@@ -33,8 +33,6 @@
     <string name="device_add_manual_scan_hint">Select a device only after setup mode is open. AquaLight will verify DeviceInfo before Wi‑Fi is sent.</string>
     <string name="device_setup_method_secure_qr">Secure QR Setup</string>
     <string name="device_setup_method_manual_ble">Manual BLE Setup</string>
-    <string name="device_detail_connection_section_title">Connection</string>
-    <string name="device_detail_information_section_title">Device information</string>
     <string name="device_status_empty_title">No active devices</string>
     <string name="device_status_empty_message">Connected devices will appear here once they are available.</string>
     <string name="device_icon_content_description">Device icon</string>
@@ -52,11 +50,6 @@
     <string name="device_connection_online_content_description">Device online</string>
     <string name="device_connection_offline_content_description">Device offline</string>
     <string name="device_serial_value">Serial: %1$s</string>
-    <string name="device_ip_value">IP: %1$s</string>
-    <string name="device_firmware_value">Firmware: %1$s</string>
-    <string name="device_model_value">Model: %1$s</string>
-    <string name="device_features_value">Features: %1$s</string>
-    <string name="device_labeled_value">%1$s: %2$s</string>
     <string name="device_provisioning_step_with_icon">%1$s %2$s</string>
     <string name="device_provisioning_step_icon_attention" translatable="false">!</string>
     <string name="device_provisioning_step_icon_progress" translatable="false">●</string>

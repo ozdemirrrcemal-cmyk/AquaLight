@@ -23,8 +23,6 @@
     <string name="device_add_manual_scan_hint">Cihazı yalnızca kurulum modu açıldıktan sonra seçin. AquaLight, Wi-Fi bilgilerini göndermeden önce DeviceInfo verisini doğrular.</string>
     <string name="device_setup_method_secure_qr">Güvenli QR Kurulumu</string>
     <string name="device_setup_method_manual_ble">Manuel BLE Kurulumu</string>
-    <string name="device_detail_connection_section_title">Bağlantı</string>
-    <string name="device_detail_information_section_title">Cihaz bilgileri</string>
     <string name="device_status_empty_title">Etkin cihaz yok</string>
     <string name="device_status_empty_message">Bağlı cihazlar kullanılabilir olduklarında burada görünür.</string>
     <string name="device_icon_content_description">Cihaz simgesi</string>
@@ -41,11 +39,6 @@
     <string name="device_connection_online_content_description">Cihaz çevrimiçi</string>
     <string name="device_connection_offline_content_description">Cihaz çevrimdışı</string>
     <string name="device_serial_value">Seri numarası: %1$s</string>
-    <string name="device_ip_value">IP: %1$s</string>
-    <string name="device_firmware_value">Aygıt yazılımı: %1$s</string>
-    <string name="device_model_value">Model: %1$s</string>
-    <string name="device_features_value">Özellikler: %1$s</string>
-    <string name="device_labeled_value">%1$s: %2$s</string>
     <string name="device_provisioning_step_with_icon">%1$s %2$s</string>
     <string name="device_card_accessibility">%1$s, UID: %2$s, %3$s</string>
     <string name="device_card_accessibility_with_supporting">%1$s, UID: %2$s, %3$s, %4$s</string>
