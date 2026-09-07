@@ -226,7 +226,6 @@ class DeviceDosingPlanFragment :
                     maxEventsPerChannel = editorState.scheduling.maxEventsPerChannel
                 )
         }
-    }
 
     private fun showDailyDoseEditor() {
         val editorState = viewModel.currentEditorState

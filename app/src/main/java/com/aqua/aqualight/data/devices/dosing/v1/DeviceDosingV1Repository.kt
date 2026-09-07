@@ -93,15 +93,15 @@ private class DeviceDosingV1ConfigurationRepository(gateway: DeviceRuntimeComman
 
     override suspend fun applyConfig(deviceUid: DeviceUid, request: DeviceDosingV1ConfigApplyRequest) =
         executor.execute(deviceUid, DeviceDosingV1Contract.Action.CONFIG_APPLY,
-            request::toJson, DeviceDosingV1MutationParser::parseConfigApply)
+            request::toJson, DeviceDosingV1SavedMutationParser::parseConfigApply)
 
     override suspend fun applyProgram(deviceUid: DeviceUid, request: DeviceDosingV1ProgramApplyRequest) =
         executor.execute(deviceUid, DeviceDosingV1Contract.Action.PROGRAM_APPLY,
-            request::toJson, DeviceDosingV1MutationParser::parseProgramApply)
+            request::toJson, DeviceDosingV1SavedMutationParser::parseProgramApply)
 
     override suspend fun resetChannel(deviceUid: DeviceUid, request: DeviceDosingV1ChannelResetRequest) =
         executor.execute(deviceUid, DeviceDosingV1Contract.Action.CHANNEL_RESET,
-            request::toJson, DeviceDosingV1MutationParser::parseChannelReset)
+            request::toJson, DeviceDosingV1SavedMutationParser::parseChannelReset)
 }
 
 private class DeviceDosingV1CalibrationRepository(gateway: DeviceRuntimeCommandGateway) :

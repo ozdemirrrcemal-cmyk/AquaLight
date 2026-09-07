@@ -52,6 +52,7 @@ APP_SETTINGS = "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/app/AppSet
 ADD_CARE = "app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AddCareTaskFragment.kt"
 TANK_SETTINGS = "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/settings/TankSettingsOthersFragment.kt"
 DOSING_RESERVOIR = "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/reservoir/DeviceDosingReservoirFragment.kt"
+DOSING_RESERVOIR_NOTIFICATIONS = "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/channel/reservoir/DeviceDosingReservoirNotificationController.kt"
 CARE_STORE = "app/src/main/java/com/aqua/aqualight/data/care/CareTaskDataStoreManager.kt"
 MAINTENANCE_OPS = "app/src/main/java/com/aqua/aqualight/data/care/DefaultMaintenanceOperations.kt"
 TANK_OPS = "app/src/main/java/com/aqua/aqualight/data/aquarium/DefaultAquariumTankOperations.kt"
@@ -202,12 +203,25 @@ for token, reason in (
 for token in ("DataStore", "SharedPreferences", "NotificationDispatchUseCase", "NotificationManager"):
     forbid(NOTIFICATION_ENABLEMENT, token, "feature enablement must not create a second preference or delivery path")
 
-for screen, category in (
-    (TANK_SETTINGS, "NotificationCategory.CARE_REMINDERS"),
-    (DOSING_RESERVOIR, "NotificationCategory.DEVICE_ALERTS"),
-):
+for screen, category in ((TANK_SETTINGS, "NotificationCategory.CARE_REMINDERS"),):
     require(screen, "NotificationEnablementCoordinator", "feature switch must use shared notification enablement")
     require(screen, category, "feature switch must resolve its stable central category")
+
+require(
+    DOSING_RESERVOIR,
+    "DeviceDosingReservoirNotificationController",
+    "reservoir feature switch must delegate notification orchestration",
+)
+require(
+    DOSING_RESERVOIR_NOTIFICATIONS,
+    "NotificationEnablementCoordinator",
+    "reservoir notification controller must use shared notification enablement",
+)
+require(
+    DOSING_RESERVOIR_NOTIFICATIONS,
+    "NotificationCategory.DEVICE_ALERTS",
+    "reservoir notification controller must resolve its stable central category",
+)
 
 require(REPOSITORY, "NotificationPreferenceRepository", "owner store must implement the application repository")
 require(REPOSITORY, "notification_preferences.pb", "owner preference must have a dedicated Proto DataStore")
