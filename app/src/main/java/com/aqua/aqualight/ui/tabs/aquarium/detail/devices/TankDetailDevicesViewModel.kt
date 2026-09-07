@@ -12,6 +12,8 @@ import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.RemoveDeviceFromTankResult
 import com.aqua.aqualight.application.devices.TankDeviceAssignmentOperations
 import com.aqua.aqualight.application.devices.TankDeviceListItem
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingCardOperations
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingCardState
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardState
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactSnapshotMapper
@@ -19,6 +21,7 @@ import com.aqua.aqualight.ui.common.devicepresence.DeviceMenuUnavailableMessageM
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRoute
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 import java.util.concurrent.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -36,7 +39,8 @@ class TankDetailDevicesViewModel(
     private val assignmentOperations: TankDeviceAssignmentOperations,
     private val menuOpenUseCase: DeviceMenuOpenUseCase,
     private val routeResolver: DeviceRouteResolver,
-    private val dosingCardOperations: DeviceDosingCardOperations? = null
+    private val dosingCardOperations: DeviceDosingCardOperations? = null,
+    private val coolingCardOperations: DeviceCoolingCardOperations? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TankDetailDevicesUiState())
@@ -48,9 +52,11 @@ class TankDetailDevicesViewModel(
     private val openingDeviceId = MutableStateFlow<String?>(null)
     private val removingDevice = MutableStateFlow(false)
     private val dosingCardStates = MutableStateFlow<Map<String, DeviceDosingCardState>>(emptyMap())
+    private val coolingCardStates = MutableStateFlow<Map<String, DeviceCoolingCardState>>(emptyMap())
     private val spotlightRotation = DosingSpotlightRotationController(viewModelScope)
 
     private val dosingObserverJobs = mutableMapOf<String, Job>()
+    private val coolingObserverJobs = mutableMapOf<String, Job>()
     private var boundTankId: Long = 0L
     private var observeJob: Job? = null
     private var menuOpenJob: Job? = null
@@ -62,27 +68,42 @@ class TankDetailDevicesViewModel(
         dosingObserverJobs.values.forEach(Job::cancel)
         dosingObserverJobs.clear()
         dosingCardStates.value = emptyMap()
+        coolingObserverJobs.values.forEach(Job::cancel)
+        coolingObserverJobs.clear()
+        coolingCardStates.value = emptyMap()
         spotlightRotation.updateChannelCounts(emptyMap())
         boundTankId = tankId
         assignmentOperations.start(viewModelScope)
         observeJob?.cancel()
 
         val assignedDevices = assignmentOperations.assignedDevices(tankId)
-            .onEach(::syncDosingObservers)
+            .onEach { devices ->
+                syncDosingObservers(devices)
+                syncCoolingObservers(
+                    devices = devices,
+                    operations = coolingCardOperations,
+                    observerJobs = coolingObserverJobs,
+                    cardStates = coolingCardStates,
+                    scope = viewModelScope
+                )
+            }
         val interactionState = observeInteractionState(
             openingDeviceId = openingDeviceId,
             removingDevice = removingDevice
         )
-        val dosingPresentationState = observeDosingPresentationState(
-            dosingCardStates = dosingCardStates,
-            spotlightIndices = spotlightRotation.indices
+        val devicePresentationState = observeDevicePresentationState(
+            dosingPresentation = observeDosingPresentationState(
+                dosingCardStates = dosingCardStates,
+                spotlightIndices = spotlightRotation.indices
+            ),
+            coolingCardStates = coolingCardStates
         )
 
         observeJob = viewModelScope.launch {
             combine(
                 assignedDevices,
                 interactionState,
-                dosingPresentationState,
+                devicePresentationState,
                 ::buildTankDetailDevicesUiState
             ).catch {
                 _uiState.update { current ->
@@ -266,6 +287,48 @@ class TankDetailDevicesViewModel(
     }
 }
 
+private fun syncCoolingObservers(
+    devices: List<TankDeviceListItem>,
+    operations: DeviceCoolingCardOperations?,
+    observerJobs: MutableMap<String, Job>,
+    cardStates: MutableStateFlow<Map<String, DeviceCoolingCardState>>,
+    scope: CoroutineScope
+) {
+    val assignedCoolingDeviceIds = devices
+        .asSequence()
+        .filter { device -> device.family == OwnerDeviceFamily.COOLING }
+        .map(TankDeviceListItem::deviceUid)
+        .toSet()
+    val reachableCoolingDeviceIds = devices
+        .asSequence()
+        .filter { device ->
+            device.family == OwnerDeviceFamily.COOLING &&
+                device.availability == OwnerDeviceAvailability.REACHABLE
+        }
+        .map(TankDeviceListItem::deviceUid)
+        .toSet()
+
+    (observerJobs.keys - reachableCoolingDeviceIds).forEach { deviceUid ->
+        observerJobs.remove(deviceUid)?.cancel()
+    }
+    val removedDeviceIds = cardStates.value.keys - assignedCoolingDeviceIds
+    if (removedDeviceIds.isNotEmpty()) {
+        cardStates.update { states -> states - removedDeviceIds }
+    }
+
+    operations?.let { coolingOperations ->
+        reachableCoolingDeviceIds
+            .filterNot(observerJobs::containsKey)
+            .forEach { deviceUid ->
+                observerJobs[deviceUid] = scope.launch {
+                    coolingOperations.observe(deviceUid).collect { state ->
+                        cardStates.update { states -> states + (deviceUid to state) }
+                    }
+                }
+            }
+    }
+}
+
 data class TankDetailDevicesUiState(
     val devices: List<TankAssignedDeviceItem> = emptyList(),
     val isEmpty: Boolean = true,
@@ -297,6 +360,11 @@ private data class TankDosingPresentationState(
     val spotlightIndices: Map<String, Int>
 )
 
+private data class TankDevicePresentationState(
+    val dosing: TankDosingPresentationState,
+    val coolingStates: Map<String, DeviceCoolingCardState>
+)
+
 private fun observeInteractionState(
     openingDeviceId: Flow<String?>,
     removingDevice: Flow<Boolean>
@@ -323,18 +391,35 @@ private fun observeDosingPresentationState(
     )
 }
 
+private fun observeDevicePresentationState(
+    dosingPresentation: Flow<TankDosingPresentationState>,
+    coolingCardStates: Flow<Map<String, DeviceCoolingCardState>>
+): Flow<TankDevicePresentationState> = combine(
+    dosingPresentation,
+    coolingCardStates
+) { dosing, cooling ->
+    TankDevicePresentationState(dosing = dosing, coolingStates = cooling)
+}
+
 private fun buildTankDetailDevicesUiState(
     devices: List<TankDeviceListItem>,
     interaction: TankDeviceInteractionState,
-    dosingPresentation: TankDosingPresentationState
+    presentation: TankDevicePresentationState
 ): TankDetailDevicesUiState {
     val items = devices.map { device ->
         val compactCard = DeviceCompactSnapshotMapper.map(device)
-        val dosingState = dosingPresentation.states[device.deviceUid]
+        val dosingState = presentation.dosing.states[device.deviceUid]
         val dosingCard = if (device.family == OwnerDeviceFamily.DOSING) {
             compactCard.toDosingSpotlightCardUi(
                 state = dosingState,
-                selectedIndex = dosingPresentation.spotlightIndices[device.deviceUid] ?: 0
+                selectedIndex = presentation.dosing.spotlightIndices[device.deviceUid] ?: 0
+            )
+        } else {
+            null
+        }
+        val coolingCard = if (device.family == OwnerDeviceFamily.COOLING) {
+            compactCard.toCoolingSpotlightCardUi(
+                state = presentation.coolingStates[device.deviceUid]
             )
         } else {
             null
@@ -343,7 +428,8 @@ private fun buildTankDetailDevicesUiState(
             deviceUid = device.deviceUid,
             title = device.displayName,
             card = compactCard,
-            dosingCard = dosingCard
+            dosingCard = dosingCard,
+            coolingCard = coolingCard
         )
     }
     return TankDetailDevicesUiState(

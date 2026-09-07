@@ -6,6 +6,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.aqua.aqualight.databinding.ItemDeviceCompactCardBinding
+import com.aqua.aqualight.databinding.ItemCoolingDeviceSpotlightCardBinding
 import com.aqua.aqualight.databinding.ItemDosingDeviceSpotlightCardBinding
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactCardBinder
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactCardUi
@@ -14,7 +15,8 @@ data class TankAssignedDeviceItem(
     val deviceUid: String,
     val title: String,
     val card: DeviceCompactCardUi,
-    val dosingCard: DosingDeviceSpotlightCardUi? = null
+    val dosingCard: DosingDeviceSpotlightCardUi? = null,
+    val coolingCard: CoolingDeviceSpotlightCardUi? = null
 )
 
 class TankAssignedDevicesAdapter(
@@ -23,10 +25,10 @@ class TankAssignedDevicesAdapter(
 ) : ListAdapter<TankAssignedDeviceItem, RecyclerView.ViewHolder>(DiffCallback) {
 
     override fun getItemViewType(position: Int): Int {
-        return if (getItem(position).dosingCard != null) {
-            VIEW_TYPE_DOSING_SPOTLIGHT
-        } else {
-            VIEW_TYPE_COMPACT
+        return when {
+            getItem(position).dosingCard != null -> VIEW_TYPE_DOSING_SPOTLIGHT
+            getItem(position).coolingCard != null -> VIEW_TYPE_COOLING_SPOTLIGHT
+            else -> VIEW_TYPE_COMPACT
         }
     }
 
@@ -42,6 +44,11 @@ class TankAssignedDevicesAdapter(
                     parent,
                     false
                 ),
+                onDeviceClick = onDeviceClick,
+                onDeviceLongClick = onDeviceLongClick
+            )
+            VIEW_TYPE_COOLING_SPOTLIGHT -> CoolingViewHolder(
+                binding = ItemCoolingDeviceSpotlightCardBinding.inflate(inflater, parent, false),
                 onDeviceClick = onDeviceClick,
                 onDeviceLongClick = onDeviceLongClick
             )
@@ -64,7 +71,27 @@ class TankAssignedDevicesAdapter(
         val item = getItem(position)
         when (holder) {
             is DosingViewHolder -> holder.bind(item)
+            is CoolingViewHolder -> holder.bind(item)
             is CompactViewHolder -> holder.bind(item)
+        }
+    }
+
+    private class CoolingViewHolder(
+        private val binding: ItemCoolingDeviceSpotlightCardBinding,
+        private val onDeviceClick: (TankAssignedDeviceItem) -> Unit,
+        private val onDeviceLongClick: (TankAssignedDeviceItem) -> Unit
+    ) : RecyclerView.ViewHolder(binding.root) {
+
+        fun bind(item: TankAssignedDeviceItem) {
+            CoolingDeviceSpotlightCardBinder.bind(
+                binding = binding,
+                item = requireNotNull(item.coolingCard)
+            )
+            binding.root.setOnClickListener { onDeviceClick(item) }
+            binding.root.setOnLongClickListener {
+                onDeviceLongClick(item)
+                true
+            }
         }
     }
 
@@ -169,5 +196,6 @@ class TankAssignedDevicesAdapter(
     private companion object {
         const val VIEW_TYPE_COMPACT = 0
         const val VIEW_TYPE_DOSING_SPOTLIGHT = 1
+        const val VIEW_TYPE_COOLING_SPOTLIGHT = 2
     }
 }

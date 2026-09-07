@@ -14,6 +14,8 @@ import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.RemoveDeviceFromTankResult
 import com.aqua.aqualight.application.devices.TankDeviceAssignmentOperations
 import com.aqua.aqualight.application.devices.TankDeviceListItem
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingCardOperations
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingCardState
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardState
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
@@ -109,6 +111,22 @@ class TankDeviceAssignmentViewModelBoundaryTest {
     }
 
     @Test
+    fun `tank detail observes only the cooling card application boundary`() {
+        val cardOperations = FakeDeviceCoolingCardOperations()
+        val viewModel = createTankDetailViewModel(
+            operations = FakeTankDeviceAssignmentOperations(
+                assigned = listOf(device("cool-1", OwnerDeviceFamily.COOLING))
+            ),
+            coolingCardOperations = cardOperations
+        )
+
+        viewModel.bind(10L)
+
+        assertEquals(listOf("cool-1"), cardOperations.observeRequests)
+        assertTrue(viewModel.uiState.value.devices.single().coolingCard != null)
+    }
+
+    @Test
     fun `tank detail menu open uses shared preparation contract before route`() = runTest {
         val preparation = FakePreparationOperations()
         val viewModel = createTankDetailViewModel(
@@ -200,7 +218,8 @@ class TankDeviceAssignmentViewModelBoundaryTest {
         operations: TankDeviceAssignmentOperations,
         menuAccess: DeviceMenuAccessOperations = FakeMenuAccessOperations(),
         preparation: DeviceControlSurfacePreparationOperations = FakePreparationOperations(),
-        dosingCardOperations: DeviceDosingCardOperations? = null
+        dosingCardOperations: DeviceDosingCardOperations? = null,
+        coolingCardOperations: DeviceCoolingCardOperations? = null
     ): TankDetailDevicesViewModel = TankDetailDevicesViewModel(
         assignmentOperations = operations,
         menuOpenUseCase = DeviceMenuOpenUseCase(
@@ -208,7 +227,8 @@ class TankDeviceAssignmentViewModelBoundaryTest {
             controlSurfacePreparationOperations = preparation
         ),
         routeResolver = DeviceRouteResolver(),
-        dosingCardOperations = dosingCardOperations
+        dosingCardOperations = dosingCardOperations,
+        coolingCardOperations = coolingCardOperations
     )
 
     private fun device(
@@ -273,6 +293,15 @@ class TankDeviceAssignmentViewModelBoundaryTest {
         override fun observe(deviceUid: String): Flow<DeviceDosingCardState> {
             observeRequests += deviceUid
             return MutableStateFlow(DeviceDosingCardState.Preparing)
+        }
+    }
+
+    private class FakeDeviceCoolingCardOperations : DeviceCoolingCardOperations {
+        val observeRequests = mutableListOf<String>()
+
+        override fun observe(deviceUid: String): Flow<DeviceCoolingCardState> {
+            observeRequests += deviceUid
+            return MutableStateFlow(DeviceCoolingCardState.Preparing)
         }
     }
 

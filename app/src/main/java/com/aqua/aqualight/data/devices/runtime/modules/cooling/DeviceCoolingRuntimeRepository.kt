@@ -86,21 +86,30 @@ class DeviceCoolingRuntimeRepository internal constructor(
 
     suspend fun requestProgram(
         deviceUid: DeviceUid
-    ): DeviceRuntimeCommandOutcome<DeviceCoolingV1ProgramSnapshot> =
-        protocol.requestProgram(deviceUid)
+    ): DeviceRuntimeCommandOutcome<DeviceCoolingV1ProgramSnapshot> {
+        val outcome = protocol.requestProgram(deviceUid)
+        if (outcome is DeviceRuntimeCommandOutcome.Success) {
+            stateOwner.recordProgram(deviceUid, outcome.generation, outcome.value)
+        }
+        return outcome
+    }
 
     suspend fun applyProgram(
         deviceUid: DeviceUid,
         payload: DeviceCoolingV1ProgramApplyPayload
-    ): DeviceRuntimeCommandOutcome<DeviceCoolingV1ProgramApplyResult> = protocol
-        .applyProgram(deviceUid, payload)
-        .reconcileAfterMutation(
+    ): DeviceRuntimeCommandOutcome<DeviceCoolingV1ProgramApplyResult> {
+        val outcome = protocol.applyProgram(deviceUid, payload).reconcileAfterMutation(
             deviceUid = deviceUid,
             stateOwner = stateOwner,
             requestStatus = ::requestStatus
         ) { result, status ->
             status.programRevision == result.program.programRevision
         }
+        if (outcome is DeviceRuntimeCommandOutcome.Success) {
+            stateOwner.recordProgram(deviceUid, outcome.generation, outcome.value.program)
+        }
+        return outcome
+    }
 
     suspend fun requestHistory(
         deviceUid: DeviceUid,

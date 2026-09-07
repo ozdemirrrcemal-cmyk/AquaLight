@@ -5,6 +5,7 @@ import com.aqua.aqualight.BuildConfig
 import com.aqua.aqualight.application.auth.AuthenticatedOwnerIdentity
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
+import com.aqua.aqualight.application.devices.cooling.DeviceCoolingCardOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationDraftOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardOperations
@@ -25,6 +26,7 @@ import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.devices.DefaultDeviceFirmwareUpdateOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.cooling.control.DefaultDeviceCoolingControlOperations
+import com.aqua.aqualight.data.devices.cooling.DefaultDeviceCoolingCardOperations
 import com.aqua.aqualight.data.devices.dosing.DefaultDeviceDosingChannelNavigationOperations
 import com.aqua.aqualight.data.devices.dosing.SharedPreferencesDeviceDosingCalibrationDraftStore
 import com.aqua.aqualight.data.devices.dosing.SharedPreferencesDeviceDosingLowLevelAlertLedger
@@ -62,6 +64,7 @@ internal data class OwnerDependencyGraph(
     val userDataArchiveOperations: UserDataArchiveOperations,
     val provisioningDraftOperations: ProvisioningDraftOperations,
     val controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations,
+    val coolingCardOperations: DeviceCoolingCardOperations,
     val dosingOperations: OwnerDosingOperations
 )
 
@@ -189,25 +192,6 @@ internal class ActiveOwnerDependencyGraphResolver(
         val ownerUidProvider = { dependencies.ownerUid }
         val aquariumTankStore = AquariumTankDataStoreManager(appContext)
         val careTaskStore = CareTaskDataStoreManager.create(appContext)
-        val archiveDataSources = UserDataArchiveDataSources(
-            aquariumStore = aquariumTankStore,
-            careTaskStore = careTaskStore,
-            assignmentRepository = dependencies.assignmentRepository
-        )
-        val mediaGateway = UserDataArchiveMediaGateway(appContext)
-        val snapshotCollector = UserDataArchiveSnapshotCollector(
-            ownerUid = dependencies.ownerUid,
-            dataSources = archiveDataSources,
-            preferences = userPreferencesManager,
-            mediaGateway = mediaGateway
-        )
-        val restorer = UserDataBackupRestorer(
-            context = appContext,
-            ownerUid = dependencies.ownerUid,
-            dataSources = archiveDataSources,
-            mediaGateway = mediaGateway,
-            reconcileCareReminders = notificationPreferenceUseCase::reconcileOwner
-        )
         val dosingOperations = createDosingOperations(dependencies)
         return OwnerDependencyGraph(
             ownerUid = dependencies.ownerUid,
@@ -218,14 +202,10 @@ internal class ActiveOwnerDependencyGraphResolver(
             assignmentRepository = dependencies.assignmentRepository,
             aquariumTankStore = aquariumTankStore,
             careTaskStore = careTaskStore,
-            userDataArchiveOperations = DefaultUserDataArchiveOperations(
-                sourceAppVersion = BuildConfig.VERSION_NAME,
-                snapshotCollector = snapshotCollector,
-                restorer = restorer,
-                runtime = UserDataArchiveRuntimeDependencies(
-                    staging = UserDataArchiveStaging(appContext),
-                    documents = AndroidUserDataDocumentOperations(appContext)
-                )
+            userDataArchiveOperations = createUserDataArchiveOperations(
+                dependencies = dependencies,
+                aquariumTankStore = aquariumTankStore,
+                careTaskStore = careTaskStore
             ),
             provisioningDraftOperations = DefaultProvisioningDraftOperations(
                 draftStore = AqlProvisioningDraftStore(
@@ -241,9 +221,49 @@ internal class ActiveOwnerDependencyGraphResolver(
                 dependencies = dependencies,
                 dosingOperations = dosingOperations
             ),
+            coolingCardOperations = createCoolingCardOperations(dependencies),
             dosingOperations = dosingOperations
         )
     }
+
+    private fun createUserDataArchiveOperations(
+        dependencies: ActiveOwnerDependencies,
+        aquariumTankStore: AquariumTankDataStoreManager,
+        careTaskStore: CareTaskDataStoreManager
+    ): UserDataArchiveOperations {
+        val archiveDataSources = UserDataArchiveDataSources(
+            aquariumStore = aquariumTankStore,
+            careTaskStore = careTaskStore,
+            assignmentRepository = dependencies.assignmentRepository
+        )
+        val mediaGateway = UserDataArchiveMediaGateway(appContext)
+        return DefaultUserDataArchiveOperations(
+            sourceAppVersion = BuildConfig.VERSION_NAME,
+            snapshotCollector = UserDataArchiveSnapshotCollector(
+                ownerUid = dependencies.ownerUid,
+                dataSources = archiveDataSources,
+                preferences = userPreferencesManager,
+                mediaGateway = mediaGateway
+            ),
+            restorer = UserDataBackupRestorer(
+                context = appContext,
+                ownerUid = dependencies.ownerUid,
+                dataSources = archiveDataSources,
+                mediaGateway = mediaGateway,
+                reconcileCareReminders = notificationPreferenceUseCase::reconcileOwner
+            ),
+            runtime = UserDataArchiveRuntimeDependencies(
+                staging = UserDataArchiveStaging(appContext),
+                documents = AndroidUserDataDocumentOperations(appContext)
+            )
+        )
+    }
+
+    private fun createCoolingCardOperations(
+        dependencies: ActiveOwnerDependencies
+    ): DeviceCoolingCardOperations = DefaultDeviceCoolingCardOperations(
+        dependencies.devicesRepository
+    )
 
     private fun createControlSurfacePreparationOperations(
         dependencies: ActiveOwnerDependencies,

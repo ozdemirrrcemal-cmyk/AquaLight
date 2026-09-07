@@ -119,6 +119,8 @@ object AquaCoolingDashboardGeometry {
     val liveHeroDeviceTopOffset = 3.dp
     val liveHeroDeviceEndOffset = 7.dp
     val liveHeroOutlineWidth = 1.dp
+
+    val deviceCardFanSize = 52.dp
 }
 
 object AquaCoolingHistoryGeometry {

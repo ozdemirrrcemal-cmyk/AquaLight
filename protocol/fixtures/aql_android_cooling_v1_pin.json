@@ -1,0 +1,66 @@
+{
+  "fixtureVersion": 1,
+  "schema": "aql.android.cooling-v1.pin.v1",
+  "firmware": {
+    "repository": "ozdemirrrcemal-cmyk/AquaLight-Firmware",
+    "commit": "90b6597216d0c697542d5dc12e26647625806d8f",
+    "tree": "276c9edeffbe291d0f0a33daa0e62ecbb35ed56a",
+    "sources": {
+      "src/api/v1/commands/AqlCoolingCommands.hpp": "4df542d5106fce2810e64559667685c1c2ecfd69",
+      "src/api/v1/telemetry/AqlCoolingTelemetry.hpp": "37d38ae2d5209ba7ab28040e0249e95f9e06ec10",
+      "src/hardware/channels/AqlCoolingFanProfile.hpp": "23dc4537b52899a6ab9a7c79fbe802ecefa4f59d",
+      "src/hardware/channels/AqlCoolingSensorProfile.hpp": "4a5bde4586b3017381b56da7b5aa06952a9cc6ca",
+      "src/modules/cooling/AqlCoolingActuationSnapshot.hpp": "c649cdab8cc710a6c19f8f197865d7a43137f91b",
+      "src/modules/cooling/AqlCoolingAlarmModel.hpp": "8c22fc057aac2abbd46108426c77575551a549b1",
+      "src/modules/cooling/AqlCoolingContractV1.hpp": "68125166a9e7a0f9defeacea516be7727615507b",
+      "src/modules/cooling/AqlCoolingHistoryService.hpp": "10c5087a1a09d141936e812dbc203a3808db4d0c",
+      "src/modules/cooling/AqlCoolingService.hpp": "174ba58f3daa43b8403b22beabb76bae118b8801"
+    }
+  },
+  "contract": {
+    "schema": "aql.cooling.v1",
+    "schemaVersion": 1,
+    "catalogSha256": "9197d06f5f2022bdeea288e8455fad98b1fab57ad3325a1f202c50b555c8ddf2",
+    "productKey": "COOLING_COOL_PRO_1F"
+  },
+  "sharedFixtures": {
+    "aql_cooling_contract_v1.json": {
+      "sha256": "9197d06f5f2022bdeea288e8455fad98b1fab57ad3325a1f202c50b555c8ddf2",
+      "firmwareBlobSha": "823fa046921922eb97573cb01c086de0b76fb350",
+      "byteIdenticalWithFirmware": true
+    },
+    "aql_cooling_telemetry_v1.json": {
+      "sha256": "8c0ecc54eff1a05f3d72b9b740e6d986dbc3a7cc69c61647608aed360b621b85",
+      "firmwareBlobSha": "7ec000ec24e2ef48cd54beff3bad81b58d7cd4c4",
+      "byteIdenticalWithFirmware": true
+    }
+  },
+  "derivedFixtures": {
+    "aql_cooling_status_v1.json": {
+      "sha256": "fb19c405ee0be60b8f52f05a307d0bcb8797a047c3bcbfcab3f0b36581060df4",
+      "androidBlobSha": "b7529fa20c266c8ba48a2464e11de670174b3f2e",
+      "firmwareCommit": "90b6597216d0c697542d5dc12e26647625806d8f",
+      "derivedFrom": [
+        "src/api/v1/commands/AqlCoolingCommands.hpp",
+        "src/modules/cooling/AqlCoolingAlarmModel.hpp",
+        "src/modules/cooling/AqlCoolingContractV1.hpp",
+        "src/modules/cooling/AqlCoolingHistoryService.hpp"
+      ],
+      "rootFields": [
+        "schema",
+        "schemaVersion",
+        "uptimeMs",
+        "contract",
+        "topology",
+        "config",
+        "program",
+        "control",
+        "policy",
+        "telemetry",
+        "alarms",
+        "healthSummary",
+        "history"
+      ]
+    }
+  }
+}

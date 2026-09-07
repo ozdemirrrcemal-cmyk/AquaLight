@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    style="@style/Widget.Aqua.Card.Device"
+    android:id="@+id/card"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="@dimen/aqua_size_4"
+    android:layout_marginTop="@dimen/aqua_size_6"
+    android:layout_marginBottom="@dimen/aqua_size_4"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    app:cardUseCompatPadding="false"
+    app:rippleColor="@color/aqua_card_ripple"
+    app:strokeWidth="@dimen/aqua_size_1">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="@dimen/aqua_size_14"
+        android:paddingTop="@dimen/aqua_size_6"
+        android:paddingEnd="@dimen/aqua_size_14"
+        android:paddingBottom="@dimen/aqua_size_6">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/aqua_size_40">
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/deviceIconContainer"
+                style="@style/Widget.Aqua.Card.Device.Media"
+                android:layout_width="@dimen/aqua_size_40"
+                android:layout_height="@dimen/aqua_size_40"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:strokeWidth="@dimen/aqua_size_1">
+
+                <ImageView
+                    android:id="@+id/ivDeviceIcon"
+                    android:layout_width="@dimen/aqua_size_34"
+                    android:layout_height="@dimen/aqua_size_34"
+                    android:layout_gravity="center"
+                    android:adjustViewBounds="true"
+                    android:contentDescription="@string/app_name"
+                    android:scaleType="centerInside"
+                    tools:src="@drawable/ic_device_cooling" />
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:id="@+id/tvDeviceName"
+                android:layout_width="@dimen/aqua_size_0"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/aqua_size_10"
+                android:layout_marginEnd="@dimen/aqua_size_6"
+                android:ellipsize="end"
+                android:includeFontPadding="false"
+                android:maxLines="1"
+                android:textColor="@color/aqua_content_primary"
+                android:textSize="@dimen/aqua_text_size_card_title"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/devicePresenceContainer"
+                app:layout_constraintStart_toEndOf="@id/deviceIconContainer"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:text="Cool Pro 1F" />
+
+            <FrameLayout
+                android:id="@+id/devicePresenceContainer"
+                android:layout_width="@dimen/aqua_size_32"
+                android:layout_height="@dimen/aqua_size_32"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <ImageView
+                    android:id="@+id/ivPresenceIcon"
+                    android:layout_width="@dimen/aqua_size_20"
+                    android:layout_height="@dimen/aqua_size_20"
+                    android:layout_gravity="center"
+                    android:contentDescription="@string/app_name"
+                    android:src="@drawable/ic_status_wifi"
+                    app:tint="@color/aqua_accent_positive" />
+
+                <ProgressBar
+                    android:id="@+id/progressCardAction"
+                    style="?android:attr/progressBarStyleSmall"
+                    android:layout_width="@dimen/aqua_size_20"
+                    android:layout_height="@dimen/aqua_size_20"
+                    android:layout_gravity="center"
+                    android:contentDescription="@string/device_menu_checking_accessibility"
+                    android:visibility="gone" />
+            </FrameLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/aqua_size_1"
+            android:layout_marginTop="@dimen/aqua_size_5"
+            android:background="@color/aqua_card_device_outline" />
+
+        <TextView
+            android:id="@+id/tvCoolingUnavailable"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/aqua_size_64"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:textColor="@color/aqua_content_muted"
+            android:textSize="@dimen/aqua_text_size_body_small"
+            android:visibility="gone"
+            tools:text="Cooling data is being prepared"
+            tools:visibility="visible" />
+
+        <LinearLayout
+            android:id="@+id/coolingDetails"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/aqua_size_64">
+
+                <LinearLayout
+                    android:layout_width="@dimen/aqua_size_0"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="@dimen/aqua_size_8"
+                    android:gravity="start"
+                    android:orientation="vertical"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/coolingFan"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <com.google.android.material.card.MaterialCardView
+                        style="@style/Widget.Aqua.Card.Metric"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:cardBackgroundColor="@color/aqua_card_device_cooling_accent"
+                        app:cardCornerRadius="@dimen/aqua_size_8"
+                        app:strokeWidth="@dimen/aqua_size_0">
+
+                        <TextView
+                            android:id="@+id/tvCoolingMode"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:includeFontPadding="false"
+                            android:paddingHorizontal="@dimen/aqua_size_9"
+                            android:paddingVertical="@dimen/aqua_size_3"
+                            android:textColor="@color/aqua_card_text_primary"
+                            android:textSize="@dimen/aqua_text_size_body_small"
+                            android:textStyle="bold"
+                            tools:text="Program" />
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <TextView
+                        android:id="@+id/tvCoolingActivity"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/aqua_size_4"
+                        android:ellipsize="end"
+                        android:includeFontPadding="false"
+                        android:maxLines="1"
+                        android:textColor="@color/aqua_content_secondary"
+                        android:textSize="@dimen/aqua_text_size_body_small"
+                        tools:text="Cooling · 14:00–18:00" />
+                </LinearLayout>
+
+                <androidx.compose.ui.platform.ComposeView
+                    android:id="@+id/coolingFan"
+                    android:layout_width="@dimen/aqua_size_56"
+                    android:layout_height="@dimen/aqua_size_56"
+                    android:importantForAccessibility="noHideDescendants"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/aqua_size_60"
+                android:layout_marginTop="@dimen/aqua_size_5"
+                android:baselineAligned="false"
+                android:orientation="horizontal"
+                android:weightSum="3">
+
+                <include
+                    android:id="@+id/waterMetric"
+                    layout="@layout/item_cooling_device_metric"
+                    android:layout_width="@dimen/aqua_size_0"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="@dimen/aqua_size_4"
+                    android:layout_weight="1" />
+
+                <include
+                    android:id="@+id/fanMetric"
+                    layout="@layout/item_cooling_device_metric"
+                    android:layout_width="@dimen/aqua_size_0"
+                    android:layout_height="match_parent"
+                    android:layout_marginHorizontal="@dimen/aqua_size_2"
+                    android:layout_weight="1" />
+
+                <include
+                    android:id="@+id/thirdMetric"
+                    layout="@layout/item_cooling_device_metric"
+                    android:layout_width="@dimen/aqua_size_0"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="@dimen/aqua_size_4"
+                    android:layout_weight="1" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

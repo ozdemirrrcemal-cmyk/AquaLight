@@ -23,6 +23,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import kotlin.math.min
+import kotlin.math.roundToInt
 import kotlinx.coroutines.isActive
 
 /**
@@ -56,6 +57,23 @@ internal fun AquaCoolingFanPreview(
             colors = colors
         )
     }
+}
+
+/** Compact live indicator driven only by authoritative applied output and operating state. */
+@Composable
+internal fun AquaCoolingFanIndicator(
+    appliedPercent: Double?,
+    motionActive: Boolean,
+    colors: AquaDeviceCardColors,
+    modifier: Modifier = Modifier
+) {
+    val motionPercent = if (motionActive) appliedPercent?.roundToInt() ?: 0 else 0
+    AquaCoolingFanPreview(
+        percent = motionPercent,
+        colors = colors,
+        contentDescription = "",
+        modifier = modifier
+    )
 }
 
 @Composable
