@@ -57,6 +57,7 @@ internal fun CoolingLiveHero(
             presentation = presentation,
             motion = motion,
             motionPhases = motionPhases,
+            colors = colors,
             modifier = Modifier
                 .width(maxWidth * DEVICE_WIDTH_FRACTION)
                 .aspectRatio(DEVICE_ASPECT_RATIO)
@@ -92,6 +93,7 @@ private fun CoolingHeroDevice(
     presentation: CoolingHeroPresentation,
     motion: CoolingHeroMotion,
     motionPhases: CoolingHeroMotionPhases,
+    colors: AquaDeviceCardColors,
     modifier: Modifier
 ) {
     val deviceImage = ImageBitmap.imageResource(R.drawable.ic_device_cooling)
@@ -114,7 +116,9 @@ private fun CoolingHeroDevice(
             ) {
                 drawCoolingFanRotor(
                     deviceImage = deviceImage,
-                    rotationPhase = motionPhases.fan
+                    rotationPhase = motionPhases.fan,
+                    motionIntensity = motion.intensity,
+                    colors = colors
                 )
             }
         }
