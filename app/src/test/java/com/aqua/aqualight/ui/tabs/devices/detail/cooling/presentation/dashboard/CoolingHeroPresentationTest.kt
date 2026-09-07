@@ -208,9 +208,9 @@ class CoolingHeroPresentationTest {
         const val EXPECTED_CONTINUOUS_AUTOMATIC_INTENSITY = 0.3595f
         val continuousAutomaticIntensityDelta =
             Math.ulp(EXPECTED_CONTINUOUS_AUTOMATIC_INTENSITY)
-        const val FULL_OUTPUT_PERIOD_MILLIS = 420
-        const val HALF_OUTPUT_PERIOD_MILLIS = 840
-        const val QUARTER_OUTPUT_PERIOD_MILLIS = 1680
+        const val FULL_OUTPUT_PERIOD_MILLIS = 280
+        const val HALF_OUTPUT_PERIOD_MILLIS = 560
+        const val QUARTER_OUTPUT_PERIOD_MILLIS = 1120
         const val NO_MOTION = 0f
         const val NO_DELTA = 0f
     }

@@ -54,10 +54,11 @@ internal fun DrawScope.drawCoolingFanRotor(
     val sourceBitmap = deviceImage.asAndroidBitmap()
     val fanTransform = rotor.projectedRotationMatrix(rotationPhase)
     val fanClip = rotor.clipPath()
+    val hubClip = rotor.hubClipPath()
 
     drawIntoCanvas { canvas ->
         val nativeCanvas = canvas.nativeCanvas
-        val checkpoint = nativeCanvas.save()
+        val rotorCheckpoint = nativeCanvas.save()
         try {
             nativeCanvas.clipPath(fanClip)
             nativeCanvas.concat(fanTransform)
@@ -68,7 +69,22 @@ internal fun DrawScope.drawCoolingFanRotor(
                 FAN_TEXTURE_PAINT
             )
         } finally {
-            nativeCanvas.restoreToCount(checkpoint)
+            nativeCanvas.restoreToCount(rotorCheckpoint)
+        }
+
+        // The metal hub is the fan's optical anchor. Its photographed specular highlight must not
+        // orbit with the blades, otherwise an accurately centered rotor still appears to wobble.
+        val hubCheckpoint = nativeCanvas.save()
+        try {
+            nativeCanvas.clipPath(hubClip)
+            nativeCanvas.drawBitmap(
+                sourceBitmap,
+                null,
+                destination,
+                FAN_TEXTURE_PAINT
+            )
+        } finally {
+            nativeCanvas.restoreToCount(hubCheckpoint)
         }
     }
 }
@@ -89,6 +105,28 @@ private data class CoolingFanRotorGeometry(
                     centerY - clipRadiusY,
                     centerX + clipRadiusX,
                     centerY + clipRadiusY
+                ),
+                Path.Direction.CW
+            )
+        }
+        path.transform(
+            Matrix().apply {
+                setRotate(FAN_PLANE_TILT_DEGREES, centerX, centerY)
+            }
+        )
+        return path
+    }
+
+    fun hubClipPath(): Path {
+        val hubRadiusX = radiusX * FAN_HUB_RADIUS_X_SCALE
+        val hubRadiusY = radiusY * FAN_HUB_RADIUS_Y_SCALE
+        val path = Path().apply {
+            addOval(
+                RectF(
+                    centerX - hubRadiusX,
+                    centerY - hubRadiusY,
+                    centerX + hubRadiusX,
+                    centerY + hubRadiusY
                 ),
                 Path.Direction.CW
             )
@@ -152,5 +190,7 @@ private const val FAN_RADIUS_Y = 0.099f
 private const val FAN_PLANE_TILT_DEGREES = -6.4f
 private const val FAN_PLANE_TILT_RADIANS = -0.11170107f
 private const val FAN_CLIP_SCALE = 0.985f
+private const val FAN_HUB_RADIUS_X_SCALE = 0.40f
+private const val FAN_HUB_RADIUS_Y_SCALE = 0.50f
 private const val FULL_CIRCLE_RADIANS = 6.2831855f
 private const val HALF_DIVISOR = 2f
