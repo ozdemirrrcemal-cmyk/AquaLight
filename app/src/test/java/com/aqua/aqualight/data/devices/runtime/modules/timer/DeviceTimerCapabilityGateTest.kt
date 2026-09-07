@@ -66,7 +66,7 @@ class DeviceTimerCapabilityGateTest {
     }
 
     @Test
-    fun `missing exact display name feature rejects rename before gateway`() = runBlocking {
+    fun `missing exact display name feature rejects mutations before gateway`() = runBlocking {
         val gateway = RejectingGateway()
         val repository = DeviceTimerRuntimeRepository(
             gateway = gateway,
@@ -82,13 +82,15 @@ class DeviceTimerCapabilityGateTest {
             }
         )
 
-        val outcome = repository.setChannelDisplayName(
+        val rename = repository.setChannelDisplayName(
             DEVICE_UID,
             "channel1",
             "Return Pump"
         )
+        val clear = repository.clearChannelDisplayName(DEVICE_UID, "channel1")
 
-        assertTrue(outcome is DeviceRuntimeCommandOutcome.UnsupportedByDevice)
+        assertTrue(rename is DeviceRuntimeCommandOutcome.UnsupportedByDevice)
+        assertTrue(clear is DeviceRuntimeCommandOutcome.UnsupportedByDevice)
         assertEquals(0, gateway.calls)
     }
 

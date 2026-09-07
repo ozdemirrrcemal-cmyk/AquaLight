@@ -13,7 +13,7 @@ import org.junit.Test
 @Suppress("TooManyFunctions")
 class DeviceTimerTypedEventReducerTest {
     @Test
-    fun \`direct status change applies runtime delta without replacing config snapshot\`() {
+    fun `direct status change applies runtime delta without replacing config snapshot`() {
         val store = seededStore(DEVICE_A)
         val reducer = supportedReducer(store)
 
@@ -30,7 +30,7 @@ class DeviceTimerTypedEventReducerTest {
     }
 
     @Test
-    fun \`duplicate and older global event sequences are ignored\`() {
+    fun `duplicate and older global event sequences are ignored`() {
         val store = seededStore(DEVICE_A)
         val reducer = supportedReducer(store)
         reducer.apply(statusEvent(DEVICE_A, sequence = 12L))
@@ -44,7 +44,7 @@ class DeviceTimerTypedEventReducerTest {
     }
 
     @Test
-    fun \`global event sequence gap requests scoped recovery\`() {
+    fun `global event sequence gap requests scoped recovery`() {
         val store = seededStore(DEVICE_A)
         val reducer = supportedReducer(store)
         reducer.apply(statusEvent(DEVICE_A, sequence = 12L))
@@ -57,7 +57,7 @@ class DeviceTimerTypedEventReducerTest {
     }
 
     @Test
-    fun \`event revision mismatch requests scoped recovery\`() {
+    fun `event revision mismatch requests scoped recovery`() {
         val store = seededStore(DEVICE_A)
         val reducer = supportedReducer(store)
 
@@ -70,7 +70,7 @@ class DeviceTimerTypedEventReducerTest {
     }
 
     @Test
-    fun \`event sequence wrap skips zero and remains ordered\`() {
+    fun `event sequence wrap skips zero and remains ordered`() {
         val store = seededStore(DEVICE_A)
         val reducer = supportedReducer(store)
 
@@ -86,7 +86,7 @@ class DeviceTimerTypedEventReducerTest {
     }
 
     @Test
-    fun \`same global sequence remains isolated by device\`() {
+    fun `same global sequence remains isolated by device`() {
         val store = DeviceTimerRuntimeStateStore()
         seed(store, DEVICE_A)
         seed(store, DEVICE_B)
@@ -99,7 +99,7 @@ class DeviceTimerTypedEventReducerTest {
     }
 
     @Test
-    fun \`command-result envelope is ignored because firmware event is direct\`() {
+    fun `command-result envelope is ignored because firmware event is direct`() {
         val store = seededStore(DEVICE_A)
         val reducer = supportedReducer(store)
         val event = statusEvent(DEVICE_A, 12L).copy(
@@ -117,7 +117,7 @@ class DeviceTimerTypedEventReducerTest {
     }
 
     @Test
-    fun \`malformed direct event fails closed and unavailable Timer is ignored\`() {
+    fun `malformed direct event fails closed and unavailable Timer is ignored`() {
         val malformedStore = seededStore(DEVICE_A)
         val malformed = statusEvent(DEVICE_A, 12L).copy(
             payload = DeviceRuntimeEventPayload.Snapshot(

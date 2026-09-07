@@ -188,59 +188,59 @@ internal class DeviceTimerRuntimeStateStore {
         }
     }
 
-    private fun replaceGlobalStatus(
-        current: DeviceTimerRuntimeState,
-        status: DeviceTimerStatus
-    ): DeviceTimerRuntimeState {
-        val retainedDetails = current.channelDetails.filter { (channelKey, detail) ->
-            val channel = status.channels.singleOrNull { it.key == channelKey }
-            detail.revision == status.revision &&
-                channel != null &&
-                channel.scheduleCount == detail.schedules.size
-        }
-        return current.copy(status = status, channelDetails = retainedDetails)
-    }
-
-    private fun mergeChannelStatus(
-        current: DeviceTimerRuntimeState,
-        detail: DeviceTimerStatus
-    ): DeviceTimerRuntimeState {
-        val channelKey = requireNotNull(detail.selectedChannelKey)
-        val selectedChannel = detail.channels.single()
-        val currentStatus = current.status
-        val mergedStatus = if (currentStatus != null && !currentStatus.channelScoped) {
-            require(currentStatus.channelCount == detail.channelCount)
-            require(currentStatus.maxScheduleCount == detail.maxScheduleCount)
-            val previous = currentStatus.channels.singleOrNull { it.key == channelKey }
-                ?: error("Timer channel-scoped status does not belong to the global snapshot.")
-            require(previous.sameTimerChannelIdentity(selectedChannel))
-            currentStatus.copy(
-                scheduleCount = detail.scheduleCount,
-                revision = detail.revision,
-                lockLoop = detail.lockLoop,
-                uptimeMs = detail.uptimeMs,
-                channels = currentStatus.channels.map { channel ->
-                    if (channel.key == channelKey) selectedChannel else channel
-                },
-                runtime = detail.runtime
-            )
-        } else {
-            detail
-        }
-        val retainedDetails = if (currentStatus?.revision == detail.revision) {
-            current.channelDetails
-        } else {
-            emptyMap()
-        }
-        return current.copy(
-            status = mergedStatus,
-            channelDetails = retainedDetails + (channelKey to detail)
-        )
-    }
-
     private fun publish(deviceUid: DeviceUid, state: DeviceTimerRuntimeState) {
         _states.value = _states.value + (deviceUid to state)
     }
+}
+
+private fun replaceGlobalStatus(
+    current: DeviceTimerRuntimeState,
+    status: DeviceTimerStatus
+): DeviceTimerRuntimeState {
+    val retainedDetails = current.channelDetails.filter { (channelKey, detail) ->
+        val channel = status.channels.singleOrNull { it.key == channelKey }
+        detail.revision == status.revision &&
+            channel != null &&
+            channel.scheduleCount == detail.schedules.size
+    }
+    return current.copy(status = status, channelDetails = retainedDetails)
+}
+
+private fun mergeChannelStatus(
+    current: DeviceTimerRuntimeState,
+    detail: DeviceTimerStatus
+): DeviceTimerRuntimeState {
+    val channelKey = requireNotNull(detail.selectedChannelKey)
+    val selectedChannel = detail.channels.single()
+    val currentStatus = current.status
+    val mergedStatus = if (currentStatus != null && !currentStatus.channelScoped) {
+        require(currentStatus.channelCount == detail.channelCount)
+        require(currentStatus.maxScheduleCount == detail.maxScheduleCount)
+        val previous = currentStatus.channels.singleOrNull { it.key == channelKey }
+            ?: error("Timer channel-scoped status does not belong to the global snapshot.")
+        require(previous.sameTimerChannelIdentity(selectedChannel))
+        currentStatus.copy(
+            scheduleCount = detail.scheduleCount,
+            revision = detail.revision,
+            lockLoop = detail.lockLoop,
+            uptimeMs = detail.uptimeMs,
+            channels = currentStatus.channels.map { channel ->
+                if (channel.key == channelKey) selectedChannel else channel
+            },
+            runtime = detail.runtime
+        )
+    } else {
+        detail
+    }
+    val retainedDetails = if (currentStatus?.revision == detail.revision) {
+        current.channelDetails
+    } else {
+        emptyMap()
+    }
+    return current.copy(
+        status = mergedStatus,
+        channelDetails = retainedDetails + (channelKey to detail)
+    )
 }
 
 internal sealed interface DeviceTimerStateEventResult {
