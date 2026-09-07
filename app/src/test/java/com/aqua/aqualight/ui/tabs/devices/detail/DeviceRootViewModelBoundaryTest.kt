@@ -28,6 +28,8 @@ import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.Devic
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.PreparedCoolingSurfaceOperations
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.timer.PreparedTimerSurfaceOperations
+import com.aqua.aqualight.ui.tabs.devices.detail.timer.UnavailableTimerControlOperations
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -82,7 +84,11 @@ class DeviceRootViewModelBoundaryTest {
     fun `supported root titles follow the same dynamic device snapshot`() {
         val operations = FakeDeviceRootOperations(rootSnapshot())
         val light = DeviceLightRootViewModel(operations)
-        val timer = DeviceTimerRootViewModel(operations)
+        val timer = DeviceTimerRootViewModel(
+            operations = operations,
+            timerControlOperations = UnavailableTimerControlOperations,
+            controlSurfacePreparationOperations = PreparedTimerSurfaceOperations
+        )
         val cooling = coolingViewModel(operations)
         light.bind("device-1")
         timer.bind("device-1")

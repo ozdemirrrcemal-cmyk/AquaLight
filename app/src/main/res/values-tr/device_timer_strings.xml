@@ -1,4 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="device_timer_open_settings_description">Cihaz ayarlarını aç</string>
+
+    <string name="device_timer_error_conflict_title">Zamanlayıcı ayarları değişti</string>
+    <string name="device_timer_error_conflict_message">Siz düzenleme yaparken cihazdaki ayarlar değişti. Kanalı yenileyip yeniden deneyin.</string>
+    <string name="device_timer_error_invalid_request_title">İşlem tamamlanamadı</string>
+    <string name="device_timer_error_invalid_request_message">Zamanlayıcı bu isteği kabul edemedi. Cihaz durumunu yenileyip yeniden deneyin.</string>
+    <string name="device_timer_error_invalid_configuration_title">Programı kontrol edin</string>
+    <string name="device_timer_error_invalid_configuration_message">Bir veya daha fazla zamanlayıcı ayarı desteklenmiyor. Kanal programını gözden geçirip yeniden deneyin.</string>
+    <string name="device_timer_error_channel_unavailable_title">Kanal kullanılamıyor</string>
+    <string name="device_timer_error_channel_unavailable_message">Bu kanal artık cihazda kullanılamıyor. Devam etmeden önce zamanlayıcı durumunu yenileyin.</string>
+    <string name="device_timer_error_resource_unavailable_title">Cihaz geçici olarak meşgul</string>
+    <string name="device_timer_error_resource_unavailable_message">Zamanlayıcıda bu değişikliği tamamlamak için şu anda yeterli boş kaynak yok. Kısa bir süre bekleyip yeniden deneyin.</string>
+    <string name="device_timer_error_hardware_failure_title">Çıkış kontrol edilemedi</string>
+    <string name="device_timer_error_hardware_failure_message">Cihaz istenen çıkış değişikliğini doğrulayamadı. Bağlı ekipmanı kontrol edip yeniden deneyin.</string>
+    <string name="device_timer_error_storage_failure_title">Değişiklikler kaydedilmedi</string>
+    <string name="device_timer_error_storage_failure_message">Cihaz değişiklikleri kaydedemediği için önceki zamanlayıcı ayarlarını geri yükledi. Mevcut programınız çalışmaya devam ediyor.</string>
+    <string name="device_timer_error_runtime_locked_title">Zamanlayıcının yeniden başlatılması gerekiyor</string>
+    <string name="device_timer_error_runtime_locked_message">Cihaz önceki durumu güvenli biçimde geri yükleyemediği için zamanlayıcı kontrolünü kilitledi. Yeni bir değişiklik yapmadan önce cihazı yeniden başlatın.</string>
+    <string name="device_timer_error_protocol_title">Zamanlayıcı verileri doğrulanamadı</string>
+    <string name="device_timer_error_protocol_message">Cihaz yanıtı desteklenen zamanlayıcı protokolüyle eşleşmedi. Yeniden bağlanıp tekrar deneyin; sorun sürerse firmware güncellemesini kontrol edin.</string>
+    <string name="device_timer_error_rejected_title">Zamanlayıcı isteği reddedildi</string>
+    <string name="device_timer_error_rejected_message">Cihaz isteği tamamlayamadı. Zamanlayıcı durumunu yenileyip yeniden deneyin.</string>
+    <string name="device_timer_error_unsupported_title">Zamanlayıcı kontrolleri kullanılamıyor</string>
+    <string name="device_timer_error_unsupported_message">Bu cihaz veya firmware sürümü bu zamanlayıcı kontrollerini desteklemiyor.</string>
+    <string name="device_timer_error_unavailable_title">Zamanlayıcı geçici olarak kullanılamıyor</string>
+    <string name="device_timer_error_unavailable_message">Güncel zamanlayıcı durumu doğrulanamadı. Bağlantıyı kontrol edip yeniden deneyin.</string>
+    <string name="device_timer_error_not_connected_title">Zamanlayıcı çevrimdışı</string>
+    <string name="device_timer_error_not_connected_message">Cihazı yeniden bağlayıp tekrar deneyin.</string>
+
+    <string name="device_timer_status_clock_unavailable_title">Cihaz saati hazır değil</string>
+    <string name="device_timer_status_clock_unavailable_message">Zamanlayıcı güvenilir yerel saati alana kadar otomatik programlar beklemede kalır. Manuel kanal kontrolü kullanılabilir.</string>
 </resources>

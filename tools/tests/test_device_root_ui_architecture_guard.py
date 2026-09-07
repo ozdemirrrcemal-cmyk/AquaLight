@@ -86,6 +86,28 @@ class DeviceRootUiArchitectureGuardTest(unittest.TestCase):
 
         self.assertTrue(any("body must remain empty" in error for error in errors), errors)
 
+    def test_timer_entry_surface_rejects_direct_runtime_imports(self) -> None:
+        layout = """<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android">
+    <include android:id="@+id/appHeader" layout="@layout/layout_aqua_header" />
+</FrameLayout>
+"""
+        fragment = (
+            "import com.aqua.aqualight.data.devices.runtime.modules.timer."
+            "DeviceTimerRuntimeRepository\n"
+        )
+
+        errors = GUARD.validate_timer_empty_surface(
+            layout,
+            fragment,
+            "class DeviceTimerRootViewModel",
+        )
+
+        self.assertTrue(
+            any("bypasses application boundaries" in error for error in errors),
+            errors,
+        )
+
     def test_cooling_code_outside_presentation_root_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             repository_root = Path(temporary_directory)

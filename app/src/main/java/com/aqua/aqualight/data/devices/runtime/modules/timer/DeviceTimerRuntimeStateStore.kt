@@ -8,6 +8,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 data class DeviceTimerRuntimeState(
+    val connectionGeneration: DeviceRuntimeConnectionGeneration? = null,
+    val authoritative: Boolean = false,
     val status: DeviceTimerStatus? = null,
     val channelDetails: Map<String, DeviceTimerStatus> = emptyMap(),
     val lastEventSequence: Long? = null,
@@ -27,9 +29,17 @@ internal class DeviceTimerRuntimeStateStore {
     ): Boolean = synchronized(lock) {
         val accepted = authority.beginGeneration(deviceUid, generation)
         if (accepted) {
-            _states.value[deviceUid]?.let { current ->
-                publish(deviceUid, current.copy(lastEventSequence = null))
-            }
+            val current = _states.value[deviceUid]
+            publish(
+                deviceUid,
+                (current ?: DeviceTimerRuntimeState()).copy(
+                    connectionGeneration = generation,
+                    authoritative = false,
+                    channelDetails = emptyMap(),
+                    lastEventSequence = null,
+                    requiresStatusRefresh = false
+                )
+            )
         }
         accepted
     }
@@ -37,7 +47,13 @@ internal class DeviceTimerRuntimeStateStore {
     fun invalidate(
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration? = null
-    ) = authority.invalidate(deviceUid, generation)
+    ) = synchronized(lock) {
+        authority.invalidate(deviceUid, generation)
+        val current = _states.value[deviceUid] ?: return@synchronized
+        if (generation == null || current.connectionGeneration == generation) {
+            publish(deviceUid, current.copy(authoritative = false))
+        }
+    }
 
     fun isAuthoritative(
         deviceUid: DeviceUid,
@@ -46,7 +62,13 @@ internal class DeviceTimerRuntimeStateStore {
 
     fun currentAuthoritativeState(deviceUid: DeviceUid): DeviceTimerRuntimeState? =
         synchronized(lock) {
-            _states.value[deviceUid]?.takeIf { authority.isAuthoritative(deviceUid) }
+            _states.value[deviceUid]?.takeIf { state ->
+                state.authoritative &&
+                    !state.requiresStatusRefresh &&
+                    state.connectionGeneration?.let { generation ->
+                        authority.isAuthoritative(deviceUid, generation)
+                    } == true
+            }
         }
 
     fun recordStatus(
@@ -73,7 +95,14 @@ internal class DeviceTimerRuntimeStateStore {
         } else {
             replaceGlobalStatus(baseline, status)
         }
-        publish(deviceUid, updated.copy(requiresStatusRefresh = false))
+        publish(
+            deviceUid,
+            updated.copy(
+                connectionGeneration = generation,
+                authoritative = true,
+                requiresStatusRefresh = false
+            )
+        )
         true
     }
 
@@ -85,6 +114,9 @@ internal class DeviceTimerRuntimeStateStore {
     ): Boolean = synchronized(lock) {
         if (!authority.acceptsPatch(deviceUid, generation)) return@synchronized false
         val current = _states.value[deviceUid] ?: return@synchronized false
+        if (!current.authoritative || current.connectionGeneration != generation) {
+            return@synchronized false
+        }
         val status = current.status ?: return@synchronized false
         val previous = status.channels.singleOrNull { it.key == channel.key }
             ?: return@synchronized false
@@ -119,6 +151,9 @@ internal class DeviceTimerRuntimeStateStore {
         }
         val current = _states.value[deviceUid]
             ?: return@synchronized DeviceTimerStateEventResult.RefreshRequired(event.channelKey)
+        if (!current.authoritative || current.connectionGeneration != generation) {
+            return@synchronized DeviceTimerStateEventResult.RefreshRequired(event.channelKey)
+        }
         val previousSequence = current.lastEventSequence
         if (previousSequence != null) {
             if (!isNewerTimerCounter(event.change.sequence, previousSequence)) {

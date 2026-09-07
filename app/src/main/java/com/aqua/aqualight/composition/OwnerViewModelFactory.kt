@@ -199,7 +199,11 @@ internal class OwnerViewModelFactory(
                     operations = DefaultDeviceCoolingProgramOperations(repository)
                 )
             DeviceTimerRootViewModel::class.java ->
-                DeviceTimerRootViewModel(DefaultDeviceRootOperations(repository))
+                DeviceTimerRootViewModel(
+                    operations = DefaultDeviceRootOperations(repository),
+                    timerControlOperations = graph.timerControlOperations,
+                    controlSurfacePreparationOperations = graph.controlSurfacePreparationOperations
+                )
             DeviceDosingRootViewModel::class.java -> graph.dosingOperations.let { dosing ->
                 DeviceDosingRootViewModel(
                     operations = DefaultDeviceRootOperations(repository),

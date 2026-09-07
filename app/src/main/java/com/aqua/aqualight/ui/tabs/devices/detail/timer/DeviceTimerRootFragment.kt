@@ -10,11 +10,14 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceTimerRootBinding
+import com.aqua.aqualight.ui.common.devicepresence.DeviceMenuUnavailableMessageMapper
 import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import kotlinx.coroutines.launch
 
 class DeviceTimerRootFragment : Fragment(R.layout.fragment_device_timer_root) {
@@ -31,26 +34,28 @@ class DeviceTimerRootFragment : Fragment(R.layout.fragment_device_timer_root) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentDeviceTimerRootBinding.bind(view)
         viewModel.bind(args.deviceUid)
-        setupHeader(
-            title = viewModel.uiState.value.title.ifBlank {
-                getString(R.string.device_family_timer)
-            }
-        )
+        val initialState = viewModel.uiState.value
+        setFragmentGlobalLoading(initialState.showBlockingPreparation)
+        setupHeader(initialState)
         observeViewModel()
     }
 
-    private fun setupHeader(title: String) {
+    private fun setupHeader(state: DeviceTimerRootUiState) {
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                titleOverride = title,
+                titleOverride = state.title.ifBlank {
+                    getString(R.string.device_family_timer)
+                },
                 onBackClick = { findNavController().navigateUp() },
+                statusIcon = state.connectionVisualState.toWifiHeaderStatusIcon(requireContext()),
                 actions = listOf(
                     AquaHeaderAction(
                         iconRes = R.drawable.ic_settings,
                         contentDescription = getString(
                             R.string.device_timer_open_settings_description
                         ),
+                        enabled = state.contentEnabled,
                         onClick = ::openSettings
                     )
                 )
@@ -59,6 +64,7 @@ class DeviceTimerRootFragment : Fragment(R.layout.fragment_device_timer_root) {
     }
 
     private fun openSettings() {
+        if (!viewModel.uiState.value.contentEnabled) return
         val navController = findNavController()
         if (navController.currentDestination?.id != R.id.deviceTimerRootFragment) return
         navController.navigate(
@@ -72,7 +78,25 @@ class DeviceTimerRootFragment : Fragment(R.layout.fragment_device_timer_root) {
     private fun observeViewModel() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collect { state -> renderState(state) }
+                launch {
+                    viewModel.uiState.collect { state -> renderState(state) }
+                }
+                launch {
+                    viewModel.surfaceUnavailableEvents.collect { reason ->
+                        if (_binding == null) return@collect
+                        setFragmentGlobalLoading(false)
+                        val navController = findNavController()
+                        if (navController.currentDestination?.id == R.id.deviceTimerRootFragment) {
+                            navController.navigateUp()
+                        }
+                        (activity as? BaseActivity)?.showSnackBar(
+                            message = getString(
+                                DeviceMenuUnavailableMessageMapper.messageRes(reason)
+                            ),
+                            type = BaseActivity.SnackType.ERROR
+                        )
+                    }
+                }
             }
         }
     }
@@ -80,9 +104,8 @@ class DeviceTimerRootFragment : Fragment(R.layout.fragment_device_timer_root) {
     private fun renderState(state: DeviceTimerRootUiState) {
         if (_binding == null) return
 
-        setupHeader(
-            title = state.title.ifBlank { getString(R.string.device_family_timer) }
-        )
+        setupHeader(state)
+        setFragmentGlobalLoading(state.showBlockingPreparation)
     }
 
     override fun onDestroyView() {

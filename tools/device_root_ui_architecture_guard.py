@@ -215,7 +215,7 @@ def validate_timer_empty_surface(
     fragment_source: str,
     view_model_source: str,
 ) -> list[str]:
-    """Keep the Timer entry surface empty until real controls replace the old placeholders."""
+    """Keep Timer visuals empty while requiring its application-owned control boundary."""
     errors: list[str] = []
     try:
         root = ET.fromstring(layout_source)
@@ -244,13 +244,55 @@ def validate_timer_empty_surface(
                 f"{TIMER_LAYOUT}: removed Timer overview data must not return: {forbidden}"
             )
 
-    expected_state = re.compile(
-        r'data class DeviceTimerRootUiState\(\s*val title: String = ""\s*\)'
-    )
-    if not expected_state.search(view_model_source):
-        errors.append(
-            f"{TIMER_VIEW_MODEL}: Timer entry state must expose only the header title"
-        )
+    for token, reason in (
+        (
+            "private val timerControlOperations: DeviceTimerControlOperations",
+            "Timer control state must enter through the application boundary",
+        ),
+        (
+            "private val controlSurfacePreparationOperations: "
+            "DeviceControlSurfacePreparationOperations",
+            "Timer restore must use the shared preparation boundary",
+        ),
+        (
+            "timerControlOperations.currentControl(deviceUid)",
+            "Timer must read only authoritative application snapshots",
+        ),
+        (
+            "timerControlOperations.observeControl(deviceUid)",
+            "Timer must observe the central application projection",
+        ),
+        (
+            "family = OwnerDeviceFamily.TIMER",
+            "Timer preparation must use its exact application family",
+        ),
+        (
+            "contentEnabled = rootAvailable && controlAvailable && "
+            "!surfacePreparationPending",
+            "Timer interactions must remain fail closed during preparation",
+        ),
+        (
+            "showBlockingPreparation = surfacePreparationPending",
+            "Timer root must expose the shared blocking preparation state",
+        ),
+        (
+            "data class DeviceTimerControlUiState(",
+            "Timer firmware-independent snapshots must be mapped to presentation state",
+        ),
+    ):
+        _require(TIMER_VIEW_MODEL, view_model_source, errors, token, reason)
+
+    for forbidden in (
+        "import com.aqua.aqualight.data.devices",
+        "runtime.modules.timer",
+        "DevicesRepository",
+        "DeviceTimerRuntimeRepository",
+        "DeviceTimerRuntimeStateStore",
+    ):
+        if forbidden in view_model_source or forbidden in fragment_source:
+            errors.append(
+                f"{TIMER_VIEW_MODEL}: Timer UI bypasses application boundaries: {forbidden}"
+            )
     return errors
 
 
@@ -443,6 +485,16 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
             settings_description="device_dosing_open_settings_description",
             current_destination="deviceDosingRootFragment",
             directions_action="actionDeviceDosingRootFragmentToDeviceDosingSettingsFragment(",
+        )
+    )
+    errors.extend(
+        validate_header_contract(
+            TIMER_FRAGMENT,
+            timer_fragment,
+            family_string="device_family_timer",
+            settings_description="device_timer_open_settings_description",
+            current_destination="deviceTimerRootFragment",
+            directions_action="actionDeviceTimerRootFragmentToDeviceTimerSettingsFragment(",
         )
     )
     errors.extend(

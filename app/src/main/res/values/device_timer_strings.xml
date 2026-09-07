@@ -1,4 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="device_timer_open_settings_description">Open device settings</string>
+
+    <string name="device_timer_error_conflict_title">Timer settings changed</string>
+    <string name="device_timer_error_conflict_message">The device settings changed while you were editing. Refresh the channel and try again.</string>
+    <string name="device_timer_error_invalid_request_title">Request could not be completed</string>
+    <string name="device_timer_error_invalid_request_message">The Timer could not accept this request. Refresh the device and try again.</string>
+    <string name="device_timer_error_invalid_configuration_title">Check the program</string>
+    <string name="device_timer_error_invalid_configuration_message">One or more Timer settings are not supported. Review the channel program and try again.</string>
+    <string name="device_timer_error_channel_unavailable_title">Channel unavailable</string>
+    <string name="device_timer_error_channel_unavailable_message">This channel is no longer available on the device. Refresh the Timer before continuing.</string>
+    <string name="device_timer_error_resource_unavailable_title">Device is temporarily busy</string>
+    <string name="device_timer_error_resource_unavailable_message">The Timer does not currently have enough free resources to complete this change. Wait a moment and try again.</string>
+    <string name="device_timer_error_hardware_failure_title">Output could not be controlled</string>
+    <string name="device_timer_error_hardware_failure_message">The device could not confirm the requested output change. Check the connected equipment and try again.</string>
+    <string name="device_timer_error_storage_failure_title">Changes were not saved</string>
+    <string name="device_timer_error_storage_failure_message">The device restored the previous Timer settings because it could not save the changes. Your existing program remains active.</string>
+    <string name="device_timer_error_runtime_locked_title">Timer requires a restart</string>
+    <string name="device_timer_error_runtime_locked_message">The device locked Timer control after it could not safely restore the previous state. Restart the device before making more changes.</string>
+    <string name="device_timer_error_protocol_title">Timer data could not be verified</string>
+    <string name="device_timer_error_protocol_message">The device response did not match the supported Timer protocol. Reconnect and try again; check for a firmware update if this continues.</string>
+    <string name="device_timer_error_rejected_title">Timer request was rejected</string>
+    <string name="device_timer_error_rejected_message">The device could not complete the request. Refresh the Timer and try again.</string>
+    <string name="device_timer_error_unsupported_title">Timer controls unavailable</string>
+    <string name="device_timer_error_unsupported_message">This device or firmware version does not support these Timer controls.</string>
+    <string name="device_timer_error_unavailable_title">Timer temporarily unavailable</string>
+    <string name="device_timer_error_unavailable_message">The current Timer state could not be verified. Check the connection and try again.</string>
+    <string name="device_timer_error_not_connected_title">Timer is offline</string>
+    <string name="device_timer_error_not_connected_message">Reconnect the device, then try again.</string>
+
+    <string name="device_timer_status_clock_unavailable_title">Device time is not ready</string>
+    <string name="device_timer_status_clock_unavailable_message">Automatic programs will remain paused until the Timer receives a trusted local time. Manual channel control remains available.</string>
 </resources>

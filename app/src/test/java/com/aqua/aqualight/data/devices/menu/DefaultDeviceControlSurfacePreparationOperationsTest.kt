@@ -1,3 +1,5 @@
+@file:Suppress("MagicNumber")
+
 package com.aqua.aqualight.data.devices.menu
 
 import com.aqua.aqualight.application.devices.DeviceChannelSlots
@@ -6,12 +8,14 @@ import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationReq
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationResult
 import com.aqua.aqualight.application.devices.DeviceDosingChannelSlot
 import com.aqua.aqualight.application.devices.DeviceFanOutputSlot
+import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootRoute
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.DeviceSlotIndex
 import com.aqua.aqualight.application.devices.DeviceTemperatureSensorSlot
+import com.aqua.aqualight.application.devices.DeviceTimerChannelSlot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlCapabilities
@@ -29,6 +33,19 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingDailyUsageSnaps
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirSnapshot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingRuntimeReason
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingSchedulingPolicy
+import com.aqua.aqualight.application.devices.timer.DeviceTimerChannelRegime
+import com.aqua.aqualight.application.devices.timer.DeviceTimerChannelSnapshot
+import com.aqua.aqualight.application.devices.timer.DeviceTimerControlCapabilities
+import com.aqua.aqualight.application.devices.timer.DeviceTimerControlFailure
+import com.aqua.aqualight.application.devices.timer.DeviceTimerControlOperations
+import com.aqua.aqualight.application.devices.timer.DeviceTimerControlResult
+import com.aqua.aqualight.application.devices.timer.DeviceTimerControlSnapshot
+import com.aqua.aqualight.application.devices.timer.DeviceTimerDisplayNameUpdate
+import com.aqua.aqualight.application.devices.timer.DeviceTimerNextTransitionType
+import com.aqua.aqualight.application.devices.timer.DeviceTimerOperatingState
+import com.aqua.aqualight.application.devices.timer.DeviceTimerOutputHealth
+import com.aqua.aqualight.application.devices.timer.DeviceTimerRuntimeReason
+import com.aqua.aqualight.application.devices.timer.DeviceTimerScheduleDraft
 import com.aqua.aqualight.data.devices.cooling.DisconnectedDeviceCoolingControlOperations
 import com.aqua.aqualight.data.devices.dosing.UnavailableDeviceDosingChannelOperations
 import kotlinx.coroutines.flow.Flow
@@ -144,7 +161,8 @@ class DefaultDeviceControlSurfacePreparationOperationsTest {
         val operations = DefaultDeviceControlSurfacePreparationOperations(
             rootOperations = FakeRootOperations(coolingRootSnapshot()),
             dosingChannelOperations = FakeChannelOperations(),
-            coolingControlOperations = cooling
+            coolingControlOperations = cooling,
+            timerControlOperations = FakeTimerControlOperations(unavailableTimerControl())
         )
 
         val result = operations.prepare(
@@ -179,7 +197,8 @@ class DefaultDeviceControlSurfacePreparationOperationsTest {
         val operations = DefaultDeviceControlSurfacePreparationOperations(
             rootOperations = FakeRootOperations(coolingRootSnapshot()),
             dosingChannelOperations = FakeChannelOperations(),
-            coolingControlOperations = cooling
+            coolingControlOperations = cooling,
+            timerControlOperations = FakeTimerControlOperations(unavailableTimerControl())
         )
 
         val result = operations.prepare(
@@ -199,18 +218,108 @@ class DefaultDeviceControlSurfacePreparationOperationsTest {
         )
     }
 
+    @Test
+    fun `Timer menu refreshes authoritative central state before ready`() = runTest {
+        val timer = FakeTimerControlOperations(availableTimerControl(channelCount = 2))
+        val operations = timerPreparation(timerRootSnapshot(channelCount = 2), timer)
+
+        val result = operations.prepare(timerRequest())
+
+        assertEquals(DeviceControlSurfacePreparationResult.Ready, result)
+        assertEquals(1, timer.refreshCalls)
+        assertEquals(0, timer.observeCalls)
+        assertTrue(operations.consumeFreshPreparation(TIMER_DEVICE_UID, OwnerDeviceFamily.TIMER))
+        assertFalse(operations.consumeFreshPreparation(TIMER_DEVICE_UID, OwnerDeviceFamily.TIMER))
+    }
+
+    @Test
+    fun `partial Timer status cannot publish ready surface`() = runTest {
+        val timer = FakeTimerControlOperations(availableTimerControl(channelCount = 1))
+        val operations = timerPreparation(timerRootSnapshot(channelCount = 2), timer)
+
+        val result = operations.prepare(timerRequest())
+
+        assertEquals(
+            DeviceControlSurfacePreparationResult.Unavailable(
+                DeviceMenuUnavailableReason.COMMERCIAL_PRODUCT_MISMATCH
+            ),
+            result
+        )
+        assertEquals(1, timer.refreshCalls)
+        assertFalse(operations.consumeFreshPreparation(TIMER_DEVICE_UID, OwnerDeviceFamily.TIMER))
+    }
+
+    @Test
+    fun `Timer refresh failure keeps navigation unavailable`() = runTest {
+        val timer = FakeTimerControlOperations(unavailableTimerControl())
+        val operations = timerPreparation(timerRootSnapshot(channelCount = 2), timer)
+
+        val result = operations.prepare(timerRequest())
+
+        assertEquals(
+            DeviceControlSurfacePreparationResult.Unavailable(
+                DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
+            ),
+            result
+        )
+        assertEquals(1, timer.refreshCalls)
+        assertFalse(operations.consumeFreshPreparation(TIMER_DEVICE_UID, OwnerDeviceFamily.TIMER))
+    }
+
+    @Test
+    fun `Timer catalog mismatch fails closed before runtime refresh`() = runTest {
+        val timer = FakeTimerControlOperations(availableTimerControl(channelCount = 2))
+        val operations = timerPreparation(
+            timerRootSnapshot(channelCount = 2, declaredChannelCount = 3),
+            timer
+        )
+
+        val result = operations.prepare(timerRequest())
+
+        assertTrue(result is DeviceControlSurfacePreparationResult.Unavailable)
+        assertEquals(0, timer.refreshCalls)
+    }
+
+    @Test
+    fun `abandoned Timer handoff is discarded idempotently`() = runTest {
+        val timer = FakeTimerControlOperations(availableTimerControl(channelCount = 2))
+        val operations = timerPreparation(timerRootSnapshot(channelCount = 2), timer)
+        assertEquals(DeviceControlSurfacePreparationResult.Ready, operations.prepare(timerRequest()))
+
+        operations.discardFreshPreparation(TIMER_DEVICE_UID, OwnerDeviceFamily.TIMER)
+        operations.discardFreshPreparation(TIMER_DEVICE_UID, OwnerDeviceFamily.TIMER)
+
+        assertFalse(operations.consumeFreshPreparation(TIMER_DEVICE_UID, OwnerDeviceFamily.TIMER))
+    }
+
     private fun preparation(
         channelCount: Int,
         channels: FakeChannelOperations
     ) = DefaultDeviceControlSurfacePreparationOperations(
         rootOperations = FakeRootOperations(rootSnapshot(channelCount)),
         dosingChannelOperations = channels,
-        coolingControlOperations = DisconnectedDeviceCoolingControlOperations
+        coolingControlOperations = DisconnectedDeviceCoolingControlOperations,
+        timerControlOperations = FakeTimerControlOperations(unavailableTimerControl())
+    )
+
+    private fun timerPreparation(
+        root: DeviceRootSnapshot,
+        timer: DeviceTimerControlOperations
+    ) = DefaultDeviceControlSurfacePreparationOperations(
+        rootOperations = FakeRootOperations(root),
+        dosingChannelOperations = FakeChannelOperations(),
+        coolingControlOperations = DisconnectedDeviceCoolingControlOperations,
+        timerControlOperations = timer
     )
 
     private fun request() = DeviceControlSurfacePreparationRequest(
         deviceUid = DEVICE_UID,
         family = OwnerDeviceFamily.DOSING
+    )
+
+    private fun timerRequest() = DeviceControlSurfacePreparationRequest(
+        deviceUid = TIMER_DEVICE_UID,
+        family = OwnerDeviceFamily.TIMER
     )
 
     private class FakeRootOperations(
@@ -287,9 +396,59 @@ class DefaultDeviceControlSurfacePreparationOperationsTest {
         ): DeviceCoolingControlResult = result
     }
 
+    private class FakeTimerControlOperations(
+        private val result: DeviceTimerControlResult
+    ) : DeviceTimerControlOperations {
+        var observeCalls: Int = 0
+        var refreshCalls: Int = 0
+
+        override fun observeControl(deviceUid: String): Flow<DeviceTimerControlResult> {
+            observeCalls += 1
+            return MutableStateFlow(result)
+        }
+
+        override fun currentControl(deviceUid: String): DeviceTimerControlResult = result
+
+        override suspend fun refreshControl(deviceUid: String): DeviceTimerControlResult {
+            refreshCalls += 1
+            return result
+        }
+
+        override suspend fun refreshChannel(
+            deviceUid: String,
+            slotId: String
+        ): DeviceTimerControlResult = result
+
+        override suspend fun setRegime(
+            deviceUid: String,
+            slotId: String,
+            regime: DeviceTimerChannelRegime
+        ): DeviceTimerControlResult = result
+
+        override suspend fun setTemporaryOverride(
+            deviceUid: String,
+            slotId: String,
+            regime: DeviceTimerChannelRegime,
+            durationMillis: Long
+        ): DeviceTimerControlResult = result
+
+        override suspend fun setDisplayName(
+            deviceUid: String,
+            slotId: String,
+            update: DeviceTimerDisplayNameUpdate
+        ): DeviceTimerControlResult = result
+
+        override suspend fun replaceSchedules(
+            deviceUid: String,
+            slotId: String,
+            schedules: List<DeviceTimerScheduleDraft>
+        ): DeviceTimerControlResult = result
+    }
+
     private companion object {
         const val DEVICE_UID = "dose-pro-4"
         const val COOLING_DEVICE_UID = "cool-pro-1f"
+        const val TIMER_DEVICE_UID = "timer-pro-2"
     }
 }
 
@@ -385,3 +544,75 @@ private fun availableCoolingControl(): DeviceCoolingControlResult =
             )
         )
     )
+
+private fun timerRootSnapshot(
+    channelCount: Int,
+    declaredChannelCount: Int = channelCount
+) = DeviceRootSnapshot(
+    deviceUid = "timer-pro-2",
+    title = "Timer Pro 2",
+    availability = OwnerDeviceAvailability.REACHABLE,
+    family = OwnerDeviceFamily.TIMER,
+    catalogState = DeviceRootCatalogState.VALID,
+    timerChannelCount = declaredChannelCount,
+    channelSlots = DeviceChannelSlots(
+        lightChannels = emptyList(),
+        timerChannels = List(channelCount) { index ->
+            DeviceTimerChannelSlot(
+                index = DeviceSlotIndex(index),
+                wireKey = DeviceChannelWireKey("timer${index + 1}"),
+                defaultDisplayName = "Timer ${index + 1}",
+                displayNameEditable = true
+            )
+        },
+        dosingChannels = emptyList(),
+        fanOutputs = emptyList(),
+        temperatureSensors = emptyList()
+    )
+)
+
+private fun availableTimerControl(channelCount: Int): DeviceTimerControlResult =
+    DeviceTimerControlResult.Available(
+        DeviceTimerControlSnapshot(
+            deviceUid = "timer-pro-2",
+            revision = 1L,
+            lockLoop = false,
+            uptimeMillis = 1_000L,
+            maxSchedulesPerChannel = 8,
+            capabilities = DeviceTimerControlCapabilities(
+                readOnly = false,
+                supportsConfigApply = true,
+                supportsChannelState = true,
+                supportsSchedules = true,
+                supportsSpansMidnight = true,
+                supportsTemporaryOverride = true,
+                supportsChannelDisplayName = true
+            ),
+            channels = List(channelCount) { index ->
+                DeviceTimerChannelSnapshot(
+                    slotId = "timer:timer${index + 1}",
+                    channelNumber = index + 1,
+                    defaultName = "Timer ${index + 1}",
+                    displayName = "Timer ${index + 1}",
+                    regime = DeviceTimerChannelRegime.AUTO,
+                    operatingState = DeviceTimerOperatingState.OFF,
+                    scheduleCount = 0,
+                    activeScheduleSlotId = null,
+                    activeScheduleName = null,
+                    nextTransitionType = DeviceTimerNextTransitionType.NONE,
+                    nextTransitionAtEpochMillis = null,
+                    runtimeReason = DeviceTimerRuntimeReason.NO_ENABLED_SCHEDULES,
+                    clockReady = true,
+                    temporaryOverrideActive = false,
+                    temporaryOverrideRemainingMillis = 0L,
+                    outputHealth = DeviceTimerOutputHealth.UNVERIFIED,
+                    physicalFeedbackAvailable = false,
+                    displayNameEditable = true,
+                    schedules = null
+                )
+            }
+        )
+    )
+
+private fun unavailableTimerControl(): DeviceTimerControlResult =
+    DeviceTimerControlResult.Failed(DeviceTimerControlFailure.Unavailable)
