@@ -13,6 +13,7 @@ import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.timer.DeviceTimerChannelRegime
 import com.aqua.aqualight.application.devices.timer.DeviceTimerChannelSnapshot
+import com.aqua.aqualight.application.devices.timer.DeviceTimerCommandFailure
 import com.aqua.aqualight.application.devices.timer.DeviceTimerControlCapabilities
 import com.aqua.aqualight.application.devices.timer.DeviceTimerControlFailure
 import com.aqua.aqualight.application.devices.timer.DeviceTimerControlOperations
@@ -124,6 +125,36 @@ class DeviceTimerRootViewModelTest {
             assertEquals(DeviceConnectionVisualState.OFFLINE, viewModel.uiState.value.connectionVisualState)
             assertEquals(7L, viewModel.uiState.value.control?.revision)
         }
+
+    @Test
+    fun `closed command failure is retained without replacing the last presentation`() = runTest {
+        val controls = FakeTimerControlOperations(availableControl())
+        val viewModel = viewModel(controls, FakePreparationOperations(fresh = true))
+        viewModel.bind(DEVICE_UID)
+
+        val failure = DeviceTimerControlFailure.Rejected(DeviceTimerCommandFailure.CONFLICT)
+        controls.publish(DeviceTimerControlResult.Failed(failure))
+
+        assertEquals(failure, viewModel.uiState.value.controlFailure)
+        assertEquals(7L, viewModel.uiState.value.control?.revision)
+        assertFalse(viewModel.uiState.value.contentEnabled)
+    }
+
+    @Test
+    fun `clock not ready becomes a derived commercial status notice`() = runTest {
+        val controls = FakeTimerControlOperations(availableControl(clockReady = false))
+        val viewModel = viewModel(controls, FakePreparationOperations(fresh = true))
+
+        viewModel.bind(DEVICE_UID)
+
+        val state = viewModel.uiState.value
+        assertTrue(state.contentEnabled)
+        assertEquals(
+            DeviceTimerChannelStatusNotice.CLOCK_UNAVAILABLE,
+            state.control?.channels?.single()?.statusNotice
+        )
+        assertEquals(null, state.controlFailure)
+    }
 
     @Test
     fun `root availability remains a fail closed interaction gate`() = runTest {
@@ -258,7 +289,9 @@ private fun timerRoot() = DeviceRootSnapshot(
     timerChannelCount = 1
 )
 
-private fun availableControl(): DeviceTimerControlResult = DeviceTimerControlResult.Available(
+private fun availableControl(
+    clockReady: Boolean = true
+): DeviceTimerControlResult = DeviceTimerControlResult.Available(
     DeviceTimerControlSnapshot(
         deviceUid = "timer-pro-1",
         revision = 7L,
@@ -287,8 +320,12 @@ private fun availableControl(): DeviceTimerControlResult = DeviceTimerControlRes
                 activeScheduleName = "Morning",
                 nextTransitionType = DeviceTimerNextTransitionType.OFF,
                 nextTransitionAtEpochMillis = 60_000L,
-                runtimeReason = DeviceTimerRuntimeReason.SCHEDULE_ACTIVE,
-                clockReady = true,
+                runtimeReason = if (clockReady) {
+                    DeviceTimerRuntimeReason.SCHEDULE_ACTIVE
+                } else {
+                    DeviceTimerRuntimeReason.CLOCK_UNAVAILABLE
+                },
+                clockReady = clockReady,
                 temporaryOverrideActive = false,
                 temporaryOverrideRemainingMillis = 0L,
                 outputHealth = DeviceTimerOutputHealth.UNVERIFIED,
@@ -312,4 +349,4 @@ private fun availableControl(): DeviceTimerControlResult = DeviceTimerControlRes
 )
 
 private fun unavailableControl(): DeviceTimerControlResult =
-    DeviceTimerControlResult.Failed(DeviceTimerControlFailure.UNAVAILABLE)
+    DeviceTimerControlResult.Failed(DeviceTimerControlFailure.Unavailable)

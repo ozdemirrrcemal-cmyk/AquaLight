@@ -615,4 +615,4 @@ private fun availableTimerControl(channelCount: Int): DeviceTimerControlResult =
     )
 
 private fun unavailableTimerControl(): DeviceTimerControlResult =
-    DeviceTimerControlResult.Failed(DeviceTimerControlFailure.UNAVAILABLE)
+    DeviceTimerControlResult.Failed(DeviceTimerControlFailure.Unavailable)

@@ -55,10 +55,14 @@ sealed interface DeviceTimerControlResult {
     ) : DeviceTimerControlResult
 }
 
-enum class DeviceTimerControlFailure {
-    UNAVAILABLE,
-    NOT_CONNECTED,
-    UNSUPPORTED,
-    INVALID_DATA,
-    REJECTED
+sealed interface DeviceTimerControlFailure {
+    data object Unavailable : DeviceTimerControlFailure
+    data object NotConnected : DeviceTimerControlFailure
+    data object Unsupported : DeviceTimerControlFailure
+
+    data class Rejected(
+        val reason: DeviceTimerCommandFailure
+    ) : DeviceTimerControlFailure
+
+    data object InvalidData : DeviceTimerControlFailure
 }

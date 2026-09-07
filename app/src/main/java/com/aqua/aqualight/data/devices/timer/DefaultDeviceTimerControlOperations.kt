@@ -18,6 +18,7 @@ import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerRuntimeR
 import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerScheduleConfig
 import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerStatus
 import com.aqua.aqualight.data.devices.runtime.modules.timer.currentAuthoritativeState
+import com.aqua.aqualight.data.devices.timer.v1.DeviceTimerV1FailureMapper
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -35,7 +36,7 @@ internal class DefaultDeviceTimerControlOperations(
         val uid = deviceUid.toDeviceUidOrNull()
         val runtime = uid?.let { devicesRepository.runtimeModules()?.timer }
         return if (uid == null || runtime == null) {
-            flowOf(failed(DeviceTimerControlFailure.UNAVAILABLE))
+            flowOf(failed(DeviceTimerControlFailure.Unavailable))
         } else {
             combine(rootOperations.observe(uid.value), runtime.states) { root, states ->
                 projectRead(root, states[uid])
@@ -127,7 +128,7 @@ internal class DefaultDeviceTimerControlOperations(
                         .singleOrNull { slot -> slot.id.value == requestedSlotId.trim() }
                         ?.wireKey
                         ?.value
-                        ?: return failed(DeviceTimerControlFailure.UNSUPPORTED)
+                        ?: return failed(DeviceTimerControlFailure.Unsupported)
                 }
                 runCatching {
                     resolved.runtime.requestStatus(resolved.deviceUid, channelKey)
@@ -135,7 +136,7 @@ internal class DefaultDeviceTimerControlOperations(
                     onSuccess = { outcome ->
                         outcome.toRefreshedControlResult(resolved, channelKey)
                     },
-                    onFailure = { failed(DeviceTimerControlFailure.INVALID_DATA) }
+                    onFailure = { failed(DeviceTimerControlFailure.InvalidData) }
                 )
             }
         }
@@ -153,11 +154,11 @@ internal class DefaultDeviceTimerControlOperations(
                     .singleOrNull { slot -> slot.id.value == slotId.trim() }
                     ?.wireKey
                     ?.value
-                    ?: return failed(DeviceTimerControlFailure.UNSUPPORTED)
+                    ?: return failed(DeviceTimerControlFailure.Unsupported)
                 runCatching { command(resolved, channelKey) }
                     .fold(
                         onSuccess = { outcome -> outcome.toControlResult(resolved) },
-                        onFailure = { failed(DeviceTimerControlFailure.INVALID_DATA) }
+                        onFailure = { failed(DeviceTimerControlFailure.InvalidData) }
                     )
             }
         }
@@ -168,12 +169,12 @@ internal class DefaultDeviceTimerControlOperations(
         val root = uid?.let { rootOperations.current(it.value) }
         return when {
             uid == null || root == null ->
-                RuntimeResolution.Failed(DeviceTimerControlFailure.UNAVAILABLE)
+                RuntimeResolution.Failed(DeviceTimerControlFailure.Unavailable)
             !root.isSupportedTimerRoot() ->
-                RuntimeResolution.Failed(DeviceTimerControlFailure.UNSUPPORTED)
+                RuntimeResolution.Failed(DeviceTimerControlFailure.Unsupported)
             else -> devicesRepository.runtimeModules()?.timer
                 ?.let { runtime -> RuntimeResolution.Ready(uid, root, runtime) }
-                ?: RuntimeResolution.Failed(DeviceTimerControlFailure.UNAVAILABLE)
+                ?: RuntimeResolution.Failed(DeviceTimerControlFailure.Unavailable)
         }
     }
 
@@ -197,14 +198,14 @@ private fun projectRead(
     root: DeviceRootSnapshot?,
     state: com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerRuntimeState?
 ): DeviceTimerControlResult = when {
-    root == null || state == null -> failed(DeviceTimerControlFailure.UNAVAILABLE)
+    root == null || state == null -> failed(DeviceTimerControlFailure.Unavailable)
     root.catalogState != DeviceRootCatalogState.VALID || root.family != OwnerDeviceFamily.TIMER ->
-        failed(DeviceTimerControlFailure.UNSUPPORTED)
+        failed(DeviceTimerControlFailure.Unsupported)
     !state.authoritative || state.requiresStatusRefresh ->
-        failed(DeviceTimerControlFailure.UNAVAILABLE)
+        failed(DeviceTimerControlFailure.Unavailable)
     else -> DeviceTimerControlSnapshotMapper.map(root, state)
         ?.let(DeviceTimerControlResult::Available)
-        ?: failed(DeviceTimerControlFailure.INVALID_DATA)
+        ?: failed(DeviceTimerControlFailure.InvalidData)
 }
 
 private fun DeviceRuntimeCommandOutcome<*>.toControlResult(
@@ -215,14 +216,16 @@ private fun DeviceRuntimeCommandOutcome<*>.toControlResult(
         resolved.runtime.currentAuthoritativeState(resolved.deviceUid)
     )
     is DeviceRuntimeCommandOutcome.NotConnected,
-    is DeviceRuntimeCommandOutcome.NotAuthenticated -> failed(DeviceTimerControlFailure.NOT_CONNECTED)
+    is DeviceRuntimeCommandOutcome.NotAuthenticated -> failed(DeviceTimerControlFailure.NotConnected)
     is DeviceRuntimeCommandOutcome.UnsupportedByDevice ->
-        failed(DeviceTimerControlFailure.UNSUPPORTED)
-    is DeviceRuntimeCommandOutcome.FirmwareError -> failed(DeviceTimerControlFailure.REJECTED)
-    is DeviceRuntimeCommandOutcome.ProtocolError -> failed(DeviceTimerControlFailure.INVALID_DATA)
+        failed(DeviceTimerControlFailure.Unsupported)
+    is DeviceRuntimeCommandOutcome.FirmwareError -> failed(
+        DeviceTimerControlFailure.Rejected(DeviceTimerV1FailureMapper.map(this))
+    )
+    is DeviceRuntimeCommandOutcome.ProtocolError -> failed(DeviceTimerControlFailure.InvalidData)
     is DeviceRuntimeCommandOutcome.SendFailed,
     is DeviceRuntimeCommandOutcome.Timeout,
-    is DeviceRuntimeCommandOutcome.Cancelled -> failed(DeviceTimerControlFailure.UNAVAILABLE)
+    is DeviceRuntimeCommandOutcome.Cancelled -> failed(DeviceTimerControlFailure.Unavailable)
 }
 
 private fun DeviceRuntimeCommandOutcome<DeviceTimerStatus>.toRefreshedControlResult(
@@ -239,7 +242,7 @@ private fun DeviceRuntimeCommandOutcome<DeviceTimerStatus>.toRefreshedControlRes
         if (state?.connectionGeneration == generation && acceptedStatus == value) {
             projectRead(resolved.root, state)
         } else {
-            failed(DeviceTimerControlFailure.UNAVAILABLE)
+            failed(DeviceTimerControlFailure.Unavailable)
         }
     }
     else -> toControlResult(resolved)

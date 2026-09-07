@@ -13,6 +13,7 @@ import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.timer.DeviceTimerChannelRegime
 import com.aqua.aqualight.application.devices.timer.DeviceTimerChannelSnapshot
+import com.aqua.aqualight.application.devices.timer.DeviceTimerControlFailure
 import com.aqua.aqualight.application.devices.timer.DeviceTimerControlOperations
 import com.aqua.aqualight.application.devices.timer.DeviceTimerControlResult
 import com.aqua.aqualight.application.devices.timer.DeviceTimerControlSnapshot
@@ -49,6 +50,7 @@ class DeviceTimerRootViewModel(
     private var boundDeviceUid = ""
     private var latestRootSnapshot: DeviceRootSnapshot? = null
     private var lastControlPresentation: DeviceTimerControlUiState? = null
+    private var lastControlFailure: DeviceTimerControlFailure? = null
     private var controlAvailable = false
     private var surfacePreparationPending = false
     private var rootObserveJob: Job? = null
@@ -155,8 +157,12 @@ class DeviceTimerRootViewModel(
 
     private fun acceptControlResult(result: DeviceTimerControlResult) {
         controlAvailable = result is DeviceTimerControlResult.Available
-        if (result is DeviceTimerControlResult.Available) {
-            lastControlPresentation = result.snapshot.toUiState()
+        when (result) {
+            is DeviceTimerControlResult.Available -> {
+                lastControlPresentation = result.snapshot.toUiState()
+                lastControlFailure = null
+            }
+            is DeviceTimerControlResult.Failed -> lastControlFailure = result.failure
         }
     }
 
@@ -173,7 +179,8 @@ class DeviceTimerRootViewModel(
             },
             contentEnabled = rootAvailable && controlAvailable && !surfacePreparationPending,
             showBlockingPreparation = surfacePreparationPending,
-            control = lastControlPresentation
+            control = lastControlPresentation,
+            controlFailure = lastControlFailure
         )
     }
 
@@ -182,6 +189,7 @@ class DeviceTimerRootViewModel(
         boundDeviceUid = ""
         latestRootSnapshot = null
         lastControlPresentation = null
+        lastControlFailure = null
         controlAvailable = false
         surfacePreparationPending = false
         _uiState.value = DeviceTimerRootUiState()
@@ -203,7 +211,8 @@ data class DeviceTimerRootUiState(
     val connectionVisualState: DeviceConnectionVisualState = DeviceConnectionVisualState.OFFLINE,
     val contentEnabled: Boolean = false,
     val showBlockingPreparation: Boolean = false,
-    val control: DeviceTimerControlUiState? = null
+    val control: DeviceTimerControlUiState? = null,
+    val controlFailure: DeviceTimerControlFailure? = null
 )
 
 @Suppress("LongParameterList")
@@ -236,6 +245,7 @@ data class DeviceTimerChannelUiState(
     val nextTransitionAtEpochMillis: Long?,
     val runtimeReason: DeviceTimerRuntimeReason,
     val clockReady: Boolean,
+    val statusNotice: DeviceTimerChannelStatusNotice?,
     val temporaryOverrideActive: Boolean,
     val temporaryOverrideRemainingMillis: Long,
     val outputHealth: DeviceTimerOutputHealth,
@@ -243,6 +253,11 @@ data class DeviceTimerChannelUiState(
     val displayNameEditable: Boolean,
     val schedules: List<DeviceTimerScheduleUiState>?
 )
+
+/** Presentation-only notice derived from authoritative Timer runtime state. */
+enum class DeviceTimerChannelStatusNotice {
+    CLOCK_UNAVAILABLE
+}
 
 @Suppress("LongParameterList")
 data class DeviceTimerScheduleUiState(
@@ -296,6 +311,7 @@ private fun DeviceTimerChannelSnapshot.toUiState() = DeviceTimerChannelUiState(
     nextTransitionAtEpochMillis = nextTransitionAtEpochMillis,
     runtimeReason = runtimeReason,
     clockReady = clockReady,
+    statusNotice = if (clockReady) null else DeviceTimerChannelStatusNotice.CLOCK_UNAVAILABLE,
     temporaryOverrideActive = temporaryOverrideActive,
     temporaryOverrideRemainingMillis = temporaryOverrideRemainingMillis,
     outputHealth = outputHealth,

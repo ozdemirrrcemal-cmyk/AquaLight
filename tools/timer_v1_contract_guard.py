@@ -26,6 +26,28 @@ EVENT_PAYLOAD_PARSER_PATH = (
     / "app/src/main/java/com/aqua/aqualight/data/devices/runtime/events/"
     / "DeviceRuntimeEventPayloadParser.kt"
 )
+TIMER_APPLICATION_PATH = (
+    ROOT
+    / "app/src/main/java/com/aqua/aqualight/application/devices/timer"
+)
+TIMER_ADAPTER_PATH = (
+    ROOT
+    / "app/src/main/java/com/aqua/aqualight/data/devices/timer/"
+    / "DefaultDeviceTimerControlOperations.kt"
+)
+TIMER_FAILURE_MAPPER_PATH = (
+    ROOT
+    / "app/src/main/java/com/aqua/aqualight/data/devices/timer/v1/"
+    / "DeviceTimerV1FailureMapper.kt"
+)
+TIMER_PRESENTATION_PATH = (
+    ROOT
+    / "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer"
+)
+TIMER_STRING_PATHS = (
+    ROOT / "app/src/main/res/values/device_timer_strings.xml",
+    ROOT / "app/src/main/res/values-tr/device_timer_strings.xml",
+)
 
 FIRMWARE_REPOSITORY = "ozdemirrrcemal-cmyk/AquaLight-Firmware"
 FIRMWARE_COMMIT = "90b6597216d0c697542d5dc12e26647625806d8f"
@@ -201,6 +223,63 @@ def verify_android_sources() -> None:
             "direct Timer events are not separated from command-result envelopes")
     require("COMMAND_EVENT_FIELDS -\n        FIELD_PUBLISHED_AT_MS" in event_parser,
             "publishedAtMs still misclassifies direct Timer events")
+    verify_failure_boundary()
+
+
+def verify_failure_boundary() -> None:
+    application_source = "\n".join(
+        path.read_text(encoding="utf-8", errors="strict")
+        for path in sorted(TIMER_APPLICATION_PATH.glob("*.kt"))
+    )
+    adapter_source = TIMER_ADAPTER_PATH.read_text(encoding="utf-8", errors="strict")
+    mapper_source = TIMER_FAILURE_MAPPER_PATH.read_text(encoding="utf-8", errors="strict")
+    presentation_source = "\n".join(
+        path.read_text(encoding="utf-8", errors="strict")
+        for path in sorted(TIMER_PRESENTATION_PATH.glob("*.kt"))
+    )
+
+    for semantic in (
+        "CONFLICT", "INVALID_REQUEST", "INVALID_CONFIGURATION", "CHANNEL_UNAVAILABLE",
+        "RESOURCE_UNAVAILABLE", "HARDWARE_FAILURE", "STORAGE_FAILURE", "RUNTIME_LOCKED",
+        "PROTOCOL_ERROR", "UNKNOWN_REJECTION",
+    ):
+        require(semantic in application_source,
+                f"Timer application failure catalog is missing {semantic}")
+    require("data class Rejected(" in application_source,
+            "Timer control rejection does not retain its application reason")
+    require("DeviceTimerV1FailureMapper.map(this)" in adapter_source,
+            "Timer firmware rejection bypasses the V1 failure mapper")
+    require("statusCode == expectedStatus" in mapper_source,
+            "Timer failure mapper does not validate firmware status codes")
+    require("DeviceTimerCommercialErrorResolver" in presentation_source,
+            "Timer presentation has no commercial error resolver")
+    require("statusNotice = if (clockReady) null else" in presentation_source,
+            "clockReady=false is not derived as a Timer commercial status")
+    require("CLOCK_UNSYNCED" not in mapper_source,
+            "Timer clock state must not be modeled as a firmware command error")
+
+    localized_names = []
+    for string_path in TIMER_STRING_PATHS:
+        string_source = string_path.read_text(encoding="utf-8", errors="strict")
+        names = set(re.findall(r'<string\s+name="([^"]+)"', string_source))
+        localized_names.append(names)
+        for required_name in (
+            "device_timer_error_conflict_message",
+            "device_timer_error_invalid_request_message",
+            "device_timer_error_invalid_configuration_message",
+            "device_timer_error_channel_unavailable_message",
+            "device_timer_error_resource_unavailable_message",
+            "device_timer_error_hardware_failure_message",
+            "device_timer_error_storage_failure_message",
+            "device_timer_error_runtime_locked_message",
+            "device_timer_error_protocol_message",
+            "device_timer_error_rejected_message",
+            "device_timer_status_clock_unavailable_message",
+        ):
+            require(required_name in names,
+                    f"{string_path.relative_to(ROOT)} is missing {required_name}")
+    require(localized_names[0] == localized_names[1],
+            "Timer EN/TR string catalogs must remain structurally identical")
 
 
 def verify_golden() -> None:

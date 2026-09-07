@@ -26,7 +26,7 @@ internal object PreparedTimerSurfaceOperations : DeviceControlSurfacePreparation
 
 internal object UnavailableTimerControlOperations : DeviceTimerControlOperations {
     private val unavailable = DeviceTimerControlResult.Failed(
-        DeviceTimerControlFailure.UNAVAILABLE
+        DeviceTimerControlFailure.Unavailable
     )
 
     override fun observeControl(deviceUid: String): Flow<DeviceTimerControlResult> =
