@@ -153,6 +153,22 @@ internal fun temperatureChartSegments(
     return segments
 }
 
+/**
+ * Removes tiny, disconnected historical islands from the compact dashboard chart.
+ *
+ * A one- or two-sample fragment does not communicate a reliable trend and otherwise appears as
+ * an unrelated blue dash. The most recent segment is always retained so a newly connected device
+ * can still show its current sample immediately.
+ */
+internal fun renderableTemperatureChartSegments(
+    values: List<TemperatureChartValue>
+): List<List<TemperatureChartValue>> {
+    val segments = temperatureChartSegments(values)
+    return segments.filterIndexed { index, segment ->
+        index == segments.lastIndex || segment.size >= MINIMUM_HISTORICAL_SEGMENT_POINT_COUNT
+    }
+}
+
 private fun coalesceArchiveAndLivePositions(
     values: List<TemperatureChartValue>
 ): List<TemperatureChartValue> {
@@ -172,3 +188,5 @@ private fun coalesceArchiveAndLivePositions(
     }
     return merged
 }
+
+private const val MINIMUM_HISTORICAL_SEGMENT_POINT_COUNT = 3

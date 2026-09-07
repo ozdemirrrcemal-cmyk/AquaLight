@@ -79,6 +79,24 @@ class CoolingTemperatureChartModelTest {
     }
 
     @Test
+    fun compactChartDropsTinyDetachedHistoryFragmentButKeepsCurrentSeries() {
+        val values = listOf(
+            TemperatureChartValue(0.35f, 25.4f, TemperatureChartSource.ARCHIVE),
+            TemperatureChartValue(0.36f, 25.6f, TemperatureChartSource.ARCHIVE),
+            TemperatureChartValue(0.55f, 25.8f, TemperatureChartSource.ARCHIVE),
+            TemperatureChartValue(0.57f, 25.7f, TemperatureChartSource.ARCHIVE),
+            TemperatureChartValue(0.59f, 25.9f, TemperatureChartSource.ARCHIVE),
+            TemperatureChartValue(1f, 25.1f, TemperatureChartSource.LIVE)
+        )
+
+        val segments = renderableTemperatureChartSegments(values)
+
+        assertEquals(2, segments.size)
+        assertEquals(listOf(0.55f, 0.57f, 0.59f), segments.first().map { it.xFraction })
+        assertEquals(1f, segments.last().single().xFraction, 0f)
+    }
+
+    @Test
     fun defaultTemperatureScaleRemainsAquariumFocused() {
         val scale = temperatureChartScale(listOf(24.8f, 25.9f, 27.1f))
 

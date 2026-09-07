@@ -48,7 +48,9 @@ private fun DrawScope.drawCoolingAtmosphere(
         )
     )
     val glowColor = when (status) {
-        CoolingHeroVisualStatus.ATTENTION -> colors.warning
+        // Alarm state is already communicated by the status card. Keeping the media scene blue
+        // prevents the warning tone from becoming a yellow patch behind the transparent fan art.
+        CoolingHeroVisualStatus.ATTENTION -> colors.accent
         CoolingHeroVisualStatus.OFFLINE,
         CoolingHeroVisualStatus.WAITING_FOR_DATA -> colors.secondaryText
         CoolingHeroVisualStatus.COOLING,

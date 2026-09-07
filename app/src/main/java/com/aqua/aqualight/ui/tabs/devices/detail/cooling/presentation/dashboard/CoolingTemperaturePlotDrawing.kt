@@ -22,7 +22,7 @@ internal fun DrawScope.drawTemperatureHistory(
     lineColor: Color,
     drawArea: Boolean
 ) {
-    val segments = temperatureChartSegments(values).map { segment ->
+    val segments = renderableTemperatureChartSegments(values).map { segment ->
         temperatureHistoryOffsets(segment, scale, viewport)
     }
     val latestPoint = segments.lastOrNull()?.lastOrNull()
