@@ -14,6 +14,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperatio
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftRequest
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftSession
+import com.aqua.aqualight.application.devices.timer.DeviceTimerControlOperations
 import com.aqua.aqualight.application.notifications.NotificationDispatchUseCase
 import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
 import com.aqua.aqualight.application.user.UserDataArchiveOperations
@@ -25,12 +26,11 @@ import com.aqua.aqualight.data.auth.OwnerSessionStateMachine
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.devices.DefaultDeviceFirmwareUpdateOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
-import com.aqua.aqualight.data.devices.cooling.control.DefaultDeviceCoolingControlOperations
 import com.aqua.aqualight.data.devices.cooling.DefaultDeviceCoolingCardOperations
+import com.aqua.aqualight.data.devices.cooling.control.DefaultDeviceCoolingControlOperations
 import com.aqua.aqualight.data.devices.dosing.DefaultDeviceDosingChannelNavigationOperations
 import com.aqua.aqualight.data.devices.dosing.SharedPreferencesDeviceDosingCalibrationDraftStore
 import com.aqua.aqualight.data.devices.dosing.SharedPreferencesDeviceDosingLowLevelAlertLedger
-import com.aqua.aqualight.data.devices.runtime.modules.firmware.SharedPreferencesDeviceOtaTransactionStore
 import com.aqua.aqualight.data.devices.dosing.v1.DeviceDosingV1ProductionRuntime
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceControlSurfacePreparationOperations
 import com.aqua.aqualight.data.devices.provisioning.repository.DefaultProvisioningDraftOperations
@@ -38,6 +38,8 @@ import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningDraftSt
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningQrSecretStore
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
+import com.aqua.aqualight.data.devices.runtime.modules.firmware.SharedPreferencesDeviceOtaTransactionStore
+import com.aqua.aqualight.data.devices.timer.DefaultDeviceTimerControlOperations
 import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.data.user.archive.DefaultUserDataArchiveOperations
@@ -64,6 +66,7 @@ internal data class OwnerDependencyGraph(
     val userDataArchiveOperations: UserDataArchiveOperations,
     val provisioningDraftOperations: ProvisioningDraftOperations,
     val controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations,
+    val timerControlOperations: DeviceTimerControlOperations,
     val coolingCardOperations: DeviceCoolingCardOperations,
     val dosingOperations: OwnerDosingOperations
 )
@@ -193,6 +196,9 @@ internal class ActiveOwnerDependencyGraphResolver(
         val aquariumTankStore = AquariumTankDataStoreManager(appContext)
         val careTaskStore = CareTaskDataStoreManager.create(appContext)
         val dosingOperations = createDosingOperations(dependencies)
+        val timerControlOperations = DefaultDeviceTimerControlOperations(
+            dependencies.devicesRepository
+        )
         return OwnerDependencyGraph(
             ownerUid = dependencies.ownerUid,
             sessionGeneration = dependencies.sessionGeneration,
@@ -219,8 +225,10 @@ internal class ActiveOwnerDependencyGraphResolver(
             ),
             controlSurfacePreparationOperations = createControlSurfacePreparationOperations(
                 dependencies = dependencies,
-                dosingOperations = dosingOperations
+                dosingOperations = dosingOperations,
+                timerControlOperations = timerControlOperations
             ),
+            timerControlOperations = timerControlOperations,
             coolingCardOperations = createCoolingCardOperations(dependencies),
             dosingOperations = dosingOperations
         )
@@ -267,14 +275,16 @@ internal class ActiveOwnerDependencyGraphResolver(
 
     private fun createControlSurfacePreparationOperations(
         dependencies: ActiveOwnerDependencies,
-        dosingOperations: OwnerDosingOperations
+        dosingOperations: OwnerDosingOperations,
+        timerControlOperations: DeviceTimerControlOperations
     ): DeviceControlSurfacePreparationOperations =
         DefaultDeviceControlSurfacePreparationOperations(
             rootOperations = DefaultDeviceRootOperations(dependencies.devicesRepository),
             dosingChannelOperations = dosingOperations.channelOperations,
             coolingControlOperations = DefaultDeviceCoolingControlOperations(
                 dependencies.devicesRepository
-            )
+            ),
+            timerControlOperations = timerControlOperations
         )
 
     private fun createDosingOperations(

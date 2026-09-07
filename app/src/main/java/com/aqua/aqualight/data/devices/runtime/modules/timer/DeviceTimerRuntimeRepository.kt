@@ -310,6 +310,10 @@ internal fun DeviceTimerRuntimeRepository.isAuthoritative(
     generation: DeviceRuntimeConnectionGeneration
 ): Boolean = stateStore.isAuthoritative(deviceUid, generation)
 
+internal fun DeviceTimerRuntimeRepository.currentAuthoritativeState(
+    deviceUid: DeviceUid
+): DeviceTimerRuntimeState? = stateStore.currentAuthoritativeState(deviceUid)
+
 private suspend fun DeviceTimerRuntimeRepository.mutateSchedules(
     deviceUid: DeviceUid,
     channelKey: String,

@@ -6,6 +6,7 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -19,16 +20,32 @@ class DeviceTimerGenerationAuthorityTest {
         val rebooted = DeviceTimerStatusParser.parse(
             DeviceTimerRuntimeFixtures.globalStatus(uptimeMs = 1_000L)
         )
+        val channelDetail = DeviceTimerStatusParser.parse(
+            DeviceTimerRuntimeFixtures.channelStatus(uptimeMs = 90_000L)
+        )
 
         store.beginGeneration(DEVICE_UID, G1)
         assertTrue(store.recordStatus(DEVICE_UID, G1, first))
+        assertTrue(store.recordStatus(DEVICE_UID, G1, channelDetail))
+        assertTrue(store.states.value.getValue(DEVICE_UID).channelDetails.isNotEmpty())
         store.invalidate(DEVICE_UID, G1)
+        assertFalse(store.states.value.getValue(DEVICE_UID).authoritative)
+        assertNull(store.currentAuthoritativeState(DEVICE_UID))
         store.beginGeneration(DEVICE_UID, G2)
 
         assertEquals(90_000L, store.states.value.getValue(DEVICE_UID).status?.uptimeMs)
+        assertEquals(G2, store.states.value.getValue(DEVICE_UID).connectionGeneration)
+        assertFalse(store.states.value.getValue(DEVICE_UID).authoritative)
+        assertTrue(store.states.value.getValue(DEVICE_UID).channelDetails.isEmpty())
+        assertNull(store.currentAuthoritativeState(DEVICE_UID))
         assertFalse(store.isAuthoritative(DEVICE_UID, G2))
         assertTrue(store.recordStatus(DEVICE_UID, G2, rebooted))
         assertEquals(1_000L, store.states.value.getValue(DEVICE_UID).status?.uptimeMs)
+        assertTrue(store.states.value.getValue(DEVICE_UID).authoritative)
+        assertEquals(
+            store.states.value.getValue(DEVICE_UID),
+            store.currentAuthoritativeState(DEVICE_UID)
+        )
         assertTrue(store.isAuthoritative(DEVICE_UID, G2))
     }
 
@@ -48,6 +65,8 @@ class DeviceTimerGenerationAuthorityTest {
         store.beginGeneration(DEVICE_UID, G1)
         store.recordStatus(DEVICE_UID, G1, oldSession)
         store.beginGeneration(DEVICE_UID, G2)
+        assertFalse(store.states.value.getValue(DEVICE_UID).authoritative)
+        assertNull(store.currentAuthoritativeState(DEVICE_UID))
         store.recordStatus(DEVICE_UID, G2, newSession)
 
         assertFalse(store.recordStatus(DEVICE_UID, G1, lateOldReply))
