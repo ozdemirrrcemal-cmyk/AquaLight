@@ -1,18 +1,39 @@
-@file:Suppress("LongParameterList", "TooManyFunctions")
-
 package com.aqua.aqualight.application.devices.dosing
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 
 /** Application boundary for the six-step pump calibration workflow. */
-interface DeviceDosingCalibrationOperations {
-    val constraints: DeviceDosingCalibrationConstraints
-        get() = DeviceDosingCalibrationConstraints()
+interface DeviceDosingCalibrationOperations :
+    DeviceDosingCalibrationReadOperations,
+    DeviceDosingCalibrationPrimeOperations,
+    DeviceDosingCalibrationWorkflowOperations,
+    DeviceDosingCalibrationVerificationOperations,
+    DeviceDosingCalibrationCompletionOperations {
+    /** Owns calibration exit safety ordering in the application layer. */
+    suspend fun exitSafely(
+        deviceUid: String,
+        slotId: String,
+        primeMayBeActive: Boolean,
+        lastKnownSnapshot: DeviceDosingCalibrationSnapshot?
+    ): DeviceDosingCalibrationResult = DeviceDosingCalibrationExitCleanup(
+        operations = this,
+        deviceUid = deviceUid,
+        slotId = slotId,
+        primeMayBeActive = primeMayBeActive,
+        lastKnownSnapshot = lastKnownSnapshot
+    ).execute()
+}
 
+interface DeviceDosingCalibrationReadOperations {
     fun observe(deviceUid: String, slotId: String): Flow<DeviceDosingCalibrationSnapshot?>
 
     suspend fun refresh(deviceUid: String, slotId: String): DeviceDosingCalibrationResult
+}
+
+interface DeviceDosingCalibrationPrimeOperations {
+    val constraints: DeviceDosingCalibrationConstraints
+        get() = DeviceDosingCalibrationConstraints()
 
     suspend fun primeStart(deviceUid: String, slotId: String): DeviceDosingCalibrationResult
     suspend fun primeStop(deviceUid: String, slotId: String): DeviceDosingCalibrationResult
@@ -28,6 +49,9 @@ interface DeviceDosingCalibrationOperations {
         delay(constraints.primeSafetyTimeoutMs)
     }
 
+}
+
+interface DeviceDosingCalibrationWorkflowOperations {
     suspend fun start(deviceUid: String, slotId: String): DeviceDosingCalibrationResult
 
     suspend fun finish(
@@ -36,6 +60,9 @@ interface DeviceDosingCalibrationOperations {
         measuredMl: Double
     ): DeviceDosingCalibrationResult
 
+}
+
+interface DeviceDosingCalibrationVerificationOperations : DeviceDosingCalibrationReadOperations {
     suspend fun startVerificationDose(
         deviceUid: String,
         slotId: String
@@ -68,10 +95,10 @@ interface DeviceDosingCalibrationOperations {
         is DeviceDosingCalibrationResult.Rejected -> stopResult
     }
 
-    /**
-     * Commits the final user-visible channel identity and confirmed calibration atomically in the
-     * firmware-owned calibration confirmation transaction.
-     */
+}
+
+interface DeviceDosingCalibrationCompletionOperations {
+    /** Commits the final display name and calibration atomically in firmware. */
     suspend fun confirm(
         deviceUid: String,
         slotId: String,
@@ -79,27 +106,6 @@ interface DeviceDosingCalibrationOperations {
     ): DeviceDosingCalibrationResult
 
     suspend fun cancel(deviceUid: String, slotId: String): DeviceDosingCalibrationResult
-
-    /**
-     * Owns calibration exit safety ordering in the application layer.
-     *
-     * Every cleanup command remains on the existing central runtime path. A fresh authoritative
-     * refresh is mandatory after any already-running workflow mutation has settled, and exit only
-     * succeeds after the final snapshot proves the channel is idle. Cleanup failures are returned
-     * to presentation instead of being swallowed.
-     */
-    suspend fun exitSafely(
-        deviceUid: String,
-        slotId: String,
-        primeMayBeActive: Boolean,
-        lastKnownSnapshot: DeviceDosingCalibrationSnapshot?
-    ): DeviceDosingCalibrationResult = DeviceDosingCalibrationExitCleanup(
-        operations = this,
-        deviceUid = deviceUid,
-        slotId = slotId,
-        primeMayBeActive = primeMayBeActive,
-        lastKnownSnapshot = lastKnownSnapshot
-    ).execute()
 }
 
 private class DeviceDosingCalibrationExitCleanup(

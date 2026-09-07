@@ -9,7 +9,6 @@ import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-@Suppress("MagicNumber")
 class DeviceDosingV1ContractTest {
     @Test
     fun `contract exposes exactly fourteen canonical authenticated actions`() {
@@ -244,9 +243,9 @@ class DeviceDosingV1ContractTest {
             .put("program", JSONObject())
             .also { response -> response.remove("saved") }
 
-        assertTrue(DeviceDosingV1MutationParser.parseProgramApply(canonical).saved)
+        assertTrue(DeviceDosingV1SavedMutationParser.parseProgramApply(canonical).saved)
         assertThrows(IllegalArgumentException::class.java) {
-            DeviceDosingV1MutationParser.parseProgramApply(obsolete)
+            DeviceDosingV1SavedMutationParser.parseProgramApply(obsolete)
         }
     }
 

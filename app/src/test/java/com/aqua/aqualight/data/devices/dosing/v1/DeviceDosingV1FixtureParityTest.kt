@@ -7,7 +7,6 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-@Suppress("MagicNumber")
 class DeviceDosingV1FixtureParityTest {
     @Test
     fun `canonical and derived firmware fixtures remain byte identical to the reviewed revision`() {

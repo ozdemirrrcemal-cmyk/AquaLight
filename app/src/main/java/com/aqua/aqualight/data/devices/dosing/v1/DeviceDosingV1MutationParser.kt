@@ -2,17 +2,18 @@ package com.aqua.aqualight.data.devices.dosing.v1
 
 import org.json.JSONObject
 
-@Suppress("LongMethod", "TooManyFunctions")
-object DeviceDosingV1MutationParser {
+object DeviceDosingV1SavedMutationParser {
     fun parseConfigApply(data: JSONObject): DeviceDosingV1SavedMutationResult =
-        parseSaved(data, DeviceDosingV1Contract.Literal.CHANNEL_CONFIG_APPLY)
+        parseSavedMutation(data, DeviceDosingV1Contract.Literal.CHANNEL_CONFIG_APPLY)
 
     fun parseProgramApply(data: JSONObject): DeviceDosingV1SavedMutationResult =
-        parseSaved(data, DeviceDosingV1Contract.Literal.PROGRAM_APPLY)
+        parseSavedMutation(data, DeviceDosingV1Contract.Literal.PROGRAM_APPLY)
 
     fun parseChannelReset(data: JSONObject): DeviceDosingV1SavedMutationResult =
-        parseSaved(data, DeviceDosingV1Contract.Literal.CHANNEL_RESET)
+        parseSavedMutation(data, DeviceDosingV1Contract.Literal.CHANNEL_RESET)
+}
 
+object DeviceDosingV1MutationParser {
     fun parsePrimeStart(data: JSONObject): DeviceDosingV1PrimeStartResult {
         data.requireDosingKeys(PRIME_START_KEYS, "prime.start result")
         return DeviceDosingV1PrimeStartResult(
@@ -26,7 +27,7 @@ object DeviceDosingV1MutationParser {
                 data.requireDosingObject("channel")
             )
         ).also { result ->
-            validateCommon(
+            validateMutationCommon(
                 operation = result.operation,
                 expectedOperation = DeviceDosingV1Contract.Literal.PRIME_START,
                 channelKey = result.channelKey,
@@ -58,7 +59,7 @@ object DeviceDosingV1MutationParser {
                 data.requireDosingObject("channel")
             )
         ).also { result ->
-            validateCommon(
+            validateMutationCommon(
                 operation = result.operation,
                 expectedOperation = DeviceDosingV1Contract.Literal.DOSE_NOW,
                 channelKey = result.channelKey,
@@ -81,7 +82,7 @@ object DeviceDosingV1MutationParser {
                 data.requireDosingObject("channel")
             )
         ).also { result ->
-            validateCommon(
+            validateMutationCommon(
                 operation = result.operation,
                 expectedOperation = DeviceDosingV1Contract.Literal.CALIBRATION_START,
                 channelKey = result.channelKey,
@@ -107,7 +108,7 @@ object DeviceDosingV1MutationParser {
                 data.requireDosingObject("channel")
             )
         ).also { result ->
-            validateCommon(
+            validateMutationCommon(
                 operation = result.operation,
                 expectedOperation = DeviceDosingV1Contract.Literal.CALIBRATION_FINISH,
                 channelKey = result.channelKey,
@@ -137,7 +138,7 @@ object DeviceDosingV1MutationParser {
                 data.requireDosingObject("channel")
             )
         ).also { result ->
-            validateCommon(
+            validateMutationCommon(
                 operation = result.operation,
                 expectedOperation = DeviceDosingV1Contract.Literal.CALIBRATION_CONFIRM,
                 channelKey = result.channelKey,
@@ -163,7 +164,7 @@ object DeviceDosingV1MutationParser {
                 data.requireDosingObject("channel")
             )
         ).also { result ->
-            validateCommon(
+            validateMutationCommon(
                 operation = result.operation,
                 expectedOperation = DeviceDosingV1Contract.Literal.CALIBRATION_CANCEL,
                 channelKey = result.channelKey,
@@ -189,7 +190,7 @@ object DeviceDosingV1MutationParser {
                 data.requireDosingObject("channel")
             )
         ).also { result ->
-            validateCommon(
+            validateMutationCommon(
                 operation = result.operation,
                 expectedOperation = DeviceDosingV1Contract.Literal.RESERVOIR_REFILL,
                 channelKey = result.channelKey,
@@ -197,31 +198,6 @@ object DeviceDosingV1MutationParser {
                 channel = result.channel
             )
             require(result.persisted)
-        }
-    }
-
-    private fun parseSaved(
-        data: JSONObject,
-        expectedOperation: String
-    ): DeviceDosingV1SavedMutationResult {
-        data.requireDosingKeys(SAVED_KEYS, "$expectedOperation result")
-        return DeviceDosingV1SavedMutationResult(
-            operation = data.requireDosingString("operation"),
-            channelKey = data.requireDosingChannelKey("channelKey"),
-            saved = data.requireDosingBoolean("saved"),
-            event = data.requireDosingString("event"),
-            channel = DeviceDosingV1StatusParser.parseChannelDetail(
-                data.requireDosingObject("channel")
-            )
-        ).also { result ->
-            validateCommon(
-                operation = result.operation,
-                expectedOperation = expectedOperation,
-                channelKey = result.channelKey,
-                event = result.event,
-                channel = result.channel
-            )
-            require(result.saved)
         }
     }
 
@@ -239,7 +215,7 @@ object DeviceDosingV1MutationParser {
                 data.requireDosingObject("channel")
             )
         ).also { result ->
-            validateCommon(
+            validateMutationCommon(
                 operation = result.operation,
                 expectedOperation = expectedOperation,
                 channelKey = result.channelKey,
@@ -250,19 +226,6 @@ object DeviceDosingV1MutationParser {
         }
     }
 
-    private fun validateCommon(
-        operation: String,
-        expectedOperation: String,
-        channelKey: DeviceDosingV1ChannelKey,
-        event: String,
-        channel: DeviceDosingV1ChannelDetail
-    ) {
-        require(operation == expectedOperation)
-        require(event == DeviceDosingV1Contract.STATUS_CHANGED_EVENT)
-        require(channelKey == channel.channelKey)
-    }
-
-    private val SAVED_KEYS = setOf("operation", "channelKey", "saved", "event", "channel")
     private val PRIME_START_KEYS = setOf(
         "operation", "channelKey", "durationMs", "doseMsPerMl", "manualActive",
         "event", "channel"
@@ -294,3 +257,40 @@ object DeviceDosingV1MutationParser {
         "persisted", "event", "channel"
     )
 }
+
+private fun parseSavedMutation(
+    data: JSONObject,
+    expectedOperation: String
+): DeviceDosingV1SavedMutationResult {
+    data.requireDosingKeys(SAVED_KEYS, "$expectedOperation result")
+    return DeviceDosingV1SavedMutationResult(
+        operation = data.requireDosingString("operation"),
+        channelKey = data.requireDosingChannelKey("channelKey"),
+        saved = data.requireDosingBoolean("saved"),
+        event = data.requireDosingString("event"),
+        channel = DeviceDosingV1StatusParser.parseChannelDetail(data.requireDosingObject("channel"))
+    ).also { result ->
+        validateMutationCommon(
+            operation = result.operation,
+            expectedOperation = expectedOperation,
+            channelKey = result.channelKey,
+            event = result.event,
+            channel = result.channel
+        )
+        require(result.saved)
+    }
+}
+
+private fun validateMutationCommon(
+    operation: String,
+    expectedOperation: String,
+    channelKey: DeviceDosingV1ChannelKey,
+    event: String,
+    channel: DeviceDosingV1ChannelDetail
+) {
+    require(operation == expectedOperation)
+    require(event == DeviceDosingV1Contract.STATUS_CHANGED_EVENT)
+    require(channelKey == channel.channelKey)
+}
+
+private val SAVED_KEYS = setOf("operation", "channelKey", "saved", "event", "channel")

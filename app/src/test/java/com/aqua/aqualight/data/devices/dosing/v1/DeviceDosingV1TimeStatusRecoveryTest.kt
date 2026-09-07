@@ -92,7 +92,6 @@ class DeviceDosingV1TimeStatusRecoveryTest {
             responses.addLast(Response(action, success(action, value)))
         }
 
-        @Suppress("UNCHECKED_CAST")
         override suspend fun <T> execute(
             deviceUid: DeviceUid,
             command: DeviceRuntimeCommand<T>,

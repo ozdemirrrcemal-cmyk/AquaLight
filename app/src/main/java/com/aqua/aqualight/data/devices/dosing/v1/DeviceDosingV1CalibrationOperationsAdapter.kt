@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 
 /** Application calibration boundary backed exclusively by the central v1 state adapter. */
-@Suppress("TooManyFunctions") // This class implements the complete application boundary verbatim.
 internal class DeviceDosingV1CalibrationOperationsAdapter(
     private val adapter: DeviceDosingV1StateAdapter
 ) : DeviceDosingCalibrationOperations {

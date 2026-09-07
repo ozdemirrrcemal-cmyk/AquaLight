@@ -3,7 +3,6 @@ package com.aqua.aqualight.data.devices.dosing.v1
 import org.json.JSONArray
 import org.json.JSONObject
 
-@Suppress("MagicNumber", "TooManyFunctions")
 internal object DeviceDosingV1TestFixtures {
     fun globalStatus(): JSONObject = envelope(channelCount = 2)
         .put("scheduling", scheduling())
@@ -145,7 +144,6 @@ internal object DeviceDosingV1TestFixtures {
             .put("reservoirRemainingMl", 500.0)
             .put("persisted", true)
 
-    @Suppress("LongMethod") // The fixture mirrors one complete firmware channel document.
     fun channelDetail(
         revision: Long = 7,
         runtimeReason: String = "none",
@@ -163,55 +161,50 @@ internal object DeviceDosingV1TestFixtures {
         .put("effectiveName", "Macro")
         .put("profileManaged", true)
         .put("deliveryAccountingCertain", true)
-        .put(
-            "hardware",
-            JSONObject()
-                .put("channelType", "pwm")
-                .put("gpio", 18)
-                .put("ledcChannel", 0)
-                .put("resolutionBits", 12)
-                .put("frequencyHz", 1_000)
-        )
-        .put(
-            "calibration",
-            JSONObject()
-                .put("confirmed", true)
-                .put("doseMsPerMl", 1_250)
-                .put("lastCalibratedAt", 1_786_320_000)
-                .put("state", "idle")
-                .put("durationMs", 0)
-                .put("measuredMl", 0.0)
-                .put("pendingDoseMsPerMl", 0.0)
-                .put("verificationDoseStarted", false)
-                .put("verificationDoseComplete", false)
-        )
-        .put(
-            "reservoir",
-            JSONObject()
-                .put("trackingEnabled", true)
-                .put("capacityMl", 500.0)
-                .put("remainingMl", 325.0)
-                .put("accountingCertain", true)
-                .put("lowLevelActive", false)
-                .put("remainingPercent", 65.0)
-        )
-        .put(
-            "activeRun",
-            JSONObject()
-                .put("active", false)
-                .put("source", "none")
-                .put("targetAmountMl", 0.0)
-                .put("remainingMs", 0)
-        )
+        .put("hardware", hardware())
+        .put("calibration", calibration())
+        .put("reservoir", reservoir())
+        .put("activeRun", activeRun())
         .put("lastRuntimeEvent", runtimeEvent())
-        .put(
-            "editable",
-            JSONObject()
-                .put("hardware", false)
-                .put("displayName", true)
-                .put("dosingCalibration", true)
-                .put("reservoir", true)
-        )
+        .put("editable", editable())
+
+    private fun hardware(): JSONObject = JSONObject()
+        .put("channelType", "pwm")
+        .put("gpio", 18)
+        .put("ledcChannel", 0)
+        .put("resolutionBits", 12)
+        .put("frequencyHz", 1_000)
+
+    private fun calibration(): JSONObject = JSONObject()
+        .put("confirmed", true)
+        .put("doseMsPerMl", 1_250)
+        .put("lastCalibratedAt", 1_786_320_000)
+        .put("state", "idle")
+        .put("durationMs", 0)
+        .put("measuredMl", 0.0)
+        .put("pendingDoseMsPerMl", 0.0)
+        .put("verificationDoseStarted", false)
+        .put("verificationDoseComplete", false)
+
+    private fun reservoir(): JSONObject = JSONObject()
+        .put("trackingEnabled", true)
+        .put("capacityMl", 500.0)
+        .put("remainingMl", 325.0)
+        .put("accountingCertain", true)
+        .put("lowLevelActive", false)
+        .put("remainingPercent", 65.0)
+
+    private fun activeRun(): JSONObject = JSONObject()
+        .put("active", false)
+        .put("source", "none")
+        .put("targetAmountMl", 0.0)
+        .put("remainingMs", 0)
+
+    private fun editable(): JSONObject = JSONObject()
+        .put("hardware", false)
+        .put("displayName", true)
+        .put("dosingCalibration", true)
+        .put("reservoir", true)
 
     private fun envelope(channelCount: Int): JSONObject = JSONObject()
         .put("supported", true)

@@ -5,13 +5,18 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-@Suppress("LongMethod")
 class DeviceDosingV1MutationContractTest {
     @Test
     fun `all mutation parsers accept the final handler response shapes`() {
+        assertSavedMutations()
+        assertRuntimeMutations()
+        assertCalibrationMutations()
+    }
+
+    private fun assertSavedMutations() {
         assertEquals(
             DeviceDosingV1Contract.Literal.CHANNEL_CONFIG_APPLY,
-            DeviceDosingV1MutationParser.parseConfigApply(
+            DeviceDosingV1SavedMutationParser.parseConfigApply(
                 DeviceDosingV1TestFixtures.savedMutation(
                     DeviceDosingV1Contract.Literal.CHANNEL_CONFIG_APPLY
                 )
@@ -19,7 +24,7 @@ class DeviceDosingV1MutationContractTest {
         )
         assertEquals(
             DeviceDosingV1Contract.Literal.PROGRAM_APPLY,
-            DeviceDosingV1MutationParser.parseProgramApply(
+            DeviceDosingV1SavedMutationParser.parseProgramApply(
                 DeviceDosingV1TestFixtures.savedMutation(
                     DeviceDosingV1Contract.Literal.PROGRAM_APPLY
                 )
@@ -27,12 +32,15 @@ class DeviceDosingV1MutationContractTest {
         )
         assertEquals(
             DeviceDosingV1Contract.Literal.CHANNEL_RESET,
-            DeviceDosingV1MutationParser.parseChannelReset(
+            DeviceDosingV1SavedMutationParser.parseChannelReset(
                 DeviceDosingV1TestFixtures.savedMutation(
                     DeviceDosingV1Contract.Literal.CHANNEL_RESET
                 )
             ).operation
         )
+    }
+
+    private fun assertRuntimeMutations() {
         assertTrue(
             DeviceDosingV1MutationParser.parsePrimeStart(
                 DeviceDosingV1TestFixtures.primeStart()
@@ -57,6 +65,9 @@ class DeviceDosingV1MutationContractTest {
                 )
             ).manualActive
         )
+    }
+
+    private fun assertCalibrationMutations() {
         assertEquals(
             "running",
             DeviceDosingV1MutationParser.parseCalibrationStart(

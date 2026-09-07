@@ -476,7 +476,7 @@ class DeviceDosingV1StateAdapterTest {
         }
 
         fun enqueueProgramMutation(revision: Long, programEnabled: Boolean = true) {
-            val parsed = DeviceDosingV1MutationParser.parseProgramApply(
+            val parsed = DeviceDosingV1SavedMutationParser.parseProgramApply(
                 DeviceDosingV1TestFixtures.savedMutation(
                     DeviceDosingV1Contract.Literal.PROGRAM_APPLY
                 )
@@ -500,7 +500,6 @@ class DeviceDosingV1StateAdapterTest {
             enqueue(action, success(action, value, generation))
         }
 
-        @Suppress("UNCHECKED_CAST")
         override suspend fun <T> execute(
             deviceUid: DeviceUid,
             command: DeviceRuntimeCommand<T>,

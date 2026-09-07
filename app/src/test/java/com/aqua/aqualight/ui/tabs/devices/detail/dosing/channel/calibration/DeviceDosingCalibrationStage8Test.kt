@@ -1,5 +1,3 @@
-@file:Suppress("MagicNumber", "TooManyFunctions")
-
 package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.calibration
 
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationConstraints

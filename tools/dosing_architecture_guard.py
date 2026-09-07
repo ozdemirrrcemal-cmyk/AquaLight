@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import gzip
 import json
 import re
 import sys
@@ -70,6 +71,12 @@ DOSING_STATE_OWNER_DECLARATION = re.compile(
     re.MULTILINE,
 )
 CANONICAL_STATE_OWNER = Path("v1/DeviceDosingV1StateOwner.kt")
+SUPPRESSION_PATTERNS = (
+    re.compile(r"^\s*@(?:file:)?Suppress(?:Lint)?\s*\(", re.MULTILINE),
+    re.compile(r"\bnoinspection\b", re.IGNORECASE),
+    re.compile(r"\b(?:detekt|ktlint)-(?:disable|ignore)\b", re.IGNORECASE),
+    re.compile(r"tools:ignore\s*="),
+)
 
 # DeviceChannelSlot is one shared closed catalog algebra. Its Dosing variant is identity/shape only;
 # behavior remains forbidden outside application/devices/dosing.
@@ -371,6 +378,47 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
         )
 
     errors.extend(validate_production_cutover(repository_root, source_root))
+    errors.extend(validate_no_quality_suppressions(repository_root))
+    return errors
+
+
+def validate_no_quality_suppressions(repository_root: Path) -> list[str]:
+    """Dosing debt must be fixed at its source, never hidden from CI."""
+    errors: list[str] = []
+    roots = (
+        repository_root / "app/src/main/java/com/aqua/aqualight/application/devices/dosing",
+        repository_root / "app/src/main/java/com/aqua/aqualight/data/devices/dosing",
+        repository_root / "app/src/main/java/com/aqua/aqualight/ui/common/dosing",
+        repository_root / "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing",
+        repository_root / "app/src/test/java/com/aqua/aqualight/application/devices/dosing",
+        repository_root / "app/src/test/java/com/aqua/aqualight/data/devices/dosing",
+        repository_root / "app/src/test/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing",
+        repository_root / "app/src/main/res/layout/fragment_device_dosing_root.xml",
+    )
+    for root in roots:
+        paths = [root] if root.is_file() else sorted(root.rglob("*")) if root.is_dir() else []
+        for path in paths:
+            if not path.is_file() or path.suffix not in {".kt", ".xml"}:
+                continue
+            source = path.read_text(encoding="utf-8", errors="ignore")
+            if any(pattern.search(source) for pattern in SUPPRESSION_PATTERNS):
+                errors.append(
+                    f"{relative(path, repository_root)}: Dosing quality suppression is forbidden"
+                )
+
+    lint_baseline = repository_root / "app/lint-baseline.xml.gz"
+    if lint_baseline.is_file():
+        baseline = gzip.open(lint_baseline, "rt", encoding="utf-8").read()
+        if "dosing" in baseline.lower():
+            errors.append("app/lint-baseline.xml.gz: Dosing lint baseline entries are forbidden")
+
+    debt_baseline = repository_root / "config/detekt/advisory-debt-baseline.json"
+    if debt_baseline.is_file():
+        debt = debt_baseline.read_text(encoding="utf-8", errors="ignore")
+        if '"dosing"' in debt.lower():
+            errors.append(
+                "config/detekt/advisory-debt-baseline.json: Dosing Detekt debt is forbidden"
+            )
     return errors
 
 

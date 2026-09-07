@@ -3,7 +3,6 @@ package com.aqua.aqualight.data.devices.dosing.v1
 import org.json.JSONArray
 import org.json.JSONObject
 
-@Suppress("LargeClass", "LongMethod", "MagicNumber", "TooManyFunctions")
 object DeviceDosingV1StatusParser {
     private val ENVELOPE_KEYS = setOf(
         "supported", "schema", "schemaVersion", "unit", "channelCount", "uptimeMs",
@@ -19,8 +18,10 @@ object DeviceDosingV1StatusParser {
 
     fun parseGlobal(data: JSONObject): DeviceDosingV1GlobalStatus {
         data.requireDosingKeys(GLOBAL_KEYS, "global dosing status")
-        val envelope = parseEnvelope(data)
-        val channels = parseGlobalChannels(data.requireDosingArray("channels"))
+        val envelope = DeviceDosingV1EnvelopeParser.parseEnvelope(data)
+        val channels = DeviceDosingV1GlobalStatusParser.parseGlobalChannels(
+            data.requireDosingArray("channels")
+        )
         require(channels.size == envelope.channelCount) {
             "Global channel count differs from the firmware envelope."
         }
@@ -29,30 +30,44 @@ object DeviceDosingV1StatusParser {
         }
         return DeviceDosingV1GlobalStatus(
             envelope = envelope,
-            scheduling = parseScheduling(data.requireDosingObject("scheduling")),
+            scheduling = DeviceDosingV1EnvelopeParser.parseScheduling(
+                data.requireDosingObject("scheduling")
+            ),
             channels = channels,
-            runtime = parseRuntime(data.requireDosingObject("runtime")),
-            resources = parseResources(data.requireDosingObject("resources"))
+            runtime = DeviceDosingV1GlobalStatusParser.parseRuntime(
+                data.requireDosingObject("runtime")
+            ),
+            resources = DeviceDosingV1GlobalStatusParser.parseResources(
+                data.requireDosingObject("resources")
+            )
         )
     }
 
     fun parseChannel(data: JSONObject): DeviceDosingV1ChannelStatus {
         data.requireDosingKeys(CHANNEL_KEYS, "channel dosing status")
-        val envelope = parseEnvelope(data)
+        val envelope = DeviceDosingV1EnvelopeParser.parseEnvelope(data)
         require(envelope.channelCount >= 1) {
             "A channel-scoped response must report at least one configured channel."
         }
         return DeviceDosingV1ChannelStatus(
             envelope = envelope,
-            scheduling = parseScheduling(data.requireDosingObject("scheduling")),
-            channel = parseChannelDetail(data.requireDosingObject("channel"))
+            scheduling = DeviceDosingV1EnvelopeParser.parseScheduling(
+                data.requireDosingObject("scheduling")
+            ),
+            channel = DeviceDosingV1ChannelDetailParser.parseChannelDetail(
+                data.requireDosingObject("channel")
+            )
         )
     }
 
     fun parseProgress(data: JSONObject): DeviceDosingV1ProgressStatus {
         data.requireDosingKeys(PROGRESS_KEYS, "dosing progress status")
-        val occurrences = parseOccurrences(data.requireDosingArray("occurrences"))
-        val progress = parseProgressSummary(data.requireDosingObject("progress"))
+        val occurrences = DeviceDosingV1ProgressParser.parseOccurrences(
+            data.requireDosingArray("occurrences")
+        )
+        val progress = DeviceDosingV1ProgressParser.parseProgressSummary(
+            data.requireDosingObject("progress")
+        )
         require(occurrences.size <= DeviceDosingV1Contract.Limit.MAX_EVENTS_PER_CHANNEL) {
             "Progress exceeds the bounded firmware occurrence capacity."
         }
@@ -60,7 +75,7 @@ object DeviceDosingV1StatusParser {
             "Progress total differs from the firmware occurrence array size."
         }
         return DeviceDosingV1ProgressStatus(
-            envelope = parseEnvelope(data),
+            envelope = DeviceDosingV1EnvelopeParser.parseEnvelope(data),
             channelKey = data.requireDosingChannelKey("channelKey"),
             revision = data.requireDosingLong(
                 "revision",
@@ -74,7 +89,15 @@ object DeviceDosingV1StatusParser {
         )
     }
 
-    internal fun parseChannelDetail(data: JSONObject): DeviceDosingV1ChannelDetail {
+    internal fun parseChannelDetail(data: JSONObject): DeviceDosingV1ChannelDetail =
+        DeviceDosingV1ChannelDetailParser.parseChannelDetail(data)
+
+    internal fun parseRuntimeEvent(data: JSONObject): DeviceDosingV1RuntimeEventSnapshot =
+        DeviceDosingV1ChannelDetailParser.parseRuntimeEvent(data)
+}
+
+private object DeviceDosingV1ChannelDetailParser {
+    fun parseChannelDetail(data: JSONObject): DeviceDosingV1ChannelDetail {
         data.requireDosingKeys(CHANNEL_DETAIL_KEYS, "dosing channel detail")
         return DeviceDosingV1ChannelDetail(
             channelKey = data.requireDosingChannelKey("channelKey"),
@@ -85,24 +108,36 @@ object DeviceDosingV1StatusParser {
             ),
             runtimeEnabled = data.requireDosingBoolean("runtimeEnabled"),
             runtimeReason = dosingWireValue(data.requireDosingString("runtimeReason")),
-            program = parseNullableProgram(data.get("program")),
-            usageToday = parseUsage(data.requireDosingObject("usageToday")),
+            program = DeviceDosingV1ProgramParser.parseNullableProgram(data.get("program")),
+            usageToday = DeviceDosingV1GlobalStatusParser.parseUsage(
+                data.requireDosingObject("usageToday")
+            ),
             index = data.requireDosingInt("index", minimum = 0),
             defaultName = data.requireDosingString("defaultName"),
             displayName = data.requireDosingNullableString("displayName"),
             effectiveName = data.requireDosingString("effectiveName"),
             profileManaged = data.requireDosingBoolean("profileManaged"),
             deliveryAccountingCertain = data.requireDosingBoolean("deliveryAccountingCertain"),
-            hardware = parseHardware(data.requireDosingObject("hardware")),
-            calibration = parseCalibration(data.requireDosingObject("calibration")),
-            reservoir = parseReservoir(data.requireDosingObject("reservoir")),
-            activeRun = parseActiveRun(data.requireDosingObject("activeRun")),
+            hardware = DeviceDosingV1ChannelStateParser.parseHardware(
+                data.requireDosingObject("hardware")
+            ),
+            calibration = DeviceDosingV1ChannelStateParser.parseCalibration(
+                data.requireDosingObject("calibration")
+            ),
+            reservoir = DeviceDosingV1ChannelStateParser.parseReservoir(
+                data.requireDosingObject("reservoir")
+            ),
+            activeRun = DeviceDosingV1ChannelStateParser.parseActiveRun(
+                data.requireDosingObject("activeRun")
+            ),
             lastRuntimeEvent = parseRuntimeEvent(data.requireDosingObject("lastRuntimeEvent")),
-            editable = parseEditable(data.requireDosingObject("editable"))
+            editable = DeviceDosingV1ChannelStateParser.parseEditable(
+                data.requireDosingObject("editable")
+            )
         )
     }
 
-    internal fun parseRuntimeEvent(data: JSONObject): DeviceDosingV1RuntimeEventSnapshot {
+    fun parseRuntimeEvent(data: JSONObject): DeviceDosingV1RuntimeEventSnapshot {
         data.requireDosingKeys(RUNTIME_EVENT_KEYS, "dosing runtime event")
         return DeviceDosingV1RuntimeEventSnapshot(
             valid = data.requireDosingBoolean("valid"),
@@ -122,7 +157,10 @@ object DeviceDosingV1StatusParser {
         )
     }
 
-    private fun parseEnvelope(data: JSONObject): DeviceDosingV1Envelope =
+}
+
+private object DeviceDosingV1EnvelopeParser {
+    fun parseEnvelope(data: JSONObject): DeviceDosingV1Envelope =
         DeviceDosingV1Envelope(
             supported = data.requireDosingBoolean("supported"),
             schema = data.requireDosingString("schema"),
@@ -149,12 +187,19 @@ object DeviceDosingV1StatusParser {
             require(envelope.storageIssue.toByteArray(Charsets.UTF_8).size <= MAX_STORAGE_ISSUE_BYTES)
         }
 
-    private fun parseScheduling(data: JSONObject): DeviceDosingV1SchedulingMetadata {
+    fun parseScheduling(data: JSONObject): DeviceDosingV1SchedulingMetadata {
         data.requireDosingKeys(SCHEDULING_KEYS, "dosing scheduling metadata")
-        val modes = parseStringValues(data.requireDosingArray("supportedModes"))
+        val modes = parseDosingStringValues(data.requireDosingArray("supportedModes"))
             .map(::dosingWireValue)
-        val weekdayOrder = parseStringValues(data.requireDosingArray("weekdayOrder"))
-        return DeviceDosingV1SchedulingMetadata(
+        val weekdayOrder = parseDosingStringValues(data.requireDosingArray("weekdayOrder"))
+        return parseSchedulingMetadata(data, modes, weekdayOrder).also(::validateScheduling)
+    }
+
+    private fun parseSchedulingMetadata(
+        data: JSONObject,
+        modes: List<DeviceDosingV1WireValue>,
+        weekdayOrder: List<String>
+    ) = DeviceDosingV1SchedulingMetadata(
             contract = data.requireDosingString("contract"),
             schemaVersion = data.requireDosingLong("schemaVersion", minimum = 1L),
             amountResolutionMilliliters = data.requireDosingDouble(
@@ -199,17 +244,18 @@ object DeviceDosingV1StatusParser {
             effectiveScheduledDose = parseEffectiveDose(
                 data.requireDosingObject("effectiveScheduledDose")
             )
-        ).also { metadata ->
-            require(metadata.contract == DeviceDosingV1Contract.SCHEMA)
-            require(metadata.schemaVersion == DeviceDosingV1Contract.SCHEMA_VERSION)
-            require(
-                metadata.amountResolutionMilliliters ==
-                    DeviceDosingV1Contract.Limit.AMOUNT_RESOLUTION_ML
-            )
-            require(metadata.minimumPumpRunDurationMillis <= metadata.maximumPumpRunDurationMillis)
-            require(metadata.weekdayOrder == WEEKDAY_ORDER)
-            require(metadata.supportedModes.map(DeviceDosingV1WireValue::raw) == SUPPORTED_MODES)
-        }
+        )
+
+    private fun validateScheduling(metadata: DeviceDosingV1SchedulingMetadata) {
+        require(metadata.contract == DeviceDosingV1Contract.SCHEMA)
+        require(metadata.schemaVersion == DeviceDosingV1Contract.SCHEMA_VERSION)
+        require(
+            metadata.amountResolutionMilliliters ==
+                DeviceDosingV1Contract.Limit.AMOUNT_RESOLUTION_ML
+        )
+        require(metadata.minimumPumpRunDurationMillis <= metadata.maximumPumpRunDurationMillis)
+        require(metadata.weekdayOrder == WEEKDAY_ORDER)
+        require(metadata.supportedModes.map(DeviceDosingV1WireValue::raw) == SUPPORTED_MODES)
     }
 
     private fun parseEffectiveDose(data: JSONObject): DeviceDosingV1EffectiveScheduledDose {
@@ -227,7 +273,10 @@ object DeviceDosingV1StatusParser {
         }
     }
 
-    private fun parseGlobalChannels(data: JSONArray): List<DeviceDosingV1GlobalChannel> =
+}
+
+private object DeviceDosingV1GlobalStatusParser {
+    fun parseGlobalChannels(data: JSONArray): List<DeviceDosingV1GlobalChannel> =
         List(data.length()) { index -> parseGlobalChannel(data.requireDosingObject(index)) }
 
     private fun parseGlobalChannel(data: JSONObject): DeviceDosingV1GlobalChannel {
@@ -255,13 +304,16 @@ object DeviceDosingV1StatusParser {
         data.requireDosingKeys(GLOBAL_RESERVOIR_KEYS, "global dosing reservoir")
         return DeviceDosingV1GlobalReservoir(
             trackingEnabled = data.requireDosingBoolean("trackingEnabled"),
-            remainingMilliliters = data.requireDosingDouble("remainingMl", minimum = -1.0),
+            remainingMilliliters = data.requireDosingDouble(
+                "remainingMl",
+                minimum = UNAVAILABLE_AMOUNT
+            ),
             accountingCertain = data.requireDosingBoolean("accountingCertain"),
             lowLevelActive = data.requireDosingBoolean("lowLevelActive")
         )
     }
 
-    private fun parseRuntime(data: JSONObject): DeviceDosingV1RuntimeCapabilities {
+    fun parseRuntime(data: JSONObject): DeviceDosingV1RuntimeCapabilities {
         data.requireDosingKeys(RUNTIME_KEYS, "dosing runtime capabilities")
         return DeviceDosingV1RuntimeCapabilities(
             module = data.requireDosingString("module"),
@@ -280,7 +332,7 @@ object DeviceDosingV1StatusParser {
         }
     }
 
-    private fun parseResources(data: JSONObject): DeviceDosingV1Resources {
+    fun parseResources(data: JSONObject): DeviceDosingV1Resources {
         data.requireDosingKeys(RESOURCE_KEYS, "dosing runtime resources")
         return DeviceDosingV1Resources(
             freeHeapBytes = data.requireDosingLong("freeHeapBytes", minimum = 0L),
@@ -297,7 +349,7 @@ object DeviceDosingV1StatusParser {
         )
     }
 
-    private fun parseUsage(data: JSONObject): DeviceDosingV1DailyUsage {
+    fun parseUsage(data: JSONObject): DeviceDosingV1DailyUsage {
         data.requireDosingKeys(USAGE_KEYS, "daily dosing usage")
         return DeviceDosingV1DailyUsage(
             dateValid = data.requireDosingBoolean("dateValid"),
@@ -313,7 +365,10 @@ object DeviceDosingV1StatusParser {
         }
     }
 
-    private fun parseNullableProgram(value: Any): DeviceDosingV1ProgramSnapshot? {
+}
+
+private object DeviceDosingV1ProgramParser {
+    fun parseNullableProgram(value: Any): DeviceDosingV1ProgramSnapshot? {
         if (value === JSONObject.NULL) return null
         return parseProgram(value as? JSONObject ?: error("program must be an object or null."))
     }
@@ -348,7 +403,7 @@ object DeviceDosingV1StatusParser {
                 minuteOfHour = data.requireDosingInt(
                     "minuteOfHour",
                     minimum = 0,
-                    maximum = 59
+                    maximum = LAST_MINUTE_OF_HOUR
                 )
             )
         }
@@ -402,7 +457,10 @@ object DeviceDosingV1StatusParser {
         return List(data.length(), data::requireDosingBoolean)
     }
 
-    private fun parseHardware(data: JSONObject): DeviceDosingV1Hardware {
+}
+
+private object DeviceDosingV1ChannelStateParser {
+    fun parseHardware(data: JSONObject): DeviceDosingV1Hardware {
         data.requireDosingKeys(HARDWARE_KEYS, "dosing hardware")
         return DeviceDosingV1Hardware(
             channelType = data.requireDosingString("channelType"),
@@ -413,7 +471,7 @@ object DeviceDosingV1StatusParser {
         )
     }
 
-    private fun parseCalibration(data: JSONObject): DeviceDosingV1Calibration {
+    fun parseCalibration(data: JSONObject): DeviceDosingV1Calibration {
         data.requireDosingKeys(CALIBRATION_KEYS, "dosing calibration")
         return DeviceDosingV1Calibration(
             confirmed = data.requireDosingBoolean("confirmed"),
@@ -429,19 +487,28 @@ object DeviceDosingV1StatusParser {
         )
     }
 
-    private fun parseReservoir(data: JSONObject): DeviceDosingV1Reservoir {
+    fun parseReservoir(data: JSONObject): DeviceDosingV1Reservoir {
         data.requireDosingKeys(RESERVOIR_KEYS, "dosing reservoir")
         return DeviceDosingV1Reservoir(
             trackingEnabled = data.requireDosingBoolean("trackingEnabled"),
-            capacityMilliliters = data.requireDosingDouble("capacityMl", minimum = -1.0),
-            remainingMilliliters = data.requireDosingDouble("remainingMl", minimum = -1.0),
+            capacityMilliliters = data.requireDosingDouble(
+                "capacityMl",
+                minimum = UNAVAILABLE_AMOUNT
+            ),
+            remainingMilliliters = data.requireDosingDouble(
+                "remainingMl",
+                minimum = UNAVAILABLE_AMOUNT
+            ),
             accountingCertain = data.requireDosingBoolean("accountingCertain"),
             lowLevelActive = data.requireDosingBoolean("lowLevelActive"),
-            remainingPercent = data.requireDosingDouble("remainingPercent", minimum = -1.0)
+            remainingPercent = data.requireDosingDouble(
+                "remainingPercent",
+                minimum = UNAVAILABLE_AMOUNT
+            )
         )
     }
 
-    private fun parseActiveRun(data: JSONObject): DeviceDosingV1ActiveRun {
+    fun parseActiveRun(data: JSONObject): DeviceDosingV1ActiveRun {
         data.requireDosingKeys(ACTIVE_RUN_KEYS, "dosing active run")
         return DeviceDosingV1ActiveRun(
             active = data.requireDosingBoolean("active"),
@@ -452,7 +519,7 @@ object DeviceDosingV1StatusParser {
         )
     }
 
-    private fun parseEditable(data: JSONObject): DeviceDosingV1Editable {
+    fun parseEditable(data: JSONObject): DeviceDosingV1Editable {
         data.requireDosingKeys(EDITABLE_KEYS, "dosing editable flags")
         return DeviceDosingV1Editable(
             hardware = data.requireDosingBoolean("hardware"),
@@ -464,7 +531,10 @@ object DeviceDosingV1StatusParser {
         }
     }
 
-    private fun parseProgressSummary(data: JSONObject): DeviceDosingV1ProgressSummary {
+}
+
+private object DeviceDosingV1ProgressParser {
+    fun parseProgressSummary(data: JSONObject): DeviceDosingV1ProgressSummary {
         data.requireDosingKeys(PROGRESS_SUMMARY_KEYS, "dosing progress summary")
         return DeviceDosingV1ProgressSummary(
             scheduleState = dosingWireValue(data.requireDosingString("scheduleState")),
@@ -483,14 +553,14 @@ object DeviceDosingV1StatusParser {
             completionPercent = data.requireDosingDouble(
                 "completionPercent",
                 minimum = 0.0,
-                maximum = 100.0
+                maximum = PERCENT_MAXIMUM
             ),
             executionCurrent = data.requireDosingBoolean("executionCurrent"),
             programDayDate = data.requireDosingNullableString("programDayDate")
         )
     }
 
-    private fun parseOccurrences(data: JSONArray): List<DeviceDosingV1Occurrence> =
+    fun parseOccurrences(data: JSONArray): List<DeviceDosingV1Occurrence> =
         List(data.length()) { index ->
             val item = data.requireDosingObject(index)
             item.requireDosingKeys(OCCURRENCE_KEYS, "dosing occurrence")
@@ -520,30 +590,35 @@ object DeviceDosingV1StatusParser {
             require(occurrences.map(DeviceDosingV1Occurrence::eventId).distinct().size == occurrences.size)
         }
 
-    private fun JSONObject.requireDosingTime(key: String): Long =
-        requireDosingLong(
-            key,
-            minimum = 0L,
-            maximum = DeviceDosingV1Contract.Limit.MILLIS_PER_DAY - 1L
-        )
+}
 
-    private fun JSONObject.requireDosingProgressCount(key: String): Int =
-        requireDosingInt(
-            key,
-            minimum = 0,
-            maximum = DeviceDosingV1Contract.Limit.MAX_EVENTS_PER_CHANNEL
-        )
+private fun JSONObject.requireDosingTime(key: String): Long =
+    requireDosingLong(
+        key,
+        minimum = 0L,
+        maximum = DeviceDosingV1Contract.Limit.MILLIS_PER_DAY - 1L
+    )
 
-    private fun parseStringValues(data: JSONArray): List<String> =
-        List(data.length(), data::requireDosingString)
+private fun JSONObject.requireDosingProgressCount(key: String): Int =
+    requireDosingInt(
+        key,
+        minimum = 0,
+        maximum = DeviceDosingV1Contract.Limit.MAX_EVENTS_PER_CHANNEL
+    )
 
-    private const val MAX_STORAGE_ISSUE_BYTES = 127
+private fun parseDosingStringValues(data: JSONArray): List<String> =
+    List(data.length(), data::requireDosingString)
 
-    private val WEEKDAY_ORDER = listOf(
+private const val MAX_STORAGE_ISSUE_BYTES = 127
+private const val LAST_MINUTE_OF_HOUR = 59
+private const val UNAVAILABLE_AMOUNT = -1.0
+private const val PERCENT_MAXIMUM = 100.0
+
+private val WEEKDAY_ORDER = listOf(
         "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"
     )
-    private val SUPPORTED_MODES = listOf("single", "hourly24", "customPeriods", "timer")
-    private val SCHEDULING_KEYS = setOf(
+private val SUPPORTED_MODES = listOf("single", "hourly24", "customPeriods", "timer")
+private val SCHEDULING_KEYS = setOf(
         "contract", "schemaVersion", "amountResolutionMl", "maxEventsPerChannel",
         "maxCustomPeriodsPerChannel", "scheduledDispatchGraceMs",
         "missedDoseRecoveryProgramDay", "minPumpRunDurationMs", "maxPumpRunDurationMs",
@@ -613,7 +688,6 @@ object DeviceDosingV1StatusParser {
         "skipped", "uncertain", "totalAmountMl", "completedAmountMl",
         "remainingAmountMl", "completionPercent", "executionCurrent", "programDayDate"
     )
-    private val OCCURRENCE_KEYS = setOf(
+private val OCCURRENCE_KEYS = setOf(
         "index", "eventId", "programDayOffset", "timeMs", "amountMl", "status"
-    )
-}
+)

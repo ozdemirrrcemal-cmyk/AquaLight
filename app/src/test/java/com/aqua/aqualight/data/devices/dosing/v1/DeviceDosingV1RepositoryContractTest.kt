@@ -13,22 +13,28 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-@Suppress("LongMethod", "MagicNumber")
 class DeviceDosingV1RepositoryContractTest {
     @Test
     fun `repository mirrors all fourteen actions without production state ownership`() = runBlocking {
         val gateway = FixtureGateway()
         val repository = DeviceDosingV1Repository(gateway)
-        val program = DeviceDosingV1Program(
-            enabled = true,
-            weekdays = DeviceDosingV1Weekdays(List(7) { true }),
-            config = DeviceDosingV1ProgramConfig.Hourly24(
-                dailyDose = DeviceDosingV1Amount.fromMilliliters(2.4),
-                minuteOfHour = 15
-            ),
-            missedDoseRecoveryEnabled = false
+        val outcomes = executeEveryCommand(repository)
+
+        assertTrue(outcomes.all { outcome -> outcome is DeviceRuntimeCommandOutcome.Success })
+        assertEquals(
+            listOf(DeviceDosingV1Contract.Action.STATUS_GET) +
+                DeviceDosingV1Contract.Action.ALL.toList(),
+            gateway.calls.map(Call::action)
         )
-        val outcomes: List<DeviceRuntimeCommandOutcome<*>> = listOf(
+        assertTrue(gateway.calls.all { call -> call.module == DeviceDosingV1Contract.MODULE })
+        assertEquals(expectedRequestKeys(), gateway.calls.map { call -> call.requestKeys })
+    }
+
+    private suspend fun executeEveryCommand(
+        repository: DeviceDosingV1Repository
+    ): List<DeviceRuntimeCommandOutcome<*>> {
+        val program = hourlyProgram()
+        return listOf(
             repository.requestGlobalStatus(DEVICE_UID),
             repository.requestChannelStatus(DEVICE_UID, CHANNEL),
             repository.requestProgress(DEVICE_UID, CHANNEL),
@@ -78,35 +84,35 @@ class DeviceDosingV1RepositoryContractTest {
             repository.stopDose(DEVICE_UID, CHANNEL),
             repository.refillReservoir(DEVICE_UID, CHANNEL)
         )
-
-        assertTrue(outcomes.all { outcome -> outcome is DeviceRuntimeCommandOutcome.Success })
-        assertEquals(
-            listOf(DeviceDosingV1Contract.Action.STATUS_GET) +
-                DeviceDosingV1Contract.Action.ALL.toList(),
-            gateway.calls.map(Call::action)
-        )
-        assertTrue(gateway.calls.all { call -> call.module == DeviceDosingV1Contract.MODULE })
-        assertEquals(
-            listOf(
-                emptySet(),
-                setOf("channelKey"),
-                setOf("channelKey"),
-                setOf("channelKey", "expectedRevision", "displayName", "reservoir"),
-                setOf("channelKey", "expectedRevision", "program"),
-                setOf("channelKey", "expectedRevision"),
-                setOf("channelKey"),
-                setOf("channelKey"),
-                setOf("channelKey", "durationMs"),
-                setOf("channelKey", "measuredMl"),
-                setOf("channelKey", "displayName"),
-                setOf("channelKey"),
-                setOf("channelKey", "amountMl", "usePendingCalibration"),
-                setOf("channelKey"),
-                setOf("channelKey")
-            ),
-            gateway.calls.map { call -> call.data.keys().asSequence().toSet() }
-        )
     }
+
+    private fun hourlyProgram() = DeviceDosingV1Program(
+        enabled = true,
+        weekdays = DeviceDosingV1Weekdays(List(7) { true }),
+        config = DeviceDosingV1ProgramConfig.Hourly24(
+            dailyDose = DeviceDosingV1Amount.fromMilliliters(2.4),
+            minuteOfHour = 15
+        ),
+        missedDoseRecoveryEnabled = false
+    )
+
+    private fun expectedRequestKeys(): List<Set<String>> = listOf(
+        emptySet(),
+        setOf("channelKey"),
+        setOf("channelKey"),
+        setOf("channelKey", "expectedRevision", "displayName", "reservoir"),
+        setOf("channelKey", "expectedRevision", "program"),
+        setOf("channelKey", "expectedRevision"),
+        setOf("channelKey"),
+        setOf("channelKey"),
+        setOf("channelKey", "durationMs"),
+        setOf("channelKey", "measuredMl"),
+        setOf("channelKey", "displayName"),
+        setOf("channelKey"),
+        setOf("channelKey", "amountMl", "usePendingCalibration"),
+        setOf("channelKey"),
+        setOf("channelKey")
+    )
 
     @Test
     fun `firmware error identity passes through without blind retry`() = runBlocking {
@@ -175,16 +181,21 @@ class DeviceDosingV1RepositoryContractTest {
             )
         }
 
-        @Suppress("CyclomaticComplexMethod") // One exhaustive fake response per firmware action.
         private fun response(action: String, encoded: JSONObject): JSONObject = when (action) {
-            DeviceDosingV1Contract.Action.STATUS_GET ->
-                if (encoded.has("channelKey")) {
-                    DeviceDosingV1TestFixtures.channelStatus()
-                } else {
-                    DeviceDosingV1TestFixtures.globalStatus()
-                }
+            DeviceDosingV1Contract.Action.STATUS_GET -> statusResponse(encoded)
             DeviceDosingV1Contract.Action.PROGRESS_GET ->
                 DeviceDosingV1TestFixtures.progressStatus()
+            else -> mutationResponse(action)
+        }
+
+        private fun statusResponse(encoded: JSONObject): JSONObject =
+            if (encoded.has("channelKey")) {
+                DeviceDosingV1TestFixtures.channelStatus()
+            } else {
+                DeviceDosingV1TestFixtures.globalStatus()
+            }
+
+        private fun mutationResponse(action: String): JSONObject = when (action) {
             DeviceDosingV1Contract.Action.CONFIG_APPLY ->
                 DeviceDosingV1TestFixtures.savedMutation(
                     DeviceDosingV1Contract.Literal.CHANNEL_CONFIG_APPLY
@@ -213,7 +224,7 @@ class DeviceDosingV1RepositoryContractTest {
                 DeviceDosingV1TestFixtures.simpleStop(DeviceDosingV1Contract.Literal.DOSE_STOP)
             DeviceDosingV1Contract.Action.RESERVOIR_REFILL ->
                 DeviceDosingV1TestFixtures.reservoirRefill()
-            else -> error("Unexpected Dosing action: " + action)
+            else -> error("Unexpected Dosing action: $action")
         }
     }
 
@@ -236,7 +247,10 @@ class DeviceDosingV1RepositoryContractTest {
         val module: String,
         val action: String,
         val data: JSONObject
-    )
+    ) {
+        val requestKeys: Set<String>
+            get() = data.keys().asSequence().toSet()
+    }
 
     private companion object {
         val DEVICE_UID = DeviceUid("AQL-DOSE-PRO-2-TEST")
