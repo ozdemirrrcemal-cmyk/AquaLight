@@ -16,14 +16,19 @@ internal object DeviceCoolingCardSnapshotMapper {
         val config = state.config
         val programStatus = state.status?.program
         val programRuntime = control?.programRuntime
-        return if (
-            control == null ||
-            config == null ||
-            programStatus == null ||
-            programRuntime == null
-        ) {
+        val requiredInputsAvailable = listOf(
+            control,
+            config,
+            programStatus,
+            programRuntime
+        ).all { input -> input != null }
+        return if (!requiredInputsAvailable) {
             null
         } else {
+            requireNotNull(control)
+            requireNotNull(config)
+            requireNotNull(programStatus)
+            requireNotNull(programRuntime)
             val programSnapshot = state.programSnapshot
                 ?.takeIf { snapshot -> snapshot.programRevision == programStatus.programRevision }
             val activeSlotIndex = programRuntime.activeSlotIndex
