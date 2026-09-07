@@ -25,22 +25,27 @@ internal object DeviceTimerControlSnapshotMapper {
         root: DeviceRootSnapshot,
         state: DeviceTimerRuntimeState
     ): DeviceTimerControlSnapshot? {
-        val status = state.status ?: return null
+        val status = state.status
         val slots = root.channelSlots.timerChannels
-        if (!root.matchesTimerCatalog(slots) || !state.isReadableGlobalStatus(status, slots)) {
-            return null
+        return if (
+            status == null ||
+            !root.matchesTimerCatalog(slots) ||
+            !state.isReadableGlobalStatus(status, slots)
+        ) {
+            null
+        } else {
+            mapChannels(status, slots, state)?.let { channels ->
+                DeviceTimerControlSnapshot(
+                    deviceUid = root.deviceUid,
+                    revision = status.revision,
+                    lockLoop = status.lockLoop,
+                    uptimeMillis = status.uptimeMs,
+                    maxSchedulesPerChannel = status.maxSchedulesPerChannel,
+                    capabilities = status.toApplicationCapabilities(slots),
+                    channels = channels
+                )
+            }
         }
-
-        val channels = mapChannels(status, slots, state) ?: return null
-        return DeviceTimerControlSnapshot(
-            deviceUid = root.deviceUid,
-            revision = status.revision,
-            lockLoop = status.lockLoop,
-            uptimeMillis = status.uptimeMs,
-            maxSchedulesPerChannel = status.maxSchedulesPerChannel,
-            capabilities = status.toApplicationCapabilities(slots),
-            channels = channels
-        )
     }
 
     private fun mapChannels(
@@ -50,19 +55,20 @@ internal object DeviceTimerControlSnapshotMapper {
     ): List<DeviceTimerChannelSnapshot>? {
         val orderedChannels = status.channels.sortedBy(DeviceTimerChannelStatus::listIndex)
         val orderedSlots = slots.sortedBy { slot -> slot.index.zeroBased }
-        return buildList {
-            orderedChannels.zip(orderedSlots).forEach { (channel, slot) ->
-                if (!channel.matches(slot)) return null
-                val detail = state.channelDetails[channel.key]
-                val schedules = when {
-                    detail == null -> null
-                    detail.matchesChannelDetail(status, channel) ->
-                        detail.schedules.map(DeviceTimerScheduleStatus::toApplicationSnapshot)
-                    else -> return null
-                }
-                add(channel.toApplicationSnapshot(slot, schedules))
+        val channels = orderedChannels.zip(orderedSlots).map { (channel, slot) ->
+            val detail = state.channelDetails[channel.key]
+            val detailMatches = detail == null || detail.matchesChannelDetail(status, channel)
+            val schedules = detail?.schedules
+                ?.map(DeviceTimerScheduleStatus::toApplicationSnapshot)
+            if (channel.matches(slot) && detailMatches) {
+                channel.toApplicationSnapshot(slot, schedules)
+            } else {
+                null
             }
         }
+        return channels
+            .takeIf { mapped -> mapped.all { channel -> channel != null } }
+            ?.filterNotNull()
     }
 }
 

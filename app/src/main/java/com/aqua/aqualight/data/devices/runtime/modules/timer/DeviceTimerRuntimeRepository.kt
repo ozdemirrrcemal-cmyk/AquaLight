@@ -305,11 +305,6 @@ class DeviceTimerRuntimeRepository internal constructor(
     }
 }
 
-internal fun DeviceTimerRuntimeRepository.isAuthoritative(
-    deviceUid: DeviceUid,
-    generation: DeviceRuntimeConnectionGeneration
-): Boolean = stateStore.isAuthoritative(deviceUid, generation)
-
 internal fun DeviceTimerRuntimeRepository.currentAuthoritativeState(
     deviceUid: DeviceUid
 ): DeviceTimerRuntimeState? = stateStore.currentAuthoritativeState(deviceUid)

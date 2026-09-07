@@ -165,20 +165,22 @@ internal class DefaultDeviceTimerControlOperations(
 
     private fun resolveRuntime(deviceUid: String): RuntimeResolution {
         val uid = deviceUid.toDeviceUidOrNull()
-            ?: return RuntimeResolution.Failed(DeviceTimerControlFailure.UNAVAILABLE)
-        val root = rootOperations.current(uid.value)
-            ?: return RuntimeResolution.Failed(DeviceTimerControlFailure.UNAVAILABLE)
-        if (
-            root.catalogState != DeviceRootCatalogState.VALID ||
-            root.family != OwnerDeviceFamily.TIMER ||
-            !root.matchesTimerCatalog()
-        ) {
-            return RuntimeResolution.Failed(DeviceTimerControlFailure.UNSUPPORTED)
+        val root = uid?.let { rootOperations.current(it.value) }
+        return when {
+            uid == null || root == null ->
+                RuntimeResolution.Failed(DeviceTimerControlFailure.UNAVAILABLE)
+            !root.isSupportedTimerRoot() ->
+                RuntimeResolution.Failed(DeviceTimerControlFailure.UNSUPPORTED)
+            else -> devicesRepository.runtimeModules()?.timer
+                ?.let { runtime -> RuntimeResolution.Ready(uid, root, runtime) }
+                ?: RuntimeResolution.Failed(DeviceTimerControlFailure.UNAVAILABLE)
         }
-        val runtime = devicesRepository.runtimeModules()?.timer
-            ?: return RuntimeResolution.Failed(DeviceTimerControlFailure.UNAVAILABLE)
-        return RuntimeResolution.Ready(uid, root, runtime)
     }
+
+    private fun DeviceRootSnapshot.isSupportedTimerRoot(): Boolean =
+        catalogState == DeviceRootCatalogState.VALID &&
+            family == OwnerDeviceFamily.TIMER &&
+            matchesTimerCatalog()
 }
 
 private sealed interface RuntimeResolution {
