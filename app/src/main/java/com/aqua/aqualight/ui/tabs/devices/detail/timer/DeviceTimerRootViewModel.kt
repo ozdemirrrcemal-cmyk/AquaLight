@@ -106,14 +106,7 @@ class DeviceTimerRootViewModel(
     }
 
     fun selectRegime(slotId: String, regime: DeviceTimerChannelRegime) {
-        val deviceUid = boundDeviceUid.takeIf(String::isNotBlank) ?: return
-        val control = lastControlPresentation ?: return
-        val channel = control.channels.firstOrNull { candidate -> candidate.slotId == slotId }
-            ?: return
-        val interactionReady = _uiState.value.contentEnabled &&
-            control.channelStateWriteEnabled &&
-            !control.lockLoop
-        if (!interactionReady || channel.regime == regime || slotId in pendingChannelSlotIds) return
+        val deviceUid = regimeMutationDeviceUid(slotId, regime) ?: return
 
         pendingChannelSlotIds += slotId
         renderBoundState()
@@ -132,6 +125,24 @@ class DeviceTimerRootViewModel(
         }
         channelMutationJobs[slotId] = mutationJob
         mutationJob.start()
+    }
+
+    private fun regimeMutationDeviceUid(
+        slotId: String,
+        regime: DeviceTimerChannelRegime
+    ): String? {
+        val control = lastControlPresentation
+        val channel = control?.channels?.firstOrNull { candidate -> candidate.slotId == slotId }
+        val interactionReady = control != null &&
+            _uiState.value.contentEnabled &&
+            control.channelStateWriteEnabled &&
+            !control.lockLoop
+        return boundDeviceUid.takeIf {
+            it.isNotBlank() &&
+                interactionReady &&
+                channel?.regime != regime &&
+                slotId !in pendingChannelSlotIds
+        }
     }
 
     private fun prepareRestoredSurface(deviceUid: String) {

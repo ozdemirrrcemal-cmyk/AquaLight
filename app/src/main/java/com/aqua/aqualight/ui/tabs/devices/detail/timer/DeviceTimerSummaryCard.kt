@@ -19,6 +19,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import com.aqua.aqualight.R
+import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.timer.AquaTimerDashboardAlpha
@@ -42,27 +43,7 @@ internal fun DeviceTimerSummaryCard(
             ),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                modifier = Modifier
-                    .size(AquaTimerDashboardGeometry.summaryIconContainerSize)
-                    .clip(CircleShape)
-                    .background(
-                        colors.mediaSurface.copy(alpha = AquaTimerDashboardAlpha.iconBackground)
-                    )
-                    .border(
-                        width = AquaDeviceCardGeometry.outlineWidth,
-                        color = colors.mediaOutline,
-                        shape = CircleShape
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                androidx.compose.foundation.Image(
-                    painter = painterResource(R.drawable.ic_device_timer),
-                    contentDescription = null,
-                    modifier = Modifier.size(AquaTimerDashboardGeometry.summaryIconSize),
-                    contentScale = ContentScale.Fit
-                )
-            }
+            TimerSummaryIcon(colors)
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(
@@ -102,5 +83,28 @@ internal fun DeviceTimerSummaryCard(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun TimerSummaryIcon(colors: AquaDeviceCardColors) {
+    Box(
+        modifier = Modifier
+            .size(AquaTimerDashboardGeometry.summaryIconContainerSize)
+            .clip(CircleShape)
+            .background(colors.mediaSurface.copy(alpha = AquaTimerDashboardAlpha.iconBackground))
+            .border(
+                width = AquaDeviceCardGeometry.outlineWidth,
+                color = colors.mediaOutline,
+                shape = CircleShape
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        androidx.compose.foundation.Image(
+            painter = painterResource(R.drawable.ic_device_timer),
+            contentDescription = null,
+            modifier = Modifier.size(AquaTimerDashboardGeometry.summaryIconSize),
+            contentScale = ContentScale.Fit
+        )
     }
 }

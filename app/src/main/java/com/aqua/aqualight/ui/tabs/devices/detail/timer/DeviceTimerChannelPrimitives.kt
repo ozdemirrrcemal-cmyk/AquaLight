@@ -45,6 +45,7 @@ internal fun TimerRegimeSelector(
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
 ) {
+    val optionStyle = TimerRegimeOptionStyle(colors, typography)
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -57,12 +58,16 @@ internal fun TimerRegimeSelector(
                 selected = regime == selected,
                 enabled = enabled,
                 onClick = { onSelected(regime) },
-                colors = colors,
-                typography = typography
+                style = optionStyle
             )
         }
     }
 }
+
+private data class TimerRegimeOptionStyle(
+    val colors: AquaDeviceCardColors,
+    val typography: AquaDeviceCardTypography
+)
 
 @Composable
 private fun RowScope.TimerRegimeOption(
@@ -70,9 +75,10 @@ private fun RowScope.TimerRegimeOption(
     selected: Boolean,
     enabled: Boolean,
     onClick: () -> Unit,
-    colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography
+    style: TimerRegimeOptionStyle
 ) {
+    val colors = style.colors
+    val typography = style.typography
     val label = timerRegimeLabel(regime)
     val description = stringResource(R.string.device_timer_mode_content_description, label)
     val background = if (selected) {

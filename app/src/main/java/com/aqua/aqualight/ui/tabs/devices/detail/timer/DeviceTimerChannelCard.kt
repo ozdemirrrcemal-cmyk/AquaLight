@@ -201,15 +201,15 @@ private fun TimerChannelMetadata(
 @Composable
 private fun timerScheduleSummary(channel: DeviceTimerChannelUiState): String {
     val activeName = channel.activeScheduleName?.takeIf(String::isNotBlank)
-    if (activeName != null) {
-        return stringResource(R.string.device_timer_active_schedule, activeName)
+    return when {
+        activeName != null -> stringResource(R.string.device_timer_active_schedule, activeName)
+        channel.scheduleCount == 0 -> stringResource(R.string.device_timer_schedule_none)
+        else -> pluralStringResource(
+            R.plurals.device_timer_schedule_count,
+            channel.scheduleCount,
+            channel.scheduleCount
+        )
     }
-    if (channel.scheduleCount == 0) return stringResource(R.string.device_timer_schedule_none)
-    return pluralStringResource(
-        R.plurals.device_timer_schedule_count,
-        channel.scheduleCount,
-        channel.scheduleCount
-    )
 }
 
 @Composable
@@ -217,27 +217,39 @@ private fun timerRuntimeSummary(
     channel: DeviceTimerChannelUiState,
     mutationPending: Boolean
 ): String {
-    if (mutationPending) return stringResource(R.string.device_timer_updating)
-    if (channel.temporaryOverrideActive) {
-        val remainingMinutes = (
-            (channel.temporaryOverrideRemainingMillis + MILLIS_PER_MINUTE - 1L) /
-                MILLIS_PER_MINUTE
-            ).coerceAtLeast(1L).toInt()
-        val duration = pluralStringResource(
-            R.plurals.device_timer_duration_minutes,
-            remainingMinutes,
-            remainingMinutes
-        )
-        return if (channel.operatingState == DeviceTimerOperatingState.ON) {
-            stringResource(R.string.device_timer_temporary_on, duration)
-        } else {
-            stringResource(R.string.device_timer_temporary_off, duration)
-        }
-    }
     val transitionAt = channel.nextTransitionAtEpochMillis
-    if (transitionAt == null || channel.nextTransitionType == DeviceTimerNextTransitionType.NONE) {
-        return stringResource(R.string.device_timer_next_none)
+    return when {
+        mutationPending -> stringResource(R.string.device_timer_updating)
+        channel.temporaryOverrideActive -> timerTemporaryOverrideSummary(channel)
+        transitionAt == null || channel.nextTransitionType == DeviceTimerNextTransitionType.NONE ->
+            stringResource(R.string.device_timer_next_none)
+        else -> timerNextTransitionSummary(channel, transitionAt)
     }
+}
+
+@Composable
+private fun timerTemporaryOverrideSummary(channel: DeviceTimerChannelUiState): String {
+    val remainingMinutes = (
+        (channel.temporaryOverrideRemainingMillis + MILLIS_PER_MINUTE - 1L) /
+            MILLIS_PER_MINUTE
+        ).coerceAtLeast(1L).toInt()
+    val duration = pluralStringResource(
+        R.plurals.device_timer_duration_minutes,
+        remainingMinutes,
+        remainingMinutes
+    )
+    return if (channel.operatingState == DeviceTimerOperatingState.ON) {
+        stringResource(R.string.device_timer_temporary_on, duration)
+    } else {
+        stringResource(R.string.device_timer_temporary_off, duration)
+    }
+}
+
+@Composable
+private fun timerNextTransitionSummary(
+    channel: DeviceTimerChannelUiState,
+    transitionAt: Long
+): String {
     val time = LocaleFormatter.formatTime(LocalContext.current, transitionAt)
     return when (channel.nextTransitionType) {
         DeviceTimerNextTransitionType.ON -> stringResource(R.string.device_timer_next_on, time)

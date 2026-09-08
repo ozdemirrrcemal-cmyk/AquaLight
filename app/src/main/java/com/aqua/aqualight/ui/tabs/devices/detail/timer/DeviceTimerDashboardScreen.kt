@@ -67,9 +67,7 @@ internal fun DeviceTimerDashboardScreen(
             ) { channel ->
                 DeviceTimerChannelCard(
                     channel = channel,
-                    interactionEnabled = state.contentEnabled &&
-                        timerControl.channelStateWriteEnabled &&
-                        !timerControl.lockLoop,
+                    interactionEnabled = timerControl.interactionEnabled(state.contentEnabled),
                     mutationPending = channel.slotId in state.pendingChannelSlotIds,
                     onRegimeSelected = { regime ->
                         onRegimeSelected(channel.slotId, regime)
@@ -80,3 +78,6 @@ internal fun DeviceTimerDashboardScreen(
         }
     }
 }
+
+private fun DeviceTimerControlUiState.interactionEnabled(contentEnabled: Boolean): Boolean =
+    contentEnabled && channelStateWriteEnabled && !lockLoop
