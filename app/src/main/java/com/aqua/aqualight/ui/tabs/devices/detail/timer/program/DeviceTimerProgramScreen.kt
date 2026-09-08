@@ -42,17 +42,8 @@ import com.aqua.aqualight.ui.common.timer.aquaTimerDashboardTypography
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerStateMessageCard
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.toCommercialTimerError
 
-internal data class DeviceTimerProgramActions(
-    val onAdd: () -> Unit,
-    val onDelete: (Int) -> Unit,
-    val onNameClick: (Int) -> Unit,
-    val onEnabledToggle: (Int) -> Unit,
-    val onWeekdayToggle: (Int, Int) -> Unit,
-    val onStartTimeClick: (Int) -> Unit,
-    val onEndTimeClick: (Int) -> Unit
-)
-
 @Composable
+@Suppress("LongMethod")
 internal fun DeviceTimerProgramScreen(
     state: DeviceTimerProgramUiState,
     actions: DeviceTimerProgramActions,
@@ -153,7 +144,12 @@ private fun TimerProgramCard(
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
 ) {
-    AquaDeviceCardSurface(modifier = Modifier.alpha(if (enabled) 1f else AquaTimerInteractionStyle.disabledContentAlpha)) {
+    val contentAlpha = if (enabled) {
+        AquaTimerInteractionStyle.enabledContentAlpha
+    } else {
+        AquaTimerInteractionStyle.disabledContentAlpha
+    }
+    AquaDeviceCardSurface(modifier = Modifier.alpha(contentAlpha)) {
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(AquaTimerDashboardGeometry.editorSectionGap)
@@ -292,6 +288,7 @@ private fun TimerWeekdaySelector(
 }
 
 @Composable
+@Suppress("LongParameterList")
 private fun TimerEditorValueRow(
     label: String,
     value: String,
@@ -340,7 +337,10 @@ private fun TimerEditorButton(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(tint.copy(alpha = AquaTimerDashboardAlpha.actionBackground), AquaTimerDashboardGeometry.actionShape)
+            .background(
+                tint.copy(alpha = AquaTimerDashboardAlpha.actionBackground),
+                AquaTimerDashboardGeometry.actionShape
+            )
             .border(AquaDeviceCardGeometry.outlineWidth, tint, AquaTimerDashboardGeometry.actionShape)
             .clickable(enabled = enabled, onClick = onClick)
             .padding(AquaTimerDashboardGeometry.actionPadding),

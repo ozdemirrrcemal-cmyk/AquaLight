@@ -25,6 +25,7 @@ import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.toCommercialTimerError
 import kotlinx.coroutines.launch
 
+@Suppress("TooManyFunctions")
 class DeviceTimerProgramFragment : Fragment(R.layout.fragment_device_timer_program) {
 
     private val args: DeviceTimerProgramFragmentArgs by navArgs()

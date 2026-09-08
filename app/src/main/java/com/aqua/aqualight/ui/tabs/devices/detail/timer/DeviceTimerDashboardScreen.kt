@@ -15,6 +15,7 @@ import com.aqua.aqualight.application.devices.timer.DeviceTimerChannelRegime
 import com.aqua.aqualight.ui.common.timer.AquaTimerDashboardGeometry
 
 @Composable
+@Suppress("LongMethod")
 internal fun DeviceTimerDashboardScreen(
     state: DeviceTimerRootUiState,
     onRegimeSelected: (String, DeviceTimerChannelRegime, Long?) -> Unit,

@@ -407,7 +407,7 @@ private fun DeviceTimerScheduleSnapshot.toUiState() = DeviceTimerScheduleUiState
     spansMidnight = spansMidnight
 )
 
-@Suppress("ComplexCondition")
+@Suppress("ComplexCondition", "LongParameterList")
 private fun DeviceTimerControlUiState?.regimeMutationDeviceUid(
     boundDeviceUid: String,
     contentEnabled: Boolean,
