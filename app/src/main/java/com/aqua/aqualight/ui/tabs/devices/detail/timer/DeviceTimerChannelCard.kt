@@ -48,7 +48,7 @@ import com.aqua.aqualight.ui.common.timer.aquaTimerDashboardTypography
 internal fun DeviceTimerChannelCard(
     channel: DeviceTimerChannelUiState,
     interactionEnabled: Boolean,
-    manualControlEnabled: Boolean,
+    manualPowerEnabled: Boolean,
     mutationPending: Boolean,
     onChannelClick: () -> Unit,
     onPowerClick: () -> Unit,
@@ -64,7 +64,11 @@ internal fun DeviceTimerChannelCard(
         name,
         stateLabel
     )
-    val enabled = manualControlEnabled && !mutationPending
+    val powerEnabled = manualPowerEnabled && !mutationPending
+    val detailsDescription = stringResource(
+        R.string.device_timer_channel_details_description,
+        name
+    )
 
     AquaDeviceCardSurface(
         modifier = modifier
@@ -73,7 +77,6 @@ internal fun DeviceTimerChannelCard(
                 if (interactionEnabled || mutationPending) 1f
                 else AquaTimerInteractionStyle.disabledContentAlpha
             )
-            .clickable(enabled = interactionEnabled, role = Role.Button, onClick = onChannelClick)
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -122,7 +125,7 @@ internal fun DeviceTimerChannelCard(
                 }
                 TimerPowerButton(
                     active = channel.operatingState == DeviceTimerOperatingState.ON,
-                    enabled = enabled,
+                    enabled = powerEnabled,
                     onClick = onPowerClick,
                     colors = colors
                 )
@@ -138,12 +141,25 @@ internal fun DeviceTimerChannelCard(
                     typography = typography,
                     modifier = Modifier.weight(1f)
                 )
-                Image(
-                    painter = painterResource(R.drawable.ic_arrow_right),
-                    contentDescription = null,
-                    modifier = Modifier.size(AquaTimerDashboardGeometry.metadataIconSize),
-                    colorFilter = ColorFilter.tint(colors.secondaryText)
-                )
+                Box(
+                    modifier = Modifier
+                        .size(AquaTimerDashboardGeometry.metadataActionSize)
+                        .clip(CircleShape)
+                        .clickable(
+                            enabled = interactionEnabled && !mutationPending,
+                            role = Role.Button,
+                            onClick = onChannelClick
+                        )
+                        .semantics { contentDescription = detailsDescription },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.ic_arrow_right),
+                        contentDescription = null,
+                        modifier = Modifier.size(AquaTimerDashboardGeometry.metadataIconSize),
+                        colorFilter = ColorFilter.tint(colors.secondaryText)
+                    )
+                }
             }
             if (channel.outputHealth == DeviceTimerOutputHealth.HARDWARE_FAULT) {
                 TimerMetadataRow(
@@ -185,8 +201,8 @@ internal fun TimerPowerButton(
 ) {
     val tint = if (active) colors.accent else colors.secondaryText
     val description = stringResource(
-        if (active) R.string.device_timer_manual_control_open_active_description
-        else R.string.device_timer_manual_control_open_inactive_description
+        if (active) R.string.device_timer_manual_power_turn_off_description
+        else R.string.device_timer_manual_power_turn_on_description
     )
     Box(
         modifier = modifier
@@ -214,6 +230,8 @@ internal val DeviceTimerChannelUiState.effectiveName: String
 internal fun timerScheduleSummary(channel: DeviceTimerChannelUiState): String {
     val activeName = channel.activeScheduleName?.takeIf(String::isNotBlank)
     return when {
+        channel.regime != DeviceTimerChannelRegime.AUTO ->
+            stringResource(R.string.device_timer_work_mode_manual)
         activeName != null -> stringResource(R.string.device_timer_active_schedule, activeName)
         channel.scheduleCount == 0 -> stringResource(R.string.device_timer_schedule_none)
         else -> pluralStringResource(
@@ -233,6 +251,8 @@ internal fun timerRuntimeSummary(
     return when {
         mutationPending -> stringResource(R.string.device_timer_updating)
         channel.temporaryOverrideActive -> timerTemporaryOverrideSummary(channel)
+        channel.regime != DeviceTimerChannelRegime.AUTO ->
+            stringResource(R.string.device_timer_manual_programs_paused)
         transitionAt == null || channel.nextTransitionType == DeviceTimerNextTransitionType.NONE ->
             stringResource(R.string.device_timer_next_none)
         else -> timerNextTransitionSummary(channel, transitionAt)

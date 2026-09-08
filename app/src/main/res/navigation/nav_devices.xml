@@ -211,10 +211,6 @@
         tools:layout="@layout/fragment_device_timer_channel">
         <argument android:name="deviceUid" app:argType="string" />
         <argument android:name="slotId" app:argType="string" />
-        <argument
-            android:name="openManualControl"
-            android:defaultValue="false"
-            app:argType="boolean" />
         <action
             android:id="@+id/action_deviceTimerChannelFragment_to_deviceTimerProgramFragment"
             app:destination="@id/deviceTimerProgramFragment"

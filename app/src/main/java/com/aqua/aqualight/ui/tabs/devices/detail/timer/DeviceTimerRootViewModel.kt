@@ -147,6 +147,17 @@ class DeviceTimerRootViewModel(
         mutationJob.start()
     }
 
+    fun toggleManualPower(slotId: String) {
+        val channel = lastControlPresentation?.channels
+            ?.firstOrNull { candidate -> candidate.slotId == slotId }
+            ?: return
+        val nextRegime = when (channel.operatingState) {
+            DeviceTimerOperatingState.ON -> DeviceTimerChannelRegime.OFF
+            DeviceTimerOperatingState.OFF -> DeviceTimerChannelRegime.ON
+        }
+        selectRegime(slotId = slotId, regime = nextRegime)
+    }
+
     private fun prepareRestoredSurface(deviceUid: String) {
         if (surfacePreparationJob?.isActive == true) return
         surfacePreparationPending = true
@@ -430,7 +441,8 @@ private fun DeviceTimerControlUiState?.regimeMutationDeviceUid(
     return boundDeviceUid.takeIf {
         it.isNotBlank() &&
             interactionReady &&
-            (!persistentMutation || channel?.regime != regime) &&
+            (!persistentMutation || channel?.regime != regime ||
+                channel?.temporaryOverrideActive == true) &&
             (persistentMutation || regime != DeviceTimerChannelRegime.AUTO) &&
             (persistentMutation || temporaryDurationMillis?.let {
                 duration -> duration in 1L..MAX_TEMPORARY_OVERRIDE_MILLIS

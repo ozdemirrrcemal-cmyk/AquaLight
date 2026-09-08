@@ -60,12 +60,74 @@ class DeviceTimerChannelViewModelTest {
         val viewModel = DeviceTimerChannelViewModel(operations)
         viewModel.bind(DEVICE_UID, CHANNEL_SLOT_ID)
 
-        viewModel.resumePersistentProgram()
+        viewModel.resumePersistentMode()
 
         assertEquals(
             listOf(DeviceTimerChannelRegime.AUTO),
             operations.regimeCalls
         )
+    }
+
+    @Test
+    fun `power uses persistent on off and never starts a timed override`() = runTest {
+        val operations = ChannelTimerOperations(
+            control(
+                regime = DeviceTimerChannelRegime.AUTO,
+                operatingState = DeviceTimerOperatingState.OFF
+            )
+        )
+        val viewModel = DeviceTimerChannelViewModel(operations)
+        viewModel.bind(DEVICE_UID, CHANNEL_SLOT_ID)
+
+        viewModel.toggleManualPower()
+
+        assertEquals(listOf(DeviceTimerChannelRegime.ON), operations.regimeCalls)
+        assertEquals(0, operations.temporaryOverrideCalls)
+    }
+
+    @Test
+    fun `manual work mode preserves the current physical state`() = runTest {
+        val operations = ChannelTimerOperations(
+            control(
+                regime = DeviceTimerChannelRegime.AUTO,
+                operatingState = DeviceTimerOperatingState.OFF
+            )
+        )
+        val viewModel = DeviceTimerChannelViewModel(operations)
+        viewModel.bind(DEVICE_UID, CHANNEL_SLOT_ID)
+
+        viewModel.setWorkMode(DeviceTimerWorkMode.MANUAL)
+
+        assertEquals(listOf(DeviceTimerChannelRegime.OFF), operations.regimeCalls)
+    }
+
+    @Test
+    fun `program work mode maps only to firmware auto`() = runTest {
+        val operations = ChannelTimerOperations(
+            control(regime = DeviceTimerChannelRegime.ON)
+        )
+        val viewModel = DeviceTimerChannelViewModel(operations)
+        viewModel.bind(DEVICE_UID, CHANNEL_SLOT_ID)
+
+        viewModel.setWorkMode(DeviceTimerWorkMode.PROGRAM)
+
+        assertEquals(listOf(DeviceTimerChannelRegime.AUTO), operations.regimeCalls)
+    }
+
+    @Test
+    fun `reselecting manual mode never changes its persistent on off state`() = runTest {
+        val operations = ChannelTimerOperations(
+            control(
+                regime = DeviceTimerChannelRegime.ON,
+                operatingState = DeviceTimerOperatingState.OFF
+            )
+        )
+        val viewModel = DeviceTimerChannelViewModel(operations)
+        viewModel.bind(DEVICE_UID, CHANNEL_SLOT_ID)
+
+        viewModel.setWorkMode(DeviceTimerWorkMode.MANUAL)
+
+        assertEquals(emptyList<DeviceTimerChannelRegime>(), operations.regimeCalls)
     }
 
     @Test
@@ -98,6 +160,7 @@ private class ChannelTimerOperations(
     private val results = MutableStateFlow(result)
     val regimeCalls = mutableListOf<DeviceTimerChannelRegime>()
     val displayNameCalls = mutableListOf<DeviceTimerDisplayNameUpdate>()
+    var temporaryOverrideCalls = 0
 
     override fun observeControl(deviceUid: String): Flow<DeviceTimerControlResult> = results
     override fun currentControl(deviceUid: String): DeviceTimerControlResult = results.value
@@ -121,7 +184,10 @@ private class ChannelTimerOperations(
         slotId: String,
         regime: DeviceTimerChannelRegime,
         durationMillis: Long
-    ): DeviceTimerControlResult = results.value
+    ): DeviceTimerControlResult {
+        temporaryOverrideCalls += 1
+        return results.value
+    }
 
     override suspend fun setDisplayName(
         deviceUid: String,
@@ -142,6 +208,7 @@ private class ChannelTimerOperations(
 private fun control(
     displayName: String = "Channel 1",
     regime: DeviceTimerChannelRegime = DeviceTimerChannelRegime.AUTO,
+    operatingState: DeviceTimerOperatingState = DeviceTimerOperatingState.OFF,
     temporaryOverrideActive: Boolean = false
 ): DeviceTimerControlResult = DeviceTimerControlResult.Available(
     DeviceTimerControlSnapshot(
@@ -166,7 +233,7 @@ private fun control(
                 defaultName = "Channel 1",
                 displayName = displayName,
                 regime = regime,
-                operatingState = DeviceTimerOperatingState.OFF,
+                operatingState = operatingState,
                 scheduleCount = 0,
                 activeScheduleSlotId = null,
                 activeScheduleName = null,

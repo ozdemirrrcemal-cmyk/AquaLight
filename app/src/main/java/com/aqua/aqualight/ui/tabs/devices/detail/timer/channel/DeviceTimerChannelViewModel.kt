@@ -7,6 +7,7 @@ import com.aqua.aqualight.application.devices.timer.DeviceTimerControlFailure
 import com.aqua.aqualight.application.devices.timer.DeviceTimerControlOperations
 import com.aqua.aqualight.application.devices.timer.DeviceTimerControlResult
 import com.aqua.aqualight.application.devices.timer.DeviceTimerDisplayNameUpdate
+import com.aqua.aqualight.application.devices.timer.DeviceTimerOperatingState
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerChannelUiState
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.toUiState
 import kotlinx.coroutines.CoroutineStart
@@ -71,6 +72,29 @@ class DeviceTimerChannelViewModel(
         mutate { operations.setRegime(state.deviceUid, state.slotId, regime) }
     }
 
+    fun toggleManualPower() {
+        val channel = _uiState.value.channel ?: return
+        val nextRegime = when (channel.operatingState) {
+            DeviceTimerOperatingState.ON -> DeviceTimerChannelRegime.OFF
+            DeviceTimerOperatingState.OFF -> DeviceTimerChannelRegime.ON
+        }
+        setPersistentRegime(nextRegime)
+    }
+
+    fun setWorkMode(workMode: DeviceTimerWorkMode) {
+        val channel = _uiState.value.channel ?: return
+        val regime = when (workMode) {
+            DeviceTimerWorkMode.PROGRAM -> DeviceTimerChannelRegime.AUTO
+            DeviceTimerWorkMode.MANUAL -> channel.regime.takeUnless {
+                it == DeviceTimerChannelRegime.AUTO
+            } ?: when (channel.operatingState) {
+                DeviceTimerOperatingState.ON -> DeviceTimerChannelRegime.ON
+                DeviceTimerOperatingState.OFF -> DeviceTimerChannelRegime.OFF
+            }
+        }
+        setPersistentRegime(regime)
+    }
+
     fun startTemporaryOverride(regime: DeviceTimerChannelRegime, durationMinutes: Int) {
         val state = _uiState.value
         if (regime == DeviceTimerChannelRegime.AUTO ||
@@ -89,7 +113,7 @@ class DeviceTimerChannelViewModel(
     }
 
     /** Firmware cancels a temporary override when the persistent regime is sent again. */
-    fun resumePersistentProgram() {
+    fun resumePersistentMode() {
         val channel = _uiState.value.channel ?: return
         if (!channel.temporaryOverrideActive) return
         setPersistentRegime(channel.regime)
@@ -189,6 +213,8 @@ data class DeviceTimerChannelDetailUiState(
 )
 
 enum class DeviceTimerChannelLoadState { IDLE, LOADING, CONTENT, FAILED }
+
+enum class DeviceTimerWorkMode { MANUAL, PROGRAM }
 
 sealed interface DeviceTimerChannelEvent {
     data class Failed(val failure: DeviceTimerControlFailure) : DeviceTimerChannelEvent

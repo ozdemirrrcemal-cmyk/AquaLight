@@ -112,6 +112,20 @@ class DeviceRootUiArchitectureGuardTest(unittest.TestCase):
             errors,
         )
 
+    def test_timer_power_cannot_navigate_to_the_channel_surface(self) -> None:
+        fragment = "onPowerClick = { slotId -> openChannel(slotId, true) }"
+
+        errors = GUARD.validate_timer_control_surface(
+            "<FrameLayout />",
+            fragment,
+            "class DeviceTimerRootViewModel",
+        )
+
+        self.assertTrue(
+            any("direct persistent manual command" in error for error in errors),
+            errors,
+        )
+
     def test_cooling_code_outside_presentation_root_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             repository_root = Path(temporary_directory)

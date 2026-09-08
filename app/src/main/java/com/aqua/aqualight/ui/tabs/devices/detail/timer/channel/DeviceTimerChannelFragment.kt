@@ -37,23 +37,14 @@ class DeviceTimerChannelFragment : Fragment(R.layout.fragment_device_timer_chann
     }
     private var _binding: FragmentDeviceTimerChannelBinding? = null
     private val binding get() = checkNotNull(_binding)
-    private var initialManualControlPresented = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentDeviceTimerChannelBinding.bind(view)
-        initialManualControlPresented = savedInstanceState?.getBoolean(
-            STATE_INITIAL_MANUAL_PRESENTED
-        ) == true
         registerResults()
         setupContent()
         observeState()
         viewModel.bind(args.deviceUid, args.slotId)
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        outState.putBoolean(STATE_INITIAL_MANUAL_PRESENTED, initialManualControlPresented)
-        super.onSaveInstanceState(outState)
     }
 
     private fun setupContent() {
@@ -64,7 +55,8 @@ class DeviceTimerChannelFragment : Fragment(R.layout.fragment_device_timer_chann
                 DeviceTimerChannelScreen(
                     state = state,
                     actions = DeviceTimerChannelActions(
-                        onManualControlClick = ::showManualControl,
+                        onPowerClick = viewModel::toggleManualPower,
+                        onTimedControlClick = ::showTimedControl,
                         onProgramsClick = ::openPrograms,
                         onWorkModeClick = ::showWorkMode,
                         onChannelNameClick = ::showChannelName
@@ -85,13 +77,6 @@ class DeviceTimerChannelFragment : Fragment(R.layout.fragment_device_timer_chann
                             state.loadState == DeviceTimerChannelLoadState.LOADING ||
                                 state.mutationPending
                         )
-                        if (args.openManualControl &&
-                            !initialManualControlPresented &&
-                            state.loadState == DeviceTimerChannelLoadState.CONTENT
-                        ) {
-                            initialManualControlPresented = true
-                            showManualControl()
-                        }
                     }
                 }
                 launch { viewModel.events.collect(::handleEvent) }
@@ -125,7 +110,7 @@ class DeviceTimerChannelFragment : Fragment(R.layout.fragment_device_timer_chann
         )
     }
 
-    private fun showManualControl() {
+    private fun showTimedControl() {
         val state = viewModel.uiState.value
         val channel = state.channel ?: return
         if (!state.temporaryOverrideWriteEnabled || state.mutationPending) return
@@ -180,14 +165,16 @@ class DeviceTimerChannelFragment : Fragment(R.layout.fragment_device_timer_chann
             fragmentManager = parentFragmentManager,
             title = getString(R.string.device_timer_work_mode_title),
             options = listOf(
-                DeviceTimerChannelRegime.AUTO.name to
-                    getString(R.string.device_timer_mode_auto),
-                DeviceTimerChannelRegime.ON.name to
-                    getString(R.string.device_timer_mode_on),
-                DeviceTimerChannelRegime.OFF.name to
-                    getString(R.string.device_timer_mode_off)
+                DeviceTimerWorkMode.MANUAL.name to
+                    getString(R.string.device_timer_work_mode_manual),
+                DeviceTimerWorkMode.PROGRAM.name to
+                    getString(R.string.device_timer_work_mode_program)
             ),
-            selectedId = channel.regime.name,
+            selectedId = if (channel.regime == DeviceTimerChannelRegime.AUTO) {
+                DeviceTimerWorkMode.PROGRAM.name
+            } else {
+                DeviceTimerWorkMode.MANUAL.name
+            },
             columns = 1,
             requestKey = REQUEST_WORK_MODE
         )
@@ -237,7 +224,7 @@ class DeviceTimerChannelFragment : Fragment(R.layout.fragment_device_timer_chann
                 DeviceTimerManualControlBottomSheet.RESULT_CUSTOM_DURATION ->
                     showCustomDuration(regime)
                 DeviceTimerManualControlBottomSheet.RESULT_RESUME ->
-                    viewModel.resumePersistentProgram()
+                    viewModel.resumePersistentMode()
             }
         }
         parentFragmentManager.setFragmentResultListener(
@@ -262,10 +249,10 @@ class DeviceTimerChannelFragment : Fragment(R.layout.fragment_device_timer_chann
             if (result.getString(SingleChoiceBottomSheet.RESULT_KEY) !=
                 SingleChoiceBottomSheet.RESULT_SELECTED
             ) return@setFragmentResultListener
-            val regime = result.getString(SingleChoiceBottomSheet.RESULT_SELECTED_ID)
-                ?.let { runCatching { DeviceTimerChannelRegime.valueOf(it) }.getOrNull() }
+            val workMode = result.getString(SingleChoiceBottomSheet.RESULT_SELECTED_ID)
+                ?.let { runCatching { DeviceTimerWorkMode.valueOf(it) }.getOrNull() }
                 ?: return@setFragmentResultListener
-            viewModel.setPersistentRegime(regime)
+            viewModel.setWorkMode(workMode)
         }
         parentFragmentManager.setFragmentResultListener(
             REQUEST_CHANNEL_NAME,
@@ -309,7 +296,6 @@ class DeviceTimerChannelFragment : Fragment(R.layout.fragment_device_timer_chann
         const val REQUEST_CUSTOM_DURATION = "timer_custom_duration"
         const val REQUEST_WORK_MODE = "timer_work_mode"
         const val REQUEST_CHANNEL_NAME = "timer_channel_name"
-        const val STATE_INITIAL_MANUAL_PRESENTED = "initial_manual_presented"
         const val MIN_TEMPORARY_DURATION_MINUTES = 1
         const val MAX_TEMPORARY_DURATION_MINUTES = 1_440
         const val DEFAULT_CUSTOM_DURATION_MINUTES = 30

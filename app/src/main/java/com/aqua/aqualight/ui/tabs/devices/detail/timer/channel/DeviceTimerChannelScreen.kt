@@ -30,6 +30,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.timer.DeviceTimerChannelRegime
 import com.aqua.aqualight.application.devices.timer.DeviceTimerOperatingState
 import com.aqua.aqualight.application.devices.timer.DeviceTimerOutputHealth
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
@@ -45,13 +46,13 @@ import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerStateMessageCa
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerStatusNotice
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.effectiveName
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.timerOperatingStateLabel
-import com.aqua.aqualight.ui.tabs.devices.detail.timer.timerRegimeLabel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.timerRuntimeSummary
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.toCommercialTimerError
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.toCommercialTimerStatus
 
 internal data class DeviceTimerChannelActions(
-    val onManualControlClick: () -> Unit,
+    val onPowerClick: () -> Unit,
+    val onTimedControlClick: () -> Unit,
     val onProgramsClick: () -> Unit,
     val onWorkModeClick: () -> Unit,
     val onChannelNameClick: () -> Unit
@@ -116,7 +117,7 @@ internal fun DeviceTimerChannelScreen(
                     state = state,
                     colors = colors,
                     typography = typography,
-                    onManualControlClick = actions.onManualControlClick
+                    onPowerClick = actions.onPowerClick
                 )
             }
             item(key = "actions") {
@@ -153,14 +154,14 @@ internal fun DeviceTimerChannelScreen(
                                 stringResource(R.string.device_timer_temporary_inactive)
                             },
                             enabled = state.temporaryOverrideWriteEnabled && !state.mutationPending,
-                            onClick = actions.onManualControlClick,
+                            onClick = actions.onTimedControlClick,
                             colors = colors,
                             typography = typography
                         )
                         TimerChannelDetailRow(
                             iconRes = R.drawable.ic_settings,
                             title = stringResource(R.string.device_timer_channel_work_mode),
-                            value = timerRegimeLabel(channel.regime),
+                            value = timerWorkModeLabel(channel.regime),
                             enabled = state.channelStateWriteEnabled && !state.mutationPending,
                             onClick = actions.onWorkModeClick,
                             colors = colors,
@@ -187,7 +188,7 @@ private fun TimerChannelHero(
     state: DeviceTimerChannelDetailUiState,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography,
-    onManualControlClick: () -> Unit
+    onPowerClick: () -> Unit
 ) {
     val channel = checkNotNull(state.channel)
     val active = channel.operatingState == DeviceTimerOperatingState.ON
@@ -213,16 +214,17 @@ private fun TimerChannelHero(
                         CircleShape
                     )
                     .clickable(
-                        enabled = state.temporaryOverrideWriteEnabled && !state.mutationPending,
+                        enabled = state.channelStateWriteEnabled && !state.mutationPending,
                         role = Role.Button,
-                        onClick = onManualControlClick
+                        onClick = onPowerClick
                     ),
                 contentAlignment = Alignment.Center
             ) {
                 Image(
                     painter = painterResource(R.drawable.ic_timer_power),
                     contentDescription = stringResource(
-                        R.string.device_timer_manual_control_open_description
+                        if (active) R.string.device_timer_manual_power_turn_off_description
+                        else R.string.device_timer_manual_power_turn_on_description
                     ),
                     modifier = Modifier.size(AquaTimerDashboardGeometry.detailHeroPowerIconSize),
                     colorFilter = ColorFilter.tint(tint)
@@ -233,7 +235,7 @@ private fun TimerChannelHero(
                 style = typography.title.copy(textAlign = TextAlign.Center)
             )
             BasicText(
-                text = timerRegimeLabel(channel.regime),
+                text = timerWorkModeLabel(channel.regime),
                 style = typography.caption.copy(
                     color = colors.secondaryText,
                     textAlign = TextAlign.Center
@@ -242,6 +244,16 @@ private fun TimerChannelHero(
         }
     }
 }
+
+@Composable
+private fun timerWorkModeLabel(regime: DeviceTimerChannelRegime): String =
+    stringResource(
+        if (regime == DeviceTimerChannelRegime.AUTO) {
+            R.string.device_timer_work_mode_program
+        } else {
+            R.string.device_timer_work_mode_manual
+        }
+    )
 
 @Composable
 @Suppress("LongParameterList")

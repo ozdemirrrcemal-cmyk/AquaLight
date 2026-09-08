@@ -51,8 +51,8 @@ class DeviceTimerRootFragment : Fragment(R.layout.fragment_device_timer_root) {
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
                 DeviceTimerDashboardScreen(
                     state = state,
-                    onChannelClick = { slotId -> openChannel(slotId, false) },
-                    onPowerClick = { slotId -> openChannel(slotId, true) }
+                    onChannelClick = ::openChannel,
+                    onPowerClick = viewModel::toggleManualPower
                 )
             }
         }
@@ -93,7 +93,7 @@ class DeviceTimerRootFragment : Fragment(R.layout.fragment_device_timer_root) {
         )
     }
 
-    private fun openChannel(slotId: String, openManualControl: Boolean) {
+    private fun openChannel(slotId: String) {
         if (!viewModel.uiState.value.contentEnabled) return
         val navController = findNavController()
         if (navController.currentDestination?.id != R.id.deviceTimerRootFragment) return
@@ -101,8 +101,7 @@ class DeviceTimerRootFragment : Fragment(R.layout.fragment_device_timer_root) {
             DeviceTimerRootFragmentDirections
                 .actionDeviceTimerRootFragmentToDeviceTimerChannelFragment(
                     deviceUid = args.deviceUid,
-                    slotId = slotId,
-                    openManualControl = openManualControl
+                    slotId = slotId
                 )
         )
     }

@@ -34,6 +34,7 @@ object AquaTimerDashboardGeometry {
     val channelSectionGap = AquaDeviceCardGeometry.contentGap
     val metadataGap = 7.dp
     val metadataIconSize = 16.dp
+    val metadataActionSize = 48.dp
     val metadataTextGap = 8.dp
     val dividerHeight = 1.dp
     val detailHeroPowerContainerSize = 96.dp

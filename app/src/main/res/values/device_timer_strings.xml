@@ -42,6 +42,7 @@
     <string name="device_timer_channels_empty_title">No channels available</string>
     <string name="device_timer_channels_empty_message">The Timer did not report a usable channel. Refresh the device before continuing.</string>
     <string name="device_timer_channel_card_content_description">Channel %1$d, %2$s, %3$s</string>
+    <string name="device_timer_channel_details_description">Open programs and settings for %1$s</string>
     <string name="device_timer_state_on">ON</string>
     <string name="device_timer_state_off">OFF</string>
     <string name="device_timer_mode_auto">Follow programs</string>
@@ -57,6 +58,7 @@
     <string name="device_timer_next_on">Turns on at %1$s</string>
     <string name="device_timer_next_off">Turns off at %1$s</string>
     <string name="device_timer_next_none">No upcoming transition</string>
+    <string name="device_timer_manual_programs_paused">Programs are paused in manual mode</string>
     <string name="device_timer_temporary_on">Temporarily on · %1$s remaining</string>
     <string name="device_timer_temporary_off">Temporarily off · %1$s remaining</string>
     <plurals name="device_timer_duration_minutes">
@@ -70,10 +72,9 @@
     <string name="device_timer_timed_off">Timed off</string>
     <string name="device_timer_timed_on_title">Turn on temporarily</string>
     <string name="device_timer_timed_off_title">Turn off temporarily</string>
-    <string name="device_timer_manual_control_open_description">Open manual control</string>
-    <string name="device_timer_manual_control_open_active_description">Channel is on; open manual control</string>
-    <string name="device_timer_manual_control_open_inactive_description">Channel is off; open manual control</string>
-    <string name="device_timer_manual_control_title">Manual control</string>
+    <string name="device_timer_manual_power_turn_on_description">Turn channel on manually</string>
+    <string name="device_timer_manual_power_turn_off_description">Turn channel off manually</string>
+    <string name="device_timer_manual_control_title">Timed control</string>
     <string name="device_timer_manual_control_message">When temporary control ends, the channel resumes its selected operating mode.</string>
     <string name="device_timer_manual_duration_label">Select duration</string>
     <string name="device_timer_duration_15_minutes">15 min</string>
@@ -94,6 +95,8 @@
     <string name="device_timer_temporary_inactive">Not active</string>
     <string name="device_timer_channel_work_mode">Operating mode</string>
     <string name="device_timer_work_mode_title">Operating mode</string>
+    <string name="device_timer_work_mode_manual">Manual</string>
+    <string name="device_timer_work_mode_program">Program</string>
     <string name="device_timer_channel_name">Channel name</string>
     <string name="device_timer_channel_name_title">Channel name</string>
     <string name="device_timer_channel_name_label">Name</string>

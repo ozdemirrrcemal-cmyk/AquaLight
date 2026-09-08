@@ -66,6 +66,10 @@ TIMER_VIEW_MODEL = Path(
     "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/"
     "DeviceTimerRootViewModel.kt"
 )
+TIMER_CHANNEL_CARD = Path(
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/"
+    "DeviceTimerChannelCard.kt"
+)
 TIMER_UI_ROOT = Path(
     "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer"
 )
@@ -217,6 +221,7 @@ def validate_timer_control_surface(
     layout_source: str,
     fragment_source: str,
     view_model_source: str,
+    channel_card_source: str | None = None,
 ) -> list[str]:
     """Require the Timer dashboard while preserving its application-owned control boundary."""
     errors: list[str] = []
@@ -253,12 +258,12 @@ def validate_timer_control_surface(
             "Timer root must render the firmware-backed dashboard",
         ),
         (
-            "onChannelClick = { slotId -> openChannel(slotId, false) }",
+            "onChannelClick = ::openChannel",
             "Timer dashboard channels must enter the channel-scoped control surface",
         ),
         (
-            "onPowerClick = { slotId -> openChannel(slotId, true) }",
-            "Timer power affordance must enter the scoped manual control surface",
+            "onPowerClick = viewModel::toggleManualPower",
+            "Timer power must send the direct persistent manual command",
         ),
     ):
         source = layout_source if token.startswith("android:id") else fragment_source
@@ -321,6 +326,10 @@ def validate_timer_control_surface(
             "Timer channel mutations must use the application operation",
         ),
         (
+            "fun toggleManualPower(slotId: String)",
+            "Timer dashboard power must derive ON or OFF from authoritative channel state",
+        ),
+        (
             "pendingChannelSlotIds",
             "Timer channel mutations must expose derived pending presentation state",
         ),
@@ -337,6 +346,37 @@ def validate_timer_control_surface(
         if forbidden in view_model_source or forbidden in fragment_source:
             errors.append(
                 f"{TIMER_VIEW_MODEL}: Timer UI bypasses application boundaries: {forbidden}"
+            )
+    if "openManualControl" in fragment_source:
+        errors.append(
+            f"{TIMER_FRAGMENT}: Timer power must not retain a navigation path to timed control"
+        )
+
+    if channel_card_source is not None:
+        for token, reason in (
+            (
+                "onClick = onChannelClick",
+                "Timer channel details must be owned by the arrow action",
+            ),
+            (
+                ".size(AquaTimerDashboardGeometry.metadataActionSize)",
+                "Timer detail arrow must retain a full touch target",
+            ),
+            (
+                "R.string.device_timer_manual_power_turn_on_description",
+                "Timer power accessibility copy must describe the direct manual action",
+            ),
+        ):
+            _require(TIMER_CHANNEL_CARD, channel_card_source, errors, token, reason)
+        surface_match = re.search(
+            r"AquaDeviceCardSurface\(\s*modifier\s*=\s*(.*?)\n\s*\)\s*\{",
+            channel_card_source,
+            re.DOTALL,
+        )
+        if surface_match is None or ".clickable(" in surface_match.group(1):
+            errors.append(
+                f"{TIMER_CHANNEL_CARD}: Timer card surface must remain non-clickable; "
+                "only power and arrow actions may handle taps"
             )
     return errors
 
@@ -484,6 +524,7 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
     cooling_layout = _read(repository_root, COOLING_LAYOUT, errors)
     timer_fragment = _read(repository_root, TIMER_FRAGMENT, errors)
     timer_view_model = _read(repository_root, TIMER_VIEW_MODEL, errors)
+    timer_channel_card = _read(repository_root, TIMER_CHANNEL_CARD, errors)
     timer_layout = _read(repository_root, TIMER_LAYOUT, errors)
 
     for token, reason in (
@@ -653,7 +694,12 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
     )
     errors.extend(validate_layout_contract(TIMER_LAYOUT, timer_layout))
     errors.extend(
-        validate_timer_control_surface(timer_layout, timer_fragment, timer_view_model)
+        validate_timer_control_surface(
+            timer_layout,
+            timer_fragment,
+            timer_view_model,
+            timer_channel_card,
+        )
     )
     errors.extend(validate_timer_feature_boundaries(repository_root))
     errors.extend(validate_cooling_feature_boundaries(repository_root))

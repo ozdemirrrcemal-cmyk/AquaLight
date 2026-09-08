@@ -188,6 +188,43 @@ class DeviceTimerRootViewModelTest {
     }
 
     @Test
+    fun `dashboard power turns the active channel off with the persistent firmware command`() =
+        runTest {
+            val controls = FakeTimerControlOperations(availableControl())
+            val viewModel = viewModel(controls, FakePreparationOperations(fresh = true))
+            viewModel.bind(DEVICE_UID)
+
+            viewModel.toggleManualPower(CHANNEL_SLOT_ID)
+
+            assertEquals(
+                listOf(RegimeCall(DEVICE_UID, CHANNEL_SLOT_ID, DeviceTimerChannelRegime.OFF)),
+                controls.regimeCalls
+            )
+            assertTrue(controls.temporaryOverrideCalls.isEmpty())
+        }
+
+    @Test
+    fun `dashboard power can cancel a temporary override using the existing persistent regime`() =
+        runTest {
+            val controls = FakeTimerControlOperations(
+                availableControl(
+                    regime = DeviceTimerChannelRegime.OFF,
+                    operatingState = DeviceTimerOperatingState.ON,
+                    temporaryOverrideActive = true
+                )
+            )
+            val viewModel = viewModel(controls, FakePreparationOperations(fresh = true))
+            viewModel.bind(DEVICE_UID)
+
+            viewModel.toggleManualPower(CHANNEL_SLOT_ID)
+
+            assertEquals(
+                listOf(RegimeCall(DEVICE_UID, CHANNEL_SLOT_ID, DeviceTimerChannelRegime.OFF)),
+                controls.regimeCalls
+            )
+        }
+
+    @Test
     fun `rejected channel mutation retains authoritative content and reports reason`() = runTest {
         val failure = DeviceTimerControlFailure.Rejected(DeviceTimerCommandFailure.CONFLICT)
         val controls = FakeTimerControlOperations(availableControl()).apply {
@@ -406,7 +443,9 @@ private fun timerRoot() = DeviceRootSnapshot(
 private fun availableControl(
     clockReady: Boolean = true,
     readOnly: Boolean = false,
-    regime: DeviceTimerChannelRegime = DeviceTimerChannelRegime.AUTO
+    regime: DeviceTimerChannelRegime = DeviceTimerChannelRegime.AUTO,
+    operatingState: DeviceTimerOperatingState = DeviceTimerOperatingState.ON,
+    temporaryOverrideActive: Boolean = false
 ): DeviceTimerControlResult = DeviceTimerControlResult.Available(
     DeviceTimerControlSnapshot(
         deviceUid = "timer-pro-1",
@@ -430,7 +469,7 @@ private fun availableControl(
                 defaultName = "Timer 1",
                 displayName = "Display Timer",
                 regime = regime,
-                operatingState = DeviceTimerOperatingState.ON,
+                operatingState = operatingState,
                 scheduleCount = 1,
                 activeScheduleSlotId = 10,
                 activeScheduleName = "Morning",
@@ -442,8 +481,12 @@ private fun availableControl(
                     DeviceTimerRuntimeReason.CLOCK_UNAVAILABLE
                 },
                 clockReady = clockReady,
-                temporaryOverrideActive = false,
-                temporaryOverrideRemainingMillis = 0L,
+                temporaryOverrideActive = temporaryOverrideActive,
+                temporaryOverrideRemainingMillis = if (temporaryOverrideActive) {
+                    1_800_000L
+                } else {
+                    0L
+                },
                 outputHealth = DeviceTimerOutputHealth.UNVERIFIED,
                 physicalFeedbackAvailable = false,
                 displayNameEditable = true,

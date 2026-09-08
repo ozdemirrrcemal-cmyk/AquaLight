@@ -42,6 +42,7 @@
     <string name="device_timer_channels_empty_title">Kullanılabilir kanal yok</string>
     <string name="device_timer_channels_empty_message">Zamanlayıcı kullanılabilir bir kanal bildirmedi. Devam etmeden önce cihaz durumunu yenileyin.</string>
     <string name="device_timer_channel_card_content_description">Kanal %1$d, %2$s, %3$s</string>
+    <string name="device_timer_channel_details_description">%1$s programlarını ve ayarlarını aç</string>
     <string name="device_timer_state_on">AÇIK</string>
     <string name="device_timer_state_off">KAPALI</string>
     <string name="device_timer_mode_auto">Programa göre</string>
@@ -57,6 +58,7 @@
     <string name="device_timer_next_on">%1$s saatinde açılır</string>
     <string name="device_timer_next_off">%1$s saatinde kapanır</string>
     <string name="device_timer_next_none">Yaklaşan geçiş yok</string>
+    <string name="device_timer_manual_programs_paused">Manuel modda programlar beklemede</string>
     <string name="device_timer_temporary_on">Geçici olarak açık · %1$s kaldı</string>
     <string name="device_timer_temporary_off">Geçici olarak kapalı · %1$s kaldı</string>
     <plurals name="device_timer_duration_minutes">
@@ -70,10 +72,9 @@
     <string name="device_timer_timed_off">Süreli kapat</string>
     <string name="device_timer_timed_on_title">Süreli aç</string>
     <string name="device_timer_timed_off_title">Süreli kapat</string>
-    <string name="device_timer_manual_control_open_description">Manuel kontrolü aç</string>
-    <string name="device_timer_manual_control_open_active_description">Kanal açık; manuel kontrolü aç</string>
-    <string name="device_timer_manual_control_open_inactive_description">Kanal kapalı; manuel kontrolü aç</string>
-    <string name="device_timer_manual_control_title">Manuel kontrol</string>
+    <string name="device_timer_manual_power_turn_on_description">Kanalı manuel aç</string>
+    <string name="device_timer_manual_power_turn_off_description">Kanalı manuel kapat</string>
+    <string name="device_timer_manual_control_title">Süreli kontrol</string>
     <string name="device_timer_manual_control_message">Geçici kontrol sona erdiğinde kanal seçili çalışma biçimine geri döner.</string>
     <string name="device_timer_manual_duration_label">Süre seçin</string>
     <string name="device_timer_duration_15_minutes">15 dk.</string>
@@ -94,6 +95,8 @@
     <string name="device_timer_temporary_inactive">Etkin değil</string>
     <string name="device_timer_channel_work_mode">Çalışma biçimi</string>
     <string name="device_timer_work_mode_title">Çalışma biçimi</string>
+    <string name="device_timer_work_mode_manual">Manuel</string>
+    <string name="device_timer_work_mode_program">Program</string>
     <string name="device_timer_channel_name">Kanal adı</string>
     <string name="device_timer_channel_name_title">Kanal adı</string>
     <string name="device_timer_channel_name_label">Ad</string>

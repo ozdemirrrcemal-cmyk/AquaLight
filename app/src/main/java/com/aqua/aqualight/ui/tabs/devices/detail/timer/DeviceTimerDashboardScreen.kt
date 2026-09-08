@@ -69,8 +69,8 @@ internal fun DeviceTimerDashboardScreen(
                 DeviceTimerChannelCard(
                     channel = channel,
                     interactionEnabled = state.contentEnabled && !timerControl.lockLoop,
-                    manualControlEnabled = state.contentEnabled &&
-                        timerControl.temporaryOverrideWriteEnabled &&
+                    manualPowerEnabled = state.contentEnabled &&
+                        timerControl.channelStateWriteEnabled &&
                         !timerControl.lockLoop,
                     mutationPending = channel.slotId in state.pendingChannelSlotIds,
                     onChannelClick = { onChannelClick(channel.slotId) },
