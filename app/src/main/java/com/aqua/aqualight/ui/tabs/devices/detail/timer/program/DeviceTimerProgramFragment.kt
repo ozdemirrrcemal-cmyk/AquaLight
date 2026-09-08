@@ -69,7 +69,9 @@ class DeviceTimerProgramFragment : Fragment(R.layout.fragment_device_timer_progr
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
-                titleOverride = getString(R.string.device_timer_program_title),
+                titleOverride = state.channelTitle.takeIf(String::isNotBlank)?.let { channelTitle ->
+                    getString(R.string.device_timer_program_title_for_channel, channelTitle)
+                } ?: getString(R.string.device_timer_program_title),
                 onBackClick = { findNavController().navigateUp() },
                 primaryAction = AquaHeaderPrimaryAction(
                     text = getString(R.string.device_timer_program_save),

@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.timer
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,11 +17,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -45,130 +48,122 @@ import com.aqua.aqualight.ui.common.timer.aquaTimerDashboardTypography
 internal fun DeviceTimerChannelCard(
     channel: DeviceTimerChannelUiState,
     interactionEnabled: Boolean,
-    programEnabled: Boolean,
-    temporaryOverrideEnabled: Boolean,
+    manualControlEnabled: Boolean,
     mutationPending: Boolean,
-    onRegimeSelected: (DeviceTimerChannelRegime) -> Unit,
-    onProgramClick: () -> Unit,
-    onTemporaryOverrideClick: (DeviceTimerChannelRegime) -> Unit,
+    onChannelClick: () -> Unit,
+    onPowerClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val colors = aquaTimerDashboardColors()
     val typography = aquaTimerDashboardTypography(colors)
     val stateLabel = timerOperatingStateLabel(channel.operatingState)
-    val name = channel.displayName.ifBlank { channel.defaultName }
+    val name = channel.effectiveName
     val description = stringResource(
         R.string.device_timer_channel_card_content_description,
         channel.channelNumber,
         name,
         stateLabel
     )
-    val contentAlpha = if (interactionEnabled || mutationPending) {
-        AquaTimerInteractionStyle.enabledContentAlpha
-    } else {
-        AquaTimerInteractionStyle.disabledContentAlpha
-    }
+    val enabled = manualControlEnabled && !mutationPending
 
     AquaDeviceCardSurface(
         modifier = modifier
             .semantics { contentDescription = description }
-            .alpha(contentAlpha)
+            .alpha(
+                if (interactionEnabled || mutationPending) 1f
+                else AquaTimerInteractionStyle.disabledContentAlpha
+            )
+            .clickable(enabled = interactionEnabled, role = Role.Button, onClick = onChannelClick)
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(
-                AquaTimerDashboardGeometry.channelSectionGap
-            )
+            verticalArrangement = Arrangement.spacedBy(AquaTimerDashboardGeometry.channelSectionGap)
         ) {
-            TimerChannelHeader(
-                channel = channel,
-                name = name,
-                stateLabel = stateLabel,
-                colors = colors,
-                typography = typography
-            )
-            TimerRegimeSelector(
-                selected = channel.regime,
-                enabled = interactionEnabled && !mutationPending,
-                onSelected = onRegimeSelected,
-                colors = colors,
-                typography = typography
-            )
-            TimerDivider(colors)
-            TimerChannelMetadata(
-                channel = channel,
-                mutationPending = mutationPending,
-                colors = colors,
-                typography = typography
-            )
-            TimerChannelActions(
-                programEnabled = programEnabled && !mutationPending,
-                temporaryOverrideEnabled = temporaryOverrideEnabled && !mutationPending,
-                onProgramClick = onProgramClick,
-                onTemporaryOverrideClick = onTemporaryOverrideClick,
-                colors = colors,
-                typography = typography
-            )
-        }
-    }
-}
-
-@Composable
-private fun TimerChannelHeader(
-    channel: DeviceTimerChannelUiState,
-    name: String,
-    stateLabel: String,
-    colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(AquaTimerDashboardGeometry.channelHeaderGap),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        TimerChannelProductIcon(colors)
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(AquaTimerDashboardGeometry.channelTextGap)
-        ) {
-            BasicText(
-                text = stringResource(
-                    R.string.device_timer_channel_title,
-                    channel.channelNumber,
-                    name
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(
+                    AquaTimerDashboardGeometry.channelHeaderGap
                 ),
-                style = typography.title,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            BasicText(
-                text = timerRegimeLabel(channel.regime),
-                style = typography.caption.copy(color = colors.secondaryText),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TimerChannelProductIcon(colors)
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(
+                        AquaTimerDashboardGeometry.channelTextGap
+                    )
+                ) {
+                    BasicText(
+                        text = name,
+                        style = typography.title,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(
+                            AquaTimerDashboardGeometry.channelHeaderGap
+                        ),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        TimerStatePill(
+                            label = stateLabel,
+                            active = channel.operatingState == DeviceTimerOperatingState.ON,
+                            colors = colors,
+                            typography = typography
+                        )
+                        BasicText(
+                            text = timerScheduleSummary(channel),
+                            style = typography.caption.copy(color = colors.secondaryText),
+                            modifier = Modifier.weight(1f, fill = false),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+                TimerPowerButton(
+                    active = channel.operatingState == DeviceTimerOperatingState.ON,
+                    enabled = enabled,
+                    onClick = onPowerClick,
+                    colors = colors
+                )
+            }
+            TimerDivider(colors)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TimerMetadataRow(
+                    text = timerRuntimeSummary(channel, mutationPending),
+                    tint = if (mutationPending) colors.accent else colors.secondaryText,
+                    typography = typography,
+                    modifier = Modifier.weight(1f)
+                )
+                Image(
+                    painter = painterResource(R.drawable.ic_arrow_right),
+                    contentDescription = null,
+                    modifier = Modifier.size(AquaTimerDashboardGeometry.metadataIconSize),
+                    colorFilter = ColorFilter.tint(colors.secondaryText)
+                )
+            }
+            if (channel.outputHealth == DeviceTimerOutputHealth.HARDWARE_FAULT) {
+                TimerMetadataRow(
+                    text = stringResource(R.string.device_timer_output_fault),
+                    tint = colors.danger,
+                    typography = typography
+                )
+            }
         }
-        TimerStatePill(
-            label = stateLabel,
-            active = channel.operatingState == DeviceTimerOperatingState.ON,
-            colors = colors,
-            typography = typography
-        )
     }
 }
 
 @Composable
-private fun TimerChannelProductIcon(colors: AquaDeviceCardColors) {
+internal fun TimerChannelProductIcon(colors: AquaDeviceCardColors) {
     Box(
         modifier = Modifier
             .size(AquaTimerDashboardGeometry.channelIconContainerSize)
             .clip(CircleShape)
             .background(colors.mediaSurface.copy(alpha = AquaTimerDashboardAlpha.iconBackground))
-            .border(
-                width = AquaDeviceCardGeometry.outlineWidth,
-                color = colors.mediaOutline,
-                shape = CircleShape
-            ),
+            .border(AquaDeviceCardGeometry.outlineWidth, colors.mediaOutline, CircleShape),
         contentAlignment = Alignment.Center
     ) {
         Image(
@@ -181,38 +176,42 @@ private fun TimerChannelProductIcon(colors: AquaDeviceCardColors) {
 }
 
 @Composable
-private fun TimerChannelMetadata(
-    channel: DeviceTimerChannelUiState,
-    mutationPending: Boolean,
+internal fun TimerPowerButton(
+    active: Boolean,
+    enabled: Boolean,
+    onClick: () -> Unit,
     colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography
+    modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(AquaTimerDashboardGeometry.metadataGap)
+    val tint = if (active) colors.accent else colors.secondaryText
+    val description = stringResource(
+        if (active) R.string.device_timer_manual_control_open_active_description
+        else R.string.device_timer_manual_control_open_inactive_description
+    )
+    Box(
+        modifier = modifier
+            .size(AquaTimerDashboardGeometry.channelPowerContainerSize)
+            .clip(CircleShape)
+            .background(tint.copy(alpha = AquaTimerDashboardAlpha.powerSurface))
+            .border(AquaTimerDashboardGeometry.channelPowerGlowWidth, tint, CircleShape)
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .semantics { contentDescription = description },
+        contentAlignment = Alignment.Center
     ) {
-        TimerMetadataRow(
-            text = timerScheduleSummary(channel),
-            tint = colors.secondaryText,
-            typography = typography
+        Image(
+            painter = painterResource(R.drawable.ic_timer_power),
+            contentDescription = null,
+            modifier = Modifier.size(AquaTimerDashboardGeometry.channelPowerIconSize),
+            colorFilter = ColorFilter.tint(tint)
         )
-        TimerMetadataRow(
-            text = timerRuntimeSummary(channel, mutationPending),
-            tint = if (mutationPending) colors.accent else colors.secondaryText,
-            typography = typography
-        )
-        if (channel.outputHealth == DeviceTimerOutputHealth.HARDWARE_FAULT) {
-            TimerMetadataRow(
-                text = stringResource(R.string.device_timer_output_fault),
-                tint = colors.danger,
-                typography = typography
-            )
-        }
     }
 }
 
+internal val DeviceTimerChannelUiState.effectiveName: String
+    get() = displayName.ifBlank { defaultName }
+
 @Composable
-private fun timerScheduleSummary(channel: DeviceTimerChannelUiState): String {
+internal fun timerScheduleSummary(channel: DeviceTimerChannelUiState): String {
     val activeName = channel.activeScheduleName?.takeIf(String::isNotBlank)
     return when {
         activeName != null -> stringResource(R.string.device_timer_active_schedule, activeName)
@@ -226,7 +225,7 @@ private fun timerScheduleSummary(channel: DeviceTimerChannelUiState): String {
 }
 
 @Composable
-private fun timerRuntimeSummary(
+internal fun timerRuntimeSummary(
     channel: DeviceTimerChannelUiState,
     mutationPending: Boolean
 ): String {
@@ -279,7 +278,7 @@ internal fun timerRegimeLabel(regime: DeviceTimerChannelRegime): String = when (
 }
 
 @Composable
-private fun timerOperatingStateLabel(state: DeviceTimerOperatingState): String = when (state) {
+internal fun timerOperatingStateLabel(state: DeviceTimerOperatingState): String = when (state) {
     DeviceTimerOperatingState.ON -> stringResource(R.string.device_timer_state_on)
     DeviceTimerOperatingState.OFF -> stringResource(R.string.device_timer_state_off)
 }

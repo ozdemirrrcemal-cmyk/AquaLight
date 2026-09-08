@@ -54,6 +54,7 @@ class TimerUiLayerBoundaryTest {
         assertTrue(ownerGraph.contains("timerControlOperations = timerControlOperations"))
         assertTrue(ownerFactory.contains("timerControlOperations = graph.timerControlOperations"))
         assertTrue(ownerFactory.contains("DeviceTimerProgramViewModel(graph.timerControlOperations)"))
+        assertTrue(ownerFactory.contains("DeviceTimerChannelViewModel(graph.timerControlOperations)"))
         assertFalse(adapter.contains("MutableStateFlow"))
         assertFalse(adapter.contains("DeviceTimerRuntimeStateStore("))
         assertTrue(provider.contains("private val timerStateStore = DeviceTimerRuntimeStateStore()"))

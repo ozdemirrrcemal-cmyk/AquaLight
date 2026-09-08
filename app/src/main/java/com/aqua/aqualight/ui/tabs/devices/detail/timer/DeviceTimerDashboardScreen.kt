@@ -11,16 +11,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.aqua.aqualight.R
-import com.aqua.aqualight.application.devices.timer.DeviceTimerChannelRegime
 import com.aqua.aqualight.ui.common.timer.AquaTimerDashboardGeometry
 
 @Composable
 @Suppress("LongMethod")
 internal fun DeviceTimerDashboardScreen(
     state: DeviceTimerRootUiState,
-    onRegimeSelected: (String, DeviceTimerChannelRegime, Long?) -> Unit,
-    onProgramClick: (String) -> Unit,
-    onTemporaryOverrideClick: (String, DeviceTimerChannelRegime) -> Unit,
+    onChannelClick: (String) -> Unit,
+    onPowerClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val control = state.control
@@ -70,27 +68,16 @@ internal fun DeviceTimerDashboardScreen(
             ) { channel ->
                 DeviceTimerChannelCard(
                     channel = channel,
-                    interactionEnabled = timerControl.interactionEnabled(state.contentEnabled),
-                    programEnabled = state.contentEnabled &&
-                        timerControl.scheduleReadEnabled &&
-                        !timerControl.lockLoop,
-                    temporaryOverrideEnabled = state.contentEnabled &&
+                    interactionEnabled = state.contentEnabled && !timerControl.lockLoop,
+                    manualControlEnabled = state.contentEnabled &&
                         timerControl.temporaryOverrideWriteEnabled &&
                         !timerControl.lockLoop,
                     mutationPending = channel.slotId in state.pendingChannelSlotIds,
-                    onRegimeSelected = { regime ->
-                        onRegimeSelected(channel.slotId, regime, null)
-                    },
-                    onProgramClick = { onProgramClick(channel.slotId) },
-                    onTemporaryOverrideClick = { regime ->
-                        onTemporaryOverrideClick(channel.slotId, regime)
-                    },
+                    onChannelClick = { onChannelClick(channel.slotId) },
+                    onPowerClick = { onPowerClick(channel.slotId) },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
         }
     }
 }
-
-private fun DeviceTimerControlUiState.interactionEnabled(contentEnabled: Boolean): Boolean =
-    contentEnabled && channelStateWriteEnabled && !lockLoop

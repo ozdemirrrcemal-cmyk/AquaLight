@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.timer.program
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -14,14 +15,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -40,6 +43,7 @@ import com.aqua.aqualight.ui.common.timer.AquaTimerInteractionStyle
 import com.aqua.aqualight.ui.common.timer.aquaTimerDashboardColors
 import com.aqua.aqualight.ui.common.timer.aquaTimerDashboardTypography
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerStateMessageCard
+import com.aqua.aqualight.ui.tabs.devices.detail.timer.TimerStatePill
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.toCommercialTimerError
 
 @Composable
@@ -71,14 +75,33 @@ internal fun DeviceTimerProgramScreen(
             }
         }
         if (state.loadState == DeviceTimerProgramLoadState.CONTENT) {
-            item(key = "summary") {
-                TimerProgramSummary(state, colors, typography)
+            item(key = "capacity") {
+                BasicText(
+                    text = pluralStringResource(
+                        R.plurals.device_timer_program_capacity,
+                        state.maxSchedules,
+                        state.maxSchedules
+                    ),
+                    style = typography.caption.copy(color = colors.secondaryText),
+                    modifier = Modifier.padding(
+                        horizontal = AquaDeviceCardGeometry.contentHorizontalPadding,
+                        vertical = AquaTimerDashboardGeometry.screenTopPadding
+                    )
+                )
             }
-            if (state.dirty && !state.valid) {
+            state.validationIssue?.takeIf { state.dirty }?.let { issue ->
                 item(key = "validation") {
                     DeviceTimerStateMessageCard(
-                        title = stringResource(R.string.device_timer_error_invalid_configuration_title),
-                        message = stringResource(R.string.device_timer_program_invalid)
+                        title = stringResource(
+                            R.string.device_timer_error_invalid_configuration_title
+                        ),
+                        message = stringResource(
+                            if (issue == DeviceTimerProgramValidationIssue.OVERLAPPING_PROGRAMS) {
+                                R.string.device_timer_program_overlap
+                            } else {
+                                R.string.device_timer_program_invalid
+                            }
+                        )
                     )
                 }
             }
@@ -110,31 +133,6 @@ internal fun DeviceTimerProgramScreen(
 }
 
 @Composable
-private fun TimerProgramSummary(
-    state: DeviceTimerProgramUiState,
-    colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography
-) {
-    AquaDeviceCardSurface {
-        Column(verticalArrangement = Arrangement.spacedBy(AquaTimerDashboardGeometry.editorSectionGap)) {
-            BasicText(text = state.channelTitle, style = typography.title)
-            BasicText(
-                text = pluralStringResource(
-                    R.plurals.device_timer_program_capacity,
-                    state.maxSchedules,
-                    state.maxSchedules
-                ),
-                style = typography.caption.copy(color = colors.secondaryText)
-            )
-            BasicText(
-                text = stringResource(R.string.device_timer_program_summary),
-                style = typography.caption.copy(color = colors.secondaryText)
-            )
-        }
-    }
-}
-
-@Composable
 @Suppress("LongMethod", "LongParameterList")
 private fun TimerProgramCard(
     schedule: DeviceTimerProgramDraft,
@@ -144,93 +142,86 @@ private fun TimerProgramCard(
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
 ) {
-    val contentAlpha = if (enabled) {
-        AquaTimerInteractionStyle.enabledContentAlpha
-    } else {
-        AquaTimerInteractionStyle.disabledContentAlpha
-    }
-    AquaDeviceCardSurface(modifier = Modifier.alpha(contentAlpha)) {
+    AquaDeviceCardSurface(
+        modifier = Modifier.alpha(
+            if (enabled) 1f else AquaTimerInteractionStyle.disabledContentAlpha
+        )
+    ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(AquaTimerDashboardGeometry.editorSectionGap)
         ) {
-            TimerEditorValueRow(
-                label = stringResource(R.string.device_timer_program_name),
-                value = schedule.name,
-                enabled = enabled,
-                onClick = { actions.onNameClick(schedule.slotId) },
-                colors = colors,
-                typography = typography
-            )
-            TimerEnabledRow(
-                checked = schedule.enabled,
-                enabled = enabled,
-                onToggle = { actions.onEnabledToggle(schedule.slotId) },
-                colors = colors,
-                typography = typography
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(AquaTimerDashboardGeometry.detailRowGap),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                BasicText(
+                    text = schedule.name,
+                    style = typography.title,
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable(enabled = enabled, onClick = {
+                            actions.onNameClick(schedule.slotId)
+                        }),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Box(
+                    modifier = Modifier.clickable(enabled = enabled, role = Role.Switch) {
+                        actions.onEnabledToggle(schedule.slotId)
+                    }
+                ) {
+                    TimerStatePill(
+                        label = stringResource(
+                            if (schedule.enabled) R.string.device_timer_program_enabled_value
+                            else R.string.device_timer_program_disabled_value
+                        ),
+                        active = schedule.enabled,
+                        colors = colors,
+                        typography = typography
+                    )
+                }
+                Image(
+                    painter = painterResource(R.drawable.ic_delete_24),
+                    contentDescription = stringResource(R.string.device_timer_program_delete),
+                    modifier = Modifier
+                        .size(AquaTimerDashboardGeometry.detailRowIconSize)
+                        .clickable(enabled = enabled) { actions.onDelete(schedule.slotId) },
+                    colorFilter = ColorFilter.tint(colors.danger)
+                )
+            }
             TimerWeekdaySelector(schedule, enabled, actions, colors, typography)
-            TimerEditorValueRow(
-                label = stringResource(R.string.device_timer_program_start),
-                value = formatMinutesOfDay(schedule.startMinutesOfDay),
-                enabled = enabled,
-                onClick = { actions.onStartTimeClick(schedule.slotId) },
-                colors = colors,
-                typography = typography
-            )
-            TimerEditorValueRow(
-                label = stringResource(R.string.device_timer_program_end),
-                value = formatMinutesOfDay(schedule.endMinutesOfDay),
-                enabled = enabled,
-                onClick = { actions.onEndTimeClick(schedule.slotId) },
-                colors = colors,
-                typography = typography
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(AquaTimerDashboardGeometry.editorRowGap)
+            ) {
+                TimerTimeChip(
+                    label = stringResource(R.string.device_timer_program_start),
+                    value = formatMinutesOfDay(schedule.startMinutesOfDay),
+                    enabled = enabled,
+                    onClick = { actions.onStartTimeClick(schedule.slotId) },
+                    colors = colors,
+                    typography = typography,
+                    modifier = Modifier.weight(1f)
+                )
+                TimerTimeChip(
+                    label = stringResource(R.string.device_timer_program_end),
+                    value = formatMinutesOfDay(schedule.endMinutesOfDay),
+                    enabled = enabled,
+                    onClick = { actions.onEndTimeClick(schedule.slotId) },
+                    colors = colors,
+                    typography = typography,
+                    modifier = Modifier.weight(1f)
+                )
+            }
             if (schedule.spansMidnight && spansMidnightSupported) {
                 BasicText(
                     text = stringResource(R.string.device_timer_program_spans_midnight),
                     style = typography.caption.copy(color = colors.accent)
                 )
             }
-            TimerEditorButton(
-                label = stringResource(R.string.device_timer_program_delete),
-                enabled = enabled,
-                onClick = { actions.onDelete(schedule.slotId) },
-                colors = colors,
-                typography = typography,
-                danger = true
-            )
         }
-    }
-}
-
-@Composable
-private fun TimerEnabledRow(
-    checked: Boolean,
-    enabled: Boolean,
-    onToggle: () -> Unit,
-    colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .toggleable(checked, enabled, Role.Switch) { onToggle() }
-            .padding(vertical = AquaTimerDashboardGeometry.editorTogglePadding),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        BasicText(
-            text = stringResource(R.string.device_timer_program_enabled),
-            style = typography.body.copy(color = colors.primaryText)
-        )
-        BasicText(
-            text = stringResource(
-                if (checked) R.string.device_timer_program_enabled_value
-                else R.string.device_timer_program_disabled_value
-            ),
-            style = typography.caption.copy(color = if (checked) colors.success else colors.secondaryText)
-        )
     }
 }
 
@@ -243,45 +234,42 @@ private fun TimerWeekdaySelector(
     typography: AquaDeviceCardTypography
 ) {
     val weekdayLabels = stringArrayResource(R.array.device_timer_weekday_short_labels)
-    Column(verticalArrangement = Arrangement.spacedBy(AquaTimerDashboardGeometry.editorSectionGap)) {
-        BasicText(
-            text = stringResource(R.string.device_timer_program_days),
-            style = typography.caption.copy(color = colors.secondaryText)
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(AquaTimerDashboardGeometry.editorWeekdayGap)
-        ) {
-            weekdayLabels.forEachIndexed { index, label ->
-                val selected = schedule.weekdays.getOrNull(index) == true
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .size(AquaTimerDashboardGeometry.editorWeekdaySize)
-                        .background(
-                            color = if (selected) colors.accent.copy(alpha = AquaTimerDashboardAlpha.selectedBackground)
-                            else colors.mediaSurface.copy(alpha = AquaTimerDashboardAlpha.idleBackground),
-                            shape = CircleShape
-                        )
-                        .border(
-                            width = AquaDeviceCardGeometry.outlineWidth,
-                            color = if (selected) colors.accent else colors.outline,
-                            shape = CircleShape
-                        )
-                        .clickable(enabled = enabled) {
-                            actions.onWeekdayToggle(schedule.slotId, index)
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    BasicText(
-                        text = label,
-                        style = typography.micro.copy(
-                            color = if (selected) colors.primaryText else colors.secondaryText,
-                            textAlign = TextAlign.Center
-                        ),
-                        maxLines = 1
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(AquaTimerDashboardGeometry.editorWeekdayGap)
+    ) {
+        weekdayLabels.forEachIndexed { index, label ->
+            val selected = schedule.weekdays.getOrNull(index) == true
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .size(AquaTimerDashboardGeometry.editorWeekdaySize)
+                    .clip(CircleShape)
+                    .background(
+                        if (selected) {
+                            colors.accent.copy(alpha = AquaTimerDashboardAlpha.selectedBackground)
+                        } else {
+                            colors.mediaSurface.copy(alpha = AquaTimerDashboardAlpha.idleBackground)
+                        }
                     )
-                }
+                    .border(
+                        AquaDeviceCardGeometry.outlineWidth,
+                        if (selected) colors.accent else colors.outline,
+                        CircleShape
+                    )
+                    .clickable(enabled = enabled) {
+                        actions.onWeekdayToggle(schedule.slotId, index)
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                BasicText(
+                    text = label,
+                    style = typography.micro.copy(
+                        color = if (selected) colors.primaryText else colors.secondaryText,
+                        textAlign = TextAlign.Center
+                    ),
+                    maxLines = 1
+                )
             }
         }
     }
@@ -289,37 +277,30 @@ private fun TimerWeekdaySelector(
 
 @Composable
 @Suppress("LongParameterList")
-private fun TimerEditorValueRow(
+private fun TimerTimeChip(
     label: String,
     value: String,
     enabled: Boolean,
     onClick: () -> Unit,
     colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography
+    typography: AquaDeviceCardTypography,
+    modifier: Modifier
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(
-                colors.mediaSurface.copy(alpha = AquaTimerDashboardAlpha.idleBackground),
+    Column(
+        modifier = modifier
+            .clip(AquaTimerDashboardGeometry.actionShape)
+            .background(colors.mediaSurface.copy(alpha = AquaTimerDashboardAlpha.idleBackground))
+            .border(
+                AquaDeviceCardGeometry.outlineWidth,
+                colors.outline,
                 AquaTimerDashboardGeometry.actionShape
             )
             .clickable(enabled = enabled, onClick = onClick)
             .padding(AquaTimerDashboardGeometry.editorRowPadding),
-        horizontalArrangement = Arrangement.spacedBy(AquaTimerDashboardGeometry.editorRowGap),
-        verticalAlignment = Alignment.CenterVertically
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        BasicText(
-            text = label,
-            style = typography.caption.copy(color = colors.secondaryText)
-        )
-        BasicText(
-            text = value,
-            style = typography.body.copy(color = colors.primaryText, textAlign = TextAlign.End),
-            modifier = Modifier.weight(1f),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
+        BasicText(text = label, style = typography.micro.copy(color = colors.secondaryText))
+        BasicText(text = value, style = typography.body.copy(color = colors.primaryText))
     }
 }
 
@@ -330,23 +311,24 @@ private fun TimerEditorButton(
     enabled: Boolean,
     onClick: () -> Unit,
     colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography,
-    danger: Boolean = false
+    typography: AquaDeviceCardTypography
 ) {
-    val tint = if (danger) colors.danger else colors.accent
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(
-                tint.copy(alpha = AquaTimerDashboardAlpha.actionBackground),
+            .alpha(if (enabled) 1f else AquaTimerInteractionStyle.disabledContentAlpha)
+            .clip(AquaTimerDashboardGeometry.actionShape)
+            .background(colors.accent.copy(alpha = AquaTimerDashboardAlpha.actionBackground))
+            .border(
+                AquaDeviceCardGeometry.outlineWidth,
+                colors.accent,
                 AquaTimerDashboardGeometry.actionShape
             )
-            .border(AquaDeviceCardGeometry.outlineWidth, tint, AquaTimerDashboardGeometry.actionShape)
             .clickable(enabled = enabled, onClick = onClick)
             .padding(AquaTimerDashboardGeometry.actionPadding),
         contentAlignment = Alignment.Center
     ) {
-        BasicText(text = label, style = typography.caption.copy(color = tint))
+        BasicText(text = label, style = typography.caption.copy(color = colors.accent))
     }
 }
 

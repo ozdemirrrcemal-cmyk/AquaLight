@@ -174,10 +174,11 @@ internal fun TimerStatePill(
 internal fun TimerMetadataRow(
     text: String,
     tint: Color,
-    typography: AquaDeviceCardTypography
+    typography: AquaDeviceCardTypography,
+    modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(AquaTimerDashboardGeometry.metadataTextGap),
         verticalAlignment = Alignment.CenterVertically
     ) {

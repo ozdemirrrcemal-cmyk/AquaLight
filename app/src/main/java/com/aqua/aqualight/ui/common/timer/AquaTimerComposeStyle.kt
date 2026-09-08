@@ -26,6 +26,9 @@ object AquaTimerDashboardGeometry {
 
     val channelIconContainerSize = 42.dp
     val channelIconSize = 34.dp
+    val channelPowerContainerSize = 50.dp
+    val channelPowerIconSize = 25.dp
+    val channelPowerGlowWidth = 2.dp
     val channelHeaderGap = 10.dp
     val channelTextGap = 2.dp
     val channelSectionGap = AquaDeviceCardGeometry.contentGap
@@ -33,6 +36,12 @@ object AquaTimerDashboardGeometry {
     val metadataIconSize = 16.dp
     val metadataTextGap = 8.dp
     val dividerHeight = 1.dp
+    val detailHeroPowerContainerSize = 96.dp
+    val detailHeroPowerIconSize = 42.dp
+    val detailHeroGap = 8.dp
+    val detailRowIconSize = 22.dp
+    val detailRowPadding = 14.dp
+    val detailRowGap = 12.dp
 
     val statusShape = RoundedCornerShape(AquaDeviceCardGeometry.statusCornerRadius)
     val statusHorizontalPadding = AquaDeviceCardGeometry.statusHorizontalPadding
@@ -79,6 +88,8 @@ object AquaTimerDashboardAlpha {
     const val statusBackground = 0.17f
     const val divider = 0.72f
     const val actionBackground = 0.16f
+    const val powerGlow = 0.34f
+    const val powerSurface = 0.28f
 }
 
 @Composable

@@ -342,7 +342,7 @@ private fun DeviceRootSnapshot?.isTimerControlRootAvailable(deviceUid: String): 
         catalogState == DeviceRootCatalogState.VALID &&
         family == OwnerDeviceFamily.TIMER
 
-private fun DeviceTimerControlSnapshot.toUiState(): DeviceTimerControlUiState {
+internal fun DeviceTimerControlSnapshot.toUiState(): DeviceTimerControlUiState {
     val channelPresentation = channels.map(DeviceTimerChannelSnapshot::toUiState)
     val notices = buildSet {
         if (channels.any { channel -> !channel.clockReady }) {
@@ -374,7 +374,7 @@ private fun DeviceTimerControlSnapshot.toUiState(): DeviceTimerControlUiState {
     )
 }
 
-private fun DeviceTimerChannelSnapshot.toUiState() = DeviceTimerChannelUiState(
+internal fun DeviceTimerChannelSnapshot.toUiState() = DeviceTimerChannelUiState(
     slotId = slotId,
     channelNumber = channelNumber,
     defaultName = defaultName,

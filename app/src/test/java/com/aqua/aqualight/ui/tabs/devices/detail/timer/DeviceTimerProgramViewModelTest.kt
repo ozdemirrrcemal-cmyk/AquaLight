@@ -16,7 +16,10 @@ import com.aqua.aqualight.application.devices.timer.DeviceTimerRuntimeReason
 import com.aqua.aqualight.application.devices.timer.DeviceTimerScheduleDraft
 import com.aqua.aqualight.application.devices.timer.DeviceTimerScheduleSnapshot
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.program.DeviceTimerProgramLoadState
+import com.aqua.aqualight.ui.tabs.devices.detail.timer.program.DeviceTimerProgramDraft
+import com.aqua.aqualight.ui.tabs.devices.detail.timer.program.DeviceTimerProgramValidationIssue
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.program.DeviceTimerProgramViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.timer.program.timerProgramValidationIssue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -88,6 +91,62 @@ class DeviceTimerProgramViewModelTest {
         viewModel.save()
         assertTrue(operations.replacements.isEmpty())
     }
+
+    @Test
+    fun `overlapping active programs are rejected before firmware mutation`() {
+        val issue = listOf(
+            programDraft(slotId = 1, start = 8 * 60, end = 12 * 60),
+            programDraft(slotId = 2, start = 11 * 60, end = 14 * 60)
+        ).timerProgramValidationIssue(maxSchedules = 8, spansMidnightSupported = true)
+
+        assertEquals(DeviceTimerProgramValidationIssue.OVERLAPPING_PROGRAMS, issue)
+    }
+
+    @Test
+    fun `sunday overnight overlap with monday is rejected across week boundary`() {
+        val sundayOnly = List(7) { index -> index == 6 }
+        val mondayOnly = List(7) { index -> index == 0 }
+        val issue = listOf(
+            programDraft(
+                slotId = 1,
+                start = 23 * 60,
+                end = 60,
+                weekdays = sundayOnly
+            ),
+            programDraft(
+                slotId = 2,
+                start = 30,
+                end = 90,
+                weekdays = mondayOnly
+            )
+        ).timerProgramValidationIssue(maxSchedules = 8, spansMidnightSupported = true)
+
+        assertEquals(DeviceTimerProgramValidationIssue.OVERLAPPING_PROGRAMS, issue)
+    }
+
+    @Test
+    fun `programs touching at one boundary remain valid`() {
+        val issue = listOf(
+            programDraft(slotId = 1, start = 8 * 60, end = 12 * 60),
+            programDraft(slotId = 2, start = 12 * 60, end = 14 * 60)
+        ).timerProgramValidationIssue(maxSchedules = 8, spansMidnightSupported = true)
+
+        assertEquals(null, issue)
+    }
+
+    private fun programDraft(
+        slotId: Int,
+        start: Int,
+        end: Int,
+        weekdays: List<Boolean> = listOf(true, false, false, false, false, false, false)
+    ) = DeviceTimerProgramDraft(
+        slotId = slotId,
+        enabled = true,
+        name = "Program $slotId",
+        weekdays = weekdays,
+        startMinutesOfDay = start,
+        endMinutesOfDay = end
+    )
 
     private companion object {
         const val DEVICE_UID = "timer-pro-4"

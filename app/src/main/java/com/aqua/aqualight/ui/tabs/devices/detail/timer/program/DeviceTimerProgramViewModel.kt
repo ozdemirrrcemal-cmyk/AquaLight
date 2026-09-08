@@ -198,8 +198,9 @@ data class DeviceTimerProgramUiState(
     val saving: Boolean = false,
     val failure: DeviceTimerControlFailure? = null
 ) {
-    val valid: Boolean
-        get() = schedules.isValidTimerProgram(maxSchedules, spansMidnightSupported)
+    val validationIssue: DeviceTimerProgramValidationIssue?
+        get() = schedules.timerProgramValidationIssue(maxSchedules, spansMidnightSupported)
+    val valid: Boolean get() = validationIssue == null
     val canSave: Boolean
         get() = loadState == DeviceTimerProgramLoadState.CONTENT &&
             editable && dirty && valid && !saving
@@ -223,20 +224,27 @@ data class DeviceTimerProgramDraft(
 
 enum class DeviceTimerProgramLoadState { IDLE, LOADING, CONTENT, FAILED }
 
+enum class DeviceTimerProgramValidationIssue {
+    INVALID_FIELD,
+    OVERLAPPING_PROGRAMS
+}
+
 sealed interface DeviceTimerProgramEvent {
     data object Saved : DeviceTimerProgramEvent
     data class Failed(val failure: DeviceTimerControlFailure) : DeviceTimerProgramEvent
 }
 
 @Suppress("ComplexCondition")
-private fun List<DeviceTimerProgramDraft>.isValidTimerProgram(
+internal fun List<DeviceTimerProgramDraft>.timerProgramValidationIssue(
     maxSchedules: Int,
     spansMidnightSupported: Boolean
-): Boolean = size <= maxSchedules &&
-    map { it.slotId }.distinct().size == size &&
-    all { draft ->
+): DeviceTimerProgramValidationIssue? {
+    val fieldsValid = size <= maxSchedules &&
+        map { it.slotId }.distinct().size == size &&
+        all { draft ->
         draft.slotId in MIN_SCHEDULE_SLOT_ID..MAX_SCHEDULE_SLOT_ID &&
             draft.name.isNotBlank() &&
+            draft.name.none { character -> character.isISOControl() } &&
             draft.name.toByteArray(Charsets.UTF_8).size <= MAX_NAME_UTF8_BYTES &&
             draft.weekdays.size == WEEKDAY_COUNT &&
             (!draft.enabled || draft.weekdays.any { it }) &&
@@ -244,6 +252,41 @@ private fun List<DeviceTimerProgramDraft>.isValidTimerProgram(
             draft.endMinutesOfDay in 0 until MINUTES_PER_DAY &&
             draft.startMinutesOfDay != draft.endMinutesOfDay &&
             (spansMidnightSupported || !draft.spansMidnight)
+        }
+    if (!fieldsValid) return DeviceTimerProgramValidationIssue.INVALID_FIELD
+    if (enabledTimerIntervals().hasOverlappingTimerPrograms()) {
+        return DeviceTimerProgramValidationIssue.OVERLAPPING_PROGRAMS
+    }
+    return null
+}
+
+private data class TimerWeekInterval(
+    val slotId: Int,
+    val start: Int,
+    val end: Int
+)
+
+private fun List<DeviceTimerProgramDraft>.enabledTimerIntervals(): List<TimerWeekInterval> =
+    buildList {
+        this@enabledTimerIntervals.filter(DeviceTimerProgramDraft::enabled).forEach { schedule ->
+            schedule.weekdays.forEachIndexed { dayIndex, selected ->
+                if (!selected) return@forEachIndexed
+                val start = dayIndex * MINUTES_PER_DAY + schedule.startMinutesOfDay
+                val end = dayIndex * MINUTES_PER_DAY + schedule.endMinutesOfDay +
+                    if (schedule.spansMidnight) MINUTES_PER_DAY else 0
+                add(TimerWeekInterval(schedule.slotId, start, end))
+                add(TimerWeekInterval(schedule.slotId, start + MINUTES_PER_WEEK, end + MINUTES_PER_WEEK))
+            }
+        }
+    }
+
+private fun List<TimerWeekInterval>.hasOverlappingTimerPrograms(): Boolean =
+    indices.any { firstIndex ->
+        val first = this[firstIndex]
+        ((firstIndex + 1) until size).any { secondIndex ->
+            val second = this[secondIndex]
+            first.slotId != second.slotId && first.start < second.end && second.start < first.end
+        }
     }
 
 private fun DeviceTimerScheduleSnapshot.toDraft() = DeviceTimerProgramDraft(
@@ -272,6 +315,7 @@ private const val MAX_SCHEDULE_SLOT_ID = 8
 private const val MAX_NAME_UTF8_BYTES = 48
 private const val WEEKDAY_COUNT = 7
 private const val MINUTES_PER_DAY = 24 * 60
+private const val MINUTES_PER_WEEK = 7 * MINUTES_PER_DAY
 private const val MILLIS_PER_MINUTE = 60_000L
 private const val DEFAULT_START_MINUTES = 8 * 60
 private const val DEFAULT_END_MINUTES = 18 * 60

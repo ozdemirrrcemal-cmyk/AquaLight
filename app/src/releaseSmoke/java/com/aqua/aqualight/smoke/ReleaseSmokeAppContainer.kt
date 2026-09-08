@@ -66,6 +66,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.Devic
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.status.DeviceCoolingSystemStatusViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.timer.channel.DeviceTimerChannelViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.program.DeviceTimerProgramViewModel
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
@@ -273,6 +274,8 @@ private class ReleaseSmokeViewModelFactory(
             )
         modelClass.isAssignableFrom(DeviceTimerProgramViewModel::class.java) ->
             DeviceTimerProgramViewModel(timerControlOperations)
+        modelClass.isAssignableFrom(DeviceTimerChannelViewModel::class.java) ->
+            DeviceTimerChannelViewModel(timerControlOperations)
         modelClass.isAssignableFrom(DeviceRootOverviewViewModel::class.java) ->
             DeviceRootOverviewViewModel(DefaultDeviceRootOperations(devicesRepository))
         else -> null

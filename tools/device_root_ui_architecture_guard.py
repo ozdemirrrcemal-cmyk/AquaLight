@@ -253,8 +253,12 @@ def validate_timer_control_surface(
             "Timer root must render the firmware-backed dashboard",
         ),
         (
-            "onRegimeSelected = viewModel::selectRegime",
-            "Timer channel interactions must delegate to the root ViewModel",
+            "onChannelClick = { slotId -> openChannel(slotId, false) }",
+            "Timer dashboard channels must enter the channel-scoped control surface",
+        ),
+        (
+            "onPowerClick = { slotId -> openChannel(slotId, true) }",
+            "Timer power affordance must enter the scoped manual control surface",
         ),
     ):
         source = layout_source if token.startswith("android:id") else fragment_source
