@@ -105,12 +105,17 @@ class DeviceTimerRootViewModel(
         }
     }
 
-    fun selectRegime(slotId: String, regime: DeviceTimerChannelRegime) {
+    fun selectRegime(
+        slotId: String,
+        regime: DeviceTimerChannelRegime,
+        temporaryDurationMillis: Long? = null
+    ) {
         val deviceUid = lastControlPresentation.regimeMutationDeviceUid(
             boundDeviceUid = boundDeviceUid,
             contentEnabled = _uiState.value.contentEnabled,
             slotId = slotId,
             regime = regime,
+            temporaryDurationMillis = temporaryDurationMillis,
             pendingChannelSlotIds = pendingChannelSlotIds
         ) ?: return
 
@@ -118,7 +123,16 @@ class DeviceTimerRootViewModel(
         renderBoundState()
         val mutationJob = viewModelScope.launch(start = CoroutineStart.LAZY) {
             val result = runCatching {
-                timerControlOperations.setRegime(deviceUid, slotId, regime)
+                if (temporaryDurationMillis == null) {
+                    timerControlOperations.setRegime(deviceUid, slotId, regime)
+                } else {
+                    timerControlOperations.setTemporaryOverride(
+                        deviceUid = deviceUid,
+                        slotId = slotId,
+                        regime = regime,
+                        durationMillis = temporaryDurationMillis
+                    )
+                }
             }.getOrElse {
                 DeviceTimerControlResult.Failed(DeviceTimerControlFailure.Unavailable)
             }
@@ -269,6 +283,7 @@ data class DeviceTimerControlUiState(
     val maxSchedulesPerChannel: Int,
     val readOnly: Boolean,
     val channelStateWriteEnabled: Boolean,
+    val scheduleReadEnabled: Boolean,
     val scheduleWriteEnabled: Boolean,
     val spansMidnightSupported: Boolean,
     val temporaryOverrideWriteEnabled: Boolean,
@@ -342,6 +357,7 @@ private fun DeviceTimerControlSnapshot.toUiState(): DeviceTimerControlUiState {
         maxSchedulesPerChannel = maxSchedulesPerChannel,
         readOnly = capabilities.readOnly,
         channelStateWriteEnabled = !capabilities.readOnly && capabilities.supportsChannelState,
+        scheduleReadEnabled = capabilities.supportsSchedules,
         scheduleWriteEnabled = !capabilities.readOnly &&
             capabilities.supportsConfigApply &&
             capabilities.supportsSchedules,
@@ -391,25 +407,39 @@ private fun DeviceTimerScheduleSnapshot.toUiState() = DeviceTimerScheduleUiState
     spansMidnight = spansMidnight
 )
 
+@Suppress("ComplexCondition")
 private fun DeviceTimerControlUiState?.regimeMutationDeviceUid(
     boundDeviceUid: String,
     contentEnabled: Boolean,
     slotId: String,
     regime: DeviceTimerChannelRegime,
+    temporaryDurationMillis: Long?,
     pendingChannelSlotIds: Set<String>
 ): String? {
     val channel = this?.channels?.firstOrNull { candidate -> candidate.slotId == slotId }
+    val persistentMutation = temporaryDurationMillis == null
+    val capabilityReady = if (persistentMutation) {
+        this?.channelStateWriteEnabled == true
+    } else {
+        this?.temporaryOverrideWriteEnabled == true
+    }
     val interactionReady = this != null &&
         contentEnabled &&
-        channelStateWriteEnabled &&
+        capabilityReady &&
         !lockLoop
     return boundDeviceUid.takeIf {
         it.isNotBlank() &&
             interactionReady &&
-            channel?.regime != regime &&
+            (!persistentMutation || channel?.regime != regime) &&
+            (persistentMutation || regime != DeviceTimerChannelRegime.AUTO) &&
+            (persistentMutation || temporaryDurationMillis?.let {
+                duration -> duration in 1L..MAX_TEMPORARY_OVERRIDE_MILLIS
+            } == true) &&
             slotId !in pendingChannelSlotIds
     }
 }
+
+private const val MAX_TEMPORARY_OVERRIDE_MILLIS = 86_400_000L
 
 private fun DeviceTimerControlFailure.closesControlSurface(): Boolean = when (this) {
     DeviceTimerControlFailure.Unavailable,

@@ -215,6 +215,33 @@ class DeviceTimerRootViewModelTest {
     }
 
     @Test
+    fun `temporary override uses the firmware duration command without changing persistent mode`() =
+        runTest {
+            val controls = FakeTimerControlOperations(availableControl())
+            val viewModel = viewModel(controls, FakePreparationOperations(fresh = true))
+            viewModel.bind(DEVICE_UID)
+
+            viewModel.selectRegime(
+                CHANNEL_SLOT_ID,
+                DeviceTimerChannelRegime.ON,
+                TEMPORARY_DURATION_MILLIS
+            )
+
+            assertTrue(controls.regimeCalls.isEmpty())
+            assertEquals(
+                listOf(
+                    TemporaryOverrideCall(
+                        DEVICE_UID,
+                        CHANNEL_SLOT_ID,
+                        DeviceTimerChannelRegime.ON,
+                        TEMPORARY_DURATION_MILLIS
+                    )
+                ),
+                controls.temporaryOverrideCalls
+            )
+        }
+
+    @Test
     fun `root availability remains a fail closed interaction gate`() = runTest {
         val roots = FakeRootOperations(timerRoot())
         val controls = FakeTimerControlOperations(availableControl())
@@ -291,6 +318,7 @@ class DeviceTimerRootViewModelTest {
     ) : DeviceTimerControlOperations {
         private val results = MutableStateFlow(initial)
         val regimeCalls = mutableListOf<RegimeCall>()
+        val temporaryOverrideCalls = mutableListOf<TemporaryOverrideCall>()
         var regimeResult: DeviceTimerControlResult? = null
 
         override fun observeControl(deviceUid: String): Flow<DeviceTimerControlResult> = results
@@ -319,7 +347,15 @@ class DeviceTimerRootViewModelTest {
             slotId: String,
             regime: DeviceTimerChannelRegime,
             durationMillis: Long
-        ): DeviceTimerControlResult = results.value
+        ): DeviceTimerControlResult {
+            temporaryOverrideCalls += TemporaryOverrideCall(
+                deviceUid,
+                slotId,
+                regime,
+                durationMillis
+            )
+            return results.value
+        }
 
         override suspend fun setDisplayName(
             deviceUid: String,
@@ -341,6 +377,7 @@ class DeviceTimerRootViewModelTest {
     private companion object {
         const val DEVICE_UID = "timer-pro-1"
         const val CHANNEL_SLOT_ID = "timer:timer1"
+        const val TEMPORARY_DURATION_MILLIS = 30L * 60_000L
     }
 }
 
@@ -348,6 +385,13 @@ private data class RegimeCall(
     val deviceUid: String,
     val slotId: String,
     val regime: DeviceTimerChannelRegime
+)
+
+private data class TemporaryOverrideCall(
+    val deviceUid: String,
+    val slotId: String,
+    val regime: DeviceTimerChannelRegime,
+    val durationMillis: Long
 )
 
 private fun timerRoot() = DeviceRootSnapshot(

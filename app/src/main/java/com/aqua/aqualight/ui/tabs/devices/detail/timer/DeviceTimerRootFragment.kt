@@ -13,9 +13,11 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.timer.DeviceTimerChannelRegime
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceTimerRootBinding
+import com.aqua.aqualight.ui.common.bottomsheet.IntegerStepperBottomSheet
 import com.aqua.aqualight.ui.common.devicepresence.DeviceMenuUnavailableMessageMapper
 import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
@@ -40,6 +42,7 @@ class DeviceTimerRootFragment : Fragment(R.layout.fragment_device_timer_root) {
         val initialState = viewModel.uiState.value
         setFragmentGlobalLoading(initialState.showBlockingPreparation)
         setupHeader(initialState)
+        registerTemporaryOverrideResult()
         setupDashboardContent()
         observeViewModel()
     }
@@ -51,7 +54,9 @@ class DeviceTimerRootFragment : Fragment(R.layout.fragment_device_timer_root) {
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
                 DeviceTimerDashboardScreen(
                     state = state,
-                    onRegimeSelected = viewModel::selectRegime
+                    onRegimeSelected = viewModel::selectRegime,
+                    onProgramClick = ::openPrograms,
+                    onTemporaryOverrideClick = ::showTemporaryOverrideSheet
                 )
             }
         }
@@ -92,6 +97,71 @@ class DeviceTimerRootFragment : Fragment(R.layout.fragment_device_timer_root) {
         )
     }
 
+    private fun openPrograms(slotId: String) {
+        if (!viewModel.uiState.value.contentEnabled) return
+        val navController = findNavController()
+        if (navController.currentDestination?.id != R.id.deviceTimerRootFragment) return
+        navController.navigate(
+            DeviceTimerRootFragmentDirections
+                .actionDeviceTimerRootFragmentToDeviceTimerProgramFragment(
+                    deviceUid = args.deviceUid,
+                    slotId = slotId
+                )
+        )
+    }
+
+    private fun showTemporaryOverrideSheet(
+        slotId: String,
+        regime: DeviceTimerChannelRegime
+    ) {
+        IntegerStepperBottomSheet.show(
+            fragmentManager = parentFragmentManager,
+            title = getString(
+                if (regime == DeviceTimerChannelRegime.ON) {
+                    R.string.device_timer_timed_on_title
+                } else {
+                    R.string.device_timer_timed_off_title
+                }
+            ),
+            helperText = getString(R.string.device_timer_timed_duration_helper),
+            valueFormat = getString(R.string.device_timer_duration_value_format),
+            initialValue = DEFAULT_TEMPORARY_DURATION_MINUTES,
+            minValue = MIN_TEMPORARY_DURATION_MINUTES,
+            maxValue = MAX_TEMPORARY_DURATION_MINUTES,
+            step = TEMPORARY_DURATION_STEP_MINUTES,
+            saveText = getString(R.string.device_timer_apply),
+            cancelText = getString(R.string.device_timer_cancel),
+            decreaseContentDescription = getString(R.string.device_timer_duration_decrease),
+            increaseContentDescription = getString(R.string.device_timer_duration_increase),
+            requestKey = REQUEST_TEMPORARY_OVERRIDE,
+            payloadId = "$slotId${PAYLOAD_SEPARATOR}${regime.name}"
+        )
+    }
+
+    private fun registerTemporaryOverrideResult() {
+        parentFragmentManager.setFragmentResultListener(
+            REQUEST_TEMPORARY_OVERRIDE,
+            viewLifecycleOwner
+        ) { _, result ->
+            if (result.getString(IntegerStepperBottomSheet.RESULT_KEY) !=
+                IntegerStepperBottomSheet.RESULT_SAVED
+            ) return@setFragmentResultListener
+            val payload = result.getString(IntegerStepperBottomSheet.RESULT_PAYLOAD_ID).orEmpty()
+            val separatorIndex = payload.lastIndexOf(PAYLOAD_SEPARATOR)
+            if (separatorIndex <= 0) return@setFragmentResultListener
+            val regime = payload.substring(separatorIndex + 1)
+                .let { value -> runCatching { DeviceTimerChannelRegime.valueOf(value) }.getOrNull() }
+                ?: return@setFragmentResultListener
+            val durationMillis = result.getInt(IntegerStepperBottomSheet.RESULT_VALUE) *
+                MILLIS_PER_MINUTE
+            viewModel.selectRegime(
+                slotId = payload.substring(0, separatorIndex),
+                regime = regime,
+                temporaryDurationMillis = durationMillis
+            )
+        }
+    }
+
     private fun observeViewModel() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -128,5 +198,15 @@ class DeviceTimerRootFragment : Fragment(R.layout.fragment_device_timer_root) {
     override fun onDestroyView() {
         _binding = null
         super.onDestroyView()
+    }
+
+    private companion object {
+        const val REQUEST_TEMPORARY_OVERRIDE = "timer_temporary_override"
+        const val PAYLOAD_SEPARATOR = ':'
+        const val MIN_TEMPORARY_DURATION_MINUTES = 1
+        const val MAX_TEMPORARY_DURATION_MINUTES = 1_440
+        const val DEFAULT_TEMPORARY_DURATION_MINUTES = 30
+        const val TEMPORARY_DURATION_STEP_MINUTES = 1
+        const val MILLIS_PER_MINUTE = 60_000L
     }
 }

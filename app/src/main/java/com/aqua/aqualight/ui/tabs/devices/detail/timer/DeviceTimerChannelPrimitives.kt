@@ -3,8 +3,10 @@ package com.aqua.aqualight.ui.tabs.devices.detail.timer
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -203,4 +205,121 @@ internal fun TimerDivider(colors: AquaDeviceCardColors) {
             .height(AquaTimerDashboardGeometry.dividerHeight)
             .background(colors.outline.copy(alpha = AquaTimerDashboardAlpha.divider))
     )
+}
+
+@Composable
+@Suppress("LongParameterList")
+internal fun TimerChannelActions(
+    programEnabled: Boolean,
+    temporaryOverrideEnabled: Boolean,
+    onProgramClick: () -> Unit,
+    onTemporaryOverrideClick: (DeviceTimerChannelRegime) -> Unit,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(AquaTimerDashboardGeometry.actionRowGap)
+    ) {
+        TimerWideAction(
+            label = stringResource(R.string.device_timer_manage_programs),
+            enabled = programEnabled,
+            onClick = onProgramClick,
+            colors = colors,
+            typography = typography
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(AquaTimerDashboardGeometry.actionButtonGap)
+        ) {
+            TimerCompactAction(
+                label = stringResource(R.string.device_timer_timed_on),
+                enabled = temporaryOverrideEnabled,
+                onClick = { onTemporaryOverrideClick(DeviceTimerChannelRegime.ON) },
+                colors = colors,
+                typography = typography
+            )
+            TimerCompactAction(
+                label = stringResource(R.string.device_timer_timed_off),
+                enabled = temporaryOverrideEnabled,
+                onClick = { onTemporaryOverrideClick(DeviceTimerChannelRegime.OFF) },
+                colors = colors,
+                typography = typography
+            )
+        }
+    }
+}
+
+@Composable
+private fun TimerWideAction(
+    label: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography
+) {
+    TimerActionSurface(
+        label = label,
+        enabled = enabled,
+        onClick = onClick,
+        outline = colors.accent,
+        background = colors.accent.copy(alpha = AquaTimerDashboardAlpha.actionBackground),
+        textColor = colors.primaryText,
+        typography = typography,
+        modifier = Modifier.fillMaxWidth()
+    )
+}
+
+@Composable
+private fun RowScope.TimerCompactAction(
+    label: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography
+) {
+    TimerActionSurface(
+        label = label,
+        enabled = enabled,
+        onClick = onClick,
+        outline = colors.outline,
+        background = colors.mediaSurface.copy(alpha = AquaTimerDashboardAlpha.idleBackground),
+        textColor = colors.secondaryText,
+        typography = typography,
+        modifier = Modifier.weight(1f)
+    )
+}
+
+@Composable
+@Suppress("LongParameterList")
+private fun TimerActionSurface(
+    label: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    outline: Color,
+    background: Color,
+    textColor: Color,
+    typography: AquaDeviceCardTypography,
+    modifier: Modifier
+) {
+    Box(
+        modifier = modifier
+            .clip(AquaTimerDashboardGeometry.actionShape)
+            .background(background)
+            .border(
+                width = AquaDeviceCardGeometry.outlineWidth,
+                color = outline,
+                shape = AquaTimerDashboardGeometry.actionShape
+            )
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(AquaTimerDashboardGeometry.actionPadding),
+        contentAlignment = Alignment.Center
+    ) {
+        BasicText(
+            text = label,
+            style = typography.caption.copy(color = textColor),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
 }

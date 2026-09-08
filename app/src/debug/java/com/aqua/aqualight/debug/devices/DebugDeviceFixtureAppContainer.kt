@@ -18,6 +18,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewMo
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.settings.DeviceFamilySettingsViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.timer.program.DeviceTimerProgramViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.update.DeviceFirmwareUpdateViewModel
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 
@@ -51,6 +52,8 @@ private class DebugDeviceFixtureViewModelFactory(
                 DeviceLightRootViewModel(rootOperations(requireGraph()))
             DeviceTimerRootViewModel::class.java ->
                 createTimerRootViewModel(requireGraph())
+            DeviceTimerProgramViewModel::class.java ->
+                DeviceTimerProgramViewModel(timerDependencies(requireGraph()).timerControlOperations)
             DeviceRootOverviewViewModel::class.java ->
                 DeviceRootOverviewViewModel(rootOperations(requireGraph()))
             DeviceFamilySettingsViewModel::class.java ->

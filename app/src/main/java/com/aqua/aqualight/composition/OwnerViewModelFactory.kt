@@ -54,6 +54,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.dosing.root.DeviceDosingRootVie
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.settings.DeviceFamilySettingsViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.timer.program.DeviceTimerProgramViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.update.DeviceFirmwareUpdateViewModel
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
@@ -204,6 +205,8 @@ internal class OwnerViewModelFactory(
                     timerControlOperations = graph.timerControlOperations,
                     controlSurfacePreparationOperations = graph.controlSurfacePreparationOperations
                 )
+            DeviceTimerProgramViewModel::class.java ->
+                DeviceTimerProgramViewModel(graph.timerControlOperations)
             DeviceDosingRootViewModel::class.java -> graph.dosingOperations.let { dosing ->
                 DeviceDosingRootViewModel(
                     operations = DefaultDeviceRootOperations(repository),
@@ -294,6 +297,7 @@ internal class OwnerViewModelFactory(
             DeviceCoolingManualSettingsViewModel::class.java,
             DeviceCoolingProgramSettingsViewModel::class.java,
             DeviceTimerRootViewModel::class.java,
+            DeviceTimerProgramViewModel::class.java,
             DeviceDosingRootViewModel::class.java,
             DeviceDosingChannelCalibrationViewModel::class.java,
             DeviceDosingChannelDetailViewModel::class.java,

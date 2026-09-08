@@ -66,4 +66,47 @@
     </plurals>
     <string name="device_timer_output_fault">Output needs attention</string>
     <string name="device_timer_updating">Updating…</string>
+    <string name="device_timer_manage_programs">Manage programs</string>
+    <string name="device_timer_timed_on">Timed on</string>
+    <string name="device_timer_timed_off">Timed off</string>
+    <string name="device_timer_timed_on_title">Turn on temporarily</string>
+    <string name="device_timer_timed_off_title">Turn off temporarily</string>
+    <string name="device_timer_timed_duration_helper">The temporary control can run for up to 24 hours. When it ends, the channel returns to its persistent operating mode.</string>
+    <string name="device_timer_duration_value_format">%d min</string>
+    <string name="device_timer_duration_decrease">Decrease duration</string>
+    <string name="device_timer_duration_increase">Increase duration</string>
+    <string name="device_timer_apply">Apply</string>
+    <string name="device_timer_cancel">Cancel</string>
+    <string name="device_timer_program_title">Programs</string>
+    <string name="device_timer_program_save">Save</string>
+    <string name="device_timer_program_saved">Programs saved</string>
+    <string name="device_timer_program_summary">Choose the days and active time for each program. A time range ending before it starts continues past midnight.</string>
+    <plurals name="device_timer_program_capacity">
+        <item quantity="one">Up to %d program on this channel</item>
+        <item quantity="other">Up to %d programs on this channel</item>
+    </plurals>
+    <string name="device_timer_program_add">Add program</string>
+    <string name="device_timer_program_limit_reached">Program limit reached</string>
+    <string name="device_timer_program_name">Program name</string>
+    <string name="device_timer_program_enabled">Program status</string>
+    <string name="device_timer_program_enabled_value">Enabled</string>
+    <string name="device_timer_program_disabled_value">Disabled</string>
+    <string name="device_timer_program_days">Active days</string>
+    <string-array name="device_timer_weekday_short_labels">
+        <item>Mon</item><item>Tue</item><item>Wed</item><item>Thu</item><item>Fri</item><item>Sat</item><item>Sun</item>
+    </string-array>
+    <string name="device_timer_program_start">Starts</string>
+    <string name="device_timer_program_end">Ends</string>
+    <string name="device_timer_program_spans_midnight">Continues into the next day</string>
+    <string name="device_timer_program_delete">Delete program</string>
+    <string name="device_timer_program_default_name">Program %1$d</string>
+    <string name="device_timer_program_name_sheet_title">Program name</string>
+    <string name="device_timer_program_name_sheet_label">Name</string>
+    <string name="device_timer_program_name_sheet_hint">For example, Day cycle</string>
+    <string name="device_timer_program_name_sheet_helper">Use a short name. Some special characters use more of the device name limit.</string>
+    <string name="device_timer_program_name_required">Enter a program name.</string>
+    <string name="device_timer_program_start_sheet_title">Start time</string>
+    <string name="device_timer_program_end_sheet_title">End time</string>
+    <string name="device_timer_program_time_sheet_message">Select the hour and minute used by the device.</string>
+    <string name="device_timer_program_invalid">Check the program name, days and time range before saving.</string>
 </resources>

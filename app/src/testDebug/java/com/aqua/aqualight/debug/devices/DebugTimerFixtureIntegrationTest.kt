@@ -105,6 +105,27 @@ class DebugTimerFixtureIntegrationTest {
     }
 
     @Test
+    fun temporaryOverrideDoesNotChangePersistentRegimeOrRevision() = runTest {
+        val dependencies = fixtureDependencies()
+        val before = dependencies.controls.currentControl(dependencies.deviceUid).availableSnapshot()
+        val slot = before.channels.first()
+
+        val mutation = dependencies.controls.setTemporaryOverride(
+            dependencies.deviceUid,
+            slot.slotId,
+            DeviceTimerChannelRegime.ON,
+            TEMPORARY_OVERRIDE_MILLIS
+        ).availableSnapshot()
+        val updated = mutation.channels.first()
+
+        assertEquals(before.revision, mutation.revision)
+        assertEquals(slot.regime, updated.regime)
+        assertEquals(DeviceTimerOperatingState.ON, updated.operatingState)
+        assertTrue(updated.temporaryOverrideActive)
+        assertEquals(TEMPORARY_OVERRIDE_MILLIS, updated.temporaryOverrideRemainingMillis)
+    }
+
+    @Test
     fun realDeviceCallsStillUseProductionDelegates() = runTest {
         val fixtures = DebugDeviceFixtureCatalog()
         val expected = DeviceTimerControlResult.Failed(DeviceTimerControlFailure.NotConnected)
@@ -161,6 +182,7 @@ class DebugTimerFixtureIntegrationTest {
     private companion object {
         const val REAL_DEVICE_UID = "REAL-TIMER-001"
         const val FIXED_NOW_MILLIS = 1_800_000_000_000L
+        const val TEMPORARY_OVERRIDE_MILLIS = 30L * 60_000L
     }
 }
 

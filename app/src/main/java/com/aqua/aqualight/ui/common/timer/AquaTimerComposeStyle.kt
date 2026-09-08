@@ -45,6 +45,17 @@ object AquaTimerDashboardGeometry {
     val modeLabelGap = 6.dp
     val modeIndicatorSize = 7.dp
 
+    val actionRowGap = 6.dp
+    val actionButtonGap = 6.dp
+    val editorSectionGap = 8.dp
+    val editorRowGap = 10.dp
+    val editorWeekdayGap = 5.dp
+    val editorWeekdaySize = 36.dp
+    val editorRowPadding = 10.dp
+    val editorTogglePadding = 8.dp
+    val actionShape = RoundedCornerShape(10.dp)
+    val actionPadding = 10.dp
+
     val messageMinimumHeight = 86.dp
     val messageGap = 6.dp
 }
@@ -67,6 +78,7 @@ object AquaTimerDashboardAlpha {
     const val idleBackground = 0.18f
     const val statusBackground = 0.17f
     const val divider = 0.72f
+    const val actionBackground = 0.16f
 }
 
 @Composable

@@ -41,11 +41,16 @@ import com.aqua.aqualight.ui.common.timer.aquaTimerDashboardColors
 import com.aqua.aqualight.ui.common.timer.aquaTimerDashboardTypography
 
 @Composable
+@Suppress("LongParameterList")
 internal fun DeviceTimerChannelCard(
     channel: DeviceTimerChannelUiState,
     interactionEnabled: Boolean,
+    programEnabled: Boolean,
+    temporaryOverrideEnabled: Boolean,
     mutationPending: Boolean,
     onRegimeSelected: (DeviceTimerChannelRegime) -> Unit,
+    onProgramClick: () -> Unit,
+    onTemporaryOverrideClick: (DeviceTimerChannelRegime) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val colors = aquaTimerDashboardColors()
@@ -93,6 +98,14 @@ internal fun DeviceTimerChannelCard(
             TimerChannelMetadata(
                 channel = channel,
                 mutationPending = mutationPending,
+                colors = colors,
+                typography = typography
+            )
+            TimerChannelActions(
+                programEnabled = programEnabled && !mutationPending,
+                temporaryOverrideEnabled = temporaryOverrideEnabled && !mutationPending,
+                onProgramClick = onProgramClick,
+                onTemporaryOverrideClick = onTemporaryOverrideClick,
                 colors = colors,
                 typography = typography
             )

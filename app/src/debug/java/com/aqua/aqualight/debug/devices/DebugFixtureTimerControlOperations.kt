@@ -69,7 +69,11 @@ internal class DebugFixtureTimerControlOperations(
             delegate.setTemporaryOverride(deviceUid, slotId, regime, durationMillis)
         regime == DeviceTimerChannelRegime.AUTO || durationMillis <= 0L ->
             rejected(DeviceTimerCommandFailure.INVALID_REQUEST)
-        else -> runtime.updateChannel(deviceUid, slotId) { channel, _ ->
+        else -> runtime.updateChannel(
+            deviceUid = deviceUid,
+            slotId = slotId,
+            persistentChange = false
+        ) { channel, _ ->
             channel.withFixtureTemporaryOverride(regime, durationMillis)
         }.toFixtureResult()
     }

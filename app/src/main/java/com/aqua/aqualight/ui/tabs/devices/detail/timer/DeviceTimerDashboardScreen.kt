@@ -17,7 +17,9 @@ import com.aqua.aqualight.ui.common.timer.AquaTimerDashboardGeometry
 @Composable
 internal fun DeviceTimerDashboardScreen(
     state: DeviceTimerRootUiState,
-    onRegimeSelected: (String, DeviceTimerChannelRegime) -> Unit,
+    onRegimeSelected: (String, DeviceTimerChannelRegime, Long?) -> Unit,
+    onProgramClick: (String) -> Unit,
+    onTemporaryOverrideClick: (String, DeviceTimerChannelRegime) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val control = state.control
@@ -68,9 +70,19 @@ internal fun DeviceTimerDashboardScreen(
                 DeviceTimerChannelCard(
                     channel = channel,
                     interactionEnabled = timerControl.interactionEnabled(state.contentEnabled),
+                    programEnabled = state.contentEnabled &&
+                        timerControl.scheduleReadEnabled &&
+                        !timerControl.lockLoop,
+                    temporaryOverrideEnabled = state.contentEnabled &&
+                        timerControl.temporaryOverrideWriteEnabled &&
+                        !timerControl.lockLoop,
                     mutationPending = channel.slotId in state.pendingChannelSlotIds,
                     onRegimeSelected = { regime ->
-                        onRegimeSelected(channel.slotId, regime)
+                        onRegimeSelected(channel.slotId, regime, null)
+                    },
+                    onProgramClick = { onProgramClick(channel.slotId) },
+                    onTemporaryOverrideClick = { regime ->
+                        onTemporaryOverrideClick(channel.slotId, regime)
                     },
                     modifier = Modifier.fillMaxWidth()
                 )

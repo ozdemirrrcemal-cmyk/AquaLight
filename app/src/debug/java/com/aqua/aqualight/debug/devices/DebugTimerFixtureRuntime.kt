@@ -44,6 +44,7 @@ internal class DebugTimerFixtureRuntime(
     fun updateChannel(
         deviceUid: String,
         slotId: String,
+        persistentChange: Boolean = true,
         transform: (DeviceTimerChannelSnapshot, Long) -> DeviceTimerChannelSnapshot
     ): DeviceTimerControlSnapshot? = synchronized(lock) {
         val normalizedUid = deviceUid.trim()
@@ -58,7 +59,11 @@ internal class DebugTimerFixtureRuntime(
             current
         } else {
             current.copy(
-                revision = current.revision.nextFixtureRevision(),
+                revision = if (persistentChange) {
+                    current.revision.nextFixtureRevision()
+                } else {
+                    current.revision
+                },
                 uptimeMillis = current.uptimeMillis + FIXTURE_COMMAND_UPTIME_MILLIS,
                 channels = current.channels.toMutableList().apply {
                     this[channelIndex] = updatedChannel
@@ -103,7 +108,6 @@ internal fun DeviceTimerChannelSnapshot.withFixtureTemporaryOverride(
     regime: DeviceTimerChannelRegime,
     durationMillis: Long
 ): DeviceTimerChannelSnapshot = copy(
-    regime = regime,
     operatingState = if (regime == DeviceTimerChannelRegime.ON) {
         DeviceTimerOperatingState.ON
     } else {
@@ -257,7 +261,7 @@ private const val FIXTURE_COMMAND_UPTIME_MILLIS = 1_000L
 private const val FIXTURE_MAX_SCHEDULES_PER_CHANNEL = 8
 private const val FIXTURE_WEEKDAY_COUNT = 7
 private const val FIXTURE_OUTPUT_PATTERN_DIVISOR = 2
-private const val FIXTURE_SCHEDULE_SLOT_BASE = 10
+private const val FIXTURE_SCHEDULE_SLOT_BASE = 0
 private const val FIXTURE_SCHEDULE_START_HOUR = 6L
 private const val FIXTURE_SCHEDULE_DURATION_HOURS = 8L
 private const val MILLIS_PER_HOUR = 3_600_000L
