@@ -206,6 +206,13 @@ class DeviceTimerChannelFragment : Fragment(R.layout.fragment_device_timer_chann
     }
 
     private fun registerResults() {
+        registerTimedControlResult()
+        registerCustomDurationResult()
+        registerWorkModeResult()
+        registerChannelNameResult()
+    }
+
+    private fun registerTimedControlResult() {
         parentFragmentManager.setFragmentResultListener(
             REQUEST_MANUAL_CONTROL,
             viewLifecycleOwner
@@ -227,6 +234,9 @@ class DeviceTimerChannelFragment : Fragment(R.layout.fragment_device_timer_chann
                     viewModel.resumePersistentMode()
             }
         }
+    }
+
+    private fun registerCustomDurationResult() {
         parentFragmentManager.setFragmentResultListener(
             REQUEST_CUSTOM_DURATION,
             viewLifecycleOwner
@@ -242,6 +252,9 @@ class DeviceTimerChannelFragment : Fragment(R.layout.fragment_device_timer_chann
                 result.getInt(IntegerStepperBottomSheet.RESULT_VALUE)
             )
         }
+    }
+
+    private fun registerWorkModeResult() {
         parentFragmentManager.setFragmentResultListener(
             REQUEST_WORK_MODE,
             viewLifecycleOwner
@@ -254,6 +267,9 @@ class DeviceTimerChannelFragment : Fragment(R.layout.fragment_device_timer_chann
                 ?: return@setFragmentResultListener
             viewModel.setWorkMode(workMode)
         }
+    }
+
+    private fun registerChannelNameResult() {
         parentFragmentManager.setFragmentResultListener(
             REQUEST_CHANNEL_NAME,
             viewLifecycleOwner

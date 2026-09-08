@@ -66,10 +66,12 @@ class DeviceTimerChannelViewModel(
 
     fun setPersistentRegime(regime: DeviceTimerChannelRegime) {
         val state = _uiState.value
-        val channel = state.channel ?: return
-        if (!state.channelStateWriteEnabled || state.mutationPending) return
-        if (channel.regime == regime && !channel.temporaryOverrideActive) return
-        mutate { operations.setRegime(state.deviceUid, state.slotId, regime) }
+        val channel = state.channel
+        val writeReady = state.channelStateWriteEnabled && !state.mutationPending
+        val changeRequired = channel?.regime != regime || channel?.temporaryOverrideActive == true
+        if (channel != null && writeReady && changeRequired) {
+            mutate { operations.setRegime(state.deviceUid, state.slotId, regime) }
+        }
     }
 
     fun toggleManualPower() {
@@ -97,18 +99,18 @@ class DeviceTimerChannelViewModel(
 
     fun startTemporaryOverride(regime: DeviceTimerChannelRegime, durationMinutes: Int) {
         val state = _uiState.value
-        if (regime == DeviceTimerChannelRegime.AUTO ||
-            durationMinutes !in MIN_TEMPORARY_MINUTES..MAX_TEMPORARY_MINUTES ||
-            !state.temporaryOverrideWriteEnabled ||
-            state.mutationPending
-        ) return
-        mutate {
-            operations.setTemporaryOverride(
-                deviceUid = state.deviceUid,
-                slotId = state.slotId,
-                regime = regime,
-                durationMillis = durationMinutes * MILLIS_PER_MINUTE
-            )
+        val regimeValid = regime != DeviceTimerChannelRegime.AUTO
+        val durationValid = durationMinutes in MIN_TEMPORARY_MINUTES..MAX_TEMPORARY_MINUTES
+        val writeReady = state.temporaryOverrideWriteEnabled && !state.mutationPending
+        if (regimeValid && durationValid && writeReady) {
+            mutate {
+                operations.setTemporaryOverride(
+                    deviceUid = state.deviceUid,
+                    slotId = state.slotId,
+                    regime = regime,
+                    durationMillis = durationMinutes * MILLIS_PER_MINUTE
+                )
+            }
         }
     }
 
@@ -121,20 +123,17 @@ class DeviceTimerChannelViewModel(
 
     fun updateDisplayName(value: String?) {
         val state = _uiState.value
-        val channel = state.channel ?: return
-        if (!state.displayNameWriteEnabled || state.mutationPending) return
-        val update = if (value == null) {
-            DeviceTimerDisplayNameUpdate.ResetToDefault
-        } else {
-            val normalized = value.trim()
-            if (!normalized.isValidTimerDisplayName()) {
+        val channel = state.channel
+        val writeReady = state.displayNameWriteEnabled && !state.mutationPending
+        if (channel == null || !writeReady) return
+        when (val resolution = value.resolveTimerDisplayNameUpdate(channel.effectiveName)) {
+            TimerDisplayNameResolution.Invalid ->
                 eventChannel.trySend(DeviceTimerChannelEvent.InvalidDisplayName)
-                return
+            TimerDisplayNameResolution.Unchanged -> Unit
+            is TimerDisplayNameResolution.Apply -> mutate {
+                operations.setDisplayName(state.deviceUid, state.slotId, resolution.update)
             }
-            if (normalized == channel.effectiveName) return
-            DeviceTimerDisplayNameUpdate.Value(normalized)
         }
-        mutate { operations.setDisplayName(state.deviceUid, state.slotId, update) }
     }
 
     private fun mutate(block: suspend () -> DeviceTimerControlResult) {
@@ -162,28 +161,12 @@ class DeviceTimerChannelViewModel(
         if (state.deviceUid != deviceUid || state.slotId != slotId) return
         when (result) {
             is DeviceTimerControlResult.Available -> {
-                val channel = result.snapshot.channels.singleOrNull { it.slotId == slotId }
-                if (channel == null) {
+                val nextState = result.toChannelDetailState(state, slotId, preserveLoading)
+                if (nextState == null) {
                     acceptFailure(DeviceTimerControlFailure.InvalidData)
-                    return
+                } else {
+                    _uiState.value = nextState
                 }
-                val capabilities = result.snapshot.capabilities
-                _uiState.value = state.copy(
-                    loadState = if (preserveLoading) state.loadState
-                    else DeviceTimerChannelLoadState.CONTENT,
-                    channel = channel.toUiState(),
-                    runtimeLocked = result.snapshot.lockLoop,
-                    scheduleReadEnabled = capabilities.supportsSchedules,
-                    channelStateWriteEnabled = !capabilities.readOnly &&
-                        capabilities.supportsChannelState && !result.snapshot.lockLoop,
-                    temporaryOverrideWriteEnabled = !capabilities.readOnly &&
-                        capabilities.supportsTemporaryOverride && !result.snapshot.lockLoop,
-                    displayNameWriteEnabled = !capabilities.readOnly &&
-                        capabilities.supportsConfigApply &&
-                        capabilities.supportsChannelDisplayName &&
-                        channel.displayNameEditable && !result.snapshot.lockLoop,
-                    failure = null
-                )
             }
             is DeviceTimerControlResult.Failed -> acceptFailure(result.failure)
         }
@@ -223,6 +206,48 @@ sealed interface DeviceTimerChannelEvent {
 
 private val DeviceTimerChannelUiState.effectiveName: String
     get() = displayName.ifBlank { defaultName }
+
+private sealed interface TimerDisplayNameResolution {
+    data object Invalid : TimerDisplayNameResolution
+    data object Unchanged : TimerDisplayNameResolution
+    data class Apply(val update: DeviceTimerDisplayNameUpdate) : TimerDisplayNameResolution
+}
+
+private fun String?.resolveTimerDisplayNameUpdate(
+    effectiveName: String
+): TimerDisplayNameResolution = when {
+    this == null -> TimerDisplayNameResolution.Apply(
+        DeviceTimerDisplayNameUpdate.ResetToDefault
+    )
+    !trim().isValidTimerDisplayName() -> TimerDisplayNameResolution.Invalid
+    trim() == effectiveName -> TimerDisplayNameResolution.Unchanged
+    else -> TimerDisplayNameResolution.Apply(DeviceTimerDisplayNameUpdate.Value(trim()))
+}
+
+private fun DeviceTimerControlResult.Available.toChannelDetailState(
+    previous: DeviceTimerChannelDetailUiState,
+    slotId: String,
+    preserveLoading: Boolean
+): DeviceTimerChannelDetailUiState? = snapshot.channels.singleOrNull { it.slotId == slotId }
+    ?.let { channel ->
+        val capabilities = snapshot.capabilities
+        previous.copy(
+            loadState = if (preserveLoading) previous.loadState
+            else DeviceTimerChannelLoadState.CONTENT,
+            channel = channel.toUiState(),
+            runtimeLocked = snapshot.lockLoop,
+            scheduleReadEnabled = capabilities.supportsSchedules,
+            channelStateWriteEnabled = !capabilities.readOnly &&
+                capabilities.supportsChannelState && !snapshot.lockLoop,
+            temporaryOverrideWriteEnabled = !capabilities.readOnly &&
+                capabilities.supportsTemporaryOverride && !snapshot.lockLoop,
+            displayNameWriteEnabled = !capabilities.readOnly &&
+                capabilities.supportsConfigApply &&
+                capabilities.supportsChannelDisplayName &&
+                channel.displayNameEditable && !snapshot.lockLoop,
+            failure = null
+        )
+    }
 
 private fun String.isValidTimerDisplayName(): Boolean =
     isNotBlank() &&

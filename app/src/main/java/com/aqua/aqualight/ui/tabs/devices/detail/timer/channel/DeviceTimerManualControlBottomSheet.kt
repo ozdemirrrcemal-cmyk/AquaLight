@@ -23,6 +23,16 @@ class DeviceTimerManualControlBottomSheet : BottomSheetDialogFragment(
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val args = requireArguments()
+        restoreSelection(args, savedInstanceState)
+        bindCopy(view, args)
+        val (onButton, offButton) = bindRegimeButtons(view, args)
+        bindDurationAndActions(view, args)
+        onButton.isFocusable = true
+        offButton.isFocusable = true
+        renderSelection(view)
+    }
+
+    private fun restoreSelection(args: Bundle, savedInstanceState: Bundle?) {
         selectedRegime = savedInstanceState?.getString(STATE_REGIME)
             ?.let { runCatching { DeviceTimerChannelRegime.valueOf(it) }.getOrNull() }
             ?: args.getString(ARG_INITIAL_REGIME)
@@ -33,14 +43,18 @@ class DeviceTimerManualControlBottomSheet : BottomSheetDialogFragment(
             STATE_DURATION,
             DEFAULT_DURATION_MINUTES
         ) ?: DEFAULT_DURATION_MINUTES
+    }
 
+    private fun bindCopy(view: View, args: Bundle) {
         view.findViewById<TextView>(R.id.tvTimerManualTitle).text =
             args.getString(ARG_TITLE).orEmpty()
         view.findViewById<TextView>(R.id.tvTimerManualMessage).text =
             args.getString(ARG_MESSAGE).orEmpty()
         view.findViewById<TextView>(R.id.tvTimerManualDurationLabel).text =
             args.getString(ARG_DURATION_LABEL).orEmpty()
+    }
 
+    private fun bindRegimeButtons(view: View, args: Bundle): Pair<TextView, TextView> {
         val onButton = view.findViewById<TextView>(R.id.btnTimerManualOn).apply {
             text = args.getString(ARG_ON_TEXT).orEmpty()
             setOnClickListener {
@@ -55,6 +69,10 @@ class DeviceTimerManualControlBottomSheet : BottomSheetDialogFragment(
                 renderSelection(view)
             }
         }
+        return onButton to offButton
+    }
+
+    private fun bindDurationAndActions(view: View, args: Bundle) {
         listOf(
             R.id.btnTimerDuration15 to PRESET_15_MINUTES,
             R.id.btnTimerDuration30 to PRESET_30_MINUTES,
@@ -90,9 +108,6 @@ class DeviceTimerManualControlBottomSheet : BottomSheetDialogFragment(
                 dismiss()
             }
         }
-        onButton.isFocusable = true
-        offButton.isFocusable = true
-        renderSelection(view)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {

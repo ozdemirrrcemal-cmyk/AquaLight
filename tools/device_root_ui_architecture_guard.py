@@ -70,6 +70,10 @@ TIMER_CHANNEL_CARD = Path(
     "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/"
     "DeviceTimerChannelCard.kt"
 )
+TIMER_CHANNEL_SCREEN = Path(
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/channel/"
+    "DeviceTimerChannelScreen.kt"
+)
 TIMER_UI_ROOT = Path(
     "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer"
 )
@@ -222,6 +226,7 @@ def validate_timer_control_surface(
     fragment_source: str,
     view_model_source: str,
     channel_card_source: str | None = None,
+    channel_screen_source: str | None = None,
 ) -> list[str]:
     """Require the Timer dashboard while preserving its application-owned control boundary."""
     errors: list[str] = []
@@ -378,6 +383,14 @@ def validate_timer_control_surface(
                 f"{TIMER_CHANNEL_CARD}: Timer card surface must remain non-clickable; "
                 "only power and arrow actions may handle taps"
             )
+    if (
+        channel_screen_source is not None
+        and channel_screen_source.count("TimerDivider(colors)") < 3
+    ):
+        errors.append(
+            f"{TIMER_CHANNEL_SCREEN}: Timer channel settings must separate all four rows "
+            "with the central TimerDivider"
+        )
     return errors
 
 
@@ -525,6 +538,7 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
     timer_fragment = _read(repository_root, TIMER_FRAGMENT, errors)
     timer_view_model = _read(repository_root, TIMER_VIEW_MODEL, errors)
     timer_channel_card = _read(repository_root, TIMER_CHANNEL_CARD, errors)
+    timer_channel_screen = _read(repository_root, TIMER_CHANNEL_SCREEN, errors)
     timer_layout = _read(repository_root, TIMER_LAYOUT, errors)
 
     for token, reason in (
@@ -699,6 +713,7 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
             timer_fragment,
             timer_view_model,
             timer_channel_card,
+            timer_channel_screen,
         )
     )
     errors.extend(validate_timer_feature_boundaries(repository_root))

@@ -82,85 +82,25 @@ internal fun DeviceTimerChannelCard(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(AquaTimerDashboardGeometry.channelSectionGap)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(
-                    AquaTimerDashboardGeometry.channelHeaderGap
-                ),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                TimerChannelProductIcon(colors)
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(
-                        AquaTimerDashboardGeometry.channelTextGap
-                    )
-                ) {
-                    BasicText(
-                        text = name,
-                        style = typography.title,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(
-                            AquaTimerDashboardGeometry.channelHeaderGap
-                        ),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        TimerStatePill(
-                            label = stateLabel,
-                            active = channel.operatingState == DeviceTimerOperatingState.ON,
-                            colors = colors,
-                            typography = typography
-                        )
-                        BasicText(
-                            text = timerScheduleSummary(channel),
-                            style = typography.caption.copy(color = colors.secondaryText),
-                            modifier = Modifier.weight(1f, fill = false),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                }
-                TimerPowerButton(
-                    active = channel.operatingState == DeviceTimerOperatingState.ON,
-                    enabled = powerEnabled,
-                    onClick = onPowerClick,
-                    colors = colors
-                )
-            }
+            TimerChannelCardHeader(
+                channel = channel,
+                name = name,
+                stateLabel = stateLabel,
+                powerEnabled = powerEnabled,
+                onPowerClick = onPowerClick,
+                colors = colors,
+                typography = typography
+            )
             TimerDivider(colors)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                TimerMetadataRow(
-                    text = timerRuntimeSummary(channel, mutationPending),
-                    tint = if (mutationPending) colors.accent else colors.secondaryText,
-                    typography = typography,
-                    modifier = Modifier.weight(1f)
-                )
-                Box(
-                    modifier = Modifier
-                        .size(AquaTimerDashboardGeometry.metadataActionSize)
-                        .clip(CircleShape)
-                        .clickable(
-                            enabled = interactionEnabled && !mutationPending,
-                            role = Role.Button,
-                            onClick = onChannelClick
-                        )
-                        .semantics { contentDescription = detailsDescription },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Image(
-                        painter = painterResource(R.drawable.ic_arrow_right),
-                        contentDescription = null,
-                        modifier = Modifier.size(AquaTimerDashboardGeometry.metadataIconSize),
-                        colorFilter = ColorFilter.tint(colors.secondaryText)
-                    )
-                }
-            }
+            TimerChannelCardFooter(
+                channel = channel,
+                interactionEnabled = interactionEnabled,
+                mutationPending = mutationPending,
+                detailsDescription = detailsDescription,
+                onChannelClick = onChannelClick,
+                colors = colors,
+                typography = typography
+            )
             if (channel.outputHealth == DeviceTimerOutputHealth.HARDWARE_FAULT) {
                 TimerMetadataRow(
                     text = stringResource(R.string.device_timer_output_fault),
@@ -168,6 +108,124 @@ internal fun DeviceTimerChannelCard(
                     typography = typography
                 )
             }
+        }
+    }
+}
+
+@Composable
+@Suppress("LongParameterList")
+private fun TimerChannelCardHeader(
+    channel: DeviceTimerChannelUiState,
+    name: String,
+    stateLabel: String,
+    powerEnabled: Boolean,
+    onPowerClick: () -> Unit,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(AquaTimerDashboardGeometry.channelHeaderGap),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        TimerChannelProductIcon(colors)
+        TimerChannelCardTitle(
+            channel = channel,
+            name = name,
+            stateLabel = stateLabel,
+            colors = colors,
+            typography = typography,
+            modifier = Modifier.weight(1f)
+        )
+        TimerPowerButton(
+            active = channel.operatingState == DeviceTimerOperatingState.ON,
+            enabled = powerEnabled,
+            onClick = onPowerClick,
+            colors = colors
+        )
+    }
+}
+
+@Composable
+@Suppress("LongParameterList")
+private fun TimerChannelCardTitle(
+    channel: DeviceTimerChannelUiState,
+    name: String,
+    stateLabel: String,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(AquaTimerDashboardGeometry.channelTextGap)
+    ) {
+        BasicText(
+            text = name,
+            style = typography.title,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(AquaTimerDashboardGeometry.channelHeaderGap),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TimerStatePill(
+                label = stateLabel,
+                active = channel.operatingState == DeviceTimerOperatingState.ON,
+                colors = colors,
+                typography = typography
+            )
+            BasicText(
+                text = timerScheduleSummary(channel),
+                style = typography.caption.copy(color = colors.secondaryText),
+                modifier = Modifier.weight(1f, fill = false),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+@Composable
+@Suppress("LongParameterList")
+private fun TimerChannelCardFooter(
+    channel: DeviceTimerChannelUiState,
+    interactionEnabled: Boolean,
+    mutationPending: Boolean,
+    detailsDescription: String,
+    onChannelClick: () -> Unit,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        TimerMetadataRow(
+            text = timerRuntimeSummary(channel, mutationPending),
+            tint = if (mutationPending) colors.accent else colors.secondaryText,
+            typography = typography,
+            modifier = Modifier.weight(1f)
+        )
+        Box(
+            modifier = Modifier
+                .size(AquaTimerDashboardGeometry.metadataActionSize)
+                .clip(CircleShape)
+                .clickable(
+                    enabled = interactionEnabled && !mutationPending,
+                    role = Role.Button,
+                    onClick = onChannelClick
+                )
+                .semantics { contentDescription = detailsDescription },
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                painter = painterResource(R.drawable.ic_arrow_right),
+                contentDescription = null,
+                modifier = Modifier.size(AquaTimerDashboardGeometry.metadataIconSize),
+                colorFilter = ColorFilter.tint(colors.secondaryText)
+            )
         }
     }
 }

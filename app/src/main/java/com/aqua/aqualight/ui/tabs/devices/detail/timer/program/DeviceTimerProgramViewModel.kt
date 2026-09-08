@@ -234,31 +234,34 @@ sealed interface DeviceTimerProgramEvent {
     data class Failed(val failure: DeviceTimerControlFailure) : DeviceTimerProgramEvent
 }
 
-@Suppress("ComplexCondition")
 internal fun List<DeviceTimerProgramDraft>.timerProgramValidationIssue(
     maxSchedules: Int,
     spansMidnightSupported: Boolean
 ): DeviceTimerProgramValidationIssue? {
     val fieldsValid = size <= maxSchedules &&
         map { it.slotId }.distinct().size == size &&
-        all { draft ->
-        draft.slotId in MIN_SCHEDULE_SLOT_ID..MAX_SCHEDULE_SLOT_ID &&
-            draft.name.isNotBlank() &&
-            draft.name.none { character -> character.isISOControl() } &&
-            draft.name.toByteArray(Charsets.UTF_8).size <= MAX_NAME_UTF8_BYTES &&
-            draft.weekdays.size == WEEKDAY_COUNT &&
-            (!draft.enabled || draft.weekdays.any { it }) &&
-            draft.startMinutesOfDay in 0 until MINUTES_PER_DAY &&
-            draft.endMinutesOfDay in 0 until MINUTES_PER_DAY &&
-            draft.startMinutesOfDay != draft.endMinutesOfDay &&
-            (spansMidnightSupported || !draft.spansMidnight)
-        }
-    if (!fieldsValid) return DeviceTimerProgramValidationIssue.INVALID_FIELD
-    if (enabledTimerIntervals().hasOverlappingTimerPrograms()) {
-        return DeviceTimerProgramValidationIssue.OVERLAPPING_PROGRAMS
+        all { draft -> draft.hasValidTimerFields(spansMidnightSupported) }
+    val programsOverlap = fieldsValid && enabledTimerIntervals().hasOverlappingTimerPrograms()
+    return when {
+        !fieldsValid -> DeviceTimerProgramValidationIssue.INVALID_FIELD
+        programsOverlap -> DeviceTimerProgramValidationIssue.OVERLAPPING_PROGRAMS
+        else -> null
     }
-    return null
 }
+
+@Suppress("ComplexCondition")
+private fun DeviceTimerProgramDraft.hasValidTimerFields(
+    spansMidnightSupported: Boolean
+): Boolean = slotId in MIN_SCHEDULE_SLOT_ID..MAX_SCHEDULE_SLOT_ID &&
+    name.isNotBlank() &&
+    name.none { character -> character.isISOControl() } &&
+    name.toByteArray(Charsets.UTF_8).size <= MAX_NAME_UTF8_BYTES &&
+    weekdays.size == WEEKDAY_COUNT &&
+    (!enabled || weekdays.any { it }) &&
+    startMinutesOfDay in 0 until MINUTES_PER_DAY &&
+    endMinutesOfDay in 0 until MINUTES_PER_DAY &&
+    startMinutesOfDay != endMinutesOfDay &&
+    (spansMidnightSupported || !spansMidnight)
 
 private data class TimerWeekInterval(
     val slotId: Int,

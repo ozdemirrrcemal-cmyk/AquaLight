@@ -167,27 +167,6 @@ class DeviceTimerRootViewModelTest {
     }
 
     @Test
-    fun `supported channel mode selection uses application operation`() = runTest {
-        val controls = FakeTimerControlOperations(availableControl()).apply {
-            regimeResult = availableControl(regime = DeviceTimerChannelRegime.ON)
-        }
-        val viewModel = viewModel(controls, FakePreparationOperations(fresh = true))
-        viewModel.bind(DEVICE_UID)
-
-        viewModel.selectRegime(CHANNEL_SLOT_ID, DeviceTimerChannelRegime.ON)
-
-        assertEquals(
-            listOf(RegimeCall(DEVICE_UID, CHANNEL_SLOT_ID, DeviceTimerChannelRegime.ON)),
-            controls.regimeCalls
-        )
-        assertEquals(
-            DeviceTimerChannelRegime.ON,
-            viewModel.uiState.value.control?.channels?.single()?.regime
-        )
-        assertTrue(viewModel.uiState.value.pendingChannelSlotIds.isEmpty())
-    }
-
-    @Test
     fun `dashboard power turns the active channel off with the persistent firmware command`() =
         runTest {
             val controls = FakeTimerControlOperations(availableControl())
@@ -233,7 +212,7 @@ class DeviceTimerRootViewModelTest {
         val viewModel = viewModel(controls, FakePreparationOperations(fresh = true))
         viewModel.bind(DEVICE_UID)
 
-        viewModel.selectRegime(CHANNEL_SLOT_ID, DeviceTimerChannelRegime.ON)
+        viewModel.toggleManualPower(CHANNEL_SLOT_ID)
 
         assertTrue(viewModel.uiState.value.contentEnabled)
         assertEquals(failure, viewModel.uiState.value.controlFailure)
@@ -246,37 +225,10 @@ class DeviceTimerRootViewModelTest {
         val viewModel = viewModel(controls, FakePreparationOperations(fresh = true))
         viewModel.bind(DEVICE_UID)
 
-        viewModel.selectRegime(CHANNEL_SLOT_ID, DeviceTimerChannelRegime.ON)
+        viewModel.toggleManualPower(CHANNEL_SLOT_ID)
 
         assertTrue(controls.regimeCalls.isEmpty())
     }
-
-    @Test
-    fun `temporary override uses the firmware duration command without changing persistent mode`() =
-        runTest {
-            val controls = FakeTimerControlOperations(availableControl())
-            val viewModel = viewModel(controls, FakePreparationOperations(fresh = true))
-            viewModel.bind(DEVICE_UID)
-
-            viewModel.selectRegime(
-                CHANNEL_SLOT_ID,
-                DeviceTimerChannelRegime.ON,
-                TEMPORARY_DURATION_MILLIS
-            )
-
-            assertTrue(controls.regimeCalls.isEmpty())
-            assertEquals(
-                listOf(
-                    TemporaryOverrideCall(
-                        DEVICE_UID,
-                        CHANNEL_SLOT_ID,
-                        DeviceTimerChannelRegime.ON,
-                        TEMPORARY_DURATION_MILLIS
-                    )
-                ),
-                controls.temporaryOverrideCalls
-            )
-        }
 
     @Test
     fun `root availability remains a fail closed interaction gate`() = runTest {
@@ -414,7 +366,6 @@ class DeviceTimerRootViewModelTest {
     private companion object {
         const val DEVICE_UID = "timer-pro-1"
         const val CHANNEL_SLOT_ID = "timer:timer1"
-        const val TEMPORARY_DURATION_MILLIS = 30L * 60_000L
     }
 }
 
@@ -490,21 +441,21 @@ private fun availableControl(
                 outputHealth = DeviceTimerOutputHealth.UNVERIFIED,
                 physicalFeedbackAvailable = false,
                 displayNameEditable = true,
-                schedules = listOf(
-                    DeviceTimerScheduleSnapshot(
-                        index = 0,
-                        slotId = 10,
-                        enabled = true,
-                        name = "Morning",
-                        weekdays = listOf(true, true, true, true, true, false, false),
-                        startTimeMillis = 28_800_000L,
-                        endTimeMillis = 36_000_000L,
-                        spansMidnight = false
-                    )
-                )
+                schedules = listOf(morningSchedule())
             )
         )
     )
+)
+
+private fun morningSchedule() = DeviceTimerScheduleSnapshot(
+    index = 0,
+    slotId = 10,
+    enabled = true,
+    name = "Morning",
+    weekdays = listOf(true, true, true, true, true, false, false),
+    startTimeMillis = 28_800_000L,
+    endTimeMillis = 36_000_000L,
+    spansMidnight = false
 )
 
 private fun unavailableControl(): DeviceTimerControlResult =
