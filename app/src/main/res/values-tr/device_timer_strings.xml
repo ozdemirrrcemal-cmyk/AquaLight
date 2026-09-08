@@ -70,8 +70,6 @@
     <string name="device_timer_manage_programs">Programları yönet</string>
     <string name="device_timer_timed_on">Süreli aç</string>
     <string name="device_timer_timed_off">Süreli kapat</string>
-    <string name="device_timer_timed_on_title">Süreli aç</string>
-    <string name="device_timer_timed_off_title">Süreli kapat</string>
     <string name="device_timer_manual_power_turn_on_description">Kanalı manuel aç</string>
     <string name="device_timer_manual_power_turn_off_description">Kanalı manuel kapat</string>
     <string name="device_timer_manual_control_title">Süreli kontrol</string>
@@ -108,18 +106,14 @@
     <string name="device_timer_program_title_for_channel">%1$s programları</string>
     <string name="device_timer_program_save">Kaydet</string>
     <string name="device_timer_program_saved">Programlar kaydedildi</string>
-    <string name="device_timer_program_summary">Her program için çalışacağı günleri ve saat aralığını seçin. Başlangıçtan önce biten bir aralık gece yarısından sonra devam eder.</string>
     <plurals name="device_timer_program_capacity">
         <item quantity="one">Bu kanala en fazla %d program eklenebilir</item>
         <item quantity="other">Bu kanala en fazla %d program eklenebilir</item>
     </plurals>
     <string name="device_timer_program_add">Program ekle</string>
     <string name="device_timer_program_limit_reached">Program sınırına ulaşıldı</string>
-    <string name="device_timer_program_name">Program adı</string>
-    <string name="device_timer_program_enabled">Program durumu</string>
     <string name="device_timer_program_enabled_value">Etkin</string>
     <string name="device_timer_program_disabled_value">Devre dışı</string>
-    <string name="device_timer_program_days">Çalışacağı günler</string>
     <string-array name="device_timer_weekday_short_labels">
         <item>Pzt</item><item>Sal</item><item>Çar</item><item>Per</item><item>Cum</item><item>Cmt</item><item>Paz</item>
     </string-array>
@@ -138,6 +132,4 @@
     <string name="device_timer_program_time_sheet_message">Cihazın kullanacağı saat ve dakikayı seçin.</string>
     <string name="device_timer_program_invalid">Kaydetmeden önce program adını, günleri ve saat aralığını kontrol edin.</string>
     <string name="device_timer_program_overlap">İki etkin programın zaman aralığı çakışıyor. Kaydetmeden önce günleri veya saatleri düzenleyin.</string>
-    <string name="device_timer_program_every_day">Her gün</string>
-    <string name="device_timer_program_selected_days">%1$d gün</string>
 </resources>

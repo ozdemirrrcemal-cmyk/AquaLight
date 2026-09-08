@@ -70,8 +70,6 @@
     <string name="device_timer_manage_programs">Manage programs</string>
     <string name="device_timer_timed_on">Timed on</string>
     <string name="device_timer_timed_off">Timed off</string>
-    <string name="device_timer_timed_on_title">Turn on temporarily</string>
-    <string name="device_timer_timed_off_title">Turn off temporarily</string>
     <string name="device_timer_manual_power_turn_on_description">Turn channel on manually</string>
     <string name="device_timer_manual_power_turn_off_description">Turn channel off manually</string>
     <string name="device_timer_manual_control_title">Timed control</string>
@@ -108,18 +106,14 @@
     <string name="device_timer_program_title_for_channel">%1$s programs</string>
     <string name="device_timer_program_save">Save</string>
     <string name="device_timer_program_saved">Programs saved</string>
-    <string name="device_timer_program_summary">Choose the days and active time for each program. A time range ending before it starts continues past midnight.</string>
     <plurals name="device_timer_program_capacity">
         <item quantity="one">Up to %d program on this channel</item>
         <item quantity="other">Up to %d programs on this channel</item>
     </plurals>
     <string name="device_timer_program_add">Add program</string>
     <string name="device_timer_program_limit_reached">Program limit reached</string>
-    <string name="device_timer_program_name">Program name</string>
-    <string name="device_timer_program_enabled">Program status</string>
     <string name="device_timer_program_enabled_value">Enabled</string>
     <string name="device_timer_program_disabled_value">Disabled</string>
-    <string name="device_timer_program_days">Active days</string>
     <string-array name="device_timer_weekday_short_labels">
         <item>Mon</item><item>Tue</item><item>Wed</item><item>Thu</item><item>Fri</item><item>Sat</item><item>Sun</item>
     </string-array>
@@ -138,6 +132,4 @@
     <string name="device_timer_program_time_sheet_message">Select the hour and minute used by the device.</string>
     <string name="device_timer_program_invalid">Check the program name, days and time range before saving.</string>
     <string name="device_timer_program_overlap">Two active programs overlap. Adjust their days or time ranges before saving.</string>
-    <string name="device_timer_program_every_day">Every day</string>
-    <string name="device_timer_program_selected_days">%1$d days</string>
 </resources>
