@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.timer
 
+import android.content.res.Resources
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -15,8 +16,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import com.aqua.aqualight.R
@@ -58,11 +59,9 @@ internal fun DeviceTimerSummaryCard(
                     overflow = TextOverflow.Ellipsis
                 )
                 BasicText(
-                    text = pluralStringResource(
-                        R.plurals.device_timer_dashboard_active_summary,
-                        control.activeChannelCount,
-                        control.activeChannelCount,
-                        control.channels.size
+                    text = LocalResources.current.deviceTimerActiveSummary(
+                        active = control.activeChannelCount,
+                        total = control.channels.size
                     ),
                     style = typography.body.copy(
                         color = colors.primaryText,
@@ -87,6 +86,14 @@ internal fun DeviceTimerSummaryCard(
         }
     }
 }
+
+internal fun Resources.deviceTimerActiveSummary(active: Int, total: Int): String =
+    getQuantityString(
+        R.plurals.device_timer_dashboard_active_summary,
+        active,
+        active,
+        total
+    )
 
 @Composable
 private fun TimerSummaryIcon(colors: AquaDeviceCardColors) {

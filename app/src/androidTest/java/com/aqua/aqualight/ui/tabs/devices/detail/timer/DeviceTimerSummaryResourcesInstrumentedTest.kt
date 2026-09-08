@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.res.Configuration
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.aqua.aqualight.R
 import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -27,12 +26,7 @@ class DeviceTimerSummaryResourcesInstrumentedTest {
     }
 
     private fun Context.activeSummary(active: Int, total: Int): String =
-        resources.getQuantityString(
-            R.plurals.device_timer_dashboard_active_summary,
-            active,
-            active,
-            total
-        )
+        resources.deviceTimerActiveSummary(active = active, total = total)
 
     private fun localizedContext(locale: Locale): Context {
         val configuration = Configuration(applicationContext.resources.configuration).apply {
