@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,7 +25,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextOverflow
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.timer.DeviceTimerChannelRegime
 import com.aqua.aqualight.application.devices.timer.DeviceTimerNextTransitionType
@@ -108,81 +106,6 @@ internal fun DeviceTimerChannelCard(
                     typography = typography
                 )
             }
-        }
-    }
-}
-
-@Composable
-@Suppress("LongParameterList")
-private fun TimerChannelCardHeader(
-    channel: DeviceTimerChannelUiState,
-    name: String,
-    stateLabel: String,
-    powerEnabled: Boolean,
-    onPowerClick: () -> Unit,
-    colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(AquaTimerDashboardGeometry.channelHeaderGap),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        TimerChannelProductIcon(colors)
-        TimerChannelCardTitle(
-            channel = channel,
-            name = name,
-            stateLabel = stateLabel,
-            colors = colors,
-            typography = typography,
-            modifier = Modifier.weight(1f)
-        )
-        TimerPowerButton(
-            active = channel.operatingState == DeviceTimerOperatingState.ON,
-            enabled = powerEnabled,
-            onClick = onPowerClick,
-            colors = colors
-        )
-    }
-}
-
-@Composable
-@Suppress("LongParameterList")
-private fun TimerChannelCardTitle(
-    channel: DeviceTimerChannelUiState,
-    name: String,
-    stateLabel: String,
-    colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(AquaTimerDashboardGeometry.channelTextGap)
-    ) {
-        BasicText(
-            text = name,
-            style = typography.title,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(AquaTimerDashboardGeometry.channelHeaderGap),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            TimerStatePill(
-                label = stateLabel,
-                active = channel.operatingState == DeviceTimerOperatingState.ON,
-                colors = colors,
-                typography = typography
-            )
-            BasicText(
-                text = timerScheduleSummary(channel),
-                style = typography.caption.copy(color = colors.secondaryText),
-                modifier = Modifier.weight(1f, fill = false),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
         }
     }
 }

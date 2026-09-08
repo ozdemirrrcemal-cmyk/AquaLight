@@ -1,6 +1,5 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.timer.channel
 
-import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -9,7 +8,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -29,7 +27,6 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.timer.DeviceTimerChannelRegime
 import com.aqua.aqualight.application.devices.timer.DeviceTimerOperatingState
@@ -309,56 +306,3 @@ private fun timerWorkModeLabel(regime: DeviceTimerChannelRegime): String =
             R.string.device_timer_work_mode_manual
         }
     )
-
-@Composable
-@Suppress("LongParameterList")
-private fun TimerChannelDetailRow(
-    @DrawableRes iconRes: Int,
-    title: String,
-    value: String,
-    enabled: Boolean,
-    onClick: () -> Unit,
-    colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(AquaTimerDashboardGeometry.actionShape)
-            .background(
-                colors.mediaSurface.copy(alpha = AquaTimerDashboardAlpha.idleBackground)
-            )
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
-            .alpha(if (enabled) 1f else AquaTimerInteractionStyle.disabledContentAlpha)
-            .padding(AquaTimerDashboardGeometry.detailRowPadding),
-        horizontalArrangement = Arrangement.spacedBy(AquaTimerDashboardGeometry.detailRowGap),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Image(
-            painter = painterResource(iconRes),
-            contentDescription = null,
-            modifier = Modifier.size(AquaTimerDashboardGeometry.detailRowIconSize),
-            colorFilter = ColorFilter.tint(colors.primaryText)
-        )
-        Column(modifier = Modifier.weight(1f)) {
-            BasicText(
-                text = title,
-                style = typography.body,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            BasicText(
-                text = value,
-                style = typography.caption.copy(color = colors.secondaryText),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-        Image(
-            painter = painterResource(R.drawable.ic_arrow_right),
-            contentDescription = null,
-            modifier = Modifier.size(AquaTimerDashboardGeometry.metadataIconSize),
-            colorFilter = ColorFilter.tint(colors.secondaryText)
-        )
-    }
-}
