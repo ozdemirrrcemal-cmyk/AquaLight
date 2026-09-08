@@ -61,6 +61,7 @@ internal fun DeviceTimerSummaryCard(
                     text = pluralStringResource(
                         R.plurals.device_timer_dashboard_active_summary,
                         control.activeChannelCount,
+                        control.activeChannelCount,
                         control.channels.size
                     ),
                     style = typography.body.copy(
