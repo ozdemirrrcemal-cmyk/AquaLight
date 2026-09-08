@@ -3,7 +3,9 @@ package com.aqua.aqualight.debug.devices
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.BuildConfig
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
 import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
+import com.aqua.aqualight.application.devices.timer.DeviceTimerControlOperations
 import com.aqua.aqualight.composition.AppContainer
 import com.aqua.aqualight.composition.OwnerDependencyGraph
 import com.aqua.aqualight.composition.OwnerDependencyGraphAccess
@@ -40,6 +42,7 @@ private class DebugDeviceFixtureViewModelFactory(
 ) : ViewModelProvider.Factory {
 
     private val fixtures = DebugDeviceFixtureCatalog()
+    private var cachedTimerDependencies: DebugTimerFixtureDependencies? = null
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         val viewModel: ViewModel = when (modelClass) {
@@ -64,6 +67,7 @@ private class DebugDeviceFixtureViewModelFactory(
     private fun requireGraph(): OwnerDependencyGraph = ownerGraphAccess.requireActiveOwnerGraph()
 
     private fun createDevicesViewModel(graph: OwnerDependencyGraph): DevicesViewModel {
+        val timerDependencies = timerDependencies(graph)
         val repository = graph.devicesRepository
         val realOperations = DefaultOwnerDevicesOperations(
             devicesRepository = repository,
@@ -86,7 +90,8 @@ private class DebugDeviceFixtureViewModelFactory(
                     delegate = DefaultDeviceMenuAccessOperations.create(repository),
                     fixtures = fixtures
                 ),
-                controlSurfacePreparationOperations = graph.controlSurfacePreparationOperations
+                controlSurfacePreparationOperations =
+                    timerDependencies.controlSurfacePreparationOperations
             ),
             routeResolver = DeviceRouteResolver()
         )
@@ -110,11 +115,43 @@ private class DebugDeviceFixtureViewModelFactory(
         )
 
     private fun createTimerRootViewModel(graph: OwnerDependencyGraph): DeviceTimerRootViewModel =
-        DeviceTimerRootViewModel(
-            operations = rootOperations(graph),
-            timerControlOperations = graph.timerControlOperations,
-            controlSurfacePreparationOperations = graph.controlSurfacePreparationOperations
+        timerDependencies(graph).let { dependencies ->
+            DeviceTimerRootViewModel(
+                operations = rootOperations(graph),
+                timerControlOperations = dependencies.timerControlOperations,
+                controlSurfacePreparationOperations =
+                    dependencies.controlSurfacePreparationOperations
+            )
+        }
+
+    private fun timerDependencies(graph: OwnerDependencyGraph): DebugTimerFixtureDependencies =
+        synchronized(this) {
+            cachedTimerDependencies
+                ?.takeIf { dependencies -> dependencies.graph === graph }
+                ?: createTimerDependencies(graph).also { dependencies ->
+                    cachedTimerDependencies = dependencies
+                }
+        }
+
+    private fun createTimerDependencies(
+        graph: OwnerDependencyGraph
+    ): DebugTimerFixtureDependencies {
+        val runtime = DebugTimerFixtureRuntime(fixtures)
+        val timerControlOperations = DebugFixtureTimerControlOperations(
+            delegate = graph.timerControlOperations,
+            runtime = runtime
         )
+        return DebugTimerFixtureDependencies(
+            graph = graph,
+            timerControlOperations = timerControlOperations,
+            controlSurfacePreparationOperations =
+                DebugFixtureControlSurfacePreparationOperations(
+                    delegate = graph.controlSurfacePreparationOperations,
+                    fixtures = fixtures,
+                    timerControlOperations = timerControlOperations
+                )
+        )
+    }
 
     private fun rootOperations(graph: OwnerDependencyGraph) = DebugFixtureDeviceRootOperations(
         delegate = DefaultDeviceRootOperations(graph.devicesRepository),
@@ -127,3 +164,9 @@ private class DebugDeviceFixtureViewModelFactory(
             fixtures = fixtures
         )
 }
+
+private data class DebugTimerFixtureDependencies(
+    val graph: OwnerDependencyGraph,
+    val timerControlOperations: DeviceTimerControlOperations,
+    val controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations
+)

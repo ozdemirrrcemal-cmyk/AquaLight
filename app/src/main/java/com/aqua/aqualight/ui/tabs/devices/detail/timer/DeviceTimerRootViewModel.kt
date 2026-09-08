@@ -106,7 +106,13 @@ class DeviceTimerRootViewModel(
     }
 
     fun selectRegime(slotId: String, regime: DeviceTimerChannelRegime) {
-        val deviceUid = regimeMutationDeviceUid(slotId, regime) ?: return
+        val deviceUid = lastControlPresentation.regimeMutationDeviceUid(
+            boundDeviceUid = boundDeviceUid,
+            contentEnabled = _uiState.value.contentEnabled,
+            slotId = slotId,
+            regime = regime,
+            pendingChannelSlotIds = pendingChannelSlotIds
+        ) ?: return
 
         pendingChannelSlotIds += slotId
         renderBoundState()
@@ -125,24 +131,6 @@ class DeviceTimerRootViewModel(
         }
         channelMutationJobs[slotId] = mutationJob
         mutationJob.start()
-    }
-
-    private fun regimeMutationDeviceUid(
-        slotId: String,
-        regime: DeviceTimerChannelRegime
-    ): String? {
-        val control = lastControlPresentation
-        val channel = control?.channels?.firstOrNull { candidate -> candidate.slotId == slotId }
-        val interactionReady = control != null &&
-            _uiState.value.contentEnabled &&
-            control.channelStateWriteEnabled &&
-            !control.lockLoop
-        return boundDeviceUid.takeIf {
-            it.isNotBlank() &&
-                interactionReady &&
-                channel?.regime != regime &&
-                slotId !in pendingChannelSlotIds
-        }
     }
 
     private fun prepareRestoredSurface(deviceUid: String) {
@@ -402,6 +390,26 @@ private fun DeviceTimerScheduleSnapshot.toUiState() = DeviceTimerScheduleUiState
     endTimeMillis = endTimeMillis,
     spansMidnight = spansMidnight
 )
+
+private fun DeviceTimerControlUiState?.regimeMutationDeviceUid(
+    boundDeviceUid: String,
+    contentEnabled: Boolean,
+    slotId: String,
+    regime: DeviceTimerChannelRegime,
+    pendingChannelSlotIds: Set<String>
+): String? {
+    val channel = this?.channels?.firstOrNull { candidate -> candidate.slotId == slotId }
+    val interactionReady = this != null &&
+        contentEnabled &&
+        channelStateWriteEnabled &&
+        !lockLoop
+    return boundDeviceUid.takeIf {
+        it.isNotBlank() &&
+            interactionReady &&
+            channel?.regime != regime &&
+            slotId !in pendingChannelSlotIds
+    }
+}
 
 private fun DeviceTimerControlFailure.closesControlSurface(): Boolean = when (this) {
     DeviceTimerControlFailure.Unavailable,
