@@ -33,7 +33,10 @@
     <string name="device_timer_status_clock_unavailable_message">Automatic programs will remain paused until the Timer receives a trusted local time. Manual channel control remains available.</string>
 
     <string name="device_timer_dashboard_channels_title">Channels</string>
-    <string name="device_timer_dashboard_active_summary">%1$d of %2$d outputs active</string>
+    <plurals name="device_timer_dashboard_active_summary">
+        <item quantity="one">%1$d of %2$d output active</item>
+        <item quantity="other">%1$d of %2$d outputs active</item>
+    </plurals>
     <string name="device_timer_dashboard_independent_message">Each output is controlled independently.</string>
     <string name="device_timer_dashboard_read_only">View only</string>
     <string name="device_timer_channels_empty_title">No channels available</string>

@@ -33,7 +33,10 @@
     <string name="device_timer_status_clock_unavailable_message">Zamanlayıcı güvenilir yerel saati alana kadar otomatik programlar beklemede kalır. Manuel kanal kontrolü kullanılabilir.</string>
 
     <string name="device_timer_dashboard_channels_title">Kanallar</string>
-    <string name="device_timer_dashboard_active_summary">Açık çıkış: %1$d / %2$d</string>
+    <plurals name="device_timer_dashboard_active_summary">
+        <item quantity="one">Açık çıkış: %1$d / %2$d</item>
+        <item quantity="other">Açık çıkış: %1$d / %2$d</item>
+    </plurals>
     <string name="device_timer_dashboard_independent_message">Her çıkış bağımsız olarak kontrol edilir.</string>
     <string name="device_timer_dashboard_read_only">Yalnızca görüntüleme</string>
     <string name="device_timer_channels_empty_title">Kullanılabilir kanal yok</string>
