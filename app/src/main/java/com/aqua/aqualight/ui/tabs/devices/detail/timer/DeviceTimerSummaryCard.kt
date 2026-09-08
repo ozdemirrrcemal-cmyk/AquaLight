@@ -59,7 +59,7 @@ internal fun DeviceTimerSummaryCard(
                 )
                 BasicText(
                     text = pluralStringResource(
-                        R.string.device_timer_dashboard_active_summary,
+                        R.plurals.device_timer_dashboard_active_summary,
                         control.activeChannelCount,
                         control.channels.size
                     ),
