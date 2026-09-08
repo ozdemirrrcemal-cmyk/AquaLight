@@ -31,4 +31,36 @@
 
     <string name="device_timer_status_clock_unavailable_title">Cihaz saati hazır değil</string>
     <string name="device_timer_status_clock_unavailable_message">Zamanlayıcı güvenilir yerel saati alana kadar otomatik programlar beklemede kalır. Manuel kanal kontrolü kullanılabilir.</string>
+
+    <string name="device_timer_dashboard_channels_title">Kanallar</string>
+    <string name="device_timer_dashboard_active_summary">Açık çıkış: %1$d / %2$d</string>
+    <string name="device_timer_dashboard_independent_message">Her çıkış bağımsız olarak kontrol edilir.</string>
+    <string name="device_timer_dashboard_read_only">Yalnızca görüntüleme</string>
+    <string name="device_timer_channels_empty_title">Kullanılabilir kanal yok</string>
+    <string name="device_timer_channels_empty_message">Zamanlayıcı kullanılabilir bir kanal bildirmedi. Devam etmeden önce cihaz durumunu yenileyin.</string>
+    <string name="device_timer_channel_title">Kanal %1$d · %2$s</string>
+    <string name="device_timer_channel_card_content_description">Kanal %1$d, %2$s, %3$s</string>
+    <string name="device_timer_state_on">AÇIK</string>
+    <string name="device_timer_state_off">KAPALI</string>
+    <string name="device_timer_mode_auto">Otomatik</string>
+    <string name="device_timer_mode_on">Sürekli açık</string>
+    <string name="device_timer_mode_off">Sürekli kapalı</string>
+    <string name="device_timer_mode_content_description">Çalışma modunu %1$s olarak ayarla</string>
+    <string name="device_timer_schedule_none">Program yok</string>
+    <string name="device_timer_active_schedule">Etkin · %1$s</string>
+    <plurals name="device_timer_schedule_count">
+        <item quantity="one">%d program</item>
+        <item quantity="other">%d program</item>
+    </plurals>
+    <string name="device_timer_next_on">%1$s saatinde açılır</string>
+    <string name="device_timer_next_off">%1$s saatinde kapanır</string>
+    <string name="device_timer_next_none">Yaklaşan geçiş yok</string>
+    <string name="device_timer_temporary_on">Geçici olarak açık · %1$s kaldı</string>
+    <string name="device_timer_temporary_off">Geçici olarak kapalı · %1$s kaldı</string>
+    <plurals name="device_timer_duration_minutes">
+        <item quantity="one">%d dakika</item>
+        <item quantity="other">%d dakika</item>
+    </plurals>
+    <string name="device_timer_output_fault">Çıkışı kontrol edin</string>
+    <string name="device_timer_updating">Güncelleniyor…</string>
 </resources>

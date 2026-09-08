@@ -31,4 +31,36 @@
 
     <string name="device_timer_status_clock_unavailable_title">Device time is not ready</string>
     <string name="device_timer_status_clock_unavailable_message">Automatic programs will remain paused until the Timer receives a trusted local time. Manual channel control remains available.</string>
+
+    <string name="device_timer_dashboard_channels_title">Channels</string>
+    <string name="device_timer_dashboard_active_summary">%1$d of %2$d outputs active</string>
+    <string name="device_timer_dashboard_independent_message">Each output is controlled independently.</string>
+    <string name="device_timer_dashboard_read_only">View only</string>
+    <string name="device_timer_channels_empty_title">No channels available</string>
+    <string name="device_timer_channels_empty_message">The Timer did not report a usable channel. Refresh the device before continuing.</string>
+    <string name="device_timer_channel_title">Channel %1$d · %2$s</string>
+    <string name="device_timer_channel_card_content_description">Channel %1$d, %2$s, %3$s</string>
+    <string name="device_timer_state_on">ON</string>
+    <string name="device_timer_state_off">OFF</string>
+    <string name="device_timer_mode_auto">Auto</string>
+    <string name="device_timer_mode_on">Always on</string>
+    <string name="device_timer_mode_off">Always off</string>
+    <string name="device_timer_mode_content_description">Set operating mode to %1$s</string>
+    <string name="device_timer_schedule_none">No programs</string>
+    <string name="device_timer_active_schedule">Active · %1$s</string>
+    <plurals name="device_timer_schedule_count">
+        <item quantity="one">%d program</item>
+        <item quantity="other">%d programs</item>
+    </plurals>
+    <string name="device_timer_next_on">Turns on at %1$s</string>
+    <string name="device_timer_next_off">Turns off at %1$s</string>
+    <string name="device_timer_next_none">No upcoming transition</string>
+    <string name="device_timer_temporary_on">Temporarily on · %1$s remaining</string>
+    <string name="device_timer_temporary_off">Temporarily off · %1$s remaining</string>
+    <plurals name="device_timer_duration_minutes">
+        <item quantity="one">%d minute</item>
+        <item quantity="other">%d minutes</item>
+    </plurals>
+    <string name="device_timer_output_fault">Output needs attention</string>
+    <string name="device_timer_updating">Updating…</string>
 </resources>

@@ -253,7 +253,8 @@ def verify_failure_boundary() -> None:
             "Timer failure mapper does not validate firmware status codes")
     require("DeviceTimerCommercialErrorResolver" in presentation_source,
             "Timer presentation has no commercial error resolver")
-    require("statusNotice = if (clockReady) null else" in presentation_source,
+    require("DeviceTimerStatusNotice.CLOCK_UNAVAILABLE" in presentation_source and
+            "channels.any { channel -> !channel.clockReady }" in presentation_source,
             "clockReady=false is not derived as a Timer commercial status")
     require("CLOCK_UNSYNCED" not in mapper_source,
             "Timer clock state must not be modeled as a firmware command error")

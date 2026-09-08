@@ -71,11 +71,15 @@ internal object DeviceTimerCommercialErrorResolver {
                 resolve(DeviceTimerCommandFailure.PROTOCOL_ERROR)
         }
 
-    fun resolveStatus(notice: DeviceTimerChannelStatusNotice): DeviceTimerCommercialMessage =
+    fun resolveStatus(notice: DeviceTimerStatusNotice): DeviceTimerCommercialMessage =
         when (notice) {
-            DeviceTimerChannelStatusNotice.CLOCK_UNAVAILABLE -> commercialMessage(
+            DeviceTimerStatusNotice.CLOCK_UNAVAILABLE -> commercialMessage(
                 R.string.device_timer_status_clock_unavailable_title,
                 R.string.device_timer_status_clock_unavailable_message
+            )
+            DeviceTimerStatusNotice.RUNTIME_LOCKED -> commercialMessage(
+                R.string.device_timer_error_runtime_locked_title,
+                R.string.device_timer_error_runtime_locked_message
             )
         }
 
@@ -96,5 +100,5 @@ internal fun DeviceTimerCommandFailure.toCommercialTimerError(): DeviceTimerComm
 internal fun DeviceTimerControlFailure.toCommercialTimerError(): DeviceTimerCommercialMessage =
     DeviceTimerCommercialErrorResolver.resolve(this)
 
-internal fun DeviceTimerChannelStatusNotice.toCommercialTimerStatus():
+internal fun DeviceTimerStatusNotice.toCommercialTimerStatus():
     DeviceTimerCommercialMessage = DeviceTimerCommercialErrorResolver.resolveStatus(this)

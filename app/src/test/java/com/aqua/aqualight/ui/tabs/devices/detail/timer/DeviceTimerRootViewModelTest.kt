@@ -150,10 +150,68 @@ class DeviceTimerRootViewModelTest {
         val state = viewModel.uiState.value
         assertTrue(state.contentEnabled)
         assertEquals(
-            DeviceTimerChannelStatusNotice.CLOCK_UNAVAILABLE,
-            state.control?.channels?.single()?.statusNotice
+            setOf(DeviceTimerStatusNotice.CLOCK_UNAVAILABLE),
+            state.control?.statusNotices
         )
         assertEquals(null, state.controlFailure)
+    }
+
+    @Test
+    fun `root summary derives active outputs from authoritative channel state`() = runTest {
+        val controls = FakeTimerControlOperations(availableControl())
+        val viewModel = viewModel(controls, FakePreparationOperations(fresh = true))
+
+        viewModel.bind(DEVICE_UID)
+
+        assertEquals(1, viewModel.uiState.value.control?.activeChannelCount)
+    }
+
+    @Test
+    fun `supported channel mode selection uses application operation`() = runTest {
+        val controls = FakeTimerControlOperations(availableControl()).apply {
+            regimeResult = availableControl(regime = DeviceTimerChannelRegime.ON)
+        }
+        val viewModel = viewModel(controls, FakePreparationOperations(fresh = true))
+        viewModel.bind(DEVICE_UID)
+
+        viewModel.selectRegime(CHANNEL_SLOT_ID, DeviceTimerChannelRegime.ON)
+
+        assertEquals(
+            listOf(RegimeCall(DEVICE_UID, CHANNEL_SLOT_ID, DeviceTimerChannelRegime.ON)),
+            controls.regimeCalls
+        )
+        assertEquals(
+            DeviceTimerChannelRegime.ON,
+            viewModel.uiState.value.control?.channels?.single()?.regime
+        )
+        assertTrue(viewModel.uiState.value.pendingChannelSlotIds.isEmpty())
+    }
+
+    @Test
+    fun `rejected channel mutation retains authoritative content and reports reason`() = runTest {
+        val failure = DeviceTimerControlFailure.Rejected(DeviceTimerCommandFailure.CONFLICT)
+        val controls = FakeTimerControlOperations(availableControl()).apply {
+            regimeResult = DeviceTimerControlResult.Failed(failure)
+        }
+        val viewModel = viewModel(controls, FakePreparationOperations(fresh = true))
+        viewModel.bind(DEVICE_UID)
+
+        viewModel.selectRegime(CHANNEL_SLOT_ID, DeviceTimerChannelRegime.ON)
+
+        assertTrue(viewModel.uiState.value.contentEnabled)
+        assertEquals(failure, viewModel.uiState.value.controlFailure)
+        assertEquals(7L, viewModel.uiState.value.control?.revision)
+    }
+
+    @Test
+    fun `read only Timer never sends a channel mutation`() = runTest {
+        val controls = FakeTimerControlOperations(availableControl(readOnly = true))
+        val viewModel = viewModel(controls, FakePreparationOperations(fresh = true))
+        viewModel.bind(DEVICE_UID)
+
+        viewModel.selectRegime(CHANNEL_SLOT_ID, DeviceTimerChannelRegime.ON)
+
+        assertTrue(controls.regimeCalls.isEmpty())
     }
 
     @Test
@@ -232,6 +290,8 @@ class DeviceTimerRootViewModelTest {
         initial: DeviceTimerControlResult
     ) : DeviceTimerControlOperations {
         private val results = MutableStateFlow(initial)
+        val regimeCalls = mutableListOf<RegimeCall>()
+        var regimeResult: DeviceTimerControlResult? = null
 
         override fun observeControl(deviceUid: String): Flow<DeviceTimerControlResult> = results
 
@@ -249,7 +309,10 @@ class DeviceTimerRootViewModelTest {
             deviceUid: String,
             slotId: String,
             regime: DeviceTimerChannelRegime
-        ): DeviceTimerControlResult = results.value
+        ): DeviceTimerControlResult {
+            regimeCalls += RegimeCall(deviceUid, slotId, regime)
+            return regimeResult ?: results.value
+        }
 
         override suspend fun setTemporaryOverride(
             deviceUid: String,
@@ -277,8 +340,15 @@ class DeviceTimerRootViewModelTest {
 
     private companion object {
         const val DEVICE_UID = "timer-pro-1"
+        const val CHANNEL_SLOT_ID = "timer:timer1"
     }
 }
+
+private data class RegimeCall(
+    val deviceUid: String,
+    val slotId: String,
+    val regime: DeviceTimerChannelRegime
+)
 
 private fun timerRoot() = DeviceRootSnapshot(
     deviceUid = "timer-pro-1",
@@ -290,7 +360,9 @@ private fun timerRoot() = DeviceRootSnapshot(
 )
 
 private fun availableControl(
-    clockReady: Boolean = true
+    clockReady: Boolean = true,
+    readOnly: Boolean = false,
+    regime: DeviceTimerChannelRegime = DeviceTimerChannelRegime.AUTO
 ): DeviceTimerControlResult = DeviceTimerControlResult.Available(
     DeviceTimerControlSnapshot(
         deviceUid = "timer-pro-1",
@@ -299,7 +371,7 @@ private fun availableControl(
         uptimeMillis = 50_000L,
         maxSchedulesPerChannel = 8,
         capabilities = DeviceTimerControlCapabilities(
-            readOnly = false,
+            readOnly = readOnly,
             supportsConfigApply = true,
             supportsChannelState = true,
             supportsSchedules = true,
@@ -313,7 +385,7 @@ private fun availableControl(
                 channelNumber = 1,
                 defaultName = "Timer 1",
                 displayName = "Display Timer",
-                regime = DeviceTimerChannelRegime.AUTO,
+                regime = regime,
                 operatingState = DeviceTimerOperatingState.ON,
                 scheduleCount = 1,
                 activeScheduleSlotId = 10,
