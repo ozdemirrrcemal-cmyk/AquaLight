@@ -1,50 +1,30 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.timer.channel
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.style.TextAlign
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.timer.DeviceTimerChannelRegime
-import com.aqua.aqualight.application.devices.timer.DeviceTimerOperatingState
 import com.aqua.aqualight.application.devices.timer.DeviceTimerOutputHealth
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
-import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
-import com.aqua.aqualight.ui.common.timer.AquaTimerDashboardAlpha
 import com.aqua.aqualight.ui.common.timer.AquaTimerDashboardGeometry
-import com.aqua.aqualight.ui.common.timer.AquaTimerInteractionStyle
 import com.aqua.aqualight.ui.common.timer.aquaTimerDashboardColors
 import com.aqua.aqualight.ui.common.timer.aquaTimerDashboardTypography
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerStateMessageCard
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerStatusNotice
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.TimerDivider
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.effectiveName
-import com.aqua.aqualight.ui.tabs.devices.detail.timer.timerOperatingStateLabel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.timerRuntimeSummary
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.toCommercialTimerError
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.toCommercialTimerStatus
@@ -236,69 +216,7 @@ private fun TimerChannelNameRow(
 }
 
 @Composable
-private fun TimerChannelHero(
-    state: DeviceTimerChannelDetailUiState,
-    colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography,
-    onPowerClick: () -> Unit
-) {
-    val channel = checkNotNull(state.channel)
-    val active = channel.operatingState == DeviceTimerOperatingState.ON
-    val tint = if (active) colors.accent else colors.secondaryText
-    AquaDeviceCardSurface(
-        modifier = Modifier.alpha(
-            if (state.mutationPending) AquaTimerInteractionStyle.disabledContentAlpha else 1f
-        )
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(AquaTimerDashboardGeometry.detailHeroGap)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(AquaTimerDashboardGeometry.detailHeroPowerContainerSize)
-                    .clip(CircleShape)
-                    .background(tint.copy(alpha = AquaTimerDashboardAlpha.powerSurface))
-                    .border(
-                        AquaTimerDashboardGeometry.channelPowerGlowWidth,
-                        tint,
-                        CircleShape
-                    )
-                    .clickable(
-                        enabled = state.channelStateWriteEnabled && !state.mutationPending,
-                        role = Role.Button,
-                        onClick = onPowerClick
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.ic_timer_power),
-                    contentDescription = stringResource(
-                        if (active) R.string.device_timer_manual_power_turn_off_description
-                        else R.string.device_timer_manual_power_turn_on_description
-                    ),
-                    modifier = Modifier.size(AquaTimerDashboardGeometry.detailHeroPowerIconSize),
-                    colorFilter = ColorFilter.tint(tint)
-                )
-            }
-            BasicText(
-                text = timerOperatingStateLabel(channel.operatingState),
-                style = typography.title.copy(textAlign = TextAlign.Center)
-            )
-            BasicText(
-                text = timerWorkModeLabel(channel.regime),
-                style = typography.caption.copy(
-                    color = colors.secondaryText,
-                    textAlign = TextAlign.Center
-                )
-            )
-        }
-    }
-}
-
-@Composable
-private fun timerWorkModeLabel(regime: DeviceTimerChannelRegime): String =
+internal fun timerWorkModeLabel(regime: DeviceTimerChannelRegime): String =
     stringResource(
         if (regime == DeviceTimerChannelRegime.AUTO) {
             R.string.device_timer_work_mode_program

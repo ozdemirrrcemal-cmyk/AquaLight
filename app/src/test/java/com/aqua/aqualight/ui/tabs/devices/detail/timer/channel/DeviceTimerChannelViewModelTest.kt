@@ -69,20 +69,48 @@ class DeviceTimerChannelViewModelTest {
     }
 
     @Test
-    fun `power uses persistent on off and never starts a timed override`() = runTest {
+    fun `power in program mode uses an override ending at the next transition`() = runTest {
         val operations = ChannelTimerOperations(
             control(
                 regime = DeviceTimerChannelRegime.AUTO,
+                operatingState = DeviceTimerOperatingState.OFF,
+                nextTransitionAtEpochMillis = TEST_NOW_EPOCH_MILLIS + FIVE_MINUTES_MILLIS
+            )
+        )
+        val viewModel = DeviceTimerChannelViewModel(
+            operations = operations,
+            currentEpochMillis = { TEST_NOW_EPOCH_MILLIS }
+        )
+        viewModel.bind(DEVICE_UID, CHANNEL_SLOT_ID)
+
+        viewModel.togglePower()
+
+        assertEquals(emptyList<DeviceTimerChannelRegime>(), operations.regimeCalls)
+        assertEquals(
+            listOf(TemporaryOverrideCall(DeviceTimerChannelRegime.ON, FIVE_MINUTES_MILLIS)),
+            operations.temporaryOverrideCalls
+        )
+        assertEquals(
+            DeviceTimerChannelRegime.AUTO,
+            viewModel.uiState.value.channel?.regime
+        )
+    }
+
+    @Test
+    fun `power in manual mode persists the opposite state`() = runTest {
+        val operations = ChannelTimerOperations(
+            control(
+                regime = DeviceTimerChannelRegime.OFF,
                 operatingState = DeviceTimerOperatingState.OFF
             )
         )
         val viewModel = DeviceTimerChannelViewModel(operations)
         viewModel.bind(DEVICE_UID, CHANNEL_SLOT_ID)
 
-        viewModel.toggleManualPower()
+        viewModel.togglePower()
 
         assertEquals(listOf(DeviceTimerChannelRegime.ON), operations.regimeCalls)
-        assertEquals(0, operations.temporaryOverrideCalls)
+        assertEquals(emptyList<TemporaryOverrideCall>(), operations.temporaryOverrideCalls)
     }
 
     @Test
@@ -151,6 +179,8 @@ class DeviceTimerChannelViewModelTest {
     private companion object {
         const val DEVICE_UID = "timer-pro-4"
         const val CHANNEL_SLOT_ID = "timer:timer1"
+        const val TEST_NOW_EPOCH_MILLIS = 1_800_000_000_000L
+        const val FIVE_MINUTES_MILLIS = 300_000L
     }
 }
 
@@ -160,7 +190,7 @@ private class ChannelTimerOperations(
     private val results = MutableStateFlow(result)
     val regimeCalls = mutableListOf<DeviceTimerChannelRegime>()
     val displayNameCalls = mutableListOf<DeviceTimerDisplayNameUpdate>()
-    var temporaryOverrideCalls = 0
+    val temporaryOverrideCalls = mutableListOf<TemporaryOverrideCall>()
 
     override fun observeControl(deviceUid: String): Flow<DeviceTimerControlResult> = results
     override fun currentControl(deviceUid: String): DeviceTimerControlResult = results.value
@@ -185,7 +215,7 @@ private class ChannelTimerOperations(
         regime: DeviceTimerChannelRegime,
         durationMillis: Long
     ): DeviceTimerControlResult {
-        temporaryOverrideCalls += 1
+        temporaryOverrideCalls += TemporaryOverrideCall(regime, durationMillis)
         return results.value
     }
 
@@ -209,7 +239,8 @@ private fun control(
     displayName: String = "Channel 1",
     regime: DeviceTimerChannelRegime = DeviceTimerChannelRegime.AUTO,
     operatingState: DeviceTimerOperatingState = DeviceTimerOperatingState.OFF,
-    temporaryOverrideActive: Boolean = false
+    temporaryOverrideActive: Boolean = false,
+    nextTransitionAtEpochMillis: Long? = null
 ): DeviceTimerControlResult = DeviceTimerControlResult.Available(
     DeviceTimerControlSnapshot(
         deviceUid = "timer-pro-4",
@@ -238,7 +269,7 @@ private fun control(
                 activeScheduleSlotId = null,
                 activeScheduleName = null,
                 nextTransitionType = DeviceTimerNextTransitionType.NONE,
-                nextTransitionAtEpochMillis = null,
+                nextTransitionAtEpochMillis = nextTransitionAtEpochMillis,
                 runtimeReason = if (temporaryOverrideActive) {
                     DeviceTimerRuntimeReason.TEMPORARY_OVERRIDE_OFF
                 } else {
@@ -254,4 +285,9 @@ private fun control(
             )
         )
     )
+)
+
+private data class TemporaryOverrideCall(
+    val regime: DeviceTimerChannelRegime,
+    val durationMillis: Long
 )

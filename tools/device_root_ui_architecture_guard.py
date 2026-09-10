@@ -267,7 +267,7 @@ def validate_timer_control_surface(
             "Timer dashboard channels must enter the channel-scoped control surface",
         ),
         (
-            "onPowerClick = viewModel::toggleManualPower",
+            "onPowerClick = viewModel::togglePower",
             "Timer power must send the direct persistent manual command",
         ),
     ):
@@ -327,11 +327,11 @@ def validate_timer_control_surface(
             "Timer firmware-independent snapshots must be mapped to presentation state",
         ),
         (
-            "timerControlOperations.setRegime(deviceUid, slotId, regime)",
-            "Timer channel mutations must use the application operation",
+            "timerControlOperations.executePowerMutation(deviceUid, slotId, mutation)",
+            "Timer power mutations must use the shared mode-aware application operation",
         ),
         (
-            "fun toggleManualPower(slotId: String)",
+            "fun togglePower(slotId: String)",
             "Timer dashboard power must derive ON or OFF from authoritative channel state",
         ),
         (
@@ -368,8 +368,8 @@ def validate_timer_control_surface(
                 "Timer detail arrow must retain a full touch target",
             ),
             (
-                "R.string.device_timer_manual_power_turn_on_description",
-                "Timer power accessibility copy must describe the direct manual action",
+                "R.string.device_timer_program_power_turn_on_description",
+                "Timer power accessibility copy must distinguish program-preserving action",
             ),
         ):
             _require(TIMER_CHANNEL_CARD, channel_card_source, errors, token, reason)

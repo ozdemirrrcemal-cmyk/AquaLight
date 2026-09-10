@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
+import com.aqua.aqualight.application.devices.timer.DeviceTimerChannelRegime
 import com.aqua.aqualight.application.devices.timer.DeviceTimerOperatingState
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
@@ -41,6 +42,7 @@ internal fun TimerChannelCardHeader(
         )
         TimerPowerButton(
             active = channel.operatingState == DeviceTimerOperatingState.ON,
+            programMode = channel.regime == DeviceTimerChannelRegime.AUTO,
             enabled = powerEnabled,
             onClick = onPowerClick,
             colors = colors

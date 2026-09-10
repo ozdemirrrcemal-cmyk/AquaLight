@@ -72,6 +72,8 @@
     <string name="device_timer_timed_off">Timed off</string>
     <string name="device_timer_manual_power_turn_on_description">Turn channel on manually</string>
     <string name="device_timer_manual_power_turn_off_description">Turn channel off manually</string>
+    <string name="device_timer_program_power_turn_on_description">Turn channel on temporarily without changing its program</string>
+    <string name="device_timer_program_power_turn_off_description">Turn channel off temporarily without changing its program</string>
     <string name="device_timer_manual_control_title">Timed control</string>
     <string name="device_timer_manual_control_message">When temporary control ends, the channel resumes its selected operating mode.</string>
     <string name="device_timer_manual_duration_label">Select duration</string>

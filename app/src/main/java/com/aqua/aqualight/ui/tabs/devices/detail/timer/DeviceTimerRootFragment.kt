@@ -52,7 +52,7 @@ class DeviceTimerRootFragment : Fragment(R.layout.fragment_device_timer_root) {
                 DeviceTimerDashboardScreen(
                     state = state,
                     onChannelClick = ::openChannel,
-                    onPowerClick = viewModel::toggleManualPower
+                    onPowerClick = viewModel::togglePower
                 )
             }
         }

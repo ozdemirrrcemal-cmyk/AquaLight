@@ -36,7 +36,8 @@ import kotlinx.coroutines.launch
 class DeviceTimerRootViewModel(
     private val operations: DeviceRootOperations,
     private val timerControlOperations: DeviceTimerControlOperations,
-    private val controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations
+    private val controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations,
+    private val currentEpochMillis: () -> Long = System::currentTimeMillis
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DeviceTimerRootUiState())
@@ -105,19 +106,16 @@ class DeviceTimerRootViewModel(
         }
     }
 
-    fun toggleManualPower(slotId: String) {
+    fun togglePower(slotId: String) {
         val channel = lastControlPresentation?.channels
             ?.firstOrNull { candidate -> candidate.slotId == slotId }
             ?: return
-        val regime = when (channel.operatingState) {
-            DeviceTimerOperatingState.ON -> DeviceTimerChannelRegime.OFF
-            DeviceTimerOperatingState.OFF -> DeviceTimerChannelRegime.ON
-        }
-        val deviceUid = lastControlPresentation.manualPowerMutationDeviceUid(
+        val mutation = channel.powerMutation(currentEpochMillis())
+        val deviceUid = lastControlPresentation.powerMutationDeviceUid(
             boundDeviceUid = boundDeviceUid,
             contentEnabled = _uiState.value.contentEnabled,
             slotId = slotId,
-            regime = regime,
+            mutation = mutation,
             pendingChannelSlotIds = pendingChannelSlotIds
         ) ?: return
 
@@ -125,7 +123,7 @@ class DeviceTimerRootViewModel(
         renderBoundState()
         val mutationJob = viewModelScope.launch(start = CoroutineStart.LAZY) {
             val result = runCatching {
-                timerControlOperations.setRegime(deviceUid, slotId, regime)
+                timerControlOperations.executePowerMutation(deviceUid, slotId, mutation)
             }.getOrElse {
                 DeviceTimerControlResult.Failed(DeviceTimerControlFailure.Unavailable)
             }
@@ -401,19 +399,27 @@ private fun DeviceTimerScheduleSnapshot.toUiState() = DeviceTimerScheduleUiState
 )
 
 @Suppress("ComplexCondition", "LongParameterList")
-private fun DeviceTimerControlUiState?.manualPowerMutationDeviceUid(
+private fun DeviceTimerControlUiState?.powerMutationDeviceUid(
     boundDeviceUid: String,
     contentEnabled: Boolean,
     slotId: String,
-    regime: DeviceTimerChannelRegime,
+    mutation: DeviceTimerPowerMutation,
     pendingChannelSlotIds: Set<String>
 ): String? {
     val channel = this?.channels?.firstOrNull { candidate -> candidate.slotId == slotId }
+    val mutationWriteEnabled = when (mutation) {
+        is DeviceTimerPowerMutation.Persistent -> channelStateWriteEnabled
+        is DeviceTimerPowerMutation.ProgramPreservingOverride -> temporaryOverrideWriteEnabled
+    }
     val interactionReady = this != null &&
         contentEnabled &&
-        channelStateWriteEnabled &&
+        mutationWriteEnabled &&
         !lockLoop
-    val changeRequired = channel?.regime != regime || channel?.temporaryOverrideActive == true
+    val changeRequired = when (mutation) {
+        is DeviceTimerPowerMutation.Persistent ->
+            channel?.regime != mutation.regime || channel?.temporaryOverrideActive == true
+        is DeviceTimerPowerMutation.ProgramPreservingOverride -> true
+    }
     return boundDeviceUid.takeIf {
         it.isNotBlank() &&
             interactionReady &&

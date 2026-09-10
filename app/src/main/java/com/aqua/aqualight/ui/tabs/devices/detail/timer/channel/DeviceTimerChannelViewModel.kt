@@ -9,6 +9,9 @@ import com.aqua.aqualight.application.devices.timer.DeviceTimerControlResult
 import com.aqua.aqualight.application.devices.timer.DeviceTimerDisplayNameUpdate
 import com.aqua.aqualight.application.devices.timer.DeviceTimerOperatingState
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerChannelUiState
+import com.aqua.aqualight.ui.tabs.devices.detail.timer.executePowerMutation
+import com.aqua.aqualight.ui.tabs.devices.detail.timer.isPowerWriteEnabled
+import com.aqua.aqualight.ui.tabs.devices.detail.timer.powerMutation
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.toUiState
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
@@ -21,7 +24,8 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
 class DeviceTimerChannelViewModel(
-    private val operations: DeviceTimerControlOperations
+    private val operations: DeviceTimerControlOperations,
+    private val currentEpochMillis: () -> Long = System::currentTimeMillis
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DeviceTimerChannelDetailUiState())
@@ -74,13 +78,19 @@ class DeviceTimerChannelViewModel(
         }
     }
 
-    fun toggleManualPower() {
-        val channel = _uiState.value.channel ?: return
-        val nextRegime = when (channel.operatingState) {
-            DeviceTimerOperatingState.ON -> DeviceTimerChannelRegime.OFF
-            DeviceTimerOperatingState.OFF -> DeviceTimerChannelRegime.ON
+    fun togglePower() {
+        val state = _uiState.value
+        val channel = state.channel ?: return
+        val mutation = channel.powerMutation(currentEpochMillis())
+        val writeReady = channel.isPowerWriteEnabled(
+            persistentWriteEnabled = state.channelStateWriteEnabled,
+            temporaryOverrideWriteEnabled = state.temporaryOverrideWriteEnabled
+        ) && !state.mutationPending
+        if (writeReady) {
+            mutate {
+                operations.executePowerMutation(state.deviceUid, state.slotId, mutation)
+            }
         }
-        setPersistentRegime(nextRegime)
     }
 
     fun setWorkMode(workMode: DeviceTimerWorkMode) {

@@ -72,6 +72,8 @@
     <string name="device_timer_timed_off">Süreli kapat</string>
     <string name="device_timer_manual_power_turn_on_description">Kanalı manuel aç</string>
     <string name="device_timer_manual_power_turn_off_description">Kanalı manuel kapat</string>
+    <string name="device_timer_program_power_turn_on_description">Programı değiştirmeden kanalı geçici olarak aç</string>
+    <string name="device_timer_program_power_turn_off_description">Programı değiştirmeden kanalı geçici olarak kapat</string>
     <string name="device_timer_manual_control_title">Süreli kontrol</string>
     <string name="device_timer_manual_control_message">Geçici kontrol sona erdiğinde kanal seçili çalışma biçimine geri döner.</string>
     <string name="device_timer_manual_duration_label">Süre seçin</string>

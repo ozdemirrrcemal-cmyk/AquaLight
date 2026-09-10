@@ -55,7 +55,7 @@ class DeviceTimerChannelFragment : Fragment(R.layout.fragment_device_timer_chann
                 DeviceTimerChannelScreen(
                     state = state,
                     actions = DeviceTimerChannelActions(
-                        onPowerClick = viewModel::toggleManualPower,
+                        onPowerClick = viewModel::togglePower,
                         onTimedControlClick = ::showTimedControl,
                         onProgramsClick = ::openPrograms,
                         onWorkModeClick = ::showWorkMode,

@@ -46,7 +46,7 @@ import com.aqua.aqualight.ui.common.timer.aquaTimerDashboardTypography
 internal fun DeviceTimerChannelCard(
     channel: DeviceTimerChannelUiState,
     interactionEnabled: Boolean,
-    manualPowerEnabled: Boolean,
+    powerEnabled: Boolean,
     mutationPending: Boolean,
     onChannelClick: () -> Unit,
     onPowerClick: () -> Unit,
@@ -62,7 +62,7 @@ internal fun DeviceTimerChannelCard(
         name,
         stateLabel
     )
-    val powerEnabled = manualPowerEnabled && !mutationPending
+    val powerInteractionEnabled = powerEnabled && !mutationPending
     val detailsDescription = stringResource(
         R.string.device_timer_channel_details_description,
         name
@@ -84,7 +84,7 @@ internal fun DeviceTimerChannelCard(
                 channel = channel,
                 name = name,
                 stateLabel = stateLabel,
-                powerEnabled = powerEnabled,
+                powerEnabled = powerInteractionEnabled,
                 onPowerClick = onPowerClick,
                 colors = colors,
                 typography = typography
@@ -173,8 +173,10 @@ internal fun TimerChannelProductIcon(colors: AquaDeviceCardColors) {
 }
 
 @Composable
+@Suppress("LongParameterList")
 internal fun TimerPowerButton(
     active: Boolean,
+    programMode: Boolean,
     enabled: Boolean,
     onClick: () -> Unit,
     colors: AquaDeviceCardColors,
@@ -182,8 +184,12 @@ internal fun TimerPowerButton(
 ) {
     val tint = if (active) colors.accent else colors.secondaryText
     val description = stringResource(
-        if (active) R.string.device_timer_manual_power_turn_off_description
-        else R.string.device_timer_manual_power_turn_on_description
+        when {
+            programMode && active -> R.string.device_timer_program_power_turn_off_description
+            programMode -> R.string.device_timer_program_power_turn_on_description
+            active -> R.string.device_timer_manual_power_turn_off_description
+            else -> R.string.device_timer_manual_power_turn_on_description
+        }
     )
     Box(
         modifier = modifier
