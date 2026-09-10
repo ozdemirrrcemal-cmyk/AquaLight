@@ -406,18 +406,20 @@ private fun DeviceTimerControlUiState?.powerMutationDeviceUid(
     mutation: DeviceTimerPowerMutation,
     pendingChannelSlotIds: Set<String>
 ): String? {
-    val channel = this?.channels?.firstOrNull { candidate -> candidate.slotId == slotId }
+    val control = this ?: return null
+    val channel = control.channels.firstOrNull { candidate -> candidate.slotId == slotId }
+        ?: return null
     val mutationWriteEnabled = when (mutation) {
-        is DeviceTimerPowerMutation.Persistent -> channelStateWriteEnabled
-        is DeviceTimerPowerMutation.ProgramPreservingOverride -> temporaryOverrideWriteEnabled
+        is DeviceTimerPowerMutation.Persistent -> control.channelStateWriteEnabled
+        is DeviceTimerPowerMutation.ProgramPreservingOverride ->
+            control.temporaryOverrideWriteEnabled
     }
-    val interactionReady = this != null &&
-        contentEnabled &&
+    val interactionReady = contentEnabled &&
         mutationWriteEnabled &&
-        !lockLoop
+        !control.lockLoop
     val changeRequired = when (mutation) {
         is DeviceTimerPowerMutation.Persistent ->
-            channel?.regime != mutation.regime || channel?.temporaryOverrideActive == true
+            channel.regime != mutation.regime || channel.temporaryOverrideActive
         is DeviceTimerPowerMutation.ProgramPreservingOverride -> true
     }
     return boundDeviceUid.takeIf {
