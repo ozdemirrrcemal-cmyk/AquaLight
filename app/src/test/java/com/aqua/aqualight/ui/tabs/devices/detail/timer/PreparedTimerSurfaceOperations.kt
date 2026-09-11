@@ -63,6 +63,7 @@ internal object UnavailableTimerControlOperations : DeviceTimerControlOperations
     override suspend fun replaceSchedules(
         deviceUid: String,
         slotId: String,
+        expectedRevision: Long,
         schedules: List<DeviceTimerScheduleDraft>
     ): DeviceTimerControlResult = unavailable
 }

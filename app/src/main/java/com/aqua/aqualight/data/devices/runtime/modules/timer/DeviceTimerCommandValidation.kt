@@ -37,9 +37,9 @@ internal object DeviceTimerCommandValidation {
         }
         require(status.supported && status.runtime.supportsConfigApply)
         require(!status.lockLoop) { "Timer runtime is locked until device restart." }
-        require(payload.expectedRevision == status.revision) {
-            "Timer config expectedRevision differs from the authoritative status."
-        }
+        // The caller's revision is an intentional compare-and-swap token. It may be older than
+        // the latest local snapshot (for example, a long-lived program editor); firmware owns the
+        // atomic conflict decision and returns the stable CONFLICT/expectedRevision identity.
         val channel = requireNotNull(
             status.channels.singleOrNull { it.key == payload.normalizedChannelKey }
         ) { "Unknown Timer channel key: ${payload.normalizedChannelKey}" }

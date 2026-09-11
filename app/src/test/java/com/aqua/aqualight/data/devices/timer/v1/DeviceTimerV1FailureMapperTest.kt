@@ -19,14 +19,14 @@ class DeviceTimerV1FailureMapperTest {
                 status = 400,
                 code = "BAD_REQUEST",
                 field = "data",
-                message = "timer.channel.set data must be a JSON object"
+                message = FIRMWARE_WIRE_MESSAGE
             ),
             failureCase(
                 expected = DeviceTimerCommandFailure.INVALID_CONFIGURATION,
                 status = 422,
                 code = "INVALID_VALUE",
                 field = "schedules",
-                message = "at most 8 schedules are supported per timer channel"
+                message = FIRMWARE_WIRE_MESSAGE
             )
         )
 
@@ -41,14 +41,14 @@ class DeviceTimerV1FailureMapperTest {
                 status = 409,
                 code = "CONFLICT",
                 field = "expectedRevision",
-                message = "timer config revision is stale"
+                message = FIRMWARE_WIRE_MESSAGE
             ),
             failureCase(
                 expected = DeviceTimerCommandFailure.CHANNEL_UNAVAILABLE,
                 status = 404,
                 code = "NOT_FOUND",
                 field = "channelKey",
-                message = "configured timer channel not found for channelKey: channel9"
+                message = FIRMWARE_WIRE_MESSAGE
             )
         )
 
@@ -59,25 +59,25 @@ class DeviceTimerV1FailureMapperTest {
     fun `maps resource and output rejection families`() {
         val cases = listOf(
             failureCase(
-                expected = DeviceTimerCommandFailure.RESOURCE_UNAVAILABLE,
+                expected = DeviceTimerCommandFailure.HARDWARE_FAILURE,
                 status = 503,
                 code = "HARDWARE_ERROR",
                 field = "timer",
-                message = "timer transaction snapshot allocation failed"
+                message = FIRMWARE_WIRE_MESSAGE
             ),
             failureCase(
                 expected = DeviceTimerCommandFailure.RESOURCE_UNAVAILABLE,
                 status = 503,
                 code = "HARDWARE_ERROR",
                 field = "schedules",
-                message = "timer schedule transaction workspace allocation failed"
+                message = FIRMWARE_WIRE_MESSAGE
             ),
             failureCase(
                 expected = DeviceTimerCommandFailure.HARDWARE_FAILURE,
                 status = 503,
                 code = "HARDWARE_ERROR",
                 field = "channelKey",
-                message = "timer output write failed; channel config was rolled back"
+                message = FIRMWARE_WIRE_MESSAGE
             )
         )
 
@@ -92,16 +92,7 @@ class DeviceTimerV1FailureMapperTest {
                 status = 500,
                 code = "STORAGE_ERROR",
                 field = "timer",
-                message = "timer channel state was not applied because persistence failed; " +
-                    "previous state restored"
-            ),
-            failureCase(
-                expected = DeviceTimerCommandFailure.RUNTIME_LOCKED,
-                status = 500,
-                code = "STORAGE_ERROR",
-                field = "timer",
-                message = "timer persistence and runtime rollback failed; " +
-                    "timer is locked until restart"
+                message = FIRMWARE_WIRE_MESSAGE
             ),
             failureCase(
                 expected = DeviceTimerCommandFailure.UNKNOWN_REJECTION,
@@ -116,22 +107,21 @@ class DeviceTimerV1FailureMapperTest {
     }
 
     @Test
-    fun `maps hardware rollback and preexisting locks to restart required`() {
+    fun `masked hardware causes remain one honest wire level category`() {
         val cases = listOf(
             failureCase(
-                expected = DeviceTimerCommandFailure.RUNTIME_LOCKED,
+                expected = DeviceTimerCommandFailure.HARDWARE_FAILURE,
                 status = 503,
                 code = "HARDWARE_ERROR",
                 field = "timer",
-                message = "timer runtime transaction is locked until restart"
+                message = FIRMWARE_WIRE_MESSAGE
             ),
             failureCase(
-                expected = DeviceTimerCommandFailure.RUNTIME_LOCKED,
+                expected = DeviceTimerCommandFailure.HARDWARE_FAILURE,
                 status = 503,
                 code = "HARDWARE_ERROR",
                 field = "channelKey",
-                message = "timer output write and rollback failed; " +
-                    "timer runtime remains locked until restart"
+                message = FIRMWARE_WIRE_MESSAGE
             )
         )
 
@@ -147,7 +137,7 @@ class DeviceTimerV1FailureMapperTest {
                     status = 422,
                     code = "CONFLICT",
                     field = "expectedRevision",
-                    message = "timer config revision is stale"
+                    message = FIRMWARE_WIRE_MESSAGE
                 )
             )
         )
@@ -162,7 +152,7 @@ class DeviceTimerV1FailureMapperTest {
                     status = 404,
                     code = "NOT_FOUND",
                     field = "timer",
-                    message = "unknown resource"
+                    message = FIRMWARE_WIRE_MESSAGE
                 )
             )
         )
@@ -203,4 +193,8 @@ class DeviceTimerV1FailureMapperTest {
         val expected: DeviceTimerCommandFailure,
         val error: DeviceRuntimeCommandOutcome.FirmwareError
     )
+
+    private companion object {
+        const val FIRMWARE_WIRE_MESSAGE = "Command rejected."
+    }
 }

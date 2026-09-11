@@ -50,7 +50,7 @@ guard.EXPECTED_FIXTURES["aql_timer_contract_v1.json"] = (
     True,
 )
 guard.EXPECTED_FIXTURES["aql_timer_wire_v1_golden.json"] = (
-    "d3d43b8e0755751c1f5a291880954eb128fb570fe52e635042c7b0e884260315",
+    "43db4a4d26766b0e8d0ee9d26a8a4154b8ecabdf6eb41d332b51f33a12dd4501",
     None,
     False,
 )

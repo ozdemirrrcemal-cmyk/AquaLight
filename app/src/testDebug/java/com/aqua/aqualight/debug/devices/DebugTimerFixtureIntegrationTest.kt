@@ -229,6 +229,7 @@ private object FailingTimerControlOperations : DeviceTimerControlOperations {
     override suspend fun replaceSchedules(
         deviceUid: String,
         slotId: String,
+        expectedRevision: Long,
         schedules: List<DeviceTimerScheduleDraft>
     ): DeviceTimerControlResult = fail(deviceUid)
 
@@ -276,6 +277,7 @@ private class RecordingTimerControlOperations(
     override suspend fun replaceSchedules(
         deviceUid: String,
         slotId: String,
+        expectedRevision: Long,
         schedules: List<DeviceTimerScheduleDraft>
     ): DeviceTimerControlResult = result
 }

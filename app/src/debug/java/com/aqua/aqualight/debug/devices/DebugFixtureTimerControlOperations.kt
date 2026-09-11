@@ -105,9 +105,17 @@ internal class DebugFixtureTimerControlOperations(
     override suspend fun replaceSchedules(
         deviceUid: String,
         slotId: String,
+        expectedRevision: Long,
         schedules: List<DeviceTimerScheduleDraft>
     ): DeviceTimerControlResult = when {
-        !runtime.contains(deviceUid) -> delegate.replaceSchedules(deviceUid, slotId, schedules)
+        !runtime.contains(deviceUid) -> delegate.replaceSchedules(
+            deviceUid,
+            slotId,
+            expectedRevision,
+            schedules
+        )
+        expectedRevision != requireNotNull(runtime.current(deviceUid)).revision ->
+            rejected(DeviceTimerCommandFailure.CONFLICT)
         schedules.size > requireNotNull(runtime.current(deviceUid)).maxSchedulesPerChannel ->
             rejected(DeviceTimerCommandFailure.INVALID_CONFIGURATION)
         else -> runtime.updateChannel(deviceUid, slotId) { channel, nowMillis ->

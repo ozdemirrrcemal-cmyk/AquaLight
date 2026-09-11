@@ -107,11 +107,13 @@ internal class DefaultDeviceTimerControlOperations(
     override suspend fun replaceSchedules(
         deviceUid: String,
         slotId: String,
+        expectedRevision: Long,
         schedules: List<DeviceTimerScheduleDraft>
     ): DeviceTimerControlResult = executeChannel(deviceUid, slotId) { resolved, channelKey ->
         resolved.runtime.replaceSchedules(
             deviceUid = resolved.deviceUid,
             channelKey = channelKey,
+            expectedRevision = expectedRevision,
             schedules = schedules.map(DeviceTimerScheduleDraft::toRuntimeConfig)
         )
     }

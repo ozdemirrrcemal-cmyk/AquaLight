@@ -100,7 +100,12 @@ class DeviceTimerProgramViewModel(
         viewModelScope.launch {
             val drafts = state.schedules.map(DeviceTimerProgramDraft::toApplicationDraft)
             val result = runCatching {
-                operations.replaceSchedules(state.deviceUid, state.slotId, drafts)
+                operations.replaceSchedules(
+                    deviceUid = state.deviceUid,
+                    slotId = state.slotId,
+                    expectedRevision = state.expectedRevision,
+                    schedules = drafts
+                )
             }.getOrElse {
                 DeviceTimerControlResult.Failed(DeviceTimerControlFailure.Unavailable)
             }
@@ -109,6 +114,7 @@ class DeviceTimerProgramViewModel(
                     originalSchedules = state.schedules
                     _uiState.value = _uiState.value.copy(
                         saving = false,
+                        expectedRevision = result.snapshot.revision,
                         schedules = state.schedules,
                         dirty = false,
                         failure = null
@@ -143,6 +149,7 @@ class DeviceTimerProgramViewModel(
                         channelTitle = channel.displayTitle(),
                         loadState = DeviceTimerProgramLoadState.CONTENT,
                         maxSchedules = result.snapshot.maxSchedulesPerChannel,
+                        expectedRevision = result.snapshot.revision,
                         spansMidnightSupported = result.snapshot.capabilities.supportsSpansMidnight,
                         editable = !result.snapshot.capabilities.readOnly &&
                             result.snapshot.capabilities.supportsConfigApply &&
@@ -191,6 +198,7 @@ data class DeviceTimerProgramUiState(
     val channelTitle: String = "",
     val loadState: DeviceTimerProgramLoadState = DeviceTimerProgramLoadState.IDLE,
     val maxSchedules: Int = 0,
+    val expectedRevision: Long = 0L,
     val spansMidnightSupported: Boolean = false,
     val editable: Boolean = false,
     val schedules: List<DeviceTimerProgramDraft> = emptyList(),
@@ -241,7 +249,7 @@ internal fun List<DeviceTimerProgramDraft>.timerProgramValidationIssue(
     val fieldsValid = size <= maxSchedules &&
         map { it.slotId }.distinct().size == size &&
         all { draft -> draft.hasValidTimerFields(spansMidnightSupported) }
-    val programsOverlap = fieldsValid && enabledTimerIntervals().hasOverlappingTimerPrograms()
+    val programsOverlap = fieldsValid && timerIntervals().hasOverlappingTimerPrograms()
     return when {
         !fieldsValid -> DeviceTimerProgramValidationIssue.INVALID_FIELD
         programsOverlap -> DeviceTimerProgramValidationIssue.OVERLAPPING_PROGRAMS
@@ -269,9 +277,9 @@ private data class TimerWeekInterval(
     val end: Int
 )
 
-private fun List<DeviceTimerProgramDraft>.enabledTimerIntervals(): List<TimerWeekInterval> =
+private fun List<DeviceTimerProgramDraft>.timerIntervals(): List<TimerWeekInterval> =
     buildList {
-        this@enabledTimerIntervals.filter(DeviceTimerProgramDraft::enabled).forEach { schedule ->
+        this@timerIntervals.forEach { schedule ->
             schedule.weekdays.forEachIndexed { dayIndex, selected ->
                 if (!selected) return@forEachIndexed
                 val start = dayIndex * MINUTES_PER_DAY + schedule.startMinutesOfDay

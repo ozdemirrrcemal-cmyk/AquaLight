@@ -60,6 +60,21 @@ internal class DeviceTimerRuntimeStateStore {
         generation: DeviceRuntimeConnectionGeneration
     ): Boolean = authority.isAuthoritative(deviceUid, generation)
 
+    /** Fails reads closed while retaining the last projection and stale-order protection. */
+    fun requireStatusRefresh(
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration
+    ): Boolean = synchronized(lock) {
+        val current = _states.value[deviceUid] ?: return@synchronized false
+        if (current.connectionGeneration != generation ||
+            !authority.isAuthoritative(deviceUid, generation)
+        ) {
+            return@synchronized false
+        }
+        publish(deviceUid, current.copy(requiresStatusRefresh = true))
+        true
+    }
+
     fun currentAuthoritativeState(deviceUid: DeviceUid): DeviceTimerRuntimeState? =
         synchronized(lock) {
             _states.value[deviceUid]?.takeIf { state ->

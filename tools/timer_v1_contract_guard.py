@@ -61,6 +61,8 @@ FIRMWARE_SOURCES = {
         "b43ea84c29d834f6508352d4002a2ce314dd777c",
     "src/modules/timer/AqlTimerScheduleMath.hpp":
         "ce11604c6d3470a359a48fde2dae6fa94c330468",
+    "src/protocol/ws/AqlWsProtocol.hpp":
+        "6ccde40213d698843320a06fb88f783d18f34c90",
     "src/server/AqlRealtimeServer.cpp":
         "e177f1290f75de40d19f867b838c92a00dd53cb9",
     "tools/check_timer_contract_v1.py":
@@ -70,8 +72,8 @@ FIRMWARE_SOURCES = {
 }
 CONTRACT_SHA256 = "014704279570575925cc8b74650f3b1b14b73fde0c3452c6ed028b7de49111cc"
 CONTRACT_BLOB = "541b2194001fed7abecdd61106d02c8c8a197c2f"
-GOLDEN_SHA256 = "d3d43b8e0755751c1f5a291880954eb128fb570fe52e635042c7b0e884260315"
-GOLDEN_BLOB = "dd104ee7f6a42462b122cd44d605920849678f4e"
+GOLDEN_SHA256 = "43db4a4d26766b0e8d0ee9d26a8a4154b8ecabdf6eb41d332b51f33a12dd4501"
+GOLDEN_BLOB = "7cc50c849a330a31143cfb34eaa22ce8992232fd"
 STATUS_FIELDS = {
     "supported", "channelCount", "scheduleCount", "maxSchedulesPerChannel",
     "maxScheduleCount", "revision", "lockLoop", "schema", "schemaVersion",
@@ -156,6 +158,7 @@ def verify_pin(contract_source: str) -> None:
     require(set(golden.get("derivedFrom", [])) == {
         "src/api/v1/commands/AqlTimerCommands.hpp",
         "src/modules/timer/AqlTimerService.hpp",
+        "src/protocol/ws/AqlWsProtocol.hpp",
         "src/server/AqlRealtimeServer.cpp",
     }, "Timer wire golden source matrix drifted")
 
@@ -288,6 +291,14 @@ def verify_golden() -> None:
     require(golden.get("fixtureVersion") == 1, "Timer wire golden version drifted")
     require(golden.get("firmwareCommit") == FIRMWARE_COMMIT,
             "Timer wire golden firmware commit drifted")
+    conflict_error = golden.get("conflictError")
+    require(conflict_error == {
+        "data": {},
+        "statusCode": 409,
+        "code": "CONFLICT",
+        "field": "expectedRevision",
+        "message": "Command rejected.",
+    }, "Timer masked conflict wire identity drifted")
     global_status = golden.get("statusGlobal")
     scoped_status = golden.get("statusChannel")
     require(isinstance(global_status, dict) and isinstance(scoped_status, dict),

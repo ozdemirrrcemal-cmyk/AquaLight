@@ -54,6 +54,7 @@ class DeviceTimerProgramViewModelTest {
         assertEquals(DeviceTimerProgramLoadState.CONTENT, viewModel.uiState.value.loadState)
         assertEquals("Filter", viewModel.uiState.value.channelTitle)
         assertEquals("Day cycle", viewModel.uiState.value.schedules.single().name)
+        assertEquals(12L, viewModel.uiState.value.expectedRevision)
         assertTrue(viewModel.uiState.value.editable)
         assertEquals(1, operations.refreshChannelCalls)
     }
@@ -75,6 +76,7 @@ class DeviceTimerProgramViewModelTest {
         assertEquals(20L * 60L * 60_000L, saved.startTimeMillis)
         assertEquals(6L * 60L * 60_000L, saved.endTimeMillis)
         assertTrue(saved.spansMidnight)
+        assertEquals(12L, operations.replacementRevisions.single())
         assertFalse(viewModel.uiState.value.dirty)
     }
 
@@ -134,14 +136,25 @@ class DeviceTimerProgramViewModelTest {
         assertEquals(null, issue)
     }
 
+    @Test
+    fun `overlapping disabled programs are rejected like firmware`() {
+        val issue = listOf(
+            programDraft(slotId = 1, start = 8 * 60, end = 12 * 60, enabled = false),
+            programDraft(slotId = 2, start = 11 * 60, end = 14 * 60, enabled = false)
+        ).timerProgramValidationIssue(maxSchedules = 8, spansMidnightSupported = true)
+
+        assertEquals(DeviceTimerProgramValidationIssue.OVERLAPPING_PROGRAMS, issue)
+    }
+
     private fun programDraft(
         slotId: Int,
         start: Int,
         end: Int,
+        enabled: Boolean = true,
         weekdays: List<Boolean> = listOf(true, false, false, false, false, false, false)
     ) = DeviceTimerProgramDraft(
         slotId = slotId,
-        enabled = true,
+        enabled = enabled,
         name = "Program $slotId",
         weekdays = weekdays,
         startMinutesOfDay = start,
@@ -160,6 +173,7 @@ private class ProgramTimerOperations(
 ) : DeviceTimerControlOperations {
     var refreshChannelCalls = 0
     val replacements = mutableListOf<List<DeviceTimerScheduleDraft>>()
+    val replacementRevisions = mutableListOf<Long>()
 
     override fun observeControl(deviceUid: String): Flow<DeviceTimerControlResult> = flowOf(result)
     override fun currentControl(deviceUid: String): DeviceTimerControlResult = result
@@ -194,8 +208,10 @@ private class ProgramTimerOperations(
     override suspend fun replaceSchedules(
         deviceUid: String,
         slotId: String,
+        expectedRevision: Long,
         schedules: List<DeviceTimerScheduleDraft>
     ): DeviceTimerControlResult {
+        replacementRevisions += expectedRevision
         replacements += schedules
         return result
     }

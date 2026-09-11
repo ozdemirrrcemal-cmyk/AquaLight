@@ -441,6 +441,7 @@ class DefaultDeviceControlSurfacePreparationOperationsTest {
         override suspend fun replaceSchedules(
             deviceUid: String,
             slotId: String,
+            expectedRevision: Long,
             schedules: List<DeviceTimerScheduleDraft>
         ): DeviceTimerControlResult = result
     }

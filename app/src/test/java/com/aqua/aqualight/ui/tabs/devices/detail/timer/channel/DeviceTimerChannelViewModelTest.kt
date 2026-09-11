@@ -231,6 +231,7 @@ private class ChannelTimerOperations(
     override suspend fun replaceSchedules(
         deviceUid: String,
         slotId: String,
+        expectedRevision: Long,
         schedules: List<DeviceTimerScheduleDraft>
     ): DeviceTimerControlResult = results.value
 }

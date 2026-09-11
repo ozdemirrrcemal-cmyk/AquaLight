@@ -2,6 +2,13 @@
   "fixtureVersion": 1,
   "schema": "aql.android.timer-v1.wire-golden.v1",
   "firmwareCommit": "90b6597216d0c697542d5dc12e26647625806d8f",
+  "conflictError": {
+    "data": {},
+    "statusCode": 409,
+    "code": "CONFLICT",
+    "field": "expectedRevision",
+    "message": "Command rejected."
+  },
   "statusGlobal": {
     "supported": true,
     "channelCount": 2,

@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -40,6 +42,8 @@ import com.aqua.aqualight.ui.common.timer.AquaTimerDashboardGeometry
 import com.aqua.aqualight.ui.common.timer.AquaTimerInteractionStyle
 import com.aqua.aqualight.ui.common.timer.aquaTimerDashboardColors
 import com.aqua.aqualight.ui.common.timer.aquaTimerDashboardTypography
+import kotlinx.coroutines.delay
+import kotlin.time.TimeSource
 
 @Composable
 @Suppress("LongParameterList")
@@ -248,8 +252,12 @@ internal fun timerRuntimeSummary(
 
 @Composable
 private fun timerTemporaryOverrideSummary(channel: DeviceTimerChannelUiState): String {
+    val remainingMillis = rememberTimerOverrideRemainingMillis(
+        active = channel.temporaryOverrideActive,
+        reportedRemainingMillis = channel.temporaryOverrideRemainingMillis
+    )
     val remainingMinutes = (
-        (channel.temporaryOverrideRemainingMillis + MILLIS_PER_MINUTE - 1L) /
+        (remainingMillis + MILLIS_PER_MINUTE - 1L) /
             MILLIS_PER_MINUTE
         ).coerceAtLeast(1L).toInt()
     val duration = pluralStringResource(
@@ -262,6 +270,31 @@ private fun timerTemporaryOverrideSummary(channel: DeviceTimerChannelUiState): S
     } else {
         stringResource(R.string.device_timer_temporary_off, duration)
     }
+}
+
+/** Presentation-only countdown derived from the latest central firmware snapshot. */
+@Composable
+private fun rememberTimerOverrideRemainingMillis(
+    active: Boolean,
+    reportedRemainingMillis: Long
+): Long {
+    val remaining by produceState(
+        initialValue = reportedRemainingMillis.coerceAtLeast(0L),
+        active,
+        reportedRemainingMillis
+    ) {
+        if (!active) {
+            value = 0L
+            return@produceState
+        }
+        val startedAt = TimeSource.Monotonic.markNow()
+        while (value > 0L) {
+            delay(COUNTDOWN_TICK_MILLIS)
+            value = (reportedRemainingMillis - startedAt.elapsedNow().inWholeMilliseconds)
+                .coerceAtLeast(0L)
+        }
+    }
+    return remaining
 }
 
 @Composable
@@ -291,3 +324,4 @@ internal fun timerOperatingStateLabel(state: DeviceTimerOperatingState): String 
 }
 
 private const val MILLIS_PER_MINUTE = 60_000L
+private const val COUNTDOWN_TICK_MILLIS = 1_000L

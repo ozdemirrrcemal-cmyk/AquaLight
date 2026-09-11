@@ -41,6 +41,7 @@ interface DeviceTimerControlOperations {
     suspend fun replaceSchedules(
         deviceUid: String,
         slotId: String,
+        expectedRevision: Long,
         schedules: List<DeviceTimerScheduleDraft>
     ): DeviceTimerControlResult
 }
