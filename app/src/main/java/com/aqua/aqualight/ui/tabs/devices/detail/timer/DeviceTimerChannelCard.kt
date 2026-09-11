@@ -252,10 +252,23 @@ internal fun timerRuntimeSummary(
 
 @Composable
 private fun timerTemporaryOverrideSummary(channel: DeviceTimerChannelUiState): String {
-    val remainingMillis = rememberTimerOverrideRemainingMillis(
-        active = channel.temporaryOverrideActive,
-        reportedRemainingMillis = channel.temporaryOverrideRemainingMillis
-    )
+    val reportedRemainingMillis = channel.temporaryOverrideRemainingMillis
+    val remainingMillis by produceState(
+        initialValue = reportedRemainingMillis.coerceAtLeast(0L),
+        channel.temporaryOverrideActive,
+        reportedRemainingMillis
+    ) {
+        if (!channel.temporaryOverrideActive) {
+            value = 0L
+            return@produceState
+        }
+        val startedAt = TimeSource.Monotonic.markNow()
+        while (value > 0L) {
+            delay(COUNTDOWN_TICK_MILLIS)
+            value = (reportedRemainingMillis - startedAt.elapsedNow().inWholeMilliseconds)
+                .coerceAtLeast(0L)
+        }
+    }
     val remainingMinutes = (
         (remainingMillis + MILLIS_PER_MINUTE - 1L) /
             MILLIS_PER_MINUTE
@@ -270,31 +283,6 @@ private fun timerTemporaryOverrideSummary(channel: DeviceTimerChannelUiState): S
     } else {
         stringResource(R.string.device_timer_temporary_off, duration)
     }
-}
-
-/** Presentation-only countdown derived from the latest central firmware snapshot. */
-@Composable
-private fun rememberTimerOverrideRemainingMillis(
-    active: Boolean,
-    reportedRemainingMillis: Long
-): Long {
-    val remaining by produceState(
-        initialValue = reportedRemainingMillis.coerceAtLeast(0L),
-        active,
-        reportedRemainingMillis
-    ) {
-        if (!active) {
-            value = 0L
-            return@produceState
-        }
-        val startedAt = TimeSource.Monotonic.markNow()
-        while (value > 0L) {
-            delay(COUNTDOWN_TICK_MILLIS)
-            value = (reportedRemainingMillis - startedAt.elapsedNow().inWholeMilliseconds)
-                .coerceAtLeast(0L)
-        }
-    }
-    return remaining
 }
 
 @Composable
