@@ -142,9 +142,10 @@ internal fun TimerStatePill(
     label: String,
     active: Boolean,
     colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography
+    typography: AquaDeviceCardTypography,
+    activeColor: Color = colors.success
 ) {
-    val stateColor = if (active) colors.success else colors.secondaryText
+    val stateColor = if (active) activeColor else colors.secondaryText
     Box(
         modifier = Modifier
             .clip(AquaTimerDashboardGeometry.statusShape)

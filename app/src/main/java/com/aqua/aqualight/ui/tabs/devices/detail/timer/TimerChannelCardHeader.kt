@@ -78,7 +78,8 @@ private fun TimerChannelCardTitle(
                 label = stateLabel,
                 active = channel.operatingState == DeviceTimerOperatingState.ON,
                 colors = colors,
-                typography = typography
+                typography = typography,
+                activeColor = colors.accent
             )
             BasicText(
                 text = timerScheduleSummary(channel),
