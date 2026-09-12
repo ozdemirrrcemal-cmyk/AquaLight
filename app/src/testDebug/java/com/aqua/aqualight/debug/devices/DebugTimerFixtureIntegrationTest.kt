@@ -9,6 +9,8 @@ import com.aqua.aqualight.application.devices.DeviceMenuOpenResult
 import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
+import com.aqua.aqualight.application.devices.light.DeviceLightControlOperations
+import com.aqua.aqualight.application.devices.light.DeviceLightControlResult
 import com.aqua.aqualight.application.devices.timer.DeviceTimerChannelRegime
 import com.aqua.aqualight.application.devices.timer.DeviceTimerControlFailure
 import com.aqua.aqualight.application.devices.timer.DeviceTimerControlOperations
@@ -138,7 +140,8 @@ class DebugTimerFixtureIntegrationTest {
         val preparation = DebugFixtureControlSurfacePreparationOperations(
             delegate = preparationDelegate,
             fixtures = fixtures,
-            timerControlOperations = controls
+            timerControlOperations = controls,
+            lightControlOperations = fixtureLightControls(fixtures)
         )
 
         assertSame(expected, controls.refreshControl(REAL_DEVICE_UID))
@@ -167,7 +170,8 @@ class DebugTimerFixtureIntegrationTest {
         val preparation = DebugFixtureControlSurfacePreparationOperations(
             delegate = FailingPreparationOperations,
             fixtures = fixtures,
-            timerControlOperations = controls
+            timerControlOperations = controls,
+            lightControlOperations = fixtureLightControls(fixtures)
         )
         return FixtureDependencies(fixtures, deviceUid, controls, preparation)
     }
@@ -186,6 +190,13 @@ class DebugTimerFixtureIntegrationTest {
     }
 }
 
+private fun fixtureLightControls(
+    fixtures: DebugDeviceFixtureCatalog
+): DeviceLightControlOperations = DebugFixtureLightControlOperations(
+    delegate = FailingLightControlOperations,
+    fixtures = fixtures
+)
+
 private object FailingMenuAccessOperations : DeviceMenuAccessOperations {
     override suspend fun resolve(deviceUid: String): DeviceMenuAccessResult =
         error("Fixture menu access must not call the production delegate: $deviceUid")
@@ -196,6 +207,15 @@ private object FailingPreparationOperations : DeviceControlSurfacePreparationOpe
         request: DeviceControlSurfacePreparationRequest
     ): DeviceControlSurfacePreparationResult =
         error("Fixture preparation must not call the production delegate: ${request.deviceUid}")
+}
+
+private object FailingLightControlOperations : DeviceLightControlOperations {
+    override fun observeControl(deviceUid: String): Flow<DeviceLightControlResult> = fail(deviceUid)
+    override fun currentControl(deviceUid: String): DeviceLightControlResult = fail(deviceUid)
+    override suspend fun refreshControl(deviceUid: String): DeviceLightControlResult = fail(deviceUid)
+
+    private fun fail(deviceUid: String): Nothing =
+        error("Fixture Light control must not call the production delegate: $deviceUid")
 }
 
 private object FailingTimerControlOperations : DeviceTimerControlOperations {
