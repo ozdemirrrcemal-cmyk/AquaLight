@@ -90,7 +90,7 @@ class DeviceCoolingV1FixtureParityTest {
     fun `telemetry fixture freezes the direct event root`() {
         val fixture = resourceJson(TELEMETRY_FIXTURE)
 
-        assertEquals(50, fixture.getInt("commandCount"))
+        assertEquals(62, fixture.getInt("commandCount"))
         assertEquals(DeviceCoolingV1Contract.Event.TELEMETRY_CHANGED, fixture.getString("event"))
         assertEquals(
             setOf("water", "ambient"),
