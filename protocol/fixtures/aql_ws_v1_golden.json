@@ -155,6 +155,31 @@
         "protocolVersion": 1,
         "firmwareVersion": "1.0.0"
       }
+    },
+    "deviceStructuredError": {
+      "id": "android-command-3",
+      "type": "err",
+      "module": "light",
+      "action": "auto.program.create",
+      "data": "eyJyZWFzb24iOiJBVVRPX1BST0dSQU1fT1ZFUkxBUCIsImFjdHVhbFJldmlzaW9uIjoxMiwiY29uZmxpY3QiOnsid2l0aFByb2dyYW1JZCI6ImFwLTAwMDAwMDA3Iiwib2NjdXJyZW5jZVdlZWtkYXlNYXNrIjoxNiwib3ZlcmxhcFN0YXJ0VGltZU1zIjo3NTYwMDAwMCwib3ZlcmxhcEVuZFRpbWVNcyI6NzkyMDAwMDAsImV4aXN0aW5nIjp7IndlZWtkYXlzTWFzayI6ODEsInN0YXJ0VGltZU1zIjo2NDgwMDAwMCwiZW5kVGltZU1zIjo3OTIwMDAwMH0sImNhbmRpZGF0ZSI6eyJ3ZWVrZGF5c01hc2siOjI0LCJzdGFydFRpbWVNcyI6NzU2MDAwMDAsImVuZFRpbWVNcyI6ODQ2MDAwMDB9fSwiYWRkaXRpb25hbENvbmZsaWN0Q291bnQiOjB9",
+      "ok": false,
+      "status": 409,
+      "error": {
+        "code": "conflict",
+        "field": "",
+        "message": "Command rejected."
+      },
+      "security": {
+        "sessionId": "session-00000001",
+        "seq": 4,
+        "mac": "e9dd1db52cdda8ede4eddb148c9b1d2c7b041611ab3f7e74f39e7d8630cfef69"
+      },
+      "meta": {
+        "schema": "aql.ws.v1",
+        "schemaVersion": 1,
+        "protocolVersion": 1,
+        "firmwareVersion": "1.0.0"
+      }
     }
   },
   "commandAccess": {
@@ -188,10 +213,22 @@
       "firmware.ota.start",
       "firmware.ota.status",
       "firmware.status.get",
-      "light.channel.regime.set",
+      "light.acclimation.start",
+      "light.acclimation.status.get",
+      "light.acclimation.stop",
+      "light.auto.program.create",
+      "light.auto.program.delete",
+      "light.auto.program.enabled.set",
+      "light.auto.program.update",
+      "light.auto.programs.get",
+      "light.control.set",
+      "light.custom.get",
+      "light.custom.install",
+      "light.graph.get",
+      "light.manual.off",
       "light.manual.set",
-      "light.program.apply",
-      "light.program.delete",
+      "light.preview.clear",
+      "light.preview.set",
       "light.status.get",
       "light.temperature-protection.set",
       "light.temperature-protection.status.get",

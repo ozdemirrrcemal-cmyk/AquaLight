@@ -3,7 +3,7 @@
   "schema": "aql.product.catalog.fixture.v1",
   "source": {
     "repository": "ozdemirrrcemal-cmyk/AquaLight-Firmware",
-    "commit": "2e3688f266d7ed34a6773badafcd62af73cf4aac",
+    "commit": "7df97ce807ebb1e90ff63cc36206d6ce479a62fc",
     "catalogPath": "src/product/AqlProductCatalog.hpp",
     "exporterPath": "tools/aql_export_product_catalog.cpp"
   },
@@ -29,10 +29,11 @@
         "LIGHT_CONTROL",
         "LIGHT_QUICK_SETUP",
         "LIGHT_PRESETS",
-        "LIGHT_MOONLIGHT",
         "LIGHT_ACCLIMATION",
         "LIGHT_TEMPERATURE_PROTECTION",
         "LIGHT_FAN_CONTROL",
+        "LIGHT_ESTIMATED_POWER",
+        "LIGHT_ESTIMATED_COLOR",
         "TEMPERATURE_READ",
         "OTA_UPDATE"
       ],
@@ -43,7 +44,6 @@
         "LIGHT_SCHEDULE",
         "LIGHT_PRESETS",
         "LIGHT_QUICK_SETUP",
-        "LIGHT_MOONLIGHT",
         "LIGHT_ACCLIMATION",
         "LIGHT_TEMPERATURE_PROTECTION",
         "LIGHT_FAN_CONTROL",
@@ -80,8 +80,6 @@
         "LIGHT_CONTROL",
         "LIGHT_QUICK_SETUP",
         "LIGHT_PRESETS",
-        "LIGHT_MOONLIGHT",
-        "LIGHT_ACCLIMATION",
         "OTA_UPDATE"
       ],
       "supportedScreens": [
@@ -91,8 +89,6 @@
         "LIGHT_SCHEDULE",
         "LIGHT_PRESETS",
         "LIGHT_QUICK_SETUP",
-        "LIGHT_MOONLIGHT",
-        "LIGHT_ACCLIMATION",
         "ADVANCED"
       ],
       "expectedMenuFeatures": [

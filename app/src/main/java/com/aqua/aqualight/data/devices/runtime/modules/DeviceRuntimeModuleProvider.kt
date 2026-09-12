@@ -142,6 +142,15 @@ class DeviceRuntimeModuleProvider internal constructor(
             }
         }
 
+        if (
+            event.type == DeviceRuntimeTypedEvent.Type.LIGHT_THERMAL_STATUS_CHANGED &&
+            event.payload is DeviceRuntimeEventPayload.CommandResult &&
+            event.payload.commandAction ==
+            DeviceLightRuntimeContract.Action.TEMPERATURE_PROTECTION_SET
+        ) {
+            lightTemperatureProtection.requestStatus(event.deviceUid)
+        }
+
         lightThermal.consume(event)
         cooling.consume(event)
 

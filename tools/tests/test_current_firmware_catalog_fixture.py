@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURE_PATH = ROOT / "protocol/fixtures/aql_product_catalog_v1.json"
 CURRENT_FIRMWARE_COMMIT = (
-    "2e3688f266d7ed34a6773badafcd62af73cf4aac"
+    "7df97ce807ebb1e90ff63cc36206d6ce479a62fc"
 )
 
 EXPECTED_PRODUCTS = {
@@ -55,11 +55,20 @@ EXPECTED_WRGB_FEATURES = {
     "LIGHT_CONTROL",
     "LIGHT_QUICK_SETUP",
     "LIGHT_PRESETS",
-    "LIGHT_MOONLIGHT",
     "LIGHT_ACCLIMATION",
     "LIGHT_TEMPERATURE_PROTECTION",
     "LIGHT_FAN_CONTROL",
+    "LIGHT_ESTIMATED_POWER",
+    "LIGHT_ESTIMATED_COLOR",
     "TEMPERATURE_READ",
+    "OTA_UPDATE",
+}
+EXPECTED_RGB_FEATURES = {
+    "WIFI_SETUP",
+    "LAN_DISCOVERY",
+    "LIGHT_CONTROL",
+    "LIGHT_QUICK_SETUP",
+    "LIGHT_PRESETS",
     "OTA_UPDATE",
 }
 EXPECTED_COOLING_FEATURES = {
@@ -152,6 +161,15 @@ class CurrentFirmwareCatalogFixtureTest(unittest.TestCase):
         self.assertIn("LIGHT_FAN_CONTROL", profile["supportedScreens"])
         self.assertNotIn("COOLING_CONTROL", profile["supportedFeatures"])
         self.assertNotIn("COOLING_CONTROL", profile["supportedScreens"])
+        self.assertNotIn("LIGHT_MOONLIGHT", profile["supportedFeatures"])
+        self.assertNotIn("LIGHT_MOONLIGHT", profile["supportedScreens"])
+
+    def test_rgb_feature_and_screen_contract_matches_firmware_exactly(self) -> None:
+        profile = self.fixture["profiles"]["lightRgbProSlim"]
+        self.assertEqual(EXPECTED_RGB_FEATURES, set(profile["supportedFeatures"]))
+        self.assertNotIn("LIGHT_ACCLIMATION", profile["supportedScreens"])
+        self.assertNotIn("LIGHT_MOONLIGHT", profile["supportedFeatures"])
+        self.assertNotIn("LIGHT_MOONLIGHT", profile["supportedScreens"])
 
     def test_cooling_feature_and_screen_contract_matches_firmware_exactly(self) -> None:
         profile = self.fixture["profiles"]["coolingCoolPro"]

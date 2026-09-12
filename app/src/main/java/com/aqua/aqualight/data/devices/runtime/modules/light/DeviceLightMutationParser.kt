@@ -1,256 +1,246 @@
 package com.aqua.aqualight.data.devices.runtime.modules.light
 
+import org.json.JSONArray
 import org.json.JSONObject
 
-/** Exact parsers for successful firmware Light mutation responses. */
+/** Exact parsers for every successful Light V1 command response. */
 internal object DeviceLightMutationParser {
-
-    fun parseManual(data: JSONObject): DeviceLightManualMutationResult {
-        data.requireLightKeys(MANUAL_KEYS, "light.manual.set.data")
-        validateEnvelope(
-            data = data,
-            command = DeviceLightRuntimeContract.QualifiedCommand.MANUAL_SET
-        )
-        val operation = DeviceLightManualOperation.fromWireExact(
-            data.requireLightText(DeviceLightRuntimeContract.Field.OPERATION)
-        )
-        val manualActive = data.requireLightBoolean(
-            DeviceLightRuntimeContract.Field.MANUAL_ACTIVE
-        )
-        require(manualActive == (operation == DeviceLightManualOperation.MANUAL_STATE)) {
-            "manualActive differs from the reported manual operation."
-        }
-        val durationMs = data.requireLightLong(
-            DeviceLightRuntimeContract.Field.DURATION_MS,
-            minimum = 0L,
-            maximum = DeviceLightRuntimeContract.Limit.MAX_MANUAL_DURATION_MS
-        )
-        if (manualActive) {
-            require(durationMs >= DeviceLightRuntimeContract.Limit.MIN_MANUAL_DURATION_MS)
-        } else {
-            require(durationMs == 0L)
-        }
-
-        val channelData = data.requireLightArray(DeviceLightRuntimeContract.Field.CHANNELS)
-        val channels = List(channelData.length()) { index ->
-            DeviceLightChannelParser.parseMutation(channelData.requireLightObject(index))
-        }
-        val affectedChannelCount = data.requireLightInt(
-            DeviceLightRuntimeContract.Field.AFFECTED_CHANNEL_COUNT,
-            minimum = 1
-        )
-        require(affectedChannelCount == channels.size) {
-            "affectedChannelCount differs from the returned channels size."
-        }
-        require(channels.map { item -> item.channel.key }.toSet().size == channels.size) {
-            "light.manual.set returned duplicate channel keys."
-        }
-        val saved = data.requireLightBoolean(DeviceLightRuntimeContract.Field.SAVED)
-        require(!saved) { "Manual Light state must not be persisted by firmware." }
-
-        return DeviceLightManualMutationResult(
-            operation = operation,
-            manualActive = manualActive,
-            durationMs = durationMs,
-            affectedChannelCount = affectedChannelCount,
-            saved = saved,
-            channels = channels
+    fun parseControl(data: JSONObject): DeviceLightControlSetResult {
+        requireBaseOrEventKeys(data, CONTROL_KEYS, "light.control.set.data")
+        return DeviceLightControlSetResult(
+            mode = DeviceLightMode.fromWireExact(data.requireLightText("mode")),
+            event = parseOptionalEvent(data)
         )
     }
 
-    fun parseChannelRegime(data: JSONObject): DeviceLightChannelRegimeMutationResult {
-        data.requireLightKeys(CHANNEL_REGIME_KEYS, "light.channel.regime.set.data")
-        validateOperation(
-            data,
-            DeviceLightRuntimeContract.Operation.CHANNEL_REGIME_SET,
-            DeviceLightRuntimeContract.QualifiedCommand.CHANNEL_REGIME_SET
-        )
-        val changed = data.requireLightBoolean(DeviceLightRuntimeContract.Field.CHANGED)
-        val saved = data.requireLightBoolean(DeviceLightRuntimeContract.Field.SAVED)
-        val saveRequested = data.requireLightBoolean(
-            DeviceLightRuntimeContract.Field.SAVE_REQUESTED
-        )
-        require(saved == saveRequested) {
-            "Firmware persistence echo differs from saveRequested."
-        }
-        val channelKey = data.requireLightText(DeviceLightRuntimeContract.Field.CHANNEL_KEY)
-        val regime = exactRegime(data.requireLightText(DeviceLightRuntimeContract.Field.REGIME))
-        val channel = DeviceLightChannelParser.parseMutation(
-            data.requireLightObject(DeviceLightRuntimeContract.Field.CHANNEL)
-        )
-        require(channel.channel.key == channelKey)
-        require(channel.channel.regime == regime)
-
-        return DeviceLightChannelRegimeMutationResult(
-            changed = changed,
-            saved = saved,
-            saveRequested = saveRequested,
-            channelKey = channelKey,
-            regime = regime,
-            channel = channel
-        )
-    }
-
-    fun parseProgramApply(data: JSONObject): DeviceLightProgramApplyResult {
-        data.requireLightKeys(PROGRAM_APPLY_KEYS, "light.program.apply.data")
-        validateOperation(
-            data,
-            DeviceLightRuntimeContract.Operation.PROGRAM_APPLY,
-            DeviceLightRuntimeContract.QualifiedCommand.PROGRAM_APPLY
-        )
-        val created = data.requireLightBoolean(DeviceLightRuntimeContract.Field.CREATED)
-        val changed = data.requireLightBoolean(DeviceLightRuntimeContract.Field.CHANGED)
-        require(changed) { "Successful program apply must report changed=true." }
-        val saved = data.requireLightBoolean(DeviceLightRuntimeContract.Field.SAVED)
-        val saveRequested = data.requireLightBoolean(
-            DeviceLightRuntimeContract.Field.SAVE_REQUESTED
-        )
-        require(saved == saveRequested) {
-            "Firmware persistence echo differs from saveRequested."
-        }
-        val programIndex = data.requireLightInt(
-            DeviceLightRuntimeContract.Field.PROGRAM_INDEX,
-            minimum = 0
-        )
-        val channelKey = data.requireLightText(DeviceLightRuntimeContract.Field.CHANNEL_KEY)
-        val channelListIndex = data.requireLightInt(
-            DeviceLightRuntimeContract.Field.CHANNEL_LIST_INDEX,
-            minimum = 0
-        )
-        val program = DeviceLightProgramParser.parseMutation(
-            data.requireLightObject(DeviceLightRuntimeContract.Field.PROGRAM)
-        )
-        require(program.index == programIndex)
-        require(program.channelKey == channelKey)
-
-        return DeviceLightProgramApplyResult(
-            created = created,
-            changed = changed,
-            saved = saved,
-            saveRequested = saveRequested,
-            programIndex = programIndex,
-            channelKey = channelKey,
-            channelListIndex = channelListIndex,
-            program = program
-        )
-    }
-
-    fun parseProgramDelete(data: JSONObject): DeviceLightProgramDeleteResult {
-        data.requireLightKeys(PROGRAM_DELETE_KEYS, "light.program.delete.data")
-        validateOperation(
-            data,
-            DeviceLightRuntimeContract.Operation.PROGRAM_DELETE,
-            DeviceLightRuntimeContract.QualifiedCommand.PROGRAM_DELETE
-        )
-        val deleted = data.requireLightBoolean(DeviceLightRuntimeContract.Field.DELETED)
-        val changed = data.requireLightBoolean(DeviceLightRuntimeContract.Field.CHANGED)
-        require(deleted && changed) {
-            "Successful program delete must report deleted=true and changed=true."
-        }
-        val saved = data.requireLightBoolean(DeviceLightRuntimeContract.Field.SAVED)
-        val saveRequested = data.requireLightBoolean(
-            DeviceLightRuntimeContract.Field.SAVE_REQUESTED
-        )
-        require(saved == saveRequested) {
-            "Firmware persistence echo differs from saveRequested."
-        }
-
-        return DeviceLightProgramDeleteResult(
-            deleted = deleted,
-            changed = changed,
-            saved = saved,
-            saveRequested = saveRequested,
-            programIndex = data.requireLightInt(
-                DeviceLightRuntimeContract.Field.PROGRAM_INDEX,
-                minimum = 0
+    fun parseManual(data: JSONObject, product: DeviceLightProduct): DeviceLightManualSetResult {
+        requireBaseOrEventKeys(data, MANUAL_KEYS, "light.manual data")
+        return DeviceLightManualSetResult(
+            scene = DeviceLightV1JsonParser.parseScene(
+                data.requireLightObject("scene"),
+                product,
+                "light.manual.data.scene"
             ),
-            deletedListIndex = data.requireLightInt(
-                DeviceLightRuntimeContract.Field.DELETED_LIST_INDEX,
-                minimum = 0
-            ),
-            channelKey = data.requireLightText(DeviceLightRuntimeContract.Field.CHANNEL_KEY),
-            deletedPointCount = data.requireLightInt(
-                DeviceLightRuntimeContract.Field.DELETED_POINT_COUNT,
-                minimum = 0
-            ),
-            programCount = data.requireLightInt(
-                DeviceLightRuntimeContract.Field.PROGRAM_COUNT,
-                minimum = 0
-            )
+            event = parseOptionalEvent(data)
         )
     }
 
-    private fun validateOperation(data: JSONObject, operation: String, command: String) {
-        require(data.requireLightText(DeviceLightRuntimeContract.Field.OPERATION) == operation)
-        validateEnvelope(data, command)
+    fun parseAutoPrograms(data: JSONObject, product: DeviceLightProduct): DeviceLightAutoPrograms {
+        data.requireLightKeys(AUTO_PROGRAMS_KEYS, "light.auto.programs.get.data")
+        val jsonPrograms = data.requireLightArray("programs")
+        val programs = List(jsonPrograms.length()) { index ->
+            DeviceLightV1JsonParser.parseProgram(jsonPrograms.requireLightObject(index), product)
+        }
+        val result = DeviceLightAutoPrograms(
+            revision = data.requireLightLong("revision", 0, UINT32_MAX),
+            capacity = data.requireLightInt("capacity", 0),
+            programCount = data.requireLightInt("programCount", 0),
+            enabledCount = data.requireLightInt("enabledCount", 0),
+            programs = programs
+        )
+        require(result.capacity == DeviceLightRuntimeContract.Limit.AUTO_PROGRAM_CAPACITY)
+        require(result.programCount == programs.size)
+        require(result.enabledCount == programs.count { it.enabled })
+        require(programs.map { it.programId }.distinct().size == programs.size)
+        return result
     }
 
-    private fun validateEnvelope(data: JSONObject, command: String) {
+    fun parseAutoProgramMutation(
+        data: JSONObject,
+        product: DeviceLightProduct
+    ): DeviceLightAutoProgramMutationResult {
+        requireBaseOrEventKeys(data, AUTO_MUTATION_KEYS, "Light AUTO mutation data")
+        return DeviceLightAutoProgramMutationResult(
+            revision = data.requireLightLong("revision", 0, UINT32_MAX),
+            program = DeviceLightV1JsonParser.parseProgram(
+                data.requireLightObject("program"),
+                product
+            ),
+            event = parseOptionalEvent(data)
+        )
+    }
+
+    fun parseAutoProgramDelete(data: JSONObject): DeviceLightAutoProgramDeleteResult {
+        requireBaseOrEventKeys(data, AUTO_DELETE_KEYS, "light.auto.program.delete.data")
+        val programId = data.requireLightText("programId")
+        require(PROGRAM_ID.matches(programId))
+        return DeviceLightAutoProgramDeleteResult(
+            revision = data.requireLightLong("revision", 0, UINT32_MAX),
+            programId = programId,
+            deleted = data.requireLightBoolean("deleted").also { require(it) },
+            event = parseOptionalEvent(data)
+        )
+    }
+
+    fun parseCustom(
+        data: JSONObject,
+        product: DeviceLightProduct
+    ): DeviceLightCustomDocument {
+        requireBaseOrEventKeys(data, CUSTOM_KEYS, "light.custom data")
+        val pointData = data.requireLightArray("points")
+        val points = List(pointData.length()) { index ->
+            DeviceLightV1JsonParser.parseCustomPoint(pointData.requireLightArray(index), product)
+        }
+        val result = DeviceLightCustomDocument(
+            revision = data.requireLightLong("revision", 0, UINT32_MAX),
+            installed = data.requireLightBoolean("installed"),
+            weekdaysMask = data.requireLightInt("weekdaysMask", 0, 127),
+            pointCount = data.requireLightInt("pointCount", 0, 96),
+            points = points,
+            event = parseOptionalEvent(data)
+        )
+        require(result.pointCount == points.size)
+        require(points.zipWithNext().all { (left, right) -> left.timeMs < right.timeMs })
+        require(result.installed || (result.weekdaysMask == 0 && points.isEmpty()))
+        require(!result.installed || result.weekdaysMask in 1..127)
+        return result
+    }
+
+    fun parseAcclimation(
+        data: JSONObject,
+        product: DeviceLightProduct
+    ): DeviceLightAcclimationStatus {
+        requireBaseOrEventKeys(data, ACCLIMATION_KEYS, "light.acclimation data")
+        return DeviceLightV1JsonParser.parseAcclimation(
+            withoutOptionalEvent(data),
+            product
+        )
+    }
+
+    fun parsePreviewSet(data: JSONObject): DeviceLightPreviewResult {
+        data.requireLightKeys(PREVIEW_SET_KEYS, "light.preview.set.data")
+        return DeviceLightPreviewResult(
+            active = data.requireLightBoolean("active").also { require(it) },
+            remainingMs = data.requireLightLong("remainingMs", 0, 10_000),
+            event = requireStatusEvent(data)
+        )
+    }
+
+    fun parsePreviewClear(data: JSONObject): DeviceLightPreviewResult {
+        data.requireLightKeys(PREVIEW_CLEAR_KEYS, "light.preview.clear.data")
+        return DeviceLightPreviewResult(
+            active = data.requireLightBoolean("active").also { require(!it) },
+            remainingMs = null,
+            event = requireStatusEvent(data)
+        )
+    }
+
+    fun parseGraph(data: JSONObject, product: DeviceLightProduct): DeviceLightGraph {
+        data.requireLightKeys(GRAPH_KEYS, "light.graph.get.data")
+        val pointData = data.requireLightArray("points")
+        val points = List(pointData.length()) { index ->
+            parseGraphPoint(pointData.requireLightArray(index), product)
+        }
+        val spanData = data.requireLightArray("autoSpans")
+        val spans = List(spanData.length()) { index ->
+            parseGraphSpan(spanData.requireLightArray(index))
+        }
+        val result = DeviceLightGraph(
+            mode = DeviceLightMode.fromWireExact(data.requireLightText("mode")),
+            available = data.requireLightBoolean("available"),
+            reason = DeviceLightGraphReason.fromWireExact(data.requireLightText("reason")),
+            sourceRevision = data.requireLightLong("sourceRevision", 0, UINT32_MAX),
+            schedulerGeneration = data.requireNullableLightLong("schedulerGeneration", 0),
+            localDate = data.requireNullableLightText("localDate"),
+            currentWeekdayMask = data.requireLightInt("currentWeekdayMask", 0, 127),
+            nowTimeMs = data.requireNullableLightLong(
+                "nowTimeMs",
+                0,
+                DeviceLightRuntimeContract.Limit.LAST_DAY_MILLISECOND
+            ),
+            basis = DeviceLightGraphBasis.fromWireExact(data.requireLightText("basis")),
+            channelScale = data.requireLightInt("channelScale"),
+            hasScheduleToday = data.requireLightBoolean("hasScheduleToday"),
+            points = points,
+            autoSpans = spans
+        )
+        require(result.channelScale == 1000)
         require(
-            data.requireLightText(DeviceLightRuntimeContract.Field.RUNTIME_TRANSPORT) ==
-                DeviceLightRuntimeContract.Transport.WEBSOCKET
+            (result.schedulerGeneration == null && result.localDate == null && result.nowTimeMs == null) ||
+                (result.schedulerGeneration != null && result.localDate != null && result.nowTimeMs != null)
         )
-        require(data.requireLightText(DeviceLightRuntimeContract.Field.COMMAND) == command)
-        require(
-            data.requireLightText(DeviceLightRuntimeContract.Field.EVENT) ==
-                DeviceLightRuntimeContract.Event.STATUS_CHANGED
+        require(result.hasScheduleToday == points.isNotEmpty())
+        require(result.mode == DeviceLightMode.AUTO || spans.isEmpty())
+        return result
+    }
+
+    private fun parseGraphPoint(
+        tuple: JSONArray,
+        product: DeviceLightProduct
+    ): DeviceLightGraphPoint {
+        require(tuple.length() == product.channelCount + 1)
+        return DeviceLightGraphPoint(
+            timeMs = tuple.requireLightLong(0, 0, DeviceLightRuntimeContract.Limit.MILLIS_IN_DAY),
+            channelPermille = List(product.channelCount) { index ->
+                tuple.requireLightInt(index + 1, 0, 1000)
+            }
         )
     }
 
-    private fun exactRegime(value: String): DeviceLightRegime =
-        DeviceLightRegime.values().singleOrNull { regime -> regime.wireValue == value }
-            ?: error("Unknown firmware light regime: $value")
+    private fun parseGraphSpan(tuple: JSONArray): DeviceLightGraphSpan {
+        require(tuple.length() == 3)
+        val id = tuple.requireLightText(2)
+        require(PROGRAM_ID.matches(id))
+        return DeviceLightGraphSpan(
+            startTimeMsWithinToday = tuple.requireLightLong(
+                0,
+                0,
+                DeviceLightRuntimeContract.Limit.MILLIS_IN_DAY
+            ),
+            endTimeMsWithinToday = tuple.requireLightLong(
+                1,
+                0,
+                DeviceLightRuntimeContract.Limit.MILLIS_IN_DAY
+            ),
+            programId = id
+        )
+    }
 
-    private val MANUAL_KEYS = setOf(
-        DeviceLightRuntimeContract.Field.OPERATION,
-        DeviceLightRuntimeContract.Field.MANUAL_ACTIVE,
-        DeviceLightRuntimeContract.Field.DURATION_MS,
-        DeviceLightRuntimeContract.Field.RUNTIME_TRANSPORT,
-        DeviceLightRuntimeContract.Field.COMMAND,
-        DeviceLightRuntimeContract.Field.EVENT,
-        DeviceLightRuntimeContract.Field.CHANNELS,
-        DeviceLightRuntimeContract.Field.AFFECTED_CHANNEL_COUNT,
-        DeviceLightRuntimeContract.Field.SAVED
+    private fun requireBaseOrEventKeys(data: JSONObject, base: Set<String>, label: String) {
+        val actual = data.keys().asSequence().toSet()
+        require(actual == base || actual == base + "event") {
+            "$label keys differ from the firmware contract."
+        }
+        parseOptionalEvent(data)
+    }
+
+    private fun parseOptionalEvent(data: JSONObject): String? = if (data.has("event")) {
+        requireStatusEvent(data)
+    } else {
+        null
+    }
+
+    private fun requireStatusEvent(data: JSONObject): String =
+        data.requireLightText("event").also {
+            require(it == DeviceLightRuntimeContract.Event.STATUS_CHANGED)
+        }
+
+    private fun withoutOptionalEvent(data: JSONObject): JSONObject = JSONObject(data.toString()).also {
+        it.remove("event")
+    }
+
+    private val CONTROL_KEYS = setOf("mode")
+    private val MANUAL_KEYS = setOf("scene")
+    private val AUTO_PROGRAMS_KEYS = setOf(
+        "revision", "capacity", "programCount", "enabledCount", "programs"
     )
-    private val CHANNEL_REGIME_KEYS = setOf(
-        DeviceLightRuntimeContract.Field.OPERATION,
-        DeviceLightRuntimeContract.Field.CHANGED,
-        DeviceLightRuntimeContract.Field.SAVED,
-        DeviceLightRuntimeContract.Field.SAVE_REQUESTED,
-        DeviceLightRuntimeContract.Field.CHANNEL_KEY,
-        DeviceLightRuntimeContract.Field.REGIME,
-        DeviceLightRuntimeContract.Field.RUNTIME_TRANSPORT,
-        DeviceLightRuntimeContract.Field.COMMAND,
-        DeviceLightRuntimeContract.Field.EVENT,
-        DeviceLightRuntimeContract.Field.CHANNEL
+    private val AUTO_MUTATION_KEYS = setOf("revision", "program")
+    private val AUTO_DELETE_KEYS = setOf("revision", "programId", "deleted")
+    private val CUSTOM_KEYS = setOf(
+        "revision", "installed", "weekdaysMask", "pointCount", "points"
     )
-    private val PROGRAM_APPLY_KEYS = setOf(
-        DeviceLightRuntimeContract.Field.OPERATION,
-        DeviceLightRuntimeContract.Field.CREATED,
-        DeviceLightRuntimeContract.Field.CHANGED,
-        DeviceLightRuntimeContract.Field.SAVED,
-        DeviceLightRuntimeContract.Field.SAVE_REQUESTED,
-        DeviceLightRuntimeContract.Field.PROGRAM_INDEX,
-        DeviceLightRuntimeContract.Field.CHANNEL_KEY,
-        DeviceLightRuntimeContract.Field.CHANNEL_LIST_INDEX,
-        DeviceLightRuntimeContract.Field.RUNTIME_TRANSPORT,
-        DeviceLightRuntimeContract.Field.COMMAND,
-        DeviceLightRuntimeContract.Field.EVENT,
-        DeviceLightRuntimeContract.Field.PROGRAM
+    private val ACCLIMATION_KEYS = setOf(
+        "supported", "revision", "state", "clockReady", "startPercent", "currentPermille",
+        "targetPercent", "durationDays", "startedAtEpochSeconds", "endsAtEpochSeconds",
+        "remainingSeconds"
     )
-    private val PROGRAM_DELETE_KEYS = setOf(
-        DeviceLightRuntimeContract.Field.OPERATION,
-        DeviceLightRuntimeContract.Field.DELETED,
-        DeviceLightRuntimeContract.Field.CHANGED,
-        DeviceLightRuntimeContract.Field.SAVED,
-        DeviceLightRuntimeContract.Field.SAVE_REQUESTED,
-        DeviceLightRuntimeContract.Field.PROGRAM_INDEX,
-        DeviceLightRuntimeContract.Field.DELETED_LIST_INDEX,
-        DeviceLightRuntimeContract.Field.CHANNEL_KEY,
-        DeviceLightRuntimeContract.Field.DELETED_POINT_COUNT,
-        DeviceLightRuntimeContract.Field.PROGRAM_COUNT,
-        DeviceLightRuntimeContract.Field.RUNTIME_TRANSPORT,
-        DeviceLightRuntimeContract.Field.COMMAND,
-        DeviceLightRuntimeContract.Field.EVENT
+    private val PREVIEW_SET_KEYS = setOf("active", "remainingMs", "event")
+    private val PREVIEW_CLEAR_KEYS = setOf("active", "event")
+    private val GRAPH_KEYS = setOf(
+        "mode", "available", "reason", "sourceRevision", "schedulerGeneration", "localDate",
+        "currentWeekdayMask", "nowTimeMs", "basis", "channelScale", "hasScheduleToday",
+        "points", "autoSpans"
     )
+    private val PROGRAM_ID = Regex("^ap-[0-9a-f]{8}$")
+    private const val UINT32_MAX = 4_294_967_295L
 }

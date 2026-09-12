@@ -8,7 +8,7 @@ import firmware_interoperability_guard_core as guard
 import timer_v1_contract_guard as timer_guard
 
 
-guard.FIRMWARE_COMMIT = "90b6597216d0c697542d5dc12e26647625806d8f"
+guard.FIRMWARE_COMMIT = "7df97ce807ebb1e90ff63cc36206d6ce479a62fc"
 guard.COMMAND_NAMES_BLOB = "a4a05ae219e449b42de2654c38b55d65804c91b0"
 guard.EVENT_CONTRACT_BLOB = "5e87fd043c0efaa849ed3ba8e5be9ce6f2727e24"
 guard.REQUEST_CONTRACT_BLOBS = {
@@ -16,7 +16,10 @@ guard.REQUEST_CONTRACT_BLOBS = {
     "src/api/v1/commands/AqlNetworkCommands.hpp": "529a3b341e81a48d33b9036343dbb0b9f2844fb6",
     "src/api/v1/commands/AqlSecurityCommands.hpp": "1c16c3e7c6d1456b1802f494d91c104347ad09aa",
     "src/api/v1/commands/AqlTimeCommands.hpp": "ee6e87ab0e1152ffd3d9004fe8b5c7e380488a4f",
-    "src/api/v1/commands/AqlLightCommands.hpp": "40f4a888232b8630a07f7bde51d555ccf24961ed",
+    "src/api/v1/commands/AqlLightCommands.hpp": "6fc17f55fb171060e1544f21a8f643a363b7da9e",
+    "src/api/v1/commands/AqlLightV1Commands.hpp": "847f9f73d225c261f55fea74f858721cac172821",
+    "src/api/v1/commands/names/AqlLightCommandNames.hpp": "9ebdd8f8b7dedb96e6cc1672fdcc676985f1e12e",
+    "src/modules/light/AqlLightProductContract.hpp": "c76f9c957672ffef62b96ba75f9b034a29c5fecb",
     "src/api/v1/commands/AqlLightTemperatureProtectionCommands.hpp": "e3f04116d2f6ae77e0a1adfd7112773a3e1d06fe",
     "src/api/v1/commands/AqlLightThermalCommands.hpp": "10f5e03237b16ad4bf0a26b64c2715e0985d094e",
     "src/api/v1/commands/AqlCoolingCommands.hpp": "4df542d5106fce2810e64559667685c1c2ecfd69",
@@ -31,9 +34,9 @@ guard.REQUEST_CONTRACT_BLOBS = {
 # Dosing keeps its separately reviewed feature pin; it now declares the final core revision.
 guard.DOSING_FIRMWARE_COMMIT = "fa147211749c2dcb2f56e15a617a00010e071984"
 
-guard.PRODUCT_CATALOG_EXPORT_COMMIT = "2e3688f266d7ed34a6773badafcd62af73cf4aac"
+guard.PRODUCT_CATALOG_EXPORT_COMMIT = "7df97ce807ebb1e90ff63cc36206d6ce479a62fc"
 guard.EXPECTED_FIXTURES["aql_product_catalog_v1.json"] = (
-    "5eb7c027ecff23c5fa939ee0a16f62804737b0c9c7b0d9a3ea4b479c4d604a59",
+    "c0061ae2074ab249777d8682412bba22be9920992c8565d8e0c1d11f29000aa4",
     None,
     False,
 )

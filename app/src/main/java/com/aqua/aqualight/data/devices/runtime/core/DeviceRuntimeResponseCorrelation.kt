@@ -85,7 +85,8 @@ private fun runtimeReplyOutcome(
             statusCode = message.statusCode,
             code = message.code,
             field = message.field,
-            message = message.message
+            message = message.message,
+            structuredDataJson = message.data.toString()
         )
     }
     is AqlWsIncomingMessage.Event -> error("Events are not pending command completions.")

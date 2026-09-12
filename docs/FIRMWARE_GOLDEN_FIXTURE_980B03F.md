@@ -1,4 +1,9 @@
-# Firmware golden fixture envanteri ve Android eşleme raporu
+# Firmware golden fixture envanteri ve Android eşleme raporu (historical)
+
+> Bu belge commit `980b03f0d83cdeb997698fc6b207064aa709cec8`
+> için değişmez arşiv kaydıdır; güncel Light komut kaydı değildir. İki ürünlü
+> güncel Light V1 sözleşmesi ve firmware main pini için
+> `LIGHT_V1_FIRMWARE_ANDROID_CONTRACT.md` esas alınır.
 
 ## Referans
 

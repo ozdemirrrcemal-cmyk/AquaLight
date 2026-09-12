@@ -1,113 +1,122 @@
 package com.aqua.aqualight.data.devices.runtime.modules.light
 
-/** Validates exact Light requests and verifies firmware mutation echoes. */
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
+import org.json.JSONObject
+
+enum class DeviceLightErrorReason(val wireValue: String) {
+    STALE_REVISION("STALE_REVISION"),
+    AUTO_CAPACITY_REACHED("AUTO_CAPACITY_REACHED"),
+    AUTO_PROGRAM_OVERLAP("AUTO_PROGRAM_OVERLAP"),
+    AUTO_PROGRAM_NOT_FOUND("AUTO_PROGRAM_NOT_FOUND"),
+    INVALID_WEEKDAYS_MASK("INVALID_WEEKDAYS_MASK"),
+    INVALID_TIME_VALUE("INVALID_TIME_VALUE"),
+    INVALID_RAMP_VALUE("INVALID_RAMP_VALUE"),
+    RAMP_DOES_NOT_FIT("RAMP_DOES_NOT_FIT"),
+    INVALID_SCENE_VALUE("INVALID_SCENE_VALUE"),
+    CUSTOM_POINT_COUNT("CUSTOM_POINT_COUNT"),
+    CUSTOM_POINT_ORDER("CUSTOM_POINT_ORDER"),
+    CUSTOM_POINT_VALUE("CUSTOM_POINT_VALUE"),
+    ACCLIMATION_START_PERCENT("ACCLIMATION_START_PERCENT"),
+    ACCLIMATION_DURATION("ACCLIMATION_DURATION"),
+    RTC_NOT_READY("RTC_NOT_READY"),
+    OUTPUT_TRANSACTION_FAILED("OUTPUT_TRANSACTION_FAILED"),
+    STORAGE_COMMIT_FAILED("STORAGE_COMMIT_FAILED");
+
+    companion object {
+        fun fromWireExact(value: String): DeviceLightErrorReason =
+            entries.singleOrNull { it.wireValue == value }
+                ?: error("Unknown Light V1 error reason: $value")
+    }
+}
+
+data class DeviceLightOverlapGeometry(
+    val weekdaysMask: Int,
+    val startTimeMs: Long,
+    val endTimeMs: Long
+)
+
+data class DeviceLightOverlapConflict(
+    val withProgramId: String,
+    val occurrenceWeekdayMask: Int,
+    val overlapStartTimeMs: Long,
+    val overlapEndTimeMs: Long,
+    val existing: DeviceLightOverlapGeometry,
+    val candidate: DeviceLightOverlapGeometry
+)
+
+data class DeviceLightFirmwareErrorData(
+    val reason: DeviceLightErrorReason?,
+    val actualRevision: Long? = null,
+    val capacity: Int? = null,
+    val programCount: Int? = null,
+    val conflict: DeviceLightOverlapConflict? = null,
+    val additionalConflictCount: Int? = null,
+    val rollbackOutputHealthy: Boolean? = null
+)
+
+/** Strict decoder for firmware error.data. Empty data is valid for envelope-level failures. */
+fun DeviceRuntimeCommandOutcome.FirmwareError.lightV1Data(): DeviceLightFirmwareErrorData {
+    require(module == DeviceLightRuntimeContract.MODULE)
+    val data = JSONObject(structuredDataJson)
+    if (data.length() == 0) return DeviceLightFirmwareErrorData(reason = null)
+    val reason = DeviceLightErrorReason.fromWireExact(data.requireLightText("reason"))
+    return when (reason) {
+        DeviceLightErrorReason.STALE_REVISION,
+        DeviceLightErrorReason.AUTO_PROGRAM_NOT_FOUND -> {
+            data.requireLightKeys(setOf("reason", "actualRevision"), "Light error.data")
+            DeviceLightFirmwareErrorData(
+                reason = reason,
+                actualRevision = data.requireLightLong("actualRevision", 0, UINT32_MAX)
+            )
+        }
+        DeviceLightErrorReason.AUTO_CAPACITY_REACHED -> {
+            data.requireLightKeys(
+                setOf("reason", "actualRevision", "capacity", "programCount"),
+                "Light error.data"
+            )
+            DeviceLightFirmwareErrorData(
+                reason = reason,
+                actualRevision = data.requireLightLong("actualRevision", 0, UINT32_MAX),
+                capacity = data.requireLightInt("capacity", 0),
+                programCount = data.requireLightInt("programCount", 0)
+            ).also {
+                require(it.capacity == DeviceLightRuntimeContract.Limit.AUTO_PROGRAM_CAPACITY)
+                require(requireNotNull(it.programCount) <= requireNotNull(it.capacity))
+            }
+        }
+        DeviceLightErrorReason.AUTO_PROGRAM_OVERLAP -> {
+            data.requireLightKeys(
+                setOf("reason", "actualRevision", "conflict", "additionalConflictCount"),
+                "Light error.data"
+            )
+            DeviceLightFirmwareErrorData(
+                reason = reason,
+                actualRevision = data.requireLightLong("actualRevision", 0, UINT32_MAX),
+                conflict = parseConflict(data.requireLightObject("conflict")),
+                additionalConflictCount = data.requireLightInt("additionalConflictCount", 0)
+            )
+        }
+        DeviceLightErrorReason.OUTPUT_TRANSACTION_FAILED,
+        DeviceLightErrorReason.STORAGE_COMMIT_FAILED -> {
+            data.requireLightKeys(
+                setOf("reason", "rollbackOutputHealthy"),
+                "Light error.data"
+            )
+            DeviceLightFirmwareErrorData(
+                reason = reason,
+                rollbackOutputHealthy = data.requireLightBoolean("rollbackOutputHealthy")
+            )
+        }
+        else -> {
+            data.requireLightKeys(setOf("reason"), "Light error.data")
+            DeviceLightFirmwareErrorData(reason = reason)
+        }
+    }
+}
+
 internal object DeviceLightCommandValidation {
-    fun validateManualRequest(request: DeviceLightManualSetPayload) {
-        val requestedKeys = request.channels.map { channel ->
-            requireExactChannelKey(channel.channelKey)
-            if (request.clear) {
-                require(channel.percent == null && channel.value == null) {
-                    "Manual Light clear channel must contain only channelKey."
-                }
-            } else {
-                require((channel.percent == null) != (channel.value == null)) {
-                    "Manual Light channel must use exactly one of percent or value."
-                }
-            }
-            channel.channelKey
-        }
-        require(requestedKeys.toSet().size == requestedKeys.size) {
-            "Manual Light request contains duplicate channel keys."
-        }
-    }
-
-    fun validateChannelRegimeRequest(request: DeviceLightChannelRegimeSetPayload) {
-        requireExactChannelKey(request.channelKey)
-    }
-
-    fun validateProgramRequest(request: DeviceLightProgramApplyPayload) {
-        requireExactChannelKey(request.channelKey)
-        request.points.forEach { point ->
-            require((point.timeMs == null) != point.time.isNullOrBlank()) {
-                "Light program point must use exactly one of timeMs or time."
-            }
-            require((point.percent == null) != (point.value == null)) {
-                "Light program point must use exactly one of percent or value."
-            }
-            point.time?.let { time ->
-                require(time == time.trim() && time.none(Char::isISOControl)) {
-                    "Light program time must be exact text without surrounding whitespace."
-                }
-            }
-        }
-    }
-
-    fun validateManual(
-        request: DeviceLightManualSetPayload,
-        result: DeviceLightManualMutationResult
-    ) {
-        val expectedOperation = if (request.clear) {
-            DeviceLightManualOperation.CLEAR_MANUAL
-        } else {
-            DeviceLightManualOperation.MANUAL_STATE
-        }
-        require(result.operation == expectedOperation)
-        require(result.manualActive == !request.clear)
-        val expectedDuration = if (request.clear) {
-            0L
-        } else {
-            request.durationMs ?: DeviceLightRuntimeContract.Limit.DEFAULT_MANUAL_DURATION_MS
-        }
-        require(result.durationMs == expectedDuration)
-        val requestedKeys = request.channels.map { channel -> channel.channelKey }
-        if (requestedKeys.isNotEmpty()) {
-            val returnedKeys = result.channels.map { item -> item.channel.key }
-            require(returnedKeys.toSet() == requestedKeys.toSet()) {
-                "Firmware returned different manual Light channels."
-            }
-        }
-        if (!request.clear) validateManualValues(request, result)
-    }
-
-    fun validateChannelRegime(
-        request: DeviceLightChannelRegimeSetPayload,
-        result: DeviceLightChannelRegimeMutationResult
-    ) {
-        require(result.channelKey == request.channelKey)
-        require(result.regime == request.regime)
-        require(result.saveRequested == request.save)
-        require(result.saved == request.save)
-    }
-
-    fun validateProgramApply(
-        request: DeviceLightProgramApplyPayload,
-        result: DeviceLightProgramApplyResult
-    ) {
-        require(result.channelKey == request.channelKey)
-        require(result.saveRequested == request.save)
-        require(result.saved == request.save)
-        require(result.created == (request.programIndex == null))
-        request.programIndex?.let { expectedIndex ->
-            require(result.programIndex == expectedIndex)
-        }
-        require(result.program.channelKey == request.channelKey)
-        require(result.program.points.size == request.points.size)
-        request.points.zip(result.program.points).forEach { (requested, returned) ->
-            requested.timeMs?.let { timeMs ->
-                require(returned.timeMs == timeMs % DeviceLightRuntimeContract.Limit.MILLIS_IN_DAY)
-            }
-            requested.percent?.let { percent -> require(closeLightValue(returned.percent, percent)) }
-            requested.value?.let { value -> require(closeLightValue(returned.value, value)) }
-        }
-    }
-
-    fun validateProgramDelete(
-        request: DeviceLightProgramDeletePayload,
-        result: DeviceLightProgramDeleteResult
-    ) {
-        require(result.programIndex == request.programIndex)
-        require(result.saveRequested == request.save)
-        require(result.saved == request.save)
+    fun requireProduct(expected: DeviceLightProduct, actual: DeviceLightProduct) {
+        require(expected == actual) { "Light payload product differs from authoritative status." }
     }
 
     fun validateTemperatureProtection(
@@ -116,38 +125,57 @@ internal object DeviceLightCommandValidation {
     ) {
         require(result.saveRequested == request.save)
         require(result.saved == request.save)
-        val returnedThreshold = requireNotNull(result.status.temperatureProtection.thresholdC)
-        require(closeLightValue(returnedThreshold, request.thresholdC))
-    }
-
-    private fun validateManualValues(
-        request: DeviceLightManualSetPayload,
-        result: DeviceLightManualMutationResult
-    ) {
-        val returnedByKey = result.channels.associateBy { item -> item.channel.key }
-        request.channels.forEach { requested ->
-            val returned = requireNotNull(returnedByKey[requested.channelKey]).channel
-            requested.percent?.let { percent ->
-                require(closeLightValue(returned.percentManual, percent))
-            }
-            requested.value?.let { value ->
-                require(closeLightValue(returned.valueManual, value))
-            }
-        }
-    }
-
-    private fun requireExactChannelKey(value: String) {
-        require(value.isNotBlank()) { "Light channel key must not be blank." }
-        require(value == value.trim().lowercase()) {
-            "Light channel key must use the exact normalized firmware key."
-        }
-        require(value.none(Char::isISOControl)) {
-            "Light channel key must not contain control characters."
-        }
+        require(result.status.temperatureProtection.thresholdC == request.thresholdC)
     }
 }
 
-private fun closeLightValue(left: Double, right: Double): Boolean =
-    kotlin.math.abs(left - right) <= LIGHT_RESPONSE_TOLERANCE
+private fun parseConflict(data: JSONObject): DeviceLightOverlapConflict {
+    data.requireLightKeys(
+        setOf(
+            "withProgramId", "occurrenceWeekdayMask", "overlapStartTimeMs", "overlapEndTimeMs",
+            "existing", "candidate"
+        ),
+        "Light overlap conflict"
+    )
+    val withProgramId = data.requireLightText("withProgramId")
+    require(PROGRAM_ID.matches(withProgramId))
+    return DeviceLightOverlapConflict(
+        withProgramId = withProgramId,
+        occurrenceWeekdayMask = data.requireLightInt("occurrenceWeekdayMask", 1, 127),
+        overlapStartTimeMs = data.requireLightLong(
+            "overlapStartTimeMs",
+            0,
+            DeviceLightRuntimeContract.Limit.MILLIS_IN_DAY
+        ),
+        overlapEndTimeMs = data.requireLightLong(
+            "overlapEndTimeMs",
+            0,
+            DeviceLightRuntimeContract.Limit.MILLIS_IN_DAY
+        ),
+        existing = parseGeometry(data.requireLightObject("existing")),
+        candidate = parseGeometry(data.requireLightObject("candidate"))
+    )
+}
 
-private const val LIGHT_RESPONSE_TOLERANCE = 0.001
+private fun parseGeometry(data: JSONObject): DeviceLightOverlapGeometry {
+    data.requireLightKeys(
+        setOf("weekdaysMask", "startTimeMs", "endTimeMs"),
+        "Light overlap geometry"
+    )
+    return DeviceLightOverlapGeometry(
+        weekdaysMask = data.requireLightInt("weekdaysMask", 1, 127),
+        startTimeMs = data.requireLightLong(
+            "startTimeMs",
+            0,
+            DeviceLightRuntimeContract.Limit.LAST_DAY_MILLISECOND
+        ),
+        endTimeMs = data.requireLightLong(
+            "endTimeMs",
+            0,
+            DeviceLightRuntimeContract.Limit.LAST_DAY_MILLISECOND
+        )
+    )
+}
+
+private val PROGRAM_ID = Regex("^ap-[0-9a-f]{8}$")
+private const val UINT32_MAX = 4_294_967_295L

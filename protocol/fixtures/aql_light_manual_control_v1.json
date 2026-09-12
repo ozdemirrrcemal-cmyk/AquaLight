@@ -1,0 +1,134 @@
+{
+  "schema": "aqualight.light.manual-control.v1",
+  "schemaVersion": 1,
+  "productKey": "LIGHT_WRGB_PRO_ELITE",
+  "productSliderOrder": {
+    "LIGHT_WRGB_PRO_ELITE": [
+      "redPercent",
+      "greenPercent",
+      "bluePercent",
+      "whitePercent"
+    ],
+    "LIGHT_RGB_PRO_SLIM": [
+      "redPercent",
+      "greenPercent",
+      "bluePercent"
+    ]
+  },
+  "mode": "MANUAL",
+  "sliderCount": 4,
+  "sliderOrder": [
+    "redPercent",
+    "greenPercent",
+    "bluePercent",
+    "whitePercent"
+  ],
+  "sliders": [
+    {
+      "key": "redPercent",
+      "physicalChannel": "red",
+      "minimum": 0,
+      "maximum": 100,
+      "stepPercent": 1,
+      "minusButton": true,
+      "plusButton": true,
+      "persistentOwner": "manual.scene"
+    },
+    {
+      "key": "greenPercent",
+      "physicalChannel": "green",
+      "minimum": 0,
+      "maximum": 100,
+      "stepPercent": 1,
+      "minusButton": true,
+      "plusButton": true,
+      "persistentOwner": "manual.scene"
+    },
+    {
+      "key": "bluePercent",
+      "physicalChannel": "blue",
+      "minimum": 0,
+      "maximum": 100,
+      "stepPercent": 1,
+      "minusButton": true,
+      "plusButton": true,
+      "persistentOwner": "manual.scene"
+    },
+    {
+      "key": "whitePercent",
+      "physicalChannel": "white",
+      "minimum": 0,
+      "maximum": 100,
+      "stepPercent": 1,
+      "minusButton": true,
+      "plusButton": true,
+      "persistentOwner": "manual.scene"
+    }
+  ],
+  "intensity": {
+    "manualIntensityFieldExists": false,
+    "fifthSliderExists": false,
+    "hiddenManualBrightnessMultiplier": false
+  },
+  "powerInteraction": {
+    "onButtonExists": false,
+    "onCommandExists": false,
+    "manualEnabledBooleanExists": false,
+    "nonZeroSceneMeansRequestedOn": true,
+    "offButtonExists": true,
+    "offCommand": "light.manual.off",
+    "offWritesZeroScene": true,
+    "offScene": {
+      "redPercent": 0,
+      "greenPercent": 0,
+      "bluePercent": 0,
+      "whitePercent": 0
+    }
+  },
+  "commands": {
+    "set": {
+      "name": "light.manual.set",
+      "requiredFields": ["scene"],
+      "completeReplacement": true,
+      "persistent": true
+    },
+    "off": {
+      "name": "light.manual.off",
+      "requiredFields": [],
+      "completeReplacementWithZeroScene": true,
+      "persistent": true
+    },
+    "on": null
+  },
+  "preview": {
+    "command": "light.preview.set",
+    "clearCommand": "light.preview.clear",
+    "sceneVolatile": true,
+    "manualIntensityOverrideAllowed": false,
+    "previewWritesPersistentStorage": false,
+    "commitOnRelease": "light.manual.set"
+  },
+  "pipeline": [
+    "SOURCE_SCENE",
+    "THERMAL_PROTECTION",
+    "POWER_LIMITER",
+    "EFFECTIVE_WRGB",
+    "PWM"
+  ],
+  "telemetry": {
+    "requestedIsFourChannelScene": true,
+    "effectiveAfterSafety": true,
+    "estimatedPowerUsesEffective": true,
+    "estimatedColorUsesEffective": true,
+    "estimatedPowerFirmwareAuthoritative": true,
+    "estimatedColorFirmwareAuthoritative": true
+  },
+  "appOwnedActions": {
+    "presetShortcuts": true,
+    "saveAs": true,
+    "load": true,
+    "presetApplyUsesManualSet": true
+  },
+  "legacyFallback": false,
+  "migration": false
+}

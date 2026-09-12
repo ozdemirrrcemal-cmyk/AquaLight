@@ -24,7 +24,7 @@ object DeviceLightTemperatureProtectionParser {
             )
             require(
                 data.requiredExactString(DeviceLightRuntimeContract.Field.EVENT) ==
-                    DeviceLightRuntimeContract.Event.STATUS_CHANGED
+                    DeviceLightRuntimeContract.Event.THERMAL_STATUS_CHANGED
             )
 
             val changed = data.requiredExactBoolean(DeviceLightRuntimeContract.Field.CHANGED)
@@ -114,7 +114,13 @@ object DeviceLightTemperatureProtectionParser {
         require(runtime.module == DeviceLightRuntimeContract.MODULE)
         require(!runtime.readOnly)
         require(runtime.supportsStatusGet)
-        require(runtime.event == DeviceLightRuntimeContract.Event.STATUS_CHANGED)
+        require(
+            runtime.event == if (runtime.supportsSet) {
+                DeviceLightRuntimeContract.Event.THERMAL_STATUS_CHANGED
+            } else {
+                DeviceLightRuntimeContract.Event.STATUS_CHANGED
+            }
+        )
         return runtime
     }
 

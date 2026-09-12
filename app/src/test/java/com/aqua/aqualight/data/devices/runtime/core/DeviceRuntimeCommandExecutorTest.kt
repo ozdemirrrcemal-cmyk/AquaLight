@@ -106,7 +106,9 @@ class DeviceRuntimeCommandExecutorTest {
                 type = AqlWsContract.TYPE_ERROR,
                 module = command.module,
                 action = command.action,
-                data = JSONObject(),
+                data = JSONObject()
+                    .put("reason", "STALE_REVISION")
+                    .put("actualRevision", 7),
                 message = "Command rejected.",
                 statusCode = 422,
                 code = "invalid_field",
@@ -117,6 +119,15 @@ class DeviceRuntimeCommandExecutorTest {
         assertEquals(422, error.statusCode)
         assertEquals("invalid_field", error.code)
         assertEquals("value", error.field)
+        assertEquals(
+            setOf("reason", "actualRevision"),
+            JSONObject(error.structuredDataJson).keySet()
+        )
+        assertEquals(
+            "STALE_REVISION",
+            JSONObject(error.structuredDataJson).getString("reason")
+        )
+        assertEquals(7, JSONObject(error.structuredDataJson).getInt("actualRevision"))
     }
 
     @Test

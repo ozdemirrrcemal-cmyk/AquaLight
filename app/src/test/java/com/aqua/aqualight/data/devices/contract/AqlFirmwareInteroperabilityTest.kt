@@ -14,13 +14,20 @@ import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1ProgramSlotPayload
 import com.aqua.aqualight.data.devices.runtime.modules.device.DeviceNameSetRequest
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareOtaStartPayload
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightChannelRegimeSetPayload
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightManualChannelPayload
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAcclimationStartPayload
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAcclimationStopPayload
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAutoProgramCreatePayload
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAutoProgramDeletePayload
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAutoProgramEnabledSetPayload
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAutoProgramUpdatePayload
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightControlSetPayload
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightCustomInstallPayload
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightCustomPoint
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightManualSetPayload
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightProgramApplyPayload
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightProgramDeletePayload
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightProgramPointPayload
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRegime
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightMode
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightPreviewSetPayload
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeContract
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightScene
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTemperatureProtectionSetPayload
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightThermalConfigApplyPayload
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightThermalMode
@@ -61,7 +68,8 @@ class AqlFirmwareInteroperabilityTest {
         val authenticated = commandAccess.getJSONArray("authenticated").asStringSet()
         val public = commandAccess.getJSONArray("public").asStringSet()
 
-        assertEquals(50, authenticated.size)
+        assertEquals(62, authenticated.size)
+        assertEquals(FIRMWARE_COMMIT, DeviceLightRuntimeContract.PINNED_FIRMWARE_COMMIT)
         assertTrue(public.isEmpty())
         assertEquals(public, AqlWsContract.publicCommandKeys())
         assertEquals(authenticated, AqlWsContract.authenticatedCommandKeys())
@@ -204,6 +212,10 @@ class AqlFirmwareInteroperabilityTest {
         listOf(
             COOLING_CONTRACT_FIXTURE,
             COOLING_TELEMETRY_FIXTURE,
+            LIGHT_CONTRACT_FIXTURE,
+            LIGHT_RGB_CONTRACT_FIXTURE,
+            LIGHT_MANUAL_CONTRACT_FIXTURE,
+            LIGHT_GRAPH_CONTRACT_FIXTURE,
             LIGHT_THERMAL_FIXTURE,
             TIMER_CONTRACT_FIXTURE
         )
@@ -370,28 +382,54 @@ class AqlFirmwareInteroperabilityTest {
     )
 
     private fun lightSerializerFields(): Map<String, Set<String>> {
-        val percent = DeviceLightManualChannelPayload("red", percent = 50.0).toJson()
-        val value = DeviceLightManualChannelPayload("green", value = 0.5).toJson()
-        val pointByMillis = DeviceLightProgramPointPayload(timeMs = 0L, percent = 50.0).toJson()
-        val pointByText = DeviceLightProgramPointPayload(time = "12:00", value = 0.5).toJson()
+        val scene = DeviceLightScene.wrgb(red = 10, green = 20, blue = 30, white = 40)
+        val create = DeviceLightAutoProgramCreatePayload(
+            expectedRevision = 1,
+            enabled = true,
+            weekdaysMask = 127,
+            startTimeMs = 28_800_000,
+            endTimeMs = 64_800_000,
+            rampDurationMs = 1_800_000,
+            scene = scene
+        )
+        val update = DeviceLightAutoProgramUpdatePayload(
+            expectedRevision = 1,
+            programId = "ap-00000001",
+            weekdaysMask = 127,
+            startTimeMs = 28_800_000,
+            endTimeMs = 64_800_000,
+            rampDurationMs = 1_800_000,
+            scene = scene
+        )
 
         return linkedMapOf(
-            "DeviceLightChannelRegimeSetPayload" to DeviceLightChannelRegimeSetPayload(
-                "red",
-                DeviceLightRegime.AUTO
+            "DeviceLightControlSetPayload" to
+                DeviceLightControlSetPayload(DeviceLightMode.AUTO).toJson().keySetExact(),
+            "DeviceLightManualSetPayload" to
+                DeviceLightManualSetPayload(scene).toJson().keySetExact(),
+            "DeviceLightScene" to scene.toJson().keySetExact(),
+            "DeviceLightAutoProgramCreatePayload" to create.toJson().keySetExact(),
+            "DeviceLightAutoProgramUpdatePayload" to update.toJson().keySetExact(),
+            "DeviceLightAutoProgramEnabledSetPayload" to
+                DeviceLightAutoProgramEnabledSetPayload(1, "ap-00000001", true)
+                    .toJson().keySetExact(),
+            "DeviceLightAutoProgramDeletePayload" to
+                DeviceLightAutoProgramDeletePayload(1, "ap-00000001")
+                    .toJson().keySetExact(),
+            "DeviceLightCustomInstallPayload" to DeviceLightCustomInstallPayload(
+                expectedRevision = 1,
+                weekdaysMask = 127,
+                points = listOf(DeviceLightCustomPoint(0, scene))
             ).toJson().keySetExact(),
-            "DeviceLightManualChannelPayload" to unionKeys(percent, value),
-            "DeviceLightManualSetPayload" to DeviceLightManualSetPayload(
-                channels = listOf(DeviceLightManualChannelPayload("red", percent = 50.0))
-            ).toJson().keySetExact(),
-            "DeviceLightProgramApplyPayload" to DeviceLightProgramApplyPayload(
-                channelKey = "red",
-                points = listOf(DeviceLightProgramPointPayload(timeMs = 0L, percent = 50.0)),
-                programIndex = 0
-            ).toJson().keySetExact(),
-            "DeviceLightProgramDeletePayload" to
-                DeviceLightProgramDeletePayload(0).toJson().keySetExact(),
-            "DeviceLightProgramPointPayload" to unionKeys(pointByMillis, pointByText),
+            "DeviceLightAcclimationStartPayload" to
+                DeviceLightAcclimationStartPayload(1, 50, 30).toJson().keySetExact(),
+            "DeviceLightAcclimationStopPayload" to
+                DeviceLightAcclimationStopPayload(1).toJson().keySetExact(),
+            "DeviceLightPreviewSetPayload.Scene" to
+                DeviceLightPreviewSetPayload.Scene(scene, 3_000).toJson().keySetExact(),
+            "DeviceLightPreviewSetPayload.VirtualTime" to
+                DeviceLightPreviewSetPayload.VirtualTime(43_200_000, 3_000)
+                    .toJson().keySetExact(),
             "DeviceLightTemperatureProtectionSetPayload" to
                 DeviceLightTemperatureProtectionSetPayload(60.0).toJson().keySetExact(),
             "DeviceLightThermalConfigApplyPayload" to DeviceLightThermalConfigApplyPayload(
@@ -522,11 +560,15 @@ class AqlFirmwareInteroperabilityTest {
         const val WEBSOCKET_FIXTURE = "aql_ws_v1_golden.json"
         const val COOLING_CONTRACT_FIXTURE = "aql_cooling_contract_v1.json"
         const val COOLING_TELEMETRY_FIXTURE = "aql_cooling_telemetry_v1.json"
+        const val LIGHT_CONTRACT_FIXTURE = "aql_light_contract_v1.json"
+        const val LIGHT_RGB_CONTRACT_FIXTURE = "aql_light_rgb_pro_slim_contract_v1.json"
+        const val LIGHT_MANUAL_CONTRACT_FIXTURE = "aql_light_manual_control_v1.json"
+        const val LIGHT_GRAPH_CONTRACT_FIXTURE = "aql_light_graph_contract_v1.json"
         const val LIGHT_THERMAL_FIXTURE = "aql_light_thermal_contract_v1.json"
         const val TIMER_CONTRACT_FIXTURE = "aql_timer_contract_v1.json"
         const val PRODUCT_CATALOG_FIXTURE = "aql_product_catalog_v1.json"
         const val DOSING_PIN_FIXTURE = "aql_android_dosing_v1_pin.json"
-        const val FIRMWARE_COMMIT = "90b6597216d0c697542d5dc12e26647625806d8f"
+        const val FIRMWARE_COMMIT = "7df97ce807ebb1e90ff63cc36206d6ce479a62fc"
         const val DOSING_FIRMWARE_COMMIT = "fa147211749c2dcb2f56e15a617a00010e071984"
 
         val WEEKDAYS = listOf(true, false, false, false, false, false, false)

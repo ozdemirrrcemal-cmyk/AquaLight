@@ -29,8 +29,8 @@ FAILURE_MAPPER_PATH = (
 COOLING_COMMAND_PREFIX = "cooling."
 
 FIRMWARE_REPOSITORY = "ozdemirrrcemal-cmyk/AquaLight-Firmware"
-FIRMWARE_COMMIT = "90b6597216d0c697542d5dc12e26647625806d8f"
-FIRMWARE_TREE = "276c9edeffbe291d0f0a33daa0e62ecbb35ed56a"
+FIRMWARE_COMMIT = "7df97ce807ebb1e90ff63cc36206d6ce479a62fc"
+FIRMWARE_TREE = "5df1ba11e2d0d5c65e3c6fbb1e4aba5d47bd6c69"
 FIRMWARE_SOURCES = {
     "src/api/v1/commands/AqlCoolingCommands.hpp":
         "4df542d5106fce2810e64559667685c1c2ecfd69",
@@ -57,8 +57,8 @@ SHARED_FIXTURES = {
         "823fa046921922eb97573cb01c086de0b76fb350",
     ),
     "aql_cooling_telemetry_v1.json": (
-        "8c0ecc54eff1a05f3d72b9b740e6d986dbc3a7cc69c61647608aed360b621b85",
-        "7ec000ec24e2ef48cd54beff3bad81b58d7cd4c4",
+        "8257ed9ad10342d8cab2693087b2b1831f8287d6e6eede24da2875457f0075a7",
+        "83778df071f32d5996a3d55946275e8b63291336",
     ),
 }
 STATUS_FIXTURE_SHA256 = "fb19c405ee0be60b8f52f05a307d0bcb8797a047c3bcbfcab3f0b36581060df4"

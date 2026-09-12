@@ -12,7 +12,7 @@ class DeviceLightGenerationAuthorityTest {
     fun `reconnect retains last Light presentation snapshot until new generation hydrates`() {
         val store = DeviceLightRuntimeStateStore()
         val first = DeviceLightStatusParser.parse(DeviceLightRuntimeFixtures.status())
-        val second = first.copy(programCount = first.programCount + 1)
+        val second = first.copy(mode = DeviceLightMode.AUTO)
 
         store.beginGeneration(DEVICE_UID, G1)
         assertTrue(store.recordStatus(DEVICE_UID, G1, first))
@@ -29,8 +29,8 @@ class DeviceLightGenerationAuthorityTest {
     fun `late old generation Light status cannot overwrite new state`() {
         val store = DeviceLightRuntimeStateStore()
         val first = DeviceLightStatusParser.parse(DeviceLightRuntimeFixtures.status())
-        val second = first.copy(programCount = first.programCount + 1)
-        val lateOld = first.copy(programCount = first.programCount + 2)
+        val second = first.copy(mode = DeviceLightMode.AUTO)
+        val lateOld = first.copy(mode = DeviceLightMode.CUSTOM)
 
         store.beginGeneration(DEVICE_UID, G1)
         store.recordStatus(DEVICE_UID, G1, first)

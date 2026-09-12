@@ -3,284 +3,535 @@ package com.aqua.aqualight.data.devices.runtime.modules.light
 import org.json.JSONArray
 import org.json.JSONObject
 
-enum class DeviceLightRegime(
-    val wireValue: String
+enum class DeviceLightProduct(
+    val wireValue: String,
+    val sceneFields: List<String>,
+    val supportsAcclimation: Boolean
 ) {
-    AUTO("Auto"),
-    ON("On"),
-    OFF("Off")
-}
+    WRGB_PRO_ELITE(
+        DeviceLightRuntimeContract.Product.WRGB_PRO_ELITE,
+        listOf("redPercent", "greenPercent", "bluePercent", "whitePercent"),
+        true
+    ),
+    RGB_PRO_SLIM(
+        DeviceLightRuntimeContract.Product.RGB_PRO_SLIM,
+        listOf("redPercent", "greenPercent", "bluePercent"),
+        false
+    );
 
-data class DeviceLightRuntimeCapabilities(
-    val module: String,
-    val readOnly: Boolean,
-    val supportsManualSet: Boolean,
-    val supportsChannelRegimeSet: Boolean,
-    val supportsProgramApply: Boolean,
-    val supportsProgramDelete: Boolean,
-    val supportsLiveEdit: Boolean,
-    val event: String
-)
+    val channelCount: Int get() = sceneFields.size
 
-data class DeviceLightChannelEditable(
-    val hardware: Boolean,
-    val displayName: Boolean,
-    val color: Boolean,
-    val hardwareCalibration: Boolean
-)
-
-data class DeviceLightChannelStatus(
-    val index: Int,
-    val key: String,
-    val name: String,
-    val displayName: String,
-    val profileManaged: Boolean,
-    val regime: DeviceLightRegime,
-    val channelKind: String,
-    val gpio: Int,
-    val ledcChannel: Int,
-    val group: Int,
-    val valueNow: Double,
-    val valueAuto: Double,
-    val valueManual: Double,
-    val manualTimeoutMs: Long,
-    val percentNow: Double,
-    val percentAuto: Double,
-    val percentManual: Double,
-    val invert: Boolean,
-    val pwmResolutionBits: Int,
-    val pwmFrequencyHz: Int,
-    val color: Int,
-    val lumen: Double,
-    val lux: Double,
-    val watt: Double,
-    val editable: DeviceLightChannelEditable
-)
-
-data class DeviceLightProgramPointStatus(
-    val index: Int,
-    val timeMs: Long,
-    val time: String,
-    val value: Double,
-    val percent: Double
-)
-
-data class DeviceLightProgramStatus(
-    val listIndex: Int,
-    val index: Int,
-    val channelKey: String,
-    val bound: Boolean,
-    val pointCount: Int,
-    val points: List<DeviceLightProgramPointStatus>
-)
-
-data class DeviceLightStatus(
-    val supported: Boolean,
-    val manualSupported: Boolean,
-    val programSupported: Boolean,
-    val presetsSupported: Boolean,
-    val simulationSupported: Boolean,
-    val channelCount: Int,
-    val programCount: Int,
-    val liveEditEnabled: Boolean,
-    val channelEdit: Int,
-    val powerLimitW: Double,
-    val lockLoop: Boolean,
-    val temperatureDownStepPercent: Double,
-    val temperatureRecoveryMs: Long,
-    val lightCorrectionFactor: Double,
-    val uptimeMs: Long,
-    val channels: List<DeviceLightChannelStatus>,
-    val programs: List<DeviceLightProgramStatus>,
-    val runtime: DeviceLightRuntimeCapabilities
-)
-
-data class DeviceLightManualChannelPayload(
-    val channelKey: String,
-    val percent: Double? = null,
-    val value: Double? = null
-) {
-    init {
-        requireExactLightChannelKey(channelKey)
-        require(percent == null || value == null) {
-            "manual channel must not contain both percent and value."
-        }
-        percent?.let { level ->
-            require(level.isFinite() && level in 0.0..100.0) {
-                "percent must be between 0 and 100."
-            }
-        }
-        value?.let { level ->
-            require(level.isFinite() && level in 0.0..1.0) {
-                "value must be between 0 and 1."
-            }
-        }
+    companion object {
+        fun fromWireExact(value: String): DeviceLightProduct =
+            entries.singleOrNull { it.wireValue == value }
+                ?: error("Unsupported Light V1 productKey: $value")
     }
-
-    fun toJson(): JSONObject = JSONObject()
-        .put(DeviceLightRuntimeContract.Field.CHANNEL_KEY, channelKey)
-        .also { json ->
-            percent?.let { json.put(DeviceLightRuntimeContract.Field.PERCENT, it) }
-            value?.let { json.put(DeviceLightRuntimeContract.Field.VALUE, it) }
-        }
 }
 
-data class DeviceLightManualSetPayload(
-    val channels: List<DeviceLightManualChannelPayload> = emptyList(),
-    val durationMs: Long? = DeviceLightRuntimeContract.Limit.DEFAULT_MANUAL_DURATION_MS,
-    val clear: Boolean = false
-) {
-    init {
-        require(channels.size <= DeviceLightRuntimeContract.Limit.MAX_MANUAL_CHANNELS) {
-            "Manual light supports at most ${DeviceLightRuntimeContract.Limit.MAX_MANUAL_CHANNELS} channels."
-        }
-        require(channels.map(DeviceLightManualChannelPayload::channelKey).toSet().size == channels.size) {
-            "Manual light channel keys must be unique."
-        }
-        if (clear) {
-            require(durationMs == null) { "durationMs is not allowed when clear=true." }
-            require(channels.all { channel -> channel.percent == null && channel.value == null }) {
-                "Manual clear channels must contain only channelKey."
-            }
-        } else {
-            require(channels.isNotEmpty()) { "manual.set requires channels when clear=false." }
-            require(channels.all { channel -> (channel.percent == null) != (channel.value == null) }) {
-                "Manual light channels require exactly one of percent or value."
-            }
-            val duration = durationMs ?: DeviceLightRuntimeContract.Limit.DEFAULT_MANUAL_DURATION_MS
-            require(
-                duration in DeviceLightRuntimeContract.Limit.MIN_MANUAL_DURATION_MS..
-                    DeviceLightRuntimeContract.Limit.MAX_MANUAL_DURATION_MS
-            ) {
-                "durationMs is outside the supported manual-light range."
-            }
-        }
+enum class DeviceLightMode(val wireValue: String) {
+    MANUAL("MANUAL"),
+    AUTO("AUTO"),
+    CUSTOM("CUSTOM");
+
+    companion object {
+        fun fromWireExact(value: String): DeviceLightMode =
+            enumByWire(value, entries) { it.wireValue }
     }
-
-    fun toJson(): JSONObject = JSONObject()
-        .put(DeviceLightRuntimeContract.Field.CLEAR, clear)
-        .also { json ->
-            if (!clear) {
-                json.put(
-                    DeviceLightRuntimeContract.Field.DURATION_MS,
-                    durationMs ?: DeviceLightRuntimeContract.Limit.DEFAULT_MANUAL_DURATION_MS
-                )
-            }
-            if (channels.isNotEmpty()) {
-                json.put(
-                    DeviceLightRuntimeContract.Field.CHANNELS,
-                    JSONArray(channels.map(DeviceLightManualChannelPayload::toJson))
-                )
-            }
-        }
 }
 
-data class DeviceLightChannelRegimeSetPayload(
-    val channelKey: String,
-    val regime: DeviceLightRegime,
-    val save: Boolean = true
-) {
-    init {
-        requireExactLightChannelKey(channelKey)
+enum class DeviceLightOutputReason(val wireValue: String) {
+    ACTIVE("ACTIVE"),
+    SCHEDULED_OFF("SCHEDULED_OFF"),
+    ALL_CHANNELS_ZERO("ALL_CHANNELS_ZERO"),
+    RTC_NOT_READY("RTC_NOT_READY"),
+    THERMAL_SHUTDOWN("THERMAL_SHUTDOWN"),
+    POWER_LIMITED("POWER_LIMITED"),
+    HARDWARE_FAULT("HARDWARE_FAULT");
+
+    companion object {
+        fun fromWireExact(value: String): DeviceLightOutputReason =
+            enumByWire(value, entries) { it.wireValue }
     }
-
-    fun toJson(): JSONObject = JSONObject()
-        .put(DeviceLightRuntimeContract.Field.CHANNEL_KEY, channelKey)
-        .put(DeviceLightRuntimeContract.Field.REGIME, regime.wireValue)
-        .put(DeviceLightRuntimeContract.Field.SAVE, save)
 }
 
-data class DeviceLightProgramPointPayload(
-    val timeMs: Long? = null,
-    val time: String? = null,
-    val percent: Double? = null,
-    val value: Double? = null
+enum class DeviceLightAutoRuntimeState(val wireValue: String) {
+    NOT_SELECTED("NOT_SELECTED"),
+    RTC_BLOCKED("RTC_BLOCKED"),
+    DARK("DARK"),
+    RAMP_UP("RAMP_UP"),
+    HOLD("HOLD"),
+    RAMP_DOWN("RAMP_DOWN");
+
+    companion object {
+        fun fromWireExact(value: String): DeviceLightAutoRuntimeState =
+            enumByWire(value, entries) { it.wireValue }
+    }
+}
+
+enum class DeviceLightCustomRuntimeState(val wireValue: String) {
+    NOT_SELECTED("NOT_SELECTED"),
+    RTC_BLOCKED("RTC_BLOCKED"),
+    NOT_INSTALLED("NOT_INSTALLED"),
+    NOT_SCHEDULED_TODAY("NOT_SCHEDULED_TODAY"),
+    DARK("DARK"),
+    ACTIVE("ACTIVE");
+
+    companion object {
+        fun fromWireExact(value: String): DeviceLightCustomRuntimeState =
+            enumByWire(value, entries) { it.wireValue }
+    }
+}
+
+enum class DeviceLightAcclimationState(val wireValue: String) {
+    DISABLED("DISABLED"),
+    ACTIVE("ACTIVE"),
+    COMPLETED("COMPLETED");
+
+    companion object {
+        fun fromWireExact(value: String): DeviceLightAcclimationState =
+            enumByWire(value, entries) { it.wireValue }
+    }
+}
+
+enum class DeviceLightModelSource(val wireValue: String) {
+    DESIGN_NOMINAL("DESIGN_NOMINAL"),
+    UNAVAILABLE("UNAVAILABLE");
+
+    companion object {
+        fun fromWireExact(value: String): DeviceLightModelSource =
+            enumByWire(value, entries) { it.wireValue }
+    }
+}
+
+enum class DeviceLightPowerLimitBasis(val wireValue: String) {
+    NONE("NONE"),
+    LED("LED"),
+    FIXTURE("FIXTURE"),
+    BOTH("BOTH");
+
+    companion object {
+        fun fromWireExact(value: String): DeviceLightPowerLimitBasis =
+            enumByWire(value, entries) { it.wireValue }
+    }
+}
+
+enum class DeviceLightGraphReason(val wireValue: String) {
+    OK("OK"),
+    MODE_HAS_NO_SCHEDULE("MODE_HAS_NO_SCHEDULE"),
+    RTC_NOT_READY("RTC_NOT_READY"),
+    NO_ENABLED_AUTO_PROGRAM_TODAY("NO_ENABLED_AUTO_PROGRAM_TODAY"),
+    CUSTOM_NOT_INSTALLED("CUSTOM_NOT_INSTALLED"),
+    CUSTOM_NOT_SCHEDULED_TODAY("CUSTOM_NOT_SCHEDULED_TODAY");
+
+    companion object {
+        fun fromWireExact(value: String): DeviceLightGraphReason =
+            enumByWire(value, entries) { it.wireValue }
+    }
+}
+
+enum class DeviceLightGraphBasis(val wireValue: String) {
+    AUTHORED_SCHEDULE("AUTHORED_SCHEDULE"),
+    NONE("NONE");
+
+    companion object {
+        fun fromWireExact(value: String): DeviceLightGraphBasis =
+            enumByWire(value, entries) { it.wireValue }
+    }
+}
+
+data class DeviceLightScene(
+    val product: DeviceLightProduct,
+    val percents: Map<String, Int>
 ) {
     init {
-        require((timeMs == null) != time.isNullOrBlank()) {
-            "program point requires exactly one of timeMs or time."
+        require(percents.keys == product.sceneFields.toSet()) {
+            "Light scene fields must exactly match ${product.wireValue}."
         }
-        require((percent == null) != (value == null)) {
-            "program point requires exactly one of percent or value."
-        }
-        timeMs?.let { milliseconds ->
-            require(milliseconds >= 0L) { "timeMs must be zero or greater." }
-        }
-        time?.let { text ->
-            require(text == text.trim() && text.none(Char::isISOControl)) {
-                "time must be exact text without surrounding whitespace."
-            }
-        }
-        percent?.let { level ->
-            require(level.isFinite() && level in 0.0..100.0) {
-                "percent must be between 0 and 100."
-            }
-        }
-        value?.let { level ->
-            require(level.isFinite() && level in 0.0..1.0) {
-                "value must be between 0 and 1."
-            }
+        require(percents.values.all { it in 0..100 }) {
+            "Light scene percentages must be integers from 0 through 100."
         }
     }
 
     fun toJson(): JSONObject = JSONObject().also { json ->
-        timeMs?.let { json.put(DeviceLightRuntimeContract.Field.TIME_MS, it) }
-        time?.let { json.put(DeviceLightRuntimeContract.Field.TIME, it) }
-        percent?.let { json.put(DeviceLightRuntimeContract.Field.PERCENT, it) }
-        value?.let { json.put(DeviceLightRuntimeContract.Field.VALUE, it) }
+        product.sceneFields.forEach { field -> json.put(field, percents.getValue(field)) }
+    }
+
+    fun toTuple(timeMs: Long): JSONArray = JSONArray().put(timeMs).also { tuple ->
+        product.sceneFields.forEach { field -> tuple.put(percents.getValue(field)) }
+    }
+
+    companion object {
+        fun wrgb(red: Int, green: Int, blue: Int, white: Int): DeviceLightScene =
+            DeviceLightScene(
+                DeviceLightProduct.WRGB_PRO_ELITE,
+                linkedMapOf(
+                    "redPercent" to red,
+                    "greenPercent" to green,
+                    "bluePercent" to blue,
+                    "whitePercent" to white
+                )
+            )
+
+        fun rgb(red: Int, green: Int, blue: Int): DeviceLightScene =
+            DeviceLightScene(
+                DeviceLightProduct.RGB_PRO_SLIM,
+                linkedMapOf(
+                    "redPercent" to red,
+                    "greenPercent" to green,
+                    "bluePercent" to blue
+                )
+            )
     }
 }
 
-data class DeviceLightProgramApplyPayload(
-    val channelKey: String,
-    val points: List<DeviceLightProgramPointPayload>,
-    val programIndex: Int? = null,
-    val save: Boolean = true
+data class DeviceLightChannelDescriptor(
+    val key: String,
+    val percentField: String,
+    val displayName: String,
+    val displayColorRgb: Int,
+    val order: Int
+)
+
+data class DeviceLightFeatures(
+    val acclimation: Boolean,
+    val fanControl: Boolean,
+    val temperatureSensor: Boolean,
+    val thermal: Boolean,
+    val estimatedPower: Boolean,
+    val estimatedColor: Boolean
+)
+
+data class DeviceLightScales(
+    val acclimation: Int,
+    val thermal: Int,
+    val powerLimit: Int
+)
+
+data class DeviceLightElectricalDesign(
+    val available: Boolean,
+    val contractRevision: Int?,
+    val fixtureLengthMm: Int?,
+    val maximumFixtureInputPowerW: Double?,
+    val minimumAdapterContinuousPowerW: Double?,
+    val maximumLedElectricalPowerW: Double?,
+    val nominalLedElectricalPowerW: Double?
+)
+
+data class DeviceLightPowerStatus(
+    val available: Boolean,
+    val source: DeviceLightModelSource,
+    val estimatedLedPowerW: Double?,
+    val estimatedFixturePowerAvailable: Boolean,
+    val estimatedFixturePowerW: Double?,
+    val hardLedPowerLimitW: Double?,
+    val hardFixturePowerLimitAvailable: Boolean,
+    val hardFixturePowerLimitW: Double?,
+    val ratioAvailable: Boolean,
+    val ratio: Double?,
+    val limited: Boolean,
+    val limitScale: Int,
+    val limitBasis: DeviceLightPowerLimitBasis,
+    val modelRevision: Int?
+)
+
+data class DeviceLightDisplayRgb(val red: Int, val green: Int, val blue: Int)
+
+data class DeviceLightColorStatus(
+    val available: Boolean,
+    val source: DeviceLightModelSource,
+    val cieX: Double?,
+    val cieY: Double?,
+    val cctAvailable: Boolean,
+    val estimatedCctK: Int?,
+    val duvAvailable: Boolean,
+    val duv: Double?,
+    val displayRgb: DeviceLightDisplayRgb?,
+    val modelRevision: Int?
+)
+
+data class DeviceLightPreviewStatus(val active: Boolean, val remainingMs: Long)
+data class DeviceLightManualStatus(val scene: DeviceLightScene)
+
+data class DeviceLightAutoPolicy(
+    val capacity: Int,
+    val timeStepMs: Long,
+    val rampDurationsMs: List<Long>
+)
+
+data class DeviceLightCustomPolicy(val maxPoints: Int, val timeStepMs: Long)
+
+data class DeviceLightAcclimationPolicy(
+    val supported: Boolean,
+    val startPercentMin: Int?,
+    val startPercentMax: Int?,
+    val startPercentStep: Int?,
+    val defaultStartPercent: Int?,
+    val durationDaysMin: Int?,
+    val durationDaysMax: Int?,
+    val durationDaysStep: Int?,
+    val defaultDurationDays: Int?,
+    val targetPercent: Int?
+)
+
+data class DeviceLightPolicy(
+    val auto: DeviceLightAutoPolicy,
+    val custom: DeviceLightCustomPolicy,
+    val acclimation: DeviceLightAcclimationPolicy
+)
+
+data class DeviceLightSchedulerStatus(
+    val ready: Boolean,
+    val reason: String,
+    val generation: Long?,
+    val localDate: String?,
+    val currentWeekdayMask: Int,
+    val currentTimeMs: Long?
+)
+
+data class DeviceLightAutoSummary(
+    val revision: Long,
+    val programCount: Int,
+    val enabledCount: Int,
+    val runtimeState: DeviceLightAutoRuntimeState,
+    val activeProgramId: String?
+)
+
+data class DeviceLightCustomSummary(
+    val revision: Long,
+    val installed: Boolean,
+    val weekdaysMask: Int,
+    val pointCount: Int,
+    val runtimeState: DeviceLightCustomRuntimeState
+)
+
+data class DeviceLightAcclimationStatus(
+    val supported: Boolean,
+    val revision: Long?,
+    val state: DeviceLightAcclimationState?,
+    val clockReady: Boolean?,
+    val startPercent: Int?,
+    val currentPermille: Int?,
+    val targetPercent: Int?,
+    val durationDays: Int?,
+    val startedAtEpochSeconds: Long?,
+    val endsAtEpochSeconds: Long?,
+    val remainingSeconds: Long?
+)
+
+data class DeviceLightRuntimeStatus(
+    val rtcReady: Boolean,
+    val physicalChannelCount: Int,
+    val physicalOutputHealthy: Boolean,
+    val event: String
+)
+
+data class DeviceLightStatus(
+    val schema: String,
+    val storageVersion: Int,
+    val product: DeviceLightProduct,
+    val channelScale: Int,
+    val channels: List<DeviceLightChannelDescriptor>,
+    val features: DeviceLightFeatures,
+    val mode: DeviceLightMode,
+    val outputActive: Boolean,
+    val outputReason: DeviceLightOutputReason,
+    val requested: DeviceLightScene,
+    val effective: DeviceLightScene,
+    val scales: DeviceLightScales,
+    val electricalDesign: DeviceLightElectricalDesign,
+    val power: DeviceLightPowerStatus,
+    val color: DeviceLightColorStatus,
+    val preview: DeviceLightPreviewStatus,
+    val manual: DeviceLightManualStatus,
+    val policy: DeviceLightPolicy,
+    val scheduler: DeviceLightSchedulerStatus,
+    val auto: DeviceLightAutoSummary,
+    val custom: DeviceLightCustomSummary,
+    val acclimation: DeviceLightAcclimationStatus,
+    val runtime: DeviceLightRuntimeStatus
+)
+
+data class DeviceLightControlSetPayload(val mode: DeviceLightMode) {
+    fun toJson(): JSONObject = JSONObject().put(DeviceLightRuntimeContract.Field.MODE, mode.wireValue)
+}
+
+data class DeviceLightManualSetPayload(val scene: DeviceLightScene) {
+    fun toJson(): JSONObject = JSONObject().put(DeviceLightRuntimeContract.Field.SCENE, scene.toJson())
+}
+
+data class DeviceLightAutoProgramCreatePayload(
+    val expectedRevision: Long,
+    val enabled: Boolean,
+    val weekdaysMask: Int,
+    val startTimeMs: Long,
+    val endTimeMs: Long,
+    val rampDurationMs: Long,
+    val scene: DeviceLightScene
+) {
+    init { validateAutoProgram(expectedRevision, weekdaysMask, startTimeMs, endTimeMs, rampDurationMs) }
+
+    fun toJson(): JSONObject = JSONObject()
+        .put(DeviceLightRuntimeContract.Field.EXPECTED_REVISION, expectedRevision)
+        .put(DeviceLightRuntimeContract.Field.ENABLED, enabled)
+        .put(DeviceLightRuntimeContract.Field.WEEKDAYS_MASK, weekdaysMask)
+        .put(DeviceLightRuntimeContract.Field.START_TIME_MS, startTimeMs)
+        .put(DeviceLightRuntimeContract.Field.END_TIME_MS, endTimeMs)
+        .put(DeviceLightRuntimeContract.Field.RAMP_DURATION_MS, rampDurationMs)
+        .put(DeviceLightRuntimeContract.Field.SCENE, scene.toJson())
+}
+
+data class DeviceLightAutoProgramUpdatePayload(
+    val expectedRevision: Long,
+    val programId: String,
+    val weekdaysMask: Int,
+    val startTimeMs: Long,
+    val endTimeMs: Long,
+    val rampDurationMs: Long,
+    val scene: DeviceLightScene
 ) {
     init {
-        requireExactLightChannelKey(channelKey)
-        require(points.isNotEmpty()) { "light program points must not be empty." }
-        require(points.size <= DeviceLightRuntimeContract.Limit.MAX_PROGRAM_POINTS) {
-            "Light program supports at most ${DeviceLightRuntimeContract.Limit.MAX_PROGRAM_POINTS} points."
-        }
-        programIndex?.let { index ->
-            require(index >= 0) { "programIndex must be zero or greater." }
-        }
+        requireProgramId(programId)
+        validateAutoProgram(expectedRevision, weekdaysMask, startTimeMs, endTimeMs, rampDurationMs)
     }
 
     fun toJson(): JSONObject = JSONObject()
-        .put(DeviceLightRuntimeContract.Field.CHANNEL_KEY, channelKey)
+        .put(DeviceLightRuntimeContract.Field.EXPECTED_REVISION, expectedRevision)
+        .put(DeviceLightRuntimeContract.Field.PROGRAM_ID, programId)
+        .put(DeviceLightRuntimeContract.Field.WEEKDAYS_MASK, weekdaysMask)
+        .put(DeviceLightRuntimeContract.Field.START_TIME_MS, startTimeMs)
+        .put(DeviceLightRuntimeContract.Field.END_TIME_MS, endTimeMs)
+        .put(DeviceLightRuntimeContract.Field.RAMP_DURATION_MS, rampDurationMs)
+        .put(DeviceLightRuntimeContract.Field.SCENE, scene.toJson())
+}
+
+data class DeviceLightAutoProgramEnabledSetPayload(
+    val expectedRevision: Long,
+    val programId: String,
+    val enabled: Boolean
+) {
+    init { requireRevision(expectedRevision); requireProgramId(programId) }
+    fun toJson(): JSONObject = JSONObject()
+        .put(DeviceLightRuntimeContract.Field.EXPECTED_REVISION, expectedRevision)
+        .put(DeviceLightRuntimeContract.Field.PROGRAM_ID, programId)
+        .put(DeviceLightRuntimeContract.Field.ENABLED, enabled)
+}
+
+data class DeviceLightAutoProgramDeletePayload(
+    val expectedRevision: Long,
+    val programId: String
+) {
+    init { requireRevision(expectedRevision); requireProgramId(programId) }
+    fun toJson(): JSONObject = JSONObject()
+        .put(DeviceLightRuntimeContract.Field.EXPECTED_REVISION, expectedRevision)
+        .put(DeviceLightRuntimeContract.Field.PROGRAM_ID, programId)
+}
+
+data class DeviceLightCustomPoint(val timeMs: Long, val scene: DeviceLightScene) {
+    init { require(timeMs in 0..DeviceLightRuntimeContract.Limit.LAST_DAY_MILLISECOND) }
+    fun toJsonTuple(): JSONArray = scene.toTuple(timeMs)
+}
+
+data class DeviceLightCustomInstallPayload(
+    val expectedRevision: Long,
+    val weekdaysMask: Int,
+    val points: List<DeviceLightCustomPoint>
+) {
+    init {
+        requireRevision(expectedRevision)
+        require(weekdaysMask in 1..127)
+        require(points.size in 1..DeviceLightRuntimeContract.Limit.CUSTOM_POINT_CAPACITY)
+        require(points.zipWithNext().all { (left, right) -> left.timeMs < right.timeMs })
+        require(points.map { it.scene.product }.distinct().size == 1)
+    }
+    fun toJson(): JSONObject = JSONObject()
+        .put(DeviceLightRuntimeContract.Field.EXPECTED_REVISION, expectedRevision)
+        .put(DeviceLightRuntimeContract.Field.WEEKDAYS_MASK, weekdaysMask)
         .put(
             DeviceLightRuntimeContract.Field.POINTS,
-            JSONArray(points.map(DeviceLightProgramPointPayload::toJson))
+            JSONArray(points.map(DeviceLightCustomPoint::toJsonTuple))
         )
-        .put(DeviceLightRuntimeContract.Field.SAVE, save)
-        .also { json ->
-            programIndex?.let {
-                json.put(DeviceLightRuntimeContract.Field.PROGRAM_INDEX, it)
-            }
-        }
 }
 
-data class DeviceLightProgramDeletePayload(
-    val programIndex: Int,
-    val save: Boolean = true
+data class DeviceLightAcclimationStartPayload(
+    val expectedRevision: Long,
+    val startPercent: Int,
+    val durationDays: Int
 ) {
     init {
-        require(programIndex >= 0) { "programIndex must be zero or greater." }
+        requireRevision(expectedRevision)
+        require(startPercent in 20..90 && startPercent % 5 == 0)
+        require(durationDays in 7..90)
     }
-
     fun toJson(): JSONObject = JSONObject()
-        .put(DeviceLightRuntimeContract.Field.PROGRAM_INDEX, programIndex)
-        .put(DeviceLightRuntimeContract.Field.SAVE, save)
+        .put(DeviceLightRuntimeContract.Field.EXPECTED_REVISION, expectedRevision)
+        .put(DeviceLightRuntimeContract.Field.START_PERCENT, startPercent)
+        .put(DeviceLightRuntimeContract.Field.DURATION_DAYS, durationDays)
 }
 
-private fun requireExactLightChannelKey(value: String) {
-    require(value.isNotBlank()) { "channelKey must not be blank." }
-    require(value == value.trim().lowercase()) {
-        "channelKey must use the exact normalized firmware key."
+data class DeviceLightAcclimationStopPayload(val expectedRevision: Long) {
+    init { requireRevision(expectedRevision) }
+    fun toJson(): JSONObject = JSONObject()
+        .put(DeviceLightRuntimeContract.Field.EXPECTED_REVISION, expectedRevision)
+}
+
+sealed interface DeviceLightPreviewSetPayload {
+    fun toJson(): JSONObject
+
+    data class Scene(
+        val scene: DeviceLightScene,
+        val durationMs: Long? = null
+    ) : DeviceLightPreviewSetPayload {
+        init { durationMs?.let(::requirePreviewDuration) }
+        override fun toJson(): JSONObject = JSONObject()
+            .put(DeviceLightRuntimeContract.Field.SCENE, scene.toJson())
+            .also { json -> durationMs?.let { json.put(DeviceLightRuntimeContract.Field.DURATION_MS, it) } }
     }
-    require(value.none(Char::isISOControl)) {
-        "channelKey must not contain control characters."
+
+    data class VirtualTime(
+        val virtualTimeMs: Long,
+        val durationMs: Long? = null
+    ) : DeviceLightPreviewSetPayload {
+        init {
+            require(virtualTimeMs in 0..DeviceLightRuntimeContract.Limit.LAST_DAY_MILLISECOND)
+            durationMs?.let(::requirePreviewDuration)
+        }
+        override fun toJson(): JSONObject = JSONObject()
+            .put(DeviceLightRuntimeContract.Field.VIRTUAL_TIME_MS, virtualTimeMs)
+            .also { json -> durationMs?.let { json.put(DeviceLightRuntimeContract.Field.DURATION_MS, it) } }
     }
 }
+
+private fun validateAutoProgram(
+    expectedRevision: Long,
+    weekdaysMask: Int,
+    startTimeMs: Long,
+    endTimeMs: Long,
+    rampDurationMs: Long
+) {
+    requireRevision(expectedRevision)
+    require(weekdaysMask in 1..127)
+    require(startTimeMs in 0..DeviceLightRuntimeContract.Limit.LAST_DAY_MILLISECOND)
+    require(endTimeMs in 0..DeviceLightRuntimeContract.Limit.LAST_DAY_MILLISECOND)
+    require(startTimeMs != endTimeMs)
+    require(rampDurationMs in ALLOWED_RAMP_DURATIONS_MS)
+    val duration = if (endTimeMs > startTimeMs) {
+        endTimeMs - startTimeMs
+    } else {
+        DeviceLightRuntimeContract.Limit.MILLIS_IN_DAY - startTimeMs + endTimeMs
+    }
+    require(rampDurationMs * 2L <= duration)
+}
+
+private fun requireRevision(value: Long) = require(value in 0..UINT32_MAX)
+private fun requireProgramId(value: String) = require(PROGRAM_ID.matches(value))
+private fun requirePreviewDuration(value: Long) =
+    require(value in 1..DeviceLightRuntimeContract.Limit.MAX_PREVIEW_DURATION_MS)
+
+private fun <T> enumByWire(value: String, entries: Iterable<T>, wire: (T) -> String): T =
+    entries.singleOrNull { wire(it) == value } ?: error("Unknown Light V1 enum value: $value")
+
+private val ALLOWED_RAMP_DURATIONS_MS = setOf(
+    0L, 1_800_000L, 3_600_000L, 5_400_000L, 7_200_000L, 9_000_000L
+)
+private val PROGRAM_ID = Regex("^ap-[0-9a-f]{8}$")
+private const val UINT32_MAX = 4_294_967_295L
