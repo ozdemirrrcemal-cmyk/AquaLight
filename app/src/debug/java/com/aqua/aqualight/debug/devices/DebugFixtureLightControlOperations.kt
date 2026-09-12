@@ -23,18 +23,19 @@ internal class DebugFixtureLightControlOperations(
         fixtureResult(deviceUid) ?: delegate.refreshControl(deviceUid)
 
     private fun fixtureResult(deviceUid: String): DeviceLightControlResult? {
-        val root = fixtures.rootSnapshot(deviceUid) ?: return null
-        val channels = root.channelSlots.lightChannels
-        if (channels.isEmpty()) {
-            return DeviceLightControlResult.Failed(DeviceLightControlFailure.UNSUPPORTED)
-        }
-        return DeviceLightControlResult.Available(
-            DeviceLightControlSnapshot(
-                deviceUid = root.deviceUid,
-                productKey = root.productKey,
-                physicalChannelCount = channels.size,
-                channelKeys = channels.map { slot -> slot.wireKey.value }
+        val root = fixtures.rootSnapshot(deviceUid)
+        return when {
+            root == null -> null
+            root.channelSlots.lightChannels.isEmpty() ->
+                DeviceLightControlResult.Failed(DeviceLightControlFailure.UNSUPPORTED)
+            else -> DeviceLightControlResult.Available(
+                DeviceLightControlSnapshot(
+                    deviceUid = root.deviceUid,
+                    productKey = root.productKey,
+                    physicalChannelCount = root.channelSlots.lightChannels.size,
+                    channelKeys = root.channelSlots.lightChannels.map { slot -> slot.wireKey.value }
+                )
             )
-        )
+        }
     }
 }

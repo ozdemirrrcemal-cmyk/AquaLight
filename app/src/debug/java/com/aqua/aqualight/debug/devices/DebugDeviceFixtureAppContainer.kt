@@ -110,14 +110,14 @@ private class DebugDeviceFixtureViewModelFactory(
                 repository = graph.devicesRepository,
                 fixtures = fixtures
             ),
-            firmwareUpdateOperations = firmwareOperations(graph),
+            firmwareUpdateOperations = fixtureFirmwareOperations(graph, fixtures),
             manifestUrl = BuildConfig.AQL_OTA_MANIFEST_URL
         )
 
     private fun createFirmwareViewModel(graph: OwnerDependencyGraph): DeviceFirmwareUpdateViewModel =
         DeviceFirmwareUpdateViewModel(
             rootOperations = rootOperations(graph),
-            firmwareUpdateOperations = firmwareOperations(graph),
+            firmwareUpdateOperations = fixtureFirmwareOperations(graph, fixtures),
             manifestUrl = BuildConfig.AQL_OTA_MANIFEST_URL
         )
 
@@ -181,12 +181,15 @@ private class DebugDeviceFixtureViewModelFactory(
         fixtures = fixtures
     )
 
-    private fun firmwareOperations(graph: OwnerDependencyGraph) =
-        DebugFixtureFirmwareUpdateOperations(
-            delegate = graph.firmwareUpdateOperations,
-            fixtures = fixtures
-        )
 }
+
+private fun fixtureFirmwareOperations(
+    graph: OwnerDependencyGraph,
+    fixtures: DebugDeviceFixtureCatalog
+) = DebugFixtureFirmwareUpdateOperations(
+    delegate = graph.firmwareUpdateOperations,
+    fixtures = fixtures
+)
 
 private data class DebugTimerFixtureDependencies(
     val graph: OwnerDependencyGraph,

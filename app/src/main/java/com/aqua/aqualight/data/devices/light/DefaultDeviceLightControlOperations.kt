@@ -138,15 +138,12 @@ private fun DeviceLightStatus.toControlSnapshot(
     channelKeys = channels.sortedBy { channel -> channel.order }.map { channel -> channel.key }
 )
 
-private fun DeviceRootSnapshot.isSupportedLightRoot(): Boolean {
-    if (catalogState != DeviceRootCatalogState.VALID) return false
-    if (
-        family != OwnerDeviceFamily.LIGHT ||
-        productKey !in SUPPORTED_LIGHT_PRODUCT_KEYS
-    ) {
-        return false
-    }
-    return lightChannelCount > 0 && lightChannelCount == channelSlots.lightChannels.size
+private fun DeviceRootSnapshot.isSupportedLightRoot(): Boolean = when {
+    catalogState != DeviceRootCatalogState.VALID -> false
+    family != OwnerDeviceFamily.LIGHT -> false
+    productKey !in SUPPORTED_LIGHT_PRODUCT_KEYS -> false
+    lightChannelCount <= 0 -> false
+    else -> lightChannelCount == channelSlots.lightChannels.size
 }
 
 private fun String.toDeviceUidOrNull(): DeviceUid? = trim()

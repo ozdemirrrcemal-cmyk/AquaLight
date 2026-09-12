@@ -191,11 +191,6 @@ internal class DefaultDeviceControlSurfacePreparationOperations(
         dosingChannelOperations.current(deviceUid, slot.id.value)
     }
 
-    private fun unavailable(
-        reason: DeviceMenuUnavailableReason
-    ): DeviceControlSurfacePreparationResult.Unavailable =
-        DeviceControlSurfacePreparationResult.Unavailable(reason)
-
     private companion object {
         val PREPARED_FAMILIES = setOf(
             OwnerDeviceFamily.DOSING,
@@ -225,11 +220,12 @@ private fun DeviceRootSnapshot.matchesCoolingCatalog(): Boolean =
         fanOutputCount == channelSlots.fanOutputs.size &&
         temperatureSensorCount == channelSlots.temperatureSensors.size
 
-private fun DeviceRootSnapshot.matchesLightCatalog(): Boolean {
-    if (catalogState != DeviceRootCatalogState.VALID) return false
-    if (family != OwnerDeviceFamily.LIGHT || productKey.isBlank()) return false
-    return channelSlots.lightChannels.isNotEmpty() &&
-        lightChannelCount == channelSlots.lightChannels.size
+private fun DeviceRootSnapshot.matchesLightCatalog(): Boolean = when {
+    catalogState != DeviceRootCatalogState.VALID -> false
+    family != OwnerDeviceFamily.LIGHT -> false
+    productKey.isBlank() -> false
+    channelSlots.lightChannels.isEmpty() -> false
+    else -> lightChannelCount == channelSlots.lightChannels.size
 }
 
 private fun DeviceTimerControlSnapshot.matchesTimerSurface(
@@ -259,3 +255,8 @@ private fun List<DeviceDosingChannelSnapshot>.matches(
             channel.pumpCount == expectedSlots.size
     }
 }
+
+private fun unavailable(
+    reason: DeviceMenuUnavailableReason
+): DeviceControlSurfacePreparationResult.Unavailable =
+    DeviceControlSurfacePreparationResult.Unavailable(reason)

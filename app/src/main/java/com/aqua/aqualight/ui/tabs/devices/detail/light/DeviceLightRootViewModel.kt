@@ -207,8 +207,10 @@ data class DeviceLightRootUiState(
     val showBlockingPreparation: Boolean = false
 )
 
-private fun DeviceRootSnapshot?.isLightControlRootAvailable(deviceUid: String): Boolean {
-    if (this == null || this.deviceUid != deviceUid) return false
-    if (availability != OwnerDeviceAvailability.REACHABLE) return false
-    return catalogState == DeviceRootCatalogState.VALID && family == OwnerDeviceFamily.LIGHT
+private fun DeviceRootSnapshot?.isLightControlRootAvailable(deviceUid: String): Boolean = when {
+    this == null -> false
+    this.deviceUid != deviceUid -> false
+    availability != OwnerDeviceAvailability.REACHABLE -> false
+    catalogState != DeviceRootCatalogState.VALID -> false
+    else -> family == OwnerDeviceFamily.LIGHT
 }

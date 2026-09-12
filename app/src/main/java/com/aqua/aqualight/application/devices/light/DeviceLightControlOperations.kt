@@ -45,9 +45,15 @@ fun DeviceLightControlSnapshot?.matchesLightControlSurface(
     deviceUid: String,
     root: DeviceRootSnapshot?
 ): Boolean {
-    if (this == null || root == null || this.deviceUid != deviceUid) return false
-    if (productKey != root.productKey) return false
-    val expectedKeys = root.channelSlots.lightChannels.map { slot -> slot.wireKey.value }
-    if (physicalChannelCount != root.lightChannelCount) return false
-    return channelKeys.size == expectedKeys.size && channelKeys.toSet() == expectedKeys.toSet()
+    val expectedKeys = root?.channelSlots?.lightChannels
+        ?.map { slot -> slot.wireKey.value }
+        .orEmpty()
+    return when {
+        this == null || root == null -> false
+        this.deviceUid != deviceUid -> false
+        productKey != root.productKey -> false
+        physicalChannelCount != root.lightChannelCount -> false
+        channelKeys.size != expectedKeys.size -> false
+        else -> channelKeys.toSet() == expectedKeys.toSet()
+    }
 }
