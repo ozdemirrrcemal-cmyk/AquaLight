@@ -114,16 +114,40 @@ object DeviceLightRuntimeContract {
     }
 
     object Limit {
+        const val UINT32_MAX = 4_294_967_295L
         const val PERCENT_MIN = 0
         const val PERCENT_MAX = 100
         const val PERMILLE_MIN = 0
         const val PERMILLE_MAX = 1000
+        const val WEEKDAY_MASK_MIN = 1
+        const val WEEKDAY_MASK_MAX = 127
+        const val DAYS_PER_WEEK = 7
+        const val RGB_COMPONENT_MAX = 255
+        const val DISPLAY_COLOR_RGB_MAX = 0xFFFFFF
         const val MILLIS_IN_DAY = 86_400_000L
         const val LAST_DAY_MILLISECOND = MILLIS_IN_DAY - 1L
         const val AUTO_PROGRAM_CAPACITY = 16
+        const val SCHEDULE_TIME_STEP_MS = 60_000L
+        const val RAMP_DISABLED_MS = 0L
+        const val RAMP_30_MINUTES_MS = 1_800_000L
+        const val RAMP_60_MINUTES_MS = 3_600_000L
+        const val RAMP_90_MINUTES_MS = 5_400_000L
+        const val RAMP_120_MINUTES_MS = 7_200_000L
+        const val RAMP_150_MINUTES_MS = 9_000_000L
         const val CUSTOM_POINT_CAPACITY = 96
+        const val GRAPH_SPAN_TUPLE_SIZE = 3
+        const val GRAPH_SPAN_PROGRAM_ID_INDEX = 2
         const val DEFAULT_PREVIEW_DURATION_MS = 3_000L
         const val MAX_PREVIEW_DURATION_MS = 10_000L
+        const val ACCLIMATION_START_PERCENT_MIN = 20
+        const val ACCLIMATION_START_PERCENT_MAX = 90
+        const val ACCLIMATION_START_PERCENT_STEP = 5
+        const val ACCLIMATION_DEFAULT_START_PERCENT = 50
+        const val ACCLIMATION_DURATION_DAYS_MIN = 7
+        const val ACCLIMATION_DURATION_DAYS_MAX = 90
+        const val ACCLIMATION_DURATION_DAYS_STEP = 1
+        const val ACCLIMATION_DEFAULT_DURATION_DAYS = 30
+        const val ACCLIMATION_TARGET_PERCENT = PERCENT_MAX
         const val MIN_TEMPERATURE_PROTECTION_C = 50.0
         const val DEFAULT_TEMPERATURE_PROTECTION_C = 60.0
         const val MAX_TEMPERATURE_PROTECTION_C = 70.0

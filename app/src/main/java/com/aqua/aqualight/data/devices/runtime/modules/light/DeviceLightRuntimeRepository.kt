@@ -81,150 +81,7 @@ class DeviceLightRuntimeRepository internal constructor(
         refreshStatus = true
     )
 
-    suspend fun requestAutoPrograms(
-        deviceUid: DeviceUid
-    ): DeviceRuntimeCommandOutcome<DeviceLightAutoPrograms> = productCommand(
-        deviceUid = deviceUid,
-        action = DeviceLightRuntimeContract.Action.AUTO_PROGRAMS_GET,
-        parser = DeviceLightMutationParser::parseAutoPrograms
-    )
-
-    suspend fun createAutoProgram(
-        deviceUid: DeviceUid,
-        payload: DeviceLightAutoProgramCreatePayload
-    ): DeviceRuntimeCommandOutcome<DeviceLightAutoProgramMutationResult> = productCommand(
-        deviceUid = deviceUid,
-        action = DeviceLightRuntimeContract.Action.AUTO_PROGRAM_CREATE,
-        dataFactory = payload::toJson,
-        parser = { data, product ->
-            DeviceLightCommandValidation.requireProduct(payload.scene.product, product)
-            DeviceLightMutationParser.parseAutoProgramMutation(data, product)
-        },
-        refreshStatus = true
-    )
-
-    suspend fun updateAutoProgram(
-        deviceUid: DeviceUid,
-        payload: DeviceLightAutoProgramUpdatePayload
-    ): DeviceRuntimeCommandOutcome<DeviceLightAutoProgramMutationResult> = productCommand(
-        deviceUid = deviceUid,
-        action = DeviceLightRuntimeContract.Action.AUTO_PROGRAM_UPDATE,
-        dataFactory = payload::toJson,
-        parser = { data, product ->
-            DeviceLightCommandValidation.requireProduct(payload.scene.product, product)
-            DeviceLightMutationParser.parseAutoProgramMutation(data, product)
-        },
-        refreshStatus = true
-    )
-
-    suspend fun setAutoProgramEnabled(
-        deviceUid: DeviceUid,
-        payload: DeviceLightAutoProgramEnabledSetPayload
-    ): DeviceRuntimeCommandOutcome<DeviceLightAutoProgramMutationResult> = productCommand(
-        deviceUid = deviceUid,
-        action = DeviceLightRuntimeContract.Action.AUTO_PROGRAM_ENABLED_SET,
-        dataFactory = payload::toJson,
-        parser = DeviceLightMutationParser::parseAutoProgramMutation,
-        refreshStatus = true
-    )
-
-    suspend fun deleteAutoProgram(
-        deviceUid: DeviceUid,
-        payload: DeviceLightAutoProgramDeletePayload
-    ): DeviceRuntimeCommandOutcome<DeviceLightAutoProgramDeleteResult> = productCommand(
-        deviceUid = deviceUid,
-        action = DeviceLightRuntimeContract.Action.AUTO_PROGRAM_DELETE,
-        dataFactory = payload::toJson,
-        parser = { data, _ -> DeviceLightMutationParser.parseAutoProgramDelete(data) },
-        refreshStatus = true
-    )
-
-    suspend fun requestCustom(
-        deviceUid: DeviceUid
-    ): DeviceRuntimeCommandOutcome<DeviceLightCustomDocument> = productCommand(
-        deviceUid = deviceUid,
-        action = DeviceLightRuntimeContract.Action.CUSTOM_GET,
-        parser = DeviceLightMutationParser::parseCustom
-    )
-
-    suspend fun installCustom(
-        deviceUid: DeviceUid,
-        payload: DeviceLightCustomInstallPayload
-    ): DeviceRuntimeCommandOutcome<DeviceLightCustomDocument> = productCommand(
-        deviceUid = deviceUid,
-        action = DeviceLightRuntimeContract.Action.CUSTOM_INSTALL,
-        dataFactory = payload::toJson,
-        parser = { data, product ->
-            DeviceLightCommandValidation.requireProduct(payload.points.first().scene.product, product)
-            DeviceLightMutationParser.parseCustom(data, product)
-        },
-        refreshStatus = true
-    )
-
-    suspend fun requestAcclimationStatus(
-        deviceUid: DeviceUid
-    ): DeviceRuntimeCommandOutcome<DeviceLightAcclimationStatus> = acclimationCommand(
-        deviceUid = deviceUid,
-        action = DeviceLightRuntimeContract.Action.ACCLIMATION_STATUS_GET,
-        parser = DeviceLightMutationParser::parseAcclimation
-    )
-
-    suspend fun startAcclimation(
-        deviceUid: DeviceUid,
-        payload: DeviceLightAcclimationStartPayload
-    ): DeviceRuntimeCommandOutcome<DeviceLightAcclimationStatus> = acclimationCommand(
-        deviceUid = deviceUid,
-        action = DeviceLightRuntimeContract.Action.ACCLIMATION_START,
-        dataFactory = payload::toJson,
-        parser = DeviceLightMutationParser::parseAcclimation,
-        refreshStatus = true
-    )
-
-    suspend fun stopAcclimation(
-        deviceUid: DeviceUid,
-        payload: DeviceLightAcclimationStopPayload
-    ): DeviceRuntimeCommandOutcome<DeviceLightAcclimationStatus> = acclimationCommand(
-        deviceUid = deviceUid,
-        action = DeviceLightRuntimeContract.Action.ACCLIMATION_STOP,
-        dataFactory = payload::toJson,
-        parser = DeviceLightMutationParser::parseAcclimation,
-        refreshStatus = true
-    )
-
-    suspend fun requestGraph(
-        deviceUid: DeviceUid
-    ): DeviceRuntimeCommandOutcome<DeviceLightGraph> = productCommand(
-        deviceUid = deviceUid,
-        action = DeviceLightRuntimeContract.Action.GRAPH_GET,
-        parser = DeviceLightMutationParser::parseGraph
-    )
-
-    suspend fun setPreview(
-        deviceUid: DeviceUid,
-        payload: DeviceLightPreviewSetPayload
-    ): DeviceRuntimeCommandOutcome<DeviceLightPreviewResult> = productCommand(
-        deviceUid = deviceUid,
-        action = DeviceLightRuntimeContract.Action.PREVIEW_SET,
-        dataFactory = payload::toJson,
-        parser = { data, product ->
-            if (payload is DeviceLightPreviewSetPayload.Scene) {
-                DeviceLightCommandValidation.requireProduct(payload.scene.product, product)
-            }
-            DeviceLightMutationParser.parsePreviewSet(data)
-        },
-        refreshStatus = true
-    )
-
-    suspend fun clearPreview(
-        deviceUid: DeviceUid
-    ): DeviceRuntimeCommandOutcome<DeviceLightPreviewResult> = productCommand(
-        deviceUid = deviceUid,
-        action = DeviceLightRuntimeContract.Action.PREVIEW_CLEAR,
-        parser = { data, _ -> DeviceLightMutationParser.parsePreviewClear(data) },
-        refreshStatus = true
-    )
-
-    private suspend fun <T> acclimationCommand(
+    internal suspend fun <T> acclimationCommand(
         deviceUid: DeviceUid,
         action: String,
         dataFactory: () -> JSONObject = ::JSONObject,
@@ -232,18 +89,22 @@ class DeviceLightRuntimeRepository internal constructor(
         refreshStatus: Boolean = false
     ): DeviceRuntimeCommandOutcome<T> {
         val status = stateStore.currentAuthoritativeStatus(deviceUid)
-            ?: return unsupported(deviceUid, action)
-        if (
-            status.product != DeviceLightProduct.WRGB_PRO_ELITE ||
-            !status.features.acclimation ||
-            !status.acclimation.supported
-        ) {
-            return unsupported(deviceUid, action)
+        val supported = status != null &&
+            status.product == DeviceLightProduct.WRGB_PRO_ELITE &&
+            status.features.acclimation &&
+            status.acclimation.supported
+        return if (supported) {
+            executeProductCommand(
+                deviceUid = deviceUid,
+                product = checkNotNull(status).product,
+                command = DeviceLightProductCommand(action, dataFactory, parser, refreshStatus)
+            )
+        } else {
+            unsupported(deviceUid, action)
         }
-        return executeProductCommand(deviceUid, action, dataFactory, parser, refreshStatus, status.product)
     }
 
-    private suspend fun <T> productCommand(
+    internal suspend fun <T> productCommand(
         deviceUid: DeviceUid,
         action: String,
         dataFactory: () -> JSONObject = ::JSONObject,
@@ -252,31 +113,39 @@ class DeviceLightRuntimeRepository internal constructor(
     ): DeviceRuntimeCommandOutcome<T> {
         val product = stateStore.currentAuthoritativeStatus(deviceUid)?.product
             ?: return unsupported(deviceUid, action)
-        return executeProductCommand(deviceUid, action, dataFactory, parser, refreshStatus, product)
+        return executeProductCommand(
+            deviceUid = deviceUid,
+            product = product,
+            command = DeviceLightProductCommand(action, dataFactory, parser, refreshStatus)
+        )
     }
 
     private suspend fun <T> executeProductCommand(
         deviceUid: DeviceUid,
-        action: String,
-        dataFactory: () -> JSONObject,
-        parser: (JSONObject, DeviceLightProduct) -> T,
-        refreshStatus: Boolean,
-        product: DeviceLightProduct
+        product: DeviceLightProduct,
+        command: DeviceLightProductCommand<T>
     ): DeviceRuntimeCommandOutcome<T> {
         val outcome = gateway.execute(
             deviceUid,
             lightCommand(
-                action = action,
-                dataFactory = dataFactory,
-                parser = { data -> parser(data, product) }
+                action = command.action,
+                dataFactory = command.dataFactory,
+                parser = { data -> command.parser(data, product) }
             )
         )
-        if (refreshStatus && outcome is DeviceRuntimeCommandOutcome.Success) {
+        if (command.refreshStatus && outcome is DeviceRuntimeCommandOutcome.Success) {
             requestStatus(deviceUid)
         }
         return outcome
     }
 }
+
+internal data class DeviceLightProductCommand<T>(
+    val action: String,
+    val dataFactory: () -> JSONObject,
+    val parser: (JSONObject, DeviceLightProduct) -> T,
+    val refreshStatus: Boolean
+)
 
 internal fun DeviceLightRuntimeRepository.isAuthoritative(
     deviceUid: DeviceUid,

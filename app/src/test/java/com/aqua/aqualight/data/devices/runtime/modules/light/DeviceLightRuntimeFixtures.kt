@@ -17,16 +17,7 @@ internal object DeviceLightRuntimeFixtures {
             .put("productKey", product.wireValue)
             .put("channelScale", 100)
             .put("channels", channelDescriptors(product))
-            .put(
-                "features",
-                JSONObject()
-                    .put("acclimation", supported)
-                    .put("fanControl", supported)
-                    .put("temperatureSensor", supported)
-                    .put("thermal", supported)
-                    .put("estimatedPower", supported)
-                    .put("estimatedColor", supported)
-            )
+            .put("features", features(supported))
             .put("mode", "MANUAL")
             .put("outputActive", true)
             .put("outputReason", "ACTIVE")
@@ -42,44 +33,52 @@ internal object DeviceLightRuntimeFixtures {
             .put("preview", JSONObject().put("active", false).put("remainingMs", 0))
             .put("manual", JSONObject().put("scene", JSONObject(scene.toString())))
             .put("policy", policy(supported))
-            .put(
-                "scheduler",
-                JSONObject()
-                    .put("ready", true)
-                    .put("reason", "OK")
-                    .put("generation", 3)
-                    .put("localDate", "2026-09-12")
-                    .put("currentWeekdayMask", 2)
-                    .put("currentTimeMs", 43_200_000)
-            )
-            .put(
-                "auto",
-                JSONObject()
-                    .put("revision", 1)
-                    .put("programCount", 0)
-                    .put("enabledCount", 0)
-                    .put("runtimeState", "NOT_SELECTED")
-                    .put("activeProgramId", JSONObject.NULL)
-            )
-            .put(
-                "custom",
-                JSONObject()
-                    .put("revision", 1)
-                    .put("installed", false)
-                    .put("weekdaysMask", 0)
-                    .put("pointCount", 0)
-                    .put("runtimeState", "NOT_SELECTED")
-            )
             .put("acclimation", acclimation(supported))
-            .put(
-                "runtime",
-                JSONObject()
-                    .put("rtcReady", true)
-                    .put("physicalChannelCount", product.channelCount)
-                    .put("physicalOutputHealthy", true)
-                    .put("event", "light.status.changed")
-            )
+            .putRuntimeSections(product)
     }
+
+    private fun features(supported: Boolean): JSONObject = JSONObject()
+        .put("acclimation", supported)
+        .put("fanControl", supported)
+        .put("temperatureSensor", supported)
+        .put("thermal", supported)
+        .put("estimatedPower", supported)
+        .put("estimatedColor", supported)
+
+    private fun JSONObject.putRuntimeSections(product: DeviceLightProduct): JSONObject =
+        put(
+            "scheduler",
+            JSONObject()
+                .put("ready", true)
+                .put("reason", "OK")
+                .put("generation", 3)
+                .put("localDate", "2026-09-12")
+                .put("currentWeekdayMask", 2)
+                .put("currentTimeMs", 43_200_000)
+        ).put(
+            "auto",
+            JSONObject()
+                .put("revision", 1)
+                .put("programCount", 0)
+                .put("enabledCount", 0)
+                .put("runtimeState", "NOT_SELECTED")
+                .put("activeProgramId", JSONObject.NULL)
+        ).put(
+            "custom",
+            JSONObject()
+                .put("revision", 1)
+                .put("installed", false)
+                .put("weekdaysMask", 0)
+                .put("pointCount", 0)
+                .put("runtimeState", "NOT_SELECTED")
+        ).put(
+            "runtime",
+            JSONObject()
+                .put("rtcReady", true)
+                .put("physicalChannelCount", product.channelCount)
+                .put("physicalOutputHealthy", true)
+                .put("event", "light.status.changed")
+        )
 
     private fun channelDescriptors(product: DeviceLightProduct): JSONArray {
         val definitions = listOf(

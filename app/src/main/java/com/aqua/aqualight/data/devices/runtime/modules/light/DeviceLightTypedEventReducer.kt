@@ -8,24 +8,23 @@ internal class DeviceLightTypedEventReducer(
     private val stateStore: DeviceLightRuntimeStateStore
 ) {
     fun apply(event: DeviceRuntimeTypedEvent): DeviceLightEventApplyResult {
-        if (event.type != DeviceRuntimeTypedEvent.Type.LIGHT_STATUS_CHANGED) {
-            return DeviceLightEventApplyResult.Ignored
-        }
-        if (event.payload !is DeviceRuntimeEventPayload.Snapshot) {
-            return DeviceLightEventApplyResult.Ignored
-        }
-        return runCatching {
-            stateStore.recordStatus(
-                event.deviceUid,
-                event.generation,
-                DeviceLightStatusParser.parse(event.payload.data)
+        val snapshot = event.payload as? DeviceRuntimeEventPayload.Snapshot
+        return if (event.type != DeviceRuntimeTypedEvent.Type.LIGHT_STATUS_CHANGED || snapshot == null) {
+            DeviceLightEventApplyResult.Ignored
+        } else {
+            runCatching {
+                stateStore.recordStatus(
+                    event.deviceUid,
+                    event.generation,
+                    DeviceLightStatusParser.parse(snapshot.data)
+                )
+            }.fold(
+                onSuccess = { applied ->
+                    if (applied) DeviceLightEventApplyResult.Applied else DeviceLightEventApplyResult.Ignored
+                },
+                onFailure = { error -> DeviceLightEventApplyResult.Malformed(error.message.orEmpty()) }
             )
-        }.fold(
-            onSuccess = { applied ->
-                if (applied) DeviceLightEventApplyResult.Applied else DeviceLightEventApplyResult.Ignored
-            },
-            onFailure = { error -> DeviceLightEventApplyResult.Malformed(error.message.orEmpty()) }
-        )
+        }
     }
 }
 

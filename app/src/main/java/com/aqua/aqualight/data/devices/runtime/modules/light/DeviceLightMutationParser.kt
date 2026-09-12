@@ -32,7 +32,11 @@ internal object DeviceLightMutationParser {
             DeviceLightV1JsonParser.parseProgram(jsonPrograms.requireLightObject(index), product)
         }
         val result = DeviceLightAutoPrograms(
-            revision = data.requireLightLong("revision", 0, UINT32_MAX),
+            revision = data.requireLightLong(
+                "revision",
+                0,
+                DeviceLightRuntimeContract.Limit.UINT32_MAX
+            ),
             capacity = data.requireLightInt("capacity", 0),
             programCount = data.requireLightInt("programCount", 0),
             enabledCount = data.requireLightInt("enabledCount", 0),
@@ -51,7 +55,11 @@ internal object DeviceLightMutationParser {
     ): DeviceLightAutoProgramMutationResult {
         requireBaseOrEventKeys(data, AUTO_MUTATION_KEYS, "Light AUTO mutation data")
         return DeviceLightAutoProgramMutationResult(
-            revision = data.requireLightLong("revision", 0, UINT32_MAX),
+            revision = data.requireLightLong(
+                "revision",
+                0,
+                DeviceLightRuntimeContract.Limit.UINT32_MAX
+            ),
             program = DeviceLightV1JsonParser.parseProgram(
                 data.requireLightObject("program"),
                 product
@@ -65,14 +73,19 @@ internal object DeviceLightMutationParser {
         val programId = data.requireLightText("programId")
         require(PROGRAM_ID.matches(programId))
         return DeviceLightAutoProgramDeleteResult(
-            revision = data.requireLightLong("revision", 0, UINT32_MAX),
+            revision = data.requireLightLong(
+                "revision",
+                0,
+                DeviceLightRuntimeContract.Limit.UINT32_MAX
+            ),
             programId = programId,
             deleted = data.requireLightBoolean("deleted").also { require(it) },
             event = parseOptionalEvent(data)
         )
     }
 
-    fun parseCustom(
+    internal object CustomAndAcclimation {
+        fun parseCustom(
         data: JSONObject,
         product: DeviceLightProduct
     ): DeviceLightCustomDocument {
@@ -82,36 +95,57 @@ internal object DeviceLightMutationParser {
             DeviceLightV1JsonParser.parseCustomPoint(pointData.requireLightArray(index), product)
         }
         val result = DeviceLightCustomDocument(
-            revision = data.requireLightLong("revision", 0, UINT32_MAX),
+            revision = data.requireLightLong(
+                "revision",
+                0,
+                DeviceLightRuntimeContract.Limit.UINT32_MAX
+            ),
             installed = data.requireLightBoolean("installed"),
-            weekdaysMask = data.requireLightInt("weekdaysMask", 0, 127),
-            pointCount = data.requireLightInt("pointCount", 0, 96),
+            weekdaysMask = data.requireLightInt(
+                "weekdaysMask",
+                0,
+                DeviceLightRuntimeContract.Limit.WEEKDAY_MASK_MAX
+            ),
+            pointCount = data.requireLightInt(
+                "pointCount",
+                0,
+                DeviceLightRuntimeContract.Limit.CUSTOM_POINT_CAPACITY
+            ),
             points = points,
             event = parseOptionalEvent(data)
         )
         require(result.pointCount == points.size)
         require(points.zipWithNext().all { (left, right) -> left.timeMs < right.timeMs })
         require(result.installed || (result.weekdaysMask == 0 && points.isEmpty()))
-        require(!result.installed || result.weekdaysMask in 1..127)
+        require(
+            !result.installed || result.weekdaysMask in
+                DeviceLightRuntimeContract.Limit.WEEKDAY_MASK_MIN..
+                DeviceLightRuntimeContract.Limit.WEEKDAY_MASK_MAX
+        )
         return result
     }
 
-    fun parseAcclimation(
+        fun parseAcclimation(
         data: JSONObject,
         product: DeviceLightProduct
     ): DeviceLightAcclimationStatus {
         requireBaseOrEventKeys(data, ACCLIMATION_KEYS, "light.acclimation data")
-        return DeviceLightV1JsonParser.parseAcclimation(
+        return DeviceLightV1JsonParser.Activity.parseAcclimation(
             withoutOptionalEvent(data),
             product
         )
+        }
     }
 
     fun parsePreviewSet(data: JSONObject): DeviceLightPreviewResult {
         data.requireLightKeys(PREVIEW_SET_KEYS, "light.preview.set.data")
         return DeviceLightPreviewResult(
             active = data.requireLightBoolean("active").also { require(it) },
-            remainingMs = data.requireLightLong("remainingMs", 0, 10_000),
+            remainingMs = data.requireLightLong(
+                "remainingMs",
+                0,
+                DeviceLightRuntimeContract.Limit.MAX_PREVIEW_DURATION_MS
+            ),
             event = requireStatusEvent(data)
         )
     }
@@ -125,7 +159,8 @@ internal object DeviceLightMutationParser {
         )
     }
 
-    fun parseGraph(data: JSONObject, product: DeviceLightProduct): DeviceLightGraph {
+    internal object Graph {
+        fun parseGraph(data: JSONObject, product: DeviceLightProduct): DeviceLightGraph {
         data.requireLightKeys(GRAPH_KEYS, "light.graph.get.data")
         val pointData = data.requireLightArray("points")
         val points = List(pointData.length()) { index ->
@@ -139,10 +174,18 @@ internal object DeviceLightMutationParser {
             mode = DeviceLightMode.fromWireExact(data.requireLightText("mode")),
             available = data.requireLightBoolean("available"),
             reason = DeviceLightGraphReason.fromWireExact(data.requireLightText("reason")),
-            sourceRevision = data.requireLightLong("sourceRevision", 0, UINT32_MAX),
+            sourceRevision = data.requireLightLong(
+                "sourceRevision",
+                0,
+                DeviceLightRuntimeContract.Limit.UINT32_MAX
+            ),
             schedulerGeneration = data.requireNullableLightLong("schedulerGeneration", 0),
             localDate = data.requireNullableLightText("localDate"),
-            currentWeekdayMask = data.requireLightInt("currentWeekdayMask", 0, 127),
+            currentWeekdayMask = data.requireLightInt(
+                "currentWeekdayMask",
+                0,
+                DeviceLightRuntimeContract.Limit.WEEKDAY_MASK_MAX
+            ),
             nowTimeMs = data.requireNullableLightLong(
                 "nowTimeMs",
                 0,
@@ -154,7 +197,7 @@ internal object DeviceLightMutationParser {
             points = points,
             autoSpans = spans
         )
-        require(result.channelScale == 1000)
+        require(result.channelScale == DeviceLightRuntimeContract.Limit.PERMILLE_MAX)
         require(
             (result.schedulerGeneration == null && result.localDate == null && result.nowTimeMs == null) ||
                 (result.schedulerGeneration != null && result.localDate != null && result.nowTimeMs != null)
@@ -164,7 +207,7 @@ internal object DeviceLightMutationParser {
         return result
     }
 
-    private fun parseGraphPoint(
+        private fun parseGraphPoint(
         tuple: JSONArray,
         product: DeviceLightProduct
     ): DeviceLightGraphPoint {
@@ -172,14 +215,18 @@ internal object DeviceLightMutationParser {
         return DeviceLightGraphPoint(
             timeMs = tuple.requireLightLong(0, 0, DeviceLightRuntimeContract.Limit.MILLIS_IN_DAY),
             channelPermille = List(product.channelCount) { index ->
-                tuple.requireLightInt(index + 1, 0, 1000)
+                tuple.requireLightInt(
+                    index + 1,
+                    DeviceLightRuntimeContract.Limit.PERMILLE_MIN,
+                    DeviceLightRuntimeContract.Limit.PERMILLE_MAX
+                )
             }
         )
     }
 
-    private fun parseGraphSpan(tuple: JSONArray): DeviceLightGraphSpan {
-        require(tuple.length() == 3)
-        val id = tuple.requireLightText(2)
+        private fun parseGraphSpan(tuple: JSONArray): DeviceLightGraphSpan {
+        require(tuple.length() == DeviceLightRuntimeContract.Limit.GRAPH_SPAN_TUPLE_SIZE)
+        val id = tuple.requireLightText(DeviceLightRuntimeContract.Limit.GRAPH_SPAN_PROGRAM_ID_INDEX)
         require(PROGRAM_ID.matches(id))
         return DeviceLightGraphSpan(
             startTimeMsWithinToday = tuple.requireLightLong(
@@ -194,6 +241,7 @@ internal object DeviceLightMutationParser {
             ),
             programId = id
         )
+        }
     }
 
     private fun requireBaseOrEventKeys(data: JSONObject, base: Set<String>, label: String) {
@@ -242,5 +290,4 @@ internal object DeviceLightMutationParser {
         "points", "autoSpans"
     )
     private val PROGRAM_ID = Regex("^ap-[0-9a-f]{8}$")
-    private const val UINT32_MAX = 4_294_967_295L
 }

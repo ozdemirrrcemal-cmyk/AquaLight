@@ -540,9 +540,6 @@ class AqlFirmwareInteroperabilityTest {
     private fun JSONArray.asObjectList(): List<JSONObject> = (0 until length())
         .map { index -> getJSONObject(index) }
 
-    private fun unionKeys(vararg objects: JSONObject): Set<String> = objects
-        .flatMapTo(linkedSetOf()) { json -> json.keySetExact() }
-
     private fun sha256(bytes: ByteArray): String {
         val digest = MessageDigest.getInstance("SHA-256").digest(bytes)
         val alphabet = "0123456789abcdef"

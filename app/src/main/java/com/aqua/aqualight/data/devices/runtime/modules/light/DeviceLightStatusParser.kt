@@ -10,71 +10,92 @@ object DeviceLightStatusParser {
         require(data.requireLightInt("storageVersion") == DeviceLightRuntimeContract.STORAGE_VERSION)
 
         val product = DeviceLightProduct.fromWireExact(data.requireLightText("productKey"))
-        val channels = DeviceLightV1JsonParser.parseChannels(
-            data.requireLightArray("channels"),
-            product
-        )
         val features = DeviceLightV1JsonParser.parseFeatures(
             data.requireLightObject("features"),
             product
         )
-        val scheduler = DeviceLightV1JsonParser.parseScheduler(
+        val scheduler = DeviceLightV1JsonParser.Policy.parseScheduler(
             data.requireLightObject("scheduler")
         )
-        val runtime = DeviceLightV1JsonParser.parseRuntime(
-            data.requireLightObject("runtime"),
-            product
-        )
-        require(runtime.rtcReady == scheduler.ready)
+        val status = parseStatus(data, product, features, scheduler)
+        require(status.runtime.rtcReady == status.scheduler.ready)
+        return status
+    }
 
-        return DeviceLightStatus(
+    private fun parseStatus(
+        data: JSONObject,
+        product: DeviceLightProduct,
+        features: DeviceLightFeatures,
+        scheduler: DeviceLightSchedulerStatus
+    ): DeviceLightStatus = DeviceLightStatus(
             schema = DeviceLightRuntimeContract.SCHEMA,
             storageVersion = DeviceLightRuntimeContract.STORAGE_VERSION,
             product = product,
-            channelScale = data.requireLightInt("channelScale").also { require(it == 100) },
-            channels = channels,
+            channelScale = data.requireLightInt("channelScale").also {
+                require(it == DeviceLightRuntimeContract.Limit.PERCENT_MAX)
+            },
+            channels = parseChannels(data, product),
             features = features,
             mode = DeviceLightMode.fromWireExact(data.requireLightText("mode")),
             outputActive = data.requireLightBoolean("outputActive"),
             outputReason = DeviceLightOutputReason.fromWireExact(
                 data.requireLightText("outputReason")
             ),
-            requested = DeviceLightV1JsonParser.parseScene(
-                data.requireLightObject("requested"),
-                product,
-                "light.status.requested"
-            ),
-            effective = DeviceLightV1JsonParser.parseScene(
-                data.requireLightObject("effective"),
-                product,
-                "light.status.effective"
-            ),
+            requested = parseScene(data, "requested", product),
+            effective = parseScene(data, "effective", product),
             scales = DeviceLightV1JsonParser.parseScales(data.requireLightObject("scales")),
-            electricalDesign = DeviceLightV1JsonParser.parseElectricalDesign(
+            electricalDesign = DeviceLightV1JsonParser.Metrics.parseElectricalDesign(
                 data.requireLightObject("electricalDesign"),
                 product
             ),
-            power = DeviceLightV1JsonParser.parsePower(
+            power = DeviceLightV1JsonParser.Metrics.parsePower(
                 data.requireLightObject("power"),
                 features
             ),
-            color = DeviceLightV1JsonParser.parseColor(
+            color = DeviceLightV1JsonParser.Metrics.parseColor(
                 data.requireLightObject("color"),
                 features
             ),
             preview = parsePreview(data.requireLightObject("preview")),
             manual = parseManual(data.requireLightObject("manual"), product),
-            policy = DeviceLightV1JsonParser.parsePolicy(data.requireLightObject("policy"), product),
+            policy = DeviceLightV1JsonParser.Policy.parsePolicy(
+                data.requireLightObject("policy"),
+                product
+            ),
             scheduler = scheduler,
-            auto = DeviceLightV1JsonParser.parseAutoSummary(data.requireLightObject("auto")),
-            custom = DeviceLightV1JsonParser.parseCustomSummary(data.requireLightObject("custom")),
-            acclimation = DeviceLightV1JsonParser.parseAcclimation(
+            auto = DeviceLightV1JsonParser.Activity.parseAutoSummary(
+                data.requireLightObject("auto")
+            ),
+            custom = DeviceLightV1JsonParser.Activity.parseCustomSummary(
+                data.requireLightObject("custom")
+            ),
+            acclimation = DeviceLightV1JsonParser.Activity.parseAcclimation(
                 data.requireLightObject("acclimation"),
                 product
             ),
-            runtime = runtime
+            runtime = DeviceLightV1JsonParser.parseRuntime(
+                data.requireLightObject("runtime"),
+                product
+            )
         )
-    }
+
+    private fun parseChannels(
+        data: JSONObject,
+        product: DeviceLightProduct
+    ): List<DeviceLightChannelDescriptor> = DeviceLightV1JsonParser.parseChannels(
+        data.requireLightArray("channels"),
+        product
+    )
+
+    private fun parseScene(
+        data: JSONObject,
+        key: String,
+        product: DeviceLightProduct
+    ): DeviceLightScene = DeviceLightV1JsonParser.parseScene(
+        data.requireLightObject(key),
+        product,
+        "light.status.$key"
+    )
 
     private fun parsePreview(data: JSONObject): DeviceLightPreviewStatus {
         data.requireLightKeys(PREVIEW_KEYS, "light.status.preview")

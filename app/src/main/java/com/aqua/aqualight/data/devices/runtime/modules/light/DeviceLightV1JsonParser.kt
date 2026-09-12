@@ -8,7 +8,11 @@ internal object DeviceLightV1JsonParser {
         data.requireLightKeys(product.sceneFields.toSet(), label)
         val values = linkedMapOf<String, Int>()
         product.sceneFields.forEach { field ->
-            values[field] = data.requireLightInt(field, 0, 100)
+            values[field] = data.requireLightInt(
+                field,
+                DeviceLightRuntimeContract.Limit.PERCENT_MIN,
+                DeviceLightRuntimeContract.Limit.PERCENT_MAX
+            )
         }
         return DeviceLightScene(product, values)
     }
@@ -24,21 +28,31 @@ internal object DeviceLightV1JsonParser {
                 key = item.requireLightText("key"),
                 percentField = item.requireLightText("percentField"),
                 displayName = item.requireLightText("displayName"),
-                displayColorRgb = item.requireLightInt("displayColorRgb", 0, 0xFFFFFF),
+                displayColorRgb = item.requireLightInt(
+                    "displayColorRgb",
+                    0,
+                    DeviceLightRuntimeContract.Limit.DISPLAY_COLOR_RGB_MAX
+                ),
                 order = item.requireLightInt("order", 0, product.channelCount - 1)
             )
         }
         val expected = when (product) {
             DeviceLightProduct.WRGB_PRO_ELITE -> listOf(
-                DeviceLightChannelDescriptor("red", "redPercent", "Red", 0xFF0000, 0),
-                DeviceLightChannelDescriptor("green", "greenPercent", "Green", 0x00FF00, 1),
-                DeviceLightChannelDescriptor("blue", "bluePercent", "Blue", 0x0000FF, 2),
-                DeviceLightChannelDescriptor("white", "whitePercent", "White", 0xFFFFFF, 3)
+                DeviceLightChannelDescriptor("red", "redPercent", "Red", RED_DISPLAY_RGB, 0),
+                DeviceLightChannelDescriptor("green", "greenPercent", "Green", GREEN_DISPLAY_RGB, 1),
+                DeviceLightChannelDescriptor("blue", "bluePercent", "Blue", BLUE_DISPLAY_RGB, 2),
+                DeviceLightChannelDescriptor(
+                    "white",
+                    "whitePercent",
+                    "White",
+                    WHITE_DISPLAY_RGB,
+                    WHITE_CHANNEL_ORDER
+                )
             )
             DeviceLightProduct.RGB_PRO_SLIM -> listOf(
-                DeviceLightChannelDescriptor("red", "redPercent", "Red", 0xFF0000, 0),
-                DeviceLightChannelDescriptor("green", "greenPercent", "Green", 0x00FF00, 1),
-                DeviceLightChannelDescriptor("blue", "bluePercent", "Blue", 0x0000FF, 2)
+                DeviceLightChannelDescriptor("red", "redPercent", "Red", RED_DISPLAY_RGB, 0),
+                DeviceLightChannelDescriptor("green", "greenPercent", "Green", GREEN_DISPLAY_RGB, 1),
+                DeviceLightChannelDescriptor("blue", "bluePercent", "Blue", BLUE_DISPLAY_RGB, 2)
             )
         }
         require(channels == expected) { "Light channel descriptors differ from firmware." }
@@ -80,13 +94,26 @@ internal object DeviceLightV1JsonParser {
     fun parseScales(data: JSONObject): DeviceLightScales {
         data.requireLightKeys(SCALE_KEYS, "light.status.scales")
         return DeviceLightScales(
-            acclimation = data.requireLightInt("acclimation", 0, 1000),
-            thermal = data.requireLightInt("thermal", 0, 1000),
-            powerLimit = data.requireLightInt("powerLimit", 0, 1000)
+            acclimation = data.requireLightInt(
+                "acclimation",
+                DeviceLightRuntimeContract.Limit.PERMILLE_MIN,
+                DeviceLightRuntimeContract.Limit.PERMILLE_MAX
+            ),
+            thermal = data.requireLightInt(
+                "thermal",
+                DeviceLightRuntimeContract.Limit.PERMILLE_MIN,
+                DeviceLightRuntimeContract.Limit.PERMILLE_MAX
+            ),
+            powerLimit = data.requireLightInt(
+                "powerLimit",
+                DeviceLightRuntimeContract.Limit.PERMILLE_MIN,
+                DeviceLightRuntimeContract.Limit.PERMILLE_MAX
+            )
         )
     }
 
-    fun parseElectricalDesign(
+    internal object Metrics {
+        fun parseElectricalDesign(
         data: JSONObject,
         product: DeviceLightProduct
     ): DeviceLightElectricalDesign {
@@ -121,11 +148,11 @@ internal object DeviceLightV1JsonParser {
             result.nominalLedElectricalPowerW
         )
         require(result.available == (product == DeviceLightProduct.WRGB_PRO_ELITE))
-        require(if (result.available) details.size == 6 else details.isEmpty())
+        require(if (result.available) details.size == ELECTRICAL_DETAIL_FIELD_COUNT else details.isEmpty())
         return result
     }
 
-    fun parsePower(data: JSONObject, features: DeviceLightFeatures): DeviceLightPowerStatus {
+        fun parsePower(data: JSONObject, features: DeviceLightFeatures): DeviceLightPowerStatus {
         data.requireLightKeys(POWER_KEYS, "light.status.power")
         val result = DeviceLightPowerStatus(
             available = data.requireLightBoolean("available"),
@@ -149,7 +176,11 @@ internal object DeviceLightV1JsonParser {
             ratioAvailable = data.requireLightBoolean("ratioAvailable"),
             ratio = data.requireNullableLightDouble("ratio", 0.0),
             limited = data.requireLightBoolean("limited"),
-            limitScale = data.requireLightInt("limitScale", 0, 1000),
+            limitScale = data.requireLightInt(
+                "limitScale",
+                DeviceLightRuntimeContract.Limit.PERMILLE_MIN,
+                DeviceLightRuntimeContract.Limit.PERMILLE_MAX
+            ),
             limitBasis = DeviceLightPowerLimitBasis.fromWireExact(
                 data.requireLightText("limitBasis")
             ),
@@ -166,14 +197,14 @@ internal object DeviceLightV1JsonParser {
         return result
     }
 
-    fun parseColor(data: JSONObject, features: DeviceLightFeatures): DeviceLightColorStatus {
+        fun parseColor(data: JSONObject, features: DeviceLightFeatures): DeviceLightColorStatus {
         data.requireLightKeys(COLOR_KEYS, "light.status.color")
         val displayRgb = data.requireNullableLightObject("displayRgb")?.let { rgb ->
             rgb.requireLightKeys(DISPLAY_RGB_KEYS, "light.status.color.displayRgb")
             DeviceLightDisplayRgb(
-                red = rgb.requireLightInt("red", 0, 255),
-                green = rgb.requireLightInt("green", 0, 255),
-                blue = rgb.requireLightInt("blue", 0, 255)
+                red = rgb.requireLightInt("red", 0, DeviceLightRuntimeContract.Limit.RGB_COMPONENT_MAX),
+                green = rgb.requireLightInt("green", 0, DeviceLightRuntimeContract.Limit.RGB_COMPONENT_MAX),
+                blue = rgb.requireLightInt("blue", 0, DeviceLightRuntimeContract.Limit.RGB_COMPONENT_MAX)
             )
         }
         val result = DeviceLightColorStatus(
@@ -197,9 +228,11 @@ internal object DeviceLightV1JsonParser {
         require((result.estimatedCctK != null) == result.cctAvailable)
         require((result.duv != null) == result.duvAvailable)
         return result
+        }
     }
 
-    fun parsePolicy(data: JSONObject, product: DeviceLightProduct): DeviceLightPolicy {
+    internal object Policy {
+        fun parsePolicy(data: JSONObject, product: DeviceLightProduct): DeviceLightPolicy {
         data.requireLightKeys(POLICY_KEYS, "light.status.policy")
         val auto = data.requireLightObject("auto")
         auto.requireLightKeys(AUTO_POLICY_KEYS, "light.status.policy.auto")
@@ -209,7 +242,7 @@ internal object DeviceLightV1JsonParser {
             rampDurationsMs = auto.requireLightArray("rampDurationsMs").toLightLongList(0)
         )
         require(autoPolicy.capacity == DeviceLightRuntimeContract.Limit.AUTO_PROGRAM_CAPACITY)
-        require(autoPolicy.timeStepMs == 60_000L)
+        require(autoPolicy.timeStepMs == DeviceLightRuntimeContract.Limit.SCHEDULE_TIME_STEP_MS)
         require(autoPolicy.rampDurationsMs == EXPECTED_RAMPS)
 
         val custom = data.requireLightObject("custom")
@@ -219,14 +252,14 @@ internal object DeviceLightV1JsonParser {
             timeStepMs = custom.requireLightLong("timeStepMs", 1)
         )
         require(customPolicy.maxPoints == DeviceLightRuntimeContract.Limit.CUSTOM_POINT_CAPACITY)
-        require(customPolicy.timeStepMs == 60_000L)
+        require(customPolicy.timeStepMs == DeviceLightRuntimeContract.Limit.SCHEDULE_TIME_STEP_MS)
 
         val acclimation = parseAcclimationPolicy(data.requireLightObject("acclimation"))
         require(acclimation.supported == product.supportsAcclimation)
         return DeviceLightPolicy(autoPolicy, customPolicy, acclimation)
     }
 
-    private fun parseAcclimationPolicy(data: JSONObject): DeviceLightAcclimationPolicy {
+        private fun parseAcclimationPolicy(data: JSONObject): DeviceLightAcclimationPolicy {
         data.requireLightKeys(ACCLIMATION_POLICY_KEYS, "light.status.policy.acclimation")
         val result = DeviceLightAcclimationPolicy(
             supported = data.requireLightBoolean("supported"),
@@ -251,19 +284,33 @@ internal object DeviceLightV1JsonParser {
             result.defaultDurationDays,
             result.targetPercent
         )
-        val expected = listOf(20, 90, 5, 50, 7, 90, 1, 30, 100)
+        val expected = listOf(
+            DeviceLightRuntimeContract.Limit.ACCLIMATION_START_PERCENT_MIN,
+            DeviceLightRuntimeContract.Limit.ACCLIMATION_START_PERCENT_MAX,
+            DeviceLightRuntimeContract.Limit.ACCLIMATION_START_PERCENT_STEP,
+            DeviceLightRuntimeContract.Limit.ACCLIMATION_DEFAULT_START_PERCENT,
+            DeviceLightRuntimeContract.Limit.ACCLIMATION_DURATION_DAYS_MIN,
+            DeviceLightRuntimeContract.Limit.ACCLIMATION_DURATION_DAYS_MAX,
+            DeviceLightRuntimeContract.Limit.ACCLIMATION_DURATION_DAYS_STEP,
+            DeviceLightRuntimeContract.Limit.ACCLIMATION_DEFAULT_DURATION_DAYS,
+            DeviceLightRuntimeContract.Limit.ACCLIMATION_TARGET_PERCENT
+        )
         require(if (result.supported) actual == expected else actual.all { it == null })
         return result
     }
 
-    fun parseScheduler(data: JSONObject): DeviceLightSchedulerStatus {
+        fun parseScheduler(data: JSONObject): DeviceLightSchedulerStatus {
         data.requireLightKeys(SCHEDULER_KEYS, "light.status.scheduler")
         val result = DeviceLightSchedulerStatus(
             ready = data.requireLightBoolean("ready"),
             reason = data.requireLightText("reason"),
             generation = data.requireNullableLightLong("generation", 0),
             localDate = data.requireNullableLightText("localDate"),
-            currentWeekdayMask = data.requireLightInt("currentWeekdayMask", 0, 127),
+            currentWeekdayMask = data.requireLightInt(
+                "currentWeekdayMask",
+                0,
+                DeviceLightRuntimeContract.Limit.WEEKDAY_MASK_MAX
+            ),
             currentTimeMs = data.requireNullableLightLong(
                 "currentTimeMs",
                 0,
@@ -283,14 +330,28 @@ internal object DeviceLightV1JsonParser {
             }
         )
         return result
+        }
     }
 
-    fun parseAutoSummary(data: JSONObject): DeviceLightAutoSummary {
+    internal object Activity {
+        fun parseAutoSummary(data: JSONObject): DeviceLightAutoSummary {
         data.requireLightKeys(AUTO_SUMMARY_KEYS, "light.status.auto")
         val result = DeviceLightAutoSummary(
-            revision = data.requireLightLong("revision", 0, UINT32_MAX),
-            programCount = data.requireLightInt("programCount", 0, 16),
-            enabledCount = data.requireLightInt("enabledCount", 0, 16),
+            revision = data.requireLightLong(
+                "revision",
+                0,
+                DeviceLightRuntimeContract.Limit.UINT32_MAX
+            ),
+            programCount = data.requireLightInt(
+                "programCount",
+                0,
+                DeviceLightRuntimeContract.Limit.AUTO_PROGRAM_CAPACITY
+            ),
+            enabledCount = data.requireLightInt(
+                "enabledCount",
+                0,
+                DeviceLightRuntimeContract.Limit.AUTO_PROGRAM_CAPACITY
+            ),
             runtimeState = DeviceLightAutoRuntimeState.fromWireExact(
                 data.requireLightText("runtimeState")
             ),
@@ -301,13 +362,25 @@ internal object DeviceLightV1JsonParser {
         return result
     }
 
-    fun parseCustomSummary(data: JSONObject): DeviceLightCustomSummary {
+        fun parseCustomSummary(data: JSONObject): DeviceLightCustomSummary {
         data.requireLightKeys(CUSTOM_SUMMARY_KEYS, "light.status.custom")
         val result = DeviceLightCustomSummary(
-            revision = data.requireLightLong("revision", 0, UINT32_MAX),
+            revision = data.requireLightLong(
+                "revision",
+                0,
+                DeviceLightRuntimeContract.Limit.UINT32_MAX
+            ),
             installed = data.requireLightBoolean("installed"),
-            weekdaysMask = data.requireLightInt("weekdaysMask", 0, 127),
-            pointCount = data.requireLightInt("pointCount", 0, 96),
+            weekdaysMask = data.requireLightInt(
+                "weekdaysMask",
+                0,
+                DeviceLightRuntimeContract.Limit.WEEKDAY_MASK_MAX
+            ),
+            pointCount = data.requireLightInt(
+                "pointCount",
+                0,
+                DeviceLightRuntimeContract.Limit.CUSTOM_POINT_CAPACITY
+            ),
             runtimeState = DeviceLightCustomRuntimeState.fromWireExact(
                 data.requireLightText("runtimeState")
             )
@@ -316,24 +389,48 @@ internal object DeviceLightV1JsonParser {
         return result
     }
 
-    fun parseAcclimation(data: JSONObject, product: DeviceLightProduct): DeviceLightAcclimationStatus {
+        fun parseAcclimation(data: JSONObject, product: DeviceLightProduct): DeviceLightAcclimationStatus {
         data.requireLightKeys(ACCLIMATION_KEYS, "light acclimation")
-        val result = DeviceLightAcclimationStatus(
+        val result = parseAcclimationFields(data)
+        require(result.supported == product.supportsAcclimation)
+        validateAcclimationDetails(result)
+        return result
+        }
+
+        private fun parseAcclimationFields(data: JSONObject): DeviceLightAcclimationStatus =
+            DeviceLightAcclimationStatus(
             supported = data.requireLightBoolean("supported"),
-            revision = data.requireNullableLightLong("revision", 0, UINT32_MAX),
+            revision = data.requireNullableLightLong(
+                "revision",
+                0,
+                DeviceLightRuntimeContract.Limit.UINT32_MAX
+            ),
             state = data.requireNullableLightText("state")?.let(
                 DeviceLightAcclimationState::fromWireExact
             ),
             clockReady = data.requireNullableLightBoolean("clockReady"),
-            startPercent = data.requireNullableLightInt("startPercent", 0, 100),
-            currentPermille = data.requireNullableLightInt("currentPermille", 0, 1000),
-            targetPercent = data.requireNullableLightInt("targetPercent", 0, 100),
+            startPercent = data.requireNullableLightInt(
+                "startPercent",
+                DeviceLightRuntimeContract.Limit.PERCENT_MIN,
+                DeviceLightRuntimeContract.Limit.PERCENT_MAX
+            ),
+            currentPermille = data.requireNullableLightInt(
+                "currentPermille",
+                DeviceLightRuntimeContract.Limit.PERMILLE_MIN,
+                DeviceLightRuntimeContract.Limit.PERMILLE_MAX
+            ),
+            targetPercent = data.requireNullableLightInt(
+                "targetPercent",
+                DeviceLightRuntimeContract.Limit.PERCENT_MIN,
+                DeviceLightRuntimeContract.Limit.PERCENT_MAX
+            ),
             durationDays = data.requireNullableLightInt("durationDays", 0),
             startedAtEpochSeconds = data.requireNullableLightLong("startedAtEpochSeconds", 0),
             endsAtEpochSeconds = data.requireNullableLightLong("endsAtEpochSeconds", 0),
             remainingSeconds = data.requireNullableLightLong("remainingSeconds", 0)
         )
-        require(result.supported == product.supportsAcclimation)
+
+        private fun validateAcclimationDetails(result: DeviceLightAcclimationStatus) {
         val detail = listOf(
             result.revision,
             result.state,
@@ -352,9 +449,16 @@ internal object DeviceLightV1JsonParser {
             require(result.revision != null && result.state != null && result.clockReady != null)
             val startPercent = requireNotNull(result.startPercent)
             val durationDays = requireNotNull(result.durationDays)
-            require(startPercent in 20..90 && startPercent % 5 == 0)
-            require(result.targetPercent == 100)
-            require(durationDays in 7..90)
+            require(
+                startPercent in DeviceLightRuntimeContract.Limit.ACCLIMATION_START_PERCENT_MIN..
+                    DeviceLightRuntimeContract.Limit.ACCLIMATION_START_PERCENT_MAX &&
+                    startPercent % DeviceLightRuntimeContract.Limit.ACCLIMATION_START_PERCENT_STEP == 0
+            )
+            require(result.targetPercent == DeviceLightRuntimeContract.Limit.ACCLIMATION_TARGET_PERCENT)
+            require(
+                durationDays in DeviceLightRuntimeContract.Limit.ACCLIMATION_DURATION_DAYS_MIN..
+                    DeviceLightRuntimeContract.Limit.ACCLIMATION_DURATION_DAYS_MAX
+            )
             require(result.startedAtEpochSeconds != null && result.endsAtEpochSeconds != null)
             if (result.state == DeviceLightAcclimationState.ACTIVE && result.clockReady == false) {
                 require(result.currentPermille == null && result.remainingSeconds == null)
@@ -362,7 +466,7 @@ internal object DeviceLightV1JsonParser {
                 require(result.currentPermille != null && result.remainingSeconds != null)
             }
         }
-        return result
+        }
     }
 
     fun parseRuntime(data: JSONObject, product: DeviceLightProduct): DeviceLightRuntimeStatus {
@@ -383,7 +487,11 @@ internal object DeviceLightV1JsonParser {
         return DeviceLightAutoProgram(
             programId = data.requireLightText("programId").also(::requireLightProgramId),
             enabled = data.requireLightBoolean("enabled"),
-            weekdaysMask = data.requireLightInt("weekdaysMask", 1, 127),
+            weekdaysMask = data.requireLightInt(
+                "weekdaysMask",
+                DeviceLightRuntimeContract.Limit.WEEKDAY_MASK_MIN,
+                DeviceLightRuntimeContract.Limit.WEEKDAY_MASK_MAX
+            ),
             startTimeMs = data.requireLightLong(
                 "startTimeMs",
                 0,
@@ -406,7 +514,11 @@ internal object DeviceLightV1JsonParser {
         require(tuple.length() == product.channelCount + 1)
         val values = linkedMapOf<String, Int>()
         product.sceneFields.forEachIndexed { index, field ->
-            values[field] = tuple.requireLightInt(index + 1, 0, 100)
+            values[field] = tuple.requireLightInt(
+                index + 1,
+                DeviceLightRuntimeContract.Limit.PERCENT_MIN,
+                DeviceLightRuntimeContract.Limit.PERCENT_MAX
+            )
         }
         return DeviceLightCustomPoint(
             timeMs = tuple.requireLightLong(
@@ -468,12 +580,24 @@ internal object DeviceLightV1JsonParser {
         "rampDurationMs", "scene"
     )
     private val EXPECTED_RAMPS = listOf(
-        0L, 1_800_000L, 3_600_000L, 5_400_000L, 7_200_000L, 9_000_000L
+        DeviceLightRuntimeContract.Limit.RAMP_DISABLED_MS,
+        DeviceLightRuntimeContract.Limit.RAMP_30_MINUTES_MS,
+        DeviceLightRuntimeContract.Limit.RAMP_60_MINUTES_MS,
+        DeviceLightRuntimeContract.Limit.RAMP_90_MINUTES_MS,
+        DeviceLightRuntimeContract.Limit.RAMP_120_MINUTES_MS,
+        DeviceLightRuntimeContract.Limit.RAMP_150_MINUTES_MS
     )
-    private val WEEKDAY_BITS = setOf(1, 2, 4, 8, 16, 32, 64)
+    private val WEEKDAY_BITS = Set(DeviceLightRuntimeContract.Limit.DAYS_PER_WEEK) { index ->
+        1 shl index
+    }
     private val DATE_PATTERN = Regex("^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
     private val PROGRAM_ID = Regex("^ap-[0-9a-f]{8}$")
-    private const val UINT32_MAX = 4_294_967_295L
+    private const val RED_DISPLAY_RGB = 0xFF0000
+    private const val GREEN_DISPLAY_RGB = 0x00FF00
+    private const val BLUE_DISPLAY_RGB = 0x0000FF
+    private const val WHITE_DISPLAY_RGB = 0xFFFFFF
+    private const val WHITE_CHANNEL_ORDER = 3
+    private const val ELECTRICAL_DETAIL_FIELD_COUNT = 6
 
     private fun requireLightProgramId(value: String) =
         require(PROGRAM_ID.matches(value)) { "Invalid Light AUTO programId." }

@@ -147,7 +147,12 @@ data class DeviceLightScene(
         require(percents.keys == product.sceneFields.toSet()) {
             "Light scene fields must exactly match ${product.wireValue}."
         }
-        require(percents.values.all { it in 0..100 }) {
+        require(
+            percents.values.all {
+                it in DeviceLightRuntimeContract.Limit.PERCENT_MIN..
+                    DeviceLightRuntimeContract.Limit.PERCENT_MAX
+            }
+        ) {
             "Light scene percentages must be integers from 0 through 100."
         }
     }
@@ -438,7 +443,10 @@ data class DeviceLightCustomInstallPayload(
 ) {
     init {
         requireRevision(expectedRevision)
-        require(weekdaysMask in 1..127)
+        require(
+            weekdaysMask in DeviceLightRuntimeContract.Limit.WEEKDAY_MASK_MIN..
+                DeviceLightRuntimeContract.Limit.WEEKDAY_MASK_MAX
+        )
         require(points.size in 1..DeviceLightRuntimeContract.Limit.CUSTOM_POINT_CAPACITY)
         require(points.zipWithNext().all { (left, right) -> left.timeMs < right.timeMs })
         require(points.map { it.scene.product }.distinct().size == 1)
@@ -459,8 +467,15 @@ data class DeviceLightAcclimationStartPayload(
 ) {
     init {
         requireRevision(expectedRevision)
-        require(startPercent in 20..90 && startPercent % 5 == 0)
-        require(durationDays in 7..90)
+        require(
+            startPercent in DeviceLightRuntimeContract.Limit.ACCLIMATION_START_PERCENT_MIN..
+                DeviceLightRuntimeContract.Limit.ACCLIMATION_START_PERCENT_MAX &&
+                startPercent % DeviceLightRuntimeContract.Limit.ACCLIMATION_START_PERCENT_STEP == 0
+        )
+        require(
+            durationDays in DeviceLightRuntimeContract.Limit.ACCLIMATION_DURATION_DAYS_MIN..
+                DeviceLightRuntimeContract.Limit.ACCLIMATION_DURATION_DAYS_MAX
+        )
     }
     fun toJson(): JSONObject = JSONObject()
         .put(DeviceLightRuntimeContract.Field.EXPECTED_REVISION, expectedRevision)
@@ -509,7 +524,10 @@ private fun validateAutoProgram(
     rampDurationMs: Long
 ) {
     requireRevision(expectedRevision)
-    require(weekdaysMask in 1..127)
+    require(
+        weekdaysMask in DeviceLightRuntimeContract.Limit.WEEKDAY_MASK_MIN..
+            DeviceLightRuntimeContract.Limit.WEEKDAY_MASK_MAX
+    )
     require(startTimeMs in 0..DeviceLightRuntimeContract.Limit.LAST_DAY_MILLISECOND)
     require(endTimeMs in 0..DeviceLightRuntimeContract.Limit.LAST_DAY_MILLISECOND)
     require(startTimeMs != endTimeMs)
@@ -522,7 +540,8 @@ private fun validateAutoProgram(
     require(rampDurationMs * 2L <= duration)
 }
 
-private fun requireRevision(value: Long) = require(value in 0..UINT32_MAX)
+private fun requireRevision(value: Long) =
+    require(value in 0..DeviceLightRuntimeContract.Limit.UINT32_MAX)
 private fun requireProgramId(value: String) = require(PROGRAM_ID.matches(value))
 private fun requirePreviewDuration(value: Long) =
     require(value in 1..DeviceLightRuntimeContract.Limit.MAX_PREVIEW_DURATION_MS)
@@ -531,7 +550,11 @@ private fun <T> enumByWire(value: String, entries: Iterable<T>, wire: (T) -> Str
     entries.singleOrNull { wire(it) == value } ?: error("Unknown Light V1 enum value: $value")
 
 private val ALLOWED_RAMP_DURATIONS_MS = setOf(
-    0L, 1_800_000L, 3_600_000L, 5_400_000L, 7_200_000L, 9_000_000L
+    DeviceLightRuntimeContract.Limit.RAMP_DISABLED_MS,
+    DeviceLightRuntimeContract.Limit.RAMP_30_MINUTES_MS,
+    DeviceLightRuntimeContract.Limit.RAMP_60_MINUTES_MS,
+    DeviceLightRuntimeContract.Limit.RAMP_90_MINUTES_MS,
+    DeviceLightRuntimeContract.Limit.RAMP_120_MINUTES_MS,
+    DeviceLightRuntimeContract.Limit.RAMP_150_MINUTES_MS
 )
 private val PROGRAM_ID = Regex("^ap-[0-9a-f]{8}$")
-private const val UINT32_MAX = 4_294_967_295L

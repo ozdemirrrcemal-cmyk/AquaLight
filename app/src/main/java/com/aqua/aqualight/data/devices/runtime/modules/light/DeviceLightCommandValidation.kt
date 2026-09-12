@@ -66,7 +66,11 @@ fun DeviceRuntimeCommandOutcome.FirmwareError.lightV1Data(): DeviceLightFirmware
             data.requireLightKeys(setOf("reason", "actualRevision"), "Light error.data")
             DeviceLightFirmwareErrorData(
                 reason = reason,
-                actualRevision = data.requireLightLong("actualRevision", 0, UINT32_MAX)
+                actualRevision = data.requireLightLong(
+                    "actualRevision",
+                    0,
+                    DeviceLightRuntimeContract.Limit.UINT32_MAX
+                )
             )
         }
         DeviceLightErrorReason.AUTO_CAPACITY_REACHED -> {
@@ -76,7 +80,11 @@ fun DeviceRuntimeCommandOutcome.FirmwareError.lightV1Data(): DeviceLightFirmware
             )
             DeviceLightFirmwareErrorData(
                 reason = reason,
-                actualRevision = data.requireLightLong("actualRevision", 0, UINT32_MAX),
+                actualRevision = data.requireLightLong(
+                    "actualRevision",
+                    0,
+                    DeviceLightRuntimeContract.Limit.UINT32_MAX
+                ),
                 capacity = data.requireLightInt("capacity", 0),
                 programCount = data.requireLightInt("programCount", 0)
             ).also {
@@ -91,7 +99,11 @@ fun DeviceRuntimeCommandOutcome.FirmwareError.lightV1Data(): DeviceLightFirmware
             )
             DeviceLightFirmwareErrorData(
                 reason = reason,
-                actualRevision = data.requireLightLong("actualRevision", 0, UINT32_MAX),
+                actualRevision = data.requireLightLong(
+                    "actualRevision",
+                    0,
+                    DeviceLightRuntimeContract.Limit.UINT32_MAX
+                ),
                 conflict = parseConflict(data.requireLightObject("conflict")),
                 additionalConflictCount = data.requireLightInt("additionalConflictCount", 0)
             )
@@ -141,7 +153,11 @@ private fun parseConflict(data: JSONObject): DeviceLightOverlapConflict {
     require(PROGRAM_ID.matches(withProgramId))
     return DeviceLightOverlapConflict(
         withProgramId = withProgramId,
-        occurrenceWeekdayMask = data.requireLightInt("occurrenceWeekdayMask", 1, 127),
+        occurrenceWeekdayMask = data.requireLightInt(
+            "occurrenceWeekdayMask",
+            DeviceLightRuntimeContract.Limit.WEEKDAY_MASK_MIN,
+            DeviceLightRuntimeContract.Limit.WEEKDAY_MASK_MAX
+        ),
         overlapStartTimeMs = data.requireLightLong(
             "overlapStartTimeMs",
             0,
@@ -163,7 +179,11 @@ private fun parseGeometry(data: JSONObject): DeviceLightOverlapGeometry {
         "Light overlap geometry"
     )
     return DeviceLightOverlapGeometry(
-        weekdaysMask = data.requireLightInt("weekdaysMask", 1, 127),
+        weekdaysMask = data.requireLightInt(
+            "weekdaysMask",
+            DeviceLightRuntimeContract.Limit.WEEKDAY_MASK_MIN,
+            DeviceLightRuntimeContract.Limit.WEEKDAY_MASK_MAX
+        ),
         startTimeMs = data.requireLightLong(
             "startTimeMs",
             0,
@@ -178,4 +198,3 @@ private fun parseGeometry(data: JSONObject): DeviceLightOverlapGeometry {
 }
 
 private val PROGRAM_ID = Regex("^ap-[0-9a-f]{8}$")
-private const val UINT32_MAX = 4_294_967_295L
