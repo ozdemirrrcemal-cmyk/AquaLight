@@ -587,9 +587,9 @@ internal object DeviceLightV1JsonParser {
         DeviceLightRuntimeContract.Limit.RAMP_120_MINUTES_MS,
         DeviceLightRuntimeContract.Limit.RAMP_150_MINUTES_MS
     )
-    private val WEEKDAY_BITS = Set(DeviceLightRuntimeContract.Limit.DAYS_PER_WEEK) { index ->
+    private val WEEKDAY_BITS = List(DeviceLightRuntimeContract.Limit.DAYS_PER_WEEK) { index ->
         1 shl index
-    }
+    }.toSet()
     private val DATE_PATTERN = Regex("^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
     private val PROGRAM_ID = Regex("^ap-[0-9a-f]{8}$")
     private const val RED_DISPLAY_RGB = 0xFF0000
