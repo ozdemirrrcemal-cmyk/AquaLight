@@ -25,6 +25,8 @@ Completed scope:
 - Typed device-menu availability and current-liveness proof boundary.
 - Read-only device status and Settings overview boundary with deterministic clock tests.
 - Device-root read boundary for Light, Cooling, Timer and Dosing screens.
+- Light, Dosing, Cooling and Timer menu girişlerinde aynı merkezi authoritative
+  control-surface preparation ve hedefte yeniden doğrulanan tek kullanımlık handoff.
 - Separate typed firmware-update command boundary for the Light OTA test surface.
 - Tank-device assigned/available list, assignment, conflict and removal boundary.
 - Production/release-smoke composition parity, deterministic fakes and dedicated CI guards for every migrated boundary.

@@ -3,7 +3,10 @@ package com.aqua.aqualight.debug.devices
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.BuildConfig
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
 import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
+import com.aqua.aqualight.application.devices.light.DeviceLightControlOperations
+import com.aqua.aqualight.application.devices.timer.DeviceTimerControlOperations
 import com.aqua.aqualight.composition.AppContainer
 import com.aqua.aqualight.composition.OwnerDependencyGraph
 import com.aqua.aqualight.composition.OwnerDependencyGraphAccess
@@ -16,6 +19,8 @@ import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewMo
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.settings.DeviceFamilySettingsViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.timer.channel.DeviceTimerChannelViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.timer.program.DeviceTimerProgramViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.update.DeviceFirmwareUpdateViewModel
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 
@@ -40,14 +45,19 @@ private class DebugDeviceFixtureViewModelFactory(
 ) : ViewModelProvider.Factory {
 
     private val fixtures = DebugDeviceFixtureCatalog()
+    private var cachedTimerDependencies: DebugTimerFixtureDependencies? = null
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         val viewModel: ViewModel = when (modelClass) {
             DevicesViewModel::class.java -> createDevicesViewModel(requireGraph())
             DeviceLightRootViewModel::class.java ->
-                DeviceLightRootViewModel(rootOperations(requireGraph()))
+                createLightRootViewModel(requireGraph())
             DeviceTimerRootViewModel::class.java ->
                 createTimerRootViewModel(requireGraph())
+            DeviceTimerProgramViewModel::class.java ->
+                DeviceTimerProgramViewModel(timerDependencies(requireGraph()).timerControlOperations)
+            DeviceTimerChannelViewModel::class.java ->
+                DeviceTimerChannelViewModel(timerDependencies(requireGraph()).timerControlOperations)
             DeviceRootOverviewViewModel::class.java ->
                 DeviceRootOverviewViewModel(rootOperations(requireGraph()))
             DeviceFamilySettingsViewModel::class.java ->
@@ -64,6 +74,7 @@ private class DebugDeviceFixtureViewModelFactory(
     private fun requireGraph(): OwnerDependencyGraph = ownerGraphAccess.requireActiveOwnerGraph()
 
     private fun createDevicesViewModel(graph: OwnerDependencyGraph): DevicesViewModel {
+        val timerDependencies = timerDependencies(graph)
         val repository = graph.devicesRepository
         val realOperations = DefaultOwnerDevicesOperations(
             devicesRepository = repository,
@@ -86,7 +97,8 @@ private class DebugDeviceFixtureViewModelFactory(
                     delegate = DefaultDeviceMenuAccessOperations.create(repository),
                     fixtures = fixtures
                 ),
-                controlSurfacePreparationOperations = graph.controlSurfacePreparationOperations
+                controlSurfacePreparationOperations =
+                    timerDependencies.controlSurfacePreparationOperations
             ),
             routeResolver = DeviceRouteResolver()
         )
@@ -98,32 +110,90 @@ private class DebugDeviceFixtureViewModelFactory(
                 repository = graph.devicesRepository,
                 fixtures = fixtures
             ),
-            firmwareUpdateOperations = firmwareOperations(graph),
+            firmwareUpdateOperations = fixtureFirmwareOperations(graph, fixtures),
             manifestUrl = BuildConfig.AQL_OTA_MANIFEST_URL
         )
 
     private fun createFirmwareViewModel(graph: OwnerDependencyGraph): DeviceFirmwareUpdateViewModel =
         DeviceFirmwareUpdateViewModel(
             rootOperations = rootOperations(graph),
-            firmwareUpdateOperations = firmwareOperations(graph),
+            firmwareUpdateOperations = fixtureFirmwareOperations(graph, fixtures),
             manifestUrl = BuildConfig.AQL_OTA_MANIFEST_URL
         )
 
     private fun createTimerRootViewModel(graph: OwnerDependencyGraph): DeviceTimerRootViewModel =
-        DeviceTimerRootViewModel(
-            operations = rootOperations(graph),
-            timerControlOperations = graph.timerControlOperations,
-            controlSurfacePreparationOperations = graph.controlSurfacePreparationOperations
+        timerDependencies(graph).let { dependencies ->
+            DeviceTimerRootViewModel(
+                operations = rootOperations(graph),
+                timerControlOperations = dependencies.timerControlOperations,
+                controlSurfacePreparationOperations =
+                    dependencies.controlSurfacePreparationOperations
+            )
+        }
+
+    private fun createLightRootViewModel(graph: OwnerDependencyGraph): DeviceLightRootViewModel =
+        timerDependencies(graph).let { dependencies ->
+            DeviceLightRootViewModel(
+                rootOperations = rootOperations(graph),
+                lightControlOperations = dependencies.lightControlOperations,
+                controlSurfacePreparationOperations =
+                    dependencies.controlSurfacePreparationOperations
+            )
+        }
+
+    private fun timerDependencies(graph: OwnerDependencyGraph): DebugTimerFixtureDependencies =
+        synchronized(this) {
+            cachedTimerDependencies
+                ?.takeIf { dependencies -> dependencies.graph === graph }
+                ?: createTimerDependencies(graph).also { dependencies ->
+                    cachedTimerDependencies = dependencies
+                }
+        }
+
+    private fun createTimerDependencies(
+        graph: OwnerDependencyGraph
+    ): DebugTimerFixtureDependencies {
+        val runtime = DebugTimerFixtureRuntime(fixtures)
+        val timerControlOperations = DebugFixtureTimerControlOperations(
+            delegate = graph.timerControlOperations,
+            runtime = runtime
         )
+        val lightControlOperations = DebugFixtureLightControlOperations(
+            delegate = graph.lightControlOperations,
+            fixtures = fixtures
+        )
+        return DebugTimerFixtureDependencies(
+            graph = graph,
+            lightControlOperations = lightControlOperations,
+            timerControlOperations = timerControlOperations,
+            controlSurfacePreparationOperations =
+                DebugFixtureControlSurfacePreparationOperations(
+                    delegate = graph.controlSurfacePreparationOperations,
+                    fixtures = fixtures,
+                    timerControlOperations = timerControlOperations,
+                    lightControlOperations = lightControlOperations
+                )
+        )
+    }
 
     private fun rootOperations(graph: OwnerDependencyGraph) = DebugFixtureDeviceRootOperations(
         delegate = DefaultDeviceRootOperations(graph.devicesRepository),
         fixtures = fixtures
     )
 
-    private fun firmwareOperations(graph: OwnerDependencyGraph) =
-        DebugFixtureFirmwareUpdateOperations(
-            delegate = graph.firmwareUpdateOperations,
-            fixtures = fixtures
-        )
 }
+
+private fun fixtureFirmwareOperations(
+    graph: OwnerDependencyGraph,
+    fixtures: DebugDeviceFixtureCatalog
+) = DebugFixtureFirmwareUpdateOperations(
+    delegate = graph.firmwareUpdateOperations,
+    fixtures = fixtures
+)
+
+private data class DebugTimerFixtureDependencies(
+    val graph: OwnerDependencyGraph,
+    val lightControlOperations: DeviceLightControlOperations,
+    val timerControlOperations: DeviceTimerControlOperations,
+    val controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations
+)

@@ -36,7 +36,8 @@ import kotlinx.coroutines.launch
 class DeviceTimerRootViewModel(
     private val operations: DeviceRootOperations,
     private val timerControlOperations: DeviceTimerControlOperations,
-    private val controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations
+    private val controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations,
+    private val currentEpochMillis: () -> Long = System::currentTimeMillis
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DeviceTimerRootUiState())
@@ -56,6 +57,8 @@ class DeviceTimerRootViewModel(
     private var rootObserveJob: Job? = null
     private var controlObserveJob: Job? = null
     private var surfacePreparationJob: Job? = null
+    private val channelMutationJobs = mutableMapOf<String, Job>()
+    private val pendingChannelSlotIds = mutableSetOf<String>()
 
     fun bind(deviceUidText: String) {
         val deviceUid = deviceUidText.trim()
@@ -101,6 +104,38 @@ class DeviceTimerRootViewModel(
         if (surfacePreparationPending) {
             prepareRestoredSurface(deviceUid)
         }
+    }
+
+    fun togglePower(slotId: String) {
+        val channel = lastControlPresentation?.channels
+            ?.firstOrNull { candidate -> candidate.slotId == slotId }
+            ?: return
+        val mutation = channel.powerMutation(currentEpochMillis())
+        val deviceUid = lastControlPresentation.powerMutationDeviceUid(
+            boundDeviceUid = boundDeviceUid,
+            contentEnabled = _uiState.value.contentEnabled,
+            slotId = slotId,
+            mutation = mutation,
+            pendingChannelSlotIds = pendingChannelSlotIds
+        ) ?: return
+
+        pendingChannelSlotIds += slotId
+        renderBoundState()
+        val mutationJob = viewModelScope.launch(start = CoroutineStart.LAZY) {
+            val result = runCatching {
+                timerControlOperations.executePowerMutation(deviceUid, slotId, mutation)
+            }.getOrElse {
+                DeviceTimerControlResult.Failed(DeviceTimerControlFailure.Unavailable)
+            }
+            if (boundDeviceUid == deviceUid) {
+                acceptMutationResult(result)
+                pendingChannelSlotIds -= slotId
+                channelMutationJobs.remove(slotId)
+                renderBoundState()
+            }
+        }
+        channelMutationJobs[slotId] = mutationJob
+        mutationJob.start()
     }
 
     private fun prepareRestoredSurface(deviceUid: String) {
@@ -166,6 +201,16 @@ class DeviceTimerRootViewModel(
         }
     }
 
+    private fun acceptMutationResult(result: DeviceTimerControlResult) {
+        when (result) {
+            is DeviceTimerControlResult.Available -> acceptControlResult(result)
+            is DeviceTimerControlResult.Failed -> {
+                lastControlFailure = result.failure
+                if (result.failure.closesControlSurface()) controlAvailable = false
+            }
+        }
+    }
+
     private fun renderBoundState() {
         val root = latestRootSnapshot
         val rootAvailable = root.isTimerControlRootAvailable(boundDeviceUid)
@@ -180,7 +225,8 @@ class DeviceTimerRootViewModel(
             contentEnabled = rootAvailable && controlAvailable && !surfacePreparationPending,
             showBlockingPreparation = surfacePreparationPending,
             control = lastControlPresentation,
-            controlFailure = lastControlFailure
+            controlFailure = lastControlFailure,
+            pendingChannelSlotIds = pendingChannelSlotIds.toSet()
         )
     }
 
@@ -192,6 +238,7 @@ class DeviceTimerRootViewModel(
         lastControlFailure = null
         controlAvailable = false
         surfacePreparationPending = false
+        pendingChannelSlotIds.clear()
         _uiState.value = DeviceTimerRootUiState()
     }
 
@@ -199,9 +246,12 @@ class DeviceTimerRootViewModel(
         rootObserveJob?.cancel()
         controlObserveJob?.cancel()
         surfacePreparationJob?.cancel()
+        channelMutationJobs.values.forEach { job -> job.cancel() }
         rootObserveJob = null
         controlObserveJob = null
         surfacePreparationJob = null
+        channelMutationJobs.clear()
+        pendingChannelSlotIds.clear()
     }
 }
 
@@ -212,7 +262,8 @@ data class DeviceTimerRootUiState(
     val contentEnabled: Boolean = false,
     val showBlockingPreparation: Boolean = false,
     val control: DeviceTimerControlUiState? = null,
-    val controlFailure: DeviceTimerControlFailure? = null
+    val controlFailure: DeviceTimerControlFailure? = null,
+    val pendingChannelSlotIds: Set<String> = emptySet()
 )
 
 @Suppress("LongParameterList")
@@ -223,10 +274,13 @@ data class DeviceTimerControlUiState(
     val maxSchedulesPerChannel: Int,
     val readOnly: Boolean,
     val channelStateWriteEnabled: Boolean,
+    val scheduleReadEnabled: Boolean,
     val scheduleWriteEnabled: Boolean,
     val spansMidnightSupported: Boolean,
     val temporaryOverrideWriteEnabled: Boolean,
     val displayNameWriteEnabled: Boolean,
+    val activeChannelCount: Int,
+    val statusNotices: Set<DeviceTimerStatusNotice>,
     val channels: List<DeviceTimerChannelUiState>
 )
 
@@ -245,7 +299,6 @@ data class DeviceTimerChannelUiState(
     val nextTransitionAtEpochMillis: Long?,
     val runtimeReason: DeviceTimerRuntimeReason,
     val clockReady: Boolean,
-    val statusNotice: DeviceTimerChannelStatusNotice?,
     val temporaryOverrideActive: Boolean,
     val temporaryOverrideRemainingMillis: Long,
     val outputHealth: DeviceTimerOutputHealth,
@@ -254,9 +307,10 @@ data class DeviceTimerChannelUiState(
     val schedules: List<DeviceTimerScheduleUiState>?
 )
 
-/** Presentation-only notice derived from authoritative Timer runtime state. */
-enum class DeviceTimerChannelStatusNotice {
-    CLOCK_UNAVAILABLE
+/** Screen-level commercial notices derived from authoritative Timer runtime state. */
+enum class DeviceTimerStatusNotice {
+    CLOCK_UNAVAILABLE,
+    RUNTIME_LOCKED
 }
 
 @Suppress("LongParameterList")
@@ -279,25 +333,39 @@ private fun DeviceRootSnapshot?.isTimerControlRootAvailable(deviceUid: String): 
         catalogState == DeviceRootCatalogState.VALID &&
         family == OwnerDeviceFamily.TIMER
 
-private fun DeviceTimerControlSnapshot.toUiState() = DeviceTimerControlUiState(
-    revision = revision,
-    lockLoop = lockLoop,
-    uptimeMillis = uptimeMillis,
-    maxSchedulesPerChannel = maxSchedulesPerChannel,
-    readOnly = capabilities.readOnly,
-    channelStateWriteEnabled = !capabilities.readOnly && capabilities.supportsChannelState,
-    scheduleWriteEnabled = !capabilities.readOnly &&
-        capabilities.supportsConfigApply &&
-        capabilities.supportsSchedules,
-    spansMidnightSupported = capabilities.supportsSpansMidnight,
-    temporaryOverrideWriteEnabled = !capabilities.readOnly &&
-        capabilities.supportsTemporaryOverride,
-    displayNameWriteEnabled = !capabilities.readOnly &&
-        capabilities.supportsChannelDisplayName,
-    channels = channels.map(DeviceTimerChannelSnapshot::toUiState)
-)
+internal fun DeviceTimerControlSnapshot.toUiState(): DeviceTimerControlUiState {
+    val channelPresentation = channels.map(DeviceTimerChannelSnapshot::toUiState)
+    val notices = buildSet {
+        if (channels.any { channel -> !channel.clockReady }) {
+            add(DeviceTimerStatusNotice.CLOCK_UNAVAILABLE)
+        }
+        if (lockLoop) add(DeviceTimerStatusNotice.RUNTIME_LOCKED)
+    }
+    return DeviceTimerControlUiState(
+        revision = revision,
+        lockLoop = lockLoop,
+        uptimeMillis = uptimeMillis,
+        maxSchedulesPerChannel = maxSchedulesPerChannel,
+        readOnly = capabilities.readOnly,
+        channelStateWriteEnabled = !capabilities.readOnly && capabilities.supportsChannelState,
+        scheduleReadEnabled = capabilities.supportsSchedules,
+        scheduleWriteEnabled = !capabilities.readOnly &&
+            capabilities.supportsConfigApply &&
+            capabilities.supportsSchedules,
+        spansMidnightSupported = capabilities.supportsSpansMidnight,
+        temporaryOverrideWriteEnabled = !capabilities.readOnly &&
+            capabilities.supportsTemporaryOverride,
+        displayNameWriteEnabled = !capabilities.readOnly &&
+            capabilities.supportsChannelDisplayName,
+        activeChannelCount = channels.count { channel ->
+            channel.operatingState == DeviceTimerOperatingState.ON
+        },
+        statusNotices = notices,
+        channels = channelPresentation
+    )
+}
 
-private fun DeviceTimerChannelSnapshot.toUiState() = DeviceTimerChannelUiState(
+internal fun DeviceTimerChannelSnapshot.toUiState() = DeviceTimerChannelUiState(
     slotId = slotId,
     channelNumber = channelNumber,
     defaultName = defaultName,
@@ -311,7 +379,6 @@ private fun DeviceTimerChannelSnapshot.toUiState() = DeviceTimerChannelUiState(
     nextTransitionAtEpochMillis = nextTransitionAtEpochMillis,
     runtimeReason = runtimeReason,
     clockReady = clockReady,
-    statusNotice = if (clockReady) null else DeviceTimerChannelStatusNotice.CLOCK_UNAVAILABLE,
     temporaryOverrideActive = temporaryOverrideActive,
     temporaryOverrideRemainingMillis = temporaryOverrideRemainingMillis,
     outputHealth = outputHealth,
@@ -330,3 +397,43 @@ private fun DeviceTimerScheduleSnapshot.toUiState() = DeviceTimerScheduleUiState
     endTimeMillis = endTimeMillis,
     spansMidnight = spansMidnight
 )
+
+@Suppress("ComplexCondition", "LongParameterList")
+private fun DeviceTimerControlUiState?.powerMutationDeviceUid(
+    boundDeviceUid: String,
+    contentEnabled: Boolean,
+    slotId: String,
+    mutation: DeviceTimerPowerMutation,
+    pendingChannelSlotIds: Set<String>
+): String? {
+    val control = this
+    val channel = control?.channels?.firstOrNull { candidate -> candidate.slotId == slotId }
+    val mutationWriteEnabled = when (mutation) {
+        is DeviceTimerPowerMutation.Persistent -> control?.channelStateWriteEnabled == true
+        is DeviceTimerPowerMutation.ProgramPreservingOverride ->
+            control?.temporaryOverrideWriteEnabled == true
+    }
+    val interactionReady = channel != null &&
+        contentEnabled &&
+        mutationWriteEnabled &&
+        control?.lockLoop == false
+    val changeRequired = when (mutation) {
+        is DeviceTimerPowerMutation.Persistent ->
+            channel?.regime != mutation.regime || channel?.temporaryOverrideActive == true
+        is DeviceTimerPowerMutation.ProgramPreservingOverride -> channel != null
+    }
+    return boundDeviceUid.takeIf {
+        it.isNotBlank() &&
+            interactionReady &&
+            changeRequired &&
+            slotId !in pendingChannelSlotIds
+    }
+}
+
+private fun DeviceTimerControlFailure.closesControlSurface(): Boolean = when (this) {
+    DeviceTimerControlFailure.Unavailable,
+    DeviceTimerControlFailure.NotConnected,
+    DeviceTimerControlFailure.Unsupported -> true
+    DeviceTimerControlFailure.InvalidData,
+    is DeviceTimerControlFailure.Rejected -> false
+}

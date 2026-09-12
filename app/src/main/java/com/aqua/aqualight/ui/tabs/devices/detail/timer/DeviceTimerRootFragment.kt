@@ -2,9 +2,12 @@ package com.aqua.aqualight.ui.tabs.devices.detail.timer
 
 import android.os.Bundle
 import android.view.View
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
@@ -37,7 +40,22 @@ class DeviceTimerRootFragment : Fragment(R.layout.fragment_device_timer_root) {
         val initialState = viewModel.uiState.value
         setFragmentGlobalLoading(initialState.showBlockingPreparation)
         setupHeader(initialState)
+        setupDashboardContent()
         observeViewModel()
+    }
+
+    private fun setupDashboardContent() {
+        binding.timerDashboardCompose.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                val state by viewModel.uiState.collectAsStateWithLifecycle()
+                DeviceTimerDashboardScreen(
+                    state = state,
+                    onChannelClick = ::openChannel,
+                    onPowerClick = viewModel::togglePower
+                )
+            }
+        }
     }
 
     private fun setupHeader(state: DeviceTimerRootUiState) {
@@ -71,6 +89,19 @@ class DeviceTimerRootFragment : Fragment(R.layout.fragment_device_timer_root) {
             DeviceTimerRootFragmentDirections
                 .actionDeviceTimerRootFragmentToDeviceTimerSettingsFragment(
                     deviceUid = args.deviceUid
+                )
+        )
+    }
+
+    private fun openChannel(slotId: String) {
+        if (!viewModel.uiState.value.contentEnabled) return
+        val navController = findNavController()
+        if (navController.currentDestination?.id != R.id.deviceTimerRootFragment) return
+        navController.navigate(
+            DeviceTimerRootFragmentDirections
+                .actionDeviceTimerRootFragmentToDeviceTimerChannelFragment(
+                    deviceUid = args.deviceUid,
+                    slotId = slotId
                 )
         )
     }
@@ -112,4 +143,5 @@ class DeviceTimerRootFragment : Fragment(R.layout.fragment_device_timer_root) {
         _binding = null
         super.onDestroyView()
     }
+
 }

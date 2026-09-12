@@ -70,7 +70,7 @@ class DeviceRootUiArchitectureGuardTest(unittest.TestCase):
 
         self.assertTrue(any("duplicate surface" in error for error in errors), errors)
 
-    def test_timer_entry_surface_rejects_body_content(self) -> None:
+    def test_timer_entry_surface_requires_compose_body(self) -> None:
         layout = """<?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android">
     <include android:id="@+id/appHeader" layout="@layout/layout_aqua_header" />
@@ -78,18 +78,22 @@ class DeviceRootUiArchitectureGuardTest(unittest.TestCase):
 </FrameLayout>
 """
 
-        errors = GUARD.validate_timer_empty_surface(
+        errors = GUARD.validate_timer_control_surface(
             layout,
             "class DeviceTimerRootFragment",
             'data class DeviceTimerRootUiState(val title: String = "")',
         )
 
-        self.assertTrue(any("body must remain empty" in error for error in errors), errors)
+        self.assertTrue(any("one ComposeView body" in error for error in errors), errors)
 
     def test_timer_entry_surface_rejects_direct_runtime_imports(self) -> None:
         layout = """<?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android">
     <include android:id="@+id/appHeader" layout="@layout/layout_aqua_header" />
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/timerDashboardCompose"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 </FrameLayout>
 """
         fragment = (
@@ -97,7 +101,7 @@ class DeviceRootUiArchitectureGuardTest(unittest.TestCase):
             "DeviceTimerRuntimeRepository\n"
         )
 
-        errors = GUARD.validate_timer_empty_surface(
+        errors = GUARD.validate_timer_control_surface(
             layout,
             fragment,
             "class DeviceTimerRootViewModel",
@@ -105,6 +109,20 @@ class DeviceRootUiArchitectureGuardTest(unittest.TestCase):
 
         self.assertTrue(
             any("bypasses application boundaries" in error for error in errors),
+            errors,
+        )
+
+    def test_timer_power_cannot_navigate_to_the_channel_surface(self) -> None:
+        fragment = "onPowerClick = { slotId -> openChannel(slotId, true) }"
+
+        errors = GUARD.validate_timer_control_surface(
+            "<FrameLayout />",
+            fragment,
+            "class DeviceTimerRootViewModel",
+        )
+
+        self.assertTrue(
+            any("direct persistent manual command" in error for error in errors),
             errors,
         )
 

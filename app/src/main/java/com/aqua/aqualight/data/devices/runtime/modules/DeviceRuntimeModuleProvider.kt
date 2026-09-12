@@ -27,11 +27,9 @@ import com.aqua.aqualight.data.devices.runtime.modules.light.isAuthoritative as 
 import com.aqua.aqualight.data.devices.runtime.modules.network.DeviceNetworkRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.security.DeviceSecurityRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.time.DeviceTimeRuntimeRepository
-import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerEventApplyResult
 import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerRuntimeAccess
 import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerRuntimeStateStore
-import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerTypedEventReducer
 import com.aqua.aqualight.data.devices.runtime.modules.timer.isAuthoritative as isTimerAuthoritative
 import com.aqua.aqualight.i18n.AppLanguageController
 import kotlinx.coroutines.delay
@@ -51,10 +49,6 @@ class DeviceRuntimeModuleProvider internal constructor(
     private val lightStateStore = DeviceLightRuntimeStateStore()
     private val lightEventReducer = DeviceLightTypedEventReducer(lightStateStore)
     private val timerStateStore = DeviceTimerRuntimeStateStore()
-    private val timerEventReducer = DeviceTimerTypedEventReducer(
-        timerStateStore,
-        timerAccessProvider
-    )
 
     val device = DeviceCommonRuntimeRepository(commandGateway)
     val security = DeviceSecurityRuntimeRepository(commandGateway, revokeLocalCredential)
@@ -148,18 +142,19 @@ class DeviceRuntimeModuleProvider internal constructor(
             }
         }
 
+        if (
+            event.type == DeviceRuntimeTypedEvent.Type.LIGHT_THERMAL_STATUS_CHANGED &&
+            event.payload is DeviceRuntimeEventPayload.CommandResult &&
+            event.payload.commandAction ==
+            DeviceLightRuntimeContract.Action.TEMPERATURE_PROTECTION_SET
+        ) {
+            lightTemperatureProtection.requestStatus(event.deviceUid)
+        }
+
         lightThermal.consume(event)
         cooling.consume(event)
 
-        val timerResult = timerEventReducer.apply(event)
-        if (timerResult is DeviceTimerEventApplyResult.RefreshRequired) {
-            val currentStatus = timer.states.value[event.deviceUid]?.status
-            if (currentStatus == null || currentStatus.channelScoped) {
-                timer.requestStatus(event.deviceUid)
-            } else {
-                timer.requestStatus(event.deviceUid, timerResult.channelKey)
-            }
-        }
+        timer.consume(event)
     }
 
     /** Permanent owner cleanup only; socket lifecycle must use [invalidateRuntimeAuthority]. */

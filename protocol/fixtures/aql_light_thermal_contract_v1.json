@@ -58,6 +58,17 @@
       {"temperatureC": 60.0, "targetPercent": 100.0}
     ]
   },
+  "lightCorrection": {
+    "sensorFaultScale": 0.0,
+    "updateIntervalMs": 60000,
+    "overTemperatureStep": 0.7,
+    "firstTrustedHotSampleImmediate": true,
+    "risingThresholdCrossingImmediate": true,
+    "crossCoreSnapshot": "ATOMIC_PACKED_TIMESTAMPED",
+    "snapshotStaleAfterMs": 10000,
+    "recoveryRestoresPreFaultScale": true,
+    "appliesToManualAndScheduledOutput": true
+  },
   "outputHealth": {
     "softwarePwmValues": ["OK", "FAULT"],
     "physicalHealthValues": ["UNVERIFIED", "HARDWARE_FAULT"],

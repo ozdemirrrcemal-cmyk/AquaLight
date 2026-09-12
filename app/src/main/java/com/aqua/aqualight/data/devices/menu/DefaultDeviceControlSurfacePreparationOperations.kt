@@ -14,6 +14,9 @@ import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingContr
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
+import com.aqua.aqualight.application.devices.light.DeviceLightControlOperations
+import com.aqua.aqualight.application.devices.light.DeviceLightControlResult
+import com.aqua.aqualight.application.devices.light.matchesLightControlSurface
 import com.aqua.aqualight.application.devices.timer.DeviceTimerControlOperations
 import com.aqua.aqualight.application.devices.timer.DeviceTimerControlResult
 import com.aqua.aqualight.application.devices.timer.DeviceTimerControlSnapshot
@@ -31,7 +34,8 @@ internal class DefaultDeviceControlSurfacePreparationOperations(
     private val rootOperations: DeviceRootOperations,
     private val dosingChannelOperations: DeviceDosingChannelOperations,
     private val coolingControlOperations: DeviceCoolingControlOperations,
-    private val timerControlOperations: DeviceTimerControlOperations
+    private val timerControlOperations: DeviceTimerControlOperations,
+    private val lightControlOperations: DeviceLightControlOperations
 ) : DeviceControlSurfacePreparationOperations {
 
     private val freshlyPreparedSurfaces = ConcurrentHashMap.newKeySet<PreparedSurface>()
@@ -44,7 +48,33 @@ internal class DefaultDeviceControlSurfacePreparationOperations(
         request.family == OwnerDeviceFamily.DOSING -> prepareDosing(request.deviceUid.trim())
         request.family == OwnerDeviceFamily.COOLING -> prepareCooling(request.deviceUid.trim())
         request.family == OwnerDeviceFamily.TIMER -> prepareTimer(request.deviceUid.trim())
+        request.family == OwnerDeviceFamily.LIGHT -> prepareLight(request.deviceUid.trim())
         else -> DeviceControlSurfacePreparationResult.Ready
+    }
+
+    private suspend fun prepareLight(
+        deviceUid: String
+    ): DeviceControlSurfacePreparationResult {
+        val preparedSurface = PreparedSurface(deviceUid, OwnerDeviceFamily.LIGHT)
+        freshlyPreparedSurfaces.remove(preparedSurface)
+        val root = rootOperations.current(deviceUid)
+        return when {
+            root == null -> unavailable(DeviceMenuUnavailableReason.DEVICE_NOT_REGISTERED)
+            !root.matchesLightCatalog() ->
+                unavailable(DeviceMenuUnavailableReason.COMMERCIAL_PRODUCT_MISMATCH)
+            else -> when (val control = lightControlOperations.refreshControl(deviceUid)) {
+                is DeviceLightControlResult.Failed ->
+                    unavailable(DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN)
+                is DeviceLightControlResult.Available -> {
+                    if (control.snapshot.matchesLightControlSurface(deviceUid, root)) {
+                        freshlyPreparedSurfaces += preparedSurface
+                        DeviceControlSurfacePreparationResult.Ready
+                    } else {
+                        unavailable(DeviceMenuUnavailableReason.COMMERCIAL_PRODUCT_MISMATCH)
+                    }
+                }
+            }
+        }
     }
 
     private suspend fun prepareDosing(
@@ -161,16 +191,12 @@ internal class DefaultDeviceControlSurfacePreparationOperations(
         dosingChannelOperations.current(deviceUid, slot.id.value)
     }
 
-    private fun unavailable(
-        reason: DeviceMenuUnavailableReason
-    ): DeviceControlSurfacePreparationResult.Unavailable =
-        DeviceControlSurfacePreparationResult.Unavailable(reason)
-
     private companion object {
         val PREPARED_FAMILIES = setOf(
             OwnerDeviceFamily.DOSING,
             OwnerDeviceFamily.COOLING,
-            OwnerDeviceFamily.TIMER
+            OwnerDeviceFamily.TIMER,
+            OwnerDeviceFamily.LIGHT
         )
     }
 }
@@ -194,18 +220,26 @@ private fun DeviceRootSnapshot.matchesCoolingCatalog(): Boolean =
         fanOutputCount == channelSlots.fanOutputs.size &&
         temperatureSensorCount == channelSlots.temperatureSensors.size
 
-@Suppress("ComplexCondition")
+private fun DeviceRootSnapshot.matchesLightCatalog(): Boolean = when {
+    catalogState != DeviceRootCatalogState.VALID -> false
+    family != OwnerDeviceFamily.LIGHT -> false
+    productKey.isBlank() -> false
+    channelSlots.lightChannels.isEmpty() -> false
+    else -> lightChannelCount == channelSlots.lightChannels.size
+}
+
 private fun DeviceTimerControlSnapshot.matchesTimerSurface(
     deviceUid: String,
     expectedSlots: List<DeviceTimerChannelSlot>
-): Boolean = this.deviceUid == deviceUid &&
-    channels.size == expectedSlots.size &&
-    channels.zip(expectedSlots).all { (channel, slot) ->
+): Boolean {
+    if (this.deviceUid != deviceUid || channels.size != expectedSlots.size) return false
+    return channels.zip(expectedSlots).all { (channel, slot) ->
         channel.slotId == slot.id.value &&
             channel.channelNumber == slot.index.position &&
             channel.defaultName == slot.defaultDisplayName &&
             channel.displayNameEditable == slot.displayNameEditable
     }
+}
 
 private fun List<DeviceDosingChannelSnapshot>.matches(
     deviceUid: String,
@@ -221,3 +255,8 @@ private fun List<DeviceDosingChannelSnapshot>.matches(
             channel.pumpCount == expectedSlots.size
     }
 }
+
+private fun unavailable(
+    reason: DeviceMenuUnavailableReason
+): DeviceControlSurfacePreparationResult.Unavailable =
+    DeviceControlSurfacePreparationResult.Unavailable(reason)

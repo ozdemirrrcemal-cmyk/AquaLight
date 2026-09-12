@@ -62,10 +62,22 @@ object AqlWsContract {
     const val ACTION_FIRMWARE_OTA_CLEAR = "ota.clear"
 
     const val ACTION_LIGHT_STATUS_GET = ACTION_STATUS_GET
+    const val ACTION_LIGHT_CONTROL_SET = "control.set"
     const val ACTION_LIGHT_MANUAL_SET = "manual.set"
-    const val ACTION_LIGHT_CHANNEL_REGIME_SET = "channel.regime.set"
-    const val ACTION_LIGHT_PROGRAM_APPLY = "program.apply"
-    const val ACTION_LIGHT_PROGRAM_DELETE = "program.delete"
+    const val ACTION_LIGHT_MANUAL_OFF = "manual.off"
+    const val ACTION_LIGHT_AUTO_PROGRAMS_GET = "auto.programs.get"
+    const val ACTION_LIGHT_AUTO_PROGRAM_CREATE = "auto.program.create"
+    const val ACTION_LIGHT_AUTO_PROGRAM_UPDATE = "auto.program.update"
+    const val ACTION_LIGHT_AUTO_PROGRAM_ENABLED_SET = "auto.program.enabled.set"
+    const val ACTION_LIGHT_AUTO_PROGRAM_DELETE = "auto.program.delete"
+    const val ACTION_LIGHT_CUSTOM_GET = "custom.get"
+    const val ACTION_LIGHT_CUSTOM_INSTALL = "custom.install"
+    const val ACTION_LIGHT_ACCLIMATION_STATUS_GET = "acclimation.status.get"
+    const val ACTION_LIGHT_ACCLIMATION_START = "acclimation.start"
+    const val ACTION_LIGHT_ACCLIMATION_STOP = "acclimation.stop"
+    const val ACTION_LIGHT_GRAPH_GET = "graph.get"
+    const val ACTION_LIGHT_PREVIEW_SET = "preview.set"
+    const val ACTION_LIGHT_PREVIEW_CLEAR = "preview.clear"
     const val ACTION_LIGHT_TEMPERATURE_PROTECTION_STATUS_GET =
         "temperature-protection.status.get"
     const val ACTION_LIGHT_TEMPERATURE_PROTECTION_SET = "temperature-protection.set"
@@ -172,10 +184,22 @@ object AqlWsContract {
         commandKey(MODULE_FIRMWARE, ACTION_FIRMWARE_OTA_CLEAR),
         commandKey(MODULE_FIRMWARE, ACTION_FIRMWARE_STATUS_GET),
         commandKey(MODULE_LIGHT, ACTION_LIGHT_STATUS_GET),
+        commandKey(MODULE_LIGHT, ACTION_LIGHT_CONTROL_SET),
         commandKey(MODULE_LIGHT, ACTION_LIGHT_MANUAL_SET),
-        commandKey(MODULE_LIGHT, ACTION_LIGHT_CHANNEL_REGIME_SET),
-        commandKey(MODULE_LIGHT, ACTION_LIGHT_PROGRAM_APPLY),
-        commandKey(MODULE_LIGHT, ACTION_LIGHT_PROGRAM_DELETE),
+        commandKey(MODULE_LIGHT, ACTION_LIGHT_MANUAL_OFF),
+        commandKey(MODULE_LIGHT, ACTION_LIGHT_AUTO_PROGRAMS_GET),
+        commandKey(MODULE_LIGHT, ACTION_LIGHT_AUTO_PROGRAM_CREATE),
+        commandKey(MODULE_LIGHT, ACTION_LIGHT_AUTO_PROGRAM_UPDATE),
+        commandKey(MODULE_LIGHT, ACTION_LIGHT_AUTO_PROGRAM_ENABLED_SET),
+        commandKey(MODULE_LIGHT, ACTION_LIGHT_AUTO_PROGRAM_DELETE),
+        commandKey(MODULE_LIGHT, ACTION_LIGHT_CUSTOM_GET),
+        commandKey(MODULE_LIGHT, ACTION_LIGHT_CUSTOM_INSTALL),
+        commandKey(MODULE_LIGHT, ACTION_LIGHT_ACCLIMATION_STATUS_GET),
+        commandKey(MODULE_LIGHT, ACTION_LIGHT_ACCLIMATION_START),
+        commandKey(MODULE_LIGHT, ACTION_LIGHT_ACCLIMATION_STOP),
+        commandKey(MODULE_LIGHT, ACTION_LIGHT_GRAPH_GET),
+        commandKey(MODULE_LIGHT, ACTION_LIGHT_PREVIEW_SET),
+        commandKey(MODULE_LIGHT, ACTION_LIGHT_PREVIEW_CLEAR),
         commandKey(MODULE_LIGHT, ACTION_LIGHT_TEMPERATURE_PROTECTION_STATUS_GET),
         commandKey(MODULE_LIGHT, ACTION_LIGHT_TEMPERATURE_PROTECTION_SET),
         commandKey(MODULE_LIGHT, ACTION_LIGHT_THERMAL_STATUS_GET),

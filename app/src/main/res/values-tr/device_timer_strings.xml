@@ -31,4 +31,107 @@
 
     <string name="device_timer_status_clock_unavailable_title">Cihaz saati hazır değil</string>
     <string name="device_timer_status_clock_unavailable_message">Zamanlayıcı güvenilir yerel saati alana kadar otomatik programlar beklemede kalır. Manuel kanal kontrolü kullanılabilir.</string>
+
+    <string name="device_timer_dashboard_channels_title">Kanallar</string>
+    <plurals name="device_timer_dashboard_active_summary">
+        <item quantity="one">Açık çıkış: %1$d / %2$d</item>
+        <item quantity="other">Açık çıkış: %1$d / %2$d</item>
+    </plurals>
+    <string name="device_timer_dashboard_independent_message">Her çıkış bağımsız olarak kontrol edilir.</string>
+    <string name="device_timer_dashboard_read_only">Yalnızca görüntüleme</string>
+    <string name="device_timer_channels_empty_title">Kullanılabilir kanal yok</string>
+    <string name="device_timer_channels_empty_message">Zamanlayıcı kullanılabilir bir kanal bildirmedi. Devam etmeden önce cihaz durumunu yenileyin.</string>
+    <string name="device_timer_channel_card_content_description">Kanal %1$d, %2$s, %3$s</string>
+    <string name="device_timer_channel_details_description">%1$s programlarını ve ayarlarını aç</string>
+    <string name="device_timer_state_on">AÇIK</string>
+    <string name="device_timer_state_off">KAPALI</string>
+    <string name="device_timer_mode_auto">Programa göre</string>
+    <string name="device_timer_mode_on">Daima açık</string>
+    <string name="device_timer_mode_off">Kapalı</string>
+    <string name="device_timer_mode_content_description">Çalışma modunu %1$s olarak ayarla</string>
+    <string name="device_timer_schedule_none">Program yok</string>
+    <string name="device_timer_active_schedule">Etkin · %1$s</string>
+    <plurals name="device_timer_schedule_count">
+        <item quantity="one">%d program</item>
+        <item quantity="other">%d program</item>
+    </plurals>
+    <string name="device_timer_next_on">%1$s saatinde açılır</string>
+    <string name="device_timer_next_off">%1$s saatinde kapanır</string>
+    <string name="device_timer_next_none">Yaklaşan geçiş yok</string>
+    <string name="device_timer_manual_programs_paused">Manuel modda programlar beklemede</string>
+    <string name="device_timer_temporary_on">Geçici olarak açık · %1$s kaldı</string>
+    <string name="device_timer_temporary_off">Geçici olarak kapalı · %1$s kaldı</string>
+    <plurals name="device_timer_duration_minutes">
+        <item quantity="one">%d dakika</item>
+        <item quantity="other">%d dakika</item>
+    </plurals>
+    <string name="device_timer_output_fault">Çıkışı kontrol edin</string>
+    <string name="device_timer_updating">Güncelleniyor…</string>
+    <string name="device_timer_manage_programs">Programları yönet</string>
+    <string name="device_timer_timed_on">Süreli aç</string>
+    <string name="device_timer_timed_off">Süreli kapat</string>
+    <string name="device_timer_manual_power_turn_on_description">Kanalı manuel aç</string>
+    <string name="device_timer_manual_power_turn_off_description">Kanalı manuel kapat</string>
+    <string name="device_timer_program_power_turn_on_description">Programı değiştirmeden kanalı geçici olarak aç</string>
+    <string name="device_timer_program_power_turn_off_description">Programı değiştirmeden kanalı geçici olarak kapat</string>
+    <string name="device_timer_manual_control_title">Süreli kontrol</string>
+    <string name="device_timer_manual_control_message">Geçici kontrol sona erdiğinde kanal seçili çalışma biçimine geri döner.</string>
+    <string name="device_timer_manual_duration_label">Süre seçin</string>
+    <string name="device_timer_duration_15_minutes">15 dk.</string>
+    <string name="device_timer_duration_30_minutes">30 dk.</string>
+    <string name="device_timer_duration_1_hour">1 sa.</string>
+    <string name="device_timer_duration_custom">Özel</string>
+    <string name="device_timer_manual_start">Başlat</string>
+    <string name="device_timer_resume_program">Seçili biçimi sürdür</string>
+    <string name="device_timer_manual_custom_duration_title">Özel süre</string>
+    <string name="device_timer_timed_duration_helper">Geçici kontrol en fazla 24 saat çalışır. Süre sona erdiğinde kanal kalıcı çalışma moduna geri döner.</string>
+    <string name="device_timer_duration_value_format">%d dk.</string>
+    <string name="device_timer_duration_decrease">Süreyi azalt</string>
+    <string name="device_timer_duration_increase">Süreyi artır</string>
+    <string name="device_timer_apply">Uygula</string>
+    <string name="device_timer_cancel">Vazgeç</string>
+    <string name="device_timer_channel_programs">Programlar</string>
+    <string name="device_timer_channel_temporary_control">Süreli kontrol</string>
+    <string name="device_timer_temporary_inactive">Etkin değil</string>
+    <string name="device_timer_channel_work_mode">Çalışma biçimi</string>
+    <string name="device_timer_work_mode_title">Çalışma biçimi</string>
+    <string name="device_timer_work_mode_manual">Manuel</string>
+    <string name="device_timer_work_mode_program">Program</string>
+    <string name="device_timer_channel_name">Kanal adı</string>
+    <string name="device_timer_channel_name_title">Kanal adı</string>
+    <string name="device_timer_channel_name_label">Ad</string>
+    <string name="device_timer_channel_name_helper">Varsayılan kanal adını cihaz sağlar. Yerine kullanmak için tek bir ad girin veya cihaz varsayılanına dönün.</string>
+    <string name="device_timer_channel_name_required">Kanal adını girin.</string>
+    <string name="device_timer_channel_name_invalid">Kontrol karakteri içermeyen ve cihazda en fazla 48 bayt kaplayan bir kanal adı kullanın.</string>
+    <string name="device_timer_channel_name_reset">Cihaz varsayılanını kullan</string>
+    <string name="device_timer_program_title">Programlar</string>
+    <string name="device_timer_program_title_for_channel">%1$s programları</string>
+    <string name="device_timer_program_save">Kaydet</string>
+    <string name="device_timer_program_saved">Programlar kaydedildi</string>
+    <plurals name="device_timer_program_capacity">
+        <item quantity="one">Bu kanala en fazla %d program eklenebilir</item>
+        <item quantity="other">Bu kanala en fazla %d program eklenebilir</item>
+    </plurals>
+    <string name="device_timer_program_add">Program ekle</string>
+    <string name="device_timer_program_limit_reached">Program sınırına ulaşıldı</string>
+    <string name="device_timer_program_enabled_value">Etkin</string>
+    <string name="device_timer_program_disabled_value">Devre dışı</string>
+    <string-array name="device_timer_weekday_short_labels">
+        <item>Pzt</item><item>Sal</item><item>Çar</item><item>Per</item><item>Cum</item><item>Cmt</item><item>Paz</item>
+    </string-array>
+    <string name="device_timer_program_start">Başlangıç</string>
+    <string name="device_timer_program_end">Bitiş</string>
+    <string name="device_timer_program_spans_midnight">Ertesi güne devam eder</string>
+    <string name="device_timer_program_delete">Programı sil</string>
+    <string name="device_timer_program_default_name">Program %1$d</string>
+    <string name="device_timer_program_name_sheet_title">Program adı</string>
+    <string name="device_timer_program_name_sheet_label">Ad</string>
+    <string name="device_timer_program_name_sheet_hint">Örneğin, Gündüz döngüsü</string>
+    <string name="device_timer_program_name_sheet_helper">Kısa bir ad kullanın. Bazı özel karakterler cihazdaki ad sınırını daha hızlı doldurabilir.</string>
+    <string name="device_timer_program_name_required">Program adını girin.</string>
+    <string name="device_timer_program_start_sheet_title">Başlangıç saati</string>
+    <string name="device_timer_program_end_sheet_title">Bitiş saati</string>
+    <string name="device_timer_program_time_sheet_message">Cihazın kullanacağı saat ve dakikayı seçin.</string>
+    <string name="device_timer_program_invalid">Kaydetmeden önce program adını, günleri ve saat aralığını kontrol edin.</string>
+    <string name="device_timer_program_overlap">İki etkin programın zaman aralığı çakışıyor. Kaydetmeden önce günleri veya saatleri düzenleyin.</string>
 </resources>

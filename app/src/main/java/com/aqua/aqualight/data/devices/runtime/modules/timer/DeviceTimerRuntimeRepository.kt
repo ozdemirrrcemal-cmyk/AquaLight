@@ -4,6 +4,7 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
+import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeTypedEvent
 import com.aqua.aqualight.data.devices.runtime.modules.common.DeviceRuntimeJsonCommand
 import kotlinx.coroutines.flow.StateFlow
 import org.json.JSONObject
@@ -14,6 +15,9 @@ class DeviceTimerRuntimeRepository internal constructor(
     internal val stateStore: DeviceTimerRuntimeStateStore,
     private val accessProvider: (DeviceUid) -> DeviceTimerRuntimeAccess
 ) {
+    private val eventReducer = DeviceTimerTypedEventReducer(stateStore, accessProvider)
+    private val mutationGate = DeviceTimerMutationGate()
+
     val states: StateFlow<Map<DeviceUid, DeviceTimerRuntimeState>> = stateStore.states
 
     internal fun beginGeneration(
@@ -25,6 +29,29 @@ class DeviceTimerRuntimeRepository internal constructor(
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration? = null
     ) = stateStore.invalidate(deviceUid, generation)
+
+    /** Typed firmware events reconcile through this facade and the single central state owner. */
+    internal suspend fun consume(event: DeviceRuntimeTypedEvent) {
+        when (val result = eventReducer.apply(event)) {
+            DeviceTimerEventApplyResult.Applied,
+            DeviceTimerEventApplyResult.Ignored -> Unit
+            is DeviceTimerEventApplyResult.RefreshRequired ->
+                reconcileEvent(event.deviceUid, result.channelKey)
+            is DeviceTimerEventApplyResult.Malformed -> {
+                stateStore.requireStatusRefresh(event.deviceUid, event.generation)
+                requestStatus(event.deviceUid)
+            }
+        }
+    }
+
+    private suspend fun reconcileEvent(deviceUid: DeviceUid, channelKey: String) {
+        val currentStatus = states.value[deviceUid]?.status
+        if (currentStatus == null || currentStatus.channelScoped) {
+            requestStatus(deviceUid)
+        } else {
+            requestStatus(deviceUid, channelKey)
+        }
+    }
 
     suspend fun requestStatus(
         deviceUid: DeviceUid,
@@ -60,9 +87,11 @@ class DeviceTimerRuntimeRepository internal constructor(
     suspend fun applyConfig(
         deviceUid: DeviceUid,
         payload: DeviceTimerConfigApplyPayload
-    ): DeviceRuntimeCommandOutcome<DeviceTimerConfigApplyResult> {
+    ): DeviceRuntimeCommandOutcome<DeviceTimerConfigApplyResult> = mutationGate.withDevice(
+        deviceUid
+    ) {
         val access = accessProvider(deviceUid)
-        return if (configUnsupported(payload, access)) {
+        if (configUnsupported(payload, access)) {
             timerUnsupported(deviceUid, DeviceTimerRuntimeContract.Action.CONFIG_APPLY)
         } else when (val result = ensureGlobalStatus(deviceUid)) {
             is TimerStatusBaseline.Failed -> result.outcome.asFailure()
@@ -92,16 +121,7 @@ class DeviceTimerRuntimeRepository internal constructor(
                         }
                     )
                 )
-                if (outcome is DeviceRuntimeCommandOutcome.Success) {
-                    stateStore.recordMutationChannel(
-                        deviceUid,
-                        outcome.generation,
-                        outcome.value.channel,
-                        outcome.value.revision
-                    )
-                    requestStatus(deviceUid, outcome.value.channelKey)
-                }
-                outcome
+                reconcileConfigMutation(deviceUid, payload, outcome)
             }
         }
     }
@@ -109,9 +129,11 @@ class DeviceTimerRuntimeRepository internal constructor(
     suspend fun setChannel(
         deviceUid: DeviceUid,
         payload: DeviceTimerChannelSetPayload
-    ): DeviceRuntimeCommandOutcome<DeviceTimerChannelSetResult> {
+    ): DeviceRuntimeCommandOutcome<DeviceTimerChannelSetResult> = mutationGate.withDevice(
+        deviceUid
+    ) {
         val access = accessProvider(deviceUid)
-        return if (!access.supportsApi || !access.supportsChannelState) {
+        if (!access.supportsApi || !access.supportsChannelState) {
             timerUnsupported(deviceUid, DeviceTimerRuntimeContract.Action.CHANNEL_SET)
         } else when (val result = ensureGlobalStatus(deviceUid)) {
             is TimerStatusBaseline.Failed -> result.outcome.asFailure()
@@ -141,18 +163,131 @@ class DeviceTimerRuntimeRepository internal constructor(
                         }
                     )
                 )
-                if (outcome is DeviceRuntimeCommandOutcome.Success) {
-                    stateStore.recordMutationChannel(
-                        deviceUid,
-                        outcome.generation,
-                        outcome.value.channel,
-                        outcome.value.revision
-                    )
-                    requestStatus(deviceUid, outcome.value.channelKey)
-                }
-                outcome
+                reconcileChannelMutation(deviceUid, payload, outcome)
             }
         }
+    }
+
+    private suspend fun reconcileConfigMutation(
+        deviceUid: DeviceUid,
+        payload: DeviceTimerConfigApplyPayload,
+        outcome: DeviceRuntimeCommandOutcome<DeviceTimerConfigApplyResult>
+    ): DeviceRuntimeCommandOutcome<DeviceTimerConfigApplyResult> = reconcileMutation(
+        deviceUid = deviceUid,
+        channelKey = payload.normalizedChannelKey,
+        outcome = outcome,
+        reconciliation = TimerMutationReconciliation(
+            channel = DeviceTimerConfigApplyResult::channel,
+            revision = DeviceTimerConfigApplyResult::revision,
+            confirms = { _, status ->
+                val channel = status.channels.singleOrNull()
+                val displayNameConfirmed = when (val update = payload.displayName) {
+                    DeviceTimerDisplayNameUpdate.Omitted -> true
+                    DeviceTimerDisplayNameUpdate.Clear -> channel?.displayName == channel?.name
+                    is DeviceTimerDisplayNameUpdate.Value ->
+                        channel?.displayName == update.normalizedDisplayName
+                }
+                val schedulesConfirmed = payload.schedules
+                    ?.matchesTimerSchedules(status.schedules) ?: true
+                displayNameConfirmed && schedulesConfirmed
+            }
+        )
+    )
+
+    private suspend fun reconcileChannelMutation(
+        deviceUid: DeviceUid,
+        payload: DeviceTimerChannelSetPayload,
+        outcome: DeviceRuntimeCommandOutcome<DeviceTimerChannelSetResult>
+    ): DeviceRuntimeCommandOutcome<DeviceTimerChannelSetResult> = reconcileMutation(
+        deviceUid = deviceUid,
+        channelKey = payload.normalizedChannelKey,
+        outcome = outcome,
+        reconciliation = TimerMutationReconciliation(
+            channel = DeviceTimerChannelSetResult::channel,
+            revision = DeviceTimerChannelSetResult::revision,
+            confirms = { _, status ->
+                val channel = status.channels.singleOrNull()
+                if (payload.durationMs == null) {
+                    channel?.regime == payload.regime
+                } else {
+                    channel?.temporaryOverrideActive == true &&
+                        channel.operatingState == payload.regime.toTimerOperatingStateOrNull()
+                }
+            }
+        )
+    )
+
+    /**
+     * ACK and rejection reconciliation stays inside the central Timer facade. There is no command
+     * replay: a successful mutation must be confirmed by a same-generation scoped readback, while
+     * failures that can leave cached state uncertain revoke reads until one fresh snapshot lands.
+     */
+    private suspend fun <T> reconcileMutation(
+        deviceUid: DeviceUid,
+        channelKey: String,
+        outcome: DeviceRuntimeCommandOutcome<T>,
+        reconciliation: TimerMutationReconciliation<T>
+    ): DeviceRuntimeCommandOutcome<T> {
+        if (outcome !is DeviceRuntimeCommandOutcome.Success) {
+            reconcileRejectedMutation(deviceUid, channelKey, outcome)
+            return outcome
+        }
+        val mutation = outcome
+        val value = mutation.value
+        stateStore.recordMutationChannel(
+            deviceUid,
+            mutation.generation,
+            reconciliation.channel(value),
+            reconciliation.revision(value)
+        )
+        return when (val readback = requestStatus(deviceUid, channelKey)) {
+            is DeviceRuntimeCommandOutcome.Success -> if (
+                mutation.isConfirmedBy(deviceUid, channelKey, readback, reconciliation)
+            ) {
+                mutation
+            } else {
+                stateStore.invalidate(deviceUid, mutation.generation)
+                mutation.timerReconciliationFailure()
+            }
+            else -> {
+                stateStore.invalidate(deviceUid, mutation.generation)
+                readback.asFailure()
+            }
+        }
+    }
+
+    private suspend fun reconcileRejectedMutation(
+        deviceUid: DeviceUid,
+        channelKey: String,
+        outcome: DeviceRuntimeCommandOutcome<*>
+    ) {
+        val failure = outcome as? DeviceRuntimeCommandOutcome.FirmwareError ?: return
+        if (!failure.requiresTimerReconciliation()) return
+        stateStore.requireStatusRefresh(deviceUid, failure.generation)
+        val global = requestStatus(deviceUid)
+        if (
+            global is DeviceRuntimeCommandOutcome.Success &&
+            global.generation == failure.generation &&
+            global.value.channels.any { channel -> channel.key == channelKey }
+        ) {
+            requestStatus(deviceUid, channelKey)
+        }
+    }
+
+    private fun <T> DeviceRuntimeCommandOutcome.Success<T>.isConfirmedBy(
+        deviceUid: DeviceUid,
+        channelKey: String,
+        readback: DeviceRuntimeCommandOutcome.Success<DeviceTimerStatus>,
+        reconciliation: TimerMutationReconciliation<T>
+    ): Boolean {
+        val accepted = stateStore.currentAuthoritativeState(deviceUid)
+        return readback.generation == generation &&
+            readback.value.channelScoped &&
+            readback.value.selectedChannelKey == channelKey &&
+            readback.value.revision == reconciliation.revision(value) &&
+            accepted?.connectionGeneration == readback.generation &&
+            accepted.channelDetails[channelKey] == readback.value &&
+            reconciliation.confirms(value, readback.value)
     }
 
     suspend fun setChannelRegime(
@@ -242,21 +377,18 @@ class DeviceTimerRuntimeRepository internal constructor(
     suspend fun replaceSchedules(
         deviceUid: DeviceUid,
         channelKey: String,
+        expectedRevision: Long,
         schedules: List<DeviceTimerScheduleConfig>,
         save: Boolean = true
-    ): DeviceRuntimeCommandOutcome<DeviceTimerConfigApplyResult> = withGlobalStatus(
-        deviceUid
-    ) { status ->
-        applyConfig(
-            deviceUid,
-            DeviceTimerConfigApplyPayload(
-                channelKey = channelKey,
-                expectedRevision = status.revision,
-                schedules = schedules,
-                save = save
-            )
+    ): DeviceRuntimeCommandOutcome<DeviceTimerConfigApplyResult> = applyConfig(
+        deviceUid,
+        DeviceTimerConfigApplyPayload(
+            channelKey = channelKey,
+            expectedRevision = expectedRevision,
+            schedules = schedules,
+            save = save
         )
-    }
+    )
 
     suspend fun createSchedule(
         deviceUid: DeviceUid,
@@ -423,3 +555,9 @@ private fun <T> DeviceRuntimeCommandOutcome<*>.asFailure(): DeviceRuntimeCommand
     check(this !is DeviceRuntimeCommandOutcome.Success<*>)
     return this as DeviceRuntimeCommandOutcome<T>
 }
+
+private data class TimerMutationReconciliation<T>(
+    val channel: (T) -> DeviceTimerChannelStatus,
+    val revision: (T) -> Long,
+    val confirms: (T, DeviceTimerStatus) -> Boolean
+)

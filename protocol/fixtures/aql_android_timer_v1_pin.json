@@ -10,6 +10,7 @@
       "src/modules/timer/AqlTimerService.hpp": "f0b7a64487dec5a14d571966a14274223dc6c743",
       "src/modules/timer/AqlTimerEventQueue.hpp": "b43ea84c29d834f6508352d4002a2ce314dd777c",
       "src/modules/timer/AqlTimerScheduleMath.hpp": "ce11604c6d3470a359a48fde2dae6fa94c330468",
+      "src/protocol/ws/AqlWsProtocol.hpp": "6ccde40213d698843320a06fb88f783d18f34c90",
       "src/server/AqlRealtimeServer.cpp": "e177f1290f75de40d19f867b838c92a00dd53cb9",
       "tools/check_timer_contract_v1.py": "687c23b01c27fac589cf71722c32dcf65f4af645",
       "docs/ANDROID_FIRMWARE_CONTRACT.md": "a7850ddb7ce754c23a964a58c2ac7faedb63e231"
@@ -25,11 +26,12 @@
   },
   "wireGolden": {
     "fixture": "aql_timer_wire_v1_golden.json",
-    "sha256": "d3d43b8e0755751c1f5a291880954eb128fb570fe52e635042c7b0e884260315",
-    "androidBlobSha": "dd104ee7f6a42462b122cd44d605920849678f4e",
+    "sha256": "43db4a4d26766b0e8d0ee9d26a8a4154b8ecabdf6eb41d332b51f33a12dd4501",
+    "androidBlobSha": "7cc50c849a330a31143cfb34eaa22ce8992232fd",
     "derivedFrom": [
       "src/api/v1/commands/AqlTimerCommands.hpp",
       "src/modules/timer/AqlTimerService.hpp",
+      "src/protocol/ws/AqlWsProtocol.hpp",
       "src/server/AqlRealtimeServer.cpp"
     ]
   }

@@ -1,0 +1,76 @@
+{
+  "schema": "aqualight.light.graph.v1",
+  "storageVersion": 1,
+  "productKey": "LIGHT_WRGB_PRO_ELITE",
+  "productTuples": {
+    "LIGHT_WRGB_PRO_ELITE": [
+      "timeMs",
+      "redPermille",
+      "greenPermille",
+      "bluePermille",
+      "whitePermille"
+    ],
+    "LIGHT_RGB_PRO_SLIM": [
+      "timeMs",
+      "redPermille",
+      "greenPermille",
+      "bluePermille"
+    ]
+  },
+  "readCommand": {
+    "name": "light.graph.get",
+    "requestFields": [],
+    "readOnly": true,
+    "selectedModeOnly": true,
+    "currentTrustedLocalDayOnly": true
+  },
+  "responseFields": [
+    "mode",
+    "available",
+    "reason",
+    "sourceRevision",
+    "schedulerGeneration",
+    "localDate",
+    "currentWeekdayMask",
+    "nowTimeMs",
+    "basis",
+    "channelScale",
+    "hasScheduleToday",
+    "points",
+    "autoSpans"
+  ],
+  "pointTuple": [
+    "timeMs",
+    "redPermille",
+    "greenPermille",
+    "bluePermille",
+    "whitePermille"
+  ],
+  "autoSpanTuple": [
+    "startTimeMsWithinToday",
+    "endTimeMsWithinToday",
+    "programId"
+  ],
+  "reasons": [
+    "OK",
+    "MODE_HAS_NO_SCHEDULE",
+    "RTC_NOT_READY",
+    "NO_ENABLED_AUTO_PROGRAM_TODAY",
+    "CUSTOM_NOT_INSTALLED",
+    "CUSTOM_NOT_SCHEDULED_TODAY"
+  ],
+  "basisValues": ["AUTHORED_SCHEDULE", "NONE"],
+  "channelScale": 1000,
+  "xAxis": {"minimumMs": 0, "maximumMs": 86400000},
+  "semantics": {
+    "manualSyntheticCurve": false,
+    "enabledAutoProgramsOnly": true,
+    "overnightCarryProjectedByFirmware": true,
+    "autoSpansPreserveProgramId": true,
+    "customUsesInstalledDocument": true,
+    "acclimationRewritesGeometry": false,
+    "thermalRewritesGeometry": false,
+    "powerLimiterRewritesGeometry": false,
+    "rtcUnavailableIsSuccessfulEmptyRead": true
+  }
+}

@@ -54,6 +54,8 @@ import com.aqua.aqualight.ui.tabs.devices.detail.dosing.root.DeviceDosingRootVie
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.settings.DeviceFamilySettingsViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.timer.channel.DeviceTimerChannelViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.timer.program.DeviceTimerProgramViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.update.DeviceFirmwareUpdateViewModel
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
@@ -168,7 +170,9 @@ internal class OwnerViewModelFactory(
                 textResolver = maintenanceTextResolver
             )
             DeviceLightRootViewModel::class.java -> DeviceLightRootViewModel(
-                rootOperations = DefaultDeviceRootOperations(repository)
+                rootOperations = DefaultDeviceRootOperations(repository),
+                lightControlOperations = graph.lightControlOperations,
+                controlSurfacePreparationOperations = graph.controlSurfacePreparationOperations
             )
             DeviceCoolingRootViewModel::class.java -> DeviceCoolingRootViewModel(
                 operations = DefaultDeviceRootOperations(repository),
@@ -204,6 +208,10 @@ internal class OwnerViewModelFactory(
                     timerControlOperations = graph.timerControlOperations,
                     controlSurfacePreparationOperations = graph.controlSurfacePreparationOperations
                 )
+            DeviceTimerProgramViewModel::class.java ->
+                DeviceTimerProgramViewModel(graph.timerControlOperations)
+            DeviceTimerChannelViewModel::class.java ->
+                DeviceTimerChannelViewModel(graph.timerControlOperations)
             DeviceDosingRootViewModel::class.java -> graph.dosingOperations.let { dosing ->
                 DeviceDosingRootViewModel(
                     operations = DefaultDeviceRootOperations(repository),
@@ -294,6 +302,8 @@ internal class OwnerViewModelFactory(
             DeviceCoolingManualSettingsViewModel::class.java,
             DeviceCoolingProgramSettingsViewModel::class.java,
             DeviceTimerRootViewModel::class.java,
+            DeviceTimerChannelViewModel::class.java,
+            DeviceTimerProgramViewModel::class.java,
             DeviceDosingRootViewModel::class.java,
             DeviceDosingChannelCalibrationViewModel::class.java,
             DeviceDosingChannelDetailViewModel::class.java,

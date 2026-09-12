@@ -1,0 +1,336 @@
+{
+  "schema": "aqualight.light.v1",
+  "storageVersion": 1,
+  "productKey": "LIGHT_WRGB_PRO_ELITE",
+  "channelCount": 4,
+  "channels": ["redPercent", "greenPercent", "bluePercent", "whitePercent"],
+  "channelDescriptors": [
+    {"key": "red", "percentField": "redPercent", "displayName": "Red", "displayColorRgb": 16711680, "order": 0},
+    {"key": "green", "percentField": "greenPercent", "displayName": "Green", "displayColorRgb": 65280, "order": 1},
+    {"key": "blue", "percentField": "bluePercent", "displayName": "Blue", "displayColorRgb": 255, "order": 2},
+    {"key": "white", "percentField": "whitePercent", "displayName": "White", "displayColorRgb": 16777215, "order": 3}
+  ],
+  "lightFeatures": {
+    "acclimation": true,
+    "fanControl": true,
+    "temperatureSensor": true,
+    "thermal": true,
+    "estimatedPower": true,
+    "estimatedColor": true
+  },
+  "modes": ["MANUAL", "AUTO", "CUSTOM"],
+  "commands": [
+    "light.status.get",
+    "light.control.set",
+    "light.manual.set",
+    "light.manual.off",
+    "light.auto.programs.get",
+    "light.auto.program.create",
+    "light.auto.program.update",
+    "light.auto.program.enabled.set",
+    "light.auto.program.delete",
+    "light.custom.get",
+    "light.custom.install",
+    "light.acclimation.status.get",
+    "light.acclimation.start",
+    "light.acclimation.stop",
+    "light.graph.get",
+    "light.preview.set",
+    "light.preview.clear"
+  ],
+  "forbidden": {
+    "modes": ["OFF"],
+    "commands": [
+      "light.manual.on",
+      "light.auto.set",
+      "light.auto.clear",
+      "light.custom.set",
+      "light.custom.clear",
+      "light.channel.regime.set",
+      "light.program.apply",
+      "light.program.delete",
+      "light.auto.program.duplicate"
+    ],
+    "fields": [
+      "masterPower",
+      "manualEnabled",
+      "intensityPercent",
+      "programIndex",
+      "name",
+      "title",
+      "role",
+      "profileId",
+      "moonlight"
+    ],
+    "outputReasons": ["MASTER_OFF"]
+  },
+  "manual": {
+    "completeSceneReplacement": true,
+    "offWritesZeroScene": true,
+    "previewPersistent": false
+  },
+  "auto": {
+    "capacity": 16,
+    "initialRevision": 0,
+    "programIdPattern": "^ap-[0-9a-f]{8}$",
+    "programIdSequenceMinimum": 1,
+    "programIdReuse": false,
+    "timeStepMs": 60000,
+    "weekdays": {
+      "MONDAY": 64,
+      "TUESDAY": 32,
+      "WEDNESDAY": 16,
+      "THURSDAY": 8,
+      "FRIDAY": 4,
+      "SATURDAY": 2,
+      "SUNDAY": 1,
+      "EVERY_DAY": 127
+    },
+    "rampDurationsMs": [0, 1800000, 3600000, 5400000, 7200000, 9000000],
+    "programFields": [
+      "programId",
+      "enabled",
+      "weekdaysMask",
+      "startTimeMs",
+      "endTimeMs",
+      "rampDurationMs",
+      "scene"
+    ],
+    "overlap": {
+      "enabledOnly": true,
+      "halfOpen": true,
+      "overnight": true,
+      "weeklyBoundary": true,
+      "structuredReason": "AUTO_PROGRAM_OVERLAP"
+    }
+  },
+  "custom": {
+    "installedDocumentCount": 1,
+    "initialRevision": 0,
+    "pointCapacity": 96,
+    "pointTuple": [
+      "timeMs",
+      "redPercent",
+      "greenPercent",
+      "bluePercent",
+      "whitePercent"
+    ],
+    "sharedWeekdaysMask": true,
+    "strictlyIncreasingTimes": true,
+    "midnightWrapInterpolation": "LINEAR",
+    "clearCommand": null
+  },
+  "acclimation": {
+    "supported": true,
+    "states": ["DISABLED", "ACTIVE", "COMPLETED"],
+    "startPercent": {"minimum": 20, "maximum": 90, "step": 5, "default": 50},
+    "durationDays": {"minimum": 7, "maximum": 90, "step": 1, "default": 30},
+    "targetPercent": 100,
+    "clock": "AqlTimeService",
+    "continuousElapsedTime": true,
+    "manualBypass": true,
+    "naturalCompletionDurable": true,
+    "persistentEpochFields": [
+      "startedAtEpochSeconds",
+      "endsAtEpochSeconds"
+    ]
+  },
+  "status": {
+    "autoIsSummaryOnly": true,
+    "rootFields": [
+      "schema",
+      "storageVersion",
+      "productKey",
+      "channelScale",
+      "channels",
+      "features",
+      "mode",
+      "outputActive",
+      "outputReason",
+      "requested",
+      "effective",
+      "scales",
+      "electricalDesign",
+      "power",
+      "color",
+      "preview",
+      "manual",
+      "policy",
+      "scheduler",
+      "auto",
+      "custom",
+      "acclimation",
+      "runtime"
+    ],
+    "electricalDesignFields": [
+      "available",
+      "contractRevision",
+      "fixtureLengthMm",
+      "maximumFixtureInputPowerW",
+      "minimumAdapterContinuousPowerW",
+      "maximumLedElectricalPowerW",
+      "nominalLedElectricalPowerW"
+    ],
+    "powerFields": [
+      "available",
+      "source",
+      "estimatedLedPowerW",
+      "estimatedFixturePowerAvailable",
+      "estimatedFixturePowerW",
+      "hardLedPowerLimitW",
+      "hardFixturePowerLimitAvailable",
+      "hardFixturePowerLimitW",
+      "ratioAvailable",
+      "ratio",
+      "limited",
+      "limitScale",
+      "limitBasis",
+      "modelRevision"
+    ],
+    "colorFields": [
+      "available",
+      "source",
+      "cieX",
+      "cieY",
+      "cctAvailable",
+      "estimatedCctK",
+      "duvAvailable",
+      "duv",
+      "displayRgb",
+      "modelRevision"
+    ],
+    "featureFields": [
+      "acclimation",
+      "fanControl",
+      "temperatureSensor",
+      "thermal",
+      "estimatedPower",
+      "estimatedColor"
+    ],
+    "channelDescriptorFields": [
+      "key",
+      "percentField",
+      "displayName",
+      "displayColorRgb",
+      "order"
+    ],
+    "scaleFields": ["acclimation", "thermal", "powerLimit"],
+    "acclimationFields": [
+      "supported",
+      "revision",
+      "state",
+      "clockReady",
+      "startPercent",
+      "currentPermille",
+      "targetPercent",
+      "durationDays",
+      "startedAtEpochSeconds",
+      "endsAtEpochSeconds",
+      "remainingSeconds"
+    ],
+    "runtimeFields": [
+      "rtcReady",
+      "physicalChannelCount",
+      "physicalOutputHealthy",
+      "event"
+    ],
+    "autoRuntimeStates": [
+      "NOT_SELECTED",
+      "RTC_BLOCKED",
+      "DARK",
+      "RAMP_UP",
+      "HOLD",
+      "RAMP_DOWN"
+    ],
+    "customRuntimeStates": [
+      "NOT_SELECTED",
+      "RTC_BLOCKED",
+      "NOT_INSTALLED",
+      "NOT_SCHEDULED_TODAY",
+      "DARK",
+      "ACTIVE"
+    ],
+    "designNominalPowerAndColorAlwaysAvailable": true
+  },
+  "errorReasons": [
+    "STALE_REVISION",
+    "AUTO_CAPACITY_REACHED",
+    "AUTO_PROGRAM_OVERLAP",
+    "AUTO_PROGRAM_NOT_FOUND",
+    "INVALID_WEEKDAYS_MASK",
+    "INVALID_TIME_VALUE",
+    "INVALID_RAMP_VALUE",
+    "RAMP_DOES_NOT_FIT",
+    "INVALID_SCENE_VALUE",
+    "CUSTOM_POINT_COUNT",
+    "CUSTOM_POINT_ORDER",
+    "CUSTOM_POINT_VALUE",
+    "ACCLIMATION_START_PERCENT",
+    "ACCLIMATION_DURATION",
+    "RTC_NOT_READY",
+    "OUTPUT_TRANSACTION_FAILED",
+    "STORAGE_COMMIT_FAILED"
+  ],
+  "persistence": {
+    "path": "/config/light.json",
+    "rootFields": [
+      "schema",
+      "storageVersion",
+      "storageGeneration",
+      "mode",
+      "manual",
+      "auto",
+      "custom",
+      "acclimation"
+    ],
+    "legacyParser": false,
+    "migration": false,
+    "atomicWrite": true
+  },
+  "electricalDesign": {
+    "authority": "LIGHT_DOMAIN",
+    "contractRevision": 2,
+    "fixtureLengthMm": 1200,
+    "maximumFixtureInputPowerW": 150,
+    "minimumAdapterContinuousPowerW": 180,
+    "dcBusVoltageV": 48,
+    "minimumAdapterContinuousCurrentMa": 3750,
+    "minimumHeadroomPercent": 20,
+    "ledManufacturer": "Cree LED",
+    "ledPartFamily": "CLQ6B-TKW",
+    "ledPackageClass": "PLCC8-5052",
+    "ledPackageCount": 120,
+    "whiteCctK": 5000,
+    "minimumWhiteCri": 90,
+    "minimumDriverEfficiencyPermille": 920,
+    "auxiliaryPowerBudgetMw": 9390,
+    "maximumLedElectricalPowerMw": 130000,
+    "nominalLedPowerBudgetMw": 129360,
+    "nominalChannelCurrentMa": {
+      "white": 110,
+      "red": 100,
+      "green": 90,
+      "blue": 90
+    },
+    "spectralRequirement": {
+      "redNm": [619, 624],
+      "greenNm": [520, 535],
+      "blueNm": [460, 475]
+    },
+    "allChannelsAtFullScaleWithinBudgetRequired": true,
+    "productionValidationIsRuntimeIndependent": true
+  },
+  "powerAndColorModel": {
+    "electricalSource": "DESIGN_NOMINAL",
+    "opticalSource": "DESIGN_NOMINAL",
+    "modelRevision": 2,
+    "fixtureInputModelRequired": true,
+    "hardFixtureLimitMaximumW": 150,
+    "invalidElectricalModelPolicy": "OUTPUT_ZERO_HARDWARE_FAULT",
+    "opticalReferenceWhite": "D50",
+    "displayRgbReferenceWhite": "D65",
+    "chromaticAdaptation": "BRADFORD",
+    "productionMeasurementRequiredForDisplay": false,
+    "fakeCctFallback": false
+  }
+}

@@ -7,8 +7,9 @@ import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerRuntimeC
 /**
  * Maps the pinned Timer V1 firmware rejection contract into stable application semantics.
  *
- * Raw firmware prose remains inside the data layer. Known codes must carry their exact HTTP
- * status; status drift is treated as a protocol failure instead of being shown to the customer.
+ * Firmware main intentionally masks rejection prose as `Command rejected.`. Classification must
+ * therefore use only the stable status/code/field identity. Known codes must carry their exact
+ * HTTP status; status drift is treated as a protocol failure instead of being shown to customers.
  */
 internal object DeviceTimerV1FailureMapper {
 
@@ -23,7 +24,8 @@ internal object DeviceTimerV1FailureMapper {
             DeviceTimerRuntimeContract.Error.NOT_FOUND -> mapNotFound(error)
             DeviceTimerRuntimeContract.Error.CONFLICT -> mapConflict(error)
             DeviceTimerRuntimeContract.Error.HARDWARE_ERROR -> mapHardware(error)
-            DeviceTimerRuntimeContract.Error.STORAGE_ERROR -> mapStorage(error)
+            DeviceTimerRuntimeContract.Error.STORAGE_ERROR ->
+                DeviceTimerCommandFailure.STORAGE_FAILURE
             else -> DeviceTimerCommandFailure.UNKNOWN_REJECTION
         }
     }
@@ -61,10 +63,7 @@ internal object DeviceTimerV1FailureMapper {
 
     private fun mapNotFound(
         error: DeviceRuntimeCommandOutcome.FirmwareError
-    ): DeviceTimerCommandFailure = if (
-        error.field == FirmwareField.CHANNEL_KEY &&
-        error.message.startsWith(CHANNEL_NOT_FOUND_MESSAGE_PREFIX)
-    ) {
+    ): DeviceTimerCommandFailure = if (error.field == FirmwareField.CHANNEL_KEY) {
         DeviceTimerCommandFailure.CHANNEL_UNAVAILABLE
     } else {
         DeviceTimerCommandFailure.UNKNOWN_REJECTION
@@ -72,10 +71,7 @@ internal object DeviceTimerV1FailureMapper {
 
     private fun mapConflict(
         error: DeviceRuntimeCommandOutcome.FirmwareError
-    ): DeviceTimerCommandFailure = if (
-        error.field == FirmwareField.EXPECTED_REVISION &&
-        error.message == REVISION_STALE_MESSAGE
-    ) {
+    ): DeviceTimerCommandFailure = if (error.field == FirmwareField.EXPECTED_REVISION) {
         DeviceTimerCommandFailure.CONFLICT
     } else {
         DeviceTimerCommandFailure.UNKNOWN_REJECTION
@@ -83,27 +79,12 @@ internal object DeviceTimerV1FailureMapper {
 
     private fun mapHardware(
         error: DeviceRuntimeCommandOutcome.FirmwareError
-    ): DeviceTimerCommandFailure = when {
-        (error.field to error.message) in RESOURCE_FAILURE_IDENTITIES ->
-            DeviceTimerCommandFailure.RESOURCE_UNAVAILABLE
-
-        error.message in RUNTIME_LOCKED_MESSAGES -> DeviceTimerCommandFailure.RUNTIME_LOCKED
-        error.field == FirmwareField.CHANNEL_KEY && error.message in OUTPUT_FAILURE_MESSAGES ->
-            DeviceTimerCommandFailure.HARDWARE_FAILURE
-
-        error.field == FirmwareField.CHANNEL_KEY &&
-            error.message.startsWith(CHANNEL_OUTPUT_FAILURE_MESSAGE_PREFIX) ->
-            DeviceTimerCommandFailure.HARDWARE_FAILURE
-
-        else -> DeviceTimerCommandFailure.HARDWARE_FAILURE
-    }
-
-    private fun mapStorage(
-        error: DeviceRuntimeCommandOutcome.FirmwareError
-    ): DeviceTimerCommandFailure = if (error.message in RUNTIME_LOCKED_MESSAGES) {
-        DeviceTimerCommandFailure.RUNTIME_LOCKED
+    ): DeviceTimerCommandFailure = if (error.field == FirmwareField.SCHEDULES) {
+        DeviceTimerCommandFailure.RESOURCE_UNAVAILABLE
     } else {
-        DeviceTimerCommandFailure.STORAGE_FAILURE
+        // `timer` and `channelKey` each cover multiple internal firmware causes whose prose is
+        // deliberately hidden on the wire. Do not invent a more specific lock/output diagnosis.
+        DeviceTimerCommandFailure.HARDWARE_FAILURE
     }
 
     private object FirmwareField {
@@ -116,7 +97,6 @@ internal object DeviceTimerV1FailureMapper {
         const val REGIME = "regime"
         const val DURATION_MS = "durationMs"
         const val TIMER_CONFIG = "timerConfig"
-        const val TIMER = "timer"
     }
 
     private const val HTTP_BAD_REQUEST = 400
@@ -126,22 +106,4 @@ internal object DeviceTimerV1FailureMapper {
     private const val HTTP_INTERNAL_ERROR = 500
     private const val HTTP_SERVICE_UNAVAILABLE = 503
 
-    private const val CHANNEL_NOT_FOUND_MESSAGE_PREFIX =
-        "configured timer channel not found for channelKey: "
-    private const val CHANNEL_OUTPUT_FAILURE_MESSAGE_PREFIX =
-        "timer channel output write failed: "
-    private const val REVISION_STALE_MESSAGE = "timer config revision is stale"
-
-    private val RESOURCE_FAILURE_IDENTITIES = setOf(
-        FirmwareField.TIMER to "timer transaction snapshot allocation failed",
-        FirmwareField.SCHEDULES to "timer schedule transaction workspace allocation failed"
-    )
-    private val OUTPUT_FAILURE_MESSAGES = setOf(
-        "timer output write failed; channel config was rolled back"
-    )
-    private val RUNTIME_LOCKED_MESSAGES = setOf(
-        "timer runtime transaction is locked until restart",
-        "timer output write and rollback failed; timer runtime remains locked until restart",
-        "timer persistence and runtime rollback failed; timer is locked until restart"
-    )
 }

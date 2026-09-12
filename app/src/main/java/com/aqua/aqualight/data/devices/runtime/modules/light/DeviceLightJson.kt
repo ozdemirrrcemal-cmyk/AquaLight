@@ -13,14 +13,27 @@ internal fun JSONObject.requireLightKeys(expected: Set<String>, label: String) {
 internal fun JSONObject.requireLightObject(key: String): JSONObject =
     get(key) as? JSONObject ?: error("$key must be a JSON object.")
 
+internal fun JSONObject.requireNullableLightObject(key: String): JSONObject? = when (val value = get(key)) {
+    JSONObject.NULL -> null
+    is JSONObject -> value
+    else -> error("$key must be a JSON object or null.")
+}
+
 internal fun JSONObject.requireLightArray(key: String): JSONArray =
     get(key) as? JSONArray ?: error("$key must be a JSON array.")
 
-internal fun JSONArray.requireLightObject(index: Int): JSONObject =
-    get(index) as? JSONObject ?: error("[$index] must be a JSON object.")
-
 internal fun JSONObject.requireLightText(key: String): String {
     val value = get(key) as? String ?: error("$key must be a string.")
+    return requireExactLightText(key, value)
+}
+
+internal fun JSONObject.requireNullableLightText(key: String): String? = when (val value = get(key)) {
+    JSONObject.NULL -> null
+    is String -> requireExactLightText(key, value)
+    else -> error("$key must be a string or null.")
+}
+
+internal fun requireExactLightText(key: String, value: String): String {
     require(value.isNotEmpty()) { "$key must not be empty." }
     require(!value.first().isWhitespace() && !value.last().isWhitespace()) {
         "$key must not contain surrounding whitespace."
@@ -32,46 +45,8 @@ internal fun JSONObject.requireLightText(key: String): String {
 internal fun JSONObject.requireLightBoolean(key: String): Boolean =
     get(key) as? Boolean ?: error("$key must be a boolean.")
 
-internal fun JSONObject.requireLightInt(
-    key: String,
-    minimum: Int = Int.MIN_VALUE,
-    maximum: Int = Int.MAX_VALUE
-): Int {
-    val value = get(key) as? Number ?: error("$key must be an integer.")
-    val asDouble = value.toDouble()
-    val asLong = value.toLong()
-    require(asDouble.isFinite() && asDouble == asLong.toDouble()) {
-        "$key must be an integer."
-    }
-    require(asLong in minimum.toLong()..maximum.toLong()) {
-        "$key is outside its supported range."
-    }
-    return asLong.toInt()
-}
-
-internal fun JSONObject.requireLightLong(
-    key: String,
-    minimum: Long = Long.MIN_VALUE,
-    maximum: Long = Long.MAX_VALUE
-): Long {
-    val value = get(key) as? Number ?: error("$key must be an integer.")
-    val asDouble = value.toDouble()
-    val asLong = value.toLong()
-    require(asDouble.isFinite() && asDouble == asLong.toDouble()) {
-        "$key must be an integer."
-    }
-    require(asLong in minimum..maximum) { "$key is outside its supported range." }
-    return asLong
-}
-
-internal fun JSONObject.requireLightDouble(
-    key: String,
-    minimum: Double = -Double.MAX_VALUE,
-    maximum: Double = Double.MAX_VALUE
-): Double {
-    val value = get(key) as? Number ?: error("$key must be numeric.")
-    return value.toDouble().also { number ->
-        require(number.isFinite()) { "$key must be finite." }
-        require(number in minimum..maximum) { "$key is outside its supported range." }
-    }
+internal fun JSONObject.requireNullableLightBoolean(key: String): Boolean? = when (val value = get(key)) {
+    JSONObject.NULL -> null
+    is Boolean -> value
+    else -> error("$key must be a boolean or null.")
 }

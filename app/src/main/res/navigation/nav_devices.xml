@@ -195,6 +195,38 @@
             app:exitAnim="@anim/nav_slide_out_right"
             app:popEnterAnim="@anim/nav_slide_in_right"
             app:popExitAnim="@anim/nav_slide_out_left" />
+        <action
+            android:id="@+id/action_deviceTimerRootFragment_to_deviceTimerChannelFragment"
+            app:destination="@id/deviceTimerChannelFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceTimerChannelFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.timer.channel.DeviceTimerChannelFragment"
+        android:label="@string/device_family_timer"
+        tools:layout="@layout/fragment_device_timer_channel">
+        <argument android:name="deviceUid" app:argType="string" />
+        <argument android:name="slotId" app:argType="string" />
+        <action
+            android:id="@+id/action_deviceTimerChannelFragment_to_deviceTimerProgramFragment"
+            app:destination="@id/deviceTimerProgramFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceTimerProgramFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.timer.program.DeviceTimerProgramFragment"
+        android:label="@string/device_timer_program_title"
+        tools:layout="@layout/fragment_device_timer_program">
+        <argument android:name="deviceUid" app:argType="string" />
+        <argument android:name="slotId" app:argType="string" />
     </fragment>
 
     <fragment

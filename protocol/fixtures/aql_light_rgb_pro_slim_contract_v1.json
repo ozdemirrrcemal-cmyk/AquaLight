@@ -1,0 +1,172 @@
+{
+  "schema": "aqualight.light.v1",
+  "storageVersion": 1,
+  "productKey": "LIGHT_RGB_PRO_SLIM",
+  "channelCount": 3,
+  "channels": ["redPercent", "greenPercent", "bluePercent"],
+  "channelDescriptors": [
+    {"key": "red", "percentField": "redPercent", "displayName": "Red", "displayColorRgb": 16711680, "order": 0},
+    {"key": "green", "percentField": "greenPercent", "displayName": "Green", "displayColorRgb": 65280, "order": 1},
+    {"key": "blue", "percentField": "bluePercent", "displayName": "Blue", "displayColorRgb": 255, "order": 2}
+  ],
+  "modes": ["MANUAL", "AUTO", "CUSTOM"],
+  "commands": [
+    "light.status.get",
+    "light.control.set",
+    "light.manual.set",
+    "light.manual.off",
+    "light.auto.programs.get",
+    "light.auto.program.create",
+    "light.auto.program.update",
+    "light.auto.program.enabled.set",
+    "light.auto.program.delete",
+    "light.custom.get",
+    "light.custom.install",
+    "light.graph.get",
+    "light.preview.set",
+    "light.preview.clear"
+  ],
+  "forbiddenCommands": [
+    "light.acclimation.status.get",
+    "light.acclimation.start",
+    "light.acclimation.stop",
+    "light.temperature.protection.status.get",
+    "light.temperature.protection.set",
+    "light.thermal.status.get",
+    "light.fan.manual.set",
+    "light.fan.manual.clear",
+    "light.channel.regime.set",
+    "light.program.apply",
+    "light.program.delete"
+  ],
+  "lightFeatures": {
+    "acclimation": false,
+    "fanControl": false,
+    "temperatureSensor": false,
+    "thermal": false,
+    "estimatedPower": false,
+    "estimatedColor": false
+  },
+  "sceneFields": ["redPercent", "greenPercent", "bluePercent"],
+  "customPointTuple": ["timeMs", "redPercent", "greenPercent", "bluePercent"],
+  "graphPointTuple": ["timeMs", "redPermille", "greenPermille", "bluePermille"],
+  "status": {
+    "rootFields": [
+      "schema",
+      "storageVersion",
+      "productKey",
+      "channelScale",
+      "channels",
+      "features",
+      "mode",
+      "outputActive",
+      "outputReason",
+      "requested",
+      "effective",
+      "scales",
+      "electricalDesign",
+      "power",
+      "color",
+      "preview",
+      "manual",
+      "policy",
+      "scheduler",
+      "auto",
+      "custom",
+      "acclimation",
+      "runtime"
+    ],
+    "featureFields": [
+      "acclimation",
+      "fanControl",
+      "temperatureSensor",
+      "thermal",
+      "estimatedPower",
+      "estimatedColor"
+    ],
+    "channelDescriptorFields": [
+      "key",
+      "percentField",
+      "displayName",
+      "displayColorRgb",
+      "order"
+    ],
+    "scaleFields": ["acclimation", "thermal", "powerLimit"],
+    "electricalDesignFields": [
+      "available",
+      "contractRevision",
+      "fixtureLengthMm",
+      "maximumFixtureInputPowerW",
+      "minimumAdapterContinuousPowerW",
+      "maximumLedElectricalPowerW",
+      "nominalLedElectricalPowerW"
+    ],
+    "powerFields": [
+      "available",
+      "source",
+      "estimatedLedPowerW",
+      "estimatedFixturePowerAvailable",
+      "estimatedFixturePowerW",
+      "hardLedPowerLimitW",
+      "hardFixturePowerLimitAvailable",
+      "hardFixturePowerLimitW",
+      "ratioAvailable",
+      "ratio",
+      "limited",
+      "limitScale",
+      "limitBasis",
+      "modelRevision"
+    ],
+    "colorFields": [
+      "available",
+      "source",
+      "cieX",
+      "cieY",
+      "cctAvailable",
+      "estimatedCctK",
+      "duvAvailable",
+      "duv",
+      "displayRgb",
+      "modelRevision"
+    ],
+    "acclimationFields": [
+      "supported",
+      "revision",
+      "state",
+      "clockReady",
+      "startPercent",
+      "currentPermille",
+      "targetPercent",
+      "durationDays",
+      "startedAtEpochSeconds",
+      "endsAtEpochSeconds",
+      "remainingSeconds"
+    ],
+    "runtimeFields": [
+      "rtcReady",
+      "physicalChannelCount",
+      "physicalOutputHealthy",
+      "event"
+    ],
+    "electricalDesignAvailable": false,
+    "estimatedPowerAvailable": false,
+    "estimatedColorAvailable": false,
+    "acclimationSupported": false,
+    "physicalChannelCount": 3
+  },
+  "persistence": {
+    "path": "/config/light.json",
+    "rootFields": [
+      "schema",
+      "storageVersion",
+      "storageGeneration",
+      "mode",
+      "manual",
+      "auto",
+      "custom",
+      "acclimation"
+    ],
+    "unsupportedAcclimationState": "DISABLED_DEFAULT_ONLY",
+    "atomicWrite": true
+  }
+}

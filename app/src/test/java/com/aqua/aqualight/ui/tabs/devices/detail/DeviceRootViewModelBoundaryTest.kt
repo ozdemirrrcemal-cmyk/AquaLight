@@ -1,6 +1,12 @@
 package com.aqua.aqualight.ui.tabs.devices.detail
 
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.DeviceChannelSlots
+import com.aqua.aqualight.application.devices.DeviceChannelWireKey
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationRequest
+import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationResult
+import com.aqua.aqualight.application.devices.DeviceLightChannelSlot
 import com.aqua.aqualight.application.devices.DeviceRootCapability
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootMenuFeature
@@ -9,6 +15,7 @@ import com.aqua.aqualight.application.devices.DeviceRootRouteResolver
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
+import com.aqua.aqualight.application.devices.DeviceSlotIndex
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticCommandResult
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticFailure
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingAutomaticSettingsOperations
@@ -20,6 +27,9 @@ import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingContr
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlMode
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlOperations
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlResult
+import com.aqua.aqualight.application.devices.light.DeviceLightControlOperations
+import com.aqua.aqualight.application.devices.light.DeviceLightControlResult
+import com.aqua.aqualight.application.devices.light.DeviceLightControlSnapshot
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import com.aqua.aqualight.ui.common.text.AquaUiText
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootKind
@@ -68,14 +78,15 @@ class DeviceRootViewModelBoundaryTest {
     }
 
     @Test
-    fun `light root exposes only the device title state`() {
+    fun `light root requires the shared authoritative preparation state`() {
         val operations = FakeDeviceRootOperations(rootSnapshot(
             capabilities = setOf(DeviceRootCapability.MANUAL_LIGHT),
             menuFeatures = setOf(DeviceRootMenuFeature.DEVICE_SETTINGS)
         ))
-        val viewModel = DeviceLightRootViewModel(operations)
+        val viewModel = lightViewModel(operations)
         viewModel.bind("device-1")
         assertEquals("AquaLight Dosing", viewModel.uiState.value.title)
+        assertTrue(viewModel.uiState.value.contentEnabled)
         assertEquals("device-1", operations.lastObservedUid)
         assertEquals("device-1", operations.lastConnectedUid)
     }
@@ -83,7 +94,7 @@ class DeviceRootViewModelBoundaryTest {
     @Test
     fun `supported root titles follow the same dynamic device snapshot`() {
         val operations = FakeDeviceRootOperations(rootSnapshot())
-        val light = DeviceLightRootViewModel(operations)
+        val light = lightViewModel(operations)
         val timer = DeviceTimerRootViewModel(
             operations = operations,
             timerControlOperations = UnavailableTimerControlOperations,
@@ -136,6 +147,13 @@ class DeviceRootViewModelBoundaryTest {
             controlSurfacePreparationOperations = PreparedCoolingSurfaceOperations
         )
 
+    private fun lightViewModel(operations: DeviceRootOperations): DeviceLightRootViewModel =
+        DeviceLightRootViewModel(
+            rootOperations = operations,
+            lightControlOperations = AvailableLightControlOperations,
+            controlSurfacePreparationOperations = PreparedLightSurfaceOperations
+        )
+
     private fun rootSnapshot(
         capabilities: Set<DeviceRootCapability> = setOf(DeviceRootCapability.DOSING),
         menuFeatures: Set<DeviceRootMenuFeature> = setOf(
@@ -150,6 +168,17 @@ class DeviceRootViewModelBoundaryTest {
             OwnerDeviceFamily.LIGHT
         }
         val routes = menuFeatures.mapNotNullTo(linkedSetOf()) { DeviceRootRouteResolver.resolve(family, it) }
+        val lightChannels = if (family == OwnerDeviceFamily.LIGHT) {
+            listOf("white", "red", "green", "blue").mapIndexed { index, key ->
+                DeviceLightChannelSlot(
+                    index = DeviceSlotIndex(index),
+                    wireKey = DeviceChannelWireKey(key),
+                    defaultDisplayName = key.replaceFirstChar(Char::uppercase)
+                )
+            }
+        } else {
+            emptyList()
+        }
         return DeviceRootSnapshot(
             deviceUid = "device-1",
             title = title,
@@ -159,8 +188,20 @@ class DeviceRootViewModelBoundaryTest {
             ipAddress = "192.168.1.20",
             firmwareLabel = "1.0.0 / 100",
             modelLabel = "AQL-DOSING / rev-a",
-            lightChannelCount = 6,
+            productKey = if (family == OwnerDeviceFamily.LIGHT) {
+                "LIGHT_WRGB_PRO_ELITE"
+            } else {
+                "DOSING_DOSE_PRO_4"
+            },
+            lightChannelCount = lightChannels.size,
             dosingChannelCount = 4,
+            channelSlots = DeviceChannelSlots(
+                lightChannels = lightChannels,
+                timerChannels = emptyList(),
+                dosingChannels = emptyList(),
+                fanOutputs = emptyList(),
+                temperatureSensors = emptyList()
+            ),
             capabilities = capabilities,
             menuFeatures = menuFeatures,
             allowedRoutes = routes
@@ -214,6 +255,40 @@ class DeviceRootViewModelBoundaryTest {
             deviceUid: String,
             percent: Int
         ): DeviceCoolingControlResult = unavailable
+    }
+
+    private object AvailableLightControlOperations : DeviceLightControlOperations {
+        private val available = DeviceLightControlResult.Available(
+            DeviceLightControlSnapshot(
+                deviceUid = "device-1",
+                productKey = "LIGHT_WRGB_PRO_ELITE",
+                physicalChannelCount = LIGHT_CHANNEL_COUNT,
+                channelKeys = listOf("red", "green", "blue", "white")
+            )
+        )
+
+        override fun observeControl(deviceUid: String): Flow<DeviceLightControlResult> =
+            flowOf(available)
+
+        override fun currentControl(deviceUid: String): DeviceLightControlResult = available
+
+        override suspend fun refreshControl(deviceUid: String): DeviceLightControlResult = available
+    }
+
+    private object PreparedLightSurfaceOperations :
+        DeviceControlSurfacePreparationOperations {
+        override suspend fun prepare(
+            request: DeviceControlSurfacePreparationRequest
+        ): DeviceControlSurfacePreparationResult = DeviceControlSurfacePreparationResult.Ready
+
+        override fun consumeFreshPreparation(
+            deviceUid: String,
+            family: OwnerDeviceFamily
+        ): Boolean = family == OwnerDeviceFamily.LIGHT
+    }
+
+    private companion object {
+        const val LIGHT_CHANNEL_COUNT = 4
     }
 
     private object UnavailableCoolingHistoryOperations : DeviceCoolingTemperatureHistoryOperations {

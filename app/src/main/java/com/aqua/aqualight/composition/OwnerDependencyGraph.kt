@@ -11,6 +11,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationOper
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
+import com.aqua.aqualight.application.devices.light.DeviceLightControlOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftRequest
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftSession
@@ -32,6 +33,7 @@ import com.aqua.aqualight.data.devices.dosing.DefaultDeviceDosingChannelNavigati
 import com.aqua.aqualight.data.devices.dosing.SharedPreferencesDeviceDosingCalibrationDraftStore
 import com.aqua.aqualight.data.devices.dosing.SharedPreferencesDeviceDosingLowLevelAlertLedger
 import com.aqua.aqualight.data.devices.dosing.v1.DeviceDosingV1ProductionRuntime
+import com.aqua.aqualight.data.devices.light.DefaultDeviceLightControlOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceControlSurfacePreparationOperations
 import com.aqua.aqualight.data.devices.provisioning.repository.DefaultProvisioningDraftOperations
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningDraftStore
@@ -66,6 +68,7 @@ internal data class OwnerDependencyGraph(
     val userDataArchiveOperations: UserDataArchiveOperations,
     val provisioningDraftOperations: ProvisioningDraftOperations,
     val controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations,
+    val lightControlOperations: DeviceLightControlOperations,
     val timerControlOperations: DeviceTimerControlOperations,
     val coolingCardOperations: DeviceCoolingCardOperations,
     val dosingOperations: OwnerDosingOperations
@@ -199,6 +202,9 @@ internal class ActiveOwnerDependencyGraphResolver(
         val timerControlOperations = DefaultDeviceTimerControlOperations(
             dependencies.devicesRepository
         )
+        val lightControlOperations = DefaultDeviceLightControlOperations(
+            dependencies.devicesRepository
+        )
         return OwnerDependencyGraph(
             ownerUid = dependencies.ownerUid,
             sessionGeneration = dependencies.sessionGeneration,
@@ -226,8 +232,10 @@ internal class ActiveOwnerDependencyGraphResolver(
             controlSurfacePreparationOperations = createControlSurfacePreparationOperations(
                 dependencies = dependencies,
                 dosingOperations = dosingOperations,
-                timerControlOperations = timerControlOperations
+                timerControlOperations = timerControlOperations,
+                lightControlOperations = lightControlOperations
             ),
+            lightControlOperations = lightControlOperations,
             timerControlOperations = timerControlOperations,
             coolingCardOperations = createCoolingCardOperations(dependencies),
             dosingOperations = dosingOperations
@@ -276,7 +284,8 @@ internal class ActiveOwnerDependencyGraphResolver(
     private fun createControlSurfacePreparationOperations(
         dependencies: ActiveOwnerDependencies,
         dosingOperations: OwnerDosingOperations,
-        timerControlOperations: DeviceTimerControlOperations
+        timerControlOperations: DeviceTimerControlOperations,
+        lightControlOperations: DeviceLightControlOperations
     ): DeviceControlSurfacePreparationOperations =
         DefaultDeviceControlSurfacePreparationOperations(
             rootOperations = DefaultDeviceRootOperations(dependencies.devicesRepository),
@@ -284,7 +293,8 @@ internal class ActiveOwnerDependencyGraphResolver(
             coolingControlOperations = DefaultDeviceCoolingControlOperations(
                 dependencies.devicesRepository
             ),
-            timerControlOperations = timerControlOperations
+            timerControlOperations = timerControlOperations,
+            lightControlOperations = lightControlOperations
         )
 
     private fun createDosingOperations(

@@ -51,10 +51,18 @@ class DeviceTimerCommercialErrorResolverTest {
 
     @Test
     fun `clock unavailable resolves as a status instead of a command error`() {
-        val message = DeviceTimerChannelStatusNotice.CLOCK_UNAVAILABLE
+        val message = DeviceTimerStatusNotice.CLOCK_UNAVAILABLE
             .toCommercialTimerStatus()
 
         assertEquals(R.string.device_timer_status_clock_unavailable_title, message.titleRes)
         assertEquals(R.string.device_timer_status_clock_unavailable_message, message.messageRes)
+    }
+
+    @Test
+    fun `runtime lock status reuses the commercial restart copy`() {
+        val message = DeviceTimerStatusNotice.RUNTIME_LOCKED.toCommercialTimerStatus()
+
+        assertEquals(R.string.device_timer_error_runtime_locked_title, message.titleRes)
+        assertEquals(R.string.device_timer_error_runtime_locked_message, message.messageRes)
     }
 }

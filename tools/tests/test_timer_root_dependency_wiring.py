@@ -55,7 +55,7 @@ class TimerRootDependencyWiringTest(unittest.TestCase):
                 self.assertIn("timerControlOperations =", text)
                 self.assertIn("controlSurfacePreparationOperations =", text)
 
-    def test_production_and_debug_share_owner_scoped_timer_dependencies(self) -> None:
+    def test_production_and_debug_keep_owner_scoped_timer_dependencies(self) -> None:
         production = COMPOSITIONS["production"].read_text(encoding="utf-8")
         debug = COMPOSITIONS["debug"].read_text(encoding="utf-8")
 
@@ -64,11 +64,15 @@ class TimerRootDependencyWiringTest(unittest.TestCase):
             "controlSurfacePreparationOperations = graph.controlSurfacePreparationOperations",
             production,
         )
-        self.assertIn("timerControlOperations = graph.timerControlOperations", debug)
+        self.assertIn("delegate = graph.timerControlOperations", debug)
         self.assertIn(
-            "controlSurfacePreparationOperations = graph.controlSurfacePreparationOperations",
+            "delegate = graph.controlSurfacePreparationOperations",
             debug,
         )
+        self.assertIn("cachedTimerDependencies", debug)
+        self.assertIn("dependencies.graph === graph", debug)
+        self.assertGreaterEqual(debug.count("timerDependencies(graph)"), 2)
+        self.assertIn("runtime = runtime", debug)
 
     def test_release_smoke_uses_a_single_stateless_timer_adapter(self) -> None:
         smoke = COMPOSITIONS["releaseSmoke"].read_text(encoding="utf-8")

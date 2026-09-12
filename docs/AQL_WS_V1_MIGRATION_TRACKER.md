@@ -1,23 +1,23 @@
-# AquaLight WS v1 Migration Tracker
+# AquaLight WS v1 Migration Tracker (historical)
 
-> Historical tracker. Golden firmware `feature/cooling-contract-v1` / commit
+> Closed historical tracker. Golden firmware `feature/cooling-contract-v1` / commit
 > `980b03f0d83cdeb997698fc6b207064aa709cec8` ile gelen 50-command, 13-event
-> Cooling V1 ve WRGB thermal sözleşmesi için güncel envanter
+> Cooling V1 ve WRGB thermal sözleşmesi için arşiv envanteri
 > `FIRMWARE_GOLDEN_FIXTURE_980B03F.md` dosyasındadır. Aşağıdaki sayılar ve
-> `temperature.changed` maddeleri önceki migration’ın tarihsel kanıtıdır.
+> `temperature.changed` maddeleri önceki migration’ın tarihsel kanıtıdır. Güncel
+> iki ürünlü Light V1 veri sözleşmesi `LIGHT_V1_FIRMWARE_ANDROID_CONTRACT.md`
+> dosyasında sabitlenmiştir.
 
 Promoted branch: `integration/aql-ws-v1-commercial` → `main` via PR #192
 Firmware source: `AquaLight-Firmware`
 Target: **41 authenticated commands / 0 public commands**
 
-## Current position
+## Closure position
 
-- Current stage: **11 — WS v1 commercial cleanup and closure**
-- Active branch: `chore/ws-v1-commercial-closure`
-- Status: **AUTOMATED CLOSURE GATES PASSED — PHYSICAL SIGNED-OTA RELEASE GATE PENDING**
+- Historical stage: **11 — WS v1 commercial cleanup and closure**
+- Historical branch: `chore/ws-v1-commercial-closure`
+- Archived result: **automated closure gates passed**
 - Completed sequence: **Stages 00–10 and OTA UI PR #193 merged into `main`**
-- Next: Review and merge PR #194, then close the canonical physical signed-OTA release gate
-  before commercial release approval.
 
 ## Fixed rules
 
@@ -95,22 +95,12 @@ Target: **41 authenticated commands / 0 public commands**
   - [x] Current custom-name firmware interoperability and physical menu liveness passed
   - [x] PR evidence recorded
 
-- [x] **05** `feat/light-05-runtime-alignment` — **MERGED / PR #186**
-  - [x] Inventoried exact firmware request/response shapes for all 7 Light commands
-  - [x] `light.status.get` exact typed status parser
-  - [x] `light.manual.set` typed manual-level and clear outcomes
-  - [x] `light.channel.regime.set` exact Auto/On/Off persistence outcome
-  - [x] `light.program.apply` exact create/update outcome
-  - [x] `light.program.delete` exact delete outcome
-  - [x] `light.temperature-protection.status.get` exact typed status
-  - [x] `light.temperature-protection.set` exact typed mutation outcome
-  - [x] Production Light consumers moved from send-success to correlated firmware success
-  - [x] `light.status.changed` integrated into deterministic current-state projection
-  - [x] Unsupported Light operations rejected using exact firmware capabilities/features
-  - [x] Unit, parser, repository and production-consumer tests added
-  - [x] Android CI, installable APK, Emulator API 27/36 and CodeQL passed
-  - [x] WRGB Pro Elite physical Light regression passed
-  - [x] PR evidence recorded
+- [x] **05** `feat/light-05-runtime-alignment` — **SUPERSEDED / PR #186**
+  - [x] Bu aşamadaki generic Light sözleşmesi tarihsel kanıt olarak korunur.
+  - [x] Eski `light.channel.regime.set`, `light.program.apply` ve
+    `light.program.delete` komutları güncel Android veri katmanından kaldırıldı.
+  - [x] Güncel ortak WRGB/RGB Light V1 sözleşmesi ve 21/14 ürün komut matrisi
+    `LIGHT_V1_FIRMWARE_ANDROID_CONTRACT.md` dosyasına taşındı.
 
 - [x] **06** `feat/cooling-06-runtime-alignment` — **MERGED / PR #187**
   - [x] Confirm both Cooling commands: `cooling.status.get`, `cooling.config.apply`

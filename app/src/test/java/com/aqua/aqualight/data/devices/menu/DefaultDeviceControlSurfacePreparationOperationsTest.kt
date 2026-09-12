@@ -8,6 +8,7 @@ import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationReq
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationResult
 import com.aqua.aqualight.application.devices.DeviceDosingChannelSlot
 import com.aqua.aqualight.application.devices.DeviceFanOutputSlot
+import com.aqua.aqualight.application.devices.DeviceLightChannelSlot
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootOperations
@@ -33,6 +34,10 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingDailyUsageSnaps
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirSnapshot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingRuntimeReason
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingSchedulingPolicy
+import com.aqua.aqualight.application.devices.light.DeviceLightControlFailure
+import com.aqua.aqualight.application.devices.light.DeviceLightControlOperations
+import com.aqua.aqualight.application.devices.light.DeviceLightControlResult
+import com.aqua.aqualight.application.devices.light.DeviceLightControlSnapshot
 import com.aqua.aqualight.application.devices.timer.DeviceTimerChannelRegime
 import com.aqua.aqualight.application.devices.timer.DeviceTimerChannelSnapshot
 import com.aqua.aqualight.application.devices.timer.DeviceTimerControlCapabilities
@@ -162,7 +167,8 @@ class DefaultDeviceControlSurfacePreparationOperationsTest {
             rootOperations = FakeRootOperations(coolingRootSnapshot()),
             dosingChannelOperations = FakeChannelOperations(),
             coolingControlOperations = cooling,
-            timerControlOperations = FakeTimerControlOperations(unavailableTimerControl())
+            timerControlOperations = FakeTimerControlOperations(unavailableTimerControl()),
+            lightControlOperations = FakeLightControlOperations(unavailableLightControl())
         )
 
         val result = operations.prepare(
@@ -198,7 +204,8 @@ class DefaultDeviceControlSurfacePreparationOperationsTest {
             rootOperations = FakeRootOperations(coolingRootSnapshot()),
             dosingChannelOperations = FakeChannelOperations(),
             coolingControlOperations = cooling,
-            timerControlOperations = FakeTimerControlOperations(unavailableTimerControl())
+            timerControlOperations = FakeTimerControlOperations(unavailableTimerControl()),
+            lightControlOperations = FakeLightControlOperations(unavailableLightControl())
         )
 
         val result = operations.prepare(
@@ -292,6 +299,120 @@ class DefaultDeviceControlSurfacePreparationOperationsTest {
         assertFalse(operations.consumeFreshPreparation(TIMER_DEVICE_UID, OwnerDeviceFamily.TIMER))
     }
 
+    @Test
+    fun `WRGB Light menu refreshes authoritative central state before ready`() = runTest {
+        val light = FakeLightControlOperations(
+            availableLightControl(
+                productKey = "LIGHT_WRGB_PRO_ELITE",
+                channelKeys = listOf("red", "green", "blue", "white")
+            )
+        )
+        val operations = lightPreparation(
+            lightRootSnapshot(
+                productKey = "LIGHT_WRGB_PRO_ELITE",
+                channelKeys = listOf("white", "red", "green", "blue")
+            ),
+            light
+        )
+
+        val result = operations.prepare(lightRequest())
+
+        assertEquals(DeviceControlSurfacePreparationResult.Ready, result)
+        assertEquals(1, light.refreshCalls)
+        assertEquals(0, light.observeCalls)
+        assertTrue(operations.consumeFreshPreparation(LIGHT_DEVICE_UID, OwnerDeviceFamily.LIGHT))
+        assertFalse(operations.consumeFreshPreparation(LIGHT_DEVICE_UID, OwnerDeviceFamily.LIGHT))
+    }
+
+    @Test
+    fun `RGB Light menu accepts the exact three channel product surface`() = runTest {
+        val light = FakeLightControlOperations(
+            availableLightControl(
+                productKey = "LIGHT_RGB_PRO_SLIM",
+                channelKeys = listOf("red", "green", "blue")
+            )
+        )
+        val operations = lightPreparation(
+            lightRootSnapshot(
+                productKey = "LIGHT_RGB_PRO_SLIM",
+                channelKeys = listOf("red", "green", "blue")
+            ),
+            light
+        )
+
+        assertEquals(DeviceControlSurfacePreparationResult.Ready, operations.prepare(lightRequest()))
+        assertTrue(operations.consumeFreshPreparation(LIGHT_DEVICE_UID, OwnerDeviceFamily.LIGHT))
+    }
+
+    @Test
+    fun `partial Light status cannot publish ready surface`() = runTest {
+        val light = FakeLightControlOperations(
+            availableLightControl(
+                productKey = "LIGHT_WRGB_PRO_ELITE",
+                channelKeys = listOf("red", "green", "blue")
+            )
+        )
+        val operations = lightPreparation(
+            lightRootSnapshot(
+                productKey = "LIGHT_WRGB_PRO_ELITE",
+                channelKeys = listOf("white", "red", "green", "blue")
+            ),
+            light
+        )
+
+        assertEquals(
+            DeviceControlSurfacePreparationResult.Unavailable(
+                DeviceMenuUnavailableReason.COMMERCIAL_PRODUCT_MISMATCH
+            ),
+            operations.prepare(lightRequest())
+        )
+        assertFalse(operations.consumeFreshPreparation(LIGHT_DEVICE_UID, OwnerDeviceFamily.LIGHT))
+    }
+
+    @Test
+    fun `Light product mismatch cannot publish ready surface`() = runTest {
+        val light = FakeLightControlOperations(
+            availableLightControl(
+                productKey = "LIGHT_RGB_PRO_SLIM",
+                channelKeys = listOf("red", "green", "blue")
+            )
+        )
+        val operations = lightPreparation(
+            lightRootSnapshot(
+                productKey = "LIGHT_WRGB_PRO_ELITE",
+                channelKeys = listOf("white", "red", "green", "blue")
+            ),
+            light
+        )
+
+        assertEquals(
+            DeviceControlSurfacePreparationResult.Unavailable(
+                DeviceMenuUnavailableReason.COMMERCIAL_PRODUCT_MISMATCH
+            ),
+            operations.prepare(lightRequest())
+        )
+    }
+
+    @Test
+    fun `Light refresh failure keeps navigation unavailable`() = runTest {
+        val light = FakeLightControlOperations(unavailableLightControl())
+        val operations = lightPreparation(
+            lightRootSnapshot(
+                productKey = "LIGHT_WRGB_PRO_ELITE",
+                channelKeys = listOf("white", "red", "green", "blue")
+            ),
+            light
+        )
+
+        assertEquals(
+            DeviceControlSurfacePreparationResult.Unavailable(
+                DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
+            ),
+            operations.prepare(lightRequest())
+        )
+        assertEquals(1, light.refreshCalls)
+    }
+
     private fun preparation(
         channelCount: Int,
         channels: FakeChannelOperations
@@ -299,7 +420,8 @@ class DefaultDeviceControlSurfacePreparationOperationsTest {
         rootOperations = FakeRootOperations(rootSnapshot(channelCount)),
         dosingChannelOperations = channels,
         coolingControlOperations = DisconnectedDeviceCoolingControlOperations,
-        timerControlOperations = FakeTimerControlOperations(unavailableTimerControl())
+        timerControlOperations = FakeTimerControlOperations(unavailableTimerControl()),
+        lightControlOperations = FakeLightControlOperations(unavailableLightControl())
     )
 
     private fun timerPreparation(
@@ -309,7 +431,19 @@ class DefaultDeviceControlSurfacePreparationOperationsTest {
         rootOperations = FakeRootOperations(root),
         dosingChannelOperations = FakeChannelOperations(),
         coolingControlOperations = DisconnectedDeviceCoolingControlOperations,
-        timerControlOperations = timer
+        timerControlOperations = timer,
+        lightControlOperations = FakeLightControlOperations(unavailableLightControl())
+    )
+
+    private fun lightPreparation(
+        root: DeviceRootSnapshot,
+        light: DeviceLightControlOperations
+    ) = DefaultDeviceControlSurfacePreparationOperations(
+        rootOperations = FakeRootOperations(root),
+        dosingChannelOperations = FakeChannelOperations(),
+        coolingControlOperations = DisconnectedDeviceCoolingControlOperations,
+        timerControlOperations = FakeTimerControlOperations(unavailableTimerControl()),
+        lightControlOperations = light
     )
 
     private fun request() = DeviceControlSurfacePreparationRequest(
@@ -320,6 +454,11 @@ class DefaultDeviceControlSurfacePreparationOperationsTest {
     private fun timerRequest() = DeviceControlSurfacePreparationRequest(
         deviceUid = TIMER_DEVICE_UID,
         family = OwnerDeviceFamily.TIMER
+    )
+
+    private fun lightRequest() = DeviceControlSurfacePreparationRequest(
+        deviceUid = LIGHT_DEVICE_UID,
+        family = OwnerDeviceFamily.LIGHT
     )
 
     private class FakeRootOperations(
@@ -441,14 +580,35 @@ class DefaultDeviceControlSurfacePreparationOperationsTest {
         override suspend fun replaceSchedules(
             deviceUid: String,
             slotId: String,
+            expectedRevision: Long,
             schedules: List<DeviceTimerScheduleDraft>
         ): DeviceTimerControlResult = result
+    }
+
+    private class FakeLightControlOperations(
+        private val result: DeviceLightControlResult
+    ) : DeviceLightControlOperations {
+        var observeCalls: Int = 0
+        var refreshCalls: Int = 0
+
+        override fun observeControl(deviceUid: String): Flow<DeviceLightControlResult> {
+            observeCalls += 1
+            return MutableStateFlow(result)
+        }
+
+        override fun currentControl(deviceUid: String): DeviceLightControlResult = result
+
+        override suspend fun refreshControl(deviceUid: String): DeviceLightControlResult {
+            refreshCalls += 1
+            return result
+        }
     }
 
     private companion object {
         const val DEVICE_UID = "dose-pro-4"
         const val COOLING_DEVICE_UID = "cool-pro-1f"
         const val TIMER_DEVICE_UID = "timer-pro-2"
+        const val LIGHT_DEVICE_UID = "light-pro"
     }
 }
 
@@ -544,6 +704,47 @@ private fun availableCoolingControl(): DeviceCoolingControlResult =
             )
         )
     )
+
+private fun lightRootSnapshot(
+    productKey: String,
+    channelKeys: List<String>
+) = DeviceRootSnapshot(
+    deviceUid = "light-pro",
+    title = "Light Pro",
+    availability = OwnerDeviceAvailability.REACHABLE,
+    family = OwnerDeviceFamily.LIGHT,
+    catalogState = DeviceRootCatalogState.VALID,
+    productKey = productKey,
+    lightChannelCount = channelKeys.size,
+    channelSlots = DeviceChannelSlots(
+        lightChannels = channelKeys.mapIndexed { index, key ->
+            DeviceLightChannelSlot(
+                index = DeviceSlotIndex(index),
+                wireKey = DeviceChannelWireKey(key),
+                defaultDisplayName = key.replaceFirstChar(Char::uppercase)
+            )
+        },
+        timerChannels = emptyList(),
+        dosingChannels = emptyList(),
+        fanOutputs = emptyList(),
+        temperatureSensors = emptyList()
+    )
+)
+
+private fun availableLightControl(
+    productKey: String,
+    channelKeys: List<String>
+): DeviceLightControlResult = DeviceLightControlResult.Available(
+    DeviceLightControlSnapshot(
+        deviceUid = "light-pro",
+        productKey = productKey,
+        physicalChannelCount = channelKeys.size,
+        channelKeys = channelKeys
+    )
+)
+
+private fun unavailableLightControl(): DeviceLightControlResult =
+    DeviceLightControlResult.Failed(DeviceLightControlFailure.UNAVAILABLE)
 
 private fun timerRootSnapshot(
     channelCount: Int,

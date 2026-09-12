@@ -223,6 +223,30 @@ for path, text in view_models.items():
         errors.append(f"{path.relative_to(ROOT)}: ViewModel must receive DeviceRootOperations")
 
 light_view_model = view_models[ROOT_VIEW_MODELS[1]]
+for token, reason in (
+    (
+        "private val lightControlOperations: DeviceLightControlOperations",
+        "Light authoritative state must enter through an application boundary",
+    ),
+    (
+        "private val controlSurfacePreparationOperations: "
+        "DeviceControlSurfacePreparationOperations",
+        "Light restore must use the shared preparation boundary",
+    ),
+    (
+        "family = OwnerDeviceFamily.LIGHT",
+        "Light preparation must use its exact application family",
+    ),
+    (
+        "currentControlSnapshot.matchesLightControlSurface",
+        "Light must re-check current authoritative identity after handoff",
+    ),
+):
+    if token not in light_view_model:
+        errors.append(
+            f"{ROOT_VIEW_MODELS[1].relative_to(ROOT)}: {reason}: {token}"
+        )
+
 for forbidden in (
     "DeviceFirmwareUpdateOperations",
     "PreparedDeviceFirmwareUpdate",
@@ -265,7 +289,7 @@ if "DeviceDosingRootViewModel(" in smoke_factory:
 for token in (
     "FakeDeviceRootOperations",
     "overview renders application root snapshot without repository models",
-    "light root exposes only the device title state",
+    "light root requires the shared authoritative preparation state",
 ):
     if token not in test:
         errors.append(f"{TEST.relative_to(ROOT)}: fake-backed root coverage is missing: {token}")

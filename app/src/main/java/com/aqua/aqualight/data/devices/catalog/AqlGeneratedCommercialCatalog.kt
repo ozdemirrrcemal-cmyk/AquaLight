@@ -1,6 +1,6 @@
 // GENERATED FILE. DO NOT EDIT.
 // Source: protocol/fixtures/aql_product_catalog_v1.json
-// Source firmware commit: 2e3688f266d7ed34a6773badafcd62af73cf4aac
+// Source firmware commit: 7df97ce807ebb1e90ff63cc36206d6ce479a62fc
 
 package com.aqua.aqualight.data.devices.catalog
 
@@ -38,10 +38,11 @@ private val PROFILE_LIGHT_WRGB_PRO_ELITE = AqlCommercialCatalogProfile(
         AqlDeviceFeatureKey.LIGHT_CONTROL,
         AqlDeviceFeatureKey.LIGHT_QUICK_SETUP,
         AqlDeviceFeatureKey.LIGHT_PRESETS,
-        AqlDeviceFeatureKey.LIGHT_MOONLIGHT,
         AqlDeviceFeatureKey.LIGHT_ACCLIMATION,
         AqlDeviceFeatureKey.LIGHT_TEMPERATURE_PROTECTION,
         AqlDeviceFeatureKey.LIGHT_FAN_CONTROL,
+        AqlDeviceFeatureKey.LIGHT_ESTIMATED_POWER,
+        AqlDeviceFeatureKey.LIGHT_ESTIMATED_COLOR,
         AqlDeviceFeatureKey.TEMPERATURE_READ,
         AqlDeviceFeatureKey.OTA_UPDATE,
     ),
@@ -52,7 +53,6 @@ private val PROFILE_LIGHT_WRGB_PRO_ELITE = AqlCommercialCatalogProfile(
         AqlDeviceScreenKey.LIGHT_SCHEDULE,
         AqlDeviceScreenKey.LIGHT_PRESETS,
         AqlDeviceScreenKey.LIGHT_QUICK_SETUP,
-        AqlDeviceScreenKey.LIGHT_MOONLIGHT,
         AqlDeviceScreenKey.LIGHT_ACCLIMATION,
         AqlDeviceScreenKey.LIGHT_TEMPERATURE_PROTECTION,
         AqlDeviceScreenKey.LIGHT_FAN_CONTROL,
@@ -90,8 +90,6 @@ private val PROFILE_LIGHT_RGB_PRO_SLIM = AqlCommercialCatalogProfile(
         AqlDeviceFeatureKey.LIGHT_CONTROL,
         AqlDeviceFeatureKey.LIGHT_QUICK_SETUP,
         AqlDeviceFeatureKey.LIGHT_PRESETS,
-        AqlDeviceFeatureKey.LIGHT_MOONLIGHT,
-        AqlDeviceFeatureKey.LIGHT_ACCLIMATION,
         AqlDeviceFeatureKey.OTA_UPDATE,
     ),
     supportedScreens = setOf(
@@ -101,8 +99,6 @@ private val PROFILE_LIGHT_RGB_PRO_SLIM = AqlCommercialCatalogProfile(
         AqlDeviceScreenKey.LIGHT_SCHEDULE,
         AqlDeviceScreenKey.LIGHT_PRESETS,
         AqlDeviceScreenKey.LIGHT_QUICK_SETUP,
-        AqlDeviceScreenKey.LIGHT_MOONLIGHT,
-        AqlDeviceScreenKey.LIGHT_ACCLIMATION,
         AqlDeviceScreenKey.ADVANCED,
     ),
     expectedMenuFeatureNames = setOf(

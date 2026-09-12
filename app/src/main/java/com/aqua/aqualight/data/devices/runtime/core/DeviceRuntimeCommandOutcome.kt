@@ -62,7 +62,9 @@ sealed interface DeviceRuntimeCommandOutcome<out T> {
         val statusCode: Int,
         val code: String,
         val field: String,
-        val message: String
+        val message: String,
+        /** Exact firmware error.data JSON retained for domain-owned structured errors. */
+        val structuredDataJson: String = "{}"
     ) : DeviceRuntimeCommandOutcome<Nothing>
 
     data class ProtocolError(

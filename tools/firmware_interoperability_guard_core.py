@@ -34,60 +34,69 @@ INTEROPERABILITY_TEST_PATH = (
 )
 
 FIRMWARE_REPOSITORY = "ozdemirrrcemal-cmyk/AquaLight-Firmware"
-FIRMWARE_COMMIT = "980b03f0d83cdeb997698fc6b207064aa709cec8"
-DOSING_FIRMWARE_COMMIT = FIRMWARE_COMMIT
-COMMAND_NAMES_BLOB = "8fbd5743e58f76f9123e63441313246aae91814d"
-EVENT_CONTRACT_BLOB = "96bcb0b45c0d39e46dc3f586507f95dca9909640"
+FIRMWARE_COMMIT = "7df97ce807ebb1e90ff63cc36206d6ce479a62fc"
+DOSING_FIRMWARE_COMMIT = "fa147211749c2dcb2f56e15a617a00010e071984"
+COMMAND_NAMES_BLOB = "a4a05ae219e449b42de2654c38b55d65804c91b0"
+EVENT_CONTRACT_BLOB = "5e87fd043c0efaa849ed3ba8e5be9ce6f2727e24"
 PRODUCT_CATALOG_EXPORT_COMMIT = FIRMWARE_COMMIT
 REQUEST_CONTRACT_BLOBS = {
     "src/api/v1/commands/AqlDeviceCommands.hpp": (
-        "c5dc9982d5c8894fa74cec51c53e7c7d8af16f53"
+        "a78d6355555afea780fdb62809bc9107d7122698"
     ),
     "src/api/v1/commands/AqlNetworkCommands.hpp": (
-        "913db695e24051585d8179b6f6fecbce74293a86"
+        "529a3b341e81a48d33b9036343dbb0b9f2844fb6"
     ),
     "src/api/v1/commands/AqlSecurityCommands.hpp": (
-        "75f7f41e4400d28c629775dc533560319cdf8977"
+        "1c16c3e7c6d1456b1802f494d91c104347ad09aa"
     ),
     "src/api/v1/commands/AqlTimeCommands.hpp": (
-        "ce33b52d75d2f1c26c08ce8bc64356be3812bcc7"
+        "ee6e87ab0e1152ffd3d9004fe8b5c7e380488a4f"
     ),
     "src/api/v1/commands/AqlLightCommands.hpp": (
-        "ce59a843375913b7d315b2cd68bdf40445df55bd"
+        "6fc17f55fb171060e1544f21a8f643a363b7da9e"
+    ),
+    "src/api/v1/commands/AqlLightV1Commands.hpp": (
+        "847f9f73d225c261f55fea74f858721cac172821"
+    ),
+    "src/api/v1/commands/names/AqlLightCommandNames.hpp": (
+        "9ebdd8f8b7dedb96e6cc1672fdcc676985f1e12e"
+    ),
+    "src/modules/light/AqlLightProductContract.hpp": (
+        "c76f9c957672ffef62b96ba75f9b034a29c5fecb"
     ),
     "src/api/v1/commands/AqlLightTemperatureProtectionCommands.hpp": (
-        "f48588d88bb902139d3545002a0ae8c40a5795c1"
+        "e3f04116d2f6ae77e0a1adfd7112773a3e1d06fe"
     ),
     "src/api/v1/commands/AqlLightThermalCommands.hpp": (
-        "b71a5415082b7d23deab8cb86aa81885a01c24f3"
+        "10f5e03237b16ad4bf0a26b64c2715e0985d094e"
     ),
     "src/api/v1/commands/AqlCoolingCommands.hpp": (
-        "50f209416d7b97efdd69b81274205dcf09777363"
+        "4df542d5106fce2810e64559667685c1c2ecfd69"
     ),
     "src/api/v1/commands/AqlTimerCommands.hpp": (
-        "0e442d40293d0a68bb5016840bd52b7c001489a6"
+        "f01a46b6a4982879f57f0d57c19ff50ff9f709f0"
     ),
     "src/api/v1/commands/AqlDosingCommands.hpp": (
-        "c293c9317db26492ca2a7ab4251ce0b23d787fa7"
+        "34cfc3287485f6a46a73b47f061a5456cde9aa9d"
     ),
     "src/api/v1/commands/AqlDosingProgressCommands.hpp": (
-        "92fd314e10c90a8d8f77434dc9d2b52ec9896341"
+        "8700e785bdd2e747abea3b09eff97755e2addad0"
     ),
     "src/api/v1/commands/AqlFirmwareCommands.hpp": (
-        "6cf2e4e56947a0b6b641e55765b8b6f685004fbb"
+        "8b1107d159ca3ff026754c8a06bd1e75fb608c37"
     ),
     "src/modules/timer/AqlTimerService.hpp": (
-        "0e8bbb20a92afbe7b5500fba51a1d03f4dfb0064"
+        "f0b7a64487dec5a14d571966a14274223dc6c743"
     ),
     "src/security/AqlSecurityService.hpp": (
-        "14d3d58740c6f8e2efebdf640298288a99c78715"
+        "484906dbdd833d6ad7505ae1755748d239fc0805"
     ),
 }
 
 EXPECTED_FIXTURES = {
     "aql_ws_v1_golden.json": (
-        "508bd588c118a0c41b66c838c579c45fefcfa5f54b1a608c26b2c9b1ef8984fb",
-        "a16e32d73a2b8aabd5989fc400df36fd9f6b5347",
+        "4d9f2b406800656dc19f08350fd0a3badac659d6fe230d9e3df66f92f728845d",
+        "e7dc2d3d5567f4246f818659dc2ae0a779021d58",
         True,
     ),
     "aql_cooling_contract_v1.json": (
@@ -96,17 +105,37 @@ EXPECTED_FIXTURES = {
         True,
     ),
     "aql_cooling_telemetry_v1.json": (
-        "8c0ecc54eff1a05f3d72b9b740e6d986dbc3a7cc69c61647608aed360b621b85",
-        "7ec000ec24e2ef48cd54beff3bad81b58d7cd4c4",
+        "8257ed9ad10342d8cab2693087b2b1831f8287d6e6eede24da2875457f0075a7",
+        "83778df071f32d5996a3d55946275e8b63291336",
+        True,
+    ),
+    "aql_light_contract_v1.json": (
+        "1260eb5c50852bcd6652cea648e38d06ec06c88422ce1bd169103fc65a52edb0",
+        "1b6fd1285af4caee02a72dadc572c2113d5c0192",
+        True,
+    ),
+    "aql_light_rgb_pro_slim_contract_v1.json": (
+        "c56863cc016ca6f5ca75ed56e58ae2e65c8f7d4432d639a31fdb9ebe7849466a",
+        "f136b629dde5e2905ac7399ce28a306e9261db34",
+        True,
+    ),
+    "aql_light_manual_control_v1.json": (
+        "84d9d61fc9ea233c72d4ae51a5c3ed9bc0b57b1ecac4f60359731a7161904869",
+        "7d06c67aa4db70bb53b83ff0def2feb11b896781",
+        True,
+    ),
+    "aql_light_graph_contract_v1.json": (
+        "49aa0c4e2e543e9e74421b94ad9b0906e460366c0edd11d6b380c0ca5ab5bcf5",
+        "375064486ab3236b09bae8f1e7508a1eb204581f",
         True,
     ),
     "aql_light_thermal_contract_v1.json": (
-        "f1c8bac58740c3250a5c2e7a172f3d49604bf0ae0a0ba628f88f156c1842d7a6",
-        "acbe344c29f8fe5569ffcf3b5b1d0fda2a6b07f7",
+        "1eba62b3b80101e5f799c35c2e1af4d69e1961cf331e5d6f139b5a3aab30a3cf",
+        "7a6cebbddeab45802bc60ce8201b410d8c2ef851",
         True,
     ),
     "aql_product_catalog_v1.json": (
-        "8ed588f11c28d7ad537623082e60bf98aed973eeb1aa0b01f582eade2126f63b",
+        "c0061ae2074ab249777d8682412bba22be9920992c8565d8e0c1d11f29000aa4",
         None,
         False,
     ),
@@ -321,12 +350,12 @@ def verify_command_and_event_coverage(interoperability: dict[str, Any]) -> None:
     require(public == [], "WebSocket public command matrix must be empty")
     require(isinstance(authenticated, list), "authenticated command matrix is missing")
     command_set = set(authenticated)
-    require(len(authenticated) == 50, "firmware fixture must contain 50 commands")
-    require(len(command_set) == 50, "firmware fixture command names must be unique")
+    require(len(authenticated) == 62, "firmware fixture must contain 62 commands")
+    require(len(command_set) == 62, "firmware fixture command names must be unique")
 
     ws_source = WS_CONTRACT_PATH.read_text(encoding="utf-8", errors="strict")
     event_source = EVENT_CONTRACT_PATH.read_text(encoding="utf-8", errors="strict")
-    require(android_commands(ws_source) == command_set, "Android 50-command matrix drifted")
+    require(android_commands(ws_source) == command_set, "Android 62-command matrix drifted")
 
     disconnected_modules = interoperability.get("androidDisconnectedModules")
     require(
@@ -413,7 +442,7 @@ def verify_command_and_event_coverage(interoperability: dict[str, Any]) -> None:
     )
     require(
         core_coverage | dosing_action_set == command_set,
-        "request coverage plus Dosing v1 pin does not exactly classify all 50 commands",
+        "request coverage plus Dosing v1 pin does not exactly classify all 62 commands",
     )
 
 
@@ -513,8 +542,8 @@ def main() -> int:
         return 1
 
     print(
-        "Firmware interoperability guard passed: 50 command names, 50 connected "
-        "Android commands (36 core + 14 feature-owned Dosing v1), 13/13 events, "
+        "Firmware interoperability guard passed: 62 command names, 62 connected "
+        "Android commands (48 core + 14 feature-owned Dosing v1), 13/13 events, "
         "core request serializers, byte-identical shared fixtures and 7/7 SKUs."
     )
     return 0

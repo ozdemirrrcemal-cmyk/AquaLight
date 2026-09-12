@@ -57,6 +57,15 @@ COOLING_PRESENTATION_AREAS = frozenset(
 MAIN_SOURCE_ROOT = Path("app/src/main/java")
 LAYOUT_ROOT = Path("app/src/main/res/layout")
 DOSING_LAYOUT = LAYOUT_ROOT / "fragment_device_dosing_root.xml"
+LIGHT_FRAGMENT = Path(
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/"
+    "DeviceLightRootFragment.kt"
+)
+LIGHT_VIEW_MODEL = Path(
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/"
+    "DeviceLightRootViewModel.kt"
+)
+LIGHT_LAYOUT = LAYOUT_ROOT / "fragment_device_light_root.xml"
 COOLING_LAYOUT = LAYOUT_ROOT / "fragment_device_cooling_root.xml"
 TIMER_FRAGMENT = Path(
     "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/"
@@ -65,6 +74,17 @@ TIMER_FRAGMENT = Path(
 TIMER_VIEW_MODEL = Path(
     "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/"
     "DeviceTimerRootViewModel.kt"
+)
+TIMER_CHANNEL_CARD = Path(
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/"
+    "DeviceTimerChannelCard.kt"
+)
+TIMER_CHANNEL_SCREEN = Path(
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/channel/"
+    "DeviceTimerChannelScreen.kt"
+)
+TIMER_UI_ROOT = Path(
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer"
 )
 TIMER_LAYOUT = LAYOUT_ROOT / "fragment_device_timer_root.xml"
 
@@ -210,22 +230,58 @@ def validate_layout_contract(
     return errors
 
 
-def validate_timer_empty_surface(
+def validate_timer_control_surface(
     layout_source: str,
     fragment_source: str,
     view_model_source: str,
+    channel_card_source: str | None = None,
+    channel_screen_source: str | None = None,
 ) -> list[str]:
-    """Keep Timer visuals empty while requiring its application-owned control boundary."""
+    """Require the Timer dashboard while preserving its application-owned control boundary."""
     errors: list[str] = []
     try:
         root = ET.fromstring(layout_source)
     except ET.ParseError as error:
         return [f"{TIMER_LAYOUT}: Timer root layout is invalid XML: {error}"]
 
-    if len(root) != 1 or not root[0].tag.endswith("include"):
+    child_tags = [child.tag for child in root]
+    if (
+        len(root) != 2
+        or sum(tag.endswith("include") for tag in child_tags) != 1
+        or sum(tag.endswith("ComposeView") for tag in child_tags) != 1
+    ):
         errors.append(
-            f"{TIMER_LAYOUT}: Timer root body must remain empty; only the shared header is allowed"
+            f"{TIMER_LAYOUT}: Timer root must contain the shared header and one ComposeView body"
         )
+
+    for token, reason in (
+        (
+            'android:id="@+id/timerDashboardCompose"',
+            "Timer dashboard ComposeView id must stay canonical finder-owned",
+        ),
+        (
+            "setupDashboardContent()",
+            "Timer root must install its dashboard composition",
+        ),
+        (
+            "collectAsStateWithLifecycle()",
+            "Timer dashboard must collect state with lifecycle awareness",
+        ),
+        (
+            "DeviceTimerDashboardScreen(",
+            "Timer root must render the firmware-backed dashboard",
+        ),
+        (
+            "onChannelClick = ::openChannel",
+            "Timer dashboard channels must enter the channel-scoped control surface",
+        ),
+        (
+            "onPowerClick = viewModel::togglePower",
+            "Timer power must send the direct persistent manual command",
+        ),
+    ):
+        source = layout_source if token.startswith("android:id") else fragment_source
+        _require(TIMER_LAYOUT if source is layout_source else TIMER_FRAGMENT, source, errors, token, reason)
 
     for forbidden in (
         "tvProductName",
@@ -279,6 +335,18 @@ def validate_timer_empty_surface(
             "data class DeviceTimerControlUiState(",
             "Timer firmware-independent snapshots must be mapped to presentation state",
         ),
+        (
+            "timerControlOperations.executePowerMutation(deviceUid, slotId, mutation)",
+            "Timer power mutations must use the shared mode-aware application operation",
+        ),
+        (
+            "fun togglePower(slotId: String)",
+            "Timer dashboard power must derive ON or OFF from authoritative channel state",
+        ),
+        (
+            "pendingChannelSlotIds",
+            "Timer channel mutations must expose derived pending presentation state",
+        ),
     ):
         _require(TIMER_VIEW_MODEL, view_model_source, errors, token, reason)
 
@@ -293,6 +361,92 @@ def validate_timer_empty_surface(
             errors.append(
                 f"{TIMER_VIEW_MODEL}: Timer UI bypasses application boundaries: {forbidden}"
             )
+    if "openManualControl" in fragment_source:
+        errors.append(
+            f"{TIMER_FRAGMENT}: Timer power must not retain a navigation path to timed control"
+        )
+
+    if channel_card_source is not None:
+        for token, reason in (
+            (
+                "onClick = onChannelClick",
+                "Timer channel details must be owned by the arrow action",
+            ),
+            (
+                ".size(AquaTimerDashboardGeometry.metadataActionSize)",
+                "Timer detail arrow must retain a full touch target",
+            ),
+            (
+                "R.string.device_timer_program_power_turn_on_description",
+                "Timer power accessibility copy must distinguish program-preserving action",
+            ),
+        ):
+            _require(TIMER_CHANNEL_CARD, channel_card_source, errors, token, reason)
+        surface_match = re.search(
+            r"AquaDeviceCardSurface\(\s*modifier\s*=\s*(.*?)\n\s*\)\s*\{",
+            channel_card_source,
+            re.DOTALL,
+        )
+        if surface_match is None or ".clickable(" in surface_match.group(1):
+            errors.append(
+                f"{TIMER_CHANNEL_CARD}: Timer card surface must remain non-clickable; "
+                "only power and arrow actions may handle taps"
+            )
+    if (
+        channel_screen_source is not None
+        and channel_screen_source.count("TimerDivider(colors)") < 3
+    ):
+        errors.append(
+            f"{TIMER_CHANNEL_SCREEN}: Timer channel settings must separate all four rows "
+            "with the central TimerDivider"
+        )
+    return errors
+
+
+def validate_timer_feature_boundaries(repository_root: Path) -> list[str]:
+    errors: list[str] = []
+    timer_root = repository_root / TIMER_UI_ROOT
+    if not timer_root.is_dir():
+        return [f"{TIMER_UI_ROOT}: Timer UI root is missing"]
+
+    has_shared_card_surface = False
+    has_central_timer_style = False
+    for path in sorted(timer_root.rglob("*.kt")):
+        source = path.read_text(encoding="utf-8", errors="ignore")
+        relative_path = path.relative_to(repository_root)
+        has_shared_card_surface = has_shared_card_surface or "AquaDeviceCardSurface" in source
+        has_central_timer_style = has_central_timer_style or (
+            "com.aqua.aqualight.ui.common.timer" in source
+        )
+        for forbidden in (
+            "import com.aqua.aqualight.data.devices",
+            "runtime.modules.timer",
+            "DevicesRepository",
+            "DeviceTimerRuntimeRepository",
+            "DeviceTimerRuntimeStateStore",
+        ):
+            if forbidden in source:
+                errors.append(
+                    f"{relative_path}: Timer UI bypasses application boundaries: {forbidden}"
+                )
+        for pattern, reason in (
+            (HARD_CODED_COMPOSE_TEXT, "Timer Compose copy must use String resources"),
+            (
+                HARD_CODED_CONTENT_DESCRIPTION,
+                "Timer accessibility copy must use String resources",
+            ),
+        ):
+            if pattern.search(source):
+                errors.append(f"{relative_path}: {reason}")
+        if "Color(0x" in source:
+            errors.append(
+                f"{relative_path}: Timer UI colors must come from the central style contract"
+            )
+
+    if not has_shared_card_surface:
+        errors.append(f"{TIMER_UI_ROOT}: Timer dashboard must use AquaDeviceCardSurface")
+    if not has_central_timer_style:
+        errors.append(f"{TIMER_UI_ROOT}: Timer dashboard must use its central style contract")
     return errors
 
 
@@ -385,13 +539,18 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
     nav_devices = _read(repository_root, NAV_DEVICES, errors)
     main_layout = _read(repository_root, MAIN_LAYOUT, errors)
     dosing_fragment = _read(repository_root, DOSING_FRAGMENT, errors)
+    light_fragment = _read(repository_root, LIGHT_FRAGMENT, errors)
+    light_view_model = _read(repository_root, LIGHT_VIEW_MODEL, errors)
     cooling_fragment = _read(repository_root, COOLING_FRAGMENT, errors)
     cooling_view_model = _read(repository_root, COOLING_VIEW_MODEL, errors)
     cooling_availability = _read(repository_root, COOLING_AVAILABILITY, errors)
     dosing_layout = _read(repository_root, DOSING_LAYOUT, errors)
+    light_layout = _read(repository_root, LIGHT_LAYOUT, errors)
     cooling_layout = _read(repository_root, COOLING_LAYOUT, errors)
     timer_fragment = _read(repository_root, TIMER_FRAGMENT, errors)
     timer_view_model = _read(repository_root, TIMER_VIEW_MODEL, errors)
+    timer_channel_card = _read(repository_root, TIMER_CHANNEL_CARD, errors)
+    timer_channel_screen = _read(repository_root, TIMER_CHANNEL_SCREEN, errors)
     timer_layout = _read(repository_root, TIMER_LAYOUT, errors)
 
     for token, reason in (
@@ -479,6 +638,16 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
 
     errors.extend(
         validate_header_contract(
+            LIGHT_FRAGMENT,
+            light_fragment,
+            family_string="device_family_light",
+            settings_description="device_light_open_settings_description",
+            current_destination="deviceLightRootFragment",
+            directions_action="actionDeviceLightRootFragmentToDeviceLightSettingsFragment(",
+        )
+    )
+    errors.extend(
+        validate_header_contract(
             DOSING_FRAGMENT,
             dosing_fragment,
             family_string="device_family_dosing",
@@ -507,6 +676,63 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
             directions_action="actionDeviceCoolingRootFragmentToDeviceCoolingSettingsFragment(",
         )
     )
+
+    for token, reason in (
+        (
+            "private val lightControlOperations: DeviceLightControlOperations",
+            "Light control state must enter through the application boundary",
+        ),
+        (
+            "private val controlSurfacePreparationOperations: "
+            "DeviceControlSurfacePreparationOperations",
+            "Light restore must use the shared preparation boundary",
+        ),
+        (
+            "lightControlOperations.currentControl(deviceUid)",
+            "Light must read only the central authoritative application snapshot",
+        ),
+        (
+            "lightControlOperations.observeControl(deviceUid)",
+            "Light must observe the central authoritative application projection",
+        ),
+        (
+            "family = OwnerDeviceFamily.LIGHT",
+            "Light preparation must use its exact application family",
+        ),
+        (
+            "contentEnabled = surfaceAvailable && !surfacePreparationPending",
+            "Light interactions must remain fail closed during preparation",
+        ),
+        (
+            "showBlockingPreparation = surfacePreparationPending",
+            "Light root must expose the shared blocking preparation state",
+        ),
+    ):
+        _require(LIGHT_VIEW_MODEL, light_view_model, errors, token, reason)
+
+    for token, reason in (
+        (
+            "viewModel.surfaceUnavailableEvents.collect",
+            "Light root must leave an unavailable destination with a typed error",
+        ),
+        (
+            "DeviceMenuUnavailableMessageMapper.messageRes(reason)",
+            "Light root must use the shared unavailable reason presentation",
+        ),
+    ):
+        _require(LIGHT_FRAGMENT, light_fragment, errors, token, reason)
+
+    for forbidden in (
+        "import com.aqua.aqualight.data.devices",
+        "runtime.modules.light",
+        "DevicesRepository",
+        "DeviceLightRuntimeRepository",
+        "DeviceLightRuntimeStateStore",
+    ):
+        if forbidden in light_view_model or forbidden in light_fragment:
+            errors.append(
+                f"{LIGHT_VIEW_MODEL}: Light UI bypasses application boundaries: {forbidden}"
+            )
 
     for token, reason in (
         (
@@ -554,6 +780,13 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
     )
     errors.extend(
         validate_layout_contract(
+            LIGHT_LAYOUT,
+            light_layout,
+            background_owned_by_shell=True,
+        )
+    )
+    errors.extend(
+        validate_layout_contract(
             COOLING_LAYOUT,
             cooling_layout,
             background_owned_by_shell=True,
@@ -561,8 +794,15 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
     )
     errors.extend(validate_layout_contract(TIMER_LAYOUT, timer_layout))
     errors.extend(
-        validate_timer_empty_surface(timer_layout, timer_fragment, timer_view_model)
+        validate_timer_control_surface(
+            timer_layout,
+            timer_fragment,
+            timer_view_model,
+            timer_channel_card,
+            timer_channel_screen,
+        )
     )
+    errors.extend(validate_timer_feature_boundaries(repository_root))
     errors.extend(validate_cooling_feature_boundaries(repository_root))
     return errors
 

@@ -8,6 +8,7 @@ import com.aqua.aqualight.data.devices.runtime.modules.common.DeviceRuntimeJsonC
 import kotlinx.coroutines.flow.StateFlow
 import org.json.JSONObject
 
+/** One product-neutral Light V1 data source for WRGB Pro Elite and RGB Pro Slim. */
 class DeviceLightRuntimeRepository internal constructor(
     private val gateway: DeviceRuntimeCommandGateway,
     internal val stateStore: DeviceLightRuntimeStateStore
@@ -19,6 +20,9 @@ class DeviceLightRuntimeRepository internal constructor(
 
     val states: StateFlow<Map<DeviceUid, DeviceLightStatus>> = stateStore.statuses
 
+    fun currentStatus(deviceUid: DeviceUid): DeviceLightStatus? =
+        stateStore.currentAuthoritativeStatus(deviceUid)
+
     internal fun beginGeneration(
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration
@@ -29,12 +33,10 @@ class DeviceLightRuntimeRepository internal constructor(
         generation: DeviceRuntimeConnectionGeneration? = null
     ) = stateStore.invalidate(deviceUid, generation)
 
-    suspend fun requestStatus(
-        deviceUid: DeviceUid
-    ): DeviceRuntimeCommandOutcome<DeviceLightStatus> {
+    suspend fun requestStatus(deviceUid: DeviceUid): DeviceRuntimeCommandOutcome<DeviceLightStatus> {
         val outcome = gateway.execute(
             deviceUid,
-            jsonCommand(
+            lightCommand(
                 action = DeviceLightRuntimeContract.Action.STATUS_GET,
                 parser = DeviceLightStatusParser::parse
             )
@@ -45,178 +47,112 @@ class DeviceLightRuntimeRepository internal constructor(
         return outcome
     }
 
+    suspend fun setControl(
+        deviceUid: DeviceUid,
+        payload: DeviceLightControlSetPayload
+    ): DeviceRuntimeCommandOutcome<DeviceLightControlSetResult> = productCommand(
+        deviceUid = deviceUid,
+        action = DeviceLightRuntimeContract.Action.CONTROL_SET,
+        dataFactory = payload::toJson,
+        parser = { data, _ -> DeviceLightMutationParser.parseControl(data) },
+        refreshStatus = true
+    )
+
     suspend fun setManual(
         deviceUid: DeviceUid,
         payload: DeviceLightManualSetPayload
-    ): DeviceRuntimeCommandOutcome<DeviceLightManualMutationResult> {
-        val status = stateStore.currentAuthoritativeStatus(deviceUid)
-        if (status != null && (!status.supported || !status.manualSupported)) {
-            return unsupported(deviceUid, DeviceLightRuntimeContract.Action.MANUAL_SET)
-        }
-        val outcome = gateway.execute(
-            deviceUid,
-            jsonCommand(
-                action = DeviceLightRuntimeContract.Action.MANUAL_SET,
-                dataFactory = {
-                    DeviceLightCommandValidation.validateManualRequest(payload)
-                    payload.toJson()
-                },
-                parser = { data ->
-                    DeviceLightMutationParser.parseManual(data).also { result ->
-                        DeviceLightCommandValidation.validateManual(payload, result)
-                    }
-                }
-            )
-        )
-        if (
-            outcome is DeviceRuntimeCommandOutcome.Success &&
-            !stateStore.recordManual(deviceUid, outcome.generation, outcome.value)
-        ) {
-            requestStatus(deviceUid)
-        }
-        return outcome
-    }
-
-    suspend fun clearManual(
-        deviceUid: DeviceUid,
-        channelKeys: List<String> = emptyList()
-    ): DeviceRuntimeCommandOutcome<DeviceLightManualMutationResult> = setManual(
+    ): DeviceRuntimeCommandOutcome<DeviceLightManualSetResult> = productCommand(
         deviceUid = deviceUid,
-        payload = DeviceLightManualSetPayload(
-            clear = true,
-            durationMs = null,
-            channels = channelKeys.map { key ->
-                DeviceLightManualChannelPayload(channelKey = key)
-            }
-        )
+        action = DeviceLightRuntimeContract.Action.MANUAL_SET,
+        dataFactory = payload::toJson,
+        parser = { data, product ->
+            DeviceLightCommandValidation.requireProduct(payload.scene.product, product)
+            DeviceLightMutationParser.parseManual(data, product)
+        },
+        refreshStatus = true
     )
 
-    suspend fun setChannelRegime(
-        deviceUid: DeviceUid,
-        payload: DeviceLightChannelRegimeSetPayload
-    ): DeviceRuntimeCommandOutcome<DeviceLightChannelRegimeMutationResult> {
-        val status = stateStore.currentAuthoritativeStatus(deviceUid)
-        if (status != null && (!status.supported || !status.runtime.supportsChannelRegimeSet)) {
-            return unsupported(deviceUid, DeviceLightRuntimeContract.Action.CHANNEL_REGIME_SET)
-        }
-        val outcome = gateway.execute(
-            deviceUid,
-            jsonCommand(
-                action = DeviceLightRuntimeContract.Action.CHANNEL_REGIME_SET,
-                dataFactory = {
-                    DeviceLightCommandValidation.validateChannelRegimeRequest(payload)
-                    payload.toJson()
-                },
-                parser = { data ->
-                    DeviceLightMutationParser.parseChannelRegime(data).also { result ->
-                        DeviceLightCommandValidation.validateChannelRegime(payload, result)
-                    }
-                }
-            )
-        )
-        if (
-            outcome is DeviceRuntimeCommandOutcome.Success &&
-            !stateStore.recordChannelRegime(deviceUid, outcome.generation, outcome.value)
-        ) {
-            requestStatus(deviceUid)
-        }
-        return outcome
-    }
-
-    suspend fun setChannelRegime(
-        deviceUid: DeviceUid,
-        channelKey: String,
-        regime: DeviceLightRegime,
-        save: Boolean = true
-    ): DeviceRuntimeCommandOutcome<DeviceLightChannelRegimeMutationResult> = setChannelRegime(
+    suspend fun manualOff(
+        deviceUid: DeviceUid
+    ): DeviceRuntimeCommandOutcome<DeviceLightManualSetResult> = productCommand(
         deviceUid = deviceUid,
-        payload = DeviceLightChannelRegimeSetPayload(
-            channelKey = channelKey,
-            regime = regime,
-            save = save
-        )
+        action = DeviceLightRuntimeContract.Action.MANUAL_OFF,
+        parser = DeviceLightMutationParser::parseManual,
+        refreshStatus = true
     )
 
-    suspend fun applyProgram(
+    internal suspend fun <T> acclimationCommand(
         deviceUid: DeviceUid,
-        payload: DeviceLightProgramApplyPayload
-    ): DeviceRuntimeCommandOutcome<DeviceLightProgramApplyResult> {
+        action: String,
+        dataFactory: () -> JSONObject = ::JSONObject,
+        parser: (JSONObject, DeviceLightProduct) -> T,
+        refreshStatus: Boolean = false
+    ): DeviceRuntimeCommandOutcome<T> {
         val status = stateStore.currentAuthoritativeStatus(deviceUid)
-        if (status != null && (!status.supported || !status.programSupported)) {
-            return unsupported(deviceUid, DeviceLightRuntimeContract.Action.PROGRAM_APPLY)
+        val supported = status != null &&
+            status.product == DeviceLightProduct.WRGB_PRO_ELITE &&
+            status.features.acclimation &&
+            status.acclimation.supported
+        return if (supported) {
+            executeProductCommand(
+                deviceUid = deviceUid,
+                product = checkNotNull(status).product,
+                command = DeviceLightProductCommand(action, dataFactory, parser, refreshStatus)
+            )
+        } else {
+            unsupported(deviceUid, action)
         }
+    }
+
+    internal suspend fun <T> productCommand(
+        deviceUid: DeviceUid,
+        action: String,
+        dataFactory: () -> JSONObject = ::JSONObject,
+        parser: (JSONObject, DeviceLightProduct) -> T,
+        refreshStatus: Boolean = false
+    ): DeviceRuntimeCommandOutcome<T> {
+        val product = stateStore.currentAuthoritativeStatus(deviceUid)?.product
+            ?: return unsupported(deviceUid, action)
+        return executeProductCommand(
+            deviceUid = deviceUid,
+            product = product,
+            command = DeviceLightProductCommand(action, dataFactory, parser, refreshStatus)
+        )
+    }
+
+    private suspend fun <T> executeProductCommand(
+        deviceUid: DeviceUid,
+        product: DeviceLightProduct,
+        command: DeviceLightProductCommand<T>
+    ): DeviceRuntimeCommandOutcome<T> {
         val outcome = gateway.execute(
             deviceUid,
-            jsonCommand(
-                action = DeviceLightRuntimeContract.Action.PROGRAM_APPLY,
-                dataFactory = {
-                    DeviceLightCommandValidation.validateProgramRequest(payload)
-                    payload.toJson()
-                },
-                parser = { data ->
-                    DeviceLightMutationParser.parseProgramApply(data).also { result ->
-                        DeviceLightCommandValidation.validateProgramApply(payload, result)
-                    }
-                }
+            lightCommand(
+                action = command.action,
+                dataFactory = command.dataFactory,
+                parser = { data -> command.parser(data, product) }
             )
         )
-        if (
-            outcome is DeviceRuntimeCommandOutcome.Success &&
-            !stateStore.recordProgramApply(deviceUid, outcome.generation, outcome.value)
-        ) {
+        if (command.refreshStatus && outcome is DeviceRuntimeCommandOutcome.Success) {
             requestStatus(deviceUid)
         }
         return outcome
     }
-
-    suspend fun deleteProgram(
-        deviceUid: DeviceUid,
-        payload: DeviceLightProgramDeletePayload
-    ): DeviceRuntimeCommandOutcome<DeviceLightProgramDeleteResult> {
-        val status = stateStore.currentAuthoritativeStatus(deviceUid)
-        if (status != null && (!status.supported || !status.programSupported)) {
-            return unsupported(deviceUid, DeviceLightRuntimeContract.Action.PROGRAM_DELETE)
-        }
-        val outcome = gateway.execute(
-            deviceUid,
-            jsonCommand(
-                action = DeviceLightRuntimeContract.Action.PROGRAM_DELETE,
-                dataFactory = payload::toJson,
-                parser = { data ->
-                    DeviceLightMutationParser.parseProgramDelete(data).also { result ->
-                        DeviceLightCommandValidation.validateProgramDelete(payload, result)
-                    }
-                }
-            )
-        )
-        if (
-            outcome is DeviceRuntimeCommandOutcome.Success &&
-            !stateStore.recordProgramDelete(deviceUid, outcome.generation, outcome.value)
-        ) {
-            requestStatus(deviceUid)
-        }
-        return outcome
-    }
-
-    suspend fun deleteProgram(
-        deviceUid: DeviceUid,
-        programIndex: Int,
-        save: Boolean = true
-    ): DeviceRuntimeCommandOutcome<DeviceLightProgramDeleteResult> = deleteProgram(
-        deviceUid = deviceUid,
-        payload = DeviceLightProgramDeletePayload(
-            programIndex = programIndex,
-            save = save
-        )
-    )
 }
+
+internal data class DeviceLightProductCommand<T>(
+    val action: String,
+    val dataFactory: () -> JSONObject,
+    val parser: (JSONObject, DeviceLightProduct) -> T,
+    val refreshStatus: Boolean
+)
 
 internal fun DeviceLightRuntimeRepository.isAuthoritative(
     deviceUid: DeviceUid,
     generation: DeviceRuntimeConnectionGeneration
 ): Boolean = stateStore.isStatusAuthoritative(deviceUid, generation)
 
-private fun <T> jsonCommand(
+private fun <T> lightCommand(
     action: String,
     dataFactory: () -> JSONObject = ::JSONObject,
     parser: (JSONObject) -> T

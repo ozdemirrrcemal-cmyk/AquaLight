@@ -166,7 +166,7 @@ class DeviceLightTemperatureProtectionContractTest {
         .put("saveRequested", saveRequested)
         .put("runtimeTransport", "websocket")
         .put("command", "light.temperature-protection.set")
-        .put("event", "light.status.changed")
+        .put("event", "light.thermal.status.changed")
         .put("status", supportedStatus(thresholdC = thresholdC))
 
     private fun runtime(supportsSet: Boolean): JSONObject = JSONObject()
@@ -174,7 +174,10 @@ class DeviceLightTemperatureProtectionContractTest {
         .put("readOnly", false)
         .put("supportsStatusGet", true)
         .put("supportsSet", supportsSet)
-        .put("event", "light.status.changed")
+        .put(
+            "event",
+            if (supportsSet) "light.thermal.status.changed" else "light.status.changed"
+        )
 
     private class ParsingGateway(
         private val responses: MutableMap<String, JSONObject>

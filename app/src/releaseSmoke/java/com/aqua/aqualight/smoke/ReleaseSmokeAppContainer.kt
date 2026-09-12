@@ -38,6 +38,7 @@ import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
 import com.aqua.aqualight.data.devices.cooling.DefaultDeviceCoolingAutomaticSettingsOperations
 import com.aqua.aqualight.data.devices.cooling.DefaultDeviceCoolingTemperatureHistoryOperations
 import com.aqua.aqualight.data.devices.cooling.control.DefaultDeviceCoolingControlOperations
+import com.aqua.aqualight.data.devices.light.DefaultDeviceLightControlOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningDiscoveryOperations
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningProgressOperations
@@ -66,6 +67,8 @@ import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.Devic
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.status.DeviceCoolingSystemStatusViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.timer.channel.DeviceTimerChannelViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.timer.program.DeviceTimerProgramViewModel
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
 import com.aqua.aqualight.ui.tabs.settings.SettingsViewModel
@@ -134,6 +137,7 @@ private class ReleaseSmokeViewModelFactory(
     private val appContext = context.applicationContext
     private val notificationPreferences = NotificationPlatform.get(appContext).preferenceUseCase
     private val devicesRepository = DevicesRepository()
+    private val lightControlOperations = DefaultDeviceLightControlOperations(devicesRepository)
     private val timerControlOperations = DefaultDeviceTimerControlOperations(devicesRepository)
     private val tankStore = AquariumTankDataStoreManager(appContext)
     private val careTaskStore = CareTaskDataStoreManager.create(appContext)
@@ -247,7 +251,12 @@ private class ReleaseSmokeViewModelFactory(
         modelClass: Class<out ViewModel>
     ): ViewModel? = when {
         modelClass.isAssignableFrom(DeviceLightRootViewModel::class.java) ->
-            DeviceLightRootViewModel(rootOperations = DefaultDeviceRootOperations(devicesRepository))
+            DeviceLightRootViewModel(
+                rootOperations = DefaultDeviceRootOperations(devicesRepository),
+                lightControlOperations = lightControlOperations,
+                controlSurfacePreparationOperations =
+                    ReleaseSmokeControlSurfacePreparationOperations
+            )
         modelClass.isAssignableFrom(DeviceCoolingRootViewModel::class.java) ->
             DeviceCoolingRootViewModel(
                 operations = DefaultDeviceRootOperations(devicesRepository),
@@ -270,6 +279,10 @@ private class ReleaseSmokeViewModelFactory(
                 controlSurfacePreparationOperations =
                     ReleaseSmokeControlSurfacePreparationOperations
             )
+        modelClass.isAssignableFrom(DeviceTimerProgramViewModel::class.java) ->
+            DeviceTimerProgramViewModel(timerControlOperations)
+        modelClass.isAssignableFrom(DeviceTimerChannelViewModel::class.java) ->
+            DeviceTimerChannelViewModel(timerControlOperations)
         modelClass.isAssignableFrom(DeviceRootOverviewViewModel::class.java) ->
             DeviceRootOverviewViewModel(DefaultDeviceRootOperations(devicesRepository))
         else -> null

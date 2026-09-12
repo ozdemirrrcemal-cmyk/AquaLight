@@ -150,10 +150,115 @@ class DeviceTimerRootViewModelTest {
         val state = viewModel.uiState.value
         assertTrue(state.contentEnabled)
         assertEquals(
-            DeviceTimerChannelStatusNotice.CLOCK_UNAVAILABLE,
-            state.control?.channels?.single()?.statusNotice
+            setOf(DeviceTimerStatusNotice.CLOCK_UNAVAILABLE),
+            state.control?.statusNotices
         )
         assertEquals(null, state.controlFailure)
+    }
+
+    @Test
+    fun `root summary derives active outputs from authoritative channel state`() = runTest {
+        val controls = FakeTimerControlOperations(availableControl())
+        val viewModel = viewModel(controls, FakePreparationOperations(fresh = true))
+
+        viewModel.bind(DEVICE_UID)
+
+        assertEquals(1, viewModel.uiState.value.control?.activeChannelCount)
+    }
+
+    @Test
+    fun `dashboard power keeps program mode and overrides only until the next transition`() =
+        runTest {
+            val controls = FakeTimerControlOperations(availableControl())
+            val viewModel = viewModel(controls, FakePreparationOperations(fresh = true))
+            viewModel.bind(DEVICE_UID)
+
+            viewModel.togglePower(CHANNEL_SLOT_ID)
+
+            assertEquals(
+                listOf(
+                    TemporaryOverrideCall(
+                        DEVICE_UID,
+                        CHANNEL_SLOT_ID,
+                        DeviceTimerChannelRegime.OFF,
+                        FIVE_MINUTES_MILLIS
+                    )
+                ),
+                controls.temporaryOverrideCalls
+            )
+            assertTrue(controls.regimeCalls.isEmpty())
+            assertEquals(
+                DeviceTimerChannelRegime.AUTO,
+                viewModel.uiState.value.control?.channels?.single()?.regime
+            )
+        }
+
+    @Test
+    fun `dashboard power in manual mode persists the opposite output state`() = runTest {
+        val controls = FakeTimerControlOperations(
+            availableControl(regime = DeviceTimerChannelRegime.ON)
+        )
+        val viewModel = viewModel(controls, FakePreparationOperations(fresh = true))
+        viewModel.bind(DEVICE_UID)
+
+        viewModel.togglePower(CHANNEL_SLOT_ID)
+
+        assertEquals(
+            listOf(RegimeCall(DEVICE_UID, CHANNEL_SLOT_ID, DeviceTimerChannelRegime.OFF)),
+            controls.regimeCalls
+        )
+        assertTrue(controls.temporaryOverrideCalls.isEmpty())
+    }
+
+    @Test
+    fun `dashboard power can cancel a temporary override using the existing persistent regime`() =
+        runTest {
+            val controls = FakeTimerControlOperations(
+                availableControl(
+                    regime = DeviceTimerChannelRegime.OFF,
+                    operatingState = DeviceTimerOperatingState.ON,
+                    temporaryOverrideActive = true
+                )
+            )
+            val viewModel = viewModel(controls, FakePreparationOperations(fresh = true))
+            viewModel.bind(DEVICE_UID)
+
+            viewModel.togglePower(CHANNEL_SLOT_ID)
+
+            assertEquals(
+                listOf(RegimeCall(DEVICE_UID, CHANNEL_SLOT_ID, DeviceTimerChannelRegime.OFF)),
+                controls.regimeCalls
+            )
+        }
+
+    @Test
+    fun `rejected channel mutation retains authoritative content and reports reason`() = runTest {
+        val failure = DeviceTimerControlFailure.Rejected(DeviceTimerCommandFailure.CONFLICT)
+        val controls = FakeTimerControlOperations(
+            availableControl(regime = DeviceTimerChannelRegime.ON)
+        ).apply {
+            regimeResult = DeviceTimerControlResult.Failed(failure)
+        }
+        val viewModel = viewModel(controls, FakePreparationOperations(fresh = true))
+        viewModel.bind(DEVICE_UID)
+
+        viewModel.togglePower(CHANNEL_SLOT_ID)
+
+        assertTrue(viewModel.uiState.value.contentEnabled)
+        assertEquals(failure, viewModel.uiState.value.controlFailure)
+        assertEquals(7L, viewModel.uiState.value.control?.revision)
+    }
+
+    @Test
+    fun `read only Timer never sends a channel mutation`() = runTest {
+        val controls = FakeTimerControlOperations(availableControl(readOnly = true))
+        val viewModel = viewModel(controls, FakePreparationOperations(fresh = true))
+        viewModel.bind(DEVICE_UID)
+
+        viewModel.togglePower(CHANNEL_SLOT_ID)
+
+        assertTrue(controls.regimeCalls.isEmpty())
+        assertTrue(controls.temporaryOverrideCalls.isEmpty())
     }
 
     @Test
@@ -180,7 +285,8 @@ class DeviceTimerRootViewModelTest {
     ) = DeviceTimerRootViewModel(
         operations = FakeRootOperations(timerRoot()),
         timerControlOperations = controls,
-        controlSurfacePreparationOperations = preparation
+        controlSurfacePreparationOperations = preparation,
+        currentEpochMillis = { TEST_NOW_EPOCH_MILLIS }
     )
 
     private class FakeRootOperations(
@@ -232,6 +338,9 @@ class DeviceTimerRootViewModelTest {
         initial: DeviceTimerControlResult
     ) : DeviceTimerControlOperations {
         private val results = MutableStateFlow(initial)
+        val regimeCalls = mutableListOf<RegimeCall>()
+        val temporaryOverrideCalls = mutableListOf<TemporaryOverrideCall>()
+        var regimeResult: DeviceTimerControlResult? = null
 
         override fun observeControl(deviceUid: String): Flow<DeviceTimerControlResult> = results
 
@@ -249,14 +358,25 @@ class DeviceTimerRootViewModelTest {
             deviceUid: String,
             slotId: String,
             regime: DeviceTimerChannelRegime
-        ): DeviceTimerControlResult = results.value
+        ): DeviceTimerControlResult {
+            regimeCalls += RegimeCall(deviceUid, slotId, regime)
+            return regimeResult ?: results.value
+        }
 
         override suspend fun setTemporaryOverride(
             deviceUid: String,
             slotId: String,
             regime: DeviceTimerChannelRegime,
             durationMillis: Long
-        ): DeviceTimerControlResult = results.value
+        ): DeviceTimerControlResult {
+            temporaryOverrideCalls += TemporaryOverrideCall(
+                deviceUid,
+                slotId,
+                regime,
+                durationMillis
+            )
+            return results.value
+        }
 
         override suspend fun setDisplayName(
             deviceUid: String,
@@ -267,6 +387,7 @@ class DeviceTimerRootViewModelTest {
         override suspend fun replaceSchedules(
             deviceUid: String,
             slotId: String,
+            expectedRevision: Long,
             schedules: List<DeviceTimerScheduleDraft>
         ): DeviceTimerControlResult = results.value
 
@@ -277,8 +398,24 @@ class DeviceTimerRootViewModelTest {
 
     private companion object {
         const val DEVICE_UID = "timer-pro-1"
+        const val CHANNEL_SLOT_ID = "timer:timer1"
+        const val TEST_NOW_EPOCH_MILLIS = 1_800_000_000_000L
+        const val FIVE_MINUTES_MILLIS = 300_000L
     }
 }
+
+private data class RegimeCall(
+    val deviceUid: String,
+    val slotId: String,
+    val regime: DeviceTimerChannelRegime
+)
+
+private data class TemporaryOverrideCall(
+    val deviceUid: String,
+    val slotId: String,
+    val regime: DeviceTimerChannelRegime,
+    val durationMillis: Long
+)
 
 private fun timerRoot() = DeviceRootSnapshot(
     deviceUid = "timer-pro-1",
@@ -290,7 +427,11 @@ private fun timerRoot() = DeviceRootSnapshot(
 )
 
 private fun availableControl(
-    clockReady: Boolean = true
+    clockReady: Boolean = true,
+    readOnly: Boolean = false,
+    regime: DeviceTimerChannelRegime = DeviceTimerChannelRegime.AUTO,
+    operatingState: DeviceTimerOperatingState = DeviceTimerOperatingState.ON,
+    temporaryOverrideActive: Boolean = false
 ): DeviceTimerControlResult = DeviceTimerControlResult.Available(
     DeviceTimerControlSnapshot(
         deviceUid = "timer-pro-1",
@@ -299,7 +440,7 @@ private fun availableControl(
         uptimeMillis = 50_000L,
         maxSchedulesPerChannel = 8,
         capabilities = DeviceTimerControlCapabilities(
-            readOnly = false,
+            readOnly = readOnly,
             supportsConfigApply = true,
             supportsChannelState = true,
             supportsSchedules = true,
@@ -313,39 +454,43 @@ private fun availableControl(
                 channelNumber = 1,
                 defaultName = "Timer 1",
                 displayName = "Display Timer",
-                regime = DeviceTimerChannelRegime.AUTO,
-                operatingState = DeviceTimerOperatingState.ON,
+                regime = regime,
+                operatingState = operatingState,
                 scheduleCount = 1,
                 activeScheduleSlotId = 10,
                 activeScheduleName = "Morning",
                 nextTransitionType = DeviceTimerNextTransitionType.OFF,
-                nextTransitionAtEpochMillis = 60_000L,
+                nextTransitionAtEpochMillis = 1_800_000_300_000L,
                 runtimeReason = if (clockReady) {
                     DeviceTimerRuntimeReason.SCHEDULE_ACTIVE
                 } else {
                     DeviceTimerRuntimeReason.CLOCK_UNAVAILABLE
                 },
                 clockReady = clockReady,
-                temporaryOverrideActive = false,
-                temporaryOverrideRemainingMillis = 0L,
+                temporaryOverrideActive = temporaryOverrideActive,
+                temporaryOverrideRemainingMillis = if (temporaryOverrideActive) {
+                    1_800_000L
+                } else {
+                    0L
+                },
                 outputHealth = DeviceTimerOutputHealth.UNVERIFIED,
                 physicalFeedbackAvailable = false,
                 displayNameEditable = true,
-                schedules = listOf(
-                    DeviceTimerScheduleSnapshot(
-                        index = 0,
-                        slotId = 10,
-                        enabled = true,
-                        name = "Morning",
-                        weekdays = listOf(true, true, true, true, true, false, false),
-                        startTimeMillis = 28_800_000L,
-                        endTimeMillis = 36_000_000L,
-                        spansMidnight = false
-                    )
-                )
+                schedules = listOf(morningSchedule())
             )
         )
     )
+)
+
+private fun morningSchedule() = DeviceTimerScheduleSnapshot(
+    index = 0,
+    slotId = 10,
+    enabled = true,
+    name = "Morning",
+    weekdays = listOf(true, true, true, true, true, false, false),
+    startTimeMillis = 28_800_000L,
+    endTimeMillis = 36_000_000L,
+    spansMidnight = false
 )
 
 private fun unavailableControl(): DeviceTimerControlResult =
