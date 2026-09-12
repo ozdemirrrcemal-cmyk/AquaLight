@@ -8,12 +8,34 @@
 - Firmware tree: `5df1ba11e2d0d5c65e3c6fbb1e4aba5d47bd6c69`
 - Android branch: `agent/timer-ui-control-surface`
 - Schema: `aqualight.light.v1`, storage version `1`
-- Kapsam: firmware ve Android veri katmanı. Android UI bağlama bu değişikliğin
-  kapsamı dışındadır.
+- Kapsam: firmware, Android veri katmanı ve Light cihaz menüsünün authoritative
+  giriş kapısı. Dashboard'ın görsel bağlaması bu değişikliğin kapsamı dışındadır.
 
 Android tek bir ürün-bağımsız Light V1 veri kaynağı kullanır. Ürün ayrımı
 `productKey`, strict `features`, kanal descriptor'ları ve authoritative status
 üzerinden yapılır. Eski generic Light DTO/komut yolu kaldırılmıştır.
+
+## Cihaz menüsü giriş sözleşmesi
+
+Light, Dosing ile aynı merkezi iki aşamalı cihaz menüsü akışını kullanır:
+
+1. Devices veya Tank girişi `DeviceMenuOpenUseCase` üzerinden güncel erişim ve
+   ticari katalog doğrulamasını tamamlar.
+2. `DeviceControlSurfacePreparationOperations`, owner-scope içindeki tek
+   `DeviceLightControlOperations` örneğinden yeni `light.status.get` ister.
+3. Yanıt yalnız aynı runtime generation tarafından authoritative kabul edilen
+   exact yanıt ise kullanılabilir.
+4. `productKey`, fiziksel kanal sayısı ve kanal anahtarı kümesi katalogla birebir
+   eşleşmeden hazır işareti üretilmez.
+5. Light hedef ekranı tek kullanımlık hazır işaretini tüketir ve merkezi
+   authoritative durumu yeniden doğrular. Restore/deep-link gibi işaretsiz girişler
+   aynı hazırlığı hedefte tekrar çalıştırır.
+
+Eksik status, stale generation, ürün/kanal uyuşmazlığı veya runtime hatası ekranı
+fail-closed tutar; ayarlar dahil hiçbir kontrol etkinleşmez ve ortak tipli hata ile
+önceki menüye dönülür. WRGB katalog slotlarının fiziksel sırası ile firmware'in
+sunum descriptor sırası farklı olabildiğinden eşleme anahtar kümesiyle yapılır;
+ekranda kullanılacak sıra her zaman firmware `channels[].order` değeridir.
 
 ## Ürün matrisi
 

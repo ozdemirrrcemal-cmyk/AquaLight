@@ -7,6 +7,9 @@ import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.DeviceTimerChannelSlot
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
+import com.aqua.aqualight.application.devices.light.DeviceLightControlOperations
+import com.aqua.aqualight.application.devices.light.DeviceLightControlResult
+import com.aqua.aqualight.application.devices.light.matchesLightControlSurface
 import com.aqua.aqualight.application.devices.timer.DeviceTimerControlOperations
 import com.aqua.aqualight.application.devices.timer.DeviceTimerControlResult
 import com.aqua.aqualight.application.devices.timer.DeviceTimerControlSnapshot
@@ -17,10 +20,12 @@ import java.util.concurrent.ConcurrentHashMap
 internal class DebugFixtureControlSurfacePreparationOperations(
     private val delegate: DeviceControlSurfacePreparationOperations,
     private val fixtures: DebugDeviceFixtureCatalog,
-    private val timerControlOperations: DeviceTimerControlOperations
+    private val timerControlOperations: DeviceTimerControlOperations,
+    private val lightControlOperations: DeviceLightControlOperations
 ) : DeviceControlSurfacePreparationOperations {
 
     private val freshlyPreparedTimers = ConcurrentHashMap.newKeySet<String>()
+    private val freshlyPreparedLights = ConcurrentHashMap.newKeySet<String>()
 
     override suspend fun prepare(
         request: DeviceControlSurfacePreparationRequest
@@ -33,6 +38,7 @@ internal class DebugFixtureControlSurfacePreparationOperations(
                 DeviceMenuUnavailableReason.COMMERCIAL_PRODUCT_MISMATCH
             )
             request.family == OwnerDeviceFamily.TIMER -> prepareTimer(deviceUid, root)
+            request.family == OwnerDeviceFamily.LIGHT -> prepareLight(deviceUid, root)
             else -> delegate.prepare(request)
         }
     }
@@ -40,20 +46,44 @@ internal class DebugFixtureControlSurfacePreparationOperations(
     override fun consumeFreshPreparation(
         deviceUid: String,
         family: OwnerDeviceFamily
-    ): Boolean = if (isFixtureTimer(deviceUid, family)) {
-        freshlyPreparedTimers.remove(deviceUid.trim())
-    } else {
-        delegate.consumeFreshPreparation(deviceUid, family)
+    ): Boolean = when {
+        isFixtureFamily(deviceUid, family, OwnerDeviceFamily.TIMER) ->
+            freshlyPreparedTimers.remove(deviceUid.trim())
+        isFixtureFamily(deviceUid, family, OwnerDeviceFamily.LIGHT) ->
+            freshlyPreparedLights.remove(deviceUid.trim())
+        else -> delegate.consumeFreshPreparation(deviceUid, family)
     }
 
     override fun discardFreshPreparation(
         deviceUid: String,
         family: OwnerDeviceFamily
     ) {
-        if (isFixtureTimer(deviceUid, family)) {
-            freshlyPreparedTimers.remove(deviceUid.trim())
-        } else {
-            delegate.discardFreshPreparation(deviceUid, family)
+        when {
+            isFixtureFamily(deviceUid, family, OwnerDeviceFamily.TIMER) ->
+                freshlyPreparedTimers.remove(deviceUid.trim())
+            isFixtureFamily(deviceUid, family, OwnerDeviceFamily.LIGHT) ->
+                freshlyPreparedLights.remove(deviceUid.trim())
+            else -> delegate.discardFreshPreparation(deviceUid, family)
+        }
+    }
+
+    private suspend fun prepareLight(
+        deviceUid: String,
+        root: DeviceRootSnapshot
+    ): DeviceControlSurfacePreparationResult {
+        freshlyPreparedLights.remove(deviceUid)
+        return when (val control = lightControlOperations.refreshControl(deviceUid)) {
+            is DeviceLightControlResult.Failed -> unavailable(
+                DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
+            )
+            is DeviceLightControlResult.Available -> {
+                if (control.snapshot.matchesLightControlSurface(deviceUid, root)) {
+                    freshlyPreparedLights += deviceUid
+                    DeviceControlSurfacePreparationResult.Ready
+                } else {
+                    unavailable(DeviceMenuUnavailableReason.COMMERCIAL_PRODUCT_MISMATCH)
+                }
+            }
         }
     }
 
@@ -83,9 +113,12 @@ internal class DebugFixtureControlSurfacePreparationOperations(
         }
     }
 
-    private fun isFixtureTimer(deviceUid: String, family: OwnerDeviceFamily): Boolean =
-        family == OwnerDeviceFamily.TIMER &&
-            fixtures.rootSnapshot(deviceUid)?.family == OwnerDeviceFamily.TIMER
+    private fun isFixtureFamily(
+        deviceUid: String,
+        requestedFamily: OwnerDeviceFamily,
+        expectedFamily: OwnerDeviceFamily
+    ): Boolean = requestedFamily == expectedFamily &&
+        fixtures.rootSnapshot(deviceUid)?.family == expectedFamily
 }
 
 private fun DeviceTimerControlSnapshot.matchesFixtureTimerSurface(

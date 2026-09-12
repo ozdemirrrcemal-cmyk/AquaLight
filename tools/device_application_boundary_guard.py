@@ -11,11 +11,20 @@ OWNER_CONTRACT = SOURCE / "application/devices/OwnerDevicesOperations.kt"
 MENU_CONTRACT = SOURCE / "application/devices/DeviceMenuAccessOperations.kt"
 MENU_OPEN_USE_CASE = SOURCE / "application/devices/DeviceMenuOpenUseCase.kt"
 PREPARATION_CONTRACT = SOURCE / "application/devices/DeviceControlSurfacePreparationOperations.kt"
+LIGHT_CONTROL_CONTRACT = (
+    SOURCE / "application/devices/light/DeviceLightControlOperations.kt"
+)
 STATUS_CONTRACT = SOURCE / "application/devices/DeviceStatusOperations.kt"
 OWNER_ADAPTER = SOURCE / "data/devices/DefaultOwnerDevicesOperations.kt"
 STATUS_ADAPTER = SOURCE / "data/devices/DefaultDeviceStatusOperations.kt"
 MAPPING = SOURCE / "data/devices/DeviceApplicationMapping.kt"
 MENU_ADAPTER = SOURCE / "data/devices/menu/DefaultDeviceMenuAccessOperations.kt"
+PREPARATION_ADAPTER = (
+    SOURCE / "data/devices/menu/DefaultDeviceControlSurfacePreparationOperations.kt"
+)
+LIGHT_CONTROL_ADAPTER = (
+    SOURCE / "data/devices/light/DefaultDeviceLightControlOperations.kt"
+)
 DEVICES_VIEW_MODEL = SOURCE / "ui/tabs/devices/DevicesViewModel.kt"
 TANK_DEVICES_VIEW_MODEL = SOURCE / "ui/tabs/aquarium/detail/devices/TankDetailDevicesViewModel.kt"
 STATUS_VIEW_MODEL = SOURCE / "ui/tabs/settings/device/DeviceStatusViewModel.kt"
@@ -51,11 +60,14 @@ owner_contract = read(OWNER_CONTRACT)
 menu_contract = read(MENU_CONTRACT)
 menu_open_use_case = read(MENU_OPEN_USE_CASE)
 preparation_contract = read(PREPARATION_CONTRACT)
+light_control_contract = read(LIGHT_CONTROL_CONTRACT)
 status_contract = read(STATUS_CONTRACT)
 owner_adapter = read(OWNER_ADAPTER)
 status_adapter = read(STATUS_ADAPTER)
 mapping = read(MAPPING)
 menu_adapter = read(MENU_ADAPTER)
+preparation_adapter = read(PREPARATION_ADAPTER)
+light_control_adapter = read(LIGHT_CONTROL_ADAPTER)
 devices_view_model = read(DEVICES_VIEW_MODEL)
 tank_devices_view_model = read(TANK_DEVICES_VIEW_MODEL)
 status_view_model = read(STATUS_VIEW_MODEL)
@@ -134,6 +146,16 @@ for token, reason in (
         errors.append(f"{PREPARATION_CONTRACT.relative_to(ROOT)}: {reason}: {token}")
 
 for token, reason in (
+    ("interface DeviceLightControlOperations", "Light control needs an application contract"),
+    ("fun observeControl(deviceUid: String)", "Light state observation must cross the boundary"),
+    ("fun currentControl(deviceUid: String)", "Light current authority must cross the boundary"),
+    ("suspend fun refreshControl(deviceUid: String)", "Light freshness must cross the boundary"),
+    ("data class DeviceLightControlSnapshot", "Light readiness needs an application DTO"),
+):
+    if token not in light_control_contract:
+        errors.append(f"{LIGHT_CONTROL_CONTRACT.relative_to(ROOT)}: {reason}: {token}")
+
+for token, reason in (
     ("interface DeviceStatusOperations", "status access needs a read-only application contract"),
     ("val statuses: Flow<List<OwnerDeviceStatusSnapshot>>", "status observation must expose application DTOs"),
     ("data class OwnerDeviceStatusSnapshot", "status UI needs a stable application DTO"),
@@ -147,6 +169,7 @@ for path, text in (
     (MENU_CONTRACT, menu_contract),
     (MENU_OPEN_USE_CASE, menu_open_use_case),
     (PREPARATION_CONTRACT, preparation_contract),
+    (LIGHT_CONTROL_CONTRACT, light_control_contract),
     (STATUS_CONTRACT, status_contract),
 ):
     for forbidden in (
@@ -219,6 +242,52 @@ for forbidden in ("verifyLanAccess", "hasFreshLanProof"):
         errors.append(
             f"{MENU_ADAPTER.relative_to(ROOT)}: UDP discovery cannot authorize menu access: {forbidden}"
         )
+
+for token, reason in (
+    (
+        "class DefaultDeviceLightControlOperations",
+        "Light control must use a concrete data adapter",
+    ),
+    (
+        "devicesRepository.runtimeModules()?.light",
+        "Light must reuse the owner-scoped central runtime",
+    ),
+    (
+        "resolved.runtime.requestStatus(resolved.deviceUid)",
+        "Light preparation must request one authoritative status document",
+    ),
+    (
+        "resolved.runtime.isAuthoritative(resolved.deviceUid, generation)",
+        "Light refresh must prove the returned runtime generation",
+    ),
+    (
+        "acceptedStatus == value",
+        "Light refresh must prove that the exact response was accepted",
+    ),
+):
+    if token not in light_control_adapter:
+        errors.append(f"{LIGHT_CONTROL_ADAPTER.relative_to(ROOT)}: {reason}: {token}")
+
+for token, reason in (
+    (
+        "request.family == OwnerDeviceFamily.LIGHT -> prepareLight",
+        "Light menus must use central surface preparation",
+    ),
+    (
+        "lightControlOperations.refreshControl(deviceUid)",
+        "Light preparation must refresh the application boundary",
+    ),
+    (
+        "control.snapshot.matchesLightControlSurface(deviceUid, root)",
+        "Light preparation must validate product and channels against the catalog",
+    ),
+    (
+        "OwnerDeviceFamily.LIGHT",
+        "Light needs a one-shot prepared handoff",
+    ),
+):
+    if token not in preparation_adapter:
+        errors.append(f"{PREPARATION_ADAPTER.relative_to(ROOT)}: {reason}: {token}")
 
 for token, reason in (
     (
@@ -406,6 +475,23 @@ if "abandoned preparation handoff is discarded idempotently" not in preparation_
     errors.append(
         f"{PREPARATION_TEST.relative_to(ROOT)}: abandoned preparation cleanup coverage is missing"
     )
+
+for token, reason in (
+    (
+        "WRGB Light menu refreshes authoritative central state before ready",
+        "WRGB Light menu preparation needs regression coverage",
+    ),
+    (
+        "RGB Light menu accepts the exact three channel product surface",
+        "RGB Light menu preparation needs regression coverage",
+    ),
+    (
+        "partial Light status cannot publish ready surface",
+        "partial Light state must fail closed",
+    ),
+):
+    if token not in preparation_test:
+        errors.append(f"{PREPARATION_TEST.relative_to(ROOT)}: {reason}")
 
 for path, text, required_tokens in (
     (

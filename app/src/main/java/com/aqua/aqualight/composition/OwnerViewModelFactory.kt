@@ -170,7 +170,9 @@ internal class OwnerViewModelFactory(
                 textResolver = maintenanceTextResolver
             )
             DeviceLightRootViewModel::class.java -> DeviceLightRootViewModel(
-                rootOperations = DefaultDeviceRootOperations(repository)
+                rootOperations = DefaultDeviceRootOperations(repository),
+                lightControlOperations = graph.lightControlOperations,
+                controlSurfacePreparationOperations = graph.controlSurfacePreparationOperations
             )
             DeviceCoolingRootViewModel::class.java -> DeviceCoolingRootViewModel(
                 operations = DefaultDeviceRootOperations(repository),

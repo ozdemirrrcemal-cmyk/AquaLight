@@ -57,6 +57,15 @@ COOLING_PRESENTATION_AREAS = frozenset(
 MAIN_SOURCE_ROOT = Path("app/src/main/java")
 LAYOUT_ROOT = Path("app/src/main/res/layout")
 DOSING_LAYOUT = LAYOUT_ROOT / "fragment_device_dosing_root.xml"
+LIGHT_FRAGMENT = Path(
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/"
+    "DeviceLightRootFragment.kt"
+)
+LIGHT_VIEW_MODEL = Path(
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/"
+    "DeviceLightRootViewModel.kt"
+)
+LIGHT_LAYOUT = LAYOUT_ROOT / "fragment_device_light_root.xml"
 COOLING_LAYOUT = LAYOUT_ROOT / "fragment_device_cooling_root.xml"
 TIMER_FRAGMENT = Path(
     "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/"
@@ -530,10 +539,13 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
     nav_devices = _read(repository_root, NAV_DEVICES, errors)
     main_layout = _read(repository_root, MAIN_LAYOUT, errors)
     dosing_fragment = _read(repository_root, DOSING_FRAGMENT, errors)
+    light_fragment = _read(repository_root, LIGHT_FRAGMENT, errors)
+    light_view_model = _read(repository_root, LIGHT_VIEW_MODEL, errors)
     cooling_fragment = _read(repository_root, COOLING_FRAGMENT, errors)
     cooling_view_model = _read(repository_root, COOLING_VIEW_MODEL, errors)
     cooling_availability = _read(repository_root, COOLING_AVAILABILITY, errors)
     dosing_layout = _read(repository_root, DOSING_LAYOUT, errors)
+    light_layout = _read(repository_root, LIGHT_LAYOUT, errors)
     cooling_layout = _read(repository_root, COOLING_LAYOUT, errors)
     timer_fragment = _read(repository_root, TIMER_FRAGMENT, errors)
     timer_view_model = _read(repository_root, TIMER_VIEW_MODEL, errors)
@@ -626,6 +638,16 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
 
     errors.extend(
         validate_header_contract(
+            LIGHT_FRAGMENT,
+            light_fragment,
+            family_string="device_family_light",
+            settings_description="device_light_open_settings_description",
+            current_destination="deviceLightRootFragment",
+            directions_action="actionDeviceLightRootFragmentToDeviceLightSettingsFragment(",
+        )
+    )
+    errors.extend(
+        validate_header_contract(
             DOSING_FRAGMENT,
             dosing_fragment,
             family_string="device_family_dosing",
@@ -654,6 +676,63 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
             directions_action="actionDeviceCoolingRootFragmentToDeviceCoolingSettingsFragment(",
         )
     )
+
+    for token, reason in (
+        (
+            "private val lightControlOperations: DeviceLightControlOperations",
+            "Light control state must enter through the application boundary",
+        ),
+        (
+            "private val controlSurfacePreparationOperations: "
+            "DeviceControlSurfacePreparationOperations",
+            "Light restore must use the shared preparation boundary",
+        ),
+        (
+            "lightControlOperations.currentControl(deviceUid)",
+            "Light must read only the central authoritative application snapshot",
+        ),
+        (
+            "lightControlOperations.observeControl(deviceUid)",
+            "Light must observe the central authoritative application projection",
+        ),
+        (
+            "family = OwnerDeviceFamily.LIGHT",
+            "Light preparation must use its exact application family",
+        ),
+        (
+            "contentEnabled = surfaceAvailable && !surfacePreparationPending",
+            "Light interactions must remain fail closed during preparation",
+        ),
+        (
+            "showBlockingPreparation = surfacePreparationPending",
+            "Light root must expose the shared blocking preparation state",
+        ),
+    ):
+        _require(LIGHT_VIEW_MODEL, light_view_model, errors, token, reason)
+
+    for token, reason in (
+        (
+            "viewModel.surfaceUnavailableEvents.collect",
+            "Light root must leave an unavailable destination with a typed error",
+        ),
+        (
+            "DeviceMenuUnavailableMessageMapper.messageRes(reason)",
+            "Light root must use the shared unavailable reason presentation",
+        ),
+    ):
+        _require(LIGHT_FRAGMENT, light_fragment, errors, token, reason)
+
+    for forbidden in (
+        "import com.aqua.aqualight.data.devices",
+        "runtime.modules.light",
+        "DevicesRepository",
+        "DeviceLightRuntimeRepository",
+        "DeviceLightRuntimeStateStore",
+    ):
+        if forbidden in light_view_model or forbidden in light_fragment:
+            errors.append(
+                f"{LIGHT_VIEW_MODEL}: Light UI bypasses application boundaries: {forbidden}"
+            )
 
     for token, reason in (
         (
@@ -696,6 +775,13 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
         validate_layout_contract(
             DOSING_LAYOUT,
             dosing_layout,
+            background_owned_by_shell=True,
+        )
+    )
+    errors.extend(
+        validate_layout_contract(
+            LIGHT_LAYOUT,
+            light_layout,
             background_owned_by_shell=True,
         )
     )

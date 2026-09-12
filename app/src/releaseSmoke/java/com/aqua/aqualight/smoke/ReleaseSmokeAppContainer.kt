@@ -38,6 +38,7 @@ import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
 import com.aqua.aqualight.data.devices.cooling.DefaultDeviceCoolingAutomaticSettingsOperations
 import com.aqua.aqualight.data.devices.cooling.DefaultDeviceCoolingTemperatureHistoryOperations
 import com.aqua.aqualight.data.devices.cooling.control.DefaultDeviceCoolingControlOperations
+import com.aqua.aqualight.data.devices.light.DefaultDeviceLightControlOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningDiscoveryOperations
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningProgressOperations
@@ -136,6 +137,7 @@ private class ReleaseSmokeViewModelFactory(
     private val appContext = context.applicationContext
     private val notificationPreferences = NotificationPlatform.get(appContext).preferenceUseCase
     private val devicesRepository = DevicesRepository()
+    private val lightControlOperations = DefaultDeviceLightControlOperations(devicesRepository)
     private val timerControlOperations = DefaultDeviceTimerControlOperations(devicesRepository)
     private val tankStore = AquariumTankDataStoreManager(appContext)
     private val careTaskStore = CareTaskDataStoreManager.create(appContext)
@@ -249,7 +251,12 @@ private class ReleaseSmokeViewModelFactory(
         modelClass: Class<out ViewModel>
     ): ViewModel? = when {
         modelClass.isAssignableFrom(DeviceLightRootViewModel::class.java) ->
-            DeviceLightRootViewModel(rootOperations = DefaultDeviceRootOperations(devicesRepository))
+            DeviceLightRootViewModel(
+                rootOperations = DefaultDeviceRootOperations(devicesRepository),
+                lightControlOperations = lightControlOperations,
+                controlSurfacePreparationOperations =
+                    ReleaseSmokeControlSurfacePreparationOperations
+            )
         modelClass.isAssignableFrom(DeviceCoolingRootViewModel::class.java) ->
             DeviceCoolingRootViewModel(
                 operations = DefaultDeviceRootOperations(devicesRepository),
