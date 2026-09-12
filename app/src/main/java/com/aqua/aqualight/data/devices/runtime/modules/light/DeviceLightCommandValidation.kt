@@ -59,71 +59,92 @@ fun DeviceRuntimeCommandOutcome.FirmwareError.lightV1Data(): DeviceLightFirmware
     require(module == DeviceLightRuntimeContract.MODULE)
     val data = JSONObject(structuredDataJson)
     if (data.length() == 0) return DeviceLightFirmwareErrorData(reason = null)
+    return parseLightV1ErrorData(data)
+}
+
+private fun parseLightV1ErrorData(data: JSONObject): DeviceLightFirmwareErrorData {
     val reason = DeviceLightErrorReason.fromWireExact(data.requireLightText("reason"))
     return when (reason) {
         DeviceLightErrorReason.STALE_REVISION,
-        DeviceLightErrorReason.AUTO_PROGRAM_NOT_FOUND -> {
-            data.requireLightKeys(setOf("reason", "actualRevision"), "Light error.data")
-            DeviceLightFirmwareErrorData(
-                reason = reason,
-                actualRevision = data.requireLightLong(
-                    "actualRevision",
-                    0,
-                    DeviceLightRuntimeContract.Limit.UINT32_MAX
-                )
-            )
-        }
-        DeviceLightErrorReason.AUTO_CAPACITY_REACHED -> {
-            data.requireLightKeys(
-                setOf("reason", "actualRevision", "capacity", "programCount"),
-                "Light error.data"
-            )
-            DeviceLightFirmwareErrorData(
-                reason = reason,
-                actualRevision = data.requireLightLong(
-                    "actualRevision",
-                    0,
-                    DeviceLightRuntimeContract.Limit.UINT32_MAX
-                ),
-                capacity = data.requireLightInt("capacity", 0),
-                programCount = data.requireLightInt("programCount", 0)
-            ).also {
-                require(it.capacity == DeviceLightRuntimeContract.Limit.AUTO_PROGRAM_CAPACITY)
-                require(requireNotNull(it.programCount) <= requireNotNull(it.capacity))
-            }
-        }
-        DeviceLightErrorReason.AUTO_PROGRAM_OVERLAP -> {
-            data.requireLightKeys(
-                setOf("reason", "actualRevision", "conflict", "additionalConflictCount"),
-                "Light error.data"
-            )
-            DeviceLightFirmwareErrorData(
-                reason = reason,
-                actualRevision = data.requireLightLong(
-                    "actualRevision",
-                    0,
-                    DeviceLightRuntimeContract.Limit.UINT32_MAX
-                ),
-                conflict = parseConflict(data.requireLightObject("conflict")),
-                additionalConflictCount = data.requireLightInt("additionalConflictCount", 0)
-            )
-        }
+        DeviceLightErrorReason.AUTO_PROGRAM_NOT_FOUND -> parseRevisionError(data, reason)
+        DeviceLightErrorReason.AUTO_CAPACITY_REACHED -> parseCapacityError(data, reason)
+        DeviceLightErrorReason.AUTO_PROGRAM_OVERLAP -> parseOverlapError(data, reason)
         DeviceLightErrorReason.OUTPUT_TRANSACTION_FAILED,
-        DeviceLightErrorReason.STORAGE_COMMIT_FAILED -> {
-            data.requireLightKeys(
-                setOf("reason", "rollbackOutputHealthy"),
-                "Light error.data"
-            )
-            DeviceLightFirmwareErrorData(
-                reason = reason,
-                rollbackOutputHealthy = data.requireLightBoolean("rollbackOutputHealthy")
-            )
-        }
+        DeviceLightErrorReason.STORAGE_COMMIT_FAILED -> parseRollbackError(data, reason)
         else -> {
             data.requireLightKeys(setOf("reason"), "Light error.data")
             DeviceLightFirmwareErrorData(reason = reason)
         }
     }
+}
+
+private fun parseRevisionError(
+    data: JSONObject,
+    reason: DeviceLightErrorReason
+): DeviceLightFirmwareErrorData {
+    data.requireLightKeys(setOf("reason", "actualRevision"), "Light error.data")
+    return DeviceLightFirmwareErrorData(
+        reason = reason,
+        actualRevision = data.requireLightLong(
+            "actualRevision",
+            0,
+            DeviceLightRuntimeContract.Limit.UINT32_MAX
+        )
+    )
+}
+
+private fun parseCapacityError(
+    data: JSONObject,
+    reason: DeviceLightErrorReason
+): DeviceLightFirmwareErrorData {
+    data.requireLightKeys(
+        setOf("reason", "actualRevision", "capacity", "programCount"),
+        "Light error.data"
+    )
+    return DeviceLightFirmwareErrorData(
+        reason = reason,
+        actualRevision = data.requireLightLong(
+            "actualRevision",
+            0,
+            DeviceLightRuntimeContract.Limit.UINT32_MAX
+        ),
+        capacity = data.requireLightInt("capacity", 0),
+        programCount = data.requireLightInt("programCount", 0)
+    ).also {
+        require(it.capacity == DeviceLightRuntimeContract.Limit.AUTO_PROGRAM_CAPACITY)
+        require(requireNotNull(it.programCount) <= requireNotNull(it.capacity))
+    }
+}
+
+private fun parseOverlapError(
+    data: JSONObject,
+    reason: DeviceLightErrorReason
+): DeviceLightFirmwareErrorData {
+    data.requireLightKeys(
+        setOf("reason", "actualRevision", "conflict", "additionalConflictCount"),
+        "Light error.data"
+    )
+    return DeviceLightFirmwareErrorData(
+        reason = reason,
+        actualRevision = data.requireLightLong(
+            "actualRevision",
+            0,
+            DeviceLightRuntimeContract.Limit.UINT32_MAX
+        ),
+        conflict = parseConflict(data.requireLightObject("conflict")),
+        additionalConflictCount = data.requireLightInt("additionalConflictCount", 0)
+    )
+}
+
+private fun parseRollbackError(
+    data: JSONObject,
+    reason: DeviceLightErrorReason
+): DeviceLightFirmwareErrorData {
+    data.requireLightKeys(setOf("reason", "rollbackOutputHealthy"), "Light error.data")
+    return DeviceLightFirmwareErrorData(
+        reason = reason,
+        rollbackOutputHealthy = data.requireLightBoolean("rollbackOutputHealthy")
+    )
 }
 
 internal object DeviceLightCommandValidation {

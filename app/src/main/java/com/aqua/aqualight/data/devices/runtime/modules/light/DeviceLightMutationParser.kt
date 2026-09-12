@@ -131,7 +131,7 @@ internal object DeviceLightMutationParser {
     ): DeviceLightAcclimationStatus {
         requireBaseOrEventKeys(data, ACCLIMATION_KEYS, "light.acclimation data")
         return DeviceLightV1JsonParser.Activity.parseAcclimation(
-            withoutOptionalEvent(data),
+            data.withoutOptionalLightEvent(),
             product
         )
         }
@@ -263,10 +263,6 @@ internal object DeviceLightMutationParser {
             require(it == DeviceLightRuntimeContract.Event.STATUS_CHANGED)
         }
 
-    private fun withoutOptionalEvent(data: JSONObject): JSONObject = JSONObject(data.toString()).also {
-        it.remove("event")
-    }
-
     private val CONTROL_KEYS = setOf("mode")
     private val MANUAL_KEYS = setOf("scene")
     private val AUTO_PROGRAMS_KEYS = setOf(
@@ -290,4 +286,8 @@ internal object DeviceLightMutationParser {
         "points", "autoSpans"
     )
     private val PROGRAM_ID = Regex("^ap-[0-9a-f]{8}$")
+}
+
+private fun JSONObject.withoutOptionalLightEvent(): JSONObject = JSONObject(toString()).also {
+    it.remove("event")
 }
