@@ -262,7 +262,7 @@ class DeviceRootViewModelBoundaryTest {
             DeviceLightControlSnapshot(
                 deviceUid = "device-1",
                 productKey = "LIGHT_WRGB_PRO_ELITE",
-                physicalChannelCount = 4,
+                physicalChannelCount = LIGHT_CHANNEL_COUNT,
                 channelKeys = listOf("red", "green", "blue", "white")
             )
         )
@@ -285,6 +285,10 @@ class DeviceRootViewModelBoundaryTest {
             deviceUid: String,
             family: OwnerDeviceFamily
         ): Boolean = family == OwnerDeviceFamily.LIGHT
+    }
+
+    private companion object {
+        const val LIGHT_CHANNEL_COUNT = 4
     }
 
     private object UnavailableCoolingHistoryOperations : DeviceCoolingTemperatureHistoryOperations {

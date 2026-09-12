@@ -177,7 +177,7 @@ private fun lightRoot() = DeviceRootSnapshot(
     family = OwnerDeviceFamily.LIGHT,
     catalogState = DeviceRootCatalogState.VALID,
     productKey = "LIGHT_WRGB_PRO_ELITE",
-    lightChannelCount = 4,
+    lightChannelCount = LIGHT_CHANNEL_COUNT,
     channelSlots = DeviceChannelSlots(
         lightChannels = listOf("white", "red", "green", "blue").mapIndexed { index, key ->
             DeviceLightChannelSlot(
@@ -199,10 +199,12 @@ private fun availableControl(
     DeviceLightControlSnapshot(
         deviceUid = "light-pro",
         productKey = productKey,
-        physicalChannelCount = 4,
+        physicalChannelCount = LIGHT_CHANNEL_COUNT,
         channelKeys = listOf("red", "green", "blue", "white")
     )
 )
 
 private fun unavailableControl(): DeviceLightControlResult =
     DeviceLightControlResult.Failed(DeviceLightControlFailure.UNAVAILABLE)
+
+private const val LIGHT_CHANNEL_COUNT = 4
