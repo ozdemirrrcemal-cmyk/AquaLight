@@ -1,7 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.settings
 
-import com.aqua.aqualight.application.devices.DeviceLightProtectionSnapshot
-import com.aqua.aqualight.application.devices.DeviceLightProtectionThresholdPolicy
+import com.aqua.aqualight.application.devices.light.protection.DeviceLightProtectionSnapshot
+import com.aqua.aqualight.application.devices.light.protection.DeviceLightProtectionThresholdPolicy
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability

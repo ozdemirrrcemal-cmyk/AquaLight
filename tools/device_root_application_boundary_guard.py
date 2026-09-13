@@ -24,7 +24,8 @@ SMOKE_FACTORY = ROOT / "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/Relea
 TEST = ROOT / "app/src/test/java/com/aqua/aqualight/ui/tabs/devices/detail/DeviceRootViewModelBoundaryTest.kt"
 ROOT_VIEW_MODELS = (
     SOURCE / "ui/tabs/devices/detail/common/DeviceRootOverviewViewModel.kt",
-    SOURCE / "ui/tabs/devices/detail/light/DeviceLightRootViewModel.kt",
+    SOURCE
+    / "ui/tabs/devices/detail/light/presentation/root/DeviceLightRootViewModel.kt",
     SOURCE
     / "ui/tabs/devices/detail/cooling/presentation/root/DeviceCoolingRootViewModel.kt",
     SOURCE / "ui/tabs/devices/detail/timer/DeviceTimerRootViewModel.kt",

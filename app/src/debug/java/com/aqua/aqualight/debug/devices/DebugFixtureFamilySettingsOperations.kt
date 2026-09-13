@@ -1,10 +1,11 @@
 package com.aqua.aqualight.debug.devices
 
 import com.aqua.aqualight.application.devices.DeviceFamilySettingsOperations
-import com.aqua.aqualight.application.devices.DeviceLightProtectionSnapshot
-import com.aqua.aqualight.application.devices.DeviceLightProtectionThresholdPolicy
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
+import com.aqua.aqualight.application.devices.light.protection.DeviceLightProtectionOperations
+import com.aqua.aqualight.application.devices.light.protection.DeviceLightProtectionSnapshot
+import com.aqua.aqualight.application.devices.light.protection.DeviceLightProtectionThresholdPolicy
 import com.aqua.aqualight.data.devices.DefaultDeviceFamilySettingsOperations
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import kotlinx.coroutines.flow.Flow
@@ -13,10 +14,14 @@ import kotlinx.coroutines.flow.flowOf
 /** Keeps the shared Settings screen usable for fixtures without sending runtime commands. */
 internal class DebugFixtureFamilySettingsOperations(
     repository: DevicesRepository,
+    lightProtectionOperations: DeviceLightProtectionOperations,
     private val fixtures: DebugDeviceFixtureCatalog
 ) : DeviceFamilySettingsOperations {
 
-    private val real = DefaultDeviceFamilySettingsOperations(repository)
+    private val real = DefaultDeviceFamilySettingsOperations(
+        devicesRepository = repository,
+        lightProtectionOperations = lightProtectionOperations
+    )
     private val root = DebugFixtureDeviceRootOperations(real, fixtures)
 
     override fun observe(deviceUid: String): Flow<DeviceRootSnapshot?> = root.observe(deviceUid)

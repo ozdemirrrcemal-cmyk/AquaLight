@@ -1,4 +1,4 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.light
+package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root
 
 import android.os.Bundle
 import android.view.View

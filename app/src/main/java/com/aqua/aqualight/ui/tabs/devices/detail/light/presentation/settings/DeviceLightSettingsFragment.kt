@@ -1,4 +1,4 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.light.settings
+package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.settings
 
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.ui.tabs.devices.detail.settings.DeviceFamilySettingsFragment

@@ -1,13 +1,13 @@
-package com.aqua.aqualight.data.devices.light
+package com.aqua.aqualight.data.devices.light.control
 
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
-import com.aqua.aqualight.application.devices.light.DeviceLightControlFailure
-import com.aqua.aqualight.application.devices.light.DeviceLightControlOperations
-import com.aqua.aqualight.application.devices.light.DeviceLightControlResult
-import com.aqua.aqualight.application.devices.light.DeviceLightControlSnapshot
-import com.aqua.aqualight.application.devices.light.matchesLightControlSurface
+import com.aqua.aqualight.application.devices.light.control.DeviceLightControlFailure
+import com.aqua.aqualight.application.devices.light.control.DeviceLightControlOperations
+import com.aqua.aqualight.application.devices.light.control.DeviceLightControlResult
+import com.aqua.aqualight.application.devices.light.control.DeviceLightControlSnapshot
+import com.aqua.aqualight.application.devices.light.control.matchesLightControlSurface
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository

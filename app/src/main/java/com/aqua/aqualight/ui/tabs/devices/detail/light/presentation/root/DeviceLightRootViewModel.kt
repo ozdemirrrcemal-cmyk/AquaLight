@@ -1,4 +1,4 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.light
+package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -11,10 +11,10 @@ import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
-import com.aqua.aqualight.application.devices.light.DeviceLightControlOperations
-import com.aqua.aqualight.application.devices.light.DeviceLightControlResult
-import com.aqua.aqualight.application.devices.light.DeviceLightControlSnapshot
-import com.aqua.aqualight.application.devices.light.matchesLightControlSurface
+import com.aqua.aqualight.application.devices.light.control.DeviceLightControlOperations
+import com.aqua.aqualight.application.devices.light.control.DeviceLightControlResult
+import com.aqua.aqualight.application.devices.light.control.DeviceLightControlSnapshot
+import com.aqua.aqualight.application.devices.light.control.matchesLightControlSurface
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job

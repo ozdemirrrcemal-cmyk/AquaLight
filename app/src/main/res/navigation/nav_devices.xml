@@ -154,7 +154,7 @@
 
     <fragment
         android:id="@+id/deviceLightRootFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root.DeviceLightRootFragment"
         android:label="@string/device_family_light"
         tools:layout="@layout/fragment_device_light_root">
         <argument android:name="deviceUid" app:argType="string" />
@@ -291,7 +291,7 @@
 
     <fragment
         android:id="@+id/deviceLightSettingsFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.settings.DeviceLightSettingsFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.settings.DeviceLightSettingsFragment"
         android:label="@string/device_settings_title"
         tools:layout="@layout/fragment_device_family_settings">
         <argument android:name="deviceUid" app:argType="string" />

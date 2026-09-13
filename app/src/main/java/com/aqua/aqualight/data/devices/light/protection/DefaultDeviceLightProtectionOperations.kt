@@ -1,8 +1,8 @@
-package com.aqua.aqualight.data.devices
+package com.aqua.aqualight.data.devices.light.protection
 
-import com.aqua.aqualight.application.devices.DeviceLightProtectionOperations
-import com.aqua.aqualight.application.devices.DeviceLightProtectionSnapshot
-import com.aqua.aqualight.application.devices.DeviceLightProtectionThresholdPolicy
+import com.aqua.aqualight.application.devices.light.protection.DeviceLightProtectionOperations
+import com.aqua.aqualight.application.devices.light.protection.DeviceLightProtectionSnapshot
+import com.aqua.aqualight.application.devices.light.protection.DeviceLightProtectionThresholdPolicy
 import com.aqua.aqualight.data.devices.catalog.AqlCommercialCatalogValidation
 import com.aqua.aqualight.data.devices.catalog.AqlCommercialDeviceCatalog
 import com.aqua.aqualight.data.devices.contract.AqlDeviceFeatureKey

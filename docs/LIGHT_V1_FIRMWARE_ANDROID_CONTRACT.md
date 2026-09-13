@@ -15,6 +15,29 @@ Android tek bir ürün-bağımsız Light V1 veri kaynağı kullanır. Ürün ayr
 `productKey`, strict `features`, kanal descriptor'ları ve authoritative status
 üzerinden yapılır. Eski generic Light DTO/komut yolu kaldırılmıştır.
 
+## Android merkezî katman düzeni
+
+Light, owner oturumu başına tek composition kaynağı kullanır. `OwnerDependencyGraph`
+bir kez `OwnerLightOperations` oluşturur; menü hazırlığı ve Light root aynı
+`controlOperations`, ortak cihaz ayarları ise aynı `protectionOperations` örneğini
+kullanır. Feature facade'ları kendi runtime/repository/adapter örneklerini oluşturamaz.
+
+Kalıcı paket sınırları şöyledir:
+
+- Uygulama sözleşmeleri: `application/devices/light/<feature>`
+- Veri adapter'ları: `data/devices/light/<feature>`
+- Tek firmware-aligned state/transport çekirdeği:
+  `data/devices/runtime/modules/light`
+- Sunum: `ui/tabs/devices/detail/light/presentation/<destination>`
+
+İlk merkezî yüzeyler `control` ve `protection` olarak ayrılmıştır. Sonraki
+dashboard, manual, auto, custom, preview, acclimation ve system ekranları bu
+paketlerin yanında kendi application/data feature sınırlarını kullanacak, ancak
+tamamı aynı `OwnerLightOperations` ve merkezî Light runtime üzerinden beslenecektir.
+Sunum kodu data/runtime tiplerini içe aktaramaz. Acclimation ve thermal/protection
+yüzeyleri yalnız katalog capability'si bulunan üründe oluşturulur; RGB Pro Slim
+için bu yüzeylere route veya komut üretilemez.
+
 ## Cihaz menüsü giriş sözleşmesi
 
 Light, Dosing ile aynı merkezi iki aşamalı cihaz menüsü akışını kullanır:

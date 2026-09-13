@@ -4,7 +4,7 @@ import com.aqua.aqualight.application.devices.DeviceFamilySettingsOperations
 import com.aqua.aqualight.application.devices.DeviceFirmwareCommandResult
 import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
-import com.aqua.aqualight.application.devices.DeviceLightProtectionSnapshot
+import com.aqua.aqualight.application.devices.light.protection.DeviceLightProtectionSnapshot
 import com.aqua.aqualight.application.devices.DeviceOtaFailure
 import com.aqua.aqualight.application.devices.DeviceOtaFailureReason
 import com.aqua.aqualight.application.devices.DeviceOtaFailureStage

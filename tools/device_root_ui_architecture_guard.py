@@ -58,11 +58,11 @@ MAIN_SOURCE_ROOT = Path("app/src/main/java")
 LAYOUT_ROOT = Path("app/src/main/res/layout")
 DOSING_LAYOUT = LAYOUT_ROOT / "fragment_device_dosing_root.xml"
 LIGHT_FRAGMENT = Path(
-    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/"
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/presentation/root/"
     "DeviceLightRootFragment.kt"
 )
 LIGHT_VIEW_MODEL = Path(
-    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/"
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/presentation/root/"
     "DeviceLightRootViewModel.kt"
 )
 LIGHT_LAYOUT = LAYOUT_ROOT / "fragment_device_light_root.xml"

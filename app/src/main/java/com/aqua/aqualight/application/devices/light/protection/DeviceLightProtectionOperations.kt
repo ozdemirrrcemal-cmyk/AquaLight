@@ -1,4 +1,4 @@
-package com.aqua.aqualight.application.devices
+package com.aqua.aqualight.application.devices.light.protection
 
 import kotlinx.coroutines.flow.Flow
 

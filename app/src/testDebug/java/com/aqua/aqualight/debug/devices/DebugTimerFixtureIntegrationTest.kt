@@ -9,8 +9,8 @@ import com.aqua.aqualight.application.devices.DeviceMenuOpenResult
 import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
-import com.aqua.aqualight.application.devices.light.DeviceLightControlOperations
-import com.aqua.aqualight.application.devices.light.DeviceLightControlResult
+import com.aqua.aqualight.application.devices.light.control.DeviceLightControlOperations
+import com.aqua.aqualight.application.devices.light.control.DeviceLightControlResult
 import com.aqua.aqualight.application.devices.timer.DeviceTimerChannelRegime
 import com.aqua.aqualight.application.devices.timer.DeviceTimerControlFailure
 import com.aqua.aqualight.application.devices.timer.DeviceTimerControlOperations

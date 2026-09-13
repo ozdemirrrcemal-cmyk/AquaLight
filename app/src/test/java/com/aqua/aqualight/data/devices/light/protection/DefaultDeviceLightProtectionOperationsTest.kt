@@ -1,6 +1,6 @@
-package com.aqua.aqualight.data.devices
+package com.aqua.aqualight.data.devices.light.protection
 
-import com.aqua.aqualight.application.devices.DeviceLightProtectionThresholdPolicy
+import com.aqua.aqualight.application.devices.light.protection.DeviceLightProtectionThresholdPolicy
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTemperatureProtectionRuntimeCapabilities
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTemperatureProtectionSnapshot

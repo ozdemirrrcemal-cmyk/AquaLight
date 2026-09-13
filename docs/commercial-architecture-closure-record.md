@@ -27,6 +27,13 @@ Completed scope:
 - Device-root read boundary for Light, Cooling, Timer and Dosing screens.
 - Light, Dosing, Cooling and Timer menu girişlerinde aynı merkezi authoritative
   control-surface preparation ve hedefte yeniden doğrulanan tek kullanımlık handoff.
+- Light feature contracts and adapters are isolated under matching
+  `light/<feature>` packages; root/settings presentation lives under
+  `light/presentation/<destination>`.
+- One owner-scoped `OwnerLightOperations` bundle supplies the exact same control
+  boundary to menu preparation and the root, and the exact same protection
+  boundary to shared settings. Feature facades cannot construct parallel Light
+  adapters or runtime state owners.
 - Separate typed firmware-update command boundary for the Light OTA test surface.
 - Tank-device assigned/available list, assignment, conflict and removal boundary.
 - Production/release-smoke composition parity, deterministic fakes and dedicated CI guards for every migrated boundary.

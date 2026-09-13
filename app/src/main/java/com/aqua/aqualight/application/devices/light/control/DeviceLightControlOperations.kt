@@ -1,4 +1,4 @@
-package com.aqua.aqualight.application.devices.light
+package com.aqua.aqualight.application.devices.light.control
 
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import kotlinx.coroutines.flow.Flow

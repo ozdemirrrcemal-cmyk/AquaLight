@@ -5,8 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.application.devices.DEVICE_FIRMWARE_MANIFEST_URL
 import com.aqua.aqualight.application.devices.DeviceFamilySettingsOperations
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
-import com.aqua.aqualight.application.devices.DeviceLightProtectionSnapshot
-import com.aqua.aqualight.application.devices.DeviceLightProtectionThresholdPolicy
+import com.aqua.aqualight.application.devices.light.protection.DeviceLightProtectionSnapshot
+import com.aqua.aqualight.application.devices.light.protection.DeviceLightProtectionThresholdPolicy
 import com.aqua.aqualight.application.devices.DeviceOtaFailure
 import com.aqua.aqualight.application.devices.DeviceOtaFailureStage
 import com.aqua.aqualight.application.devices.DeviceOtaState

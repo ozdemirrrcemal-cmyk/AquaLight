@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.BuildConfig
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
 import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
-import com.aqua.aqualight.application.devices.light.DeviceLightControlOperations
+import com.aqua.aqualight.application.devices.light.control.DeviceLightControlOperations
 import com.aqua.aqualight.application.devices.timer.DeviceTimerControlOperations
 import com.aqua.aqualight.composition.AppContainer
 import com.aqua.aqualight.composition.OwnerDependencyGraph
@@ -16,7 +16,7 @@ import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
 import com.aqua.aqualight.data.devices.remove.OwnerDeviceDataCleaner
 import com.aqua.aqualight.ui.tabs.devices.DevicesViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
-import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.settings.DeviceFamilySettingsViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.channel.DeviceTimerChannelViewModel
@@ -108,6 +108,7 @@ private class DebugDeviceFixtureViewModelFactory(
         DeviceFamilySettingsViewModel(
             settingsOperations = DebugFixtureFamilySettingsOperations(
                 repository = graph.devicesRepository,
+                lightProtectionOperations = graph.lightOperations.protectionOperations,
                 fixtures = fixtures
             ),
             firmwareUpdateOperations = fixtureFirmwareOperations(graph, fixtures),
@@ -159,7 +160,7 @@ private class DebugDeviceFixtureViewModelFactory(
             runtime = runtime
         )
         val lightControlOperations = DebugFixtureLightControlOperations(
-            delegate = graph.lightControlOperations,
+            delegate = graph.lightOperations.controlOperations,
             fixtures = fixtures
         )
         return DebugTimerFixtureDependencies(

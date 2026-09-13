@@ -7,9 +7,9 @@ import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.DeviceTimerChannelSlot
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
-import com.aqua.aqualight.application.devices.light.DeviceLightControlOperations
-import com.aqua.aqualight.application.devices.light.DeviceLightControlResult
-import com.aqua.aqualight.application.devices.light.matchesLightControlSurface
+import com.aqua.aqualight.application.devices.light.control.DeviceLightControlOperations
+import com.aqua.aqualight.application.devices.light.control.DeviceLightControlResult
+import com.aqua.aqualight.application.devices.light.control.matchesLightControlSurface
 import com.aqua.aqualight.application.devices.timer.DeviceTimerControlOperations
 import com.aqua.aqualight.application.devices.timer.DeviceTimerControlResult
 import com.aqua.aqualight.application.devices.timer.DeviceTimerControlSnapshot

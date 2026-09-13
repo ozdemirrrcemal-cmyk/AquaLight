@@ -1,9 +1,9 @@
 package com.aqua.aqualight.debug.devices
 
-import com.aqua.aqualight.application.devices.light.DeviceLightControlFailure
-import com.aqua.aqualight.application.devices.light.DeviceLightControlOperations
-import com.aqua.aqualight.application.devices.light.DeviceLightControlResult
-import com.aqua.aqualight.application.devices.light.DeviceLightControlSnapshot
+import com.aqua.aqualight.application.devices.light.control.DeviceLightControlFailure
+import com.aqua.aqualight.application.devices.light.control.DeviceLightControlOperations
+import com.aqua.aqualight.application.devices.light.control.DeviceLightControlResult
+import com.aqua.aqualight.application.devices.light.control.DeviceLightControlSnapshot
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 

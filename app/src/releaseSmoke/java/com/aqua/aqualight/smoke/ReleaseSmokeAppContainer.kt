@@ -21,6 +21,7 @@ import com.aqua.aqualight.application.user.UserProfileOperations
 import com.aqua.aqualight.application.user.UserProfileSnapshot
 import com.aqua.aqualight.application.user.UserSettingsOperations
 import com.aqua.aqualight.composition.AppContainer
+import com.aqua.aqualight.composition.OwnerLightOperations
 import com.aqua.aqualight.data.aquarium.DefaultAquariumTankOperations
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
 import com.aqua.aqualight.data.aquarium.devices.DefaultTankDeviceAssignmentOperations
@@ -38,7 +39,8 @@ import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
 import com.aqua.aqualight.data.devices.cooling.DefaultDeviceCoolingAutomaticSettingsOperations
 import com.aqua.aqualight.data.devices.cooling.DefaultDeviceCoolingTemperatureHistoryOperations
 import com.aqua.aqualight.data.devices.cooling.control.DefaultDeviceCoolingControlOperations
-import com.aqua.aqualight.data.devices.light.DefaultDeviceLightControlOperations
+import com.aqua.aqualight.data.devices.light.control.DefaultDeviceLightControlOperations
+import com.aqua.aqualight.data.devices.light.protection.DefaultDeviceLightProtectionOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningDiscoveryOperations
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningProgressOperations
@@ -65,7 +67,7 @@ import com.aqua.aqualight.ui.tabs.devices.add.DeviceQrScanViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.DeviceCoolingRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.status.DeviceCoolingSystemStatusViewModel
-import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.channel.DeviceTimerChannelViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.program.DeviceTimerProgramViewModel
@@ -137,7 +139,10 @@ private class ReleaseSmokeViewModelFactory(
     private val appContext = context.applicationContext
     private val notificationPreferences = NotificationPlatform.get(appContext).preferenceUseCase
     private val devicesRepository = DevicesRepository()
-    private val lightControlOperations = DefaultDeviceLightControlOperations(devicesRepository)
+    private val lightOperations = OwnerLightOperations(
+        controlOperations = DefaultDeviceLightControlOperations(devicesRepository),
+        protectionOperations = DefaultDeviceLightProtectionOperations(devicesRepository)
+    )
     private val timerControlOperations = DefaultDeviceTimerControlOperations(devicesRepository)
     private val tankStore = AquariumTankDataStoreManager(appContext)
     private val careTaskStore = CareTaskDataStoreManager.create(appContext)
@@ -253,7 +258,7 @@ private class ReleaseSmokeViewModelFactory(
         modelClass.isAssignableFrom(DeviceLightRootViewModel::class.java) ->
             DeviceLightRootViewModel(
                 rootOperations = DefaultDeviceRootOperations(devicesRepository),
-                lightControlOperations = lightControlOperations,
+                lightControlOperations = lightOperations.controlOperations,
                 controlSurfacePreparationOperations =
                     ReleaseSmokeControlSurfacePreparationOperations
             )

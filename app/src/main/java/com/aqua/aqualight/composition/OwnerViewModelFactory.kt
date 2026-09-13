@@ -51,7 +51,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.detail.DeviceDos
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan.DeviceDosingPlanViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.reservoir.DeviceDosingReservoirViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.root.DeviceDosingRootViewModel
-import com.aqua.aqualight.ui.tabs.devices.detail.light.DeviceLightRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.settings.DeviceFamilySettingsViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.channel.DeviceTimerChannelViewModel
@@ -171,7 +171,7 @@ internal class OwnerViewModelFactory(
             )
             DeviceLightRootViewModel::class.java -> DeviceLightRootViewModel(
                 rootOperations = DefaultDeviceRootOperations(repository),
-                lightControlOperations = graph.lightControlOperations,
+                lightControlOperations = graph.lightOperations.controlOperations,
                 controlSurfacePreparationOperations = graph.controlSurfacePreparationOperations
             )
             DeviceCoolingRootViewModel::class.java -> DeviceCoolingRootViewModel(
@@ -234,7 +234,10 @@ internal class OwnerViewModelFactory(
             DeviceRootOverviewViewModel::class.java ->
                 DeviceRootOverviewViewModel(DefaultDeviceRootOperations(repository))
             DeviceFamilySettingsViewModel::class.java -> DeviceFamilySettingsViewModel(
-                settingsOperations = DefaultDeviceFamilySettingsOperations(repository),
+                settingsOperations = DefaultDeviceFamilySettingsOperations(
+                    devicesRepository = repository,
+                    lightProtectionOperations = graph.lightOperations.protectionOperations
+                ),
                 firmwareUpdateOperations = graph.firmwareUpdateOperations,
                 manifestUrl = BuildConfig.AQL_OTA_MANIFEST_URL
             )

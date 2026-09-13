@@ -12,7 +12,10 @@ MENU_CONTRACT = SOURCE / "application/devices/DeviceMenuAccessOperations.kt"
 MENU_OPEN_USE_CASE = SOURCE / "application/devices/DeviceMenuOpenUseCase.kt"
 PREPARATION_CONTRACT = SOURCE / "application/devices/DeviceControlSurfacePreparationOperations.kt"
 LIGHT_CONTROL_CONTRACT = (
-    SOURCE / "application/devices/light/DeviceLightControlOperations.kt"
+    SOURCE / "application/devices/light/control/DeviceLightControlOperations.kt"
+)
+LIGHT_PROTECTION_CONTRACT = (
+    SOURCE / "application/devices/light/protection/DeviceLightProtectionOperations.kt"
 )
 STATUS_CONTRACT = SOURCE / "application/devices/DeviceStatusOperations.kt"
 OWNER_ADAPTER = SOURCE / "data/devices/DefaultOwnerDevicesOperations.kt"
@@ -23,8 +26,12 @@ PREPARATION_ADAPTER = (
     SOURCE / "data/devices/menu/DefaultDeviceControlSurfacePreparationOperations.kt"
 )
 LIGHT_CONTROL_ADAPTER = (
-    SOURCE / "data/devices/light/DefaultDeviceLightControlOperations.kt"
+    SOURCE / "data/devices/light/control/DefaultDeviceLightControlOperations.kt"
 )
+LIGHT_PROTECTION_ADAPTER = (
+    SOURCE / "data/devices/light/protection/DefaultDeviceLightProtectionOperations.kt"
+)
+FAMILY_SETTINGS_ADAPTER = SOURCE / "data/devices/DefaultDeviceFamilySettingsOperations.kt"
 DEVICES_VIEW_MODEL = SOURCE / "ui/tabs/devices/DevicesViewModel.kt"
 TANK_DEVICES_VIEW_MODEL = SOURCE / "ui/tabs/aquarium/detail/devices/TankDetailDevicesViewModel.kt"
 STATUS_VIEW_MODEL = SOURCE / "ui/tabs/settings/device/DeviceStatusViewModel.kt"
@@ -35,6 +42,7 @@ STATUS_MAPPER = SOURCE / "ui/tabs/settings/device/DeviceStatusSnapshotMapper.kt"
 ROUTE_RESOLVER = SOURCE / "ui/tabs/devices/route/DeviceRouteResolver.kt"
 OBSOLETE_UI_GATE = SOURCE / "ui/tabs/devices/route/DeviceMenuOpenGate.kt"
 FACTORY = SOURCE / "composition/OwnerViewModelFactory.kt"
+OWNER_GRAPH = SOURCE / "composition/OwnerDependencyGraph.kt"
 SMOKE_FACTORY = ROOT / "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/ReleaseSmokeAppContainer.kt"
 DEVICES_TEST = ROOT / "app/src/test/java/com/aqua/aqualight/ui/tabs/devices/DevicesViewModelBoundaryTest.kt"
 TANK_DEVICES_TEST = ROOT / "app/src/test/java/com/aqua/aqualight/ui/tabs/aquarium/detail/devices/TankDeviceAssignmentViewModelBoundaryTest.kt"
@@ -61,6 +69,7 @@ menu_contract = read(MENU_CONTRACT)
 menu_open_use_case = read(MENU_OPEN_USE_CASE)
 preparation_contract = read(PREPARATION_CONTRACT)
 light_control_contract = read(LIGHT_CONTROL_CONTRACT)
+light_protection_contract = read(LIGHT_PROTECTION_CONTRACT)
 status_contract = read(STATUS_CONTRACT)
 owner_adapter = read(OWNER_ADAPTER)
 status_adapter = read(STATUS_ADAPTER)
@@ -68,6 +77,8 @@ mapping = read(MAPPING)
 menu_adapter = read(MENU_ADAPTER)
 preparation_adapter = read(PREPARATION_ADAPTER)
 light_control_adapter = read(LIGHT_CONTROL_ADAPTER)
+light_protection_adapter = read(LIGHT_PROTECTION_ADAPTER)
+family_settings_adapter = read(FAMILY_SETTINGS_ADAPTER)
 devices_view_model = read(DEVICES_VIEW_MODEL)
 tank_devices_view_model = read(TANK_DEVICES_VIEW_MODEL)
 status_view_model = read(STATUS_VIEW_MODEL)
@@ -77,6 +88,7 @@ card_mapper = read(CARD_MAPPER)
 status_mapper = read(STATUS_MAPPER)
 route_resolver = read(ROUTE_RESOLVER)
 factory = read(FACTORY)
+owner_graph = read(OWNER_GRAPH)
 smoke_factory = read(SMOKE_FACTORY)
 devices_test = read(DEVICES_TEST)
 tank_devices_test = read(TANK_DEVICES_TEST)
@@ -156,6 +168,17 @@ for token, reason in (
         errors.append(f"{LIGHT_CONTROL_CONTRACT.relative_to(ROOT)}: {reason}: {token}")
 
 for token, reason in (
+    ("interface DeviceLightProtectionOperations", "Light protection needs an application contract"),
+    ("fun observeLightProtection(deviceUid: String)", "Light protection observation must cross the boundary"),
+    ("fun currentLightProtection(deviceUid: String)", "Light protection state must cross the boundary"),
+    ("suspend fun refreshLightProtection(deviceUid: String)", "Light protection refresh must cross the boundary"),
+    ("suspend fun updateLightProtectionThreshold(", "Light protection updates must cross the boundary"),
+    ("data class DeviceLightProtectionSnapshot", "Light protection needs an application DTO"),
+):
+    if token not in light_protection_contract:
+        errors.append(f"{LIGHT_PROTECTION_CONTRACT.relative_to(ROOT)}: {reason}: {token}")
+
+for token, reason in (
     ("interface DeviceStatusOperations", "status access needs a read-only application contract"),
     ("val statuses: Flow<List<OwnerDeviceStatusSnapshot>>", "status observation must expose application DTOs"),
     ("data class OwnerDeviceStatusSnapshot", "status UI needs a stable application DTO"),
@@ -170,6 +193,7 @@ for path, text in (
     (MENU_OPEN_USE_CASE, menu_open_use_case),
     (PREPARATION_CONTRACT, preparation_contract),
     (LIGHT_CONTROL_CONTRACT, light_control_contract),
+    (LIGHT_PROTECTION_CONTRACT, light_protection_contract),
     (STATUS_CONTRACT, status_contract),
 ):
     for forbidden in (
@@ -267,6 +291,102 @@ for token, reason in (
 ):
     if token not in light_control_adapter:
         errors.append(f"{LIGHT_CONTROL_ADAPTER.relative_to(ROOT)}: {reason}: {token}")
+
+for token, reason in (
+    (
+        "class DefaultDeviceLightProtectionOperations",
+        "Light protection must use a concrete data adapter",
+    ),
+    (
+        "devicesRepository.runtimeModules()",
+        "Light protection must resolve the owner-scoped central module provider",
+    ),
+    (
+        "modules.lightTemperatureProtection.requestStatus(uid)",
+        "Light protection refresh must use the central protection module",
+    ),
+):
+    if token not in light_protection_adapter:
+        errors.append(f"{LIGHT_PROTECTION_ADAPTER.relative_to(ROOT)}: {reason}: {token}")
+
+for token, reason in (
+    ("val lightOperations: OwnerLightOperations", "the owner graph needs one Light operation bundle"),
+    ("data class OwnerLightOperations", "Light application surfaces need one owner-scoped bundle"),
+    ("val controlOperations: DeviceLightControlOperations", "the Light bundle must own control"),
+    ("val protectionOperations: DeviceLightProtectionOperations", "the Light bundle must own protection"),
+    (
+        "val lightOperations = createOwnerLightOperations(dependencies.devicesRepository)",
+        "the owner graph must create the Light bundle once",
+    ),
+    ("lightControlOperations = lightOperations.controlOperations", "menu preparation must reuse central Light control"),
+):
+    if token not in owner_graph:
+        errors.append(f"{OWNER_GRAPH.relative_to(ROOT)}: {reason}: {token}")
+
+for forbidden, reason in (
+    ("val lightControlOperations: DeviceLightControlOperations", "the graph must expose the complete Light bundle"),
+):
+    if forbidden in owner_graph:
+        errors.append(f"{OWNER_GRAPH.relative_to(ROOT)}: {reason}: {forbidden}")
+
+for adapter in (
+    "DefaultDeviceLightControlOperations(",
+    "DefaultDeviceLightProtectionOperations(",
+):
+    if owner_graph.count(adapter) != 1:
+        errors.append(
+            f"{OWNER_GRAPH.relative_to(ROOT)}: production must construct exactly one owner-scoped {adapter}"
+        )
+
+for token, reason in (
+    (
+        "lightControlOperations = graph.lightOperations.controlOperations",
+        "the Light root must reuse owner-scoped control",
+    ),
+    (
+        "lightProtectionOperations = graph.lightOperations.protectionOperations",
+        "shared settings must reuse owner-scoped Light protection",
+    ),
+):
+    if token not in factory:
+        errors.append(f"{FACTORY.relative_to(ROOT)}: {reason}: {token}")
+
+for token, reason in (
+    ("OwnerLightOperations(", "release smoke must compose the same Light operation bundle"),
+    (
+        "lightControlOperations = lightOperations.controlOperations",
+        "release-smoke Light root must reuse its central control boundary",
+    ),
+):
+    if token not in smoke_factory:
+        errors.append(f"{SMOKE_FACTORY.relative_to(ROOT)}: {reason}: {token}")
+
+for adapter in (
+    "DefaultDeviceLightControlOperations(",
+    "DefaultDeviceLightProtectionOperations(",
+):
+    if smoke_factory.count(adapter) != 1:
+        errors.append(
+            f"{SMOKE_FACTORY.relative_to(ROOT)}: release smoke must construct exactly one {adapter}"
+        )
+
+for token, reason in (
+    (
+        "lightProtectionOperations: DeviceLightProtectionOperations",
+        "shared settings must require its owner-scoped Light protection dependency",
+    ),
+    (
+        "DeviceLightProtectionOperations by lightProtectionOperations",
+        "shared settings must delegate to the injected central Light protection boundary",
+    ),
+):
+    if token not in family_settings_adapter:
+        errors.append(f"{FAMILY_SETTINGS_ADAPTER.relative_to(ROOT)}: {reason}: {token}")
+
+if "DefaultDeviceLightProtectionOperations(" in family_settings_adapter:
+    errors.append(
+        f"{FAMILY_SETTINGS_ADAPTER.relative_to(ROOT)}: shared settings cannot create a parallel Light protection adapter"
+    )
 
 for token, reason in (
     (

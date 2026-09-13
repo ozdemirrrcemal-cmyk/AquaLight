@@ -34,10 +34,10 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingDailyUsageSnaps
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirSnapshot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingRuntimeReason
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingSchedulingPolicy
-import com.aqua.aqualight.application.devices.light.DeviceLightControlFailure
-import com.aqua.aqualight.application.devices.light.DeviceLightControlOperations
-import com.aqua.aqualight.application.devices.light.DeviceLightControlResult
-import com.aqua.aqualight.application.devices.light.DeviceLightControlSnapshot
+import com.aqua.aqualight.application.devices.light.control.DeviceLightControlFailure
+import com.aqua.aqualight.application.devices.light.control.DeviceLightControlOperations
+import com.aqua.aqualight.application.devices.light.control.DeviceLightControlResult
+import com.aqua.aqualight.application.devices.light.control.DeviceLightControlSnapshot
 import com.aqua.aqualight.application.devices.timer.DeviceTimerChannelRegime
 import com.aqua.aqualight.application.devices.timer.DeviceTimerChannelSnapshot
 import com.aqua.aqualight.application.devices.timer.DeviceTimerControlCapabilities
