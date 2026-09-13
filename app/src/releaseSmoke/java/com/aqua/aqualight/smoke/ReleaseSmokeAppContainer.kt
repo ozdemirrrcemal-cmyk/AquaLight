@@ -40,6 +40,8 @@ import com.aqua.aqualight.data.devices.cooling.DefaultDeviceCoolingAutomaticSett
 import com.aqua.aqualight.data.devices.cooling.DefaultDeviceCoolingTemperatureHistoryOperations
 import com.aqua.aqualight.data.devices.cooling.control.DefaultDeviceCoolingControlOperations
 import com.aqua.aqualight.data.devices.light.control.DefaultDeviceLightControlOperations
+import com.aqua.aqualight.data.devices.light.library.DefaultDeviceLightLibraryOperations
+import com.aqua.aqualight.data.devices.light.library.DeviceLightLibraryStore
 import com.aqua.aqualight.data.devices.light.protection.DefaultDeviceLightProtectionOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningDiscoveryOperations
@@ -67,6 +69,8 @@ import com.aqua.aqualight.ui.tabs.devices.add.DeviceQrScanViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.DeviceCoolingRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.status.DeviceCoolingSystemStatusViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.library.DeviceLightLibraryViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual.DeviceLightManualControlViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.presentation.root.DeviceTimerRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.presentation.channel.DeviceTimerChannelViewModel
@@ -139,9 +143,16 @@ private class ReleaseSmokeViewModelFactory(
     private val appContext = context.applicationContext
     private val notificationPreferences = NotificationPlatform.get(appContext).preferenceUseCase
     private val devicesRepository = DevicesRepository()
+    private val lightControlOperations = DefaultDeviceLightControlOperations(devicesRepository)
     private val lightOperations = OwnerLightOperations(
-        controlOperations = DefaultDeviceLightControlOperations(devicesRepository),
-        protectionOperations = DefaultDeviceLightProtectionOperations(devicesRepository)
+        controlOperations = lightControlOperations,
+        protectionOperations = DefaultDeviceLightProtectionOperations(devicesRepository),
+        libraryOperations = DefaultDeviceLightLibraryOperations(
+            ownerUid = SMOKE_OWNER_UID,
+            store = DeviceLightLibraryStore.create(appContext, SMOKE_OWNER_UID),
+            devicesRepository = devicesRepository,
+            controlOperations = lightControlOperations
+        )
     )
     private val timerControlOperations = DefaultDeviceTimerControlOperations(devicesRepository)
     private val tankStore = AquariumTankDataStoreManager(appContext)
@@ -262,6 +273,10 @@ private class ReleaseSmokeViewModelFactory(
                 controlSurfacePreparationOperations =
                     ReleaseSmokeControlSurfacePreparationOperations
             )
+        modelClass.isAssignableFrom(DeviceLightManualControlViewModel::class.java) ->
+            DeviceLightManualControlViewModel(lightOperations.libraryOperations)
+        modelClass.isAssignableFrom(DeviceLightLibraryViewModel::class.java) ->
+            DeviceLightLibraryViewModel(lightOperations.libraryOperations)
         modelClass.isAssignableFrom(DeviceCoolingRootViewModel::class.java) ->
             DeviceCoolingRootViewModel(
                 operations = DefaultDeviceRootOperations(devicesRepository),
