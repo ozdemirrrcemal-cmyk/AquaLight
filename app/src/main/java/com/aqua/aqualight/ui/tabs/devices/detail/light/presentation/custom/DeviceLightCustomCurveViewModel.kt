@@ -107,21 +107,26 @@ internal class DeviceLightCustomCurveViewModel(
     }
 
     fun requestAddPoint() {
-        if (!_uiState.value.contentEnabled || _uiState.value.draft.points.size >= _uiState.value.maxPoints) {
+        if (!_uiState.value.contentEnabled || _uiState.value.operationInProgress ||
+            _uiState.value.draft.points.size >= _uiState.value.maxPoints
+        ) {
             return
         }
         emit(DeviceLightCustomCurveEffect.OpenTimePicker(null))
     }
 
     fun requestEditSelectedTime() {
+        if (_uiState.value.operationInProgress) return
         _uiState.value.selectedTimeMs?.let { time ->
             emit(DeviceLightCustomCurveEffect.OpenTimePicker(time))
         }
     }
 
     fun selectOrAddGraphTime(timeMs: Long) {
+        val state = _uiState.value
+        if (!state.contentEnabled || state.operationInProgress) return
         val aligned = timeMs.alignedTime()
-        val existing = _uiState.value.draft.points.singleOrNull { point -> point.timeMs == aligned }
+        val existing = state.draft.points.singleOrNull { point -> point.timeMs == aligned }
         if (existing != null) {
             _uiState.update { state -> state.copy(selectedTimeMs = existing.timeMs) }
         } else {
@@ -131,7 +136,7 @@ internal class DeviceLightCustomCurveViewModel(
 
     fun addOrMovePoint(originalTimeMs: Long?, targetTimeMs: Long) {
         val state = _uiState.value
-        if (!state.contentEnabled) return
+        if (!state.contentEnabled || state.operationInProgress) return
         val aligned = targetTimeMs.alignedTime()
         if (state.draft.points.any { point ->
                 point.timeMs == aligned && point.timeMs != originalTimeMs
@@ -153,6 +158,7 @@ internal class DeviceLightCustomCurveViewModel(
 
     fun duplicateSelectedPoint() {
         val state = _uiState.value
+        if (state.operationInProgress) return
         val selected = state.selectedPoint ?: return
         if (state.draft.points.size >= state.maxPoints) return
         val occupied = state.draft.points.mapTo(mutableSetOf()) { point -> point.timeMs }
@@ -173,6 +179,7 @@ internal class DeviceLightCustomCurveViewModel(
 
     fun deleteSelectedPoint() {
         val state = _uiState.value
+        if (state.operationInProgress) return
         val selected = state.selectedPoint ?: return
         val points = state.draft.points.filterNot { point -> point.timeMs == selected.timeMs }
         val nextSelection = points.minByOrNull { point -> kotlin.math.abs(point.timeMs - selected.timeMs) }
@@ -182,6 +189,7 @@ internal class DeviceLightCustomCurveViewModel(
 
     fun updateSelectedChannel(channel: DeviceLightCustomChannelId, percent: Int) {
         val state = _uiState.value
+        if (state.operationInProgress) return
         val selected = state.selectedPoint ?: return
         if (channel !in selected.channels) return
         val points = state.draft.points.map { point ->

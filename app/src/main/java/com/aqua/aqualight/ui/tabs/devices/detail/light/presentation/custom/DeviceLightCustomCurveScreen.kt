@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -80,7 +81,7 @@ internal fun DeviceLightCustomCurveScreen(
             CustomOutlinedButton(
                 label = stringResource(R.string.device_light_custom_reset),
                 description = stringResource(R.string.device_light_custom_reset_description),
-                enabled = state.contentEnabled && !state.operationInProgress,
+                enabled = !state.operationInProgress,
                 color = visuals.colors.card.primaryText,
                 iconRes = R.drawable.ic_dosing_reset_24,
                 onClick = actions.onResetClick,
@@ -228,6 +229,11 @@ private fun EditableCurveChart(
     onTimeClick: (Long) -> Unit,
     visuals: DeviceLightCustomVisuals
 ) {
+    val chartDescription = pluralStringResource(
+        R.plurals.device_light_library_chart_description,
+        state.draft.points.size,
+        state.draft.points.size
+    )
     Column {
         state.selectedTimeMs?.let { selected ->
             BasicText(
@@ -250,8 +256,8 @@ private fun EditableCurveChart(
             }
             Canvas(
                 modifier = Modifier.weight(1f).height(134.dp)
-                    .pointerInput(state.contentEnabled, state.draft.points) {
-                        if (state.contentEnabled) {
+                    .pointerInput(state.contentEnabled, state.operationInProgress, state.draft.points) {
+                        if (state.contentEnabled && !state.operationInProgress) {
                             detectTapGestures { offset ->
                                 val time = (offset.x / size.width.toFloat()).coerceIn(0f, 1f) *
                                     (MILLIS_PER_DAY - MILLIS_PER_MINUTE)
@@ -260,7 +266,7 @@ private fun EditableCurveChart(
                         }
                     }
                     .clearAndSetSemantics {
-                        contentDescription = "${state.draft.points.size} point custom light curve"
+                        contentDescription = chartDescription
                     }
             ) {
                 drawCurveGrid(visuals.colors.card)
@@ -397,7 +403,8 @@ private fun SelectedPointCard(
                     SquareIconButton(
                         iconRes = R.drawable.ic_add_24,
                         description = stringResource(R.string.device_light_custom_duplicate_point),
-                        enabled = state.draft.points.size < state.maxPoints,
+                        enabled = !state.operationInProgress &&
+                            state.draft.points.size < state.maxPoints,
                         color = visuals.colors.action,
                         onClick = actions.onDuplicatePointClick,
                         visuals = visuals
@@ -405,7 +412,7 @@ private fun SelectedPointCard(
                     SquareIconButton(
                         iconRes = R.drawable.ic_delete_24,
                         description = stringResource(R.string.device_light_custom_delete_point),
-                        enabled = true,
+                        enabled = !state.operationInProgress,
                         color = visuals.colors.card.danger,
                         onClick = actions.onDeletePointClick,
                         visuals = visuals
@@ -464,7 +471,12 @@ private fun CustomChannelRow(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
-        StepButton("−", percent > 0, { actions.onChannelStep(channel, -1) }, visuals)
+        StepButton(
+            stringResource(R.string.device_light_manual_minus_symbol),
+            !state.operationInProgress && percent > 0,
+            { actions.onChannelStep(channel, -1) },
+            visuals
+        )
         AquaLightManualPercentSlider(
             state = AquaLightManualPercentSliderState(
                 percent = percent,
@@ -479,7 +491,12 @@ private fun CustomChannelRow(
             ),
             modifier = Modifier.weight(1f).padding(horizontal = 1.dp)
         )
-        StepButton("+", percent < 100, { actions.onChannelStep(channel, 1) }, visuals)
+        StepButton(
+            stringResource(R.string.device_light_manual_plus_symbol),
+            !state.operationInProgress && percent < 100,
+            { actions.onChannelStep(channel, 1) },
+            visuals
+        )
         BasicText(
             text = stringResource(R.string.device_light_library_channel_percent_format, percent),
             style = visuals.typography.body.copy(textAlign = TextAlign.End),
@@ -667,7 +684,10 @@ private fun CompactActionButton(
             .padding(horizontal = 11.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        BasicText("+", style = visuals.typography.title.copy(color = visuals.colors.action.copy(alpha = alpha)))
+        BasicText(
+            stringResource(R.string.device_light_manual_plus_symbol),
+            style = visuals.typography.title.copy(color = visuals.colors.action.copy(alpha = alpha))
+        )
         BasicText(
             label,
             style = visuals.typography.caption.copy(color = visuals.colors.action.copy(alpha = alpha)),
