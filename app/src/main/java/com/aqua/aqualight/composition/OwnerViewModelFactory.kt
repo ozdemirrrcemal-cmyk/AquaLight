@@ -52,6 +52,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan.DeviceDosin
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.reservoir.DeviceDosingReservoirViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.root.DeviceDosingRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.library.DeviceLightLibraryViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom.DeviceLightCustomCurveViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual.DeviceLightManualControlViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.settings.DeviceFamilySettingsViewModel
@@ -177,6 +178,10 @@ internal class OwnerViewModelFactory(
                 controlSurfacePreparationOperations = graph.controlSurfacePreparationOperations
             )
             DeviceLightManualControlViewModel::class.java -> DeviceLightManualControlViewModel(
+                libraryOperations = graph.lightOperations.libraryOperations
+            )
+            DeviceLightCustomCurveViewModel::class.java -> DeviceLightCustomCurveViewModel(
+                customOperations = graph.lightOperations.customOperations,
                 libraryOperations = graph.lightOperations.libraryOperations
             )
             DeviceLightLibraryViewModel::class.java -> DeviceLightLibraryViewModel(
@@ -307,6 +312,7 @@ internal class OwnerViewModelFactory(
             MaintenanceViewModel::class.java,
             DeviceLightRootViewModel::class.java,
             DeviceLightManualControlViewModel::class.java,
+            DeviceLightCustomCurveViewModel::class.java,
             DeviceLightLibraryViewModel::class.java,
             DeviceCoolingRootViewModel::class.java,
             DeviceCoolingTemperatureHistoryViewModel::class.java,

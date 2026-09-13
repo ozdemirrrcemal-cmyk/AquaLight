@@ -40,6 +40,7 @@ import com.aqua.aqualight.data.devices.cooling.DefaultDeviceCoolingAutomaticSett
 import com.aqua.aqualight.data.devices.cooling.DefaultDeviceCoolingTemperatureHistoryOperations
 import com.aqua.aqualight.data.devices.cooling.control.DefaultDeviceCoolingControlOperations
 import com.aqua.aqualight.data.devices.light.control.DefaultDeviceLightControlOperations
+import com.aqua.aqualight.data.devices.light.custom.DefaultDeviceLightCustomOperations
 import com.aqua.aqualight.data.devices.light.library.DefaultDeviceLightLibraryOperations
 import com.aqua.aqualight.data.devices.light.library.DeviceLightLibraryStore
 import com.aqua.aqualight.data.devices.light.protection.DefaultDeviceLightProtectionOperations
@@ -70,6 +71,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewMo
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.DeviceCoolingRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.status.DeviceCoolingSystemStatusViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.library.DeviceLightLibraryViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom.DeviceLightCustomCurveViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual.DeviceLightManualControlViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.presentation.root.DeviceTimerRootViewModel
@@ -146,6 +148,7 @@ private class ReleaseSmokeViewModelFactory(
     private val lightControlOperations = DefaultDeviceLightControlOperations(devicesRepository)
     private val lightOperations = OwnerLightOperations(
         controlOperations = lightControlOperations,
+        customOperations = DefaultDeviceLightCustomOperations(devicesRepository),
         protectionOperations = DefaultDeviceLightProtectionOperations(devicesRepository),
         libraryOperations = DefaultDeviceLightLibraryOperations(
             ownerUid = SMOKE_OWNER_UID,
@@ -275,6 +278,11 @@ private class ReleaseSmokeViewModelFactory(
             )
         modelClass.isAssignableFrom(DeviceLightManualControlViewModel::class.java) ->
             DeviceLightManualControlViewModel(lightOperations.libraryOperations)
+        modelClass.isAssignableFrom(DeviceLightCustomCurveViewModel::class.java) ->
+            DeviceLightCustomCurveViewModel(
+                customOperations = lightOperations.customOperations,
+                libraryOperations = lightOperations.libraryOperations
+            )
         modelClass.isAssignableFrom(DeviceLightLibraryViewModel::class.java) ->
             DeviceLightLibraryViewModel(lightOperations.libraryOperations)
         modelClass.isAssignableFrom(DeviceCoolingRootViewModel::class.java) ->

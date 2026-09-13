@@ -1,0 +1,211 @@
+package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom
+
+import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomChannel
+import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomMutationResult
+import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomOperations
+import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomPoint
+import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomReadResult
+import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomScene
+import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomSnapshot
+import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryCustomPoint
+import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryKind
+import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryMutationResult
+import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryOperations
+import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryResult
+import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryScene
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.test.TestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Rule
+import org.junit.Test
+import org.junit.rules.TestWatcher
+import org.junit.runner.Description
+
+class DeviceLightCustomCurveViewModelTest {
+
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
+    @Test
+    fun `firmware document becomes the clean editor baseline`() {
+        val viewModel = boundViewModel()
+
+        assertFalse(viewModel.currentState.initialLoading)
+        assertFalse(viewModel.currentState.hasUnsavedChanges)
+        assertEquals(EVERY_DAY_MASK, viewModel.currentState.draft.weekdaysMask)
+        assertEquals(INITIAL_TIME_MS, viewModel.currentState.selectedPoint?.timeMs)
+        assertEquals(WRGB_CHANNELS.map(DeviceLightCustomChannel::toUiChannel), viewModel.currentState.channels)
+    }
+
+    @Test
+    fun `point and weekday edits mark draft dirty`() {
+        val viewModel = boundViewModel()
+
+        viewModel.updateSelectedChannel(DeviceLightCustomChannelId.BLUE, UPDATED_BLUE)
+        viewModel.toggleWeekday(SUNDAY_INDEX)
+
+        assertTrue(viewModel.currentState.hasUnsavedChanges)
+        assertEquals(UPDATED_BLUE, viewModel.currentState.selectedPoint?.channels?.get(DeviceLightCustomChannelId.BLUE))
+        assertEquals(EVERY_DAY_MASK xor (1 shl SUNDAY_INDEX), viewModel.currentState.draft.weekdaysMask)
+    }
+
+    @Test
+    fun `save as writes exact draft to DataStore boundary and clears dirty state`() {
+        val library = FakeLibraryOperations()
+        val viewModel = boundViewModel(libraryOperations = library)
+        viewModel.updateSelectedChannel(DeviceLightCustomChannelId.RED, UPDATED_RED)
+
+        viewModel.saveAs("Morning reef")
+
+        assertEquals("Morning reef", library.savedName)
+        assertEquals(EVERY_DAY_MASK, library.savedWeekdaysMask)
+        assertEquals(UPDATED_RED, library.savedPoints.single().scene.channels.values.first())
+        assertFalse(viewModel.currentState.hasUnsavedChanges)
+    }
+
+    @Test
+    fun `rgb product never exposes or persists white`() {
+        val channels = WRGB_CHANNELS.dropLast(1)
+        val library = FakeLibraryOperations()
+        val viewModel = boundViewModel(
+            customOperations = FakeCustomOperations(snapshot(channels)),
+            libraryOperations = library
+        )
+
+        viewModel.saveAs("RGB curve")
+
+        assertFalse(DeviceLightCustomChannelId.WHITE in viewModel.currentState.channels)
+        assertFalse(
+            library.savedPoints.single().scene.channels.keys.any { channel ->
+                channel.sceneKey == DeviceLightCustomChannel.WHITE.sceneKey
+            }
+        )
+    }
+
+    @Test
+    fun `preview uses firmware virtual time without installing draft`() {
+        val custom = FakeCustomOperations(snapshot())
+        val viewModel = boundViewModel(customOperations = custom)
+        viewModel.updatePreviewTime(PREVIEW_TIME_MS)
+
+        viewModel.preview()
+
+        assertEquals(PREVIEW_TIME_MS, custom.previewTimeMs)
+    }
+
+    private fun boundViewModel(
+        customOperations: FakeCustomOperations = FakeCustomOperations(snapshot()),
+        libraryOperations: FakeLibraryOperations = FakeLibraryOperations()
+    ) = DeviceLightCustomCurveViewModel(customOperations, libraryOperations).apply {
+        bind(DEVICE_UID)
+    }
+
+    private class FakeCustomOperations(
+        private val snapshot: DeviceLightCustomSnapshot
+    ) : DeviceLightCustomOperations {
+        var previewTimeMs: Long? = null
+
+        override suspend fun read(deviceUid: String) = DeviceLightCustomReadResult.Available(snapshot)
+
+        override suspend fun preview(deviceUid: String, virtualTimeMs: Long):
+            DeviceLightCustomMutationResult {
+            previewTimeMs = virtualTimeMs
+            return DeviceLightCustomMutationResult.Success
+        }
+
+        override suspend fun clearPreview(deviceUid: String) =
+            DeviceLightCustomMutationResult.Success
+    }
+
+    private class FakeLibraryOperations : DeviceLightLibraryOperations {
+        var savedName: String? = null
+        var savedWeekdaysMask: Int? = null
+        var savedPoints: List<DeviceLightLibraryCustomPoint> = emptyList()
+
+        override fun observeLibrary(deviceUid: String): Flow<DeviceLightLibraryResult> = emptyFlow()
+        override suspend fun usedNames(kind: DeviceLightLibraryKind): List<String> = emptyList()
+        override suspend fun refreshInstalledCustom(deviceUid: String) = Unit
+        override suspend fun saveManual(
+            deviceUid: String,
+            name: String,
+            scene: DeviceLightLibraryScene
+        ) = DeviceLightLibraryMutationResult.Success()
+
+        override suspend fun saveCustom(
+            deviceUid: String,
+            name: String,
+            weekdaysMask: Int,
+            points: List<DeviceLightLibraryCustomPoint>
+        ): DeviceLightLibraryMutationResult {
+            savedName = name
+            savedWeekdaysMask = weekdaysMask
+            savedPoints = points
+            return DeviceLightLibraryMutationResult.Success("custom")
+        }
+
+        override suspend fun rename(entryId: String, name: String) =
+            DeviceLightLibraryMutationResult.Success(entryId)
+        override suspend fun delete(entryId: String) =
+            DeviceLightLibraryMutationResult.Success(entryId)
+        override suspend fun load(deviceUid: String, entryId: String) =
+            DeviceLightLibraryMutationResult.Success(entryId)
+    }
+
+    class MainDispatcherRule(
+        private val dispatcher: TestDispatcher = UnconfinedTestDispatcher()
+    ) : TestWatcher() {
+        override fun starting(description: Description) = Dispatchers.setMain(dispatcher)
+        override fun finished(description: Description) = Dispatchers.resetMain()
+    }
+
+    private companion object {
+        const val DEVICE_UID = "custom-light"
+        const val INITIAL_TIME_MS = 12 * 60 * 60_000L
+        const val PREVIEW_TIME_MS = 16 * 60 * 60_000L
+        const val UPDATED_BLUE = 73
+        const val UPDATED_RED = 64
+        const val SUNDAY_INDEX = 6
+        val WRGB_CHANNELS = listOf(
+            DeviceLightCustomChannel.RED,
+            DeviceLightCustomChannel.GREEN,
+            DeviceLightCustomChannel.BLUE,
+            DeviceLightCustomChannel.WHITE
+        )
+
+        fun snapshot(
+            channels: List<DeviceLightCustomChannel> = WRGB_CHANNELS
+        ): DeviceLightCustomSnapshot = DeviceLightCustomSnapshot(
+            deviceUid = DEVICE_UID,
+            productKey = if (channels.size == 4) "LIGHT_WRGB_PRO_ELITE" else "LIGHT_RGB_PRO_SLIM",
+            revision = 4,
+            installed = true,
+            weekdaysMask = EVERY_DAY_MASK,
+            maxPoints = MAX_POINT_CAPACITY,
+            timeStepMs = MILLIS_PER_MINUTE,
+            currentTimeMs = INITIAL_TIME_MS,
+            channels = channels,
+            points = listOf(
+                DeviceLightCustomPoint(
+                    timeMs = INITIAL_TIME_MS,
+                    scene = DeviceLightCustomScene(
+                        channels.associateWith { channel ->
+                            when (channel) {
+                                DeviceLightCustomChannel.RED -> 20
+                                DeviceLightCustomChannel.GREEN -> 40
+                                DeviceLightCustomChannel.BLUE -> 60
+                                DeviceLightCustomChannel.WHITE -> 85
+                            }
+                        }
+                    )
+                )
+            )
+        )
+    }
+}

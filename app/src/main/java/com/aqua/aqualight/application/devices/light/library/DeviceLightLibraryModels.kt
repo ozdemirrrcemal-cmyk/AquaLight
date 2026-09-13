@@ -46,6 +46,7 @@ data class DeviceLightLibraryCustomPoint(
 ) {
     init {
         require(timeMs in 0..LAST_DAY_MILLISECOND)
+        require(timeMs % SCHEDULE_TIME_STEP_MILLIS == 0L)
     }
 }
 
@@ -137,6 +138,7 @@ private const val MAX_WEEKDAYS_MASK = 127
 private const val MIN_CUSTOM_POINTS = 1
 private const val MAX_CUSTOM_POINTS = 96
 private const val LAST_DAY_MILLISECOND = 86_399_999L
+private const val SCHEDULE_TIME_STEP_MILLIS = 60_000L
 private val CHANNEL_COUNT_RANGE = MIN_CHANNEL_COUNT..MAX_CHANNEL_COUNT
 private val PERCENT_RANGE = MIN_PERCENT..MAX_PERCENT
 private val WEEKDAYS_MASK_RANGE = MIN_WEEKDAYS_MASK..MAX_WEEKDAYS_MASK

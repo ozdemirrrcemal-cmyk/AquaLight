@@ -156,6 +156,7 @@ internal class DefaultDeviceLightLibraryOperations(
         require(points.zipWithNext().all { (left, right) -> left.timeMs < right.timeMs })
         points.forEach { point ->
             require(point.timeMs in 0..DeviceLightLibraryStoreRules.LAST_DAY_MILLISECOND)
+            require(point.timeMs % DeviceLightLibraryStoreRules.SCHEDULE_TIME_STEP_MS == 0L)
             requireExactScene(target, point.scene)
         }
         storedEntryBuilder(target, canonicalName, timestamp)

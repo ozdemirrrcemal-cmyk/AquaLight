@@ -9,6 +9,7 @@ internal object DeviceLightLibraryStoreRules {
     const val MIN_WEEKDAYS_MASK = 1
     const val MAX_WEEKDAYS_MASK = 127
     const val LAST_DAY_MILLISECOND = 86_399_999L
+    const val SCHEDULE_TIME_STEP_MS = 60_000L
     private const val MIN_CHANNEL_PERCENT = 0
     private const val MAX_CHANNEL_PERCENT = 100
 
@@ -110,6 +111,9 @@ internal object DeviceLightLibraryStoreRules {
         custom.pointsList.forEach { point ->
             if (point.timeMs !in 0..LAST_DAY_MILLISECOND) {
                 violation("custom point timeMs is outside one day.")
+            }
+            if (point.timeMs % SCHEDULE_TIME_STEP_MS != 0L) {
+                violation("custom point timeMs must be aligned to a whole minute.")
             }
             if (point.timeMs <= priorTime) {
                 violation("custom point times must be strictly increasing.")

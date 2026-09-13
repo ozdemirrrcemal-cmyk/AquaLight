@@ -21,6 +21,7 @@ import com.aqua.aqualight.data.devices.remove.OwnerDeviceDataCleaner
 import com.aqua.aqualight.ui.tabs.devices.DevicesViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.library.DeviceLightLibraryViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom.DeviceLightCustomCurveViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual.DeviceLightManualControlViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.settings.DeviceFamilySettingsViewModel
@@ -65,6 +66,11 @@ private class DebugDeviceFixtureViewModelFactory(
             DeviceLightManualControlViewModel::class.java ->
                 DeviceLightManualControlViewModel(
                     timerDependencies(requireGraph()).lightLibraryOperations
+                )
+            DeviceLightCustomCurveViewModel::class.java ->
+                DeviceLightCustomCurveViewModel(
+                    customOperations = requireGraph().lightOperations.customOperations,
+                    libraryOperations = timerDependencies(requireGraph()).lightLibraryOperations
                 )
             DeviceLightLibraryViewModel::class.java ->
                 DeviceLightLibraryViewModel(

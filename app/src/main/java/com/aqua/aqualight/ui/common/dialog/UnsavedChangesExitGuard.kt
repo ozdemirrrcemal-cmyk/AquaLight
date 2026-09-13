@@ -16,24 +16,33 @@ class UnsavedChangesExitGuard private constructor(
     private val actionId: String,
     private val hasUnsavedChanges: () -> Boolean,
     private val isExitBlocked: () -> Boolean,
+    private val beforeConfirmation: () -> Unit,
     private val exit: () -> Unit
 ) {
+    private var pendingAction: (() -> Unit)? = null
 
     data class Configuration(
         val requestKey: String,
         val actionId: String,
         val hasUnsavedChanges: () -> Boolean,
         val isExitBlocked: () -> Boolean = { false },
+        val beforeConfirmation: () -> Unit = {},
         val exit: () -> Unit
     )
 
-    fun requestExit() {
+    fun requestExit() = requestAction(exit)
+
+    /** Uses the same central Dosing confirmation for any action that discards the editor draft. */
+    fun requestAction(action: () -> Unit) {
         if (isExitBlocked()) return
         if (!hasUnsavedChanges()) {
-            exit()
+            action()
             return
         }
+        if (pendingAction != null) return
 
+        beforeConfirmation()
+        pendingAction = action
         ConfirmDialogFragment.show(
             fragmentManager = fragment.childFragmentManager,
             request = ConfirmDialogFragment.Request(
@@ -55,8 +64,10 @@ class UnsavedChangesExitGuard private constructor(
 
     private fun handleResult(result: String?, resultActionId: String?) {
         if (resultActionId != actionId) return
+        val action = pendingAction
+        pendingAction = null
         if (result == ConfirmDialogFragment.RESULT_CONFIRM && !isExitBlocked()) {
-            exit()
+            action?.invoke()
         }
     }
 
@@ -71,6 +82,7 @@ class UnsavedChangesExitGuard private constructor(
                 actionId = configuration.actionId,
                 hasUnsavedChanges = configuration.hasUnsavedChanges,
                 isExitBlocked = configuration.isExitBlocked,
+                beforeConfirmation = configuration.beforeConfirmation,
                 exit = configuration.exit
             )
             fragment.childFragmentManager.setFragmentResultListener(

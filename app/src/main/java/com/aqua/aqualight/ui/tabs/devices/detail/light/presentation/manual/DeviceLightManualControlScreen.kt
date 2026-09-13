@@ -64,9 +64,6 @@ internal fun DeviceLightManualControlScreen(
                 ManualProtectionBanner(protection, visuals)
             }
         }
-        item(key = "manual-quick-scenes") {
-            ManualQuickScenesCard(state, actions, visuals)
-        }
         item(key = "manual-library-actions") {
             ManualLibraryActions(state.contentEnabled, actions, visuals)
         }

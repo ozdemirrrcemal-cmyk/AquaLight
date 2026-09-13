@@ -43,6 +43,13 @@ class DeviceLightLibraryFragment : Fragment(R.layout.fragment_device_light_libra
         registerSheetResults()
         setupContent()
         viewModel.bind(args.deviceUid)
+        viewModel.selectTab(
+            if (args.initialTab == INITIAL_TAB_CUSTOM) {
+                DeviceLightLibraryTab.CUSTOM
+            } else {
+                DeviceLightLibraryTab.MANUAL
+            }
+        )
         renderState(viewModel.uiState.value)
         observeViewModel()
     }
@@ -218,5 +225,6 @@ class DeviceLightLibraryFragment : Fragment(R.layout.fragment_device_light_libra
         const val DELETE_REQUEST_KEY = "device_light_library_delete"
         const val ACTION_RENAME = "rename"
         const val ACTION_DELETE = "delete"
+        const val INITIAL_TAB_CUSTOM = "CUSTOM"
     }
 }
