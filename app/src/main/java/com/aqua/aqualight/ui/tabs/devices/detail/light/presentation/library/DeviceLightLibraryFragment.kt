@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentDeviceLightLibraryBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
@@ -11,11 +12,13 @@ import com.aqua.aqualight.ui.common.header.setupAquaHeader
 
 class DeviceLightLibraryFragment : Fragment(R.layout.fragment_device_light_library) {
 
+    private val args: DeviceLightLibraryFragmentArgs by navArgs()
     private var _binding: FragmentDeviceLightLibraryBinding? = null
     private val binding get() = _binding!!
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        require(args.deviceUid.isNotBlank())
         _binding = FragmentDeviceLightLibraryBinding.bind(view)
         binding.appHeader.setupAquaHeader(
             fragment = this,
