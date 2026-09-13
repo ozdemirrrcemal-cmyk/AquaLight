@@ -51,21 +51,22 @@ internal class DefaultDeviceLightLibraryOperations(
 
     override fun observeLibrary(deviceUid: String): Flow<DeviceLightLibraryResult> {
         val uid = deviceUid.toDeviceUidOrNull()
-        val runtime = devicesRepository.runtimeModules()?.light
-        return if (uid == null || runtime == null) {
+        return if (uid == null) {
             flowOf(DeviceLightLibraryResult.Failed(DeviceLightLibraryFailure.UNAVAILABLE))
         } else {
-            observeAvailableLibrary(uid, runtime)
+            val statuses = devicesRepository.runtimeModules()?.light?.states
+                ?: flowOf<Map<DeviceUid, DeviceLightStatus>>(emptyMap())
+            observeAvailableLibrary(uid, statuses)
         }
     }
 
     private fun observeAvailableLibrary(
         uid: DeviceUid,
-        runtime: DeviceLightRuntimeRepository
+        statuses: Flow<Map<DeviceUid, DeviceLightStatus>>
     ): Flow<DeviceLightLibraryResult> = combine(
         controlOperations.observeControl(uid.value),
         store.observeEntries(),
-        runtime.states,
+        statuses,
         installedCustomDocuments
     ) { control, storedEntries, statuses, customDocuments ->
         val controlSnapshot = (control as? DeviceLightControlResult.Available)?.snapshot

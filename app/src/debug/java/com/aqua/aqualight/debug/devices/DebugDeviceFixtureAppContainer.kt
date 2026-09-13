@@ -1,21 +1,27 @@
 package com.aqua.aqualight.debug.devices
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.BuildConfig
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
 import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
 import com.aqua.aqualight.application.devices.light.control.DeviceLightControlOperations
+import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryOperations
 import com.aqua.aqualight.application.devices.timer.control.DeviceTimerControlOperations
 import com.aqua.aqualight.composition.AppContainer
 import com.aqua.aqualight.composition.OwnerDependencyGraph
 import com.aqua.aqualight.composition.OwnerDependencyGraphAccess
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
+import com.aqua.aqualight.data.devices.light.library.DefaultDeviceLightLibraryOperations
+import com.aqua.aqualight.data.devices.light.library.DeviceLightLibraryStore
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
 import com.aqua.aqualight.data.devices.remove.OwnerDeviceDataCleaner
 import com.aqua.aqualight.ui.tabs.devices.DevicesViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.library.DeviceLightLibraryViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual.DeviceLightManualControlViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.settings.DeviceFamilySettingsViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.presentation.root.DeviceTimerRootViewModel
@@ -26,6 +32,7 @@ import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 
 /** Debug-only AppContainer decorator for catalog-backed Light and Timer fixtures. */
 internal class DebugDeviceFixtureAppContainer(
+    context: Context,
     private val delegate: AppContainer
 ) : AppContainer by delegate {
     private val ownerGraphAccess = requireNotNull(delegate as? OwnerDependencyGraphAccess) {
@@ -34,16 +41,19 @@ internal class DebugDeviceFixtureAppContainer(
 
     override val defaultViewModelFactory: ViewModelProvider.Factory =
         DebugDeviceFixtureViewModelFactory(
+            context = context.applicationContext,
             delegate = delegate.defaultViewModelFactory,
             ownerGraphAccess = ownerGraphAccess
         )
 }
 
 private class DebugDeviceFixtureViewModelFactory(
+    context: Context,
     private val delegate: ViewModelProvider.Factory,
     private val ownerGraphAccess: OwnerDependencyGraphAccess
 ) : ViewModelProvider.Factory {
 
+    private val appContext = context.applicationContext
     private val fixtures = DebugDeviceFixtureCatalog()
     private var cachedTimerDependencies: DebugTimerFixtureDependencies? = null
 
@@ -52,6 +62,14 @@ private class DebugDeviceFixtureViewModelFactory(
             DevicesViewModel::class.java -> createDevicesViewModel(requireGraph())
             DeviceLightRootViewModel::class.java ->
                 createLightRootViewModel(requireGraph())
+            DeviceLightManualControlViewModel::class.java ->
+                DeviceLightManualControlViewModel(
+                    timerDependencies(requireGraph()).lightLibraryOperations
+                )
+            DeviceLightLibraryViewModel::class.java ->
+                DeviceLightLibraryViewModel(
+                    timerDependencies(requireGraph()).lightLibraryOperations
+                )
             DeviceTimerRootViewModel::class.java ->
                 createTimerRootViewModel(requireGraph())
             DeviceTimerProgramViewModel::class.java ->
@@ -163,9 +181,16 @@ private class DebugDeviceFixtureViewModelFactory(
             delegate = graph.lightOperations.controlOperations,
             fixtures = fixtures
         )
+        val lightLibraryOperations = DefaultDeviceLightLibraryOperations(
+            ownerUid = graph.ownerUid,
+            store = DeviceLightLibraryStore.create(appContext, graph.ownerUid),
+            devicesRepository = graph.devicesRepository,
+            controlOperations = lightControlOperations
+        )
         return DebugTimerFixtureDependencies(
             graph = graph,
             lightControlOperations = lightControlOperations,
+            lightLibraryOperations = lightLibraryOperations,
             timerControlOperations = timerControlOperations,
             controlSurfacePreparationOperations =
                 DebugFixtureControlSurfacePreparationOperations(
@@ -195,6 +220,7 @@ private fun fixtureFirmwareOperations(
 private data class DebugTimerFixtureDependencies(
     val graph: OwnerDependencyGraph,
     val lightControlOperations: DeviceLightControlOperations,
+    val lightLibraryOperations: DeviceLightLibraryOperations,
     val timerControlOperations: DeviceTimerControlOperations,
     val controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations
 )
