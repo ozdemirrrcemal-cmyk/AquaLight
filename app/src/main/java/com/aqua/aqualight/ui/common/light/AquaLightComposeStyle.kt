@@ -158,28 +158,28 @@ object AquaLightDashboardGeometry {
 
 /** Central layout contract for the product-adaptive Manual light surface. */
 object AquaLightManualGeometry {
-    val screenHorizontalPadding = AquaLightDashboardGeometry.screenHorizontalPadding
+    val screenHorizontalPadding = 8.dp
     val screenTopPadding = 2.dp
-    val screenBottomPadding = AquaLightDashboardGeometry.screenBottomPadding
-    val sectionGap = AquaLightDashboardGeometry.cardGap
+    val screenBottomPadding = 16.dp
+    val sectionGap = 7.dp
 
-    val controlContentVerticalPadding = 12.dp
-    val controlContentHorizontalPadding = 12.dp
-    val controlContentGap = 8.dp
-    val powerGaugeSize = 132.dp
-    val powerGaugeTrackWidth = 14.dp
-    val powerGaugeValueGap = 4.dp
+    val controlContentVerticalPadding = 8.dp
+    val controlContentHorizontalPadding = 8.dp
+    val controlContentGap = 2.dp
+    val powerGaugeSize = 104.dp
+    val powerGaugeTrackWidth = 11.dp
+    val powerGaugeValueGap = 10.dp
 
-    val channelRowHeight = 52.dp
-    val channelLabelWidth = 52.dp
-    val channelValueWidth = 42.dp
-    val channelStepTouchSize = 48.dp
-    val channelStepVisualSize = 38.dp
+    val channelRowHeight = 40.dp
+    val channelLabelWidth = 44.dp
+    val channelValueWidth = 36.dp
+    val channelStepTouchSize = 38.dp
+    val channelStepVisualSize = 30.dp
     val channelStepOutlineWidth = 1.dp
-    val channelSliderTouchHeight = 48.dp
-    val channelSliderTrackHeight = 8.dp
-    val channelSliderThumbRadius = 10.dp
-    val channelSliderHorizontalInset = 2.dp
+    val channelSliderTouchHeight = 34.dp
+    val channelSliderTrackHeight = 7.dp
+    val channelSliderThumbRadius = 8.dp
+    val channelSliderHorizontalInset = 1.dp
 
     val bannerCornerRadius = AquaDeviceCardGeometry.cornerRadius
     val bannerOutlineWidth = AquaDeviceCardGeometry.outlineWidth
@@ -189,8 +189,8 @@ object AquaLightManualGeometry {
     val bannerContentGap = 10.dp
     val bannerTextGap = 2.dp
 
-    val quickSceneButtonHeight = 52.dp
-    val quickSceneButtonGap = 8.dp
+    val quickSceneButtonHeight = 46.dp
+    val quickSceneButtonGap = 6.dp
     val quickSceneButtonCornerRadius = 12.dp
     val quickSceneSwatchSize = 20.dp
     val quickSceneContentGap = 8.dp
@@ -204,8 +204,8 @@ object AquaLightManualGeometry {
     val actionButtonContentGap = 8.dp
     val actionButtonHorizontalPadding = 10.dp
 
-    val powerOffButtonHeight = 72.dp
-    val powerOffIconSize = 28.dp
+    val powerOffButtonHeight = actionButtonHeight
+    val powerOffIconSize = 24.dp
     val powerOffContentGap = 7.dp
     val powerOffTextGap = 2.dp
 
@@ -223,8 +223,8 @@ object AquaLightManualAlpha {
 }
 
 object AquaLightManualTypographySpec {
-    val powerValueFontSize = 25.sp
-    val powerValueLineHeight = 30.sp
+    val powerValueFontSize = 22.sp
+    val powerValueLineHeight = 26.sp
 }
 
 object AquaLightDashboardAlpha {
