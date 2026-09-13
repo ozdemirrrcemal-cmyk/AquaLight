@@ -3,9 +3,11 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -16,17 +18,17 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
 import com.aqua.aqualight.ui.common.light.AquaLightDashboardAlpha
@@ -35,26 +37,30 @@ import com.aqua.aqualight.ui.common.light.aquaLightDashboardColors
 import com.aqua.aqualight.ui.common.light.aquaLightDashboardTypography
 import com.aqua.aqualight.ui.common.light.aquaLightLibraryScrimColor
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun DeviceLightLibrarySheet(
     visible: Boolean,
     onDismissRequest: () -> Unit
 ) {
     if (!visible) return
-    val colors = aquaLightDashboardColors()
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-    ModalBottomSheet(
+    Dialog(
         onDismissRequest = onDismissRequest,
-        sheetState = sheetState,
-        shape = AquaLightDashboardGeometry.librarySheetShape,
-        containerColor = colors.surface,
-        contentColor = colors.primaryText,
-        scrimColor = aquaLightLibraryScrimColor(),
-        dragHandle = { DeviceLightLibraryDragHandle() }
+        properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
-        DeviceLightLibraryContent()
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(aquaLightLibraryScrimColor())
+                .pointerInput(onDismissRequest) {
+                    detectTapGestures { onDismissRequest() }
+                }
+        ) {
+            DeviceLightLibraryContent(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .pointerInput(Unit) { detectTapGestures { } }
+            )
+        }
     }
 }
 
@@ -74,13 +80,15 @@ private fun DeviceLightLibraryDragHandle() {
 }
 
 @Composable
-private fun DeviceLightLibraryContent() {
+private fun DeviceLightLibraryContent(modifier: Modifier) {
     val colors = aquaLightDashboardColors()
     val typography = aquaLightDashboardTypography(colors)
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .heightIn(min = AquaLightDashboardGeometry.librarySheetMinimumHeight)
+            .clip(AquaLightDashboardGeometry.librarySheetShape)
+            .background(colors.surface)
             .navigationBarsPadding()
             .padding(
                 start = AquaLightDashboardGeometry.librarySheetHorizontalPadding,
@@ -89,6 +97,7 @@ private fun DeviceLightLibraryContent() {
             ),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        DeviceLightLibraryDragHandle()
         BasicText(
             text = stringResource(R.string.device_light_library_title),
             style = typography.title.copy(
