@@ -27,8 +27,6 @@
     <string name="device_light_hero_content_description">%1$s. %2$s. %3$s. Güç %4$s. Renk sıcaklığı %5$s.</string>
     <string name="device_light_open_library_description">Işık Kitaplığını aç</string>
     <string name="device_light_library_title">Işık Kitaplığı</string>
-    <string name="device_light_library_empty_title">Henüz kayıtlı ışık yok</string>
-    <string name="device_light_library_empty_description">Manuel ve özel modda kaydettiğiniz ışık ayarları burada görünecek.</string>
     <string name="device_light_plan_title">Bugünün ışık planı</string>
     <string name="device_light_plan_subtitle">Planlanan program</string>
     <string name="device_light_plan_view_program">Programı görüntüle</string>
@@ -69,14 +67,8 @@
         <item quantity="one">%1$d gün kaldı</item>
         <item quantity="other">%1$d gün kaldı</item>
     </plurals>
-    <plurals name="device_light_adaptation_summary">
-        <item quantity="one">%1$d gün kaldı · %%%2$d</item>
-        <item quantity="other">%1$d gün kaldı · %%%2$d</item>
-    </plurals>
     <string name="device_light_system_title">Sistem</string>
     <string name="device_light_system_temperature">%1$.1f °C</string>
     <string name="device_light_system_fans_summary">F1 %%%1$d · F2 %%%2$d</string>
     <string name="device_light_system_status_normal">Normal</string>
-    <string name="device_light_system_summary">%1$.1f °C · Fan 1 %%%2$d · Fan 2 %%%3$d</string>
-    <string name="device_light_system_normal_status">Termal ve güç limiti normal</string>
 </resources>
