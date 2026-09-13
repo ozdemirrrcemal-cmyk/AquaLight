@@ -314,10 +314,13 @@ for token, reason in (
     ("data class OwnerLightOperations", "Light application surfaces need one owner-scoped bundle"),
     ("val controlOperations: DeviceLightControlOperations", "the Light bundle must own control"),
     ("val protectionOperations: DeviceLightProtectionOperations", "the Light bundle must own protection"),
+    ("val libraryOperations: DeviceLightLibraryOperations", "the Light bundle must own its library"),
     (
-        "val lightOperations = createOwnerLightOperations(dependencies.devicesRepository)",
+        "val lightOperations = createOwnerLightOperations(",
         "the owner graph must create the Light bundle once",
     ),
+    ("ownerUid = dependencies.ownerUid", "the Light library must remain owner scoped"),
+    ("devicesRepository = dependencies.devicesRepository", "the Light bundle must reuse the owner runtime"),
     ("lightControlOperations = lightOperations.controlOperations", "menu preparation must reuse central Light control"),
 ):
     if token not in owner_graph:
