@@ -358,37 +358,6 @@ private fun TimerTimeChip(
     }
 }
 
-@Composable
-private fun TimerEditorButton(
-    label: String,
-    enabled: Boolean,
-    onClick: () -> Unit,
-    style: TimerCardStyle
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .alpha(if (enabled) 1f else AquaTimerInteractionStyle.disabledContentAlpha)
-            .clip(AquaTimerDashboardGeometry.actionShape)
-            .background(
-                style.colors.accent.copy(alpha = AquaTimerDashboardAlpha.actionBackground)
-            )
-            .border(
-                AquaDeviceCardGeometry.outlineWidth,
-                style.colors.accent,
-                AquaTimerDashboardGeometry.actionShape
-            )
-            .clickable(enabled = enabled, onClick = onClick)
-            .padding(AquaTimerDashboardGeometry.actionPadding),
-        contentAlignment = Alignment.Center
-    ) {
-        BasicText(
-            text = label,
-            style = style.typography.caption.copy(color = style.colors.accent)
-        )
-    }
-}
-
 private data class TimerTimeChipContent(
     val label: String,
     val value: String,
