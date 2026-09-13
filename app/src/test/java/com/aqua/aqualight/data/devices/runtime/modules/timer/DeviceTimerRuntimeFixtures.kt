@@ -1,5 +1,3 @@
-@file:Suppress("MagicNumber")
-
 package com.aqua.aqualight.data.devices.runtime.modules.timer
 
 import org.json.JSONObject
@@ -16,15 +14,15 @@ internal object DeviceTimerRuntimeFixtures {
     }
 
     fun globalStatus(
-        uptimeMs: Long = 20_000L,
-        revision: Long = 7L
+        uptimeMs: Long = TIMER_TEST_DEFAULT_UPTIME_MILLIS,
+        revision: Long = TIMER_TEST_BASE_REVISION
     ): JSONObject = goldenObject("statusGlobal")
         .put("uptimeMs", uptimeMs)
         .put("revision", revision)
 
     fun channelStatus(
-        uptimeMs: Long = 20_000L,
-        revision: Long = 7L
+        uptimeMs: Long = TIMER_TEST_DEFAULT_UPTIME_MILLIS,
+        revision: Long = TIMER_TEST_BASE_REVISION
     ): JSONObject = goldenObject("statusChannel")
         .put("uptimeMs", uptimeMs)
         .put("revision", revision)
@@ -33,19 +31,19 @@ internal object DeviceTimerRuntimeFixtures {
         changed: Boolean = true,
         saved: Boolean = true,
         saveRequested: Boolean = true,
-        revision: Long = 8L
+        revision: Long = TIMER_TEST_APPLIED_REVISION
     ): JSONObject = goldenObject("configApply")
         .put("changed", changed)
         .put("saved", saved)
         .put("saveRequested", saveRequested)
         .put("revision", revision)
 
-    fun channelSet(revision: Long = 8L): JSONObject =
+    fun channelSet(revision: Long = TIMER_TEST_APPLIED_REVISION): JSONObject =
         goldenObject("channelSet").put("revision", revision)
 
     fun statusChanged(
-        sequence: Long = 12L,
-        revision: Long = 8L,
+        sequence: Long = TIMER_TEST_EVENT_SEQUENCE,
+        revision: Long = TIMER_TEST_APPLIED_REVISION,
         channelKey: String = "channel1"
     ): JSONObject = goldenObject("statusChanged")
         .put("channelKey", channelKey)
@@ -55,8 +53,8 @@ internal object DeviceTimerRuntimeFixtures {
     fun schedulePayload(
         slotId: Int = 1,
         name: String = "Day Filter",
-        startTimeMs: Long = timerScheduleBoundaryMillis(12, 0),
-        endTimeMs: Long = timerScheduleBoundaryMillis(18, 0),
+        startTimeMs: Long = timerScheduleBoundaryMillis(TIMER_TEST_START_HOUR, 0),
+        endTimeMs: Long = timerScheduleBoundaryMillis(TIMER_TEST_END_HOUR, 0),
         weekdays: List<Boolean> = WEEKDAYS
     ): DeviceTimerScheduleConfig = DeviceTimerScheduleConfig(
         slotId = slotId,

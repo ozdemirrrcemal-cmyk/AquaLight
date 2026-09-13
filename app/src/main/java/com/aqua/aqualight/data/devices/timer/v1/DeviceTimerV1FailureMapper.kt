@@ -1,6 +1,6 @@
 package com.aqua.aqualight.data.devices.timer.v1
 
-import com.aqua.aqualight.application.devices.timer.DeviceTimerCommandFailure
+import com.aqua.aqualight.application.devices.timer.control.DeviceTimerCommandFailure
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerRuntimeContract
 

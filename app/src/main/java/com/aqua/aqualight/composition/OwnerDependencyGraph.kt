@@ -16,7 +16,7 @@ import com.aqua.aqualight.application.devices.light.protection.DeviceLightProtec
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftRequest
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftSession
-import com.aqua.aqualight.application.devices.timer.DeviceTimerControlOperations
+import com.aqua.aqualight.application.devices.timer.control.DeviceTimerControlOperations
 import com.aqua.aqualight.application.notifications.NotificationDispatchUseCase
 import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
 import com.aqua.aqualight.application.user.UserDataArchiveOperations
@@ -43,7 +43,7 @@ import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningQrSecre
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import com.aqua.aqualight.data.devices.runtime.modules.firmware.SharedPreferencesDeviceOtaTransactionStore
-import com.aqua.aqualight.data.devices.timer.DefaultDeviceTimerControlOperations
+import com.aqua.aqualight.data.devices.timer.control.DefaultDeviceTimerControlOperations
 import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.data.user.archive.DefaultUserDataArchiveOperations

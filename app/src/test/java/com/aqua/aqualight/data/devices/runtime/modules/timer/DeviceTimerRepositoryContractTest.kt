@@ -1,5 +1,3 @@
-@file:Suppress("MagicNumber")
-
 package com.aqua.aqualight.data.devices.runtime.modules.timer
 
 import com.aqua.aqualight.data.devices.model.DeviceUid
@@ -31,14 +29,14 @@ class DeviceTimerRepositoryContractTest {
         val replace = repository.replaceSchedules(
             deviceUid = DEVICE_UID,
             channelKey = "channel1",
-            expectedRevision = 7L,
+            expectedRevision = TIMER_TEST_BASE_REVISION,
             schedules = listOf(DeviceTimerRuntimeFixtures.schedulePayload())
         )
         val temporary = repository.setTemporaryOverride(
             deviceUid = DEVICE_UID,
             channelKey = "channel1",
             regime = DeviceTimerRegime.OFF,
-            durationMs = 300_000L
+            durationMs = TIMER_TEST_OVERRIDE_DURATION_MILLIS
         )
 
         assertSuccessful(status, replace, temporary)
@@ -51,19 +49,22 @@ class DeviceTimerRepositoryContractTest {
             setOf("channelKey", "expectedRevision", "schedules", "save"),
             gateway.encoded[1].keySetExact()
         )
-        assertEquals(7L, gateway.encoded[1].getLong("expectedRevision"))
+        assertEquals(TIMER_TEST_BASE_REVISION, gateway.encoded[1].getLong("expectedRevision"))
         assertFalse(gateway.encoded[1].getJSONArray("schedules").getJSONObject(0)
             .has("channelKey"))
         assertEquals(setOf("channelKey"), gateway.encoded[2].keySetExact())
         assertEquals(
             setOf("channelKey", "expectedRevision", "regime", "durationMs", "save"),
-            gateway.encoded[3].keySetExact()
+            gateway.encoded.last().keySetExact()
         )
-        assertEquals(8L, gateway.encoded[3].getLong("expectedRevision"))
-        assertFalse(gateway.encoded[3].getBoolean("save"))
+        assertEquals(
+            TIMER_TEST_APPLIED_REVISION,
+            gateway.encoded.last().getLong("expectedRevision")
+        )
+        assertFalse(gateway.encoded.last().getBoolean("save"))
 
         val state = repository.states.value.getValue(DEVICE_UID)
-        assertEquals(8L, state.status?.revision)
+        assertEquals(TIMER_TEST_APPLIED_REVISION, state.status?.revision)
         assertFalse(requireNotNull(state.status).channelScoped)
         assertEquals("Day Filter", state.channelDetails.getValue("channel1").schedules.single().name)
         assertFalse(state.requiresStatusRefresh)
@@ -82,7 +83,7 @@ class DeviceTimerRepositoryContractTest {
         val result = repository.replaceSchedules(
             deviceUid = DEVICE_UID,
             channelKey = "channel1",
-            expectedRevision = 7L,
+            expectedRevision = TIMER_TEST_BASE_REVISION,
             schedules = listOf(DeviceTimerRuntimeFixtures.schedulePayload())
         )
 
@@ -91,10 +92,10 @@ class DeviceTimerRepositoryContractTest {
             listOf("status.get", "config.apply", "status.get", "status.get"),
             gateway.actions
         )
-        assertEquals(7L, gateway.encoded[1].getLong("expectedRevision"))
+        assertEquals(TIMER_TEST_BASE_REVISION, gateway.encoded[1].getLong("expectedRevision"))
         val state = requireNotNull(repository.currentAuthoritativeState(DEVICE_UID))
-        assertEquals(9L, state.status?.revision)
-        assertEquals(9L, state.channelDetails["channel1"]?.revision)
+        assertEquals(TIMER_TEST_RECOVERY_REVISION, state.status?.revision)
+        assertEquals(TIMER_TEST_RECOVERY_REVISION, state.channelDetails["channel1"]?.revision)
     }
 
     @Test
@@ -128,7 +129,7 @@ class DeviceTimerRepositoryContractTest {
     private class FixtureGateway : DeviceRuntimeCommandGateway {
         val actions = mutableListOf<String>()
         val encoded = mutableListOf<JSONObject>()
-        private var revision = 7L
+        private var revision = TIMER_TEST_BASE_REVISION
         private var temporaryOverride = false
 
         override suspend fun <T> execute(
@@ -153,7 +154,7 @@ class DeviceTimerRepositoryContractTest {
                     action = command.action,
                     data = response,
                     ok = true,
-                    statusCode = 200
+                    statusCode = TIMER_TEST_HTTP_OK
                 )
             )
             return DeviceRuntimeCommandOutcome.Success(
@@ -162,7 +163,7 @@ class DeviceTimerRepositoryContractTest {
                 action = command.action,
                 messageId = "res-" + command.action,
                 generation = GENERATION,
-                statusCode = 200,
+                statusCode = TIMER_TEST_HTTP_OK,
                 value = value
             )
         }
@@ -175,7 +176,10 @@ class DeviceTimerRepositoryContractTest {
                             .put("operatingState", "OFF")
                             .put("runtimeReason", "temporaryOverrideOff")
                             .put("temporaryOverrideActive", true)
-                            .put("temporaryOverrideRemainingMs", 299_900L)
+                            .put(
+                                "temporaryOverrideRemainingMs",
+                                TIMER_TEST_OVERRIDE_REMAINING_MILLIS
+                            )
                     }
                 }
             } else {
@@ -206,7 +210,7 @@ class DeviceTimerRepositoryContractTest {
     private class ConflictGateway : DeviceRuntimeCommandGateway {
         val actions = mutableListOf<String>()
         val encoded = mutableListOf<JSONObject>()
-        private var revision = 8L
+        private var revision = TIMER_TEST_APPLIED_REVISION
 
         override suspend fun <T> execute(
             deviceUid: DeviceUid,
@@ -217,14 +221,14 @@ class DeviceTimerRepositoryContractTest {
             val request = command.encodeData()
             encoded += JSONObject(request.toString())
             if (command.action == DeviceTimerRuntimeContract.Action.CONFIG_APPLY) {
-                revision = 9L
+                revision = TIMER_TEST_RECOVERY_REVISION
                 return DeviceRuntimeCommandOutcome.FirmwareError(
                     deviceUid = deviceUid,
                     module = command.module,
                     action = command.action,
                     messageId = "res-conflict",
                     generation = GENERATION,
-                    statusCode = 409,
+                    statusCode = TIMER_TEST_CONFLICT_STATUS,
                     code = DeviceTimerRuntimeContract.Error.CONFLICT,
                     field = DeviceTimerRuntimeContract.Field.EXPECTED_REVISION,
                     message = "Command rejected."
@@ -241,7 +245,7 @@ class DeviceTimerRepositoryContractTest {
                 action = command.action,
                 messageId = "res-status",
                 generation = GENERATION,
-                statusCode = 200,
+                statusCode = TIMER_TEST_HTTP_OK,
                 value = command.parseSuccess(
                     AqlWsIncomingMessage.Response(
                         id = "res-status",
@@ -250,7 +254,7 @@ class DeviceTimerRepositoryContractTest {
                         action = command.action,
                         data = response,
                         ok = true,
-                        statusCode = 200
+                        statusCode = TIMER_TEST_HTTP_OK
                     )
                 )
             )
@@ -265,7 +269,7 @@ class DeviceTimerRepositoryContractTest {
         val GENERATION = DeviceRuntimeConnectionGeneration(1L)
         val SUPPORTED_ACCESS = DeviceTimerRuntimeAccess(
             supportsApi = true,
-            channelCount = 2,
+            channelCount = TIMER_TEST_CHANNEL_COUNT,
             supportsSchedules = true,
             supportsChannelState = true,
             supportsChannelDisplayName = true

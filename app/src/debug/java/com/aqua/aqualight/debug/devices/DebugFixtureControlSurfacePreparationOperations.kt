@@ -10,10 +10,10 @@ import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.light.control.DeviceLightControlOperations
 import com.aqua.aqualight.application.devices.light.control.DeviceLightControlResult
 import com.aqua.aqualight.application.devices.light.control.matchesLightControlSurface
-import com.aqua.aqualight.application.devices.timer.DeviceTimerControlOperations
-import com.aqua.aqualight.application.devices.timer.DeviceTimerControlResult
-import com.aqua.aqualight.application.devices.timer.DeviceTimerControlSnapshot
-import com.aqua.aqualight.data.devices.timer.matchesTimerCatalog
+import com.aqua.aqualight.application.devices.timer.control.DeviceTimerControlOperations
+import com.aqua.aqualight.application.devices.timer.control.DeviceTimerControlResult
+import com.aqua.aqualight.application.devices.timer.control.DeviceTimerControlSnapshot
+import com.aqua.aqualight.data.devices.timer.control.matchesTimerCatalog
 import java.util.concurrent.ConcurrentHashMap
 
 /** Fixture-aware preparation decorator that keeps production preparation intact for real UIDs. */

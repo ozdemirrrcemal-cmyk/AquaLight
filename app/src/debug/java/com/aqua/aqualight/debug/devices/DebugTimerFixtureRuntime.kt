@@ -2,16 +2,24 @@ package com.aqua.aqualight.debug.devices
 
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
-import com.aqua.aqualight.application.devices.timer.DeviceTimerChannelRegime
-import com.aqua.aqualight.application.devices.timer.DeviceTimerChannelSnapshot
-import com.aqua.aqualight.application.devices.timer.DeviceTimerControlCapabilities
-import com.aqua.aqualight.application.devices.timer.DeviceTimerControlSnapshot
-import com.aqua.aqualight.application.devices.timer.DeviceTimerNextTransitionType
-import com.aqua.aqualight.application.devices.timer.DeviceTimerOperatingState
-import com.aqua.aqualight.application.devices.timer.DeviceTimerOutputHealth
-import com.aqua.aqualight.application.devices.timer.DeviceTimerRuntimeReason
-import com.aqua.aqualight.application.devices.timer.DeviceTimerScheduleDraft
-import com.aqua.aqualight.application.devices.timer.DeviceTimerScheduleSnapshot
+import com.aqua.aqualight.application.devices.timer.control.DeviceTimerChannelRegime
+import com.aqua.aqualight.application.devices.timer.control.DeviceTimerChannelIdentity
+import com.aqua.aqualight.application.devices.timer.control.DeviceTimerChannelRuntime
+import com.aqua.aqualight.application.devices.timer.control.DeviceTimerChannelSnapshot
+import com.aqua.aqualight.application.devices.timer.control.DeviceTimerChannelState
+import com.aqua.aqualight.application.devices.timer.control.DeviceTimerChannelTransition
+import com.aqua.aqualight.application.devices.timer.control.DeviceTimerControlAuthority
+import com.aqua.aqualight.application.devices.timer.control.DeviceTimerControlCapabilities
+import com.aqua.aqualight.application.devices.timer.control.DeviceTimerControlSnapshot
+import com.aqua.aqualight.application.devices.timer.control.DeviceTimerMutationCapabilities
+import com.aqua.aqualight.application.devices.timer.control.DeviceTimerNextTransitionType
+import com.aqua.aqualight.application.devices.timer.control.DeviceTimerOperatingState
+import com.aqua.aqualight.application.devices.timer.control.DeviceTimerOutputHealth
+import com.aqua.aqualight.application.devices.timer.control.DeviceTimerRuntimeReason
+import com.aqua.aqualight.application.devices.timer.control.DeviceTimerScheduleDraft
+import com.aqua.aqualight.application.devices.timer.control.DeviceTimerScheduleIdentity
+import com.aqua.aqualight.application.devices.timer.control.DeviceTimerScheduleSnapshot
+import com.aqua.aqualight.application.devices.timer.control.DeviceTimerScheduleWindow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -59,12 +67,14 @@ internal class DebugTimerFixtureRuntime(
             current
         } else {
             current.copy(
-                revision = if (persistentChange) {
-                    current.revision.nextFixtureRevision()
-                } else {
-                    current.revision
-                },
-                uptimeMillis = current.uptimeMillis + FIXTURE_COMMAND_UPTIME_MILLIS,
+                authority = current.authority.copy(
+                    revision = if (persistentChange) {
+                        current.revision.nextFixtureRevision()
+                    } else {
+                        current.revision
+                    },
+                    uptimeMillis = current.uptimeMillis + FIXTURE_COMMAND_UPTIME_MILLIS
+                ),
                 channels = current.channels.toMutableList().apply {
                     this[channelIndex] = updatedChannel
                 }
@@ -81,26 +91,22 @@ internal fun DeviceTimerChannelSnapshot.withFixtureRegime(
 ): DeviceTimerChannelSnapshot = when (regime) {
     DeviceTimerChannelRegime.AUTO -> toFixtureAutomaticState(nowMillis)
     DeviceTimerChannelRegime.ON -> copy(
-        regime = regime,
-        operatingState = DeviceTimerOperatingState.ON,
-        activeScheduleSlotId = null,
-        activeScheduleName = null,
-        nextTransitionType = DeviceTimerNextTransitionType.NONE,
-        nextTransitionAtEpochMillis = null,
-        runtimeReason = DeviceTimerRuntimeReason.MANUAL_ON,
-        temporaryOverrideActive = false,
-        temporaryOverrideRemainingMillis = 0L
+        state = state.copy(regime = regime, operatingState = DeviceTimerOperatingState.ON),
+        transition = transition.cleared(),
+        runtime = runtime.copy(
+            reason = DeviceTimerRuntimeReason.MANUAL_ON,
+            temporaryOverrideActive = false,
+            temporaryOverrideRemainingMillis = 0L
+        )
     )
     DeviceTimerChannelRegime.OFF -> copy(
-        regime = regime,
-        operatingState = DeviceTimerOperatingState.OFF,
-        activeScheduleSlotId = null,
-        activeScheduleName = null,
-        nextTransitionType = DeviceTimerNextTransitionType.NONE,
-        nextTransitionAtEpochMillis = null,
-        runtimeReason = DeviceTimerRuntimeReason.MANUAL_OFF,
-        temporaryOverrideActive = false,
-        temporaryOverrideRemainingMillis = 0L
+        state = state.copy(regime = regime, operatingState = DeviceTimerOperatingState.OFF),
+        transition = transition.cleared(),
+        runtime = runtime.copy(
+            reason = DeviceTimerRuntimeReason.MANUAL_OFF,
+            temporaryOverrideActive = false,
+            temporaryOverrideRemainingMillis = 0L
+        )
     )
 }
 
@@ -108,27 +114,35 @@ internal fun DeviceTimerChannelSnapshot.withFixtureTemporaryOverride(
     regime: DeviceTimerChannelRegime,
     durationMillis: Long
 ): DeviceTimerChannelSnapshot = copy(
-    operatingState = if (regime == DeviceTimerChannelRegime.ON) {
-        DeviceTimerOperatingState.ON
-    } else {
-        DeviceTimerOperatingState.OFF
-    },
+    state = state.copy(
+        operatingState = if (regime == DeviceTimerChannelRegime.ON) {
+            DeviceTimerOperatingState.ON
+        } else {
+            DeviceTimerOperatingState.OFF
+        }
+    ),
+    transition = transition.cleared(),
+    runtime = runtime.copy(
+        reason = if (regime == DeviceTimerChannelRegime.ON) {
+            DeviceTimerRuntimeReason.TEMPORARY_OVERRIDE_ON
+        } else {
+            DeviceTimerRuntimeReason.TEMPORARY_OVERRIDE_OFF
+        },
+        temporaryOverrideActive = true,
+        temporaryOverrideRemainingMillis = durationMillis
+    )
+)
+
+private fun DeviceTimerChannelTransition.cleared() = copy(
     activeScheduleSlotId = null,
     activeScheduleName = null,
     nextTransitionType = DeviceTimerNextTransitionType.NONE,
-    nextTransitionAtEpochMillis = null,
-    runtimeReason = if (regime == DeviceTimerChannelRegime.ON) {
-        DeviceTimerRuntimeReason.TEMPORARY_OVERRIDE_ON
-    } else {
-        DeviceTimerRuntimeReason.TEMPORARY_OVERRIDE_OFF
-    },
-    temporaryOverrideActive = true,
-    temporaryOverrideRemainingMillis = durationMillis
+    nextTransitionAtEpochMillis = null
 )
 
 internal fun DeviceTimerChannelSnapshot.withFixtureDisplayName(
     displayName: String
-): DeviceTimerChannelSnapshot = copy(displayName = displayName)
+): DeviceTimerChannelSnapshot = copy(identity = identity.copy(displayName = displayName))
 
 internal fun DeviceTimerChannelSnapshot.withFixtureSchedules(
     drafts: List<DeviceTimerScheduleDraft>,
@@ -136,10 +150,12 @@ internal fun DeviceTimerChannelSnapshot.withFixtureSchedules(
 ): DeviceTimerChannelSnapshot {
     val replacement = drafts.mapIndexed { index, draft -> draft.toFixtureSchedule(index) }
     val updated = copy(
-        scheduleCount = replacement.size,
+        state = state.copy(scheduleCount = replacement.size),
         schedules = replacement,
-        activeScheduleSlotId = null,
-        activeScheduleName = null
+        transition = transition.copy(
+            activeScheduleSlotId = null,
+            activeScheduleName = null
+        )
     )
     return if (regime == DeviceTimerChannelRegime.AUTO) {
         updated.toFixtureAutomaticState(nowMillis)
@@ -151,42 +167,54 @@ internal fun DeviceTimerChannelSnapshot.withFixtureSchedules(
 private fun DeviceRootSnapshot.toFixtureTimerControl(nowMillis: Long) =
     DeviceTimerControlSnapshot(
         deviceUid = deviceUid,
-        revision = FIXTURE_INITIAL_REVISION,
-        lockLoop = false,
-        uptimeMillis = FIXTURE_INITIAL_UPTIME_MILLIS,
-        maxSchedulesPerChannel = FIXTURE_MAX_SCHEDULES_PER_CHANNEL,
+        authority = DeviceTimerControlAuthority(
+            revision = FIXTURE_INITIAL_REVISION,
+            lockLoop = false,
+            uptimeMillis = FIXTURE_INITIAL_UPTIME_MILLIS,
+            maxSchedulesPerChannel = FIXTURE_MAX_SCHEDULES_PER_CHANNEL
+        ),
         capabilities = DeviceTimerControlCapabilities(
             readOnly = false,
-            supportsConfigApply = true,
-            supportsChannelState = true,
-            supportsSchedules = true,
-            supportsSpansMidnight = true,
-            supportsTemporaryOverride = true,
-            supportsChannelDisplayName = channelSlots.timerChannels.any { slot ->
-                slot.displayNameEditable
-            }
+            mutations = DeviceTimerMutationCapabilities(
+                supportsConfigApply = true,
+                supportsChannelState = true,
+                supportsSchedules = true,
+                supportsSpansMidnight = true,
+                supportsTemporaryOverride = true,
+                supportsChannelDisplayName = channelSlots.timerChannels.any { slot ->
+                    slot.displayNameEditable
+                }
+            )
         ),
         channels = channelSlots.timerChannels.map { slot ->
             val schedule = slot.index.zeroBased.toFixtureSchedule()
             DeviceTimerChannelSnapshot(
-                slotId = slot.id.value,
-                channelNumber = slot.index.position,
-                defaultName = slot.defaultDisplayName,
-                displayName = slot.defaultDisplayName,
-                regime = DeviceTimerChannelRegime.AUTO,
-                operatingState = DeviceTimerOperatingState.OFF,
-                scheduleCount = 1,
-                activeScheduleSlotId = null,
-                activeScheduleName = null,
-                nextTransitionType = DeviceTimerNextTransitionType.NONE,
-                nextTransitionAtEpochMillis = null,
-                runtimeReason = DeviceTimerRuntimeReason.NOT_EVALUATED,
-                clockReady = true,
-                temporaryOverrideActive = false,
-                temporaryOverrideRemainingMillis = 0L,
-                outputHealth = DeviceTimerOutputHealth.UNVERIFIED,
-                physicalFeedbackAvailable = false,
-                displayNameEditable = slot.displayNameEditable,
+                identity = DeviceTimerChannelIdentity(
+                    slotId = slot.id.value,
+                    channelNumber = slot.index.position,
+                    defaultName = slot.defaultDisplayName,
+                    displayName = slot.defaultDisplayName,
+                    displayNameEditable = slot.displayNameEditable
+                ),
+                state = DeviceTimerChannelState(
+                    regime = DeviceTimerChannelRegime.AUTO,
+                    operatingState = DeviceTimerOperatingState.OFF,
+                    scheduleCount = 1,
+                    outputHealth = DeviceTimerOutputHealth.UNVERIFIED
+                ),
+                transition = DeviceTimerChannelTransition(
+                    activeScheduleSlotId = null,
+                    activeScheduleName = null,
+                    nextTransitionType = DeviceTimerNextTransitionType.NONE,
+                    nextTransitionAtEpochMillis = null
+                ),
+                runtime = DeviceTimerChannelRuntime(
+                    reason = DeviceTimerRuntimeReason.NOT_EVALUATED,
+                    clockReady = true,
+                    temporaryOverrideActive = false,
+                    temporaryOverrideRemainingMillis = 0L,
+                    physicalFeedbackAvailable = false
+                ),
                 schedules = listOf(schedule)
             ).toFixtureAutomaticState(nowMillis)
         }
@@ -198,31 +226,37 @@ private fun DeviceTimerChannelSnapshot.toFixtureAutomaticState(
     val enabledSchedule = schedules.orEmpty().firstOrNull { schedule -> schedule.enabled }
     val outputOn = enabledSchedule != null && channelNumber % FIXTURE_OUTPUT_PATTERN_DIVISOR != 0
     return copy(
-        regime = DeviceTimerChannelRegime.AUTO,
-        operatingState = if (outputOn) {
-            DeviceTimerOperatingState.ON
-        } else {
-            DeviceTimerOperatingState.OFF
-        },
-        activeScheduleSlotId = enabledSchedule?.slotId?.takeIf { outputOn },
-        activeScheduleName = enabledSchedule?.name?.takeIf { outputOn },
-        nextTransitionType = if (enabledSchedule == null) {
-            DeviceTimerNextTransitionType.NONE
-        } else if (outputOn) {
-            DeviceTimerNextTransitionType.OFF
-        } else {
-            DeviceTimerNextTransitionType.ON
-        },
-        nextTransitionAtEpochMillis = enabledSchedule?.let {
-            nowMillis + channelNumber * MILLIS_PER_HOUR
-        },
-        runtimeReason = when {
-            enabledSchedule == null -> DeviceTimerRuntimeReason.NO_ENABLED_SCHEDULES
-            outputOn -> DeviceTimerRuntimeReason.SCHEDULE_ACTIVE
-            else -> DeviceTimerRuntimeReason.OUTSIDE_SCHEDULE
-        },
-        temporaryOverrideActive = false,
-        temporaryOverrideRemainingMillis = 0L
+        state = state.copy(
+            regime = DeviceTimerChannelRegime.AUTO,
+            operatingState = if (outputOn) {
+                DeviceTimerOperatingState.ON
+            } else {
+                DeviceTimerOperatingState.OFF
+            }
+        ),
+        transition = transition.copy(
+            activeScheduleSlotId = enabledSchedule?.slotId?.takeIf { outputOn },
+            activeScheduleName = enabledSchedule?.name?.takeIf { outputOn },
+            nextTransitionType = if (enabledSchedule == null) {
+                DeviceTimerNextTransitionType.NONE
+            } else if (outputOn) {
+                DeviceTimerNextTransitionType.OFF
+            } else {
+                DeviceTimerNextTransitionType.ON
+            },
+            nextTransitionAtEpochMillis = enabledSchedule?.let {
+                nowMillis + channelNumber * MILLIS_PER_HOUR
+            }
+        ),
+        runtime = runtime.copy(
+            reason = when {
+                enabledSchedule == null -> DeviceTimerRuntimeReason.NO_ENABLED_SCHEDULES
+                outputOn -> DeviceTimerRuntimeReason.SCHEDULE_ACTIVE
+                else -> DeviceTimerRuntimeReason.OUTSIDE_SCHEDULE
+            },
+            temporaryOverrideActive = false,
+            temporaryOverrideRemainingMillis = 0L
+        )
     )
 }
 
@@ -230,27 +264,35 @@ private fun Int.toFixtureSchedule(): DeviceTimerScheduleSnapshot {
     val position = this + 1
     val start = (FIXTURE_SCHEDULE_START_HOUR + position) * MILLIS_PER_HOUR
     return DeviceTimerScheduleSnapshot(
-        index = this,
-        slotId = FIXTURE_SCHEDULE_SLOT_BASE + position,
-        enabled = true,
-        name = "Program $position",
-        weekdays = List(FIXTURE_WEEKDAY_COUNT) { true },
-        startTimeMillis = start,
-        endTimeMillis = start + FIXTURE_SCHEDULE_DURATION_HOURS * MILLIS_PER_HOUR,
-        spansMidnight = false
+        identity = DeviceTimerScheduleIdentity(
+            index = this,
+            slotId = FIXTURE_SCHEDULE_SLOT_BASE + position,
+            enabled = true,
+            name = "Program $position"
+        ),
+        window = DeviceTimerScheduleWindow(
+            weekdays = List(FIXTURE_WEEKDAY_COUNT) { true },
+            startTimeMillis = start,
+            endTimeMillis = start + FIXTURE_SCHEDULE_DURATION_HOURS * MILLIS_PER_HOUR,
+            spansMidnight = false
+        )
     )
 }
 
 private fun DeviceTimerScheduleDraft.toFixtureSchedule(index: Int) =
     DeviceTimerScheduleSnapshot(
-        index = index,
-        slotId = slotId,
-        enabled = enabled,
-        name = name,
-        weekdays = weekdays,
-        startTimeMillis = startTimeMillis,
-        endTimeMillis = endTimeMillis,
-        spansMidnight = spansMidnight
+        identity = DeviceTimerScheduleIdentity(
+            index = index,
+            slotId = slotId,
+            enabled = enabled,
+            name = name
+        ),
+        window = DeviceTimerScheduleWindow(
+            weekdays = weekdays,
+            startTimeMillis = startTimeMillis,
+            endTimeMillis = endTimeMillis,
+            spansMidnight = spansMidnight
+        )
     )
 
 private fun Long.nextFixtureRevision(): Long = if (this == UInt.MAX_VALUE.toLong()) 0L else this + 1L

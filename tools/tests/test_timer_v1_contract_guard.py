@@ -36,6 +36,13 @@ class TimerV1ContractGuardTest(unittest.TestCase):
 
         self.assertEqual("541b2194001fed7abecdd61106d02c8c8a197c2f", blob)
 
+    def test_timer_scope_has_no_suppression_or_baseline_escape_hatch(self) -> None:
+        guard = (ROOT / "tools/timer_v1_contract_guard.py").read_text(encoding="utf-8")
+
+        self.assertIn("verify_zero_timer_suppression_debt()", guard)
+        self.assertIn("DETEKT_DEBT_BASELINE_PATH", guard)
+        self.assertIn("LINT_BASELINE_PATH", guard)
+
 
 if __name__ == "__main__":
     unittest.main()

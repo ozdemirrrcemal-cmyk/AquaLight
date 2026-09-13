@@ -28,7 +28,8 @@ ROOT_VIEW_MODELS = (
     / "ui/tabs/devices/detail/light/presentation/root/DeviceLightRootViewModel.kt",
     SOURCE
     / "ui/tabs/devices/detail/cooling/presentation/root/DeviceCoolingRootViewModel.kt",
-    SOURCE / "ui/tabs/devices/detail/timer/DeviceTimerRootViewModel.kt",
+    SOURCE
+    / "ui/tabs/devices/detail/timer/presentation/root/DeviceTimerRootViewModel.kt",
     SOURCE / "ui/tabs/devices/detail/dosing/root/DeviceDosingRootViewModel.kt",
 )
 

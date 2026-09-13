@@ -37,9 +37,9 @@ import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewMo
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.DeviceCoolingRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.PreparedCoolingSurfaceOperations
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root.DeviceLightRootViewModel
-import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
-import com.aqua.aqualight.ui.tabs.devices.detail.timer.PreparedTimerSurfaceOperations
-import com.aqua.aqualight.ui.tabs.devices.detail.timer.UnavailableTimerControlOperations
+import com.aqua.aqualight.ui.tabs.devices.detail.timer.presentation.root.DeviceTimerRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.timer.presentation.support.PreparedTimerSurfaceOperations
+import com.aqua.aqualight.ui.tabs.devices.detail.timer.presentation.support.UnavailableTimerControlOperations
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow

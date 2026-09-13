@@ -27,58 +27,42 @@ internal data class DeviceTimerRuntimeAccess(
 
         fun from(metadata: DeviceRuntimeMetadata?): DeviceTimerRuntimeAccess = metadata?.let {
             resolve(
-                family = it.identity.family,
-                capabilities = it.capabilities.capabilities,
-                limits = it.capabilities.limits,
-                features = it.capabilities.supportedFeatures,
-                screens = it.capabilities.supportedScreens,
-                modules = it.modules
+                DeviceTimerRuntimeDescriptor(
+                    family = it.identity.family,
+                    capabilities = it.capabilities.capabilities,
+                    limits = it.capabilities.limits,
+                    features = it.capabilities.supportedFeatures,
+                    screens = it.capabilities.supportedScreens,
+                    modules = it.modules
+                )
             )
         } ?: UNAVAILABLE
 
-        @Suppress("LongParameterList")
-        fun resolve(
-            family: DeviceFamily,
-            capabilities: DeviceCapabilitySet,
-            limits: DeviceLimitSet,
-            features: Set<AqlDeviceFeatureKey>,
-            screens: Set<AqlDeviceScreenKey>,
-            modules: DeviceRuntimeModules
-        ): DeviceTimerRuntimeAccess {
-            val supportsApi = supportsStandaloneTimerApi(
-                family,
-                capabilities,
-                limits,
-                features,
-                screens,
-                modules
-            )
+        fun resolve(descriptor: DeviceTimerRuntimeDescriptor): DeviceTimerRuntimeAccess {
+            val supportsApi = supportsStandaloneTimerApi(descriptor)
 
             return DeviceTimerRuntimeAccess(
                 supportsApi = supportsApi,
-                channelCount = if (supportsApi) limits.timerChannelCount else 0,
+                channelCount = if (supportsApi) descriptor.limits.timerChannelCount else 0,
                 supportsSchedules = supportsApi &&
-                    AqlDeviceScreenKey.TIMER_SCHEDULES in screens,
+                    AqlDeviceScreenKey.TIMER_SCHEDULES in descriptor.screens,
                 supportsChannelState = supportsApi &&
-                    AqlDeviceFeatureKey.TIMER_MANUAL_RUN in features &&
-                    AqlDeviceScreenKey.TIMER_MANUAL_RUN in screens,
+                    AqlDeviceFeatureKey.TIMER_MANUAL_RUN in descriptor.features &&
+                    AqlDeviceScreenKey.TIMER_MANUAL_RUN in descriptor.screens,
                 supportsChannelDisplayName = supportsApi &&
-                    AqlDeviceFeatureKey.TIMER_CHANNEL_DISPLAY_NAME in features &&
-                    AqlDeviceScreenKey.TIMER_CHANNELS in screens
+                    AqlDeviceFeatureKey.TIMER_CHANNEL_DISPLAY_NAME in descriptor.features &&
+                    AqlDeviceScreenKey.TIMER_CHANNELS in descriptor.screens
             )
         }
 
-        @Suppress("LongParameterList")
         private fun supportsStandaloneTimerApi(
-            family: DeviceFamily,
-            capabilities: DeviceCapabilitySet,
-            limits: DeviceLimitSet,
-            features: Set<AqlDeviceFeatureKey>,
-            screens: Set<AqlDeviceScreenKey>,
-            modules: DeviceRuntimeModules
-        ): Boolean = isStandaloneTimerProduct(family, capabilities, limits) &&
-            hasStandaloneTimerModules(modules) &&
-            exposesTimerSurface(features, screens)
+            descriptor: DeviceTimerRuntimeDescriptor
+        ): Boolean = isStandaloneTimerProduct(
+            descriptor.family,
+            descriptor.capabilities,
+            descriptor.limits
+        ) && hasStandaloneTimerModules(descriptor.modules) &&
+            exposesTimerSurface(descriptor.features, descriptor.screens)
 
         private fun isStandaloneTimerProduct(
             family: DeviceFamily,
@@ -103,3 +87,12 @@ internal data class DeviceTimerRuntimeAccess(
             AqlDeviceScreenKey.TIMER_CONTROL in screens
     }
 }
+
+internal data class DeviceTimerRuntimeDescriptor(
+    val family: DeviceFamily,
+    val capabilities: DeviceCapabilitySet,
+    val limits: DeviceLimitSet,
+    val features: Set<AqlDeviceFeatureKey>,
+    val screens: Set<AqlDeviceScreenKey>,
+    val modules: DeviceRuntimeModules
+)

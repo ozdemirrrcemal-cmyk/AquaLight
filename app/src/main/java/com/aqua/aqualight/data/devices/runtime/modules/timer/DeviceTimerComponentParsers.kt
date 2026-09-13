@@ -54,31 +54,33 @@ internal object DeviceTimerRuntimeCapabilitiesParser {
     fun parse(data: JSONObject): DeviceTimerRuntimeCapabilities {
         data.requireTimerKeys(KEYS, "Timer runtime capabilities")
         return DeviceTimerRuntimeCapabilities(
-            module = data.requireTimerText("module"),
-            readOnly = data.requireTimerBoolean("readOnly"),
-            supportsConfigApply = data.requireTimerBoolean("supportsConfigApply"),
-            supportsChannelSet = data.requireTimerBoolean("supportsChannelSet"),
-            supportsSchedules = data.requireTimerBoolean("supportsSchedules"),
-            supportsChannels = data.requireTimerBoolean("supportsChannels"),
-            supportsSpansMidnight = data.requireTimerBoolean("supportsSpansMidnight"),
-            supportsTemporaryOverride = data.requireTimerBoolean("supportsTemporaryOverride"),
-            supportsChannelScopedStatus = data.requireTimerBoolean(
-                "supportsChannelScopedStatus"
+            identity = DeviceTimerRuntimeIdentity(
+                module = data.requireTimerText("module"),
+                configApplyScope = data.requireTimerText("configApplyScope"),
+                event = data.requireTimerText("event")
             ),
-            supportsChannelScopedConfigApply = data.requireTimerBoolean(
-                "supportsChannelScopedConfigApply"
+            readSupport = DeviceTimerRuntimeReadSupport(
+                readOnly = data.requireTimerBoolean("readOnly"),
+                supportsChannels = data.requireTimerBoolean("supportsChannels"),
+                supportsChannelScopedStatus = data.requireTimerBoolean(
+                    "supportsChannelScopedStatus"
+                )
             ),
-            configApplyScope = data.requireTimerText("configApplyScope"),
-            event = data.requireTimerText("event"),
-            internalHeapMinimumFreeBytes = data.requireTimerLong(
-                "internalHeapMinimumFreeBytes",
-                TIMER_NON_NEGATIVE_LONG,
-                DeviceTimerRuntimeContract.Limit.UINT32_MAX
+            mutationSupport = DeviceTimerRuntimeMutationSupport(
+                supportsConfigApply = data.requireTimerBoolean("supportsConfigApply"),
+                supportsChannelSet = data.requireTimerBoolean("supportsChannelSet"),
+                supportsSchedules = data.requireTimerBoolean("supportsSchedules"),
+                supportsSpansMidnight = data.requireTimerBoolean("supportsSpansMidnight"),
+                supportsTemporaryOverride = data.requireTimerBoolean("supportsTemporaryOverride"),
+                supportsChannelScopedConfigApply = data.requireTimerBoolean(
+                    "supportsChannelScopedConfigApply"
+                )
             ),
-            internalHeapLargestFreeBlockBytes = data.requireTimerLong(
-                "internalHeapLargestFreeBlockBytes",
-                TIMER_NON_NEGATIVE_LONG,
-                DeviceTimerRuntimeContract.Limit.UINT32_MAX
+            heap = DeviceTimerRuntimeHeap(
+                minimumFreeBytes = data.requireTimerUnsignedLong("internalHeapMinimumFreeBytes"),
+                largestFreeBlockBytes = data.requireTimerUnsignedLong(
+                    "internalHeapLargestFreeBlockBytes"
+                )
             )
         ).also(::validate)
     }
@@ -116,90 +118,113 @@ internal object DeviceTimerChannelParser {
         DeviceTimerRuntimeContract.Literal.CHANNEL_KIND_NONE
     )
 
-    @Suppress("LongMethod")
     fun parse(data: JSONObject): DeviceTimerChannelStatus {
         data.requireTimerKeys(KEYS, "Timer channel status")
         return DeviceTimerChannelStatus(
-            index = data.requireTimerInt("index", TIMER_MIN_INDEX),
-            listIndex = data.requireTimerInt(
-                "listIndex",
-                TIMER_MIN_INDEX,
-                DeviceTimerRuntimeContract.Limit.MAX_CHANNELS - 1
-            ),
-            key = data.requireTimerText("key"),
-            name = data.requireTimerText("name"),
-            displayName = data.requireTimerText("displayName"),
-            profileManaged = data.requireTimerBoolean("profileManaged"),
-            regime = DeviceTimerRegimeParser.parse(data.requireTimerText("regime")),
-            channelKind = data.requireTimerText("channelKind"),
-            gpio = data.requireTimerInt("gpio", TIMER_UNAVAILABLE_INDEX, Byte.MAX_VALUE.toInt()),
-            ledcChannel = data.requireTimerInt(
-                "ledcChannel",
-                TIMER_UNAVAILABLE_INDEX,
-                Byte.MAX_VALUE.toInt()
-            ),
-            group = data.requireTimerInt("group", Byte.MIN_VALUE.toInt(), Byte.MAX_VALUE.toInt()),
-            valueNow = data.requireTimerDouble(
-                "valueNow",
-                TIMER_INACTIVE_VALUE,
-                TIMER_NORMALIZED_MAX
-            ),
-            valueAuto = data.requireTimerDouble(
-                "valueAuto",
-                TIMER_NORMALIZED_MIN,
-                TIMER_NORMALIZED_MAX
-            ),
-            valueManual = data.requireTimerDouble(
-                "valueManual",
-                TIMER_INACTIVE_VALUE,
-                TIMER_NORMALIZED_MAX
-            ),
-            manualTimeoutMs = data.requireTimerLong(
-                "manualTimeoutMs",
-                TIMER_NON_NEGATIVE_LONG,
-                DeviceTimerRuntimeContract.Limit.UINT32_MAX
-            ),
-            invert = data.requireTimerBoolean("invert"),
-            pwmResolutionBits = data.requireTimerInt("pwmResolutionBits", minimum = 0),
-            pwmFrequencyHz = data.requireTimerInt("pwmFrequencyHz", minimum = 0),
-            outputHealth = DeviceTimerOutputHealthParser.parse(
-                data.requireTimerText("outputHealth")
-            ),
-            physicalFeedbackAvailable = data.requireTimerBoolean("physicalFeedbackAvailable"),
-            scheduleCount = data.requireTimerInt(
-                "scheduleCount",
-                TIMER_MIN_COUNT,
-                DeviceTimerRuntimeContract.Limit.MAX_SCHEDULES_PER_CHANNEL
-            ),
-            operatingState = DeviceTimerOperatingStateParser.parse(
-                data.requireTimerText("operatingState")
-            ),
-            activeSlotId = data.requireNullableTimerInt(
-                "activeSlotId",
-                DeviceTimerRuntimeContract.Limit.SLOT_ID_MINIMUM,
-                DeviceTimerRuntimeContract.Limit.SLOT_ID_MAXIMUM
-            ),
-            activeSlotName = data.requireNullableTimerText("activeSlotName"),
-            nextTransitionType = DeviceTimerNextTransitionTypeParser.parse(
-                data.requireTimerText("nextTransitionType")
-            ),
-            nextTransitionAt = data.requireNullableTimerLong(
-                "nextTransitionAt",
-                minimum = TIMER_NON_NEGATIVE_LONG
-            ),
-            runtimeReason = DeviceTimerRuntimeReasonParser.parse(
-                data.requireTimerText("runtimeReason")
-            ),
-            clockReady = data.requireTimerBoolean("clockReady"),
-            temporaryOverrideActive = data.requireTimerBoolean("temporaryOverrideActive"),
-            temporaryOverrideRemainingMs = data.requireTimerLong(
-                "temporaryOverrideRemainingMs",
-                TIMER_NON_NEGATIVE_LONG,
-                DeviceTimerRuntimeContract.Limit.TEMPORARY_DURATION_MAXIMUM_MS
-            ),
-            editable = parseEditable(data.requireTimerObject("editable"))
+            identity = parseIdentity(data),
+            hardware = parseHardware(data),
+            values = parseValues(data),
+            state = parseState(data),
+            transition = parseTransition(data),
+            runtime = parseRuntime(data)
         ).also(::validate)
     }
+
+    private fun parseIdentity(data: JSONObject) = DeviceTimerChannelIdentity(
+        index = data.requireTimerInt("index", TIMER_MIN_INDEX),
+        listIndex = data.requireTimerInt(
+            "listIndex",
+            TIMER_MIN_INDEX,
+            DeviceTimerRuntimeContract.Limit.MAX_CHANNELS - 1
+        ),
+        key = data.requireTimerText("key"),
+        name = data.requireTimerText("name"),
+        displayName = data.requireTimerText("displayName"),
+        profileManaged = data.requireTimerBoolean("profileManaged"),
+        editable = parseEditable(data.requireTimerObject("editable"))
+    )
+
+    private fun parseHardware(data: JSONObject) = DeviceTimerChannelHardware(
+        channelKind = data.requireTimerText("channelKind"),
+        gpio = data.requireTimerInt("gpio", TIMER_UNAVAILABLE_INDEX, Byte.MAX_VALUE.toInt()),
+        ledcChannel = data.requireTimerInt(
+            "ledcChannel",
+            TIMER_UNAVAILABLE_INDEX,
+            Byte.MAX_VALUE.toInt()
+        ),
+        group = data.requireTimerInt("group", Byte.MIN_VALUE.toInt(), Byte.MAX_VALUE.toInt()),
+        invert = data.requireTimerBoolean("invert"),
+        pwmResolutionBits = data.requireTimerInt("pwmResolutionBits", minimum = 0),
+        pwmFrequencyHz = data.requireTimerInt("pwmFrequencyHz", minimum = 0)
+    )
+
+    private fun parseValues(data: JSONObject) = DeviceTimerChannelValues(
+        now = data.requireTimerDouble(
+            "valueNow",
+            TIMER_INACTIVE_VALUE,
+            TIMER_NORMALIZED_MAX
+        ),
+        automatic = data.requireTimerDouble(
+            "valueAuto",
+            TIMER_NORMALIZED_MIN,
+            TIMER_NORMALIZED_MAX
+        ),
+        manual = data.requireTimerDouble(
+            "valueManual",
+            TIMER_INACTIVE_VALUE,
+            TIMER_NORMALIZED_MAX
+        ),
+        manualTimeoutMs = data.requireTimerLong(
+            "manualTimeoutMs",
+            TIMER_NON_NEGATIVE_LONG,
+            DeviceTimerRuntimeContract.Limit.UINT32_MAX
+        )
+    )
+
+    private fun parseState(data: JSONObject) = DeviceTimerChannelState(
+        regime = DeviceTimerRegimeParser.parse(data.requireTimerText("regime")),
+        outputHealth = DeviceTimerOutputHealthParser.parse(
+            data.requireTimerText("outputHealth")
+        ),
+        physicalFeedbackAvailable = data.requireTimerBoolean("physicalFeedbackAvailable"),
+        scheduleCount = data.requireTimerInt(
+            "scheduleCount",
+            TIMER_MIN_COUNT,
+            DeviceTimerRuntimeContract.Limit.MAX_SCHEDULES_PER_CHANNEL
+        ),
+        operatingState = DeviceTimerOperatingStateParser.parse(
+            data.requireTimerText("operatingState")
+        )
+    )
+
+    private fun parseTransition(data: JSONObject) = DeviceTimerChannelTransition(
+        activeSlotId = data.requireNullableTimerInt(
+            "activeSlotId",
+            DeviceTimerRuntimeContract.Limit.SLOT_ID_MINIMUM,
+            DeviceTimerRuntimeContract.Limit.SLOT_ID_MAXIMUM
+        ),
+        activeSlotName = data.requireNullableTimerText("activeSlotName"),
+        nextTransitionType = DeviceTimerNextTransitionTypeParser.parse(
+            data.requireTimerText("nextTransitionType")
+        ),
+        nextTransitionAt = data.requireNullableTimerLong(
+            "nextTransitionAt",
+            minimum = TIMER_NON_NEGATIVE_LONG
+        )
+    )
+
+    private fun parseRuntime(data: JSONObject) = DeviceTimerChannelRuntime(
+        reason = DeviceTimerRuntimeReasonParser.parse(
+            data.requireTimerText("runtimeReason")
+        ),
+        clockReady = data.requireTimerBoolean("clockReady"),
+        temporaryOverrideActive = data.requireTimerBoolean("temporaryOverrideActive"),
+        temporaryOverrideRemainingMs = data.requireTimerLong(
+            "temporaryOverrideRemainingMs",
+            TIMER_NON_NEGATIVE_LONG,
+            DeviceTimerRuntimeContract.Limit.TEMPORARY_DURATION_MAXIMUM_MS
+        )
+    )
 
     private fun parseEditable(data: JSONObject): DeviceTimerChannelEditable {
         data.requireTimerKeys(EDITABLE_KEYS, "Timer channel editable")
@@ -239,30 +264,34 @@ internal object DeviceTimerScheduleParser {
     fun parse(data: JSONObject): DeviceTimerScheduleStatus {
         data.requireTimerKeys(KEYS, "Timer schedule status")
         return DeviceTimerScheduleStatus(
-            index = data.requireTimerInt("index", TIMER_MIN_INDEX),
-            slotId = data.requireTimerInt(
-                "slotId",
-                DeviceTimerRuntimeContract.Limit.SLOT_ID_MINIMUM,
-                DeviceTimerRuntimeContract.Limit.SLOT_ID_MAXIMUM
+            identity = DeviceTimerScheduleIdentity(
+                index = data.requireTimerInt("index", TIMER_MIN_INDEX),
+                slotId = data.requireTimerInt(
+                    "slotId",
+                    DeviceTimerRuntimeContract.Limit.SLOT_ID_MINIMUM,
+                    DeviceTimerRuntimeContract.Limit.SLOT_ID_MAXIMUM
+                ),
+                enabled = data.requireTimerBoolean("enabled"),
+                name = data.requireTimerText("name"),
+                channelKey = data.requireTimerText("channelKey"),
+                bound = data.requireTimerBoolean("bound")
             ),
-            enabled = data.requireTimerBoolean("enabled"),
-            name = data.requireTimerText("name"),
-            channelKey = data.requireTimerText("channelKey"),
-            bound = data.requireTimerBoolean("bound"),
-            weekdays = parseWeekdays(data.requireTimerArray("weekdays")),
-            startTimeMs = data.requireTimerLong(
-                "startTimeMs",
-                TIMER_NON_NEGATIVE_LONG,
-                DeviceTimerRuntimeContract.Limit.LAST_MILLISECOND_OF_DAY
-            ),
-            startTime = data.requireTimerText("startTime"),
-            endTimeMs = data.requireTimerLong(
-                "endTimeMs",
-                TIMER_NON_NEGATIVE_LONG,
-                DeviceTimerRuntimeContract.Limit.LAST_MILLISECOND_OF_DAY
-            ),
-            endTime = data.requireTimerText("endTime"),
-            spansMidnight = data.requireTimerBoolean("spansMidnight")
+            window = DeviceTimerScheduleWindow(
+                weekdays = parseWeekdays(data.requireTimerArray("weekdays")),
+                startTimeMs = data.requireTimerLong(
+                    "startTimeMs",
+                    TIMER_NON_NEGATIVE_LONG,
+                    DeviceTimerRuntimeContract.Limit.LAST_MILLISECOND_OF_DAY
+                ),
+                startTime = data.requireTimerText("startTime"),
+                endTimeMs = data.requireTimerLong(
+                    "endTimeMs",
+                    TIMER_NON_NEGATIVE_LONG,
+                    DeviceTimerRuntimeContract.Limit.LAST_MILLISECOND_OF_DAY
+                ),
+                endTime = data.requireTimerText("endTime"),
+                spansMidnight = data.requireTimerBoolean("spansMidnight")
+            )
         ).also(::validate)
     }
 
@@ -287,3 +316,9 @@ internal object DeviceTimerScheduleParser {
         require(schedule.spansMidnight == (schedule.endTimeMs < schedule.startTimeMs))
     }
 }
+
+private fun JSONObject.requireTimerUnsignedLong(key: String): Long = requireTimerLong(
+    key,
+    TIMER_NON_NEGATIVE_LONG,
+    DeviceTimerRuntimeContract.Limit.UINT32_MAX
+)

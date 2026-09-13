@@ -39,41 +39,49 @@ internal object DeviceTimerStatusChangedEventParser {
     private fun parseChange(data: JSONObject): DeviceTimerStatusChange {
         data.requireTimerKeys(CHANGE_KEYS, "timer.status.changed change")
         return DeviceTimerStatusChange(
-            sequence = data.requireTimerLong(
-                "sequence",
-                minimum = 1L,
-                maximum = DeviceTimerRuntimeContract.Limit.UINT32_MAX
+            event = DeviceTimerStatusChangeEvent(
+                sequence = data.requireTimerLong(
+                    "sequence",
+                    minimum = 1L,
+                    maximum = DeviceTimerRuntimeContract.Limit.UINT32_MAX
+                ),
+                occurredAtMs = data.requireTimerLong(
+                    "occurredAtMs",
+                    TIMER_NON_NEGATIVE_LONG,
+                    DeviceTimerRuntimeContract.Limit.UINT32_MAX
+                )
             ),
-            occurredAtMs = data.requireTimerLong(
-                "occurredAtMs",
-                TIMER_NON_NEGATIVE_LONG,
-                DeviceTimerRuntimeContract.Limit.UINT32_MAX
+            output = DeviceTimerStatusChangeOutput(
+                operatingState = DeviceTimerOperatingStateParser.parse(
+                    data.requireTimerText("operatingState")
+                ),
+                runtimeReason = DeviceTimerRuntimeReasonParser.parse(
+                    data.requireTimerText("runtimeReason")
+                ),
+                clockReady = data.requireTimerBoolean("clockReady")
             ),
-            operatingState = DeviceTimerOperatingStateParser.parse(
-                data.requireTimerText("operatingState")
+            transition = DeviceTimerChannelTransition(
+                activeSlotId = data.requireNullableTimerInt(
+                    "activeSlotId",
+                    DeviceTimerRuntimeContract.Limit.SLOT_ID_MINIMUM,
+                    DeviceTimerRuntimeContract.Limit.SLOT_ID_MAXIMUM
+                ),
+                activeSlotName = data.requireNullableTimerText("activeSlotName"),
+                nextTransitionType = DeviceTimerNextTransitionTypeParser.parse(
+                    data.requireTimerText("nextTransitionType")
+                ),
+                nextTransitionAt = data.requireNullableTimerLong(
+                    "nextTransitionAt",
+                    minimum = TIMER_NON_NEGATIVE_LONG
+                )
             ),
-            activeSlotId = data.requireNullableTimerInt(
-                "activeSlotId",
-                DeviceTimerRuntimeContract.Limit.SLOT_ID_MINIMUM,
-                DeviceTimerRuntimeContract.Limit.SLOT_ID_MAXIMUM
-            ),
-            activeSlotName = data.requireNullableTimerText("activeSlotName"),
-            nextTransitionType = DeviceTimerNextTransitionTypeParser.parse(
-                data.requireTimerText("nextTransitionType")
-            ),
-            nextTransitionAt = data.requireNullableTimerLong(
-                "nextTransitionAt",
-                minimum = TIMER_NON_NEGATIVE_LONG
-            ),
-            runtimeReason = DeviceTimerRuntimeReasonParser.parse(
-                data.requireTimerText("runtimeReason")
-            ),
-            clockReady = data.requireTimerBoolean("clockReady"),
-            temporaryOverrideActive = data.requireTimerBoolean("temporaryOverrideActive"),
-            temporaryOverrideRemainingMs = data.requireTimerLong(
-                "temporaryOverrideRemainingMs",
-                TIMER_NON_NEGATIVE_LONG,
-                DeviceTimerRuntimeContract.Limit.TEMPORARY_DURATION_MAXIMUM_MS
+            override = DeviceTimerTemporaryOverride(
+                active = data.requireTimerBoolean("temporaryOverrideActive"),
+                remainingMs = data.requireTimerLong(
+                    "temporaryOverrideRemainingMs",
+                    TIMER_NON_NEGATIVE_LONG,
+                    DeviceTimerRuntimeContract.Limit.TEMPORARY_DURATION_MAXIMUM_MS
+                )
             )
         ).also { change ->
             require((change.activeSlotId == null) == (change.activeSlotName == null))

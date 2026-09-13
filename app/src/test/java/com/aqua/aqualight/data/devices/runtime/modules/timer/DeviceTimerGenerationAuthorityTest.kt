@@ -1,5 +1,3 @@
-@file:Suppress("MagicNumber")
-
 package com.aqua.aqualight.data.devices.runtime.modules.timer
 
 import com.aqua.aqualight.data.devices.model.DeviceUid
@@ -15,13 +13,17 @@ class DeviceTimerGenerationAuthorityTest {
     fun `reconnect retains presentation snapshot and accepts lower reboot uptime`() {
         val store = DeviceTimerRuntimeStateStore()
         val first = DeviceTimerStatusParser.parse(
-            DeviceTimerRuntimeFixtures.globalStatus(uptimeMs = 90_000L)
+            DeviceTimerRuntimeFixtures.globalStatus(
+                uptimeMs = TIMER_TEST_FIRST_SESSION_UPTIME_MILLIS
+            )
         )
         val rebooted = DeviceTimerStatusParser.parse(
-            DeviceTimerRuntimeFixtures.globalStatus(uptimeMs = 1_000L)
+            DeviceTimerRuntimeFixtures.globalStatus(uptimeMs = TIMER_TEST_REBOOT_UPTIME_MILLIS)
         )
         val channelDetail = DeviceTimerStatusParser.parse(
-            DeviceTimerRuntimeFixtures.channelStatus(uptimeMs = 90_000L)
+            DeviceTimerRuntimeFixtures.channelStatus(
+                uptimeMs = TIMER_TEST_FIRST_SESSION_UPTIME_MILLIS
+            )
         )
 
         store.beginGeneration(DEVICE_UID, G1)
@@ -33,14 +35,20 @@ class DeviceTimerGenerationAuthorityTest {
         assertNull(store.currentAuthoritativeState(DEVICE_UID))
         store.beginGeneration(DEVICE_UID, G2)
 
-        assertEquals(90_000L, store.states.value.getValue(DEVICE_UID).status?.uptimeMs)
+        assertEquals(
+            TIMER_TEST_FIRST_SESSION_UPTIME_MILLIS,
+            store.states.value.getValue(DEVICE_UID).status?.uptimeMs
+        )
         assertEquals(G2, store.states.value.getValue(DEVICE_UID).connectionGeneration)
         assertFalse(store.states.value.getValue(DEVICE_UID).authoritative)
         assertTrue(store.states.value.getValue(DEVICE_UID).channelDetails.isEmpty())
         assertNull(store.currentAuthoritativeState(DEVICE_UID))
         assertFalse(store.isAuthoritative(DEVICE_UID, G2))
         assertTrue(store.recordStatus(DEVICE_UID, G2, rebooted))
-        assertEquals(1_000L, store.states.value.getValue(DEVICE_UID).status?.uptimeMs)
+        assertEquals(
+            TIMER_TEST_REBOOT_UPTIME_MILLIS,
+            store.states.value.getValue(DEVICE_UID).status?.uptimeMs
+        )
         assertTrue(store.states.value.getValue(DEVICE_UID).authoritative)
         assertEquals(
             store.states.value.getValue(DEVICE_UID),
@@ -53,13 +61,19 @@ class DeviceTimerGenerationAuthorityTest {
     fun `late previous generation status cannot overwrite new authoritative Timer state`() {
         val store = DeviceTimerRuntimeStateStore()
         val oldSession = DeviceTimerStatusParser.parse(
-            DeviceTimerRuntimeFixtures.globalStatus(uptimeMs = 90_000L)
+            DeviceTimerRuntimeFixtures.globalStatus(
+                uptimeMs = TIMER_TEST_FIRST_SESSION_UPTIME_MILLIS
+            )
         )
         val newSession = DeviceTimerStatusParser.parse(
-            DeviceTimerRuntimeFixtures.globalStatus(uptimeMs = 2_000L)
+            DeviceTimerRuntimeFixtures.globalStatus(
+                uptimeMs = TIMER_TEST_NEW_SESSION_UPTIME_MILLIS
+            )
         )
         val lateOldReply = DeviceTimerStatusParser.parse(
-            DeviceTimerRuntimeFixtures.globalStatus(uptimeMs = 95_000L)
+            DeviceTimerRuntimeFixtures.globalStatus(
+                uptimeMs = TIMER_TEST_LATE_SESSION_UPTIME_MILLIS
+            )
         )
 
         store.beginGeneration(DEVICE_UID, G1)
@@ -70,7 +84,10 @@ class DeviceTimerGenerationAuthorityTest {
         store.recordStatus(DEVICE_UID, G2, newSession)
 
         assertFalse(store.recordStatus(DEVICE_UID, G1, lateOldReply))
-        assertEquals(2_000L, store.states.value.getValue(DEVICE_UID).status?.uptimeMs)
+        assertEquals(
+            TIMER_TEST_NEW_SESSION_UPTIME_MILLIS,
+            store.states.value.getValue(DEVICE_UID).status?.uptimeMs
+        )
         assertTrue(store.isAuthoritative(DEVICE_UID, G2))
     }
 
@@ -78,16 +95,25 @@ class DeviceTimerGenerationAuthorityTest {
     fun `same-millisecond older revision cannot roll back authoritative Timer state`() {
         val store = DeviceTimerRuntimeStateStore()
         val current = DeviceTimerStatusParser.parse(
-            DeviceTimerRuntimeFixtures.globalStatus(uptimeMs = 20_000L, revision = 8L)
+            DeviceTimerRuntimeFixtures.globalStatus(
+                uptimeMs = TIMER_TEST_DEFAULT_UPTIME_MILLIS,
+                revision = TIMER_TEST_APPLIED_REVISION
+            )
         )
         val stale = DeviceTimerStatusParser.parse(
-            DeviceTimerRuntimeFixtures.globalStatus(uptimeMs = 20_000L, revision = 7L)
+            DeviceTimerRuntimeFixtures.globalStatus(
+                uptimeMs = TIMER_TEST_DEFAULT_UPTIME_MILLIS,
+                revision = TIMER_TEST_BASE_REVISION
+            )
         )
 
         store.beginGeneration(DEVICE_UID, G1)
         assertTrue(store.recordStatus(DEVICE_UID, G1, current))
         assertFalse(store.recordStatus(DEVICE_UID, G1, stale))
-        assertEquals(8L, store.states.value.getValue(DEVICE_UID).status?.revision)
+        assertEquals(
+            TIMER_TEST_APPLIED_REVISION,
+            store.states.value.getValue(DEVICE_UID).status?.revision
+        )
     }
 
     private companion object {

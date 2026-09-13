@@ -1,8 +1,6 @@
-@file:Suppress("MagicNumber")
-
 package com.aqua.aqualight.data.devices.timer.v1
 
-import com.aqua.aqualight.application.devices.timer.DeviceTimerCommandFailure
+import com.aqua.aqualight.application.devices.timer.control.DeviceTimerCommandFailure
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
@@ -16,14 +14,14 @@ class DeviceTimerV1FailureMapperTest {
         val cases = listOf(
             failureCase(
                 expected = DeviceTimerCommandFailure.INVALID_REQUEST,
-                status = 400,
+                status = HTTP_BAD_REQUEST,
                 code = "BAD_REQUEST",
                 field = "data",
                 message = FIRMWARE_WIRE_MESSAGE
             ),
             failureCase(
                 expected = DeviceTimerCommandFailure.INVALID_CONFIGURATION,
-                status = 422,
+                status = HTTP_UNPROCESSABLE_ENTITY,
                 code = "INVALID_VALUE",
                 field = "schedules",
                 message = FIRMWARE_WIRE_MESSAGE
@@ -38,14 +36,14 @@ class DeviceTimerV1FailureMapperTest {
         val cases = listOf(
             failureCase(
                 expected = DeviceTimerCommandFailure.CONFLICT,
-                status = 409,
+                status = HTTP_CONFLICT,
                 code = "CONFLICT",
                 field = "expectedRevision",
                 message = FIRMWARE_WIRE_MESSAGE
             ),
             failureCase(
                 expected = DeviceTimerCommandFailure.CHANNEL_UNAVAILABLE,
-                status = 404,
+                status = HTTP_NOT_FOUND,
                 code = "NOT_FOUND",
                 field = "channelKey",
                 message = FIRMWARE_WIRE_MESSAGE
@@ -60,21 +58,21 @@ class DeviceTimerV1FailureMapperTest {
         val cases = listOf(
             failureCase(
                 expected = DeviceTimerCommandFailure.HARDWARE_FAILURE,
-                status = 503,
+                status = HTTP_SERVICE_UNAVAILABLE,
                 code = "HARDWARE_ERROR",
                 field = "timer",
                 message = FIRMWARE_WIRE_MESSAGE
             ),
             failureCase(
                 expected = DeviceTimerCommandFailure.RESOURCE_UNAVAILABLE,
-                status = 503,
+                status = HTTP_SERVICE_UNAVAILABLE,
                 code = "HARDWARE_ERROR",
                 field = "schedules",
                 message = FIRMWARE_WIRE_MESSAGE
             ),
             failureCase(
                 expected = DeviceTimerCommandFailure.HARDWARE_FAILURE,
-                status = 503,
+                status = HTTP_SERVICE_UNAVAILABLE,
                 code = "HARDWARE_ERROR",
                 field = "channelKey",
                 message = FIRMWARE_WIRE_MESSAGE
@@ -89,14 +87,14 @@ class DeviceTimerV1FailureMapperTest {
         val cases = listOf(
             failureCase(
                 expected = DeviceTimerCommandFailure.STORAGE_FAILURE,
-                status = 500,
+                status = HTTP_INTERNAL_ERROR,
                 code = "STORAGE_ERROR",
                 field = "timer",
                 message = FIRMWARE_WIRE_MESSAGE
             ),
             failureCase(
                 expected = DeviceTimerCommandFailure.UNKNOWN_REJECTION,
-                status = 418,
+                status = HTTP_TEAPOT,
                 code = "FUTURE_TIMER_REJECTION",
                 field = "timer",
                 message = "future rejection"
@@ -111,14 +109,14 @@ class DeviceTimerV1FailureMapperTest {
         val cases = listOf(
             failureCase(
                 expected = DeviceTimerCommandFailure.HARDWARE_FAILURE,
-                status = 503,
+                status = HTTP_SERVICE_UNAVAILABLE,
                 code = "HARDWARE_ERROR",
                 field = "timer",
                 message = FIRMWARE_WIRE_MESSAGE
             ),
             failureCase(
                 expected = DeviceTimerCommandFailure.HARDWARE_FAILURE,
-                status = 503,
+                status = HTTP_SERVICE_UNAVAILABLE,
                 code = "HARDWARE_ERROR",
                 field = "channelKey",
                 message = FIRMWARE_WIRE_MESSAGE
@@ -134,7 +132,7 @@ class DeviceTimerV1FailureMapperTest {
             DeviceTimerCommandFailure.PROTOCOL_ERROR,
             DeviceTimerV1FailureMapper.map(
                 firmwareError(
-                    status = 422,
+                    status = HTTP_UNPROCESSABLE_ENTITY,
                     code = "CONFLICT",
                     field = "expectedRevision",
                     message = FIRMWARE_WIRE_MESSAGE
@@ -149,7 +147,7 @@ class DeviceTimerV1FailureMapperTest {
             DeviceTimerCommandFailure.UNKNOWN_REJECTION,
             DeviceTimerV1FailureMapper.map(
                 firmwareError(
-                    status = 404,
+                    status = HTTP_NOT_FOUND,
                     code = "NOT_FOUND",
                     field = "timer",
                     message = FIRMWARE_WIRE_MESSAGE
@@ -196,5 +194,12 @@ class DeviceTimerV1FailureMapperTest {
 
     private companion object {
         const val FIRMWARE_WIRE_MESSAGE = "Command rejected."
+        const val HTTP_BAD_REQUEST = 400
+        const val HTTP_NOT_FOUND = 404
+        const val HTTP_CONFLICT = 409
+        const val HTTP_TEAPOT = 418
+        const val HTTP_UNPROCESSABLE_ENTITY = 422
+        const val HTTP_INTERNAL_ERROR = 500
+        const val HTTP_SERVICE_UNAVAILABLE = 503
     }
 }

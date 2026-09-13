@@ -16,20 +16,18 @@ internal object DeviceTimerMutationParser {
     fun parseConfigApply(data: JSONObject): DeviceTimerConfigApplyResult {
         data.requireTimerKeys(CONFIG_RESULT_KEYS, "timer.config.apply result")
         return DeviceTimerConfigApplyResult(
-            operation = data.requireTimerText("operation"),
-            changed = data.requireTimerBoolean("changed"),
-            saved = data.requireTimerBoolean("saved"),
-            saveRequested = data.requireTimerBoolean("saveRequested"),
-            channelKey = data.requireTimerText("channelKey"),
-            revision = data.requireTimerLong(
-                "revision",
-                TIMER_NON_NEGATIVE_LONG,
-                DeviceTimerRuntimeContract.Limit.UINT32_MAX
+            mutation = DeviceTimerConfigMutationResult(
+                operation = data.requireTimerText("operation"),
+                changed = data.requireTimerBoolean("changed"),
+                saved = data.requireTimerBoolean("saved"),
+                saveRequested = data.requireTimerBoolean("saveRequested"),
+                revision = data.requireTimerRevision()
             ),
-            runtimeTransport = data.requireTimerText("runtimeTransport"),
-            command = data.requireTimerText("command"),
-            appliedDisplayName = data.requireTimerBoolean("appliedDisplayName"),
-            replacedSchedules = data.requireTimerBoolean("replacedSchedules"),
+            transport = data.parseMutationTransport(),
+            application = DeviceTimerConfigApplication(
+                appliedDisplayName = data.requireTimerBoolean("appliedDisplayName"),
+                replacedSchedules = data.requireTimerBoolean("replacedSchedules")
+            ),
             channel = DeviceTimerChannelParser.parse(data.requireTimerObject("channel"))
         ).also(::validateConfigResult)
     }
@@ -37,28 +35,27 @@ internal object DeviceTimerMutationParser {
     fun parseChannelSet(data: JSONObject): DeviceTimerChannelSetResult {
         data.requireTimerKeys(CHANNEL_RESULT_KEYS, "timer.channel.set result")
         return DeviceTimerChannelSetResult(
-            operation = data.requireTimerText("operation"),
-            changed = data.requireTimerBoolean("changed"),
-            persistentChanged = data.requireTimerBoolean("persistentChanged"),
-            temporaryOverrideCancelled = data.requireTimerBoolean(
-                "temporaryOverrideCancelled"
+            mutation = DeviceTimerChannelMutationResult(
+                operation = data.requireTimerText("operation"),
+                changed = data.requireTimerBoolean("changed"),
+                persistentChanged = data.requireTimerBoolean("persistentChanged"),
+                temporaryOverrideCancelled = data.requireTimerBoolean(
+                    "temporaryOverrideCancelled"
+                ),
+                saved = data.requireTimerBoolean("saved"),
+                saveRequested = data.requireTimerBoolean("saveRequested")
             ),
-            saved = data.requireTimerBoolean("saved"),
-            saveRequested = data.requireTimerBoolean("saveRequested"),
-            channelKey = data.requireTimerText("channelKey"),
-            regime = DeviceTimerRegimeParser.parse(data.requireTimerText("regime")),
-            durationMs = data.requireTimerLong(
-                "durationMs",
-                TIMER_NON_NEGATIVE_LONG,
-                DeviceTimerRuntimeContract.Limit.TEMPORARY_DURATION_MAXIMUM_MS
+            target = DeviceTimerChannelMutationTarget(
+                channelKey = data.requireTimerText("channelKey"),
+                regime = DeviceTimerRegimeParser.parse(data.requireTimerText("regime")),
+                durationMs = data.requireTimerLong(
+                    "durationMs",
+                    TIMER_NON_NEGATIVE_LONG,
+                    DeviceTimerRuntimeContract.Limit.TEMPORARY_DURATION_MAXIMUM_MS
+                )
             ),
-            revision = data.requireTimerLong(
-                "revision",
-                TIMER_NON_NEGATIVE_LONG,
-                DeviceTimerRuntimeContract.Limit.UINT32_MAX
-            ),
-            runtimeTransport = data.requireTimerText("runtimeTransport"),
-            command = data.requireTimerText("command"),
+            authority = DeviceTimerMutationAuthority(data.requireTimerRevision()),
+            transport = data.parseMutationTransport(),
             channel = DeviceTimerChannelParser.parse(data.requireTimerObject("channel"))
         ).also(::validateChannelResult)
     }
@@ -104,3 +101,15 @@ internal object DeviceTimerMutationParser {
     private fun timerCommand(action: String): String =
         "${DeviceTimerRuntimeContract.MODULE}.$action"
 }
+
+private fun JSONObject.parseMutationTransport() = DeviceTimerMutationTransport(
+    channelKey = requireTimerText("channelKey"),
+    runtimeTransport = requireTimerText("runtimeTransport"),
+    command = requireTimerText("command")
+)
+
+private fun JSONObject.requireTimerRevision(): Long = requireTimerLong(
+    "revision",
+    TIMER_NON_NEGATIVE_LONG,
+    DeviceTimerRuntimeContract.Limit.UINT32_MAX
+)

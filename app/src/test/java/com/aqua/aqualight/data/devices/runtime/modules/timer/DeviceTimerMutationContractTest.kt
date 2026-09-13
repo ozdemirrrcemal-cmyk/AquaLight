@@ -1,5 +1,3 @@
-@file:Suppress("MagicNumber")
-
 package com.aqua.aqualight.data.devices.runtime.modules.timer
 
 import org.junit.Assert.assertEquals
@@ -12,15 +10,15 @@ class DeviceTimerMutationContractTest {
     fun `golden channel config result validates exact revision scope and replacement`() {
         val payload = DeviceTimerConfigApplyPayload(
             channelKey = "channel1",
-            expectedRevision = 7L,
+            expectedRevision = TIMER_TEST_BASE_REVISION,
             displayName = DeviceTimerDisplayNameUpdate.Value("Return Pump"),
             schedules = listOf(
                 DeviceTimerRuntimeFixtures.schedulePayload(slotId = 1),
                 DeviceTimerRuntimeFixtures.schedulePayload(
                     slotId = 2,
                     name = "Night Filter",
-                    startTimeMs = timerScheduleBoundaryMillis(20, 0),
-                    endTimeMs = timerScheduleBoundaryMillis(22, 0)
+                    startTimeMs = timerScheduleBoundaryMillis(TIMER_TEST_EVENING_START_HOUR, 0),
+                    endTimeMs = timerScheduleBoundaryMillis(TIMER_TEST_EVENING_END_HOUR, 0)
                 )
             )
         )
@@ -36,7 +34,7 @@ class DeviceTimerMutationContractTest {
         )
 
         assertEquals("channel1", result.channelKey)
-        assertEquals(8L, result.revision)
+        assertEquals(TIMER_TEST_APPLIED_REVISION, result.revision)
         assertEquals(2, result.channel.scheduleCount)
         assertTrue(result.appliedDisplayName)
         assertTrue(result.replacedSchedules)
@@ -46,20 +44,20 @@ class DeviceTimerMutationContractTest {
     fun `golden temporary override keeps persistent regime and revision unchanged`() {
         val payload = DeviceTimerChannelSetPayload(
             channelKey = "channel1",
-            expectedRevision = 8L,
+            expectedRevision = TIMER_TEST_APPLIED_REVISION,
             regime = DeviceTimerRegime.OFF,
-            durationMs = 300_000L,
+            durationMs = TIMER_TEST_OVERRIDE_DURATION_MILLIS,
             save = false
         )
         val result = DeviceTimerMutationParser.parseChannelSet(
-            DeviceTimerRuntimeFixtures.channelSet(revision = 8L)
+            DeviceTimerRuntimeFixtures.channelSet(revision = TIMER_TEST_APPLIED_REVISION)
         )
 
         DeviceTimerCommandValidation.validateChannelResult(
             payload,
             result,
             DeviceTimerStatusParser.parse(
-                DeviceTimerRuntimeFixtures.globalStatus(revision = 8L)
+                DeviceTimerRuntimeFixtures.globalStatus(revision = TIMER_TEST_APPLIED_REVISION)
             ),
             SUPPORTED_ACCESS
         )
@@ -67,12 +65,14 @@ class DeviceTimerMutationContractTest {
         assertEquals(DeviceTimerRegime.AUTO, result.channel.regime)
         assertTrue(result.channel.temporaryOverrideActive)
         assertFalse(result.persistentChanged)
-        assertEquals(8L, result.revision)
+        assertEquals(TIMER_TEST_APPLIED_REVISION, result.revision)
     }
 
     @Test
     fun `persistent channel result requires canonical operation and revision increment`() {
-        val response = DeviceTimerRuntimeFixtures.channelSet(revision = 8L).also { data ->
+        val response = DeviceTimerRuntimeFixtures.channelSet(
+            revision = TIMER_TEST_APPLIED_REVISION
+        ).also { data ->
             data.put("operation", "channelSet")
             data.put("persistentChanged", true)
             data.put("saved", true)
@@ -88,7 +88,7 @@ class DeviceTimerMutationContractTest {
         }
         val payload = DeviceTimerChannelSetPayload(
             channelKey = "channel1",
-            expectedRevision = 7L,
+            expectedRevision = TIMER_TEST_BASE_REVISION,
             regime = DeviceTimerRegime.ON
         )
         val result = DeviceTimerMutationParser.parseChannelSet(response)
@@ -101,7 +101,7 @@ class DeviceTimerMutationContractTest {
         )
 
         assertEquals(DeviceTimerRegime.ON, result.channel.regime)
-        assertEquals(8L, result.revision)
+        assertEquals(TIMER_TEST_APPLIED_REVISION, result.revision)
     }
 
     @Test
@@ -119,9 +119,9 @@ class DeviceTimerMutationContractTest {
             runCatching {
                 DeviceTimerChannelSetPayload(
                     channelKey = "channel1",
-                    expectedRevision = 7L,
+                    expectedRevision = TIMER_TEST_BASE_REVISION,
                     regime = DeviceTimerRegime.OFF,
-                    durationMs = 1_000L,
+                    durationMs = TIMER_TEST_SUB_MINUTE_MILLIS,
                     save = true
                 )
             }.isFailure
@@ -130,9 +130,9 @@ class DeviceTimerMutationContractTest {
             runCatching {
                 DeviceTimerChannelSetPayload(
                     channelKey = "channel1",
-                    expectedRevision = 7L,
+                    expectedRevision = TIMER_TEST_BASE_REVISION,
                     regime = DeviceTimerRegime.AUTO,
-                    durationMs = 1_000L,
+                    durationMs = TIMER_TEST_SUB_MINUTE_MILLIS,
                     save = false
                 )
             }.isFailure
@@ -142,7 +142,7 @@ class DeviceTimerMutationContractTest {
     private companion object {
         val SUPPORTED_ACCESS = DeviceTimerRuntimeAccess(
             supportsApi = true,
-            channelCount = 2,
+            channelCount = TIMER_TEST_CHANNEL_COUNT,
             supportsSchedules = true,
             supportsChannelState = true,
             supportsChannelDisplayName = true

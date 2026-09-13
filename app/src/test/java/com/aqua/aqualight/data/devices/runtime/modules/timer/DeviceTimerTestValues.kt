@@ -1,0 +1,32 @@
+package com.aqua.aqualight.data.devices.runtime.modules.timer
+
+internal const val TIMER_TEST_BASE_REVISION = 7L
+internal const val TIMER_TEST_APPLIED_REVISION = 8L
+internal const val TIMER_TEST_RECOVERY_REVISION = 9L
+internal const val TIMER_TEST_DEFAULT_UPTIME_MILLIS = 20_000L
+internal const val TIMER_TEST_FIRST_SESSION_UPTIME_MILLIS = 90_000L
+internal const val TIMER_TEST_LATE_SESSION_UPTIME_MILLIS = 95_000L
+internal const val TIMER_TEST_REBOOT_UPTIME_MILLIS = 1_000L
+internal const val TIMER_TEST_NEW_SESSION_UPTIME_MILLIS = 2_000L
+internal const val TIMER_TEST_OVERRIDE_DURATION_MILLIS = 300_000L
+internal const val TIMER_TEST_OVERRIDE_REMAINING_MILLIS = 299_900L
+internal const val TIMER_TEST_EVENT_SEQUENCE = 12L
+internal const val TIMER_TEST_OLDER_EVENT_SEQUENCE = 11L
+internal const val TIMER_TEST_GAPPED_EVENT_SEQUENCE = 14L
+internal const val TIMER_TEST_PUBLISHED_AT_MILLIS = 20_100L
+internal const val TIMER_TEST_UINT32_MAX = 4_294_967_295L
+internal const val TIMER_TEST_CHANNEL_COUNT = 2
+internal const val TIMER_TEST_MAX_CHANNEL_COUNT = 4
+internal const val TIMER_TEST_MAX_SCHEDULES = 8
+internal const val TIMER_TEST_WEEKDAY_COUNT = 7
+internal const val TIMER_TEST_START_HOUR = 12
+internal const val TIMER_TEST_END_HOUR = 18
+internal const val TIMER_TEST_NOON_BOUNDARY_MILLIS = 43_200_000L
+internal const val TIMER_TEST_EVENING_START_HOUR = 20
+internal const val TIMER_TEST_EVENING_END_HOUR = 22
+internal const val TIMER_TEST_DAY_END_HOUR = 23
+internal const val TIMER_TEST_HALF_HOUR_MINUTES = 30
+internal const val TIMER_TEST_MINUTE_MILLIS = 60_000L
+internal const val TIMER_TEST_SUB_MINUTE_MILLIS = 1_000L
+internal const val TIMER_TEST_HTTP_OK = 200
+internal const val TIMER_TEST_CONFLICT_STATUS = 409

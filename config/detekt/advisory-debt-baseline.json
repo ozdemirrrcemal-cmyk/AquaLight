@@ -3,7 +3,7 @@
   "policyId": "aqualight-detekt-advisory-debt",
   "detektVersion": "1.23.8",
   "sourceCommit": "a48942a06391e5463e85f9f20e80543c1ef41e69",
-  "totalFindings": 1002,
+  "totalFindings": 998,
   "fingerprints": [
     {
       "ruleId": "detekt.complexity.ComplexCondition",
@@ -1780,18 +1780,6 @@
       "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/time/DeviceTimeStatusParser.kt",
       "message": "This expression contains a magic number. Consider defining it to a well named constant.",
       "count": 1
-    },
-    {
-      "ruleId": "detekt.style.MagicNumber",
-      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/timer/DeviceTimerModels.kt",
-      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
-      "count": 2
-    },
-    {
-      "ruleId": "detekt.style.MagicNumber",
-      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/timer/DeviceTimerStatusParser.kt",
-      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
-      "count": 2
     },
     {
       "ruleId": "detekt.style.MagicNumber",

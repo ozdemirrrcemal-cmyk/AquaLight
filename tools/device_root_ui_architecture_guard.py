@@ -68,19 +68,19 @@ LIGHT_VIEW_MODEL = Path(
 LIGHT_LAYOUT = LAYOUT_ROOT / "fragment_device_light_root.xml"
 COOLING_LAYOUT = LAYOUT_ROOT / "fragment_device_cooling_root.xml"
 TIMER_FRAGMENT = Path(
-    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/"
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/presentation/root/"
     "DeviceTimerRootFragment.kt"
 )
 TIMER_VIEW_MODEL = Path(
-    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/"
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/presentation/root/"
     "DeviceTimerRootViewModel.kt"
 )
 TIMER_CHANNEL_CARD = Path(
-    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/"
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/presentation/dashboard/"
     "DeviceTimerChannelCard.kt"
 )
 TIMER_CHANNEL_SCREEN = Path(
-    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/channel/"
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/presentation/channel/"
     "DeviceTimerChannelScreen.kt"
 )
 TIMER_UI_ROOT = Path(
@@ -369,7 +369,7 @@ def validate_timer_control_surface(
     if channel_card_source is not None:
         for token, reason in (
             (
-                "onClick = onChannelClick",
+                "onClick = actions.onChannelClick",
                 "Timer channel details must be owned by the arrow action",
             ),
             (

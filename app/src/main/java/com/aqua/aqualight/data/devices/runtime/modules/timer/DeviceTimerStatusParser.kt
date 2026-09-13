@@ -17,47 +17,56 @@ object DeviceTimerStatusParser {
         val channels = parseChannels(data.requireTimerArray("channels"))
         val schedules = parseSchedules(data.requireTimerArray("schedules"))
         return DeviceTimerStatus(
-            supported = data.requireTimerBoolean("supported"),
-            channelCount = data.requireTimerInt(
-                "channelCount",
-                minimum = 1,
-                maximum = DeviceTimerRuntimeContract.Limit.MAX_CHANNELS
+            scope = DeviceTimerStatusScope(
+                supported = data.requireTimerBoolean("supported"),
+                channelScoped = data.requireTimerBoolean("channelScoped"),
+                schedulesIncluded = data.requireTimerBoolean("schedulesIncluded"),
+                selectedChannelKey = data.optionalTimerText("selectedChannelKey"),
+                returnedScheduleCount = data.requireTimerInt(
+                    "returnedScheduleCount",
+                    TIMER_MIN_COUNT,
+                    DeviceTimerRuntimeContract.Limit.MAX_SCHEDULES_PER_CHANNEL
+                )
             ),
-            scheduleCount = data.requireTimerInt("scheduleCount", minimum = TIMER_MIN_COUNT),
-            maxSchedulesPerChannel = data.requireTimerInt(
-                "maxSchedulesPerChannel",
-                minimum = DeviceTimerRuntimeContract.Limit.MAX_SCHEDULES_PER_CHANNEL,
-                maximum = DeviceTimerRuntimeContract.Limit.MAX_SCHEDULES_PER_CHANNEL
+            limits = DeviceTimerStatusLimits(
+                channelCount = data.requireTimerInt(
+                    "channelCount",
+                    minimum = TIMER_MIN_CHANNEL_COUNT,
+                    maximum = DeviceTimerRuntimeContract.Limit.MAX_CHANNELS
+                ),
+                scheduleCount = data.requireTimerInt("scheduleCount", minimum = TIMER_MIN_COUNT),
+                maxSchedulesPerChannel = data.requireTimerInt(
+                    "maxSchedulesPerChannel",
+                    minimum = DeviceTimerRuntimeContract.Limit.MAX_SCHEDULES_PER_CHANNEL,
+                    maximum = DeviceTimerRuntimeContract.Limit.MAX_SCHEDULES_PER_CHANNEL
+                ),
+                maxScheduleCount = data.requireTimerInt(
+                    "maxScheduleCount",
+                    minimum = TIMER_MIN_COUNT
+                )
             ),
-            maxScheduleCount = data.requireTimerInt("maxScheduleCount", minimum = TIMER_MIN_COUNT),
-            revision = data.requireTimerLong(
-                "revision",
-                TIMER_NON_NEGATIVE_LONG,
-                DeviceTimerRuntimeContract.Limit.UINT32_MAX
+            authority = DeviceTimerStatusAuthority(
+                revision = data.requireTimerLong(
+                    "revision",
+                    TIMER_NON_NEGATIVE_LONG,
+                    DeviceTimerRuntimeContract.Limit.UINT32_MAX
+                ),
+                lockLoop = data.requireTimerBoolean("lockLoop"),
+                schema = data.requireTimerText("schema"),
+                schemaVersion = data.requireTimerInt(
+                    "schemaVersion",
+                    DeviceTimerRuntimeContract.SCHEMA_VERSION,
+                    DeviceTimerRuntimeContract.SCHEMA_VERSION
+                ),
+                rootName = data.requireTimerText("rootName"),
+                uptimeMs = data.requireTimerLong(
+                    "uptimeMs",
+                    TIMER_NON_NEGATIVE_LONG,
+                    DeviceTimerRuntimeContract.Limit.UINT32_MAX
+                )
             ),
-            lockLoop = data.requireTimerBoolean("lockLoop"),
-            schema = data.requireTimerText("schema"),
-            schemaVersion = data.requireTimerInt(
-                "schemaVersion",
-                DeviceTimerRuntimeContract.SCHEMA_VERSION,
-                DeviceTimerRuntimeContract.SCHEMA_VERSION
-            ),
-            rootName = data.requireTimerText("rootName"),
-            uptimeMs = data.requireTimerLong(
-                "uptimeMs",
-                TIMER_NON_NEGATIVE_LONG,
-                DeviceTimerRuntimeContract.Limit.UINT32_MAX
-            ),
-            channelScoped = data.requireTimerBoolean("channelScoped"),
-            schedulesIncluded = data.requireTimerBoolean("schedulesIncluded"),
-            selectedChannelKey = data.optionalTimerText("selectedChannelKey"),
             channels = channels,
             schedules = schedules,
-            returnedScheduleCount = data.requireTimerInt(
-                "returnedScheduleCount",
-                TIMER_MIN_COUNT,
-                DeviceTimerRuntimeContract.Limit.MAX_SCHEDULES_PER_CHANNEL
-            ),
             runtime = DeviceTimerRuntimeCapabilitiesParser.parse(
                 data.requireTimerObject("runtime")
             )
@@ -116,3 +125,5 @@ object DeviceTimerStatusParser {
         }
     }
 }
+
+private const val TIMER_MIN_CHANNEL_COUNT = 1

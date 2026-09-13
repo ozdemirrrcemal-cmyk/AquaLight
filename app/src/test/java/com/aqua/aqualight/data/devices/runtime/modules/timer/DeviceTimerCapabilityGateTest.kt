@@ -19,14 +19,14 @@ import org.junit.Test
 class DeviceTimerCapabilityGateTest {
     @Test
     fun `dosing timer engine never resolves to standalone Timer API access`() {
-        val access = DeviceTimerRuntimeAccess.resolve(
+        val access = DeviceTimerRuntimeAccess.resolve(DeviceTimerRuntimeDescriptor(
             family = DeviceFamily.DOSING,
             capabilities = capabilities(standaloneTimer = false, dosing = true),
             limits = DeviceLimitSet(0, 0, 0, 0, 2),
             features = setOf(AqlDeviceFeatureKey.DOSING_CONTROL),
             screens = setOf(AqlDeviceScreenKey.DOSING_CONTROL),
             modules = modules(timerApi = false, timerEngine = false, dosing = true)
-        )
+        ))
 
         assertFalse(access.supportsApi)
         assertEquals(0, access.channelCount)
@@ -99,7 +99,7 @@ class DeviceTimerCapabilityGateTest {
         val status = DeviceTimerStatusParser.parse(DeviceTimerRuntimeFixtures.globalStatus())
         val mismatchedAccess = DeviceTimerRuntimeAccess(
             supportsApi = true,
-            channelCount = 4,
+            channelCount = TIMER_TEST_MAX_CHANNEL_COUNT,
             supportsSchedules = true,
             supportsChannelState = true,
             supportsChannelDisplayName = true

@@ -32,7 +32,7 @@ TIMER_APPLICATION_PATH = (
 )
 TIMER_ADAPTER_PATH = (
     ROOT
-    / "app/src/main/java/com/aqua/aqualight/data/devices/timer/"
+    / "app/src/main/java/com/aqua/aqualight/data/devices/timer/control/"
     / "DefaultDeviceTimerControlOperations.kt"
 )
 TIMER_FAILURE_MAPPER_PATH = (
@@ -43,6 +43,33 @@ TIMER_FAILURE_MAPPER_PATH = (
 TIMER_PRESENTATION_PATH = (
     ROOT
     / "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer"
+)
+TIMER_SOURCE_ROOTS = (
+    TIMER_APPLICATION_PATH,
+    TIMER_DIR,
+    ROOT / "app/src/main/java/com/aqua/aqualight/data/devices/timer",
+    TIMER_PRESENTATION_PATH,
+    ROOT / "app/src/main/java/com/aqua/aqualight/ui/common/timer",
+    ROOT / "app/src/test/java/com/aqua/aqualight/data/devices/runtime/modules/timer",
+    ROOT / "app/src/test/java/com/aqua/aqualight/data/devices/timer",
+    ROOT / "app/src/test/java/com/aqua/aqualight/ui/tabs/devices/detail/timer",
+    ROOT / "app/src/androidTest/java/com/aqua/aqualight/ui/tabs/devices/detail/timer",
+)
+TIMER_SOURCE_FILES = (
+    ROOT / "app/src/debug/java/com/aqua/aqualight/debug/devices/DebugTimerFixtureRuntime.kt",
+    ROOT / "app/src/debug/java/com/aqua/aqualight/debug/devices/DebugFixtureTimerControlOperations.kt",
+    ROOT / "app/src/testDebug/java/com/aqua/aqualight/debug/devices/DebugTimerFixtureIntegrationTest.kt",
+    ROOT / "app/src/test/java/com/aqua/aqualight/data/devices/menu/"
+    / "DefaultDeviceControlSurfacePreparationOperationsTest.kt",
+)
+DETEKT_DEBT_BASELINE_PATH = ROOT / "config/detekt/advisory-debt-baseline.json"
+LINT_BASELINE_PATH = ROOT / "config/lint/lint-baseline.xml"
+SUPPRESSION_PATTERNS = (
+    re.compile(r"@file\s*:\s*Suppress\b"),
+    re.compile(r"@Suppress(?:Lint)?\s*\("),
+    re.compile(r"\bnoinspection\b", re.IGNORECASE),
+    re.compile(r"\b(?:detekt|ktlint)-(?:disable|ignore)\b", re.IGNORECASE),
+    re.compile(r"tools:ignore\s*="),
 )
 TIMER_STRING_PATHS = (
     ROOT / "app/src/main/res/values/device_timer_strings.xml",
@@ -227,18 +254,19 @@ def verify_android_sources() -> None:
     require("COMMAND_EVENT_FIELDS -\n        FIELD_PUBLISHED_AT_MS" in event_parser,
             "publishedAtMs still misclassifies direct Timer events")
     verify_failure_boundary()
+    verify_zero_timer_suppression_debt()
 
 
 def verify_failure_boundary() -> None:
     application_source = "\n".join(
         path.read_text(encoding="utf-8", errors="strict")
-        for path in sorted(TIMER_APPLICATION_PATH.glob("*.kt"))
+        for path in sorted(TIMER_APPLICATION_PATH.rglob("*.kt"))
     )
     adapter_source = TIMER_ADAPTER_PATH.read_text(encoding="utf-8", errors="strict")
     mapper_source = TIMER_FAILURE_MAPPER_PATH.read_text(encoding="utf-8", errors="strict")
     presentation_source = "\n".join(
         path.read_text(encoding="utf-8", errors="strict")
-        for path in sorted(TIMER_PRESENTATION_PATH.glob("*.kt"))
+        for path in sorted(TIMER_PRESENTATION_PATH.rglob("*.kt"))
     )
 
     for semantic in (
@@ -284,6 +312,43 @@ def verify_failure_boundary() -> None:
                     f"{string_path.relative_to(ROOT)} is missing {required_name}")
     require(localized_names[0] == localized_names[1],
             "Timer EN/TR string catalogs must remain structurally identical")
+
+
+def verify_zero_timer_suppression_debt() -> None:
+    timer_files = [
+        path
+        for root in TIMER_SOURCE_ROOTS
+        if root.is_dir()
+        for path in root.rglob("*")
+        if path.is_file() and path.suffix in {".kt", ".xml"}
+    ]
+    timer_files.extend(path for path in TIMER_SOURCE_FILES if path.is_file())
+    for path in sorted(set(timer_files)):
+        source = path.read_text(encoding="utf-8", errors="strict")
+        require(
+            not any(pattern.search(source) for pattern in SUPPRESSION_PATTERNS),
+            f"{path.relative_to(ROOT)} contains forbidden Timer suppression debt",
+        )
+
+    detekt_baseline = load_json(DETEKT_DEBT_BASELINE_PATH)
+    fingerprints = detekt_baseline.get("fingerprints")
+    require(isinstance(fingerprints, list), "Detekt debt baseline fingerprints are missing")
+    for fingerprint in fingerprints:
+        require(isinstance(fingerprint, dict), "Detekt debt fingerprint must be an object")
+        path = str(fingerprint.get("path", ""))
+        is_timer_path = "/timer/" in path.lower()
+        is_timer_file = Path(path).name.lower().startswith("devicetimer")
+        require(
+            not (is_timer_path or is_timer_file),
+            f"{DETEKT_DEBT_BASELINE_PATH.relative_to(ROOT)} retains Timer debt: {path}",
+        )
+
+    if LINT_BASELINE_PATH.exists():
+        lint_baseline = LINT_BASELINE_PATH.read_text(encoding="utf-8", errors="strict")
+        require(
+            re.search(r"(?:/timer/|DeviceTimer)", lint_baseline, re.IGNORECASE) is None,
+            f"{LINT_BASELINE_PATH.relative_to(ROOT)} retains Timer lint debt",
+        )
 
 
 def verify_golden() -> None:

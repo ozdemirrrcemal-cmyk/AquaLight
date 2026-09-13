@@ -1,5 +1,3 @@
-@file:Suppress("LongParameterList", "MagicNumber")
-
 package com.aqua.aqualight.data.devices.runtime.modules.timer
 
 import org.json.JSONArray
@@ -41,20 +39,52 @@ enum class DeviceTimerRuntimeReason(val wireValue: String) {
 }
 
 data class DeviceTimerRuntimeCapabilities(
+    val identity: DeviceTimerRuntimeIdentity,
+    val readSupport: DeviceTimerRuntimeReadSupport,
+    val mutationSupport: DeviceTimerRuntimeMutationSupport,
+    val heap: DeviceTimerRuntimeHeap
+) {
+    val module: String get() = identity.module
+    val configApplyScope: String get() = identity.configApplyScope
+    val event: String get() = identity.event
+    val readOnly: Boolean get() = readSupport.readOnly
+    val supportsChannels: Boolean get() = readSupport.supportsChannels
+    val supportsChannelScopedStatus: Boolean get() = readSupport.supportsChannelScopedStatus
+    val supportsConfigApply: Boolean get() = mutationSupport.supportsConfigApply
+    val supportsChannelSet: Boolean get() = mutationSupport.supportsChannelSet
+    val supportsSchedules: Boolean get() = mutationSupport.supportsSchedules
+    val supportsSpansMidnight: Boolean get() = mutationSupport.supportsSpansMidnight
+    val supportsTemporaryOverride: Boolean get() = mutationSupport.supportsTemporaryOverride
+    val supportsChannelScopedConfigApply: Boolean
+        get() = mutationSupport.supportsChannelScopedConfigApply
+    val internalHeapMinimumFreeBytes: Long get() = heap.minimumFreeBytes
+    val internalHeapLargestFreeBlockBytes: Long get() = heap.largestFreeBlockBytes
+}
+
+data class DeviceTimerRuntimeIdentity(
     val module: String,
+    val configApplyScope: String,
+    val event: String
+)
+
+data class DeviceTimerRuntimeReadSupport(
     val readOnly: Boolean,
+    val supportsChannels: Boolean,
+    val supportsChannelScopedStatus: Boolean
+)
+
+data class DeviceTimerRuntimeMutationSupport(
     val supportsConfigApply: Boolean,
     val supportsChannelSet: Boolean,
     val supportsSchedules: Boolean,
-    val supportsChannels: Boolean,
     val supportsSpansMidnight: Boolean,
     val supportsTemporaryOverride: Boolean,
-    val supportsChannelScopedStatus: Boolean,
-    val supportsChannelScopedConfigApply: Boolean,
-    val configApplyScope: String,
-    val event: String,
-    val internalHeapMinimumFreeBytes: Long,
-    val internalHeapLargestFreeBlockBytes: Long
+    val supportsChannelScopedConfigApply: Boolean
+)
+
+data class DeviceTimerRuntimeHeap(
+    val minimumFreeBytes: Long,
+    val largestFreeBlockBytes: Long
 )
 
 data class DeviceTimerChannelEditable(
@@ -63,48 +93,124 @@ data class DeviceTimerChannelEditable(
     val hardwareCalibration: Boolean
 )
 
-@Suppress("LongParameterList")
 data class DeviceTimerChannelStatus(
+    val identity: DeviceTimerChannelIdentity,
+    val hardware: DeviceTimerChannelHardware,
+    val values: DeviceTimerChannelValues,
+    val state: DeviceTimerChannelState,
+    val transition: DeviceTimerChannelTransition,
+    val runtime: DeviceTimerChannelRuntime
+) {
+    val index: Int get() = identity.index
+    val listIndex: Int get() = identity.listIndex
+    val key: String get() = identity.key
+    val name: String get() = identity.name
+    val displayName: String get() = identity.displayName
+    val profileManaged: Boolean get() = identity.profileManaged
+    val editable: DeviceTimerChannelEditable get() = identity.editable
+    val channelKind: String get() = hardware.channelKind
+    val gpio: Int get() = hardware.gpio
+    val ledcChannel: Int get() = hardware.ledcChannel
+    val group: Int get() = hardware.group
+    val invert: Boolean get() = hardware.invert
+    val pwmResolutionBits: Int get() = hardware.pwmResolutionBits
+    val pwmFrequencyHz: Int get() = hardware.pwmFrequencyHz
+    val valueNow: Double get() = values.now
+    val valueAuto: Double get() = values.automatic
+    val valueManual: Double get() = values.manual
+    val manualTimeoutMs: Long get() = values.manualTimeoutMs
+    val regime: DeviceTimerRegime get() = state.regime
+    val outputHealth: DeviceTimerOutputHealth get() = state.outputHealth
+    val physicalFeedbackAvailable: Boolean get() = state.physicalFeedbackAvailable
+    val scheduleCount: Int get() = state.scheduleCount
+    val operatingState: DeviceTimerOperatingState get() = state.operatingState
+    val activeSlotId: Int? get() = transition.activeSlotId
+    val activeSlotName: String? get() = transition.activeSlotName
+    val nextTransitionType: DeviceTimerNextTransitionType get() = transition.nextTransitionType
+    val nextTransitionAt: Long? get() = transition.nextTransitionAt
+    val runtimeReason: DeviceTimerRuntimeReason get() = runtime.reason
+    val clockReady: Boolean get() = runtime.clockReady
+    val temporaryOverrideActive: Boolean get() = runtime.temporaryOverrideActive
+    val temporaryOverrideRemainingMs: Long get() = runtime.temporaryOverrideRemainingMs
+}
+
+data class DeviceTimerChannelIdentity(
     val index: Int,
     val listIndex: Int,
     val key: String,
     val name: String,
     val displayName: String,
     val profileManaged: Boolean,
-    val regime: DeviceTimerRegime,
+    val editable: DeviceTimerChannelEditable
+)
+
+data class DeviceTimerChannelHardware(
     val channelKind: String,
     val gpio: Int,
     val ledcChannel: Int,
     val group: Int,
-    val valueNow: Double,
-    val valueAuto: Double,
-    val valueManual: Double,
-    val manualTimeoutMs: Long,
     val invert: Boolean,
     val pwmResolutionBits: Int,
-    val pwmFrequencyHz: Int,
+    val pwmFrequencyHz: Int
+)
+
+data class DeviceTimerChannelValues(
+    val now: Double,
+    val automatic: Double,
+    val manual: Double,
+    val manualTimeoutMs: Long
+)
+
+data class DeviceTimerChannelState(
+    val regime: DeviceTimerRegime,
     val outputHealth: DeviceTimerOutputHealth,
     val physicalFeedbackAvailable: Boolean,
     val scheduleCount: Int,
-    val operatingState: DeviceTimerOperatingState,
+    val operatingState: DeviceTimerOperatingState
+)
+
+data class DeviceTimerChannelTransition(
     val activeSlotId: Int?,
     val activeSlotName: String?,
     val nextTransitionType: DeviceTimerNextTransitionType,
-    val nextTransitionAt: Long?,
-    val runtimeReason: DeviceTimerRuntimeReason,
+    val nextTransitionAt: Long?
+)
+
+data class DeviceTimerChannelRuntime(
+    val reason: DeviceTimerRuntimeReason,
     val clockReady: Boolean,
     val temporaryOverrideActive: Boolean,
-    val temporaryOverrideRemainingMs: Long,
-    val editable: DeviceTimerChannelEditable
+    val temporaryOverrideRemainingMs: Long
 )
 
 data class DeviceTimerScheduleStatus(
+    val identity: DeviceTimerScheduleIdentity,
+    val window: DeviceTimerScheduleWindow
+) {
+    val index: Int get() = identity.index
+    val slotId: Int get() = identity.slotId
+    val enabled: Boolean get() = identity.enabled
+    val name: String get() = identity.name
+    val channelKey: String get() = identity.channelKey
+    val bound: Boolean get() = identity.bound
+    val weekdays: List<Boolean> get() = window.weekdays
+    val startTimeMs: Long get() = window.startTimeMs
+    val startTime: String get() = window.startTime
+    val endTimeMs: Long get() = window.endTimeMs
+    val endTime: String get() = window.endTime
+    val spansMidnight: Boolean get() = window.spansMidnight
+}
+
+data class DeviceTimerScheduleIdentity(
     val index: Int,
     val slotId: Int,
     val enabled: Boolean,
     val name: String,
     val channelKey: String,
-    val bound: Boolean,
+    val bound: Boolean
+)
+
+data class DeviceTimerScheduleWindow(
     val weekdays: List<Boolean>,
     val startTimeMs: Long,
     val startTime: String,
@@ -113,26 +219,53 @@ data class DeviceTimerScheduleStatus(
     val spansMidnight: Boolean
 )
 
-@Suppress("LongParameterList")
 data class DeviceTimerStatus(
+    val scope: DeviceTimerStatusScope,
+    val limits: DeviceTimerStatusLimits,
+    val authority: DeviceTimerStatusAuthority,
+    val channels: List<DeviceTimerChannelStatus>,
+    val schedules: List<DeviceTimerScheduleStatus>,
+    val runtime: DeviceTimerRuntimeCapabilities
+) {
+    val supported: Boolean get() = scope.supported
+    val channelScoped: Boolean get() = scope.channelScoped
+    val schedulesIncluded: Boolean get() = scope.schedulesIncluded
+    val selectedChannelKey: String? get() = scope.selectedChannelKey
+    val returnedScheduleCount: Int get() = scope.returnedScheduleCount
+    val channelCount: Int get() = limits.channelCount
+    val scheduleCount: Int get() = limits.scheduleCount
+    val maxSchedulesPerChannel: Int get() = limits.maxSchedulesPerChannel
+    val maxScheduleCount: Int get() = limits.maxScheduleCount
+    val revision: Long get() = authority.revision
+    val lockLoop: Boolean get() = authority.lockLoop
+    val schema: String get() = authority.schema
+    val schemaVersion: Int get() = authority.schemaVersion
+    val rootName: String get() = authority.rootName
+    val uptimeMs: Long get() = authority.uptimeMs
+}
+
+data class DeviceTimerStatusScope(
     val supported: Boolean,
+    val channelScoped: Boolean,
+    val schedulesIncluded: Boolean,
+    val selectedChannelKey: String?,
+    val returnedScheduleCount: Int
+)
+
+data class DeviceTimerStatusLimits(
     val channelCount: Int,
     val scheduleCount: Int,
     val maxSchedulesPerChannel: Int,
-    val maxScheduleCount: Int,
+    val maxScheduleCount: Int
+)
+
+data class DeviceTimerStatusAuthority(
     val revision: Long,
     val lockLoop: Boolean,
     val schema: String,
     val schemaVersion: Int,
     val rootName: String,
-    val uptimeMs: Long,
-    val channelScoped: Boolean,
-    val schedulesIncluded: Boolean,
-    val selectedChannelKey: String?,
-    val channels: List<DeviceTimerChannelStatus>,
-    val schedules: List<DeviceTimerScheduleStatus>,
-    val returnedScheduleCount: Int,
-    val runtime: DeviceTimerRuntimeCapabilities
+    val uptimeMs: Long
 )
 
 data class DeviceTimerStatusGetPayload(
@@ -307,47 +440,115 @@ data class DeviceTimerChannelSetPayload(
 }
 
 data class DeviceTimerConfigApplyResult(
+    val mutation: DeviceTimerConfigMutationResult,
+    val transport: DeviceTimerMutationTransport,
+    val application: DeviceTimerConfigApplication,
+    val channel: DeviceTimerChannelStatus
+) {
+    val operation: String get() = mutation.operation
+    val changed: Boolean get() = mutation.changed
+    val saved: Boolean get() = mutation.saved
+    val saveRequested: Boolean get() = mutation.saveRequested
+    val revision: Long get() = mutation.revision
+    val channelKey: String get() = transport.channelKey
+    val runtimeTransport: String get() = transport.runtimeTransport
+    val command: String get() = transport.command
+    val appliedDisplayName: Boolean get() = application.appliedDisplayName
+    val replacedSchedules: Boolean get() = application.replacedSchedules
+}
+
+data class DeviceTimerConfigMutationResult(
     val operation: String,
     val changed: Boolean,
     val saved: Boolean,
     val saveRequested: Boolean,
+    val revision: Long
+)
+
+data class DeviceTimerMutationTransport(
     val channelKey: String,
-    val revision: Long,
     val runtimeTransport: String,
-    val command: String,
+    val command: String
+)
+
+data class DeviceTimerConfigApplication(
     val appliedDisplayName: Boolean,
-    val replacedSchedules: Boolean,
-    val channel: DeviceTimerChannelStatus
+    val replacedSchedules: Boolean
 )
 
 data class DeviceTimerChannelSetResult(
+    val mutation: DeviceTimerChannelMutationResult,
+    val target: DeviceTimerChannelMutationTarget,
+    val authority: DeviceTimerMutationAuthority,
+    val transport: DeviceTimerMutationTransport,
+    val channel: DeviceTimerChannelStatus
+) {
+    val operation: String get() = mutation.operation
+    val changed: Boolean get() = mutation.changed
+    val persistentChanged: Boolean get() = mutation.persistentChanged
+    val temporaryOverrideCancelled: Boolean get() = mutation.temporaryOverrideCancelled
+    val saved: Boolean get() = mutation.saved
+    val saveRequested: Boolean get() = mutation.saveRequested
+    val channelKey: String get() = target.channelKey
+    val regime: DeviceTimerRegime get() = target.regime
+    val durationMs: Long get() = target.durationMs
+    val revision: Long get() = authority.revision
+    val runtimeTransport: String get() = transport.runtimeTransport
+    val command: String get() = transport.command
+}
+
+data class DeviceTimerChannelMutationResult(
     val operation: String,
     val changed: Boolean,
     val persistentChanged: Boolean,
     val temporaryOverrideCancelled: Boolean,
     val saved: Boolean,
-    val saveRequested: Boolean,
+    val saveRequested: Boolean
+)
+
+data class DeviceTimerChannelMutationTarget(
     val channelKey: String,
     val regime: DeviceTimerRegime,
-    val durationMs: Long,
-    val revision: Long,
-    val runtimeTransport: String,
-    val command: String,
-    val channel: DeviceTimerChannelStatus
+    val durationMs: Long
+)
+
+data class DeviceTimerMutationAuthority(
+    val revision: Long
 )
 
 data class DeviceTimerStatusChange(
+    val event: DeviceTimerStatusChangeEvent,
+    val output: DeviceTimerStatusChangeOutput,
+    val transition: DeviceTimerChannelTransition,
+    val override: DeviceTimerTemporaryOverride
+) {
+    val sequence: Long get() = event.sequence
+    val occurredAtMs: Long get() = event.occurredAtMs
+    val operatingState: DeviceTimerOperatingState get() = output.operatingState
+    val runtimeReason: DeviceTimerRuntimeReason get() = output.runtimeReason
+    val clockReady: Boolean get() = output.clockReady
+    val activeSlotId: Int? get() = transition.activeSlotId
+    val activeSlotName: String? get() = transition.activeSlotName
+    val nextTransitionType: DeviceTimerNextTransitionType get() = transition.nextTransitionType
+    val nextTransitionAt: Long? get() = transition.nextTransitionAt
+    val temporaryOverrideActive: Boolean get() = override.active
+    val temporaryOverrideRemainingMs: Long get() = override.remainingMs
+}
+
+data class DeviceTimerStatusChangeEvent(
     val sequence: Long,
-    val occurredAtMs: Long,
+    val occurredAtMs: Long
+)
+
+data class DeviceTimerStatusChangeOutput(
     val operatingState: DeviceTimerOperatingState,
-    val activeSlotId: Int?,
-    val activeSlotName: String?,
-    val nextTransitionType: DeviceTimerNextTransitionType,
-    val nextTransitionAt: Long?,
     val runtimeReason: DeviceTimerRuntimeReason,
-    val clockReady: Boolean,
-    val temporaryOverrideActive: Boolean,
-    val temporaryOverrideRemainingMs: Long
+    val clockReady: Boolean
+)
+
+data class DeviceTimerTemporaryOverride(
+    val active: Boolean,
+    val remainingMs: Long
 )
 
 data class DeviceTimerStatusChangedEvent(
@@ -372,35 +573,33 @@ private fun List<DeviceTimerScheduleConfig>.validateTimerScheduleReplacement() {
     }
 }
 
-@Suppress("NestedBlockDepth")
-private fun DeviceTimerScheduleConfig.overlaps(other: DeviceTimerScheduleConfig): Boolean {
-    val firstDuration = if (endTimeMs > startTimeMs) {
+private fun DeviceTimerScheduleConfig.overlaps(other: DeviceTimerScheduleConfig): Boolean =
+    weeklyIntervals().any { first ->
+        other.weeklyIntervals().any { second -> first.overlaps(second) }
+    }
+
+private fun DeviceTimerScheduleConfig.weeklyIntervals(): List<TimerInterval> =
+    weekdays.indices
+        .filter { day -> weekdays[day] }
+        .flatMap { day ->
+            val start = day * DeviceTimerRuntimeContract.Limit.DAY_MILLISECONDS + startTimeMs
+            val end = start + durationMillis()
+            listOf(
+                TimerInterval(start, end),
+                TimerInterval(start - TIMER_WEEK_MILLISECONDS, end - TIMER_WEEK_MILLISECONDS),
+                TimerInterval(start + TIMER_WEEK_MILLISECONDS, end + TIMER_WEEK_MILLISECONDS)
+            )
+        }
+
+private fun DeviceTimerScheduleConfig.durationMillis(): Long =
+    if (endTimeMs > startTimeMs) {
         endTimeMs - startTimeMs
     } else {
         DeviceTimerRuntimeContract.Limit.DAY_MILLISECONDS - startTimeMs + endTimeMs
     }
-    val secondDuration = if (other.endTimeMs > other.startTimeMs) {
-        other.endTimeMs - other.startTimeMs
-    } else {
-        DeviceTimerRuntimeContract.Limit.DAY_MILLISECONDS - other.startTimeMs + other.endTimeMs
-    }
-    for (firstDay in weekdays.indices) {
-        if (!weekdays[firstDay]) continue
-        val firstStart = firstDay * DeviceTimerRuntimeContract.Limit.DAY_MILLISECONDS + startTimeMs
-        val firstEnd = firstStart + firstDuration
-        for (secondDay in other.weekdays.indices) {
-            if (!other.weekdays[secondDay]) continue
-            val secondBase =
-                secondDay * DeviceTimerRuntimeContract.Limit.DAY_MILLISECONDS + other.startTimeMs
-            for (weekOffset in -1..1) {
-                val secondStart = secondBase +
-                    weekOffset * TIMER_WEEK_MILLISECONDS
-                val secondEnd = secondStart + secondDuration
-                if (firstStart < secondEnd && secondStart < firstEnd) return true
-            }
-        }
-    }
-    return false
+
+private data class TimerInterval(val start: Long, val end: Long) {
+    fun overlaps(other: TimerInterval): Boolean = start < other.end && other.start < end
 }
 
 private fun requireTimerMutationBudget(data: JSONObject) {
@@ -408,7 +607,8 @@ private fun requireTimerMutationBudget(data: JSONObject) {
     require(decodedBytes <= DeviceTimerRuntimeContract.Limit.DECODED_DATA_MAXIMUM_BYTES) {
         "Timer mutation exceeds the decoded WebSocket data budget."
     }
-    val encodedCharacters = 4 * ((decodedBytes + 2) / 3)
+    val encodedCharacters = BASE64_BLOCK_CHARACTERS *
+        ((decodedBytes + BASE64_PADDING_BYTES) / BASE64_BLOCK_BYTES)
     require(encodedCharacters <=
         DeviceTimerRuntimeContract.Limit.ENCODED_DATA_MAXIMUM_CHARACTERS) {
         "Timer mutation exceeds the encoded WebSocket data budget."
@@ -426,4 +626,8 @@ private fun timerJsonKeyCount(value: Any): Int = when (value) {
     else -> 0
 }
 
-private const val TIMER_WEEK_MILLISECONDS = 7L * 86_400_000L
+private const val TIMER_WEEK_MILLISECONDS = TIMER_WEEKDAY_COUNT *
+    DeviceTimerRuntimeContract.Limit.DAY_MILLISECONDS
+private const val BASE64_BLOCK_CHARACTERS = 4
+private const val BASE64_PADDING_BYTES = 2
+private const val BASE64_BLOCK_BYTES = 3

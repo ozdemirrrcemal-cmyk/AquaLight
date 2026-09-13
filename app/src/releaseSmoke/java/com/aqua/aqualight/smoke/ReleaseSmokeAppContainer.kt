@@ -46,7 +46,7 @@ import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningDiscovery
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningProgressOperations
 import com.aqua.aqualight.data.devices.remove.OwnerDeviceDataCleaner
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
-import com.aqua.aqualight.data.devices.timer.DefaultDeviceTimerControlOperations
+import com.aqua.aqualight.data.devices.timer.control.DefaultDeviceTimerControlOperations
 import com.aqua.aqualight.data.notifications.NotificationPlatform
 import com.aqua.aqualight.data.recovery.DefaultLocalDataRecoveryOperations
 import com.aqua.aqualight.data.user.StartupAppearanceCache
@@ -68,9 +68,9 @@ import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewMo
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.DeviceCoolingRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.status.DeviceCoolingSystemStatusViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root.DeviceLightRootViewModel
-import com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootViewModel
-import com.aqua.aqualight.ui.tabs.devices.detail.timer.channel.DeviceTimerChannelViewModel
-import com.aqua.aqualight.ui.tabs.devices.detail.timer.program.DeviceTimerProgramViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.timer.presentation.root.DeviceTimerRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.timer.presentation.channel.DeviceTimerChannelViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.timer.presentation.program.DeviceTimerProgramViewModel
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
 import com.aqua.aqualight.ui.tabs.settings.SettingsViewModel

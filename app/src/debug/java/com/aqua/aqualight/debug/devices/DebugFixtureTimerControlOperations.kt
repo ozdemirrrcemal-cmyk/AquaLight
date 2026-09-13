@@ -1,13 +1,13 @@
 package com.aqua.aqualight.debug.devices
 
-import com.aqua.aqualight.application.devices.timer.DeviceTimerChannelRegime
-import com.aqua.aqualight.application.devices.timer.DeviceTimerCommandFailure
-import com.aqua.aqualight.application.devices.timer.DeviceTimerControlFailure
-import com.aqua.aqualight.application.devices.timer.DeviceTimerControlOperations
-import com.aqua.aqualight.application.devices.timer.DeviceTimerControlResult
-import com.aqua.aqualight.application.devices.timer.DeviceTimerControlSnapshot
-import com.aqua.aqualight.application.devices.timer.DeviceTimerDisplayNameUpdate
-import com.aqua.aqualight.application.devices.timer.DeviceTimerScheduleDraft
+import com.aqua.aqualight.application.devices.timer.control.DeviceTimerChannelRegime
+import com.aqua.aqualight.application.devices.timer.control.DeviceTimerCommandFailure
+import com.aqua.aqualight.application.devices.timer.control.DeviceTimerControlFailure
+import com.aqua.aqualight.application.devices.timer.control.DeviceTimerControlOperations
+import com.aqua.aqualight.application.devices.timer.control.DeviceTimerControlResult
+import com.aqua.aqualight.application.devices.timer.control.DeviceTimerControlSnapshot
+import com.aqua.aqualight.application.devices.timer.control.DeviceTimerDisplayNameUpdate
+import com.aqua.aqualight.application.devices.timer.control.DeviceTimerScheduleDraft
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 

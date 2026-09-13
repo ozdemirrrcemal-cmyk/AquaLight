@@ -138,8 +138,8 @@ internal class DeviceTimerRuntimeStateStore {
         if (!previous.sameTimerChannelIdentity(channel)) return@synchronized false
         val scheduleCount = status.scheduleCount - previous.scheduleCount + channel.scheduleCount
         val patchedStatus = status.copy(
-            scheduleCount = scheduleCount,
-            revision = revision,
+            limits = status.limits.copy(scheduleCount = scheduleCount),
+            authority = status.authority.copy(revision = revision),
             channels = status.channels.map { existing ->
                 if (existing.key == channel.key) channel else existing
             }
@@ -155,78 +155,22 @@ internal class DeviceTimerRuntimeStateStore {
         true
     }
 
-    @Suppress("LongMethod", "ReturnCount")
     fun recordRuntimeEvent(
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration,
         event: DeviceTimerStatusChangedEvent
     ): DeviceTimerStateEventResult = synchronized(lock) {
-        if (!authority.acceptsPatch(deviceUid, generation)) {
-            return@synchronized DeviceTimerStateEventResult.RefreshRequired(event.channelKey)
-        }
-        val current = _states.value[deviceUid]
-            ?: return@synchronized DeviceTimerStateEventResult.RefreshRequired(event.channelKey)
-        if (!current.authoritative || current.connectionGeneration != generation) {
-            return@synchronized DeviceTimerStateEventResult.RefreshRequired(event.channelKey)
-        }
-        val previousSequence = current.lastEventSequence
-        if (previousSequence != null) {
-            if (!isNewerTimerCounter(event.change.sequence, previousSequence)) {
-                return@synchronized DeviceTimerStateEventResult.Ignored
+        when (val decision = decideRuntimeEvent(deviceUid, generation, event)) {
+            RuntimeEventDecision.Ignored -> DeviceTimerStateEventResult.Ignored
+            is RuntimeEventDecision.Refresh -> {
+                decision.state?.let { state -> publish(deviceUid, state) }
+                DeviceTimerStateEventResult.RefreshRequired(event.channelKey)
             }
-            if (event.change.sequence != nextTimerSequence(previousSequence)) {
-                publish(
-                    deviceUid,
-                    current.copy(
-                        lastEventSequence = event.change.sequence,
-                        requiresStatusRefresh = true
-                    )
-                )
-                return@synchronized DeviceTimerStateEventResult.RefreshRequired(event.channelKey)
+            is RuntimeEventDecision.Apply -> {
+                publish(deviceUid, decision.apply(event))
+                DeviceTimerStateEventResult.Applied
             }
         }
-
-        val status = current.status
-        val channel = status?.channels?.singleOrNull { it.key == event.channelKey }
-        if (status == null || channel == null || status.revision != event.revision) {
-            publish(
-                deviceUid,
-                current.copy(
-                    lastEventSequence = event.change.sequence,
-                    requiresStatusRefresh = true
-                )
-            )
-            return@synchronized DeviceTimerStateEventResult.RefreshRequired(event.channelKey)
-        }
-
-        val patchedChannel = channel.withRuntime(event.change)
-        val patchedStatus = status.copy(
-            uptimeMs = newerTimerUptime(status.uptimeMs, event.publishedAtMs),
-            channels = status.channels.map { existing ->
-                if (existing.key == event.channelKey) patchedChannel else existing
-            }
-        )
-        val detail = current.channelDetails[event.channelKey]
-        val details = if (detail?.revision == event.revision) {
-            current.channelDetails + (
-                event.channelKey to detail.copy(
-                    uptimeMs = newerTimerUptime(detail.uptimeMs, event.publishedAtMs),
-                    channels = listOf(patchedChannel)
-                )
-            )
-        } else {
-            current.channelDetails
-        }
-        publish(
-            deviceUid,
-            current.copy(
-                status = patchedStatus,
-                channelDetails = details,
-                lastEventSequence = event.change.sequence,
-                requiresStatusRefresh = false
-            )
-        )
-        DeviceTimerStateEventResult.Applied
     }
 
     fun clear(deviceUid: DeviceUid) {
@@ -241,6 +185,88 @@ internal class DeviceTimerRuntimeStateStore {
     private fun publish(deviceUid: DeviceUid, state: DeviceTimerRuntimeState) {
         _states.value = _states.value + (deviceUid to state)
     }
+
+    private fun decideRuntimeEvent(
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration,
+        event: DeviceTimerStatusChangedEvent
+    ): RuntimeEventDecision {
+        val current = _states.value[deviceUid]
+        val sequence = current?.lastEventSequence
+        val status = current?.status
+        val channel = status?.channels?.singleOrNull { it.key == event.channelKey }
+        val stateReady = authority.acceptsPatch(deviceUid, generation) &&
+            current != null && current.authoritative && current.connectionGeneration == generation
+        val sequenceStale = sequence != null &&
+            !isNewerTimerCounter(event.change.sequence, sequence)
+        val sequenceMissing = sequence != null &&
+            event.change.sequence != nextTimerSequence(sequence)
+        val snapshotMismatch = status == null || channel == null ||
+            status.revision != event.revision
+        return when {
+            !stateReady -> RuntimeEventDecision.Refresh()
+            sequenceStale -> RuntimeEventDecision.Ignored
+            sequenceMissing || snapshotMismatch -> RuntimeEventDecision.Refresh(
+                current.copy(
+                    lastEventSequence = event.change.sequence,
+                    requiresStatusRefresh = true
+                )
+            )
+            else -> RuntimeEventDecision.Apply(
+                requireNotNull(current),
+                requireNotNull(status),
+                requireNotNull(channel)
+            )
+        }
+    }
+}
+
+private sealed interface RuntimeEventDecision {
+    data object Ignored : RuntimeEventDecision
+    data class Refresh(val state: DeviceTimerRuntimeState? = null) : RuntimeEventDecision
+    data class Apply(
+        val current: DeviceTimerRuntimeState,
+        val status: DeviceTimerStatus,
+        val channel: DeviceTimerChannelStatus
+    ) : RuntimeEventDecision
+}
+
+private fun RuntimeEventDecision.Apply.apply(
+    event: DeviceTimerStatusChangedEvent
+): DeviceTimerRuntimeState {
+    val patchedChannel = channel.withRuntime(event.change)
+    val patchedStatus = status.copy(
+        authority = status.authority.copy(
+            uptimeMs = newerTimerUptime(status.uptimeMs, event.publishedAtMs)
+        ),
+        channels = status.channels.replaceTimerChannel(event.channelKey, patchedChannel)
+    )
+    val detail = current.channelDetails[event.channelKey]
+    val details = if (detail?.revision == event.revision) {
+        current.channelDetails + (
+            event.channelKey to detail.copy(
+                authority = detail.authority.copy(
+                    uptimeMs = newerTimerUptime(detail.uptimeMs, event.publishedAtMs)
+                ),
+                channels = listOf(patchedChannel)
+            )
+        )
+    } else {
+        current.channelDetails
+    }
+    return current.copy(
+        status = patchedStatus,
+        channelDetails = details,
+        lastEventSequence = event.change.sequence,
+        requiresStatusRefresh = false
+    )
+}
+
+private fun List<DeviceTimerChannelStatus>.replaceTimerChannel(
+    channelKey: String,
+    replacement: DeviceTimerChannelStatus
+): List<DeviceTimerChannelStatus> = map { channel ->
+    if (channel.key == channelKey) replacement else channel
 }
 
 private fun replaceGlobalStatus(
@@ -270,10 +296,12 @@ private fun mergeChannelStatus(
             ?: error("Timer channel-scoped status does not belong to the global snapshot.")
         require(previous.sameTimerChannelIdentity(selectedChannel))
         currentStatus.copy(
-            scheduleCount = detail.scheduleCount,
-            revision = detail.revision,
-            lockLoop = detail.lockLoop,
-            uptimeMs = detail.uptimeMs,
+            limits = currentStatus.limits.copy(scheduleCount = detail.scheduleCount),
+            authority = currentStatus.authority.copy(
+                revision = detail.revision,
+                lockLoop = detail.lockLoop,
+                uptimeMs = detail.uptimeMs
+            ),
             channels = currentStatus.channels.map { channel ->
                 if (channel.key == channelKey) selectedChannel else channel
             },
@@ -302,15 +330,14 @@ internal sealed interface DeviceTimerStateEventResult {
 private fun DeviceTimerChannelStatus.withRuntime(
     change: DeviceTimerStatusChange
 ): DeviceTimerChannelStatus = copy(
-    operatingState = change.operatingState,
-    activeSlotId = change.activeSlotId,
-    activeSlotName = change.activeSlotName,
-    nextTransitionType = change.nextTransitionType,
-    nextTransitionAt = change.nextTransitionAt,
-    runtimeReason = change.runtimeReason,
-    clockReady = change.clockReady,
-    temporaryOverrideActive = change.temporaryOverrideActive,
-    temporaryOverrideRemainingMs = change.temporaryOverrideRemainingMs
+    state = state.copy(operatingState = change.operatingState),
+    transition = change.transition,
+    runtime = runtime.copy(
+        reason = change.runtimeReason,
+        clockReady = change.clockReady,
+        temporaryOverrideActive = change.temporaryOverrideActive,
+        temporaryOverrideRemainingMs = change.temporaryOverrideRemainingMs
+    )
 )
 
 private fun newerTimerUptime(current: Long, candidate: Long): Long =

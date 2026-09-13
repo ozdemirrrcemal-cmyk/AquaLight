@@ -4,7 +4,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 ROOT_VIEW_MODEL = ROOT / (
-    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/"
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/presentation/root/"
     "DeviceTimerRootViewModel.kt"
 )
 RUNTIME_PROVIDER = ROOT / (

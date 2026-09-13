@@ -1,5 +1,3 @@
-@file:Suppress("MagicNumber")
-
 package com.aqua.aqualight.data.devices.runtime.modules.timer
 
 import org.json.JSONObject
@@ -17,15 +15,15 @@ class DeviceTimerRuntimeContractTest {
         val schedule = DeviceTimerRuntimeFixtures.schedulePayload()
         val config = DeviceTimerConfigApplyPayload(
             channelKey = "channel1",
-            expectedRevision = 7L,
+            expectedRevision = TIMER_TEST_BASE_REVISION,
             displayName = DeviceTimerDisplayNameUpdate.Value("Filter"),
             schedules = listOf(schedule)
         ).toJson()
         val channelSet = DeviceTimerChannelSetPayload(
             channelKey = "channel1",
-            expectedRevision = 7L,
+            expectedRevision = TIMER_TEST_BASE_REVISION,
             regime = DeviceTimerRegime.OFF,
-            durationMs = 300_000L,
+            durationMs = TIMER_TEST_OVERRIDE_DURATION_MILLIS,
             save = false
         ).toJson()
 
@@ -87,7 +85,7 @@ class DeviceTimerRuntimeContractTest {
         val schedule = DeviceTimerRuntimeFixtures.schedulePayload()
         val payload = DeviceTimerConfigApplyPayload(
             channelKey = " CHANNEL1 ",
-            expectedRevision = 7L,
+            expectedRevision = TIMER_TEST_BASE_REVISION,
             displayName = DeviceTimerDisplayNameUpdate.Value(" Return Pump "),
             schedules = listOf(schedule)
         ).toJson()
@@ -117,12 +115,12 @@ class DeviceTimerRuntimeContractTest {
     fun `display name clear is explicit JSON null and schedule delete is channel scoped`() {
         val clear = DeviceTimerConfigApplyPayload(
             channelKey = "channel1",
-            expectedRevision = 7L,
+            expectedRevision = TIMER_TEST_BASE_REVISION,
             displayName = DeviceTimerDisplayNameUpdate.Clear
         ).toJson()
         val delete = DeviceTimerConfigApplyPayload(
             channelKey = "channel1",
-            expectedRevision = 7L,
+            expectedRevision = TIMER_TEST_BASE_REVISION,
             schedules = emptyList()
         ).toJson()
 
@@ -134,17 +132,23 @@ class DeviceTimerRuntimeContractTest {
 
     @Test
     fun `twelve o'clock encodes as whole-minute milliseconds and sub-minute input is rejected`() {
-        assertEquals(43_200_000L, timerScheduleBoundaryMillis(12, 0))
-        assertEquals("12:00", timerTimeText(timerScheduleBoundaryMillis(12, 0)))
+        assertEquals(
+            TIMER_TEST_NOON_BOUNDARY_MILLIS,
+            timerScheduleBoundaryMillis(TIMER_TEST_START_HOUR, 0)
+        )
+        assertEquals(
+            "12:00",
+            timerTimeText(timerScheduleBoundaryMillis(TIMER_TEST_START_HOUR, 0))
+        )
         assertTrue(
             runCatching {
                 DeviceTimerScheduleConfig(
                     slotId = 1,
                     enabled = true,
                     name = "Invalid",
-                    weekdays = List(7) { true },
-                    startTimeMs = 1_000L,
-                    endTimeMs = 60_000L
+                    weekdays = List(TIMER_TEST_WEEKDAY_COUNT) { true },
+                    startTimeMs = TIMER_TEST_SUB_MINUTE_MILLIS,
+                    endTimeMs = TIMER_TEST_MINUTE_MILLIS
                 )
             }.isFailure
         )
@@ -154,13 +158,13 @@ class DeviceTimerRuntimeContractTest {
     fun `duplicate slots and cross-midnight overlaps are rejected before transport`() {
         val overnight = DeviceTimerRuntimeFixtures.schedulePayload(
             slotId = 1,
-            startTimeMs = timerScheduleBoundaryMillis(23, 0),
+            startTimeMs = timerScheduleBoundaryMillis(TIMER_TEST_DAY_END_HOUR, 0),
             endTimeMs = timerScheduleBoundaryMillis(1, 0),
             weekdays = listOf(true, false, false, false, false, false, false)
         )
         val nextDayOverlap = DeviceTimerRuntimeFixtures.schedulePayload(
             slotId = 2,
-            startTimeMs = timerScheduleBoundaryMillis(0, 30),
+            startTimeMs = timerScheduleBoundaryMillis(0, TIMER_TEST_HALF_HOUR_MINUTES),
             endTimeMs = timerScheduleBoundaryMillis(2, 0),
             weekdays = listOf(false, true, false, false, false, false, false)
         )
@@ -169,7 +173,7 @@ class DeviceTimerRuntimeContractTest {
             runCatching {
                 DeviceTimerConfigApplyPayload(
                     channelKey = "channel1",
-                    expectedRevision = 7L,
+                    expectedRevision = TIMER_TEST_BASE_REVISION,
                     schedules = listOf(overnight, overnight)
                 )
             }.isFailure
@@ -178,7 +182,7 @@ class DeviceTimerRuntimeContractTest {
             runCatching {
                 DeviceTimerConfigApplyPayload(
                     channelKey = "channel1",
-                    expectedRevision = 7L,
+                    expectedRevision = TIMER_TEST_BASE_REVISION,
                     schedules = listOf(overnight, nextDayOverlap)
                 )
             }.isFailure

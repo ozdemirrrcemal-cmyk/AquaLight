@@ -324,7 +324,7 @@
 
     <fragment
         android:id="@+id/deviceTimerRootFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.timer.DeviceTimerRootFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.timer.presentation.root.DeviceTimerRootFragment"
         android:label="@string/device_family_timer"
         tools:layout="@layout/fragment_device_timer_root">
         <argument
@@ -348,7 +348,7 @@
 
     <fragment
         android:id="@+id/deviceTimerChannelFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.timer.channel.DeviceTimerChannelFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.timer.presentation.channel.DeviceTimerChannelFragment"
         android:label="@string/device_family_timer"
         tools:layout="@layout/fragment_device_timer_channel">
         <argument android:name="deviceUid" app:argType="string" />
@@ -364,7 +364,7 @@
 
     <fragment
         android:id="@+id/deviceTimerProgramFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.timer.program.DeviceTimerProgramFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.timer.presentation.program.DeviceTimerProgramFragment"
         android:label="@string/device_timer_program_title"
         tools:layout="@layout/fragment_device_timer_program">
         <argument android:name="deviceUid" app:argType="string" />
@@ -410,7 +410,7 @@
 
     <fragment
         android:id="@+id/deviceTimerSettingsFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.timer.settings.DeviceTimerSettingsFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.timer.presentation.settings.DeviceTimerSettingsFragment"
         android:label="@string/device_settings_title"
         tools:layout="@layout/fragment_device_family_settings">
         <argument
