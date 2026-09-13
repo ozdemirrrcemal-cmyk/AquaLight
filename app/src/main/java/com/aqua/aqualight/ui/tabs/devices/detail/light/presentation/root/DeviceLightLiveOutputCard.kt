@@ -86,10 +86,22 @@ private fun deviceLightLiveOutputChannels(
 private fun deviceLightLiveOutputDescription(): String =
     stringResource(
         R.string.device_light_live_output_content_description,
-        AquaLightLiveOutputPreviewSpec.redPercent,
-        AquaLightLiveOutputPreviewSpec.greenPercent,
-        AquaLightLiveOutputPreviewSpec.bluePercent,
-        AquaLightLiveOutputPreviewSpec.whitePercent
+        stringResource(
+            R.string.device_light_live_output_percent_format,
+            AquaLightLiveOutputPreviewSpec.redPercent
+        ),
+        stringResource(
+            R.string.device_light_live_output_percent_format,
+            AquaLightLiveOutputPreviewSpec.greenPercent
+        ),
+        stringResource(
+            R.string.device_light_live_output_percent_format,
+            AquaLightLiveOutputPreviewSpec.bluePercent
+        ),
+        stringResource(
+            R.string.device_light_live_output_percent_format,
+            AquaLightLiveOutputPreviewSpec.whitePercent
+        )
     )
 
 @Composable

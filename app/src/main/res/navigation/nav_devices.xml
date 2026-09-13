@@ -179,6 +179,41 @@
             app:exitAnim="@anim/nav_slide_out_left"
             app:popEnterAnim="@anim/nav_slide_in_left"
             app:popExitAnim="@anim/nav_slide_out_right" />
+        <action
+            android:id="@+id/action_deviceLightRootFragment_to_deviceLightManualControlFragment"
+            app:destination="@id/deviceLightManualControlFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+        <action
+            android:id="@+id/action_deviceLightRootFragment_to_deviceLightAutomaticProgramsFragment"
+            app:destination="@id/deviceLightAutomaticProgramsFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+        <action
+            android:id="@+id/action_deviceLightRootFragment_to_deviceLightCustomCurveFragment"
+            app:destination="@id/deviceLightCustomCurveFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+        <action
+            android:id="@+id/action_deviceLightRootFragment_to_deviceLightAdaptationFragment"
+            app:destination="@id/deviceLightAdaptationFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+        <action
+            android:id="@+id/action_deviceLightRootFragment_to_deviceLightSystemFragment"
+            app:destination="@id/deviceLightSystemFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
     </fragment>
 
     <fragment
@@ -194,6 +229,46 @@
         android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.quicksetup.DeviceLightQuickSetupFragment"
         android:label="@string/device_menu_quick_setup_title"
         tools:layout="@layout/fragment_device_light_quick_setup">
+        <argument android:name="deviceUid" app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceLightManualControlFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.menu.DeviceLightManualControlFragment"
+        android:label="@string/device_menu_manual_control_title"
+        tools:layout="@layout/fragment_device_light_empty_menu">
+        <argument android:name="deviceUid" app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceLightAutomaticProgramsFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.menu.DeviceLightAutomaticProgramsFragment"
+        android:label="@string/device_light_automatic_programs_title"
+        tools:layout="@layout/fragment_device_light_empty_menu">
+        <argument android:name="deviceUid" app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceLightCustomCurveFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.menu.DeviceLightCustomCurveFragment"
+        android:label="@string/device_light_custom_curve_title"
+        tools:layout="@layout/fragment_device_light_empty_menu">
+        <argument android:name="deviceUid" app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceLightAdaptationFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.menu.DeviceLightAdaptationFragment"
+        android:label="@string/device_light_adaptation_title"
+        tools:layout="@layout/fragment_device_light_empty_menu">
+        <argument android:name="deviceUid" app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceLightSystemFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.menu.DeviceLightSystemFragment"
+        android:label="@string/device_light_system_title"
+        tools:layout="@layout/fragment_device_light_empty_menu">
         <argument android:name="deviceUid" app:argType="string" />
     </fragment>
 

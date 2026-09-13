@@ -47,13 +47,17 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
     }
 
     private fun setupDashboardContent() {
+        val actions = DeviceLightDashboardActions(
+            onQuickSetupClick = ::openQuickSetup,
+            onMenuClick = ::openDashboardMenu
+        )
         binding.lightDashboardCompose.apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
                 DeviceLightDashboardScreen(
                     state = state,
-                    onQuickSetupClick = ::openQuickSetup
+                    actions = actions
                 )
             }
         }
@@ -126,6 +130,36 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
                     deviceUid = args.deviceUid
                 )
         )
+    }
+
+    private fun openDashboardMenu(destination: DeviceLightMenuDestination) {
+        if (!viewModel.uiState.value.contentEnabled) return
+        val navController = findNavController()
+        if (navController.currentDestination?.id != R.id.deviceLightRootFragment) return
+        when (destination) {
+            DeviceLightMenuDestination.MANUAL_CONTROL -> navController.navigate(
+                DeviceLightRootFragmentDirections
+                    .actionDeviceLightRootFragmentToDeviceLightManualControlFragment(args.deviceUid)
+            )
+            DeviceLightMenuDestination.AUTOMATIC_PROGRAMS -> navController.navigate(
+                DeviceLightRootFragmentDirections
+                    .actionDeviceLightRootFragmentToDeviceLightAutomaticProgramsFragment(
+                        args.deviceUid
+                    )
+            )
+            DeviceLightMenuDestination.CUSTOM_LIGHT_CURVE -> navController.navigate(
+                DeviceLightRootFragmentDirections
+                    .actionDeviceLightRootFragmentToDeviceLightCustomCurveFragment(args.deviceUid)
+            )
+            DeviceLightMenuDestination.ADAPTATION -> navController.navigate(
+                DeviceLightRootFragmentDirections
+                    .actionDeviceLightRootFragmentToDeviceLightAdaptationFragment(args.deviceUid)
+            )
+            DeviceLightMenuDestination.SYSTEM -> navController.navigate(
+                DeviceLightRootFragmentDirections
+                    .actionDeviceLightRootFragmentToDeviceLightSystemFragment(args.deviceUid)
+            )
+        }
     }
 
     private fun observeViewModel() {

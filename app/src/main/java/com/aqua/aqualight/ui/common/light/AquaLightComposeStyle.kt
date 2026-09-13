@@ -123,6 +123,33 @@ object AquaLightDashboardGeometry {
     val quickSetupIconSize = 15.dp
     val quickSetupOutlineWidth = 1.dp
     val quickSetupShape = RoundedCornerShape(percent = 50)
+
+    val controlsCardMinimumHeight = 156.dp
+    val controlsRowHeight = 52.dp
+    val controlsRowHorizontalPadding = 14.dp
+    val controlsRowIconSize = 27.dp
+    val controlsRowIconGap = 12.dp
+    val controlsRowTextGap = 1.dp
+    val controlsDividerHeight = 1.dp
+    val controlsChevronSize = 14.dp
+    val controlsChevronStrokeWidth = 1.8.dp
+    val controlsTrailingGap = 8.dp
+    val activeChipShape = RoundedCornerShape(12.dp)
+    val activeChipHorizontalPadding = 10.dp
+    val activeChipVerticalPadding = 4.dp
+
+    val secondaryCardGap = 8.dp
+    val secondaryCardMinimumHeight = 74.dp
+    val secondaryIconSize = 29.dp
+    val secondaryIconGap = 10.dp
+    val secondaryTitleGap = 2.dp
+    val systemStatusTopGap = 3.dp
+    val systemStatusDotSize = 6.dp
+    val systemStatusGap = 6.dp
+    const val adaptationCardWeight = 0.96f
+    const val systemCardWeight = 1.04f
+
+    val dashboardIconStrokeWidth = 1.7.dp
 }
 
 object AquaLightDashboardAlpha {
@@ -133,6 +160,8 @@ object AquaLightDashboardAlpha {
     const val liveOutputRail = 0.22f
     const val liveOutputFillStart = 0.86f
     const val disabledControl = 0.38f
+    const val activeChipBackground = 0.20f
+    const val controlsDivider = 0.72f
 }
 
 object AquaLightPlanChartSpec {
@@ -151,6 +180,16 @@ object AquaLightLiveOutputPreviewSpec {
     const val greenPercent = 30
     const val bluePercent = 40
     const val whitePercent = 50
+}
+
+object AquaLightControlsPreviewSpec {
+    const val programCount = 3
+    const val customCurvePointCount = 12
+    const val adaptationDaysRemaining = 12
+    const val adaptationPercent = 82
+    const val systemTemperatureCelsius = 42.8
+    const val systemFanOnePercent = 35
+    const val systemFanTwoPercent = 35
 }
 
 @Immutable

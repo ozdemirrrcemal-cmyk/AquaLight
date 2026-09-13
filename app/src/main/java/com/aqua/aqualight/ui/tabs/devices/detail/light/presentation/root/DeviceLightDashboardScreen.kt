@@ -15,7 +15,7 @@ import com.aqua.aqualight.ui.common.light.AquaLightDashboardGeometry
 @Composable
 internal fun DeviceLightDashboardScreen(
     state: DeviceLightRootUiState,
-    onQuickSetupClick: () -> Unit,
+    actions: DeviceLightDashboardActions,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -45,7 +45,19 @@ internal fun DeviceLightDashboardScreen(
         item(key = "light-controls-header") {
             DeviceLightControlsHeader(
                 enabled = state.contentEnabled,
-                onQuickSetupClick = onQuickSetupClick
+                onQuickSetupClick = actions.onQuickSetupClick
+            )
+        }
+        item(key = "light-control-screens") {
+            DeviceLightControlScreensCard(
+                enabled = state.contentEnabled,
+                onMenuClick = actions.onMenuClick
+            )
+        }
+        item(key = "light-secondary-screens") {
+            DeviceLightSecondaryScreensRow(
+                enabled = state.contentEnabled,
+                onMenuClick = actions.onMenuClick
             )
         }
     }

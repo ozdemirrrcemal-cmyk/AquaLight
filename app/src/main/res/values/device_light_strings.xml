@@ -47,7 +47,27 @@
     <string name="device_light_live_output_blue">Blue</string>
     <string name="device_light_live_output_white">White</string>
     <string name="device_light_live_output_percent_format">%1$d%%</string>
-    <string name="device_light_live_output_content_description">Live output. Red %1$d percent, green %2$d percent, blue %3$d percent, white %4$d percent.</string>
+    <string name="device_light_live_output_content_description">Live output. Red %1$s, green %2$s, blue %3$s, white %4$s.</string>
     <string name="device_light_controls_title">Control screens</string>
     <string name="device_light_quick_setup_button">Smart setup</string>
+    <string name="device_light_manual_control_subtitle">Control channels directly</string>
+    <string name="device_light_automatic_programs_title">Automatic programs</string>
+    <plurals name="device_light_program_count">
+        <item quantity="one">%1$d program saved</item>
+        <item quantity="other">%1$d programs saved</item>
+    </plurals>
+    <string name="device_light_custom_curve_title">Custom light curve</string>
+    <plurals name="device_light_custom_curve_summary">
+        <item quantity="one">%1$d point · Weekdays</item>
+        <item quantity="other">%1$d points · Weekdays</item>
+    </plurals>
+    <string name="device_light_active_uppercase">ACTIVE</string>
+    <string name="device_light_adaptation_title">Adaptation</string>
+    <plurals name="device_light_adaptation_summary">
+        <item quantity="one">%1$d day left · %2$d%%</item>
+        <item quantity="other">%1$d days left · %2$d%%</item>
+    </plurals>
+    <string name="device_light_system_title">System</string>
+    <string name="device_light_system_summary">%1$.1f °C · Fan 1 %2$d%% · Fan 2 %3$d%%</string>
+    <string name="device_light_system_normal_status">Thermal and power limit normal</string>
 </resources>

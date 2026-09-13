@@ -77,6 +77,11 @@ LIGHT_QUICK_SETUP_FRAGMENT = Path(
     "DeviceLightQuickSetupFragment.kt"
 )
 LIGHT_QUICK_SETUP_LAYOUT = LAYOUT_ROOT / "fragment_device_light_quick_setup.xml"
+LIGHT_EMPTY_MENU_FRAGMENT = Path(
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/presentation/menu/"
+    "DeviceLightEmptyMenuFragment.kt"
+)
+LIGHT_EMPTY_MENU_LAYOUT = LAYOUT_ROOT / "fragment_device_light_empty_menu.xml"
 COOLING_LAYOUT = LAYOUT_ROOT / "fragment_device_cooling_root.xml"
 TIMER_FRAGMENT = Path(
     "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/presentation/root/"
@@ -559,6 +564,11 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
         LIGHT_QUICK_SETUP_FRAGMENT,
         errors,
     )
+    light_empty_menu_fragment = _read(
+        repository_root,
+        LIGHT_EMPTY_MENU_FRAGMENT,
+        errors,
+    )
     cooling_fragment = _read(repository_root, COOLING_FRAGMENT, errors)
     cooling_view_model = _read(repository_root, COOLING_VIEW_MODEL, errors)
     cooling_availability = _read(repository_root, COOLING_AVAILABILITY, errors)
@@ -566,6 +576,7 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
     light_layout = _read(repository_root, LIGHT_LAYOUT, errors)
     light_library_layout = _read(repository_root, LIGHT_LIBRARY_LAYOUT, errors)
     light_quick_setup_layout = _read(repository_root, LIGHT_QUICK_SETUP_LAYOUT, errors)
+    light_empty_menu_layout = _read(repository_root, LIGHT_EMPTY_MENU_LAYOUT, errors)
     cooling_layout = _read(repository_root, COOLING_LAYOUT, errors)
     timer_fragment = _read(repository_root, TIMER_FRAGMENT, errors)
     timer_view_model = _read(repository_root, TIMER_VIEW_MODEL, errors)
@@ -688,6 +699,51 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
     ):
         _require(NAV_AQUARIUM, nav_aquarium, errors, token, reason)
 
+    light_dashboard_destinations = (
+        "DeviceLightManualControlFragment",
+        "DeviceLightAutomaticProgramsFragment",
+        "DeviceLightCustomCurveFragment",
+        "DeviceLightAdaptationFragment",
+        "DeviceLightSystemFragment",
+    )
+    for destination in light_dashboard_destinations:
+        action_token = (
+            'android:id="@+id/action_deviceLightRootFragment_to_'
+            f'{destination[0].lower()}{destination[1:]}"'
+        )
+        destination_token = (
+            'app:destination="@id/'
+            f'{destination[0].lower()}{destination[1:]}"'
+        )
+        _require(
+            NAV_DEVICES,
+            nav_devices,
+            errors,
+            action_token,
+            f"Light dashboard action must remain in the devices graph: {destination}",
+        )
+        _require(
+            NAV_DEVICES,
+            nav_devices,
+            errors,
+            destination_token,
+            f"Light dashboard action must target its canonical destination: {destination}",
+        )
+        _require(
+            NAV_AQUARIUM,
+            nav_aquarium,
+            errors,
+            action_token,
+            f"Light dashboard action must remain in the aquarium graph: {destination}",
+        )
+        _require(
+            LIGHT_FRAGMENT,
+            light_fragment,
+            errors,
+            f"actionDeviceLightRootFragmentTo{destination}(",
+            f"Light dashboard navigation must use Safe Args: {destination}",
+        )
+
     errors.extend(
         validate_header_contract(
             LIGHT_FRAGMENT,
@@ -758,6 +814,39 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
     ):
         if forbidden in light_quick_setup_fragment:
             errors.append(f"{LIGHT_QUICK_SETUP_FRAGMENT}: {reason}: {forbidden}")
+    for token, reason in (
+        (
+            "binding.appHeader.setupAquaHeader(",
+            "Light empty menus must use the shared AquaHeader binder",
+        ),
+        (
+            "config = AquaHeaderConfig(",
+            "Light empty menus must use the shared AquaHeader config",
+        ),
+        (
+            "titleOverride = getString(titleRes)",
+            "Light empty-menu titles must resolve from String resources",
+        ),
+        (
+            "findNavController().navigateUp()",
+            "Light empty-menu back behavior must use the shared navigation host",
+        ),
+    ):
+        _require(
+            LIGHT_EMPTY_MENU_FRAGMENT,
+            light_empty_menu_fragment,
+            errors,
+            token,
+            reason,
+        )
+
+    for forbidden, reason in (
+        ("MaterialToolbar", "Light empty menus must not construct a parallel toolbar"),
+        ("setSupportActionBar", "Light empty menus must not construct a parallel action bar"),
+        ('titleOverride = "', "Light empty-menu titles must not be hard-coded"),
+    ):
+        if forbidden in light_empty_menu_fragment:
+            errors.append(f"{LIGHT_EMPTY_MENU_FRAGMENT}: {reason}: {forbidden}")
     errors.extend(
         validate_header_contract(
             DOSING_FRAGMENT,
@@ -907,6 +996,12 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
         validate_layout_contract(
             LIGHT_QUICK_SETUP_LAYOUT,
             light_quick_setup_layout,
+        )
+    )
+    errors.extend(
+        validate_layout_contract(
+            LIGHT_EMPTY_MENU_LAYOUT,
+            light_empty_menu_layout,
         )
     )
     errors.extend(
