@@ -156,6 +156,77 @@ object AquaLightDashboardGeometry {
     val dashboardIconStrokeWidth = 1.7.dp
 }
 
+/** Central layout contract for the product-adaptive Manual light surface. */
+object AquaLightManualGeometry {
+    val screenHorizontalPadding = AquaLightDashboardGeometry.screenHorizontalPadding
+    val screenTopPadding = 2.dp
+    val screenBottomPadding = AquaLightDashboardGeometry.screenBottomPadding
+    val sectionGap = AquaLightDashboardGeometry.cardGap
+
+    val controlContentVerticalPadding = 12.dp
+    val controlContentHorizontalPadding = 12.dp
+    val controlContentGap = 8.dp
+    val powerGaugeSize = 132.dp
+    val powerGaugeTrackWidth = 14.dp
+    val powerGaugeValueGap = 4.dp
+
+    val channelRowHeight = 52.dp
+    val channelLabelWidth = 52.dp
+    val channelValueWidth = 42.dp
+    val channelStepTouchSize = 48.dp
+    val channelStepVisualSize = 38.dp
+    val channelStepOutlineWidth = 1.dp
+    val channelSliderTouchHeight = 48.dp
+    val channelSliderTrackHeight = 8.dp
+    val channelSliderThumbRadius = 10.dp
+    val channelSliderHorizontalInset = 2.dp
+
+    val bannerCornerRadius = AquaDeviceCardGeometry.cornerRadius
+    val bannerOutlineWidth = AquaDeviceCardGeometry.outlineWidth
+    val bannerHorizontalPadding = 12.dp
+    val bannerVerticalPadding = 10.dp
+    val bannerIconSize = 20.dp
+    val bannerContentGap = 10.dp
+    val bannerTextGap = 2.dp
+
+    val quickSceneButtonHeight = 52.dp
+    val quickSceneButtonGap = 8.dp
+    val quickSceneButtonCornerRadius = 12.dp
+    val quickSceneSwatchSize = 20.dp
+    val quickSceneContentGap = 8.dp
+    val quickSceneHorizontalPadding = 10.dp
+
+    val actionButtonHeight = 54.dp
+    val actionButtonGap = 8.dp
+    val actionButtonCornerRadius = 13.dp
+    val actionButtonOutlineWidth = 1.dp
+    val actionButtonIconSize = 24.dp
+    val actionButtonContentGap = 8.dp
+    val actionButtonHorizontalPadding = 10.dp
+
+    val powerOffButtonHeight = 72.dp
+    val powerOffIconSize = 28.dp
+    val powerOffContentGap = 7.dp
+    val powerOffTextGap = 2.dp
+
+    val informationIconSize = 18.dp
+    val informationContentGap = 7.dp
+    val informationHorizontalPadding = 8.dp
+}
+
+object AquaLightManualAlpha {
+    const val gaugeTrack = 0.24f
+    const val channelTrack = 0.24f
+    const val disabledControl = 0.38f
+    const val bannerSurface = 0.10f
+    const val buttonPressed = 0.14f
+}
+
+object AquaLightManualTypographySpec {
+    val powerValueFontSize = 25.sp
+    val powerValueLineHeight = 30.sp
+}
+
 object AquaLightDashboardAlpha {
     const val horizontalGrid = 0.40f
     const val verticalGrid = 0.30f
@@ -198,6 +269,19 @@ object AquaLightControlsPreviewSpec {
     const val systemFanTwoPercent = 35
 }
 
+/** UI-only values used until the Manual application boundary is connected. */
+object AquaLightManualPreviewSpec {
+    const val estimatedPowerWatts = 46
+    const val estimatedPowerRatio = 0.46f
+    const val redPercent = 20
+    const val greenPercent = 30
+    const val bluePercent = 40
+    const val whitePercent = 50
+    const val minimumPercent = 0
+    const val maximumPercent = 100
+    const val stepPercent = 1
+}
+
 @Immutable
 data class AquaLightPlanChartColors(
     val red: Color,
@@ -222,6 +306,18 @@ data class AquaLightLiveOutputTypography(
     val title: TextStyle,
     val label: TextStyle,
     val value: TextStyle
+)
+
+@Immutable
+data class AquaLightManualColors(
+    val card: AquaDeviceCardColors,
+    val red: Color,
+    val green: Color,
+    val blue: Color,
+    val white: Color,
+    val fish: Color,
+    val shrimp: Color,
+    val action: Color
 )
 
 @Immutable
@@ -348,5 +444,20 @@ fun aquaLightLiveOutputTypography(
         title = typography.title,
         label = typography.body,
         value = typography.body.copy(fontFamily = interSemiBold)
+    )
+}
+
+@Composable
+fun aquaLightManualColors(): AquaLightManualColors {
+    val cardColors = aquaLightDashboardColors()
+    return AquaLightManualColors(
+        card = cardColors,
+        red = colorResource(R.color.aqua_card_state_danger),
+        green = colorResource(R.color.aqua_accent),
+        blue = colorResource(R.color.aqua_button_blue),
+        white = colorResource(R.color.aqua_content_on_dark),
+        fish = colorResource(R.color.aqua_card_state_warning),
+        shrimp = colorResource(R.color.aqua_light_preset_shrimp_swatch),
+        action = colorResource(R.color.aqua_button_blue)
     )
 }

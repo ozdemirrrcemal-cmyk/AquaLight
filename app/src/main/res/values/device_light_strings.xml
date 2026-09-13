@@ -71,4 +71,38 @@
     <string name="device_light_system_temperature">%1$.1f °C</string>
     <string name="device_light_system_fans_summary">F1 %1$d%% · F2 %2$d%%</string>
     <string name="device_light_system_status_normal">Normal</string>
+
+    <!-- Manual light control -->
+    <string name="device_light_manual_estimated_power">Estimated power</string>
+    <string name="device_light_manual_power_value_format">%1$d W</string>
+    <string name="device_light_manual_power_description">%1$s, %2$s</string>
+    <string name="device_light_manual_minus_symbol" translatable="false">−</string>
+    <string name="device_light_manual_plus_symbol" translatable="false">+</string>
+    <string name="device_light_manual_decrease_channel_description">Decrease %1$s channel by one percent</string>
+    <string name="device_light_manual_increase_channel_description">Increase %1$s channel by one percent</string>
+    <string name="device_light_manual_slider_description">%1$s channel intensity</string>
+    <string name="device_light_manual_quick_scenes_title">Quick Scenes</string>
+    <string name="device_light_manual_preset_red">Red</string>
+    <string name="device_light_manual_preset_green">Green</string>
+    <string name="device_light_manual_preset_blue">Blue</string>
+    <string name="device_light_manual_preset_fish">Fish</string>
+    <string name="device_light_manual_preset_shrimp">Shrimp</string>
+    <string name="device_light_manual_preset_all">All</string>
+    <string name="device_light_manual_preset_scene_description">%1$s scene. Red %2$d percent, green %3$d percent, blue %4$d percent, white %5$d percent.</string>
+    <string name="device_light_manual_load">Load</string>
+    <string name="device_light_manual_load_description">Load a saved light scene</string>
+    <string name="device_light_manual_save_as">Save as</string>
+    <string name="device_light_manual_save_as_description">Save the requested channel values as a new scene</string>
+    <string name="device_light_manual_power_off">Turn light off</string>
+    <string name="device_light_manual_power_off_summary">Sets every channel to 0%</string>
+    <string name="device_light_manual_power_off_description">Turn the light off by setting every channel to zero percent</string>
+    <string name="device_light_manual_protection_information">Safety protection automatically limits actual output when needed.</string>
+    <string name="device_light_manual_power_limited_title">Power limit active</string>
+    <string name="device_light_manual_power_limited_message">Requested values are preserved while actual output is limited to a safe level.</string>
+    <string name="device_light_manual_power_limited_percent_message">Requested values are preserved; actual output is limited to %1$d%%.</string>
+    <string name="device_light_manual_thermal_limited_title">Temperature protection active</string>
+    <string name="device_light_manual_thermal_limited_message">Light output is reduced until the device returns to a safe temperature.</string>
+    <string name="device_light_manual_thermal_limited_percent_message">The device is cooling; actual output is limited to %1$d%%.</string>
+    <string name="device_light_manual_thermal_shutdown_title">Light temporarily turned off</string>
+    <string name="device_light_manual_thermal_shutdown_message">Output remains off until the device returns to a safe temperature.</string>
 </resources>

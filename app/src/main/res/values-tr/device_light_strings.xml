@@ -71,4 +71,36 @@
     <string name="device_light_system_temperature">%1$.1f °C</string>
     <string name="device_light_system_fans_summary">F1 %%%1$d · F2 %%%2$d</string>
     <string name="device_light_system_status_normal">Normal</string>
+
+    <!-- Manuel ışık kontrolü -->
+    <string name="device_light_manual_estimated_power">Tahmini güç</string>
+    <string name="device_light_manual_power_value_format">%1$d W</string>
+    <string name="device_light_manual_power_description">%1$s, %2$s</string>
+    <string name="device_light_manual_decrease_channel_description">%1$s kanalını yüzde bir azalt</string>
+    <string name="device_light_manual_increase_channel_description">%1$s kanalını yüzde bir artır</string>
+    <string name="device_light_manual_slider_description">%1$s kanal yoğunluğu</string>
+    <string name="device_light_manual_quick_scenes_title">Hızlı Sahneler</string>
+    <string name="device_light_manual_preset_red">Kırmızı</string>
+    <string name="device_light_manual_preset_green">Yeşil</string>
+    <string name="device_light_manual_preset_blue">Mavi</string>
+    <string name="device_light_manual_preset_fish">Balık</string>
+    <string name="device_light_manual_preset_shrimp">Karides</string>
+    <string name="device_light_manual_preset_all">Tümü</string>
+    <string name="device_light_manual_preset_scene_description">%1$s sahnesi. Kırmızı %%%2$d, yeşil %%%3$d, mavi %%%4$d, beyaz %%%5$d.</string>
+    <string name="device_light_manual_load">Yükle</string>
+    <string name="device_light_manual_load_description">Kayıtlı bir ışık sahnesini yükle</string>
+    <string name="device_light_manual_save_as">Farklı kaydet</string>
+    <string name="device_light_manual_save_as_description">İstenen kanal değerlerini yeni bir sahne olarak kaydet</string>
+    <string name="device_light_manual_power_off">Işığı kapat</string>
+    <string name="device_light_manual_power_off_summary">Tüm kanalları yüzde 0 yapar</string>
+    <string name="device_light_manual_power_off_description">Tüm kanalları yüzde sıfır yaparak ışığı kapat</string>
+    <string name="device_light_manual_protection_information">Koruma gerektiğinde gerçek çıkışı otomatik sınırlar.</string>
+    <string name="device_light_manual_power_limited_title">Güç sınırı etkin</string>
+    <string name="device_light_manual_power_limited_message">İstenen değerler korunurken gerçek çıkış güvenli seviyede sınırlandırılıyor.</string>
+    <string name="device_light_manual_power_limited_percent_message">İstenen değerler korunuyor; gerçek çıkış %%%1$d ile sınırlandırılıyor.</string>
+    <string name="device_light_manual_thermal_limited_title">Sıcaklık koruması etkin</string>
+    <string name="device_light_manual_thermal_limited_message">Cihaz güvenli sıcaklığa dönene kadar ışık çıkışı azaltılıyor.</string>
+    <string name="device_light_manual_thermal_limited_percent_message">Cihaz soğuyor; gerçek çıkış %%%1$d ile sınırlandırılıyor.</string>
+    <string name="device_light_manual_thermal_shutdown_title">Işık geçici olarak kapatıldı</string>
+    <string name="device_light_manual_thermal_shutdown_message">Cihaz güvenli sıcaklığa dönene kadar çıkış kapalı kalır.</string>
 </resources>

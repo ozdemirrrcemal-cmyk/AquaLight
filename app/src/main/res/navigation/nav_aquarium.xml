@@ -372,10 +372,17 @@
 
     <fragment
         android:id="@+id/deviceLightManualControlFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.menu.DeviceLightManualControlFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual.DeviceLightManualControlFragment"
         android:label="@string/device_menu_manual_control_title"
-        tools:layout="@layout/fragment_device_light_empty_menu">
+        tools:layout="@layout/fragment_device_light_manual_control">
         <argument android:name="deviceUid" app:argType="string" />
+        <action
+            android:id="@+id/action_deviceLightManualControlFragment_to_deviceLightLibraryFragment"
+            app:destination="@id/deviceLightLibraryFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
     </fragment>
 
     <fragment
