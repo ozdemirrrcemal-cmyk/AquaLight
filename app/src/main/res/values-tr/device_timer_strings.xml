@@ -67,7 +67,6 @@
     </plurals>
     <string name="device_timer_output_fault">Çıkışı kontrol edin</string>
     <string name="device_timer_updating">Güncelleniyor…</string>
-    <string name="device_timer_manage_programs">Programları yönet</string>
     <string name="device_timer_timed_on">Süreli aç</string>
     <string name="device_timer_timed_off">Süreli kapat</string>
     <string name="device_timer_manual_power_turn_on_description">Kanalı manuel aç</string>

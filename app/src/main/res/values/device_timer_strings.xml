@@ -67,7 +67,6 @@
     </plurals>
     <string name="device_timer_output_fault">Output needs attention</string>
     <string name="device_timer_updating">Updating…</string>
-    <string name="device_timer_manage_programs">Manage programs</string>
     <string name="device_timer_timed_on">Timed on</string>
     <string name="device_timer_timed_off">Timed off</string>
     <string name="device_timer_manual_power_turn_on_description">Turn channel on manually</string>
