@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -59,6 +60,11 @@ object AquaDeviceCardGeometry {
     val statusVerticalPadding = STATUS_VERTICAL_PADDING_DP.dp
     val contentGap = CONTENT_GAP_DP.dp
     val compactGap = COMPACT_GAP_DP.dp
+    val contentPadding = PaddingValues(
+        horizontal = contentHorizontalPadding,
+        vertical = contentVerticalPadding
+    )
+    val edgeToEdgeContentPadding = PaddingValues()
 }
 
 private val InterRegular = FontFamily(Font(R.font.inter_regular))
@@ -110,6 +116,7 @@ fun aquaDeviceCardTypography(colors: AquaDeviceCardColors): AquaDeviceCardTypogr
 @Composable
 fun AquaDeviceCardSurface(
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = AquaDeviceCardGeometry.contentPadding,
     content: @Composable BoxScope.() -> Unit
 ) {
     val colors = aquaDeviceCardColors()
@@ -123,10 +130,7 @@ fun AquaDeviceCardSurface(
                 color = colors.outline,
                 shape = shape
             )
-            .padding(
-                horizontal = AquaDeviceCardGeometry.contentHorizontalPadding,
-                vertical = AquaDeviceCardGeometry.contentVerticalPadding
-            ),
+            .padding(contentPadding),
         content = content
     )
 }

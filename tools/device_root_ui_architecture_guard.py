@@ -66,6 +66,11 @@ LIGHT_VIEW_MODEL = Path(
     "DeviceLightRootViewModel.kt"
 )
 LIGHT_LAYOUT = LAYOUT_ROOT / "fragment_device_light_root.xml"
+LIGHT_LIBRARY_FRAGMENT = Path(
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/presentation/library/"
+    "DeviceLightLibraryFragment.kt"
+)
+LIGHT_LIBRARY_LAYOUT = LAYOUT_ROOT / "fragment_device_light_library.xml"
 COOLING_LAYOUT = LAYOUT_ROOT / "fragment_device_cooling_root.xml"
 TIMER_FRAGMENT = Path(
     "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/presentation/root/"
@@ -541,11 +546,13 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
     dosing_fragment = _read(repository_root, DOSING_FRAGMENT, errors)
     light_fragment = _read(repository_root, LIGHT_FRAGMENT, errors)
     light_view_model = _read(repository_root, LIGHT_VIEW_MODEL, errors)
+    light_library_fragment = _read(repository_root, LIGHT_LIBRARY_FRAGMENT, errors)
     cooling_fragment = _read(repository_root, COOLING_FRAGMENT, errors)
     cooling_view_model = _read(repository_root, COOLING_VIEW_MODEL, errors)
     cooling_availability = _read(repository_root, COOLING_AVAILABILITY, errors)
     dosing_layout = _read(repository_root, DOSING_LAYOUT, errors)
     light_layout = _read(repository_root, LIGHT_LAYOUT, errors)
+    light_library_layout = _read(repository_root, LIGHT_LIBRARY_LAYOUT, errors)
     cooling_layout = _read(repository_root, COOLING_LAYOUT, errors)
     timer_fragment = _read(repository_root, TIMER_FRAGMENT, errors)
     timer_view_model = _read(repository_root, TIMER_VIEW_MODEL, errors)
@@ -633,6 +640,14 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
             'app:destination="@id/deviceCoolingSettingsFragment"',
             "Cooling settings action must target the canonical destination",
         ),
+        (
+            'android:id="@+id/action_deviceLightRootFragment_to_deviceLightLibraryFragment"',
+            "Light Library action must remain in the shared devices navigation graph",
+        ),
+        (
+            'app:destination="@id/deviceLightLibraryFragment"',
+            "Light Library action must target the canonical destination",
+        ),
     ):
         _require(NAV_DEVICES, nav_devices, errors, token, reason)
 
@@ -646,6 +661,33 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
             directions_action="actionDeviceLightRootFragmentToDeviceLightSettingsFragment(",
         )
     )
+    for token, reason in (
+        (
+            "binding.appHeader.setupAquaHeader(",
+            "Light Library must use the shared AquaHeader binder",
+        ),
+        (
+            "config = AquaHeaderConfig(",
+            "Light Library must use the shared AquaHeader config",
+        ),
+        (
+            "getString(R.string.device_light_library_title)",
+            "Light Library title must come from String resources",
+        ),
+        (
+            "findNavController().navigateUp()",
+            "Light Library back behavior must use the shared navigation host",
+        ),
+    ):
+        _require(LIGHT_LIBRARY_FRAGMENT, light_library_fragment, errors, token, reason)
+
+    for forbidden, reason in (
+        ("MaterialToolbar", "Light Library must not construct a parallel toolbar"),
+        ("setSupportActionBar", "Light Library must not construct a parallel action bar"),
+        ('titleOverride = "', "Light Library title must not be hard-coded"),
+    ):
+        if forbidden in light_library_fragment:
+            errors.append(f"{LIGHT_LIBRARY_FRAGMENT}: {reason}: {forbidden}")
     errors.extend(
         validate_header_contract(
             DOSING_FRAGMENT,
@@ -783,6 +825,12 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
             LIGHT_LAYOUT,
             light_layout,
             background_owned_by_shell=True,
+        )
+    )
+    errors.extend(
+        validate_layout_contract(
+            LIGHT_LIBRARY_LAYOUT,
+            light_library_layout,
         )
     )
     errors.extend(

@@ -2,7 +2,6 @@
 
 package com.aqua.aqualight.ui.common.light
 
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
@@ -22,45 +21,45 @@ import com.aqua.aqualight.ui.common.devicecard.aquaDeviceCardTypography
 /** Central visual contract for the Light control-surface hero. */
 object AquaLightHeroGeometry {
     val screenHorizontalPadding = 12.dp
-    val screenTopPadding = 8.dp
+    val screenTopPadding = 0.dp
     val heroOutlineWidth = AquaDeviceCardGeometry.outlineWidth
-    const val heroAspectRatio = 16f / 9f
+    const val heroAspectRatio = 1942f / 809f
 
     val titleBounds = AquaLightHeroBounds(
-        left = 0.057f,
-        top = 0.270f,
-        width = 0.295f,
-        height = 0.090f
+        left = 0.042f,
+        top = 0.245f,
+        width = 0.275f,
+        height = 0.140f
     )
     val subtitleBounds = AquaLightHeroBounds(
-        left = 0.057f,
-        top = 0.382f,
-        width = 0.300f,
-        height = 0.072f
+        left = 0.042f,
+        top = 0.380f,
+        width = 0.285f,
+        height = 0.100f
     )
     val statusBounds = AquaLightHeroBounds(
-        left = 0.057f,
-        top = 0.498f,
-        width = 0.242f,
-        height = 0.120f
+        left = 0.042f,
+        top = 0.455f,
+        width = 0.232f,
+        height = 0.149f
     )
     val powerBounds = AquaLightHeroBounds(
-        left = 0.885f,
-        top = 0.520f,
-        width = 0.092f,
-        height = 0.064f
+        left = 0.890f,
+        top = 0.510f,
+        width = 0.095f,
+        height = 0.100f
     )
     val estimatedBounds = AquaLightHeroBounds(
-        left = 0.882f,
-        top = 0.588f,
+        left = 0.890f,
+        top = 0.595f,
         width = 0.095f,
-        height = 0.046f
+        height = 0.070f
     )
     val colorTemperatureBounds = AquaLightHeroBounds(
-        left = 0.882f,
-        top = 0.704f,
+        left = 0.890f,
+        top = 0.665f,
         width = 0.095f,
-        height = 0.066f
+        height = 0.100f
     )
 
     val statusHorizontalPadding = 5.dp
@@ -76,7 +75,7 @@ object AquaLightDashboardGeometry {
     val screenBottomPadding = 24.dp
     val cardGap = 9.dp
 
-    val planCardMinimumHeight = 196.dp
+    val planCardMinimumHeight = 187.dp
     val planHeaderGap = 2.dp
     val planContentTopGap = 4.dp
     val planMarkerLabelHeight = 18.dp
@@ -103,20 +102,6 @@ object AquaLightDashboardGeometry {
     val planCurrentGuideDash = 5.dp
     val planCurrentGuideGap = 4.dp
     val planCurrentPointRadius = 3.dp
-
-    val librarySheetShape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
-    val librarySheetMinimumHeight = 260.dp
-    val librarySheetHorizontalPadding = 24.dp
-    val librarySheetBottomPadding = 28.dp
-    val libraryDragHandleWidth = 36.dp
-    val libraryDragHandleHeight = 4.dp
-    val libraryDragHandleTopPadding = 10.dp
-    val libraryTitleTopPadding = 18.dp
-    val libraryEmptyTopPadding = 32.dp
-    val libraryEmptyIconContainerSize = 64.dp
-    val libraryEmptyIconSize = 32.dp
-    val libraryEmptyTitleTopPadding = 16.dp
-    val libraryEmptyDescriptionTopPadding = 6.dp
 }
 
 object AquaLightDashboardAlpha {
@@ -124,10 +109,6 @@ object AquaLightDashboardAlpha {
     const val verticalGrid = 0.12f
     const val currentGuide = 0.88f
     const val inactiveLine = 0.96f
-    const val libraryScrim = 0.62f
-    const val libraryHandle = 0.46f
-    const val libraryIconSurface = 0.10f
-    const val libraryIconOutline = 0.42f
 }
 
 object AquaLightPlanChartSpec {
@@ -252,8 +233,3 @@ fun aquaLightPlanChartColors(
     grid = colors.outline,
     currentGuide = colors.primaryText
 )
-
-@Composable
-fun aquaLightLibraryScrimColor(): Color = colorResource(
-    R.color.aqua_system_bar_surface_argb
-).copy(alpha = AquaLightDashboardAlpha.libraryScrim)

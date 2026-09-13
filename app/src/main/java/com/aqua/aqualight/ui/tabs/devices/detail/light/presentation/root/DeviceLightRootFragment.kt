@@ -3,8 +3,6 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root
 import android.os.Bundle
 import android.view.View
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -34,7 +32,6 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
 
     private var _binding: FragmentDeviceLightRootBinding? = null
     private val binding get() = _binding!!
-    private var showLightLibrary by mutableStateOf(false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -55,9 +52,7 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
             setContent {
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
                 DeviceLightDashboardScreen(
-                    state = state,
-                    showLightLibrary = showLightLibrary,
-                    onLightLibraryDismiss = { showLightLibrary = false }
+                    state = state
                 )
             }
         }
@@ -98,7 +93,14 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
 
     private fun openLightLibrary() {
         if (!viewModel.uiState.value.contentEnabled) return
-        showLightLibrary = true
+        val navController = findNavController()
+        if (navController.currentDestination?.id != R.id.deviceLightRootFragment) return
+        navController.navigate(
+            DeviceLightRootFragmentDirections
+                .actionDeviceLightRootFragmentToDeviceLightLibraryFragment(
+                    deviceUid = args.deviceUid
+                )
+        )
     }
 
     private fun openSettings() {
@@ -147,7 +149,6 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
     }
 
     override fun onDestroyView() {
-        showLightLibrary = false
         _binding = null
         super.onDestroyView()
     }

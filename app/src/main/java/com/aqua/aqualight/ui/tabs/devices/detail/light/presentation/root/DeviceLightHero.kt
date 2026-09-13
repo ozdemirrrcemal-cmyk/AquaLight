@@ -37,6 +37,8 @@ import androidx.compose.ui.unit.DpSize
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.light.control.DeviceLightHeroSnapshot
 import com.aqua.aqualight.i18n.LocaleFormatter
+import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
+import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.light.AquaLightHeroBounds
 import com.aqua.aqualight.ui.common.light.AquaLightHeroColors
 import com.aqua.aqualight.ui.common.light.AquaLightHeroGeometry
@@ -54,37 +56,40 @@ internal fun DeviceLightHero(
     val typography = aquaLightHeroTypography(colors)
     val content = resolveHeroContent(presentation)
 
-    BoxWithConstraints(
+    AquaDeviceCardSurface(
         modifier = modifier
             .aspectRatio(AquaLightHeroGeometry.heroAspectRatio)
             .clearAndSetSemantics {
                 contentDescription = content.accessibilityText
-            }
+            },
+        contentPadding = AquaDeviceCardGeometry.edgeToEdgeContentPadding
     ) {
-        Image(
-            painter = painterResource(R.drawable.device_light_hero),
-            contentDescription = null,
-            contentScale = ContentScale.FillBounds,
-            modifier = Modifier.matchParentSize()
-        )
-        val parentSize = DpSize(maxWidth, maxHeight)
-        HeroPrimaryCopy(
-            content = content,
-            typography = typography,
-            parentSize = parentSize
-        )
-        HeroHealthPill(
-            text = content.health,
-            tone = presentation.healthTone,
-            colors = colors,
-            typography = typography,
-            parentSize = parentSize
-        )
-        HeroMetrics(
-            content = content,
-            typography = typography,
-            parentSize = parentSize
-        )
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            Image(
+                painter = painterResource(R.drawable.device_light_hero_card),
+                contentDescription = null,
+                contentScale = ContentScale.FillBounds,
+                modifier = Modifier.matchParentSize()
+            )
+            val parentSize = DpSize(maxWidth, maxHeight)
+            HeroPrimaryCopy(
+                content = content,
+                typography = typography,
+                parentSize = parentSize
+            )
+            HeroHealthPill(
+                text = content.health,
+                tone = presentation.healthTone,
+                colors = colors,
+                typography = typography,
+                parentSize = parentSize
+            )
+            HeroMetrics(
+                content = content,
+                typography = typography,
+                parentSize = parentSize
+            )
+        }
     }
 }
 
@@ -161,7 +166,7 @@ private fun HeroMetrics(
         style = typography.metricValue,
         bounds = AquaLightHeroGeometry.powerBounds,
         parentSize = parentSize,
-        textAlign = TextAlign.Center
+        textAlign = TextAlign.Start
     )
     HeroLabel(
         text = content.estimated,
@@ -175,7 +180,7 @@ private fun HeroMetrics(
         style = typography.metricValue,
         bounds = AquaLightHeroGeometry.colorTemperatureBounds,
         parentSize = parentSize,
-        textAlign = TextAlign.Center
+        textAlign = TextAlign.Start
     )
 }
 

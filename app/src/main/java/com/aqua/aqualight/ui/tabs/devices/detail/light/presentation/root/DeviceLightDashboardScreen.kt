@@ -15,8 +15,6 @@ import com.aqua.aqualight.ui.common.light.AquaLightDashboardGeometry
 @Composable
 internal fun DeviceLightDashboardScreen(
     state: DeviceLightRootUiState,
-    showLightLibrary: Boolean,
-    onLightLibraryDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -41,9 +39,4 @@ internal fun DeviceLightDashboardScreen(
             DeviceLightPlanCard()
         }
     }
-
-    DeviceLightLibrarySheet(
-        visible = showLightLibrary,
-        onDismissRequest = onLightLibraryDismiss
-    )
 }
