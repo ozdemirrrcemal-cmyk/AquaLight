@@ -60,10 +60,9 @@ internal fun ManualQuickScenesCard(
                     rowPresets.forEach { preset ->
                         ManualQuickSceneButton(
                             preset = preset,
-                            selected = state.selectedPreset == preset.id,
-                            enabled = state.contentEnabled,
+                            state = state,
+                            actions = actions,
                             visuals = visuals,
-                            onClick = { actions.onPresetClick(preset.id) },
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -79,12 +78,12 @@ internal fun ManualQuickScenesCard(
 @Composable
 private fun ManualQuickSceneButton(
     preset: DeviceLightManualPresetUiState,
-    selected: Boolean,
-    enabled: Boolean,
+    state: DeviceLightManualControlUiState,
+    actions: DeviceLightManualControlActions,
     visuals: DeviceLightManualVisuals,
-    onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val selected = state.selectedPreset == preset.id
     val label = stringResource(preset.labelRes)
     val sceneDescription = stringResource(
         R.string.device_light_manual_preset_scene_description,
@@ -109,7 +108,11 @@ private fun ManualQuickSceneButton(
             )
             .border(AquaLightManualGeometry.actionButtonOutlineWidth, outline, shape)
             .clearAndSetSemantics { contentDescription = sceneDescription }
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .clickable(
+                enabled = state.contentEnabled,
+                role = Role.Button,
+                onClick = { actions.onPresetClick(preset.id) }
+            )
             .padding(horizontal = AquaLightManualGeometry.quickSceneHorizontalPadding),
         contentAlignment = Alignment.Center
     ) {

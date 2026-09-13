@@ -6,6 +6,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
@@ -29,24 +30,19 @@ import kotlin.math.roundToInt
 
 @Composable
 internal fun AquaLightManualPercentSlider(
-    percent: Int,
-    enabled: Boolean,
-    channelColor: Color,
-    stateText: String,
-    accessibilityDescription: String,
-    onValueChanged: (Int) -> Unit,
-    onValueChangeFinished: () -> Unit,
+    state: AquaLightManualPercentSliderState,
+    actions: AquaLightManualPercentSliderActions,
     modifier: Modifier = Modifier
 ) {
     var widthPx by remember { mutableFloatStateOf(0f) }
-    val value = percent.coerceIn(
+    val value = state.percent.coerceIn(
         AquaLightManualPreviewSpec.minimumPercent,
         AquaLightManualPreviewSpec.maximumPercent
     )
-    val currentOnValueChanged = rememberUpdatedState(onValueChanged)
-    val currentOnValueChangeFinished = rememberUpdatedState(onValueChangeFinished)
+    val currentOnValueChanged = rememberUpdatedState(actions.onValueChanged)
+    val currentOnValueChangeFinished = rememberUpdatedState(actions.onValueChangeFinished)
     val interaction = ManualSliderInteraction(
-        enabled = enabled,
+        enabled = state.enabled,
         widthPx = widthPx,
         onValueChanged = { changed -> currentOnValueChanged.value(changed) },
         onValueChangeFinished = { currentOnValueChangeFinished.value() }
@@ -60,8 +56,8 @@ internal fun AquaLightManualPercentSlider(
             .manualSliderTapInput(interaction)
             .manualSliderDragInput(interaction)
             .semantics {
-                contentDescription = accessibilityDescription
-                stateDescription = stateText
+                contentDescription = state.accessibilityDescription
+                stateDescription = state.stateText
                 progressBarRangeInfo = ProgressBarRangeInfo(
                     current = value.toFloat(),
                     range = AquaLightManualPreviewSpec.minimumPercent.toFloat()..
@@ -69,7 +65,7 @@ internal fun AquaLightManualPercentSlider(
                     steps = AquaLightManualPreviewSpec.maximumPercent -
                         AquaLightManualPreviewSpec.minimumPercent - 1
                 )
-                if (enabled) {
+                if (state.enabled) {
                     setProgress { requested ->
                         interaction.onValueChanged(requested.roundToInt())
                         interaction.finishChange()
@@ -80,9 +76,23 @@ internal fun AquaLightManualPercentSlider(
                 }
             }
     ) {
-        drawManualPercentSlider(value, channelColor, enabled)
+        drawManualPercentSlider(value, state.channelColor, state.enabled)
     }
 }
+
+@Immutable
+internal data class AquaLightManualPercentSliderState(
+    val percent: Int,
+    val enabled: Boolean,
+    val channelColor: Color,
+    val stateText: String,
+    val accessibilityDescription: String
+)
+
+internal data class AquaLightManualPercentSliderActions(
+    val onValueChanged: (Int) -> Unit,
+    val onValueChangeFinished: () -> Unit
+)
 
 private fun Modifier.manualSliderTapInput(
     interaction: ManualSliderInteraction
