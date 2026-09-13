@@ -244,6 +244,7 @@ object AquaLightLibraryGeometry {
     val moreTouchSize = 36.dp
     val moreDotRadius = 1.4.dp
     val moreDotGap = 5.dp
+    const val moreDotCount = 3
 
     val manualRowHeight = 27.dp
     val manualLabelWidth = 20.dp
@@ -271,6 +272,7 @@ object AquaLightLibraryGeometry {
     val emptyTextGap = 6.dp
     val informationIconSize = 18.dp
     val informationGap = 7.dp
+    const val percentMaximum = 100f
 }
 
 object AquaLightLibraryAlpha {

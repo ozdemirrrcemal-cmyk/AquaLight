@@ -93,7 +93,17 @@ class DeviceLightLibraryFragment : Fragment(R.layout.fragment_device_light_libra
             is DeviceLightLibraryEffect.OpenActions -> showActions(effect)
             is DeviceLightLibraryEffect.OpenRename -> showRename(effect)
             is DeviceLightLibraryEffect.OpenDeleteConfirmation -> showDeleteConfirmation(effect)
-            is DeviceLightLibraryEffect.ShowMessage -> showMessage(effect)
+            is DeviceLightLibraryEffect.ShowMessage -> {
+                setFragmentGlobalLoading(false)
+                (activity as? BaseActivity)?.showSnackBar(
+                    message = getString(effect.messageRes),
+                    type = if (effect.success) {
+                        BaseActivity.SnackType.SUCCESS
+                    } else {
+                        BaseActivity.SnackType.ERROR
+                    }
+                )
+            }
         }
     }
 
@@ -152,18 +162,6 @@ class DeviceLightLibraryFragment : Fragment(R.layout.fragment_device_light_libra
             tone = FeedbackBottomSheet.FeedbackTone.DANGER,
             requestKey = DELETE_REQUEST_KEY,
             actionId = effect.entryId
-        )
-    }
-
-    private fun showMessage(effect: DeviceLightLibraryEffect.ShowMessage) {
-        setFragmentGlobalLoading(false)
-        (activity as? BaseActivity)?.showSnackBar(
-            message = getString(effect.messageRes),
-            type = if (effect.success) {
-                BaseActivity.SnackType.SUCCESS
-            } else {
-                BaseActivity.SnackType.ERROR
-            }
         )
     }
 

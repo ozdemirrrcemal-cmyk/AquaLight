@@ -45,7 +45,7 @@ class DeviceLightLibraryViewModel(
         boundDeviceUid = deviceUid
         _uiState.value = DeviceLightLibraryUiState(deviceUid = deviceUid)
         startObservation()
-        refreshInstalledCustom()
+        viewModelScope.launch { operations.refreshInstalledCustom(deviceUid) }
     }
 
     private fun startObservation() {
@@ -53,8 +53,12 @@ class DeviceLightLibraryViewModel(
         observationJob?.cancel()
         observationJob = viewModelScope.launch {
             operations.observeLibrary(deviceUid)
-                .catch { emit(DeviceLightLibraryResult.Failed(DeviceLightLibraryFailure.INVALID_DATA)) }
-                .collect(::applyResult)
+                .catch {
+                    emit(DeviceLightLibraryResult.Failed(DeviceLightLibraryFailure.INVALID_DATA))
+                }
+                .collect { result ->
+                    _uiState.update { state -> state.withResult(result) }
+                }
         }
     }
 
@@ -65,28 +69,24 @@ class DeviceLightLibraryViewModel(
     internal fun retry() {
         _uiState.update { state -> state.copy(initialLoading = true, readError = false) }
         startObservation()
-        refreshInstalledCustom()
+        viewModelScope.launch { operations.refreshInstalledCustom(boundDeviceUid) }
     }
 
     internal fun load(entryId: String) {
         val state = _uiState.value
-        if (state.activeLoadEntryId != null) return
-        val entry = state.entries.singleOrNull { item -> item.id == entryId } ?: return
-        if (entry.isLoaded) return
+        val entry = state.entries.singleOrNull { item -> item.id == entryId }
+        if (state.activeLoadEntryId != null || entry == null || entry.isLoaded) return
         _uiState.update { current -> current.copy(activeLoadEntryId = entryId) }
         viewModelScope.launch {
             val result = operations.load(boundDeviceUid, entryId)
             _uiState.update { current -> current.copy(activeLoadEntryId = null) }
-            publishMutationResult(
-                result = result,
-                successMessage = R.string.device_light_library_loaded_success
-            )
+            _effects.emit(result.toEffect(R.string.device_light_library_loaded_success))
         }
     }
 
     internal fun requestActions(entryId: String) {
         val entry = _uiState.value.entries.singleOrNull { item -> item.id == entryId } ?: return
-        emitEffect(DeviceLightLibraryEffect.OpenActions(entry.id, entry.name))
+        _effects.tryEmit(DeviceLightLibraryEffect.OpenActions(entry.id, entry.name))
     }
 
     internal fun requestRename(entryId: String) {
@@ -99,7 +99,7 @@ class DeviceLightLibraryViewModel(
                         .map(DeviceLightLibraryEntry::name)
                 )
                 .filterNot { name -> name == entry.name }
-            emitEffect(
+            _effects.emit(
                 DeviceLightLibraryEffect.OpenRename(
                     entryId = entry.id,
                     currentName = entry.name,
@@ -111,71 +111,54 @@ class DeviceLightLibraryViewModel(
 
     internal fun rename(entryId: String, name: String) {
         viewModelScope.launch {
-            publishMutationResult(
-                result = operations.rename(entryId, name),
-                successMessage = R.string.device_light_library_renamed_success
+            _effects.emit(
+                operations.rename(entryId, name).toEffect(
+                    R.string.device_light_library_renamed_success
+                )
             )
         }
     }
 
     internal fun requestDelete(entryId: String) {
         val entry = _uiState.value.entries.singleOrNull { item -> item.id == entryId } ?: return
-        emitEffect(DeviceLightLibraryEffect.OpenDeleteConfirmation(entry.id, entry.name))
+        _effects.tryEmit(DeviceLightLibraryEffect.OpenDeleteConfirmation(entry.id, entry.name))
     }
 
     internal fun delete(entryId: String) {
         viewModelScope.launch {
-            publishMutationResult(
-                result = operations.delete(entryId),
-                successMessage = R.string.device_light_library_deleted_success
-            )
-        }
-    }
-
-    private fun applyResult(result: DeviceLightLibraryResult) {
-        _uiState.update { state ->
-            when (result) {
-                is DeviceLightLibraryResult.Available -> state.copy(
-                    target = result.snapshot.target,
-                    entries = result.snapshot.entries,
-                    initialLoading = false,
-                    readError = false
-                )
-                is DeviceLightLibraryResult.Failed -> state.copy(
-                    initialLoading = false,
-                    readError = true
-                )
-            }
-        }
-    }
-
-    private fun refreshInstalledCustom() {
-        val deviceUid = boundDeviceUid.takeIf(String::isNotBlank) ?: return
-        viewModelScope.launch {
-            operations.refreshInstalledCustom(deviceUid)
-        }
-    }
-
-    private fun publishMutationResult(
-        result: DeviceLightLibraryMutationResult,
-        @StringRes successMessage: Int
-    ) {
-        when (result) {
-            is DeviceLightLibraryMutationResult.Success -> emitEffect(
-                DeviceLightLibraryEffect.ShowMessage(successMessage, success = true)
-            )
-            is DeviceLightLibraryMutationResult.Failed -> emitEffect(
-                DeviceLightLibraryEffect.ShowMessage(
-                    messageRes = result.failure.messageRes(),
-                    success = false
+            _effects.emit(
+                operations.delete(entryId).toEffect(
+                    R.string.device_light_library_deleted_success
                 )
             )
         }
     }
+}
 
-    private fun emitEffect(effect: DeviceLightLibraryEffect) {
-        viewModelScope.launch { _effects.emit(effect) }
-    }
+private fun DeviceLightLibraryUiState.withResult(
+    result: DeviceLightLibraryResult
+): DeviceLightLibraryUiState = when (result) {
+    is DeviceLightLibraryResult.Available -> copy(
+        target = result.snapshot.target,
+        entries = result.snapshot.entries,
+        initialLoading = false,
+        readError = false
+    )
+    is DeviceLightLibraryResult.Failed -> copy(
+        initialLoading = false,
+        readError = true
+    )
+}
+
+private fun DeviceLightLibraryMutationResult.toEffect(
+    @StringRes successMessage: Int
+): DeviceLightLibraryEffect.ShowMessage = when (this) {
+    is DeviceLightLibraryMutationResult.Success ->
+        DeviceLightLibraryEffect.ShowMessage(successMessage, success = true)
+    is DeviceLightLibraryMutationResult.Failed -> DeviceLightLibraryEffect.ShowMessage(
+        messageRes = failure.messageRes(),
+        success = false
+    )
 }
 
 internal sealed interface DeviceLightLibraryEffect {

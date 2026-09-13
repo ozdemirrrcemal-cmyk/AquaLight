@@ -1,3 +1,5 @@
+@file:Suppress("TooManyFunctions")
+
 package com.aqua.aqualight.data.devices.light.library
 
 import com.aqua.aqualight.application.devices.light.control.DeviceLightControlFailure

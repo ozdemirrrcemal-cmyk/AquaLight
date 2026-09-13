@@ -50,47 +50,52 @@ internal class DefaultDeviceLightLibraryOperations(
         MutableStateFlow<Map<DeviceUid, DeviceLightCustomDocument>>(emptyMap())
 
     override fun observeLibrary(deviceUid: String): Flow<DeviceLightLibraryResult> {
-        val uid = deviceUid.toDeviceUidOrNull() ?: return flowOf(
-            DeviceLightLibraryResult.Failed(DeviceLightLibraryFailure.UNAVAILABLE)
-        )
-        val runtime = devicesRepository.runtimeModules()?.light ?: return flowOf(
-            DeviceLightLibraryResult.Failed(DeviceLightLibraryFailure.UNAVAILABLE)
-        )
-        return combine(
-            controlOperations.observeControl(uid.value),
-            store.observeEntries(),
-            runtime.states,
-            installedCustomDocuments
-        ) { control, storedEntries, statuses, customDocuments ->
-            val controlSnapshot = (control as? DeviceLightControlResult.Available)?.snapshot
-                ?: return@combine DeviceLightLibraryResult.Failed(
-                    (control as DeviceLightControlResult.Failed).failure.toLibraryFailure()
-                )
-            val product = runCatching {
-                DeviceLightProduct.fromWireExact(controlSnapshot.productKey)
-            }.getOrNull() ?: return@combine DeviceLightLibraryResult.Failed(
-                DeviceLightLibraryFailure.INVALID_DATA
-            )
-            val target = controlSnapshot.toTarget(product)
-            val status = statuses[uid]
-            val entries = storedEntries
-                .filter { entry ->
-                    entry.productKey == product.wireValue &&
-                        entry.channelKeysList == product.sceneFields
-                }
-                .map { entry ->
-                    entry.toApplicationEntry(
-                        product = product,
-                        status = status,
-                        installedCustom = customDocuments[uid]
-                    )
-                }
-            DeviceLightLibraryResult.Available(
-                DeviceLightLibrarySnapshot(target = target, entries = entries)
-            )
-        }.catch {
-            emit(DeviceLightLibraryResult.Failed(DeviceLightLibraryFailure.INVALID_DATA))
+        val uid = deviceUid.toDeviceUidOrNull()
+        val runtime = devicesRepository.runtimeModules()?.light
+        return if (uid == null || runtime == null) {
+            flowOf(DeviceLightLibraryResult.Failed(DeviceLightLibraryFailure.UNAVAILABLE))
+        } else {
+            observeAvailableLibrary(uid, runtime)
         }
+    }
+
+    private fun observeAvailableLibrary(
+        uid: DeviceUid,
+        runtime: DeviceLightRuntimeRepository
+    ): Flow<DeviceLightLibraryResult> = combine(
+        controlOperations.observeControl(uid.value),
+        store.observeEntries(),
+        runtime.states,
+        installedCustomDocuments
+    ) { control, storedEntries, statuses, customDocuments ->
+        val controlSnapshot = (control as? DeviceLightControlResult.Available)?.snapshot
+            ?: return@combine DeviceLightLibraryResult.Failed(
+                (control as DeviceLightControlResult.Failed).failure.toLibraryFailure()
+            )
+        val product = runCatching {
+            DeviceLightProduct.fromWireExact(controlSnapshot.productKey)
+        }.getOrNull() ?: return@combine DeviceLightLibraryResult.Failed(
+            DeviceLightLibraryFailure.INVALID_DATA
+        )
+        val target = controlSnapshot.toTarget(product)
+        val status = statuses[uid]
+        val entries = storedEntries
+            .filter { entry ->
+                entry.productKey == product.wireValue &&
+                    entry.channelKeysList == product.sceneFields
+            }
+            .map { entry ->
+                entry.toApplicationEntry(
+                    product = product,
+                    status = status,
+                    installedCustom = customDocuments[uid]
+                )
+            }
+        DeviceLightLibraryResult.Available(
+            DeviceLightLibrarySnapshot(target = target, entries = entries)
+        )
+    }.catch {
+        emit(DeviceLightLibraryResult.Failed(DeviceLightLibraryFailure.INVALID_DATA))
     }
 
     override suspend fun refreshInstalledCustom(deviceUid: String) {
@@ -199,26 +204,24 @@ internal class DefaultDeviceLightLibraryOperations(
         entryId: String
     ): DeviceLightLibraryMutationResult {
         val uid = deviceUid.toDeviceUidOrNull()
-            ?: return failed(DeviceLightLibraryFailure.UNAVAILABLE)
         val runtime = devicesRepository.runtimeModules()?.light
-            ?: return failed(DeviceLightLibraryFailure.UNAVAILABLE)
-        val status = runtime.currentStatus(uid)
-            ?: return failed(DeviceLightLibraryFailure.UNAVAILABLE)
+        val status = if (uid == null) null else runtime?.currentStatus(uid)
         val entry = runCatching { store.snapshot().singleOrNull { stored -> stored.id == entryId } }
             .getOrNull()
-            ?: return failed(DeviceLightLibraryFailure.NOT_FOUND)
-        if (
+        return when {
+            uid == null || runtime == null || status == null ->
+                failed(DeviceLightLibraryFailure.UNAVAILABLE)
+            entry == null -> failed(DeviceLightLibraryFailure.NOT_FOUND)
             entry.productKey != status.product.wireValue ||
-            entry.channelKeysList != status.product.sceneFields
-        ) {
-            return failed(DeviceLightLibraryFailure.INCOMPATIBLE)
-        }
-        return try {
-            loadEntry(uid, entry, status, runtime)
-        } catch (error: CancellationException) {
-            throw error
-        } catch (_: Exception) {
-            failed(DeviceLightLibraryFailure.INVALID_DATA)
+                entry.channelKeysList != status.product.sceneFields ->
+                failed(DeviceLightLibraryFailure.INCOMPATIBLE)
+            else -> try {
+                loadEntry(uid, entry, status, runtime)
+            } catch (error: CancellationException) {
+                throw error
+            } catch (_: Exception) {
+                failed(DeviceLightLibraryFailure.INVALID_DATA)
+            }
         }
     }
 
@@ -271,31 +274,39 @@ internal class DefaultDeviceLightLibraryOperations(
         ) -> StoredDeviceLightLibraryEntry
     ): DeviceLightLibraryMutationResult {
         val canonicalName = name.validatedNameOrFailure()
-            ?: return failed(DeviceLightLibraryFailure.INVALID_NAME)
         val target = currentTarget(deviceUid)
-            ?: return failed(DeviceLightLibraryFailure.UNAVAILABLE)
-        val duplicate = runCatching {
-            store.snapshot().any { entry ->
-                entry.kind == kind.toStoredKind() &&
-                    entry.normalizedName == canonicalName.normalized
+        val duplicateResult = if (canonicalName == null || target == null) {
+            null
+        } else {
+            runCatching {
+                store.snapshot().any { entry ->
+                    entry.kind == kind.toStoredKind() &&
+                        entry.normalizedName == canonicalName.normalized
+                }
             }
-        }.getOrElse { return failed(DeviceLightLibraryFailure.UNAVAILABLE) }
-        if (duplicate) return failed(DeviceLightLibraryFailure.DUPLICATE_NAME)
-        return runStoreMutation {
-            val timestamp = nowMillis()
-            val entry = build(target, canonicalName, timestamp)
-            store.insert(entry)
-            DeviceLightLibraryMutationResult.Success(entry.id)
+        }
+        return when {
+            canonicalName == null -> failed(DeviceLightLibraryFailure.INVALID_NAME)
+            target == null || duplicateResult == null || duplicateResult.isFailure ->
+                failed(DeviceLightLibraryFailure.UNAVAILABLE)
+            duplicateResult.getOrThrow() -> failed(DeviceLightLibraryFailure.DUPLICATE_NAME)
+            else -> runStoreMutation {
+                val timestamp = nowMillis()
+                val entry = build(target, canonicalName, timestamp)
+                store.insert(entry)
+                DeviceLightLibraryMutationResult.Success(entry.id)
+            }
         }
     }
 
     private fun currentTarget(deviceUid: String): DeviceLightLibraryTarget? {
         val control = controlOperations.currentControl(deviceUid)
-            as? DeviceLightControlResult.Available ?: return null
-        val product = runCatching {
-            DeviceLightProduct.fromWireExact(control.snapshot.productKey)
-        }.getOrNull() ?: return null
-        return control.snapshot.toTarget(product)
+            as? DeviceLightControlResult.Available
+        return control?.let { available ->
+            runCatching {
+                DeviceLightProduct.fromWireExact(available.snapshot.productKey)
+            }.map { product -> available.snapshot.toTarget(product) }.getOrNull()
+        }
     }
 
     private fun storedEntryBuilder(

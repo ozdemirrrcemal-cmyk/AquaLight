@@ -137,7 +137,7 @@ private fun LibraryCardHeader(
         ) {
             val center = Offset(size.width / 2f, size.height / 2f)
             val gap = AquaLightLibraryGeometry.moreDotGap.toPx()
-            repeat(3) { index ->
+            repeat(AquaLightLibraryGeometry.moreDotCount) { index ->
                 drawCircle(
                     color = visuals.colors.card.secondaryText,
                     radius = AquaLightLibraryGeometry.moreDotRadius.toPx(),
@@ -205,7 +205,7 @@ private fun ManualValueRow(
             Box(
                 Modifier
                     .fillMaxHeight()
-                    .fillMaxWidth(percent / 100f)
+                    .fillMaxWidth(percent / AquaLightLibraryGeometry.percentMaximum)
                     .background(
                         channel.libraryColor(visuals.colors),
                         RoundedCornerShape(percent = 50)

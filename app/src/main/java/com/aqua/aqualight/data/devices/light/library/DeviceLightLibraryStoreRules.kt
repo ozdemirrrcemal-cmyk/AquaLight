@@ -9,6 +9,8 @@ internal object DeviceLightLibraryStoreRules {
     const val MIN_WEEKDAYS_MASK = 1
     const val MAX_WEEKDAYS_MASK = 127
     const val LAST_DAY_MILLISECOND = 86_399_999L
+    private const val MIN_CHANNEL_PERCENT = 0
+    private const val MAX_CHANNEL_PERCENT = 100
 
     fun defaultStore(): DeviceLightLibraryStoreData = DeviceLightLibraryStoreData
         .newBuilder()
@@ -124,7 +126,10 @@ internal object DeviceLightLibraryStoreRules {
         if (values.map { value -> value.channelKey } != requiredChannelKeys) {
             violation("Stored channel values must exactly match the product channel order.")
         }
-        if (values.any { value -> value.percent !in 0..100 }) {
+        val containsInvalidPercent = values.any { value ->
+            value.percent !in MIN_CHANNEL_PERCENT..MAX_CHANNEL_PERCENT
+        }
+        if (containsInvalidPercent) {
             violation("Stored channel percentage must be between 0 and 100.")
         }
     }

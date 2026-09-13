@@ -74,10 +74,12 @@ internal fun DeviceLightLibraryScreen(
             state.initialLoading -> Unit
             state.readError || state.target == null -> item(key = "library-error") {
                 LibraryMessageCard(
-                    iconRes = R.drawable.ic_error,
-                    title = stringResource(R.string.device_light_library_error_title),
-                    message = stringResource(R.string.device_light_library_error_message),
-                    actionText = stringResource(R.string.device_light_library_retry),
+                    content = LibraryMessageContent(
+                        iconRes = R.drawable.ic_error,
+                        title = stringResource(R.string.device_light_library_error_title),
+                        message = stringResource(R.string.device_light_library_error_message),
+                        actionText = stringResource(R.string.device_light_library_retry)
+                    ),
                     onAction = actions.onRetryClick,
                     visuals = visuals
                 )
@@ -237,33 +239,40 @@ private fun LibraryEmptyState(
     visuals: DeviceLightLibraryVisuals
 ) {
     LibraryMessageCard(
-        iconRes = R.drawable.ic_light_library,
-        title = stringResource(
-            if (tab == DeviceLightLibraryTab.MANUAL) {
-                R.string.device_light_library_empty_manual_title
-            } else {
-                R.string.device_light_library_empty_custom_title
-            }
+        content = LibraryMessageContent(
+            iconRes = R.drawable.ic_light_library,
+            title = stringResource(
+                if (tab == DeviceLightLibraryTab.MANUAL) {
+                    R.string.device_light_library_empty_manual_title
+                } else {
+                    R.string.device_light_library_empty_custom_title
+                }
+            ),
+            message = stringResource(
+                if (tab == DeviceLightLibraryTab.MANUAL) {
+                    R.string.device_light_library_empty_manual_message
+                } else {
+                    R.string.device_light_library_empty_custom_message
+                }
+            ),
+            actionText = null
         ),
-        message = stringResource(
-            if (tab == DeviceLightLibraryTab.MANUAL) {
-                R.string.device_light_library_empty_manual_message
-            } else {
-                R.string.device_light_library_empty_custom_message
-            }
-        ),
-        actionText = null,
         onAction = null,
         visuals = visuals
     )
 }
 
+@Immutable
+private data class LibraryMessageContent(
+    val iconRes: Int,
+    val title: String,
+    val message: String,
+    val actionText: String?
+)
+
 @Composable
 private fun LibraryMessageCard(
-    iconRes: Int,
-    title: String,
-    message: String,
-    actionText: String?,
+    content: LibraryMessageContent,
     onAction: (() -> Unit)?,
     visuals: DeviceLightLibraryVisuals
 ) {
@@ -276,19 +285,19 @@ private fun LibraryMessageCard(
             verticalArrangement = Arrangement.spacedBy(AquaLightLibraryGeometry.emptyTextGap)
         ) {
             Image(
-                painter = painterResource(iconRes),
+                painter = painterResource(content.iconRes),
                 contentDescription = null,
                 colorFilter = ColorFilter.tint(visuals.colors.action),
                 modifier = Modifier.size(AquaLightLibraryGeometry.emptyIconSize)
             )
-            BasicText(text = title, style = visuals.typography.title)
+            BasicText(text = content.title, style = visuals.typography.title)
             BasicText(
-                text = message,
+                text = content.message,
                 style = visuals.typography.caption.copy(textAlign = TextAlign.Center)
             )
-            if (actionText != null && onAction != null) {
+            if (content.actionText != null && onAction != null) {
                 Spacer(Modifier.height(4.dp))
-                LibraryTextAction(actionText, onAction, visuals)
+                LibraryTextAction(content.actionText, onAction, visuals)
             }
         }
     }

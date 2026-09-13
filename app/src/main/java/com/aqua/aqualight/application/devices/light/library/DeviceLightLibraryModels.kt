@@ -26,7 +26,7 @@ data class DeviceLightLibraryTarget(
     init {
         require(deviceUid.isNotBlank())
         require(productKey.isNotBlank())
-        require(channels.size in 3..4 && channels.distinct().size == channels.size)
+        require(channels.size in CHANNEL_COUNT_RANGE && channels.distinct().size == channels.size)
         require(estimatedPowerWatts == null || estimatedPowerWatts >= 0)
     }
 }
@@ -60,8 +60,8 @@ sealed interface DeviceLightLibraryPayload {
         val points: List<DeviceLightLibraryCustomPoint>
     ) : DeviceLightLibraryPayload {
         init {
-            require(weekdaysMask in 1..127)
-            require(points.size in 1..MAX_CUSTOM_POINTS)
+            require(weekdaysMask in WEEKDAYS_MASK_RANGE)
+            require(points.size in CUSTOM_POINT_COUNT_RANGE)
             require(points.zipWithNext().all { (left, right) -> left.timeMs < right.timeMs })
             require(points.map { point -> point.scene.channels.keys }.distinct().size == 1)
         }
@@ -83,7 +83,7 @@ data class DeviceLightLibraryEntry(
         require(id.isNotBlank())
         require(name.isNotBlank())
         require(productKey.isNotBlank())
-        require(channels.size in 3..4 && channels.distinct().size == channels.size)
+        require(channels.size in CHANNEL_COUNT_RANGE && channels.distinct().size == channels.size)
         require(updatedAtMillis >= createdAtMillis)
         when (payload) {
             is DeviceLightLibraryPayload.Manual ->
@@ -128,6 +128,16 @@ enum class DeviceLightLibraryFailure {
     INCOMPATIBLE
 }
 
-private val PERCENT_RANGE = 0..100
+private const val MIN_CHANNEL_COUNT = 3
+private const val MAX_CHANNEL_COUNT = 4
+private const val MIN_PERCENT = 0
+private const val MAX_PERCENT = 100
+private const val MIN_WEEKDAYS_MASK = 1
+private const val MAX_WEEKDAYS_MASK = 127
+private const val MIN_CUSTOM_POINTS = 1
 private const val MAX_CUSTOM_POINTS = 96
 private const val LAST_DAY_MILLISECOND = 86_399_999L
+private val CHANNEL_COUNT_RANGE = MIN_CHANNEL_COUNT..MAX_CHANNEL_COUNT
+private val PERCENT_RANGE = MIN_PERCENT..MAX_PERCENT
+private val WEEKDAYS_MASK_RANGE = MIN_WEEKDAYS_MASK..MAX_WEEKDAYS_MASK
+private val CUSTOM_POINT_COUNT_RANGE = MIN_CUSTOM_POINTS..MAX_CUSTOM_POINTS
