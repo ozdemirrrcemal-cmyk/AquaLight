@@ -52,7 +52,8 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
             setContent {
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
                 DeviceLightDashboardScreen(
-                    state = state
+                    state = state,
+                    onQuickSetupClick = ::openQuickSetup
                 )
             }
         }
@@ -110,6 +111,18 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
         navController.navigate(
             DeviceLightRootFragmentDirections
                 .actionDeviceLightRootFragmentToDeviceLightSettingsFragment(
+                    deviceUid = args.deviceUid
+                )
+        )
+    }
+
+    private fun openQuickSetup() {
+        if (!viewModel.uiState.value.contentEnabled) return
+        val navController = findNavController()
+        if (navController.currentDestination?.id != R.id.deviceLightRootFragment) return
+        navController.navigate(
+            DeviceLightRootFragmentDirections
+                .actionDeviceLightRootFragmentToDeviceLightQuickSetupFragment(
                     deviceUid = args.deviceUid
                 )
         )

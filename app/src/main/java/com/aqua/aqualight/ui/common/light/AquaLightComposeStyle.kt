@@ -114,15 +114,25 @@ object AquaLightDashboardGeometry {
     val liveOutputTrackValueGap = 12.dp
     val liveOutputValueWidth = 36.dp
     val liveOutputTrackShape = RoundedCornerShape(percent = 50)
+
+    val controlsHeaderHeight = 30.dp
+    val controlsHeaderHorizontalPadding = 2.dp
+    val quickSetupButtonHeight = 26.dp
+    val quickSetupButtonHorizontalPadding = 10.dp
+    val quickSetupButtonContentGap = 5.dp
+    val quickSetupIconSize = 15.dp
+    val quickSetupOutlineWidth = 1.dp
+    val quickSetupShape = RoundedCornerShape(percent = 50)
 }
 
 object AquaLightDashboardAlpha {
-    const val horizontalGrid = 0.20f
-    const val verticalGrid = 0.12f
+    const val horizontalGrid = 0.40f
+    const val verticalGrid = 0.30f
     const val currentGuide = 0.88f
     const val inactiveLine = 0.96f
     const val liveOutputRail = 0.22f
     const val liveOutputFillStart = 0.86f
+    const val disabledControl = 0.38f
 }
 
 object AquaLightPlanChartSpec {
@@ -252,7 +262,7 @@ fun aquaLightHeroTypography(colors: AquaLightHeroColors): AquaLightHeroTypograph
 
 @Composable
 fun aquaLightDashboardColors(): AquaDeviceCardColors = aquaDeviceCardColors().copy(
-    accent = colorResource(R.color.aqua_accent)
+    accent = colorResource(R.color.aqua_card_device_cooling_accent)
 )
 
 fun aquaLightDashboardTypography(

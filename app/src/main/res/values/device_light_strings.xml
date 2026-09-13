@@ -48,4 +48,6 @@
     <string name="device_light_live_output_white">White</string>
     <string name="device_light_live_output_percent_format">%1$d%%</string>
     <string name="device_light_live_output_content_description">Live output. Red %1$d percent, green %2$d percent, blue %3$d percent, white %4$d percent.</string>
+    <string name="device_light_controls_title">Control screens</string>
+    <string name="device_light_quick_setup_button">Smart setup</string>
 </resources>

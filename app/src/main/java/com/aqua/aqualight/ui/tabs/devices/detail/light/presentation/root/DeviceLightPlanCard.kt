@@ -248,7 +248,6 @@ private fun DeviceLightPlanXAxis(
                 val tickCenter = width.toFloat() * index / intervals
                 val x = (tickCenter - placeable.width / 2f)
                     .roundToInt()
-                    .coerceIn(0, (width - placeable.width).coerceAtLeast(0))
                 placeable.place(x, 0)
             }
         }

@@ -303,6 +303,36 @@
             app:exitAnim="@anim/nav_slide_out_right"
             app:popEnterAnim="@anim/nav_slide_in_right"
             app:popExitAnim="@anim/nav_slide_out_left" />
+        <action
+            android:id="@+id/action_deviceLightRootFragment_to_deviceLightLibraryFragment"
+            app:destination="@id/deviceLightLibraryFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+        <action
+            android:id="@+id/action_deviceLightRootFragment_to_deviceLightQuickSetupFragment"
+            app:destination="@id/deviceLightQuickSetupFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceLightLibraryFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.library.DeviceLightLibraryFragment"
+        android:label="@string/device_light_library_title"
+        tools:layout="@layout/fragment_device_light_library">
+        <argument android:name="deviceUid" app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceLightQuickSetupFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.quicksetup.DeviceLightQuickSetupFragment"
+        android:label="@string/device_menu_quick_setup_title"
+        tools:layout="@layout/fragment_device_light_quick_setup">
+        <argument android:name="deviceUid" app:argType="string" />
     </fragment>
 
     <fragment

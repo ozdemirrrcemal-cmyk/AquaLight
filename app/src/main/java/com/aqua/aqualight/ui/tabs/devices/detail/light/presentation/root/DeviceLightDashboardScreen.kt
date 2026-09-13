@@ -15,6 +15,7 @@ import com.aqua.aqualight.ui.common.light.AquaLightDashboardGeometry
 @Composable
 internal fun DeviceLightDashboardScreen(
     state: DeviceLightRootUiState,
+    onQuickSetupClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -40,6 +41,12 @@ internal fun DeviceLightDashboardScreen(
         }
         item(key = "light-live-output") {
             DeviceLightLiveOutputCard()
+        }
+        item(key = "light-controls-header") {
+            DeviceLightControlsHeader(
+                enabled = state.contentEnabled,
+                onQuickSetupClick = onQuickSetupClick
+            )
         }
     }
 }
