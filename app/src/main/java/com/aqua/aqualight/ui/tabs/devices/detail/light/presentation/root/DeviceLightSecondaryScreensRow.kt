@@ -143,7 +143,8 @@ private fun DeviceLightAdaptationProgress(
     percent: Int,
     colors: AquaDeviceCardColors
 ) {
-    val progress = percent.coerceIn(0, 100) / 100f
+    val progress = percent.coerceIn(0, AquaLightControlsPreviewSpec.fullPercent) /
+        AquaLightControlsPreviewSpec.fullPercent.toFloat()
     Box(
         modifier = Modifier
             .padding(top = AquaLightDashboardGeometry.secondaryProgressTopGap)

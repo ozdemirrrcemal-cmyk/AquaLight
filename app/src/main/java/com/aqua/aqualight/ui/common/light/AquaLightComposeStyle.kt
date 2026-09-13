@@ -187,6 +187,7 @@ object AquaLightLiveOutputPreviewSpec {
 }
 
 object AquaLightControlsPreviewSpec {
+    const val fullPercent = 100
     const val programCount = 3
     const val customCurvePointCount = 12
     const val adaptationActive = true
