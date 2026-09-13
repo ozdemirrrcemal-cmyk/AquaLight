@@ -406,16 +406,14 @@ private fun SelectedPointCard(
                         enabled = !state.operationInProgress &&
                             state.draft.points.size < state.maxPoints,
                         color = visuals.colors.action,
-                        onClick = actions.onDuplicatePointClick,
-                        visuals = visuals
+                        onClick = actions.onDuplicatePointClick
                     )
                     SquareIconButton(
                         iconRes = R.drawable.ic_delete_24,
                         description = stringResource(R.string.device_light_custom_delete_point),
                         enabled = !state.operationInProgress,
                         color = visuals.colors.card.danger,
-                        onClick = actions.onDeletePointClick,
-                        visuals = visuals
+                        onClick = actions.onDeletePointClick
                     )
                 }
                 point.channels.forEach { (channel, percent) ->
@@ -702,8 +700,7 @@ private fun SquareIconButton(
     description: String,
     enabled: Boolean,
     color: Color,
-    onClick: () -> Unit,
-    visuals: DeviceLightCustomVisuals
+    onClick: () -> Unit
 ) {
     val alpha = if (enabled) 1f else 0.38f
     val shape = RoundedCornerShape(11.dp)
