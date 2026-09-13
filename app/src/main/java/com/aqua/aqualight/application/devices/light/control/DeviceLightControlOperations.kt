@@ -32,13 +32,39 @@ enum class DeviceLightControlFailure {
     INVALID_DATA
 }
 
-/** Minimum authoritative identity needed before rendering any Light control content. */
+/** Authoritative Light snapshot projected without leaking firmware models into presentation. */
 data class DeviceLightControlSnapshot(
     val deviceUid: String,
     val productKey: String,
     val physicalChannelCount: Int,
-    val channelKeys: List<String>
+    val channelKeys: List<String>,
+    val hero: DeviceLightHeroSnapshot = DeviceLightHeroSnapshot()
 )
+
+data class DeviceLightHeroSnapshot(
+    val mode: DeviceLightControlMode? = null,
+    val outputActive: Boolean? = null,
+    val outputCondition: DeviceLightOutputCondition? = null,
+    val outputHealthy: Boolean? = null,
+    val estimatedPowerWatts: Double? = null,
+    val estimatedColorTemperatureKelvin: Int? = null
+)
+
+enum class DeviceLightControlMode {
+    MANUAL,
+    AUTOMATIC,
+    CUSTOM
+}
+
+enum class DeviceLightOutputCondition {
+    ACTIVE,
+    SCHEDULED_OFF,
+    ALL_CHANNELS_ZERO,
+    CLOCK_UNAVAILABLE,
+    THERMAL_PROTECTION,
+    POWER_LIMITED,
+    HARDWARE_FAULT
+}
 
 /** Exact catalog/runtime identity check shared by preparation and destination read paths. */
 fun DeviceLightControlSnapshot?.matchesLightControlSurface(

@@ -14,6 +14,7 @@ import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.light.control.DeviceLightControlOperations
 import com.aqua.aqualight.application.devices.light.control.DeviceLightControlResult
 import com.aqua.aqualight.application.devices.light.control.DeviceLightControlSnapshot
+import com.aqua.aqualight.application.devices.light.control.DeviceLightHeroSnapshot
 import com.aqua.aqualight.application.devices.light.control.matchesLightControlSurface
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import kotlinx.coroutines.CoroutineStart
@@ -176,7 +177,8 @@ class DeviceLightRootViewModel(
                 DeviceConnectionVisualState.OFFLINE
             },
             contentEnabled = surfaceAvailable && !surfacePreparationPending,
-            showBlockingPreparation = surfacePreparationPending
+            showBlockingPreparation = surfacePreparationPending,
+            hero = currentControlSnapshot?.hero ?: DeviceLightHeroSnapshot()
         )
     }
 
@@ -204,7 +206,8 @@ data class DeviceLightRootUiState(
     val deviceUid: String = "",
     val connectionVisualState: DeviceConnectionVisualState = DeviceConnectionVisualState.OFFLINE,
     val contentEnabled: Boolean = false,
-    val showBlockingPreparation: Boolean = false
+    val showBlockingPreparation: Boolean = false,
+    val hero: DeviceLightHeroSnapshot = DeviceLightHeroSnapshot()
 )
 
 private fun DeviceRootSnapshot?.isLightControlRootAvailable(deviceUid: String): Boolean = when {

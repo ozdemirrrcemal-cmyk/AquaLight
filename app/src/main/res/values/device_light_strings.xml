@@ -1,4 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="device_light_open_settings_description">Open device settings</string>
+    <string name="device_light_hero_title_on">Light on</string>
+    <string name="device_light_hero_title_off">Light off</string>
+    <string name="device_light_hero_title_unavailable">Light status unavailable</string>
+    <string name="device_light_hero_mode_manual">Manual</string>
+    <string name="device_light_hero_mode_automatic">Automatic</string>
+    <string name="device_light_hero_mode_custom">Custom</string>
+    <string name="device_light_hero_mode_unavailable">Mode unavailable</string>
+    <string name="device_light_hero_output_steady">Steady</string>
+    <string name="device_light_hero_output_scheduled_off">Scheduled off</string>
+    <string name="device_light_hero_output_channels_zero">Channels at zero</string>
+    <string name="device_light_hero_output_clock_unavailable">Clock unavailable</string>
+    <string name="device_light_hero_output_thermal_protection">Thermal protection</string>
+    <string name="device_light_hero_output_power_limited">Power limited</string>
+    <string name="device_light_hero_output_hardware_fault">Hardware issue</string>
+    <string name="device_light_hero_output_unavailable">Output unavailable</string>
+    <string name="device_light_hero_mode_output_format">%1$s · %2$s</string>
+    <string name="device_light_hero_output_healthy">Output healthy</string>
+    <string name="device_light_hero_output_attention">Check output</string>
+    <string name="device_light_hero_output_health_unavailable">Output status unavailable</string>
+    <string name="device_light_hero_estimated">estimated</string>
+    <string name="device_light_hero_power_value_format">%1$s W</string>
+    <string name="device_light_hero_color_temperature_value_format">%1$s K</string>
+    <string name="device_light_hero_value_unavailable">—</string>
+    <string name="device_light_hero_content_description">%1$s. %2$s. %3$s. Power %4$s. Color temperature %5$s.</string>
 </resources>

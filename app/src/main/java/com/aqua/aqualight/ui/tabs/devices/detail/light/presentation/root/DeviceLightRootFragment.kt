@@ -2,9 +2,12 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root
 
 import android.os.Bundle
 import android.view.View
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
@@ -39,7 +42,18 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
         val initialState = viewModel.uiState.value
         setFragmentGlobalLoading(initialState.showBlockingPreparation)
         setupHeader(initialState)
+        setupDashboardContent()
         observeViewModel()
+    }
+
+    private fun setupDashboardContent() {
+        binding.lightDashboardCompose.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                val state by viewModel.uiState.collectAsStateWithLifecycle()
+                DeviceLightDashboardScreen(state = state)
+            }
+        }
     }
 
     private fun setupHeader(state: DeviceLightRootUiState) {
