@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.timer.presentation.common
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.timer.control.DeviceTimerCommandFailure
 import com.aqua.aqualight.application.devices.timer.control.DeviceTimerControlFailure
+import com.aqua.aqualight.ui.tabs.devices.detail.timer.presentation.root.DeviceTimerStatusNotice
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
