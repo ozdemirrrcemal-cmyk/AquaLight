@@ -88,7 +88,7 @@
     <string name="device_light_manual_preset_fish">Fish</string>
     <string name="device_light_manual_preset_shrimp">Shrimp</string>
     <string name="device_light_manual_preset_all">All</string>
-    <string name="device_light_manual_preset_scene_description">%1$s scene. Red %2$d percent, green %3$d percent, blue %4$d percent, white %5$d percent.</string>
+    <string name="device_light_manual_preset_scene_description">%1$s scene. Red %2$d%%, green %3$d%%, blue %4$d%%, white %5$d%%.</string>
     <string name="device_light_manual_load">Load</string>
     <string name="device_light_manual_load_description">Load a saved light scene</string>
     <string name="device_light_manual_save_as">Save as</string>
