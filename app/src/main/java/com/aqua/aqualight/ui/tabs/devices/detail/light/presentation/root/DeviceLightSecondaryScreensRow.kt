@@ -8,8 +8,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.BasicText
@@ -26,6 +27,7 @@ import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
 import com.aqua.aqualight.ui.common.light.AquaLightControlsPreviewSpec
+import com.aqua.aqualight.ui.common.light.AquaLightDashboardAlpha
 import com.aqua.aqualight.ui.common.light.AquaLightDashboardGeometry
 import com.aqua.aqualight.ui.common.light.AquaLightDashboardIcon
 import com.aqua.aqualight.ui.common.light.AquaLightDashboardIconKind
@@ -38,85 +40,61 @@ internal fun DeviceLightSecondaryScreensRow(
     onMenuClick: (DeviceLightMenuDestination) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val models = deviceLightSecondaryItems()
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(AquaLightDashboardGeometry.secondaryCardGap)
     ) {
         DeviceLightSecondaryCard(
-            model = models.first(),
+            icon = AquaLightDashboardIconKind.ADAPTATION,
             enabled = enabled,
-            onClick = { onMenuClick(models.first().destination) },
+            onClick = { onMenuClick(DeviceLightMenuDestination.ADAPTATION) },
             modifier = Modifier.weight(AquaLightDashboardGeometry.adaptationCardWeight)
-        )
+        ) { colors, typography ->
+            DeviceLightAdaptationContent(colors, typography)
+        }
         DeviceLightSecondaryCard(
-            model = models.last(),
+            icon = AquaLightDashboardIconKind.SYSTEM,
             enabled = enabled,
-            onClick = { onMenuClick(models.last().destination) },
+            onClick = { onMenuClick(DeviceLightMenuDestination.SYSTEM) },
             modifier = Modifier.weight(AquaLightDashboardGeometry.systemCardWeight)
-        )
+        ) { colors, typography ->
+            DeviceLightSystemContent(colors, typography)
+        }
     }
 }
 
 @Composable
-private fun deviceLightSecondaryItems(): List<DeviceLightSecondaryItem> = listOf(
-    DeviceLightSecondaryItem(
-        titleRes = R.string.device_light_adaptation_title,
-        subtitle = pluralStringResource(
-            R.plurals.device_light_adaptation_summary,
-            AquaLightControlsPreviewSpec.adaptationDaysRemaining,
-            AquaLightControlsPreviewSpec.adaptationDaysRemaining,
-            AquaLightControlsPreviewSpec.adaptationPercent
-        ),
-        icon = AquaLightDashboardIconKind.ADAPTATION,
-        destination = DeviceLightMenuDestination.ADAPTATION
-    ),
-    DeviceLightSecondaryItem(
-        titleRes = R.string.device_light_system_title,
-        subtitle = stringResource(
-            R.string.device_light_system_summary,
-            AquaLightControlsPreviewSpec.systemTemperatureCelsius,
-            AquaLightControlsPreviewSpec.systemFanOnePercent,
-            AquaLightControlsPreviewSpec.systemFanTwoPercent
-        ),
-        status = stringResource(R.string.device_light_system_normal_status),
-        icon = AquaLightDashboardIconKind.SYSTEM,
-        destination = DeviceLightMenuDestination.SYSTEM
-    )
-)
-
-@Composable
 private fun RowScope.DeviceLightSecondaryCard(
-    model: DeviceLightSecondaryItem,
+    icon: AquaLightDashboardIconKind,
     enabled: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    content: @Composable RowScope.(AquaDeviceCardColors, AquaDeviceCardTypography) -> Unit
 ) {
     val colors = aquaLightDashboardColors()
     val typography = aquaLightDashboardTypography(colors)
     AquaDeviceCardSurface(
         modifier = modifier
-            .heightIn(min = AquaLightDashboardGeometry.secondaryCardMinimumHeight)
+            .height(AquaLightDashboardGeometry.secondaryCardMinimumHeight)
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxSize(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             AquaLightDashboardIcon(
-                kind = model.icon,
+                kind = icon,
                 tint = colors.accent,
                 modifier = Modifier.size(AquaLightDashboardGeometry.secondaryIconSize)
             )
-            DeviceLightSecondaryText(model, colors, typography)
+            content(colors, typography)
             DeviceLightChevron(colors.secondaryText)
         }
     }
 }
 
 @Composable
-private fun RowScope.DeviceLightSecondaryText(
-    model: DeviceLightSecondaryItem,
+private fun RowScope.DeviceLightAdaptationContent(
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
 ) {
@@ -126,20 +104,113 @@ private fun RowScope.DeviceLightSecondaryText(
             .weight(1f),
         verticalArrangement = Arrangement.spacedBy(AquaLightDashboardGeometry.secondaryTitleGap)
     ) {
+        DeviceLightSecondaryTitle(R.string.device_light_adaptation_title, colors, typography)
+        if (AquaLightControlsPreviewSpec.adaptationActive) {
+            BasicText(
+                text = stringResource(
+                    R.string.device_light_adaptation_percent,
+                    AquaLightControlsPreviewSpec.adaptationPercent
+                ),
+                style = typography.body.copy(color = colors.primaryText),
+                maxLines = 1
+            )
+            BasicText(
+                text = pluralStringResource(
+                    R.plurals.device_light_adaptation_days_remaining,
+                    AquaLightControlsPreviewSpec.adaptationDaysRemaining,
+                    AquaLightControlsPreviewSpec.adaptationDaysRemaining
+                ),
+                style = typography.micro.copy(color = colors.secondaryText),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            DeviceLightAdaptationProgress(
+                percent = AquaLightControlsPreviewSpec.adaptationPercent,
+                colors = colors
+            )
+        } else {
+            BasicText(
+                text = stringResource(R.string.device_light_adaptation_off),
+                style = typography.body.copy(color = colors.secondaryText),
+                maxLines = 1
+            )
+        }
+    }
+}
+
+@Composable
+private fun DeviceLightAdaptationProgress(
+    percent: Int,
+    colors: AquaDeviceCardColors
+) {
+    val progress = percent.coerceIn(0, 100) / 100f
+    Box(
+        modifier = Modifier
+            .padding(top = AquaLightDashboardGeometry.secondaryProgressTopGap)
+            .fillMaxWidth()
+            .height(AquaLightDashboardGeometry.secondaryProgressHeight)
+            .clip(AquaLightDashboardGeometry.secondaryProgressShape)
+            .background(colors.secondaryText.copy(alpha = AquaLightDashboardAlpha.liveOutputRail))
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(progress)
+                .height(AquaLightDashboardGeometry.secondaryProgressHeight)
+                .background(colors.accent)
+        )
+    }
+}
+
+@Composable
+private fun RowScope.DeviceLightSystemContent(
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography
+) {
+    Column(
+        modifier = Modifier
+            .padding(start = AquaLightDashboardGeometry.secondaryIconGap)
+            .weight(1f),
+        verticalArrangement = Arrangement.spacedBy(AquaLightDashboardGeometry.secondaryTitleGap)
+    ) {
+        DeviceLightSecondaryTitle(R.string.device_light_system_title, colors, typography)
         BasicText(
-            text = stringResource(model.titleRes),
-            style = typography.title.copy(color = colors.primaryText),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            text = stringResource(
+                R.string.device_light_system_temperature,
+                AquaLightControlsPreviewSpec.systemTemperatureCelsius
+            ),
+            style = typography.body.copy(color = colors.primaryText),
+            maxLines = 1
         )
         BasicText(
-            text = model.subtitle,
+            text = stringResource(
+                R.string.device_light_system_fans_summary,
+                AquaLightControlsPreviewSpec.systemFanOnePercent,
+                AquaLightControlsPreviewSpec.systemFanTwoPercent
+            ),
             style = typography.micro.copy(color = colors.secondaryText),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
-        model.status?.let { status -> DeviceLightSystemStatus(status, colors, typography) }
+        DeviceLightSystemStatus(
+            status = stringResource(R.string.device_light_system_status_normal),
+            colors = colors,
+            typography = typography
+        )
     }
+}
+
+@Composable
+private fun DeviceLightSecondaryTitle(
+    @StringRes titleRes: Int,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography
+) {
+    BasicText(
+        text = stringResource(titleRes),
+        style = typography.title.copy(color = colors.primaryText),
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis
+    )
 }
 
 @Composable
@@ -167,11 +238,3 @@ private fun DeviceLightSystemStatus(
         )
     }
 }
-
-private data class DeviceLightSecondaryItem(
-    @StringRes val titleRes: Int,
-    val subtitle: String,
-    val status: String? = null,
-    val icon: AquaLightDashboardIconKind,
-    val destination: DeviceLightMenuDestination
-)

@@ -140,10 +140,13 @@ object AquaLightDashboardGeometry {
     val activeChipVerticalPadding = 4.dp
 
     val secondaryCardGap = 8.dp
-    val secondaryCardMinimumHeight = 74.dp
+    val secondaryCardMinimumHeight = 92.dp
     val secondaryIconSize = 29.dp
     val secondaryIconGap = 10.dp
     val secondaryTitleGap = 2.dp
+    val secondaryProgressTopGap = 5.dp
+    val secondaryProgressHeight = 3.dp
+    val secondaryProgressShape = RoundedCornerShape(percent = 50)
     val systemStatusTopGap = 3.dp
     val systemStatusDotSize = 6.dp
     val systemStatusGap = 6.dp
@@ -186,6 +189,7 @@ object AquaLightLiveOutputPreviewSpec {
 object AquaLightControlsPreviewSpec {
     const val programCount = 3
     const val customCurvePointCount = 12
+    const val adaptationActive = true
     const val adaptationDaysRemaining = 12
     const val adaptationPercent = 82
     const val systemTemperatureCelsius = 42.8

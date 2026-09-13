@@ -63,11 +63,20 @@
     </plurals>
     <string name="device_light_active_uppercase">AKTİF</string>
     <string name="device_light_adaptation_title">Adaptasyon</string>
+    <string name="device_light_adaptation_off">Kapalı</string>
+    <string name="device_light_adaptation_percent">%%%1$d</string>
+    <plurals name="device_light_adaptation_days_remaining">
+        <item quantity="one">%1$d gün kaldı</item>
+        <item quantity="other">%1$d gün kaldı</item>
+    </plurals>
     <plurals name="device_light_adaptation_summary">
         <item quantity="one">%1$d gün kaldı · %%%2$d</item>
         <item quantity="other">%1$d gün kaldı · %%%2$d</item>
     </plurals>
     <string name="device_light_system_title">Sistem</string>
+    <string name="device_light_system_temperature">%1$.1f °C</string>
+    <string name="device_light_system_fans_summary">F1 %%%1$d · F2 %%%2$d</string>
+    <string name="device_light_system_status_normal">Normal</string>
     <string name="device_light_system_summary">%1$.1f °C · Fan 1 %%%2$d · Fan 2 %%%3$d</string>
     <string name="device_light_system_normal_status">Termal ve güç limiti normal</string>
 </resources>
