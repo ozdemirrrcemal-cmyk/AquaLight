@@ -53,15 +53,18 @@ class DeviceTimerRepositoryContractTest {
         assertFalse(gateway.encoded[1].getJSONArray("schedules").getJSONObject(0)
             .has("channelKey"))
         assertEquals(setOf("channelKey"), gateway.encoded[2].keySetExact())
+        val temporaryOverrideRequest = gateway.actions.zip(gateway.encoded)
+            .single { (action, _) -> action == DeviceTimerRuntimeContract.Action.CHANNEL_SET }
+            .second
         assertEquals(
             setOf("channelKey", "expectedRevision", "regime", "durationMs", "save"),
-            gateway.encoded.last().keySetExact()
+            temporaryOverrideRequest.keySetExact()
         )
         assertEquals(
             TIMER_TEST_APPLIED_REVISION,
-            gateway.encoded.last().getLong("expectedRevision")
+            temporaryOverrideRequest.getLong("expectedRevision")
         )
-        assertFalse(gateway.encoded.last().getBoolean("save"))
+        assertFalse(temporaryOverrideRequest.getBoolean("save"))
 
         val state = repository.states.value.getValue(DEVICE_UID)
         assertEquals(TIMER_TEST_APPLIED_REVISION, state.status?.revision)
