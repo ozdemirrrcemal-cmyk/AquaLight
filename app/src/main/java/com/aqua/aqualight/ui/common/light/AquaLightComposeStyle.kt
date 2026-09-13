@@ -83,6 +83,7 @@ object AquaLightDashboardGeometry {
     val planMarkerLabelWidth = 76.dp
     val planPlotHeight = 76.dp
     val planYAxisWidth = 31.dp
+    val planYAxisStartOffset = (-4).dp
     val planYAxisGap = 6.dp
     val planXAxisHeight = 14.dp
     val planLegendTopGap = 7.dp

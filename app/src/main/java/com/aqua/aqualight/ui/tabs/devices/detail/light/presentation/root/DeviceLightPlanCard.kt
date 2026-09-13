@@ -194,6 +194,7 @@ private fun DeviceLightPlanYAxis(
     Column(
         modifier = Modifier
             .padding(top = AquaLightDashboardGeometry.planMarkerLabelHeight)
+            .absoluteOffset(x = AquaLightDashboardGeometry.planYAxisStartOffset)
             .width(AquaLightDashboardGeometry.planYAxisWidth)
             .height(AquaLightDashboardGeometry.planPlotHeight),
         horizontalAlignment = Alignment.End,

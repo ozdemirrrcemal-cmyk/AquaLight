@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.unit.Dp
 
+/** Icons shared by the Light dashboard menu surfaces. */
 enum class AquaLightDashboardIconKind {
     MANUAL,
     PROGRAM,

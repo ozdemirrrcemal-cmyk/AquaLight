@@ -38,8 +38,6 @@ internal fun DeviceLightSecondaryScreensRow(
     onMenuClick: (DeviceLightMenuDestination) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val colors = aquaLightDashboardColors()
-    val typography = aquaLightDashboardTypography(colors)
     val models = deviceLightSecondaryItems()
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -48,16 +46,12 @@ internal fun DeviceLightSecondaryScreensRow(
         DeviceLightSecondaryCard(
             model = models.first(),
             enabled = enabled,
-            colors = colors,
-            typography = typography,
             onClick = { onMenuClick(models.first().destination) },
             modifier = Modifier.weight(AquaLightDashboardGeometry.adaptationCardWeight)
         )
         DeviceLightSecondaryCard(
             model = models.last(),
             enabled = enabled,
-            colors = colors,
-            typography = typography,
             onClick = { onMenuClick(models.last().destination) },
             modifier = Modifier.weight(AquaLightDashboardGeometry.systemCardWeight)
         )
@@ -95,11 +89,11 @@ private fun deviceLightSecondaryItems(): List<DeviceLightSecondaryItem> = listOf
 private fun RowScope.DeviceLightSecondaryCard(
     model: DeviceLightSecondaryItem,
     enabled: Boolean,
-    colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val colors = aquaLightDashboardColors()
+    val typography = aquaLightDashboardTypography(colors)
     AquaDeviceCardSurface(
         modifier = modifier
             .heightIn(min = AquaLightDashboardGeometry.secondaryCardMinimumHeight)
