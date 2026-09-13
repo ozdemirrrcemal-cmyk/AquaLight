@@ -2,6 +2,7 @@
 
 package com.aqua.aqualight.ui.common.light
 
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
@@ -33,9 +34,9 @@ object AquaLightHeroGeometry {
     )
     val subtitleBounds = AquaLightHeroBounds(
         left = 0.042f,
-        top = 0.380f,
+        top = 0.360f,
         width = 0.285f,
-        height = 0.100f
+        height = 0.085f
     )
     val statusBounds = AquaLightHeroBounds(
         left = 0.042f,
@@ -102,6 +103,17 @@ object AquaLightDashboardGeometry {
     val planCurrentGuideDash = 5.dp
     val planCurrentGuideGap = 4.dp
     val planCurrentPointRadius = 3.dp
+
+    val liveOutputCardMinimumHeight = 133.dp
+    val liveOutputTitleBottomGap = 10.dp
+    val liveOutputRowHeight = 16.dp
+    val liveOutputRowGap = 7.dp
+    val liveOutputLabelWidth = 42.dp
+    val liveOutputLabelTrackGap = 8.dp
+    val liveOutputTrackHeight = 8.dp
+    val liveOutputTrackValueGap = 12.dp
+    val liveOutputValueWidth = 36.dp
+    val liveOutputTrackShape = RoundedCornerShape(percent = 50)
 }
 
 object AquaLightDashboardAlpha {
@@ -109,6 +121,8 @@ object AquaLightDashboardAlpha {
     const val verticalGrid = 0.12f
     const val currentGuide = 0.88f
     const val inactiveLine = 0.96f
+    const val liveOutputRail = 0.22f
+    const val liveOutputFillStart = 0.86f
 }
 
 object AquaLightPlanChartSpec {
@@ -122,6 +136,13 @@ object AquaLightPlanChartSpec {
     const val previewMinute = 0
 }
 
+object AquaLightLiveOutputPreviewSpec {
+    const val redPercent = 20
+    const val greenPercent = 30
+    const val bluePercent = 40
+    const val whitePercent = 50
+}
+
 @Immutable
 data class AquaLightPlanChartColors(
     val red: Color,
@@ -130,6 +151,22 @@ data class AquaLightPlanChartColors(
     val white: Color,
     val grid: Color,
     val currentGuide: Color
+)
+
+@Immutable
+data class AquaLightLiveOutputColors(
+    val rail: Color,
+    val red: Color,
+    val green: Color,
+    val blue: Color,
+    val white: Color
+)
+
+@Immutable
+data class AquaLightLiveOutputTypography(
+    val title: TextStyle,
+    val label: TextStyle,
+    val value: TextStyle
 )
 
 @Immutable
@@ -233,3 +270,28 @@ fun aquaLightPlanChartColors(
     grid = colors.outline,
     currentGuide = colors.primaryText
 )
+
+@Composable
+fun aquaLightLiveOutputColors(
+    colors: AquaDeviceCardColors
+): AquaLightLiveOutputColors {
+    val channelColors = aquaLightPlanChartColors(colors)
+    return AquaLightLiveOutputColors(
+        rail = colors.secondaryText.copy(alpha = AquaLightDashboardAlpha.liveOutputRail),
+        red = channelColors.red,
+        green = channelColors.green,
+        blue = channelColors.blue,
+        white = channelColors.white
+    )
+}
+
+fun aquaLightLiveOutputTypography(
+    colors: AquaDeviceCardColors
+): AquaLightLiveOutputTypography {
+    val typography = aquaLightDashboardTypography(colors)
+    return AquaLightLiveOutputTypography(
+        title = typography.title,
+        label = typography.body,
+        value = typography.body.copy(fontFamily = interSemiBold)
+    )
+}

@@ -41,4 +41,11 @@
     <string name="device_light_plan_channel_blue">B</string>
     <string name="device_light_plan_channel_white">W</string>
     <string name="device_light_plan_content_description">00:00 ile 24:00 arasındaki planlanan kırmızı, yeşil, mavi ve beyaz ışık çıkışı. Geçerli önizleme saati: %1$s.</string>
+    <string name="device_light_live_output_title">Anlık çıkış</string>
+    <string name="device_light_live_output_red">Kırmızı</string>
+    <string name="device_light_live_output_green">Yeşil</string>
+    <string name="device_light_live_output_blue">Mavi</string>
+    <string name="device_light_live_output_white">Beyaz</string>
+    <string name="device_light_live_output_percent_format">%%%1$d</string>
+    <string name="device_light_live_output_content_description">Anlık çıkış. Kırmızı yüzde %1$d, yeşil yüzde %2$d, mavi yüzde %3$d, beyaz yüzde %4$d.</string>
 </resources>

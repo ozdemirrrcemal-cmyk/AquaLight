@@ -41,4 +41,11 @@
     <string name="device_light_plan_channel_blue">B</string>
     <string name="device_light_plan_channel_white">W</string>
     <string name="device_light_plan_content_description">Today’s planned red, green, blue and white light output from 00:00 to 24:00. Current preview time: %1$s.</string>
+    <string name="device_light_live_output_title">Live output</string>
+    <string name="device_light_live_output_red">Red</string>
+    <string name="device_light_live_output_green">Green</string>
+    <string name="device_light_live_output_blue">Blue</string>
+    <string name="device_light_live_output_white">White</string>
+    <string name="device_light_live_output_percent_format">%1$d%%</string>
+    <string name="device_light_live_output_content_description">Live output. Red %1$d percent, green %2$d percent, blue %3$d percent, white %4$d percent.</string>
 </resources>

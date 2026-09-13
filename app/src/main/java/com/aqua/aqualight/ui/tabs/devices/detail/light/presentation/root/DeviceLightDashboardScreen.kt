@@ -38,5 +38,8 @@ internal fun DeviceLightDashboardScreen(
         item(key = "light-plan") {
             DeviceLightPlanCard()
         }
+        item(key = "light-live-output") {
+            DeviceLightLiveOutputCard()
+        }
     }
 }
