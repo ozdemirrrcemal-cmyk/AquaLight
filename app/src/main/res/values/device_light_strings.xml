@@ -165,5 +165,8 @@
     <string name="device_light_library_day_sunday">Sun</string>
     <string name="device_light_library_days_points_format">%1$s · %2$s</string>
     <string name="device_light_library_channel_percent_format">%1$d%%</string>
-    <string name="device_light_library_chart_description">Custom curve with %1$d actual time points.</string>
+    <plurals name="device_light_library_chart_description">
+        <item quantity="one">Custom curve with %1$d actual time point.</item>
+        <item quantity="other">Custom curve with %1$d actual time points.</item>
+    </plurals>
 </resources>

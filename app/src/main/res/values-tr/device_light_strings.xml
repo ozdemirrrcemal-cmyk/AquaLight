@@ -163,5 +163,8 @@
     <string name="device_light_library_day_sunday">Paz</string>
     <string name="device_light_library_days_points_format">%1$s · %2$s</string>
     <string name="device_light_library_channel_percent_format">%%%1$d</string>
-    <string name="device_light_library_chart_description">%1$d gerçek zaman noktasından oluşan özel eğri.</string>
+    <plurals name="device_light_library_chart_description">
+        <item quantity="one">%1$d gerçek zaman noktasından oluşan özel eğri.</item>
+        <item quantity="other">%1$d gerçek zaman noktasından oluşan özel eğri.</item>
+    </plurals>
 </resources>

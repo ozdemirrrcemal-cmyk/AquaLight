@@ -23,6 +23,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -40,8 +41,9 @@ internal fun CustomCurveChart(
     payload: DeviceLightLibraryPayload.Custom,
     visuals: DeviceLightLibraryVisuals
 ) {
-    val chartDescription = stringResource(
-        R.string.device_light_library_chart_description,
+    val chartDescription = pluralStringResource(
+        R.plurals.device_light_library_chart_description,
+        payload.points.size,
         payload.points.size
     )
     Column(modifier = Modifier.clearAndSetSemantics { contentDescription = chartDescription }) {
