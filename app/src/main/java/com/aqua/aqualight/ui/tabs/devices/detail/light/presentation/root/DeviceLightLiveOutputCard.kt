@@ -39,7 +39,27 @@ internal fun DeviceLightLiveOutputCard(modifier: Modifier = Modifier) {
     val dashboardColors = aquaLightDashboardColors()
     val colors = aquaLightLiveOutputColors(dashboardColors)
     val typography = aquaLightLiveOutputTypography(dashboardColors)
-    val channels = listOf(
+    val description = deviceLightLiveOutputDescription()
+
+    AquaDeviceCardSurface(
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = AquaLightDashboardGeometry.liveOutputCardMinimumHeight)
+            .clearAndSetSemantics { contentDescription = description }
+    ) {
+        DeviceLightLiveOutputContent(
+            channels = deviceLightLiveOutputChannels(colors),
+            colors = colors,
+            typography = typography,
+            textColor = dashboardColors.primaryText
+        )
+    }
+}
+
+private fun deviceLightLiveOutputChannels(
+    colors: AquaLightLiveOutputColors
+): List<DeviceLightLiveOutputChannel> =
+    listOf(
         DeviceLightLiveOutputChannel(
             labelRes = R.string.device_light_live_output_red,
             percent = AquaLightLiveOutputPreviewSpec.redPercent,
@@ -61,7 +81,10 @@ internal fun DeviceLightLiveOutputCard(modifier: Modifier = Modifier) {
             color = colors.white
         )
     )
-    val description = stringResource(
+
+@Composable
+private fun deviceLightLiveOutputDescription(): String =
+    stringResource(
         R.string.device_light_live_output_content_description,
         AquaLightLiveOutputPreviewSpec.redPercent,
         AquaLightLiveOutputPreviewSpec.greenPercent,
@@ -69,36 +92,32 @@ internal fun DeviceLightLiveOutputCard(modifier: Modifier = Modifier) {
         AquaLightLiveOutputPreviewSpec.whitePercent
     )
 
-    AquaDeviceCardSurface(
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = AquaLightDashboardGeometry.liveOutputCardMinimumHeight)
-            .clearAndSetSemantics { contentDescription = description }
-    ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            BasicText(
-                text = stringResource(R.string.device_light_live_output_title),
-                style = typography.title.copy(color = dashboardColors.primaryText)
+@Composable
+private fun DeviceLightLiveOutputContent(
+    channels: List<DeviceLightLiveOutputChannel>,
+    colors: AquaLightLiveOutputColors,
+    typography: AquaLightLiveOutputTypography,
+    textColor: Color
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        BasicText(
+            text = stringResource(R.string.device_light_live_output_title),
+            style = typography.title.copy(color = textColor)
+        )
+        Spacer(
+            modifier = Modifier.height(AquaLightDashboardGeometry.liveOutputTitleBottomGap)
+        )
+        channels.forEachIndexed { index, channel ->
+            DeviceLightLiveOutputRow(
+                channel = channel,
+                colors = colors,
+                typography = typography,
+                textColor = textColor
             )
-            Spacer(
-                modifier = Modifier.height(
-                    AquaLightDashboardGeometry.liveOutputTitleBottomGap
+            if (index != channels.lastIndex) {
+                Spacer(
+                    modifier = Modifier.height(AquaLightDashboardGeometry.liveOutputRowGap)
                 )
-            )
-            channels.forEachIndexed { index, channel ->
-                DeviceLightLiveOutputRow(
-                    channel = channel,
-                    colors = colors,
-                    typography = typography,
-                    textColor = dashboardColors.primaryText
-                )
-                if (index != channels.lastIndex) {
-                    Spacer(
-                        modifier = Modifier.height(
-                            AquaLightDashboardGeometry.liveOutputRowGap
-                        )
-                    )
-                }
             }
         }
     }
