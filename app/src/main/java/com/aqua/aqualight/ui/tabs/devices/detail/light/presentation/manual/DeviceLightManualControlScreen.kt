@@ -93,17 +93,29 @@ private fun ManualControlCard(
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(AquaLightManualGeometry.controlContentGap)
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             state.power?.let { power -> ManualPowerGauge(power, visuals) }
-            state.channels.forEach { channel ->
-                ManualChannelRow(
-                    channel = channel,
-                    enabled = state.contentEnabled,
-                    actions = actions,
-                    visuals = visuals
-                )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(
+                        if (state.power == null) {
+                            Modifier
+                        } else {
+                            Modifier.padding(top = AquaLightManualGeometry.powerToChannelsGap)
+                        }
+                    ),
+                verticalArrangement = Arrangement.spacedBy(AquaLightManualGeometry.channelRowGap)
+            ) {
+                state.channels.forEach { channel ->
+                    ManualChannelRow(
+                        channel = channel,
+                        enabled = state.contentEnabled,
+                        actions = actions,
+                        visuals = visuals
+                    )
+                }
             }
         }
     }
