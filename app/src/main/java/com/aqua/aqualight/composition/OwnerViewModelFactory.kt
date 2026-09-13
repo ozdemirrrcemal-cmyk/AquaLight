@@ -51,6 +51,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.detail.DeviceDos
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan.DeviceDosingPlanViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.reservoir.DeviceDosingReservoirViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.root.DeviceDosingRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.library.DeviceLightLibraryViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual.DeviceLightManualControlViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.settings.DeviceFamilySettingsViewModel
@@ -175,7 +176,12 @@ internal class OwnerViewModelFactory(
                 lightControlOperations = graph.lightOperations.controlOperations,
                 controlSurfacePreparationOperations = graph.controlSurfacePreparationOperations
             )
-            DeviceLightManualControlViewModel::class.java -> DeviceLightManualControlViewModel()
+            DeviceLightManualControlViewModel::class.java -> DeviceLightManualControlViewModel(
+                libraryOperations = graph.lightOperations.libraryOperations
+            )
+            DeviceLightLibraryViewModel::class.java -> DeviceLightLibraryViewModel(
+                operations = graph.lightOperations.libraryOperations
+            )
             DeviceCoolingRootViewModel::class.java -> DeviceCoolingRootViewModel(
                 operations = DefaultDeviceRootOperations(repository),
                 controlOperations = DefaultDeviceCoolingControlOperations(repository),
@@ -301,6 +307,7 @@ internal class OwnerViewModelFactory(
             MaintenanceViewModel::class.java,
             DeviceLightRootViewModel::class.java,
             DeviceLightManualControlViewModel::class.java,
+            DeviceLightLibraryViewModel::class.java,
             DeviceCoolingRootViewModel::class.java,
             DeviceCoolingTemperatureHistoryViewModel::class.java,
             DeviceCoolingSystemStatusViewModel::class.java,

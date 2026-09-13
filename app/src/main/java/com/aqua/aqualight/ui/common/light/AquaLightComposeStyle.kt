@@ -223,6 +223,65 @@ object AquaLightManualAlpha {
     const val buttonPressed = 0.14f
 }
 
+/** Central layout contract for the reusable Manual and Custom light library. */
+object AquaLightLibraryGeometry {
+    val screenHorizontalPadding = 12.dp
+    val screenTopPadding = 4.dp
+    val screenBottomPadding = 24.dp
+    val sectionGap = 10.dp
+    val cardGap = 8.dp
+
+    val tabHeight = 44.dp
+    val tabCornerRadius = 13.dp
+    val tabOutlineWidth = AquaDeviceCardGeometry.outlineWidth
+    val tabInnerPadding = 4.dp
+
+    val sectionHeaderHorizontalPadding = 2.dp
+    val cardHeaderGap = 8.dp
+    val badgeCornerRadius = 9.dp
+    val badgeHorizontalPadding = 8.dp
+    val badgeVerticalPadding = 3.dp
+    val moreTouchSize = 36.dp
+    val moreDotRadius = 1.4.dp
+    val moreDotGap = 5.dp
+
+    val manualRowHeight = 27.dp
+    val manualLabelWidth = 20.dp
+    val manualValueWidth = 42.dp
+    val manualRailHeight = 7.dp
+    val manualRowGap = 2.dp
+
+    val chartHeight = 126.dp
+    val chartYAxisWidth = 34.dp
+    val chartXAxisHeight = 16.dp
+    val chartGridStrokeWidth = 1.dp
+    val chartLineStrokeWidth = 2.dp
+    val chartLegendGap = 16.dp
+    val chartLegendDotSize = 9.dp
+
+    val loadButtonHeight = 42.dp
+    val loadButtonMinWidth = 112.dp
+    val loadButtonCornerRadius = 12.dp
+    val loadButtonOutlineWidth = 1.dp
+    val loadButtonIconSize = 21.dp
+    val loadButtonGap = 7.dp
+
+    val emptyIconSize = 42.dp
+    val emptyVerticalPadding = 34.dp
+    val emptyTextGap = 6.dp
+    val informationIconSize = 18.dp
+    val informationGap = 7.dp
+}
+
+object AquaLightLibraryAlpha {
+    const val selectedTabSurface = 0.20f
+    const val badgeSurface = 0.16f
+    const val rail = 0.24f
+    const val grid = 0.52f
+    const val disabled = 0.38f
+    const val pressed = 0.14f
+}
+
 object AquaLightManualTypographySpec {
     val powerValueFontSize = 22.sp
     val powerValueLineHeight = 26.sp

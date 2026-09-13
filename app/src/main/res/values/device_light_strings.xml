@@ -105,4 +105,65 @@
     <string name="device_light_manual_thermal_limited_percent_message">The device is cooling; actual output is limited to %1$d%%.</string>
     <string name="device_light_manual_thermal_shutdown_title">Light temporarily turned off</string>
     <string name="device_light_manual_thermal_shutdown_message">Output remains off until the device returns to a safe temperature.</string>
+
+    <!-- Light Library -->
+    <string name="device_light_library_tab_manual">Manual</string>
+    <string name="device_light_library_tab_custom">Custom Curves</string>
+    <string name="device_light_library_manual_records_title">My Manual Scenes</string>
+    <string name="device_light_library_custom_records_title">My Custom Curves</string>
+    <plurals name="device_light_library_record_count">
+        <item quantity="one">%1$d record</item>
+        <item quantity="other">%1$d records</item>
+    </plurals>
+    <plurals name="device_light_library_point_count">
+        <item quantity="one">%1$d point</item>
+        <item quantity="other">%1$d points</item>
+    </plurals>
+    <string name="device_light_library_badge_manual">MANUAL</string>
+    <string name="device_light_library_badge_custom">CUSTOM</string>
+    <string name="device_light_library_load">Load</string>
+    <string name="device_light_library_loaded">✓ Loaded</string>
+    <string name="device_light_library_more_actions_description">More actions for %1$s</string>
+    <string name="device_light_library_load_description">Load %1$s to the device</string>
+    <string name="device_light_library_loaded_description">%1$s is loaded on the device</string>
+    <string name="device_light_library_actions_title">%1$s</string>
+    <string name="device_light_library_rename">Rename</string>
+    <string name="device_light_library_delete">Delete</string>
+    <string name="device_light_library_delete_title">Delete light setting?</string>
+    <string name="device_light_library_delete_message">“%1$s” will be removed permanently.</string>
+    <string name="device_light_library_delete_confirm">Delete</string>
+    <string name="device_light_library_save_as_title">Save light setting</string>
+    <string name="device_light_library_rename_title">Rename light setting</string>
+    <string name="device_light_library_name_label">Setting name</string>
+    <string name="device_light_library_name_hint">For example, Evening view</string>
+    <string name="device_light_library_name_supporting_text">Up to 40 characters</string>
+    <string name="device_light_library_save">Save</string>
+    <string name="device_light_library_name_required_error">Enter a name.</string>
+    <string name="device_light_library_name_duplicate_error">This name is already used in this section.</string>
+    <string name="device_light_library_name_invalid_error">Enter a valid name of up to 40 characters.</string>
+    <string name="device_light_library_saved_success">Light setting saved</string>
+    <string name="device_light_library_renamed_success">Light setting renamed</string>
+    <string name="device_light_library_deleted_success">Light setting deleted</string>
+    <string name="device_light_library_loaded_success">Light setting loaded to the device</string>
+    <string name="device_light_library_operation_error">The light setting could not be processed. Try again.</string>
+    <string name="device_light_library_load_not_connected_error">The device connection was lost. Reconnect and try again.</string>
+    <string name="device_light_library_empty_manual_title">No manual scenes yet</string>
+    <string name="device_light_library_empty_manual_message">Use Save as on the Manual screen to add your current channel values.</string>
+    <string name="device_light_library_empty_custom_title">No custom curves yet</string>
+    <string name="device_light_library_empty_custom_message">Saved time curves from the Custom screen will appear here.</string>
+    <string name="device_light_library_error_title">Light Library is unavailable</string>
+    <string name="device_light_library_error_message">Your records could not be read. Try again.</string>
+    <string name="device_light_library_retry">Try again</string>
+    <string name="device_light_library_manual_information">Records preserve your requested channel values.</string>
+    <string name="device_light_library_custom_information">Load applies the selected days and the complete time curve to the device.</string>
+    <string name="device_light_library_day_monday">Mon</string>
+    <string name="device_light_library_day_tuesday">Tue</string>
+    <string name="device_light_library_day_wednesday">Wed</string>
+    <string name="device_light_library_day_thursday">Thu</string>
+    <string name="device_light_library_day_friday">Fri</string>
+    <string name="device_light_library_day_saturday">Sat</string>
+    <string name="device_light_library_day_sunday">Sun</string>
+    <string name="device_light_library_days_points_format">%1$s · %2$s</string>
+    <string name="device_light_library_channel_percent_format">%1$d%%</string>
+    <string name="device_light_library_chart_description">Custom curve with %1$d actual time points.</string>
 </resources>

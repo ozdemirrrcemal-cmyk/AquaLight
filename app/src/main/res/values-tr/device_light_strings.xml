@@ -103,4 +103,65 @@
     <string name="device_light_manual_thermal_limited_percent_message">Cihaz soğuyor; gerçek çıkış %%%1$d ile sınırlandırılıyor.</string>
     <string name="device_light_manual_thermal_shutdown_title">Işık geçici olarak kapatıldı</string>
     <string name="device_light_manual_thermal_shutdown_message">Cihaz güvenli sıcaklığa dönene kadar çıkış kapalı kalır.</string>
+
+    <!-- Işık Kitaplığı -->
+    <string name="device_light_library_tab_manual">Manuel</string>
+    <string name="device_light_library_tab_custom">Özel Eğriler</string>
+    <string name="device_light_library_manual_records_title">Manuel Kayıtlarım</string>
+    <string name="device_light_library_custom_records_title">Özel Eğrilerim</string>
+    <plurals name="device_light_library_record_count">
+        <item quantity="one">%1$d kayıt</item>
+        <item quantity="other">%1$d kayıt</item>
+    </plurals>
+    <plurals name="device_light_library_point_count">
+        <item quantity="one">%1$d nokta</item>
+        <item quantity="other">%1$d nokta</item>
+    </plurals>
+    <string name="device_light_library_badge_manual">MANUEL</string>
+    <string name="device_light_library_badge_custom">ÖZEL</string>
+    <string name="device_light_library_load">Yükle</string>
+    <string name="device_light_library_loaded">✓ Yüklü</string>
+    <string name="device_light_library_more_actions_description">%1$s için diğer işlemler</string>
+    <string name="device_light_library_load_description">%1$s ayarını cihaza yükle</string>
+    <string name="device_light_library_loaded_description">%1$s cihazda yüklü</string>
+    <string name="device_light_library_actions_title">%1$s</string>
+    <string name="device_light_library_rename">Yeniden adlandır</string>
+    <string name="device_light_library_delete">Sil</string>
+    <string name="device_light_library_delete_title">Işık ayarı silinsin mi?</string>
+    <string name="device_light_library_delete_message">“%1$s” kalıcı olarak kaldırılacak.</string>
+    <string name="device_light_library_delete_confirm">Sil</string>
+    <string name="device_light_library_save_as_title">Işık ayarını kaydet</string>
+    <string name="device_light_library_rename_title">Işık ayarını yeniden adlandır</string>
+    <string name="device_light_library_name_label">Ayar adı</string>
+    <string name="device_light_library_name_hint">Örneğin Akşam görünümü</string>
+    <string name="device_light_library_name_supporting_text">En fazla 40 karakter</string>
+    <string name="device_light_library_save">Kaydet</string>
+    <string name="device_light_library_name_required_error">Bir ad girin.</string>
+    <string name="device_light_library_name_duplicate_error">Bu ad aynı bölümde zaten kullanılıyor.</string>
+    <string name="device_light_library_name_invalid_error">En fazla 40 karakterlik geçerli bir ad girin.</string>
+    <string name="device_light_library_saved_success">Işık ayarı kaydedildi</string>
+    <string name="device_light_library_renamed_success">Işık ayarı yeniden adlandırıldı</string>
+    <string name="device_light_library_deleted_success">Işık ayarı silindi</string>
+    <string name="device_light_library_loaded_success">Işık ayarı cihaza yüklendi</string>
+    <string name="device_light_library_operation_error">Işık ayarı işlenemedi. Tekrar deneyin.</string>
+    <string name="device_light_library_load_not_connected_error">Cihaz bağlantısı kesildi. Yeniden bağlanıp tekrar deneyin.</string>
+    <string name="device_light_library_empty_manual_title">Henüz manuel kayıt yok</string>
+    <string name="device_light_library_empty_manual_message">Mevcut kanal değerlerinizi eklemek için Manuel ekranındaki Farklı kaydet seçeneğini kullanın.</string>
+    <string name="device_light_library_empty_custom_title">Henüz özel eğri yok</string>
+    <string name="device_light_library_empty_custom_message">Özel ekranında kaydettiğiniz zaman eğrileri burada gösterilecek.</string>
+    <string name="device_light_library_error_title">Işık Kitaplığı kullanılamıyor</string>
+    <string name="device_light_library_error_message">Kayıtlarınız okunamadı. Tekrar deneyin.</string>
+    <string name="device_light_library_retry">Tekrar dene</string>
+    <string name="device_light_library_manual_information">Kayıtlar, istediğiniz kanal değerlerini saklar.</string>
+    <string name="device_light_library_custom_information">Yükle, seçili günleri ve tüm zaman eğrisini cihaza uygular.</string>
+    <string name="device_light_library_day_monday">Pzt</string>
+    <string name="device_light_library_day_tuesday">Sal</string>
+    <string name="device_light_library_day_wednesday">Çar</string>
+    <string name="device_light_library_day_thursday">Per</string>
+    <string name="device_light_library_day_friday">Cum</string>
+    <string name="device_light_library_day_saturday">Cmt</string>
+    <string name="device_light_library_day_sunday">Paz</string>
+    <string name="device_light_library_days_points_format">%1$s · %2$s</string>
+    <string name="device_light_library_channel_percent_format">%%%1$d</string>
+    <string name="device_light_library_chart_description">%1$d gerçek zaman noktasından oluşan özel eğri.</string>
 </resources>

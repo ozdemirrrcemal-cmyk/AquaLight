@@ -12,6 +12,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
 import com.aqua.aqualight.application.devices.light.control.DeviceLightControlOperations
+import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryOperations
 import com.aqua.aqualight.application.devices.light.protection.DeviceLightProtectionOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftRequest
@@ -35,6 +36,8 @@ import com.aqua.aqualight.data.devices.dosing.SharedPreferencesDeviceDosingCalib
 import com.aqua.aqualight.data.devices.dosing.SharedPreferencesDeviceDosingLowLevelAlertLedger
 import com.aqua.aqualight.data.devices.dosing.v1.DeviceDosingV1ProductionRuntime
 import com.aqua.aqualight.data.devices.light.control.DefaultDeviceLightControlOperations
+import com.aqua.aqualight.data.devices.light.library.DefaultDeviceLightLibraryOperations
+import com.aqua.aqualight.data.devices.light.library.DeviceLightLibraryStore
 import com.aqua.aqualight.data.devices.light.protection.DefaultDeviceLightProtectionOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceControlSurfacePreparationOperations
 import com.aqua.aqualight.data.devices.provisioning.repository.DefaultProvisioningDraftOperations
@@ -88,7 +91,8 @@ internal data class OwnerDosingOperations(
 /** One owner-scoped application boundary set backed by the single central Light runtime. */
 internal data class OwnerLightOperations(
     val controlOperations: DeviceLightControlOperations,
-    val protectionOperations: DeviceLightProtectionOperations
+    val protectionOperations: DeviceLightProtectionOperations,
+    val libraryOperations: DeviceLightLibraryOperations
 )
 
 internal fun interface OwnerDependencyGraphResolver {
@@ -210,7 +214,11 @@ internal class ActiveOwnerDependencyGraphResolver(
         val timerControlOperations = DefaultDeviceTimerControlOperations(
             dependencies.devicesRepository
         )
-        val lightOperations = createOwnerLightOperations(dependencies.devicesRepository)
+        val lightOperations = createOwnerLightOperations(
+            context = appContext,
+            ownerUid = dependencies.ownerUid,
+            devicesRepository = dependencies.devicesRepository
+        )
         return OwnerDependencyGraph(
             ownerUid = dependencies.ownerUid,
             sessionGeneration = dependencies.sessionGeneration,
@@ -353,11 +361,22 @@ internal class ActiveOwnerDependencyGraphResolver(
 }
 
 private fun createOwnerLightOperations(
+    context: Context,
+    ownerUid: String,
     devicesRepository: DevicesRepository
-): OwnerLightOperations = OwnerLightOperations(
-    controlOperations = DefaultDeviceLightControlOperations(devicesRepository),
-    protectionOperations = DefaultDeviceLightProtectionOperations(devicesRepository)
-)
+): OwnerLightOperations {
+    val controlOperations = DefaultDeviceLightControlOperations(devicesRepository)
+    return OwnerLightOperations(
+        controlOperations = controlOperations,
+        protectionOperations = DefaultDeviceLightProtectionOperations(devicesRepository),
+        libraryOperations = DefaultDeviceLightLibraryOperations(
+            ownerUid = ownerUid,
+            store = DeviceLightLibraryStore.create(context, ownerUid),
+            devicesRepository = devicesRepository,
+            controlOperations = controlOperations
+        )
+    )
+}
 
 private data class ActiveOwnerDependencies(
     val ownerUid: String,

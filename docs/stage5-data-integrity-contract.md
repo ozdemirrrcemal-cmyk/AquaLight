@@ -1,4 +1,4 @@
-# Stage 5 — Commercial tank and care data integrity
+# Stage 5 — Commercial owner data integrity
 
 This stage defines the first commercial local-store contract for AquaLight.
 The application has not shipped a previous public store schema, so this work
@@ -9,6 +9,7 @@ intentionally provides no legacy compatibility or downgrade path.
 - Aquarium tanks
 - Care tasks
 - Encrypted user preferences
+- Light Library records
 
 ## Required guarantees
 
@@ -23,6 +24,8 @@ intentionally provides no legacy compatibility or downgrade path.
 9. Manual and generated care-task IDs are allocated inside the atomic `DataStore.updateData` transaction.
 10. Tank deletion and dependent Care Task cleanup use a durable compensating transaction. Care-task writes are blocked before snapshots are captured, care tasks are removed before the tank, failed tank writes restore the snapshots, and owner-session startup resolves interrupted transactions.
 11. Serializer, corruption, owner-isolation, schema-policy, recovery, and concurrent-write tests are release gates.
+12. Light Library names are canonical and unique within one owner and record type; product channel sets and custom time points are stored exactly.
+13. Light Library records never persist a device UID, firmware revision, or loaded-state flag.
 
 ## Care schedule product limits
 
@@ -42,12 +45,12 @@ intentionally provides no legacy compatibility or downgrade path.
 
 **Status: N/A for the first commercial release schema.**
 
-AquaLight has not shipped a public Tank, Care Task, or encrypted User
+AquaLight has not shipped a public Tank, Care Task, Light Library, or encrypted User
 Preferences schema. Therefore there is no legitimate source schema to migrate
 and no legacy `DataMigration` is installed. Clean installation is the required
 validation baseline for this unreleased build.
 
-Version `1` is explicit and tested for all three stores. Missing version `0`
+Version `1` is explicit and tested for all four stores. Missing version `0`
 and unknown future versions fail closed. The first post-release schema change
 must increment the relevant version constant, add an explicit reviewed
 migration when a legitimate public source schema exists, and include upgrade,

@@ -1,12 +1,34 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual
 
+import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryChannel
+import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryCustomPoint
+import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryKind
+import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryMutationResult
+import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryOperations
+import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryResult
+import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryScene
+import com.aqua.aqualight.application.devices.light.library.DeviceLightLibrarySnapshot
+import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryTarget
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.TestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TestWatcher
+import org.junit.runner.Description
 
 class DeviceLightManualControlViewModelTest {
+
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
 
     @Test
     fun `preview starts without protection banner or loading`() {
@@ -94,8 +116,98 @@ class DeviceLightManualControlViewModelTest {
         assertFalse(viewModel.uiState.value.showGlobalLoading)
     }
 
-    private fun boundViewModel() = DeviceLightManualControlViewModel().apply {
+    @Test
+    fun `rgb slim removes white channel and estimated power section`() {
+        val viewModel = boundViewModel(
+            FakeLibraryOperations(
+                productKey = "LIGHT_RGB_PRO_SLIM",
+                channels = listOf(
+                    DeviceLightLibraryChannel.RED,
+                    DeviceLightLibraryChannel.GREEN,
+                    DeviceLightLibraryChannel.BLUE
+                ),
+                estimatedPowerWatts = null
+            )
+        )
+
+        assertFalse(
+            viewModel.uiState.value.channels.any { channel ->
+                channel.id == DeviceLightManualChannelId.WHITE
+            }
+        )
+        assertNull(viewModel.uiState.value.power)
+    }
+
+    private fun boundViewModel(
+        operations: DeviceLightLibraryOperations = FakeLibraryOperations()
+    ) = DeviceLightManualControlViewModel(
+        libraryOperations = operations
+    ).apply {
         bind(DEVICE_UID)
+    }
+
+    private class FakeLibraryOperations(
+        productKey: String = "LIGHT_WRGB_PRO_ELITE",
+        channels: List<DeviceLightLibraryChannel> = listOf(
+            DeviceLightLibraryChannel.RED,
+            DeviceLightLibraryChannel.GREEN,
+            DeviceLightLibraryChannel.BLUE,
+            DeviceLightLibraryChannel.WHITE
+        ),
+        estimatedPowerWatts: Int? = 46
+    ) : DeviceLightLibraryOperations {
+        private val result = DeviceLightLibraryResult.Available(
+            DeviceLightLibrarySnapshot(
+                target = DeviceLightLibraryTarget(
+                    deviceUid = DEVICE_UID,
+                    productKey = productKey,
+                    channels = channels,
+                    estimatedPowerWatts = estimatedPowerWatts
+                ),
+                entries = emptyList()
+            )
+        )
+
+        override fun observeLibrary(deviceUid: String): Flow<DeviceLightLibraryResult> =
+            flowOf(result)
+
+        override suspend fun usedNames(kind: DeviceLightLibraryKind): List<String> = emptyList()
+
+        override suspend fun refreshInstalledCustom(deviceUid: String) = Unit
+
+        override suspend fun saveManual(
+            deviceUid: String,
+            name: String,
+            scene: DeviceLightLibraryScene
+        ) = DeviceLightLibraryMutationResult.Success("manual")
+
+        override suspend fun saveCustom(
+            deviceUid: String,
+            name: String,
+            weekdaysMask: Int,
+            points: List<DeviceLightLibraryCustomPoint>
+        ) = DeviceLightLibraryMutationResult.Success("custom")
+
+        override suspend fun rename(entryId: String, name: String) =
+            DeviceLightLibraryMutationResult.Success(entryId)
+
+        override suspend fun delete(entryId: String) =
+            DeviceLightLibraryMutationResult.Success(entryId)
+
+        override suspend fun load(deviceUid: String, entryId: String) =
+            DeviceLightLibraryMutationResult.Success(entryId)
+    }
+
+    class MainDispatcherRule(
+        private val dispatcher: TestDispatcher = UnconfinedTestDispatcher()
+    ) : TestWatcher() {
+        override fun starting(description: Description) {
+            Dispatchers.setMain(dispatcher)
+        }
+
+        override fun finished(description: Description) {
+            Dispatchers.resetMain()
+        }
     }
 
     private fun assertScene(

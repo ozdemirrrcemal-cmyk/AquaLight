@@ -16,6 +16,8 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceLightManualControlBinding
+import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryNamePolicy
+import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
@@ -35,6 +37,7 @@ class DeviceLightManualControlFragment : Fragment(R.layout.fragment_device_light
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentDeviceLightManualControlBinding.bind(view)
 
+        registerSaveAsResult()
         viewModel.bind(args.deviceUid)
         renderState(viewModel.uiState.value)
         setupManualContent()
@@ -93,6 +96,15 @@ class DeviceLightManualControlFragment : Fragment(R.layout.fragment_device_light
         if (_binding == null) return
         when (effect) {
             DeviceLightManualControlEffect.OpenLibrary -> openLibrary()
+            is DeviceLightManualControlEffect.OpenSaveAs -> showSaveAsSheet(
+                effect.usedManualNames
+            )
+            is DeviceLightManualControlEffect.ShowSuccess -> {
+                (activity as? BaseActivity)?.showSnackBar(
+                    message = getString(effect.messageRes),
+                    type = BaseActivity.SnackType.SUCCESS
+                )
+            }
             is DeviceLightManualControlEffect.ShowError -> {
                 setFragmentGlobalLoading(false)
                 (activity as? BaseActivity)?.showSnackBar(
@@ -101,6 +113,39 @@ class DeviceLightManualControlFragment : Fragment(R.layout.fragment_device_light
                 )
             }
         }
+    }
+
+    private fun registerSaveAsResult() {
+        childFragmentManager.setFragmentResultListener(
+            SAVE_AS_REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            if (result.getString(TextInputBottomSheet.RESULT_KEY) ==
+                TextInputBottomSheet.RESULT_SAVED
+            ) {
+                viewModel.saveAs(result.getString(TextInputBottomSheet.RESULT_VALUE).orEmpty())
+            }
+        }
+    }
+
+    private fun showSaveAsSheet(usedManualNames: List<String>) {
+        TextInputBottomSheet.show(
+            fragmentManager = childFragmentManager,
+            title = getString(R.string.device_light_library_save_as_title),
+            label = getString(R.string.device_light_library_name_label),
+            hint = getString(R.string.device_light_library_name_hint),
+            initialValue = "",
+            supportingText = getString(R.string.device_light_library_name_supporting_text),
+            saveText = getString(R.string.device_light_library_save),
+            cancelText = getString(R.string.cancel),
+            required = true,
+            requiredMessage = getString(R.string.device_light_library_name_required_error),
+            requestKey = SAVE_AS_REQUEST_KEY,
+            maxLength = DeviceLightLibraryNamePolicy.MAX_LENGTH,
+            requestFocus = true,
+            disallowedValues = usedManualNames,
+            disallowedMessage = getString(R.string.device_light_library_name_duplicate_error)
+        )
     }
 
     private fun openLibrary() {
@@ -118,5 +163,9 @@ class DeviceLightManualControlFragment : Fragment(R.layout.fragment_device_light
         setFragmentGlobalLoading(false)
         _binding = null
         super.onDestroyView()
+    }
+
+    private companion object {
+        const val SAVE_AS_REQUEST_KEY = "device_light_manual_save_as"
     }
 }

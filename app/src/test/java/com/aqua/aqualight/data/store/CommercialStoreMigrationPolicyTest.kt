@@ -12,6 +12,7 @@ class CommercialStoreMigrationPolicyTest {
         assertEquals(1, CommercialStoreSchema.AQUARIUM_TANKS_VERSION)
         assertEquals(1, CommercialStoreSchema.CARE_TASKS_VERSION)
         assertEquals(1, CommercialStoreSchema.USER_PREFERENCES_VERSION)
+        assertEquals(1, CommercialStoreSchema.LIGHT_LIBRARY_VERSION)
 
         val policy = File(
             locateRepositoryRoot(),
@@ -26,7 +27,7 @@ class CommercialStoreMigrationPolicyTest {
         )
         assertTrue(
             normalizedPolicy.contains(
-                "has not shipped a public Tank, Care Task, or encrypted User Preferences schema"
+                "has not shipped a public Tank, Care Task, Light Library, or encrypted User Preferences schema"
             )
         )
         assertTrue(

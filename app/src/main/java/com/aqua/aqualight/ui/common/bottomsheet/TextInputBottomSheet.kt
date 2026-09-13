@@ -15,6 +15,8 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+import java.text.Normalizer
+import java.util.Locale
 
 /** Re-creatable single text input sheet used by simple feature editors. */
 class TextInputBottomSheet : BottomSheetDialogFragment(
@@ -136,6 +138,15 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
                 val displayedValue = views.input.text?.toString()?.trim().orEmpty()
                 if (required && displayedValue.isBlank()) {
                     views.inputLayout.error = args.getString(ARG_REQUIRED_MESSAGE).orEmpty()
+                    return@setOnClickListener
+                }
+                if (
+                    isTextInputValueDisallowed(
+                        value = displayedValue,
+                        disallowedValues = args.getStringArrayList(ARG_DISALLOWED_VALUES).orEmpty()
+                    )
+                ) {
+                    views.inputLayout.error = args.getString(ARG_DISALLOWED_MESSAGE).orEmpty()
                     return@setOnClickListener
                 }
                 views.inputLayout.error = null
@@ -280,6 +291,8 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
         private const val ARG_PRESET_ACTION_TEXT = "arg_preset_action_text"
         private const val ARG_PRESET_DISPLAY_VALUE = "arg_preset_display_value"
         private const val ARG_PRESET_RESULT_VALUE = "arg_preset_result_value"
+        private const val ARG_DISALLOWED_VALUES = "arg_disallowed_values"
+        private const val ARG_DISALLOWED_MESSAGE = "arg_disallowed_message"
         private const val STATE_PRESET_SELECTED = "state_preset_selected"
         private const val TAG_PREFIX = "TextInputBottomSheet:"
         private const val DEFAULT_MAX_LENGTH = 4_096
@@ -310,7 +323,9 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
             requestFocus: Boolean = false,
             presetActionText: String = "",
             presetDisplayValue: String = "",
-            presetResultValue: String = ""
+            presetResultValue: String = "",
+            disallowedValues: List<String> = emptyList(),
+            disallowedMessage: String = ""
         ) {
             val tag = TAG_PREFIX + requestKey
             if (fragmentManager.findFragmentByTag(tag) != null || fragmentManager.isStateSaved) return
@@ -337,7 +352,9 @@ class TextInputBottomSheet : BottomSheetDialogFragment(
                     ARG_REQUEST_FOCUS to requestFocus,
                     ARG_PRESET_ACTION_TEXT to presetActionText,
                     ARG_PRESET_DISPLAY_VALUE to presetDisplayValue,
-                    ARG_PRESET_RESULT_VALUE to presetResultValue
+                    ARG_PRESET_RESULT_VALUE to presetResultValue,
+                    ARG_DISALLOWED_VALUES to ArrayList(disallowedValues),
+                    ARG_DISALLOWED_MESSAGE to disallowedMessage
                 )
             }.show(fragmentManager, tag)
         }
@@ -363,3 +380,19 @@ internal fun isTextInputValueValid(
         ?.let { numericValue -> numericValue > minimumNumericValueExclusive }
         ?: false
 }
+
+internal fun isTextInputValueDisallowed(
+    value: String,
+    disallowedValues: List<String>
+): Boolean {
+    val normalizedValue = normalizeTextInputComparisonValue(value)
+    return normalizedValue.isNotBlank() && disallowedValues.any { disallowed ->
+        normalizeTextInputComparisonValue(disallowed) == normalizedValue
+    }
+}
+
+private fun normalizeTextInputComparisonValue(value: String): String = Normalizer
+    .normalize(value, Normalizer.Form.NFKC)
+    .trim()
+    .replace(Regex("\\s+"), " ")
+    .lowercase(Locale.ROOT)
