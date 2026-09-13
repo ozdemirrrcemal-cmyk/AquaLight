@@ -185,7 +185,7 @@ class DeviceTimerManualControlBottomSheet : BottomSheetDialogFragment(
         private const val PRESET_60_MINUTES = 60
         private const val DEFAULT_DURATION_MINUTES = PRESET_30_MINUTES
 
-        fun show(
+        internal fun show(
             fragmentManager: FragmentManager,
             request: DeviceTimerManualControlRequest
         ) {

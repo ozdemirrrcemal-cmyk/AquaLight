@@ -42,6 +42,8 @@ class TimerV1ContractGuardTest(unittest.TestCase):
         self.assertIn("verify_zero_timer_suppression_debt()", guard)
         self.assertIn("DETEKT_DEBT_BASELINE_PATH", guard)
         self.assertIn("LINT_BASELINE_PATH", guard)
+        self.assertIn('ROOT / "app/lint-baseline.xml.gz"', guard)
+        self.assertIn("gzip.open(LINT_BASELINE_PATH", guard)
 
 
 if __name__ == "__main__":

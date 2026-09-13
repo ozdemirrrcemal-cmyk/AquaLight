@@ -285,17 +285,7 @@ private fun timerProgramControl(): DeviceTimerControlResult = DeviceTimerControl
             uptimeMillis = TEST_UPTIME_MILLIS,
             maxSchedulesPerChannel = TEST_MAX_SCHEDULES
         ),
-        capabilities = DeviceTimerControlCapabilities(
-            readOnly = false,
-            mutations = DeviceTimerMutationCapabilities(
-                supportsConfigApply = true,
-                supportsChannelState = true,
-                supportsSchedules = true,
-                supportsSpansMidnight = true,
-                supportsTemporaryOverride = true,
-                supportsChannelDisplayName = true
-            )
-        ),
+        capabilities = TEST_CONTROL_CAPABILITIES,
         channels = listOf(
             DeviceTimerChannelSnapshot(
                 identity = DeviceTimerChannelIdentity(
@@ -346,6 +336,18 @@ private fun timerProgramControl(): DeviceTimerControlResult = DeviceTimerControl
 )
 
 private fun minutesOfDay(hour: Int): Int = hour * MINUTES_PER_HOUR
+
+private val TEST_CONTROL_CAPABILITIES = DeviceTimerControlCapabilities(
+    readOnly = false,
+    mutations = DeviceTimerMutationCapabilities(
+        supportsConfigApply = true,
+        supportsChannelState = true,
+        supportsSchedules = true,
+        supportsSpansMidnight = true,
+        supportsTemporaryOverride = true,
+        supportsChannelDisplayName = true
+    )
+)
 
 private const val TEST_REVISION = 12L
 private const val MINUTES_PER_HOUR = 60

@@ -160,7 +160,10 @@ internal class DeviceTimerRuntimeStateStore {
         generation: DeviceRuntimeConnectionGeneration,
         event: DeviceTimerStatusChangedEvent
     ): DeviceTimerStateEventResult = synchronized(lock) {
-        when (val decision = decideRuntimeEvent(deviceUid, generation, event)) {
+        val current = _states.value[deviceUid]
+        val stateReady = authority.acceptsPatch(deviceUid, generation) &&
+            current != null && current.authoritative && current.connectionGeneration == generation
+        when (val decision = runtimeEventDecision(current, event, stateReady)) {
             RuntimeEventDecision.Ignored -> DeviceTimerStateEventResult.Ignored
             is RuntimeEventDecision.Refresh -> {
                 decision.state?.let { state -> publish(deviceUid, state) }
@@ -186,39 +189,6 @@ internal class DeviceTimerRuntimeStateStore {
         _states.value = _states.value + (deviceUid to state)
     }
 
-    private fun decideRuntimeEvent(
-        deviceUid: DeviceUid,
-        generation: DeviceRuntimeConnectionGeneration,
-        event: DeviceTimerStatusChangedEvent
-    ): RuntimeEventDecision {
-        val current = _states.value[deviceUid]
-        val sequence = current?.lastEventSequence
-        val status = current?.status
-        val channel = status?.channels?.singleOrNull { it.key == event.channelKey }
-        val stateReady = authority.acceptsPatch(deviceUid, generation) &&
-            current != null && current.authoritative && current.connectionGeneration == generation
-        val sequenceStale = sequence != null &&
-            !isNewerTimerCounter(event.change.sequence, sequence)
-        val sequenceMissing = sequence != null &&
-            event.change.sequence != nextTimerSequence(sequence)
-        val snapshotMismatch = status == null || channel == null ||
-            status.revision != event.revision
-        return when {
-            !stateReady -> RuntimeEventDecision.Refresh()
-            sequenceStale -> RuntimeEventDecision.Ignored
-            sequenceMissing || snapshotMismatch -> RuntimeEventDecision.Refresh(
-                current.copy(
-                    lastEventSequence = event.change.sequence,
-                    requiresStatusRefresh = true
-                )
-            )
-            else -> RuntimeEventDecision.Apply(
-                requireNotNull(current),
-                requireNotNull(status),
-                requireNotNull(channel)
-            )
-        }
-    }
 }
 
 private sealed interface RuntimeEventDecision {
@@ -229,6 +199,37 @@ private sealed interface RuntimeEventDecision {
         val status: DeviceTimerStatus,
         val channel: DeviceTimerChannelStatus
     ) : RuntimeEventDecision
+}
+
+private fun runtimeEventDecision(
+    current: DeviceTimerRuntimeState?,
+    event: DeviceTimerStatusChangedEvent,
+    stateReady: Boolean
+): RuntimeEventDecision {
+    val sequence = current?.lastEventSequence
+    val status = current?.status
+    val channel = status?.channels?.singleOrNull { it.key == event.channelKey }
+    val sequenceStale = sequence != null &&
+        !isNewerTimerCounter(event.change.sequence, sequence)
+    val sequenceMissing = sequence != null &&
+        event.change.sequence != nextTimerSequence(sequence)
+    val snapshotMismatch = status == null || channel == null ||
+        status.revision != event.revision
+    return when {
+        !stateReady -> RuntimeEventDecision.Refresh()
+        sequenceStale -> RuntimeEventDecision.Ignored
+        sequenceMissing || snapshotMismatch -> RuntimeEventDecision.Refresh(
+            requireNotNull(current).copy(
+                lastEventSequence = event.change.sequence,
+                requiresStatusRefresh = true
+            )
+        )
+        else -> RuntimeEventDecision.Apply(
+            requireNotNull(current),
+            requireNotNull(status),
+            requireNotNull(channel)
+        )
+    }
 }
 
 private fun RuntimeEventDecision.Apply.apply(

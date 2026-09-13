@@ -449,14 +449,7 @@ private fun availableControl(
         ),
         capabilities = DeviceTimerControlCapabilities(
             readOnly = readOnly,
-            mutations = DeviceTimerMutationCapabilities(
-                supportsConfigApply = true,
-                supportsChannelState = true,
-                supportsSchedules = true,
-                supportsSpansMidnight = true,
-                supportsTemporaryOverride = true,
-                supportsChannelDisplayName = true
-            )
+            mutations = TEST_MUTATION_CAPABILITIES
         ),
         channels = listOf(
             DeviceTimerChannelSnapshot(
@@ -517,6 +510,15 @@ private fun morningSchedule() = DeviceTimerScheduleSnapshot(
 
 private fun unavailableControl(): DeviceTimerControlResult =
     DeviceTimerControlResult.Failed(DeviceTimerControlFailure.Unavailable)
+
+private val TEST_MUTATION_CAPABILITIES = DeviceTimerMutationCapabilities(
+    supportsConfigApply = true,
+    supportsChannelState = true,
+    supportsSchedules = true,
+    supportsSpansMidnight = true,
+    supportsTemporaryOverride = true,
+    supportsChannelDisplayName = true
+)
 
 private const val TEST_REVISION = 7L
 private const val TEST_UPTIME_MILLIS = 50_000L

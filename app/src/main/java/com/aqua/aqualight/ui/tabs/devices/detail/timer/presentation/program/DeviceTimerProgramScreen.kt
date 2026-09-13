@@ -291,6 +291,7 @@ private fun TimerProgramTimeRow(
     actions: DeviceTimerProgramActions,
     style: TimerCardStyle
 ) {
+    val context = LocalContext.current
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(AquaTimerDashboardGeometry.editorRowGap)
@@ -298,7 +299,10 @@ private fun TimerProgramTimeRow(
         TimerTimeChip(
             content = TimerTimeChipContent(
                 label = stringResource(R.string.device_timer_program_start),
-                value = formatMinutesOfDay(schedule.startMinutesOfDay),
+                value = LocaleFormatter.formatTimeOfDay24Hour(
+                    context,
+                    schedule.startMinutesOfDay
+                ),
                 enabled = enabled
             ),
             onClick = { actions.onStartTimeClick(schedule.slotId) },
@@ -308,7 +312,10 @@ private fun TimerProgramTimeRow(
         TimerTimeChip(
             content = TimerTimeChipContent(
                 label = stringResource(R.string.device_timer_program_end),
-                value = formatMinutesOfDay(schedule.endMinutesOfDay),
+                value = LocaleFormatter.formatTimeOfDay24Hour(
+                    context,
+                    schedule.endMinutesOfDay
+                ),
                 enabled = enabled
             ),
             onClick = { actions.onEndTimeClick(schedule.slotId) },
@@ -387,7 +394,3 @@ private data class TimerTimeChipContent(
     val value: String,
     val enabled: Boolean
 )
-
-@Composable
-private fun formatMinutesOfDay(minutesOfDay: Int): String =
-    LocaleFormatter.formatTimeOfDay24Hour(LocalContext.current, minutesOfDay)

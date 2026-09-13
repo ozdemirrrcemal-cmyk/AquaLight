@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import gzip
 import hashlib
 import json
 import re
@@ -63,7 +64,7 @@ TIMER_SOURCE_FILES = (
     / "DefaultDeviceControlSurfacePreparationOperationsTest.kt",
 )
 DETEKT_DEBT_BASELINE_PATH = ROOT / "config/detekt/advisory-debt-baseline.json"
-LINT_BASELINE_PATH = ROOT / "config/lint/lint-baseline.xml"
+LINT_BASELINE_PATH = ROOT / "app/lint-baseline.xml.gz"
 SUPPRESSION_PATTERNS = (
     re.compile(r"@file\s*:\s*Suppress\b"),
     re.compile(r"@Suppress(?:Lint)?\s*\("),
@@ -344,9 +345,11 @@ def verify_zero_timer_suppression_debt() -> None:
         )
 
     if LINT_BASELINE_PATH.exists():
-        lint_baseline = LINT_BASELINE_PATH.read_text(encoding="utf-8", errors="strict")
+        with gzip.open(LINT_BASELINE_PATH, "rt", encoding="utf-8", errors="strict") as baseline:
+            lint_baseline = baseline.read()
         require(
-            re.search(r"(?:/timer/|DeviceTimer)", lint_baseline, re.IGNORECASE) is None,
+            re.search(r"(?:/timer/|DeviceTimer|device_timer)", lint_baseline, re.IGNORECASE)
+            is None,
             f"{LINT_BASELINE_PATH.relative_to(ROOT)} retains Timer lint debt",
         )
 

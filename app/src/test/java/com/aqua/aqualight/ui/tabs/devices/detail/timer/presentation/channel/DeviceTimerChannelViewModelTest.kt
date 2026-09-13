@@ -255,17 +255,7 @@ private fun control(
             uptimeMillis = TEST_UPTIME_MILLIS,
             maxSchedulesPerChannel = TEST_MAX_SCHEDULES
         ),
-        capabilities = DeviceTimerControlCapabilities(
-            readOnly = false,
-            mutations = DeviceTimerMutationCapabilities(
-                supportsConfigApply = true,
-                supportsChannelState = true,
-                supportsSchedules = true,
-                supportsSpansMidnight = true,
-                supportsTemporaryOverride = true,
-                supportsChannelDisplayName = true
-            )
-        ),
+        capabilities = TEST_CONTROL_CAPABILITIES,
         channels = listOf(
             DeviceTimerChannelSnapshot(
                 identity = DeviceTimerChannelIdentity(
@@ -311,6 +301,18 @@ private fun control(
 private data class TemporaryOverrideCall(
     val regime: DeviceTimerChannelRegime,
     val durationMillis: Long
+)
+
+private val TEST_CONTROL_CAPABILITIES = DeviceTimerControlCapabilities(
+    readOnly = false,
+    mutations = DeviceTimerMutationCapabilities(
+        supportsConfigApply = true,
+        supportsChannelState = true,
+        supportsSchedules = true,
+        supportsSpansMidnight = true,
+        supportsTemporaryOverride = true,
+        supportsChannelDisplayName = true
+    )
 )
 
 private const val TEST_UPTIME_MILLIS = 10_000L

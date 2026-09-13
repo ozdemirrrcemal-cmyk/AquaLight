@@ -45,26 +45,7 @@ object DeviceTimerStatusParser {
                     minimum = TIMER_MIN_COUNT
                 )
             ),
-            authority = DeviceTimerStatusAuthority(
-                revision = data.requireTimerLong(
-                    "revision",
-                    TIMER_NON_NEGATIVE_LONG,
-                    DeviceTimerRuntimeContract.Limit.UINT32_MAX
-                ),
-                lockLoop = data.requireTimerBoolean("lockLoop"),
-                schema = data.requireTimerText("schema"),
-                schemaVersion = data.requireTimerInt(
-                    "schemaVersion",
-                    DeviceTimerRuntimeContract.SCHEMA_VERSION,
-                    DeviceTimerRuntimeContract.SCHEMA_VERSION
-                ),
-                rootName = data.requireTimerText("rootName"),
-                uptimeMs = data.requireTimerLong(
-                    "uptimeMs",
-                    TIMER_NON_NEGATIVE_LONG,
-                    DeviceTimerRuntimeContract.Limit.UINT32_MAX
-                )
-            ),
+            authority = parseAuthority(data),
             channels = channels,
             schedules = schedules,
             runtime = DeviceTimerRuntimeCapabilitiesParser.parse(
@@ -82,6 +63,27 @@ object DeviceTimerStatusParser {
         List(data.length()) { index ->
             DeviceTimerScheduleParser.parse(data.requireTimerObject(index))
         }
+
+    private fun parseAuthority(data: JSONObject) = DeviceTimerStatusAuthority(
+        revision = data.requireTimerLong(
+            "revision",
+            TIMER_NON_NEGATIVE_LONG,
+            DeviceTimerRuntimeContract.Limit.UINT32_MAX
+        ),
+        lockLoop = data.requireTimerBoolean("lockLoop"),
+        schema = data.requireTimerText("schema"),
+        schemaVersion = data.requireTimerInt(
+            "schemaVersion",
+            DeviceTimerRuntimeContract.SCHEMA_VERSION,
+            DeviceTimerRuntimeContract.SCHEMA_VERSION
+        ),
+        rootName = data.requireTimerText("rootName"),
+        uptimeMs = data.requireTimerLong(
+            "uptimeMs",
+            TIMER_NON_NEGATIVE_LONG,
+            DeviceTimerRuntimeContract.Limit.UINT32_MAX
+        )
+    )
 
     private fun validate(status: DeviceTimerStatus) {
         require(status.supported)
