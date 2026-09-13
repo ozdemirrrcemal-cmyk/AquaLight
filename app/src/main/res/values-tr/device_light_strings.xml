@@ -25,4 +25,20 @@
     <string name="device_light_hero_color_temperature_value_format">%1$s K</string>
     <string name="device_light_hero_value_unavailable">—</string>
     <string name="device_light_hero_content_description">%1$s. %2$s. %3$s. Güç %4$s. Renk sıcaklığı %5$s.</string>
+    <string name="device_light_open_library_description">Işık Kitaplığını aç</string>
+    <string name="device_light_library_title">Işık Kitaplığı</string>
+    <string name="device_light_library_empty_title">Henüz kayıtlı ışık yok</string>
+    <string name="device_light_library_empty_description">Manuel ve özel modda kaydettiğiniz ışık ayarları burada görünecek.</string>
+    <string name="device_light_plan_title">Bugünün ışık planı</string>
+    <string name="device_light_plan_subtitle">Planlanan program</string>
+    <string name="device_light_plan_view_program">Programı görüntüle</string>
+    <string name="device_light_plan_current_time_format">Şimdi %1$s</string>
+    <string name="device_light_plan_time_format">%1$02d:%2$02d</string>
+    <string name="device_light_plan_hour_format">%1$02d</string>
+    <string name="device_light_plan_percent_axis_format">%%%1$d</string>
+    <string name="device_light_plan_channel_red">R</string>
+    <string name="device_light_plan_channel_green">G</string>
+    <string name="device_light_plan_channel_blue">B</string>
+    <string name="device_light_plan_channel_white">W</string>
+    <string name="device_light_plan_content_description">00:00 ile 24:00 arasındaki planlanan kırmızı, yeşil, mavi ve beyaz ışık çıkışı. Geçerli önizleme saati: %1$s.</string>
 </resources>

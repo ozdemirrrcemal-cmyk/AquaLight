@@ -3,6 +3,8 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root
 import android.os.Bundle
 import android.view.View
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -32,6 +34,7 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
 
     private var _binding: FragmentDeviceLightRootBinding? = null
     private val binding get() = _binding!!
+    private var showLightLibrary by mutableStateOf(false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -51,7 +54,11 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
-                DeviceLightDashboardScreen(state = state)
+                DeviceLightDashboardScreen(
+                    state = state,
+                    showLightLibrary = showLightLibrary,
+                    onLightLibraryDismiss = { showLightLibrary = false }
+                )
             }
         }
     }
@@ -69,6 +76,14 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
                 statusIcon = state.connectionVisualState.toWifiHeaderStatusIcon(requireContext()),
                 actions = listOf(
                     AquaHeaderAction(
+                        iconRes = R.drawable.ic_light_library,
+                        contentDescription = getString(
+                            R.string.device_light_open_library_description
+                        ),
+                        enabled = state.contentEnabled,
+                        onClick = ::openLightLibrary
+                    ),
+                    AquaHeaderAction(
                         iconRes = R.drawable.ic_settings,
                         contentDescription = getString(
                             R.string.device_light_open_settings_description
@@ -79,6 +94,11 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
                 )
             )
         )
+    }
+
+    private fun openLightLibrary() {
+        if (!viewModel.uiState.value.contentEnabled) return
+        showLightLibrary = true
     }
 
     private fun openSettings() {
@@ -127,6 +147,7 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
     }
 
     override fun onDestroyView() {
+        showLightLibrary = false
         _binding = null
         super.onDestroyView()
     }
