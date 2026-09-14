@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.inset
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import com.aqua.aqualight.R
@@ -27,7 +28,13 @@ internal fun DayDial(
     modifier: Modifier
 ) {
     Box(modifier, contentAlignment = Alignment.Center) {
-        Canvas(Modifier.fillMaxSize()) { drawDayDial(schedule, visuals) }
+        Canvas(Modifier.fillMaxSize()) {
+            val edgeInset = (
+                DeviceLightAutomaticEditorGeometry.dialMarkerRadius +
+                    DeviceLightAutomaticEditorGeometry.dialMarkerOutlineWidth
+                ).toPx()
+            inset(edgeInset) { drawDayDial(schedule, visuals) }
+        }
         DialAxisLabels(visuals)
         DialCenterCopy(schedule, visuals)
     }
@@ -47,8 +54,8 @@ private fun DrawScope.drawDayDial(
     drawDialGuides(visuals)
     if (schedule != null) {
         drawScheduleArcs(schedule, visuals, stroke)
-        drawDialMarker(schedule.startTimeMs, visuals.colors.red)
-        drawDialMarker(schedule.endTimeMs, visuals.colors.blue)
+        drawDialMarker(schedule.startTimeMs, visuals.colors.card.warning)
+        drawDialMarker(schedule.endTimeMs, visuals.colors.shrimp)
     }
 }
 
@@ -62,9 +69,9 @@ private fun DrawScope.drawScheduleArcs(
     val ramp = schedule.rampDurationMs.toDayDegrees()
     val hold = (duration - ramp - ramp).coerceAtLeast(NO_SWEEP_DEGREES)
     listOf(
-        DialArc(start, ramp, visuals.colors.red),
-        DialArc(start + ramp, hold, visuals.colors.action),
-        DialArc(start + ramp + hold, ramp, visuals.colors.blue)
+        DialArc(start, ramp, visuals.colors.card.warning),
+        DialArc(start + ramp, hold, schedule.sceneColor),
+        DialArc(start + ramp + hold, ramp, visuals.colors.shrimp)
     ).forEach { arc ->
         drawArc(
             color = arc.color,
@@ -189,7 +196,8 @@ internal data class DaySimulationSchedule(
     val startTimeMs: Long,
     val endTimeMs: Long,
     val rampDurationMs: Long,
-    val durationMs: Long
+    val durationMs: Long,
+    val sceneColor: Color
 )
 
 private data class DialArc(val startDegrees: Float, val sweepDegrees: Float, val color: Color)

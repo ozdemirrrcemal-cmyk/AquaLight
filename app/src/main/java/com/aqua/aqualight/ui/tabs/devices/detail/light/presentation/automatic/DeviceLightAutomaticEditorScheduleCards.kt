@@ -5,6 +5,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -42,9 +44,12 @@ internal fun DeviceLightAutomaticEditorTimeRow(
         EditorTimeCard(
             content = EditorTimeContent(
                 label = stringResource(R.string.device_light_auto_editor_start_time),
+                compactLabel = stringResource(
+                    R.string.device_light_auto_editor_start_time_compact
+                ),
                 summary = stringResource(R.string.device_light_auto_editor_start_time_summary),
                 timeMs = state.draft.startTimeMs,
-                accent = visuals.colors.red,
+                accent = visuals.colors.card.warning,
                 onClick = actions.onStartTimeClick
             ),
             enabled = state.contentEnabled,
@@ -54,9 +59,12 @@ internal fun DeviceLightAutomaticEditorTimeRow(
         EditorTimeCard(
             content = EditorTimeContent(
                 label = stringResource(R.string.device_light_auto_editor_end_time),
+                compactLabel = stringResource(
+                    R.string.device_light_auto_editor_end_time_compact
+                ),
                 summary = stringResource(R.string.device_light_auto_editor_end_time_summary),
                 timeMs = state.draft.endTimeMs,
-                accent = visuals.colors.blue,
+                accent = visuals.colors.red,
                 onClick = actions.onEndTimeClick
             ),
             enabled = state.contentEnabled,
@@ -77,29 +85,41 @@ private fun EditorTimeCard(
         modifier = modifier,
         contentPadding = DeviceLightAutomaticEditorGeometry.cardPadding
     ) {
-        Row(
-            modifier = Modifier.height(DeviceLightAutomaticEditorGeometry.timeCardHeight),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            AutomaticClockIcon(
-                color = content.accent,
-                modifier = Modifier.size(DeviceLightAutomaticEditorGeometry.sectionIconSize)
-            )
-            Spacer(Modifier.width(DeviceLightAutomaticEditorGeometry.sectionIconGap))
-            Column(Modifier.weight(TIME_COPY_WEIGHT)) {
-                BasicText(
-                    text = content.label,
-                    style = visuals.typography.title.copy(color = visuals.colors.card.primaryText),
-                    maxLines = SINGLE_LINE
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            val compact = maxWidth < DeviceLightAutomaticEditorGeometry.timeExpandedContentMinWidth
+            Row(
+                modifier = Modifier.height(DeviceLightAutomaticEditorGeometry.timeCardHeight),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                AutomaticClockIcon(
+                    color = content.accent,
+                    modifier = Modifier.size(DeviceLightAutomaticEditorGeometry.sectionIconSize)
                 )
-                BasicText(
-                    text = content.summary,
-                    style = visuals.typography.micro.copy(color = visuals.colors.card.secondaryText),
-                    maxLines = SINGLE_LINE
-                )
+                Spacer(Modifier.width(DeviceLightAutomaticEditorGeometry.sectionIconGap))
+                Column(Modifier.weight(TIME_COPY_WEIGHT)) {
+                    val labelStyle = if (compact) {
+                        visuals.typography.body
+                    } else {
+                        visuals.typography.title
+                    }
+                    BasicText(
+                        text = if (compact) content.compactLabel else content.label,
+                        style = labelStyle.copy(color = visuals.colors.card.primaryText),
+                        maxLines = SINGLE_LINE
+                    )
+                    if (!compact) {
+                        BasicText(
+                            text = content.summary,
+                            style = visuals.typography.micro.copy(
+                                color = visuals.colors.card.secondaryText
+                            ),
+                            maxLines = SINGLE_LINE
+                        )
+                    }
+                }
+                Spacer(Modifier.width(DeviceLightAutomaticEditorGeometry.timeCardGap))
+                TimeValueButton(content.timeMs, enabled, content.onClick, visuals)
             }
-            Spacer(Modifier.width(DeviceLightAutomaticEditorGeometry.timeCardGap))
-            TimeValueButton(content.timeMs, enabled, content.onClick, visuals)
         }
     }
 }
@@ -114,6 +134,7 @@ private fun TimeValueButton(
     val alpha = if (enabled) ENABLED_ALPHA else DeviceLightAutomaticEditorAlpha.disabled
     Row(
         modifier = Modifier
+            .widthIn(min = DeviceLightAutomaticEditorGeometry.timeValueMinWidth)
             .height(DeviceLightAutomaticEditorGeometry.timeValueHeight)
             .clip(DeviceLightAutomaticEditorGeometry.timeValueShape)
             .border(
@@ -283,6 +304,7 @@ private fun Long.toAutomaticMinutes(): Int = (this / MILLIS_PER_MINUTE).toInt()
 
 private data class EditorTimeContent(
     val label: String,
+    val compactLabel: String,
     val summary: String,
     val timeMs: Long?,
     val accent: Color,

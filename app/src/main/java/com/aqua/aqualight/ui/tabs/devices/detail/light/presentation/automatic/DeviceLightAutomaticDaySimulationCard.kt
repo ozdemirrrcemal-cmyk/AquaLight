@@ -1,14 +1,14 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -19,8 +19,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import com.aqua.aqualight.R
@@ -35,45 +33,43 @@ internal fun DeviceLightAutomaticDaySimulationCard(
     visuals: DeviceLightAutomaticEditorVisuals
 ) {
     val preview = state.previewProgram
-    val schedule = preview?.toSimulationSchedule()
+    val sceneColor = preview?.scene?.channels.orEmpty().simulationColor()
+    val schedule = preview?.toSimulationSchedule(sceneColor)
     AquaDeviceCardSurface(
         modifier = Modifier
             .fillMaxWidth()
-            .height(DeviceLightAutomaticEditorGeometry.simulationHeight),
+            .aspectRatio(DeviceLightAutomaticEditorGeometry.simulationAspectRatio),
         contentPadding = AquaDeviceCardGeometry.edgeToEdgeContentPadding
     ) {
         Box(Modifier.fillMaxSize()) {
-            Image(
-                painter = painterResource(R.drawable.device_light_hero_card),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
+            DeviceLightAutomaticSimulationBackdrop(
+                complete = preview != null,
+                sceneColor = sceneColor,
+                visuals = visuals
             )
             Box(
-                Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = DeviceLightAutomaticEditorAlpha.imageScrim))
-            )
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .background((preview?.scene?.channels ?: emptyMap()).simulationColor().copy(
-                        alpha = DeviceLightAutomaticEditorAlpha.imageColorOverlay
-                    ))
-            )
-            Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(DeviceLightAutomaticEditorGeometry.simulationContentPadding),
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(DeviceLightAutomaticEditorGeometry.simulationContentPadding)
             ) {
                 SimulationCopy(
                     state = state,
                     complete = preview != null,
                     visuals = visuals,
-                    modifier = Modifier.weight(SIMULATION_COPY_WEIGHT)
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .fillMaxWidth(
+                            DeviceLightAutomaticEditorGeometry.simulationTextWidthFraction
+                        )
+                        .padding(end = DeviceLightAutomaticEditorGeometry.simulationCopyGap)
                 )
-                DayDial(schedule, visuals, Modifier.size(DeviceLightAutomaticEditorGeometry.dialSize))
+                DayDial(
+                    schedule = schedule,
+                    visuals = visuals,
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .size(DeviceLightAutomaticEditorGeometry.dialSize)
+                )
             }
         }
     }
@@ -86,7 +82,7 @@ private fun SimulationCopy(
     visuals: DeviceLightAutomaticEditorVisuals,
     modifier: Modifier
 ) {
-    Column(modifier.padding(end = DeviceLightAutomaticEditorGeometry.simulationCopyGap)) {
+    Column(modifier) {
         BasicText(
             text = state.source?.productDisplayName
                 ?: stringResource(R.string.device_light_auto_editor_device_placeholder),
@@ -118,7 +114,7 @@ private fun SimulationStatusPill(
         else -> R.string.device_light_auto_editor_passive
     }
     val accent = if (complete && state.draft.enabled) {
-        visuals.colors.action
+        visuals.colors.green
     } else {
         visuals.colors.card.secondaryText
     }
@@ -126,6 +122,11 @@ private fun SimulationStatusPill(
         modifier = Modifier
             .height(DeviceLightAutomaticEditorGeometry.simulationStatusHeight)
             .clip(CircleShape)
+            .border(
+                width = DeviceLightAutomaticEditorGeometry.actionBorderWidth,
+                color = accent,
+                shape = CircleShape
+            )
             .background(accent.copy(alpha = DeviceLightAutomaticEditorAlpha.selectedSurface))
             .padding(horizontal = DeviceLightAutomaticEditorGeometry.simulationStatusHorizontalPadding),
         verticalAlignment = Alignment.CenterVertically
@@ -144,12 +145,15 @@ private fun SimulationStatusPill(
     }
 }
 
-private fun DeviceLightAutomaticProgram.toSimulationSchedule(): DaySimulationSchedule =
+private fun DeviceLightAutomaticProgram.toSimulationSchedule(
+    sceneColor: Color
+): DaySimulationSchedule =
     DaySimulationSchedule(
         startTimeMs = startTimeMs,
         endTimeMs = endTimeMs,
         rampDurationMs = rampDurationMs,
-        durationMs = occupiedDuration(startTimeMs, endTimeMs)
+        durationMs = occupiedDuration(startTimeMs, endTimeMs),
+        sceneColor = sceneColor
     )
 
 private fun Map<
@@ -181,9 +185,8 @@ private fun occupiedDuration(startTimeMs: Long, endTimeMs: Long): Long =
     if (endTimeMs > startTimeMs) endTimeMs - startTimeMs
     else MILLIS_PER_DAY - startTimeMs + endTimeMs
 
-private const val SIMULATION_COPY_WEIGHT = 1f
-private const val PRODUCT_TITLE_MAX_LINES = 2
-private const val SIMULATION_DESCRIPTION_MAX_LINES = 4
+private const val PRODUCT_TITLE_MAX_LINES = 1
+private const val SIMULATION_DESCRIPTION_MAX_LINES = 3
 private const val ZERO_PERCENT = 0
 private const val MAX_PERCENT = 100f
 private const val MILLIS_PER_DAY = 86_400_000L

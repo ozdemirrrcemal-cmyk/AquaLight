@@ -84,6 +84,9 @@ internal fun DeviceLightAutomaticEditorChannelsCard(
     onChannelChanged: (DeviceLightAutomaticChannel, Int) -> Unit,
     visuals: DeviceLightAutomaticEditorVisuals
 ) {
+    val displayedChannels = CHANNEL_PRESENTATION_ORDER.filter(
+        state.source?.channels.orEmpty()::contains
+    )
     AquaDeviceCardSurface(
         modifier = Modifier.fillMaxWidth(),
         contentPadding = DeviceLightAutomaticEditorGeometry.cardPadding
@@ -97,7 +100,7 @@ internal fun DeviceLightAutomaticEditorChannelsCard(
                 visuals = visuals,
                 icon = { color -> ChannelSlidersIcon(color) }
             )
-            state.source?.channels.orEmpty().chunked(CHANNEL_COLUMN_COUNT).forEach { rowChannels ->
+            displayedChannels.chunked(CHANNEL_COLUMN_COUNT).forEach { rowChannels ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(
@@ -224,6 +227,12 @@ private val CHANNEL_ICON_X_FRACTIONS = listOf(
     CHANNEL_ICON_FIRST_X,
     CHANNEL_ICON_SECOND_X,
     CHANNEL_ICON_THIRD_X
+)
+private val CHANNEL_PRESENTATION_ORDER = listOf(
+    DeviceLightAutomaticChannel.RED,
+    DeviceLightAutomaticChannel.GREEN,
+    DeviceLightAutomaticChannel.BLUE,
+    DeviceLightAutomaticChannel.WHITE
 )
 private val CHANNEL_ICON_THUMB_Y_FRACTIONS = listOf(
     CHANNEL_ICON_FIRST_THUMB_Y,

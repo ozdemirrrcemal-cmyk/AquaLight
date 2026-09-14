@@ -64,7 +64,9 @@ private class DebugDeviceFixtureViewModelFactory(
     private var cachedTimerDependencies: DebugTimerFixtureDependencies? = null
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        val viewModel: ViewModel = when (modelClass) {
+        val viewModel: ViewModel = automaticViewModelOrNull(modelClass) {
+            timerDependencies(requireGraph()).lightAutomaticOperations
+        } ?: when (modelClass) {
             DevicesViewModel::class.java -> createDevicesViewModel(requireGraph())
             DeviceLightRootViewModel::class.java ->
                 createLightRootViewModel(requireGraph())
@@ -93,9 +95,7 @@ private class DebugDeviceFixtureViewModelFactory(
                 createSettingsViewModel(requireGraph())
             DeviceFirmwareUpdateViewModel::class.java ->
                 createFirmwareViewModel(requireGraph())
-            else -> automaticViewModelOrNull(modelClass) {
-                timerDependencies(requireGraph()).lightAutomaticOperations
-            } ?: return delegate.create(modelClass)
+            else -> return delegate.create(modelClass)
         }
 
         return modelClass.cast(viewModel)
