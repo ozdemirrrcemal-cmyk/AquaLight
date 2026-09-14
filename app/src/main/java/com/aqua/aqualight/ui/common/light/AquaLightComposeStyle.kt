@@ -167,9 +167,9 @@ object AquaLightManualGeometry {
     val controlContentHorizontalPadding = 8.dp
     val powerToChannelsGap = 8.dp
     val channelRowGap = 2.dp
-    val powerGaugeSize = 104.dp
-    val powerGaugeTrackWidth = 11.dp
-    val powerGaugeValueGap = 10.dp
+    val powerGaugeSize = 116.dp
+    val powerGaugeTrackWidth = 12.dp
+    val powerGaugeValueGap = 12.dp
 
     val channelRowHeight = 40.dp
     val channelLabelWidth = 44.dp
