@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic
 import android.os.Bundle
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticChannel
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticPolicy
+import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticProgram
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticProgramDraft
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticScene
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
