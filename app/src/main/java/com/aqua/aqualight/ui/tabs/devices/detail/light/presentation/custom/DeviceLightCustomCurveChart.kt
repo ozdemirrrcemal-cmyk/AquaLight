@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
@@ -80,7 +79,13 @@ private fun EditableCurveChart(
         SelectedTimeLabel(state.selectedTimeMs, visuals)
         Row(Modifier.fillMaxWidth()) {
             PercentAxis(visuals)
-            CurveCanvas(state, onTimeClick, description, visuals)
+            CurveCanvas(
+                state = state,
+                onTimeClick = onTimeClick,
+                description = description,
+                visuals = visuals,
+                modifier = Modifier.weight(1f)
+            )
         }
         HourAxis(visuals)
     }
@@ -117,10 +122,11 @@ private fun CurveCanvas(
     state: DeviceLightCustomCurveUiState,
     onTimeClick: (Long) -> Unit,
     description: String,
-    visuals: DeviceLightCustomVisuals
+    visuals: DeviceLightCustomVisuals,
+    modifier: Modifier
 ) {
     Canvas(
-        modifier = Modifier.weight(1f).height(CHART_HEIGHT_DP.dp)
+        modifier = modifier.height(CHART_HEIGHT_DP.dp)
             .pointerInput(state.contentEnabled, state.operationInProgress, state.draft.points) {
                 if (state.contentEnabled && !state.operationInProgress) {
                     detectTapGestures { offset ->

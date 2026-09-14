@@ -75,10 +75,10 @@ internal class DeviceLightCustomPointEditor(
             originalTimeMs == null && state.draft.points.size >= state.maxPoints ->
                 emitPointLimit(state.maxPoints)
             else -> setDraft(
-                draft = state.draft.copy(
+                state.draft.copy(
                     points = state.changedPoints(originalTimeMs, aligned)
                 ),
-                selectedTimeMs = aligned
+                aligned
             )
         }
     }
