@@ -58,49 +58,49 @@ class DeviceLightManualControlViewModelTest {
     }
 
     @Test
-    fun `curated built in scenes remain frozen`() {
+    fun `curated aquarium scenes remain frozen`() {
         val presets = boundViewModel().uiState.value.presets
 
         assertEquals(
             listOf(
-                DeviceLightManualPresetId.NATURAL,
-                DeviceLightManualPresetId.GROWTH,
-                DeviceLightManualPresetId.RED_FLORA,
-                DeviceLightManualPresetId.COLOR_BOOST,
-                DeviceLightManualPresetId.DETAIL,
-                DeviceLightManualPresetId.LOW_LIGHT
+                DeviceLightManualPresetId.NATURAL_AQUARIUM,
+                DeviceLightManualPresetId.PLANTED_AQUARIUM,
+                DeviceLightManualPresetId.RED_PLANTS,
+                DeviceLightManualPresetId.VIVID_COLORS,
+                DeviceLightManualPresetId.LOW_TECH,
+                DeviceLightManualPresetId.AQUASCAPE
             ),
             presets.map(DeviceLightManualPresetUiState::id)
         )
         assertScene(
             presets,
-            DeviceLightManualPresetId.NATURAL,
-            listOf(PERCENT_50, PERCENT_50, PERCENT_45, PERCENT_60)
+            DeviceLightManualPresetId.NATURAL_AQUARIUM,
+            listOf(PERCENT_45, PERCENT_50, PERCENT_50, PERCENT_60)
         )
         assertScene(
             presets,
-            DeviceLightManualPresetId.GROWTH,
-            listOf(PERCENT_60, PERCENT_55, PERCENT_60, PERCENT_50)
+            DeviceLightManualPresetId.PLANTED_AQUARIUM,
+            listOf(PERCENT_60, PERCENT_50, PERCENT_65, PERCENT_55)
         )
         assertScene(
             presets,
-            DeviceLightManualPresetId.RED_FLORA,
-            listOf(PERCENT_70, PERCENT_45, PERCENT_65, PERCENT_45)
+            DeviceLightManualPresetId.RED_PLANTS,
+            listOf(PERCENT_65, PERCENT_45, PERCENT_70, PERCENT_45)
         )
         assertScene(
             presets,
-            DeviceLightManualPresetId.COLOR_BOOST,
-            listOf(PERCENT_65, PERCENT_50, PERCENT_60, PERCENT_55)
+            DeviceLightManualPresetId.VIVID_COLORS,
+            listOf(PERCENT_65, PERCENT_50, PERCENT_65, PERCENT_60)
         )
         assertScene(
             presets,
-            DeviceLightManualPresetId.DETAIL,
-            listOf(PERCENT_50, PERCENT_55, PERCENT_45, PERCENT_65)
+            DeviceLightManualPresetId.LOW_TECH,
+            listOf(PERCENT_30, PERCENT_30, PERCENT_30, PERCENT_35)
         )
         assertScene(
             presets,
-            DeviceLightManualPresetId.LOW_LIGHT,
-            listOf(PERCENT_35, PERCENT_35, PERCENT_30, PERCENT_40)
+            DeviceLightManualPresetId.AQUASCAPE,
+            listOf(PERCENT_55, PERCENT_55, PERCENT_60, PERCENT_65)
         )
     }
 
@@ -108,13 +108,16 @@ class DeviceLightManualControlViewModelTest {
     fun `preset selection copies every requested channel`() {
         val viewModel = boundViewModel()
 
-        viewModel.applyPreset(DeviceLightManualPresetId.COLOR_BOOST)
+        viewModel.applyPreset(DeviceLightManualPresetId.VIVID_COLORS)
 
         assertEquals(PERCENT_65, viewModel.uiState.value.percent(DeviceLightManualChannelId.RED))
         assertEquals(PERCENT_50, viewModel.uiState.value.percent(DeviceLightManualChannelId.GREEN))
-        assertEquals(PERCENT_60, viewModel.uiState.value.percent(DeviceLightManualChannelId.BLUE))
-        assertEquals(PERCENT_55, viewModel.uiState.value.percent(DeviceLightManualChannelId.WHITE))
-        assertEquals(DeviceLightManualPresetId.COLOR_BOOST, viewModel.uiState.value.selectedPreset)
+        assertEquals(PERCENT_65, viewModel.uiState.value.percent(DeviceLightManualChannelId.BLUE))
+        assertEquals(PERCENT_60, viewModel.uiState.value.percent(DeviceLightManualChannelId.WHITE))
+        assertEquals(
+            DeviceLightManualPresetId.VIVID_COLORS,
+            viewModel.uiState.value.selectedPreset
+        )
     }
 
     @Test
@@ -248,7 +251,6 @@ class DeviceLightManualControlViewModelTest {
         const val INITIAL_GREEN_PERCENT = 30
         const val PERCENT_30 = 30
         const val PERCENT_35 = 35
-        const val PERCENT_40 = 40
         const val PERCENT_45 = 45
         const val PERCENT_50 = 50
         const val PERCENT_55 = 55
