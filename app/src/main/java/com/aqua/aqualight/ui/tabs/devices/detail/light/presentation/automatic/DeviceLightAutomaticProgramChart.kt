@@ -211,10 +211,10 @@ private fun programFactorAt(program: DeviceLightAutomaticProgram, timeMs: Long):
     } else {
         normalizedTime + MILLIS_PER_DAY_LONG - program.startTimeMs
     }
-    if (offset >= duration) return 0f
     val ramp = program.rampDurationMs
-    if (ramp == 0L) return 1f
     return when {
+        offset >= duration -> 0f
+        ramp == 0L -> 1f
         offset < ramp -> offset.toFloat() / ramp
         offset > duration - ramp -> (duration - offset).toFloat() / ramp
         else -> 1f

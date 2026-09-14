@@ -34,7 +34,8 @@ data class DeviceLightAutomaticProgram(
         require(startTimeMs in AUTHORED_TIME_RANGE && startTimeMs % MINUTE_MILLIS == 0L)
         require(endTimeMs in AUTHORED_TIME_RANGE && endTimeMs % MINUTE_MILLIS == 0L)
         require(startTimeMs != endTimeMs)
-        require(rampDurationMs in RAMP_DURATIONS_MS)
+        require(rampDurationMs in MIN_RAMP_DURATION_MS..MAX_RAMP_DURATION_MS)
+        require(rampDurationMs % RAMP_DURATION_STEP_MS == 0L)
         require(rampDurationMs * 2L <= occupiedDurationMs())
     }
 
@@ -106,15 +107,12 @@ private const val MAX_WEEKDAYS_MASK = 127
 private const val MINUTE_MILLIS = 60_000L
 private const val LAST_AUTHORED_MINUTE_MS = 86_340_000L
 private const val MILLIS_PER_DAY = 86_400_000L
+private const val MIN_RAMP_DURATION_MS = 0L
+private const val RAMP_DURATION_STEP_MINUTES = 30L
+private const val MAX_RAMP_DURATION_MINUTES = 150L
+private const val RAMP_DURATION_STEP_MS = RAMP_DURATION_STEP_MINUTES * MINUTE_MILLIS
+private const val MAX_RAMP_DURATION_MS = MAX_RAMP_DURATION_MINUTES * MINUTE_MILLIS
 private val PERCENT_RANGE = MIN_PERCENT..MAX_PERCENT
 private val WEEKDAYS_MASK_RANGE = MIN_WEEKDAYS_MASK..MAX_WEEKDAYS_MASK
 private val AUTHORED_TIME_RANGE = 0L..LAST_AUTHORED_MINUTE_MS
 private val PROGRAM_ID = Regex("^ap-[0-9a-f]{8}$")
-private val RAMP_DURATIONS_MS = setOf(
-    0L,
-    1_800_000L,
-    3_600_000L,
-    5_400_000L,
-    7_200_000L,
-    9_000_000L
-)

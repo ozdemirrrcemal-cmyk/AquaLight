@@ -5,7 +5,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -17,28 +19,36 @@ import androidx.compose.ui.semantics.semantics
 internal fun AutomaticCalendarIcon(color: Color, modifier: Modifier = Modifier) {
     Canvas(modifier = modifier) {
         val stroke = DeviceLightAutomaticGeometry.iconStrokeWidth.toPx()
-        val left = size.width * 0.16f
-        val right = size.width * 0.84f
-        val top = size.height * 0.23f
-        val bottom = size.height * 0.86f
+        val geometry = DeviceLightAutomaticIconGeometry
+        val left = size.width * geometry.calendarLeftFraction
+        val right = size.width * geometry.calendarRightFraction
+        val top = size.height * geometry.calendarTopFraction
+        val bottom = size.height * geometry.calendarBottomFraction
         drawRoundRect(
             color = color,
             topLeft = Offset(left, top),
-            size = androidx.compose.ui.geometry.Size(right - left, bottom - top),
-            cornerRadius = androidx.compose.ui.geometry.CornerRadius(size.width * 0.08f),
+            size = Size(right - left, bottom - top),
+            cornerRadius = CornerRadius(size.width * geometry.calendarCornerRadiusFraction),
             style = Stroke(width = stroke)
         )
+        val dividerY = size.height * geometry.calendarDividerFraction
         drawLine(
             color = color,
-            start = Offset(left, size.height * 0.40f),
-            end = Offset(right, size.height * 0.40f),
+            start = Offset(left, dividerY),
+            end = Offset(right, dividerY),
             strokeWidth = stroke
         )
-        listOf(0.34f, 0.66f).forEach { x ->
+        geometry.calendarBindingFractions.forEach { xFraction ->
             drawLine(
                 color = color,
-                start = Offset(size.width * x, size.height * 0.12f),
-                end = Offset(size.width * x, size.height * 0.31f),
+                start = Offset(
+                    size.width * xFraction,
+                    size.height * geometry.calendarBindingTopFraction
+                ),
+                end = Offset(
+                    size.width * xFraction,
+                    size.height * geometry.calendarBindingBottomFraction
+                ),
                 strokeWidth = stroke,
                 cap = StrokeCap.Round
             )
@@ -49,21 +59,27 @@ internal fun AutomaticCalendarIcon(color: Color, modifier: Modifier = Modifier) 
 @Composable
 internal fun AutomaticClockIcon(color: Color, modifier: Modifier = Modifier) {
     Canvas(modifier = modifier) {
+        val geometry = DeviceLightAutomaticIconGeometry
         val stroke = DeviceLightAutomaticGeometry.iconStrokeWidth.toPx()
-        val radius = size.minDimension * 0.38f
-        val center = center
+        val radius = size.minDimension * geometry.clockRadiusFraction
         drawCircle(color = color, radius = radius, style = Stroke(width = stroke))
         drawLine(
             color = color,
             start = center,
-            end = Offset(center.x, center.y - radius * 0.55f),
+            end = Offset(
+                center.x,
+                center.y - radius * geometry.clockHourHandFraction
+            ),
             strokeWidth = stroke,
             cap = StrokeCap.Round
         )
         drawLine(
             color = color,
             start = center,
-            end = Offset(center.x + radius * 0.47f, center.y + radius * 0.24f),
+            end = Offset(
+                center.x + radius * geometry.clockMinuteHandXFraction,
+                center.y + radius * geometry.clockMinuteHandYFraction
+            ),
             strokeWidth = stroke,
             cap = StrokeCap.Round
         )
@@ -73,10 +89,20 @@ internal fun AutomaticClockIcon(color: Color, modifier: Modifier = Modifier) {
 @Composable
 internal fun AutomaticRampIcon(color: Color, modifier: Modifier = Modifier) {
     Canvas(modifier = modifier) {
+        val geometry = DeviceLightAutomaticIconGeometry
         val stroke = DeviceLightAutomaticGeometry.iconStrokeWidth.toPx()
-        val left = Offset(size.width * 0.13f, size.height * 0.79f)
-        val top = Offset(size.width * 0.80f, size.height * 0.21f)
-        val bottom = Offset(size.width * 0.80f, size.height * 0.79f)
+        val left = Offset(
+            size.width * geometry.rampLeftXFraction,
+            size.height * geometry.rampLeftYFraction
+        )
+        val top = Offset(
+            size.width * geometry.rampRightXFraction,
+            size.height * geometry.rampTopYFraction
+        )
+        val bottom = Offset(
+            size.width * geometry.rampRightXFraction,
+            size.height * geometry.rampBottomYFraction
+        )
         drawLine(color, left, top, stroke, StrokeCap.Round)
         drawLine(color, top, bottom, stroke, StrokeCap.Round)
         drawLine(color, bottom, left, stroke, StrokeCap.Round)
@@ -96,12 +122,15 @@ internal fun AutomaticMoreButton(
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .semantics { contentDescription = contentDescriptionText }
     ) {
+        val geometry = DeviceLightAutomaticIconGeometry
         val gap = DeviceLightAutomaticGeometry.moreDotGap.toPx()
-        repeat(3) { index ->
+        repeat(geometry.moreDotCount) { index ->
             drawCircle(
                 color = color,
                 radius = DeviceLightAutomaticGeometry.moreDotRadius.toPx(),
-                center = center.copy(y = center.y + (index - 1) * gap)
+                center = center.copy(
+                    y = center.y + (index - geometry.moreDotCenterIndex) * gap
+                )
             )
         }
     }
@@ -111,7 +140,7 @@ internal fun AutomaticMoreButton(
 internal fun AutomaticPlusIcon(color: Color, modifier: Modifier = Modifier) {
     Canvas(modifier = modifier) {
         val stroke = DeviceLightAutomaticGeometry.addButtonIconStrokeWidth.toPx()
-        val inset = size.minDimension * 0.18f
+        val inset = size.minDimension * DeviceLightAutomaticIconGeometry.plusInsetFraction
         drawLine(
             color = color,
             start = Offset(center.x, inset),

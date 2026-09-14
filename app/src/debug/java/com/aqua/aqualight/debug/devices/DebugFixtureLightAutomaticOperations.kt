@@ -52,10 +52,7 @@ internal class DebugFixtureLightAutomaticOperations(
             if (source.enabled == enabled) {
                 return@synchronized DeviceLightAutomaticMutationResult.Success
             }
-            if (enabled && current.programs.any { other ->
-                    other.programId != source.programId && other.enabled && source.conflictsWith(other)
-                }
-            ) {
+            if (hasEnabledConflict(current, source, enabled)) {
                 return@synchronized DeviceLightAutomaticMutationResult.Failed(
                     DeviceLightAutomaticFailure.REJECTED
                 )
@@ -116,6 +113,17 @@ internal class DebugFixtureLightAutomaticOperations(
         }
     }
 
+    private fun hasEnabledConflict(
+        snapshot: DeviceLightAutomaticSnapshot,
+        source: DeviceLightAutomaticProgram,
+        requestedEnabled: Boolean
+    ): Boolean {
+        val eligiblePrograms = snapshot.programs.filter { candidate ->
+            candidate.programId != source.programId && candidate.enabled
+        }
+        return requestedEnabled && eligiblePrograms.any(source::conflictsWith)
+    }
+
     private fun isLightFixture(deviceUid: String): Boolean =
         fixtures.rootSnapshot(deviceUid)?.family == OwnerDeviceFamily.LIGHT
 }
@@ -127,27 +135,27 @@ private fun fixturePrograms(
         programId = "ap-00000001",
         enabled = true,
         weekdaysMask = EVERY_DAY_MASK,
-        startTimeMs = hours(6),
-        endTimeMs = hours(22),
-        rampDurationMs = minutes(30),
+        startTimeMs = hours(FIRST_PROGRAM_START_HOUR),
+        endTimeMs = hours(FIRST_PROGRAM_END_HOUR),
+        rampDurationMs = minutes(FIRST_PROGRAM_RAMP_MINUTES),
         scene = fixtureScene(channels, red = 70, green = 60, blue = 50, white = 80)
     ),
     DeviceLightAutomaticProgram(
         programId = "ap-00000002",
         enabled = false,
         weekdaysMask = MONDAY_WEDNESDAY_FRIDAY_MASK,
-        startTimeMs = hours(8),
-        endTimeMs = hours(20),
-        rampDurationMs = minutes(60),
+        startTimeMs = hours(SECOND_PROGRAM_START_HOUR),
+        endTimeMs = hours(SECOND_PROGRAM_END_HOUR),
+        rampDurationMs = minutes(SECOND_PROGRAM_RAMP_MINUTES),
         scene = fixtureScene(channels, red = 100, green = 40, blue = 30, white = 40)
     ),
     DeviceLightAutomaticProgram(
         programId = "ap-00000003",
         enabled = true,
         weekdaysMask = TUESDAY_THURSDAY_SATURDAY_MASK,
-        startTimeMs = hours(7),
-        endTimeMs = hours(21),
-        rampDurationMs = minutes(90),
+        startTimeMs = hours(THIRD_PROGRAM_START_HOUR),
+        endTimeMs = hours(THIRD_PROGRAM_END_HOUR),
+        rampDurationMs = minutes(THIRD_PROGRAM_RAMP_MINUTES),
         scene = fixtureScene(channels, red = 50, green = 60, blue = 70, white = 70)
     )
 )
@@ -190,6 +198,15 @@ private fun DeviceLightAutomaticProgram.daySegments(): List<Pair<Long, Long>> =
 private fun hours(value: Int): Long = value * MINUTES_PER_HOUR * MILLIS_PER_MINUTE
 private fun minutes(value: Int): Long = value * MILLIS_PER_MINUTE
 
+private const val FIRST_PROGRAM_START_HOUR = 6
+private const val FIRST_PROGRAM_END_HOUR = 22
+private const val FIRST_PROGRAM_RAMP_MINUTES = 30
+private const val SECOND_PROGRAM_START_HOUR = 8
+private const val SECOND_PROGRAM_END_HOUR = 20
+private const val SECOND_PROGRAM_RAMP_MINUTES = 60
+private const val THIRD_PROGRAM_START_HOUR = 7
+private const val THIRD_PROGRAM_END_HOUR = 21
+private const val THIRD_PROGRAM_RAMP_MINUTES = 90
 private const val INITIAL_REVISION = 12L
 private const val REVISION_INCREMENT = 1L
 private const val AUTO_CAPACITY = 16

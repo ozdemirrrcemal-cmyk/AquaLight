@@ -50,7 +50,8 @@ internal fun DeviceLightAutomaticProgramCard(
             .fillMaxWidth()
             .clickable(enabled = enabled, role = Role.Button) {
                 actions.onProgramClick(program.programId)
-            }
+            },
+        contentPadding = DeviceLightAutomaticGeometry.cardContentPadding
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             AutomaticProgramHeader(program, enabled, actions, typography, colors.secondaryText)
