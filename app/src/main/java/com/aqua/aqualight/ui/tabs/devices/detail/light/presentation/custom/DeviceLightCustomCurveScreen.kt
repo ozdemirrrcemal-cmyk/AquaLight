@@ -44,6 +44,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
@@ -197,25 +198,12 @@ private fun CurveCard(
                         visuals = visuals
                     )
                 }
-                Column(horizontalAlignment = Alignment.End) {
-                    BasicText(
-                        text = stringResource(
-                            R.string.device_light_custom_point_capacity,
-                            state.draft.points.size,
-                            state.maxPoints
-                        ),
-                        style = visuals.typography.caption.copy(
-                            color = visuals.colors.card.secondaryText
-                        )
-                    )
-                    CompactActionButton(
-                        label = stringResource(R.string.device_light_custom_add_point),
-                        enabled = state.contentEnabled &&
-                            state.draft.points.size < state.maxPoints,
-                        onClick = actions.onAddPointClick,
-                        visuals = visuals
-                    )
-                }
+                CompactActionButton(
+                    label = stringResource(R.string.device_light_custom_add_point),
+                    enabled = state.contentEnabled && !state.operationInProgress,
+                    onClick = actions.onAddPointClick,
+                    visuals = visuals
+                )
             }
             EditableCurveChart(state, actions.onGraphTimeClick, visuals)
             CurveLegend(state.channels, visuals)
@@ -280,22 +268,25 @@ private fun EditableCurveChart(
             modifier = Modifier.fillMaxWidth().padding(start = 34.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            listOf("00", "06", "12", "18", "24").forEach { label ->
-                BasicText(text = label, style = visuals.typography.micro)
+            (0..HOURS_PER_DAY step CHART_HOUR_STEP).forEach { hour ->
+                BasicText(text = hour.toString().padStart(2, '0'), style = visuals.typography.micro)
             }
         }
     }
 }
 
 private fun DrawScope.drawCurveGrid(colors: AquaDeviceCardColors) {
-    repeat(5) { index ->
-        val fraction = index / 4f
+    repeat(CHART_PERCENT_DIVISIONS + 1) { index ->
+        val fraction = index / CHART_PERCENT_DIVISIONS.toFloat()
         drawLine(
             color = colors.outline.copy(alpha = 0.45f),
             start = Offset(0f, size.height * fraction),
             end = Offset(size.width, size.height * fraction),
             strokeWidth = 1.dp.toPx()
         )
+    }
+    repeat(HOURS_PER_DAY / CHART_HOUR_STEP + 1) { index ->
+        val fraction = index * CHART_HOUR_STEP / HOURS_PER_DAY.toFloat()
         drawLine(
             color = colors.outline.copy(alpha = 0.32f),
             start = Offset(size.width * fraction, 0f),
@@ -403,8 +394,7 @@ private fun SelectedPointCard(
                     SquareIconButton(
                         iconRes = R.drawable.ic_add_24,
                         description = stringResource(R.string.device_light_custom_duplicate_point),
-                        enabled = !state.operationInProgress &&
-                            state.draft.points.size < state.maxPoints,
+                        enabled = state.contentEnabled && !state.operationInProgress,
                         color = visuals.colors.action,
                         onClick = actions.onDuplicatePointClick
                     )
@@ -590,7 +580,9 @@ private fun VirtualTimePreviewCard(
                     color = visuals.colors.action,
                     iconRes = null,
                     onClick = actions.onPreviewClick,
-                    modifier = Modifier.width(108.dp)
+                    modifier = Modifier.width(84.dp),
+                    buttonHeight = 36.dp,
+                    showPlayIcon = true
                 )
             }
         }
@@ -636,18 +628,25 @@ private fun CustomOutlinedButton(
     color: Color,
     iconRes: Int?,
     onClick: () -> Unit,
-    modifier: Modifier
+    modifier: Modifier,
+    buttonHeight: Dp = 53.dp,
+    showPlayIcon: Boolean = false
 ) {
     val alpha = if (enabled) 1f else 0.38f
     val shape = RoundedCornerShape(13.dp)
     Row(
-        modifier = modifier.height(53.dp).clip(shape).border(1.dp, color.copy(alpha = alpha), shape)
+        modifier = modifier.height(buttonHeight).clip(shape)
+            .border(1.dp, color.copy(alpha = alpha), shape)
             .clearAndSetSemantics { contentDescription = description }
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .padding(horizontal = 10.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
+        if (showPlayIcon) {
+            PlayGlyph(color.copy(alpha = alpha))
+            Spacer(Modifier.width(5.dp))
+        }
         iconRes?.let {
             androidx.compose.foundation.Image(
                 painter = painterResource(it),
@@ -667,6 +666,19 @@ private fun CustomOutlinedButton(
 }
 
 @Composable
+private fun PlayGlyph(color: Color) {
+    Canvas(Modifier.size(15.dp)) {
+        val play = Path().apply {
+            moveTo(size.width * 0.28f, size.height * 0.16f)
+            lineTo(size.width * 0.82f, size.height * 0.5f)
+            lineTo(size.width * 0.28f, size.height * 0.84f)
+            close()
+        }
+        drawPath(play, color)
+    }
+}
+
+@Composable
 private fun CompactActionButton(
     label: String,
     enabled: Boolean,
@@ -676,20 +688,23 @@ private fun CompactActionButton(
     val alpha = if (enabled) 1f else 0.38f
     val shape = RoundedCornerShape(percent = 50)
     Row(
-        modifier = Modifier.padding(top = 4.dp).height(31.dp).clip(shape)
+        modifier = Modifier.height(31.dp).clip(shape)
             .border(1.dp, visuals.colors.action.copy(alpha = alpha), shape)
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .padding(horizontal = 11.dp),
+        horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        BasicText(
-            stringResource(R.string.device_light_manual_plus_symbol),
-            style = visuals.typography.title.copy(color = visuals.colors.action.copy(alpha = alpha))
+        androidx.compose.foundation.Image(
+            painter = painterResource(R.drawable.ic_add_24),
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(visuals.colors.action.copy(alpha = alpha)),
+            modifier = Modifier.size(16.dp)
         )
         BasicText(
             label,
             style = visuals.typography.caption.copy(color = visuals.colors.action.copy(alpha = alpha)),
-            modifier = Modifier.padding(start = 5.dp)
+            modifier = Modifier.padding(start = 4.dp)
         )
     }
 }
@@ -795,3 +810,7 @@ private data class DeviceLightCustomVisuals(
     val colors: AquaLightManualColors,
     val typography: AquaDeviceCardTypography
 )
+
+private const val HOURS_PER_DAY = 24
+private const val CHART_HOUR_STEP = 2
+private const val CHART_PERCENT_DIVISIONS = 4

@@ -107,11 +107,9 @@ internal class DeviceLightCustomCurveViewModel(
     }
 
     fun requestAddPoint() {
-        if (!_uiState.value.contentEnabled || _uiState.value.operationInProgress ||
-            _uiState.value.draft.points.size >= _uiState.value.maxPoints
-        ) {
-            return
-        }
+        val state = _uiState.value
+        if (!state.contentEnabled || state.operationInProgress) return
+        if (state.draft.points.size >= state.maxPoints) return emitPointLimit(state.maxPoints)
         emit(DeviceLightCustomCurveEffect.OpenTimePicker(null))
     }
 
@@ -130,6 +128,10 @@ internal class DeviceLightCustomCurveViewModel(
         if (existing != null) {
             _uiState.update { state -> state.copy(selectedTimeMs = existing.timeMs) }
         } else {
+            if (state.draft.points.size >= state.maxPoints) {
+                emitPointLimit(state.maxPoints)
+                return
+            }
             addOrMovePoint(originalTimeMs = null, targetTimeMs = aligned)
         }
     }
@@ -143,7 +145,10 @@ internal class DeviceLightCustomCurveViewModel(
             }
         ) return
         val changed = if (originalTimeMs == null) {
-            if (state.draft.points.size >= state.maxPoints) return
+            if (state.draft.points.size >= state.maxPoints) {
+                emitPointLimit(state.maxPoints)
+                return
+            }
             state.draft.points + DeviceLightCustomPointUiState(
                 timeMs = aligned,
                 channels = interpolatedChannels(state.draft.points, state.channels, aligned)
@@ -160,7 +165,10 @@ internal class DeviceLightCustomCurveViewModel(
         val state = _uiState.value
         if (state.operationInProgress) return
         val selected = state.selectedPoint ?: return
-        if (state.draft.points.size >= state.maxPoints) return
+        if (state.draft.points.size >= state.maxPoints) {
+            emitPointLimit(state.maxPoints)
+            return
+        }
         val occupied = state.draft.points.mapTo(mutableSetOf()) { point -> point.timeMs }
         val target = generateSequence(selected.timeMs + state.timeStepMs) { value ->
             value + state.timeStepMs
@@ -363,6 +371,10 @@ internal class DeviceLightCustomCurveViewModel(
     private fun emit(effect: DeviceLightCustomCurveEffect) {
         viewModelScope.launch { _effects.emit(effect) }
     }
+
+    private fun emitPointLimit(maxPoints: Int) {
+        emit(DeviceLightCustomCurveEffect.ShowPointLimit(maxPoints))
+    }
 }
 
 internal sealed interface DeviceLightCustomCurveEffect {
@@ -371,6 +383,7 @@ internal sealed interface DeviceLightCustomCurveEffect {
     data object OpenLibrary : DeviceLightCustomCurveEffect
     data class ShowSuccess(@StringRes val messageRes: Int) : DeviceLightCustomCurveEffect
     data class ShowError(@StringRes val messageRes: Int) : DeviceLightCustomCurveEffect
+    data class ShowPointLimit(val maxPoints: Int) : DeviceLightCustomCurveEffect
 }
 
 private fun Long.alignedTime(): Long = coerceIn(0L, MILLIS_PER_DAY - MILLIS_PER_MINUTE)

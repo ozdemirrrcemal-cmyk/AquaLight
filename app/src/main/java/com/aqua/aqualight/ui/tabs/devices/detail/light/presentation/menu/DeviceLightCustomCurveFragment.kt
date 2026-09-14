@@ -142,6 +142,7 @@ class DeviceLightCustomCurveFragment : Fragment(R.layout.fragment_device_light_c
             DeviceLightCustomCurveEffect.OpenLibrary -> openLibrary()
             is DeviceLightCustomCurveEffect.ShowSuccess -> showMessage(effect.messageRes, true)
             is DeviceLightCustomCurveEffect.ShowError -> showMessage(effect.messageRes, false)
+            is DeviceLightCustomCurveEffect.ShowPointLimit -> showPointLimit(effect.maxPoints)
         }
     }
 
@@ -238,6 +239,14 @@ class DeviceLightCustomCurveFragment : Fragment(R.layout.fragment_device_light_c
         (activity as? BaseActivity)?.showSnackBar(
             message = getString(messageRes),
             type = if (success) BaseActivity.SnackType.SUCCESS else BaseActivity.SnackType.ERROR
+        )
+    }
+
+    private fun showPointLimit(maxPoints: Int) {
+        setFragmentGlobalLoading(false)
+        (activity as? BaseActivity)?.showSnackBar(
+            message = getString(R.string.device_light_custom_point_limit_warning, maxPoints),
+            type = BaseActivity.SnackType.WARNING
         )
     }
 

@@ -13,12 +13,16 @@ import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryMu
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryOperations
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryResult
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryScene
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -98,6 +102,30 @@ class DeviceLightCustomCurveViewModelTest {
         viewModel.preview()
 
         assertEquals(PREVIEW_TIME_MS, custom.previewTimeMs)
+    }
+
+    @Test
+    fun `adding beyond firmware point limit shows warning and preserves draft`() = runTest {
+        val points = List(MAX_POINT_CAPACITY) { index ->
+            DeviceLightCustomPoint(
+                timeMs = index * MILLIS_PER_MINUTE,
+                scene = DeviceLightCustomScene(
+                    WRGB_CHANNELS.associateWith { channel -> channel.ordinal }
+                )
+            )
+        }
+        val viewModel = boundViewModel(
+            customOperations = FakeCustomOperations(snapshot(points = points))
+        )
+        val effect = async(start = CoroutineStart.UNDISPATCHED) { viewModel.effects.first() }
+
+        viewModel.requestAddPoint()
+
+        assertEquals(
+            DeviceLightCustomCurveEffect.ShowPointLimit(MAX_POINT_CAPACITY),
+            effect.await()
+        )
+        assertEquals(MAX_POINT_CAPACITY, viewModel.currentState.draft.points.size)
     }
 
     private fun boundViewModel(
@@ -180,18 +208,8 @@ class DeviceLightCustomCurveViewModelTest {
         )
 
         fun snapshot(
-            channels: List<DeviceLightCustomChannel> = WRGB_CHANNELS
-        ): DeviceLightCustomSnapshot = DeviceLightCustomSnapshot(
-            deviceUid = DEVICE_UID,
-            productKey = if (channels.size == 4) "LIGHT_WRGB_PRO_ELITE" else "LIGHT_RGB_PRO_SLIM",
-            revision = 4,
-            installed = true,
-            weekdaysMask = EVERY_DAY_MASK,
-            maxPoints = MAX_POINT_CAPACITY,
-            timeStepMs = MILLIS_PER_MINUTE,
-            currentTimeMs = INITIAL_TIME_MS,
-            channels = channels,
-            points = listOf(
+            channels: List<DeviceLightCustomChannel> = WRGB_CHANNELS,
+            points: List<DeviceLightCustomPoint> = listOf(
                 DeviceLightCustomPoint(
                     timeMs = INITIAL_TIME_MS,
                     scene = DeviceLightCustomScene(
@@ -206,6 +224,17 @@ class DeviceLightCustomCurveViewModelTest {
                     )
                 )
             )
+        ): DeviceLightCustomSnapshot = DeviceLightCustomSnapshot(
+            deviceUid = DEVICE_UID,
+            productKey = if (channels.size == 4) "LIGHT_WRGB_PRO_ELITE" else "LIGHT_RGB_PRO_SLIM",
+            revision = 4,
+            installed = true,
+            weekdaysMask = EVERY_DAY_MASK,
+            maxPoints = MAX_POINT_CAPACITY,
+            timeStepMs = MILLIS_PER_MINUTE,
+            currentTimeMs = INITIAL_TIME_MS,
+            channels = channels,
+            points = points
         )
     }
 }
