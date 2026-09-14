@@ -96,7 +96,18 @@ internal enum class AutomaticCycleEventKind(
     SUNSET(SUNSET_CENTER_Y, SUNSET_RAY_OFFSET)
 }
 
-private val EVENT_RAY_ANGLES_DEGREES = listOf(200.0, 235.0, 270.0, 305.0, 340.0)
+private val EVENT_RAY_ANGLES_DEGREES = listOf(
+    EVENT_RAY_FIRST_DEGREES,
+    EVENT_RAY_SECOND_DEGREES,
+    EVENT_RAY_CENTER_DEGREES,
+    EVENT_RAY_FOURTH_DEGREES,
+    EVENT_RAY_LAST_DEGREES
+)
+private const val EVENT_RAY_FIRST_DEGREES = 200.0
+private const val EVENT_RAY_SECOND_DEGREES = 235.0
+private const val EVENT_RAY_CENTER_DEGREES = 270.0
+private const val EVENT_RAY_FOURTH_DEGREES = 305.0
+private const val EVENT_RAY_LAST_DEGREES = 340.0
 private const val EVENT_CENTER_X = 0.50f
 private const val SUNRISE_CENTER_Y = 0.61f
 private const val SUNSET_CENTER_Y = 0.58f

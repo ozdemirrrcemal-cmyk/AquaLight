@@ -87,9 +87,9 @@ private fun DrawScope.drawAutomaticCycleActiveArc(
     radius: Float,
     visuals: DeviceLightAutomaticEditorVisuals
 ) {
-    val start = state.startTimeMs ?: return
-    val end = state.endTimeMs ?: return
-    if (start == end) return
+    val start = state.startTimeMs
+    val end = state.endTimeMs
+    if (start == null || end == null || start == end) return
     val sweep = occupiedAutomaticCycleDuration(start, end).automaticCycleDegrees()
     val segmentSweep = sweep / ACTIVE_ARC_SEGMENTS
     repeat(ACTIVE_ARC_SEGMENTS) { index ->
