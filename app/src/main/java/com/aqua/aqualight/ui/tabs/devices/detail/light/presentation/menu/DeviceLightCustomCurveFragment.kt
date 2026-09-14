@@ -222,8 +222,9 @@ private class DeviceLightCustomCurveEffectHandler(
                 type = BaseActivity.SnackType.ERROR
             )
             is DeviceLightCustomCurveEffect.ShowPointLimit -> showMessage(
-                message = fragment.getString(
-                    R.string.device_light_custom_point_limit_warning,
+                message = fragment.resources.getQuantityString(
+                    R.plurals.device_light_custom_point_limit_warning,
+                    effect.maxPoints,
                     effect.maxPoints
                 ),
                 type = BaseActivity.SnackType.WARNING

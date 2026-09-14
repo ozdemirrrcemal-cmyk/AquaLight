@@ -176,7 +176,10 @@
     <string name="device_light_custom_curve_heading">24 saatlik ışık eğrisi</string>
     <string name="device_light_custom_curve_helper">Bir noktayı seçin veya eğriye dokunarak ekleyin</string>
     <string name="device_light_custom_add_point">Nokta ekle</string>
-    <string name="device_light_custom_point_limit_warning">Özel eğriye en fazla %1$d nokta ekleyebilirsiniz.</string>
+    <plurals name="device_light_custom_point_limit_warning">
+        <item quantity="one">Özel eğriye en fazla %1$d nokta ekleyebilirsiniz.</item>
+        <item quantity="other">Özel eğriye en fazla %1$d nokta ekleyebilirsiniz.</item>
+    </plurals>
     <string name="device_light_custom_selected_point">Seçili nokta</string>
     <string name="device_light_custom_no_point_selected">Saatini ve kanal seviyelerini düzenlemek için bir nokta ekleyin veya seçin.</string>
     <string name="device_light_custom_duplicate_point">Seçili noktayı çoğalt</string>

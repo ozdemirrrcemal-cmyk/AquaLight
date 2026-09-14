@@ -178,7 +178,10 @@
     <string name="device_light_custom_curve_heading">24-hour light curve</string>
     <string name="device_light_custom_curve_helper">Select a point or touch the curve to add one</string>
     <string name="device_light_custom_add_point">Add point</string>
-    <string name="device_light_custom_point_limit_warning">A custom curve can contain at most %1$d points.</string>
+    <plurals name="device_light_custom_point_limit_warning">
+        <item quantity="one">A custom curve can contain at most %1$d point.</item>
+        <item quantity="other">A custom curve can contain at most %1$d points.</item>
+    </plurals>
     <string name="device_light_custom_selected_point">Selected point</string>
     <string name="device_light_custom_no_point_selected">Add or select a point to edit its time and channel levels.</string>
     <string name="device_light_custom_duplicate_point">Duplicate selected point</string>
