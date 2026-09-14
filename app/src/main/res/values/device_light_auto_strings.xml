@@ -31,7 +31,6 @@
     <string name="device_light_auto_editor_create_title">Create program</string>
     <string name="device_light_auto_editor_edit_title">Edit program</string>
     <string name="device_light_auto_editor_duplicate_title">Duplicate program</string>
-    <string name="device_light_auto_editor_device_placeholder">AquaLight</string>
     <string name="device_light_auto_editor_simulation_description">Create a natural daily light cycle for your aquarium.</string>
     <string name="device_light_auto_editor_active">Active</string>
     <string name="device_light_auto_editor_passive">Inactive</string>
@@ -41,7 +40,7 @@
     <string name="device_light_auto_editor_end_short">End</string>
     <string name="device_light_auto_editor_ramp_short">Ramp\u0020%1$d min</string>
     <string name="device_light_auto_editor_days">Days</string>
-    <string name="device_light_auto_editor_days_summary_compact">When should it run?</string>
+    <string name="device_light_auto_editor_days_summary">When should the program run?</string>
     <string name="device_light_auto_editor_weekdays">Weekdays</string>
     <string name="device_light_auto_editor_weekend">Weekend</string>
     <string name="device_light_auto_editor_start_time">Start time</string>

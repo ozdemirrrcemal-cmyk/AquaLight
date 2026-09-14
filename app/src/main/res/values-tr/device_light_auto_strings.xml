@@ -31,7 +31,6 @@
     <string name="device_light_auto_editor_create_title">Program oluştur</string>
     <string name="device_light_auto_editor_edit_title">Programı düzenle</string>
     <string name="device_light_auto_editor_duplicate_title">Programı çoğalt</string>
-    <string name="device_light_auto_editor_device_placeholder">AquaLight</string>
     <string name="device_light_auto_editor_simulation_description">Akvaryumunuz için doğal bir günlük ışık döngüsü oluşturun.</string>
     <string name="device_light_auto_editor_active">Aktif</string>
     <string name="device_light_auto_editor_passive">Pasif</string>
@@ -41,7 +40,7 @@
     <string name="device_light_auto_editor_end_short">Kapanış</string>
     <string name="device_light_auto_editor_ramp_short">Geçiş\u0020%1$d dk</string>
     <string name="device_light_auto_editor_days">Günler</string>
-    <string name="device_light_auto_editor_days_summary_compact">Hangi günler çalışsın?</string>
+    <string name="device_light_auto_editor_days_summary">Program hangi günler çalışsın?</string>
     <string name="device_light_auto_editor_weekdays">Hafta içi</string>
     <string name="device_light_auto_editor_weekend">Hafta sonu</string>
     <string name="device_light_auto_editor_start_time">Açılış saati</string>

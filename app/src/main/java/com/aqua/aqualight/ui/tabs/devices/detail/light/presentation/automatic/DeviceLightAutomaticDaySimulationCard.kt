@@ -84,14 +84,6 @@ private fun SimulationCopy(
     modifier: Modifier
 ) {
     Column(modifier) {
-        BasicText(
-            text = state.source?.productDisplayName
-                ?: stringResource(R.string.device_light_auto_editor_device_placeholder),
-            style = visuals.typography.title.copy(color = visuals.colors.card.primaryText),
-            maxLines = PRODUCT_TITLE_MAX_LINES,
-            overflow = TextOverflow.Ellipsis
-        )
-        Spacer(Modifier.height(DeviceLightAutomaticEditorGeometry.simulationTitleTopGap))
         SimulationStatusPill(state, complete, visuals)
         Spacer(Modifier.height(DeviceLightAutomaticEditorGeometry.simulationCopyGap))
         BasicText(
@@ -186,7 +178,6 @@ private fun occupiedDuration(startTimeMs: Long, endTimeMs: Long): Long =
     if (endTimeMs > startTimeMs) endTimeMs - startTimeMs
     else MILLIS_PER_DAY - startTimeMs + endTimeMs
 
-private const val PRODUCT_TITLE_MAX_LINES = 1
 private const val SIMULATION_DESCRIPTION_MAX_LINES = 3
 private const val ZERO_PERCENT = 0
 private const val MAX_PERCENT = 100f

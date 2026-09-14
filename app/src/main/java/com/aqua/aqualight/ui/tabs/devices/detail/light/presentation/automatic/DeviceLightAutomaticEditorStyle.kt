@@ -14,10 +14,7 @@ internal object DeviceLightAutomaticEditorGeometry {
 
     const val simulationAspectRatio = 2.44f
     val simulationContentPadding = 11.dp
-    const val simulationImageWidthFraction = 0.58f
-    const val simulationImageHorizontalBias = 0.30f
     const val simulationTextWidthFraction = 0.43f
-    val simulationTitleTopGap = 3.dp
     val simulationCopyGap = 4.dp
     val simulationStatusHeight = 23.dp
     val simulationStatusHorizontalPadding = 8.dp
@@ -28,19 +25,20 @@ internal object DeviceLightAutomaticEditorGeometry {
     val dialGuideStrokeWidth = 1.dp
     val dialMarkerRadius = 4.dp
     val dialMarkerOutlineWidth = 1.5.dp
+    val dialMarkerHaloRadius = 8.dp
     val dialCenterWidth = 70.dp
+    val dialEventIconSize = 10.dp
+    val dialEventIconGap = 3.dp
+    val dialEventStrokeWidth = 1.2.dp
 
     val sectionIconSize = 21.dp
     val sectionIconGap = 7.dp
     val headingTextGap = 1.dp
-    val dayCardHeight = 69.dp
-    val dayButtonHeight = 30.dp
-    val dayButtonGap = 3.dp
+    val dayButtonHeight = 36.dp
+    val dayButtonGap = 5.dp
     val dayButtonShape = RoundedCornerShape(9.dp)
-    val quickDayButtonHeight = 34.dp
-    val quickDayButtonGap = 3.dp
-    val dayGroupGap = 8.dp
-    val dayGroupDividerWidth = 1.dp
+    val quickDayButtonHeight = 36.dp
+    val quickDayButtonGap = 6.dp
 
     val timeCardGap = 6.dp
     val timeCardHeight = 51.dp
@@ -59,11 +57,9 @@ internal object DeviceLightAutomaticEditorGeometry {
     val presetHeight = 44.dp
     val presetChevronSize = 16.dp
 
-    val channelRowHeight = 36.dp
-    val channelRowGap = 2.dp
-    val channelLabelWidth = 52.dp
-    val channelValueWidth = 39.dp
-    val channelSliderGap = 5.dp
+    val channelRowHeight = 42.dp
+    val channelLabelWidth = 54.dp
+    val channelValueWidth = 42.dp
 
     val chartHeight = 88.dp
     val chartTopGap = 7.dp
@@ -78,12 +74,13 @@ internal object DeviceLightAutomaticEditorAlpha {
     const val imageActive = 0.86f
     const val imageInactive = 0.36f
     const val imageColorOverlay = 0.13f
-    const val heroLeftScrim = 0.90f
-    const val heroCenterScrim = 0.12f
-    const val heroDialScrim = 0.82f
-    const val heroEdgeScrim = 0.94f
+    const val heroLeftScrim = 0.82f
+    const val heroCenterScrim = 0.18f
+    const val heroDialScrim = 0.46f
+    const val heroEdgeScrim = 0.62f
     const val neutralDial = 0.32f
     const val dialGuide = 0.50f
+    const val dialMarkerHalo = 0.24f
     const val disabled = 0.38f
     const val selectedSurface = 0.20f
     const val unselectedSurface = 0.06f

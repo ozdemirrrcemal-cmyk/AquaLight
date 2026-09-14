@@ -3,16 +3,17 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.imageResource
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import com.aqua.aqualight.R
 
 @Composable
@@ -37,28 +38,26 @@ internal fun DeviceLightAutomaticSimulationBackdrop(
 
 @Composable
 private fun SimulationAquariumImage(complete: Boolean, sceneColor: Color) {
+    val aquarium = ImageBitmap.imageResource(R.drawable.device_light_hero_card)
     Image(
-        painter = painterResource(R.drawable.device_light_hero_card),
+        painter = BitmapPainter(
+            image = aquarium,
+            srcOffset = IntOffset(AQUARIUM_CROP_LEFT_PX, AQUARIUM_CROP_TOP_PX),
+            srcSize = IntSize(AQUARIUM_CROP_WIDTH_PX, AQUARIUM_CROP_HEIGHT_PX)
+        ),
         contentDescription = null,
         contentScale = ContentScale.Crop,
-        alignment = BiasAlignment(
-            horizontalBias = DeviceLightAutomaticEditorGeometry.simulationImageHorizontalBias,
-            verticalBias = CENTER_IMAGE_BIAS
-        ),
         alpha = if (complete) {
             DeviceLightAutomaticEditorAlpha.imageActive
         } else {
             DeviceLightAutomaticEditorAlpha.imageInactive
         },
-        modifier = Modifier
-            .fillMaxHeight()
-            .fillMaxWidth(DeviceLightAutomaticEditorGeometry.simulationImageWidthFraction)
+        modifier = Modifier.fillMaxSize()
     )
     if (complete) {
         Box(
             Modifier
-                .fillMaxHeight()
-                .fillMaxWidth(DeviceLightAutomaticEditorGeometry.simulationImageWidthFraction)
+                .fillMaxSize()
                 .background(
                     sceneColor.copy(alpha = DeviceLightAutomaticEditorAlpha.imageColorOverlay)
                 )
@@ -84,4 +83,7 @@ private fun simulationScrim(visuals: DeviceLightAutomaticEditorVisuals): Brush =
         )
     )
 
-private const val CENTER_IMAGE_BIAS = 0f
+private const val AQUARIUM_CROP_LEFT_PX = 610
+private const val AQUARIUM_CROP_TOP_PX = 100
+private const val AQUARIUM_CROP_WIDTH_PX = 1000
+private const val AQUARIUM_CROP_HEIGHT_PX = 650

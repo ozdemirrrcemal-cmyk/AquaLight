@@ -1,6 +1,5 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -8,7 +7,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
@@ -36,51 +34,26 @@ internal fun DeviceLightAutomaticEditorDaysCard(
         modifier = Modifier.fillMaxWidth(),
         contentPadding = DeviceLightAutomaticEditorGeometry.cardPadding
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(DeviceLightAutomaticEditorGeometry.dayCardHeight),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(
-                modifier = Modifier
-                    .weight(DAY_GROUP_WEIGHT)
-                    .fillMaxHeight(),
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                EditorSectionHeading(
-                    title = stringResource(R.string.device_light_auto_editor_days),
-                    subtitle = stringResource(
-                        R.string.device_light_auto_editor_days_summary_compact
-                    ),
-                    visuals = visuals,
-                    icon = { color ->
-                        AutomaticCalendarIcon(
-                            color = color,
-                            modifier = Modifier.size(
-                                DeviceLightAutomaticEditorGeometry.sectionIconSize
-                            )
-                        )
-                    }
-                )
-                WeekdayButtons(state, actions, visuals)
-            }
-            Spacer(Modifier.width(DeviceLightAutomaticEditorGeometry.dayGroupGap))
-            Box(
-                Modifier
-                    .fillMaxHeight()
-                    .width(DeviceLightAutomaticEditorGeometry.dayGroupDividerWidth)
-                    .background(visuals.colors.card.outline)
+        Column(
+            verticalArrangement = Arrangement.spacedBy(
+                DeviceLightAutomaticEditorGeometry.cardContentGap
             )
-            Spacer(Modifier.width(DeviceLightAutomaticEditorGeometry.dayGroupGap))
-            Box(
-                modifier = Modifier
-                    .weight(QUICK_GROUP_WEIGHT)
-                    .fillMaxHeight(),
-                contentAlignment = Alignment.Center
-            ) {
-                QuickDayButtons(state, actions, visuals)
-            }
+        ) {
+            EditorSectionHeading(
+                title = stringResource(R.string.device_light_auto_editor_days),
+                subtitle = stringResource(R.string.device_light_auto_editor_days_summary),
+                visuals = visuals,
+                icon = { color ->
+                    AutomaticCalendarIcon(
+                        color = color,
+                        modifier = Modifier.size(
+                            DeviceLightAutomaticEditorGeometry.sectionIconSize
+                        )
+                    )
+                }
+            )
+            WeekdayButtons(state, actions, visuals)
+            QuickDayButtons(state, actions, visuals)
         }
     }
 }
@@ -100,8 +73,7 @@ private fun WeekdayButtons(
                 state = DeviceLightAutomaticSelectionState(
                     label = stringResource(day.labelRes()),
                     selected = state.draft.weekdaysMask and day.mask != 0,
-                    enabled = state.contentEnabled,
-                    compact = true
+                    enabled = state.contentEnabled
                 ),
                 onClick = { actions.onDayClick(day) },
                 modifier = Modifier
@@ -129,9 +101,7 @@ private fun QuickDayButtons(
             state = DeviceLightAutomaticSelectionState(
                 label = stringResource(R.string.device_light_auto_every_day),
                 selected = state.draft.weekdaysMask == DEVICE_LIGHT_AUTOMATIC_EVERY_DAY_MASK,
-                enabled = state.contentEnabled,
-                compact = true,
-                maxLines = QUICK_BUTTON_MAX_LINES
+                enabled = state.contentEnabled
             ),
             onClick = actions.onEveryDayClick,
             visuals = visuals,
@@ -143,9 +113,7 @@ private fun QuickDayButtons(
             state = DeviceLightAutomaticSelectionState(
                 label = stringResource(R.string.device_light_auto_editor_weekdays),
                 selected = state.draft.weekdaysMask == AUTOMATIC_WEEKDAYS_MASK,
-                enabled = state.contentEnabled,
-                compact = true,
-                maxLines = QUICK_BUTTON_MAX_LINES
+                enabled = state.contentEnabled
             ),
             onClick = actions.onWeekdaysClick,
             visuals = visuals,
@@ -157,9 +125,7 @@ private fun QuickDayButtons(
             state = DeviceLightAutomaticSelectionState(
                 label = stringResource(R.string.device_light_auto_editor_weekend),
                 selected = state.draft.weekdaysMask == AUTOMATIC_WEEKEND_MASK,
-                enabled = state.contentEnabled,
-                compact = true,
-                maxLines = QUICK_BUTTON_MAX_LINES
+                enabled = state.contentEnabled
             ),
             onClick = actions.onWeekendClick,
             visuals = visuals,
@@ -178,7 +144,6 @@ internal fun EditorSelectionButton(
     visuals: DeviceLightAutomaticEditorVisuals
 ) {
     val alpha = if (state.enabled) ENABLED_ALPHA else DeviceLightAutomaticEditorAlpha.disabled
-    val typography = if (state.compact) visuals.typography.micro else visuals.typography.caption
     val color = if (state.selected) {
         visuals.colors.action
     } else {
@@ -206,11 +171,11 @@ internal fun EditorSelectionButton(
     ) {
         BasicText(
             text = state.label,
-            style = typography.copy(
+            style = visuals.typography.caption.copy(
                 color = visuals.colors.card.primaryText.copy(alpha = alpha),
                 textAlign = TextAlign.Center
             ),
-            maxLines = state.maxLines
+            maxLines = BUTTON_LABEL_MAX_LINES
         )
     }
 }
@@ -218,9 +183,7 @@ internal fun EditorSelectionButton(
 internal data class DeviceLightAutomaticSelectionState(
     val label: String,
     val selected: Boolean,
-    val enabled: Boolean,
-    val compact: Boolean = false,
-    val maxLines: Int = SINGLE_BUTTON_LABEL_LINE
+    val enabled: Boolean
 )
 
 @Composable
@@ -264,10 +227,7 @@ private val AUTOMATIC_WEEKEND_MASK = DeviceLightAutomaticWeekday.entries
     .drop(AUTOMATIC_WEEKDAY_COUNT)
     .sumOf(DeviceLightAutomaticWeekday::mask)
 private const val AUTOMATIC_WEEKDAY_COUNT = 5
-private const val DAY_GROUP_WEIGHT = 1.34f
-private const val QUICK_GROUP_WEIGHT = 1f
 private const val DAY_BUTTON_WEIGHT = 1f
 private const val QUICK_DAY_BUTTON_WEIGHT = 1f
 private const val ENABLED_ALPHA = 1f
-private const val SINGLE_BUTTON_LABEL_LINE = 1
-private const val QUICK_BUTTON_MAX_LINES = 2
+private const val BUTTON_LABEL_MAX_LINES = 1

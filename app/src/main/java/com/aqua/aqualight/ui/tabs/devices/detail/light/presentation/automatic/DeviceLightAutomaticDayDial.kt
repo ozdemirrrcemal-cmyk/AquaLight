@@ -3,13 +3,14 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -18,8 +19,6 @@ import androidx.compose.ui.graphics.drawscope.inset
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import com.aqua.aqualight.R
-import kotlin.math.cos
-import kotlin.math.sin
 
 @Composable
 internal fun DayDial(
@@ -45,12 +44,7 @@ private fun DrawScope.drawDayDial(
     visuals: DeviceLightAutomaticEditorVisuals
 ) {
     val stroke = DeviceLightAutomaticEditorGeometry.dialStrokeWidth.toPx()
-    drawCircle(
-        color = visuals.colors.card.mediaOutline.copy(
-            alpha = DeviceLightAutomaticEditorAlpha.neutralDial
-        ),
-        style = Stroke(width = stroke)
-    )
+    drawColorDialTrack(visuals, stroke)
     drawDialGuides(visuals)
     if (schedule != null) {
         drawScheduleArcs(schedule, visuals, stroke)
@@ -68,19 +62,31 @@ private fun DrawScope.drawScheduleArcs(
     val duration = schedule.durationMs.toDayDegrees()
     val ramp = schedule.rampDurationMs.toDayDegrees()
     val hold = (duration - ramp - ramp).coerceAtLeast(NO_SWEEP_DEGREES)
-    listOf(
-        DialArc(start, ramp, visuals.colors.card.warning),
-        DialArc(start + ramp, hold, schedule.sceneColor),
-        DialArc(start + ramp + hold, ramp, visuals.colors.shrimp)
-    ).forEach { arc ->
-        drawArc(
-            color = arc.color,
-            startAngle = arc.startDegrees + DeviceLightAutomaticDialSpec.topOriginDegrees,
-            sweepAngle = arc.sweepDegrees,
-            useCenter = false,
-            style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+    drawTransitionArc(
+        DayDialTransitionArc(
+            startDegrees = start,
+            sweepDegrees = ramp,
+            startColor = visuals.colors.card.warning,
+            endColor = schedule.sceneColor,
+            strokeWidth = strokeWidth
         )
-    }
+    )
+    drawArc(
+        color = schedule.sceneColor,
+        startAngle = start + ramp + DeviceLightAutomaticDialSpec.topOriginDegrees,
+        sweepAngle = hold,
+        useCenter = false,
+        style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+    )
+    drawTransitionArc(
+        DayDialTransitionArc(
+            startDegrees = start + ramp + hold,
+            sweepDegrees = ramp,
+            startColor = schedule.sceneColor,
+            endColor = visuals.colors.shrimp,
+            strokeWidth = strokeWidth
+        )
+    )
 }
 
 private fun DrawScope.drawDialGuides(visuals: DeviceLightAutomaticEditorVisuals) {
@@ -107,7 +113,12 @@ private fun DrawScope.drawDialMarker(timeMs: Long, color: Color) {
     val angle = Math.toRadians(
         timeMs.toDayDegrees().toDouble() - DeviceLightAutomaticDialSpec.markerAngleOffsetDegrees
     )
-    val markerCenter = center.radialOffset(angle, radius)
+    val markerCenter = center.dialRadialOffset(angle, radius)
+    drawCircle(
+        color = color.copy(alpha = DeviceLightAutomaticEditorAlpha.dialMarkerHalo),
+        radius = DeviceLightAutomaticEditorGeometry.dialMarkerHaloRadius.toPx(),
+        center = markerCenter
+    )
     drawCircle(
         color = Color.White,
         radius = DeviceLightAutomaticEditorGeometry.dialMarkerRadius.toPx() +
@@ -120,11 +131,6 @@ private fun DrawScope.drawDialMarker(timeMs: Long, color: Color) {
         center = markerCenter
     )
 }
-
-private fun Offset.radialOffset(angle: Double, radius: Float): Offset = this + Offset(
-    x = (cos(angle) * radius).toFloat(),
-    y = (sin(angle) * radius).toFloat()
-)
 
 @Composable
 private fun DialAxisLabels(visuals: DeviceLightAutomaticEditorVisuals) {
@@ -161,11 +167,15 @@ private fun DialCenterCopy(
             DialValue(
                 stringResource(R.string.device_light_auto_editor_start_short),
                 automaticEditorTimeText(schedule.startTimeMs),
+                DayDialEventKind.SUNRISE,
+                visuals.colors.card.warning,
                 visuals
             )
             DialValue(
                 stringResource(R.string.device_light_auto_editor_end_short),
                 automaticEditorTimeText(schedule.endTimeMs),
+                DayDialEventKind.SUNSET,
+                visuals.colors.shrimp,
                 visuals
             )
             BasicText(
@@ -183,9 +193,18 @@ private fun DialCenterCopy(
 private fun DialValue(
     label: String,
     value: String,
+    eventKind: DayDialEventKind,
+    eventColor: Color,
     visuals: DeviceLightAutomaticEditorVisuals
 ) {
-    BasicText(label, style = visuals.typography.micro.copy(color = visuals.colors.card.secondaryText))
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        DayDialEventIcon(eventKind, eventColor)
+        Spacer(Modifier.width(DeviceLightAutomaticEditorGeometry.dialEventIconGap))
+        BasicText(
+            label,
+            style = visuals.typography.micro.copy(color = visuals.colors.card.secondaryText)
+        )
+    }
     BasicText(value, style = visuals.typography.caption.copy(color = visuals.colors.card.primaryText))
 }
 
@@ -199,8 +218,6 @@ internal data class DaySimulationSchedule(
     val durationMs: Long,
     val sceneColor: Color
 )
-
-private data class DialArc(val startDegrees: Float, val sweepDegrees: Float, val color: Color)
 
 private const val DIAL_GUIDE_COUNT = 12
 private const val DIAL_TOP_LABEL = "24"

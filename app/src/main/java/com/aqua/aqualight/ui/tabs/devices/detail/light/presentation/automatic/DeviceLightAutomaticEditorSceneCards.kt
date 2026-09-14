@@ -26,6 +26,9 @@ import androidx.compose.ui.text.style.TextAlign
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticChannel
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
+import com.aqua.aqualight.ui.common.light.AquaLightChannelStepButton
+import com.aqua.aqualight.ui.common.light.AquaLightChannelStepButtonState
+import com.aqua.aqualight.ui.common.light.AquaLightManualPreviewSpec
 import com.aqua.aqualight.ui.common.light.AquaLightManualPercentSlider
 import com.aqua.aqualight.ui.common.light.AquaLightManualPercentSliderActions
 import com.aqua.aqualight.ui.common.light.AquaLightManualPercentSliderState
@@ -100,29 +103,17 @@ internal fun DeviceLightAutomaticEditorChannelsCard(
                 visuals = visuals,
                 icon = { color -> ChannelSlidersIcon(color) }
             )
-            displayedChannels.chunked(CHANNEL_COLUMN_COUNT).forEach { rowChannels ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(
-                        DeviceLightAutomaticEditorGeometry.channelSliderGap
-                    )
-                ) {
-                    rowChannels.forEach { channel ->
-                        ChannelControl(
-                            state = ChannelControlState(
-                                channel = channel,
-                                percent = state.draft.channels[channel] ?: MIN_PERCENT,
-                                enabled = state.contentEnabled
-                            ),
-                            onValueChanged = { value -> onChannelChanged(channel, value) },
-                            visuals = visuals,
-                            modifier = Modifier.weight(CHANNEL_COLUMN_WEIGHT)
-                        )
-                    }
-                    repeat(CHANNEL_COLUMN_COUNT - rowChannels.size) {
-                        Spacer(Modifier.weight(CHANNEL_COLUMN_WEIGHT))
-                    }
-                }
+            displayedChannels.forEach { channel ->
+                ChannelControl(
+                    state = ChannelControlState(
+                        channel = channel,
+                        percent = state.draft.channels[channel] ?: MIN_PERCENT,
+                        enabled = state.contentEnabled
+                    ),
+                    onValueChanged = { value -> onChannelChanged(channel, value) },
+                    visuals = visuals,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
     }
@@ -145,6 +136,13 @@ private fun ChannelControl(
             style = visuals.typography.caption.copy(color = visuals.colors.card.primaryText),
             modifier = Modifier.width(DeviceLightAutomaticEditorGeometry.channelLabelWidth)
         )
+        ChannelStepButton(
+            state = state,
+            increase = false,
+            label = label,
+            onValueChanged = onValueChanged,
+            visuals = visuals
+        )
         AquaLightManualPercentSlider(
             state = AquaLightManualPercentSliderState(
                 percent = state.percent,
@@ -165,7 +163,13 @@ private fun ChannelControl(
             ),
             modifier = Modifier.weight(CHANNEL_SLIDER_WEIGHT)
         )
-        Spacer(Modifier.width(DeviceLightAutomaticEditorGeometry.channelSliderGap))
+        ChannelStepButton(
+            state = state,
+            increase = true,
+            label = label,
+            onValueChanged = onValueChanged,
+            visuals = visuals
+        )
         BasicText(
             text = stringResource(R.string.device_light_auto_percent_format, state.percent),
             style = visuals.typography.caption.copy(
@@ -175,6 +179,44 @@ private fun ChannelControl(
             modifier = Modifier.width(DeviceLightAutomaticEditorGeometry.channelValueWidth)
         )
     }
+}
+
+@Composable
+private fun ChannelStepButton(
+    state: ChannelControlState,
+    increase: Boolean,
+    label: String,
+    onValueChanged: (Int) -> Unit,
+    visuals: DeviceLightAutomaticEditorVisuals
+) {
+    val step = if (increase) {
+        AquaLightManualPreviewSpec.stepPercent
+    } else {
+        -AquaLightManualPreviewSpec.stepPercent
+    }
+    val limit = if (increase) MAX_PERCENT else MIN_PERCENT
+    val descriptionRes = if (increase) {
+        R.string.device_light_manual_increase_channel_description
+    } else {
+        R.string.device_light_manual_decrease_channel_description
+    }
+    val symbolRes = if (increase) {
+        R.string.device_light_manual_plus_symbol
+    } else {
+        R.string.device_light_manual_minus_symbol
+    }
+    AquaLightChannelStepButton(
+        state = AquaLightChannelStepButtonState(
+            symbol = stringResource(symbolRes),
+            contentDescription = stringResource(descriptionRes, label),
+            enabled = state.enabled && state.percent != limit
+        ),
+        colors = visuals.colors,
+        typography = visuals.typography,
+        onClick = {
+            onValueChanged((state.percent + step).coerceIn(MIN_PERCENT, MAX_PERCENT))
+        }
+    )
 }
 
 private data class ChannelControlState(
@@ -239,11 +281,10 @@ private val CHANNEL_ICON_THUMB_Y_FRACTIONS = listOf(
     CHANNEL_ICON_SECOND_THUMB_Y,
     CHANNEL_ICON_THIRD_THUMB_Y
 )
-private const val CHANNEL_COLUMN_COUNT = 2
 private const val PRESET_COPY_WEIGHT = 1f
-private const val CHANNEL_COLUMN_WEIGHT = 1f
 private const val CHANNEL_SLIDER_WEIGHT = 1f
 private const val MIN_PERCENT = 0
+private const val MAX_PERCENT = 100
 private const val CHANNEL_ICON_FIRST_X = 0.22f
 private const val CHANNEL_ICON_SECOND_X = 0.50f
 private const val CHANNEL_ICON_THIRD_X = 0.78f
