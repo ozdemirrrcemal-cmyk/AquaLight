@@ -83,7 +83,7 @@ private fun simulationScrim(visuals: DeviceLightAutomaticEditorVisuals): Brush =
         )
     )
 
-private const val AQUARIUM_CROP_LEFT_PX = 610
+private const val AQUARIUM_CROP_LEFT_PX = 620
 private const val AQUARIUM_CROP_TOP_PX = 100
-private const val AQUARIUM_CROP_WIDTH_PX = 1000
+private const val AQUARIUM_CROP_WIDTH_PX = 990
 private const val AQUARIUM_CROP_HEIGHT_PX = 650
