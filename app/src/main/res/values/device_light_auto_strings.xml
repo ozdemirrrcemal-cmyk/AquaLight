@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_light_auto_every_day">Every day</string>
+    <string name="device_light_auto_day_monday">Mon</string>
+    <string name="device_light_auto_day_tuesday">Tue</string>
+    <string name="device_light_auto_day_wednesday">Wed</string>
+    <string name="device_light_auto_day_thursday">Thu</string>
+    <string name="device_light_auto_day_friday">Fri</string>
+    <string name="device_light_auto_day_saturday">Sat</string>
+    <string name="device_light_auto_day_sunday">Sun</string>
+    <string name="device_light_auto_time_format">%1$02d:%2$02d</string>
+    <string name="device_light_auto_time_range_format">%1$s → %2$s</string>
+    <string name="device_light_auto_ramp_format">Ramp: %1$s</string>
+    <string name="device_light_auto_minutes">%1$d min</string>
+    <string name="device_light_auto_hour_format">%1$02d</string>
+    <string name="device_light_auto_percent_format">%1$d%%</string>
+    <string name="device_light_auto_channel_value_format">%1$s %2$d%%</string>
+    <string name="device_light_auto_add_program">Add program</string>
+    <string name="device_light_auto_enable_program_description">Enable automatic program</string>
+    <string name="device_light_auto_disable_program_description">Disable automatic program</string>
+    <string name="device_light_auto_more_actions_description">More program actions</string>
+    <string name="device_light_auto_actions_title">Program actions</string>
+    <string name="device_light_auto_duplicate">Duplicate</string>
+    <string name="device_light_auto_delete">Delete</string>
+    <string name="device_light_auto_delete_title">Delete program?</string>
+    <string name="device_light_auto_delete_message">This automatic program will be removed permanently.</string>
+    <string name="device_light_auto_delete_confirm">Delete</string>
+    <string name="device_light_auto_deleted_success">Program deleted</string>
+    <string name="device_light_auto_operation_error">Automatic programs could not be updated. Try again.</string>
+    <string name="device_light_auto_editor_title">Automatic program</string>
+</resources>

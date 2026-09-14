@@ -15,12 +15,14 @@ import com.aqua.aqualight.composition.OwnerDependencyGraph
 import com.aqua.aqualight.composition.OwnerDependencyGraphAccess
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
+import com.aqua.aqualight.data.devices.light.automatic.DefaultDeviceLightAutomaticOperations
 import com.aqua.aqualight.data.devices.light.library.DefaultDeviceLightLibraryOperations
 import com.aqua.aqualight.data.devices.light.library.DeviceLightLibraryStore
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
 import com.aqua.aqualight.data.devices.remove.OwnerDeviceDataCleaner
 import com.aqua.aqualight.ui.tabs.devices.DevicesViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.DeviceLightAutomaticProgramsViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.library.DeviceLightLibraryViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom.DeviceLightCustomCurveViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual.DeviceLightManualControlViewModel
@@ -64,6 +66,15 @@ private class DebugDeviceFixtureViewModelFactory(
             DevicesViewModel::class.java -> createDevicesViewModel(requireGraph())
             DeviceLightRootViewModel::class.java ->
                 createLightRootViewModel(requireGraph())
+            DeviceLightAutomaticProgramsViewModel::class.java ->
+                DeviceLightAutomaticProgramsViewModel(
+                    DebugFixtureLightAutomaticOperations(
+                        delegate = DefaultDeviceLightAutomaticOperations(
+                            requireGraph().devicesRepository
+                        ),
+                        fixtures = fixtures
+                    )
+                )
             DeviceLightManualControlViewModel::class.java ->
                 DeviceLightManualControlViewModel(
                     timerDependencies(requireGraph()).lightLibraryOperations

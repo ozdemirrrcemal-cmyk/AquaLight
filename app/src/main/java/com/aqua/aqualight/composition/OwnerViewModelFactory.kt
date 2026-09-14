@@ -21,6 +21,7 @@ import com.aqua.aqualight.data.devices.cooling.DefaultDeviceCoolingAutomaticSett
 import com.aqua.aqualight.data.devices.cooling.DefaultDeviceCoolingTemperatureHistoryOperations
 import com.aqua.aqualight.data.devices.cooling.control.DefaultDeviceCoolingControlOperations
 import com.aqua.aqualight.data.devices.cooling.program.DefaultDeviceCoolingProgramOperations
+import com.aqua.aqualight.data.devices.light.automatic.DefaultDeviceLightAutomaticOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningDiscoveryOperations
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningProgressOperations
@@ -51,6 +52,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.detail.DeviceDos
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan.DeviceDosingPlanViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.reservoir.DeviceDosingReservoirViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.root.DeviceDosingRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.DeviceLightAutomaticProgramsViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.library.DeviceLightLibraryViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom.DeviceLightCustomCurveViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual.DeviceLightManualControlViewModel
@@ -177,6 +179,10 @@ internal class OwnerViewModelFactory(
                 lightControlOperations = graph.lightOperations.controlOperations,
                 controlSurfacePreparationOperations = graph.controlSurfacePreparationOperations
             )
+            DeviceLightAutomaticProgramsViewModel::class.java ->
+                DeviceLightAutomaticProgramsViewModel(
+                    DefaultDeviceLightAutomaticOperations(repository)
+                )
             DeviceLightManualControlViewModel::class.java -> DeviceLightManualControlViewModel(
                 libraryOperations = graph.lightOperations.libraryOperations
             )
@@ -311,6 +317,7 @@ internal class OwnerViewModelFactory(
             AquariumTankViewModel::class.java,
             MaintenanceViewModel::class.java,
             DeviceLightRootViewModel::class.java,
+            DeviceLightAutomaticProgramsViewModel::class.java,
             DeviceLightManualControlViewModel::class.java,
             DeviceLightCustomCurveViewModel::class.java,
             DeviceLightLibraryViewModel::class.java,

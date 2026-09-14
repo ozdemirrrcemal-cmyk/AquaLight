@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_light_auto_every_day">Her gün</string>
+    <string name="device_light_auto_day_monday">Pzt</string>
+    <string name="device_light_auto_day_tuesday">Sal</string>
+    <string name="device_light_auto_day_wednesday">Çar</string>
+    <string name="device_light_auto_day_thursday">Per</string>
+    <string name="device_light_auto_day_friday">Cum</string>
+    <string name="device_light_auto_day_saturday">Cmt</string>
+    <string name="device_light_auto_day_sunday">Paz</string>
+    <string name="device_light_auto_time_format">%1$02d:%2$02d</string>
+    <string name="device_light_auto_time_range_format">%1$s → %2$s</string>
+    <string name="device_light_auto_ramp_format">Ramp: %1$s</string>
+    <string name="device_light_auto_minutes">%1$d dk</string>
+    <string name="device_light_auto_hour_format">%1$02d</string>
+    <string name="device_light_auto_percent_format">%1$d%%</string>
+    <string name="device_light_auto_channel_value_format">%1$s %2$d%%</string>
+    <string name="device_light_auto_add_program">Program ekle</string>
+    <string name="device_light_auto_enable_program_description">Otomatik programı etkinleştir</string>
+    <string name="device_light_auto_disable_program_description">Otomatik programı devre dışı bırak</string>
+    <string name="device_light_auto_more_actions_description">Diğer program işlemleri</string>
+    <string name="device_light_auto_actions_title">Program işlemleri</string>
+    <string name="device_light_auto_duplicate">Çoğalt</string>
+    <string name="device_light_auto_delete">Sil</string>
+    <string name="device_light_auto_delete_title">Program silinsin mi?</string>
+    <string name="device_light_auto_delete_message">Bu otomatik program kalıcı olarak kaldırılacak.</string>
+    <string name="device_light_auto_delete_confirm">Sil</string>
+    <string name="device_light_auto_deleted_success">Program silindi</string>
+    <string name="device_light_auto_operation_error">Otomatik programlar güncellenemedi. Tekrar deneyin.</string>
+    <string name="device_light_auto_editor_title">Otomatik program</string>
+</resources>
