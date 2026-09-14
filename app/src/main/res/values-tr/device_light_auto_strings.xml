@@ -41,7 +41,6 @@
     <string name="device_light_auto_editor_end_short">Kapanış</string>
     <string name="device_light_auto_editor_ramp_short">Geçiş\u0020%1$d dk</string>
     <string name="device_light_auto_editor_days">Günler</string>
-    <string name="device_light_auto_editor_days_summary">Program hangi günler çalışsın?</string>
     <string name="device_light_auto_editor_days_summary_compact">Hangi günler çalışsın?</string>
     <string name="device_light_auto_editor_weekdays">Hafta içi</string>
     <string name="device_light_auto_editor_weekend">Hafta sonu</string>

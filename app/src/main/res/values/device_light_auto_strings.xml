@@ -41,7 +41,6 @@
     <string name="device_light_auto_editor_end_short">End</string>
     <string name="device_light_auto_editor_ramp_short">Ramp\u0020%1$d min</string>
     <string name="device_light_auto_editor_days">Days</string>
-    <string name="device_light_auto_editor_days_summary">When should the program run?</string>
     <string name="device_light_auto_editor_days_summary_compact">When should it run?</string>
     <string name="device_light_auto_editor_weekdays">Weekdays</string>
     <string name="device_light_auto_editor_weekend">Weekend</string>
