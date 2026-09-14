@@ -35,12 +35,12 @@ internal data class DeviceLightManualPowerUiState(
 }
 
 internal enum class DeviceLightManualPresetId {
-    RED,
-    GREEN,
-    BLUE,
-    FISH,
-    SHRIMP,
-    ALL
+    NATURAL,
+    GROWTH,
+    RED_FLORA,
+    COLOR_BOOST,
+    DETAIL,
+    LOW_LIGHT
 }
 
 internal data class DeviceLightManualPresetUiState(
@@ -119,34 +119,34 @@ internal fun deviceLightManualPreviewState(deviceUid: String) = DeviceLightManua
 
 private fun builtInManualPresets() = listOf(
     manualPreset(
-        DeviceLightManualPresetId.RED,
-        R.string.device_light_manual_preset_red,
-        DeviceLightBuiltInManualPreset.RED.scene
+        DeviceLightManualPresetId.NATURAL,
+        R.string.device_light_manual_preset_natural,
+        DeviceLightBuiltInManualPreset.NATURAL.scene
     ),
     manualPreset(
-        DeviceLightManualPresetId.GREEN,
-        R.string.device_light_manual_preset_green,
-        DeviceLightBuiltInManualPreset.GREEN.scene
+        DeviceLightManualPresetId.GROWTH,
+        R.string.device_light_manual_preset_growth,
+        DeviceLightBuiltInManualPreset.GROWTH.scene
     ),
     manualPreset(
-        DeviceLightManualPresetId.BLUE,
-        R.string.device_light_manual_preset_blue,
-        DeviceLightBuiltInManualPreset.BLUE.scene
+        DeviceLightManualPresetId.RED_FLORA,
+        R.string.device_light_manual_preset_red_flora,
+        DeviceLightBuiltInManualPreset.RED_FLORA.scene
     ),
     manualPreset(
-        DeviceLightManualPresetId.FISH,
-        R.string.device_light_manual_preset_fish,
-        DeviceLightBuiltInManualPreset.FISH.scene
+        DeviceLightManualPresetId.COLOR_BOOST,
+        R.string.device_light_manual_preset_color_boost,
+        DeviceLightBuiltInManualPreset.COLOR_BOOST.scene
     ),
     manualPreset(
-        DeviceLightManualPresetId.SHRIMP,
-        R.string.device_light_manual_preset_shrimp,
-        DeviceLightBuiltInManualPreset.SHRIMP.scene
+        DeviceLightManualPresetId.DETAIL,
+        R.string.device_light_manual_preset_detail,
+        DeviceLightBuiltInManualPreset.DETAIL.scene
     ),
     manualPreset(
-        DeviceLightManualPresetId.ALL,
-        R.string.device_light_manual_preset_all,
-        DeviceLightBuiltInManualPreset.ALL.scene
+        DeviceLightManualPresetId.LOW_LIGHT,
+        R.string.device_light_manual_preset_low_light,
+        DeviceLightBuiltInManualPreset.LOW_LIGHT.scene
     )
 )
 
