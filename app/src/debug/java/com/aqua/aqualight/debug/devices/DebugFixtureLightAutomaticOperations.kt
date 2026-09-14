@@ -5,7 +5,9 @@ import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomat
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticFailure
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticMutationResult
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticOperations
+import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticPolicy
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticProgram
+import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticProgramDraft
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticReadResult
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticScene
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticSnapshot
@@ -25,6 +27,81 @@ internal class DebugFixtureLightAutomaticOperations(
             ?: delegate.read(deviceUid)
     }
 
+    override suspend fun create(
+        deviceUid: String,
+        expectedRevision: Long,
+        enabled: Boolean,
+        draft: DeviceLightAutomaticProgramDraft
+    ): DeviceLightAutomaticMutationResult {
+        val normalizedUid = deviceUid.trim()
+        if (!isLightFixture(normalizedUid)) {
+            return delegate.create(deviceUid, expectedRevision, enabled, draft)
+        }
+        return synchronized(lock) {
+            val current = fixtureSnapshot(normalizedUid)
+                ?: return@synchronized invalidDataFailure()
+            if (expectedRevision != current.revision) {
+                return@synchronized staleRevisionFailure()
+            }
+            if (current.programs.size >= current.policy.capacity) {
+                return@synchronized DeviceLightAutomaticMutationResult.Failed(
+                    DeviceLightAutomaticFailure.CAPACITY_REACHED
+                )
+            }
+            val candidate = draft.toProgram(
+                programId = nextProgramId(current.programs),
+                enabled = enabled
+            )
+            if (hasEnabledConflict(current, candidate, enabled)) {
+                return@synchronized DeviceLightAutomaticMutationResult.Failed(
+                    DeviceLightAutomaticFailure.OVERLAP
+                )
+            }
+            fixtureStates[normalizedUid] = current.copy(
+                revision = current.revision + REVISION_INCREMENT,
+                programs = current.programs + candidate
+            )
+            DeviceLightAutomaticMutationResult.Success
+        }
+    }
+
+    override suspend fun update(
+        deviceUid: String,
+        expectedRevision: Long,
+        programId: String,
+        draft: DeviceLightAutomaticProgramDraft
+    ): DeviceLightAutomaticMutationResult {
+        val normalizedUid = deviceUid.trim()
+        if (!isLightFixture(normalizedUid)) {
+            return delegate.update(deviceUid, expectedRevision, programId, draft)
+        }
+        return synchronized(lock) {
+            val current = fixtureSnapshot(normalizedUid)
+                ?: return@synchronized invalidDataFailure()
+            val source = current.programs.singleOrNull { program ->
+                program.programId == programId
+            } ?: return@synchronized DeviceLightAutomaticMutationResult.Failed(
+                DeviceLightAutomaticFailure.NOT_FOUND
+            )
+            if (expectedRevision != current.revision) {
+                return@synchronized staleRevisionFailure()
+            }
+            val candidate = draft.toProgram(programId = programId, enabled = source.enabled)
+            if (hasEnabledConflict(current, candidate, candidate.enabled)) {
+                return@synchronized DeviceLightAutomaticMutationResult.Failed(
+                    DeviceLightAutomaticFailure.OVERLAP
+                )
+            }
+            fixtureStates[normalizedUid] = current.copy(
+                revision = current.revision + REVISION_INCREMENT,
+                programs = current.programs.map { program ->
+                    if (program.programId == programId) candidate else program
+                }
+            )
+            DeviceLightAutomaticMutationResult.Success
+        }
+    }
+
     override suspend fun setEnabled(
         deviceUid: String,
         expectedRevision: Long,
@@ -42,19 +119,17 @@ internal class DebugFixtureLightAutomaticOperations(
                 )
             val source = current.programs.singleOrNull { program -> program.programId == programId }
                 ?: return@synchronized DeviceLightAutomaticMutationResult.Failed(
-                    DeviceLightAutomaticFailure.INVALID_DATA
+                    DeviceLightAutomaticFailure.NOT_FOUND
                 )
             if (expectedRevision != current.revision) {
-                return@synchronized DeviceLightAutomaticMutationResult.Failed(
-                    DeviceLightAutomaticFailure.REJECTED
-                )
+                return@synchronized staleRevisionFailure()
             }
             if (source.enabled == enabled) {
                 return@synchronized DeviceLightAutomaticMutationResult.Success
             }
             if (hasEnabledConflict(current, source, enabled)) {
                 return@synchronized DeviceLightAutomaticMutationResult.Failed(
-                    DeviceLightAutomaticFailure.REJECTED
+                    DeviceLightAutomaticFailure.OVERLAP
                 )
             }
             fixtureStates[normalizedUid] = current.copy(
@@ -81,11 +156,12 @@ internal class DebugFixtureLightAutomaticOperations(
                 ?: return@synchronized DeviceLightAutomaticMutationResult.Failed(
                     DeviceLightAutomaticFailure.INVALID_DATA
                 )
-            if (expectedRevision != current.revision ||
-                current.programs.none { program -> program.programId == programId }
-            ) {
+            if (expectedRevision != current.revision) {
+                return@synchronized staleRevisionFailure()
+            }
+            if (current.programs.none { program -> program.programId == programId }) {
                 return@synchronized DeviceLightAutomaticMutationResult.Failed(
-                    DeviceLightAutomaticFailure.REJECTED
+                    DeviceLightAutomaticFailure.NOT_FOUND
                 )
             }
             fixtureStates[normalizedUid] = current.copy(
@@ -105,8 +181,13 @@ internal class DebugFixtureLightAutomaticOperations(
             }
             DeviceLightAutomaticSnapshot(
                 deviceUid = deviceUid,
+                productDisplayName = root.productDisplayName,
                 revision = INITIAL_REVISION,
-                capacity = AUTO_CAPACITY,
+                policy = DeviceLightAutomaticPolicy(
+                    capacity = AUTO_CAPACITY,
+                    timeStepMs = MILLIS_PER_MINUTE,
+                    rampDurationsMs = ALLOWED_RAMP_DURATIONS_MS
+                ),
                 channels = channels,
                 programs = fixturePrograms(channels)
             )
@@ -127,6 +208,33 @@ internal class DebugFixtureLightAutomaticOperations(
     private fun isLightFixture(deviceUid: String): Boolean =
         fixtures.rootSnapshot(deviceUid)?.family == OwnerDeviceFamily.LIGHT
 }
+
+private fun DeviceLightAutomaticProgramDraft.toProgram(
+    programId: String,
+    enabled: Boolean
+): DeviceLightAutomaticProgram = DeviceLightAutomaticProgram(
+    programId = programId,
+    enabled = enabled,
+    weekdaysMask = weekdaysMask,
+    startTimeMs = startTimeMs,
+    endTimeMs = endTimeMs,
+    rampDurationMs = rampDurationMs,
+    scene = scene
+)
+
+private fun nextProgramId(programs: List<DeviceLightAutomaticProgram>): String {
+    val nextSequence = programs.maxOfOrNull { program ->
+        program.programId.removePrefix(PROGRAM_ID_PREFIX).toLong(PROGRAM_ID_RADIX)
+    }?.plus(REVISION_INCREMENT) ?: INITIAL_PROGRAM_SEQUENCE
+    return PROGRAM_ID_PREFIX + nextSequence.toString(PROGRAM_ID_RADIX)
+        .padStart(PROGRAM_ID_HEX_LENGTH, PROGRAM_ID_PAD_CHARACTER)
+}
+
+private fun invalidDataFailure(): DeviceLightAutomaticMutationResult =
+    DeviceLightAutomaticMutationResult.Failed(DeviceLightAutomaticFailure.INVALID_DATA)
+
+private fun staleRevisionFailure(): DeviceLightAutomaticMutationResult =
+    DeviceLightAutomaticMutationResult.Failed(DeviceLightAutomaticFailure.STALE_REVISION)
 
 private fun fixturePrograms(
     channels: List<DeviceLightAutomaticChannel>
@@ -151,7 +259,7 @@ private fun fixturePrograms(
     ),
     DeviceLightAutomaticProgram(
         programId = "ap-00000003",
-        enabled = true,
+        enabled = false,
         weekdaysMask = TUESDAY_THURSDAY_SATURDAY_MASK,
         startTimeMs = hours(THIRD_PROGRAM_START_HOUR),
         endTimeMs = hours(THIRD_PROGRAM_END_HOUR),
@@ -182,18 +290,35 @@ private fun String.toAutomaticChannel(): DeviceLightAutomaticChannel = checkNotN
 ) { "Unsupported Debug Light fixture channel: $this" }
 
 private fun DeviceLightAutomaticProgram.conflictsWith(other: DeviceLightAutomaticProgram): Boolean {
-    if (weekdaysMask and other.weekdaysMask == 0) return false
-    return daySegments().any { left ->
-        other.daySegments().any { right -> left.first < right.second && right.first < left.second }
+    val otherIntervals = other.weeklyIntervals()
+    return weeklyIntervals().any { candidate ->
+        otherIntervals.any { existing ->
+            WEEK_OFFSETS.any { offset ->
+                candidate.overlaps(existing.shifted(offset))
+            }
+        }
     }
 }
 
-private fun DeviceLightAutomaticProgram.daySegments(): List<Pair<Long, Long>> =
-    if (endTimeMs > startTimeMs) {
-        listOf(startTimeMs to endTimeMs)
-    } else {
-        listOf(startTimeMs to MILLIS_PER_DAY, 0L to endTimeMs)
+private fun DeviceLightAutomaticProgram.weeklyIntervals(): List<WeeklyInterval> =
+    (0 until DAYS_PER_WEEK).mapNotNull { dayIndex ->
+        val mask = 1 shl (WEEKDAY_FIRST_BIT_INDEX - dayIndex)
+        if (weekdaysMask and mask == 0) {
+            null
+        } else {
+            val start = dayIndex * MILLIS_PER_DAY + startTimeMs
+            val end = dayIndex * MILLIS_PER_DAY + endTimeMs +
+                if (endTimeMs <= startTimeMs) MILLIS_PER_DAY else 0L
+            WeeklyInterval(start, end)
+        }
     }
+
+private data class WeeklyInterval(val startMs: Long, val endMs: Long) {
+    fun shifted(offsetMs: Long) = WeeklyInterval(startMs + offsetMs, endMs + offsetMs)
+
+    fun overlaps(other: WeeklyInterval): Boolean =
+        startMs < other.endMs && other.startMs < endMs
+}
 
 private fun hours(value: Int): Long = value * MINUTES_PER_HOUR * MILLIS_PER_MINUTE
 private fun minutes(value: Int): Long = value * MILLIS_PER_MINUTE
@@ -216,3 +341,23 @@ private const val TUESDAY_THURSDAY_SATURDAY_MASK = 0x2a
 private const val MINUTES_PER_HOUR = 60L
 private const val MILLIS_PER_MINUTE = 60_000L
 private const val MILLIS_PER_DAY = 86_400_000L
+private const val DAYS_PER_WEEK = 7
+private const val WEEKDAY_FIRST_BIT_INDEX = 6
+private const val MILLIS_PER_WEEK = DAYS_PER_WEEK * MILLIS_PER_DAY
+private const val PROGRAM_ID_PREFIX = "ap-"
+private const val PROGRAM_ID_RADIX = 16
+private const val PROGRAM_ID_HEX_LENGTH = 8
+private const val PROGRAM_ID_PAD_CHARACTER = '0'
+private const val INITIAL_PROGRAM_SEQUENCE = 1L
+private val WEEK_OFFSETS = listOf(-MILLIS_PER_WEEK, 0L, MILLIS_PER_WEEK)
+private val ALLOWED_RAMP_DURATIONS_MS = listOf(
+    minutes(NO_RAMP_MINUTES),
+    minutes(FIRST_PROGRAM_RAMP_MINUTES),
+    minutes(SECOND_PROGRAM_RAMP_MINUTES),
+    minutes(THIRD_PROGRAM_RAMP_MINUTES),
+    minutes(FOURTH_RAMP_MINUTES),
+    minutes(FIFTH_RAMP_MINUTES)
+)
+private const val NO_RAMP_MINUTES = 0
+private const val FOURTH_RAMP_MINUTES = 120
+private const val FIFTH_RAMP_MINUTES = 150

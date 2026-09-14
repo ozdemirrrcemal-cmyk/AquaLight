@@ -48,7 +48,12 @@ internal class DeviceLightAutomaticProgramsViewModel(
     }
 
     fun refresh() {
-        if (boundDeviceUid.isBlank() || _uiState.value.operationInProgress) return
+        if (boundDeviceUid.isBlank() ||
+            _uiState.value.initialLoading ||
+            _uiState.value.operationInProgress
+        ) {
+            return
+        }
         refresh(showLoading = false, showFailureMessage = false)
     }
 
@@ -157,7 +162,7 @@ internal class DeviceLightAutomaticProgramsViewModel(
             deviceUid = snapshot.deviceUid,
             connectionVisualState = DeviceConnectionVisualState.ONLINE,
             revision = snapshot.revision,
-            capacity = snapshot.capacity,
+            capacity = snapshot.policy.capacity,
             channels = snapshot.channels,
             programs = snapshot.programs,
             contentEnabled = true,
@@ -182,6 +187,10 @@ private fun DeviceLightAutomaticFailure.connectionState(): DeviceConnectionVisua
     DeviceLightAutomaticFailure.NOT_CONNECTED -> DeviceConnectionVisualState.OFFLINE
     DeviceLightAutomaticFailure.UNAVAILABLE -> DeviceConnectionVisualState.WARNING
     DeviceLightAutomaticFailure.UNSUPPORTED,
+    DeviceLightAutomaticFailure.STALE_REVISION,
+    DeviceLightAutomaticFailure.CAPACITY_REACHED,
+    DeviceLightAutomaticFailure.OVERLAP,
+    DeviceLightAutomaticFailure.NOT_FOUND,
     DeviceLightAutomaticFailure.REJECTED,
     DeviceLightAutomaticFailure.INVALID_DATA -> DeviceConnectionVisualState.WARNING
 }

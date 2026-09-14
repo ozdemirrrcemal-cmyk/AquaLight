@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
 
 internal class DeviceLightAutomaticProgramSheetCoordinator(
     private val fragment: Fragment,
-    private val onDuplicate: () -> Unit,
+    private val onDuplicate: (String) -> Unit,
     private val onDelete: (String) -> Unit
 ) {
     fun register(owner: LifecycleOwner) {
@@ -35,7 +35,7 @@ internal class DeviceLightAutomaticProgramSheetCoordinator(
                 .getString(GlobalActionBottomSheet.RESULT_PAYLOAD_ID)
                 .orEmpty()
             when (result.getString(GlobalActionBottomSheet.RESULT_ACTION_ID)) {
-                ACTION_DUPLICATE -> onDuplicate()
+                ACTION_DUPLICATE -> onDuplicate(programId)
                 ACTION_DELETE -> showDeleteConfirmation(programId)
             }
         }

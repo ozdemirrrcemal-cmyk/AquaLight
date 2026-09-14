@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.BuildConfig
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
 import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
+import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticOperations
 import com.aqua.aqualight.application.devices.light.control.DeviceLightControlOperations
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomOperations
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryOperations
@@ -23,6 +24,7 @@ import com.aqua.aqualight.data.devices.remove.OwnerDeviceDataCleaner
 import com.aqua.aqualight.ui.tabs.devices.DevicesViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.DeviceLightAutomaticProgramsViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.DeviceLightAutomaticProgramEditorViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.library.DeviceLightLibraryViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom.DeviceLightCustomCurveViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual.DeviceLightManualControlViewModel
@@ -68,12 +70,11 @@ private class DebugDeviceFixtureViewModelFactory(
                 createLightRootViewModel(requireGraph())
             DeviceLightAutomaticProgramsViewModel::class.java ->
                 DeviceLightAutomaticProgramsViewModel(
-                    DebugFixtureLightAutomaticOperations(
-                        delegate = DefaultDeviceLightAutomaticOperations(
-                            requireGraph().devicesRepository
-                        ),
-                        fixtures = fixtures
-                    )
+                    timerDependencies(requireGraph()).lightAutomaticOperations
+                )
+            DeviceLightAutomaticProgramEditorViewModel::class.java ->
+                DeviceLightAutomaticProgramEditorViewModel(
+                    timerDependencies(requireGraph()).lightAutomaticOperations
                 )
             DeviceLightManualControlViewModel::class.java ->
                 DeviceLightManualControlViewModel(
@@ -198,6 +199,10 @@ private class DebugDeviceFixtureViewModelFactory(
             delegate = graph.lightOperations.controlOperations,
             fixtures = fixtures
         )
+        val lightAutomaticOperations = DebugFixtureLightAutomaticOperations(
+            delegate = DefaultDeviceLightAutomaticOperations(graph.devicesRepository),
+            fixtures = fixtures
+        )
         val lightRuntime = DebugLightFixtureRuntime(fixtures)
         val lightCustomOperations = DebugFixtureLightCustomOperations(
             delegate = graph.lightOperations.customOperations,
@@ -214,6 +219,7 @@ private class DebugDeviceFixtureViewModelFactory(
         )
         return DebugTimerFixtureDependencies(
             graph = graph,
+            lightAutomaticOperations = lightAutomaticOperations,
             lightControlOperations = lightControlOperations,
             lightCustomOperations = lightCustomOperations,
             lightLibraryOperations = lightLibraryOperations,
@@ -245,6 +251,7 @@ private fun fixtureFirmwareOperations(
 
 private data class DebugTimerFixtureDependencies(
     val graph: OwnerDependencyGraph,
+    val lightAutomaticOperations: DeviceLightAutomaticOperations,
     val lightControlOperations: DeviceLightControlOperations,
     val lightCustomOperations: DeviceLightCustomOperations,
     val lightLibraryOperations: DeviceLightLibraryOperations,
