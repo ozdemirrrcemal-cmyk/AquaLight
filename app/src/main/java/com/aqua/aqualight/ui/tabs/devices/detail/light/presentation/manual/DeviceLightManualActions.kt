@@ -32,7 +32,6 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.light.AquaLightManualAlpha
-import com.aqua.aqualight.ui.common.light.AquaLightManualColors
 import com.aqua.aqualight.ui.common.light.AquaLightManualGeometry
 
 @Composable
@@ -116,21 +115,12 @@ private fun ManualQuickSceneButton(
             .padding(horizontal = AquaLightManualGeometry.quickSceneHorizontalPadding),
         contentAlignment = Alignment.Center
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .size(AquaLightManualGeometry.quickSceneSwatchSize)
-                    .clip(RoundedCornerShape(percent = PERCENT_SHAPE))
-                    .background(visuals.colors.presetColor(preset.id))
-            )
-            BasicText(
-                text = label,
-                style = visuals.typography.body.copy(color = visuals.colors.card.primaryText),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(start = AquaLightManualGeometry.quickSceneContentGap)
-            )
-        }
+        BasicText(
+            text = label,
+            style = visuals.typography.body.copy(color = visuals.colors.card.primaryText),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 
@@ -270,15 +260,4 @@ private data class ManualActionButtonContent(
     @DrawableRes val iconRes: Int
 )
 
-private fun AquaLightManualColors.presetColor(preset: DeviceLightManualPresetId): Color =
-    when (preset) {
-        DeviceLightManualPresetId.NATURAL_AQUARIUM -> white
-        DeviceLightManualPresetId.PLANTED_AQUARIUM -> green
-        DeviceLightManualPresetId.RED_PLANTS -> red
-        DeviceLightManualPresetId.VIVID_COLORS -> shrimp
-        DeviceLightManualPresetId.LOW_TECH -> fish
-        DeviceLightManualPresetId.AQUASCAPE -> blue
-    }
-
 private const val PRESETS_PER_ROW = 3
-private const val PERCENT_SHAPE = 50
