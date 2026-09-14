@@ -61,13 +61,14 @@ private fun DeviceLightAutomaticProgramEditorUiState.chartSummary(): String {
     val start = draft.startTimeMs
     val end = draft.endTimeMs
     val ramp = draft.rampDurationMs
-    return if (start == null || end == null || ramp == null || start == end) {
+    val timeRange = if (start != null && end != null && start != end) start to end else null
+    return if (timeRange == null || ramp == null) {
         stringResource(R.string.device_light_auto_editor_complete_settings)
     } else {
         stringResource(
             R.string.device_light_auto_editor_chart_summary,
-            automaticEditorTimeText(start),
-            automaticEditorTimeText(end),
+            automaticEditorTimeText(timeRange.first),
+            automaticEditorTimeText(timeRange.second),
             (ramp / MILLIS_PER_MINUTE).toInt()
         )
     }

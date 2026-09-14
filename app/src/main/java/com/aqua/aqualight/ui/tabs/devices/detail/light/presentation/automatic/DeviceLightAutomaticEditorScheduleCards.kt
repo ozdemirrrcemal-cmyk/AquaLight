@@ -185,12 +185,14 @@ private fun RampButtons(
     ) {
         state.source?.policy?.rampDurationsMs.orEmpty().forEach { duration ->
             EditorSelectionButton(
-                label = stringResource(
-                    R.string.device_light_auto_minutes,
-                    duration.toAutomaticMinutes()
+                state = DeviceLightAutomaticSelectionState(
+                    label = stringResource(
+                        R.string.device_light_auto_minutes,
+                        duration.toAutomaticMinutes()
+                    ),
+                    selected = state.draft.rampDurationMs == duration,
+                    enabled = state.contentEnabled && state.draft.rampFits(duration)
                 ),
-                selected = state.draft.rampDurationMs == duration,
-                enabled = state.contentEnabled && state.draft.rampFits(duration),
                 onClick = { actions.onRampClick(duration) },
                 modifier = Modifier
                     .weight(RAMP_BUTTON_WEIGHT)

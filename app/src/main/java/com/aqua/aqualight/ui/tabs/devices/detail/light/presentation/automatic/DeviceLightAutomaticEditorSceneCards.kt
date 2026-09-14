@@ -106,9 +106,11 @@ internal fun DeviceLightAutomaticEditorChannelsCard(
                 ) {
                     rowChannels.forEach { channel ->
                         ChannelControl(
-                            channel = channel,
-                            percent = state.draft.channels[channel] ?: MIN_PERCENT,
-                            enabled = state.contentEnabled,
+                            state = ChannelControlState(
+                                channel = channel,
+                                percent = state.draft.channels[channel] ?: MIN_PERCENT,
+                                enabled = state.contentEnabled
+                            ),
                             onValueChanged = { value -> onChannelChanged(channel, value) },
                             visuals = visuals,
                             modifier = Modifier.weight(CHANNEL_COLUMN_WEIGHT)
@@ -125,14 +127,12 @@ internal fun DeviceLightAutomaticEditorChannelsCard(
 
 @Composable
 private fun ChannelControl(
-    channel: DeviceLightAutomaticChannel,
-    percent: Int,
-    enabled: Boolean,
+    state: ChannelControlState,
     onValueChanged: (Int) -> Unit,
     visuals: DeviceLightAutomaticEditorVisuals,
     modifier: Modifier
 ) {
-    val label = stringResource(channel.labelRes())
+    val label = stringResource(state.channel.labelRes())
     Row(
         modifier = modifier.height(DeviceLightAutomaticEditorGeometry.channelRowHeight),
         verticalAlignment = Alignment.CenterVertically
@@ -144,10 +144,13 @@ private fun ChannelControl(
         )
         AquaLightManualPercentSlider(
             state = AquaLightManualPercentSliderState(
-                percent = percent,
-                enabled = enabled,
-                channelColor = channel.color(visuals),
-                stateText = stringResource(R.string.device_light_auto_percent_format, percent),
+                percent = state.percent,
+                enabled = state.enabled,
+                channelColor = state.channel.color(visuals),
+                stateText = stringResource(
+                    R.string.device_light_auto_percent_format,
+                    state.percent
+                ),
                 accessibilityDescription = stringResource(
                     R.string.device_light_auto_editor_channel_description,
                     label
@@ -161,7 +164,7 @@ private fun ChannelControl(
         )
         Spacer(Modifier.width(DeviceLightAutomaticEditorGeometry.channelSliderGap))
         BasicText(
-            text = stringResource(R.string.device_light_auto_percent_format, percent),
+            text = stringResource(R.string.device_light_auto_percent_format, state.percent),
             style = visuals.typography.caption.copy(
                 color = visuals.colors.card.primaryText,
                 textAlign = TextAlign.End
@@ -170,6 +173,12 @@ private fun ChannelControl(
         )
     }
 }
+
+private data class ChannelControlState(
+    val channel: DeviceLightAutomaticChannel,
+    val percent: Int,
+    val enabled: Boolean
+)
 
 @Composable
 private fun ChannelSlidersIcon(color: Color) {

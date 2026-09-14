@@ -67,9 +67,11 @@ private fun WeekdayButtons(
     ) {
         DeviceLightAutomaticWeekday.entries.forEach { day ->
             EditorSelectionButton(
-                label = stringResource(day.labelRes()),
-                selected = state.draft.weekdaysMask and day.mask != 0,
-                enabled = state.contentEnabled,
+                state = DeviceLightAutomaticSelectionState(
+                    label = stringResource(day.labelRes()),
+                    selected = state.draft.weekdaysMask and day.mask != 0,
+                    enabled = state.contentEnabled
+                ),
                 onClick = { actions.onDayClick(day) },
                 modifier = Modifier
                     .weight(DAY_BUTTON_WEIGHT)
@@ -92,69 +94,64 @@ private fun QuickDayButtons(
             DeviceLightAutomaticEditorGeometry.quickDayButtonGap
         )
     ) {
-        QuickDayButton(
-            label = stringResource(R.string.device_light_auto_every_day),
-            selected = state.draft.weekdaysMask == DEVICE_LIGHT_AUTOMATIC_EVERY_DAY_MASK,
+        EditorSelectionButton(
+            state = DeviceLightAutomaticSelectionState(
+                label = stringResource(R.string.device_light_auto_every_day),
+                selected = state.draft.weekdaysMask == DEVICE_LIGHT_AUTOMATIC_EVERY_DAY_MASK,
+                enabled = state.contentEnabled
+            ),
             onClick = actions.onEveryDayClick,
-            state = state,
             visuals = visuals,
-            modifier = Modifier.weight(QUICK_DAY_BUTTON_WEIGHT)
+            modifier = Modifier
+                .weight(QUICK_DAY_BUTTON_WEIGHT)
+                .height(DeviceLightAutomaticEditorGeometry.quickDayButtonHeight)
         )
-        QuickDayButton(
-            label = stringResource(R.string.device_light_auto_editor_weekdays),
-            selected = state.draft.weekdaysMask == AUTOMATIC_WEEKDAYS_MASK,
+        EditorSelectionButton(
+            state = DeviceLightAutomaticSelectionState(
+                label = stringResource(R.string.device_light_auto_editor_weekdays),
+                selected = state.draft.weekdaysMask == AUTOMATIC_WEEKDAYS_MASK,
+                enabled = state.contentEnabled
+            ),
             onClick = actions.onWeekdaysClick,
-            state = state,
             visuals = visuals,
-            modifier = Modifier.weight(QUICK_DAY_BUTTON_WEIGHT)
+            modifier = Modifier
+                .weight(QUICK_DAY_BUTTON_WEIGHT)
+                .height(DeviceLightAutomaticEditorGeometry.quickDayButtonHeight)
         )
-        QuickDayButton(
-            label = stringResource(R.string.device_light_auto_editor_weekend),
-            selected = state.draft.weekdaysMask == AUTOMATIC_WEEKEND_MASK,
+        EditorSelectionButton(
+            state = DeviceLightAutomaticSelectionState(
+                label = stringResource(R.string.device_light_auto_editor_weekend),
+                selected = state.draft.weekdaysMask == AUTOMATIC_WEEKEND_MASK,
+                enabled = state.contentEnabled
+            ),
             onClick = actions.onWeekendClick,
-            state = state,
             visuals = visuals,
-            modifier = Modifier.weight(QUICK_DAY_BUTTON_WEIGHT)
+            modifier = Modifier
+                .weight(QUICK_DAY_BUTTON_WEIGHT)
+                .height(DeviceLightAutomaticEditorGeometry.quickDayButtonHeight)
         )
     }
 }
 
 @Composable
-private fun QuickDayButton(
-    label: String,
-    selected: Boolean,
-    onClick: () -> Unit,
-    state: DeviceLightAutomaticProgramEditorUiState,
-    visuals: DeviceLightAutomaticEditorVisuals,
-    modifier: Modifier
-) {
-    EditorSelectionButton(
-        label = label,
-        selected = selected,
-        enabled = state.contentEnabled,
-        onClick = onClick,
-        modifier = modifier.height(DeviceLightAutomaticEditorGeometry.quickDayButtonHeight),
-        visuals = visuals
-    )
-}
-
-@Composable
 internal fun EditorSelectionButton(
-    label: String,
-    selected: Boolean,
-    enabled: Boolean,
+    state: DeviceLightAutomaticSelectionState,
     onClick: () -> Unit,
     modifier: Modifier,
     visuals: DeviceLightAutomaticEditorVisuals
 ) {
-    val alpha = if (enabled) ENABLED_ALPHA else DeviceLightAutomaticEditorAlpha.disabled
-    val color = if (selected) visuals.colors.action else visuals.colors.card.mediaOutline
+    val alpha = if (state.enabled) ENABLED_ALPHA else DeviceLightAutomaticEditorAlpha.disabled
+    val color = if (state.selected) {
+        visuals.colors.action
+    } else {
+        visuals.colors.card.mediaOutline
+    }
     Box(
         modifier = modifier
             .clip(DeviceLightAutomaticEditorGeometry.dayButtonShape)
             .background(
                 color.copy(
-                    alpha = if (selected) {
+                    alpha = if (state.selected) {
                         ENABLED_ALPHA * alpha
                     } else {
                         DeviceLightAutomaticEditorAlpha.unselectedSurface * alpha
@@ -166,11 +163,11 @@ internal fun EditorSelectionButton(
                 color.copy(alpha = alpha),
                 DeviceLightAutomaticEditorGeometry.dayButtonShape
             )
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick),
+            .clickable(enabled = state.enabled, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
         BasicText(
-            text = label,
+            text = state.label,
             style = visuals.typography.caption.copy(
                 color = visuals.colors.card.primaryText.copy(alpha = alpha),
                 textAlign = TextAlign.Center
@@ -179,6 +176,12 @@ internal fun EditorSelectionButton(
         )
     }
 }
+
+internal data class DeviceLightAutomaticSelectionState(
+    val label: String,
+    val selected: Boolean,
+    val enabled: Boolean
+)
 
 @Composable
 internal fun EditorSectionHeading(

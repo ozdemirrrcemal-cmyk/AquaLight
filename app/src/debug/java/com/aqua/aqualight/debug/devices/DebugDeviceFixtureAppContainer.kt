@@ -68,14 +68,6 @@ private class DebugDeviceFixtureViewModelFactory(
             DevicesViewModel::class.java -> createDevicesViewModel(requireGraph())
             DeviceLightRootViewModel::class.java ->
                 createLightRootViewModel(requireGraph())
-            DeviceLightAutomaticProgramsViewModel::class.java ->
-                DeviceLightAutomaticProgramsViewModel(
-                    timerDependencies(requireGraph()).lightAutomaticOperations
-                )
-            DeviceLightAutomaticProgramEditorViewModel::class.java ->
-                DeviceLightAutomaticProgramEditorViewModel(
-                    timerDependencies(requireGraph()).lightAutomaticOperations
-                )
             DeviceLightManualControlViewModel::class.java ->
                 DeviceLightManualControlViewModel(
                     timerDependencies(requireGraph()).lightLibraryOperations
@@ -101,7 +93,9 @@ private class DebugDeviceFixtureViewModelFactory(
                 createSettingsViewModel(requireGraph())
             DeviceFirmwareUpdateViewModel::class.java ->
                 createFirmwareViewModel(requireGraph())
-            else -> return delegate.create(modelClass)
+            else -> automaticViewModelOrNull(modelClass) {
+                timerDependencies(requireGraph()).lightAutomaticOperations
+            } ?: return delegate.create(modelClass)
         }
 
         return modelClass.cast(viewModel)
@@ -248,6 +242,17 @@ private fun fixtureFirmwareOperations(
     delegate = graph.firmwareUpdateOperations,
     fixtures = fixtures
 )
+
+private fun automaticViewModelOrNull(
+    modelClass: Class<*>,
+    operations: () -> DeviceLightAutomaticOperations
+): ViewModel? = when (modelClass) {
+    DeviceLightAutomaticProgramsViewModel::class.java ->
+        DeviceLightAutomaticProgramsViewModel(operations())
+    DeviceLightAutomaticProgramEditorViewModel::class.java ->
+        DeviceLightAutomaticProgramEditorViewModel(operations())
+    else -> null
+}
 
 private data class DebugTimerFixtureDependencies(
     val graph: OwnerDependencyGraph,

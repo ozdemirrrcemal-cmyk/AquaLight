@@ -69,22 +69,24 @@ internal class DeviceLightAutomaticProgramEditorViewModel(
 
     fun save() {
         val state = currentState
-        val source = state.source ?: return
-        val draft = state.draft.toMutationDraftOrNull(source) ?: return
-        if (!state.canSave) return
-        viewModelScope.launch {
-            _uiState.update { value -> value.copy(operationInProgress = true) }
-            when (val result = mutate(state, source, draft)) {
-                DeviceLightAutomaticMutationResult.Success -> {
-                    val message = if (state.mode is DeviceLightAutomaticEditorMode.Edit) {
-                        R.string.device_light_auto_editor_updated
-                    } else {
-                        R.string.device_light_auto_editor_created
+        val source = state.source
+        val draft = source?.let(state.draft::toMutationDraftOrNull)
+        if (state.canSave && source != null && draft != null) {
+            viewModelScope.launch {
+                _uiState.update { value -> value.copy(operationInProgress = true) }
+                when (val result = mutate(state, source, draft)) {
+                    DeviceLightAutomaticMutationResult.Success -> {
+                        val message = if (state.mode is DeviceLightAutomaticEditorMode.Edit) {
+                            R.string.device_light_auto_editor_updated
+                        } else {
+                            R.string.device_light_auto_editor_created
+                        }
+                        _uiState.update { value -> value.copy(operationInProgress = false) }
+                        emit(DeviceLightAutomaticProgramEditorEffect.Saved(message))
                     }
-                    _uiState.update { value -> value.copy(operationInProgress = false) }
-                    emit(DeviceLightAutomaticProgramEditorEffect.Saved(message))
+                    is DeviceLightAutomaticMutationResult.Failed ->
+                        applyMutationFailure(result.failure)
                 }
-                is DeviceLightAutomaticMutationResult.Failed -> applyMutationFailure(result.failure)
             }
         }
     }
