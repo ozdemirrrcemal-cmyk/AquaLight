@@ -10,6 +10,7 @@ import com.aqua.aqualight.utils.DialogType
  * owns unsaved changes. The callbacks are bound to the Fragment view lifecycle so stale views
  * cannot receive confirmation results after navigation.
  */
+@Suppress("LongParameterList")
 class UnsavedChangesExitGuard private constructor(
     private val fragment: Fragment,
     private val requestKey: String,
@@ -33,6 +34,7 @@ class UnsavedChangesExitGuard private constructor(
     fun requestExit() = requestAction(exit)
 
     /** Uses the same central Dosing confirmation for any action that discards the editor draft. */
+    @Suppress("ReturnCount")
     fun requestAction(action: () -> Unit) {
         if (isExitBlocked()) return
         if (!hasUnsavedChanges()) {

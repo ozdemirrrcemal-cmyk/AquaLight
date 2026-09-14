@@ -20,7 +20,11 @@ internal data class DeviceLightCustomPointUiState(
     init {
         require(timeMs in 0 until MILLIS_PER_DAY)
         require(timeMs % MILLIS_PER_MINUTE == 0L)
-        require(channels.isNotEmpty() && channels.values.all { value -> value in 0..100 })
+        require(
+            channels.isNotEmpty() && channels.values.all { value ->
+                value in MIN_LIGHT_CHANNEL_PERCENT..MAX_LIGHT_CHANNEL_PERCENT
+            }
+        )
     }
 }
 
@@ -47,6 +51,7 @@ internal data class DeviceLightCustomDraft(
     }
 
     companion object {
+        @Suppress("ReturnCount")
         fun restore(state: Bundle): DeviceLightCustomDraft? {
             val times = state.getLongArray(STATE_POINT_TIMES) ?: return null
             val channelValues = DeviceLightCustomChannelId.entries.associateWith { channel ->
@@ -105,6 +110,8 @@ internal const val MILLIS_PER_MINUTE = 60_000L
 internal const val MINUTES_PER_DAY = 1_440
 internal const val MILLIS_PER_DAY = MINUTES_PER_DAY * MILLIS_PER_MINUTE
 internal const val MAX_POINT_CAPACITY = 96
+internal const val MIN_LIGHT_CHANNEL_PERCENT = 0
+internal const val MAX_LIGHT_CHANNEL_PERCENT = 100
 private const val DEFAULT_PREVIEW_MINUTES = 15 * 60 + 30
 private const val DEFAULT_PREVIEW_TIME_MS = DEFAULT_PREVIEW_MINUTES * MILLIS_PER_MINUTE
 private const val ABSENT_CHANNEL = -1

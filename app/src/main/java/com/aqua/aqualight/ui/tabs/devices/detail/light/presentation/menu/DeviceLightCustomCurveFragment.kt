@@ -32,6 +32,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom.MILLI
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom.MINUTES_PER_DAY
 import kotlinx.coroutines.launch
 
+@Suppress("TooManyFunctions")
 class DeviceLightCustomCurveFragment : Fragment(R.layout.fragment_device_light_custom_curve) {
 
     private val args: DeviceLightCustomCurveFragmentArgs by navArgs()

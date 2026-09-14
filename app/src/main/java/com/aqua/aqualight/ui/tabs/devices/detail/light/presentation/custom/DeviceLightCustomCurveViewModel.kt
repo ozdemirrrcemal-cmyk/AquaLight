@@ -98,7 +98,7 @@ internal class DeviceLightCustomCurveViewModel(
     fun selectEveryDay() = mutateDraft { draft -> draft.copy(weekdaysMask = EVERY_DAY_MASK) }
 
     fun toggleWeekday(dayIndex: Int) {
-        require(dayIndex in 0..6)
+        require(dayIndex in FIRST_WEEKDAY_INDEX..LAST_WEEKDAY_INDEX)
         mutateDraft { draft ->
             val bit = 1 shl dayIndex
             val changed = draft.weekdaysMask xor bit
@@ -136,6 +136,7 @@ internal class DeviceLightCustomCurveViewModel(
         }
     }
 
+    @Suppress("ReturnCount")
     fun addOrMovePoint(originalTimeMs: Long?, targetTimeMs: Long) {
         val state = _uiState.value
         if (!state.contentEnabled || state.operationInProgress) return
@@ -161,6 +162,7 @@ internal class DeviceLightCustomCurveViewModel(
         setDraft(state.draft.copy(points = changed), selectedTimeMs = aligned)
     }
 
+    @Suppress("ReturnCount")
     fun duplicateSelectedPoint() {
         val state = _uiState.value
         if (state.operationInProgress) return
@@ -195,6 +197,7 @@ internal class DeviceLightCustomCurveViewModel(
         setDraft(state.draft.copy(points = points), selectedTimeMs = nextSelection)
     }
 
+    @Suppress("ReturnCount")
     fun updateSelectedChannel(channel: DeviceLightCustomChannelId, percent: Int) {
         val state = _uiState.value
         if (state.operationInProgress) return
@@ -202,7 +205,14 @@ internal class DeviceLightCustomCurveViewModel(
         if (channel !in selected.channels) return
         val points = state.draft.points.map { point ->
             if (point.timeMs == selected.timeMs) {
-                point.copy(channels = point.channels + (channel to percent.coerceIn(0, 100)))
+                point.copy(
+                    channels = point.channels + (
+                        channel to percent.coerceIn(
+                            MIN_LIGHT_CHANNEL_PERCENT,
+                            MAX_LIGHT_CHANNEL_PERCENT
+                        )
+                    )
+                )
             } else {
                 point
             }
@@ -415,3 +425,6 @@ private fun DeviceLightLibraryFailure.messageRes(): Int = when (this) {
     DeviceLightLibraryFailure.NOT_CONNECTED -> R.string.device_light_library_load_not_connected_error
     else -> R.string.device_light_library_operation_error
 }
+
+private const val FIRST_WEEKDAY_INDEX = 0
+private const val LAST_WEEKDAY_INDEX = 6

@@ -21,6 +21,7 @@ internal class DefaultDeviceLightCustomOperations(
     private val devicesRepository: DevicesRepository
 ) : DeviceLightCustomOperations {
 
+    @Suppress("ReturnCount")
     override suspend fun read(deviceUid: String): DeviceLightCustomReadResult {
         val uid = deviceUid.toUidOrNull()
             ?: return DeviceLightCustomReadResult.Failed(DeviceLightCustomFailure.INVALID_DATA)
@@ -91,6 +92,7 @@ internal class DefaultDeviceLightCustomOperations(
             runtime.clearPreview(uid)
         }
 
+    @Suppress("ReturnCount")
     private suspend fun command(
         deviceUid: String,
         execute: suspend (DeviceUid) -> DeviceRuntimeCommandOutcome<*>

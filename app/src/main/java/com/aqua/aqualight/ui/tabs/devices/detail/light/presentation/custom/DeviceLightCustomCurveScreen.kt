@@ -154,6 +154,7 @@ private fun ProgramDaysCard(
 }
 
 @Composable
+@Suppress("LongParameterList")
 private fun DayButton(
     label: String,
     selected: Boolean,
@@ -621,6 +622,7 @@ private fun LibraryActions(
 }
 
 @Composable
+@Suppress("LongParameterList")
 private fun CustomOutlinedButton(
     label: String,
     description: String,
