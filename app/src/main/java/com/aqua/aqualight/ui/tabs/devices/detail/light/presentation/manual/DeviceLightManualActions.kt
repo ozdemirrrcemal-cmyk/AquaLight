@@ -272,12 +272,12 @@ private data class ManualActionButtonContent(
 
 private fun AquaLightManualColors.presetColor(preset: DeviceLightManualPresetId): Color =
     when (preset) {
-        DeviceLightManualPresetId.NATURAL -> white
-        DeviceLightManualPresetId.GROWTH -> green
-        DeviceLightManualPresetId.RED_FLORA -> red
-        DeviceLightManualPresetId.COLOR_BOOST -> fish
-        DeviceLightManualPresetId.DETAIL -> shrimp
-        DeviceLightManualPresetId.LOW_LIGHT -> blue
+        DeviceLightManualPresetId.NATURAL_AQUARIUM -> white
+        DeviceLightManualPresetId.PLANTED_AQUARIUM -> green
+        DeviceLightManualPresetId.RED_PLANTS -> red
+        DeviceLightManualPresetId.VIVID_COLORS -> shrimp
+        DeviceLightManualPresetId.LOW_TECH -> fish
+        DeviceLightManualPresetId.AQUASCAPE -> blue
     }
 
 private const val PRESETS_PER_ROW = 3
