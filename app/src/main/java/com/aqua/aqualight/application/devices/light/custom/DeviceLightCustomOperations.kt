@@ -1,10 +1,13 @@
 package com.aqua.aqualight.application.devices.light.custom
 
-enum class DeviceLightCustomChannel(val sceneKey: String) {
-    RED("redPercent"),
-    GREEN("greenPercent"),
-    BLUE("bluePercent"),
-    WHITE("whitePercent")
+enum class DeviceLightCustomChannel(
+    val wireKey: String,
+    val sceneKey: String
+) {
+    RED("red", "redPercent"),
+    GREEN("green", "greenPercent"),
+    BLUE("blue", "bluePercent"),
+    WHITE("white", "whitePercent")
 }
 
 data class DeviceLightCustomScene(

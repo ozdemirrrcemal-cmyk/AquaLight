@@ -93,9 +93,7 @@ private fun DeviceLightLibraryChannel.toCustomChannel(): DeviceLightCustomChanne
 
 private fun DeviceRootSnapshot.toFixtureCustomSnapshot(): DeviceLightCustomSnapshot {
     val channels = channelSlots.lightChannels.map { slot ->
-        requireNotNull(DeviceLightCustomChannel.entries.singleOrNull { channel ->
-            channel.sceneKey == slot.wireKey.value
-        })
+        slot.wireKey.value.toCustomChannel()
     }
     val points = FIXTURE_CURVE.map { fixturePoint ->
         DeviceLightCustomPoint(
@@ -118,6 +116,10 @@ private fun DeviceRootSnapshot.toFixtureCustomSnapshot(): DeviceLightCustomSnaps
         points = points
     )
 }
+
+private fun String.toCustomChannel(): DeviceLightCustomChannel = checkNotNull(
+    DeviceLightCustomChannel.entries.singleOrNull { channel -> channel.wireKey == this }
+) { "Unsupported Debug Light fixture channel: $this" }
 
 private data class FixtureCurvePoint(
     val minuteOfDay: Long,
