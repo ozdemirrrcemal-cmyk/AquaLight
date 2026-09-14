@@ -10,15 +10,9 @@ import com.aqua.aqualight.utils.DialogType
  * owns unsaved changes. The callbacks are bound to the Fragment view lifecycle so stale views
  * cannot receive confirmation results after navigation.
  */
-@Suppress("LongParameterList")
 class UnsavedChangesExitGuard private constructor(
     private val fragment: Fragment,
-    private val requestKey: String,
-    private val actionId: String,
-    private val hasUnsavedChanges: () -> Boolean,
-    private val isExitBlocked: () -> Boolean,
-    private val beforeConfirmation: () -> Unit,
-    private val exit: () -> Unit
+    private val configuration: Configuration
 ) {
     private var pendingAction: (() -> Unit)? = null
 
@@ -31,44 +25,42 @@ class UnsavedChangesExitGuard private constructor(
         val exit: () -> Unit
     )
 
-    fun requestExit() = requestAction(exit)
+    fun requestExit() = requestAction(configuration.exit)
 
     /** Uses the same central Dosing confirmation for any action that discards the editor draft. */
-    @Suppress("ReturnCount")
     fun requestAction(action: () -> Unit) {
-        if (isExitBlocked()) return
-        if (!hasUnsavedChanges()) {
+        if (configuration.isExitBlocked()) {
+            Unit
+        } else if (!configuration.hasUnsavedChanges()) {
             action()
-            return
-        }
-        if (pendingAction != null) return
-
-        beforeConfirmation()
-        pendingAction = action
-        ConfirmDialogFragment.show(
-            fragmentManager = fragment.childFragmentManager,
-            request = ConfirmDialogFragment.Request(
-                title = fragment.getString(R.string.common_unsaved_changes_exit_title),
-                message = fragment.getString(R.string.common_unsaved_changes_exit_message),
-                confirmText = fragment.getString(R.string.common_unsaved_changes_exit_action),
-                cancelText = fragment.getString(R.string.common_unsaved_changes_continue_action),
-                presentation = ConfirmDialogFragment.Presentation(
-                    type = DialogType.WARNING,
-                    destructive = true
-                ),
-                resultTarget = ConfirmDialogFragment.ResultTarget(
-                    requestKey = requestKey,
-                    actionId = actionId
+        } else if (pendingAction == null) {
+            configuration.beforeConfirmation()
+            pendingAction = action
+            ConfirmDialogFragment.show(
+                fragmentManager = fragment.childFragmentManager,
+                request = ConfirmDialogFragment.Request(
+                    title = fragment.getString(R.string.common_unsaved_changes_exit_title),
+                    message = fragment.getString(R.string.common_unsaved_changes_exit_message),
+                    confirmText = fragment.getString(R.string.common_unsaved_changes_exit_action),
+                    cancelText = fragment.getString(R.string.common_unsaved_changes_continue_action),
+                    presentation = ConfirmDialogFragment.Presentation(
+                        type = DialogType.WARNING,
+                        destructive = true
+                    ),
+                    resultTarget = ConfirmDialogFragment.ResultTarget(
+                        requestKey = configuration.requestKey,
+                        actionId = configuration.actionId
+                    )
                 )
             )
-        )
+        }
     }
 
     private fun handleResult(result: String?, resultActionId: String?) {
-        if (resultActionId != actionId) return
+        if (resultActionId != configuration.actionId) return
         val action = pendingAction
         pendingAction = null
-        if (result == ConfirmDialogFragment.RESULT_CONFIRM && !isExitBlocked()) {
+        if (result == ConfirmDialogFragment.RESULT_CONFIRM && !configuration.isExitBlocked()) {
             action?.invoke()
         }
     }
@@ -80,12 +72,7 @@ class UnsavedChangesExitGuard private constructor(
         ): UnsavedChangesExitGuard {
             val guard = UnsavedChangesExitGuard(
                 fragment = fragment,
-                requestKey = configuration.requestKey,
-                actionId = configuration.actionId,
-                hasUnsavedChanges = configuration.hasUnsavedChanges,
-                isExitBlocked = configuration.isExitBlocked,
-                beforeConfirmation = configuration.beforeConfirmation,
-                exit = configuration.exit
+                configuration = configuration
             )
             fragment.childFragmentManager.setFragmentResultListener(
                 configuration.requestKey,

@@ -52,8 +52,8 @@ class DeviceLightCustomCurveViewModelTest {
     fun `point and weekday edits mark draft dirty`() {
         val viewModel = boundViewModel()
 
-        viewModel.updateSelectedChannel(DeviceLightCustomChannelId.BLUE, UPDATED_BLUE)
-        viewModel.toggleWeekday(SUNDAY_INDEX)
+        viewModel.pointEditor.updateSelectedChannel(DeviceLightCustomChannelId.BLUE, UPDATED_BLUE)
+        viewModel.dayEditor.toggleWeekday(SUNDAY_INDEX)
 
         assertTrue(viewModel.currentState.hasUnsavedChanges)
         assertEquals(UPDATED_BLUE, viewModel.currentState.selectedPoint?.channels?.get(DeviceLightCustomChannelId.BLUE))
@@ -64,7 +64,7 @@ class DeviceLightCustomCurveViewModelTest {
     fun `save as writes exact draft to DataStore boundary and clears dirty state`() {
         val library = FakeLibraryOperations()
         val viewModel = boundViewModel(libraryOperations = library)
-        viewModel.updateSelectedChannel(DeviceLightCustomChannelId.RED, UPDATED_RED)
+        viewModel.pointEditor.updateSelectedChannel(DeviceLightCustomChannelId.RED, UPDATED_RED)
 
         viewModel.saveAs("Morning reef")
 
@@ -97,7 +97,7 @@ class DeviceLightCustomCurveViewModelTest {
     fun `preview uses firmware virtual time without installing draft`() {
         val custom = FakeCustomOperations(snapshot())
         val viewModel = boundViewModel(customOperations = custom)
-        viewModel.updatePreviewTime(PREVIEW_TIME_MS)
+        viewModel.pointEditor.updatePreviewTime(PREVIEW_TIME_MS)
 
         viewModel.preview()
 
@@ -119,7 +119,7 @@ class DeviceLightCustomCurveViewModelTest {
         )
         val effect = async(start = CoroutineStart.UNDISPATCHED) { viewModel.effects.first() }
 
-        viewModel.requestAddPoint()
+        viewModel.pointEditor.requestAddPoint()
 
         assertEquals(
             DeviceLightCustomCurveEffect.ShowPointLimit(MAX_POINT_CAPACITY),

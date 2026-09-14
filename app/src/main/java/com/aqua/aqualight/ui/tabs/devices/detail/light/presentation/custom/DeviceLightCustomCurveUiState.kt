@@ -51,27 +51,33 @@ internal data class DeviceLightCustomDraft(
     }
 
     companion object {
-        @Suppress("ReturnCount")
         fun restore(state: Bundle): DeviceLightCustomDraft? {
-            val times = state.getLongArray(STATE_POINT_TIMES) ?: return null
+            val times = state.getLongArray(STATE_POINT_TIMES)
             val channelValues = DeviceLightCustomChannelId.entries.associateWith { channel ->
-                state.getIntArray(STATE_CHANNEL_PREFIX + channel.name) ?: return null
+                state.getIntArray(STATE_CHANNEL_PREFIX + channel.name)
             }
-            if (channelValues.values.any { values -> values.size != times.size }) return null
-            return runCatching {
-                DeviceLightCustomDraft(
-                    weekdaysMask = state.getInt(STATE_WEEKDAYS_MASK, EVERY_DAY_MASK),
-                    points = times.mapIndexed { index, timeMs ->
-                        DeviceLightCustomPointUiState(
-                            timeMs = timeMs,
-                            channels = channelValues.mapNotNull { (channel, values) ->
-                                values[index].takeUnless { value -> value == ABSENT_CHANNEL }
-                                    ?.let { value -> channel to value }
-                            }.toMap()
-                        )
-                    }
-                )
-            }.getOrNull()
+            val channelsInvalid = times == null || channelValues.values.any { values ->
+                values == null || values.size != times.size
+            }
+            return if (times == null || channelsInvalid) {
+                null
+            } else {
+                runCatching {
+                    DeviceLightCustomDraft(
+                        weekdaysMask = state.getInt(STATE_WEEKDAYS_MASK, EVERY_DAY_MASK),
+                        points = times.mapIndexed { index, timeMs ->
+                            DeviceLightCustomPointUiState(
+                                timeMs = timeMs,
+                                channels = channelValues.mapNotNull { (channel, values) ->
+                                    requireNotNull(values)[index]
+                                        .takeUnless { value -> value == ABSENT_CHANNEL }
+                                        ?.let { value -> channel to value }
+                                }.toMap()
+                            )
+                        }
+                    )
+                }.getOrNull()
+            }
         }
     }
 }

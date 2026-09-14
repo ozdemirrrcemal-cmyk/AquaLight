@@ -7,6 +7,7 @@ import com.aqua.aqualight.BuildConfig
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
 import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
 import com.aqua.aqualight.application.devices.light.control.DeviceLightControlOperations
+import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomOperations
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryOperations
 import com.aqua.aqualight.application.devices.timer.control.DeviceTimerControlOperations
 import com.aqua.aqualight.composition.AppContainer
@@ -56,7 +57,7 @@ private class DebugDeviceFixtureViewModelFactory(
 
     private val appContext = context.applicationContext
     private val fixtures = DebugDeviceFixtureCatalog()
-    private var cachedTimerDependencies: DebugTimerFixtureDependencies? = null
+    private var cachedFixtureDependencies: DebugFixtureDependencies? = null
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         val viewModel: ViewModel = when (modelClass) {
@@ -65,16 +66,16 @@ private class DebugDeviceFixtureViewModelFactory(
                 createLightRootViewModel(requireGraph())
             DeviceLightManualControlViewModel::class.java ->
                 DeviceLightManualControlViewModel(
-                    timerDependencies(requireGraph()).lightLibraryOperations
+                    fixtureDependencies(requireGraph()).lightLibraryOperations
                 )
             DeviceLightCustomCurveViewModel::class.java ->
                 DeviceLightCustomCurveViewModel(
-                    customOperations = requireGraph().lightOperations.customOperations,
-                    libraryOperations = timerDependencies(requireGraph()).lightLibraryOperations
+                    customOperations = fixtureDependencies(requireGraph()).lightCustomOperations,
+                    libraryOperations = fixtureDependencies(requireGraph()).lightLibraryOperations
                 )
             DeviceLightLibraryViewModel::class.java ->
                 DeviceLightLibraryViewModel(
-                    timerDependencies(requireGraph()).lightLibraryOperations
+                    fixtureDependencies(requireGraph()).lightLibraryOperations
                 )
             DeviceTimerRootViewModel::class.java ->
                 createTimerRootViewModel(requireGraph())
@@ -91,14 +92,13 @@ private class DebugDeviceFixtureViewModelFactory(
             else -> return delegate.create(modelClass)
         }
 
-        @Suppress("UNCHECKED_CAST")
-        return viewModel as T
+        return modelClass.cast(viewModel)
     }
 
     private fun requireGraph(): OwnerDependencyGraph = ownerGraphAccess.requireActiveOwnerGraph()
 
     private fun createDevicesViewModel(graph: OwnerDependencyGraph): DevicesViewModel {
-        val timerDependencies = timerDependencies(graph)
+        val fixtureDependencies = fixtureDependencies(graph)
         val repository = graph.devicesRepository
         val realOperations = DefaultOwnerDevicesOperations(
             devicesRepository = repository,
@@ -122,7 +122,7 @@ private class DebugDeviceFixtureViewModelFactory(
                     fixtures = fixtures
                 ),
                 controlSurfacePreparationOperations =
-                    timerDependencies.controlSurfacePreparationOperations
+                    fixtureDependencies.controlSurfacePreparationOperations
             ),
             routeResolver = DeviceRouteResolver()
         )
@@ -147,7 +147,7 @@ private class DebugDeviceFixtureViewModelFactory(
         )
 
     private fun createTimerRootViewModel(graph: OwnerDependencyGraph): DeviceTimerRootViewModel =
-        timerDependencies(graph).let { dependencies ->
+        fixtureDependencies(graph).let { dependencies ->
             DeviceTimerRootViewModel(
                 operations = rootOperations(graph),
                 timerControlOperations = dependencies.timerControlOperations,
@@ -157,7 +157,7 @@ private class DebugDeviceFixtureViewModelFactory(
         }
 
     private fun createLightRootViewModel(graph: OwnerDependencyGraph): DeviceLightRootViewModel =
-        timerDependencies(graph).let { dependencies ->
+        fixtureDependencies(graph).let { dependencies ->
             DeviceLightRootViewModel(
                 rootOperations = rootOperations(graph),
                 lightControlOperations = dependencies.lightControlOperations,
@@ -166,36 +166,45 @@ private class DebugDeviceFixtureViewModelFactory(
             )
         }
 
-    private fun timerDependencies(graph: OwnerDependencyGraph): DebugTimerFixtureDependencies =
+    private fun fixtureDependencies(graph: OwnerDependencyGraph): DebugFixtureDependencies =
         synchronized(this) {
-            cachedTimerDependencies
+            cachedFixtureDependencies
                 ?.takeIf { dependencies -> dependencies.graph === graph }
-                ?: createTimerDependencies(graph).also { dependencies ->
-                    cachedTimerDependencies = dependencies
+                ?: createFixtureDependencies(graph).also { dependencies ->
+                    cachedFixtureDependencies = dependencies
                 }
         }
 
-    private fun createTimerDependencies(
+    private fun createFixtureDependencies(
         graph: OwnerDependencyGraph
-    ): DebugTimerFixtureDependencies {
-        val runtime = DebugTimerFixtureRuntime(fixtures)
+    ): DebugFixtureDependencies {
+        val timerRuntime = DebugTimerFixtureRuntime(fixtures)
         val timerControlOperations = DebugFixtureTimerControlOperations(
             delegate = graph.timerControlOperations,
-            runtime = runtime
+            runtime = timerRuntime
         )
         val lightControlOperations = DebugFixtureLightControlOperations(
             delegate = graph.lightOperations.controlOperations,
             fixtures = fixtures
         )
-        val lightLibraryOperations = DefaultDeviceLightLibraryOperations(
-            ownerUid = graph.ownerUid,
-            store = DeviceLightLibraryStore.create(appContext, graph.ownerUid),
-            devicesRepository = graph.devicesRepository,
-            controlOperations = lightControlOperations
+        val lightRuntime = DebugLightFixtureRuntime(fixtures)
+        val lightCustomOperations = DebugFixtureLightCustomOperations(
+            delegate = graph.lightOperations.customOperations,
+            runtime = lightRuntime
         )
-        return DebugTimerFixtureDependencies(
+        val lightLibraryOperations = DebugFixtureLightLibraryOperations(
+            delegate = DefaultDeviceLightLibraryOperations(
+                ownerUid = graph.ownerUid,
+                store = DeviceLightLibraryStore.create(appContext, graph.ownerUid),
+                devicesRepository = graph.devicesRepository,
+                controlOperations = lightControlOperations
+            ),
+            runtime = lightRuntime
+        )
+        return DebugFixtureDependencies(
             graph = graph,
             lightControlOperations = lightControlOperations,
+            lightCustomOperations = lightCustomOperations,
             lightLibraryOperations = lightLibraryOperations,
             timerControlOperations = timerControlOperations,
             controlSurfacePreparationOperations =
@@ -223,9 +232,10 @@ private fun fixtureFirmwareOperations(
     fixtures = fixtures
 )
 
-private data class DebugTimerFixtureDependencies(
+private data class DebugFixtureDependencies(
     val graph: OwnerDependencyGraph,
     val lightControlOperations: DeviceLightControlOperations,
+    val lightCustomOperations: DeviceLightCustomOperations,
     val lightLibraryOperations: DeviceLightLibraryOperations,
     val timerControlOperations: DeviceTimerControlOperations,
     val controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations
