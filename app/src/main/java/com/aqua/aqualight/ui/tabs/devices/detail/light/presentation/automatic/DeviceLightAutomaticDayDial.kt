@@ -95,8 +95,8 @@ private fun DrawScope.drawDialGuides(visuals: DeviceLightAutomaticEditorVisuals)
     val stroke = DeviceLightAutomaticEditorGeometry.dialGuideStrokeWidth.toPx()
     repeat(DIAL_GUIDE_COUNT) { index ->
         val angle = index.toDouble() * FULL_ROTATION_RADIANS / DIAL_GUIDE_COUNT
-        val outer = center.radialOffset(angle, radius)
-        val inner = center.radialOffset(angle, radius - inset)
+        val outer = center.dialRadialOffset(angle, radius)
+        val inner = center.dialRadialOffset(angle, radius - inset)
         drawLine(
             color = visuals.colors.card.secondaryText.copy(
                 alpha = DeviceLightAutomaticEditorAlpha.dialGuide
