@@ -15,7 +15,7 @@ internal object DeviceLightAutomaticEditorGeometry {
     val simulationHeight = 174.dp
     val simulationCornerRadius = 16.dp
     val simulationContentPadding = 12.dp
-    val simulationTextWidthFraction = 0.42f
+    const val simulationTextWidthFraction = 0.42f
     val simulationTitleTopGap = 4.dp
     val simulationCopyGap = 5.dp
     val simulationStatusHeight = 27.dp
