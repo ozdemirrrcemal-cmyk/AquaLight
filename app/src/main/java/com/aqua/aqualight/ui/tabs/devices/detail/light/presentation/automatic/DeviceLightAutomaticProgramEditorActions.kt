@@ -16,11 +16,13 @@ internal data class DeviceLightAutomaticDayActions(
     val onEveryDayClick: () -> Unit,
     val onWeekdaysClick: () -> Unit,
     val onWeekendClick: () -> Unit,
+    val onCustomClick: () -> Unit,
     val onDayClick: (DeviceLightAutomaticWeekday) -> Unit
 )
 
 internal data class DeviceLightAutomaticScheduleActions(
     val onStartTimeClick: () -> Unit,
     val onEndTimeClick: () -> Unit,
+    val onTimeChanged: (DeviceLightAutomaticTimeField, Long) -> Unit,
     val onRampClick: (Long) -> Unit
 )

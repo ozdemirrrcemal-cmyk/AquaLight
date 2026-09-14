@@ -99,7 +99,7 @@ internal fun DeviceLightAutomaticEditorChannelsCard(
         )) {
             EditorSectionHeading(
                 title = stringResource(R.string.device_light_auto_editor_channels),
-                subtitle = stringResource(R.string.device_light_auto_editor_channels_summary),
+                subtitle = null,
                 visuals = visuals,
                 icon = { color -> ChannelSlidersIcon(color) }
             )

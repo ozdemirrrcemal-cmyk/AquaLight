@@ -2,8 +2,11 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
@@ -26,44 +29,54 @@ internal fun DeviceLightAutomaticProgramEditorScreen(
         colors = colors,
         typography = aquaDeviceCardTypography(colors.card)
     )
-    LazyColumn(
+    Column(
         modifier = modifier
             .fillMaxSize()
-            .background(colorResource(R.color.background_color)),
-        contentPadding = PaddingValues(
-            start = DeviceLightAutomaticEditorGeometry.screenPadding,
-            top = DeviceLightAutomaticEditorGeometry.screenTopPadding,
-            end = DeviceLightAutomaticEditorGeometry.screenPadding,
-            bottom = DeviceLightAutomaticEditorGeometry.screenBottomPadding
-        ),
-        verticalArrangement = Arrangement.spacedBy(
-            DeviceLightAutomaticEditorGeometry.sectionGap
-        )
+            .background(colorResource(R.color.background_color))
     ) {
-        item(key = "simulation") {
-            DeviceLightAutomaticDaySimulationCard(state, visuals)
+        LazyColumn(
+            modifier = Modifier.weight(SCROLL_CONTENT_WEIGHT),
+            contentPadding = PaddingValues(
+                start = DeviceLightAutomaticEditorGeometry.screenPadding,
+                top = DeviceLightAutomaticEditorGeometry.screenTopPadding,
+                end = DeviceLightAutomaticEditorGeometry.screenPadding,
+                bottom = DeviceLightAutomaticEditorGeometry.sectionGap
+            ),
+            verticalArrangement = Arrangement.spacedBy(
+                DeviceLightAutomaticEditorGeometry.sectionGap
+            )
+        ) {
+            item(key = "cycle") {
+                DeviceLightAutomaticCycleCard(state, actions.schedule, visuals)
+            }
+            item(key = "days") {
+                DeviceLightAutomaticEditorDaysCard(state, actions.days, visuals)
+            }
+            item(key = "ramp") {
+                DeviceLightAutomaticEditorRampCard(state, actions.schedule, visuals)
+            }
+            item(key = "preset") {
+                DeviceLightAutomaticEditorPresetCard(state, actions.onPresetClick, visuals)
+            }
+            item(key = "channels") {
+                DeviceLightAutomaticEditorChannelsCard(
+                    state,
+                    actions.onChannelChanged,
+                    visuals
+                )
+            }
         }
-        item(key = "days") {
-            DeviceLightAutomaticEditorDaysCard(state, actions.days, visuals)
-        }
-        item(key = "times") {
-            DeviceLightAutomaticEditorTimeRow(state, actions.schedule, visuals)
-        }
-        item(key = "ramp") {
-            DeviceLightAutomaticEditorRampCard(state, actions.schedule, visuals)
-        }
-        item(key = "preset") {
-            DeviceLightAutomaticEditorPresetCard(state, actions.onPresetClick, visuals)
-        }
-        item(key = "channels") {
-            DeviceLightAutomaticEditorChannelsCard(state, actions.onChannelChanged, visuals)
-        }
-        item(key = "chart") {
-            DeviceLightAutomaticEditorChartCard(state, visuals)
-        }
-        item(key = "actions") {
-            DeviceLightAutomaticEditorActionRow(state, actions, visuals)
-        }
+        DeviceLightAutomaticEditorActionRow(
+            state = state,
+            actions = actions,
+            visuals = visuals,
+            modifier = Modifier.padding(
+                start = DeviceLightAutomaticEditorGeometry.screenPadding,
+                top = DeviceLightAutomaticEditorGeometry.actionTopPadding,
+                end = DeviceLightAutomaticEditorGeometry.screenPadding,
+                bottom = DeviceLightAutomaticEditorGeometry.screenBottomPadding
+            )
+        )
     }
 }
 
@@ -72,3 +85,5 @@ internal data class DeviceLightAutomaticEditorVisuals(
     val colors: AquaLightManualColors,
     val typography: AquaDeviceCardTypography
 )
+
+private const val SCROLL_CONTENT_WEIGHT = 1f

@@ -3,7 +3,6 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic
 import android.os.Bundle
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticChannel
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticPolicy
-import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticProgram
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticProgramDraft
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticScene
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
@@ -48,20 +47,6 @@ internal data class DeviceLightAutomaticEditorDraft(
                 scene = DeviceLightAutomaticScene(channels)
             )
         }.getOrNull()
-    }
-
-    fun toPreviewProgramOrNull(
-        source: DeviceLightAutomaticEditorSource
-    ): DeviceLightAutomaticProgram? = toMutationDraftOrNull(source)?.let { mutation ->
-        DeviceLightAutomaticProgram(
-            programId = PREVIEW_PROGRAM_ID,
-            enabled = enabled,
-            weekdaysMask = mutation.weekdaysMask,
-            startTimeMs = mutation.startTimeMs,
-            endTimeMs = mutation.endTimeMs,
-            rampDurationMs = mutation.rampDurationMs,
-            scene = mutation.scene
-        )
     }
 
     fun writeTo(outState: Bundle) {
@@ -111,7 +96,6 @@ internal data class DeviceLightAutomaticEditorDraft(
 
 internal data class DeviceLightAutomaticEditorSource(
     val deviceUid: String,
-    val productDisplayName: String,
     val revision: Long,
     val programCount: Int,
     val policy: DeviceLightAutomaticPolicy,
@@ -134,9 +118,6 @@ internal data class DeviceLightAutomaticProgramEditorUiState(
     val hasUnsavedChanges: Boolean
         get() = source?.baselineDraft?.let { baseline -> draft != baseline } == true
 
-    val previewProgram: DeviceLightAutomaticProgram?
-        get() = source?.let(draft::toPreviewProgramOrNull)
-
     val canSave: Boolean
         get() {
             val currentSource = source ?: return false
@@ -150,7 +131,6 @@ internal data class DeviceLightAutomaticProgramEditorUiState(
 private fun Bundle.optionalLong(key: String): Long? =
     if (containsKey(key)) getLong(key) else null
 
-private const val PREVIEW_PROGRAM_ID = "ap-00000000"
 private const val EMPTY_WEEKDAYS_MASK = 0
 private const val EMPTY_CHANNEL_PERCENT = 0
 private const val ABSENT_CHANNEL = -1

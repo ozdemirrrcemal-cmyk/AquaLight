@@ -14,6 +14,8 @@ internal class DeviceLightAutomaticDraftEditor(
 
     fun selectWeekend() = selectDays(WEEKEND_MASK)
 
+    fun selectCustom() = selectDays(EMPTY_DAYS_MASK)
+
     fun toggleDay(day: DeviceLightAutomaticWeekday) {
         if (!currentState().contentEnabled) return
         updateDraft { draft ->
@@ -33,11 +35,14 @@ internal class DeviceLightAutomaticDraftEditor(
     }
 
     fun updateTime(field: DeviceLightAutomaticTimeField, timeMs: Long) {
-        if (!currentState().contentEnabled) return
+        val state = currentState()
+        val source = state.source ?: return
+        if (!state.contentEnabled) return
+        val normalizedTimeMs = snapAutomaticCycleTime(timeMs, source.policy.timeStepMs)
         updateDraft { draft ->
             when (field) {
-                DeviceLightAutomaticTimeField.START -> draft.copy(startTimeMs = timeMs)
-                DeviceLightAutomaticTimeField.END -> draft.copy(endTimeMs = timeMs)
+                DeviceLightAutomaticTimeField.START -> draft.copy(startTimeMs = normalizedTimeMs)
+                DeviceLightAutomaticTimeField.END -> draft.copy(endTimeMs = normalizedTimeMs)
             }
         }
     }
@@ -75,5 +80,6 @@ private val WEEKEND_MASK = DeviceLightAutomaticWeekday.entries
     .drop(WEEKDAY_COUNT)
     .sumOf(DeviceLightAutomaticWeekday::mask)
 private const val WEEKDAY_COUNT = 5
+private const val EMPTY_DAYS_MASK = 0
 private const val MIN_PERCENT = 0
 private const val MAX_PERCENT = 100

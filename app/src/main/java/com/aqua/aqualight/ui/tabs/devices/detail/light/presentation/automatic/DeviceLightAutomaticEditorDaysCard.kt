@@ -42,7 +42,7 @@ internal fun DeviceLightAutomaticEditorDaysCard(
         ) {
             EditorSectionHeading(
                 title = stringResource(R.string.device_light_auto_editor_days),
-                subtitle = stringResource(R.string.device_light_auto_editor_days_summary),
+                subtitle = null,
                 visuals = visuals,
                 icon = { color ->
                     AutomaticCalendarIcon(
@@ -53,8 +53,8 @@ internal fun DeviceLightAutomaticEditorDaysCard(
                     )
                 }
             )
-            WeekdayButtons(state, actions, visuals)
             QuickDayButtons(state, actions, visuals)
+            WeekdayButtons(state, actions, visuals)
         }
     }
 }
@@ -134,6 +134,18 @@ private fun QuickDayButtons(
                 .weight(QUICK_DAY_BUTTON_WEIGHT)
                 .height(DeviceLightAutomaticEditorGeometry.quickDayButtonHeight)
         )
+        EditorSelectionButton(
+            state = DeviceLightAutomaticSelectionState(
+                label = stringResource(R.string.device_light_auto_editor_custom_days),
+                selected = state.draft.weekdaysMask !in AUTOMATIC_QUICK_DAY_MASKS,
+                enabled = state.contentEnabled
+            ),
+            onClick = actions.onCustomClick,
+            visuals = visuals,
+            modifier = Modifier
+                .weight(QUICK_DAY_BUTTON_WEIGHT)
+                .height(DeviceLightAutomaticEditorGeometry.quickDayButtonHeight)
+        )
     }
 }
 
@@ -190,7 +202,7 @@ internal data class DeviceLightAutomaticSelectionState(
 @Composable
 internal fun EditorSectionHeading(
     title: String,
-    subtitle: String,
+    subtitle: String?,
     visuals: DeviceLightAutomaticEditorVisuals,
     icon: @Composable (Color) -> Unit
 ) {
@@ -202,11 +214,15 @@ internal fun EditorSectionHeading(
                 text = title,
                 style = visuals.typography.title.copy(color = visuals.colors.card.primaryText)
             )
-            Spacer(Modifier.height(DeviceLightAutomaticEditorGeometry.headingTextGap))
-            BasicText(
-                text = subtitle,
-                style = visuals.typography.micro.copy(color = visuals.colors.card.secondaryText)
-            )
+            subtitle?.let { supportingText ->
+                Spacer(Modifier.height(DeviceLightAutomaticEditorGeometry.headingTextGap))
+                BasicText(
+                    text = supportingText,
+                    style = visuals.typography.micro.copy(
+                        color = visuals.colors.card.secondaryText
+                    )
+                )
+            }
         }
     }
 }
@@ -227,6 +243,11 @@ private val AUTOMATIC_WEEKDAYS_MASK = DeviceLightAutomaticWeekday.entries
 private val AUTOMATIC_WEEKEND_MASK = DeviceLightAutomaticWeekday.entries
     .drop(AUTOMATIC_WEEKDAY_COUNT)
     .sumOf(DeviceLightAutomaticWeekday::mask)
+private val AUTOMATIC_QUICK_DAY_MASKS = setOf(
+    DEVICE_LIGHT_AUTOMATIC_EVERY_DAY_MASK,
+    AUTOMATIC_WEEKDAYS_MASK,
+    AUTOMATIC_WEEKEND_MASK
+)
 private const val AUTOMATIC_WEEKDAY_COUNT = 5
 private const val DAY_BUTTON_WEIGHT = 1f
 private const val QUICK_DAY_BUTTON_WEIGHT = 1f

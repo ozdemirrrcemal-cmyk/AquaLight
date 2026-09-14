@@ -23,10 +23,11 @@ import com.aqua.aqualight.R
 internal fun DeviceLightAutomaticEditorActionRow(
     state: DeviceLightAutomaticProgramEditorUiState,
     actions: DeviceLightAutomaticProgramEditorActions,
-    visuals: DeviceLightAutomaticEditorVisuals
+    visuals: DeviceLightAutomaticEditorVisuals,
+    modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(DeviceLightAutomaticEditorGeometry.actionGap)
     ) {
         EditorActionButton(

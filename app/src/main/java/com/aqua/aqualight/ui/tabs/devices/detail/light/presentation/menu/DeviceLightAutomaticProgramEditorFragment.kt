@@ -88,11 +88,13 @@ class DeviceLightAutomaticProgramEditorFragment :
                 onEveryDayClick = editor::selectEveryDay,
                 onWeekdaysClick = editor::selectWeekdays,
                 onWeekendClick = editor::selectWeekend,
+                onCustomClick = editor::selectCustom,
                 onDayClick = editor::toggleDay
             ),
             schedule = DeviceLightAutomaticScheduleActions(
                 onStartTimeClick = { editor.requestTime(DeviceLightAutomaticTimeField.START) },
                 onEndTimeClick = { editor.requestTime(DeviceLightAutomaticTimeField.END) },
+                onTimeChanged = editor::updateTime,
                 onRampClick = editor::selectRamp
             ),
             onChannelChanged = editor::updateChannel,

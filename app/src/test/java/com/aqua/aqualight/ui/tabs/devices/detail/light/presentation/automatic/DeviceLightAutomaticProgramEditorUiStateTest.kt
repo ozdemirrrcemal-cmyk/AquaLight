@@ -4,8 +4,6 @@ import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomat
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticPolicy
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -15,13 +13,12 @@ class DeviceLightAutomaticProgramEditorUiStateTest {
     fun emptyCreateDraftStaysNeutralAndCannotBeSaved() {
         val state = createState(DeviceLightAutomaticEditorDraft.empty(CHANNELS))
 
-        assertNull(state.previewProgram)
         assertFalse(state.canSave)
         assertFalse(state.hasUnsavedChanges)
     }
 
     @Test
-    fun completeOvernightDraftUsesOnePreviewModelAndCanBeSaved() {
+    fun completeOvernightDraftCanBeSaved() {
         val draft = DeviceLightAutomaticEditorDraft.empty(CHANNELS).copy(
             weekdaysMask = EVERY_DAY_MASK,
             startTimeMs = hours(OVERNIGHT_START_HOUR),
@@ -31,10 +28,7 @@ class DeviceLightAutomaticProgramEditorUiStateTest {
         )
         val state = createState(draft)
 
-        assertNotNull(state.previewProgram)
-        assertEquals(draft.startTimeMs, state.previewProgram?.startTimeMs)
-        assertEquals(draft.endTimeMs, state.previewProgram?.endTimeMs)
-        assertEquals(draft.rampDurationMs, state.previewProgram?.rampDurationMs)
+        assertEquals(draft, state.draft)
         assertTrue(state.canSave)
     }
 
@@ -48,7 +42,6 @@ class DeviceLightAutomaticProgramEditorUiStateTest {
         )
         val state = createState(draft)
 
-        assertNull(state.previewProgram)
         assertFalse(state.canSave)
     }
 
@@ -62,7 +55,6 @@ class DeviceLightAutomaticProgramEditorUiStateTest {
         )
         val state = createState(draft, timeStepMs = minutes(FIVE_MINUTES))
 
-        assertNull(state.previewProgram)
         assertFalse(state.canSave)
     }
 
@@ -74,7 +66,6 @@ class DeviceLightAutomaticProgramEditorUiStateTest {
         return DeviceLightAutomaticProgramEditorUiState(
             source = DeviceLightAutomaticEditorSource(
                 deviceUid = DEVICE_UID,
-                productDisplayName = PRODUCT_NAME,
                 revision = REVISION,
                 programCount = 0,
                 policy = DeviceLightAutomaticPolicy(
@@ -101,7 +92,6 @@ private fun hours(value: Int): Long = minutes(value * MINUTES_PER_HOUR)
 private fun minutes(value: Int): Long = value * MILLIS_PER_MINUTE
 
 private const val DEVICE_UID = "light-editor-test-device"
-private const val PRODUCT_NAME = "WRGB Pro Elite 120"
 private const val REVISION = 12L
 private const val CAPACITY = 16
 private const val EVERY_DAY_MASK = 0x7f

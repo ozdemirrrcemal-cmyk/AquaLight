@@ -98,6 +98,6 @@ private const val TIME_REQUEST_KEY = "device_light_auto_editor_time"
 private const val MINUTES_PER_HOUR = 60
 private const val MILLIS_PER_MINUTE = 60_000L
 private const val DEFAULT_START_HOUR = 8
-private const val DEFAULT_END_HOUR = 22
+private const val DEFAULT_END_HOUR = 18
 private const val DEFAULT_START_MINUTES = DEFAULT_START_HOUR * MINUTES_PER_HOUR
 private const val DEFAULT_END_MINUTES = DEFAULT_END_HOUR * MINUTES_PER_HOUR

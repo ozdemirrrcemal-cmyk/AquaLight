@@ -125,7 +125,6 @@ internal class DeviceLightAutomaticProgramEditorViewModel(
             mode = mode,
             source = DeviceLightAutomaticEditorSource(
                 deviceUid = snapshot.deviceUid,
-                productDisplayName = snapshot.productDisplayName,
                 revision = snapshot.revision,
                 programCount = snapshot.programs.size,
                 policy = snapshot.policy,
