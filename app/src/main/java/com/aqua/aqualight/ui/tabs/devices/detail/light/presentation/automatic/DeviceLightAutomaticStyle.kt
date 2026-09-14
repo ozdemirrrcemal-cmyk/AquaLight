@@ -59,7 +59,12 @@ internal object DeviceLightAutomaticIconGeometry {
     const val calendarBottomFraction = 0.86f
     const val calendarCornerRadiusFraction = 0.08f
     const val calendarDividerFraction = 0.40f
-    val calendarBindingFractions = listOf(0.34f, 0.66f)
+    const val calendarFirstBindingFraction = 0.34f
+    const val calendarSecondBindingFraction = 0.66f
+    val calendarBindingFractions = listOf(
+        calendarFirstBindingFraction,
+        calendarSecondBindingFraction
+    )
     const val calendarBindingTopFraction = 0.12f
     const val calendarBindingBottomFraction = 0.31f
 
