@@ -50,6 +50,35 @@ class DeviceLightAutomaticCycleDialTest {
             )
         )
     }
+
+    @Test
+    fun signedDragDeltaRemainsContinuousAcrossMidnight() {
+        assertEquals(
+            FORWARD_WRAP_DELTA,
+            automaticCycleSignedDeltaDegrees(PREVIOUS_WRAP_DEGREES, CURRENT_WRAP_DEGREES),
+            DOUBLE_TOLERANCE
+        )
+        assertEquals(
+            BACKWARD_WRAP_DELTA,
+            automaticCycleSignedDeltaDegrees(CURRENT_WRAP_DEGREES, PREVIOUS_WRAP_DEGREES),
+            DOUBLE_TOLERANCE
+        )
+    }
+
+    @Test
+    fun innerRingDragProvidesFourTimesFinerMinuteControl() {
+        val start = hours(MORNING_HOUR).toDouble()
+        assertEquals(
+            minutes(NORMAL_DRAG_MINUTES).toDouble(),
+            advanceAutomaticCycleDragTime(start, ONE_DEGREE, NORMAL_SENSITIVITY) - start,
+            DOUBLE_TOLERANCE
+        )
+        assertEquals(
+            minutes(PRECISE_DRAG_MINUTES).toDouble(),
+            advanceAutomaticCycleDragTime(start, ONE_DEGREE, PRECISE_SENSITIVITY) - start,
+            DOUBLE_TOLERANCE
+        )
+    }
 }
 
 private fun hours(value: Int): Long = minutes(value * MINUTES_PER_HOUR)
@@ -68,6 +97,16 @@ private const val RAW_MINUTES = 487
 private const val SNAPPED_MINUTES = 485
 private const val END_OF_DAY_MINUTES = 1_439
 private const val TOUCH_MINUTES = 5
+private const val NORMAL_DRAG_MINUTES = 4
+private const val PRECISE_DRAG_MINUTES = 1
 private const val MINUTES_PER_HOUR = 60
 private const val MILLIS_PER_MINUTE = 60_000L
 private const val STEP_MS = 5L * MILLIS_PER_MINUTE
+private const val PREVIOUS_WRAP_DEGREES = 359.0
+private const val CURRENT_WRAP_DEGREES = 1.0
+private const val FORWARD_WRAP_DELTA = 2.0
+private const val BACKWARD_WRAP_DELTA = -2.0
+private const val ONE_DEGREE = 1.0
+private const val NORMAL_SENSITIVITY = 1.0
+private const val PRECISE_SENSITIVITY = 0.25
+private const val DOUBLE_TOLERANCE = 0.0

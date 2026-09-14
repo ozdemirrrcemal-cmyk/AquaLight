@@ -32,8 +32,8 @@
     <string name="device_light_auto_editor_edit_title">Programı düzenle</string>
     <string name="device_light_auto_editor_duplicate_title">Programı çoğalt</string>
     <string name="device_light_auto_editor_cycle">Gün döngüsü</string>
-    <string name="device_light_auto_editor_cycle_drag_hint">Başlangıç ve bitiş noktalarını sürükleyin</string>
-    <string name="device_light_auto_editor_cycle_drag_description">Etkileşimli gün döngüsü. Saatini değiştirmek için başlangıç veya bitiş noktasını sürükleyin.</string>
+    <string name="device_light_auto_editor_cycle_drag_hint">Sürükleyin · iç halkada hassas ayar</string>
+    <string name="device_light_auto_editor_cycle_drag_description">Etkileşimli gün döngüsü. Başlangıç veya bitiş noktasını sürükleyin. Dakika hassasiyetinde ayar için parmağınızı iç halkaya alın.</string>
     <string name="device_light_auto_editor_days">Günler</string>
     <string name="device_light_auto_editor_weekdays">Hafta içi</string>
     <string name="device_light_auto_editor_weekend">Hafta sonu</string>

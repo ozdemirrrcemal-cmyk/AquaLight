@@ -2,7 +2,6 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,9 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.disabled
@@ -124,82 +121,6 @@ private fun AutomaticCycleDialValue(
     }
 }
 
-private fun Modifier.automaticCycleDialInput(
-    enabled: Boolean,
-    timeStepMs: Long,
-    currentState: () -> AutomaticCycleDialState,
-    onTimeChanged: (DeviceLightAutomaticTimeField, Long) -> Unit
-): Modifier = pointerInput(enabled, timeStepMs) {
-    if (!enabled) return@pointerInput
-    var selectedField: DeviceLightAutomaticTimeField? = null
-    detectDragGestures(
-        onDragStart = { position ->
-            val state = currentState()
-            val touchedTime = position.toAutomaticCycleTime(size.width, size.height, timeStepMs)
-            selectedField = nearestAutomaticCycleField(
-                touchedTime,
-                state.startTimeMs,
-                state.endTimeMs
-            )
-        },
-        onDragEnd = { selectedField = null },
-        onDragCancel = { selectedField = null },
-        onDrag = { change, _ ->
-            selectedField?.let { field ->
-                change.consume()
-                onTimeChanged(
-                    field,
-                    change.position.toAutomaticCycleTime(
-                        size.width,
-                        size.height,
-                        timeStepMs
-                    )
-                )
-            }
-        }
-    )
-}
-
-private fun Offset.toAutomaticCycleTime(width: Int, height: Int, stepMs: Long): Long {
-    val center = Offset(width / HALF_DIVISOR, height / HALF_DIVISOR)
-    val rawDegrees = Math.toDegrees(
-        kotlin.math.atan2((y - center.y).toDouble(), (x - center.x).toDouble())
-    ) + QUARTER_TURN_DEGREES
-    val normalizedDegrees = (rawDegrees + FULL_CIRCLE_DEGREES) % FULL_CIRCLE_DEGREES
-    return automaticCycleTimeFromClockDegrees(normalizedDegrees, stepMs)
-}
-
-internal fun automaticCycleTimeFromClockDegrees(degrees: Double, stepMs: Long): Long {
-    val normalizedDegrees = (degrees % FULL_CIRCLE_DEGREES + FULL_CIRCLE_DEGREES) %
-        FULL_CIRCLE_DEGREES
-    val rawTime = normalizedDegrees / FULL_CIRCLE_DEGREES * MILLIS_PER_DAY
-    return snapAutomaticCycleTime(rawTime.toLong(), stepMs)
-}
-
-internal fun snapAutomaticCycleTime(timeMs: Long, stepMs: Long): Long {
-    require(stepMs > 0L)
-    val snapped = ((timeMs + stepMs / HALF_LONG_DIVISOR) / stepMs) * stepMs
-    return snapped % MILLIS_PER_DAY
-}
-
-internal fun nearestAutomaticCycleField(
-    touchedTimeMs: Long,
-    startTimeMs: Long?,
-    endTimeMs: Long?
-): DeviceLightAutomaticTimeField? = when {
-    startTimeMs == null -> DeviceLightAutomaticTimeField.START
-    endTimeMs == null -> DeviceLightAutomaticTimeField.END
-    circularAutomaticCycleDistance(touchedTimeMs, startTimeMs) <=
-        circularAutomaticCycleDistance(touchedTimeMs, endTimeMs) ->
-        DeviceLightAutomaticTimeField.START
-    else -> DeviceLightAutomaticTimeField.END
-}
-
-private fun circularAutomaticCycleDistance(first: Long, second: Long): Long {
-    val direct = kotlin.math.abs(first - second)
-    return minOf(direct, MILLIS_PER_DAY - direct)
-}
-
 internal data class AutomaticCycleDialState(
     val startTimeMs: Long?,
     val endTimeMs: Long?,
@@ -207,11 +128,6 @@ internal data class AutomaticCycleDialState(
     val enabled: Boolean
 )
 
-private const val HALF_DIVISOR = 2f
-private const val HALF_LONG_DIVISOR = 2L
-private const val QUARTER_TURN_DEGREES = 90.0
-private const val FULL_CIRCLE_DEGREES = 360.0
-private const val MILLIS_PER_DAY = 86_400_000L
 private val CENTER_DIVIDER_WIDTH = 72.dp
 private val CENTER_DIVIDER_HEIGHT = 1.dp
 private val CENTER_DIVIDER_GAP = 5.dp

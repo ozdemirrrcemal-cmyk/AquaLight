@@ -32,8 +32,8 @@
     <string name="device_light_auto_editor_edit_title">Edit program</string>
     <string name="device_light_auto_editor_duplicate_title">Duplicate program</string>
     <string name="device_light_auto_editor_cycle">Day cycle</string>
-    <string name="device_light_auto_editor_cycle_drag_hint">Drag the start and end points</string>
-    <string name="device_light_auto_editor_cycle_drag_description">Interactive day cycle. Drag the start or end point to change its time.</string>
+    <string name="device_light_auto_editor_cycle_drag_hint">Drag · use the inner ring for fine adjustment</string>
+    <string name="device_light_auto_editor_cycle_drag_description">Interactive day cycle. Drag the start or end point. Move your finger to the inner ring for minute-level adjustment.</string>
     <string name="device_light_auto_editor_days">Days</string>
     <string name="device_light_auto_editor_weekdays">Weekdays</string>
     <string name="device_light_auto_editor_weekend">Weekend</string>

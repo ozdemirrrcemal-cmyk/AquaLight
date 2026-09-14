@@ -38,8 +38,8 @@ internal object DeviceLightAutomaticEditorGeometry {
     val quickDayButtonHeight = 36.dp
     val quickDayButtonGap = 6.dp
 
-    val rampControlHeight = 52.dp
-    val rampSliderTouchHeight = 42.dp
+    val rampControlHeight = 60.dp
+    val rampSliderTouchHeight = 34.dp
     val rampSliderTrackWidth = 2.dp
     val rampSliderThumbRadius = 7.dp
     val rampSliderStepRadius = 2.5.dp
