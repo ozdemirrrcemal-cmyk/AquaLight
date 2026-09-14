@@ -1,61 +1,61 @@
 package com.aqua.aqualight.application.devices.light.manual
 
 /**
- * Product-neutral built-in Manual scenes documented by the Light firmware contract.
+ * Product-neutral AquaLight-curated Manual scenes.
  *
- * This application model is intentionally independent of Android resources and runtime payloads.
- * Presentation supplies localized labels; a later data adapter will translate the selected scene
- * to the exact product-specific command shape.
+ * Percentages are conservative channel-drive baselines rather than PAR targets. Optical output
+ * still depends on the product, installation height, aquarium depth, plants, CO2 and nutrients.
+ * Presentation keeps only channels supported by the connected Light product.
  */
 enum class DeviceLightBuiltInManualPreset(
     val scene: DeviceLightManualScenePercentages
 ) {
-    RED(
+    NATURAL(
         scene(
-            PresetPercent.RED_RED,
-            PresetPercent.RED_GREEN,
-            PresetPercent.RED_BLUE,
-            PresetPercent.RED_WHITE
+            PresetPercent.NATURAL_RED,
+            PresetPercent.NATURAL_GREEN,
+            PresetPercent.NATURAL_BLUE,
+            PresetPercent.NATURAL_WHITE
         )
     ),
-    GREEN(
+    GROWTH(
         scene(
-            PresetPercent.GREEN_RED,
-            PresetPercent.GREEN_GREEN,
-            PresetPercent.GREEN_BLUE,
-            PresetPercent.GREEN_WHITE
+            PresetPercent.GROWTH_RED,
+            PresetPercent.GROWTH_GREEN,
+            PresetPercent.GROWTH_BLUE,
+            PresetPercent.GROWTH_WHITE
         )
     ),
-    BLUE(
+    RED_FLORA(
         scene(
-            PresetPercent.BLUE_RED,
-            PresetPercent.BLUE_GREEN,
-            PresetPercent.BLUE_BLUE,
-            PresetPercent.BLUE_WHITE
+            PresetPercent.RED_FLORA_RED,
+            PresetPercent.RED_FLORA_GREEN,
+            PresetPercent.RED_FLORA_BLUE,
+            PresetPercent.RED_FLORA_WHITE
         )
     ),
-    FISH(
+    COLOR_BOOST(
         scene(
-            PresetPercent.FISH_RED,
-            PresetPercent.FISH_GREEN,
-            PresetPercent.FISH_BLUE,
-            PresetPercent.FISH_WHITE
+            PresetPercent.COLOR_BOOST_RED,
+            PresetPercent.COLOR_BOOST_GREEN,
+            PresetPercent.COLOR_BOOST_BLUE,
+            PresetPercent.COLOR_BOOST_WHITE
         )
     ),
-    SHRIMP(
+    DETAIL(
         scene(
-            PresetPercent.SHRIMP_RED,
-            PresetPercent.SHRIMP_GREEN,
-            PresetPercent.SHRIMP_BLUE,
-            PresetPercent.SHRIMP_WHITE
+            PresetPercent.DETAIL_RED,
+            PresetPercent.DETAIL_GREEN,
+            PresetPercent.DETAIL_BLUE,
+            PresetPercent.DETAIL_WHITE
         )
     ),
-    ALL(
+    LOW_LIGHT(
         scene(
-            PresetPercent.ALL_RED,
-            PresetPercent.ALL_GREEN,
-            PresetPercent.ALL_BLUE,
-            PresetPercent.ALL_WHITE
+            PresetPercent.LOW_LIGHT_RED,
+            PresetPercent.LOW_LIGHT_GREEN,
+            PresetPercent.LOW_LIGHT_BLUE,
+            PresetPercent.LOW_LIGHT_WHITE
         )
     )
 }
@@ -79,35 +79,35 @@ private fun scene(
 ) = DeviceLightManualScenePercentages(red, green, blue, white)
 
 private object PresetPercent {
-    const val RED_RED = 85
-    const val RED_GREEN = 50
-    const val RED_BLUE = 55
-    const val RED_WHITE = 35
+    const val NATURAL_RED = 50
+    const val NATURAL_GREEN = 50
+    const val NATURAL_BLUE = 45
+    const val NATURAL_WHITE = 60
 
-    const val GREEN_RED = 60
-    const val GREEN_GREEN = 85
-    const val GREEN_BLUE = 65
-    const val GREEN_WHITE = 40
+    const val GROWTH_RED = 60
+    const val GROWTH_GREEN = 55
+    const val GROWTH_BLUE = 60
+    const val GROWTH_WHITE = 50
 
-    const val BLUE_RED = 50
-    const val BLUE_GREEN = 60
-    const val BLUE_BLUE = 85
-    const val BLUE_WHITE = 35
+    const val RED_FLORA_RED = 70
+    const val RED_FLORA_GREEN = 45
+    const val RED_FLORA_BLUE = 65
+    const val RED_FLORA_WHITE = 45
 
-    const val FISH_RED = 80
-    const val FISH_GREEN = 45
-    const val FISH_BLUE = 70
-    const val FISH_WHITE = 45
+    const val COLOR_BOOST_RED = 65
+    const val COLOR_BOOST_GREEN = 50
+    const val COLOR_BOOST_BLUE = 60
+    const val COLOR_BOOST_WHITE = 55
 
-    const val SHRIMP_RED = 85
-    const val SHRIMP_GREEN = 70
-    const val SHRIMP_BLUE = 65
-    const val SHRIMP_WHITE = 50
+    const val DETAIL_RED = 50
+    const val DETAIL_GREEN = 55
+    const val DETAIL_BLUE = 45
+    const val DETAIL_WHITE = 65
 
-    const val ALL_RED = 70
-    const val ALL_GREEN = 70
-    const val ALL_BLUE = 70
-    const val ALL_WHITE = 70
+    const val LOW_LIGHT_RED = 35
+    const val LOW_LIGHT_GREEN = 35
+    const val LOW_LIGHT_BLUE = 30
+    const val LOW_LIGHT_WHITE = 40
 }
 
 private val PERCENT_RANGE = MINIMUM_PERCENT..MAXIMUM_PERCENT
