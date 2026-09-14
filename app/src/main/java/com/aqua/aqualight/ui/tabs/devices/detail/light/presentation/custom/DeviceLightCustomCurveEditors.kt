@@ -35,7 +35,9 @@ internal class DeviceLightCustomPointEditor(
         val state = currentState()
         when {
             !state.contentEnabled || state.operationInProgress -> Unit
-            state.draft.points.size >= state.maxPoints -> emitPointLimit(state.maxPoints)
+            state.draft.points.size >= state.maxPoints -> emit(
+                DeviceLightCustomCurveEffect.ShowPointLimit(state.maxPoints)
+            )
             else -> emit(DeviceLightCustomCurveEffect.OpenTimePicker(null))
         }
     }
@@ -58,7 +60,9 @@ internal class DeviceLightCustomPointEditor(
                 existing != null -> updateState { current ->
                     current.copy(selectedTimeMs = existing.timeMs)
                 }
-                state.draft.points.size >= state.maxPoints -> emitPointLimit(state.maxPoints)
+                state.draft.points.size >= state.maxPoints -> emit(
+                    DeviceLightCustomCurveEffect.ShowPointLimit(state.maxPoints)
+                )
                 else -> addOrMovePoint(originalTimeMs = null, targetTimeMs = aligned)
             }
         }
@@ -73,7 +77,7 @@ internal class DeviceLightCustomPointEditor(
         when {
             !state.contentEnabled || state.operationInProgress || timeOccupied -> Unit
             originalTimeMs == null && state.draft.points.size >= state.maxPoints ->
-                emitPointLimit(state.maxPoints)
+                emit(DeviceLightCustomCurveEffect.ShowPointLimit(state.maxPoints))
             else -> setDraft(
                 state.draft.copy(
                     points = state.changedPoints(originalTimeMs, aligned)
@@ -88,7 +92,9 @@ internal class DeviceLightCustomPointEditor(
         val selected = state.selectedPoint
         when {
             state.operationInProgress || selected == null -> Unit
-            state.draft.points.size >= state.maxPoints -> emitPointLimit(state.maxPoints)
+            state.draft.points.size >= state.maxPoints -> emit(
+                DeviceLightCustomCurveEffect.ShowPointLimit(state.maxPoints)
+            )
             else -> duplicatePointAtAvailableTime(state, selected)
         }
     }
@@ -142,9 +148,6 @@ internal class DeviceLightCustomPointEditor(
         }
     }
 
-    private fun emitPointLimit(maxPoints: Int) {
-        emit(DeviceLightCustomCurveEffect.ShowPointLimit(maxPoints))
-    }
 }
 
 private fun DeviceLightCustomCurveUiState.changedPoints(

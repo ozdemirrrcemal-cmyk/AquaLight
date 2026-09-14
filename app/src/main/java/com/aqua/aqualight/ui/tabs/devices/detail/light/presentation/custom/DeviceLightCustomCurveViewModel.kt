@@ -73,7 +73,7 @@ internal class DeviceLightCustomCurveViewModel(
         refreshFromDevice()
     }
 
-    fun refreshIfClean() {
+    val refreshIfClean: () -> Unit = {
         if (!_uiState.value.hasUnsavedChanges) refreshFromDevice()
     }
 

@@ -215,25 +215,6 @@ internal fun SectionHeading(
     }
 }
 
-@Composable
-internal fun weekdayLabels(): List<String> = listOf(
-    stringResource(R.string.device_light_library_day_monday),
-    stringResource(R.string.device_light_library_day_tuesday),
-    stringResource(R.string.device_light_library_day_wednesday),
-    stringResource(R.string.device_light_library_day_thursday),
-    stringResource(R.string.device_light_library_day_friday),
-    stringResource(R.string.device_light_library_day_saturday),
-    stringResource(R.string.device_light_library_day_sunday)
-)
-
-internal fun formatTime(timeMs: Long): String {
-    val totalMinutes = timeMs / MILLIS_PER_MINUTE
-    val hour = totalMinutes / MINUTES_PER_HOUR
-    val minute = totalMinutes % MINUTES_PER_HOUR
-    return hour.toString().padStart(TIME_DIGITS, '0') + ":" +
-        minute.toString().padStart(TIME_DIGITS, '0')
-}
-
 internal fun DeviceLightCustomVisuals.channelColor(channel: DeviceLightCustomChannelId): Color =
     when (channel) {
         DeviceLightCustomChannelId.RED -> colors.red
@@ -293,6 +274,4 @@ private const val INFORMATION_HORIZONTAL_PADDING_DP = 17
 private const val INFORMATION_VERTICAL_PADDING_DP = 3
 private const val INFORMATION_ICON_SIZE_DP = 18
 private const val INFORMATION_TEXT_PADDING_DP = 7
-private const val MINUTES_PER_HOUR = 60
-private const val TIME_DIGITS = 2
 private const val DEFAULT_BUTTON_HEIGHT_DP = 53

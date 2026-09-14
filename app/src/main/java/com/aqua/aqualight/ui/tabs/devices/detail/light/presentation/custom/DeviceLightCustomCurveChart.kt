@@ -151,7 +151,7 @@ private fun HourAxis(visuals: DeviceLightCustomVisuals) {
         modifier = Modifier.fillMaxWidth().padding(start = CHART_PERCENT_AXIS_WIDTH_DP.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        (0..HOURS_PER_DAY step CHART_HOUR_STEP).forEach { hour ->
+        for (hour in 0..HOURS_PER_DAY step CHART_HOUR_STEP) {
             BasicText(text = hour.toString().padStart(TIME_DIGITS, '0'), style = visuals.typography.micro)
         }
     }

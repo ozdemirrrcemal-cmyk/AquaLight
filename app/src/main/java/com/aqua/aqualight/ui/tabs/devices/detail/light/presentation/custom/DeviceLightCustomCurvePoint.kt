@@ -141,7 +141,16 @@ private fun CustomChannelRow(
             onClick = { actions.onChannelStep(channel, CHANNEL_DECREMENT) },
             visuals = visuals
         )
-        ChannelSlider(channel, percent, label, state, actions, visuals)
+        ChannelSlider(
+            state = ChannelSliderState(
+                channel = channel,
+                percent = percent,
+                label = label,
+                enabled = state.contentEnabled && !state.operationInProgress
+            ),
+            actions = actions,
+            visuals = visuals
+        )
         StepButton(
             symbol = stringResource(R.string.device_light_manual_plus_symbol),
             enabled = !state.operationInProgress && percent < MAX_LIGHT_CHANNEL_PERCENT,
@@ -158,28 +167,32 @@ private fun CustomChannelRow(
 
 @Composable
 private fun RowScope.ChannelSlider(
-    channel: DeviceLightCustomChannelId,
-    percent: Int,
-    label: String,
-    state: DeviceLightCustomCurveUiState,
+    state: ChannelSliderState,
     actions: DeviceLightCustomCurveActions,
     visuals: DeviceLightCustomVisuals
 ) {
     AquaLightManualPercentSlider(
         state = AquaLightManualPercentSliderState(
-            percent = percent,
-            enabled = state.contentEnabled && !state.operationInProgress,
-            channelColor = visuals.channelColor(channel),
-            stateText = "$percent%",
-            accessibilityDescription = label
+            percent = state.percent,
+            enabled = state.enabled,
+            channelColor = visuals.channelColor(state.channel),
+            stateText = "${state.percent}%",
+            accessibilityDescription = state.label
         ),
         actions = AquaLightManualPercentSliderActions(
-            onValueChanged = { value -> actions.onChannelChanged(channel, value) },
+            onValueChanged = { value -> actions.onChannelChanged(state.channel, value) },
             onValueChangeFinished = {}
         ),
         modifier = Modifier.weight(1f).padding(horizontal = CHANNEL_SLIDER_PADDING_DP.dp)
     )
 }
+
+private data class ChannelSliderState(
+    val channel: DeviceLightCustomChannelId,
+    val percent: Int,
+    val label: String,
+    val enabled: Boolean
+)
 
 @Composable
 private fun StepButton(
