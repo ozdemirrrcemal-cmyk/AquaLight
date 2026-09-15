@@ -35,6 +35,23 @@ message StoredTank {
   repeated StoredPlantTag plants = 20;
   repeated StoredMaterial materials = 30;
   repeated StoredLivestock livestock = 40;
+  StoredSmartLightProfile smart_light_profile = 50;
+}
+
+message StoredSmartLightProfile {
+  // Blank enum codes and absent optional scalars mean unknown. They are surfaced
+  // as MissingData and are never replaced by inferred or compatibility values.
+  string plant_density = 1;
+  string highest_plant_light_demand = 2;
+  string co2_status = 3;
+  optional bool is_active_soil = 4;
+  optional int32 water_depth_cm = 5;
+  optional int32 fixture_mount_height_cm = 6;
+  optional int32 preferred_viewing_start_minute_of_day = 7;
+  optional int32 preferred_viewing_end_minute_of_day = 8;
+  string algae_observation = 9;
+  string plant_stress_observation = 10;
+  optional int64 observation_date_epoch_day = 11;
 }
 
 message StoredPlantTag {

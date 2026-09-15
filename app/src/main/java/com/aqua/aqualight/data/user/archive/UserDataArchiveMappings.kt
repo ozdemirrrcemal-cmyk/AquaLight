@@ -1,5 +1,10 @@
 package com.aqua.aqualight.data.user.archive
 
+import com.aqua.aqualight.application.aquarium.lighting.AquariumLightingProfile
+import com.aqua.aqualight.application.aquarium.lighting.AquariumObservationSeverity
+import com.aqua.aqualight.application.aquarium.lighting.Co2Status
+import com.aqua.aqualight.application.aquarium.lighting.PlantDensity
+import com.aqua.aqualight.application.aquarium.lighting.PlantLightDemand
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignment
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumLivestock
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
@@ -27,6 +32,7 @@ internal fun SavedAquariumTank.toArchiveAquarium(
         volumeUnit = volumeUnit,
         tankType = tankType,
         tankStyle = tankStyle,
+        smartLightProfile = lightingProfile.toArchiveSmartLightProfile(),
         createdAtMillis = createdAtMillis,
         smartCareEnabled = smartCareEnabled,
         careRemindersEnabled = careRemindersEnabled,
@@ -95,9 +101,52 @@ internal fun ArchiveAquarium.toTankDraft(photoUri: String?): TankDraft {
         sizeUnit = sizeUnit,
         volumeUnit = volumeUnit,
         tankType = tankType,
-        tankStyle = tankStyle
+        tankStyle = tankStyle,
+        lightingProfile = smartLightProfile.toAquariumLightingProfile()
     )
 }
+
+private fun AquariumLightingProfile.toArchiveSmartLightProfile() = ArchiveSmartLightProfile(
+    plantDensity = plantDensity?.name.orEmpty(),
+    highestPlantLightDemand = highestPlantLightDemand?.name.orEmpty(),
+    co2Status = co2Status?.name.orEmpty(),
+    isActiveSoil = isActiveSoil,
+    waterDepthCm = waterDepthCm,
+    fixtureMountHeightCm = fixtureMountHeightCm,
+    preferredViewingStartMinuteOfDay = preferredViewingStartMinuteOfDay,
+    preferredViewingEndMinuteOfDay = preferredViewingEndMinuteOfDay,
+    algaeObservation = algaeObservation?.name.orEmpty(),
+    plantStressObservation = plantStressObservation?.name.orEmpty(),
+    observationDateEpochDay = observationDateEpochDay
+)
+
+internal fun ArchiveSmartLightProfile.toAquariumLightingProfile() = AquariumLightingProfile(
+    plantDensity = plantDensity.toArchiveEnumOrNull(PlantDensity.entries),
+    highestPlantLightDemand = highestPlantLightDemand.toArchiveEnumOrNull(
+        PlantLightDemand.entries
+    ),
+    co2Status = co2Status.toArchiveEnumOrNull(Co2Status.entries),
+    isActiveSoil = isActiveSoil,
+    waterDepthCm = waterDepthCm,
+    fixtureMountHeightCm = fixtureMountHeightCm,
+    preferredViewingStartMinuteOfDay = preferredViewingStartMinuteOfDay,
+    preferredViewingEndMinuteOfDay = preferredViewingEndMinuteOfDay,
+    algaeObservation = algaeObservation.toArchiveEnumOrNull(
+        AquariumObservationSeverity.entries
+    ),
+    plantStressObservation = plantStressObservation.toArchiveEnumOrNull(
+        AquariumObservationSeverity.entries
+    ),
+    observationDateEpochDay = observationDateEpochDay
+)
+
+private fun <T : Enum<T>> String.toArchiveEnumOrNull(entries: Iterable<T>): T? =
+    takeIf(String::isNotBlank)?.let { value ->
+        entries.singleOrNull { entry -> entry.name == value }
+            ?: throw IllegalArgumentException(
+                "Unsupported Smart Light semantic value '$value' in backup."
+            )
+    }
 
 internal fun ArchiveLivestock.toSavedLivestock(): SavedAquariumLivestock {
     return SavedAquariumLivestock(

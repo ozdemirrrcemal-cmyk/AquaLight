@@ -1,11 +1,17 @@
 package com.aqua.aqualight.data.aquarium.store
 
 import com.aqua.aqualight.application.aquarium.AquariumTankTaxonomy
+import com.aqua.aqualight.application.aquarium.lighting.AquariumLightingProfile
+import com.aqua.aqualight.application.aquarium.lighting.AquariumObservationSeverity
+import com.aqua.aqualight.application.aquarium.lighting.Co2Status
+import com.aqua.aqualight.application.aquarium.lighting.PlantDensity
+import com.aqua.aqualight.application.aquarium.lighting.PlantLightDemand
 import com.aqua.aqualight.data.store.CommercialStoreSchema
 import com.aqua.aqualight.data.store.StoreInvariantViolation
 import java.time.LocalDate
 
 /** Authoritative invariant rules for the commercial tank store. */
+@Suppress("TooManyFunctions")
 object TankStoreRules {
 
     const val MIN_DIMENSION_CM = 1
@@ -80,6 +86,9 @@ object TankStoreRules {
         validatePlants(tank)
         validateMaterials(tank)
         validateLivestock(tank)
+        if (tank.hasSmartLightProfile()) {
+            validateSmartLightProfile(tank.smartLightProfile)
+        }
 
         return tank
     }
@@ -171,6 +180,73 @@ object TankStoreRules {
                 livestock.addedDateEpochDay
             )
             requireCanonicalOptionalText("livestock.note", livestock.note, MAX_NOTE_CHARS)
+        }
+    }
+
+    private fun validateSmartLightProfile(profile: StoredSmartLightProfile) {
+        requireOptionalEnum("smartLight.plantDensity", profile.plantDensity, PlantDensity.entries)
+        requireOptionalEnum(
+            "smartLight.highestPlantLightDemand",
+            profile.highestPlantLightDemand,
+            PlantLightDemand.entries
+        )
+        requireOptionalEnum("smartLight.co2Status", profile.co2Status, Co2Status.entries)
+        requireOptionalEnum(
+            "smartLight.algaeObservation",
+            profile.algaeObservation,
+            AquariumObservationSeverity.entries
+        )
+        requireOptionalEnum(
+            "smartLight.plantStressObservation",
+            profile.plantStressObservation,
+            AquariumObservationSeverity.entries
+        )
+        if (profile.hasWaterDepthCm() &&
+            profile.waterDepthCm !in AquariumLightingProfile.WATER_DEPTH_CM_RANGE
+        ) {
+            violation("smartLight.waterDepthCm is outside the supported range.")
+        }
+        if (profile.hasFixtureMountHeightCm() &&
+            profile.fixtureMountHeightCm !in AquariumLightingProfile.FIXTURE_HEIGHT_CM_RANGE
+        ) {
+            violation("smartLight.fixtureMountHeightCm is outside the supported range.")
+        }
+        val hasViewingStart = profile.hasPreferredViewingStartMinuteOfDay()
+        val hasViewingEnd = profile.hasPreferredViewingEndMinuteOfDay()
+        if (hasViewingStart != hasViewingEnd) {
+            violation("Smart Light viewing-window boundaries must be stored together.")
+        }
+        if (hasViewingStart) {
+            if (profile.preferredViewingStartMinuteOfDay !in
+                AquariumLightingProfile.MINUTE_OF_DAY_RANGE ||
+                profile.preferredViewingEndMinuteOfDay !in
+                AquariumLightingProfile.MINUTE_OF_DAY_RANGE ||
+                profile.preferredViewingEndMinuteOfDay <=
+                profile.preferredViewingStartMinuteOfDay
+            ) {
+                violation("Smart Light viewing window must be valid and same-day.")
+            }
+        }
+        val hasObservation = profile.algaeObservation.isNotBlank() ||
+            profile.plantStressObservation.isNotBlank()
+        if (hasObservation != profile.hasObservationDateEpochDay()) {
+            violation("Smart Light observations and their date must be stored together.")
+        }
+        if (profile.hasObservationDateEpochDay()) {
+            requireOptionalEpochDay(
+                "smartLight.observationDateEpochDay",
+                profile.observationDateEpochDay
+            )
+        }
+    }
+
+    private fun <T : Enum<T>> requireOptionalEnum(
+        field: String,
+        value: String,
+        allowed: Iterable<T>
+    ) {
+        if (value.isNotBlank() && allowed.none { entry -> entry.name == value }) {
+            violation("$field is not a supported semantic value.")
         }
     }
 

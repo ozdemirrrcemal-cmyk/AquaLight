@@ -58,6 +58,13 @@ data class DeviceLightGraphSpan(
     val programId: String
 )
 
+data class DeviceLightManagedPlanGraphSpan(
+    val startTimeMsWithinToday: Long,
+    val endTimeMsWithinToday: Long,
+    val planId: String,
+    val phaseIndex: Int
+)
+
 data class DeviceLightGraph(
     val mode: DeviceLightMode,
     val available: Boolean,
@@ -71,7 +78,8 @@ data class DeviceLightGraph(
     val channelScale: Int,
     val hasScheduleToday: Boolean,
     val points: List<DeviceLightGraphPoint>,
-    val autoSpans: List<DeviceLightGraphSpan>
+    val autoSpans: List<DeviceLightGraphSpan>,
+    val planSpans: List<DeviceLightManagedPlanGraphSpan>
 )
 
 data class DeviceLightPreviewResult(

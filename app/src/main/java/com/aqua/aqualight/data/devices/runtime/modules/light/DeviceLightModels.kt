@@ -68,6 +68,29 @@ enum class DeviceLightAutoRuntimeState(val wireValue: String) {
     }
 }
 
+enum class DeviceLightAutoScheduleSource(val wireValue: String) {
+    PROGRAMS("PROGRAMS"),
+    MANAGED_PLAN("MANAGED_PLAN");
+
+    companion object {
+        fun fromWireExact(value: String): DeviceLightAutoScheduleSource =
+            enumByWire(value, entries) { it.wireValue }
+    }
+}
+
+enum class DeviceLightManagedPlanRuntimeState(val wireValue: String) {
+    NOT_INSTALLED("NOT_INSTALLED"),
+    NOT_SELECTED("NOT_SELECTED"),
+    RTC_BLOCKED("RTC_BLOCKED"),
+    BEFORE_PLAN("BEFORE_PLAN"),
+    ACTIVE("ACTIVE");
+
+    companion object {
+        fun fromWireExact(value: String): DeviceLightManagedPlanRuntimeState =
+            enumByWire(value, entries) { it.wireValue }
+    }
+}
+
 enum class DeviceLightCustomRuntimeState(val wireValue: String) {
     NOT_SELECTED("NOT_SELECTED"),
     RTC_BLOCKED("RTC_BLOCKED"),
@@ -120,6 +143,7 @@ enum class DeviceLightGraphReason(val wireValue: String) {
     MODE_HAS_NO_SCHEDULE("MODE_HAS_NO_SCHEDULE"),
     RTC_NOT_READY("RTC_NOT_READY"),
     NO_ENABLED_AUTO_PROGRAM_TODAY("NO_ENABLED_AUTO_PROGRAM_TODAY"),
+    MANAGED_PLAN_NOT_SCHEDULED_TODAY("MANAGED_PLAN_NOT_SCHEDULED_TODAY"),
     CUSTOM_NOT_INSTALLED("CUSTOM_NOT_INSTALLED"),
     CUSTOM_NOT_SCHEDULED_TODAY("CUSTOM_NOT_SCHEDULED_TODAY");
 
@@ -131,6 +155,7 @@ enum class DeviceLightGraphReason(val wireValue: String) {
 
 enum class DeviceLightGraphBasis(val wireValue: String) {
     AUTHORED_SCHEDULE("AUTHORED_SCHEDULE"),
+    MANAGED_PLAN("MANAGED_PLAN"),
     NONE("NONE");
 
     companion object {
@@ -260,6 +285,10 @@ data class DeviceLightManualStatus(val scene: DeviceLightScene)
 data class DeviceLightAutoPolicy(
     val capacity: Int,
     val timeStepMs: Long,
+    val managedPlanPhaseCapacity: Int,
+    val managedPlanTransitionDaysMax: Int,
+    val managedPlanSameDayOnly: Boolean,
+    val managedPlanContiguous: Boolean,
     val rampDurationsMs: List<Long>
 )
 
@@ -297,8 +326,16 @@ data class DeviceLightAutoSummary(
     val revision: Long,
     val programCount: Int,
     val enabledCount: Int,
+    val scheduleSource: DeviceLightAutoScheduleSource,
+    val planRevision: Long,
+    val planInstalled: Boolean,
+    val planId: String?,
     val runtimeState: DeviceLightAutoRuntimeState,
-    val activeProgramId: String?
+    val activeProgramId: String?,
+    val activePlanPhaseIndex: Int?,
+    val planRuntimeState: DeviceLightManagedPlanRuntimeState,
+    val planTransitionPermille: Int?,
+    val nextPlanTransitionEpochDay: Long?
 )
 
 data class DeviceLightCustomSummary(
@@ -333,6 +370,7 @@ data class DeviceLightRuntimeStatus(
 data class DeviceLightStatus(
     val schema: String,
     val storageVersion: Int,
+    val storageGeneration: Long,
     val product: DeviceLightProduct,
     val channelScale: Int,
     val channels: List<DeviceLightChannelDescriptor>,

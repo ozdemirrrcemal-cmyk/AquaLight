@@ -1,5 +1,6 @@
 package com.aqua.aqualight.application.aquarium
 
+import com.aqua.aqualight.application.aquarium.lighting.AquariumLightingProfile
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 
@@ -49,7 +50,8 @@ data class AquariumTankSnapshot(
     val careRemindersEnabled: Boolean,
     val plants: List<AquariumPlantTag>,
     val materials: List<AquariumMaterialSelection>,
-    val livestock: List<AquariumLivestock>
+    val livestock: List<AquariumLivestock>,
+    val lightingProfile: AquariumLightingProfile = AquariumLightingProfile()
 )
 
 data class AquariumTankDraft(
@@ -66,7 +68,8 @@ data class AquariumTankDraft(
     val sizeUnit: String = "cm",
     val volumeUnit: String = "L",
     val tankType: String = "",
-    val tankStyle: String = ""
+    val tankStyle: String = "",
+    val lightingProfile: AquariumLightingProfile = AquariumLightingProfile()
 )
 
 data class AquariumTankSize(

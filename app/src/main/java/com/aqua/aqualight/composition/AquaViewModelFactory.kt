@@ -2,6 +2,7 @@ package com.aqua.aqualight.composition
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.CreationExtras
 
 /**
  * Process-level dispatcher for the two explicit ViewModel dependency scopes.
@@ -16,6 +17,17 @@ internal class AquaViewModelFactory(
 ) : ViewModelProvider.Factory {
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        return route(modelClass) { factory -> factory.create(modelClass) }
+    }
+
+    override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
+        return route(modelClass) { factory -> factory.create(modelClass, extras) }
+    }
+
+    private fun <T : ViewModel> route(
+        modelClass: Class<T>,
+        create: (ScopedViewModelFactory) -> T
+    ): T {
         val processBinding = processFactory.supports(modelClass)
         val ownerBinding = ownerFactory.supports(modelClass)
 
@@ -24,8 +36,8 @@ internal class AquaViewModelFactory(
         }
 
         return when {
-            processBinding -> processFactory.create(modelClass)
-            ownerBinding -> ownerFactory.create(modelClass)
+            processBinding -> create(processFactory)
+            ownerBinding -> create(ownerFactory)
             else -> throw IllegalArgumentException(
                 "No registered AquaLight ViewModel binding for ${modelClass.name}."
             )

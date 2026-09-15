@@ -243,7 +243,8 @@ internal fun SavedAquariumTank.toApplicationSnapshot(): AquariumTankSnapshot =
                 addedDateEpochDay = item.addedDateEpochDay,
                 note = item.note
             )
-        }
+        },
+        lightingProfile = lightingProfile
     )
 
 internal fun AquariumTankDraft.toDataDraft(): TankDraft = TankDraft(
@@ -260,7 +261,8 @@ internal fun AquariumTankDraft.toDataDraft(): TankDraft = TankDraft(
     sizeUnit = sizeUnit,
     volumeUnit = volumeUnit,
     tankType = tankType,
-    tankStyle = tankStyle
+    tankStyle = tankStyle,
+    lightingProfile = lightingProfile
 )
 
 private fun AquariumPlantTag.toDataTag(): TankPlantTag = TankPlantTag(

@@ -1,5 +1,7 @@
 package com.aqua.aqualight.data.aquarium.model
 
+import com.aqua.aqualight.application.aquarium.lighting.AquariumLightingProfile
+
 data class TankDraft(
     val name: String = "",
     val description: String = "",
@@ -14,5 +16,6 @@ data class TankDraft(
     val sizeUnit: String = "cm",
     val volumeUnit: String = "L",
     val tankType: String = "",
-    val tankStyle: String = ""
+    val tankStyle: String = "",
+    val lightingProfile: AquariumLightingProfile = AquariumLightingProfile()
 )

@@ -6,6 +6,11 @@ import com.aqua.aqualight.application.aquarium.AquariumPlantTag
 import com.aqua.aqualight.application.aquarium.AquariumTankCleanupStage
 import com.aqua.aqualight.application.aquarium.AquariumTankDraft
 import com.aqua.aqualight.application.aquarium.DeleteAquariumTanksResult
+import com.aqua.aqualight.application.aquarium.lighting.AquariumLightingProfile
+import com.aqua.aqualight.application.aquarium.lighting.AquariumObservationSeverity
+import com.aqua.aqualight.application.aquarium.lighting.Co2Status
+import com.aqua.aqualight.application.aquarium.lighting.PlantDensity
+import com.aqua.aqualight.application.aquarium.lighting.PlantLightDemand
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumLivestock
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumMaterial
@@ -18,6 +23,7 @@ import org.junit.Test
 class DefaultAquariumTankOperationsMapperTest {
 
     @Test
+    @Suppress("LongMethod")
     fun `saved tank maps every UI-facing field without owner leakage`() {
         val source = SavedAquariumTank(
             id = 7L,
@@ -65,7 +71,8 @@ class DefaultAquariumTankOperationsMapperTest {
                     addedDateEpochDay = 300L,
                     note = "Pair"
                 )
-            )
+            ),
+            lightingProfile = completeLightingProfile()
         )
 
         val mapped = source.toApplicationSnapshot()
@@ -105,6 +112,7 @@ class DefaultAquariumTankOperationsMapperTest {
             AquariumLivestock(13L, "Clownfish", "Fish", 2, 300L, "Pair"),
             mapped.livestock.single()
         )
+        assertEquals(completeLightingProfile(), mapped.lightingProfile)
     }
 
     @Test
@@ -133,7 +141,8 @@ class DefaultAquariumTankOperationsMapperTest {
             sizeUnit = "cm",
             volumeUnit = "L",
             tankType = "Freshwater",
-            tankStyle = "Nature"
+            tankStyle = "Nature",
+            lightingProfile = completeLightingProfile()
         )
 
         val mapped = source.toDataDraft()
@@ -150,6 +159,7 @@ class DefaultAquariumTankOperationsMapperTest {
         assertEquals(source.volumeUnit, mapped.volumeUnit)
         assertEquals(source.tankType, mapped.tankType)
         assertEquals(source.tankStyle, mapped.tankStyle)
+        assertEquals(source.lightingProfile, mapped.lightingProfile)
         assertEquals(21L, mapped.plants.single().id)
         assertEquals("Monte Carlo", mapped.plants.single().plantName)
         assertEquals(22L, mapped.materials.single().id)
@@ -177,4 +187,18 @@ class DefaultAquariumTankOperationsMapperTest {
         assertEquals(listOf(7L), mapped.tankIds)
         assertEquals(AquariumTankCleanupStage.DEVICE_ASSIGNMENTS, mapped.cleanupIssues.single().stage)
     }
+
+    private fun completeLightingProfile() = AquariumLightingProfile(
+        plantDensity = PlantDensity.HIGH,
+        highestPlantLightDemand = PlantLightDemand.MEDIUM,
+        co2Status = Co2Status.ACTIVE,
+        isActiveSoil = true,
+        waterDepthCm = 42,
+        fixtureMountHeightCm = 12,
+        preferredViewingStartMinuteOfDay = 600,
+        preferredViewingEndMinuteOfDay = 1_200,
+        algaeObservation = AquariumObservationSeverity.NONE,
+        plantStressObservation = AquariumObservationSeverity.MILD,
+        observationDateEpochDay = 20_500L
+    )
 }

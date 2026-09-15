@@ -3,7 +3,7 @@
   "schema": "aql.android-firmware.interoperability.v1",
   "firmware": {
     "repository": "ozdemirrrcemal-cmyk/AquaLight-Firmware",
-    "commit": "7df97ce807ebb1e90ff63cc36206d6ce479a62fc",
+    "commit": "455298833668537fedc16b851067558815d2cc7b",
     "commandNames": {
       "path": "src/api/v1/commands/AqlCommandNames.hpp",
       "blobSha": "a4a05ae219e449b42de2654c38b55d65804c91b0"
@@ -18,9 +18,15 @@
       "src/api/v1/commands/AqlSecurityCommands.hpp": "1c16c3e7c6d1456b1802f494d91c104347ad09aa",
       "src/api/v1/commands/AqlTimeCommands.hpp": "ee6e87ab0e1152ffd3d9004fe8b5c7e380488a4f",
       "src/api/v1/commands/AqlLightCommands.hpp": "6fc17f55fb171060e1544f21a8f643a363b7da9e",
-      "src/api/v1/commands/AqlLightV1Commands.hpp": "847f9f73d225c261f55fea74f858721cac172821",
-      "src/api/v1/commands/names/AqlLightCommandNames.hpp": "9ebdd8f8b7dedb96e6cc1672fdcc676985f1e12e",
+      "src/api/v1/commands/AqlLightV1Commands.hpp": "e71b5e874914bfb8ed65105d0812e78d360991b0",
+      "src/api/v1/commands/names/AqlLightCommandNames.hpp": "ac77defeac3c93a4ed59245c8437d023d2657f9c",
+      "src/modules/light/AqlLightContractV1.hpp": "cd6dac08b0ae1a26c06c39fa21132fa23e027089",
+      "src/modules/light/AqlLightControlService.hpp": "e16c11d04a766feea1cf07da6bd60f3f18c7ae7a",
+      "src/modules/light/AqlLightGraphProjector.hpp": "374984587cc8f801816f8f700fe174721c459dc3",
+      "src/modules/light/AqlLightManagedPlan.hpp": "d428f5d803d142d7fd92f37e221f3290e87196ac",
       "src/modules/light/AqlLightProductContract.hpp": "c76f9c957672ffef62b96ba75f9b034a29c5fecb",
+      "src/modules/light/AqlLightScheduleEngine.hpp": "656e2221cd8481d9db2fd112394c086e1b7af653",
+      "src/modules/light/AqlLightV1Service.hpp": "03dd3c56db7c19b89f389f3e67c7b54744bd485f",
       "src/api/v1/commands/AqlLightTemperatureProtectionCommands.hpp": "e3f04116d2f6ae77e0a1adfd7112773a3e1d06fe",
       "src/api/v1/commands/AqlLightThermalCommands.hpp": "10f5e03237b16ad4bf0a26b64c2715e0985d094e",
       "src/api/v1/commands/AqlCoolingCommands.hpp": "4df542d5106fce2810e64559667685c1c2ecfd69",
@@ -34,8 +40,8 @@
   },
   "fixtures": {
     "aql_ws_v1_golden.json": {
-      "sha256": "4d9f2b406800656dc19f08350fd0a3badac659d6fe230d9e3df66f92f728845d",
-      "firmwareBlobSha": "e7dc2d3d5567f4246f818659dc2ae0a779021d58",
+      "sha256": "1646ebe28b9b27bffda866c508b2387ff3166cf76d98c7c6b09cc684b216758b",
+      "firmwareBlobSha": "8414f2ec1ef689c2b9d8a0e88034edeecf3e5b7f",
       "byteIdenticalWithFirmware": true
     },
     "aql_cooling_contract_v1.json": {
@@ -44,18 +50,18 @@
       "byteIdenticalWithFirmware": true
     },
     "aql_cooling_telemetry_v1.json": {
-      "sha256": "8257ed9ad10342d8cab2693087b2b1831f8287d6e6eede24da2875457f0075a7",
-      "firmwareBlobSha": "83778df071f32d5996a3d55946275e8b63291336",
+      "sha256": "bd6544e1d2f000f7794f10e085405e146c50fe036f20075681e42aacefffa22b",
+      "firmwareBlobSha": "77dd74c58a271180cbe455e648284f3cc7d33456",
       "byteIdenticalWithFirmware": true
     },
     "aql_light_contract_v1.json": {
-      "sha256": "1260eb5c50852bcd6652cea648e38d06ec06c88422ce1bd169103fc65a52edb0",
-      "firmwareBlobSha": "1b6fd1285af4caee02a72dadc572c2113d5c0192",
+      "sha256": "9e0471f4573c9b729ce6c8931fc0e0683765d7fcf352d6d6fdbf09848d582fcd",
+      "firmwareBlobSha": "2ed7fec8f600b81ff4f9b6fd63365aaeb3d03bdf",
       "byteIdenticalWithFirmware": true
     },
     "aql_light_rgb_pro_slim_contract_v1.json": {
-      "sha256": "c56863cc016ca6f5ca75ed56e58ae2e65c8f7d4432d639a31fdb9ebe7849466a",
-      "firmwareBlobSha": "f136b629dde5e2905ac7399ce28a306e9261db34",
+      "sha256": "604f723ca25da598ca89b2f3cc65350baba34f70ec0c283ed5a182ea9a1ce33a",
+      "firmwareBlobSha": "0ad201c06cbea972b538a757e060b128a8edb181",
       "byteIdenticalWithFirmware": true
     },
     "aql_light_manual_control_v1.json": {
@@ -64,8 +70,8 @@
       "byteIdenticalWithFirmware": true
     },
     "aql_light_graph_contract_v1.json": {
-      "sha256": "49aa0c4e2e543e9e74421b94ad9b0906e460366c0edd11d6b380c0ca5ab5bcf5",
-      "firmwareBlobSha": "375064486ab3236b09bae8f1e7508a1eb204581f",
+      "sha256": "2ea04e333b95f01b8a27c2c80969b2fa121754821e2f9bef377cca19daaae2f7",
+      "firmwareBlobSha": "686bce0c41df8749887cd7ff2b4c0fd1ffe3ed3b",
       "byteIdenticalWithFirmware": true
     },
     "aql_light_thermal_contract_v1.json": {
@@ -115,6 +121,7 @@
       "firmware.ota.status",
       "firmware.status.get",
       "light.acclimation.status.get",
+      "light.auto.plan.get",
       "light.auto.programs.get",
       "light.custom.get",
       "light.graph.get",
@@ -156,6 +163,14 @@
       ],
       "light.acclimation.stop": [
         "DeviceLightAcclimationStopPayload"
+      ],
+      "light.auto.plan.apply": [
+        "DeviceLightManagedPlanApplyPayload",
+        "DeviceLightManagedPlanPhase",
+        "DeviceLightScene"
+      ],
+      "light.auto.plan.delete": [
+        "DeviceLightManagedPlanDeletePayload"
       ],
       "light.auto.program.create": [
         "DeviceLightAutoProgramCreatePayload",
@@ -339,6 +354,37 @@
     "DeviceLightManualSetPayload": {
       "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/light/DeviceLightModels.kt",
       "fields": [
+        "scene"
+      ]
+    },
+    "DeviceLightManagedPlanApplyPayload": {
+      "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/light/DeviceLightManagedPlanModels.kt",
+      "fields": [
+        "expectedRevision",
+        "expectedStorageGeneration",
+        "planId",
+        "initialStartPercent",
+        "phases"
+      ]
+    },
+    "DeviceLightManagedPlanDeletePayload": {
+      "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/light/DeviceLightManagedPlanModels.kt",
+      "fields": [
+        "expectedRevision",
+        "expectedStorageGeneration",
+        "planId"
+      ]
+    },
+    "DeviceLightManagedPlanPhase": {
+      "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/light/DeviceLightManagedPlanModels.kt",
+      "fields": [
+        "validFromEpochDay",
+        "validUntilEpochDayExclusive",
+        "transitionDays",
+        "weekdaysMask",
+        "startTimeMs",
+        "endTimeMs",
+        "rampDurationMs",
         "scene"
       ]
     },

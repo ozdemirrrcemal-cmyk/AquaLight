@@ -45,6 +45,7 @@ import com.aqua.aqualight.data.devices.light.control.DefaultDeviceLightControlOp
 import com.aqua.aqualight.data.devices.light.custom.DefaultDeviceLightCustomOperations
 import com.aqua.aqualight.data.devices.light.library.DefaultDeviceLightLibraryOperations
 import com.aqua.aqualight.data.devices.light.library.DeviceLightLibraryStore
+import com.aqua.aqualight.data.devices.light.smartsetup.DefaultSmartSetupOperations
 import com.aqua.aqualight.data.devices.light.system.DefaultDeviceLightSystemOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningDiscoveryOperations
@@ -152,6 +153,15 @@ private class ReleaseSmokeViewModelFactory(
     private val notificationPreferences = NotificationPlatform.get(appContext).preferenceUseCase
     private val devicesRepository = DevicesRepository()
     private val lightControlOperations = DefaultDeviceLightControlOperations(devicesRepository)
+    private val timerControlOperations = DefaultDeviceTimerControlOperations(devicesRepository)
+    private val tankStore = AquariumTankDataStoreManager(appContext)
+    private val careTaskStore = CareTaskDataStoreManager.create(appContext)
+    private val assignmentRepository = TankDeviceAssignmentRepository(
+        ownerUid = SMOKE_OWNER_UID,
+        devicesRepository = devicesRepository,
+        assignmentStore = TankDeviceAssignmentStore.get(appContext),
+        tankStore = tankStore
+    )
     private val lightOperations = OwnerLightOperations(
         adaptationOperations = DefaultDeviceLightAdaptationOperations(devicesRepository),
         controlOperations = lightControlOperations,
@@ -163,16 +173,14 @@ private class ReleaseSmokeViewModelFactory(
             store = DeviceLightLibraryStore.create(appContext, SMOKE_OWNER_UID),
             devicesRepository = devicesRepository,
             controlOperations = lightControlOperations
+        ),
+        smartSetupOperations = DefaultSmartSetupOperations(
+            ownerUid = SMOKE_OWNER_UID,
+            devicesRepository = devicesRepository,
+            assignmentRepository = assignmentRepository,
+            tankStore = tankStore,
+            careTaskStore = careTaskStore
         )
-    )
-    private val timerControlOperations = DefaultDeviceTimerControlOperations(devicesRepository)
-    private val tankStore = AquariumTankDataStoreManager(appContext)
-    private val careTaskStore = CareTaskDataStoreManager.create(appContext)
-    private val assignmentRepository = TankDeviceAssignmentRepository(
-        ownerUid = SMOKE_OWNER_UID,
-        devicesRepository = devicesRepository,
-        assignmentStore = TankDeviceAssignmentStore.get(appContext),
-        tankStore = tankStore
     )
     private val maintenanceOperations = DefaultMaintenanceOperations(
         context = appContext,

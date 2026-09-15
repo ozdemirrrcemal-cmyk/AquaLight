@@ -18,7 +18,7 @@ class DeviceLightV1ContractTest {
     @Test
     fun `Light data layer pins the merged firmware main revision`() {
         assertEquals(
-            "7df97ce807ebb1e90ff63cc36206d6ce479a62fc",
+            "455298833668537fedc16b851067558815d2cc7b",
             DeviceLightRuntimeContract.PINNED_FIRMWARE_COMMIT
         )
     }
@@ -56,6 +56,33 @@ class DeviceLightV1ContractTest {
                 DeviceLightStatusParser.parse(status)
             }.isFailure
         )
+    }
+
+    @Test
+    fun `status parser rejects impossible managed plan runtime combinations`() {
+        val installedOutsideAuto = DeviceLightRuntimeFixtures.status().apply {
+            getJSONObject("auto")
+                .put("scheduleSource", "MANAGED_PLAN")
+                .put("planRevision", 2)
+                .put("planInstalled", true)
+                .put("planId", "lp-00000001")
+                .put("planRuntimeState", "ACTIVE")
+                .put("activePlanPhaseIndex", 0)
+                .put("planTransitionPermille", 500)
+        }
+        assertTrue(runCatching { DeviceLightStatusParser.parse(installedOutsideAuto) }.isFailure)
+
+        val blockedWithReadyClock = DeviceLightRuntimeFixtures.status().apply {
+            put("mode", "AUTO")
+            getJSONObject("auto")
+                .put("scheduleSource", "MANAGED_PLAN")
+                .put("planRevision", 2)
+                .put("planInstalled", true)
+                .put("planId", "lp-00000001")
+                .put("runtimeState", "RTC_BLOCKED")
+                .put("planRuntimeState", "RTC_BLOCKED")
+        }
+        assertTrue(runCatching { DeviceLightStatusParser.parse(blockedWithReadyClock) }.isFailure)
     }
 
     @Test

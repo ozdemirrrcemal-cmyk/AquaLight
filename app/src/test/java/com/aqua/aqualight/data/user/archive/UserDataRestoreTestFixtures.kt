@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.user.archive
 
+import com.aqua.aqualight.application.aquarium.lighting.AquariumLightingProfile
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignment
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentResult
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceRemovalResult
@@ -382,7 +383,8 @@ internal object RestoreFixture {
             careRemindersEnabled = true,
             plants = emptyList(),
             materials = emptyList(),
-            livestock = emptyList()
+            livestock = emptyList(),
+            lightingProfile = draft?.lightingProfile ?: AquariumLightingProfile()
         )
     }
 
@@ -416,6 +418,7 @@ internal object RestoreFixture {
             volumeUnit = "L",
             tankType = "freshwater",
             tankStyle = "nature",
+            smartLightProfile = emptyArchiveSmartLightProfile(),
             createdAtMillis = SOURCE_TANK_CREATED_AT_MILLIS,
             smartCareEnabled = true,
             careRemindersEnabled = true,

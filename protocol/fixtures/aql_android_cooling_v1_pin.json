@@ -30,8 +30,8 @@
       "byteIdenticalWithFirmware": true
     },
     "aql_cooling_telemetry_v1.json": {
-      "sha256": "8257ed9ad10342d8cab2693087b2b1831f8287d6e6eede24da2875457f0075a7",
-      "firmwareBlobSha": "83778df071f32d5996a3d55946275e8b63291336",
+      "sha256": "bd6544e1d2f000f7794f10e085405e146c50fe036f20075681e42aacefffa22b",
+      "firmwareBlobSha": "77dd74c58a271180cbe455e648284f3cc7d33456",
       "byteIdenticalWithFirmware": true
     }
   },

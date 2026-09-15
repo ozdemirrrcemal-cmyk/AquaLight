@@ -68,6 +68,9 @@ internal class UserDataBackupValidator {
         require(aquarium.createdAtMillis > 0L) {
             "Backup aquarium creation time is invalid."
         }
+        requireNotNull(aquarium.smartLightProfile) {
+            "Backup aquarium Smart Light profile is missing."
+        }.toAquariumLightingProfile()
         validateArchiveItemIds(aquarium.plants.map(ArchivePlant::id))
         validateArchiveItemIds(aquarium.materials.map(ArchiveMaterial::id))
         validateArchiveItemIds(aquarium.livestock.map(ArchiveLivestock::id))
