@@ -40,15 +40,10 @@ import kotlin.math.roundToInt
 
 @Composable
 internal fun DeviceLightTemperatureControlRow(
-    @StringRes labelRes: Int,
-    value: Int,
-    minimum: Int,
-    maximum: Int,
-    enabled: Boolean,
-    onValueChanged: (Int) -> Unit,
+    control: DeviceLightTemperatureControlSpec,
     visuals: DeviceLightSystemVisuals
 ) {
-    val label = stringResource(labelRes)
+    val label = stringResource(control.labelRes)
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -66,18 +61,23 @@ internal fun DeviceLightTemperatureControlRow(
                 R.string.device_light_system_decrease_temperature_description,
                 label
             ),
-            enabled = enabled && value > minimum,
-            onClick = { onValueChanged(value - 1) },
+            enabled = control.enabled && control.value > control.minimum,
+            onClick = { control.onValueChanged(control.value - 1) },
             visuals = visuals
         )
         DeviceLightTemperatureSlider(
-            value = value,
-            minimum = minimum,
-            maximum = maximum,
-            enabled = enabled,
-            description = label,
-            stateText = stringResource(R.string.device_light_system_temperature_format, value),
-            onValueChanged = onValueChanged,
+            spec = TemperatureSliderSpec(
+                value = control.value,
+                minimum = control.minimum,
+                maximum = control.maximum,
+                enabled = control.enabled,
+                description = label,
+                stateText = stringResource(
+                    R.string.device_light_system_temperature_format,
+                    control.value
+                )
+            ),
+            onValueChanged = control.onValueChanged,
             visuals = visuals,
             modifier = Modifier.weight(1f)
         )
@@ -87,12 +87,15 @@ internal fun DeviceLightTemperatureControlRow(
                 R.string.device_light_system_increase_temperature_description,
                 label
             ),
-            enabled = enabled && value < maximum,
-            onClick = { onValueChanged(value + 1) },
+            enabled = control.enabled && control.value < control.maximum,
+            onClick = { control.onValueChanged(control.value + 1) },
             visuals = visuals
         )
         BasicText(
-            text = stringResource(R.string.device_light_system_temperature_format, value),
+            text = stringResource(
+                R.string.device_light_system_temperature_format,
+                control.value
+            ),
             style = visuals.typography.body.copy(textAlign = TextAlign.End),
             modifier = Modifier.width(DeviceLightSystemGeometry.controlValueWidth)
         )
@@ -143,24 +146,19 @@ private fun TemperatureStepButton(
 
 @Composable
 private fun DeviceLightTemperatureSlider(
-    value: Int,
-    minimum: Int,
-    maximum: Int,
-    enabled: Boolean,
-    description: String,
-    stateText: String,
+    spec: TemperatureSliderSpec,
     onValueChanged: (Int) -> Unit,
     visuals: DeviceLightSystemVisuals,
     modifier: Modifier = Modifier
 ) {
     val currentOnValueChanged = rememberUpdatedState(onValueChanged)
     val state = TemperatureSliderState(
-        value = value,
-        minimum = minimum,
-        maximum = maximum,
-        enabled = enabled,
-        description = description,
-        stateText = stateText,
+        value = spec.value,
+        minimum = spec.minimum,
+        maximum = spec.maximum,
+        enabled = spec.enabled,
+        description = spec.description,
+        stateText = spec.stateText,
         onValueChanged = { selected -> currentOnValueChanged.value(selected) }
     )
     Canvas(
@@ -169,12 +167,12 @@ private fun DeviceLightTemperatureSlider(
             .temperatureSliderInput(state)
             .temperatureSliderSemantics(state)
     ) {
-        val alpha = if (enabled) 1f else DeviceLightSystemAlpha.disabled
+        val alpha = if (spec.enabled) 1f else DeviceLightSystemAlpha.disabled
         val startX = DeviceLightSystemGeometry.controlSliderInset.toPx()
         val endX = size.width - startX
         val centerY = size.height / 2f
-        val range = (maximum - minimum).coerceAtLeast(1)
-        val fraction = (value - minimum).toFloat() / range
+        val range = (spec.maximum - spec.minimum).coerceAtLeast(1)
+        val fraction = (spec.value - spec.minimum).toFloat() / range
         val selectedX = startX + (endX - startX) * fraction.coerceIn(0f, 1f)
         drawLine(
             color = visuals.colors.card.mediaOutline.copy(
@@ -199,6 +197,26 @@ private fun DeviceLightTemperatureSlider(
         )
     }
 }
+
+@Immutable
+internal data class DeviceLightTemperatureControlSpec(
+    @StringRes val labelRes: Int,
+    val value: Int,
+    val minimum: Int,
+    val maximum: Int,
+    val enabled: Boolean,
+    val onValueChanged: (Int) -> Unit
+)
+
+@Immutable
+private data class TemperatureSliderSpec(
+    val value: Int,
+    val minimum: Int,
+    val maximum: Int,
+    val enabled: Boolean,
+    val description: String,
+    val stateText: String
+)
 
 private fun Modifier.temperatureSliderInput(state: TemperatureSliderState): Modifier =
     pointerInput(state.enabled, state.minimum, state.maximum) {

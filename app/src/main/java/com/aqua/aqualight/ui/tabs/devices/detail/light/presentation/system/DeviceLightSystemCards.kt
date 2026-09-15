@@ -296,27 +296,31 @@ internal fun DeviceLightAutomaticRangeCard(
                     .height(DeviceLightSystemGeometry.chartHeight)
             )
             DeviceLightTemperatureControlRow(
-                labelRes = R.string.device_light_system_start,
-                value = state.selectedStartTemperatureCelsius,
-                minimum = state.snapshot?.startTemperaturePolicy?.minimum ?: 0,
-                maximum = minOf(
-                    state.snapshot?.startTemperaturePolicy?.maximum ?: 80,
-                    state.selectedFullSpeedTemperatureCelsius - 1
+                control = DeviceLightTemperatureControlSpec(
+                    labelRes = R.string.device_light_system_start,
+                    value = state.selectedStartTemperatureCelsius,
+                    minimum = state.snapshot?.startTemperaturePolicy?.minimum ?: 0,
+                    maximum = minOf(
+                        state.snapshot?.startTemperaturePolicy?.maximum ?: 80,
+                        state.selectedFullSpeedTemperatureCelsius - 1
+                    ),
+                    enabled = state.controlsEnabled,
+                    onValueChanged = actions.onStartTemperatureChanged
                 ),
-                enabled = state.controlsEnabled,
-                onValueChanged = actions.onStartTemperatureChanged,
                 visuals = visuals
             )
             DeviceLightTemperatureControlRow(
-                labelRes = R.string.device_light_system_full_speed,
-                value = state.selectedFullSpeedTemperatureCelsius,
-                minimum = maxOf(
-                    state.snapshot?.fullSpeedTemperaturePolicy?.minimum ?: 1,
-                    state.selectedStartTemperatureCelsius + 1
+                control = DeviceLightTemperatureControlSpec(
+                    labelRes = R.string.device_light_system_full_speed,
+                    value = state.selectedFullSpeedTemperatureCelsius,
+                    minimum = maxOf(
+                        state.snapshot?.fullSpeedTemperaturePolicy?.minimum ?: 1,
+                        state.selectedStartTemperatureCelsius + 1
+                    ),
+                    maximum = state.snapshot?.fullSpeedTemperaturePolicy?.maximum ?: 90,
+                    enabled = state.controlsEnabled,
+                    onValueChanged = actions.onFullSpeedTemperatureChanged
                 ),
-                maximum = state.snapshot?.fullSpeedTemperaturePolicy?.maximum ?: 90,
-                enabled = state.controlsEnabled,
-                onValueChanged = actions.onFullSpeedTemperatureChanged,
                 visuals = visuals
             )
             BasicText(
@@ -395,12 +399,14 @@ internal fun DeviceLightProtectionCard(
                     .background(visuals.colors.card.mediaOutline)
             )
             DeviceLightTemperatureControlRow(
-                labelRes = R.string.device_light_system_protection_threshold,
-                value = state.selectedProtectionThresholdCelsius,
-                minimum = state.snapshot?.protectionThresholdPolicy?.minimum ?: 50,
-                maximum = state.snapshot?.protectionThresholdPolicy?.maximum ?: 70,
-                enabled = state.controlsEnabled,
-                onValueChanged = actions.onProtectionThresholdChanged,
+                control = DeviceLightTemperatureControlSpec(
+                    labelRes = R.string.device_light_system_protection_threshold,
+                    value = state.selectedProtectionThresholdCelsius,
+                    minimum = state.snapshot?.protectionThresholdPolicy?.minimum ?: 50,
+                    maximum = state.snapshot?.protectionThresholdPolicy?.maximum ?: 70,
+                    enabled = state.controlsEnabled,
+                    onValueChanged = actions.onProtectionThresholdChanged
+                ),
                 visuals = visuals
             )
             Row(
