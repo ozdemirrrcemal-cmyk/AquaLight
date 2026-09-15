@@ -75,6 +75,9 @@ private class DebugDeviceFixtureViewModelFactory(
             },
             adaptationOperations = {
                 timerDependencies(requireGraph()).lightAdaptationOperations
+            },
+            systemOperations = {
+                timerDependencies(requireGraph()).lightSystemOperations
             }
         ) ?: when (modelClass) {
             DevicesViewModel::class.java -> createDevicesViewModel(requireGraph())
@@ -92,10 +95,6 @@ private class DebugDeviceFixtureViewModelFactory(
             DeviceLightLibraryViewModel::class.java ->
                 DeviceLightLibraryViewModel(
                     timerDependencies(requireGraph()).lightLibraryOperations
-                )
-            DeviceLightSystemViewModel::class.java ->
-                DeviceLightSystemViewModel(
-                    timerDependencies(requireGraph()).lightSystemOperations
                 )
             DeviceTimerRootViewModel::class.java ->
                 createTimerRootViewModel(requireGraph())
@@ -270,7 +269,8 @@ private fun fixtureFirmwareOperations(
 private fun lightFeatureViewModelOrNull(
     modelClass: Class<*>,
     automaticOperations: () -> DeviceLightAutomaticOperations,
-    adaptationOperations: () -> DeviceLightAdaptationOperations
+    adaptationOperations: () -> DeviceLightAdaptationOperations,
+    systemOperations: () -> DeviceLightSystemOperations
 ): ViewModel? = when (modelClass) {
     DeviceLightAutomaticProgramsViewModel::class.java ->
         DeviceLightAutomaticProgramsViewModel(automaticOperations())
@@ -278,6 +278,8 @@ private fun lightFeatureViewModelOrNull(
         DeviceLightAutomaticProgramEditorViewModel(automaticOperations())
     DeviceLightAdaptationViewModel::class.java ->
         DeviceLightAdaptationViewModel(adaptationOperations())
+    DeviceLightSystemViewModel::class.java ->
+        DeviceLightSystemViewModel(systemOperations())
     else -> null
 }
 
