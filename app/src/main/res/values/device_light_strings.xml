@@ -233,7 +233,6 @@
     <string name="device_light_custom_every_day">Every day</string>
     <string name="device_light_custom_curve_heading">24-hour light curve</string>
     <string name="device_light_custom_curve_helper">Drag the time playhead for a new point</string>
-    <string name="device_light_custom_point_capacity_format">%1$d / %2$d points</string>
     <string name="device_light_custom_add_point">Add point</string>
     <plurals name="device_light_custom_point_limit_warning">
         <item quantity="one">A custom curve can contain at most %1$d point.</item>
