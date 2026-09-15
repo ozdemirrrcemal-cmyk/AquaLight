@@ -16,7 +16,7 @@ import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdapta
 import com.aqua.aqualight.application.devices.light.control.DeviceLightControlOperations
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomOperations
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryOperations
-import com.aqua.aqualight.application.devices.light.protection.DeviceLightProtectionOperations
+import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftRequest
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftSession
@@ -44,7 +44,7 @@ import com.aqua.aqualight.data.devices.light.control.DefaultDeviceLightControlOp
 import com.aqua.aqualight.data.devices.light.custom.DefaultDeviceLightCustomOperations
 import com.aqua.aqualight.data.devices.light.library.DefaultDeviceLightLibraryOperations
 import com.aqua.aqualight.data.devices.light.library.DeviceLightLibraryStore
-import com.aqua.aqualight.data.devices.light.protection.DefaultDeviceLightProtectionOperations
+import com.aqua.aqualight.data.devices.light.system.DefaultDeviceLightSystemOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceControlSurfacePreparationOperations
 import com.aqua.aqualight.data.devices.provisioning.repository.DefaultProvisioningDraftOperations
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningDraftStore
@@ -100,7 +100,7 @@ internal data class OwnerLightOperations(
     val automaticOperations: DeviceLightAutomaticOperations,
     val controlOperations: DeviceLightControlOperations,
     val customOperations: DeviceLightCustomOperations,
-    val protectionOperations: DeviceLightProtectionOperations,
+    val systemOperations: DeviceLightSystemOperations,
     val libraryOperations: DeviceLightLibraryOperations
 )
 
@@ -380,7 +380,7 @@ private fun createOwnerLightOperations(
         automaticOperations = DefaultDeviceLightAutomaticOperations(devicesRepository),
         controlOperations = controlOperations,
         customOperations = DefaultDeviceLightCustomOperations(devicesRepository),
-        protectionOperations = DefaultDeviceLightProtectionOperations(devicesRepository),
+        systemOperations = DefaultDeviceLightSystemOperations(devicesRepository),
         libraryOperations = DefaultDeviceLightLibraryOperations(
             ownerUid = ownerUid,
             store = DeviceLightLibraryStore.create(context, ownerUid),

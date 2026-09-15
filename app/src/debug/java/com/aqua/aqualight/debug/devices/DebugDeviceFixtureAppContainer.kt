@@ -11,6 +11,7 @@ import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomat
 import com.aqua.aqualight.application.devices.light.control.DeviceLightControlOperations
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomOperations
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryOperations
+import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemOperations
 import com.aqua.aqualight.application.devices.timer.control.DeviceTimerControlOperations
 import com.aqua.aqualight.composition.AppContainer
 import com.aqua.aqualight.composition.OwnerDependencyGraph
@@ -31,6 +32,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.library.Devi
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom.DeviceLightCustomCurveViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual.DeviceLightManualControlViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root.DeviceLightRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.system.DeviceLightSystemViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.settings.DeviceFamilySettingsViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.presentation.root.DeviceTimerRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.presentation.channel.DeviceTimerChannelViewModel
@@ -91,6 +93,10 @@ private class DebugDeviceFixtureViewModelFactory(
                 DeviceLightLibraryViewModel(
                     timerDependencies(requireGraph()).lightLibraryOperations
                 )
+            DeviceLightSystemViewModel::class.java ->
+                DeviceLightSystemViewModel(
+                    timerDependencies(requireGraph()).lightSystemOperations
+                )
             DeviceTimerRootViewModel::class.java ->
                 createTimerRootViewModel(requireGraph())
             DeviceTimerProgramViewModel::class.java ->
@@ -146,7 +152,6 @@ private class DebugDeviceFixtureViewModelFactory(
         DeviceFamilySettingsViewModel(
             settingsOperations = DebugFixtureFamilySettingsOperations(
                 repository = graph.devicesRepository,
-                lightProtectionOperations = graph.lightOperations.protectionOperations,
                 fixtures = fixtures
             ),
             firmwareUpdateOperations = fixtureFirmwareOperations(graph, fixtures),
@@ -224,6 +229,10 @@ private class DebugDeviceFixtureViewModelFactory(
             ),
             runtime = lightRuntime
         )
+        val lightSystemOperations = DebugFixtureLightSystemOperations(
+            delegate = graph.lightOperations.systemOperations,
+            fixtures = fixtures
+        )
         return DebugTimerFixtureDependencies(
             graph = graph,
             lightAdaptationOperations = lightAdaptationOperations,
@@ -231,6 +240,7 @@ private class DebugDeviceFixtureViewModelFactory(
             lightControlOperations = lightControlOperations,
             lightCustomOperations = lightCustomOperations,
             lightLibraryOperations = lightLibraryOperations,
+            lightSystemOperations = lightSystemOperations,
             timerControlOperations = timerControlOperations,
             controlSurfacePreparationOperations =
                 DebugFixtureControlSurfacePreparationOperations(
@@ -278,6 +288,7 @@ private data class DebugTimerFixtureDependencies(
     val lightControlOperations: DeviceLightControlOperations,
     val lightCustomOperations: DeviceLightCustomOperations,
     val lightLibraryOperations: DeviceLightLibraryOperations,
+    val lightSystemOperations: DeviceLightSystemOperations,
     val timerControlOperations: DeviceTimerControlOperations,
     val controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations
 )

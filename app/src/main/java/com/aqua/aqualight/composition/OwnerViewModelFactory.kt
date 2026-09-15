@@ -58,6 +58,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.library.Devi
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom.DeviceLightCustomCurveViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual.DeviceLightManualControlViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root.DeviceLightRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.system.DeviceLightSystemViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.settings.DeviceFamilySettingsViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.presentation.root.DeviceTimerRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.presentation.channel.DeviceTimerChannelViewModel
@@ -201,6 +202,9 @@ internal class OwnerViewModelFactory(
             DeviceLightLibraryViewModel::class.java -> DeviceLightLibraryViewModel(
                 operations = graph.lightOperations.libraryOperations
             )
+            DeviceLightSystemViewModel::class.java -> DeviceLightSystemViewModel(
+                operations = graph.lightOperations.systemOperations
+            )
             DeviceCoolingRootViewModel::class.java -> DeviceCoolingRootViewModel(
                 operations = DefaultDeviceRootOperations(repository),
                 controlOperations = DefaultDeviceCoolingControlOperations(repository),
@@ -262,8 +266,7 @@ internal class OwnerViewModelFactory(
                 DeviceRootOverviewViewModel(DefaultDeviceRootOperations(repository))
             DeviceFamilySettingsViewModel::class.java -> DeviceFamilySettingsViewModel(
                 settingsOperations = DefaultDeviceFamilySettingsOperations(
-                    devicesRepository = repository,
-                    lightProtectionOperations = graph.lightOperations.protectionOperations
+                    devicesRepository = repository
                 ),
                 firmwareUpdateOperations = graph.firmwareUpdateOperations,
                 manifestUrl = BuildConfig.AQL_OTA_MANIFEST_URL
@@ -331,6 +334,7 @@ internal class OwnerViewModelFactory(
             DeviceLightManualControlViewModel::class.java,
             DeviceLightCustomCurveViewModel::class.java,
             DeviceLightLibraryViewModel::class.java,
+            DeviceLightSystemViewModel::class.java,
             DeviceCoolingRootViewModel::class.java,
             DeviceCoolingTemperatureHistoryViewModel::class.java,
             DeviceCoolingSystemStatusViewModel::class.java,

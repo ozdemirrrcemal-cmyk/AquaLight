@@ -45,7 +45,7 @@ import com.aqua.aqualight.data.devices.light.control.DefaultDeviceLightControlOp
 import com.aqua.aqualight.data.devices.light.custom.DefaultDeviceLightCustomOperations
 import com.aqua.aqualight.data.devices.light.library.DefaultDeviceLightLibraryOperations
 import com.aqua.aqualight.data.devices.light.library.DeviceLightLibraryStore
-import com.aqua.aqualight.data.devices.light.protection.DefaultDeviceLightProtectionOperations
+import com.aqua.aqualight.data.devices.light.system.DefaultDeviceLightSystemOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningDiscoveryOperations
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningProgressOperations
@@ -79,6 +79,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.library.Devi
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom.DeviceLightCustomCurveViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual.DeviceLightManualControlViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root.DeviceLightRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.system.DeviceLightSystemViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.presentation.root.DeviceTimerRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.presentation.channel.DeviceTimerChannelViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.presentation.program.DeviceTimerProgramViewModel
@@ -156,7 +157,7 @@ private class ReleaseSmokeViewModelFactory(
         controlOperations = lightControlOperations,
         automaticOperations = DefaultDeviceLightAutomaticOperations(devicesRepository),
         customOperations = DefaultDeviceLightCustomOperations(devicesRepository),
-        protectionOperations = DefaultDeviceLightProtectionOperations(devicesRepository),
+        systemOperations = DefaultDeviceLightSystemOperations(devicesRepository),
         libraryOperations = DefaultDeviceLightLibraryOperations(
             ownerUid = SMOKE_OWNER_UID,
             store = DeviceLightLibraryStore.create(appContext, SMOKE_OWNER_UID),
@@ -303,6 +304,8 @@ private class ReleaseSmokeViewModelFactory(
             )
         modelClass.isAssignableFrom(DeviceLightLibraryViewModel::class.java) ->
             DeviceLightLibraryViewModel(lightOperations.libraryOperations)
+        modelClass.isAssignableFrom(DeviceLightSystemViewModel::class.java) ->
+            DeviceLightSystemViewModel(lightOperations.systemOperations)
         else -> null
     }
 

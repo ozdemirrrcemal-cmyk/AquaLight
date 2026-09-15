@@ -449,7 +449,7 @@
         android:id="@+id/deviceLightSystemFragment"
         android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.menu.DeviceLightSystemFragment"
         android:label="@string/device_light_system_title"
-        tools:layout="@layout/fragment_device_light_empty_menu">
+        tools:layout="@layout/fragment_device_light_system">
         <argument android:name="deviceUid" app:argType="string" />
     </fragment>
 
