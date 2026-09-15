@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.core.view.ViewCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -36,10 +37,22 @@ class DeviceLightSystemFragment : Fragment(R.layout.fragment_device_light_system
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding = FragmentDeviceLightSystemBinding.bind(view)
+        compactHeaderForApprovedLayout()
         setupContent()
         viewModel.bind(args.deviceUid)
         renderState(viewModel.uiState.value)
         observeViewModel()
+    }
+
+    private fun compactHeaderForApprovedLayout() {
+        val header = binding?.appHeader?.root ?: return
+        ViewCompat.setPaddingRelative(
+            header,
+            ViewCompat.getPaddingStart(header),
+            resources.getDimensionPixelSize(R.dimen.aqua_size_4),
+            ViewCompat.getPaddingEnd(header),
+            resources.getDimensionPixelSize(R.dimen.aqua_size_6)
+        )
     }
 
     private fun setupContent() {

@@ -62,17 +62,33 @@ internal fun DeviceLightSystemStatusCard(
                 )
             }
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(DeviceLightSystemGeometry.fanCardGap)
+                modifier = Modifier.fillMaxWidth()
             ) {
-                repeat(EXPECTED_FAN_COUNT) { index ->
-                    DeviceLightFanCard(
-                        fan = snapshot?.fans?.getOrNull(index),
-                        index = index,
-                        visuals = visuals,
-                        modifier = Modifier.weight(1f)
+                DeviceLightFanCard(
+                    fan = snapshot?.fans?.getOrNull(0),
+                    index = 0,
+                    visuals = visuals,
+                    modifier = Modifier.weight(1f)
+                )
+                Box(
+                    modifier = Modifier
+                        .width(DeviceLightSystemGeometry.fanCardGap)
+                        .height(DeviceLightSystemGeometry.fanCardHeight),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Box(
+                        Modifier
+                            .width(DeviceLightSystemGeometry.dividerHeight)
+                            .fillMaxSize()
+                            .background(visuals.colors.card.mediaOutline)
                     )
                 }
+                DeviceLightFanCard(
+                    fan = snapshot?.fans?.getOrNull(1),
+                    index = 1,
+                    visuals = visuals,
+                    modifier = Modifier.weight(1f)
+                )
             }
             Spacer(Modifier.height(DeviceLightSystemGeometry.dividerHeight))
             Box(
@@ -345,9 +361,22 @@ internal fun DeviceLightProtectionCard(
         modifier = Modifier
             .fillMaxWidth()
             .height(DeviceLightSystemGeometry.protectionCardHeight),
-        contentPadding = DeviceLightSystemGeometry.cardPadding
+        contentPadding = DeviceLightSystemGeometry.protectionCardPadding
     ) {
         Column(Modifier.fillMaxSize()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(DeviceLightSystemGeometry.protectionHeaderHeight),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                BasicText(
+                    text = stringResource(R.string.device_light_system_light_protection),
+                    style = visuals.typography.title,
+                    modifier = Modifier.weight(1f)
+                )
+                DeviceLightProtectionBadge(visuals)
+            }
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -359,37 +388,11 @@ internal fun DeviceLightProtectionCard(
                     modifier = Modifier.size(DeviceLightSystemGeometry.protectionIconSize)
                 )
                 Spacer(Modifier.width(DeviceLightSystemGeometry.protectionTextGap))
-                Column(Modifier.weight(1f)) {
-                    BasicText(
-                        text = stringResource(R.string.device_light_system_light_protection),
-                        style = visuals.typography.title
-                    )
-                    BasicText(
-                        text = stringResource(R.string.device_light_system_protection_description),
-                        style = visuals.typography.caption
-                    )
-                }
-                Row(
-                    modifier = Modifier
-                        .clip(DeviceLightSystemGeometry.protectionBadgeShape)
-                        .background(
-                            visuals.colors.action.copy(
-                                alpha = DeviceLightSystemAlpha.badgeSurface
-                            )
-                        )
-                        .padding(DeviceLightSystemGeometry.protectionBadgePadding),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    DeviceLightLockIcon(
-                        tint = visuals.colors.action,
-                        modifier = Modifier.size(DeviceLightSystemGeometry.infoIconSize)
-                    )
-                    Spacer(Modifier.width(DeviceLightSystemGeometry.modeHelperGap))
-                    BasicText(
-                        text = stringResource(R.string.device_light_system_always_on),
-                        style = visuals.typography.micro.copy(color = visuals.colors.action)
-                    )
-                }
+                BasicText(
+                    text = stringResource(R.string.device_light_system_protection_description),
+                    style = visuals.typography.caption,
+                    modifier = Modifier.weight(1f)
+                )
             }
             Spacer(Modifier.height(DeviceLightSystemGeometry.protectionDividerGap))
             Box(
@@ -409,32 +412,40 @@ internal fun DeviceLightProtectionCard(
                 ),
                 visuals = visuals
             )
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = DeviceLightSystemGeometry.thresholdLimitIndent),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                BasicText(
-                    text = stringResource(
-                        R.string.device_light_system_temperature_format,
-                        state.snapshot?.protectionThresholdPolicy?.minimum ?: 50
-                    ),
-                    style = visuals.typography.caption
-                )
-                BasicText(
-                    text = stringResource(
-                        R.string.device_light_system_temperature_format,
-                        state.snapshot?.protectionThresholdPolicy?.maximum ?: 70
-                    ),
-                    style = visuals.typography.caption
-                )
-            }
+            DeviceLightTemperatureLimitLabels(
+                minimum = state.snapshot?.protectionThresholdPolicy?.minimum ?: 50,
+                maximum = state.snapshot?.protectionThresholdPolicy?.maximum ?: 70,
+                visuals = visuals
+            )
+            Spacer(Modifier.height(DeviceLightSystemGeometry.helperTopGap))
             BasicText(
                 text = stringResource(R.string.device_light_system_protection_helper),
                 style = visuals.typography.caption
             )
         }
+    }
+}
+
+@Composable
+private fun DeviceLightProtectionBadge(visuals: DeviceLightSystemVisuals) {
+    Row(
+        modifier = Modifier
+            .clip(DeviceLightSystemGeometry.protectionBadgeShape)
+            .background(
+                visuals.colors.action.copy(alpha = DeviceLightSystemAlpha.badgeSurface)
+            )
+            .padding(DeviceLightSystemGeometry.protectionBadgePadding),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        DeviceLightLockIcon(
+            tint = visuals.colors.action,
+            modifier = Modifier.size(DeviceLightSystemGeometry.infoIconSize)
+        )
+        Spacer(Modifier.width(DeviceLightSystemGeometry.modeHelperGap))
+        BasicText(
+            text = stringResource(R.string.device_light_system_always_on),
+            style = visuals.typography.micro.copy(color = visuals.colors.action)
+        )
     }
 }
 
@@ -450,5 +461,4 @@ private fun DeviceLightFanMode.helperRes(): Int = when (this) {
     DeviceLightFanMode.OFF -> R.string.device_light_system_mode_off_helper
 }
 
-private const val EXPECTED_FAN_COUNT = 2
 private const val PERCENT_MAXIMUM = 100

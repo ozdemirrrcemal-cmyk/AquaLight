@@ -8,10 +8,13 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
@@ -53,7 +56,8 @@ internal fun DeviceLightTemperatureControlRow(
         BasicText(
             text = label,
             style = visuals.typography.body,
-            modifier = Modifier.width(DeviceLightSystemGeometry.controlLabelWidth)
+            modifier = Modifier.width(DeviceLightSystemGeometry.controlLabelWidth),
+            maxLines = 1
         )
         TemperatureStepButton(
             symbol = stringResource(R.string.device_light_system_minus_symbol),
@@ -99,6 +103,40 @@ internal fun DeviceLightTemperatureControlRow(
             style = visuals.typography.body.copy(textAlign = TextAlign.End),
             modifier = Modifier.width(DeviceLightSystemGeometry.controlValueWidth)
         )
+    }
+}
+
+@Composable
+internal fun DeviceLightTemperatureLimitLabels(
+    minimum: Int,
+    maximum: Int,
+    visuals: DeviceLightSystemVisuals
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(DeviceLightSystemGeometry.thresholdLimitHeight),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Spacer(Modifier.width(DeviceLightSystemGeometry.controlLabelWidth))
+        Spacer(Modifier.width(DeviceLightSystemGeometry.controlStepTouchSize))
+        Row(
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = DeviceLightSystemGeometry.controlSliderInset),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            BasicText(
+                text = stringResource(R.string.device_light_system_temperature_format, minimum),
+                style = visuals.typography.caption
+            )
+            BasicText(
+                text = stringResource(R.string.device_light_system_temperature_format, maximum),
+                style = visuals.typography.caption
+            )
+        }
+        Spacer(Modifier.width(DeviceLightSystemGeometry.controlStepTouchSize))
+        Spacer(Modifier.width(DeviceLightSystemGeometry.controlValueWidth))
     }
 }
 
