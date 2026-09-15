@@ -111,13 +111,17 @@ internal class DeviceLightAutomaticProgramEditorViewModel(
         }
         val emptyDraft = DeviceLightAutomaticEditorDraft.empty(snapshot.channels)
         val loadedDraft = selectedProgram?.let(DeviceLightAutomaticEditorDraft::fromProgram)
-            ?: emptyDraft
+            ?: DeviceLightAutomaticEditorDraft.forNewProgram(snapshot.channels)
         val modeDraft = if (mode is DeviceLightAutomaticEditorMode.Duplicate) {
             loadedDraft.copy(enabled = true)
         } else {
             loadedDraft
         }
-        val baseline = if (mode is DeviceLightAutomaticEditorMode.Edit) modeDraft else emptyDraft
+        val baseline = when (mode) {
+            DeviceLightAutomaticEditorMode.Create,
+            is DeviceLightAutomaticEditorMode.Edit -> modeDraft
+            is DeviceLightAutomaticEditorMode.Duplicate -> emptyDraft
+        }
         val restored = restoredDraft?.takeIf { draft ->
             draft.channels.keys == snapshot.channels.toSet()
         }

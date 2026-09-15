@@ -20,7 +20,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.res.stringResource
@@ -29,7 +28,6 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
-import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticChannel
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 
 @Composable
@@ -38,14 +36,12 @@ internal fun DeviceLightAutomaticCycleCard(
     actions: DeviceLightAutomaticScheduleActions,
     visuals: DeviceLightAutomaticEditorVisuals
 ) {
-    val sceneColor = state.draft.channels.cycleSceneColor(visuals)
     AquaDeviceCardSurface(
         modifier = Modifier
             .fillMaxWidth()
             .height(DeviceLightAutomaticEditorGeometry.cycleCardHeight),
         contentPadding = PaddingValues()
     ) {
-        CycleAmbientBackdrop(sceneColor, visuals)
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -86,34 +82,6 @@ internal fun DeviceLightAutomaticCycleCard(
                 )
             }
             CycleTimeFields(state, actions, visuals)
-        }
-    }
-}
-
-@Composable
-private fun CycleAmbientBackdrop(
-    sceneColor: Color,
-    visuals: DeviceLightAutomaticEditorVisuals
-) {
-    Canvas(Modifier.fillMaxSize()) {
-        val glowRadius = size.minDimension * AMBIENT_GLOW_RADIUS_MULTIPLIER
-        val glows = listOf(
-            visuals.colors.red to Offset(0f, 0f),
-            visuals.colors.green to Offset(size.width * HALF_FRACTION, 0f),
-            visuals.colors.blue to Offset(size.width, 0f),
-            sceneColor to center
-        )
-        glows.forEach { (color, glowCenter) ->
-            drawRect(
-                brush = Brush.radialGradient(
-                    colors = listOf(
-                        color.copy(alpha = DeviceLightAutomaticEditorAlpha.ambientGlow),
-                        Color.Transparent
-                    ),
-                    center = glowCenter,
-                    radius = glowRadius
-                )
-            )
         }
     }
 }
@@ -242,31 +210,6 @@ private fun CycleDownChevron(color: Color, modifier: Modifier) {
     }
 }
 
-private fun Map<DeviceLightAutomaticChannel, Int>.cycleSceneColor(
-    visuals: DeviceLightAutomaticEditorVisuals
-): Color {
-    if (values.all { percent -> percent == ZERO_PERCENT }) return visuals.colors.blue
-    val red = this[DeviceLightAutomaticChannel.RED].orZeroPercent()
-    val green = this[DeviceLightAutomaticChannel.GREEN].orZeroPercent()
-    val blue = this[DeviceLightAutomaticChannel.BLUE].orZeroPercent()
-    val white = this[DeviceLightAutomaticChannel.WHITE].orZeroPercent()
-    return Color(
-        red = mixCycleChannel(red, white),
-        green = mixCycleChannel(green, white),
-        blue = mixCycleChannel(blue, white)
-    )
-}
-
-private fun Int?.orZeroPercent(): Float =
-    (this ?: ZERO_PERCENT).toFloat() / MAX_PERCENT
-
-private fun mixCycleChannel(channel: Float, white: Float): Float =
-    (channel * DeviceLightAutomaticDialSpec.colorMixWeight +
-        white * DeviceLightAutomaticDialSpec.whiteMixWeight).coerceIn(
-        DeviceLightAutomaticDialSpec.minimumOverlayChannel,
-        DeviceLightAutomaticDialSpec.maximumOverlayChannel
-    )
-
 private data class AutomaticCycleTimeFieldContent(
     val label: String,
     val timeMs: Long?,
@@ -276,11 +219,7 @@ private data class AutomaticCycleTimeFieldContent(
 )
 
 private const val DEFAULT_TIME_STEP_MS = 60_000L
-private const val ZERO_PERCENT = 0
-private const val MAX_PERCENT = 100f
 private const val ENABLED_ALPHA = 1f
-private const val HALF_FRACTION = 0.5f
-private const val AMBIENT_GLOW_RADIUS_MULTIPLIER = 1.45f
 private const val CYCLE_DIAL_WEIGHT = 1f
 private const val TIME_FIELD_WEIGHT = 1f
 private const val TIME_LABEL_WEIGHT = 1f

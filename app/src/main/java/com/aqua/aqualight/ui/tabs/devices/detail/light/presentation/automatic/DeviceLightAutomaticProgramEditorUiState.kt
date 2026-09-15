@@ -67,6 +67,12 @@ internal data class DeviceLightAutomaticEditorDraft(
                 channels = channels.associateWith { EMPTY_CHANNEL_PERCENT }
             )
 
+        fun forNewProgram(channels: List<DeviceLightAutomaticChannel>) =
+            empty(channels).copy(
+                startTimeMs = DEFAULT_START_TIME_MS,
+                endTimeMs = DEFAULT_END_TIME_MS
+            )
+
         fun fromProgram(program: DeviceLightAutomaticProgram) =
             DeviceLightAutomaticEditorDraft(
                 weekdaysMask = program.weekdaysMask,
@@ -134,6 +140,11 @@ private fun Bundle.optionalLong(key: String): Long? =
 
 private const val EMPTY_WEEKDAYS_MASK = 0
 private const val EMPTY_CHANNEL_PERCENT = 0
+private const val MILLIS_PER_HOUR = 3_600_000L
+private const val DEFAULT_START_HOUR = 10L
+private const val DEFAULT_END_HOUR = 17L
+private const val DEFAULT_START_TIME_MS = DEFAULT_START_HOUR * MILLIS_PER_HOUR
+private const val DEFAULT_END_TIME_MS = DEFAULT_END_HOUR * MILLIS_PER_HOUR
 private const val ABSENT_CHANNEL = -1
 private const val STATE_WEEKDAYS_MASK = "light_auto_editor_weekdays_mask"
 private const val STATE_START_TIME = "light_auto_editor_start_time"

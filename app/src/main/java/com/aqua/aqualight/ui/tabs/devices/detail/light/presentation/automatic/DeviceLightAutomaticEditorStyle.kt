@@ -18,7 +18,7 @@ internal object DeviceLightAutomaticEditorGeometry {
     val cycleTimeFieldGap = 8.dp
     val cycleTimeFieldShape = RoundedCornerShape(12.dp)
     val cycleTimeChevronSize = 12.dp
-    val dialStrokeWidth = 8.dp
+    val dialStrokeWidth = 10.dp
     val dialGuideStrokeWidth = 1.dp
     val dialMarkerRadius = 8.dp
     val dialMarkerOutlineWidth = 2.dp
@@ -60,7 +60,6 @@ internal object DeviceLightAutomaticEditorGeometry {
 }
 
 internal object DeviceLightAutomaticEditorAlpha {
-    const val ambientGlow = 0.16f
     const val centerScrim = 0.72f
     const val neutralDial = 0.28f
     const val dialGuide = 0.62f
@@ -81,8 +80,4 @@ internal object DeviceLightAutomaticDialSpec {
     const val radiusInsetFraction = 0.09f
     const val moonOrbitFraction = 0.67f
     const val centerScrimRadiusFraction = 0.35f
-    const val minimumOverlayChannel = 0f
-    const val maximumOverlayChannel = 1f
-    const val whiteMixWeight = 0.55f
-    const val colorMixWeight = 0.45f
 }

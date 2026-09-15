@@ -10,6 +10,15 @@ import org.junit.Test
 class DeviceLightAutomaticProgramEditorUiStateTest {
 
     @Test
+    fun newProgramDraftStartsEnabledWithCommercialTimeDefaults() {
+        val draft = DeviceLightAutomaticEditorDraft.forNewProgram(CHANNELS)
+
+        assertEquals(hours(DEFAULT_START_HOUR), draft.startTimeMs)
+        assertEquals(hours(DEFAULT_END_HOUR), draft.endTimeMs)
+        assertTrue(draft.enabled)
+    }
+
+    @Test
     fun emptyCreateDraftStaysNeutralAndCannotBeSaved() {
         val state = createState(DeviceLightAutomaticEditorDraft.empty(CHANNELS))
 
@@ -95,6 +104,8 @@ private const val DEVICE_UID = "light-editor-test-device"
 private const val REVISION = 12L
 private const val CAPACITY = 16
 private const val EVERY_DAY_MASK = 0x7f
+private const val DEFAULT_START_HOUR = 10
+private const val DEFAULT_END_HOUR = 17
 private const val OVERNIGHT_START_HOUR = 22
 private const val OVERNIGHT_END_HOUR = 6
 private const val OVERNIGHT_RAMP_MINUTES = 60
