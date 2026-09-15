@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.devices.light.control
 
 import com.aqua.aqualight.application.devices.light.control.DeviceLightControlMode
 import com.aqua.aqualight.application.devices.light.control.DeviceLightOutputCondition
+import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationState
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightMode
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeFixtures
@@ -26,6 +27,10 @@ class DeviceLightControlSnapshotProjectionTest {
         assertEquals(true, snapshot.hero.outputHealthy)
         assertEquals(76.0, snapshot.hero.estimatedPowerWatts ?: Double.NaN, 0.0)
         assertEquals(5000, snapshot.hero.estimatedColorTemperatureKelvin)
+        assertTrue(snapshot.adaptation.supported)
+        assertEquals(DeviceLightAdaptationState.DISABLED, snapshot.adaptation.state)
+        assertEquals(1_000, snapshot.adaptation.currentPermille)
+        assertEquals(0L, snapshot.adaptation.remainingSeconds)
         assertTrue(snapshot.channelKeys.containsAll(listOf("red", "green", "blue", "white")))
     }
 }

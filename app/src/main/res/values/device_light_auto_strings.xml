@@ -80,6 +80,6 @@
     <string name="device_light_auto_preset_shade_summary">Anubias, fern and moss</string>
     <string name="device_light_auto_preset_schedule_format">%1$d h · %2$d min</string>
     <string name="device_light_auto_preset_channel_percent">%1$d%%</string>
-    <string name="device_light_auto_preset_card_description">%1$s. %2$d hours, %3$d minute ramp. White %4$d percent, red %5$d percent, green %6$d percent, blue %7$d percent.</string>
+    <string name="device_light_auto_preset_card_description">%1$s. %2$d h, %3$d min ramp. White %4$d percent, red %5$d percent, green %6$d percent, blue %7$d percent.</string>
     <string name="device_light_auto_preset_use">Use this preset</string>
 </resources>

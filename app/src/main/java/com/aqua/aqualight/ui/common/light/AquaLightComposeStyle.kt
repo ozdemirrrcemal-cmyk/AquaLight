@@ -323,9 +323,6 @@ object AquaLightControlsPreviewSpec {
     const val fullPercent = 100
     const val programCount = 3
     const val customCurvePointCount = 12
-    const val adaptationActive = true
-    const val adaptationDaysRemaining = 12
-    const val adaptationPercent = 82
     const val systemTemperatureCelsius = 42.8
     const val systemFanOnePercent = 35
     const val systemFanTwoPercent = 35

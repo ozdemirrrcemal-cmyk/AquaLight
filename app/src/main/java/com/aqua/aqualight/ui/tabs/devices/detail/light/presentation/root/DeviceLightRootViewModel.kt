@@ -12,6 +12,7 @@ import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.light.control.DeviceLightControlOperations
+import com.aqua.aqualight.application.devices.light.control.DeviceLightAdaptationSummary
 import com.aqua.aqualight.application.devices.light.control.DeviceLightControlResult
 import com.aqua.aqualight.application.devices.light.control.DeviceLightControlSnapshot
 import com.aqua.aqualight.application.devices.light.control.DeviceLightHeroSnapshot
@@ -178,7 +179,8 @@ class DeviceLightRootViewModel(
             },
             contentEnabled = surfaceAvailable && !surfacePreparationPending,
             showBlockingPreparation = surfacePreparationPending,
-            hero = currentControlSnapshot?.hero ?: DeviceLightHeroSnapshot()
+            hero = currentControlSnapshot?.hero ?: DeviceLightHeroSnapshot(),
+            adaptation = currentControlSnapshot?.adaptation ?: DeviceLightAdaptationSummary()
         )
     }
 
@@ -207,7 +209,8 @@ data class DeviceLightRootUiState(
     val connectionVisualState: DeviceConnectionVisualState = DeviceConnectionVisualState.OFFLINE,
     val contentEnabled: Boolean = false,
     val showBlockingPreparation: Boolean = false,
-    val hero: DeviceLightHeroSnapshot = DeviceLightHeroSnapshot()
+    val hero: DeviceLightHeroSnapshot = DeviceLightHeroSnapshot(),
+    val adaptation: DeviceLightAdaptationSummary = DeviceLightAdaptationSummary()
 )
 
 private fun DeviceRootSnapshot?.isLightControlRootAvailable(deviceUid: String): Boolean = when {

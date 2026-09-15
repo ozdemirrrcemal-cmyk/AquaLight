@@ -4,18 +4,21 @@ import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.light.control.DeviceLightControlFailure
+import com.aqua.aqualight.application.devices.light.control.DeviceLightAdaptationSummary
 import com.aqua.aqualight.application.devices.light.control.DeviceLightControlMode
 import com.aqua.aqualight.application.devices.light.control.DeviceLightControlOperations
 import com.aqua.aqualight.application.devices.light.control.DeviceLightControlResult
 import com.aqua.aqualight.application.devices.light.control.DeviceLightControlSnapshot
 import com.aqua.aqualight.application.devices.light.control.DeviceLightHeroSnapshot
 import com.aqua.aqualight.application.devices.light.control.DeviceLightOutputCondition
+import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationState
 import com.aqua.aqualight.application.devices.light.control.matchesLightControlSurface
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightMode
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAcclimationState
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightOutputReason
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightProduct
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRepository
@@ -150,8 +153,21 @@ internal fun DeviceLightStatus.toControlSnapshot(
             ?.takeIf { power.available && power.estimatedFixturePowerAvailable },
         estimatedColorTemperatureKelvin = color.estimatedCctK
             ?.takeIf { color.available && color.cctAvailable }
+    ),
+    adaptation = DeviceLightAdaptationSummary(
+        supported = features.acclimation && acclimation.supported,
+        state = acclimation.state?.toApplicationState(),
+        currentPermille = acclimation.currentPermille,
+        remainingSeconds = acclimation.remainingSeconds
     )
 )
+
+private fun DeviceLightAcclimationState.toApplicationState(): DeviceLightAdaptationState =
+    when (this) {
+        DeviceLightAcclimationState.DISABLED -> DeviceLightAdaptationState.DISABLED
+        DeviceLightAcclimationState.ACTIVE -> DeviceLightAdaptationState.ACTIVE
+        DeviceLightAcclimationState.COMPLETED -> DeviceLightAdaptationState.COMPLETED
+    }
 
 private fun DeviceLightMode.toApplicationMode(): DeviceLightControlMode = when (this) {
     DeviceLightMode.MANUAL -> DeviceLightControlMode.MANUAL

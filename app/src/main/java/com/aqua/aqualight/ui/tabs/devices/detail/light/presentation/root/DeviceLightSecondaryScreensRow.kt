@@ -23,6 +23,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationState
+import com.aqua.aqualight.application.devices.light.control.DeviceLightAdaptationSummary
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
@@ -37,6 +39,7 @@ import com.aqua.aqualight.ui.common.light.aquaLightDashboardTypography
 @Composable
 internal fun DeviceLightSecondaryScreensRow(
     enabled: Boolean,
+    adaptation: DeviceLightAdaptationSummary,
     onMenuClick: (DeviceLightMenuDestination) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -44,13 +47,15 @@ internal fun DeviceLightSecondaryScreensRow(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(AquaLightDashboardGeometry.secondaryCardGap)
     ) {
-        DeviceLightSecondaryCard(
-            icon = AquaLightDashboardIconKind.ADAPTATION,
-            enabled = enabled,
-            onClick = { onMenuClick(DeviceLightMenuDestination.ADAPTATION) },
-            modifier = Modifier.weight(AquaLightDashboardGeometry.adaptationCardWeight)
-        ) { colors, typography ->
-            DeviceLightAdaptationContent(colors, typography)
+        if (adaptation.supported) {
+            DeviceLightSecondaryCard(
+                icon = AquaLightDashboardIconKind.ADAPTATION,
+                enabled = enabled,
+                onClick = { onMenuClick(DeviceLightMenuDestination.ADAPTATION) },
+                modifier = Modifier.weight(AquaLightDashboardGeometry.adaptationCardWeight)
+            ) { colors, typography ->
+                DeviceLightAdaptationContent(adaptation, colors, typography)
+            }
         }
         DeviceLightSecondaryCard(
             icon = AquaLightDashboardIconKind.SYSTEM,
@@ -95,6 +100,7 @@ private fun RowScope.DeviceLightSecondaryCard(
 
 @Composable
 private fun RowScope.DeviceLightAdaptationContent(
+    adaptation: DeviceLightAdaptationSummary,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
 ) {
@@ -105,27 +111,30 @@ private fun RowScope.DeviceLightAdaptationContent(
         verticalArrangement = Arrangement.spacedBy(AquaLightDashboardGeometry.secondaryTitleGap)
     ) {
         DeviceLightSecondaryTitle(R.string.device_light_adaptation_title, colors, typography)
-        if (AquaLightControlsPreviewSpec.adaptationActive) {
+        val percent = adaptation.displayPercent()
+        if (adaptation.state != DeviceLightAdaptationState.DISABLED && percent != null) {
             BasicText(
                 text = stringResource(
                     R.string.device_light_adaptation_percent,
-                    AquaLightControlsPreviewSpec.adaptationPercent
+                    percent
                 ),
                 style = typography.body.copy(color = colors.primaryText),
                 maxLines = 1
             )
-            BasicText(
-                text = pluralStringResource(
-                    R.plurals.device_light_adaptation_days_remaining,
-                    AquaLightControlsPreviewSpec.adaptationDaysRemaining,
-                    AquaLightControlsPreviewSpec.adaptationDaysRemaining
-                ),
-                style = typography.micro.copy(color = colors.secondaryText),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            adaptation.remainingDays()?.let { days ->
+                BasicText(
+                    text = pluralStringResource(
+                        R.plurals.device_light_adaptation_days_remaining,
+                        days,
+                        days
+                    ),
+                    style = typography.micro.copy(color = colors.secondaryText),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
             DeviceLightAdaptationProgress(
-                percent = AquaLightControlsPreviewSpec.adaptationPercent,
+                percent = percent,
                 colors = colors
             )
         } else {
@@ -136,6 +145,17 @@ private fun RowScope.DeviceLightAdaptationContent(
             )
         }
     }
+}
+
+private fun DeviceLightAdaptationSummary.displayPercent(): Int? = when (state) {
+    DeviceLightAdaptationState.COMPLETED -> AquaLightControlsPreviewSpec.fullPercent.toInt()
+    DeviceLightAdaptationState.ACTIVE -> currentPermille?.div(PERMILLE_PER_PERCENT)
+    DeviceLightAdaptationState.DISABLED,
+    null -> null
+}
+
+private fun DeviceLightAdaptationSummary.remainingDays(): Int? = remainingSeconds?.let { seconds ->
+    ((seconds + SECONDS_PER_DAY - 1L) / SECONDS_PER_DAY).toInt()
 }
 
 @Composable
@@ -239,3 +259,6 @@ private fun DeviceLightSystemStatus(
         )
     }
 }
+
+private const val PERMILLE_PER_PERCENT = 10
+private const val SECONDS_PER_DAY = 86_400L

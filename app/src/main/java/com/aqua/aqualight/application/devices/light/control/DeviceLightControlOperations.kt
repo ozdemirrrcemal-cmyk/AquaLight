@@ -1,6 +1,7 @@
 package com.aqua.aqualight.application.devices.light.control
 
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
+import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationState
 import kotlinx.coroutines.flow.Flow
 
 /** Firmware-independent application boundary for the shared Light V1 control surface. */
@@ -38,7 +39,15 @@ data class DeviceLightControlSnapshot(
     val productKey: String,
     val physicalChannelCount: Int,
     val channelKeys: List<String>,
-    val hero: DeviceLightHeroSnapshot = DeviceLightHeroSnapshot()
+    val hero: DeviceLightHeroSnapshot = DeviceLightHeroSnapshot(),
+    val adaptation: DeviceLightAdaptationSummary = DeviceLightAdaptationSummary()
+)
+
+data class DeviceLightAdaptationSummary(
+    val supported: Boolean = false,
+    val state: DeviceLightAdaptationState? = null,
+    val currentPermille: Int? = null,
+    val remainingSeconds: Long? = null
 )
 
 data class DeviceLightHeroSnapshot(

@@ -151,10 +151,14 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
                 DeviceLightRootFragmentDirections
                     .actionDeviceLightRootFragmentToDeviceLightCustomCurveFragment(args.deviceUid)
             )
-            DeviceLightMenuDestination.ADAPTATION -> navController.navigate(
-                DeviceLightRootFragmentDirections
-                    .actionDeviceLightRootFragmentToDeviceLightAdaptationFragment(args.deviceUid)
-            )
+            DeviceLightMenuDestination.ADAPTATION -> if (
+                viewModel.uiState.value.adaptation.supported
+            ) {
+                navController.navigate(
+                    DeviceLightRootFragmentDirections
+                        .actionDeviceLightRootFragmentToDeviceLightAdaptationFragment(args.deviceUid)
+                )
+            }
             DeviceLightMenuDestination.SYSTEM -> navController.navigate(
                 DeviceLightRootFragmentDirections
                     .actionDeviceLightRootFragmentToDeviceLightSystemFragment(args.deviceUid)

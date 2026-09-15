@@ -314,7 +314,7 @@
         android:id="@+id/deviceLightAdaptationFragment"
         android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.menu.DeviceLightAdaptationFragment"
         android:label="@string/device_light_adaptation_title"
-        tools:layout="@layout/fragment_device_light_empty_menu">
+        tools:layout="@layout/fragment_device_light_adaptation">
         <argument android:name="deviceUid" app:argType="string" />
     </fragment>
 

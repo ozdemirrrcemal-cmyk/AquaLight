@@ -57,6 +57,7 @@ internal fun DeviceLightDashboardScreen(
         item(key = "light-secondary-screens") {
             DeviceLightSecondaryScreensRow(
                 enabled = state.contentEnabled,
+                adaptation = state.adaptation,
                 onMenuClick = actions.onMenuClick
             )
         }

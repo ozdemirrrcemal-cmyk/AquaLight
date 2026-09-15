@@ -53,6 +53,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.reservoir.Device
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.root.DeviceDosingRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.DeviceLightAutomaticProgramsViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.DeviceLightAutomaticProgramEditorViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.adaptation.DeviceLightAdaptationViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.library.DeviceLightLibraryViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom.DeviceLightCustomCurveViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual.DeviceLightManualControlViewModel
@@ -178,6 +179,9 @@ internal class OwnerViewModelFactory(
                 rootOperations = DefaultDeviceRootOperations(repository),
                 lightControlOperations = graph.lightOperations.controlOperations,
                 controlSurfacePreparationOperations = graph.controlSurfacePreparationOperations
+            )
+            DeviceLightAdaptationViewModel::class.java -> DeviceLightAdaptationViewModel(
+                graph.lightOperations.adaptationOperations
             )
             DeviceLightAutomaticProgramsViewModel::class.java ->
                 DeviceLightAutomaticProgramsViewModel(
@@ -321,6 +325,7 @@ internal class OwnerViewModelFactory(
             AquariumTankViewModel::class.java,
             MaintenanceViewModel::class.java,
             DeviceLightRootViewModel::class.java,
+            DeviceLightAdaptationViewModel::class.java,
             DeviceLightAutomaticProgramsViewModel::class.java,
             DeviceLightAutomaticProgramEditorViewModel::class.java,
             DeviceLightManualControlViewModel::class.java,

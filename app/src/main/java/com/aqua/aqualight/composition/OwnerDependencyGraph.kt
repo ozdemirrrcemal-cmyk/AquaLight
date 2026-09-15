@@ -12,6 +12,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigationOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticOperations
+import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationOperations
 import com.aqua.aqualight.application.devices.light.control.DeviceLightControlOperations
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomOperations
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryOperations
@@ -38,6 +39,7 @@ import com.aqua.aqualight.data.devices.dosing.SharedPreferencesDeviceDosingCalib
 import com.aqua.aqualight.data.devices.dosing.SharedPreferencesDeviceDosingLowLevelAlertLedger
 import com.aqua.aqualight.data.devices.dosing.v1.DeviceDosingV1ProductionRuntime
 import com.aqua.aqualight.data.devices.light.automatic.DefaultDeviceLightAutomaticOperations
+import com.aqua.aqualight.data.devices.light.adaptation.DefaultDeviceLightAdaptationOperations
 import com.aqua.aqualight.data.devices.light.control.DefaultDeviceLightControlOperations
 import com.aqua.aqualight.data.devices.light.custom.DefaultDeviceLightCustomOperations
 import com.aqua.aqualight.data.devices.light.library.DefaultDeviceLightLibraryOperations
@@ -94,6 +96,7 @@ internal data class OwnerDosingOperations(
 
 /** One owner-scoped application boundary set backed by the single central Light runtime. */
 internal data class OwnerLightOperations(
+    val adaptationOperations: DeviceLightAdaptationOperations,
     val automaticOperations: DeviceLightAutomaticOperations,
     val controlOperations: DeviceLightControlOperations,
     val customOperations: DeviceLightCustomOperations,
@@ -373,6 +376,7 @@ private fun createOwnerLightOperations(
 ): OwnerLightOperations {
     val controlOperations = DefaultDeviceLightControlOperations(devicesRepository)
     return OwnerLightOperations(
+        adaptationOperations = DefaultDeviceLightAdaptationOperations(devicesRepository),
         automaticOperations = DefaultDeviceLightAutomaticOperations(devicesRepository),
         controlOperations = controlOperations,
         customOperations = DefaultDeviceLightCustomOperations(devicesRepository),
