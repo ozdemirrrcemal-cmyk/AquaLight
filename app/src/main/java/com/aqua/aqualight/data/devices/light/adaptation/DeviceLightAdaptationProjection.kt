@@ -33,23 +33,10 @@ internal fun DeviceLightAcclimationPolicy.accepts(
     startPercent: Int,
     durationDays: Int
 ): Boolean {
-    val startMin = startPercentMin
-    val startMax = startPercentMax
-    val startStep = startPercentStep
-    val durationMin = durationDaysMin
-    val durationMax = durationDaysMax
-    val durationStep = durationDaysStep
-    return if (
-        startMin == null || startMax == null || startStep == null ||
-        durationMin == null || durationMax == null || durationStep == null
-    ) {
-        false
-    } else {
-        startPercent in startMin..startMax &&
-            (startPercent - startMin) % startStep == 0 &&
-            durationDays in durationMin..durationMax &&
-            (durationDays - durationMin) % durationStep == 0
-    }
+    val startRange = policyRangeOrNull(startPercentMin, startPercentMax, startPercentStep)
+    val durationRange = policyRangeOrNull(durationDaysMin, durationDaysMax, durationDaysStep)
+    return startRange?.accepts(startPercent) == true &&
+        durationRange?.accepts(durationDays) == true
 }
 
 internal fun DeviceLightAcclimationStatus.toSnapshot(
@@ -57,20 +44,15 @@ internal fun DeviceLightAcclimationStatus.toSnapshot(
     policy: DeviceLightAcclimationPolicy
 ): DeviceLightAdaptationSnapshot? {
     val applicationPolicy = policy.toApplicationPolicy()
-    val revisionValue = revision
-    val stateValue = state
-    val clockReadyValue = clockReady
-    return if (
-        applicationPolicy == null || revisionValue == null ||
-        stateValue == null || clockReadyValue == null
-    ) {
+    val statusFields = requiredStatusFieldsOrNull(revision, state, clockReady)
+    return if (applicationPolicy == null || statusFields == null) {
         null
     } else {
         DeviceLightAdaptationSnapshot(
             deviceUid = deviceUid.value,
-            revision = revisionValue,
-            state = stateValue.toApplicationState(),
-            clockReady = clockReadyValue,
+            revision = statusFields.revision,
+            state = statusFields.state.toApplicationState(),
+            clockReady = statusFields.clockReady,
             startPercent = startPercent ?: applicationPolicy.defaultStartPercent,
             currentPermille = currentPermille,
             targetPercent = targetPercent ?: applicationPolicy.targetPercent,
@@ -84,34 +66,60 @@ internal fun DeviceLightAcclimationStatus.toSnapshot(
 }
 
 private fun DeviceLightAcclimationPolicy.toApplicationPolicy(): DeviceLightAdaptationPolicy? {
-    val startMin = startPercentMin
-    val startMax = startPercentMax
-    val startStep = startPercentStep
-    val defaultStart = defaultStartPercent
-    val durationMin = durationDaysMin
-    val durationMax = durationDaysMax
-    val durationStep = durationDaysStep
-    val defaultDuration = defaultDurationDays
-    val target = targetPercent
-    return if (
-        startMin == null || startMax == null || startStep == null || defaultStart == null ||
-        durationMin == null || durationMax == null || durationStep == null ||
-        defaultDuration == null || target == null
-    ) {
+    val startRange = policyRangeOrNull(startPercentMin, startPercentMax, startPercentStep)
+    val durationRange = policyRangeOrNull(durationDaysMin, durationDaysMax, durationDaysStep)
+    val defaults = policyDefaultsOrNull(
+        defaultStartPercent,
+        defaultDurationDays,
+        targetPercent
+    )
+    return if (startRange == null || durationRange == null || defaults == null) {
         null
     } else {
         DeviceLightAdaptationPolicy(
-            startPercentMin = startMin,
-            startPercentMax = startMax,
-            startPercentStep = startStep,
-            defaultStartPercent = defaultStart,
-            durationDaysMin = durationMin,
-            durationDaysMax = durationMax,
-            durationDaysStep = durationStep,
-            defaultDurationDays = defaultDuration,
-            targetPercent = target
+            startPercentMin = startRange.minimum,
+            startPercentMax = startRange.maximum,
+            startPercentStep = startRange.step,
+            defaultStartPercent = defaults.startPercent,
+            durationDaysMin = durationRange.minimum,
+            durationDaysMax = durationRange.maximum,
+            durationDaysStep = durationRange.step,
+            defaultDurationDays = defaults.durationDays,
+            targetPercent = defaults.targetPercent
         )
     }
+}
+
+private fun policyRangeOrNull(
+    minimum: Int?,
+    maximum: Int?,
+    step: Int?
+): AdaptationPolicyRange? = when {
+    minimum == null || maximum == null || step == null -> null
+    step <= 0 -> null
+    else -> AdaptationPolicyRange(minimum, maximum, step)
+}
+
+private fun policyDefaultsOrNull(
+    startPercent: Int?,
+    durationDays: Int?,
+    targetPercent: Int?
+): AdaptationPolicyDefaults? = if (
+    startPercent == null || durationDays == null || targetPercent == null
+) {
+    null
+} else {
+    AdaptationPolicyDefaults(startPercent, durationDays, targetPercent)
+}
+
+private fun requiredStatusFieldsOrNull(
+    revision: Long?,
+    state: DeviceLightAcclimationState?,
+    clockReady: Boolean?
+): AdaptationStatusFields? = if (revision == null || state == null || clockReady == null) {
+    null
+} else {
+    AdaptationStatusFields(revision, state, clockReady)
 }
 
 private fun DeviceLightAcclimationState.toApplicationState(): DeviceLightAdaptationState =
@@ -120,3 +128,24 @@ private fun DeviceLightAcclimationState.toApplicationState(): DeviceLightAdaptat
         DeviceLightAcclimationState.ACTIVE -> DeviceLightAdaptationState.ACTIVE
         DeviceLightAcclimationState.COMPLETED -> DeviceLightAdaptationState.COMPLETED
     }
+
+private data class AdaptationPolicyRange(
+    val minimum: Int,
+    val maximum: Int,
+    val step: Int
+) {
+    fun accepts(value: Int): Boolean =
+        value in minimum..maximum && (value - minimum) % step == 0
+}
+
+private data class AdaptationPolicyDefaults(
+    val startPercent: Int,
+    val durationDays: Int,
+    val targetPercent: Int
+)
+
+private data class AdaptationStatusFields(
+    val revision: Long,
+    val state: DeviceLightAcclimationState,
+    val clockReady: Boolean
+)

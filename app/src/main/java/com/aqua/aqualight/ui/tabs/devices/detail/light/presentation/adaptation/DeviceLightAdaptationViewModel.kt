@@ -52,7 +52,7 @@ internal class DeviceLightAdaptationViewModel(
                 when (result) {
                     is DeviceLightAdaptationReadResult.Available -> applySnapshot(result.snapshot)
                     is DeviceLightAdaptationReadResult.Failed -> if (!_uiState.value.initialLoading) {
-                        applyFailure(result.failure)
+                        _uiState.applyFailure(result.failure, effectEmitter::closeUnavailable)
                     }
                 }
             }
@@ -166,7 +166,7 @@ internal class DeviceLightAdaptationViewModel(
             when (val result = operations.refresh(deviceUid)) {
                 is DeviceLightAdaptationReadResult.Available -> applySnapshot(result.snapshot)
                 is DeviceLightAdaptationReadResult.Failed -> {
-                    applyFailure(result.failure)
+                    _uiState.applyFailure(result.failure, effectEmitter::closeUnavailable)
                     if (showFailure) effectEmitter.showMessage(result.failure.messageRes(), false)
                 }
             }
@@ -201,19 +201,6 @@ internal class DeviceLightAdaptationViewModel(
         }
     }
 
-    private fun applyFailure(failure: DeviceLightAdaptationFailure) {
-        _uiState.update { state ->
-            state.copy(
-                connectionVisualState = failure.connectionState(),
-                contentEnabled = false,
-                initialLoading = false,
-                operationInProgress = false
-            )
-        }
-        if (failure == DeviceLightAdaptationFailure.UNSUPPORTED) {
-            effectEmitter.closeUnavailable()
-        }
-    }
 }
 
 private class DeviceLightAdaptationEffectEmitter {
@@ -252,6 +239,21 @@ private fun DeviceLightAdaptationFailure.connectionState(): DeviceConnectionVisu
     } else {
         DeviceConnectionVisualState.WARNING
     }
+
+private fun MutableStateFlow<DeviceLightAdaptationUiState>.applyFailure(
+    failure: DeviceLightAdaptationFailure,
+    closeUnavailable: () -> Unit
+) {
+    update { state ->
+        state.copy(
+            connectionVisualState = failure.connectionState(),
+            contentEnabled = false,
+            initialLoading = false,
+            operationInProgress = false
+        )
+    }
+    if (failure == DeviceLightAdaptationFailure.UNSUPPORTED) closeUnavailable()
+}
 
 @StringRes
 private fun DeviceLightAdaptationFailure.messageRes(): Int = when (this) {
