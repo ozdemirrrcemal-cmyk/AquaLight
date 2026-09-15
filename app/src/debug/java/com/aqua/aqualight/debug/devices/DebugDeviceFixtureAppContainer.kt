@@ -68,14 +68,12 @@ private class DebugDeviceFixtureViewModelFactory(
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         val viewModel: ViewModel = automaticViewModelOrNull(modelClass) {
             timerDependencies(requireGraph()).lightAutomaticOperations
+        } ?: adaptationViewModelOrNull(modelClass) {
+            timerDependencies(requireGraph()).lightAdaptationOperations
         } ?: when (modelClass) {
             DevicesViewModel::class.java -> createDevicesViewModel(requireGraph())
             DeviceLightRootViewModel::class.java ->
                 createLightRootViewModel(requireGraph())
-            DeviceLightAdaptationViewModel::class.java ->
-                DeviceLightAdaptationViewModel(
-                    timerDependencies(requireGraph()).lightAdaptationOperations
-                )
             DeviceLightManualControlViewModel::class.java ->
                 DeviceLightManualControlViewModel(
                     timerDependencies(requireGraph()).lightLibraryOperations
@@ -263,6 +261,15 @@ private fun automaticViewModelOrNull(
         DeviceLightAutomaticProgramsViewModel(operations())
     DeviceLightAutomaticProgramEditorViewModel::class.java ->
         DeviceLightAutomaticProgramEditorViewModel(operations())
+    else -> null
+}
+
+private fun adaptationViewModelOrNull(
+    modelClass: Class<*>,
+    operations: () -> DeviceLightAdaptationOperations
+): ViewModel? = when (modelClass) {
+    DeviceLightAdaptationViewModel::class.java ->
+        DeviceLightAdaptationViewModel(operations())
     else -> null
 }
 
