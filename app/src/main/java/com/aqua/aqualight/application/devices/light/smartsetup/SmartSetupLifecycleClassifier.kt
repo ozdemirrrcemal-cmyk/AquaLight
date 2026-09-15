@@ -5,6 +5,7 @@ data class SmartSetupLifecycle(
     val stage: SmartSetupLifecycleStage
 )
 
+@Suppress("ReturnCount")
 object SmartSetupLifecycleClassifier {
     fun classify(setupDateEpochDay: Long, evaluationEpochDay: Long): SmartSetupLifecycle? {
         if (setupDateEpochDay > evaluationEpochDay) return null

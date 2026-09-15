@@ -122,6 +122,7 @@ class SmartSetupDecisionEngineTest {
     }
 
     @Test
+    @Suppress("NestedBlockDepth")
     fun `commercial planted cross product always remains inside firmware plan invariants`() {
         var evaluated = 0
         val maintenanceCases = listOf(

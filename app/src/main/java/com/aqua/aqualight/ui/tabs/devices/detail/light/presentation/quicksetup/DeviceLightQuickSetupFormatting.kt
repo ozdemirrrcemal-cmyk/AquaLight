@@ -1,3 +1,5 @@
+@file:Suppress("CyclomaticComplexMethod", "TooManyFunctions")
+
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.quicksetup
 
 import androidx.annotation.StringRes

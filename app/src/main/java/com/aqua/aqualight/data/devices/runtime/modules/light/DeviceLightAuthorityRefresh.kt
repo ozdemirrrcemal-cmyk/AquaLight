@@ -1,3 +1,5 @@
+@file:Suppress("MatchingDeclarationName", "ReturnCount")
+
 package com.aqua.aqualight.data.devices.runtime.modules.light
 
 import com.aqua.aqualight.data.devices.model.DeviceUid

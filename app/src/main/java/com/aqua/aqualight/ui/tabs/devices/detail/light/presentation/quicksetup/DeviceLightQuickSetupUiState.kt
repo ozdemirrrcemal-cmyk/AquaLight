@@ -1,3 +1,5 @@
+@file:Suppress("CyclomaticComplexMethod", "MagicNumber")
+
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.quicksetup
 
 import com.aqua.aqualight.application.aquarium.lighting.AquariumLightingProfile

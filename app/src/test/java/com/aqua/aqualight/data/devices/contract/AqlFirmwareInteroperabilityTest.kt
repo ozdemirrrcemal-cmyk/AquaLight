@@ -384,6 +384,7 @@ class AqlFirmwareInteroperabilityTest {
         "DeviceFirmwareOtaStartPayload" to otaStartPayload().keySetExact()
     )
 
+    @Suppress("LongMethod")
     private fun lightSerializerFields(): Map<String, Set<String>> {
         val scene = DeviceLightScene.wrgb(red = 10, green = 20, blue = 30, white = 40)
         val create = DeviceLightAutoProgramCreatePayload(

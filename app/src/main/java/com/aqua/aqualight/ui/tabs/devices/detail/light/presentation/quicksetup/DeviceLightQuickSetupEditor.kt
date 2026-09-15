@@ -1,4 +1,4 @@
-@file:Suppress("LongMethod")
+@file:Suppress("LongMethod", "LongParameterList", "MagicNumber")
 
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.quicksetup
 

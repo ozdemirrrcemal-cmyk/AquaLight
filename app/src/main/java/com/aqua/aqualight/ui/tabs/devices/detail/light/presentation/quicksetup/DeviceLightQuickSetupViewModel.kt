@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+@Suppress("MagicNumber", "TooManyFunctions")
 internal class DeviceLightQuickSetupViewModel(
     private val operations: SmartSetupOperations,
     private val savedStateHandle: SavedStateHandle

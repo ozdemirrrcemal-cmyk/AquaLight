@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.user.archive
 
+import com.aqua.aqualight.application.aquarium.lighting.AquariumLightingProfile
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.data.care.model.CareTask
 import com.aqua.aqualight.data.care.model.CareTaskSource
@@ -127,7 +128,7 @@ class UserDataRestoreDeduplicatorTest {
             volumeUnit = "L",
             tankType = "freshwater",
             tankStyle = "nature",
-            smartLightProfile = emptyArchiveSmartLightProfile(),
+            lightingProfile = AquariumLightingProfile(),
             createdAtMillis = createdAtMillis,
             smartCareEnabled = true,
             careRemindersEnabled = true,
@@ -160,7 +161,8 @@ class UserDataRestoreDeduplicatorTest {
             careRemindersEnabled = true,
             plants = emptyList(),
             materials = emptyList(),
-            livestock = emptyList()
+            livestock = emptyList(),
+            smartLightProfile = emptyArchiveSmartLightProfile()
         )
     }
 

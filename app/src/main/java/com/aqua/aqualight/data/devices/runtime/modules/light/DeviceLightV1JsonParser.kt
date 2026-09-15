@@ -354,6 +354,7 @@ internal object DeviceLightV1JsonParser {
     }
 
     internal object Activity {
+        @Suppress("LongMethod")
         fun parseAutoSummary(data: JSONObject): DeviceLightAutoSummary {
         data.requireLightKeys(AUTO_SUMMARY_KEYS, "light.status.auto")
         val result = DeviceLightAutoSummary(

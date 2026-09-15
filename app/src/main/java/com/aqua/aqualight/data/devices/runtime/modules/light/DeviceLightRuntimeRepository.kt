@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 import org.json.JSONObject
 
 /** One product-neutral Light V1 data source for WRGB Pro Elite and RGB Pro Slim. */
+@Suppress("TooManyFunctions")
 class DeviceLightRuntimeRepository internal constructor(
     private val gateway: DeviceRuntimeCommandGateway,
     internal val stateStore: DeviceLightRuntimeStateStore

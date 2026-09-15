@@ -1,3 +1,5 @@
+@file:Suppress("LongMethod", "LongParameterList")
+
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.quicksetup
 
 import androidx.compose.foundation.background

@@ -10,6 +10,16 @@ import java.util.Locale
 import kotlin.math.roundToInt
 
 /** Deterministic, side-effect-free author of bounded firmware-managed Light plans. */
+@Suppress(
+    "ComplexCondition",
+    "CyclomaticComplexMethod",
+    "LargeClass",
+    "LongMethod",
+    "LongParameterList",
+    "MagicNumber",
+    "ReturnCount",
+    "TooManyFunctions"
+)
 object SmartSetupDecisionEngine {
 
     fun decide(input: SmartSetupInput): SmartSetupDecision {

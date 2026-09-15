@@ -38,6 +38,7 @@ import java.util.concurrent.CancellationException
 import kotlinx.coroutines.flow.first
 
 /** Production adapter. It never derives semantic facts from user-entered text. */
+@Suppress("ReturnCount")
 internal class DefaultSmartSetupOperations(
     private val ownerUid: String,
     private val devicesRepository: DevicesRepository,
@@ -290,6 +291,7 @@ private fun DeviceLightStatus.toSmartSetupDeviceFacts(): SmartSetupDeviceFacts {
     )
 }
 
+@Suppress("ReturnCount")
 private fun DeviceLightStatus.reportedCalibrationRevision(): Int? {
     if (product != DeviceLightProduct.WRGB_PRO_ELITE) return null
     val revisions = listOf(

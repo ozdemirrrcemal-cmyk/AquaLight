@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /** Owns only complete firmware-authoritative Light V1 and protection snapshots. */
+@Suppress("TooManyFunctions")
 internal class DeviceLightRuntimeStateStore {
     private val lock = Any()
     private val statusAuthority = DeviceRuntimeGenerationAuthority()

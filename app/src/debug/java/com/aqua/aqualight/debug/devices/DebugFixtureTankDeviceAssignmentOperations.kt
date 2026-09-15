@@ -64,6 +64,7 @@ internal class DebugFixtureTankAssignments {
 }
 
 /** Adds test fixtures to tank assignment while preserving the exact real-device delegate. */
+@Suppress("ReturnCount", "TooGenericExceptionCaught")
 internal class DebugFixtureTankDeviceAssignmentOperations(
     private val delegate: TankDeviceAssignmentOperations,
     private val fixtures: DebugDeviceFixtureCatalog,

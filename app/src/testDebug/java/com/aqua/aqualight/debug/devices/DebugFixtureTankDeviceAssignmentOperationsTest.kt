@@ -18,6 +18,7 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+@Suppress("LongMethod", "MagicNumber")
 class DebugFixtureTankDeviceAssignmentOperationsTest {
 
     @Test

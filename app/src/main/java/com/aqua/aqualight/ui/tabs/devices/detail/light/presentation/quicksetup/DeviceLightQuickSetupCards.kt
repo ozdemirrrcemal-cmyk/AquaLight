@@ -1,4 +1,4 @@
-@file:Suppress("LongMethod")
+@file:Suppress("CyclomaticComplexMethod", "LongMethod", "TooManyFunctions")
 
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.quicksetup
 

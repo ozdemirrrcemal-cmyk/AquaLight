@@ -11,6 +11,7 @@ import com.aqua.aqualight.data.store.StoreInvariantViolation
 import java.time.LocalDate
 
 /** Authoritative invariant rules for the commercial tank store. */
+@Suppress("TooManyFunctions")
 object TankStoreRules {
 
     const val MIN_DIMENSION_CM = 1

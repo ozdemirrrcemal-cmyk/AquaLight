@@ -40,6 +40,7 @@ private val Context.aquariumTanksDataStore: DataStore<AquariumTanksStore> by dat
     }
 )
 
+@Suppress("TooManyFunctions")
 class AquariumTankDataStoreManager(
     private val context: Context
 ) {

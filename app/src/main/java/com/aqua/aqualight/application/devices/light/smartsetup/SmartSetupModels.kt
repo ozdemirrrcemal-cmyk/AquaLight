@@ -24,6 +24,7 @@ enum class SmartSetupChannel(val sceneKey: String) {
     WHITE("whitePercent")
 }
 
+@Suppress("MagicNumber")
 data class SmartSetupCalibrationProfile(
     val id: String,
     val productKey: String,

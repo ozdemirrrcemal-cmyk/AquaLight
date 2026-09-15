@@ -24,6 +24,13 @@ import java.time.ZoneId
 import java.util.concurrent.CancellationException
 
 /** Complete in-process Smart Setup authority for installable-debug Light fixtures only. */
+@Suppress(
+    "ComplexCondition",
+    "LongParameterList",
+    "MagicNumber",
+    "ReturnCount",
+    "TooGenericExceptionCaught"
+)
 internal class DebugFixtureSmartSetupOperations(
     private val delegate: SmartSetupOperations,
     private val fixtures: DebugDeviceFixtureCatalog,

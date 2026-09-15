@@ -23,6 +23,7 @@ import org.junit.Test
 class DefaultAquariumTankOperationsMapperTest {
 
     @Test
+    @Suppress("LongMethod")
     fun `saved tank maps every UI-facing field without owner leakage`() {
         val source = SavedAquariumTank(
             id = 7L,
