@@ -130,7 +130,4 @@
     <string name="device_settings_update_notification_timeout_title">Device did not reconnect</string>
     <string name="device_settings_update_notification_timeout_message">Open AquaLight to reconnect to %1$s or review recovery options.</string>
 
-    <string name="device_settings_light_protection_section">Light protection</string>
-    <string name="device_settings_light_temperature_threshold_label">Temperature protection threshold</string>
-    <string name="device_settings_light_edit_temperature_threshold_description">Edit temperature protection threshold</string>
 </resources>
