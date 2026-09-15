@@ -39,6 +39,7 @@ import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
 import com.aqua.aqualight.data.devices.cooling.DefaultDeviceCoolingAutomaticSettingsOperations
 import com.aqua.aqualight.data.devices.cooling.DefaultDeviceCoolingTemperatureHistoryOperations
 import com.aqua.aqualight.data.devices.cooling.control.DefaultDeviceCoolingControlOperations
+import com.aqua.aqualight.data.devices.light.adaptation.DefaultDeviceLightAdaptationOperations
 import com.aqua.aqualight.data.devices.light.automatic.DefaultDeviceLightAutomaticOperations
 import com.aqua.aqualight.data.devices.light.control.DefaultDeviceLightControlOperations
 import com.aqua.aqualight.data.devices.light.custom.DefaultDeviceLightCustomOperations
@@ -71,6 +72,7 @@ import com.aqua.aqualight.ui.tabs.devices.add.DeviceQrScanViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.DeviceCoolingRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.status.DeviceCoolingSystemStatusViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.adaptation.DeviceLightAdaptationViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.DeviceLightAutomaticProgramEditorViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.DeviceLightAutomaticProgramsViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.library.DeviceLightLibraryViewModel
@@ -150,6 +152,7 @@ private class ReleaseSmokeViewModelFactory(
     private val devicesRepository = DevicesRepository()
     private val lightControlOperations = DefaultDeviceLightControlOperations(devicesRepository)
     private val lightOperations = OwnerLightOperations(
+        adaptationOperations = DefaultDeviceLightAdaptationOperations(devicesRepository),
         controlOperations = lightControlOperations,
         automaticOperations = DefaultDeviceLightAutomaticOperations(devicesRepository),
         customOperations = DefaultDeviceLightCustomOperations(devicesRepository),
@@ -280,6 +283,8 @@ private class ReleaseSmokeViewModelFactory(
                 controlSurfacePreparationOperations =
                     ReleaseSmokeControlSurfacePreparationOperations
             )
+        modelClass.isAssignableFrom(DeviceLightAdaptationViewModel::class.java) ->
+            DeviceLightAdaptationViewModel(lightOperations.adaptationOperations)
         modelClass.isAssignableFrom(DeviceLightAutomaticProgramsViewModel::class.java) ->
             DeviceLightAutomaticProgramsViewModel(lightOperations.automaticOperations)
         modelClass.isAssignableFrom(DeviceLightAutomaticProgramEditorViewModel::class.java) ->
