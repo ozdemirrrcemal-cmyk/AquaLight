@@ -102,6 +102,7 @@
     <string name="device_light_adaptation_clock_info">Cihaz saati hazır değil. Başlatmak için cihaz saatini eşitleyin; aktif adaptasyon yine de durdurulabilir.</string>
     <string name="device_light_adaptation_clock_blocked">Adaptasyon başlamadan önce cihaz saati hazır olmalıdır.</string>
     <string name="device_light_adaptation_current_level">Güncel seviye</string>
+    <string name="device_light_adaptation_progress_unavailable">İlerleme cihaz saatinin hazır olmasını bekliyor.</string>
     <string name="device_light_adaptation_progress_start">Başlangıç %%%1$d</string>
     <string name="device_light_adaptation_progress_target">Hedef %%%1$d</string>
     <string name="device_light_adaptation_day_progress">%1$d / %2$s</string>

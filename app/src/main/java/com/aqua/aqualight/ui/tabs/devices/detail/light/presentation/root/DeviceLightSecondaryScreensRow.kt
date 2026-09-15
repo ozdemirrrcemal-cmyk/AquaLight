@@ -137,6 +137,12 @@ private fun RowScope.DeviceLightAdaptationContent(
                 percent = percent,
                 colors = colors
             )
+        } else if (adaptation.state == DeviceLightAdaptationState.ACTIVE) {
+            BasicText(
+                text = stringResource(R.string.device_light_active_uppercase),
+                style = typography.body.copy(color = colors.accent),
+                maxLines = 1
+            )
         } else {
             BasicText(
                 text = stringResource(R.string.device_light_adaptation_off),

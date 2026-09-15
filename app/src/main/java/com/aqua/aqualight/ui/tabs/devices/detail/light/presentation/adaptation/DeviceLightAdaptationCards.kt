@@ -135,7 +135,14 @@ internal fun AdaptationActiveProgressCard(
         ) {
             AdaptationCurrentLevel(snapshot, visuals)
             AdaptationProgressDetails(snapshot, progress, visuals)
-            AdaptationDayDetails(snapshot, elapsedDays, remainingDays, visuals)
+            if (elapsedDays != null && remainingDays != null) {
+                AdaptationDayDetails(snapshot, elapsedDays, remainingDays, visuals)
+            } else {
+                BasicText(
+                    text = stringResource(R.string.device_light_adaptation_progress_unavailable),
+                    style = visuals.typography.caption.copy(color = visuals.colors.card.warning)
+                )
+            }
         }
     }
 }
@@ -322,12 +329,13 @@ private fun DeviceLightAdaptationSnapshot.progressFraction(): Float {
     return (current - start).toFloat() / (target - start).coerceAtLeast(1)
 }
 
-internal fun DeviceLightAdaptationSnapshot.remainingDays(): Int = remainingSeconds?.let { seconds ->
+internal fun DeviceLightAdaptationSnapshot.remainingDays(): Int? = remainingSeconds?.let { seconds ->
     ceil(seconds.toDouble() / DeviceLightAdaptationSpec.secondsPerDay).toInt()
-} ?: 0
+}
 
-internal fun DeviceLightAdaptationSnapshot.elapsedDays(): Int =
-    (durationDays - remainingDays()).coerceIn(0, durationDays)
+internal fun DeviceLightAdaptationSnapshot.elapsedDays(): Int? = remainingDays()?.let { remaining ->
+    (durationDays - remaining).coerceIn(0, durationDays)
+}
 
 internal fun DeviceLightAdaptationSnapshot.endDateText(): String = endsAtEpochSeconds?.let { epoch ->
     DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(epoch * MILLIS_PER_SECOND))

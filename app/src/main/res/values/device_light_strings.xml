@@ -102,6 +102,7 @@
     <string name="device_light_adaptation_clock_info">Device time is not ready. Synchronize the device clock to start; an active adaptation can still be stopped.</string>
     <string name="device_light_adaptation_clock_blocked">The device clock must be ready before adaptation can start.</string>
     <string name="device_light_adaptation_current_level">Current level</string>
+    <string name="device_light_adaptation_progress_unavailable">Progress is waiting for the device clock.</string>
     <string name="device_light_adaptation_progress_start">Start %1$d%%</string>
     <string name="device_light_adaptation_progress_target">Target %1$d%%</string>
     <string name="device_light_adaptation_day_progress">Day %1$d / %2$s</string>
