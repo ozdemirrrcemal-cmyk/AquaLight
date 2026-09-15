@@ -8,7 +8,6 @@ object SmartFertilizerDoseCalculator {
     rule: FertilizerDoseRule,
     grossVolumeL: Double,
     setupDay: Int?,
-    hasActiveSoil: Boolean,
     useEstimatedWaterVolume: Boolean = true
   ): FertilizerDoseRecommendation {
     val estimatedWaterVolumeL = if (useEstimatedWaterVolume) {
@@ -21,22 +20,20 @@ object SmartFertilizerDoseCalculator {
       estimatedWaterVolumeL / rule.baseVolumeL * rule.baseDoseMl
     )
 
-    val startupDoseFactor = getStartupDoseFactor(
-      setupDay = setupDay,
-      hasActiveSoil = hasActiveSoil
-    )
-
-    val startupDoseMl = roundDose(
-      normalDoseMl * startupDoseFactor
-    )
+    val decision = decision(rule, setupDay)
 
     return FertilizerDoseRecommendation(
       rule = rule,
       grossVolumeL = roundDose(grossVolumeL),
       estimatedWaterVolumeL = roundDose(estimatedWaterVolumeL),
       normalDoseMl = normalDoseMl,
-      startupDoseMl = startupDoseMl,
-      startupDoseFactor = startupDoseFactor
+      advisedDoseMl = if (decision == FertilizerDoseDecision.LABEL_DOSE) {
+        normalDoseMl
+      } else {
+        null
+      },
+      decision = decision,
+      usesEstimatedWaterVolume = useEstimatedWaterVolume
     )
   }
 
@@ -46,28 +43,41 @@ object SmartFertilizerDoseCalculator {
     return grossVolumeL * 0.85
   }
 
-  private fun getStartupDoseFactor(
-    setupDay: Int?,
-    hasActiveSoil: Boolean
-  ): Double {
-    if (setupDay == null || setupDay > 30) {
-      return 1.0
-    }
+  fun decision(
+    rule: FertilizerDoseRule,
+    setupDay: Int?
+  ): FertilizerDoseDecision {
+    return getDoseDecision(rule.startupGuidance, setupDay)
+  }
 
-    val baseFactor = when (setupDay) {
-      in 1..7 -> 0.0
-      in 8..21 -> 0.5
-      in 22..30 -> 0.75
-      else -> 1.0
-    }
+  private fun getDoseDecision(
+    guidance: FertilizerStartupGuidance,
+    setupDay: Int?
+  ): FertilizerDoseDecision {
+    return when (guidance) {
+      FertilizerStartupGuidance.FOLLOW_LABEL -> {
+        FertilizerDoseDecision.LABEL_DOSE
+      }
 
-    return if (hasActiveSoil && setupDay <= 30) {
-      minOf(
-        baseFactor,
-        0.5
-      )
-    } else {
-      baseFactor
+      FertilizerStartupGuidance.WITHHOLD_OR_LIMIT_FIRST_28_DAYS -> {
+        if (setupDay != null && setupDay <= 28) {
+          FertilizerDoseDecision.WITHHOLD_OR_LIMIT
+        } else {
+          FertilizerDoseDecision.LABEL_DOSE
+        }
+      }
+
+      FertilizerStartupGuidance.DEFER_UNTIL_DAY_61 -> {
+        if (setupDay != null && setupDay < 61) {
+          FertilizerDoseDecision.DEFER
+        } else {
+          FertilizerDoseDecision.LABEL_DOSE
+        }
+      }
+
+      FertilizerStartupGuidance.APPLY_ONLY_WHEN_NEEDED -> {
+        FertilizerDoseDecision.OBSERVATION_REQUIRED
+      }
     }
   }
 
