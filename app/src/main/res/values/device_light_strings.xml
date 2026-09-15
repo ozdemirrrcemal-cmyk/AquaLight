@@ -232,21 +232,26 @@
     <string name="device_light_custom_program_days_summary">Applies to the whole curve</string>
     <string name="device_light_custom_every_day">Every day</string>
     <string name="device_light_custom_curve_heading">24-hour light curve</string>
-    <string name="device_light_custom_curve_helper">Select a point or touch the curve to add one</string>
+    <string name="device_light_custom_curve_helper">Drag the time playhead for a new point</string>
+    <string name="device_light_custom_point_capacity_format">%1$d / %2$d points</string>
     <string name="device_light_custom_add_point">Add point</string>
     <plurals name="device_light_custom_point_limit_warning">
         <item quantity="one">A custom curve can contain at most %1$d point.</item>
         <item quantity="other">A custom curve can contain at most %1$d points.</item>
     </plurals>
     <string name="device_light_custom_selected_point">Selected point</string>
+    <string name="device_light_custom_point_values_title">%1$s values</string>
     <string name="device_light_custom_no_point_selected">Add or select a point to edit its time and channel levels.</string>
     <string name="device_light_custom_duplicate_point">Duplicate selected point</string>
     <string name="device_light_custom_delete_point">Delete selected point</string>
     <string name="device_light_custom_virtual_preview">Virtual time preview</string>
+    <string name="device_light_custom_virtual_preview_compact">Virtual preview</string>
     <string name="device_light_custom_virtual_preview_summary">Show on the device without changing persistent settings</string>
     <string name="device_light_custom_virtual_time_description">Virtual preview time</string>
     <string name="device_light_custom_preview">Preview</string>
     <string name="device_light_custom_preview_description">Preview the installed custom curve at the selected virtual time</string>
+    <string name="device_light_custom_preview_at_time_description">Preview the installed custom curve at %1$s</string>
+    <string name="device_light_custom_days_heading">Days</string>
     <string name="device_light_custom_load">Load</string>
     <string name="device_light_custom_load_description">Open saved custom curves in the Light Library</string>
     <string name="device_light_custom_save_as">Save as</string>
@@ -257,5 +262,17 @@
     <string name="device_light_custom_point_time_title">Point time</string>
     <string name="device_light_custom_point_time_message">Choose a unique time for this curve point.</string>
     <string name="device_light_custom_point_time_confirm">Select</string>
+    <string name="device_light_custom_add_time_title">Add time point</string>
+    <string name="device_light_custom_add_time_message">Choose the exact time for the point</string>
+    <string name="device_light_custom_add_time_helper">A new point will be created when you tap Done</string>
+    <string name="device_light_custom_move_time_title">Change point time</string>
+    <string name="device_light_custom_move_time_message">Choose the point’s exact new time</string>
+    <string name="device_light_custom_move_time_helper">The point time will be updated when you tap Done</string>
+    <string name="device_light_custom_time_done">Done</string>
+    <string name="device_light_custom_time_cancel">Cancel</string>
+    <string name="device_light_custom_point_actions_title">%1$s point</string>
+    <string name="device_light_custom_point_actions_message">Change the time or remove this point from the curve.</string>
+    <string name="device_light_custom_edit_time">Change time</string>
+    <string name="device_light_custom_delete_point_action">Delete point</string>
     <string name="device_light_custom_operation_error">The custom curve could not be read or previewed. Try again.</string>
 </resources>

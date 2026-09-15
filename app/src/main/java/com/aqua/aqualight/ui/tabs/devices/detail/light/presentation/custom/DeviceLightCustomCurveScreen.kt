@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
@@ -36,28 +37,41 @@ internal fun DeviceLightCustomCurveScreen(
     actions: DeviceLightCustomCurveActions,
     modifier: Modifier = Modifier
 ) {
+    val background = colorResource(R.color.background_color)
     val colors = aquaLightManualColors()
     val visuals = DeviceLightCustomVisuals(colors, aquaDeviceCardTypography(colors.card))
-    LazyColumn(
-        modifier = modifier.fillMaxSize().background(colorResource(R.color.background_color)),
-        contentPadding = PaddingValues(
-            start = SCREEN_HORIZONTAL_PADDING_DP.dp,
-            top = SCREEN_TOP_PADDING_DP.dp,
-            end = SCREEN_HORIZONTAL_PADDING_DP.dp,
-            bottom = SCREEN_BOTTOM_PADDING_DP.dp
-        ),
-        verticalArrangement = Arrangement.spacedBy(SECTION_SPACING_DP.dp)
-    ) {
-        if (state.hasUnsavedChanges) {
-            item(key = "unsaved") { UnsavedChangesIndicator(visuals) }
+    Box(modifier = modifier.fillMaxSize().background(background)) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                start = SCREEN_HORIZONTAL_PADDING_DP.dp,
+                top = SCREEN_TOP_PADDING_DP.dp,
+                end = SCREEN_HORIZONTAL_PADDING_DP.dp,
+                bottom = SCREEN_BOTTOM_PADDING_DP.dp
+            ),
+            verticalArrangement = Arrangement.spacedBy(SECTION_SPACING_DP.dp)
+        ) {
+            if (state.hasUnsavedChanges) {
+                item(key = "unsaved") { UnsavedChangesIndicator(visuals) }
+            }
+            item(key = "curve") { CurveCard(state, actions, visuals) }
+            item(key = "point") { SelectedPointCard(state, actions, visuals) }
+            item(key = "days") { ProgramDaysCard(state, actions, visuals) }
+            item(key = "preview") { VirtualTimePreviewCard(state, actions, visuals) }
         }
-        item(key = "days") { ProgramDaysCard(state, actions, visuals) }
-        item(key = "curve") { CurveCard(state, actions, visuals) }
-        item(key = "point") { SelectedPointCard(state, actions, visuals) }
-        item(key = "preview") { VirtualTimePreviewCard(state, actions, visuals) }
-        item(key = "library") { LibraryActions(state, actions, visuals) }
-        item(key = "reset") { ResetAction(state, actions, visuals) }
-        item(key = "info") { CustomInformation(visuals) }
+        LibraryActions(
+            state = state,
+            actions = actions,
+            visuals = visuals,
+            modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+                .background(background)
+                .padding(
+                    start = SCREEN_HORIZONTAL_PADDING_DP.dp,
+                    top = STICKY_ACTION_TOP_PADDING_DP.dp,
+                    end = SCREEN_HORIZONTAL_PADDING_DP.dp,
+                    bottom = STICKY_ACTION_BOTTOM_PADDING_DP.dp
+                )
+        )
     }
 }
 
@@ -78,7 +92,7 @@ private fun UnsavedChangesIndicator(visuals: DeviceLightCustomVisuals) {
         )
         BasicText(
             text = stringResource(R.string.device_light_custom_unsaved_changes),
-            style = visuals.typography.caption.copy(color = visuals.colors.card.secondaryText),
+            style = visuals.typography.caption.copy(color = visuals.colors.card.warning),
             modifier = Modifier.padding(start = UNSAVED_TEXT_PADDING_DP.dp)
         )
     }
@@ -92,18 +106,17 @@ private fun ProgramDaysCard(
 ) {
     AquaDeviceCardSurface(modifier = Modifier.fillMaxWidth()) {
         Column(verticalArrangement = Arrangement.spacedBy(DAYS_CONTENT_SPACING_DP.dp)) {
-            SectionHeading(
-                title = stringResource(R.string.device_light_custom_program_days),
-                subtitle = stringResource(R.string.device_light_custom_program_days_summary),
-                visuals = visuals
+            BasicText(
+                text = stringResource(R.string.device_light_custom_days_heading),
+                style = visuals.typography.title.copy(color = visuals.colors.card.primaryText)
             )
-            DaySelectionRow(state, actions, visuals)
+            WeekdayRow(state, actions, visuals)
         }
     }
 }
 
 @Composable
-private fun DaySelectionRow(
+private fun WeekdayRow(
     state: DeviceLightCustomCurveUiState,
     actions: DeviceLightCustomCurveActions,
     visuals: DeviceLightCustomVisuals
@@ -112,25 +125,15 @@ private fun DaySelectionRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(DAY_SPACING_DP.dp)
     ) {
-        DayButton(
-            state = DayButtonState(
-                label = stringResource(R.string.device_light_custom_every_day),
-                selected = state.draft.weekdaysMask == EVERY_DAY_MASK,
-                enabled = state.contentEnabled
-            ),
-            onClick = actions.onEveryDayClick,
-            modifier = Modifier.weight(EVERY_DAY_WEIGHT),
-            visuals = visuals
-        )
         weekdayLabels().forEachIndexed { index, label ->
             DayButton(
                 state = DayButtonState(
                     label = label,
-                    selected = state.draft.weekdaysMask and (1 shl index) != 0,
-                    enabled = state.contentEnabled
+                    selected = state.draft.weekdaysMask and customWeekdayMask(index) != 0,
+                    enabled = state.contentEnabled && !state.operationInProgress
                 ),
                 onClick = { actions.onWeekdayClick(index) },
-                modifier = Modifier.weight(WEEKDAY_WEIGHT),
+                modifier = Modifier.weight(1f),
                 visuals = visuals
             )
         }
@@ -160,31 +163,10 @@ private fun DayButton(
             maxLines = 1,
             style = visuals.typography.caption.copy(
                 color = visuals.colors.card.primaryText.copy(alpha = alpha),
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                textAlign = TextAlign.Center
             )
         )
     }
-}
-
-@Composable
-private fun ResetAction(
-    state: DeviceLightCustomCurveUiState,
-    actions: DeviceLightCustomCurveActions,
-    visuals: DeviceLightCustomVisuals
-) {
-    CustomOutlinedButton(
-        button = CustomOutlinedButtonState(
-            label = stringResource(R.string.device_light_custom_reset),
-            description = stringResource(R.string.device_light_custom_reset_description),
-            enabled = !state.operationInProgress
-        ),
-        appearance = CustomOutlinedButtonAppearance(
-            color = visuals.colors.card.primaryText,
-            iconRes = R.drawable.ic_dosing_reset_24
-        ),
-        onClick = actions.onResetClick,
-        modifier = Modifier.fillMaxWidth()
-    )
 }
 
 private data class DayButtonState(
@@ -195,18 +177,18 @@ private data class DayButtonState(
 
 private const val SCREEN_HORIZONTAL_PADDING_DP = 9
 private const val SCREEN_TOP_PADDING_DP = 2
-private const val SCREEN_BOTTOM_PADDING_DP = 18
-private const val SECTION_SPACING_DP = 7
-private const val UNSAVED_HORIZONTAL_PADDING_DP = 45
+private const val SCREEN_BOTTOM_PADDING_DP = 86
+private const val SECTION_SPACING_DP = 8
+private const val STICKY_ACTION_TOP_PADDING_DP = 8
+private const val STICKY_ACTION_BOTTOM_PADDING_DP = 12
+private const val UNSAVED_HORIZONTAL_PADDING_DP = 8
 private const val UNSAVED_VERTICAL_PADDING_DP = 1
 private const val UNSAVED_DOT_SIZE_DP = 8
 private const val UNSAVED_TEXT_PADDING_DP = 8
-private const val DAYS_CONTENT_SPACING_DP = 10
+private const val DAYS_CONTENT_SPACING_DP = 8
 private const val DAY_SPACING_DP = 5
-private const val EVERY_DAY_WEIGHT = 1.8f
-private const val WEEKDAY_WEIGHT = 1f
 private const val ENABLED_ALPHA = 1f
 private const val DISABLED_ALPHA = 0.38f
 private const val DAY_BUTTON_CORNER_DP = 11
-private const val DAY_BUTTON_HEIGHT_DP = 40
+private const val DAY_BUTTON_HEIGHT_DP = 42
 private const val BORDER_WIDTH_DP = 1

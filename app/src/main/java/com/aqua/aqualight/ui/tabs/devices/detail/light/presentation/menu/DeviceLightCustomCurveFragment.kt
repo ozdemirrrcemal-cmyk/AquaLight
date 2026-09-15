@@ -18,6 +18,9 @@ import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceLightCustomCurveBinding
 import com.aqua.aqualight.ui.common.bottomsheet.AquaTimePickerBottomSheet
+import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetAction
+import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetActionStyle
+import com.aqua.aqualight.ui.common.bottomsheet.GlobalActionBottomSheet
 import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
 import com.aqua.aqualight.ui.common.dialog.UnsavedChangesExitGuard
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
@@ -28,8 +31,10 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom.Devic
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom.DeviceLightCustomCurveScreen
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom.DeviceLightCustomCurveViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom.DeviceLightCustomDraft
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom.DeviceLightCustomTimePickerPurpose
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom.MILLIS_PER_MINUTE
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom.MINUTES_PER_DAY
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom.formatTime
 import kotlinx.coroutines.launch
 
 class DeviceLightCustomCurveFragment : Fragment(R.layout.fragment_device_light_custom_curve) {
@@ -93,20 +98,16 @@ class DeviceLightCustomCurveFragment : Fragment(R.layout.fragment_device_light_c
 
     private fun setupContent() {
         val actions = DeviceLightCustomCurveActions(
-            onEveryDayClick = viewModel.dayEditor::selectEveryDay,
             onWeekdayClick = viewModel.dayEditor::toggleWeekday,
-            onGraphTimeClick = viewModel.pointEditor::selectOrAddGraphTime,
-            onAddPointClick = viewModel.pointEditor::requestAddPoint,
-            onEditTimeClick = viewModel.pointEditor::requestEditSelectedTime,
-            onDuplicatePointClick = viewModel.pointEditor::duplicateSelectedPoint,
-            onDeletePointClick = viewModel.pointEditor::deleteSelectedPoint,
+            onGraphPointClick = viewModel.pointEditor::selectGraphPoint,
+            onGraphPointLongClick = viewModel.pointEditor::requestPointActions,
+            onPlayheadChanged = viewModel.pointEditor::updatePlayhead,
+            onPlayheadChangeFinished = viewModel.pointEditor::finishPlayheadDrag,
+            onPlayheadTimeClick = viewModel.pointEditor::requestPlayheadTime,
             onChannelChanged = viewModel.pointEditor::updateSelectedChannel,
-            onChannelStep = viewModel.pointEditor::stepSelectedChannel,
-            onPreviewTimeChanged = viewModel.pointEditor::updatePreviewTime,
             onPreviewClick = viewModel::preview,
             onLoadClick = { unsavedGuard.requestAction(::openLibrary) },
-            onSaveAsClick = viewModel::requestSaveAs,
-            onResetClick = { unsavedGuard.requestAction(viewModel::resetToDevice) }
+            onSaveAsClick = viewModel::requestSaveAs
         )
         binding.customCurveCompose.apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
@@ -187,14 +188,38 @@ private class DeviceLightCustomCurveEffectHandler(
             TIME_REQUEST_KEY,
             fragment.viewLifecycleOwner
         ) { _, result ->
-            val selected = result.getString(AquaTimePickerBottomSheet.RESULT_KEY) ==
+            val purpose = result.getString(AquaTimePickerBottomSheet.RESULT_PAYLOAD_ID)
+                ?.toTimePickerPurpose() ?: return@setFragmentResultListener
+            if (result.getString(AquaTimePickerBottomSheet.RESULT_KEY) ==
                 AquaTimePickerBottomSheet.RESULT_SELECTED
-            if (selected) {
-                val original = result.getString(AquaTimePickerBottomSheet.RESULT_PAYLOAD_ID)
-                    ?.takeUnless { value -> value == NEW_POINT_PAYLOAD }
-                    ?.toLongOrNull()
+            ) {
                 val minutes = result.getInt(AquaTimePickerBottomSheet.RESULT_MINUTES_OF_DAY)
-                viewModel.pointEditor.addOrMovePoint(original, minutes * MILLIS_PER_MINUTE)
+                val targetTimeMs = minutes * MILLIS_PER_MINUTE
+                when (purpose) {
+                    is DeviceLightCustomTimePickerPurpose.Add ->
+                        viewModel.pointEditor.addOrMovePoint(null, targetTimeMs)
+                    is DeviceLightCustomTimePickerPurpose.Move ->
+                        viewModel.pointEditor.addOrMovePoint(purpose.originalTimeMs, targetTimeMs)
+                }
+            } else {
+                viewModel.pointEditor.cancelTimeSelection(purpose)
+            }
+        }
+        fragment.childFragmentManager.setFragmentResultListener(
+            POINT_ACTIONS_REQUEST_KEY,
+            fragment.viewLifecycleOwner
+        ) { _, result ->
+            if (result.getString(GlobalActionBottomSheet.RESULT_KEY) !=
+                GlobalActionBottomSheet.RESULT_ACTION
+            ) {
+                return@setFragmentResultListener
+            }
+            val timeMs = result.getString(GlobalActionBottomSheet.RESULT_PAYLOAD_ID)
+                ?.toLongOrNull() ?: return@setFragmentResultListener
+            viewModel.pointEditor.selectGraphPoint(timeMs)
+            when (result.getString(GlobalActionBottomSheet.RESULT_ACTION_ID)) {
+                ACTION_EDIT_TIME -> viewModel.pointEditor.requestEditSelectedTime()
+                ACTION_DELETE_POINT -> viewModel.pointEditor.deletePoint(timeMs)
             }
         }
         fragment.childFragmentManager.setFragmentResultListener(
@@ -211,7 +236,8 @@ private class DeviceLightCustomCurveEffectHandler(
 
     fun handle(effect: DeviceLightCustomCurveEffect) {
         when (effect) {
-            is DeviceLightCustomCurveEffect.OpenTimePicker -> showTimePicker(effect.originalTimeMs)
+            is DeviceLightCustomCurveEffect.OpenTimePicker -> showTimePicker(effect.purpose)
+            is DeviceLightCustomCurveEffect.OpenPointActions -> showPointActions(effect.timeMs)
             is DeviceLightCustomCurveEffect.OpenSaveAs -> showSaveAs(effect.usedCustomNames)
             is DeviceLightCustomCurveEffect.ShowSuccess -> showMessage(
                 message = fragment.getString(effect.messageRes),
@@ -232,34 +258,97 @@ private class DeviceLightCustomCurveEffectHandler(
         }
     }
 
-    private fun showTimePicker(originalTimeMs: Long?) {
+    private fun showTimePicker(purpose: DeviceLightCustomTimePickerPurpose) {
         val occupied = viewModel.currentState.draft.points.mapTo(mutableSetOf()) { point ->
             (point.timeMs / MILLIS_PER_MINUTE).toInt()
         }
+        val originalTimeMs = (purpose as? DeviceLightCustomTimePickerPurpose.Move)?.originalTimeMs
         originalTimeMs?.let { occupied.remove((it / MILLIS_PER_MINUTE).toInt()) }
         val selectable = (0 until MINUTES_PER_DAY).filterNot(occupied::contains)
-        val preferred = originalTimeMs?.div(MILLIS_PER_MINUTE)?.toInt() ?: NOON_MINUTES
+        val preferred = when (purpose) {
+            is DeviceLightCustomTimePickerPurpose.Add ->
+                (purpose.preferredTimeMs / MILLIS_PER_MINUTE).toInt()
+            is DeviceLightCustomTimePickerPurpose.Move ->
+                (purpose.originalTimeMs / MILLIS_PER_MINUTE).toInt()
+        }
         val initial = selectable.minByOrNull { minute -> kotlin.math.abs(minute - preferred) }
         if (initial != null) {
+            val addingPoint = purpose is DeviceLightCustomTimePickerPurpose.Add
             AquaTimePickerBottomSheet.show(
                 fragment.childFragmentManager,
                 AquaTimePickerBottomSheet.Request(
-                    title = fragment.getString(R.string.device_light_custom_point_time_title),
-                    message = fragment.getString(R.string.device_light_custom_point_time_message),
+                    title = fragment.getString(
+                        if (addingPoint) {
+                            R.string.device_light_custom_add_time_title
+                        } else {
+                            R.string.device_light_custom_move_time_title
+                        }
+                    ),
+                    message = fragment.getString(
+                        if (addingPoint) {
+                            R.string.device_light_custom_add_time_message
+                        } else {
+                            R.string.device_light_custom_move_time_message
+                        }
+                    ),
                     initialHour = initial / MINUTES_PER_HOUR,
                     initialMinute = initial % MINUTES_PER_HOUR,
                     selectableMinutesOfDay = selectable,
-                    confirmText = fragment.getString(
-                        R.string.device_light_custom_point_time_confirm
+                    confirmText = fragment.getString(R.string.device_light_custom_time_done),
+                    cancelText = fragment.getString(R.string.device_light_custom_time_cancel),
+                    showSelectionPreview = false,
+                    showColumnLabels = false,
+                    showFormatHint = false,
+                    splitSelectionHighlight = true,
+                    helperText = fragment.getString(
+                        if (addingPoint) {
+                            R.string.device_light_custom_add_time_helper
+                        } else {
+                            R.string.device_light_custom_move_time_helper
+                        }
                     ),
-                    cancelText = fragment.getString(R.string.cancel),
+                    cancelAsTextAction = true,
                     resultTarget = AquaTimePickerBottomSheet.ResultTarget(
                         requestKey = TIME_REQUEST_KEY,
-                        payloadId = originalTimeMs?.toString() ?: NEW_POINT_PAYLOAD
+                        payloadId = purpose.toPayload()
                     )
                 )
             )
         }
+    }
+
+    private fun showPointActions(timeMs: Long) {
+        val canDelete = viewModel.currentState.canDeleteSelectedPoint &&
+            viewModel.currentState.selectedTimeMs == timeMs
+        val actions = buildList {
+            add(
+                BottomSheetAction(
+                    id = ACTION_EDIT_TIME,
+                    text = fragment.getString(R.string.device_light_custom_edit_time),
+                    style = BottomSheetActionStyle.NEUTRAL
+                )
+            )
+            if (canDelete) {
+                add(
+                    BottomSheetAction(
+                        id = ACTION_DELETE_POINT,
+                        text = fragment.getString(R.string.device_light_custom_delete_point_action),
+                        style = BottomSheetActionStyle.DANGER
+                    )
+                )
+            }
+        }
+        GlobalActionBottomSheet.show(
+            fragmentManager = fragment.childFragmentManager,
+            title = fragment.getString(
+                R.string.device_light_custom_point_actions_title,
+                formatTime(timeMs)
+            ),
+            message = fragment.getString(R.string.device_light_custom_point_actions_message),
+            actions = actions,
+            requestKey = POINT_ACTIONS_REQUEST_KEY,
+            payloadId = timeMs.toString()
+        )
     }
 
     private fun showSaveAs(usedNames: List<String>) {
@@ -294,8 +383,24 @@ private class DeviceLightCustomCurveEffectHandler(
     }
 }
 
+private fun DeviceLightCustomTimePickerPurpose.toPayload(): String = when (this) {
+    is DeviceLightCustomTimePickerPurpose.Add -> "$ADD_POINT_PAYLOAD_PREFIX$preferredTimeMs"
+    is DeviceLightCustomTimePickerPurpose.Move -> "$MOVE_POINT_PAYLOAD_PREFIX$originalTimeMs"
+}
+
+private fun String.toTimePickerPurpose(): DeviceLightCustomTimePickerPurpose? = when {
+    startsWith(ADD_POINT_PAYLOAD_PREFIX) -> removePrefix(ADD_POINT_PAYLOAD_PREFIX).toLongOrNull()
+        ?.let(DeviceLightCustomTimePickerPurpose::Add)
+    startsWith(MOVE_POINT_PAYLOAD_PREFIX) -> removePrefix(MOVE_POINT_PAYLOAD_PREFIX).toLongOrNull()
+        ?.let(DeviceLightCustomTimePickerPurpose::Move)
+    else -> null
+}
+
 private const val TIME_REQUEST_KEY = "device_light_custom_point_time"
+private const val POINT_ACTIONS_REQUEST_KEY = "device_light_custom_point_actions"
 private const val SAVE_AS_REQUEST_KEY = "device_light_custom_save_as"
-private const val NEW_POINT_PAYLOAD = "new"
+private const val ACTION_EDIT_TIME = "edit_time"
+private const val ACTION_DELETE_POINT = "delete_point"
+private const val ADD_POINT_PAYLOAD_PREFIX = "add:"
+private const val MOVE_POINT_PAYLOAD_PREFIX = "move:"
 private const val MINUTES_PER_HOUR = 60
-private const val NOON_MINUTES = 12 * MINUTES_PER_HOUR

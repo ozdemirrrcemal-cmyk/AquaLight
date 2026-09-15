@@ -8,11 +8,19 @@ import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryFa
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 
 internal sealed interface DeviceLightCustomCurveEffect {
-    data class OpenTimePicker(val originalTimeMs: Long?) : DeviceLightCustomCurveEffect
+    data class OpenTimePicker(
+        val purpose: DeviceLightCustomTimePickerPurpose
+    ) : DeviceLightCustomCurveEffect
+    data class OpenPointActions(val timeMs: Long) : DeviceLightCustomCurveEffect
     data class OpenSaveAs(val usedCustomNames: List<String>) : DeviceLightCustomCurveEffect
     data class ShowSuccess(@StringRes val messageRes: Int) : DeviceLightCustomCurveEffect
     data class ShowError(@StringRes val messageRes: Int) : DeviceLightCustomCurveEffect
     data class ShowPointLimit(val maxPoints: Int) : DeviceLightCustomCurveEffect
+}
+
+internal sealed interface DeviceLightCustomTimePickerPurpose {
+    data class Add(val preferredTimeMs: Long) : DeviceLightCustomTimePickerPurpose
+    data class Move(val originalTimeMs: Long) : DeviceLightCustomTimePickerPurpose
 }
 
 internal fun DeviceLightCustomChannelId.toLibraryChannel(): DeviceLightLibraryChannel = when (this) {

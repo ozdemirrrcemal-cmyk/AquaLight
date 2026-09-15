@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -46,9 +47,13 @@ internal fun CustomOutlinedButton(
     modifier: Modifier
 ) {
     val alpha = if (button.enabled) ENABLED_ALPHA else DISABLED_ALPHA
+    val foreground = (appearance.contentColor ?: appearance.color).copy(alpha = alpha)
     val shape = RoundedCornerShape(OUTLINED_BUTTON_CORNER_DP.dp)
     Row(
         modifier = modifier.height(appearance.height).clip(shape)
+            .background(
+                if (appearance.filled) appearance.color.copy(alpha = alpha) else Color.Transparent
+            )
             .border(BORDER_WIDTH_DP.dp, appearance.color.copy(alpha = alpha), shape)
             .clearAndSetSemantics { contentDescription = button.description }
             .clickable(enabled = button.enabled, role = Role.Button, onClick = onClick)
@@ -56,10 +61,10 @@ internal fun CustomOutlinedButton(
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        ButtonLeadingVisual(appearance, alpha)
+        ButtonLeadingVisual(appearance, foreground)
         BasicText(
             text = button.label,
-            style = TextStyle(color = appearance.color.copy(alpha = alpha)),
+            style = TextStyle(color = foreground),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
@@ -67,16 +72,16 @@ internal fun CustomOutlinedButton(
 }
 
 @Composable
-private fun ButtonLeadingVisual(appearance: CustomOutlinedButtonAppearance, alpha: Float) {
+private fun ButtonLeadingVisual(appearance: CustomOutlinedButtonAppearance, color: Color) {
     if (appearance.showPlayIcon) {
-        PlayGlyph(appearance.color.copy(alpha = alpha))
+        PlayGlyph(color)
         Spacer(Modifier.width(PLAY_TEXT_GAP_DP.dp))
     }
     appearance.iconRes?.let { iconRes ->
         Image(
             painter = painterResource(iconRes),
             contentDescription = null,
-            colorFilter = ColorFilter.tint(appearance.color.copy(alpha = alpha)),
+            colorFilter = ColorFilter.tint(color),
             modifier = Modifier.size(OUTLINED_ICON_SIZE_DP.dp)
         )
         Spacer(Modifier.width(ICON_TEXT_GAP_DP.dp))
@@ -241,7 +246,9 @@ internal data class CustomOutlinedButtonAppearance(
     val color: Color,
     val iconRes: Int? = null,
     val height: Dp = DEFAULT_BUTTON_HEIGHT_DP.dp,
-    val showPlayIcon: Boolean = false
+    val showPlayIcon: Boolean = false,
+    val filled: Boolean = false,
+    val contentColor: Color? = null
 )
 
 internal const val CIRCLE_SHAPE_PERCENT = 50

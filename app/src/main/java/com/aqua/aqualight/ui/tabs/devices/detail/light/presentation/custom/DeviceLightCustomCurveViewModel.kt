@@ -188,13 +188,17 @@ internal class DeviceLightCustomCurveViewModel(
         }
         val draft = if (restoreDirty && restored != null) restored else deviceDraft
         restoredDraft = null
+        val currentTimeMs = snapshot.currentTimeMs?.alignedTime() ?: _uiState.value.previewTimeMs
+        val initialPointTimeMs = draft.points.minByOrNull { point ->
+            kotlin.math.abs(point.timeMs - currentTimeMs)
+        }?.timeMs
         _uiState.value = DeviceLightCustomCurveUiState(
             deviceUid = snapshot.deviceUid,
             connectionVisualState = DeviceConnectionVisualState.ONLINE,
             channels = channels,
             draft = draft,
-            selectedTimeMs = draft.points.firstOrNull()?.timeMs,
-            previewTimeMs = snapshot.currentTimeMs?.alignedTime() ?: _uiState.value.previewTimeMs,
+            selectedTimeMs = initialPointTimeMs,
+            previewTimeMs = initialPointTimeMs ?: currentTimeMs,
             maxPoints = snapshot.maxPoints,
             timeStepMs = snapshot.timeStepMs,
             contentEnabled = true,

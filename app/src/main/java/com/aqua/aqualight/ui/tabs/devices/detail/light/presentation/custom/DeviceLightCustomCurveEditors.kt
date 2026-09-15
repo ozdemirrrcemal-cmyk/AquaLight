@@ -1,27 +1,17 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom
 
-import kotlin.math.roundToLong
-
 internal class DeviceLightCustomDayEditor(
     private val currentState: () -> DeviceLightCustomCurveUiState,
     private val setDraft: (DeviceLightCustomDraft, Long?) -> Unit
 ) {
-    fun selectEveryDay() = mutateDraft { draft -> draft.copy(weekdaysMask = EVERY_DAY_MASK) }
-
     fun toggleWeekday(dayIndex: Int) {
         require(dayIndex in FIRST_WEEKDAY_INDEX..LAST_WEEKDAY_INDEX)
-        mutateDraft { draft ->
-            val bit = 1 shl dayIndex
-            val changed = draft.weekdaysMask xor bit
-            draft.copy(weekdaysMask = changed.takeIf { mask -> mask != 0 } ?: draft.weekdaysMask)
-        }
-    }
-
-    private fun mutateDraft(change: (DeviceLightCustomDraft) -> DeviceLightCustomDraft) {
         val state = currentState()
-        if (state.contentEnabled && !state.operationInProgress) {
-            setDraft(change(state.draft), state.selectedTimeMs)
-        }
+        if (!state.contentEnabled || state.operationInProgress) return
+        val bit = customWeekdayMask(dayIndex)
+        val changed = state.draft.weekdaysMask xor bit
+        val mask = changed.takeIf { value -> value != 0 } ?: state.draft.weekdaysMask
+        setDraft(state.draft.copy(weekdaysMask = mask), state.selectedTimeMs)
     }
 }
 
@@ -31,14 +21,52 @@ internal class DeviceLightCustomPointEditor(
     private val setDraft: (DeviceLightCustomDraft, Long?) -> Unit,
     private val emit: (DeviceLightCustomCurveEffect) -> Unit
 ) {
-    fun requestAddPoint() {
+    fun updatePlayhead(timeMs: Long) {
+        val state = currentState()
+        if (!state.contentEnabled || state.operationInProgress) return
+        updateState { current -> current.copy(previewTimeMs = timeMs.alignedTime()) }
+    }
+
+    fun finishPlayheadDrag() {
+        val state = currentState()
+        if (!state.contentEnabled || state.operationInProgress) return
+        val existingPoint = state.draft.points.singleOrNull { point ->
+            point.timeMs == state.previewTimeMs
+        }
+        if (existingPoint != null) {
+            selectGraphPoint(existingPoint.timeMs)
+        } else {
+            requestAddPoint(state.previewTimeMs)
+        }
+    }
+
+    fun requestPlayheadTime() {
+        val state = currentState()
+        val selectedPoint = state.selectedPoint?.takeIf { point ->
+            point.timeMs == state.previewTimeMs
+        }
+        if (selectedPoint != null) {
+            requestEditSelectedTime()
+        } else {
+            requestAddPoint(state.previewTimeMs)
+        }
+    }
+
+    private fun requestAddPoint(preferredTimeMs: Long) {
         val state = currentState()
         when {
             !state.contentEnabled || state.operationInProgress -> Unit
-            state.draft.points.size >= state.maxPoints -> emit(
-                DeviceLightCustomCurveEffect.ShowPointLimit(state.maxPoints)
+            state.draft.points.size >= state.maxPoints -> {
+                emit(DeviceLightCustomCurveEffect.ShowPointLimit(state.maxPoints))
+                state.selectedTimeMs?.let { selectedTimeMs ->
+                    updateState { current -> current.copy(previewTimeMs = selectedTimeMs) }
+                }
+            }
+            else -> emit(
+                DeviceLightCustomCurveEffect.OpenTimePicker(
+                    DeviceLightCustomTimePickerPurpose.Add(preferredTimeMs.alignedTime())
+                )
             )
-            else -> emit(DeviceLightCustomCurveEffect.OpenTimePicker(null))
         }
     }
 
@@ -46,26 +74,47 @@ internal class DeviceLightCustomPointEditor(
         val state = currentState()
         if (!state.operationInProgress) {
             state.selectedTimeMs?.let { time ->
-                emit(DeviceLightCustomCurveEffect.OpenTimePicker(time))
+                emit(
+                    DeviceLightCustomCurveEffect.OpenTimePicker(
+                        DeviceLightCustomTimePickerPurpose.Move(time)
+                    )
+                )
             }
         }
     }
 
-    fun selectOrAddGraphTime(timeMs: Long) {
+    fun selectGraphPoint(timeMs: Long) {
         val state = currentState()
         if (state.contentEnabled && !state.operationInProgress) {
-            val aligned = timeMs.alignedTime()
-            val existing = state.draft.points.singleOrNull { point -> point.timeMs == aligned }
-            when {
-                existing != null -> updateState { current ->
-                    current.copy(selectedTimeMs = existing.timeMs)
+            state.draft.points.singleOrNull { point -> point.timeMs == timeMs }?.let { point ->
+                updateState { current ->
+                    current.copy(
+                        selectedTimeMs = point.timeMs,
+                        previewTimeMs = point.timeMs
+                    )
                 }
-                state.draft.points.size >= state.maxPoints -> emit(
-                    DeviceLightCustomCurveEffect.ShowPointLimit(state.maxPoints)
-                )
-                else -> addOrMovePoint(originalTimeMs = null, targetTimeMs = aligned)
             }
         }
+    }
+
+    fun requestPointActions(timeMs: Long) {
+        val state = currentState()
+        if (state.contentEnabled && !state.operationInProgress &&
+            state.draft.points.any { point -> point.timeMs == timeMs }
+        ) {
+            selectGraphPoint(timeMs)
+            emit(DeviceLightCustomCurveEffect.OpenPointActions(timeMs))
+        }
+    }
+
+    fun cancelTimeSelection(purpose: DeviceLightCustomTimePickerPurpose) {
+        val state = currentState()
+        val restoredTimeMs = when (purpose) {
+            is DeviceLightCustomTimePickerPurpose.Add ->
+                state.selectedTimeMs ?: purpose.preferredTimeMs
+            is DeviceLightCustomTimePickerPurpose.Move -> purpose.originalTimeMs
+        }
+        updateState { current -> current.copy(previewTimeMs = restoredTimeMs.alignedTime()) }
     }
 
     fun addOrMovePoint(originalTimeMs: Long?, targetTimeMs: Long) {
@@ -78,36 +127,30 @@ internal class DeviceLightCustomPointEditor(
             !state.contentEnabled || state.operationInProgress || timeOccupied -> Unit
             originalTimeMs == null && state.draft.points.size >= state.maxPoints ->
                 emit(DeviceLightCustomCurveEffect.ShowPointLimit(state.maxPoints))
-            else -> setDraft(
-                state.draft.copy(
-                    points = state.changedPoints(originalTimeMs, aligned)
-                ),
-                aligned
-            )
+            else -> {
+                setDraft(
+                    state.draft.copy(
+                        points = state.changedPoints(originalTimeMs, aligned)
+                    ),
+                    aligned
+                )
+                updateState { current -> current.copy(previewTimeMs = aligned) }
+            }
         }
     }
 
-    fun duplicateSelectedPoint() {
+    fun deletePoint(timeMs: Long) {
         val state = currentState()
-        val selected = state.selectedPoint
-        when {
-            state.operationInProgress || selected == null -> Unit
-            state.draft.points.size >= state.maxPoints -> emit(
-                DeviceLightCustomCurveEffect.ShowPointLimit(state.maxPoints)
-            )
-            else -> duplicatePointAtAvailableTime(state, selected)
-        }
-    }
-
-    fun deleteSelectedPoint() {
-        val state = currentState()
-        val selected = state.selectedPoint
-        if (!state.operationInProgress && selected != null) {
-            val points = state.draft.points.filterNot { point -> point.timeMs == selected.timeMs }
+        val point = state.draft.points.singleOrNull { candidate -> candidate.timeMs == timeMs }
+        if (state.canDeleteSelectedPoint && point != null && state.selectedTimeMs == timeMs) {
+            val points = state.draft.points.filterNot { candidate -> candidate.timeMs == timeMs }
             val nextSelection = points.minByOrNull { point ->
-                kotlin.math.abs(point.timeMs - selected.timeMs)
+                kotlin.math.abs(point.timeMs - timeMs)
             }?.timeMs
             setDraft(state.draft.copy(points = points), nextSelection)
+            nextSelection?.let { nextTime ->
+                updateState { current -> current.copy(previewTimeMs = nextTime) }
+            }
         }
     }
 
@@ -121,33 +164,6 @@ internal class DeviceLightCustomPointEditor(
             setDraft(state.draft.copy(points = points), state.selectedTimeMs)
         }
     }
-
-    fun stepSelectedChannel(channel: DeviceLightCustomChannelId, delta: Int) {
-        currentState().selectedPoint?.channels?.get(channel)?.let { value ->
-            updateSelectedChannel(channel, value + delta)
-        }
-    }
-
-    fun updatePreviewTime(timeMs: Long) {
-        updateState { state -> state.copy(previewTimeMs = timeMs.alignedTime()) }
-    }
-
-    private fun duplicatePointAtAvailableTime(
-        state: DeviceLightCustomCurveUiState,
-        selected: DeviceLightCustomPointUiState
-    ) {
-        val target = state.availableDuplicateTime(selected.timeMs)
-        if (target != null) {
-            setDraft(
-                state.draft.copy(
-                    points = (state.draft.points + selected.copy(timeMs = target))
-                        .sortedBy { point -> point.timeMs }
-                ),
-                target
-            )
-        }
-    }
-
 }
 
 private fun DeviceLightCustomCurveUiState.changedPoints(
@@ -157,7 +173,7 @@ private fun DeviceLightCustomCurveUiState.changedPoints(
     val changed = if (originalTimeMs == null) {
         draft.points + DeviceLightCustomPointUiState(
             timeMs = alignedTimeMs,
-            channels = interpolatedChannels(alignedTimeMs)
+            channels = draft.points.interpolatedChannelsAt(alignedTimeMs, channels)
         )
     } else {
         draft.points.map { point ->
@@ -165,45 +181,6 @@ private fun DeviceLightCustomCurveUiState.changedPoints(
         }
     }
     return changed.sortedBy { point -> point.timeMs }
-}
-
-private fun DeviceLightCustomCurveUiState.interpolatedChannels(
-    timeMs: Long
-): Map<DeviceLightCustomChannelId, Int> {
-    val availableChannels = draft.points.firstOrNull()?.channels?.keys ?: channels
-    val before = draft.points.lastOrNull { point -> point.timeMs < timeMs }
-    val after = draft.points.firstOrNull { point -> point.timeMs > timeMs }
-    return availableChannels.associateWith { channel ->
-        interpolatedPercent(before, after, channel, timeMs)
-    }
-}
-
-private fun interpolatedPercent(
-    before: DeviceLightCustomPointUiState?,
-    after: DeviceLightCustomPointUiState?,
-    channel: DeviceLightCustomChannelId,
-    timeMs: Long
-): Int = when {
-    before == null && after == null -> MIN_LIGHT_CHANNEL_PERCENT
-    before == null -> after?.channels?.get(channel) ?: MIN_LIGHT_CHANNEL_PERCENT
-    after == null -> before.channels[channel] ?: MIN_LIGHT_CHANNEL_PERCENT
-    else -> {
-        val fraction = (timeMs - before.timeMs).toDouble() /
-            (after.timeMs - before.timeMs).toDouble()
-        val start = before.channels[channel] ?: MIN_LIGHT_CHANNEL_PERCENT
-        val end = after.channels[channel] ?: MIN_LIGHT_CHANNEL_PERCENT
-        (start + (end - start) * fraction).roundToLong().toInt()
-    }
-}
-
-private fun DeviceLightCustomCurveUiState.availableDuplicateTime(selectedTimeMs: Long): Long? {
-    val occupied = draft.points.mapTo(mutableSetOf()) { point -> point.timeMs }
-    val later = generateSequence(selectedTimeMs + timeStepMs) { value -> value + timeStepMs }
-        .takeWhile { value -> value < MILLIS_PER_DAY }
-        .firstOrNull { value -> value !in occupied }
-    return later ?: generateSequence(selectedTimeMs - timeStepMs) { value -> value - timeStepMs }
-        .takeWhile { value -> value >= 0L }
-        .firstOrNull { value -> value !in occupied }
 }
 
 private fun DeviceLightCustomPointUiState.updateChannelIfSelected(

@@ -57,7 +57,10 @@ class DeviceLightCustomCurveViewModelTest {
 
         assertTrue(viewModel.currentState.hasUnsavedChanges)
         assertEquals(UPDATED_BLUE, viewModel.currentState.selectedPoint?.channels?.get(DeviceLightCustomChannelId.BLUE))
-        assertEquals(EVERY_DAY_MASK xor (1 shl SUNDAY_INDEX), viewModel.currentState.draft.weekdaysMask)
+        assertEquals(
+            EVERY_DAY_MASK xor customWeekdayMask(SUNDAY_INDEX),
+            viewModel.currentState.draft.weekdaysMask
+        )
     }
 
     @Test
@@ -97,7 +100,7 @@ class DeviceLightCustomCurveViewModelTest {
     fun `preview uses firmware virtual time without installing draft`() {
         val custom = FakeCustomOperations(snapshot())
         val viewModel = boundViewModel(customOperations = custom)
-        viewModel.pointEditor.updatePreviewTime(PREVIEW_TIME_MS)
+        viewModel.pointEditor.updatePlayhead(PREVIEW_TIME_MS)
 
         viewModel.preview()
 
@@ -119,13 +122,100 @@ class DeviceLightCustomCurveViewModelTest {
         )
         val effect = async(start = CoroutineStart.UNDISPATCHED) { viewModel.effects.first() }
 
-        viewModel.pointEditor.requestAddPoint()
+        viewModel.pointEditor.updatePlayhead(PREVIEW_TIME_MS)
+        viewModel.pointEditor.finishPlayheadDrag()
 
         assertEquals(
             DeviceLightCustomCurveEffect.ShowPointLimit(MAX_POINT_CAPACITY),
             effect.await()
         )
         assertEquals(MAX_POINT_CAPACITY, viewModel.currentState.draft.points.size)
+    }
+
+    @Test
+    fun `graph selection never creates a point`() {
+        val secondTimeMs = INITIAL_TIME_MS + 2 * MILLIS_PER_HOUR
+        val viewModel = boundViewModel(
+            customOperations = FakeCustomOperations(
+                snapshot(
+                    points = listOf(
+                        point(INITIAL_TIME_MS),
+                        point(secondTimeMs)
+                    )
+                )
+            )
+        )
+
+        viewModel.pointEditor.selectGraphPoint(secondTimeMs)
+        viewModel.pointEditor.selectGraphPoint(INITIAL_TIME_MS + MILLIS_PER_HOUR)
+
+        assertEquals(2, viewModel.currentState.draft.points.size)
+        assertEquals(secondTimeMs, viewModel.currentState.selectedTimeMs)
+        assertEquals(secondTimeMs, viewModel.currentState.previewTimeMs)
+    }
+
+    @Test
+    fun `last remaining point cannot be deleted`() {
+        val viewModel = boundViewModel()
+
+        viewModel.pointEditor.deletePoint(INITIAL_TIME_MS)
+
+        assertEquals(1, viewModel.currentState.draft.points.size)
+        assertFalse(viewModel.currentState.canDeleteSelectedPoint)
+    }
+
+    @Test
+    fun `releasing playhead requests exact dragged time`() = runTest {
+        val viewModel = boundViewModel()
+        val effect = async(start = CoroutineStart.UNDISPATCHED) { viewModel.effects.first() }
+
+        viewModel.pointEditor.updatePlayhead(PREVIEW_TIME_MS)
+        viewModel.pointEditor.finishPlayheadDrag()
+
+        assertEquals(
+            DeviceLightCustomCurveEffect.OpenTimePicker(
+                DeviceLightCustomTimePickerPurpose.Add(PREVIEW_TIME_MS)
+            ),
+            effect.await()
+        )
+    }
+
+    @Test
+    fun `moving playhead does not change draft before time confirmation`() {
+        val viewModel = boundViewModel()
+
+        viewModel.pointEditor.updatePlayhead(PREVIEW_TIME_MS)
+
+        assertEquals(1, viewModel.currentState.draft.points.size)
+        assertFalse(viewModel.currentState.hasUnsavedChanges)
+        assertEquals(PREVIEW_TIME_MS, viewModel.currentState.previewTimeMs)
+    }
+
+    @Test
+    fun `cancelling add time restores playhead to selected point`() {
+        val viewModel = boundViewModel()
+        viewModel.pointEditor.updatePlayhead(PREVIEW_TIME_MS)
+
+        viewModel.pointEditor.cancelTimeSelection(
+            DeviceLightCustomTimePickerPurpose.Add(PREVIEW_TIME_MS)
+        )
+
+        assertEquals(INITIAL_TIME_MS, viewModel.currentState.previewTimeMs)
+        assertEquals(INITIAL_TIME_MS, viewModel.currentState.selectedTimeMs)
+    }
+
+    @Test
+    fun `long press exposes contextual point actions without changing draft`() = runTest {
+        val viewModel = boundViewModel()
+        val effect = async(start = CoroutineStart.UNDISPATCHED) { viewModel.effects.first() }
+
+        viewModel.pointEditor.requestPointActions(INITIAL_TIME_MS)
+
+        assertEquals(
+            DeviceLightCustomCurveEffect.OpenPointActions(INITIAL_TIME_MS),
+            effect.await()
+        )
+        assertEquals(1, viewModel.currentState.draft.points.size)
     }
 
     private fun boundViewModel(
@@ -205,6 +295,13 @@ class DeviceLightCustomCurveViewModelTest {
             DeviceLightCustomChannel.GREEN,
             DeviceLightCustomChannel.BLUE,
             DeviceLightCustomChannel.WHITE
+        )
+
+        fun point(timeMs: Long) = DeviceLightCustomPoint(
+            timeMs = timeMs,
+            scene = DeviceLightCustomScene(
+                WRGB_CHANNELS.associateWith { channel -> channel.ordinal * 10 }
+            )
         )
 
         fun snapshot(

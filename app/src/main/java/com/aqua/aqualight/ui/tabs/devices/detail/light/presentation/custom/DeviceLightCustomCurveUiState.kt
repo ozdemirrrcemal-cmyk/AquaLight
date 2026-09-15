@@ -102,6 +102,10 @@ internal data class DeviceLightCustomCurveUiState(
 
     val canSaveAs: Boolean
         get() = contentEnabled && !operationInProgress && draft.points.isNotEmpty()
+
+    val canDeleteSelectedPoint: Boolean
+        get() = contentEnabled && !operationInProgress &&
+            selectedPoint != null && draft.points.size > MIN_CUSTOM_POINT_COUNT
 }
 
 internal fun DeviceLightCustomChannel.toUiChannel(): DeviceLightCustomChannelId = when (this) {
@@ -113,6 +117,8 @@ internal fun DeviceLightCustomChannel.toUiChannel(): DeviceLightCustomChannelId 
 
 internal const val EVERY_DAY_MASK = 127
 internal const val MILLIS_PER_MINUTE = 60_000L
+internal const val MINUTES_PER_HOUR = 60
+internal const val MILLIS_PER_HOUR = MINUTES_PER_HOUR * MILLIS_PER_MINUTE
 internal const val MINUTES_PER_DAY = 1_440
 internal const val MILLIS_PER_DAY = MINUTES_PER_DAY * MILLIS_PER_MINUTE
 internal const val MAX_POINT_CAPACITY = 96
@@ -124,3 +130,9 @@ private const val ABSENT_CHANNEL = -1
 private const val STATE_WEEKDAYS_MASK = "light_custom_weekdays_mask"
 private const val STATE_POINT_TIMES = "light_custom_point_times"
 private const val STATE_CHANNEL_PREFIX = "light_custom_channel_"
+private const val MIN_CUSTOM_POINT_COUNT = 1
+
+internal fun customWeekdayMask(dayIndex: Int): Int {
+    require(dayIndex in FIRST_WEEKDAY_INDEX..LAST_WEEKDAY_INDEX)
+    return 1 shl (LAST_WEEKDAY_INDEX - dayIndex)
+}

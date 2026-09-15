@@ -1,23 +1,24 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom
 
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
-import com.aqua.aqualight.ui.common.light.AquaLightManualPercentSlider
-import com.aqua.aqualight.ui.common.light.AquaLightManualPercentSliderActions
-import com.aqua.aqualight.ui.common.light.AquaLightManualPercentSliderState
 
 @Composable
 internal fun VirtualTimePreviewCard(
@@ -26,79 +27,56 @@ internal fun VirtualTimePreviewCard(
     visuals: DeviceLightCustomVisuals
 ) {
     AquaDeviceCardSurface(modifier = Modifier.fillMaxWidth()) {
-        Column(verticalArrangement = Arrangement.spacedBy(PREVIEW_CONTENT_SPACING_DP.dp)) {
-            SectionHeading(
-                title = stringResource(R.string.device_light_custom_virtual_preview),
-                subtitle = stringResource(R.string.device_light_custom_virtual_preview_summary),
-                visuals = visuals
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            PreviewGlyph(visuals)
+            BasicText(
+                text = stringResource(R.string.device_light_custom_virtual_preview_compact),
+                style = visuals.typography.title.copy(color = visuals.colors.card.primaryText),
+                modifier = Modifier.weight(1f).padding(start = PREVIEW_TITLE_GAP_DP.dp)
             )
-            PreviewControls(state, actions, visuals)
+            CustomOutlinedButton(
+                button = CustomOutlinedButtonState(
+                    label = stringResource(R.string.device_light_custom_preview),
+                    description = stringResource(
+                        R.string.device_light_custom_preview_at_time_description,
+                        formatTime(state.previewTimeMs)
+                    ),
+                    enabled = state.contentEnabled && !state.operationInProgress
+                ),
+                appearance = CustomOutlinedButtonAppearance(
+                    color = visuals.colors.action,
+                    height = PREVIEW_BUTTON_HEIGHT_DP.dp
+                ),
+                onClick = actions.onPreviewClick,
+                modifier = Modifier.width(PREVIEW_BUTTON_WIDTH_DP.dp)
+            )
         }
     }
 }
 
 @Composable
-private fun PreviewControls(
-    state: DeviceLightCustomCurveUiState,
-    actions: DeviceLightCustomCurveActions,
-    visuals: DeviceLightCustomVisuals
-) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        PreviewTimeSlider(state, actions, visuals, Modifier.weight(1f))
-        Spacer(Modifier.width(PREVIEW_BUTTON_GAP_DP.dp))
-        CustomOutlinedButton(
-            button = CustomOutlinedButtonState(
-                label = stringResource(R.string.device_light_custom_preview),
-                description = stringResource(R.string.device_light_custom_preview_description),
-                enabled = state.contentEnabled && !state.operationInProgress
-            ),
-            appearance = CustomOutlinedButtonAppearance(
-                color = visuals.colors.action,
-                height = PREVIEW_BUTTON_HEIGHT_DP.dp,
-                showPlayIcon = true
-            ),
-            onClick = actions.onPreviewClick,
-            modifier = Modifier.width(PREVIEW_BUTTON_WIDTH_DP.dp)
+private fun PreviewGlyph(visuals: DeviceLightCustomVisuals) {
+    Canvas(
+        modifier = Modifier.size(PREVIEW_GLYPH_SIZE_DP.dp).border(
+            PREVIEW_GLYPH_BORDER_DP.dp,
+            visuals.colors.action,
+            RoundedCornerShape(percent = CIRCLE_SHAPE_PERCENT)
         )
-    }
-}
-
-@Composable
-private fun PreviewTimeSlider(
-    state: DeviceLightCustomCurveUiState,
-    actions: DeviceLightCustomCurveActions,
-    visuals: DeviceLightCustomVisuals,
-    modifier: Modifier
-) {
-    Column(modifier) {
-        BasicText(
-            text = formatTime(state.previewTimeMs),
-            style = visuals.typography.caption.copy(
-                color = visuals.colors.card.primaryText,
-                textAlign = TextAlign.Center
-            ),
-            modifier = Modifier.fillMaxWidth()
-        )
-        AquaLightManualPercentSlider(
-            state = AquaLightManualPercentSliderState(
-                percent = state.previewTimeMs.toDayPercent(),
-                enabled = state.contentEnabled && !state.operationInProgress,
-                channelColor = visuals.colors.action,
-                stateText = formatTime(state.previewTimeMs),
-                accessibilityDescription = stringResource(
-                    R.string.device_light_custom_virtual_time_description
-                )
-            ),
-            actions = AquaLightManualPercentSliderActions(
-                onValueChanged = { percent -> actions.onPreviewTimeChanged(percent.toDayTime()) },
-                onValueChangeFinished = {}
-            )
-        )
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            PREVIEW_TIME_LABELS.forEach { label ->
-                BasicText(text = label, style = visuals.typography.micro)
-            }
+    ) {
+        val path = Path().apply {
+            moveTo(size.width * PLAY_LEFT_FRACTION, size.height * PLAY_TOP_FRACTION)
+            lineTo(size.width * PLAY_RIGHT_FRACTION, size.height * PLAY_CENTER_FRACTION)
+            lineTo(size.width * PLAY_LEFT_FRACTION, size.height * PLAY_BOTTOM_FRACTION)
+            close()
         }
+        drawPath(
+            path = path,
+            color = visuals.colors.action,
+            style = Stroke(width = PLAY_STROKE_DP.dp.toPx())
+        )
     }
 }
 
@@ -106,10 +84,11 @@ private fun PreviewTimeSlider(
 internal fun LibraryActions(
     state: DeviceLightCustomCurveUiState,
     actions: DeviceLightCustomCurveActions,
-    visuals: DeviceLightCustomVisuals
+    visuals: DeviceLightCustomVisuals,
+    modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(LIBRARY_ACTION_SPACING_DP.dp)
     ) {
         CustomOutlinedButton(
@@ -133,7 +112,9 @@ internal fun LibraryActions(
             ),
             appearance = CustomOutlinedButtonAppearance(
                 color = visuals.colors.action,
-                iconRes = R.drawable.ic_add_24
+                iconRes = R.drawable.ic_add_24,
+                filled = true,
+                contentColor = visuals.colors.card.primaryText
             ),
             onClick = actions.onSaveAsClick,
             modifier = Modifier.weight(1f)
@@ -141,15 +122,15 @@ internal fun LibraryActions(
     }
 }
 
-private fun Long.toDayPercent(): Int =
-    ((this * MAX_LIGHT_CHANNEL_PERCENT) / (MILLIS_PER_DAY - MILLIS_PER_MINUTE)).toInt()
-
-private fun Int.toDayTime(): Long =
-    (MILLIS_PER_DAY - MILLIS_PER_MINUTE) * this / MAX_LIGHT_CHANNEL_PERCENT
-
-private val PREVIEW_TIME_LABELS = listOf("00", "06", "12", "18", "24")
-private const val PREVIEW_CONTENT_SPACING_DP = 8
-private const val PREVIEW_BUTTON_GAP_DP = 10
-private const val PREVIEW_BUTTON_HEIGHT_DP = 36
-private const val PREVIEW_BUTTON_WIDTH_DP = 84
+private const val PREVIEW_TITLE_GAP_DP = 12
+private const val PREVIEW_BUTTON_HEIGHT_DP = 44
+private const val PREVIEW_BUTTON_WIDTH_DP = 126
+private const val PREVIEW_GLYPH_SIZE_DP = 42
+private const val PREVIEW_GLYPH_BORDER_DP = 2
+private const val PLAY_STROKE_DP = 2
+private const val PLAY_LEFT_FRACTION = 0.36f
+private const val PLAY_TOP_FRACTION = 0.27f
+private const val PLAY_RIGHT_FRACTION = 0.72f
+private const val PLAY_CENTER_FRACTION = 0.5f
+private const val PLAY_BOTTOM_FRACTION = 0.73f
 private const val LIBRARY_ACTION_SPACING_DP = 8

@@ -3,6 +3,7 @@
 package com.aqua.aqualight.ui.common.bottomsheet
 
 import android.content.DialogInterface
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -10,6 +11,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.annotation.StringRes
+import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.core.view.isGone
 import androidx.fragment.app.FragmentManager
@@ -71,7 +73,19 @@ class AquaTimePickerBottomSheet : BottomSheetDialogFragment(
         val selection = view.findViewById<TextView>(R.id.tvAquaTimePickerSelection)
         val hourWheel = view.findViewById<RecyclerView>(R.id.rvAquaTimePickerHour)
         val minuteWheel = view.findViewById<RecyclerView>(R.id.rvAquaTimePickerMinute)
-        configureSelectionMode(view, selectionMode)
+        configureSelectionMode(
+            view = view,
+            selectionMode = selectionMode,
+            showSelectionPreview = args.getBoolean(ARG_SHOW_SELECTION_PREVIEW, true),
+            showColumnLabels = args.getBoolean(ARG_SHOW_COLUMN_LABELS, true),
+            showFormatHint = args.getBoolean(ARG_SHOW_FORMAT_HINT, true),
+            splitSelectionHighlight = args.getBoolean(ARG_SPLIT_SELECTION_HIGHLIGHT)
+        )
+        view.findViewById<TextView>(R.id.tvAquaTimePickerHelper).apply {
+            val helper = args.getString(ARG_HELPER_TEXT)
+            isGone = helper.isNullOrBlank()
+            text = helper.orEmpty()
+        }
 
         val minuteBinding = bindWheel(
             recyclerView = minuteWheel,
@@ -106,6 +120,15 @@ class AquaTimePickerBottomSheet : BottomSheetDialogFragment(
 
         view.findViewById<MaterialButton>(R.id.btnAquaTimePickerCancel).apply {
             text = args.getString(ARG_CANCEL_TEXT).orEmpty()
+            if (args.getBoolean(ARG_CANCEL_AS_TEXT_ACTION)) {
+                backgroundTintList = ColorStateList.valueOf(
+                    ContextCompat.getColor(context, R.color.aqua_color_transparent)
+                )
+                setTextColor(
+                    ContextCompat.getColor(context, R.color.aqua_bottom_sheet_text_secondary)
+                )
+                strokeWidth = 0
+            }
             setOnClickListener {
                 publish(RESULT_CANCELLED)
                 dismiss()
@@ -149,19 +172,38 @@ class AquaTimePickerBottomSheet : BottomSheetDialogFragment(
         }
     }
 
-    private fun configureSelectionMode(view: View, selectionMode: SelectionMode) {
+    private fun configureSelectionMode(
+        view: View,
+        selectionMode: SelectionMode,
+        showSelectionPreview: Boolean,
+        showColumnLabels: Boolean,
+        showFormatHint: Boolean,
+        splitSelectionHighlight: Boolean
+    ) {
         val minuteOnly = selectionMode == SelectionMode.MINUTE_OF_HOUR
-        view.findViewById<View>(R.id.tvAquaTimePickerHourLabel).isGone = minuteOnly
-        view.findViewById<View>(R.id.spaceAquaTimePickerLabels).isGone = minuteOnly
+        val showSplitHighlight = splitSelectionHighlight && !minuteOnly
+        view.findViewById<View>(R.id.tvAquaTimePickerSelection).isGone = !showSelectionPreview
+        view.findViewById<View>(R.id.tvAquaTimePickerHourLabel).isGone =
+            minuteOnly || !showColumnLabels
+        view.findViewById<View>(R.id.spaceAquaTimePickerLabels).isGone =
+            minuteOnly || !showColumnLabels
+        view.findViewById<View>(R.id.tvAquaTimePickerMinuteLabel).isGone = !showColumnLabels
         view.findViewById<View>(R.id.rvAquaTimePickerHour).isGone = minuteOnly
         view.findViewById<View>(R.id.tvAquaTimePickerSeparator).isGone = minuteOnly
-        view.findViewById<TextView>(R.id.tvAquaTimePickerHint).setText(
-            if (minuteOnly) {
-                R.string.common_time_picker_minute_of_hour_hint
-            } else {
-                R.string.common_time_picker_24_hour_format
-            }
-        )
+        view.findViewById<View>(R.id.viewAquaTimePickerCombinedSelection).isGone =
+            showSplitHighlight
+        view.findViewById<View>(R.id.aquaTimePickerSplitSelection).isGone =
+            !showSplitHighlight
+        view.findViewById<TextView>(R.id.tvAquaTimePickerHint).apply {
+            isGone = !showFormatHint
+            setText(
+                if (minuteOnly) {
+                    R.string.common_time_picker_minute_of_hour_hint
+                } else {
+                    R.string.common_time_picker_24_hour_format
+                }
+            )
+        }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -279,6 +321,12 @@ class AquaTimePickerBottomSheet : BottomSheetDialogFragment(
         val selectableMinutesOfDay: List<Int>? = null,
         val confirmText: String,
         val cancelText: String,
+        val showSelectionPreview: Boolean = true,
+        val showColumnLabels: Boolean = true,
+        val showFormatHint: Boolean = true,
+        val splitSelectionHighlight: Boolean = false,
+        val helperText: String? = null,
+        val cancelAsTextAction: Boolean = false,
         val resultTarget: ResultTarget
     ) {
         init {
@@ -344,6 +392,12 @@ class AquaTimePickerBottomSheet : BottomSheetDialogFragment(
         private const val ARG_SELECTABLE_MINUTES_OF_DAY = "arg_selectable_minutes_of_day"
         private const val ARG_CONFIRM_TEXT = "arg_confirm_text"
         private const val ARG_CANCEL_TEXT = "arg_cancel_text"
+        private const val ARG_SHOW_SELECTION_PREVIEW = "arg_show_selection_preview"
+        private const val ARG_SHOW_COLUMN_LABELS = "arg_show_column_labels"
+        private const val ARG_SHOW_FORMAT_HINT = "arg_show_format_hint"
+        private const val ARG_SPLIT_SELECTION_HIGHLIGHT = "arg_split_selection_highlight"
+        private const val ARG_HELPER_TEXT = "arg_helper_text"
+        private const val ARG_CANCEL_AS_TEXT_ACTION = "arg_cancel_as_text_action"
         private const val ARG_REQUEST_KEY = "arg_request_key"
         private const val ARG_PAYLOAD_ID = "arg_payload_id"
         private const val STATE_SELECTED_HOUR = "state_selected_hour"
@@ -369,6 +423,12 @@ class AquaTimePickerBottomSheet : BottomSheetDialogFragment(
                     ARG_ALLOW_END_OF_DAY to request.allowEndOfDay,
                     ARG_CONFIRM_TEXT to request.confirmText,
                     ARG_CANCEL_TEXT to request.cancelText,
+                    ARG_SHOW_SELECTION_PREVIEW to request.showSelectionPreview,
+                    ARG_SHOW_COLUMN_LABELS to request.showColumnLabels,
+                    ARG_SHOW_FORMAT_HINT to request.showFormatHint,
+                    ARG_SPLIT_SELECTION_HIGHLIGHT to request.splitSelectionHighlight,
+                    ARG_HELPER_TEXT to request.helperText,
+                    ARG_CANCEL_AS_TEXT_ACTION to request.cancelAsTextAction,
                     ARG_REQUEST_KEY to request.resultTarget.requestKey,
                     ARG_PAYLOAD_ID to request.resultTarget.payloadId
                 ).apply {
