@@ -240,11 +240,7 @@ private fun LibraryLoadButton(
         entry.name
     )
     val shape = RoundedCornerShape(AquaLightLibraryGeometry.loadButtonCornerRadius)
-    val contentColor = if (prominent) {
-        visuals.colors.card.primaryText
-    } else {
-        visuals.colors.action
-    }
+    val contentColor = if (prominent) visuals.colors.card.primaryText else visuals.colors.action
     Row(
         modifier = modifier
             .requiredWidthIn(min = AquaLightLibraryGeometry.loadButtonMinWidth)
