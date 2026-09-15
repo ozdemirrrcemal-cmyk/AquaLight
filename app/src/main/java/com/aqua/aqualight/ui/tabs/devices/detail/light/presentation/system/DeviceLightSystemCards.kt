@@ -66,6 +66,7 @@ private fun DeviceLightSystemStatusContent(
                 modifier = Modifier.size(DeviceLightSystemGeometry.gaugeSize)
             )
         }
+        Spacer(Modifier.height(DeviceLightSystemGeometry.gaugeFanGap))
         DeviceLightFanPair(state, visuals)
         Spacer(Modifier.height(DeviceLightSystemGeometry.dividerHeight))
         Box(
@@ -322,6 +323,7 @@ internal fun DeviceLightAutomaticRangeCard(
                 text = stringResource(R.string.device_light_system_automatic_range),
                 style = visuals.typography.title
             )
+            Spacer(Modifier.height(DeviceLightSystemGeometry.chartTitleGap))
             DeviceLightAutomaticChart(
                 startTemperature = state.selectedStartTemperatureCelsius,
                 fullSpeedTemperature = state.selectedFullSpeedTemperatureCelsius,
@@ -361,14 +363,6 @@ internal fun DeviceLightAutomaticRangeCard(
                     onValueChanged = actions.onFullSpeedTemperatureChanged
                 ),
                 visuals = visuals
-            )
-            BasicText(
-                text = stringResource(
-                    R.string.device_light_system_automatic_helper,
-                    state.selectedStartTemperatureCelsius,
-                    state.selectedFullSpeedTemperatureCelsius
-                ),
-                style = visuals.typography.caption
             )
         }
     }

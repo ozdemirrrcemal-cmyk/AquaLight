@@ -107,11 +107,6 @@ private fun DeviceLightProtectionThreshold(
         visuals = visuals
     )
     DeviceLightTemperatureLimitLabels(minimum, maximum, visuals)
-    Spacer(Modifier.height(DeviceLightSystemGeometry.helperTopGap))
-    BasicText(
-        text = stringResource(R.string.device_light_system_protection_helper),
-        style = visuals.typography.caption
-    )
 }
 
 @Composable

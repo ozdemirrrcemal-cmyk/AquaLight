@@ -23,12 +23,10 @@
     <string name="device_light_system_automatic_range">Otomatik çalışma aralığı</string>
     <string name="device_light_system_start">Başlangıç</string>
     <string name="device_light_system_full_speed">Tam hız</string>
-    <string name="device_light_system_automatic_helper">%1$d °C altında %%0 · %2$d °C ve üzeri %%100</string>
     <string name="device_light_system_light_protection">Işık koruması</string>
-    <string name="device_light_system_protection_description">Aşırı sıcaklık durumunda ışık çıkışı otomatik olarak azaltılır.</string>
+    <string name="device_light_system_protection_description">Cihaz aşırı ısındığında ışık çıkışı\ngüvenli bir seviyeye otomatik düşürülür.</string>
     <string name="device_light_system_always_on">HER ZAMAN AÇIK</string>
     <string name="device_light_system_protection_threshold">Koruma eşiği</string>
-    <string name="device_light_system_protection_helper">Eşik aşıldığında ışık çıkışı güvenle azaltılır.</string>
     <string name="device_light_system_save_action">Ayarları kaydet</string>
     <string name="device_light_system_minus_symbol">−</string>
     <string name="device_light_system_plus_symbol">+</string>

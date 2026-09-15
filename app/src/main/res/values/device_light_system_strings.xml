@@ -23,12 +23,10 @@
     <string name="device_light_system_automatic_range">Automatic operating range</string>
     <string name="device_light_system_start">Start</string>
     <string name="device_light_system_full_speed">Full speed</string>
-    <string name="device_light_system_automatic_helper">0%% below %1$d °C · 100%% at and above %2$d °C</string>
     <string name="device_light_system_light_protection">Light protection</string>
-    <string name="device_light_system_protection_description">Light output is automatically reduced at excessive temperature.</string>
+    <string name="device_light_system_protection_description">If the device overheats, light output\nis automatically reduced to a safe level.</string>
     <string name="device_light_system_always_on">ALWAYS ON</string>
     <string name="device_light_system_protection_threshold">Protection threshold</string>
-    <string name="device_light_system_protection_helper">Light output is reduced safely when the threshold is exceeded.</string>
     <string name="device_light_system_save_action">Save settings</string>
     <string name="device_light_system_minus_symbol">−</string>
     <string name="device_light_system_plus_symbol">+</string>
