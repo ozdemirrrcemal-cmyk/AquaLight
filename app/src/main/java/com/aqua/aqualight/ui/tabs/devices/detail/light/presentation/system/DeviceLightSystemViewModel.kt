@@ -49,7 +49,14 @@ internal class DeviceLightSystemViewModel(
             initialLoading = true
         )
         observeJob = viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
-            operations.observe(deviceUid).collect(::consumeReadResult)
+            operations.observe(deviceUid).collect { result ->
+                when (result) {
+                    is DeviceLightSystemReadResult.Available -> applySnapshot(result.snapshot)
+                    is DeviceLightSystemReadResult.Failed -> {
+                        if (!mutableUiState.value.initialLoading) applyFailure(result.failure)
+                    }
+                }
+            }
         }
         refresh(showLoading = true, showFailure = true)
     }
@@ -174,15 +181,6 @@ internal class DeviceLightSystemViewModel(
                         effectEmitter.showMessage(result.failure.messageRes(), false)
                     }
                 }
-            }
-        }
-    }
-
-    private fun consumeReadResult(result: DeviceLightSystemReadResult) {
-        when (result) {
-            is DeviceLightSystemReadResult.Available -> applySnapshot(result.snapshot)
-            is DeviceLightSystemReadResult.Failed -> {
-                if (!mutableUiState.value.initialLoading) applyFailure(result.failure)
             }
         }
     }

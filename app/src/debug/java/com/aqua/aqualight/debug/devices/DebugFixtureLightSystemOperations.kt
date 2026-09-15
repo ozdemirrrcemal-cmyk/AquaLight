@@ -68,20 +68,49 @@ internal class DebugFixtureLightSystemOperations(
 
     private fun fixture(deviceUid: String) = DeviceLightSystemSnapshot(
         deviceUid = deviceUid,
-        temperatureCelsius = 42.8,
+        temperatureCelsius = FIXTURE_TEMPERATURE_CELSIUS,
         condition = DeviceLightSystemCondition.NORMAL,
         sensorHealthy = true,
         fans = listOf(
-            DeviceLightSystemFanSnapshot(key = "FAN_1", percent = 35, healthy = true),
-            DeviceLightSystemFanSnapshot(key = "FAN_2", percent = 35, healthy = true)
+            DeviceLightSystemFanSnapshot(
+                key = "FAN_1",
+                percent = FIXTURE_FAN_PERCENT,
+                healthy = true
+            ),
+            DeviceLightSystemFanSnapshot(
+                key = "FAN_2",
+                percent = FIXTURE_FAN_PERCENT,
+                healthy = true
+            )
         ),
         mode = DeviceLightFanMode.AUTOMATIC,
-        startTemperatureCelsius = 30,
-        fullSpeedTemperatureCelsius = 50,
-        startTemperaturePolicy = DeviceLightSystemTemperaturePolicy(0, 80),
-        fullSpeedTemperaturePolicy = DeviceLightSystemTemperaturePolicy(1, 90),
-        protectionThresholdCelsius = 60,
-        protectionThresholdPolicy = DeviceLightSystemTemperaturePolicy(50, 70),
+        startTemperatureCelsius = FIXTURE_START_TEMPERATURE_CELSIUS,
+        fullSpeedTemperatureCelsius = FIXTURE_FULL_SPEED_TEMPERATURE_CELSIUS,
+        startTemperaturePolicy = DeviceLightSystemTemperaturePolicy(
+            FIXTURE_START_TEMPERATURE_MINIMUM,
+            FIXTURE_START_TEMPERATURE_MAXIMUM
+        ),
+        fullSpeedTemperaturePolicy = DeviceLightSystemTemperaturePolicy(
+            FIXTURE_FULL_SPEED_TEMPERATURE_MINIMUM,
+            FIXTURE_FULL_SPEED_TEMPERATURE_MAXIMUM
+        ),
+        protectionThresholdCelsius = FIXTURE_PROTECTION_THRESHOLD_CELSIUS,
+        protectionThresholdPolicy = DeviceLightSystemTemperaturePolicy(
+            FIXTURE_PROTECTION_TEMPERATURE_MINIMUM,
+            FIXTURE_PROTECTION_TEMPERATURE_MAXIMUM
+        ),
         protectionActive = false
     )
 }
+
+private const val FIXTURE_TEMPERATURE_CELSIUS = 42.8
+private const val FIXTURE_FAN_PERCENT = 35
+private const val FIXTURE_START_TEMPERATURE_CELSIUS = 30
+private const val FIXTURE_FULL_SPEED_TEMPERATURE_CELSIUS = 50
+private const val FIXTURE_START_TEMPERATURE_MINIMUM = 0
+private const val FIXTURE_START_TEMPERATURE_MAXIMUM = 80
+private const val FIXTURE_FULL_SPEED_TEMPERATURE_MINIMUM = 1
+private const val FIXTURE_FULL_SPEED_TEMPERATURE_MAXIMUM = 90
+private const val FIXTURE_PROTECTION_THRESHOLD_CELSIUS = 60
+private const val FIXTURE_PROTECTION_TEMPERATURE_MINIMUM = 50
+private const val FIXTURE_PROTECTION_TEMPERATURE_MAXIMUM = 70

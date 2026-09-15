@@ -3,7 +3,6 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.system
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -36,100 +34,121 @@ internal fun DeviceLightSystemStatusCard(
     state: DeviceLightSystemUiState,
     visuals: DeviceLightSystemVisuals
 ) {
-    val snapshot = state.snapshot
     AquaDeviceCardSurface(
         modifier = Modifier
             .fillMaxWidth()
             .height(DeviceLightSystemGeometry.statusCardHeight),
         contentPadding = DeviceLightSystemGeometry.cardPadding
     ) {
-        Column(Modifier.fillMaxSize()) {
-            BasicText(
-                text = stringResource(R.string.device_light_system_current_temperature),
-                style = visuals.typography.title
+        DeviceLightSystemStatusContent(state, visuals)
+    }
+}
+
+@Composable
+private fun DeviceLightSystemStatusContent(
+    state: DeviceLightSystemUiState,
+    visuals: DeviceLightSystemVisuals
+) {
+    val snapshot = state.snapshot
+    Column(Modifier.fillMaxSize()) {
+        BasicText(
+            text = stringResource(R.string.device_light_system_current_temperature),
+            style = visuals.typography.title
+        )
+        Box(
+            modifier = Modifier.fillMaxWidth().weight(1f),
+            contentAlignment = Alignment.Center
+        ) {
+            DeviceLightTemperatureGauge(
+                temperatureCelsius = snapshot?.temperatureCelsius,
+                condition = snapshot?.condition ?: DeviceLightSystemCondition.NORMAL,
+                visuals = visuals,
+                modifier = Modifier.size(DeviceLightSystemGeometry.gaugeSize)
             )
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                contentAlignment = Alignment.Center
-            ) {
-                DeviceLightTemperatureGauge(
-                    temperatureCelsius = snapshot?.temperatureCelsius,
-                    condition = snapshot?.condition ?: DeviceLightSystemCondition.NORMAL,
-                    visuals = visuals,
-                    modifier = Modifier.size(DeviceLightSystemGeometry.gaugeSize)
-                )
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                DeviceLightFanCard(
-                    fan = snapshot?.fans?.getOrNull(0),
-                    index = 0,
-                    visuals = visuals,
-                    modifier = Modifier.weight(1f)
-                )
-                Box(
-                    modifier = Modifier
-                        .width(DeviceLightSystemGeometry.fanCardGap)
-                        .height(DeviceLightSystemGeometry.fanCardHeight),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Box(
-                        Modifier
-                            .width(DeviceLightSystemGeometry.dividerHeight)
-                            .fillMaxSize()
-                            .background(visuals.colors.card.mediaOutline)
+        }
+        DeviceLightFanPair(state, visuals)
+        Spacer(Modifier.height(DeviceLightSystemGeometry.dividerHeight))
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(DeviceLightSystemGeometry.dividerHeight)
+                .background(
+                    visuals.colors.card.mediaOutline.copy(
+                        alpha = DeviceLightSystemAlpha.divider
                     )
-                }
-                DeviceLightFanCard(
-                    fan = snapshot?.fans?.getOrNull(1),
-                    index = 1,
-                    visuals = visuals,
-                    modifier = Modifier.weight(1f)
                 )
-            }
-            Spacer(Modifier.height(DeviceLightSystemGeometry.dividerHeight))
+        )
+        DeviceLightSensorHealth(state, visuals)
+    }
+}
+
+@Composable
+private fun DeviceLightFanPair(
+    state: DeviceLightSystemUiState,
+    visuals: DeviceLightSystemVisuals
+) {
+    Row(modifier = Modifier.fillMaxWidth()) {
+        DeviceLightFanCard(
+            fan = state.snapshot?.fans?.getOrNull(FIRST_FAN_INDEX),
+            index = FIRST_FAN_INDEX,
+            visuals = visuals,
+            modifier = Modifier.weight(1f)
+        )
+        Box(
+            modifier = Modifier
+                .width(DeviceLightSystemGeometry.fanCardGap)
+                .height(DeviceLightSystemGeometry.fanCardHeight),
+            contentAlignment = Alignment.Center
+        ) {
             Box(
                 Modifier
-                    .fillMaxWidth()
-                    .height(DeviceLightSystemGeometry.dividerHeight)
-                    .background(
-                        visuals.colors.card.mediaOutline.copy(
-                            alpha = DeviceLightSystemAlpha.divider
-                        )
-                    )
+                    .width(DeviceLightSystemGeometry.dividerHeight)
+                    .fillMaxSize()
+                    .background(visuals.colors.card.mediaOutline)
             )
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(DeviceLightSystemGeometry.sensorRowHeight),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                DeviceLightInfoIcon(
-                    tint = visuals.colors.card.secondaryText,
-                    modifier = Modifier.size(DeviceLightSystemGeometry.infoIconSize)
-                )
-                Spacer(Modifier.width(DeviceLightSystemGeometry.infoTextGap))
-                BasicText(
-                    text = stringResource(
-                        if (snapshot?.sensorHealthy == false) {
-                            R.string.device_light_system_sensor_fault
-                        } else {
-                            R.string.device_light_system_sensor_healthy
-                        }
-                    ),
-                    style = visuals.typography.caption.copy(
-                        color = if (snapshot?.sensorHealthy == false) {
-                            visuals.colors.card.danger
-                        } else {
-                            visuals.colors.card.secondaryText
-                        }
-                    )
-                )
-            }
         }
+        DeviceLightFanCard(
+            fan = state.snapshot?.fans?.getOrNull(SECOND_FAN_INDEX),
+            index = SECOND_FAN_INDEX,
+            visuals = visuals,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+private fun DeviceLightSensorHealth(
+    state: DeviceLightSystemUiState,
+    visuals: DeviceLightSystemVisuals
+) {
+    val sensorFault = state.snapshot?.sensorHealthy == false
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(DeviceLightSystemGeometry.sensorRowHeight),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        DeviceLightInfoIcon(
+            tint = visuals.colors.card.secondaryText,
+            modifier = Modifier.size(DeviceLightSystemGeometry.infoIconSize)
+        )
+        Spacer(Modifier.width(DeviceLightSystemGeometry.infoTextGap))
+        BasicText(
+            text = stringResource(
+                if (sensorFault) {
+                    R.string.device_light_system_sensor_fault
+                } else {
+                    R.string.device_light_system_sensor_healthy
+                }
+            ),
+            style = visuals.typography.caption.copy(
+                color = if (sensorFault) {
+                    visuals.colors.card.danger
+                } else {
+                    visuals.colors.card.secondaryText
+                }
+            )
+        )
     }
 }
 
@@ -315,10 +334,12 @@ internal fun DeviceLightAutomaticRangeCard(
                 control = DeviceLightTemperatureControlSpec(
                     labelRes = R.string.device_light_system_start,
                     value = state.selectedStartTemperatureCelsius,
-                    minimum = state.snapshot?.startTemperaturePolicy?.minimum ?: 0,
+                    minimum = state.snapshot?.startTemperaturePolicy?.minimum
+                        ?: DEFAULT_START_TEMPERATURE_MINIMUM,
                     maximum = minOf(
-                        state.snapshot?.startTemperaturePolicy?.maximum ?: 80,
-                        state.selectedFullSpeedTemperatureCelsius - 1
+                        state.snapshot?.startTemperaturePolicy?.maximum
+                            ?: DEFAULT_START_TEMPERATURE_MAXIMUM,
+                        state.selectedFullSpeedTemperatureCelsius - MINIMUM_TEMPERATURE_GAP
                     ),
                     enabled = state.controlsEnabled,
                     onValueChanged = actions.onStartTemperatureChanged
@@ -330,10 +351,12 @@ internal fun DeviceLightAutomaticRangeCard(
                     labelRes = R.string.device_light_system_full_speed,
                     value = state.selectedFullSpeedTemperatureCelsius,
                     minimum = maxOf(
-                        state.snapshot?.fullSpeedTemperaturePolicy?.minimum ?: 1,
-                        state.selectedStartTemperatureCelsius + 1
+                        state.snapshot?.fullSpeedTemperaturePolicy?.minimum
+                            ?: DEFAULT_FULL_SPEED_TEMPERATURE_MINIMUM,
+                        state.selectedStartTemperatureCelsius + MINIMUM_TEMPERATURE_GAP
                     ),
-                    maximum = state.snapshot?.fullSpeedTemperaturePolicy?.maximum ?: 90,
+                    maximum = state.snapshot?.fullSpeedTemperaturePolicy?.maximum
+                        ?: DEFAULT_FULL_SPEED_TEMPERATURE_MAXIMUM,
                     enabled = state.controlsEnabled,
                     onValueChanged = actions.onFullSpeedTemperatureChanged
                 ),
@@ -351,104 +374,6 @@ internal fun DeviceLightAutomaticRangeCard(
     }
 }
 
-@Composable
-internal fun DeviceLightProtectionCard(
-    state: DeviceLightSystemUiState,
-    actions: DeviceLightSystemActions,
-    visuals: DeviceLightSystemVisuals
-) {
-    AquaDeviceCardSurface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(DeviceLightSystemGeometry.protectionCardHeight),
-        contentPadding = DeviceLightSystemGeometry.protectionCardPadding
-    ) {
-        Column(Modifier.fillMaxSize()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(DeviceLightSystemGeometry.protectionHeaderHeight),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                BasicText(
-                    text = stringResource(R.string.device_light_system_light_protection),
-                    style = visuals.typography.title,
-                    modifier = Modifier.weight(1f)
-                )
-                DeviceLightProtectionBadge(visuals)
-            }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(DeviceLightSystemGeometry.protectionIntroHeight),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                DeviceLightProtectionIcon(
-                    tint = visuals.colors.action,
-                    modifier = Modifier.size(DeviceLightSystemGeometry.protectionIconSize)
-                )
-                Spacer(Modifier.width(DeviceLightSystemGeometry.protectionTextGap))
-                BasicText(
-                    text = stringResource(R.string.device_light_system_protection_description),
-                    style = visuals.typography.caption,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-            Spacer(Modifier.height(DeviceLightSystemGeometry.protectionDividerGap))
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .height(DeviceLightSystemGeometry.dividerHeight)
-                    .background(visuals.colors.card.mediaOutline)
-            )
-            DeviceLightTemperatureControlRow(
-                control = DeviceLightTemperatureControlSpec(
-                    labelRes = R.string.device_light_system_protection_threshold,
-                    value = state.selectedProtectionThresholdCelsius,
-                    minimum = state.snapshot?.protectionThresholdPolicy?.minimum ?: 50,
-                    maximum = state.snapshot?.protectionThresholdPolicy?.maximum ?: 70,
-                    enabled = state.controlsEnabled,
-                    onValueChanged = actions.onProtectionThresholdChanged
-                ),
-                visuals = visuals
-            )
-            DeviceLightTemperatureLimitLabels(
-                minimum = state.snapshot?.protectionThresholdPolicy?.minimum ?: 50,
-                maximum = state.snapshot?.protectionThresholdPolicy?.maximum ?: 70,
-                visuals = visuals
-            )
-            Spacer(Modifier.height(DeviceLightSystemGeometry.helperTopGap))
-            BasicText(
-                text = stringResource(R.string.device_light_system_protection_helper),
-                style = visuals.typography.caption
-            )
-        }
-    }
-}
-
-@Composable
-private fun DeviceLightProtectionBadge(visuals: DeviceLightSystemVisuals) {
-    Row(
-        modifier = Modifier
-            .clip(DeviceLightSystemGeometry.protectionBadgeShape)
-            .background(
-                visuals.colors.action.copy(alpha = DeviceLightSystemAlpha.badgeSurface)
-            )
-            .padding(DeviceLightSystemGeometry.protectionBadgePadding),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        DeviceLightLockIcon(
-            tint = visuals.colors.action,
-            modifier = Modifier.size(DeviceLightSystemGeometry.infoIconSize)
-        )
-        Spacer(Modifier.width(DeviceLightSystemGeometry.modeHelperGap))
-        BasicText(
-            text = stringResource(R.string.device_light_system_always_on),
-            style = visuals.typography.micro.copy(color = visuals.colors.action)
-        )
-    }
-}
-
 private fun DeviceLightFanMode.labelRes(): Int = when (this) {
     DeviceLightFanMode.AUTOMATIC -> R.string.device_light_system_mode_automatic
     DeviceLightFanMode.ON -> R.string.device_light_system_mode_on
@@ -462,3 +387,10 @@ private fun DeviceLightFanMode.helperRes(): Int = when (this) {
 }
 
 private const val PERCENT_MAXIMUM = 100
+private const val FIRST_FAN_INDEX = 0
+private const val SECOND_FAN_INDEX = 1
+private const val DEFAULT_START_TEMPERATURE_MINIMUM = 0
+private const val DEFAULT_START_TEMPERATURE_MAXIMUM = 80
+private const val DEFAULT_FULL_SPEED_TEMPERATURE_MINIMUM = 1
+private const val DEFAULT_FULL_SPEED_TEMPERATURE_MAXIMUM = 90
+private const val MINIMUM_TEMPERATURE_GAP = 1

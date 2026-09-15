@@ -59,6 +59,26 @@ internal fun DeviceLightTemperatureControlRow(
             modifier = Modifier.width(DeviceLightSystemGeometry.controlLabelWidth),
             maxLines = 1
         )
+        DeviceLightTemperatureAdjuster(control, label, visuals, Modifier.weight(1f))
+        BasicText(
+            text = stringResource(
+                R.string.device_light_system_temperature_format,
+                control.value
+            ),
+            style = visuals.typography.body.copy(textAlign = TextAlign.End),
+            modifier = Modifier.width(DeviceLightSystemGeometry.controlValueWidth)
+        )
+    }
+}
+
+@Composable
+private fun DeviceLightTemperatureAdjuster(
+    control: DeviceLightTemperatureControlSpec,
+    label: String,
+    visuals: DeviceLightSystemVisuals,
+    modifier: Modifier = Modifier
+) {
+    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
         TemperatureStepButton(
             symbol = stringResource(R.string.device_light_system_minus_symbol),
             description = stringResource(
@@ -94,14 +114,6 @@ internal fun DeviceLightTemperatureControlRow(
             enabled = control.enabled && control.value < control.maximum,
             onClick = { control.onValueChanged(control.value + 1) },
             visuals = visuals
-        )
-        BasicText(
-            text = stringResource(
-                R.string.device_light_system_temperature_format,
-                control.value
-            ),
-            style = visuals.typography.body.copy(textAlign = TextAlign.End),
-            modifier = Modifier.width(DeviceLightSystemGeometry.controlValueWidth)
         )
     }
 }
