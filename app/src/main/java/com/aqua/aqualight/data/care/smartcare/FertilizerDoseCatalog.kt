@@ -12,6 +12,13 @@ object FertilizerDoseCatalog {
       baseVolumeL = 50.0,
       frequency = FertilizerFrequency.WEEKLY,
       doseType = FertilizerDoseType.COMPLETE_MACRO_MICRO,
+      startupGuidance = FertilizerStartupGuidance.WITHHOLD_OR_LIMIT_FIRST_28_DAYS,
+      catalogProductIds = setOf("fertilizer_tropica_specialised_nutrition"),
+      evidenceSourceIds = SmartCareEvidenceCatalog.tags(
+        SmartCareEvidenceId.TROPICA_GROWING_IN,
+        SmartCareEvidenceId.TROPICA_SPECIALISED_NUTRITION
+      ),
+      algaeResponse = FertilizerAlgaeResponse.HALVE_DOSE_AND_INCREASE_WATER_CHANGES,
       noteTr = "Makro ve mikro besin içerir. Yosun artışı varsa doz dikkatli azaltılmalıdır.",
       sourceTags = listOf("Tropica")
     ),
@@ -24,6 +31,12 @@ object FertilizerDoseCatalog {
       baseVolumeL = 50.0,
       frequency = FertilizerFrequency.WEEKLY,
       doseType = FertilizerDoseType.MICRO_TRACE,
+      startupGuidance = FertilizerStartupGuidance.WITHHOLD_OR_LIMIT_FIRST_28_DAYS,
+      catalogProductIds = setOf("fertilizer_tropica_premium_nutrition"),
+      evidenceSourceIds = SmartCareEvidenceCatalog.tags(
+        SmartCareEvidenceId.TROPICA_GROWING_IN,
+        SmartCareEvidenceId.TROPICA_PREMIUM_NUTRITION
+      ),
       noteTr = "Azot ve fosfor içermez. Daha çok balıklı veya düşük/orta bitkili tanklar için uygundur.",
       sourceTags = listOf("Tropica")
     ),
@@ -109,6 +122,11 @@ object FertilizerDoseCatalog {
       baseVolumeL = 20.0,
       frequency = FertilizerFrequency.DAILY,
       doseType = FertilizerDoseType.NITROGEN,
+      startupGuidance = FertilizerStartupGuidance.APPLY_ONLY_WHEN_NEEDED,
+      evidenceSourceIds = SmartCareEvidenceCatalog.tags(
+        SmartCareEvidenceId.ADA_LIQUID_FERTILIZERS
+      ),
+      requiresWaterTest = true,
       noteTr = "Azot desteği içindir. Özellikle nitrat ihtiyacı gözlemlenmelidir.",
       sourceTags = listOf("ADA")
     ),
@@ -121,6 +139,9 @@ object FertilizerDoseCatalog {
       baseVolumeL = 20.0,
       frequency = FertilizerFrequency.DAILY,
       doseType = FertilizerDoseType.POTASSIUM,
+      evidenceSourceIds = SmartCareEvidenceCatalog.tags(
+        SmartCareEvidenceId.ADA_LIQUID_FERTILIZERS
+      ),
       noteTr = "Potasyum desteği içindir.",
       sourceTags = listOf("ADA")
     ),
@@ -133,6 +154,10 @@ object FertilizerDoseCatalog {
       baseVolumeL = 20.0,
       frequency = FertilizerFrequency.DAILY,
       doseType = FertilizerDoseType.IRON,
+      startupGuidance = FertilizerStartupGuidance.DEFER_UNTIL_DAY_61,
+      evidenceSourceIds = SmartCareEvidenceCatalog.tags(
+        SmartCareEvidenceId.ADA_LIQUID_FERTILIZERS
+      ),
       noteTr = "Demir desteği içindir. Bitki yoğunluğuna göre dikkatli ayarlanmalıdır.",
       sourceTags = listOf("ADA")
     ),

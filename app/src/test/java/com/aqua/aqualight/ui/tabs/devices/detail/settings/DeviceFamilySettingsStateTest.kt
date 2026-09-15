@@ -1,7 +1,5 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.settings
 
-import com.aqua.aqualight.application.devices.light.protection.DeviceLightProtectionSnapshot
-import com.aqua.aqualight.application.devices.light.protection.DeviceLightProtectionThresholdPolicy
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
@@ -29,70 +27,6 @@ class DeviceFamilySettingsStateTest {
     }
 
     @Test
-    fun `projects light protection application values into ready state`() {
-        val state = DeviceFamilySettingsUiState().withLightProtectionSnapshot(
-            DeviceLightProtectionSnapshot(
-                available = true,
-                currentTemperatureCelsius = 54.25,
-                thresholdCelsius = 60.0,
-                thresholdPolicy = DeviceLightProtectionThresholdPolicy(
-                    currentCelsius = 60,
-                    minimumCelsius = 50,
-                    maximumCelsius = 70,
-                    stepCelsius = 1
-                ),
-                loaded = true
-            )
-        )
-
-        assertTrue(state.showLightProtectionInventory)
-        assertEquals(54.25, state.lightProtection.currentTemperatureCelsius ?: 0.0, 0.0)
-        assertEquals(60.0, state.lightProtection.thresholdCelsius ?: 0.0, 0.0)
-        assertEquals(
-            DeviceTemperatureProtectionEditorUiState(
-                currentCelsius = 60,
-                minimumCelsius = 50,
-                maximumCelsius = 70,
-                stepCelsius = 1
-            ),
-            state.lightProtection.editor
-        )
-        assertEquals(
-            DeviceLightProtectionLoadState.READY,
-            state.lightProtection.loadState
-        )
-    }
-
-    @Test
-    fun `uses loaded contract to distinguish loading from unavailable values`() {
-        val loading = DeviceFamilySettingsUiState().withLightProtectionSnapshot(
-            DeviceLightProtectionSnapshot(
-                available = true,
-                currentTemperatureCelsius = 53.5,
-                loaded = false
-            )
-        )
-        val readyWithoutTemperature = loading.withLightProtectionSnapshot(
-            DeviceLightProtectionSnapshot(
-                available = true,
-                thresholdCelsius = 60.0,
-                loaded = true
-            )
-        )
-
-        assertEquals(
-            DeviceLightProtectionLoadState.LOADING,
-            loading.lightProtection.loadState
-        )
-        assertEquals(53.5, loading.lightProtection.currentTemperatureCelsius ?: 0.0, 0.0)
-        assertEquals(
-            DeviceLightProtectionLoadState.READY,
-            readyWithoutTemperature.lightProtection.loadState
-        )
-        assertEquals(null, readyWithoutTemperature.lightProtection.currentTemperatureCelsius)
-    }
-
-    @Test
     fun `keeps hardware revision loading until exact catalog proof exists`() {
         val state = wrgbSnapshot().copy(
             catalogState = DeviceRootCatalogState.INVALID,
@@ -104,19 +38,6 @@ class DeviceFamilySettingsStateTest {
             DeviceSettingsInformationLoadState.LOADING,
             state.informationLoadState
         )
-    }
-
-    @Test
-    fun `shows Light protection inventory only from application availability`() {
-        val available = DeviceFamilySettingsUiState().withLightProtectionSnapshot(
-            DeviceLightProtectionSnapshot(available = true)
-        )
-        val unavailable = available.withLightProtectionSnapshot(
-            DeviceLightProtectionSnapshot(available = false)
-        )
-
-        assertTrue(available.showLightProtectionInventory)
-        assertFalse(unavailable.showLightProtectionInventory)
     }
 
     @Test

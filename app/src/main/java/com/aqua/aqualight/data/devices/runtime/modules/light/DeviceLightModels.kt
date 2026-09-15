@@ -432,7 +432,10 @@ data class DeviceLightAutoProgramDeletePayload(
 }
 
 data class DeviceLightCustomPoint(val timeMs: Long, val scene: DeviceLightScene) {
-    init { require(timeMs in 0..DeviceLightRuntimeContract.Limit.LAST_DAY_MILLISECOND) }
+    init {
+        require(timeMs in 0..DeviceLightRuntimeContract.Limit.LAST_DAY_MILLISECOND)
+        require(timeMs % DeviceLightRuntimeContract.Limit.SCHEDULE_TIME_STEP_MS == 0L)
+    }
     fun toJsonTuple(): JSONArray = scene.toTuple(timeMs)
 }
 

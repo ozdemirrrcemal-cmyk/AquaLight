@@ -5,8 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.application.devices.DEVICE_FIRMWARE_MANIFEST_URL
 import com.aqua.aqualight.application.devices.DeviceFamilySettingsOperations
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
-import com.aqua.aqualight.application.devices.light.protection.DeviceLightProtectionSnapshot
-import com.aqua.aqualight.application.devices.light.protection.DeviceLightProtectionThresholdPolicy
 import com.aqua.aqualight.application.devices.DeviceOtaFailure
 import com.aqua.aqualight.application.devices.DeviceOtaFailureStage
 import com.aqua.aqualight.application.devices.DeviceOtaState
@@ -47,9 +45,7 @@ class DeviceFamilySettingsViewModel(
     private var boundDeviceUid = ""
     private var observeDeviceJob: Job? = null
     private var observeFirmwareJob: Job? = null
-    private var observeLightProtectionJob: Job? = null
     private var deviceNameUpdateJob: Job? = null
-    private var thresholdUpdateJob: Job? = null
     private var updateCheckJob: Job? = null
     private var automaticFirmwareCheckPending = false
 
@@ -65,11 +61,7 @@ class DeviceFamilySettingsViewModel(
         cancelBoundJobs()
         automaticFirmwareCheckPending = true
         val currentSnapshot = settingsOperations.current(deviceUid)
-        _uiState.value = currentSnapshot
-            .toInitialDeviceFamilySettingsUiState(deviceUid)
-            .withLightProtectionSnapshot(
-                settingsOperations.currentLightProtection(deviceUid)
-            )
+        _uiState.value = currentSnapshot.toInitialDeviceFamilySettingsUiState(deviceUid)
         settingsOperations.connect(deviceUid)
 
         observeDeviceJob = viewModelScope.launch {
@@ -81,11 +73,6 @@ class DeviceFamilySettingsViewModel(
         applyFirmwareState(firmwareStates.value)
         observeFirmwareJob = viewModelScope.launch {
             firmwareStates.collect(::applyFirmwareState)
-        }
-        observeLightProtectionJob = viewModelScope.launch {
-            settingsOperations.observeLightProtection(deviceUid).collect { snapshot ->
-                applyLightProtectionSnapshot(deviceUid, snapshot)
-            }
         }
         startAutomaticFirmwareAvailabilityCheckIfReady(deviceUid, currentSnapshot)
     }
@@ -156,62 +143,6 @@ class DeviceFamilySettingsViewModel(
             }
         }
     }
-
-    fun updateTemperatureProtectionThreshold(valueCelsius: Int) {
-        val deviceUid = boundDeviceUid
-        val state = _uiState.value
-        val editor = state.lightProtection.editor
-        val canStart = deviceUid.isNotBlank() &&
-            editor != null &&
-            valueCelsius in editor.minimumCelsius..editor.maximumCelsius &&
-            (valueCelsius - editor.minimumCelsius) % editor.stepCelsius == 0 &&
-            valueCelsius != editor.currentCelsius &&
-            thresholdUpdateJob?.isActive != true
-        if (!canStart) return
-
-        _uiState.update { current ->
-            current.copy(
-                lightProtection = current.lightProtection.copy(updateInProgress = true)
-            )
-        }
-        thresholdUpdateJob = viewModelScope.launch {
-            val result = settingsOperations.updateLightProtectionThreshold(
-                deviceUid = deviceUid,
-                thresholdCelsius = valueCelsius
-            )
-            if (boundDeviceUid != deviceUid) return@launch
-
-            _uiState.update { current ->
-                val light = current.lightProtection
-                current.copy(
-                    lightProtection = light.copy(
-                        thresholdCelsius = if (result.isSuccess) {
-                            valueCelsius.toDouble()
-                        } else {
-                            light.thresholdCelsius
-                        },
-                        editor = if (result.isSuccess) {
-                            light.editor?.copy(currentCelsius = valueCelsius)
-                        } else {
-                            light.editor
-                        },
-                        updateInProgress = false
-                    )
-                )
-            }
-            if (result.isFailure) {
-                eventChannel.trySend(
-                    DeviceFamilySettingsEvent.TemperatureProtectionUpdateFailed
-                )
-            }
-        }
-    }
-
-    /**
-     * Kept temporarily for the existing Fragment callback surface. Runtime/domain bootstrap owns
-     * freshness; presentation must never issue a status request or retry loop.
-     */
-    fun retryLightProtection() = Unit
 
     fun checkForUpdates() {
         startFirmwareAvailabilityCheck(deviceUid = boundDeviceUid, automatic = false)
@@ -284,14 +215,6 @@ class DeviceFamilySettingsViewModel(
         }
     }
 
-    private fun applyLightProtectionSnapshot(
-        deviceUid: String,
-        snapshot: DeviceLightProtectionSnapshot
-    ) {
-        if (boundDeviceUid != deviceUid) return
-        _uiState.update { state -> state.withLightProtectionSnapshot(snapshot) }
-    }
-
     private fun applyFirmwareState(state: DeviceOtaState) {
         if (state.deviceUid != boundDeviceUid) return
         _uiState.update { current ->
@@ -346,13 +269,10 @@ class DeviceFamilySettingsViewModel(
         if (snapshot == null || snapshot.catalogState != DeviceRootCatalogState.VALID) {
             preserveStableDeviceInformation(deviceUid, snapshot)
         } else {
-            val previous = _uiState.value
             val deviceState = snapshot.toDeviceFamilySettingsUiState()
             _uiState.value = deviceState.copy(
-                showLightProtectionInventory = previous.showLightProtectionInventory,
-                deviceNameSaving = previous.deviceNameSaving,
-                lightProtection = previous.lightProtection,
-                updateActionState = previous.updateActionState,
+                deviceNameSaving = _uiState.value.deviceNameSaving,
+                updateActionState = _uiState.value.updateActionState,
                 informationLoadState = DeviceSettingsInformationLoadState.READY
             )
         }
@@ -401,9 +321,7 @@ class DeviceFamilySettingsViewModel(
     private fun cancelBoundJobs() {
         observeDeviceJob?.cancel()
         observeFirmwareJob?.cancel()
-        observeLightProtectionJob?.cancel()
         deviceNameUpdateJob?.cancel()
-        thresholdUpdateJob?.cancel()
         updateCheckJob?.cancel()
     }
 
@@ -420,20 +338,12 @@ class DeviceFamilySettingsViewModel(
 
 sealed interface DeviceFamilySettingsEvent {
     data object DeviceNameUpdateFailed : DeviceFamilySettingsEvent
-    data object TemperatureProtectionUpdateFailed : DeviceFamilySettingsEvent
     data object OpenFirmwareUpdate : DeviceFamilySettingsEvent
 }
 
 enum class DeviceSettingsInformationLoadState {
     LOADING,
     READY
-}
-
-enum class DeviceLightProtectionLoadState {
-    IDLE,
-    LOADING,
-    READY,
-    FAILED
 }
 
 sealed interface DeviceSettingsUpdateActionState {
@@ -484,21 +394,6 @@ private fun DeviceSettingsUpdateActionState.allowsAvailabilityCheck(
     DeviceSettingsUpdateActionState.Unsupported -> false
 }
 
-data class DeviceTemperatureProtectionEditorUiState(
-    val currentCelsius: Int,
-    val minimumCelsius: Int,
-    val maximumCelsius: Int,
-    val stepCelsius: Int
-)
-
-data class DeviceLightProtectionUiState(
-    val currentTemperatureCelsius: Double? = null,
-    val thresholdCelsius: Double? = null,
-    val editor: DeviceTemperatureProtectionEditorUiState? = null,
-    val loadState: DeviceLightProtectionLoadState = DeviceLightProtectionLoadState.IDLE,
-    val updateInProgress: Boolean = false
-)
-
 data class DeviceFamilySettingsUiState(
     val deviceName: String = "",
     val productDisplayName: String = "",
@@ -507,9 +402,7 @@ data class DeviceFamilySettingsUiState(
     val hardwareRevision: String = "",
     val firmwareVersion: String = "",
     val family: OwnerDeviceFamily = OwnerDeviceFamily.UNKNOWN,
-    val showLightProtectionInventory: Boolean = false,
     val deviceNameSaving: Boolean = false,
-    val lightProtection: DeviceLightProtectionUiState = DeviceLightProtectionUiState(),
     val informationLoadState: DeviceSettingsInformationLoadState =
         DeviceSettingsInformationLoadState.LOADING,
     val updateActionState: DeviceSettingsUpdateActionState =
@@ -533,47 +426,6 @@ internal fun DeviceRootSnapshot.toDeviceFamilySettingsUiState(): DeviceFamilySet
             DeviceSettingsInformationLoadState.LOADING
         }
     )
-
-internal fun DeviceFamilySettingsUiState.withLightProtectionSnapshot(
-    snapshot: DeviceLightProtectionSnapshot
-): DeviceFamilySettingsUiState {
-    if (!snapshot.available) {
-        return copy(
-            showLightProtectionInventory = false,
-            lightProtection = DeviceLightProtectionUiState()
-        )
-    }
-
-    val previous = lightProtection
-    return copy(
-        showLightProtectionInventory = true,
-        lightProtection = previous.copy(
-            currentTemperatureCelsius = snapshot.currentTemperatureCelsius
-                ?: previous.currentTemperatureCelsius.takeIf { !snapshot.loaded },
-            thresholdCelsius = snapshot.thresholdCelsius
-                ?: previous.thresholdCelsius.takeIf { !snapshot.loaded },
-            editor = when {
-                snapshot.loaded -> snapshot.thresholdPolicy?.toEditorUiState()
-                snapshot.thresholdPolicy != null -> snapshot.thresholdPolicy.toEditorUiState()
-                else -> previous.editor
-            },
-            loadState = when {
-                snapshot.loaded -> DeviceLightProtectionLoadState.READY
-                previous.loadState == DeviceLightProtectionLoadState.IDLE ->
-                    DeviceLightProtectionLoadState.LOADING
-                else -> previous.loadState
-            }
-        )
-    )
-}
-
-private fun DeviceLightProtectionThresholdPolicy.toEditorUiState():
-    DeviceTemperatureProtectionEditorUiState = DeviceTemperatureProtectionEditorUiState(
-    currentCelsius = currentCelsius,
-    minimumCelsius = minimumCelsius,
-    maximumCelsius = maximumCelsius,
-    stepCelsius = stepCelsius
-)
 
 private fun DeviceRootSnapshot?.toInitialDeviceFamilySettingsUiState(
     deviceUid: String

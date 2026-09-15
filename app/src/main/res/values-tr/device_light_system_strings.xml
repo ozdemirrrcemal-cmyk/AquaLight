@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_light_system_current_temperature">Anlık sıcaklık</string>
+    <string name="device_light_system_temperature_decimal_format">%1$.1f °C</string>
+    <string name="device_light_system_temperature_format">%1$d °C</string>
+    <string name="device_light_system_temperature_unavailable">— °C</string>
+    <string name="device_light_system_condition_normal">Normal</string>
+    <string name="device_light_system_condition_protection">Koruma aktif</string>
+    <string name="device_light_system_condition_sensor_fail_safe">Sensör güvenli modu</string>
+    <string name="device_light_system_condition_fan_fault">Fan hatası</string>
+    <string name="device_light_system_fan_name">Fan %1$d</string>
+    <string name="device_light_system_percent_format">%%%1$d</string>
+    <string name="device_light_system_sensor_healthy">Sensör sağlıklı</string>
+    <string name="device_light_system_sensor_fault">Sensör hatası · güvenli mod aktif</string>
+    <string name="device_light_system_fan_control">Fan kontrolü</string>
+    <string name="device_light_system_operating_mode">Çalışma modu</string>
+    <string name="device_light_system_mode_automatic">Otomatik</string>
+    <string name="device_light_system_mode_on">Açık</string>
+    <string name="device_light_system_mode_off">Kapalı</string>
+    <string name="device_light_system_mode_automatic_helper">Fan hızı sıcaklığa göre ayarlanır.</string>
+    <string name="device_light_system_mode_on_helper">Fanlar sürekli tam hızda çalışır.</string>
+    <string name="device_light_system_mode_off_helper">Güvenli koruma gerekmedikçe fanlar kapalı kalır.</string>
+    <string name="device_light_system_automatic_range">Otomatik çalışma aralığı</string>
+    <string name="device_light_system_start">Başlangıç</string>
+    <string name="device_light_system_full_speed">Tam hız</string>
+    <string name="device_light_system_light_protection">Işık koruması</string>
+    <string name="device_light_system_protection_description">Cihaz aşırı ısındığında ışık çıkışı\ngüvenli bir seviyeye otomatik düşürülür.</string>
+    <string name="device_light_system_always_on">HER ZAMAN AÇIK</string>
+    <string name="device_light_system_protection_threshold">Koruma eşiği</string>
+    <string name="device_light_system_save_action">Ayarları kaydet</string>
+    <string name="device_light_system_minus_symbol">−</string>
+    <string name="device_light_system_plus_symbol">+</string>
+    <string name="device_light_system_decrease_temperature_description">%1$s sıcaklığını azalt</string>
+    <string name="device_light_system_increase_temperature_description">%1$s sıcaklığını artır</string>
+    <string name="device_light_system_save_success">Sistem ayarları kaydedildi.</string>
+    <string name="device_light_system_partial_save_error">Bazı ayarlar uygulanmış olabilir. Cihazdaki güncel değerler yeniden yüklendi.</string>
+    <string name="device_light_system_not_connected_error">Sistem ayarlarını yönetmek için cihaza bağlanın.</string>
+    <string name="device_light_system_unsupported_error">Sistem kontrolleri bu cihazda kullanılamıyor.</string>
+    <string name="device_light_system_invalid_data_error">Cihaz geçersiz sistem verisi döndürdü.</string>
+    <string name="device_light_system_operation_error">Sistem ayarları güncellenemedi.</string>
+</resources>

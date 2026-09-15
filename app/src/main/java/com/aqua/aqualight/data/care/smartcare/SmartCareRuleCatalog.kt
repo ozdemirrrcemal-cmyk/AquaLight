@@ -16,7 +16,10 @@ object SmartCareRuleCatalog {
       messageRes = R.string.maintenance_smart_rule_initial_setup_check_message,
       priority = SmartCarePriority.HIGH,
       repeatMode = SmartCareRepeatMode.ONCE,
-      sourceTags = listOf("SmartCare")
+      sourceTags = SmartCareEvidenceCatalog.tags(
+        SmartCareEvidenceId.TROPICA_GROWING_IN,
+        SmartCareEvidenceId.UF_IFAS_FISH_HEALTH
+      )
     ),
 
     SmartCareRule(
@@ -24,6 +27,7 @@ object SmartCareRuleCatalog {
       dayStart = 1,
       dayEnd = 21,
       conditions = listOf(
+        SmartCareCondition.FRESHWATER,
         SmartCareCondition.PLANTED,
         SmartCareCondition.HAS_LIGHT
       ),
@@ -32,7 +36,10 @@ object SmartCareRuleCatalog {
       messageRes = R.string.maintenance_smart_rule_check_light_duration_message,
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.WEEKLY,
-      sourceTags = listOf("SmartCare")
+      sourceTags = SmartCareEvidenceCatalog.tags(
+        SmartCareEvidenceId.TROPICA_GROWING_IN,
+        SmartCareEvidenceId.TROPICA_QUICK_GUIDE
+      )
     ),
 
     SmartCareRule(
@@ -40,6 +47,8 @@ object SmartCareRuleCatalog {
       dayStart = 1,
       dayEnd = 90,
       conditions = listOf(
+        SmartCareCondition.FRESHWATER,
+        SmartCareCondition.PLANTED,
         SmartCareCondition.HAS_CO2
       ),
       taskType = SmartCareTaskType.CO2_CHECK,
@@ -47,37 +56,47 @@ object SmartCareRuleCatalog {
       messageRes = R.string.maintenance_smart_rule_co2_check_message,
       priority = SmartCarePriority.HIGH,
       repeatMode = SmartCareRepeatMode.EVERY_2_DAYS,
-      sourceTags = listOf("SmartCare")
+      sourceTags = SmartCareEvidenceCatalog.tags(
+        SmartCareEvidenceId.TROPICA_GROWING_IN
+      )
     ),
 
     SmartCareRule(
       id = "startup_active_soil_water_change_first_week",
-      dayStart = 2,
-      dayEnd = 7,
+      dayStart = 1,
+      dayEnd = 14,
       conditions = listOf(
+        SmartCareCondition.FRESHWATER,
+        SmartCareCondition.NATURE_AQUARIUM,
         SmartCareCondition.HAS_ACTIVE_SOIL
       ),
       taskType = SmartCareTaskType.WATER_CHANGE,
       titleRes = R.string.maintenance_smart_rule_early_water_change_title,
       messageRes = R.string.maintenance_smart_rule_early_water_change_message,
       priority = SmartCarePriority.HIGH,
-      repeatMode = SmartCareRepeatMode.EVERY_2_DAYS,
-      sourceTags = listOf("SmartCare")
+      repeatMode = SmartCareRepeatMode.DAILY,
+      sourceTags = SmartCareEvidenceCatalog.tags(
+        SmartCareEvidenceId.ADA_STARTING_FROM_ZERO,
+        SmartCareEvidenceId.TROPICA_GROWING_IN
+      )
     ),
 
     SmartCareRule(
       id = "startup_planted_water_change_week_1_4",
-      dayStart = 3,
+      dayStart = 1,
       dayEnd = 28,
       conditions = listOf(
+        SmartCareCondition.FRESHWATER,
         SmartCareCondition.PLANTED
       ),
       taskType = SmartCareTaskType.WATER_CHANGE,
       titleRes = R.string.maintenance_smart_rule_startup_water_change_title,
       messageRes = R.string.maintenance_smart_rule_startup_water_change_message,
       priority = SmartCarePriority.HIGH,
-      repeatMode = SmartCareRepeatMode.WEEKLY,
-      sourceTags = listOf("SmartCare")
+      repeatMode = SmartCareRepeatMode.EVERY_3_DAYS,
+      sourceTags = SmartCareEvidenceCatalog.tags(
+        SmartCareEvidenceId.TROPICA_GROWING_IN
+      )
     ),
 
     SmartCareRule(
@@ -85,6 +104,7 @@ object SmartCareRuleCatalog {
       dayStart = 3,
       dayEnd = 21,
       conditions = listOf(
+        SmartCareCondition.FRESHWATER,
         SmartCareCondition.PLANTED
       ),
       taskType = SmartCareTaskType.PLANT_CHECK,
@@ -92,7 +112,10 @@ object SmartCareRuleCatalog {
       messageRes = R.string.maintenance_smart_rule_plant_adaptation_check_message,
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.EVERY_3_DAYS,
-      sourceTags = listOf("SmartCare")
+      sourceTags = SmartCareEvidenceCatalog.tags(
+        SmartCareEvidenceId.TROPICA_GROWING_IN,
+        SmartCareEvidenceId.ADA_STARTING_FROM_ZERO
+      )
     ),
 
     SmartCareRule(
@@ -100,6 +123,7 @@ object SmartCareRuleCatalog {
       dayStart = 5,
       dayEnd = 45,
       conditions = listOf(
+        SmartCareCondition.FRESHWATER,
         SmartCareCondition.PLANTED
       ),
       taskType = SmartCareTaskType.GLASS_CLEANING,
@@ -107,7 +131,9 @@ object SmartCareRuleCatalog {
       messageRes = R.string.maintenance_smart_rule_algae_check_message,
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.WEEKLY,
-      sourceTags = listOf("SmartCare")
+      sourceTags = SmartCareEvidenceCatalog.tags(
+        SmartCareEvidenceId.TROPICA_GROWING_IN
+      )
     ),
 
     SmartCareRule(
@@ -115,6 +141,7 @@ object SmartCareRuleCatalog {
       dayStart = 8,
       dayEnd = 14,
       conditions = listOf(
+        SmartCareCondition.FRESHWATER,
         SmartCareCondition.PLANTED,
         SmartCareCondition.FERTILIZER_UNKNOWN
       ),
@@ -123,14 +150,17 @@ object SmartCareRuleCatalog {
       messageRes = R.string.maintenance_smart_rule_review_fertilizer_plan_message,
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.ONCE,
-      sourceTags = listOf("SmartCare")
+      sourceTags = SmartCareEvidenceCatalog.tags(
+        SmartCareEvidenceId.TROPICA_GROWING_IN
+      )
     ),
 
     SmartCareRule(
       id = "startup_fertilizer_selected_week_2",
-      dayStart = 8,
-      dayEnd = 21,
+      dayStart = 1,
+      dayEnd = 90,
       conditions = listOf(
+        SmartCareCondition.FRESHWATER,
         SmartCareCondition.PLANTED,
         SmartCareCondition.HAS_FERTILIZER
       ),
@@ -138,8 +168,11 @@ object SmartCareRuleCatalog {
       titleRes = R.string.maintenance_smart_rule_fertilizer_check_title,
       messageRes = R.string.maintenance_smart_rule_fertilizer_check_message,
       priority = SmartCarePriority.MEDIUM,
-      repeatMode = SmartCareRepeatMode.WEEKLY,
-      sourceTags = listOf("SmartCare")
+      repeatMode = SmartCareRepeatMode.PRODUCT_SCHEDULE,
+      sourceTags = SmartCareEvidenceCatalog.tags(
+        SmartCareEvidenceId.TROPICA_GROWING_IN,
+        SmartCareEvidenceId.ADA_LIQUID_FERTILIZERS
+      )
     ),
 
     SmartCareRule(
@@ -147,6 +180,7 @@ object SmartCareRuleCatalog {
       dayStart = 14,
       dayEnd = 30,
       conditions = listOf(
+        SmartCareCondition.FRESHWATER,
         SmartCareCondition.NO_LIVESTOCK
       ),
       taskType = SmartCareTaskType.WATER_TEST,
@@ -155,7 +189,10 @@ object SmartCareRuleCatalog {
       priority = SmartCarePriority.CRITICAL,
       repeatMode = SmartCareRepeatMode.WEEKLY,
       requiresWaterTest = true,
-      sourceTags = listOf("SmartCare")
+      sourceTags = SmartCareEvidenceCatalog.tags(
+        SmartCareEvidenceId.ADA_STARTING_FROM_ZERO,
+        SmartCareEvidenceId.UF_IFAS_FISH_HEALTH
+      )
     ),
 
     SmartCareRule(
@@ -163,6 +200,7 @@ object SmartCareRuleCatalog {
       dayStart = 14,
       dayEnd = 30,
       conditions = listOf(
+        SmartCareCondition.FRESHWATER,
         SmartCareCondition.NO_LIVESTOCK
       ),
       taskType = SmartCareTaskType.LIVESTOCK_CHECK,
@@ -171,7 +209,10 @@ object SmartCareRuleCatalog {
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.ONCE,
       requiresWaterTest = true,
-      sourceTags = listOf("SmartCare")
+      sourceTags = SmartCareEvidenceCatalog.tags(
+        SmartCareEvidenceId.TROPICA_GROWING_IN,
+        SmartCareEvidenceId.ADA_STARTING_FROM_ZERO
+      )
     ),
 
     SmartCareRule(
@@ -179,6 +220,7 @@ object SmartCareRuleCatalog {
       dayStart = 21,
       dayEnd = 45,
       conditions = listOf(
+        SmartCareCondition.FRESHWATER,
         SmartCareCondition.NO_LIVESTOCK
       ),
       taskType = SmartCareTaskType.LIVESTOCK_CHECK,
@@ -187,7 +229,11 @@ object SmartCareRuleCatalog {
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.ONCE,
       requiresWaterTest = true,
-      sourceTags = listOf("SmartCare")
+      sourceTags = SmartCareEvidenceCatalog.tags(
+        SmartCareEvidenceId.TROPICA_GROWING_IN,
+        SmartCareEvidenceId.ADA_STARTING_FROM_ZERO,
+        SmartCareEvidenceId.UF_IFAS_FISH_HEALTH
+      )
     ),
 
     SmartCareRule(
@@ -195,6 +241,7 @@ object SmartCareRuleCatalog {
       dayStart = 22,
       dayEnd = 45,
       conditions = listOf(
+        SmartCareCondition.FRESHWATER,
         SmartCareCondition.PLANTED,
         SmartCareCondition.HAS_LIGHT
       ),
@@ -203,14 +250,18 @@ object SmartCareRuleCatalog {
       messageRes = R.string.maintenance_smart_rule_adjust_light_period_message,
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.ONCE,
-      sourceTags = listOf("SmartCare")
+      sourceTags = SmartCareEvidenceCatalog.tags(
+        SmartCareEvidenceId.TROPICA_GROWING_IN,
+        SmartCareEvidenceId.TROPICA_QUICK_GUIDE
+      )
     ),
 
     SmartCareRule(
       id = "startup_first_trim_check",
-      dayStart = 21,
-      dayEnd = 45,
+      dayStart = 7,
+      dayEnd = 14,
       conditions = listOf(
+        SmartCareCondition.FRESHWATER,
         SmartCareCondition.PLANTED
       ),
       taskType = SmartCareTaskType.PLANT_TRIM,
@@ -218,7 +269,9 @@ object SmartCareRuleCatalog {
       messageRes = R.string.maintenance_smart_rule_first_trimming_check_message,
       priority = SmartCarePriority.LOW,
       repeatMode = SmartCareRepeatMode.ONCE,
-      sourceTags = listOf("SmartCare")
+      sourceTags = SmartCareEvidenceCatalog.tags(
+        SmartCareEvidenceId.ADA_STARTING_FROM_ZERO
+      )
     ),
 
     SmartCareRule(
@@ -226,6 +279,7 @@ object SmartCareRuleCatalog {
       dayStart = 31,
       dayEnd = 90,
       conditions = listOf(
+        SmartCareCondition.FRESHWATER,
         SmartCareCondition.STARTUP_PERIOD
       ),
       taskType = SmartCareTaskType.WATER_CHANGE,
@@ -233,7 +287,9 @@ object SmartCareRuleCatalog {
       messageRes = R.string.maintenance_smart_rule_weekly_water_change_message,
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.WEEKLY,
-      sourceTags = listOf("SmartCare")
+      sourceTags = SmartCareEvidenceCatalog.tags(
+        SmartCareEvidenceId.TROPICA_GROWING_IN
+      )
     ),
 
     SmartCareRule(
@@ -248,7 +304,9 @@ object SmartCareRuleCatalog {
       messageRes = R.string.maintenance_smart_rule_filter_flow_check_message,
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.EVERY_2_WEEKS,
-      sourceTags = listOf("SmartCare")
+      sourceTags = SmartCareEvidenceCatalog.tags(
+        SmartCareEvidenceId.UF_IFAS_FISH_HEALTH
+      )
     ),
 
     SmartCareRule(
@@ -256,6 +314,7 @@ object SmartCareRuleCatalog {
       dayStart = 14,
       dayEnd = 90,
       conditions = listOf(
+        SmartCareCondition.FRESHWATER,
         SmartCareCondition.HAS_SHRIMP
       ),
       taskType = SmartCareTaskType.LIVESTOCK_CHECK,
@@ -263,7 +322,9 @@ object SmartCareRuleCatalog {
       messageRes = R.string.maintenance_smart_rule_shrimp_stability_check_message,
       priority = SmartCarePriority.HIGH,
       repeatMode = SmartCareRepeatMode.WEEKLY,
-      sourceTags = listOf("SmartCare")
+      sourceTags = SmartCareEvidenceCatalog.tags(
+        SmartCareEvidenceId.UF_IFAS_FISH_HEALTH
+      )
     ),
 
     SmartCareRule(
@@ -278,7 +339,10 @@ object SmartCareRuleCatalog {
       messageRes = R.string.maintenance_smart_rule_feeding_review_message,
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.EVERY_3_DAYS,
-      sourceTags = listOf("SmartCare")
+      sourceTags = SmartCareEvidenceCatalog.tags(
+        SmartCareEvidenceId.ADA_STARTING_FROM_ZERO,
+        SmartCareEvidenceId.UF_IFAS_FISH_HEALTH
+      )
     ),
 
     SmartCareRule(
@@ -293,7 +357,9 @@ object SmartCareRuleCatalog {
       messageRes = R.string.maintenance_smart_rule_startup_phase_complete_message,
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.ONCE,
-      sourceTags = listOf("SmartCare")
+      sourceTags = SmartCareEvidenceCatalog.tags(
+        SmartCareEvidenceId.TROPICA_GROWING_IN
+      )
     )
   )
 
@@ -304,6 +370,7 @@ object SmartCareRuleCatalog {
       dayStart = 91,
       dayEnd = Int.MAX_VALUE,
       conditions = listOf(
+        SmartCareCondition.FRESHWATER,
         SmartCareCondition.MATURE_TANK
       ),
       taskType = SmartCareTaskType.WATER_CHANGE,
@@ -311,7 +378,9 @@ object SmartCareRuleCatalog {
       messageRes = R.string.maintenance_smart_rule_weekly_water_change_mature_message,
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.WEEKLY,
-      sourceTags = listOf("SmartCare")
+      sourceTags = SmartCareEvidenceCatalog.tags(
+        SmartCareEvidenceId.TROPICA_GROWING_IN
+      )
     ),
 
     SmartCareRule(
@@ -319,6 +388,7 @@ object SmartCareRuleCatalog {
       dayStart = 91,
       dayEnd = Int.MAX_VALUE,
       conditions = listOf(
+        SmartCareCondition.FRESHWATER,
         SmartCareCondition.MATURE_TANK,
         SmartCareCondition.PLANTED
       ),
@@ -327,7 +397,9 @@ object SmartCareRuleCatalog {
       messageRes = R.string.maintenance_smart_rule_plant_trimming_check_message,
       priority = SmartCarePriority.LOW,
       repeatMode = SmartCareRepeatMode.WEEKLY,
-      sourceTags = listOf("SmartCare")
+      sourceTags = SmartCareEvidenceCatalog.tags(
+        SmartCareEvidenceId.ADA_STARTING_FROM_ZERO
+      )
     ),
 
     SmartCareRule(
@@ -343,7 +415,9 @@ object SmartCareRuleCatalog {
       messageRes = R.string.maintenance_smart_rule_filter_maintenance_check_message,
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.MONTHLY,
-      sourceTags = listOf("SmartCare")
+      sourceTags = SmartCareEvidenceCatalog.tags(
+        SmartCareEvidenceId.UF_IFAS_FISH_HEALTH
+      )
     ),
 
     SmartCareRule(
@@ -351,7 +425,9 @@ object SmartCareRuleCatalog {
       dayStart = 91,
       dayEnd = Int.MAX_VALUE,
       conditions = listOf(
+        SmartCareCondition.FRESHWATER,
         SmartCareCondition.MATURE_TANK,
+        SmartCareCondition.PLANTED,
         SmartCareCondition.HAS_CO2
       ),
       taskType = SmartCareTaskType.CO2_CHECK,
@@ -359,7 +435,52 @@ object SmartCareRuleCatalog {
       messageRes = R.string.maintenance_smart_rule_co2_system_check_message,
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.WEEKLY,
-      sourceTags = listOf("SmartCare")
+      sourceTags = SmartCareEvidenceCatalog.tags(
+        SmartCareEvidenceId.TROPICA_GROWING_IN
+      )
+    ),
+
+    SmartCareRule(
+      id = "mature_fertilizer_selected",
+      dayStart = 91,
+      dayEnd = Int.MAX_VALUE,
+      conditions = listOf(
+        SmartCareCondition.FRESHWATER,
+        SmartCareCondition.MATURE_TANK,
+        SmartCareCondition.PLANTED,
+        SmartCareCondition.HAS_FERTILIZER
+      ),
+      taskType = SmartCareTaskType.FERTILIZER,
+      titleRes = R.string.maintenance_smart_rule_fertilizer_check_title,
+      messageRes = R.string.maintenance_smart_rule_fertilizer_check_message,
+      priority = SmartCarePriority.MEDIUM,
+      repeatMode = SmartCareRepeatMode.PRODUCT_SCHEDULE,
+      sourceTags = SmartCareEvidenceCatalog.tags(
+        SmartCareEvidenceId.TROPICA_SPECIALISED_NUTRITION,
+        SmartCareEvidenceId.TROPICA_PREMIUM_NUTRITION,
+        SmartCareEvidenceId.ADA_LIQUID_FERTILIZERS
+      )
+    ),
+
+    SmartCareRule(
+      id = "mature_monthly_lighting_review",
+      dayStart = 91,
+      dayEnd = Int.MAX_VALUE,
+      conditions = listOf(
+        SmartCareCondition.FRESHWATER,
+        SmartCareCondition.MATURE_TANK,
+        SmartCareCondition.PLANTED,
+        SmartCareCondition.HAS_LIGHT
+      ),
+      taskType = SmartCareTaskType.LIGHTING,
+      titleRes = R.string.maintenance_smart_rule_check_light_duration_title,
+      messageRes = R.string.maintenance_smart_rule_check_light_duration_message,
+      priority = SmartCarePriority.LOW,
+      repeatMode = SmartCareRepeatMode.MONTHLY,
+      sourceTags = SmartCareEvidenceCatalog.tags(
+        SmartCareEvidenceId.TROPICA_GROWING_IN,
+        SmartCareEvidenceId.TROPICA_QUICK_GUIDE
+      )
     ),
 
     SmartCareRule(
@@ -375,7 +496,9 @@ object SmartCareRuleCatalog {
       messageRes = R.string.maintenance_smart_rule_livestock_health_check_message,
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.WEEKLY,
-      sourceTags = listOf("SmartCare")
+      sourceTags = SmartCareEvidenceCatalog.tags(
+        SmartCareEvidenceId.UF_IFAS_FISH_HEALTH
+      )
     )
   )
 

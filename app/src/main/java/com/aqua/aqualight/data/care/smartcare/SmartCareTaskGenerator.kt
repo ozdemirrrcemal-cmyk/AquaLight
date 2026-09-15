@@ -57,7 +57,8 @@ object SmartCareTaskGenerator {
         rule ->
         isRuleDueToday(
           rule = rule,
-          setupDay = setupDay
+          setupDay = setupDay,
+          tank = tank
         )
       }
       .map {
@@ -107,7 +108,8 @@ object SmartCareTaskGenerator {
 
   private fun isRuleDueToday(
     rule: SmartCareRule,
-    setupDay: Int
+    setupDay: Int,
+    tank: SavedAquariumTank
   ): Boolean {
     val daysFromStart = setupDay - rule.dayStart
 
@@ -142,6 +144,17 @@ object SmartCareTaskGenerator {
 
       SmartCareRepeatMode.MONTHLY -> {
         daysFromStart % 30 == 0
+      }
+
+      SmartCareRepeatMode.PRODUCT_SCHEDULE -> {
+        val fertilizerRule = SmartCareFertilizerRuleResolver.resolve(tank)
+        fertilizerRule?.let { selectedRule ->
+          SmartCareFertilizerSchedule.isDue(
+            rule = selectedRule,
+            setupDay = setupDay,
+            daysFromStart = daysFromStart
+          )
+        } ?: (daysFromStart % 7 == 0)
       }
     }
   }
@@ -179,8 +192,14 @@ object SmartCareTaskGenerator {
       priority = rule.priority,
       dueAtMillis = dueAtMillis,
       setupDay = profile.setupDay,
-      requiresWaterTest = rule.requiresWaterTest,
-      sourceTags = rule.sourceTags,
+      requiresWaterTest = SmartCareTaskPolicy.requiresWaterTest(
+        tank = tank,
+        rule = rule
+      ),
+      sourceTags = getSourceTags(
+        tank = tank,
+        rule = rule
+      ),
       waterChangePercent = getWaterChangePercent(
         rule = rule,
         profile = profile
@@ -220,7 +239,7 @@ object SmartCareTaskGenerator {
       }
 
       setupDay in 29..90 -> {
-        30
+        25
       }
 
       else -> {
@@ -235,76 +254,21 @@ object SmartCareTaskGenerator {
     rule: SmartCareRule,
     profile: SmartCareTankProfile
   ): String {
-    val setupDay = profile.setupDay
-
     return when (rule.taskType) {
       SmartCareTaskType.WATER_CHANGE -> {
-        val percent = getWaterChangePercent(
-          rule = rule,
-          profile = profile
-        ) ?: 30
-
-        if (setupDay != null) {
-          context.getString(
-            R.string.maintenance_smart_msg_water_change_day,
-            setupDay,
-            percent
-          )
-        } else {
-          context.getString(
-            R.string.maintenance_smart_msg_water_change,
-            percent
-          )
-        }
-      }
-
-      SmartCareTaskType.FERTILIZER -> {
-        buildFertilizerMessage(
-          context = context,
-          tank = tank,
-          profile = profile
+        SmartCareTaskPolicy.waterChangeMessage(
+          context,
+          profile.setupDay,
+          getWaterChangePercent(rule, profile) ?: 30
         )
       }
-
-      SmartCareTaskType.CO2_CHECK -> {
-        context.getString(R.string.maintenance_smart_msg_co2_check)
+      SmartCareTaskType.FERTILIZER -> {
+        buildFertilizerMessage(context, tank, profile)
       }
-
-      SmartCareTaskType.FEEDING -> {
-        context.getString(R.string.maintenance_smart_msg_feeding)
-      }
-
-      SmartCareTaskType.LIGHTING -> {
-        context.getString(R.string.maintenance_smart_msg_lighting)
-      }
-
-      SmartCareTaskType.WATER_TEST -> {
-        context.getString(R.string.maintenance_smart_msg_water_test)
-      }
-
-      SmartCareTaskType.PLANT_CHECK -> {
-        context.getString(R.string.maintenance_smart_msg_plant_check)
-      }
-
-      SmartCareTaskType.PLANT_TRIM -> {
-        context.getString(R.string.maintenance_smart_msg_plant_trim)
-      }
-
-      SmartCareTaskType.FILTER_CHECK -> {
-        context.getString(R.string.maintenance_smart_msg_filter_check)
-      }
-
-      SmartCareTaskType.GLASS_CLEANING -> {
-        context.getString(R.string.maintenance_smart_msg_glass_cleaning)
-      }
-
-      SmartCareTaskType.LIVESTOCK_CHECK -> {
-        context.getString(R.string.maintenance_smart_msg_livestock_check)
-      }
-
       SmartCareTaskType.GENERAL_CHECK -> {
         context.getString(rule.messageRes)
       }
+      else -> SmartCareTaskPolicy.standardMessage(context, rule.taskType, profile)
     }
   }
 
@@ -313,9 +277,7 @@ object SmartCareTaskGenerator {
     tank: SavedAquariumTank,
     profile: SmartCareTankProfile
   ): String {
-    val fertilizerRule = findSelectedFertilizerRule(
-      tank = tank
-    )
+    val fertilizerRule = SmartCareFertilizerRuleResolver.resolve(tank)
 
     if (fertilizerRule == null) {
       return if (profile.setupDay != null) {
@@ -331,8 +293,7 @@ object SmartCareTaskGenerator {
     val recommendation = SmartFertilizerDoseCalculator.calculate(
       rule = fertilizerRule,
       grossVolumeL = profile.grossVolumeL,
-      setupDay = profile.setupDay,
-      hasActiveSoil = profile.hasActiveSoil
+      setupDay = profile.setupDay
     )
 
     val productName = fertilizerRule.productName
@@ -342,74 +303,53 @@ object SmartCareTaskGenerator {
       frequency = fertilizerRule.frequency
     )
 
-    val setupDay = profile.setupDay
+    return when (recommendation.decision) {
+      FertilizerDoseDecision.WITHHOLD_OR_LIMIT -> {
+        context.getString(
+          R.string.maintenance_smart_msg_limit_fertilizer_day,
+          profile.setupDay ?: 1,
+          productName
+        )
+      }
 
-    if (
-      setupDay != null &&
-      setupDay <= 7 &&
-      recommendation.startupDoseFactor == 0.0
-    ) {
-      return context.getString(
-        R.string.maintenance_smart_msg_delay_fertilizer_day,
-        setupDay,
-        productName
-      )
+      FertilizerDoseDecision.DEFER -> {
+        context.getString(
+          R.string.maintenance_smart_msg_defer_fertilizer_stage,
+          productName
+        )
+      }
+
+      FertilizerDoseDecision.OBSERVATION_REQUIRED -> {
+        context.getString(
+          R.string.maintenance_smart_msg_observe_before_fertilizer,
+          productName
+        )
+      }
+
+      FertilizerDoseDecision.LABEL_DOSE -> {
+        val advisedDoseMl = requireNotNull(recommendation.advisedDoseMl)
+        context.getString(
+          R.string.maintenance_smart_msg_label_fertilizer,
+          advisedDoseMl.toString(),
+          productName,
+          frequencyText,
+          recommendation.estimatedWaterVolumeL.toString()
+        )
+      }
     }
-
-    if (
-      setupDay != null &&
-      setupDay <= 30
-    ) {
-      return context.getString(
-        R.string.maintenance_smart_msg_reduced_fertilizer_day,
-        setupDay,
-        recommendation.startupDoseMl.toString(),
-        productName
-      )
-    }
-
-    return context.getString(
-      R.string.maintenance_smart_msg_normal_fertilizer,
-      recommendation.normalDoseMl.toString(),
-      productName,
-      frequencyText
-    )
   }
 
-  private fun findSelectedFertilizerRule(
-    tank: SavedAquariumTank
-  ): FertilizerDoseRule? {
-    val materialText = tank.materials.joinToString(
-      separator = " "
-    ) {
-      material ->
-      listOf(
-        material.brand,
-        material.name,
-        material.note,
-        material.categoryKey,
-        material.categoryTitle
-      ).joinToString(
-        separator = " "
-      )
-    }.lowercase()
-
-    if (materialText.isBlank()) {
-      return null
+  private fun getSourceTags(
+    tank: SavedAquariumTank,
+    rule: SmartCareRule
+  ): List<String> {
+    if (rule.taskType != SmartCareTaskType.FERTILIZER) {
+      return rule.sourceTags
     }
-
-    return FertilizerDoseCatalog.rules.firstOrNull {
-      rule ->
-      val productName = rule.productName.lowercase()
-      val brandName = rule.brand.name.lowercase()
-
-      materialText.contains(productName) ||
-        productName.split(" ").all {
-          token ->
-          token.length <= 2 || materialText.contains(token)
-        } ||
-        materialText.contains(brandName)
-    }
+    val productSourceIds = SmartCareFertilizerRuleResolver.resolve(tank)
+      ?.evidenceSourceIds
+      .orEmpty()
+    return productSourceIds.ifEmpty { rule.sourceTags }
   }
 
   private fun getFrequencyText(

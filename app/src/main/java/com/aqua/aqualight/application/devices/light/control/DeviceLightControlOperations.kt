@@ -1,6 +1,7 @@
 package com.aqua.aqualight.application.devices.light.control
 
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
+import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationState
 import kotlinx.coroutines.flow.Flow
 
 /** Firmware-independent application boundary for the shared Light V1 control surface. */
@@ -32,13 +33,48 @@ enum class DeviceLightControlFailure {
     INVALID_DATA
 }
 
-/** Minimum authoritative identity needed before rendering any Light control content. */
+/** Authoritative Light snapshot projected without leaking firmware models into presentation. */
 data class DeviceLightControlSnapshot(
     val deviceUid: String,
     val productKey: String,
     val physicalChannelCount: Int,
-    val channelKeys: List<String>
+    val channelKeys: List<String>,
+    val activeAutomaticProgramId: String? = null,
+    val hero: DeviceLightHeroSnapshot = DeviceLightHeroSnapshot(),
+    val adaptation: DeviceLightAdaptationSummary = DeviceLightAdaptationSummary()
 )
+
+data class DeviceLightAdaptationSummary(
+    val supported: Boolean = false,
+    val state: DeviceLightAdaptationState? = null,
+    val currentPermille: Int? = null,
+    val remainingSeconds: Long? = null
+)
+
+data class DeviceLightHeroSnapshot(
+    val mode: DeviceLightControlMode? = null,
+    val outputActive: Boolean? = null,
+    val outputCondition: DeviceLightOutputCondition? = null,
+    val outputHealthy: Boolean? = null,
+    val estimatedPowerWatts: Double? = null,
+    val estimatedColorTemperatureKelvin: Int? = null
+)
+
+enum class DeviceLightControlMode {
+    MANUAL,
+    AUTOMATIC,
+    CUSTOM
+}
+
+enum class DeviceLightOutputCondition {
+    ACTIVE,
+    SCHEDULED_OFF,
+    ALL_CHANNELS_ZERO,
+    CLOCK_UNAVAILABLE,
+    THERMAL_PROTECTION,
+    POWER_LIMITED,
+    HARDWARE_FAULT
+}
 
 /** Exact catalog/runtime identity check shared by preparation and destination read paths. */
 fun DeviceLightControlSnapshot?.matchesLightControlSurface(

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_light_system_current_temperature">Current temperature</string>
+    <string name="device_light_system_temperature_decimal_format">%1$.1f °C</string>
+    <string name="device_light_system_temperature_format">%1$d °C</string>
+    <string name="device_light_system_temperature_unavailable">— °C</string>
+    <string name="device_light_system_condition_normal">Normal</string>
+    <string name="device_light_system_condition_protection">Protection active</string>
+    <string name="device_light_system_condition_sensor_fail_safe">Sensor fail-safe</string>
+    <string name="device_light_system_condition_fan_fault">Fan fault</string>
+    <string name="device_light_system_fan_name">Fan %1$d</string>
+    <string name="device_light_system_percent_format">%1$d%%</string>
+    <string name="device_light_system_sensor_healthy">Sensor healthy</string>
+    <string name="device_light_system_sensor_fault">Sensor fault · fail-safe active</string>
+    <string name="device_light_system_fan_control">Fan control</string>
+    <string name="device_light_system_operating_mode">Operating mode</string>
+    <string name="device_light_system_mode_automatic">Automatic</string>
+    <string name="device_light_system_mode_on">On</string>
+    <string name="device_light_system_mode_off">Off</string>
+    <string name="device_light_system_mode_automatic_helper">Fan speed follows temperature.</string>
+    <string name="device_light_system_mode_on_helper">Fans run continuously at full speed.</string>
+    <string name="device_light_system_mode_off_helper">Fans remain off unless fail-safe protection is required.</string>
+    <string name="device_light_system_automatic_range">Automatic operating range</string>
+    <string name="device_light_system_start">Start</string>
+    <string name="device_light_system_full_speed">Full speed</string>
+    <string name="device_light_system_light_protection">Light protection</string>
+    <string name="device_light_system_protection_description">If the device overheats, light output\nis automatically reduced to a safe level.</string>
+    <string name="device_light_system_always_on">ALWAYS ON</string>
+    <string name="device_light_system_protection_threshold">Protection threshold</string>
+    <string name="device_light_system_save_action">Save settings</string>
+    <string name="device_light_system_minus_symbol">−</string>
+    <string name="device_light_system_plus_symbol">+</string>
+    <string name="device_light_system_decrease_temperature_description">Decrease %1$s</string>
+    <string name="device_light_system_increase_temperature_description">Increase %1$s</string>
+    <string name="device_light_system_save_success">System settings saved.</string>
+    <string name="device_light_system_partial_save_error">Some settings may have been applied. Current device values were reloaded.</string>
+    <string name="device_light_system_not_connected_error">Connect to the device to manage system settings.</string>
+    <string name="device_light_system_unsupported_error">System controls are unavailable for this device.</string>
+    <string name="device_light_system_invalid_data_error">The device returned invalid system data.</string>
+    <string name="device_light_system_operation_error">System settings could not be updated.</string>
+</resources>

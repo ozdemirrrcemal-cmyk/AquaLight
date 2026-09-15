@@ -4,14 +4,22 @@ import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.light.control.DeviceLightControlFailure
+import com.aqua.aqualight.application.devices.light.control.DeviceLightAdaptationSummary
+import com.aqua.aqualight.application.devices.light.control.DeviceLightControlMode
 import com.aqua.aqualight.application.devices.light.control.DeviceLightControlOperations
 import com.aqua.aqualight.application.devices.light.control.DeviceLightControlResult
 import com.aqua.aqualight.application.devices.light.control.DeviceLightControlSnapshot
+import com.aqua.aqualight.application.devices.light.control.DeviceLightHeroSnapshot
+import com.aqua.aqualight.application.devices.light.control.DeviceLightOutputCondition
+import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationState
 import com.aqua.aqualight.application.devices.light.control.matchesLightControlSurface
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightMode
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAcclimationState
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightOutputReason
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightProduct
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightStatus
@@ -129,14 +137,57 @@ private fun DeviceRuntimeCommandOutcome<DeviceLightStatus>.toRefreshedControlRes
         failed(DeviceLightControlFailure.UNAVAILABLE)
 }
 
-private fun DeviceLightStatus.toControlSnapshot(
+internal fun DeviceLightStatus.toControlSnapshot(
     deviceUid: DeviceUid
 ) = DeviceLightControlSnapshot(
     deviceUid = deviceUid.value,
     productKey = product.wireValue,
     physicalChannelCount = runtime.physicalChannelCount,
-    channelKeys = channels.sortedBy { channel -> channel.order }.map { channel -> channel.key }
+    channelKeys = channels.sortedBy { channel -> channel.order }.map { channel -> channel.key },
+    activeAutomaticProgramId = auto.activeProgramId,
+    hero = DeviceLightHeroSnapshot(
+        mode = mode.toApplicationMode(),
+        outputActive = outputActive,
+        outputCondition = outputReason.toApplicationCondition(),
+        outputHealthy = runtime.physicalOutputHealthy,
+        estimatedPowerWatts = power.estimatedFixturePowerW
+            ?.takeIf { power.available && power.estimatedFixturePowerAvailable },
+        estimatedColorTemperatureKelvin = color.estimatedCctK
+            ?.takeIf { color.available && color.cctAvailable }
+    ),
+    adaptation = DeviceLightAdaptationSummary(
+        supported = features.acclimation && acclimation.supported,
+        state = acclimation.state?.toApplicationState(),
+        currentPermille = acclimation.currentPermille,
+        remainingSeconds = acclimation.remainingSeconds
+    )
 )
+
+private fun DeviceLightAcclimationState.toApplicationState(): DeviceLightAdaptationState =
+    when (this) {
+        DeviceLightAcclimationState.DISABLED -> DeviceLightAdaptationState.DISABLED
+        DeviceLightAcclimationState.ACTIVE -> DeviceLightAdaptationState.ACTIVE
+        DeviceLightAcclimationState.COMPLETED -> DeviceLightAdaptationState.COMPLETED
+    }
+
+private fun DeviceLightMode.toApplicationMode(): DeviceLightControlMode = when (this) {
+    DeviceLightMode.MANUAL -> DeviceLightControlMode.MANUAL
+    DeviceLightMode.AUTO -> DeviceLightControlMode.AUTOMATIC
+    DeviceLightMode.CUSTOM -> DeviceLightControlMode.CUSTOM
+}
+
+private fun DeviceLightOutputReason.toApplicationCondition(): DeviceLightOutputCondition =
+    when (this) {
+        DeviceLightOutputReason.ACTIVE -> DeviceLightOutputCondition.ACTIVE
+        DeviceLightOutputReason.SCHEDULED_OFF -> DeviceLightOutputCondition.SCHEDULED_OFF
+        DeviceLightOutputReason.ALL_CHANNELS_ZERO ->
+            DeviceLightOutputCondition.ALL_CHANNELS_ZERO
+        DeviceLightOutputReason.RTC_NOT_READY -> DeviceLightOutputCondition.CLOCK_UNAVAILABLE
+        DeviceLightOutputReason.THERMAL_SHUTDOWN ->
+            DeviceLightOutputCondition.THERMAL_PROTECTION
+        DeviceLightOutputReason.POWER_LIMITED -> DeviceLightOutputCondition.POWER_LIMITED
+        DeviceLightOutputReason.HARDWARE_FAULT -> DeviceLightOutputCondition.HARDWARE_FAULT
+    }
 
 private fun DeviceRootSnapshot.isSupportedLightRoot(): Boolean = when {
     catalogState != DeviceRootCatalogState.VALID -> false

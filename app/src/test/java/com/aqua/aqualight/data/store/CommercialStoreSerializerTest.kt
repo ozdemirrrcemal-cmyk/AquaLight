@@ -13,6 +13,13 @@ import com.aqua.aqualight.data.care.StoredCareTask
 import com.aqua.aqualight.data.care.model.CareTaskSource
 import com.aqua.aqualight.data.care.model.CareTaskStatus
 import com.aqua.aqualight.data.care.model.CareTaskType
+import com.aqua.aqualight.data.devices.light.library.DeviceLightLibrarySerializer
+import com.aqua.aqualight.data.devices.light.library.DeviceLightLibraryStoreData
+import com.aqua.aqualight.data.devices.light.library.DeviceLightLibraryStoreRules
+import com.aqua.aqualight.data.devices.light.library.StoredDeviceLightChannelValue
+import com.aqua.aqualight.data.devices.light.library.StoredDeviceLightLibraryEntry
+import com.aqua.aqualight.data.devices.light.library.StoredDeviceLightLibraryKind
+import com.aqua.aqualight.data.devices.light.library.StoredDeviceLightManualScene
 import com.aqua.aqualight.data.user.UserPreferences
 import com.aqua.aqualight.data.user.UserPreferencesSerializer
 import com.aqua.aqualight.data.user.UserPreferencesStoreRules
@@ -38,6 +45,9 @@ class CommercialStoreSerializerTest {
             .setUid("owner-a")
             .setIsLoggedIn(true)
             .build()
+        val lightLibrary = DeviceLightLibraryStoreRules.defaultStore().toBuilder()
+            .addEntries(validLightLibraryEntry())
+            .build()
 
         assertEquals(
             tankStore,
@@ -51,6 +61,10 @@ class CommercialStoreSerializerTest {
             preferences,
             roundTrip(UserPreferencesSerializer, preferences)
         )
+        assertEquals(
+            lightLibrary,
+            roundTrip(DeviceLightLibrarySerializer, lightLibrary)
+        )
     }
 
     @Test
@@ -58,14 +72,17 @@ class CommercialStoreSerializerTest {
         val tankStore = AquariumTanksStore.getDefaultInstance()
         val careStore = CareTasksStore.getDefaultInstance()
         val preferences = UserPreferences.getDefaultInstance()
+        val lightLibrary = DeviceLightLibraryStoreData.getDefaultInstance()
 
         assertCorruption(AquariumTanksSerializer, tankStore.toByteArray())
         assertCorruption(CareTasksCommercialSerializer, careStore.toByteArray())
         assertCorruption(UserPreferencesSerializer, preferences.toByteArray())
+        assertCorruption(DeviceLightLibrarySerializer, lightLibrary.toByteArray())
 
         assertWriteRejected(AquariumTanksSerializer, tankStore)
         assertWriteRejected(CareTasksCommercialSerializer, careStore)
         assertWriteRejected(UserPreferencesSerializer, preferences)
+        assertWriteRejected(DeviceLightLibrarySerializer, lightLibrary)
     }
 
     @Test
@@ -89,10 +106,17 @@ class CommercialStoreSerializerTest {
             .setIsLoggedIn(true)
             .build()
             .toByteArray()
+        val lightLibraryBytes = DeviceLightLibraryStoreRules.defaultStore()
+            .toBuilder()
+            .setSchemaVersion(0)
+            .addEntries(validLightLibraryEntry())
+            .build()
+            .toByteArray()
 
         assertCorruption(AquariumTanksSerializer, tankBytes)
         assertCorruption(CareTasksCommercialSerializer, careBytes)
         assertCorruption(UserPreferencesSerializer, preferenceBytes)
+        assertCorruption(DeviceLightLibrarySerializer, lightLibraryBytes)
     }
 
     @Test
@@ -114,10 +138,16 @@ class CommercialStoreSerializerTest {
             .setSchemaVersion(CommercialStoreSchema.USER_PREFERENCES_VERSION + 1)
             .build()
             .toByteArray()
+        val lightLibraryBytes = DeviceLightLibraryStoreRules.defaultStore()
+            .toBuilder()
+            .setSchemaVersion(CommercialStoreSchema.LIGHT_LIBRARY_VERSION + 1)
+            .build()
+            .toByteArray()
 
         assertCorruption(AquariumTanksSerializer, tankBytes)
         assertCorruption(CareTasksCommercialSerializer, careBytes)
         assertCorruption(UserPreferencesSerializer, preferenceBytes)
+        assertCorruption(DeviceLightLibrarySerializer, lightLibraryBytes)
     }
 
     @Test
@@ -223,5 +253,38 @@ class CommercialStoreSerializerTest {
         .setGeneratedRuleKey("")
         .setCreatedAtMillis(1_767_225_600_000L)
         .setUpdatedAtMillis(1_767_225_600_000L)
+        .build()
+
+    private fun validLightLibraryEntry(): StoredDeviceLightLibraryEntry =
+        StoredDeviceLightLibraryEntry.newBuilder()
+            .setId("manual-1")
+            .setOwnerUid("owner-a")
+            .setDisplayName("Evening View")
+            .setNormalizedName("evening view")
+            .setKind(
+                StoredDeviceLightLibraryKind.STORED_DEVICE_LIGHT_LIBRARY_KIND_MANUAL
+            )
+            .setProductKey("LIGHT_RGB_PRO_SLIM")
+            .addAllChannelKeys(listOf("redPercent", "greenPercent", "bluePercent"))
+            .setCreatedAtMillis(1_767_225_600_000L)
+            .setUpdatedAtMillis(1_767_225_600_000L)
+            .setManual(
+                StoredDeviceLightManualScene.newBuilder()
+                    .addAllChannels(
+                        listOf(
+                            storedChannel("redPercent", 65),
+                            storedChannel("greenPercent", 45),
+                            storedChannel("bluePercent", 75)
+                        )
+                    )
+            )
+            .build()
+
+    private fun storedChannel(
+        key: String,
+        percent: Int
+    ): StoredDeviceLightChannelValue = StoredDeviceLightChannelValue.newBuilder()
+        .setChannelKey(key)
+        .setPercent(percent)
         .build()
 }

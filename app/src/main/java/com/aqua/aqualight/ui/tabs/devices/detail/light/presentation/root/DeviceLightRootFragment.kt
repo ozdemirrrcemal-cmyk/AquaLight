@@ -2,9 +2,12 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root
 
 import android.os.Bundle
 import android.view.View
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
@@ -39,7 +42,26 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
         val initialState = viewModel.uiState.value
         setFragmentGlobalLoading(initialState.showBlockingPreparation)
         setupHeader(initialState)
+        setupDashboardContent()
         observeViewModel()
+    }
+
+    private fun setupDashboardContent() {
+        val actions = DeviceLightDashboardActions(
+            onQuickSetupClick = ::openQuickSetup,
+            onMenuClick = ::openDashboardDestination,
+            onPlanClick = ::openDashboardDestination
+        )
+        binding.lightDashboardCompose.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                val state by viewModel.uiState.collectAsStateWithLifecycle()
+                DeviceLightDashboardScreen(
+                    state = state,
+                    actions = actions
+                )
+            }
+        }
     }
 
     private fun setupHeader(state: DeviceLightRootUiState) {
@@ -55,6 +77,14 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
                 statusIcon = state.connectionVisualState.toWifiHeaderStatusIcon(requireContext()),
                 actions = listOf(
                     AquaHeaderAction(
+                        iconRes = R.drawable.ic_light_library,
+                        contentDescription = getString(
+                            R.string.device_light_open_library_description
+                        ),
+                        enabled = state.contentEnabled,
+                        onClick = ::openLightLibrary
+                    ),
+                    AquaHeaderAction(
                         iconRes = R.drawable.ic_settings,
                         contentDescription = getString(
                             R.string.device_light_open_settings_description
@@ -64,6 +94,18 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
                     )
                 )
             )
+        )
+    }
+
+    private fun openLightLibrary() {
+        if (!viewModel.uiState.value.contentEnabled) return
+        val navController = findNavController()
+        if (navController.currentDestination?.id != R.id.deviceLightRootFragment) return
+        navController.navigate(
+            DeviceLightRootFragmentDirections
+                .actionDeviceLightRootFragmentToDeviceLightLibraryFragment(
+                    deviceUid = args.deviceUid
+                )
         )
     }
 
@@ -77,6 +119,65 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
                     deviceUid = args.deviceUid
                 )
         )
+    }
+
+    private fun openQuickSetup() {
+        if (!viewModel.uiState.value.contentEnabled) return
+        val navController = findNavController()
+        if (navController.currentDestination?.id != R.id.deviceLightRootFragment) return
+        navController.navigate(
+            DeviceLightRootFragmentDirections
+                .actionDeviceLightRootFragmentToDeviceLightQuickSetupFragment(
+                    deviceUid = args.deviceUid
+                )
+        )
+    }
+
+    private fun openDashboardDestination(destination: DeviceLightDashboardDestination) {
+        if (!viewModel.uiState.value.contentEnabled) return
+        val navController = findNavController()
+        if (navController.currentDestination?.id != R.id.deviceLightRootFragment) return
+        when (destination) {
+            DeviceLightMenuDestination.MANUAL_CONTROL -> navController.navigate(
+                DeviceLightRootFragmentDirections
+                    .actionDeviceLightRootFragmentToDeviceLightManualControlFragment(args.deviceUid)
+            )
+            DeviceLightMenuDestination.AUTOMATIC_PROGRAMS,
+            DeviceLightPlanDestination.AutomaticPrograms -> navController.navigate(
+                DeviceLightRootFragmentDirections
+                    .actionDeviceLightRootFragmentToDeviceLightAutomaticProgramsFragment(
+                        args.deviceUid
+                    )
+            )
+            DeviceLightMenuDestination.CUSTOM_LIGHT_CURVE -> navController.navigate(
+                DeviceLightRootFragmentDirections
+                    .actionDeviceLightRootFragmentToDeviceLightCustomCurveFragment(args.deviceUid)
+            )
+            DeviceLightMenuDestination.ADAPTATION -> if (
+                viewModel.uiState.value.adaptation.supported
+            ) {
+                navController.navigate(
+                    DeviceLightRootFragmentDirections
+                        .actionDeviceLightRootFragmentToDeviceLightAdaptationFragment(args.deviceUid)
+                )
+            }
+            DeviceLightMenuDestination.SYSTEM -> navController.navigate(
+                DeviceLightRootFragmentDirections
+                    .actionDeviceLightRootFragmentToDeviceLightSystemFragment(args.deviceUid)
+            )
+            is DeviceLightPlanDestination.AutomaticProgramEditor -> navController.navigate(
+                DeviceLightRootFragmentDirections
+                    .actionDeviceLightRootFragmentToDeviceLightAutomaticProgramEditorFragment(
+                        deviceUid = args.deviceUid,
+                        programId = destination.programId,
+                        duplicate = false
+                    )
+            )
+            DeviceLightPlanDestination.CustomCurveEditor -> navController.navigate(
+                DeviceLightRootFragmentDirections
+                    .actionDeviceLightRootFragmentToDeviceLightCustomCurveFragment(args.deviceUid)
+            )
+        }
     }
 
     private fun observeViewModel() {

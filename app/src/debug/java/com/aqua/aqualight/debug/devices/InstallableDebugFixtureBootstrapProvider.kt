@@ -68,6 +68,7 @@ private class FixtureCompositionInstaller(
 
         application.replaceAppContainerForProcess(
             DebugDeviceFixtureAppContainer(
+                context = application.applicationContext,
                 delegate = application.appContainer
             )
         )

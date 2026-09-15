@@ -3,6 +3,9 @@ package com.aqua.aqualight.data.care.smartcare
 import androidx.annotation.StringRes
 
 enum class SmartCareCondition {
+  FRESHWATER,
+  MARINE,
+
   PLANTED,
   NO_PLANTS,
 
@@ -26,6 +29,8 @@ enum class SmartCareCondition {
 
   HIGH_TECH,
   LOW_TECH,
+
+  NATURE_AQUARIUM,
 
   STARTUP_PERIOD,
   MATURE_TANK
@@ -60,7 +65,8 @@ enum class SmartCareRepeatMode {
   EVERY_3_DAYS,
   WEEKLY,
   EVERY_2_WEEKS,
-  MONTHLY
+  MONTHLY,
+  PRODUCT_SCHEDULE
 }
 
 data class SmartCareRule(

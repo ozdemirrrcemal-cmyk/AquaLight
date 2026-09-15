@@ -47,6 +47,13 @@ class CommercialStoreArchitectureTest {
                     "UserPreferencesManager.kt"
             )
         )
+        assertOnlyFilesContain(
+            token = "light_library.pb",
+            expectedRelativePaths = setOf(
+                "app/src/main/java/com/aqua/aqualight/data/devices/light/library/" +
+                    "DeviceLightLibraryStore.kt"
+            )
+        )
     }
 
     @Test
@@ -54,7 +61,8 @@ class CommercialStoreArchitectureTest {
         listOf(
             "app/src/main/proto/aquarium_tanks.proto",
             "app/src/main/proto/care_tasks.proto",
-            "app/src/main/proto/user_prefs.proto"
+            "app/src/main/proto/user_prefs.proto",
+            "app/src/main/proto/light_library.proto"
         ).forEach { relativePath ->
             val text = File(repositoryRoot, relativePath).readText()
             assertTrue(
@@ -72,7 +80,9 @@ class CommercialStoreArchitectureTest {
             "app/src/main/java/com/aqua/aqualight/data/care/" +
                 "CareTasksCommercialSerializer.kt",
             "app/src/main/java/com/aqua/aqualight/data/user/" +
-                "UserPreferencesSerializer.kt"
+                "UserPreferencesSerializer.kt",
+            "app/src/main/java/com/aqua/aqualight/data/devices/light/library/" +
+                "DeviceLightLibrarySerializer.kt"
         ).forEach { relativePath ->
             val text = File(repositoryRoot, relativePath).readText()
             assertFalse(
@@ -100,6 +110,11 @@ class CommercialStoreArchitectureTest {
             "app/src/main/java/com/aqua/aqualight/data/user/" +
                 "UserPreferencesManager.kt"
         ).readText()
+        val lightLibraryStore = File(
+            repositoryRoot,
+            "app/src/main/java/com/aqua/aqualight/data/devices/light/library/" +
+                "DeviceLightLibraryStore.kt"
+        ).readText()
 
         assertTrue(tankManager.contains("TankStoreRules.validateStore"))
         assertTrue(tankManager.contains("TankStoreRules.validateTank"))
@@ -110,6 +125,28 @@ class CommercialStoreArchitectureTest {
         assertTrue(preferenceManager.contains("ReplaceFileCorruptionHandler"))
         assertTrue(preferenceManager.contains("updateValidated"))
         assertFalse(preferenceManager.contains("emit(UserPreferences"))
+        assertTrue(lightLibraryStore.contains("DeviceLightLibraryStoreRules.validateStore"))
+        assertTrue(lightLibraryStore.contains("ReplaceFileCorruptionHandler"))
+    }
+
+    @Test
+    fun lightLibraryPersistsReusableAuthoredDataOnly() {
+        val proto = File(
+            repositoryRoot,
+            "app/src/main/proto/light_library.proto"
+        ).readText()
+        val presentationText = File(
+            repositoryRoot,
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/presentation"
+        ).walkTopDown()
+            .filter(File::isFile)
+            .joinToString("\n", transform = File::readText)
+
+        assertFalse(proto.contains("device_uid"))
+        assertFalse(proto.contains("expected_revision"))
+        assertFalse(proto.contains("is_loaded"))
+        assertFalse(presentationText.contains("DeviceLightLibraryStore"))
+        assertFalse(presentationText.contains("androidx.datastore"))
     }
 
     @Test
