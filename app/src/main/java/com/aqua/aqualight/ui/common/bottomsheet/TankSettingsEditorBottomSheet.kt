@@ -208,51 +208,41 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
         }
         binding.btnCancel.setOnClickListener { cancelAndDismiss() }
         binding.btnSave.setOnClickListener {
-            val widthCm = AquariumDimensionInputPolicy.parseCentimeters(
-                requireContext(),
-                binding.inputWidth.text,
-                selectedUnit
-            )
-            val lengthCm = AquariumDimensionInputPolicy.parseCentimeters(
-                requireContext(),
-                binding.inputLength.text,
-                selectedUnit
-            )
-            val heightCm = AquariumDimensionInputPolicy.parseCentimeters(
-                requireContext(),
-                binding.inputHeight.text,
-                selectedUnit
-            )
-
-            var invalid = false
-            if (widthCm == null) {
-                binding.inputWidth.error = validationMessage
-                invalid = true
-            }
-            if (lengthCm == null) {
-                binding.inputLength.error = validationMessage
-                invalid = true
-            }
-            if (heightCm == null) {
-                binding.inputHeight.error = validationMessage
-                invalid = true
-            }
-            if (invalid) return@setOnClickListener
-
-            publishResult(
-                status = RESULT_SAVED,
-                payload = ResultPayload(
-                    dimensions = ResultDimensions(
-                        widthCm = requireNotNull(widthCm),
-                        lengthCm = requireNotNull(lengthCm),
-                        heightCm = requireNotNull(heightCm),
-                        unit = selectedUnit
-                    )
-                )
-            )
-            dismiss()
+            saveDimensions(binding, validationMessage)
         }
         attachContent(binding.root)
+    }
+
+    private fun saveDimensions(
+        binding: ContentSheetTankSizeBinding,
+        validationMessage: String
+    ) {
+        val inputs = listOf(binding.inputWidth, binding.inputLength, binding.inputHeight)
+        val dimensions = inputs.map { input ->
+            AquariumDimensionInputPolicy.parseCentimeters(
+                requireContext(),
+                input.text,
+                selectedUnit
+            )
+        }
+        dimensions.forEachIndexed { index, value ->
+            inputs[index].error = if (value == null) validationMessage else null
+        }
+        if (dimensions.any { it == null }) return
+        val (widthCm, lengthCm, heightCm) = dimensions.map { requireNotNull(it) }
+
+        publishResult(
+            status = RESULT_SAVED,
+            payload = ResultPayload(
+                dimensions = ResultDimensions(
+                    widthCm = widthCm,
+                    lengthCm = lengthCm,
+                    heightCm = heightCm,
+                    unit = selectedUnit
+                )
+            )
+        )
+        dismiss()
     }
 
     private fun bindSetupDateEditor() {

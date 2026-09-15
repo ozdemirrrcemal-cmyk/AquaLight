@@ -21,6 +21,19 @@ class SingleChoiceBottomSheet : BottomSheetDialogFragment(
 
     private var resultSent = false
 
+    data class Request(
+        val title: String,
+        val options: List<Pair<String, String>>,
+        val selectedId: String?,
+        val columns: Int,
+        val resultTarget: ResultTarget
+    )
+
+    data class ResultTarget(
+        val requestKey: String,
+        val payloadId: String = ""
+    )
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val args = requireArguments()
@@ -150,17 +163,5 @@ class SingleChoiceBottomSheet : BottomSheetDialogFragment(
             }.show(fragmentManager, tag)
         }
 
-        data class Request(
-            val title: String,
-            val options: List<Pair<String, String>>,
-            val selectedId: String?,
-            val columns: Int,
-            val resultTarget: ResultTarget
-        )
-
-        data class ResultTarget(
-            val requestKey: String,
-            val payloadId: String = ""
-        )
     }
 }

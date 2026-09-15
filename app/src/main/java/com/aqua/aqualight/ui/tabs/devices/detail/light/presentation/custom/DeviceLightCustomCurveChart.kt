@@ -2,9 +2,6 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,31 +10,24 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
@@ -131,17 +121,7 @@ private fun EditableCurveChart(
                 .height((PLAYHEAD_LABEL_SPACE_DP + CHART_HEIGHT_DP).dp)
         ) {
             val axisWidth = CHART_PERCENT_AXIS_WIDTH_DP.dp
-            val bubbleWidth = PLAYHEAD_LABEL_WIDTH_DP.dp
             val plotWidth = (maxWidth - axisWidth).coerceAtLeast(0.dp)
-            val playheadFraction = state.previewTimeMs.toFloat() / MILLIS_PER_DAY.toFloat()
-            val maximumBubbleX = (maxWidth - bubbleWidth).coerceAtLeast(0.dp)
-            val bubbleX = (axisWidth + plotWidth * playheadFraction - bubbleWidth / 2f)
-                .coerceIn(0.dp, maximumBubbleX)
-            val handleWidth = PLAYHEAD_HANDLE_WIDTH_DP.dp
-            val maximumHandleX = (maxWidth - handleWidth).coerceAtLeast(0.dp)
-            val handleX = (axisWidth + plotWidth * playheadFraction - handleWidth / 2f)
-                .coerceIn(0.dp, maximumHandleX)
-            val plotWidthPx = with(LocalDensity.current) { plotWidth.toPx() }
 
             Row(
                 modifier = Modifier.fillMaxWidth().height(CHART_HEIGHT_DP.dp)
@@ -156,97 +136,14 @@ private fun EditableCurveChart(
                     modifier = Modifier.weight(1f)
                 )
             }
-            PlayheadTimeBubble(
-                timeMs = state.previewTimeMs,
-                enabled = state.contentEnabled && !state.operationInProgress,
-                onClick = actions.onPlayheadTimeClick,
-                visuals = visuals,
-                modifier = Modifier.offset(x = bubbleX).width(bubbleWidth)
-            )
-            PlayheadDragHandle(
-                state = DeviceLightCustomPlayheadState(
-                    timeMs = state.previewTimeMs,
-                    enabled = state.contentEnabled && !state.operationInProgress,
-                    chartWidthPx = plotWidthPx
-                ),
+            CurvePlayheadControls(
+                state = state,
                 actions = actions,
-                modifier = Modifier.offset(
-                    x = handleX,
-                    y = (PLAYHEAD_LABEL_SPACE_DP + CHART_HEIGHT_DP -
-                        PLAYHEAD_HANDLE_HEIGHT_DP).dp
-                ).width(handleWidth).height(PLAYHEAD_HANDLE_HEIGHT_DP.dp)
+                visuals = visuals,
+                layout = DeviceLightCustomPlayheadLayout(maxWidth, plotWidth, axisWidth)
             )
         }
         HourAxis(visuals)
-    }
-}
-
-@Composable
-private fun PlayheadDragHandle(
-    state: DeviceLightCustomPlayheadState,
-    actions: DeviceLightCustomCurveActions,
-    modifier: Modifier
-) {
-    val currentTimeMs by rememberUpdatedState(state.timeMs)
-    Box(
-        modifier = modifier.pointerInput(state.enabled, state.chartWidthPx) {
-            if (!state.enabled || state.chartWidthPx <= 0f) return@pointerInput
-            var playheadX = 0f
-            var moved = false
-            detectHorizontalDragGestures(
-                onDragStart = {
-                    playheadX = chartX(
-                        currentTimeMs,
-                        state.chartWidthPx,
-                        CHART_WINDOW.startMs,
-                        CHART_WINDOW.endMs
-                    )
-                    moved = false
-                },
-                onDragEnd = {
-                    if (moved) actions.onPlayheadChangeFinished()
-                    moved = false
-                },
-                onDragCancel = { moved = false }
-            ) { change, dragAmount ->
-                change.consume()
-                moved = true
-                playheadX = (playheadX + dragAmount).coerceIn(0f, state.chartWidthPx)
-                actions.onPlayheadChanged(playheadTimeForX(playheadX, state.chartWidthPx))
-            }
-        }.clearAndSetSemantics { contentDescription = formatTime(state.timeMs) }
-    )
-}
-
-@Composable
-private fun PlayheadTimeBubble(
-    timeMs: Long,
-    enabled: Boolean,
-    onClick: () -> Unit,
-    visuals: DeviceLightCustomVisuals,
-    modifier: Modifier
-) {
-    val shape = RoundedCornerShape(PLAYHEAD_LABEL_CORNER_DP.dp)
-    Box(
-        modifier = modifier.height(PLAYHEAD_LABEL_TOUCH_HEIGHT_DP.dp)
-            .clearAndSetSemantics { contentDescription = formatTime(timeMs) }
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        Box(
-            modifier = Modifier.fillMaxWidth().height(PLAYHEAD_LABEL_VISUAL_HEIGHT_DP.dp)
-                .clip(shape)
-                .border(PLAYHEAD_LABEL_BORDER_DP.dp, visuals.colors.action, shape),
-            contentAlignment = Alignment.Center
-        ) {
-            BasicText(
-                text = formatTime(timeMs),
-                style = visuals.typography.caption.copy(
-                    color = visuals.colors.card.primaryText,
-                    textAlign = TextAlign.Center
-                )
-            )
-        }
     }
 }
 
@@ -393,7 +290,6 @@ private val CHART_PERCENT_LABELS = listOf(
 private val CHART_HOUR_LABELS = List(CHART_TIME_DIVISIONS + 1) { index ->
     index * HOURS_PER_GRID_DIVISION
 }
-private val CHART_WINDOW = DeviceLightCustomChartWindow(0L, MILLIS_PER_DAY)
 private const val CURVE_CONTENT_SPACING_DP = 8
 private const val HEADER_ICON_SIZE_DP = 34
 private const val HEADER_ICON_STROKE_DP = 2
@@ -407,19 +303,9 @@ private const val GLYPH_END_X = 0.88f
 private const val GLYPH_END_Y = 0.23f
 private const val HEADER_ICON_GAP_DP = 10
 private const val HEADER_CAPACITY_GAP_DP = 8
-private const val PLAYHEAD_LABEL_SPACE_DP = 48
-private const val PLAYHEAD_LABEL_WIDTH_DP = 58
-private const val PLAYHEAD_LABEL_TOUCH_HEIGHT_DP = 48
-private const val PLAYHEAD_LABEL_VISUAL_HEIGHT_DP = 30
-private const val PLAYHEAD_LABEL_CORNER_DP = 8
-private const val PLAYHEAD_LABEL_BORDER_DP = 1
-private const val CHART_PERCENT_AXIS_WIDTH_DP = 38
-private const val CHART_HEIGHT_DP = 218
 private const val CHART_TIME_DIVISIONS = 6
 private const val HOURS_PER_GRID_DIVISION = 4
 private const val POINT_HIT_RADIUS_DP = 24
-private const val PLAYHEAD_HANDLE_WIDTH_DP = 56
-private const val PLAYHEAD_HANDLE_HEIGHT_DP = 48
 private const val TIME_DIGITS = 2
 private const val LEGEND_ITEM_PADDING_DP = 11
 private const val LEGEND_DOT_SIZE_DP = 10
