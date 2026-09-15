@@ -61,75 +61,51 @@ object DeviceLightPresetCatalog {
     val presets: List<DeviceLightBuiltInPreset> = listOf(
         preset(
             id = DeviceLightPresetId.NATURAL_AQUARIUM,
-            red = 45,
-            green = 50,
-            blue = 50,
-            white = 60,
-            durationMinutes = hours(7),
+            scene = DeviceLightPresetScene(red = 45, green = 50, blue = 50, white = 60),
+            durationMinutes = SEVEN_HOUR_DURATION_MINUTES,
             rampMinutes = 60
         ),
         preset(
             id = DeviceLightPresetId.PLANTED_AQUARIUM,
-            red = 60,
-            green = 50,
-            blue = 65,
-            white = 55,
-            durationMinutes = hours(8),
+            scene = DeviceLightPresetScene(red = 60, green = 50, blue = 65, white = 55),
+            durationMinutes = EIGHT_HOUR_DURATION_MINUTES,
             rampMinutes = 60
         ),
         preset(
             id = DeviceLightPresetId.RED_PLANTS,
-            red = 65,
-            green = 45,
-            blue = 70,
-            white = 45,
-            durationMinutes = hours(8),
+            scene = DeviceLightPresetScene(red = 65, green = 45, blue = 70, white = 45),
+            durationMinutes = EIGHT_HOUR_DURATION_MINUTES,
             rampMinutes = 90
         ),
         preset(
             id = DeviceLightPresetId.VIVID_COLORS,
-            red = 65,
-            green = 50,
-            blue = 65,
-            white = 60,
-            durationMinutes = hours(7),
+            scene = DeviceLightPresetScene(red = 65, green = 50, blue = 65, white = 60),
+            durationMinutes = SEVEN_HOUR_DURATION_MINUTES,
             rampMinutes = 60
         ),
         preset(
             id = DeviceLightPresetId.LOW_TECH,
-            red = 30,
-            green = 30,
-            blue = 30,
-            white = 35,
-            durationMinutes = hours(6),
+            scene = DeviceLightPresetScene(red = 30, green = 30, blue = 30, white = 35),
+            durationMinutes = SIX_HOUR_DURATION_MINUTES,
             rampMinutes = 90
         ),
         preset(
             id = DeviceLightPresetId.AQUASCAPE,
-            red = 55,
-            green = 55,
-            blue = 60,
-            white = 65,
-            durationMinutes = hours(8),
+            scene = DeviceLightPresetScene(red = 55, green = 55, blue = 60, white = 65),
+            durationMinutes = EIGHT_HOUR_DURATION_MINUTES,
             rampMinutes = 60
         ),
         preset(
             id = DeviceLightPresetId.NEW_SETUP,
-            red = 40,
-            green = 40,
-            blue = 45,
-            white = 50,
-            durationMinutes = hours(6),
+            scene = DeviceLightPresetScene(red = 40, green = 40, blue = 45, white = 50),
+            durationMinutes = SIX_HOUR_DURATION_MINUTES,
             rampMinutes = 120,
             availableInManual = false
         ),
         preset(
             id = DeviceLightPresetId.SHADE_PLANTS,
-            red = 40,
-            green = 50,
-            blue = 55,
-            white = 45,
-            durationMinutes = hours(7),
+            scene = DeviceLightPresetScene(red = 40, green = 50, blue = 55, white = 45),
+            durationMinutes = SEVEN_HOUR_DURATION_MINUTES,
             rampMinutes = 90,
             availableInManual = false
         )
@@ -142,19 +118,15 @@ object DeviceLightPresetCatalog {
         presets.singleOrNull { preset -> preset.id == id }
 }
 
-@Suppress("LongParameterList")
 private fun preset(
     id: DeviceLightPresetId,
-    red: Int,
-    green: Int,
-    blue: Int,
-    white: Int,
+    scene: DeviceLightPresetScene,
     durationMinutes: Int,
     rampMinutes: Int,
     availableInManual: Boolean = true
 ) = DeviceLightBuiltInPreset(
     id = id,
-    scene = DeviceLightPresetScene(red, green, blue, white),
+    scene = scene,
     automaticSchedule = DeviceLightAutomaticPresetSchedule(
         startMinuteOfDay = DEFAULT_START_MINUTE_OF_DAY,
         durationMinutes = durationMinutes,
@@ -162,8 +134,6 @@ private fun preset(
     ),
     availableInManual = availableInManual
 )
-
-private fun hours(value: Int) = value * MINUTES_PER_HOUR
 
 private val PERCENT_RANGE = MINIMUM_PERCENT..MAXIMUM_PERCENT
 private val MINUTE_OF_DAY_RANGE = 0 until MINUTES_PER_DAY
@@ -176,3 +146,6 @@ private const val MINUTES_PER_HOUR = 60
 private const val MINUTES_PER_DAY = 24 * MINUTES_PER_HOUR
 private const val DEFAULT_START_HOUR = 10
 private const val DEFAULT_START_MINUTE_OF_DAY = DEFAULT_START_HOUR * MINUTES_PER_HOUR
+private const val SIX_HOUR_DURATION_MINUTES = 360
+private const val SEVEN_HOUR_DURATION_MINUTES = 420
+private const val EIGHT_HOUR_DURATION_MINUTES = 480

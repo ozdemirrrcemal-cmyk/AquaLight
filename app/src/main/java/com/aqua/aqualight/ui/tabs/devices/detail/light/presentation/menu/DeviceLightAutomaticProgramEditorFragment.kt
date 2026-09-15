@@ -54,7 +54,17 @@ class DeviceLightAutomaticProgramEditorFragment :
                 savedInstanceState?.getString(STATE_SELECTED_PRESET_ID)
             )
         )
-        observePresetResult()
+        findNavController().currentBackStackEntry?.savedStateHandle?.let { savedStateHandle ->
+            savedStateHandle
+                .getLiveData<String>(DeviceLightAutomaticPresetNavigation.RESULT_PRESET_ID)
+                .observe(viewLifecycleOwner) { storedPresetId ->
+                    savedStateHandle.remove<String>(
+                        DeviceLightAutomaticPresetNavigation.RESULT_PRESET_ID
+                    )
+                    DeviceLightPresetId.fromStorageName(storedPresetId)
+                        ?.let(viewModel::applyPreset)
+                }
+        }
         attachUnsavedGuard()
         effectHandler = DeviceLightAutomaticProgramEditorEffectHandler(this, viewModel)
         effectHandler.registerTimeResult()
@@ -69,16 +79,6 @@ class DeviceLightAutomaticProgramEditorFragment :
             outState.putString(STATE_SELECTED_PRESET_ID, presetId.name)
         }
         super.onSaveInstanceState(outState)
-    }
-
-    private fun observePresetResult() {
-        val savedStateHandle = findNavController().currentBackStackEntry?.savedStateHandle ?: return
-        savedStateHandle
-            .getLiveData<String>(DeviceLightAutomaticPresetNavigation.RESULT_PRESET_ID)
-            .observe(viewLifecycleOwner) { storedPresetId ->
-                savedStateHandle.remove<String>(DeviceLightAutomaticPresetNavigation.RESULT_PRESET_ID)
-                DeviceLightPresetId.fromStorageName(storedPresetId)?.let(viewModel::applyPreset)
-            }
     }
 
     private fun resolveMode(): DeviceLightAutomaticEditorMode = when {

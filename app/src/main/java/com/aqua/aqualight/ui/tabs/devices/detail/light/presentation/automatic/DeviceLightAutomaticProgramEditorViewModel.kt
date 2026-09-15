@@ -77,13 +77,14 @@ internal class DeviceLightAutomaticProgramEditorViewModel(
 
     fun applyPreset(presetId: DeviceLightPresetId) {
         val state = currentState
-        val source = state.source ?: return
-        val preset = DeviceLightPresetCatalog.find(presetId) ?: return
-        if (!state.contentEnabled) return
-        _uiState.value = state.copy(
-            draft = state.draft.withPreset(preset, source),
-            selectedPresetId = presetId
-        )
+        val source = state.source
+        val preset = DeviceLightPresetCatalog.find(presetId)
+        if (state.contentEnabled && source != null && preset != null) {
+            _uiState.value = state.copy(
+                draft = state.draft.withPreset(preset, source),
+                selectedPresetId = presetId
+            )
+        }
     }
 
     fun save() {

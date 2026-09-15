@@ -280,20 +280,30 @@ private fun LibraryLoadButton(
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Image(
-            painter = painterResource(
-                if (entry.isLoaded) R.drawable.ic_check_24 else R.drawable.ic_light_library
-            ),
-            contentDescription = null,
-            colorFilter = ColorFilter.tint(contentColor),
-            modifier = Modifier.size(AquaLightLibraryGeometry.loadButtonIconSize)
-        )
-        Spacer(Modifier.width(AquaLightLibraryGeometry.loadButtonGap))
-        BasicText(
-            text = text,
-            style = visuals.typography.title.copy(color = contentColor)
-        )
+        LibraryLoadButtonContent(entry.isLoaded, text, contentColor, visuals)
     }
+}
+
+@Composable
+private fun LibraryLoadButtonContent(
+    loaded: Boolean,
+    text: String,
+    contentColor: Color,
+    visuals: DeviceLightLibraryVisuals
+) {
+    Image(
+        painter = painterResource(
+            if (loaded) R.drawable.ic_check_24 else R.drawable.ic_light_library
+        ),
+        contentDescription = null,
+        colorFilter = ColorFilter.tint(contentColor),
+        modifier = Modifier.size(AquaLightLibraryGeometry.loadButtonIconSize)
+    )
+    Spacer(Modifier.width(AquaLightLibraryGeometry.loadButtonGap))
+    BasicText(
+        text = text,
+        style = visuals.typography.title.copy(color = contentColor)
+    )
 }
 
 @Composable

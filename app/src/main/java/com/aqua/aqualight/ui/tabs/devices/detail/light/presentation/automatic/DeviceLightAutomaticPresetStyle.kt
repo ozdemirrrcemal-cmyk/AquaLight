@@ -4,6 +4,13 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
+import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
+import com.aqua.aqualight.ui.common.light.AquaLightManualColors
+
+internal data class DeviceLightAutomaticPresetVisuals(
+    val colors: AquaLightManualColors,
+    val typography: AquaDeviceCardTypography
+)
 
 internal object DeviceLightAutomaticPresetGeometry {
     val screenHorizontalPadding = 10.dp
