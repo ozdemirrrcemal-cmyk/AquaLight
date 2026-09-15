@@ -118,6 +118,18 @@ class NotificationPreferenceUseCaseTest {
     }
 
     @Test
+    fun successfulDeliveryFinalizationUsesSchedulerWithoutCancellingVisibleReminder() = runTest {
+        val fixture = Fixture(initialEnabled = true)
+
+        fixture.useCase.finalizeCareTaskDelivery("owner-a", 42L)
+
+        assertEquals(
+            listOf("finalize-care-delivery:owner-a:42"),
+            fixture.events
+        )
+    }
+
+    @Test
     fun ownerCancellationStopsDeviceWorkBeforeOtherNotificationState() = runTest {
         val fixture = Fixture(initialEnabled = true)
 
@@ -192,6 +204,10 @@ class NotificationPreferenceUseCaseTest {
     ) : NotificationScheduler {
         override suspend fun scheduleCareTask(ownerUid: String, taskId: Long) {
             events += "schedule-care:$ownerUid:$taskId"
+        }
+
+        override suspend fun finalizeCareTaskDelivery(ownerUid: String, taskId: Long) {
+            events += "finalize-care-delivery:$ownerUid:$taskId"
         }
 
         override suspend fun cancelCareTask(ownerUid: String, taskId: Long) {

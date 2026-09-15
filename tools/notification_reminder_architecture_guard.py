@@ -327,6 +327,14 @@ for token in ("FirebaseAuthenticatedOwnerProvider", "CareTaskDataStoreManager", 
 for token, reason in (
     ("NotificationPlatform.get", "delivery must use central composition"),
     ("dispatchUseCase.dispatchCareReminder", "posting must pass through the dispatch use-case"),
+    (
+        "preferenceUseCase.finalizeCareTaskDelivery",
+        "a posted reminder must finalize scheduling without cancelling visible delivery",
+    ),
+    (
+        "NotificationDispatchResult.POSTED",
+        "only a successfully posted reminder may use delivery finalization",
+    ),
     ("FirebaseAuthenticatedOwnerProvider", "delivery must verify the active owner"),
     ("CareReminderDeliveryPolicy.shouldDeliver", "delivery must revalidate task and tank"),
     ("setExpedited", "alarm-triggered user-visible work must request expedited execution"),
@@ -336,6 +344,18 @@ for token, reason in (
     ("MAX_ATTEMPTS", "delivery retries must be bounded"),
 ):
     require(DELIVERY_WORKER, token, reason)
+
+for token, reason in (
+    (
+        "override suspend fun finalizeCareTaskDelivery",
+        "the scheduler must expose explicit post-delivery finalization",
+    ),
+    (
+        "preserveVisibleNotificationWhenConsumed = true",
+        "consuming the final alarm must preserve the notification just posted",
+    ),
+):
+    require(SCHEDULER, token, reason)
 
 for token, reason in (
     ("CareReminderReconcileWorker.enqueue", "boot/package/access grant must enqueue reconciliation"),
