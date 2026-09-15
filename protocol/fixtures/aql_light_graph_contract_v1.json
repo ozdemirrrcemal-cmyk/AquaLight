@@ -37,7 +37,8 @@
     "channelScale",
     "hasScheduleToday",
     "points",
-    "autoSpans"
+    "autoSpans",
+    "planSpans"
   ],
   "pointTuple": [
     "timeMs",
@@ -51,15 +52,22 @@
     "endTimeMsWithinToday",
     "programId"
   ],
+  "planSpanTuple": [
+    "startTimeMsWithinToday",
+    "endTimeMsWithinToday",
+    "planId",
+    "phaseIndex"
+  ],
   "reasons": [
     "OK",
     "MODE_HAS_NO_SCHEDULE",
     "RTC_NOT_READY",
     "NO_ENABLED_AUTO_PROGRAM_TODAY",
+    "MANAGED_PLAN_NOT_SCHEDULED_TODAY",
     "CUSTOM_NOT_INSTALLED",
     "CUSTOM_NOT_SCHEDULED_TODAY"
   ],
-  "basisValues": ["AUTHORED_SCHEDULE", "NONE"],
+  "basisValues": ["AUTHORED_SCHEDULE", "MANAGED_PLAN", "NONE"],
   "channelScale": 1000,
   "xAxis": {"minimumMs": 0, "maximumMs": 86400000},
   "semantics": {
@@ -67,6 +75,7 @@
     "enabledAutoProgramsOnly": true,
     "overnightCarryProjectedByFirmware": true,
     "autoSpansPreserveProgramId": true,
+    "planSpansPreservePlanIdAndPhaseIndex": true,
     "customUsesInstalledDocument": true,
     "acclimationRewritesGeometry": false,
     "thermalRewritesGeometry": false,

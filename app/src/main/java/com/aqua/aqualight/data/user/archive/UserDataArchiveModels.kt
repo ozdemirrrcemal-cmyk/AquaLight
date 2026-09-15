@@ -32,12 +32,27 @@ internal data class ArchiveAquarium(
     val volumeUnit: String,
     val tankType: String,
     val tankStyle: String,
+    val smartLightProfile: ArchiveSmartLightProfile,
     val createdAtMillis: Long,
     val smartCareEnabled: Boolean,
     val careRemindersEnabled: Boolean,
     val plants: List<ArchivePlant>,
     val materials: List<ArchiveMaterial>,
     val livestock: List<ArchiveLivestock>
+)
+
+internal data class ArchiveSmartLightProfile(
+    val plantDensity: String,
+    val highestPlantLightDemand: String,
+    val co2Status: String,
+    val isActiveSoil: Boolean?,
+    val waterDepthCm: Int?,
+    val fixtureMountHeightCm: Int?,
+    val preferredViewingStartMinuteOfDay: Int?,
+    val preferredViewingEndMinuteOfDay: Int?,
+    val algaeObservation: String,
+    val plantStressObservation: String,
+    val observationDateEpochDay: Long?
 )
 
 internal data class ArchiveMediaReference(

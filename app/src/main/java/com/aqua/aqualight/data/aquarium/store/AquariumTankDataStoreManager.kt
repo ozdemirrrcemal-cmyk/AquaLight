@@ -6,6 +6,11 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.dataStore
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.aquarium.lighting.AquariumLightingProfile
+import com.aqua.aqualight.application.aquarium.lighting.AquariumObservationSeverity
+import com.aqua.aqualight.application.aquarium.lighting.Co2Status
+import com.aqua.aqualight.application.aquarium.lighting.PlantDensity
+import com.aqua.aqualight.application.aquarium.lighting.PlantLightDemand
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumLivestock
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumMaterial
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumPlant
@@ -502,6 +507,20 @@ class AquariumTankDataStoreManager(
         }
     }
 
+    /** Commits every aquarium-owned Smart Setup fact as one validated DataStore transaction. */
+    suspend fun updateTankSmartSetupProfile(
+        tankId: Long,
+        setupDateEpochDay: Long,
+        profile: AquariumLightingProfile
+    ) {
+        updateCurrentOwnerTank(tankId) { storedTank ->
+            storedTank.toBuilder()
+                .setSetupDateEpochDay(setupDateEpochDay)
+                .setSmartLightProfile(profile.toStoredSmartLightProfile())
+                .build()
+        }
+    }
+
     private suspend fun updateCurrentOwnerTank(
         tankId: Long,
         transform: (StoredTank) -> StoredTank
@@ -574,6 +593,7 @@ class AquariumTankDataStoreManager(
                     material.toStoredMaterial()
                 }
             )
+            .setSmartLightProfile(lightingProfile.toStoredSmartLightProfile())
             .build()
     }
 
@@ -658,9 +678,71 @@ class AquariumTankDataStoreManager(
                     addedDateEpochDay = livestock.addedDateEpochDay.takeIf { value -> value > 0L },
                     note = livestock.note
                 )
+            },
+            lightingProfile = if (hasSmartLightProfile()) {
+                smartLightProfile.toAquariumLightingProfile()
+            } else {
+                AquariumLightingProfile()
             }
         )
     }
+
+    private fun AquariumLightingProfile.toStoredSmartLightProfile(): StoredSmartLightProfile {
+        val builder = StoredSmartLightProfile.newBuilder()
+            .setPlantDensity(plantDensity?.name.orEmpty())
+            .setHighestPlantLightDemand(highestPlantLightDemand?.name.orEmpty())
+            .setCo2Status(co2Status?.name.orEmpty())
+            .setAlgaeObservation(algaeObservation?.name.orEmpty())
+            .setPlantStressObservation(plantStressObservation?.name.orEmpty())
+        isActiveSoil?.let(builder::setIsActiveSoil)
+        waterDepthCm?.let(builder::setWaterDepthCm)
+        fixtureMountHeightCm?.let(builder::setFixtureMountHeightCm)
+        preferredViewingStartMinuteOfDay?.let(builder::setPreferredViewingStartMinuteOfDay)
+        preferredViewingEndMinuteOfDay?.let(builder::setPreferredViewingEndMinuteOfDay)
+        observationDateEpochDay?.let(builder::setObservationDateEpochDay)
+        return builder.build()
+    }
+
+    private fun StoredSmartLightProfile.toAquariumLightingProfile(): AquariumLightingProfile =
+        AquariumLightingProfile(
+            plantDensity = plantDensity.toEnumOrNull(PlantDensity.entries),
+            highestPlantLightDemand = highestPlantLightDemand.toEnumOrNull(
+                PlantLightDemand.entries
+            ),
+            co2Status = co2Status.toEnumOrNull(Co2Status.entries),
+            isActiveSoil = if (hasIsActiveSoil()) isActiveSoil else null,
+            waterDepthCm = if (hasWaterDepthCm()) waterDepthCm else null,
+            fixtureMountHeightCm = if (hasFixtureMountHeightCm()) {
+                fixtureMountHeightCm
+            } else {
+                null
+            },
+            preferredViewingStartMinuteOfDay =
+                if (hasPreferredViewingStartMinuteOfDay()) {
+                    preferredViewingStartMinuteOfDay
+                } else {
+                    null
+                },
+            preferredViewingEndMinuteOfDay = if (hasPreferredViewingEndMinuteOfDay()) {
+                preferredViewingEndMinuteOfDay
+            } else {
+                null
+            },
+            algaeObservation = algaeObservation.toEnumOrNull(
+                AquariumObservationSeverity.entries
+            ),
+            plantStressObservation = plantStressObservation.toEnumOrNull(
+                AquariumObservationSeverity.entries
+            ),
+            observationDateEpochDay = if (hasObservationDateEpochDay()) {
+                observationDateEpochDay
+            } else {
+                null
+            }
+        )
+
+    private fun <T : Enum<T>> String.toEnumOrNull(entries: Iterable<T>): T? =
+        takeIf(String::isNotBlank)?.let { value -> entries.single { entry -> entry.name == value } }
 
     private fun AquariumTanksStore.appendValidated(
         tank: StoredTank

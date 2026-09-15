@@ -57,8 +57,8 @@ SHARED_FIXTURES = {
         "823fa046921922eb97573cb01c086de0b76fb350",
     ),
     "aql_cooling_telemetry_v1.json": (
-        "8257ed9ad10342d8cab2693087b2b1831f8287d6e6eede24da2875457f0075a7",
-        "83778df071f32d5996a3d55946275e8b63291336",
+        "bd6544e1d2f000f7794f10e085405e146c50fe036f20075681e42aacefffa22b",
+        "77dd74c58a271180cbe455e648284f3cc7d33456",
     ),
 }
 STATUS_FIXTURE_SHA256 = "fb19c405ee0be60b8f52f05a307d0bcb8797a047c3bcbfcab3f0b36581060df4"

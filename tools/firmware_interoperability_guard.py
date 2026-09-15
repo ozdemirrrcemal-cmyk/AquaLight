@@ -8,7 +8,7 @@ import firmware_interoperability_guard_core as guard
 import timer_v1_contract_guard as timer_guard
 
 
-guard.FIRMWARE_COMMIT = "7df97ce807ebb1e90ff63cc36206d6ce479a62fc"
+guard.FIRMWARE_COMMIT = "455298833668537fedc16b851067558815d2cc7b"
 guard.COMMAND_NAMES_BLOB = "a4a05ae219e449b42de2654c38b55d65804c91b0"
 guard.EVENT_CONTRACT_BLOB = "5e87fd043c0efaa849ed3ba8e5be9ce6f2727e24"
 guard.REQUEST_CONTRACT_BLOBS = {
@@ -17,9 +17,15 @@ guard.REQUEST_CONTRACT_BLOBS = {
     "src/api/v1/commands/AqlSecurityCommands.hpp": "1c16c3e7c6d1456b1802f494d91c104347ad09aa",
     "src/api/v1/commands/AqlTimeCommands.hpp": "ee6e87ab0e1152ffd3d9004fe8b5c7e380488a4f",
     "src/api/v1/commands/AqlLightCommands.hpp": "6fc17f55fb171060e1544f21a8f643a363b7da9e",
-    "src/api/v1/commands/AqlLightV1Commands.hpp": "847f9f73d225c261f55fea74f858721cac172821",
-    "src/api/v1/commands/names/AqlLightCommandNames.hpp": "9ebdd8f8b7dedb96e6cc1672fdcc676985f1e12e",
+    "src/api/v1/commands/AqlLightV1Commands.hpp": "e71b5e874914bfb8ed65105d0812e78d360991b0",
+    "src/api/v1/commands/names/AqlLightCommandNames.hpp": "ac77defeac3c93a4ed59245c8437d023d2657f9c",
+    "src/modules/light/AqlLightContractV1.hpp": "cd6dac08b0ae1a26c06c39fa21132fa23e027089",
+    "src/modules/light/AqlLightControlService.hpp": "e16c11d04a766feea1cf07da6bd60f3f18c7ae7a",
+    "src/modules/light/AqlLightGraphProjector.hpp": "374984587cc8f801816f8f700fe174721c459dc3",
+    "src/modules/light/AqlLightManagedPlan.hpp": "d428f5d803d142d7fd92f37e221f3290e87196ac",
     "src/modules/light/AqlLightProductContract.hpp": "c76f9c957672ffef62b96ba75f9b034a29c5fecb",
+    "src/modules/light/AqlLightScheduleEngine.hpp": "656e2221cd8481d9db2fd112394c086e1b7af653",
+    "src/modules/light/AqlLightV1Service.hpp": "03dd3c56db7c19b89f389f3e67c7b54744bd485f",
     "src/api/v1/commands/AqlLightTemperatureProtectionCommands.hpp": "e3f04116d2f6ae77e0a1adfd7112773a3e1d06fe",
     "src/api/v1/commands/AqlLightThermalCommands.hpp": "10f5e03237b16ad4bf0a26b64c2715e0985d094e",
     "src/api/v1/commands/AqlCoolingCommands.hpp": "4df542d5106fce2810e64559667685c1c2ecfd69",

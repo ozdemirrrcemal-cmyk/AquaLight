@@ -57,6 +57,17 @@ class UserDataBackupCodecTest {
     }
 
     @Test
+    fun `decoder rejects aquarium shape without Smart Light profile`() {
+        val json = Gson().toJsonTree(manifest()).asJsonObject
+        json.getAsJsonArray("aquariums")[0].asJsonObject.remove("smartLightProfile")
+        val encoded = rawZip(json.toString())
+
+        assertThrows(IllegalArgumentException::class.java) {
+            codec.decode(encoded, File(encoded.parentFile, "decoded-missing-light-profile"))
+        }
+    }
+
+    @Test
     fun `decoder rejects path traversal entries`() {
         val encoded = rawZip(
             manifestJson = Gson().toJson(manifest()),
@@ -144,6 +155,7 @@ class UserDataBackupCodecTest {
                     volumeUnit = "L",
                     tankType = "freshwater",
                     tankStyle = "nature",
+                    smartLightProfile = emptyArchiveSmartLightProfile(),
                     createdAtMillis = 900L,
                     smartCareEnabled = true,
                     careRemindersEnabled = true,

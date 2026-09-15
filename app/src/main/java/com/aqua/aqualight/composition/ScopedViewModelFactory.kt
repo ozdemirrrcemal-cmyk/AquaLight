@@ -2,6 +2,7 @@ package com.aqua.aqualight.composition
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.CreationExtras
 
 /**
  * A closed set of ViewModel bindings for exactly one dependency scope.
@@ -12,4 +13,7 @@ import androidx.lifecycle.ViewModelProvider
  */
 internal interface ScopedViewModelFactory : ViewModelProvider.Factory {
     fun supports(modelClass: Class<out ViewModel>): Boolean
+
+    override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T =
+        create(modelClass)
 }

@@ -19,7 +19,54 @@ object DeviceLightStatusParser {
         )
         val status = parseStatus(data, product, features, scheduler)
         require(status.runtime.rtcReady == status.scheduler.ready)
+        requireAutoRuntimeShape(status)
         return status
+    }
+
+    private fun requireAutoRuntimeShape(status: DeviceLightStatus) {
+        val auto = status.auto
+        require(
+            auto.scheduleSource == if (auto.planInstalled) {
+                DeviceLightAutoScheduleSource.MANAGED_PLAN
+            } else {
+                DeviceLightAutoScheduleSource.PROGRAMS
+            }
+        )
+        if (auto.planInstalled) require(auto.activeProgramId == null)
+
+        when {
+            !auto.planInstalled -> {
+                require(auto.planRuntimeState == DeviceLightManagedPlanRuntimeState.NOT_INSTALLED)
+                requireNoActivePlanFields(auto)
+            }
+            status.mode != DeviceLightMode.AUTO -> {
+                require(auto.runtimeState == DeviceLightAutoRuntimeState.NOT_SELECTED)
+                require(auto.planRuntimeState == DeviceLightManagedPlanRuntimeState.NOT_SELECTED)
+                requireNoActivePlanFields(auto)
+            }
+            !status.scheduler.ready -> {
+                require(auto.runtimeState == DeviceLightAutoRuntimeState.RTC_BLOCKED)
+                require(auto.planRuntimeState == DeviceLightManagedPlanRuntimeState.RTC_BLOCKED)
+                requireNoActivePlanFields(auto)
+            }
+            auto.planRuntimeState == DeviceLightManagedPlanRuntimeState.BEFORE_PLAN -> {
+                require(auto.runtimeState == DeviceLightAutoRuntimeState.DARK)
+                require(auto.activePlanPhaseIndex == null)
+                require(auto.planTransitionPermille == null)
+                require(auto.nextPlanTransitionEpochDay != null)
+            }
+            auto.planRuntimeState == DeviceLightManagedPlanRuntimeState.ACTIVE -> {
+                require(auto.activePlanPhaseIndex != null)
+                require(auto.planTransitionPermille != null)
+            }
+            else -> error("Installed AUTO managed-plan runtime state is invalid.")
+        }
+    }
+
+    private fun requireNoActivePlanFields(auto: DeviceLightAutoSummary) {
+        require(auto.activePlanPhaseIndex == null)
+        require(auto.planTransitionPermille == null)
+        require(auto.nextPlanTransitionEpochDay == null)
     }
 
     private fun parseStatus(
@@ -30,6 +77,11 @@ object DeviceLightStatusParser {
     ): DeviceLightStatus = DeviceLightStatus(
             schema = DeviceLightRuntimeContract.SCHEMA,
             storageVersion = DeviceLightRuntimeContract.STORAGE_VERSION,
+            storageGeneration = data.requireLightLong(
+                "storageGeneration",
+                0,
+                DeviceLightRuntimeContract.Limit.UINT32_MAX
+            ),
             product = product,
             channelScale = data.requireLightInt("channelScale").also {
                 require(it == DeviceLightRuntimeContract.Limit.PERCENT_MAX)
@@ -122,6 +174,7 @@ object DeviceLightStatusParser {
     private val STATUS_KEYS = setOf(
         "schema",
         "storageVersion",
+        "storageGeneration",
         "productKey",
         "channelScale",
         "channels",

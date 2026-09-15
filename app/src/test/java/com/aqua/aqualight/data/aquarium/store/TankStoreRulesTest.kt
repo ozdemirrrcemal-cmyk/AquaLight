@@ -71,6 +71,94 @@ class TankStoreRulesTest {
         )
     }
 
+    @Test
+    fun completeSemanticSmartLightProfileIsAccepted() {
+        val profile = StoredSmartLightProfile.newBuilder()
+            .setPlantDensity("HIGH")
+            .setHighestPlantLightDemand("MEDIUM")
+            .setCo2Status("ACTIVE")
+            .setIsActiveSoil(true)
+            .setWaterDepthCm(42)
+            .setFixtureMountHeightCm(12)
+            .setPreferredViewingStartMinuteOfDay(600)
+            .setPreferredViewingEndMinuteOfDay(1_200)
+            .setAlgaeObservation("NONE")
+            .setPlantStressObservation("MILD")
+            .setObservationDateEpochDay(20_500L)
+            .build()
+        val tank = validTank(id = 51L, ownerUid = "owner-a")
+            .toBuilder()
+            .setSmartLightProfile(profile)
+            .build()
+
+        assertEquals(tank, TankStoreRules.validateTank(tank))
+    }
+
+    @Test
+    fun unknownSmartLightSemanticCodeIsRejectedWithoutSubstitution() {
+        val tank = validTank(id = 52L, ownerUid = "owner-a")
+            .toBuilder()
+            .setSmartLightProfile(
+                StoredSmartLightProfile.newBuilder()
+                    .setPlantDensity("DENSE")
+                    .build()
+            )
+            .build()
+
+        assertThrows(StoreInvariantViolation::class.java) {
+            TankStoreRules.validateTank(tank)
+        }
+    }
+
+    @Test
+    fun partialViewingWindowIsRejected() {
+        val tank = validTank(id = 53L, ownerUid = "owner-a")
+            .toBuilder()
+            .setSmartLightProfile(
+                StoredSmartLightProfile.newBuilder()
+                    .setPreferredViewingStartMinuteOfDay(600)
+                    .build()
+            )
+            .build()
+
+        assertThrows(StoreInvariantViolation::class.java) {
+            TankStoreRules.validateTank(tank)
+        }
+    }
+
+    @Test
+    fun observationsWithoutExplicitDateAreRejected() {
+        val tank = validTank(id = 54L, ownerUid = "owner-a")
+            .toBuilder()
+            .setSmartLightProfile(
+                StoredSmartLightProfile.newBuilder()
+                    .setAlgaeObservation("NONE")
+                    .setPlantStressObservation("NONE")
+                    .build()
+            )
+            .build()
+
+        assertThrows(StoreInvariantViolation::class.java) {
+            TankStoreRules.validateTank(tank)
+        }
+    }
+
+    @Test
+    fun outOfDomainSmartLightMeasurementIsRejected() {
+        val tank = validTank(id = 55L, ownerUid = "owner-a")
+            .toBuilder()
+            .setSmartLightProfile(
+                StoredSmartLightProfile.newBuilder()
+                    .setWaterDepthCm(201)
+                    .build()
+            )
+            .build()
+
+        assertThrows(StoreInvariantViolation::class.java) {
+            TankStoreRules.validateTank(tank)
+        }
+    }
+
     private fun validTank(
         id: Long,
         ownerUid: String

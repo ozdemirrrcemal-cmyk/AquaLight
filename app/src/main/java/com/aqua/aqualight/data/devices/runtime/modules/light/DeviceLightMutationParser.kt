@@ -170,6 +170,10 @@ internal object DeviceLightMutationParser {
         val spans = List(spanData.length()) { index ->
             parseGraphSpan(spanData.requireLightArray(index))
         }
+        val planSpanData = data.requireLightArray("planSpans")
+        val planSpans = List(planSpanData.length()) { index ->
+            parseManagedPlanGraphSpan(planSpanData.requireLightArray(index))
+        }
         val result = DeviceLightGraph(
             mode = DeviceLightMode.fromWireExact(data.requireLightText("mode")),
             available = data.requireLightBoolean("available"),
@@ -195,7 +199,8 @@ internal object DeviceLightMutationParser {
             channelScale = data.requireLightInt("channelScale"),
             hasScheduleToday = data.requireLightBoolean("hasScheduleToday"),
             points = points,
-            autoSpans = spans
+            autoSpans = spans,
+            planSpans = planSpans
         )
         require(result.channelScale == DeviceLightRuntimeContract.Limit.PERMILLE_MAX)
         require(
@@ -204,6 +209,9 @@ internal object DeviceLightMutationParser {
         )
         require(result.hasScheduleToday == points.isNotEmpty())
         require(result.mode == DeviceLightMode.AUTO || spans.isEmpty())
+        require(result.mode == DeviceLightMode.AUTO || planSpans.isEmpty())
+        require(result.basis == DeviceLightGraphBasis.MANAGED_PLAN || planSpans.isEmpty())
+        require(result.basis != DeviceLightGraphBasis.MANAGED_PLAN || spans.isEmpty())
         return result
     }
 
@@ -241,6 +249,34 @@ internal object DeviceLightMutationParser {
             ),
             programId = id
         )
+        }
+
+        private fun parseManagedPlanGraphSpan(
+            tuple: JSONArray
+        ): DeviceLightManagedPlanGraphSpan {
+            require(tuple.length() == DeviceLightRuntimeContract.Limit.GRAPH_PLAN_SPAN_TUPLE_SIZE)
+            val id = tuple.requireLightText(
+                DeviceLightRuntimeContract.Limit.GRAPH_PLAN_SPAN_PLAN_ID_INDEX
+            )
+            require(MANAGED_PLAN_ID.matches(id))
+            return DeviceLightManagedPlanGraphSpan(
+                startTimeMsWithinToday = tuple.requireLightLong(
+                    0,
+                    0,
+                    DeviceLightRuntimeContract.Limit.MILLIS_IN_DAY
+                ),
+                endTimeMsWithinToday = tuple.requireLightLong(
+                    1,
+                    0,
+                    DeviceLightRuntimeContract.Limit.MILLIS_IN_DAY
+                ),
+                planId = id,
+                phaseIndex = tuple.requireLightInt(
+                    DeviceLightRuntimeContract.Limit.GRAPH_PLAN_SPAN_PHASE_INDEX,
+                    0,
+                    DeviceLightRuntimeContract.Limit.MANAGED_PLAN_PHASE_CAPACITY - 1
+                )
+            )
         }
     }
 
@@ -283,7 +319,7 @@ internal object DeviceLightMutationParser {
     private val GRAPH_KEYS = setOf(
         "mode", "available", "reason", "sourceRevision", "schedulerGeneration", "localDate",
         "currentWeekdayMask", "nowTimeMs", "basis", "channelScale", "hasScheduleToday",
-        "points", "autoSpans"
+        "points", "autoSpans", "planSpans"
     )
     private val PROGRAM_ID = Regex("^ap-[0-9a-f]{8}$")
 }

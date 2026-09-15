@@ -14,6 +14,7 @@ internal object DeviceLightRuntimeFixtures {
         return JSONObject()
             .put("schema", "aqualight.light.v1")
             .put("storageVersion", 1)
+            .put("storageGeneration", 4)
             .put("productKey", product.wireValue)
             .put("channelScale", 100)
             .put("channels", channelDescriptors(product))
@@ -61,8 +62,16 @@ internal object DeviceLightRuntimeFixtures {
                 .put("revision", 1)
                 .put("programCount", 0)
                 .put("enabledCount", 0)
+                .put("scheduleSource", "PROGRAMS")
+                .put("planRevision", 0)
+                .put("planInstalled", false)
+                .put("planId", JSONObject.NULL)
                 .put("runtimeState", "NOT_SELECTED")
                 .put("activeProgramId", JSONObject.NULL)
+                .put("activePlanPhaseIndex", JSONObject.NULL)
+                .put("planRuntimeState", "NOT_INSTALLED")
+                .put("planTransitionPermille", JSONObject.NULL)
+                .put("nextPlanTransitionEpochDay", JSONObject.NULL)
         ).put(
             "custom",
             JSONObject()
@@ -148,6 +157,10 @@ internal object DeviceLightRuntimeFixtures {
             JSONObject()
                 .put("capacity", 16)
                 .put("timeStepMs", 60_000)
+                .put("managedPlanPhaseCapacity", 8)
+                .put("managedPlanTransitionDaysMax", 90)
+                .put("managedPlanSameDayOnly", true)
+                .put("managedPlanContiguous", true)
                 .put(
                     "rampDurationsMs",
                     JSONArray(listOf(0, 1_800_000, 3_600_000, 5_400_000, 7_200_000, 9_000_000))

@@ -34,11 +34,11 @@ INTEROPERABILITY_TEST_PATH = (
 )
 
 FIRMWARE_REPOSITORY = "ozdemirrrcemal-cmyk/AquaLight-Firmware"
-FIRMWARE_COMMIT = "7df97ce807ebb1e90ff63cc36206d6ce479a62fc"
+FIRMWARE_COMMIT = "455298833668537fedc16b851067558815d2cc7b"
 DOSING_FIRMWARE_COMMIT = "fa147211749c2dcb2f56e15a617a00010e071984"
 COMMAND_NAMES_BLOB = "a4a05ae219e449b42de2654c38b55d65804c91b0"
 EVENT_CONTRACT_BLOB = "5e87fd043c0efaa849ed3ba8e5be9ce6f2727e24"
-PRODUCT_CATALOG_EXPORT_COMMIT = FIRMWARE_COMMIT
+PRODUCT_CATALOG_EXPORT_COMMIT = "7df97ce807ebb1e90ff63cc36206d6ce479a62fc"
 REQUEST_CONTRACT_BLOBS = {
     "src/api/v1/commands/AqlDeviceCommands.hpp": (
         "a78d6355555afea780fdb62809bc9107d7122698"
@@ -56,13 +56,31 @@ REQUEST_CONTRACT_BLOBS = {
         "6fc17f55fb171060e1544f21a8f643a363b7da9e"
     ),
     "src/api/v1/commands/AqlLightV1Commands.hpp": (
-        "847f9f73d225c261f55fea74f858721cac172821"
+        "e71b5e874914bfb8ed65105d0812e78d360991b0"
     ),
     "src/api/v1/commands/names/AqlLightCommandNames.hpp": (
-        "9ebdd8f8b7dedb96e6cc1672fdcc676985f1e12e"
+        "ac77defeac3c93a4ed59245c8437d023d2657f9c"
+    ),
+    "src/modules/light/AqlLightContractV1.hpp": (
+        "cd6dac08b0ae1a26c06c39fa21132fa23e027089"
+    ),
+    "src/modules/light/AqlLightControlService.hpp": (
+        "e16c11d04a766feea1cf07da6bd60f3f18c7ae7a"
+    ),
+    "src/modules/light/AqlLightGraphProjector.hpp": (
+        "374984587cc8f801816f8f700fe174721c459dc3"
+    ),
+    "src/modules/light/AqlLightManagedPlan.hpp": (
+        "d428f5d803d142d7fd92f37e221f3290e87196ac"
     ),
     "src/modules/light/AqlLightProductContract.hpp": (
         "c76f9c957672ffef62b96ba75f9b034a29c5fecb"
+    ),
+    "src/modules/light/AqlLightScheduleEngine.hpp": (
+        "656e2221cd8481d9db2fd112394c086e1b7af653"
+    ),
+    "src/modules/light/AqlLightV1Service.hpp": (
+        "03dd3c56db7c19b89f389f3e67c7b54744bd485f"
     ),
     "src/api/v1/commands/AqlLightTemperatureProtectionCommands.hpp": (
         "e3f04116d2f6ae77e0a1adfd7112773a3e1d06fe"
@@ -95,8 +113,8 @@ REQUEST_CONTRACT_BLOBS = {
 
 EXPECTED_FIXTURES = {
     "aql_ws_v1_golden.json": (
-        "4d9f2b406800656dc19f08350fd0a3badac659d6fe230d9e3df66f92f728845d",
-        "e7dc2d3d5567f4246f818659dc2ae0a779021d58",
+        "1646ebe28b9b27bffda866c508b2387ff3166cf76d98c7c6b09cc684b216758b",
+        "8414f2ec1ef689c2b9d8a0e88034edeecf3e5b7f",
         True,
     ),
     "aql_cooling_contract_v1.json": (
@@ -105,18 +123,18 @@ EXPECTED_FIXTURES = {
         True,
     ),
     "aql_cooling_telemetry_v1.json": (
-        "8257ed9ad10342d8cab2693087b2b1831f8287d6e6eede24da2875457f0075a7",
-        "83778df071f32d5996a3d55946275e8b63291336",
+        "bd6544e1d2f000f7794f10e085405e146c50fe036f20075681e42aacefffa22b",
+        "77dd74c58a271180cbe455e648284f3cc7d33456",
         True,
     ),
     "aql_light_contract_v1.json": (
-        "1260eb5c50852bcd6652cea648e38d06ec06c88422ce1bd169103fc65a52edb0",
-        "1b6fd1285af4caee02a72dadc572c2113d5c0192",
+        "9e0471f4573c9b729ce6c8931fc0e0683765d7fcf352d6d6fdbf09848d582fcd",
+        "2ed7fec8f600b81ff4f9b6fd63365aaeb3d03bdf",
         True,
     ),
     "aql_light_rgb_pro_slim_contract_v1.json": (
-        "c56863cc016ca6f5ca75ed56e58ae2e65c8f7d4432d639a31fdb9ebe7849466a",
-        "f136b629dde5e2905ac7399ce28a306e9261db34",
+        "604f723ca25da598ca89b2f3cc65350baba34f70ec0c283ed5a182ea9a1ce33a",
+        "0ad201c06cbea972b538a757e060b128a8edb181",
         True,
     ),
     "aql_light_manual_control_v1.json": (
@@ -125,8 +143,8 @@ EXPECTED_FIXTURES = {
         True,
     ),
     "aql_light_graph_contract_v1.json": (
-        "49aa0c4e2e543e9e74421b94ad9b0906e460366c0edd11d6b380c0ca5ab5bcf5",
-        "375064486ab3236b09bae8f1e7508a1eb204581f",
+        "2ea04e333b95f01b8a27c2c80969b2fa121754821e2f9bef377cca19daaae2f7",
+        "686bce0c41df8749887cd7ff2b4c0fd1ffe3ed3b",
         True,
     ),
     "aql_light_thermal_contract_v1.json": (
@@ -350,12 +368,12 @@ def verify_command_and_event_coverage(interoperability: dict[str, Any]) -> None:
     require(public == [], "WebSocket public command matrix must be empty")
     require(isinstance(authenticated, list), "authenticated command matrix is missing")
     command_set = set(authenticated)
-    require(len(authenticated) == 62, "firmware fixture must contain 62 commands")
-    require(len(command_set) == 62, "firmware fixture command names must be unique")
+    require(len(authenticated) == 65, "firmware fixture must contain 65 commands")
+    require(len(command_set) == 65, "firmware fixture command names must be unique")
 
     ws_source = WS_CONTRACT_PATH.read_text(encoding="utf-8", errors="strict")
     event_source = EVENT_CONTRACT_PATH.read_text(encoding="utf-8", errors="strict")
-    require(android_commands(ws_source) == command_set, "Android 62-command matrix drifted")
+    require(android_commands(ws_source) == command_set, "Android 65-command matrix drifted")
 
     disconnected_modules = interoperability.get("androidDisconnectedModules")
     require(
@@ -442,7 +460,7 @@ def verify_command_and_event_coverage(interoperability: dict[str, Any]) -> None:
     )
     require(
         core_coverage | dosing_action_set == command_set,
-        "request coverage plus Dosing v1 pin does not exactly classify all 62 commands",
+        "request coverage plus Dosing v1 pin does not exactly classify all 65 commands",
     )
 
 
@@ -542,8 +560,8 @@ def main() -> int:
         return 1
 
     print(
-        "Firmware interoperability guard passed: 62 command names, 62 connected "
-        "Android commands (48 core + 14 feature-owned Dosing v1), 13/13 events, "
+        "Firmware interoperability guard passed: 65 command names, 65 connected "
+        "Android commands (51 core + 14 feature-owned Dosing v1), 13/13 events, "
         "core request serializers, byte-identical shared fixtures and 7/7 SKUs."
     )
     return 0

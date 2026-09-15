@@ -19,9 +19,18 @@ class DeviceLightRuntimeRepository internal constructor(
     )
 
     val states: StateFlow<Map<DeviceUid, DeviceLightStatus>> = stateStore.statuses
+    val managedPlans: StateFlow<Map<DeviceUid, DeviceLightManagedPlanDocument>> =
+        stateStore.managedPlans
+    val graphs: StateFlow<Map<DeviceUid, DeviceLightGraph>> = stateStore.graphs
 
     fun currentStatus(deviceUid: DeviceUid): DeviceLightStatus? =
         stateStore.currentAuthoritativeStatus(deviceUid)
+
+    fun currentManagedPlan(deviceUid: DeviceUid): DeviceLightManagedPlanDocument? =
+        stateStore.currentAuthoritativeManagedPlan(deviceUid)
+
+    fun currentGraph(deviceUid: DeviceUid): DeviceLightGraph? =
+        stateStore.currentAuthoritativeGraph(deviceUid)
 
     internal fun beginGeneration(
         deviceUid: DeviceUid,
@@ -42,6 +51,7 @@ class DeviceLightRuntimeRepository internal constructor(
             )
         )
         if (outcome is DeviceRuntimeCommandOutcome.Success) {
+            stateStore.invalidateAuthoritySet(deviceUid, outcome.generation)
             stateStore.recordStatus(deviceUid, outcome.generation, outcome.value)
         }
         return outcome
@@ -134,6 +144,7 @@ class DeviceLightRuntimeRepository internal constructor(
             )
         )
         if (command.refreshStatus && outcome is DeviceRuntimeCommandOutcome.Success) {
+            stateStore.invalidateAuthoritySet(deviceUid, outcome.generation)
             requestStatus(deviceUid)
         }
         return outcome

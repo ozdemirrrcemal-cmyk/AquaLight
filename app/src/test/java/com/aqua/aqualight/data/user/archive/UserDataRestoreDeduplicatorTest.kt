@@ -127,6 +127,7 @@ class UserDataRestoreDeduplicatorTest {
             volumeUnit = "L",
             tankType = "freshwater",
             tankStyle = "nature",
+            smartLightProfile = emptyArchiveSmartLightProfile(),
             createdAtMillis = createdAtMillis,
             smartCareEnabled = true,
             careRemindersEnabled = true,

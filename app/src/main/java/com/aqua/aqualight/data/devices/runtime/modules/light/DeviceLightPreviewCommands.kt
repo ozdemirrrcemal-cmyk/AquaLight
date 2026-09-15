@@ -5,11 +5,17 @@ import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 
 suspend fun DeviceLightRuntimeRepository.requestGraph(
     deviceUid: DeviceUid
-): DeviceRuntimeCommandOutcome<DeviceLightGraph> = productCommand(
-    deviceUid = deviceUid,
-    action = DeviceLightRuntimeContract.Action.GRAPH_GET,
-    parser = DeviceLightMutationParser.Graph::parseGraph
-)
+): DeviceRuntimeCommandOutcome<DeviceLightGraph> {
+    val outcome = productCommand(
+        deviceUid = deviceUid,
+        action = DeviceLightRuntimeContract.Action.GRAPH_GET,
+        parser = DeviceLightMutationParser.Graph::parseGraph
+    )
+    if (outcome is DeviceRuntimeCommandOutcome.Success) {
+        stateStore.recordGraph(deviceUid, outcome.generation, outcome.value)
+    }
+    return outcome
+}
 
 suspend fun DeviceLightRuntimeRepository.setPreview(
     deviceUid: DeviceUid,

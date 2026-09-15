@@ -13,6 +13,7 @@ internal class DeviceLightTypedEventReducer(
             DeviceLightEventApplyResult.Ignored
         } else {
             runCatching {
+                stateStore.invalidateAuthoritySet(event.deviceUid, event.generation)
                 stateStore.recordStatus(
                     event.deviceUid,
                     event.generation,
