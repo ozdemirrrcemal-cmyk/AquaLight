@@ -233,9 +233,18 @@
     <string name="maintenance_smart_msg_co2_check">CO₂ zamanlamasını, drop checker rengini ve canlı davranışlarını kontrol edin.</string>
     <string name="maintenance_smart_msg_feeding">Yalnızca 10–30 saniyede tüketilecek kadar yem verin ve fazlasını çıkarın.</string>
     <string name="maintenance_smart_msg_lighting">Aydınlatma süresini kontrol edin ve kararlı tutun.</string>
-    <string name="maintenance_smart_msg_lighting_startup">Bitkili akvaryumda 3. haftanın sonuna kadar ışığı günde %1$d saat tutun; armatür veya PAR verisi olmadan kanal şiddeti çıkarımı yapmayın.</string>
-    <string name="maintenance_smart_msg_lighting_establishing">Gelişim kararlı ve yosun kontrol altındaysa süreyi kademeli olarak günde en fazla %1$d saate çıkarın; şiddeti ayrıca doğrulayın.</string>
-    <string name="maintenance_smart_msg_lighting_mature">Günlük %1$d saatlik temeli bitki gelişimi ve yosuna göre gözden geçirin; kanal şiddeti için armatür veya PAR kalibrasyonu gerekir.</string>
+    <plurals name="maintenance_smart_msg_lighting_startup">
+        <item quantity="one">Bitkili akvaryumda 3. haftanın sonuna kadar ışığı günde %1$d saat tutun; armatür veya PAR verisi olmadan kanal şiddeti çıkarımı yapmayın.</item>
+        <item quantity="other">Bitkili akvaryumda 3. haftanın sonuna kadar ışığı günde %1$d saat tutun; armatür veya PAR verisi olmadan kanal şiddeti çıkarımı yapmayın.</item>
+    </plurals>
+    <plurals name="maintenance_smart_msg_lighting_establishing">
+        <item quantity="one">Gelişim kararlı ve yosun kontrol altındaysa süreyi kademeli olarak günde en fazla %1$d saate çıkarın; şiddeti ayrıca doğrulayın.</item>
+        <item quantity="other">Gelişim kararlı ve yosun kontrol altındaysa süreyi kademeli olarak günde en fazla %1$d saate çıkarın; şiddeti ayrıca doğrulayın.</item>
+    </plurals>
+    <plurals name="maintenance_smart_msg_lighting_mature">
+        <item quantity="one">Günlük %1$d saatlik temeli bitki gelişimi ve yosuna göre gözden geçirin; kanal şiddeti için armatür veya PAR kalibrasyonu gerekir.</item>
+        <item quantity="other">Günlük %1$d saatlik temeli bitki gelişimi ve yosuna göre gözden geçirin; kanal şiddeti için armatür veya PAR kalibrasyonu gerekir.</item>
+    </plurals>
     <string name="maintenance_smart_msg_water_test">Canlı veya dozajlama kararlarından önce suyu test edin.</string>
     <string name="maintenance_smart_msg_plant_check">Bitki sağlığını, eriyen yaprakları ve zayıf gelişimi kontrol edin.</string>
     <string name="maintenance_smart_msg_plant_trim">Gerekirse aşırı büyümüş veya sağlıksız bitki bölümlerini budayın.</string>

@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.care.smartcare
 
 import android.content.Context
+import androidx.annotation.PluralsRes
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.care.SmartCareLightingPhase
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
@@ -51,27 +52,36 @@ object SmartCareTaskPolicy {
 
     return when (recommendation.phase) {
       SmartCareLightingPhase.STARTUP -> {
-        context.getString(
-          R.string.maintenance_smart_msg_lighting_startup,
-          recommendation.photoperiodMinutes / MINUTES_PER_HOUR
+        lightingHoursMessage(
+          context = context,
+          messageRes = R.plurals.maintenance_smart_msg_lighting_startup,
+          hours = recommendation.photoperiodMinutes / MINUTES_PER_HOUR
         )
       }
 
       SmartCareLightingPhase.ESTABLISHING -> {
-        context.getString(
-          R.string.maintenance_smart_msg_lighting_establishing,
-          recommendation.maximumPhotoperiodMinutes / MINUTES_PER_HOUR
+        lightingHoursMessage(
+          context = context,
+          messageRes = R.plurals.maintenance_smart_msg_lighting_establishing,
+          hours = recommendation.maximumPhotoperiodMinutes / MINUTES_PER_HOUR
         )
       }
 
       SmartCareLightingPhase.MATURE -> {
-        context.getString(
-          R.string.maintenance_smart_msg_lighting_mature,
-          recommendation.photoperiodMinutes / MINUTES_PER_HOUR
+        lightingHoursMessage(
+          context = context,
+          messageRes = R.plurals.maintenance_smart_msg_lighting_mature,
+          hours = recommendation.photoperiodMinutes / MINUTES_PER_HOUR
         )
       }
     }
   }
+
+  private fun lightingHoursMessage(
+    context: Context,
+    @PluralsRes messageRes: Int,
+    hours: Int
+  ): String = context.resources.getQuantityString(messageRes, hours, hours)
 
   fun requiresWaterTest(
     tank: SavedAquariumTank,

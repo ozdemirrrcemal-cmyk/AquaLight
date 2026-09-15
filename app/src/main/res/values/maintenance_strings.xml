@@ -247,9 +247,18 @@
     <string name="maintenance_smart_msg_co2_check">Check CO₂ timing, drop checker color, and livestock behavior.</string>
     <string name="maintenance_smart_msg_feeding">Offer only what is consumed within 10–30 seconds and remove excess food.</string>
     <string name="maintenance_smart_msg_lighting">Check the light period and keep it stable.</string>
-    <string name="maintenance_smart_msg_lighting_startup">Keep the planted aquarium at %1$d hours of light per day through week 3; do not infer channel intensity without fixture or PAR data.</string>
-    <string name="maintenance_smart_msg_lighting_establishing">If growth is stable and algae is controlled, increase gradually up to %1$d hours per day; verify intensity separately.</string>
-    <string name="maintenance_smart_msg_lighting_mature">Review the %1$d-hour daily baseline against plant growth and algae; channel intensity still requires fixture or PAR calibration.</string>
+    <plurals name="maintenance_smart_msg_lighting_startup">
+        <item quantity="one">Keep the planted aquarium at %1$d hour of light per day through week 3; do not infer channel intensity without fixture or PAR data.</item>
+        <item quantity="other">Keep the planted aquarium at %1$d hours of light per day through week 3; do not infer channel intensity without fixture or PAR data.</item>
+    </plurals>
+    <plurals name="maintenance_smart_msg_lighting_establishing">
+        <item quantity="one">If growth is stable and algae is controlled, increase gradually up to %1$d hour per day; verify intensity separately.</item>
+        <item quantity="other">If growth is stable and algae is controlled, increase gradually up to %1$d hours per day; verify intensity separately.</item>
+    </plurals>
+    <plurals name="maintenance_smart_msg_lighting_mature">
+        <item quantity="one">Review the %1$d-hour daily baseline against plant growth and algae; channel intensity still requires fixture or PAR calibration.</item>
+        <item quantity="other">Review the %1$d-hour daily baseline against plant growth and algae; channel intensity still requires fixture or PAR calibration.</item>
+    </plurals>
     <string name="maintenance_smart_msg_water_test">Test water before making livestock or dosing decisions.</string>
     <string name="maintenance_smart_msg_plant_check">Check plant health, melting leaves, and weak growth.</string>
     <string name="maintenance_smart_msg_plant_trim">Trim overgrown or unhealthy plant sections if needed.</string>
