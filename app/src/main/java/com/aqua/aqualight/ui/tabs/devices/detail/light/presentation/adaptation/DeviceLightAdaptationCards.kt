@@ -17,7 +17,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
@@ -26,14 +25,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationSnapshot
-import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationState
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.light.AquaLightDashboardIcon
 import com.aqua.aqualight.ui.common.light.AquaLightDashboardIconKind
-import java.text.DateFormat
-import java.text.NumberFormat
-import java.util.Date
-import kotlin.math.ceil
 
 @Composable
 internal fun AdaptationIntroCard(
@@ -283,65 +277,4 @@ internal fun AdaptationCompletedCard(
     }
 }
 
-private fun DeviceLightAdaptationUiState.introTitleRes(): Int = when (screenState) {
-    DeviceLightAdaptationScreenState.SETUP -> R.string.device_light_adaptation_intro_title
-    DeviceLightAdaptationScreenState.ACTIVE -> R.string.device_light_adaptation_active_title
-    DeviceLightAdaptationScreenState.COMPLETED -> R.string.device_light_adaptation_completed_title
-}
-
-private fun DeviceLightAdaptationUiState.informationRes(): Int = when {
-    snapshot?.clockReady == false -> R.string.device_light_adaptation_clock_info
-    screenState == DeviceLightAdaptationScreenState.ACTIVE ->
-        R.string.device_light_adaptation_active_manual_info
-    else -> R.string.device_light_adaptation_manual_info
-}
-
-private fun DeviceLightAdaptationUiState.toStatusChip(
-    visuals: DeviceLightAdaptationVisuals
-): AdaptationStatusChip = when (screenState) {
-    DeviceLightAdaptationScreenState.SETUP -> AdaptationStatusChip(
-        R.string.device_light_adaptation_off_uppercase,
-        visuals.colors.card.secondaryText
-    )
-    DeviceLightAdaptationScreenState.ACTIVE -> AdaptationStatusChip(
-        R.string.device_light_active_uppercase,
-        visuals.colors.action
-    )
-    DeviceLightAdaptationScreenState.COMPLETED -> AdaptationStatusChip(
-        R.string.device_light_adaptation_completed_uppercase,
-        visuals.colors.card.success
-    )
-}
-
-private fun DeviceLightAdaptationSnapshot.currentPercentValue(): String {
-    val permille = currentPermille ?: return "—"
-    val value = permille.toDouble() / DeviceLightAdaptationSpec.percentScale
-    return NumberFormat.getNumberInstance().apply {
-        minimumFractionDigits = if (permille % DeviceLightAdaptationSpec.percentScale == 0) 0 else 1
-        maximumFractionDigits = 1
-    }.format(value)
-}
-
-private fun DeviceLightAdaptationSnapshot.progressFraction(): Float {
-    val start = startPercent * DeviceLightAdaptationSpec.percentScale
-    val target = targetPercent * DeviceLightAdaptationSpec.percentScale
-    val current = currentPermille ?: start
-    return (current - start).toFloat() / (target - start).coerceAtLeast(1)
-}
-
-internal fun DeviceLightAdaptationSnapshot.remainingDays(): Int? = remainingSeconds?.let { seconds ->
-    ceil(seconds.toDouble() / DeviceLightAdaptationSpec.secondsPerDay).toInt()
-}
-
-internal fun DeviceLightAdaptationSnapshot.elapsedDays(): Int? = remainingDays()?.let { remaining ->
-    (durationDays - remaining).coerceIn(0, durationDays)
-}
-
-internal fun DeviceLightAdaptationSnapshot.endDateText(): String = endsAtEpochSeconds?.let { epoch ->
-    DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(epoch * MILLIS_PER_SECOND))
-} ?: "—"
-
-private data class AdaptationStatusChip(val labelRes: Int, val color: Color)
-
 private const val CONTENT_WEIGHT = 1f
-private const val MILLIS_PER_SECOND = 1_000L

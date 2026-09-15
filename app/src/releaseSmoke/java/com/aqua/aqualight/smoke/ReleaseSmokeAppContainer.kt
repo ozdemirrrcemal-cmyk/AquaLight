@@ -275,6 +275,11 @@ private class ReleaseSmokeViewModelFactory(
 
     private fun createDeviceRootViewModel(
         modelClass: Class<out ViewModel>
+    ): ViewModel? = createLightDeviceViewModel(modelClass)
+        ?: createOtherDeviceViewModel(modelClass)
+
+    private fun createLightDeviceViewModel(
+        modelClass: Class<out ViewModel>
     ): ViewModel? = when {
         modelClass.isAssignableFrom(DeviceLightRootViewModel::class.java) ->
             DeviceLightRootViewModel(
@@ -298,6 +303,12 @@ private class ReleaseSmokeViewModelFactory(
             )
         modelClass.isAssignableFrom(DeviceLightLibraryViewModel::class.java) ->
             DeviceLightLibraryViewModel(lightOperations.libraryOperations)
+        else -> null
+    }
+
+    private fun createOtherDeviceViewModel(
+        modelClass: Class<out ViewModel>
+    ): ViewModel? = when {
         modelClass.isAssignableFrom(DeviceCoolingRootViewModel::class.java) ->
             DeviceCoolingRootViewModel(
                 operations = DefaultDeviceRootOperations(devicesRepository),

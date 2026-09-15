@@ -29,11 +29,8 @@ internal class DeviceLightAdaptationViewModel(
 
     private val _uiState = MutableStateFlow(DeviceLightAdaptationUiState())
     val uiState: StateFlow<DeviceLightAdaptationUiState> = _uiState.asStateFlow()
-    private val _effects = MutableSharedFlow<DeviceLightAdaptationEffect>(
-        extraBufferCapacity = 2,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST
-    )
-    val effects: SharedFlow<DeviceLightAdaptationEffect> = _effects.asSharedFlow()
+    private val effectEmitter = DeviceLightAdaptationEffectEmitter()
+    val effects: SharedFlow<DeviceLightAdaptationEffect> = effectEmitter.effects
 
     private var boundDeviceUid = ""
     private var draftDirty = false
@@ -51,7 +48,14 @@ internal class DeviceLightAdaptationViewModel(
             initialLoading = true
         )
         observeJob = viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
-            operations.observe(deviceUid).collect(::acceptObservedResult)
+            operations.observe(deviceUid).collect { result ->
+                when (result) {
+                    is DeviceLightAdaptationReadResult.Available -> applySnapshot(result.snapshot)
+                    is DeviceLightAdaptationReadResult.Failed -> if (!_uiState.value.initialLoading) {
+                        applyFailure(result.failure)
+                    }
+                }
+            }
         }
         refresh(showLoading = true, showFailure = true)
     }
@@ -142,11 +146,11 @@ internal class DeviceLightAdaptationViewModel(
                 is DeviceLightAdaptationMutationResult.Success -> {
                     draftDirty = false
                     applySnapshot(result.snapshot, operationFinished = true)
-                    successMessage?.let { emit(DeviceLightAdaptationEffect.ShowMessage(it, true)) }
+                    successMessage?.let { effectEmitter.showMessage(it, true) }
                 }
                 is DeviceLightAdaptationMutationResult.Failed -> {
                     _uiState.update { state -> state.copy(operationInProgress = false) }
-                    emitFailure(result.failure)
+                    effectEmitter.showMessage(result.failure.messageRes(), false)
                     if (result.failure == DeviceLightAdaptationFailure.STALE_REVISION) {
                         refresh(showLoading = false, showFailure = false)
                     }
@@ -163,17 +167,8 @@ internal class DeviceLightAdaptationViewModel(
                 is DeviceLightAdaptationReadResult.Available -> applySnapshot(result.snapshot)
                 is DeviceLightAdaptationReadResult.Failed -> {
                     applyFailure(result.failure)
-                    if (showFailure) emitFailure(result.failure)
+                    if (showFailure) effectEmitter.showMessage(result.failure.messageRes(), false)
                 }
-            }
-        }
-    }
-
-    private fun acceptObservedResult(result: DeviceLightAdaptationReadResult) {
-        when (result) {
-            is DeviceLightAdaptationReadResult.Available -> applySnapshot(result.snapshot)
-            is DeviceLightAdaptationReadResult.Failed -> if (!_uiState.value.initialLoading) {
-                applyFailure(result.failure)
             }
         }
     }
@@ -216,16 +211,24 @@ internal class DeviceLightAdaptationViewModel(
             )
         }
         if (failure == DeviceLightAdaptationFailure.UNSUPPORTED) {
-            emit(DeviceLightAdaptationEffect.CloseUnavailable)
+            effectEmitter.closeUnavailable()
         }
     }
+}
 
-    private fun emitFailure(failure: DeviceLightAdaptationFailure) {
-        emit(DeviceLightAdaptationEffect.ShowMessage(failure.messageRes(), false))
+private class DeviceLightAdaptationEffectEmitter {
+    private val mutableEffects = MutableSharedFlow<DeviceLightAdaptationEffect>(
+        extraBufferCapacity = 2,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
+    val effects: SharedFlow<DeviceLightAdaptationEffect> = mutableEffects.asSharedFlow()
+
+    fun showMessage(@StringRes messageRes: Int, success: Boolean) {
+        mutableEffects.tryEmit(DeviceLightAdaptationEffect.ShowMessage(messageRes, success))
     }
 
-    private fun emit(effect: DeviceLightAdaptationEffect) {
-        viewModelScope.launch { _effects.emit(effect) }
+    fun closeUnavailable() {
+        mutableEffects.tryEmit(DeviceLightAdaptationEffect.CloseUnavailable)
     }
 }
 
