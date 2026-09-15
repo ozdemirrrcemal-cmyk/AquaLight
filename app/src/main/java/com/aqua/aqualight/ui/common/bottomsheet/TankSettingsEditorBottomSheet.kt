@@ -102,7 +102,10 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
                     .orEmpty()
                 return@setOnClickListener
             }
-            publishResult(status = RESULT_SAVED, textValue = value)
+            publishResult(
+                status = RESULT_SAVED,
+                payload = ResultPayload(textValue = value)
+            )
             dismiss()
         }
         attachContent(binding.root)
@@ -127,7 +130,10 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
         bindChoiceOptions(options)
         binding.btnCancel.setOnClickListener { cancelAndDismiss() }
         binding.btnSave.setOnClickListener {
-            publishResult(status = RESULT_SAVED, textValue = selectedChoice)
+            publishResult(
+                status = RESULT_SAVED,
+                payload = ResultPayload(textValue = selectedChoice)
+            )
             dismiss()
         }
         attachContent(binding.root)
@@ -235,10 +241,14 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
 
             publishResult(
                 status = RESULT_SAVED,
-                widthCm = requireNotNull(widthCm),
-                lengthCm = requireNotNull(lengthCm),
-                heightCm = requireNotNull(heightCm),
-                unit = selectedUnit
+                payload = ResultPayload(
+                    dimensions = ResultDimensions(
+                        widthCm = requireNotNull(widthCm),
+                        lengthCm = requireNotNull(lengthCm),
+                        heightCm = requireNotNull(heightCm),
+                        unit = selectedUnit
+                    )
+                )
             )
             dismiss()
         }
@@ -308,7 +318,10 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
                 set(Calendar.SECOND, 0)
                 set(Calendar.MILLISECOND, 0)
             }.timeInMillis
-            publishResult(status = RESULT_SAVED, millisValue = selectedMillis)
+            publishResult(
+                status = RESULT_SAVED,
+                payload = ResultPayload(millisValue = selectedMillis)
+            )
             dismiss()
         }
         attachContent(binding.root)
@@ -363,7 +376,10 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
                     .orEmpty()
                 return@setOnClickListener
             }
-            publishResult(status = RESULT_SAVED, textValue = value)
+            publishResult(
+                status = RESULT_SAVED,
+                payload = ResultPayload(textValue = value)
+            )
             dismiss()
         }
         attachContent(binding.root)
@@ -376,7 +392,9 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
         binding.btnSave.setOnClickListener {
             publishResult(
                 status = RESULT_SAVED,
-                textValue = binding.inputIdea.text.toString().trim()
+                payload = ResultPayload(
+                    textValue = binding.inputIdea.text.toString().trim()
+                )
             )
             dismiss()
         }
@@ -417,12 +435,7 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
 
     private fun publishResult(
         status: String,
-        textValue: String? = null,
-        millisValue: Long? = null,
-        widthCm: Int? = null,
-        lengthCm: Int? = null,
-        heightCm: Int? = null,
-        unit: String? = null
+        payload: ResultPayload = ResultPayload()
     ) {
         if (resultSent) return
         resultSent = true
@@ -430,14 +443,29 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
             RESULT_STATUS to status,
             RESULT_MODE to mode.name
         )
-        textValue?.let { result.putString(RESULT_TEXT, it) }
-        millisValue?.let { result.putLong(RESULT_MILLIS, it) }
-        widthCm?.let { result.putInt(RESULT_WIDTH_CM, it) }
-        lengthCm?.let { result.putInt(RESULT_LENGTH_CM, it) }
-        heightCm?.let { result.putInt(RESULT_HEIGHT_CM, it) }
-        unit?.let { result.putString(RESULT_UNIT, it) }
+        payload.textValue?.let { result.putString(RESULT_TEXT, it) }
+        payload.millisValue?.let { result.putLong(RESULT_MILLIS, it) }
+        payload.dimensions?.let { dimensions ->
+            result.putInt(RESULT_WIDTH_CM, dimensions.widthCm)
+            result.putInt(RESULT_LENGTH_CM, dimensions.lengthCm)
+            result.putInt(RESULT_HEIGHT_CM, dimensions.heightCm)
+            result.putString(RESULT_UNIT, dimensions.unit)
+        }
         parentFragmentManager.setFragmentResult(REQUEST_KEY, result)
     }
+
+    private data class ResultPayload(
+        val textValue: String? = null,
+        val millisValue: Long? = null,
+        val dimensions: ResultDimensions? = null
+    )
+
+    private data class ResultDimensions(
+        val widthCm: Int,
+        val lengthCm: Int,
+        val heightCm: Int,
+        val unit: String
+    )
 
     enum class Mode {
         NAME,

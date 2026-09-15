@@ -23,5 +23,4 @@ internal fun formatTime(timeMs: Long): String {
         minute.toString().padStart(TIME_DIGITS, '0')
 }
 
-private const val MINUTES_PER_HOUR = 60
 private const val TIME_DIGITS = 2

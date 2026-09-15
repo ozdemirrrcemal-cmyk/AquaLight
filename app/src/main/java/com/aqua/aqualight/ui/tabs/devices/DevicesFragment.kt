@@ -48,12 +48,11 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         _binding = FragmentDevicesBinding.bind(view)
 
         setupHeader()
-        setupFeedbackResultListener()
-        setupUiShell()
+        setupUi()
         observeViewModel()
     }
 
-    private fun setupFeedbackResultListener() {
+    private fun setupUi() {
         childFragmentManager.setFragmentResultListener(
             DELETE_DEVICES_REQUEST_KEY,
             viewLifecycleOwner
@@ -62,6 +61,12 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                 FeedbackBottomSheet.RESULT_PRIMARY
             ) viewModel.deleteSelectedDevices()
         }
+        binding.rvSelectedDevices.layoutManager = LinearLayoutManager(requireContext())
+        binding.rvSelectedDevices.adapter = deviceAdapter
+        binding.rvSelectedDevices.setHasFixedSize(false)
+        binding.rvSelectedDevices.isVisible = false
+        binding.tvEmptyState.isVisible = true
+        binding.btnEmptyAddDevice.setOnClickListener { openAddDevice() }
     }
 
     override fun onStart() {
@@ -128,17 +133,6 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         )
     }
 
-    private fun setupUiShell() {
-        binding.rvSelectedDevices.layoutManager = LinearLayoutManager(requireContext())
-        binding.rvSelectedDevices.adapter = deviceAdapter
-        binding.rvSelectedDevices.setHasFixedSize(false)
-        binding.rvSelectedDevices.isVisible = false
-        binding.tvEmptyState.isVisible = true
-        binding.btnEmptyAddDevice.setOnClickListener {
-            openAddDevice()
-        }
-    }
-
     private fun observeViewModel() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -178,60 +172,13 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
             !state.isDeletingDevices && !state.isOpeningDeviceMenu
         binding.rvSelectedDevices.isVisible = state.devices.isNotEmpty()
         binding.tvEmptyState.isVisible = state.isEmpty
-        baseActivity()?.setGlobalLoading(
+        (activity as? BaseActivity)?.setGlobalLoading(
             ownerKey = DEVICE_DELETE_LOADING_OWNER,
             show = state.isDeletingDevices
         )
-        baseActivity()?.setGlobalLoading(
+        (activity as? BaseActivity)?.setGlobalLoading(
             ownerKey = DEVICE_MENU_LOADING_OWNER,
             show = state.isOpeningDeviceMenu
-        )
-    }
-
-    private fun showDeviceUnavailable(
-        event: DevicesEvent.ShowDeviceUnavailable
-    ) {
-        baseActivity()?.clearGlobalLoading(DEVICE_MENU_LOADING_OWNER)
-        baseActivity()?.showDeviceOfflineDialog(
-            deviceTitle = event.title,
-            messageRes = event.messageRes
-        )
-    }
-
-    private fun showDeletePartialSuccess(
-        event: DevicesEvent.ShowDeletePartialSuccess
-    ) {
-        val removedSentence = resources.getQuantityString(
-            R.plurals.devices_delete_removed_sentence,
-            event.succeededCount,
-            event.succeededCount
-        )
-        val failedSentence = resources.getQuantityString(
-            R.plurals.devices_delete_remain_selected_sentence,
-            event.failedCount,
-            event.failedCount
-        )
-
-        DialogManager.showInfoDialog(
-            context = requireContext(),
-            type = DialogType.WARNING,
-            title = getString(R.string.devices_delete_partial_title),
-            message = "$removedSentence $failedSentence"
-        )
-    }
-
-    private fun showDeleteFailed(
-        event: DevicesEvent.ShowDeleteFailed
-    ) {
-        DialogManager.showInfoDialog(
-            context = requireContext(),
-            type = DialogType.ERROR,
-            title = getString(R.string.devices_delete_failed_title),
-            message = resources.getQuantityString(
-                R.plurals.devices_delete_failed_message,
-                event.failedCount,
-                event.failedCount
-            )
         )
     }
 
@@ -268,7 +215,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
 
     private fun openDeviceRoute(route: DeviceRoute) {
         if (!isAdded) {
-            baseActivity()?.clearGlobalLoading(DEVICE_MENU_LOADING_OWNER)
+            (activity as? BaseActivity)?.clearGlobalLoading(DEVICE_MENU_LOADING_OWNER)
             viewModel.onDeviceNavigationFinished(route.deviceUid, committed = false)
             return
         }
@@ -308,7 +255,7 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
             val isCurrentDestination =
                 findNavController().currentDestination?.id == R.id.devicesFragment
             if (!hostReady || !isCurrentDestination) {
-                baseActivity()?.clearGlobalLoading(DEVICE_MENU_LOADING_OWNER)
+                (activity as? BaseActivity)?.clearGlobalLoading(DEVICE_MENU_LOADING_OWNER)
                 viewModel.onDeviceNavigationFinished(route.deviceUid, committed = false)
                 return@postOnAnimation
             }
@@ -318,28 +265,67 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                 findNavController().navigate(directions)
                 committed = true
             } finally {
-                baseActivity()?.clearGlobalLoading(DEVICE_MENU_LOADING_OWNER)
+                (activity as? BaseActivity)?.clearGlobalLoading(DEVICE_MENU_LOADING_OWNER)
                 viewModel.onDeviceNavigationFinished(route.deviceUid, committed)
             }
         }
     }
 
-    private fun baseActivity(): BaseActivity? {
-        return activity as? BaseActivity
-    }
-
     override fun onDestroyView() {
         viewModel.onNavigationHostDestroyed()
-        baseActivity()?.clearGlobalLoading(DEVICE_DELETE_LOADING_OWNER)
-        baseActivity()?.clearGlobalLoading(DEVICE_MENU_LOADING_OWNER)
+        (activity as? BaseActivity)?.clearGlobalLoading(DEVICE_DELETE_LOADING_OWNER)
+        (activity as? BaseActivity)?.clearGlobalLoading(DEVICE_MENU_LOADING_OWNER)
         binding.rvSelectedDevices.adapter = null
         _binding = null
         super.onDestroyView()
     }
 
-    private companion object {
-        const val DEVICE_DELETE_LOADING_OWNER = "DevicesFragment.Delete"
-        const val DEVICE_MENU_LOADING_OWNER = "DevicesFragment.MenuOpen"
-        const val DELETE_DEVICES_REQUEST_KEY = "devices_delete_result"
-    }
 }
+
+private fun DevicesFragment.showDeviceUnavailable(
+    event: DevicesEvent.ShowDeviceUnavailable
+) {
+    (activity as? BaseActivity)?.clearGlobalLoading(DEVICE_MENU_LOADING_OWNER)
+    (activity as? BaseActivity)?.showDeviceOfflineDialog(
+        deviceTitle = event.title,
+        messageRes = event.messageRes
+    )
+}
+
+private fun DevicesFragment.showDeletePartialSuccess(
+    event: DevicesEvent.ShowDeletePartialSuccess
+) {
+    val removedSentence = resources.getQuantityString(
+        R.plurals.devices_delete_removed_sentence,
+        event.succeededCount,
+        event.succeededCount
+    )
+    val failedSentence = resources.getQuantityString(
+        R.plurals.devices_delete_remain_selected_sentence,
+        event.failedCount,
+        event.failedCount
+    )
+    DialogManager.showInfoDialog(
+        context = requireContext(),
+        type = DialogType.WARNING,
+        title = getString(R.string.devices_delete_partial_title),
+        message = "$removedSentence $failedSentence"
+    )
+}
+
+private fun DevicesFragment.showDeleteFailed(event: DevicesEvent.ShowDeleteFailed) {
+    DialogManager.showInfoDialog(
+        context = requireContext(),
+        type = DialogType.ERROR,
+        title = getString(R.string.devices_delete_failed_title),
+        message = resources.getQuantityString(
+            R.plurals.devices_delete_failed_message,
+            event.failedCount,
+            event.failedCount
+        )
+    )
+}
+
+private const val DEVICE_DELETE_LOADING_OWNER = "DevicesFragment.Delete"
+private const val DEVICE_MENU_LOADING_OWNER = "DevicesFragment.MenuOpen"
+private const val DELETE_DEVICES_REQUEST_KEY = "devices_delete_result"

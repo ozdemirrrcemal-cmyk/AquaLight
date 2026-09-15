@@ -26,21 +26,23 @@ class DeviceLightCustomCurveMathTest {
             6 * MILLIS_PER_HOUR,
             nearestVisiblePointTime(
                 points = points,
-                tapX = 27f,
-                chartWidth = 100f,
-                windowStartMs = 0L,
-                windowEndMs = MILLIS_PER_DAY,
-                tolerancePx = 5f
+                target = DeviceLightCustomHitTarget(
+                    tapX = 27f,
+                    chartWidth = 100f,
+                    tolerancePx = 5f
+                ),
+                window = DeviceLightCustomChartWindow(0L, MILLIS_PER_DAY)
             )
         )
         assertNull(
             nearestVisiblePointTime(
                 points = points,
-                tapX = 50f,
-                chartWidth = 100f,
-                windowStartMs = 0L,
-                windowEndMs = MILLIS_PER_DAY,
-                tolerancePx = 5f
+                target = DeviceLightCustomHitTarget(
+                    tapX = 50f,
+                    chartWidth = 100f,
+                    tolerancePx = 5f
+                ),
+                window = DeviceLightCustomChartWindow(0L, MILLIS_PER_DAY)
             )
         )
     }

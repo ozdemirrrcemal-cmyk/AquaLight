@@ -9,29 +9,63 @@ internal data class DeviceLightCustomChartSample(
     val channels: Map<DeviceLightCustomChannelId, Int>
 )
 
+internal data class DeviceLightCustomChartWindow(
+    val startMs: Long,
+    val endMs: Long
+)
+
+internal data class DeviceLightCustomHitTarget(
+    val tapX: Float,
+    val chartWidth: Float,
+    val tolerancePx: Float
+)
+
+internal data class DeviceLightCustomChannelPlot(
+    val samples: List<DeviceLightCustomChartSample>,
+    val actualPoints: List<DeviceLightCustomPointUiState>,
+    val channel: DeviceLightCustomChannelId,
+    val selectedTimeMs: Long?,
+    val window: DeviceLightCustomChartWindow
+)
+
+internal data class DeviceLightCustomPlayheadState(
+    val timeMs: Long,
+    val enabled: Boolean,
+    val chartWidthPx: Float
+)
+
 internal fun List<DeviceLightCustomPointUiState>.interpolatedChannelsAt(
     timeMs: Long,
     fallbackChannels: List<DeviceLightCustomChannelId>
 ): Map<DeviceLightCustomChannelId, Int> {
-    if (isEmpty()) return fallbackChannels.associateWith { MIN_LIGHT_CHANNEL_PERCENT }
-    if (size == 1) return first().channels
+    return when {
+        isEmpty() -> fallbackChannels.associateWith { MIN_LIGHT_CHANNEL_PERCENT }
+        size == 1 -> first().channels
+        else -> {
+            val normalizedTime = timeMs.mod(MILLIS_PER_DAY)
+            singleOrNull { point -> point.timeMs == normalizedTime }?.channels
+                ?: interpolateChannels(normalizedTime, fallbackChannels)
+        }
+    }
+}
 
-    val normalizedTime = timeMs.mod(MILLIS_PER_DAY)
-    singleOrNull { point -> point.timeMs == normalizedTime }?.let { return it.channels }
-
+private fun List<DeviceLightCustomPointUiState>.interpolateChannels(
+    normalizedTime: Long,
+    fallbackChannels: List<DeviceLightCustomChannelId>
+): Map<DeviceLightCustomChannelId, Int> {
     val rightIndex = indexOfFirst { point -> point.timeMs > normalizedTime }
     val left = if (rightIndex > 0) get(rightIndex - 1) else last()
     val right = if (rightIndex >= 0) get(rightIndex) else first()
     val leftTime = if (rightIndex == 0) left.timeMs - MILLIS_PER_DAY else left.timeMs
     val rightTime = if (rightIndex < 0) right.timeMs + MILLIS_PER_DAY else right.timeMs
     val fraction = (normalizedTime - leftTime).toFloat() / (rightTime - leftTime).toFloat()
-    val channels = (left.channels.keys + right.channels.keys + fallbackChannels).distinct()
-    return channels.associateWith { channel ->
-        val start = left.channels[channel] ?: MIN_LIGHT_CHANNEL_PERCENT
-        val end = right.channels[channel] ?: MIN_LIGHT_CHANNEL_PERCENT
-        (start + (end - start) * fraction).roundToInt()
-            .coerceIn(MIN_LIGHT_CHANNEL_PERCENT, MAX_LIGHT_CHANNEL_PERCENT)
-    }
+    return (left.channels.keys + right.channels.keys + fallbackChannels).distinct()
+        .associateWith { channel ->
+            val start = left.channels[channel] ?: MIN_LIGHT_CHANNEL_PERCENT
+            val end = right.channels[channel] ?: MIN_LIGHT_CHANNEL_PERCENT
+            (start + (end - start) * fraction).roundToInt()
+                .coerceIn(MIN_LIGHT_CHANNEL_PERCENT, MAX_LIGHT_CHANNEL_PERCENT)
+        }
 }
 
 internal fun List<DeviceLightCustomPointUiState>.chartSamples(
@@ -54,26 +88,23 @@ internal fun List<DeviceLightCustomPointUiState>.chartSamples(
 
 internal fun nearestVisiblePointTime(
     points: List<DeviceLightCustomPointUiState>,
-    tapX: Float,
-    chartWidth: Float,
-    windowStartMs: Long,
-    windowEndMs: Long,
-    tolerancePx: Float
+    target: DeviceLightCustomHitTarget,
+    window: DeviceLightCustomChartWindow
 ): Long? {
-    if (chartWidth <= 0f || windowEndMs <= windowStartMs) return null
+    if (target.chartWidth <= 0f || window.endMs <= window.startMs) return null
     return points.asSequence()
-        .filter { point -> point.timeMs in windowStartMs..windowEndMs }
+        .filter { point -> point.timeMs in window.startMs..window.endMs }
         .map { point ->
             point.timeMs to abs(
-                tapX - chartX(
+                target.tapX - chartX(
                     timeMs = point.timeMs,
-                    width = chartWidth,
-                    windowStartMs = windowStartMs,
-                    windowEndMs = windowEndMs
+                    width = target.chartWidth,
+                    windowStartMs = window.startMs,
+                    windowEndMs = window.endMs
                 )
             )
         }
-        .filter { (_, distance) -> distance <= tolerancePx }
+        .filter { (_, distance) -> distance <= target.tolerancePx }
         .minByOrNull { (_, distance) -> distance }
         ?.first
 }

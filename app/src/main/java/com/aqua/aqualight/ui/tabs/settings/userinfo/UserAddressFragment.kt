@@ -202,40 +202,32 @@ class UserAddressFragment : Fragment(R.layout.fragment_user_address) {
                 ) = Unit
 
                 override fun afterTextChanged(text: Editable?) {
-                    if (isFormattingPhone) {
-                        return
+                    val currentText = text?.toString().orEmpty()
+                    if (!isFormattingPhone && currentText.isNotBlank()) {
+                        val countryIso = binding.ccpCountry.selectedCountryNameCode
+                        val dialCode = lastDialCode
+                            ?: binding.ccpCountry.selectedCountryCodeWithPlus
+                        val digits = currentText.removePrefix(dialCode)
+                            .trimStart()
+                            .filter(Char::isDigit)
+                        val formattedText = if (digits.isEmpty()) {
+                            "$dialCode "
+                        } else {
+                            val maximumLength = runCatching {
+                                phoneUtil.getExampleNumber(countryIso)
+                                    ?.nationalNumber
+                                    ?.toString()
+                                    ?.length
+                            }.getOrNull() ?: 15
+                            val formatter = phoneUtil.getAsYouTypeFormatter(countryIso)
+                            var nationalFormatted = ""
+                            digits.take(maximumLength).forEach { digit ->
+                                nationalFormatted = formatter.inputDigit(digit)
+                            }
+                            "$dialCode $nationalFormatted"
+                        }
+                        replacePhoneText(formattedText)
                     }
-
-                    val currentText = text?.toString() ?: return
-                    if (currentText.isBlank()) {
-                        return
-                    }
-
-                    val countryIso = binding.ccpCountry.selectedCountryNameCode
-                    val dialCode = lastDialCode
-                        ?: binding.ccpCountry.selectedCountryCodeWithPlus
-                    val rawNumber = currentText
-                        .removePrefix(dialCode)
-                        .trimStart()
-                    val digits = rawNumber.filter(Char::isDigit)
-
-                    if (digits.isEmpty()) {
-                        replacePhoneText("$dialCode ")
-                        return
-                    }
-
-                    val maximumLength = runCatching {
-                        phoneUtil.getExampleNumber(countryIso)
-                            ?.nationalNumber
-                            ?.toString()
-                            ?.length
-                    }.getOrNull() ?: 15
-                    val formatter = phoneUtil.getAsYouTypeFormatter(countryIso)
-                    var nationalFormatted = ""
-                    digits.take(maximumLength).forEach { digit ->
-                        nationalFormatted = formatter.inputDigit(digit)
-                    }
-                    replacePhoneText("$dialCode $nationalFormatted")
                 }
             }
         )

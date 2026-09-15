@@ -83,25 +83,20 @@ internal fun DrawScope.drawPlayheadThumb(
 }
 
 internal fun DrawScope.drawChannelCurve(
-    samples: List<DeviceLightCustomChartSample>,
-    actualPoints: List<DeviceLightCustomPointUiState>,
-    channel: DeviceLightCustomChannelId,
-    selectedTimeMs: Long?,
-    windowStartMs: Long,
-    windowEndMs: Long,
+    plot: DeviceLightCustomChannelPlot,
     visuals: DeviceLightCustomVisuals
 ) {
-    if (samples.isEmpty()) return
-    val color = visuals.channelColor(channel)
+    if (plot.samples.isEmpty()) return
+    val color = visuals.channelColor(plot.channel)
     val chartHeight = size.height - CHART_BOTTOM_INSET_DP.dp.toPx()
     val path = Path()
-    samples.forEachIndexed { index, sample ->
+    plot.samples.forEachIndexed { index, sample ->
         val coordinate = sample.chartCoordinate(
             size.width,
             chartHeight,
-            channel,
-            windowStartMs,
-            windowEndMs
+            plot.channel,
+            plot.window.startMs,
+            plot.window.endMs
         )
         if (index == 0) path.moveTo(coordinate.x, coordinate.y)
         else path.lineTo(coordinate.x, coordinate.y)
@@ -111,44 +106,56 @@ internal fun DrawScope.drawChannelCurve(
         color,
         style = Stroke(width = CURVE_WIDTH_DP.dp.toPx(), cap = StrokeCap.Round)
     )
-    actualPoints.filter { point -> point.timeMs in windowStartMs..windowEndMs }
+    plot.actualPoints.filter { point ->
+        point.timeMs in plot.window.startMs..plot.window.endMs
+    }
         .forEach { point ->
             val center = DeviceLightCustomChartSample(point.timeMs, point.channels).chartCoordinate(
                 size.width,
                 chartHeight,
-                channel,
-                windowStartMs,
-                windowEndMs
+                plot.channel,
+                plot.window.startMs,
+                plot.window.endMs
             )
-            val selected = point.timeMs == selectedTimeMs
-            if (selected) {
-                drawCircle(
-                    color.copy(alpha = SELECTED_HALO_ALPHA),
-                    radius = SELECTED_HALO_RADIUS_DP.dp.toPx(),
-                    center = center
-                )
-                drawCircle(
-                    visuals.colors.card.primaryText,
-                    radius = SELECTED_RING_RADIUS_DP.dp.toPx(),
-                    center = center
-                )
-            } else {
-                drawCircle(
-                    visuals.colors.card.primaryText,
-                    radius = POINT_RING_RADIUS_DP.dp.toPx(),
-                    center = center
-                )
-            }
-            drawCircle(
-                color,
-                radius = if (selected) {
-                    SELECTED_POINT_RADIUS_DP.dp.toPx()
-                } else {
-                    CURVE_POINT_RADIUS_DP.dp.toPx()
-                },
-                center = center
+            drawChannelPoint(
+                center = center,
+                color = color,
+                selected = point.timeMs == plot.selectedTimeMs,
+                visuals = visuals
             )
         }
+}
+
+private fun DrawScope.drawChannelPoint(
+    center: Offset,
+    color: androidx.compose.ui.graphics.Color,
+    selected: Boolean,
+    visuals: DeviceLightCustomVisuals
+) {
+    if (selected) {
+        drawCircle(
+            color.copy(alpha = SELECTED_HALO_ALPHA),
+            radius = SELECTED_HALO_RADIUS_DP.dp.toPx(),
+            center = center
+        )
+        drawCircle(
+            visuals.colors.card.primaryText,
+            radius = SELECTED_RING_RADIUS_DP.dp.toPx(),
+            center = center
+        )
+    } else {
+        drawCircle(
+            visuals.colors.card.primaryText,
+            radius = POINT_RING_RADIUS_DP.dp.toPx(),
+            center = center
+        )
+    }
+    drawCircle(
+        color,
+        radius = if (selected) SELECTED_POINT_RADIUS_DP.dp.toPx()
+        else CURVE_POINT_RADIUS_DP.dp.toPx(),
+        center = center
+    )
 }
 
 private fun DeviceLightCustomChartSample.chartCoordinate(

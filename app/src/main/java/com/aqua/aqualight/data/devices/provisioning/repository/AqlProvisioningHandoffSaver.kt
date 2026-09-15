@@ -54,7 +54,7 @@ class AqlProvisioningHandoffSaver(
                 )
             )
         } catch (error: Throwable) {
-            error.throwIfCancellation()
+            error.throwIfProvisioningCancellation()
             Result.failure(error)
         }
     }
@@ -211,7 +211,7 @@ class AqlProvisioningHandoffSaver(
 
             Result.success(committed)
         } catch (error: Throwable) {
-            error.throwIfCancellation()
+            error.throwIfProvisioningCancellation()
             Result.failure(error)
         }
     }
@@ -325,7 +325,7 @@ class AqlProvisioningHandoffSaver(
                     Result.success(true)
                 }
             } catch (error: Throwable) {
-                error.throwIfCancellation()
+                error.throwIfProvisioningCancellation()
                 Result.failure(error)
             }
         }
@@ -398,12 +398,6 @@ class AqlProvisioningHandoffSaver(
         }.exceptionOrNull()
     }
 
-    private fun Throwable.throwIfCancellation() {
-        if (this is CancellationException) {
-            throw this
-        }
-    }
-
     private fun resolvedTitle(
         draft: AqlProvisioningDraft
     ): String {
@@ -418,6 +412,12 @@ class AqlProvisioningHandoffSaver(
                 ownerUidOf = PendingRegistration::ownerUid,
                 deviceUidOf = PendingRegistration::deviceUid
             )
+    }
+}
+
+private fun Throwable.throwIfProvisioningCancellation() {
+    if (this is CancellationException) {
+        throw this
     }
 }
 

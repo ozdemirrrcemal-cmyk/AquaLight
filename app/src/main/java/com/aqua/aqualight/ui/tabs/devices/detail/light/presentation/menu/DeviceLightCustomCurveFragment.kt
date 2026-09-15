@@ -102,8 +102,12 @@ class DeviceLightCustomCurveFragment : Fragment(R.layout.fragment_device_light_c
             onGraphPointClick = viewModel.pointEditor::selectGraphPoint,
             onGraphPointLongClick = viewModel.pointEditor::requestPointActions,
             onPlayheadChanged = viewModel.pointEditor::updatePlayhead,
-            onPlayheadChangeFinished = viewModel.pointEditor::finishPlayheadDrag,
-            onPlayheadTimeClick = viewModel.pointEditor::requestPlayheadTime,
+            onPlayheadChangeFinished = {
+                viewModel.pointEditor.requestPlayheadTime(editSelected = false)
+            },
+            onPlayheadTimeClick = {
+                viewModel.pointEditor.requestPlayheadTime(editSelected = true)
+            },
             onChannelChanged = viewModel.pointEditor::updateSelectedChannel,
             onPreviewClick = viewModel::preview,
             onLoadClick = { unsavedGuard.requestAction(::openLibrary) },

@@ -76,10 +76,12 @@ class AquaTimePickerBottomSheet : BottomSheetDialogFragment(
         configureSelectionMode(
             view = view,
             selectionMode = selectionMode,
-            showSelectionPreview = args.getBoolean(ARG_SHOW_SELECTION_PREVIEW, true),
-            showColumnLabels = args.getBoolean(ARG_SHOW_COLUMN_LABELS, true),
-            showFormatHint = args.getBoolean(ARG_SHOW_FORMAT_HINT, true),
-            splitSelectionHighlight = args.getBoolean(ARG_SPLIT_SELECTION_HIGHLIGHT)
+            presentation = AquaTimePickerPresentation(
+                showSelectionPreview = args.getBoolean(ARG_SHOW_SELECTION_PREVIEW, true),
+                showColumnLabels = args.getBoolean(ARG_SHOW_COLUMN_LABELS, true),
+                showFormatHint = args.getBoolean(ARG_SHOW_FORMAT_HINT, true),
+                splitSelectionHighlight = args.getBoolean(ARG_SPLIT_SELECTION_HIGHLIGHT)
+            )
         )
         view.findViewById<TextView>(R.id.tvAquaTimePickerHelper).apply {
             val helper = args.getString(ARG_HELPER_TEXT)
@@ -175,19 +177,18 @@ class AquaTimePickerBottomSheet : BottomSheetDialogFragment(
     private fun configureSelectionMode(
         view: View,
         selectionMode: SelectionMode,
-        showSelectionPreview: Boolean,
-        showColumnLabels: Boolean,
-        showFormatHint: Boolean,
-        splitSelectionHighlight: Boolean
+        presentation: AquaTimePickerPresentation
     ) {
         val minuteOnly = selectionMode == SelectionMode.MINUTE_OF_HOUR
-        val showSplitHighlight = splitSelectionHighlight && !minuteOnly
-        view.findViewById<View>(R.id.tvAquaTimePickerSelection).isGone = !showSelectionPreview
+        val showSplitHighlight = presentation.splitSelectionHighlight && !minuteOnly
+        view.findViewById<View>(R.id.tvAquaTimePickerSelection).isGone =
+            !presentation.showSelectionPreview
         view.findViewById<View>(R.id.tvAquaTimePickerHourLabel).isGone =
-            minuteOnly || !showColumnLabels
+            minuteOnly || !presentation.showColumnLabels
         view.findViewById<View>(R.id.spaceAquaTimePickerLabels).isGone =
-            minuteOnly || !showColumnLabels
-        view.findViewById<View>(R.id.tvAquaTimePickerMinuteLabel).isGone = !showColumnLabels
+            minuteOnly || !presentation.showColumnLabels
+        view.findViewById<View>(R.id.tvAquaTimePickerMinuteLabel).isGone =
+            !presentation.showColumnLabels
         view.findViewById<View>(R.id.rvAquaTimePickerHour).isGone = minuteOnly
         view.findViewById<View>(R.id.tvAquaTimePickerSeparator).isGone = minuteOnly
         view.findViewById<View>(R.id.viewAquaTimePickerCombinedSelection).isGone =
@@ -195,7 +196,7 @@ class AquaTimePickerBottomSheet : BottomSheetDialogFragment(
         view.findViewById<View>(R.id.aquaTimePickerSplitSelection).isGone =
             !showSplitHighlight
         view.findViewById<TextView>(R.id.tvAquaTimePickerHint).apply {
-            isGone = !showFormatHint
+            isGone = !presentation.showFormatHint
             setText(
                 if (minuteOnly) {
                     R.string.common_time_picker_minute_of_hour_hint
@@ -450,6 +451,13 @@ class AquaTimePickerBottomSheet : BottomSheetDialogFragment(
         }
     }
 }
+
+private data class AquaTimePickerPresentation(
+    val showSelectionPreview: Boolean,
+    val showColumnLabels: Boolean,
+    val showFormatHint: Boolean,
+    val splitSelectionHighlight: Boolean
+)
 
 private data class AquaTimeWheelBinding(
     val replaceValues: (List<Int>, Int) -> Unit

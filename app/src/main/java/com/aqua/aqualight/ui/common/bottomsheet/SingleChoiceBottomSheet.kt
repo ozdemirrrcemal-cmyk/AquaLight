@@ -134,28 +134,33 @@ class SingleChoiceBottomSheet : BottomSheetDialogFragment(
         private const val ARG_PAYLOAD_ID = "arg_payload_id"
         private const val TAG_PREFIX = "SingleChoiceBottomSheet:"
 
-        fun show(
-            fragmentManager: FragmentManager,
-            title: String,
-            options: List<Pair<String, String>>,
-            selectedId: String?,
-            columns: Int,
-            requestKey: String,
-            payloadId: String = ""
-        ) {
-            val tag = TAG_PREFIX + requestKey
+        fun show(fragmentManager: FragmentManager, request: Request) {
+            val tag = TAG_PREFIX + request.resultTarget.requestKey
             if (fragmentManager.findFragmentByTag(tag) != null || fragmentManager.isStateSaved) return
             SingleChoiceBottomSheet().apply {
                 arguments = bundleOf(
-                    ARG_TITLE to title,
-                    ARG_OPTION_IDS to ArrayList(options.map { it.first }),
-                    ARG_OPTION_LABELS to ArrayList(options.map { it.second }),
-                    ARG_SELECTED_ID to selectedId.orEmpty(),
-                    ARG_COLUMNS to columns.coerceAtLeast(1),
-                    ARG_REQUEST_KEY to requestKey,
-                    ARG_PAYLOAD_ID to payloadId
+                    ARG_TITLE to request.title,
+                    ARG_OPTION_IDS to ArrayList(request.options.map { it.first }),
+                    ARG_OPTION_LABELS to ArrayList(request.options.map { it.second }),
+                    ARG_SELECTED_ID to request.selectedId.orEmpty(),
+                    ARG_COLUMNS to request.columns.coerceAtLeast(1),
+                    ARG_REQUEST_KEY to request.resultTarget.requestKey,
+                    ARG_PAYLOAD_ID to request.resultTarget.payloadId
                 )
             }.show(fragmentManager, tag)
         }
+
+        data class Request(
+            val title: String,
+            val options: List<Pair<String, String>>,
+            val selectedId: String?,
+            val columns: Int,
+            val resultTarget: ResultTarget
+        )
+
+        data class ResultTarget(
+            val requestKey: String,
+            val payloadId: String = ""
+        )
     }
 }

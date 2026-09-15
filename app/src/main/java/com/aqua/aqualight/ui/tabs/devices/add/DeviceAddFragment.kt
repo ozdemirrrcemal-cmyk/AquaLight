@@ -97,7 +97,18 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
 
                 launch {
                     viewModel.events.collect { event ->
-                        handleEvent(event)
+                        when (event) {
+                            is DeviceAddEvent.ShowMessage -> {
+                                (activity as? BaseActivity)?.showSnackBar(
+                                    message = event.message,
+                                    type = BaseActivity.SnackType.WARNING
+                                )
+                            }
+                            DeviceAddEvent.OpenQrScanner -> openQrScanner()
+                            is DeviceAddEvent.OpenWifiProvisioning -> {
+                                openManualWifiProvisioning(event.candidate)
+                            }
+                        }
                     }
                 }
             }
@@ -128,31 +139,12 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
             binding.scanPulseView.startScan()
             binding.btnScan.text = getString(R.string.device_add_scan_button_scanning)
             binding.btnScan.isEnabled = false
-            binding.btnScan.alpha = 0.72f
+            binding.btnScan.alpha = SCANNING_BUTTON_ALPHA
         } else {
             binding.scanPulseView.stopScan()
             binding.btnScan.text = getString(R.string.device_add_scan_button)
             binding.btnScan.isEnabled = true
             binding.btnScan.alpha = 1f
-        }
-    }
-
-    private fun handleEvent(event: DeviceAddEvent) {
-        when (event) {
-            is DeviceAddEvent.ShowMessage -> {
-                (activity as? BaseActivity)?.showSnackBar(
-                    message = event.message,
-                    type = BaseActivity.SnackType.WARNING
-                )
-            }
-
-            DeviceAddEvent.OpenQrScanner -> {
-                openQrScanner()
-            }
-
-            is DeviceAddEvent.OpenWifiProvisioning -> {
-                openManualWifiProvisioning(event.candidate)
-            }
         }
     }
 
@@ -185,5 +177,6 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
 
     private companion object {
         const val ACTION_START_BLE_SCAN = "start_ble_scan"
+        const val SCANNING_BUTTON_ALPHA = 0.72f
     }
 }

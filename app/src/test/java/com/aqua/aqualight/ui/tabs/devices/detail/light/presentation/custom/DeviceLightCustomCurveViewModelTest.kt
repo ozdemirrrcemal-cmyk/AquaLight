@@ -123,7 +123,7 @@ class DeviceLightCustomCurveViewModelTest {
         val effect = async(start = CoroutineStart.UNDISPATCHED) { viewModel.effects.first() }
 
         viewModel.pointEditor.updatePlayhead(PREVIEW_TIME_MS)
-        viewModel.pointEditor.finishPlayheadDrag()
+        viewModel.pointEditor.requestPlayheadTime(editSelected = false)
 
         assertEquals(
             DeviceLightCustomCurveEffect.ShowPointLimit(MAX_POINT_CAPACITY),
@@ -170,7 +170,7 @@ class DeviceLightCustomCurveViewModelTest {
         val effect = async(start = CoroutineStart.UNDISPATCHED) { viewModel.effects.first() }
 
         viewModel.pointEditor.updatePlayhead(PREVIEW_TIME_MS)
-        viewModel.pointEditor.finishPlayheadDrag()
+        viewModel.pointEditor.requestPlayheadTime(editSelected = false)
 
         assertEquals(
             DeviceLightCustomCurveEffect.OpenTimePicker(

@@ -28,6 +28,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
@@ -104,10 +105,10 @@ private fun CurveHeadingGlyph(color: Color) {
             strokeWidth = stroke
         )
         val path = Path().apply {
-            moveTo(size.width * 0.16f, size.height * 0.68f)
-            lineTo(size.width * 0.40f, size.height * 0.43f)
-            lineTo(size.width * 0.62f, size.height * 0.58f)
-            lineTo(size.width * 0.88f, size.height * 0.23f)
+            moveTo(size.width * GLYPH_START_X, size.height * GLYPH_START_Y)
+            lineTo(size.width * GLYPH_SECOND_X, size.height * GLYPH_SECOND_Y)
+            lineTo(size.width * GLYPH_THIRD_X, size.height * GLYPH_THIRD_Y)
+            lineTo(size.width * GLYPH_END_X, size.height * GLYPH_END_Y)
         }
         drawPath(path, color, style = Stroke(width = stroke))
     }
@@ -163,11 +164,12 @@ private fun EditableCurveChart(
                 modifier = Modifier.offset(x = bubbleX).width(bubbleWidth)
             )
             PlayheadDragHandle(
-                timeMs = state.previewTimeMs,
-                enabled = state.contentEnabled && !state.operationInProgress,
-                chartWidthPx = plotWidthPx,
-                onTimeChanged = actions.onPlayheadChanged,
-                onDragFinished = actions.onPlayheadChangeFinished,
+                state = DeviceLightCustomPlayheadState(
+                    timeMs = state.previewTimeMs,
+                    enabled = state.contentEnabled && !state.operationInProgress,
+                    chartWidthPx = plotWidthPx
+                ),
+                actions = actions,
                 modifier = Modifier.offset(
                     x = handleX,
                     y = (PLAYHEAD_LABEL_SPACE_DP + CHART_HEIGHT_DP -
@@ -181,36 +183,38 @@ private fun EditableCurveChart(
 
 @Composable
 private fun PlayheadDragHandle(
-    timeMs: Long,
-    enabled: Boolean,
-    chartWidthPx: Float,
-    onTimeChanged: (Long) -> Unit,
-    onDragFinished: () -> Unit,
+    state: DeviceLightCustomPlayheadState,
+    actions: DeviceLightCustomCurveActions,
     modifier: Modifier
 ) {
-    val currentTimeMs by rememberUpdatedState(timeMs)
+    val currentTimeMs by rememberUpdatedState(state.timeMs)
     Box(
-        modifier = modifier.pointerInput(enabled, chartWidthPx) {
-            if (!enabled || chartWidthPx <= 0f) return@pointerInput
+        modifier = modifier.pointerInput(state.enabled, state.chartWidthPx) {
+            if (!state.enabled || state.chartWidthPx <= 0f) return@pointerInput
             var playheadX = 0f
             var moved = false
             detectHorizontalDragGestures(
                 onDragStart = {
-                    playheadX = chartX(currentTimeMs, chartWidthPx, 0L, MILLIS_PER_DAY)
+                    playheadX = chartX(
+                        currentTimeMs,
+                        state.chartWidthPx,
+                        CHART_WINDOW.startMs,
+                        CHART_WINDOW.endMs
+                    )
                     moved = false
                 },
                 onDragEnd = {
-                    if (moved) onDragFinished()
+                    if (moved) actions.onPlayheadChangeFinished()
                     moved = false
                 },
                 onDragCancel = { moved = false }
             ) { change, dragAmount ->
                 change.consume()
                 moved = true
-                playheadX = (playheadX + dragAmount).coerceIn(0f, chartWidthPx)
-                onTimeChanged(playheadTimeForX(playheadX, chartWidthPx))
+                playheadX = (playheadX + dragAmount).coerceIn(0f, state.chartWidthPx)
+                actions.onPlayheadChanged(playheadTimeForX(playheadX, state.chartWidthPx))
             }
-        }.clearAndSetSemantics { contentDescription = formatTime(timeMs) }
+        }.clearAndSetSemantics { contentDescription = formatTime(state.timeMs) }
     )
 }
 
@@ -271,68 +275,70 @@ private fun CurveCanvas(
 ) {
     Canvas(
         modifier = modifier.height(CHART_HEIGHT_DP.dp)
-            .pointerInput(
-                state.contentEnabled,
-                state.operationInProgress,
-                state.draft.points
-            ) {
-                if (state.contentEnabled && !state.operationInProgress) {
-                    detectTapGestures(
-                        onTap = { offset ->
-                            nearestVisiblePointTime(
-                                points = state.draft.points,
-                                tapX = offset.x,
-                                chartWidth = size.width.toFloat(),
-                                windowStartMs = 0L,
-                                windowEndMs = MILLIS_PER_DAY,
-                                tolerancePx = POINT_HIT_RADIUS_DP.dp.toPx()
-                            )?.let(actions.onGraphPointClick)
-                        },
-                        onLongPress = { offset ->
-                            nearestVisiblePointTime(
-                                points = state.draft.points,
-                                tapX = offset.x,
-                                chartWidth = size.width.toFloat(),
-                                windowStartMs = 0L,
-                                windowEndMs = MILLIS_PER_DAY,
-                                tolerancePx = POINT_HIT_RADIUS_DP.dp.toPx()
-                            )?.let(actions.onGraphPointLongClick)
-                        }
-                    )
-                }
-            }
+            .curvePointInput(state, actions)
             .clearAndSetSemantics { contentDescription = description }
     ) {
-        drawCurveGrid(visuals.colors.card, CHART_TIME_DIVISIONS)
-        drawPlayheadGuide(
-            timeMs = state.previewTimeMs,
-            windowStartMs = 0L,
-            windowEndMs = MILLIS_PER_DAY,
-            visuals = visuals
+        drawCurveContent(state, visuals)
+    }
+}
+
+private fun Modifier.curvePointInput(
+    state: DeviceLightCustomCurveUiState,
+    actions: DeviceLightCustomCurveActions
+): Modifier = pointerInput(state.contentEnabled, state.operationInProgress, state.draft.points) {
+    if (state.contentEnabled && !state.operationInProgress) {
+        fun nearestTime(tapX: Float) = nearestVisiblePointTime(
+            points = state.draft.points,
+            target = DeviceLightCustomHitTarget(
+                tapX = tapX,
+                chartWidth = size.width.toFloat(),
+                tolerancePx = POINT_HIT_RADIUS_DP.dp.toPx()
+            ),
+            window = CHART_WINDOW
         )
-        val samples = state.draft.points.chartSamples(
-            state.channels,
-            0L,
-            MILLIS_PER_DAY
+        detectTapGestures(
+            onTap = { offset -> nearestTime(offset.x)?.let(actions.onGraphPointClick) },
+            onLongPress = { offset ->
+                nearestTime(offset.x)?.let(actions.onGraphPointLongClick)
+            }
         )
-        state.channels.forEach { channel ->
-            drawChannelCurve(
+    }
+}
+
+private fun DrawScope.drawCurveContent(
+    state: DeviceLightCustomCurveUiState,
+    visuals: DeviceLightCustomVisuals
+) {
+    drawCurveGrid(visuals.colors.card, CHART_TIME_DIVISIONS)
+    drawPlayheadGuide(
+        state.previewTimeMs,
+        CHART_WINDOW.startMs,
+        CHART_WINDOW.endMs,
+        visuals
+    )
+    val samples = state.draft.points.chartSamples(
+        state.channels,
+        CHART_WINDOW.startMs,
+        CHART_WINDOW.endMs
+    )
+    state.channels.forEach { channel ->
+        drawChannelCurve(
+            plot = DeviceLightCustomChannelPlot(
                 samples = samples,
                 actualPoints = state.draft.points,
                 channel = channel,
                 selectedTimeMs = state.selectedTimeMs,
-                windowStartMs = 0L,
-                windowEndMs = MILLIS_PER_DAY,
-                visuals = visuals
-            )
-        }
-        drawPlayheadThumb(
-            timeMs = state.previewTimeMs,
-            windowStartMs = 0L,
-            windowEndMs = MILLIS_PER_DAY,
+                window = CHART_WINDOW
+            ),
             visuals = visuals
         )
     }
+    drawPlayheadThumb(
+        state.previewTimeMs,
+        CHART_WINDOW.startMs,
+        CHART_WINDOW.endMs,
+        visuals
+    )
 }
 
 @Composable
@@ -384,10 +390,21 @@ private val CHART_PERCENT_LABELS = listOf(
     QUARTER_PERCENT,
     MIN_LIGHT_CHANNEL_PERCENT
 )
-private val CHART_HOUR_LABELS = listOf(0, 4, 8, 12, 16, 20, 24)
+private val CHART_HOUR_LABELS = List(CHART_TIME_DIVISIONS + 1) { index ->
+    index * HOURS_PER_GRID_DIVISION
+}
+private val CHART_WINDOW = DeviceLightCustomChartWindow(0L, MILLIS_PER_DAY)
 private const val CURVE_CONTENT_SPACING_DP = 8
 private const val HEADER_ICON_SIZE_DP = 34
 private const val HEADER_ICON_STROKE_DP = 2
+private const val GLYPH_START_X = 0.16f
+private const val GLYPH_START_Y = 0.68f
+private const val GLYPH_SECOND_X = 0.40f
+private const val GLYPH_SECOND_Y = 0.43f
+private const val GLYPH_THIRD_X = 0.62f
+private const val GLYPH_THIRD_Y = 0.58f
+private const val GLYPH_END_X = 0.88f
+private const val GLYPH_END_Y = 0.23f
 private const val HEADER_ICON_GAP_DP = 10
 private const val HEADER_CAPACITY_GAP_DP = 8
 private const val PLAYHEAD_LABEL_SPACE_DP = 48
@@ -399,6 +416,7 @@ private const val PLAYHEAD_LABEL_BORDER_DP = 1
 private const val CHART_PERCENT_AXIS_WIDTH_DP = 38
 private const val CHART_HEIGHT_DP = 218
 private const val CHART_TIME_DIVISIONS = 6
+private const val HOURS_PER_GRID_DIVISION = 4
 private const val POINT_HIT_RADIUS_DP = 24
 private const val PLAYHEAD_HANDLE_WIDTH_DP = 56
 private const val PLAYHEAD_HANDLE_HEIGHT_DP = 48

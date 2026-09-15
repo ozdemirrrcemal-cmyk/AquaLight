@@ -27,28 +27,19 @@ internal class DeviceLightCustomPointEditor(
         updateState { current -> current.copy(previewTimeMs = timeMs.alignedTime()) }
     }
 
-    fun finishPlayheadDrag() {
+    fun requestPlayheadTime(editSelected: Boolean) {
         val state = currentState()
         if (!state.contentEnabled || state.operationInProgress) return
+        val selectedPoint = state.selectedPoint?.takeIf { point ->
+            editSelected && point.timeMs == state.previewTimeMs
+        }
         val existingPoint = state.draft.points.singleOrNull { point ->
             point.timeMs == state.previewTimeMs
         }
-        if (existingPoint != null) {
-            selectGraphPoint(existingPoint.timeMs)
-        } else {
-            requestAddPoint(state.previewTimeMs)
-        }
-    }
-
-    fun requestPlayheadTime() {
-        val state = currentState()
-        val selectedPoint = state.selectedPoint?.takeIf { point ->
-            point.timeMs == state.previewTimeMs
-        }
-        if (selectedPoint != null) {
-            requestEditSelectedTime()
-        } else {
-            requestAddPoint(state.previewTimeMs)
+        when {
+            selectedPoint != null -> requestEditSelectedTime()
+            existingPoint != null -> selectGraphPoint(existingPoint.timeMs)
+            else -> requestAddPoint(state.previewTimeMs)
         }
     }
 
