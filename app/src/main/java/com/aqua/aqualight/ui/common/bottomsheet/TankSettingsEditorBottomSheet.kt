@@ -1,6 +1,5 @@
 package com.aqua.aqualight.ui.common.bottomsheet
 
-import android.content.Context
 import android.content.DialogInterface
 import android.os.Bundle
 import android.text.Editable
@@ -103,10 +102,7 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
                     .orEmpty()
                 return@setOnClickListener
             }
-            publishResult(
-                status = RESULT_SAVED,
-                payload = ResultPayload(textValue = value)
-            )
+            publishResult(status = RESULT_SAVED, textValue = value)
             dismiss()
         }
         attachContent(binding.root)
@@ -131,10 +127,7 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
         bindChoiceOptions(options)
         binding.btnCancel.setOnClickListener { cancelAndDismiss() }
         binding.btnSave.setOnClickListener {
-            publishResult(
-                status = RESULT_SAVED,
-                payload = ResultPayload(textValue = selectedChoice)
-            )
+            publishResult(status = RESULT_SAVED, textValue = selectedChoice)
             dismiss()
         }
         attachContent(binding.root)
@@ -209,21 +202,43 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
         }
         binding.btnCancel.setOnClickListener { cancelAndDismiss() }
         binding.btnSave.setOnClickListener {
-            val dimensions = binding.parseDimensions(
+            val widthCm = AquariumDimensionInputPolicy.parseCentimeters(
                 requireContext(),
-                selectedUnit,
-                validationMessage
-            ) ?: return@setOnClickListener
+                binding.inputWidth.text,
+                selectedUnit
+            )
+            val lengthCm = AquariumDimensionInputPolicy.parseCentimeters(
+                requireContext(),
+                binding.inputLength.text,
+                selectedUnit
+            )
+            val heightCm = AquariumDimensionInputPolicy.parseCentimeters(
+                requireContext(),
+                binding.inputHeight.text,
+                selectedUnit
+            )
+
+            var invalid = false
+            if (widthCm == null) {
+                binding.inputWidth.error = validationMessage
+                invalid = true
+            }
+            if (lengthCm == null) {
+                binding.inputLength.error = validationMessage
+                invalid = true
+            }
+            if (heightCm == null) {
+                binding.inputHeight.error = validationMessage
+                invalid = true
+            }
+            if (invalid) return@setOnClickListener
+
             publishResult(
                 status = RESULT_SAVED,
-                payload = ResultPayload(
-                    dimensions = ResultDimensions(
-                        widthCm = dimensions.widthCm,
-                        lengthCm = dimensions.lengthCm,
-                        heightCm = dimensions.heightCm,
-                        unit = selectedUnit
-                    )
-                )
+                widthCm = requireNotNull(widthCm),
+                lengthCm = requireNotNull(lengthCm),
+                heightCm = requireNotNull(heightCm),
+                unit = selectedUnit
             )
             dismiss()
         }
@@ -293,10 +308,7 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
                 set(Calendar.SECOND, 0)
                 set(Calendar.MILLISECOND, 0)
             }.timeInMillis
-            publishResult(
-                status = RESULT_SAVED,
-                payload = ResultPayload(millisValue = selectedMillis)
-            )
+            publishResult(status = RESULT_SAVED, millisValue = selectedMillis)
             dismiss()
         }
         attachContent(binding.root)
@@ -351,10 +363,7 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
                     .orEmpty()
                 return@setOnClickListener
             }
-            publishResult(
-                status = RESULT_SAVED,
-                payload = ResultPayload(textValue = value)
-            )
+            publishResult(status = RESULT_SAVED, textValue = value)
             dismiss()
         }
         attachContent(binding.root)
@@ -367,9 +376,7 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
         binding.btnSave.setOnClickListener {
             publishResult(
                 status = RESULT_SAVED,
-                payload = ResultPayload(
-                    textValue = binding.inputIdea.text.toString().trim()
-                )
+                textValue = binding.inputIdea.text.toString().trim()
             )
             dismiss()
         }
@@ -410,7 +417,12 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
 
     private fun publishResult(
         status: String,
-        payload: ResultPayload = ResultPayload()
+        textValue: String? = null,
+        millisValue: Long? = null,
+        widthCm: Int? = null,
+        lengthCm: Int? = null,
+        heightCm: Int? = null,
+        unit: String? = null
     ) {
         if (resultSent) return
         resultSent = true
@@ -418,29 +430,14 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
             RESULT_STATUS to status,
             RESULT_MODE to mode.name
         )
-        payload.textValue?.let { result.putString(RESULT_TEXT, it) }
-        payload.millisValue?.let { result.putLong(RESULT_MILLIS, it) }
-        payload.dimensions?.let { dimensions ->
-            result.putInt(RESULT_WIDTH_CM, dimensions.widthCm)
-            result.putInt(RESULT_LENGTH_CM, dimensions.lengthCm)
-            result.putInt(RESULT_HEIGHT_CM, dimensions.heightCm)
-            result.putString(RESULT_UNIT, dimensions.unit)
-        }
+        textValue?.let { result.putString(RESULT_TEXT, it) }
+        millisValue?.let { result.putLong(RESULT_MILLIS, it) }
+        widthCm?.let { result.putInt(RESULT_WIDTH_CM, it) }
+        lengthCm?.let { result.putInt(RESULT_LENGTH_CM, it) }
+        heightCm?.let { result.putInt(RESULT_HEIGHT_CM, it) }
+        unit?.let { result.putString(RESULT_UNIT, it) }
         parentFragmentManager.setFragmentResult(REQUEST_KEY, result)
     }
-
-    private data class ResultPayload(
-        val textValue: String? = null,
-        val millisValue: Long? = null,
-        val dimensions: ResultDimensions? = null
-    )
-
-    private data class ResultDimensions(
-        val widthCm: Int,
-        val lengthCm: Int,
-        val heightCm: Int,
-        val unit: String
-    )
 
     enum class Mode {
         NAME,
@@ -525,27 +522,4 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
             return if (unit.equals(UNIT_IN, ignoreCase = true)) UNIT_IN else UNIT_CM
         }
     }
-}
-
-private data class ParsedTankDimensions(
-    val widthCm: Int,
-    val lengthCm: Int,
-    val heightCm: Int
-)
-
-private fun ContentSheetTankSizeBinding.parseDimensions(
-    context: Context,
-    unit: String,
-    validationMessage: String
-): ParsedTankDimensions? {
-    val inputs = listOf(inputWidth, inputLength, inputHeight)
-    val dimensions = inputs.map { input ->
-        AquariumDimensionInputPolicy.parseCentimeters(context, input.text, unit)
-    }
-    dimensions.forEachIndexed { index, value ->
-        inputs[index].error = if (value == null) validationMessage else null
-    }
-    if (dimensions.any { it == null }) return null
-    val (widthCm, lengthCm, heightCm) = dimensions.map { requireNotNull(it) }
-    return ParsedTankDimensions(widthCm, lengthCm, heightCm)
 }

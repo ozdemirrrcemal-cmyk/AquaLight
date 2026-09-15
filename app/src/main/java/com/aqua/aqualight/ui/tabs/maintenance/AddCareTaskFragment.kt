@@ -314,13 +314,11 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
         }
         SingleChoiceBottomSheet.show(
             fragmentManager = childFragmentManager,
-            request = SingleChoiceBottomSheet.Request(
-                title = getString(R.string.maintenance_select_water_change_percentage),
-                options = options,
-                selectedId = selectedWaterChangePercent?.toString(),
-                columns = 4,
-                resultTarget = SingleChoiceBottomSheet.ResultTarget(WATER_PERCENT_REQUEST_KEY)
-            )
+            title = getString(R.string.maintenance_select_water_change_percentage),
+            options = options,
+            selectedId = selectedWaterChangePercent?.toString(),
+            columns = 4,
+            requestKey = WATER_PERCENT_REQUEST_KEY
         )
     }
 
@@ -334,17 +332,15 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
         }
         SingleChoiceBottomSheet.show(
             fragmentManager = childFragmentManager,
-            request = SingleChoiceBottomSheet.Request(
-                title = getString(R.string.maintenance_select_aquarium),
-                options = latestTanks.map { tank ->
-                    tank.id.toString() to tank.name.ifBlank {
-                        getString(R.string.maintenance_unnamed_aquarium)
-                    }
-                },
-                selectedId = selectedTankId.takeIf { it != 0L }?.toString(),
-                columns = 1,
-                resultTarget = SingleChoiceBottomSheet.ResultTarget(AQUARIUM_REQUEST_KEY)
-            )
+            title = getString(R.string.maintenance_select_aquarium),
+            options = latestTanks.map { tank ->
+                tank.id.toString() to tank.name.ifBlank {
+                    getString(R.string.maintenance_unnamed_aquarium)
+                }
+            },
+            selectedId = selectedTankId.takeIf { it != 0L }?.toString(),
+            columns = 1,
+            requestKey = AQUARIUM_REQUEST_KEY
         )
     }
 

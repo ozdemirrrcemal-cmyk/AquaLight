@@ -35,17 +35,15 @@ sealed interface AquaUiText {
 
 fun Context.resolve(uiText: AquaUiText): CharSequence {
     return when (uiText) {
-        is AquaUiText.Resource -> AquaUiTextResourceFormatter.formatString(
-            this,
+        is AquaUiText.Resource -> getString(
             uiText.resId,
-            uiText.args.map(::resolveArgument).toTypedArray()
+            *uiText.args.map(::resolveArgument).toTypedArray()
         )
 
-        is AquaUiText.Plural -> AquaUiTextResourceFormatter.formatPlural(
-            this,
+        is AquaUiText.Plural -> resources.getQuantityString(
             uiText.resId,
             uiText.quantity,
-            uiText.args.map(::resolveArgument).toTypedArray()
+            *uiText.args.map(::resolveArgument).toTypedArray()
         )
 
         is AquaUiText.Dynamic -> uiText.value

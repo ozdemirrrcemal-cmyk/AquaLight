@@ -38,22 +38,20 @@ internal class DeviceTimerChannelSheetCoordinator(
         if (!current.channelStateWriteEnabled || current.mutationPending) return
         SingleChoiceBottomSheet.show(
             fragmentManager = fragment.parentFragmentManager,
-            request = SingleChoiceBottomSheet.Request(
-                title = fragment.getString(R.string.device_timer_work_mode_title),
-                options = listOf(
-                    DeviceTimerWorkMode.MANUAL.name to
-                        fragment.getString(R.string.device_timer_work_mode_manual),
-                    DeviceTimerWorkMode.PROGRAM.name to
-                        fragment.getString(R.string.device_timer_work_mode_program)
-                ),
-                selectedId = if (channel.regime == DeviceTimerChannelRegime.AUTO) {
-                    DeviceTimerWorkMode.PROGRAM.name
-                } else {
-                    DeviceTimerWorkMode.MANUAL.name
-                },
-                columns = SINGLE_CHOICE_COLUMN_COUNT,
-                resultTarget = SingleChoiceBottomSheet.ResultTarget(REQUEST_WORK_MODE)
-            )
+            title = fragment.getString(R.string.device_timer_work_mode_title),
+            options = listOf(
+                DeviceTimerWorkMode.MANUAL.name to
+                    fragment.getString(R.string.device_timer_work_mode_manual),
+                DeviceTimerWorkMode.PROGRAM.name to
+                    fragment.getString(R.string.device_timer_work_mode_program)
+            ),
+            selectedId = if (channel.regime == DeviceTimerChannelRegime.AUTO) {
+                DeviceTimerWorkMode.PROGRAM.name
+            } else {
+                DeviceTimerWorkMode.MANUAL.name
+            },
+            columns = SINGLE_CHOICE_COLUMN_COUNT,
+            requestKey = REQUEST_WORK_MODE
         )
     }
 
