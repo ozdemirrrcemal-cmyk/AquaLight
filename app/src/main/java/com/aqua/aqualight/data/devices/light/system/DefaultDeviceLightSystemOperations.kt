@@ -138,7 +138,7 @@ internal class DefaultDeviceLightSystemOperations(
             )
         )
         val protectionResult = (protectionOutcome as? DeviceRuntimeCommandOutcome.Success)?.value
-        if (
+        return if (
             protectionResult == null ||
             !protectionResult.saveRequested ||
             !protectionResult.saved
