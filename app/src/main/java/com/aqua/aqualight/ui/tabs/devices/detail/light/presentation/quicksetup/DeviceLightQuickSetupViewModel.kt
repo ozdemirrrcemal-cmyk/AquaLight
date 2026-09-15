@@ -194,7 +194,11 @@ internal class DeviceLightQuickSetupViewModel(
             when (result) {
                 is SmartSetupProfileSaveResult.Saved -> {
                     clearDraftState()
-                    applySnapshot(result.snapshot, preserveApplied = false)
+                    applySnapshot(
+                        snapshot = result.snapshot,
+                        preserveApplied = false,
+                        preserveDraft = false
+                    )
                     emitMessage(R.string.device_light_smart_setup_profile_saved, success = true)
                 }
                 is SmartSetupProfileSaveResult.Failed -> {
@@ -262,10 +266,16 @@ internal class DeviceLightQuickSetupViewModel(
         }
     }
 
-    private fun applySnapshot(snapshot: SmartSetupSnapshot, preserveApplied: Boolean) {
+    private fun applySnapshot(
+        snapshot: SmartSetupSnapshot,
+        preserveApplied: Boolean,
+        preserveDraft: Boolean = true
+    ) {
         _uiState.update { state ->
-            val restored = restoredEditor(snapshot)
-            val keepCurrent = state.draftDirty && state.deviceUid == snapshot.deviceUid
+            val restored = restoredEditor(snapshot).takeIf { preserveDraft }
+            val keepCurrent = preserveDraft &&
+                state.draftDirty &&
+                state.deviceUid == snapshot.deviceUid
             state.copy(
                 deviceUid = snapshot.deviceUid,
                 connectionVisualState = DeviceConnectionVisualState.ONLINE,
