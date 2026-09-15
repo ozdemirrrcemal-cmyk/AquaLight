@@ -80,6 +80,6 @@
     <string name="device_light_auto_preset_shade_summary">Anubias, fern ve moss</string>
     <string name="device_light_auto_preset_schedule_format">%1$d sa · %2$d dk</string>
     <string name="device_light_auto_preset_channel_percent">%%%1$d</string>
-    <string name="device_light_auto_preset_card_description">%1$s. %2$d sa, %3$d dk geçiş. Beyaz yüzde %4$d, kırmızı yüzde %5$d, yeşil yüzde %6$d, mavi yüzde %7$d.</string>
+    <string name="device_light_auto_preset_card_description">%1$s. %2$d sa, %3$d dk geçiş. Beyaz %%%4$d, kırmızı %%%5$d, yeşil %%%6$d, mavi %%%7$d.</string>
     <string name="device_light_auto_preset_use">Bu ön ayarı kullan</string>
 </resources>
