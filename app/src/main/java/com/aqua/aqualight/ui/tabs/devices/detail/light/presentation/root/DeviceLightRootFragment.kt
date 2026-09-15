@@ -49,7 +49,8 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
     private fun setupDashboardContent() {
         val actions = DeviceLightDashboardActions(
             onQuickSetupClick = ::openQuickSetup,
-            onMenuClick = ::openDashboardMenu
+            onMenuClick = ::openDashboardDestination,
+            onPlanClick = ::openDashboardDestination
         )
         binding.lightDashboardCompose.apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
@@ -132,7 +133,7 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
         )
     }
 
-    private fun openDashboardMenu(destination: DeviceLightMenuDestination) {
+    private fun openDashboardDestination(destination: DeviceLightDashboardDestination) {
         if (!viewModel.uiState.value.contentEnabled) return
         val navController = findNavController()
         if (navController.currentDestination?.id != R.id.deviceLightRootFragment) return
@@ -141,7 +142,8 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
                 DeviceLightRootFragmentDirections
                     .actionDeviceLightRootFragmentToDeviceLightManualControlFragment(args.deviceUid)
             )
-            DeviceLightMenuDestination.AUTOMATIC_PROGRAMS -> navController.navigate(
+            DeviceLightMenuDestination.AUTOMATIC_PROGRAMS,
+            DeviceLightPlanDestination.AutomaticPrograms -> navController.navigate(
                 DeviceLightRootFragmentDirections
                     .actionDeviceLightRootFragmentToDeviceLightAutomaticProgramsFragment(
                         args.deviceUid
@@ -162,6 +164,18 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
             DeviceLightMenuDestination.SYSTEM -> navController.navigate(
                 DeviceLightRootFragmentDirections
                     .actionDeviceLightRootFragmentToDeviceLightSystemFragment(args.deviceUid)
+            )
+            is DeviceLightPlanDestination.AutomaticProgramEditor -> navController.navigate(
+                DeviceLightRootFragmentDirections
+                    .actionDeviceLightRootFragmentToDeviceLightAutomaticProgramEditorFragment(
+                        deviceUid = args.deviceUid,
+                        programId = destination.programId,
+                        duplicate = false
+                    )
+            )
+            DeviceLightPlanDestination.CustomCurveEditor -> navController.navigate(
+                DeviceLightRootFragmentDirections
+                    .actionDeviceLightRootFragmentToDeviceLightCustomCurveFragment(args.deviceUid)
             )
         }
     }

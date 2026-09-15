@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.colorResource
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.light.control.DeviceLightControlMode
 import com.aqua.aqualight.ui.common.light.AquaLightDashboardGeometry
 
 @Composable
@@ -37,7 +38,14 @@ internal fun DeviceLightDashboardScreen(
             )
         }
         item(key = "light-plan") {
-            DeviceLightPlanCard()
+            DeviceLightPlanCard(
+                mode = state.hero.mode,
+                enabled = state.contentEnabled,
+                onActionClick = {
+                    state.hero.mode.planDestination(state.activeAutomaticProgramId)
+                        ?.let(actions.onPlanClick)
+                }
+            )
         }
         item(key = "light-live-output") {
             DeviceLightLiveOutputCard()
@@ -62,4 +70,16 @@ internal fun DeviceLightDashboardScreen(
             )
         }
     }
+}
+
+internal fun DeviceLightControlMode?.planDestination(
+    activeAutomaticProgramId: String?
+): DeviceLightPlanDestination? = when (this) {
+    DeviceLightControlMode.MANUAL -> DeviceLightPlanDestination.AutomaticPrograms
+    DeviceLightControlMode.AUTOMATIC -> activeAutomaticProgramId
+        ?.takeIf(String::isNotBlank)
+        ?.let { programId -> DeviceLightPlanDestination.AutomaticProgramEditor(programId) }
+        ?: DeviceLightPlanDestination.AutomaticPrograms
+    DeviceLightControlMode.CUSTOM -> DeviceLightPlanDestination.CustomCurveEditor
+    null -> null
 }

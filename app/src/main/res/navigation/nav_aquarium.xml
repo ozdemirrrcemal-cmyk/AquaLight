@@ -332,6 +332,13 @@
             app:popEnterAnim="@anim/nav_slide_in_left"
             app:popExitAnim="@anim/nav_slide_out_right" />
         <action
+            android:id="@+id/action_deviceLightRootFragment_to_deviceLightAutomaticProgramEditorFragment"
+            app:destination="@id/deviceLightAutomaticProgramEditorFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+        <action
             android:id="@+id/action_deviceLightRootFragment_to_deviceLightCustomCurveFragment"
             app:destination="@id/deviceLightCustomCurveFragment"
             app:enterAnim="@anim/nav_slide_in_right"

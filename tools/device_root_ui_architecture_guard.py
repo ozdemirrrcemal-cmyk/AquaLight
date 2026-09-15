@@ -702,6 +702,7 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
     light_dashboard_destinations = (
         "DeviceLightManualControlFragment",
         "DeviceLightAutomaticProgramsFragment",
+        "DeviceLightAutomaticProgramEditorFragment",
         "DeviceLightCustomCurveFragment",
         "DeviceLightAdaptationFragment",
         "DeviceLightSystemFragment",

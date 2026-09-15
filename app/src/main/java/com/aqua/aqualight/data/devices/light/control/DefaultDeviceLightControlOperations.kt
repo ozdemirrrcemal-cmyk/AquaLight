@@ -144,6 +144,7 @@ internal fun DeviceLightStatus.toControlSnapshot(
     productKey = product.wireValue,
     physicalChannelCount = runtime.physicalChannelCount,
     channelKeys = channels.sortedBy { channel -> channel.order }.map { channel -> channel.key },
+    activeAutomaticProgramId = auto.activeProgramId,
     hero = DeviceLightHeroSnapshot(
         mode = mode.toApplicationMode(),
         outputActive = outputActive,

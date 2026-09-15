@@ -30,6 +30,10 @@
     <string name="device_light_plan_title">Today’s light plan</string>
     <string name="device_light_plan_subtitle">Planned program</string>
     <string name="device_light_plan_view_program">View program</string>
+    <string name="device_light_plan_manual_title">Daily light plan</string>
+    <string name="device_light_plan_manual_message">Time scheduling is not used in Manual mode.</string>
+    <string name="device_light_plan_switch_to_automatic">Switch to Automatic</string>
+    <string name="device_light_plan_manual_content_description">Manual mode does not use a time schedule. Switch to Automatic.</string>
     <string name="device_light_plan_current_time_format">Now %1$s</string>
     <string name="device_light_plan_time_format">%1$02d:%2$02d</string>
     <string name="device_light_plan_hour_format">%1$02d</string>

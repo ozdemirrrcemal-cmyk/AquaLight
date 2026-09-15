@@ -39,6 +39,7 @@ data class DeviceLightControlSnapshot(
     val productKey: String,
     val physicalChannelCount: Int,
     val channelKeys: List<String>,
+    val activeAutomaticProgramId: String? = null,
     val hero: DeviceLightHeroSnapshot = DeviceLightHeroSnapshot(),
     val adaptation: DeviceLightAdaptationSummary = DeviceLightAdaptationSummary()
 )

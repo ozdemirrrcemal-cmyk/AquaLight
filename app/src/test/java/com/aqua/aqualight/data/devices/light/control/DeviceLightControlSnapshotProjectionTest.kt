@@ -15,13 +15,17 @@ class DeviceLightControlSnapshotProjectionTest {
 
     @Test
     fun `authoritative status projects live hero values without firmware models`() {
-        val status = DeviceLightStatusParser.parse(DeviceLightRuntimeFixtures.status())
-            .copy(mode = DeviceLightMode.AUTO)
+        val parsed = DeviceLightStatusParser.parse(DeviceLightRuntimeFixtures.status())
+        val status = parsed.copy(
+            mode = DeviceLightMode.AUTO,
+            auto = parsed.auto.copy(activeProgramId = "program-1")
+        )
 
         val snapshot = status
             .toControlSnapshot(DeviceUid("light-pro"))
 
         assertEquals(DeviceLightControlMode.AUTOMATIC, snapshot.hero.mode)
+        assertEquals("program-1", snapshot.activeAutomaticProgramId)
         assertEquals(true, snapshot.hero.outputActive)
         assertEquals(DeviceLightOutputCondition.ACTIVE, snapshot.hero.outputCondition)
         assertEquals(true, snapshot.hero.outputHealthy)

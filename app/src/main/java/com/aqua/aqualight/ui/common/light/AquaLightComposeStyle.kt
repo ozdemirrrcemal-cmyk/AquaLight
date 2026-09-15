@@ -104,6 +104,11 @@ object AquaLightDashboardGeometry {
     val planCurrentGuideDash = 5.dp
     val planCurrentGuideGap = 4.dp
     val planCurrentPointRadius = 3.dp
+    val planActionHeight = 30.dp
+    val planActionHorizontalPadding = 16.dp
+    val planActionOutlineWidth = 1.dp
+    val planActionShape = RoundedCornerShape(percent = 50)
+    val planManualMessageActionGap = 8.dp
 
     val liveOutputCardMinimumHeight = 133.dp
     val liveOutputTitleBottomGap = 10.dp

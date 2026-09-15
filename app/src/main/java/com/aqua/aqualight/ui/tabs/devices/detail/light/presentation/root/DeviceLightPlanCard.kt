@@ -2,6 +2,8 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -20,17 +22,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.light.control.DeviceLightControlMode
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
+import com.aqua.aqualight.ui.common.light.AquaLightDashboardAlpha
 import com.aqua.aqualight.ui.common.light.AquaLightDashboardGeometry
 import com.aqua.aqualight.ui.common.light.AquaLightPlanChartColors
 import com.aqua.aqualight.ui.common.light.AquaLightPlanChartSpec
@@ -40,7 +47,12 @@ import com.aqua.aqualight.ui.common.light.aquaLightPlanChartColors
 import kotlin.math.roundToInt
 
 @Composable
-internal fun DeviceLightPlanCard(modifier: Modifier = Modifier) {
+internal fun DeviceLightPlanCard(
+    mode: DeviceLightControlMode?,
+    enabled: Boolean,
+    onActionClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     val preview = remember { deviceLightPlanPreview() }
     val colors = aquaLightDashboardColors()
     val typography = aquaLightDashboardTypography(colors)
@@ -50,10 +62,17 @@ internal fun DeviceLightPlanCard(modifier: Modifier = Modifier) {
         preview.currentHour,
         preview.currentMinute
     )
-    val description = stringResource(
-        R.string.device_light_plan_content_description,
-        currentTime
+    val state = DeviceLightPlanCardState(
+        mode = mode,
+        enabled = enabled,
+        preview = preview,
+        currentTime = currentTime
     )
+    val description = if (state.manualMode) {
+        stringResource(R.string.device_light_plan_manual_content_description)
+    } else {
+        stringResource(R.string.device_light_plan_content_description, currentTime)
+    }
 
     AquaDeviceCardSurface(
         modifier = modifier
@@ -62,14 +81,19 @@ internal fun DeviceLightPlanCard(modifier: Modifier = Modifier) {
             .semantics { contentDescription = description }
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            DeviceLightPlanHeader(colors = colors, typography = typography)
+            DeviceLightPlanHeader(
+                state = state,
+                colors = colors,
+                typography = typography,
+                onActionClick = onActionClick
+            )
             Spacer(modifier = Modifier.height(AquaLightDashboardGeometry.planContentTopGap))
             DeviceLightPlanChart(
-                preview = preview,
-                currentTime = currentTime,
+                state = state,
                 colors = colors,
                 chartColors = chartColors,
-                typography = typography
+                typography = typography,
+                onActionClick = onActionClick
             )
         }
     }
@@ -77,8 +101,10 @@ internal fun DeviceLightPlanCard(modifier: Modifier = Modifier) {
 
 @Composable
 private fun DeviceLightPlanHeader(
+    state: DeviceLightPlanCardState,
     colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography
+    typography: AquaDeviceCardTypography,
+    onActionClick: () -> Unit
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -86,74 +112,202 @@ private fun DeviceLightPlanHeader(
     ) {
         Column(modifier = Modifier.weight(1f)) {
             BasicText(
-                text = stringResource(R.string.device_light_plan_title),
+                text = stringResource(
+                    if (state.manualMode) {
+                        R.string.device_light_plan_manual_title
+                    } else {
+                        R.string.device_light_plan_title
+                    }
+                ),
                 style = typography.title.copy(color = colors.primaryText),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-            BasicText(
-                text = stringResource(R.string.device_light_plan_subtitle),
-                style = typography.caption.copy(color = colors.secondaryText),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            if (!state.manualMode) {
+                BasicText(
+                    text = stringResource(R.string.device_light_plan_subtitle),
+                    style = typography.caption.copy(color = colors.secondaryText),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(AquaLightDashboardGeometry.planHeaderGap)
-        ) {
-            BasicText(
-                text = stringResource(R.string.device_light_plan_view_program),
-                style = typography.caption.copy(color = colors.secondaryText),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            LightPlanChevron(
-                color = colors.primaryText,
-                modifier = Modifier.size(AquaLightDashboardGeometry.planChevronSize)
-            )
+        if (state.showProgramAction) {
+            Row(
+                modifier = Modifier
+                    .height(AquaLightDashboardGeometry.planActionHeight)
+                    .alpha(if (state.enabled) 1f else AquaLightDashboardAlpha.disabledControl)
+                    .clip(AquaLightDashboardGeometry.planActionShape)
+                    .clickable(
+                        enabled = state.enabled,
+                        role = Role.Button,
+                        onClick = onActionClick
+                    )
+                    .padding(horizontal = AquaLightDashboardGeometry.planHeaderGap),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(
+                    AquaLightDashboardGeometry.planHeaderGap
+                )
+            ) {
+                BasicText(
+                    text = stringResource(R.string.device_light_plan_view_program),
+                    style = typography.caption.copy(color = colors.secondaryText),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                LightPlanChevron(
+                    color = colors.primaryText,
+                    modifier = Modifier.size(AquaLightDashboardGeometry.planChevronSize)
+                )
+            }
         }
     }
 }
 
 @Composable
 private fun DeviceLightPlanChart(
-    preview: DeviceLightPlanPreview,
-    currentTime: String,
+    state: DeviceLightPlanCardState,
     colors: AquaDeviceCardColors,
     chartColors: AquaLightPlanChartColors,
-    typography: AquaDeviceCardTypography
+    typography: AquaDeviceCardTypography,
+    onActionClick: () -> Unit
 ) {
     Row(modifier = Modifier.fillMaxWidth()) {
         DeviceLightPlanYAxis(colors = colors, typography = typography)
         Spacer(modifier = Modifier.width(AquaLightDashboardGeometry.planYAxisGap))
         Column(modifier = Modifier.weight(1f)) {
-            DeviceLightCurrentTimeLabel(
-                currentTime = currentTime,
-                colors = colors,
-                typography = typography,
-                currentHour = preview.currentHour
-            )
-            Canvas(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(AquaLightDashboardGeometry.planPlotHeight)
-            ) {
-                drawLightPlanGrid(chartColors)
-                drawCurrentTimeGuide(preview.currentHour, chartColors)
-                preview.series.forEach { series ->
-                    drawLightPlanSeries(series, chartColors.colorFor(series.channel))
-                }
+            if (state.manualMode) {
+                Spacer(modifier = Modifier.height(AquaLightDashboardGeometry.planMarkerLabelHeight))
+            } else {
+                DeviceLightCurrentTimeLabel(
+                    currentTime = state.currentTime,
+                    colors = colors,
+                    typography = typography,
+                    currentHour = state.preview.currentHour
+                )
             }
+            DeviceLightPlanPlot(
+                state = state,
+                colors = colors,
+                chartColors = chartColors,
+                typography = typography,
+                onActionClick = onActionClick
+            )
             DeviceLightPlanXAxis(colors = colors, typography = typography)
         }
     }
-    Spacer(modifier = Modifier.height(AquaLightDashboardGeometry.planLegendTopGap))
-    DeviceLightPlanLegend(
-        colors = colors,
-        chartColors = chartColors,
-        typography = typography
-    )
+    if (state.manualMode) {
+        Spacer(
+            modifier = Modifier.height(
+                AquaLightDashboardGeometry.planLegendTopGap +
+                    AquaLightDashboardGeometry.planLegendHeight
+            )
+        )
+    } else {
+        Spacer(modifier = Modifier.height(AquaLightDashboardGeometry.planLegendTopGap))
+        DeviceLightPlanLegend(
+            colors = colors,
+            chartColors = chartColors,
+            typography = typography
+        )
+    }
+}
+
+@Composable
+private fun DeviceLightPlanPlot(
+    state: DeviceLightPlanCardState,
+    colors: AquaDeviceCardColors,
+    chartColors: AquaLightPlanChartColors,
+    typography: AquaDeviceCardTypography,
+    onActionClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(AquaLightDashboardGeometry.planPlotHeight)
+    ) {
+        Canvas(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(AquaLightDashboardGeometry.planPlotHeight)
+        ) {
+            drawLightPlanGrid(chartColors)
+            if (!state.manualMode) {
+                drawCurrentTimeGuide(state.preview.currentHour, chartColors)
+                state.preview.series.forEach { series ->
+                    drawLightPlanSeries(series, chartColors.colorFor(series.channel))
+                }
+            }
+        }
+        if (state.manualMode) {
+            DeviceLightManualPlanNotice(
+                enabled = state.enabled,
+                colors = colors,
+                typography = typography,
+                onActionClick = onActionClick,
+                modifier = Modifier.align(Alignment.Center)
+            )
+        }
+    }
+}
+
+private data class DeviceLightPlanCardState(
+    val mode: DeviceLightControlMode?,
+    val enabled: Boolean,
+    val preview: DeviceLightPlanPreview,
+    val currentTime: String
+) {
+    val manualMode: Boolean
+        get() = mode == DeviceLightControlMode.MANUAL
+
+    val showProgramAction: Boolean
+        get() = mode == DeviceLightControlMode.AUTOMATIC ||
+            mode == DeviceLightControlMode.CUSTOM
+}
+
+@Composable
+private fun DeviceLightManualPlanNotice(
+    enabled: Boolean,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography,
+    onActionClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        BasicText(
+            text = stringResource(R.string.device_light_plan_manual_message),
+            style = typography.body.copy(
+                color = colors.primaryText,
+                textAlign = TextAlign.Center
+            ),
+            maxLines = 2
+        )
+        Spacer(modifier = Modifier.height(AquaLightDashboardGeometry.planManualMessageActionGap))
+        Row(
+            modifier = Modifier
+                .height(AquaLightDashboardGeometry.planActionHeight)
+                .alpha(if (enabled) 1f else AquaLightDashboardAlpha.disabledControl)
+                .clip(AquaLightDashboardGeometry.planActionShape)
+                .border(
+                    width = AquaLightDashboardGeometry.planActionOutlineWidth,
+                    color = colors.accent,
+                    shape = AquaLightDashboardGeometry.planActionShape
+                )
+                .clickable(enabled = enabled, role = Role.Button, onClick = onActionClick)
+                .padding(horizontal = AquaLightDashboardGeometry.planActionHorizontalPadding),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            BasicText(
+                text = stringResource(R.string.device_light_plan_switch_to_automatic),
+                style = typography.body.copy(color = colors.accent),
+                maxLines = 1
+            )
+        }
+    }
 }
 
 @Composable

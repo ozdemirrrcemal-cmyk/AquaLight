@@ -179,6 +179,7 @@ class DeviceLightRootViewModel(
             },
             contentEnabled = surfaceAvailable && !surfacePreparationPending,
             showBlockingPreparation = surfacePreparationPending,
+            activeAutomaticProgramId = currentControlSnapshot?.activeAutomaticProgramId,
             hero = currentControlSnapshot?.hero ?: DeviceLightHeroSnapshot(),
             adaptation = currentControlSnapshot?.adaptation ?: DeviceLightAdaptationSummary()
         )
@@ -209,6 +210,7 @@ data class DeviceLightRootUiState(
     val connectionVisualState: DeviceConnectionVisualState = DeviceConnectionVisualState.OFFLINE,
     val contentEnabled: Boolean = false,
     val showBlockingPreparation: Boolean = false,
+    val activeAutomaticProgramId: String? = null,
     val hero: DeviceLightHeroSnapshot = DeviceLightHeroSnapshot(),
     val adaptation: DeviceLightAdaptationSummary = DeviceLightAdaptationSummary()
 )
