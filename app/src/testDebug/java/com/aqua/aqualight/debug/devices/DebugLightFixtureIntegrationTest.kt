@@ -1,5 +1,11 @@
 package com.aqua.aqualight.debug.devices
 
+import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationMutationResult
+import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationOperations
+import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationReadResult
+import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationState
+import com.aqua.aqualight.application.devices.light.control.DeviceLightControlOperations
+import com.aqua.aqualight.application.devices.light.control.DeviceLightControlResult
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomFailure
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomMutationResult
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomOperations
@@ -26,6 +32,42 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DebugLightFixtureIntegrationTest {
+
+    @Test
+    fun eliteFixtureExposesAndRunsAdaptationWithoutProductionCalls() = runTest {
+        val fixtures = DebugDeviceFixtureCatalog()
+        val deviceUid = fixtures.firstAdaptationLightUid()
+        val adaptation = DebugFixtureLightAdaptationOperations(
+            delegate = FailingAdaptationOperations,
+            fixtures = fixtures,
+            epochSeconds = { FIXED_EPOCH_SECONDS }
+        )
+        val controls = DebugFixtureLightControlOperations(
+            delegate = FailingFixtureLightControlOperations,
+            fixtures = fixtures,
+            adaptationOperations = adaptation
+        )
+
+        val initial = adaptation.current(deviceUid) as DeviceLightAdaptationReadResult.Available
+        val initialControl = controls.currentControl(deviceUid) as DeviceLightControlResult.Available
+        val started = adaptation.start(
+            deviceUid = deviceUid,
+            expectedRevision = initial.snapshot.revision,
+            startPercent = START_PERCENT,
+            durationDays = DURATION_DAYS
+        ) as DeviceLightAdaptationMutationResult.Success
+        val activeControl = controls.observeControl(deviceUid).first()
+            as DeviceLightControlResult.Available
+        val stopped = adaptation.stop(deviceUid, started.snapshot.revision)
+            as DeviceLightAdaptationMutationResult.Success
+
+        assertTrue(initialControl.snapshot.adaptation.supported)
+        assertEquals(DeviceLightAdaptationState.DISABLED, initial.snapshot.state)
+        assertEquals(DeviceLightAdaptationState.ACTIVE, started.snapshot.state)
+        assertEquals(START_PERCENT * PERMILLE_PER_PERCENT, started.snapshot.currentPermille)
+        assertEquals(DeviceLightAdaptationState.ACTIVE, activeControl.snapshot.adaptation.state)
+        assertEquals(DeviceLightAdaptationState.DISABLED, stopped.snapshot.state)
+    }
 
     @Test
     fun fixtureCustomDocumentAndPreviewUseInProcessRuntime() = runTest {
@@ -104,6 +146,10 @@ class DebugLightFixtureIntegrationTest {
         const val REAL_DEVICE_UID = "REAL-LIGHT-001"
         const val PREVIEW_TIME_MILLIS = 15L * 60L * 60_000L
         const val EXPECTED_DELEGATE_CALL_COUNT = 3
+        const val FIXED_EPOCH_SECONDS = 1_800_000_000L
+        const val START_PERCENT = 55
+        const val DURATION_DAYS = 21
+        const val PERMILLE_PER_PERCENT = 10
     }
 }
 
@@ -111,6 +157,11 @@ private fun DebugDeviceFixtureCatalog.firstLightUid(): String = snapshots
     .first { snapshot -> snapshot.product.family == DeviceFamily.LIGHT }
     .deviceUid
     .value
+
+private fun DebugDeviceFixtureCatalog.firstAdaptationLightUid(): String = snapshots
+    .map { snapshot -> requireNotNull(rootSnapshot(snapshot.deviceUid.value)) }
+    .first { root -> LIGHT_ACCLIMATION_FEATURE in root.supportedFeatures }
+    .deviceUid
 
 private fun customEntry(
     productKey: String,
@@ -165,6 +216,40 @@ private object FailingCustomOperations : DeviceLightCustomOperations {
 
     private fun fail(deviceUid: String): Nothing =
         error("Fixture Custom operation must not call the production delegate: $deviceUid")
+}
+
+private object FailingAdaptationOperations : DeviceLightAdaptationOperations {
+    override fun observe(deviceUid: String): Flow<DeviceLightAdaptationReadResult> = fail(deviceUid)
+
+    override fun current(deviceUid: String): DeviceLightAdaptationReadResult = fail(deviceUid)
+
+    override suspend fun refresh(deviceUid: String): DeviceLightAdaptationReadResult = fail(deviceUid)
+
+    override suspend fun start(
+        deviceUid: String,
+        expectedRevision: Long,
+        startPercent: Int,
+        durationDays: Int
+    ): DeviceLightAdaptationMutationResult = fail(deviceUid)
+
+    override suspend fun stop(
+        deviceUid: String,
+        expectedRevision: Long
+    ): DeviceLightAdaptationMutationResult = fail(deviceUid)
+
+    private fun fail(deviceUid: String): Nothing =
+        error("Fixture adaptation must not call the production delegate: $deviceUid")
+}
+
+private object FailingFixtureLightControlOperations : DeviceLightControlOperations {
+    override fun observeControl(deviceUid: String): Flow<DeviceLightControlResult> = fail(deviceUid)
+
+    override fun currentControl(deviceUid: String): DeviceLightControlResult = fail(deviceUid)
+
+    override suspend fun refreshControl(deviceUid: String): DeviceLightControlResult = fail(deviceUid)
+
+    private fun fail(deviceUid: String): Nothing =
+        error("Fixture Light control must not call the production delegate: $deviceUid")
 }
 
 private class RecordingCustomOperations(
@@ -234,3 +319,4 @@ private const val CUSTOM_POINT_PERCENT = 42
 private const val CUSTOM_ENTRY_ID = "fixture-custom-entry"
 private const val CUSTOM_ENTRY_NAME = "Fixture custom curve"
 private const val CUSTOM_CREATED_AT_MILLIS = 1L
+private const val LIGHT_ACCLIMATION_FEATURE = "LIGHT_ACCLIMATION"

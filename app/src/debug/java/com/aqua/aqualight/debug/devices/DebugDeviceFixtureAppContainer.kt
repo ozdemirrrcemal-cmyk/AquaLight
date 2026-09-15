@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.BuildConfig
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
 import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
+import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationOperations
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticOperations
 import com.aqua.aqualight.application.devices.light.control.DeviceLightControlOperations
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomOperations
@@ -25,6 +26,7 @@ import com.aqua.aqualight.ui.tabs.devices.DevicesViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.DeviceLightAutomaticProgramsViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.DeviceLightAutomaticProgramEditorViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.adaptation.DeviceLightAdaptationViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.library.DeviceLightLibraryViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom.DeviceLightCustomCurveViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual.DeviceLightManualControlViewModel
@@ -70,6 +72,10 @@ private class DebugDeviceFixtureViewModelFactory(
             DevicesViewModel::class.java -> createDevicesViewModel(requireGraph())
             DeviceLightRootViewModel::class.java ->
                 createLightRootViewModel(requireGraph())
+            DeviceLightAdaptationViewModel::class.java ->
+                DeviceLightAdaptationViewModel(
+                    timerDependencies(requireGraph()).lightAdaptationOperations
+                )
             DeviceLightManualControlViewModel::class.java ->
                 DeviceLightManualControlViewModel(
                     timerDependencies(requireGraph()).lightLibraryOperations
@@ -189,9 +195,14 @@ private class DebugDeviceFixtureViewModelFactory(
             delegate = graph.timerControlOperations,
             runtime = runtime
         )
+        val lightAdaptationOperations = DebugFixtureLightAdaptationOperations(
+            delegate = graph.lightOperations.adaptationOperations,
+            fixtures = fixtures
+        )
         val lightControlOperations = DebugFixtureLightControlOperations(
             delegate = graph.lightOperations.controlOperations,
-            fixtures = fixtures
+            fixtures = fixtures,
+            adaptationOperations = lightAdaptationOperations
         )
         val lightAutomaticOperations = DebugFixtureLightAutomaticOperations(
             delegate = DefaultDeviceLightAutomaticOperations(graph.devicesRepository),
@@ -213,6 +224,7 @@ private class DebugDeviceFixtureViewModelFactory(
         )
         return DebugTimerFixtureDependencies(
             graph = graph,
+            lightAdaptationOperations = lightAdaptationOperations,
             lightAutomaticOperations = lightAutomaticOperations,
             lightControlOperations = lightControlOperations,
             lightCustomOperations = lightCustomOperations,
@@ -256,6 +268,7 @@ private fun automaticViewModelOrNull(
 
 private data class DebugTimerFixtureDependencies(
     val graph: OwnerDependencyGraph,
+    val lightAdaptationOperations: DeviceLightAdaptationOperations,
     val lightAutomaticOperations: DeviceLightAutomaticOperations,
     val lightControlOperations: DeviceLightControlOperations,
     val lightCustomOperations: DeviceLightCustomOperations,
