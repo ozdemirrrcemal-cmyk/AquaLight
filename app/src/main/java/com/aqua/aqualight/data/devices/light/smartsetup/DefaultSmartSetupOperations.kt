@@ -1,19 +1,13 @@
 package com.aqua.aqualight.data.devices.light.smartsetup
 
-import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
-import com.aqua.aqualight.application.aquarium.AquariumTankTaxonomy
 import com.aqua.aqualight.application.aquarium.lighting.AquariumLightingProfile
 import com.aqua.aqualight.application.devices.light.smartsetup.SmartLightPhaseDraft
 import com.aqua.aqualight.application.devices.light.smartsetup.SmartLightPlanDraft
 import com.aqua.aqualight.application.devices.light.smartsetup.SmartSetupApplyFailure
 import com.aqua.aqualight.application.devices.light.smartsetup.SmartSetupApplyResult
-import com.aqua.aqualight.application.devices.light.smartsetup.SmartSetupAquariumEnvironment
 import com.aqua.aqualight.application.devices.light.smartsetup.SmartSetupCalibrationCatalog
 import com.aqua.aqualight.application.devices.light.smartsetup.SmartSetupDecision
 import com.aqua.aqualight.application.devices.light.smartsetup.SmartSetupDecisionEngine
-import com.aqua.aqualight.application.devices.light.smartsetup.SmartSetupInput
-import com.aqua.aqualight.application.devices.light.smartsetup.SmartSetupLifecycleClassifier
-import com.aqua.aqualight.application.devices.light.smartsetup.SmartSetupMaintenanceObservations
 import com.aqua.aqualight.application.devices.light.smartsetup.SmartSetupOperations
 import com.aqua.aqualight.application.devices.light.smartsetup.SmartSetupProfileSaveFailure
 import com.aqua.aqualight.application.devices.light.smartsetup.SmartSetupProfileSaveResult
@@ -23,9 +17,6 @@ import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.aquarium.toApplicationSnapshot
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
-import com.aqua.aqualight.data.care.model.CareTask
-import com.aqua.aqualight.data.care.model.CareTaskStatus
-import com.aqua.aqualight.data.care.model.CareTaskType
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
@@ -41,7 +32,6 @@ import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightStatus
 import com.aqua.aqualight.data.devices.runtime.modules.light.applyManagedPlan
 import com.aqua.aqualight.data.devices.runtime.modules.light.lightV1Data
 import com.aqua.aqualight.data.devices.runtime.modules.light.refreshAuthoritySet
-import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.util.concurrent.CancellationException
@@ -240,7 +230,12 @@ internal class DefaultSmartSetupOperations(
         val zone = runCatching { ZoneId.of(time.timezoneId) }.getOrNull()
             ?: return Resolution.Failed(SmartSetupReadResult.InvalidFirmwareData)
         val tasks = careTaskStore.tasksForTankFlow(tank.id).first()
-        val input = tank.toSmartSetupInput(authority.status, tasks, zone, nowMillis())
+        val input = tank.toSmartSetupInput(
+            deviceFacts = authority.status.toSmartSetupDeviceFacts(),
+            tasks = tasks,
+            zone = zone,
+            nowMillis = nowMillis()
+        )
         val decision = SmartSetupDecisionEngine.decide(input)
         val snapshot = SmartSetupSnapshot(
             deviceUid = uid.value,
@@ -277,52 +272,21 @@ internal class DefaultSmartSetupOperations(
     }
 }
 
-private fun AquariumTankSnapshot.toSmartSetupInput(
-    status: DeviceLightStatus,
-    tasks: List<CareTask>,
-    zone: ZoneId,
-    nowMillis: Long
-): SmartSetupInput {
-    val evaluationDay = status.scheduler.localDate?.let { date ->
-        LocalDate.parse(date).toEpochDay()
-    }
-    val lifecycle = if (setupDateEpochDay != null && evaluationDay != null) {
-        SmartSetupLifecycleClassifier.classify(setupDateEpochDay, evaluationDay)
-    } else {
-        null
-    }
-    val calibrationRevision = status.reportedCalibrationRevision()
-    val calibration = SmartSetupCalibrationCatalog.reviewedProfileFor(status.product.wireValue)
+private fun DeviceLightStatus.toSmartSetupDeviceFacts(): SmartSetupDeviceFacts {
+    val calibrationRevision = reportedCalibrationRevision()
+    val calibration = SmartSetupCalibrationCatalog.reviewedProfileFor(product.wireValue)
         ?.takeIf { profile ->
             calibrationRevision == profile.revision &&
-                status.product.sceneFields == profile.channels.map { channel -> channel.sceneKey }
+                product.sceneFields == profile.channels.map { channel -> channel.sceneKey }
         }
-    return SmartSetupInput(
-        tankId = id,
-        tankName = name,
-        aquariumEnvironment = tankType.toSmartSetupEnvironment(),
-        evaluationEpochDay = evaluationDay,
-        setupDateEpochDay = setupDateEpochDay,
-        setupDay = lifecycle?.setupDay,
-        lifecycleStage = lifecycle?.stage,
-        isPlanted = tankType == AquariumTankTaxonomy.TYPE_PLANTED || plants.isNotEmpty(),
-        plantDensity = lightingProfile.plantDensity,
-        highestPlantLightDemand = lightingProfile.highestPlantLightDemand,
-        co2Status = lightingProfile.co2Status,
-        isActiveSoil = lightingProfile.isActiveSoil,
-        waterDepthCm = lightingProfile.waterDepthCm,
-        fixtureMountHeightCm = lightingProfile.fixtureMountHeightCm,
-        deviceProductKey = status.product.wireValue,
-        reportedCalibrationRevision = calibrationRevision,
-        reportedChannelSceneKeys = status.product.sceneFields,
-        calibrationProfile = calibration,
-        preferredViewingStartMinuteOfDay =
-            lightingProfile.preferredViewingStartMinuteOfDay,
-        preferredViewingEndMinuteOfDay = lightingProfile.preferredViewingEndMinuteOfDay,
-        algaeObservation = lightingProfile.algaeObservation,
-        plantStressObservation = lightingProfile.plantStressObservation,
-        observationDateEpochDay = lightingProfile.observationDateEpochDay,
-        maintenance = tasks.toMaintenanceObservations(zone, nowMillis)
+    return SmartSetupDeviceFacts(
+        evaluationEpochDay = scheduler.localDate?.let { date ->
+            LocalDate.parse(date).toEpochDay()
+        },
+        productKey = product.wireValue,
+        calibrationRevision = calibrationRevision,
+        channelSceneKeys = product.sceneFields,
+        calibrationProfile = calibration
     )
 }
 
@@ -336,48 +300,6 @@ private fun DeviceLightStatus.reportedCalibrationRevision(): Int? {
     if (revisions.any { revision -> revision == null }) return null
     val exact = revisions.filterNotNull().distinct()
     return exact.singleOrNull() ?: INVALID_CALIBRATION_REVISION
-}
-
-private fun String.toSmartSetupEnvironment(): SmartSetupAquariumEnvironment = when (this) {
-    AquariumTankTaxonomy.TYPE_FISH,
-    AquariumTankTaxonomy.TYPE_SHRIMP,
-    AquariumTankTaxonomy.TYPE_PLANTED -> SmartSetupAquariumEnvironment.FRESHWATER
-    AquariumTankTaxonomy.TYPE_MARINE,
-    AquariumTankTaxonomy.TYPE_SOFTIES,
-    AquariumTankTaxonomy.TYPE_MIXED_REEF,
-    AquariumTankTaxonomy.TYPE_SPS,
-    AquariumTankTaxonomy.TYPE_CORAL -> SmartSetupAquariumEnvironment.MARINE
-    AquariumTankTaxonomy.TYPE_OTHER -> SmartSetupAquariumEnvironment.UNKNOWN
-    else -> SmartSetupAquariumEnvironment.UNKNOWN
-}
-
-private fun List<CareTask>.toMaintenanceObservations(
-    zone: ZoneId,
-    nowMillis: Long
-): SmartSetupMaintenanceObservations {
-    val completed = filter { task ->
-        task.status == CareTaskStatus.COMPLETED &&
-            task.completedAtMillis != null &&
-            task.type in RELEVANT_CARE_TASKS
-    }
-    fun latest(type: CareTaskType): Long? = completed
-        .asSequence()
-        .filter { task -> task.type == type }
-        .mapNotNull(CareTask::completedAtMillis)
-        .maxOrNull()
-        ?.let { millis -> Instant.ofEpochMilli(millis).atZone(zone).toLocalDate().toEpochDay() }
-    val overdue = count { task ->
-        task.type in RELEVANT_CARE_TASKS &&
-            task.status == CareTaskStatus.PENDING &&
-            task.dueAtMillis <= nowMillis
-    }
-    return SmartSetupMaintenanceObservations(
-        latestWaterChangeEpochDay = latest(CareTaskType.WATER_CHANGE),
-        latestAlgaeCleaningEpochDay = latest(CareTaskType.ALGAE_CLEANING),
-        latestPlantHealthCheckEpochDay = latest(CareTaskType.PLANT_HEALTH_CHECK),
-        latestCo2CheckEpochDay = latest(CareTaskType.CO2_CHECK),
-        overdueRelevantTaskCount = overdue
-    )
 }
 
 private fun SmartLightPlanDraft.toRuntimePhases(
@@ -444,13 +366,5 @@ private fun DeviceRuntimeCommandOutcome.FirmwareError.toSmartSetupFailure(): Sma
 }
 
 private fun String.toUidOrNull(): DeviceUid? = trim().takeIf(String::isNotBlank)?.let(::DeviceUid)
-
-private val RELEVANT_CARE_TASKS = setOf(
-    CareTaskType.WATER_CHANGE,
-    CareTaskType.ALGAE_CLEANING,
-    CareTaskType.PLANT_HEALTH_CHECK,
-    CareTaskType.CO2_CHECK,
-    CareTaskType.LIGHT_CHECK
-)
 
 private const val INVALID_CALIBRATION_REVISION = -1
