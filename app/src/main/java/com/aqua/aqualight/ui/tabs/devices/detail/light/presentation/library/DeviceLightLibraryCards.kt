@@ -220,8 +220,8 @@ private fun LibraryLoadButton(
     entry: DeviceLightLibraryEntry,
     onLoadClick: (String) -> Unit,
     visuals: DeviceLightLibraryVisuals,
-    prominent: Boolean = false,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    prominent: Boolean = false
 ) {
     val enabled = !entry.isLoaded
     val text = stringResource(
