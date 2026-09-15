@@ -66,11 +66,15 @@ private class DebugDeviceFixtureViewModelFactory(
     private var cachedTimerDependencies: DebugTimerFixtureDependencies? = null
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        val viewModel: ViewModel = automaticViewModelOrNull(modelClass) {
-            timerDependencies(requireGraph()).lightAutomaticOperations
-        } ?: adaptationViewModelOrNull(modelClass) {
-            timerDependencies(requireGraph()).lightAdaptationOperations
-        } ?: when (modelClass) {
+        val viewModel: ViewModel = lightFeatureViewModelOrNull(
+            modelClass = modelClass,
+            automaticOperations = {
+                timerDependencies(requireGraph()).lightAutomaticOperations
+            },
+            adaptationOperations = {
+                timerDependencies(requireGraph()).lightAdaptationOperations
+            }
+        ) ?: when (modelClass) {
             DevicesViewModel::class.java -> createDevicesViewModel(requireGraph())
             DeviceLightRootViewModel::class.java ->
                 createLightRootViewModel(requireGraph())
@@ -253,23 +257,17 @@ private fun fixtureFirmwareOperations(
     fixtures = fixtures
 )
 
-private fun automaticViewModelOrNull(
+private fun lightFeatureViewModelOrNull(
     modelClass: Class<*>,
-    operations: () -> DeviceLightAutomaticOperations
+    automaticOperations: () -> DeviceLightAutomaticOperations,
+    adaptationOperations: () -> DeviceLightAdaptationOperations
 ): ViewModel? = when (modelClass) {
     DeviceLightAutomaticProgramsViewModel::class.java ->
-        DeviceLightAutomaticProgramsViewModel(operations())
+        DeviceLightAutomaticProgramsViewModel(automaticOperations())
     DeviceLightAutomaticProgramEditorViewModel::class.java ->
-        DeviceLightAutomaticProgramEditorViewModel(operations())
-    else -> null
-}
-
-private fun adaptationViewModelOrNull(
-    modelClass: Class<*>,
-    operations: () -> DeviceLightAdaptationOperations
-): ViewModel? = when (modelClass) {
+        DeviceLightAutomaticProgramEditorViewModel(automaticOperations())
     DeviceLightAdaptationViewModel::class.java ->
-        DeviceLightAdaptationViewModel(operations())
+        DeviceLightAdaptationViewModel(adaptationOperations())
     else -> null
 }
 
