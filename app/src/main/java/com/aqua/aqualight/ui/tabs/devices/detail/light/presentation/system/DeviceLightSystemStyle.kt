@@ -27,10 +27,10 @@ internal object DeviceLightSystemGeometry {
     val cardTitleBottomGap = 6.dp
     val gaugeSize = 112.dp
     val gaugeTrackWidth = 11.dp
-    val gaugeSweep = 280f
-    val gaugeStartAngle = -85f
-    val gaugeMinimumTemperature = 0f
-    val gaugeMaximumTemperature = 70f
+    const val gaugeSweep = 280f
+    const val gaugeStartAngle = -85f
+    const val gaugeMinimumTemperature = 0f
+    const val gaugeMaximumTemperature = 70f
     val gaugeValueSize = 22.sp
     val gaugeStatusGap = 4.dp
     val statusDotSize = 7.dp
