@@ -317,14 +317,14 @@ private fun DeviceLightPresetId.summaryResource(): Int = when (this) {
 
 @DrawableRes
 private fun DeviceLightPresetId.iconResource(): Int = when (this) {
-    DeviceLightPresetId.NATURAL_AQUARIUM,
-    DeviceLightPresetId.PLANTED_AQUARIUM,
-    DeviceLightPresetId.RED_PLANTS,
-    DeviceLightPresetId.LOW_TECH,
-    DeviceLightPresetId.SHADE_PLANTS -> R.drawable.ic_care_plant_health_24
-    DeviceLightPresetId.VIVID_COLORS -> R.drawable.ic_care_custom_24
-    DeviceLightPresetId.AQUASCAPE -> R.drawable.ic_care_substrate_24
-    DeviceLightPresetId.NEW_SETUP -> R.drawable.ic_settings
+    DeviceLightPresetId.NATURAL_AQUARIUM -> R.drawable.ic_light_preset_natural
+    DeviceLightPresetId.PLANTED_AQUARIUM -> R.drawable.ic_light_preset_planted
+    DeviceLightPresetId.RED_PLANTS -> R.drawable.ic_light_preset_red_plants
+    DeviceLightPresetId.VIVID_COLORS -> R.drawable.ic_light_preset_vivid
+    DeviceLightPresetId.LOW_TECH -> R.drawable.ic_light_preset_low_tech
+    DeviceLightPresetId.AQUASCAPE -> R.drawable.ic_light_preset_aquascape
+    DeviceLightPresetId.NEW_SETUP -> R.drawable.ic_light_preset_new_setup
+    DeviceLightPresetId.SHADE_PLANTS -> R.drawable.ic_light_preset_shade_plants
 }
 
 private fun DeviceLightPresetId.iconColor(colors: AquaLightManualColors): Color = when (this) {

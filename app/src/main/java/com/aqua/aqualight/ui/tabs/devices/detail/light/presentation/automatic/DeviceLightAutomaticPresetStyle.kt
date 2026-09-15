@@ -27,7 +27,7 @@ internal object DeviceLightAutomaticPresetGeometry {
     val cardHeight = 142.dp
     val cardPadding = PaddingValues(10.dp)
     val cardShape = RoundedCornerShape(AquaDeviceCardGeometry.cornerRadius)
-    val cardIconSize = 29.dp
+    val cardIconSize = 34.dp
     val cardIconGap = 8.dp
     val cardHeadingHeight = 46.dp
     val cardTextGap = 2.dp
