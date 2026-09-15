@@ -53,35 +53,6 @@ internal fun DrawScope.drawPlayheadGuide(
     )
 }
 
-internal fun DrawScope.drawPlayheadThumb(
-    timeMs: Long,
-    windowStartMs: Long,
-    windowEndMs: Long,
-    visuals: DeviceLightCustomVisuals
-) {
-    val haloRadius = PLAYHEAD_HALO_RADIUS_DP.dp.toPx()
-    val center = Offset(
-        x = chartX(timeMs, size.width, windowStartMs, windowEndMs)
-            .coerceIn(haloRadius, size.width - haloRadius),
-        y = size.height - CHART_BOTTOM_INSET_DP.dp.toPx()
-    )
-    drawCircle(
-        color = visuals.colors.action.copy(alpha = PLAYHEAD_HALO_ALPHA),
-        radius = haloRadius,
-        center = center
-    )
-    drawCircle(
-        color = visuals.colors.card.primaryText,
-        radius = PLAYHEAD_RING_RADIUS_DP.dp.toPx(),
-        center = center
-    )
-    drawCircle(
-        color = visuals.colors.action,
-        radius = PLAYHEAD_THUMB_RADIUS_DP.dp.toPx(),
-        center = center
-    )
-}
-
 internal fun DrawScope.drawChannelCurve(
     plot: DeviceLightCustomChannelPlot,
     visuals: DeviceLightCustomVisuals
@@ -174,7 +145,6 @@ private const val HORIZONTAL_GRID_ALPHA = 0.45f
 private const val VERTICAL_GRID_ALPHA = 0.32f
 private const val SELECTED_GUIDE_ALPHA = 0.9f
 private const val SELECTED_HALO_ALPHA = 0.24f
-private const val PLAYHEAD_HALO_ALPHA = 0.22f
 private const val GRID_WIDTH_DP = 1
 private const val CHART_BOTTOM_INSET_DP = 12
 private const val SELECTED_GUIDE_WIDTH_DP = 1.2f
@@ -186,6 +156,3 @@ private const val CURVE_POINT_RADIUS_DP = 3.4f
 private const val SELECTED_HALO_RADIUS_DP = 12
 private const val SELECTED_RING_RADIUS_DP = 7.2f
 private const val SELECTED_POINT_RADIUS_DP = 5.4f
-private const val PLAYHEAD_HALO_RADIUS_DP = 15
-private const val PLAYHEAD_RING_RADIUS_DP = 11
-private const val PLAYHEAD_THUMB_RADIUS_DP = 8

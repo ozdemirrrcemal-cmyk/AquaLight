@@ -43,80 +43,57 @@ internal fun CurvePlayheadControls(
     val maximumBubbleX = (layout.availableWidth - bubbleWidth).coerceAtLeast(0.dp)
     val bubbleX = (layout.axisWidth + layout.plotWidth * playheadFraction - bubbleWidth / 2f)
         .coerceIn(0.dp, maximumBubbleX)
-    val handleWidth = PLAYHEAD_HANDLE_WIDTH_DP.dp
-    val maximumHandleX = (layout.availableWidth - handleWidth).coerceAtLeast(0.dp)
-    val handleX = (layout.axisWidth + layout.plotWidth * playheadFraction - handleWidth / 2f)
-        .coerceIn(0.dp, maximumHandleX)
     val plotWidthPx = with(LocalDensity.current) { layout.plotWidth.toPx() }
-    val enabled = state.contentEnabled && !state.operationInProgress
 
     PlayheadTimeBubble(
-        timeMs = state.previewTimeMs,
-        enabled = enabled,
-        onClick = actions.onPlayheadTimeClick,
-        visuals = visuals,
-        modifier = Modifier.offset(x = bubbleX).width(bubbleWidth)
-    )
-    PlayheadDragHandle(
-        state = DeviceLightCustomPlayheadState(state.previewTimeMs, enabled, plotWidthPx),
+        state = state,
         actions = actions,
-        modifier = Modifier.offset(
-            x = handleX,
-            y = (PLAYHEAD_LABEL_SPACE_DP + CHART_HEIGHT_DP - PLAYHEAD_HANDLE_HEIGHT_DP).dp
-        ).width(handleWidth).height(PLAYHEAD_HANDLE_HEIGHT_DP.dp)
-    )
-}
-
-@Composable
-private fun PlayheadDragHandle(
-    state: DeviceLightCustomPlayheadState,
-    actions: DeviceLightCustomCurveActions,
-    modifier: Modifier
-) {
-    val currentTimeMs by rememberUpdatedState(state.timeMs)
-    Box(
-        modifier = modifier.pointerInput(state.enabled, state.chartWidthPx) {
-            if (!state.enabled || state.chartWidthPx <= 0f) return@pointerInput
-            var playheadX = 0f
-            var moved = false
-            detectHorizontalDragGestures(
-                onDragStart = {
-                    playheadX = chartX(
-                        currentTimeMs,
-                        state.chartWidthPx,
-                        CHART_WINDOW.startMs,
-                        CHART_WINDOW.endMs
-                    )
-                    moved = false
-                },
-                onDragEnd = {
-                    if (moved) actions.onPlayheadChangeFinished()
-                    moved = false
-                },
-                onDragCancel = { moved = false }
-            ) { change, dragAmount ->
-                change.consume()
-                moved = true
-                playheadX = (playheadX + dragAmount).coerceIn(0f, state.chartWidthPx)
-                actions.onPlayheadChanged(playheadTimeForX(playheadX, state.chartWidthPx))
-            }
-        }.clearAndSetSemantics { contentDescription = formatTime(state.timeMs) }
+        visuals = visuals,
+        chartWidthPx = plotWidthPx,
+        modifier = Modifier.offset(x = bubbleX).width(bubbleWidth)
     )
 }
 
 @Composable
 private fun PlayheadTimeBubble(
-    timeMs: Long,
-    enabled: Boolean,
-    onClick: () -> Unit,
+    state: DeviceLightCustomCurveUiState,
+    actions: DeviceLightCustomCurveActions,
     visuals: DeviceLightCustomVisuals,
+    chartWidthPx: Float,
     modifier: Modifier
 ) {
+    val currentTimeMs by rememberUpdatedState(state.previewTimeMs)
+    val enabled = state.contentEnabled && !state.operationInProgress
     val shape = RoundedCornerShape(PLAYHEAD_LABEL_CORNER_DP.dp)
     Box(
         modifier = modifier.height(PLAYHEAD_LABEL_TOUCH_HEIGHT_DP.dp)
-            .clearAndSetSemantics { contentDescription = formatTime(timeMs) }
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick),
+            .pointerInput(enabled, chartWidthPx) {
+                if (!enabled || chartWidthPx <= 0f) return@pointerInput
+                var playheadX = 0f
+                var moved = false
+                detectHorizontalDragGestures(
+                    onDragStart = {
+                        playheadX = chartX(
+                            currentTimeMs,
+                            chartWidthPx,
+                            CHART_WINDOW.startMs,
+                            CHART_WINDOW.endMs
+                        )
+                        moved = false
+                    },
+                    onDragEnd = {
+                        if (moved) actions.onPlayheadChangeFinished()
+                        moved = false
+                    },
+                    onDragCancel = { moved = false }
+                ) { change, dragAmount ->
+                    change.consume()
+                    moved = true
+                    playheadX = (playheadX + dragAmount).coerceIn(0f, chartWidthPx)
+                    actions.onPlayheadChanged(playheadTimeForX(playheadX, chartWidthPx))
+                }
+            }.clearAndSetSemantics { contentDescription = formatTime(state.previewTimeMs) }
+            .clickable(enabled = enabled, role = Role.Button, onClick = actions.onPlayheadTimeClick),
         contentAlignment = Alignment.Center
     ) {
         Box(
@@ -126,7 +103,7 @@ private fun PlayheadTimeBubble(
             contentAlignment = Alignment.Center
         ) {
             BasicText(
-                text = formatTime(timeMs),
+                text = formatTime(state.previewTimeMs),
                 style = visuals.typography.caption.copy(
                     color = visuals.colors.card.primaryText,
                     textAlign = TextAlign.Center
@@ -145,5 +122,3 @@ private const val PLAYHEAD_LABEL_TOUCH_HEIGHT_DP = 48
 private const val PLAYHEAD_LABEL_VISUAL_HEIGHT_DP = 30
 private const val PLAYHEAD_LABEL_CORNER_DP = 8
 private const val PLAYHEAD_LABEL_BORDER_DP = 1
-private const val PLAYHEAD_HANDLE_WIDTH_DP = 56
-private const val PLAYHEAD_HANDLE_HEIGHT_DP = 48

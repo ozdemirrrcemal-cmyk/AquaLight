@@ -28,12 +28,6 @@ internal data class DeviceLightCustomChannelPlot(
     val window: DeviceLightCustomChartWindow
 )
 
-internal data class DeviceLightCustomPlayheadState(
-    val timeMs: Long,
-    val enabled: Boolean,
-    val chartWidthPx: Float
-)
-
 internal fun List<DeviceLightCustomPointUiState>.interpolatedChannelsAt(
     timeMs: Long,
     fallbackChannels: List<DeviceLightCustomChannelId>

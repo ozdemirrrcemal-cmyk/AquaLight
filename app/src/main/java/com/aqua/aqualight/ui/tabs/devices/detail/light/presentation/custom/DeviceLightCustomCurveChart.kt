@@ -40,7 +40,7 @@ internal fun CurveCard(
 ) {
     AquaDeviceCardSurface(modifier = Modifier.fillMaxWidth()) {
         Column(verticalArrangement = Arrangement.spacedBy(CURVE_CONTENT_SPACING_DP.dp)) {
-            CurveHeader(state, visuals)
+            CurveHeader(visuals)
             EditableCurveChart(state, actions, visuals)
             CurveLegend(state.channels, visuals)
         }
@@ -49,7 +49,6 @@ internal fun CurveCard(
 
 @Composable
 private fun CurveHeader(
-    state: DeviceLightCustomCurveUiState,
     visuals: DeviceLightCustomVisuals
 ) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
@@ -66,15 +65,6 @@ private fun CurveHeader(
                 style = visuals.typography.caption.copy(color = visuals.colors.card.secondaryText)
             )
         }
-        BasicText(
-            text = stringResource(
-                R.string.device_light_custom_point_capacity_format,
-                state.draft.points.size,
-                state.maxPoints
-            ),
-            style = visuals.typography.caption.copy(color = visuals.colors.card.primaryText),
-            modifier = Modifier.padding(start = HEADER_CAPACITY_GAP_DP.dp)
-        )
     }
 }
 
@@ -230,12 +220,6 @@ private fun DrawScope.drawCurveContent(
             visuals = visuals
         )
     }
-    drawPlayheadThumb(
-        state.previewTimeMs,
-        CHART_WINDOW.startMs,
-        CHART_WINDOW.endMs,
-        visuals
-    )
 }
 
 @Composable
@@ -302,7 +286,6 @@ private const val GLYPH_THIRD_Y = 0.58f
 private const val GLYPH_END_X = 0.88f
 private const val GLYPH_END_Y = 0.23f
 private const val HEADER_ICON_GAP_DP = 10
-private const val HEADER_CAPACITY_GAP_DP = 8
 private const val CHART_TIME_DIVISIONS = 6
 private const val HOURS_PER_GRID_DIVISION = 4
 private const val POINT_HIT_RADIUS_DP = 24

@@ -172,21 +172,13 @@ internal class DeviceLightCustomCurveViewModel(
 
     private fun applySnapshot(snapshot: DeviceLightCustomSnapshot) {
         val channels = snapshot.channels.map(DeviceLightCustomChannel::toUiChannel)
-        val deviceDraft = DeviceLightCustomDraft(
-            weekdaysMask = snapshot.weekdaysMask,
-            points = snapshot.points.map { point ->
-                DeviceLightCustomPointUiState(
-                    timeMs = point.timeMs,
-                    channels = point.scene.channels.mapKeys { (channel, _) -> channel.toUiChannel() }
-                )
-            }
-        )
-        persistedDraft = deviceDraft
+        val emptyDraft = DeviceLightCustomDraft(weekdaysMask = snapshot.weekdaysMask)
+        persistedDraft = emptyDraft
         val restored = restoredDraft?.takeIf { draft ->
             draft.points.all { point -> point.channels.keys == channels.toSet() } &&
                 draft.points.size <= snapshot.maxPoints
         }
-        val draft = if (restoreDirty && restored != null) restored else deviceDraft
+        val draft = if (restoreDirty && restored != null) restored else emptyDraft
         restoredDraft = null
         val currentTimeMs = snapshot.currentTimeMs?.alignedTime() ?: _uiState.value.previewTimeMs
         val initialPointTimeMs = draft.points.minByOrNull { point ->

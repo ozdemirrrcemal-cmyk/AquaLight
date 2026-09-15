@@ -33,7 +33,7 @@ internal object DeviceLightSystemGeometry {
     const val gaugeMaximumTemperature = 80f
     val gaugeValueSize = 22.sp
     val gaugeStatusGap = 4.dp
-    val gaugeFanGap = 2.dp
+    val gaugeFanGap = 4.dp
     val statusDotSize = 7.dp
     val fanCardHeight = 46.dp
     val fanCardGap = 7.dp

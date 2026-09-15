@@ -38,25 +38,34 @@ class DeviceLightCustomCurveViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     @Test
-    fun `firmware document becomes the clean editor baseline`() {
+    fun `fresh editor starts with an empty clean draft`() {
         val viewModel = boundViewModel()
 
         assertFalse(viewModel.currentState.initialLoading)
         assertFalse(viewModel.currentState.hasUnsavedChanges)
         assertEquals(EVERY_DAY_MASK, viewModel.currentState.draft.weekdaysMask)
-        assertEquals(INITIAL_TIME_MS, viewModel.currentState.selectedPoint?.timeMs)
-        assertEquals(WRGB_CHANNELS.map(DeviceLightCustomChannel::toUiChannel), viewModel.currentState.channels)
+        assertTrue(viewModel.currentState.draft.points.isEmpty())
+        assertEquals(null, viewModel.currentState.selectedPoint)
+        assertEquals(INITIAL_TIME_MS, viewModel.currentState.previewTimeMs)
+        assertEquals(
+            WRGB_CHANNELS.map(DeviceLightCustomChannel::toUiChannel),
+            viewModel.currentState.channels
+        )
     }
 
     @Test
     fun `point and weekday edits mark draft dirty`() {
         val viewModel = boundViewModel()
+        viewModel.addInitialPoint()
 
         viewModel.pointEditor.updateSelectedChannel(DeviceLightCustomChannelId.BLUE, UPDATED_BLUE)
         viewModel.dayEditor.toggleWeekday(SUNDAY_INDEX)
 
         assertTrue(viewModel.currentState.hasUnsavedChanges)
-        assertEquals(UPDATED_BLUE, viewModel.currentState.selectedPoint?.channels?.get(DeviceLightCustomChannelId.BLUE))
+        assertEquals(
+            UPDATED_BLUE,
+            viewModel.currentState.selectedPoint?.channels?.get(DeviceLightCustomChannelId.BLUE)
+        )
         assertEquals(
             EVERY_DAY_MASK xor customWeekdayMask(SUNDAY_INDEX),
             viewModel.currentState.draft.weekdaysMask
@@ -67,6 +76,7 @@ class DeviceLightCustomCurveViewModelTest {
     fun `save as writes exact draft to DataStore boundary and clears dirty state`() {
         val library = FakeLibraryOperations()
         val viewModel = boundViewModel(libraryOperations = library)
+        viewModel.addInitialPoint()
         viewModel.pointEditor.updateSelectedChannel(DeviceLightCustomChannelId.RED, UPDATED_RED)
 
         viewModel.saveAs("Morning reef")
@@ -85,6 +95,7 @@ class DeviceLightCustomCurveViewModelTest {
             customOperations = FakeCustomOperations(snapshot(channels)),
             libraryOperations = library
         )
+        viewModel.addInitialPoint()
 
         viewModel.saveAs("RGB curve")
 
@@ -109,16 +120,19 @@ class DeviceLightCustomCurveViewModelTest {
 
     @Test
     fun `adding beyond firmware point limit shows warning and preserves draft`() = runTest {
-        val points = List(MAX_POINT_CAPACITY) { index ->
-            DeviceLightCustomPoint(
-                timeMs = index * MILLIS_PER_MINUTE,
-                scene = DeviceLightCustomScene(
-                    WRGB_CHANNELS.associateWith { channel -> channel.ordinal }
+        val restoredDraft = DeviceLightCustomDraft(
+            points = List(MAX_POINT_CAPACITY) { index ->
+                DeviceLightCustomPointUiState(
+                    timeMs = index * MILLIS_PER_MINUTE,
+                    channels = DeviceLightCustomChannelId.entries.associateWith { channel ->
+                        channel.ordinal
+                    }
                 )
-            )
-        }
+            }
+        )
         val viewModel = boundViewModel(
-            customOperations = FakeCustomOperations(snapshot(points = points))
+            restoredDraft = restoredDraft,
+            restoredDirty = true
         )
         val effect = async(start = CoroutineStart.UNDISPATCHED) { viewModel.effects.first() }
 
@@ -135,16 +149,9 @@ class DeviceLightCustomCurveViewModelTest {
     @Test
     fun `graph selection never creates a point`() {
         val secondTimeMs = INITIAL_TIME_MS + 2 * MILLIS_PER_HOUR
-        val viewModel = boundViewModel(
-            customOperations = FakeCustomOperations(
-                snapshot(
-                    points = listOf(
-                        point(INITIAL_TIME_MS),
-                        point(secondTimeMs)
-                    )
-                )
-            )
-        )
+        val viewModel = boundViewModel()
+        viewModel.addInitialPoint()
+        viewModel.pointEditor.addOrMovePoint(null, secondTimeMs)
 
         viewModel.pointEditor.selectGraphPoint(secondTimeMs)
         viewModel.pointEditor.selectGraphPoint(INITIAL_TIME_MS + MILLIS_PER_HOUR)
@@ -157,6 +164,7 @@ class DeviceLightCustomCurveViewModelTest {
     @Test
     fun `last remaining point cannot be deleted`() {
         val viewModel = boundViewModel()
+        viewModel.addInitialPoint()
 
         viewModel.pointEditor.deletePoint(INITIAL_TIME_MS)
 
@@ -186,13 +194,13 @@ class DeviceLightCustomCurveViewModelTest {
 
         viewModel.pointEditor.updatePlayhead(PREVIEW_TIME_MS)
 
-        assertEquals(1, viewModel.currentState.draft.points.size)
+        assertEquals(0, viewModel.currentState.draft.points.size)
         assertFalse(viewModel.currentState.hasUnsavedChanges)
         assertEquals(PREVIEW_TIME_MS, viewModel.currentState.previewTimeMs)
     }
 
     @Test
-    fun `cancelling add time restores playhead to selected point`() {
+    fun `cancelling first point time keeps playhead at dragged time`() {
         val viewModel = boundViewModel()
         viewModel.pointEditor.updatePlayhead(PREVIEW_TIME_MS)
 
@@ -200,13 +208,14 @@ class DeviceLightCustomCurveViewModelTest {
             DeviceLightCustomTimePickerPurpose.Add(PREVIEW_TIME_MS)
         )
 
-        assertEquals(INITIAL_TIME_MS, viewModel.currentState.previewTimeMs)
-        assertEquals(INITIAL_TIME_MS, viewModel.currentState.selectedTimeMs)
+        assertEquals(PREVIEW_TIME_MS, viewModel.currentState.previewTimeMs)
+        assertEquals(null, viewModel.currentState.selectedTimeMs)
     }
 
     @Test
     fun `long press exposes contextual point actions without changing draft`() = runTest {
         val viewModel = boundViewModel()
+        viewModel.addInitialPoint()
         val effect = async(start = CoroutineStart.UNDISPATCHED) { viewModel.effects.first() }
 
         viewModel.pointEditor.requestPointActions(INITIAL_TIME_MS)
@@ -220,9 +229,15 @@ class DeviceLightCustomCurveViewModelTest {
 
     private fun boundViewModel(
         customOperations: FakeCustomOperations = FakeCustomOperations(snapshot()),
-        libraryOperations: FakeLibraryOperations = FakeLibraryOperations()
+        libraryOperations: FakeLibraryOperations = FakeLibraryOperations(),
+        restoredDraft: DeviceLightCustomDraft? = null,
+        restoredDirty: Boolean = false
     ) = DeviceLightCustomCurveViewModel(customOperations, libraryOperations).apply {
-        bind(DEVICE_UID)
+        bind(DEVICE_UID, restoredDraft, restoredDirty)
+    }
+
+    private fun DeviceLightCustomCurveViewModel.addInitialPoint() {
+        pointEditor.addOrMovePoint(null, INITIAL_TIME_MS)
     }
 
     private class FakeCustomOperations(
@@ -295,13 +310,6 @@ class DeviceLightCustomCurveViewModelTest {
             DeviceLightCustomChannel.GREEN,
             DeviceLightCustomChannel.BLUE,
             DeviceLightCustomChannel.WHITE
-        )
-
-        fun point(timeMs: Long) = DeviceLightCustomPoint(
-            timeMs = timeMs,
-            scene = DeviceLightCustomScene(
-                WRGB_CHANNELS.associateWith { channel -> channel.ordinal * 10 }
-            )
         )
 
         fun snapshot(
