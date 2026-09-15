@@ -185,8 +185,8 @@ private fun DeviceLightAcclimationStatus.toSnapshot(
     )
 }
 
-private fun DeviceLightAcclimationPolicy.toApplicationPolicy(): DeviceLightAdaptationPolicy? =
-    DeviceLightAdaptationPolicy(
+private fun DeviceLightAcclimationPolicy.toApplicationPolicy(): DeviceLightAdaptationPolicy? {
+    return DeviceLightAdaptationPolicy(
         startPercentMin = startPercentMin ?: return null,
         startPercentMax = startPercentMax ?: return null,
         startPercentStep = startPercentStep ?: return null,
@@ -197,6 +197,7 @@ private fun DeviceLightAcclimationPolicy.toApplicationPolicy(): DeviceLightAdapt
         defaultDurationDays = defaultDurationDays ?: return null,
         targetPercent = targetPercent ?: return null
     )
+}
 
 private fun DeviceLightAcclimationState.toApplicationState(): DeviceLightAdaptationState = when (this) {
     DeviceLightAcclimationState.DISABLED -> DeviceLightAdaptationState.DISABLED

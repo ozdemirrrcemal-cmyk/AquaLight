@@ -57,7 +57,13 @@ internal class DeviceLightAdaptationViewModel(
     }
 
     fun refresh() {
-        if (boundDeviceUid.isBlank() || _uiState.value.operationInProgress) return
+        if (
+            boundDeviceUid.isBlank() ||
+            _uiState.value.initialLoading ||
+            _uiState.value.operationInProgress
+        ) {
+            return
+        }
         refresh(showLoading = false, showFailure = false)
     }
 
