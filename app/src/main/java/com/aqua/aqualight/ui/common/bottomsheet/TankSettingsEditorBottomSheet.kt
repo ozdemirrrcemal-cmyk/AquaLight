@@ -19,6 +19,7 @@ import com.aqua.aqualight.databinding.ContentSheetTankStyleBinding
 import com.aqua.aqualight.databinding.ContentSheetTankTypeBinding
 import com.aqua.aqualight.databinding.DialogSettingsBottomSheetBinding
 import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumDimensionInputPolicy
+import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumMeasurementPolicy
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import java.text.DateFormatSymbols
 import java.util.Calendar
@@ -153,6 +154,13 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
             )
         }
 
+        fun formatInitialValue(cmValue: Int): String {
+            return cmValue
+                .takeIf(AquariumMeasurementPolicy::isValidDimensionCm)
+                ?.let(::formatValue)
+                .orEmpty()
+        }
+
         fun renderUnit() {
             binding.tvUnitValue.text = unitLabel()
         }
@@ -188,9 +196,9 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
             return true
         }
 
-        binding.inputWidth.setText(formatValue(requireArguments().getInt(ARG_WIDTH_CM)))
-        binding.inputLength.setText(formatValue(requireArguments().getInt(ARG_LENGTH_CM)))
-        binding.inputHeight.setText(formatValue(requireArguments().getInt(ARG_HEIGHT_CM)))
+        binding.inputWidth.setText(formatInitialValue(requireArguments().getInt(ARG_WIDTH_CM)))
+        binding.inputLength.setText(formatInitialValue(requireArguments().getInt(ARG_LENGTH_CM)))
+        binding.inputHeight.setText(formatInitialValue(requireArguments().getInt(ARG_HEIGHT_CM)))
         renderUnit()
 
         binding.unitRow.setOnClickListener {

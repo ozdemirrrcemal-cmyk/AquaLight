@@ -56,6 +56,8 @@
     <string name="aquarium_tank_name_title">Tank name</string>
     <string name="aquarium_tank_size_title">Tank size</string>
     <string name="aquarium_validation_invalid_tank_size">Please enter a valid tank size.</string>
+    <string name="aquarium_validation_setup_date_required">Please select a setup date.</string>
+    <string name="aquarium_validation_tank_size_required">Please enter and save the tank dimensions.</string>
     <string name="aquarium_validation_tank_name_min">Tank name must be at least 2 characters.</string>
     <string name="aquarium_validation_tank_type_required">Please select a tank type.</string>
     <string name="aquarium_action_add">+ Add</string>

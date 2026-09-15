@@ -16,6 +16,9 @@ class CreateTankViewModel(
     var tankDraft: AquariumTankDraft = restoreDraft()
         private set
 
+    var isTankSizeConfirmed: Boolean = savedStateHandle[KEY_TANK_SIZE_CONFIRMED] ?: false
+        private set
+
     fun updateTankName(name: String) = updateDraft { copy(name = name) }
 
     fun updateTankDescription(description: String) = updateDraft {
@@ -63,13 +66,17 @@ class CreateTankViewModel(
         lengthCm: Int,
         heightCm: Int,
         sizeUnit: String = tankDraft.sizeUnit
-    ) = updateDraft {
-        copy(
-            widthCm = widthCm,
-            lengthCm = lengthCm,
-            heightCm = heightCm,
-            sizeUnit = sizeUnit.ifBlank { "cm" }
-        )
+    ) {
+        updateDraft {
+            copy(
+                widthCm = widthCm,
+                lengthCm = lengthCm,
+                heightCm = heightCm,
+                sizeUnit = sizeUnit.ifBlank { "cm" }
+            )
+        }
+        isTankSizeConfirmed = true
+        savedStateHandle[KEY_TANK_SIZE_CONFIRMED] = true
     }
 
     fun updateSizeUnit(sizeUnit: String) = updateDraft {
@@ -86,6 +93,7 @@ class CreateTankViewModel(
 
     fun completeTank() {
         savedStateHandle.remove<String>(KEY_DRAFT_JSON)
+        savedStateHandle.remove<Boolean>(KEY_TANK_SIZE_CONFIRMED)
     }
 
     private inline fun updateDraft(
@@ -98,16 +106,21 @@ class CreateTankViewModel(
     private fun restoreDraft(): AquariumTankDraft {
         val encoded = savedStateHandle.get<String>(KEY_DRAFT_JSON)
             ?.takeIf(String::isNotBlank)
-            ?: return AquariumTankDraft()
+            ?: run {
+                savedStateHandle.remove<Boolean>(KEY_TANK_SIZE_CONFIRMED)
+                return AquariumTankDraft()
+            }
         return runCatching {
             gson.fromJson(encoded, AquariumTankDraft::class.java)
         }.getOrElse {
             savedStateHandle.remove<String>(KEY_DRAFT_JSON)
+            savedStateHandle.remove<Boolean>(KEY_TANK_SIZE_CONFIRMED)
             AquariumTankDraft()
         }
     }
 
     private companion object {
         const val KEY_DRAFT_JSON = "createTank.draftJson"
+        const val KEY_TANK_SIZE_CONFIRMED = "createTank.tankSizeConfirmed"
     }
 }

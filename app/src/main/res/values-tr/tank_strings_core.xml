@@ -52,6 +52,8 @@
     <string name="aquarium_tank_name_title">Tank adı</string>
     <string name="aquarium_tank_size_title">Tank boyutu</string>
     <string name="aquarium_validation_invalid_tank_size">Lütfen geçerli bir tank boyutu girin.</string>
+    <string name="aquarium_validation_setup_date_required">Lütfen kurulum tarihini seçin.</string>
+    <string name="aquarium_validation_tank_size_required">Lütfen tank ölçülerini girip kaydedin.</string>
     <string name="aquarium_validation_tank_name_min">Tank adı en az 2 karakter olmalıdır.</string>
     <string name="aquarium_validation_tank_type_required">Lütfen bir tank türü seçin.</string>
     <string name="aquarium_action_add">+ Ekle</string>

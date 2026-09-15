@@ -132,8 +132,27 @@ class TankInfoFragment :
         )
 
         binding.tvSizeLabel.text = formatSizeTitle()
-        binding.tvSizeValue.text = formatSize()
-        binding.tvVolumeValue.text = formatVolume()
+        val tankSizeConfirmed = viewModel.isTankSizeConfirmed
+        val dimensionTextColor = ContextCompat.getColor(
+            requireContext(),
+            if (tankSizeConfirmed) {
+                R.color.aqua_content_on_dark
+            } else {
+                R.color.aqua_content_placeholder
+            }
+        )
+        binding.tvSizeValue.text = if (tankSizeConfirmed) {
+            formatSize()
+        } else {
+            getString(R.string.aquarium_common_not_selected)
+        }
+        binding.tvSizeValue.setTextColor(dimensionTextColor)
+        binding.tvVolumeValue.text = if (tankSizeConfirmed) {
+            formatVolume()
+        } else {
+            getString(R.string.aquarium_common_not_selected)
+        }
+        binding.tvVolumeValue.setTextColor(dimensionTextColor)
 
         binding.tvTankTypeValue.text = draft.tankType
             .takeIf(String::isNotBlank)
@@ -184,9 +203,9 @@ class TankInfoFragment :
             mode = TankSettingsEditorBottomSheet.Mode.SIZE,
             title = getString(R.string.aquarium_tank_size_title),
             validationMessage = getString(R.string.aquarium_validation_invalid_tank_size),
-            widthCm = draft.widthCm,
-            lengthCm = draft.lengthCm,
-            heightCm = draft.heightCm,
+            widthCm = draft.widthCm.takeIf { viewModel.isTankSizeConfirmed } ?: 0,
+            lengthCm = draft.lengthCm.takeIf { viewModel.isTankSizeConfirmed } ?: 0,
+            heightCm = draft.heightCm.takeIf { viewModel.isTankSizeConfirmed } ?: 0,
             currentUnit = draft.sizeUnit
         )
     }
@@ -268,31 +287,26 @@ class TankInfoFragment :
     }
 
     override fun validateAndSave(): Boolean {
-        val draft = viewModel.tankDraft
+        val error = TankInfoValidationPolicy.validate(
+            draft = viewModel.tankDraft,
+            isTankSizeConfirmed = viewModel.isTankSizeConfirmed
+        ) ?: return true
 
-        val isValidSize = AquariumMeasurementPolicy.areValidDimensions(
-            widthCm = draft.widthCm,
-            lengthCm = draft.lengthCm,
-            heightCm = draft.heightCm
+        val message = when (error) {
+            TankInfoValidationError.SETUP_DATE_REQUIRED ->
+                R.string.aquarium_validation_setup_date_required
+            TankInfoValidationError.TANK_SIZE_REQUIRED ->
+                R.string.aquarium_validation_tank_size_required
+            TankInfoValidationError.INVALID_TANK_SIZE ->
+                R.string.aquarium_validation_invalid_tank_size
+            TankInfoValidationError.TANK_TYPE_REQUIRED ->
+                R.string.aquarium_validation_tank_type_required
+        }
+        showSnackBar(
+            message = getString(message),
+            type = BaseActivity.SnackType.WARNING
         )
-
-        if (!isValidSize) {
-            showSnackBar(
-                message = getString(R.string.aquarium_validation_invalid_tank_size),
-                type = BaseActivity.SnackType.WARNING
-            )
-            return false
-        }
-
-        if (draft.tankType.isBlank()) {
-            showSnackBar(
-                message = getString(R.string.aquarium_validation_tank_type_required),
-                type = BaseActivity.SnackType.WARNING
-            )
-            return false
-        }
-
-        return true
+        return false
     }
 
     override fun onDestroyView() {
