@@ -1,5 +1,6 @@
 package com.aqua.aqualight.application.aquarium
 
+import com.aqua.aqualight.application.aquarium.lighting.AquariumLightingProfile
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 

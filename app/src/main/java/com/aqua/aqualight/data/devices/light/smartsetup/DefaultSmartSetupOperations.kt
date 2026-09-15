@@ -72,102 +72,106 @@ internal class DefaultSmartSetupOperations(
         deviceUid: String,
         setupDateEpochDay: Long,
         profile: AquariumLightingProfile
-    ): SmartSetupProfileSaveResult = try {
-        val uid = deviceUid.toUidOrNull()
-            ?: return SmartSetupProfileSaveResult.Failed(
-                SmartSetupProfileSaveFailure.UNAVAILABLE
+    ): SmartSetupProfileSaveResult {
+        return try {
+            val uid = deviceUid.toUidOrNull()
+                ?: return SmartSetupProfileSaveResult.Failed(
+                    SmartSetupProfileSaveFailure.UNAVAILABLE
+                )
+            val assignment = assignmentRepository.assignmentForDevice(uid)
+                ?: return SmartSetupProfileSaveResult.Failed(
+                    SmartSetupProfileSaveFailure.DEVICE_NOT_ASSIGNED
+                )
+            val tankExists = tankStore.tanksSnapshotForOwner(ownerUid)
+                .any { tank -> tank.id == assignment.tankId }
+            if (!tankExists) {
+                return SmartSetupProfileSaveResult.Failed(
+                    SmartSetupProfileSaveFailure.AQUARIUM_NOT_FOUND
+                )
+            }
+            tankStore.updateTankSmartSetupProfile(
+                tankId = assignment.tankId,
+                setupDateEpochDay = setupDateEpochDay,
+                profile = profile
             )
-        val assignment = assignmentRepository.assignmentForDevice(uid)
-            ?: return SmartSetupProfileSaveResult.Failed(
-                SmartSetupProfileSaveFailure.DEVICE_NOT_ASSIGNED
-            )
-        val tankExists = tankStore.tanksSnapshotForOwner(ownerUid)
-            .any { tank -> tank.id == assignment.tankId }
-        if (!tankExists) {
-            return SmartSetupProfileSaveResult.Failed(
-                SmartSetupProfileSaveFailure.AQUARIUM_NOT_FOUND
-            )
+            when (val refreshed = read(uid.value)) {
+                is SmartSetupReadResult.Available -> SmartSetupProfileSaveResult.Saved(
+                    refreshed.snapshot
+                )
+                SmartSetupReadResult.AquariumNotFound -> SmartSetupProfileSaveResult.Failed(
+                    SmartSetupProfileSaveFailure.AQUARIUM_NOT_FOUND
+                )
+                SmartSetupReadResult.DeviceNotAssigned -> SmartSetupProfileSaveResult.Failed(
+                    SmartSetupProfileSaveFailure.DEVICE_NOT_ASSIGNED
+                )
+                else -> SmartSetupProfileSaveResult.Failed(SmartSetupProfileSaveFailure.UNAVAILABLE)
+            }
+        } catch (error: CancellationException) {
+            throw error
+        } catch (_: IllegalArgumentException) {
+            SmartSetupProfileSaveResult.Failed(SmartSetupProfileSaveFailure.INVALID_PROFILE)
+        } catch (_: Exception) {
+            SmartSetupProfileSaveResult.Failed(SmartSetupProfileSaveFailure.UNAVAILABLE)
         }
-        tankStore.updateTankSmartSetupProfile(
-            tankId = assignment.tankId,
-            setupDateEpochDay = setupDateEpochDay,
-            profile = profile
-        )
-        when (val refreshed = read(uid.value)) {
-            is SmartSetupReadResult.Available -> SmartSetupProfileSaveResult.Saved(
-                refreshed.snapshot
-            )
-            SmartSetupReadResult.AquariumNotFound -> SmartSetupProfileSaveResult.Failed(
-                SmartSetupProfileSaveFailure.AQUARIUM_NOT_FOUND
-            )
-            SmartSetupReadResult.DeviceNotAssigned -> SmartSetupProfileSaveResult.Failed(
-                SmartSetupProfileSaveFailure.DEVICE_NOT_ASSIGNED
-            )
-            else -> SmartSetupProfileSaveResult.Failed(SmartSetupProfileSaveFailure.UNAVAILABLE)
-        }
-    } catch (error: CancellationException) {
-        throw error
-    } catch (_: IllegalArgumentException) {
-        SmartSetupProfileSaveResult.Failed(SmartSetupProfileSaveFailure.INVALID_PROFILE)
-    } catch (_: Exception) {
-        SmartSetupProfileSaveResult.Failed(SmartSetupProfileSaveFailure.UNAVAILABLE)
     }
 
     override suspend fun apply(
         deviceUid: String,
         expectedProfileFingerprint: String
-    ): SmartSetupApplyResult = try {
-        val resolution = when (val fresh = resolve(deviceUid)) {
-            is Resolution.Ready -> fresh
-            is Resolution.Failed -> return SmartSetupApplyResult.Failed(
-                fresh.result.toApplyFailure()
+    ): SmartSetupApplyResult {
+        return try {
+            val resolution = when (val fresh = resolve(deviceUid)) {
+                is Resolution.Ready -> fresh
+                is Resolution.Failed -> return SmartSetupApplyResult.Failed(
+                    fresh.result.toApplyFailure()
+                )
+            }
+            val ready = resolution.snapshot.decision as? SmartSetupDecision.Ready
+                ?: return SmartSetupApplyResult.Failed(SmartSetupApplyFailure.NOT_READY)
+            val recommendation = ready.recommendation
+            if (recommendation.profileFingerprint != expectedProfileFingerprint) {
+                return SmartSetupApplyResult.Failed(SmartSetupApplyFailure.PREVIEW_CHANGED)
+            }
+            val payload = DeviceLightManagedPlanApplyPayload(
+                expectedRevision = resolution.plan.revision,
+                expectedStorageGeneration = resolution.status.storageGeneration,
+                planId = resolution.plan.planId,
+                initialStartPercent = recommendation.plan.initialStartPercent,
+                phases = recommendation.plan.toRuntimePhases(resolution.status.product)
             )
+            when (
+                val applied = resolution.runtime.applyManagedPlan(resolution.deviceUid, payload)
+            ) {
+                is DeviceRuntimeCommandOutcome.Success -> confirmApply(
+                    resolution = resolution,
+                    recommendationPlan = recommendation.plan,
+                    profileFingerprint = recommendation.profileFingerprint,
+                    commandDocument = applied.value
+                )
+                is DeviceRuntimeCommandOutcome.FirmwareError -> SmartSetupApplyResult.Failed(
+                    applied.toSmartSetupFailure()
+                )
+                is DeviceRuntimeCommandOutcome.NotConnected,
+                is DeviceRuntimeCommandOutcome.NotAuthenticated -> SmartSetupApplyResult.Failed(
+                    SmartSetupApplyFailure.NOT_CONNECTED
+                )
+                is DeviceRuntimeCommandOutcome.UnsupportedByDevice -> SmartSetupApplyResult.Failed(
+                    SmartSetupApplyFailure.UNSUPPORTED
+                )
+                is DeviceRuntimeCommandOutcome.ProtocolError -> SmartSetupApplyResult.Failed(
+                    SmartSetupApplyFailure.INVALID_FIRMWARE_DATA
+                )
+                is DeviceRuntimeCommandOutcome.Cancelled,
+                is DeviceRuntimeCommandOutcome.SendFailed,
+                is DeviceRuntimeCommandOutcome.Timeout -> SmartSetupApplyResult.Failed(
+                    SmartSetupApplyFailure.UNAVAILABLE
+                )
+            }
+        } catch (error: CancellationException) {
+            throw error
+        } catch (_: Exception) {
+            SmartSetupApplyResult.Failed(SmartSetupApplyFailure.INVALID_FIRMWARE_DATA)
         }
-        val ready = resolution.snapshot.decision as? SmartSetupDecision.Ready
-            ?: return SmartSetupApplyResult.Failed(SmartSetupApplyFailure.NOT_READY)
-        val recommendation = ready.recommendation
-        if (recommendation.profileFingerprint != expectedProfileFingerprint) {
-            return SmartSetupApplyResult.Failed(SmartSetupApplyFailure.PREVIEW_CHANGED)
-        }
-        val payload = DeviceLightManagedPlanApplyPayload(
-            expectedRevision = resolution.plan.revision,
-            expectedStorageGeneration = resolution.status.storageGeneration,
-            planId = resolution.plan.planId,
-            initialStartPercent = recommendation.plan.initialStartPercent,
-            phases = recommendation.plan.toRuntimePhases(resolution.status.product)
-        )
-        when (
-            val applied = resolution.runtime.applyManagedPlan(resolution.deviceUid, payload)
-        ) {
-            is DeviceRuntimeCommandOutcome.Success -> confirmApply(
-                resolution = resolution,
-                recommendationPlan = recommendation.plan,
-                profileFingerprint = recommendation.profileFingerprint,
-                commandDocument = applied.value
-            )
-            is DeviceRuntimeCommandOutcome.FirmwareError -> SmartSetupApplyResult.Failed(
-                applied.toSmartSetupFailure()
-            )
-            is DeviceRuntimeCommandOutcome.NotConnected,
-            is DeviceRuntimeCommandOutcome.NotAuthenticated -> SmartSetupApplyResult.Failed(
-                SmartSetupApplyFailure.NOT_CONNECTED
-            )
-            is DeviceRuntimeCommandOutcome.UnsupportedByDevice -> SmartSetupApplyResult.Failed(
-                SmartSetupApplyFailure.UNSUPPORTED
-            )
-            is DeviceRuntimeCommandOutcome.ProtocolError -> SmartSetupApplyResult.Failed(
-                SmartSetupApplyFailure.INVALID_FIRMWARE_DATA
-            )
-            is DeviceRuntimeCommandOutcome.Cancelled,
-            is DeviceRuntimeCommandOutcome.SendFailed,
-            is DeviceRuntimeCommandOutcome.Timeout -> SmartSetupApplyResult.Failed(
-                SmartSetupApplyFailure.UNAVAILABLE
-            )
-        }
-    } catch (error: CancellationException) {
-        throw error
-    } catch (_: Exception) {
-        SmartSetupApplyResult.Failed(SmartSetupApplyFailure.INVALID_FIRMWARE_DATA)
     }
 
     private suspend fun confirmApply(
