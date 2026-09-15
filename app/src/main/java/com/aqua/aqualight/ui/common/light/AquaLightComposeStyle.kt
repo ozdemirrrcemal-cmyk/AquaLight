@@ -246,11 +246,10 @@ object AquaLightLibraryGeometry {
     val moreDotGap = 5.dp
     const val moreDotCount = 3
 
-    val manualRowHeight = 27.dp
-    val manualLabelWidth = 20.dp
-    val manualValueWidth = 42.dp
-    val manualRailHeight = 7.dp
-    val manualRowGap = 2.dp
+    val manualCardMinHeight = 128.dp
+    val manualContentGap = 6.dp
+    val manualSummaryDotSize = 10.dp
+    val manualSummaryTextGap = 5.dp
 
     val chartHeight = 126.dp
     val chartYAxisWidth = 34.dp
@@ -261,6 +260,7 @@ object AquaLightLibraryGeometry {
     val chartLegendDotSize = 9.dp
 
     val loadButtonHeight = 42.dp
+    val manualLoadButtonHeight = 44.dp
     val loadButtonMinWidth = 112.dp
     val loadButtonCornerRadius = 12.dp
     val loadButtonOutlineWidth = 1.dp
@@ -271,14 +271,14 @@ object AquaLightLibraryGeometry {
     val emptyVerticalPadding = 34.dp
     val emptyTextGap = 6.dp
     val informationIconSize = 18.dp
+    val informationTouchSize = 32.dp
+    val informationPopupMaxWidth = 260.dp
     val informationGap = 7.dp
-    const val percentMaximum = 100f
 }
 
 object AquaLightLibraryAlpha {
     const val selectedTabSurface = 0.20f
     const val badgeSurface = 0.16f
-    const val rail = 0.24f
     const val grid = 0.52f
     const val disabled = 0.38f
     const val pressed = 0.14f

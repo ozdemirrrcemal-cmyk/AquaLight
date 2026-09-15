@@ -17,22 +17,35 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryEntry
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryPayload
@@ -111,8 +124,10 @@ private fun androidx.compose.foundation.lazy.LazyListScope.libraryContent(
             }
         }
     }
-    item(key = "library-information-" + state.selectedTab.name) {
-        LibraryInformation(state.selectedTab, visuals)
+    if (state.selectedTab == DeviceLightLibraryTab.CUSTOM) {
+        item(key = "library-information-" + state.selectedTab.name) {
+            CustomLibraryInformation(visuals)
+        }
     }
 }
 
@@ -220,8 +235,14 @@ private fun LibrarySectionHeader(
         BasicText(
             text = title,
             style = visuals.typography.title,
-            modifier = Modifier.weight(1f)
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
+        if (state.selectedTab == DeviceLightLibraryTab.MANUAL) {
+            Spacer(Modifier.width(2.dp))
+            LibrarySectionInformation(visuals)
+        }
+        Spacer(Modifier.weight(1f))
         BasicText(
             text = pluralStringResource(
                 R.plurals.device_light_library_record_count,
@@ -230,6 +251,57 @@ private fun LibrarySectionHeader(
             ),
             style = visuals.typography.caption
         )
+    }
+}
+
+@Composable
+private fun LibrarySectionInformation(visuals: DeviceLightLibraryVisuals) {
+    var expanded by remember { mutableStateOf(false) }
+    val information = stringResource(R.string.device_light_library_manual_information)
+    val popupOffset = with(LocalDensity.current) {
+        IntOffset(0, AquaLightLibraryGeometry.informationTouchSize.roundToPx())
+    }
+    Box {
+        Box(
+            modifier = Modifier
+                .size(AquaLightLibraryGeometry.informationTouchSize)
+                .clip(RoundedCornerShape(percent = 50))
+                .clickable(role = Role.Button) { expanded = !expanded }
+                .semantics { contentDescription = information },
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                painter = painterResource(R.drawable.ic_info),
+                contentDescription = null,
+                colorFilter = ColorFilter.tint(visuals.colors.card.secondaryText),
+                modifier = Modifier.size(AquaLightLibraryGeometry.informationIconSize)
+            )
+        }
+        if (expanded) {
+            Popup(
+                alignment = Alignment.TopStart,
+                offset = popupOffset,
+                onDismissRequest = { expanded = false },
+                properties = PopupProperties(focusable = true)
+            ) {
+                BasicText(
+                    text = information,
+                    style = visuals.typography.caption,
+                    modifier = Modifier
+                        .widthIn(max = AquaLightLibraryGeometry.informationPopupMaxWidth)
+                        .background(
+                            visuals.colors.card.surface,
+                            RoundedCornerShape(AquaLightLibraryGeometry.badgeCornerRadius)
+                        )
+                        .border(
+                            AquaLightLibraryGeometry.tabOutlineWidth,
+                            visuals.colors.card.outline,
+                            RoundedCornerShape(AquaLightLibraryGeometry.badgeCornerRadius)
+                        )
+                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                )
+            }
+        }
     }
 }
 
@@ -324,10 +396,7 @@ private fun LibraryTextAction(
 }
 
 @Composable
-private fun LibraryInformation(
-    tab: DeviceLightLibraryTab,
-    visuals: DeviceLightLibraryVisuals
-) {
+private fun CustomLibraryInformation(visuals: DeviceLightLibraryVisuals) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -343,13 +412,7 @@ private fun LibraryInformation(
         )
         Spacer(Modifier.width(AquaLightLibraryGeometry.informationGap))
         BasicText(
-            text = stringResource(
-                if (tab == DeviceLightLibraryTab.MANUAL) {
-                    R.string.device_light_library_manual_information
-                } else {
-                    R.string.device_light_library_custom_information
-                }
-            ),
+            text = stringResource(R.string.device_light_library_custom_information),
             style = visuals.typography.caption
         )
     }

@@ -6,13 +6,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredWidthIn
 import androidx.compose.foundation.layout.size
@@ -33,7 +32,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
@@ -53,21 +51,24 @@ internal fun ManualLibraryCard(
     actions: DeviceLightLibraryActions,
     visuals: DeviceLightLibraryVisuals
 ) {
-    AquaDeviceCardSurface(modifier = Modifier.fillMaxWidth()) {
-        Column(verticalArrangement = Arrangement.spacedBy(AquaLightLibraryGeometry.cardHeaderGap)) {
+    AquaDeviceCardSurface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = AquaLightLibraryGeometry.manualCardMinHeight)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(AquaLightLibraryGeometry.manualContentGap)
+        ) {
             LibraryCardHeader(entry, actions.onMoreClick, visuals)
-            Column(
-                verticalArrangement = Arrangement.spacedBy(
-                    AquaLightLibraryGeometry.manualRowGap
-                )
-            ) {
-                entry.channels.forEach { channel ->
-                    ManualValueRow(channel, payload.scene, visuals)
-                }
-            }
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                LibraryLoadButton(entry, actions.onLoadClick, visuals)
-            }
+            ManualValuesSummary(entry.channels, payload.scene, visuals)
+            LibraryLoadButton(
+                entry = entry,
+                onLoadClick = actions.onLoadClick,
+                visuals = visuals,
+                prominent = true,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
@@ -114,7 +115,10 @@ private fun LibraryCardHeader(
     onMoreClick: (String) -> Unit,
     visuals: DeviceLightLibraryVisuals
 ) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         BasicText(
             text = entry.name,
             style = visuals.typography.title,
@@ -176,47 +180,38 @@ private fun LibraryKindBadge(
 }
 
 @Composable
-private fun ManualValueRow(
-    channel: DeviceLightLibraryChannel,
+private fun ManualValuesSummary(
+    channels: List<DeviceLightLibraryChannel>,
     scene: DeviceLightLibraryScene,
     visuals: DeviceLightLibraryVisuals
 ) {
-    val percent = scene.channels.getValue(channel)
+    val visibleChannels = MANUAL_CHANNEL_ORDER.filter(channels::contains)
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(AquaLightLibraryGeometry.manualRowHeight),
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        BasicText(
-            text = channel.shortLabel(),
-            style = visuals.typography.body,
-            modifier = Modifier.width(AquaLightLibraryGeometry.manualLabelWidth)
-        )
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .height(AquaLightLibraryGeometry.manualRailHeight)
-                .background(
-                    visuals.colors.card.secondaryText.copy(alpha = AquaLightLibraryAlpha.rail),
-                    RoundedCornerShape(percent = 50)
+        visibleChannels.forEach { channel ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(
+                    AquaLightLibraryGeometry.manualSummaryTextGap
                 )
-        ) {
-            Box(
-                Modifier
-                    .fillMaxHeight()
-                    .fillMaxWidth(percent / AquaLightLibraryGeometry.percentMaximum)
-                    .background(
-                        channel.libraryColor(visuals.colors),
-                        RoundedCornerShape(percent = 50)
-                    )
-            )
+            ) {
+                Canvas(modifier = Modifier.size(AquaLightLibraryGeometry.manualSummaryDotSize)) {
+                    drawCircle(color = channel.libraryColor(visuals.colors))
+                }
+                BasicText(
+                    text = stringResource(
+                        R.string.device_light_library_channel_summary_format,
+                        channel.shortLabel(),
+                        scene.channels.getValue(channel)
+                    ),
+                    style = visuals.typography.body,
+                    maxLines = 1
+                )
+            }
         }
-        BasicText(
-            text = stringResource(R.string.device_light_library_channel_percent_format, percent),
-            style = visuals.typography.body.copy(textAlign = TextAlign.End),
-            modifier = Modifier.width(AquaLightLibraryGeometry.manualValueWidth)
-        )
     }
 }
 
@@ -224,7 +219,9 @@ private fun ManualValueRow(
 private fun LibraryLoadButton(
     entry: DeviceLightLibraryEntry,
     onLoadClick: (String) -> Unit,
-    visuals: DeviceLightLibraryVisuals
+    visuals: DeviceLightLibraryVisuals,
+    prominent: Boolean = false,
+    modifier: Modifier = Modifier
 ) {
     val enabled = !entry.isLoaded
     val text = stringResource(
@@ -243,11 +240,26 @@ private fun LibraryLoadButton(
         entry.name
     )
     val shape = RoundedCornerShape(AquaLightLibraryGeometry.loadButtonCornerRadius)
+    val contentColor = if (prominent) {
+        visuals.colors.card.primaryText
+    } else {
+        visuals.colors.action
+    }
     Row(
-        modifier = Modifier
+        modifier = modifier
             .requiredWidthIn(min = AquaLightLibraryGeometry.loadButtonMinWidth)
-            .height(AquaLightLibraryGeometry.loadButtonHeight)
+            .height(
+                if (prominent) {
+                    AquaLightLibraryGeometry.manualLoadButtonHeight
+                } else {
+                    AquaLightLibraryGeometry.loadButtonHeight
+                }
+            )
             .alpha(if (enabled) 1f else AquaLightLibraryAlpha.disabled)
+            .background(
+                if (prominent) visuals.colors.action else Color.Transparent,
+                shape
+            )
             .border(
                 AquaLightLibraryGeometry.loadButtonOutlineWidth,
                 visuals.colors.action,
@@ -273,13 +285,13 @@ private fun LibraryLoadButton(
                 if (entry.isLoaded) R.drawable.ic_check_24 else R.drawable.ic_light_library
             ),
             contentDescription = null,
-            colorFilter = ColorFilter.tint(visuals.colors.action),
+            colorFilter = ColorFilter.tint(contentColor),
             modifier = Modifier.size(AquaLightLibraryGeometry.loadButtonIconSize)
         )
         Spacer(Modifier.width(AquaLightLibraryGeometry.loadButtonGap))
         BasicText(
             text = text,
-            style = visuals.typography.body.copy(color = visuals.colors.action)
+            style = visuals.typography.title.copy(color = contentColor)
         )
     }
 }
@@ -301,6 +313,13 @@ internal fun DeviceLightLibraryChannel.libraryColor(colors: AquaLightManualColor
         DeviceLightLibraryChannel.BLUE -> colors.blue
         DeviceLightLibraryChannel.WHITE -> colors.white
     }
+
+private val MANUAL_CHANNEL_ORDER = listOf(
+    DeviceLightLibraryChannel.WHITE,
+    DeviceLightLibraryChannel.RED,
+    DeviceLightLibraryChannel.GREEN,
+    DeviceLightLibraryChannel.BLUE
+)
 
 @Composable
 private fun lightLibraryWeekdaysText(mask: Int): String {
