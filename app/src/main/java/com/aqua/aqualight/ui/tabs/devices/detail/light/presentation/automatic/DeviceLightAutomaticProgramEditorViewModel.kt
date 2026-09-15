@@ -10,6 +10,8 @@ import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomat
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticProgramDraft
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticReadResult
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticSnapshot
+import com.aqua.aqualight.application.devices.light.preset.DeviceLightPresetCatalog
+import com.aqua.aqualight.application.devices.light.preset.DeviceLightPresetId
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -40,7 +42,12 @@ internal class DeviceLightAutomaticProgramEditorViewModel(
     val draftEditor = DeviceLightAutomaticDraftEditor(
         currentState = { currentState },
         updateDraft = { update ->
-            _uiState.update { state -> state.copy(draft = update(state.draft)) }
+            _uiState.update { state ->
+                state.copy(
+                    draft = update(state.draft),
+                    selectedPresetId = null
+                )
+            }
         },
         emit = ::emit
     )
@@ -48,7 +55,8 @@ internal class DeviceLightAutomaticProgramEditorViewModel(
     fun bind(
         deviceUidText: String,
         mode: DeviceLightAutomaticEditorMode,
-        restoredDraft: DeviceLightAutomaticEditorDraft?
+        restoredDraft: DeviceLightAutomaticEditorDraft?,
+        restoredPresetId: DeviceLightPresetId?
     ) {
         val deviceUid = deviceUidText.trim()
         require(deviceUid.isNotBlank()) { "Automatic editor destination deviceUid is required." }
@@ -61,10 +69,21 @@ internal class DeviceLightAutomaticProgramEditorViewModel(
         viewModelScope.launch {
             when (val result = operations.read(deviceUid)) {
                 is DeviceLightAutomaticReadResult.Available ->
-                    applySnapshot(result.snapshot, restoredDraft)
+                    applySnapshot(result.snapshot, restoredDraft, restoredPresetId)
                 is DeviceLightAutomaticReadResult.Failed -> applyReadFailure(result.failure)
             }
         }
+    }
+
+    fun applyPreset(presetId: DeviceLightPresetId) {
+        val state = currentState
+        val source = state.source ?: return
+        val preset = DeviceLightPresetCatalog.find(presetId) ?: return
+        if (!state.contentEnabled) return
+        _uiState.value = state.copy(
+            draft = state.draft.withPreset(preset, source),
+            selectedPresetId = presetId
+        )
     }
 
     fun save() {
@@ -93,7 +112,8 @@ internal class DeviceLightAutomaticProgramEditorViewModel(
 
     private fun applySnapshot(
         snapshot: DeviceLightAutomaticSnapshot,
-        restoredDraft: DeviceLightAutomaticEditorDraft?
+        restoredDraft: DeviceLightAutomaticEditorDraft?,
+        restoredPresetId: DeviceLightPresetId?
     ) {
         val mode = currentState.mode
         val selectedProgram = when (mode) {
@@ -136,6 +156,7 @@ internal class DeviceLightAutomaticProgramEditorViewModel(
                 baselineDraft = baseline
             ),
             draft = restored ?: modeDraft,
+            selectedPresetId = restoredPresetId?.takeIf { restored != null },
             connectionVisualState = DeviceConnectionVisualState.ONLINE
         )
     }

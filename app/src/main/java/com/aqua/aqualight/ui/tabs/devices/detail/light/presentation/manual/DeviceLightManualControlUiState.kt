@@ -2,10 +2,12 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual
 
 import androidx.annotation.StringRes
 import com.aqua.aqualight.R
-import com.aqua.aqualight.application.devices.light.manual.DeviceLightBuiltInManualPreset
-import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualScenePercentages
+import com.aqua.aqualight.application.devices.light.preset.DeviceLightPresetCatalog
+import com.aqua.aqualight.application.devices.light.preset.DeviceLightPresetId
+import com.aqua.aqualight.application.devices.light.preset.DeviceLightPresetScene
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import com.aqua.aqualight.ui.common.light.AquaLightManualPreviewSpec
+import com.aqua.aqualight.ui.common.light.labelResource
 
 internal enum class DeviceLightManualChannelId {
     RED,
@@ -34,14 +36,7 @@ internal data class DeviceLightManualPowerUiState(
     }
 }
 
-internal enum class DeviceLightManualPresetId {
-    NATURAL_AQUARIUM,
-    PLANTED_AQUARIUM,
-    RED_PLANTS,
-    VIVID_COLORS,
-    LOW_TECH,
-    AQUASCAPE
-}
+internal typealias DeviceLightManualPresetId = DeviceLightPresetId
 
 internal data class DeviceLightManualPresetUiState(
     val id: DeviceLightManualPresetId,
@@ -117,43 +112,14 @@ internal fun deviceLightManualPreviewState(deviceUid: String) = DeviceLightManua
     contentEnabled = true
 )
 
-private fun builtInManualPresets() = listOf(
-    manualPreset(
-        DeviceLightManualPresetId.NATURAL_AQUARIUM,
-        R.string.device_light_manual_preset_natural_aquarium,
-        DeviceLightBuiltInManualPreset.NATURAL_AQUARIUM.scene
-    ),
-    manualPreset(
-        DeviceLightManualPresetId.PLANTED_AQUARIUM,
-        R.string.device_light_manual_preset_planted_aquarium,
-        DeviceLightBuiltInManualPreset.PLANTED_AQUARIUM.scene
-    ),
-    manualPreset(
-        DeviceLightManualPresetId.RED_PLANTS,
-        R.string.device_light_manual_preset_red_plants,
-        DeviceLightBuiltInManualPreset.RED_PLANTS.scene
-    ),
-    manualPreset(
-        DeviceLightManualPresetId.VIVID_COLORS,
-        R.string.device_light_manual_preset_vivid_colors,
-        DeviceLightBuiltInManualPreset.VIVID_COLORS.scene
-    ),
-    manualPreset(
-        DeviceLightManualPresetId.LOW_TECH,
-        R.string.device_light_manual_preset_low_tech,
-        DeviceLightBuiltInManualPreset.LOW_TECH.scene
-    ),
-    manualPreset(
-        DeviceLightManualPresetId.AQUASCAPE,
-        R.string.device_light_manual_preset_aquascape,
-        DeviceLightBuiltInManualPreset.AQUASCAPE.scene
-    )
-)
+private fun builtInManualPresets() = DeviceLightPresetCatalog.manualPresets.map { preset ->
+    manualPreset(preset.id, preset.id.labelResource(), preset.scene)
+}
 
 private fun manualPreset(
     id: DeviceLightManualPresetId,
     @StringRes labelRes: Int,
-    scene: DeviceLightManualScenePercentages
+    scene: DeviceLightPresetScene
 ) = DeviceLightManualPresetUiState(
     id = id,
     labelRes = labelRes,

@@ -6,6 +6,7 @@ import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomat
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticProgram
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticProgramDraft
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticScene
+import com.aqua.aqualight.application.devices.light.preset.DeviceLightPresetId
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 
 internal sealed interface DeviceLightAutomaticEditorMode {
@@ -114,6 +115,7 @@ internal data class DeviceLightAutomaticProgramEditorUiState(
     val mode: DeviceLightAutomaticEditorMode = DeviceLightAutomaticEditorMode.Create,
     val source: DeviceLightAutomaticEditorSource? = null,
     val draft: DeviceLightAutomaticEditorDraft = DeviceLightAutomaticEditorDraft(),
+    val selectedPresetId: DeviceLightPresetId? = null,
     val connectionVisualState: DeviceConnectionVisualState? = null,
     val initialLoading: Boolean = false,
     val operationInProgress: Boolean = false,

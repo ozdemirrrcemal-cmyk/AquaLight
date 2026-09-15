@@ -88,6 +88,8 @@
     <string name="device_light_manual_preset_vivid_colors">Vivid Colors</string>
     <string name="device_light_manual_preset_low_tech">Low-Tech</string>
     <string name="device_light_manual_preset_aquascape">Aquascape</string>
+    <string name="device_light_preset_new_setup">New Setup</string>
+    <string name="device_light_preset_shade_plants">Shade Plants</string>
     <string name="device_light_manual_preset_scene_description">%1$s scene. Red %2$d%%, green %3$d%%, blue %4$d%%, white %5$d%%.</string>
     <string name="device_light_manual_load">Load</string>
     <string name="device_light_manual_load_description">Load a saved light scene</string>

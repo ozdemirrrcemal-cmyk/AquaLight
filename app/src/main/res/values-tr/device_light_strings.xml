@@ -86,6 +86,8 @@
     <string name="device_light_manual_preset_vivid_colors">Canlı Renkler</string>
     <string name="device_light_manual_preset_low_tech">Low-Tech</string>
     <string name="device_light_manual_preset_aquascape">Aquascape</string>
+    <string name="device_light_preset_new_setup">Yeni Kurulum</string>
+    <string name="device_light_preset_shade_plants">Gölge Bitkileri</string>
     <string name="device_light_manual_preset_scene_description">%1$s sahnesi. Kırmızı %%%2$d, yeşil %%%3$d, mavi %%%4$d, beyaz %%%5$d.</string>
     <string name="device_light_manual_load">Yükle</string>
     <string name="device_light_manual_load_description">Kayıtlı bir ışık sahnesini yükle</string>

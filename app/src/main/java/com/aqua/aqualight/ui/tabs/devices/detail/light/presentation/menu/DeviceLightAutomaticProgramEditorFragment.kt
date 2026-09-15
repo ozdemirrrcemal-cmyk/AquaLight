@@ -13,6 +13,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.light.preset.DeviceLightPresetId
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceLightAutomaticProgramEditorBinding
 import com.aqua.aqualight.ui.common.dialog.UnsavedChangesExitGuard
@@ -25,6 +26,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.De
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.DeviceLightAutomaticProgramEditorActions
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.DeviceLightAutomaticProgramEditorScreen
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.DeviceLightAutomaticProgramEditorViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.DeviceLightAutomaticPresetNavigation
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.DeviceLightAutomaticScheduleActions
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.DeviceLightAutomaticTimeField
 import kotlinx.coroutines.launch
@@ -47,8 +49,12 @@ class DeviceLightAutomaticProgramEditorFragment :
         viewModel.bind(
             deviceUidText = args.deviceUid,
             mode = resolveMode(),
-            restoredDraft = savedInstanceState?.let(DeviceLightAutomaticEditorDraft::restore)
+            restoredDraft = savedInstanceState?.let(DeviceLightAutomaticEditorDraft::restore),
+            restoredPresetId = DeviceLightPresetId.fromStorageName(
+                savedInstanceState?.getString(STATE_SELECTED_PRESET_ID)
+            )
         )
+        observePresetResult()
         attachUnsavedGuard()
         effectHandler = DeviceLightAutomaticProgramEditorEffectHandler(this, viewModel)
         effectHandler.registerTimeResult()
@@ -59,7 +65,20 @@ class DeviceLightAutomaticProgramEditorFragment :
 
     override fun onSaveInstanceState(outState: Bundle) {
         viewModel.currentState.draft.writeTo(outState)
+        viewModel.currentState.selectedPresetId?.let { presetId ->
+            outState.putString(STATE_SELECTED_PRESET_ID, presetId.name)
+        }
         super.onSaveInstanceState(outState)
+    }
+
+    private fun observePresetResult() {
+        val savedStateHandle = findNavController().currentBackStackEntry?.savedStateHandle ?: return
+        savedStateHandle
+            .getLiveData<String>(DeviceLightAutomaticPresetNavigation.RESULT_PRESET_ID)
+            .observe(viewLifecycleOwner) { storedPresetId ->
+                savedStateHandle.remove<String>(DeviceLightAutomaticPresetNavigation.RESULT_PRESET_ID)
+                DeviceLightPresetId.fromStorageName(storedPresetId)?.let(viewModel::applyPreset)
+            }
     }
 
     private fun resolveMode(): DeviceLightAutomaticEditorMode = when {
@@ -142,7 +161,8 @@ class DeviceLightAutomaticProgramEditorFragment :
         navController.navigate(
             DeviceLightAutomaticProgramEditorFragmentDirections
                 .actionDeviceLightAutomaticProgramEditorFragmentToDeviceLightAutomaticPresetFragment(
-                    args.deviceUid
+                    deviceUid = args.deviceUid,
+                    selectedPresetId = viewModel.currentState.selectedPresetId?.name.orEmpty()
                 )
         )
     }
@@ -163,6 +183,7 @@ class DeviceLightAutomaticProgramEditorFragment :
     private companion object {
         const val UNSAVED_REQUEST_KEY = "device_light_auto_editor_unsaved"
         const val ACTION_DISCARD_DRAFT = "discard_auto_program_draft"
+        const val STATE_SELECTED_PRESET_ID = "device_light_auto_editor_selected_preset"
     }
 }
 

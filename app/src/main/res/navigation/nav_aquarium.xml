@@ -421,8 +421,12 @@
         android:id="@+id/deviceLightAutomaticPresetFragment"
         android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.menu.DeviceLightAutomaticPresetFragment"
         android:label="@string/device_light_auto_preset_title"
-        tools:layout="@layout/fragment_device_light_empty_menu">
+        tools:layout="@layout/fragment_device_light_automatic_preset">
         <argument android:name="deviceUid" app:argType="string" />
+        <argument
+            android:name="selectedPresetId"
+            android:defaultValue=""
+            app:argType="string" />
     </fragment>
 
     <fragment

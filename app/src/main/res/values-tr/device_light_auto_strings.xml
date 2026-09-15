@@ -67,4 +67,19 @@
     <string name="device_light_auto_editor_end_time_picker">Kapanış saatini seçin</string>
     <string name="device_light_auto_editor_time_select">Seç</string>
     <string name="device_light_auto_preset_title">Ön ayar</string>
+    <string name="device_light_auto_preset_intro_title">Hazır programlar</string>
+    <string name="device_light_auto_preset_intro_summary">Bir başlangıç seçin, sonra düzenleyin.</string>
+    <string name="device_light_auto_preset_intro_safety">Seçim cihazı hemen değiştirmez.</string>
+    <string name="device_light_auto_preset_natural_summary">Dengeli günlük görünüm</string>
+    <string name="device_light_auto_preset_planted_summary">Yoğun bitki gelişimi</string>
+    <string name="device_light_auto_preset_red_summary">Kırmızı ton vurgusu</string>
+    <string name="device_light_auto_preset_vivid_summary">Canlı, dengeli sunum</string>
+    <string name="device_light_auto_preset_low_tech_summary">Sakin, düşük yoğunluk</string>
+    <string name="device_light_auto_preset_aquascape_summary">Doğal yüksek görünürlük</string>
+    <string name="device_light_auto_preset_new_setup_summary">Kademeli başlangıç</string>
+    <string name="device_light_auto_preset_shade_summary">Anubias, fern ve moss</string>
+    <string name="device_light_auto_preset_schedule_format">%1$d sa · %2$d dk</string>
+    <string name="device_light_auto_preset_channel_percent">%%%1$d</string>
+    <string name="device_light_auto_preset_card_description">%1$s. %2$d saat, %3$d dakika geçiş. Beyaz yüzde %4$d, kırmızı yüzde %5$d, yeşil yüzde %6$d, mavi yüzde %7$d.</string>
+    <string name="device_light_auto_preset_use">Bu ön ayarı kullan</string>
 </resources>

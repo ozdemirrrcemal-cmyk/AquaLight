@@ -32,6 +32,7 @@ import com.aqua.aqualight.ui.common.light.AquaLightManualPreviewSpec
 import com.aqua.aqualight.ui.common.light.AquaLightManualPercentSlider
 import com.aqua.aqualight.ui.common.light.AquaLightManualPercentSliderActions
 import com.aqua.aqualight.ui.common.light.AquaLightManualPercentSliderState
+import com.aqua.aqualight.ui.common.light.labelResource
 
 @Composable
 internal fun DeviceLightAutomaticEditorPresetCard(
@@ -67,7 +68,9 @@ internal fun DeviceLightAutomaticEditorPresetCard(
                 )
             }
             BasicText(
-                text = stringResource(R.string.device_light_auto_editor_preset_empty),
+                text = state.selectedPresetId?.let { presetId ->
+                    stringResource(presetId.labelResource())
+                } ?: stringResource(R.string.device_light_auto_editor_preset_empty),
                 style = visuals.typography.caption.copy(color = visuals.colors.card.secondaryText)
             )
             Spacer(Modifier.width(DeviceLightAutomaticEditorGeometry.presetChevronSize))
