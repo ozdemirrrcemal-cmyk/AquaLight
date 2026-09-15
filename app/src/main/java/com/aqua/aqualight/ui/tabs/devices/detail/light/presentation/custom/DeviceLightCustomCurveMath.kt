@@ -116,5 +116,5 @@ internal fun chartX(
 internal fun playheadTimeForX(x: Float, chartWidth: Float): Long {
     if (chartWidth <= 0f) return 0L
     val fraction = (x / chartWidth).coerceIn(0f, 1f)
-    return (fraction * (MILLIS_PER_DAY - MILLIS_PER_MINUTE)).roundToLong().alignedTime()
+    return (fraction * MILLIS_PER_DAY).roundToLong().alignedTime()
 }
