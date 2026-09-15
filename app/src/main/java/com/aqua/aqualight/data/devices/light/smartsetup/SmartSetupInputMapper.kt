@@ -1,3 +1,5 @@
+@file:Suppress("MatchingDeclarationName")
+
 package com.aqua.aqualight.data.devices.light.smartsetup
 
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot

@@ -1,4 +1,4 @@
-@file:Suppress("CyclomaticComplexMethod", "MagicNumber")
+@file:Suppress("CyclomaticComplexMethod", "MagicNumber", "ReturnCount")
 
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.quicksetup
 

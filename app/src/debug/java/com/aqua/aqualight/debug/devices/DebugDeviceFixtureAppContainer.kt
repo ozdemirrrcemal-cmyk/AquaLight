@@ -69,6 +69,7 @@ internal class DebugDeviceFixtureAppContainer(
         )
 }
 
+@Suppress("CyclomaticComplexMethod", "LongMethod", "TooManyFunctions")
 private class DebugDeviceFixtureViewModelFactory(
     context: Context,
     private val delegate: ViewModelProvider.Factory,

@@ -175,9 +175,11 @@ data class SmartSetupFactor(
 data class SmartLightScene(val channels: Map<SmartSetupChannel, Int>) {
     init {
         require(channels.isNotEmpty())
-        require(channels.values.all { value -> value in 0..100 })
+        require(channels.values.all { value -> value in 0..MAX_CHANNEL_PERCENT })
     }
 }
+
+private const val MAX_CHANNEL_PERCENT = 100
 
 data class SmartLightPhaseDraft(
     val validFromEpochDay: Long,

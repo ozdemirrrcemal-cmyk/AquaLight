@@ -51,8 +51,9 @@ internal class DebugFixtureSmartSetupOperations(
             ?: return delegate.read(normalizedDeviceUid)
         return try {
             readFixture(normalizedDeviceUid, fixture)
-        } catch (error: Throwable) {
-            if (error is CancellationException) throw error
+        } catch (error: CancellationException) {
+            throw error
+        } catch (_: Exception) {
             SmartSetupReadResult.Unavailable
         }
     }
@@ -91,13 +92,12 @@ internal class DebugFixtureSmartSetupOperations(
                 )
                 else -> SmartSetupProfileSaveResult.Failed(SmartSetupProfileSaveFailure.UNAVAILABLE)
             }
-        } catch (error: Throwable) {
-            if (error is CancellationException) throw error
-            if (error is IllegalArgumentException) {
-                SmartSetupProfileSaveResult.Failed(SmartSetupProfileSaveFailure.INVALID_PROFILE)
-            } else {
-                SmartSetupProfileSaveResult.Failed(SmartSetupProfileSaveFailure.UNAVAILABLE)
-            }
+        } catch (error: CancellationException) {
+            throw error
+        } catch (_: IllegalArgumentException) {
+            SmartSetupProfileSaveResult.Failed(SmartSetupProfileSaveFailure.INVALID_PROFILE)
+        } catch (_: Exception) {
+            SmartSetupProfileSaveResult.Failed(SmartSetupProfileSaveFailure.UNAVAILABLE)
         }
     }
 
@@ -137,8 +137,9 @@ internal class DebugFixtureSmartSetupOperations(
                 storageGeneration = applied.storageGeneration,
                 profileFingerprint = applied.profileFingerprint
             )
-        } catch (error: Throwable) {
-            if (error is CancellationException) throw error
+        } catch (error: CancellationException) {
+            throw error
+        } catch (_: Exception) {
             SmartSetupApplyResult.Failed(SmartSetupApplyFailure.UNAVAILABLE)
         }
     }

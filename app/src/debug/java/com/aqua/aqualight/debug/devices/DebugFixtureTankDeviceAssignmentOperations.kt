@@ -127,8 +127,9 @@ internal class DebugFixtureTankDeviceAssignmentOperations(
             } else {
                 fixtureAssignments.assign(normalizedDeviceUid, tankId, tankIds)
             }
-        } catch (error: Throwable) {
-            if (error is CancellationException) throw error
+        } catch (error: CancellationException) {
+            throw error
+        } catch (_: Exception) {
             AssignDeviceToTankResult.Failure
         }
     }
