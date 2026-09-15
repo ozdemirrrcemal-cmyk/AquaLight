@@ -10,15 +10,19 @@ internal object DeviceLightAutomaticGeometry {
     val screenBottomPadding = 82.dp
     val cardGap = 8.dp
     val cardContentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp)
+    val cardContentMinimumHeight = 110.dp
 
     val cardHeaderIconSize = 22.dp
-    val cardMetaIconSize = 20.dp
     val iconStrokeWidth = 1.5.dp
     val headerIconGap = 8.dp
     val headerControlGap = 5.dp
-    val metaTopGap = 4.dp
-    val metaItemGap = 7.dp
-    val rampItemStartGap = 12.dp
+    val scheduleEventIconSize = 22.dp
+    val scheduleTextGap = 5.dp
+    val scheduleArrowGap = 7.dp
+    val scheduleDividerWidth = 1.dp
+    val scheduleDividerHeight = 22.dp
+    val scheduleDividerGap = 8.dp
+    val cardDividerHeight = 1.dp
 
     val switchWidth = 48.dp
     val switchHeight = 28.dp
@@ -30,18 +34,8 @@ internal object DeviceLightAutomaticGeometry {
     val moreDotRadius = 1.3.dp
     val moreDotGap = 4.dp
 
-    val chartTopGap = 7.dp
-    val chartHeight = 72.dp
-    val chartYAxisWidth = 34.dp
-    val chartYAxisGap = 4.dp
-    val chartXAxisHeight = 16.dp
-    val chartGridStrokeWidth = 0.8.dp
-    val chartSeriesStrokeWidth = 1.8.dp
-
-    val legendTopGap = 6.dp
-    val legendDotSize = 10.dp
-    val legendTextGap = 5.dp
-    val legendItemGap = 7.dp
+    val channelDotSize = 10.dp
+    val channelTextGap = 5.dp
 
     val addButtonHorizontalPadding = 12.dp
     val addButtonBottomPadding = 12.dp
@@ -85,7 +79,6 @@ internal object DeviceLightAutomaticIconGeometry {
 }
 
 internal object DeviceLightAutomaticAlpha {
-    const val grid = 0.42f
     const val disabled = 0.42f
     const val switchOffTrack = 0.58f
 }
