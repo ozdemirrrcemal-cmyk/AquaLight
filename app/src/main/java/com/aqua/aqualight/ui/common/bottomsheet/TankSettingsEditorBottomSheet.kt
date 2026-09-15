@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.common.bottomsheet
 
+import android.content.Context
 import android.content.DialogInterface
 import android.os.Bundle
 import android.text.Editable
@@ -208,41 +209,25 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
         }
         binding.btnCancel.setOnClickListener { cancelAndDismiss() }
         binding.btnSave.setOnClickListener {
-            saveDimensions(binding, validationMessage)
-        }
-        attachContent(binding.root)
-    }
-
-    private fun saveDimensions(
-        binding: ContentSheetTankSizeBinding,
-        validationMessage: String
-    ) {
-        val inputs = listOf(binding.inputWidth, binding.inputLength, binding.inputHeight)
-        val dimensions = inputs.map { input ->
-            AquariumDimensionInputPolicy.parseCentimeters(
+            val dimensions = binding.parseDimensions(
                 requireContext(),
-                input.text,
-                selectedUnit
-            )
-        }
-        dimensions.forEachIndexed { index, value ->
-            inputs[index].error = if (value == null) validationMessage else null
-        }
-        if (dimensions.any { it == null }) return
-        val (widthCm, lengthCm, heightCm) = dimensions.map { requireNotNull(it) }
-
-        publishResult(
-            status = RESULT_SAVED,
-            payload = ResultPayload(
-                dimensions = ResultDimensions(
-                    widthCm = widthCm,
-                    lengthCm = lengthCm,
-                    heightCm = heightCm,
-                    unit = selectedUnit
+                selectedUnit,
+                validationMessage
+            ) ?: return@setOnClickListener
+            publishResult(
+                status = RESULT_SAVED,
+                payload = ResultPayload(
+                    dimensions = ResultDimensions(
+                        widthCm = dimensions.widthCm,
+                        lengthCm = dimensions.lengthCm,
+                        heightCm = dimensions.heightCm,
+                        unit = selectedUnit
+                    )
                 )
             )
-        )
-        dismiss()
+            dismiss()
+        }
+        attachContent(binding.root)
     }
 
     private fun bindSetupDateEditor() {
@@ -540,4 +525,27 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
             return if (unit.equals(UNIT_IN, ignoreCase = true)) UNIT_IN else UNIT_CM
         }
     }
+}
+
+private data class ParsedTankDimensions(
+    val widthCm: Int,
+    val lengthCm: Int,
+    val heightCm: Int
+)
+
+private fun ContentSheetTankSizeBinding.parseDimensions(
+    context: Context,
+    unit: String,
+    validationMessage: String
+): ParsedTankDimensions? {
+    val inputs = listOf(inputWidth, inputLength, inputHeight)
+    val dimensions = inputs.map { input ->
+        AquariumDimensionInputPolicy.parseCentimeters(context, input.text, unit)
+    }
+    dimensions.forEachIndexed { index, value ->
+        inputs[index].error = if (value == null) validationMessage else null
+    }
+    if (dimensions.any { it == null }) return null
+    val (widthCm, lengthCm, heightCm) = dimensions.map { requireNotNull(it) }
+    return ParsedTankDimensions(widthCm, lengthCm, heightCm)
 }

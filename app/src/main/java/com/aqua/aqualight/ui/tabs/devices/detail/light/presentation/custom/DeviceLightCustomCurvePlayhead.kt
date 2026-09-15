@@ -25,7 +25,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-internal data class DeviceLightCustomPlayheadLayout(
+internal data class DeviceLightCustomCurvePlayhead(
     val availableWidth: Dp,
     val plotWidth: Dp,
     val axisWidth: Dp
@@ -36,7 +36,7 @@ internal fun CurvePlayheadControls(
     state: DeviceLightCustomCurveUiState,
     actions: DeviceLightCustomCurveActions,
     visuals: DeviceLightCustomVisuals,
-    layout: DeviceLightCustomPlayheadLayout
+    layout: DeviceLightCustomCurvePlayhead
 ) {
     val bubbleWidth = PLAYHEAD_LABEL_WIDTH_DP.dp
     val playheadFraction = state.previewTimeMs.toFloat() / MILLIS_PER_DAY.toFloat()

@@ -140,7 +140,7 @@ private fun EditableCurveChart(
                 state = state,
                 actions = actions,
                 visuals = visuals,
-                layout = DeviceLightCustomPlayheadLayout(maxWidth, plotWidth, axisWidth)
+                layout = DeviceLightCustomCurvePlayhead(maxWidth, plotWidth, axisWidth)
             )
         }
         HourAxis(visuals)
