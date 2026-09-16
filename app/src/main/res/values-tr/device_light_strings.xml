@@ -74,7 +74,7 @@
         <item quantity="other">%1$d gün kaldı</item>
     </plurals>
     <string name="device_light_adaptation_intro_title">Yeni ışığa güvenli geçiş</string>
-    <string name="device_light_adaptation_intro_body">Programlı ışığı seçtiğiniz seviyeden kademeli olarak %%100’e çıkarır.</string>
+    <string name="device_light_adaptation_intro_body">Programlı ışığı seçtiğiniz seviyeden kademeli olarak %100’e çıkarır.</string>
     <string name="device_light_adaptation_active_title">Adaptasyon aktif</string>
     <string name="device_light_adaptation_completed_title">Adaptasyon tamamlandı</string>
     <string name="device_light_adaptation_completed_uppercase">TAMAMLANDI</string>
