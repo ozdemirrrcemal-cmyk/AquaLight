@@ -1,6 +1,5 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.library
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -24,7 +23,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
@@ -35,14 +33,11 @@ import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import com.aqua.aqualight.R
-import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryChannel
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryEntry
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryPayload
-import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryScene
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.light.AquaLightLibraryAlpha
 import com.aqua.aqualight.ui.common.light.AquaLightLibraryGeometry
-import com.aqua.aqualight.ui.common.light.AquaLightManualColors
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.AutomaticCalendarIcon
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.AutomaticClockIcon
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.AutomaticMoreButton
@@ -248,73 +243,6 @@ private fun LibraryCardDivider(visuals: DeviceLightLibraryVisuals) {
 }
 
 @Composable
-private fun ManualChannelSummary(
-    channels: List<DeviceLightLibraryChannel>,
-    scene: DeviceLightLibraryScene,
-    visuals: DeviceLightLibraryVisuals
-) {
-    val visibleChannels = LIBRARY_CHANNEL_ORDER.filter(channels::contains)
-    val labels = visibleChannels.associateWith { channel ->
-        stringResource(
-            R.string.device_light_library_channel_summary_format,
-            channel.shortLabel(),
-            scene.channels.getValue(channel)
-        )
-    }
-    LibraryChannelSummary(visibleChannels, labels, visuals)
-}
-
-@Composable
-private fun CustomChannelSummary(
-    channels: List<DeviceLightLibraryChannel>,
-    payload: DeviceLightLibraryPayload.Custom,
-    visuals: DeviceLightLibraryVisuals
-) {
-    val visibleChannels = LIBRARY_CHANNEL_ORDER.filter(channels::contains)
-    val labels = visibleChannels.associateWith { channel ->
-        val range = payload.channelRange(channel)
-        stringResource(
-            R.string.device_light_library_channel_range_format,
-            channel.shortLabel(),
-            range.first,
-            range.last
-        )
-    }
-    LibraryChannelSummary(visibleChannels, labels, visuals)
-}
-
-@Composable
-private fun LibraryChannelSummary(
-    channels: List<DeviceLightLibraryChannel>,
-    labels: Map<DeviceLightLibraryChannel, String>,
-    visuals: DeviceLightLibraryVisuals
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        channels.forEach { channel ->
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(
-                    DeviceLightAutomaticGeometry.channelTextGap
-                )
-            ) {
-                Canvas(modifier = Modifier.size(DeviceLightAutomaticGeometry.channelDotSize)) {
-                    drawCircle(color = channel.libraryColor(visuals.colors))
-                }
-                BasicText(
-                    text = labels.getValue(channel),
-                    style = visuals.typography.body,
-                    maxLines = 1
-                )
-            }
-        }
-    }
-}
-
-@Composable
 private fun LibraryLoadButton(
     entry: DeviceLightLibraryEntry,
     onLoadClick: (String) -> Unit,
@@ -380,24 +308,6 @@ private fun LibraryLoadButton(
 }
 
 @Composable
-internal fun DeviceLightLibraryChannel.shortLabel(): String = stringResource(
-    when (this) {
-        DeviceLightLibraryChannel.RED -> R.string.device_light_plan_channel_red
-        DeviceLightLibraryChannel.GREEN -> R.string.device_light_plan_channel_green
-        DeviceLightLibraryChannel.BLUE -> R.string.device_light_plan_channel_blue
-        DeviceLightLibraryChannel.WHITE -> R.string.device_light_plan_channel_white
-    }
-)
-
-internal fun DeviceLightLibraryChannel.libraryColor(colors: AquaLightManualColors): Color =
-    when (this) {
-        DeviceLightLibraryChannel.RED -> colors.red
-        DeviceLightLibraryChannel.GREEN -> colors.green
-        DeviceLightLibraryChannel.BLUE -> colors.blue
-        DeviceLightLibraryChannel.WHITE -> colors.white
-    }
-
-@Composable
 private fun lightLibraryWeekdaysText(mask: Int): String {
     if (mask == EVERY_DAY_MASK) {
         return stringResource(R.string.device_light_library_every_day)
@@ -415,12 +325,5 @@ private fun lightLibraryWeekdaysText(mask: Int): String {
         stringResource(dayResource).takeIf { mask and (1 shl index) != 0 }
     }.joinToString(" · ")
 }
-
-private val LIBRARY_CHANNEL_ORDER = listOf(
-    DeviceLightLibraryChannel.WHITE,
-    DeviceLightLibraryChannel.RED,
-    DeviceLightLibraryChannel.GREEN,
-    DeviceLightLibraryChannel.BLUE
-)
 
 private const val EVERY_DAY_MASK = 0x7f
