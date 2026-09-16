@@ -50,10 +50,16 @@ class DeviceLightQuickSetupViewModelTest {
         assertNull(loaded.plan)
         assertFalse(loaded.canApply)
 
-        viewModel.selectAmbientLight(DeviceLightAmbientLight.INDIRECT)
+        viewModel.selectCondition(
+            DeviceLightQuickSetupConditionSelection.AmbientLight(
+                DeviceLightAmbientLight.INDIRECT
+            )
+        )
         assertNull(viewModel.uiState.value.plan)
 
-        viewModel.selectAlgaeLevel(DeviceLightAlgaeLevel.MILD)
+        viewModel.selectCondition(
+            DeviceLightQuickSetupConditionSelection.AlgaeLevel(DeviceLightAlgaeLevel.MILD)
+        )
         val assessed = viewModel.uiState.value
         assertNotNull(assessed.plan)
         assertEquals(
@@ -68,8 +74,14 @@ class DeviceLightQuickSetupViewModelTest {
         val plans = FakeManagedPlanOperations()
         val viewModel = viewModel(plans).apply {
             bind(DEVICE_UID)
-            selectAmbientLight(DeviceLightAmbientLight.INDIRECT)
-            selectAlgaeLevel(DeviceLightAlgaeLevel.MILD)
+            selectCondition(
+                DeviceLightQuickSetupConditionSelection.AmbientLight(
+                    DeviceLightAmbientLight.INDIRECT
+                )
+            )
+            selectCondition(
+                DeviceLightQuickSetupConditionSelection.AlgaeLevel(DeviceLightAlgaeLevel.MILD)
+            )
         }
 
         viewModel.apply()
@@ -117,8 +129,14 @@ class DeviceLightQuickSetupViewModelTest {
         )
         val viewModel = viewModel(plans).apply {
             bind(DEVICE_UID)
-            selectAmbientLight(DeviceLightAmbientLight.INDIRECT)
-            selectAlgaeLevel(DeviceLightAlgaeLevel.MILD)
+            selectCondition(
+                DeviceLightQuickSetupConditionSelection.AmbientLight(
+                    DeviceLightAmbientLight.INDIRECT
+                )
+            )
+            selectCondition(
+                DeviceLightQuickSetupConditionSelection.AlgaeLevel(DeviceLightAlgaeLevel.MILD)
+            )
         }
 
         viewModel.apply()

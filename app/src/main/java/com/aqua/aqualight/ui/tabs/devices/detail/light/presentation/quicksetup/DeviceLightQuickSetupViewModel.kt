@@ -54,13 +54,15 @@ internal class DeviceLightQuickSetupViewModel(
         _uiState.update { state -> state.copy(detailsExpanded = !state.detailsExpanded) }
     }
 
-    fun selectAmbientLight(value: DeviceLightAmbientLight) {
-        _uiState.update { state -> state.copy(ambientLight = value) }
-        recalculateAssessment()
-    }
-
-    fun selectAlgaeLevel(value: DeviceLightAlgaeLevel) {
-        _uiState.update { state -> state.copy(algaeLevel = value) }
+    fun selectCondition(selection: DeviceLightQuickSetupConditionSelection) {
+        _uiState.update { state ->
+            when (selection) {
+                is DeviceLightQuickSetupConditionSelection.AmbientLight ->
+                    state.copy(ambientLight = selection.value)
+                is DeviceLightQuickSetupConditionSelection.AlgaeLevel ->
+                    state.copy(algaeLevel = selection.value)
+            }
+        }
         recalculateAssessment()
     }
 
@@ -223,6 +225,14 @@ internal class DeviceLightQuickSetupViewModel(
             )
         }
     }
+}
+
+internal sealed interface DeviceLightQuickSetupConditionSelection {
+    data class AmbientLight(val value: DeviceLightAmbientLight) :
+        DeviceLightQuickSetupConditionSelection
+
+    data class AlgaeLevel(val value: DeviceLightAlgaeLevel) :
+        DeviceLightQuickSetupConditionSelection
 }
 
 private fun DeviceLightQuickSetupTank.automaticInput(

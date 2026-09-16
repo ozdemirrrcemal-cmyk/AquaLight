@@ -41,8 +41,16 @@ class DeviceLightQuickSetupFragment : Fragment(R.layout.fragment_device_light_qu
 
     private fun setupContent() {
         val actions = DeviceLightQuickSetupActions(
-            onAmbientLightSelected = viewModel::selectAmbientLight,
-            onAlgaeLevelSelected = viewModel::selectAlgaeLevel,
+            onAmbientLightSelected = { value ->
+                viewModel.selectCondition(
+                    DeviceLightQuickSetupConditionSelection.AmbientLight(value)
+                )
+            },
+            onAlgaeLevelSelected = { value ->
+                viewModel.selectCondition(
+                    DeviceLightQuickSetupConditionSelection.AlgaeLevel(value)
+                )
+            },
             onToggleDetails = viewModel::toggleDetails,
             onEditInstalledPlan = { viewModel.setInstalledPlanEditing(true) },
             onCancelEdit = { viewModel.setInstalledPlanEditing(false) },
