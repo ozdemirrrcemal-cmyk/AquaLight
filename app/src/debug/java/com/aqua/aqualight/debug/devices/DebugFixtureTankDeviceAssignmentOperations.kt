@@ -98,29 +98,32 @@ internal class DebugFixtureTankDeviceAssignmentOperations(
         deviceUid: String
     ): AssignDeviceToTankResult {
         val normalizedUid = deviceUid.trim()
-        if (!fixtures.contains(normalizedUid)) {
-            return delegate.assignDevice(tankId, deviceUid)
+        return when {
+            !fixtures.contains(normalizedUid) -> delegate.assignDevice(tankId, deviceUid)
+            tankId <= 0L || normalizedUid.isBlank() -> AssignDeviceToTankResult.InvalidRequest
+            else -> assignFixture(tankId, normalizedUid)
         }
-        if (tankId <= 0L || normalizedUid.isBlank()) {
-            return AssignDeviceToTankResult.InvalidRequest
-        }
-        return try {
-            if (!tankExists(tankId)) {
-                AssignDeviceToTankResult.TankNotFound
-            } else {
-                when (val decision = runtime.assign(normalizedUid, tankId)) {
-                    DebugFixtureAssignDecision.Assigned -> AssignDeviceToTankResult.Assigned
-                    DebugFixtureAssignDecision.AlreadyAssigned ->
-                        AssignDeviceToTankResult.AlreadyAssigned
-                    is DebugFixtureAssignDecision.Conflict ->
-                        AssignDeviceToTankResult.Conflict(decision.existingTankId)
-                }
+    }
+
+    private suspend fun assignFixture(
+        tankId: Long,
+        normalizedUid: String
+    ): AssignDeviceToTankResult = try {
+        if (!tankExists(tankId)) {
+            AssignDeviceToTankResult.TankNotFound
+        } else {
+            when (val decision = runtime.assign(normalizedUid, tankId)) {
+                DebugFixtureAssignDecision.Assigned -> AssignDeviceToTankResult.Assigned
+                DebugFixtureAssignDecision.AlreadyAssigned ->
+                    AssignDeviceToTankResult.AlreadyAssigned
+                is DebugFixtureAssignDecision.Conflict ->
+                    AssignDeviceToTankResult.Conflict(decision.existingTankId)
             }
-        } catch (error: CancellationException) {
-            throw error
-        } catch (_: Exception) {
-            AssignDeviceToTankResult.Failure
         }
+    } catch (error: CancellationException) {
+        throw error
+    } catch (_: Exception) {
+        AssignDeviceToTankResult.Failure
     }
 
     override suspend fun removeDevice(
@@ -128,16 +131,12 @@ internal class DebugFixtureTankDeviceAssignmentOperations(
         deviceUid: String
     ): RemoveDeviceFromTankResult {
         val normalizedUid = deviceUid.trim()
-        if (!fixtures.contains(normalizedUid)) {
-            return delegate.removeDevice(tankId, deviceUid)
-        }
-        if (tankId <= 0L || normalizedUid.isBlank()) {
-            return RemoveDeviceFromTankResult.INVALID_REQUEST
-        }
-        return if (runtime.remove(normalizedUid, tankId)) {
-            RemoveDeviceFromTankResult.REMOVED
-        } else {
-            RemoveDeviceFromTankResult.NOT_ASSIGNED
+        return when {
+            !fixtures.contains(normalizedUid) -> delegate.removeDevice(tankId, deviceUid)
+            tankId <= 0L || normalizedUid.isBlank() ->
+                RemoveDeviceFromTankResult.INVALID_REQUEST
+            runtime.remove(normalizedUid, tankId) -> RemoveDeviceFromTankResult.REMOVED
+            else -> RemoveDeviceFromTankResult.NOT_ASSIGNED
         }
     }
 }

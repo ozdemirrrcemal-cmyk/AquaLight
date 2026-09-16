@@ -44,8 +44,8 @@ class DeviceLightQuickSetupFragment : Fragment(R.layout.fragment_device_light_qu
             onAmbientLightSelected = viewModel::selectAmbientLight,
             onAlgaeLevelSelected = viewModel::selectAlgaeLevel,
             onToggleDetails = viewModel::toggleDetails,
-            onEditInstalledPlan = viewModel::editInstalledPlan,
-            onCancelEdit = viewModel::cancelEdit,
+            onEditInstalledPlan = { viewModel.setInstalledPlanEditing(true) },
+            onCancelEdit = { viewModel.setInstalledPlanEditing(false) },
             onApply = viewModel::apply
         )
         binding.quickSetupCompose.apply {

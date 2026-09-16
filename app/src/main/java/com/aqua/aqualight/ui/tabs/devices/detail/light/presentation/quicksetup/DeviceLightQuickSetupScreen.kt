@@ -205,51 +205,18 @@ private fun QuickSetupStatusHeader(
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
 ) {
-    val active = state.mode == DeviceLightQuickSetupMode.ACTIVE
-    val editing = state.mode == DeviceLightQuickSetupMode.EDIT
-    val runtime = state.managedPlanSnapshot?.runtimeState
-    val title = when {
-        active && runtime == DeviceLightManagedPlanRuntimeState.RTC_BLOCKED ->
-            R.string.device_light_quick_setup_program_waiting
-        active && runtime == DeviceLightManagedPlanRuntimeState.NOT_SELECTED ->
-            R.string.device_light_quick_setup_program_stored
-        active && runtime == DeviceLightManagedPlanRuntimeState.BEFORE_PLAN ->
-            R.string.device_light_quick_setup_program_scheduled
-        active -> R.string.device_light_quick_setup_program_active
-        editing -> R.string.device_light_quick_setup_update_conditions
-        else -> R.string.device_light_quick_setup_prepare_title
-    }
-    val subtitle = when {
-        active && runtime == DeviceLightManagedPlanRuntimeState.RTC_BLOCKED ->
-            R.string.device_light_quick_setup_program_waiting_subtitle
-        active && runtime == DeviceLightManagedPlanRuntimeState.NOT_SELECTED ->
-            R.string.device_light_quick_setup_program_stored_subtitle
-        active && runtime == DeviceLightManagedPlanRuntimeState.BEFORE_PLAN ->
-            R.string.device_light_quick_setup_program_scheduled_subtitle
-        active -> R.string.device_light_quick_setup_program_active_subtitle
-        editing -> R.string.device_light_quick_setup_edit_subtitle
-        else -> R.string.device_light_quick_setup_prepare_subtitle
-    }
-    val tag = when {
-        active && runtime == DeviceLightManagedPlanRuntimeState.ACTIVE ->
-            R.string.device_light_quick_setup_active_tag
-        active && runtime == DeviceLightManagedPlanRuntimeState.RTC_BLOCKED ->
-            R.string.device_light_quick_setup_waiting_tag
-        active -> R.string.device_light_quick_setup_stored_tag
-        editing -> R.string.device_light_quick_setup_edit_tag
-        else -> R.string.device_light_quick_setup_draft_tag
-    }
-    val statusTone = when {
-        active && runtime == DeviceLightManagedPlanRuntimeState.ACTIVE -> colors.success
-        active && runtime == DeviceLightManagedPlanRuntimeState.RTC_BLOCKED -> colors.warning
-        else -> colors.accent
+    val presentation = quickSetupHeaderPresentation(state)
+    val statusTone = when (presentation.tone) {
+        QuickSetupHeaderTone.ACCENT -> colors.accent
+        QuickSetupHeaderTone.SUCCESS -> colors.success
+        QuickSetupHeaderTone.WARNING -> colors.warning
     }
     AquaDeviceCardSurface(Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (active) {
+            if (presentation.showStatusDot) {
                 Box(
                     Modifier
                         .size(AquaLightQuickSetupGeometry.statusDotSize)
@@ -265,18 +232,95 @@ private fun QuickSetupStatusHeader(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(AquaLightQuickSetupGeometry.tinyGap)
             ) {
-                BasicText(text = stringResource(title), style = typography.title)
-                BasicText(text = stringResource(subtitle), style = typography.caption)
+                BasicText(
+                    text = stringResource(presentation.titleRes),
+                    style = typography.title
+                )
+                BasicText(
+                    text = stringResource(presentation.subtitleRes),
+                    style = typography.caption
+                )
             }
             Spacer(Modifier.width(AquaLightQuickSetupGeometry.compactGap))
             StatusTag(
-                text = stringResource(tag),
+                text = stringResource(presentation.tagRes),
                 tone = statusTone,
                 typography = typography
             )
         }
     }
 }
+
+private fun quickSetupHeaderPresentation(
+    state: DeviceLightQuickSetupUiState
+): QuickSetupHeaderPresentation = when (state.mode) {
+    DeviceLightQuickSetupMode.ACTIVE -> activeHeaderPresentation(
+        state.managedPlanSnapshot?.runtimeState
+    )
+    DeviceLightQuickSetupMode.EDIT -> QuickSetupHeaderPresentation(
+        titleRes = R.string.device_light_quick_setup_update_conditions,
+        subtitleRes = R.string.device_light_quick_setup_edit_subtitle,
+        tagRes = R.string.device_light_quick_setup_edit_tag,
+        tone = QuickSetupHeaderTone.ACCENT,
+        showStatusDot = false
+    )
+    DeviceLightQuickSetupMode.CREATE -> QuickSetupHeaderPresentation(
+        titleRes = R.string.device_light_quick_setup_prepare_title,
+        subtitleRes = R.string.device_light_quick_setup_prepare_subtitle,
+        tagRes = R.string.device_light_quick_setup_draft_tag,
+        tone = QuickSetupHeaderTone.ACCENT,
+        showStatusDot = false
+    )
+}
+
+private fun activeHeaderPresentation(
+    runtime: DeviceLightManagedPlanRuntimeState?
+): QuickSetupHeaderPresentation = when (runtime) {
+    DeviceLightManagedPlanRuntimeState.ACTIVE -> QuickSetupHeaderPresentation(
+        titleRes = R.string.device_light_quick_setup_program_active,
+        subtitleRes = R.string.device_light_quick_setup_program_active_subtitle,
+        tagRes = R.string.device_light_quick_setup_active_tag,
+        tone = QuickSetupHeaderTone.SUCCESS,
+        showStatusDot = true
+    )
+    DeviceLightManagedPlanRuntimeState.RTC_BLOCKED -> QuickSetupHeaderPresentation(
+        titleRes = R.string.device_light_quick_setup_program_waiting,
+        subtitleRes = R.string.device_light_quick_setup_program_waiting_subtitle,
+        tagRes = R.string.device_light_quick_setup_waiting_tag,
+        tone = QuickSetupHeaderTone.WARNING,
+        showStatusDot = true
+    )
+    DeviceLightManagedPlanRuntimeState.BEFORE_PLAN -> QuickSetupHeaderPresentation(
+        titleRes = R.string.device_light_quick_setup_program_scheduled,
+        subtitleRes = R.string.device_light_quick_setup_program_scheduled_subtitle,
+        tagRes = R.string.device_light_quick_setup_stored_tag,
+        tone = QuickSetupHeaderTone.ACCENT,
+        showStatusDot = true
+    )
+    DeviceLightManagedPlanRuntimeState.NOT_INSTALLED,
+    DeviceLightManagedPlanRuntimeState.NOT_SELECTED,
+    null -> QuickSetupHeaderPresentation(
+        titleRes = R.string.device_light_quick_setup_program_stored,
+        subtitleRes = R.string.device_light_quick_setup_program_stored_subtitle,
+        tagRes = R.string.device_light_quick_setup_stored_tag,
+        tone = QuickSetupHeaderTone.ACCENT,
+        showStatusDot = true
+    )
+}
+
+private enum class QuickSetupHeaderTone {
+    ACCENT,
+    SUCCESS,
+    WARNING
+}
+
+private data class QuickSetupHeaderPresentation(
+    @StringRes val titleRes: Int,
+    @StringRes val subtitleRes: Int,
+    @StringRes val tagRes: Int,
+    val tone: QuickSetupHeaderTone,
+    val showStatusDot: Boolean
+)
 
 @Composable
 private fun CompactAquariumProfile(

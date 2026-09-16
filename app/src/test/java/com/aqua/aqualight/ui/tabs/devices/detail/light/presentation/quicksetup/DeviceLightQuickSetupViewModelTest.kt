@@ -98,11 +98,11 @@ class DeviceLightQuickSetupViewModelTest {
         assertNull(state.plan)
         assertFalse(state.canApply)
 
-        viewModel.editInstalledPlan()
+        viewModel.setInstalledPlanEditing(true)
         assertEquals(DeviceLightQuickSetupMode.EDIT, viewModel.uiState.value.mode)
         assertFalse(viewModel.uiState.value.canApply)
 
-        viewModel.cancelEdit()
+        viewModel.setInstalledPlanEditing(false)
         assertEquals(DeviceLightQuickSetupMode.ACTIVE, viewModel.uiState.value.mode)
     }
 

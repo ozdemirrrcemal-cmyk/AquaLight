@@ -83,17 +83,19 @@ object DeviceLightQuickSetupCalculator {
         input: DeviceLightQuickSetupInput,
         lifecycle: LifecycleContext,
         lightProfile: PhaseLightProfile
-    ): List<DeviceLightQuickSetupPhase> = plannedStages(lifecycle, input)
-        .mapIndexed { relativeIndex, _ ->
-            createPhase(
-                tank = tank,
-                input = input,
-                lifecycle = lifecycle,
-                relativeIndex = relativeIndex,
-                lightProfile = lightProfile,
-                holdForAlgaeReview = input.algaeLevel != DeviceLightAlgaeLevel.NONE
-            )
-        }
+    ): List<DeviceLightQuickSetupPhase> {
+        val context = PhaseBuildContext(
+            tank = tank,
+            input = input,
+            lifecycle = lifecycle,
+            lightProfile = lightProfile,
+            holdForAlgaeReview = input.algaeLevel != DeviceLightAlgaeLevel.NONE
+        )
+        return plannedStages(lifecycle, input)
+            .mapIndexed { relativeIndex, _ ->
+                createPhase(context, relativeIndex)
+            }
+    }
 
     private fun plannedStages(
         lifecycle: LifecycleContext,
@@ -105,13 +107,12 @@ object DeviceLightQuickSetupCalculator {
     }
 
     private fun createPhase(
-        tank: DeviceLightQuickSetupTank,
-        input: DeviceLightQuickSetupInput,
-        lifecycle: LifecycleContext,
-        relativeIndex: Int,
-        lightProfile: PhaseLightProfile,
-        holdForAlgaeReview: Boolean
+        context: PhaseBuildContext,
+        relativeIndex: Int
     ): DeviceLightQuickSetupPhase {
+        val tank = context.tank
+        val input = context.input
+        val lifecycle = context.lifecycle
         val absoluteIndex = lifecycle.currentStageIndex + relativeIndex
         val stage = DeviceLightLifecycleStage.entries[absoluteIndex]
         val fromDay = if (relativeIndex == 0) {
@@ -120,17 +121,17 @@ object DeviceLightQuickSetupCalculator {
             lifecycle.safeSetupDay + stage.dayStart - 1L
         }
         val nextStage = DeviceLightLifecycleStage.entries.getOrNull(absoluteIndex + 1)
-        val untilDay = if (holdForAlgaeReview) {
+        val untilDay = if (context.holdForAlgaeReview) {
             null
         } else {
             nextStage?.let { lifecycle.safeSetupDay + it.dayStart - 1L }
         }
         val stageIntensity = (
-            lightProfile.fullIntensityPercent * STAGE_INTENSITY_FACTORS[absoluteIndex]
+            context.lightProfile.fullIntensityPercent * STAGE_INTENSITY_FACTORS[absoluteIndex]
         )
             .roundToInt()
             .coerceIn(MIN_INTENSITY_PERCENT, MAX_INTENSITY_PERCENT)
-        val targetPpfd = (lightProfile.fullProfilePpfd * stageIntensity / PERCENT_SCALE)
+        val targetPpfd = (context.lightProfile.fullProfilePpfd * stageIntensity / PERCENT_SCALE)
             .roundToInt()
             .coerceAtLeast(MIN_TARGET_PPFD)
         val startMinute = input.programEndMinute - stage.durationMinutes
@@ -195,29 +196,46 @@ object DeviceLightQuickSetupCalculator {
         productKey: String,
         input: DeviceLightQuickSetupInput
     ): Int {
-        var intensity = when (input.plantDemand) {
-            DeviceLightPlantDemand.LOW -> 42
-            DeviceLightPlantDemand.MEDIUM -> 56
-            DeviceLightPlantDemand.HIGH -> 72
-        }
-        intensity += when (input.plantDensity) {
-            DeviceLightPlantDensity.SPARSE -> -5
-            DeviceLightPlantDensity.MEDIUM -> 0
-            DeviceLightPlantDensity.DENSE -> 5
-        }
-        intensity += when (input.ambientLight) {
+        var intensity = plantDemandIntensity(input.plantDemand)
+        intensity += plantDensityAdjustment(input.plantDensity)
+        intensity += ambientLightAdjustment(input.ambientLight)
+        intensity += algaeAdjustment(input.algaeLevel)
+        val opticalDistance = input.aquariumHeightCm + defaultMountHeightCm(productKey)
+        intensity += (opticalDistance - REFERENCE_DISTANCE_CM) / 4
+        if (input.activeSoil) intensity -= 3
+        return applySafetyCaps(intensity, input)
+    }
+
+    private fun plantDemandIntensity(demand: DeviceLightPlantDemand): Int = when (demand) {
+        DeviceLightPlantDemand.LOW -> 42
+        DeviceLightPlantDemand.MEDIUM -> 56
+        DeviceLightPlantDemand.HIGH -> 72
+    }
+
+    private fun plantDensityAdjustment(density: DeviceLightPlantDensity): Int = when (density) {
+        DeviceLightPlantDensity.SPARSE -> -5
+        DeviceLightPlantDensity.MEDIUM -> 0
+        DeviceLightPlantDensity.DENSE -> 5
+    }
+
+    private fun ambientLightAdjustment(ambientLight: DeviceLightAmbientLight): Int =
+        when (ambientLight) {
             DeviceLightAmbientLight.LOW -> 0
             DeviceLightAmbientLight.INDIRECT -> -6
             DeviceLightAmbientLight.DIRECT -> -15
         }
-        intensity += when (input.algaeLevel) {
-            DeviceLightAlgaeLevel.NONE -> 0
-            DeviceLightAlgaeLevel.MILD -> -14
-            DeviceLightAlgaeLevel.VISIBLE -> -24
-        }
-        val opticalDistance = input.aquariumHeightCm + defaultMountHeightCm(productKey)
-        intensity += (opticalDistance - REFERENCE_DISTANCE_CM) / 4
-        if (input.activeSoil) intensity -= 3
+
+    private fun algaeAdjustment(algaeLevel: DeviceLightAlgaeLevel): Int = when (algaeLevel) {
+        DeviceLightAlgaeLevel.NONE -> 0
+        DeviceLightAlgaeLevel.MILD -> -14
+        DeviceLightAlgaeLevel.VISIBLE -> -24
+    }
+
+    private fun applySafetyCaps(
+        requestedIntensity: Int,
+        input: DeviceLightQuickSetupInput
+    ): Int {
+        var intensity = requestedIntensity
         if (!input.co2Installed) intensity = intensity.coerceAtMost(NO_CO2_MAX_INTENSITY_PERCENT)
         if (input.ambientLight == DeviceLightAmbientLight.DIRECT) {
             intensity = intensity.coerceAtMost(DIRECT_DAYLIGHT_MAX_INTENSITY_PERCENT)
@@ -353,5 +371,13 @@ object DeviceLightQuickSetupCalculator {
     private data class PhaseLightProfile(
         val fullIntensityPercent: Int,
         val fullProfilePpfd: Int
+    )
+
+    private data class PhaseBuildContext(
+        val tank: DeviceLightQuickSetupTank,
+        val input: DeviceLightQuickSetupInput,
+        val lifecycle: LifecycleContext,
+        val lightProfile: PhaseLightProfile,
+        val holdForAlgaeReview: Boolean
     )
 }

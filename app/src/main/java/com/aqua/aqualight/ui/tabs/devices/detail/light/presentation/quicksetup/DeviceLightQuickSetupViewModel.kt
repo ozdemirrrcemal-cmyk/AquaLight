@@ -64,7 +64,7 @@ internal class DeviceLightQuickSetupViewModel(
         recalculateAssessment()
     }
 
-    fun editInstalledPlan() {
+    fun setInstalledPlanEditing(editing: Boolean) {
         _uiState.update { state ->
             if (!state.hasInstalledPlan) {
                 state
@@ -73,23 +73,7 @@ internal class DeviceLightQuickSetupViewModel(
                     ambientLight = null,
                     algaeLevel = null,
                     plan = null,
-                    editingInstalledPlan = true,
-                    detailsExpanded = false
-                )
-            }
-        }
-    }
-
-    fun cancelEdit() {
-        _uiState.update { state ->
-            if (!state.hasInstalledPlan) {
-                state
-            } else {
-                state.copy(
-                    ambientLight = null,
-                    algaeLevel = null,
-                    plan = null,
-                    editingInstalledPlan = false,
+                    editingInstalledPlan = editing,
                     detailsExpanded = false
                 )
             }
