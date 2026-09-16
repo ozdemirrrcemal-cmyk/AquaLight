@@ -40,6 +40,21 @@ object AquaLightQuickSetupGeometry {
     val actionTopPadding = 12.dp
     val badgeSize = 28.dp
     val dividerHeight = 1.dp
+    val automationHeroIconSize = 46.dp
+    val automationHeroIconRadius = 14.dp
+    val automationHeroGlyphSize = 24.dp
+    val profileIconSize = 22.dp
+    val profileRowVerticalPadding = 10.dp
+    val chartPadding = 12.dp
+    val programChartHeight = 142.dp
+    val chartGridWidth = 1.dp
+    val chartLineWidth = 2.dp
+    val channelDotSize = 8.dp
+    val summaryMetricPadding = 10.dp
+    val channelOutputDotSize = 13.dp
+    val reasonBadgeSize = 26.dp
+    val adaptationIconSize = 28.dp
+    val phaseLabelWidth = 96.dp
 }
 
 object AquaLightQuickSetupAlpha {

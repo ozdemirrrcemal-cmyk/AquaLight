@@ -109,13 +109,7 @@ object SmartCareTankClassifier {
   }
 
   private fun hasActiveSoil(materials: List<SavedAquariumMaterial>): Boolean {
-    return SmartCareTextMatcher.hasMaterialKeyword(
-      materials,
-      arrayOf(
-        "active soil", "aqua soil", "aquasoil", "soil", "amazonia",
-        "controsoil", "stratum", "plant substrate"
-      )
-    )
+    return SmartCareTextMatcher.hasMaterialCategory(materials, MATERIAL_CATEGORY_SUBSTRATE)
   }
 
   private fun hasFilter(materials: List<SavedAquariumMaterial>): Boolean {
@@ -158,4 +152,5 @@ object SmartCareTankClassifier {
   private const val MATERIAL_CATEGORY_FERTILIZER = "fertilizer"
   private const val MATERIAL_CATEGORY_FILTER = "filter"
   private const val MATERIAL_CATEGORY_LIGHT = "light"
+  private const val MATERIAL_CATEGORY_SUBSTRATE = "substrate"
 }

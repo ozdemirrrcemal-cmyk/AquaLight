@@ -55,6 +55,7 @@ class DebugFixtureTankDeviceAssignmentOperationsTest {
         )
         assertFalse(
             operations.availableDevices(FIRST_TANK_ID).first()
+                .devices
                 .any { item -> item.deviceUid == fixtureUid }
         )
         assertEquals(
@@ -67,6 +68,7 @@ class DebugFixtureTankDeviceAssignmentOperationsTest {
         )
         assertTrue(
             operations.availableDevices(FIRST_TANK_ID).first()
+                .devices
                 .any { item -> item.deviceUid == fixtureUid }
         )
         assertEquals(0, delegate.fixtureMutationCalls)

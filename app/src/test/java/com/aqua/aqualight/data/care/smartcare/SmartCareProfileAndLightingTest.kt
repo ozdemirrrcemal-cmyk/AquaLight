@@ -37,6 +37,25 @@ class SmartCareProfileAndLightingTest {
   }
 
   @Test
+  fun `substrate category is the only active soil authority`() {
+    val substrate = profile(
+      tankType = AquariumTankTaxonomy.TYPE_PLANTED,
+      tankStyle = AquariumTankTaxonomy.STYLE_NATURE_AQUARIUM,
+      setupDay = 1,
+      materials = listOf(material(4L, "substrate", "Neutral catalog entry"))
+    )
+    val misleadingName = profile(
+      tankType = AquariumTankTaxonomy.TYPE_PLANTED,
+      tankStyle = AquariumTankTaxonomy.STYLE_NATURE_AQUARIUM,
+      setupDay = 1,
+      materials = listOf(material(4L, "filter", "Premium active soil reactor"))
+    )
+
+    assertTrue(substrate.hasActiveSoil)
+    assertFalse(misleadingName.hasActiveSoil)
+  }
+
+  @Test
   fun `first three weeks recommend six hours without invented intensity`() {
     val recommendation = requireNotNull(
       SmartCareLightingAdvisor.recommend(
@@ -88,7 +107,8 @@ class SmartCareProfileAndLightingTest {
   private fun profile(
     tankType: String,
     tankStyle: String,
-    setupDay: Int
+    setupDay: Int,
+    materials: List<SavedAquariumMaterial>? = null
   ): SmartCareTankProfile {
     val tank = SavedAquariumTank(
       id = 1L,
@@ -106,7 +126,7 @@ class SmartCareProfileAndLightingTest {
       plants = listOf(
         SavedAquariumPlant(2L, "Monte Carlo", "Carpet", 0.5f, 0.5f)
       ),
-      materials = listOf(
+      materials = materials ?: listOf(
         material(3L, "light", "light-device"),
         material(4L, "substrate", "ADA Amazonia Soil")
       )

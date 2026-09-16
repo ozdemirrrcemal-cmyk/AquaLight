@@ -41,36 +41,7 @@ class DeviceLightQuickSetupFragment : Fragment(R.layout.fragment_device_light_qu
 
     private fun setupContent() {
         val actions = DeviceLightQuickSetupActions(
-            onPlantDemandChanged = { value ->
-                viewModel.updatePreference(DeviceLightQuickSetupPreferenceChange.PlantDemand(value))
-            },
-            onPlantDensityChanged = { value ->
-                viewModel.updatePreference(DeviceLightQuickSetupPreferenceChange.PlantDensity(value))
-            },
-            onWaterDepthChanged = { value ->
-                viewModel.updatePreference(DeviceLightQuickSetupPreferenceChange.WaterDepth(value))
-            },
-            onFixtureHeightChanged = { value ->
-                viewModel.updatePreference(DeviceLightQuickSetupPreferenceChange.FixtureHeight(value))
-            },
-            onAmbientLevelChanged = { value ->
-                viewModel.updatePreference(DeviceLightQuickSetupPreferenceChange.AmbientLevel(value))
-            },
-            onCo2ReadyChanged = { value ->
-                viewModel.updatePreference(DeviceLightQuickSetupPreferenceChange.Co2Ready(value))
-            },
-            onActiveSoilChanged = { value ->
-                viewModel.updatePreference(DeviceLightQuickSetupPreferenceChange.ActiveSoil(value))
-            },
-            onLightsOffMinuteChanged = { value ->
-                viewModel.updatePreference(DeviceLightQuickSetupPreferenceChange.LightsOffMinute(value))
-            },
-            onMeasuredPpfdChanged = { value ->
-                viewModel.updatePreference(DeviceLightQuickSetupPreferenceChange.MeasuredPpfd(value))
-            },
-            onContinue = viewModel::continueToPreferences,
-            onBackStep = viewModel::backStep,
-            onCalculate = viewModel::calculate,
+            onToggleDetails = viewModel::toggleDetails,
             onApply = viewModel::apply
         )
         binding.quickSetupCompose.apply {
@@ -97,13 +68,7 @@ class DeviceLightQuickSetupFragment : Fragment(R.layout.fragment_device_light_qu
             fragment = this,
             config = AquaHeaderConfig(
                 titleOverride = getString(R.string.device_menu_quick_setup_title),
-                onBackClick = {
-                    if (state.step == DeviceLightQuickSetupStep.TANK_DATA) {
-                        findNavController().navigateUp()
-                    } else {
-                        viewModel.backStep()
-                    }
-                }
+                onBackClick = { findNavController().navigateUp() }
             )
         )
         setFragmentGlobalLoading(state.initialLoading || state.applying)

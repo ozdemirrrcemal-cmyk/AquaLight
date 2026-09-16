@@ -12,7 +12,7 @@ class DeviceLightQuickSetupCalculatorTest {
     fun `new planted tank receives five contiguous lifecycle phases`() {
         val plan = calculate(
             tank = tank(setupDateEpochDay = TODAY - 11),
-            input = input().copy(activeSoil = true, co2Ready = true)
+            input = input().copy(activeSoil = true, co2Installed = true)
         )
 
         assertEquals(DeviceLightPlanConfidence.ESTIMATED, plan.confidence)
@@ -41,7 +41,7 @@ class DeviceLightQuickSetupCalculatorTest {
     fun `mature tank receives one open ended eight hour phase`() {
         val plan = calculate(
             tank = tank(setupDateEpochDay = TODAY - 120),
-            input = input().copy(co2Ready = true)
+            input = input().copy(co2Installed = true)
         )
 
         assertEquals(1, plan.phases.size)
@@ -59,45 +59,58 @@ class DeviceLightQuickSetupCalculatorTest {
             input = input().copy(
                 plantDemand = DeviceLightPlantDemand.HIGH,
                 plantDensity = DeviceLightPlantDensity.DENSE,
-                waterDepthCm = 100,
-                fixtureHeightCm = 60,
-                co2Ready = false,
-                measuredFullProfilePpfd = 200
+                aquariumHeightCm = 100,
+                co2Installed = false
             )
         )
 
         assertEquals(55, plan.scene.channels.values.maxOrNull())
-        assertEquals(110, plan.currentTargetPpfd)
+        assertEquals(19, plan.currentTargetPpfd)
         assertTrue(DeviceLightPlanReason.NO_CO2_SAFETY_CAP in plan.reasons)
         assertTrue(DeviceLightPlanWarning.HIGH_LIGHT_WITHOUT_CO2 in plan.warnings)
     }
 
     @Test
-    fun `measured PAR produces calibrated DLI and removes estimate warning`() {
+    fun `automatic device model keeps PPFD transparent as an estimate`() {
         val plan = calculate(
             tank = tank(setupDateEpochDay = TODAY - 120),
-            input = input().copy(
-                co2Ready = true,
-                measuredFullProfilePpfd = 200
-            )
+            input = input().copy(co2Installed = true)
         )
 
-        assertEquals(DeviceLightPlanConfidence.CALIBRATED, plan.confidence)
-        assertFalse(DeviceLightPlanWarning.PAR_NOT_MEASURED in plan.warnings)
-        assertTrue(DeviceLightPlanReason.MEASURED_PAR in plan.reasons)
-        assertEquals(112, plan.currentTargetPpfd)
-        assertEquals(2.8224, plan.currentEstimatedDliMolPerM2Day, 0.0001)
+        assertEquals(DeviceLightPlanConfidence.ESTIMATED, plan.confidence)
+        assertTrue(DeviceLightPlanWarning.PAR_NOT_MEASURED in plan.warnings)
+        assertTrue(DeviceLightPlanReason.ESTIMATED_PAR in plan.reasons)
+        assertEquals(
+            plan.currentTargetPpfd * 420 * 60.0 / 1_000_000.0,
+            plan.currentEstimatedDliMolPerM2Day,
+            0.0001
+        )
+    }
+
+    @Test
+    fun `stored aquarium height directly changes the optical model`() {
+        val shallow = calculate(
+            tank = tank(),
+            input = input().copy(aquariumHeightCm = 30, co2Installed = true)
+        )
+        val deep = calculate(
+            tank = tank(),
+            input = input().copy(aquariumHeightCm = 80, co2Installed = true)
+        )
+
+        assertTrue(shallow.currentTargetPpfd > deep.currentTargetPpfd)
+        assertFalse(shallow.profileFingerprint == deep.profileFingerprint)
     }
 
     @Test
     fun `scene channel shape follows the selected fixture product`() {
         val wrgb = calculate(
             tank = tank(productKey = "LIGHT_WRGB_PRO_ELITE"),
-            input = input().copy(co2Ready = true)
+            input = input().copy(co2Installed = true)
         )
         val rgb = calculate(
             tank = tank(productKey = "LIGHT_RGB_PRO_SLIM"),
-            input = input().copy(co2Ready = true)
+            input = input().copy(co2Installed = true)
         )
 
         assertEquals(DeviceLightAutomaticChannel.entries.toSet(), wrgb.scene.channels.keys)
@@ -115,11 +128,11 @@ class DeviceLightQuickSetupCalculatorTest {
     fun `future or missing setup date fails safe as a new tank`() {
         val future = calculate(
             tank = tank(setupDateEpochDay = TODAY + 10),
-            input = input().copy(co2Ready = true)
+            input = input().copy(co2Installed = true)
         )
         val missing = calculate(
             tank = tank(setupDateEpochDay = null),
-            input = input().copy(co2Ready = true)
+            input = input().copy(co2Installed = true)
         )
 
         assertTrue(DeviceLightPlanWarning.SETUP_DATE_IN_FUTURE in future.warnings)
@@ -162,13 +175,10 @@ class DeviceLightQuickSetupCalculatorTest {
     private fun input() = DeviceLightQuickSetupInput(
         plantDemand = DeviceLightPlantDemand.MEDIUM,
         plantDensity = DeviceLightPlantDensity.MEDIUM,
-        waterDepthCm = 35,
-        fixtureHeightCm = 10,
-        ambientLevel = DeviceLightAmbientLevel.LOW,
-        co2Ready = false,
+        aquariumHeightCm = 35,
+        co2Installed = false,
         activeSoil = false,
-        preferredLightsOffMinute = 22 * 60,
-        measuredFullProfilePpfd = null
+        programEndMinute = 22 * 60
     )
 
     private companion object {

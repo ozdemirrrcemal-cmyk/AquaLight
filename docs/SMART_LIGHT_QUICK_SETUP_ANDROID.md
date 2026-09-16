@@ -6,36 +6,35 @@ Bu belge, `feature/smart-light-quick-setup` Android uygulamasının firmware
 `455298833668537fedc16b851067558815d2cc7b` ile çalışan hızlı aydınlatma
 otomasyonunu tanımlar.
 
-- Android; tank verisini toplar, kullanıcıya doğrulatır ve deterministik bir
-  öneri üretir.
+- Android; kayıtlı tank ve atanmış cihaz verilerinden kullanıcı ayarı istemeden
+  deterministik bir öneri üretir.
 - Firmware; planı doğrulayan, kalıcılaştıran ve çalıştıran tek otoritedir.
-- Öneri, tıbbi/biyolojik kesinlik iddiası taşımaz. PAR ölçümü yoksa sonuç açıkça
-  `ESTIMATED`, ölçüm girilmişse `CALIBRATED` olarak gösterilir.
+- Öneri, tıbbi/biyolojik kesinlik iddiası taşımaz. Sensör tabanlı PAR ölçümü
+  bulunmadığı için PPFD/DLI teknik ayrıntılarda açıkça `ESTIMATED` gösterilir.
 - Firmware'in revision veya storage generation değeri değişirse Android körlemesine
-  tekrar yazmaz; authoritative planı yeniden okur ve kullanıcıdan yeniden hesaplama
-  ister.
+  tekrar yazmaz; authoritative planı yeniden okur ve tank verisinden yeni bir plan
+  hesaplar. Yeniden uygulama yine açık kullanıcı eylemi gerektirir.
 
 ## Girdi sahipliği ve mevcut veri yeterliliği
 
-| Girdi | Android kaynağı | Başlangıç davranışı | Kullanıcı doğrulaması |
+| Girdi | Android kaynağı | Otomasyon davranışı | Kurulum ekranında düzenlenir mi? |
 |---|---|---|---|
 | Tank–cihaz ilişkisi | `TankDeviceAssignmentRepository` | Zorunlu; yoksa akış açılmaz | Hayır |
-| Kurulum tarihi | `SavedAquariumTank.setupDateEpochDay` | Yaşı ve mevcut yaşam evresini belirler | Tank ekranında görünür; eksik/gelecek tarih uyarıdır |
-| Tank yüksekliği | Tank store | Su derinliği için `yükseklik - 5 cm` başlangıcı | Evet, 10–100 cm |
-| Bitki listesi | Tank store | İsim/kategori sinyallerinden düşük/orta/yüksek ihtiyaç tahmini | Evet |
-| Bitki yoğunluğu | Bitki adedi | `0–2` seyrek, `3–7` orta, `8+` yoğun | Evet |
-| CO₂ kurulumu | `SmartCareTankClassifier` | Mevcut tank sınıflandırmasıyla doldurulur | Evet |
-| Aktif toprak | `SmartCareTankClassifier` | Mevcut malzeme sınıflandırmasıyla doldurulur | Evet |
+| Kurulum tarihi | `SavedAquariumTank.setupDateEpochDay` | Yaşı ve yaşam evresini belirler; eksik/gelecek tarih temkinli yeni tank davranışıdır | Hayır |
+| Akvaryum yüksekliği | `SavedAquariumTank.heightCm` | Değer doğrudan optik modelde kullanılır; yapay `-5 cm` düzeltmesi yoktur | Hayır |
+| Bitki listesi | Tank store | İsim/kategori sinyallerinden az/orta/yüksek ihtiyaç tahmini | Hayır |
+| Bitki yoğunluğu | Bitki adedi | `0–2` seyrek, `3–7` orta, `8+` yoğun | Hayır |
+| CO₂ kurulumu | `SmartCareTankClassifier` | Kayıtlı CO₂ kategorisi/sinyali otomatik kullanılır | Hayır |
+| Aktif toprak | Malzeme `categoryKey=substrate` | Taban kategorisindeki her ürün aktif toprak kabul edilir; ürün adında `soil` aranmaz | Hayır |
 | Ürün ve kanal şekli | Authoritative cihaz snapshot'ı | WRGB/RGB sahnesini seçer | Hayır |
-| Lamba–su mesafesi | Tank verisinde yok | Devam etmek için zorunlu | Evet, 0–60 cm |
-| Ortam ışığı | Tank verisinde yok | Güvenli varsayılan `LOW` | Evet |
-| Işıkların kapanış saati | Tank verisinde yok | Yerel kullanıcı tercihi, başlangıç 22:00 | Evet, 20:00–23:30 |
-| Substrat seviyesinde tam profil PAR | Sensör/veri yok | Opsiyonel muhafazakâr ürün tahmini | Opsiyonel, 20–500 µmol/m²/s |
+| Standart montaj mesafesi | Ürün politikası | WRGB için 10 cm, RGB için 8 cm güvenli varsayım | Hayır |
+| Program penceresi | Ürün politikası | Mevcut evrenin süresi 22:00'de bitecek şekilde otomatik yerleştirilir | Hayır |
+| Substrat seviyesinde tam profil PAR | Sensör/veri yok | Muhafazakâr ürün tahmini; yalnız teknik ayrıntıda gösterilir | Hayır |
 
-Sonuç: Android'de tank yaşı, boyutları, bitkiler, CO₂, toprak, atanan cihaz ve
-ürün bilgisi karşılanmaktadır. Bilimsel doğruluğu en çok artıracak eksikler lamba
-yüksekliği, ortam ışığı ve substrat seviyesindeki PAR'dır; ilk ikisi akışta alınır,
-PAR ise ölçüm yoksa dürüstçe tahmin olarak işaretlenir.
+Sonuç: Bu ekran bir plan editörü değildir. Tank profili salt-okunur özetlenir,
+öneri açılışta otomatik hesaplanır ve kullanıcı yalnız programı oluşturur.
+Montaj mesafesi ile ortam ışığı sensörle ölçülmediği için algoritma temkinli ürün
+varsayımlarını kullanır; PPFD/DLI kesin ölçüm olarak sunulmaz.
 
 ## Karar modeli
 
@@ -64,12 +63,11 @@ muhafazakâr bir ürün politikasıdır.
 
 1. Bitki ihtiyacı tabanı: düşük `%42`, orta `%56`, yüksek `%72`.
 2. Bitki yoğunluğu: seyrek `-5`, orta `0`, yoğun `+5` puan.
-3. Ortam ışığı: az `0`, orta `-4`, fazla `-8` puan.
-4. Optik mesafe düzeltmesi:
-   `(su derinliği + lamba yüksekliği - 45) / 4` puan.
-5. Aktif toprak bulunan tankta başlangıç riski için `-3` puan.
-6. CO₂ hazır değilse sonuç en fazla `%55`.
-7. Nihai olgun değer `%25–85` aralığına sıkıştırılır ve yaşam evresi çarpanı
+3. Optik mesafe düzeltmesi:
+   `(akvaryum yüksekliği + ürünün standart montaj mesafesi - 45) / 4` puan.
+4. Aktif toprak bulunan tankta başlangıç riski için `-3` puan.
+5. Kayıtlı CO₂ sistemi yoksa sonuç en fazla `%55`.
+6. Nihai olgun değer `%25–85` aralığına sıkıştırılır ve yaşam evresi çarpanı
    uygulanır.
 
 Yüksek ışık isteyen bitki + CO₂ yok kombinasyonu ayrıca kullanıcıya uyarı verir.
@@ -78,11 +76,11 @@ noktası iddiası değildir.
 
 ### PPFD, DLI ve spektrum
 
-Ölçülmüş tam-profil PPFD varsa doğrudan kullanılır. Yoksa yalnız öneri üretimini
-mümkün kılmak için 45 cm optik mesafede WRGB için `105`, RGB için `78 µmol/m²/s`
-referansı ve `exp(-0.018 × (mesafe - 45))` sönüm tahmini kullanılır; tahmin
-`35–180 µmol/m²/s` ile sınırlıdır. Bu katsayılar cihaz başına kalibre edilmiş PAR
-haritasının yerini tutmaz.
+Yalnız öneri üretimini mümkün kılmak için 45 cm optik mesafede WRGB için `105`,
+RGB için `78 µmol/m²/s` referansı ve
+`exp(-0.018 × (akvaryum yüksekliği + standart montaj mesafesi - 45))` sönüm
+tahmini kullanılır; tahmin `35–180 µmol/m²/s` ile sınırlıdır. Bu katsayılar cihaz
+başına kalibre edilmiş PAR haritasının yerini tutmaz.
 
 İki doğrusal rampanın toplamı bir saatlik tam güç eşdeğeridir. Gösterilen DLI:
 
@@ -106,8 +104,8 @@ Android aşağıdaki exact Light V1 işlemlerini kullanır:
    `planId`, başlangıç yüzdesi ve fazlar gönderilir.
 3. Başarı yanıtı authoritative snapshot olarak saklanır; cihaz AUTO moduna geçer.
 4. `STALE_REVISION` veya `STALE_STORAGE_GENERATION` durumunda otomatik retry yoktur.
-   Plan yeniden okunur, oluşturulan öneri iptal edilir ve kullanıcı tercihler
-   adımına döner.
+   Plan yeniden okunur ve güncel tank profiliyle öneri yeniden hesaplanır; otomatik
+   ikinci yazma yapılmaz.
 5. Eski/uyumsuz firmware fail-closed davranır ve yükseltme mesajı gösterir.
 
 Plan; 10957–47481 epoch-day aralığı, 0–90 geçiş günü, 20–100 arası beşlik başlangıç
@@ -116,12 +114,17 @@ hem Android hem firmware tarafında strict doğrulamasından geçer.
 
 ## UI akışı
 
-1. **Tank verileri:** atanan tank, gün yaşı, bitki ihtiyacı/yoğunluğu, CO₂, aktif
-   toprak, su derinliği ve zorunlu lamba yüksekliği.
-2. **Tercihler:** kapanış saati, ortam ışığı, CO₂/toprak doğrulaması ve opsiyonel
-   PAR ölçümü.
-3. **Önerilen plan:** bugünkü zaman çizelgesi, tüm yaşam fazları, PPFD, DLI,
-   tahmin/kalibrasyon güveni, gerekçeler, uyarılar ve cihaza uygulama.
+Tek ekranlı yapı son kullanıcıya yalnız gerekli kararı bırakır:
+
+1. **Akvaryum profili:** kayıtlı tank, bitkilendirme, az/orta/yüksek ışık ihtiyacı,
+   CO₂, taban, atanmış cihaz ve akvaryum yüksekliği salt-okunur gösterilir.
+2. **Önerilen program:** 24 saatlik WRGB/RGB eğrisi, toplam süre, 60 dakikalık
+   geçiş ve her gün tekrarı gösterilir.
+3. **Güvenli çıkış ve gerekçe:** kanal sınırları, karar nedenleri ve kademeli
+   adaptasyon açıklanır.
+4. **Ayrıntıları incele:** fazlar ile tahmini PPFD/DLI isteğe bağlı açılır; hiçbir
+   teknik değer buradan düzenlenmez.
+5. **Programı oluştur:** tek bir authoritative apply işlemi yapar.
 
 Ekran mevcut AquaLight Compose kartları, renk token'ları, tipografi ve merkezî
 fragment header/navigation yapısını kullanır. Sunum katmanı runtime/data tiplerine
@@ -143,9 +146,12 @@ korunur.
 
 ## Yayın doğrulaması
 
-- Deterministik hesaplayıcı: yeni/olgun tank, CO₂ güvenlik tavanı, ölçülmüş PAR,
-  eksik/gelecek tarih ve WRGB/RGB kanal şekli birim testleri.
-- ViewModel: yükleme, hesaplama, authoritative apply ve stale-authority uzlaşması.
+- Deterministik hesaplayıcı: yeni/olgun tank, CO₂ güvenlik tavanı, doğrudan
+  akvaryum yüksekliği, eksik/gelecek tarih ve WRGB/RGB kanal şekli birim testleri.
+- ViewModel: yüklemede otomatik hesaplama, authoritative apply ve stale-authority
+  sonrası refetch + otomatik yeniden hesaplama.
+- Tank sınıflandırması: yalnız `substrate` kategori anahtarının aktif toprak
+  otoritesi olduğunu doğrulayan test.
 - Runtime: exact serializer alanları, strict parser, hata alanları ve golden fixture
   byte/hash pinleri.
 - Repo kapıları: tam JVM test paketi, detekt (sıfır yeni borç), Android lint,

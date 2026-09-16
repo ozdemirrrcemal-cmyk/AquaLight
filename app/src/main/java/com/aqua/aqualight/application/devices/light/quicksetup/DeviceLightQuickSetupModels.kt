@@ -53,12 +53,6 @@ enum class DeviceLightPlantDensity {
     DENSE
 }
 
-enum class DeviceLightAmbientLevel {
-    LOW,
-    MEDIUM,
-    HIGH
-}
-
 enum class DeviceLightPlanConfidence {
     ESTIMATED,
     CALIBRATED
@@ -70,11 +64,9 @@ enum class DeviceLightPlanReason {
     LOW_LIGHT_PLANTS,
     MEDIUM_LIGHT_PLANTS,
     HIGH_LIGHT_PLANTS,
-    CO2_CONFIRMED,
+    CO2_ACTIVE,
     NO_CO2_SAFETY_CAP,
     ACTIVE_SOIL_STARTUP,
-    AMBIENT_LIGHT_COMPENSATION,
-    MEASURED_PAR,
     ESTIMATED_PAR
 }
 
@@ -109,13 +101,10 @@ enum class DeviceLightLifecycleStage(val dayStart: Int, val durationMinutes: Int
 data class DeviceLightQuickSetupInput(
     val plantDemand: DeviceLightPlantDemand,
     val plantDensity: DeviceLightPlantDensity,
-    val waterDepthCm: Int,
-    val fixtureHeightCm: Int,
-    val ambientLevel: DeviceLightAmbientLevel,
-    val co2Ready: Boolean,
+    val aquariumHeightCm: Int,
+    val co2Installed: Boolean,
     val activeSoil: Boolean,
-    val preferredLightsOffMinute: Int,
-    val measuredFullProfilePpfd: Int? = null
+    val programEndMinute: Int
 )
 
 data class DeviceLightQuickSetupPhase(

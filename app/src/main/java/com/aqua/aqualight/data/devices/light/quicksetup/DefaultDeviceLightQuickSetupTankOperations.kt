@@ -122,10 +122,11 @@ private val COMBINING_MARKS = Regex("\\p{Mn}+")
 private const val SPARSE_PLANT_COUNT_MAX = 2
 private const val DENSE_PLANT_COUNT_MIN = 8
 private val HIGH_DEMAND_SIGNALS = listOf(
-    "ground cover", "foreground", "rare", "rotala macrandra", "hemianthus",
-    "glossostigma", "utricularia", "eriocaulon", "tonina", "pantanal"
+    "ground cover", "foreground", "rare", "zemin ortucu", "on plan", "nadir bitki",
+    "rotala macrandra", "hemianthus", "glossostigma", "utricularia", "eriocaulon",
+    "tonina", "pantanal"
 )
 private val LOW_DEMAND_SIGNALS = listOf(
-    "epiphyte", "moss", "floating", "anubias", "microsorum", "bucephalandra",
-    "bolbitis", "cryptocoryne"
+    "epiphyte", "moss", "floating", "epifit", "yosun", "yuzen bitki", "anubias",
+    "microsorum", "bucephalandra", "bolbitis", "cryptocoryne"
 )

@@ -9,6 +9,8 @@ import com.aqua.aqualight.application.devices.light.automation.DeviceLightManage
 import com.aqua.aqualight.application.devices.light.automation.DeviceLightManagedPlanReadResult
 import com.aqua.aqualight.application.devices.light.automation.DeviceLightManagedPlanRuntimeState
 import com.aqua.aqualight.application.devices.light.automation.DeviceLightManagedPlanSnapshot
+import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupCalculator
+import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupInput
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightPlantDemand
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightPlantDensity
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupTank
@@ -23,7 +25,6 @@ import kotlinx.coroutines.test.setMain
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -35,25 +36,23 @@ class DeviceLightQuickSetupViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     @Test
-    fun `tank inference seeds editable draft and height remains an explicit requirement`() {
+    fun `tank profile automatically produces an applicable program`() {
         val plans = FakeManagedPlanOperations()
         val viewModel = viewModel(plans).apply { bind(DEVICE_UID) }
 
         val loaded = viewModel.uiState.value
         assertTrue(loaded.contentEnabled)
-        assertTrue(loaded.co2Ready)
-        assertTrue(loaded.activeSoil)
-        assertEquals(DeviceLightPlantDemand.HIGH, loaded.plantDemand)
-        assertEquals(DeviceLightPlantDensity.DENSE, loaded.plantDensity)
-        assertNull(loaded.fixtureHeightCm)
-        assertFalse(loaded.canContinueTankData)
+        assertEquals(TANK, loaded.tank)
+        assertNotNull(loaded.plan)
+        assertEquals(
+            QUICK_SETUP_AUTOMATIC_END_MINUTE * 60_000L,
+            loaded.plan?.currentPhase?.draft?.endTimeMs
+        )
+        assertEquals(expectedPlan().profileFingerprint, loaded.plan?.profileFingerprint)
+        assertTrue(loaded.canApply)
 
-        viewModel.updatePreference(DeviceLightQuickSetupPreferenceChange.FixtureHeight(14))
-        viewModel.continueToPreferences()
-        viewModel.calculate()
-
-        assertEquals(DeviceLightQuickSetupStep.PLAN, viewModel.uiState.value.step)
-        assertNotNull(viewModel.uiState.value.plan)
+        viewModel.toggleDetails()
+        assertTrue(viewModel.uiState.value.detailsExpanded)
     }
 
     @Test
@@ -65,9 +64,6 @@ class DeviceLightQuickSetupViewModelTest {
         )
         val viewModel = viewModel(plans).apply {
             bind(DEVICE_UID)
-            updatePreference(DeviceLightQuickSetupPreferenceChange.FixtureHeight(14))
-            continueToPreferences()
-            calculate()
         }
 
         viewModel.apply()
@@ -76,9 +72,9 @@ class DeviceLightQuickSetupViewModelTest {
         assertEquals(2, plans.readCount)
         assertEquals(FIRST_AUTHORITY, plans.appliedAuthority)
         assertEquals(REFRESHED_AUTHORITY, state.managedPlanSnapshot?.authority)
-        assertEquals(DeviceLightQuickSetupStep.PREFERENCES, state.step)
-        assertNull(state.plan)
+        assertNotNull(state.plan)
         assertTrue(state.contentEnabled)
+        assertTrue(state.canApply)
         assertFalse(state.applying)
     }
 
@@ -91,6 +87,19 @@ class DeviceLightQuickSetupViewModelTest {
         },
         managedPlanOperations = plans,
         todayEpochDay = { TODAY }
+    )
+
+    private fun expectedPlan() = DeviceLightQuickSetupCalculator.calculate(
+        tank = TANK,
+        input = DeviceLightQuickSetupInput(
+            plantDemand = TANK.inferredPlantDemand,
+            plantDensity = TANK.inferredPlantDensity,
+            aquariumHeightCm = TANK.heightCm,
+            co2Installed = TANK.inferredCo2Installed,
+            activeSoil = TANK.inferredActiveSoil,
+            programEndMinute = QUICK_SETUP_AUTOMATIC_END_MINUTE
+        ),
+        todayEpochDay = TODAY
     )
 
     private class FakeManagedPlanOperations(

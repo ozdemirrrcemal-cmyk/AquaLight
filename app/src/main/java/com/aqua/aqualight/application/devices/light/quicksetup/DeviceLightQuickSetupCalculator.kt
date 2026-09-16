@@ -29,9 +29,8 @@ object DeviceLightQuickSetupCalculator {
     ): DeviceLightQuickSetupPlan {
         validateInput(input)
         val lifecycle = lifecycle(tank.setupDateEpochDay, todayEpochDay)
-        val fullIntensity = targetIntensityPercent(input)
-        val fullProfilePpfd = input.measuredFullProfilePpfd
-            ?: estimatedFullProfilePpfd(tank.productKey, input)
+        val fullIntensity = targetIntensityPercent(tank.productKey, input)
+        val fullProfilePpfd = estimatedFullProfilePpfd(tank.productKey, input)
         val lightProfile = PhaseLightProfile(fullIntensity, fullProfilePpfd)
         val phases = buildPhases(tank, input, lifecycle, lightProfile)
         val current = phases.first()
@@ -40,11 +39,7 @@ object DeviceLightQuickSetupCalculator {
             currentPhaseIndex = 0,
             currentTargetPpfd = current.targetPpfd,
             currentEstimatedDliMolPerM2Day = current.estimatedDliMolPerM2Day,
-            confidence = if (input.measuredFullProfilePpfd == null) {
-                DeviceLightPlanConfidence.ESTIMATED
-            } else {
-                DeviceLightPlanConfidence.CALIBRATED
-            },
+            confidence = DeviceLightPlanConfidence.ESTIMATED,
             reasons = reasons(lifecycle.tankDay, input),
             warnings = warnings(tank, input, todayEpochDay),
             phases = phases,
@@ -76,12 +71,10 @@ object DeviceLightQuickSetupCalculator {
         }
         if (!tank.plantedFreshwater) add(DeviceLightPlanWarning.NOT_PLANTED_FRESHWATER)
         if (tank.plantCount == 0) add(DeviceLightPlanWarning.NO_PLANTS)
-        if (input.plantDemand == DeviceLightPlantDemand.HIGH && !input.co2Ready) {
+        if (input.plantDemand == DeviceLightPlantDemand.HIGH && !input.co2Installed) {
             add(DeviceLightPlanWarning.HIGH_LIGHT_WITHOUT_CO2)
         }
-        if (input.measuredFullProfilePpfd == null) {
-            add(DeviceLightPlanWarning.PAR_NOT_MEASURED)
-        }
+        add(DeviceLightPlanWarning.PAR_NOT_MEASURED)
     }
 
     private fun buildPhases(
@@ -125,7 +118,7 @@ object DeviceLightQuickSetupCalculator {
         val targetPpfd = (lightProfile.fullProfilePpfd * stageIntensity / PERCENT_SCALE)
             .roundToInt()
             .coerceAtLeast(MIN_TARGET_PPFD)
-        val startMinute = input.preferredLightsOffMinute - stage.durationMinutes
+        val startMinute = input.programEndMinute - stage.durationMinutes
         val transitionDays = if (relativeIndex == 0) {
             initialTransitionDays(untilDay, fromDay)
         } else {
@@ -141,7 +134,7 @@ object DeviceLightQuickSetupCalculator {
                 transitionDays = transitionDays,
                 weekdaysMask = EVERY_DAY_MASK,
                 startTimeMs = startMinute * MINUTE_MS,
-                endTimeMs = input.preferredLightsOffMinute * MINUTE_MS,
+                endTimeMs = input.programEndMinute * MINUTE_MS,
                 rampDurationMs = RAMP_MS,
                 scene = balancedScene(tank.productKey, stageIntensity)
             )
@@ -155,19 +148,20 @@ object DeviceLightQuickSetupCalculator {
     }
 
     private fun validateInput(input: DeviceLightQuickSetupInput) {
-        require(input.waterDepthCm in 10..100)
-        require(input.fixtureHeightCm in 0..60)
-        require(input.preferredLightsOffMinute in 720 until MINUTES_PER_DAY)
-        input.measuredFullProfilePpfd?.let { require(it in 20..500) }
+        require(input.aquariumHeightCm in 10..100)
+        require(input.programEndMinute in 720 until MINUTES_PER_DAY)
         val maximumDuration = DeviceLightLifecycleStage.entries.maxOf { it.durationMinutes }
-        require(input.preferredLightsOffMinute >= maximumDuration)
+        require(input.programEndMinute >= maximumDuration)
     }
 
     private fun lifecycleIndex(tankDay: Long): Int =
         DeviceLightLifecycleStage.entries.indexOfLast { tankDay >= it.dayStart }
             .coerceAtLeast(0)
 
-    private fun targetIntensityPercent(input: DeviceLightQuickSetupInput): Int {
+    private fun targetIntensityPercent(
+        productKey: String,
+        input: DeviceLightQuickSetupInput
+    ): Int {
         var intensity = when (input.plantDemand) {
             DeviceLightPlantDemand.LOW -> 42
             DeviceLightPlantDemand.MEDIUM -> 56
@@ -178,14 +172,10 @@ object DeviceLightQuickSetupCalculator {
             DeviceLightPlantDensity.MEDIUM -> 0
             DeviceLightPlantDensity.DENSE -> 5
         }
-        intensity += when (input.ambientLevel) {
-            DeviceLightAmbientLevel.LOW -> 0
-            DeviceLightAmbientLevel.MEDIUM -> -4
-            DeviceLightAmbientLevel.HIGH -> -8
-        }
-        intensity += ((input.waterDepthCm + input.fixtureHeightCm) - REFERENCE_DISTANCE_CM) / 4
+        val opticalDistance = input.aquariumHeightCm + defaultMountHeightCm(productKey)
+        intensity += (opticalDistance - REFERENCE_DISTANCE_CM) / 4
         if (input.activeSoil) intensity -= 3
-        if (!input.co2Ready) intensity = intensity.coerceAtMost(NO_CO2_MAX_INTENSITY_PERCENT)
+        if (!input.co2Installed) intensity = intensity.coerceAtMost(NO_CO2_MAX_INTENSITY_PERCENT)
         return intensity.coerceIn(MIN_INTENSITY_PERCENT, MAX_INTENSITY_PERCENT)
     }
 
@@ -194,10 +184,17 @@ object DeviceLightQuickSetupCalculator {
         input: DeviceLightQuickSetupInput
     ): Int {
         val reference = if (productKey == WRGB_PRODUCT_KEY) 105.0 else 78.0
-        val distance = input.waterDepthCm + input.fixtureHeightCm
+        val distance = input.aquariumHeightCm + defaultMountHeightCm(productKey)
         val attenuation = exp(-0.018 * (distance - REFERENCE_DISTANCE_CM))
         return (reference * attenuation).roundToInt().coerceIn(35, 180)
     }
+
+    private fun defaultMountHeightCm(productKey: String): Int =
+        if (productKey == WRGB_PRODUCT_KEY) {
+            WRGB_DEFAULT_MOUNT_HEIGHT_CM
+        } else {
+            RGB_DEFAULT_MOUNT_HEIGHT_CM
+        }
 
     private fun balancedScene(productKey: String, intensity: Int): DeviceLightAutomaticScene {
         fun scaled(ratio: Double) = (intensity * ratio).roundToInt().coerceIn(0, 100)
@@ -244,18 +241,15 @@ object DeviceLightQuickSetupCalculator {
                 DeviceLightPlantDemand.HIGH -> DeviceLightPlanReason.HIGH_LIGHT_PLANTS
             }
         )
-        add(if (input.co2Ready) DeviceLightPlanReason.CO2_CONFIRMED else DeviceLightPlanReason.NO_CO2_SAFETY_CAP)
-        if (input.activeSoil && tankDay <= 42L) add(DeviceLightPlanReason.ACTIVE_SOIL_STARTUP)
-        if (input.ambientLevel != DeviceLightAmbientLevel.LOW) {
-            add(DeviceLightPlanReason.AMBIENT_LIGHT_COMPENSATION)
-        }
         add(
-            if (input.measuredFullProfilePpfd == null) {
-                DeviceLightPlanReason.ESTIMATED_PAR
+            if (input.co2Installed) {
+                DeviceLightPlanReason.CO2_ACTIVE
             } else {
-                DeviceLightPlanReason.MEASURED_PAR
+                DeviceLightPlanReason.NO_CO2_SAFETY_CAP
             }
         )
+        if (input.activeSoil && tankDay <= 42L) add(DeviceLightPlanReason.ACTIVE_SOIL_STARTUP)
+        add(DeviceLightPlanReason.ESTIMATED_PAR)
     }
 
     private fun fingerprint(
@@ -284,6 +278,8 @@ object DeviceLightQuickSetupCalculator {
     private const val PERCENT_SCALE = 100.0
     private const val MIN_TARGET_PPFD = 1
     private const val WRGB_PRODUCT_KEY = "LIGHT_WRGB_PRO_ELITE"
+    private const val WRGB_DEFAULT_MOUNT_HEIGHT_CM = 10
+    private const val RGB_DEFAULT_MOUNT_HEIGHT_CM = 8
 
     private data class LifecycleContext(
         val safeSetupDay: Long,

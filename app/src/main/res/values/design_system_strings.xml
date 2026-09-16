@@ -83,8 +83,8 @@
     <string name="device_family_cooling">Cooling</string>
     <string name="device_menu_manual_control_title">Manual control</string>
     <string name="device_menu_manual_control_description">Direct channel control for supported light outputs.</string>
-    <string name="device_menu_quick_setup_title">Quick setup</string>
-    <string name="device_menu_quick_setup_description">Fast setup from firmware-supported light presets and profiles.</string>
+    <string name="device_menu_quick_setup_title">Smart setup</string>
+    <string name="device_menu_quick_setup_description">Automatically creates a safe lighting program from the aquarium profile.</string>
     <string name="device_menu_programs_title">Programs</string>
     <string name="device_menu_programs_description">Create and manage daily light programs.</string>
     <string name="device_menu_presets_title">Presets</string>
