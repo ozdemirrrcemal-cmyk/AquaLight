@@ -239,10 +239,26 @@ internal object DeviceLightV1JsonParser {
         val autoPolicy = DeviceLightAutoPolicy(
             capacity = auto.requireLightInt("capacity", 0),
             timeStepMs = auto.requireLightLong("timeStepMs", 1),
+            managedPlanPhaseCapacity = auto.requireLightInt("managedPlanPhaseCapacity", 0),
+            managedPlanTransitionDaysMax = auto.requireLightInt(
+                "managedPlanTransitionDaysMax",
+                0
+            ),
+            managedPlanSameDayOnly = auto.requireLightBoolean("managedPlanSameDayOnly"),
+            managedPlanContiguous = auto.requireLightBoolean("managedPlanContiguous"),
             rampDurationsMs = auto.requireLightArray("rampDurationsMs").toLightLongList(0)
         )
         require(autoPolicy.capacity == DeviceLightRuntimeContract.Limit.AUTO_PROGRAM_CAPACITY)
         require(autoPolicy.timeStepMs == DeviceLightRuntimeContract.Limit.SCHEDULE_TIME_STEP_MS)
+        require(
+            autoPolicy.managedPlanPhaseCapacity ==
+                DeviceLightRuntimeContract.Limit.MANAGED_PLAN_PHASE_CAPACITY
+        )
+        require(
+            autoPolicy.managedPlanTransitionDaysMax ==
+                DeviceLightRuntimeContract.Limit.MANAGED_PLAN_TRANSITION_DAYS_MAX
+        )
+        require(autoPolicy.managedPlanSameDayOnly && autoPolicy.managedPlanContiguous)
         require(autoPolicy.rampDurationsMs == EXPECTED_RAMPS)
 
         val custom = data.requireLightObject("custom")
@@ -352,15 +368,71 @@ internal object DeviceLightV1JsonParser {
                 0,
                 DeviceLightRuntimeContract.Limit.AUTO_PROGRAM_CAPACITY
             ),
+            scheduleSource = DeviceLightAutoScheduleSource.fromWireExact(
+                data.requireLightText("scheduleSource")
+            ),
+            planRevision = data.requireLightLong(
+                "planRevision",
+                0,
+                DeviceLightRuntimeContract.Limit.UINT32_MAX
+            ),
+            planInstalled = data.requireLightBoolean("planInstalled"),
+            planId = data.requireNullableLightText("planId"),
             runtimeState = DeviceLightAutoRuntimeState.fromWireExact(
                 data.requireLightText("runtimeState")
             ),
-            activeProgramId = data.requireNullableLightText("activeProgramId")
+            activeProgramId = data.requireNullableLightText("activeProgramId"),
+            activePlanPhaseIndex = data.requireNullableLightInt(
+                "activePlanPhaseIndex",
+                0,
+                DeviceLightRuntimeContract.Limit.MANAGED_PLAN_PHASE_CAPACITY - 1
+            ),
+            planRuntimeState = DeviceLightManagedPlanRuntimeState.fromWireExact(
+                data.requireLightText("planRuntimeState")
+            ),
+            planTransitionPermille = data.requireNullableLightInt(
+                "planTransitionPermille",
+                DeviceLightRuntimeContract.Limit.PERMILLE_MIN,
+                DeviceLightRuntimeContract.Limit.PERMILLE_MAX
+            ),
+            nextPlanTransitionEpochDay = data.requireNullableLightLong(
+                "nextPlanTransitionEpochDay",
+                DeviceLightRuntimeContract.Limit.MANAGED_PLAN_EPOCH_DAY_MIN,
+                DeviceLightRuntimeContract.Limit.MANAGED_PLAN_EPOCH_DAY_MAX
+            )
         )
-        require(result.enabledCount <= result.programCount)
-        result.activeProgramId?.let(::requireLightProgramId)
+        validateAutoSummary(result)
         return result
     }
+
+        private fun validateAutoSummary(result: DeviceLightAutoSummary) {
+            require(result.enabledCount <= result.programCount)
+            result.activeProgramId?.let(::requireLightProgramId)
+            result.planId?.let(::requireLightManagedPlanId)
+            val expectedSource = if (result.planInstalled) {
+                DeviceLightAutoScheduleSource.MANAGED_PLAN
+            } else {
+                DeviceLightAutoScheduleSource.PROGRAMS
+            }
+            require(result.scheduleSource == expectedSource)
+            require(result.planInstalled == (result.planId != null))
+            require(
+                result.planInstalled ||
+                    result.planRuntimeState == DeviceLightManagedPlanRuntimeState.NOT_INSTALLED
+            )
+            require(
+                (result.activePlanPhaseIndex != null) ==
+                    (result.planTransitionPermille != null)
+            )
+            require(
+                result.scheduleSource == DeviceLightAutoScheduleSource.PROGRAMS ||
+                    result.activeProgramId == null
+            )
+            require(
+                result.scheduleSource == DeviceLightAutoScheduleSource.MANAGED_PLAN ||
+                    result.activePlanPhaseIndex == null
+            )
+        }
 
         fun parseCustomSummary(data: JSONObject): DeviceLightCustomSummary {
         data.requireLightKeys(CUSTOM_SUMMARY_KEYS, "light.status.custom")
@@ -510,6 +582,47 @@ internal object DeviceLightV1JsonParser {
         }
     }
 
+    fun parseManagedPlanPhase(
+        data: JSONObject,
+        product: DeviceLightProduct
+    ): DeviceLightManagedPlanPhase {
+        data.requireLightKeys(MANAGED_PLAN_PHASE_KEYS, "Light managed plan phase")
+        return DeviceLightManagedPlanPhase(
+            validFromEpochDay = data.requireLightLong(
+                "validFromEpochDay",
+                DeviceLightRuntimeContract.Limit.MANAGED_PLAN_EPOCH_DAY_MIN,
+                DeviceLightRuntimeContract.Limit.MANAGED_PLAN_EPOCH_DAY_MAX
+            ),
+            validUntilEpochDayExclusive = data.requireNullableLightLong(
+                "validUntilEpochDayExclusive",
+                DeviceLightRuntimeContract.Limit.MANAGED_PLAN_EPOCH_DAY_MIN,
+                DeviceLightRuntimeContract.Limit.MANAGED_PLAN_EPOCH_DAY_MAX
+            ),
+            transitionDays = data.requireLightInt(
+                "transitionDays",
+                0,
+                DeviceLightRuntimeContract.Limit.MANAGED_PLAN_TRANSITION_DAYS_MAX
+            ),
+            weekdaysMask = data.requireLightInt(
+                "weekdaysMask",
+                DeviceLightRuntimeContract.Limit.WEEKDAY_MASK_MIN,
+                DeviceLightRuntimeContract.Limit.WEEKDAY_MASK_MAX
+            ),
+            startTimeMs = data.requireLightLong(
+                "startTimeMs",
+                0,
+                DeviceLightRuntimeContract.Limit.LAST_DAY_MILLISECOND
+            ),
+            endTimeMs = data.requireLightLong(
+                "endTimeMs",
+                0,
+                DeviceLightRuntimeContract.Limit.LAST_DAY_MILLISECOND
+            ),
+            rampDurationMs = data.requireLightLong("rampDurationMs", 0),
+            scene = parseScene(data.requireLightObject("scene"), product, "managed plan scene")
+        )
+    }
+
     fun parseCustomPoint(tuple: JSONArray, product: DeviceLightProduct): DeviceLightCustomPoint {
         require(tuple.length() == product.channelCount + 1)
         val values = linkedMapOf<String, Int>()
@@ -551,7 +664,11 @@ internal object DeviceLightV1JsonParser {
     )
     private val DISPLAY_RGB_KEYS = setOf("red", "green", "blue")
     private val POLICY_KEYS = setOf("auto", "custom", "acclimation")
-    private val AUTO_POLICY_KEYS = setOf("capacity", "timeStepMs", "rampDurationsMs")
+    private val AUTO_POLICY_KEYS = setOf(
+        "capacity", "timeStepMs", "managedPlanPhaseCapacity",
+        "managedPlanTransitionDaysMax", "managedPlanSameDayOnly",
+        "managedPlanContiguous", "rampDurationsMs"
+    )
     private val CUSTOM_POLICY_KEYS = setOf("maxPoints", "timeStepMs")
     private val ACCLIMATION_POLICY_KEYS = setOf(
         "supported", "startPercentMin", "startPercentMax", "startPercentStep",
@@ -562,7 +679,10 @@ internal object DeviceLightV1JsonParser {
         "ready", "reason", "generation", "localDate", "currentWeekdayMask", "currentTimeMs"
     )
     private val AUTO_SUMMARY_KEYS = setOf(
-        "revision", "programCount", "enabledCount", "runtimeState", "activeProgramId"
+        "revision", "programCount", "enabledCount", "scheduleSource", "planRevision",
+        "planInstalled", "planId", "runtimeState", "activeProgramId",
+        "activePlanPhaseIndex", "planRuntimeState", "planTransitionPermille",
+        "nextPlanTransitionEpochDay"
     )
     private val CUSTOM_SUMMARY_KEYS = setOf(
         "revision", "installed", "weekdaysMask", "pointCount", "runtimeState"
@@ -579,6 +699,10 @@ internal object DeviceLightV1JsonParser {
         "programId", "enabled", "weekdaysMask", "startTimeMs", "endTimeMs",
         "rampDurationMs", "scene"
     )
+    private val MANAGED_PLAN_PHASE_KEYS = setOf(
+        "validFromEpochDay", "validUntilEpochDayExclusive", "transitionDays",
+        "weekdaysMask", "startTimeMs", "endTimeMs", "rampDurationMs", "scene"
+    )
     private val EXPECTED_RAMPS = listOf(
         DeviceLightRuntimeContract.Limit.RAMP_DISABLED_MS,
         DeviceLightRuntimeContract.Limit.RAMP_30_MINUTES_MS,
@@ -592,6 +716,7 @@ internal object DeviceLightV1JsonParser {
     }.toSet()
     private val DATE_PATTERN = Regex("^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
     private val PROGRAM_ID = Regex("^ap-[0-9a-f]{8}$")
+    private val MANAGED_PLAN_ID = Regex("^lp-[0-9a-f]{8}$")
     private const val RED_DISPLAY_RGB = 0xFF0000
     private const val GREEN_DISPLAY_RGB = 0x00FF00
     private const val BLUE_DISPLAY_RGB = 0x0000FF
@@ -601,4 +726,7 @@ internal object DeviceLightV1JsonParser {
 
     private fun requireLightProgramId(value: String) =
         require(PROGRAM_ID.matches(value)) { "Invalid Light AUTO programId." }
+
+    private fun requireLightManagedPlanId(value: String) =
+        require(MANAGED_PLAN_ID.matches(value)) { "Invalid Light managed planId." }
 }

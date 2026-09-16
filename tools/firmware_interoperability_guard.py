@@ -8,7 +8,7 @@ import firmware_interoperability_guard_core as guard
 import timer_v1_contract_guard as timer_guard
 
 
-guard.FIRMWARE_COMMIT = "7df97ce807ebb1e90ff63cc36206d6ce479a62fc"
+guard.FIRMWARE_COMMIT = "455298833668537fedc16b851067558815d2cc7b"
 guard.COMMAND_NAMES_BLOB = "a4a05ae219e449b42de2654c38b55d65804c91b0"
 guard.EVENT_CONTRACT_BLOB = "5e87fd043c0efaa849ed3ba8e5be9ce6f2727e24"
 guard.REQUEST_CONTRACT_BLOBS = {
@@ -17,8 +17,8 @@ guard.REQUEST_CONTRACT_BLOBS = {
     "src/api/v1/commands/AqlSecurityCommands.hpp": "1c16c3e7c6d1456b1802f494d91c104347ad09aa",
     "src/api/v1/commands/AqlTimeCommands.hpp": "ee6e87ab0e1152ffd3d9004fe8b5c7e380488a4f",
     "src/api/v1/commands/AqlLightCommands.hpp": "6fc17f55fb171060e1544f21a8f643a363b7da9e",
-    "src/api/v1/commands/AqlLightV1Commands.hpp": "847f9f73d225c261f55fea74f858721cac172821",
-    "src/api/v1/commands/names/AqlLightCommandNames.hpp": "9ebdd8f8b7dedb96e6cc1672fdcc676985f1e12e",
+    "src/api/v1/commands/AqlLightV1Commands.hpp": "e71b5e874914bfb8ed65105d0812e78d360991b0",
+    "src/api/v1/commands/names/AqlLightCommandNames.hpp": "ac77defeac3c93a4ed59245c8437d023d2657f9c",
     "src/modules/light/AqlLightProductContract.hpp": "c76f9c957672ffef62b96ba75f9b034a29c5fecb",
     "src/api/v1/commands/AqlLightTemperatureProtectionCommands.hpp": "e3f04116d2f6ae77e0a1adfd7112773a3e1d06fe",
     "src/api/v1/commands/AqlLightThermalCommands.hpp": "10f5e03237b16ad4bf0a26b64c2715e0985d094e",
@@ -39,6 +39,27 @@ guard.EXPECTED_FIXTURES["aql_product_catalog_v1.json"] = (
     "c0061ae2074ab249777d8682412bba22be9920992c8565d8e0c1d11f29000aa4",
     None,
     False,
+)
+
+guard.EXPECTED_FIXTURES["aql_ws_v1_golden.json"] = (
+    "1646ebe28b9b27bffda866c508b2387ff3166cf76d98c7c6b09cc684b216758b",
+    "8414f2ec1ef689c2b9d8a0e88034edeecf3e5b7f",
+    True,
+)
+guard.EXPECTED_FIXTURES["aql_light_contract_v1.json"] = (
+    "9e0471f4573c9b729ce6c8931fc0e0683765d7fcf352d6d6fdbf09848d582fcd",
+    "2ed7fec8f600b81ff4f9b6fd63365aaeb3d03bdf",
+    True,
+)
+guard.EXPECTED_FIXTURES["aql_light_rgb_pro_slim_contract_v1.json"] = (
+    "604f723ca25da598ca89b2f3cc65350baba34f70ec0c283ed5a182ea9a1ce33a",
+    "0ad201c06cbea972b538a757e060b128a8edb181",
+    True,
+)
+guard.EXPECTED_FIXTURES["aql_light_graph_contract_v1.json"] = (
+    "2ea04e333b95f01b8a27c2c80969b2fa121754821e2f9bef377cca19daaae2f7",
+    "686bce0c41df8749887cd7ff2b4c0fd1ffe3ed3b",
+    True,
 )
 
 guard.EXPECTED_FIXTURES["aql_cooling_contract_v1.json"] = (

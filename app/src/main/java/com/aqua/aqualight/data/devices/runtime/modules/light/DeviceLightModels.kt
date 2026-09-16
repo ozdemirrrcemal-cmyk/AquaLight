@@ -68,6 +68,29 @@ enum class DeviceLightAutoRuntimeState(val wireValue: String) {
     }
 }
 
+enum class DeviceLightAutoScheduleSource(val wireValue: String) {
+    PROGRAMS("PROGRAMS"),
+    MANAGED_PLAN("MANAGED_PLAN");
+
+    companion object {
+        fun fromWireExact(value: String): DeviceLightAutoScheduleSource =
+            enumByWire(value, entries) { it.wireValue }
+    }
+}
+
+enum class DeviceLightManagedPlanRuntimeState(val wireValue: String) {
+    NOT_INSTALLED("NOT_INSTALLED"),
+    NOT_SELECTED("NOT_SELECTED"),
+    RTC_BLOCKED("RTC_BLOCKED"),
+    BEFORE_PLAN("BEFORE_PLAN"),
+    ACTIVE("ACTIVE");
+
+    companion object {
+        fun fromWireExact(value: String): DeviceLightManagedPlanRuntimeState =
+            enumByWire(value, entries) { it.wireValue }
+    }
+}
+
 enum class DeviceLightCustomRuntimeState(val wireValue: String) {
     NOT_SELECTED("NOT_SELECTED"),
     RTC_BLOCKED("RTC_BLOCKED"),
@@ -121,7 +144,8 @@ enum class DeviceLightGraphReason(val wireValue: String) {
     RTC_NOT_READY("RTC_NOT_READY"),
     NO_ENABLED_AUTO_PROGRAM_TODAY("NO_ENABLED_AUTO_PROGRAM_TODAY"),
     CUSTOM_NOT_INSTALLED("CUSTOM_NOT_INSTALLED"),
-    CUSTOM_NOT_SCHEDULED_TODAY("CUSTOM_NOT_SCHEDULED_TODAY");
+    CUSTOM_NOT_SCHEDULED_TODAY("CUSTOM_NOT_SCHEDULED_TODAY"),
+    MANAGED_PLAN_NOT_SCHEDULED_TODAY("MANAGED_PLAN_NOT_SCHEDULED_TODAY");
 
     companion object {
         fun fromWireExact(value: String): DeviceLightGraphReason =
@@ -131,6 +155,7 @@ enum class DeviceLightGraphReason(val wireValue: String) {
 
 enum class DeviceLightGraphBasis(val wireValue: String) {
     AUTHORED_SCHEDULE("AUTHORED_SCHEDULE"),
+    MANAGED_PLAN("MANAGED_PLAN"),
     NONE("NONE");
 
     companion object {
@@ -260,6 +285,10 @@ data class DeviceLightManualStatus(val scene: DeviceLightScene)
 data class DeviceLightAutoPolicy(
     val capacity: Int,
     val timeStepMs: Long,
+    val managedPlanPhaseCapacity: Int,
+    val managedPlanTransitionDaysMax: Int,
+    val managedPlanSameDayOnly: Boolean,
+    val managedPlanContiguous: Boolean,
     val rampDurationsMs: List<Long>
 )
 
@@ -297,8 +326,16 @@ data class DeviceLightAutoSummary(
     val revision: Long,
     val programCount: Int,
     val enabledCount: Int,
+    val scheduleSource: DeviceLightAutoScheduleSource,
+    val planRevision: Long,
+    val planInstalled: Boolean,
+    val planId: String?,
     val runtimeState: DeviceLightAutoRuntimeState,
-    val activeProgramId: String?
+    val activeProgramId: String?,
+    val activePlanPhaseIndex: Int?,
+    val planRuntimeState: DeviceLightManagedPlanRuntimeState,
+    val planTransitionPermille: Int?,
+    val nextPlanTransitionEpochDay: Long?
 )
 
 data class DeviceLightCustomSummary(
@@ -333,6 +370,7 @@ data class DeviceLightRuntimeStatus(
 data class DeviceLightStatus(
     val schema: String,
     val storageVersion: Int,
+    val storageGeneration: Long,
     val product: DeviceLightProduct,
     val channelScale: Int,
     val channels: List<DeviceLightChannelDescriptor>,
@@ -429,6 +467,99 @@ data class DeviceLightAutoProgramDeletePayload(
     fun toJson(): JSONObject = JSONObject()
         .put(DeviceLightRuntimeContract.Field.EXPECTED_REVISION, expectedRevision)
         .put(DeviceLightRuntimeContract.Field.PROGRAM_ID, programId)
+}
+
+data class DeviceLightManagedPlanPhase(
+    val validFromEpochDay: Long,
+    val validUntilEpochDayExclusive: Long?,
+    val transitionDays: Int,
+    val weekdaysMask: Int,
+    val startTimeMs: Long,
+    val endTimeMs: Long,
+    val rampDurationMs: Long,
+    val scene: DeviceLightScene
+) {
+    init {
+        require(validFromEpochDay in MANAGED_PLAN_EPOCH_DAY_RANGE)
+        validUntilEpochDayExclusive?.let { validUntil ->
+            require(validUntil in MANAGED_PLAN_EPOCH_DAY_RANGE)
+            require(validUntil > validFromEpochDay)
+        }
+        require(transitionDays in 0..DeviceLightRuntimeContract.Limit.MANAGED_PLAN_TRANSITION_DAYS_MAX)
+        require(
+            weekdaysMask in DeviceLightRuntimeContract.Limit.WEEKDAY_MASK_MIN..
+                DeviceLightRuntimeContract.Limit.WEEKDAY_MASK_MAX
+        )
+        require(startTimeMs in 0..DeviceLightRuntimeContract.Limit.LAST_DAY_MILLISECOND)
+        require(endTimeMs in 0..DeviceLightRuntimeContract.Limit.LAST_DAY_MILLISECOND)
+        require(startTimeMs % DeviceLightRuntimeContract.Limit.SCHEDULE_TIME_STEP_MS == 0L)
+        require(endTimeMs % DeviceLightRuntimeContract.Limit.SCHEDULE_TIME_STEP_MS == 0L)
+        require(endTimeMs > startTimeMs)
+        require(rampDurationMs in ALLOWED_RAMP_DURATIONS_MS)
+        require(rampDurationMs * 2L <= endTimeMs - startTimeMs)
+    }
+
+    fun toJson(): JSONObject = JSONObject()
+        .put(DeviceLightRuntimeContract.Field.VALID_FROM_EPOCH_DAY, validFromEpochDay)
+        .put(
+            DeviceLightRuntimeContract.Field.VALID_UNTIL_EPOCH_DAY_EXCLUSIVE,
+            validUntilEpochDayExclusive ?: JSONObject.NULL
+        )
+        .put(DeviceLightRuntimeContract.Field.TRANSITION_DAYS, transitionDays)
+        .put(DeviceLightRuntimeContract.Field.WEEKDAYS_MASK, weekdaysMask)
+        .put(DeviceLightRuntimeContract.Field.START_TIME_MS, startTimeMs)
+        .put(DeviceLightRuntimeContract.Field.END_TIME_MS, endTimeMs)
+        .put(DeviceLightRuntimeContract.Field.RAMP_DURATION_MS, rampDurationMs)
+        .put(DeviceLightRuntimeContract.Field.SCENE, scene.toJson())
+}
+
+data class DeviceLightManagedPlanApplyPayload(
+    val expectedRevision: Long,
+    val expectedStorageGeneration: Long,
+    val planId: String?,
+    val initialStartPercent: Int,
+    val phases: List<DeviceLightManagedPlanPhase>
+) {
+    init {
+        requireRevision(expectedRevision)
+        requireRevision(expectedStorageGeneration)
+        planId?.let(::requireManagedPlanId)
+        require(
+            initialStartPercent in
+                DeviceLightRuntimeContract.Limit.MANAGED_PLAN_INITIAL_START_PERCENT_MIN..
+                DeviceLightRuntimeContract.Limit.MANAGED_PLAN_INITIAL_START_PERCENT_MAX &&
+                initialStartPercent %
+                DeviceLightRuntimeContract.Limit.MANAGED_PLAN_INITIAL_START_PERCENT_STEP == 0
+        )
+        validateManagedPlanPhases(phases)
+    }
+
+    fun toJson(): JSONObject = JSONObject()
+        .put(DeviceLightRuntimeContract.Field.EXPECTED_REVISION, expectedRevision)
+        .put(DeviceLightRuntimeContract.Field.EXPECTED_STORAGE_GENERATION, expectedStorageGeneration)
+        .put(DeviceLightRuntimeContract.Field.PLAN_ID, planId ?: JSONObject.NULL)
+        .put(DeviceLightRuntimeContract.Field.INITIAL_START_PERCENT, initialStartPercent)
+        .put(
+            DeviceLightRuntimeContract.Field.PHASES,
+            JSONArray(phases.map(DeviceLightManagedPlanPhase::toJson))
+        )
+}
+
+data class DeviceLightManagedPlanDeletePayload(
+    val expectedRevision: Long,
+    val expectedStorageGeneration: Long,
+    val planId: String
+) {
+    init {
+        requireRevision(expectedRevision)
+        requireRevision(expectedStorageGeneration)
+        requireManagedPlanId(planId)
+    }
+
+    fun toJson(): JSONObject = JSONObject()
+        .put(DeviceLightRuntimeContract.Field.EXPECTED_REVISION, expectedRevision)
+        .put(DeviceLightRuntimeContract.Field.EXPECTED_STORAGE_GENERATION, expectedStorageGeneration)
+        .put(DeviceLightRuntimeContract.Field.PLAN_ID, planId)
 }
 
 data class DeviceLightCustomPoint(val timeMs: Long, val scene: DeviceLightScene) {
@@ -546,6 +677,7 @@ private fun validateAutoProgram(
 private fun requireRevision(value: Long) =
     require(value in 0..DeviceLightRuntimeContract.Limit.UINT32_MAX)
 private fun requireProgramId(value: String) = require(PROGRAM_ID.matches(value))
+private fun requireManagedPlanId(value: String) = require(MANAGED_PLAN_ID.matches(value))
 private fun requirePreviewDuration(value: Long) =
     require(value in 1..DeviceLightRuntimeContract.Limit.MAX_PREVIEW_DURATION_MS)
 
@@ -561,3 +693,17 @@ private val ALLOWED_RAMP_DURATIONS_MS = setOf(
     DeviceLightRuntimeContract.Limit.RAMP_150_MINUTES_MS
 )
 private val PROGRAM_ID = Regex("^ap-[0-9a-f]{8}$")
+private val MANAGED_PLAN_ID = Regex("^lp-[0-9a-f]{8}$")
+private val MANAGED_PLAN_EPOCH_DAY_RANGE =
+    DeviceLightRuntimeContract.Limit.MANAGED_PLAN_EPOCH_DAY_MIN..
+        DeviceLightRuntimeContract.Limit.MANAGED_PLAN_EPOCH_DAY_MAX
+
+private fun validateManagedPlanPhases(phases: List<DeviceLightManagedPlanPhase>) {
+    require(phases.size in 1..DeviceLightRuntimeContract.Limit.MANAGED_PLAN_PHASE_CAPACITY)
+    require(phases.map { it.scene.product }.distinct().size == 1)
+    require(phases.dropLast(1).all { it.validUntilEpochDayExclusive != null })
+    require(phases.last().validUntilEpochDayExclusive == null)
+    require(phases.zipWithNext().all { (left, right) ->
+        left.validUntilEpochDayExclusive == right.validFromEpochDay
+    })
+}

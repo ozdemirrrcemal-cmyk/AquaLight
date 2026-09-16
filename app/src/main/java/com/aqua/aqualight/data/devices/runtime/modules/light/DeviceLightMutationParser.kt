@@ -84,6 +84,117 @@ internal object DeviceLightMutationParser {
         )
     }
 
+    internal object ManagedPlan {
+        fun parse(
+            data: JSONObject,
+            product: DeviceLightProduct
+        ): DeviceLightManagedPlan {
+        requireBaseOrEventKeys(data, MANAGED_PLAN_KEYS, "light.auto.plan data")
+        val phaseData = data.requireLightArray("phases")
+        val phases = List(phaseData.length()) { index ->
+            DeviceLightV1JsonParser.parseManagedPlanPhase(
+                phaseData.requireLightObject(index),
+                product
+            )
+        }
+        val result = DeviceLightManagedPlan(
+            storageGeneration = data.requireLightLong(
+                "storageGeneration",
+                0,
+                DeviceLightRuntimeContract.Limit.UINT32_MAX
+            ),
+            revision = data.requireLightLong(
+                "revision",
+                0,
+                DeviceLightRuntimeContract.Limit.UINT32_MAX
+            ),
+            installed = data.requireLightBoolean("installed"),
+            planId = data.requireNullableLightText("planId"),
+            initialStartPercent = data.requireLightInt(
+                "initialStartPercent",
+                DeviceLightRuntimeContract.Limit.MANAGED_PLAN_INITIAL_START_PERCENT_MIN,
+                DeviceLightRuntimeContract.Limit.MANAGED_PLAN_INITIAL_START_PERCENT_MAX
+            ),
+            phaseCount = data.requireLightInt(
+                "phaseCount",
+                0,
+                DeviceLightRuntimeContract.Limit.MANAGED_PLAN_PHASE_CAPACITY
+            ),
+            phases = phases,
+            runtime = parseRuntime(data.requireLightObject("runtime")),
+            event = parseOptionalEvent(data)
+        )
+        require(
+            result.initialStartPercent %
+                DeviceLightRuntimeContract.Limit.MANAGED_PLAN_INITIAL_START_PERCENT_STEP == 0
+        )
+        require(result.phaseCount == phases.size)
+        require(result.installed == (result.planId != null))
+        result.planId?.let(::requireLightManagedPlanId)
+        if (result.installed) {
+            require(phases.isNotEmpty())
+            require(phases.dropLast(1).all { it.validUntilEpochDayExclusive != null })
+            require(phases.last().validUntilEpochDayExclusive == null)
+            require(phases.zipWithNext().all { (left, right) ->
+                left.validUntilEpochDayExclusive == right.validFromEpochDay
+            })
+        } else {
+            require(phases.isEmpty())
+            require(result.runtime.state == DeviceLightManagedPlanRuntimeState.NOT_INSTALLED)
+        }
+        return result
+    }
+
+        fun parseDelete(data: JSONObject): DeviceLightManagedPlanDeleteResult {
+        requireBaseOrEventKeys(data, MANAGED_PLAN_DELETE_KEYS, "light.auto.plan.delete.data")
+        return DeviceLightManagedPlanDeleteResult(
+            revision = data.requireLightLong(
+                "revision",
+                0,
+                DeviceLightRuntimeContract.Limit.UINT32_MAX
+            ),
+            storageGeneration = data.requireLightLong(
+                "storageGeneration",
+                0,
+                DeviceLightRuntimeContract.Limit.UINT32_MAX
+            ),
+            planId = data.requireLightText("planId").also(::requireLightManagedPlanId),
+            deleted = data.requireLightBoolean("deleted").also { require(it) },
+            event = parseOptionalEvent(data)
+        )
+    }
+
+        private fun parseRuntime(data: JSONObject): DeviceLightManagedPlanRuntime {
+        data.requireLightKeys(MANAGED_PLAN_RUNTIME_KEYS, "light managed plan runtime")
+        val result = DeviceLightManagedPlanRuntime(
+            clockReady = data.requireLightBoolean("clockReady"),
+            state = DeviceLightManagedPlanRuntimeState.fromWireExact(data.requireLightText("state")),
+            activePhaseIndex = data.requireNullableLightInt(
+                "activePhaseIndex",
+                0,
+                DeviceLightRuntimeContract.Limit.MANAGED_PLAN_PHASE_CAPACITY - 1
+            ),
+            transitionPermille = data.requireNullableLightInt(
+                "transitionPermille",
+                DeviceLightRuntimeContract.Limit.PERMILLE_MIN,
+                DeviceLightRuntimeContract.Limit.PERMILLE_MAX
+            ),
+            nextTransitionEpochDay = data.requireNullableLightLong(
+                "nextTransitionEpochDay",
+                DeviceLightRuntimeContract.Limit.MANAGED_PLAN_EPOCH_DAY_MIN,
+                DeviceLightRuntimeContract.Limit.MANAGED_PLAN_EPOCH_DAY_MAX
+            )
+        )
+        require((result.activePhaseIndex != null) == (result.transitionPermille != null))
+        require(
+            (result.state == DeviceLightManagedPlanRuntimeState.ACTIVE) ==
+                (result.activePhaseIndex != null)
+        )
+        require(result.state != DeviceLightManagedPlanRuntimeState.RTC_BLOCKED || !result.clockReady)
+        return result
+        }
+    }
+
     internal object CustomAndAcclimation {
         fun parseCustom(
         data: JSONObject,
@@ -170,6 +281,10 @@ internal object DeviceLightMutationParser {
         val spans = List(spanData.length()) { index ->
             parseGraphSpan(spanData.requireLightArray(index))
         }
+        val planSpanData = data.requireLightArray("planSpans")
+        val planSpans = List(planSpanData.length()) { index ->
+            parseManagedPlanGraphSpan(planSpanData.requireLightArray(index))
+        }
         val result = DeviceLightGraph(
             mode = DeviceLightMode.fromWireExact(data.requireLightText("mode")),
             available = data.requireLightBoolean("available"),
@@ -195,7 +310,8 @@ internal object DeviceLightMutationParser {
             channelScale = data.requireLightInt("channelScale"),
             hasScheduleToday = data.requireLightBoolean("hasScheduleToday"),
             points = points,
-            autoSpans = spans
+            autoSpans = spans,
+            planSpans = planSpans
         )
         require(result.channelScale == DeviceLightRuntimeContract.Limit.PERMILLE_MAX)
         require(
@@ -204,6 +320,9 @@ internal object DeviceLightMutationParser {
         )
         require(result.hasScheduleToday == points.isNotEmpty())
         require(result.mode == DeviceLightMode.AUTO || spans.isEmpty())
+        require(result.mode == DeviceLightMode.AUTO || planSpans.isEmpty())
+        require(result.basis == DeviceLightGraphBasis.AUTHORED_SCHEDULE || spans.isEmpty())
+        require(result.basis == DeviceLightGraphBasis.MANAGED_PLAN || planSpans.isEmpty())
         return result
     }
 
@@ -242,6 +361,30 @@ internal object DeviceLightMutationParser {
             programId = id
         )
         }
+
+        private fun parseManagedPlanGraphSpan(tuple: JSONArray): DeviceLightManagedPlanGraphSpan {
+            require(tuple.length() == DeviceLightRuntimeContract.Limit.GRAPH_PLAN_SPAN_TUPLE_SIZE)
+            return DeviceLightManagedPlanGraphSpan(
+                startTimeMsWithinToday = tuple.requireLightLong(
+                    0,
+                    0,
+                    DeviceLightRuntimeContract.Limit.MILLIS_IN_DAY
+                ),
+                endTimeMsWithinToday = tuple.requireLightLong(
+                    1,
+                    0,
+                    DeviceLightRuntimeContract.Limit.MILLIS_IN_DAY
+                ),
+                planId = tuple.requireLightText(
+                    DeviceLightRuntimeContract.Limit.GRAPH_PLAN_SPAN_ID_INDEX
+                ).also(::requireLightManagedPlanId),
+                phaseIndex = tuple.requireLightInt(
+                    DeviceLightRuntimeContract.Limit.GRAPH_PLAN_SPAN_PHASE_INDEX,
+                    0,
+                    DeviceLightRuntimeContract.Limit.MANAGED_PLAN_PHASE_CAPACITY - 1
+                )
+            )
+        }
     }
 
     private fun requireBaseOrEventKeys(data: JSONObject, base: Set<String>, label: String) {
@@ -270,6 +413,17 @@ internal object DeviceLightMutationParser {
     )
     private val AUTO_MUTATION_KEYS = setOf("revision", "program")
     private val AUTO_DELETE_KEYS = setOf("revision", "programId", "deleted")
+    private val MANAGED_PLAN_KEYS = setOf(
+        "storageGeneration", "revision", "installed", "planId", "initialStartPercent",
+        "phaseCount", "phases", "runtime"
+    )
+    private val MANAGED_PLAN_RUNTIME_KEYS = setOf(
+        "clockReady", "state", "activePhaseIndex", "transitionPermille",
+        "nextTransitionEpochDay"
+    )
+    private val MANAGED_PLAN_DELETE_KEYS = setOf(
+        "revision", "storageGeneration", "planId", "deleted"
+    )
     private val CUSTOM_KEYS = setOf(
         "revision", "installed", "weekdaysMask", "pointCount", "points"
     )
@@ -283,10 +437,15 @@ internal object DeviceLightMutationParser {
     private val GRAPH_KEYS = setOf(
         "mode", "available", "reason", "sourceRevision", "schedulerGeneration", "localDate",
         "currentWeekdayMask", "nowTimeMs", "basis", "channelScale", "hasScheduleToday",
-        "points", "autoSpans"
+        "points", "autoSpans", "planSpans"
     )
     private val PROGRAM_ID = Regex("^ap-[0-9a-f]{8}$")
 }
+
+private val LIGHT_MANAGED_PLAN_ID = Regex("^lp-[0-9a-f]{8}$")
+
+private fun requireLightManagedPlanId(value: String) =
+    require(LIGHT_MANAGED_PLAN_ID.matches(value)) { "Invalid Light managed planId." }
 
 private fun JSONObject.withoutOptionalLightEvent(): JSONObject = JSONObject(toString()).also {
     it.remove("event")

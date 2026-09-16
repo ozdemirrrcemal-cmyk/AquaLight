@@ -24,6 +24,9 @@ import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightControlS
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightCustomInstallPayload
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightCustomPoint
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightManualSetPayload
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightManagedPlanApplyPayload
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightManagedPlanDeletePayload
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightManagedPlanPhase
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightMode
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightPreviewSetPayload
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeContract
@@ -68,7 +71,7 @@ class AqlFirmwareInteroperabilityTest {
         val authenticated = commandAccess.getJSONArray("authenticated").asStringSet()
         val public = commandAccess.getJSONArray("public").asStringSet()
 
-        assertEquals(62, authenticated.size)
+        assertEquals(65, authenticated.size)
         assertEquals(FIRMWARE_COMMIT, DeviceLightRuntimeContract.PINNED_FIRMWARE_COMMIT)
         assertTrue(public.isEmpty())
         assertEquals(public, AqlWsContract.publicCommandKeys())
@@ -401,44 +404,18 @@ class AqlFirmwareInteroperabilityTest {
             rampDurationMs = 1_800_000,
             scene = scene
         )
-
-        return linkedMapOf(
-            "DeviceLightControlSetPayload" to
-                DeviceLightControlSetPayload(DeviceLightMode.AUTO).toJson().keySetExact(),
-            "DeviceLightManualSetPayload" to
-                DeviceLightManualSetPayload(scene).toJson().keySetExact(),
-            "DeviceLightScene" to scene.toJson().keySetExact(),
-            "DeviceLightAutoProgramCreatePayload" to create.toJson().keySetExact(),
-            "DeviceLightAutoProgramUpdatePayload" to update.toJson().keySetExact(),
-            "DeviceLightAutoProgramEnabledSetPayload" to
-                DeviceLightAutoProgramEnabledSetPayload(1, "ap-00000001", true)
-                    .toJson().keySetExact(),
-            "DeviceLightAutoProgramDeletePayload" to
-                DeviceLightAutoProgramDeletePayload(1, "ap-00000001")
-                    .toJson().keySetExact(),
-            "DeviceLightCustomInstallPayload" to DeviceLightCustomInstallPayload(
-                expectedRevision = 1,
-                weekdaysMask = 127,
-                points = listOf(DeviceLightCustomPoint(0, scene))
-            ).toJson().keySetExact(),
-            "DeviceLightAcclimationStartPayload" to
-                DeviceLightAcclimationStartPayload(1, 50, 30).toJson().keySetExact(),
-            "DeviceLightAcclimationStopPayload" to
-                DeviceLightAcclimationStopPayload(1).toJson().keySetExact(),
-            "DeviceLightPreviewSetPayload.Scene" to
-                DeviceLightPreviewSetPayload.Scene(scene, 3_000).toJson().keySetExact(),
-            "DeviceLightPreviewSetPayload.VirtualTime" to
-                DeviceLightPreviewSetPayload.VirtualTime(43_200_000, 3_000)
-                    .toJson().keySetExact(),
-            "DeviceLightTemperatureProtectionSetPayload" to
-                DeviceLightTemperatureProtectionSetPayload(60.0).toJson().keySetExact(),
-            "DeviceLightThermalConfigApplyPayload" to DeviceLightThermalConfigApplyPayload(
-                mode = DeviceLightThermalMode.AUTO,
-                minTemperatureC = 35.0,
-                maxTemperatureC = 45.0,
-                save = true
-            ).toJson().keySetExact()
+        val managedPhase = DeviceLightManagedPlanPhase(
+            validFromEpochDay = 20_000,
+            validUntilEpochDayExclusive = null,
+            transitionDays = 7,
+            weekdaysMask = 127,
+            startTimeMs = 57_600_000,
+            endTimeMs = 79_200_000,
+            rampDurationMs = 3_600_000,
+            scene = scene
         )
+
+        return lightSerializerFieldMap(scene, create, update, managedPhase)
     }
 
     private fun deviceAndTimeSerializerFields(): Map<String, Set<String>> {
@@ -565,9 +542,87 @@ class AqlFirmwareInteroperabilityTest {
         const val TIMER_CONTRACT_FIXTURE = "aql_timer_contract_v1.json"
         const val PRODUCT_CATALOG_FIXTURE = "aql_product_catalog_v1.json"
         const val DOSING_PIN_FIXTURE = "aql_android_dosing_v1_pin.json"
-        const val FIRMWARE_COMMIT = "7df97ce807ebb1e90ff63cc36206d6ce479a62fc"
+        const val FIRMWARE_COMMIT = "455298833668537fedc16b851067558815d2cc7b"
         const val DOSING_FIRMWARE_COMMIT = "fa147211749c2dcb2f56e15a617a00010e071984"
 
         val WEEKDAYS = listOf(true, false, false, false, false, false, false)
     }
+}
+
+private fun lightSerializerFieldMap(
+    scene: DeviceLightScene,
+    create: DeviceLightAutoProgramCreatePayload,
+    update: DeviceLightAutoProgramUpdatePayload,
+    managedPhase: DeviceLightManagedPlanPhase
+): Map<String, Set<String>> = linkedMapOf<String, Set<String>>().apply {
+    putAll(lightScheduleSerializerFields(scene, create, update, managedPhase))
+    putAll(lightSupportSerializerFields(scene))
+}
+
+private fun lightScheduleSerializerFields(
+    scene: DeviceLightScene,
+    create: DeviceLightAutoProgramCreatePayload,
+    update: DeviceLightAutoProgramUpdatePayload,
+    managedPhase: DeviceLightManagedPlanPhase
+): Map<String, Set<String>> = linkedMapOf(
+    "DeviceLightControlSetPayload" to
+        DeviceLightControlSetPayload(DeviceLightMode.AUTO).toJson().serializerKeys(),
+    "DeviceLightManualSetPayload" to
+        DeviceLightManualSetPayload(scene).toJson().serializerKeys(),
+    "DeviceLightScene" to scene.toJson().serializerKeys(),
+    "DeviceLightAutoProgramCreatePayload" to create.toJson().serializerKeys(),
+    "DeviceLightAutoProgramUpdatePayload" to update.toJson().serializerKeys(),
+    "DeviceLightAutoProgramEnabledSetPayload" to
+        DeviceLightAutoProgramEnabledSetPayload(1, "ap-00000001", true)
+            .toJson().serializerKeys(),
+    "DeviceLightAutoProgramDeletePayload" to
+        DeviceLightAutoProgramDeletePayload(1, "ap-00000001")
+            .toJson().serializerKeys(),
+    "DeviceLightManagedPlanApplyPayload" to DeviceLightManagedPlanApplyPayload(
+        expectedRevision = 1,
+        expectedStorageGeneration = 4,
+        planId = null,
+        initialStartPercent = 60,
+        phases = listOf(managedPhase)
+    ).toJson().serializerKeys(),
+    "DeviceLightManagedPlanDeletePayload" to
+        DeviceLightManagedPlanDeletePayload(1, 4, "lp-00000001")
+            .toJson().serializerKeys(),
+    "DeviceLightManagedPlanPhase" to managedPhase.toJson().serializerKeys()
+)
+
+private fun lightSupportSerializerFields(
+    scene: DeviceLightScene
+): Map<String, Set<String>> = linkedMapOf(
+    "DeviceLightCustomInstallPayload" to DeviceLightCustomInstallPayload(
+        expectedRevision = 1,
+        weekdaysMask = 127,
+        points = listOf(DeviceLightCustomPoint(0, scene))
+    ).toJson().serializerKeys(),
+    "DeviceLightAcclimationStartPayload" to
+        DeviceLightAcclimationStartPayload(1, 50, 30).toJson().serializerKeys(),
+    "DeviceLightAcclimationStopPayload" to
+        DeviceLightAcclimationStopPayload(1).toJson().serializerKeys(),
+    "DeviceLightPreviewSetPayload.Scene" to
+        DeviceLightPreviewSetPayload.Scene(scene, 3_000).toJson().serializerKeys(),
+    "DeviceLightPreviewSetPayload.VirtualTime" to
+        DeviceLightPreviewSetPayload.VirtualTime(43_200_000, 3_000)
+            .toJson().serializerKeys(),
+    "DeviceLightTemperatureProtectionSetPayload" to
+        DeviceLightTemperatureProtectionSetPayload(60.0).toJson().serializerKeys(),
+    "DeviceLightThermalConfigApplyPayload" to DeviceLightThermalConfigApplyPayload(
+        mode = DeviceLightThermalMode.AUTO,
+        minTemperatureC = 35.0,
+        maxTemperatureC = 45.0,
+        save = true
+    ).toJson().serializerKeys()
+)
+
+private fun JSONObject.serializerKeys(): Set<String> {
+    val result = linkedSetOf<String>()
+    val iterator = keys()
+    while (iterator.hasNext()) {
+        result += iterator.next()
+    }
+    return result
 }

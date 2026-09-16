@@ -30,6 +30,11 @@ object DeviceLightStatusParser {
     ): DeviceLightStatus = DeviceLightStatus(
             schema = DeviceLightRuntimeContract.SCHEMA,
             storageVersion = DeviceLightRuntimeContract.STORAGE_VERSION,
+            storageGeneration = data.requireLightLong(
+                "storageGeneration",
+                0,
+                DeviceLightRuntimeContract.Limit.UINT32_MAX
+            ),
             product = product,
             channelScale = data.requireLightInt("channelScale").also {
                 require(it == DeviceLightRuntimeContract.Limit.PERCENT_MAX)
@@ -122,6 +127,7 @@ object DeviceLightStatusParser {
     private val STATUS_KEYS = setOf(
         "schema",
         "storageVersion",
+        "storageGeneration",
         "productKey",
         "channelScale",
         "channels",

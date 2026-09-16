@@ -18,7 +18,7 @@ class DeviceLightV1ContractTest {
     @Test
     fun `Light data layer pins the merged firmware main revision`() {
         assertEquals(
-            "7df97ce807ebb1e90ff63cc36206d6ce479a62fc",
+            "455298833668537fedc16b851067558815d2cc7b",
             DeviceLightRuntimeContract.PINNED_FIRMWARE_COMMIT
         )
     }
@@ -62,6 +62,15 @@ class DeviceLightV1ContractTest {
     fun `every Light V1 request serializer emits exact firmware keys and tuple width`() {
         val wrgb = DeviceLightScene.wrgb(10, 20, 30, 40)
         val rgb = DeviceLightScene.rgb(10, 20, 30)
+        assertProgramSerializerKeys(wrgb, rgb)
+        assertManagedPlanSerializerKeys(wrgb)
+        assertCustomAndPreviewSerializerKeys(wrgb, rgb)
+    }
+
+    private fun assertProgramSerializerKeys(
+        wrgb: DeviceLightScene,
+        rgb: DeviceLightScene
+    ) {
         assertKeys(DeviceLightControlSetPayload(DeviceLightMode.AUTO).toJson(), "mode")
         assertKeys(DeviceLightManualSetPayload(wrgb).toJson(), "scene")
         assertKeys(wrgb.toJson(), "redPercent", "greenPercent", "bluePercent", "whitePercent")
@@ -80,7 +89,58 @@ class DeviceLightV1ContractTest {
             "expectedRevision",
             "programId"
         )
+    }
 
+    private fun assertManagedPlanSerializerKeys(wrgb: DeviceLightScene) {
+        val managedPhase = DeviceLightManagedPlanPhase(
+            validFromEpochDay = 20_000,
+            validUntilEpochDayExclusive = null,
+            transitionDays = 7,
+            weekdaysMask = 127,
+            startTimeMs = 57_600_000,
+            endTimeMs = 79_200_000,
+            rampDurationMs = 3_600_000,
+            scene = wrgb
+        )
+        val managedApply = DeviceLightManagedPlanApplyPayload(
+            expectedRevision = 2,
+            expectedStorageGeneration = 4,
+            planId = null,
+            initialStartPercent = 60,
+            phases = listOf(managedPhase)
+        ).toJson()
+        assertKeys(
+            managedApply,
+            "expectedRevision",
+            "expectedStorageGeneration",
+            "planId",
+            "initialStartPercent",
+            "phases"
+        )
+        assertTrue(managedApply.isNull("planId"))
+        assertKeys(
+            managedApply.getJSONArray("phases").getJSONObject(0),
+            "validFromEpochDay",
+            "validUntilEpochDayExclusive",
+            "transitionDays",
+            "weekdaysMask",
+            "startTimeMs",
+            "endTimeMs",
+            "rampDurationMs",
+            "scene"
+        )
+        assertKeys(
+            DeviceLightManagedPlanDeletePayload(2, 4, "lp-00000001").toJson(),
+            "expectedRevision",
+            "expectedStorageGeneration",
+            "planId"
+        )
+    }
+
+    private fun assertCustomAndPreviewSerializerKeys(
+        wrgb: DeviceLightScene,
+        rgb: DeviceLightScene
+    ) {
         val wrgbCustom = DeviceLightCustomInstallPayload(
             expectedRevision = 2,
             weekdaysMask = 127,
@@ -180,6 +240,67 @@ class DeviceLightV1ContractTest {
     }
 
     @Test
+    fun `managed plan response is decoded strictly with runtime authority`() {
+        val response = managedPlanResponse()
+
+        val parsed = DeviceLightMutationParser.ManagedPlan.parse(
+            response,
+            DeviceLightProduct.WRGB_PRO_ELITE
+        )
+
+        assertEquals(4L, parsed.storageGeneration)
+        assertEquals(8L, parsed.revision)
+        assertEquals("lp-00000001", parsed.planId)
+        assertEquals(2, parsed.phases.size)
+        assertEquals(DeviceLightManagedPlanRuntimeState.ACTIVE, parsed.runtime.state)
+        assertEquals(0, parsed.runtime.activePhaseIndex)
+        assertEquals(600, parsed.runtime.transitionPermille)
+        assertTrue(
+            runCatching {
+                DeviceLightMutationParser.ManagedPlan.parse(
+                    JSONObject(response.toString()).put("unexpected", true),
+                    DeviceLightProduct.WRGB_PRO_ELITE
+                )
+            }.isFailure
+        )
+    }
+
+    @Test
+    fun `managed plan stale storage error preserves storage authority`() {
+        val stale = DeviceRuntimeCommandOutcome.FirmwareError(
+            deviceUid = DEVICE_UID,
+            module = "light",
+            action = "auto.plan.apply",
+            messageId = "error-plan-1",
+            generation = GENERATION,
+            statusCode = 409,
+            code = "conflict",
+            field = "expectedStorageGeneration",
+            message = "Storage generation changed",
+            structuredDataJson = """
+                {"reason":"STALE_STORAGE_GENERATION","actualStorageGeneration":9}
+            """.trimIndent()
+        ).lightV1Data()
+        val missing = DeviceRuntimeCommandOutcome.FirmwareError(
+            deviceUid = DEVICE_UID,
+            module = "light",
+            action = "auto.plan.delete",
+            messageId = "error-plan-2",
+            generation = GENERATION,
+            statusCode = 404,
+            code = "not_found",
+            field = "planId",
+            message = "Managed plan not found",
+            structuredDataJson = """{"reason":"AUTO_PLAN_NOT_FOUND"}"""
+        ).lightV1Data()
+
+        assertEquals(DeviceLightErrorReason.STALE_STORAGE_GENERATION, stale.reason)
+        assertEquals(9L, stale.actualStorageGeneration)
+        assertEquals(DeviceLightErrorReason.AUTO_PLAN_NOT_FOUND, missing.reason)
+        assertNull(missing.actualRevision)
+    }
+
+    @Test
     fun `WebSocket registry contains firmware Light V1 and no removed Light commands`() {
         val commands = AqlWsContract.authenticatedCommandKeys()
         val expected = DeviceLightRuntimeContract.Action.COMMON_V1 +
@@ -220,6 +341,48 @@ class DeviceLightV1ContractTest {
         endTimeMs = 64_800_000,
         rampDurationMs = 1_800_000,
         scene = scene
+    )
+
+    private fun managedPlanResponse(): JSONObject = JSONObject(
+        """
+        {
+          "storageGeneration":4,
+          "revision":8,
+          "installed":true,
+          "planId":"lp-00000001",
+          "initialStartPercent":60,
+          "phaseCount":2,
+          "phases":[
+            {
+              "validFromEpochDay":20000,
+              "validUntilEpochDayExclusive":20021,
+              "transitionDays":7,
+              "weekdaysMask":127,
+              "startTimeMs":57600000,
+              "endTimeMs":79200000,
+              "rampDurationMs":3600000,
+              "scene":{"redPercent":40,"greenPercent":32,"bluePercent":35,"whitePercent":46}
+            },
+            {
+              "validFromEpochDay":20021,
+              "validUntilEpochDayExclusive":null,
+              "transitionDays":7,
+              "weekdaysMask":127,
+              "startTimeMs":55800000,
+              "endTimeMs":79200000,
+              "rampDurationMs":3600000,
+              "scene":{"redPercent":45,"greenPercent":36,"bluePercent":39,"whitePercent":52}
+            }
+          ],
+          "runtime":{
+            "clockReady":true,
+            "state":"ACTIVE",
+            "activePhaseIndex":0,
+            "transitionPermille":600,
+            "nextTransitionEpochDay":20001
+          }
+        }
+        """.trimIndent()
     )
 
     private fun autoUpdate(scene: DeviceLightScene) = DeviceLightAutoProgramUpdatePayload(

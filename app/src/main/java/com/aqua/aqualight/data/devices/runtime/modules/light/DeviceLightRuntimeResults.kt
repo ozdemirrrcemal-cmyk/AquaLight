@@ -41,6 +41,34 @@ data class DeviceLightAutoProgramDeleteResult(
     val event: String?
 )
 
+data class DeviceLightManagedPlanRuntime(
+    val clockReady: Boolean,
+    val state: DeviceLightManagedPlanRuntimeState,
+    val activePhaseIndex: Int?,
+    val transitionPermille: Int?,
+    val nextTransitionEpochDay: Long?
+)
+
+data class DeviceLightManagedPlan(
+    val storageGeneration: Long,
+    val revision: Long,
+    val installed: Boolean,
+    val planId: String?,
+    val initialStartPercent: Int,
+    val phaseCount: Int,
+    val phases: List<DeviceLightManagedPlanPhase>,
+    val runtime: DeviceLightManagedPlanRuntime,
+    val event: String? = null
+)
+
+data class DeviceLightManagedPlanDeleteResult(
+    val revision: Long,
+    val storageGeneration: Long,
+    val planId: String,
+    val deleted: Boolean,
+    val event: String?
+)
+
 data class DeviceLightCustomDocument(
     val revision: Long,
     val installed: Boolean,
@@ -58,6 +86,13 @@ data class DeviceLightGraphSpan(
     val programId: String
 )
 
+data class DeviceLightManagedPlanGraphSpan(
+    val startTimeMsWithinToday: Long,
+    val endTimeMsWithinToday: Long,
+    val planId: String,
+    val phaseIndex: Int
+)
+
 data class DeviceLightGraph(
     val mode: DeviceLightMode,
     val available: Boolean,
@@ -71,7 +106,8 @@ data class DeviceLightGraph(
     val channelScale: Int,
     val hasScheduleToday: Boolean,
     val points: List<DeviceLightGraphPoint>,
-    val autoSpans: List<DeviceLightGraphSpan>
+    val autoSpans: List<DeviceLightGraphSpan>,
+    val planSpans: List<DeviceLightManagedPlanGraphSpan>
 )
 
 data class DeviceLightPreviewResult(

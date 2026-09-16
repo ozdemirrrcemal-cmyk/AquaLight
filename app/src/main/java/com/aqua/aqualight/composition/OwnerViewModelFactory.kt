@@ -58,6 +58,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.library.Devi
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom.DeviceLightCustomCurveViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual.DeviceLightManualControlViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root.DeviceLightRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.quicksetup.DeviceLightQuickSetupViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.system.DeviceLightSystemViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.settings.DeviceFamilySettingsViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.presentation.root.DeviceTimerRootViewModel
@@ -192,6 +193,10 @@ internal class OwnerViewModelFactory(
                 DeviceLightAutomaticProgramEditorViewModel(
                     graph.lightOperations.automaticOperations
                 )
+            DeviceLightQuickSetupViewModel::class.java -> DeviceLightQuickSetupViewModel(
+                tankOperations = graph.lightOperations.quickSetupTankOperations,
+                managedPlanOperations = graph.lightOperations.managedPlanOperations
+            )
             DeviceLightManualControlViewModel::class.java -> DeviceLightManualControlViewModel(
                 libraryOperations = graph.lightOperations.libraryOperations
             )
@@ -331,6 +336,7 @@ internal class OwnerViewModelFactory(
             DeviceLightAdaptationViewModel::class.java,
             DeviceLightAutomaticProgramsViewModel::class.java,
             DeviceLightAutomaticProgramEditorViewModel::class.java,
+            DeviceLightQuickSetupViewModel::class.java,
             DeviceLightManualControlViewModel::class.java,
             DeviceLightCustomCurveViewModel::class.java,
             DeviceLightLibraryViewModel::class.java,

@@ -16,6 +16,8 @@ import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdapta
 import com.aqua.aqualight.application.devices.light.control.DeviceLightControlOperations
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomOperations
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryOperations
+import com.aqua.aqualight.application.devices.light.automation.DeviceLightManagedPlanOperations
+import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupTankOperations
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftRequest
@@ -44,6 +46,8 @@ import com.aqua.aqualight.data.devices.light.control.DefaultDeviceLightControlOp
 import com.aqua.aqualight.data.devices.light.custom.DefaultDeviceLightCustomOperations
 import com.aqua.aqualight.data.devices.light.library.DefaultDeviceLightLibraryOperations
 import com.aqua.aqualight.data.devices.light.library.DeviceLightLibraryStore
+import com.aqua.aqualight.data.devices.light.automation.DefaultDeviceLightManagedPlanOperations
+import com.aqua.aqualight.data.devices.light.quicksetup.DefaultDeviceLightQuickSetupTankOperations
 import com.aqua.aqualight.data.devices.light.system.DefaultDeviceLightSystemOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceControlSurfacePreparationOperations
 import com.aqua.aqualight.data.devices.provisioning.repository.DefaultProvisioningDraftOperations
@@ -98,6 +102,8 @@ internal data class OwnerDosingOperations(
 internal data class OwnerLightOperations(
     val adaptationOperations: DeviceLightAdaptationOperations,
     val automaticOperations: DeviceLightAutomaticOperations,
+    val managedPlanOperations: DeviceLightManagedPlanOperations,
+    val quickSetupTankOperations: DeviceLightQuickSetupTankOperations,
     val controlOperations: DeviceLightControlOperations,
     val customOperations: DeviceLightCustomOperations,
     val systemOperations: DeviceLightSystemOperations,
@@ -226,7 +232,9 @@ internal class ActiveOwnerDependencyGraphResolver(
         val lightOperations = createOwnerLightOperations(
             context = appContext,
             ownerUid = dependencies.ownerUid,
-            devicesRepository = dependencies.devicesRepository
+            devicesRepository = dependencies.devicesRepository,
+            assignmentRepository = dependencies.assignmentRepository,
+            tankStore = aquariumTankStore
         )
         return OwnerDependencyGraph(
             ownerUid = dependencies.ownerUid,
@@ -372,12 +380,21 @@ internal class ActiveOwnerDependencyGraphResolver(
 private fun createOwnerLightOperations(
     context: Context,
     ownerUid: String,
-    devicesRepository: DevicesRepository
+    devicesRepository: DevicesRepository,
+    assignmentRepository: TankDeviceAssignmentRepository,
+    tankStore: AquariumTankDataStoreManager
 ): OwnerLightOperations {
     val controlOperations = DefaultDeviceLightControlOperations(devicesRepository)
     return OwnerLightOperations(
         adaptationOperations = DefaultDeviceLightAdaptationOperations(devicesRepository),
         automaticOperations = DefaultDeviceLightAutomaticOperations(devicesRepository),
+        managedPlanOperations = DefaultDeviceLightManagedPlanOperations(devicesRepository),
+        quickSetupTankOperations = DefaultDeviceLightQuickSetupTankOperations(
+            ownerUid = ownerUid,
+            assignmentRepository = assignmentRepository,
+            tankStore = tankStore,
+            devicesRepository = devicesRepository
+        ),
         controlOperations = controlOperations,
         customOperations = DefaultDeviceLightCustomOperations(devicesRepository),
         systemOperations = DefaultDeviceLightSystemOperations(devicesRepository),

@@ -60,3 +60,38 @@ suspend fun DeviceLightRuntimeRepository.deleteAutoProgram(
     parser = { data, _ -> DeviceLightMutationParser.parseAutoProgramDelete(data) },
     refreshStatus = true
 )
+
+suspend fun DeviceLightRuntimeRepository.requestManagedPlan(
+    deviceUid: DeviceUid
+): DeviceRuntimeCommandOutcome<DeviceLightManagedPlan> = productCommand(
+    deviceUid = deviceUid,
+    action = DeviceLightRuntimeContract.Action.AUTO_PLAN_GET,
+    parser = DeviceLightMutationParser.ManagedPlan::parse
+)
+
+suspend fun DeviceLightRuntimeRepository.applyManagedPlan(
+    deviceUid: DeviceUid,
+    payload: DeviceLightManagedPlanApplyPayload
+): DeviceRuntimeCommandOutcome<DeviceLightManagedPlan> = productCommand(
+    deviceUid = deviceUid,
+    action = DeviceLightRuntimeContract.Action.AUTO_PLAN_APPLY,
+    dataFactory = payload::toJson,
+    parser = { data, product ->
+        payload.phases.forEach { phase ->
+            DeviceLightCommandValidation.requireProduct(phase.scene.product, product)
+        }
+        DeviceLightMutationParser.ManagedPlan.parse(data, product)
+    },
+    refreshStatus = true
+)
+
+suspend fun DeviceLightRuntimeRepository.deleteManagedPlan(
+    deviceUid: DeviceUid,
+    payload: DeviceLightManagedPlanDeletePayload
+): DeviceRuntimeCommandOutcome<DeviceLightManagedPlanDeleteResult> = productCommand(
+    deviceUid = deviceUid,
+    action = DeviceLightRuntimeContract.Action.AUTO_PLAN_DELETE,
+    dataFactory = payload::toJson,
+    parser = { data, _ -> DeviceLightMutationParser.ManagedPlan.parseDelete(data) },
+    refreshStatus = true
+)
