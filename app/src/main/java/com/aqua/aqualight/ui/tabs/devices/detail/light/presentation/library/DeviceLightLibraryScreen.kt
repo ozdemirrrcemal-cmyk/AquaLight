@@ -124,11 +124,6 @@ private fun androidx.compose.foundation.lazy.LazyListScope.libraryContent(
             }
         }
     }
-    if (state.selectedTab == DeviceLightLibraryTab.CUSTOM) {
-        item(key = "library-information-" + state.selectedTab.name) {
-            CustomLibraryInformation(visuals)
-        }
-    }
 }
 
 @Composable
@@ -393,29 +388,6 @@ private fun LibraryTextAction(
             .clickable(role = Role.Button, onClick = onClick)
             .padding(horizontal = 18.dp, vertical = 10.dp)
     )
-}
-
-@Composable
-private fun CustomLibraryInformation(visuals: DeviceLightLibraryVisuals) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Image(
-            painter = painterResource(R.drawable.ic_info),
-            contentDescription = null,
-            colorFilter = ColorFilter.tint(visuals.colors.card.secondaryText),
-            modifier = Modifier.size(AquaLightLibraryGeometry.informationIconSize)
-        )
-        Spacer(Modifier.width(AquaLightLibraryGeometry.informationGap))
-        BasicText(
-            text = stringResource(R.string.device_light_library_custom_information),
-            style = visuals.typography.caption
-        )
-    }
 }
 
 @Immutable

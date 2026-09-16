@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,13 +17,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredWidthIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
@@ -33,7 +34,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryChannel
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryEntry
@@ -43,6 +43,10 @@ import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.light.AquaLightLibraryAlpha
 import com.aqua.aqualight.ui.common.light.AquaLightLibraryGeometry
 import com.aqua.aqualight.ui.common.light.AquaLightManualColors
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.AutomaticCalendarIcon
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.AutomaticClockIcon
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.AutomaticMoreButton
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.DeviceLightAutomaticGeometry
 
 @Composable
 internal fun ManualLibraryCard(
@@ -51,25 +55,11 @@ internal fun ManualLibraryCard(
     actions: DeviceLightLibraryActions,
     visuals: DeviceLightLibraryVisuals
 ) {
-    AquaDeviceCardSurface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = AquaLightLibraryGeometry.manualCardMinHeight)
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(AquaLightLibraryGeometry.manualContentGap)
-        ) {
-            LibraryCardHeader(entry, actions.onMoreClick, visuals)
-            ManualValuesSummary(entry.channels, payload.scene, visuals)
-            LibraryLoadButton(
-                entry = entry,
-                onLoadClick = actions.onLoadClick,
-                visuals = visuals,
-                prominent = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
+    LibraryCardSurface {
+        LibraryCardHeader(entry, actions, visuals)
+        ManualLibrarySummary(visuals)
+        LibraryCardDivider(visuals)
+        ManualChannelSummary(entry.channels, payload.scene, visuals)
     }
 }
 
@@ -80,31 +70,27 @@ internal fun CustomLibraryCard(
     actions: DeviceLightLibraryActions,
     visuals: DeviceLightLibraryVisuals
 ) {
-    AquaDeviceCardSurface(modifier = Modifier.fillMaxWidth()) {
-        Column(verticalArrangement = Arrangement.spacedBy(AquaLightLibraryGeometry.cardHeaderGap)) {
-            LibraryCardHeader(entry, actions.onMoreClick, visuals)
-            val pointCount = payload.points.size
-            BasicText(
-                text = stringResource(
-                    R.string.device_light_library_days_points_format,
-                    lightLibraryWeekdaysText(payload.weekdaysMask),
-                    pluralStringResource(
-                        R.plurals.device_light_library_point_count,
-                        pointCount,
-                        pointCount
-                    )
-                ),
-                style = visuals.typography.caption
-            )
-            CustomCurveChart(entry, payload, visuals)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                ChartLegend(entry.channels, visuals)
-                Spacer(Modifier.weight(1f))
-                LibraryLoadButton(entry, actions.onLoadClick, visuals)
-            }
+    LibraryCardSurface {
+        LibraryCardHeader(entry, actions, visuals)
+        CustomLibrarySummary(payload, visuals)
+        LibraryCardDivider(visuals)
+        CustomChannelSummary(entry.channels, payload, visuals)
+    }
+}
+
+@Composable
+private fun LibraryCardSurface(content: @Composable () -> Unit) {
+    AquaDeviceCardSurface(
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = DeviceLightAutomaticGeometry.cardContentPadding
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = DeviceLightAutomaticGeometry.cardContentMinimumHeight),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            content()
         }
     }
 }
@@ -112,13 +98,19 @@ internal fun CustomLibraryCard(
 @Composable
 private fun LibraryCardHeader(
     entry: DeviceLightLibraryEntry,
-    onMoreClick: (String) -> Unit,
+    actions: DeviceLightLibraryActions,
     visuals: DeviceLightLibraryVisuals
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        LibraryEntryIcon(
+            payload = entry.payload,
+            color = visuals.colors.card.secondaryText,
+            modifier = Modifier.size(DeviceLightAutomaticGeometry.cardHeaderIconSize)
+        )
+        Spacer(Modifier.width(DeviceLightAutomaticGeometry.headerIconGap))
         BasicText(
             text = entry.name,
             style = visuals.typography.title,
@@ -126,87 +118,194 @@ private fun LibraryCardHeader(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f)
         )
-        Spacer(Modifier.width(8.dp))
-        LibraryKindBadge(entry, visuals)
-        Spacer(Modifier.width(2.dp))
-        val description = stringResource(
-            R.string.device_light_library_more_actions_description,
-            entry.name
+        Spacer(Modifier.width(DeviceLightAutomaticGeometry.headerControlGap))
+        LibraryLoadButton(entry, actions.onLoadClick, visuals)
+        Spacer(Modifier.width(DeviceLightAutomaticGeometry.headerControlGap))
+        AutomaticMoreButton(
+            color = visuals.colors.card.secondaryText,
+            contentDescriptionText = stringResource(
+                R.string.device_light_library_more_actions_description,
+                entry.name
+            ),
+            enabled = true,
+            onClick = { actions.onMoreClick(entry.id) }
         )
-        Canvas(
-            modifier = Modifier
-                .size(AquaLightLibraryGeometry.moreTouchSize)
-                .clickable(role = Role.Button) { onMoreClick(entry.id) }
-                .semantics { contentDescription = description }
-        ) {
-            val center = Offset(size.width / 2f, size.height / 2f)
-            val gap = AquaLightLibraryGeometry.moreDotGap.toPx()
-            repeat(AquaLightLibraryGeometry.moreDotCount) { index ->
-                drawCircle(
-                    color = visuals.colors.card.secondaryText,
-                    radius = AquaLightLibraryGeometry.moreDotRadius.toPx(),
-                    center = center.copy(y = center.y + (index - 1) * gap)
-                )
-            }
-        }
     }
 }
 
 @Composable
-private fun LibraryKindBadge(
-    entry: DeviceLightLibraryEntry,
+private fun ManualLibrarySummary(visuals: DeviceLightLibraryVisuals) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        LibraryBulbIcon(
+            color = visuals.colors.card.warning,
+            modifier = Modifier.size(DeviceLightAutomaticGeometry.scheduleEventIconSize)
+        )
+        Spacer(Modifier.width(DeviceLightAutomaticGeometry.scheduleTextGap))
+        BasicText(
+            text = stringResource(R.string.device_light_library_fixed_light),
+            style = visuals.typography.title,
+            maxLines = 1
+        )
+        Spacer(Modifier.weight(1f))
+        LibrarySummaryDivider(visuals)
+        Spacer(Modifier.width(DeviceLightAutomaticGeometry.scheduleDividerGap))
+        LibraryLightningIcon(
+            color = visuals.colors.action,
+            modifier = Modifier.size(DeviceLightAutomaticGeometry.scheduleEventIconSize)
+        )
+        Spacer(Modifier.width(DeviceLightAutomaticGeometry.scheduleTextGap))
+        BasicText(
+            text = stringResource(R.string.device_light_library_applies_instantly),
+            style = visuals.typography.body.copy(color = visuals.colors.card.secondaryText),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+@Composable
+private fun CustomLibrarySummary(
+    payload: DeviceLightLibraryPayload.Custom,
     visuals: DeviceLightLibraryVisuals
 ) {
-    val text = when (entry.payload) {
-        is DeviceLightLibraryPayload.Manual ->
-            stringResource(R.string.device_light_library_badge_manual)
-        is DeviceLightLibraryPayload.Custom ->
-            stringResource(R.string.device_light_library_badge_custom)
+    val pointCount = payload.points.size
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        AutomaticCalendarIcon(
+            color = visuals.colors.card.secondaryText,
+            modifier = Modifier.size(DeviceLightAutomaticGeometry.scheduleEventIconSize)
+        )
+        Spacer(Modifier.width(DeviceLightAutomaticGeometry.scheduleTextGap))
+        BasicText(
+            text = lightLibraryWeekdaysText(payload.weekdaysMask),
+            style = visuals.typography.title,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.widthIn(max = AquaLightLibraryGeometry.customDaysMaxWidth)
+        )
+        Spacer(Modifier.width(AquaLightLibraryGeometry.customMetadataGap))
+        BasicText(
+            text = stringResource(R.string.device_light_library_metadata_separator),
+            style = visuals.typography.body.copy(color = visuals.colors.card.secondaryText)
+        )
+        Spacer(Modifier.width(AquaLightLibraryGeometry.customMetadataGap))
+        LibraryCurveIcon(
+            color = visuals.colors.card.secondaryText,
+            modifier = Modifier.size(DeviceLightAutomaticGeometry.scheduleEventIconSize)
+        )
+        Spacer(Modifier.width(DeviceLightAutomaticGeometry.scheduleTextGap))
+        BasicText(
+            text = pluralStringResource(
+                R.plurals.device_light_library_point_count,
+                pointCount,
+                pointCount
+            ),
+            style = visuals.typography.body,
+            maxLines = 1
+        )
+        Spacer(Modifier.weight(1f))
+        LibrarySummaryDivider(visuals)
+        Spacer(Modifier.width(DeviceLightAutomaticGeometry.scheduleDividerGap))
+        AutomaticClockIcon(
+            color = visuals.colors.card.secondaryText,
+            modifier = Modifier.size(DeviceLightAutomaticGeometry.scheduleEventIconSize)
+        )
+        Spacer(Modifier.width(DeviceLightAutomaticGeometry.scheduleTextGap))
+        BasicText(
+            text = stringResource(
+                R.string.device_light_library_light_duration_hours,
+                payload.activeLightDurationHours()
+            ),
+            style = visuals.typography.body,
+            maxLines = 1
+        )
     }
-    val shape = RoundedCornerShape(AquaLightLibraryGeometry.badgeCornerRadius)
-    BasicText(
-        text = text,
-        style = visuals.typography.micro.copy(color = visuals.colors.action),
-        modifier = Modifier
-            .background(
-                visuals.colors.action.copy(alpha = AquaLightLibraryAlpha.badgeSurface),
-                shape
-            )
-            .padding(
-                horizontal = AquaLightLibraryGeometry.badgeHorizontalPadding,
-                vertical = AquaLightLibraryGeometry.badgeVerticalPadding
-            )
+}
+
+@Composable
+private fun LibrarySummaryDivider(visuals: DeviceLightLibraryVisuals) {
+    Box(
+        Modifier
+            .width(DeviceLightAutomaticGeometry.scheduleDividerWidth)
+            .height(DeviceLightAutomaticGeometry.scheduleDividerHeight)
+            .background(visuals.colors.card.mediaOutline)
     )
 }
 
 @Composable
-private fun ManualValuesSummary(
+private fun LibraryCardDivider(visuals: DeviceLightLibraryVisuals) {
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .height(DeviceLightAutomaticGeometry.cardDividerHeight)
+            .background(visuals.colors.card.mediaOutline)
+    )
+}
+
+@Composable
+private fun ManualChannelSummary(
     channels: List<DeviceLightLibraryChannel>,
     scene: DeviceLightLibraryScene,
     visuals: DeviceLightLibraryVisuals
 ) {
-    val visibleChannels = MANUAL_CHANNEL_ORDER.filter(channels::contains)
+    val visibleChannels = LIBRARY_CHANNEL_ORDER.filter(channels::contains)
+    val labels = visibleChannels.associateWith { channel ->
+        stringResource(
+            R.string.device_light_library_channel_summary_format,
+            channel.shortLabel(),
+            scene.channels.getValue(channel)
+        )
+    }
+    LibraryChannelSummary(visibleChannels, labels, visuals)
+}
+
+@Composable
+private fun CustomChannelSummary(
+    channels: List<DeviceLightLibraryChannel>,
+    payload: DeviceLightLibraryPayload.Custom,
+    visuals: DeviceLightLibraryVisuals
+) {
+    val visibleChannels = LIBRARY_CHANNEL_ORDER.filter(channels::contains)
+    val labels = visibleChannels.associateWith { channel ->
+        val range = payload.channelRange(channel)
+        stringResource(
+            R.string.device_light_library_channel_range_format,
+            channel.shortLabel(),
+            range.first,
+            range.last
+        )
+    }
+    LibraryChannelSummary(visibleChannels, labels, visuals)
+}
+
+@Composable
+private fun LibraryChannelSummary(
+    channels: List<DeviceLightLibraryChannel>,
+    labels: Map<DeviceLightLibraryChannel, String>,
+    visuals: DeviceLightLibraryVisuals
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        visibleChannels.forEach { channel ->
+        channels.forEach { channel ->
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(
-                    AquaLightLibraryGeometry.manualSummaryTextGap
+                    DeviceLightAutomaticGeometry.channelTextGap
                 )
             ) {
-                Canvas(modifier = Modifier.size(AquaLightLibraryGeometry.manualSummaryDotSize)) {
+                Canvas(modifier = Modifier.size(DeviceLightAutomaticGeometry.channelDotSize)) {
                     drawCircle(color = channel.libraryColor(visuals.colors))
                 }
                 BasicText(
-                    text = stringResource(
-                        R.string.device_light_library_channel_summary_format,
-                        channel.shortLabel(),
-                        scene.channels.getValue(channel)
-                    ),
+                    text = labels.getValue(channel),
                     style = visuals.typography.body,
                     maxLines = 1
                 )
@@ -219,9 +318,7 @@ private fun ManualValuesSummary(
 private fun LibraryLoadButton(
     entry: DeviceLightLibraryEntry,
     onLoadClick: (String) -> Unit,
-    visuals: DeviceLightLibraryVisuals,
-    modifier: Modifier = Modifier,
-    prominent: Boolean = false
+    visuals: DeviceLightLibraryVisuals
 ) {
     val enabled = !entry.isLoaded
     val text = stringResource(
@@ -240,22 +337,11 @@ private fun LibraryLoadButton(
         entry.name
     )
     val shape = RoundedCornerShape(AquaLightLibraryGeometry.loadButtonCornerRadius)
-    val contentColor = if (prominent) visuals.colors.card.primaryText else visuals.colors.action
     Row(
-        modifier = modifier
+        modifier = Modifier
             .requiredWidthIn(min = AquaLightLibraryGeometry.loadButtonMinWidth)
-            .height(
-                if (prominent) {
-                    AquaLightLibraryGeometry.manualLoadButtonHeight
-                } else {
-                    AquaLightLibraryGeometry.loadButtonHeight
-                }
-            )
+            .height(AquaLightLibraryGeometry.loadButtonHeight)
             .alpha(if (enabled) 1f else AquaLightLibraryAlpha.disabled)
-            .background(
-                if (prominent) visuals.colors.action else Color.Transparent,
-                shape
-            )
             .border(
                 AquaLightLibraryGeometry.loadButtonOutlineWidth,
                 visuals.colors.action,
@@ -272,34 +358,25 @@ private fun LibraryLoadButton(
                 contentDescription = description
                 if (!enabled) disabled()
             }
-            .padding(horizontal = 12.dp),
+            .padding(horizontal = AquaLightLibraryGeometry.loadButtonHorizontalPadding),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        LibraryLoadButtonContent(entry.isLoaded, text, contentColor, visuals)
+        Image(
+            painter = painterResource(
+                if (entry.isLoaded) R.drawable.ic_check_24 else R.drawable.ic_light_library
+            ),
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(visuals.colors.action),
+            modifier = Modifier.size(AquaLightLibraryGeometry.loadButtonIconSize)
+        )
+        Spacer(Modifier.width(AquaLightLibraryGeometry.loadButtonGap))
+        BasicText(
+            text = text,
+            style = visuals.typography.title.copy(color = visuals.colors.action),
+            maxLines = 1
+        )
     }
-}
-
-@Composable
-private fun LibraryLoadButtonContent(
-    loaded: Boolean,
-    text: String,
-    contentColor: Color,
-    visuals: DeviceLightLibraryVisuals
-) {
-    Image(
-        painter = painterResource(
-            if (loaded) R.drawable.ic_check_24 else R.drawable.ic_light_library
-        ),
-        contentDescription = null,
-        colorFilter = ColorFilter.tint(contentColor),
-        modifier = Modifier.size(AquaLightLibraryGeometry.loadButtonIconSize)
-    )
-    Spacer(Modifier.width(AquaLightLibraryGeometry.loadButtonGap))
-    BasicText(
-        text = text,
-        style = visuals.typography.title.copy(color = contentColor)
-    )
 }
 
 @Composable
@@ -320,15 +397,11 @@ internal fun DeviceLightLibraryChannel.libraryColor(colors: AquaLightManualColor
         DeviceLightLibraryChannel.WHITE -> colors.white
     }
 
-private val MANUAL_CHANNEL_ORDER = listOf(
-    DeviceLightLibraryChannel.WHITE,
-    DeviceLightLibraryChannel.RED,
-    DeviceLightLibraryChannel.GREEN,
-    DeviceLightLibraryChannel.BLUE
-)
-
 @Composable
 private fun lightLibraryWeekdaysText(mask: Int): String {
+    if (mask == EVERY_DAY_MASK) {
+        return stringResource(R.string.device_light_library_every_day)
+    }
     val dayResources = listOf(
         R.string.device_light_library_day_monday,
         R.string.device_light_library_day_tuesday,
@@ -338,11 +411,16 @@ private fun lightLibraryWeekdaysText(mask: Int): String {
         R.string.device_light_library_day_saturday,
         R.string.device_light_library_day_sunday
     )
-    val labels = mutableListOf<String>()
-    dayResources.forEachIndexed { index, dayResource ->
-        if (mask and (1 shl index) != 0) {
-            labels += stringResource(dayResource)
-        }
-    }
-    return labels.joinToString(" · ")
+    return dayResources.mapIndexedNotNull { index, dayResource ->
+        stringResource(dayResource).takeIf { mask and (1 shl index) != 0 }
+    }.joinToString(" · ")
 }
+
+private val LIBRARY_CHANNEL_ORDER = listOf(
+    DeviceLightLibraryChannel.WHITE,
+    DeviceLightLibraryChannel.RED,
+    DeviceLightLibraryChannel.GREEN,
+    DeviceLightLibraryChannel.BLUE
+)
+
+private const val EVERY_DAY_MASK = 0x7f
