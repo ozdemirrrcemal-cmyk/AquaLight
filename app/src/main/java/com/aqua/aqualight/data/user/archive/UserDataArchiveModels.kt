@@ -1,5 +1,9 @@
 package com.aqua.aqualight.data.user.archive
 
+import com.aqua.aqualight.application.aquarium.AquariumAutomationProfile
+import com.aqua.aqualight.application.aquarium.AquariumPlantLightDemand
+import com.aqua.aqualight.data.aquarium.devices.TankLightInstallationProfile
+import com.aqua.aqualight.data.aquarium.devices.TankLightRecommendationSnapshot
 import java.io.File
 
 internal const val USER_DATA_BACKUP_FORMAT = "aqualight-user-backup"
@@ -35,6 +39,7 @@ internal data class ArchiveAquarium(
     val createdAtMillis: Long,
     val smartCareEnabled: Boolean,
     val careRemindersEnabled: Boolean,
+    val automationProfile: AquariumAutomationProfile,
     val plants: List<ArchivePlant>,
     val materials: List<ArchiveMaterial>,
     val livestock: List<ArchiveLivestock>
@@ -48,8 +53,11 @@ internal data class ArchiveMediaReference(
 
 internal data class ArchivePlant(
     val id: Long,
+    val catalogId: String,
     val plantName: String,
     val category: String,
+    val lightDemand: AquariumPlantLightDemand,
+    val plantedAtEpochDay: Long?,
     val markerX: Float,
     val markerY: Float
 )
@@ -61,7 +69,8 @@ internal data class ArchiveMaterial(
     val categoryTitle: String,
     val name: String,
     val brand: String,
-    val note: String
+    val note: String,
+    val substrateSemantic: com.aqua.aqualight.application.aquarium.AquariumSubstrateSemantic
 )
 
 internal data class ArchiveLivestock(
@@ -98,7 +107,9 @@ internal data class ArchiveCareTask(
 internal data class ArchiveDeviceAssignment(
     val tankId: Long,
     val deviceUid: String,
-    val assignedAtMillis: Long
+    val assignedAtMillis: Long,
+    val lightInstallation: TankLightInstallationProfile,
+    val lightRecommendations: List<TankLightRecommendationSnapshot>
 )
 
 internal data class DecodedUserDataBackup(

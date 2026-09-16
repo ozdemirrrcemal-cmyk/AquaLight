@@ -13,6 +13,7 @@ import androidx.navigation.fragment.navArgs
 import coil3.load
 import coil3.request.crossfade
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.aquarium.AquariumPlantLightDemand
 import com.aqua.aqualight.application.aquarium.AquariumPlantTag
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentPlantTagBinding
@@ -24,6 +25,7 @@ import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.create.plants.PlantPickerFragment
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
 import com.aqua.aqualight.ui.tabs.aquarium.plants.PlantTagUiRenderer
+import java.time.LocalDate
 import kotlinx.coroutines.launch
 
 class TankDetailPlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
@@ -122,11 +124,22 @@ class TankDetailPlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
             val category = bundle.getString(
                 PlantPickerFragment.RESULT_PLANT_CATEGORY
             ) ?: return@observe
+            val catalogId = bundle.getString(
+                PlantPickerFragment.RESULT_PLANT_ID
+            ) ?: return@observe
+            val lightDemand = bundle.getString(
+                PlantPickerFragment.RESULT_PLANT_LIGHT_DEMAND
+            )?.let { value ->
+                AquariumPlantLightDemand.entries.singleOrNull { it.name == value }
+            } ?: AquariumPlantLightDemand.UNKNOWN
 
             selectedPlants.add(
                 AquariumPlantTag(
+                    catalogId = catalogId,
                     plantName = plantName,
                     category = category,
+                    lightDemand = lightDemand,
+                    plantedAtEpochDay = LocalDate.now().toEpochDay(),
                     markerX = pendingMarkerX,
                     markerY = pendingMarkerY
                 )

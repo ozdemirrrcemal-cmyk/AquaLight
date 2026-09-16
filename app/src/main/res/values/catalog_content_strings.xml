@@ -100,12 +100,13 @@
     <string name="catalog_material_filter_sunsun_hw_603b_name" translatable="false">SunSun HW-603B External Filter</string>
     <string name="catalog_material_gravel_ada_aqua_gravel_s_name" translatable="false">ADA Aqua Gravel S</string>
     <string name="catalog_material_gravel_ada_aqua_gravel_m_name" translatable="false">ADA Aqua Gravel M</string>
-    <string name="catalog_material_gravel_dennerle_nano_gravel_black_name" translatable="false">Dennerle Nano Gravel Black</string>
-    <string name="catalog_material_gravel_dennerle_nano_gravel_natural_name" translatable="false">Dennerle Nano Gravel Natural</string>
+    <string name="catalog_material_gravel_dennerle_nano_shrimp_gravel_sulawesi_black_name" translatable="false">Dennerle Nano Shrimp Gravel Sulawesi Black</string>
+    <string name="catalog_material_gravel_dennerle_nano_shrimp_gravel_arkansas_grey_name" translatable="false">Dennerle Nano Shrimp Gravel Arkansas Grey</string>
+    <string name="catalog_material_gravel_dennerle_nano_shrimp_gravel_borneo_brown_name" translatable="false">Dennerle Nano Shrimp Gravel Borneo Brown</string>
+    <string name="catalog_material_gravel_dennerle_nano_shrimp_gravel_sunda_white_name" translatable="false">Dennerle Nano Shrimp Gravel Sunda White</string>
     <string name="catalog_material_gravel_jbl_sansibar_dark_name" translatable="false">JBL Sansibar Dark</string>
     <string name="catalog_material_gravel_jbl_sansibar_white_name" translatable="false">JBL Sansibar White</string>
-    <string name="catalog_material_gravel_aquael_basaltsand_name" translatable="false">Aquael Basalt Sand</string>
-    <string name="catalog_material_gravel_natural_river_sand_name" translatable="false">Natural River Sand</string>
+    <string name="catalog_material_gravel_aquael_basalt_gravel_name" translatable="false">Aquael Basalt Gravel</string>
     <string name="catalog_material_heater_eheim_thermocontrol_50w_name" translatable="false">Eheim Thermocontrol 50W</string>
     <string name="catalog_material_heater_eheim_thermocontrol_100w_name" translatable="false">Eheim Thermocontrol 100W</string>
     <string name="catalog_material_heater_eheim_thermocontrol_150w_name" translatable="false">Eheim Thermocontrol 150W</string>
@@ -121,10 +122,10 @@
     <string name="catalog_material_light_chihiros_wrgb_ii_slim_name" translatable="false">Chihiros WRGB II Slim</string>
     <string name="catalog_material_light_chihiros_magnetic_lamp_led_name" translatable="false">Chihiros Magnetic Lamp - LED Light</string>
     <string name="catalog_material_light_twinstar_s_series_name" translatable="false">Twinstar S Series</string>
-    <string name="catalog_material_substrate_chihiros_aquasoil_9l_name" translatable="false">Chihiros Aquasoil 9L</string>
-    <string name="catalog_material_substrate_chihiros_aquasoil_3l_name" translatable="false">Chihiros Aquasoil 3L</string>
+    <string name="catalog_material_substrate_chihiros_aquasoil_9l_name" translatable="false">Chihiros Aqua Soil 9L</string>
+    <string name="catalog_material_substrate_chihiros_aquasoil_3l_name" translatable="false">Chihiros Aqua Soil 3L</string>
     <string name="catalog_material_substrate_ada_tourmaline_bc_name" translatable="false">ADA Tourmaline BC</string>
-    <string name="catalog_material_substrate_dennerle_deponitmix_4_8kg_name" translatable="false">Dennerle DeponitMix Professional 10in1 - 4.8 kg</string>
+    <string name="catalog_material_substrate_dennerle_deponit_mix_pro_4_8kg_name" translatable="false">Dennerle Deponit Mix Pro 4.8 kg</string>
 
     <!-- Scientific cultivar names are locale-independent catalog data. -->
     <string name="catalog_plant_anubias_barteri_name" translatable="false">Anubias barteri</string>
@@ -404,11 +405,9 @@
     <string name="catalog_keyword_aqua_gravel">aqua gravel</string>
     <string name="catalog_keyword_black">black</string>
     <string name="catalog_keyword_nano">nano</string>
-    <string name="catalog_keyword_natural">natural</string>
     <string name="catalog_keyword_dark">dark</string>
     <string name="catalog_keyword_white">white</string>
     <string name="catalog_keyword_basalt">basalt</string>
-    <string name="catalog_keyword_river">river</string>
     <string name="catalog_keyword_heater">heater</string>
     <string name="catalog_keyword_thermo">thermo</string>
     <string name="catalog_keyword_protemp" translatable="false">protemp</string>
@@ -429,4 +428,3 @@
     <string name="catalog_keyword_additive">additive</string>
     <string name="catalog_keyword_base_layer">base layer</string>
 </resources>
-

@@ -1,5 +1,8 @@
 package com.aqua.aqualight.data.care.smartcare
 
+import com.aqua.aqualight.application.aquarium.AquariumLivestockCategory
+import com.aqua.aqualight.application.aquarium.AquariumMaterialCategory
+import com.aqua.aqualight.application.aquarium.AquariumSubstrateSemantic
 import com.aqua.aqualight.application.aquarium.AquariumTankTaxonomy
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumMaterial
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
@@ -66,17 +69,14 @@ object SmartCareTankClassifier {
 
   private fun classifyLivestock(tank: SavedAquariumTank): SmartCareLivestockSignals {
     val hasLivestock = tank.livestock.isNotEmpty()
-    val hasShrimp = SmartCareTextMatcher.hasLivestockKeyword(
-      tank,
-      arrayOf("shrimp", "karides", "neocaridina", "caridina", "amano")
-    )
-    val hasFish = hasLivestock && !hasShrimp || SmartCareTextMatcher.hasLivestockKeyword(
-      tank,
-      arrayOf(
-        "fish", "balık", "tetra", "guppy", "betta", "rasbora",
-        "cory", "corydoras", "danio", "molly", "platy"
-      )
-    )
+    // The category is selected from the app's fixed catalog. Free-text names and notes are not
+    // authoritative enough to drive lighting safety decisions.
+    val hasShrimp = tank.livestock.any { item ->
+      item.category == AquariumLivestockCategory.SHRIMP
+    }
+    val hasFish = tank.livestock.any { item ->
+      item.category == AquariumLivestockCategory.FISH
+    }
     return SmartCareLivestockSignals(hasLivestock, hasFish, hasShrimp)
   }
 
@@ -93,8 +93,9 @@ object SmartCareTankClassifier {
   }
 
   private fun hasCo2(materials: List<SavedAquariumMaterial>): Boolean {
-    return SmartCareTextMatcher.hasMaterialCategory(materials, MATERIAL_CATEGORY_CO2) ||
-      SmartCareTextMatcher.hasMaterialKeyword(materials, arrayOf("co2", "co₂", "carbon dioxide"))
+    return materials.any { material ->
+      material.categoryKey == AquariumMaterialCategory.CO2
+    }
   }
 
   private fun hasFertilizer(materials: List<SavedAquariumMaterial>): Boolean {
@@ -109,7 +110,9 @@ object SmartCareTankClassifier {
   }
 
   private fun hasActiveSoil(materials: List<SavedAquariumMaterial>): Boolean {
-    return SmartCareTextMatcher.hasMaterialCategory(materials, MATERIAL_CATEGORY_SUBSTRATE)
+    return materials.any { material ->
+      material.substrateSemantic == AquariumSubstrateSemantic.ACTIVE_SOIL
+    }
   }
 
   private fun hasFilter(materials: List<SavedAquariumMaterial>): Boolean {
@@ -148,9 +151,7 @@ object SmartCareTankClassifier {
     )
   }
 
-  private const val MATERIAL_CATEGORY_CO2 = "co2"
-  private const val MATERIAL_CATEGORY_FERTILIZER = "fertilizer"
-  private const val MATERIAL_CATEGORY_FILTER = "filter"
-  private const val MATERIAL_CATEGORY_LIGHT = "light"
-  private const val MATERIAL_CATEGORY_SUBSTRATE = "substrate"
+  private const val MATERIAL_CATEGORY_FERTILIZER = AquariumMaterialCategory.FERTILIZER
+  private const val MATERIAL_CATEGORY_FILTER = AquariumMaterialCategory.FILTER
+  private const val MATERIAL_CATEGORY_LIGHT = AquariumMaterialCategory.LIGHT
 }

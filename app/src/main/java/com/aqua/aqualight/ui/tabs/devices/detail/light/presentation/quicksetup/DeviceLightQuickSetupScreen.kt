@@ -4,7 +4,6 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.quicksetup
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -31,37 +30,33 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.aquarium.AquariumCo2Readiness
+import com.aqua.aqualight.application.aquarium.AquariumDaylightExposure
+import com.aqua.aqualight.application.aquarium.AquariumPlantCoverage
+import com.aqua.aqualight.application.aquarium.AquariumShelterAvailability
+import com.aqua.aqualight.application.aquarium.AquariumSubstrateSemantic
+import com.aqua.aqualight.application.aquarium.AquariumSurfaceGrowth
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticChannel
 import com.aqua.aqualight.application.devices.light.automation.DeviceLightManagedPlanPhaseDraft
 import com.aqua.aqualight.application.devices.light.automation.DeviceLightManagedPlanRuntimeState
 import com.aqua.aqualight.application.devices.light.automation.DeviceLightManagedPlanSnapshot
-import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightAlgaeLevel
-import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightAmbientLight
+import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightPlanConfidence
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightPlanReason
+import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightPlanWarning
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightPlantDemand
-import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightPlantDensity
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupPlan
-import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupTank
 import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
@@ -71,7 +66,6 @@ import com.aqua.aqualight.ui.common.light.AquaLightQuickSetupAlpha
 import com.aqua.aqualight.ui.common.light.AquaLightQuickSetupGeometry
 import com.aqua.aqualight.ui.common.light.aquaLightDashboardTypography
 import com.aqua.aqualight.ui.common.light.aquaLightManualColors
-import java.time.LocalTime
 
 @Composable
 internal fun DeviceLightQuickSetupScreen(
@@ -82,11 +76,10 @@ internal fun DeviceLightQuickSetupScreen(
     val channelColors = aquaLightManualColors()
     val colors = channelColors.card
     val typography = aquaLightDashboardTypography(colors)
-    val background = colorResource(R.color.background_color)
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(background)
+            .background(colorResource(R.color.background_color))
     ) {
         LazyColumn(
             modifier = Modifier.weight(1f),
@@ -99,9 +92,7 @@ internal fun DeviceLightQuickSetupScreen(
             verticalArrangement = Arrangement.spacedBy(AquaLightQuickSetupGeometry.sectionGap)
         ) {
             if (state.tank != null && state.managedPlanSnapshot != null) {
-                item("status") {
-                    QuickSetupStatusHeader(state, colors, typography)
-                }
+                item("status") { QuickSetupStatusHeader(state, colors, typography) }
                 if (state.mode == DeviceLightQuickSetupMode.ACTIVE) {
                     activeProgramItems(state, actions, colors, typography, channelColors)
                 } else {
@@ -109,7 +100,10 @@ internal fun DeviceLightQuickSetupScreen(
                 }
             }
         }
-        if (state.mode != DeviceLightQuickSetupMode.ACTIVE && state.tank != null) {
+        if (state.mode != DeviceLightQuickSetupMode.ACTIVE &&
+            state.tank != null &&
+            !state.profileBlocked
+        ) {
             QuickSetupActionBar(state, actions, colors, typography)
         }
     }
@@ -122,24 +116,26 @@ private fun androidx.compose.foundation.lazy.LazyListScope.assessmentItems(
     typography: AquaDeviceCardTypography,
     channelColors: AquaLightManualColors
 ) {
-    item("profile") {
-        CompactAquariumProfile(state, colors, typography)
+    item("profile") { CompactAquariumProfile(state, colors, typography) }
+    if (state.profileBlocked) {
+        item("blocked") { BlockingWarningCard(colors, typography) }
+        return
     }
-    item("conditions") {
-        ConditionsCard(state, actions, colors, typography)
+    if (state.hasSetupQuestions) {
+        item("setup-data") { SetupDataCard(state, actions, colors, typography) }
+    }
+    if (state.hasConditionQuestions) {
+        item("conditions") { ConditionsCard(state, actions, colors, typography) }
     }
     val plan = state.plan
     if (plan == null) {
-        item("assessment-hint") {
-            AssessmentHint(colors, typography)
-        }
+        item("assessment-hint") { AssessmentHint(state, colors, typography) }
     } else {
         item("preview") {
             ProgramCard(
                 phase = plan.currentPhase.draft,
                 plan = plan,
                 active = false,
-                showCurrentTime = false,
                 detailsExpanded = state.detailsExpanded,
                 onToggleDetails = actions.onToggleDetails,
                 colors = colors,
@@ -148,18 +144,10 @@ private fun androidx.compose.foundation.lazy.LazyListScope.assessmentItems(
             )
         }
         if (state.detailsExpanded) {
-            item("details") {
-                TechnicalDetailsCard(
-                    phases = plan.phases.map { it.draft },
-                    colors = colors,
-                    typography = typography
-                )
-            }
+            item("details") { TechnicalDetailsCard(plan, state, colors, typography) }
         }
         if (state.hasBlockingWarning) {
-            item("blocked") {
-                BlockingWarningCard(colors, typography)
-            }
+            item("blocked") { BlockingWarningCard(colors, typography) }
         }
     }
 }
@@ -173,13 +161,12 @@ private fun androidx.compose.foundation.lazy.LazyListScope.activeProgramItems(
 ) {
     val snapshot = state.managedPlanSnapshot ?: return
     val phase = state.plan?.currentPhase?.draft ?: snapshot.phaseFor(state.todayEpochDay)
-    if (phase != null) {
+    phase?.let { current ->
         item("active-program") {
             ProgramCard(
-                phase = phase,
+                phase = current,
                 plan = state.plan,
                 active = true,
-                showCurrentTime = true,
                 detailsExpanded = false,
                 onToggleDetails = {},
                 colors = colors,
@@ -188,15 +175,9 @@ private fun androidx.compose.foundation.lazy.LazyListScope.activeProgramItems(
             )
         }
     }
-    item("monitoring") {
-        MonitoringCard(state, colors, typography)
-    }
-    item("reasons") {
-        ActiveReasonCard(state, actions.onEditInstalledPlan, colors, typography)
-    }
-    item("protected") {
-        ProtectedFooter(colors, typography)
-    }
+    item("monitoring") { MonitoringCard(state, colors, typography) }
+    item("reasons") { ActiveReasonCard(state, actions.onEditInstalledPlan, colors, typography) }
+    item("protected") { ProtectedFooter(colors, typography) }
 }
 
 @Composable
@@ -205,120 +186,95 @@ private fun QuickSetupStatusHeader(
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
 ) {
-    val presentation = quickSetupHeaderPresentation(state)
-    val statusTone = when (presentation.tone) {
-        QuickSetupHeaderTone.ACCENT -> colors.accent
-        QuickSetupHeaderTone.WARNING -> colors.warning
+    val presentation = headerPresentation(state)
+    val tone = if (presentation.warning) colors.warning else colors.accent
+    val subtitle = when (state.mode) {
+        DeviceLightQuickSetupMode.CREATE -> pluralStringResource(
+            R.plurals.device_light_quick_setup_questions_remaining,
+            state.missingInputCount,
+            state.missingInputCount
+        )
+        DeviceLightQuickSetupMode.EDIT ->
+            stringResource(R.string.device_light_quick_setup_edit_subtitle)
+        DeviceLightQuickSetupMode.ACTIVE -> stringResource(presentation.subtitleRes)
     }
     AquaDeviceCardSurface(Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (presentation.showStatusDot) {
+        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            if (state.mode == DeviceLightQuickSetupMode.ACTIVE) {
                 Box(
                     Modifier
                         .size(AquaLightQuickSetupGeometry.statusDotSize)
                         .clip(CircleShape)
-                        .background(statusTone)
+                        .background(tone)
                 )
-                Spacer(Modifier.width(AquaLightQuickSetupGeometry.compactGap))
             } else {
                 IconTile(R.drawable.ic_light_quick_setup, colors.accent)
-                Spacer(Modifier.width(AquaLightQuickSetupGeometry.compactGap))
             }
+            Spacer(Modifier.width(AquaLightQuickSetupGeometry.compactGap))
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(AquaLightQuickSetupGeometry.tinyGap)
             ) {
-                BasicText(
-                    text = stringResource(presentation.titleRes),
-                    style = typography.title
-                )
-                BasicText(
-                    text = stringResource(presentation.subtitleRes),
-                    style = typography.caption
-                )
+                BasicText(text = stringResource(presentation.titleRes), style = typography.title)
+                BasicText(text = subtitle, style = typography.caption)
             }
             Spacer(Modifier.width(AquaLightQuickSetupGeometry.compactGap))
-            StatusTag(
-                text = stringResource(presentation.tagRes),
-                tone = statusTone,
-                typography = typography
-            )
+            StatusTag(stringResource(presentation.tagRes), tone, typography)
         }
     }
 }
 
-private fun quickSetupHeaderPresentation(
-    state: DeviceLightQuickSetupUiState
-): QuickSetupHeaderPresentation = when (state.mode) {
-    DeviceLightQuickSetupMode.ACTIVE -> activeHeaderPresentation(
-        state.managedPlanSnapshot?.runtimeState
-    )
-    DeviceLightQuickSetupMode.EDIT -> QuickSetupHeaderPresentation(
-        titleRes = R.string.device_light_quick_setup_update_conditions,
-        subtitleRes = R.string.device_light_quick_setup_edit_subtitle,
-        tagRes = R.string.device_light_quick_setup_edit_tag,
-        tone = QuickSetupHeaderTone.ACCENT,
-        showStatusDot = false
-    )
-    DeviceLightQuickSetupMode.CREATE -> QuickSetupHeaderPresentation(
-        titleRes = R.string.device_light_quick_setup_prepare_title,
-        subtitleRes = R.string.device_light_quick_setup_prepare_subtitle,
-        tagRes = R.string.device_light_quick_setup_draft_tag,
-        tone = QuickSetupHeaderTone.ACCENT,
-        showStatusDot = false
-    )
-}
-
-private fun activeHeaderPresentation(
-    runtime: DeviceLightManagedPlanRuntimeState?
-): QuickSetupHeaderPresentation = when (runtime) {
-    DeviceLightManagedPlanRuntimeState.ACTIVE -> QuickSetupHeaderPresentation(
-        titleRes = R.string.device_light_quick_setup_program_active,
-        subtitleRes = R.string.device_light_quick_setup_program_active_subtitle,
-        tagRes = R.string.device_light_quick_setup_active_tag,
-        tone = QuickSetupHeaderTone.ACCENT,
-        showStatusDot = true
-    )
-    DeviceLightManagedPlanRuntimeState.RTC_BLOCKED -> QuickSetupHeaderPresentation(
-        titleRes = R.string.device_light_quick_setup_program_waiting,
-        subtitleRes = R.string.device_light_quick_setup_program_waiting_subtitle,
-        tagRes = R.string.device_light_quick_setup_waiting_tag,
-        tone = QuickSetupHeaderTone.WARNING,
-        showStatusDot = true
-    )
-    DeviceLightManagedPlanRuntimeState.BEFORE_PLAN -> QuickSetupHeaderPresentation(
-        titleRes = R.string.device_light_quick_setup_program_scheduled,
-        subtitleRes = R.string.device_light_quick_setup_program_scheduled_subtitle,
-        tagRes = R.string.device_light_quick_setup_stored_tag,
-        tone = QuickSetupHeaderTone.ACCENT,
-        showStatusDot = true
-    )
-    DeviceLightManagedPlanRuntimeState.NOT_INSTALLED,
-    DeviceLightManagedPlanRuntimeState.NOT_SELECTED,
-    null -> QuickSetupHeaderPresentation(
-        titleRes = R.string.device_light_quick_setup_program_stored,
-        subtitleRes = R.string.device_light_quick_setup_program_stored_subtitle,
-        tagRes = R.string.device_light_quick_setup_stored_tag,
-        tone = QuickSetupHeaderTone.ACCENT,
-        showStatusDot = true
-    )
-}
-
-private enum class QuickSetupHeaderTone {
-    ACCENT,
-    WARNING
-}
-
-private data class QuickSetupHeaderPresentation(
+private data class HeaderPresentation(
     @StringRes val titleRes: Int,
     @StringRes val subtitleRes: Int,
     @StringRes val tagRes: Int,
-    val tone: QuickSetupHeaderTone,
-    val showStatusDot: Boolean
+    val warning: Boolean = false
 )
+
+private fun headerPresentation(state: DeviceLightQuickSetupUiState): HeaderPresentation =
+    when (state.mode) {
+        DeviceLightQuickSetupMode.CREATE -> HeaderPresentation(
+            R.string.device_light_quick_setup_prepare_title,
+            R.string.device_light_quick_setup_prepare_subtitle,
+            R.string.device_light_quick_setup_draft_tag
+        )
+        DeviceLightQuickSetupMode.EDIT -> HeaderPresentation(
+            R.string.device_light_quick_setup_update_conditions,
+            R.string.device_light_quick_setup_edit_subtitle,
+            R.string.device_light_quick_setup_edit_tag
+        )
+        DeviceLightQuickSetupMode.ACTIVE -> activeHeaderPresentation(
+            state.managedPlanSnapshot?.runtimeState
+        )
+    }
+
+private fun activeHeaderPresentation(
+    runtime: DeviceLightManagedPlanRuntimeState?
+): HeaderPresentation = when (runtime) {
+    DeviceLightManagedPlanRuntimeState.ACTIVE -> HeaderPresentation(
+        R.string.device_light_quick_setup_program_active,
+        R.string.device_light_quick_setup_program_active_subtitle,
+        R.string.device_light_quick_setup_active_tag
+    )
+    DeviceLightManagedPlanRuntimeState.RTC_BLOCKED -> HeaderPresentation(
+        R.string.device_light_quick_setup_program_waiting,
+        R.string.device_light_quick_setup_program_waiting_subtitle,
+        R.string.device_light_quick_setup_waiting_tag,
+        warning = true
+    )
+    DeviceLightManagedPlanRuntimeState.BEFORE_PLAN -> HeaderPresentation(
+        R.string.device_light_quick_setup_program_scheduled,
+        R.string.device_light_quick_setup_program_scheduled_subtitle,
+        R.string.device_light_quick_setup_stored_tag
+    )
+    DeviceLightManagedPlanRuntimeState.NOT_INSTALLED,
+    DeviceLightManagedPlanRuntimeState.NOT_SELECTED,
+    null -> HeaderPresentation(
+        R.string.device_light_quick_setup_program_stored,
+        R.string.device_light_quick_setup_program_stored_subtitle,
+        R.string.device_light_quick_setup_stored_tag
+    )
+}
 
 @Composable
 private fun CompactAquariumProfile(
@@ -348,14 +304,17 @@ private fun CompactAquariumProfile(
                     BasicText(
                         text = state.tankDay?.let { day ->
                             stringResource(R.string.device_light_quick_setup_day_value, day)
-                        } ?: stringResource(R.string.device_light_quick_setup_setup_date_unknown),
+                        } ?: stringResource(
+                            R.string.device_light_quick_setup_setup_date_unknown
+                        ),
                         style = typography.caption
                     )
                     BasicText(
                         text = stringResource(
-                            R.string.device_light_quick_setup_device_height_summary,
+                            R.string.device_light_quick_setup_verified_device_summary,
                             tank.productDisplayName,
-                            tank.heightCm
+                            tank.fixtureLengthMm,
+                            tank.hardwareRevision
                         ),
                         style = typography.micro,
                         maxLines = 1,
@@ -369,44 +328,42 @@ private fun CompactAquariumProfile(
                 horizontalArrangement = Arrangement.spacedBy(AquaLightQuickSetupGeometry.tinyGap)
             ) {
                 ProfileFact(
-                    icon = R.drawable.ic_light_preset_planted,
-                    text = stringResource(tank.inferredPlantDemand.compactLabelRes()),
-                    colors = colors,
-                    typography = typography
+                    R.drawable.ic_light_preset_planted,
+                    stringResource((state.plantDemand ?: tank.plantDemand).compactLabelRes()),
+                    colors,
+                    typography
                 )
                 ProfileFact(
-                    icon = R.drawable.ic_care_plant_health_24,
-                    text = stringResource(tank.inferredPlantDensity.labelRes()),
-                    colors = colors,
-                    typography = typography
+                    R.drawable.ic_care_plant_health_24,
+                    stringResource((state.plantCoverage ?: tank.plantCoverage).labelRes()),
+                    colors,
+                    typography
                 )
                 ProfileFact(
-                    icon = R.drawable.ic_care_co2_24,
-                    text = stringResource(
-                        if (tank.inferredCo2Installed) {
-                            R.string.device_light_quick_setup_co2_active
-                        } else {
-                            R.string.device_light_quick_setup_co2_absent
-                        }
-                    ),
-                    colors = colors,
-                    typography = typography
+                    R.drawable.ic_care_co2_24,
+                    stringResource(co2SummaryRes(state)),
+                    colors,
+                    typography
                 )
                 ProfileFact(
-                    icon = R.drawable.ic_care_substrate_24,
-                    text = stringResource(
-                        if (tank.inferredActiveSoil) {
-                            R.string.device_light_quick_setup_active_soil
-                        } else {
-                            R.string.device_light_quick_setup_substrate_unknown
-                        }
-                    ),
-                    colors = colors,
-                    typography = typography
+                    R.drawable.ic_care_substrate_24,
+                    stringResource(tank.substrateSemantic.labelRes()),
+                    colors,
+                    typography
                 )
             }
         }
     }
+}
+
+@StringRes
+private fun co2SummaryRes(state: DeviceLightQuickSetupUiState): Int = when {
+    state.tank?.co2ComponentPresent != true -> R.string.device_light_quick_setup_co2_absent
+    state.co2Readiness == AquariumCo2Readiness.READY_AT_LIGHT_ON ->
+        R.string.device_light_quick_setup_co2_ready
+    state.co2Readiness == AquariumCo2Readiness.NOT_READY_AT_LIGHT_ON ->
+        R.string.device_light_quick_setup_co2_not_ready_short
+    else -> R.string.device_light_quick_setup_co2_equipment
 }
 
 @Composable
@@ -440,7 +397,7 @@ private fun RowScope.ProfileFact(
 }
 
 @Composable
-private fun ConditionsCard(
+private fun SetupDataCard(
     state: DeviceLightQuickSetupUiState,
     actions: DeviceLightQuickSetupActions,
     colors: AquaDeviceCardColors,
@@ -451,60 +408,291 @@ private fun ConditionsCard(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(AquaLightQuickSetupGeometry.compactGap)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Image(
-                    painter = painterResource(R.drawable.ic_light_quick_setup),
-                    contentDescription = null,
-                    modifier = Modifier.size(AquaLightQuickSetupGeometry.iconSize),
-                    colorFilter = ColorFilter.tint(colors.accent)
+            CardHeader(
+                R.drawable.ic_care_device_24,
+                stringResource(R.string.device_light_quick_setup_measurements_title),
+                stringResource(R.string.device_light_quick_setup_measurements_subtitle),
+                colors,
+                typography
+            )
+            if (state.requestsWaterDepth) {
+                SetupValueRow(
+                    stringResource(R.string.device_light_quick_setup_water_depth),
+                    state.waterDepthCm?.let {
+                        stringResource(R.string.device_light_quick_setup_cm_value, it)
+                    },
+                    actions.onWaterDepthRequested,
+                    colors,
+                    typography
                 )
-                Spacer(Modifier.width(AquaLightQuickSetupGeometry.compactGap))
-                Column {
+            }
+            if (state.requestsFixtureHeight) {
+                SetupValueRow(
+                    stringResource(R.string.device_light_quick_setup_fixture_height),
+                    state.fixtureHeightAboveWaterCm?.let {
+                        stringResource(R.string.device_light_quick_setup_cm_value, it)
+                    },
+                    actions.onFixtureHeightRequested,
+                    colors,
+                    typography
+                )
+            }
+            if (state.requestsProgramEnd) {
+                SetupValueRow(
+                    stringResource(R.string.device_light_quick_setup_program_end),
+                    state.programEndMinute?.let { formatTime(it) },
+                    actions.onProgramEndRequested,
+                    colors,
+                    typography
+                )
+            }
+            if (state.requestsDirectDaylightWindow) {
+                SetupValueRow(
+                    stringResource(R.string.device_light_quick_setup_daylight_start),
+                    state.daylightStartMinute?.let { formatTime(it) },
+                    actions.onDaylightStartRequested,
+                    colors,
+                    typography
+                )
+                SetupValueRow(
+                    stringResource(R.string.device_light_quick_setup_daylight_end),
+                    state.daylightEndMinute?.let { formatTime(it) },
+                    actions.onDaylightEndRequested,
+                    colors,
+                    typography
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SetupValueRow(
+    label: String,
+    value: String?,
+    onClick: () -> Unit,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(AquaLightQuickSetupGeometry.factRadius))
+            .border(
+                1.dp,
+                if (value == null) colors.warning else colors.outline,
+                RoundedCornerShape(AquaLightQuickSetupGeometry.factRadius)
+            )
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(AquaLightQuickSetupGeometry.rowPadding),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        BasicText(text = label, modifier = Modifier.weight(1f), style = typography.body)
+        BasicText(
+            text = value ?: stringResource(R.string.device_light_quick_setup_enter_value),
+            style = typography.caption.copy(
+                color = if (value == null) colors.warning else colors.accent
+            )
+        )
+        Spacer(Modifier.width(AquaLightQuickSetupGeometry.compactGap))
+        Image(
+            painter = painterResource(R.drawable.ic_arrow_right),
+            contentDescription = null,
+            modifier = Modifier.size(14.dp),
+            colorFilter = ColorFilter.tint(colors.secondaryText)
+        )
+    }
+}
+
+@Composable
+private fun ConditionsCard(
+    state: DeviceLightQuickSetupUiState,
+    actions: DeviceLightQuickSetupActions,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography
+) {
+    val tank = state.tank ?: return
+    AquaDeviceCardSurface(Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(AquaLightQuickSetupGeometry.compactGap)
+        ) {
+            CardHeader(
+                R.drawable.ic_light_quick_setup,
+                stringResource(R.string.device_light_quick_setup_today_conditions),
+                stringResource(R.string.device_light_quick_setup_conditions_subtitle),
+                colors,
+                typography
+            )
+            if (state.requestsPlantDemand) {
+                ChoiceGrid(
+                    stringResource(R.string.device_light_quick_setup_plant_demand),
+                    plantDemandChoices(tank.reviewedPlantDemandFloor),
+                    state.plantDemand,
+                    actions.onPlantDemandSelected,
+                    colors,
+                    typography
+                )
+                if (tank.reviewedPlantDemandFloor == DeviceLightPlantDemand.MEDIUM) {
                     BasicText(
-                        text = stringResource(R.string.device_light_quick_setup_today_conditions),
-                        style = typography.title
-                    )
-                    BasicText(
-                        text = stringResource(R.string.device_light_quick_setup_conditions_subtitle),
-                        style = typography.caption
+                        text = stringResource(
+                            R.string.device_light_quick_setup_plant_demand_floor_help
+                        ),
+                        style = typography.micro
                     )
                 }
             }
-            ChoiceRow(
-                label = stringResource(R.string.device_light_quick_setup_daylight),
-                choices = listOf(
-                    Choice(DeviceLightAmbientLight.LOW, R.string.device_light_quick_setup_low),
-                    Choice(
-                        DeviceLightAmbientLight.INDIRECT,
-                        R.string.device_light_quick_setup_indirect
+            if (state.requestsPlantCoverage) {
+                ChoiceGrid(
+                    stringResource(R.string.device_light_quick_setup_plant_coverage),
+                    listOf(
+                        Choice(
+                            AquariumPlantCoverage.SPARSE,
+                            R.string.device_light_quick_setup_sparse
+                        ),
+                        Choice(
+                            AquariumPlantCoverage.MEDIUM,
+                            R.string.device_light_quick_setup_medium_density
+                        ),
+                        Choice(
+                            AquariumPlantCoverage.DENSE,
+                            R.string.device_light_quick_setup_dense
+                        )
                     ),
-                    Choice(DeviceLightAmbientLight.DIRECT, R.string.device_light_quick_setup_direct)
-                ),
-                selected = state.ambientLight,
-                onSelected = actions.onAmbientLightSelected,
-                colors = colors,
-                typography = typography
-            )
-            ChoiceRow(
-                label = stringResource(R.string.device_light_quick_setup_algae_level),
-                choices = listOf(
-                    Choice(DeviceLightAlgaeLevel.NONE, R.string.device_light_quick_setup_none),
-                    Choice(DeviceLightAlgaeLevel.MILD, R.string.device_light_quick_setup_mild),
-                    Choice(DeviceLightAlgaeLevel.VISIBLE, R.string.device_light_quick_setup_visible)
-                ),
-                selected = state.algaeLevel,
-                onSelected = actions.onAlgaeLevelSelected,
-                colors = colors,
-                typography = typography
-            )
+                    state.plantCoverage,
+                    actions.onPlantCoverageSelected,
+                    colors,
+                    typography
+                )
+            }
+            if (state.requestsCo2Readiness) {
+                ChoiceGrid(
+                    stringResource(R.string.device_light_quick_setup_co2_question),
+                    listOf(
+                        Choice(
+                            AquariumCo2Readiness.READY_AT_LIGHT_ON,
+                            R.string.device_light_quick_setup_yes_ready
+                        ),
+                        Choice(
+                            AquariumCo2Readiness.NOT_READY_AT_LIGHT_ON,
+                            R.string.device_light_quick_setup_no_not_ready
+                        )
+                    ),
+                    state.co2Readiness,
+                    actions.onCo2ReadinessSelected,
+                    colors,
+                    typography
+                )
+                BasicText(
+                    text = stringResource(R.string.device_light_quick_setup_co2_help),
+                    style = typography.micro
+                )
+            }
+            if (state.requestsDaylight) {
+                ChoiceGrid(
+                    stringResource(R.string.device_light_quick_setup_daylight),
+                    listOf(
+                        Choice(
+                            AquariumDaylightExposure.LOW,
+                            R.string.device_light_quick_setup_low
+                        ),
+                        Choice(
+                            AquariumDaylightExposure.INDIRECT,
+                            R.string.device_light_quick_setup_indirect
+                        ),
+                        Choice(
+                            AquariumDaylightExposure.DIRECT,
+                            R.string.device_light_quick_setup_direct
+                        )
+                    ),
+                    state.daylightExposure,
+                    actions.onDaylightSelected,
+                    colors,
+                    typography
+                )
+            }
+            if (state.requestsSurfaceObservation) {
+                ChoiceGrid(
+                    stringResource(R.string.device_light_quick_setup_surface_growth),
+                    buildList {
+                        add(
+                            Choice(
+                                AquariumSurfaceGrowth.NONE,
+                                R.string.device_light_quick_setup_none
+                            )
+                        )
+                        if (tank.hasShrimp) {
+                            add(
+                                Choice(
+                                    AquariumSurfaceGrowth.TARGET_BIOFILM,
+                                    R.string.device_light_quick_setup_target_biofilm
+                                )
+                            )
+                        }
+                        add(
+                            Choice(
+                                AquariumSurfaceGrowth.STABLE_ALGAE,
+                                R.string.device_light_quick_setup_stable_algae
+                            )
+                        )
+                        add(
+                            Choice(
+                                AquariumSurfaceGrowth.WORSENING_ALGAE,
+                                R.string.device_light_quick_setup_worsening_algae
+                            )
+                        )
+                    },
+                    state.surfaceGrowth,
+                    actions.onSurfaceGrowthSelected,
+                    colors,
+                    typography
+                )
+            }
+            if (state.requestsShelter) {
+                ChoiceGrid(
+                    stringResource(R.string.device_light_quick_setup_shelter),
+                    listOf(
+                        Choice(
+                            AquariumShelterAvailability.ADEQUATE,
+                            R.string.device_light_quick_setup_shelter_adequate
+                        ),
+                        Choice(
+                            AquariumShelterAvailability.LIMITED,
+                            R.string.device_light_quick_setup_shelter_limited
+                        ),
+                        Choice(
+                            AquariumShelterAvailability.NONE,
+                            R.string.device_light_quick_setup_none
+                        )
+                    ),
+                    state.shelterAvailability,
+                    actions.onShelterSelected,
+                    colors,
+                    typography
+                )
+            }
         }
     }
 }
 
 private data class Choice<T>(val value: T, @StringRes val labelRes: Int)
 
+private fun plantDemandChoices(
+    minimum: DeviceLightPlantDemand
+): List<Choice<DeviceLightPlantDemand>> = buildList {
+    if (minimum == DeviceLightPlantDemand.UNKNOWN ||
+        minimum == DeviceLightPlantDemand.LOW
+    ) {
+        add(Choice(DeviceLightPlantDemand.LOW, R.string.device_light_quick_setup_low))
+    }
+    if (minimum != DeviceLightPlantDemand.HIGH) {
+        add(Choice(DeviceLightPlantDemand.MEDIUM, R.string.device_light_quick_setup_medium))
+    }
+    add(Choice(DeviceLightPlantDemand.HIGH, R.string.device_light_quick_setup_high))
+}
+
 @Composable
-private fun <T> ChoiceRow(
+private fun <T> ChoiceGrid(
     label: String,
     choices: List<Choice<T>>,
     selected: T?,
@@ -512,50 +700,51 @@ private fun <T> ChoiceRow(
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        BasicText(
-            text = label,
-            modifier = Modifier.width(92.dp),
-            style = typography.body
-        )
-        Row(
-            modifier = Modifier.weight(1f),
-            horizontalArrangement = Arrangement.spacedBy(AquaLightQuickSetupGeometry.tinyGap)
-        ) {
-            choices.forEach { choice ->
-                val isSelected = selected == choice.value
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(AquaLightQuickSetupGeometry.segmentHeight)
-                        .clip(AquaLightQuickSetupGeometry.choiceShape)
-                        .background(
-                            if (isSelected) {
-                                colors.accent.copy(alpha = AquaLightQuickSetupAlpha.SELECTED)
-                            } else {
-                                colors.mediaSurface
-                            }
+    Column(verticalArrangement = Arrangement.spacedBy(AquaLightQuickSetupGeometry.tinyGap)) {
+        BasicText(text = label, style = typography.body)
+        choices.chunked(MAX_CHOICES_PER_ROW).forEach { rowChoices ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(AquaLightQuickSetupGeometry.tinyGap)
+            ) {
+                rowChoices.forEach { choice ->
+                    val isSelected = choice.value == selected
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(AquaLightQuickSetupGeometry.segmentHeight)
+                            .clip(AquaLightQuickSetupGeometry.choiceShape)
+                            .background(
+                                if (isSelected) {
+                                    colors.accent.copy(alpha = AquaLightQuickSetupAlpha.SELECTED)
+                                } else {
+                                    colors.mediaSurface
+                                }
+                            )
+                            .border(
+                                1.dp,
+                                if (isSelected) colors.accent else colors.outline,
+                                AquaLightQuickSetupGeometry.choiceShape
+                            )
+                            .clickable(
+                                role = Role.RadioButton,
+                                onClick = { onSelected(choice.value) }
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        BasicText(
+                            text = stringResource(choice.labelRes),
+                            style = typography.caption.copy(
+                                color = if (isSelected) colors.accent else colors.secondaryText,
+                                textAlign = TextAlign.Center
+                            ),
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
                         )
-                        .border(
-                            width = 1.dp,
-                            color = if (isSelected) colors.accent else colors.mediaOutline,
-                            shape = AquaLightQuickSetupGeometry.choiceShape
-                        )
-                        .clickable(role = Role.RadioButton) { onSelected(choice.value) },
-                    contentAlignment = Alignment.Center
-                ) {
-                    BasicText(
-                        text = stringResource(choice.labelRes),
-                        style = typography.micro.copy(
-                            color = if (isSelected) colors.accent else colors.secondaryText,
-                            textAlign = TextAlign.Center
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                    }
+                }
+                repeat(MAX_CHOICES_PER_ROW - rowChoices.size) {
+                    Spacer(Modifier.weight(1f))
                 }
             }
         }
@@ -563,16 +752,45 @@ private fun <T> ChoiceRow(
 }
 
 @Composable
-private fun AssessmentHint(
+private fun CardHeader(
+    @DrawableRes icon: Int,
+    title: String,
+    subtitle: String,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
 ) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Image(
+            painter = painterResource(icon),
+            contentDescription = null,
+            modifier = Modifier.size(AquaLightQuickSetupGeometry.iconSize),
+            colorFilter = ColorFilter.tint(colors.accent)
+        )
+        Spacer(Modifier.width(AquaLightQuickSetupGeometry.compactGap))
+        Column(modifier = Modifier.weight(1f)) {
+            BasicText(text = title, style = typography.title)
+            BasicText(text = subtitle, style = typography.caption)
+        }
+    }
+}
+
+@Composable
+private fun AssessmentHint(
+    state: DeviceLightQuickSetupUiState,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography
+) {
+    val count = state.missingInputCount
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(AquaLightQuickSetupGeometry.cardRadius))
-            .background(colors.mediaSurface)
-            .border(1.dp, colors.mediaOutline, RoundedCornerShape(AquaLightQuickSetupGeometry.cardRadius))
+            .background(colors.surface)
+            .border(
+                1.dp,
+                if (count == 0) colors.accent else colors.outline,
+                RoundedCornerShape(AquaLightQuickSetupGeometry.cardRadius)
+            )
             .padding(AquaLightQuickSetupGeometry.cardPadding),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -580,11 +798,19 @@ private fun AssessmentHint(
             Modifier
                 .size(7.dp)
                 .clip(CircleShape)
-                .background(colors.accent)
+                .background(if (count == 0) colors.accent else colors.warning)
         )
         Spacer(Modifier.width(AquaLightQuickSetupGeometry.compactGap))
         BasicText(
-            text = stringResource(R.string.device_light_quick_setup_complete_conditions),
+            text = if (count == 0) {
+                stringResource(R.string.device_light_quick_setup_calculating)
+            } else {
+                pluralStringResource(
+                    R.plurals.device_light_quick_setup_complete_remaining,
+                    count,
+                    count
+                )
+            },
             style = typography.caption
         )
     }
@@ -595,86 +821,97 @@ private fun ProgramCard(
     phase: DeviceLightManagedPlanPhaseDraft,
     plan: DeviceLightQuickSetupPlan?,
     active: Boolean,
-    showCurrentTime: Boolean,
     detailsExpanded: Boolean,
     onToggleDetails: () -> Unit,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography,
     channelColors: AquaLightManualColors
 ) {
-    val context = LocalContext.current
     val startMinute = (phase.startTimeMs / MINUTE_MS).toInt()
     val endMinute = (phase.endTimeMs / MINUTE_MS).toInt()
     val durationMinutes = endMinute - startMinute
-    val peak = phase.scene.channels.values.maxOrNull() ?: 0
     AquaDeviceCardSurface(Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(AquaLightQuickSetupGeometry.compactGap)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Image(
-                    painter = painterResource(R.drawable.ic_care_light_24),
-                    contentDescription = null,
-                    modifier = Modifier.size(AquaLightQuickSetupGeometry.iconSize),
-                    colorFilter = ColorFilter.tint(colors.accent)
-                )
-                Spacer(Modifier.width(AquaLightQuickSetupGeometry.compactGap))
-                BasicText(
-                    text = stringResource(
-                        if (active) {
-                            R.string.device_light_quick_setup_today_program
-                        } else {
-                            R.string.device_light_quick_setup_recommended_program
-                        }
-                    ),
-                    style = typography.title,
-                    modifier = Modifier.weight(1f)
-                )
-                if (!active) {
-                    StatusTag(
-                        text = stringResource(R.string.device_light_quick_setup_cautious_tag),
-                        tone = colors.warning,
-                        typography = typography
+                Column(modifier = Modifier.weight(1f)) {
+                    BasicText(
+                        text = stringResource(
+                            if (active) {
+                                R.string.device_light_quick_setup_today_program
+                            } else {
+                                R.string.device_light_quick_setup_recommended_program
+                            }
+                        ),
+                        style = typography.title
+                    )
+                    BasicText(
+                        text = stringResource(
+                            R.string.device_light_quick_setup_time_range,
+                            formatTime(startMinute),
+                            formatTime(endMinute)
+                        ),
+                        style = typography.caption
                     )
                 }
+                StatusTag(
+                    stringResource(
+                        if (plan?.confidence == DeviceLightPlanConfidence.CALIBRATED) {
+                            R.string.device_light_quick_setup_calibrated_tag
+                        } else {
+                            R.string.device_light_quick_setup_conservative_tag
+                        }
+                    ),
+                    if (plan?.confidence == DeviceLightPlanConfidence.CALIBRATED) {
+                        colors.success
+                    } else {
+                        colors.warning
+                    },
+                    typography
+                )
             }
-            BasicText(
-                text = stringResource(
-                    R.string.device_light_quick_setup_time_range,
-                    LocaleFormatter.formatTimeOfDay24Hour(context, startMinute),
-                    LocaleFormatter.formatTimeOfDay24Hour(context, endMinute)
-                ),
-                style = typography.title.copy(fontSize = 20.sp, lineHeight = 24.sp)
-            )
-            CompactProgramChart(
-                phase = phase,
-                showCurrentTime = showCurrentTime,
-                colors = colors,
-                typography = typography,
-                channelColors = channelColors
-            )
-            ProgramSummary(
-                durationMinutes = durationMinutes,
-                rampMinutes = (phase.rampDurationMs / MINUTE_MS).toInt(),
-                peak = peak,
-                active = active,
-                colors = colors,
-                typography = typography
-            )
-            val algaeLevel = plan?.let { currentPlan ->
-                when {
-                    DeviceLightPlanReason.VISIBLE_ALGAE_GUARD in currentPlan.reasons ->
-                        DeviceLightAlgaeLevel.VISIBLE
-                    DeviceLightPlanReason.MILD_ALGAE_GUARD in currentPlan.reasons ->
-                        DeviceLightAlgaeLevel.MILD
-                    else -> DeviceLightAlgaeLevel.NONE
+            Row(horizontalArrangement = Arrangement.spacedBy(AquaLightQuickSetupGeometry.tinyGap)) {
+                FactChip(
+                    stringResource(
+                        R.string.device_light_quick_setup_hours_short,
+                        formatHours(durationMinutes)
+                    ),
+                    colors,
+                    typography
+                )
+                FactChip(
+                    stringResource(R.string.device_light_quick_setup_every_day),
+                    colors,
+                    typography
+                )
+                FactChip(
+                    stringResource(
+                        R.string.device_light_quick_setup_transition_value,
+                        phase.rampDurationMs / MINUTE_MS
+                    ),
+                    colors,
+                    typography
+                )
+            }
+            ThinDivider(colors)
+            phase.scene.channels.forEach { (channel, value) ->
+                ChannelRow(channel, value, channelColors, colors, typography)
+            }
+            plan?.let { currentPlan ->
+                if (currentPlan.reasons.any { reason ->
+                        reason == DeviceLightPlanReason.STABLE_ALGAE_HOLD ||
+                            reason == DeviceLightPlanReason.WORSENING_ALGAE_GUARD
+                    }
+                ) {
+                    GuardNotice(
+                        DeviceLightPlanReason.WORSENING_ALGAE_GUARD in currentPlan.reasons,
+                        colors,
+                        typography
+                    )
                 }
-            }
-            if (algaeLevel != null && algaeLevel != DeviceLightAlgaeLevel.NONE) {
-                AlgaeHoldNotice(algaeLevel, colors, typography)
-            }
-            if (!active) {
+                PlanSafetyNotices(currentPlan.warnings, colors, typography)
                 DetailLink(detailsExpanded, onToggleDetails, colors, typography)
             }
         }
@@ -682,235 +919,91 @@ private fun ProgramCard(
 }
 
 @Composable
-private fun CompactProgramChart(
-    phase: DeviceLightManagedPlanPhaseDraft,
-    showCurrentTime: Boolean,
-    colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography,
-    channelColors: AquaLightManualColors
-) {
-    val description = stringResource(R.string.device_light_quick_setup_chart_description)
-    val currentMinute = LocalTime.now().let { it.hour * 60 + it.minute }
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(AquaLightQuickSetupGeometry.factRadius))
-            .background(colors.mediaSurface)
-            .border(
-                1.dp,
-                colors.mediaOutline,
-                RoundedCornerShape(AquaLightQuickSetupGeometry.factRadius)
-            )
-            .padding(AquaLightQuickSetupGeometry.chartPadding)
-    ) {
-        Row(modifier = Modifier.fillMaxWidth()) {
-            ChartYAxis(colors, typography)
-            Spacer(Modifier.width(AquaLightQuickSetupGeometry.tinyGap))
-            Canvas(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(AquaLightQuickSetupGeometry.chartHeight)
-                    .semantics { contentDescription = description }
-            ) {
-                for (index in 0..4) {
-                    val fraction = index / 4f
-                    drawLine(
-                        color = colors.mediaOutline.copy(alpha = AquaLightQuickSetupAlpha.GUIDE),
-                        start = Offset(size.width * fraction, 0f),
-                        end = Offset(size.width * fraction, size.height),
-                        strokeWidth = AquaLightQuickSetupGeometry.chartGridWidth.toPx()
-                    )
-                    drawLine(
-                        color = colors.mediaOutline.copy(alpha = AquaLightQuickSetupAlpha.GUIDE),
-                        start = Offset(0f, size.height * fraction),
-                        end = Offset(size.width, size.height * fraction),
-                        strokeWidth = AquaLightQuickSetupGeometry.chartGridWidth.toPx()
-                    )
-                }
-                phase.scene.channels.forEach { (channel, percent) ->
-                    drawPath(
-                        path = channelPath(phase, percent, size.width, size.height),
-                        color = channelColors.colorFor(channel),
-                        style = Stroke(
-                            width = AquaLightQuickSetupGeometry.chartLineWidth.toPx(),
-                            cap = StrokeCap.Round
-                        )
-                    )
-                }
-                if (showCurrentTime) {
-                    val x = size.width * currentMinute / MINUTES_PER_DAY
-                    drawLine(
-                        color = colors.primaryText,
-                        start = Offset(x, 0f),
-                        end = Offset(x, size.height),
-                        strokeWidth = AquaLightQuickSetupGeometry.progressMarkerWidth.toPx(),
-                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 6f))
-                    )
-                    drawCircle(
-                        color = colors.primaryText,
-                        radius = 3.dp.toPx(),
-                        center = Offset(x, 3.dp.toPx())
-                    )
-                }
-            }
-        }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 32.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            listOf("00", "06", "12", "18", "24").forEach { label ->
-                BasicText(text = label, style = typography.micro)
-            }
-        }
-        Spacer(Modifier.height(AquaLightQuickSetupGeometry.tinyGap))
-        ChartLegend(phase, channelColors, typography)
-    }
-}
-
-@Composable
-private fun ChartYAxis(
-    colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography
-) {
-    Column(
-        modifier = Modifier
-            .width(28.dp)
-            .height(AquaLightQuickSetupGeometry.chartHeight),
-        verticalArrangement = Arrangement.SpaceBetween,
-        horizontalAlignment = Alignment.End
-    ) {
-        listOf("100%", "75%", "50%", "25%", "0%").forEach { label ->
-            BasicText(
-                text = label,
-                style = typography.micro.copy(color = colors.secondaryText, fontSize = 8.sp)
-            )
-        }
-    }
-}
-
-@Composable
-private fun ChartLegend(
-    phase: DeviceLightManagedPlanPhaseDraft,
-    channelColors: AquaLightManualColors,
-    typography: AquaDeviceCardTypography
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center
-    ) {
-        phase.scene.channels.keys.forEachIndexed { index, channel ->
-            if (index > 0) Spacer(Modifier.width(18.dp))
-            Box(
-                Modifier
-                    .size(AquaLightQuickSetupGeometry.legendDotSize)
-                    .clip(CircleShape)
-                    .background(channelColors.colorFor(channel))
-            )
-            Spacer(Modifier.width(AquaLightQuickSetupGeometry.tinyGap))
-            BasicText(text = channel.shortLabel(), style = typography.micro)
-        }
-    }
-}
-
-private fun channelPath(
-    phase: DeviceLightManagedPlanPhaseDraft,
-    percent: Int,
-    width: Float,
-    height: Float
-): Path {
-    val start = phase.startTimeMs.toFloat() / DAY_MS
-    val end = phase.endTimeMs.toFloat() / DAY_MS
-    val ramp = phase.rampDurationMs.toFloat() / DAY_MS
-    val peakY = height * (1f - percent / 100f)
-    return Path().apply {
-        moveTo(0f, height)
-        lineTo(width * start, height)
-        lineTo(width * (start + ramp), peakY)
-        lineTo(width * (end - ramp), peakY)
-        lineTo(width * end, height)
-        lineTo(width, height)
-    }
-}
-
-@Composable
-private fun ProgramSummary(
-    durationMinutes: Int,
-    rampMinutes: Int,
-    peak: Int,
-    active: Boolean,
-    colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        SummaryValue(
-            stringResource(
-                R.string.device_light_quick_setup_hours_short,
-                formatHours(durationMinutes)
-            ),
-            colors,
-            typography
-        )
-        SummaryDivider(colors)
-        SummaryValue(
-            stringResource(R.string.device_light_quick_setup_transition_value, rampMinutes),
-            colors,
-            typography
-        )
-        SummaryDivider(colors)
-        SummaryValue(
-            if (active) {
-                stringResource(R.string.device_light_quick_setup_every_day)
-            } else {
-                stringResource(R.string.device_light_quick_setup_peak_value, peak)
-            },
-            colors,
-            typography
-        )
-    }
-}
-
-@Composable
-private fun RowScope.SummaryValue(
+private fun RowScope.FactChip(
     text: String,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
 ) {
     BasicText(
         text = text,
-        modifier = Modifier.weight(1f),
-        style = typography.body.copy(color = colors.primaryText, textAlign = TextAlign.Center),
+        modifier = Modifier
+            .weight(1f)
+            .clip(RoundedCornerShape(AquaLightQuickSetupGeometry.factRadius))
+            .background(colors.mediaSurface)
+            .padding(
+                horizontal = AquaLightQuickSetupGeometry.factHorizontalPadding,
+                vertical = AquaLightQuickSetupGeometry.factVerticalPadding
+            ),
+        style = typography.micro.copy(textAlign = TextAlign.Center),
         maxLines = 1,
         overflow = TextOverflow.Ellipsis
     )
 }
 
 @Composable
-private fun RowScope.SummaryDivider(colors: AquaDeviceCardColors) {
-    Box(
-        Modifier
-            .width(1.dp)
-            .height(24.dp)
-            .background(colors.outline)
-    )
-}
-
-@Composable
-private fun AlgaeHoldNotice(
-    algaeLevel: DeviceLightAlgaeLevel,
+private fun ChannelRow(
+    channel: DeviceLightAutomaticChannel,
+    value: Int,
+    channelColors: AquaLightManualColors,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
 ) {
-    val text = if (algaeLevel == DeviceLightAlgaeLevel.VISIBLE) {
-        R.string.device_light_quick_setup_visible_algae_hold
-    } else {
-        R.string.device_light_quick_setup_mild_algae_hold
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            Modifier
+                .size(8.dp)
+                .clip(CircleShape)
+                .background(channelColors.colorFor(channel))
+        )
+        Spacer(Modifier.width(AquaLightQuickSetupGeometry.compactGap))
+        BasicText(
+            text = stringResource(channel.labelRes()),
+            modifier = Modifier.width(58.dp),
+            style = typography.micro
+        )
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(5.dp)
+                .clip(CircleShape)
+                .background(colors.mediaSurface)
+        ) {
+            if (value > 0) {
+                Box(
+                    Modifier
+                        .fillMaxWidth(value / 100f)
+                        .height(5.dp)
+                        .clip(CircleShape)
+                        .background(channelColors.colorFor(channel))
+                )
+            }
+        }
+        Spacer(Modifier.width(AquaLightQuickSetupGeometry.compactGap))
+        BasicText(
+            text = stringResource(R.string.device_light_quick_setup_percent_value, value),
+            modifier = Modifier.width(38.dp),
+            style = typography.micro.copy(
+                color = colors.primaryText,
+                textAlign = TextAlign.End
+            )
+        )
     }
-    Row(
+}
+
+@Composable
+private fun GuardNotice(
+    worsening: Boolean,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography
+) {
+    BasicText(
+        text = stringResource(
+            if (worsening) {
+                R.string.device_light_quick_setup_worsening_hold
+            } else {
+                R.string.device_light_quick_setup_stable_hold
+            }
+        ),
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(AquaLightQuickSetupGeometry.factRadius))
@@ -920,22 +1013,59 @@ private fun AlgaeHoldNotice(
                 colors.warning,
                 RoundedCornerShape(AquaLightQuickSetupGeometry.factRadius)
             )
-            .padding(
-                horizontal = AquaLightQuickSetupGeometry.rowPadding,
-                vertical = AquaLightQuickSetupGeometry.compactGap
-            ),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(AquaLightQuickSetupGeometry.rowPadding),
+        style = typography.caption.copy(color = colors.warning)
+    )
+}
+
+@Composable
+private fun PlanSafetyNotices(
+    warnings: Set<DeviceLightPlanWarning>,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography
+) {
+    val messageResources = warnings.mapNotNull { warning -> warning.noticeRes() }
+    if (messageResources.isEmpty()) return
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(AquaLightQuickSetupGeometry.factRadius))
+            .background(colors.warning.copy(alpha = AquaLightQuickSetupAlpha.SUBTLE))
+            .border(
+                1.dp,
+                colors.warning,
+                RoundedCornerShape(AquaLightQuickSetupGeometry.factRadius)
+            )
+            .padding(AquaLightQuickSetupGeometry.rowPadding),
+        verticalArrangement = Arrangement.spacedBy(AquaLightQuickSetupGeometry.tinyGap)
     ) {
-        BasicText(
-            text = "!",
-            style = typography.body.copy(color = colors.warning)
-        )
-        Spacer(Modifier.width(AquaLightQuickSetupGeometry.compactGap))
-        BasicText(
-            text = stringResource(text),
-            style = typography.caption.copy(color = colors.warning)
-        )
+        messageResources.forEach { messageRes ->
+            BasicText(
+                text = stringResource(messageRes),
+                style = typography.caption.copy(color = colors.warning)
+            )
+        }
     }
+}
+
+@StringRes
+private fun DeviceLightPlanWarning.noticeRes(): Int? = when (this) {
+    DeviceLightPlanWarning.SETUP_DATE_MISSING ->
+        R.string.device_light_quick_setup_warning_setup_date_missing
+    DeviceLightPlanWarning.SETUP_DATE_IN_FUTURE ->
+        R.string.device_light_quick_setup_warning_setup_date_future
+    DeviceLightPlanWarning.HIGH_LIGHT_WITHOUT_READY_CO2 ->
+        R.string.device_light_quick_setup_warning_high_light_co2
+    DeviceLightPlanWarning.DEEP_INSTALLATION_UNCALIBRATED ->
+        R.string.device_light_quick_setup_warning_deep_uncalibrated
+    DeviceLightPlanWarning.DIRECT_DAYLIGHT_OVERLAP ->
+        R.string.device_light_quick_setup_warning_daylight_overlap
+    DeviceLightPlanWarning.SHRIMP_SHELTER_MISSING ->
+        R.string.device_light_quick_setup_warning_shrimp_shelter
+    DeviceLightPlanWarning.NOT_PLANTED_FRESHWATER,
+    DeviceLightPlanWarning.NO_PLANTS,
+    DeviceLightPlanWarning.UNKNOWN_PLANT_DEMAND,
+    DeviceLightPlanWarning.CALIBRATION_UNAVAILABLE -> null
 }
 
 @Composable
@@ -972,7 +1102,8 @@ private fun DetailLink(
 
 @Composable
 private fun TechnicalDetailsCard(
-    phases: List<DeviceLightManagedPlanPhaseDraft>,
+    plan: DeviceLightQuickSetupPlan,
+    state: DeviceLightQuickSetupUiState,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
 ) {
@@ -985,31 +1116,76 @@ private fun TechnicalDetailsCard(
                 text = stringResource(R.string.device_light_quick_setup_calculation_details),
                 style = typography.title
             )
-            BasicText(
-                text = stringResource(R.string.device_light_quick_setup_estimate_warning),
-                style = typography.caption
+            DetailValueRow(
+                stringResource(R.string.device_light_quick_setup_policy),
+                plan.policyVersion,
+                typography
             )
-            phases.forEachIndexed { index, phase ->
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    BasicText(
-                        text = stringResource(
-                            R.string.device_light_quick_setup_phase_day_value,
-                            index + 1
-                        ),
-                        modifier = Modifier.weight(1f),
-                        style = typography.micro
+            DetailValueRow(
+                stringResource(R.string.device_light_quick_setup_evidence),
+                stringResource(
+                    R.string.device_light_quick_setup_source_count,
+                    plan.evidenceSourceIds.size
+                ),
+                typography
+            )
+            DetailValueRow(
+                stringResource(R.string.device_light_quick_setup_calibration),
+                if (plan.confidence == DeviceLightPlanConfidence.CALIBRATED) {
+                    stringResource(
+                        R.string.device_light_quick_setup_calibration_value,
+                        plan.calibrationProfileId,
+                        plan.calibrationRevision
                     )
-                    val duration = ((phase.endTimeMs - phase.startTimeMs) / MINUTE_MS).toInt()
-                    BasicText(
-                        text = stringResource(
-                            R.string.device_light_quick_setup_hours_short,
-                            formatHours(duration)
-                        ),
-                        style = typography.micro.copy(color = colors.primaryText)
-                    )
-                }
+                } else {
+                    stringResource(R.string.device_light_quick_setup_calibration_missing)
+                },
+                typography
+            )
+            DetailValueRow(
+                stringResource(R.string.device_light_quick_setup_geometry),
+                stringResource(
+                    R.string.device_light_quick_setup_geometry_value,
+                    state.waterDepthCm ?: 0,
+                    state.fixtureHeightAboveWaterCm ?: 0
+                ),
+                typography
+            )
+            DetailValueRow(
+                stringResource(R.string.device_light_quick_setup_next_check),
+                relativeFutureLabel(
+                    (plan.reevaluationEpochDay - state.todayEpochDay).coerceAtLeast(0L)
+                ),
+                typography
+            )
+            if (plan.confidence == DeviceLightPlanConfidence.CONSERVATIVE_UNCALIBRATED) {
+                BasicText(
+                    text = stringResource(R.string.device_light_quick_setup_estimate_warning),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(AquaLightQuickSetupGeometry.factRadius))
+                        .background(colors.mediaSurface)
+                        .padding(AquaLightQuickSetupGeometry.rowPadding),
+                    style = typography.caption
+                )
             }
         }
+    }
+}
+
+@Composable
+private fun DetailValueRow(
+    label: String,
+    value: String,
+    typography: AquaDeviceCardTypography
+) {
+    Row(modifier = Modifier.fillMaxWidth()) {
+        BasicText(text = label, modifier = Modifier.weight(1f), style = typography.caption)
+        BasicText(
+            text = value,
+            modifier = Modifier.weight(1f),
+            style = typography.micro.copy(textAlign = TextAlign.End)
+        )
     }
 }
 
@@ -1021,30 +1197,25 @@ private fun MonitoringCard(
 ) {
     val snapshot = state.managedPlanSnapshot ?: return
     val appliedDay = state.plan?.currentPhase?.draft?.validFromEpochDay
-        ?: snapshot.phases.minOfOrNull { it.validFromEpochDay }
-    val daysSince = appliedDay?.let { (state.todayEpochDay - it).coerceAtLeast(0L) }
-    val reviewDay = state.plan?.reevaluationEpochDay
-        ?: appliedDay?.plus(
-            if (snapshot.isHeldForReview(state.todayEpochDay, state.tankDay)) 7L else 14L
-        )
-    val daysUntil = reviewDay?.let { (it - state.todayEpochDay).coerceAtLeast(0L) }
+        ?: snapshot.phases.minOfOrNull { phase -> phase.validFromEpochDay }
+    val daysSince = appliedDay?.let { day -> (state.todayEpochDay - day).coerceAtLeast(0L) }
+    val reviewDay = state.plan?.reevaluationEpochDay ?: state.tank?.nextReevaluationEpochDay
     AquaDeviceCardSurface(Modifier.fillMaxWidth()) {
         Row(modifier = Modifier.fillMaxWidth()) {
             MonitorValue(
-                label = stringResource(R.string.device_light_quick_setup_last_evaluation),
-                value = relativePastLabel(daysSince),
-                typography = typography
+                stringResource(R.string.device_light_quick_setup_last_evaluation),
+                relativePastLabel(daysSince),
+                typography
             )
-            Box(
-                Modifier
-                    .width(1.dp)
-                    .height(38.dp)
-                    .background(colors.outline)
-            )
+            Box(Modifier.width(1.dp).height(38.dp).background(colors.outline))
             MonitorValue(
-                label = stringResource(R.string.device_light_quick_setup_next_check),
-                value = relativeFutureLabel(daysUntil),
-                typography = typography
+                stringResource(R.string.device_light_quick_setup_next_check),
+                if (reviewDay == null || reviewDay <= state.todayEpochDay) {
+                    stringResource(R.string.device_light_quick_setup_reassessment_required)
+                } else {
+                    relativeFutureLabel(reviewDay - state.todayEpochDay)
+                },
+                typography
             )
         }
     }
@@ -1079,8 +1250,7 @@ private fun relativePastLabel(days: Long?): String = when (days) {
 }
 
 @Composable
-private fun relativeFutureLabel(days: Long?): String = when (days) {
-    null -> stringResource(R.string.device_light_quick_setup_not_available)
+private fun relativeFutureLabel(days: Long): String = when (days) {
     0L -> stringResource(R.string.device_light_quick_setup_today)
     else -> pluralStringResource(
         R.plurals.device_light_quick_setup_days_later,
@@ -1109,30 +1279,20 @@ private fun ActiveReasonCard(
                 style = typography.title
             )
             ReasonRow(
-                lifecycleReason(state),
+                installedDurationReason(state),
                 colors,
                 typography
             )
             ReasonRow(
                 stringResource(
                     R.string.device_light_quick_setup_plant_co2_reason,
-                    stringResource(tank.inferredPlantDemand.labelRes()),
-                    stringResource(
-                        if (tank.inferredCo2Installed) {
-                            R.string.device_light_quick_setup_co2_active
-                        } else {
-                            R.string.device_light_quick_setup_co2_absent
-                        }
-                    )
+                    stringResource((state.plantDemand ?: tank.plantDemand).labelRes()),
+                    stringResource(co2SummaryRes(state))
                 ),
                 colors,
                 typography
             )
-            ReasonRow(
-                activeGuardReason(state),
-                colors,
-                typography
-            )
+            ReasonRow(activeGuardReason(state), colors, typography)
             ThinDivider(colors)
             Row(
                 modifier = Modifier
@@ -1159,29 +1319,37 @@ private fun ActiveReasonCard(
 }
 
 @Composable
-private fun lifecycleReason(state: DeviceLightQuickSetupUiState): String =
-    if ((state.tankDay ?: Long.MAX_VALUE) <= 21L) {
-        stringResource(R.string.device_light_quick_setup_active_reason_new_tank)
-    } else {
-        stringResource(R.string.device_light_quick_setup_active_reason_established)
-    }
-
-@Composable
-private fun activeGuardReason(state: DeviceLightQuickSetupUiState): String = when (state.algaeLevel) {
-    DeviceLightAlgaeLevel.MILD ->
-        stringResource(R.string.device_light_quick_setup_active_reason_mild_algae)
-    DeviceLightAlgaeLevel.VISIBLE ->
-        stringResource(R.string.device_light_quick_setup_active_reason_visible_algae)
-    DeviceLightAlgaeLevel.NONE ->
-        stringResource(R.string.device_light_quick_setup_active_reason_clear)
-    null -> if (
-        state.managedPlanSnapshot?.isHeldForReview(state.todayEpochDay, state.tankDay) == true
-    ) {
-        stringResource(R.string.device_light_quick_setup_active_reason_held)
-    } else {
-        stringResource(R.string.device_light_quick_setup_active_reason_protected)
+private fun installedDurationReason(state: DeviceLightQuickSetupUiState): String {
+    val snapshot = state.managedPlanSnapshot
+    val phase = snapshot?.phaseFor(state.todayEpochDay)
+    val durationMinutes = phase?.let { installedPhase ->
+        ((installedPhase.endTimeMs - installedPhase.startTimeMs) / MINUTE_MS)
+            .takeIf { duration -> duration > 0L }
+            ?.toInt()
+    } ?: state.plan?.currentPhase?.lifecycleStage?.durationMinutes
+    return when {
+        durationMinutes == null || durationMinutes <= 6 * 60 ->
+            stringResource(R.string.device_light_quick_setup_active_reason_new_tank)
+        durationMinutes <= 7 * 60 ->
+            stringResource(R.string.device_light_quick_setup_active_reason_acclimation)
+        else -> stringResource(R.string.device_light_quick_setup_active_reason_established)
     }
 }
+
+@Composable
+private fun activeGuardReason(state: DeviceLightQuickSetupUiState): String =
+    when (state.surfaceGrowth) {
+        AquariumSurfaceGrowth.STABLE_ALGAE ->
+            stringResource(R.string.device_light_quick_setup_active_reason_stable_algae)
+        AquariumSurfaceGrowth.WORSENING_ALGAE ->
+            stringResource(R.string.device_light_quick_setup_active_reason_worsening_algae)
+        AquariumSurfaceGrowth.TARGET_BIOFILM ->
+            stringResource(R.string.device_light_quick_setup_active_reason_biofilm)
+        AquariumSurfaceGrowth.NONE ->
+            stringResource(R.string.device_light_quick_setup_active_reason_clear)
+        AquariumSurfaceGrowth.UNKNOWN,
+        null -> stringResource(R.string.device_light_quick_setup_active_reason_held)
+    }
 
 @Composable
 private fun ReasonRow(
@@ -1242,7 +1410,11 @@ private fun BlockingWarningCard(
             .fillMaxWidth()
             .clip(RoundedCornerShape(AquaLightQuickSetupGeometry.cardRadius))
             .background(colors.danger.copy(alpha = AquaLightQuickSetupAlpha.SUBTLE))
-            .border(1.dp, colors.danger, RoundedCornerShape(AquaLightQuickSetupGeometry.cardRadius))
+            .border(
+                1.dp,
+                colors.danger,
+                RoundedCornerShape(AquaLightQuickSetupGeometry.cardRadius)
+            )
             .padding(AquaLightQuickSetupGeometry.cardPadding),
         style = typography.caption.copy(color = colors.danger)
     )
@@ -1255,40 +1427,38 @@ private fun QuickSetupActionBar(
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
 ) {
-    val background = colorResource(R.color.background_color)
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(background)
+            .background(colorResource(R.color.background_color))
             .padding(AquaLightQuickSetupGeometry.actionBarPadding),
         horizontalArrangement = Arrangement.spacedBy(AquaLightQuickSetupGeometry.compactGap)
     ) {
         if (state.mode == DeviceLightQuickSetupMode.EDIT) {
             CompactActionButton(
-                text = stringResource(R.string.device_light_quick_setup_cancel),
-                enabled = !state.applying,
-                secondary = true,
-                onClick = actions.onCancelEdit,
-                modifier = Modifier.weight(0.36f),
-                colors = colors,
-                typography = typography
+                stringResource(R.string.device_light_quick_setup_cancel),
+                !state.applying,
+                true,
+                actions.onCancelEdit,
+                Modifier.weight(0.36f),
+                colors,
+                typography
             )
         }
         val primaryText = when {
-            state.proposalMatchesInstalled ->
-                R.string.device_light_quick_setup_program_current
+            state.proposalMatchesInstalled -> R.string.device_light_quick_setup_program_current
             state.mode == DeviceLightQuickSetupMode.EDIT ->
                 R.string.device_light_quick_setup_apply_changes
             else -> R.string.device_light_quick_setup_create_program
         }
         CompactActionButton(
-            text = stringResource(primaryText),
-            enabled = state.canApply,
-            secondary = false,
-            onClick = actions.onApply,
-            modifier = Modifier.weight(if (state.mode == DeviceLightQuickSetupMode.EDIT) 0.64f else 1f),
-            colors = colors,
-            typography = typography
+            stringResource(primaryText),
+            state.canApply,
+            false,
+            actions.onApply,
+            Modifier.weight(if (state.mode == DeviceLightQuickSetupMode.EDIT) 0.64f else 1f),
+            colors,
+            typography
         )
     }
 }
@@ -1305,7 +1475,11 @@ private fun CompactActionButton(
 ) {
     val shape = RoundedCornerShape(AquaLightQuickSetupGeometry.actionRadius)
     val container = if (secondary) colors.surface else colors.accent
-    val content = if (secondary) colors.primaryText else colorResource(R.color.aqua_button_primary_content)
+    val content = if (secondary) {
+        colors.primaryText
+    } else {
+        colorResource(R.color.aqua_button_primary_content)
+    }
     Box(
         modifier = modifier
             .height(AquaLightQuickSetupGeometry.actionHeight)
@@ -1313,8 +1487,7 @@ private fun CompactActionButton(
             .clip(shape)
             .background(container)
             .border(1.dp, if (secondary) colors.outline else colors.accent, shape)
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
-            .padding(horizontal = AquaLightQuickSetupGeometry.rowPadding),
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
         BasicText(
@@ -1327,10 +1500,7 @@ private fun CompactActionButton(
 }
 
 @Composable
-private fun IconTile(
-    @DrawableRes iconRes: Int,
-    tint: Color
-) {
+private fun IconTile(@DrawableRes iconRes: Int, tint: Color) {
     Box(
         modifier = Modifier
             .size(AquaLightQuickSetupGeometry.iconBoxSize)
@@ -1368,8 +1538,7 @@ private fun StatusTag(
                 vertical = AquaLightQuickSetupGeometry.factVerticalPadding
             ),
         style = typography.micro.copy(color = tone),
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis
+        maxLines = 1
     )
 }
 
@@ -1394,39 +1563,46 @@ private fun DeviceLightManagedPlanSnapshot.phaseFor(
     } ?: phases.firstOrNull()
 }
 
-private fun DeviceLightManagedPlanSnapshot.isHeldForReview(
-    todayEpochDay: Long,
-    tankDay: Long?
-): Boolean {
-    val phase = phaseFor(todayEpochDay) ?: return false
-    return phases.size == 1 && phase.validUntilEpochDayExclusive == null &&
-        tankDay != null && tankDay < 85L &&
-        runtimeState != DeviceLightManagedPlanRuntimeState.NOT_INSTALLED
-}
-
+@StringRes
 private fun DeviceLightPlantDemand.labelRes(): Int = when (this) {
+    DeviceLightPlantDemand.UNKNOWN -> R.string.device_light_quick_setup_unknown
     DeviceLightPlantDemand.LOW -> R.string.device_light_quick_setup_low
     DeviceLightPlantDemand.MEDIUM -> R.string.device_light_quick_setup_medium
     DeviceLightPlantDemand.HIGH -> R.string.device_light_quick_setup_high
 }
 
+@StringRes
 private fun DeviceLightPlantDemand.compactLabelRes(): Int = when (this) {
+    DeviceLightPlantDemand.UNKNOWN -> R.string.device_light_quick_setup_plant_demand_unknown
     DeviceLightPlantDemand.LOW -> R.string.device_light_quick_setup_low_light
     DeviceLightPlantDemand.MEDIUM -> R.string.device_light_quick_setup_medium_light
     DeviceLightPlantDemand.HIGH -> R.string.device_light_quick_setup_high_light
 }
 
-private fun DeviceLightPlantDensity.labelRes(): Int = when (this) {
-    DeviceLightPlantDensity.SPARSE -> R.string.device_light_quick_setup_sparse
-    DeviceLightPlantDensity.MEDIUM -> R.string.device_light_quick_setup_medium_density
-    DeviceLightPlantDensity.DENSE -> R.string.device_light_quick_setup_dense
+@StringRes
+private fun AquariumPlantCoverage.labelRes(): Int = when (this) {
+    AquariumPlantCoverage.UNKNOWN -> R.string.device_light_quick_setup_coverage_unknown
+    AquariumPlantCoverage.SPARSE -> R.string.device_light_quick_setup_sparse
+    AquariumPlantCoverage.MEDIUM -> R.string.device_light_quick_setup_medium_density
+    AquariumPlantCoverage.DENSE -> R.string.device_light_quick_setup_dense
 }
 
-private fun DeviceLightAutomaticChannel.shortLabel(): String = when (this) {
-    DeviceLightAutomaticChannel.RED -> "R"
-    DeviceLightAutomaticChannel.GREEN -> "G"
-    DeviceLightAutomaticChannel.BLUE -> "B"
-    DeviceLightAutomaticChannel.WHITE -> "W"
+@StringRes
+private fun AquariumSubstrateSemantic.labelRes(): Int = when (this) {
+    AquariumSubstrateSemantic.ACTIVE_SOIL -> R.string.device_light_quick_setup_active_soil
+    AquariumSubstrateSemantic.NUTRIENT_BASE -> R.string.device_light_quick_setup_nutrient_base
+    AquariumSubstrateSemantic.INERT -> R.string.device_light_quick_setup_inert_substrate
+    AquariumSubstrateSemantic.ADDITIVE -> R.string.device_light_quick_setup_substrate_additive
+    AquariumSubstrateSemantic.UNKNOWN -> R.string.device_light_quick_setup_substrate_unverified
+    AquariumSubstrateSemantic.NOT_APPLICABLE -> R.string.device_light_quick_setup_no_substrate
+}
+
+@StringRes
+private fun DeviceLightAutomaticChannel.labelRes(): Int = when (this) {
+    DeviceLightAutomaticChannel.RED -> R.string.device_light_quick_setup_channel_red
+    DeviceLightAutomaticChannel.GREEN -> R.string.device_light_quick_setup_channel_green
+    DeviceLightAutomaticChannel.BLUE -> R.string.device_light_quick_setup_channel_blue
+    DeviceLightAutomaticChannel.WHITE -> R.string.device_light_quick_setup_channel_white
 }
 
 private fun AquaLightManualColors.colorFor(channel: DeviceLightAutomaticChannel): Color =
@@ -1444,6 +1620,11 @@ private fun formatHours(durationMinutes: Int): String = LocaleFormatter.formatDe
     maximumFractionDigits = 1
 )
 
+@Composable
+private fun formatTime(minutesOfDay: Int): String = LocaleFormatter.formatTimeOfDay24Hour(
+    LocalContext.current,
+    minutesOfDay
+)
+
+private const val MAX_CHOICES_PER_ROW = 3
 private const val MINUTE_MS = 60_000L
-private const val MINUTES_PER_DAY = 1_440f
-private const val DAY_MS = 86_400_000f

@@ -4,19 +4,27 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.aquarium.AquariumCo2Readiness
+import com.aqua.aqualight.application.aquarium.AquariumDaylightExposure
+import com.aqua.aqualight.application.aquarium.AquariumPlantCoverage
+import com.aqua.aqualight.application.aquarium.AquariumShelterAvailability
+import com.aqua.aqualight.application.aquarium.AquariumSurfaceGrowth
 import com.aqua.aqualight.application.devices.light.automation.DeviceLightManagedPlanFailure
 import com.aqua.aqualight.application.devices.light.automation.DeviceLightManagedPlanMutationResult
 import com.aqua.aqualight.application.devices.light.automation.DeviceLightManagedPlanOperations
 import com.aqua.aqualight.application.devices.light.automation.DeviceLightManagedPlanReadResult
-import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightAlgaeLevel
-import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightAmbientLight
+import com.aqua.aqualight.application.devices.light.automation.DeviceLightManagedPlanSnapshot
+import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightPlantDemand
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupCalculator
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupInput
+import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupPersistenceResult
+import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupRecordedOutcome
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupTank
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupTankFailure
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupTankOperations
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupTankReadResult
-import java.time.LocalDate
+import com.aqua.aqualight.application.devices.light.quicksetup.notBelow
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,18 +37,18 @@ import kotlinx.coroutines.launch
 
 internal class DeviceLightQuickSetupViewModel(
     private val tankOperations: DeviceLightQuickSetupTankOperations,
-    private val managedPlanOperations: DeviceLightManagedPlanOperations,
-    private val todayEpochDay: () -> Long = { LocalDate.now().toEpochDay() }
+    private val managedPlanOperations: DeviceLightManagedPlanOperations
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DeviceLightQuickSetupUiState())
     val uiState: StateFlow<DeviceLightQuickSetupUiState> = _uiState.asStateFlow()
     private val _effects = MutableSharedFlow<DeviceLightQuickSetupEffect>(
-        extraBufferCapacity = 2,
+        extraBufferCapacity = 3,
         onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
     val effects: SharedFlow<DeviceLightQuickSetupEffect> = _effects.asSharedFlow()
     private var boundDeviceUid = ""
+    private val applyInFlight = AtomicBoolean(false)
 
     fun bind(deviceUidText: String) {
         val deviceUid = deviceUidText.trim()
@@ -50,83 +58,253 @@ internal class DeviceLightQuickSetupViewModel(
         load()
     }
 
+    fun setWaterDepthCm(value: Int) = updateInput {
+        val max = tank?.tankHeightCm ?: return@updateInput this
+        copy(waterDepthCm = value.takeIf { it in QUICK_SETUP_WATER_DEPTH_MIN_CM..max })
+    }
+
+    fun setFixtureHeightAboveWaterCm(value: Int) = updateInput {
+        copy(
+            fixtureHeightAboveWaterCm = value.takeIf {
+                it in QUICK_SETUP_FIXTURE_HEIGHT_MIN_CM..QUICK_SETUP_FIXTURE_HEIGHT_MAX_CM
+            }
+        )
+    }
+
+    fun setProgramEndMinute(value: Int) = updateInput {
+        copy(
+            programEndMinute = value.takeIf {
+                it in QUICK_SETUP_MINIMUM_END_MINUTE until MINUTES_PER_DAY
+            }
+        )
+    }
+
+    fun setDaylightStartMinute(value: Int) = updateInput {
+        copy(daylightStartMinute = value.takeIf { it in 0 until MINUTES_PER_DAY })
+    }
+
+    fun setDaylightEndMinute(value: Int) = updateInput {
+        copy(daylightEndMinute = value.takeIf { it in 0 until MINUTES_PER_DAY })
+    }
+
+    fun selectPlantDemand(value: DeviceLightPlantDemand) = updateInput {
+        copy(
+            plantDemand = value.notBelow(
+                tank?.reviewedPlantDemandFloor ?: DeviceLightPlantDemand.UNKNOWN
+            )
+        )
+    }
+
+    fun selectPlantCoverage(value: AquariumPlantCoverage) = updateInput {
+        copy(plantCoverage = value)
+    }
+
+    fun selectCo2Readiness(value: AquariumCo2Readiness) = updateInput {
+        val accepted = if (tank?.co2ComponentPresent == true) {
+            value.takeUnless { it == AquariumCo2Readiness.NOT_INSTALLED }
+        } else {
+            AquariumCo2Readiness.NOT_INSTALLED
+        }
+        copy(co2Readiness = accepted)
+    }
+
+    fun selectDaylight(value: AquariumDaylightExposure) = updateInput {
+        if (value == AquariumDaylightExposure.DIRECT) {
+            copy(daylightExposure = value)
+        } else {
+            copy(
+                daylightExposure = value,
+                daylightStartMinute = null,
+                daylightEndMinute = null
+            )
+        }
+    }
+
+    fun selectSurfaceGrowth(value: AquariumSurfaceGrowth) = updateInput {
+        copy(surfaceGrowth = value)
+    }
+
+    fun selectShelter(value: AquariumShelterAvailability) = updateInput {
+        copy(shelterAvailability = value)
+    }
+
     fun toggleDetails() {
         _uiState.update { state -> state.copy(detailsExpanded = !state.detailsExpanded) }
     }
 
-    fun selectCondition(selection: DeviceLightQuickSetupConditionSelection) {
-        _uiState.update { state ->
-            when (selection) {
-                is DeviceLightQuickSetupConditionSelection.AmbientLight ->
-                    state.copy(ambientLight = selection.value)
-                is DeviceLightQuickSetupConditionSelection.AlgaeLevel ->
-                    state.copy(algaeLevel = selection.value)
-            }
-        }
-        recalculateAssessment()
-    }
-
     fun setInstalledPlanEditing(editing: Boolean) {
         _uiState.update { state ->
-            if (!state.hasInstalledPlan) {
+            val tank = state.tank
+            if (!state.hasInstalledPlan || tank == null) {
                 state
-            } else {
+            } else if (editing) {
                 state.copy(
-                    ambientLight = null,
-                    algaeLevel = null,
+                    co2Readiness = if (tank.co2ComponentPresent) {
+                        null
+                    } else {
+                        AquariumCo2Readiness.NOT_INSTALLED
+                    },
+                    surfaceGrowth = null,
                     plan = null,
-                    editingInstalledPlan = editing,
+                    editingInstalledPlan = true,
                     detailsExpanded = false
                 )
+            } else {
+                state.withStoredInputs(tank, state.managedPlanSnapshot)
+                    .copy(
+                        plan = null,
+                        editingInstalledPlan = false,
+                        detailsExpanded = false
+                    )
             }
         }
+        if (editing) recalculateAssessment()
     }
 
     fun apply() {
         val state = _uiState.value
-        val plan = state.plan
-        val snapshot = state.managedPlanSnapshot
-        if (plan != null && snapshot != null && state.canApply) {
-            viewModelScope.launch {
-                _uiState.update { it.copy(applying = true) }
+        val plan = state.plan ?: return
+        val snapshot = state.managedPlanSnapshot ?: return
+        val input = state.toInputOrNull() ?: return
+        if (!state.canApply) return
+        if (!applyInFlight.compareAndSet(false, true)) return
+        val targetDeviceUid = boundDeviceUid
+        if (targetDeviceUid.isBlank()) {
+            applyInFlight.set(false)
+            return
+        }
+        // Claim the action before launching so two taps cannot prepare two firmware mutations.
+        _uiState.update { current ->
+            if (current.applying) current else current.copy(applying = true)
+        }
+        viewModelScope.launch {
+            try {
                 when (
-                    val result = managedPlanOperations.apply(
-                        deviceUid = boundDeviceUid,
-                        authority = snapshot.authority,
-                        draft = plan.toManagedPlanDraft()
+                    val preparation = tankOperations.prepareRecommendation(
+                        targetDeviceUid,
+                        input,
+                        plan
                     )
                 ) {
-                    is DeviceLightManagedPlanMutationResult.Applied -> {
-                        _uiState.update {
-                            it.copy(
-                                managedPlanSnapshot = result.snapshot,
-                                editingInstalledPlan = false,
-                                applying = false
+                    is DeviceLightQuickSetupPersistenceResult.Failed -> {
+                        if (targetDeviceUid == boundDeviceUid) {
+                            _uiState.update { it.copy(applying = false) }
+                            _effects.emit(
+                                DeviceLightQuickSetupEffect.ShowMessage(
+                                    R.string.device_light_quick_setup_profile_save_error
+                                )
                             )
                         }
-                        _effects.emit(DeviceLightQuickSetupEffect.Applied)
                     }
-                    is DeviceLightManagedPlanMutationResult.Failed ->
-                        handleMutationFailure(result.failure)
-                    DeviceLightManagedPlanMutationResult.Deleted ->
-                        error("Apply cannot return Deleted.")
+                    is DeviceLightQuickSetupPersistenceResult.Prepared -> applyPrepared(
+                        deviceUid = targetDeviceUid,
+                        plan = plan,
+                        snapshot = snapshot,
+                        auditId = preparation.auditId
+                    )
+                    DeviceLightQuickSetupPersistenceResult.Saved ->
+                        error("Prepare must return an immutable audit id.")
+                }
+            } finally {
+                applyInFlight.set(false)
+                _uiState.update { current ->
+                    if (current.applying) current.copy(applying = false) else current
                 }
             }
         }
     }
 
+    private suspend fun applyPrepared(
+        deviceUid: String,
+        plan: com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupPlan,
+        snapshot: DeviceLightManagedPlanSnapshot,
+        auditId: String
+    ) {
+        when (
+            val result = managedPlanOperations.apply(
+                deviceUid = deviceUid,
+                authority = snapshot.authority,
+                draft = plan.toManagedPlanDraft()
+            )
+        ) {
+            is DeviceLightManagedPlanMutationResult.Applied -> {
+                val audit = recordRecommendationOutcomeReliably(
+                    deviceUid = deviceUid,
+                    auditId = auditId,
+                    outcome = DeviceLightQuickSetupRecordedOutcome.Applied(result.snapshot)
+                )
+                if (deviceUid == boundDeviceUid) {
+                    _uiState.update {
+                        it.copy(
+                            managedPlanSnapshot = result.snapshot,
+                            editingInstalledPlan = false,
+                            applying = false
+                        )
+                    }
+                    _effects.emit(DeviceLightQuickSetupEffect.Applied)
+                    if (audit is DeviceLightQuickSetupPersistenceResult.Failed) {
+                        _effects.emit(
+                            DeviceLightQuickSetupEffect.ShowMessage(
+                                R.string.device_light_quick_setup_audit_update_error
+                            )
+                        )
+                    }
+                }
+            }
+            is DeviceLightManagedPlanMutationResult.Failed -> {
+                recordRecommendationOutcomeReliably(
+                    deviceUid = deviceUid,
+                    auditId = auditId,
+                    outcome = if (result.failure == DeviceLightManagedPlanFailure.UNAVAILABLE) {
+                        DeviceLightQuickSetupRecordedOutcome.Indeterminate
+                    } else {
+                        DeviceLightQuickSetupRecordedOutcome.Failed
+                    }
+                )
+                if (deviceUid == boundDeviceUid) {
+                    handleMutationFailure(deviceUid, result.failure)
+                }
+            }
+            DeviceLightManagedPlanMutationResult.Deleted ->
+                error("Apply cannot return Deleted.")
+        }
+    }
+
+    private suspend fun recordRecommendationOutcomeReliably(
+        deviceUid: String,
+        auditId: String,
+        outcome: DeviceLightQuickSetupRecordedOutcome
+    ): DeviceLightQuickSetupPersistenceResult {
+        var result: DeviceLightQuickSetupPersistenceResult =
+            DeviceLightQuickSetupPersistenceResult.Failed()
+        repeat(AUDIT_WRITE_ATTEMPTS) {
+            result = tankOperations.recordRecommendationOutcome(
+                deviceUid = deviceUid,
+                auditId = auditId,
+                outcome = outcome
+            )
+            if (result == DeviceLightQuickSetupPersistenceResult.Saved) return result
+        }
+        return result
+    }
+
     private fun load() {
         viewModelScope.launch {
-            val today = todayEpochDay()
             _uiState.value = DeviceLightQuickSetupUiState(
                 deviceUid = boundDeviceUid,
-                todayEpochDay = today,
                 initialLoading = true
             )
             when (val tankResult = tankOperations.readForDevice(boundDeviceUid)) {
-                is DeviceLightQuickSetupTankReadResult.Failed -> closeUnavailable(tankResult.failure)
+                is DeviceLightQuickSetupTankReadResult.Failed ->
+                    closeUnavailable(tankResult.failure)
                 is DeviceLightQuickSetupTankReadResult.Available -> {
-                    _uiState.update { state -> state.copy(tank = tankResult.tank) }
+                    _uiState.update { state ->
+                        state.copy(
+                            tank = tankResult.tank,
+                            todayEpochDay = tankResult.tank.deviceLocalEpochDay
+                        )
+                            .withStoredInputs(tankResult.tank, null)
+                    }
                     loadAuthorityAndPlan()
                 }
             }
@@ -136,18 +314,18 @@ internal class DeviceLightQuickSetupViewModel(
     private suspend fun loadAuthorityAndPlan() {
         when (val result = managedPlanOperations.read(boundDeviceUid)) {
             is DeviceLightManagedPlanReadResult.Available -> {
-                _uiState.update {
-                    it.copy(
+                _uiState.update { state ->
+                    val tank = requireNotNull(state.tank)
+                    state.copy(
                         managedPlanSnapshot = result.snapshot,
                         plan = null,
-                        ambientLight = null,
-                        algaeLevel = null,
                         editingInstalledPlan = false,
                         contentEnabled = true,
                         initialLoading = false,
                         applying = false
-                    )
+                    ).withStoredInputs(tank, result.snapshot)
                 }
+                if (!_uiState.value.hasInstalledPlan) recalculateAssessment()
             }
             is DeviceLightManagedPlanReadResult.Failed -> {
                 _uiState.update { it.copy(initialLoading = false, applying = false) }
@@ -161,9 +339,11 @@ internal class DeviceLightQuickSetupViewModel(
         _effects.emit(DeviceLightQuickSetupEffect.CloseUnavailable(failure.messageRes()))
     }
 
-    private suspend fun handleMutationFailure(failure: DeviceLightManagedPlanFailure) {
+    private suspend fun handleMutationFailure(
+        deviceUid: String,
+        failure: DeviceLightManagedPlanFailure
+    ) {
         if (failure == DeviceLightManagedPlanFailure.STALE_AUTHORITY) {
-            val state = _uiState.value
             _uiState.update {
                 it.copy(
                     managedPlanSnapshot = null,
@@ -171,8 +351,9 @@ internal class DeviceLightQuickSetupViewModel(
                     applying = false
                 )
             }
-            when (val refreshed = managedPlanOperations.read(boundDeviceUid)) {
+            when (val refreshed = managedPlanOperations.read(deviceUid)) {
                 is DeviceLightManagedPlanReadResult.Available -> {
+                    if (deviceUid != boundDeviceUid) return
                     _uiState.update {
                         it.copy(
                             managedPlanSnapshot = refreshed.snapshot,
@@ -184,35 +365,45 @@ internal class DeviceLightQuickSetupViewModel(
                     recalculateAssessment()
                 }
                 is DeviceLightManagedPlanReadResult.Failed -> {
-                    _effects.emit(
-                        DeviceLightQuickSetupEffect.ShowMessage(refreshed.failure.messageRes())
-                    )
+                    if (deviceUid == boundDeviceUid) {
+                        _effects.emit(
+                            DeviceLightQuickSetupEffect.ShowMessage(
+                                refreshed.failure.messageRes()
+                            )
+                        )
+                    }
                 }
             }
-            _effects.emit(
-                DeviceLightQuickSetupEffect.ShowMessage(
-                    R.string.device_light_quick_setup_stale_authority
+            if (deviceUid == boundDeviceUid) {
+                _effects.emit(
+                    DeviceLightQuickSetupEffect.ShowMessage(
+                        R.string.device_light_quick_setup_stale_authority
+                    )
                 )
-            )
+            }
         } else {
             _uiState.update { it.copy(applying = false) }
             _effects.emit(DeviceLightQuickSetupEffect.ShowMessage(failure.messageRes()))
         }
     }
 
+    private fun updateInput(transform: DeviceLightQuickSetupUiState.() -> DeviceLightQuickSetupUiState) {
+        _uiState.update { state -> state.transform().copy(detailsExpanded = false) }
+        recalculateAssessment()
+    }
+
     private fun recalculateAssessment() {
         val state = _uiState.value
         val tank = state.tank
-        val ambientLight = state.ambientLight
-        val algaeLevel = state.algaeLevel
-        if (tank == null || ambientLight == null || algaeLevel == null) {
+        val input = state.toInputOrNull()
+        if (tank == null || input == null || state.mode == DeviceLightQuickSetupMode.ACTIVE) {
             _uiState.update { it.copy(plan = null, detailsExpanded = false) }
             return
         }
         val plan = runCatching {
             DeviceLightQuickSetupCalculator.calculate(
                 tank = tank,
-                input = tank.automaticInput(ambientLight, algaeLevel),
+                input = input,
                 todayEpochDay = state.todayEpochDay
             )
         }.getOrNull()
@@ -227,31 +418,75 @@ internal class DeviceLightQuickSetupViewModel(
     }
 }
 
-internal sealed interface DeviceLightQuickSetupConditionSelection {
-    data class AmbientLight(val value: DeviceLightAmbientLight) :
-        DeviceLightQuickSetupConditionSelection
-
-    data class AlgaeLevel(val value: DeviceLightAlgaeLevel) :
-        DeviceLightQuickSetupConditionSelection
+private fun DeviceLightQuickSetupUiState.withStoredInputs(
+    tank: DeviceLightQuickSetupTank,
+    snapshot: DeviceLightManagedPlanSnapshot?
+): DeviceLightQuickSetupUiState {
+    val installedPlan = snapshot?.installed == true
+    val installedEndMinute = snapshot?.phases?.firstOrNull()
+        ?.endTimeMs
+        ?.div(MINUTE_MS)
+        ?.toInt()
+    return copy(
+        waterDepthCm = tank.waterDepthCm,
+        fixtureHeightAboveWaterCm = tank.fixtureHeightAboveWaterCm,
+        plantDemand = tank.plantDemand.takeUnless { it == DeviceLightPlantDemand.UNKNOWN },
+        plantCoverage = tank.plantCoverage.takeUnless {
+            it == AquariumPlantCoverage.UNKNOWN
+        },
+        co2Readiness = if (tank.co2ComponentPresent) {
+            tank.co2Readiness
+                .takeIf { installedPlan }
+                ?.takeUnless { it == AquariumCo2Readiness.UNKNOWN }
+        } else {
+            AquariumCo2Readiness.NOT_INSTALLED
+        },
+        daylightExposure = tank.daylightExposure.takeUnless {
+            it == AquariumDaylightExposure.UNKNOWN
+        },
+        daylightStartMinute = tank.daylightStartMinute,
+        daylightEndMinute = tank.daylightEndMinute,
+        surfaceGrowth = tank.surfaceGrowth
+            .takeIf { installedPlan }
+            ?.takeUnless { it == AquariumSurfaceGrowth.UNKNOWN },
+        shelterAvailability = if (tank.hasShrimp) {
+            tank.shelterAvailability.takeUnless {
+                it == AquariumShelterAvailability.UNKNOWN ||
+                    it == AquariumShelterAvailability.NOT_REQUIRED
+            }
+        } else {
+            AquariumShelterAvailability.NOT_REQUIRED
+        },
+        programEndMinute = tank.preferredLightEndMinute ?: installedEndMinute
+    )
 }
 
-private fun DeviceLightQuickSetupTank.automaticInput(
-    ambientLight: DeviceLightAmbientLight,
-    algaeLevel: DeviceLightAlgaeLevel
-): DeviceLightQuickSetupInput =
-    DeviceLightQuickSetupInput(
-        plantDemand = inferredPlantDemand,
-        plantDensity = inferredPlantDensity,
-        aquariumHeightCm = heightCm.coerceIn(
-            QUICK_SETUP_AQUARIUM_HEIGHT_MIN_CM,
-            QUICK_SETUP_AQUARIUM_HEIGHT_MAX_CM
-        ),
-        co2Installed = inferredCo2Installed,
-        activeSoil = inferredActiveSoil,
-        ambientLight = ambientLight,
-        algaeLevel = algaeLevel,
-        programEndMinute = QUICK_SETUP_AUTOMATIC_END_MINUTE
+private fun DeviceLightQuickSetupUiState.toInputOrNull(): DeviceLightQuickSetupInput? {
+    val currentTank = tank ?: return null
+    if (!assessmentComplete) return null
+    return DeviceLightQuickSetupInput(
+        plantDemand = requireNotNull(plantDemand),
+        plantCoverage = requireNotNull(plantCoverage),
+        waterDepthCm = requireNotNull(waterDepthCm),
+        fixtureHeightAboveWaterCm = requireNotNull(fixtureHeightAboveWaterCm),
+        co2Readiness = if (currentTank.co2ComponentPresent) {
+            requireNotNull(co2Readiness)
+        } else {
+            AquariumCo2Readiness.NOT_INSTALLED
+        },
+        substrateSemantic = currentTank.substrateSemantic,
+        daylightExposure = requireNotNull(daylightExposure),
+        daylightStartMinute = daylightStartMinute,
+        daylightEndMinute = daylightEndMinute,
+        surfaceGrowth = requireNotNull(surfaceGrowth),
+        shelterAvailability = if (currentTank.hasShrimp) {
+            requireNotNull(shelterAvailability)
+        } else {
+            AquariumShelterAvailability.NOT_REQUIRED
+        },
+        programEndMinute = requireNotNull(programEndMinute)
     )
+}
 
 internal sealed interface DeviceLightQuickSetupEffect {
     data class ShowMessage(@StringRes val messageRes: Int) : DeviceLightQuickSetupEffect
@@ -265,6 +500,12 @@ private fun DeviceLightQuickSetupTankFailure.messageRes(): Int = when (this) {
         R.string.device_light_quick_setup_tank_not_assigned
     DeviceLightQuickSetupTankFailure.TANK_NOT_FOUND ->
         R.string.device_light_quick_setup_tank_not_found
+    DeviceLightQuickSetupTankFailure.DEVICE_IDENTITY_UNVERIFIED ->
+        R.string.device_light_quick_setup_identity_unverified
+    DeviceLightQuickSetupTankFailure.DEVICE_RUNTIME_UNVERIFIED ->
+        R.string.device_light_quick_setup_runtime_unverified
+    DeviceLightQuickSetupTankFailure.DEVICE_TIME_UNVERIFIED ->
+        R.string.device_light_quick_setup_time_unverified
     DeviceLightQuickSetupTankFailure.INVALID_DEVICE,
     DeviceLightQuickSetupTankFailure.DEVICE_NOT_FOUND,
     DeviceLightQuickSetupTankFailure.UNAVAILABLE ->
@@ -286,3 +527,7 @@ private fun DeviceLightManagedPlanFailure.messageRes(): Int = when (this) {
     DeviceLightManagedPlanFailure.UNAVAILABLE ->
         R.string.device_light_quick_setup_operation_error
 }
+
+private const val MINUTES_PER_DAY = 1_440
+private const val MINUTE_MS = 60_000L
+private const val AUDIT_WRITE_ATTEMPTS = 3

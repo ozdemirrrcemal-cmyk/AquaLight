@@ -3,7 +3,7 @@
 ## Otorite ve kapsam
 
 - Firmware repository: `ozdemirrrcemal-cmyk/AquaLight-Firmware`
-- Firmware branch: `main`
+- Firmware branch: `feature/smart-light-automation-plan`
 - Firmware commit: `455298833668537fedc16b851067558815d2cc7b`
 - Android branch: `feature/smart-light-quick-setup`
 - Schema: `aqualight.light.v1`, storage version `1`

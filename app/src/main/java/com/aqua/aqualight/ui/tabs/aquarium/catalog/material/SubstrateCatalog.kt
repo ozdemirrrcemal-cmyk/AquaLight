@@ -46,9 +46,9 @@ object SubstrateCatalog {
             )
         ),
         AquariumMaterialDefinition(
-            id = "substrate_dennerle_deponitmix_4_8kg",
+            id = "substrate_dennerle_deponit_mix_pro_4_8kg",
             brandRes = R.string.catalog_brand_dennerle,
-            nameRes = R.string.catalog_material_substrate_dennerle_deponitmix_4_8kg_name,
+            nameRes = R.string.catalog_material_substrate_dennerle_deponit_mix_pro_4_8kg_name,
             categoryKey = MaterialCategoryKey.SUBSTRATE,
             categoryTitleRes = R.string.catalog_material_category_substrate_title,
             keywordRes = listOf(

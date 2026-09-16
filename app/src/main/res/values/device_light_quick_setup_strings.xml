@@ -18,7 +18,13 @@
     <string name="device_light_quick_setup_peak_value">%1$d%% peak</string>
     <string name="device_light_quick_setup_why">Why this program?</string>
     <string name="device_light_quick_setup_check_mark">✓</string>
-    <string name="device_light_quick_setup_estimate_warning">No calibrated PAR profile is available. Output is conservatively limited from the device model, aquarium height, and observed conditions; PPFD and DLI are not presented as measured values.</string>
+    <string name="device_light_quick_setup_estimate_warning">No calibrated PAR profile is available. Output is conservatively constrained, not asserted as a measured plant-level target; PPFD and DLI are not shown.</string>
+    <string name="device_light_quick_setup_warning_setup_date_missing">The aquarium setup date is unavailable. The plan remains at the safe six-hour start until the date is corrected and conditions are reviewed.</string>
+    <string name="device_light_quick_setup_warning_setup_date_future">The aquarium setup date is later than the light’s current date. The plan remains at the safe six-hour start until the date is corrected.</string>
+    <string name="device_light_quick_setup_warning_high_light_co2">High-light plants are present, but CO₂ is not confirmed stable when the light turns on. Higher output is not used.</string>
+    <string name="device_light_quick_setup_warning_deep_uncalibrated">The combined water and mounting distance exceeds 60 cm without a matching PAR calibration. Output remains constrained and is not a measured plant-level target.</string>
+    <string name="device_light_quick_setup_warning_daylight_overlap">The program overlaps direct daylight. Output is constrained; choose a non-overlapping light-off time when practical.</string>
+    <string name="device_light_quick_setup_warning_shrimp_shelter">No shaded shrimp shelter was reported. Output is constrained until adequate shade or shelter is available.</string>
     <string name="device_light_quick_setup_applied">The lighting program was applied to the device.</string>
     <string name="device_light_quick_setup_tank_not_assigned">Assign this light to an aquarium before smart lighting setup.</string>
     <string name="device_light_quick_setup_tank_not_found">The assigned aquarium could not be found.</string>
@@ -31,7 +37,7 @@
     <string name="device_light_quick_setup_profile_blocked">This automation is available for planted freshwater aquariums. Add at least one plant and review the aquarium type.</string>
 
     <string name="device_light_quick_setup_prepare_title">Prepare the light program</string>
-    <string name="device_light_quick_setup_prepare_subtitle">Saved profile + 2 quick checks</string>
+    <string name="device_light_quick_setup_prepare_subtitle">Saved profile + required quick checks</string>
     <string name="device_light_quick_setup_program_active">Program active</string>
     <string name="device_light_quick_setup_program_active_subtitle">Running automatically on the device</string>
     <string name="device_light_quick_setup_program_stored">Program stored</string>
@@ -53,7 +59,7 @@
     <string name="device_light_quick_setup_co2_absent">No CO₂</string>
 
     <string name="device_light_quick_setup_today_conditions">Today’s conditions</string>
-    <string name="device_light_quick_setup_conditions_subtitle">Select only information not stored in the profile.</string>
+    <string name="device_light_quick_setup_conditions_subtitle">Select only the current information required by the calculation.</string>
     <string name="device_light_quick_setup_daylight">Daylight</string>
     <string name="device_light_quick_setup_indirect">Indirect</string>
     <string name="device_light_quick_setup_direct">Direct</string>
@@ -61,14 +67,14 @@
     <string name="device_light_quick_setup_none">None</string>
     <string name="device_light_quick_setup_mild">Mild</string>
     <string name="device_light_quick_setup_visible">Visible</string>
-    <string name="device_light_quick_setup_complete_conditions">Complete both checks to generate the program preview.</string>
+    <string name="device_light_quick_setup_complete_conditions">Complete the required checks to generate the program preview.</string>
 
     <string name="device_light_quick_setup_recommended_program">Recommended program</string>
     <string name="device_light_quick_setup_today_program">Today’s program</string>
     <string name="device_light_quick_setup_cautious_tag">Cautious</string>
     <string name="device_light_quick_setup_chart_description">Twenty-four-hour red, green, blue, and white channel curve.</string>
-    <string name="device_light_quick_setup_mild_algae_hold">Increase paused because mild algae is present.</string>
-    <string name="device_light_quick_setup_visible_algae_hold">Increase paused and output reduced because visible algae is present.</string>
+    <string name="device_light_quick_setup_mild_algae_hold">Photoperiod progression is paused because mild algae is present.</string>
+    <string name="device_light_quick_setup_visible_algae_hold">Photoperiod progression is paused and output is constrained because visible algae is present.</string>
     <string name="device_light_quick_setup_calculation_details">Calculation details</string>
     <string name="device_light_quick_setup_hide_details">Hide details</string>
     <string name="device_light_quick_setup_phase_day_value">Phase %1$d</string>
@@ -86,13 +92,14 @@
     </plurals>
     <string name="device_light_quick_setup_not_available">Not available</string>
     <string name="device_light_quick_setup_plant_co2_reason">%1$s plants · %2$s</string>
-    <string name="device_light_quick_setup_active_reason_new_tank">New aquarium · 6-hour start</string>
-    <string name="device_light_quick_setup_active_reason_established">Established aquarium · balanced duration</string>
-    <string name="device_light_quick_setup_active_reason_mild_algae">Mild algae · intensity increase paused</string>
+    <string name="device_light_quick_setup_active_reason_new_tank">Conservative start or reset · 6 hours</string>
+    <string name="device_light_quick_setup_active_reason_acclimation">Controlled increase · 7 hours</string>
+    <string name="device_light_quick_setup_active_reason_established">Balanced stage · 8-hour ceiling</string>
+    <string name="device_light_quick_setup_active_reason_mild_algae">Mild algae · duration progression paused</string>
     <string name="device_light_quick_setup_active_reason_visible_algae">Visible algae · protected output</string>
-    <string name="device_light_quick_setup_active_reason_clear">No visible algae · gradual increase enabled</string>
+    <string name="device_light_quick_setup_active_reason_clear">No visible algae · duration progression may be reviewed</string>
     <string name="device_light_quick_setup_active_reason_held">Automatic increase is awaiting reassessment</string>
-    <string name="device_light_quick_setup_active_reason_protected">Device safety limits are active</string>
+    <string name="device_light_quick_setup_active_reason_protected">Device output constraints are active</string>
     <string name="device_light_quick_setup_update_conditions">Update conditions</string>
     <string name="device_light_quick_setup_program_protected">The program is stored and protected on the device.</string>
 
@@ -100,4 +107,90 @@
     <string name="device_light_quick_setup_apply_changes">Apply changes</string>
     <string name="device_light_quick_setup_program_current">Program is current</string>
     <string name="device_light_quick_setup_cancel">Cancel</string>
+
+    <string name="device_light_quick_setup_profile_save_error">The verified input snapshot could not be saved. Nothing was sent to the device.</string>
+    <string name="device_light_quick_setup_audit_update_error">The program was applied, but its audit outcome could not be updated.</string>
+    <string name="device_light_quick_setup_identity_unverified">The product key or hardware revision could not be verified. Automation was not opened.</string>
+    <string name="device_light_quick_setup_runtime_unverified">The fixture length or live light identity could not be verified. Automation was not opened.</string>
+    <string name="device_light_quick_setup_time_unverified">Sync the light’s date and time, then try again. No program was created.</string>
+    <plurals name="device_light_quick_setup_questions_remaining">
+        <item quantity="one">%1$d required input remains</item>
+        <item quantity="other">%1$d required inputs remain</item>
+    </plurals>
+    <plurals name="device_light_quick_setup_complete_remaining">
+        <item quantity="one">Complete %1$d required input to preview the program.</item>
+        <item quantity="other">Complete %1$d required inputs to preview the program.</item>
+    </plurals>
+    <string name="device_light_quick_setup_calculating">Preparing the verified program preview…</string>
+    <string name="device_light_quick_setup_verified_device_summary">%1$s · %2$d mm · HW %3$s</string>
+    <string name="device_light_quick_setup_unknown">Unknown</string>
+    <string name="device_light_quick_setup_plant_demand_unknown">Plant demand</string>
+    <string name="device_light_quick_setup_coverage_unknown">Coverage</string>
+    <string name="device_light_quick_setup_co2_equipment">CO₂ equipment</string>
+    <string name="device_light_quick_setup_co2_ready">CO₂ ready</string>
+    <string name="device_light_quick_setup_co2_not_ready_short">CO₂ not ready</string>
+    <string name="device_light_quick_setup_nutrient_base">Nutrient base</string>
+    <string name="device_light_quick_setup_inert_substrate">Inert base</string>
+    <string name="device_light_quick_setup_substrate_additive">Base additive</string>
+    <string name="device_light_quick_setup_substrate_unverified">Base unverified</string>
+    <string name="device_light_quick_setup_no_substrate">No base</string>
+
+    <string name="device_light_quick_setup_measurements_title">Installation data</string>
+    <string name="device_light_quick_setup_measurements_subtitle">Measured once and reused until the aquarium or fixture moves.</string>
+    <string name="device_light_quick_setup_water_depth">Actual water depth</string>
+    <string name="device_light_quick_setup_fixture_height">Light above water</string>
+    <string name="device_light_quick_setup_program_end">Light-off time</string>
+    <string name="device_light_quick_setup_daylight_start">Direct daylight starts</string>
+    <string name="device_light_quick_setup_daylight_end">Direct daylight ends</string>
+    <string name="device_light_quick_setup_cm_value">%1$d cm</string>
+    <string name="device_light_quick_setup_cm_suffix">cm</string>
+    <string name="device_light_quick_setup_enter_value">Enter</string>
+    <string name="device_light_quick_setup_plant_demand">Plant light demand</string>
+    <string name="device_light_quick_setup_plant_demand_floor_help">Reviewed plants in this aquarium already require at least medium light, so a lower overall demand cannot be selected.</string>
+    <string name="device_light_quick_setup_plant_coverage">Planted coverage</string>
+    <string name="device_light_quick_setup_co2_question">Is CO₂ stable when the light turns on?</string>
+    <string name="device_light_quick_setup_yes_ready">Yes, ready</string>
+    <string name="device_light_quick_setup_no_not_ready">No / unsure</string>
+    <string name="device_light_quick_setup_co2_help">Start-up lead time varies with flow, diffuser and tank volume. The plan only needs to know whether CO₂ is available when photosynthetic light begins.</string>
+    <string name="device_light_quick_setup_surface_growth">Current algae or biofilm</string>
+    <string name="device_light_quick_setup_target_biofilm">Wanted biofilm</string>
+    <string name="device_light_quick_setup_stable_algae">Stable algae</string>
+    <string name="device_light_quick_setup_worsening_algae">Worsening</string>
+    <string name="device_light_quick_setup_shelter">Shrimp shade and shelter</string>
+    <string name="device_light_quick_setup_shelter_adequate">Adequate</string>
+    <string name="device_light_quick_setup_shelter_limited">Limited</string>
+
+    <string name="device_light_quick_setup_conservative_tag">CONSERVATIVE</string>
+    <string name="device_light_quick_setup_calibrated_tag">CALIBRATED</string>
+    <string name="device_light_quick_setup_percent_value">%1$d%%</string>
+    <string name="device_light_quick_setup_channel_red">Red</string>
+    <string name="device_light_quick_setup_channel_green">Green</string>
+    <string name="device_light_quick_setup_channel_blue">Blue</string>
+    <string name="device_light_quick_setup_channel_white">White</string>
+    <string name="device_light_quick_setup_stable_hold">Output increase is held while algae remains present.</string>
+    <string name="device_light_quick_setup_worsening_hold">Output is guarded and no automatic increase is scheduled while algae is worsening.</string>
+    <string name="device_light_quick_setup_policy">Policy</string>
+    <string name="device_light_quick_setup_evidence">Evidence set</string>
+    <string name="device_light_quick_setup_source_count">%1$d versioned sources</string>
+    <string name="device_light_quick_setup_calibration">Fixture calibration</string>
+    <string name="device_light_quick_setup_calibration_missing">Not available · constrained output</string>
+    <string name="device_light_quick_setup_calibration_value">%1$s · rev %2$d</string>
+    <string name="device_light_quick_setup_geometry">Optical geometry</string>
+    <string name="device_light_quick_setup_geometry_value">%1$d cm water + %2$d cm mount</string>
+    <string name="device_light_quick_setup_reassessment_required">Condition check required</string>
+    <string name="device_light_quick_setup_active_reason_stable_algae">Stable algae · output increase held</string>
+    <string name="device_light_quick_setup_active_reason_worsening_algae">Worsening algae · protected output</string>
+    <string name="device_light_quick_setup_active_reason_biofilm">Wanted shrimp biofilm · not treated as nuisance algae</string>
+
+    <string name="device_light_quick_setup_measurement_sheet_title">Installation measurement</string>
+    <string name="device_light_quick_setup_measurement_sheet_label">Measured value</string>
+    <string name="device_light_quick_setup_measurement_sheet_hint">Enter a whole number</string>
+    <string name="device_light_quick_setup_measurement_save">Save</string>
+    <string name="device_light_quick_setup_measurement_cancel">Cancel</string>
+    <string name="device_light_quick_setup_measurement_required">Enter a valid measurement.</string>
+    <string name="device_light_quick_setup_water_depth_help">Measure from the substrate surface to the water surface. Allowed: %1$d–%2$d cm.</string>
+    <string name="device_light_quick_setup_fixture_height_help">Measure vertically from the water surface to the light. Allowed: %1$d–%2$d cm.</string>
+    <string name="device_light_quick_setup_measurement_out_of_range">The measurement is outside the allowed range.</string>
+    <string name="device_light_quick_setup_end_time_invalid">Choose a light-off time at or after 08:00; this firmware schedule cannot cross midnight.</string>
+    <string name="device_light_quick_setup_daylight_window_invalid">Direct daylight must have a start time earlier than its end time.</string>
 </resources>

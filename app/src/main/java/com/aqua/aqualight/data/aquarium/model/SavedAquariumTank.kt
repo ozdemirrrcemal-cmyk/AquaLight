@@ -1,6 +1,8 @@
 package com.aqua.aqualight.data.aquarium.model
 
+import com.aqua.aqualight.application.aquarium.AquariumAutomationProfile
 import com.aqua.aqualight.application.aquarium.AquariumIdGenerator
+import com.aqua.aqualight.application.aquarium.AquariumPlantLightDemand
 
 data class SavedAquariumTank(
     val id: Long,
@@ -21,13 +23,17 @@ data class SavedAquariumTank(
     val careRemindersEnabled: Boolean = true,
     val plants: List<SavedAquariumPlant>,
     val materials: List<SavedAquariumMaterial>,
-    val livestock: List<SavedAquariumLivestock> = emptyList()
+    val livestock: List<SavedAquariumLivestock> = emptyList(),
+    val automationProfile: AquariumAutomationProfile = AquariumAutomationProfile()
 )
 
 data class SavedAquariumPlant(
     val id: Long,
+    val catalogId: String,
     val plantName: String,
     val category: String,
+    val lightDemand: AquariumPlantLightDemand,
+    val plantedAtEpochDay: Long?,
     val markerX: Float,
     val markerY: Float
 )
@@ -39,7 +45,9 @@ data class SavedAquariumMaterial(
     val categoryTitle: String,
     val name: String,
     val brand: String,
-    val note: String
+    val note: String,
+    val substrateSemantic: com.aqua.aqualight.application.aquarium.AquariumSubstrateSemantic =
+        com.aqua.aqualight.application.aquarium.AquariumSubstrateSemantic.NOT_APPLICABLE
 )
 
 data class SavedAquariumLivestock(

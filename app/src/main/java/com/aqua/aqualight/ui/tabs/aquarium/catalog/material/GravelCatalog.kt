@@ -35,9 +35,10 @@ object GravelCatalog {
             )
         ),
         AquariumMaterialDefinition(
-            id = "gravel_dennerle_nano_gravel_black",
+            id = "gravel_dennerle_nano_shrimp_gravel_sulawesi_black",
             brandRes = R.string.catalog_brand_dennerle,
-            nameRes = R.string.catalog_material_gravel_dennerle_nano_gravel_black_name,
+            nameRes =
+                R.string.catalog_material_gravel_dennerle_nano_shrimp_gravel_sulawesi_black_name,
             categoryKey = MaterialCategoryKey.GRAVEL,
             categoryTitleRes = R.string.catalog_material_category_gravel_title,
             keywordRes = listOf(
@@ -48,14 +49,41 @@ object GravelCatalog {
             )
         ),
         AquariumMaterialDefinition(
-            id = "gravel_dennerle_nano_gravel_natural",
+            id = "gravel_dennerle_nano_shrimp_gravel_arkansas_grey",
             brandRes = R.string.catalog_brand_dennerle,
-            nameRes = R.string.catalog_material_gravel_dennerle_nano_gravel_natural_name,
+            nameRes =
+                R.string.catalog_material_gravel_dennerle_nano_shrimp_gravel_arkansas_grey_name,
             categoryKey = MaterialCategoryKey.GRAVEL,
             categoryTitleRes = R.string.catalog_material_category_gravel_title,
             keywordRes = listOf(
                 R.string.catalog_keyword_gravel,
-                R.string.catalog_keyword_natural,
+                R.string.catalog_keyword_nano,
+                R.string.catalog_keyword_dennerle
+            )
+        ),
+        AquariumMaterialDefinition(
+            id = "gravel_dennerle_nano_shrimp_gravel_borneo_brown",
+            brandRes = R.string.catalog_brand_dennerle,
+            nameRes =
+                R.string.catalog_material_gravel_dennerle_nano_shrimp_gravel_borneo_brown_name,
+            categoryKey = MaterialCategoryKey.GRAVEL,
+            categoryTitleRes = R.string.catalog_material_category_gravel_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_gravel,
+                R.string.catalog_keyword_nano,
+                R.string.catalog_keyword_dennerle
+            )
+        ),
+        AquariumMaterialDefinition(
+            id = "gravel_dennerle_nano_shrimp_gravel_sunda_white",
+            brandRes = R.string.catalog_brand_dennerle,
+            nameRes =
+                R.string.catalog_material_gravel_dennerle_nano_shrimp_gravel_sunda_white_name,
+            categoryKey = MaterialCategoryKey.GRAVEL,
+            categoryTitleRes = R.string.catalog_material_category_gravel_title,
+            keywordRes = listOf(
+                R.string.catalog_keyword_gravel,
+                R.string.catalog_keyword_white,
                 R.string.catalog_keyword_nano,
                 R.string.catalog_keyword_dennerle
             )
@@ -88,9 +116,9 @@ object GravelCatalog {
             )
         ),
         AquariumMaterialDefinition(
-            id = "gravel_aquael_basaltsand",
+            id = "gravel_aquael_basalt_gravel",
             brandRes = R.string.catalog_brand_aquael,
-            nameRes = R.string.catalog_material_gravel_aquael_basaltsand_name,
+            nameRes = R.string.catalog_material_gravel_aquael_basalt_gravel_name,
             categoryKey = MaterialCategoryKey.GRAVEL,
             categoryTitleRes = R.string.catalog_material_category_gravel_title,
             keywordRes = listOf(
@@ -99,19 +127,6 @@ object GravelCatalog {
                 R.string.catalog_keyword_basalt,
                 R.string.catalog_keyword_black,
                 R.string.catalog_keyword_aquael
-            )
-        ),
-        AquariumMaterialDefinition(
-            id = "gravel_natural_river_sand",
-            brandRes = 0,
-            nameRes = R.string.catalog_material_gravel_natural_river_sand_name,
-            categoryKey = MaterialCategoryKey.GRAVEL,
-            categoryTitleRes = R.string.catalog_material_category_gravel_title,
-            keywordRes = listOf(
-                R.string.catalog_keyword_gravel,
-                R.string.catalog_keyword_sand,
-                R.string.catalog_keyword_river,
-                R.string.catalog_keyword_natural
             )
         )
     )

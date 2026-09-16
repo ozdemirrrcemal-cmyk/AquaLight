@@ -1,39 +1,39 @@
 package com.aqua.aqualight.ui.tabs.aquarium.create.materials
 
-import com.aqua.aqualight.ui.common.text.setTextSizeResource
-import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
-import com.aqua.aqualight.base.BaseActivity
-import com.aqua.aqualight.ui.tabs.aquarium.catalog.material.AquariumMaterial
 import android.graphics.Typeface
 import android.os.Bundle
 import android.text.TextUtils
 import android.view.Gravity
 import android.view.View
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.FrameLayout
-import androidx.core.view.isVisible
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
+import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentMaterialPickerBinding
+import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderSearchField
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.common.text.setTextSizeResource
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
-import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
-import com.aqua.aqualight.ui.tabs.aquarium.materials.MaterialSelectionMapper
-import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankViewModel
+import com.aqua.aqualight.ui.tabs.aquarium.catalog.material.AquariumMaterial
 import com.aqua.aqualight.ui.tabs.aquarium.catalog.material.MaterialCatalog
-import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
+import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankViewModel
+import com.aqua.aqualight.ui.tabs.aquarium.materials.MaterialSelectionMapper
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.launch
-import androidx.navigation.fragment.navArgs
 
 class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
 
@@ -473,6 +473,7 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
         }
 
         val category = TextView(requireContext()).apply {
+            // Substrate semantics are reviewed catalog metadata, never a user choice.
             text = product.categoryTitle
             setTextColor(
                 ContextCompat.getColor(
@@ -581,9 +582,7 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
         )
     }
 
-    private fun addCustomMaterial(
-        materialName: String
-    ) {
+    private fun addCustomMaterial(materialName: String) {
         val existingProduct = allProducts.firstOrNull { product ->
             product.name.equals(materialName, ignoreCase = true)
         }

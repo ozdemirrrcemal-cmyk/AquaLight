@@ -1,5 +1,12 @@
 package com.aqua.aqualight.data.aquarium.store
 
+import com.aqua.aqualight.application.aquarium.AquariumAutomationProfile
+import com.aqua.aqualight.application.aquarium.AquariumLivestockCategory
+import com.aqua.aqualight.application.aquarium.AquariumMaterialCategory
+import com.aqua.aqualight.application.aquarium.AquariumPlantLightCatalog
+import com.aqua.aqualight.application.aquarium.AquariumPlantLightDemand
+import com.aqua.aqualight.application.aquarium.AquariumSubstrateSemantic
+import com.aqua.aqualight.application.aquarium.AquariumSubstrateSemantics
 import com.aqua.aqualight.application.aquarium.AquariumTankTaxonomy
 import com.aqua.aqualight.data.store.CommercialStoreSchema
 import com.aqua.aqualight.data.store.StoreInvariantViolation
@@ -77,6 +84,8 @@ object TankStoreRules {
         }
         requireCanonicalOptionalText("tank.tankStyle", tank.tankStyle, MAX_STYLE_CHARS)
 
+        validateAutomationProfile(tank)
+
         validatePlants(tank)
         validateMaterials(tank)
         validateLivestock(tank)
@@ -96,6 +105,11 @@ object TankStoreRules {
                 violation("Duplicate plant id ${plant.id} in tank ${tank.id}.")
             }
             requireCanonicalRequiredText(
+                "plant.catalogId",
+                plant.catalogId,
+                MAX_PRODUCT_ID_CHARS
+            )
+            requireCanonicalRequiredText(
                 "plant.plantName",
                 plant.plantName,
                 MAX_ENTITY_NAME_CHARS
@@ -107,6 +121,155 @@ object TankStoreRules {
             )
             requireNormalizedMarker("plant.markerX", plant.markerX)
             requireNormalizedMarker("plant.markerY", plant.markerY)
+            requireOptionalEpochDay("plant.plantedAtEpochDay", plant.plantedAtEpochDay)
+            if (plant.lightDemand == StoredPlantLightDemand.UNRECOGNIZED) {
+                violation("plant.lightDemand is not recognized.")
+            }
+            val expectedDemand = AquariumPlantLightCatalog.resolve(plant.catalogId).toStored()
+            if (plant.lightDemand != expectedDemand) {
+                violation(
+                    "plant.lightDemand must match the reviewed catalog record or remain unknown."
+                )
+            }
+        }
+    }
+
+    private fun validateAutomationProfile(tank: StoredTank) {
+        if (!tank.hasAutomationProfile()) {
+            violation("tank.automationProfile is required by the final commercial V1 contract.")
+        }
+        val profile = tank.automationProfile
+        if (profile.contractRevision != AquariumAutomationProfile.CONTRACT_REVISION) {
+            violation("tank.automationProfile contract revision is unsupported.")
+        }
+        val hasUnrecognizedEnum = profile.plantDemandOverride ==
+            StoredPlantLightDemand.UNRECOGNIZED ||
+            profile.plantCoverage == StoredPlantCoverage.UNRECOGNIZED ||
+            profile.canopyDensity == StoredCanopyDensity.UNRECOGNIZED ||
+            profile.co2Readiness == StoredCo2Readiness.UNRECOGNIZED ||
+            profile.daylightExposure == StoredDaylightExposure.UNRECOGNIZED ||
+            profile.latestSurfaceGrowth == StoredSurfaceGrowth.UNRECOGNIZED ||
+            profile.shelterAvailability == StoredShelterAvailability.UNRECOGNIZED
+        if (hasUnrecognizedEnum) {
+            violation("tank.automationProfile contains an unrecognized enum value.")
+        }
+        if (profile.hasWaterDepthCm()) {
+            val depth = profile.waterDepthCm
+            if (depth !in MIN_DIMENSION_CM..tank.heightCm) {
+                violation("tank.automationProfile water depth must fit inside tank height.")
+            }
+        }
+        if (profile.hasSubstrateDepthCm()) {
+            val depth = profile.substrateDepthCm
+            if (depth !in MIN_DIMENSION_CM until tank.heightCm) {
+                violation("tank.automationProfile substrate depth must fit inside tank height.")
+            }
+        }
+        if (profile.hasWaterDepthCm() && profile.hasSubstrateDepthCm() &&
+            profile.waterDepthCm + profile.substrateDepthCm > tank.heightCm
+        ) {
+            violation("tank automation water and substrate depths exceed tank height.")
+        }
+        requireOptionalMinute(
+            "automation.daylightStartMinute",
+            profile.hasDaylightStartMinute(),
+            profile.daylightStartMinute
+        )
+        requireOptionalMinute(
+            "automation.daylightEndMinute",
+            profile.hasDaylightEndMinute(),
+            profile.daylightEndMinute
+        )
+        requireOptionalMinute(
+            "automation.preferredLightEndMinute",
+            profile.hasPreferredLightEndMinute(),
+            profile.preferredLightEndMinute
+        )
+        requireOptionalEpochDay(
+            "automation.lastMajorPlantingEpochDay",
+            profile.lastMajorPlantingEpochDay.takeIf {
+                profile.hasLastMajorPlantingEpochDay()
+            } ?: 0L
+        )
+        requireOptionalEpochDay(
+            "automation.latestObservationEpochDay",
+            profile.latestObservationEpochDay.takeIf {
+                profile.hasLatestObservationEpochDay()
+            } ?: 0L
+        )
+        val directDaylight = profile.daylightExposure ==
+            StoredDaylightExposure.STORED_DAYLIGHT_EXPOSURE_DIRECT
+        if (directDaylight &&
+            (!profile.hasDaylightStartMinute() || !profile.hasDaylightEndMinute() ||
+                profile.daylightStartMinute >= profile.daylightEndMinute)
+        ) {
+            violation("direct daylight requires a valid same-day observation window.")
+        }
+        if (!directDaylight &&
+            (profile.hasDaylightStartMinute() || profile.hasDaylightEndMinute())
+        ) {
+            violation("only direct daylight can carry an observation window.")
+        }
+        val hasSurfaceObservation = profile.latestSurfaceGrowth !=
+            StoredSurfaceGrowth.STORED_SURFACE_GROWTH_UNKNOWN
+        if (hasSurfaceObservation != profile.hasLatestObservationEpochDay()) {
+            violation("surface observation value and observation date must be stored together.")
+        }
+        if (profile.hasObservedAreaPercent() && profile.observedAreaPercent !in 0..100) {
+            violation("automation.observedAreaPercent must be between 0 and 100.")
+        }
+        requireCanonicalOptionalText(
+            "automation.observationLocation",
+            profile.observationLocation,
+            MAX_ENTITY_NAME_CHARS
+        )
+        if (profile.hasUpdatedAtMillis()) {
+            requireTimestamp("automation.updatedAtMillis", profile.updatedAtMillis)
+        }
+        validateCo2Inventory(tank, profile)
+        validateLivestockAutomation(tank, profile)
+    }
+
+    private fun validateCo2Inventory(
+        tank: StoredTank,
+        profile: StoredTankAutomationProfile
+    ) {
+        val hasCo2Component = tank.materialsList.any { material ->
+            material.categoryKey == MATERIAL_CATEGORY_CO2
+        }
+        if (!hasCo2Component && profile.co2Readiness !=
+            StoredCo2Readiness.STORED_CO2_READINESS_NOT_INSTALLED
+        ) {
+            violation("CO2 readiness must be not-installed when no CO2 component is recorded.")
+        }
+        if (hasCo2Component && profile.co2Readiness ==
+            StoredCo2Readiness.STORED_CO2_READINESS_NOT_INSTALLED
+        ) {
+            violation("A recorded CO2 component cannot use the not-installed readiness state.")
+        }
+    }
+
+    private fun validateLivestockAutomation(
+        tank: StoredTank,
+        profile: StoredTankAutomationProfile
+    ) {
+        val hasShrimp = tank.livestockList.any { item ->
+            item.category == AquariumLivestockCategory.SHRIMP
+        }
+        if (hasShrimp && profile.shelterAvailability ==
+            StoredShelterAvailability.STORED_SHELTER_AVAILABILITY_NOT_REQUIRED
+        ) {
+            violation("Shrimp tanks require an unknown or assessed shelter state.")
+        }
+        if (!hasShrimp && profile.shelterAvailability !=
+            StoredShelterAvailability.STORED_SHELTER_AVAILABILITY_NOT_REQUIRED
+        ) {
+            violation("Shelter state must be not-required when no shrimp is recorded.")
+        }
+        if (!hasShrimp && profile.latestSurfaceGrowth ==
+            StoredSurfaceGrowth.STORED_SURFACE_GROWTH_TARGET_BIOFILM
+        ) {
+            violation("Target biofilm requires a recorded shrimp profile.")
         }
     }
 
@@ -127,6 +290,9 @@ object TankStoreRules {
                 material.categoryKey,
                 MAX_CATEGORY_CHARS
             )
+            if (!AquariumMaterialCategory.isSupported(material.categoryKey)) {
+                violation("material.categoryKey must be a supported stable category code.")
+            }
             requireCanonicalRequiredText(
                 "material.categoryTitle",
                 material.categoryTitle,
@@ -143,6 +309,39 @@ object TankStoreRules {
                 MAX_ENTITY_NAME_CHARS
             )
             requireCanonicalOptionalText("material.note", material.note, MAX_NOTE_CHARS)
+            if (material.substrateSemantic == StoredSubstrateSemantic.UNRECOGNIZED) {
+                violation("material.substrateSemantic is not recognized.")
+            }
+            if (material.categoryKey == AquariumMaterialCategory.SUBSTRATE &&
+                material.substrateSemantic ==
+                StoredSubstrateSemantic.STORED_SUBSTRATE_SEMANTIC_NOT_APPLICABLE
+            ) {
+                violation("substrate materials require an explicit semantic class.")
+            }
+            if (material.categoryKey !in setOf(
+                    AquariumMaterialCategory.SUBSTRATE,
+                    AquariumMaterialCategory.GRAVEL
+                ) &&
+                material.substrateSemantic !=
+                StoredSubstrateSemantic.STORED_SUBSTRATE_SEMANTIC_NOT_APPLICABLE
+            ) {
+                violation("non-substrate materials cannot carry substrate semantics.")
+            }
+            if (
+                !AquariumSubstrateSemantics.matchesCatalogCategory(
+                    productId = material.productId,
+                    categoryKey = material.categoryKey
+                )
+            ) {
+                violation("material category must match the reviewed catalog identity.")
+            }
+            val expectedSemantic = AquariumSubstrateSemantics.resolve(
+                productId = material.productId,
+                categoryKey = material.categoryKey
+            ).toStored()
+            if (material.substrateSemantic != expectedSemantic) {
+                violation("material.substrateSemantic must match the reviewed catalog record.")
+            }
         }
     }
 
@@ -163,6 +362,9 @@ object TankStoreRules {
                 livestock.category,
                 MAX_CATEGORY_CHARS
             )
+            if (!AquariumLivestockCategory.isSupported(livestock.category)) {
+                violation("livestock.category must be a supported stable category code.")
+            }
             if (livestock.quantity !in 1..100_000) {
                 violation("livestock.quantity must be between 1 and 100000.")
             }
@@ -189,6 +391,29 @@ object TankStoreRules {
         if (value <= 0L) {
             violation("$field must be positive.")
         }
+    }
+
+    private fun AquariumPlantLightDemand.toStored(): StoredPlantLightDemand = when (this) {
+        AquariumPlantLightDemand.UNKNOWN ->
+            StoredPlantLightDemand.STORED_PLANT_LIGHT_DEMAND_UNKNOWN
+        AquariumPlantLightDemand.LOW -> StoredPlantLightDemand.STORED_PLANT_LIGHT_DEMAND_LOW
+        AquariumPlantLightDemand.MEDIUM -> StoredPlantLightDemand.STORED_PLANT_LIGHT_DEMAND_MEDIUM
+        AquariumPlantLightDemand.HIGH -> StoredPlantLightDemand.STORED_PLANT_LIGHT_DEMAND_HIGH
+    }
+
+    private fun AquariumSubstrateSemantic.toStored(): StoredSubstrateSemantic = when (this) {
+        AquariumSubstrateSemantic.NOT_APPLICABLE ->
+            StoredSubstrateSemantic.STORED_SUBSTRATE_SEMANTIC_NOT_APPLICABLE
+        AquariumSubstrateSemantic.UNKNOWN ->
+            StoredSubstrateSemantic.STORED_SUBSTRATE_SEMANTIC_UNKNOWN
+        AquariumSubstrateSemantic.INERT ->
+            StoredSubstrateSemantic.STORED_SUBSTRATE_SEMANTIC_INERT
+        AquariumSubstrateSemantic.NUTRIENT_BASE ->
+            StoredSubstrateSemantic.STORED_SUBSTRATE_SEMANTIC_NUTRIENT_BASE
+        AquariumSubstrateSemantic.ACTIVE_SOIL ->
+            StoredSubstrateSemantic.STORED_SUBSTRATE_SEMANTIC_ACTIVE_SOIL
+        AquariumSubstrateSemantic.ADDITIVE ->
+            StoredSubstrateSemantic.STORED_SUBSTRATE_SEMANTIC_ADDITIVE
     }
 
     private fun requireDimension(field: String, value: Int) {
@@ -238,6 +463,12 @@ object TankStoreRules {
         }
     }
 
+    private fun requireOptionalMinute(field: String, present: Boolean, value: Int) {
+        if (present && value !in 0 until 24 * 60) {
+            violation("$field must be a minute of day.")
+        }
+    }
+
     private fun requireTimestamp(field: String, value: Long) {
         if (value !in MIN_TIMESTAMP_MILLIS..MAX_TIMESTAMP_MILLIS) {
             violation("$field is outside the supported commercial timestamp range.")
@@ -247,4 +478,6 @@ object TankStoreRules {
     private fun violation(message: String): Nothing {
         throw StoreInvariantViolation(message)
     }
+
+    private const val MATERIAL_CATEGORY_CO2 = AquariumMaterialCategory.CO2
 }

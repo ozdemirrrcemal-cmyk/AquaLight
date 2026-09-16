@@ -2,10 +2,11 @@ package com.aqua.aqualight.data.aquarium.devices
 
 import android.content.Context
 import androidx.datastore.core.DataStore
-import androidx.datastore.dataStore
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
+import androidx.datastore.dataStore
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker
+import com.aqua.aqualight.data.store.CommercialStoreSchema
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
@@ -18,7 +19,9 @@ private val Context.tankDeviceAssignmentsDataStore: DataStore<TankDeviceAssignme
         LocalDataRecoveryTracker.markRecovered(
             LocalDataRecoveryTracker.Area.TANK_DEVICE_ASSIGNMENTS
         )
-        TankDeviceAssignmentsStore.getDefaultInstance()
+        TankDeviceAssignmentsStore.newBuilder()
+            .setSchemaVersion(CommercialStoreSchema.TANK_DEVICE_ASSIGNMENTS_VERSION)
+            .build()
     }
 )
 
@@ -79,6 +82,35 @@ class TankDeviceAssignmentStore private constructor(
             checkNotNull(decision) {
                 "Tank assignment mutation completed without a decision."
             }
+        }
+    }
+
+    internal suspend fun updateLightAutomation(
+        ownerUid: String,
+        deviceUid: DeviceUid,
+        installation: TankLightInstallationProfile,
+        recommendations: List<TankLightRecommendationSnapshot>
+    ): TankDeviceAssignment {
+        return mutationMutex.withLock {
+            var updated: TankDeviceAssignment? = null
+            dataStore.updateData { currentStore ->
+                val normalizedOwner = ownerUid.requireOwnerUid()
+                val index = currentStore.assignmentsList.indexOfFirst { assignment ->
+                    assignment.ownerUid == normalizedOwner &&
+                        assignment.deviceUid == deviceUid.value
+                }
+                require(index >= 0) { "Tank assignment was not found." }
+                val replacement = currentStore.getAssignments(index).toDomain().copy(
+                    lightInstallation = installation,
+                    lightRecommendations = recommendations.takeLast(MAX_RECOMMENDATION_HISTORY)
+                )
+                updated = replacement
+                currentStore.toBuilder()
+                    .setAssignments(index, replacement.toStored())
+                    .build()
+                    .also(TankDeviceAssignmentRules::validate)
+            }
+            checkNotNull(updated)
         }
     }
 
@@ -203,6 +235,7 @@ class TankDeviceAssignmentStore private constructor(
     }
 
     companion object {
+        private const val MAX_RECOMMENDATION_HISTORY = 1_000
         @Volatile
         private var instance: TankDeviceAssignmentStore? = null
 

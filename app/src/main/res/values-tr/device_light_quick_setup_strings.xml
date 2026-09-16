@@ -18,7 +18,13 @@
     <string name="device_light_quick_setup_peak_value">%%%1$d tepe</string>
     <string name="device_light_quick_setup_why">Neden bu program?</string>
     <string name="device_light_quick_setup_check_mark">✓</string>
-    <string name="device_light_quick_setup_estimate_warning">Kalibre edilmiş PAR profili bulunmuyor. Çıkış; cihaz modeli, akvaryum yüksekliği ve gözlenen koşullara göre temkinli biçimde sınırlandırılır; PPFD ve DLI ölçülmüş değer gibi sunulmaz.</string>
+    <string name="device_light_quick_setup_estimate_warning">Kalibre edilmiş PAR profili bulunmuyor. Çıkış temkinli biçimde sınırlandırılır; bitki düzeyinde ölçülmüş hedef olduğu iddia edilmez ve PPFD/DLI gösterilmez.</string>
+    <string name="device_light_quick_setup_warning_setup_date_missing">Akvaryum kurulum tarihi bulunmuyor. Tarih düzeltilip koşullar yeniden değerlendirilene kadar plan güvenli 6 saatlik başlangıçta kalır.</string>
+    <string name="device_light_quick_setup_warning_setup_date_future">Akvaryum kurulum tarihi lambanın güncel tarihinden ileride. Tarih düzeltilene kadar plan güvenli 6 saatlik başlangıçta kalır.</string>
+    <string name="device_light_quick_setup_warning_high_light_co2">Yüksek ışık isteyen bitkiler var ancak ışık açıldığında CO₂’nin stabil olduğu doğrulanmadı. Daha yüksek çıkış kullanılmaz.</string>
+    <string name="device_light_quick_setup_warning_deep_uncalibrated">Su ve montaj mesafesi toplamı 60 cm’yi aşıyor ve uygun PAR kalibrasyonu yok. Çıkış sınırlı kalır; bitki düzeyinde ölçülmüş hedef değildir.</string>
+    <string name="device_light_quick_setup_warning_daylight_overlap">Program direkt gün ışığıyla çakışıyor. Çıkış sınırlandırılır; mümkünse çakışmayan bir kapanış saati seç.</string>
+    <string name="device_light_quick_setup_warning_shrimp_shelter">Karidesler için gölgeli saklanma alanı bildirilmedi. Yeterli gölge veya saklanma alanı sağlanana kadar çıkış sınırlandırılır.</string>
     <string name="device_light_quick_setup_applied">Aydınlatma programı cihaza uygulandı.</string>
     <string name="device_light_quick_setup_tank_not_assigned">Akıllı aydınlatmadan önce bu lambayı bir akvaryuma ata.</string>
     <string name="device_light_quick_setup_tank_not_found">Atanmış akvaryum bulunamadı.</string>
@@ -31,7 +37,7 @@
     <string name="device_light_quick_setup_profile_blocked">Bu otomasyon bitkili tatlı su akvaryumları için kullanılabilir. En az bir bitki ekleyip akvaryum türünü kontrol et.</string>
 
     <string name="device_light_quick_setup_prepare_title">Işık planını hazırla</string>
-    <string name="device_light_quick_setup_prepare_subtitle">Kayıtlı profil + 2 kısa kontrol</string>
+    <string name="device_light_quick_setup_prepare_subtitle">Kayıtlı profil + gerekli kısa kontroller</string>
     <string name="device_light_quick_setup_program_active">Program aktif</string>
     <string name="device_light_quick_setup_program_active_subtitle">Cihaz tarafından otomatik yürütülüyor</string>
     <string name="device_light_quick_setup_program_stored">Program kayıtlı</string>
@@ -53,7 +59,7 @@
     <string name="device_light_quick_setup_co2_absent">CO₂ yok</string>
 
     <string name="device_light_quick_setup_today_conditions">Bugünkü koşullar</string>
-    <string name="device_light_quick_setup_conditions_subtitle">Yalnız profilde bulunmayan bilgileri seç.</string>
+    <string name="device_light_quick_setup_conditions_subtitle">Yalnız hesap için gerekli güncel bilgileri seç.</string>
     <string name="device_light_quick_setup_daylight">Gün ışığı</string>
     <string name="device_light_quick_setup_indirect">Dolaylı</string>
     <string name="device_light_quick_setup_direct">Direkt</string>
@@ -61,14 +67,14 @@
     <string name="device_light_quick_setup_none">Yok</string>
     <string name="device_light_quick_setup_mild">Hafif</string>
     <string name="device_light_quick_setup_visible">Belirgin</string>
-    <string name="device_light_quick_setup_complete_conditions">Program önizlemesi için iki kontrolü de tamamla.</string>
+    <string name="device_light_quick_setup_complete_conditions">Program önizlemesi için gerekli kontrolleri tamamla.</string>
 
     <string name="device_light_quick_setup_recommended_program">Önerilen program</string>
     <string name="device_light_quick_setup_today_program">Bugünkü program</string>
     <string name="device_light_quick_setup_cautious_tag">Temkinli</string>
     <string name="device_light_quick_setup_chart_description">Kırmızı, yeşil, mavi ve beyaz kanalların 24 saatlik eğrisi.</string>
-    <string name="device_light_quick_setup_mild_algae_hold">Hafif yosun nedeniyle artış beklemede.</string>
-    <string name="device_light_quick_setup_visible_algae_hold">Belirgin yosun nedeniyle artış durduruldu ve çıkış azaltıldı.</string>
+    <string name="device_light_quick_setup_mild_algae_hold">Hafif yosun nedeniyle aydınlatma süresi artışı beklemede.</string>
+    <string name="device_light_quick_setup_visible_algae_hold">Belirgin yosun nedeniyle süre artışı durduruldu ve çıkış sınırlandırıldı.</string>
     <string name="device_light_quick_setup_calculation_details">Hesap ayrıntıları</string>
     <string name="device_light_quick_setup_hide_details">Ayrıntıları gizle</string>
     <string name="device_light_quick_setup_phase_day_value">%1$d. faz</string>
@@ -86,13 +92,14 @@
     </plurals>
     <string name="device_light_quick_setup_not_available">Kullanılamıyor</string>
     <string name="device_light_quick_setup_plant_co2_reason">%1$s bitkileri · %2$s</string>
-    <string name="device_light_quick_setup_active_reason_new_tank">Yeni tank · 6 saat başlangıç</string>
-    <string name="device_light_quick_setup_active_reason_established">Oturmuş tank · dengeli süre</string>
-    <string name="device_light_quick_setup_active_reason_mild_algae">Hafif yosun · yoğunluk artışı beklemede</string>
+    <string name="device_light_quick_setup_active_reason_new_tank">Temkinli başlangıç veya sıfırlama · 6 saat</string>
+    <string name="device_light_quick_setup_active_reason_acclimation">Kontrollü artış · 7 saat</string>
+    <string name="device_light_quick_setup_active_reason_established">Dengeli evre · 8 saat tavan</string>
+    <string name="device_light_quick_setup_active_reason_mild_algae">Hafif yosun · süre artışı beklemede</string>
     <string name="device_light_quick_setup_active_reason_visible_algae">Belirgin yosun · korumalı çıkış</string>
-    <string name="device_light_quick_setup_active_reason_clear">Görünür yosun yok · kademeli artış etkin</string>
+    <string name="device_light_quick_setup_active_reason_clear">Görünür yosun yok · süre artışı değerlendirilebilir</string>
     <string name="device_light_quick_setup_active_reason_held">Otomatik artış yeniden değerlendirmeyi bekliyor</string>
-    <string name="device_light_quick_setup_active_reason_protected">Cihaz güvenlik sınırları etkin</string>
+    <string name="device_light_quick_setup_active_reason_protected">Cihaz çıkış sınırları etkin</string>
     <string name="device_light_quick_setup_update_conditions">Koşulları güncelle</string>
     <string name="device_light_quick_setup_program_protected">Program cihazda kayıtlı ve korunuyor.</string>
 
@@ -100,4 +107,90 @@
     <string name="device_light_quick_setup_apply_changes">Değişiklikleri uygula</string>
     <string name="device_light_quick_setup_program_current">Program güncel</string>
     <string name="device_light_quick_setup_cancel">Vazgeç</string>
+
+    <string name="device_light_quick_setup_profile_save_error">Doğrulanmış girdi kaydı oluşturulamadı. Cihaza hiçbir şey gönderilmedi.</string>
+    <string name="device_light_quick_setup_audit_update_error">Program uygulandı ancak denetim sonucu güncellenemedi.</string>
+    <string name="device_light_quick_setup_identity_unverified">Ürün anahtarı veya donanım revizyonu doğrulanamadı. Otomasyon açılmadı.</string>
+    <string name="device_light_quick_setup_runtime_unverified">Lamba uzunluğu veya canlı cihaz kimliği doğrulanamadı. Otomasyon açılmadı.</string>
+    <string name="device_light_quick_setup_time_unverified">Aydınlatmanın tarih ve saatini eşitleyip tekrar dene. Program oluşturulmadı.</string>
+    <plurals name="device_light_quick_setup_questions_remaining">
+        <item quantity="one">%1$d zorunlu bilgi kaldı</item>
+        <item quantity="other">%1$d zorunlu bilgi kaldı</item>
+    </plurals>
+    <plurals name="device_light_quick_setup_complete_remaining">
+        <item quantity="one">Programı önizlemek için %1$d zorunlu bilgiyi tamamla.</item>
+        <item quantity="other">Programı önizlemek için %1$d zorunlu bilgiyi tamamla.</item>
+    </plurals>
+    <string name="device_light_quick_setup_calculating">Doğrulanmış program önizlemesi hazırlanıyor…</string>
+    <string name="device_light_quick_setup_verified_device_summary">%1$s · %2$d mm · HW %3$s</string>
+    <string name="device_light_quick_setup_unknown">Bilinmiyor</string>
+    <string name="device_light_quick_setup_plant_demand_unknown">Bitki talebi</string>
+    <string name="device_light_quick_setup_coverage_unknown">Kaplama</string>
+    <string name="device_light_quick_setup_co2_equipment">CO₂ ekipmanı</string>
+    <string name="device_light_quick_setup_co2_ready">CO₂ hazır</string>
+    <string name="device_light_quick_setup_co2_not_ready_short">CO₂ hazır değil</string>
+    <string name="device_light_quick_setup_nutrient_base">Besleyici taban</string>
+    <string name="device_light_quick_setup_inert_substrate">İnert taban</string>
+    <string name="device_light_quick_setup_substrate_additive">Taban katkısı</string>
+    <string name="device_light_quick_setup_substrate_unverified">Taban doğrulanmadı</string>
+    <string name="device_light_quick_setup_no_substrate">Taban yok</string>
+
+    <string name="device_light_quick_setup_measurements_title">Kurulum bilgileri</string>
+    <string name="device_light_quick_setup_measurements_subtitle">Bir kez ölçülür; tank veya lamba taşınana kadar yeniden kullanılır.</string>
+    <string name="device_light_quick_setup_water_depth">Gerçek su derinliği</string>
+    <string name="device_light_quick_setup_fixture_height">Lamba–su mesafesi</string>
+    <string name="device_light_quick_setup_program_end">Işığın kapanış saati</string>
+    <string name="device_light_quick_setup_daylight_start">Direkt gün ışığı başlangıcı</string>
+    <string name="device_light_quick_setup_daylight_end">Direkt gün ışığı bitişi</string>
+    <string name="device_light_quick_setup_cm_value">%1$d cm</string>
+    <string name="device_light_quick_setup_cm_suffix">cm</string>
+    <string name="device_light_quick_setup_enter_value">Gir</string>
+    <string name="device_light_quick_setup_plant_demand">Bitkilerin ışık talebi</string>
+    <string name="device_light_quick_setup_plant_demand_floor_help">Bu akvaryumdaki doğrulanmış bitkiler zaten en az orta ışık istiyor; toplam talep daha düşük seçilemez.</string>
+    <string name="device_light_quick_setup_plant_coverage">Bitkili alan kaplaması</string>
+    <string name="device_light_quick_setup_co2_question">Işık açıldığında CO₂ hazır ve stabil mi?</string>
+    <string name="device_light_quick_setup_yes_ready">Evet, hazır</string>
+    <string name="device_light_quick_setup_no_not_ready">Hayır / emin değilim</string>
+    <string name="device_light_quick_setup_co2_help">Gerekli ön açılma süresi akışa, difüzöre ve tank hacmine göre değişir. Plan yalnız fotosentetik ışık başladığında CO₂’nin hazır olup olmadığını kullanır.</string>
+    <string name="device_light_quick_setup_surface_growth">Güncel yosun veya biofilm</string>
+    <string name="device_light_quick_setup_target_biofilm">Hedef biofilm</string>
+    <string name="device_light_quick_setup_stable_algae">Sabit yosun</string>
+    <string name="device_light_quick_setup_worsening_algae">Artıyor</string>
+    <string name="device_light_quick_setup_shelter">Karides gölge ve saklanma alanı</string>
+    <string name="device_light_quick_setup_shelter_adequate">Yeterli</string>
+    <string name="device_light_quick_setup_shelter_limited">Sınırlı</string>
+
+    <string name="device_light_quick_setup_conservative_tag">TEMKİNLİ</string>
+    <string name="device_light_quick_setup_calibrated_tag">KALİBRE</string>
+    <string name="device_light_quick_setup_percent_value">%%%1$d</string>
+    <string name="device_light_quick_setup_channel_red">Kırmızı</string>
+    <string name="device_light_quick_setup_channel_green">Yeşil</string>
+    <string name="device_light_quick_setup_channel_blue">Mavi</string>
+    <string name="device_light_quick_setup_channel_white">Beyaz</string>
+    <string name="device_light_quick_setup_stable_hold">Yosun mevcutken çıkış artışı bekletilir.</string>
+    <string name="device_light_quick_setup_worsening_hold">Yosun artarken çıkış korunur ve otomatik artış planlanmaz.</string>
+    <string name="device_light_quick_setup_policy">Politika</string>
+    <string name="device_light_quick_setup_evidence">Kanıt seti</string>
+    <string name="device_light_quick_setup_source_count">%1$d sürümlü kaynak</string>
+    <string name="device_light_quick_setup_calibration">Lamba kalibrasyonu</string>
+    <string name="device_light_quick_setup_calibration_missing">Yok · sınırlandırılmış çıkış</string>
+    <string name="device_light_quick_setup_calibration_value">%1$s · rev %2$d</string>
+    <string name="device_light_quick_setup_geometry">Optik geometri</string>
+    <string name="device_light_quick_setup_geometry_value">%1$d cm su + %2$d cm montaj</string>
+    <string name="device_light_quick_setup_reassessment_required">Koşul kontrolü gerekli</string>
+    <string name="device_light_quick_setup_active_reason_stable_algae">Sabit yosun · çıkış artışı beklemede</string>
+    <string name="device_light_quick_setup_active_reason_worsening_algae">Artan yosun · korumalı çıkış</string>
+    <string name="device_light_quick_setup_active_reason_biofilm">Hedef karides biofilmi · istenmeyen yosun sayılmaz</string>
+
+    <string name="device_light_quick_setup_measurement_sheet_title">Kurulum ölçüsü</string>
+    <string name="device_light_quick_setup_measurement_sheet_label">Ölçülen değer</string>
+    <string name="device_light_quick_setup_measurement_sheet_hint">Tam sayı gir</string>
+    <string name="device_light_quick_setup_measurement_save">Kaydet</string>
+    <string name="device_light_quick_setup_measurement_cancel">Vazgeç</string>
+    <string name="device_light_quick_setup_measurement_required">Geçerli bir ölçü gir.</string>
+    <string name="device_light_quick_setup_water_depth_help">Taban yüzeyinden su yüzeyine ölç. İzin verilen: %1$d–%2$d cm.</string>
+    <string name="device_light_quick_setup_fixture_height_help">Su yüzeyinden lambaya dikey ölç. İzin verilen: %1$d–%2$d cm.</string>
+    <string name="device_light_quick_setup_measurement_out_of_range">Ölçü izin verilen aralığın dışında.</string>
+    <string name="device_light_quick_setup_end_time_invalid">08:00 veya sonrasında bir kapanış saati seç; bu firmware programı gece yarısını aşamaz.</string>
+    <string name="device_light_quick_setup_daylight_window_invalid">Direkt gün ışığı başlangıcı bitişinden önce olmalı.</string>
 </resources>

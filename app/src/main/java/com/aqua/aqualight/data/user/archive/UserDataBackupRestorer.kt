@@ -225,10 +225,18 @@ internal class UserDataBackupRestorer(
             when (
                 val result = dataSources.assignments.assignDeviceToTank(
                     plan.tankId,
-                    plan.deviceUid
+                    plan.deviceUid,
+                    plan.archived.assignedAtMillis
                 )
             ) {
-                is TankDeviceAssignmentResult.Assigned -> restored += 1
+                is TankDeviceAssignmentResult.Assigned -> {
+                    dataSources.assignments.updateLightAutomation(
+                        plan.deviceUid,
+                        plan.archived.lightInstallation,
+                        plan.archived.lightRecommendations
+                    )
+                    restored += 1
+                }
                 is TankDeviceAssignmentResult.AlreadyAssigned,
                 is TankDeviceAssignmentResult.Conflict,
                 TankDeviceAssignmentResult.DeviceNotFound -> skipped += 1
@@ -256,7 +264,7 @@ internal class UserDataBackupRestorer(
             val deviceUid = DeviceUid(archived.deviceUid)
             val existing = dataSources.assignments.assignmentForDevice(deviceUid)
             if (existing == null) {
-                plans += AssignmentRestorePlan(restoredTankId, deviceUid)
+                plans += AssignmentRestorePlan(restoredTankId, deviceUid, archived)
             } else {
                 skipped += 1
             }
@@ -319,7 +327,8 @@ private data class CareTaskRestorePlan(
 
 private data class AssignmentRestorePlan(
     val tankId: Long,
-    val deviceUid: DeviceUid
+    val deviceUid: DeviceUid,
+    val archived: ArchiveDeviceAssignment
 )
 
 private data class AssignmentPlanningResult(

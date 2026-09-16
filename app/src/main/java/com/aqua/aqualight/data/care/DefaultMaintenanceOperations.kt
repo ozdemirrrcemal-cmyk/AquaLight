@@ -6,6 +6,9 @@ import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
 import com.aqua.aqualight.application.aquarium.AquariumPlantTag
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.application.care.CareTaskSnapshot
+import com.aqua.aqualight.application.care.CareTaskSource as AppCareTaskSource
+import com.aqua.aqualight.application.care.CareTaskStatus as AppCareTaskStatus
+import com.aqua.aqualight.application.care.CareTaskType as AppCareTaskType
 import com.aqua.aqualight.application.care.CompletedCareActivityInput
 import com.aqua.aqualight.application.care.MaintenanceOperations
 import com.aqua.aqualight.application.care.ManualCareTaskInput
@@ -16,14 +19,11 @@ import com.aqua.aqualight.data.aquarium.model.SavedAquariumPlant
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.data.care.catalog.CareTaskTypeCatalog
 import com.aqua.aqualight.data.care.model.CareTask
+import com.aqua.aqualight.data.care.model.CareTaskType as DataCareTaskType
 import com.aqua.aqualight.data.care.smartcare.SmartCareTaskGenerator
 import com.aqua.aqualight.data.user.withCurrentOwnerScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import com.aqua.aqualight.application.care.CareTaskSource as AppCareTaskSource
-import com.aqua.aqualight.application.care.CareTaskStatus as AppCareTaskStatus
-import com.aqua.aqualight.application.care.CareTaskType as AppCareTaskType
-import com.aqua.aqualight.data.care.model.CareTaskType as DataCareTaskType
 
 class DefaultMaintenanceOperations(
     context: Context,
@@ -188,8 +188,11 @@ internal fun AquariumTankSnapshot.toDataTank(
 
 private fun AquariumPlantTag.toDataPlant(): SavedAquariumPlant = SavedAquariumPlant(
     id = id,
+    catalogId = catalogId,
     plantName = plantName,
     category = category,
+    lightDemand = lightDemand,
+    plantedAtEpochDay = plantedAtEpochDay,
     markerX = markerX,
     markerY = markerY
 )
@@ -202,7 +205,8 @@ private fun AquariumMaterialSelection.toDataMaterial(): SavedAquariumMaterial =
         categoryTitle = categoryTitle,
         name = name,
         brand = brand,
-        note = note
+        note = note,
+        substrateSemantic = substrateSemantic
     )
 
 private fun AquariumLivestock.toDataLivestock(): SavedAquariumLivestock =

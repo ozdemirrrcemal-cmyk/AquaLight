@@ -1,173 +1,190 @@
-# Akıllı aydınlatma hızlı kurulum sözleşmesi
+# Akıllı aydınlatma ticari V1 sözleşmesi
 
-## Kapsam ve otoriteler
+## Değişmez kapsam
 
-Bu belge, `feature/smart-light-quick-setup` Android uygulamasının firmware
-`455298833668537fedc16b851067558815d2cc7b` ile çalışan hızlı aydınlatma
-otomasyonunu tanımlar.
+Bu belge Android `feature/smart-light-quick-setup` ile firmware
+`feature/smart-light-automation-plan` dallarının ticari akıllı aydınlatma akışını
+tanımlar. Pinli firmware commit'i
+`455298833668537fedc16b851067558815d2cc7b` değeridir.
 
-- Android; kayıtlı tank ve atanmış cihaz verilerini, profilde bulunmayan iki gözlem
-  sinyaliyle (gün ışığı ve yosun durumu) birleştirerek deterministik öneri üretir.
-- Firmware; planı doğrulayan, kalıcılaştıran ve çalıştıran tek otoritedir.
-- Öneri, tıbbi/biyolojik kesinlik iddiası taşımaz. Sensör tabanlı PAR ölçümü
-  bulunmadığı için PPFD/DLI ölçülmüş değer gibi kullanıcıya gösterilmez.
-- Firmware'in revision veya storage generation değeri değişirse Android körlemesine
-  tekrar yazmaz; authoritative planı yeniden okur ve tank verisinden yeni bir plan
-  hesaplar. Yeniden uygulama yine açık kullanıcı eylemi gerektirir.
+- Tek sözleşme `aqualight.light.v1`, tek storage/schema sürümü `1`'dir. V2 ve
+  migration/compatibility yolu yoktur.
+- Android öneriyi üretir ve kullanıcı onayından önce kesin girdileri kalıcı denetim
+  kaydına yazar. Firmware planı strict doğrular, atomik kaydeder ve çalıştırır.
+- Telefon tarihi plan otoritesi değildir. Her hesaplamada yeni `light.status.get`
+  alınır; `scheduler.ready=true` ve geçerli firmware yerel tarihi yoksa işlem
+  fail-closed kapanır.
+- Yüzdeler cihaz kanal komutudur. Exact ürün/hardware/fixture kalibrasyonu yokken
+  PPFD veya DLI ölçümü/tahmini gösterilmez.
+- Taban türü hiçbir ekranda kullanıcıya sorulmaz. Kullanıcı yalnız ürün adını seçer;
+  semantik sınıf sürümlü katalog kaydından gelir.
 
-## Girdi sahipliği ve mevcut veri yeterliliği
+## Veri sahipliği ve soru politikası
 
-| Girdi | Android kaynağı | Otomasyon davranışı | Kurulum ekranında düzenlenir mi? |
+| Veri | Tek doğru kaynak | Kullanıcıya sorulma koşulu | Eksik/şüpheli davranış |
 |---|---|---|---|
-| Tank–cihaz ilişkisi | `TankDeviceAssignmentRepository` | Zorunlu; yoksa akış açılmaz | Hayır |
-| Kurulum tarihi | `SavedAquariumTank.setupDateEpochDay` | Yaşı ve yaşam evresini belirler; eksik/gelecek tarih temkinli yeni tank davranışıdır | Hayır |
-| Akvaryum yüksekliği | `SavedAquariumTank.heightCm` | Değer doğrudan optik modelde kullanılır; yapay `-5 cm` düzeltmesi yoktur | Hayır |
-| Bitki listesi | Tank store | İsim/kategori sinyallerinden az/orta/yüksek ihtiyaç tahmini | Hayır |
-| Bitki yoğunluğu | Bitki adedi | `0–2` seyrek, `3–7` orta, `8+` yoğun | Hayır |
-| CO₂ kurulumu | `SmartCareTankClassifier` | Kayıtlı CO₂ kategorisi/sinyali otomatik kullanılır | Hayır |
-| Aktif toprak | Malzeme `categoryKey=substrate` | Taban kategorisindeki her ürün aktif toprak kabul edilir; ürün adında `soil` aranmaz | Hayır |
-| Ürün ve kanal şekli | Authoritative cihaz snapshot'ı | WRGB/RGB sahnesini seçer | Hayır |
-| Standart montaj mesafesi | Ürün politikası | WRGB için 10 cm, RGB için 8 cm güvenli varsayım | Hayır |
-| Program penceresi | Ürün politikası | Mevcut evrenin süresi 22:00'de bitecek şekilde otomatik yerleştirilir | Hayır |
-| Gün ışığı etkisi | Kullanıcı gözlemi | Az / dolaylı / direkt; yapay çıkışı temkinli azaltır | Evet |
-| Yosun durumu | Kullanıcı gözlemi | Yok / hafif / belirgin; artışı sürdürür, bekletir veya daha güçlü sınırlar | Evet |
-| Substrat seviyesinde tam profil PAR | Sensör/veri yok | Muhafazakâr iç model; ölçülmüş PPFD/DLI olarak sunulmaz | Hayır |
+| Tank tipi, cam ölçüleri, kurulum tarihi | Mevcut tank kaydı | Tekrar sorulmaz | Tarih eksik/gelecekteyse 6 saatlik başlangıçta kalır |
+| Gerçek su derinliği | Tank otomasyon profili | İlk hassas ışık kurulumunda bir kez; düzenlemede değiştirilebilir | Plan tamamlanmaz |
+| Lamba–su mesafesi | Tank–cihaz montaj profili | İlk atamada; düzenlemede montaj değişikliği girilebilir | Plan tamamlanmaz; değişiklik 6 saate resetler |
+| Product key, hardware revision | Doğrulanmış cihaz kimliği | Sorulmaz | Akış açılmaz |
+| Fixture uzunluğu ve cihaz yerel tarihi | Güncel firmware status | Sorulmaz | Akış açılmaz |
+| Kalibrasyon kimliği/revizyonu | AquaLight kalibrasyon kataloğu | Sorulmaz | Kalibre yoğunluk ve PPFD/DLI kapalı; kanal tavanı en fazla `%50` |
+| Bitki türü/ışık talebi | Stabil bitki katalog kimliği | Yalnız özel/bilinmeyen bitkide düşük–orta–yüksek | Bilinmeyen talep sessizce tahmin edilmez; cevap exact katalog kayıtlarının kanıtlı en yüksek talebini düşüremez |
+| Bitki kaplaması | Tank otomasyon profili | Bir kez seyrek–orta–yoğun | Bitki adedi yoğunluk yerine kullanılmaz |
+| CO₂ ekipmanı varlığı | Mevcut tank malzemeleri | Tekrar sorulmaz | Varlık, aktif/hazır kabul edilmez |
+| CO₂ çalışma durumu | Zaman damgalı tank otomasyon profili | CO₂ ekipmanı varsa ilk kurulumda ve her yeniden değerlendirmede tek soru: “Işık açıldığında CO₂ hazır ve stabil mi?” | Hazır değilse süre artışı tutulur ve çıkış sınırlandırılır |
+| Taban semantiği | Exact ürün ID'li taban kataloğu | Asla sorulmaz | Bilinmeyen ürün aktif toprak sayılmaz |
+| Gün ışığı sınıfı/penceresi | Tank çevre profili | İlk kurulumda; direkt ise başlangıç/bitiş de istenir; yeniden değerlendirmede mevcut değer düzenlenebilir | Direkt ışıkta korumalı çıkış ve artış hold |
+| Güncel yosun/biofilm | Zaman damgalı gözlem | Her yeni plan değerlendirmesinde tek kısa soru | Sabit/artan yosunda artış yok; hedef karides biofilmi yosun sayılmaz |
+| Karides ve saklanma | Mevcut canlı kaydı + profil | Yalnız karides varsa tek soru | Yetersizse çıkış sınırlandırılır |
+| Kapanış saati | Profil veya mevcut firmware planı | İlk kez eksikse | `22:00` sessizce atanmaz; aynı günü aşan plan reddedilir |
+| Son büyük dikim/taban/lamba değişimi | Tank olayı + montaj profili | Akışta tekrar sorulmaz | Bitki veya taban kompozisyonu değişince profil geçersizleşir; ilk yeni plan cihaz tarihiyle 21 günlük yaşam döngüsünü başlatır, taban değişiminde su derinliği yeniden ölçülür |
+| Input snapshot, politika, kaynaklar, sonuç | Öneri sistemi | Sorulmaz | Denetim kaydı oluşmadan firmware'e yazılmaz |
 
-Sonuç: Bu ekran bir plan editörü değildir. Tank profili salt-okunur özetlenir;
-kullanıcı yalnız uygulamanın bilemeyeceği iki güncel koşulu seçer. Montaj mesafesi
-ürün politikasıyla, ortam etkisi kullanıcı gözlemiyle ele alınır. Program cihazda
-zaten kuruluysa ekran tekrar oluşturma eylemi sunmaz; aktif planı gösterir ve ancak
-"Koşulları güncelle" eylemiyle yeni değerlendirme başlatır.
+### Taban kataloğu
 
-## Karar modeli
+Ticari V1 katalog girdileri exact ürün ID'siyle şu semantiği taşır:
 
-### Fotoperiyot ve yaşam evreleri
+- `ACTIVE_SOIL`: Chihiros Aqua Soil 3 L ve 9 L.
+- `NUTRIENT_BASE`: Dennerle Deponit Mix Professional 9in1.
+- `ADDITIVE`: ADA Tourmaline BC.
+- `INERT`: ADA Aqua Gravel S/M, Dennerle Nano Shrimp Gravel ürünleri, JBL Sansibar
+  Dark/White ve Aquael Basalt Gravel.
 
-| Tank günü | Süre | Olgun yoğunluğa göre çarpan |
-|---:|---:|---:|
-| 1–21 | 6 saat | %75 |
-| 22–42 | 6,5 saat | %85 |
-| 43–63 | 7 saat | %92 |
-| 64–84 | 7,5 saat | %96 |
-| 85+ | 8 saat | %100 |
+Kategori adı, ürün adındaki “soil” kelimesi veya serbest metin teknik sınıf
+otoritesi değildir. Özel ürün `UNKNOWN` kalır; kullanıcıdan “aktif/inert” seçmesi
+istenmez ve ürün sessizce aktif toprağa çevrilmez. Üreticisi ve sabit bileşimi
+olmayan genel “Natural River Sand” girdisi bu nedenle ticari katalogdan çıkarılmıştır;
+kullanıcı kendi ürün adını özel ürün olarak kaydedebilir.
 
-Her faz her gün çalışır ve 60 dakika gün doğumu + 60 dakika gün batımı kullanır.
-Tank daha yaşlıysa geçmiş fazlar gönderilmez; ilk gönderilen faz bugünden başlar,
-sonraki sınırlar tank kurulum tarihine bağlı kalır. Fazlar aynı gün içinde,
-bitişik ve son faz açık uçlu olacak şekilde firmware'in en fazla sekiz fazlık
-sözleşmesine uyar.
+## Ticari karar politikası
 
-Bu süreler evrensel bitki sabiti değildir. Yeni akvaryumda ilk 2–3 hafta 6 saatle
-başlayıp sonra artırma yaklaşımını kullanan işletim rehberi ile, su altında ışık ve
-inorganik karbonun birlikte sınırlayıcı olabildiğini gösteren literatürden türetilmiş
-muhafazakâr bir ürün politikasıdır.
+### Süre
 
-### Olgun yoğunluk yüzdesi
+Tropica'nın yeni tank rehberindeki ilk 2–3 hafta 6 saat ve sonrasında kademeli
+artış yaklaşımı şu kontrollü politika olarak uygulanır:
 
-1. Bitki ihtiyacı tabanı: düşük `%42`, orta `%56`, yüksek `%72`.
-2. Bitki yoğunluğu: seyrek `-5`, orta `0`, yoğun `+5` puan.
-3. Optik mesafe düzeltmesi:
-   `(akvaryum yüksekliği + ürünün standart montaj mesafesi - 45) / 4` puan.
-4. Aktif toprak bulunan tankta başlangıç riski için `-3` puan.
-5. Gün ışığı: az `0`, dolaylı `-6`, direkt `-15` puan; direkt ışıkta üst sınır `%50`.
-6. Yosun: yok `0`, hafif `-14`, belirgin `-24` puan; belirgin yosunda üst sınır `%45`.
-7. Kayıtlı CO₂ sistemi yoksa sonuç en fazla `%55`.
-8. Nihai olgun değer `%25–85` aralığına sıkıştırılır ve yaşam evresi çarpanı
-   uygulanır.
+1. Yeni kurulum veya son büyük dikim/montaj değişiminden sonraki ilk 21 gün: `6 saat`.
+2. En az 21 gün geçmiş, son uygulamadan en az 14 gün geçmiş ve koruma sinyali yok:
+   kullanıcı değerlendirmesiyle `7 saat`.
+3. Bir başka en az 14 günlük stabil dönem ve yeni değerlendirme sonrasında: `8 saat`.
+4. `8 saat` ticari tabandır; otomatik olarak 8 saatin üstüne çıkılmaz.
 
-Hafif veya belirgin yosun seçildiğinde Android gelecekteki otomatik artış fazlarını
-önceden kurmaz; mevcut güvenli evre açık uçlu tutulur ve yedi gün sonra yeniden
-değerlendirme istenir. Yosun yoksa yaşam evresi fazları ve 14 günlük kontrol ritmi
-devam eder.
+Her onayda firmware'e yalnız bugünden başlayan tek açık uçlu faz gönderilir.
+Gelecekteki 7/8 saatlik artışlar önceden programlanmaz. `transitionDays=0`, her gün
+maskesi `127`, günlük sunrise/sunset rampası `60 dakika` ve managed-plan
+`initialStartPercent=100`'dür. Kullanıcı gözlemi olmadan süre veya kanal çıkışı
+artmaz.
 
-Yüksek ışık isteyen bitki + CO₂ yok kombinasyonu ayrıca kullanıcıya uyarı verir.
-Bu sınırlar güvenli mühendislik guardrail'leridir; tür bazlı fotosentez doygunluk
-noktası iddiası değildir.
+Bitki/taban kompozisyonu geçersizleştiğinde veya son uygulanmış kayda göre product
+key, hardware revision ya da fixture uzunluğu değiştiğinde başlangıç günü telefon
+saatinden alınmaz. Güncel firmware scheduler tarihi montaj/yaşam döngüsü olayına
+kalıcı olarak yazılır ve yeni 21 günlük pencere buradan başlar.
 
-### PPFD, DLI ve spektrum
+### Kanal çıkışı
 
-Yalnız öneri üretimini mümkün kılmak için 45 cm optik mesafede WRGB için `105`,
-RGB için `78 µmol/m²/s` referansı ve
-`exp(-0.018 × (akvaryum yüksekliği + standart montaj mesafesi - 45))` sönüm
-tahmini kullanılır; tahmin `35–180 µmol/m²/s` ile sınırlıdır. Bu katsayılar cihaz
-başına kalibre edilmiş PAR haritasının yerini tutmaz.
+- Kalibrasyonsuz yeni kurulumun ilk 21 gününde en yüksek kanal en fazla `%30`,
+  sonraki değerlendirmelerde en fazla `%50`'dir. `%30`, Chihiros'un yeni dikim
+  rehberinden alınmış çapraz-ürün temkin sınırıdır; AquaLight PAR kalibrasyonu
+  veya biyolojik optimum olarak sunulmaz.
+- CO₂ ışık açılışında hazır değilse veya dikim seyrekse tavan en fazla `%40`.
+- Direkt gün ışığı veya stabil yosunda en fazla `%35`; artan yosun ya da karideste
+  saklanma yoksa en fazla `%30`.
+- Optik mesafe 25 cm veya altındaysa en fazla `%35`.
+- Bir kez uygulanmış doğru kanal tavanı, yeni bir ölçüm/kalibrasyon olmadan yukarı
+  çekilmez. Güvenlik koşulu kötüleşirse aşağı çekilebilir.
+- WRGB ve RGB kanal şekli ürünün exact firmware sahne alanlarıyla üretilir. Genel
+  ürün yüzdesi, watt veya lümen PPFD'ye çevrilmez.
 
-İki doğrusal rampanın toplamı bir saatlik tam güç eşdeğeridir. Gösterilen DLI:
+Bu yüzdeler biyolojik optimum iddiası değil, ürün kalibrasyonu tamamlanana kadar
+fail-safe mühendislik sınırıdır. Exact hardware revision + fixture length için
+laboratuvar PAR haritası yayınlanmadan `CALIBRATED` karar üretilemez.
 
-`DLI = hedef PPFD × (fotoperiyot dakikası - 60) × 60 / 1.000.000`
+### CO₂
 
-WRGB sahne oranı `R 0,86 / G 0,68 / B 0,74 / W 1,00`; RGB oranı
-`R 1,00 / G 0,72 / B 0,82` olup her kanal hesaplanan yoğunluğa göre ölçeklenir.
-Oranlar dengeli görsel/işletim profili varsayımıdır; tür bazlı aksiyon spektrumu
-ölçümü değildir.
+CO₂ varlığı yalnız bileşen varlığıdır. Hesap için gereken sinyal, ışık açıldığı anda
+CO₂'nin hazır ve stabil olup olmadığıdır. Bu dinamik cevap ilk kurulumda ve her
+yeniden değerlendirmede doğrulanır. Sabit “ışıklardan tam iki saat önce”
+kuralı uygulanmaz: gerekli lead time tank hacmi, akış, difüzör ve hedef seviyeye
+göre değişir. Kullanıcıya tek soru sorulur; yardım metni CO₂ zamanlamasının ışık
+dönemiyle birlikte ayarlanmasını ve canlı güvenliğinin izlenmesini açıklar.
 
-Yeni tankta firmware geçiş başlangıcı aktif toprakta `%60`, diğer tankta `%70`;
-21 günden yaşlı tankta `%85` olur. Her yeni faz için `transitionDays = 7` kullanılır.
-Bu firmware geçişi, günlük 60 dakikalık gün doğumu/gün batımı rampasından farklıdır.
+## Firmware yazma ve denetim akışı
 
-## Firmware yazma protokolü
+1. Android her değerlendirmede yeni status alıp ürün, hardware, fixture uzunluğu ve
+   cihaz yerel tarihini doğrular.
+2. `light.auto.plan.get` ile `revision`, `storageGeneration` ve varsa `planId`
+   alınır.
+3. Hesap girdileri, politika/kaynak kimlikleri, exact R/G/B(/W), başlangıç–bitiş,
+   rampa, cihaz yerel günü ve yeniden değerlendirme günü değiştirilemez bir
+   `PREPARED` denetim satırına yazılır.
+4. Denetim satırı başarıyla kaydolmadan `light.auto.plan.apply` gönderilmez.
+5. Firmware başarısında dönen exact faz ile hazırlanan payload karşılaştırılır;
+   `planId`, plan revision ve storage generation kayda eklenip `APPLIED` yapılır.
+6. Kesin reddedilen deneme `FAILED`, timeout/taşıma sonucu bilinmeyen deneme
+   `INDETERMINATE` olur. Aynı önerinin yeni denemesi ayrı audit ID alır; terminal
+   kayıt üzerine yazılmaz.
+   `PREPARED` kaydından sonra yerel profil yazımı tamamlanamaz veya işlem iptal
+   edilirse firmware çağrılmaz; yarım audit `FAILED` terminal durumuna yazmak için
+   sınırlı yeniden deneme yapılır.
+7. Son doğru doz yalnız kayıtlı `planId + planRevision` güncel firmware status ile
+   birebir eşleşiyorsa kullanılır. Plan silinmiş/değişmişse eski kayıt artış için
+   otorite sayılmaz.
+8. `STALE_REVISION` veya `STALE_STORAGE_GENERATION` otomatik yeniden gönderilmez;
+   otorite yeniden okunur ve kullanıcının yeniden onayı gerekir.
 
-Android aşağıdaki exact Light V1 işlemlerini kullanır:
-
-1. `light.auto.plan.get` ile `revision`, `storageGeneration`, plan ve runtime okunur.
-2. `light.auto.plan.apply` çağrısına her iki beklenen otorite değeri, nullable
-   `planId`, başlangıç yüzdesi ve fazlar gönderilir.
-3. Başarı yanıtı authoritative snapshot olarak saklanır; cihaz AUTO moduna geçer.
-4. `STALE_REVISION` veya `STALE_STORAGE_GENERATION` durumunda otomatik retry yoktur.
-   Plan yeniden okunur ve güncel tank profiliyle öneri yeniden hesaplanır; otomatik
-   ikinci yazma yapılmaz.
-5. Eski/uyumsuz firmware fail-closed davranır ve yükseltme mesajı gösterir.
-
-Plan; 10957–47481 epoch-day aralığı, 0–90 geçiş günü, 20–100 arası beşlik başlangıç
-yüzdesi, aynı-gün zaman aralığı, bitişik fazlar ve en fazla sekiz faz kurallarının
-hem Android hem firmware tarafında strict doğrulamasından geçer.
+Firmware RTC hazır değilse, tarih parse edilemiyorsa, cihaz kimliği/fixture uzunluğu
+doğrulanamıyorsa, kalıcı snapshot yazılamıyorsa veya exact firmware cevabı hazırlanan
+planla eşleşmiyorsa akış fail-closed kalır.
 
 ## UI akışı
 
-Tek ekranlı yapı iki açık duruma sahiptir:
+- Üst kart kayıtlı tank, ürün ve katalogdan türetilen sinyalleri salt okunur gösterir.
+- Ekran yalnız eksik zorunlu alanları açar. Aynı veri tank oluştururken veya ürün
+  seçerken alınmışsa tekrar sorulmaz.
+- Su derinliği ve lamba–su mesafesi ilk kurulumda bir kez ölçülür; düzenleme modunda
+  mevcut değerleri tekrar cevaplamadan değiştirmek mümkündür. Bitki talebi yalnız
+  katalog dışı bitkide, CO₂ sorusu yalnız CO₂ bileşeni varsa, saklanma yalnız
+  karides varsa açılır.
+- Taban ürünü yeniden seçtirilmez ve teknik taban sınıfı seçeneği gösterilmez.
+- Bilinen ve katalog dışı bitkiler birlikteyse kullanıcı cevabı yalnız belirsizliği
+  tamamlar; exact katalogdan gelen orta/yüksek talebi aşağı çekemez.
+- Kapanış saati kullanıcıdan alınır veya mevcut plan/profilden korunur; sabit
+  `14:00–22:00` üretilmez.
+- Program önizlemesi süreyi, exact kanal yüzdelerini, rampayı, uyarıları ve bir
+  sonraki değerlendirme gününü gösterir. PPFD/DLI göstermez.
+- Kurulu plan aktif ekranda salt okunur gösterilir. “Koşulları güncelle”, CO₂ bileşeni
+  varsa CO₂ hazırlığını ve her durumda yeni yosun/biofilm gözlemini tekrar ister;
+  kayıtlı gün ışığı ile karides saklanma değerlerini de zorunlu yeniden seçim olmadan
+  düzenlenebilir gösterir; ardından açık kullanıcı onayı gerekir.
 
-1. **İlk oluşturma / düzenleme:** kayıtlı profil kompakt gösterilir; yalnız gün ışığı
-   ve yosun durumu sorulur. İki seçim tamamlanınca 24 saatlik WRGB/RGB eğrisi,
-   süre, geçiş ve tepe çıkışı önizlenir. `Programı oluştur` yalnız bu durumda vardır.
-2. **Program aktif:** firmware snapshot'ındaki bugünkü eğri, çalışma durumu, son ve
-   sonraki değerlendirme ile karar gerekçeleri gösterilir. Oluşturma butonu yoktur;
-   kullanıcı isterse içerideki `Koşulları güncelle` eylemiyle düzenleme durumuna geçer.
-3. **Başarılı apply:** ekran kapanmaz; aynı state anında aktif programa dönüşür ve
-   tekrar yazmayı sağlayan CTA kaybolur.
-4. **Hesap ayrıntıları:** model varsayımı ve faz süreleri açılır; kalibrasyon yoksa
-   PPFD/DLI sayıları gösterilmez ve hiçbir firmware alanı elle düzenlenmez.
+## Kanıt dayanakları
 
-Ekran mevcut AquaLight Compose kartları, renk token'ları, tipografi ve merkezî
-fragment header/navigation yapısını kullanır. Sunum katmanı runtime/data tiplerine
-doğrudan bağımlı değildir; application boundary ve owner-scope dependency graph
-korunur.
+- Yeni akvaryumda ilk 2–3 hafta günde 6 saat, ardından kademeli artış ve CO₂'nin ilk
+  günden kullanılması: [Tropica Growing-in](https://tropica.com/en/guide/get-the-right-start/growing-in/).
+- İlk üç hafta 6 saat ve daha sonra kademeli olarak en fazla 8 saat:
+  [Tropica Quick Guide](https://tropica.com/media/870849/REDUCEDP14-11434-Quickguide_ny-UK.pdf).
+- Yosun gözleminde doğrudan güneş ve zamanlayıcının ayrıca kontrol edilmesi:
+  [Tropica Algae control](https://tropica.com/en/guide/algae-control/).
+- Yeni dikimde ışık yoğunluğunun `%30`'u aşmaması ve ürün/tank koşullarının birlikte
+  değerlendirilmesi: [Chihiros ışık yoğunluğu rehberi](https://bbs.chihirosaquaticstudio.com/threads/how-to-set-light-intensity.4/).
+- CO₂ solenoidinin aydınlatma dönemiyle sınırlandırılması:
+  [Colombo CO₂ Profi Set manual](https://aquadistri.com/wp-content/uploads/2024/08/Manual-Colombo-CO2-Profi-Set-1200.pdf).
+- Işık ve inorganik karbonun su altı fotosentezinde birlikte sınırlayıcı olması:
+  [Kitaya ve ark., 2003](https://pubmed.ncbi.nlm.nih.gov/14503512/).
+- Tür bazlı ışık talebi: [Tropica plant database](https://tropica.com/en/plants/).
+- Katalog taban semantiği; ürün üreticilerinin exact ürün sayfaları ve her kayıtla
+  saklanan evidence source ID üzerinden izlenir.
 
-## Bilimsel ve işletim dayanakları
+## Yayın kapıları
 
-- Pedersen, Colmer ve Sand-Jensen, su altı fotosentezinde ışık ile inorganik karbon
-  erişiminin temel sınırlayıcılar olduğunu ve gaz difüzyonunun suda çok daha yavaş
-  olduğunu özetler: [Underwater Photosynthesis of Submerged Plants](https://pmc.ncbi.nlm.nih.gov/articles/PMC3659369/).
-- Guo ve ark. ışık aklimasyonu ile CO₂ yanıtının su altı fotosentezinde birlikte
-  değerlendirilmesi gerektiğini gösterir: [Frontiers in Plant Science, 2024](https://www.frontiersin.org/journals/plant-science/articles/10.3389/fpls.2024.1355729/full).
-- DLI, PPFD'nin gün boyunca integrali olarak kullanılır; fotoperiyot ve yoğunluğu
-  tek günlük dozda birleştirir: [Faust ve Logan, HortScience 2018](https://journals.ashs.org/view/journals/hortsci/53/9/article-p1250.xml).
-- 6 saatlik yeni tank başlangıcı ve kademeli artış, bilimsel sabit olarak değil,
-  yaygın akvaryum işletim pratiği olarak alınmıştır:
-  [Tropica başlangıç rehberi](https://tropica.com/en/guide/get-the-right-start/growing-in/).
-
-## Yayın doğrulaması
-
-- Deterministik hesaplayıcı: yeni/olgun tank, CO₂ güvenlik tavanı, doğrudan
-  akvaryum yüksekliği, eksik/gelecek tarih ve WRGB/RGB kanal şekli birim testleri.
-- ViewModel: iki koşul tamamlanmadan hesaplamama, başarılı apply sonrası aktif moda
-  geçiş, kurulu planda oluşturma eylemini kapatma ve stale-authority sonrası refetch
-  + bilinçli yeniden uygulama.
-- Tank sınıflandırması: yalnız `substrate` kategori anahtarının aktif toprak
-  otoritesi olduğunu doğrulayan test.
-- Runtime: exact serializer alanları, strict parser, hata alanları ve golden fixture
-  byte/hash pinleri.
-- Repo kapıları: tam JVM test paketi, detekt (sıfır yeni borç), Android lint,
-  protokol/firmware guard'ları ve debug APK.
-- Yayın öncesinde gerçek WRGB ve RGB cihazında saat dilimi/gece yarısı, bağlantı
-  kesilmesi, eşzamanlı plan değişimi, yeniden başlatma ve tüm 85 günlük faz
-  sınırlarını hızlandırılmış saatle kapsayan fiziksel smoke test zorunludur.
+- Android unit test, lint/detekt, proto doğrulama ve debug/releaseSmoke derlemeleri.
+- Firmware host contract testi ve yedi ürün PlatformIO build'i.
+- Exact WRGB ve RGB donanımında RTC/gece yarısı, bağlantı kesilmesi, stale authority,
+  reboot/persistence, plan silme/değiştirme ve termal/power limiter smoke testleri.
+- Her satış fixture/hardware revizyonu için laboratuvar PAR haritası, kalibrasyon
+  profil revizyonu ve izlenebilir ölçüm raporu. Bu kapı tamamlanmadan uygulama yalnız
+  `CONSERVATIVE_UNCALIBRATED` üretir.
+- RGB Pro Slim firmware status'ü doğrulanmış fixture uzunluğu sağlamadığı sürece
+  Android bu ürün için akıllı kurulumu bilerek açmaz. Tahmini uzunluk veya model
+  adından çıkarım yayın çözümü değildir.

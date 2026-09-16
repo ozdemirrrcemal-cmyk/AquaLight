@@ -1,5 +1,17 @@
 package com.aqua.aqualight.data.user.archive
 
+import com.aqua.aqualight.application.aquarium.AquariumAutomationProfile
+import com.aqua.aqualight.application.aquarium.AquariumCo2Readiness
+import com.aqua.aqualight.application.aquarium.AquariumDaylightExposure
+import com.aqua.aqualight.application.aquarium.AquariumLivestockCategory
+import com.aqua.aqualight.application.aquarium.AquariumMaterialCategory
+import com.aqua.aqualight.application.aquarium.AquariumPlantLightCatalog
+import com.aqua.aqualight.application.aquarium.AquariumShelterAvailability
+import com.aqua.aqualight.application.aquarium.AquariumSubstrateSemantics
+import com.aqua.aqualight.application.aquarium.AquariumSurfaceGrowth
+import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupCalculator
+import com.aqua.aqualight.data.aquarium.devices.TankLightInstallationProfile
+import com.aqua.aqualight.data.aquarium.devices.TankLightRecommendationOutcome
 import com.aqua.aqualight.data.care.model.CareTaskSource
 import com.aqua.aqualight.data.care.model.CareTaskStatus
 import com.aqua.aqualight.data.care.model.CareTaskType
@@ -68,9 +80,99 @@ internal class UserDataBackupValidator {
         require(aquarium.createdAtMillis > 0L) {
             "Backup aquarium creation time is invalid."
         }
+        require(
+            aquarium.automationProfile.contractRevision ==
+                AquariumAutomationProfile.CONTRACT_REVISION
+        ) { "Backup aquarium automation profile is unsupported." }
+        aquarium.automationProfile.waterDepthCm?.let { depth ->
+            require(depth in 1..aquarium.heightCm) {
+                "Backup aquarium water depth is invalid."
+            }
+        }
+        aquarium.automationProfile.substrateDepthCm?.let { depth ->
+            require(depth in 1 until aquarium.heightCm) {
+                "Backup aquarium substrate depth is invalid."
+            }
+        }
+        val waterDepth = aquarium.automationProfile.waterDepthCm
+        val substrateDepth = aquarium.automationProfile.substrateDepthCm
+        require(waterDepth == null || substrateDepth == null ||
+            waterDepth + substrateDepth <= aquarium.heightCm
+        ) { "Backup aquarium geometry is inconsistent." }
+        if (aquarium.automationProfile.daylightExposure == AquariumDaylightExposure.DIRECT) {
+            val start = requireNotNull(aquarium.automationProfile.daylightStartMinute)
+            val end = requireNotNull(aquarium.automationProfile.daylightEndMinute)
+            require(start in 0 until end && end < MINUTES_PER_DAY) {
+                "Backup aquarium daylight window is invalid."
+            }
+        } else {
+            require(aquarium.automationProfile.daylightStartMinute == null &&
+                aquarium.automationProfile.daylightEndMinute == null
+            ) { "Only direct daylight can carry a backup observation window." }
+        }
         validateArchiveItemIds(aquarium.plants.map(ArchivePlant::id))
         validateArchiveItemIds(aquarium.materials.map(ArchiveMaterial::id))
         validateArchiveItemIds(aquarium.livestock.map(ArchiveLivestock::id))
+        require(
+            aquarium.livestock.all { item ->
+                AquariumLivestockCategory.isSupported(item.category)
+            }
+        ) { "Backup aquarium livestock category is not a supported stable code." }
+        aquarium.plants.forEach { plant ->
+            require(plant.catalogId.isNotBlank()) {
+                "Backup aquarium plant catalog identity is missing."
+            }
+            require(
+                plant.lightDemand == AquariumPlantLightCatalog.resolve(plant.catalogId)
+            ) { "Backup aquarium plant demand does not match the reviewed catalog." }
+        }
+        aquarium.materials.forEach { material ->
+            require(AquariumMaterialCategory.isSupported(material.categoryKey)) {
+                "Backup aquarium material category is not a supported stable code."
+            }
+            require(
+                AquariumSubstrateSemantics.matchesCatalogCategory(
+                    productId = material.productId,
+                    categoryKey = material.categoryKey
+                )
+            ) { "Backup aquarium material category conflicts with the reviewed catalog." }
+            require(
+                material.substrateSemantic == AquariumSubstrateSemantics.resolve(
+                    productId = material.productId,
+                    categoryKey = material.categoryKey
+                )
+            ) { "Backup aquarium substrate semantic does not match the reviewed catalog." }
+        }
+        val hasCo2Component = aquarium.materials.any { material ->
+            material.categoryKey == MATERIAL_CATEGORY_CO2
+        }
+        require(
+            if (hasCo2Component) {
+                aquarium.automationProfile.co2Readiness != AquariumCo2Readiness.NOT_INSTALLED
+            } else {
+                aquarium.automationProfile.co2Readiness == AquariumCo2Readiness.NOT_INSTALLED
+            }
+        ) { "Backup aquarium CO2 readiness conflicts with the component inventory." }
+        val hasSurfaceObservation = aquarium.automationProfile.latestSurfaceGrowth !=
+            AquariumSurfaceGrowth.UNKNOWN
+        require(
+            hasSurfaceObservation ==
+                (aquarium.automationProfile.latestObservationEpochDay != null)
+        ) { "Backup surface observation value and date must be stored together." }
+        val hasShrimp = aquarium.livestock.any { item ->
+            item.category == AquariumLivestockCategory.SHRIMP
+        }
+        require(
+            if (hasShrimp) {
+                aquarium.automationProfile.shelterAvailability !=
+                    AquariumShelterAvailability.NOT_REQUIRED
+            } else {
+                aquarium.automationProfile.shelterAvailability ==
+                    AquariumShelterAvailability.NOT_REQUIRED &&
+                    aquarium.automationProfile.latestSurfaceGrowth !=
+                    AquariumSurfaceGrowth.TARGET_BIOFILM
+            }
+        ) { "Backup shelter or target-biofilm state conflicts with livestock inventory." }
         aquarium.livestock.forEach { livestock ->
             require(livestock.quantity > 0) {
                 "Backup livestock quantity is invalid."
@@ -124,6 +226,75 @@ internal class UserDataBackupValidator {
             require(assignment.assignedAtMillis > 0L) {
                 "Backup device assignment time is invalid."
             }
+            require(
+                assignment.lightInstallation.contractRevision ==
+                    TankLightInstallationProfile.CONTRACT_REVISION
+            ) { "Backup light installation profile is unsupported." }
+            require(assignment.lightRecommendations.size <= MAX_LIGHT_RECOMMENDATIONS) {
+                "Backup contains too many light recommendation records."
+            }
+            val recommendationIds = assignment.lightRecommendations.map { snapshot ->
+                require(snapshot.recommendationId.isNotBlank()) {
+                    "Backup light recommendation identity is missing."
+                }
+                require(snapshot.profileFingerprint.matches(PROFILE_FINGERPRINT_PATTERN)) {
+                    "Backup light recommendation fingerprint is invalid."
+                }
+                require(
+                    snapshot.policyVersion == DeviceLightQuickSetupCalculator.POLICY_VERSION &&
+                    snapshot.evidenceSourceIds.isNotEmpty() &&
+                    snapshot.reasonCodes.isNotEmpty()
+                ) { "Backup light recommendation provenance is missing." }
+                require(snapshot.plantCatalogIds.isNotEmpty() &&
+                    snapshot.plantCatalogIds == snapshot.plantCatalogIds.distinct().sorted() &&
+                    snapshot.substrateProductIds ==
+                    snapshot.substrateProductIds.distinct().sorted()
+                ) { "Backup light recommendation catalog inputs are invalid." }
+                require(snapshot.hasPlants && snapshot.plantedFreshwater &&
+                    snapshot.fixtureLengthMm > 0 && snapshot.tankHeightCm > 0 &&
+                    snapshot.waterDepthCm in 5..snapshot.tankHeightCm
+                ) {
+                    "Backup light recommendation geometry is invalid."
+                }
+                require(snapshot.programEndMinute in 0 until MINUTES_PER_DAY &&
+                    snapshot.programStartMinute in 0 until MINUTES_PER_DAY &&
+                    snapshot.programEndMinute - snapshot.programStartMinute ==
+                    snapshot.photoperiodMinutes &&
+                    snapshot.photoperiodMinutes in 1..MINUTES_PER_DAY &&
+                    snapshot.recommendationEpochDay > 0L &&
+                    snapshot.reevaluationEpochDay >= snapshot.recommendationEpochDay
+                ) { "Backup light recommendation schedule is invalid." }
+                val priorDoseParts = listOf(
+                    snapshot.priorAppliedPhotoperiodMinutes,
+                    snapshot.priorAppliedMaximumChannelPercent,
+                    snapshot.priorAppliedEpochDay
+                ).count { value -> value != null }
+                require(priorDoseParts in setOf(0, 3)) {
+                    "Backup light recommendation prior dose is incomplete."
+                }
+                val applied = snapshot.outcome == TankLightRecommendationOutcome.APPLIED
+                val authorityParts = listOf(
+                    snapshot.firmwarePlanId,
+                    snapshot.firmwarePlanRevision,
+                    snapshot.firmwareStorageGeneration
+                ).count { value -> value != null }
+                require(applied == (snapshot.appliedAtMillis != null) &&
+                    authorityParts in setOf(0, 3) &&
+                    applied == (authorityParts == 3)
+                ) { "Backup light recommendation outcome authority is invalid." }
+                if (applied) {
+                    require(snapshot.firmwarePlanId?.matches(FIRMWARE_PLAN_ID_PATTERN) == true &&
+                        snapshot.firmwarePlanRevision?.let { revision -> revision > 0L } == true &&
+                        snapshot.firmwareStorageGeneration?.let { generation ->
+                            generation > 0L
+                        } == true
+                    ) { "Backup light recommendation firmware authority is invalid." }
+                }
+                snapshot.recommendationId
+            }
+            require(recommendationIds.distinct().size == recommendationIds.size) {
+                "Backup contains duplicate light recommendation identities."
+            }
             require(devices.add(assignment.deviceUid)) {
                 "Backup assigns one device to more than one aquarium."
             }
@@ -147,6 +318,12 @@ internal class UserDataBackupValidator {
         }
     }
 }
+
+private const val MINUTES_PER_DAY = 1_440
+private const val MAX_LIGHT_RECOMMENDATIONS = 1_000
+private const val MATERIAL_CATEGORY_CO2 = AquariumMaterialCategory.CO2
+private val PROFILE_FINGERPRINT_PATTERN = Regex("^[0-9a-f]{16}$")
+private val FIRMWARE_PLAN_ID_PATTERN = Regex("^lp-[0-9a-f]{8}$")
 
 private fun validateEnvelope(manifest: UserDataBackupManifest) {
     require(manifest.format == USER_DATA_BACKUP_FORMAT) {

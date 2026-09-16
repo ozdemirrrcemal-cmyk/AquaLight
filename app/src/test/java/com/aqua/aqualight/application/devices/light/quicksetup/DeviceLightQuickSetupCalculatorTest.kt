@@ -1,117 +1,328 @@
 package com.aqua.aqualight.application.devices.light.quicksetup
 
+import com.aqua.aqualight.application.aquarium.AquariumCo2Readiness
+import com.aqua.aqualight.application.aquarium.AquariumDaylightExposure
+import com.aqua.aqualight.application.aquarium.AquariumPlantCoverage
+import com.aqua.aqualight.application.aquarium.AquariumShelterAvailability
+import com.aqua.aqualight.application.aquarium.AquariumSubstrateSemantic
+import com.aqua.aqualight.application.aquarium.AquariumSurfaceGrowth
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticChannel
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DeviceLightQuickSetupCalculatorTest {
     @Test
-    fun `new planted tank receives five contiguous lifecycle phases`() {
-        val plan = calculate(
-            tank = tank(setupDateEpochDay = TODAY - 11),
-            input = input().copy(activeSoil = true, co2Installed = true)
-        )
+    fun `new or recently changed tank receives one open ended six hour phase`() {
+        val plan = calculate(tank = tank(lastLightingResetEpochDay = TODAY - 5))
 
-        assertEquals(DeviceLightPlanConfidence.ESTIMATED, plan.confidence)
-        assertEquals(5, plan.phases.size)
-        assertEquals(60, plan.initialStartPercent)
-        assertEquals(TODAY, plan.phases.first().draft.validFromEpochDay)
-        assertNull(plan.phases.last().draft.validUntilEpochDayExclusive)
-        assertTrue(
-            plan.phases.zipWithNext().all { (left, right) ->
-                left.draft.validUntilEpochDayExclusive == right.draft.validFromEpochDay
-            }
-        )
         assertEquals(
-            listOf(360, 390, 420, 450, 480),
-            plan.phases.map { phase ->
-                ((phase.draft.endTimeMs - phase.draft.startTimeMs) / MINUTE_MS).toInt()
-            }
+            DeviceLightPlanConfidence.CONSERVATIVE_UNCALIBRATED,
+            plan.confidence
         )
-        assertTrue(DeviceLightPlanReason.NEW_TANK in plan.reasons)
-        assertTrue(DeviceLightPlanReason.ACTIVE_SOIL_STARTUP in plan.reasons)
-        assertTrue(DeviceLightPlanWarning.PAR_NOT_MEASURED in plan.warnings)
-        assertTrue(plan.profileFingerprint.matches(Regex("^[0-9a-f]{16}$")))
-    }
-
-    @Test
-    fun `mature tank receives one open ended eight hour phase`() {
-        val plan = calculate(
-            tank = tank(setupDateEpochDay = TODAY - 120),
-            input = input().copy(co2Installed = true)
-        )
-
         assertEquals(1, plan.phases.size)
-        assertEquals(DeviceLightLifecycleStage.MATURE, plan.currentPhase.lifecycleStage)
-        assertEquals(480 * MINUTE_MS, plan.currentPhase.draft.endTimeMs - plan.currentPhase.draft.startTimeMs)
+        assertEquals(DeviceLightLifecycleStage.STARTUP, plan.currentPhase.lifecycleStage)
+        assertEquals(360 * MINUTE_MS, plan.durationMillis())
         assertNull(plan.currentPhase.draft.validUntilEpochDayExclusive)
-        assertEquals(85, plan.initialStartPercent)
-        assertTrue(DeviceLightPlanReason.ESTABLISHED_TANK in plan.reasons)
+        assertEquals(TODAY, plan.currentPhase.draft.validFromEpochDay)
+        assertTrue(DeviceLightPlanReason.EVIDENCE_SIX_HOUR_START in plan.reasons)
+        assertTrue(DeviceLightPlanReason.ACTIVE_SOIL_STARTUP in plan.reasons)
+        assertTrue(DeviceLightPlanWarning.CALIBRATION_UNAVAILABLE in plan.warnings)
+        assertTrue(plan.maximumChannelPercent <= 30)
+        assertTrue("chihiros_light_intensity_guidance" in plan.evidenceSourceIds)
+        assertEquals(TODAY - 5 + 21, plan.reevaluationEpochDay)
     }
 
     @Test
-    fun `missing CO2 caps a demanding mature profile at fifty five percent`() {
-        val plan = calculate(
-            tank = tank(setupDateEpochDay = TODAY - 120),
-            input = input().copy(
-                plantDemand = DeviceLightPlantDemand.HIGH,
-                plantDensity = DeviceLightPlantDensity.DENSE,
-                aquariumHeightCm = 100,
-                co2Installed = false
+    fun `applied six and seven hour plans advance one reviewed step at a time`() {
+        val sevenHours = calculate(
+            tank = tank(
+                lastLightingResetEpochDay = TODAY - 120,
+                lastAppliedPhotoperiodMinutes = 360,
+                lastAppliedMaximumChannelPercent = 45,
+                lastAppliedEpochDay = TODAY - 14
+            )
+        )
+        val eightHours = calculate(
+            tank = tank(
+                lastLightingResetEpochDay = TODAY - 120,
+                lastAppliedPhotoperiodMinutes = 420,
+                lastAppliedMaximumChannelPercent = 45,
+                lastAppliedEpochDay = TODAY - 14
             )
         )
 
-        assertEquals(55, plan.scene.channels.values.maxOrNull())
-        assertEquals(19, plan.currentTargetPpfd)
-        assertTrue(DeviceLightPlanReason.NO_CO2_SAFETY_CAP in plan.reasons)
-        assertTrue(DeviceLightPlanWarning.HIGH_LIGHT_WITHOUT_CO2 in plan.warnings)
+        assertEquals(DeviceLightLifecycleStage.ACCLIMATION, sevenHours.currentPhase.lifecycleStage)
+        assertEquals(420 * MINUTE_MS, sevenHours.durationMillis())
+        assertTrue(DeviceLightPlanReason.CONTROLLED_SEVEN_HOUR_STEP in sevenHours.reasons)
+        assertEquals(DeviceLightLifecycleStage.ESTABLISHED, eightHours.currentPhase.lifecycleStage)
+        assertEquals(480 * MINUTE_MS, eightHours.durationMillis())
+        assertTrue(DeviceLightPlanReason.EVIDENCE_EIGHT_HOUR_BASELINE in eightHours.reasons)
     }
 
     @Test
-    fun `automatic device model keeps PPFD transparent as an estimate`() {
+    fun `review interval prevents an early automatic increase`() {
         val plan = calculate(
-            tank = tank(setupDateEpochDay = TODAY - 120),
-            input = input().copy(co2Installed = true)
+            tank = tank(
+                lastLightingResetEpochDay = TODAY - 120,
+                lastAppliedPhotoperiodMinutes = 360,
+                lastAppliedMaximumChannelPercent = 45,
+                lastAppliedEpochDay = TODAY - 4
+            )
         )
 
-        assertEquals(DeviceLightPlanConfidence.ESTIMATED, plan.confidence)
-        assertTrue(DeviceLightPlanWarning.PAR_NOT_MEASURED in plan.warnings)
-        assertTrue(DeviceLightPlanReason.ESTIMATED_PAR in plan.reasons)
-        assertEquals(
-            plan.currentTargetPpfd * 420 * 60.0 / 1_000_000.0,
-            plan.currentEstimatedDliMolPerM2Day,
-            0.0001
-        )
+        assertEquals(DeviceLightLifecycleStage.STARTUP, plan.currentPhase.lifecycleStage)
+        assertTrue(DeviceLightPlanReason.REVIEW_INTERVAL_HOLD in plan.reasons)
+        assertEquals(TODAY - 4 + 14, plan.reevaluationEpochDay)
     }
 
     @Test
-    fun `stored aquarium height directly changes the optical model`() {
-        val shallow = calculate(
-            tank = tank(),
-            input = input().copy(aquariumHeightCm = 30, co2Installed = true)
+    fun `algae holds the last duration and reduces channel output`() {
+        val clear = calculate(
+            tank = tank(
+                lastLightingResetEpochDay = TODAY - 120,
+                lastAppliedPhotoperiodMinutes = 420,
+                lastAppliedMaximumChannelPercent = 50,
+                lastAppliedEpochDay = TODAY - 20
+            )
         )
-        val deep = calculate(
-            tank = tank(),
-            input = input().copy(aquariumHeightCm = 80, co2Installed = true)
+        val worsening = calculate(
+            tank = tank(
+                lastLightingResetEpochDay = TODAY - 120,
+                lastAppliedPhotoperiodMinutes = 420,
+                lastAppliedMaximumChannelPercent = 50,
+                lastAppliedEpochDay = TODAY - 20
+            ),
+            input = input().copy(surfaceGrowth = AquariumSurfaceGrowth.WORSENING_ALGAE)
         )
 
-        assertTrue(shallow.currentTargetPpfd > deep.currentTargetPpfd)
-        assertFalse(shallow.profileFingerprint == deep.profileFingerprint)
+        assertEquals(DeviceLightLifecycleStage.ESTABLISHED, clear.currentPhase.lifecycleStage)
+        assertEquals(DeviceLightLifecycleStage.ACCLIMATION, worsening.currentPhase.lifecycleStage)
+        assertTrue(DeviceLightPlanReason.REVIEW_INTERVAL_HOLD in worsening.reasons)
+        assertTrue(DeviceLightPlanReason.WORSENING_ALGAE_GUARD in worsening.reasons)
+        assertTrue("tropica_algae_control" in worsening.evidenceSourceIds)
+        assertTrue(worsening.maximumChannelPercent < clear.maximumChannelPercent)
+        assertEquals(TODAY + 7, worsening.reevaluationEpochDay)
     }
 
     @Test
-    fun `scene channel shape follows the selected fixture product`() {
-        val wrgb = calculate(
-            tank = tank(productKey = "LIGHT_WRGB_PRO_ELITE"),
-            input = input().copy(co2Installed = true)
+    fun `a cleared guard never raises the last applied output automatically`() {
+        val plan = calculate(
+            tank = tank(
+                lastLightingResetEpochDay = TODAY - 120,
+                lastAppliedPhotoperiodMinutes = 420,
+                lastAppliedMaximumChannelPercent = 30,
+                lastAppliedEpochDay = TODAY - 20
+            )
         )
-        val rgb = calculate(
-            tank = tank(productKey = "LIGHT_RGB_PRO_SLIM"),
-            input = input().copy(co2Installed = true)
+
+        assertEquals(DeviceLightLifecycleStage.ESTABLISHED, plan.currentPhase.lifecycleStage)
+        assertTrue(plan.maximumChannelPercent <= 30)
+        assertTrue(DeviceLightPlanReason.LAST_APPLIED_OUTPUT_HOLD in plan.reasons)
+    }
+
+    @Test
+    fun `mounting height change immediately resets an established plan to six hours`() {
+        val plan = calculate(
+            tank = tank(
+                lastLightingResetEpochDay = TODAY - 120,
+                lastAppliedPhotoperiodMinutes = 480,
+                lastAppliedMaximumChannelPercent = 45,
+                lastAppliedEpochDay = TODAY - 20
+            ),
+            input = input().copy(fixtureHeightAboveWaterCm = 4)
         )
+
+        assertEquals(DeviceLightLifecycleStage.STARTUP, plan.currentPhase.lifecycleStage)
+        assertEquals(360 * MINUTE_MS, plan.durationMillis())
+        assertEquals(TODAY + 21, plan.reevaluationEpochDay)
+        assertTrue(DeviceLightPlanReason.OPTICAL_GEOMETRY_CHANGE_RESET in plan.reasons)
+    }
+
+    @Test
+    fun `water depth change also resets an established plan to six hours`() {
+        val plan = calculate(
+            tank = tank(
+                lastLightingResetEpochDay = TODAY - 120,
+                lastAppliedPhotoperiodMinutes = 480,
+                lastAppliedMaximumChannelPercent = 45,
+                lastAppliedEpochDay = TODAY - 20
+            ),
+            input = input().copy(waterDepthCm = 30)
+        )
+
+        assertEquals(DeviceLightLifecycleStage.STARTUP, plan.currentPhase.lifecycleStage)
+        assertEquals(TODAY + 21, plan.reevaluationEpochDay)
+        assertTrue(DeviceLightPlanReason.OPTICAL_GEOMETRY_CHANGE_RESET in plan.reasons)
+    }
+
+    @Test
+    fun `invalidated water depth is compared with the last applied optical baseline`() {
+        val plan = calculate(
+            tank = tank(
+                waterDepthCm = null,
+                lastLightingResetEpochDay = TODAY - 120,
+                lastAppliedPhotoperiodMinutes = 480,
+                lastAppliedMaximumChannelPercent = 45,
+                lastAppliedEpochDay = TODAY - 20,
+                lastAppliedWaterDepthCm = 35
+            ),
+            input = input().copy(waterDepthCm = 30)
+        )
+
+        assertEquals(DeviceLightLifecycleStage.STARTUP, plan.currentPhase.lifecycleStage)
+        assertEquals(TODAY + 21, plan.reevaluationEpochDay)
+        assertTrue(DeviceLightPlanReason.OPTICAL_GEOMETRY_CHANGE_RESET in plan.reasons)
+    }
+
+    @Test
+    fun `invalidated plant profile resets an established plan using fixture date`() {
+        val establishedTank = tank(
+            lastLightingResetEpochDay = TODAY - 120,
+            lastAppliedPhotoperiodMinutes = 480,
+            lastAppliedMaximumChannelPercent = 45,
+            lastAppliedEpochDay = TODAY - 20
+        )
+        val plan = calculate(
+            tank = establishedTank.copy(plantCoverage = AquariumPlantCoverage.UNKNOWN)
+        )
+        val unchanged = calculate(tank = establishedTank)
+
+        assertEquals(DeviceLightLifecycleStage.STARTUP, plan.currentPhase.lifecycleStage)
+        assertEquals(360 * MINUTE_MS, plan.durationMillis())
+        assertEquals(TODAY + 21, plan.reevaluationEpochDay)
+        assertTrue(DeviceLightPlanReason.BIOLOGICAL_PROFILE_CHANGE_RESET in plan.reasons)
+        assertFalse(plan.profileFingerprint == unchanged.profileFingerprint)
+        assertFalse(plan.recommendationId == unchanged.recommendationId)
+    }
+
+    @Test
+    fun `phone date can never replace the verified fixture date`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            DeviceLightQuickSetupCalculator.calculate(
+                tank = tank(),
+                input = input(),
+                todayEpochDay = TODAY + 1
+            )
+        }
+    }
+
+    @Test
+    fun `input cannot reduce an exact reviewed plant demand`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            DeviceLightQuickSetupCalculator.calculate(
+                tank = tank().copy(
+                    reviewedPlantDemandFloor = DeviceLightPlantDemand.HIGH
+                ),
+                input = input().copy(plantDemand = DeviceLightPlantDemand.LOW),
+                todayEpochDay = TODAY
+            )
+        }
+    }
+
+    @Test
+    fun `unsupported tank cannot produce a commercial recommendation`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            DeviceLightQuickSetupCalculator.calculate(
+                tank = tank().copy(
+                    hasPlants = false,
+                    plantedFreshwater = false,
+                    plantDemand = DeviceLightPlantDemand.UNKNOWN,
+                    reviewedPlantDemandFloor = DeviceLightPlantDemand.UNKNOWN,
+                    plantCatalogIds = emptySet(),
+                    plantEvidenceSourceIds = emptySet()
+                ),
+                input = input(),
+                todayEpochDay = TODAY
+            )
+        }
+    }
+
+    @Test
+    fun `CO2 equipment not ready at light on blocks progression and caps output`() {
+        val plan = calculate(
+            tank = tank(
+                lastLightingResetEpochDay = TODAY - 120,
+                lastAppliedPhotoperiodMinutes = 360,
+                lastAppliedMaximumChannelPercent = 45,
+                lastAppliedEpochDay = TODAY - 20
+            ),
+            input = input().copy(
+                plantDemand = DeviceLightPlantDemand.HIGH,
+                co2Readiness = AquariumCo2Readiness.NOT_READY_AT_LIGHT_ON
+            )
+        )
+
+        assertEquals(DeviceLightLifecycleStage.STARTUP, plan.currentPhase.lifecycleStage)
+        assertTrue(plan.maximumChannelPercent <= 40)
+        assertTrue(DeviceLightPlanReason.CO2_NOT_READY_GUARD in plan.reasons)
+        assertTrue(DeviceLightPlanWarning.HIGH_LIGHT_WITHOUT_READY_CO2 in plan.warnings)
+    }
+
+    @Test
+    fun `direct daylight overlap is explicit and cannot trigger progression`() {
+        val plan = calculate(
+            tank = tank(
+                lastLightingResetEpochDay = TODAY - 120,
+                lastAppliedPhotoperiodMinutes = 420,
+                lastAppliedMaximumChannelPercent = 50,
+                lastAppliedEpochDay = TODAY - 20
+            ),
+            input = input().copy(
+                daylightExposure = AquariumDaylightExposure.DIRECT,
+                daylightStartMinute = 14 * 60,
+                daylightEndMinute = 16 * 60,
+                programEndMinute = 20 * 60
+            )
+        )
+
+        assertEquals(DeviceLightLifecycleStage.ACCLIMATION, plan.currentPhase.lifecycleStage)
+        assertTrue(DeviceLightPlanReason.DIRECT_DAYLIGHT_GUARD in plan.reasons)
+        assertTrue(DeviceLightPlanWarning.DIRECT_DAYLIGHT_OVERLAP in plan.warnings)
+        assertTrue(plan.maximumChannelPercent <= 35)
+    }
+
+    @Test
+    fun `wanted shrimp biofilm is not treated as nuisance algae`() {
+        val plan = calculate(
+            tank = tank(
+                hasShrimp = true,
+                lastLightingResetEpochDay = TODAY - 120,
+                lastAppliedPhotoperiodMinutes = 360,
+                lastAppliedMaximumChannelPercent = 45,
+                lastAppliedEpochDay = TODAY - 14
+            ),
+            input = input().copy(
+                surfaceGrowth = AquariumSurfaceGrowth.TARGET_BIOFILM,
+                shelterAvailability = AquariumShelterAvailability.ADEQUATE
+            )
+        )
+
+        assertEquals(DeviceLightLifecycleStage.ACCLIMATION, plan.currentPhase.lifecycleStage)
+        assertTrue(DeviceLightPlanReason.TARGET_BIOFILM_PROTECTED in plan.reasons)
+        assertFalse(DeviceLightPlanReason.STABLE_ALGAE_HOLD in plan.reasons)
+    }
+
+    @Test
+    fun `evidence and identity are included in the deterministic fingerprint`() {
+        val base = calculate(tank = tank())
+        val changedHardware = calculate(tank = tank(hardwareRevision = "rev-b"))
+
+        assertTrue("chihiros_aqua_soil_launch" in base.evidenceSourceIds)
+        assertTrue("tropica_growing_in" in base.evidenceSourceIds)
+        assertTrue("tropica_plant_database" in base.evidenceSourceIds)
+        assertTrue("tropica_plant_4442" in base.evidenceSourceIds)
+        assertFalse(base.profileFingerprint == changedHardware.profileFingerprint)
+        assertTrue(base.profileFingerprint.matches(Regex("^[0-9a-f]{16}$")))
+    }
+
+    @Test
+    fun `fixture product controls the emitted channel set`() {
+        val wrgb = calculate(tank = tank(productKey = "LIGHT_WRGB_PRO_ELITE"))
+        val rgb = calculate(tank = tank(productKey = "LIGHT_RGB_PRO_SLIM"))
 
         assertEquals(DeviceLightAutomaticChannel.entries.toSet(), wrgb.scene.channels.keys)
         assertEquals(
@@ -125,109 +336,111 @@ class DeviceLightQuickSetupCalculatorTest {
     }
 
     @Test
-    fun `indirect daylight and mild algae hold progression for seven days`() {
-        val plan = calculate(
-            tank = tank(setupDateEpochDay = TODAY - 11),
-            input = input().copy(
-                plantDemand = DeviceLightPlantDemand.HIGH,
-                plantDensity = DeviceLightPlantDensity.DENSE,
-                aquariumHeightCm = 45,
-                co2Installed = true,
-                activeSoil = true,
-                ambientLight = DeviceLightAmbientLight.INDIRECT,
-                algaeLevel = DeviceLightAlgaeLevel.MILD
-            )
-        )
-
-        assertEquals(1, plan.phases.size)
-        assertNull(plan.currentPhase.draft.validUntilEpochDayExclusive)
-        assertEquals(TODAY + 7, plan.reevaluationEpochDay)
-        assertEquals(42, plan.scene.channels.values.maxOrNull())
-        assertTrue(DeviceLightPlanReason.INDIRECT_DAYLIGHT in plan.reasons)
-        assertTrue(DeviceLightPlanReason.MILD_ALGAE_GUARD in plan.reasons)
-    }
-
-    @Test
-    fun `direct daylight and visible algae reduce output below clear conditions`() {
-        val clear = calculate(
-            tank = tank(),
-            input = input().copy(co2Installed = true)
-        )
-        val guarded = calculate(
-            tank = tank(),
-            input = input().copy(
-                co2Installed = true,
-                ambientLight = DeviceLightAmbientLight.DIRECT,
-                algaeLevel = DeviceLightAlgaeLevel.VISIBLE
-            )
-        )
-
-        assertTrue(
-            guarded.scene.channels.values.maxOrNull()!! < clear.scene.channels.values.maxOrNull()!!
-        )
-        assertEquals(1, guarded.phases.size)
-        assertEquals(TODAY + 7, guarded.reevaluationEpochDay)
-        assertTrue(DeviceLightPlanReason.DIRECT_DAYLIGHT_CAP in guarded.reasons)
-        assertTrue(DeviceLightPlanReason.VISIBLE_ALGAE_GUARD in guarded.reasons)
-    }
-
-    @Test
-    fun `future or missing setup date fails safe as a new tank`() {
-        val future = calculate(
-            tank = tank(setupDateEpochDay = TODAY + 10),
-            input = input().copy(co2Installed = true)
-        )
+    fun `missing and future setup dates stay in the safe startup stage`() {
         val missing = calculate(
-            tank = tank(setupDateEpochDay = null),
-            input = input().copy(co2Installed = true)
+            tank = tank(setupDateEpochDay = null, lastLightingResetEpochDay = null)
+        )
+        val future = calculate(
+            tank = tank(
+                setupDateEpochDay = TODAY + 3,
+                lastLightingResetEpochDay = TODAY + 3
+            )
         )
 
-        assertTrue(DeviceLightPlanWarning.SETUP_DATE_IN_FUTURE in future.warnings)
-        assertTrue(DeviceLightPlanWarning.SETUP_DATE_MISSING in missing.warnings)
-        assertEquals(DeviceLightLifecycleStage.STARTUP, future.currentPhase.lifecycleStage)
         assertEquals(DeviceLightLifecycleStage.STARTUP, missing.currentPhase.lifecycleStage)
-        assertEquals(TODAY, future.currentPhase.draft.validFromEpochDay)
-        assertEquals(TODAY, missing.currentPhase.draft.validFromEpochDay)
+        assertEquals(DeviceLightLifecycleStage.STARTUP, future.currentPhase.lifecycleStage)
+        assertTrue(DeviceLightPlanWarning.SETUP_DATE_MISSING in missing.warnings)
+        assertTrue(DeviceLightPlanWarning.SETUP_DATE_IN_FUTURE in future.warnings)
     }
 
     private fun calculate(
         tank: DeviceLightQuickSetupTank,
-        input: DeviceLightQuickSetupInput
+        input: DeviceLightQuickSetupInput = input()
     ): DeviceLightQuickSetupPlan = DeviceLightQuickSetupCalculator.calculate(
         tank = tank,
         input = input,
         todayEpochDay = TODAY
     )
 
+    private fun DeviceLightQuickSetupPlan.durationMillis(): Long =
+        currentPhase.draft.endTimeMs - currentPhase.draft.startTimeMs
+
     private fun tank(
-        setupDateEpochDay: Long? = TODAY - 11,
-        productKey: String = "LIGHT_WRGB_PRO_ELITE"
+        setupDateEpochDay: Long? = TODAY - 5,
+        productKey: String = "LIGHT_WRGB_PRO_ELITE",
+        hardwareRevision: String = "rev-a",
+        hasShrimp: Boolean = false,
+        plantCoverage: AquariumPlantCoverage = AquariumPlantCoverage.MEDIUM,
+        waterDepthCm: Int? = 35,
+        lastLightingResetEpochDay: Long? = setupDateEpochDay,
+        lastAppliedPhotoperiodMinutes: Int? = null,
+        lastAppliedMaximumChannelPercent: Int? = null,
+        lastAppliedEpochDay: Long? = null,
+        lastAppliedWaterDepthCm: Int? = if (lastAppliedPhotoperiodMinutes == null) {
+            null
+        } else {
+            waterDepthCm
+        }
     ) = DeviceLightQuickSetupTank(
         tankId = 7,
         tankName = "Living room",
+        deviceLocalEpochDay = TODAY,
         setupDateEpochDay = setupDateEpochDay,
-        widthCm = 90,
-        lengthCm = 45,
-        heightCm = 45,
-        plantCount = 12,
-        inferredPlantDemand = DeviceLightPlantDemand.MEDIUM,
-        inferredPlantDensity = DeviceLightPlantDensity.MEDIUM,
-        inferredCo2Installed = true,
-        inferredActiveSoil = false,
+        tankHeightCm = 45,
+        hasPlants = true,
+        plantDemand = DeviceLightPlantDemand.MEDIUM,
+        reviewedPlantDemandFloor = DeviceLightPlantDemand.MEDIUM,
+        plantCatalogIds = setOf("plant:micranthemum_tweediei_monte_carlo"),
+        plantEvidenceSourceIds = setOf("tropica_plant_4442"),
+        plantCoverage = plantCoverage,
+        co2ComponentPresent = true,
+        co2Readiness = AquariumCo2Readiness.READY_AT_LIGHT_ON,
+        substrateSemantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
+        substrateProductIds = setOf("substrate_chihiros_aquasoil_9l"),
+        substrateEvidenceSourceIds = setOf("chihiros_aqua_soil_launch"),
+        daylightExposure = AquariumDaylightExposure.LOW,
+        daylightStartMinute = null,
+        daylightEndMinute = null,
+        preferredLightEndMinute = 20 * 60,
+        surfaceGrowth = AquariumSurfaceGrowth.NONE,
+        latestObservationEpochDay = TODAY,
+        hasShrimp = hasShrimp,
+        shelterAvailability = if (hasShrimp) {
+            AquariumShelterAvailability.ADEQUATE
+        } else {
+            AquariumShelterAvailability.NOT_REQUIRED
+        },
+        waterDepthCm = waterDepthCm,
+        fixtureHeightAboveWaterCm = 10,
+        profileUpdatedAtMillis = null,
+        installationUpdatedAtMillis = null,
         plantedFreshwater = true,
         productKey = productKey,
-        productDisplayName = "AquaLight"
+        productDisplayName = "AquaLight",
+        hardwareRevision = hardwareRevision,
+        fixtureLengthMm = 900,
+        calibrationProfile = null,
+        lastLightingResetEpochDay = lastLightingResetEpochDay,
+        lastAppliedPhotoperiodMinutes = lastAppliedPhotoperiodMinutes,
+        lastAppliedMaximumChannelPercent = lastAppliedMaximumChannelPercent,
+        lastAppliedEpochDay = lastAppliedEpochDay,
+        nextReevaluationEpochDay = null,
+        lastAppliedWaterDepthCm = lastAppliedWaterDepthCm
     )
 
     private fun input() = DeviceLightQuickSetupInput(
         plantDemand = DeviceLightPlantDemand.MEDIUM,
-        plantDensity = DeviceLightPlantDensity.MEDIUM,
-        aquariumHeightCm = 35,
-        co2Installed = false,
-        activeSoil = false,
-        ambientLight = DeviceLightAmbientLight.LOW,
-        algaeLevel = DeviceLightAlgaeLevel.NONE,
-        programEndMinute = 22 * 60
+        plantCoverage = AquariumPlantCoverage.MEDIUM,
+        waterDepthCm = 35,
+        fixtureHeightAboveWaterCm = 10,
+        co2Readiness = AquariumCo2Readiness.READY_AT_LIGHT_ON,
+        substrateSemantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
+        daylightExposure = AquariumDaylightExposure.LOW,
+        daylightStartMinute = null,
+        daylightEndMinute = null,
+        surfaceGrowth = AquariumSurfaceGrowth.NONE,
+        shelterAvailability = AquariumShelterAvailability.NOT_REQUIRED,
+        programEndMinute = 20 * 60
     )
 
     private companion object {

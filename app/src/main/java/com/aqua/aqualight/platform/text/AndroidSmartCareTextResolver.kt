@@ -121,8 +121,11 @@ internal class AndroidSmartCareTextResolver(
 
     private fun AquariumPlantTag.toSavedPlant(): SavedAquariumPlant = SavedAquariumPlant(
         id = id,
+        catalogId = catalogId,
         plantName = plantName,
         category = category,
+        lightDemand = lightDemand,
+        plantedAtEpochDay = plantedAtEpochDay,
         markerX = markerX,
         markerY = markerY
     )
@@ -135,7 +138,8 @@ internal class AndroidSmartCareTextResolver(
             categoryTitle = categoryTitle,
             name = name,
             brand = brand,
-            note = note
+            note = note,
+            substrateSemantic = substrateSemantic
         )
 
     private fun AquariumLivestock.toSavedLivestock(): SavedAquariumLivestock =

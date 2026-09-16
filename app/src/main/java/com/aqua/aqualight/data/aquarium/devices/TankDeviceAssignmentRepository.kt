@@ -110,6 +110,42 @@ class TankDeviceAssignmentRepository(
         }
     }
 
+    suspend fun updateLightAutomation(
+        deviceUid: DeviceUid,
+        installation: TankLightInstallationProfile,
+        recommendations: List<TankLightRecommendationSnapshot>
+    ): TankDeviceAssignment = operationMutex.withLock {
+        assignmentStore.updateLightAutomation(
+            ownerUid = ownerUid,
+            deviceUid = deviceUid,
+            installation = installation,
+            recommendations = recommendations
+        )
+    }
+
+    /** Serializes read-modify-write so concurrent light audit updates cannot drop a row. */
+    suspend fun mutateLightAutomation(
+        deviceUid: DeviceUid,
+        transform: (TankDeviceAssignment) -> TankDeviceAssignment
+    ): TankDeviceAssignment = operationMutex.withLock {
+        val current = ownerAssignments.first().singleOrNull { assignment ->
+            assignment.deviceUid == deviceUid
+        } ?: error("Tank assignment was not found.")
+        val replacement = transform(current)
+        require(
+            replacement.ownerUid == current.ownerUid &&
+                replacement.tankId == current.tankId &&
+                replacement.deviceUid == current.deviceUid &&
+                replacement.assignedAtMillis == current.assignedAtMillis
+        ) { "Light automation cannot change tank assignment identity." }
+        assignmentStore.updateLightAutomation(
+            ownerUid = ownerUid,
+            deviceUid = deviceUid,
+            installation = replacement.lightInstallation,
+            recommendations = replacement.lightRecommendations
+        )
+    }
+
     suspend fun assignmentsSnapshotForTanks(
         tankIds: Set<Long>
     ): List<TankDeviceAssignment> {
@@ -125,9 +161,10 @@ class TankDeviceAssignmentRepository(
 
     suspend fun assignDeviceToTank(
         tankId: Long,
-        deviceUid: DeviceUid
+        deviceUid: DeviceUid,
+        assignedAtMillis: Long = System.currentTimeMillis()
     ): TankDeviceAssignmentResult {
-        if (tankId <= 0L || deviceUid.value.isBlank()) {
+        if (tankId <= 0L || deviceUid.value.isBlank() || assignedAtMillis <= 0L) {
             return TankDeviceAssignmentResult.InvalidRequest
         }
 
@@ -150,7 +187,8 @@ class TankDeviceAssignmentRepository(
                     val decision = assignmentStore.assignDeviceToTank(
                         ownerUid = ownerUid,
                         tankId = tankId,
-                        deviceUid = deviceUid
+                        deviceUid = deviceUid,
+                        assignedAtMillis = assignedAtMillis
                     )
                 ) {
                     is TankDeviceStoreAssignDecision.Assigned -> {

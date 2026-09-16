@@ -4,6 +4,8 @@ import android.content.Context
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignment
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentResult
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceRemovalResult
+import com.aqua.aqualight.data.aquarium.devices.TankLightInstallationProfile
+import com.aqua.aqualight.data.aquarium.devices.TankLightRecommendationSnapshot
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumLivestock
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.data.aquarium.model.TankDraft
@@ -39,7 +41,12 @@ internal data class UserDataRestoreDataSources(
 
     internal data class AssignmentDataSource(
         val assignmentForDevice: suspend (DeviceUid) -> TankDeviceAssignment?,
-        val assignDeviceToTank: suspend (Long, DeviceUid) -> TankDeviceAssignmentResult,
+        val assignDeviceToTank: suspend (Long, DeviceUid, Long) -> TankDeviceAssignmentResult,
+        val updateLightAutomation: suspend (
+            DeviceUid,
+            TankLightInstallationProfile,
+            List<TankLightRecommendationSnapshot>
+        ) -> TankDeviceAssignment,
         val removeDeviceFromTank: suspend (Long, DeviceUid) -> TankDeviceRemovalResult
     )
 
@@ -72,7 +79,14 @@ internal data class UserDataRestoreDataSources(
                 ),
                 assignments = AssignmentDataSource(
                     assignmentForDevice = assignmentRepository::assignmentForDevice,
-                    assignDeviceToTank = assignmentRepository::assignDeviceToTank,
+                    assignDeviceToTank = { tankId, deviceUid, assignedAtMillis ->
+                        assignmentRepository.assignDeviceToTank(
+                            tankId = tankId,
+                            deviceUid = deviceUid,
+                            assignedAtMillis = assignedAtMillis
+                        )
+                    },
+                    updateLightAutomation = assignmentRepository::updateLightAutomation,
                     removeDeviceFromTank = assignmentRepository::removeDeviceFromTank
                 )
             )
@@ -169,8 +183,14 @@ private fun UserDataRestoreDataSources.AssignmentDataSource.trackCreatedAssignme
 ): UserDataRestoreDataSources.AssignmentDataSource {
     val raw = this
     return copy(
-        assignDeviceToTank = { tankId, deviceUid ->
-            when (val result = raw.assignDeviceToTank(tankId, deviceUid)) {
+        assignDeviceToTank = { tankId, deviceUid, assignedAtMillis ->
+            when (
+                val result = raw.assignDeviceToTank(
+                    tankId,
+                    deviceUid,
+                    assignedAtMillis
+                )
+            ) {
                 is TankDeviceAssignmentResult.Assigned ->
                     raw.recordAssignmentOrCompensate(result, transactions)
                 else -> result

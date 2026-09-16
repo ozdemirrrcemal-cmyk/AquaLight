@@ -179,7 +179,14 @@ private class ExactRecoveryHarness(
         ),
         assignments = UserDataRestoreDataSources.AssignmentDataSource(
             assignmentForDevice = { uid -> assignments[uid] },
-            assignDeviceToTank = { _, _ -> TankDeviceAssignmentResult.InvalidRequest },
+            assignDeviceToTank = { _, _, _ -> TankDeviceAssignmentResult.InvalidRequest },
+            updateLightAutomation = { uid, installation, recommendations ->
+                val current = requireNotNull(assignments[uid])
+                current.copy(
+                    lightInstallation = installation,
+                    lightRecommendations = recommendations
+                ).also { updated -> assignments[uid] = updated }
+            },
             removeDeviceFromTank = { tankId, uid ->
                 val current = assignments[uid]
                 if (current?.tankId == tankId) {

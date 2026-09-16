@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.user.archive
 
+import com.aqua.aqualight.application.aquarium.AquariumAutomationProfile
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.data.care.model.CareTask
 import com.aqua.aqualight.data.care.model.CareTaskSource
@@ -130,6 +131,7 @@ class UserDataRestoreDeduplicatorTest {
             createdAtMillis = createdAtMillis,
             smartCareEnabled = true,
             careRemindersEnabled = true,
+            automationProfile = AquariumAutomationProfile(),
             plants = emptyList(),
             materials = emptyList(),
             livestock = emptyList()
@@ -157,6 +159,7 @@ class UserDataRestoreDeduplicatorTest {
             createdAtMillis = createdAtMillis,
             smartCareEnabled = true,
             careRemindersEnabled = true,
+            automationProfile = AquariumAutomationProfile(),
             plants = emptyList(),
             materials = emptyList(),
             livestock = emptyList()

@@ -30,11 +30,15 @@ internal fun SavedAquariumTank.toArchiveAquarium(
         createdAtMillis = createdAtMillis,
         smartCareEnabled = smartCareEnabled,
         careRemindersEnabled = careRemindersEnabled,
+        automationProfile = automationProfile,
         plants = plants.map { plant ->
             ArchivePlant(
                 id = plant.id,
+                catalogId = plant.catalogId,
                 plantName = plant.plantName,
                 category = plant.category,
+                lightDemand = plant.lightDemand,
+                plantedAtEpochDay = plant.plantedAtEpochDay,
                 markerX = plant.markerX,
                 markerY = plant.markerY
             )
@@ -47,7 +51,8 @@ internal fun SavedAquariumTank.toArchiveAquarium(
                 categoryTitle = material.categoryTitle,
                 name = material.name,
                 brand = material.brand,
-                note = material.note
+                note = material.note,
+                substrateSemantic = material.substrateSemantic
             )
         },
         livestock = livestock.map { item ->
@@ -71,8 +76,11 @@ internal fun ArchiveAquarium.toTankDraft(photoUri: String?): TankDraft {
         plants = plants.map { plant ->
             TankPlantTag(
                 id = plant.id,
+                catalogId = plant.catalogId,
                 plantName = plant.plantName,
                 category = plant.category,
+                lightDemand = plant.lightDemand,
+                plantedAtEpochDay = plant.plantedAtEpochDay,
                 markerX = plant.markerX,
                 markerY = plant.markerY
             )
@@ -95,7 +103,8 @@ internal fun ArchiveAquarium.toTankDraft(photoUri: String?): TankDraft {
         sizeUnit = sizeUnit,
         volumeUnit = volumeUnit,
         tankType = tankType,
-        tankStyle = tankStyle
+        tankStyle = tankStyle,
+        automationProfile = automationProfile
     )
 }
 
@@ -179,6 +188,8 @@ internal fun TankDeviceAssignment.toArchiveAssignment(): ArchiveDeviceAssignment
     return ArchiveDeviceAssignment(
         tankId = tankId,
         deviceUid = deviceUid.value,
-        assignedAtMillis = assignedAtMillis
+        assignedAtMillis = assignedAtMillis,
+        lightInstallation = lightInstallation,
+        lightRecommendations = lightRecommendations
     )
 }
