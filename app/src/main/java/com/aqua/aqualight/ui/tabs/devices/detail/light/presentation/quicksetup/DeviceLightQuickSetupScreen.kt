@@ -1260,7 +1260,6 @@ private fun QuickSetupActionBar(
         modifier = Modifier
             .fillMaxWidth()
             .background(background)
-            .border(width = 1.dp, color = colors.outline)
             .padding(AquaLightQuickSetupGeometry.actionBarPadding),
         horizontalArrangement = Arrangement.spacedBy(AquaLightQuickSetupGeometry.compactGap)
     ) {
