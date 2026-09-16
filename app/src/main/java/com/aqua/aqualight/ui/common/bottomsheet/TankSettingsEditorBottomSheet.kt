@@ -19,6 +19,7 @@ import com.aqua.aqualight.databinding.ContentSheetTankStyleBinding
 import com.aqua.aqualight.databinding.ContentSheetTankTypeBinding
 import com.aqua.aqualight.databinding.DialogSettingsBottomSheetBinding
 import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumDimensionInputPolicy
+import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumMeasurementPolicy
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import java.text.DateFormatSymbols
 import java.util.Calendar
@@ -146,6 +147,9 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
         )
 
         fun formatValue(cmValue: Int): String {
+            if (!AquariumMeasurementPolicy.isValidDimensionCm(cmValue)) {
+                return ""
+            }
             return AquariumDimensionInputPolicy.format(
                 context = requireContext(),
                 centimeters = cmValue,
@@ -165,6 +169,9 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
 
         fun convertInputsTo(newUnit: String): Boolean {
             val inputs = inputViews()
+            if (inputs.all { input -> input.text.isNullOrBlank() }) {
+                return true
+            }
             val converted = inputs.map { input ->
                 AquariumDimensionInputPolicy.convert(
                     context = requireContext(),

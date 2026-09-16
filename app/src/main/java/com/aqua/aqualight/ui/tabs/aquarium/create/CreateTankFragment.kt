@@ -219,11 +219,22 @@ class CreateTankFragment : Fragment(R.layout.fragment_create_tank) {
 
     private fun completeTank() {
         if (isCompletingTank || isClosingFlow) return
+        val draftViewModel = createTankViewModel()
+        val validationIssue = CreateTankInfoValidationPolicy.firstIssue(
+            draftViewModel.tankDraft
+        )
+        if (validationIssue != null) {
+            (activity as? BaseActivity)?.showSnackBar(
+                message = getString(validationIssue.messageRes),
+                type = BaseActivity.SnackType.WARNING
+            )
+            return
+        }
+
         isCompletingTank = true
         binding.btnNext.isEnabled = false
 
         lifecycleScope.launch {
-            val draftViewModel = createTankViewModel()
             try {
                 withContext(NonCancellable) {
                     aquariumTankViewModel.addTankFromDraft(draftViewModel.tankDraft)

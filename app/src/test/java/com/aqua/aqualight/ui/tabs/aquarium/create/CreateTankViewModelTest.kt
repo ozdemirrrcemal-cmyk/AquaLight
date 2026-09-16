@@ -4,9 +4,21 @@ import androidx.lifecycle.SavedStateHandle
 import com.aqua.aqualight.application.aquarium.AquariumPlantTag
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class CreateTankViewModelTest {
+
+    @Test
+    fun newDraftHasNoImplicitSetupDateOrTankDimensions() {
+        val draft = CreateTankViewModel(SavedStateHandle()).tankDraft
+
+        assertNull(draft.setupDateEpochDay)
+        assertEquals(0, draft.widthCm)
+        assertEquals(0, draft.lengthCm)
+        assertEquals(0, draft.heightCm)
+        assertTrue(draft.tankType.isBlank())
+    }
 
     @Test
     fun draftSurvivesViewModelRecreationAndCanBeClearedAfterCommit() {
@@ -36,5 +48,8 @@ class CreateTankViewModelTest {
         val afterCommit = CreateTankViewModel(state)
         assertEquals("", afterCommit.tankDraft.name)
         assertNull(afterCommit.tankDraft.photoUri)
+        assertEquals(0, afterCommit.tankDraft.widthCm)
+        assertEquals(0, afterCommit.tankDraft.lengthCm)
+        assertEquals(0, afterCommit.tankDraft.heightCm)
     }
 }

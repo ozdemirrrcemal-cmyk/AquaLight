@@ -13,6 +13,7 @@ import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumDatePolicy
 import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumDimensionFormatter
 import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumMeasurementPolicy
 import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumTankTaxonomyText
+import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankInfoValidationPolicy
 import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankViewModel
 
 class TankInfoFragment :
@@ -132,8 +133,31 @@ class TankInfoFragment :
         )
 
         binding.tvSizeLabel.text = formatSizeTitle()
-        binding.tvSizeValue.text = formatSize()
-        binding.tvVolumeValue.text = formatVolume()
+        val hasValidSize = AquariumMeasurementPolicy.areValidDimensions(
+            widthCm = draft.widthCm,
+            lengthCm = draft.lengthCm,
+            heightCm = draft.heightCm
+        )
+        val sizeContentColor = ContextCompat.getColor(
+            requireContext(),
+            if (hasValidSize) {
+                R.color.aqua_card_text_primary
+            } else {
+                R.color.aqua_content_placeholder
+            }
+        )
+        binding.tvSizeValue.text = if (hasValidSize) {
+            formatSize()
+        } else {
+            getString(R.string.aquarium_common_not_selected)
+        }
+        binding.tvSizeValue.setTextColor(sizeContentColor)
+        binding.tvVolumeValue.text = if (hasValidSize) {
+            formatVolume()
+        } else {
+            getString(R.string.aquarium_common_not_selected)
+        }
+        binding.tvVolumeValue.setTextColor(sizeContentColor)
 
         binding.tvTankTypeValue.text = draft.tankType
             .takeIf(String::isNotBlank)
@@ -268,25 +292,10 @@ class TankInfoFragment :
     }
 
     override fun validateAndSave(): Boolean {
-        val draft = viewModel.tankDraft
-
-        val isValidSize = AquariumMeasurementPolicy.areValidDimensions(
-            widthCm = draft.widthCm,
-            lengthCm = draft.lengthCm,
-            heightCm = draft.heightCm
-        )
-
-        if (!isValidSize) {
+        val issue = CreateTankInfoValidationPolicy.firstIssue(viewModel.tankDraft)
+        if (issue != null) {
             showSnackBar(
-                message = getString(R.string.aquarium_validation_invalid_tank_size),
-                type = BaseActivity.SnackType.WARNING
-            )
-            return false
-        }
-
-        if (draft.tankType.isBlank()) {
-            showSnackBar(
-                message = getString(R.string.aquarium_validation_tank_type_required),
+                message = getString(issue.messageRes),
                 type = BaseActivity.SnackType.WARNING
             )
             return false
