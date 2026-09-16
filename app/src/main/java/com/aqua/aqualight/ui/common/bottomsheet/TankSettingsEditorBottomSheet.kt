@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.common.bottomsheet
 
+import android.content.Context
 import android.content.DialogInterface
 import android.os.Bundle
 import android.text.Editable
@@ -7,6 +8,7 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.TextView
 import androidx.core.os.bundleOf
 import androidx.fragment.app.FragmentManager
@@ -147,10 +149,7 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
         )
 
         fun formatValue(cmValue: Int): String {
-            if (!AquariumMeasurementPolicy.isValidDimensionCm(cmValue)) {
-                return ""
-            }
-            return AquariumDimensionInputPolicy.format(
+            return formatDimensionInput(
                 context = requireContext(),
                 centimeters = cmValue,
                 unit = selectedUnit
@@ -168,31 +167,13 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
         )
 
         fun convertInputsTo(newUnit: String): Boolean {
-            val inputs = inputViews()
-            if (inputs.all { input -> input.text.isNullOrBlank() }) {
-                return true
-            }
-            val converted = inputs.map { input ->
-                AquariumDimensionInputPolicy.convert(
-                    context = requireContext(),
-                    value = input.text,
-                    fromUnit = selectedUnit,
-                    toUnit = newUnit
-                )
-            }
-
-            if (converted.any { it == null }) {
-                converted.forEachIndexed { index, value ->
-                    if (value == null) inputs[index].error = validationMessage
-                }
-                return false
-            }
-
-            inputs.forEachIndexed { index, input ->
-                input.error = null
-                input.setText(requireNotNull(converted[index]))
-            }
-            return true
+            return convertDimensionInputs(
+                context = requireContext(),
+                inputs = inputViews(),
+                validationMessage = validationMessage,
+                fromUnit = selectedUnit,
+                toUnit = newUnit
+            )
         }
 
         binding.inputWidth.setText(formatValue(requireArguments().getInt(ARG_WIDTH_CM)))
@@ -529,4 +510,48 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
             return if (unit.equals(UNIT_IN, ignoreCase = true)) UNIT_IN else UNIT_CM
         }
     }
+}
+
+private fun formatDimensionInput(
+    context: Context,
+    centimeters: Int,
+    unit: String
+): String {
+    if (!AquariumMeasurementPolicy.isValidDimensionCm(centimeters)) return ""
+    return AquariumDimensionInputPolicy.format(
+        context = context,
+        centimeters = centimeters,
+        unit = unit
+    )
+}
+
+private fun convertDimensionInputs(
+    context: Context,
+    inputs: List<EditText>,
+    validationMessage: String,
+    fromUnit: String,
+    toUnit: String
+): Boolean {
+    if (inputs.all { input -> input.text.isNullOrBlank() }) return true
+
+    val converted = inputs.map { input ->
+        AquariumDimensionInputPolicy.convert(
+            context = context,
+            value = input.text,
+            fromUnit = fromUnit,
+            toUnit = toUnit
+        )
+    }
+    val conversionSucceeded = converted.none { it == null }
+    if (conversionSucceeded) {
+        inputs.forEachIndexed { index, input ->
+            input.error = null
+            input.setText(requireNotNull(converted[index]))
+        }
+    } else {
+        converted.forEachIndexed { index, value ->
+            if (value == null) inputs[index].error = validationMessage
+        }
+    }
+    return conversionSucceeded
 }

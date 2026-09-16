@@ -16,23 +16,17 @@ object CreateTankInfoValidationPolicy {
     }
 
     fun firstIssue(draft: AquariumTankDraft): Issue? {
-        if (draft.setupDateEpochDay == null) {
-            return Issue.SETUP_DATE_REQUIRED
-        }
-
         val hasValidDimensions = AquariumMeasurementPolicy.areValidDimensions(
             widthCm = draft.widthCm,
             lengthCm = draft.lengthCm,
             heightCm = draft.heightCm
         )
-        if (!hasValidDimensions) {
-            return Issue.SIZE_REQUIRED
-        }
 
-        if (draft.tankType.isBlank()) {
-            return Issue.TANK_TYPE_REQUIRED
+        return when {
+            draft.setupDateEpochDay == null -> Issue.SETUP_DATE_REQUIRED
+            !hasValidDimensions -> Issue.SIZE_REQUIRED
+            draft.tankType.isBlank() -> Issue.TANK_TYPE_REQUIRED
+            else -> null
         }
-
-        return null
     }
 }

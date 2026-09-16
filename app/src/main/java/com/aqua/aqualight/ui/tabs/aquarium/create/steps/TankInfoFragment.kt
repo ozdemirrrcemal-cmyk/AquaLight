@@ -1,8 +1,9 @@
 package com.aqua.aqualight.ui.tabs.aquarium.create.steps
 
-import androidx.core.content.ContextCompat
+import android.content.Context
 import android.os.Bundle
 import android.view.View
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.navGraphViewModels
 import com.aqua.aqualight.R
@@ -138,26 +139,13 @@ class TankInfoFragment :
             lengthCm = draft.lengthCm,
             heightCm = draft.heightCm
         )
-        val sizeContentColor = ContextCompat.getColor(
-            requireContext(),
-            if (hasValidSize) {
-                R.color.aqua_card_text_primary
-            } else {
-                R.color.aqua_content_placeholder
-            }
+        renderTankSizeDetails(
+            binding = binding,
+            context = requireContext(),
+            hasValidSize = hasValidSize,
+            sizeText = formatSize(),
+            volumeText = formatVolume()
         )
-        binding.tvSizeValue.text = if (hasValidSize) {
-            formatSize()
-        } else {
-            getString(R.string.aquarium_common_not_selected)
-        }
-        binding.tvSizeValue.setTextColor(sizeContentColor)
-        binding.tvVolumeValue.text = if (hasValidSize) {
-            formatVolume()
-        } else {
-            getString(R.string.aquarium_common_not_selected)
-        }
-        binding.tvVolumeValue.setTextColor(sizeContentColor)
 
         binding.tvTankTypeValue.text = draft.tankType
             .takeIf(String::isNotBlank)
@@ -308,4 +296,22 @@ class TankInfoFragment :
         _binding = null
         super.onDestroyView()
     }
+}
+
+private fun renderTankSizeDetails(
+    binding: FragmentTankInfoBinding,
+    context: Context,
+    hasValidSize: Boolean,
+    sizeText: String,
+    volumeText: String
+) {
+    val contentColor = ContextCompat.getColor(
+        context,
+        if (hasValidSize) R.color.aqua_card_text_primary else R.color.aqua_content_placeholder
+    )
+    val emptyText = context.getString(R.string.aquarium_common_not_selected)
+    binding.tvSizeValue.text = sizeText.takeIf { hasValidSize } ?: emptyText
+    binding.tvSizeValue.setTextColor(contentColor)
+    binding.tvVolumeValue.text = volumeText.takeIf { hasValidSize } ?: emptyText
+    binding.tvVolumeValue.setTextColor(contentColor)
 }
