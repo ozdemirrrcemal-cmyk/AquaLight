@@ -9,6 +9,16 @@ import org.junit.Test
 class CreateTankViewModelTest {
 
     @Test
+    fun newDraftStartsWithoutImplicitDimensionsOrSetupDate() {
+        val draft = CreateTankViewModel(SavedStateHandle()).tankDraft
+
+        assertNull(draft.setupDateEpochDay)
+        assertEquals(0, draft.widthCm)
+        assertEquals(0, draft.lengthCm)
+        assertEquals(0, draft.heightCm)
+    }
+
+    @Test
     fun draftSurvivesViewModelRecreationAndCanBeClearedAfterCommit() {
         val state = SavedStateHandle()
         val first = CreateTankViewModel(state)

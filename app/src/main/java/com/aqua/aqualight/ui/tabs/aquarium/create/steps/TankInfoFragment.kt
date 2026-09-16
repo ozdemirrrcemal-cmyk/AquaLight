@@ -132,8 +132,7 @@ class TankInfoFragment :
         )
 
         binding.tvSizeLabel.text = formatSizeTitle()
-        binding.tvSizeValue.text = formatSize()
-        binding.tvVolumeValue.text = formatVolume()
+        renderMeasurements()
 
         binding.tvTankTypeValue.text = draft.tankType
             .takeIf(String::isNotBlank)
@@ -260,6 +259,36 @@ class TankInfoFragment :
         )
     }
 
+    private fun renderMeasurements() {
+        val draft = viewModel.tankDraft
+        val hasValidDimensions = AquariumMeasurementPolicy.areValidDimensions(
+            widthCm = draft.widthCm,
+            lengthCm = draft.lengthCm,
+            heightCm = draft.heightCm
+        )
+        val valueColor = ContextCompat.getColor(
+            requireContext(),
+            if (hasValidDimensions) {
+                R.color.aqua_content_on_dark
+            } else {
+                R.color.aqua_content_placeholder
+            }
+        )
+
+        binding.tvSizeValue.text = if (hasValidDimensions) {
+            formatSize()
+        } else {
+            getString(R.string.aquarium_common_not_selected)
+        }
+        binding.tvVolumeValue.text = if (hasValidDimensions) {
+            formatVolume()
+        } else {
+            getString(R.string.aquarium_common_not_selected)
+        }
+        binding.tvSizeValue.setTextColor(valueColor)
+        binding.tvVolumeValue.setTextColor(valueColor)
+    }
+
     private fun showSnackBar(
         message: String,
         type: BaseActivity.SnackType = BaseActivity.SnackType.NORMAL
@@ -269,6 +298,14 @@ class TankInfoFragment :
 
     override fun validateAndSave(): Boolean {
         val draft = viewModel.tankDraft
+
+        if (draft.setupDateEpochDay == null) {
+            showSnackBar(
+                message = getString(R.string.aquarium_validation_setup_date_required),
+                type = BaseActivity.SnackType.WARNING
+            )
+            return false
+        }
 
         val isValidSize = AquariumMeasurementPolicy.areValidDimensions(
             widthCm = draft.widthCm,
