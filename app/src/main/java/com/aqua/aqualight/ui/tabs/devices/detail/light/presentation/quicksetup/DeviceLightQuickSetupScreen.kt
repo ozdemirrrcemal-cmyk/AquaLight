@@ -65,11 +65,10 @@ import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
-import com.aqua.aqualight.ui.common.devicecard.aquaDeviceCardColors
-import com.aqua.aqualight.ui.common.devicecard.aquaDeviceCardTypography
 import com.aqua.aqualight.ui.common.light.AquaLightManualColors
 import com.aqua.aqualight.ui.common.light.AquaLightQuickSetupAlpha
 import com.aqua.aqualight.ui.common.light.AquaLightQuickSetupGeometry
+import com.aqua.aqualight.ui.common.light.aquaLightDashboardTypography
 import com.aqua.aqualight.ui.common.light.aquaLightManualColors
 import java.time.LocalTime
 
@@ -79,9 +78,9 @@ internal fun DeviceLightQuickSetupScreen(
     actions: DeviceLightQuickSetupActions,
     modifier: Modifier = Modifier
 ) {
-    val colors = aquaDeviceCardColors()
-    val typography = aquaDeviceCardTypography(colors)
     val channelColors = aquaLightManualColors()
+    val colors = channelColors.card
+    val typography = aquaLightDashboardTypography(colors)
     val background = colorResource(R.color.background_color)
     Column(
         modifier = modifier
@@ -208,7 +207,6 @@ private fun QuickSetupStatusHeader(
     val presentation = quickSetupHeaderPresentation(state)
     val statusTone = when (presentation.tone) {
         QuickSetupHeaderTone.ACCENT -> colors.accent
-        QuickSetupHeaderTone.SUCCESS -> colors.success
         QuickSetupHeaderTone.WARNING -> colors.warning
     }
     AquaDeviceCardSurface(Modifier.fillMaxWidth()) {
@@ -280,7 +278,7 @@ private fun activeHeaderPresentation(
         titleRes = R.string.device_light_quick_setup_program_active,
         subtitleRes = R.string.device_light_quick_setup_program_active_subtitle,
         tagRes = R.string.device_light_quick_setup_active_tag,
-        tone = QuickSetupHeaderTone.SUCCESS,
+        tone = QuickSetupHeaderTone.ACCENT,
         showStatusDot = true
     )
     DeviceLightManagedPlanRuntimeState.RTC_BLOCKED -> QuickSetupHeaderPresentation(
@@ -310,7 +308,6 @@ private fun activeHeaderPresentation(
 
 private enum class QuickSetupHeaderTone {
     ACCENT,
-    SUCCESS,
     WARNING
 }
 
@@ -335,7 +332,7 @@ private fun CompactAquariumProfile(
             verticalArrangement = Arrangement.spacedBy(AquaLightQuickSetupGeometry.compactGap)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                IconTile(R.drawable.ic_care_plant_health_24, colors.success)
+                IconTile(R.drawable.ic_care_plant_health_24, colors.accent)
                 Spacer(Modifier.width(AquaLightQuickSetupGeometry.compactGap))
                 Column(
                     modifier = Modifier.weight(1f),
@@ -427,7 +424,7 @@ private fun RowScope.ProfileFact(
             painter = painterResource(icon),
             contentDescription = null,
             modifier = Modifier.size(18.dp),
-            colorFilter = ColorFilter.tint(colors.success)
+            colorFilter = ColorFilter.tint(colors.accent)
         )
         BasicText(
             text = text,
