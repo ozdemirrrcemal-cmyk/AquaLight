@@ -76,8 +76,14 @@
     <string name="device_light_quick_setup_last_evaluation">Son değerlendirme</string>
     <string name="device_light_quick_setup_next_check">Sonraki kontrol</string>
     <string name="device_light_quick_setup_today">Bugün</string>
-    <string name="device_light_quick_setup_days_ago">%1$d gün önce</string>
-    <string name="device_light_quick_setup_days_later">%1$d gün sonra</string>
+    <plurals name="device_light_quick_setup_days_ago">
+        <item quantity="one">%1$d gün önce</item>
+        <item quantity="other">%1$d gün önce</item>
+    </plurals>
+    <plurals name="device_light_quick_setup_days_later">
+        <item quantity="one">%1$d gün sonra</item>
+        <item quantity="other">%1$d gün sonra</item>
+    </plurals>
     <string name="device_light_quick_setup_not_available">Kullanılamıyor</string>
     <string name="device_light_quick_setup_plant_co2_reason">%1$s bitkileri · %2$s</string>
     <string name="device_light_quick_setup_active_reason_new_tank">Yeni tank · 6 saat başlangıç</string>

@@ -41,6 +41,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -1070,15 +1071,25 @@ private fun RowScope.MonitorValue(
 private fun relativePastLabel(days: Long?): String = when (days) {
     null -> stringResource(R.string.device_light_quick_setup_not_available)
     0L -> stringResource(R.string.device_light_quick_setup_today)
-    else -> stringResource(R.string.device_light_quick_setup_days_ago, days)
+    else -> pluralStringResource(
+        R.plurals.device_light_quick_setup_days_ago,
+        days.toSafePluralCount(),
+        days
+    )
 }
 
 @Composable
 private fun relativeFutureLabel(days: Long?): String = when (days) {
     null -> stringResource(R.string.device_light_quick_setup_not_available)
     0L -> stringResource(R.string.device_light_quick_setup_today)
-    else -> stringResource(R.string.device_light_quick_setup_days_later, days)
+    else -> pluralStringResource(
+        R.plurals.device_light_quick_setup_days_later,
+        days.toSafePluralCount(),
+        days
+    )
 }
+
+private fun Long.toSafePluralCount(): Int = coerceIn(0L, Int.MAX_VALUE.toLong()).toInt()
 
 @Composable
 private fun ActiveReasonCard(
