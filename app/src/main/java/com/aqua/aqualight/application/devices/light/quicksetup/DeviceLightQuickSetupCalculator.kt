@@ -20,7 +20,8 @@ object DeviceLightQuickSetupCalculator {
     private const val MINUTES_PER_DAY = 1_440
     private const val FIRST_STAGE_DAYS = 21L
     private const val REEVALUATION_DAYS = 14L
-    private const val PROFILE_VERSION = "aql-planted-balanced-v1"
+    private const val ALGAE_REEVALUATION_DAYS = 7L
+    private const val PROFILE_VERSION = "aql-planted-balanced-v2"
 
     fun calculate(
         tank: DeviceLightQuickSetupTank,
@@ -35,7 +36,7 @@ object DeviceLightQuickSetupCalculator {
         val phases = buildPhases(tank, input, lifecycle, lightProfile)
         val current = phases.first()
         return DeviceLightQuickSetupPlan(
-            initialStartPercent = initialStartPercent(lifecycle.tankDay, input.activeSoil),
+            initialStartPercent = initialStartPercent(lifecycle.tankDay, input),
             currentPhaseIndex = 0,
             currentTargetPpfd = current.targetPpfd,
             currentEstimatedDliMolPerM2Day = current.estimatedDliMolPerM2Day,
@@ -43,7 +44,7 @@ object DeviceLightQuickSetupCalculator {
             reasons = reasons(lifecycle.tankDay, input),
             warnings = warnings(tank, input, todayEpochDay),
             phases = phases,
-            reevaluationEpochDay = todayEpochDay + REEVALUATION_DAYS,
+            reevaluationEpochDay = todayEpochDay + reevaluationDays(input.algaeLevel),
             profileFingerprint = fingerprint(tank, input, todayEpochDay)
         )
     }
@@ -82,24 +83,34 @@ object DeviceLightQuickSetupCalculator {
         input: DeviceLightQuickSetupInput,
         lifecycle: LifecycleContext,
         lightProfile: PhaseLightProfile
-    ): List<DeviceLightQuickSetupPhase> = DeviceLightLifecycleStage.entries
-        .drop(lifecycle.currentStageIndex)
+    ): List<DeviceLightQuickSetupPhase> = plannedStages(lifecycle, input)
         .mapIndexed { relativeIndex, _ ->
             createPhase(
                 tank = tank,
                 input = input,
                 lifecycle = lifecycle,
                 relativeIndex = relativeIndex,
-                lightProfile = lightProfile
+                lightProfile = lightProfile,
+                holdForAlgaeReview = input.algaeLevel != DeviceLightAlgaeLevel.NONE
             )
         }
+
+    private fun plannedStages(
+        lifecycle: LifecycleContext,
+        input: DeviceLightQuickSetupInput
+    ): List<DeviceLightLifecycleStage> = if (input.algaeLevel == DeviceLightAlgaeLevel.NONE) {
+        DeviceLightLifecycleStage.entries.drop(lifecycle.currentStageIndex)
+    } else {
+        listOf(DeviceLightLifecycleStage.entries[lifecycle.currentStageIndex])
+    }
 
     private fun createPhase(
         tank: DeviceLightQuickSetupTank,
         input: DeviceLightQuickSetupInput,
         lifecycle: LifecycleContext,
         relativeIndex: Int,
-        lightProfile: PhaseLightProfile
+        lightProfile: PhaseLightProfile,
+        holdForAlgaeReview: Boolean
     ): DeviceLightQuickSetupPhase {
         val absoluteIndex = lifecycle.currentStageIndex + relativeIndex
         val stage = DeviceLightLifecycleStage.entries[absoluteIndex]
@@ -109,7 +120,11 @@ object DeviceLightQuickSetupCalculator {
             lifecycle.safeSetupDay + stage.dayStart - 1L
         }
         val nextStage = DeviceLightLifecycleStage.entries.getOrNull(absoluteIndex + 1)
-        val untilDay = nextStage?.let { lifecycle.safeSetupDay + it.dayStart - 1L }
+        val untilDay = if (holdForAlgaeReview) {
+            null
+        } else {
+            nextStage?.let { lifecycle.safeSetupDay + it.dayStart - 1L }
+        }
         val stageIntensity = (
             lightProfile.fullIntensityPercent * STAGE_INTENSITY_FACTORS[absoluteIndex]
         )
@@ -141,11 +156,29 @@ object DeviceLightQuickSetupCalculator {
         )
     }
 
-    private fun initialStartPercent(tankDay: Long, activeSoil: Boolean): Int = when {
-        tankDay > FIRST_STAGE_DAYS -> MATURE_INITIAL_START_PERCENT
-        activeSoil -> ACTIVE_SOIL_INITIAL_START_PERCENT
-        else -> NEW_TANK_INITIAL_START_PERCENT
+    private fun initialStartPercent(
+        tankDay: Long,
+        input: DeviceLightQuickSetupInput
+    ): Int {
+        val base = when {
+            tankDay > FIRST_STAGE_DAYS -> MATURE_INITIAL_START_PERCENT
+            input.activeSoil -> ACTIVE_SOIL_INITIAL_START_PERCENT
+            else -> NEW_TANK_INITIAL_START_PERCENT
+        }
+        val reduction = when (input.algaeLevel) {
+            DeviceLightAlgaeLevel.NONE -> 0
+            DeviceLightAlgaeLevel.MILD -> 10
+            DeviceLightAlgaeLevel.VISIBLE -> 20
+        }
+        return (base - reduction).coerceAtLeast(MIN_INITIAL_START_PERCENT)
     }
+
+    private fun reevaluationDays(algaeLevel: DeviceLightAlgaeLevel): Long =
+        if (algaeLevel == DeviceLightAlgaeLevel.NONE) {
+            REEVALUATION_DAYS
+        } else {
+            ALGAE_REEVALUATION_DAYS
+        }
 
     private fun validateInput(input: DeviceLightQuickSetupInput) {
         require(input.aquariumHeightCm in 10..100)
@@ -172,10 +205,26 @@ object DeviceLightQuickSetupCalculator {
             DeviceLightPlantDensity.MEDIUM -> 0
             DeviceLightPlantDensity.DENSE -> 5
         }
+        intensity += when (input.ambientLight) {
+            DeviceLightAmbientLight.LOW -> 0
+            DeviceLightAmbientLight.INDIRECT -> -6
+            DeviceLightAmbientLight.DIRECT -> -15
+        }
+        intensity += when (input.algaeLevel) {
+            DeviceLightAlgaeLevel.NONE -> 0
+            DeviceLightAlgaeLevel.MILD -> -14
+            DeviceLightAlgaeLevel.VISIBLE -> -24
+        }
         val opticalDistance = input.aquariumHeightCm + defaultMountHeightCm(productKey)
         intensity += (opticalDistance - REFERENCE_DISTANCE_CM) / 4
         if (input.activeSoil) intensity -= 3
         if (!input.co2Installed) intensity = intensity.coerceAtMost(NO_CO2_MAX_INTENSITY_PERCENT)
+        if (input.ambientLight == DeviceLightAmbientLight.DIRECT) {
+            intensity = intensity.coerceAtMost(DIRECT_DAYLIGHT_MAX_INTENSITY_PERCENT)
+        }
+        if (input.algaeLevel == DeviceLightAlgaeLevel.VISIBLE) {
+            intensity = intensity.coerceAtMost(VISIBLE_ALGAE_MAX_INTENSITY_PERCENT)
+        }
         return intensity.coerceIn(MIN_INTENSITY_PERCENT, MAX_INTENSITY_PERCENT)
     }
 
@@ -249,6 +298,16 @@ object DeviceLightQuickSetupCalculator {
             }
         )
         if (input.activeSoil && tankDay <= 42L) add(DeviceLightPlanReason.ACTIVE_SOIL_STARTUP)
+        when (input.ambientLight) {
+            DeviceLightAmbientLight.LOW -> Unit
+            DeviceLightAmbientLight.INDIRECT -> add(DeviceLightPlanReason.INDIRECT_DAYLIGHT)
+            DeviceLightAmbientLight.DIRECT -> add(DeviceLightPlanReason.DIRECT_DAYLIGHT_CAP)
+        }
+        when (input.algaeLevel) {
+            DeviceLightAlgaeLevel.NONE -> Unit
+            DeviceLightAlgaeLevel.MILD -> add(DeviceLightPlanReason.MILD_ALGAE_GUARD)
+            DeviceLightAlgaeLevel.VISIBLE -> add(DeviceLightPlanReason.VISIBLE_ALGAE_GUARD)
+        }
         add(DeviceLightPlanReason.ESTIMATED_PAR)
     }
 
@@ -272,6 +331,9 @@ object DeviceLightQuickSetupCalculator {
     private const val MIN_INTENSITY_PERCENT = 25
     private const val MAX_INTENSITY_PERCENT = 85
     private const val NO_CO2_MAX_INTENSITY_PERCENT = 55
+    private const val DIRECT_DAYLIGHT_MAX_INTENSITY_PERCENT = 50
+    private const val VISIBLE_ALGAE_MAX_INTENSITY_PERCENT = 45
+    private const val MIN_INITIAL_START_PERCENT = 40
     private const val ACTIVE_SOIL_INITIAL_START_PERCENT = 60
     private const val NEW_TANK_INITIAL_START_PERCENT = 70
     private const val MATURE_INITIAL_START_PERCENT = 85

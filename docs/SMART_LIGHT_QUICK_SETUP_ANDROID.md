@@ -6,11 +6,11 @@ Bu belge, `feature/smart-light-quick-setup` Android uygulamasının firmware
 `455298833668537fedc16b851067558815d2cc7b` ile çalışan hızlı aydınlatma
 otomasyonunu tanımlar.
 
-- Android; kayıtlı tank ve atanmış cihaz verilerinden kullanıcı ayarı istemeden
-  deterministik bir öneri üretir.
+- Android; kayıtlı tank ve atanmış cihaz verilerini, profilde bulunmayan iki gözlem
+  sinyaliyle (gün ışığı ve yosun durumu) birleştirerek deterministik öneri üretir.
 - Firmware; planı doğrulayan, kalıcılaştıran ve çalıştıran tek otoritedir.
 - Öneri, tıbbi/biyolojik kesinlik iddiası taşımaz. Sensör tabanlı PAR ölçümü
-  bulunmadığı için PPFD/DLI teknik ayrıntılarda açıkça `ESTIMATED` gösterilir.
+  bulunmadığı için PPFD/DLI ölçülmüş değer gibi kullanıcıya gösterilmez.
 - Firmware'in revision veya storage generation değeri değişirse Android körlemesine
   tekrar yazmaz; authoritative planı yeniden okur ve tank verisinden yeni bir plan
   hesaplar. Yeniden uygulama yine açık kullanıcı eylemi gerektirir.
@@ -29,12 +29,15 @@ otomasyonunu tanımlar.
 | Ürün ve kanal şekli | Authoritative cihaz snapshot'ı | WRGB/RGB sahnesini seçer | Hayır |
 | Standart montaj mesafesi | Ürün politikası | WRGB için 10 cm, RGB için 8 cm güvenli varsayım | Hayır |
 | Program penceresi | Ürün politikası | Mevcut evrenin süresi 22:00'de bitecek şekilde otomatik yerleştirilir | Hayır |
-| Substrat seviyesinde tam profil PAR | Sensör/veri yok | Muhafazakâr ürün tahmini; yalnız teknik ayrıntıda gösterilir | Hayır |
+| Gün ışığı etkisi | Kullanıcı gözlemi | Az / dolaylı / direkt; yapay çıkışı temkinli azaltır | Evet |
+| Yosun durumu | Kullanıcı gözlemi | Yok / hafif / belirgin; artışı sürdürür, bekletir veya daha güçlü sınırlar | Evet |
+| Substrat seviyesinde tam profil PAR | Sensör/veri yok | Muhafazakâr iç model; ölçülmüş PPFD/DLI olarak sunulmaz | Hayır |
 
-Sonuç: Bu ekran bir plan editörü değildir. Tank profili salt-okunur özetlenir,
-öneri açılışta otomatik hesaplanır ve kullanıcı yalnız programı oluşturur.
-Montaj mesafesi ile ortam ışığı sensörle ölçülmediği için algoritma temkinli ürün
-varsayımlarını kullanır; PPFD/DLI kesin ölçüm olarak sunulmaz.
+Sonuç: Bu ekran bir plan editörü değildir. Tank profili salt-okunur özetlenir;
+kullanıcı yalnız uygulamanın bilemeyeceği iki güncel koşulu seçer. Montaj mesafesi
+ürün politikasıyla, ortam etkisi kullanıcı gözlemiyle ele alınır. Program cihazda
+zaten kuruluysa ekran tekrar oluşturma eylemi sunmaz; aktif planı gösterir ve ancak
+"Koşulları güncelle" eylemiyle yeni değerlendirme başlatır.
 
 ## Karar modeli
 
@@ -66,9 +69,16 @@ muhafazakâr bir ürün politikasıdır.
 3. Optik mesafe düzeltmesi:
    `(akvaryum yüksekliği + ürünün standart montaj mesafesi - 45) / 4` puan.
 4. Aktif toprak bulunan tankta başlangıç riski için `-3` puan.
-5. Kayıtlı CO₂ sistemi yoksa sonuç en fazla `%55`.
-6. Nihai olgun değer `%25–85` aralığına sıkıştırılır ve yaşam evresi çarpanı
+5. Gün ışığı: az `0`, dolaylı `-6`, direkt `-15` puan; direkt ışıkta üst sınır `%50`.
+6. Yosun: yok `0`, hafif `-14`, belirgin `-24` puan; belirgin yosunda üst sınır `%45`.
+7. Kayıtlı CO₂ sistemi yoksa sonuç en fazla `%55`.
+8. Nihai olgun değer `%25–85` aralığına sıkıştırılır ve yaşam evresi çarpanı
    uygulanır.
+
+Hafif veya belirgin yosun seçildiğinde Android gelecekteki otomatik artış fazlarını
+önceden kurmaz; mevcut güvenli evre açık uçlu tutulur ve yedi gün sonra yeniden
+değerlendirme istenir. Yosun yoksa yaşam evresi fazları ve 14 günlük kontrol ritmi
+devam eder.
 
 Yüksek ışık isteyen bitki + CO₂ yok kombinasyonu ayrıca kullanıcıya uyarı verir.
 Bu sınırlar güvenli mühendislik guardrail'leridir; tür bazlı fotosentez doygunluk
@@ -114,17 +124,18 @@ hem Android hem firmware tarafında strict doğrulamasından geçer.
 
 ## UI akışı
 
-Tek ekranlı yapı son kullanıcıya yalnız gerekli kararı bırakır:
+Tek ekranlı yapı iki açık duruma sahiptir:
 
-1. **Akvaryum profili:** kayıtlı tank, bitkilendirme, az/orta/yüksek ışık ihtiyacı,
-   CO₂, taban, atanmış cihaz ve akvaryum yüksekliği salt-okunur gösterilir.
-2. **Önerilen program:** 24 saatlik WRGB/RGB eğrisi, toplam süre, 60 dakikalık
-   geçiş ve her gün tekrarı gösterilir.
-3. **Güvenli çıkış ve gerekçe:** kanal sınırları, karar nedenleri ve kademeli
-   adaptasyon açıklanır.
-4. **Ayrıntıları incele:** fazlar ile tahmini PPFD/DLI isteğe bağlı açılır; hiçbir
-   teknik değer buradan düzenlenmez.
-5. **Programı oluştur:** tek bir authoritative apply işlemi yapar.
+1. **İlk oluşturma / düzenleme:** kayıtlı profil kompakt gösterilir; yalnız gün ışığı
+   ve yosun durumu sorulur. İki seçim tamamlanınca 24 saatlik WRGB/RGB eğrisi,
+   süre, geçiş ve tepe çıkışı önizlenir. `Programı oluştur` yalnız bu durumda vardır.
+2. **Program aktif:** firmware snapshot'ındaki bugünkü eğri, çalışma durumu, son ve
+   sonraki değerlendirme ile karar gerekçeleri gösterilir. Oluşturma butonu yoktur;
+   kullanıcı isterse içerideki `Koşulları güncelle` eylemiyle düzenleme durumuna geçer.
+3. **Başarılı apply:** ekran kapanmaz; aynı state anında aktif programa dönüşür ve
+   tekrar yazmayı sağlayan CTA kaybolur.
+4. **Hesap ayrıntıları:** model varsayımı ve faz süreleri açılır; kalibrasyon yoksa
+   PPFD/DLI sayıları gösterilmez ve hiçbir firmware alanı elle düzenlenmez.
 
 Ekran mevcut AquaLight Compose kartları, renk token'ları, tipografi ve merkezî
 fragment header/navigation yapısını kullanır. Sunum katmanı runtime/data tiplerine
@@ -148,8 +159,9 @@ korunur.
 
 - Deterministik hesaplayıcı: yeni/olgun tank, CO₂ güvenlik tavanı, doğrudan
   akvaryum yüksekliği, eksik/gelecek tarih ve WRGB/RGB kanal şekli birim testleri.
-- ViewModel: yüklemede otomatik hesaplama, authoritative apply ve stale-authority
-  sonrası refetch + otomatik yeniden hesaplama.
+- ViewModel: iki koşul tamamlanmadan hesaplamama, başarılı apply sonrası aktif moda
+  geçiş, kurulu planda oluşturma eylemini kapatma ve stale-authority sonrası refetch
+  + bilinçli yeniden uygulama.
 - Tank sınıflandırması: yalnız `substrate` kategori anahtarının aktif toprak
   otoritesi olduğunu doğrulayan test.
 - Runtime: exact serializer alanları, strict parser, hata alanları ve golden fixture

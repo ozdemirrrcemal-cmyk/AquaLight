@@ -68,8 +68,8 @@
     <string name="device_family_cooling">Soğutma</string>
     <string name="device_menu_manual_control_title">Manuel kontrol</string>
     <string name="device_menu_manual_control_description">Desteklenen aydınlatma çıkışları için doğrudan kanal kontrolü.</string>
-    <string name="device_menu_quick_setup_title">Akıllı kurulum</string>
-    <string name="device_menu_quick_setup_description">Akvaryum profiline göre güvenli aydınlatma programını otomatik oluşturur.</string>
+    <string name="device_menu_quick_setup_title">Akıllı aydınlatma</string>
+    <string name="device_menu_quick_setup_description">Akvaryum profili ve güncel koşullardan güvenli program oluşturur ve izler.</string>
     <string name="device_menu_programs_title">Programlar</string>
     <string name="device_menu_programs_description">Günlük aydınlatma programları oluşturun ve yönetin.</string>
     <string name="device_menu_presets_title">Ön ayarlar</string>

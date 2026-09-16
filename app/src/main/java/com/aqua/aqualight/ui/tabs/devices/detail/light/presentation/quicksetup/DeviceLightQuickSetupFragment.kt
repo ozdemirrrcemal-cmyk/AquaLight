@@ -41,7 +41,11 @@ class DeviceLightQuickSetupFragment : Fragment(R.layout.fragment_device_light_qu
 
     private fun setupContent() {
         val actions = DeviceLightQuickSetupActions(
+            onAmbientLightSelected = viewModel::selectAmbientLight,
+            onAlgaeLevelSelected = viewModel::selectAlgaeLevel,
             onToggleDetails = viewModel::toggleDetails,
+            onEditInstalledPlan = viewModel::editInstalledPlan,
+            onCancelEdit = viewModel::cancelEdit,
             onApply = viewModel::apply
         )
         binding.quickSetupCompose.apply {
@@ -79,7 +83,6 @@ class DeviceLightQuickSetupFragment : Fragment(R.layout.fragment_device_light_qu
         when (effect) {
             DeviceLightQuickSetupEffect.Applied -> {
                 showMessage(R.string.device_light_quick_setup_applied, true)
-                findNavController().navigateUp()
             }
             is DeviceLightQuickSetupEffect.CloseUnavailable -> {
                 showMessage(effect.messageRes, false)

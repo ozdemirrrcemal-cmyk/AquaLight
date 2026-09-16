@@ -125,6 +125,53 @@ class DeviceLightQuickSetupCalculatorTest {
     }
 
     @Test
+    fun `indirect daylight and mild algae hold progression for seven days`() {
+        val plan = calculate(
+            tank = tank(setupDateEpochDay = TODAY - 11),
+            input = input().copy(
+                plantDemand = DeviceLightPlantDemand.HIGH,
+                plantDensity = DeviceLightPlantDensity.DENSE,
+                aquariumHeightCm = 45,
+                co2Installed = true,
+                activeSoil = true,
+                ambientLight = DeviceLightAmbientLight.INDIRECT,
+                algaeLevel = DeviceLightAlgaeLevel.MILD
+            )
+        )
+
+        assertEquals(1, plan.phases.size)
+        assertNull(plan.currentPhase.draft.validUntilEpochDayExclusive)
+        assertEquals(TODAY + 7, plan.reevaluationEpochDay)
+        assertEquals(42, plan.scene.channels.values.maxOrNull())
+        assertTrue(DeviceLightPlanReason.INDIRECT_DAYLIGHT in plan.reasons)
+        assertTrue(DeviceLightPlanReason.MILD_ALGAE_GUARD in plan.reasons)
+    }
+
+    @Test
+    fun `direct daylight and visible algae reduce output below clear conditions`() {
+        val clear = calculate(
+            tank = tank(),
+            input = input().copy(co2Installed = true)
+        )
+        val guarded = calculate(
+            tank = tank(),
+            input = input().copy(
+                co2Installed = true,
+                ambientLight = DeviceLightAmbientLight.DIRECT,
+                algaeLevel = DeviceLightAlgaeLevel.VISIBLE
+            )
+        )
+
+        assertTrue(
+            guarded.scene.channels.values.maxOrNull()!! < clear.scene.channels.values.maxOrNull()!!
+        )
+        assertEquals(1, guarded.phases.size)
+        assertEquals(TODAY + 7, guarded.reevaluationEpochDay)
+        assertTrue(DeviceLightPlanReason.DIRECT_DAYLIGHT_CAP in guarded.reasons)
+        assertTrue(DeviceLightPlanReason.VISIBLE_ALGAE_GUARD in guarded.reasons)
+    }
+
+    @Test
     fun `future or missing setup date fails safe as a new tank`() {
         val future = calculate(
             tank = tank(setupDateEpochDay = TODAY + 10),
@@ -178,6 +225,8 @@ class DeviceLightQuickSetupCalculatorTest {
         aquariumHeightCm = 35,
         co2Installed = false,
         activeSoil = false,
+        ambientLight = DeviceLightAmbientLight.LOW,
+        algaeLevel = DeviceLightAlgaeLevel.NONE,
         programEndMinute = 22 * 60
     )
 

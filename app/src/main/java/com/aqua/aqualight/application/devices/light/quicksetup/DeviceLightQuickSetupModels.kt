@@ -53,6 +53,20 @@ enum class DeviceLightPlantDensity {
     DENSE
 }
 
+/** Room/daylight reaching the aquarium; fixture output is calculated separately. */
+enum class DeviceLightAmbientLight {
+    LOW,
+    INDIRECT,
+    DIRECT
+}
+
+/** User-observed algae signal used to pause or reduce automatic progression. */
+enum class DeviceLightAlgaeLevel {
+    NONE,
+    MILD,
+    VISIBLE
+}
+
 enum class DeviceLightPlanConfidence {
     ESTIMATED,
     CALIBRATED
@@ -67,6 +81,10 @@ enum class DeviceLightPlanReason {
     CO2_ACTIVE,
     NO_CO2_SAFETY_CAP,
     ACTIVE_SOIL_STARTUP,
+    INDIRECT_DAYLIGHT,
+    DIRECT_DAYLIGHT_CAP,
+    MILD_ALGAE_GUARD,
+    VISIBLE_ALGAE_GUARD,
     ESTIMATED_PAR
 }
 
@@ -104,6 +122,8 @@ data class DeviceLightQuickSetupInput(
     val aquariumHeightCm: Int,
     val co2Installed: Boolean,
     val activeSoil: Boolean,
+    val ambientLight: DeviceLightAmbientLight,
+    val algaeLevel: DeviceLightAlgaeLevel,
     val programEndMinute: Int
 )
 
