@@ -78,11 +78,8 @@ data class AquariumTankSize(
 
 data class AquariumPlantTag(
     val id: Long = AquariumEntityIdGenerator.newLong(),
-    val catalogId: String,
     val plantName: String,
     val category: String,
-    val lightDemand: AquariumPlantLightDemand,
-    val plantedAtEpochDay: Long? = null,
     val markerX: Float = 0.5f,
     val markerY: Float = 0.5f
 )
@@ -95,14 +92,7 @@ data class AquariumMaterialSelection(
     val name: String,
     val brand: String = "",
     val note: String = ""
-) {
-    /** Catalog-owned automation metadata; a user selection cannot override it. */
-    val substrateSemantic: AquariumSubstrateSemantic
-        get() = AquariumSubstrateSemantics.resolve(
-            productId = productId.trim(),
-            categoryKey = categoryKey.trim()
-        )
-}
+)
 
 data class AquariumLivestock(
     val id: Long = AquariumEntityIdGenerator.newLong(),

@@ -1,15 +1,20 @@
 package com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock
 
-import com.aqua.aqualight.application.aquarium.AquariumLivestockCategory
-
 object LivestockCategories {
 
-    const val FISH = AquariumLivestockCategory.FISH
-    const val SHRIMP = AquariumLivestockCategory.SHRIMP
-    const val SNAIL = AquariumLivestockCategory.SNAIL
-    const val CRAB_CRAYFISH = AquariumLivestockCategory.CRAB_CRAYFISH
-    const val CORAL = AquariumLivestockCategory.CORAL
-    const val OTHER = AquariumLivestockCategory.OTHER
+    const val FISH = "Fish"
+    const val SHRIMP = "Shrimp"
+    const val SNAIL = "Snail"
+    const val CRAB_CRAYFISH = "Crab / Crayfish"
+    const val CORAL = "Coral"
+    const val OTHER = "Other"
 
-    val all: List<String> = AquariumLivestockCategory.codes.toList()
+    val all: List<String> = listOf(
+        FISH,
+        SHRIMP,
+        SNAIL,
+        CRAB_CRAYFISH,
+        CORAL,
+        OTHER
+    )
 }

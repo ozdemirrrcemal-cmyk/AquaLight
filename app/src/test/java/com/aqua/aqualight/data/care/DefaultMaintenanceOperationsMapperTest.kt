@@ -2,18 +2,17 @@ package com.aqua.aqualight.data.care
 
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
 import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
-import com.aqua.aqualight.application.aquarium.AquariumPlantLightDemand
 import com.aqua.aqualight.application.aquarium.AquariumPlantTag
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.application.care.CareTaskSource
 import com.aqua.aqualight.application.care.CareTaskStatus
 import com.aqua.aqualight.application.care.CareTaskType
 import com.aqua.aqualight.data.care.model.CareTask
+import org.junit.Assert.assertEquals
+import org.junit.Test
 import com.aqua.aqualight.data.care.model.CareTaskSource as DataCareTaskSource
 import com.aqua.aqualight.data.care.model.CareTaskStatus as DataCareTaskStatus
 import com.aqua.aqualight.data.care.model.CareTaskType as DataCareTaskType
-import org.junit.Assert.assertEquals
-import org.junit.Test
 
 class DefaultMaintenanceOperationsMapperTest {
 
@@ -89,25 +88,16 @@ class DefaultMaintenanceOperationsMapperTest {
             smartCareEnabled = true,
             careRemindersEnabled = false,
             plants = listOf(
-                AquariumPlantTag(
-                    id = 31L,
-                    catalogId = "plant:micranthemum_tweediei_monte_carlo",
-                    plantName = "Monte Carlo",
-                    category = "Carpet",
-                    lightDemand = AquariumPlantLightDemand.MEDIUM,
-                    plantedAtEpochDay = 1000L,
-                    markerX = 0.2f,
-                    markerY = 0.8f
-                )
+                AquariumPlantTag(31L, "Monte Carlo", "Carpet", 0.2f, 0.8f)
             ),
             materials = listOf(
                 AquariumMaterialSelection(
                     id = 32L,
-                    productId = "substrate_chihiros_aquasoil_9l",
+                    productId = "soil-1",
                     categoryKey = "substrate",
                     categoryTitle = "Substrate",
-                    name = "Chihiros Aqua Soil 9L",
-                    brand = "Chihiros",
+                    name = "Active Soil",
+                    brand = "Aqua",
                     note = "Dark"
                 )
             ),

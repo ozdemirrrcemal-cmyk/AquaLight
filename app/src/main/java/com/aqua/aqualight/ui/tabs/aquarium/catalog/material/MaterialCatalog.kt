@@ -1,7 +1,6 @@
 package com.aqua.aqualight.ui.tabs.aquarium.catalog.material
 
 import android.content.Context
-import com.aqua.aqualight.application.aquarium.AquariumSubstrateSemantics
 
 object MaterialCatalog {
 
@@ -20,20 +19,6 @@ object MaterialCatalog {
             CoolerCatalog.definitions +
             DosingCatalog.definitions +
             LedBackgroundCatalog.definitions
-
-    init {
-        val selectableSubstrateIdentities = definitions
-            .filter { definition ->
-                definition.categoryKey == MaterialCategoryKey.SUBSTRATE ||
-                    definition.categoryKey == MaterialCategoryKey.GRAVEL
-            }
-            .mapTo(linkedSetOf()) { definition -> definition.id to definition.categoryKey }
-        val reviewedSubstrateIdentities = AquariumSubstrateSemantics.records
-            .mapTo(linkedSetOf()) { record -> record.productId to record.categoryKey }
-        require(selectableSubstrateIdentities == reviewedSubstrateIdentities) {
-            "Every selectable substrate product requires an explicit reviewed catalog record."
-        }
-    }
 
     fun getByCategory(
         context: Context,

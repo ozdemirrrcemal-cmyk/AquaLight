@@ -1,7 +1,6 @@
 package com.aqua.aqualight.data.aquarium.devices
 
 import androidx.datastore.core.CorruptionException
-import com.aqua.aqualight.data.store.CommercialStoreSchema
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import kotlinx.coroutines.runBlocking
@@ -14,14 +13,12 @@ class TankDeviceAssignmentsSerializerTest {
     fun `serializer round trips valid assignments`() {
         runBlocking {
             val expected = TankDeviceAssignmentsStore.newBuilder()
-                .setSchemaVersion(CommercialStoreSchema.TANK_DEVICE_ASSIGNMENTS_VERSION)
                 .addAssignments(
                     StoredTankDeviceAssignment.newBuilder()
                         .setOwnerUid("owner-a")
                         .setTankId(10L)
                         .setDeviceUid("device-a")
                         .setAssignedAtMillis(100L)
-                        .setLightInstallation(validInstallation())
                         .build()
                 )
                 .build()
@@ -41,7 +38,6 @@ class TankDeviceAssignmentsSerializerTest {
     fun `serializer rejects duplicate device assignment for one owner`() {
         runBlocking {
             val invalid = TankDeviceAssignmentsStore.newBuilder()
-                .setSchemaVersion(CommercialStoreSchema.TANK_DEVICE_ASSIGNMENTS_VERSION)
                 .addAssignments(stored(tankId = 10L))
                 .addAssignments(stored(tankId = 20L))
                 .build()
@@ -69,12 +65,6 @@ class TankDeviceAssignmentsSerializerTest {
             .setTankId(tankId)
             .setDeviceUid("device-a")
             .setAssignedAtMillis(100L)
-            .setLightInstallation(validInstallation())
             .build()
     }
-
-    private fun validInstallation(): StoredLightInstallationProfile =
-        StoredLightInstallationProfile.newBuilder()
-            .setContractRevision(TankLightInstallationProfile.CONTRACT_REVISION)
-            .build()
 }

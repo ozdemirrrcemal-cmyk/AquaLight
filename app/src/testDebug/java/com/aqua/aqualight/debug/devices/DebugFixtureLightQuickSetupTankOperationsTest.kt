@@ -1,10 +1,5 @@
 package com.aqua.aqualight.debug.devices
 
-import com.aqua.aqualight.application.aquarium.AquariumPlantLightDemand
-import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupInput
-import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupPersistenceResult
-import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupPlan
-import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupRecordedOutcome
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupTankFailure
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupTankOperations
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupTankReadResult
@@ -57,20 +52,6 @@ class DebugFixtureLightQuickSetupTankOperationsTest {
 private object FailingQuickSetupTankOperations : DeviceLightQuickSetupTankOperations {
     override suspend fun readForDevice(deviceUid: String): DeviceLightQuickSetupTankReadResult =
         error("Fixture quick setup must not call production lookup: $deviceUid")
-
-    override suspend fun prepareRecommendation(
-        deviceUid: String,
-        input: DeviceLightQuickSetupInput,
-        plan: DeviceLightQuickSetupPlan
-    ): DeviceLightQuickSetupPersistenceResult =
-        error("Fixture quick setup must not persist through production: $deviceUid")
-
-    override suspend fun recordRecommendationOutcome(
-        deviceUid: String,
-        auditId: String,
-        outcome: DeviceLightQuickSetupRecordedOutcome
-    ): DeviceLightQuickSetupPersistenceResult =
-        error("Fixture quick setup must not persist through production: $deviceUid")
 }
 
 private fun testTank(): SavedAquariumTank = SavedAquariumTank(
@@ -90,11 +71,8 @@ private fun testTank(): SavedAquariumTank = SavedAquariumTank(
     plants = listOf(
         SavedAquariumPlant(
             id = 1L,
-            catalogId = "plant:anubias_barteri_var_nana",
             plantName = "Anubias",
             category = "Epiphyte",
-            lightDemand = AquariumPlantLightDemand.LOW,
-            plantedAtEpochDay = 20_000L,
             markerX = 0.5f,
             markerY = 0.5f
         )

@@ -1,7 +1,5 @@
 package com.aqua.aqualight.data.care.smartcare
 
-import com.aqua.aqualight.application.aquarium.AquariumPlantLightDemand
-import com.aqua.aqualight.application.aquarium.AquariumSubstrateSemantic
 import com.aqua.aqualight.application.aquarium.AquariumTankTaxonomy
 import com.aqua.aqualight.application.care.SmartCareLightingAdjustment
 import com.aqua.aqualight.application.care.SmartCareLightingPhase
@@ -39,32 +37,18 @@ class SmartCareProfileAndLightingTest {
   }
 
   @Test
-  fun `explicit catalog semantic is the only active soil authority`() {
+  fun `substrate category is the only active soil authority`() {
     val substrate = profile(
       tankType = AquariumTankTaxonomy.TYPE_PLANTED,
       tankStyle = AquariumTankTaxonomy.STYLE_NATURE_AQUARIUM,
       setupDay = 1,
-      materials = listOf(
-        material(
-          4L,
-          "substrate",
-          "Verified active soil",
-          AquariumSubstrateSemantic.ACTIVE_SOIL
-        )
-      )
+      materials = listOf(material(4L, "substrate", "Neutral catalog entry"))
     )
     val misleadingName = profile(
       tankType = AquariumTankTaxonomy.TYPE_PLANTED,
       tankStyle = AquariumTankTaxonomy.STYLE_NATURE_AQUARIUM,
       setupDay = 1,
-      materials = listOf(
-        material(
-          4L,
-          "filter",
-          "Premium active soil reactor",
-          AquariumSubstrateSemantic.NOT_APPLICABLE
-        )
-      )
+      materials = listOf(material(4L, "filter", "Premium active soil reactor"))
     )
 
     assertTrue(substrate.hasActiveSoil)
@@ -140,25 +124,11 @@ class SmartCareProfileAndLightingTest {
       tankStyle = tankStyle,
       createdAtMillis = 1L,
       plants = listOf(
-        SavedAquariumPlant(
-          id = 2L,
-          catalogId = "plant:micranthemum_tweediei_monte_carlo",
-          plantName = "Monte Carlo",
-          category = "Carpet",
-          lightDemand = AquariumPlantLightDemand.MEDIUM,
-          plantedAtEpochDay = tankSetupDay(setupDay),
-          markerX = 0.5f,
-          markerY = 0.5f
-        )
+        SavedAquariumPlant(2L, "Monte Carlo", "Carpet", 0.5f, 0.5f)
       ),
       materials = materials ?: listOf(
         material(3L, "light", "light-device"),
-        material(
-          4L,
-          "substrate",
-          "ADA Amazonia Soil",
-          AquariumSubstrateSemantic.ACTIVE_SOIL
-        )
+        material(4L, "substrate", "ADA Amazonia Soil")
       )
     )
     return SmartCareProfileBuilder.build(tank, nowMillis)
@@ -167,8 +137,7 @@ class SmartCareProfileAndLightingTest {
   private fun material(
     id: Long,
     category: String,
-    name: String,
-    semantic: AquariumSubstrateSemantic = AquariumSubstrateSemantic.NOT_APPLICABLE
+    name: String
   ): SavedAquariumMaterial {
     return SavedAquariumMaterial(
       id = id,
@@ -177,11 +146,7 @@ class SmartCareProfileAndLightingTest {
       categoryTitle = category,
       name = name,
       brand = "",
-      note = "",
-      substrateSemantic = semantic
+      note = ""
     )
   }
-
-  private fun tankSetupDay(setupDay: Int): Long =
-    currentDate.minusDays((setupDay - 1).toLong()).toEpochDay()
 }

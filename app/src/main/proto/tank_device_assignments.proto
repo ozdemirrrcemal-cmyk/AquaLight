@@ -5,8 +5,6 @@ option java_multiple_files = true;
 
 message TankDeviceAssignmentsStore {
   repeated StoredTankDeviceAssignment assignments = 1;
-  // Final commercial V1 baseline; unsupported development files are recovered cleanly.
-  uint32 schema_version = 100;
 }
 
 message StoredTankDeviceAssignment {
@@ -14,72 +12,4 @@ message StoredTankDeviceAssignment {
   int64 tank_id = 2;
   string device_uid = 3;
   int64 assigned_at_millis = 4;
-  StoredLightInstallationProfile light_installation = 10;
-  repeated StoredLightRecommendationSnapshot light_recommendations = 11;
-}
-
-message StoredLightInstallationProfile {
-  uint32 contract_revision = 1;
-  optional int32 fixture_height_above_water_cm = 2;
-  optional int64 installed_at_epoch_day = 3;
-  optional int64 last_fixture_change_epoch_day = 4;
-  optional int64 updated_at_millis = 5;
-}
-
-message StoredLightRecommendationSnapshot {
-  string recommendation_id = 1;
-  string policy_version = 2;
-  repeated string evidence_source_ids = 3;
-  string product_key = 4;
-  string hardware_revision = 5;
-  int32 fixture_length_mm = 6;
-  string calibration_profile_id = 7;
-  uint32 calibration_revision = 8;
-  string confidence = 9;
-  int32 water_depth_cm = 10;
-  int32 fixture_height_above_water_cm = 11;
-  string plant_demand = 12;
-  string plant_coverage = 13;
-  string co2_readiness = 14;
-  string substrate_semantic = 15;
-  string daylight_exposure = 16;
-  optional int32 daylight_start_minute = 17;
-  optional int32 daylight_end_minute = 18;
-  string surface_growth = 19;
-  string shelter_availability = 20;
-  int32 program_end_minute = 21;
-  int32 photoperiod_minutes = 22;
-  int32 maximum_channel_percent = 23;
-  int64 created_at_millis = 24;
-  optional int64 applied_at_millis = 25;
-  string outcome = 26;
-  string profile_fingerprint = 27;
-  int64 reevaluation_epoch_day = 28;
-  int64 recommendation_epoch_day = 29;
-  int32 program_start_minute = 30;
-  int32 ramp_duration_minutes = 31;
-  int32 initial_start_percent = 32;
-  int32 red_percent = 33;
-  int32 green_percent = 34;
-  int32 blue_percent = 35;
-  optional int32 white_percent = 36;
-  optional string firmware_plan_id = 37;
-  optional int64 firmware_plan_revision = 38;
-  optional int64 firmware_storage_generation = 39;
-  repeated string plant_catalog_ids = 40;
-  repeated string substrate_product_ids = 41;
-  optional int64 tank_setup_epoch_day = 42;
-  int32 tank_height_cm = 43;
-  bool has_plants = 44;
-  bool planted_freshwater = 45;
-  bool co2_component_present = 46;
-  bool has_shrimp = 47;
-  optional int64 last_lighting_reset_epoch_day = 48;
-  optional int32 prior_applied_photoperiod_minutes = 49;
-  optional int32 prior_applied_maximum_channel_percent = 50;
-  optional int64 prior_applied_epoch_day = 51;
-  optional int64 profile_updated_at_millis = 52;
-  optional int64 installation_updated_at_millis = 53;
-  repeated string reason_codes = 54;
-  repeated string warning_codes = 55;
 }

@@ -8,7 +8,6 @@ package com.aqua.aqualight.data.store
  */
 object CommercialStoreSchema {
     const val AQUARIUM_TANKS_VERSION = 1
-    const val TANK_DEVICE_ASSIGNMENTS_VERSION = 1
     const val CARE_TASKS_VERSION = 1
     const val USER_PREFERENCES_VERSION = 1
     const val LIGHT_LIBRARY_VERSION = 1

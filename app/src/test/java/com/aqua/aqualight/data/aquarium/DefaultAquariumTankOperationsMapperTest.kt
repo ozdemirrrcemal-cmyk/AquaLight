@@ -2,9 +2,7 @@ package com.aqua.aqualight.data.aquarium
 
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
 import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
-import com.aqua.aqualight.application.aquarium.AquariumPlantLightDemand
 import com.aqua.aqualight.application.aquarium.AquariumPlantTag
-import com.aqua.aqualight.application.aquarium.AquariumSubstrateSemantic
 import com.aqua.aqualight.application.aquarium.AquariumTankCleanupStage
 import com.aqua.aqualight.application.aquarium.AquariumTankDraft
 import com.aqua.aqualight.application.aquarium.DeleteAquariumTanksResult
@@ -18,30 +16,6 @@ import org.junit.Assert.assertSame
 import org.junit.Test
 
 class DefaultAquariumTankOperationsMapperTest {
-
-    @Test
-    fun `material selection derives substrate class from product id`() {
-        val source = AquariumTankDraft(
-            materials = listOf(
-                AquariumMaterialSelection(
-                    id = 8L,
-                    productId = "substrate_ada_tourmaline_bc",
-                    categoryKey = "substrate",
-                    categoryTitle = "Substrate",
-                    name = "ADA Tourmaline BC"
-                )
-            )
-        )
-
-        assertEquals(
-            AquariumSubstrateSemantic.ADDITIVE,
-            source.materials.single().substrateSemantic
-        )
-        assertEquals(
-            AquariumSubstrateSemantic.ADDITIVE,
-            source.toDataDraft().materials.single().substrateSemantic
-        )
-    }
 
     @Test
     fun `saved tank maps every UI-facing field without owner leakage`() {
@@ -65,11 +39,8 @@ class DefaultAquariumTankOperationsMapperTest {
             plants = listOf(
                 SavedAquariumPlant(
                     id = 11L,
-                    catalogId = "plant:anubias_barteri_var_nana",
                     plantName = "Anubias",
                     category = "Rhizome",
-                    lightDemand = AquariumPlantLightDemand.LOW,
-                    plantedAtEpochDay = 100L,
                     markerX = 0.25f,
                     markerY = 0.75f
                 )
@@ -77,13 +48,12 @@ class DefaultAquariumTankOperationsMapperTest {
             materials = listOf(
                 SavedAquariumMaterial(
                     id = 12L,
-                    productId = "substrate_chihiros_aquasoil_9l",
+                    productId = "soil-1",
                     categoryKey = "substrate",
                     categoryTitle = "Substrate",
-                    name = "Chihiros Aqua Soil 9L",
-                    brand = "Chihiros",
-                    note = "Dark",
-                    substrateSemantic = AquariumSubstrateSemantic.ACTIVE_SOIL
+                    name = "Active Soil",
+                    brand = "Aqua",
+                    note = "Dark"
                 )
             ),
             livestock = listOf(
@@ -116,33 +86,20 @@ class DefaultAquariumTankOperationsMapperTest {
         assertEquals(true, mapped.smartCareEnabled)
         assertEquals(false, mapped.careRemindersEnabled)
         assertEquals(
-            AquariumPlantTag(
-                id = 11L,
-                catalogId = "plant:anubias_barteri_var_nana",
-                plantName = "Anubias",
-                category = "Rhizome",
-                lightDemand = AquariumPlantLightDemand.LOW,
-                plantedAtEpochDay = 100L,
-                markerX = 0.25f,
-                markerY = 0.75f
-            ),
+            AquariumPlantTag(11L, "Anubias", "Rhizome", 0.25f, 0.75f),
             mapped.plants.single()
         )
         assertEquals(
             AquariumMaterialSelection(
                 id = 12L,
-                productId = "substrate_chihiros_aquasoil_9l",
+                productId = "soil-1",
                 categoryKey = "substrate",
                 categoryTitle = "Substrate",
-                name = "Chihiros Aqua Soil 9L",
-                brand = "Chihiros",
+                name = "Active Soil",
+                brand = "Aqua",
                 note = "Dark"
             ),
             mapped.materials.single()
-        )
-        assertEquals(
-            AquariumSubstrateSemantic.ACTIVE_SOIL,
-            mapped.materials.single().substrateSemantic
         )
         assertEquals(
             AquariumLivestock(13L, "Clownfish", "Fish", 2, 300L, "Pair"),
@@ -156,18 +113,7 @@ class DefaultAquariumTankOperationsMapperTest {
             name = "Planted",
             description = "High tech",
             photoUri = "content://draft",
-            plants = listOf(
-                AquariumPlantTag(
-                    id = 21L,
-                    catalogId = "plant:micranthemum_tweediei_monte_carlo",
-                    plantName = "Monte Carlo",
-                    category = "Carpet",
-                    lightDemand = AquariumPlantLightDemand.MEDIUM,
-                    plantedAtEpochDay = 500L,
-                    markerX = 0.1f,
-                    markerY = 0.9f
-                )
-            ),
+            plants = listOf(AquariumPlantTag(21L, "Monte Carlo", "Carpet", 0.1f, 0.9f)),
             materials = listOf(
                 AquariumMaterialSelection(
                     id = 22L,

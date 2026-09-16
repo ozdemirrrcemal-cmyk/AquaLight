@@ -2,7 +2,6 @@ package com.aqua.aqualight.i18n
 
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
 import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
-import com.aqua.aqualight.application.aquarium.AquariumPlantLightDemand
 import com.aqua.aqualight.application.aquarium.AquariumPlantTag
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.application.aquarium.AquariumVolumeCalculator
@@ -39,20 +38,17 @@ class PopulatedTankLocalizationContractTest {
             plants = listOf(
                 AquariumPlantTag(
                     id = 1L,
-                    catalogId = "plant:anubias_barteri_var_nana",
                     plantName = "Anubias",
-                    category = "Rhizome",
-                    lightDemand = AquariumPlantLightDemand.LOW,
-                    plantedAtEpochDay = setupDate.toEpochDay()
+                    category = "Rhizome"
                 )
             ),
             materials = listOf(
                 AquariumMaterialSelection(
                     id = 2L,
-                    productId = "substrate_chihiros_aquasoil_9l",
+                    productId = "soil-1",
                     categoryKey = "substrate",
                     categoryTitle = "Substrate",
-                    name = "Chihiros Aqua Soil 9L"
+                    name = "Active Soil"
                 )
             ),
             livestock = listOf(

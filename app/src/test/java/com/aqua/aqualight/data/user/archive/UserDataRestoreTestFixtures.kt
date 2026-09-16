@@ -1,10 +1,8 @@
 package com.aqua.aqualight.data.user.archive
 
-import com.aqua.aqualight.application.aquarium.AquariumAutomationProfile
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignment
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentResult
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceRemovalResult
-import com.aqua.aqualight.data.aquarium.devices.TankLightInstallationProfile
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.data.aquarium.model.TankDraft
 import com.aqua.aqualight.data.care.model.CareTask
@@ -46,16 +44,7 @@ internal class RestoreHarness {
         ),
         assignments = UserDataRestoreDataSources.AssignmentDataSource(
             assignmentForDevice = { deviceUid -> assignments[deviceUid] },
-            assignDeviceToTank = { tankId, deviceUid, assignedAtMillis ->
-                assign(tankId, deviceUid, assignedAtMillis)
-            },
-            updateLightAutomation = { deviceUid, installation, recommendations ->
-                val current = requireNotNull(assignments[deviceUid])
-                current.copy(
-                    lightInstallation = installation,
-                    lightRecommendations = recommendations
-                ).also { updated -> assignments[deviceUid] = updated }
-            },
+            assignDeviceToTank = { tankId, deviceUid -> assign(tankId, deviceUid) },
             removeDeviceFromTank = { tankId, deviceUid -> removeAssignment(tankId, deviceUid) }
         )
     )
@@ -145,18 +134,14 @@ internal class RestoreHarness {
         tanks[index] = transform(tanks[index])
     }
 
-    private fun assign(
-        tankId: Long,
-        deviceUid: DeviceUid,
-        assignedAtMillis: Long
-    ): TankDeviceAssignmentResult {
+    private fun assign(tankId: Long, deviceUid: DeviceUid): TankDeviceAssignmentResult {
         val configured = assignmentBehavior?.invoke(tankId, deviceUid)
         val result = configured ?: TankDeviceAssignmentResult.Assigned(
             TankDeviceAssignment(
                 ownerUid = RestoreFixture.OWNER_UID,
                 tankId = tankId,
                 deviceUid = deviceUid,
-                assignedAtMillis = assignedAtMillis
+                assignedAtMillis = RestoreFixture.ASSIGNED_AT_MILLIS
             )
         )
         if (result is TankDeviceAssignmentResult.Assigned) {
@@ -342,9 +327,7 @@ internal object RestoreFixture {
         return ArchiveDeviceAssignment(
             tankId = SOURCE_TANK_ID,
             deviceUid = deviceUid,
-            assignedAtMillis = ASSIGNED_AT_MILLIS,
-            lightInstallation = TankLightInstallationProfile(),
-            lightRecommendations = emptyList()
+            assignedAtMillis = ASSIGNED_AT_MILLIS
         )
     }
 
@@ -397,7 +380,6 @@ internal object RestoreFixture {
             createdAtMillis = createdAtMillis,
             smartCareEnabled = true,
             careRemindersEnabled = true,
-            automationProfile = AquariumAutomationProfile(),
             plants = emptyList(),
             materials = emptyList(),
             livestock = emptyList()
@@ -437,7 +419,6 @@ internal object RestoreFixture {
             createdAtMillis = SOURCE_TANK_CREATED_AT_MILLIS,
             smartCareEnabled = true,
             careRemindersEnabled = true,
-            automationProfile = AquariumAutomationProfile(),
             plants = emptyList(),
             materials = emptyList(),
             livestock = emptyList()

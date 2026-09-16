@@ -35,9 +35,6 @@ message StoredTank {
   repeated StoredPlantTag plants = 20;
   repeated StoredMaterial materials = 30;
   repeated StoredLivestock livestock = 40;
-
-  // Final commercial V1 automation contract. There is intentionally no V2 migration path.
-  StoredTankAutomationProfile automation_profile = 50;
 }
 
 message StoredPlantTag {
@@ -46,81 +43,6 @@ message StoredPlantTag {
   string category = 3;
   float markerX = 4;
   float markerY = 5;
-  string catalog_id = 6;
-  StoredPlantLightDemand light_demand = 7;
-  int64 planted_at_epoch_day = 8;
-}
-
-enum StoredPlantLightDemand {
-  STORED_PLANT_LIGHT_DEMAND_UNKNOWN = 0;
-  STORED_PLANT_LIGHT_DEMAND_LOW = 1;
-  STORED_PLANT_LIGHT_DEMAND_MEDIUM = 2;
-  STORED_PLANT_LIGHT_DEMAND_HIGH = 3;
-}
-
-message StoredTankAutomationProfile {
-  uint32 contract_revision = 1;
-  optional int32 water_depth_cm = 2;
-  optional int32 substrate_depth_cm = 3;
-  StoredPlantCoverage plant_coverage = 4;
-  StoredCanopyDensity canopy_density = 5;
-  StoredCo2Readiness co2_readiness = 6;
-  StoredDaylightExposure daylight_exposure = 7;
-  optional int32 daylight_start_minute = 8;
-  optional int32 daylight_end_minute = 9;
-  optional int32 preferred_light_end_minute = 10;
-  optional int64 last_major_planting_epoch_day = 11;
-  StoredSurfaceGrowth latest_surface_growth = 12;
-  optional int64 latest_observation_epoch_day = 13;
-  optional int32 observed_area_percent = 14;
-  string observation_location = 15;
-  StoredShelterAvailability shelter_availability = 16;
-  optional int64 updated_at_millis = 17;
-  StoredPlantLightDemand plant_demand_override = 18;
-}
-
-enum StoredPlantCoverage {
-  STORED_PLANT_COVERAGE_UNKNOWN = 0;
-  STORED_PLANT_COVERAGE_SPARSE = 1;
-  STORED_PLANT_COVERAGE_MEDIUM = 2;
-  STORED_PLANT_COVERAGE_DENSE = 3;
-}
-
-enum StoredCanopyDensity {
-  STORED_CANOPY_DENSITY_UNKNOWN = 0;
-  STORED_CANOPY_DENSITY_OPEN = 1;
-  STORED_CANOPY_DENSITY_PARTIAL = 2;
-  STORED_CANOPY_DENSITY_CLOSED = 3;
-}
-
-enum StoredCo2Readiness {
-  STORED_CO2_READINESS_UNKNOWN = 0;
-  STORED_CO2_READINESS_NOT_INSTALLED = 1;
-  STORED_CO2_READINESS_READY_AT_LIGHT_ON = 2;
-  STORED_CO2_READINESS_NOT_READY_AT_LIGHT_ON = 3;
-}
-
-enum StoredDaylightExposure {
-  STORED_DAYLIGHT_EXPOSURE_UNKNOWN = 0;
-  STORED_DAYLIGHT_EXPOSURE_LOW = 1;
-  STORED_DAYLIGHT_EXPOSURE_INDIRECT = 2;
-  STORED_DAYLIGHT_EXPOSURE_DIRECT = 3;
-}
-
-enum StoredSurfaceGrowth {
-  STORED_SURFACE_GROWTH_UNKNOWN = 0;
-  STORED_SURFACE_GROWTH_NONE = 1;
-  STORED_SURFACE_GROWTH_TARGET_BIOFILM = 2;
-  STORED_SURFACE_GROWTH_STABLE_ALGAE = 3;
-  STORED_SURFACE_GROWTH_WORSENING_ALGAE = 4;
-}
-
-enum StoredShelterAvailability {
-  STORED_SHELTER_AVAILABILITY_NOT_REQUIRED = 0;
-  STORED_SHELTER_AVAILABILITY_UNKNOWN = 1;
-  STORED_SHELTER_AVAILABILITY_ADEQUATE = 2;
-  STORED_SHELTER_AVAILABILITY_LIMITED = 3;
-  STORED_SHELTER_AVAILABILITY_NONE = 4;
 }
 
 message StoredMaterial {
@@ -131,16 +53,6 @@ message StoredMaterial {
   string name = 5;
   string brand = 6;
   string note = 7;
-  StoredSubstrateSemantic substrate_semantic = 8;
-}
-
-enum StoredSubstrateSemantic {
-  STORED_SUBSTRATE_SEMANTIC_NOT_APPLICABLE = 0;
-  STORED_SUBSTRATE_SEMANTIC_UNKNOWN = 1;
-  STORED_SUBSTRATE_SEMANTIC_INERT = 2;
-  STORED_SUBSTRATE_SEMANTIC_NUTRIENT_BASE = 3;
-  STORED_SUBSTRATE_SEMANTIC_ACTIVE_SOIL = 4;
-  STORED_SUBSTRATE_SEMANTIC_ADDITIVE = 5;
 }
 
 message StoredLivestock {

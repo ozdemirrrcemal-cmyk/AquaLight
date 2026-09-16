@@ -34,13 +34,6 @@ class CommercialStoreArchitectureTest {
             )
         )
         assertOnlyFilesContain(
-            token = "tank_device_assignments.pb",
-            expectedRelativePaths = setOf(
-                "app/src/main/java/com/aqua/aqualight/data/aquarium/devices/" +
-                    "TankDeviceAssignmentStore.kt"
-            )
-        )
-        assertOnlyFilesContain(
             token = "care_tasks.pb",
             expectedRelativePaths = setOf(
                 "app/src/main/java/com/aqua/aqualight/data/care/" +
@@ -67,7 +60,6 @@ class CommercialStoreArchitectureTest {
     fun everyCommercialProtoDeclaresAnExplicitSchemaVersion() {
         listOf(
             "app/src/main/proto/aquarium_tanks.proto",
-            "app/src/main/proto/tank_device_assignments.proto",
             "app/src/main/proto/care_tasks.proto",
             "app/src/main/proto/user_prefs.proto",
             "app/src/main/proto/light_library.proto"
@@ -85,8 +77,6 @@ class CommercialStoreArchitectureTest {
         listOf(
             "app/src/main/java/com/aqua/aqualight/data/aquarium/store/" +
                 "AquariumTanksSerializer.kt",
-            "app/src/main/java/com/aqua/aqualight/data/aquarium/devices/" +
-                "TankDeviceAssignmentsSerializer.kt",
             "app/src/main/java/com/aqua/aqualight/data/care/" +
                 "CareTasksCommercialSerializer.kt",
             "app/src/main/java/com/aqua/aqualight/data/user/" +

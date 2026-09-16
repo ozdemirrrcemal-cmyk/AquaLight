@@ -1,6 +1,5 @@
 package com.aqua.aqualight.data.user.archive
 
-import com.aqua.aqualight.application.aquarium.AquariumAutomationProfile
 import com.google.gson.Gson
 import java.io.File
 import java.nio.charset.StandardCharsets
@@ -148,7 +147,6 @@ class UserDataBackupCodecTest {
                     createdAtMillis = 900L,
                     smartCareEnabled = true,
                     careRemindersEnabled = true,
-                    automationProfile = AquariumAutomationProfile(),
                     plants = emptyList(),
                     materials = emptyList(),
                     livestock = emptyList()

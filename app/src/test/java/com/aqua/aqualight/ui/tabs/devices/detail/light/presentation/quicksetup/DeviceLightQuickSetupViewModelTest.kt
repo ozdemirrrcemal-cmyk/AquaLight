@@ -1,11 +1,5 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.quicksetup
 
-import com.aqua.aqualight.application.aquarium.AquariumCo2Readiness
-import com.aqua.aqualight.application.aquarium.AquariumDaylightExposure
-import com.aqua.aqualight.application.aquarium.AquariumPlantCoverage
-import com.aqua.aqualight.application.aquarium.AquariumShelterAvailability
-import com.aqua.aqualight.application.aquarium.AquariumSubstrateSemantic
-import com.aqua.aqualight.application.aquarium.AquariumSurfaceGrowth
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticChannel
 import com.aqua.aqualight.application.devices.light.automation.DeviceLightManagedPlanAuthority
 import com.aqua.aqualight.application.devices.light.automation.DeviceLightManagedPlanDraft
@@ -15,12 +9,12 @@ import com.aqua.aqualight.application.devices.light.automation.DeviceLightManage
 import com.aqua.aqualight.application.devices.light.automation.DeviceLightManagedPlanReadResult
 import com.aqua.aqualight.application.devices.light.automation.DeviceLightManagedPlanRuntimeState
 import com.aqua.aqualight.application.devices.light.automation.DeviceLightManagedPlanSnapshot
+import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightAlgaeLevel
+import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightAmbientLight
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightPlantDemand
+import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightPlantDensity
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupCalculator
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupInput
-import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupPersistenceResult
-import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupPlan
-import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupRecordedOutcome
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupTank
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupTankOperations
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupTankReadResult
@@ -45,270 +39,149 @@ class DeviceLightQuickSetupViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     @Test
-    fun `new assessment rechecks only dynamic CO2 and surface conditions`() {
-        val viewModel = fixture().viewModel.apply { bind(DEVICE_UID) }
+    fun `new program requires both observed conditions before calculation`() {
+        val plans = FakeManagedPlanOperations()
+        val viewModel = viewModel(plans).apply { bind(DEVICE_UID) }
 
         val loaded = viewModel.uiState.value
         assertTrue(loaded.contentEnabled)
         assertEquals(DeviceLightQuickSetupMode.CREATE, loaded.mode)
-        assertEquals(2, loaded.missingInputCount)
-        assertFalse(loaded.hasSetupQuestions)
-        assertFalse(loaded.requestsPlantDemand)
-        assertFalse(loaded.requestsPlantCoverage)
-        assertTrue(loaded.requestsCo2Readiness)
-        assertFalse(loaded.requestsDaylight)
-        assertTrue(loaded.requestsSurfaceObservation)
-        assertFalse(loaded.requestsShelter)
-        assertNull(loaded.co2Readiness)
-        assertNull(loaded.surfaceGrowth)
+        assertEquals(TANK, loaded.tank)
         assertNull(loaded.plan)
+        assertFalse(loaded.canApply)
 
-        viewModel.selectCo2Readiness(AquariumCo2Readiness.READY_AT_LIGHT_ON)
-        viewModel.selectSurfaceGrowth(AquariumSurfaceGrowth.NONE)
-
-        val assessed = viewModel.uiState.value
-        assertNotNull(assessed.plan)
-        assertTrue(assessed.canApply)
-        assertEquals(20 * 60, assessed.programEndMinute)
-    }
-
-    @Test
-    fun `tank without plants is blocked without asking irrelevant assessment questions`() {
-        val state = DeviceLightQuickSetupUiState(
-            tank = TANK.copy(
-                hasPlants = false,
-                plantedFreshwater = false,
-                plantDemand = DeviceLightPlantDemand.UNKNOWN,
-                plantCoverage = AquariumPlantCoverage.UNKNOWN
-            ),
-            todayEpochDay = TODAY,
-            contentEnabled = true
-        )
-
-        assertTrue(state.profileBlocked)
-        assertTrue(state.hasBlockingWarning)
-        assertFalse(state.canApply)
-    }
-
-    @Test
-    fun `unreviewed plant answer cannot reduce an exact catalog demand`() {
-        val mixedTank = TANK.copy(
-            plantDemand = DeviceLightPlantDemand.UNKNOWN,
-            reviewedPlantDemandFloor = DeviceLightPlantDemand.MEDIUM,
-            plantCatalogIds = setOf(
-                "plant:micranthemum_tweediei_monte_carlo",
-                "plant:unreviewed"
+        viewModel.selectCondition(
+            DeviceLightQuickSetupConditionSelection.AmbientLight(
+                DeviceLightAmbientLight.INDIRECT
             )
         )
-        val viewModel = fixture(tank = mixedTank).viewModel.apply { bind(DEVICE_UID) }
+        assertNull(viewModel.uiState.value.plan)
 
-        assertTrue(viewModel.uiState.value.requestsPlantDemand)
-
-        viewModel.selectPlantDemand(DeviceLightPlantDemand.LOW)
-
-        assertEquals(DeviceLightPlantDemand.MEDIUM, viewModel.uiState.value.plantDemand)
-    }
-
-    @Test
-    fun `recommendation is persisted before firmware and outcome is recorded after apply`() {
-        val events = mutableListOf<String>()
-        val fixture = fixture(events = events)
-        fixture.viewModel.apply {
-            bind(DEVICE_UID)
-            selectCo2Readiness(AquariumCo2Readiness.READY_AT_LIGHT_ON)
-            selectSurfaceGrowth(AquariumSurfaceGrowth.NONE)
-            apply()
-        }
-
-        assertEquals(listOf("prepare", "firmware", "outcome:true"), events)
-        assertEquals(DeviceLightQuickSetupMode.ACTIVE, fixture.viewModel.uiState.value.mode)
-        assertFalse(fixture.viewModel.uiState.value.canApply)
-        assertEquals(1, fixture.plans.applyCount)
-    }
-
-    @Test
-    fun `persistence failure prevents firmware mutation`() {
-        val events = mutableListOf<String>()
-        val fixture = fixture(
-            events = events,
-            prepareResult = DeviceLightQuickSetupPersistenceResult.Failed()
+        viewModel.selectCondition(
+            DeviceLightQuickSetupConditionSelection.AlgaeLevel(DeviceLightAlgaeLevel.MILD)
         )
-        fixture.viewModel.apply {
-            bind(DEVICE_UID)
-            selectCo2Readiness(AquariumCo2Readiness.READY_AT_LIGHT_ON)
-            selectSurfaceGrowth(AquariumSurfaceGrowth.NONE)
-            apply()
-        }
-
-        assertEquals(listOf("prepare"), events)
-        assertEquals(0, fixture.plans.applyCount)
-        assertFalse(fixture.viewModel.uiState.value.applying)
-    }
-
-    @Test
-    fun `applied outcome audit is retried before reporting an audit error`() {
-        val events = mutableListOf<String>()
-        val fixture = fixture(events = events, outcomeFailuresBeforeSuccess = 2)
-        fixture.viewModel.apply {
-            bind(DEVICE_UID)
-            selectCo2Readiness(AquariumCo2Readiness.READY_AT_LIGHT_ON)
-            selectSurfaceGrowth(AquariumSurfaceGrowth.NONE)
-            apply()
-        }
-
+        val assessed = viewModel.uiState.value
+        assertNotNull(assessed.plan)
         assertEquals(
-            listOf("prepare", "firmware", "outcome:true", "outcome:true", "outcome:true"),
-            events
+            expectedPlan().profileFingerprint,
+            assessed.plan?.profileFingerprint
         )
-        assertEquals(DeviceLightQuickSetupMode.ACTIVE, fixture.viewModel.uiState.value.mode)
+        assertTrue(assessed.canApply)
     }
 
     @Test
-    fun `installed program edit rechecks dynamic conditions and exposes setup values`() {
+    fun `successful creation transitions to active and cannot create repeatedly`() {
+        val plans = FakeManagedPlanOperations()
+        val viewModel = viewModel(plans).apply {
+            bind(DEVICE_UID)
+            selectCondition(
+                DeviceLightQuickSetupConditionSelection.AmbientLight(
+                    DeviceLightAmbientLight.INDIRECT
+                )
+            )
+            selectCondition(
+                DeviceLightQuickSetupConditionSelection.AlgaeLevel(DeviceLightAlgaeLevel.MILD)
+            )
+        }
+
+        viewModel.apply()
+
+        val active = viewModel.uiState.value
+        assertEquals(DeviceLightQuickSetupMode.ACTIVE, active.mode)
+        assertTrue(active.hasInstalledPlan)
+        assertFalse(active.canApply)
+        assertEquals(1, plans.applyCount)
+
+        viewModel.apply()
+        assertEquals(1, plans.applyCount)
+    }
+
+    @Test
+    fun `installed program opens in active mode without a create action`() {
         val draft = expectedPlan().toManagedPlanDraft()
-        val fixture = fixture(
+        val plans = FakeManagedPlanOperations(
             reads = listOf(snapshot(REFRESHED_AUTHORITY, draft))
         )
-        fixture.viewModel.bind(DEVICE_UID)
+        val viewModel = viewModel(plans).apply { bind(DEVICE_UID) }
 
-        assertEquals(DeviceLightQuickSetupMode.ACTIVE, fixture.viewModel.uiState.value.mode)
-        assertNull(fixture.viewModel.uiState.value.plan)
-        assertFalse(fixture.viewModel.uiState.value.canApply)
+        val state = viewModel.uiState.value
+        assertEquals(DeviceLightQuickSetupMode.ACTIVE, state.mode)
+        assertTrue(state.hasInstalledPlan)
+        assertNull(state.plan)
+        assertFalse(state.canApply)
 
-        fixture.viewModel.setInstalledPlanEditing(true)
+        viewModel.setInstalledPlanEditing(true)
+        assertEquals(DeviceLightQuickSetupMode.EDIT, viewModel.uiState.value.mode)
+        assertFalse(viewModel.uiState.value.canApply)
 
-        val editing = fixture.viewModel.uiState.value
-        assertEquals(DeviceLightQuickSetupMode.EDIT, editing.mode)
-        assertTrue(editing.hasSetupQuestions)
-        assertTrue(editing.requestsSurfaceObservation)
-        assertTrue(editing.requestsCo2Readiness)
-        assertTrue(editing.requestsDaylight)
-        assertTrue(editing.requestsWaterDepth)
-        assertTrue(editing.requestsFixtureHeight)
-        assertTrue(editing.requestsProgramEnd)
-        assertEquals(2, editing.missingInputCount)
-        assertNull(editing.co2Readiness)
-        assertNull(editing.surfaceGrowth)
-        assertFalse(editing.canApply)
+        viewModel.setInstalledPlanEditing(false)
+        assertEquals(DeviceLightQuickSetupMode.ACTIVE, viewModel.uiState.value.mode)
     }
 
     @Test
-    fun `stale authority is reread once and never blindly retried`() {
-        val events = mutableListOf<String>()
-        val fixture = fixture(
-            events = events,
-            reads = listOf(snapshot(FIRST_AUTHORITY), snapshot(REFRESHED_AUTHORITY)),
+    fun `stale apply authority is reread without blindly retrying`() {
+        val plans = FakeManagedPlanOperations(
+            reads = listOf(
+                snapshot(FIRST_AUTHORITY),
+                snapshot(REFRESHED_AUTHORITY)
+            ),
             applyFailure = DeviceLightManagedPlanFailure.STALE_AUTHORITY
         )
-        fixture.viewModel.apply {
+        val viewModel = viewModel(plans).apply {
             bind(DEVICE_UID)
-            selectCo2Readiness(AquariumCo2Readiness.READY_AT_LIGHT_ON)
-            selectSurfaceGrowth(AquariumSurfaceGrowth.NONE)
-            apply()
+            selectCondition(
+                DeviceLightQuickSetupConditionSelection.AmbientLight(
+                    DeviceLightAmbientLight.INDIRECT
+                )
+            )
+            selectCondition(
+                DeviceLightQuickSetupConditionSelection.AlgaeLevel(DeviceLightAlgaeLevel.MILD)
+            )
         }
 
-        val state = fixture.viewModel.uiState.value
-        assertEquals(2, fixture.plans.readCount)
-        assertEquals(1, fixture.plans.applyCount)
-        assertEquals(FIRST_AUTHORITY, fixture.plans.appliedAuthority)
+        viewModel.apply()
+
+        val state = viewModel.uiState.value
+        assertEquals(2, plans.readCount)
+        assertEquals(1, plans.applyCount)
+        assertEquals(FIRST_AUTHORITY, plans.appliedAuthority)
         assertEquals(REFRESHED_AUTHORITY, state.managedPlanSnapshot?.authority)
-        assertEquals(listOf("prepare", "firmware", "outcome:false"), events)
+        assertNotNull(state.plan)
+        assertEquals(DeviceLightQuickSetupMode.EDIT, state.mode)
+        assertTrue(state.canApply)
         assertFalse(state.applying)
     }
 
-    @Test
-    fun `transport uncertainty is recorded as indeterminate and never retried blindly`() {
-        val events = mutableListOf<String>()
-        val fixture = fixture(
-            events = events,
-            applyFailure = DeviceLightManagedPlanFailure.UNAVAILABLE
-        )
-        fixture.viewModel.apply {
-            bind(DEVICE_UID)
-            selectCo2Readiness(AquariumCo2Readiness.READY_AT_LIGHT_ON)
-            selectSurfaceGrowth(AquariumSurfaceGrowth.NONE)
-            apply()
-        }
-
-        assertEquals(listOf("prepare", "firmware", "outcome:indeterminate"), events)
-        assertEquals(1, fixture.plans.applyCount)
-        assertFalse(fixture.viewModel.uiState.value.applying)
-    }
-
-    private fun fixture(
-        events: MutableList<String> = mutableListOf(),
-        tank: DeviceLightQuickSetupTank = TANK,
-        reads: List<DeviceLightManagedPlanSnapshot> = listOf(snapshot(FIRST_AUTHORITY)),
-        prepareResult: DeviceLightQuickSetupPersistenceResult =
-            DeviceLightQuickSetupPersistenceResult.Prepared(AUDIT_ID),
-        outcomeFailuresBeforeSuccess: Int = 0,
-        applyFailure: DeviceLightManagedPlanFailure? = null
-    ): Fixture {
-        val tankOperations = FakeTankOperations(
-            events,
-            tank,
-            prepareResult,
-            outcomeFailuresBeforeSuccess
-        )
-        val plans = FakeManagedPlanOperations(events, reads, applyFailure)
-        return Fixture(
-            viewModel = DeviceLightQuickSetupViewModel(
-                tankOperations = tankOperations,
-                managedPlanOperations = plans
-            ),
-            plans = plans
-        )
-    }
-
-    private data class Fixture(
-        val viewModel: DeviceLightQuickSetupViewModel,
-        val plans: FakeManagedPlanOperations
+    private fun viewModel(plans: FakeManagedPlanOperations) = DeviceLightQuickSetupViewModel(
+        tankOperations = object : DeviceLightQuickSetupTankOperations {
+            override suspend fun readForDevice(
+                deviceUid: String
+            ): DeviceLightQuickSetupTankReadResult =
+                DeviceLightQuickSetupTankReadResult.Available(TANK)
+        },
+        managedPlanOperations = plans,
+        todayEpochDay = { TODAY }
     )
 
-    private class FakeTankOperations(
-        private val events: MutableList<String>,
-        private val tank: DeviceLightQuickSetupTank,
-        private val prepareResult: DeviceLightQuickSetupPersistenceResult,
-        private var outcomeFailuresBeforeSuccess: Int
-    ) : DeviceLightQuickSetupTankOperations {
-        override suspend fun readForDevice(
-            deviceUid: String
-        ): DeviceLightQuickSetupTankReadResult =
-            DeviceLightQuickSetupTankReadResult.Available(tank)
-
-        override suspend fun prepareRecommendation(
-            deviceUid: String,
-            input: DeviceLightQuickSetupInput,
-            plan: DeviceLightQuickSetupPlan
-        ): DeviceLightQuickSetupPersistenceResult {
-            events += "prepare"
-            return prepareResult
-        }
-
-        override suspend fun recordRecommendationOutcome(
-            deviceUid: String,
-            auditId: String,
-            outcome: DeviceLightQuickSetupRecordedOutcome
-        ): DeviceLightQuickSetupPersistenceResult {
-            assertEquals(AUDIT_ID, auditId)
-            events += when (outcome) {
-                is DeviceLightQuickSetupRecordedOutcome.Applied -> "outcome:true"
-                DeviceLightQuickSetupRecordedOutcome.Failed -> "outcome:false"
-                DeviceLightQuickSetupRecordedOutcome.Indeterminate ->
-                    "outcome:indeterminate"
-            }
-            if (outcomeFailuresBeforeSuccess > 0) {
-                outcomeFailuresBeforeSuccess -= 1
-                return DeviceLightQuickSetupPersistenceResult.Failed()
-            }
-            return DeviceLightQuickSetupPersistenceResult.Saved
-        }
-    }
+    private fun expectedPlan() = DeviceLightQuickSetupCalculator.calculate(
+        tank = TANK,
+        input = DeviceLightQuickSetupInput(
+            plantDemand = TANK.inferredPlantDemand,
+            plantDensity = TANK.inferredPlantDensity,
+            aquariumHeightCm = TANK.heightCm,
+            co2Installed = TANK.inferredCo2Installed,
+            activeSoil = TANK.inferredActiveSoil,
+            ambientLight = DeviceLightAmbientLight.INDIRECT,
+            algaeLevel = DeviceLightAlgaeLevel.MILD,
+            programEndMinute = QUICK_SETUP_AUTOMATIC_END_MINUTE
+        ),
+        todayEpochDay = TODAY
+    )
 
     private class FakeManagedPlanOperations(
-        private val events: MutableList<String>,
-        private val reads: List<DeviceLightManagedPlanSnapshot>,
-        private val applyFailure: DeviceLightManagedPlanFailure?
+        private val reads: List<DeviceLightManagedPlanSnapshot> =
+            listOf(snapshot(FIRST_AUTHORITY)),
+        private val applyFailure: DeviceLightManagedPlanFailure? = null
     ) : DeviceLightManagedPlanOperations {
         var readCount = 0
         var applyCount = 0
@@ -325,7 +198,6 @@ class DeviceLightQuickSetupViewModelTest {
             authority: DeviceLightManagedPlanAuthority,
             draft: DeviceLightManagedPlanDraft
         ): DeviceLightManagedPlanMutationResult {
-            events += "firmware"
             applyCount += 1
             appliedAuthority = authority
             return applyFailure?.let { failure ->
@@ -352,7 +224,6 @@ class DeviceLightQuickSetupViewModelTest {
 
     private companion object {
         const val DEVICE_UID = "quick-light"
-        const val AUDIT_ID = "slr-0123456789abcdef01234567"
         const val TODAY = 20_000L
 
         val FIRST_AUTHORITY = DeviceLightManagedPlanAuthority(
@@ -368,65 +239,19 @@ class DeviceLightQuickSetupViewModelTest {
         val TANK = DeviceLightQuickSetupTank(
             tankId = 7,
             tankName = "Living room",
-            deviceLocalEpochDay = TODAY,
             setupDateEpochDay = TODAY - 10,
-            tankHeightCm = 45,
-            hasPlants = true,
-            plantDemand = DeviceLightPlantDemand.HIGH,
-            reviewedPlantDemandFloor = DeviceLightPlantDemand.HIGH,
-            plantCatalogIds = setOf("plant:hemianthus_callitrichoides_cuba"),
-            plantEvidenceSourceIds = setOf("tropica_plant_4478"),
-            plantCoverage = AquariumPlantCoverage.DENSE,
-            co2ComponentPresent = true,
-            co2Readiness = AquariumCo2Readiness.READY_AT_LIGHT_ON,
-            substrateSemantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
-            substrateProductIds = setOf("substrate_chihiros_aquasoil_9l"),
-            substrateEvidenceSourceIds = setOf("chihiros_aqua_soil_launch"),
-            daylightExposure = AquariumDaylightExposure.INDIRECT,
-            daylightStartMinute = null,
-            daylightEndMinute = null,
-            preferredLightEndMinute = 20 * 60,
-            surfaceGrowth = AquariumSurfaceGrowth.NONE,
-            latestObservationEpochDay = TODAY - 20,
-            hasShrimp = false,
-            shelterAvailability = AquariumShelterAvailability.NOT_REQUIRED,
-            waterDepthCm = 38,
-            fixtureHeightAboveWaterCm = 12,
-            profileUpdatedAtMillis = null,
-            installationUpdatedAtMillis = null,
+            widthCm = 90,
+            lengthCm = 45,
+            heightCm = 45,
+            plantCount = 12,
+            inferredPlantDemand = DeviceLightPlantDemand.HIGH,
+            inferredPlantDensity = DeviceLightPlantDensity.DENSE,
+            inferredCo2Installed = true,
+            inferredActiveSoil = true,
             plantedFreshwater = true,
             productKey = "LIGHT_WRGB_PRO_ELITE",
-            productDisplayName = "WRGB Pro Elite",
-            hardwareRevision = "rev-a",
-            fixtureLengthMm = 900,
-            calibrationProfile = null,
-            lastLightingResetEpochDay = TODAY - 10,
-            lastAppliedPhotoperiodMinutes = null,
-            lastAppliedMaximumChannelPercent = null,
-            lastAppliedEpochDay = null,
-            nextReevaluationEpochDay = null
+            productDisplayName = "WRGB Pro Elite"
         )
-
-        fun expectedPlan() =
-            DeviceLightQuickSetupCalculator.calculate(
-                    tank = TANK,
-                    input = DeviceLightQuickSetupInput(
-                        plantDemand = TANK.plantDemand,
-                        plantCoverage = TANK.plantCoverage,
-                        waterDepthCm = requireNotNull(TANK.waterDepthCm),
-                        fixtureHeightAboveWaterCm =
-                            requireNotNull(TANK.fixtureHeightAboveWaterCm),
-                        co2Readiness = TANK.co2Readiness,
-                        substrateSemantic = TANK.substrateSemantic,
-                        daylightExposure = TANK.daylightExposure,
-                        daylightStartMinute = null,
-                        daylightEndMinute = null,
-                        surfaceGrowth = AquariumSurfaceGrowth.NONE,
-                        shelterAvailability = AquariumShelterAvailability.NOT_REQUIRED,
-                        programEndMinute = requireNotNull(TANK.preferredLightEndMinute)
-                    ),
-                    todayEpochDay = TODAY
-                )
 
         fun snapshot(
             authority: DeviceLightManagedPlanAuthority,
@@ -437,7 +262,7 @@ class DeviceLightQuickSetupViewModelTest {
             channels = DeviceLightAutomaticChannel.entries,
             authority = authority,
             installed = authority.installedPlanId != null,
-            initialStartPercent = draft?.initialStartPercent ?: 100,
+            initialStartPercent = draft?.initialStartPercent ?: 60,
             phases = draft?.phases.orEmpty(),
             runtimeState = if (authority.installedPlanId == null) {
                 DeviceLightManagedPlanRuntimeState.NOT_INSTALLED

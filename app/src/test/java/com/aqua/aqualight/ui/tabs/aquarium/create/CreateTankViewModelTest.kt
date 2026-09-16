@@ -1,7 +1,6 @@
 package com.aqua.aqualight.ui.tabs.aquarium.create
 
 import androidx.lifecycle.SavedStateHandle
-import com.aqua.aqualight.application.aquarium.AquariumPlantLightDemand
 import com.aqua.aqualight.application.aquarium.AquariumPlantTag
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -30,10 +29,8 @@ class CreateTankViewModelTest {
             listOf(
                 AquariumPlantTag(
                     id = 91L,
-                    catalogId = "plant:anubias_barteri_var_nana",
                     plantName = "Anubias",
-                    category = "Rhizome",
-                    lightDemand = AquariumPlantLightDemand.LOW
+                    category = "Rhizome"
                 )
             )
         )

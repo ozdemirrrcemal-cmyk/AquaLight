@@ -1,12 +1,15 @@
 package com.aqua.aqualight.ui.tabs.aquarium.create.plants
 
+import com.aqua.aqualight.ui.common.text.setTextSizeResource
+import com.aqua.aqualight.ui.tabs.aquarium.catalog.plant.PlantCatalog
+import com.aqua.aqualight.ui.tabs.aquarium.catalog.plant.AquariumPlant
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
@@ -15,9 +18,6 @@ import com.aqua.aqualight.databinding.FragmentPlantPickerBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderSearchField
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
-import com.aqua.aqualight.ui.common.text.setTextSizeResource
-import com.aqua.aqualight.ui.tabs.aquarium.catalog.plant.AquariumPlant
-import com.aqua.aqualight.ui.tabs.aquarium.catalog.plant.PlantCatalog
 import com.google.android.material.card.MaterialCardView
 
 class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
@@ -188,7 +188,10 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
             layoutParams = params
 
             setOnClickListener {
-                selectPlant(plant)
+                selectPlant(
+                    plantName = plant.name,
+                    category = plant.category
+                )
             }
         }
 
@@ -243,13 +246,14 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
         return card
     }
 
-    private fun selectPlant(plant: AquariumPlant) {
+    private fun selectPlant(
+        plantName: String,
+        category: String
+    ) {
         val navController = findNavController()
         val resultBundle = bundleOf(
-            RESULT_PLANT_ID to plant.catalogId,
-            RESULT_PLANT_NAME to plant.name,
-            RESULT_PLANT_CATEGORY to plant.category,
-            RESULT_PLANT_LIGHT_DEMAND to plant.lightDemand.name
+            RESULT_PLANT_NAME to plantName,
+            RESULT_PLANT_CATEGORY to category
         )
 
         navController.previousBackStackEntry
@@ -275,9 +279,7 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
 
         const val RESULT_BUNDLE_KEY = "plant_picker_result_bundle"
 
-        const val RESULT_PLANT_ID = "plant_catalog_id"
         const val RESULT_PLANT_NAME = "plant_name"
         const val RESULT_PLANT_CATEGORY = "plant_category"
-        const val RESULT_PLANT_LIGHT_DEMAND = "plant_light_demand"
     }
 }

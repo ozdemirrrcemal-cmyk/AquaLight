@@ -130,25 +130,6 @@ class UserDataBackupRestorerTest {
     }
 
     @Test
-    fun `assignment restore preserves the archived installation clock`() = runBlocking {
-        val harness = RestoreHarness()
-
-        withOwner {
-            val result = harness.restorer().restore(
-                RestoreFixture.backup(
-                    assignments = listOf(RestoreFixture.archiveAssignment("device-light"))
-                )
-            )
-
-            assertEquals(1, result.restoredDeviceAssignmentCount)
-            assertEquals(
-                RestoreFixture.ASSIGNED_AT_MILLIS,
-                harness.assignments.getValue(DeviceUid("device-light")).assignedAtMillis
-            )
-        }
-    }
-
-    @Test
     fun `reminder reconciliation failure is reported as warning after committed restore`() =
         runBlocking {
             val harness = RestoreHarness().apply {
