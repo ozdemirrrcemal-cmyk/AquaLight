@@ -6,16 +6,20 @@ import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.BuildConfig
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
 import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
+import com.aqua.aqualight.application.devices.TankDeviceAssignmentOperations
 import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationOperations
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticOperations
+import com.aqua.aqualight.application.devices.light.automation.DeviceLightManagedPlanOperations
 import com.aqua.aqualight.application.devices.light.control.DeviceLightControlOperations
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomOperations
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryOperations
+import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupTankOperations
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemOperations
 import com.aqua.aqualight.application.devices.timer.control.DeviceTimerControlOperations
 import com.aqua.aqualight.composition.AppContainer
 import com.aqua.aqualight.composition.OwnerDependencyGraph
 import com.aqua.aqualight.composition.OwnerDependencyGraphAccess
+import com.aqua.aqualight.data.aquarium.devices.DefaultTankDeviceAssignmentOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
 import com.aqua.aqualight.data.devices.light.automatic.DefaultDeviceLightAutomaticOperations
@@ -23,6 +27,8 @@ import com.aqua.aqualight.data.devices.light.library.DefaultDeviceLightLibraryOp
 import com.aqua.aqualight.data.devices.light.library.DeviceLightLibraryStore
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
 import com.aqua.aqualight.data.devices.remove.OwnerDeviceDataCleaner
+import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesViewModel
+import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectViewModel
 import com.aqua.aqualight.ui.tabs.devices.DevicesViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.DeviceLightAutomaticProgramsViewModel
@@ -31,6 +37,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.adaptation.D
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.library.DeviceLightLibraryViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom.DeviceLightCustomCurveViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual.DeviceLightManualControlViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.quicksetup.DeviceLightQuickSetupViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.system.DeviceLightSystemViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.settings.DeviceFamilySettingsViewModel
@@ -96,6 +103,8 @@ private class DebugDeviceFixtureViewModelFactory(
                 DeviceLightLibraryViewModel(
                     timerDependencies(requireGraph()).lightLibraryOperations
                 )
+            DeviceLightQuickSetupViewModel::class.java ->
+                createLightQuickSetupViewModel(requireGraph())
             DeviceTimerRootViewModel::class.java ->
                 createTimerRootViewModel(requireGraph())
             DeviceTimerProgramViewModel::class.java ->
@@ -108,6 +117,12 @@ private class DebugDeviceFixtureViewModelFactory(
                 createSettingsViewModel(requireGraph())
             DeviceFirmwareUpdateViewModel::class.java ->
                 createFirmwareViewModel(requireGraph())
+            TankDetailDevicesViewModel::class.java ->
+                createTankDetailDevicesViewModel(requireGraph())
+            TankDeviceSelectViewModel::class.java ->
+                TankDeviceSelectViewModel(
+                    timerDependencies(requireGraph()).tankAssignmentOperations
+                )
             else -> return delegate.create(modelClass)
         }
 
@@ -184,6 +199,34 @@ private class DebugDeviceFixtureViewModelFactory(
             )
         }
 
+    private fun createLightQuickSetupViewModel(
+        graph: OwnerDependencyGraph
+    ): DeviceLightQuickSetupViewModel = timerDependencies(graph).let { dependencies ->
+        DeviceLightQuickSetupViewModel(
+            tankOperations = dependencies.quickSetupTankOperations,
+            managedPlanOperations = dependencies.lightManagedPlanOperations
+        )
+    }
+
+    private fun createTankDetailDevicesViewModel(
+        graph: OwnerDependencyGraph
+    ): TankDetailDevicesViewModel = timerDependencies(graph).let { dependencies ->
+        TankDetailDevicesViewModel(
+            assignmentOperations = dependencies.tankAssignmentOperations,
+            menuOpenUseCase = DeviceMenuOpenUseCase(
+                menuAccessOperations = DebugFixtureMenuAccessOperations(
+                    delegate = DefaultDeviceMenuAccessOperations.create(graph.devicesRepository),
+                    fixtures = fixtures
+                ),
+                controlSurfacePreparationOperations =
+                    dependencies.controlSurfacePreparationOperations
+            ),
+            routeResolver = DeviceRouteResolver(),
+            dosingCardOperations = graph.dosingOperations.cardOperations,
+            coolingCardOperations = graph.coolingCardOperations
+        )
+    }
+
     private fun timerDependencies(graph: OwnerDependencyGraph): DebugTimerFixtureDependencies =
         synchronized(this) {
             cachedTimerDependencies
@@ -214,6 +257,32 @@ private class DebugDeviceFixtureViewModelFactory(
             delegate = DefaultDeviceLightAutomaticOperations(graph.devicesRepository),
             fixtures = fixtures
         )
+        val lightManagedPlanOperations = DebugFixtureLightManagedPlanOperations(
+            delegate = graph.lightOperations.managedPlanOperations,
+            fixtures = fixtures
+        )
+        val fixtureAssignments = DebugFixtureTankAssignmentRuntime()
+        val tankAssignmentOperations = DebugFixtureTankDeviceAssignmentOperations(
+            delegate = DefaultTankDeviceAssignmentOperations(
+                assignmentRepository = graph.assignmentRepository,
+                devicesRepository = graph.devicesRepository
+            ),
+            fixtures = fixtures,
+            runtime = fixtureAssignments,
+            tankExists = { tankId ->
+                graph.aquariumTankStore.tanksSnapshotForOwner(graph.ownerUid)
+                    .any { tank -> tank.id == tankId }
+            }
+        )
+        val quickSetupTankOperations = DebugFixtureLightQuickSetupTankOperations(
+            delegate = graph.lightOperations.quickSetupTankOperations,
+            fixtures = fixtures,
+            assignments = fixtureAssignments,
+            tankById = { tankId ->
+                graph.aquariumTankStore.tanksSnapshotForOwner(graph.ownerUid)
+                    .singleOrNull { tank -> tank.id == tankId }
+            }
+        )
         val lightRuntime = DebugLightFixtureRuntime(fixtures)
         val lightCustomOperations = DebugFixtureLightCustomOperations(
             delegate = graph.lightOperations.customOperations,
@@ -236,10 +305,13 @@ private class DebugDeviceFixtureViewModelFactory(
             graph = graph,
             lightAdaptationOperations = lightAdaptationOperations,
             lightAutomaticOperations = lightAutomaticOperations,
+            lightManagedPlanOperations = lightManagedPlanOperations,
             lightControlOperations = lightControlOperations,
             lightCustomOperations = lightCustomOperations,
             lightLibraryOperations = lightLibraryOperations,
             lightSystemOperations = lightSystemOperations,
+            quickSetupTankOperations = quickSetupTankOperations,
+            tankAssignmentOperations = tankAssignmentOperations,
             timerControlOperations = timerControlOperations,
             controlSurfacePreparationOperations =
                 DebugFixtureControlSurfacePreparationOperations(
@@ -287,10 +359,13 @@ private data class DebugTimerFixtureDependencies(
     val graph: OwnerDependencyGraph,
     val lightAdaptationOperations: DeviceLightAdaptationOperations,
     val lightAutomaticOperations: DeviceLightAutomaticOperations,
+    val lightManagedPlanOperations: DeviceLightManagedPlanOperations,
     val lightControlOperations: DeviceLightControlOperations,
     val lightCustomOperations: DeviceLightCustomOperations,
     val lightLibraryOperations: DeviceLightLibraryOperations,
     val lightSystemOperations: DeviceLightSystemOperations,
+    val quickSetupTankOperations: DeviceLightQuickSetupTankOperations,
+    val tankAssignmentOperations: TankDeviceAssignmentOperations,
     val timerControlOperations: DeviceTimerControlOperations,
     val controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations
 )

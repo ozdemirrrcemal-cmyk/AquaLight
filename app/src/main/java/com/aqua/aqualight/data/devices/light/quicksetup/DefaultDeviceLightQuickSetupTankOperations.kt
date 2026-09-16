@@ -8,6 +8,7 @@ import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickS
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupTankReadResult
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumPlant
+import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.care.smartcare.SmartCareTankClassifier
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
@@ -61,29 +62,35 @@ internal class DefaultDeviceLightQuickSetupTankOperations(
             if (tank == null) {
                 failure(DeviceLightQuickSetupTankFailure.TANK_NOT_FOUND)
             } else {
-                val characteristics = SmartCareTankClassifier.classify(tank)
                 DeviceLightQuickSetupTankReadResult.Available(
-                    DeviceLightQuickSetupTank(
-                        tankId = tank.id,
-                        tankName = tank.name,
-                        setupDateEpochDay = tank.setupDateEpochDay,
-                        widthCm = tank.widthCm,
-                        lengthCm = tank.lengthCm,
-                        heightCm = tank.heightCm,
-                        plantCount = tank.plants.size,
-                        inferredPlantDemand = inferPlantDemand(tank.plants),
-                        inferredPlantDensity = inferPlantDensity(tank.plants.size),
-                        inferredCo2Installed = characteristics.hasCo2,
-                        inferredActiveSoil = characteristics.hasActiveSoil,
-                        plantedFreshwater = characteristics.isFreshwater &&
-                            characteristics.hasPlants,
-                        productKey = device.product.productKey,
-                        productDisplayName = device.product.displayName.ifBlank { device.title }
-                    )
+                    mapDeviceLightQuickSetupTank(tank = tank, device = device)
                 )
             }
         }
     }
+}
+
+internal fun mapDeviceLightQuickSetupTank(
+    tank: SavedAquariumTank,
+    device: DeviceSnapshot
+): DeviceLightQuickSetupTank {
+    val characteristics = SmartCareTankClassifier.classify(tank)
+    return DeviceLightQuickSetupTank(
+        tankId = tank.id,
+        tankName = tank.name,
+        setupDateEpochDay = tank.setupDateEpochDay,
+        widthCm = tank.widthCm,
+        lengthCm = tank.lengthCm,
+        heightCm = tank.heightCm,
+        plantCount = tank.plants.size,
+        inferredPlantDemand = inferPlantDemand(tank.plants),
+        inferredPlantDensity = inferPlantDensity(tank.plants.size),
+        inferredCo2Installed = characteristics.hasCo2,
+        inferredActiveSoil = characteristics.hasActiveSoil,
+        plantedFreshwater = characteristics.isFreshwater && characteristics.hasPlants,
+        productKey = device.product.productKey,
+        productDisplayName = device.product.displayName.ifBlank { device.title }
+    )
 }
 
 private fun inferPlantDemand(plants: List<SavedAquariumPlant>): DeviceLightPlantDemand {
