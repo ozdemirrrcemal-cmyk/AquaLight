@@ -121,6 +121,10 @@ LIGHT_OPERATION_LOADING_STATE = (
 LIGHT_COMMERCIAL_ERROR_RESOLVER = (
     LIGHT_PRESENTATION_ROOT / "common/DeviceLightCommercialErrorResolver.kt"
 )
+LIGHT_STRING_RESOURCES = (
+    Path("app/src/main/res/values/device_light_strings.xml"),
+    Path("app/src/main/res/values-tr/device_light_strings.xml"),
+)
 LIGHT_BLOCKING_OPERATION_SURFACES = (
     ("adaptation/DeviceLightAdaptationUiState.kt", "adaptation/DeviceLightAdaptationFragment.kt"),
     (
@@ -172,6 +176,7 @@ LIGHT_COMMERCIAL_ERROR_REFERENCE = re.compile(
     r"device_light_adaptation_(?:stale|clock|unsupported|invalid|not_connected|operation)_error|"
     r"device_light_auto_operation_error|"
     r"device_light_auto_editor_(?:stale|capacity|overlap|not_found|not_connected)|"
+    r"device_light_error_not_connected_message|"
     r"device_light_manual_(?:operation|not_connected)_error|"
     r"device_light_library_(?:operation|load_not_connected)_error|"
     r"device_light_library_error_(?:title|message)|"
@@ -631,6 +636,23 @@ def validate_light_feature_boundaries(repository_root: Path) -> list[str]:
         "object DeviceLightCommercialErrorResolver",
         "Light command failures must use one feature-scoped commercial error resolver",
     )
+    for string_resource in LIGHT_STRING_RESOURCES:
+        _read(repository_root, string_resource, errors)
+    allowed_string_resources = set(LIGHT_STRING_RESOURCES)
+    for values_root in (Path("app/src/main/res/values"), Path("app/src/main/res/values-tr")):
+        absolute_values_root = repository_root / values_root
+        if not absolute_values_root.is_dir():
+            continue
+        for path in sorted(absolute_values_root.glob("*.xml")):
+            relative_path = path.relative_to(repository_root)
+            if relative_path in allowed_string_resources:
+                continue
+            source = path.read_text(encoding="utf-8", errors="ignore")
+            if re.search(r'name="device_light_', source):
+                errors.append(
+                    f"{relative_path}: Light-specific strings must stay in the canonical "
+                    "device_light_strings.xml for this locale"
+                )
 
     for root, expected_areas, label in (
         (LIGHT_APPLICATION_ROOT, LIGHT_APPLICATION_AREAS, "application"),

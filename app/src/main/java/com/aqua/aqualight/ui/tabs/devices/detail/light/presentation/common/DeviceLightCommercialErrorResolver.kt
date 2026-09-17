@@ -92,7 +92,7 @@ internal object DeviceLightCommercialErrorResolver {
             )
             DeviceLightCustomFailure.NOT_CONNECTED -> commercialError(
                 R.string.device_light_error_not_connected_title,
-                R.string.device_light_library_load_not_connected_error
+                R.string.device_light_error_not_connected_message
             )
             DeviceLightCustomFailure.UNSUPPORTED -> commercialError(
                 R.string.device_light_error_unsupported_title,
@@ -114,7 +114,7 @@ internal object DeviceLightCommercialErrorResolver {
             )
             DeviceLightLibraryFailure.NOT_CONNECTED -> commercialError(
                 R.string.device_light_error_not_connected_title,
-                R.string.device_light_library_load_not_connected_error
+                R.string.device_light_error_not_connected_message
             )
             DeviceLightLibraryFailure.UNSUPPORTED -> commercialError(
                 R.string.device_light_error_unsupported_title,

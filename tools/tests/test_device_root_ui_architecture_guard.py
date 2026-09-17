@@ -361,6 +361,28 @@ class DeviceRootUiArchitectureGuardTest(unittest.TestCase):
             errors,
         )
 
+    def test_light_strings_cannot_be_split_across_resource_files(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repository_root = Path(temporary_directory)
+            split_resource = (
+                repository_root
+                / "app/src/main/res/values/device_light_auto_strings.xml"
+            )
+            split_resource.parent.mkdir(parents=True)
+            split_resource.write_text(
+                "<resources>\n"
+                "    <string name=\"device_light_auto_error\">Error</string>\n"
+                "</resources>\n",
+                encoding="utf-8",
+            )
+
+            errors = GUARD.validate_light_feature_boundaries(repository_root)
+
+        self.assertTrue(
+            any("canonical device_light_strings.xml" in error for error in errors),
+            errors,
+        )
+
     def test_automatic_presentation_package_cycle_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             repository_root = Path(temporary_directory)

@@ -67,7 +67,7 @@ class DeviceLightCommercialErrorResolverTest {
         val expectedMessages = mapOf(
             DeviceLightCustomFailure.UNAVAILABLE to R.string.device_light_custom_operation_error,
             DeviceLightCustomFailure.NOT_CONNECTED to
-                R.string.device_light_library_load_not_connected_error,
+                R.string.device_light_error_not_connected_message,
             DeviceLightCustomFailure.UNSUPPORTED to R.string.device_light_custom_operation_error,
             DeviceLightCustomFailure.REJECTED to R.string.device_light_custom_operation_error,
             DeviceLightCustomFailure.INVALID_DATA to R.string.device_light_custom_operation_error
@@ -83,7 +83,7 @@ class DeviceLightCommercialErrorResolverTest {
         val expectedMessages = mapOf(
             DeviceLightLibraryFailure.UNAVAILABLE to R.string.device_light_library_operation_error,
             DeviceLightLibraryFailure.NOT_CONNECTED to
-                R.string.device_light_library_load_not_connected_error,
+                R.string.device_light_error_not_connected_message,
             DeviceLightLibraryFailure.UNSUPPORTED to R.string.device_light_library_operation_error,
             DeviceLightLibraryFailure.REJECTED to R.string.device_light_library_operation_error,
             DeviceLightLibraryFailure.INVALID_DATA to R.string.device_light_library_operation_error,
