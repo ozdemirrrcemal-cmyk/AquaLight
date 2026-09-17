@@ -44,7 +44,7 @@ object ProvisioningRuntimeDiagnostics {
         val elapsed = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedAtNanos)
         val normalizedStage = stage
             .uppercase(Locale.US)
-            .replace(NON_STAGE_CHARACTER, '_')
+            .replace(NON_STAGE_CHARACTER, "_")
             .take(MAX_STAGE_CHARS)
         val normalizedDetail = sanitize(detail).take(MAX_DETAIL_CHARS)
         entries.addLast(
