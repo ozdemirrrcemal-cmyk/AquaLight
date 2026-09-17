@@ -115,6 +115,7 @@ class AqlCommercialDeviceCatalogTest {
         assertTrue(root.allowedRoutes.isEmpty())
         assertTrue(root.capabilities.isEmpty())
         assertEquals("", root.productKey)
+        assertEquals("", root.firmwareLabel)
     }
 
     private fun product(productKey: String): AqlCommercialCatalogProduct =

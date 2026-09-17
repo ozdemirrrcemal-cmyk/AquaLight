@@ -12,6 +12,7 @@
     <string name="device_settings_firmware_version_label">Yüklü yazılım sürümü</string>
     <string name="device_settings_check_updates_action">Güncellemeleri denetle</string>
     <string name="device_settings_update_check_description">En yeni uyumlu firmware sürümünü denetleyin.</string>
+    <string name="device_settings_firmware_loading_description">Cihazın yüklü firmware sürümünü güvenli biçimde bildirmesi bekleniyor.</string>
     <string name="device_settings_update_checking_description">En yeni imzalı sürüm doğrulanıyor…</string>
     <string name="device_settings_update_up_to_date_description">Firmware %1$s yüklü ve güncel.</string>
     <string name="device_settings_update_installed_unknown_description">Yüklü firmware güncel.</string>

@@ -18,12 +18,24 @@ class DeviceFamilySettingsStateTest {
         assertEquals("Living room light", state.deviceName)
         assertEquals("AQL-WPE-123456", state.serialNumber)
         assertEquals("2.0", state.hardwareRevision)
-        assertEquals("1.2.3 / build 42", state.firmwareVersion)
+        assertEquals("1.2.3", state.firmwareVersion)
+        assertEquals(DeviceSettingsFirmwareLoadState.READY, state.firmwareLoadState)
         assertEquals(OwnerDeviceFamily.LIGHT, state.family)
         assertEquals(
             DeviceSettingsInformationLoadState.READY,
             state.informationLoadState
         )
+    }
+
+    @Test
+    fun `rejects cached firmware without current catalog proof`() {
+        val state = wrgbSnapshot().copy(
+            catalogState = DeviceRootCatalogState.INVALID,
+            firmwareLabel = "1.2.3 / cached build 42"
+        ).toDeviceFamilySettingsUiState()
+
+        assertEquals("", state.firmwareVersion)
+        assertEquals(DeviceSettingsFirmwareLoadState.LOADING, state.firmwareLoadState)
     }
 
     @Test
@@ -86,7 +98,7 @@ class DeviceFamilySettingsStateTest {
         model = "wrgb_pro_elite_120",
         serialNumber = "AQL-WPE-123456",
         hardwareRevision = "2.0",
-        firmwareLabel = "1.2.3 / build 42",
+        firmwareLabel = "1.2.3",
         temperatureSensorCount = 1,
         supportedFeatures = listOf("LIGHT_TEMPERATURE_PROTECTION")
     )

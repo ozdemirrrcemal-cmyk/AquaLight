@@ -86,6 +86,74 @@ class DeviceFamilySettingsViewModelTest {
     }
 
     @Test
+    fun `clears firmware without runtime authority and accepts the next live version`() {
+        val operations = FakeDeviceFamilySettingsOperations(validSnapshot())
+        val viewModel = DeviceFamilySettingsViewModel(operations, FakeFirmwareOperations())
+
+        viewModel.bind(DEVICE_UID)
+
+        assertEquals("1.2.3", viewModel.uiState.value.firmwareVersion)
+        assertEquals(
+            DeviceSettingsFirmwareLoadState.READY,
+            viewModel.uiState.value.firmwareLoadState
+        )
+
+        operations.emitDevice(
+            invalidSnapshot().copy(firmwareLabel = "1.2.3 / cached build 42")
+        )
+
+        assertEquals("", viewModel.uiState.value.firmwareVersion)
+        assertEquals(
+            DeviceSettingsFirmwareLoadState.LOADING,
+            viewModel.uiState.value.firmwareLoadState
+        )
+
+        operations.emitDevice(
+            validSnapshot().copy(
+                firmwareLabel = "1.3.0"
+            )
+        )
+
+        assertEquals("1.3.0", viewModel.uiState.value.firmwareVersion)
+        assertEquals(
+            DeviceSettingsFirmwareLoadState.READY,
+            viewModel.uiState.value.firmwareLoadState
+        )
+    }
+
+    @Test
+    fun `surfaces direct connection failure until valid metadata arrives`() {
+        val operations = FakeDeviceFamilySettingsOperations(invalidSnapshot()).apply {
+            connectResult = Result.failure(IllegalStateException("connection failed"))
+        }
+        val viewModel = DeviceFamilySettingsViewModel(operations, FakeFirmwareOperations())
+
+        viewModel.bind(DEVICE_UID)
+
+        assertEquals("", viewModel.uiState.value.firmwareVersion)
+        assertEquals(
+            DeviceSettingsFirmwareLoadState.CONNECTION_FAILED,
+            viewModel.uiState.value.firmwareLoadState
+        )
+
+        operations.connectResult = Result.success(Unit)
+        viewModel.onFirmwareUpdateAction()
+
+        assertEquals(2, operations.connectCalls)
+        assertEquals(
+            DeviceSettingsFirmwareLoadState.LOADING,
+            viewModel.uiState.value.firmwareLoadState
+        )
+
+        operations.emitDevice(validSnapshot())
+        assertEquals(
+            DeviceSettingsFirmwareLoadState.READY,
+            viewModel.uiState.value.firmwareLoadState
+        )
+        assertEquals("1.2.3", viewModel.uiState.value.firmwareVersion)
+    }
+
+    @Test
     fun `persists device name through owner scoped settings operations`() {
         val operations = FakeDeviceFamilySettingsOperations(validSnapshot())
         val viewModel = DeviceFamilySettingsViewModel(operations, FakeFirmwareOperations())
@@ -158,6 +226,7 @@ class DeviceFamilySettingsViewModelTest {
     ) : DeviceFamilySettingsOperations {
         private val snapshots = MutableStateFlow(initialSnapshot)
         var connectCalls: Int = 0
+        var connectResult: Result<Unit> = Result.success(Unit)
         var deviceNameResult: Result<Unit> = Result.success(Unit)
         var deviceNameGate: CompletableDeferred<Unit>? = null
         val updatedNames = mutableListOf<String>()
@@ -168,7 +237,7 @@ class DeviceFamilySettingsViewModelTest {
 
         override fun connect(deviceUid: String): Result<Unit> {
             connectCalls += 1
-            return Result.success(Unit)
+            return connectResult
         }
 
         override suspend fun updateCustomName(
@@ -297,7 +366,7 @@ class DeviceFamilySettingsViewModelTest {
             model = "wrgb_pro_elite_120",
             serialNumber = "AQL-WPE-123456",
             hardwareRevision = "2.0",
-            firmwareLabel = "1.2.3 / build 42",
+            firmwareLabel = "1.2.3",
             temperatureSensorCount = 1,
             supportedFeatures = listOf("LIGHT_TEMPERATURE_PROTECTION")
         )

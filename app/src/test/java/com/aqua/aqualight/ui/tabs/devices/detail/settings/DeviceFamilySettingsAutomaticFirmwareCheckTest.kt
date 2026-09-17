@@ -89,8 +89,39 @@ class DeviceFamilySettingsAutomaticFirmwareCheckTest {
         }
     }
 
+    @Test
+    fun `connection failure blocks automatic check until new valid metadata arrives`() = runTest {
+        Dispatchers.setMain(UnconfinedTestDispatcher(testScheduler))
+        try {
+            val settings = FakeSettingsOperations(
+                connectResult = Result.failure(IllegalStateException("connection failed"))
+            )
+            val firmware = FakeFirmwareOperations()
+            val viewModel = DeviceFamilySettingsViewModel(settings, firmware, MANIFEST_URL)
+
+            viewModel.bind(DEVICE_UID)
+
+            assertEquals(
+                DeviceSettingsFirmwareLoadState.CONNECTION_FAILED,
+                viewModel.uiState.value.firmwareLoadState
+            )
+            assertEquals(0, firmware.automaticCheckCalls)
+
+            settings.emit(validSnapshot().copy(firmwareLabel = "1.0.4"))
+
+            assertEquals(
+                DeviceSettingsFirmwareLoadState.READY,
+                viewModel.uiState.value.firmwareLoadState
+            )
+            assertEquals(1, firmware.automaticCheckCalls)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
     private class FakeSettingsOperations(
-        initialSnapshot: DeviceRootSnapshot = validSnapshot()
+        initialSnapshot: DeviceRootSnapshot = validSnapshot(),
+        private val connectResult: Result<Unit> = Result.success(Unit)
     ) : DeviceFamilySettingsOperations {
         private val devices = MutableStateFlow(initialSnapshot)
 
@@ -102,7 +133,7 @@ class DeviceFamilySettingsAutomaticFirmwareCheckTest {
 
         override fun current(deviceUid: String): DeviceRootSnapshot = devices.value
 
-        override fun connect(deviceUid: String): Result<Unit> = Result.success(Unit)
+        override fun connect(deviceUid: String): Result<Unit> = connectResult
 
         override suspend fun updateCustomName(
             deviceUid: String,

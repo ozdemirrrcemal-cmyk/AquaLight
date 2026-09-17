@@ -207,19 +207,35 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
             isInvisible = state.informationLoadState ==
                 DeviceSettingsInformationLoadState.LOADING
         }
-        binding.tvFirmwareVersionValue.text = state.firmwareVersion.ifBlank { unavailable }
+        binding.tvFirmwareVersionValue.text = if (
+            state.firmwareLoadState == DeviceSettingsFirmwareLoadState.READY
+        ) {
+            state.firmwareVersion.ifBlank { unavailable }
+        } else {
+            unavailable
+        }
 
         renderUpdateAction(
             state = state.updateActionState,
-            installedVersion = state.firmwareVersion
+            installedVersion = state.firmwareVersion,
+            firmwareLoadState = state.firmwareLoadState
         )
     }
 
     private fun renderUpdateAction(
         state: DeviceSettingsUpdateActionState,
-        installedVersion: String
+        installedVersion: String,
+        firmwareLoadState: DeviceSettingsFirmwareLoadState
     ) {
-        val presentation = state.toFirmwareActionPresentation(installedVersion)
+        val presentation = if (
+            state == DeviceSettingsUpdateActionState.Idle ||
+            state == DeviceSettingsUpdateActionState.UpToDate
+        ) {
+            firmwareLoadState.toFirmwareLoadPresentation()
+                ?: state.toFirmwareActionPresentation(installedVersion)
+        } else {
+            state.toFirmwareActionPresentation(installedVersion)
+        }
 
         binding.tvFirmwareUpdateActionTitle.text = presentation.titleText
         binding.tvFirmwareUpdateActionSubtitle.text = presentation.subtitleText
@@ -240,6 +256,24 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
                 presentation.subtitleText
             )
         }
+    }
+
+    private fun DeviceSettingsFirmwareLoadState.toFirmwareLoadPresentation():
+        FirmwareActionPresentation? = when (this) {
+        DeviceSettingsFirmwareLoadState.LOADING -> FirmwareActionPresentation(
+            titleText = getString(R.string.device_settings_update_action_loading),
+            subtitleText = getString(R.string.device_settings_firmware_loading_description),
+            enabled = false,
+            showProgress = true,
+            strokeColorRes = R.color.aqua_accent_primary
+        )
+        DeviceSettingsFirmwareLoadState.READY -> null
+        DeviceSettingsFirmwareLoadState.CONNECTION_FAILED -> FirmwareActionPresentation(
+            titleText = getString(R.string.device_settings_update_reconnect_action),
+            subtitleText = getString(R.string.device_settings_update_error_connection),
+            enabled = true,
+            strokeColorRes = R.color.aqua_status_danger
+        )
     }
 
     private fun DeviceSettingsUpdateActionState.toFirmwareActionPresentation(
