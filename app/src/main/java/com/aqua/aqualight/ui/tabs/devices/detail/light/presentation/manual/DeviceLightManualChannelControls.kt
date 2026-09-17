@@ -16,7 +16,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightChannelStepButton
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightChannelStepButtonState
-import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualColors
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualGeometry
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualPercentSlider
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualPercentSliderActions
@@ -32,7 +31,7 @@ internal fun ManualChannelRow(
 ) {
     val content = ManualChannelContent(
         channel = channel,
-        label = stringResource(channel.labelRes),
+        label = channel.label,
         value = stringResource(R.string.device_light_live_output_percent_format, channel.percent)
     )
     Row(
@@ -47,7 +46,6 @@ internal fun ManualChannelRow(
             content = content,
             enabled = enabled,
             actions = actions,
-            visuals = visuals,
             modifier = Modifier.weight(1f)
         )
         ManualChannelIncreaseButton(content, enabled, actions, visuals)
@@ -101,14 +99,13 @@ private fun ManualChannelSlider(
     content: ManualChannelContent,
     enabled: Boolean,
     actions: DeviceLightManualControlActions,
-    visuals: DeviceLightManualVisuals,
     modifier: Modifier = Modifier
 ) {
     AquaLightManualPercentSlider(
         state = AquaLightManualPercentSliderState(
             percent = content.channel.percent,
             enabled = enabled,
-            channelColor = visuals.colors.channelColor(content.channel.id),
+            channelColor = Color(FULL_ALPHA_MASK or content.channel.displayColorRgb),
             stateText = content.value,
             accessibilityDescription = stringResource(
                 R.string.device_light_manual_slider_description,
@@ -170,16 +167,10 @@ private fun ManualChannelValue(
     )
 }
 
-private fun AquaLightManualColors.channelColor(channel: DeviceLightManualChannelId): Color =
-    when (channel) {
-        DeviceLightManualChannelId.RED -> red
-        DeviceLightManualChannelId.GREEN -> green
-        DeviceLightManualChannelId.BLUE -> blue
-        DeviceLightManualChannelId.WHITE -> white
-    }
-
 private data class ManualChannelContent(
     val channel: DeviceLightManualChannelUiState,
     val label: String,
     val value: String
 )
+
+private const val FULL_ALPHA_MASK = 0xFF000000.toInt()

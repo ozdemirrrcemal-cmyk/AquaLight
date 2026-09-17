@@ -33,6 +33,12 @@ internal enum class DeviceLightLibraryReadAuthority {
     PRESENTATION
 }
 
+/** Selects current-generation authority or the last fully validated status for presentation. */
+internal enum class DeviceLightStatusReadAuthority {
+    AUTHORITATIVE,
+    PRESENTATION
+}
+
 /**
  * The only mutable, firmware-authoritative Light state owner.
  *
@@ -108,12 +114,19 @@ internal class DeviceLightRuntimeStateOwner {
         generation: DeviceRuntimeConnectionGeneration
     ): Boolean = authorityCoordinator.isAuthoritative(projection, deviceUid, generation)
 
-    fun currentAuthoritativeStatus(deviceUid: DeviceUid): DeviceLightStatus? = synchronized(lock) {
-        _statuses.value[deviceUid]?.takeIf {
-            authorityCoordinator.isCurrentlyAuthoritative(
-                DeviceLightRuntimeProjection.STATUS,
-                deviceUid
-            )
+    fun currentStatus(
+        deviceUid: DeviceUid,
+        authority: DeviceLightStatusReadAuthority
+    ): DeviceLightStatus? = synchronized(lock) {
+        val status = _statuses.value[deviceUid] ?: return@synchronized null
+        when (authority) {
+            DeviceLightStatusReadAuthority.PRESENTATION -> status
+            DeviceLightStatusReadAuthority.AUTHORITATIVE -> status.takeIf {
+                authorityCoordinator.isCurrentlyAuthoritative(
+                    DeviceLightRuntimeProjection.STATUS,
+                    deviceUid
+                )
+            }
         }
     }
 

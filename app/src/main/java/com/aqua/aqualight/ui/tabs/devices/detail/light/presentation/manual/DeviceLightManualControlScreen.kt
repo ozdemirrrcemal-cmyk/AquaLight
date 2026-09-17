@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.colorResource
@@ -68,7 +69,7 @@ internal fun DeviceLightManualControlScreen(
             ManualQuickScenesCard(state, actions, visuals)
         }
         item(key = "manual-library-actions") {
-            ManualLibraryActions(state.controlsEnabled, actions, visuals)
+            ManualLibraryActions(state.libraryActionsEnabled, actions, visuals)
         }
         item(key = "manual-power-off") {
             ManualPowerOffAction(state.controlsEnabled, actions.onPowerOffClick, visuals)
@@ -151,7 +152,7 @@ private fun ManualPowerGauge(
                 .clearAndSetSemantics { contentDescription = description },
             contentAlignment = Alignment.Center
         ) {
-            ManualPowerGaugeArc(power.ratio, visuals.colors)
+            ManualPowerGaugeArc(power, visuals.colors)
             BasicText(
                 text = value,
                 style = visuals.typography.title.copy(
@@ -166,7 +167,10 @@ private fun ManualPowerGauge(
 }
 
 @Composable
-private fun ManualPowerGaugeArc(ratio: Float, colors: AquaLightManualColors) {
+private fun ManualPowerGaugeArc(
+    power: DeviceLightManualPowerUiState,
+    colors: AquaLightManualColors
+) {
     Canvas(modifier = Modifier.fillMaxSize()) {
         val stroke = AquaLightManualGeometry.powerGaugeTrackWidth.toPx()
         drawArc(
@@ -177,9 +181,9 @@ private fun ManualPowerGaugeArc(ratio: Float, colors: AquaLightManualColors) {
             style = Stroke(width = stroke, cap = StrokeCap.Round)
         )
         drawArc(
-            color = colors.card.primaryText,
+            color = Color(FULL_ALPHA_MASK or power.displayColorRgb),
             startAngle = GAUGE_START_ANGLE,
-            sweepAngle = FULL_ARC_DEGREES * ratio,
+            sweepAngle = FULL_ARC_DEGREES * power.ratio,
             useCenter = false,
             style = Stroke(width = stroke, cap = StrokeCap.Round)
         )
@@ -194,3 +198,4 @@ internal data class DeviceLightManualVisuals(
 
 private const val GAUGE_START_ANGLE = -90f
 private const val FULL_ARC_DEGREES = 360f
+private const val FULL_ALPHA_MASK = 0xFF000000.toInt()

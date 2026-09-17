@@ -21,11 +21,22 @@ class DeviceLightGenerationAuthorityTest {
         owner.beginGeneration(DEVICE_UID, G2)
 
         assertEquals(first, owner.statuses.value[DEVICE_UID])
+        assertEquals(
+            first,
+            owner.currentStatus(DEVICE_UID, DeviceLightStatusReadAuthority.PRESENTATION)
+        )
+        assertNull(
+            owner.currentStatus(DEVICE_UID, DeviceLightStatusReadAuthority.AUTHORITATIVE)
+        )
         assertFalse(
             owner.isAuthoritative(DeviceLightRuntimeProjection.STATUS, DEVICE_UID, G2)
         )
         assertTrue(owner.recordStatus(DEVICE_UID, G2, second))
         assertEquals(second, owner.statuses.value[DEVICE_UID])
+        assertEquals(
+            second,
+            owner.currentStatus(DEVICE_UID, DeviceLightStatusReadAuthority.AUTHORITATIVE)
+        )
     }
 
     @Test

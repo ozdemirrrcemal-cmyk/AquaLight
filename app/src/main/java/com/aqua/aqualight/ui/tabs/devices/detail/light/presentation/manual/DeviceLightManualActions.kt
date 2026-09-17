@@ -84,14 +84,29 @@ private fun ManualQuickSceneButton(
 ) {
     val selected = state.selectedPreset == preset.id
     val label = stringResource(preset.labelRes)
-    val sceneDescription = stringResource(
-        R.string.device_light_manual_preset_scene_description,
-        label,
-        preset.scene[DeviceLightManualChannelId.RED] ?: 0,
-        preset.scene[DeviceLightManualChannelId.GREEN] ?: 0,
-        preset.scene[DeviceLightManualChannelId.BLUE] ?: 0,
-        preset.scene[DeviceLightManualChannelId.WHITE] ?: 0
-    )
+    val sceneDescription = when {
+        state.channels.isEmpty() -> stringResource(
+            R.string.device_light_manual_preset_scene_description_unavailable,
+            label
+        )
+        state.channels.any { channel -> channel.id == DeviceLightManualChannelId.WHITE } -> {
+            stringResource(
+                R.string.device_light_manual_preset_scene_description,
+                label,
+                preset.scene.getValue(DeviceLightManualChannelId.RED),
+                preset.scene.getValue(DeviceLightManualChannelId.GREEN),
+                preset.scene.getValue(DeviceLightManualChannelId.BLUE),
+                preset.scene.getValue(DeviceLightManualChannelId.WHITE)
+            )
+        }
+        else -> stringResource(
+            R.string.device_light_manual_preset_scene_description_rgb,
+            label,
+            preset.scene.getValue(DeviceLightManualChannelId.RED),
+            preset.scene.getValue(DeviceLightManualChannelId.GREEN),
+            preset.scene.getValue(DeviceLightManualChannelId.BLUE)
+        )
+    }
     val shape = RoundedCornerShape(AquaLightManualGeometry.quickSceneButtonCornerRadius)
     val outline = if (selected) visuals.colors.action else visuals.colors.card.mediaOutline
     Box(

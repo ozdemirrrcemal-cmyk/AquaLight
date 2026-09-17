@@ -3,6 +3,11 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aqua.aqualight.application.devices.DeviceRootCatalogState
+import com.aqua.aqualight.application.devices.DeviceRootOperations
+import com.aqua.aqualight.application.devices.DeviceRootSnapshot
+import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
+import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryOperations
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualFailure
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualMutationResult
@@ -25,7 +30,8 @@ import kotlinx.coroutines.launch
 
 class DeviceLightManualControlViewModel(
     private val manualOperations: DeviceLightManualOperations,
-    private val libraryOperations: DeviceLightLibraryOperations
+    private val libraryOperations: DeviceLightLibraryOperations,
+    private val rootOperations: DeviceRootOperations
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DeviceLightManualControlUiState())
@@ -66,9 +72,15 @@ class DeviceLightManualControlViewModel(
         acknowledgedDraftVersion = 0L
         latestSnapshot = null
         _uiState.value = deviceLightManualInitialState(deviceUid)
+            .withRootSnapshot(rootOperations.current(deviceUid))
         observationJobs = listOf(
             viewModelScope.launch {
                 manualOperations.observe(deviceUid).collect(::applyManualResult)
+            },
+            viewModelScope.launch {
+                rootOperations.observe(deviceUid).collect { snapshot ->
+                    _uiState.update { state -> state.withRootSnapshot(snapshot) }
+                }
             },
             libraryActions.bind(deviceUid)
         )
@@ -147,9 +159,7 @@ class DeviceLightManualControlViewModel(
             }
             is DeviceLightManualReadResult.Failed -> _uiState.update { state ->
                 state.copy(
-                    connectionVisualState = result.failure.connectionState(),
-                    contentEnabled = false,
-                    protection = null,
+                    runtimeWriteAuthoritative = false,
                     initialLoading = false
                 )
             }
@@ -193,7 +203,13 @@ class DeviceLightManualControlViewModel(
                     }
                 }
                 _uiState.update { state ->
-                    state.copy(connectionVisualState = result.failure.connectionState())
+                    state.copy(
+                        runtimeWriteAuthoritative = if (result.failure.invalidatesWriteAuthority()) {
+                            false
+                        } else {
+                            state.runtimeWriteAuthoritative
+                        }
+                    )
                 }
                 emitEffect(
                     DeviceLightManualControlEffect.ShowError(
@@ -233,10 +249,26 @@ private fun DeviceLightManualControlUiState.toApplicationScene() = DeviceLightMa
     channels.associate { channel -> channel.id.toApplicationChannel() to channel.percent }
 )
 
-private fun DeviceLightManualFailure.connectionState(): DeviceConnectionVisualState = when (this) {
-    DeviceLightManualFailure.NOT_CONNECTED -> DeviceConnectionVisualState.OFFLINE
-    DeviceLightManualFailure.UNAVAILABLE,
+private fun DeviceLightManualControlUiState.withRootSnapshot(
+    snapshot: DeviceRootSnapshot?
+): DeviceLightManualControlUiState = copy(
+    connectionVisualState = if (snapshot?.availability == OwnerDeviceAvailability.REACHABLE) {
+        DeviceConnectionVisualState.ONLINE
+    } else {
+        DeviceConnectionVisualState.OFFLINE
+    },
+    centralFirmwareWritesEnabled = snapshot.isLightManualWriteAvailable()
+)
+
+private fun DeviceRootSnapshot?.isLightManualWriteAvailable(): Boolean =
+    this?.availability == OwnerDeviceAvailability.REACHABLE &&
+        family == OwnerDeviceFamily.LIGHT &&
+        catalogState == DeviceRootCatalogState.VALID
+
+private fun DeviceLightManualFailure.invalidatesWriteAuthority(): Boolean = when (this) {
+    DeviceLightManualFailure.NOT_CONNECTED,
+    DeviceLightManualFailure.UNAVAILABLE -> true
     DeviceLightManualFailure.UNSUPPORTED,
     DeviceLightManualFailure.REJECTED,
-    DeviceLightManualFailure.INVALID_DATA -> DeviceConnectionVisualState.WARNING
+    DeviceLightManualFailure.INVALID_DATA -> false
 }

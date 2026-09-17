@@ -21,6 +21,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
@@ -88,7 +90,24 @@ private fun DeviceLightFanPair(
     state: DeviceLightSystemUiState,
     visuals: DeviceLightSystemVisuals
 ) {
-    Row(modifier = Modifier.fillMaxWidth()) {
+    val fans = state.snapshot?.fans
+    val firmwareSummary = fans?.takeIf { values -> values.size == SYSTEM_FAN_COUNT }
+        ?.let { values ->
+            stringResource(
+                R.string.device_light_system_fans_summary,
+                values[FIRST_FAN_INDEX].percent,
+                values[SECOND_FAN_INDEX].percent
+            )
+        }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                firmwareSummary?.let { summary ->
+                    Modifier.clearAndSetSemantics { contentDescription = summary }
+                } ?: Modifier
+            )
+    ) {
         DeviceLightFanCard(
             fan = state.snapshot?.fans?.getOrNull(FIRST_FAN_INDEX),
             index = FIRST_FAN_INDEX,
@@ -383,6 +402,7 @@ private fun DeviceLightFanMode.helperRes(): Int = when (this) {
 private const val PERCENT_MAXIMUM = 100
 private const val FIRST_FAN_INDEX = 0
 private const val SECOND_FAN_INDEX = 1
+private const val SYSTEM_FAN_COUNT = 2
 private const val DEFAULT_START_TEMPERATURE_MINIMUM = 0
 private const val DEFAULT_START_TEMPERATURE_MAXIMUM = 80
 private const val DEFAULT_FULL_SPEED_TEMPERATURE_MINIMUM = 1

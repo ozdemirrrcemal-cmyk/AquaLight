@@ -51,7 +51,7 @@ internal class DeviceLightManualLibraryActions(
     fun saveAs(name: String) {
         val deviceUid = currentDeviceUid().takeIf(String::isNotBlank) ?: return
         val state = currentState()
-        if (!state.controlsEnabled || state.channels.isEmpty()) return
+        if (!state.libraryActionsEnabled || state.channels.isEmpty()) return
         val scene = DeviceLightLibraryScene(
             state.channels.associate { channel ->
                 channel.id.toLibraryChannel() to channel.percent

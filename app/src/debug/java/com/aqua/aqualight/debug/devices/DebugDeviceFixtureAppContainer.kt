@@ -87,7 +87,8 @@ private class DebugDeviceFixtureViewModelFactory(
             DeviceLightManualControlViewModel::class.java ->
                 DeviceLightManualControlViewModel(
                     manualOperations = timerDependencies(requireGraph()).lightManualOperations,
-                    libraryOperations = timerDependencies(requireGraph()).lightLibraryOperations
+                    libraryOperations = timerDependencies(requireGraph()).lightLibraryOperations,
+                    rootOperations = rootOperations(requireGraph())
                 )
             DeviceLightCustomCurveViewModel::class.java ->
                 DeviceLightCustomCurveViewModel(

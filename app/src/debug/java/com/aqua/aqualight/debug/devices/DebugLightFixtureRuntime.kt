@@ -17,6 +17,7 @@ import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryCh
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryCustomPoint
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryPayload
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualChannel
+import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualChannelDescriptor
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualScene
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualSnapshot
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -170,15 +171,28 @@ private fun DeviceRootSnapshot.toFixtureCustomSnapshot(): DeviceLightCustomSnaps
 }
 
 private fun DeviceRootSnapshot.toFixtureManualSnapshot(): DeviceLightManualSnapshot {
-    val channels = channelSlots.lightChannels.map { slot -> slot.wireKey.value.toManualChannel() }
+    val descriptors = channelSlots.lightChannels.mapIndexed { index, slot ->
+        DeviceLightManualChannelDescriptor(
+            channel = slot.wireKey.value.toManualChannel(),
+            key = slot.wireKey.value,
+            displayName = slot.defaultDisplayName,
+            displayColorRgb = slot.wireKey.value.fixtureDisplayColorRgb(),
+            order = index
+        )
+    }
+    val channels = descriptors.map(DeviceLightManualChannelDescriptor::channel)
     val supportsEstimatedPower = DeviceLightManualChannel.WHITE in channels
     return DeviceLightManualSnapshot(
         deviceUid = deviceUid,
         productKey = productKey,
+        channelDescriptors = descriptors,
         scene = DeviceLightManualScene(channels.associateWith(::fixtureManualPercent)),
         estimatedPowerWatts = FIXTURE_MANUAL_POWER_WATTS.takeIf { supportsEstimatedPower },
         estimatedPowerRatio = FIXTURE_MANUAL_POWER_RATIO.takeIf { supportsEstimatedPower },
-        protection = null
+        estimatedPowerDisplayColorRgb = FIXTURE_MANUAL_DISPLAY_COLOR_RGB
+            .takeIf { supportsEstimatedPower },
+        protection = null,
+        firmwareWriteAuthoritative = true
     )
 }
 
@@ -350,6 +364,7 @@ private const val FIXTURE_MANUAL_BLUE_PERCENT = 40
 private const val FIXTURE_MANUAL_WHITE_PERCENT = 50
 private const val FIXTURE_MANUAL_POWER_WATTS = 46
 private const val FIXTURE_MANUAL_POWER_RATIO = 0.46f
+private const val FIXTURE_MANUAL_DISPLAY_COLOR_RGB = 0xD8D1FF
 private const val FIXTURE_OFF_PERCENT = 0
 private const val FIRMWARE_CHANNEL_SCALE = 1_000
 private const val DISPLAY_COLOR_RED = 0xFF0000

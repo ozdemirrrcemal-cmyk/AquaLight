@@ -76,7 +76,7 @@ private fun DeviceLightTemperatureGaugeLabel(
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         BasicText(
             text = temperatureCelsius?.let { value ->
-                stringResource(R.string.device_light_system_temperature_decimal_format, value)
+                stringResource(R.string.device_light_system_temperature, value)
             } ?: stringResource(R.string.device_light_system_temperature_unavailable),
             style = visuals.typography.title.copy(
                 fontSize = DeviceLightSystemGeometry.gaugeValueSize,
@@ -107,7 +107,7 @@ private fun Double?.gaugeFraction(): Float = this?.toFloat()?.let { value ->
 } ?: 0f
 
 private fun DeviceLightSystemCondition.statusLabelRes(): Int = when (this) {
-    DeviceLightSystemCondition.NORMAL -> R.string.device_light_system_condition_normal
+    DeviceLightSystemCondition.NORMAL -> R.string.device_light_system_status_normal
     DeviceLightSystemCondition.PROTECTION_ACTIVE ->
         R.string.device_light_system_condition_protection
     DeviceLightSystemCondition.SENSOR_FAIL_SAFE ->

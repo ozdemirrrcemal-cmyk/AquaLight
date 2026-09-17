@@ -1,53 +1,34 @@
 package com.aqua.aqualight.data.devices.light.manual
 
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualChannel
-import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualFailure
-import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualMutationResult
+import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualChannelDescriptor
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualProtection
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualProtectionKind
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualScene
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
-import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightMode
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightDisplayRgb
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightOutputReason
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightProduct
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightScene
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightStatus
-import com.aqua.aqualight.data.devices.runtime.modules.light.requestGraph
 import kotlin.math.roundToInt
 
-internal suspend fun DeviceRuntimeCommandOutcome<*>.confirmManualMutation(
+internal fun DeviceLightStatus.toManualSnapshot(
     uid: DeviceUid,
-    runtime: DeviceLightRuntimeRepository,
-    expectedScene: DeviceLightScene
-): DeviceLightManualMutationResult = when (this) {
-    is DeviceRuntimeCommandOutcome.Success -> {
-        val status = runtime.currentStatus(uid)
-            ?.takeIf { current -> current.confirms(expectedScene) }
-            ?: runtime.refreshStatusAndGraph(uid)
-                ?.takeIf { current -> current.confirms(expectedScene) }
-        status?.toManualSnapshot(uid)
-            ?.let(DeviceLightManualMutationResult::Success)
-            ?: manualMutationFailure(DeviceLightManualFailure.UNAVAILABLE)
-    }
-    else -> manualMutationFailure(toManualFailure())
-}
-
-private suspend fun DeviceLightRuntimeRepository.refreshStatusAndGraph(
-    uid: DeviceUid
-): DeviceLightStatus? {
-    val outcome = requestStatus(uid)
-    if (outcome is DeviceRuntimeCommandOutcome.Success) requestGraph(uid)
-    return currentStatus(uid)
-}
-
-private fun DeviceLightStatus.confirms(expectedScene: DeviceLightScene): Boolean =
-    mode == DeviceLightMode.MANUAL && manual.scene == expectedScene
-
-internal fun DeviceLightStatus.toManualSnapshot(uid: DeviceUid): DeviceLightManualSnapshot {
+    firmwareWriteAuthoritative: Boolean = true
+): DeviceLightManualSnapshot {
     require(manual.scene.product == product)
+    val sortedChannels = channels.sortedBy { descriptor -> descriptor.order }
+    val descriptors = sortedChannels.map { descriptor ->
+        DeviceLightManualChannelDescriptor(
+            channel = descriptor.percentField.toManualChannel(),
+            key = descriptor.key,
+            displayName = descriptor.displayName,
+            displayColorRgb = descriptor.displayColorRgb,
+            order = descriptor.order
+        )
+    }
     val estimatedPower = power.estimatedFixturePowerW
         ?.takeIf { power.available && power.estimatedFixturePowerAvailable }
         ?.roundToInt()
@@ -58,14 +39,20 @@ internal fun DeviceLightStatus.toManualSnapshot(uid: DeviceUid): DeviceLightManu
     return DeviceLightManualSnapshot(
         deviceUid = uid.value,
         productKey = product.wireValue,
+        channelDescriptors = descriptors,
         scene = DeviceLightManualScene(
-            product.sceneFields.associate { field ->
-                field.toManualChannel() to manual.scene.percents.getValue(field)
+            sortedChannels.associate { descriptor ->
+                descriptor.percentField.toManualChannel() to
+                    manual.scene.percents.getValue(descriptor.percentField)
             }
         ),
         estimatedPowerWatts = estimatedPower,
         estimatedPowerRatio = estimatedRatio,
-        protection = toManualProtection()
+        estimatedPowerDisplayColorRgb = color.displayRgb
+            ?.takeIf { color.available }
+            ?.toPackedRgb(),
+        protection = toManualProtection(),
+        firmwareWriteAuthoritative = firmwareWriteAuthoritative
     )
 }
 
@@ -87,6 +74,9 @@ private fun DeviceLightStatus.toManualProtection(): DeviceLightManualProtection?
 private fun Int.toEffectivePercent(): Int =
     coerceIn(MIN_SCALE_PERMILLE, FULL_SCALE_PERMILLE) / PERMILLE_PER_PERCENT
 
+private fun DeviceLightDisplayRgb.toPackedRgb(): Int =
+    (red shl RED_SHIFT) or (green shl GREEN_SHIFT) or blue
+
 internal fun DeviceLightManualScene.toRuntimeScene(product: DeviceLightProduct): DeviceLightScene {
     val expectedChannels = product.sceneFields.mapTo(linkedSetOf(), String::toManualChannel)
     require(channels.keys == expectedChannels)
@@ -106,21 +96,6 @@ private fun String.toManualChannel(): DeviceLightManualChannel = when (this) {
     else -> error("Unsupported Light manual scene field: $this")
 }
 
-internal fun DeviceRuntimeCommandOutcome<*>.toManualFailure(): DeviceLightManualFailure = when (this) {
-    is DeviceRuntimeCommandOutcome.NotConnected,
-    is DeviceRuntimeCommandOutcome.NotAuthenticated -> DeviceLightManualFailure.NOT_CONNECTED
-    is DeviceRuntimeCommandOutcome.UnsupportedByDevice -> DeviceLightManualFailure.UNSUPPORTED
-    is DeviceRuntimeCommandOutcome.FirmwareError -> DeviceLightManualFailure.REJECTED
-    is DeviceRuntimeCommandOutcome.ProtocolError -> DeviceLightManualFailure.INVALID_DATA
-    is DeviceRuntimeCommandOutcome.SendFailed,
-    is DeviceRuntimeCommandOutcome.Timeout,
-    is DeviceRuntimeCommandOutcome.Cancelled -> DeviceLightManualFailure.UNAVAILABLE
-    is DeviceRuntimeCommandOutcome.Success -> error("A successful outcome has no failure.")
-}
-
-internal fun manualMutationFailure(failure: DeviceLightManualFailure) =
-    DeviceLightManualMutationResult.Failed(failure)
-
 private const val RED_PERCENT_FIELD = "redPercent"
 private const val GREEN_PERCENT_FIELD = "greenPercent"
 private const val BLUE_PERCENT_FIELD = "bluePercent"
@@ -130,3 +105,5 @@ private const val FULL_SCALE_PERMILLE = 1_000
 private const val PERMILLE_PER_PERCENT = 10
 private const val POWER_RATIO_MIN = 0f
 private const val POWER_RATIO_MAX = 1f
+private const val RED_SHIFT = 16
+private const val GREEN_SHIFT = 8

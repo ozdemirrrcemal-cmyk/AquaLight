@@ -301,7 +301,8 @@ private class ReleaseSmokeViewModelFactory(
         modelClass.isAssignableFrom(DeviceLightManualControlViewModel::class.java) ->
             DeviceLightManualControlViewModel(
                 manualOperations = lightOperations.manualOperations,
-                libraryOperations = lightOperations.libraryOperations
+                libraryOperations = lightOperations.libraryOperations,
+                rootOperations = rootOperations
             )
         modelClass.isAssignableFrom(DeviceLightCustomCurveViewModel::class.java) ->
             DeviceLightCustomCurveViewModel(

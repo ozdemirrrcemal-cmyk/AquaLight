@@ -2,15 +2,13 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual
 
 import androidx.annotation.StringRes
 import com.aqua.aqualight.R
-import com.aqua.aqualight.application.devices.light.automatic.DeviceLightPresetCatalog
-import com.aqua.aqualight.application.devices.light.automatic.DeviceLightPresetId
-import com.aqua.aqualight.application.devices.light.automatic.DeviceLightPresetScene
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualChannel
+import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualPresetCatalog
+import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualPresetId as ApplicationManualPresetId
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualProtectionKind as ApplicationProtectionKind
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualSnapshot
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualControlSpec
-import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.labelResource
 
 internal enum class DeviceLightManualChannelId {
     RED,
@@ -21,25 +19,30 @@ internal enum class DeviceLightManualChannelId {
 
 internal data class DeviceLightManualChannelUiState(
     val id: DeviceLightManualChannelId,
-    @StringRes val labelRes: Int,
+    val label: String,
+    val displayColorRgb: Int,
     val percent: Int
 ) {
     init {
+        require(label.isNotBlank())
+        require(displayColorRgb in DISPLAY_COLOR_RANGE)
         require(percent in PERCENT_RANGE)
     }
 }
 
 internal data class DeviceLightManualPowerUiState(
     val watts: Int,
-    val ratio: Float
+    val ratio: Float,
+    val displayColorRgb: Int
 ) {
     init {
         require(watts >= 0)
         require(ratio in 0f..1f)
+        require(displayColorRgb in DISPLAY_COLOR_RANGE)
     }
 }
 
-internal typealias DeviceLightManualPresetId = DeviceLightPresetId
+internal typealias DeviceLightManualPresetId = ApplicationManualPresetId
 
 internal data class DeviceLightManualPresetUiState(
     val id: DeviceLightManualPresetId,
@@ -78,9 +81,14 @@ internal data class DeviceLightManualControlUiState(
     val selectedPreset: DeviceLightManualPresetId? = null,
     val protection: DeviceLightManualProtectionUiState? = null,
     val contentEnabled: Boolean = false,
+    val centralFirmwareWritesEnabled: Boolean = false,
+    val runtimeWriteAuthoritative: Boolean = false,
     val initialLoading: Boolean = false
 ) {
     val controlsEnabled: Boolean
+        get() = contentEnabled && centralFirmwareWritesEnabled && runtimeWriteAuthoritative
+
+    val libraryActionsEnabled: Boolean
         get() = contentEnabled
 
     /** Live slider/step commands remain non-blocking; only the first authoritative read blocks. */
@@ -99,12 +107,23 @@ internal fun DeviceLightManualSnapshot.mergeInto(
     replaceScene: Boolean
 ): DeviceLightManualControlUiState {
     val resolvedChannels = if (replaceScene) {
-        scene.channels.map { (channel, percent) -> channel.toUiState(percent) }
+        channelDescriptors.map { descriptor ->
+            DeviceLightManualChannelUiState(
+                id = descriptor.channel.toUiId(),
+                label = descriptor.displayName,
+                displayColorRgb = descriptor.displayColorRgb,
+                percent = scene.channels.getValue(descriptor.channel)
+            )
+        }
     } else {
         state.channels
     }
     val powerState = estimatedPowerWatts?.let { watts ->
-        estimatedPowerRatio?.let { ratio -> DeviceLightManualPowerUiState(watts, ratio) }
+        estimatedPowerRatio?.let { ratio ->
+            estimatedPowerDisplayColorRgb?.let { displayColorRgb ->
+                DeviceLightManualPowerUiState(watts, ratio, displayColorRgb)
+            }
+        }
     }
     val matchingPreset = if (replaceScene) {
         state.presets.firstOrNull { preset ->
@@ -115,7 +134,6 @@ internal fun DeviceLightManualSnapshot.mergeInto(
     }
     return state.copy(
         deviceUid = deviceUid,
-        connectionVisualState = DeviceConnectionVisualState.ONLINE,
         channels = resolvedChannels,
         power = powerState,
         protection = protection?.let { value ->
@@ -126,21 +144,10 @@ internal fun DeviceLightManualSnapshot.mergeInto(
         },
         selectedPreset = matchingPreset,
         contentEnabled = true,
+        runtimeWriteAuthoritative = firmwareWriteAuthoritative,
         initialLoading = false
     )
 }
-
-private fun DeviceLightManualChannel.toUiState(percent: Int) =
-    DeviceLightManualChannelUiState(
-        id = toUiId(),
-        labelRes = when (this) {
-            DeviceLightManualChannel.RED -> R.string.device_light_live_output_red
-            DeviceLightManualChannel.GREEN -> R.string.device_light_live_output_green
-            DeviceLightManualChannel.BLUE -> R.string.device_light_live_output_blue
-            DeviceLightManualChannel.WHITE -> R.string.device_light_live_output_white
-        },
-        percent = percent
-    )
 
 internal fun DeviceLightManualChannel.toUiId(): DeviceLightManualChannelId = when (this) {
     DeviceLightManualChannel.RED -> DeviceLightManualChannelId.RED
@@ -163,24 +170,26 @@ private fun ApplicationProtectionKind.toUiKind(): DeviceLightManualProtectionKin
     ApplicationProtectionKind.THERMAL_SHUTDOWN -> DeviceLightManualProtectionKind.THERMAL_SHUTDOWN
 }
 
-private fun builtInManualPresets() = DeviceLightPresetCatalog.manualPresets.map { preset ->
-    manualPreset(preset.id, preset.id.labelResource(), preset.scene)
+private fun builtInManualPresets() = DeviceLightManualPresetCatalog.presets.map { preset ->
+    DeviceLightManualPresetUiState(
+        id = preset.id,
+        labelRes = preset.id.labelResource(),
+        scene = preset.scene.channels.mapKeys { (channel, _) -> channel.toUiId() }
+    )
 }
 
-private fun manualPreset(
-    id: DeviceLightManualPresetId,
-    @StringRes labelRes: Int,
-    scene: DeviceLightPresetScene
-) = DeviceLightManualPresetUiState(
-    id = id,
-    labelRes = labelRes,
-    scene = mapOf(
-        DeviceLightManualChannelId.RED to scene.red,
-        DeviceLightManualChannelId.GREEN to scene.green,
-        DeviceLightManualChannelId.BLUE to scene.blue,
-        DeviceLightManualChannelId.WHITE to scene.white
-    )
-)
+@StringRes
+private fun DeviceLightManualPresetId.labelResource(): Int = when (this) {
+    DeviceLightManualPresetId.RED -> R.string.device_light_manual_preset_red
+    DeviceLightManualPresetId.GREEN -> R.string.device_light_manual_preset_green
+    DeviceLightManualPresetId.BLUE -> R.string.device_light_manual_preset_blue
+    DeviceLightManualPresetId.FISH -> R.string.device_light_manual_preset_fish
+    DeviceLightManualPresetId.SHRIMP -> R.string.device_light_manual_preset_shrimp
+    DeviceLightManualPresetId.ALL -> R.string.device_light_manual_preset_all
+}
 
 internal val PERCENT_RANGE =
     AquaLightManualControlSpec.minimumPercent..AquaLightManualControlSpec.maximumPercent
+
+private val DISPLAY_COLOR_RANGE = 0..DISPLAY_COLOR_RGB_MAX
+private const val DISPLAY_COLOR_RGB_MAX = 0xFFFFFF

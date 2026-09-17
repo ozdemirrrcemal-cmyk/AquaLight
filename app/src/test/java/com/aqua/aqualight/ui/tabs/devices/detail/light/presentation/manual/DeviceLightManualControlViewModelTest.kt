@@ -1,5 +1,11 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual
 
+import com.aqua.aqualight.application.devices.DeviceRootCatalogState
+import com.aqua.aqualight.application.devices.DeviceRootOperations
+import com.aqua.aqualight.application.devices.DeviceRootRoute
+import com.aqua.aqualight.application.devices.DeviceRootSnapshot
+import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
+import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryChannel
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryChannelDescriptor
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryCustomPoint
@@ -11,11 +17,14 @@ import com.aqua.aqualight.application.devices.light.library.DeviceLightLibrarySc
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibrarySnapshot
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryTarget
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualChannel
+import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualChannelDescriptor
+import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualFailure
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualMutationResult
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualOperations
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualReadResult
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualScene
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualSnapshot
+import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -110,17 +119,17 @@ class DeviceLightManualControlViewModelTest {
         val manual = FakeManualOperations()
         val viewModel = boundViewModel(manual)
 
-        viewModel.applyPreset(DeviceLightManualPresetId.VIVID_COLORS)
+        viewModel.applyPreset(DeviceLightManualPresetId.FISH)
 
-        assertEquals(PERCENT_65, viewModel.uiState.value.percent(DeviceLightManualChannelId.RED))
-        assertEquals(PERCENT_50, viewModel.uiState.value.percent(DeviceLightManualChannelId.GREEN))
-        assertEquals(PERCENT_65, viewModel.uiState.value.percent(DeviceLightManualChannelId.BLUE))
-        assertEquals(PERCENT_60, viewModel.uiState.value.percent(DeviceLightManualChannelId.WHITE))
+        assertEquals(PERCENT_80, viewModel.uiState.value.percent(DeviceLightManualChannelId.RED))
+        assertEquals(PERCENT_45, viewModel.uiState.value.percent(DeviceLightManualChannelId.GREEN))
+        assertEquals(PERCENT_70, viewModel.uiState.value.percent(DeviceLightManualChannelId.BLUE))
+        assertEquals(PERCENT_45, viewModel.uiState.value.percent(DeviceLightManualChannelId.WHITE))
         assertEquals(
-            DeviceLightManualPresetId.VIVID_COLORS,
+            DeviceLightManualPresetId.FISH,
             viewModel.uiState.value.selectedPreset
         )
-        assertEquals(PERCENT_65, manual.setScenes.single().value(DeviceLightManualChannel.RED))
+        assertEquals(PERCENT_80, manual.setScenes.single().value(DeviceLightManualChannel.RED))
     }
 
     @Test
@@ -155,58 +164,119 @@ class DeviceLightManualControlViewModelTest {
     }
 
     @Test
-    fun `curated aquarium scenes remain frozen`() {
+    fun `firmware channel presentation metadata is rendered without local fallback`() {
+        val state = boundViewModel().uiState.value
+
+        assertEquals(
+            listOf("Firmware RED", "Firmware GREEN", "Firmware BLUE", "Firmware WHITE"),
+            state.channels.map(DeviceLightManualChannelUiState::label)
+        )
+        assertEquals(
+            listOf(RED_RGB, GREEN_RGB, BLUE_RGB, WHITE_RGB),
+            state.channels.map(DeviceLightManualChannelUiState::displayColorRgb)
+        )
+    }
+
+    @Test
+    fun `central offline state retains presentation and never reconnects from Manual`() {
+        val root = FakeRootOperations(onlineRoot())
+        val manual = FakeManualOperations()
+        val viewModel = boundViewModel(manualOperations = manual, rootOperations = root)
+
+        root.publish(onlineRoot(OwnerDeviceAvailability.UNREACHABLE))
+        manual.publishFailure(DeviceLightManualFailure.UNAVAILABLE)
+
+        assertTrue(viewModel.uiState.value.contentEnabled)
+        assertTrue(viewModel.uiState.value.libraryActionsEnabled)
+        assertFalse(viewModel.uiState.value.controlsEnabled)
+        assertEquals(
+            DeviceConnectionVisualState.OFFLINE,
+            viewModel.uiState.value.connectionVisualState
+        )
+        assertEquals(
+            INITIAL_RED_PERCENT,
+            viewModel.uiState.value.percent(DeviceLightManualChannelId.RED)
+        )
+        assertEquals(0, root.connectCalls)
+
+        viewModel.stepChannel(DeviceLightManualChannelId.RED, CHANNEL_STEP)
+        assertTrue(manual.setScenes.isEmpty())
+    }
+
+    @Test
+    fun `presentation remains visible while current generation write authority is pending`() {
+        val manual = FakeManualOperations()
+        val viewModel = boundViewModel(manualOperations = manual)
+
+        manual.publishWriteAuthority(authoritative = false)
+
+        assertTrue(viewModel.uiState.value.contentEnabled)
+        assertFalse(viewModel.uiState.value.controlsEnabled)
+        assertEquals(
+            INITIAL_BLUE_PERCENT,
+            viewModel.uiState.value.percent(DeviceLightManualChannelId.BLUE)
+        )
+
+        manual.publishWriteAuthority(authoritative = true)
+
+        assertTrue(viewModel.uiState.value.controlsEnabled)
+    }
+
+    @Test
+    fun `manual scenes remain frozen to the pinned firmware handoff`() {
         val presets = boundViewModel().uiState.value.presets
 
         assertEquals(
             listOf(
-                DeviceLightManualPresetId.NATURAL_AQUARIUM,
-                DeviceLightManualPresetId.PLANTED_AQUARIUM,
-                DeviceLightManualPresetId.RED_PLANTS,
-                DeviceLightManualPresetId.VIVID_COLORS,
-                DeviceLightManualPresetId.LOW_TECH,
-                DeviceLightManualPresetId.AQUASCAPE
+                DeviceLightManualPresetId.RED,
+                DeviceLightManualPresetId.GREEN,
+                DeviceLightManualPresetId.BLUE,
+                DeviceLightManualPresetId.FISH,
+                DeviceLightManualPresetId.SHRIMP,
+                DeviceLightManualPresetId.ALL
             ),
             presets.map(DeviceLightManualPresetUiState::id)
         )
         assertScene(
             presets,
-            DeviceLightManualPresetId.NATURAL_AQUARIUM,
-            listOf(PERCENT_45, PERCENT_50, PERCENT_50, PERCENT_60)
+            DeviceLightManualPresetId.RED,
+            listOf(PERCENT_85, PERCENT_50, PERCENT_55, PERCENT_35)
         )
         assertScene(
             presets,
-            DeviceLightManualPresetId.PLANTED_AQUARIUM,
-            listOf(PERCENT_60, PERCENT_50, PERCENT_65, PERCENT_55)
+            DeviceLightManualPresetId.GREEN,
+            listOf(PERCENT_60, PERCENT_85, PERCENT_65, PERCENT_40)
         )
         assertScene(
             presets,
-            DeviceLightManualPresetId.RED_PLANTS,
-            listOf(PERCENT_65, PERCENT_45, PERCENT_70, PERCENT_45)
+            DeviceLightManualPresetId.BLUE,
+            listOf(PERCENT_50, PERCENT_60, PERCENT_85, PERCENT_35)
         )
         assertScene(
             presets,
-            DeviceLightManualPresetId.VIVID_COLORS,
-            listOf(PERCENT_65, PERCENT_50, PERCENT_65, PERCENT_60)
+            DeviceLightManualPresetId.FISH,
+            listOf(PERCENT_80, PERCENT_45, PERCENT_70, PERCENT_45)
         )
         assertScene(
             presets,
-            DeviceLightManualPresetId.LOW_TECH,
-            listOf(PERCENT_30, PERCENT_30, PERCENT_30, PERCENT_35)
+            DeviceLightManualPresetId.SHRIMP,
+            listOf(PERCENT_85, PERCENT_70, PERCENT_65, PERCENT_50)
         )
         assertScene(
             presets,
-            DeviceLightManualPresetId.AQUASCAPE,
-            listOf(PERCENT_55, PERCENT_55, PERCENT_60, PERCENT_65)
+            DeviceLightManualPresetId.ALL,
+            listOf(PERCENT_70, PERCENT_70, PERCENT_70, PERCENT_70)
         )
     }
 
     private fun boundViewModel(
         manualOperations: DeviceLightManualOperations = FakeManualOperations(),
-        libraryOperations: DeviceLightLibraryOperations = FakeLibraryOperations()
+        libraryOperations: DeviceLightLibraryOperations = FakeLibraryOperations(),
+        rootOperations: DeviceRootOperations = FakeRootOperations(onlineRoot())
     ) = DeviceLightManualControlViewModel(
         manualOperations = manualOperations,
-        libraryOperations = libraryOperations
+        libraryOperations = libraryOperations,
+        rootOperations = rootOperations
     ).apply {
         bind(DEVICE_UID)
     }
@@ -253,18 +323,62 @@ class DeviceLightManualControlViewModelTest {
             return DeviceLightManualMutationResult.Success(snapshot)
         }
 
+        fun publishWriteAuthority(authoritative: Boolean) {
+            val current = (results.value as DeviceLightManualReadResult.Available).snapshot
+            results.value = DeviceLightManualReadResult.Available(
+                current.copy(firmwareWriteAuthoritative = authoritative)
+            )
+        }
+
+        fun publishFailure(failure: DeviceLightManualFailure) {
+            results.value = DeviceLightManualReadResult.Failed(failure)
+        }
+
         private fun snapshot(
             channels: Map<DeviceLightManualChannel, Int>
         ): DeviceLightManualSnapshot {
             val supportsWhite = DeviceLightManualChannel.WHITE in channels
+            val descriptors = channels.keys.mapIndexed { index, channel ->
+                DeviceLightManualChannelDescriptor(
+                    channel = channel,
+                    key = channel.name.lowercase(),
+                    displayName = "Firmware ${channel.name}",
+                    displayColorRgb = channel.displayColorRgb(),
+                    order = index
+                )
+            }
             return DeviceLightManualSnapshot(
                 deviceUid = DEVICE_UID,
                 productKey = if (supportsWhite) WRGB_PRODUCT_KEY else RGB_PRODUCT_KEY,
+                channelDescriptors = descriptors,
                 scene = DeviceLightManualScene(channels),
                 estimatedPowerWatts = ESTIMATED_POWER_WATTS.takeIf { supportsWhite },
                 estimatedPowerRatio = ESTIMATED_POWER_RATIO.takeIf { supportsWhite },
-                protection = null
+                estimatedPowerDisplayColorRgb = ESTIMATED_POWER_DISPLAY_RGB
+                    .takeIf { supportsWhite },
+                protection = null,
+                firmwareWriteAuthoritative = true
             )
+        }
+    }
+
+    private class FakeRootOperations(initial: DeviceRootSnapshot?) : DeviceRootOperations {
+        private val snapshots = MutableStateFlow(initial)
+        var connectCalls = 0
+
+        override fun observe(deviceUid: String): Flow<DeviceRootSnapshot?> = snapshots
+
+        override fun current(deviceUid: String): DeviceRootSnapshot? = snapshots.value
+
+        override fun connect(deviceUid: String): Result<Unit> {
+            connectCalls += 1
+            return Result.success(Unit)
+        }
+
+        override fun authorizeRoute(deviceUid: String, route: DeviceRootRoute): Boolean = true
+
+        fun publish(snapshot: DeviceRootSnapshot?) {
+            snapshots.value = snapshot
         }
     }
 
@@ -362,13 +476,38 @@ class DeviceLightManualControlViewModelTest {
         const val CHANNEL_STEP = 1
         const val ESTIMATED_POWER_WATTS = 46
         const val ESTIMATED_POWER_RATIO = 0.46f
-        const val PERCENT_30 = 30
+        const val ESTIMATED_POWER_DISPLAY_RGB = 0xD8D1FF
+        const val RED_RGB = 0xFF0000
+        const val GREEN_RGB = 0x00FF00
+        const val BLUE_RGB = 0x0000FF
+        const val WHITE_RGB = 0xFFFFFF
         const val PERCENT_35 = 35
+        const val PERCENT_40 = 40
         const val PERCENT_45 = 45
         const val PERCENT_50 = 50
         const val PERCENT_55 = 55
         const val PERCENT_60 = 60
         const val PERCENT_65 = 65
         const val PERCENT_70 = 70
+        const val PERCENT_80 = 80
+        const val PERCENT_85 = 85
+
+        fun onlineRoot(
+            availability: OwnerDeviceAvailability = OwnerDeviceAvailability.REACHABLE
+        ) = DeviceRootSnapshot(
+            deviceUid = DEVICE_UID,
+            title = "Manual Light",
+            availability = availability,
+            family = OwnerDeviceFamily.LIGHT,
+            catalogState = DeviceRootCatalogState.VALID,
+            productKey = WRGB_PRODUCT_KEY
+        )
     }
+}
+
+private fun DeviceLightManualChannel.displayColorRgb(): Int = when (this) {
+    DeviceLightManualChannel.RED -> 0xFF0000
+    DeviceLightManualChannel.GREEN -> 0x00FF00
+    DeviceLightManualChannel.BLUE -> 0x0000FF
+    DeviceLightManualChannel.WHITE -> 0xFFFFFF
 }

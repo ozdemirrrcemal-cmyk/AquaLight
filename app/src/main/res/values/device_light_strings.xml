@@ -159,6 +159,12 @@
     <string name="device_light_manual_increase_channel_description">Increase %1$s channel by one percent</string>
     <string name="device_light_manual_slider_description">%1$s channel intensity</string>
     <string name="device_light_manual_quick_scenes_title">Lighting Scenes</string>
+    <string name="device_light_manual_preset_red">Red</string>
+    <string name="device_light_manual_preset_green">Green</string>
+    <string name="device_light_manual_preset_blue">Blue</string>
+    <string name="device_light_manual_preset_fish">Fish</string>
+    <string name="device_light_manual_preset_shrimp">Shrimp</string>
+    <string name="device_light_manual_preset_all">All</string>
     <string name="device_light_manual_preset_natural_aquarium">Natural Aquarium</string>
     <string name="device_light_manual_preset_planted_aquarium">Planted Aquarium</string>
     <string name="device_light_manual_preset_red_plants">Red Plants</string>
@@ -168,6 +174,8 @@
     <string name="device_light_preset_new_setup">New Setup</string>
     <string name="device_light_preset_shade_plants">Shade Plants</string>
     <string name="device_light_manual_preset_scene_description">%1$s scene. Red %2$d%%, green %3$d%%, blue %4$d%%, white %5$d%%.</string>
+    <string name="device_light_manual_preset_scene_description_rgb">%1$s scene. Red %2$d%%, green %3$d%%, blue %4$d%%.</string>
+    <string name="device_light_manual_preset_scene_description_unavailable">%1$s scene.</string>
     <string name="device_light_manual_load">Load</string>
     <string name="device_light_manual_load_description">Load a saved light scene</string>
     <string name="device_light_manual_save_as">Save as</string>
@@ -374,10 +382,8 @@
 
     <!-- Light system controls -->
     <string name="device_light_system_current_temperature">Current temperature</string>
-    <string name="device_light_system_temperature_decimal_format">%1$.1f °C</string>
     <string name="device_light_system_temperature_format">%1$d °C</string>
     <string name="device_light_system_temperature_unavailable">— °C</string>
-    <string name="device_light_system_condition_normal">Normal</string>
     <string name="device_light_system_condition_protection">Protection active</string>
     <string name="device_light_system_condition_sensor_fail_safe">Sensor fail-safe</string>
     <string name="device_light_system_condition_fan_fault">Fan fault</string>

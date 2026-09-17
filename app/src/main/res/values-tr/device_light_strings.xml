@@ -157,6 +157,12 @@
     <string name="device_light_manual_increase_channel_description">%1$s kanalını yüzde bir artır</string>
     <string name="device_light_manual_slider_description">%1$s kanal yoğunluğu</string>
     <string name="device_light_manual_quick_scenes_title">Işık Sahneleri</string>
+    <string name="device_light_manual_preset_red">Kırmızı</string>
+    <string name="device_light_manual_preset_green">Yeşil</string>
+    <string name="device_light_manual_preset_blue">Mavi</string>
+    <string name="device_light_manual_preset_fish">Balık</string>
+    <string name="device_light_manual_preset_shrimp">Karides</string>
+    <string name="device_light_manual_preset_all">Tümü</string>
     <string name="device_light_manual_preset_natural_aquarium">Doğal Akvaryum</string>
     <string name="device_light_manual_preset_planted_aquarium">Bitkili Akvaryum</string>
     <string name="device_light_manual_preset_red_plants">Kırmızı Bitkiler</string>
@@ -166,6 +172,8 @@
     <string name="device_light_preset_new_setup">Yeni Kurulum</string>
     <string name="device_light_preset_shade_plants">Gölge Bitkileri</string>
     <string name="device_light_manual_preset_scene_description">%1$s sahnesi. Kırmızı %%%2$d, yeşil %%%3$d, mavi %%%4$d, beyaz %%%5$d.</string>
+    <string name="device_light_manual_preset_scene_description_rgb">%1$s sahnesi. Kırmızı %%%2$d, yeşil %%%3$d, mavi %%%4$d.</string>
+    <string name="device_light_manual_preset_scene_description_unavailable">%1$s sahnesi.</string>
     <string name="device_light_manual_load">Yükle</string>
     <string name="device_light_manual_load_description">Kayıtlı bir ışık sahnesini yükle</string>
     <string name="device_light_manual_save_as">Farklı kaydet</string>
@@ -372,10 +380,8 @@
 
     <!-- Işık sistem kontrolleri -->
     <string name="device_light_system_current_temperature">Anlık sıcaklık</string>
-    <string name="device_light_system_temperature_decimal_format">%1$.1f °C</string>
     <string name="device_light_system_temperature_format">%1$d °C</string>
     <string name="device_light_system_temperature_unavailable">— °C</string>
-    <string name="device_light_system_condition_normal">Normal</string>
     <string name="device_light_system_condition_protection">Koruma aktif</string>
     <string name="device_light_system_condition_sensor_fail_safe">Sensör güvenli modu</string>
     <string name="device_light_system_condition_fan_fault">Fan hatası</string>

@@ -11,6 +11,8 @@ import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightManualSetPayload
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightStatus
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightStatusReadAuthority
+import com.aqua.aqualight.data.devices.runtime.modules.light.currentStatus
 import java.util.concurrent.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -35,11 +37,15 @@ internal class DefaultDeviceLightManualOperations(
             flowOf(readFailure(DeviceLightManualFailure.UNAVAILABLE))
         } else {
             runtime.stateRevision.map {
-                runtime.currentStatus(uid)
-                    ?.toManualSnapshot(uid)
+                runtime.currentStatus(uid, DeviceLightStatusReadAuthority.PRESENTATION)
+                    ?.toManualSnapshot(
+                        uid = uid,
+                        firmwareWriteAuthoritative = runtime.currentStatus(uid) != null
+                    )
                     ?.let(DeviceLightManualReadResult::Available)
                     ?: readFailure(DeviceLightManualFailure.NOT_CONNECTED)
-            }.distinctUntilChanged()
+            }
+                .distinctUntilChanged()
         }
     }
 

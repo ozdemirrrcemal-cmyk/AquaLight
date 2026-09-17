@@ -17,7 +17,7 @@ class DeviceLightRuntimeRepository internal constructor(
     val stateRevision: StateFlow<Long> = stateOwner.stateRevision
 
     fun currentStatus(deviceUid: DeviceUid): DeviceLightStatus? =
-        stateOwner.currentAuthoritativeStatus(deviceUid)
+        stateOwner.currentStatus(deviceUid, DeviceLightStatusReadAuthority.AUTHORITATIVE)
 
     internal fun beginGeneration(
         deviceUid: DeviceUid,
@@ -84,7 +84,7 @@ class DeviceLightRuntimeRepository internal constructor(
         parser: (JSONObject, DeviceLightProduct) -> T,
         refreshStatus: Boolean = false
     ): DeviceRuntimeCommandOutcome<T> {
-        val status = stateOwner.currentAuthoritativeStatus(deviceUid)
+        val status = currentStatus(deviceUid)
         val supported = status != null &&
             status.product == DeviceLightProduct.WRGB_PRO_ELITE &&
             status.features.acclimation &&
@@ -107,7 +107,7 @@ class DeviceLightRuntimeRepository internal constructor(
         parser: (JSONObject, DeviceLightProduct) -> T,
         refreshStatus: Boolean = false
     ): DeviceRuntimeCommandOutcome<T> {
-        val product = stateOwner.currentAuthoritativeStatus(deviceUid)?.product
+        val product = currentStatus(deviceUid)?.product
             ?: return unsupported(deviceUid, action)
         return executeProductCommand(
             deviceUid = deviceUid,
@@ -138,6 +138,11 @@ class DeviceLightRuntimeRepository internal constructor(
         return outcome
     }
 }
+
+internal fun DeviceLightRuntimeRepository.currentStatus(
+    deviceUid: DeviceUid,
+    authority: DeviceLightStatusReadAuthority
+): DeviceLightStatus? = stateOwner.currentStatus(deviceUid, authority)
 
 internal fun DeviceLightRuntimeRepository.currentDashboard(
     deviceUid: DeviceUid,
