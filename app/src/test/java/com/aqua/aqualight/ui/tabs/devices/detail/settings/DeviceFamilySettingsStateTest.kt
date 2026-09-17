@@ -41,6 +41,13 @@ class DeviceFamilySettingsStateTest {
     }
 
     @Test
+    fun `does not substitute device uid when serial number is unavailable`() {
+        val state = wrgbSnapshot().copy(serialNumber = "").toDeviceFamilySettingsUiState()
+
+        assertEquals("", state.serialNumber)
+    }
+
+    @Test
     fun `accepts saved editor results only for the currently bound device`() {
         assertTrue(
             isSavedSettingsEditorResult(

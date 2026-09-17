@@ -61,7 +61,7 @@ class DeviceFamilySettingsViewModel(
         cancelBoundJobs()
         automaticFirmwareCheckPending = true
         val currentSnapshot = settingsOperations.current(deviceUid)
-        _uiState.value = currentSnapshot.toInitialDeviceFamilySettingsUiState(deviceUid)
+        _uiState.value = currentSnapshot.toInitialDeviceFamilySettingsUiState()
         settingsOperations.connect(deviceUid)
 
         observeDeviceJob = viewModelScope.launch {
@@ -267,7 +267,7 @@ class DeviceFamilySettingsViewModel(
 
     private fun applyDeviceSnapshot(deviceUid: String, snapshot: DeviceRootSnapshot?) {
         if (snapshot == null || snapshot.catalogState != DeviceRootCatalogState.VALID) {
-            preserveStableDeviceInformation(deviceUid, snapshot)
+            preserveStableDeviceInformation(snapshot)
         } else {
             val deviceState = snapshot.toDeviceFamilySettingsUiState()
             _uiState.value = deviceState.copy(
@@ -280,10 +280,7 @@ class DeviceFamilySettingsViewModel(
         startAutomaticFirmwareAvailabilityCheckIfReady(deviceUid, snapshot)
     }
 
-    private fun preserveStableDeviceInformation(
-        deviceUid: String,
-        snapshot: DeviceRootSnapshot?
-    ) {
+    private fun preserveStableDeviceInformation(snapshot: DeviceRootSnapshot?) {
         _uiState.update { current ->
             val nameSnapshot = snapshot?.takeIf { it.productDisplayName.isNotBlank() }
             current.copy(
@@ -297,7 +294,7 @@ class DeviceFamilySettingsViewModel(
                 hasCustomDeviceName = nameSnapshot?.hasCustomName
                     ?: current.hasCustomDeviceName,
                 serialNumber = current.serialNumber.ifBlank {
-                    snapshot?.serialNumber?.ifBlank { deviceUid } ?: deviceUid
+                    snapshot?.serialNumber.orEmpty()
                 },
                 firmwareVersion = current.firmwareVersion.ifBlank {
                     snapshot?.firmwareLabel.orEmpty()
@@ -414,7 +411,7 @@ internal fun DeviceRootSnapshot.toDeviceFamilySettingsUiState(): DeviceFamilySet
         deviceName = title,
         productDisplayName = productDisplayName,
         hasCustomDeviceName = hasCustomName,
-        serialNumber = serialNumber.ifBlank { deviceUid },
+        serialNumber = serialNumber,
         hardwareRevision = hardwareRevision,
         firmwareVersion = firmwareLabel,
         family = family,
@@ -427,9 +424,6 @@ internal fun DeviceRootSnapshot.toDeviceFamilySettingsUiState(): DeviceFamilySet
         }
     )
 
-private fun DeviceRootSnapshot?.toInitialDeviceFamilySettingsUiState(
-    deviceUid: String
-): DeviceFamilySettingsUiState {
-    return this?.toDeviceFamilySettingsUiState()
-        ?: DeviceFamilySettingsUiState(serialNumber = deviceUid)
-}
+private fun DeviceRootSnapshot?.toInitialDeviceFamilySettingsUiState(): DeviceFamilySettingsUiState =
+    this?.toDeviceFamilySettingsUiState()
+        ?: DeviceFamilySettingsUiState()

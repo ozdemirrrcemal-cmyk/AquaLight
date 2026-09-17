@@ -67,6 +67,25 @@ class DeviceFamilySettingsViewModelTest {
     }
 
     @Test
+    fun `shows only supplied serial and retains it through transient blank snapshots`() {
+        val operations = FakeDeviceFamilySettingsOperations(null)
+        val viewModel = DeviceFamilySettingsViewModel(operations, FakeFirmwareOperations())
+
+        viewModel.bind(DEVICE_UID)
+
+        assertEquals("", viewModel.uiState.value.serialNumber)
+
+        operations.emitDevice(invalidSnapshot())
+        assertEquals("AQL-WPE-123456", viewModel.uiState.value.serialNumber)
+
+        operations.emitDevice(invalidSnapshot().copy(serialNumber = ""))
+        assertEquals("AQL-WPE-123456", viewModel.uiState.value.serialNumber)
+
+        operations.emitDevice(validSnapshot().copy(serialNumber = "AQL-WPE-654321"))
+        assertEquals("AQL-WPE-654321", viewModel.uiState.value.serialNumber)
+    }
+
+    @Test
     fun `persists device name through owner scoped settings operations`() {
         val operations = FakeDeviceFamilySettingsOperations(validSnapshot())
         val viewModel = DeviceFamilySettingsViewModel(operations, FakeFirmwareOperations())
