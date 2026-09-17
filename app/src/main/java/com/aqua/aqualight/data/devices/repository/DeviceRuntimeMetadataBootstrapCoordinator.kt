@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.devices.repository
 
+import com.aqua.aqualight.application.devices.provisioning.ProvisioningRuntimeDiagnostics
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadataFailureCode
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadataFragment
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeMetadataGeneration
@@ -23,6 +24,10 @@ internal class DeviceRuntimeMetadataBootstrapCoordinator(
         send: (AqlWsOutgoingMessage.Command) -> Boolean
     ): Result<DeviceRuntimeMetadataGeneration> = runCatching {
         val collecting = startGeneration(deviceUid)
+        ProvisioningRuntimeDiagnostics.record(
+            "metadata_bootstrap_start",
+            "uid=${deviceUid.value} generation=${collecting.generation.value}"
+        )
         deviceRuntimeMetadataBootstrapOrder.forEach { kind ->
             val command = kind.command()
             val ticket = DeviceRuntimeMetadataBootstrapTicket(
@@ -49,6 +54,10 @@ internal class DeviceRuntimeMetadataBootstrapCoordinator(
                 )
                 error("Metadata bootstrap transport dispatch failed.")
             }
+            ProvisioningRuntimeDiagnostics.record(
+                "metadata_request_sent",
+                "kind=${kind.name}"
+            )
         }
         collecting.generation
     }
@@ -76,6 +85,12 @@ internal class DeviceRuntimeMetadataBootstrapCoordinator(
         val ticket = synchronized(lock) { ticketsByRequestId.remove(response.id) }
             ?: return DeviceRuntimeMetadataBootstrapClaim.Unmatched
         val failure = ticket.responseFailure(deviceUid, response)
+        failure?.let { rejected ->
+            ProvisioningRuntimeDiagnostics.record(
+                "metadata_response_rejected",
+                "kind=${ticket.kind.name} code=${rejected.code} field=${rejected.field}"
+            )
+        }
         val rejected = failure?.let {
             reject(ticket.deviceUid, ticket.generation, it.code, it.field)
         }
@@ -141,7 +156,13 @@ internal class DeviceRuntimeMetadataBootstrapCoordinator(
             current = current,
             code = DeviceRuntimeMetadataFailureCode.BOOTSTRAP_TIMEOUT,
             field = "device.metadata.bootstrap"
-        ).state.also { rejected -> states[deviceUid] = rejected }
+        ).state.also { rejected ->
+            states[deviceUid] = rejected
+            ProvisioningRuntimeDiagnostics.record(
+                "metadata_timeout",
+                "uid=${deviceUid.value} generation=${generation.value}"
+            )
+        }
     }
 
     fun clear(deviceUid: DeviceUid) {
@@ -164,25 +185,43 @@ internal class DeviceRuntimeMetadataBootstrapCoordinator(
     private fun processAccepted(
         ticket: DeviceRuntimeMetadataBootstrapTicket,
         response: AqlWsIncomingMessage.Response
-    ): DeviceRuntimeMetadataBootstrapProcessing = parseFragment(ticket, response).fold(
-        onSuccess = { fragment ->
-            accept(ticket, fragment)
-                ?.let(DeviceRuntimeMetadataBootstrapProcessing::Reduced)
-                ?: DeviceRuntimeMetadataBootstrapProcessing.Unmatched
-        },
-        onFailure = { error ->
-            reject(
-                ticket.deviceUid,
-                ticket.generation,
-                ticket.kind.parseFailureCode,
-                "${ticket.kind.module}.${ticket.kind.action}:${error.message.orEmpty()}"
-            )?.let { rejected ->
-                DeviceRuntimeMetadataBootstrapProcessing.Reduced(
-                    DeviceRuntimeMetadataReduction.Rejected(rejected)
+    ): DeviceRuntimeMetadataBootstrapProcessing {
+        ProvisioningRuntimeDiagnostics.record(
+            "metadata_response",
+            "kind=${ticket.kind.name} ok=${response.ok} status=${response.statusCode}"
+        )
+        return parseFragment(ticket, response).fold(
+            onSuccess = { fragment ->
+                accept(ticket, fragment)
+                    ?.also { reduction ->
+                        val state = reduction.state
+                        ProvisioningRuntimeDiagnostics.record(
+                            "metadata_reduction",
+                            state.diagnosticSummary()
+                        )
+                    }
+                    ?.let(DeviceRuntimeMetadataBootstrapProcessing::Reduced)
+                    ?: DeviceRuntimeMetadataBootstrapProcessing.Unmatched
+            },
+            onFailure = { error ->
+                ProvisioningRuntimeDiagnostics.record(
+                    "metadata_parse_failure",
+                    "kind=${ticket.kind.name} cause=${error::class.java.simpleName}:" +
+                        error.message.orEmpty()
                 )
-            } ?: DeviceRuntimeMetadataBootstrapProcessing.Unmatched
-        }
-    )
+                reject(
+                    ticket.deviceUid,
+                    ticket.generation,
+                    ticket.kind.parseFailureCode,
+                    "${ticket.kind.module}.${ticket.kind.action}:${error.message.orEmpty()}"
+                )?.let { rejected ->
+                    DeviceRuntimeMetadataBootstrapProcessing.Reduced(
+                        DeviceRuntimeMetadataReduction.Rejected(rejected)
+                    )
+                } ?: DeviceRuntimeMetadataBootstrapProcessing.Unmatched
+            }
+        )
+    }
 
     private fun parseFragment(
         ticket: DeviceRuntimeMetadataBootstrapTicket,
@@ -237,6 +276,15 @@ internal class DeviceRuntimeMetadataBootstrapCoordinator(
             if (iterator.next().value.deviceUid == deviceUid) iterator.remove()
         }
     }
+}
+
+private fun DeviceRuntimeMetadataGenerationState.diagnosticSummary(): String = when (this) {
+    is DeviceRuntimeMetadataGenerationState.Collecting ->
+        "collecting identity=${identity != null} capabilities=${capabilities != null} " +
+            "status=${moduleStatus != null}"
+    is DeviceRuntimeMetadataGenerationState.Ready -> "ready"
+    is DeviceRuntimeMetadataGenerationState.Rejected ->
+        "rejected code=${failure.code} field=${failure.field.orEmpty()}"
 }
 
 private val DeviceRuntimeMetadataBootstrapKind.parseFailureCode:

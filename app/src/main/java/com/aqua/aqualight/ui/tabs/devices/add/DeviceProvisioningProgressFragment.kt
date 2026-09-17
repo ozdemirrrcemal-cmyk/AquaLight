@@ -1,5 +1,8 @@
 package com.aqua.aqualight.ui.tabs.devices.add
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.os.Bundle
 import android.view.View
 import androidx.annotation.StringRes
@@ -95,6 +98,24 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
                 startProvisioningWithPermissionCheck()
             }
         }
+        binding.btnCopyDiagnostics.setOnClickListener {
+            val diagnostics = binding.tvDiagnostics.text?.toString().orEmpty()
+            if (diagnostics.isNotBlank()) {
+                val clipboard = requireContext().getSystemService(
+                    Context.CLIPBOARD_SERVICE
+                ) as ClipboardManager
+                clipboard.setPrimaryClip(
+                    ClipData.newPlainText(
+                        getString(R.string.device_provisioning_diagnostics_title),
+                        diagnostics
+                    )
+                )
+                (activity as? BaseActivity)?.showSnackBar(
+                    getString(R.string.device_provisioning_diagnostics_copied),
+                    BaseActivity.SnackType.SUCCESS
+                )
+            }
+        }
     }
 
     private fun requestAutoStart(view: View) {
@@ -188,6 +209,8 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
         binding.btnStartProvisioning.text = state.buttonText
         binding.btnStartProvisioning.alpha = if (state.canStart) 1f else 0.45f
         binding.progressBar.isVisible = state.showProgress
+        binding.cardDiagnostics.isVisible = state.diagnostics.isNotBlank()
+        binding.tvDiagnostics.text = state.diagnostics
 
         val wifiFailure = state.wifiCredentialFailure
         if (!wifiFailureReturned && wifiFailure != null) {

@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.devices.runtime.ws
 
+import com.aqua.aqualight.application.devices.provisioning.ProvisioningRuntimeDiagnostics
 import com.aqua.aqualight.data.devices.contract.AqlWsContract
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeEndpoint
 import com.aqua.aqualight.data.devices.model.DeviceUid
@@ -100,6 +101,10 @@ class AqlWsClient(
 
         val route = AqlPrivateLanEndpoint.route(deviceUid, endpoint)
             ?: error("Device has no compatible private-LAN WebSocket endpoint.")
+        ProvisioningRuntimeDiagnostics.record(
+            "ws_connect",
+            "uid=${deviceUid.value} endpoint=${endpoint.ip}:${endpoint.wsPort}${endpoint.wsPath}"
+        )
         val request = Request.Builder().url(route.url).build()
 
         disconnect(code = NORMAL_CLOSE_CODE, reason = RECONNECT_CLOSE_REASON)
@@ -222,6 +227,10 @@ class AqlWsClient(
         generation: Long
     ): WebSocketListener = object : WebSocketListener() {
         override fun onOpen(webSocket: WebSocket, response: Response) {
+            ProvisioningRuntimeDiagnostics.record(
+                "ws_open",
+                "uid=${deviceUid.value} http=${response.code}"
+            )
             if (!publishOpenedIfCurrent(webSocket, generation, deviceUid, url)) {
                 webSocket.cancel()
                 return
@@ -243,6 +252,10 @@ class AqlWsClient(
         }
 
         override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
+            ProvisioningRuntimeDiagnostics.record(
+                "ws_closed",
+                "uid=${deviceUid.value} code=$code reason=${sanitizedCloseReason(reason)}"
+            )
             finishConnection(
                 webSocket = webSocket,
                 generation = generation,
@@ -253,6 +266,11 @@ class AqlWsClient(
         }
 
         override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+            ProvisioningRuntimeDiagnostics.record(
+                "ws_failure",
+                "uid=${deviceUid.value} http=${response?.code ?: 0} " +
+                    "cause=${t::class.java.simpleName}:${t.message.orEmpty()}"
+            )
             finishConnection(
                 webSocket = webSocket,
                 generation = generation,
@@ -293,20 +311,35 @@ class AqlWsClient(
                 secureSession = state.secureSession
             )
         } catch (error: AqlWsProtocolException) {
+            ProvisioningRuntimeDiagnostics.record(
+                "ws_decode_failure",
+                "uid=${deviceUid.value} protocol=${error.protocolError.name}"
+            )
             failProtocolConnection(webSocket, generation, deviceUid, error.protocolError)
             return
-        } catch (_: Throwable) {
+        } catch (error: Throwable) {
+            ProvisioningRuntimeDiagnostics.record(
+                "ws_decode_failure",
+                "uid=${deviceUid.value} cause=${error::class.java.simpleName}:" +
+                    error.message.orEmpty()
+            )
             failProtocolConnection(webSocket, generation, deviceUid, AqlWsProtocolError.MALFORMED_JSON)
             return
         }
 
         when (decoded) {
-            is AqlWsDecodedFrame.Hello -> handleHello(
-                webSocket,
-                generation,
-                deviceUid,
-                decoded.challenge
-            )
+            is AqlWsDecodedFrame.Hello -> {
+                ProvisioningRuntimeDiagnostics.record(
+                    "ws_hello",
+                    "uid=${deviceUid.value} firmware=${decoded.challenge.firmwareVersion}"
+                )
+                handleHello(
+                    webSocket,
+                    generation,
+                    deviceUid,
+                    decoded.challenge
+                )
+            }
             is AqlWsDecodedFrame.Authenticated -> completeAuthentication(
                 webSocket,
                 generation,
@@ -369,7 +402,12 @@ class AqlWsClient(
     ) {
         val token = try {
             tokenProvider?.getToken(deviceUid)?.trim().orEmpty()
-        } catch (_: Throwable) {
+        } catch (error: Throwable) {
+            ProvisioningRuntimeDiagnostics.record(
+                "ws_token_read_failure",
+                "uid=${deviceUid.value} cause=${error::class.java.simpleName}:" +
+                    error.message.orEmpty()
+            )
             failProtocolConnection(
                 webSocket,
                 generation,
@@ -379,13 +417,23 @@ class AqlWsClient(
             return
         }
         if (token.isBlank()) {
+            ProvisioningRuntimeDiagnostics.record("ws_token_missing", "uid=${deviceUid.value}")
             markAuthenticationRequiredIfCurrent(webSocket, generation, deviceUid)
             return
         }
+        ProvisioningRuntimeDiagnostics.record(
+            "ws_token_loaded",
+            "uid=${deviceUid.value} format=64_hex"
+        )
 
         val pending = try {
             wireCodec.prepareAuthentication(hello, token)
-        } catch (_: Throwable) {
+        } catch (error: Throwable) {
+            ProvisioningRuntimeDiagnostics.record(
+                "ws_auth_prepare_failure",
+                "uid=${deviceUid.value} cause=${error::class.java.simpleName}:" +
+                    error.message.orEmpty()
+            )
             failProtocolConnection(
                 webSocket,
                 generation,
@@ -396,7 +444,12 @@ class AqlWsClient(
         }
         val raw = try {
             wireCodec.encodeAuthenticationRequest(pending)
-        } catch (_: Throwable) {
+        } catch (error: Throwable) {
+            ProvisioningRuntimeDiagnostics.record(
+                "ws_auth_encode_failure",
+                "uid=${deviceUid.value} cause=${error::class.java.simpleName}:" +
+                    error.message.orEmpty()
+            )
             pending.close()
             failProtocolConnection(
                 webSocket,
@@ -420,6 +473,7 @@ class AqlWsClient(
             }
         }
         if (!sent) {
+            ProvisioningRuntimeDiagnostics.record("ws_auth_send_failure", "uid=${deviceUid.value}")
             synchronized(lifecycleLock) {
                 if (pendingAuthentication === pending) pendingAuthentication = null
             }
@@ -430,6 +484,8 @@ class AqlWsClient(
                 deviceUid,
                 AqlWsProtocolError.AUTHENTICATION_FAILED
             )
+        } else {
+            ProvisioningRuntimeDiagnostics.record("ws_auth_sent", "uid=${deviceUid.value}")
         }
     }
 
@@ -467,6 +523,10 @@ class AqlWsClient(
                 AqlWsProtocolError.AUTHENTICATION_OUT_OF_SEQUENCE
             )
         } else {
+            ProvisioningRuntimeDiagnostics.record(
+                "ws_authenticated",
+                "uid=${deviceUid.value}"
+            )
             oldPending.close()
         }
     }
@@ -476,6 +536,7 @@ class AqlWsClient(
         generation: Long,
         deviceUid: DeviceUid
     ) {
+        ProvisioningRuntimeDiagnostics.record("ws_auth_rejected", "uid=${deviceUid.value}")
         val detached = synchronized(lifecycleLock) {
             if (!isCurrentConnectionLocked(webSocket, generation, deviceUid)) return
             detachConnectionLocked(
@@ -495,6 +556,7 @@ class AqlWsClient(
         generation: Long,
         deviceUid: DeviceUid
     ) {
+        ProvisioningRuntimeDiagnostics.record("ws_auth_required", "uid=${deviceUid.value}")
         val detached = synchronized(lifecycleLock) {
             if (!isCurrentConnectionLocked(webSocket, generation, deviceUid)) return
             detachConnectionLocked(
@@ -589,6 +651,10 @@ class AqlWsClient(
         deviceUid: DeviceUid,
         error: AqlWsProtocolError
     ) {
+        ProvisioningRuntimeDiagnostics.record(
+            "ws_protocol_failure",
+            "uid=${deviceUid.value} error=${error.name}"
+        )
         val detached = synchronized(lifecycleLock) {
             if (!isCurrentConnectionLocked(webSocket, generation, deviceUid)) return
             val failure = AqlWsConnectionState.Failed(

@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.devices.provisioning.repository
 
+import com.aqua.aqualight.application.devices.provisioning.ProvisioningRuntimeDiagnostics
 import com.aqua.aqualight.data.devices.catalog.AqlCommercialCatalogValidation
 import com.aqua.aqualight.data.devices.catalog.AqlCommercialDeviceCatalog
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
@@ -20,11 +21,22 @@ class AqlProvisioningRuntimeMetadataResolver {
         provisionalSnapshot: DeviceSnapshot,
         timeoutMillis: Long = DEFAULT_TIMEOUT_MILLIS
     ): Result<DeviceSnapshot> = runCatching {
+        ProvisioningRuntimeDiagnostics.record(
+            "runtime_resolve_start",
+            "uid=${provisionalSnapshot.deviceUid.value} timeoutMs=$timeoutMillis"
+        )
         withTimeoutOrNull(timeoutMillis) {
             collectValidatedSnapshot(repository, provisionalSnapshot)
-        } ?: error(
-            "Exact runtime identity, capabilities and modules were not validated before timeout."
-        )
+        } ?: run {
+            val diagnostic = repository.provisioningRuntimeDiagnostic(
+                provisionalSnapshot.deviceUid
+            )
+            ProvisioningRuntimeDiagnostics.record("runtime_resolve_timeout", diagnostic)
+            error(
+                "Exact runtime identity, capabilities and modules were not validated before " +
+                    "timeout. $diagnostic"
+            )
+        }
     }
 
     private suspend fun collectValidatedSnapshot(
@@ -48,6 +60,10 @@ class AqlProvisioningRuntimeMetadataResolver {
         }
 
         repository.connectRuntime(provisionalSnapshot.deviceUid).getOrThrow()
+        ProvisioningRuntimeDiagnostics.record(
+            "runtime_connect_requested",
+            repository.provisioningRuntimeDiagnostic(provisionalSnapshot.deviceUid)
+        )
         try {
             resolved.await()
         } finally {

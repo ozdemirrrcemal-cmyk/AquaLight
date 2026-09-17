@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.devices.provisioning.repository
 
 import android.content.Context
+import com.aqua.aqualight.application.devices.provisioning.ProvisioningRuntimeDiagnostics
 import com.aqua.aqualight.data.devices.model.DeviceCapabilities
 import com.aqua.aqualight.data.devices.model.DeviceConnectionState
 import com.aqua.aqualight.data.devices.model.DeviceFamily
@@ -55,6 +56,10 @@ class AqlProvisioningHandoffSaver(
             )
         } catch (error: Throwable) {
             error.throwIfCancellation()
+            ProvisioningRuntimeDiagnostics.record(
+                "prepare_failure",
+                "${error::class.java.simpleName}:${error.message.orEmpty()}"
+            )
             Result.failure(error)
         }
     }
@@ -63,6 +68,11 @@ class AqlProvisioningHandoffSaver(
         draft: AqlProvisioningDraft,
         handoff: AqlProvisioningRuntimeHandoff
     ): DeviceSnapshot {
+        ProvisioningRuntimeDiagnostics.record(
+            "handoff_received",
+            "uid=${handoff.deviceUid.value} endpoint=${handoff.endpoint.ip}:" +
+                "${handoff.endpoint.wsPort}${handoff.endpoint.wsPath} usable=${handoff.isUsable}"
+        )
         require(handoff.isUsable) {
             "Runtime handoff is missing device uid, WebSocket endpoint or token."
         }
@@ -98,6 +108,10 @@ class AqlProvisioningHandoffSaver(
                     deviceUid = handoff.deviceUid,
                     token = handoff.webSocketToken
                 )
+                ProvisioningRuntimeDiagnostics.record(
+                    "runtime_token_staged",
+                    "uid=${handoff.deviceUid.value} format=64_hex"
+                )
 
                 val incomingSnapshot = DeviceSnapshot(
                     identity = DeviceIdentity(
@@ -132,11 +146,19 @@ class AqlProvisioningHandoffSaver(
                         incoming = incomingSnapshot
                     )
                 )
+                ProvisioningRuntimeDiagnostics.record(
+                    "snapshot_staged",
+                    "uid=${staged.deviceUid.value} endpointValid=${staged.endpoint.hasWebSocketEndpoint}"
+                )
 
                 val resolved = metadataResolver.resolveAndConnect(
                     repository = repository,
                     provisionalSnapshot = staged
                 ).getOrThrow()
+                ProvisioningRuntimeDiagnostics.record(
+                    "runtime_metadata_ready",
+                    "uid=${resolved.deviceUid.value} family=${resolved.product.family}"
+                )
 
                 require(resolved.product.family != DeviceFamily.UNKNOWN) {
                     "Runtime device identity did not include a supported product family."

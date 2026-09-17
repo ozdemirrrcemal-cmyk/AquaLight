@@ -171,6 +171,9 @@
     <string name="device_provisioning_opening_menu_step">Opening device menu</string>
     <string name="device_provisioning_save_failed_title">Device could not be saved</string>
     <string name="device_provisioning_save_failed_message">Device details could not be saved.</string>
+    <string name="device_provisioning_diagnostics_title">Provisioning diagnostics</string>
+    <string name="device_provisioning_copy_diagnostics">Copy diagnostics</string>
+    <string name="device_provisioning_diagnostics_copied">Diagnostics copied</string>
     <string name="device_provisioning_status_setup_mode_title">Device in setup mode</string>
     <string name="device_provisioning_status_verifying_title">Verifying setup</string>
     <string name="device_provisioning_status_wifi_received_title">Wi-Fi details received</string>

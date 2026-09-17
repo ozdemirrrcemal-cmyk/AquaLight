@@ -363,6 +363,13 @@ class DeviceRuntimeRepository(
     fun currentConnectionState(deviceUid: DeviceUid): AqlWsConnectionState? =
         sessionStore.current(deviceUid)?.wsClient?.connectionState?.value
 
+    internal fun provisioningDiagnostic(deviceUid: DeviceUid): String {
+        val connection = currentConnectionState(deviceUid).toProvisioningDiagnostic()
+        val metadata = metadataBootstrapCoordinator.currentState(deviceUid)
+            .toProvisioningDiagnostic()
+        return "transport=$connection; metadata=$metadata"
+    }
+
     internal fun currentConnectionGeneration(
         deviceUid: DeviceUid
     ): DeviceRuntimeConnectionGeneration? = sessionStore.current(deviceUid)
@@ -893,4 +900,33 @@ internal object RuntimeConnectionReusePolicy {
             is AqlWsConnectionState.Failed -> true
         }
     }
+}
+
+private fun AqlWsConnectionState?.toProvisioningDiagnostic(): String = when (this) {
+    null -> "no_session"
+    AqlWsConnectionState.Disconnected -> "disconnected"
+    is AqlWsConnectionState.Connecting -> "connecting"
+    is AqlWsConnectionState.Connected -> "connected_waiting_auth"
+    is AqlWsConnectionState.Authenticated -> "authenticated"
+    is AqlWsConnectionState.AuthRequired -> "auth_required:${message}"
+    is AqlWsConnectionState.Failed -> buildString {
+        append("failed:").append(message)
+        cause?.let { failure ->
+            append(':').append(failure::class.java.simpleName)
+            failure.message?.takeIf(String::isNotBlank)?.let { append(':').append(it) }
+        }
+    }
+}
+
+private fun DeviceRuntimeMetadataGenerationState?.toProvisioningDiagnostic(): String = when (this) {
+    null -> "not_started"
+    is DeviceRuntimeMetadataGenerationState.Collecting -> buildString {
+        append("collecting[")
+        append("identity=").append(identity != null).append(',')
+        append("capabilities=").append(capabilities != null).append(',')
+        append("status=").append(moduleStatus != null).append(']')
+    }
+    is DeviceRuntimeMetadataGenerationState.Ready -> "ready"
+    is DeviceRuntimeMetadataGenerationState.Rejected ->
+        "rejected:${failure.code}:${failure.field.orEmpty()}"
 }

@@ -7,6 +7,7 @@ import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
 import com.aqua.aqualight.application.devices.provisioning.PreparedProvisioningRegistration
 import com.aqua.aqualight.application.devices.provisioning.ProvisionedDevice
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningProgressOperations
+import com.aqua.aqualight.application.devices.provisioning.ProvisioningRuntimeDiagnostics
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningRuntimeHandoff
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningSessionSnapshot
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningTransportEvent
@@ -198,6 +199,7 @@ class DeviceProvisioningProgressViewModel(
         pendingSavedDeviceUid = null
         exitRequested = false
         registrationCommitted = false
+        ProvisioningRuntimeDiagnostics.reset()
         observeTransportEvents()
 
         startJob = viewModelScope.launch {
@@ -296,12 +298,18 @@ class DeviceProvisioningProgressViewModel(
                 )
             }
             is ProvisioningTransportEvent.Failed -> {
+                ProvisioningRuntimeDiagnostics.record("ble_transport_failure", event.message)
                 markProvisioningStopped()
-                _uiState.value = reduceTransportEvent(event)
+                _uiState.value = reduceTransportEvent(event).copy(
+                    diagnostics = ProvisioningRuntimeDiagnostics.report()
+                )
             }
             ProvisioningTransportEvent.Disconnected -> {
+                ProvisioningRuntimeDiagnostics.record("ble_disconnected")
                 if (!setupCompleted) markProvisioningStopped()
-                _uiState.value = reduceTransportEvent(event)
+                _uiState.value = reduceTransportEvent(event).copy(
+                    diagnostics = ProvisioningRuntimeDiagnostics.report()
+                )
             }
             ProvisioningTransportEvent.Completed -> handleCompletedEvent()
             else -> _uiState.value = reduceTransportEvent(event)
@@ -360,7 +368,8 @@ class DeviceProvisioningProgressViewModel(
                             buttonText = string(R.string.device_provisioning_start_again),
                             showProgress = false,
                             requiresFreshDeviceSelection = true,
-                            wifiCredentialFailure = null
+                            wifiCredentialFailure = null,
+                            diagnostics = ProvisioningRuntimeDiagnostics.report(error)
                         )
                     }
             }
@@ -455,7 +464,8 @@ class DeviceProvisioningProgressViewModel(
                             buttonText = string(R.string.device_provisioning_start_again),
                             showProgress = false,
                             requiresFreshDeviceSelection = true,
-                            wifiCredentialFailure = null
+                            wifiCredentialFailure = null,
+                            diagnostics = ProvisioningRuntimeDiagnostics.report(error)
                         )
                     }
             }.onFailure { error ->
@@ -476,7 +486,8 @@ class DeviceProvisioningProgressViewModel(
                     buttonText = string(R.string.device_provisioning_start_again),
                     showProgress = false,
                     requiresFreshDeviceSelection = true,
-                    wifiCredentialFailure = null
+                    wifiCredentialFailure = null,
+                    diagnostics = ProvisioningRuntimeDiagnostics.report(error)
                 )
             }
         }
@@ -506,6 +517,10 @@ class DeviceProvisioningProgressViewModel(
     }
 
     private fun renderTransportStartFailure(error: Throwable) {
+        ProvisioningRuntimeDiagnostics.record(
+            "transport_start_failure",
+            "${error::class.java.simpleName}:${error.message.orEmpty()}"
+        )
         markProvisioningStopped()
         _uiState.value = _uiState.value.copy(
             title = string(R.string.device_provisioning_failed_title),
@@ -515,7 +530,8 @@ class DeviceProvisioningProgressViewModel(
             buttonText = string(R.string.device_provisioning_start_again),
             showProgress = false,
             requiresFreshDeviceSelection = true,
-            wifiCredentialFailure = null
+            wifiCredentialFailure = null,
+            diagnostics = ProvisioningRuntimeDiagnostics.report(error)
         )
     }
 

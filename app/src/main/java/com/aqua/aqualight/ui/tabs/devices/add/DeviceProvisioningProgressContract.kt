@@ -43,5 +43,6 @@ data class DeviceProvisioningProgressUiState(
     val showProgress: Boolean = false,
     val isCancelling: Boolean = false,
     val requiresFreshDeviceSelection: Boolean = false,
-    val wifiCredentialFailure: DeviceProvisioningWifiCredentialFailure? = null
+    val wifiCredentialFailure: DeviceProvisioningWifiCredentialFailure? = null,
+    val diagnostics: String = ""
 )

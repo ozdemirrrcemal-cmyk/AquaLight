@@ -183,6 +183,51 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardDiagnostics"
+                style="@style/Widget.Aqua.Card.Device"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_12"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/aqua_size_16">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/device_provisioning_diagnostics_title"
+                        android:textColor="@color/aqua_content_primary"
+                        android:textSize="@dimen/aqua_text_size_body_small"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvDiagnostics"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/aqua_size_8"
+                        android:fontFamily="monospace"
+                        android:textColor="@color/aqua_content_muted"
+                        android:textIsSelectable="true"
+                        android:textSize="@dimen/aqua_text_size_caption"
+                        tools:text="+120ms WS_OPEN http=101&#10;+180ms WS_AUTH_REJECTED" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnCopyDiagnostics"
+                        style="@style/Widget.Aqua.Button.Secondary.Compact"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/aqua_size_12"
+                        android:text="@string/device_provisioning_copy_diagnostics" />
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
             <com.google.android.material.button.MaterialButton
                 style="@style/Widget.Aqua.Button.Primary"
                 android:id="@+id/btnStartProvisioning"

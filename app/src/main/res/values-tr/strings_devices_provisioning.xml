@@ -166,6 +166,9 @@
     <string name="device_provisioning_opening_menu_step">Cihaz menüsü açılıyor</string>
     <string name="device_provisioning_save_failed_title">Cihaz kaydedilemedi</string>
     <string name="device_provisioning_save_failed_message">Cihaz bilgileri kaydedilemedi.</string>
+    <string name="device_provisioning_diagnostics_title">Kurulum tanılaması</string>
+    <string name="device_provisioning_copy_diagnostics">Tanılamayı kopyala</string>
+    <string name="device_provisioning_diagnostics_copied">Tanılama kopyalandı</string>
     <string name="device_provisioning_status_setup_mode_title">Cihaz kurulum modunda</string>
     <string name="device_provisioning_status_verifying_title">Kurulum doğrulanıyor</string>
     <string name="device_provisioning_status_wifi_received_title">Wi-Fi bilgileri alındı</string>

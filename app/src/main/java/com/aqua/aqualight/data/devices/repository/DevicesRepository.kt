@@ -252,6 +252,10 @@ class DevicesRepository(
     fun currentRuntimeConnectionState(deviceUid: DeviceUid): AqlWsConnectionState? =
         runtimeRepository?.currentConnectionState(deviceUid)
 
+    internal fun provisioningRuntimeDiagnostic(deviceUid: DeviceUid): String =
+        runtimeRepository?.provisioningDiagnostic(deviceUid)
+            ?: "transport=repository_unavailable; metadata=repository_unavailable"
+
     fun recordControlProof(deviceUid: DeviceUid): DeviceSnapshot? =
         recordRuntimeProof(deviceUid = deviceUid, isControlProof = true)
 
