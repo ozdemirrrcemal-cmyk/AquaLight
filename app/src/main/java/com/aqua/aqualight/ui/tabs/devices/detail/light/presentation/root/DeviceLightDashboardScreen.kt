@@ -39,7 +39,7 @@ internal fun DeviceLightDashboardScreen(
         }
         item(key = "light-plan") {
             DeviceLightPlanCard(
-                mode = state.hero.mode,
+                data = state.planCardData(),
                 enabled = state.contentEnabled,
                 onActionClick = {
                     state.hero.mode.planDestination(state.activeAutomaticProgramId)
@@ -48,7 +48,7 @@ internal fun DeviceLightDashboardScreen(
             )
         }
         item(key = "light-live-output") {
-            DeviceLightLiveOutputCard()
+            DeviceLightLiveOutputCard(channels = state.channels)
         }
         item(key = "light-controls-header") {
             DeviceLightControlsHeader(
@@ -58,6 +58,7 @@ internal fun DeviceLightDashboardScreen(
         }
         item(key = "light-control-screens") {
             DeviceLightControlScreensCard(
+                state = state.controlScreensState(),
                 enabled = state.contentEnabled,
                 onMenuClick = actions.onMenuClick
             )
@@ -71,6 +72,18 @@ internal fun DeviceLightDashboardScreen(
         }
     }
 }
+
+private fun DeviceLightRootUiState.planCardData() = DeviceLightPlanCardData(
+    mode = hero.mode,
+    plan = plan,
+    channels = channels
+)
+
+private fun DeviceLightRootUiState.controlScreensState() = DeviceLightControlScreensState(
+    mode = hero.mode,
+    automaticProgramCount = automaticProgramCount,
+    customCurvePointCount = customCurvePointCount
+)
 
 internal fun DeviceLightControlMode?.planDestination(
     activeAutomaticProgramId: String?

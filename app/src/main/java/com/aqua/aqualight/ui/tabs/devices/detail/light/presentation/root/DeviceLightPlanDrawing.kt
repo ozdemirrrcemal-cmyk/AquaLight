@@ -41,10 +41,10 @@ internal fun DrawScope.drawLightPlanGrid(colors: AquaLightPlanChartColors) {
 }
 
 internal fun DrawScope.drawCurrentTimeGuide(
-    currentHour: Int,
+    nowTimeMs: Long,
     colors: AquaLightPlanChartColors
 ) {
-    val x = size.width * currentHour / AquaLightPlanChartSpec.maximumHour
+    val x = size.width * nowTimeMs.toFloat() / MILLIS_IN_DAY
     drawLine(
         color = colors.currentGuide.copy(alpha = AquaLightDashboardAlpha.currentGuide),
         start = Offset(x, 0f),
@@ -66,14 +66,15 @@ internal fun DrawScope.drawCurrentTimeGuide(
 
 internal fun DrawScope.drawLightPlanSeries(
     series: DeviceLightPlanSeries,
-    color: Color
+    color: Color,
+    channelScale: Int
 ) {
     if (series.points.isEmpty()) return
     val path = Path()
     series.points.forEachIndexed { index, point ->
-        val x = size.width * point.hour / AquaLightPlanChartSpec.maximumHour
+        val x = size.width * point.timeMs.toFloat() / MILLIS_IN_DAY
         val y = size.height * (
-            1f - point.percent / AquaLightPlanChartSpec.maximumPercent
+            1f - point.level.toFloat() / channelScale.toFloat()
             )
         if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
     }
@@ -118,10 +119,4 @@ internal fun LightPlanChevron(color: Color, modifier: Modifier = Modifier) {
     }
 }
 
-internal fun AquaLightPlanChartColors.colorFor(channel: DeviceLightPlanChannel): Color =
-    when (channel) {
-        DeviceLightPlanChannel.RED -> red
-        DeviceLightPlanChannel.GREEN -> green
-        DeviceLightPlanChannel.BLUE -> blue
-        DeviceLightPlanChannel.WHITE -> white
-    }
+internal const val MILLIS_IN_DAY = 86_400_000f

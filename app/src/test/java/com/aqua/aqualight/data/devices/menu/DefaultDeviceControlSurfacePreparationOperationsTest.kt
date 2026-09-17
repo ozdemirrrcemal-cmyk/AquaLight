@@ -33,9 +33,12 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirSnapsh
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingRuntimeReason
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingSchedulingPolicy
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlFailure
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightChannelOutputSnapshot
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlOperations
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlResult
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlSnapshot
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanReason
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanSnapshot
 import com.aqua.aqualight.application.devices.timer.control.DeviceTimerChannelRegime
 import com.aqua.aqualight.application.devices.timer.control.DeviceTimerChannelIdentity
 import com.aqua.aqualight.application.devices.timer.control.DeviceTimerChannelRuntime
@@ -749,8 +752,28 @@ private fun availableLightControl(
         deviceUid = "light-pro",
         productKey = productKey,
         physicalChannelCount = channelKeys.size,
-        channelKeys = channelKeys
+        channelKeys = channelKeys,
+        channels = channelKeys.map(::testLightChannel),
+        plan = testLightPlan(),
+        automaticProgramCount = 0,
+        customCurvePointCount = 0
     )
+)
+
+private fun testLightChannel(key: String) = DeviceLightChannelOutputSnapshot(
+    key = key,
+    displayName = key,
+    displayColorRgb = 0,
+    effectivePercent = 0
+)
+
+private fun testLightPlan() = DeviceLightPlanSnapshot(
+    available = true,
+    reason = DeviceLightPlanReason.MODE_HAS_NO_SCHEDULE,
+    nowTimeMs = null,
+    channelScale = 1_000,
+    hasScheduleToday = false,
+    points = emptyList()
 )
 
 private fun unavailableLightControl(): DeviceLightControlResult =

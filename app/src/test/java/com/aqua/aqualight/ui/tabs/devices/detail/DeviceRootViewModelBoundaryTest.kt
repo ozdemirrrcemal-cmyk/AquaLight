@@ -28,8 +28,11 @@ import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingContr
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlOperations
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlResult
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlOperations
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightChannelOutputSnapshot
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlResult
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlSnapshot
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanReason
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanSnapshot
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import com.aqua.aqualight.ui.common.text.AquaUiText
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootKind
@@ -263,7 +266,20 @@ class DeviceRootViewModelBoundaryTest {
                 deviceUid = "device-1",
                 productKey = "LIGHT_WRGB_PRO_ELITE",
                 physicalChannelCount = LIGHT_CHANNEL_COUNT,
-                channelKeys = listOf("red", "green", "blue", "white")
+                channelKeys = LIGHT_CHANNEL_KEYS,
+                channels = LIGHT_CHANNEL_KEYS.map { key ->
+                    DeviceLightChannelOutputSnapshot(key, key, 0, 0)
+                },
+                plan = DeviceLightPlanSnapshot(
+                    available = true,
+                    reason = DeviceLightPlanReason.MODE_HAS_NO_SCHEDULE,
+                    nowTimeMs = null,
+                    channelScale = 1_000,
+                    hasScheduleToday = false,
+                    points = emptyList()
+                ),
+                automaticProgramCount = 0,
+                customCurvePointCount = 0
             )
         )
 
@@ -289,6 +305,7 @@ class DeviceRootViewModelBoundaryTest {
 
     private companion object {
         const val LIGHT_CHANNEL_COUNT = 4
+        val LIGHT_CHANNEL_KEYS = listOf("red", "green", "blue", "white")
     }
 
     private object UnavailableCoolingHistoryOperations : DeviceCoolingTemperatureHistoryOperations {

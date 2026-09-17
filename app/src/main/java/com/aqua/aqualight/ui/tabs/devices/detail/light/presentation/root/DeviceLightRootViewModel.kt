@@ -12,10 +12,12 @@ import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlOperations
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightChannelOutputSnapshot
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightAdaptationSummary
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlResult
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlSnapshot
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightHeroSnapshot
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanSnapshot
 import com.aqua.aqualight.application.devices.light.dashboard.matchesLightControlSurface
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import kotlinx.coroutines.CoroutineStart
@@ -67,6 +69,7 @@ class DeviceLightRootViewModel(
         )
         cancelJobs()
         boundDeviceUid = deviceUid
+        currentControlSnapshot = null
         latestRootSnapshot = rootOperations.current(deviceUid)
         acceptControlResult(lightControlOperations.currentControl(deviceUid))
         val preparedSurfaceStillCurrent = preparedHandoff &&
@@ -149,15 +152,13 @@ class DeviceLightRootViewModel(
 
     private suspend fun finishUnavailablePreparation(reason: DeviceMenuUnavailableReason) {
         surfacePreparationPending = false
-        currentControlSnapshot = null
         renderBoundState()
         surfaceUnavailableEventChannel.send(reason)
     }
 
     private fun acceptControlResult(result: DeviceLightControlResult) {
-        currentControlSnapshot = when (result) {
-            is DeviceLightControlResult.Available -> result.snapshot
-            is DeviceLightControlResult.Failed -> null
+        if (result is DeviceLightControlResult.Available) {
+            currentControlSnapshot = result.snapshot
         }
     }
 
@@ -178,10 +179,16 @@ class DeviceLightRootViewModel(
                 DeviceConnectionVisualState.OFFLINE
             },
             contentEnabled = surfaceAvailable && !surfacePreparationPending,
-            showBlockingPreparation = surfacePreparationPending,
+            // Match Dosing: a refresh blocks only a cold surface. A validated frame already on
+            // screen remains visible until its complete replacement is atomically published.
+            showBlockingPreparation = surfacePreparationPending && !controlAvailable,
             activeAutomaticProgramId = currentControlSnapshot?.activeAutomaticProgramId,
             hero = currentControlSnapshot?.hero ?: DeviceLightHeroSnapshot(),
-            adaptation = currentControlSnapshot?.adaptation ?: DeviceLightAdaptationSummary()
+            adaptation = currentControlSnapshot?.adaptation ?: DeviceLightAdaptationSummary(),
+            channels = currentControlSnapshot?.channels.orEmpty(),
+            plan = currentControlSnapshot?.plan,
+            automaticProgramCount = currentControlSnapshot?.automaticProgramCount,
+            customCurvePointCount = currentControlSnapshot?.customCurvePointCount
         )
     }
 
@@ -212,7 +219,11 @@ data class DeviceLightRootUiState(
     val showBlockingPreparation: Boolean = false,
     val activeAutomaticProgramId: String? = null,
     val hero: DeviceLightHeroSnapshot = DeviceLightHeroSnapshot(),
-    val adaptation: DeviceLightAdaptationSummary = DeviceLightAdaptationSummary()
+    val adaptation: DeviceLightAdaptationSummary = DeviceLightAdaptationSummary(),
+    val channels: List<DeviceLightChannelOutputSnapshot> = emptyList(),
+    val plan: DeviceLightPlanSnapshot? = null,
+    val automaticProgramCount: Int? = null,
+    val customCurvePointCount: Int? = null
 )
 
 private fun DeviceRootSnapshot?.isLightControlRootAvailable(deviceUid: String): Boolean = when {

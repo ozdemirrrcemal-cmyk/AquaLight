@@ -75,6 +75,7 @@ internal class DeviceLightRuntimeAuthorityCoordinator {
 
 internal enum class DeviceLightRuntimeProjection {
     STATUS,
+    GRAPH,
     CUSTOM,
     TEMPERATURE_PROTECTION,
     THERMAL

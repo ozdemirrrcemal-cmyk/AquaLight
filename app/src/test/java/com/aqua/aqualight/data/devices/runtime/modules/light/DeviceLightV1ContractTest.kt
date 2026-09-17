@@ -7,6 +7,7 @@ import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
 import kotlinx.coroutines.runBlocking
+import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -54,6 +55,54 @@ class DeviceLightV1ContractTest {
                 val status = DeviceLightRuntimeFixtures.status(DeviceLightProduct.RGB_PRO_SLIM)
                 status.getJSONObject("features").put("acclimation", true)
                 DeviceLightStatusParser.parse(status)
+            }.isFailure
+        )
+    }
+
+    @Test
+    fun `graph parser preserves firmware time and channel tuples for both products`() {
+        DeviceLightProduct.entries.forEach { product ->
+            val graph = DeviceLightMutationParser.Graph.parseGraph(
+                DeviceLightRuntimeFixtures.graph(product, DeviceLightMode.AUTO),
+                product
+            )
+
+            assertEquals(DeviceLightMode.AUTO, graph.mode)
+            assertEquals(43_200_000L, graph.nowTimeMs)
+            assertEquals(listOf(0L, 43_200_000L, 86_400_000L), graph.points.map { it.timeMs })
+            assertTrue(graph.points.all { point ->
+                point.channelPermille.size == product.channelCount
+            })
+        }
+    }
+
+    @Test
+    fun `graph parser rejects invented or incoherent schedule data`() {
+        val wrongTupleWidth = DeviceLightRuntimeFixtures.graph(
+            mode = DeviceLightMode.AUTO
+        ).also { graph ->
+            graph.getJSONArray("points").getJSONArray(0).put(100)
+        }
+        val manualWithSchedule = DeviceLightRuntimeFixtures.graph().also { graph ->
+            graph.put("reason", "OK")
+            graph.put("hasScheduleToday", true)
+            graph.getJSONArray("points").put(JSONArray(listOf(0, 0, 0, 0, 0)))
+        }
+
+        assertTrue(
+            runCatching {
+                DeviceLightMutationParser.Graph.parseGraph(
+                    wrongTupleWidth,
+                    DeviceLightProduct.WRGB_PRO_ELITE
+                )
+            }.isFailure
+        )
+        assertTrue(
+            runCatching {
+                DeviceLightMutationParser.Graph.parseGraph(
+                    manualWithSchedule,
+                    DeviceLightProduct.WRGB_PRO_ELITE
+                )
             }.isFailure
         )
     }

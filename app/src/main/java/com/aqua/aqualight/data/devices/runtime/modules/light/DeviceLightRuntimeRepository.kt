@@ -130,11 +130,22 @@ class DeviceLightRuntimeRepository internal constructor(
             )
         )
         if (command.refreshStatus && outcome is DeviceRuntimeCommandOutcome.Success) {
-            requestStatus(deviceUid)
+            val statusOutcome = requestStatus(deviceUid)
+            if (statusOutcome is DeviceRuntimeCommandOutcome.Success) {
+                requestGraph(deviceUid)
+            }
         }
         return outcome
     }
 }
+
+internal fun DeviceLightRuntimeRepository.currentDashboard(
+    deviceUid: DeviceUid,
+    authority: DeviceLightDashboardReadAuthority
+): DeviceLightDashboardRuntimeState? = stateOwner.dashboardProjection.current(
+    deviceUid,
+    authority
+)
 
 internal data class DeviceLightProductCommand<T>(
     val action: String,
@@ -148,6 +159,15 @@ internal fun DeviceLightRuntimeRepository.isAuthoritative(
     generation: DeviceRuntimeConnectionGeneration
 ): Boolean = stateOwner.isAuthoritative(
     DeviceLightRuntimeProjection.STATUS,
+    deviceUid,
+    generation
+)
+
+internal fun DeviceLightRuntimeRepository.isGraphAuthoritative(
+    deviceUid: DeviceUid,
+    generation: DeviceRuntimeConnectionGeneration
+): Boolean = stateOwner.isAuthoritative(
+    DeviceLightRuntimeProjection.GRAPH,
     deviceUid,
     generation
 )

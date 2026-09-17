@@ -48,6 +48,11 @@
     <string name="device_light_plan_manual_message">Time scheduling is not used in Manual mode.</string>
     <string name="device_light_plan_switch_to_automatic">Switch to Automatic</string>
     <string name="device_light_plan_manual_content_description">Manual mode does not use a time schedule. Switch to Automatic.</string>
+    <string name="device_light_plan_rtc_not_ready">The device clock is not ready.</string>
+    <string name="device_light_plan_no_automatic_program_today">No enabled automatic program is scheduled today.</string>
+    <string name="device_light_plan_custom_not_installed">No custom curve is installed.</string>
+    <string name="device_light_plan_custom_not_scheduled_today">The custom curve is not scheduled today.</string>
+    <string name="device_light_plan_unavailable">Light plan is unavailable.</string>
     <string name="device_light_plan_current_time_format">Now %1$s</string>
     <string name="device_light_plan_time_format">%1$02d:%2$02d</string>
     <string name="device_light_plan_hour_format">%1$02d</string>
@@ -56,14 +61,14 @@
     <string name="device_light_plan_channel_green">G</string>
     <string name="device_light_plan_channel_blue">B</string>
     <string name="device_light_plan_channel_white">W</string>
-    <string name="device_light_plan_content_description">Today’s planned red, green, blue and white light output from 00:00 to 24:00. Current preview time: %1$s.</string>
+    <string name="device_light_plan_content_description">Today’s firmware light plan from 00:00 to 24:00. Device time: %1$s.</string>
     <string name="device_light_live_output_title">Live output</string>
     <string name="device_light_live_output_red">Red</string>
     <string name="device_light_live_output_green">Green</string>
     <string name="device_light_live_output_blue">Blue</string>
     <string name="device_light_live_output_white">White</string>
     <string name="device_light_live_output_percent_format">%1$d%%</string>
-    <string name="device_light_live_output_content_description">Live output. Red %1$s, green %2$s, blue %3$s, white %4$s.</string>
+    <string name="device_light_live_output_content_description">Live output. %1$s.</string>
     <string name="device_light_controls_title">Control screens</string>
     <string name="device_light_quick_setup_button">Smart setup</string>
     <string name="device_light_manual_control_subtitle">Control channels directly</string>
@@ -142,6 +147,7 @@
     <string name="device_light_system_temperature">%1$.1f °C</string>
     <string name="device_light_system_fans_summary">F1 %1$d%% · F2 %2$d%%</string>
     <string name="device_light_system_status_normal">Normal</string>
+    <string name="device_light_system_open_details">View firmware system details</string>
 
     <!-- Manual light control -->
     <string name="device_light_manual_estimated_power">Estimated power</string>

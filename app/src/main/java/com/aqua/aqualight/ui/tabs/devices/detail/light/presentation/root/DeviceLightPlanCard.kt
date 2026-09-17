@@ -1,6 +1,5 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root
 
-import androidx.annotation.StringRes
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -19,7 +18,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -33,7 +31,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import com.aqua.aqualight.R
-import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlMode
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanReason
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
@@ -48,30 +46,36 @@ import kotlin.math.roundToInt
 
 @Composable
 internal fun DeviceLightPlanCard(
-    mode: DeviceLightControlMode?,
+    data: DeviceLightPlanCardData,
     enabled: Boolean,
     onActionClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val preview = remember { deviceLightPlanPreview() }
     val colors = aquaLightDashboardColors()
     val typography = aquaLightDashboardTypography(colors)
     val chartColors = aquaLightPlanChartColors(colors)
-    val currentTime = stringResource(
-        R.string.device_light_plan_time_format,
-        preview.currentHour,
-        preview.currentMinute
-    )
+    val presentation = data.plan?.toPresentation(data.channels)
+    val currentTime = presentation?.nowTimeMs?.let { nowTimeMs ->
+        stringResource(
+            R.string.device_light_plan_time_format,
+            (nowTimeMs / MILLIS_PER_HOUR).toInt(),
+            ((nowTimeMs % MILLIS_PER_HOUR) / MILLIS_PER_MINUTE).toInt()
+        )
+    }
     val state = DeviceLightPlanCardState(
-        mode = mode,
+        mode = data.mode,
         enabled = enabled,
-        preview = preview,
+        plan = data.plan,
+        presentation = presentation,
         currentTime = currentTime
     )
     val description = if (state.manualMode) {
         stringResource(R.string.device_light_plan_manual_content_description)
     } else {
-        stringResource(R.string.device_light_plan_content_description, currentTime)
+        stringResource(
+            R.string.device_light_plan_content_description,
+            currentTime ?: stringResource(R.string.device_light_plan_unavailable)
+        )
     }
 
     AquaDeviceCardSurface(
@@ -172,18 +176,19 @@ private fun DeviceLightPlanChart(
     typography: AquaDeviceCardTypography,
     onActionClick: () -> Unit
 ) {
+    val nowTimeMs = state.presentation?.nowTimeMs
     Row(modifier = Modifier.fillMaxWidth()) {
         DeviceLightPlanYAxis(colors = colors, typography = typography)
         Spacer(modifier = Modifier.width(AquaLightDashboardGeometry.planYAxisGap))
         Column(modifier = Modifier.weight(1f)) {
-            if (state.manualMode) {
+            if (state.manualMode || nowTimeMs == null) {
                 Spacer(modifier = Modifier.height(AquaLightDashboardGeometry.planMarkerLabelHeight))
             } else {
                 DeviceLightCurrentTimeLabel(
-                    currentTime = state.currentTime,
+                    currentTime = checkNotNull(state.currentTime),
                     colors = colors,
                     typography = typography,
-                    currentHour = state.preview.currentHour
+                    nowTimeMs = nowTimeMs
                 )
             }
             DeviceLightPlanPlot(
@@ -196,7 +201,7 @@ private fun DeviceLightPlanChart(
             DeviceLightPlanXAxis(colors = colors, typography = typography)
         }
     }
-    if (state.manualMode) {
+    if (!state.hasRenderableSchedule) {
         Spacer(
             modifier = Modifier.height(
                 AquaLightDashboardGeometry.planLegendTopGap +
@@ -206,8 +211,8 @@ private fun DeviceLightPlanChart(
     } else {
         Spacer(modifier = Modifier.height(AquaLightDashboardGeometry.planLegendTopGap))
         DeviceLightPlanLegend(
+            state = state,
             colors = colors,
-            chartColors = chartColors,
             typography = typography
         )
     }
@@ -232,10 +237,17 @@ private fun DeviceLightPlanPlot(
                 .height(AquaLightDashboardGeometry.planPlotHeight)
         ) {
             drawLightPlanGrid(chartColors)
-            if (!state.manualMode) {
-                drawCurrentTimeGuide(state.preview.currentHour, chartColors)
-                state.preview.series.forEach { series ->
-                    drawLightPlanSeries(series, chartColors.colorFor(series.channel))
+            if (state.hasRenderableSchedule) {
+                val presentation = checkNotNull(state.presentation)
+                presentation.nowTimeMs?.let { nowTimeMs ->
+                    drawCurrentTimeGuide(nowTimeMs, chartColors)
+                }
+                presentation.series.forEach { series ->
+                    drawLightPlanSeries(
+                        series = series,
+                        color = series.channel.toComposeColor(),
+                        channelScale = presentation.channelScale
+                    )
                 }
             }
         }
@@ -247,22 +259,44 @@ private fun DeviceLightPlanPlot(
                 onActionClick = onActionClick,
                 modifier = Modifier.align(Alignment.Center)
             )
+        } else if (!state.hasRenderableSchedule) {
+            DeviceLightEmptyPlanNotice(
+                reason = state.plan?.reason,
+                colors = colors,
+                typography = typography,
+                modifier = Modifier.align(Alignment.Center)
+            )
         }
     }
 }
 
-private data class DeviceLightPlanCardState(
-    val mode: DeviceLightControlMode?,
-    val enabled: Boolean,
-    val preview: DeviceLightPlanPreview,
-    val currentTime: String
+@Composable
+private fun DeviceLightEmptyPlanNotice(
+    reason: DeviceLightPlanReason?,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography,
+    modifier: Modifier = Modifier
 ) {
-    val manualMode: Boolean
-        get() = mode == DeviceLightControlMode.MANUAL
-
-    val showProgramAction: Boolean
-        get() = mode == DeviceLightControlMode.AUTOMATIC ||
-            mode == DeviceLightControlMode.CUSTOM
+    val messageRes = when (reason) {
+        DeviceLightPlanReason.RTC_NOT_READY -> R.string.device_light_plan_rtc_not_ready
+        DeviceLightPlanReason.NO_ENABLED_AUTO_PROGRAM_TODAY ->
+            R.string.device_light_plan_no_automatic_program_today
+        DeviceLightPlanReason.CUSTOM_NOT_INSTALLED ->
+            R.string.device_light_plan_custom_not_installed
+        DeviceLightPlanReason.CUSTOM_NOT_SCHEDULED_TODAY ->
+            R.string.device_light_plan_custom_not_scheduled_today
+        DeviceLightPlanReason.OK,
+        DeviceLightPlanReason.MODE_HAS_NO_SCHEDULE,
+        null -> R.string.device_light_plan_unavailable
+    }
+    BasicText(
+        text = stringResource(messageRes),
+        style = typography.body.copy(
+            color = colors.primaryText,
+            textAlign = TextAlign.Center
+        ),
+        modifier = modifier
+    )
 }
 
 @Composable
@@ -315,14 +349,14 @@ private fun DeviceLightCurrentTimeLabel(
     currentTime: String,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography,
-    currentHour: Int
+    nowTimeMs: Long
 ) {
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxWidth()
             .height(AquaLightDashboardGeometry.planMarkerLabelHeight)
     ) {
-        val plotFraction = currentHour.toFloat() / AquaLightPlanChartSpec.maximumHour
+        val plotFraction = nowTimeMs.toFloat() / MILLIS_IN_DAY
         val labelWidth = AquaLightDashboardGeometry.planMarkerLabelWidth
         BasicText(
             text = stringResource(R.string.device_light_plan_current_time_format, currentTime),
@@ -411,14 +445,14 @@ private fun DeviceLightPlanXAxis(
 
 @Composable
 private fun DeviceLightPlanLegend(
+    state: DeviceLightPlanCardState,
     colors: AquaDeviceCardColors,
-    chartColors: AquaLightPlanChartColors,
     typography: AquaDeviceCardTypography
 ) {
-    val items = DeviceLightPlanChannel.entries.map { channel ->
+    val items = state.presentation?.series.orEmpty().map { series ->
         DeviceLightLegendItem(
-            label = stringResource(channel.labelRes()),
-            color = chartColors.colorFor(channel)
+            label = series.channel.shortLabel(),
+            color = series.channel.toComposeColor()
         )
     }
     Row(
@@ -456,10 +490,5 @@ private data class DeviceLightLegendItem(
     val color: Color
 )
 
-@StringRes
-private fun DeviceLightPlanChannel.labelRes(): Int = when (this) {
-    DeviceLightPlanChannel.RED -> R.string.device_light_plan_channel_red
-    DeviceLightPlanChannel.GREEN -> R.string.device_light_plan_channel_green
-    DeviceLightPlanChannel.BLUE -> R.string.device_light_plan_channel_blue
-    DeviceLightPlanChannel.WHITE -> R.string.device_light_plan_channel_white
-}
+private const val MILLIS_PER_HOUR = 3_600_000L
+private const val MILLIS_PER_MINUTE = 60_000L

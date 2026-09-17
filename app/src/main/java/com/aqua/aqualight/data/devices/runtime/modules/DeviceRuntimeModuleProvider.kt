@@ -24,6 +24,7 @@ import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTemperat
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightThermalRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTypedEventReducer
 import com.aqua.aqualight.data.devices.runtime.modules.light.isAuthoritative as isLightAuthoritative
+import com.aqua.aqualight.data.devices.runtime.modules.light.requestGraph
 import com.aqua.aqualight.data.devices.runtime.modules.network.DeviceNetworkRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.security.DeviceSecurityRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.time.DeviceTimeRuntimeRepository
@@ -126,6 +127,12 @@ class DeviceRuntimeModuleProvider internal constructor(
         val lightResult = lightEventReducer.apply(event)
         if (
             event.type == DeviceRuntimeTypedEvent.Type.LIGHT_STATUS_CHANGED &&
+            lightResult == DeviceLightEventApplyResult.Applied
+        ) {
+            light.requestGraph(event.deviceUid)
+        }
+        if (
+            event.type == DeviceRuntimeTypedEvent.Type.LIGHT_STATUS_CHANGED &&
             lightResult == DeviceLightEventApplyResult.Ignored &&
             event.payload is DeviceRuntimeEventPayload.CommandResult
         ) {
@@ -136,7 +143,10 @@ class DeviceRuntimeModuleProvider internal constructor(
             ) {
                 lightTemperatureProtection.requestStatus(event.deviceUid)
             } else {
-                light.requestStatus(event.deviceUid)
+                val statusOutcome = light.requestStatus(event.deviceUid)
+                if (statusOutcome is DeviceRuntimeCommandOutcome.Success) {
+                    light.requestGraph(event.deviceUid)
+                }
             }
         }
 

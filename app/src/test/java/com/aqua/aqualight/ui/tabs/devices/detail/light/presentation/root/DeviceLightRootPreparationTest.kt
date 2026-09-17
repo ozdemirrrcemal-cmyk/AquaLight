@@ -14,9 +14,12 @@ import com.aqua.aqualight.application.devices.DeviceSlotIndex
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlFailure
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightChannelOutputSnapshot
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlOperations
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlResult
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlSnapshot
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanReason
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanSnapshot
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -109,6 +112,36 @@ class DeviceLightRootPreparationTest {
         assertEquals(DeviceConnectionVisualState.OFFLINE, viewModel.uiState.value.connectionVisualState)
     }
 
+    @Test
+    fun `refresh transition keeps the last validated Light frame without blocking flicker`() =
+        runTest {
+            val validated = availableControl()
+            val controls = FakeLightControlOperations(validated)
+            lateinit var viewModel: DeviceLightRootViewModel
+            var retainedDuringRefresh = false
+            val preparation = FakePreparationOperations(
+                onPrepare = {
+                    controls.publish(unavailableControl())
+                    retainedDuringRefresh =
+                        viewModel.uiState.value.channels.size == LIGHT_CHANNEL_COUNT &&
+                            !viewModel.uiState.value.showBlockingPreparation
+                }
+            )
+            viewModel = DeviceLightRootViewModel(
+                rootOperations = FakeRootOperations(lightRoot()),
+                lightControlOperations = controls,
+                controlSurfacePreparationOperations = preparation
+            )
+
+            viewModel.bind(DEVICE_UID)
+
+            val state = viewModel.uiState.value
+            assertTrue(retainedDuringRefresh)
+            assertEquals(LIGHT_CHANNEL_COUNT, state.channels.size)
+            assertFalse(state.showBlockingPreparation)
+            assertTrue(state.contentEnabled)
+        }
+
     private class FakeRootOperations(
         initial: DeviceRootSnapshot
     ) : DeviceRootOperations {
@@ -200,7 +233,20 @@ private fun availableControl(
         deviceUid = "light-pro",
         productKey = productKey,
         physicalChannelCount = LIGHT_CHANNEL_COUNT,
-        channelKeys = listOf("red", "green", "blue", "white")
+        channelKeys = LIGHT_CHANNEL_KEYS,
+        channels = LIGHT_CHANNEL_KEYS.map { key ->
+            DeviceLightChannelOutputSnapshot(key, key, 0, 0)
+        },
+        plan = DeviceLightPlanSnapshot(
+            available = true,
+            reason = DeviceLightPlanReason.MODE_HAS_NO_SCHEDULE,
+            nowTimeMs = null,
+            channelScale = 1_000,
+            hasScheduleToday = false,
+            points = emptyList()
+        ),
+        automaticProgramCount = 0,
+        customCurvePointCount = 0
     )
 )
 
@@ -208,3 +254,4 @@ private fun unavailableControl(): DeviceLightControlResult =
     DeviceLightControlResult.Failed(DeviceLightControlFailure.UNAVAILABLE)
 
 private const val LIGHT_CHANNEL_COUNT = 4
+private val LIGHT_CHANNEL_KEYS = listOf("red", "green", "blue", "white")

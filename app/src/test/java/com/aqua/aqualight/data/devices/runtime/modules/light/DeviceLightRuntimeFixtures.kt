@@ -37,6 +37,44 @@ internal object DeviceLightRuntimeFixtures {
             .putRuntimeSections(product)
     }
 
+    fun graph(
+        product: DeviceLightProduct = DeviceLightProduct.WRGB_PRO_ELITE,
+        mode: DeviceLightMode = DeviceLightMode.MANUAL,
+        sourceRevision: Long = if (mode == DeviceLightMode.MANUAL) 0L else 1L
+    ): JSONObject {
+        val scheduled = mode != DeviceLightMode.MANUAL
+        val points = JSONArray()
+        if (scheduled) {
+            points.put(graphPoint(product, 0L, 0))
+            points.put(graphPoint(product, 43_200_000L, 750))
+            points.put(graphPoint(product, 86_400_000L, 0))
+        }
+        return JSONObject()
+            .put("mode", mode.wireValue)
+            .put("available", true)
+            .put("reason", if (scheduled) "OK" else "MODE_HAS_NO_SCHEDULE")
+            .put("sourceRevision", sourceRevision)
+            .put("schedulerGeneration", 3)
+            .put("localDate", "2026-09-12")
+            .put("currentWeekdayMask", 2)
+            .put("nowTimeMs", 43_200_000)
+            .put("basis", if (scheduled) "AUTHORED_SCHEDULE" else "NONE")
+            .put("channelScale", 1000)
+            .put("hasScheduleToday", scheduled)
+            .put("points", points)
+            .put("autoSpans", JSONArray())
+    }
+
+    private fun graphPoint(
+        product: DeviceLightProduct,
+        timeMs: Long,
+        level: Int
+    ): JSONArray = JSONArray().put(timeMs).also { tuple ->
+        repeat(product.channelCount) { channelIndex ->
+            tuple.put((level - channelIndex * 100).coerceAtLeast(0))
+        }
+    }
+
     private fun features(supported: Boolean): JSONObject = JSONObject()
         .put("acclimation", supported)
         .put("fanControl", supported)

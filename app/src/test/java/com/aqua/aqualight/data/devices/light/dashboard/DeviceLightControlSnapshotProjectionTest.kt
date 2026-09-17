@@ -5,6 +5,7 @@ import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightOutputC
 import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationState
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightMode
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightMutationParser
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeFixtures
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightStatusParser
 import org.junit.Assert.assertEquals
@@ -21,8 +22,11 @@ class DeviceLightControlSnapshotProjectionTest {
             auto = parsed.auto.copy(activeProgramId = "program-1")
         )
 
-        val snapshot = status
-            .toControlSnapshot(DeviceUid("light-pro"))
+        val graph = DeviceLightMutationParser.Graph.parseGraph(
+            DeviceLightRuntimeFixtures.graph(mode = DeviceLightMode.AUTO),
+            status.product
+        )
+        val snapshot = status.toControlSnapshot(DeviceUid("light-pro"), graph)
 
         assertEquals(DeviceLightControlMode.AUTOMATIC, snapshot.hero.mode)
         assertEquals("program-1", snapshot.activeAutomaticProgramId)
@@ -36,5 +40,10 @@ class DeviceLightControlSnapshotProjectionTest {
         assertEquals(1_000, snapshot.adaptation.currentPermille)
         assertEquals(0L, snapshot.adaptation.remainingSeconds)
         assertTrue(snapshot.channelKeys.containsAll(listOf("red", "green", "blue", "white")))
+        assertEquals(listOf(20, 30, 40, 50), snapshot.channels.map { it.effectivePercent })
+        assertEquals(listOf(0L, 43_200_000L, 86_400_000L), snapshot.plan?.points?.map { it.timeMs })
+        assertEquals(listOf(750, 650, 550, 450), snapshot.plan?.points?.get(1)?.channelLevels)
+        assertEquals(status.auto.programCount, snapshot.automaticProgramCount)
+        assertEquals(status.custom.pointCount, snapshot.customCurvePointCount)
     }
 }

@@ -4,26 +4,22 @@ import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlFailure
-import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightAdaptationSummary
-import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlMode
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlOperations
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlResult
-import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlSnapshot
-import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightHeroSnapshot
-import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightOutputCondition
-import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationState
 import com.aqua.aqualight.application.devices.light.dashboard.matchesLightControlSurface
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightMode
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAcclimationState
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightOutputReason
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightDashboardReadAuthority
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightGraph
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightProduct
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightStatus
+import com.aqua.aqualight.data.devices.runtime.modules.light.currentDashboard
 import com.aqua.aqualight.data.devices.runtime.modules.light.isAuthoritative
+import com.aqua.aqualight.data.devices.runtime.modules.light.isGraphAuthoritative
+import com.aqua.aqualight.data.devices.runtime.modules.light.requestGraph
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -43,7 +39,11 @@ internal class DefaultDeviceLightControlOperations(
             flowOf(failed(DeviceLightControlFailure.UNAVAILABLE))
         } else {
             combine(rootOperations.observe(uid.value), runtime.stateRevision) { root, _ ->
-                projectRead(uid, root, runtime.currentStatus(uid))
+                val dashboard = runtime.currentDashboard(
+                    uid,
+                    DeviceLightDashboardReadAuthority.PRESENTATION
+                )
+                projectRead(uid, root, dashboard?.status, dashboard?.graph)
             }.distinctUntilChanged()
         }
     }
@@ -51,20 +51,26 @@ internal class DefaultDeviceLightControlOperations(
     override fun currentControl(deviceUid: String): DeviceLightControlResult =
         when (val resolved = resolveRuntime(deviceUid)) {
             is RuntimeResolution.Failed -> failed(resolved.failure)
-            is RuntimeResolution.Ready -> projectRead(
-                resolved.deviceUid,
-                resolved.root,
-                resolved.runtime.currentStatus(resolved.deviceUid)
-            )
+            is RuntimeResolution.Ready -> resolved.runtime
+                .currentDashboard(
+                    resolved.deviceUid,
+                    DeviceLightDashboardReadAuthority.AUTHORITATIVE
+                )
+                .let { dashboard ->
+                    projectRead(
+                        resolved.deviceUid,
+                        resolved.root,
+                        dashboard?.status,
+                        dashboard?.graph
+                    )
+                }
         }
 
     override suspend fun refreshControl(deviceUid: String): DeviceLightControlResult =
         when (val resolved = resolveRuntime(deviceUid)) {
             is RuntimeResolution.Failed -> failed(resolved.failure)
-            is RuntimeResolution.Ready -> runCatching {
-                resolved.runtime.requestStatus(resolved.deviceUid)
-            }.fold(
-                onSuccess = { outcome -> outcome.toRefreshedControlResult(resolved) },
+            is RuntimeResolution.Ready -> runCatching { refresh(resolved) }.fold(
+                onSuccess = { result -> result },
                 onFailure = { failed(DeviceLightControlFailure.INVALID_DATA) }
             )
         }
@@ -84,6 +90,52 @@ internal class DefaultDeviceLightControlOperations(
     }
 }
 
+private suspend fun refresh(
+    resolved: RuntimeResolution.Ready
+): DeviceLightControlResult {
+    val outcome = resolved.runtime.requestStatus(resolved.deviceUid)
+    return when (outcome) {
+        is DeviceRuntimeCommandOutcome.Success -> {
+            val acceptedStatus = resolved.runtime.currentStatus(resolved.deviceUid)
+            val generation = outcome.generation
+            val value = outcome.value
+            if (
+                acceptedStatus == value &&
+                resolved.runtime.isAuthoritative(resolved.deviceUid, generation)
+            ) {
+                resolved.refreshGraph()
+            } else {
+                failed(DeviceLightControlFailure.UNAVAILABLE)
+            }
+        }
+        else -> failed(outcome.toControlFailure())
+    }
+}
+
+private suspend fun RuntimeResolution.Ready.refreshGraph(): DeviceLightControlResult =
+    when (val graphOutcome = runtime.requestGraph(deviceUid)) {
+        is DeviceRuntimeCommandOutcome.Success -> graphOutcome.toControlResult(
+            resolution = this
+        )
+        else -> failed(graphOutcome.toControlFailure())
+    }
+
+private fun DeviceRuntimeCommandOutcome.Success<DeviceLightGraph>.toControlResult(
+    resolution: RuntimeResolution.Ready
+): DeviceLightControlResult {
+    val dashboard = resolution.runtime.currentDashboard(
+        resolution.deviceUid,
+        DeviceLightDashboardReadAuthority.AUTHORITATIVE
+    )
+    val graphAccepted = dashboard?.graph == value &&
+        resolution.runtime.isGraphAuthoritative(resolution.deviceUid, generation)
+    return if (graphAccepted && dashboard != null) {
+        projectRead(resolution.deviceUid, resolution.root, dashboard.status, dashboard.graph)
+    } else {
+        failed(DeviceLightControlFailure.UNAVAILABLE)
+    }
+}
+
 private sealed interface RuntimeResolution {
     data class Ready(
         val deviceUid: DeviceUid,
@@ -97,96 +149,35 @@ private sealed interface RuntimeResolution {
 private fun projectRead(
     deviceUid: DeviceUid,
     root: DeviceRootSnapshot?,
-    status: DeviceLightStatus?
+    status: DeviceLightStatus?,
+    graph: DeviceLightGraph?
 ): DeviceLightControlResult = when {
-    root == null || status == null -> failed(DeviceLightControlFailure.UNAVAILABLE)
+    root == null || status == null || graph == null ->
+        failed(DeviceLightControlFailure.UNAVAILABLE)
     !root.isSupportedLightRoot() -> failed(DeviceLightControlFailure.UNSUPPORTED)
     status.product.wireValue != root.productKey -> failed(DeviceLightControlFailure.INVALID_DATA)
-    else -> status.toControlSnapshot(deviceUid)
+    else -> status.toControlSnapshot(deviceUid, graph)
         .takeIf { snapshot -> snapshot.matchesLightControlSurface(deviceUid.value, root) }
         ?.let(DeviceLightControlResult::Available)
         ?: failed(DeviceLightControlFailure.INVALID_DATA)
 }
 
-private fun DeviceRuntimeCommandOutcome<DeviceLightStatus>.toRefreshedControlResult(
-    resolved: RuntimeResolution.Ready
-): DeviceLightControlResult = when (this) {
-    is DeviceRuntimeCommandOutcome.Success -> {
-        val acceptedStatus = resolved.runtime.currentStatus(resolved.deviceUid)
-        if (
-            acceptedStatus == value &&
-            resolved.runtime.isAuthoritative(resolved.deviceUid, generation)
-        ) {
-            projectRead(resolved.deviceUid, resolved.root, acceptedStatus)
-        } else {
-            failed(DeviceLightControlFailure.UNAVAILABLE)
-        }
-    }
-    is DeviceRuntimeCommandOutcome.NotConnected,
-    is DeviceRuntimeCommandOutcome.NotAuthenticated ->
-        failed(DeviceLightControlFailure.NOT_CONNECTED)
-    is DeviceRuntimeCommandOutcome.UnsupportedByDevice ->
-        failed(DeviceLightControlFailure.UNSUPPORTED)
-    is DeviceRuntimeCommandOutcome.FirmwareError ->
-        failed(DeviceLightControlFailure.REJECTED)
-    is DeviceRuntimeCommandOutcome.ProtocolError ->
-        failed(DeviceLightControlFailure.INVALID_DATA)
-    is DeviceRuntimeCommandOutcome.SendFailed,
-    is DeviceRuntimeCommandOutcome.Timeout,
-    is DeviceRuntimeCommandOutcome.Cancelled ->
-        failed(DeviceLightControlFailure.UNAVAILABLE)
-}
-
-internal fun DeviceLightStatus.toControlSnapshot(
-    deviceUid: DeviceUid
-) = DeviceLightControlSnapshot(
-    deviceUid = deviceUid.value,
-    productKey = product.wireValue,
-    physicalChannelCount = runtime.physicalChannelCount,
-    channelKeys = channels.sortedBy { channel -> channel.order }.map { channel -> channel.key },
-    activeAutomaticProgramId = auto.activeProgramId,
-    hero = DeviceLightHeroSnapshot(
-        mode = mode.toApplicationMode(),
-        outputActive = outputActive,
-        outputCondition = outputReason.toApplicationCondition(),
-        outputHealthy = runtime.physicalOutputHealthy,
-        estimatedPowerWatts = power.estimatedFixturePowerW
-            ?.takeIf { power.available && power.estimatedFixturePowerAvailable },
-        estimatedColorTemperatureKelvin = color.estimatedCctK
-            ?.takeIf { color.available && color.cctAvailable }
-    ),
-    adaptation = DeviceLightAdaptationSummary(
-        supported = features.acclimation && acclimation.supported,
-        state = acclimation.state?.toApplicationState(),
-        currentPermille = acclimation.currentPermille,
-        remainingSeconds = acclimation.remainingSeconds
-    )
-)
-
-private fun DeviceLightAcclimationState.toApplicationState(): DeviceLightAdaptationState =
+private fun DeviceRuntimeCommandOutcome<*>.toControlFailure(): DeviceLightControlFailure =
     when (this) {
-        DeviceLightAcclimationState.DISABLED -> DeviceLightAdaptationState.DISABLED
-        DeviceLightAcclimationState.ACTIVE -> DeviceLightAdaptationState.ACTIVE
-        DeviceLightAcclimationState.COMPLETED -> DeviceLightAdaptationState.COMPLETED
-    }
-
-private fun DeviceLightMode.toApplicationMode(): DeviceLightControlMode = when (this) {
-    DeviceLightMode.MANUAL -> DeviceLightControlMode.MANUAL
-    DeviceLightMode.AUTO -> DeviceLightControlMode.AUTOMATIC
-    DeviceLightMode.CUSTOM -> DeviceLightControlMode.CUSTOM
-}
-
-private fun DeviceLightOutputReason.toApplicationCondition(): DeviceLightOutputCondition =
-    when (this) {
-        DeviceLightOutputReason.ACTIVE -> DeviceLightOutputCondition.ACTIVE
-        DeviceLightOutputReason.SCHEDULED_OFF -> DeviceLightOutputCondition.SCHEDULED_OFF
-        DeviceLightOutputReason.ALL_CHANNELS_ZERO ->
-            DeviceLightOutputCondition.ALL_CHANNELS_ZERO
-        DeviceLightOutputReason.RTC_NOT_READY -> DeviceLightOutputCondition.CLOCK_UNAVAILABLE
-        DeviceLightOutputReason.THERMAL_SHUTDOWN ->
-            DeviceLightOutputCondition.THERMAL_PROTECTION
-        DeviceLightOutputReason.POWER_LIMITED -> DeviceLightOutputCondition.POWER_LIMITED
-        DeviceLightOutputReason.HARDWARE_FAULT -> DeviceLightOutputCondition.HARDWARE_FAULT
+        is DeviceRuntimeCommandOutcome.Success -> DeviceLightControlFailure.UNAVAILABLE
+        is DeviceRuntimeCommandOutcome.NotConnected,
+        is DeviceRuntimeCommandOutcome.NotAuthenticated ->
+            DeviceLightControlFailure.NOT_CONNECTED
+        is DeviceRuntimeCommandOutcome.UnsupportedByDevice ->
+            DeviceLightControlFailure.UNSUPPORTED
+        is DeviceRuntimeCommandOutcome.FirmwareError ->
+            DeviceLightControlFailure.REJECTED
+        is DeviceRuntimeCommandOutcome.ProtocolError ->
+            DeviceLightControlFailure.INVALID_DATA
+        is DeviceRuntimeCommandOutcome.SendFailed,
+        is DeviceRuntimeCommandOutcome.Timeout,
+        is DeviceRuntimeCommandOutcome.Cancelled ->
+            DeviceLightControlFailure.UNAVAILABLE
     }
 
 private fun DeviceRootSnapshot.isSupportedLightRoot(): Boolean = when {

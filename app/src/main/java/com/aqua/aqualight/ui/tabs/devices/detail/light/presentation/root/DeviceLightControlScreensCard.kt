@@ -23,12 +23,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlMode
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.DeviceLightChevron
-import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightControlsPreviewSpec
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightDashboardAlpha
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightDashboardGeometry
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightDashboardIcon
@@ -38,6 +38,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.aquaL
 
 @Composable
 internal fun DeviceLightControlScreensCard(
+    state: DeviceLightControlScreensState,
     enabled: Boolean,
     onMenuClick: (DeviceLightMenuDestination) -> Unit,
     modifier: Modifier = Modifier
@@ -51,7 +52,11 @@ internal fun DeviceLightControlScreensCard(
         contentPadding = AquaDeviceCardGeometry.edgeToEdgeContentPadding
     ) {
         DeviceLightControlRows(
-            items = deviceLightControlItems(),
+            items = deviceLightControlItems(
+                mode = state.mode,
+                automaticProgramCount = state.automaticProgramCount,
+                customCurvePointCount = state.customCurvePointCount
+            ),
             enabled = enabled,
             colors = colors,
             typography = typography,
@@ -60,34 +65,42 @@ internal fun DeviceLightControlScreensCard(
     }
 }
 
+internal data class DeviceLightControlScreensState(
+    val mode: DeviceLightControlMode?,
+    val automaticProgramCount: Int?,
+    val customCurvePointCount: Int?
+)
+
 @Composable
-private fun deviceLightControlItems(): List<DeviceLightControlItem> = listOf(
+private fun deviceLightControlItems(
+    mode: DeviceLightControlMode?,
+    automaticProgramCount: Int?,
+    customCurvePointCount: Int?
+): List<DeviceLightControlItem> = listOf(
     DeviceLightControlItem(
         titleRes = R.string.device_menu_manual_control_title,
         subtitle = stringResource(R.string.device_light_manual_control_subtitle),
         icon = AquaLightDashboardIconKind.MANUAL,
-        destination = DeviceLightMenuDestination.MANUAL_CONTROL
+        destination = DeviceLightMenuDestination.MANUAL_CONTROL,
+        active = mode == DeviceLightControlMode.MANUAL
     ),
     DeviceLightControlItem(
         titleRes = R.string.device_light_automatic_programs_title,
-        subtitle = pluralStringResource(
-            R.plurals.device_light_program_count,
-            AquaLightControlsPreviewSpec.programCount,
-            AquaLightControlsPreviewSpec.programCount
-        ),
+        subtitle = automaticProgramCount?.let { count ->
+            pluralStringResource(R.plurals.device_light_program_count, count, count)
+        } ?: stringResource(R.string.device_light_hero_value_unavailable),
         icon = AquaLightDashboardIconKind.PROGRAM,
-        destination = DeviceLightMenuDestination.AUTOMATIC_PROGRAMS
+        destination = DeviceLightMenuDestination.AUTOMATIC_PROGRAMS,
+        active = mode == DeviceLightControlMode.AUTOMATIC
     ),
     DeviceLightControlItem(
         titleRes = R.string.device_light_custom_curve_title,
-        subtitle = pluralStringResource(
-            R.plurals.device_light_custom_curve_summary,
-            AquaLightControlsPreviewSpec.customCurvePointCount,
-            AquaLightControlsPreviewSpec.customCurvePointCount
-        ),
+        subtitle = customCurvePointCount?.let { count ->
+            pluralStringResource(R.plurals.device_light_custom_curve_summary, count, count)
+        } ?: stringResource(R.string.device_light_hero_value_unavailable),
         icon = AquaLightDashboardIconKind.CURVE,
         destination = DeviceLightMenuDestination.CUSTOM_LIGHT_CURVE,
-        active = true
+        active = mode == DeviceLightControlMode.CUSTOM
     )
 )
 

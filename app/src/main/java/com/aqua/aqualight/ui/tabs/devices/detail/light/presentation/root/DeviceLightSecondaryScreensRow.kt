@@ -29,7 +29,6 @@ import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.DeviceLightChevron
-import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightControlsPreviewSpec
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightDashboardAlpha
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightDashboardGeometry
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightDashboardIcon
@@ -155,7 +154,7 @@ private fun RowScope.DeviceLightAdaptationContent(
 }
 
 private fun DeviceLightAdaptationSummary.displayPercent(): Int? = when (state) {
-    DeviceLightAdaptationState.COMPLETED -> AquaLightControlsPreviewSpec.fullPercent.toInt()
+    DeviceLightAdaptationState.COMPLETED -> FULL_PERCENT
     DeviceLightAdaptationState.ACTIVE -> currentPermille?.div(PERMILLE_PER_PERCENT)
     DeviceLightAdaptationState.DISABLED,
     null -> null
@@ -170,8 +169,7 @@ private fun DeviceLightAdaptationProgress(
     percent: Int,
     colors: AquaDeviceCardColors
 ) {
-    val progress = percent.coerceIn(0, AquaLightControlsPreviewSpec.fullPercent) /
-        AquaLightControlsPreviewSpec.fullPercent.toFloat()
+    val progress = percent.coerceIn(0, FULL_PERCENT) / FULL_PERCENT.toFloat()
     Box(
         modifier = Modifier
             .padding(top = AquaLightDashboardGeometry.secondaryProgressTopGap)
@@ -202,27 +200,10 @@ private fun RowScope.DeviceLightSystemContent(
     ) {
         DeviceLightSecondaryTitle(R.string.device_light_system_title, colors, typography)
         BasicText(
-            text = stringResource(
-                R.string.device_light_system_temperature,
-                AquaLightControlsPreviewSpec.systemTemperatureCelsius
-            ),
-            style = typography.body.copy(color = colors.primaryText),
-            maxLines = 1
-        )
-        BasicText(
-            text = stringResource(
-                R.string.device_light_system_fans_summary,
-                AquaLightControlsPreviewSpec.systemFanOnePercent,
-                AquaLightControlsPreviewSpec.systemFanTwoPercent
-            ),
-            style = typography.micro.copy(color = colors.secondaryText),
-            maxLines = 1,
+            text = stringResource(R.string.device_light_system_open_details),
+            style = typography.body.copy(color = colors.secondaryText),
+            maxLines = 2,
             overflow = TextOverflow.Ellipsis
-        )
-        DeviceLightSystemStatus(
-            status = stringResource(R.string.device_light_system_status_normal),
-            colors = colors,
-            typography = typography
         )
     }
 }
@@ -241,31 +222,6 @@ private fun DeviceLightSecondaryTitle(
     )
 }
 
-@Composable
-private fun DeviceLightSystemStatus(
-    status: String,
-    colors: AquaDeviceCardColors,
-    typography: AquaDeviceCardTypography
-) {
-    Row(
-        modifier = Modifier.padding(top = AquaLightDashboardGeometry.systemStatusTopGap),
-        horizontalArrangement = Arrangement.spacedBy(AquaLightDashboardGeometry.systemStatusGap),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier
-                .size(AquaLightDashboardGeometry.systemStatusDotSize)
-                .clip(AquaLightDashboardGeometry.quickSetupShape)
-                .background(colors.accent)
-        )
-        BasicText(
-            text = status,
-            style = typography.micro.copy(color = colors.accent),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-    }
-}
-
+private const val FULL_PERCENT = 100
 private const val PERMILLE_PER_PERCENT = 10
 private const val SECONDS_PER_DAY = 86_400L

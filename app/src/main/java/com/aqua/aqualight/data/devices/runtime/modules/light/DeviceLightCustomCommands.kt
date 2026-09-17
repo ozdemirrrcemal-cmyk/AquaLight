@@ -52,9 +52,17 @@ private suspend fun DeviceLightRuntimeRepository.acceptSuccessfulCustomDocument(
     )
     if (accepted) return outcome
     val refreshed = requestStatus(outcome.deviceUid)
-    val acceptedAfterRefresh =
-        refreshed is DeviceRuntimeCommandOutcome.Success &&
-        stateOwner.customProjection.record(outcome.deviceUid, outcome.generation, outcome.value)
+    val acceptedAfterRefresh = if (refreshed is DeviceRuntimeCommandOutcome.Success) {
+        val acceptedDocument = stateOwner.customProjection.record(
+            outcome.deviceUid,
+            outcome.generation,
+            outcome.value
+        )
+        requestGraph(outcome.deviceUid)
+        acceptedDocument
+    } else {
+        false
+    }
     return if (acceptedAfterRefresh) outcome else DeviceRuntimeCommandOutcome.ProtocolError(
         deviceUid = outcome.deviceUid,
         module = outcome.module,

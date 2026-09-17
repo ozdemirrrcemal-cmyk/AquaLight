@@ -15,6 +15,7 @@ import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightProduct
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightScene
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightStatus
+import com.aqua.aqualight.data.devices.runtime.modules.light.requestGraph
 import kotlin.math.roundToInt
 
 internal suspend fun DeviceRuntimeCommandOutcome<*>.confirmManualMutation(
@@ -25,15 +26,21 @@ internal suspend fun DeviceRuntimeCommandOutcome<*>.confirmManualMutation(
     is DeviceRuntimeCommandOutcome.Success -> {
         val status = runtime.currentStatus(uid)
             ?.takeIf { current -> current.confirms(expectedScene) }
-            ?: runtime.requestStatus(uid)
-                .takeIf { refresh -> refresh is DeviceRuntimeCommandOutcome.Success }
-                ?.let { runtime.currentStatus(uid) }
+            ?: runtime.refreshStatusAndGraph(uid)
                 ?.takeIf { current -> current.confirms(expectedScene) }
         status?.toManualSnapshot(uid)
             ?.let(DeviceLightManualMutationResult::Success)
             ?: manualMutationFailure(DeviceLightManualFailure.UNAVAILABLE)
     }
     else -> manualMutationFailure(toManualFailure())
+}
+
+private suspend fun DeviceLightRuntimeRepository.refreshStatusAndGraph(
+    uid: DeviceUid
+): DeviceLightStatus? {
+    val outcome = requestStatus(uid)
+    if (outcome is DeviceRuntimeCommandOutcome.Success) requestGraph(uid)
+    return currentStatus(uid)
 }
 
 private fun DeviceLightStatus.confirms(expectedScene: DeviceLightScene): Boolean =

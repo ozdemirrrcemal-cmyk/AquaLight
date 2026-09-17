@@ -1,6 +1,5 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root
 
-import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,11 +22,11 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.style.TextAlign
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightChannelOutputSnapshot
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightDashboardAlpha
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightDashboardGeometry
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightLiveOutputColors
-import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightLiveOutputPreviewSpec
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightLiveOutputTypography
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightPlanChartSpec
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.aquaLightDashboardColors
@@ -35,11 +34,15 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.aquaL
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.aquaLightLiveOutputTypography
 
 @Composable
-internal fun DeviceLightLiveOutputCard(modifier: Modifier = Modifier) {
+internal fun DeviceLightLiveOutputCard(
+    channels: List<DeviceLightChannelOutputSnapshot>,
+    modifier: Modifier = Modifier
+) {
     val dashboardColors = aquaLightDashboardColors()
     val colors = aquaLightLiveOutputColors(dashboardColors)
     val typography = aquaLightLiveOutputTypography(dashboardColors)
-    val description = deviceLightLiveOutputDescription()
+    val outputChannels = deviceLightLiveOutputChannels(channels)
+    val description = deviceLightLiveOutputDescription(outputChannels)
 
     AquaDeviceCardSurface(
         modifier = modifier
@@ -48,7 +51,7 @@ internal fun DeviceLightLiveOutputCard(modifier: Modifier = Modifier) {
             .clearAndSetSemantics { contentDescription = description }
     ) {
         DeviceLightLiveOutputContent(
-            channels = deviceLightLiveOutputChannels(colors),
+            channels = outputChannels,
             colors = colors,
             typography = typography,
             textColor = dashboardColors.primaryText
@@ -56,53 +59,34 @@ internal fun DeviceLightLiveOutputCard(modifier: Modifier = Modifier) {
     }
 }
 
+@Composable
 private fun deviceLightLiveOutputChannels(
-    colors: AquaLightLiveOutputColors
-): List<DeviceLightLiveOutputChannel> =
-    listOf(
-        DeviceLightLiveOutputChannel(
-            labelRes = R.string.device_light_live_output_red,
-            percent = AquaLightLiveOutputPreviewSpec.redPercent,
-            color = colors.red
-        ),
-        DeviceLightLiveOutputChannel(
-            labelRes = R.string.device_light_live_output_green,
-            percent = AquaLightLiveOutputPreviewSpec.greenPercent,
-            color = colors.green
-        ),
-        DeviceLightLiveOutputChannel(
-            labelRes = R.string.device_light_live_output_blue,
-            percent = AquaLightLiveOutputPreviewSpec.bluePercent,
-            color = colors.blue
-        ),
-        DeviceLightLiveOutputChannel(
-            labelRes = R.string.device_light_live_output_white,
-            percent = AquaLightLiveOutputPreviewSpec.whitePercent,
-            color = colors.white
-        )
+    channels: List<DeviceLightChannelOutputSnapshot>
+): List<DeviceLightLiveOutputChannel> = channels.map { channel ->
+    DeviceLightLiveOutputChannel(
+        label = channel.localizedLabel(),
+        percent = channel.effectivePercent,
+        color = channel.toComposeColor()
+    )
+}
+
+@Composable
+private fun deviceLightLiveOutputDescription(
+    channels: List<DeviceLightLiveOutputChannel>
+): String =
+    stringResource(
+        R.string.device_light_live_output_content_description,
+        channels.joinToString { channel -> "${channel.label} ${channel.percent}%" }
     )
 
 @Composable
-private fun deviceLightLiveOutputDescription(): String =
-    stringResource(
-        R.string.device_light_live_output_content_description,
-        stringResource(
-            R.string.device_light_live_output_percent_format,
-            AquaLightLiveOutputPreviewSpec.redPercent
-        ),
-        stringResource(
-            R.string.device_light_live_output_percent_format,
-            AquaLightLiveOutputPreviewSpec.greenPercent
-        ),
-        stringResource(
-            R.string.device_light_live_output_percent_format,
-            AquaLightLiveOutputPreviewSpec.bluePercent
-        ),
-        stringResource(
-            R.string.device_light_live_output_percent_format,
-            AquaLightLiveOutputPreviewSpec.whitePercent
-        )
-    )
+private fun DeviceLightChannelOutputSnapshot.localizedLabel(): String = when (key) {
+    "red" -> stringResource(R.string.device_light_live_output_red)
+    "green" -> stringResource(R.string.device_light_live_output_green)
+    "blue" -> stringResource(R.string.device_light_live_output_blue)
+    "white" -> stringResource(R.string.device_light_live_output_white)
+    else -> displayName
+}
 
 @Composable
 private fun DeviceLightLiveOutputContent(
@@ -149,7 +133,7 @@ private fun DeviceLightLiveOutputRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         BasicText(
-            text = stringResource(channel.labelRes),
+            text = channel.label,
             style = typography.label.copy(color = textColor),
             modifier = Modifier.width(AquaLightDashboardGeometry.liveOutputLabelWidth)
         )
@@ -208,7 +192,7 @@ private fun DeviceLightLiveOutputTrack(
 }
 
 private data class DeviceLightLiveOutputChannel(
-    @StringRes val labelRes: Int,
+    val label: String,
     val percent: Int,
     val color: Color
 )

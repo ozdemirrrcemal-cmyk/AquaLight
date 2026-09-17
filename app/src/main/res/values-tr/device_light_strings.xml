@@ -48,6 +48,11 @@
     <string name="device_light_plan_manual_message">Manuel modda zaman planı kullanılmaz.</string>
     <string name="device_light_plan_switch_to_automatic">Otomatiğe geç</string>
     <string name="device_light_plan_manual_content_description">Manuel modda zaman planı kullanılmaz. Otomatiğe geç.</string>
+    <string name="device_light_plan_rtc_not_ready">Cihaz saati hazır değil.</string>
+    <string name="device_light_plan_no_automatic_program_today">Bugün için etkin otomatik program yok.</string>
+    <string name="device_light_plan_custom_not_installed">Özel eğri yüklü değil.</string>
+    <string name="device_light_plan_custom_not_scheduled_today">Özel eğri bugün için planlanmamış.</string>
+    <string name="device_light_plan_unavailable">Işık planı kullanılamıyor.</string>
     <string name="device_light_plan_current_time_format">Şimdi %1$s</string>
     <string name="device_light_plan_time_format">%1$02d:%2$02d</string>
     <string name="device_light_plan_hour_format">%1$02d</string>
@@ -56,14 +61,14 @@
     <string name="device_light_plan_channel_green">G</string>
     <string name="device_light_plan_channel_blue">B</string>
     <string name="device_light_plan_channel_white">W</string>
-    <string name="device_light_plan_content_description">00:00 ile 24:00 arasındaki planlanan kırmızı, yeşil, mavi ve beyaz ışık çıkışı. Geçerli önizleme saati: %1$s.</string>
+    <string name="device_light_plan_content_description">00:00 ile 24:00 arasındaki firmware ışık planı. Cihaz saati: %1$s.</string>
     <string name="device_light_live_output_title">Anlık çıkış</string>
     <string name="device_light_live_output_red">Kırmızı</string>
     <string name="device_light_live_output_green">Yeşil</string>
     <string name="device_light_live_output_blue">Mavi</string>
     <string name="device_light_live_output_white">Beyaz</string>
     <string name="device_light_live_output_percent_format">%%%1$d</string>
-    <string name="device_light_live_output_content_description">Anlık çıkış. Kırmızı %1$s, yeşil %2$s, mavi %3$s, beyaz %4$s.</string>
+    <string name="device_light_live_output_content_description">Anlık çıkış. %1$s.</string>
     <string name="device_light_controls_title">Kontrol ekranları</string>
     <string name="device_light_quick_setup_button">Akıllı kurulum</string>
     <string name="device_light_manual_control_subtitle">Kanalları doğrudan ayarla</string>
@@ -142,6 +147,7 @@
     <string name="device_light_system_temperature">%1$.1f °C</string>
     <string name="device_light_system_fans_summary">F1 %%%1$d · F2 %%%2$d</string>
     <string name="device_light_system_status_normal">Normal</string>
+    <string name="device_light_system_open_details">Firmware sistem ayrıntılarını görüntüle</string>
 
     <!-- Manuel ışık kontrolü -->
     <string name="device_light_manual_estimated_power">Tahmini güç</string>

@@ -86,6 +86,96 @@ class DeviceLightGenerationAuthorityTest {
         assertFalse(owner.customProjection.record(DEVICE_UID, G1, document))
     }
 
+    @Test
+    fun `reconnect keeps the last dashboard frame while current graph rehydrates`() {
+        val owner = DeviceLightRuntimeStateOwner()
+        val status = DeviceLightStatusParser.parse(DeviceLightRuntimeFixtures.status())
+        val graph = DeviceLightMutationParser.Graph.parseGraph(
+            DeviceLightRuntimeFixtures.graph(),
+            status.product
+        )
+
+        owner.beginGeneration(DEVICE_UID, G1)
+        assertTrue(owner.recordStatus(DEVICE_UID, G1, status))
+        assertTrue(owner.dashboardProjection.record(DEVICE_UID, G1, graph))
+        assertEquals(graph, owner.authoritativeDashboard()?.graph)
+
+        owner.invalidate(DEVICE_UID, G1)
+        owner.beginGeneration(DEVICE_UID, G2)
+        assertNull(owner.authoritativeDashboard())
+        assertEquals(
+            DeviceLightDashboardRuntimeState(status, graph),
+            owner.presentationDashboard()
+        )
+        assertTrue(owner.recordStatus(DEVICE_UID, G2, status))
+        assertNull(owner.authoritativeDashboard())
+        assertEquals(
+            DeviceLightDashboardRuntimeState(status, graph),
+            owner.presentationDashboard()
+        )
+        assertTrue(owner.dashboardProjection.record(DEVICE_UID, G2, graph))
+        assertEquals(graph, owner.authoritativeDashboard()?.graph)
+        assertEquals(
+            DeviceLightDashboardRuntimeState(status, graph),
+            owner.authoritativeDashboard()
+        )
+    }
+
+    @Test
+    fun `status mode change invalidates an obsolete graph`() {
+        val owner = DeviceLightRuntimeStateOwner()
+        val manualStatus = DeviceLightStatusParser.parse(DeviceLightRuntimeFixtures.status())
+        val manualGraph = DeviceLightMutationParser.Graph.parseGraph(
+            DeviceLightRuntimeFixtures.graph(),
+            manualStatus.product
+        )
+        val automaticStatus = manualStatus.copy(mode = DeviceLightMode.AUTO)
+
+        owner.beginGeneration(DEVICE_UID, G1)
+        owner.recordStatus(DEVICE_UID, G1, manualStatus)
+        owner.dashboardProjection.record(DEVICE_UID, G1, manualGraph)
+
+        assertTrue(owner.recordStatus(DEVICE_UID, G1, automaticStatus))
+        assertNull(owner.authoritativeDashboard())
+        assertEquals(
+            DeviceLightDashboardRuntimeState(manualStatus, manualGraph),
+            owner.presentationDashboard()
+        )
+        assertFalse(owner.dashboardProjection.record(DEVICE_UID, G1, manualGraph))
+        assertEquals(
+            DeviceLightDashboardRuntimeState(manualStatus, manualGraph),
+            owner.presentationDashboard()
+        )
+    }
+
+    @Test
+    fun `status refresh retains the old frame until fresh graph commits the new pair`() {
+        val owner = DeviceLightRuntimeStateOwner()
+        val status = DeviceLightStatusParser.parse(DeviceLightRuntimeFixtures.status())
+        val refreshedStatus = status.copy(outputActive = !status.outputActive)
+        val graph = DeviceLightMutationParser.Graph.parseGraph(
+            DeviceLightRuntimeFixtures.graph(),
+            status.product
+        )
+
+        owner.beginGeneration(DEVICE_UID, G1)
+        owner.recordStatus(DEVICE_UID, G1, status)
+        owner.dashboardProjection.record(DEVICE_UID, G1, graph)
+
+        assertTrue(owner.recordStatus(DEVICE_UID, G1, refreshedStatus))
+        assertNull(owner.authoritativeDashboard())
+        assertEquals(
+            DeviceLightDashboardRuntimeState(status, graph),
+            owner.presentationDashboard()
+        )
+        assertTrue(owner.dashboardProjection.record(DEVICE_UID, G1, graph))
+        assertEquals(graph, owner.authoritativeDashboard()?.graph)
+        assertEquals(
+            DeviceLightDashboardRuntimeState(refreshedStatus, graph),
+            owner.presentationDashboard()
+        )
+    }
+
     private companion object {
         val DEVICE_UID = DeviceUid("AQL-LIGHT-GENERATION")
         val G1 = DeviceRuntimeConnectionGeneration(1L)
@@ -100,4 +190,14 @@ private fun DeviceLightStatus.emptyCustomDocument() = DeviceLightCustomDocument(
     pointCount = custom.pointCount,
     points = emptyList(),
     event = null
+)
+
+private fun DeviceLightRuntimeStateOwner.authoritativeDashboard() = dashboardProjection.current(
+    DeviceUid("AQL-LIGHT-GENERATION"),
+    DeviceLightDashboardReadAuthority.AUTHORITATIVE
+)
+
+private fun DeviceLightRuntimeStateOwner.presentationDashboard() = dashboardProjection.current(
+    DeviceUid("AQL-LIGHT-GENERATION"),
+    DeviceLightDashboardReadAuthority.PRESENTATION
 )

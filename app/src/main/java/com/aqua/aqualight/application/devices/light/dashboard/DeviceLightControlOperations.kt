@@ -6,12 +6,13 @@ import kotlinx.coroutines.flow.Flow
 
 /** Firmware-independent application boundary for the shared Light V1 control surface. */
 interface DeviceLightControlOperations {
+    /** Observes the last complete validated frame; half-refreshes never erase presentation. */
     fun observeControl(deviceUid: String): Flow<DeviceLightControlResult>
 
     /** Returns a snapshot only when the current runtime generation is authoritative. */
     fun currentControl(deviceUid: String): DeviceLightControlResult
 
-    /** Refreshes the complete Light V1 status document used to prepare the root surface. */
+    /** Refreshes the Light V1 status and graph documents used to prepare the root surface. */
     suspend fun refreshControl(deviceUid: String): DeviceLightControlResult
 }
 
@@ -33,16 +34,52 @@ enum class DeviceLightControlFailure {
     INVALID_DATA
 }
 
-/** Authoritative Light snapshot projected without leaking firmware models into presentation. */
+/** Fully validated Light frame projected without leaking firmware models into presentation. */
 data class DeviceLightControlSnapshot(
     val deviceUid: String,
     val productKey: String,
     val physicalChannelCount: Int,
     val channelKeys: List<String>,
+    val channels: List<DeviceLightChannelOutputSnapshot>,
+    val plan: DeviceLightPlanSnapshot,
+    val automaticProgramCount: Int,
+    val customCurvePointCount: Int,
     val activeAutomaticProgramId: String? = null,
     val hero: DeviceLightHeroSnapshot = DeviceLightHeroSnapshot(),
     val adaptation: DeviceLightAdaptationSummary = DeviceLightAdaptationSummary()
 )
+
+/** Channel metadata and effective output exactly as reported by light.status.get. */
+data class DeviceLightChannelOutputSnapshot(
+    val key: String,
+    val displayName: String,
+    val displayColorRgb: Int,
+    val effectivePercent: Int
+)
+
+/** Daily plan exactly as reported by light.graph.get; presentation only scales it for drawing. */
+data class DeviceLightPlanSnapshot(
+    val available: Boolean,
+    val reason: DeviceLightPlanReason,
+    val nowTimeMs: Long?,
+    val channelScale: Int,
+    val hasScheduleToday: Boolean,
+    val points: List<DeviceLightPlanPointSnapshot>
+)
+
+data class DeviceLightPlanPointSnapshot(
+    val timeMs: Long,
+    val channelLevels: List<Int>
+)
+
+enum class DeviceLightPlanReason {
+    OK,
+    MODE_HAS_NO_SCHEDULE,
+    RTC_NOT_READY,
+    NO_ENABLED_AUTO_PROGRAM_TODAY,
+    CUSTOM_NOT_INSTALLED,
+    CUSTOM_NOT_SCHEDULED_TODAY
+}
 
 data class DeviceLightAdaptationSummary(
     val supported: Boolean = false,
@@ -90,6 +127,9 @@ fun DeviceLightControlSnapshot?.matchesLightControlSurface(
         productKey != root.productKey -> false
         physicalChannelCount != root.lightChannelCount -> false
         channelKeys.size != expectedKeys.size -> false
-        else -> channelKeys.toSet() == expectedKeys.toSet()
+        channelKeys.toSet() != expectedKeys.toSet() -> false
+        channels.map { channel -> channel.key } != channelKeys -> false
+        plan.points.any { point -> point.channelLevels.size != channels.size } -> false
+        else -> true
     }
 }

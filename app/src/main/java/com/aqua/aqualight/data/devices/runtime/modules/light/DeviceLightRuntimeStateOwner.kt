@@ -11,18 +11,36 @@ data class DeviceLightThermalRuntimeState(
     val telemetry: DeviceLightThermalTelemetry? = null
 )
 
+/** A status/graph pair validated and published as one indivisible dashboard frame. */
+internal data class DeviceLightDashboardRuntimeState(
+    val status: DeviceLightStatus,
+    val graph: DeviceLightGraph
+)
+
+internal enum class DeviceLightDashboardReadAuthority {
+    AUTHORITATIVE,
+    PRESENTATION
+}
+
 /**
  * The only mutable, firmware-authoritative Light state owner.
  *
- * Main Light status, custom, temperature protection and thermal documents publish through this
- * aggregate so no Light adapter can retain a parallel authoritative snapshot. Their independent
- * connection-generation lifecycles are delegated to [DeviceLightRuntimeAuthorityCoordinator].
+ * Main Light status, graph, custom, temperature protection and thermal documents publish through
+ * this aggregate so no Light adapter can retain a parallel authoritative snapshot. Their
+ * independent connection-generation lifecycles are delegated to
+ * [DeviceLightRuntimeAuthorityCoordinator].
  */
 internal class DeviceLightRuntimeStateOwner {
     private val lock = Any()
     private val authorityCoordinator = DeviceLightRuntimeAuthorityCoordinator()
     private val _statuses = MutableStateFlow<Map<DeviceUid, DeviceLightStatus>>(emptyMap())
     private val _stateRevision = MutableStateFlow(0L)
+    internal val dashboardProjection = DeviceLightDashboardRuntimeProjection(
+        lock = lock,
+        authorityCoordinator = authorityCoordinator,
+        statuses = { _statuses.value },
+        publishChange = { _stateRevision.value += 1L }
+    )
     internal val customProjection = DeviceLightCustomRuntimeProjection(
         lock = lock,
         authorityCoordinator = authorityCoordinator,
@@ -108,6 +126,7 @@ internal class DeviceLightRuntimeStateOwner {
             return@synchronized false
         }
         _statuses.value = _statuses.value + (deviceUid to status)
+        dashboardProjection.reconcileStatus(deviceUid, generation)
         customProjection.reconcileStatus(deviceUid, generation, status)
         _stateRevision.value += 1L
         true
@@ -210,12 +229,96 @@ internal class DeviceLightRuntimeStateOwner {
     fun clear(deviceUid: DeviceUid) {
         synchronized(lock) {
             _statuses.value = _statuses.value.without(deviceUid)
+            dashboardProjection.clear(deviceUid)
             customProjection.clear(deviceUid)
             _temperatureProtection.value = _temperatureProtection.value.without(deviceUid)
             _thermalStates.value = _thermalStates.value.without(deviceUid)
             authorityCoordinator.clear(deviceUid)
             _stateRevision.value += 1L
         }
+    }
+
+}
+
+/** Dashboard is a projection component of [DeviceLightRuntimeStateOwner], never a second owner. */
+internal class DeviceLightDashboardRuntimeProjection(
+    private val lock: Any,
+    private val authorityCoordinator: DeviceLightRuntimeAuthorityCoordinator,
+    private val statuses: () -> Map<DeviceUid, DeviceLightStatus>,
+    private val publishChange: () -> Unit
+) {
+    private var graphs: Map<DeviceUid, DeviceLightGraph> = emptyMap()
+    private var dashboards: Map<DeviceUid, DeviceLightDashboardRuntimeState> = emptyMap()
+
+    /**
+     * Presentation retains the last complete frame. Authoritative reads fail closed while a
+     * replacement status/graph pair is incomplete or belongs to an invalidated generation.
+     */
+    fun current(
+        deviceUid: DeviceUid,
+        authority: DeviceLightDashboardReadAuthority
+    ): DeviceLightDashboardRuntimeState? = synchronized(lock) {
+        val dashboard = dashboards[deviceUid] ?: return@synchronized null
+        when (authority) {
+            DeviceLightDashboardReadAuthority.PRESENTATION -> dashboard
+            DeviceLightDashboardReadAuthority.AUTHORITATIVE -> dashboard.takeIf {
+                statuses()[deviceUid] == dashboard.status &&
+                    graphs[deviceUid] == dashboard.graph &&
+                    dashboard.graph.isCoherentWith(dashboard.status) &&
+                    authorityCoordinator.isCurrentlyAuthoritative(
+                        DeviceLightRuntimeProjection.STATUS,
+                        deviceUid
+                    ) &&
+                    authorityCoordinator.isCurrentlyAuthoritative(
+                        DeviceLightRuntimeProjection.GRAPH,
+                        deviceUid
+                    )
+            }
+        }
+    }
+
+    fun record(
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration,
+        graph: DeviceLightGraph
+    ): Boolean = synchronized(lock) {
+        val status = statuses()[deviceUid] ?: return@synchronized false
+        val mayAccept = authorityCoordinator.isAuthoritative(
+            DeviceLightRuntimeProjection.STATUS,
+            deviceUid,
+            generation
+        ) && graph.isCoherentWith(status)
+        if (mayAccept && authorityCoordinator.acceptAuthoritativeSnapshot(
+                DeviceLightRuntimeProjection.GRAPH,
+                deviceUid,
+                generation
+            )) {
+            graphs = graphs + (deviceUid to graph)
+            dashboards = dashboards + (
+                deviceUid to DeviceLightDashboardRuntimeState(status, graph)
+            )
+            publishChange()
+            true
+        } else {
+            false
+        }
+    }
+
+    fun reconcileStatus(
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration
+    ) = synchronized(lock) {
+        // Revoke current graph authority, but retain the last atomically validated dashboard pair.
+        authorityCoordinator.invalidateProjection(
+            DeviceLightRuntimeProjection.GRAPH,
+            deviceUid,
+            generation
+        )
+    }
+
+    fun clear(deviceUid: DeviceUid) = synchronized(lock) {
+        graphs = graphs.without(deviceUid)
+        dashboards = dashboards.without(deviceUid)
     }
 }
 
@@ -311,6 +414,22 @@ private fun DeviceLightCustomDocument.isCoherentWith(status: DeviceLightStatus):
     summary() == status.customSummary() &&
         pointCount == points.size &&
         points.all { point -> point.scene.product == status.product }
+
+private fun DeviceLightGraph.isCoherentWith(status: DeviceLightStatus): Boolean =
+    mode == status.mode &&
+        sourceRevision == status.graphSourceRevision() &&
+        schedulerMatches(status)
+
+private fun DeviceLightGraph.schedulerMatches(status: DeviceLightStatus): Boolean =
+    schedulerGeneration == status.scheduler.generation &&
+        localDate == status.scheduler.localDate &&
+        currentWeekdayMask == status.scheduler.currentWeekdayMask
+
+private fun DeviceLightStatus.graphSourceRevision(): Long = when (mode) {
+    DeviceLightMode.MANUAL -> 0L
+    DeviceLightMode.AUTO -> auto.revision
+    DeviceLightMode.CUSTOM -> custom.revision
+}
 
 private fun DeviceLightCustomDocument.summary() = DeviceLightCustomDocumentSummary(
     revision = revision,

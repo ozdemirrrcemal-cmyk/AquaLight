@@ -292,24 +292,6 @@ object AquaLightPlanChartSpec {
     const val minimumPercent = 0
     const val maximumPercent = 100
     const val percentStep = 25
-    const val previewHour = 12
-    const val previewMinute = 0
-}
-
-object AquaLightLiveOutputPreviewSpec {
-    const val redPercent = 20
-    const val greenPercent = 30
-    const val bluePercent = 40
-    const val whitePercent = 50
-}
-
-object AquaLightControlsPreviewSpec {
-    const val fullPercent = 100
-    const val programCount = 3
-    const val customCurvePointCount = 12
-    const val systemTemperatureCelsius = 42.8
-    const val systemFanOnePercent = 35
-    const val systemFanTwoPercent = 35
 }
 
 object AquaLightManualControlSpec {
@@ -320,21 +302,13 @@ object AquaLightManualControlSpec {
 
 @Immutable
 data class AquaLightPlanChartColors(
-    val red: Color,
-    val green: Color,
-    val blue: Color,
-    val white: Color,
     val grid: Color,
     val currentGuide: Color
 )
 
 @Immutable
 data class AquaLightLiveOutputColors(
-    val rail: Color,
-    val red: Color,
-    val green: Color,
-    val blue: Color,
-    val white: Color
+    val rail: Color
 )
 
 @Immutable
@@ -472,10 +446,6 @@ fun aquaLightDashboardTypography(
 fun aquaLightPlanChartColors(
     colors: AquaDeviceCardColors
 ): AquaLightPlanChartColors = AquaLightPlanChartColors(
-    red = colorResource(R.color.aqua_card_state_danger),
-    green = colorResource(R.color.aqua_accent),
-    blue = colorResource(R.color.aqua_button_blue),
-    white = colorResource(R.color.aqua_content_on_dark),
     grid = colors.outline,
     currentGuide = colors.primaryText
 )
@@ -483,16 +453,9 @@ fun aquaLightPlanChartColors(
 @Composable
 fun aquaLightLiveOutputColors(
     colors: AquaDeviceCardColors
-): AquaLightLiveOutputColors {
-    val channelColors = aquaLightPlanChartColors(colors)
-    return AquaLightLiveOutputColors(
-        rail = colors.secondaryText.copy(alpha = AquaLightDashboardAlpha.liveOutputRail),
-        red = channelColors.red,
-        green = channelColors.green,
-        blue = channelColors.blue,
-        white = channelColors.white
-    )
-}
+): AquaLightLiveOutputColors = AquaLightLiveOutputColors(
+    rail = colors.secondaryText.copy(alpha = AquaLightDashboardAlpha.liveOutputRail)
+)
 
 fun aquaLightLiveOutputTypography(
     colors: AquaDeviceCardColors
