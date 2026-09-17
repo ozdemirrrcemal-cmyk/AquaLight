@@ -233,10 +233,18 @@ private fun LibrarySectionHeader(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
-        if (state.selectedTab == DeviceLightLibraryTab.MANUAL) {
-            Spacer(Modifier.width(2.dp))
-            LibrarySectionInformation(visuals)
-        }
+        Spacer(Modifier.width(2.dp))
+        LibrarySectionInformation(
+            information = stringResource(
+                when (state.selectedTab) {
+                    DeviceLightLibraryTab.MANUAL ->
+                        R.string.device_light_library_manual_information
+                    DeviceLightLibraryTab.CUSTOM ->
+                        R.string.device_light_library_custom_information
+                }
+            ),
+            visuals = visuals
+        )
         Spacer(Modifier.weight(1f))
         BasicText(
             text = pluralStringResource(
@@ -250,9 +258,11 @@ private fun LibrarySectionHeader(
 }
 
 @Composable
-private fun LibrarySectionInformation(visuals: DeviceLightLibraryVisuals) {
+private fun LibrarySectionInformation(
+    information: String,
+    visuals: DeviceLightLibraryVisuals
+) {
     var expanded by remember { mutableStateOf(false) }
-    val information = stringResource(R.string.device_light_library_manual_information)
     val popupOffset = with(LocalDensity.current) {
         IntOffset(0, AquaLightLibraryGeometry.informationTouchSize.roundToPx())
     }
