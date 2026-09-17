@@ -91,6 +91,23 @@ class DeviceFamilySettingsFirmwareFailureActionTest {
         )
     }
 
+    @Test
+    fun `unpublished release remains neutral and allows an explicit recheck`() {
+        val firmware = FakeFirmwareOperations()
+        val viewModel = createViewModel(firmware)
+        viewModel.bind(DEVICE_UID)
+        firmware.emit(DeviceOtaState.ReleaseNotPublished(DEVICE_UID, CURRENT_VERSION))
+
+        assertEquals(
+            DeviceSettingsUpdateActionState.ReleaseNotPublished,
+            viewModel.uiState.value.updateActionState
+        )
+
+        viewModel.onFirmwareUpdateAction()
+
+        assertEquals(1, firmware.checkCalls)
+    }
+
     private fun createViewModel(firmware: FakeFirmwareOperations) =
         DeviceFamilySettingsViewModel(
             settingsOperations = FakeSettingsOperations(),

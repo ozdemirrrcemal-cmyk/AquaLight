@@ -40,17 +40,16 @@ class DeviceFirmwareProductIsolationMatrixTest {
                 )
             }
             for (deviceProduct in products) {
-                val availability = DeviceFirmwareUpdatePlanner().evaluateUpdate(
+                val result = DeviceFirmwareUpdatePlanner().evaluateUpdate(
                     snapshot = snapshot(deviceProduct),
                     manifest = manifest
-                ).getOrThrow()
+                )
 
                 if (deviceProduct.productKey == releaseProduct.productKey) {
+                    val availability = result.getOrThrow()
                     assertTrue(availability is DeviceFirmwareAvailability.UpdateAvailable)
                 } else {
-                    val upToDate = availability as DeviceFirmwareAvailability.UpToDate
-                    assertEquals(CURRENT_VERSION, upToDate.currentVersion)
-                    assertEquals(CURRENT_VERSION, upToDate.latestVersion)
+                    assertTrue(result.exceptionOrNull() is IllegalArgumentException)
                 }
             }
         }

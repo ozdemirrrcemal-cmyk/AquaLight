@@ -38,35 +38,33 @@ class DeviceFirmwareBackgroundAvailabilityProbeTest {
     }
 
     @Test
-    fun missingIdentityArtifactProducesUpToDateHint() {
+    fun identityIncompatibleArtifactFailsClosed() {
         val exact = artifact()
         val other = exact.copy(
             compatibility = exact.compatibility.copy(model = "dose_pro_4")
         )
 
-        val hint = probe.evaluate(
+        val failure = probe.evaluate(
             snapshot(),
             manifest(artifacts = listOf(other))
-        ).getOrThrow() as DeviceFirmwareAvailabilityHint.UpToDate
+        ).exceptionOrNull()
 
-        assertEquals("1.0.0", hint.currentVersion)
-        assertEquals("1.0.0", hint.targetVersion)
+        assertTrue(failure is IllegalArgumentException)
     }
 
     @Test
-    fun nonmatchingEnvironmentProducesUpToDateHint() {
+    fun nonmatchingEnvironmentFailsClosed() {
         val wrongEnv = dosePro4Artifact()
 
-        val hint = probe.evaluate(
+        val failure = probe.evaluate(
             snapshot(),
             manifest(
                 tag = "dosing_dose_pro_4-v2.0.0",
                 artifacts = listOf(wrongEnv)
             )
-        ).getOrThrow() as DeviceFirmwareAvailabilityHint.UpToDate
+        ).exceptionOrNull()
 
-        assertEquals("1.0.0", hint.currentVersion)
-        assertEquals("1.0.0", hint.targetVersion)
+        assertTrue(failure is IllegalArgumentException)
     }
 
     @Test

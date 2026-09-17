@@ -35,6 +35,22 @@ class DeviceFirmwareUpdateProgressPresentationMapperTest {
         )
     }
 
+    @Test
+    fun `unpublished release is a completed neutral check`() {
+        val state = DeviceFirmwareUpdateUiState(
+            mode = DeviceFirmwareUpdateMode.RELEASE_NOT_PUBLISHED
+        )
+
+        assertEquals(
+            R.string.device_settings_update_phase_not_published,
+            DeviceFirmwareUpdateProgressPresentationMapper.phaseTextRes(state)
+        )
+        assertEquals(
+            R.string.device_settings_update_done_action,
+            DeviceFirmwareUpdateProgressPresentationMapper.action(state).textRes
+        )
+    }
+
     private fun failedState(stage: DeviceOtaFailureStage) = DeviceFirmwareUpdateUiState(
         mode = DeviceFirmwareUpdateMode.FAILED,
         failure = DeviceOtaFailure(

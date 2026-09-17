@@ -158,6 +158,7 @@ class DeviceFamilySettingsViewModel(
         val current = _uiState.value
         when (val state = current.updateActionState) {
             DeviceSettingsUpdateActionState.Idle,
+            DeviceSettingsUpdateActionState.ReleaseNotPublished,
             DeviceSettingsUpdateActionState.UpToDate -> when (current.firmwareLoadState) {
                 DeviceSettingsFirmwareLoadState.LOADING -> Unit
                 DeviceSettingsFirmwareLoadState.READY -> checkForUpdates()
@@ -269,16 +270,14 @@ class DeviceFamilySettingsViewModel(
             is DeviceOtaState.Idle -> DeviceSettingsUpdateActionState.Idle
             is DeviceOtaState.Checking -> DeviceSettingsUpdateActionState.Checking
             is DeviceOtaState.Unsupported -> DeviceSettingsUpdateActionState.Unsupported
+            is DeviceOtaState.ReleaseNotPublished ->
+                DeviceSettingsUpdateActionState.ReleaseNotPublished
             is DeviceOtaState.UpToDate,
             is DeviceOtaState.Succeeded -> DeviceSettingsUpdateActionState.UpToDate
-            is DeviceOtaState.RolledBack -> postUpdateAttention(
-                DeviceSettingsUpdateAttention.ROLLED_BACK
-            )
-            is DeviceOtaState.PostRestartTimeout -> postUpdateAttention(
-                DeviceSettingsUpdateAttention.CONNECTION_TIMEOUT
-            )
+            is DeviceOtaState.RolledBack,
+            is DeviceOtaState.PostRestartTimeout,
             is DeviceOtaState.UnexpectedFirmware -> postUpdateAttention(
-                DeviceSettingsUpdateAttention.UNEXPECTED_FIRMWARE
+                toSettingsUpdateAttention()
             )
             is DeviceOtaState.UpdateAvailable -> DeviceSettingsUpdateActionState.UpdateAvailable(
                 plan.targetVersion
@@ -300,6 +299,16 @@ class DeviceFamilySettingsViewModel(
                 progressPermille = COMPLETE_PROGRESS_PERMILLE
             )
             is DeviceOtaState.Failed -> DeviceSettingsUpdateActionState.Failed(failure)
+        }
+
+    private fun DeviceOtaState.toSettingsUpdateAttention(): DeviceSettingsUpdateAttention =
+        when (this) {
+            is DeviceOtaState.RolledBack -> DeviceSettingsUpdateAttention.ROLLED_BACK
+            is DeviceOtaState.PostRestartTimeout ->
+                DeviceSettingsUpdateAttention.CONNECTION_TIMEOUT
+            is DeviceOtaState.UnexpectedFirmware ->
+                DeviceSettingsUpdateAttention.UNEXPECTED_FIRMWARE
+            else -> error("OTA state does not require post-update attention.")
         }
 
     private fun postUpdateAttention(
@@ -401,6 +410,7 @@ enum class DeviceSettingsFirmwareLoadState {
 sealed interface DeviceSettingsUpdateActionState {
     data object Idle : DeviceSettingsUpdateActionState
     data object Checking : DeviceSettingsUpdateActionState
+    data object ReleaseNotPublished : DeviceSettingsUpdateActionState
     data object UpToDate : DeviceSettingsUpdateActionState
 
     data class UpdateAvailable(
@@ -436,6 +446,7 @@ private fun DeviceSettingsUpdateActionState.allowsAvailabilityCheck(
     automatic: Boolean
 ): Boolean = when (this) {
     DeviceSettingsUpdateActionState.Idle,
+    DeviceSettingsUpdateActionState.ReleaseNotPublished,
     DeviceSettingsUpdateActionState.UpToDate -> true
     is DeviceSettingsUpdateActionState.Failed ->
         !automatic && failure.canRetryAvailabilityCheck

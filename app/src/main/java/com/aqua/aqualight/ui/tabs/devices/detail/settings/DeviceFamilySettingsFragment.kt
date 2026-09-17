@@ -229,6 +229,7 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
     ) {
         val presentation = if (
             state == DeviceSettingsUpdateActionState.Idle ||
+            state == DeviceSettingsUpdateActionState.ReleaseNotPublished ||
             state == DeviceSettingsUpdateActionState.UpToDate
         ) {
             firmwareLoadState.toFirmwareLoadPresentation()
@@ -294,6 +295,11 @@ abstract class DeviceFamilySettingsFragment : Fragment(R.layout.fragment_device_
         DeviceSettingsUpdateActionState.UpToDate -> FirmwareActionPresentation(
             titleText = getString(R.string.device_settings_check_updates_action),
             subtitleText = installedFirmwareDescription(installedVersion),
+            enabled = true
+        )
+        DeviceSettingsUpdateActionState.ReleaseNotPublished -> FirmwareActionPresentation(
+            titleText = getString(R.string.device_settings_update_status_not_published),
+            subtitleText = getString(R.string.device_settings_update_not_published_description),
             enabled = true
         )
         is DeviceSettingsUpdateActionState.UpdateAvailable -> FirmwareActionPresentation(

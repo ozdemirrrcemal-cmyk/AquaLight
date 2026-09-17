@@ -319,6 +319,10 @@ data class DeviceFirmwareFactoryAsset(
 )
 
 sealed interface DeviceFirmwareAvailability {
+    data class ReleaseNotPublished(
+        val currentVersion: String
+    ) : DeviceFirmwareAvailability
+
     data class UpToDate(
         val currentVersion: String,
         val latestVersion: String,

@@ -221,6 +221,11 @@ internal fun Result<DeviceOtaState>.toPreparedUpdateResult():
                     "Device is already up to date: ${state.currentVersion}."
                 )
             )
+            is DeviceOtaState.ReleaseNotPublished -> Result.failure(
+                IllegalStateException(
+                    "No official OTA release information is published for this product."
+                )
+            )
             is DeviceOtaState.Unsupported -> Result.failure(
                 IllegalStateException("OTA is unsupported for this device.")
             )
@@ -317,6 +322,7 @@ private fun String?.releaseLocaleOrNull(): String? {
 
 private fun DeviceOtaState.allowsPassiveAvailabilityRefresh(): Boolean = when (this) {
     is DeviceOtaState.Idle,
+    is DeviceOtaState.ReleaseNotPublished,
     is DeviceOtaState.UpToDate -> true
     is DeviceOtaState.Failed ->
         failure.stage == DeviceOtaFailureStage.AVAILABILITY_CHECK && failure.recoverable
@@ -356,6 +362,7 @@ private fun DeviceOtaState.notificationKey(): String? = when (this) {
     }
     is DeviceOtaState.Idle,
     is DeviceOtaState.Checking,
+    is DeviceOtaState.ReleaseNotPublished,
     is DeviceOtaState.Unsupported,
     is DeviceOtaState.UpToDate,
     is DeviceOtaState.UpdateAvailable -> null

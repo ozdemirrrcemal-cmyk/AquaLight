@@ -14,6 +14,7 @@
     <string name="device_settings_update_check_description">Check for the latest compatible firmware.</string>
     <string name="device_settings_firmware_loading_description">Waiting for the device to securely report its installed firmware.</string>
     <string name="device_settings_update_checking_description">Verifying the latest signed release…</string>
+    <string name="device_settings_update_not_published_description">No update information has been published for this device yet.</string>
     <string name="device_settings_update_up_to_date_description">Firmware %1$s is installed and up to date.</string>
     <string name="device_settings_update_installed_unknown_description">The installed firmware is up to date.</string>
     <string name="device_settings_update_available_status">Firmware %1$s is ready</string>
