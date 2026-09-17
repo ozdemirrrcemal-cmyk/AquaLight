@@ -26,6 +26,12 @@ DOSING_FRAGMENT = Path(
     "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/root/"
     "DeviceDosingRootFragment.kt"
 )
+DOSING_UI_ROOT = Path(
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing"
+)
+DOSING_COMMERCIAL_ERROR_RESOLVER = (
+    DOSING_UI_ROOT / "presentation/common/DeviceDosingCommercialErrorResolver.kt"
+)
 COOLING_FRAGMENT = Path(
     "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/cooling/presentation/root/"
     "DeviceCoolingRootFragment.kt"
@@ -184,6 +190,32 @@ LIGHT_COMMERCIAL_ERROR_REFERENCE = re.compile(
     r"device_light_system_(?:partial_save|not_connected|unsupported|invalid_data|operation)_error"
     r")\b"
 )
+DOSING_COMMERCIAL_ERROR_REFERENCE = re.compile(
+    r"R\.string\.(?:"
+    r"device_dosing_channel_open_failed|"
+    r"device_dosing_plan_rejected_(?:not_editable|not_calibrated|busy|conflict|unsafe)|"
+    r"device_dosing_plan_invalid_schedule|"
+    r"device_dosing_plan_unavailable|"
+    r"device_dosing_detail_error_(?:invalid_input|not_editable|calibration_required|busy|"
+    r"state_changed|safety_blocked|unavailable)|"
+    r"device_dosing_error_output_stop_unconfirmed|"
+    r"device_dosing_detail_operation_failed|"
+    r"device_dosing_calibration_(?:connection_error|storage_error|hardware_error|"
+    r"operation_in_progress|device_time_not_ready|state_mismatch|operation_failed|"
+    r"invalid_measurement)"
+    r")"
+)
+DOSING_LOCAL_VALIDATION_RESOURCE_OWNERS = {
+    DOSING_UI_ROOT / "channel/detail/DeviceDosingChannelDetailDialogs.kt": (
+        "device_dosing_detail_error_invalid_input",
+    ),
+    DOSING_UI_ROOT / "channel/plan/DeviceDosingPlanFragment.kt": (
+        "device_dosing_plan_invalid_schedule",
+    ),
+    DOSING_UI_ROOT / "channel/calibration/DosingCalibrationPresentation.kt": (
+        "device_dosing_calibration_invalid_measurement",
+    ),
+}
 
 COOLING_UI_FORBIDDEN = (
     "import com.aqua.aqualight.data.",
@@ -617,6 +649,38 @@ def validate_cooling_feature_boundaries(repository_root: Path) -> list[str]:
                 continue
             source = path.read_text(encoding="utf-8", errors="ignore")
             errors.extend(validate_resource_usage(path.relative_to(repository_root), source))
+    return errors
+
+
+def validate_dosing_commercial_error_boundaries(repository_root: Path) -> list[str]:
+    """Keep Dosing operational failure copy behind one feature-scoped resolver."""
+    errors: list[str] = []
+    resolver = _read(repository_root, DOSING_COMMERCIAL_ERROR_RESOLVER, errors)
+    _require(
+        DOSING_COMMERCIAL_ERROR_RESOLVER,
+        resolver,
+        errors,
+        "object DeviceDosingCommercialErrorResolver",
+        "Dosing command failures must use one feature-scoped commercial error resolver",
+    )
+
+    absolute_ui_root = repository_root / DOSING_UI_ROOT
+    if not absolute_ui_root.is_dir():
+        errors.append(f"{DOSING_UI_ROOT}: Dosing UI root is missing")
+        return errors
+
+    for path in sorted(absolute_ui_root.rglob("*.kt")):
+        relative_path = path.relative_to(repository_root)
+        if relative_path == DOSING_COMMERCIAL_ERROR_RESOLVER:
+            continue
+        source = path.read_text(encoding="utf-8", errors="ignore")
+        for resource_name in DOSING_LOCAL_VALIDATION_RESOURCE_OWNERS.get(relative_path, ()):
+            source = source.replace(f"R.string.{resource_name}", "")
+        if DOSING_COMMERCIAL_ERROR_REFERENCE.search(source):
+            errors.append(
+                f"{relative_path}: Dosing operational error resources must be owned by "
+                "DeviceDosingCommercialErrorResolver"
+            )
     return errors
 
 
@@ -1410,6 +1474,7 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
     )
     errors.extend(validate_timer_feature_boundaries(repository_root))
     errors.extend(validate_cooling_feature_boundaries(repository_root))
+    errors.extend(validate_dosing_commercial_error_boundaries(repository_root))
     errors.extend(validate_light_feature_boundaries(repository_root))
     return errors
 

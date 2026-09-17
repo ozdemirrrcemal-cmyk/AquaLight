@@ -208,6 +208,60 @@ class DeviceRootUiArchitectureGuardTest(unittest.TestCase):
                 errors,
             )
 
+    def test_dosing_operational_error_resource_cannot_bypass_central_resolver(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repository_root = Path(temporary_directory)
+            resolver = repository_root / GUARD.DOSING_COMMERCIAL_ERROR_RESOLVER
+            resolver.parent.mkdir(parents=True)
+            resolver.write_text(
+                "internal object DeviceDosingCommercialErrorResolver\n",
+                encoding="utf-8",
+            )
+            bypass = (
+                repository_root
+                / GUARD.DOSING_UI_ROOT
+                / "channel/plan/DecentralizedDosingError.kt"
+            )
+            bypass.parent.mkdir(parents=True)
+            bypass.write_text(
+                "private val error = R.string.device_dosing_plan_unavailable\n",
+                encoding="utf-8",
+            )
+
+            errors = GUARD.validate_dosing_commercial_error_boundaries(repository_root)
+
+        self.assertTrue(
+            any("DeviceDosingCommercialErrorResolver" in error for error in errors),
+            errors,
+        )
+
+    def test_dosing_form_validation_copy_may_remain_local(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repository_root = Path(temporary_directory)
+            resolver = repository_root / GUARD.DOSING_COMMERCIAL_ERROR_RESOLVER
+            resolver.parent.mkdir(parents=True)
+            resolver.write_text(
+                "internal object DeviceDosingCommercialErrorResolver\n",
+                encoding="utf-8",
+            )
+            validation = (
+                repository_root
+                / GUARD.DOSING_UI_ROOT
+                / "channel/calibration/DosingCalibrationPresentation.kt"
+            )
+            validation.parent.mkdir(parents=True)
+            validation.write_text(
+                "private val error = R.string.device_dosing_calibration_invalid_measurement\n",
+                encoding="utf-8",
+            )
+
+            errors = GUARD.validate_dosing_commercial_error_boundaries(repository_root)
+
+        self.assertFalse(
+            any("operational error resources" in error for error in errors),
+            errors,
+        )
+
     def test_legacy_light_menu_package_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             repository_root = Path(temporary_directory)
