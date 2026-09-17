@@ -127,7 +127,7 @@ class DeviceLightAutomaticProgramEditorViewModelTest {
 
     private companion object {
         const val DEVICE_UID = "automatic-editor-light"
-        const val PROGRAM_ID = "0000000000000001"
+        const val PROGRAM_ID = "ap-00000001"
         const val REVISION = 4L
         const val START_TIME_MS = 10L * 60L * 60_000L
         const val END_TIME_MS = 17L * 60L * 60_000L
