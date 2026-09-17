@@ -257,17 +257,6 @@ class DeviceDosingPlanFragment :
         }
     }
 
-    private fun showPlanMessage(
-        messageRes: Int,
-        type: BaseActivity.SnackType = BaseActivity.SnackType.SUCCESS
-    ) {
-        (activity as? BaseActivity)?.showSnackBar(getString(messageRes), type)
-    }
-
-    private fun showPlanError(error: DeviceDosingCommercialErrorMessage) {
-        showPlanMessage(error.messageRes, error.severity.toSnackType())
-    }
-
     private companion object {
         const val DAILY_DOSE_REQUEST_KEY = "dosing_daily_dose_input"
         const val DAILY_DOSE_INPUT_MAX_LENGTH = 12
@@ -276,6 +265,19 @@ class DeviceDosingPlanFragment :
         const val UNSAVED_CHANGES_REQUEST_KEY = "dosing_plan_unsaved_changes"
         const val ACTION_EXIT_WITHOUT_SAVING = "exit_dosing_plan_without_saving"
     }
+}
+
+private fun DeviceDosingPlanFragment.showPlanMessage(
+    messageRes: Int,
+    type: BaseActivity.SnackType = BaseActivity.SnackType.SUCCESS
+) {
+    (activity as? BaseActivity)?.showSnackBar(getString(messageRes), type)
+}
+
+private fun DeviceDosingPlanFragment.showPlanError(
+    error: DeviceDosingCommercialErrorMessage
+) {
+    showPlanMessage(error.messageRes, error.severity.toSnackType())
 }
 
 private fun scheduleDirection(
