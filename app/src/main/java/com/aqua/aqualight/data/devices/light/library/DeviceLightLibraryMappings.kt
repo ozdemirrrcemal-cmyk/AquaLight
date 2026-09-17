@@ -2,24 +2,54 @@ package com.aqua.aqualight.data.devices.light.library
 
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlSnapshot
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryChannel
+import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryChannelDescriptor
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryCustomPoint
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryEntry
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryPayload
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryScene
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryTarget
+import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightCustomDocument
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightMode
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightProduct
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightScene
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightStatus
 
-internal fun DeviceLightControlSnapshot.toTarget(
+internal fun DeviceLightStatus.toLibraryTarget(
+    deviceUid: DeviceUid
+): DeviceLightLibraryTarget = DeviceLightLibraryTarget(
+    deviceUid = deviceUid.value,
+    productKey = product.wireValue,
+    channelDescriptors = channels.sortedBy { descriptor -> descriptor.order }.map { descriptor ->
+        DeviceLightLibraryChannelDescriptor(
+            channel = requireNotNull(
+                DeviceLightLibraryChannel.fromSceneKey(descriptor.percentField)
+            ),
+            key = descriptor.key,
+            displayName = descriptor.displayName,
+            displayColorRgb = descriptor.displayColorRgb,
+            order = descriptor.order
+        )
+    },
+    estimatedPowerWatts = power.estimatedFixturePowerW
+        ?.takeIf { product == DeviceLightProduct.WRGB_PRO_ELITE }
+        ?.toInt()
+)
+
+internal fun DeviceLightControlSnapshot.toLibraryTarget(
     product: DeviceLightProduct
 ): DeviceLightLibraryTarget = DeviceLightLibraryTarget(
     deviceUid = deviceUid,
     productKey = productKey,
-    channels = product.sceneFields.map { sceneKey ->
-        requireNotNull(DeviceLightLibraryChannel.fromSceneKey(sceneKey))
+    channelDescriptors = product.sceneFields.zip(channels).mapIndexed { index, pair ->
+        val (percentField, output) = pair
+        DeviceLightLibraryChannelDescriptor(
+            channel = requireNotNull(DeviceLightLibraryChannel.fromSceneKey(percentField)),
+            key = output.key,
+            displayName = output.displayName,
+            displayColorRgb = output.displayColorRgb,
+            order = index
+        )
     },
     estimatedPowerWatts = hero.estimatedPowerWatts
         ?.takeIf { product == DeviceLightProduct.WRGB_PRO_ELITE }

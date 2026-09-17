@@ -1,14 +1,21 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.library
 
+import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryChannelDescriptor
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryEntry
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryKind
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryTarget
+import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.DeviceLightCommercialErrorMessage
 
 internal enum class DeviceLightLibraryTab {
     MANUAL,
     CUSTOM
 }
+
+internal data class DeviceLightLibraryCardPresentation(
+    val descriptors: List<DeviceLightLibraryChannelDescriptor>,
+    val firmwareWritesEnabled: Boolean
+)
 
 internal data class DeviceLightLibraryUiState(
     val deviceUid: String = "",
@@ -17,6 +24,9 @@ internal data class DeviceLightLibraryUiState(
     val entries: List<DeviceLightLibraryEntry> = emptyList(),
     val initialLoading: Boolean = true,
     val readError: DeviceLightCommercialErrorMessage? = null,
+    val connectionVisualState: DeviceConnectionVisualState = DeviceConnectionVisualState.OFFLINE,
+    val centralFirmwareWritesEnabled: Boolean = false,
+    val runtimeWriteAuthoritative: Boolean = false,
     val activeLoadEntryId: String? = null
 ) {
     val visibleEntries: List<DeviceLightLibraryEntry>
@@ -29,6 +39,12 @@ internal data class DeviceLightLibraryUiState(
 
     val showGlobalLoading: Boolean
         get() = activeLoadEntryId != null
+
+    val hasPresentationSnapshot: Boolean
+        get() = target != null
+
+    val firmwareWritesEnabled: Boolean
+        get() = centralFirmwareWritesEnabled && runtimeWriteAuthoritative
 }
 
 internal data class DeviceLightLibraryActions(

@@ -11,6 +11,7 @@ import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomMuta
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomOperations
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomReadResult
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryChannel
+import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryChannelDescriptor
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryCustomPoint
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryEntry
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryKind
@@ -124,10 +125,11 @@ class DebugLightFixtureIntegrationTest {
                     target = DeviceLightLibraryTarget(
                         deviceUid = deviceUid,
                         productKey = current.productKey,
-                        channels = entry.channels,
+                        channelDescriptors = entry.channels.mapIndexed(::fixtureDescriptor),
                         estimatedPowerWatts = null
                     ),
-                    entries = listOf(entry)
+                    entries = listOf(entry),
+                    firmwareWriteAuthoritative = true
                 )
             )
         )
@@ -202,6 +204,17 @@ private fun libraryChannel(
     com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomChannel.WHITE ->
         DeviceLightLibraryChannel.WHITE
 }
+
+private fun fixtureDescriptor(
+    index: Int,
+    channel: DeviceLightLibraryChannel
+): DeviceLightLibraryChannelDescriptor = DeviceLightLibraryChannelDescriptor(
+    channel = channel,
+    key = channel.name.lowercase(),
+    displayName = channel.name,
+    displayColorRgb = index,
+    order = index
+)
 
 private object FailingCustomOperations : DeviceLightCustomOperations {
     override suspend fun read(deviceUid: String): DeviceLightCustomReadResult = fail(deviceUid)

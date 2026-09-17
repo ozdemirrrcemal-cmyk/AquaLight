@@ -96,7 +96,8 @@ private class DebugDeviceFixtureViewModelFactory(
                 )
             DeviceLightLibraryViewModel::class.java ->
                 DeviceLightLibraryViewModel(
-                    timerDependencies(requireGraph()).lightLibraryOperations
+                    operations = timerDependencies(requireGraph()).lightLibraryOperations,
+                    rootOperations = rootOperations(requireGraph())
                 )
             DeviceTimerRootViewModel::class.java ->
                 createTimerRootViewModel(requireGraph())

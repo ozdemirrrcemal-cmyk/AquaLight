@@ -17,16 +17,37 @@ enum class DeviceLightLibraryChannel(val sceneKey: String) {
     }
 }
 
+/** Firmware-authored channel presentation; user scene percentages are stored separately. */
+data class DeviceLightLibraryChannelDescriptor(
+    val channel: DeviceLightLibraryChannel,
+    val key: String,
+    val displayName: String,
+    val displayColorRgb: Int,
+    val order: Int
+) {
+    init {
+        require(key.isNotBlank())
+        require(displayName.isNotBlank())
+        require(displayColorRgb in DISPLAY_COLOR_RANGE)
+        require(order >= 0)
+    }
+}
+
 data class DeviceLightLibraryTarget(
     val deviceUid: String,
     val productKey: String,
-    val channels: List<DeviceLightLibraryChannel>,
+    val channelDescriptors: List<DeviceLightLibraryChannelDescriptor>,
     val estimatedPowerWatts: Int?
 ) {
+    val channels: List<DeviceLightLibraryChannel>
+        get() = channelDescriptors.map(DeviceLightLibraryChannelDescriptor::channel)
+
     init {
         require(deviceUid.isNotBlank())
         require(productKey.isNotBlank())
         require(channels.size in CHANNEL_COUNT_RANGE && channels.distinct().size == channels.size)
+        require(channelDescriptors.map { descriptor -> descriptor.key }.distinct().size == channels.size)
+        require(channelDescriptors.map { descriptor -> descriptor.order } == channels.indices.toList())
         require(estimatedPowerWatts == null || estimatedPowerWatts >= 0)
     }
 }
@@ -104,7 +125,9 @@ data class DeviceLightLibraryEntry(
 
 data class DeviceLightLibrarySnapshot(
     val target: DeviceLightLibraryTarget,
-    val entries: List<DeviceLightLibraryEntry>
+    val entries: List<DeviceLightLibraryEntry>,
+    /** Current generation authority for firmware writes; presentation may be older and retained. */
+    val firmwareWriteAuthoritative: Boolean
 )
 
 sealed interface DeviceLightLibraryResult {
@@ -137,9 +160,11 @@ private const val MIN_WEEKDAYS_MASK = 1
 private const val MAX_WEEKDAYS_MASK = 127
 private const val MIN_CUSTOM_POINTS = 1
 private const val MAX_CUSTOM_POINTS = 96
+private const val DISPLAY_COLOR_RGB_MAX = 0xFFFFFF
 private const val LAST_DAY_MILLISECOND = 86_399_999L
 private const val SCHEDULE_TIME_STEP_MILLIS = 60_000L
 private val CHANNEL_COUNT_RANGE = MIN_CHANNEL_COUNT..MAX_CHANNEL_COUNT
 private val PERCENT_RANGE = MIN_PERCENT..MAX_PERCENT
 private val WEEKDAYS_MASK_RANGE = MIN_WEEKDAYS_MASK..MAX_WEEKDAYS_MASK
 private val CUSTOM_POINT_COUNT_RANGE = MIN_CUSTOM_POINTS..MAX_CUSTOM_POINTS
+private val DISPLAY_COLOR_RANGE = 0..DISPLAY_COLOR_RGB_MAX

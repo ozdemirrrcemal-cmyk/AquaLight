@@ -127,7 +127,7 @@ internal class DeviceLightLibraryPersistence(
         return control?.let { available ->
             runCatching {
                 DeviceLightProduct.fromWireExact(available.snapshot.productKey)
-            }.map { product -> available.snapshot.toTarget(product) }.getOrNull()
+            }.map { product -> available.snapshot.toLibraryTarget(product) }.getOrNull()
         }
     }
 

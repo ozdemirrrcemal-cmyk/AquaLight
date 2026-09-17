@@ -176,6 +176,108 @@ class DeviceLightGenerationAuthorityTest {
         )
     }
 
+    @Test
+    fun `library retains its last complete frame until reconnect hydrates custom`() {
+        val owner = DeviceLightRuntimeStateOwner()
+        val firstStatus = DeviceLightStatusParser.parse(DeviceLightRuntimeFixtures.status())
+        val firstDocument = firstStatus.emptyCustomDocument()
+        val refreshedStatus = firstStatus.copy(outputActive = !firstStatus.outputActive)
+
+        owner.beginGeneration(DEVICE_UID, G1)
+        assertTrue(owner.recordStatus(DEVICE_UID, G1, firstStatus))
+        assertTrue(owner.customProjection.record(DEVICE_UID, G1, firstDocument))
+        assertEquals(
+            DeviceLightLibraryRuntimeState(firstStatus, firstDocument),
+            owner.presentationLibrary()
+        )
+
+        owner.invalidate(DEVICE_UID, G1)
+        owner.beginGeneration(DEVICE_UID, G2)
+        assertTrue(owner.recordStatus(DEVICE_UID, G2, refreshedStatus))
+
+        assertNull(owner.authoritativeLibrary())
+        assertEquals(
+            DeviceLightLibraryRuntimeState(firstStatus, firstDocument),
+            owner.presentationLibrary()
+        )
+
+        assertTrue(owner.customProjection.record(DEVICE_UID, G2, firstDocument))
+        assertEquals(
+            DeviceLightLibraryRuntimeState(refreshedStatus, firstDocument),
+            owner.authoritativeLibrary()
+        )
+    }
+
+    @Test
+    fun `library custom revision change publishes status and document atomically`() {
+        val owner = DeviceLightRuntimeStateOwner()
+        val firstStatus = DeviceLightStatusParser.parse(DeviceLightRuntimeFixtures.status())
+        val firstDocument = firstStatus.emptyCustomDocument()
+        val nextStatus = firstStatus.copy(
+            custom = firstStatus.custom.copy(revision = firstStatus.custom.revision + 1L)
+        )
+        val nextDocument = nextStatus.emptyCustomDocument()
+
+        owner.beginGeneration(DEVICE_UID, G1)
+        owner.recordStatus(DEVICE_UID, G1, firstStatus)
+        owner.customProjection.record(DEVICE_UID, G1, firstDocument)
+
+        assertTrue(owner.recordStatus(DEVICE_UID, G1, nextStatus))
+        assertNull(owner.authoritativeLibrary())
+        assertEquals(
+            DeviceLightLibraryRuntimeState(firstStatus, firstDocument),
+            owner.presentationLibrary()
+        )
+
+        assertTrue(owner.customProjection.record(DEVICE_UID, G1, nextDocument))
+        assertEquals(
+            DeviceLightLibraryRuntimeState(nextStatus, nextDocument),
+            owner.presentationLibrary()
+        )
+    }
+
+    @Test
+    fun `library reuses an authoritative coherent custom document for a status refresh`() {
+        val owner = DeviceLightRuntimeStateOwner()
+        val status = DeviceLightStatusParser.parse(DeviceLightRuntimeFixtures.status())
+        val document = status.emptyCustomDocument()
+        val refreshedStatus = status.copy(outputActive = !status.outputActive)
+
+        owner.beginGeneration(DEVICE_UID, G1)
+        owner.recordStatus(DEVICE_UID, G1, status)
+        owner.customProjection.record(DEVICE_UID, G1, document)
+
+        assertTrue(owner.recordStatus(DEVICE_UID, G1, refreshedStatus))
+        assertEquals(
+            DeviceLightLibraryRuntimeState(refreshedStatus, document),
+            owner.authoritativeLibrary()
+        )
+    }
+
+    @Test
+    fun `late old generation custom cannot replace the current library frame`() {
+        val owner = DeviceLightRuntimeStateOwner()
+        val status = DeviceLightStatusParser.parse(DeviceLightRuntimeFixtures.status())
+        val document = status.emptyCustomDocument()
+
+        owner.beginGeneration(DEVICE_UID, G1)
+        owner.recordStatus(DEVICE_UID, G1, status)
+        owner.customProjection.record(DEVICE_UID, G1, document)
+        owner.invalidate(DEVICE_UID, G1)
+        owner.beginGeneration(DEVICE_UID, G2)
+        owner.recordStatus(DEVICE_UID, G2, status)
+        owner.customProjection.record(DEVICE_UID, G2, document)
+
+        assertFalse(
+            owner.customProjection.record(
+                DEVICE_UID,
+                G1,
+                document.copy(revision = document.revision + 1L)
+            )
+        )
+        assertEquals(DeviceLightLibraryRuntimeState(status, document), owner.presentationLibrary())
+    }
+
     private companion object {
         val DEVICE_UID = DeviceUid("AQL-LIGHT-GENERATION")
         val G1 = DeviceRuntimeConnectionGeneration(1L)
@@ -200,4 +302,14 @@ private fun DeviceLightRuntimeStateOwner.authoritativeDashboard() = dashboardPro
 private fun DeviceLightRuntimeStateOwner.presentationDashboard() = dashboardProjection.current(
     DeviceUid("AQL-LIGHT-GENERATION"),
     DeviceLightDashboardReadAuthority.PRESENTATION
+)
+
+private fun DeviceLightRuntimeStateOwner.authoritativeLibrary() = libraryProjection.current(
+    DeviceUid("AQL-LIGHT-GENERATION"),
+    DeviceLightLibraryReadAuthority.AUTHORITATIVE
+)
+
+private fun DeviceLightRuntimeStateOwner.presentationLibrary() = libraryProjection.current(
+    DeviceUid("AQL-LIGHT-GENERATION"),
+    DeviceLightLibraryReadAuthority.PRESENTATION
 )

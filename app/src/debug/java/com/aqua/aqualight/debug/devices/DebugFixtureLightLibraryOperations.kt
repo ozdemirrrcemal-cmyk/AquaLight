@@ -99,7 +99,8 @@ private fun DeviceLightLibraryResult.withFixtureLoadedState(
     is DeviceLightLibraryResult.Available -> DeviceLightLibraryResult.Available(
         DeviceLightLibrarySnapshot(
             target = snapshot.target,
-            entries = snapshot.entries.map { entry -> entry.withLoadedState(deviceUid, runtime) }
+            entries = snapshot.entries.map { entry -> entry.withLoadedState(deviceUid, runtime) },
+            firmwareWriteAuthoritative = snapshot.firmwareWriteAuthoritative
         )
     )
     is DeviceLightLibraryResult.Failed -> this

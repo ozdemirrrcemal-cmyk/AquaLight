@@ -86,8 +86,8 @@ internal fun DeviceLightLibraryScreen(
             LibraryTabs(state.selectedTab, actions.onTabSelected, visuals)
         }
         when {
-            state.initialLoading -> Unit
-            state.readError != null || state.target == null -> item(key = "library-error") {
+            state.initialLoading && !state.hasPresentationSnapshot -> Unit
+            !state.hasPresentationSnapshot -> item(key = "library-error") {
                 val error = state.readError
                     ?: DeviceLightLibraryFailure.INVALID_DATA.toCommercialLightReadError()
                 LibraryMessageCard(
@@ -101,7 +101,23 @@ internal fun DeviceLightLibraryScreen(
                     visuals = visuals
                 )
             }
-            else -> libraryContent(state, actions, visuals)
+            else -> {
+                state.readError?.let { error ->
+                    item(key = "library-refresh-warning") {
+                        LibraryMessageCard(
+                            content = LibraryMessageContent(
+                                iconRes = R.drawable.ic_error,
+                                title = stringResource(error.titleRes),
+                                message = stringResource(error.messageRes),
+                                actionText = stringResource(R.string.device_light_library_retry)
+                            ),
+                            onAction = actions.onRetryClick,
+                            visuals = visuals
+                        )
+                    }
+                }
+                libraryContent(state, actions, visuals)
+            }
         }
     }
 }
@@ -111,6 +127,10 @@ private fun androidx.compose.foundation.lazy.LazyListScope.libraryContent(
     actions: DeviceLightLibraryActions,
     visuals: DeviceLightLibraryVisuals
 ) {
+    val cardPresentation = DeviceLightLibraryCardPresentation(
+        descriptors = requireNotNull(state.target).channelDescriptors,
+        firmwareWritesEnabled = state.firmwareWritesEnabled
+    )
     item(key = "library-section-header") {
         LibrarySectionHeader(state, visuals)
     }
@@ -122,9 +142,21 @@ private fun androidx.compose.foundation.lazy.LazyListScope.libraryContent(
         items(state.visibleEntries, key = DeviceLightLibraryEntry::id) { entry ->
             when (val payload = entry.payload) {
                 is DeviceLightLibraryPayload.Manual ->
-                    ManualLibraryCard(entry, payload, actions, visuals)
+                    ManualLibraryCard(
+                        entry,
+                        payload,
+                        cardPresentation,
+                        actions,
+                        visuals
+                    )
                 is DeviceLightLibraryPayload.Custom ->
-                    CustomLibraryCard(entry, payload, actions, visuals)
+                    CustomLibraryCard(
+                        entry,
+                        payload,
+                        cardPresentation,
+                        actions,
+                        visuals
+                    )
             }
         }
     }

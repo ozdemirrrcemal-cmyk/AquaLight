@@ -201,7 +201,8 @@ internal class OwnerViewModelFactory(
                 libraryOperations = graph.lightOperations.libraryOperations
             )
             DeviceLightLibraryViewModel::class.java -> DeviceLightLibraryViewModel(
-                operations = graph.lightOperations.libraryOperations
+                operations = graph.lightOperations.libraryOperations,
+                rootOperations = DefaultDeviceRootOperations(repository)
             )
             DeviceLightSystemViewModel::class.java -> DeviceLightSystemViewModel(
                 operations = graph.lightOperations.systemOperations

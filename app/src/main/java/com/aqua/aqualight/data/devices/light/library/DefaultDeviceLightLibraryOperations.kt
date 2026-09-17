@@ -14,11 +14,11 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightCustomInstallPayload
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightCustomPoint
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightLibraryReadAuthority
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightManualSetPayload
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightProduct
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightStatus
-import com.aqua.aqualight.data.devices.runtime.modules.light.currentCustom
+import com.aqua.aqualight.data.devices.runtime.modules.light.currentLibrary
 import com.aqua.aqualight.data.devices.runtime.modules.light.installCustom
 import com.aqua.aqualight.data.devices.runtime.modules.light.requestCustom
 import java.util.UUID
@@ -62,30 +62,19 @@ internal class DefaultDeviceLightLibraryOperations(
         uid: DeviceUid,
         runtime: DeviceLightRuntimeRepository
     ): Flow<DeviceLightLibraryResult> = combine(
-        controlOperations.observeControl(uid.value),
         store.observeEntries(),
         runtime.stateRevision
-    ) { control, storedEntries, _ ->
-        val controlSnapshot = (control as? DeviceLightControlResult.Available)?.snapshot
-            ?: return@combine DeviceLightLibraryResult.Failed(
-                (control as DeviceLightControlResult.Failed).failure.toLibraryFailure()
-            )
-        val status = runtime.currentStatus(uid)
+    ) { storedEntries, _ ->
+        val frame = runtime.currentLibrary(
+            uid,
+            DeviceLightLibraryReadAuthority.PRESENTATION
+        )
             ?: return@combine DeviceLightLibraryResult.Failed(
                 DeviceLightLibraryFailure.NOT_CONNECTED
             )
-        val product = runCatching {
-            DeviceLightProduct.fromWireExact(controlSnapshot.productKey)
-        }.getOrNull() ?: return@combine DeviceLightLibraryResult.Failed(
-            DeviceLightLibraryFailure.INVALID_DATA
-        )
-        if (status.product != product) {
-            return@combine DeviceLightLibraryResult.Failed(
-                DeviceLightLibraryFailure.INVALID_DATA
-            )
-        }
-        val target = controlSnapshot.toTarget(product)
-        val installedCustom = runtime.currentCustom(uid)
+        val status = frame.status
+        val product = status.product
+        val target = status.toLibraryTarget(uid)
         val entries = storedEntries
             .filter { entry ->
                 entry.productKey == product.wireValue &&
@@ -95,11 +84,18 @@ internal class DefaultDeviceLightLibraryOperations(
                 entry.toApplicationEntry(
                     product = product,
                     status = status,
-                    installedCustom = installedCustom
+                    installedCustom = frame.custom
                 )
             }
         DeviceLightLibraryResult.Available(
-            DeviceLightLibrarySnapshot(target = target, entries = entries)
+            DeviceLightLibrarySnapshot(
+                target = target,
+                entries = entries,
+                firmwareWriteAuthoritative = runtime.currentLibrary(
+                    uid,
+                    DeviceLightLibraryReadAuthority.AUTHORITATIVE
+                ) != null
+            )
         )
     }.catch {
         emit(DeviceLightLibraryResult.Failed(DeviceLightLibraryFailure.INVALID_DATA))
@@ -109,7 +105,13 @@ internal class DefaultDeviceLightLibraryOperations(
         val uid = deviceUid.toDeviceUidOrNull() ?: return
         val runtime = devicesRepository.runtimeModules()?.light ?: return
         try {
-            runtime.requestCustom(uid)
+            val refreshedControl = controlOperations.refreshControl(uid.value)
+            if (
+                refreshedControl is DeviceLightControlResult.Available ||
+                runtime.currentStatus(uid) != null
+            ) {
+                runtime.requestCustom(uid)
+            }
         } catch (error: CancellationException) {
             throw error
         } catch (_: Exception) {
@@ -152,8 +154,9 @@ internal class DefaultDeviceLightLibraryOperations(
         val entry = runCatching { store.snapshot().singleOrNull { stored -> stored.id == entryId } }
             .getOrNull()
         return when {
-            uid == null || runtime == null || status == null ->
+            uid == null || runtime == null ->
                 failed(DeviceLightLibraryFailure.UNAVAILABLE)
+            status == null -> failed(DeviceLightLibraryFailure.NOT_CONNECTED)
             entry == null -> failed(DeviceLightLibraryFailure.NOT_FOUND)
             entry.productKey != status.product.wireValue ||
                 entry.channelKeysList != status.product.sceneFields ->

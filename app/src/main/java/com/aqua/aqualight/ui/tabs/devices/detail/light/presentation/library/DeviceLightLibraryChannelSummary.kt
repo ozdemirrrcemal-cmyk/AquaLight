@@ -13,23 +13,24 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryChannel
+import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryChannelDescriptor
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryPayload
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryScene
-import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualColors
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.DeviceLightAutomaticGeometry
 
 @Composable
 internal fun ManualChannelSummary(
     channels: List<DeviceLightLibraryChannel>,
+    descriptors: List<DeviceLightLibraryChannelDescriptor>,
     scene: DeviceLightLibraryScene,
     visuals: DeviceLightLibraryVisuals
 ) {
-    val visibleChannels = LIBRARY_CHANNEL_ORDER.filter(channels::contains)
-    val labels = visibleChannels.associateWith { channel ->
+    val visibleChannels = descriptors.filter { descriptor -> descriptor.channel in channels }
+    val labels = visibleChannels.associateWith { descriptor ->
         stringResource(
             R.string.device_light_library_channel_summary_format,
-            channel.shortLabel(),
-            scene.channels.getValue(channel)
+            descriptor.displayName,
+            scene.channels.getValue(descriptor.channel)
         )
     }
     LibraryChannelSummary(visibleChannels, labels, visuals)
@@ -38,15 +39,16 @@ internal fun ManualChannelSummary(
 @Composable
 internal fun CustomChannelSummary(
     channels: List<DeviceLightLibraryChannel>,
+    descriptors: List<DeviceLightLibraryChannelDescriptor>,
     payload: DeviceLightLibraryPayload.Custom,
     visuals: DeviceLightLibraryVisuals
 ) {
-    val visibleChannels = LIBRARY_CHANNEL_ORDER.filter(channels::contains)
-    val labels = visibleChannels.associateWith { channel ->
-        val range = payload.channelRange(channel)
+    val visibleChannels = descriptors.filter { descriptor -> descriptor.channel in channels }
+    val labels = visibleChannels.associateWith { descriptor ->
+        val range = payload.channelRange(descriptor.channel)
         stringResource(
             R.string.device_light_library_channel_range_format,
-            channel.shortLabel(),
+            descriptor.displayName,
             range.first,
             range.last
         )
@@ -56,8 +58,8 @@ internal fun CustomChannelSummary(
 
 @Composable
 private fun LibraryChannelSummary(
-    channels: List<DeviceLightLibraryChannel>,
-    labels: Map<DeviceLightLibraryChannel, String>,
+    channels: List<DeviceLightLibraryChannelDescriptor>,
+    labels: Map<DeviceLightLibraryChannelDescriptor, String>,
     visuals: DeviceLightLibraryVisuals
 ) {
     Row(
@@ -65,7 +67,7 @@ private fun LibraryChannelSummary(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        channels.forEach { channel ->
+        channels.forEach { descriptor ->
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(
@@ -73,10 +75,10 @@ private fun LibraryChannelSummary(
                 )
             ) {
                 Canvas(modifier = Modifier.size(DeviceLightAutomaticGeometry.channelDotSize)) {
-                    drawCircle(color = channel.libraryColor(visuals.colors))
+                    drawCircle(color = Color(descriptor.displayColorRgb or OPAQUE_ALPHA))
                 }
                 BasicText(
-                    text = labels.getValue(channel),
+                    text = labels.getValue(descriptor),
                     style = visuals.typography.body,
                     maxLines = 1
                 )
@@ -85,27 +87,4 @@ private fun LibraryChannelSummary(
     }
 }
 
-@Composable
-internal fun DeviceLightLibraryChannel.shortLabel(): String = stringResource(
-    when (this) {
-        DeviceLightLibraryChannel.RED -> R.string.device_light_plan_channel_red
-        DeviceLightLibraryChannel.GREEN -> R.string.device_light_plan_channel_green
-        DeviceLightLibraryChannel.BLUE -> R.string.device_light_plan_channel_blue
-        DeviceLightLibraryChannel.WHITE -> R.string.device_light_plan_channel_white
-    }
-)
-
-internal fun DeviceLightLibraryChannel.libraryColor(colors: AquaLightManualColors): Color =
-    when (this) {
-        DeviceLightLibraryChannel.RED -> colors.red
-        DeviceLightLibraryChannel.GREEN -> colors.green
-        DeviceLightLibraryChannel.BLUE -> colors.blue
-        DeviceLightLibraryChannel.WHITE -> colors.white
-    }
-
-private val LIBRARY_CHANNEL_ORDER = listOf(
-    DeviceLightLibraryChannel.WHITE,
-    DeviceLightLibraryChannel.RED,
-    DeviceLightLibraryChannel.GREEN,
-    DeviceLightLibraryChannel.BLUE
-)
+private const val OPAQUE_ALPHA = -0x1000000

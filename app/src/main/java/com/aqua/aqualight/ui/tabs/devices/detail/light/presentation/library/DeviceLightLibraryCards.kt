@@ -47,14 +47,15 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.Devic
 internal fun ManualLibraryCard(
     entry: DeviceLightLibraryEntry,
     payload: DeviceLightLibraryPayload.Manual,
+    presentation: DeviceLightLibraryCardPresentation,
     actions: DeviceLightLibraryActions,
     visuals: DeviceLightLibraryVisuals
 ) {
     LibraryCardSurface {
-        LibraryCardHeader(entry, actions, visuals)
+        LibraryCardHeader(entry, presentation.firmwareWritesEnabled, actions, visuals)
         ManualLibrarySummary(visuals)
         LibraryCardDivider(visuals)
-        ManualChannelSummary(entry.channels, payload.scene, visuals)
+        ManualChannelSummary(entry.channels, presentation.descriptors, payload.scene, visuals)
     }
 }
 
@@ -62,14 +63,15 @@ internal fun ManualLibraryCard(
 internal fun CustomLibraryCard(
     entry: DeviceLightLibraryEntry,
     payload: DeviceLightLibraryPayload.Custom,
+    presentation: DeviceLightLibraryCardPresentation,
     actions: DeviceLightLibraryActions,
     visuals: DeviceLightLibraryVisuals
 ) {
     LibraryCardSurface {
-        LibraryCardHeader(entry, actions, visuals)
+        LibraryCardHeader(entry, presentation.firmwareWritesEnabled, actions, visuals)
         CustomLibrarySummary(payload, visuals)
         LibraryCardDivider(visuals)
-        CustomChannelSummary(entry.channels, payload, visuals)
+        CustomChannelSummary(entry.channels, presentation.descriptors, payload, visuals)
     }
 }
 
@@ -93,6 +95,7 @@ private fun LibraryCardSurface(content: @Composable () -> Unit) {
 @Composable
 private fun LibraryCardHeader(
     entry: DeviceLightLibraryEntry,
+    firmwareWritesEnabled: Boolean,
     actions: DeviceLightLibraryActions,
     visuals: DeviceLightLibraryVisuals
 ) {
@@ -114,7 +117,7 @@ private fun LibraryCardHeader(
             modifier = Modifier.weight(1f)
         )
         Spacer(Modifier.width(DeviceLightAutomaticGeometry.headerControlGap))
-        LibraryLoadButton(entry, actions.onLoadClick, visuals)
+        LibraryLoadButton(entry, firmwareWritesEnabled, actions.onLoadClick, visuals)
         Spacer(Modifier.width(DeviceLightAutomaticGeometry.headerControlGap))
         AutomaticMoreButton(
             color = visuals.colors.card.secondaryText,
@@ -245,10 +248,11 @@ private fun LibraryCardDivider(visuals: DeviceLightLibraryVisuals) {
 @Composable
 private fun LibraryLoadButton(
     entry: DeviceLightLibraryEntry,
+    firmwareWritesEnabled: Boolean,
     onLoadClick: (String) -> Unit,
     visuals: DeviceLightLibraryVisuals
 ) {
-    val enabled = !entry.isLoaded
+    val enabled = firmwareWritesEnabled && !entry.isLoaded
     val text = stringResource(
         if (entry.isLoaded) {
             R.string.device_light_library_loaded

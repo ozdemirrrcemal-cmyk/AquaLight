@@ -24,7 +24,9 @@ import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTemperat
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightThermalRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTypedEventReducer
 import com.aqua.aqualight.data.devices.runtime.modules.light.isAuthoritative as isLightAuthoritative
+import com.aqua.aqualight.data.devices.runtime.modules.light.requestCustom
 import com.aqua.aqualight.data.devices.runtime.modules.light.requestGraph
+import com.aqua.aqualight.data.devices.runtime.modules.light.requiresLibraryCustomRefresh
 import com.aqua.aqualight.data.devices.runtime.modules.network.DeviceNetworkRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.security.DeviceSecurityRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.time.DeviceTimeRuntimeRepository
@@ -130,6 +132,7 @@ class DeviceRuntimeModuleProvider internal constructor(
             lightResult == DeviceLightEventApplyResult.Applied
         ) {
             light.requestGraph(event.deviceUid)
+            refreshLightLibraryIfRequired(event.deviceUid)
         }
         if (
             event.type == DeviceRuntimeTypedEvent.Type.LIGHT_STATUS_CHANGED &&
@@ -146,6 +149,7 @@ class DeviceRuntimeModuleProvider internal constructor(
                 val statusOutcome = light.requestStatus(event.deviceUid)
                 if (statusOutcome is DeviceRuntimeCommandOutcome.Success) {
                     light.requestGraph(event.deviceUid)
+                    refreshLightLibraryIfRequired(event.deviceUid)
                 }
             }
         }
@@ -163,6 +167,12 @@ class DeviceRuntimeModuleProvider internal constructor(
         cooling.consume(event)
 
         timer.consume(event)
+    }
+
+    private suspend fun refreshLightLibraryIfRequired(deviceUid: DeviceUid) {
+        if (light.requiresLibraryCustomRefresh(deviceUid)) {
+            light.requestCustom(deviceUid)
+        }
     }
 
     /** Permanent owner cleanup only; socket lifecycle must use [invalidateRuntimeAuthority]. */

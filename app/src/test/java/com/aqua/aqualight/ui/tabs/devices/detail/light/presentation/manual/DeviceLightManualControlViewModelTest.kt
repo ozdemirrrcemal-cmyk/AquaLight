@@ -1,6 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual
 
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryChannel
+import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryChannelDescriptor
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryCustomPoint
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryKind
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryMutationResult
@@ -273,10 +274,19 @@ class DeviceLightManualControlViewModelTest {
                 target = DeviceLightLibraryTarget(
                     deviceUid = DEVICE_UID,
                     productKey = WRGB_PRODUCT_KEY,
-                    channels = DeviceLightLibraryChannel.entries,
+                    channelDescriptors = DeviceLightLibraryChannel.entries.mapIndexed { index, channel ->
+                        DeviceLightLibraryChannelDescriptor(
+                            channel = channel,
+                            key = channel.name.lowercase(),
+                            displayName = channel.name,
+                            displayColorRgb = index,
+                            order = index
+                        )
+                    },
                     estimatedPowerWatts = ESTIMATED_POWER_WATTS
                 ),
-                entries = emptyList()
+                entries = emptyList(),
+                firmwareWriteAuthoritative = true
             )
         )
 

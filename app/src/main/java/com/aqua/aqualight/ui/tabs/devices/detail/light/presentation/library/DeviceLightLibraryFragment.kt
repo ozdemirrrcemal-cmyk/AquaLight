@@ -21,7 +21,6 @@ import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetAction
 import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetActionStyle
 import com.aqua.aqualight.ui.common.bottomsheet.GlobalActionBottomSheet
 import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
-import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
@@ -56,7 +55,7 @@ class DeviceLightLibraryFragment : Fragment(R.layout.fragment_device_light_libra
 
     private fun setupContent() {
         val actions = DeviceLightLibraryActions(
-            onTabSelected = viewModel::selectTab,
+            onTabSelected = viewModel.selectTab,
             onLoadClick = viewModel::load,
             onMoreClick = viewModel::requestActions,
             onRetryClick = viewModel::retry
@@ -86,9 +85,7 @@ class DeviceLightLibraryFragment : Fragment(R.layout.fragment_device_light_libra
             config = AquaHeaderConfig(
                 titleOverride = getString(R.string.device_light_library_title),
                 onBackClick = { findNavController().navigateUp() },
-                statusIcon = state.target?.let {
-                    DeviceConnectionVisualState.ONLINE.toWifiHeaderStatusIcon(requireContext())
-                }
+                statusIcon = state.connectionVisualState.toWifiHeaderStatusIcon(requireContext())
             )
         )
         setFragmentGlobalLoading(state.showGlobalLoading)
