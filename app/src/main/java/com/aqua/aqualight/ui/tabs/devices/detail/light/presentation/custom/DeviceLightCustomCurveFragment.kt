@@ -81,7 +81,7 @@ class DeviceLightCustomCurveFragment : Fragment(R.layout.fragment_device_light_c
                 actionId = ACTION_DISCARD_DRAFT,
                 hasUnsavedChanges = { viewModel.currentState.hasUnsavedChanges },
                 isExitBlocked = { viewModel.currentState.operationInProgress },
-                beforeConfirmation = viewModel::clearPreview,
+                beforeConfirmation = viewModel.clearPreview,
                 exit = ::exitScreen
             )
         )
