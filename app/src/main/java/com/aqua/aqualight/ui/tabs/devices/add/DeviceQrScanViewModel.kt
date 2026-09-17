@@ -5,14 +5,17 @@ import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDiscoveryOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningQrPayload
+import com.aqua.aqualight.application.devices.provisioning.ProvisioningScanFailure
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningScanStartResult
 import com.aqua.aqualight.application.text.AppTextResolver
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
@@ -20,6 +23,8 @@ class DeviceQrScanViewModel(
     private val discoveryOperations: ProvisioningDiscoveryOperations,
     private val textResolver: AppTextResolver
 ) : ViewModel() {
+
+    private val scanFailurePresentation = DeviceQrScanFailurePresentation(textResolver)
 
     private val _uiState = MutableStateFlow(DeviceQrScanUiState())
     val uiState: StateFlow<DeviceQrScanUiState> = _uiState.asStateFlow()
@@ -29,6 +34,7 @@ class DeviceQrScanViewModel(
 
     private var pendingPayload: ProvisioningQrPayload? = null
     private var scanJob: Job? = null
+    private var scanFailureJob: Job? = null
 
     fun onQrDetected(rawValue: String, hasBlePermissions: Boolean) {
         if (scanJob?.isActive == true) return
@@ -77,6 +83,8 @@ class DeviceQrScanViewModel(
     fun onScanAgain() {
         scanJob?.cancel()
         scanJob = null
+        scanFailureJob?.cancel()
+        scanFailureJob = null
         discoveryOperations.stopScan()
         discoveryOperations.clearCandidates()
         discardPendingPayload()
@@ -124,60 +132,73 @@ class DeviceQrScanViewModel(
                 }
                 is ProvisioningScanStartResult.Failed -> {
                     discardPendingPayload()
-                    showFailure(
-                        titleRes = R.string.device_add_scan_failed_title,
-                        messageRes = R.string.device_add_scan_failed_message
-                    )
+                    discoveryOperations.stopScan()
+                    _uiState.value = scanFailurePresentation.failure(result.failure)
                     return@launch
                 }
             }
 
-            val candidate = discoveryOperations.awaitQrCandidate(
-                payload = payload,
-                timeoutMillis = QR_SCAN_TIMEOUT_MS
-            )
-            discoveryOperations.stopScan()
+            continueQrBleScan(payload)
+        }
+    }
 
-            if (candidate != null) {
-                pendingPayload = null
-                _uiState.value = DeviceQrScanUiState(
-                    title = string(R.string.device_qr_verified_title),
-                    message = string(R.string.device_qr_opening_wifi),
-                    primaryAction = null
-                )
-                _events.send(
-                    DeviceQrScanEvent.OpenWifiProvisioning(
-                        result = DeviceQrPreflightSuccess(
-                            deviceUid = payload.deviceUid,
-                            deviceTitle = payload.displayName,
-                            deviceSerial = payload.serialNumber,
-                            deviceModel = string(R.string.device_setup_method_secure_qr),
-                            bleAddress = candidate.address,
-                            bleName = payload.bleName,
-                            qrSecretReference = payload.secretReference
-                        )
+    private suspend fun continueQrBleScan(payload: ProvisioningQrPayload) {
+        scanFailureJob?.cancel()
+        scanFailureJob = viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            val failure = discoveryOperations.scanFailures.first()
+            scanJob?.cancel()
+            discardPendingPayload()
+            discoveryOperations.stopScan()
+            _uiState.value = scanFailurePresentation.failure(failure)
+        }
+
+        val candidate = discoveryOperations.awaitQrCandidate(
+            payload = payload,
+            timeoutMillis = QR_SCAN_TIMEOUT_MS
+        )
+        scanFailureJob?.cancel()
+        scanFailureJob = null
+        discoveryOperations.stopScan()
+
+        if (candidate != null) {
+            pendingPayload = null
+            _uiState.value = DeviceQrScanUiState(
+                title = string(R.string.device_qr_verified_title),
+                message = string(R.string.device_qr_opening_wifi),
+                primaryAction = null
+            )
+            _events.send(
+                DeviceQrScanEvent.OpenWifiProvisioning(
+                    result = DeviceQrPreflightSuccess(
+                        deviceUid = payload.deviceUid,
+                        deviceTitle = payload.displayName,
+                        deviceSerial = payload.serialNumber,
+                        deviceModel = string(R.string.device_setup_method_secure_qr),
+                        bleAddress = candidate.address,
+                        bleName = payload.bleName,
+                        qrSecretReference = payload.secretReference
                     )
                 )
-                return@launch
-            }
+            )
+            return
+        }
 
-            val hasNearbyCandidates = discoveryOperations.hasCandidates()
-            val isAlreadyRegistered = discoveryOperations.isRegistered(payload.deviceUid)
-            discardPendingPayload()
-            when {
-                hasNearbyCandidates -> showFailure(
-                    titleRes = R.string.device_qr_preflight_mismatch_title,
-                    messageRes = R.string.device_qr_preflight_mismatch_message
-                )
-                isAlreadyRegistered -> showFailure(
-                    titleRes = R.string.device_qr_preflight_already_added_title,
-                    messageRes = R.string.device_qr_preflight_already_added_message
-                )
-                else -> showFailure(
-                    titleRes = R.string.device_qr_preflight_not_found_title,
-                    messageRes = R.string.device_qr_preflight_not_found_message
-                )
-            }
+        val hasNearbyCandidates = discoveryOperations.hasCandidates()
+        val isAlreadyRegistered = discoveryOperations.isRegistered(payload.deviceUid)
+        discardPendingPayload()
+        when {
+            hasNearbyCandidates -> showFailure(
+                titleRes = R.string.device_qr_preflight_mismatch_title,
+                messageRes = R.string.device_qr_preflight_mismatch_message
+            )
+            isAlreadyRegistered -> showFailure(
+                titleRes = R.string.device_qr_preflight_already_added_title,
+                messageRes = R.string.device_qr_preflight_already_added_message
+            )
+            else -> showFailure(
+                titleRes = R.string.device_qr_preflight_not_found_title,
+                messageRes = R.string.device_qr_preflight_not_found_message
+            )
         }
     }
 
@@ -203,6 +224,7 @@ class DeviceQrScanViewModel(
 
     override fun onCleared() {
         scanJob?.cancel()
+        scanFailureJob?.cancel()
         discoveryOperations.stopScan()
         discardPendingPayload()
         super.onCleared()
@@ -243,3 +265,27 @@ data class DeviceQrPreflightSuccess(
     val bleName: String,
     val qrSecretReference: String
 )
+
+private class DeviceQrScanFailurePresentation(
+    private val textResolver: AppTextResolver
+) {
+    fun failure(failure: ProvisioningScanFailure): DeviceQrScanUiState {
+        val (titleRes, messageRes) = when (failure) {
+            ProvisioningScanFailure.ALREADY_RUNNING,
+            ProvisioningScanFailure.TOO_FREQUENT ->
+                R.string.device_add_scan_failed_title to R.string.device_add_scan_busy_message
+            ProvisioningScanFailure.FEATURE_UNSUPPORTED ->
+                R.string.device_add_bluetooth_unavailable_title to
+                    R.string.device_add_bluetooth_unavailable_message
+            ProvisioningScanFailure.APP_REGISTRATION_FAILED,
+            ProvisioningScanFailure.INTERNAL_ERROR,
+            ProvisioningScanFailure.OUT_OF_RESOURCES ->
+                R.string.device_add_scan_failed_title to R.string.device_add_scan_service_message
+        }
+        return DeviceQrScanUiState(
+            title = textResolver.get(titleRes),
+            message = textResolver.get(messageRes),
+            primaryAction = DeviceQrScanPrimaryAction.SCAN_AGAIN
+        )
+    }
+}

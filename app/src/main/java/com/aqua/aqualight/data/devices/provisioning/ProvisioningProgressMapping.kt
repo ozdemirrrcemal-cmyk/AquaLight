@@ -92,6 +92,12 @@ private fun String.toApplicationErrorCode(): ProvisioningErrorCode = when (this)
         ProvisioningErrorCode.WIFI_TIMEOUT
     AqlBleProvisioningContract.ErrorCode.NETWORK_SAVE_FAILED ->
         ProvisioningErrorCode.NETWORK_SAVE_FAILED
+    AqlBleProvisioningContract.ErrorCode.WIFI_CONNECT_FAILED ->
+        ProvisioningErrorCode.WIFI_CONNECT_FAILED
+    AqlBleProvisioningContract.ErrorCode.SETUP_CONFIRMATION_TIMEOUT ->
+        ProvisioningErrorCode.SETUP_CONFIRMATION_TIMEOUT
+    AqlBleProvisioningContract.ErrorCode.FINALIZE_REJECTED ->
+        ProvisioningErrorCode.FINALIZE_REJECTED
     else -> ProvisioningErrorCode.UNKNOWN
 }
 

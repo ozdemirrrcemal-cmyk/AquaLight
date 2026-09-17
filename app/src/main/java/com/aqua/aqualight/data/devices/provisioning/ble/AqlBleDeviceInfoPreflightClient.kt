@@ -31,28 +31,28 @@ import kotlinx.coroutines.delay
  */
 class AqlBleDeviceInfoPreflightClient(
     context: Context
-) {
+) : ManualProvisioningPreflightClient {
 
     private val appContext = context.applicationContext
     private val bluetoothManager = appContext.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
 
-    suspend fun verifyManualSetup(bleAddress: String): ManualSetupPreflightResult {
+    override suspend fun verifyManualSetup(bleAddress: String): ManualSetupPreflightResult {
         val address = bleAddress.trim()
-        if (address.isBlank()) return ManualSetupPreflightResult.Blocked("BLE address is missing. Scan again.")
-        if (!hasRequiredPermissions()) return ManualSetupPreflightResult.Blocked("Bluetooth scan/connect permission is required.")
-        val adapter = bluetoothManager?.adapter ?: return ManualSetupPreflightResult.Blocked("Bluetooth adapter is unavailable.")
-        if (!adapter.isEnabled) return ManualSetupPreflightResult.Blocked("Bluetooth is disabled.")
+        if (address.isBlank()) return ManualSetupPreflightResult.ConnectionFailed
+        if (!hasRequiredPermissions()) return ManualSetupPreflightResult.MissingPermission
+        val adapter = bluetoothManager?.adapter ?: return ManualSetupPreflightResult.BluetoothUnavailable
+        if (!adapter.isEnabled) return ManualSetupPreflightResult.BluetoothOff
         val device = runCatching { adapter.getRemoteDevice(address) }.getOrElse {
-            return ManualSetupPreflightResult.Blocked("BLE device address is invalid. Scan again.")
+            return ManualSetupPreflightResult.ConnectionFailed
         }
         val deviceInfo = readDeviceInfoWithRetry(
             device = device,
             timeoutMs = PREFLIGHT_TIMEOUT_MS,
             attempts = PREFLIGHT_READ_ATTEMPTS
-        ) ?: return ManualSetupPreflightResult.Blocked("DeviceInfo verification timed out. Keep setup mode open and scan again.")
+        ) ?: return ManualSetupPreflightResult.ConnectionFailed
         return deviceInfo.fold(
             onSuccess = { info -> validateManualDeviceInfo(info) },
-            onFailure = { error -> ManualSetupPreflightResult.Blocked(error.message ?: "DeviceInfo verification failed. Scan again.") }
+            onFailure = { ManualSetupPreflightResult.ConnectionFailed }
         )
     }
 
@@ -342,28 +342,28 @@ class AqlBleDeviceInfoPreflightClient(
 
     private fun validateManualDeviceInfo(info: DeviceInfo): ManualSetupPreflightResult {
         if (info.contractVersion != AqlBleProvisioningContract.CONTRACT_VERSION) {
-            return ManualSetupPreflightResult.Blocked("Unsupported DeviceInfo contractVersion: ${info.contractVersion}.")
+            return ManualSetupPreflightResult.IncompatibleDevice
         }
         if (info.securityVersion != AqlBleProvisioningContract.PROVISIONING_SECURITY_VERSION) {
-            return ManualSetupPreflightResult.Blocked("Unsupported DeviceInfo securityVersion: ${info.securityVersion}.")
+            return ManualSetupPreflightResult.IncompatibleDevice
         }
         if (info.brand.isNotBlank() && !info.brand.equals(AqlBleProvisioningContract.BRAND, ignoreCase = true)) {
-            return ManualSetupPreflightResult.Blocked("DeviceInfo brand is not supported: ${info.brand}.")
+            return ManualSetupPreflightResult.IncompatibleDevice
         }
         if (info.mode == AqlBleProvisioningContract.Status.FACTORY && info.claimRequired && !info.physicalReset) {
-            return ManualSetupPreflightResult.QrRequired("First setup requires the secure QR code. Scan the QR label to continue.")
+            return ManualSetupPreflightResult.QrRequired
         }
         if (info.mode != AqlBleProvisioningContract.Status.PHYSICAL_RESET) {
-            return ManualSetupPreflightResult.Blocked("Manual BLE setup is available only after holding SETUP/RESET for 5 seconds.")
+            return ManualSetupPreflightResult.ResetRequired
         }
         if (!info.physicalReset) {
-            return ManualSetupPreflightResult.Blocked("DeviceInfo physicalReset flag is not active. Hold SETUP/RESET for 5 seconds, then scan again.")
+            return ManualSetupPreflightResult.ResetRequired
         }
         if (info.claimRequired) {
-            return ManualSetupPreflightResult.QrRequired("This device requires QR claim verification. Scan the QR label to continue.")
+            return ManualSetupPreflightResult.QrRequired
         }
         if (info.sessionMode != AqlBleProvisioningContract.SessionMode.PHYSICAL_RESET_SECURE || info.devicePublicKey.isBlank()) {
-            return ManualSetupPreflightResult.Blocked("Secure physical reset recovery is not ready. Hold SETUP/RESET for 5 seconds, then scan again.")
+            return ManualSetupPreflightResult.ResetRequired
         }
         return ManualSetupPreflightResult.Allowed(
             deviceUid = info.deviceUid,
@@ -497,8 +497,17 @@ sealed interface ManualSetupPreflightResult {
         val bleName: String
     ) : ManualSetupPreflightResult
 
-    data class QrRequired(val message: String) : ManualSetupPreflightResult
-    data class Blocked(val message: String) : ManualSetupPreflightResult
+    data object QrRequired : ManualSetupPreflightResult
+    data object ResetRequired : ManualSetupPreflightResult
+    data object MissingPermission : ManualSetupPreflightResult
+    data object BluetoothOff : ManualSetupPreflightResult
+    data object BluetoothUnavailable : ManualSetupPreflightResult
+    data object ConnectionFailed : ManualSetupPreflightResult
+    data object IncompatibleDevice : ManualSetupPreflightResult
+}
+
+interface ManualProvisioningPreflightClient {
+    suspend fun verifyManualSetup(bleAddress: String): ManualSetupPreflightResult
 }
 
 

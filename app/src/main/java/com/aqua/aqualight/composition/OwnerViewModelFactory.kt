@@ -23,6 +23,7 @@ import com.aqua.aqualight.data.devices.cooling.control.DefaultDeviceCoolingContr
 import com.aqua.aqualight.data.devices.cooling.program.DefaultDeviceCoolingProgramOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningDiscoveryOperations
+import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleDeviceInfoPreflightClient
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningProgressOperations
 import com.aqua.aqualight.data.devices.provisioning.ble.DefaultBleProvisioningScanner
 import com.aqua.aqualight.data.devices.provisioning.qr.AqlProvisioningQrParser
@@ -120,7 +121,8 @@ internal class OwnerViewModelFactory(
                     qrSecretStore = AqlProvisioningQrSecretStore(
                         context = appContext,
                         ownerUidProvider = { graph.ownerUid }
-                    )
+                    ),
+                    manualPreflightClient = AqlBleDeviceInfoPreflightClient(appContext)
                 ),
                 textResolver = appTextResolver
             )
@@ -132,7 +134,8 @@ internal class OwnerViewModelFactory(
                     qrSecretStore = AqlProvisioningQrSecretStore(
                         context = appContext,
                         ownerUidProvider = { graph.ownerUid }
-                    )
+                    ),
+                    manualPreflightClient = AqlBleDeviceInfoPreflightClient(appContext)
                 ),
                 textResolver = appTextResolver
             )

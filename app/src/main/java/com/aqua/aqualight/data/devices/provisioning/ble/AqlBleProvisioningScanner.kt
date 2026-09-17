@@ -15,6 +15,9 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import com.aqua.aqualight.data.devices.contract.AqlBleProvisioningContract
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -33,6 +36,8 @@ class AqlBleProvisioningScanner(
 
     private val _candidates = MutableStateFlow<List<AqlBleProvisioningCandidate>>(emptyList())
     val candidates: StateFlow<List<AqlBleProvisioningCandidate>> = _candidates.asStateFlow()
+    private val _failures = MutableSharedFlow<AqlBleScanFailure>(extraBufferCapacity = 1)
+    val failures: SharedFlow<AqlBleScanFailure> = _failures.asSharedFlow()
 
     @Volatile
     private var scanCallback: ScanCallback? = null
@@ -73,7 +78,7 @@ class AqlBleProvisioningScanner(
             StartResult.MissingPermission
         } catch (error: Throwable) {
             scanCallback = null
-            StartResult.Failed(error.message.orEmpty())
+            StartResult.Failed(AqlBleScanFailure.INTERNAL_ERROR)
         }
     }
 
@@ -130,6 +135,7 @@ class AqlBleProvisioningScanner(
 
             override fun onScanFailed(errorCode: Int) {
                 scanCallback = null
+                _failures.tryEmit(errorCode.toScanFailure())
             }
         }
     }
@@ -216,10 +222,32 @@ class AqlBleProvisioningScanner(
         object MissingPermission : StartResult
         object BluetoothUnavailable : StartResult
         object BluetoothOff : StartResult
-        data class Failed(val message: String) : StartResult
+        data class Failed(val failure: AqlBleScanFailure) : StartResult
     }
 
     private companion object {
         const val TAG = "AqlBleScanner"
     }
+}
+
+private const val SCAN_FAILED_OUT_OF_HARDWARE_RESOURCES = 5
+private const val SCAN_FAILED_SCANNING_TOO_FREQUENTLY = 6
+
+private fun Int.toScanFailure(): AqlBleScanFailure = when (this) {
+    ScanCallback.SCAN_FAILED_ALREADY_STARTED -> AqlBleScanFailure.ALREADY_RUNNING
+    ScanCallback.SCAN_FAILED_APPLICATION_REGISTRATION_FAILED ->
+        AqlBleScanFailure.APP_REGISTRATION_FAILED
+    ScanCallback.SCAN_FAILED_FEATURE_UNSUPPORTED -> AqlBleScanFailure.FEATURE_UNSUPPORTED
+    SCAN_FAILED_OUT_OF_HARDWARE_RESOURCES -> AqlBleScanFailure.OUT_OF_RESOURCES
+    SCAN_FAILED_SCANNING_TOO_FREQUENTLY -> AqlBleScanFailure.TOO_FREQUENT
+    else -> AqlBleScanFailure.INTERNAL_ERROR
+}
+
+enum class AqlBleScanFailure {
+    ALREADY_RUNNING,
+    APP_REGISTRATION_FAILED,
+    INTERNAL_ERROR,
+    FEATURE_UNSUPPORTED,
+    OUT_OF_RESOURCES,
+    TOO_FREQUENT
 }

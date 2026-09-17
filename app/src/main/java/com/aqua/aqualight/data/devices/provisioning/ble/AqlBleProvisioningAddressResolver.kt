@@ -180,7 +180,7 @@ class AqlBleProvisioningAddressResolver(
                     if (continuation.isActive) {
                         continuation.resume(
                             Result.failure(
-                                IllegalStateException("BLE resolve scan failed with code $errorCode.")
+                                IllegalStateException(provisioningResolveScanFailureMessage(errorCode))
                             )
                         )
                     }
@@ -339,9 +339,19 @@ class AqlBleProvisioningAddressResolver(
     private companion object {
         const val RESOLVE_TIMEOUT_MS = 12_000L
         const val MAX_QR_CANDIDATES_TO_PREFLIGHT = 4
-        const val QR_PREFLIGHT_GATT_SETTLE_DELAY_MS = 250L
+        const val QR_PREFLIGHT_GATT_SETTLE_DELAY_MS = 600L
         const val TAG = "AqlBleAddressResolver"
         val MAC_ADDRESS_REGEX =
             Regex("^[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}$")
     }
+}
+
+private const val SCAN_FAILED_SCANNING_TOO_FREQUENTLY = 6
+
+private fun provisioningResolveScanFailureMessage(errorCode: Int): String = when (errorCode) {
+    ScanCallback.SCAN_FAILED_ALREADY_STARTED,
+    SCAN_FAILED_SCANNING_TOO_FREQUENTLY -> "BLE resolve scan is temporarily busy."
+    ScanCallback.SCAN_FAILED_FEATURE_UNSUPPORTED ->
+        "BLE resolve scan is not supported on this phone."
+    else -> "BLE resolve scan service is unavailable."
 }

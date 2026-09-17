@@ -75,6 +75,8 @@ class AqlBleProvisioningGattClient(
     private val readFailures = mutableMapOf<AqlBleGattOperation, Int>()
     private val statusPollRunnable = Runnable { gattQueue.enqueue(AqlBleGattOperation.READ_PROVISIONING_STATUS) }
     private val deviceInfoRetryRunnable = Runnable { gattQueue.enqueue(AqlBleGattOperation.READ_DEVICE_INFO) }
+    private val connectionTimeout = AqlBleGattPhaseTimeout(mainHandler, CONNECTION_TIMEOUT_MS)
+    private val serviceDiscoveryTimeout = AqlBleGattPhaseTimeout(mainHandler, SERVICE_DISCOVERY_TIMEOUT_MS)
 
     @SuppressLint("MissingPermission")
     fun start(draft: AqlProvisioningDraft) {
@@ -122,10 +124,14 @@ class AqlBleProvisioningGattClient(
         mainHandler.removeCallbacks(deviceInfoRetryRunnable)
         emit(AqlBleProvisioningGattEvent.Connecting(draft.bleAddress))
 
-        activeGatt = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            device.connectGatt(appContext, false, callback, BluetoothDevice.TRANSPORT_LE)
+        val gatt = connectProvisioningGatt(device, appContext, callback)
+        if (gatt == null) {
+            failAndClose("BLE connection could not be started.")
         } else {
-            device.connectGatt(appContext, false, callback)
+            activeGatt = gatt
+            connectionTimeout.schedule {
+                if (activeGatt === gatt) failAndClose("BLE connection timed out.")
+            }
         }
     }
 
@@ -142,6 +148,8 @@ class AqlBleProvisioningGattClient(
     fun close() {
         mainHandler.removeCallbacks(statusPollRunnable)
         mainHandler.removeCallbacks(deviceInfoRetryRunnable)
+        connectionTimeout.cancel()
+        serviceDiscoveryTimeout.cancel()
         gattQueue.clear()
         operationStartFailures.clear()
         readFailures.clear()
@@ -177,12 +185,14 @@ class AqlBleProvisioningGattClient(
 
     private val callback = object : BluetoothGattCallback() {
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
+            if (activeGatt !== gatt) return
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 failAndClose("BLE connection failed with status $status.")
                 return
             }
             when (newState) {
                 BluetoothProfile.STATE_CONNECTED -> {
+                    connectionTimeout.cancel()
                     emit(AqlBleProvisioningGattEvent.Connected(gatt.device.address))
                     discoverServices(gatt)
                 }
@@ -195,6 +205,7 @@ class AqlBleProvisioningGattClient(
 
         override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
             if (activeGatt !== gatt) return
+            serviceDiscoveryTimeout.cancel()
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 failAndClose("BLE service discovery failed with status $status.")
                 return
@@ -372,11 +383,16 @@ class AqlBleProvisioningGattClient(
 
     @SuppressLint("MissingPermission")
     private fun discoverServices(gatt: BluetoothGatt) {
+        if (activeGatt !== gatt) return
         if (!hasConnectPermission()) {
             failAndClose("Bluetooth connect permission is missing.")
-            return
+        } else if (!gatt.discoverServices()) {
+            failAndClose("BLE service discovery could not be started.")
+        } else {
+            serviceDiscoveryTimeout.schedule {
+                if (activeGatt === gatt) failAndClose("BLE service discovery timed out.")
+            }
         }
-        if (!gatt.discoverServices()) failAndClose("BLE service discovery could not be started.")
     }
 
     @SuppressLint("MissingPermission")
@@ -541,7 +557,7 @@ class AqlBleProvisioningGattClient(
         if (raw.isNotBlank()) {
             val statusMessage = codec.parseStatus(raw)
             emit(AqlBleProvisioningGattEvent.StatusReceived(statusMessage))
-            handleProvisioningStatus(gatt, statusMessage.status, statusMessage.message)
+            handleProvisioningStatus(statusMessage.status)
         } else {
             scheduleStatusPoll()
         }
@@ -567,7 +583,7 @@ class AqlBleProvisioningGattClient(
             PROVISIONING_STATUS_UUID -> {
                 val statusMessage = codec.parseStatus(raw)
                 emit(AqlBleProvisioningGattEvent.StatusReceived(statusMessage))
-                handleProvisioningStatus(gatt, statusMessage.status, statusMessage.message)
+                handleProvisioningStatus(statusMessage.status)
             }
             RUNTIME_ENDPOINT_UUID -> handleRuntimeEndpointValue(value, completeReadOperation = false)
         }
@@ -608,7 +624,7 @@ class AqlBleProvisioningGattClient(
         }
     }
 
-    private fun handleProvisioningStatus(gatt: BluetoothGatt, status: AqlProvisioningStatus, message: String) {
+    private fun handleProvisioningStatus(status: AqlProvisioningStatus) {
         when (status) {
             AqlProvisioningStatus.PROVISIONING_IN_PROGRESS -> {
                 if (!writeWifiCredentialsIfReady()) scheduleStatusPoll()
@@ -645,7 +661,8 @@ class AqlBleProvisioningGattClient(
             AqlProvisioningStatus.WIFI_FAILED,
             AqlProvisioningStatus.ERROR,
             AqlProvisioningStatus.TIMEOUT -> {
-                failAndClose(message.ifBlank { "Provisioning was rejected by the device: ${status.wireValue}." })
+                mainHandler.removeCallbacks(statusPollRunnable)
+                close()
             }
         }
     }
@@ -931,6 +948,8 @@ class AqlBleProvisioningGattClient(
         const val ATT_MTU_OVERHEAD_BYTES = 3
         const val DEFAULT_ATT_PAYLOAD_BYTES = 20
         const val STATUS_POLL_INTERVAL_MS = 1_500L
+        const val CONNECTION_TIMEOUT_MS = 20_000L
+        const val SERVICE_DISCOVERY_TIMEOUT_MS = 15_000L
         const val MAX_DEVICE_INFO_READ_ATTEMPTS = 3
         const val DEVICE_INFO_RETRY_DELAY_MS = 350L
         const val GATT_OPERATION_START_RETRY_DELAY_MS = 700L
@@ -961,5 +980,37 @@ class AqlBleProvisioningGattClient(
         val RUNTIME_ENDPOINT_UUID: UUID = UUID.fromString(AqlBleProvisioningContract.RUNTIME_ENDPOINT_UUID)
         val FINALIZE_SETUP_UUID: UUID = UUID.fromString(AqlBleProvisioningContract.FINALIZE_SETUP_UUID)
         val CLIENT_CHARACTERISTIC_CONFIG_UUID: UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
+    }
+}
+
+@SuppressLint("MissingPermission")
+private fun connectProvisioningGatt(
+    device: BluetoothDevice,
+    context: Context,
+    callback: BluetoothGattCallback
+): BluetoothGatt? = runCatching {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        device.connectGatt(context, false, callback, BluetoothDevice.TRANSPORT_LE)
+    } else {
+        device.connectGatt(context, false, callback)
+    }
+}.getOrNull()
+
+private class AqlBleGattPhaseTimeout(
+    private val handler: Handler,
+    private val timeoutMillis: Long
+) {
+    private var runnable: Runnable? = null
+
+    fun schedule(onTimeout: () -> Unit) {
+        cancel()
+        runnable = Runnable { onTimeout() }.also { timeout ->
+            handler.postDelayed(timeout, timeoutMillis)
+        }
+    }
+
+    fun cancel() {
+        runnable?.let(handler::removeCallbacks)
+        runnable = null
     }
 }

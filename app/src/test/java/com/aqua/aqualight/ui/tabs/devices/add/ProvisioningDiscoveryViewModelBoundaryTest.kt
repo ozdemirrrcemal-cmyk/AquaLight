@@ -3,13 +3,16 @@ package com.aqua.aqualight.ui.tabs.devices.add
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningCandidateSnapshot
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDiscoveryOperations
+import com.aqua.aqualight.application.devices.provisioning.ProvisioningManualPreflightResult
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningQrPayload
+import com.aqua.aqualight.application.devices.provisioning.ProvisioningScanFailure
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningScanStartResult
 import com.aqua.aqualight.application.text.AppTextResolver
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -49,6 +52,36 @@ class ProvisioningDiscoveryViewModelBoundaryTest {
         assertEquals("AA:BB:CC:DD:EE:FF", rendered.bleAddress)
 
         viewModel.onCandidateClicked(rendered)
+        assertEquals(1, operations.manualPreflightCalls)
+    }
+
+    @Test
+    fun `manual candidate is verified before WiFi screen opens`() = runTest {
+        val operations = FakeProvisioningDiscoveryOperations()
+        val viewModel = DeviceAddViewModel(operations, FakeTextResolver)
+
+        viewModel.startBleScan()
+        operations.candidateState.value = listOf(candidate())
+        viewModel.onCandidateClicked(viewModel.uiState.value.candidates.single())
+
+        val event = viewModel.events.first() as DeviceAddEvent.OpenWifiProvisioning
+        assertEquals(1, operations.manualPreflightCalls)
+        assertEquals("device-1", event.candidate.id)
+    }
+
+    @Test
+    fun `platform scan failure is shown immediately instead of waiting for timeout`() {
+        val operations = FakeProvisioningDiscoveryOperations()
+        val viewModel = DeviceAddViewModel(operations, FakeTextResolver)
+
+        viewModel.startBleScan()
+        operations.scanFailureEvents.tryEmit(ProvisioningScanFailure.TOO_FREQUENT)
+
+        assertEquals(DeviceAddScanMode.ERROR, viewModel.uiState.value.mode)
+        assertEquals(
+            text(R.string.device_add_scan_busy_message),
+            viewModel.uiState.value.emptyMessage
+        )
     }
 
     @Test
@@ -120,6 +153,8 @@ class ProvisioningDiscoveryViewModelBoundaryTest {
     private class FakeProvisioningDiscoveryOperations : ProvisioningDiscoveryOperations {
         val candidateState = MutableStateFlow<List<ProvisioningCandidateSnapshot>>(emptyList())
         override val candidates: Flow<List<ProvisioningCandidateSnapshot>> = candidateState
+        val scanFailureEvents = MutableSharedFlow<ProvisioningScanFailure>(extraBufferCapacity = 1)
+        override val scanFailures: Flow<ProvisioningScanFailure> = scanFailureEvents
 
         var startResult: ProvisioningScanStartResult = ProvisioningScanStartResult.Started
         var parsedPayload: ProvisioningQrPayload? = null
@@ -129,6 +164,7 @@ class ProvisioningDiscoveryViewModelBoundaryTest {
         var startCalls: Int = 0
         var parseCalls: Int = 0
         var awaitCalls: Int = 0
+        var manualPreflightCalls: Int = 0
         val registrationChecks = mutableListOf<String>()
         val discardedReferences = mutableListOf<String>()
 
@@ -163,6 +199,13 @@ class ProvisioningDiscoveryViewModelBoundaryTest {
         ): ProvisioningCandidateSnapshot? {
             awaitCalls += 1
             return awaitedCandidate
+        }
+
+        override suspend fun verifyManualCandidate(
+            candidate: ProvisioningCandidateSnapshot
+        ): ProvisioningManualPreflightResult {
+            manualPreflightCalls += 1
+            return ProvisioningManualPreflightResult.Allowed(candidate)
         }
 
         override fun hasCandidates(): Boolean = nearbyCandidates

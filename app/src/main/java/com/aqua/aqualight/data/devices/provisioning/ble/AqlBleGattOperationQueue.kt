@@ -11,6 +11,7 @@ internal class AqlBleGattOperationQueue(
 ) {
     private val lock = Any()
     private val pending = ArrayDeque<AqlBleGattOperation>()
+    private val delayedRunnables = mutableSetOf<Runnable>()
     private var active: AqlBleGattOperation? = null
 
     private val operationTimeoutRunnable = Runnable {
@@ -40,7 +41,18 @@ internal class AqlBleGattOperationQueue(
     }
 
     fun enqueueDelayed(operation: AqlBleGattOperation, delayMillis: Long) {
-        handler.postDelayed({ enqueue(operation) }, delayMillis)
+        val runnable = object : Runnable {
+            override fun run() {
+                synchronized(lock) {
+                    delayedRunnables.remove(this)
+                }
+                enqueue(operation)
+            }
+        }
+        synchronized(lock) {
+            delayedRunnables += runnable
+        }
+        handler.postDelayed(runnable, delayMillis)
     }
 
     fun complete(operation: AqlBleGattOperation) {
@@ -58,11 +70,13 @@ internal class AqlBleGattOperationQueue(
     }
 
     fun clear() {
-        synchronized(lock) {
+        val delayed = synchronized(lock) {
             pending.clear()
             active = null
+            delayedRunnables.toList().also { delayedRunnables.clear() }
         }
         handler.removeCallbacks(operationTimeoutRunnable)
+        delayed.forEach(handler::removeCallbacks)
     }
 
     private fun drain() {
@@ -78,7 +92,10 @@ internal class AqlBleGattOperationQueue(
         handler.removeCallbacks(operationTimeoutRunnable)
         when (val result = startOperation(operation)) {
             AqlBleGattOperationStartResult.Started -> {
-                handler.postDelayed(operationTimeoutRunnable, operationTimeoutMillis)
+                val isStillActive = synchronized(lock) { active == operation }
+                if (isStillActive) {
+                    handler.postDelayed(operationTimeoutRunnable, operationTimeoutMillis)
+                }
             }
             is AqlBleGattOperationStartResult.NotStarted -> {
                 synchronized(lock) {

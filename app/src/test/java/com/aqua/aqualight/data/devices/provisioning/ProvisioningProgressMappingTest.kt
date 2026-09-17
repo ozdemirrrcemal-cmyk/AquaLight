@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.devices.provisioning
 
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningStatus
+import com.aqua.aqualight.application.devices.provisioning.ProvisioningErrorCode
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningTransportEvent
 import com.aqua.aqualight.data.devices.model.DeviceRuntimeEndpoint
 import com.aqua.aqualight.data.devices.model.DeviceUid
@@ -10,6 +11,7 @@ import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningDraft
 import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningRuntimeHandoff
 import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningStatus
 import com.aqua.aqualight.data.devices.provisioning.model.AqlWifiCredentials
+import com.aqua.aqualight.data.devices.contract.AqlBleProvisioningContract
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -40,6 +42,28 @@ class ProvisioningProgressMappingTest {
         }
 
         assertEquals(ProvisioningStatus.entries, mappedStatuses)
+    }
+
+    @Test
+    fun `firmware terminal error codes keep exact application meaning`() {
+        val cases = mapOf(
+            AqlBleProvisioningContract.ErrorCode.WIFI_CONNECT_FAILED to
+                ProvisioningErrorCode.WIFI_CONNECT_FAILED,
+            AqlBleProvisioningContract.ErrorCode.SETUP_CONFIRMATION_TIMEOUT to
+                ProvisioningErrorCode.SETUP_CONFIRMATION_TIMEOUT,
+            AqlBleProvisioningContract.ErrorCode.FINALIZE_REJECTED to
+                ProvisioningErrorCode.FINALIZE_REJECTED
+        )
+
+        cases.forEach { (wireCode, expected) ->
+            val event = AqlBleProvisioningGattEvent.StatusReceived(
+                AqlBleProvisioningStatusMessage(
+                    status = AqlProvisioningStatus.ERROR,
+                    errorCode = wireCode
+                )
+            ).toApplicationEvent() as ProvisioningTransportEvent.StatusReceived
+            assertEquals(expected, event.statusMessage.errorCode)
+        }
     }
 
     @Test

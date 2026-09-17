@@ -9,6 +9,7 @@
     <string name="device_add_title">Cihaz Ekle</string>
     <string name="device_add_scan_button">Tara</string>
     <string name="device_add_scan_button_scanning">Taranıyor...</string>
+    <string name="device_add_scan_button_verifying">Doğrulanıyor...</string>
     <string name="device_add_scan_badge_ready">Hazır</string>
     <string name="device_add_scan_badge_scanning">Taranıyor</string>
     <string name="device_add_scan_badge_permission">İzin</string>
@@ -16,6 +17,8 @@
     <string name="device_add_scan_badge_unavailable">Kullanılamıyor</string>
     <string name="device_add_scan_badge_error">Hata</string>
     <string name="device_add_scan_badge_nearby">Yakında</string>
+    <string name="device_add_scan_badge_verifying">Doğrulanıyor</string>
+    <string name="device_add_scan_badge_secure_qr">Güvenli QR</string>
     <string name="device_add_ready_title">AquaLight cihazını güvenle ekleyin</string>
     <string name="device_add_ready_message">İlk kurulum için QR kodunu kullanın. Daha önce eşleştirilmiş bir cihazda SETUP/RESET düğmesini 5 saniye basılı tutup bırakın, ardından yakındaki cihazları tarayın.</string>
     <string name="device_add_scanning_secure_title">Güvenli kurulum aralığı taranıyor</string>
@@ -44,6 +47,18 @@
     <string name="device_add_scan_failed_message">Bluetooth taraması başlatılırken bir sorun oluştu.</string>
     <string name="device_add_scan_failed_empty_title">Tarama başarısız</string>
     <string name="device_add_scan_failed_fallback">BLE taraması başarısız oldu. Yeniden deneyin.</string>
+    <string name="device_add_scan_busy_message">Bluetooth taraması kısa süre içinde çok kez başlatıldı. Birkaç saniye bekleyip yeniden deneyin.</string>
+    <string name="device_add_scan_service_message">Telefonun Bluetooth hizmeti şu anda hazır değil. Bluetooth’u kapatıp açın ve yeniden deneyin.</string>
+    <string name="device_add_verifying_title">Cihaz doğrulanıyor</string>
+    <string name="device_add_verifying_message">Wi‑Fi bilgileri istenmeden önce cihaz güvenli biçimde doğrulanıyor.</string>
+    <string name="device_add_qr_required_title">Güvenli QR gerekli</string>
+    <string name="device_add_qr_required_message">Bu cihaz ilk kurulum modunda. Güvenle devam etmek için cihaz etiketindeki QR kodunu tarayın.</string>
+    <string name="device_add_reset_required_title">Kurulum modu hazır değil</string>
+    <string name="device_add_reset_required_message">SETUP/RESET düğmesini 5 saniye basılı tutup bırakın, ardından yeniden tarayın. Cihazın gücünü kesmeniz gerekmez.</string>
+    <string name="device_add_verification_failed_title">Cihaz doğrulaması kesildi</string>
+    <string name="device_add_verification_failed_message">Cihazı yakında ve kurulum modunda tutun, kısa bir süre bekleyip yeniden tarayın.</string>
+    <string name="device_add_incompatible_title">Cihaz güncellemesi gerekli</string>
+    <string name="device_add_incompatible_message">Cihaz yazılımı bu uygulamadaki güvenli kurulumla uyumlu değil. Cihaz yazılımını güncelleyip yeniden deneyin.</string>
     <string name="device_add_missing_ble_address">BLE adresi eksik. Yeniden tarayın.</string>
     <string name="device_add_setup_mode_label">Kurulum modu</string>
     <string name="device_add_rssi_format">RSSI %1$d dBm</string>
@@ -171,6 +186,8 @@
     <string name="device_provisioning_status_wifi_router_rejected_message">Yönlendirici bağlantıyı reddetti. Şifreyi, güvenlik modunu ve 2.4 GHz uyumluluğunu kontrol edin.</string>
     <string name="device_provisioning_status_wifi_timeout_message">Yönlendirici zamanında yanıt vermedi. Cihazı yaklaştırıp yeniden deneyin.</string>
     <string name="device_provisioning_status_wifi_save_failed_message">Wi-Fi bağlantısı kuruldu, ancak cihaz ağ ayarlarını kaydedemedi. Yeniden deneyin.</string>
+    <string name="device_provisioning_status_confirmation_timeout_message">Cihaz Wi‑Fi’ye bağlandı, ancak güvenli kurulum onayı zamanında tamamlanamadı. Cihazı kurulum moduna alıp yeniden deneyin.</string>
+    <string name="device_provisioning_status_finalize_rejected_message">Cihaz kurulumu güvenli biçimde onaylayamadı. Cihazı kurulum moduna alıp kurulumu yeniden başlatın.</string>
     <string name="device_provisioning_status_claim_rejected_title">Cihaz doğrulaması başarısız</string>
     <string name="device_provisioning_status_claim_rejected_message">Cihaz bu kurulum isteğini reddetti. QR kurulumunu kullanın veya kurulum düğmesini 5 saniye basılı tutup yeniden deneyin.</string>
     <string name="device_provisioning_status_timeout_title">Kurulum zaman aşımına uğradı</string>
@@ -187,5 +204,12 @@
     <string name="device_provisioning_error_wifi_failed">Wi-Fi bağlantısı başarısız oldu. Ağın 2.4 GHz olduğundan ve şifrenin doğru olduğundan emin olun.</string>
     <string name="device_provisioning_error_unexpected">Beklenmeyen bir kurulum sorunu oluştu. Yeniden deneyin.</string>
     <string name="device_provisioning_error_secure_session_ended">Güvenli Bluetooth kurulum oturumu sona erdi. Cihazı kurulum moduna alın ve kurulumu yeniden başlatın.</string>
+    <string name="device_provisioning_error_connection_timeout">Bluetooth bağlantısı zamanında kurulamadı. Cihazı yakında ve kurulum modunda tutup yeniden deneyin.</string>
+    <string name="device_provisioning_error_connection_failed">Güvenli Bluetooth bağlantısı kurulamadı. Cihazı yakında ve kurulum modunda tutup yeniden deneyin.</string>
+    <string name="device_provisioning_error_service_unavailable">Cihazın güvenli kurulum hizmeti hazır değil veya cihaz yazılımı uyumlu değil. Cihazı kurulum moduna alın, gerekiyorsa güncelleyip yeniden deneyin.</string>
+    <string name="device_provisioning_error_scan_busy">Bluetooth taraması kısa süre içinde çok kez başlatıldı. Birkaç saniye bekleyip kurulumu yeniden başlatın.</string>
+    <string name="device_provisioning_error_bluetooth_unavailable">Telefonun Bluetooth hizmeti hazır değil. Bluetooth’u kapatıp açın ve kurulumu yeniden başlatın.</string>
+    <string name="device_provisioning_error_device_mismatch">Bağlanan cihaz, seçtiğiniz cihaz veya QR etiketiyle eşleşmiyor. Geri dönüp doğru cihazı seçin.</string>
+    <string name="device_provisioning_error_setup_mode">Cihaz gerekli güvenli kurulum modunda değil. İlk kurulumda QR etiketini kullanın; manuel kurulumdan önce SETUP/RESET düğmesini 5 saniye basılı tutun.</string>
     <string name="device_provisioning_error_runtime_confirmation">Cihaz Wi-Fi bilgilerini aldı, ancak AquaLight çalışma kimliğini güvenli biçimde doğrulayamadı. Telefon bağlantısını geri yükleyip kurulumu yeniden başlatın.</string>
 </resources>
