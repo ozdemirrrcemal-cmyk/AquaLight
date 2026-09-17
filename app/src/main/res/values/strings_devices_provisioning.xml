@@ -112,7 +112,7 @@
     <string name="device_provisioning_saving">Saving...</string>
     <string name="device_provisioning_opening">Opening...</string>
     <string name="device_provisioning_finding">Finding...</string>
-    <string name="device_provisioning_running">Provisioning...</string>
+    <string name="device_provisioning_running">Provisioning…</string>
     <string name="device_provisioning_serial_format">Serial: %1$s</string>
     <string name="device_provisioning_ble_format">BLE: %1$s</string>
     <string name="device_provisioning_wifi_format">Wi-Fi: %1$s</string>

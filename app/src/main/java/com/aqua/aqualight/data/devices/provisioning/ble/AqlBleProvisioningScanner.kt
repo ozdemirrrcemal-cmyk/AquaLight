@@ -42,6 +42,7 @@ class AqlBleProvisioningScanner(
     @Volatile
     private var scanCallback: ScanCallback? = null
 
+    @SuppressLint("MissingPermission")
     fun startScan(): StartResult {
         if (!hasRequiredPermissions()) {
             return StartResult.MissingPermission

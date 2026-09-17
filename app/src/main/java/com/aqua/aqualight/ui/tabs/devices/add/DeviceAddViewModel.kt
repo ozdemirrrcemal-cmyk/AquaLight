@@ -116,9 +116,10 @@ class DeviceAddViewModel(
 
     fun onCandidateClicked(candidate: DeviceAddCandidateUi) {
         if (candidate.bleAddress.isBlank()) {
-            _uiState.value = preflightPresentation.failure(
-                ProvisioningManualPreflightResult.ConnectionFailed
-            )
+            val message = string(R.string.device_add_missing_ble_address)
+            _uiState.value = preflightPresentation
+                .failure(ProvisioningManualPreflightResult.ConnectionFailed)
+                .copy(heroSubtitle = message, emptyMessage = message)
             return
         }
 
@@ -243,9 +244,10 @@ class DeviceAddViewModel(
             ProvisioningScanFailure.FEATURE_UNSUPPORTED ->
                 string(R.string.device_add_bluetooth_unavailable_empty_message)
             ProvisioningScanFailure.APP_REGISTRATION_FAILED,
-            ProvisioningScanFailure.INTERNAL_ERROR,
             ProvisioningScanFailure.OUT_OF_RESOURCES ->
                 string(R.string.device_add_scan_service_message)
+            ProvisioningScanFailure.INTERNAL_ERROR ->
+                string(R.string.device_add_scan_failed_fallback)
         }
         _uiState.value = DeviceAddUiState(
             mode = DeviceAddScanMode.ERROR,

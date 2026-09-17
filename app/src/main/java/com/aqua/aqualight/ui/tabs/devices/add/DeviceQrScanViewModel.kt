@@ -278,9 +278,10 @@ private class DeviceQrScanFailurePresentation(
                 R.string.device_add_bluetooth_unavailable_title to
                     R.string.device_add_bluetooth_unavailable_message
             ProvisioningScanFailure.APP_REGISTRATION_FAILED,
-            ProvisioningScanFailure.INTERNAL_ERROR,
             ProvisioningScanFailure.OUT_OF_RESOURCES ->
                 R.string.device_add_scan_failed_title to R.string.device_add_scan_service_message
+            ProvisioningScanFailure.INTERNAL_ERROR ->
+                R.string.device_add_scan_failed_title to R.string.device_add_scan_failed_fallback
         }
         return DeviceQrScanUiState(
             title = textResolver.get(titleRes),
