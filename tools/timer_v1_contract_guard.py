@@ -57,9 +57,6 @@ TIMER_SOURCE_ROOTS = (
     ROOT / "app/src/androidTest/java/com/aqua/aqualight/ui/tabs/devices/detail/timer",
 )
 TIMER_SOURCE_FILES = (
-    ROOT / "app/src/debug/java/com/aqua/aqualight/debug/devices/DebugTimerFixtureRuntime.kt",
-    ROOT / "app/src/debug/java/com/aqua/aqualight/debug/devices/DebugFixtureTimerControlOperations.kt",
-    ROOT / "app/src/testDebug/java/com/aqua/aqualight/debug/devices/DebugTimerFixtureIntegrationTest.kt",
     ROOT / "app/src/test/java/com/aqua/aqualight/data/devices/menu/"
     / "DefaultDeviceControlSurfacePreparationOperationsTest.kt",
 )

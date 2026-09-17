@@ -100,6 +100,7 @@ jobs:
           set -o pipefail
           {
             python3 tools/architecture_guard.py
+            python3 tools/installable_debug_real_device_guard.py
             python3 tools/dosing_architecture_guard.py
             python3 tools/session_startup_guard.py
             python3 tools/composition_root_guard.py

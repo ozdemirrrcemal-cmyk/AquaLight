@@ -13,7 +13,9 @@ on:
       - "gradlew"
       - "gradlew.bat"
       - "config/signing/**"
+      - "tools/installable_debug_real_device_guard.py"
       - "tools/provision_persistent_debug_keystore.sh"
+      - "tools/tests/test_installable_debug_real_device_guard.py"
       - "tools/tests/test_persistent_debug_signing.py"
       - ".github/workflows/installable_debug_apk.yml"
 
@@ -104,18 +106,8 @@ jobs:
         shell: bash
         run: bash tools/provision_persistent_debug_keystore.sh
 
-      - name: Enable installable debug device fixtures
-        shell: bash
-        run: |
-          set -Eeuo pipefail
-          fixture_resource="app/src/debug/res/values/installable_debug_device_fixture.xml"
-          test -s "$fixture_resource"
-          sed -i \
-            's#<bool name="installable_debug_device_fixture_enabled">false</bool>#<bool name="installable_debug_device_fixture_enabled">true</bool>#' \
-            "$fixture_resource"
-          grep -Fq \
-            '<bool name="installable_debug_device_fixture_enabled">true</bool>' \
-            "$fixture_resource"
+      - name: Verify physical-device-only Debug composition
+        run: python3 tools/installable_debug_real_device_guard.py
 
       - name: Build installable Debug APK
         run: ./gradlew :app:assembleDebug --stacktrace --no-daemon
