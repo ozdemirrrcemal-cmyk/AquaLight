@@ -77,15 +77,15 @@ internal class ProvisioningProgressPresenter(
     }
 
     private fun ProvisioningStatusMessage.toMessage(): String {
-        when (errorCode) {
+        val terminalErrorMessage = when (errorCode) {
             ProvisioningErrorCode.SETUP_CONFIRMATION_TIMEOUT ->
-                return string(R.string.device_provisioning_status_confirmation_timeout_message)
+                string(R.string.device_provisioning_status_confirmation_timeout_message)
             ProvisioningErrorCode.FINALIZE_REJECTED ->
-                return string(R.string.device_provisioning_status_finalize_rejected_message)
-            else -> Unit
+                string(R.string.device_provisioning_status_finalize_rejected_message)
+            else -> null
         }
-        if (status == ProvisioningStatus.WIFI_FAILED) {
-            return when (errorCode) {
+        return terminalErrorMessage ?: if (status == ProvisioningStatus.WIFI_FAILED) {
+            when (errorCode) {
                 ProvisioningErrorCode.WIFI_AUTH_FAILED ->
                     string(R.string.device_provisioning_status_wifi_auth_failed_message)
                 ProvisioningErrorCode.WIFI_NETWORK_NOT_FOUND ->
@@ -105,11 +105,12 @@ internal class ProvisioningProgressPresenter(
                 ProvisioningErrorCode.FINALIZE_REJECTED ->
                     string(R.string.device_provisioning_status_finalize_rejected_message)
             }
+        } else {
+            status.toMessage()
         }
-        return status.toMessage(message)
     }
 
-    private fun ProvisioningStatus.toMessage(fallback: String): String = when (this) {
+    private fun ProvisioningStatus.toMessage(): String = when (this) {
         ProvisioningStatus.IDLE,
         ProvisioningStatus.FACTORY,
         ProvisioningStatus.PHYSICAL_RESET ->

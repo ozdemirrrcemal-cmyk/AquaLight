@@ -66,19 +66,20 @@ class AqlBleProvisioningScanner(
         val callback = createScanCallback()
         scanCallback = callback
 
-        return try {
+        return runCatching {
             scanner.startScan(
                 scanFilters(),
                 scanSettings(),
                 callback
             )
             StartResult.Started
-        } catch (securityException: SecurityException) {
+        }.getOrElse { error ->
             scanCallback = null
-            StartResult.MissingPermission
-        } catch (error: Throwable) {
-            scanCallback = null
-            StartResult.Failed(AqlBleScanFailure.INTERNAL_ERROR)
+            if (error is SecurityException) {
+                StartResult.MissingPermission
+            } else {
+                StartResult.Failed(AqlBleScanFailure.INTERNAL_ERROR)
+            }
         }
     }
 
