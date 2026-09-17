@@ -84,6 +84,7 @@
     </plurals>
     <string name="device_light_active_uppercase">AKTİF</string>
     <string name="device_light_adaptation_title">Adaptasyon</string>
+    <string name="device_light_adaptation_data_unavailable">Canlı adaptasyon verisi kullanılamıyor. Cihaza yeniden bağlanıp tekrar deneyin.</string>
     <string name="device_light_adaptation_off">Kapalı</string>
     <string name="device_light_adaptation_off_uppercase">KAPALI</string>
     <string name="device_light_adaptation_percent">%%%1$d</string>
@@ -293,6 +294,7 @@
     <string name="device_light_custom_edit_time">Saati değiştir</string>
     <string name="device_light_custom_delete_point_action">Noktayı sil</string>
     <string name="device_light_custom_operation_error">Özel eğri okunamadı veya önizlenemedi. Tekrar deneyin.</string>
+    <string name="device_light_custom_data_unavailable">Kurulu özel eğri kullanılamıyor. Cihaza yeniden bağlanıp tekrar deneyin.</string>
 
     <!-- Otomatik ışık programları -->
     <string name="device_light_auto_every_day">Her gün</string>
@@ -311,6 +313,7 @@
     <string name="device_light_auto_percent_format">%1$d%%</string>
     <string name="device_light_auto_channel_value_format">%1$s %2$d%%</string>
     <string name="device_light_auto_add_program">Program ekle</string>
+    <string name="device_light_auto_data_unavailable">Kurulu otomatik programlar kullanılamıyor. Cihaza yeniden bağlanıp tekrar deneyin.</string>
     <string name="device_light_auto_enable_program_description">Otomatik programı etkinleştir</string>
     <string name="device_light_auto_disable_program_description">Otomatik programı devre dışı bırak</string>
     <string name="device_light_auto_more_actions_description">Diğer program işlemleri</string>
@@ -415,4 +418,5 @@
     <string name="device_light_system_unsupported_error">Sistem kontrolleri bu cihazda kullanılamıyor.</string>
     <string name="device_light_system_invalid_data_error">Sistem ayarları doğrulanamadı. Yenileyip tekrar deneyin.</string>
     <string name="device_light_system_operation_error">Sistem ayarları güncellenemedi.</string>
+    <string name="device_light_system_data_unavailable">Canlı sistem verisi kullanılamıyor. Cihaza yeniden bağlanıp tekrar deneyin.</string>
 </resources>

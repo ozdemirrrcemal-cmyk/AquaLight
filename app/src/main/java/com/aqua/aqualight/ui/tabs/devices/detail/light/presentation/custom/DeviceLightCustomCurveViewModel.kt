@@ -16,6 +16,8 @@ import com.aqua.aqualight.application.devices.light.library.DeviceLightLibrarySc
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.toCommercialLightError
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -44,6 +46,7 @@ internal class DeviceLightCustomCurveViewModel(
     private var persistedDraft: DeviceLightCustomDraft? = null
     private var restoredDraft: DeviceLightCustomDraft? = null
     private var restoreDirty = false
+    private var observeJob: Job? = null
 
     val dayEditor = DeviceLightCustomDayEditor(
         currentState = { currentState },
@@ -64,6 +67,7 @@ internal class DeviceLightCustomCurveViewModel(
         val deviceUid = deviceUidText.trim()
         require(deviceUid.isNotBlank()) { "Custom light destination deviceUid must not be blank." }
         if (boundDeviceUid == deviceUid) return
+        observeJob?.cancel()
         boundDeviceUid = deviceUid
         this.restoredDraft = restoredDraft
         restoreDirty = restoredDraft != null && restoredDirty
@@ -71,6 +75,16 @@ internal class DeviceLightCustomCurveViewModel(
             deviceUid = deviceUid,
             initialLoading = true
         )
+        observeJob = viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            customOperations.observe(deviceUid).collect { result ->
+                when (result) {
+                    is DeviceLightCustomReadResult.Available -> applySnapshot(result.snapshot)
+                    is DeviceLightCustomReadResult.Failed -> if (!_uiState.value.initialLoading) {
+                        applyReadFailure(result.failure)
+                    }
+                }
+            }
+        }
         refreshFromDevice()
     }
 
@@ -81,18 +95,16 @@ internal class DeviceLightCustomCurveViewModel(
     fun refreshFromDevice() {
         val deviceUid = boundDeviceUid.takeIf(String::isNotBlank) ?: return
         viewModelScope.launch {
-            _uiState.update { state -> state.copy(initialLoading = true, readFailed = false) }
+            _uiState.update { state ->
+                state.copy(
+                    initialLoading = state.channels.isEmpty(),
+                    readFailed = false
+                )
+            }
             when (val result = customOperations.read(deviceUid)) {
                 is DeviceLightCustomReadResult.Available -> applySnapshot(result.snapshot)
                 is DeviceLightCustomReadResult.Failed -> {
-                    _uiState.update { state ->
-                        state.copy(
-                            connectionVisualState = result.failure.connectionState(),
-                            initialLoading = false,
-                            contentEnabled = false,
-                            readFailed = true
-                        )
-                    }
+                    applyReadFailure(result.failure)
                     emit(
                         DeviceLightCustomCurveEffect.ShowError(
                             result.failure.toCommercialLightError().messageRes
@@ -105,7 +117,7 @@ internal class DeviceLightCustomCurveViewModel(
 
     fun preview() {
         val state = _uiState.value
-        if (!state.contentEnabled || state.operationInProgress) return
+        if (!state.canPreview) return
         viewModelScope.launch {
             _uiState.update { it.copy(operationInProgress = true) }
             when (val result = customOperations.preview(boundDeviceUid, state.previewTimeMs)) {
@@ -120,9 +132,10 @@ internal class DeviceLightCustomCurveViewModel(
         }
     }
 
-    fun clearPreview() {
-        val deviceUid = boundDeviceUid.takeIf(String::isNotBlank) ?: return
-        viewModelScope.launch { customOperations.clearPreview(deviceUid) }
+    val clearPreview: () -> Unit = {
+        boundDeviceUid.takeIf(String::isNotBlank)?.let { deviceUid ->
+            viewModelScope.launch { customOperations.clearPreview(deviceUid) }
+        }
     }
 
     fun requestSaveAs() {
@@ -197,13 +210,33 @@ internal class DeviceLightCustomCurveViewModel(
 
     private fun applySnapshot(snapshot: DeviceLightCustomSnapshot) {
         val channels = snapshot.channels.map(DeviceLightCustomChannel::toUiChannel)
-        val emptyDraft = DeviceLightCustomDraft(weekdaysMask = snapshot.weekdaysMask)
-        persistedDraft = emptyDraft
+        val firmwareDraft = DeviceLightCustomDraft(
+            weekdaysMask = snapshot.weekdaysMask,
+            points = snapshot.points.map { point ->
+                DeviceLightCustomPointUiState(
+                    timeMs = point.timeMs,
+                    channels = point.scene.channels.mapKeys { (channel, _) ->
+                        channel.toUiChannel()
+                    }
+                )
+            }
+        )
+        persistedDraft = firmwareDraft
         val restored = restoredDraft?.takeIf { draft ->
             draft.points.all { point -> point.channels.keys == channels.toSet() } &&
                 draft.points.size <= snapshot.maxPoints
         }
-        val draft = if (restoreDirty && restored != null) restored else emptyDraft
+        val current = _uiState.value
+        val currentDirtyDraft = current.draft.takeIf { draft ->
+            current.hasUnsavedChanges &&
+                draft.points.all { point -> point.channels.keys == channels.toSet() } &&
+                draft.points.size <= snapshot.maxPoints
+        }
+        val draft = when {
+            restoreDirty && restored != null -> restored
+            currentDirtyDraft != null -> currentDirtyDraft
+            else -> firmwareDraft
+        }
         restoredDraft = null
         val currentTimeMs = snapshot.currentTimeMs?.alignedTime() ?: _uiState.value.previewTimeMs
         val initialPointTimeMs = draft.points.minByOrNull { point ->
@@ -211,7 +244,11 @@ internal class DeviceLightCustomCurveViewModel(
         }?.timeMs
         _uiState.value = DeviceLightCustomCurveUiState(
             deviceUid = snapshot.deviceUid,
-            connectionVisualState = DeviceConnectionVisualState.ONLINE,
+            connectionVisualState = if (snapshot.firmwareWriteAuthoritative) {
+                DeviceConnectionVisualState.ONLINE
+            } else {
+                DeviceConnectionVisualState.OFFLINE
+            },
             channels = channels,
             draft = draft,
             selectedTimeMs = initialPointTimeMs,
@@ -219,10 +256,27 @@ internal class DeviceLightCustomCurveViewModel(
             maxPoints = snapshot.maxPoints,
             timeStepMs = snapshot.timeStepMs,
             contentEnabled = true,
+            firmwareWriteAuthoritative = snapshot.firmwareWriteAuthoritative,
             initialLoading = false,
-            hasUnsavedChanges = restoreDirty && restored != null
+            operationInProgress = current.operationInProgress,
+            blockingOperationInProgress = current.blockingOperationInProgress,
+            hasUnsavedChanges = draft != firmwareDraft
         )
         restoreDirty = false
+    }
+
+    private fun applyReadFailure(
+        failure: com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomFailure
+    ) {
+        _uiState.update { state ->
+            state.copy(
+                connectionVisualState = failure.connectionState(),
+                initialLoading = false,
+                contentEnabled = state.channels.isNotEmpty(),
+                firmwareWriteAuthoritative = false,
+                readFailed = true
+            )
+        }
     }
 
     private fun setDraft(draft: DeviceLightCustomDraft, selectedTimeMs: Long?) {

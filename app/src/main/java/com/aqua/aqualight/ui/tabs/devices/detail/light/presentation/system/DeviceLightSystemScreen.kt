@@ -35,6 +35,24 @@ internal fun DeviceLightSystemScreen(
         colors = colors,
         typography = aquaDeviceCardTypography(colors.card)
     )
+    if (state.snapshot == null) {
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .background(colorResource(R.color.background_color))
+                .padding(DeviceLightSystemGeometry.screenHorizontalPadding),
+            contentAlignment = Alignment.Center
+        ) {
+            BasicText(
+                text = stringResource(R.string.device_light_system_data_unavailable),
+                style = visuals.typography.body.copy(
+                    color = visuals.colors.card.secondaryText,
+                    textAlign = TextAlign.Center
+                )
+            )
+        }
+        return
+    }
     Column(
         modifier = modifier
             .fillMaxSize()

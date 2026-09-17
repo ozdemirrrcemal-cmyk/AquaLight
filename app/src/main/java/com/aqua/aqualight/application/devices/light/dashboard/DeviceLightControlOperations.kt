@@ -46,7 +46,8 @@ data class DeviceLightControlSnapshot(
     val customCurvePointCount: Int,
     val activeAutomaticProgramId: String? = null,
     val hero: DeviceLightHeroSnapshot = DeviceLightHeroSnapshot(),
-    val adaptation: DeviceLightAdaptationSummary = DeviceLightAdaptationSummary()
+    val adaptation: DeviceLightAdaptationSummary = DeviceLightAdaptationSummary(),
+    val systemSupported: Boolean = false
 )
 
 /** Channel metadata and effective output exactly as reported by light.status.get. */

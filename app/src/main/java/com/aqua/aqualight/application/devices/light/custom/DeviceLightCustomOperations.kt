@@ -1,5 +1,7 @@
 package com.aqua.aqualight.application.devices.light.custom
 
+import kotlinx.coroutines.flow.Flow
+
 enum class DeviceLightCustomChannel(
     val wireKey: String,
     val sceneKey: String
@@ -39,7 +41,8 @@ data class DeviceLightCustomSnapshot(
     val timeStepMs: Long,
     val currentTimeMs: Long?,
     val channels: List<DeviceLightCustomChannel>,
-    val points: List<DeviceLightCustomPoint>
+    val points: List<DeviceLightCustomPoint>,
+    val firmwareWriteAuthoritative: Boolean
 ) {
     init {
         require(deviceUid.isNotBlank())
@@ -76,6 +79,8 @@ enum class DeviceLightCustomFailure {
 
 /** Firmware-backed boundary for the single installed Custom document and volatile preview. */
 interface DeviceLightCustomOperations {
+    fun observe(deviceUid: String): Flow<DeviceLightCustomReadResult>
+    fun current(deviceUid: String): DeviceLightCustomReadResult
     suspend fun read(deviceUid: String): DeviceLightCustomReadResult
     suspend fun preview(deviceUid: String, virtualTimeMs: Long): DeviceLightCustomMutationResult
     suspend fun clearPreview(deviceUid: String): DeviceLightCustomMutationResult

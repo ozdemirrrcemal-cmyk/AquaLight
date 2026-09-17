@@ -251,6 +251,10 @@ private fun fixtureDescriptor(
 )
 
 private object FailingCustomOperations : DeviceLightCustomOperations {
+    override fun observe(deviceUid: String): Flow<DeviceLightCustomReadResult> = fail(deviceUid)
+
+    override fun current(deviceUid: String): DeviceLightCustomReadResult = fail(deviceUid)
+
     override suspend fun read(deviceUid: String): DeviceLightCustomReadResult = fail(deviceUid)
 
     override suspend fun preview(
@@ -304,6 +308,11 @@ private class RecordingCustomOperations(
 ) : DeviceLightCustomOperations {
     var callCount = 0
         private set
+
+    override fun observe(deviceUid: String): Flow<DeviceLightCustomReadResult> =
+        flowOf(readResult)
+
+    override fun current(deviceUid: String): DeviceLightCustomReadResult = readResult
 
     override suspend fun read(deviceUid: String): DeviceLightCustomReadResult {
         callCount += 1

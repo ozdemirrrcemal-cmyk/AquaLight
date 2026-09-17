@@ -27,7 +27,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.light.system.DeviceLightFanMode
-import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemCondition
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemFanSnapshot
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 
@@ -51,7 +50,7 @@ private fun DeviceLightSystemStatusContent(
     state: DeviceLightSystemUiState,
     visuals: DeviceLightSystemVisuals
 ) {
-    val snapshot = state.snapshot
+    val snapshot = requireNotNull(state.snapshot)
     Column(Modifier.fillMaxSize()) {
         BasicText(
             text = stringResource(R.string.device_light_system_current_temperature),
@@ -62,8 +61,8 @@ private fun DeviceLightSystemStatusContent(
             contentAlignment = Alignment.Center
         ) {
             DeviceLightTemperatureGauge(
-                temperatureCelsius = snapshot?.temperatureCelsius,
-                condition = snapshot?.condition ?: DeviceLightSystemCondition.NORMAL,
+                temperatureCelsius = snapshot.temperatureCelsius,
+                condition = snapshot.condition,
                 visuals = visuals,
                 modifier = Modifier.size(DeviceLightSystemGeometry.gaugeSize)
             )
@@ -90,8 +89,8 @@ private fun DeviceLightFanPair(
     state: DeviceLightSystemUiState,
     visuals: DeviceLightSystemVisuals
 ) {
-    val fans = state.snapshot?.fans
-    val firmwareSummary = fans?.takeIf { values -> values.size == SYSTEM_FAN_COUNT }
+    val fans = requireNotNull(state.snapshot).fans
+    val firmwareSummary = fans.takeIf { values -> values.size == SYSTEM_FAN_COUNT }
         ?.let { values ->
             stringResource(
                 R.string.device_light_system_fans_summary,
@@ -109,7 +108,7 @@ private fun DeviceLightFanPair(
             )
     ) {
         DeviceLightFanCard(
-            fan = state.snapshot?.fans?.getOrNull(FIRST_FAN_INDEX),
+            fan = fans[FIRST_FAN_INDEX],
             index = FIRST_FAN_INDEX,
             visuals = visuals,
             modifier = Modifier.weight(1f)
@@ -128,7 +127,7 @@ private fun DeviceLightFanPair(
             )
         }
         DeviceLightFanCard(
-            fan = state.snapshot?.fans?.getOrNull(SECOND_FAN_INDEX),
+            fan = fans[SECOND_FAN_INDEX],
             index = SECOND_FAN_INDEX,
             visuals = visuals,
             modifier = Modifier.weight(1f)
@@ -141,7 +140,7 @@ private fun DeviceLightSensorHealth(
     state: DeviceLightSystemUiState,
     visuals: DeviceLightSystemVisuals
 ) {
-    val sensorFault = state.snapshot?.sensorHealthy == false
+    val sensorFault = !requireNotNull(state.snapshot).sensorHealthy
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -174,13 +173,13 @@ private fun DeviceLightSensorHealth(
 
 @Composable
 private fun DeviceLightFanCard(
-    fan: DeviceLightSystemFanSnapshot?,
+    fan: DeviceLightSystemFanSnapshot,
     index: Int,
     visuals: DeviceLightSystemVisuals,
     modifier: Modifier = Modifier
 ) {
-    val percent = fan?.percent ?: 0
-    val fanColor = if (fan?.healthy == false) {
+    val percent = fan.percent
+    val fanColor = if (!fan.healthy) {
         visuals.colors.card.danger
     } else {
         visuals.colors.action
@@ -331,6 +330,7 @@ internal fun DeviceLightAutomaticRangeCard(
     actions: DeviceLightSystemActions,
     visuals: DeviceLightSystemVisuals
 ) {
+    val snapshot = requireNotNull(state.snapshot)
     AquaDeviceCardSurface(
         modifier = Modifier
             .fillMaxWidth()
@@ -355,11 +355,9 @@ internal fun DeviceLightAutomaticRangeCard(
                 control = DeviceLightTemperatureControlSpec(
                     labelRes = R.string.device_light_system_start,
                     value = state.selectedStartTemperatureCelsius,
-                    minimum = state.snapshot?.startTemperaturePolicy?.minimum
-                        ?: DEFAULT_START_TEMPERATURE_MINIMUM,
+                    minimum = snapshot.startTemperaturePolicy.minimum,
                     maximum = minOf(
-                        state.snapshot?.startTemperaturePolicy?.maximum
-                            ?: DEFAULT_START_TEMPERATURE_MAXIMUM,
+                        snapshot.startTemperaturePolicy.maximum,
                         state.selectedFullSpeedTemperatureCelsius - MINIMUM_TEMPERATURE_GAP
                     ),
                     enabled = state.controlsEnabled,
@@ -372,12 +370,10 @@ internal fun DeviceLightAutomaticRangeCard(
                     labelRes = R.string.device_light_system_full_speed,
                     value = state.selectedFullSpeedTemperatureCelsius,
                     minimum = maxOf(
-                        state.snapshot?.fullSpeedTemperaturePolicy?.minimum
-                            ?: DEFAULT_FULL_SPEED_TEMPERATURE_MINIMUM,
+                        snapshot.fullSpeedTemperaturePolicy.minimum,
                         state.selectedStartTemperatureCelsius + MINIMUM_TEMPERATURE_GAP
                     ),
-                    maximum = state.snapshot?.fullSpeedTemperaturePolicy?.maximum
-                        ?: DEFAULT_FULL_SPEED_TEMPERATURE_MAXIMUM,
+                    maximum = snapshot.fullSpeedTemperaturePolicy.maximum,
                     enabled = state.controlsEnabled,
                     onValueChanged = actions.onFullSpeedTemperatureChanged
                 ),
@@ -403,8 +399,4 @@ private const val PERCENT_MAXIMUM = 100
 private const val FIRST_FAN_INDEX = 0
 private const val SECOND_FAN_INDEX = 1
 private const val SYSTEM_FAN_COUNT = 2
-private const val DEFAULT_START_TEMPERATURE_MINIMUM = 0
-private const val DEFAULT_START_TEMPERATURE_MAXIMUM = 80
-private const val DEFAULT_FULL_SPEED_TEMPERATURE_MINIMUM = 1
-private const val DEFAULT_FULL_SPEED_TEMPERATURE_MAXIMUM = 90
 private const val MINIMUM_TEMPERATURE_GAP = 1

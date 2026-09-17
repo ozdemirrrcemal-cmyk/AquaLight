@@ -4,12 +4,34 @@ import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomFail
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomMutationResult
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomOperations
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomReadResult
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 /** Routes only debug-fixture UIDs to the in-process Light runtime. */
 internal class DebugFixtureLightCustomOperations(
     private val delegate: DeviceLightCustomOperations,
     private val runtime: DebugLightFixtureRuntime
 ) : DeviceLightCustomOperations {
+
+    override fun observe(deviceUid: String): Flow<DeviceLightCustomReadResult> =
+        if (runtime.contains(deviceUid)) {
+            runtime.revisions.map {
+                runtime.current(deviceUid)
+                    ?.let(DeviceLightCustomReadResult::Available)
+                    ?: failedRead()
+            }
+        } else {
+            delegate.observe(deviceUid)
+        }
+
+    override fun current(deviceUid: String): DeviceLightCustomReadResult =
+        if (runtime.contains(deviceUid)) {
+            runtime.current(deviceUid)
+                ?.let(DeviceLightCustomReadResult::Available)
+                ?: failedRead()
+        } else {
+            delegate.current(deviceUid)
+        }
 
     override suspend fun read(deviceUid: String): DeviceLightCustomReadResult =
         if (runtime.contains(deviceUid)) {

@@ -25,7 +25,9 @@ import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightThermalR
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTypedEventReducer
 import com.aqua.aqualight.data.devices.runtime.modules.light.isAuthoritative as isLightAuthoritative
 import com.aqua.aqualight.data.devices.runtime.modules.light.requestCustom
+import com.aqua.aqualight.data.devices.runtime.modules.light.requestAutoPrograms
 import com.aqua.aqualight.data.devices.runtime.modules.light.requestGraph
+import com.aqua.aqualight.data.devices.runtime.modules.light.requiresAutomaticProgramsRefresh
 import com.aqua.aqualight.data.devices.runtime.modules.light.requiresLibraryCustomRefresh
 import com.aqua.aqualight.data.devices.runtime.modules.network.DeviceNetworkRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.security.DeviceSecurityRuntimeRepository
@@ -133,6 +135,7 @@ class DeviceRuntimeModuleProvider internal constructor(
         ) {
             light.requestGraph(event.deviceUid)
             refreshLightLibraryIfRequired(event.deviceUid)
+            refreshLightAutomaticIfRequired(event.deviceUid)
         }
         if (
             event.type == DeviceRuntimeTypedEvent.Type.LIGHT_STATUS_CHANGED &&
@@ -150,6 +153,7 @@ class DeviceRuntimeModuleProvider internal constructor(
                 if (statusOutcome is DeviceRuntimeCommandOutcome.Success) {
                     light.requestGraph(event.deviceUid)
                     refreshLightLibraryIfRequired(event.deviceUid)
+                    refreshLightAutomaticIfRequired(event.deviceUid)
                 }
             }
         }
@@ -172,6 +176,12 @@ class DeviceRuntimeModuleProvider internal constructor(
     private suspend fun refreshLightLibraryIfRequired(deviceUid: DeviceUid) {
         if (light.requiresLibraryCustomRefresh(deviceUid)) {
             light.requestCustom(deviceUid)
+        }
+    }
+
+    private suspend fun refreshLightAutomaticIfRequired(deviceUid: DeviceUid) {
+        if (light.requiresAutomaticProgramsRefresh(deviceUid)) {
+            light.requestAutoPrograms(deviceUid)
         }
     }
 

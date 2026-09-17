@@ -167,7 +167,8 @@ private fun initialSnapshot(deviceUid: String) = DeviceLightAdaptationSnapshot(
     startedAtEpochSeconds = 0L,
     endsAtEpochSeconds = 0L,
     remainingSeconds = 0L,
-    policy = ADAPTATION_POLICY
+    policy = ADAPTATION_POLICY,
+    firmwareWriteAuthoritative = true
 )
 
 private fun available(snapshot: DeviceLightAdaptationSnapshot) =

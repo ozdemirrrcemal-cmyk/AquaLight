@@ -13,9 +13,11 @@ import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.modules.DeviceRuntimeModuleProvider
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTemperatureProtectionSetPayload
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightSystemReadAuthority
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightThermalConfigApplyPayload
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightThermalConfigApplyResult
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightThermalMode
+import com.aqua.aqualight.data.devices.runtime.modules.light.currentSystem
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -34,15 +36,9 @@ internal class DefaultDeviceLightSystemOperations(
             is SystemRuntimeResolution.Failed -> flowOf(readFailure(resolution.failure))
             is SystemRuntimeResolution.Ready -> combine(
                 rootOperations.observe(resolution.deviceUid.value),
-                resolution.modules.lightThermal.states,
-                resolution.modules.lightTemperatureProtection.states
-            ) { root, thermalStates, protectionStates ->
-                projectLightSystemSnapshot(
-                    deviceUid = resolution.deviceUid,
-                    root = root,
-                    thermal = thermalStates[resolution.deviceUid],
-                    protection = protectionStates[resolution.deviceUid]
-                )
+                resolution.modules.light.stateRevision
+            ) { root, _ ->
+                resolution.project(root, DeviceLightSystemReadAuthority.PRESENTATION)
             }.distinctUntilChanged()
         }
     }
@@ -179,12 +175,26 @@ private sealed interface SystemRuntimeResolution {
         val root: DeviceRootSnapshot,
         val modules: DeviceRuntimeModuleProvider
     ) : SystemRuntimeResolution {
-        fun projectCurrent(): DeviceLightSystemReadResult = projectLightSystemSnapshot(
-            deviceUid = deviceUid,
-            root = root,
-            thermal = modules.lightThermal.states.value[deviceUid],
-            protection = modules.lightTemperatureProtection.currentStatus(deviceUid)
-        )
+        fun projectCurrent(): DeviceLightSystemReadResult =
+            project(root, DeviceLightSystemReadAuthority.AUTHORITATIVE)
+
+        fun project(
+            currentRoot: DeviceRootSnapshot?,
+            authority: DeviceLightSystemReadAuthority
+        ): DeviceLightSystemReadResult {
+            val frame = modules.light.currentSystem(deviceUid, authority)
+            val authoritative = modules.light.currentSystem(
+                deviceUid,
+                DeviceLightSystemReadAuthority.AUTHORITATIVE
+            )
+            return projectLightSystemSnapshot(
+                deviceUid = deviceUid,
+                root = currentRoot,
+                thermal = frame?.thermal,
+                protection = frame?.protection,
+                firmwareWriteAuthoritative = frame != null && frame == authoritative
+            )
+        }
     }
 
     data class Failed(val failure: DeviceLightSystemFailure) : SystemRuntimeResolution

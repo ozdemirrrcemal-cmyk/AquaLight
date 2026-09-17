@@ -16,6 +16,7 @@ import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightGraph
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightGraphReason
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightMode
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightOutputReason
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightProduct
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightStatus
 
 internal fun DeviceLightStatus.toControlSnapshot(
@@ -43,6 +44,8 @@ internal fun DeviceLightStatus.toControlSnapshot(
         currentPermille = acclimation.currentPermille,
         remainingSeconds = acclimation.remainingSeconds
     ),
+    systemSupported = product == DeviceLightProduct.WRGB_PRO_ELITE &&
+        features.fanControl && features.temperatureSensor && features.thermal,
     channels = channels.sortedBy { channel -> channel.order }.map { channel ->
         DeviceLightChannelOutputSnapshot(
             key = channel.key,

@@ -81,7 +81,8 @@ data class DeviceLightSystemSnapshot(
     val fullSpeedTemperaturePolicy: DeviceLightSystemTemperaturePolicy,
     val protectionThresholdCelsius: Int,
     val protectionThresholdPolicy: DeviceLightSystemTemperaturePolicy,
-    val protectionActive: Boolean
+    val protectionActive: Boolean,
+    val firmwareWriteAuthoritative: Boolean
 )
 
 data class DeviceLightSystemSettings(

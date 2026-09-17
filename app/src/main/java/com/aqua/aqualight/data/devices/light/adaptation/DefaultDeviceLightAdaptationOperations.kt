@@ -6,10 +6,13 @@ import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdapta
 import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationReadResult
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAcclimationPolicy
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAcclimationStartPayload
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAcclimationStopPayload
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRepository
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightStatusReadAuthority
+import com.aqua.aqualight.data.devices.runtime.modules.light.currentStatus
 import com.aqua.aqualight.data.devices.runtime.modules.light.requestAcclimationStatus
 import com.aqua.aqualight.data.devices.runtime.modules.light.startAcclimation
 import com.aqua.aqualight.data.devices.runtime.modules.light.stopAcclimation
@@ -28,9 +31,18 @@ internal class DefaultDeviceLightAdaptationOperations(
         return when (resolution) {
             is AdaptationRuntimeResolution.Failed -> flowOf(readFailure(resolution.failure))
             is AdaptationRuntimeResolution.Ready -> resolution.runtime.stateRevision.map {
+                val presentation = resolution.runtime.currentStatus(
+                    resolution.deviceUid,
+                    DeviceLightStatusReadAuthority.PRESENTATION
+                )
+                val authoritative = resolution.runtime.currentStatus(
+                    resolution.deviceUid,
+                    DeviceLightStatusReadAuthority.AUTHORITATIVE
+                )
                 project(
                     resolution.deviceUid,
-                    resolution.runtime.currentStatus(resolution.deviceUid)
+                    presentation,
+                    presentation != null && presentation == authoritative
                 )
             }.distinctUntilChanged()
         }
@@ -41,7 +53,8 @@ internal class DefaultDeviceLightAdaptationOperations(
             is AdaptationRuntimeResolution.Failed -> readFailure(resolution.failure)
             is AdaptationRuntimeResolution.Ready -> project(
                 resolution.deviceUid,
-                resolution.runtime.currentStatus(resolution.deviceUid)
+                resolution.runtime.currentStatus(resolution.deviceUid),
+                firmwareWriteAuthoritative = true
             )
         }
 
@@ -49,7 +62,11 @@ internal class DefaultDeviceLightAdaptationOperations(
         when (val resolution = resolve(deviceUid)) {
             is AdaptationRuntimeResolution.Failed -> readFailure(resolution.failure)
             is AdaptationRuntimeResolution.Ready -> runCatching {
-                resolution.runtime.requestAcclimationStatus(resolution.deviceUid)
+                val outcome = resolution.runtime.requestAcclimationStatus(resolution.deviceUid)
+                if (outcome is DeviceRuntimeCommandOutcome.Success) {
+                    resolution.runtime.requestStatus(resolution.deviceUid)
+                }
+                outcome
             }.fold(
                 onSuccess = { outcome -> outcome.toReadResult(resolution) },
                 onFailure = { readFailure(DeviceLightAdaptationFailure.INVALID_DATA) }
@@ -90,7 +107,8 @@ internal class DefaultDeviceLightAdaptationOperations(
         is AdaptationRuntimeResolution.Ready -> when (
             val current = project(
                 resolution.deviceUid,
-                resolution.runtime.currentStatus(resolution.deviceUid)
+                resolution.runtime.currentStatus(resolution.deviceUid),
+                firmwareWriteAuthoritative = true
             )
         ) {
             is DeviceLightAdaptationReadResult.Failed -> mutationFailure(current.failure)

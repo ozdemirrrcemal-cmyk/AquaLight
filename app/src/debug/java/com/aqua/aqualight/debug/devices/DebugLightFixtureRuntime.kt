@@ -166,7 +166,8 @@ private fun DeviceRootSnapshot.toFixtureCustomSnapshot(): DeviceLightCustomSnaps
         timeStepMs = MINUTE_MILLIS,
         currentTimeMs = FIXTURE_CURRENT_TIME_MINUTES * MINUTE_MILLIS,
         channels = channels,
-        points = points
+        points = points,
+        firmwareWriteAuthoritative = true
     )
 }
 
@@ -237,7 +238,9 @@ private fun DeviceRootSnapshot.toFixtureControlSnapshot(
             outputHealthy = true,
             estimatedPowerWatts = manual.estimatedPowerWatts?.toDouble(),
             estimatedColorTemperatureKelvin = null
-        )
+        ),
+        systemSupported = "LIGHT_FAN_CONTROL" in supportedFeatures &&
+            "LIGHT_TEMPERATURE_PROTECTION" in supportedFeatures
     )
 }
 

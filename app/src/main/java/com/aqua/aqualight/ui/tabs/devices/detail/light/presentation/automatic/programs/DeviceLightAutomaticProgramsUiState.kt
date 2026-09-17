@@ -13,9 +13,14 @@ internal data class DeviceLightAutomaticProgramsUiState(
     val channels: List<DeviceLightAutomaticChannel> = emptyList(),
     val programs: List<DeviceLightAutomaticProgram> = emptyList(),
     val contentEnabled: Boolean = false,
+    val firmwareWriteAuthoritative: Boolean = false,
     override val initialLoading: Boolean = false,
     override val operationInProgress: Boolean = false
 ) : DeviceLightOperationLoadingState {
     val canAdd: Boolean
-        get() = contentEnabled && capacity > 0 && programs.size < capacity && !operationInProgress
+        get() = contentEnabled && firmwareWriteAuthoritative && capacity > 0 &&
+            programs.size < capacity && !operationInProgress
+
+    val canMutate: Boolean
+        get() = contentEnabled && firmwareWriteAuthoritative && !operationInProgress
 }

@@ -28,11 +28,13 @@ internal data class DeviceLightAdaptationUiState(
 
     val canStart: Boolean
         get() = contentEnabled &&
+            snapshot?.firmwareWriteAuthoritative == true &&
             snapshot?.clockReady == true &&
             !operationInProgress
 
     val canStop: Boolean
         get() = contentEnabled &&
+            snapshot?.firmwareWriteAuthoritative == true &&
             snapshot?.state == DeviceLightAdaptationState.ACTIVE &&
             !operationInProgress
 }

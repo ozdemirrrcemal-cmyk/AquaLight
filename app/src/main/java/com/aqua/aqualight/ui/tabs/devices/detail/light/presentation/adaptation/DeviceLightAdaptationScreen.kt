@@ -38,6 +38,24 @@ internal fun DeviceLightAdaptationScreen(
         colors = colors,
         typography = aquaDeviceCardTypography(colors.card)
     )
+    if (state.snapshot == null) {
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .background(colorResource(R.color.background_color))
+                .padding(DeviceLightAdaptationGeometry.screenHorizontalPadding),
+            contentAlignment = Alignment.Center
+        ) {
+            BasicText(
+                text = stringResource(R.string.device_light_adaptation_data_unavailable),
+                style = visuals.typography.body.copy(
+                    color = visuals.colors.card.secondaryText,
+                    textAlign = TextAlign.Center
+                )
+            )
+        }
+        return
+    }
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -158,7 +176,8 @@ private fun DeviceLightAdaptationUiState.toActionConfiguration(
     )
     DeviceLightAdaptationScreenState.COMPLETED -> AdaptationActionConfiguration(
         labelRes = R.string.device_light_adaptation_configure_again_action,
-        enabled = contentEnabled && !operationInProgress,
+        enabled = contentEnabled && snapshot?.firmwareWriteAuthoritative == true &&
+            !operationInProgress,
         filled = true,
         danger = false,
         onClick = actions.onConfigureAgainClick

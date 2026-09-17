@@ -14,6 +14,8 @@ import com.aqua.aqualight.application.devices.light.automatic.DeviceLightPresetC
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightPresetId
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.toCommercialLightError
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,6 +41,7 @@ internal class DeviceLightAutomaticProgramEditorViewModel(
     val effects: SharedFlow<DeviceLightAutomaticProgramEditorEffect> = _effects.asSharedFlow()
 
     private var boundDeviceUid = ""
+    private var observeJob: Job? = null
 
     val draftEditor = DeviceLightAutomaticDraftEditor(
         currentState = { currentState },
@@ -62,15 +65,27 @@ internal class DeviceLightAutomaticProgramEditorViewModel(
         val deviceUid = deviceUidText.trim()
         require(deviceUid.isNotBlank()) { "Automatic editor destination deviceUid is required." }
         if (boundDeviceUid == deviceUid) return
+        observeJob?.cancel()
         boundDeviceUid = deviceUid
         _uiState.value = DeviceLightAutomaticProgramEditorUiState(
             mode = mode,
             initialLoading = true
         )
+        observeJob = viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            operations.observe(deviceUid).collect { result ->
+                when (result) {
+                    is DeviceLightAutomaticReadResult.Available ->
+                        applyObservedSnapshot(result.snapshot, restoredDraft, restoredPresetId)
+                    is DeviceLightAutomaticReadResult.Failed -> if (!currentState.initialLoading) {
+                        applyReadFailure(result.failure)
+                    }
+                }
+            }
+        }
         viewModelScope.launch {
             when (val result = operations.read(deviceUid)) {
                 is DeviceLightAutomaticReadResult.Available ->
-                    applySnapshot(result.snapshot, restoredDraft, restoredPresetId)
+                    applyObservedSnapshot(result.snapshot, restoredDraft, restoredPresetId)
                 is DeviceLightAutomaticReadResult.Failed -> applyReadFailure(result.failure)
             }
         }
@@ -135,7 +150,8 @@ internal class DeviceLightAutomaticProgramEditorViewModel(
         val loadedDraft = selectedProgram?.let(DeviceLightAutomaticEditorDraft::fromProgram)
             ?: DeviceLightAutomaticEditorDraft.forNewProgram(snapshot.channels)
         val modeDraft = if (mode is DeviceLightAutomaticEditorMode.Duplicate) {
-            loadedDraft.copy(enabled = true)
+            // Firmware handoff requires duplicates to be created disabled on their first save.
+            loadedDraft.copy(enabled = false)
         } else {
             loadedDraft
         }
@@ -147,6 +163,11 @@ internal class DeviceLightAutomaticProgramEditorViewModel(
         val restored = restoredDraft?.takeIf { draft ->
             draft.channels.keys == snapshot.channels.toSet()
         }
+        val restoredForMode = if (mode is DeviceLightAutomaticEditorMode.Duplicate) {
+            restored?.copy(enabled = false)
+        } else {
+            restored
+        }
         _uiState.value = DeviceLightAutomaticProgramEditorUiState(
             mode = mode,
             source = DeviceLightAutomaticEditorSource(
@@ -157,10 +178,49 @@ internal class DeviceLightAutomaticProgramEditorViewModel(
                 channels = snapshot.channels,
                 baselineDraft = baseline
             ),
-            draft = restored ?: modeDraft,
-            selectedPresetId = restoredPresetId?.takeIf { restored != null },
-            connectionVisualState = DeviceConnectionVisualState.ONLINE
+            draft = restoredForMode ?: modeDraft,
+            selectedPresetId = restoredPresetId?.takeIf { restoredForMode != null },
+            connectionVisualState = if (snapshot.firmwareWriteAuthoritative) {
+                DeviceConnectionVisualState.ONLINE
+            } else {
+                DeviceConnectionVisualState.OFFLINE
+            },
+            firmwareWriteAuthoritative = snapshot.firmwareWriteAuthoritative
         )
+    }
+
+    private fun applyObservedSnapshot(
+        snapshot: DeviceLightAutomaticSnapshot,
+        restoredDraft: DeviceLightAutomaticEditorDraft?,
+        restoredPresetId: DeviceLightPresetId?
+    ) {
+        val source = currentState.source
+        when {
+            source == null -> applySnapshot(snapshot, restoredDraft, restoredPresetId)
+            source.revision == snapshot.revision &&
+                source.programCount == snapshot.programs.size &&
+                source.policy == snapshot.policy &&
+                source.channels == snapshot.channels ->
+                _uiState.update { state ->
+                    state.copy(
+                        connectionVisualState = if (snapshot.firmwareWriteAuthoritative) {
+                            DeviceConnectionVisualState.ONLINE
+                        } else {
+                            DeviceConnectionVisualState.OFFLINE
+                        },
+                        firmwareWriteAuthoritative = snapshot.firmwareWriteAuthoritative,
+                        initialLoading = false
+                    )
+                }
+            !currentState.hasUnsavedChanges -> applySnapshot(snapshot, null, null)
+            else -> _uiState.update { state ->
+                state.copy(
+                    connectionVisualState = DeviceConnectionVisualState.WARNING,
+                    firmwareWriteAuthoritative = false,
+                    initialLoading = false
+                )
+            }
+        }
     }
 
     private suspend fun mutate(
@@ -168,11 +228,16 @@ internal class DeviceLightAutomaticProgramEditorViewModel(
         source: DeviceLightAutomaticEditorSource,
         draft: DeviceLightAutomaticProgramDraft
     ): DeviceLightAutomaticMutationResult = when (val mode = state.mode) {
-        DeviceLightAutomaticEditorMode.Create,
-        is DeviceLightAutomaticEditorMode.Duplicate -> operations.create(
+        DeviceLightAutomaticEditorMode.Create -> operations.create(
             deviceUid = source.deviceUid,
             expectedRevision = source.revision,
             enabled = state.draft.enabled,
+            draft = draft
+        )
+        is DeviceLightAutomaticEditorMode.Duplicate -> operations.create(
+            deviceUid = source.deviceUid,
+            expectedRevision = source.revision,
+            enabled = false,
             draft = draft
         )
         is DeviceLightAutomaticEditorMode.Edit -> operations.update(
@@ -189,7 +254,8 @@ internal class DeviceLightAutomaticProgramEditorViewModel(
                 connectionVisualState = failure.connectionState(),
                 initialLoading = false,
                 operationInProgress = false,
-                loadFailed = true
+                firmwareWriteAuthoritative = false,
+                loadFailed = state.source == null
             )
         }
         emit(

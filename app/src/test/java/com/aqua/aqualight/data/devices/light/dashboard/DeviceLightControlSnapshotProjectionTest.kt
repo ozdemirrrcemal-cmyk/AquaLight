@@ -6,6 +6,7 @@ import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdapta
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightMode
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightMutationParser
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightProduct
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeFixtures
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightStatusParser
 import org.junit.Assert.assertEquals
@@ -45,5 +46,24 @@ class DeviceLightControlSnapshotProjectionTest {
         assertEquals(listOf(750, 650, 550, 450), snapshot.plan?.points?.get(1)?.channelLevels)
         assertEquals(status.auto.programCount, snapshot.automaticProgramCount)
         assertEquals(status.custom.pointCount, snapshot.customCurvePointCount)
+        assertTrue(snapshot.systemSupported)
+    }
+
+    @Test
+    fun `rgb product does not expose unsupported system surface`() {
+        val status = DeviceLightStatusParser.parse(
+            DeviceLightRuntimeFixtures.status(DeviceLightProduct.RGB_PRO_SLIM)
+        )
+        val graph = DeviceLightMutationParser.Graph.parseGraph(
+            DeviceLightRuntimeFixtures.graph(
+                mode = status.mode,
+                product = DeviceLightProduct.RGB_PRO_SLIM
+            ),
+            status.product
+        )
+
+        val snapshot = status.toControlSnapshot(DeviceUid("light-rgb"), graph)
+
+        assertEquals(false, snapshot.systemSupported)
     }
 }

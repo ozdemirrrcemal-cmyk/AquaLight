@@ -40,6 +40,22 @@ internal fun DeviceLightCustomCurveScreen(
     val background = colorResource(R.color.background_color)
     val colors = aquaLightManualColors()
     val visuals = DeviceLightCustomVisuals(colors, aquaDeviceCardTypography(colors.card))
+    if (state.channels.isEmpty()) {
+        Box(
+            modifier = modifier.fillMaxSize().background(background)
+                .padding(SCREEN_HORIZONTAL_PADDING_DP.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            BasicText(
+                text = stringResource(R.string.device_light_custom_data_unavailable),
+                style = visuals.typography.body.copy(
+                    color = visuals.colors.card.secondaryText,
+                    textAlign = TextAlign.Center
+                )
+            )
+        }
+        return
+    }
     Box(modifier = modifier.fillMaxSize().background(background)) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),

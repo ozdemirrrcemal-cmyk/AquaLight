@@ -91,10 +91,9 @@ private fun DeviceLightProtectionThreshold(
     actions: DeviceLightSystemActions,
     visuals: DeviceLightSystemVisuals
 ) {
-    val minimum = state.snapshot?.protectionThresholdPolicy?.minimum
-        ?: DEFAULT_PROTECTION_TEMPERATURE_MINIMUM
-    val maximum = state.snapshot?.protectionThresholdPolicy?.maximum
-        ?: DEFAULT_PROTECTION_TEMPERATURE_MAXIMUM
+    val policy = requireNotNull(state.snapshot).protectionThresholdPolicy
+    val minimum = policy.minimum
+    val maximum = policy.maximum
     DeviceLightTemperatureControlRow(
         control = DeviceLightTemperatureControlSpec(
             labelRes = R.string.device_light_system_protection_threshold,
@@ -131,6 +130,3 @@ private fun DeviceLightProtectionBadge(visuals: DeviceLightSystemVisuals) {
         )
     }
 }
-
-private const val DEFAULT_PROTECTION_TEMPERATURE_MINIMUM = 50
-private const val DEFAULT_PROTECTION_TEMPERATURE_MAXIMUM = 70

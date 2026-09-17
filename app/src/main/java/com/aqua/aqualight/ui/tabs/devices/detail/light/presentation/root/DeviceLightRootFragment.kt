@@ -127,8 +127,10 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
         if (navController.currentDestination?.id != R.id.deviceLightRootFragment) return
         navController.navigate(
             DeviceLightRootFragmentDirections
-                .actionDeviceLightRootFragmentToDeviceLightQuickSetupFragment(
-                    deviceUid = args.deviceUid
+                .actionDeviceLightRootFragmentToDeviceLightAutomaticProgramEditorFragment(
+                    deviceUid = args.deviceUid,
+                    programId = "",
+                    duplicate = false
                 )
         )
     }
@@ -161,10 +163,12 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
                         .actionDeviceLightRootFragmentToDeviceLightAdaptationFragment(args.deviceUid)
                 )
             }
-            DeviceLightMenuDestination.SYSTEM -> navController.navigate(
-                DeviceLightRootFragmentDirections
-                    .actionDeviceLightRootFragmentToDeviceLightSystemFragment(args.deviceUid)
-            )
+            DeviceLightMenuDestination.SYSTEM -> if (viewModel.uiState.value.systemSupported) {
+                navController.navigate(
+                    DeviceLightRootFragmentDirections
+                        .actionDeviceLightRootFragmentToDeviceLightSystemFragment(args.deviceUid)
+                )
+            }
             is DeviceLightPlanDestination.AutomaticProgramEditor -> navController.navigate(
                 DeviceLightRootFragmentDirections
                     .actionDeviceLightRootFragmentToDeviceLightAutomaticProgramEditorFragment(

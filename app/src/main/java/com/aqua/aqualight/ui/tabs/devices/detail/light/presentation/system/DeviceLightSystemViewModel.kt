@@ -197,7 +197,11 @@ internal class DeviceLightSystemViewModel(
             val keepDraft = draftDirty && !operationFinished
             state.copy(
                 deviceUid = snapshot.deviceUid,
-                connectionVisualState = DeviceConnectionVisualState.ONLINE,
+                connectionVisualState = if (snapshot.firmwareWriteAuthoritative) {
+                    DeviceConnectionVisualState.ONLINE
+                } else {
+                    DeviceConnectionVisualState.OFFLINE
+                },
                 snapshot = snapshot,
                 selectedMode = if (keepDraft) state.selectedMode else snapshot.mode,
                 selectedStartTemperatureCelsius = if (keepDraft) {
@@ -216,6 +220,7 @@ internal class DeviceLightSystemViewModel(
                     snapshot.protectionThresholdCelsius
                 },
                 contentEnabled = true,
+                firmwareWriteAuthoritative = snapshot.firmwareWriteAuthoritative,
                 initialLoading = false,
                 operationInProgress = if (operationFinished) false else state.operationInProgress
             )
@@ -226,7 +231,8 @@ internal class DeviceLightSystemViewModel(
         mutableUiState.update { state ->
             state.copy(
                 connectionVisualState = failure.connectionState(),
-                contentEnabled = false,
+                contentEnabled = state.snapshot != null,
+                firmwareWriteAuthoritative = false,
                 initialLoading = false,
                 operationInProgress = false
             )

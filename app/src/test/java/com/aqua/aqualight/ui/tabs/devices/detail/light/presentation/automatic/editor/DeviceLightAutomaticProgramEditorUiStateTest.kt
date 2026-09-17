@@ -85,7 +85,8 @@ class DeviceLightAutomaticProgramEditorUiStateTest {
                 channels = CHANNELS,
                 baselineDraft = empty
             ),
-            draft = draft
+            draft = draft,
+            firmwareWriteAuthoritative = true
         )
     }
 }

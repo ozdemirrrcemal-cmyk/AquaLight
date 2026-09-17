@@ -40,6 +40,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.aquaL
 internal fun DeviceLightSecondaryScreensRow(
     enabled: Boolean,
     adaptation: DeviceLightAdaptationSummary,
+    systemSupported: Boolean,
     onMenuClick: (DeviceLightMenuDestination) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -57,13 +58,15 @@ internal fun DeviceLightSecondaryScreensRow(
                 DeviceLightAdaptationContent(adaptation, colors, typography)
             }
         }
-        DeviceLightSecondaryCard(
-            icon = AquaLightDashboardIconKind.SYSTEM,
-            enabled = enabled,
-            onClick = { onMenuClick(DeviceLightMenuDestination.SYSTEM) },
-            modifier = Modifier.weight(AquaLightDashboardGeometry.systemCardWeight)
-        ) { colors, typography ->
-            DeviceLightSystemContent(colors, typography)
+        if (systemSupported) {
+            DeviceLightSecondaryCard(
+                icon = AquaLightDashboardIconKind.SYSTEM,
+                enabled = enabled,
+                onClick = { onMenuClick(DeviceLightMenuDestination.SYSTEM) },
+                modifier = Modifier.weight(AquaLightDashboardGeometry.systemCardWeight)
+            ) { colors, typography ->
+                DeviceLightSystemContent(colors, typography)
+            }
         }
     }
 }

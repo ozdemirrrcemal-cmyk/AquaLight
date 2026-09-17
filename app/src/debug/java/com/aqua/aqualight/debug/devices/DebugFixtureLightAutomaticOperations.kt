@@ -9,6 +9,8 @@ import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomat
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticProgramDraft
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticReadResult
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticSnapshot
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 
 internal class DebugFixtureLightAutomaticOperations(
     private val delegate: DeviceLightAutomaticOperations,
@@ -17,6 +19,19 @@ internal class DebugFixtureLightAutomaticOperations(
 
     private val lock = Any()
     private val fixtureStates = mutableMapOf<String, DeviceLightAutomaticSnapshot>()
+
+    override fun observe(deviceUid: String): Flow<DeviceLightAutomaticReadResult> {
+        val snapshot = synchronized(lock) { fixtureSnapshot(deviceUid.trim()) }
+        return snapshot?.let { value ->
+            flowOf(DeviceLightAutomaticReadResult.Available(value))
+        } ?: delegate.observe(deviceUid)
+    }
+
+    override fun current(deviceUid: String): DeviceLightAutomaticReadResult {
+        val snapshot = synchronized(lock) { fixtureSnapshot(deviceUid.trim()) }
+        return snapshot?.let(DeviceLightAutomaticReadResult::Available)
+            ?: delegate.current(deviceUid)
+    }
 
     override suspend fun read(deviceUid: String): DeviceLightAutomaticReadResult {
         val normalizedUid = deviceUid.trim()
@@ -187,7 +202,8 @@ internal class DebugFixtureLightAutomaticOperations(
                     rampDurationsMs = debugLightAutomaticRampDurationsMs
                 ),
                 channels = channels,
-                programs = debugLightAutomaticFixturePrograms(channels)
+                programs = debugLightAutomaticFixturePrograms(channels),
+                firmwareWriteAuthoritative = true
             )
         }
     }

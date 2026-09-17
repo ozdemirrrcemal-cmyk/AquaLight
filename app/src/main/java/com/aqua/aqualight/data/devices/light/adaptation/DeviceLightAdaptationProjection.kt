@@ -14,11 +14,16 @@ import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightStatus
 
 internal fun project(
     deviceUid: DeviceUid,
-    status: DeviceLightStatus?
+    status: DeviceLightStatus?,
+    firmwareWriteAuthoritative: Boolean
 ): DeviceLightAdaptationReadResult = when {
     status == null -> readFailure(DeviceLightAdaptationFailure.UNAVAILABLE)
     !status.supportsAdaptation() -> readFailure(DeviceLightAdaptationFailure.UNSUPPORTED)
-    else -> status.acclimation.toSnapshot(deviceUid, status.policy.acclimation)
+    else -> status.acclimation.toSnapshot(
+        deviceUid,
+        status.policy.acclimation,
+        firmwareWriteAuthoritative
+    )
         ?.let(DeviceLightAdaptationReadResult::Available)
         ?: readFailure(DeviceLightAdaptationFailure.INVALID_DATA)
 }
@@ -41,7 +46,8 @@ internal fun DeviceLightAcclimationPolicy.accepts(
 
 internal fun DeviceLightAcclimationStatus.toSnapshot(
     deviceUid: DeviceUid,
-    policy: DeviceLightAcclimationPolicy
+    policy: DeviceLightAcclimationPolicy,
+    firmwareWriteAuthoritative: Boolean
 ): DeviceLightAdaptationSnapshot? {
     val applicationPolicy = policy.toApplicationPolicy()
     val statusFields = requiredStatusFieldsOrNull(revision, state, clockReady)
@@ -60,7 +66,8 @@ internal fun DeviceLightAcclimationStatus.toSnapshot(
             startedAtEpochSeconds = startedAtEpochSeconds,
             endsAtEpochSeconds = endsAtEpochSeconds,
             remainingSeconds = remainingSeconds,
-            policy = applicationPolicy
+            policy = applicationPolicy,
+            firmwareWriteAuthoritative = firmwareWriteAuthoritative
         )
     }
 }

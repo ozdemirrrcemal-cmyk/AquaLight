@@ -18,27 +18,64 @@ import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAutoProg
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAutoProgramDeletePayload
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAutoProgramEnabledSetPayload
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAutoProgramUpdatePayload
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAutoPrograms
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAutomaticReadAuthority
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAutomaticRuntimeState
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightErrorReason
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightScene
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightStatus
 import com.aqua.aqualight.data.devices.runtime.modules.light.createAutoProgram
+import com.aqua.aqualight.data.devices.runtime.modules.light.currentAutomatic
 import com.aqua.aqualight.data.devices.runtime.modules.light.deleteAutoProgram
 import com.aqua.aqualight.data.devices.runtime.modules.light.requestAutoPrograms
 import com.aqua.aqualight.data.devices.runtime.modules.light.setAutoProgramEnabled
 import com.aqua.aqualight.data.devices.runtime.modules.light.updateAutoProgram
 import com.aqua.aqualight.data.devices.runtime.modules.light.lightV1Data
 import java.util.concurrent.CancellationException
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 
 internal class DefaultDeviceLightAutomaticOperations(
     private val devicesRepository: DevicesRepository
 ) : DeviceLightAutomaticOperations {
 
+    override fun observe(deviceUid: String): Flow<DeviceLightAutomaticReadResult> {
+        val uid = deviceUid.toUidOrNull()
+        val runtime = devicesRepository.runtimeModules()?.light
+        return if (uid == null || runtime == null) {
+            flowOf(DeviceLightAutomaticReadResult.Failed(DeviceLightAutomaticFailure.UNAVAILABLE))
+        } else {
+            runtime.stateRevision.map {
+                projectCurrent(
+                    devicesRepository,
+                    uid,
+                    runtime,
+                    DeviceLightAutomaticReadAuthority.PRESENTATION
+                )
+            }.distinctUntilChanged()
+        }
+    }
+
+    override fun current(deviceUid: String): DeviceLightAutomaticReadResult {
+        val uid = deviceUid.toUidOrNull()
+        val runtime = devicesRepository.runtimeModules()?.light
+        return if (uid == null || runtime == null) {
+            DeviceLightAutomaticReadResult.Failed(DeviceLightAutomaticFailure.UNAVAILABLE)
+        } else {
+            projectCurrent(
+                devicesRepository,
+                uid,
+                runtime,
+                DeviceLightAutomaticReadAuthority.AUTHORITATIVE
+            )
+        }
+    }
+
     override suspend fun read(deviceUid: String): DeviceLightAutomaticReadResult {
         val uid = deviceUid.toUidOrNull()
         val runtime = devicesRepository.runtimeModules()?.light
-        val status = if (uid == null) null else runtime?.currentStatus(uid)
         return when {
             uid == null -> DeviceLightAutomaticReadResult.Failed(
                 DeviceLightAutomaticFailure.INVALID_DATA
@@ -46,35 +83,25 @@ internal class DefaultDeviceLightAutomaticOperations(
             runtime == null -> DeviceLightAutomaticReadResult.Failed(
                 DeviceLightAutomaticFailure.UNAVAILABLE
             )
-            status == null -> DeviceLightAutomaticReadResult.Failed(
+            runtime.currentStatus(uid) == null -> DeviceLightAutomaticReadResult.Failed(
                 DeviceLightAutomaticFailure.NOT_CONNECTED
             )
-            else -> readAvailable(uid, runtime, status)
+            else -> try {
+                when (val result = runtime.requestAutoPrograms(uid)) {
+                    is DeviceRuntimeCommandOutcome.Success -> projectCurrent(
+                        devicesRepository,
+                        uid,
+                        runtime,
+                        DeviceLightAutomaticReadAuthority.AUTHORITATIVE
+                    )
+                    else -> DeviceLightAutomaticReadResult.Failed(result.toFailure())
+                }
+            } catch (error: CancellationException) {
+                throw error
+            } catch (_: Exception) {
+                DeviceLightAutomaticReadResult.Failed(DeviceLightAutomaticFailure.INVALID_DATA)
+            }
         }
-    }
-
-    private suspend fun readAvailable(
-        uid: DeviceUid,
-        runtime: DeviceLightRuntimeRepository,
-        status: DeviceLightStatus
-    ): DeviceLightAutomaticReadResult = try {
-        when (val result = runtime.requestAutoPrograms(uid)) {
-            is DeviceRuntimeCommandOutcome.Success -> DeviceLightAutomaticReadResult.Available(
-                result.value.toApplicationSnapshot(
-                    uid = uid,
-                    status = status,
-                    productDisplayName = devicesRepository.currentDevice(uid)
-                        ?.product
-                        ?.displayName
-                        .orEmpty()
-                )
-            )
-            else -> DeviceLightAutomaticReadResult.Failed(result.toFailure())
-        }
-    } catch (error: CancellationException) {
-        throw error
-    } catch (_: Exception) {
-        DeviceLightAutomaticReadResult.Failed(DeviceLightAutomaticFailure.INVALID_DATA)
     }
 
     override suspend fun create(
@@ -163,6 +190,10 @@ internal class DefaultDeviceLightAutomaticOperations(
             runtime == null -> DeviceLightAutomaticMutationResult.Failed(
                 DeviceLightAutomaticFailure.UNAVAILABLE
             )
+            runtime.currentAutomatic(
+                uid,
+                DeviceLightAutomaticReadAuthority.AUTHORITATIVE
+            ) == null -> mutationFailure(DeviceLightAutomaticFailure.NOT_CONNECTED)
             else -> executeSafely(uid, runtime, execute)
         }
     }
@@ -177,7 +208,10 @@ internal class DefaultDeviceLightAutomaticOperations(
     ): DeviceLightAutomaticMutationResult {
         val uid = deviceUid.toUidOrNull()
         val runtime = devicesRepository.runtimeModules()?.light
-        val status = if (uid == null) null else runtime?.currentStatus(uid)
+        val status = if (uid == null) null else runtime?.currentAutomatic(
+            uid,
+            DeviceLightAutomaticReadAuthority.AUTHORITATIVE
+        )?.status
         return when {
             uid == null -> mutationFailure(DeviceLightAutomaticFailure.INVALID_DATA)
             runtime == null -> mutationFailure(DeviceLightAutomaticFailure.UNAVAILABLE)
@@ -207,26 +241,63 @@ internal class DefaultDeviceLightAutomaticOperations(
     }
 }
 
-private fun DeviceLightAutoPrograms.toApplicationSnapshot(
+private fun projectCurrent(
+    devicesRepository: DevicesRepository,
     uid: DeviceUid,
-    status: DeviceLightStatus,
-    productDisplayName: String
+    runtime: DeviceLightRuntimeRepository,
+    authority: DeviceLightAutomaticReadAuthority
+): DeviceLightAutomaticReadResult {
+    val frame = runtime.currentAutomatic(uid, authority)
+        ?: return DeviceLightAutomaticReadResult.Failed(
+            DeviceLightAutomaticFailure.NOT_CONNECTED
+        )
+    val writeAuthoritative = runtime.currentAutomatic(
+        uid,
+        DeviceLightAutomaticReadAuthority.AUTHORITATIVE
+    ) == frame
+    return runCatching {
+        DeviceLightAutomaticReadResult.Available(
+            frame.toApplicationSnapshot(
+                uid = uid,
+                productDisplayName = devicesRepository.currentDevice(uid)
+                    ?.product
+                    ?.displayName
+                    .orEmpty(),
+                firmwareWriteAuthoritative = writeAuthoritative
+            )
+        )
+    }.getOrElse {
+        DeviceLightAutomaticReadResult.Failed(DeviceLightAutomaticFailure.INVALID_DATA)
+    }
+}
+
+private fun DeviceLightAutomaticRuntimeState.toApplicationSnapshot(
+    uid: DeviceUid,
+    productDisplayName: String,
+    firmwareWriteAuthoritative: Boolean
 ): DeviceLightAutomaticSnapshot {
-    require(programCount == programs.size)
-    require(enabledCount == programs.count(DeviceLightAutoProgram::enabled))
-    require(capacity == status.policy.auto.capacity)
-    val channels = status.product.sceneFields.map(String::toAutomaticChannel)
+    val lightStatus = status
+    val programsDocument = programs
+    require(programsDocument.programCount == programsDocument.programs.size)
+    require(
+        programsDocument.enabledCount == programsDocument.programs.count(DeviceLightAutoProgram::enabled)
+    )
+    require(programsDocument.capacity == lightStatus.policy.auto.capacity)
+    val channels = lightStatus.product.sceneFields.map(String::toAutomaticChannel)
     return DeviceLightAutomaticSnapshot(
         deviceUid = uid.value,
-        productDisplayName = productDisplayName.ifBlank { status.product.wireValue },
-        revision = revision,
+        productDisplayName = productDisplayName.ifBlank { lightStatus.product.wireValue },
+        revision = programsDocument.revision,
         policy = DeviceLightAutomaticPolicy(
-            capacity = status.policy.auto.capacity,
-            timeStepMs = status.policy.auto.timeStepMs,
-            rampDurationsMs = status.policy.auto.rampDurationsMs
+            capacity = lightStatus.policy.auto.capacity,
+            timeStepMs = lightStatus.policy.auto.timeStepMs,
+            rampDurationsMs = lightStatus.policy.auto.rampDurationsMs
         ),
         channels = channels,
-        programs = programs.map { program -> program.toApplicationProgram(status, channels) }
+        programs = programsDocument.programs.map { program ->
+            program.toApplicationProgram(lightStatus, channels)
+        },
+        firmwareWriteAuthoritative = firmwareWriteAuthoritative
     )
 }
 

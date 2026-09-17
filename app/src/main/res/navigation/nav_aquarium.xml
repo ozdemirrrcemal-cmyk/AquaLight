@@ -375,6 +375,15 @@
         android:label="@string/device_menu_quick_setup_title"
         tools:layout="@layout/fragment_device_light_quick_setup">
         <argument android:name="deviceUid" app:argType="string" />
+        <action
+            android:id="@+id/action_deviceLightQuickSetupFragment_to_deviceLightAutomaticProgramEditorFragment"
+            app:destination="@id/deviceLightAutomaticProgramEditorFragment"
+            app:popUpTo="@id/deviceLightQuickSetupFragment"
+            app:popUpToInclusive="true"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
     </fragment>
 
     <fragment

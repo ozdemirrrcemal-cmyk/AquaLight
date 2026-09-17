@@ -289,6 +289,94 @@ class DeviceLightGenerationAuthorityTest {
         assertEquals(DeviceLightLibraryRuntimeState(status, document), owner.presentationLibrary())
     }
 
+    @Test
+    fun `automatic retains one complete frame while a reconnect rehydrates programs`() {
+        val owner = DeviceLightRuntimeStateOwner()
+        val status = DeviceLightStatusParser.parse(DeviceLightRuntimeFixtures.status())
+        val programs = status.emptyAutoPrograms()
+        val refreshedStatus = status.copy(outputActive = !status.outputActive)
+
+        owner.beginGeneration(DEVICE_UID, G1)
+        assertTrue(owner.recordStatus(DEVICE_UID, G1, status))
+        assertTrue(owner.automaticProjection.record(DEVICE_UID, G1, programs))
+        assertEquals(
+            DeviceLightAutomaticRuntimeState(status, programs),
+            owner.presentationAutomatic()
+        )
+
+        owner.invalidate(DEVICE_UID, G1)
+        owner.beginGeneration(DEVICE_UID, G2)
+        assertTrue(owner.recordStatus(DEVICE_UID, G2, refreshedStatus))
+
+        assertNull(owner.authoritativeAutomatic())
+        assertEquals(
+            DeviceLightAutomaticRuntimeState(status, programs),
+            owner.presentationAutomatic()
+        )
+
+        assertTrue(owner.automaticProjection.record(DEVICE_UID, G2, programs))
+        assertEquals(
+            DeviceLightAutomaticRuntimeState(refreshedStatus, programs),
+            owner.authoritativeAutomatic()
+        )
+    }
+
+    @Test
+    fun `automatic summary revision change cannot publish a mixed frame`() {
+        val owner = DeviceLightRuntimeStateOwner()
+        val firstStatus = DeviceLightStatusParser.parse(DeviceLightRuntimeFixtures.status())
+        val firstPrograms = firstStatus.emptyAutoPrograms()
+        val nextStatus = firstStatus.copy(
+            auto = firstStatus.auto.copy(revision = firstStatus.auto.revision + 1L)
+        )
+
+        owner.beginGeneration(DEVICE_UID, G1)
+        owner.recordStatus(DEVICE_UID, G1, firstStatus)
+        owner.automaticProjection.record(DEVICE_UID, G1, firstPrograms)
+
+        assertTrue(owner.recordStatus(DEVICE_UID, G1, nextStatus))
+        assertNull(owner.authoritativeAutomatic())
+        assertEquals(
+            DeviceLightAutomaticRuntimeState(firstStatus, firstPrograms),
+            owner.presentationAutomatic()
+        )
+        assertFalse(owner.automaticProjection.record(DEVICE_UID, G1, firstPrograms))
+    }
+
+    @Test
+    fun `system retains its complete frame until both owning domains rehydrate`() {
+        val owner = DeviceLightRuntimeStateOwner()
+        val firstThermal = thermalStatus(uptimeMs = 100L, minimumC = 30.0)
+        val firstProtection = protectionStatus(thresholdC = 60.0)
+        val nextThermal = thermalStatus(uptimeMs = 200L, minimumC = 32.0)
+        val nextProtection = protectionStatus(thresholdC = 62.0)
+
+        owner.beginGeneration(DEVICE_UID, G1)
+        assertTrue(owner.recordThermalStatus(DEVICE_UID, G1, firstThermal))
+        assertNull(owner.presentationSystem())
+        assertTrue(owner.recordTemperatureProtection(DEVICE_UID, G1, firstProtection))
+        val firstFrame = DeviceLightSystemRuntimeState(
+            DeviceLightThermalRuntimeState(status = firstThermal),
+            firstProtection
+        )
+        assertEquals(firstFrame, owner.authoritativeSystem())
+
+        owner.invalidate(DEVICE_UID, G1)
+        owner.beginGeneration(DEVICE_UID, G2)
+        assertTrue(owner.recordThermalStatus(DEVICE_UID, G2, nextThermal))
+        assertNull(owner.authoritativeSystem())
+        assertEquals(firstFrame, owner.presentationSystem())
+
+        assertTrue(owner.recordTemperatureProtection(DEVICE_UID, G2, nextProtection))
+        assertEquals(
+            DeviceLightSystemRuntimeState(
+                DeviceLightThermalRuntimeState(status = nextThermal),
+                nextProtection
+            ),
+            owner.authoritativeSystem()
+        )
+    }
+
     private companion object {
         val DEVICE_UID = DeviceUid("AQL-LIGHT-GENERATION")
         val G1 = DeviceRuntimeConnectionGeneration(1L)
@@ -303,6 +391,14 @@ private fun DeviceLightStatus.emptyCustomDocument() = DeviceLightCustomDocument(
     pointCount = custom.pointCount,
     points = emptyList(),
     event = null
+)
+
+private fun DeviceLightStatus.emptyAutoPrograms() = DeviceLightAutoPrograms(
+    revision = auto.revision,
+    capacity = policy.auto.capacity,
+    programCount = auto.programCount,
+    enabledCount = auto.enabledCount,
+    programs = emptyList()
 )
 
 private fun DeviceLightRuntimeStateOwner.authoritativeDashboard() = dashboardProjection.current(
@@ -323,4 +419,103 @@ private fun DeviceLightRuntimeStateOwner.authoritativeLibrary() = libraryProject
 private fun DeviceLightRuntimeStateOwner.presentationLibrary() = libraryProjection.current(
     DeviceUid("AQL-LIGHT-GENERATION"),
     DeviceLightLibraryReadAuthority.PRESENTATION
+)
+
+private fun DeviceLightRuntimeStateOwner.authoritativeAutomatic() = automaticProjection.current(
+    DeviceUid("AQL-LIGHT-GENERATION"),
+    DeviceLightAutomaticReadAuthority.AUTHORITATIVE
+)
+
+private fun DeviceLightRuntimeStateOwner.presentationAutomatic() = automaticProjection.current(
+    DeviceUid("AQL-LIGHT-GENERATION"),
+    DeviceLightAutomaticReadAuthority.PRESENTATION
+)
+
+private fun DeviceLightRuntimeStateOwner.authoritativeSystem() = systemProjection.current(
+    DeviceUid("AQL-LIGHT-GENERATION"),
+    DeviceLightSystemReadAuthority.AUTHORITATIVE
+)
+
+private fun DeviceLightRuntimeStateOwner.presentationSystem() = systemProjection.current(
+    DeviceUid("AQL-LIGHT-GENERATION"),
+    DeviceLightSystemReadAuthority.PRESENTATION
+)
+
+private fun thermalStatus(
+    uptimeMs: Long,
+    minimumC: Double
+) = DeviceLightThermalStatus(
+    schema = DeviceLightThermalV1Contract.SCHEMA,
+    schemaVersion = DeviceLightThermalV1Contract.SCHEMA_VERSION,
+    productKey = DeviceLightThermalV1Contract.PRODUCT_KEY,
+    uptimeMs = uptimeMs,
+    topology = DeviceLightThermalTopology(fanOutputCount = 2, temperatureSensorCount = 1),
+    config = DeviceLightThermalConfig(
+        mode = DeviceLightThermalMode.AUTO,
+        minTemperatureC = minimumC,
+        maxTemperatureC = 50.0
+    ),
+    temperature = DeviceLightThermalTemperature(
+        sensorKey = DeviceLightThermalV1Contract.FIXTURE_SENSOR_KEY,
+        sensorIndex = 0,
+        readingValid = true,
+        temperatureC = 42.0,
+        sampledAtMs = uptimeMs
+    ),
+    lightProtection = DeviceLightThermalProtection(
+        enabled = true,
+        active = false,
+        thresholdC = 60.0
+    ),
+    fans = listOf(thermalFan("fan1", 0), thermalFan("fan2", 1)),
+    runtime = DeviceLightThermalRuntime(
+        event = DeviceLightThermalV1Contract.Event.STATUS_CHANGED,
+        statusEvent = DeviceLightThermalV1Contract.Event.STATUS_CHANGED,
+        sensorFailSafeActive = false,
+        automaticOutputCycleHealthy = true,
+        hardwareEditable = false,
+        fanMappingEditable = false,
+        sensorMappingEditable = false
+    )
+)
+
+private fun thermalFan(key: String, index: Int) = DeviceLightThermalFan(
+    fanKey = key,
+    index = index,
+    name = key,
+    regime = "AUTO",
+    valueNow = 0.35,
+    valueAuto = 0.35,
+    percentNow = 35.0,
+    percentAuto = 35.0,
+    hardware = DeviceLightThermalFanHardware(
+        editable = false,
+        gpio = null,
+        ledcChannel = null,
+        pwmFrequencyHz = null,
+        pwmResolutionBits = null,
+        invert = null,
+        pwmOutputHealth = "OK",
+        health = "OK",
+        physicalFeedbackAvailable = false
+    )
+)
+
+private fun protectionStatus(thresholdC: Double) = DeviceLightTemperatureProtectionStatus(
+    supported = true,
+    temperatureProtection = DeviceLightTemperatureProtectionSnapshot(
+        supported = true,
+        active = false,
+        thresholdEditable = true,
+        thresholdC = thresholdC,
+        minimumC = 50.0,
+        maximumC = 70.0
+    ),
+    runtime = DeviceLightTemperatureProtectionRuntimeCapabilities(
+        module = DeviceLightRuntimeContract.MODULE,
+        readOnly = false,
+        supportsStatusGet = true,
+        supportsSet = true,
+        event = DeviceLightThermalV1Contract.Event.STATUS_CHANGED
+    )
 )

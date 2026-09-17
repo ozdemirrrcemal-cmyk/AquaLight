@@ -156,7 +156,8 @@ class DeviceLightAdaptationViewModelTest {
             startedAtEpochSeconds = 0,
             endsAtEpochSeconds = 0,
             remainingSeconds = 0,
-            policy = POLICY
+            policy = POLICY,
+            firmwareWriteAuthoritative = true
         )
 
         fun activeSnapshot(clockReady: Boolean = true) = snapshot(clockReady).copy(

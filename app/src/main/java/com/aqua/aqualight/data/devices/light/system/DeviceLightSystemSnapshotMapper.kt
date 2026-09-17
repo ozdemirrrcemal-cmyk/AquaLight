@@ -27,7 +27,8 @@ internal fun projectLightSystemSnapshot(
     deviceUid: DeviceUid,
     root: DeviceRootSnapshot?,
     thermal: DeviceLightThermalRuntimeState?,
-    protection: DeviceLightTemperatureProtectionStatus?
+    protection: DeviceLightTemperatureProtectionStatus?,
+    firmwareWriteAuthoritative: Boolean
 ): DeviceLightSystemReadResult {
     val status = thermal?.status
     return when {
@@ -38,7 +39,12 @@ internal fun projectLightSystemSnapshot(
             systemReadFailure(DeviceLightSystemFailure.INVALID_DATA)
         else -> runCatching {
             DeviceLightSystemReadResult.Available(
-                status.toSystemSnapshot(deviceUid, thermal.telemetry, protection)
+                status.toSystemSnapshot(
+                    deviceUid,
+                    thermal.telemetry,
+                    protection,
+                    firmwareWriteAuthoritative
+                )
             )
         }.getOrElse { systemReadFailure(DeviceLightSystemFailure.INVALID_DATA) }
     }
@@ -47,7 +53,8 @@ internal fun projectLightSystemSnapshot(
 private fun DeviceLightThermalStatus.toSystemSnapshot(
     deviceUid: DeviceUid,
     telemetry: DeviceLightThermalTelemetry?,
-    protectionStatus: DeviceLightTemperatureProtectionStatus
+    protectionStatus: DeviceLightTemperatureProtectionStatus,
+    firmwareWriteAuthoritative: Boolean
 ): DeviceLightSystemSnapshot {
     val liveTemperature = telemetry?.temperature ?: temperature
     val liveFans = telemetry?.fans ?: fans
@@ -86,7 +93,8 @@ private fun DeviceLightThermalStatus.toSystemSnapshot(
             minimum = protection.minimumC.requireExactInt(),
             maximum = protection.maximumC.requireExactInt()
         ),
-        protectionActive = protectionActive
+        protectionActive = protectionActive,
+        firmwareWriteAuthoritative = firmwareWriteAuthoritative
     )
 }
 

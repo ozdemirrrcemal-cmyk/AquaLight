@@ -93,6 +93,7 @@ internal data class DeviceLightCustomCurveUiState(
     val maxPoints: Int = MAX_POINT_CAPACITY,
     val timeStepMs: Long = MILLIS_PER_MINUTE,
     val contentEnabled: Boolean = false,
+    val firmwareWriteAuthoritative: Boolean = false,
     override val initialLoading: Boolean = false,
     override val operationInProgress: Boolean = false,
     val blockingOperationInProgress: Boolean = false,
@@ -107,6 +108,10 @@ internal data class DeviceLightCustomCurveUiState(
 
     val canSaveAs: Boolean
         get() = contentEnabled && !operationInProgress && draft.points.isNotEmpty()
+
+    val canPreview: Boolean
+        get() = contentEnabled && firmwareWriteAuthoritative && !hasUnsavedChanges &&
+            !operationInProgress && draft.points.isNotEmpty()
 
     val canDeleteSelectedPoint: Boolean
         get() = contentEnabled && !operationInProgress &&

@@ -22,6 +22,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextAlign
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AutomaticPlusIcon
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.DeviceLightAutomaticAlpha
@@ -36,6 +37,25 @@ internal fun DeviceLightAutomaticProgramsScreen(
     modifier: Modifier = Modifier
 ) {
     val colors = aquaLightDashboardColors()
+    val typography = aquaLightDashboardTypography(colors)
+    if (state.channels.isEmpty()) {
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .background(colorResource(R.color.background_color))
+                .padding(DeviceLightAutomaticGeometry.screenHorizontalPadding),
+            contentAlignment = Alignment.Center
+        ) {
+            BasicText(
+                text = stringResource(R.string.device_light_auto_data_unavailable),
+                style = typography.body.copy(
+                    color = colors.secondaryText,
+                    textAlign = TextAlign.Center
+                )
+            )
+        }
+        return
+    }
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -55,7 +75,7 @@ internal fun DeviceLightAutomaticProgramsScreen(
                 DeviceLightAutomaticProgramCard(
                     program = program,
                     channels = state.channels,
-                    enabled = state.contentEnabled && !state.operationInProgress,
+                    enabled = state.canMutate,
                     actions = actions
                 )
             }

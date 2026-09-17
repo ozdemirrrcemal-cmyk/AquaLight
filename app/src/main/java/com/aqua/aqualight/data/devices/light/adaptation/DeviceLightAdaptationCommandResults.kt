@@ -13,11 +13,16 @@ internal fun DeviceRuntimeCommandOutcome<DeviceLightAcclimationStatus>.toReadRes
     resolution: AdaptationRuntimeResolution.Ready
 ): DeviceLightAdaptationReadResult = when (this) {
     is DeviceRuntimeCommandOutcome.Success -> if (
-        resolution.runtime.isAuthoritative(resolution.deviceUid, generation)
+        resolution.runtime.isAuthoritative(resolution.deviceUid, generation) &&
+        resolution.runtime.currentStatus(resolution.deviceUid)
+            ?.acclimation
+            ?.sameDocumentAs(value) == true
     ) {
-        value.toSnapshot(resolution.deviceUid, resolution.requirePolicy())
-            ?.let(DeviceLightAdaptationReadResult::Available)
-            ?: readFailure(DeviceLightAdaptationFailure.INVALID_DATA)
+        project(
+            resolution.deviceUid,
+            resolution.runtime.currentStatus(resolution.deviceUid),
+            firmwareWriteAuthoritative = true
+        )
     } else {
         readFailure(DeviceLightAdaptationFailure.UNAVAILABLE)
     }
@@ -28,9 +33,16 @@ internal fun DeviceRuntimeCommandOutcome<DeviceLightAcclimationStatus>.toMutatio
     resolution: AdaptationRuntimeResolution.Ready
 ): DeviceLightAdaptationMutationResult = when (this) {
     is DeviceRuntimeCommandOutcome.Success -> if (
-        resolution.runtime.isAuthoritative(resolution.deviceUid, generation)
+        resolution.runtime.isAuthoritative(resolution.deviceUid, generation) &&
+        resolution.runtime.currentStatus(resolution.deviceUid)
+            ?.acclimation
+            ?.sameDocumentAs(value) == true
     ) {
-        value.toSnapshot(resolution.deviceUid, resolution.requirePolicy())
+        value.toSnapshot(
+            resolution.deviceUid,
+            resolution.requirePolicy(),
+            firmwareWriteAuthoritative = true
+        )
             ?.let(DeviceLightAdaptationMutationResult::Success)
             ?: mutationFailure(DeviceLightAdaptationFailure.INVALID_DATA)
     } else {
@@ -73,3 +85,15 @@ internal fun readFailure(failure: DeviceLightAdaptationFailure) =
 
 internal fun mutationFailure(failure: DeviceLightAdaptationFailure) =
     DeviceLightAdaptationMutationResult.Failed(failure)
+
+/** Excludes continuously advancing progress fields while proving the persisted document identity. */
+private fun DeviceLightAcclimationStatus.sameDocumentAs(
+    other: DeviceLightAcclimationStatus
+): Boolean = revision == other.revision &&
+    state == other.state &&
+    clockReady == other.clockReady &&
+    startPercent == other.startPercent &&
+    targetPercent == other.targetPercent &&
+    durationDays == other.durationDays &&
+    startedAtEpochSeconds == other.startedAtEpochSeconds &&
+    endsAtEpochSeconds == other.endsAtEpochSeconds

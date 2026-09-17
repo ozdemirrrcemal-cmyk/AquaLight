@@ -44,7 +44,7 @@ internal fun VirtualTimePreviewCard(
                         R.string.device_light_custom_preview_at_time_description,
                         formatTime(state.previewTimeMs)
                     ),
-                    enabled = state.contentEnabled && !state.operationInProgress
+                    enabled = state.canPreview
                 ),
                 appearance = CustomOutlinedButtonAppearance(
                     color = visuals.colors.action,

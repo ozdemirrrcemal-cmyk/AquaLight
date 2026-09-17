@@ -118,6 +118,7 @@ internal data class DeviceLightAutomaticProgramEditorUiState(
     val draft: DeviceLightAutomaticEditorDraft = DeviceLightAutomaticEditorDraft(),
     val selectedPresetId: DeviceLightPresetId? = null,
     val connectionVisualState: DeviceConnectionVisualState? = null,
+    val firmwareWriteAuthoritative: Boolean = false,
     override val initialLoading: Boolean = false,
     override val operationInProgress: Boolean = false,
     val loadFailed: Boolean = false
@@ -133,7 +134,7 @@ internal data class DeviceLightAutomaticProgramEditorUiState(
             val currentSource = source ?: return false
             val hasCapacity = mode is DeviceLightAutomaticEditorMode.Edit ||
                 currentSource.programCount < currentSource.policy.capacity
-            return contentEnabled && hasCapacity && hasUnsavedChanges &&
+            return contentEnabled && firmwareWriteAuthoritative && hasCapacity && hasUnsavedChanges &&
                 draft.toMutationDraftOrNull(currentSource) != null
         }
 }

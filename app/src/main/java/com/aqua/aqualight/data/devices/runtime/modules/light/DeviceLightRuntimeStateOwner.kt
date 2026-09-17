@@ -33,6 +33,28 @@ internal enum class DeviceLightLibraryReadAuthority {
     PRESENTATION
 }
 
+/** A status/programs pair validated and published as one indivisible Automatic frame. */
+internal data class DeviceLightAutomaticRuntimeState(
+    val status: DeviceLightStatus,
+    val programs: DeviceLightAutoPrograms
+)
+
+internal enum class DeviceLightAutomaticReadAuthority {
+    AUTHORITATIVE,
+    PRESENTATION
+}
+
+/** A thermal/protection pair validated and published as one indivisible System frame. */
+internal data class DeviceLightSystemRuntimeState(
+    val thermal: DeviceLightThermalRuntimeState,
+    val protection: DeviceLightTemperatureProtectionStatus
+)
+
+internal enum class DeviceLightSystemReadAuthority {
+    AUTHORITATIVE,
+    PRESENTATION
+}
+
 /** Selects current-generation authority or the last fully validated status for presentation. */
 internal enum class DeviceLightStatusReadAuthority {
     AUTHORITATIVE,
@@ -42,9 +64,9 @@ internal enum class DeviceLightStatusReadAuthority {
 /**
  * The only mutable, firmware-authoritative Light state owner.
  *
- * Main Light status, graph, custom, temperature protection and thermal documents publish through
- * this aggregate so no Light adapter can retain a parallel authoritative snapshot. Their
- * independent connection-generation lifecycles are delegated to
+ * Main Light status, graph, automatic, custom, temperature protection and thermal documents
+ * publish through this aggregate so no Light adapter can retain a parallel authoritative snapshot.
+ * Their independent connection-generation lifecycles are delegated to
  * [DeviceLightRuntimeAuthorityCoordinator].
  */
 internal class DeviceLightRuntimeStateOwner {
@@ -71,12 +93,25 @@ internal class DeviceLightRuntimeStateOwner {
         onAccepted = libraryProjection::record,
         publishChange = { _stateRevision.value += 1L }
     )
+    internal val automaticProjection = DeviceLightAutomaticRuntimeProjection(
+        lock = lock,
+        authorityCoordinator = authorityCoordinator,
+        statuses = { _statuses.value },
+        publishChange = { _stateRevision.value += 1L }
+    )
     private val _temperatureProtection = MutableStateFlow<
         Map<DeviceUid, DeviceLightTemperatureProtectionStatus>
         >(emptyMap())
     private val _thermalStates = MutableStateFlow<
         Map<DeviceUid, DeviceLightThermalRuntimeState>
         >(emptyMap())
+    internal val systemProjection = DeviceLightSystemRuntimeProjection(
+        lock = lock,
+        authorityCoordinator = authorityCoordinator,
+        thermalStates = { _thermalStates.value },
+        temperatureProtection = { _temperatureProtection.value },
+        publishChange = { _stateRevision.value += 1L }
+    )
 
     val statuses: StateFlow<Map<DeviceUid, DeviceLightStatus>> = _statuses.asStateFlow()
     val temperatureProtection: StateFlow<Map<DeviceUid, DeviceLightTemperatureProtectionStatus>> =
@@ -158,6 +193,7 @@ internal class DeviceLightRuntimeStateOwner {
         }
         _statuses.value = _statuses.value + (deviceUid to status)
         dashboardProjection.reconcileStatus(deviceUid, generation)
+        automaticProjection.reconcileStatus(deviceUid, generation, status)
         val custom = customProjection.reconcileStatus(deviceUid, generation, status)
         libraryProjection.reconcileStatus(deviceUid, generation, status, custom)
         _stateRevision.value += 1L
@@ -179,6 +215,7 @@ internal class DeviceLightRuntimeStateOwner {
             return@synchronized false
         }
         _temperatureProtection.value = _temperatureProtection.value + (deviceUid to status)
+        systemProjection.reconcile(deviceUid)
         _stateRevision.value += 1L
         true
     }
@@ -217,6 +254,7 @@ internal class DeviceLightRuntimeStateOwner {
                 }
             )
         )
+        systemProjection.reconcile(deviceUid)
         _stateRevision.value += 1L
         true
     }
@@ -254,6 +292,7 @@ internal class DeviceLightRuntimeStateOwner {
             return@synchronized false
         }
         _thermalStates.value = _thermalStates.value + (deviceUid to current.copy(telemetry = telemetry))
+        systemProjection.reconcile(deviceUid)
         _stateRevision.value += 1L
         true
     }
@@ -262,15 +301,195 @@ internal class DeviceLightRuntimeStateOwner {
         synchronized(lock) {
             _statuses.value = _statuses.value.without(deviceUid)
             dashboardProjection.clear(deviceUid)
+            automaticProjection.clear(deviceUid)
             libraryProjection.clear(deviceUid)
             customProjection.clear(deviceUid)
             _temperatureProtection.value = _temperatureProtection.value.without(deviceUid)
             _thermalStates.value = _thermalStates.value.without(deviceUid)
+            systemProjection.clear(deviceUid)
             authorityCoordinator.clear(deviceUid)
             _stateRevision.value += 1L
         }
     }
 
+}
+
+/** Automatic is a projection component of [DeviceLightRuntimeStateOwner], never a second owner. */
+internal class DeviceLightAutomaticRuntimeProjection(
+    private val lock: Any,
+    private val authorityCoordinator: DeviceLightRuntimeAuthorityCoordinator,
+    private val statuses: () -> Map<DeviceUid, DeviceLightStatus>,
+    private val publishChange: () -> Unit
+) {
+    private var documents: Map<DeviceUid, DeviceLightAutoPrograms> = emptyMap()
+    private var frames: Map<DeviceUid, DeviceLightAutomaticRuntimeState> = emptyMap()
+
+    fun current(
+        deviceUid: DeviceUid,
+        authority: DeviceLightAutomaticReadAuthority
+    ): DeviceLightAutomaticRuntimeState? = synchronized(lock) {
+        val frame = frames[deviceUid] ?: return@synchronized null
+        when (authority) {
+            DeviceLightAutomaticReadAuthority.PRESENTATION -> frame
+            DeviceLightAutomaticReadAuthority.AUTHORITATIVE -> frame.takeIf {
+                statuses()[deviceUid] == frame.status &&
+                    documents[deviceUid] == frame.programs &&
+                    frame.programs.isCoherentWith(frame.status) &&
+                    authorityCoordinator.isCurrentlyAuthoritative(
+                        DeviceLightRuntimeProjection.STATUS,
+                        deviceUid
+                    ) &&
+                    authorityCoordinator.isCurrentlyAuthoritative(
+                        DeviceLightRuntimeProjection.AUTO_PROGRAMS,
+                        deviceUid
+                    )
+            }
+        }
+    }
+
+    fun hasPresentation(deviceUid: DeviceUid): Boolean = synchronized(lock) {
+        frames.containsKey(deviceUid)
+    }
+
+    fun record(
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration,
+        programs: DeviceLightAutoPrograms
+    ): Boolean = synchronized(lock) {
+        if (!authorityCoordinator.isAuthoritative(
+                DeviceLightRuntimeProjection.STATUS,
+                deviceUid,
+                generation
+            )) {
+            return@synchronized false
+        }
+        val status = statuses()[deviceUid] ?: return@synchronized false
+        if (!programs.isCoherentWith(status)) return@synchronized false
+        val current = documents[deviceUid]
+        if (
+            authorityCoordinator.isAuthoritative(
+                DeviceLightRuntimeProjection.AUTO_PROGRAMS,
+                deviceUid,
+                generation
+            ) && current != null && programs.revision < current.revision
+        ) {
+            return@synchronized false
+        }
+        if (!authorityCoordinator.acceptAuthoritativeSnapshot(
+                DeviceLightRuntimeProjection.AUTO_PROGRAMS,
+                deviceUid,
+                generation
+            )) {
+            return@synchronized false
+        }
+        documents = documents + (deviceUid to programs)
+        publish(deviceUid, status, programs)
+        true
+    }
+
+    fun reconcileStatus(
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration,
+        status: DeviceLightStatus
+    ) = synchronized(lock) {
+        val programs = documents[deviceUid]
+        if (programs != null && !programs.isCoherentWith(status)) {
+            documents = documents.without(deviceUid)
+            authorityCoordinator.invalidateProjection(
+                DeviceLightRuntimeProjection.AUTO_PROGRAMS,
+                deviceUid,
+                generation
+            )
+        } else if (
+            programs != null &&
+            authorityCoordinator.isAuthoritative(
+                DeviceLightRuntimeProjection.AUTO_PROGRAMS,
+                deviceUid,
+                generation
+            )
+        ) {
+            publish(deviceUid, status, programs)
+        }
+    }
+
+    private fun publish(
+        deviceUid: DeviceUid,
+        status: DeviceLightStatus,
+        programs: DeviceLightAutoPrograms
+    ) {
+        val next = DeviceLightAutomaticRuntimeState(status, programs)
+        if (frames[deviceUid] != next) {
+            frames = frames + (deviceUid to next)
+            publishChange()
+        }
+    }
+
+    fun clear(deviceUid: DeviceUid) = synchronized(lock) {
+        documents = documents.without(deviceUid)
+        frames = frames.without(deviceUid)
+    }
+}
+
+/** System is an atomic projection of the two firmware-owned System documents. */
+internal class DeviceLightSystemRuntimeProjection(
+    private val lock: Any,
+    private val authorityCoordinator: DeviceLightRuntimeAuthorityCoordinator,
+    private val thermalStates: () -> Map<DeviceUid, DeviceLightThermalRuntimeState>,
+    private val temperatureProtection: () -> Map<DeviceUid, DeviceLightTemperatureProtectionStatus>,
+    private val publishChange: () -> Unit
+) {
+    private var frames: Map<DeviceUid, DeviceLightSystemRuntimeState> = emptyMap()
+
+    fun current(
+        deviceUid: DeviceUid,
+        authority: DeviceLightSystemReadAuthority
+    ): DeviceLightSystemRuntimeState? = synchronized(lock) {
+        val frame = frames[deviceUid] ?: return@synchronized null
+        when (authority) {
+            DeviceLightSystemReadAuthority.PRESENTATION -> frame
+            DeviceLightSystemReadAuthority.AUTHORITATIVE -> frame.takeIf {
+                thermalStates()[deviceUid] == frame.thermal &&
+                    temperatureProtection()[deviceUid] == frame.protection &&
+                    authorityCoordinator.isCurrentlyAuthoritative(
+                        DeviceLightRuntimeProjection.THERMAL,
+                        deviceUid
+                    ) &&
+                    authorityCoordinator.isCurrentlyAuthoritative(
+                        DeviceLightRuntimeProjection.TEMPERATURE_PROTECTION,
+                        deviceUid
+                    )
+            }
+        }
+    }
+
+    fun reconcile(deviceUid: DeviceUid) = synchronized(lock) {
+        val thermal = thermalStates()[deviceUid]
+        val protection = temperatureProtection()[deviceUid]
+        val completeCurrentPair = thermal?.status != null &&
+            protection != null &&
+            authorityCoordinator.isCurrentlyAuthoritative(
+                DeviceLightRuntimeProjection.THERMAL,
+                deviceUid
+            ) &&
+            authorityCoordinator.isCurrentlyAuthoritative(
+                DeviceLightRuntimeProjection.TEMPERATURE_PROTECTION,
+                deviceUid
+            )
+        if (completeCurrentPair) {
+            val next = DeviceLightSystemRuntimeState(
+                thermal = checkNotNull(thermal),
+                protection = checkNotNull(protection)
+            )
+            if (frames[deviceUid] != next) {
+                frames = frames + (deviceUid to next)
+                publishChange()
+            }
+        }
+    }
+
+    fun clear(deviceUid: DeviceUid) = synchronized(lock) {
+        frames = frames.without(deviceUid)
+    }
 }
 
 /** Library is a projection component of [DeviceLightRuntimeStateOwner], never a second owner. */
@@ -547,6 +766,16 @@ private fun DeviceLightCustomDocument.isCoherentWith(status: DeviceLightStatus):
     summary() == status.customSummary() &&
         pointCount == points.size &&
         points.all { point -> point.scene.product == status.product }
+
+private fun DeviceLightAutoPrograms.isCoherentWith(status: DeviceLightStatus): Boolean =
+    revision == status.auto.revision &&
+        capacity == status.policy.auto.capacity &&
+        programCount == status.auto.programCount &&
+        enabledCount == status.auto.enabledCount &&
+        programCount == programs.size &&
+        enabledCount == programs.count(DeviceLightAutoProgram::enabled) &&
+        programs.map(DeviceLightAutoProgram::programId).distinct().size == programs.size &&
+        programs.all { program -> program.scene.product == status.product }
 
 private fun DeviceLightGraph.isCoherentWith(status: DeviceLightStatus): Boolean =
     mode == status.mode &&

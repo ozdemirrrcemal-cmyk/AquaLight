@@ -144,7 +144,8 @@ class DeviceLightSystemViewModelTest {
             fullSpeedTemperaturePolicy = DeviceLightSystemTemperaturePolicy(1, 90),
             protectionThresholdCelsius = 60,
             protectionThresholdPolicy = DeviceLightSystemTemperaturePolicy(50, 70),
-            protectionActive = false
+            protectionActive = false,
+            firmwareWriteAuthoritative = true
         )
     }
 }

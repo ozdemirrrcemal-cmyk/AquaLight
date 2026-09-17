@@ -1,5 +1,7 @@
 package com.aqua.aqualight.application.devices.light.automatic
 
+import kotlinx.coroutines.flow.Flow
+
 enum class DeviceLightAutomaticChannel(
     val wireKey: String,
     val sceneKey: String
@@ -88,7 +90,8 @@ data class DeviceLightAutomaticSnapshot(
     val revision: Long,
     val policy: DeviceLightAutomaticPolicy,
     val channels: List<DeviceLightAutomaticChannel>,
-    val programs: List<DeviceLightAutomaticProgram>
+    val programs: List<DeviceLightAutomaticProgram>,
+    val firmwareWriteAuthoritative: Boolean
 ) {
     init {
         require(deviceUid.isNotBlank())
@@ -125,6 +128,10 @@ enum class DeviceLightAutomaticFailure {
 
 /** Firmware-backed boundary for the installed AUTO program collection. */
 interface DeviceLightAutomaticOperations {
+    fun observe(deviceUid: String): Flow<DeviceLightAutomaticReadResult>
+
+    fun current(deviceUid: String): DeviceLightAutomaticReadResult
+
     suspend fun read(deviceUid: String): DeviceLightAutomaticReadResult
 
     suspend fun create(

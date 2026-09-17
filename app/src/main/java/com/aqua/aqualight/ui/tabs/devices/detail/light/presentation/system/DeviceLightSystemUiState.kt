@@ -14,11 +14,12 @@ internal data class DeviceLightSystemUiState(
     val selectedFullSpeedTemperatureCelsius: Int = DEFAULT_FULL_SPEED_TEMPERATURE,
     val selectedProtectionThresholdCelsius: Int = DEFAULT_PROTECTION_THRESHOLD,
     val contentEnabled: Boolean = false,
+    val firmwareWriteAuthoritative: Boolean = false,
     override val initialLoading: Boolean = false,
     override val operationInProgress: Boolean = false
 ) : DeviceLightOperationLoadingState {
     val controlsEnabled: Boolean
-        get() = contentEnabled && !operationInProgress
+        get() = contentEnabled && firmwareWriteAuthoritative && !operationInProgress
 
     val canSave: Boolean
         get() = controlsEnabled && snapshot != null

@@ -123,6 +123,7 @@ internal class DeviceLightAdaptationViewModel(
         val snapshot = _uiState.value.snapshot ?: return
         if (
             snapshot.state != DeviceLightAdaptationState.COMPLETED ||
+            !snapshot.firmwareWriteAuthoritative ||
             _uiState.value.operationInProgress
         ) {
             return
@@ -190,7 +191,11 @@ internal class DeviceLightAdaptationViewModel(
             val keepDraft = draftDirty && state.screenState == DeviceLightAdaptationScreenState.SETUP
             state.copy(
                 deviceUid = snapshot.deviceUid,
-                connectionVisualState = DeviceConnectionVisualState.ONLINE,
+                connectionVisualState = if (snapshot.firmwareWriteAuthoritative) {
+                    DeviceConnectionVisualState.ONLINE
+                } else {
+                    DeviceConnectionVisualState.OFFLINE
+                },
                 snapshot = snapshot,
                 selectedStartPercent = if (keepDraft) {
                     state.selectedStartPercent

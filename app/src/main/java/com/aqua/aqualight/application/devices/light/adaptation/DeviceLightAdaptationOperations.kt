@@ -66,7 +66,8 @@ data class DeviceLightAdaptationSnapshot(
     val startedAtEpochSeconds: Long?,
     val endsAtEpochSeconds: Long?,
     val remainingSeconds: Long?,
-    val policy: DeviceLightAdaptationPolicy
+    val policy: DeviceLightAdaptationPolicy,
+    val firmwareWriteAuthoritative: Boolean
 )
 
 data class DeviceLightAdaptationPolicy(

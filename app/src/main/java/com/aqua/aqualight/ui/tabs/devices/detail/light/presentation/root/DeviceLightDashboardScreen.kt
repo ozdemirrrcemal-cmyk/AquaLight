@@ -67,6 +67,7 @@ internal fun DeviceLightDashboardScreen(
             DeviceLightSecondaryScreensRow(
                 enabled = state.contentEnabled,
                 adaptation = state.adaptation,
+                systemSupported = state.systemSupported,
                 onMenuClick = actions.onMenuClick
             )
         }

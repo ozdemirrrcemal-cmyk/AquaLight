@@ -15,7 +15,7 @@ class DeviceLightTemperatureProtectionRuntimeRepository internal constructor(
         stateOwner.temperatureProtection
 
     fun currentStatus(deviceUid: DeviceUid): DeviceLightTemperatureProtectionStatus? =
-        states.value[deviceUid]
+        stateOwner.currentAuthoritativeTemperatureProtection(deviceUid)
 
     internal fun isAuthoritative(
         deviceUid: DeviceUid,

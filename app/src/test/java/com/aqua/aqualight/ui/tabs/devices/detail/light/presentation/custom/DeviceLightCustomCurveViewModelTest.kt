@@ -39,14 +39,14 @@ class DeviceLightCustomCurveViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     @Test
-    fun `fresh editor starts with an empty clean draft`() {
+    fun `fresh editor hydrates the installed firmware curve as a clean draft`() {
         val viewModel = boundViewModel()
 
         assertFalse(viewModel.currentState.initialLoading)
         assertFalse(viewModel.currentState.hasUnsavedChanges)
         assertEquals(EVERY_DAY_MASK, viewModel.currentState.draft.weekdaysMask)
-        assertTrue(viewModel.currentState.draft.points.isEmpty())
-        assertEquals(null, viewModel.currentState.selectedPoint)
+        assertEquals(1, viewModel.currentState.draft.points.size)
+        assertEquals(INITIAL_TIME_MS, viewModel.currentState.selectedPoint?.timeMs)
         assertEquals(INITIAL_TIME_MS, viewModel.currentState.previewTimeMs)
         assertEquals(
             WRGB_CHANNELS.map(DeviceLightCustomChannel::toUiChannel),
@@ -230,13 +230,13 @@ class DeviceLightCustomCurveViewModelTest {
 
         viewModel.pointEditor.updatePlayhead(PREVIEW_TIME_MS)
 
-        assertEquals(0, viewModel.currentState.draft.points.size)
+        assertEquals(1, viewModel.currentState.draft.points.size)
         assertFalse(viewModel.currentState.hasUnsavedChanges)
         assertEquals(PREVIEW_TIME_MS, viewModel.currentState.previewTimeMs)
     }
 
     @Test
-    fun `cancelling first point time keeps playhead at dragged time`() {
+    fun `cancelling add returns playhead to selected firmware point`() {
         val viewModel = boundViewModel()
         viewModel.pointEditor.updatePlayhead(PREVIEW_TIME_MS)
 
@@ -244,8 +244,8 @@ class DeviceLightCustomCurveViewModelTest {
             DeviceLightCustomTimePickerPurpose.Add(PREVIEW_TIME_MS)
         )
 
-        assertEquals(PREVIEW_TIME_MS, viewModel.currentState.previewTimeMs)
-        assertEquals(null, viewModel.currentState.selectedTimeMs)
+        assertEquals(INITIAL_TIME_MS, viewModel.currentState.previewTimeMs)
+        assertEquals(INITIAL_TIME_MS, viewModel.currentState.selectedTimeMs)
     }
 
     @Test
@@ -281,6 +281,10 @@ class DeviceLightCustomCurveViewModelTest {
         private val previewGate: CompletableDeferred<Unit>? = null
     ) : DeviceLightCustomOperations {
         var previewTimeMs: Long? = null
+
+        override fun observe(deviceUid: String): Flow<DeviceLightCustomReadResult> = emptyFlow()
+
+        override fun current(deviceUid: String) = DeviceLightCustomReadResult.Available(snapshot)
 
         override suspend fun read(deviceUid: String) = DeviceLightCustomReadResult.Available(snapshot)
 
@@ -380,7 +384,8 @@ class DeviceLightCustomCurveViewModelTest {
             timeStepMs = MILLIS_PER_MINUTE,
             currentTimeMs = INITIAL_TIME_MS,
             channels = channels,
-            points = points
+            points = points,
+            firmwareWriteAuthoritative = true
         )
     }
 }

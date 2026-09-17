@@ -144,27 +144,6 @@ internal fun DeviceLightRuntimeRepository.currentStatus(
     authority: DeviceLightStatusReadAuthority
 ): DeviceLightStatus? = stateOwner.currentStatus(deviceUid, authority)
 
-internal fun DeviceLightRuntimeRepository.currentDashboard(
-    deviceUid: DeviceUid,
-    authority: DeviceLightDashboardReadAuthority
-): DeviceLightDashboardRuntimeState? = stateOwner.dashboardProjection.current(
-    deviceUid,
-    authority
-)
-
-internal fun DeviceLightRuntimeRepository.currentLibrary(
-    deviceUid: DeviceUid,
-    authority: DeviceLightLibraryReadAuthority
-): DeviceLightLibraryRuntimeState? = stateOwner.libraryProjection.current(
-    deviceUid,
-    authority
-)
-
-internal fun DeviceLightRuntimeRepository.requiresLibraryCustomRefresh(
-    deviceUid: DeviceUid
-): Boolean = currentStatus(deviceUid) != null &&
-    currentLibrary(deviceUid, DeviceLightLibraryReadAuthority.AUTHORITATIVE) == null
-
 internal data class DeviceLightProductCommand<T>(
     val action: String,
     val dataFactory: () -> JSONObject,

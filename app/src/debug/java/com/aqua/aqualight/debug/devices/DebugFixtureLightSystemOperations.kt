@@ -64,7 +64,11 @@ internal class DebugFixtureLightSystemOperations(
         }
 
     private fun isLightFixture(deviceUid: String): Boolean =
-        fixtures.rootSnapshot(deviceUid)?.family == OwnerDeviceFamily.LIGHT
+        fixtures.rootSnapshot(deviceUid)?.let { root ->
+            root.family == OwnerDeviceFamily.LIGHT &&
+                LIGHT_FAN_CONTROL in root.supportedFeatures &&
+                LIGHT_TEMPERATURE_PROTECTION in root.supportedFeatures
+        } == true
 
     private fun fixture(deviceUid: String) = DeviceLightSystemSnapshot(
         deviceUid = deviceUid,
@@ -99,7 +103,8 @@ internal class DebugFixtureLightSystemOperations(
             FIXTURE_PROTECTION_TEMPERATURE_MINIMUM,
             FIXTURE_PROTECTION_TEMPERATURE_MAXIMUM
         ),
-        protectionActive = false
+        protectionActive = false,
+        firmwareWriteAuthoritative = true
     )
 }
 
@@ -114,3 +119,5 @@ private const val FIXTURE_FULL_SPEED_TEMPERATURE_MAXIMUM = 90
 private const val FIXTURE_PROTECTION_THRESHOLD_CELSIUS = 60
 private const val FIXTURE_PROTECTION_TEMPERATURE_MINIMUM = 50
 private const val FIXTURE_PROTECTION_TEMPERATURE_MAXIMUM = 70
+private const val LIGHT_FAN_CONTROL = "LIGHT_FAN_CONTROL"
+private const val LIGHT_TEMPERATURE_PROTECTION = "LIGHT_TEMPERATURE_PROTECTION"
