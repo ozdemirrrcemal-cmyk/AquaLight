@@ -269,6 +269,89 @@ class DeviceRootUiArchitectureGuardTest(unittest.TestCase):
             errors,
         )
 
+    def test_light_suppression_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repository_root = Path(temporary_directory)
+            source_file = (
+                repository_root
+                / GUARD.LIGHT_PRESENTATION_ROOT
+                / "manual/Suppressed.kt"
+            )
+            source_file.parent.mkdir(parents=True)
+            source_file.write_text(
+                '@file:Suppress("MagicNumber")\n\n'
+                "package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual\n",
+                encoding="utf-8",
+            )
+
+            errors = GUARD.validate_light_feature_boundaries(repository_root)
+
+        self.assertTrue(
+            any("instead of suppressing them" in error for error in errors),
+            errors,
+        )
+
+    def test_automatic_presentation_package_cycle_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repository_root = Path(temporary_directory)
+            editor = (
+                repository_root
+                / GUARD.LIGHT_PRESENTATION_ROOT
+                / "automatic/editor/Editor.kt"
+            )
+            preset = (
+                repository_root
+                / GUARD.LIGHT_PRESENTATION_ROOT
+                / "automatic/preset/Preset.kt"
+            )
+            editor.parent.mkdir(parents=True)
+            preset.parent.mkdir(parents=True)
+            editor.write_text(
+                "package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation."
+                "automatic.editor\n\n"
+                "import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation."
+                "automatic.preset.Preset\n",
+                encoding="utf-8",
+            )
+            preset.write_text(
+                "package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation."
+                "automatic.preset\n\n"
+                "import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation."
+                "automatic.editor.Editor\n",
+                encoding="utf-8",
+            )
+
+            errors = GUARD.validate_light_feature_boundaries(repository_root)
+
+        self.assertTrue(
+            any("dependency cycle" in error for error in errors),
+            errors,
+        )
+
+    def test_automatic_editor_cannot_import_preset_directly(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repository_root = Path(temporary_directory)
+            editor = (
+                repository_root
+                / GUARD.LIGHT_PRESENTATION_ROOT
+                / "automatic/editor/Editor.kt"
+            )
+            editor.parent.mkdir(parents=True)
+            editor.write_text(
+                "package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation."
+                "automatic.editor\n\n"
+                "import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation."
+                "automatic.preset.Preset\n",
+                encoding="utf-8",
+            )
+
+            errors = GUARD.validate_light_feature_boundaries(repository_root)
+
+        self.assertTrue(
+            any("shared parent contract" in error for error in errors),
+            errors,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -13,7 +13,6 @@ import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomat
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightPresetCatalog
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightPresetId
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
-import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.preset.withPreset
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow

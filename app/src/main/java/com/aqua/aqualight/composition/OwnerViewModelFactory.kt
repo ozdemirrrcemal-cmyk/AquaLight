@@ -193,6 +193,7 @@ internal class OwnerViewModelFactory(
                     graph.lightOperations.automaticOperations
                 )
             DeviceLightManualControlViewModel::class.java -> DeviceLightManualControlViewModel(
+                manualOperations = graph.lightOperations.manualOperations,
                 libraryOperations = graph.lightOperations.libraryOperations
             )
             DeviceLightCustomCurveViewModel::class.java -> DeviceLightCustomCurveViewModel(

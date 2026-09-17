@@ -1,12 +1,8 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.preset
+package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.editor
 
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticChannel
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightBuiltInPreset
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightPresetScene
-import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.editor.DEVICE_LIGHT_AUTOMATIC_EVERY_DAY_MASK
-import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.editor.DeviceLightAutomaticEditorDraft
-import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.editor.DeviceLightAutomaticEditorSource
-import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.editor.snapAutomaticCycleTime
 import kotlin.math.abs
 
 internal fun DeviceLightAutomaticEditorDraft.withPreset(

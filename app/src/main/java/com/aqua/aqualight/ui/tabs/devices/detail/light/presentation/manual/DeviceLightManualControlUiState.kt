@@ -5,8 +5,11 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightPresetCatalog
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightPresetId
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightPresetScene
+import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualChannel
+import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualProtectionKind as ApplicationProtectionKind
+import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualSnapshot
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
-import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualPreviewSpec
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualControlSpec
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.labelResource
 
 internal enum class DeviceLightManualChannelId {
@@ -78,39 +81,78 @@ internal data class DeviceLightManualControlUiState(
     val showGlobalLoading: Boolean = false
 )
 
-/** Presentation-only fixture. Authoritative device data will replace this in integration work. */
-internal fun deviceLightManualPreviewState(deviceUid: String) = DeviceLightManualControlUiState(
+internal fun deviceLightManualInitialState(deviceUid: String) = DeviceLightManualControlUiState(
     deviceUid = deviceUid,
-    connectionVisualState = DeviceConnectionVisualState.ONLINE,
-    channels = listOf(
-        DeviceLightManualChannelUiState(
-            DeviceLightManualChannelId.RED,
-            R.string.device_light_live_output_red,
-            AquaLightManualPreviewSpec.redPercent
-        ),
-        DeviceLightManualChannelUiState(
-            DeviceLightManualChannelId.GREEN,
-            R.string.device_light_live_output_green,
-            AquaLightManualPreviewSpec.greenPercent
-        ),
-        DeviceLightManualChannelUiState(
-            DeviceLightManualChannelId.BLUE,
-            R.string.device_light_live_output_blue,
-            AquaLightManualPreviewSpec.bluePercent
-        ),
-        DeviceLightManualChannelUiState(
-            DeviceLightManualChannelId.WHITE,
-            R.string.device_light_live_output_white,
-            AquaLightManualPreviewSpec.whitePercent
-        )
-    ),
-    power = DeviceLightManualPowerUiState(
-        watts = AquaLightManualPreviewSpec.estimatedPowerWatts,
-        ratio = AquaLightManualPreviewSpec.estimatedPowerRatio
-    ),
-    presets = builtInManualPresets(),
-    contentEnabled = true
+    presets = builtInManualPresets()
 )
+
+internal fun DeviceLightManualSnapshot.mergeInto(
+    state: DeviceLightManualControlUiState,
+    replaceScene: Boolean
+): DeviceLightManualControlUiState {
+    val resolvedChannels = if (replaceScene) {
+        scene.channels.map { (channel, percent) -> channel.toUiState(percent) }
+    } else {
+        state.channels
+    }
+    val powerState = estimatedPowerWatts?.let { watts ->
+        estimatedPowerRatio?.let { ratio -> DeviceLightManualPowerUiState(watts, ratio) }
+    }
+    val matchingPreset = if (replaceScene) {
+        state.presets.firstOrNull { preset ->
+            resolvedChannels.all { channel -> preset.scene[channel.id] == channel.percent }
+        }?.id
+    } else {
+        state.selectedPreset
+    }
+    return state.copy(
+        deviceUid = deviceUid,
+        connectionVisualState = DeviceConnectionVisualState.ONLINE,
+        channels = resolvedChannels,
+        power = powerState,
+        protection = protection?.let { value ->
+            DeviceLightManualProtectionUiState(
+                kind = value.kind.toUiKind(),
+                effectivePercent = value.effectivePercent
+            )
+        },
+        selectedPreset = matchingPreset,
+        contentEnabled = true
+    )
+}
+
+private fun DeviceLightManualChannel.toUiState(percent: Int) =
+    DeviceLightManualChannelUiState(
+        id = toUiId(),
+        labelRes = when (this) {
+            DeviceLightManualChannel.RED -> R.string.device_light_live_output_red
+            DeviceLightManualChannel.GREEN -> R.string.device_light_live_output_green
+            DeviceLightManualChannel.BLUE -> R.string.device_light_live_output_blue
+            DeviceLightManualChannel.WHITE -> R.string.device_light_live_output_white
+        },
+        percent = percent
+    )
+
+internal fun DeviceLightManualChannel.toUiId(): DeviceLightManualChannelId = when (this) {
+    DeviceLightManualChannel.RED -> DeviceLightManualChannelId.RED
+    DeviceLightManualChannel.GREEN -> DeviceLightManualChannelId.GREEN
+    DeviceLightManualChannel.BLUE -> DeviceLightManualChannelId.BLUE
+    DeviceLightManualChannel.WHITE -> DeviceLightManualChannelId.WHITE
+}
+
+internal fun DeviceLightManualChannelId.toApplicationChannel(): DeviceLightManualChannel =
+    when (this) {
+        DeviceLightManualChannelId.RED -> DeviceLightManualChannel.RED
+        DeviceLightManualChannelId.GREEN -> DeviceLightManualChannel.GREEN
+        DeviceLightManualChannelId.BLUE -> DeviceLightManualChannel.BLUE
+        DeviceLightManualChannelId.WHITE -> DeviceLightManualChannel.WHITE
+    }
+
+private fun ApplicationProtectionKind.toUiKind(): DeviceLightManualProtectionKind = when (this) {
+    ApplicationProtectionKind.POWER_LIMITED -> DeviceLightManualProtectionKind.POWER_LIMITED
+    ApplicationProtectionKind.THERMAL_LIMITED -> DeviceLightManualProtectionKind.THERMAL_LIMITED
+    ApplicationProtectionKind.THERMAL_SHUTDOWN -> DeviceLightManualProtectionKind.THERMAL_SHUTDOWN
+}
 
 private fun builtInManualPresets() = DeviceLightPresetCatalog.manualPresets.map { preset ->
     manualPreset(preset.id, preset.id.labelResource(), preset.scene)
@@ -132,4 +174,4 @@ private fun manualPreset(
 )
 
 internal val PERCENT_RANGE =
-    AquaLightManualPreviewSpec.minimumPercent..AquaLightManualPreviewSpec.maximumPercent
+    AquaLightManualControlSpec.minimumPercent..AquaLightManualControlSpec.maximumPercent

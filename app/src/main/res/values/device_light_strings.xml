@@ -164,6 +164,8 @@
     <string name="device_light_manual_thermal_limited_percent_message">The device is cooling; actual output is limited to %1$d%%.</string>
     <string name="device_light_manual_thermal_shutdown_title">Light temporarily turned off</string>
     <string name="device_light_manual_thermal_shutdown_message">Output remains off until the device returns to a safe temperature.</string>
+    <string name="device_light_manual_operation_error">The light could not be updated. Try again.</string>
+    <string name="device_light_manual_not_connected_error">The device connection was lost. Reconnect and try again.</string>
 
     <!-- Light Library -->
     <string name="device_light_library_tab_manual">Manual</string>

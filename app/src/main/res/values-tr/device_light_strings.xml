@@ -162,6 +162,8 @@
     <string name="device_light_manual_thermal_limited_percent_message">Cihaz soğuyor; gerçek çıkış %%%1$d ile sınırlandırılıyor.</string>
     <string name="device_light_manual_thermal_shutdown_title">Işık geçici olarak kapatıldı</string>
     <string name="device_light_manual_thermal_shutdown_message">Cihaz güvenli sıcaklığa dönene kadar çıkış kapalı kalır.</string>
+    <string name="device_light_manual_operation_error">Işık güncellenemedi. Tekrar deneyin.</string>
+    <string name="device_light_manual_not_connected_error">Cihaz bağlantısı kesildi. Yeniden bağlanıp tekrar deneyin.</string>
 
     <!-- Işık Kitaplığı -->
     <string name="device_light_library_tab_manual">Manuel</string>

@@ -15,6 +15,7 @@ import com.aqua.aqualight.application.devices.light.automatic.DeviceLightPresetI
 import com.aqua.aqualight.databinding.FragmentDeviceLightAutomaticPresetBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.DeviceLightAutomaticPresetResultContract
 
 class DeviceLightAutomaticPresetFragment :
     Fragment(R.layout.fragment_device_light_automatic_preset) {
@@ -65,7 +66,7 @@ class DeviceLightAutomaticPresetFragment :
     private fun usePreset(presetId: DeviceLightPresetId) {
         val navController = findNavController()
         navController.previousBackStackEntry?.savedStateHandle?.set(
-            DeviceLightAutomaticPresetNavigation.RESULT_PRESET_ID,
+            DeviceLightAutomaticPresetResultContract.RESULT_PRESET_ID,
             presetId.name
         )
         navController.navigateUp()

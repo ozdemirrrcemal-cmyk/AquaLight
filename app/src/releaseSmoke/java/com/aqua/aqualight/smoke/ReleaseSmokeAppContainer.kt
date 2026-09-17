@@ -45,6 +45,7 @@ import com.aqua.aqualight.data.devices.light.dashboard.DefaultDeviceLightControl
 import com.aqua.aqualight.data.devices.light.custom.DefaultDeviceLightCustomOperations
 import com.aqua.aqualight.data.devices.light.library.DefaultDeviceLightLibraryOperations
 import com.aqua.aqualight.data.devices.light.library.DeviceLightLibraryStore
+import com.aqua.aqualight.data.devices.light.manual.DefaultDeviceLightManualOperations
 import com.aqua.aqualight.data.devices.light.system.DefaultDeviceLightSystemOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningDiscoveryOperations
@@ -157,6 +158,7 @@ private class ReleaseSmokeViewModelFactory(
         controlOperations = lightControlOperations,
         automaticOperations = DefaultDeviceLightAutomaticOperations(devicesRepository),
         customOperations = DefaultDeviceLightCustomOperations(devicesRepository),
+        manualOperations = DefaultDeviceLightManualOperations(devicesRepository),
         systemOperations = DefaultDeviceLightSystemOperations(devicesRepository),
         libraryOperations = DefaultDeviceLightLibraryOperations(
             ownerUid = SMOKE_OWNER_UID,
@@ -296,7 +298,10 @@ private class ReleaseSmokeViewModelFactory(
         modelClass.isAssignableFrom(DeviceLightAutomaticProgramEditorViewModel::class.java) ->
             DeviceLightAutomaticProgramEditorViewModel(lightOperations.automaticOperations)
         modelClass.isAssignableFrom(DeviceLightManualControlViewModel::class.java) ->
-            DeviceLightManualControlViewModel(lightOperations.libraryOperations)
+            DeviceLightManualControlViewModel(
+                manualOperations = lightOperations.manualOperations,
+                libraryOperations = lightOperations.libraryOperations
+            )
         modelClass.isAssignableFrom(DeviceLightCustomCurveViewModel::class.java) ->
             DeviceLightCustomCurveViewModel(
                 customOperations = lightOperations.customOperations,

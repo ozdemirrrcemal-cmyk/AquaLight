@@ -48,13 +48,12 @@ class DeviceLightManualControlFragment : Fragment(R.layout.fragment_device_light
         val actions = DeviceLightManualControlActions(
             channels = DeviceLightManualChannelActions(
                 onChannelValueChanged = viewModel::updateChannel,
-                // Commit belongs to the future application/data integration, not the UI preview.
-                onChannelValueChangeFinished = { _ -> },
+                onChannelValueChangeFinished = { viewModel.commitScene() },
                 onChannelStep = viewModel::stepChannel
             ),
             onPresetClick = viewModel::applyPreset,
-            onLoadClick = viewModel::requestLoad,
-            onSaveAsClick = viewModel::requestSaveAs,
+            onLoadClick = viewModel.libraryActions::requestLoad,
+            onSaveAsClick = viewModel.libraryActions::requestSaveAs,
             onPowerOffClick = viewModel::turnOff
         )
         binding.manualControlCompose.apply {
@@ -123,7 +122,9 @@ class DeviceLightManualControlFragment : Fragment(R.layout.fragment_device_light
             if (result.getString(TextInputBottomSheet.RESULT_KEY) ==
                 TextInputBottomSheet.RESULT_SAVED
             ) {
-                viewModel.saveAs(result.getString(TextInputBottomSheet.RESULT_VALUE).orEmpty())
+                viewModel.libraryActions.saveAs(
+                    result.getString(TextInputBottomSheet.RESULT_VALUE).orEmpty()
+                )
             }
         }
     }

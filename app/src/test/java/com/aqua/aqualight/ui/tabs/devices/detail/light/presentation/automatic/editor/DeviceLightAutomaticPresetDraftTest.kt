@@ -1,11 +1,9 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.preset
+package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.editor
 
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticChannel
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticPolicy
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightPresetCatalog
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightPresetId
-import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.editor.DeviceLightAutomaticEditorDraft
-import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.editor.DeviceLightAutomaticEditorSource
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

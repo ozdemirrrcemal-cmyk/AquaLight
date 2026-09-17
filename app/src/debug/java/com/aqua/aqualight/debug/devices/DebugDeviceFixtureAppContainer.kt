@@ -11,6 +11,7 @@ import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomat
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlOperations
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomOperations
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryOperations
+import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualOperations
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemOperations
 import com.aqua.aqualight.application.devices.timer.control.DeviceTimerControlOperations
 import com.aqua.aqualight.composition.AppContainer
@@ -85,7 +86,8 @@ private class DebugDeviceFixtureViewModelFactory(
                 createLightRootViewModel(requireGraph())
             DeviceLightManualControlViewModel::class.java ->
                 DeviceLightManualControlViewModel(
-                    timerDependencies(requireGraph()).lightLibraryOperations
+                    manualOperations = timerDependencies(requireGraph()).lightManualOperations,
+                    libraryOperations = timerDependencies(requireGraph()).lightLibraryOperations
                 )
             DeviceLightCustomCurveViewModel::class.java ->
                 DeviceLightCustomCurveViewModel(
@@ -219,6 +221,10 @@ private class DebugDeviceFixtureViewModelFactory(
             delegate = graph.lightOperations.customOperations,
             runtime = lightRuntime
         )
+        val lightManualOperations = DebugFixtureLightManualOperations(
+            delegate = graph.lightOperations.manualOperations,
+            runtime = lightRuntime
+        )
         val lightLibraryOperations = DebugFixtureLightLibraryOperations(
             delegate = DefaultDeviceLightLibraryOperations(
                 ownerUid = graph.ownerUid,
@@ -239,6 +245,7 @@ private class DebugDeviceFixtureViewModelFactory(
             lightControlOperations = lightControlOperations,
             lightCustomOperations = lightCustomOperations,
             lightLibraryOperations = lightLibraryOperations,
+            lightManualOperations = lightManualOperations,
             lightSystemOperations = lightSystemOperations,
             timerControlOperations = timerControlOperations,
             controlSurfacePreparationOperations =
@@ -290,6 +297,7 @@ private data class DebugTimerFixtureDependencies(
     val lightControlOperations: DeviceLightControlOperations,
     val lightCustomOperations: DeviceLightCustomOperations,
     val lightLibraryOperations: DeviceLightLibraryOperations,
+    val lightManualOperations: DeviceLightManualOperations,
     val lightSystemOperations: DeviceLightSystemOperations,
     val timerControlOperations: DeviceTimerControlOperations,
     val controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations

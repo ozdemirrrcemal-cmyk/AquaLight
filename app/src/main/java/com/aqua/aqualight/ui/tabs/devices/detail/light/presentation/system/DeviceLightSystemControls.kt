@@ -1,5 +1,3 @@
-@file:Suppress("MagicNumber")
-
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.system
 
 import androidx.annotation.StringRes

@@ -14,9 +14,13 @@ class DeviceLightRuntimeRepository internal constructor(
     internal val stateOwner: DeviceLightRuntimeStateOwner
 ) {
     val states: StateFlow<Map<DeviceUid, DeviceLightStatus>> = stateOwner.statuses
+    val stateRevision: StateFlow<Long> = stateOwner.stateRevision
 
     fun currentStatus(deviceUid: DeviceUid): DeviceLightStatus? =
         stateOwner.currentAuthoritativeStatus(deviceUid)
+
+    fun currentCustom(deviceUid: DeviceUid): DeviceLightCustomDocument? =
+        stateOwner.customProjection.currentAuthoritative(deviceUid)
 
     internal fun beginGeneration(
         deviceUid: DeviceUid,

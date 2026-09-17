@@ -36,8 +36,8 @@ internal fun AquaLightManualPercentSlider(
 ) {
     var widthPx by remember { mutableFloatStateOf(0f) }
     val value = state.percent.coerceIn(
-        AquaLightManualPreviewSpec.minimumPercent,
-        AquaLightManualPreviewSpec.maximumPercent
+        AquaLightManualControlSpec.minimumPercent,
+        AquaLightManualControlSpec.maximumPercent
     )
     val currentOnValueChanged = rememberUpdatedState(actions.onValueChanged)
     val currentOnValueChangeFinished = rememberUpdatedState(actions.onValueChangeFinished)
@@ -60,10 +60,10 @@ internal fun AquaLightManualPercentSlider(
                 stateDescription = state.stateText
                 progressBarRangeInfo = ProgressBarRangeInfo(
                     current = value.toFloat(),
-                    range = AquaLightManualPreviewSpec.minimumPercent.toFloat()..
-                        AquaLightManualPreviewSpec.maximumPercent.toFloat(),
-                    steps = AquaLightManualPreviewSpec.maximumPercent -
-                        AquaLightManualPreviewSpec.minimumPercent - 1
+                    range = AquaLightManualControlSpec.minimumPercent.toFloat()..
+                        AquaLightManualControlSpec.maximumPercent.toFloat(),
+                    steps = AquaLightManualControlSpec.maximumPercent -
+                        AquaLightManualControlSpec.minimumPercent - 1
                 )
                 if (state.enabled) {
                     setProgress { requested ->
@@ -127,7 +127,7 @@ private fun DrawScope.drawManualPercentSlider(
     val centerY = size.height / 2f
     val startX = AquaLightManualGeometry.channelSliderThumbRadius.toPx()
     val endX = (size.width - startX).coerceAtLeast(startX)
-    val fraction = percent.toFloat() / AquaLightManualPreviewSpec.maximumPercent
+    val fraction = percent.toFloat() / AquaLightManualControlSpec.maximumPercent
     val thumbX = startX + (endX - startX) * fraction
     val trackStroke = AquaLightManualGeometry.channelSliderTrackHeight.toPx()
 
@@ -138,7 +138,7 @@ private fun DrawScope.drawManualPercentSlider(
         strokeWidth = trackStroke,
         cap = StrokeCap.Round
     )
-    if (percent > AquaLightManualPreviewSpec.minimumPercent) {
+    if (percent > AquaLightManualControlSpec.minimumPercent) {
         drawLine(
             color = channelColor.copy(alpha = alpha),
             start = Offset(startX, centerY),
@@ -164,7 +164,7 @@ private data class ManualSliderInteraction(
         if (widthPx <= 0f) return
         val value = (
             (positionX / widthPx).coerceIn(0f, 1f) *
-                AquaLightManualPreviewSpec.maximumPercent
+                AquaLightManualControlSpec.maximumPercent
             ).roundToInt()
         onValueChanged(value)
     }

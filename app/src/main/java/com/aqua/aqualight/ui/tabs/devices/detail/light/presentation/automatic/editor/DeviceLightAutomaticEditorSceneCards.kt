@@ -28,7 +28,7 @@ import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomat
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightChannelStepButton
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightChannelStepButtonState
-import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualPreviewSpec
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualControlSpec
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualPercentSlider
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualPercentSliderActions
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualPercentSliderState
@@ -194,9 +194,9 @@ private fun ChannelStepButton(
     visuals: DeviceLightAutomaticEditorVisuals
 ) {
     val step = if (increase) {
-        AquaLightManualPreviewSpec.stepPercent
+        AquaLightManualControlSpec.stepPercent
     } else {
-        -AquaLightManualPreviewSpec.stepPercent
+        -AquaLightManualControlSpec.stepPercent
     }
     val limit = if (increase) MAX_PERCENT else MIN_PERCENT
     val descriptionRes = if (increase) {

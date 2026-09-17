@@ -42,7 +42,7 @@ internal class DefaultDeviceLightControlOperations(
         return if (uid == null || runtime == null) {
             flowOf(failed(DeviceLightControlFailure.UNAVAILABLE))
         } else {
-            combine(rootOperations.observe(uid.value), runtime.states) { root, _ ->
+            combine(rootOperations.observe(uid.value), runtime.stateRevision) { root, _ ->
                 projectRead(uid, root, runtime.currentStatus(uid))
             }.distinctUntilChanged()
         }

@@ -624,6 +624,11 @@ def validate_light_feature_boundaries(repository_root: Path) -> list[str]:
         absolute_root = repository_root / source_root
         if not absolute_root.is_dir():
             continue
+        layer_name = {
+            LIGHT_APPLICATION_ROOT: "application",
+            LIGHT_DATA_ROOT: "data",
+            LIGHT_PRESENTATION_ROOT: "presentation",
+        }[source_root]
         for path in sorted(
             source_path
             for pattern in ("*.kt", "*.java")
@@ -640,6 +645,29 @@ def validate_light_feature_boundaries(repository_root: Path) -> list[str]:
                     f"{path.relative_to(repository_root)}: Package must match Light path: "
                     f"expected {expected_package}, found {actual_package}"
                 )
+            if re.search(r"@(?:file:)?Suppress\s*\(", source):
+                errors.append(
+                    f"{path.relative_to(repository_root)}: Light production code must resolve "
+                    "static-analysis findings instead of suppressing them"
+                )
+            forbidden_imports = {
+                LIGHT_APPLICATION_ROOT: (
+                    "import com.aqua.aqualight.data.",
+                    "import com.aqua.aqualight.platform.",
+                    "import com.aqua.aqualight.ui.",
+                ),
+                LIGHT_DATA_ROOT: ("import com.aqua.aqualight.ui.",),
+                LIGHT_PRESENTATION_ROOT: (
+                    "import com.aqua.aqualight.data.",
+                    "import com.aqua.aqualight.platform.",
+                ),
+            }[source_root]
+            for forbidden_import in forbidden_imports:
+                if forbidden_import in source:
+                    errors.append(
+                        f"{path.relative_to(repository_root)}: Light {layer_name} "
+                        f"layer imports a forbidden outer layer: {forbidden_import}"
+                    )
 
     legacy_roots = (
         LIGHT_UI_ROOT / "presentation/menu",
@@ -651,6 +679,101 @@ def validate_light_feature_boundaries(repository_root: Path) -> list[str]:
     for legacy_root in legacy_roots:
         if (repository_root / legacy_root).exists():
             errors.append(f"{legacy_root}: legacy Light package must not return")
+
+    manual_contract = LIGHT_APPLICATION_ROOT / "manual/DeviceLightManualOperations.kt"
+    manual_adapter = LIGHT_DATA_ROOT / "manual/DefaultDeviceLightManualOperations.kt"
+    for required_path, token in (
+        (manual_contract, "interface DeviceLightManualOperations"),
+        (manual_adapter, "class DefaultDeviceLightManualOperations"),
+    ):
+        source = _read(repository_root, required_path, errors)
+        _require(
+            required_path,
+            source,
+            errors,
+            token,
+            "Manual Light must keep a real application/data vertical slice",
+        )
+
+    automatic_edges = {area: set() for area in LIGHT_AUTOMATIC_AREAS}
+    automatic_import = re.compile(
+        r"^import\s+com\.aqua\.aqualight\.ui\.tabs\.devices\.detail\.light\."
+        r"presentation\.automatic\.(editor|preset|programs)\.",
+        re.MULTILINE,
+    )
+    if automatic_root.is_dir():
+        for source_area in LIGHT_AUTOMATIC_AREAS:
+            area_root = automatic_root / source_area
+            if not area_root.is_dir():
+                continue
+            for path in area_root.rglob("*.kt"):
+                source = path.read_text(encoding="utf-8", errors="ignore")
+                for target_area in automatic_import.findall(source):
+                    if target_area != source_area:
+                        automatic_edges[source_area].add(target_area)
+                        if {source_area, target_area} == {"editor", "preset"}:
+                            errors.append(
+                                f"{path.relative_to(repository_root)}: Automatic editor and "
+                                "preset must communicate through a shared parent contract"
+                            )
+    remaining = {area: set(targets) for area, targets in automatic_edges.items()}
+    while True:
+        roots = {area for area, targets in remaining.items() if not targets}
+        if not roots:
+            break
+        for root in roots:
+            remaining.pop(root)
+        for targets in remaining.values():
+            targets.difference_update(roots)
+    if remaining:
+        errors.append(
+            "Light Automatic presentation package dependency cycle: "
+            + ", ".join(sorted(remaining))
+        )
+
+    library_adapter = _read(
+        repository_root,
+        LIGHT_DATA_ROOT / "library/DefaultDeviceLightLibraryOperations.kt",
+        errors,
+    )
+    if "installedCustomDocuments" in library_adapter:
+        errors.append(
+            "Light Library must read installed custom documents from the central runtime owner"
+        )
+
+    manual_fragment = _read(
+        repository_root,
+        LIGHT_PRESENTATION_ROOT / "manual/DeviceLightManualControlFragment.kt",
+        errors,
+    )
+    _require(
+        LIGHT_PRESENTATION_ROOT / "manual/DeviceLightManualControlFragment.kt",
+        manual_fragment,
+        errors,
+        "onChannelValueChangeFinished = { viewModel.commitScene() }",
+        "Manual slider completion must commit through the application boundary",
+    )
+
+    light_state_owner_path = Path(
+        "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/light/"
+        "DeviceLightRuntimeStateOwner.kt"
+    )
+    light_state_owner = _read(repository_root, light_state_owner_path, errors)
+    for token, reason in (
+        (
+            "internal val customProjection = DeviceLightCustomRuntimeProjection(",
+            "central Light runtime owner must own custom documents",
+        ),
+        (
+            "fun currentAuthoritative",
+            "custom reads must enforce current-generation authority",
+        ),
+        (
+            "fun record(",
+            "custom replies must publish through the central Light runtime owner",
+        ),
+    ):
+        _require(light_state_owner_path, light_state_owner, errors, token, reason)
 
     provider = _read(repository_root, LIGHT_RUNTIME_PROVIDER, errors)
     for token, reason in (

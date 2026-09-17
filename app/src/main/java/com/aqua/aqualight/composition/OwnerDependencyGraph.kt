@@ -16,6 +16,7 @@ import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdapta
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlOperations
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomOperations
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryOperations
+import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualOperations
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftRequest
@@ -44,6 +45,7 @@ import com.aqua.aqualight.data.devices.light.dashboard.DefaultDeviceLightControl
 import com.aqua.aqualight.data.devices.light.custom.DefaultDeviceLightCustomOperations
 import com.aqua.aqualight.data.devices.light.library.DefaultDeviceLightLibraryOperations
 import com.aqua.aqualight.data.devices.light.library.DeviceLightLibraryStore
+import com.aqua.aqualight.data.devices.light.manual.DefaultDeviceLightManualOperations
 import com.aqua.aqualight.data.devices.light.system.DefaultDeviceLightSystemOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceControlSurfacePreparationOperations
 import com.aqua.aqualight.data.devices.provisioning.repository.DefaultProvisioningDraftOperations
@@ -100,6 +102,7 @@ internal data class OwnerLightOperations(
     val automaticOperations: DeviceLightAutomaticOperations,
     val controlOperations: DeviceLightControlOperations,
     val customOperations: DeviceLightCustomOperations,
+    val manualOperations: DeviceLightManualOperations,
     val systemOperations: DeviceLightSystemOperations,
     val libraryOperations: DeviceLightLibraryOperations
 )
@@ -380,6 +383,7 @@ private fun createOwnerLightOperations(
         automaticOperations = DefaultDeviceLightAutomaticOperations(devicesRepository),
         controlOperations = controlOperations,
         customOperations = DefaultDeviceLightCustomOperations(devicesRepository),
+        manualOperations = DefaultDeviceLightManualOperations(devicesRepository),
         systemOperations = DefaultDeviceLightSystemOperations(devicesRepository),
         libraryOperations = DefaultDeviceLightLibraryOperations(
             ownerUid = ownerUid,

@@ -1,5 +1,3 @@
-@file:Suppress("MagicNumber")
-
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root
 
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightPlanChartSpec
@@ -32,10 +30,10 @@ internal fun deviceLightPlanPreview() = DeviceLightPlanPreview(
     currentHour = AquaLightPlanChartSpec.previewHour,
     currentMinute = AquaLightPlanChartSpec.previewMinute,
     series = listOf(
-        previewSeries(DeviceLightPlanChannel.RED, peakPercent = 20f),
-        previewSeries(DeviceLightPlanChannel.GREEN, peakPercent = 40f),
-        previewSeries(DeviceLightPlanChannel.BLUE, peakPercent = 60f),
-        previewSeries(DeviceLightPlanChannel.WHITE, peakPercent = 82f)
+        previewSeries(DeviceLightPlanChannel.RED, peakPercent = RED_PEAK_PERCENT),
+        previewSeries(DeviceLightPlanChannel.GREEN, peakPercent = GREEN_PEAK_PERCENT),
+        previewSeries(DeviceLightPlanChannel.BLUE, peakPercent = BLUE_PEAK_PERCENT),
+        previewSeries(DeviceLightPlanChannel.WHITE, peakPercent = WHITE_PEAK_PERCENT)
     )
 )
 
@@ -44,19 +42,36 @@ private fun previewSeries(
     peakPercent: Float
 ) = DeviceLightPlanSeries(
     channel = channel,
-    points = listOf(
-        DeviceLightPlanPoint(hour = 0f, percent = 0f),
-        DeviceLightPlanPoint(hour = 3.5f, percent = 0f),
-        DeviceLightPlanPoint(hour = 5f, percent = peakPercent * 0.18f),
-        DeviceLightPlanPoint(hour = 6f, percent = peakPercent * 0.42f),
-        DeviceLightPlanPoint(hour = 7f, percent = peakPercent * 0.72f),
-        DeviceLightPlanPoint(hour = 8.2f, percent = peakPercent),
-        DeviceLightPlanPoint(hour = 16.4f, percent = peakPercent),
-        DeviceLightPlanPoint(hour = 17.4f, percent = peakPercent * 0.66f),
-        DeviceLightPlanPoint(hour = 18.3f, percent = peakPercent * 0.54f),
-        DeviceLightPlanPoint(hour = 19.2f, percent = peakPercent * 0.34f),
-        DeviceLightPlanPoint(hour = 20.3f, percent = peakPercent * 0.16f),
-        DeviceLightPlanPoint(hour = 22f, percent = 0f),
-        DeviceLightPlanPoint(hour = 24f, percent = 0f)
-    )
+    points = PREVIEW_PROFILE.map { point ->
+        DeviceLightPlanPoint(
+            hour = point.hour,
+            percent = peakPercent * point.intensityFactor
+        )
+    }
 )
+
+private data class DeviceLightPlanProfilePoint(
+    val hour: Float,
+    val intensityFactor: Float
+)
+
+private val PREVIEW_PROFILE = listOf(
+    DeviceLightPlanProfilePoint(hour = 0f, intensityFactor = 0f),
+    DeviceLightPlanProfilePoint(hour = 3.5f, intensityFactor = 0f),
+    DeviceLightPlanProfilePoint(hour = 5f, intensityFactor = 0.18f),
+    DeviceLightPlanProfilePoint(hour = 6f, intensityFactor = 0.42f),
+    DeviceLightPlanProfilePoint(hour = 7f, intensityFactor = 0.72f),
+    DeviceLightPlanProfilePoint(hour = 8.2f, intensityFactor = 1f),
+    DeviceLightPlanProfilePoint(hour = 16.4f, intensityFactor = 1f),
+    DeviceLightPlanProfilePoint(hour = 17.4f, intensityFactor = 0.66f),
+    DeviceLightPlanProfilePoint(hour = 18.3f, intensityFactor = 0.54f),
+    DeviceLightPlanProfilePoint(hour = 19.2f, intensityFactor = 0.34f),
+    DeviceLightPlanProfilePoint(hour = 20.3f, intensityFactor = 0.16f),
+    DeviceLightPlanProfilePoint(hour = 22f, intensityFactor = 0f),
+    DeviceLightPlanProfilePoint(hour = 24f, intensityFactor = 0f)
+)
+
+private const val RED_PEAK_PERCENT = 20f
+private const val GREEN_PEAK_PERCENT = 40f
+private const val BLUE_PEAK_PERCENT = 60f
+private const val WHITE_PEAK_PERCENT = 82f

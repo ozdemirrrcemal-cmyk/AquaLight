@@ -27,7 +27,7 @@ internal class DefaultDeviceLightAdaptationOperations(
         val resolution = resolve(deviceUid)
         return when (resolution) {
             is AdaptationRuntimeResolution.Failed -> flowOf(readFailure(resolution.failure))
-            is AdaptationRuntimeResolution.Ready -> resolution.runtime.states.map {
+            is AdaptationRuntimeResolution.Ready -> resolution.runtime.stateRevision.map {
                 project(
                     resolution.deviceUid,
                     resolution.runtime.currentStatus(resolution.deviceUid)

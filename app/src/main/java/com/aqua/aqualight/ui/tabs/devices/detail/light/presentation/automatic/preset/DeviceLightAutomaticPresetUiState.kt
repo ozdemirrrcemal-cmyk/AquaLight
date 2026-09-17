@@ -18,7 +18,3 @@ internal data class DeviceLightAutomaticPresetActions(
     val onCancelClick: () -> Unit,
     val onUseClick: (DeviceLightPresetId) -> Unit
 )
-
-internal object DeviceLightAutomaticPresetNavigation {
-    const val RESULT_PRESET_ID = "device_light_automatic_preset_id"
-}

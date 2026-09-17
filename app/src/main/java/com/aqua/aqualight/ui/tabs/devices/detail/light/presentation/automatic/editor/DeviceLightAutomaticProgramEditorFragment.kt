@@ -20,7 +20,7 @@ import com.aqua.aqualight.ui.common.dialog.UnsavedChangesExitGuard
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
-import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.preset.DeviceLightAutomaticPresetNavigation
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.DeviceLightAutomaticPresetResultContract
 import kotlinx.coroutines.launch
 
 class DeviceLightAutomaticProgramEditorFragment :
@@ -48,10 +48,10 @@ class DeviceLightAutomaticProgramEditorFragment :
         )
         findNavController().currentBackStackEntry?.savedStateHandle?.let { savedStateHandle ->
             savedStateHandle
-                .getLiveData<String>(DeviceLightAutomaticPresetNavigation.RESULT_PRESET_ID)
+                .getLiveData<String>(DeviceLightAutomaticPresetResultContract.RESULT_PRESET_ID)
                 .observe(viewLifecycleOwner) { storedPresetId ->
                     savedStateHandle.remove<String>(
-                        DeviceLightAutomaticPresetNavigation.RESULT_PRESET_ID
+                        DeviceLightAutomaticPresetResultContract.RESULT_PRESET_ID
                     )
                     DeviceLightPresetId.fromStorageName(storedPresetId)
                         ?.let(viewModel::applyPreset)

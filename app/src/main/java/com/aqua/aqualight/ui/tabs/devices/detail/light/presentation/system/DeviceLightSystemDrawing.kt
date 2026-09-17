@@ -1,5 +1,3 @@
-@file:Suppress("MagicNumber")
-
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.system
 
 import androidx.compose.foundation.Canvas
@@ -94,7 +92,7 @@ private fun DrawScope.drawAutomaticChart(
     visuals: DeviceLightSystemVisuals
 ) {
     val gridColor = visuals.colors.card.mediaOutline.copy(alpha = DeviceLightSystemAlpha.grid)
-    repeat(3) { index ->
+    repeat(CHART_HORIZONTAL_LINE_COUNT) { index ->
         val y = size.height * index / 2f
         drawLine(
             color = gridColor,
@@ -157,9 +155,17 @@ private fun DrawScope.drawDashedGuide(x: Float, visuals: DeviceLightSystemVisual
 }
 
 private fun chartDomain(start: Int, fullSpeed: Int): TemperatureChartDomain {
-    val lower = floor((min(start, fullSpeed) - 10) / 5.0).toInt() * 5
-    val upper = ceil((max(start, fullSpeed) + 10) / 5.0).toInt() * 5
-    val step = if (upper - lower <= 40) 5 else 10
+    val lower = floor(
+        (min(start, fullSpeed) - CHART_DOMAIN_MARGIN) / CHART_BUCKET_SIZE.toDouble()
+    ).toInt() * CHART_BUCKET_SIZE
+    val upper = ceil(
+        (max(start, fullSpeed) + CHART_DOMAIN_MARGIN) / CHART_BUCKET_SIZE.toDouble()
+    ).toInt() * CHART_BUCKET_SIZE
+    val step = if (upper - lower <= NARROW_DOMAIN_LIMIT) {
+        NARROW_DOMAIN_STEP
+    } else {
+        WIDE_DOMAIN_STEP
+    }
     return TemperatureChartDomain(
         minimum = lower,
         maximum = upper,
@@ -175,3 +181,10 @@ private data class TemperatureChartDomain(
     fun x(value: Int, width: Float): Float =
         (value - minimum).toFloat() / (maximum - minimum).coerceAtLeast(1) * width
 }
+
+private const val CHART_HORIZONTAL_LINE_COUNT = 3
+private const val CHART_DOMAIN_MARGIN = 10
+private const val CHART_BUCKET_SIZE = 5
+private const val NARROW_DOMAIN_LIMIT = 40
+private const val NARROW_DOMAIN_STEP = 5
+private const val WIDE_DOMAIN_STEP = 10

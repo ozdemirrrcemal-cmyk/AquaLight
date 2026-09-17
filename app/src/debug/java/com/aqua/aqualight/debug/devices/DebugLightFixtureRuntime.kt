@@ -9,11 +9,14 @@ import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomSnap
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryChannel
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryCustomPoint
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryPayload
+import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualChannel
+import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualScene
+import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualSnapshot
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-/** Single in-process Custom-document authority for Installable Debug Light fixtures. */
+/** Single in-process Light authority for installable Debug fixtures. */
 internal class DebugLightFixtureRuntime(fixtures: DebugDeviceFixtureCatalog) {
 
     private val lock = Any()
@@ -22,6 +25,11 @@ internal class DebugLightFixtureRuntime(fixtures: DebugDeviceFixtureCatalog) {
         .filter { root -> root.family == OwnerDeviceFamily.LIGHT }
         .associate { root -> root.deviceUid to root.toFixtureCustomSnapshot() }
         .toMutableMap()
+    private val manualSnapshots = fixtures.snapshots
+        .mapNotNull { snapshot -> fixtures.rootSnapshot(snapshot.deviceUid.value) }
+        .filter { root -> root.family == OwnerDeviceFamily.LIGHT }
+        .associate { root -> root.deviceUid to root.toFixtureManualSnapshot() }
+        .toMutableMap()
     private val previewTimes = mutableMapOf<String, Long>()
     private val _revisions = MutableStateFlow(0L)
     val revisions: StateFlow<Long> = _revisions.asStateFlow()
@@ -29,6 +37,35 @@ internal class DebugLightFixtureRuntime(fixtures: DebugDeviceFixtureCatalog) {
     fun contains(deviceUid: String): Boolean = deviceUid.trim() in snapshots
 
     fun current(deviceUid: String): DeviceLightCustomSnapshot? = snapshots[deviceUid.trim()]
+
+    fun currentManual(deviceUid: String): DeviceLightManualSnapshot? =
+        synchronized(lock) { manualSnapshots[deviceUid.trim()] }
+
+    fun setManual(
+        deviceUid: String,
+        scene: DeviceLightManualScene
+    ): DeviceLightManualSnapshot? = synchronized(lock) {
+        val normalizedUid = deviceUid.trim()
+        val current = manualSnapshots[normalizedUid] ?: return@synchronized null
+        if (scene.channels.keys != current.scene.channels.keys) return@synchronized null
+        current.copy(scene = scene).also { snapshot ->
+            manualSnapshots[normalizedUid] = snapshot
+            _revisions.value += REVISION_INCREMENT
+        }
+    }
+
+    fun turnManualOff(deviceUid: String): DeviceLightManualSnapshot? = synchronized(lock) {
+        val normalizedUid = deviceUid.trim()
+        val current = manualSnapshots[normalizedUid] ?: return@synchronized null
+        current.copy(
+            scene = DeviceLightManualScene(
+                current.scene.channels.mapValues { FIXTURE_OFF_PERCENT }
+            )
+        ).also { snapshot ->
+            manualSnapshots[normalizedUid] = snapshot
+            _revisions.value += REVISION_INCREMENT
+        }
+    }
 
     fun preview(deviceUid: String, virtualTimeMs: Long): Boolean = synchronized(lock) {
         val normalizedUid = deviceUid.trim()
@@ -117,9 +154,37 @@ private fun DeviceRootSnapshot.toFixtureCustomSnapshot(): DeviceLightCustomSnaps
     )
 }
 
+private fun DeviceRootSnapshot.toFixtureManualSnapshot(): DeviceLightManualSnapshot {
+    val channels = channelSlots.lightChannels.map { slot -> slot.wireKey.value.toManualChannel() }
+    val supportsEstimatedPower = DeviceLightManualChannel.WHITE in channels
+    return DeviceLightManualSnapshot(
+        deviceUid = deviceUid,
+        productKey = productKey,
+        scene = DeviceLightManualScene(channels.associateWith(::fixtureManualPercent)),
+        estimatedPowerWatts = FIXTURE_MANUAL_POWER_WATTS.takeIf { supportsEstimatedPower },
+        estimatedPowerRatio = FIXTURE_MANUAL_POWER_RATIO.takeIf { supportsEstimatedPower },
+        protection = null
+    )
+}
+
+private fun fixtureManualPercent(channel: DeviceLightManualChannel): Int = when (channel) {
+    DeviceLightManualChannel.RED -> FIXTURE_MANUAL_RED_PERCENT
+    DeviceLightManualChannel.GREEN -> FIXTURE_MANUAL_GREEN_PERCENT
+    DeviceLightManualChannel.BLUE -> FIXTURE_MANUAL_BLUE_PERCENT
+    DeviceLightManualChannel.WHITE -> FIXTURE_MANUAL_WHITE_PERCENT
+}
+
 private fun String.toCustomChannel(): DeviceLightCustomChannel = checkNotNull(
     DeviceLightCustomChannel.entries.singleOrNull { channel -> channel.wireKey == this }
 ) { "Unsupported Debug Light fixture channel: $this" }
+
+private fun String.toManualChannel(): DeviceLightManualChannel = when (this) {
+    "red" -> DeviceLightManualChannel.RED
+    "green" -> DeviceLightManualChannel.GREEN
+    "blue" -> DeviceLightManualChannel.BLUE
+    "white" -> DeviceLightManualChannel.WHITE
+    else -> error("Unsupported Debug Light fixture channel: $this")
+}
 
 private data class FixtureCurvePoint(
     val minuteOfDay: Long,
@@ -204,3 +269,10 @@ private const val DAY_RED_PERCENT = 25
 private const val DAY_GREEN_PERCENT = 45
 private const val DAY_BLUE_PERCENT = 65
 private const val DAY_WHITE_PERCENT = 85
+private const val FIXTURE_MANUAL_RED_PERCENT = 20
+private const val FIXTURE_MANUAL_GREEN_PERCENT = 30
+private const val FIXTURE_MANUAL_BLUE_PERCENT = 40
+private const val FIXTURE_MANUAL_WHITE_PERCENT = 50
+private const val FIXTURE_MANUAL_POWER_WATTS = 46
+private const val FIXTURE_MANUAL_POWER_RATIO = 0.46f
+private const val FIXTURE_OFF_PERCENT = 0

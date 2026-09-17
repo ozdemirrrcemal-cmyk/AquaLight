@@ -10,11 +10,13 @@ internal class DeviceLightRuntimeAuthorityCoordinator {
         DeviceRuntimeGenerationAuthority()
     }
 
-    fun beginGeneration(deviceUid: DeviceUid, generation: DeviceRuntimeConnectionGeneration) {
-        authorities.values.forEach { authority ->
-            authority.beginGeneration(deviceUid, generation)
-        }
-    }
+    fun beginGeneration(
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration
+    ): Boolean = authorities.values
+        .map { authority -> authority.beginGeneration(deviceUid, generation) }
+        .also { accepted -> check(accepted.distinct().size == 1) }
+        .first()
 
     fun invalidate(
         deviceUid: DeviceUid,
@@ -36,6 +38,12 @@ internal class DeviceLightRuntimeAuthorityCoordinator {
         deviceUid: DeviceUid
     ): Boolean = authorityFor(projection).isAuthoritative(deviceUid)
 
+    fun isCurrentGeneration(
+        projection: DeviceLightRuntimeProjection,
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration
+    ): Boolean = authorityFor(projection).isCurrentGeneration(deviceUid, generation)
+
     fun acceptAuthoritativeSnapshot(
         projection: DeviceLightRuntimeProjection,
         deviceUid: DeviceUid,
@@ -48,6 +56,14 @@ internal class DeviceLightRuntimeAuthorityCoordinator {
         generation: DeviceRuntimeConnectionGeneration
     ): Boolean = authorityFor(projection).acceptsPatch(deviceUid, generation)
 
+    fun invalidateProjection(
+        projection: DeviceLightRuntimeProjection,
+        deviceUid: DeviceUid,
+        generation: DeviceRuntimeConnectionGeneration? = null
+    ) {
+        authorityFor(projection).invalidate(deviceUid, generation)
+    }
+
     fun clear(deviceUid: DeviceUid) {
         authorities.values.forEach { authority -> authority.clear(deviceUid) }
     }
@@ -59,6 +75,7 @@ internal class DeviceLightRuntimeAuthorityCoordinator {
 
 internal enum class DeviceLightRuntimeProjection {
     STATUS,
+    CUSTOM,
     TEMPERATURE_PROTECTION,
     THERMAL
 }

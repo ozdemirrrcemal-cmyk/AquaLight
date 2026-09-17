@@ -4,6 +4,7 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -46,9 +47,57 @@ class DeviceLightGenerationAuthorityTest {
         )
     }
 
+    @Test
+    fun `custom document must rehydrate after reconnect before it is readable`() {
+        val owner = DeviceLightRuntimeStateOwner()
+        val status = DeviceLightStatusParser.parse(DeviceLightRuntimeFixtures.status())
+        val document = status.emptyCustomDocument()
+
+        owner.beginGeneration(DEVICE_UID, G1)
+        assertTrue(owner.recordStatus(DEVICE_UID, G1, status))
+        assertTrue(owner.customProjection.record(DEVICE_UID, G1, document))
+        assertEquals(document, owner.customProjection.currentAuthoritative(DEVICE_UID))
+
+        owner.invalidate(DEVICE_UID, G1)
+        owner.beginGeneration(DEVICE_UID, G2)
+        assertNull(owner.customProjection.currentAuthoritative(DEVICE_UID))
+
+        assertTrue(owner.recordStatus(DEVICE_UID, G2, status))
+        assertNull(owner.customProjection.currentAuthoritative(DEVICE_UID))
+        assertTrue(owner.customProjection.record(DEVICE_UID, G2, document))
+        assertEquals(document, owner.customProjection.currentAuthoritative(DEVICE_UID))
+    }
+
+    @Test
+    fun `status revision change invalidates the central custom projection`() {
+        val owner = DeviceLightRuntimeStateOwner()
+        val status = DeviceLightStatusParser.parse(DeviceLightRuntimeFixtures.status())
+        val document = status.emptyCustomDocument()
+        val advancedStatus = status.copy(
+            custom = status.custom.copy(revision = status.custom.revision + 1L)
+        )
+
+        owner.beginGeneration(DEVICE_UID, G1)
+        owner.recordStatus(DEVICE_UID, G1, status)
+        owner.customProjection.record(DEVICE_UID, G1, document)
+
+        assertTrue(owner.recordStatus(DEVICE_UID, G1, advancedStatus))
+        assertNull(owner.customProjection.currentAuthoritative(DEVICE_UID))
+        assertFalse(owner.customProjection.record(DEVICE_UID, G1, document))
+    }
+
     private companion object {
         val DEVICE_UID = DeviceUid("AQL-LIGHT-GENERATION")
         val G1 = DeviceRuntimeConnectionGeneration(1L)
         val G2 = DeviceRuntimeConnectionGeneration(2L)
     }
 }
+
+private fun DeviceLightStatus.emptyCustomDocument() = DeviceLightCustomDocument(
+    revision = custom.revision,
+    installed = custom.installed,
+    weekdaysMask = custom.weekdaysMask,
+    pointCount = custom.pointCount,
+    points = emptyList(),
+    event = null
+)

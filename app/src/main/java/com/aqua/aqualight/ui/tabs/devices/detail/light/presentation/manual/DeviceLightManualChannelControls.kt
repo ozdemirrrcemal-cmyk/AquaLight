@@ -21,7 +21,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaL
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualPercentSlider
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualPercentSliderActions
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualPercentSliderState
-import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualPreviewSpec
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualControlSpec
 
 @Composable
 internal fun ManualChannelRow(
@@ -90,7 +90,7 @@ private fun ManualChannelDecreaseButton(
         onClick = {
             actions.channels.onChannelStep(
                 content.channel.id,
-                -AquaLightManualPreviewSpec.stepPercent
+                -AquaLightManualControlSpec.stepPercent
             )
         }
     )
@@ -149,7 +149,7 @@ private fun ManualChannelIncreaseButton(
         onClick = {
             actions.channels.onChannelStep(
                 content.channel.id,
-                AquaLightManualPreviewSpec.stepPercent
+                AquaLightManualControlSpec.stepPercent
             )
         }
     )

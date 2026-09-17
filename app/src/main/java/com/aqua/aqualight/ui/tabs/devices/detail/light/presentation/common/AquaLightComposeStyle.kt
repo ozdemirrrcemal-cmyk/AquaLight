@@ -1,5 +1,3 @@
-@file:Suppress("MagicNumber")
-
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common
 
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,7 +22,7 @@ object AquaLightHeroGeometry {
     val screenHorizontalPadding = 12.dp
     val screenTopPadding = 0.dp
     val heroOutlineWidth = AquaDeviceCardGeometry.outlineWidth
-    const val heroAspectRatio = 1942f / 809f
+    const val heroAspectRatio = HERO_ARTWORK_WIDTH / HERO_ARTWORK_HEIGHT
 
     val titleBounds = AquaLightHeroBounds(
         left = 0.042f,
@@ -312,14 +310,7 @@ object AquaLightControlsPreviewSpec {
     const val systemFanTwoPercent = 35
 }
 
-/** UI-only values used until the Manual application boundary is connected. */
-object AquaLightManualPreviewSpec {
-    const val estimatedPowerWatts = 46
-    const val estimatedPowerRatio = 0.46f
-    const val redPercent = 20
-    const val greenPercent = 30
-    const val bluePercent = 40
-    const val whitePercent = 50
+object AquaLightManualControlSpec {
     const val minimumPercent = 0
     const val maximumPercent = 100
     const val stepPercent = 1
@@ -372,17 +363,35 @@ data class AquaLightHeroBounds(
 )
 
 @Immutable
-@Suppress("LongParameterList")
-data class AquaLightHeroColors(
+data class AquaLightHeroContentColors(
     val primaryText: Color,
     val secondaryText: Color,
+    val iconContent: Color
+)
+
+@Immutable
+data class AquaLightHeroStatusColors(
     val healthyAccent: Color,
     val healthySurface: Color,
     val attentionAccent: Color,
     val neutralAccent: Color,
-    val neutralSurface: Color,
-    val iconContent: Color
+    val neutralSurface: Color
 )
+
+@Immutable
+data class AquaLightHeroColors(
+    val content: AquaLightHeroContentColors,
+    val status: AquaLightHeroStatusColors
+) {
+    val primaryText: Color get() = content.primaryText
+    val secondaryText: Color get() = content.secondaryText
+    val iconContent: Color get() = content.iconContent
+    val healthyAccent: Color get() = status.healthyAccent
+    val healthySurface: Color get() = status.healthySurface
+    val attentionAccent: Color get() = status.attentionAccent
+    val neutralAccent: Color get() = status.neutralAccent
+    val neutralSurface: Color get() = status.neutralSurface
+}
 
 @Immutable
 data class AquaLightHeroTypography(
@@ -400,14 +409,18 @@ private val interSemiBold = FontFamily(Font(R.font.inter_semibold))
 
 @Composable
 fun aquaLightHeroColors(): AquaLightHeroColors = AquaLightHeroColors(
-    primaryText = colorResource(R.color.aqua_content_on_dark),
-    secondaryText = colorResource(R.color.aqua_content_primary_soft),
-    healthyAccent = colorResource(R.color.aqua_accent),
-    healthySurface = colorResource(R.color.aqua_surface_positive),
-    attentionAccent = colorResource(R.color.aqua_card_state_warning),
-    neutralAccent = colorResource(R.color.aqua_card_text_secondary),
-    neutralSurface = colorResource(R.color.aqua_card_device_media_surface),
-    iconContent = colorResource(R.color.aqua_card_device_surface)
+    content = AquaLightHeroContentColors(
+        primaryText = colorResource(R.color.aqua_content_on_dark),
+        secondaryText = colorResource(R.color.aqua_content_primary_soft),
+        iconContent = colorResource(R.color.aqua_card_device_surface)
+    ),
+    status = AquaLightHeroStatusColors(
+        healthyAccent = colorResource(R.color.aqua_accent),
+        healthySurface = colorResource(R.color.aqua_surface_positive),
+        attentionAccent = colorResource(R.color.aqua_card_state_warning),
+        neutralAccent = colorResource(R.color.aqua_card_text_secondary),
+        neutralSurface = colorResource(R.color.aqua_card_device_media_surface)
+    )
 )
 
 fun aquaLightHeroTypography(colors: AquaLightHeroColors): AquaLightHeroTypography =
@@ -504,3 +517,6 @@ fun aquaLightManualColors(): AquaLightManualColors {
         action = colorResource(R.color.aqua_button_blue)
     )
 }
+
+private const val HERO_ARTWORK_WIDTH = 1_942f
+private const val HERO_ARTWORK_HEIGHT = 809f
