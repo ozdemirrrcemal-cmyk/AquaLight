@@ -11,27 +11,22 @@ import org.json.JSONObject
 /** One product-neutral Light V1 data source for WRGB Pro Elite and RGB Pro Slim. */
 class DeviceLightRuntimeRepository internal constructor(
     private val gateway: DeviceRuntimeCommandGateway,
-    internal val stateStore: DeviceLightRuntimeStateStore
+    internal val stateOwner: DeviceLightRuntimeStateOwner
 ) {
-    constructor(gateway: DeviceRuntimeCommandGateway) : this(
-        gateway = gateway,
-        stateStore = DeviceLightRuntimeStateStore()
-    )
-
-    val states: StateFlow<Map<DeviceUid, DeviceLightStatus>> = stateStore.statuses
+    val states: StateFlow<Map<DeviceUid, DeviceLightStatus>> = stateOwner.statuses
 
     fun currentStatus(deviceUid: DeviceUid): DeviceLightStatus? =
-        stateStore.currentAuthoritativeStatus(deviceUid)
+        stateOwner.currentAuthoritativeStatus(deviceUid)
 
     internal fun beginGeneration(
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration
-    ) = stateStore.beginGeneration(deviceUid, generation)
+    ) = stateOwner.beginGeneration(deviceUid, generation)
 
     internal fun invalidate(
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration? = null
-    ) = stateStore.invalidate(deviceUid, generation)
+    ) = stateOwner.invalidate(deviceUid, generation)
 
     suspend fun requestStatus(deviceUid: DeviceUid): DeviceRuntimeCommandOutcome<DeviceLightStatus> {
         val outcome = gateway.execute(
@@ -42,7 +37,7 @@ class DeviceLightRuntimeRepository internal constructor(
             )
         )
         if (outcome is DeviceRuntimeCommandOutcome.Success) {
-            stateStore.recordStatus(deviceUid, outcome.generation, outcome.value)
+            stateOwner.recordStatus(deviceUid, outcome.generation, outcome.value)
         }
         return outcome
     }
@@ -88,7 +83,7 @@ class DeviceLightRuntimeRepository internal constructor(
         parser: (JSONObject, DeviceLightProduct) -> T,
         refreshStatus: Boolean = false
     ): DeviceRuntimeCommandOutcome<T> {
-        val status = stateStore.currentAuthoritativeStatus(deviceUid)
+        val status = stateOwner.currentAuthoritativeStatus(deviceUid)
         val supported = status != null &&
             status.product == DeviceLightProduct.WRGB_PRO_ELITE &&
             status.features.acclimation &&
@@ -111,7 +106,7 @@ class DeviceLightRuntimeRepository internal constructor(
         parser: (JSONObject, DeviceLightProduct) -> T,
         refreshStatus: Boolean = false
     ): DeviceRuntimeCommandOutcome<T> {
-        val product = stateStore.currentAuthoritativeStatus(deviceUid)?.product
+        val product = stateOwner.currentAuthoritativeStatus(deviceUid)?.product
             ?: return unsupported(deviceUid, action)
         return executeProductCommand(
             deviceUid = deviceUid,
@@ -150,7 +145,7 @@ internal data class DeviceLightProductCommand<T>(
 internal fun DeviceLightRuntimeRepository.isAuthoritative(
     deviceUid: DeviceUid,
     generation: DeviceRuntimeConnectionGeneration
-): Boolean = stateStore.isStatusAuthoritative(deviceUid, generation)
+): Boolean = stateOwner.isStatusAuthoritative(deviceUid, generation)
 
 private fun <T> lightCommand(
     action: String,

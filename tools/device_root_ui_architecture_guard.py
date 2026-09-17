@@ -77,11 +77,44 @@ LIGHT_QUICK_SETUP_FRAGMENT = Path(
     "DeviceLightQuickSetupFragment.kt"
 )
 LIGHT_QUICK_SETUP_LAYOUT = LAYOUT_ROOT / "fragment_device_light_quick_setup.xml"
-LIGHT_EMPTY_MENU_FRAGMENT = Path(
-    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/presentation/menu/"
-    "DeviceLightEmptyMenuFragment.kt"
+LIGHT_APPLICATION_ROOT = Path(
+    "app/src/main/java/com/aqua/aqualight/application/devices/light"
 )
-LIGHT_EMPTY_MENU_LAYOUT = LAYOUT_ROOT / "fragment_device_light_empty_menu.xml"
+LIGHT_DATA_ROOT = Path("app/src/main/java/com/aqua/aqualight/data/devices/light")
+LIGHT_UI_ROOT = Path("app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light")
+LIGHT_PRESENTATION_ROOT = LIGHT_UI_ROOT / "presentation"
+LIGHT_APPLICATION_AREAS = frozenset(
+    {
+        "adaptation",
+        "automatic",
+        "custom",
+        "dashboard",
+        "library",
+        "manual",
+        "quicksetup",
+        "system",
+    }
+)
+LIGHT_DATA_AREAS = LIGHT_APPLICATION_AREAS
+LIGHT_PRESENTATION_AREAS = frozenset(
+    {
+        "adaptation",
+        "automatic",
+        "common",
+        "custom",
+        "library",
+        "manual",
+        "quicksetup",
+        "root",
+        "settings",
+        "system",
+    }
+)
+LIGHT_AUTOMATIC_AREAS = frozenset({"editor", "preset", "programs"})
+LIGHT_RUNTIME_PROVIDER = Path(
+    "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/"
+    "DeviceRuntimeModuleProvider.kt"
+)
 COOLING_LAYOUT = LAYOUT_ROOT / "fragment_device_cooling_root.xml"
 TIMER_FRAGMENT = Path(
     "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/presentation/root/"
@@ -547,6 +580,124 @@ def validate_cooling_feature_boundaries(repository_root: Path) -> list[str]:
     return errors
 
 
+def validate_light_feature_boundaries(repository_root: Path) -> list[str]:
+    """Keep every Light destination in its vertical slice and one central runtime owner."""
+    errors: list[str] = []
+
+    for root, expected_areas, label in (
+        (LIGHT_APPLICATION_ROOT, LIGHT_APPLICATION_AREAS, "application"),
+        (LIGHT_DATA_ROOT, LIGHT_DATA_AREAS, "data"),
+        (LIGHT_PRESENTATION_ROOT, LIGHT_PRESENTATION_AREAS, "presentation"),
+    ):
+        absolute_root = repository_root / root
+        if not absolute_root.is_dir():
+            errors.append(f"{root}: Light {label} root is missing")
+            continue
+        actual_areas = {path.name for path in absolute_root.iterdir() if path.is_dir()}
+        for missing in sorted(expected_areas - actual_areas):
+            errors.append(f"{root / missing}: required Light {label} package is missing")
+        for unexpected in sorted(actual_areas - expected_areas):
+            errors.append(f"{root / unexpected}: unexpected Light {label} package")
+
+    automatic_root = repository_root / LIGHT_PRESENTATION_ROOT / "automatic"
+    if automatic_root.is_dir():
+        actual_automatic_areas = {
+            path.name for path in automatic_root.iterdir() if path.is_dir()
+        }
+        for missing in sorted(LIGHT_AUTOMATIC_AREAS - actual_automatic_areas):
+            errors.append(
+                f"{LIGHT_PRESENTATION_ROOT / 'automatic' / missing}: "
+                "required Automatic destination package is missing"
+            )
+        for unexpected in sorted(actual_automatic_areas - LIGHT_AUTOMATIC_AREAS):
+            errors.append(
+                f"{LIGHT_PRESENTATION_ROOT / 'automatic' / unexpected}: "
+                "unexpected Automatic destination package"
+            )
+        for path in automatic_root.glob("*.kt"):
+            errors.append(
+                f"{path.relative_to(repository_root)}: Automatic presentation files must live "
+                "in programs, editor or preset"
+            )
+
+    for source_root in (LIGHT_APPLICATION_ROOT, LIGHT_DATA_ROOT, LIGHT_PRESENTATION_ROOT):
+        absolute_root = repository_root / source_root
+        if not absolute_root.is_dir():
+            continue
+        for path in sorted(
+            source_path
+            for pattern in ("*.kt", "*.java")
+            for source_path in absolute_root.rglob(pattern)
+        ):
+            source = path.read_text(encoding="utf-8", errors="ignore")
+            package_match = re.search(r"^package\s+([\w.]+)", source, re.MULTILINE)
+            expected_package = ".".join(
+                path.parent.relative_to(repository_root / MAIN_SOURCE_ROOT).parts
+            )
+            if package_match is None or package_match.group(1) != expected_package:
+                actual_package = package_match.group(1) if package_match else "<missing>"
+                errors.append(
+                    f"{path.relative_to(repository_root)}: Package must match Light path: "
+                    f"expected {expected_package}, found {actual_package}"
+                )
+
+    legacy_roots = (
+        LIGHT_UI_ROOT / "presentation/menu",
+        Path("app/src/main/java/com/aqua/aqualight/ui/common/light"),
+        LIGHT_APPLICATION_ROOT / "control",
+        LIGHT_APPLICATION_ROOT / "preset",
+        LIGHT_DATA_ROOT / "control",
+    )
+    for legacy_root in legacy_roots:
+        if (repository_root / legacy_root).exists():
+            errors.append(f"{legacy_root}: legacy Light package must not return")
+
+    provider = _read(repository_root, LIGHT_RUNTIME_PROVIDER, errors)
+    for token, reason in (
+        (
+            "private val lightStateOwner = DeviceLightRuntimeStateOwner()",
+            "Light must construct exactly one owner-scoped runtime state owner",
+        ),
+        (
+            "DeviceLightRuntimeRepository(commandGateway, lightStateOwner)",
+            "main Light runtime must share the central state owner",
+        ),
+        (
+            "DeviceLightTemperatureProtectionRuntimeRepository(commandGateway, lightStateOwner)",
+            "Light protection runtime must share the central state owner",
+        ),
+        (
+            "DeviceLightThermalRuntimeRepository(commandGateway, lightStateOwner)",
+            "Light thermal runtime must share the central state owner",
+        ),
+    ):
+        _require(LIGHT_RUNTIME_PROVIDER, provider, errors, token, reason)
+
+    production_owner_constructions: list[tuple[Path, int]] = []
+    main_source_root = repository_root / MAIN_SOURCE_ROOT
+    if main_source_root.is_dir():
+        for path in main_source_root.rglob("*.kt"):
+            source = path.read_text(encoding="utf-8", errors="ignore")
+            construction_count = len(
+                re.findall(r"\bDeviceLightRuntimeStateOwner\s*\(", source)
+            )
+            if construction_count:
+                production_owner_constructions.append(
+                    (path.relative_to(repository_root), construction_count)
+                )
+            if "DeviceLightThermalRuntimeStateOwner" in source:
+                errors.append(
+                    f"{path.relative_to(repository_root)}: parallel Light thermal state owner "
+                    "must not return"
+                )
+    if production_owner_constructions != [(LIGHT_RUNTIME_PROVIDER, 1)]:
+        errors.append(
+            "Light production must construct exactly one state owner only in "
+            f"{LIGHT_RUNTIME_PROVIDER}; found {production_owner_constructions}"
+        )
+    return errors
+
+
 def validate_repository(repository_root: Path = ROOT) -> list[str]:
     errors: list[str] = []
     devices_view_model = _read(repository_root, DEVICES_VIEW_MODEL, errors)
@@ -564,11 +715,6 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
         LIGHT_QUICK_SETUP_FRAGMENT,
         errors,
     )
-    light_empty_menu_fragment = _read(
-        repository_root,
-        LIGHT_EMPTY_MENU_FRAGMENT,
-        errors,
-    )
     cooling_fragment = _read(repository_root, COOLING_FRAGMENT, errors)
     cooling_view_model = _read(repository_root, COOLING_VIEW_MODEL, errors)
     cooling_availability = _read(repository_root, COOLING_AVAILABILITY, errors)
@@ -576,7 +722,6 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
     light_layout = _read(repository_root, LIGHT_LAYOUT, errors)
     light_library_layout = _read(repository_root, LIGHT_LIBRARY_LAYOUT, errors)
     light_quick_setup_layout = _read(repository_root, LIGHT_QUICK_SETUP_LAYOUT, errors)
-    light_empty_menu_layout = _read(repository_root, LIGHT_EMPTY_MENU_LAYOUT, errors)
     cooling_layout = _read(repository_root, COOLING_LAYOUT, errors)
     timer_fragment = _read(repository_root, TIMER_FRAGMENT, errors)
     timer_view_model = _read(repository_root, TIMER_VIEW_MODEL, errors)
@@ -815,39 +960,6 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
     ):
         if forbidden in light_quick_setup_fragment:
             errors.append(f"{LIGHT_QUICK_SETUP_FRAGMENT}: {reason}: {forbidden}")
-    for token, reason in (
-        (
-            "binding.appHeader.setupAquaHeader(",
-            "Light empty menus must use the shared AquaHeader binder",
-        ),
-        (
-            "config = AquaHeaderConfig(",
-            "Light empty menus must use the shared AquaHeader config",
-        ),
-        (
-            "titleOverride = getString(titleRes)",
-            "Light empty-menu titles must resolve from String resources",
-        ),
-        (
-            "findNavController().navigateUp()",
-            "Light empty-menu back behavior must use the shared navigation host",
-        ),
-    ):
-        _require(
-            LIGHT_EMPTY_MENU_FRAGMENT,
-            light_empty_menu_fragment,
-            errors,
-            token,
-            reason,
-        )
-
-    for forbidden, reason in (
-        ("MaterialToolbar", "Light empty menus must not construct a parallel toolbar"),
-        ("setSupportActionBar", "Light empty menus must not construct a parallel action bar"),
-        ('titleOverride = "', "Light empty-menu titles must not be hard-coded"),
-    ):
-        if forbidden in light_empty_menu_fragment:
-            errors.append(f"{LIGHT_EMPTY_MENU_FRAGMENT}: {reason}: {forbidden}")
     errors.extend(
         validate_header_contract(
             DOSING_FRAGMENT,
@@ -929,7 +1041,7 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
         "runtime.modules.light",
         "DevicesRepository",
         "DeviceLightRuntimeRepository",
-        "DeviceLightRuntimeStateStore",
+        "DeviceLightRuntimeStateOwner",
     ):
         if forbidden in light_view_model or forbidden in light_fragment:
             errors.append(
@@ -1001,12 +1113,6 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
     )
     errors.extend(
         validate_layout_contract(
-            LIGHT_EMPTY_MENU_LAYOUT,
-            light_empty_menu_layout,
-        )
-    )
-    errors.extend(
-        validate_layout_contract(
             COOLING_LAYOUT,
             cooling_layout,
             background_owned_by_shell=True,
@@ -1024,6 +1130,7 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
     )
     errors.extend(validate_timer_feature_boundaries(repository_root))
     errors.extend(validate_cooling_feature_boundaries(repository_root))
+    errors.extend(validate_light_feature_boundaries(repository_root))
     return errors
 
 

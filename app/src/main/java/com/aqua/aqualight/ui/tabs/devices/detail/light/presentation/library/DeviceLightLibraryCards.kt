@@ -36,12 +36,12 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryEntry
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryPayload
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
-import com.aqua.aqualight.ui.common.light.AquaLightLibraryAlpha
-import com.aqua.aqualight.ui.common.light.AquaLightLibraryGeometry
-import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.AutomaticCalendarIcon
-import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.AutomaticClockIcon
-import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.AutomaticMoreButton
-import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.DeviceLightAutomaticGeometry
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightLibraryAlpha
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightLibraryGeometry
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AutomaticCalendarIcon
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AutomaticClockIcon
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AutomaticMoreButton
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.DeviceLightAutomaticGeometry
 
 @Composable
 internal fun ManualLibraryCard(

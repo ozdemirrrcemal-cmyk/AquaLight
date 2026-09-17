@@ -260,7 +260,7 @@
 
     <fragment
         android:id="@+id/deviceLightAutomaticProgramsFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.menu.DeviceLightAutomaticProgramsFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.programs.DeviceLightAutomaticProgramsFragment"
         android:label="@string/device_light_automatic_programs_title"
         tools:layout="@layout/fragment_device_light_automatic_programs">
         <argument android:name="deviceUid" app:argType="string" />
@@ -275,7 +275,7 @@
 
     <fragment
         android:id="@+id/deviceLightAutomaticProgramEditorFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.menu.DeviceLightAutomaticProgramEditorFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.editor.DeviceLightAutomaticProgramEditorFragment"
         android:label="@string/device_light_auto_editor_title"
         tools:layout="@layout/fragment_device_light_automatic_program_editor">
         <argument android:name="deviceUid" app:argType="string" />
@@ -292,7 +292,7 @@
 
     <fragment
         android:id="@+id/deviceLightAutomaticPresetFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.menu.DeviceLightAutomaticPresetFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.preset.DeviceLightAutomaticPresetFragment"
         android:label="@string/device_light_auto_preset_title"
         tools:layout="@layout/fragment_device_light_automatic_preset">
         <argument android:name="deviceUid" app:argType="string" />
@@ -304,7 +304,7 @@
 
     <fragment
         android:id="@+id/deviceLightCustomCurveFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.menu.DeviceLightCustomCurveFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom.DeviceLightCustomCurveFragment"
         android:label="@string/device_light_custom_curve_title"
         tools:layout="@layout/fragment_device_light_custom_curve">
         <argument android:name="deviceUid" app:argType="string" />
@@ -319,7 +319,7 @@
 
     <fragment
         android:id="@+id/deviceLightAdaptationFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.menu.DeviceLightAdaptationFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.adaptation.DeviceLightAdaptationFragment"
         android:label="@string/device_light_adaptation_title"
         tools:layout="@layout/fragment_device_light_adaptation">
         <argument android:name="deviceUid" app:argType="string" />
@@ -327,7 +327,7 @@
 
     <fragment
         android:id="@+id/deviceLightSystemFragment"
-        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.menu.DeviceLightSystemFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.system.DeviceLightSystemFragment"
         android:label="@string/device_light_system_title"
         tools:layout="@layout/fragment_device_light_system">
         <argument android:name="deviceUid" app:argType="string" />

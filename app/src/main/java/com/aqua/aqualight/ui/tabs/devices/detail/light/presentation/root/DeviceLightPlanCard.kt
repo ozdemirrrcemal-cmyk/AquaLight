@@ -33,17 +33,17 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import com.aqua.aqualight.R
-import com.aqua.aqualight.application.devices.light.control.DeviceLightControlMode
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlMode
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
-import com.aqua.aqualight.ui.common.light.AquaLightDashboardAlpha
-import com.aqua.aqualight.ui.common.light.AquaLightDashboardGeometry
-import com.aqua.aqualight.ui.common.light.AquaLightPlanChartColors
-import com.aqua.aqualight.ui.common.light.AquaLightPlanChartSpec
-import com.aqua.aqualight.ui.common.light.aquaLightDashboardColors
-import com.aqua.aqualight.ui.common.light.aquaLightDashboardTypography
-import com.aqua.aqualight.ui.common.light.aquaLightPlanChartColors
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightDashboardAlpha
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightDashboardGeometry
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightPlanChartColors
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightPlanChartSpec
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.aquaLightDashboardColors
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.aquaLightDashboardTypography
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.aquaLightPlanChartColors
 import kotlin.math.roundToInt
 
 @Composable

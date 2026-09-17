@@ -29,7 +29,7 @@ import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.devicecard.aquaDeviceCardTypography
-import com.aqua.aqualight.ui.common.light.aquaLightManualColors
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.aquaLightManualColors
 
 @Composable
 internal fun DeviceLightCustomCurveScreen(

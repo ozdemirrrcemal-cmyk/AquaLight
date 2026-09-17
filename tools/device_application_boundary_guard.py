@@ -12,7 +12,7 @@ MENU_CONTRACT = SOURCE / "application/devices/DeviceMenuAccessOperations.kt"
 MENU_OPEN_USE_CASE = SOURCE / "application/devices/DeviceMenuOpenUseCase.kt"
 PREPARATION_CONTRACT = SOURCE / "application/devices/DeviceControlSurfacePreparationOperations.kt"
 LIGHT_CONTROL_CONTRACT = (
-    SOURCE / "application/devices/light/control/DeviceLightControlOperations.kt"
+    SOURCE / "application/devices/light/dashboard/DeviceLightControlOperations.kt"
 )
 LIGHT_SYSTEM_CONTRACT = (
     SOURCE / "application/devices/light/system/DeviceLightSystemOperations.kt"
@@ -26,7 +26,7 @@ PREPARATION_ADAPTER = (
     SOURCE / "data/devices/menu/DefaultDeviceControlSurfacePreparationOperations.kt"
 )
 LIGHT_CONTROL_ADAPTER = (
-    SOURCE / "data/devices/light/control/DefaultDeviceLightControlOperations.kt"
+    SOURCE / "data/devices/light/dashboard/DefaultDeviceLightControlOperations.kt"
 )
 LIGHT_SYSTEM_ADAPTER = (
     SOURCE / "data/devices/light/system/DefaultDeviceLightSystemOperations.kt"

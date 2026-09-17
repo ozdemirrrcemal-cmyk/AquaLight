@@ -95,7 +95,10 @@ class DeviceLightTemperatureProtectionContractTest {
                     setResult(saved = true, saveRequested = true, thresholdC = 62.5)
             )
         )
-        val repository = DeviceLightTemperatureProtectionRuntimeRepository(gateway)
+        val repository = DeviceLightTemperatureProtectionRuntimeRepository(
+            gateway,
+            DeviceLightRuntimeStateOwner()
+        )
         val deviceUid = DeviceUid("device-light-temperature")
 
         val status = repository.requestStatus(deviceUid)

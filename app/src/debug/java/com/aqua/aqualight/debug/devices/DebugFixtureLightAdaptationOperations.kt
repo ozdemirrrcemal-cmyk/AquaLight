@@ -7,7 +7,7 @@ import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdapta
 import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationReadResult
 import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationSnapshot
 import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationState
-import com.aqua.aqualight.application.devices.light.control.DeviceLightAdaptationSummary
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightAdaptationSummary
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map

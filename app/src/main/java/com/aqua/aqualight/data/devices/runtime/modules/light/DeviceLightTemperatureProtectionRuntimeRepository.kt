@@ -9,15 +9,10 @@ import kotlinx.coroutines.flow.StateFlow
 
 class DeviceLightTemperatureProtectionRuntimeRepository internal constructor(
     private val gateway: DeviceRuntimeCommandGateway,
-    private val stateStore: DeviceLightRuntimeStateStore
+    private val stateOwner: DeviceLightRuntimeStateOwner
 ) {
-    constructor(gateway: DeviceRuntimeCommandGateway) : this(
-        gateway = gateway,
-        stateStore = DeviceLightRuntimeStateStore()
-    )
-
     val states: StateFlow<Map<DeviceUid, DeviceLightTemperatureProtectionStatus>> =
-        stateStore.temperatureProtection
+        stateOwner.temperatureProtection
 
     fun currentStatus(deviceUid: DeviceUid): DeviceLightTemperatureProtectionStatus? =
         states.value[deviceUid]
@@ -25,7 +20,7 @@ class DeviceLightTemperatureProtectionRuntimeRepository internal constructor(
     internal fun isAuthoritative(
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration
-    ): Boolean = stateStore.isTemperatureProtectionAuthoritative(deviceUid, generation)
+    ): Boolean = stateOwner.isTemperatureProtectionAuthoritative(deviceUid, generation)
 
     suspend fun requestStatus(
         deviceUid: DeviceUid
@@ -41,7 +36,7 @@ class DeviceLightTemperatureProtectionRuntimeRepository internal constructor(
             )
         )
         if (outcome is DeviceRuntimeCommandOutcome.Success) {
-            stateStore.recordTemperatureProtection(deviceUid, outcome.generation, outcome.value)
+            stateOwner.recordTemperatureProtection(deviceUid, outcome.generation, outcome.value)
         }
         return outcome
     }
@@ -50,7 +45,7 @@ class DeviceLightTemperatureProtectionRuntimeRepository internal constructor(
         deviceUid: DeviceUid,
         payload: DeviceLightTemperatureProtectionSetPayload
     ): DeviceRuntimeCommandOutcome<DeviceLightTemperatureProtectionSetResult> {
-        val status = stateStore.currentAuthoritativeTemperatureProtection(deviceUid)
+        val status = stateOwner.currentAuthoritativeTemperatureProtection(deviceUid)
         if (status != null && (!status.supported || !status.runtime.supportsSet)) {
             return DeviceRuntimeCommandOutcome.UnsupportedByDevice(
                 deviceUid = deviceUid,
@@ -78,7 +73,7 @@ class DeviceLightTemperatureProtectionRuntimeRepository internal constructor(
         )
         if (
             outcome is DeviceRuntimeCommandOutcome.Success &&
-            !stateStore.recordTemperatureProtection(
+            !stateOwner.recordTemperatureProtection(
                 deviceUid,
                 outcome.generation,
                 outcome.value.status

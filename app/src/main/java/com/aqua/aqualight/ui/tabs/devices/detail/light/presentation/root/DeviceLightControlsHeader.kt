@@ -21,10 +21,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import com.aqua.aqualight.R
-import com.aqua.aqualight.ui.common.light.AquaLightDashboardAlpha
-import com.aqua.aqualight.ui.common.light.AquaLightDashboardGeometry
-import com.aqua.aqualight.ui.common.light.aquaLightDashboardColors
-import com.aqua.aqualight.ui.common.light.aquaLightDashboardTypography
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightDashboardAlpha
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightDashboardGeometry
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.aquaLightDashboardColors
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.aquaLightDashboardTypography
 
 @Composable
 internal fun DeviceLightControlsHeader(

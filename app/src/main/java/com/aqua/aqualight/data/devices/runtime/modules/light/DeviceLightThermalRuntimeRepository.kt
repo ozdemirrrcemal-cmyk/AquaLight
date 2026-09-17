@@ -16,35 +16,24 @@ import kotlinx.coroutines.flow.StateFlow
  */
 class DeviceLightThermalRuntimeRepository internal constructor(
     gateway: DeviceRuntimeCommandGateway,
-    private val stateOwner: DeviceLightThermalRuntimeStateOwner = DeviceLightThermalRuntimeStateOwner()
+    private val stateOwner: DeviceLightRuntimeStateOwner
 ) {
     private val protocol = DeviceLightThermalV1RuntimeRepository(gateway)
 
-    val states: StateFlow<Map<DeviceUid, DeviceLightThermalRuntimeState>> = stateOwner.states
-
-    internal fun beginGeneration(
-        deviceUid: DeviceUid,
-        generation: DeviceRuntimeConnectionGeneration
-    ): Boolean = stateOwner.beginGeneration(deviceUid, generation)
-
-    internal fun invalidate(
-        deviceUid: DeviceUid,
-        generation: DeviceRuntimeConnectionGeneration? = null
-    ) = stateOwner.invalidate(deviceUid, generation)
-
-    internal fun clear(deviceUid: DeviceUid) = stateOwner.clear(deviceUid)
+    val states: StateFlow<Map<DeviceUid, DeviceLightThermalRuntimeState>> =
+        stateOwner.thermalStates
 
     internal fun isAuthoritative(
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration
-    ): Boolean = stateOwner.isAuthoritative(deviceUid, generation)
+    ): Boolean = stateOwner.isThermalAuthoritative(deviceUid, generation)
 
     suspend fun requestStatus(
         deviceUid: DeviceUid
     ): DeviceRuntimeCommandOutcome<DeviceLightThermalStatus> {
         val outcome = protocol.requestStatus(deviceUid)
         if (outcome is DeviceRuntimeCommandOutcome.Success) {
-            stateOwner.recordStatus(deviceUid, outcome.generation, outcome.value)
+            stateOwner.recordThermalStatus(deviceUid, outcome.generation, outcome.value)
         }
         return outcome
     }
@@ -55,7 +44,7 @@ class DeviceLightThermalRuntimeRepository internal constructor(
     ): DeviceRuntimeCommandOutcome<DeviceLightThermalConfigApplyResult> {
         val outcome = protocol.applyConfig(deviceUid, payload)
         if (outcome is DeviceRuntimeCommandOutcome.Success) {
-            if (!stateOwner.recordStatus(deviceUid, outcome.generation, outcome.value.status)) {
+            if (!stateOwner.recordThermalStatus(deviceUid, outcome.generation, outcome.value.status)) {
                 requestStatus(deviceUid)
             }
         }
@@ -82,7 +71,10 @@ class DeviceLightThermalRuntimeRepository internal constructor(
                 else -> null
             }
         }
-        if (status == null || !stateOwner.recordStatus(event.deviceUid, event.generation, status)) {
+        if (
+            status == null ||
+            !stateOwner.recordThermalStatus(event.deviceUid, event.generation, status)
+        ) {
             requestStatus(event.deviceUid)
         }
     }
@@ -94,7 +86,10 @@ class DeviceLightThermalRuntimeRepository internal constructor(
             }.getOrNull()
             is DeviceRuntimeEventPayload.CommandResult -> null
         }
-        if (telemetry != null && stateOwner.recordTelemetry(event.deviceUid, event.generation, telemetry)) {
+        if (
+            telemetry != null &&
+            stateOwner.recordThermalTelemetry(event.deviceUid, event.generation, telemetry)
+        ) {
             return
         }
         val status = requestStatus(event.deviceUid)
@@ -103,7 +98,7 @@ class DeviceLightThermalRuntimeRepository internal constructor(
             status is DeviceRuntimeCommandOutcome.Success &&
             status.generation == event.generation
         ) {
-            stateOwner.recordTelemetry(event.deviceUid, event.generation, telemetry)
+            stateOwner.recordThermalTelemetry(event.deviceUid, event.generation, telemetry)
         }
     }
 }

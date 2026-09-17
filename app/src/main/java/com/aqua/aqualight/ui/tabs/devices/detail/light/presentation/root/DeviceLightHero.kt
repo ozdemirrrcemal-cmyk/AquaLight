@@ -35,16 +35,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpSize
 import com.aqua.aqualight.R
-import com.aqua.aqualight.application.devices.light.control.DeviceLightHeroSnapshot
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightHeroSnapshot
 import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
-import com.aqua.aqualight.ui.common.light.AquaLightHeroBounds
-import com.aqua.aqualight.ui.common.light.AquaLightHeroColors
-import com.aqua.aqualight.ui.common.light.AquaLightHeroGeometry
-import com.aqua.aqualight.ui.common.light.AquaLightHeroTypography
-import com.aqua.aqualight.ui.common.light.aquaLightHeroColors
-import com.aqua.aqualight.ui.common.light.aquaLightHeroTypography
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightHeroBounds
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightHeroColors
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightHeroGeometry
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightHeroTypography
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.aquaLightHeroColors
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.aquaLightHeroTypography
 
 @Composable
 internal fun DeviceLightHero(

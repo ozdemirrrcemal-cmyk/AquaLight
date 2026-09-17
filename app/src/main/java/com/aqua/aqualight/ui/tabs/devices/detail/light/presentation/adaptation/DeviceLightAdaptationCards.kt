@@ -26,8 +26,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationSnapshot
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
-import com.aqua.aqualight.ui.common.light.AquaLightDashboardIcon
-import com.aqua.aqualight.ui.common.light.AquaLightDashboardIconKind
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightDashboardIcon
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightDashboardIconKind
 
 @Composable
 internal fun AdaptationIntroCard(

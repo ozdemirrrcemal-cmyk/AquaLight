@@ -116,16 +116,16 @@ class DeviceLightV1ContractTest {
     @Test
     fun `RGB Slim acclimation commands fail closed before gateway`() = runBlocking {
         val gateway = RejectingGateway()
-        val stateStore = DeviceLightRuntimeStateStore()
-        stateStore.beginGeneration(DEVICE_UID, GENERATION)
-        stateStore.recordStatus(
+        val stateOwner = DeviceLightRuntimeStateOwner()
+        stateOwner.beginGeneration(DEVICE_UID, GENERATION)
+        stateOwner.recordStatus(
             DEVICE_UID,
             GENERATION,
             DeviceLightStatusParser.parse(
                 DeviceLightRuntimeFixtures.status(DeviceLightProduct.RGB_PRO_SLIM)
             )
         )
-        val repository = DeviceLightRuntimeRepository(gateway, stateStore)
+        val repository = DeviceLightRuntimeRepository(gateway, stateOwner)
 
         val status = repository.requestAcclimationStatus(DEVICE_UID)
         val start = repository.startAcclimation(

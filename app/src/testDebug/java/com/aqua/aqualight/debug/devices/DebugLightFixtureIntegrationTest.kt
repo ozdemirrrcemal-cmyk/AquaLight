@@ -4,8 +4,8 @@ import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdapta
 import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationOperations
 import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationReadResult
 import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationState
-import com.aqua.aqualight.application.devices.light.control.DeviceLightControlOperations
-import com.aqua.aqualight.application.devices.light.control.DeviceLightControlResult
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlOperations
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlResult
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomFailure
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomMutationResult
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomOperations

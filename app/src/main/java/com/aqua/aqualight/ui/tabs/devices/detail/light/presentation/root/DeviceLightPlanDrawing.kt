@@ -11,10 +11,10 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
-import com.aqua.aqualight.ui.common.light.AquaLightDashboardAlpha
-import com.aqua.aqualight.ui.common.light.AquaLightDashboardGeometry
-import com.aqua.aqualight.ui.common.light.AquaLightPlanChartColors
-import com.aqua.aqualight.ui.common.light.AquaLightPlanChartSpec
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightDashboardAlpha
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightDashboardGeometry
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightPlanChartColors
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightPlanChartSpec
 
 internal fun DrawScope.drawLightPlanGrid(colors: AquaLightPlanChartColors) {
     val horizontalLines = AquaLightPlanChartSpec.maximumPercent /

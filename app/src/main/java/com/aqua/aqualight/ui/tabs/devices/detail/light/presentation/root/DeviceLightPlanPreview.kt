@@ -2,7 +2,7 @@
 
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root
 
-import com.aqua.aqualight.ui.common.light.AquaLightPlanChartSpec
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightPlanChartSpec
 
 internal data class DeviceLightPlanPreview(
     val currentHour: Int,

@@ -52,10 +52,10 @@ import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryPa
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
 import com.aqua.aqualight.ui.common.devicecard.aquaDeviceCardTypography
-import com.aqua.aqualight.ui.common.light.AquaLightLibraryAlpha
-import com.aqua.aqualight.ui.common.light.AquaLightLibraryGeometry
-import com.aqua.aqualight.ui.common.light.AquaLightManualColors
-import com.aqua.aqualight.ui.common.light.aquaLightManualColors
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightLibraryAlpha
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightLibraryGeometry
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualColors
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.aquaLightManualColors
 
 @Composable
 internal fun DeviceLightLibraryScreen(

@@ -1,9 +1,9 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root
 
 import com.aqua.aqualight.R
-import com.aqua.aqualight.application.devices.light.control.DeviceLightControlMode
-import com.aqua.aqualight.application.devices.light.control.DeviceLightHeroSnapshot
-import com.aqua.aqualight.application.devices.light.control.DeviceLightOutputCondition
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlMode
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightHeroSnapshot
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightOutputCondition
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

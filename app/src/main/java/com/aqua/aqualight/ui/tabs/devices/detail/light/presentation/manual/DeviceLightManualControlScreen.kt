@@ -27,11 +27,11 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
 import com.aqua.aqualight.ui.common.devicecard.aquaDeviceCardTypography
-import com.aqua.aqualight.ui.common.light.AquaLightManualAlpha
-import com.aqua.aqualight.ui.common.light.AquaLightManualColors
-import com.aqua.aqualight.ui.common.light.AquaLightManualGeometry
-import com.aqua.aqualight.ui.common.light.AquaLightManualTypographySpec
-import com.aqua.aqualight.ui.common.light.aquaLightManualColors
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualAlpha
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualColors
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualGeometry
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualTypographySpec
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.aquaLightManualColors
 
 @Composable
 internal fun DeviceLightManualControlScreen(

@@ -19,7 +19,7 @@ import com.aqua.aqualight.data.devices.runtime.modules.firmware.DeviceFirmwareUp
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightEventApplyResult
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeContract
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRepository
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeStateStore
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeStateOwner
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTemperatureProtectionRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightThermalRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTypedEventReducer
@@ -46,8 +46,8 @@ class DeviceRuntimeModuleProvider internal constructor(
     revokeLocalCredential: suspend (DeviceUid) -> Result<Unit>,
     timerAccessProvider: (DeviceUid) -> DeviceTimerRuntimeAccess
 ) {
-    private val lightStateStore = DeviceLightRuntimeStateStore()
-    private val lightEventReducer = DeviceLightTypedEventReducer(lightStateStore)
+    private val lightStateOwner = DeviceLightRuntimeStateOwner()
+    private val lightEventReducer = DeviceLightTypedEventReducer(lightStateOwner)
     private val timerStateStore = DeviceTimerRuntimeStateStore()
 
     val device = DeviceCommonRuntimeRepository(commandGateway)
@@ -64,10 +64,10 @@ class DeviceRuntimeModuleProvider internal constructor(
     )
 
     val timer = DeviceTimerRuntimeRepository(commandGateway, timerStateStore, timerAccessProvider)
-    val light = DeviceLightRuntimeRepository(commandGateway, lightStateStore)
+    val light = DeviceLightRuntimeRepository(commandGateway, lightStateOwner)
     val lightTemperatureProtection =
-        DeviceLightTemperatureProtectionRuntimeRepository(commandGateway, lightStateStore)
-    val lightThermal = DeviceLightThermalRuntimeRepository(commandGateway)
+        DeviceLightTemperatureProtectionRuntimeRepository(commandGateway, lightStateOwner)
+    val lightThermal = DeviceLightThermalRuntimeRepository(commandGateway, lightStateOwner)
     val cooling = DeviceCoolingRuntimeRepository(commandGateway)
 
     internal val domainBootstrapPorts: List<DeviceRuntimeDomainBootstrapPort> = listOf(
@@ -109,7 +109,6 @@ class DeviceRuntimeModuleProvider internal constructor(
         generation: DeviceRuntimeConnectionGeneration
     ) {
         light.beginGeneration(deviceUid, generation)
-        lightThermal.beginGeneration(deviceUid, generation)
         cooling.beginGeneration(deviceUid, generation)
         timer.beginGeneration(deviceUid, generation)
     }
@@ -119,7 +118,6 @@ class DeviceRuntimeModuleProvider internal constructor(
         generation: DeviceRuntimeConnectionGeneration? = null
     ) {
         light.invalidate(deviceUid, generation)
-        lightThermal.invalidate(deviceUid, generation)
         cooling.invalidate(deviceUid, generation)
         timer.invalidate(deviceUid, generation)
     }
@@ -159,8 +157,7 @@ class DeviceRuntimeModuleProvider internal constructor(
 
     /** Permanent owner cleanup only; socket lifecycle must use [invalidateRuntimeAuthority]. */
     internal fun clearRuntimeState(deviceUid: DeviceUid) {
-        lightStateStore.clear(deviceUid)
-        lightThermal.clear(deviceUid)
+        lightStateOwner.clear(deviceUid)
         cooling.clear(deviceUid)
         timerStateStore.clear(deviceUid)
     }

@@ -13,7 +13,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigati
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticOperations
 import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationOperations
-import com.aqua.aqualight.application.devices.light.control.DeviceLightControlOperations
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlOperations
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomOperations
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryOperations
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemOperations
@@ -40,7 +40,7 @@ import com.aqua.aqualight.data.devices.dosing.SharedPreferencesDeviceDosingLowLe
 import com.aqua.aqualight.data.devices.dosing.v1.DeviceDosingV1ProductionRuntime
 import com.aqua.aqualight.data.devices.light.automatic.DefaultDeviceLightAutomaticOperations
 import com.aqua.aqualight.data.devices.light.adaptation.DefaultDeviceLightAdaptationOperations
-import com.aqua.aqualight.data.devices.light.control.DefaultDeviceLightControlOperations
+import com.aqua.aqualight.data.devices.light.dashboard.DefaultDeviceLightControlOperations
 import com.aqua.aqualight.data.devices.light.custom.DefaultDeviceLightCustomOperations
 import com.aqua.aqualight.data.devices.light.library.DefaultDeviceLightLibraryOperations
 import com.aqua.aqualight.data.devices.light.library.DeviceLightLibraryStore

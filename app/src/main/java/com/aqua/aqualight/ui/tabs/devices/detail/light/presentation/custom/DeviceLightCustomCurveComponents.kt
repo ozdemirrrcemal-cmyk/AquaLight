@@ -37,7 +37,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
-import com.aqua.aqualight.ui.common.light.AquaLightManualColors
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualColors
 
 @Composable
 internal fun CustomOutlinedButton(

@@ -24,17 +24,18 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationState
-import com.aqua.aqualight.application.devices.light.control.DeviceLightAdaptationSummary
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightAdaptationSummary
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
-import com.aqua.aqualight.ui.common.light.AquaLightControlsPreviewSpec
-import com.aqua.aqualight.ui.common.light.AquaLightDashboardAlpha
-import com.aqua.aqualight.ui.common.light.AquaLightDashboardGeometry
-import com.aqua.aqualight.ui.common.light.AquaLightDashboardIcon
-import com.aqua.aqualight.ui.common.light.AquaLightDashboardIconKind
-import com.aqua.aqualight.ui.common.light.aquaLightDashboardColors
-import com.aqua.aqualight.ui.common.light.aquaLightDashboardTypography
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.DeviceLightChevron
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightControlsPreviewSpec
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightDashboardAlpha
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightDashboardGeometry
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightDashboardIcon
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightDashboardIconKind
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.aquaLightDashboardColors
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.aquaLightDashboardTypography
 
 @Composable
 internal fun DeviceLightSecondaryScreensRow(

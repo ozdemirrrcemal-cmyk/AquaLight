@@ -208,6 +208,67 @@ class DeviceRootUiArchitectureGuardTest(unittest.TestCase):
                 errors,
             )
 
+    def test_legacy_light_menu_package_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repository_root = Path(temporary_directory)
+            legacy_file = (
+                repository_root
+                / GUARD.LIGHT_PRESENTATION_ROOT
+                / "menu/LegacyLightMenuFragment.kt"
+            )
+            legacy_file.parent.mkdir(parents=True)
+            legacy_file.write_text(
+                "package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.menu\n",
+                encoding="utf-8",
+            )
+
+            errors = GUARD.validate_light_feature_boundaries(repository_root)
+
+        self.assertTrue(
+            any("legacy Light package must not return" in error for error in errors),
+            errors,
+        )
+
+    def test_parallel_light_state_owner_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repository_root = Path(temporary_directory)
+            parallel_owner = (
+                repository_root
+                / GUARD.LIGHT_DATA_ROOT
+                / "system/ParallelOwner.kt"
+            )
+            parallel_owner.parent.mkdir(parents=True)
+            parallel_owner.write_text(
+                "package com.aqua.aqualight.data.devices.light.system\n\n"
+                "private val owner = DeviceLightRuntimeStateOwner()\n",
+                encoding="utf-8",
+            )
+
+            errors = GUARD.validate_light_feature_boundaries(repository_root)
+
+        self.assertTrue(
+            any("construct exactly one state owner only" in error for error in errors),
+            errors,
+        )
+
+    def test_duplicate_light_state_owner_in_composition_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repository_root = Path(temporary_directory)
+            provider = repository_root / GUARD.LIGHT_RUNTIME_PROVIDER
+            provider.parent.mkdir(parents=True)
+            provider.write_text(
+                "private val first = DeviceLightRuntimeStateOwner()\n"
+                "private val second = DeviceLightRuntimeStateOwner()\n",
+                encoding="utf-8",
+            )
+
+            errors = GUARD.validate_light_feature_boundaries(repository_root)
+
+        self.assertTrue(
+            any("construct exactly one state owner only" in error for error in errors),
+            errors,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

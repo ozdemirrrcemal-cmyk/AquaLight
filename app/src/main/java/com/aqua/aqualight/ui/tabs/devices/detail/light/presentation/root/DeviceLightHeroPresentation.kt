@@ -2,9 +2,9 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root
 
 import androidx.annotation.StringRes
 import com.aqua.aqualight.R
-import com.aqua.aqualight.application.devices.light.control.DeviceLightControlMode
-import com.aqua.aqualight.application.devices.light.control.DeviceLightHeroSnapshot
-import com.aqua.aqualight.application.devices.light.control.DeviceLightOutputCondition
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlMode
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightHeroSnapshot
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightOutputCondition
 
 internal data class DeviceLightHeroPresentation(
     @StringRes val titleRes: Int,

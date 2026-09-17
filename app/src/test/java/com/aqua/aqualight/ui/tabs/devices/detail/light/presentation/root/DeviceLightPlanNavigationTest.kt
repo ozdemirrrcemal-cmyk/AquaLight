@@ -1,6 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root
 
-import com.aqua.aqualight.application.devices.light.control.DeviceLightControlMode
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlMode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test

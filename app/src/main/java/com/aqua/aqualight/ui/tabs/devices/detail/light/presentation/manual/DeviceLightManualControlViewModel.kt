@@ -12,7 +12,7 @@ import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryOp
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryResult
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryScene
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryTarget
-import com.aqua.aqualight.ui.common.light.AquaLightManualPreviewSpec
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualPreviewSpec
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow

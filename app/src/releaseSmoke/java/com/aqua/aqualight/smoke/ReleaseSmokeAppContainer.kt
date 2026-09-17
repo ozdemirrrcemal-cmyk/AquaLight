@@ -41,7 +41,7 @@ import com.aqua.aqualight.data.devices.cooling.DefaultDeviceCoolingTemperatureHi
 import com.aqua.aqualight.data.devices.cooling.control.DefaultDeviceCoolingControlOperations
 import com.aqua.aqualight.data.devices.light.adaptation.DefaultDeviceLightAdaptationOperations
 import com.aqua.aqualight.data.devices.light.automatic.DefaultDeviceLightAutomaticOperations
-import com.aqua.aqualight.data.devices.light.control.DefaultDeviceLightControlOperations
+import com.aqua.aqualight.data.devices.light.dashboard.DefaultDeviceLightControlOperations
 import com.aqua.aqualight.data.devices.light.custom.DefaultDeviceLightCustomOperations
 import com.aqua.aqualight.data.devices.light.library.DefaultDeviceLightLibraryOperations
 import com.aqua.aqualight.data.devices.light.library.DeviceLightLibraryStore
@@ -73,8 +73,8 @@ import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootOverviewViewMo
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.root.DeviceCoolingRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.status.DeviceCoolingSystemStatusViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.adaptation.DeviceLightAdaptationViewModel
-import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.DeviceLightAutomaticProgramEditorViewModel
-import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.DeviceLightAutomaticProgramsViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.editor.DeviceLightAutomaticProgramEditorViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.programs.DeviceLightAutomaticProgramsViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.library.DeviceLightLibraryViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom.DeviceLightCustomCurveViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual.DeviceLightManualControlViewModel

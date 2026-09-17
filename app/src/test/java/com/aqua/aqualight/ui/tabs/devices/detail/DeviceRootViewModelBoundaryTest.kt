@@ -27,9 +27,9 @@ import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingContr
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlMode
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlOperations
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlResult
-import com.aqua.aqualight.application.devices.light.control.DeviceLightControlOperations
-import com.aqua.aqualight.application.devices.light.control.DeviceLightControlResult
-import com.aqua.aqualight.application.devices.light.control.DeviceLightControlSnapshot
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlOperations
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlResult
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlSnapshot
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import com.aqua.aqualight.ui.common.text.AquaUiText
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootKind

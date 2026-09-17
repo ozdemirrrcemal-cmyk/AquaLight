@@ -10,8 +10,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.colorResource
 import com.aqua.aqualight.R
-import com.aqua.aqualight.application.devices.light.control.DeviceLightControlMode
-import com.aqua.aqualight.ui.common.light.AquaLightDashboardGeometry
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlMode
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightDashboardGeometry
 
 @Composable
 internal fun DeviceLightDashboardScreen(

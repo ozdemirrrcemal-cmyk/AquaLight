@@ -18,9 +18,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
-import com.aqua.aqualight.ui.common.light.AquaLightManualPercentSlider
-import com.aqua.aqualight.ui.common.light.AquaLightManualPercentSliderActions
-import com.aqua.aqualight.ui.common.light.AquaLightManualPercentSliderState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualPercentSlider
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualPercentSliderActions
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualPercentSliderState
 
 @Composable
 internal fun SelectedPointCard(

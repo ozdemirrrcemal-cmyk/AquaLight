@@ -14,14 +14,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import com.aqua.aqualight.R
-import com.aqua.aqualight.ui.common.light.AquaLightChannelStepButton
-import com.aqua.aqualight.ui.common.light.AquaLightChannelStepButtonState
-import com.aqua.aqualight.ui.common.light.AquaLightManualColors
-import com.aqua.aqualight.ui.common.light.AquaLightManualGeometry
-import com.aqua.aqualight.ui.common.light.AquaLightManualPercentSlider
-import com.aqua.aqualight.ui.common.light.AquaLightManualPercentSliderActions
-import com.aqua.aqualight.ui.common.light.AquaLightManualPercentSliderState
-import com.aqua.aqualight.ui.common.light.AquaLightManualPreviewSpec
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightChannelStepButton
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightChannelStepButtonState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualColors
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualGeometry
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualPercentSlider
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualPercentSliderActions
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualPercentSliderState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualPreviewSpec
 
 @Composable
 internal fun ManualChannelRow(

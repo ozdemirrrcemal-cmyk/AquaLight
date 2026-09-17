@@ -2,8 +2,8 @@
 
 package com.aqua.aqualight.data.devices.light.library
 
-import com.aqua.aqualight.application.devices.light.control.DeviceLightControlOperations
-import com.aqua.aqualight.application.devices.light.control.DeviceLightControlResult
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlOperations
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlResult
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryChannel
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryCustomPoint
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryFailure

@@ -6,7 +6,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
-import com.aqua.aqualight.ui.common.light.AquaLightManualColors
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualColors
 
 @Immutable
 internal data class DeviceLightAdaptationVisuals(

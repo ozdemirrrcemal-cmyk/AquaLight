@@ -21,8 +21,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import com.aqua.aqualight.R
-import com.aqua.aqualight.ui.common.light.AquaLightManualAlpha
-import com.aqua.aqualight.ui.common.light.AquaLightManualGeometry
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualAlpha
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualGeometry
 
 @Composable
 internal fun ManualProtectionBanner(

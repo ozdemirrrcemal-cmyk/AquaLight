@@ -14,9 +14,9 @@ import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingContr
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
-import com.aqua.aqualight.application.devices.light.control.DeviceLightControlOperations
-import com.aqua.aqualight.application.devices.light.control.DeviceLightControlResult
-import com.aqua.aqualight.application.devices.light.control.matchesLightControlSurface
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlOperations
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlResult
+import com.aqua.aqualight.application.devices.light.dashboard.matchesLightControlSurface
 import com.aqua.aqualight.application.devices.timer.control.DeviceTimerControlOperations
 import com.aqua.aqualight.application.devices.timer.control.DeviceTimerControlResult
 import com.aqua.aqualight.application.devices.timer.control.DeviceTimerControlSnapshot

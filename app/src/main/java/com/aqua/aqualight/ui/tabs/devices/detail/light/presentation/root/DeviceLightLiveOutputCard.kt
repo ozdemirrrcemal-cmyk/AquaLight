@@ -24,15 +24,15 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.style.TextAlign
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
-import com.aqua.aqualight.ui.common.light.AquaLightDashboardAlpha
-import com.aqua.aqualight.ui.common.light.AquaLightDashboardGeometry
-import com.aqua.aqualight.ui.common.light.AquaLightLiveOutputColors
-import com.aqua.aqualight.ui.common.light.AquaLightLiveOutputPreviewSpec
-import com.aqua.aqualight.ui.common.light.AquaLightLiveOutputTypography
-import com.aqua.aqualight.ui.common.light.AquaLightPlanChartSpec
-import com.aqua.aqualight.ui.common.light.aquaLightDashboardColors
-import com.aqua.aqualight.ui.common.light.aquaLightLiveOutputColors
-import com.aqua.aqualight.ui.common.light.aquaLightLiveOutputTypography
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightDashboardAlpha
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightDashboardGeometry
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightLiveOutputColors
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightLiveOutputPreviewSpec
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightLiveOutputTypography
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightPlanChartSpec
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.aquaLightDashboardColors
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.aquaLightLiveOutputColors
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.aquaLightLiveOutputTypography
 
 @Composable
 internal fun DeviceLightLiveOutputCard(modifier: Modifier = Modifier) {

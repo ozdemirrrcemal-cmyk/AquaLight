@@ -2,12 +2,12 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual
 
 import androidx.annotation.StringRes
 import com.aqua.aqualight.R
-import com.aqua.aqualight.application.devices.light.preset.DeviceLightPresetCatalog
-import com.aqua.aqualight.application.devices.light.preset.DeviceLightPresetId
-import com.aqua.aqualight.application.devices.light.preset.DeviceLightPresetScene
+import com.aqua.aqualight.application.devices.light.automatic.DeviceLightPresetCatalog
+import com.aqua.aqualight.application.devices.light.automatic.DeviceLightPresetId
+import com.aqua.aqualight.application.devices.light.automatic.DeviceLightPresetScene
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
-import com.aqua.aqualight.ui.common.light.AquaLightManualPreviewSpec
-import com.aqua.aqualight.ui.common.light.labelResource
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualPreviewSpec
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.labelResource
 
 internal enum class DeviceLightManualChannelId {
     RED,
