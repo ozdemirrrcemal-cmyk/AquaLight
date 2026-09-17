@@ -1,6 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="device_light_open_settings_description">Cihaz ayarlarını aç</string>
+    <string name="device_light_error_unavailable_title">Işık kontrolleri kullanılamıyor</string>
+    <string name="device_light_error_not_connected_title">Cihaz çevrimdışı</string>
+    <string name="device_light_error_unsupported_title">Işık özelliği desteklenmiyor</string>
+    <string name="device_light_error_stale_title">Işık ayarları değişti</string>
+    <string name="device_light_error_clock_title">Cihaz saati hazır değil</string>
+    <string name="device_light_error_invalid_request_title">Işık ayarlarını kontrol edin</string>
+    <string name="device_light_error_capacity_title">Program sınırına ulaşıldı</string>
+    <string name="device_light_error_overlap_title">Program çakışması</string>
+    <string name="device_light_error_not_found_title">Öğe artık kullanılamıyor</string>
+    <string name="device_light_error_rejected_title">Değişiklik kabul edilmedi</string>
+    <string name="device_light_error_invalid_data_title">Cihaz yanıtı doğrulanamadı</string>
+    <string name="device_light_error_duplicate_name_title">Bu ad zaten kullanılıyor</string>
+    <string name="device_light_error_incompatible_title">Ayar uyumlu değil</string>
+    <string name="device_light_error_partial_apply_title">Bazı ayarlar değişmiş olabilir</string>
     <string name="device_light_hero_title_on">Işık açık</string>
     <string name="device_light_hero_title_off">Işık kapalı</string>
     <string name="device_light_hero_title_unavailable">Işık durumu kullanılamıyor</string>

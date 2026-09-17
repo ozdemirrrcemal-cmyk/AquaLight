@@ -11,6 +11,7 @@ import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdapta
 import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationSnapshot
 import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationState
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.toCommercialLightError
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
@@ -150,7 +151,10 @@ internal class DeviceLightAdaptationViewModel(
                 }
                 is DeviceLightAdaptationMutationResult.Failed -> {
                     _uiState.update { state -> state.copy(operationInProgress = false) }
-                    effectEmitter.showMessage(result.failure.messageRes(), false)
+                    effectEmitter.showMessage(
+                        result.failure.toCommercialLightError().messageRes,
+                        false
+                    )
                     if (result.failure == DeviceLightAdaptationFailure.STALE_REVISION) {
                         refresh(showLoading = false, showFailure = false)
                     }
@@ -167,7 +171,12 @@ internal class DeviceLightAdaptationViewModel(
                 is DeviceLightAdaptationReadResult.Available -> applySnapshot(result.snapshot)
                 is DeviceLightAdaptationReadResult.Failed -> {
                     _uiState.applyFailure(result.failure, effectEmitter::closeUnavailable)
-                    if (showFailure) effectEmitter.showMessage(result.failure.messageRes(), false)
+                    if (showFailure) {
+                        effectEmitter.showMessage(
+                            result.failure.toCommercialLightError().messageRes,
+                            false
+                        )
+                    }
                 }
             }
         }
@@ -253,17 +262,4 @@ private fun MutableStateFlow<DeviceLightAdaptationUiState>.applyFailure(
         )
     }
     if (failure == DeviceLightAdaptationFailure.UNSUPPORTED) closeUnavailable()
-}
-
-@StringRes
-private fun DeviceLightAdaptationFailure.messageRes(): Int = when (this) {
-    DeviceLightAdaptationFailure.STALE_REVISION -> R.string.device_light_adaptation_stale_error
-    DeviceLightAdaptationFailure.CLOCK_NOT_READY -> R.string.device_light_adaptation_clock_error
-    DeviceLightAdaptationFailure.UNSUPPORTED -> R.string.device_light_adaptation_unsupported_error
-    DeviceLightAdaptationFailure.INVALID_REQUEST -> R.string.device_light_adaptation_invalid_error
-    DeviceLightAdaptationFailure.NOT_CONNECTED ->
-        R.string.device_light_adaptation_not_connected_error
-    DeviceLightAdaptationFailure.UNAVAILABLE,
-    DeviceLightAdaptationFailure.REJECTED,
-    DeviceLightAdaptationFailure.INVALID_DATA -> R.string.device_light_adaptation_operation_error
 }

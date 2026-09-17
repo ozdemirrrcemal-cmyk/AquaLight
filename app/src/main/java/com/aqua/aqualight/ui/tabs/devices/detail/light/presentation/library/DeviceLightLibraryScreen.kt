@@ -48,6 +48,7 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryEntry
+import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryFailure
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryPayload
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
@@ -56,6 +57,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaL
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightLibraryGeometry
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualColors
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.aquaLightManualColors
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.toCommercialLightReadError
 
 @Composable
 internal fun DeviceLightLibraryScreen(
@@ -85,12 +87,14 @@ internal fun DeviceLightLibraryScreen(
         }
         when {
             state.initialLoading -> Unit
-            state.readError || state.target == null -> item(key = "library-error") {
+            state.readError != null || state.target == null -> item(key = "library-error") {
+                val error = state.readError
+                    ?: DeviceLightLibraryFailure.INVALID_DATA.toCommercialLightReadError()
                 LibraryMessageCard(
                     content = LibraryMessageContent(
                         iconRes = R.drawable.ic_error,
-                        title = stringResource(R.string.device_light_library_error_title),
-                        message = stringResource(R.string.device_light_library_error_message),
+                        title = stringResource(error.titleRes),
+                        message = stringResource(error.messageRes),
                         actionText = stringResource(R.string.device_light_library_retry)
                     ),
                     onAction = actions.onRetryClick,

@@ -14,6 +14,7 @@ import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryMu
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryOperations
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryScene
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.toCommercialLightError
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -92,7 +93,11 @@ internal class DeviceLightCustomCurveViewModel(
                             readFailed = true
                         )
                     }
-                    emit(DeviceLightCustomCurveEffect.ShowError(result.failure.messageRes()))
+                    emit(
+                        DeviceLightCustomCurveEffect.ShowError(
+                            result.failure.toCommercialLightError().messageRes
+                        )
+                    )
                 }
             }
         }
@@ -106,7 +111,9 @@ internal class DeviceLightCustomCurveViewModel(
             when (val result = customOperations.preview(boundDeviceUid, state.previewTimeMs)) {
                 DeviceLightCustomMutationResult.Success -> Unit
                 is DeviceLightCustomMutationResult.Failed -> emit(
-                    DeviceLightCustomCurveEffect.ShowError(result.failure.messageRes())
+                    DeviceLightCustomCurveEffect.ShowError(
+                        result.failure.toCommercialLightError().messageRes
+                    )
                 )
             }
             _uiState.update { it.copy(operationInProgress = false) }
@@ -171,7 +178,11 @@ internal class DeviceLightCustomCurveViewModel(
                             blockingOperationInProgress = false
                         )
                     }
-                    emit(DeviceLightCustomCurveEffect.ShowError(result.failure.messageRes()))
+                    emit(
+                        DeviceLightCustomCurveEffect.ShowError(
+                            result.failure.toCommercialLightError().messageRes
+                        )
+                    )
                 }
             }
         }

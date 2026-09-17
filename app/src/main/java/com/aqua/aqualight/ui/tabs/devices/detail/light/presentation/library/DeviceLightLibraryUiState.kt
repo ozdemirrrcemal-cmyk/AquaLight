@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.library
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryEntry
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryKind
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryTarget
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.DeviceLightCommercialErrorMessage
 
 internal enum class DeviceLightLibraryTab {
     MANUAL,
@@ -15,7 +16,7 @@ internal data class DeviceLightLibraryUiState(
     val selectedTab: DeviceLightLibraryTab = DeviceLightLibraryTab.MANUAL,
     val entries: List<DeviceLightLibraryEntry> = emptyList(),
     val initialLoading: Boolean = true,
-    val readError: Boolean = false,
+    val readError: DeviceLightCommercialErrorMessage? = null,
     val activeLoadEntryId: String? = null
 ) {
     val visibleEntries: List<DeviceLightLibraryEntry>

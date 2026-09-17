@@ -12,6 +12,7 @@ import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemRead
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemSettings
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemSnapshot
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.toCommercialLightError
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
@@ -152,12 +153,12 @@ internal class DeviceLightSystemViewModel(
                     mutableUiState.update { current ->
                         current.copy(operationInProgress = false)
                     }
-                    val message = if (result.partialApplyPossible) {
-                        R.string.device_light_system_partial_save_error
-                    } else {
-                        result.failure.messageRes()
-                    }
-                    effectEmitter.showMessage(message, false)
+                    effectEmitter.showMessage(
+                        result.failure.toCommercialLightError(
+                            partialApplyPossible = result.partialApplyPossible
+                        ).messageRes,
+                        false
+                    )
                     if (result.partialApplyPossible) {
                         draftDirty = false
                         refresh(showLoading = false, showFailure = false)
@@ -178,7 +179,10 @@ internal class DeviceLightSystemViewModel(
                 is DeviceLightSystemReadResult.Failed -> {
                     applyFailure(result.failure)
                     if (showFailure) {
-                        effectEmitter.showMessage(result.failure.messageRes(), false)
+                        effectEmitter.showMessage(
+                            result.failure.toCommercialLightError().messageRes,
+                            false
+                        )
                     }
                 }
             }
@@ -264,14 +268,5 @@ private fun DeviceLightSystemFailure.connectionState(): DeviceConnectionVisualSt
     } else {
         DeviceConnectionVisualState.WARNING
     }
-
-@StringRes
-private fun DeviceLightSystemFailure.messageRes(): Int = when (this) {
-    DeviceLightSystemFailure.NOT_CONNECTED -> R.string.device_light_system_not_connected_error
-    DeviceLightSystemFailure.UNSUPPORTED -> R.string.device_light_system_unsupported_error
-    DeviceLightSystemFailure.INVALID_DATA -> R.string.device_light_system_invalid_data_error
-    DeviceLightSystemFailure.UNAVAILABLE,
-    DeviceLightSystemFailure.REJECTED -> R.string.device_light_system_operation_error
-}
 
 private const val MINIMUM_TEMPERATURE_GAP = 1

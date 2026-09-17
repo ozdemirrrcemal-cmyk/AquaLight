@@ -13,6 +13,7 @@ import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomat
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightPresetCatalog
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightPresetId
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.toCommercialLightError
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -191,12 +192,20 @@ internal class DeviceLightAutomaticProgramEditorViewModel(
                 loadFailed = true
             )
         }
-        emit(DeviceLightAutomaticProgramEditorEffect.ShowMessage(failure.messageRes()))
+        emit(
+            DeviceLightAutomaticProgramEditorEffect.ShowMessage(
+                failure.toCommercialLightError().messageRes
+            )
+        )
     }
 
     private fun applyMutationFailure(failure: DeviceLightAutomaticFailure) {
         _uiState.update { state -> state.copy(operationInProgress = false) }
-        emit(DeviceLightAutomaticProgramEditorEffect.ShowMessage(failure.messageRes()))
+        emit(
+            DeviceLightAutomaticProgramEditorEffect.ShowMessage(
+                failure.toCommercialLightError().messageRes
+            )
+        )
     }
 
     private fun emit(effect: DeviceLightAutomaticProgramEditorEffect) {
@@ -214,19 +223,6 @@ internal sealed interface DeviceLightAutomaticProgramEditorEffect {
         DeviceLightAutomaticProgramEditorEffect
 
     data class Saved(@StringRes val messageRes: Int) : DeviceLightAutomaticProgramEditorEffect
-}
-
-@StringRes
-private fun DeviceLightAutomaticFailure.messageRes(): Int = when (this) {
-    DeviceLightAutomaticFailure.STALE_REVISION -> R.string.device_light_auto_editor_stale
-    DeviceLightAutomaticFailure.CAPACITY_REACHED -> R.string.device_light_auto_editor_capacity
-    DeviceLightAutomaticFailure.OVERLAP -> R.string.device_light_auto_editor_overlap
-    DeviceLightAutomaticFailure.NOT_FOUND -> R.string.device_light_auto_editor_not_found
-    DeviceLightAutomaticFailure.NOT_CONNECTED -> R.string.device_light_auto_editor_not_connected
-    DeviceLightAutomaticFailure.UNAVAILABLE,
-    DeviceLightAutomaticFailure.UNSUPPORTED,
-    DeviceLightAutomaticFailure.REJECTED,
-    DeviceLightAutomaticFailure.INVALID_DATA -> R.string.device_light_auto_operation_error
 }
 
 private fun DeviceLightAutomaticFailure.connectionState(): DeviceConnectionVisualState = when (this) {

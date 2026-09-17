@@ -118,6 +118,9 @@ LIGHT_RUNTIME_PROVIDER = Path(
 LIGHT_OPERATION_LOADING_STATE = (
     LIGHT_PRESENTATION_ROOT / "common/DeviceLightOperationLoadingState.kt"
 )
+LIGHT_COMMERCIAL_ERROR_RESOLVER = (
+    LIGHT_PRESENTATION_ROOT / "common/DeviceLightCommercialErrorResolver.kt"
+)
 LIGHT_BLOCKING_OPERATION_SURFACES = (
     ("adaptation/DeviceLightAdaptationUiState.kt", "adaptation/DeviceLightAdaptationFragment.kt"),
     (
@@ -160,6 +163,22 @@ RAW_COLOR = re.compile(r'android:(?:background|textColor|tint)="#[0-9A-Fa-f]{3,8
 RAW_TEXT_SIZE = re.compile(r'android:textSize="[0-9.]+sp"')
 HARD_CODED_COMPOSE_TEXT = re.compile(r'\bText\s*\(\s*"[^"$]+"')
 HARD_CODED_CONTENT_DESCRIPTION = re.compile(r'\bcontentDescription\s*=\s*"[^"$]+"')
+LIGHT_FAILURE_MESSAGE_MAPPER = re.compile(
+    r"fun\s+DeviceLight(?:Adaptation|Automatic|Custom|Library|Manual|System)"
+    r"Failure\.messageRes\s*\("
+)
+LIGHT_COMMERCIAL_ERROR_REFERENCE = re.compile(
+    r"R\.string\.(?:"
+    r"device_light_adaptation_(?:stale|clock|unsupported|invalid|not_connected|operation)_error|"
+    r"device_light_auto_operation_error|"
+    r"device_light_auto_editor_(?:stale|capacity|overlap|not_found|not_connected)|"
+    r"device_light_manual_(?:operation|not_connected)_error|"
+    r"device_light_library_(?:operation|load_not_connected)_error|"
+    r"device_light_library_error_(?:title|message)|"
+    r"device_light_custom_operation_error|"
+    r"device_light_system_(?:partial_save|not_connected|unsupported|invalid_data|operation)_error"
+    r")\b"
+)
 
 COOLING_UI_FORBIDDEN = (
     "import com.aqua.aqualight.data.",
@@ -600,6 +619,19 @@ def validate_light_feature_boundaries(repository_root: Path) -> list[str]:
     """Keep every Light destination in its vertical slice and one central runtime owner."""
     errors: list[str] = []
 
+    commercial_error_resolver = _read(
+        repository_root,
+        LIGHT_COMMERCIAL_ERROR_RESOLVER,
+        errors,
+    )
+    _require(
+        LIGHT_COMMERCIAL_ERROR_RESOLVER,
+        commercial_error_resolver,
+        errors,
+        "object DeviceLightCommercialErrorResolver",
+        "Light command failures must use one feature-scoped commercial error resolver",
+    )
+
     for root, expected_areas, label in (
         (LIGHT_APPLICATION_ROOT, LIGHT_APPLICATION_AREAS, "application"),
         (LIGHT_DATA_ROOT, LIGHT_DATA_AREAS, "data"),
@@ -651,6 +683,7 @@ def validate_light_feature_boundaries(repository_root: Path) -> list[str]:
             for source_path in absolute_root.rglob(pattern)
         ):
             source = path.read_text(encoding="utf-8", errors="ignore")
+            relative_path = path.relative_to(repository_root)
             package_match = re.search(r"^package\s+([\w.]+)", source, re.MULTILINE)
             expected_package = ".".join(
                 path.parent.relative_to(repository_root / MAIN_SOURCE_ROOT).parts
@@ -683,6 +716,20 @@ def validate_light_feature_boundaries(repository_root: Path) -> list[str]:
                     errors.append(
                         f"{path.relative_to(repository_root)}: Light {layer_name} "
                         f"layer imports a forbidden outer layer: {forbidden_import}"
+                    )
+            if (
+                source_root == LIGHT_PRESENTATION_ROOT
+                and relative_path != LIGHT_COMMERCIAL_ERROR_RESOLVER
+            ):
+                if LIGHT_FAILURE_MESSAGE_MAPPER.search(source):
+                    errors.append(
+                        f"{relative_path}: Light failure copy must be resolved by "
+                        "DeviceLightCommercialErrorResolver"
+                    )
+                if LIGHT_COMMERCIAL_ERROR_REFERENCE.search(source):
+                    errors.append(
+                        f"{relative_path}: Light operational error resources must be owned by "
+                        "DeviceLightCommercialErrorResolver"
                     )
 
     legacy_roots = (

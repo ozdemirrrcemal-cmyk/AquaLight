@@ -316,6 +316,51 @@ class DeviceRootUiArchitectureGuardTest(unittest.TestCase):
             errors,
         )
 
+    def test_light_failure_copy_cannot_be_mapped_outside_central_resolver(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repository_root = Path(temporary_directory)
+            decentralized_mapper = (
+                repository_root
+                / GUARD.LIGHT_PRESENTATION_ROOT
+                / "manual/DecentralizedErrorMapper.kt"
+            )
+            decentralized_mapper.parent.mkdir(parents=True)
+            decentralized_mapper.write_text(
+                "package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual\n\n"
+                "private fun DeviceLightManualFailure.messageRes(): Int = 0\n",
+                encoding="utf-8",
+            )
+
+            errors = GUARD.validate_light_feature_boundaries(repository_root)
+
+        self.assertTrue(
+            any("DeviceLightCommercialErrorResolver" in error for error in errors),
+            errors,
+        )
+
+    def test_light_operational_error_resource_cannot_bypass_central_resolver(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repository_root = Path(temporary_directory)
+            bypass = (
+                repository_root
+                / GUARD.LIGHT_PRESENTATION_ROOT
+                / "automatic/programs/ResolverBypass.kt"
+            )
+            bypass.parent.mkdir(parents=True)
+            bypass.write_text(
+                "package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation."
+                "automatic.programs\n\n"
+                "private val error = R.string.device_light_auto_operation_error\n",
+                encoding="utf-8",
+            )
+
+            errors = GUARD.validate_light_feature_boundaries(repository_root)
+
+        self.assertTrue(
+            any("operational error resources" in error for error in errors),
+            errors,
+        )
+
     def test_automatic_presentation_package_cycle_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             repository_root = Path(temporary_directory)

@@ -10,6 +10,8 @@ import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryKi
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryMutationResult
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryOperations
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryResult
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.toCommercialLightError
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.toCommercialLightReadError
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -67,7 +69,7 @@ class DeviceLightLibraryViewModel(
     }
 
     internal fun retry() {
-        _uiState.update { state -> state.copy(initialLoading = true, readError = false) }
+        _uiState.update { state -> state.copy(initialLoading = true, readError = null) }
         startObservation()
         viewModelScope.launch { operations.refreshInstalledCustom(boundDeviceUid) }
     }
@@ -142,11 +144,11 @@ private fun DeviceLightLibraryUiState.withResult(
         target = result.snapshot.target,
         entries = result.snapshot.entries,
         initialLoading = false,
-        readError = false
+        readError = null
     )
     is DeviceLightLibraryResult.Failed -> copy(
         initialLoading = false,
-        readError = true
+        readError = result.failure.toCommercialLightReadError()
     )
 }
 
@@ -156,7 +158,7 @@ private fun DeviceLightLibraryMutationResult.toEffect(
     is DeviceLightLibraryMutationResult.Success ->
         DeviceLightLibraryEffect.ShowMessage(successMessage, success = true)
     is DeviceLightLibraryMutationResult.Failed -> DeviceLightLibraryEffect.ShowMessage(
-        messageRes = failure.messageRes(),
+        messageRes = failure.toCommercialLightError().messageRes,
         success = false
     )
 }
@@ -182,15 +184,4 @@ internal sealed interface DeviceLightLibraryEffect {
         @StringRes val messageRes: Int,
         val success: Boolean
     ) : DeviceLightLibraryEffect
-}
-
-@StringRes
-private fun DeviceLightLibraryFailure.messageRes(): Int = when (this) {
-    DeviceLightLibraryFailure.DUPLICATE_NAME ->
-        R.string.device_light_library_name_duplicate_error
-    DeviceLightLibraryFailure.INVALID_NAME ->
-        R.string.device_light_library_name_invalid_error
-    DeviceLightLibraryFailure.NOT_CONNECTED ->
-        R.string.device_light_library_load_not_connected_error
-    else -> R.string.device_light_library_operation_error
 }

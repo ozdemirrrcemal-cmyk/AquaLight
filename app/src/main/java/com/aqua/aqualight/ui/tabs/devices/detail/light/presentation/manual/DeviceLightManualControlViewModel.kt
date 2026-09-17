@@ -3,7 +3,6 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryOperations
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualFailure
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualMutationResult
@@ -12,6 +11,7 @@ import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualRead
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualScene
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualSnapshot
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.toCommercialLightError
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -195,7 +195,11 @@ class DeviceLightManualControlViewModel(
                 _uiState.update { state ->
                     state.copy(connectionVisualState = result.failure.connectionState())
                 }
-                emitEffect(DeviceLightManualControlEffect.ShowError(result.failure.messageRes()))
+                emitEffect(
+                    DeviceLightManualControlEffect.ShowError(
+                        result.failure.toCommercialLightError().messageRes
+                    )
+                )
             }
         }
     }
@@ -235,13 +239,4 @@ private fun DeviceLightManualFailure.connectionState(): DeviceConnectionVisualSt
     DeviceLightManualFailure.UNSUPPORTED,
     DeviceLightManualFailure.REJECTED,
     DeviceLightManualFailure.INVALID_DATA -> DeviceConnectionVisualState.WARNING
-}
-
-@StringRes
-private fun DeviceLightManualFailure.messageRes(): Int = when (this) {
-    DeviceLightManualFailure.NOT_CONNECTED -> R.string.device_light_manual_not_connected_error
-    DeviceLightManualFailure.UNAVAILABLE,
-    DeviceLightManualFailure.UNSUPPORTED,
-    DeviceLightManualFailure.REJECTED,
-    DeviceLightManualFailure.INVALID_DATA -> R.string.device_light_manual_operation_error
 }

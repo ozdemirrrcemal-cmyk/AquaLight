@@ -10,6 +10,7 @@ import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomat
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticReadResult
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticSnapshot
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.toCommercialLightError
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -90,7 +91,7 @@ internal class DeviceLightAutomaticProgramsViewModel(
     ) {
         viewModelScope.launch {
             _uiState.update { state -> state.copy(operationInProgress = true) }
-            when (operation()) {
+            when (val result = operation()) {
                 DeviceLightAutomaticMutationResult.Success -> {
                     refreshAfterMutation()
                     successMessageRes?.let { messageRes ->
@@ -101,7 +102,7 @@ internal class DeviceLightAutomaticProgramsViewModel(
                     _uiState.update { state -> state.copy(operationInProgress = false) }
                     emit(
                         DeviceLightAutomaticProgramsEffect.ShowMessage(
-                            R.string.device_light_auto_operation_error,
+                            result.failure.toCommercialLightError().messageRes,
                             false
                         )
                     )
@@ -147,7 +148,7 @@ internal class DeviceLightAutomaticProgramsViewModel(
                     if (showFailureMessage) {
                         emit(
                             DeviceLightAutomaticProgramsEffect.ShowMessage(
-                                R.string.device_light_auto_operation_error,
+                                result.failure.toCommercialLightError().messageRes,
                                 false
                             )
                         )
