@@ -53,12 +53,12 @@
     <string name="device_light_controls_title">Kontrol ekranları</string>
     <string name="device_light_quick_setup_button">Akıllı kurulum</string>
     <string name="device_light_manual_control_subtitle">Kanalları doğrudan ayarla</string>
-    <string name="device_light_automatic_programs_title">Otomatik programlar</string>
+    <string name="device_light_automatic_programs_title">Otomatik Programlar</string>
     <plurals name="device_light_program_count">
         <item quantity="one">%1$d program kayıtlı</item>
         <item quantity="other">%1$d program kayıtlı</item>
     </plurals>
-    <string name="device_light_custom_curve_title">Özel ışık eğrisi</string>
+    <string name="device_light_custom_curve_title">Özel Işık Eğrisi</string>
     <plurals name="device_light_custom_curve_summary">
         <item quantity="one">%1$d nokta · Hafta içi</item>
         <item quantity="other">%1$d nokta · Hafta içi</item>

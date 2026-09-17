@@ -27,10 +27,10 @@
     <string name="device_light_auto_delete_confirm">Sil</string>
     <string name="device_light_auto_deleted_success">Program silindi</string>
     <string name="device_light_auto_operation_error">Otomatik programlar güncellenemedi. Tekrar deneyin.</string>
-    <string name="device_light_auto_editor_title">Otomatik program</string>
-    <string name="device_light_auto_editor_create_title">Program oluştur</string>
-    <string name="device_light_auto_editor_edit_title">Programı düzenle</string>
-    <string name="device_light_auto_editor_duplicate_title">Programı çoğalt</string>
+    <string name="device_light_auto_editor_title">Otomatik Program</string>
+    <string name="device_light_auto_editor_create_title">Program Oluştur</string>
+    <string name="device_light_auto_editor_edit_title">Programı Düzenle</string>
+    <string name="device_light_auto_editor_duplicate_title">Programı Çoğalt</string>
     <string name="device_light_auto_editor_cycle">Gün döngüsü</string>
     <string name="device_light_auto_editor_cycle_drag_hint">Sürükleyin · iç halkada hassas ayar</string>
     <string name="device_light_auto_editor_cycle_drag_description">Etkileşimli gün döngüsü. Başlangıç veya bitiş noktasını sürükleyin. Dakika hassasiyetinde ayar için parmağınızı iç halkaya alın.</string>
@@ -66,7 +66,7 @@
     <string name="device_light_auto_editor_start_time_picker">Açılış saatini seçin</string>
     <string name="device_light_auto_editor_end_time_picker">Kapanış saatini seçin</string>
     <string name="device_light_auto_editor_time_select">Seç</string>
-    <string name="device_light_auto_preset_title">Ön ayar</string>
+    <string name="device_light_auto_preset_title">Ön Ayar</string>
     <string name="device_light_auto_preset_intro_title">Hazır programlar</string>
     <string name="device_light_auto_preset_intro_summary">Bir başlangıç seçin, sonra düzenleyin.</string>
     <string name="device_light_auto_preset_intro_safety">Seçim cihazı hemen değiştirmez.</string>

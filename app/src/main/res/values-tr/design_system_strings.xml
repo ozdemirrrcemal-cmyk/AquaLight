@@ -66,9 +66,9 @@
     <string name="device_family_dosing">Dozajlama</string>
     <string name="device_family_timer">Zamanlayıcı</string>
     <string name="device_family_cooling">Soğutma</string>
-    <string name="device_menu_manual_control_title">Manuel kontrol</string>
+    <string name="device_menu_manual_control_title">Manuel Kontrol</string>
     <string name="device_menu_manual_control_description">Desteklenen aydınlatma çıkışları için doğrudan kanal kontrolü.</string>
-    <string name="device_menu_quick_setup_title">Hızlı kurulum</string>
+    <string name="device_menu_quick_setup_title">Hızlı Kurulum</string>
     <string name="device_menu_quick_setup_description">Aygıt yazılımının desteklediği aydınlatma ön ayarları ve profilleriyle hızlı kurulum.</string>
     <string name="device_menu_programs_title">Programlar</string>
     <string name="device_menu_programs_description">Günlük aydınlatma programları oluşturun ve yönetin.</string>

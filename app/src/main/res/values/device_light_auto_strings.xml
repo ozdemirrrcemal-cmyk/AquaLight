@@ -27,10 +27,10 @@
     <string name="device_light_auto_delete_confirm">Delete</string>
     <string name="device_light_auto_deleted_success">Program deleted</string>
     <string name="device_light_auto_operation_error">Automatic programs could not be updated. Try again.</string>
-    <string name="device_light_auto_editor_title">Automatic program</string>
-    <string name="device_light_auto_editor_create_title">Create program</string>
-    <string name="device_light_auto_editor_edit_title">Edit program</string>
-    <string name="device_light_auto_editor_duplicate_title">Duplicate program</string>
+    <string name="device_light_auto_editor_title">Automatic Program</string>
+    <string name="device_light_auto_editor_create_title">Create Program</string>
+    <string name="device_light_auto_editor_edit_title">Edit Program</string>
+    <string name="device_light_auto_editor_duplicate_title">Duplicate Program</string>
     <string name="device_light_auto_editor_cycle">Day cycle</string>
     <string name="device_light_auto_editor_cycle_drag_hint">Drag · use the inner ring for fine adjustment</string>
     <string name="device_light_auto_editor_cycle_drag_description">Interactive day cycle. Drag the start or end point. Move your finger to the inner ring for minute-level adjustment.</string>
