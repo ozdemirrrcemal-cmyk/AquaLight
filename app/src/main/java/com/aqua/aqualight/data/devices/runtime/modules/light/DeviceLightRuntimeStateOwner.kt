@@ -2,7 +2,6 @@ package com.aqua.aqualight.data.devices.runtime.modules.light
 
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
-import com.aqua.aqualight.data.devices.runtime.state.DeviceRuntimeGenerationAuthority
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,15 +14,13 @@ data class DeviceLightThermalRuntimeState(
 /**
  * The only mutable, firmware-authoritative Light state owner.
  *
- * Main Light status, temperature protection and thermal documents have independent generation
- * authorities because firmware hydrates them through separate commands. They still publish through
- * this one owner so no Light adapter can retain a parallel authoritative snapshot.
+ * Main Light status, temperature protection and thermal documents publish through this aggregate
+ * so no Light adapter can retain a parallel authoritative snapshot. Their independent connection
+ * generation lifecycles are delegated to [DeviceLightRuntimeAuthorityCoordinator].
  */
 internal class DeviceLightRuntimeStateOwner {
     private val lock = Any()
-    private val statusAuthority = DeviceRuntimeGenerationAuthority()
-    private val temperatureProtectionAuthority = DeviceRuntimeGenerationAuthority()
-    private val thermalAuthority = DeviceRuntimeGenerationAuthority()
+    private val authorityCoordinator = DeviceLightRuntimeAuthorityCoordinator()
     private val _statuses = MutableStateFlow<Map<DeviceUid, DeviceLightStatus>>(emptyMap())
     private val _temperatureProtection = MutableStateFlow<
         Map<DeviceUid, DeviceLightTemperatureProtectionStatus>
@@ -39,44 +36,41 @@ internal class DeviceLightRuntimeStateOwner {
         _thermalStates.asStateFlow()
 
     fun beginGeneration(deviceUid: DeviceUid, generation: DeviceRuntimeConnectionGeneration) {
-        statusAuthority.beginGeneration(deviceUid, generation)
-        temperatureProtectionAuthority.beginGeneration(deviceUid, generation)
-        thermalAuthority.beginGeneration(deviceUid, generation)
+        authorityCoordinator.beginGeneration(deviceUid, generation)
     }
 
     fun invalidate(
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration? = null
     ) {
-        statusAuthority.invalidate(deviceUid, generation)
-        temperatureProtectionAuthority.invalidate(deviceUid, generation)
-        thermalAuthority.invalidate(deviceUid, generation)
+        authorityCoordinator.invalidate(deviceUid, generation)
     }
 
-    fun isStatusAuthoritative(
+    fun isAuthoritative(
+        projection: DeviceLightRuntimeProjection,
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration
-    ): Boolean = statusAuthority.isAuthoritative(deviceUid, generation)
-
-    fun isTemperatureProtectionAuthoritative(
-        deviceUid: DeviceUid,
-        generation: DeviceRuntimeConnectionGeneration
-    ): Boolean = temperatureProtectionAuthority.isAuthoritative(deviceUid, generation)
-
-    fun isThermalAuthoritative(
-        deviceUid: DeviceUid,
-        generation: DeviceRuntimeConnectionGeneration
-    ): Boolean = thermalAuthority.isAuthoritative(deviceUid, generation)
+    ): Boolean = authorityCoordinator.isAuthoritative(projection, deviceUid, generation)
 
     fun currentAuthoritativeStatus(deviceUid: DeviceUid): DeviceLightStatus? = synchronized(lock) {
-        _statuses.value[deviceUid]?.takeIf { statusAuthority.isAuthoritative(deviceUid) }
+        _statuses.value[deviceUid]?.takeIf {
+            authorityCoordinator.isCurrentlyAuthoritative(
+                DeviceLightRuntimeProjection.STATUS,
+                deviceUid
+            )
+        }
     }
 
     fun currentAuthoritativeTemperatureProtection(
         deviceUid: DeviceUid
     ): DeviceLightTemperatureProtectionStatus? = synchronized(lock) {
         _temperatureProtection.value[deviceUid]
-            ?.takeIf { temperatureProtectionAuthority.isAuthoritative(deviceUid) }
+            ?.takeIf {
+                authorityCoordinator.isCurrentlyAuthoritative(
+                    DeviceLightRuntimeProjection.TEMPERATURE_PROTECTION,
+                    deviceUid
+                )
+            }
     }
 
     fun recordStatus(
@@ -84,7 +78,13 @@ internal class DeviceLightRuntimeStateOwner {
         generation: DeviceRuntimeConnectionGeneration,
         status: DeviceLightStatus
     ): Boolean = synchronized(lock) {
-        if (!statusAuthority.acceptAuthoritativeSnapshot(deviceUid, generation)) {
+        if (
+            !authorityCoordinator.acceptAuthoritativeSnapshot(
+                DeviceLightRuntimeProjection.STATUS,
+                deviceUid,
+                generation
+            )
+        ) {
             return@synchronized false
         }
         _statuses.value = _statuses.value + (deviceUid to status)
@@ -96,7 +96,13 @@ internal class DeviceLightRuntimeStateOwner {
         generation: DeviceRuntimeConnectionGeneration,
         status: DeviceLightTemperatureProtectionStatus
     ): Boolean = synchronized(lock) {
-        if (!temperatureProtectionAuthority.acceptAuthoritativeSnapshot(deviceUid, generation)) {
+        if (
+            !authorityCoordinator.acceptAuthoritativeSnapshot(
+                DeviceLightRuntimeProjection.TEMPERATURE_PROTECTION,
+                deviceUid,
+                generation
+            )
+        ) {
             return@synchronized false
         }
         _temperatureProtection.value = _temperatureProtection.value + (deviceUid to status)
@@ -110,12 +116,22 @@ internal class DeviceLightRuntimeStateOwner {
     ): Boolean = synchronized(lock) {
         val current = _thermalStates.value[deviceUid]
         if (
-            thermalAuthority.isAuthoritative(deviceUid, generation) &&
+            authorityCoordinator.isAuthoritative(
+                DeviceLightRuntimeProjection.THERMAL,
+                deviceUid,
+                generation
+            ) &&
             current?.status?.uptimeMs?.let { previous -> status.uptimeMs < previous } == true
         ) {
             return@synchronized false
         }
-        if (!thermalAuthority.acceptAuthoritativeSnapshot(deviceUid, generation)) {
+        if (
+            !authorityCoordinator.acceptAuthoritativeSnapshot(
+                DeviceLightRuntimeProjection.THERMAL,
+                deviceUid,
+                generation
+            )
+        ) {
             return@synchronized false
         }
         _thermalStates.value = _thermalStates.value + (
@@ -135,7 +151,15 @@ internal class DeviceLightRuntimeStateOwner {
         generation: DeviceRuntimeConnectionGeneration,
         telemetry: DeviceLightThermalTelemetry
     ): Boolean = synchronized(lock) {
-        if (!thermalAuthority.acceptsPatch(deviceUid, generation)) return@synchronized false
+        if (
+            !authorityCoordinator.acceptsPatch(
+                DeviceLightRuntimeProjection.THERMAL,
+                deviceUid,
+                generation
+            )
+        ) {
+            return@synchronized false
+        }
         val current = _thermalStates.value[deviceUid] ?: return@synchronized false
         val status = current.status ?: return@synchronized false
         if (
@@ -163,9 +187,7 @@ internal class DeviceLightRuntimeStateOwner {
             _statuses.value = _statuses.value.without(deviceUid)
             _temperatureProtection.value = _temperatureProtection.value.without(deviceUid)
             _thermalStates.value = _thermalStates.value.without(deviceUid)
-            statusAuthority.clear(deviceUid)
-            temperatureProtectionAuthority.clear(deviceUid)
-            thermalAuthority.clear(deviceUid)
+            authorityCoordinator.clear(deviceUid)
         }
     }
 }

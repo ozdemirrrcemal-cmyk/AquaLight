@@ -26,7 +26,11 @@ class DeviceLightThermalRuntimeRepository internal constructor(
     internal fun isAuthoritative(
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration
-    ): Boolean = stateOwner.isThermalAuthoritative(deviceUid, generation)
+    ): Boolean = stateOwner.isAuthoritative(
+        DeviceLightRuntimeProjection.THERMAL,
+        deviceUid,
+        generation
+    )
 
     suspend fun requestStatus(
         deviceUid: DeviceUid

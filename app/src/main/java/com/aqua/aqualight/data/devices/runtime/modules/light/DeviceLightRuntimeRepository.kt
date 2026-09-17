@@ -145,7 +145,11 @@ internal data class DeviceLightProductCommand<T>(
 internal fun DeviceLightRuntimeRepository.isAuthoritative(
     deviceUid: DeviceUid,
     generation: DeviceRuntimeConnectionGeneration
-): Boolean = stateOwner.isStatusAuthoritative(deviceUid, generation)
+): Boolean = stateOwner.isAuthoritative(
+    DeviceLightRuntimeProjection.STATUS,
+    deviceUid,
+    generation
+)
 
 private fun <T> lightCommand(
     action: String,

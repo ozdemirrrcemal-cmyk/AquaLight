@@ -398,4 +398,3 @@ private const val ACTION_EDIT_TIME = "edit_time"
 private const val ACTION_DELETE_POINT = "delete_point"
 private const val ADD_POINT_PAYLOAD_PREFIX = "add:"
 private const val MOVE_POINT_PAYLOAD_PREFIX = "move:"
-private const val MINUTES_PER_HOUR = 60

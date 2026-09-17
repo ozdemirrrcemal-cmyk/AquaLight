@@ -20,7 +20,11 @@ class DeviceLightTemperatureProtectionRuntimeRepository internal constructor(
     internal fun isAuthoritative(
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration
-    ): Boolean = stateOwner.isTemperatureProtectionAuthoritative(deviceUid, generation)
+    ): Boolean = stateOwner.isAuthoritative(
+        DeviceLightRuntimeProjection.TEMPERATURE_PROTECTION,
+        deviceUid,
+        generation
+    )
 
     suspend fun requestStatus(
         deviceUid: DeviceUid

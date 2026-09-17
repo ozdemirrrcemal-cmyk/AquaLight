@@ -20,7 +20,9 @@ class DeviceLightGenerationAuthorityTest {
         owner.beginGeneration(DEVICE_UID, G2)
 
         assertEquals(first, owner.statuses.value[DEVICE_UID])
-        assertFalse(owner.isStatusAuthoritative(DEVICE_UID, G2))
+        assertFalse(
+            owner.isAuthoritative(DeviceLightRuntimeProjection.STATUS, DEVICE_UID, G2)
+        )
         assertTrue(owner.recordStatus(DEVICE_UID, G2, second))
         assertEquals(second, owner.statuses.value[DEVICE_UID])
     }
@@ -39,7 +41,9 @@ class DeviceLightGenerationAuthorityTest {
 
         assertFalse(owner.recordStatus(DEVICE_UID, G1, lateOld))
         assertEquals(second, owner.statuses.value[DEVICE_UID])
-        assertTrue(owner.isStatusAuthoritative(DEVICE_UID, G2))
+        assertTrue(
+            owner.isAuthoritative(DeviceLightRuntimeProjection.STATUS, DEVICE_UID, G2)
+        )
     }
 
     private companion object {
