@@ -283,11 +283,14 @@ private fun DeviceRuntimeCommandOutcome.FirmwareError.toAutomaticFailure():
     DeviceLightAutomaticFailure {
     val reason = runCatching { lightV1Data().reason }.getOrNull()
     return when (reason) {
-        DeviceLightErrorReason.STALE_REVISION -> DeviceLightAutomaticFailure.STALE_REVISION
-        DeviceLightErrorReason.AUTO_CAPACITY_REACHED ->
+        DeviceLightErrorReason.Known.STALE_REVISION ->
+            DeviceLightAutomaticFailure.STALE_REVISION
+        DeviceLightErrorReason.Known.AUTO_CAPACITY_REACHED ->
             DeviceLightAutomaticFailure.CAPACITY_REACHED
-        DeviceLightErrorReason.AUTO_PROGRAM_OVERLAP -> DeviceLightAutomaticFailure.OVERLAP
-        DeviceLightErrorReason.AUTO_PROGRAM_NOT_FOUND -> DeviceLightAutomaticFailure.NOT_FOUND
+        DeviceLightErrorReason.Known.AUTO_PROGRAM_OVERLAP ->
+            DeviceLightAutomaticFailure.OVERLAP
+        DeviceLightErrorReason.Known.AUTO_PROGRAM_NOT_FOUND ->
+            DeviceLightAutomaticFailure.NOT_FOUND
         else -> DeviceLightAutomaticFailure.REJECTED
     }
 }

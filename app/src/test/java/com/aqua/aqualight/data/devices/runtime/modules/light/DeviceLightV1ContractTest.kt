@@ -152,7 +152,7 @@ class DeviceLightV1ContractTest {
             messageId = "error-1",
             generation = GENERATION,
             statusCode = 409,
-            code = "conflict",
+            code = "CONFLICT",
             field = "",
             message = "AUTO program overlaps",
             structuredDataJson = """
@@ -173,10 +173,41 @@ class DeviceLightV1ContractTest {
         )
 
         val parsed = error.lightV1Data()
-        assertEquals(DeviceLightErrorReason.AUTO_PROGRAM_OVERLAP, parsed.reason)
+        assertEquals(DeviceLightErrorReason.Known.AUTO_PROGRAM_OVERLAP, parsed.reason)
         assertEquals(7L, parsed.actualRevision)
         assertEquals("ap-00000001", parsed.conflict?.withProgramId)
         assertEquals(2, parsed.additionalConflictCount)
+    }
+
+    @Test
+    fun `firmware INVALID_VALUE fallback is a known Light error reason`() {
+        val error = lightFirmwareError(
+            structuredDataJson = """{"reason":"INVALID_VALUE"}"""
+        )
+
+        assertEquals(DeviceLightErrorReason.Known.INVALID_VALUE, error.lightV1Data().reason)
+    }
+
+    @Test
+    fun `unknown Light error reason is retained without rejecting future fields`() {
+        val error = lightFirmwareError(
+            structuredDataJson =
+                """{"reason":"SENSOR_CALIBRATION_FAILED","sensorIndex":2}"""
+        )
+
+        val reason = error.lightV1Data().reason
+        assertEquals(
+            DeviceLightErrorReason.Unknown("SENSOR_CALIBRATION_FAILED"),
+            reason
+        )
+        assertEquals(
+            "SENSOR_CALIBRATION_FAILED",
+            (reason as DeviceLightErrorReason.Unknown).rawValue
+        )
+        assertEquals(
+            2,
+            JSONObject(error.structuredDataJson).getInt("sensorIndex")
+        )
     }
 
     @Test
@@ -211,6 +242,21 @@ class DeviceLightV1ContractTest {
             error("Unsupported command reached the gateway.")
         }
     }
+
+    private fun lightFirmwareError(
+        structuredDataJson: String
+    ) = DeviceRuntimeCommandOutcome.FirmwareError(
+        deviceUid = DEVICE_UID,
+        module = DeviceLightRuntimeContract.MODULE,
+        action = DeviceLightRuntimeContract.Action.AUTO_PROGRAM_UPDATE,
+        messageId = "error-forward-compatibility",
+        generation = GENERATION,
+        statusCode = 422,
+        code = "INVALID_VALUE",
+        field = "data",
+        message = "invalid Light V1 candidate",
+        structuredDataJson = structuredDataJson
+    )
 
     private fun autoCreate(scene: DeviceLightScene) = DeviceLightAutoProgramCreatePayload(
         expectedRevision = 3,

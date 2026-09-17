@@ -57,10 +57,12 @@ private fun DeviceRuntimeCommandOutcome<*>.toAdaptationFailure(): DeviceLightAda
 private fun DeviceRuntimeCommandOutcome.FirmwareError.toFirmwareFailure(): DeviceLightAdaptationFailure =
     runCatching { lightV1Data().reason }.getOrNull().let { reason ->
         when (reason) {
-            DeviceLightErrorReason.STALE_REVISION -> DeviceLightAdaptationFailure.STALE_REVISION
-            DeviceLightErrorReason.RTC_NOT_READY -> DeviceLightAdaptationFailure.CLOCK_NOT_READY
-            DeviceLightErrorReason.ACCLIMATION_START_PERCENT,
-            DeviceLightErrorReason.ACCLIMATION_DURATION ->
+            DeviceLightErrorReason.Known.STALE_REVISION ->
+                DeviceLightAdaptationFailure.STALE_REVISION
+            DeviceLightErrorReason.Known.RTC_NOT_READY ->
+                DeviceLightAdaptationFailure.CLOCK_NOT_READY
+            DeviceLightErrorReason.Known.ACCLIMATION_START_PERCENT,
+            DeviceLightErrorReason.Known.ACCLIMATION_DURATION ->
                 DeviceLightAdaptationFailure.INVALID_REQUEST
             else -> DeviceLightAdaptationFailure.REJECTED
         }
