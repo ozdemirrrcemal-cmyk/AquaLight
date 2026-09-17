@@ -68,10 +68,10 @@ internal fun DeviceLightManualControlScreen(
             ManualQuickScenesCard(state, actions, visuals)
         }
         item(key = "manual-library-actions") {
-            ManualLibraryActions(state.contentEnabled, actions, visuals)
+            ManualLibraryActions(state.controlsEnabled, actions, visuals)
         }
         item(key = "manual-power-off") {
-            ManualPowerOffAction(state.contentEnabled, actions.onPowerOffClick, visuals)
+            ManualPowerOffAction(state.controlsEnabled, actions.onPowerOffClick, visuals)
         }
         item(key = "manual-protection-information") {
             ManualProtectionInformation(visuals)
@@ -112,7 +112,7 @@ private fun ManualControlCard(
                 state.channels.forEach { channel ->
                     ManualChannelRow(
                         channel = channel,
-                        enabled = state.contentEnabled,
+                        enabled = state.controlsEnabled,
                         actions = actions,
                         visuals = visuals
                     )

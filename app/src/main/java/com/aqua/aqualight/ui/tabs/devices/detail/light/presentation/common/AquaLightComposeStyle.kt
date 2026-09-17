@@ -81,7 +81,7 @@ object AquaLightDashboardGeometry {
     val planMarkerLabelWidth = 76.dp
     val planPlotHeight = 76.dp
     val planYAxisWidth = 31.dp
-    val planYAxisStartOffset = (-4).dp
+    val planYAxisStartOffset = PLAN_Y_AXIS_START_OFFSET_DP.dp
     val planYAxisGap = 6.dp
     val planXAxisHeight = 14.dp
     val planLegendTopGap = 7.dp
@@ -158,6 +158,8 @@ object AquaLightDashboardGeometry {
 
     val dashboardIconStrokeWidth = 1.7.dp
 }
+
+private const val PLAN_Y_AXIS_START_OFFSET_DP = -4
 
 /** Central layout contract for the product-adaptive Manual light surface. */
 object AquaLightManualGeometry {

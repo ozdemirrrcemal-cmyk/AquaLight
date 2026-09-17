@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.adaptation
 import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationSnapshot
 import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationState
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.DeviceLightOperationLoadingState
 
 internal data class DeviceLightAdaptationUiState(
     val deviceUid: String = "",
@@ -12,9 +13,9 @@ internal data class DeviceLightAdaptationUiState(
     val selectedDurationDays: Int = 30,
     val configureAfterCompletion: Boolean = false,
     val contentEnabled: Boolean = false,
-    val initialLoading: Boolean = false,
-    val operationInProgress: Boolean = false
-) {
+    override val initialLoading: Boolean = false,
+    override val operationInProgress: Boolean = false
+) : DeviceLightOperationLoadingState {
     val screenState: DeviceLightAdaptationScreenState
         get() = when {
             configureAfterCompletion -> DeviceLightAdaptationScreenState.SETUP

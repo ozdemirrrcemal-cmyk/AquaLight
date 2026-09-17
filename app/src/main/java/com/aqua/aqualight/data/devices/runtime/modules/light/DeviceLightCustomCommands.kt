@@ -3,6 +3,10 @@ package com.aqua.aqualight.data.devices.runtime.modules.light
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 
+internal fun DeviceLightRuntimeRepository.currentCustom(
+    deviceUid: DeviceUid
+): DeviceLightCustomDocument? = stateOwner.customProjection.currentAuthoritative(deviceUid)
+
 suspend fun DeviceLightRuntimeRepository.requestCustom(
     deviceUid: DeviceUid
 ): DeviceRuntimeCommandOutcome<DeviceLightCustomDocument> {
@@ -33,19 +37,25 @@ suspend fun DeviceLightRuntimeRepository.installCustom(
 
 private suspend fun DeviceLightRuntimeRepository.acceptCustomDocument(
     outcome: DeviceRuntimeCommandOutcome<DeviceLightCustomDocument>
+): DeviceRuntimeCommandOutcome<DeviceLightCustomDocument> = when (outcome) {
+    is DeviceRuntimeCommandOutcome.Success -> acceptSuccessfulCustomDocument(outcome)
+    else -> outcome
+}
+
+private suspend fun DeviceLightRuntimeRepository.acceptSuccessfulCustomDocument(
+    outcome: DeviceRuntimeCommandOutcome.Success<DeviceLightCustomDocument>
 ): DeviceRuntimeCommandOutcome<DeviceLightCustomDocument> {
-    if (outcome !is DeviceRuntimeCommandOutcome.Success) return outcome
-    if (stateOwner.customProjection.record(outcome.deviceUid, outcome.generation, outcome.value)) {
-        return outcome
-    }
+    val accepted = stateOwner.customProjection.record(
+        outcome.deviceUid,
+        outcome.generation,
+        outcome.value
+    )
+    if (accepted) return outcome
     val refreshed = requestStatus(outcome.deviceUid)
-    if (
+    val acceptedAfterRefresh =
         refreshed is DeviceRuntimeCommandOutcome.Success &&
         stateOwner.customProjection.record(outcome.deviceUid, outcome.generation, outcome.value)
-    ) {
-        return outcome
-    }
-    return DeviceRuntimeCommandOutcome.ProtocolError(
+    return if (acceptedAfterRefresh) outcome else DeviceRuntimeCommandOutcome.ProtocolError(
         deviceUid = outcome.deviceUid,
         module = outcome.module,
         action = outcome.action,

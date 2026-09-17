@@ -76,22 +76,26 @@ class DeviceLightManualControlViewModel(
 
     internal fun updateChannel(channelId: DeviceLightManualChannelId, percent: Int) {
         val state = _uiState.value
-        if (!state.contentEnabled) return
         val requestedPercent = percent.coerceIn(PERCENT_RANGE)
-        val current = state.channels.singleOrNull { channel -> channel.id == channelId } ?: return
-        if (current.percent == requestedPercent) return
-        draftVersion += 1L
-        _uiState.value = state.copy(
-            channels = state.channels.map { channel ->
-                if (channel.id == channelId) channel.copy(percent = requestedPercent) else channel
-            },
-            selectedPreset = null
-        )
+        val current = state.channels.singleOrNull { channel -> channel.id == channelId }
+        if (state.controlsEnabled && current != null && current.percent != requestedPercent) {
+            draftVersion += 1L
+            _uiState.value = state.copy(
+                channels = state.channels.map { channel ->
+                    if (channel.id == channelId) {
+                        channel.copy(percent = requestedPercent)
+                    } else {
+                        channel
+                    }
+                },
+                selectedPreset = null
+            )
+        }
     }
 
     internal fun commitScene() {
         val state = _uiState.value
-        if (!state.contentEnabled || state.channels.isEmpty()) return
+        if (!state.controlsEnabled || state.channels.isEmpty()) return
         enqueueMutation(
             version = draftVersion,
             command = DeviceLightManualCommand.SetScene(state.toApplicationScene())
@@ -107,7 +111,7 @@ class DeviceLightManualControlViewModel(
 
     internal fun applyPreset(presetId: DeviceLightManualPresetId) {
         val state = _uiState.value
-        if (!state.contentEnabled) return
+        if (!state.controlsEnabled) return
         val preset = state.presets.singleOrNull { it.id == presetId } ?: return
         draftVersion += 1L
         _uiState.value = state.copy(
@@ -121,7 +125,7 @@ class DeviceLightManualControlViewModel(
 
     internal fun turnOff() {
         val state = _uiState.value
-        if (!state.contentEnabled) return
+        if (!state.controlsEnabled) return
         draftVersion += 1L
         _uiState.value = state.copy(
             channels = state.channels.map { channel -> channel.copy(percent = PERCENT_RANGE.first) },
@@ -145,7 +149,8 @@ class DeviceLightManualControlViewModel(
                 state.copy(
                     connectionVisualState = result.failure.connectionState(),
                     contentEnabled = false,
-                    protection = null
+                    protection = null,
+                    initialLoading = false
                 )
             }
         }

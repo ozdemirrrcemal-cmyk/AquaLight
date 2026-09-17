@@ -142,7 +142,7 @@ class DeviceLightAutomaticProgramEditorFragment :
                 statusIcon = state.connectionVisualState?.toWifiHeaderStatusIcon(requireContext())
             )
         )
-        setFragmentGlobalLoading(state.initialLoading || state.operationInProgress)
+        setFragmentGlobalLoading(state.showGlobalLoading)
     }
 
     private fun openPreset() {

@@ -131,7 +131,12 @@ internal class DeviceLightCustomCurveViewModel(
         val state = _uiState.value
         if (!state.canSaveAs) return
         viewModelScope.launch {
-            _uiState.update { it.copy(operationInProgress = true) }
+            _uiState.update { current ->
+                current.copy(
+                    operationInProgress = true,
+                    blockingOperationInProgress = true
+                )
+            }
             val points = state.draft.points.map { point ->
                 DeviceLightLibraryCustomPoint(
                     timeMs = point.timeMs,
@@ -151,12 +156,21 @@ internal class DeviceLightCustomCurveViewModel(
                 is DeviceLightLibraryMutationResult.Success -> {
                     persistedDraft = state.draft
                     _uiState.update { current ->
-                        current.copy(operationInProgress = false, hasUnsavedChanges = false)
+                        current.copy(
+                            operationInProgress = false,
+                            blockingOperationInProgress = false,
+                            hasUnsavedChanges = false
+                        )
                     }
                     emit(DeviceLightCustomCurveEffect.ShowSuccess(R.string.device_light_library_saved_success))
                 }
                 is DeviceLightLibraryMutationResult.Failed -> {
-                    _uiState.update { it.copy(operationInProgress = false) }
+                    _uiState.update { current ->
+                        current.copy(
+                            operationInProgress = false,
+                            blockingOperationInProgress = false
+                        )
+                    }
                     emit(DeviceLightCustomCurveEffect.ShowError(result.failure.messageRes()))
                 }
             }

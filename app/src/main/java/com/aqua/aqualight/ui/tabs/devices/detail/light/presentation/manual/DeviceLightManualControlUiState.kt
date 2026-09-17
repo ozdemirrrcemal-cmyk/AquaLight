@@ -78,12 +78,20 @@ internal data class DeviceLightManualControlUiState(
     val selectedPreset: DeviceLightManualPresetId? = null,
     val protection: DeviceLightManualProtectionUiState? = null,
     val contentEnabled: Boolean = false,
-    val showGlobalLoading: Boolean = false
-)
+    val initialLoading: Boolean = false
+) {
+    val controlsEnabled: Boolean
+        get() = contentEnabled
+
+    /** Live slider/step commands remain non-blocking; only the first authoritative read blocks. */
+    val showGlobalLoading: Boolean
+        get() = initialLoading
+}
 
 internal fun deviceLightManualInitialState(deviceUid: String) = DeviceLightManualControlUiState(
     deviceUid = deviceUid,
-    presets = builtInManualPresets()
+    presets = builtInManualPresets(),
+    initialLoading = true
 )
 
 internal fun DeviceLightManualSnapshot.mergeInto(
@@ -117,7 +125,8 @@ internal fun DeviceLightManualSnapshot.mergeInto(
             )
         },
         selectedPreset = matchingPreset,
-        contentEnabled = true
+        contentEnabled = true,
+        initialLoading = false
     )
 }
 

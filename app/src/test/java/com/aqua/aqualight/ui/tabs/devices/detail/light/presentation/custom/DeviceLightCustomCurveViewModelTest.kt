@@ -13,6 +13,7 @@ import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryMu
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryOperations
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryResult
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryScene
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -116,6 +117,41 @@ class DeviceLightCustomCurveViewModelTest {
         viewModel.preview()
 
         assertEquals(PREVIEW_TIME_MS, custom.previewTimeMs)
+    }
+
+    @Test
+    fun `preview never opens blocking loading`() {
+        val previewGate = CompletableDeferred<Unit>()
+        val custom = FakeCustomOperations(snapshot(), previewGate)
+        val viewModel = boundViewModel(customOperations = custom)
+
+        viewModel.preview()
+
+        assertTrue(viewModel.currentState.operationInProgress)
+        assertFalse(viewModel.currentState.showGlobalLoading)
+
+        previewGate.complete(Unit)
+
+        assertFalse(viewModel.currentState.operationInProgress)
+        assertFalse(viewModel.currentState.showGlobalLoading)
+    }
+
+    @Test
+    fun `save opens blocking loading until persistence completes`() {
+        val saveGate = CompletableDeferred<Unit>()
+        val library = FakeLibraryOperations(saveGate)
+        val viewModel = boundViewModel(libraryOperations = library)
+        viewModel.addInitialPoint()
+
+        viewModel.saveAs("Loading contract")
+
+        assertTrue(viewModel.currentState.operationInProgress)
+        assertTrue(viewModel.currentState.showGlobalLoading)
+
+        saveGate.complete(Unit)
+
+        assertFalse(viewModel.currentState.operationInProgress)
+        assertFalse(viewModel.currentState.showGlobalLoading)
     }
 
     @Test
@@ -241,7 +277,8 @@ class DeviceLightCustomCurveViewModelTest {
     }
 
     private class FakeCustomOperations(
-        private val snapshot: DeviceLightCustomSnapshot
+        private val snapshot: DeviceLightCustomSnapshot,
+        private val previewGate: CompletableDeferred<Unit>? = null
     ) : DeviceLightCustomOperations {
         var previewTimeMs: Long? = null
 
@@ -250,6 +287,7 @@ class DeviceLightCustomCurveViewModelTest {
         override suspend fun preview(deviceUid: String, virtualTimeMs: Long):
             DeviceLightCustomMutationResult {
             previewTimeMs = virtualTimeMs
+            previewGate?.await()
             return DeviceLightCustomMutationResult.Success
         }
 
@@ -257,7 +295,9 @@ class DeviceLightCustomCurveViewModelTest {
             DeviceLightCustomMutationResult.Success
     }
 
-    private class FakeLibraryOperations : DeviceLightLibraryOperations {
+    private class FakeLibraryOperations(
+        private val saveGate: CompletableDeferred<Unit>? = null
+    ) : DeviceLightLibraryOperations {
         var savedName: String? = null
         var savedWeekdaysMask: Int? = null
         var savedPoints: List<DeviceLightLibraryCustomPoint> = emptyList()
@@ -280,6 +320,7 @@ class DeviceLightCustomCurveViewModelTest {
             savedName = name
             savedWeekdaysMask = weekdaysMask
             savedPoints = points
+            saveGate?.await()
             return DeviceLightLibraryMutationResult.Success("custom")
         }
 

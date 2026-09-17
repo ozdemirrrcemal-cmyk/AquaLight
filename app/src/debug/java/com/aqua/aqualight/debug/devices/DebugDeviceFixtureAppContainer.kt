@@ -203,57 +203,23 @@ private class DebugDeviceFixtureViewModelFactory(
             delegate = graph.timerControlOperations,
             runtime = runtime
         )
-        val lightAdaptationOperations = DebugFixtureLightAdaptationOperations(
-            delegate = graph.lightOperations.adaptationOperations,
-            fixtures = fixtures
-        )
-        val lightControlOperations = DebugFixtureLightControlOperations(
-            delegate = graph.lightOperations.controlOperations,
-            fixtures = fixtures,
-            adaptationOperations = lightAdaptationOperations
-        )
-        val lightAutomaticOperations = DebugFixtureLightAutomaticOperations(
-            delegate = DefaultDeviceLightAutomaticOperations(graph.devicesRepository),
-            fixtures = fixtures
-        )
-        val lightRuntime = DebugLightFixtureRuntime(fixtures)
-        val lightCustomOperations = DebugFixtureLightCustomOperations(
-            delegate = graph.lightOperations.customOperations,
-            runtime = lightRuntime
-        )
-        val lightManualOperations = DebugFixtureLightManualOperations(
-            delegate = graph.lightOperations.manualOperations,
-            runtime = lightRuntime
-        )
-        val lightLibraryOperations = DebugFixtureLightLibraryOperations(
-            delegate = DefaultDeviceLightLibraryOperations(
-                ownerUid = graph.ownerUid,
-                store = DeviceLightLibraryStore.create(appContext, graph.ownerUid),
-                devicesRepository = graph.devicesRepository,
-                controlOperations = lightControlOperations
-            ),
-            runtime = lightRuntime
-        )
-        val lightSystemOperations = DebugFixtureLightSystemOperations(
-            delegate = graph.lightOperations.systemOperations,
-            fixtures = fixtures
-        )
+        val light = createLightFixtureDependencies(appContext, graph, fixtures)
         return DebugTimerFixtureDependencies(
             graph = graph,
-            lightAdaptationOperations = lightAdaptationOperations,
-            lightAutomaticOperations = lightAutomaticOperations,
-            lightControlOperations = lightControlOperations,
-            lightCustomOperations = lightCustomOperations,
-            lightLibraryOperations = lightLibraryOperations,
-            lightManualOperations = lightManualOperations,
-            lightSystemOperations = lightSystemOperations,
+            lightAdaptationOperations = light.adaptationOperations,
+            lightAutomaticOperations = light.automaticOperations,
+            lightControlOperations = light.controlOperations,
+            lightCustomOperations = light.customOperations,
+            lightLibraryOperations = light.libraryOperations,
+            lightManualOperations = light.manualOperations,
+            lightSystemOperations = light.systemOperations,
             timerControlOperations = timerControlOperations,
             controlSurfacePreparationOperations =
                 DebugFixtureControlSurfacePreparationOperations(
                     delegate = graph.controlSurfacePreparationOperations,
                     fixtures = fixtures,
                     timerControlOperations = timerControlOperations,
-                    lightControlOperations = lightControlOperations
+                    lightControlOperations = light.controlOperations
                 )
         )
     }
@@ -263,6 +229,53 @@ private class DebugDeviceFixtureViewModelFactory(
         fixtures = fixtures
     )
 
+}
+
+private fun createLightFixtureDependencies(
+    appContext: Context,
+    graph: OwnerDependencyGraph,
+    fixtures: DebugDeviceFixtureCatalog
+): DebugLightFixtureDependencies {
+    val adaptationOperations = DebugFixtureLightAdaptationOperations(
+        delegate = graph.lightOperations.adaptationOperations,
+        fixtures = fixtures
+    )
+    val controlOperations = DebugFixtureLightControlOperations(
+        delegate = graph.lightOperations.controlOperations,
+        fixtures = fixtures,
+        adaptationOperations = adaptationOperations
+    )
+    val automaticOperations = DebugFixtureLightAutomaticOperations(
+        delegate = DefaultDeviceLightAutomaticOperations(graph.devicesRepository),
+        fixtures = fixtures
+    )
+    val runtime = DebugLightFixtureRuntime(fixtures)
+    return DebugLightFixtureDependencies(
+        adaptationOperations = adaptationOperations,
+        automaticOperations = automaticOperations,
+        controlOperations = controlOperations,
+        customOperations = DebugFixtureLightCustomOperations(
+            delegate = graph.lightOperations.customOperations,
+            runtime = runtime
+        ),
+        libraryOperations = DebugFixtureLightLibraryOperations(
+            delegate = DefaultDeviceLightLibraryOperations(
+                ownerUid = graph.ownerUid,
+                store = DeviceLightLibraryStore.create(appContext, graph.ownerUid),
+                devicesRepository = graph.devicesRepository,
+                controlOperations = controlOperations
+            ),
+            runtime = runtime
+        ),
+        manualOperations = DebugFixtureLightManualOperations(
+            delegate = graph.lightOperations.manualOperations,
+            runtime = runtime
+        ),
+        systemOperations = DebugFixtureLightSystemOperations(
+            delegate = graph.lightOperations.systemOperations,
+            fixtures = fixtures
+        )
+    )
 }
 
 private fun fixtureFirmwareOperations(
@@ -301,4 +314,14 @@ private data class DebugTimerFixtureDependencies(
     val lightSystemOperations: DeviceLightSystemOperations,
     val timerControlOperations: DeviceTimerControlOperations,
     val controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations
+)
+
+private data class DebugLightFixtureDependencies(
+    val adaptationOperations: DeviceLightAdaptationOperations,
+    val automaticOperations: DeviceLightAutomaticOperations,
+    val controlOperations: DeviceLightControlOperations,
+    val customOperations: DeviceLightCustomOperations,
+    val libraryOperations: DeviceLightLibraryOperations,
+    val manualOperations: DeviceLightManualOperations,
+    val systemOperations: DeviceLightSystemOperations
 )

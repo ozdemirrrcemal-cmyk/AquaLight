@@ -77,7 +77,7 @@ class DeviceLightAutomaticProgramsFragment :
                 statusIcon = state.connectionVisualState?.toWifiHeaderStatusIcon(requireContext())
             )
         )
-        setFragmentGlobalLoading(state.initialLoading)
+        setFragmentGlobalLoading(state.showGlobalLoading)
     }
 
     private fun openEditor(programId: String, duplicate: Boolean) {

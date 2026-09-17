@@ -80,5 +80,7 @@ enum class DeviceLightManualFailure {
     INVALID_DATA
 }
 
-private val MANUAL_PERCENT_RANGE = 0..100
+private val MANUAL_PERCENT_RANGE = MANUAL_MIN_PERCENT..MANUAL_MAX_PERCENT
 private val POWER_RATIO_RANGE = 0f..1f
+private const val MANUAL_MIN_PERCENT = 0
+private const val MANUAL_MAX_PERCENT = 100

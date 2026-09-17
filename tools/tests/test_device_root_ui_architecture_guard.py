@@ -291,6 +291,31 @@ class DeviceRootUiArchitectureGuardTest(unittest.TestCase):
             errors,
         )
 
+    def test_light_manual_slider_cannot_use_blocking_operation_loading(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repository_root = Path(temporary_directory)
+            state_file = (
+                repository_root
+                / GUARD.LIGHT_PRESENTATION_ROOT
+                / "manual/DeviceLightManualControlUiState.kt"
+            )
+            state_file.parent.mkdir(parents=True)
+            state_file.write_text(
+                "package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual\n\n"
+                "data class DeviceLightManualControlUiState(\n"
+                "    override val initialLoading: Boolean,\n"
+                "    override val operationInProgress: Boolean\n"
+                ") : DeviceLightOperationLoadingState\n",
+                encoding="utf-8",
+            )
+
+            errors = GUARD.validate_light_feature_boundaries(repository_root)
+
+        self.assertTrue(
+            any("slider commands must remain non-blocking" in error for error in errors),
+            errors,
+        )
+
     def test_automatic_presentation_package_cycle_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             repository_root = Path(temporary_directory)

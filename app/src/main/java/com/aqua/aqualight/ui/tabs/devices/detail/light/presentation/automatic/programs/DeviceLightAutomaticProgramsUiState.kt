@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.p
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticChannel
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticProgram
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.DeviceLightOperationLoadingState
 
 internal data class DeviceLightAutomaticProgramsUiState(
     val deviceUid: String = "",
@@ -12,9 +13,9 @@ internal data class DeviceLightAutomaticProgramsUiState(
     val channels: List<DeviceLightAutomaticChannel> = emptyList(),
     val programs: List<DeviceLightAutomaticProgram> = emptyList(),
     val contentEnabled: Boolean = false,
-    val initialLoading: Boolean = false,
-    val operationInProgress: Boolean = false
-) {
+    override val initialLoading: Boolean = false,
+    override val operationInProgress: Boolean = false
+) : DeviceLightOperationLoadingState {
     val canAdd: Boolean
         get() = contentEnabled && capacity > 0 && programs.size < capacity && !operationInProgress
 }

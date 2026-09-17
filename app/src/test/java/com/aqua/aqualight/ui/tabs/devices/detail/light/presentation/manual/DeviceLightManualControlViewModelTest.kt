@@ -15,6 +15,7 @@ import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualOper
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualReadResult
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualScene
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualSnapshot
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -70,6 +71,23 @@ class DeviceLightManualControlViewModelTest {
         viewModel.commitScene()
 
         assertEquals(UPDATED_RED_PERCENT, manual.setScenes.single().value(DeviceLightManualChannel.RED))
+        assertFalse(viewModel.uiState.value.showGlobalLoading)
+    }
+
+    @Test
+    fun `in flight slider commit never opens blocking loading`() {
+        val mutationGate = CompletableDeferred<Unit>()
+        val manual = FakeManualOperations(mutationGate = mutationGate)
+        val viewModel = boundViewModel(manual)
+
+        viewModel.updateChannel(DeviceLightManualChannelId.RED, UPDATED_RED_PERCENT)
+        viewModel.commitScene()
+
+        assertEquals(1, manual.setScenes.size)
+        assertFalse(viewModel.uiState.value.showGlobalLoading)
+
+        mutationGate.complete(Unit)
+
         assertFalse(viewModel.uiState.value.showGlobalLoading)
     }
 
@@ -193,7 +211,8 @@ class DeviceLightManualControlViewModelTest {
     }
 
     private class FakeManualOperations(
-        channels: List<DeviceLightManualChannel> = DeviceLightManualChannel.entries
+        channels: List<DeviceLightManualChannel> = DeviceLightManualChannel.entries,
+        private val mutationGate: CompletableDeferred<Unit>? = null
     ) : DeviceLightManualOperations {
         private val initialSnapshot = snapshot(
             channels.associateWith { channel ->
@@ -218,6 +237,7 @@ class DeviceLightManualControlViewModelTest {
             scene: DeviceLightManualScene
         ): DeviceLightManualMutationResult {
             setScenes += scene
+            mutationGate?.await()
             return publish(snapshot(scene.channels))
         }
 

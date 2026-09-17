@@ -74,7 +74,7 @@ class DeviceLightAdaptationFragment : Fragment(R.layout.fragment_device_light_ad
                 statusIcon = state.connectionVisualState?.toWifiHeaderStatusIcon(requireContext())
             )
         )
-        setFragmentGlobalLoading(state.initialLoading)
+        setFragmentGlobalLoading(state.showGlobalLoading)
     }
 
     private fun renderEffect(effect: DeviceLightAdaptationEffect) {

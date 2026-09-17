@@ -19,9 +19,6 @@ class DeviceLightRuntimeRepository internal constructor(
     fun currentStatus(deviceUid: DeviceUid): DeviceLightStatus? =
         stateOwner.currentAuthoritativeStatus(deviceUid)
 
-    fun currentCustom(deviceUid: DeviceUid): DeviceLightCustomDocument? =
-        stateOwner.customProjection.currentAuthoritative(deviceUid)
-
     internal fun beginGeneration(
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration

@@ -115,6 +115,22 @@ LIGHT_RUNTIME_PROVIDER = Path(
     "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/"
     "DeviceRuntimeModuleProvider.kt"
 )
+LIGHT_OPERATION_LOADING_STATE = (
+    LIGHT_PRESENTATION_ROOT / "common/DeviceLightOperationLoadingState.kt"
+)
+LIGHT_BLOCKING_OPERATION_SURFACES = (
+    ("adaptation/DeviceLightAdaptationUiState.kt", "adaptation/DeviceLightAdaptationFragment.kt"),
+    (
+        "automatic/editor/DeviceLightAutomaticProgramEditorUiState.kt",
+        "automatic/editor/DeviceLightAutomaticProgramEditorFragment.kt",
+    ),
+    (
+        "automatic/programs/DeviceLightAutomaticProgramsUiState.kt",
+        "automatic/programs/DeviceLightAutomaticProgramsFragment.kt",
+    ),
+    ("custom/DeviceLightCustomCurveUiState.kt", "custom/DeviceLightCustomCurveFragment.kt"),
+    ("system/DeviceLightSystemUiState.kt", "system/DeviceLightSystemFragment.kt"),
+)
 COOLING_LAYOUT = LAYOUT_ROOT / "fragment_device_cooling_root.xml"
 TIMER_FRAGMENT = Path(
     "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/presentation/root/"
@@ -753,6 +769,78 @@ def validate_light_feature_boundaries(repository_root: Path) -> list[str]:
         "onChannelValueChangeFinished = { viewModel.commitScene() }",
         "Manual slider completion must commit through the application boundary",
     )
+
+    loading_contract = _read(repository_root, LIGHT_OPERATION_LOADING_STATE, errors)
+    for token, reason in (
+        (
+            "interface DeviceLightOperationLoadingState",
+            "blocking Light commands must share one presentation loading policy",
+        ),
+        (
+            "get() = initialLoading || operationInProgress",
+            "Light loading policy must cover initial reads and blocking commands",
+        ),
+    ):
+        _require(LIGHT_OPERATION_LOADING_STATE, loading_contract, errors, token, reason)
+
+    for state_suffix, fragment_suffix in LIGHT_BLOCKING_OPERATION_SURFACES:
+        state_path = LIGHT_PRESENTATION_ROOT / state_suffix
+        fragment_path = LIGHT_PRESENTATION_ROOT / fragment_suffix
+        state_source = _read(repository_root, state_path, errors)
+        fragment_source = _read(repository_root, fragment_path, errors)
+        _require(
+            state_path,
+            state_source,
+            errors,
+            "DeviceLightOperationLoadingState",
+            "blocking Light command state must use the central loading policy",
+        )
+        _require(
+            fragment_path,
+            fragment_source,
+            errors,
+            "setFragmentGlobalLoading(state.showGlobalLoading)",
+            "blocking Light commands must use owner-keyed global loading",
+        )
+
+    custom_state_path = (
+        LIGHT_PRESENTATION_ROOT / "custom/DeviceLightCustomCurveUiState.kt"
+    )
+    custom_state = _read(repository_root, custom_state_path, errors)
+    for token, reason in (
+        (
+            "val blockingOperationInProgress: Boolean = false",
+            "Custom preview and persistent operations must have distinct loading semantics",
+        ),
+        (
+            "get() = initialLoading || blockingOperationInProgress",
+            "Custom preview must not open blocking global loading",
+        ),
+    ):
+        _require(custom_state_path, custom_state, errors, token, reason)
+
+    manual_state_path = (
+        LIGHT_PRESENTATION_ROOT / "manual/DeviceLightManualControlUiState.kt"
+    )
+    manual_state = _read(repository_root, manual_state_path, errors)
+    _require(
+        manual_state_path,
+        manual_state,
+        errors,
+        "get() = initialLoading",
+        "Manual live controls may block only for the first authoritative read",
+    )
+    _require(
+        LIGHT_PRESENTATION_ROOT / "manual/DeviceLightManualControlFragment.kt",
+        manual_fragment,
+        errors,
+        "setFragmentGlobalLoading(state.showGlobalLoading)",
+        "Manual initial loading must use the owner-keyed global loading host",
+    )
+    if "DeviceLightOperationLoadingState" in manual_state:
+        errors.append(
+            f"{manual_state_path}: Manual slider commands must remain non-blocking"
+        )
 
     light_state_owner_path = Path(
         "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/light/"

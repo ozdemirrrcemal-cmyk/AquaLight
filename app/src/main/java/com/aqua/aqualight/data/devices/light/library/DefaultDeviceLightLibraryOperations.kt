@@ -18,6 +18,7 @@ import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightManualSe
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightProduct
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightStatus
+import com.aqua.aqualight.data.devices.runtime.modules.light.currentCustom
 import com.aqua.aqualight.data.devices.runtime.modules.light.installCustom
 import com.aqua.aqualight.data.devices.runtime.modules.light.requestCustom
 import java.util.UUID

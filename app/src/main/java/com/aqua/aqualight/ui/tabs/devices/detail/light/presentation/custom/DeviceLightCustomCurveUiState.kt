@@ -5,6 +5,7 @@ import androidx.annotation.StringRes
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomChannel
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.DeviceLightOperationLoadingState
 
 internal enum class DeviceLightCustomChannelId(@StringRes val labelRes: Int) {
     RED(R.string.device_light_live_output_red),
@@ -92,11 +93,15 @@ internal data class DeviceLightCustomCurveUiState(
     val maxPoints: Int = MAX_POINT_CAPACITY,
     val timeStepMs: Long = MILLIS_PER_MINUTE,
     val contentEnabled: Boolean = false,
-    val initialLoading: Boolean = false,
-    val operationInProgress: Boolean = false,
+    override val initialLoading: Boolean = false,
+    override val operationInProgress: Boolean = false,
+    val blockingOperationInProgress: Boolean = false,
     val hasUnsavedChanges: Boolean = false,
     val readFailed: Boolean = false
-) {
+) : DeviceLightOperationLoadingState {
+    override val showGlobalLoading: Boolean
+        get() = initialLoading || blockingOperationInProgress
+
     val selectedPoint: DeviceLightCustomPointUiState?
         get() = draft.points.singleOrNull { point -> point.timeMs == selectedTimeMs }
 

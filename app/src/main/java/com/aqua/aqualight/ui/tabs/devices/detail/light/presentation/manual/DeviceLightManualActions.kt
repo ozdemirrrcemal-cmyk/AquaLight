@@ -108,7 +108,7 @@ private fun ManualQuickSceneButton(
             .border(AquaLightManualGeometry.actionButtonOutlineWidth, outline, shape)
             .clearAndSetSemantics { contentDescription = sceneDescription }
             .clickable(
-                enabled = state.contentEnabled,
+                enabled = state.controlsEnabled,
                 role = Role.Button,
                 onClick = { actions.onPresetClick(preset.id) }
             )

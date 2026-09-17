@@ -133,7 +133,7 @@ class DeviceLightCustomCurveFragment : Fragment(R.layout.fragment_device_light_c
                 statusIcon = state.connectionVisualState?.toWifiHeaderStatusIcon(requireContext())
             )
         )
-        setFragmentGlobalLoading(state.initialLoading)
+        setFragmentGlobalLoading(state.showGlobalLoading)
     }
 
     private fun openLibrary() {
