@@ -194,7 +194,7 @@ private fun fixtureLightControls(
     fixtures: DebugDeviceFixtureCatalog
 ): DeviceLightControlOperations = DebugFixtureLightControlOperations(
     delegate = FailingLightControlOperations,
-    fixtures = fixtures
+    runtime = DebugLightFixtureRuntime(fixtures)
 )
 
 private object FailingMenuAccessOperations : DeviceMenuAccessOperations {

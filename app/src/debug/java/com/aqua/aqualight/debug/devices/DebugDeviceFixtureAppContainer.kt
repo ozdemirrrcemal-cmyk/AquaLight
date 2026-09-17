@@ -237,20 +237,20 @@ private fun createLightFixtureDependencies(
     graph: OwnerDependencyGraph,
     fixtures: DebugDeviceFixtureCatalog
 ): DebugLightFixtureDependencies {
+    val runtime = DebugLightFixtureRuntime(fixtures)
     val adaptationOperations = DebugFixtureLightAdaptationOperations(
         delegate = graph.lightOperations.adaptationOperations,
         fixtures = fixtures
     )
     val controlOperations = DebugFixtureLightControlOperations(
         delegate = graph.lightOperations.controlOperations,
-        fixtures = fixtures,
+        runtime = runtime,
         adaptationOperations = adaptationOperations
     )
     val automaticOperations = DebugFixtureLightAutomaticOperations(
         delegate = DefaultDeviceLightAutomaticOperations(graph.devicesRepository),
         fixtures = fixtures
     )
-    val runtime = DebugLightFixtureRuntime(fixtures)
     return DebugLightFixtureDependencies(
         adaptationOperations = adaptationOperations,
         automaticOperations = automaticOperations,

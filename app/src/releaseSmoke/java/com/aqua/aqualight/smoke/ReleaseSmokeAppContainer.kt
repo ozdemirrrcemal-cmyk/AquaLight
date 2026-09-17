@@ -152,6 +152,7 @@ private class ReleaseSmokeViewModelFactory(
     private val appContext = context.applicationContext
     private val notificationPreferences = NotificationPlatform.get(appContext).preferenceUseCase
     private val devicesRepository = DevicesRepository()
+    private val rootOperations = DefaultDeviceRootOperations(devicesRepository)
     private val lightControlOperations = DefaultDeviceLightControlOperations(devicesRepository)
     private val lightOperations = OwnerLightOperations(
         adaptationOperations = DefaultDeviceLightAdaptationOperations(devicesRepository),
@@ -286,7 +287,7 @@ private class ReleaseSmokeViewModelFactory(
     ): ViewModel? = when {
         modelClass.isAssignableFrom(DeviceLightRootViewModel::class.java) ->
             DeviceLightRootViewModel(
-                rootOperations = DefaultDeviceRootOperations(devicesRepository),
+                rootOperations = rootOperations,
                 lightControlOperations = lightOperations.controlOperations,
                 controlSurfacePreparationOperations =
                     ReleaseSmokeControlSurfacePreparationOperations
@@ -308,7 +309,10 @@ private class ReleaseSmokeViewModelFactory(
                 libraryOperations = lightOperations.libraryOperations
             )
         modelClass.isAssignableFrom(DeviceLightLibraryViewModel::class.java) ->
-            DeviceLightLibraryViewModel(lightOperations.libraryOperations)
+            DeviceLightLibraryViewModel(
+                operations = lightOperations.libraryOperations,
+                rootOperations = rootOperations
+            )
         modelClass.isAssignableFrom(DeviceLightSystemViewModel::class.java) ->
             DeviceLightSystemViewModel(lightOperations.systemOperations)
         else -> null
@@ -319,7 +323,7 @@ private class ReleaseSmokeViewModelFactory(
     ): ViewModel? = when {
         modelClass.isAssignableFrom(DeviceCoolingRootViewModel::class.java) ->
             DeviceCoolingRootViewModel(
-                operations = DefaultDeviceRootOperations(devicesRepository),
+                operations = rootOperations,
                 controlOperations = DefaultDeviceCoolingControlOperations(devicesRepository),
                 historyOperations = DefaultDeviceCoolingTemperatureHistoryOperations(devicesRepository),
                 automaticSettingsOperations =
@@ -329,12 +333,12 @@ private class ReleaseSmokeViewModelFactory(
             )
         modelClass.isAssignableFrom(DeviceCoolingSystemStatusViewModel::class.java) ->
             DeviceCoolingSystemStatusViewModel(
-                rootOperations = DefaultDeviceRootOperations(devicesRepository),
+                rootOperations = rootOperations,
                 controlOperations = DefaultDeviceCoolingControlOperations(devicesRepository)
             )
         modelClass.isAssignableFrom(DeviceTimerRootViewModel::class.java) ->
             DeviceTimerRootViewModel(
-                operations = DefaultDeviceRootOperations(devicesRepository),
+                operations = rootOperations,
                 timerControlOperations = timerControlOperations,
                 controlSurfacePreparationOperations =
                     ReleaseSmokeControlSurfacePreparationOperations
@@ -344,7 +348,7 @@ private class ReleaseSmokeViewModelFactory(
         modelClass.isAssignableFrom(DeviceTimerChannelViewModel::class.java) ->
             DeviceTimerChannelViewModel(timerControlOperations)
         modelClass.isAssignableFrom(DeviceRootOverviewViewModel::class.java) ->
-            DeviceRootOverviewViewModel(DefaultDeviceRootOperations(devicesRepository))
+            DeviceRootOverviewViewModel(rootOperations)
         else -> null
     }
 

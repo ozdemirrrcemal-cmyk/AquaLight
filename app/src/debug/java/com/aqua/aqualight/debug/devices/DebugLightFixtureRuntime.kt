@@ -2,6 +2,13 @@ package com.aqua.aqualight.debug.devices
 
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightChannelOutputSnapshot
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlMode
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlSnapshot
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightHeroSnapshot
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightOutputCondition
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanReason
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanSnapshot
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomChannel
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomPoint
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomScene
@@ -20,14 +27,14 @@ import kotlinx.coroutines.flow.asStateFlow
 internal class DebugLightFixtureRuntime(fixtures: DebugDeviceFixtureCatalog) {
 
     private val lock = Any()
-    private val snapshots = fixtures.snapshots
+    private val roots = fixtures.snapshots
         .mapNotNull { snapshot -> fixtures.rootSnapshot(snapshot.deviceUid.value) }
         .filter { root -> root.family == OwnerDeviceFamily.LIGHT }
+        .associateBy(DeviceRootSnapshot::deviceUid)
+    private val snapshots = roots.values
         .associate { root -> root.deviceUid to root.toFixtureCustomSnapshot() }
         .toMutableMap()
-    private val manualSnapshots = fixtures.snapshots
-        .mapNotNull { snapshot -> fixtures.rootSnapshot(snapshot.deviceUid.value) }
-        .filter { root -> root.family == OwnerDeviceFamily.LIGHT }
+    private val manualSnapshots = roots.values
         .associate { root -> root.deviceUid to root.toFixtureManualSnapshot() }
         .toMutableMap()
     private val previewTimes = mutableMapOf<String, Long>()
@@ -35,6 +42,14 @@ internal class DebugLightFixtureRuntime(fixtures: DebugDeviceFixtureCatalog) {
     val revisions: StateFlow<Long> = _revisions.asStateFlow()
 
     fun contains(deviceUid: String): Boolean = deviceUid.trim() in snapshots
+
+    fun currentControl(deviceUid: String): DeviceLightControlSnapshot? = synchronized(lock) {
+        val normalizedUid = deviceUid.trim()
+        val root = roots[normalizedUid] ?: return@synchronized null
+        val manual = manualSnapshots[normalizedUid] ?: return@synchronized null
+        val custom = snapshots[normalizedUid] ?: return@synchronized null
+        root.toFixtureControlSnapshot(manual, custom)
+    }
 
     fun current(deviceUid: String): DeviceLightCustomSnapshot? = snapshots[deviceUid.trim()]
 
@@ -167,6 +182,51 @@ private fun DeviceRootSnapshot.toFixtureManualSnapshot(): DeviceLightManualSnaps
     )
 }
 
+private fun DeviceRootSnapshot.toFixtureControlSnapshot(
+    manual: DeviceLightManualSnapshot,
+    custom: DeviceLightCustomSnapshot
+): DeviceLightControlSnapshot {
+    val effectivePercents = manual.scene.channels.mapKeys { (channel, _) -> channel.toWireKey() }
+    val outputActive = effectivePercents.values.any { percent -> percent > FIXTURE_OFF_PERCENT }
+    val channels = channelSlots.lightChannels.map { slot ->
+        DeviceLightChannelOutputSnapshot(
+            key = slot.wireKey.value,
+            displayName = slot.defaultDisplayName,
+            displayColorRgb = slot.wireKey.value.fixtureDisplayColorRgb(),
+            effectivePercent = effectivePercents.getValue(slot.wireKey.value)
+        )
+    }
+    return DeviceLightControlSnapshot(
+        deviceUid = deviceUid,
+        productKey = productKey,
+        physicalChannelCount = channels.size,
+        channelKeys = channels.map(DeviceLightChannelOutputSnapshot::key),
+        channels = channels,
+        plan = DeviceLightPlanSnapshot(
+            available = false,
+            reason = DeviceLightPlanReason.MODE_HAS_NO_SCHEDULE,
+            nowTimeMs = FIXTURE_CURRENT_TIME_MINUTES * MINUTE_MILLIS,
+            channelScale = FIRMWARE_CHANNEL_SCALE,
+            hasScheduleToday = false,
+            points = emptyList()
+        ),
+        automaticProgramCount = 0,
+        customCurvePointCount = custom.points.size,
+        hero = DeviceLightHeroSnapshot(
+            mode = DeviceLightControlMode.MANUAL,
+            outputActive = outputActive,
+            outputCondition = if (outputActive) {
+                DeviceLightOutputCondition.ACTIVE
+            } else {
+                DeviceLightOutputCondition.ALL_CHANNELS_ZERO
+            },
+            outputHealthy = true,
+            estimatedPowerWatts = manual.estimatedPowerWatts?.toDouble(),
+            estimatedColorTemperatureKelvin = null
+        )
+    )
+}
+
 private fun fixtureManualPercent(channel: DeviceLightManualChannel): Int = when (channel) {
     DeviceLightManualChannel.RED -> FIXTURE_MANUAL_RED_PERCENT
     DeviceLightManualChannel.GREEN -> FIXTURE_MANUAL_GREEN_PERCENT
@@ -184,6 +244,21 @@ private fun String.toManualChannel(): DeviceLightManualChannel = when (this) {
     "blue" -> DeviceLightManualChannel.BLUE
     "white" -> DeviceLightManualChannel.WHITE
     else -> error("Unsupported Debug Light fixture channel: $this")
+}
+
+private fun DeviceLightManualChannel.toWireKey(): String = when (this) {
+    DeviceLightManualChannel.RED -> "red"
+    DeviceLightManualChannel.GREEN -> "green"
+    DeviceLightManualChannel.BLUE -> "blue"
+    DeviceLightManualChannel.WHITE -> "white"
+}
+
+private fun String.fixtureDisplayColorRgb(): Int = when (this) {
+    "red" -> DISPLAY_COLOR_RED
+    "green" -> DISPLAY_COLOR_GREEN
+    "blue" -> DISPLAY_COLOR_BLUE
+    "white" -> DISPLAY_COLOR_WHITE
+    else -> error("Unsupported Debug Light fixture channel color: $this")
 }
 
 private data class FixtureCurvePoint(
@@ -276,3 +351,8 @@ private const val FIXTURE_MANUAL_WHITE_PERCENT = 50
 private const val FIXTURE_MANUAL_POWER_WATTS = 46
 private const val FIXTURE_MANUAL_POWER_RATIO = 0.46f
 private const val FIXTURE_OFF_PERCENT = 0
+private const val FIRMWARE_CHANNEL_SCALE = 1_000
+private const val DISPLAY_COLOR_RED = 0xFF0000
+private const val DISPLAY_COLOR_GREEN = 0x00FF00
+private const val DISPLAY_COLOR_BLUE = 0x0000FF
+private const val DISPLAY_COLOR_WHITE = 0xFFFFFF

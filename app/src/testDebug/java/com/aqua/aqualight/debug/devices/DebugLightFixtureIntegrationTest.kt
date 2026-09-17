@@ -6,6 +6,7 @@ import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdapta
 import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationState
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlOperations
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlResult
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightOutputCondition
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomFailure
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomMutationResult
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomOperations
@@ -28,6 +29,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -43,9 +45,10 @@ class DebugLightFixtureIntegrationTest {
             fixtures = fixtures,
             epochSeconds = { FIXED_EPOCH_SECONDS }
         )
+        val runtime = DebugLightFixtureRuntime(fixtures)
         val controls = DebugFixtureLightControlOperations(
             delegate = FailingFixtureLightControlOperations,
-            fixtures = fixtures,
+            runtime = runtime,
             adaptationOperations = adaptation
         )
 
@@ -68,6 +71,37 @@ class DebugLightFixtureIntegrationTest {
         assertEquals(START_PERCENT * PERMILLE_PER_PERCENT, started.snapshot.currentPermille)
         assertEquals(DeviceLightAdaptationState.ACTIVE, activeControl.snapshot.adaptation.state)
         assertEquals(DeviceLightAdaptationState.DISABLED, stopped.snapshot.state)
+    }
+
+    @Test
+    fun controlProjectionStaysCompleteAndTracksTheSingleFixtureRuntime() = runTest {
+        val fixtures = DebugDeviceFixtureCatalog()
+        val runtime = DebugLightFixtureRuntime(fixtures)
+        val operations = DebugFixtureLightControlOperations(
+            delegate = FailingFixtureLightControlOperations,
+            runtime = runtime
+        )
+        val deviceUid = fixtures.firstLightUid()
+        val root = requireNotNull(fixtures.rootSnapshot(deviceUid))
+
+        val initial = operations.currentControl(deviceUid) as DeviceLightControlResult.Available
+        runtime.turnManualOff(deviceUid)
+        val turnedOff = operations.observeControl(deviceUid).first()
+            as DeviceLightControlResult.Available
+
+        assertEquals(
+            root.channelSlots.lightChannels.map { channel -> channel.wireKey.value },
+            initial.snapshot.channelKeys
+        )
+        assertEquals(initial.snapshot.channelKeys, initial.snapshot.channels.map { channel -> channel.key })
+        assertEquals(runtime.current(deviceUid)?.points?.size, initial.snapshot.customCurvePointCount)
+        assertTrue(initial.snapshot.plan.points.isEmpty())
+        assertFalse(turnedOff.snapshot.hero.outputActive ?: true)
+        assertEquals(
+            DeviceLightOutputCondition.ALL_CHANNELS_ZERO,
+            turnedOff.snapshot.hero.outputCondition
+        )
+        assertTrue(turnedOff.snapshot.channels.all { channel -> channel.effectivePercent == 0 })
     }
 
     @Test
