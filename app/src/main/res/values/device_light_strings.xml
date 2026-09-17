@@ -184,8 +184,6 @@
     <string name="device_light_library_metadata_separator">·</string>
     <string name="device_light_library_light_duration_hours">%1$d h light</string>
     <string name="device_light_library_channel_range_format">%1$s %2$d–%3$d%%</string>
-    <string name="device_light_library_badge_manual">MANUAL</string>
-    <string name="device_light_library_badge_custom">CUSTOM</string>
     <string name="device_light_library_load">Load</string>
     <string name="device_light_library_loaded">✓ Loaded</string>
     <string name="device_light_library_more_actions_description">More actions for %1$s</string>
@@ -228,7 +226,6 @@
     <string name="device_light_library_day_friday">Fri</string>
     <string name="device_light_library_day_saturday">Sat</string>
     <string name="device_light_library_day_sunday">Sun</string>
-    <string name="device_light_library_days_points_format">%1$s · %2$s</string>
     <string name="device_light_library_channel_percent_format">%1$d%%</string>
     <string name="device_light_library_channel_summary_format">%1$s %2$d%%</string>
     <plurals name="device_light_library_chart_description">
