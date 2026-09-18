@@ -421,4 +421,5 @@
     <string name="device_light_system_invalid_data_error">Sistem ayarları doğrulanamadı. Yenileyip tekrar deneyin.</string>
     <string name="device_light_system_operation_error">Sistem ayarları güncellenemedi.</string>
     <string name="device_light_system_data_unavailable">Canlı sistem verisi kullanılamıyor. Cihaza yeniden bağlanıp tekrar deneyin.</string>
+    <string name="device_light_mode_change_error">Çalışma modu değiştirilemedi. Cihaz bağlantısını kontrol edip tekrar deneyin.</string>
 </resources>

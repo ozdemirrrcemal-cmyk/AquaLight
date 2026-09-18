@@ -14,10 +14,12 @@ import com.aqua.aqualight.application.devices.DeviceSlotIndex
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlFailure
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlMode
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightChannelOutputSnapshot
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlOperations
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlResult
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlSnapshot
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightHeroSnapshot
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanReason
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanSnapshot
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightSystemSummary
@@ -145,6 +147,44 @@ class DeviceLightRootPreparationTest {
         }
 
     @Test
+    fun `successful mode mutation publishes the authoritative returned mode`() = runTest {
+        val controls = FakeLightControlOperations(availableControl()).apply {
+            modeResult = availableControl(mode = DeviceLightControlMode.AUTOMATIC)
+        }
+        val viewModel = DeviceLightRootViewModel(
+            rootOperations = FakeRootOperations(lightRoot()),
+            lightControlOperations = controls,
+            controlSurfacePreparationOperations = FakePreparationOperations()
+        )
+        viewModel.bind(DEVICE_UID)
+
+        viewModel.setMode(DeviceLightControlMode.AUTOMATIC)
+
+        assertEquals(DeviceLightControlMode.AUTOMATIC, viewModel.uiState.value.hero.mode)
+    }
+
+    @Test
+    fun `failed mode mutation is surfaced and retains the last validated mode`() = runTest {
+        val controls = FakeLightControlOperations(availableControl()).apply {
+            modeResult = DeviceLightControlResult.Failed(DeviceLightControlFailure.REJECTED)
+        }
+        val viewModel = DeviceLightRootViewModel(
+            rootOperations = FakeRootOperations(lightRoot()),
+            lightControlOperations = controls,
+            controlSurfacePreparationOperations = FakePreparationOperations()
+        )
+        viewModel.bind(DEVICE_UID)
+
+        viewModel.setMode(DeviceLightControlMode.AUTOMATIC)
+
+        assertEquals(
+            DeviceLightControlFailure.REJECTED,
+            viewModel.modeChangeFailureEvents.first()
+        )
+        assertEquals(DeviceLightControlMode.MANUAL, viewModel.uiState.value.hero.mode)
+    }
+
+    @Test
     fun `validated system summary is exposed to the root card`() = runTest {
         val system = DeviceLightSystemSummary(
             temperatureCelsius = 42.8,
@@ -178,6 +218,7 @@ class DeviceLightRootPreparationTest {
         initial: DeviceLightControlResult
     ) : DeviceLightControlOperations {
         private val results = MutableStateFlow(initial)
+        var modeResult: DeviceLightControlResult? = null
 
         override fun observeControl(deviceUid: String): Flow<DeviceLightControlResult> = results
 
@@ -187,8 +228,8 @@ class DeviceLightRootPreparationTest {
 
         override suspend fun setMode(
             deviceUid: String,
-            mode: com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlMode
-        ): DeviceLightControlResult = results.value
+            mode: DeviceLightControlMode
+        ): DeviceLightControlResult = modeResult ?: results.value
 
         fun publish(result: DeviceLightControlResult) {
             results.value = result
@@ -253,7 +294,8 @@ private fun lightRoot() = DeviceRootSnapshot(
 
 private fun availableControl(
     productKey: String = "LIGHT_WRGB_PRO_ELITE",
-    system: DeviceLightSystemSummary? = null
+    system: DeviceLightSystemSummary? = null,
+    mode: DeviceLightControlMode = DeviceLightControlMode.MANUAL
 ): DeviceLightControlResult = DeviceLightControlResult.Available(
     DeviceLightControlSnapshot(
         deviceUid = "light-pro",
@@ -273,6 +315,7 @@ private fun availableControl(
         ),
         automaticProgramCount = 0,
         customCurvePointCount = 0,
+        hero = DeviceLightHeroSnapshot(mode = mode),
         systemSupported = system != null,
         system = system
     )

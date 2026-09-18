@@ -5,6 +5,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationFailure
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticFailure
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomFailure
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlFailure
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryFailure
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualFailure
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemFailure
@@ -235,6 +236,30 @@ internal data class DeviceLightCommercialErrorMessage(
     @StringRes val titleRes: Int,
     @StringRes val messageRes: Int
 )
+
+internal fun DeviceLightControlFailure.toCommercialLightError():
+    DeviceLightCommercialErrorMessage = when (this) {
+        DeviceLightControlFailure.UNAVAILABLE -> DeviceLightCommercialErrorMessage(
+            R.string.device_light_error_unavailable_title,
+            R.string.device_light_mode_change_error
+        )
+        DeviceLightControlFailure.NOT_CONNECTED -> DeviceLightCommercialErrorMessage(
+            R.string.device_light_error_not_connected_title,
+            R.string.device_light_mode_change_error
+        )
+        DeviceLightControlFailure.UNSUPPORTED -> DeviceLightCommercialErrorMessage(
+            R.string.device_light_error_unsupported_title,
+            R.string.device_light_mode_change_error
+        )
+        DeviceLightControlFailure.REJECTED -> DeviceLightCommercialErrorMessage(
+            R.string.device_light_error_rejected_title,
+            R.string.device_light_mode_change_error
+        )
+        DeviceLightControlFailure.INVALID_DATA -> DeviceLightCommercialErrorMessage(
+            R.string.device_light_error_invalid_data_title,
+            R.string.device_light_mode_change_error
+        )
+    }
 
 internal fun DeviceLightAdaptationFailure.toCommercialLightError():
     DeviceLightCommercialErrorMessage = DeviceLightCommercialErrorResolver.resolve(this)

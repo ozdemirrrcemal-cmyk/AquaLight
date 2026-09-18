@@ -86,11 +86,16 @@ internal class DefaultDeviceLightControlOperations(
     ): DeviceLightControlResult = when (val resolved = resolveRuntime(deviceUid)) {
         is RuntimeResolution.Failed -> failed(resolved.failure)
         is RuntimeResolution.Ready -> runCatching {
+            val firmwareMode = mode.toFirmwareMode()
             when (val outcome = resolved.runtime.setControl(
                 resolved.deviceUid,
-                DeviceLightControlSetPayload(mode.toFirmwareMode())
+                DeviceLightControlSetPayload(firmwareMode)
             )) {
-                is DeviceRuntimeCommandOutcome.Success -> refresh(resolved, systemOperations)
+                is DeviceRuntimeCommandOutcome.Success -> if (outcome.value.mode == firmwareMode) {
+                    resolved.currentControl(systemOperations)
+                } else {
+                    failed(DeviceLightControlFailure.INVALID_DATA)
+                }
                 else -> failed(outcome.toControlFailure())
             }
         }.getOrElse { failed(DeviceLightControlFailure.INVALID_DATA) }

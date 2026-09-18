@@ -21,6 +21,7 @@ import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.toCommercialLightError
 import kotlinx.coroutines.launch
 
 class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
@@ -203,6 +204,16 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
                             message = getString(
                                 DeviceMenuUnavailableMessageMapper.messageRes(reason)
                             ),
+                            type = BaseActivity.SnackType.ERROR
+                        )
+                    }
+                }
+                launch {
+                    viewModel.modeChangeFailureEvents.collect { failure ->
+                        if (_binding == null) return@collect
+                        val copy = failure.toCommercialLightError()
+                        (activity as? BaseActivity)?.showSnackBar(
+                            message = getString(copy.messageRes),
                             type = BaseActivity.SnackType.ERROR
                         )
                     }

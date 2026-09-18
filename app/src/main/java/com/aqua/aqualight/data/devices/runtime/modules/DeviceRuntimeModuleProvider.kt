@@ -148,7 +148,7 @@ class DeviceRuntimeModuleProvider internal constructor(
                 DeviceLightRuntimeContract.Action.TEMPERATURE_PROTECTION_SET
             ) {
                 lightTemperatureProtection.requestStatus(event.deviceUid)
-            } else {
+            } else if (!command.isInlineReconciledLightControlMutation()) {
                 val statusOutcome = light.requestStatus(event.deviceUid)
                 if (statusOutcome is DeviceRuntimeCommandOutcome.Success) {
                     light.requestGraph(event.deviceUid)
@@ -192,6 +192,10 @@ class DeviceRuntimeModuleProvider internal constructor(
         timerStateStore.clear(deviceUid)
     }
 }
+
+private fun DeviceRuntimeEventPayload.CommandResult.isInlineReconciledLightControlMutation():
+    Boolean = commandModule == DeviceLightRuntimeContract.MODULE &&
+    commandAction == DeviceLightRuntimeContract.Action.CONTROL_SET
 
 private class CommandBootstrapPort(
     override val domain: DeviceRuntimeDomain,

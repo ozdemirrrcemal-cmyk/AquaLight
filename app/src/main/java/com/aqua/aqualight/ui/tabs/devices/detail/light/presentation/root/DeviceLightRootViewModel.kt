@@ -11,6 +11,7 @@ import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlFailure
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlOperations
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlMode
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightChannelOutputSnapshot
@@ -45,6 +46,11 @@ class DeviceLightRootViewModel(
     )
     val surfaceUnavailableEvents: Flow<DeviceMenuUnavailableReason> =
         surfaceUnavailableEventChannel.receiveAsFlow()
+    private val modeChangeFailureEventChannel = Channel<DeviceLightControlFailure>(
+        capacity = Channel.BUFFERED
+    )
+    val modeChangeFailureEvents: Flow<DeviceLightControlFailure> =
+        modeChangeFailureEventChannel.receiveAsFlow()
 
     private var boundDeviceUid = ""
     private var latestRootSnapshot: DeviceRootSnapshot? = null
@@ -221,7 +227,9 @@ class DeviceLightRootViewModel(
                         renderBoundState()
                     }
                 }
-                is DeviceLightControlResult.Failed -> Unit
+                is DeviceLightControlResult.Failed -> if (boundDeviceUid == deviceUid) {
+                    modeChangeFailureEventChannel.send(result.failure)
+                }
             }
         }
     }
