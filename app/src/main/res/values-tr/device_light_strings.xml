@@ -151,9 +151,12 @@
     <string name="device_light_system_open_details">Firmware sistem ayrıntılarını görüntüle</string>
 
     <!-- Manuel ışık kontrolü -->
-    <string name="device_light_manual_estimated_power">Tahmini güç</string>
+    <string name="device_light_manual_current_estimated_led_power">Anlık tahmini LED gücü</string>
     <string name="device_light_manual_power_value_format">%1$d W</string>
     <string name="device_light_manual_power_description">%1$s, %2$s</string>
+    <string name="device_light_manual_inactive_mode_title">Manuel mod etkin değil</string>
+    <string name="device_light_manual_inactive_automatic_message">Anlık çıkış Otomatik moddan geliyor.</string>
+    <string name="device_light_manual_inactive_custom_message">Anlık çıkış Özel moddan geliyor.</string>
     <string name="device_light_manual_decrease_channel_description">%1$s kanalını yüzde bir azalt</string>
     <string name="device_light_manual_increase_channel_description">%1$s kanalını yüzde bir artır</string>
     <string name="device_light_manual_slider_description">%1$s kanal yoğunluğu</string>

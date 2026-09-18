@@ -181,10 +181,21 @@ internal class DefaultDeviceLightLibraryOperations(
         runtime: DeviceLightRuntimeRepository
     ): DeviceLightLibraryMutationResult = when (entry.kind) {
         StoredDeviceLightLibraryKind.STORED_DEVICE_LIGHT_LIBRARY_KIND_MANUAL -> {
-            runtime.setManual(
+            val installOutcome = runtime.setManual(
                 uid,
                 DeviceLightManualSetPayload(entry.manual.toRuntimeScene(status.product))
-            ).toLibraryMutationResult(entry.id)
+            )
+            if (
+                installOutcome is DeviceRuntimeCommandOutcome.Success &&
+                runtime.currentStatus(uid)?.mode != DeviceLightMode.MANUAL
+            ) {
+                runtime.setControl(
+                    uid,
+                    DeviceLightControlSetPayload(DeviceLightMode.MANUAL)
+                ).toLibraryMutationResult(entry.id)
+            } else {
+                installOutcome.toLibraryMutationResult(entry.id)
+            }
         }
         StoredDeviceLightLibraryKind.STORED_DEVICE_LIGHT_LIBRARY_KIND_CUSTOM -> {
             val payload = DeviceLightCustomInstallPayload(

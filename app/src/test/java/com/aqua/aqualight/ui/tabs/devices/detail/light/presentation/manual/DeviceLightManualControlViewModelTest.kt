@@ -19,6 +19,7 @@ import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryTa
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualChannel
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualChannelDescriptor
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualFailure
+import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualMode
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualMutationResult
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualOperations
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualReadResult
@@ -142,6 +143,18 @@ class DeviceLightManualControlViewModelTest {
         assertEquals(1, manual.turnOffCalls)
         assertTrue(viewModel.uiState.value.channels.all { channel -> channel.percent == 0 })
         assertFalse(viewModel.uiState.value.showGlobalLoading)
+    }
+
+    @Test
+    fun `active non-manual mode is retained for the output-context notice`() {
+        val manual = FakeManualOperations()
+        val viewModel = boundViewModel(manual)
+
+        manual.publishMode(DeviceLightManualMode.AUTOMATIC)
+        assertEquals(DeviceLightManualMode.AUTOMATIC, viewModel.uiState.value.activeMode)
+
+        manual.publishMode(DeviceLightManualMode.CUSTOM)
+        assertEquals(DeviceLightManualMode.CUSTOM, viewModel.uiState.value.activeMode)
     }
 
     @Test
@@ -330,6 +343,11 @@ class DeviceLightManualControlViewModelTest {
             )
         }
 
+        fun publishMode(mode: DeviceLightManualMode) {
+            val current = (results.value as DeviceLightManualReadResult.Available).snapshot
+            results.value = DeviceLightManualReadResult.Available(current.copy(activeMode = mode))
+        }
+
         fun publishFailure(failure: DeviceLightManualFailure) {
             results.value = DeviceLightManualReadResult.Failed(failure)
         }
@@ -350,11 +368,12 @@ class DeviceLightManualControlViewModelTest {
             return DeviceLightManualSnapshot(
                 deviceUid = DEVICE_UID,
                 productKey = if (supportsWhite) WRGB_PRODUCT_KEY else RGB_PRODUCT_KEY,
+                activeMode = DeviceLightManualMode.MANUAL,
                 channelDescriptors = descriptors,
                 scene = DeviceLightManualScene(channels),
-                estimatedPowerWatts = ESTIMATED_POWER_WATTS.takeIf { supportsWhite },
-                estimatedPowerRatio = ESTIMATED_POWER_RATIO.takeIf { supportsWhite },
-                estimatedPowerDisplayColorRgb = ESTIMATED_POWER_DISPLAY_RGB
+                estimatedLedPowerWatts = ESTIMATED_POWER_WATTS.takeIf { supportsWhite },
+                estimatedLedPowerRatio = ESTIMATED_POWER_RATIO.takeIf { supportsWhite },
+                effectiveOutputDisplayColorRgb = ESTIMATED_POWER_DISPLAY_RGB
                     .takeIf { supportsWhite },
                 protection = null,
                 firmwareWriteAuthoritative = true

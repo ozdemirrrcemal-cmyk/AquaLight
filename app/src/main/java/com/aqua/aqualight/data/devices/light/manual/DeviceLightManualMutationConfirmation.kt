@@ -4,11 +4,48 @@ import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualFail
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualMutationResult
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightControlSetPayload
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightManualSetResult
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightMode
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightScene
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightStatus
 import com.aqua.aqualight.data.devices.runtime.modules.light.requestGraph
+
+internal fun DeviceRuntimeCommandOutcome<DeviceLightManualSetResult>.successSceneOrNull():
+    DeviceLightScene? = when (this) {
+        is DeviceRuntimeCommandOutcome.Success -> value.scene
+        else -> null
+    }
+
+internal suspend fun DeviceRuntimeCommandOutcome<DeviceLightManualSetResult>
+    .activateManualAndConfirmMutation(
+        uid: DeviceUid,
+        runtime: DeviceLightRuntimeRepository,
+        expectedScene: DeviceLightScene?
+    ): DeviceLightManualMutationResult = when {
+    this !is DeviceRuntimeCommandOutcome.Success -> manualMutationFailure(toManualFailure())
+    expectedScene == null -> manualMutationFailure(DeviceLightManualFailure.INVALID_DATA)
+    else -> activateManualAndConfirmSuccess(uid, runtime, expectedScene)
+}
+
+private suspend fun DeviceRuntimeCommandOutcome.Success<DeviceLightManualSetResult>
+    .activateManualAndConfirmSuccess(
+        uid: DeviceUid,
+        runtime: DeviceLightRuntimeRepository,
+        expectedScene: DeviceLightScene
+    ): DeviceLightManualMutationResult {
+    val modeOutcome = if (runtime.currentStatus(uid)?.mode == DeviceLightMode.MANUAL) {
+        null
+    } else {
+        runtime.setControl(uid, DeviceLightControlSetPayload(DeviceLightMode.MANUAL))
+    }
+    return if (modeOutcome == null || modeOutcome is DeviceRuntimeCommandOutcome.Success) {
+        confirmManualMutation(uid, runtime, expectedScene)
+    } else {
+        manualMutationFailure(modeOutcome.toManualFailure())
+    }
+}
 
 internal suspend fun DeviceRuntimeCommandOutcome<*>.confirmManualMutation(
     uid: DeviceUid,

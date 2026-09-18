@@ -7,7 +7,6 @@ import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualRead
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualScene
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
-import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightManualSetPayload
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightStatus
@@ -23,14 +22,18 @@ import kotlinx.coroutines.sync.withLock
 
 /** Stateless projection and serialized mutation adapter over the central Light runtime owner. */
 internal class DefaultDeviceLightManualOperations(
-    private val devicesRepository: DevicesRepository
+    private val runtimeProvider: () -> DeviceLightRuntimeRepository?
 ) : DeviceLightManualOperations {
+
+    constructor(devicesRepository: DevicesRepository) : this(
+        runtimeProvider = { devicesRepository.runtimeModules()?.light }
+    )
 
     private val mutationMutex = Mutex()
 
     override fun observe(deviceUid: String): Flow<DeviceLightManualReadResult> {
         val uid = deviceUid.toUidOrNull()
-        val runtime = uid?.let { devicesRepository.runtimeModules()?.light }
+        val runtime = uid?.let { runtimeProvider() }
         return if (uid == null) {
             flowOf(readFailure(DeviceLightManualFailure.INVALID_DATA))
         } else if (runtime == null) {
@@ -55,20 +58,14 @@ internal class DefaultDeviceLightManualOperations(
     ): DeviceLightManualMutationResult = mutate(deviceUid) { uid, runtime, status ->
         val requestedScene = scene.toRuntimeScene(status.product)
         runtime.setManual(uid, DeviceLightManualSetPayload(requestedScene))
-            .confirmManualMutation(uid, runtime, requestedScene)
+            .activateManualAndConfirmMutation(uid, runtime, requestedScene)
     }
 
     override suspend fun turnOff(
         deviceUid: String
     ): DeviceLightManualMutationResult = mutate(deviceUid) { uid, runtime, _ ->
-        when (val outcome = runtime.manualOff(uid)) {
-            is DeviceRuntimeCommandOutcome.Success -> outcome.confirmManualMutation(
-                uid = uid,
-                runtime = runtime,
-                expectedScene = outcome.value.scene
-            )
-            else -> manualMutationFailure(outcome.toManualFailure())
-        }
+        val outcome = runtime.manualOff(uid)
+        outcome.activateManualAndConfirmMutation(uid, runtime, outcome.successSceneOrNull())
     }
 
     private suspend fun mutate(
@@ -80,7 +77,7 @@ internal class DefaultDeviceLightManualOperations(
         ) -> DeviceLightManualMutationResult
     ): DeviceLightManualMutationResult = mutationMutex.withLock {
         val uid = deviceUid.toUidOrNull()
-        val runtime = devicesRepository.runtimeModules()?.light
+        val runtime = runtimeProvider()
         val status = if (uid == null) null else runtime?.currentStatus(uid)
         when {
             uid == null -> manualMutationFailure(DeviceLightManualFailure.INVALID_DATA)

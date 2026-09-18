@@ -21,6 +21,12 @@ enum class DeviceLightManualChannel {
     WHITE
 }
 
+enum class DeviceLightManualMode {
+    MANUAL,
+    AUTOMATIC,
+    CUSTOM
+}
+
 /** Firmware-authored channel identity and presentation metadata. */
 data class DeviceLightManualChannelDescriptor(
     val channel: DeviceLightManualChannel,
@@ -49,11 +55,12 @@ data class DeviceLightManualScene(
 data class DeviceLightManualSnapshot(
     val deviceUid: String,
     val productKey: String,
+    val activeMode: DeviceLightManualMode,
     val channelDescriptors: List<DeviceLightManualChannelDescriptor>,
     val scene: DeviceLightManualScene,
-    val estimatedPowerWatts: Int?,
-    val estimatedPowerRatio: Float?,
-    val estimatedPowerDisplayColorRgb: Int?,
+    val estimatedLedPowerWatts: Int?,
+    val estimatedLedPowerRatio: Float?,
+    val effectiveOutputDisplayColorRgb: Int?,
     val protection: DeviceLightManualProtection?,
     /** Current-generation authority for firmware writes; presentation may be older and retained. */
     val firmwareWriteAuthoritative: Boolean
@@ -74,11 +81,11 @@ data class DeviceLightManualSnapshot(
             channelDescriptors.map { descriptor -> descriptor.key }.distinct().size ==
                 channelDescriptors.size
         )
-        require(estimatedPowerWatts == null || estimatedPowerWatts >= 0)
-        require(estimatedPowerRatio == null || estimatedPowerRatio in POWER_RATIO_RANGE)
+        require(estimatedLedPowerWatts == null || estimatedLedPowerWatts >= 0)
+        require(estimatedLedPowerRatio == null || estimatedLedPowerRatio in POWER_RATIO_RANGE)
         require(
-            estimatedPowerDisplayColorRgb == null ||
-                estimatedPowerDisplayColorRgb in DISPLAY_COLOR_RANGE
+            effectiveOutputDisplayColorRgb == null ||
+                effectiveOutputDisplayColorRgb in DISPLAY_COLOR_RANGE
         )
     }
 }

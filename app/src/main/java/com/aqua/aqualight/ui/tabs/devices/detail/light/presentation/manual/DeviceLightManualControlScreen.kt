@@ -25,6 +25,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.style.TextAlign
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualMode
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
 import com.aqua.aqualight.ui.common.devicecard.aquaDeviceCardTypography
@@ -57,6 +58,13 @@ internal fun DeviceLightManualControlScreen(
         ),
         verticalArrangement = Arrangement.spacedBy(AquaLightManualGeometry.sectionGap)
     ) {
+        state.activeMode
+            ?.takeIf { mode -> mode != DeviceLightManualMode.MANUAL }
+            ?.let { mode ->
+                item(key = "manual-inactive-mode") {
+                    ManualInactiveModeNotice(mode, visuals)
+                }
+            }
         item(key = "manual-controls") {
             ManualControlCard(state, actions, visuals)
         }
@@ -128,7 +136,7 @@ private fun ManualPowerGauge(
     power: DeviceLightManualPowerUiState,
     visuals: DeviceLightManualVisuals
 ) {
-    val title = stringResource(R.string.device_light_manual_estimated_power)
+    val title = stringResource(R.string.device_light_manual_current_estimated_led_power)
     val value = stringResource(R.string.device_light_manual_power_value_format, power.watts)
     val description = stringResource(
         R.string.device_light_manual_power_description,

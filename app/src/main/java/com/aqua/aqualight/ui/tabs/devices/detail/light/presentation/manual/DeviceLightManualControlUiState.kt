@@ -5,6 +5,7 @@ import com.aqua.aqualight.application.devices.light.automatic.DeviceLightPresetC
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightPresetId
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightPresetScene
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualChannel
+import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualMode
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualProtectionKind as ApplicationProtectionKind
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualSnapshot
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
@@ -76,6 +77,7 @@ internal data class DeviceLightManualProtectionUiState(
 internal data class DeviceLightManualControlUiState(
     val deviceUid: String = "",
     val connectionVisualState: DeviceConnectionVisualState? = null,
+    val activeMode: DeviceLightManualMode? = null,
     val channels: List<DeviceLightManualChannelUiState> = emptyList(),
     val power: DeviceLightManualPowerUiState? = null,
     val presets: List<DeviceLightManualPresetUiState> = emptyList(),
@@ -119,9 +121,9 @@ internal fun DeviceLightManualSnapshot.mergeInto(
     } else {
         state.channels
     }
-    val powerState = estimatedPowerWatts?.let { watts ->
-        estimatedPowerRatio?.let { ratio ->
-            estimatedPowerDisplayColorRgb?.let { displayColorRgb ->
+    val powerState = estimatedLedPowerWatts?.let { watts ->
+        estimatedLedPowerRatio?.let { ratio ->
+            effectiveOutputDisplayColorRgb?.let { displayColorRgb ->
                 DeviceLightManualPowerUiState(watts, ratio, displayColorRgb)
             }
         }
@@ -135,6 +137,7 @@ internal fun DeviceLightManualSnapshot.mergeInto(
     }
     return state.copy(
         deviceUid = deviceUid,
+        activeMode = activeMode,
         channels = resolvedChannels,
         power = powerState,
         protection = protection?.let { value ->

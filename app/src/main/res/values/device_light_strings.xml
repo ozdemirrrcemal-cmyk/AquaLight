@@ -151,9 +151,12 @@
     <string name="device_light_system_open_details">View firmware system details</string>
 
     <!-- Manual light control -->
-    <string name="device_light_manual_estimated_power">Estimated power</string>
+    <string name="device_light_manual_current_estimated_led_power">Current estimated LED power</string>
     <string name="device_light_manual_power_value_format">%1$d W</string>
     <string name="device_light_manual_power_description">%1$s, %2$s</string>
+    <string name="device_light_manual_inactive_mode_title">Manual mode is not active</string>
+    <string name="device_light_manual_inactive_automatic_message">Current output comes from Automatic mode.</string>
+    <string name="device_light_manual_inactive_custom_message">Current output comes from Custom mode.</string>
     <string name="device_light_manual_minus_symbol" translatable="false">−</string>
     <string name="device_light_manual_plus_symbol" translatable="false">+</string>
     <string name="device_light_manual_decrease_channel_description">Decrease %1$s channel by one percent</string>

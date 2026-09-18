@@ -2,12 +2,14 @@ package com.aqua.aqualight.data.devices.light.manual
 
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualChannel
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualChannelDescriptor
+import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualMode
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualProtection
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualProtectionKind
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualScene
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightDisplayRgb
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightMode
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightOutputReason
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightProduct
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightScene
@@ -29,16 +31,19 @@ internal fun DeviceLightStatus.toManualSnapshot(
             order = descriptor.order
         )
     }
-    val estimatedPower = power.estimatedFixturePowerW
-        ?.takeIf { power.available && power.estimatedFixturePowerAvailable }
-        ?.roundToInt()
-    val estimatedRatio = power.ratio
-        ?.takeIf { power.available && power.ratioAvailable }
-        ?.toFloat()
-        ?.coerceIn(POWER_RATIO_MIN, POWER_RATIO_MAX)
+    val estimatedLedPower = power.estimatedLedPowerW
+        ?.takeIf { power.available }
+    // Firmware power.ratio is fixture input power / fixture input limit, not an LED ratio.
+    val estimatedLedPowerRatio = estimatedLedPower?.let { watts ->
+        power.hardLedPowerLimitW
+            ?.takeIf { limit -> power.available && limit > 0.0 }
+            ?.let { limit -> (watts / limit).toFloat() }
+            ?.coerceIn(POWER_RATIO_MIN, POWER_RATIO_MAX)
+    }
     return DeviceLightManualSnapshot(
         deviceUid = uid.value,
         productKey = product.wireValue,
+        activeMode = mode.toManualMode(),
         channelDescriptors = descriptors,
         scene = DeviceLightManualScene(
             sortedChannels.associate { descriptor ->
@@ -46,14 +51,20 @@ internal fun DeviceLightStatus.toManualSnapshot(
                     manual.scene.percents.getValue(descriptor.percentField)
             }
         ),
-        estimatedPowerWatts = estimatedPower,
-        estimatedPowerRatio = estimatedRatio,
-        estimatedPowerDisplayColorRgb = color.displayRgb
+        estimatedLedPowerWatts = estimatedLedPower?.roundToInt(),
+        estimatedLedPowerRatio = estimatedLedPowerRatio,
+        effectiveOutputDisplayColorRgb = color.displayRgb
             ?.takeIf { color.available }
             ?.toPackedRgb(),
         protection = toManualProtection(),
         firmwareWriteAuthoritative = firmwareWriteAuthoritative
     )
+}
+
+private fun DeviceLightMode.toManualMode(): DeviceLightManualMode = when (this) {
+    DeviceLightMode.MANUAL -> DeviceLightManualMode.MANUAL
+    DeviceLightMode.AUTO -> DeviceLightManualMode.AUTOMATIC
+    DeviceLightMode.CUSTOM -> DeviceLightManualMode.CUSTOM
 }
 
 private fun DeviceLightStatus.toManualProtection(): DeviceLightManualProtection? = when {
