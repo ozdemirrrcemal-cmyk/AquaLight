@@ -452,7 +452,6 @@ class AqlFirmwareInteroperabilityTest {
                 save = true
             ).toJson().keySetExact()
         )
-    }
 
     private fun deviceAndTimeSerializerFields(): Map<String, Set<String>> {
         val rtc = DeviceManualRtcPayload(
