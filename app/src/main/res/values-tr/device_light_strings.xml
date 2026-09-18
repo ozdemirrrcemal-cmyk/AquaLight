@@ -34,7 +34,6 @@
     <string name="device_light_hero_output_healthy">Çıkış sağlıklı</string>
     <string name="device_light_hero_output_attention">Çıkışı kontrol edin</string>
     <string name="device_light_hero_output_health_unavailable">Çıkış durumu kullanılamıyor</string>
-    <string name="device_light_hero_estimated">tahmini</string>
     <string name="device_light_hero_power_value_format">%1$s W</string>
     <string name="device_light_hero_color_temperature_value_format">%1$s K</string>
     <string name="device_light_hero_value_unavailable">—</string>

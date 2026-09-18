@@ -34,7 +34,6 @@
     <string name="device_light_hero_output_healthy">Output healthy</string>
     <string name="device_light_hero_output_attention">Check output</string>
     <string name="device_light_hero_output_health_unavailable">Output status unavailable</string>
-    <string name="device_light_hero_estimated">estimated</string>
     <string name="device_light_hero_power_value_format">%1$s W</string>
     <string name="device_light_hero_color_temperature_value_format">%1$s K</string>
     <string name="device_light_hero_value_unavailable">—</string>
