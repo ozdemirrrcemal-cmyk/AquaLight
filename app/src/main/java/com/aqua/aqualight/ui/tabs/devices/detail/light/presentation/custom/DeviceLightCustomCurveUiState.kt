@@ -90,6 +90,7 @@ internal data class DeviceLightCustomCurveUiState(
     val draft: DeviceLightCustomDraft = DeviceLightCustomDraft(),
     val selectedTimeMs: Long? = null,
     val previewTimeMs: Long = DEFAULT_PREVIEW_TIME_MS,
+    val previewPlaybackActive: Boolean = false,
     val maxPoints: Int = MAX_POINT_CAPACITY,
     val timeStepMs: Long = MILLIS_PER_MINUTE,
     val contentEnabled: Boolean = false,
@@ -105,6 +106,17 @@ internal data class DeviceLightCustomCurveUiState(
 
     val selectedPoint: DeviceLightCustomPointUiState?
         get() = draft.points.singleOrNull { point -> point.timeMs == selectedTimeMs }
+
+    val valuesPoint: DeviceLightCustomPointUiState?
+        get() = if (previewPlaybackActive && draft.points.isNotEmpty()) {
+            val timeMs = previewTimeMs.coerceIn(0L, MILLIS_PER_DAY - 1L)
+            DeviceLightCustomPointUiState(
+                timeMs = timeMs,
+                channels = draft.points.interpolatedChannelsAt(timeMs, channels)
+            )
+        } else {
+            selectedPoint
+        }
 
     val canSaveAs: Boolean
         get() = contentEnabled && !operationInProgress && draft.points.isNotEmpty()
