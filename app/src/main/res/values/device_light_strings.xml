@@ -160,12 +160,6 @@
     <string name="device_light_manual_increase_channel_description">Increase %1$s channel by one percent</string>
     <string name="device_light_manual_slider_description">%1$s channel intensity</string>
     <string name="device_light_manual_quick_scenes_title">Lighting Scenes</string>
-    <string name="device_light_manual_preset_red">Red</string>
-    <string name="device_light_manual_preset_green">Green</string>
-    <string name="device_light_manual_preset_blue">Blue</string>
-    <string name="device_light_manual_preset_fish">Fish</string>
-    <string name="device_light_manual_preset_shrimp">Shrimp</string>
-    <string name="device_light_manual_preset_all">All</string>
     <string name="device_light_manual_preset_natural_aquarium">Natural Aquarium</string>
     <string name="device_light_manual_preset_planted_aquarium">Planted Aquarium</string>
     <string name="device_light_manual_preset_red_plants">Red Plants</string>

@@ -1,9 +1,10 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual
 
 import androidx.annotation.StringRes
+import com.aqua.aqualight.application.devices.light.automatic.DeviceLightPresetCatalog
+import com.aqua.aqualight.application.devices.light.automatic.DeviceLightPresetId
+import com.aqua.aqualight.application.devices.light.automatic.DeviceLightPresetScene
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualChannel
-import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualPresetCatalog
-import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualPresetId as ApplicationManualPresetId
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualProtectionKind as ApplicationProtectionKind
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualSnapshot
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
@@ -42,7 +43,7 @@ internal data class DeviceLightManualPowerUiState(
     }
 }
 
-internal typealias DeviceLightManualPresetId = ApplicationManualPresetId
+internal typealias DeviceLightManualPresetId = DeviceLightPresetId
 
 internal data class DeviceLightManualPresetUiState(
     val id: DeviceLightManualPresetId,
@@ -170,13 +171,28 @@ private fun ApplicationProtectionKind.toUiKind(): DeviceLightManualProtectionKin
     ApplicationProtectionKind.THERMAL_SHUTDOWN -> DeviceLightManualProtectionKind.THERMAL_SHUTDOWN
 }
 
-private fun builtInManualPresets() = DeviceLightManualPresetCatalog.presets.map { preset ->
-    DeviceLightManualPresetUiState(
+private fun builtInManualPresets() = DeviceLightPresetCatalog.manualPresets.map { preset ->
+    manualPreset(
         id = preset.id,
         labelRes = preset.id.labelResource(),
-        scene = preset.scene.channels.mapKeys { (channel, _) -> channel.toUiId() }
+        scene = preset.scene
     )
 }
+
+private fun manualPreset(
+    id: DeviceLightManualPresetId,
+    @StringRes labelRes: Int,
+    scene: DeviceLightPresetScene
+) = DeviceLightManualPresetUiState(
+    id = id,
+    labelRes = labelRes,
+    scene = mapOf(
+        DeviceLightManualChannelId.RED to scene.red,
+        DeviceLightManualChannelId.GREEN to scene.green,
+        DeviceLightManualChannelId.BLUE to scene.blue,
+        DeviceLightManualChannelId.WHITE to scene.white
+    )
+)
 
 internal val PERCENT_RANGE =
     AquaLightManualControlSpec.minimumPercent..AquaLightManualControlSpec.maximumPercent
