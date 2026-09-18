@@ -49,6 +49,7 @@ class ProvisioningDiscoveryViewModelBoundaryTest {
         assertEquals("device-1", rendered.id)
         assertEquals("AquaLight One", rendered.title)
         assertEquals("AQL-0001", rendered.serial)
+        assertEquals(text(R.string.device_add_status_ready), rendered.status)
         assertEquals("AA:BB:CC:DD:EE:FF", rendered.bleAddress)
 
         viewModel.onCandidateClicked(rendered)

@@ -281,9 +281,7 @@ class DeviceAddViewModel(
             title = displayTitle,
             serial = displaySerial,
             model = modelLabel,
-            status = displayStatus.ifBlank {
-                string(R.string.device_add_status_ready)
-            },
+            status = string(R.string.device_add_status_ready),
             rssiLabel = string(R.string.device_add_rssi_value_format, rssi),
             bleAddress = address,
             bleName = bleName

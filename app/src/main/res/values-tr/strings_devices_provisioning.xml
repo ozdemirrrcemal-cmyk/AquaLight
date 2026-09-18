@@ -32,7 +32,7 @@
     <string name="device_add_scanning_empty_message">Kurulum modundaki AquaLight cihazları aranıyor.</string>
     <string name="device_add_result_title_single">%1$d cihaz bulundu</string>
     <string name="device_add_result_title_multi">%1$d cihaz bulundu</string>
-    <string name="device_add_result_secure_message">Cihazı seçin. AquaLight, Wi-Fi bilgilerini göndermeden önce aygıt yazılımının DeviceInfo verisini doğrular.</string>
+    <string name="device_add_result_secure_message">Kuruluma devam etmek için cihazınızı seçin. AquaLight, Wi-Fi bilgilerinizi göndermeden önce cihazın güvenli ve uyumlu olduğunu doğrular.</string>
     <string name="device_add_no_nearby_title">Yakında cihaz yok</string>
     <string name="device_add_no_nearby_message">Cihazı kurulum moduna alın, telefonunuza yakın tutun ve yeniden Tara düğmesine basın. QR kurulumu sağ üstteki simgeden kullanılabilir.</string>
     <string name="device_add_no_setup_window_title">Kurulum aralığı bulunamadı</string>

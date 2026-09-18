@@ -35,7 +35,7 @@
     <string name="device_add_scanning_empty_message">Searching for AquaLight devices in setup mode.</string>
     <string name="device_add_result_title_single">%1$d device found</string>
     <string name="device_add_result_title_multi">%1$d devices found</string>
-<string name="device_add_result_secure_message">Select the device. AquaLight will verify its firmware DeviceInfo before Wi‑Fi is sent.</string>
+<string name="device_add_result_secure_message">Select your device to continue. AquaLight verifies that it is secure and compatible before sending your Wi‑Fi details.</string>
 <string name="device_add_no_nearby_title">No nearby devices</string>
     <string name="device_add_no_nearby_message">Put the device in setup mode, keep it close to your phone, then press Scan again. QR setup is available from the top-right icon.</string>
     <string name="device_add_no_setup_window_title">No setup window found</string>
