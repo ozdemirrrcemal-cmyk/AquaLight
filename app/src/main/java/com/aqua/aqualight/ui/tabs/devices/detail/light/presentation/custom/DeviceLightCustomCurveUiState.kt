@@ -29,6 +29,20 @@ internal data class DeviceLightCustomPointUiState(
     }
 }
 
+internal data class DeviceLightCustomValuesUiState(
+    val timeMs: Long,
+    val channels: Map<DeviceLightCustomChannelId, Int>
+) {
+    init {
+        require(timeMs in 0 until MILLIS_PER_DAY)
+        require(
+            channels.isNotEmpty() && channels.values.all { value ->
+                value in MIN_LIGHT_CHANNEL_PERCENT..MAX_LIGHT_CHANNEL_PERCENT
+            }
+        )
+    }
+}
+
 internal data class DeviceLightCustomDraft(
     val weekdaysMask: Int = EVERY_DAY_MASK,
     val points: List<DeviceLightCustomPointUiState> = emptyList()
@@ -107,15 +121,20 @@ internal data class DeviceLightCustomCurveUiState(
     val selectedPoint: DeviceLightCustomPointUiState?
         get() = draft.points.singleOrNull { point -> point.timeMs == selectedTimeMs }
 
-    val valuesPoint: DeviceLightCustomPointUiState?
+    val valuesPoint: DeviceLightCustomValuesUiState?
         get() = if (previewPlaybackActive && draft.points.isNotEmpty()) {
             val timeMs = previewTimeMs.coerceIn(0L, MILLIS_PER_DAY - 1L)
-            DeviceLightCustomPointUiState(
+            DeviceLightCustomValuesUiState(
                 timeMs = timeMs,
                 channels = draft.points.interpolatedChannelsAt(timeMs, channels)
             )
         } else {
-            selectedPoint
+            selectedPoint?.let { point ->
+                DeviceLightCustomValuesUiState(
+                    timeMs = point.timeMs,
+                    channels = point.channels
+                )
+            }
         }
 
     val canSaveAs: Boolean
