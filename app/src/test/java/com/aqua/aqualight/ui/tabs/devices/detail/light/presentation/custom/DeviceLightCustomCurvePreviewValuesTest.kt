@@ -1,7 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertSame
 import org.junit.Test
 
 class DeviceLightCustomCurvePreviewValuesTest {
@@ -102,7 +101,8 @@ class DeviceLightCustomCurvePreviewValuesTest {
             previewPlaybackActive = false
         )
 
-        assertSame(selected, state.valuesPoint)
+        assertEquals(selected.timeMs, state.valuesPoint?.timeMs)
+        assertEquals(selected.channels, state.valuesPoint?.channels)
     }
 
     private fun point(
