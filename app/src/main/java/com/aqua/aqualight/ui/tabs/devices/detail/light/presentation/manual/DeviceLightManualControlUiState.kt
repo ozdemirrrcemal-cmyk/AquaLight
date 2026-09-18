@@ -1,7 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual
 
 import androidx.annotation.StringRes
-import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualChannel
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualPresetCatalog
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualPresetId as ApplicationManualPresetId
@@ -9,6 +8,7 @@ import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualProt
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualSnapshot
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualControlSpec
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.labelResource
 
 internal enum class DeviceLightManualChannelId {
     RED,
@@ -176,16 +176,6 @@ private fun builtInManualPresets() = DeviceLightManualPresetCatalog.presets.map 
         labelRes = preset.id.labelResource(),
         scene = preset.scene.channels.mapKeys { (channel, _) -> channel.toUiId() }
     )
-}
-
-@StringRes
-private fun DeviceLightManualPresetId.labelResource(): Int = when (this) {
-    DeviceLightManualPresetId.RED -> R.string.device_light_manual_preset_red
-    DeviceLightManualPresetId.GREEN -> R.string.device_light_manual_preset_green
-    DeviceLightManualPresetId.BLUE -> R.string.device_light_manual_preset_blue
-    DeviceLightManualPresetId.FISH -> R.string.device_light_manual_preset_fish
-    DeviceLightManualPresetId.SHRIMP -> R.string.device_light_manual_preset_shrimp
-    DeviceLightManualPresetId.ALL -> R.string.device_light_manual_preset_all
 }
 
 internal val PERCENT_RANGE =

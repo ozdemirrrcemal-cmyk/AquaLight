@@ -119,17 +119,17 @@ class DeviceLightManualControlViewModelTest {
         val manual = FakeManualOperations()
         val viewModel = boundViewModel(manual)
 
-        viewModel.applyPreset(DeviceLightManualPresetId.FISH)
+        viewModel.applyPreset(DeviceLightManualPresetId.RED_PLANTS)
 
-        assertEquals(PERCENT_80, viewModel.uiState.value.percent(DeviceLightManualChannelId.RED))
+        assertEquals(PERCENT_65, viewModel.uiState.value.percent(DeviceLightManualChannelId.RED))
         assertEquals(PERCENT_45, viewModel.uiState.value.percent(DeviceLightManualChannelId.GREEN))
         assertEquals(PERCENT_70, viewModel.uiState.value.percent(DeviceLightManualChannelId.BLUE))
         assertEquals(PERCENT_45, viewModel.uiState.value.percent(DeviceLightManualChannelId.WHITE))
         assertEquals(
-            DeviceLightManualPresetId.FISH,
+            DeviceLightManualPresetId.RED_PLANTS,
             viewModel.uiState.value.selectedPreset
         )
-        assertEquals(PERCENT_80, manual.setScenes.single().value(DeviceLightManualChannel.RED))
+        assertEquals(PERCENT_65, manual.setScenes.single().value(DeviceLightManualChannel.RED))
     }
 
     @Test
@@ -223,49 +223,49 @@ class DeviceLightManualControlViewModelTest {
     }
 
     @Test
-    fun `manual scenes remain frozen to the pinned firmware handoff`() {
+    fun `manual scenes use the central curated aquarium catalog`() {
         val presets = boundViewModel().uiState.value.presets
 
         assertEquals(
             listOf(
-                DeviceLightManualPresetId.RED,
-                DeviceLightManualPresetId.GREEN,
-                DeviceLightManualPresetId.BLUE,
-                DeviceLightManualPresetId.FISH,
-                DeviceLightManualPresetId.SHRIMP,
-                DeviceLightManualPresetId.ALL
+                DeviceLightManualPresetId.NATURAL_AQUARIUM,
+                DeviceLightManualPresetId.PLANTED_AQUARIUM,
+                DeviceLightManualPresetId.RED_PLANTS,
+                DeviceLightManualPresetId.VIVID_COLORS,
+                DeviceLightManualPresetId.LOW_TECH,
+                DeviceLightManualPresetId.AQUASCAPE
             ),
             presets.map(DeviceLightManualPresetUiState::id)
         )
         assertScene(
             presets,
-            DeviceLightManualPresetId.RED,
-            listOf(PERCENT_85, PERCENT_50, PERCENT_55, PERCENT_35)
+            DeviceLightManualPresetId.NATURAL_AQUARIUM,
+            listOf(PERCENT_45, PERCENT_50, PERCENT_50, PERCENT_60)
         )
         assertScene(
             presets,
-            DeviceLightManualPresetId.GREEN,
-            listOf(PERCENT_60, PERCENT_85, PERCENT_65, PERCENT_40)
+            DeviceLightManualPresetId.PLANTED_AQUARIUM,
+            listOf(PERCENT_60, PERCENT_50, PERCENT_65, PERCENT_55)
         )
         assertScene(
             presets,
-            DeviceLightManualPresetId.BLUE,
-            listOf(PERCENT_50, PERCENT_60, PERCENT_85, PERCENT_35)
+            DeviceLightManualPresetId.RED_PLANTS,
+            listOf(PERCENT_65, PERCENT_45, PERCENT_70, PERCENT_45)
         )
         assertScene(
             presets,
-            DeviceLightManualPresetId.FISH,
-            listOf(PERCENT_80, PERCENT_45, PERCENT_70, PERCENT_45)
+            DeviceLightManualPresetId.VIVID_COLORS,
+            listOf(PERCENT_65, PERCENT_50, PERCENT_65, PERCENT_60)
         )
         assertScene(
             presets,
-            DeviceLightManualPresetId.SHRIMP,
-            listOf(PERCENT_85, PERCENT_70, PERCENT_65, PERCENT_50)
+            DeviceLightManualPresetId.LOW_TECH,
+            listOf(PERCENT_30, PERCENT_30, PERCENT_30, PERCENT_35)
         )
         assertScene(
             presets,
-            DeviceLightManualPresetId.ALL,
-            listOf(PERCENT_70, PERCENT_70, PERCENT_70, PERCENT_70)
+            DeviceLightManualPresetId.AQUASCAPE,
+            listOf(PERCENT_55, PERCENT_55, PERCENT_60, PERCENT_65)
         )
     }
 
@@ -481,6 +481,7 @@ class DeviceLightManualControlViewModelTest {
         const val GREEN_RGB = 0x00FF00
         const val BLUE_RGB = 0x0000FF
         const val WHITE_RGB = 0xFFFFFF
+        const val PERCENT_30 = 30
         const val PERCENT_35 = 35
         const val PERCENT_40 = 40
         const val PERCENT_45 = 45
@@ -489,8 +490,6 @@ class DeviceLightManualControlViewModelTest {
         const val PERCENT_60 = 60
         const val PERCENT_65 = 65
         const val PERCENT_70 = 70
-        const val PERCENT_80 = 80
-        const val PERCENT_85 = 85
 
         fun onlineRoot(
             availability: OwnerDeviceAvailability = OwnerDeviceAvailability.REACHABLE

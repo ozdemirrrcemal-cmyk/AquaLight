@@ -29,7 +29,7 @@ class DeviceLightPresetCatalogTest {
 
     @Test
     fun manualAndAutomaticExperiencesShareTheSameFirstSixPresets() {
-        assertEquals(EXPECTED_IDS.take(MANUAL_PRESET_COUNT), DeviceLightPresetCatalog.manualPresets.map { it.id })
+        assertEquals(EXPECTED_MANUAL_IDS, DeviceLightPresetCatalog.manualPresets.map { it.id })
         assertTrue(DeviceLightPresetCatalog.manualPresets.all { preset -> preset.availableInManual })
         assertFalse(DeviceLightPresetCatalog.find(DeviceLightPresetId.NEW_SETUP)!!.availableInManual)
         assertFalse(DeviceLightPresetCatalog.find(DeviceLightPresetId.SHADE_PLANTS)!!.availableInManual)
@@ -68,6 +68,15 @@ private val EXPECTED_SCENES = listOf(
     DeviceLightPresetScene(red = 40, green = 50, blue = 55, white = 45)
 )
 
+private val EXPECTED_MANUAL_IDS = listOf(
+    DeviceLightPresetId.NATURAL_AQUARIUM,
+    DeviceLightPresetId.PLANTED_AQUARIUM,
+    DeviceLightPresetId.RED_PLANTS,
+    DeviceLightPresetId.VIVID_COLORS,
+    DeviceLightPresetId.LOW_TECH,
+    DeviceLightPresetId.AQUASCAPE
+)
+
 private val EXPECTED_SCHEDULES = listOf(
     7 * MINUTES_PER_HOUR to 60,
     8 * MINUTES_PER_HOUR to 60,
@@ -79,7 +88,6 @@ private val EXPECTED_SCHEDULES = listOf(
     7 * MINUTES_PER_HOUR to 90
 )
 
-private const val MANUAL_PRESET_COUNT = 6
 private const val MINUTES_PER_HOUR = 60
 private const val MINUTES_PER_DAY = 24 * MINUTES_PER_HOUR
 private const val DEFAULT_START_MINUTE = 10 * MINUTES_PER_HOUR
