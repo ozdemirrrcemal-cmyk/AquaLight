@@ -82,8 +82,10 @@ internal fun DeviceLightLibraryScreen(
         ),
         verticalArrangement = Arrangement.spacedBy(AquaLightLibraryGeometry.sectionGap)
     ) {
-        item(key = "library-tabs") {
-            LibraryTabs(state.selectedTab, actions.onTabSelected, visuals)
+        if (!state.customSelectionMode) {
+            item(key = "library-tabs") {
+                LibraryTabs(state.selectedTab, actions.onTabSelected, visuals)
+            }
         }
         when {
             state.initialLoading && !state.hasPresentationSnapshot -> Unit
@@ -129,7 +131,8 @@ private fun androidx.compose.foundation.lazy.LazyListScope.libraryContent(
 ) {
     val cardPresentation = DeviceLightLibraryCardPresentation(
         descriptors = requireNotNull(state.target).channelDescriptors,
-        firmwareWritesEnabled = state.firmwareWritesEnabled
+        firmwareWritesEnabled = state.firmwareWritesEnabled,
+        customSelectionMode = state.customSelectionMode
     )
     item(key = "library-section-header") {
         LibrarySectionHeader(state, visuals)

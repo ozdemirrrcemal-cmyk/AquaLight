@@ -233,6 +233,10 @@
             android:name="initialTab"
             android:defaultValue="MANUAL"
             app:argType="string" />
+        <argument
+            android:name="customSelectionMode"
+            android:defaultValue="false"
+            app:argType="boolean" />
     </fragment>
 
     <fragment
