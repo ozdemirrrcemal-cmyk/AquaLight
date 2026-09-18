@@ -56,6 +56,7 @@ class DeviceLightRootViewModel(
     private var boundDeviceUid = ""
     private var latestRootSnapshot: DeviceRootSnapshot? = null
     private var currentControlSnapshot: DeviceLightControlSnapshot? = null
+    private var pendingMode: DeviceLightControlMode? = null
     private var committedMode: DeviceLightControlMode? = null
     private var surfacePreparationPending = false
     private var rootObserveJob: Job? = null
@@ -81,6 +82,7 @@ class DeviceLightRootViewModel(
         cancelJobs()
         boundDeviceUid = deviceUid
         currentControlSnapshot = null
+        pendingMode = null
         committedMode = null
         latestRootSnapshot = rootOperations.current(deviceUid)
         acceptControlResult(lightControlOperations.currentControl(deviceUid))
@@ -203,7 +205,7 @@ class DeviceLightRootViewModel(
             showBlockingPreparation = surfacePreparationPending && !controlAvailable,
             activeAutomaticProgramId = currentControlSnapshot?.activeAutomaticProgramId,
             hero = currentControlSnapshot?.hero ?: DeviceLightHeroSnapshot(),
-            selectedMode = committedMode ?: currentControlSnapshot?.hero?.mode,
+            selectedMode = pendingMode ?: committedMode ?: currentControlSnapshot?.hero?.mode,
             adaptation = currentControlSnapshot?.adaptation ?: DeviceLightAdaptationSummary(),
             systemSupported = currentControlSnapshot?.systemSupported == true,
             system = currentControlSnapshot?.system,
@@ -219,6 +221,7 @@ class DeviceLightRootViewModel(
         boundDeviceUid = ""
         latestRootSnapshot = null
         currentControlSnapshot = null
+        pendingMode = null
         committedMode = null
         surfacePreparationPending = false
         modeChangeJob = null
@@ -231,10 +234,13 @@ class DeviceLightRootViewModel(
         if (deviceUid.isBlank() || !state.contentEnabled) return
         if (state.selectedMode == mode || modeChangeJob?.isActive == true) return
 
+        pendingMode = mode
+        renderBoundState()
         modeChangeJob = viewModelScope.launch {
             when (val result = lightControlOperations.setMode(deviceUid, mode)) {
                 is DeviceLightModeMutationResult.Reconciled -> {
                     if (boundDeviceUid == deviceUid) {
+                        pendingMode = null
                         committedMode = null
                         acceptControlResult(DeviceLightControlResult.Available(result.snapshot))
                         renderBoundState()
@@ -242,11 +248,14 @@ class DeviceLightRootViewModel(
                 }
                 is DeviceLightModeMutationResult.Committed -> {
                     if (boundDeviceUid == deviceUid) {
+                        pendingMode = null
                         committedMode = result.mode
                         renderBoundState()
                     }
                 }
                 is DeviceLightModeMutationResult.Failed -> if (boundDeviceUid == deviceUid) {
+                    pendingMode = null
+                    renderBoundState()
                     modeChangeFailureEventChannel.send(result.failure)
                 }
             }
