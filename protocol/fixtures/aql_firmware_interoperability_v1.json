@@ -183,7 +183,8 @@
       ],
       "light.preview.set": [
         "DeviceLightPreviewSetPayload.Scene",
-        "DeviceLightPreviewSetPayload.VirtualTime"
+        "DeviceLightPreviewSetPayload.VirtualTime",
+        "DeviceLightPreviewSetPayload.CustomDay"
       ],
       "light.temperature-protection.set": [
         "DeviceLightTemperatureProtectionSetPayload"
@@ -354,6 +355,13 @@
       "fields": [
         "virtualTimeMs",
         "durationMs"
+      ]
+    },
+    "DeviceLightPreviewSetPayload.CustomDay": {
+      "source": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/light/DeviceLightModels.kt",
+      "fields": [
+        "playback",
+        "points"
       ]
     },
     "DeviceLightScene": {
