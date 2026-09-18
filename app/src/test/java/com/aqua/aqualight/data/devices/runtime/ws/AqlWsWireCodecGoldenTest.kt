@@ -24,6 +24,7 @@ class AqlWsWireCodecGoldenTest {
     private val codec = AqlWsWireCodec()
 
     @Test
+    @Suppress("LongMethod")
     fun `shared golden handshake and signed runtime frames are interoperable`() {
         val inputs = fixture.getJSONObject("testInputs")
         val handshake = fixture.getJSONObject("handshake")

@@ -158,6 +158,7 @@ class KnownDevicesStoreReducerTest {
         KnownDevicesStoreReducer.validate(invalid)
     }
 
+    @Suppress("LongMethod")
     private fun snapshot(
         uid: String,
         customName: String

@@ -108,6 +108,7 @@ class DeviceLightV1ContractTest {
     }
 
     @Test
+    @Suppress("LongMethod")
     fun `every Light V1 request serializer emits exact firmware keys and tuple width`() {
         val wrgb = DeviceLightScene.wrgb(10, 20, 30, 40)
         val rgb = DeviceLightScene.rgb(10, 20, 30)
