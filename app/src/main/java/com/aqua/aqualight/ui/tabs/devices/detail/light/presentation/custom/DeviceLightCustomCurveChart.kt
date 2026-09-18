@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -196,7 +197,7 @@ private fun DrawScope.drawCurveContent(
     state: DeviceLightCustomCurveUiState,
     visuals: DeviceLightCustomVisuals
 ) {
-    drawCurveGrid(visuals.colors.card, CHART_TIME_DIVISIONS)
+    drawCurveGrid(visuals.colors.card, CHART_HOURLY_GRID_DIVISIONS)
     drawPlayheadGuide(
         state.previewTimeMs,
         CHART_WINDOW.startMs,
@@ -224,15 +225,23 @@ private fun DrawScope.drawCurveContent(
 
 @Composable
 private fun HourAxis(visuals: DeviceLightCustomVisuals) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(start = CHART_PERCENT_AXIS_WIDTH_DP.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
+    val labelWidth = HOUR_AXIS_LABEL_WIDTH_DP.dp
+    BoxWithConstraints(
+        modifier = Modifier.fillMaxWidth().padding(start = CHART_PERCENT_AXIS_WIDTH_DP.dp)
     ) {
-        CHART_HOUR_LABELS.forEach { hour ->
-            BasicText(
-                text = hour.toString().padStart(TIME_DIGITS, '0'),
-                style = visuals.typography.micro
-            )
+        CHART_HOUR_LABELS.forEachIndexed { index, hour ->
+            val fraction = index / CHART_TIME_DIVISIONS.toFloat()
+            Box(
+                modifier = Modifier
+                    .absoluteOffset(x = maxWidth * fraction - labelWidth / 2f)
+                    .width(labelWidth),
+                contentAlignment = Alignment.Center
+            ) {
+                BasicText(
+                    text = hour.toString().padStart(TIME_DIGITS, '0'),
+                    style = visuals.typography.micro
+                )
+            }
         }
     }
 }
@@ -287,7 +296,9 @@ private const val GLYPH_END_X = 0.88f
 private const val GLYPH_END_Y = 0.23f
 private const val HEADER_ICON_GAP_DP = 10
 private const val CHART_TIME_DIVISIONS = 6
+private const val CHART_HOURLY_GRID_DIVISIONS = 24
 private const val HOURS_PER_GRID_DIVISION = 4
+private const val HOUR_AXIS_LABEL_WIDTH_DP = 24
 private const val POINT_HIT_RADIUS_DP = 24
 private const val TIME_DIGITS = 2
 private const val LEGEND_ITEM_PADDING_DP = 11
