@@ -30,17 +30,26 @@ interface DeviceLightControlOperations {
 
 sealed interface DeviceLightModeMutationResult {
     data class Reconciled(
-        val snapshot: DeviceLightControlSnapshot
+        val snapshot: DeviceLightControlSnapshot,
+        val diagnostic: DeviceLightModeDiagnostic? = null
     ) : DeviceLightModeMutationResult
 
     data class Committed(
-        val mode: DeviceLightControlMode
+        val mode: DeviceLightControlMode,
+        val diagnostic: DeviceLightModeDiagnostic? = null
     ) : DeviceLightModeMutationResult
 
     data class Failed(
-        val failure: DeviceLightControlFailure
+        val failure: DeviceLightControlFailure,
+        val diagnostic: DeviceLightModeDiagnostic? = null
     ) : DeviceLightModeMutationResult
 }
+
+data class DeviceLightModeDiagnostic(
+    val stage: String,
+    val requestedMode: DeviceLightControlMode,
+    val details: List<String>
+)
 
 sealed interface DeviceLightControlResult {
     data class Available(

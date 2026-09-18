@@ -1,6 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ViewCompositionStrategy
@@ -33,6 +34,7 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
 
     private var _binding: FragmentDeviceLightRootBinding? = null
     private val binding get() = _binding!!
+    private var lastModeDiagnosticLog: String? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -227,6 +229,12 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
 
         setupHeader(state)
         setFragmentGlobalLoading(state.showBlockingPreparation)
+        state.modeDiagnostic?.toDiagnosticText()?.let { diagnostic ->
+            if (diagnostic != lastModeDiagnosticLog) {
+                Log.e(MODE_DIAGNOSTIC_TAG, diagnostic)
+                lastModeDiagnosticLog = diagnostic
+            }
+        }
     }
 
     override fun onDestroyView() {
@@ -234,3 +242,5 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
         super.onDestroyView()
     }
 }
+
+private const val MODE_DIAGNOSTIC_TAG = "AquaLightModeDiag"

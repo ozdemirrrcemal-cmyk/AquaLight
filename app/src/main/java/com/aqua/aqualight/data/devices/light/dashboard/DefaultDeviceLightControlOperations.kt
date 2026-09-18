@@ -7,6 +7,7 @@ import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControl
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlMode
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlOperations
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlResult
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightModeDiagnostic
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightModeMutationResult
 import com.aqua.aqualight.application.devices.light.dashboard.matchesLightControlSurface
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemOperations
@@ -87,7 +88,17 @@ internal class DefaultDeviceLightControlOperations(
         deviceUid: String,
         mode: DeviceLightControlMode
     ): DeviceLightModeMutationResult = when (val resolved = resolveRuntime(deviceUid)) {
-        is RuntimeResolution.Failed -> mutationFailed(resolved.failure)
+        is RuntimeResolution.Failed -> mutationFailed(
+            failure = resolved.failure,
+            diagnostic = DeviceLightModeDiagnostic(
+                stage = "PRECONDITION_FAILED",
+                requestedMode = mode,
+                details = listOf(
+                    "expectedWireMode=" + mode.toFirmwareMode().wireValue,
+                    "failure=" + resolved.failure
+                )
+            )
+        )
         is RuntimeResolution.Ready -> resolved.commitMode(mode, systemOperations)
     }
 
@@ -128,8 +139,19 @@ private suspend fun RuntimeResolution.Ready.commitMode(
     )
 } catch (cancellation: CancellationException) {
     throw cancellation
-} catch (_: Exception) {
-    mutationFailed(DeviceLightControlFailure.INVALID_DATA)
+} catch (error: Exception) {
+    mutationFailed(
+        failure = DeviceLightControlFailure.INVALID_DATA,
+        diagnostic = DeviceLightModeDiagnostic(
+            stage = "ANDROID_EXCEPTION",
+            requestedMode = mode,
+            details = listOf(
+                "expectedWireMode=" + mode.toFirmwareMode().wireValue,
+                "exception=" + error::class.java.name,
+                "message=" + error.message.orEmpty()
+            )
+        )
+    )
 }
 
 private fun DeviceRuntimeCommandOutcome<DeviceLightControlSetResult>.toModeMutationResult(
@@ -144,7 +166,18 @@ private fun DeviceRuntimeCommandOutcome<DeviceLightControlSetResult>.toModeMutat
         firmwareMode = firmwareMode,
         systemOperations = systemOperations
     )
-    else -> mutationFailed(toControlFailure())
+    else -> {
+        val failure = toControlFailure()
+        mutationFailed(
+            failure = failure,
+            diagnostic = toModeDiagnostic(
+                stage = "COMMAND_FAILED",
+                requestedMode = requestedMode,
+                expectedWireMode = firmwareMode.wireValue,
+                failure = failure
+            )
+        )
+    }
 }
 
 private fun RuntimeResolution.Ready.confirmCommittedMode(
@@ -153,16 +186,47 @@ private fun RuntimeResolution.Ready.confirmCommittedMode(
     firmwareMode: DeviceLightMode,
     systemOperations: DeviceLightSystemOperations
 ): DeviceLightModeMutationResult {
+    val baseDiagnostic = outcome.toModeDiagnostic(
+        stage = "ACK_RECEIVED",
+        requestedMode = requestedMode,
+        expectedWireMode = firmwareMode.wireValue,
+        actualWireMode = outcome.value.mode.wireValue
+    )
     if (outcome.value.mode != firmwareMode) {
-        return mutationFailed(DeviceLightControlFailure.INVALID_DATA)
+        return mutationFailed(
+            failure = DeviceLightControlFailure.INVALID_DATA,
+            diagnostic = baseDiagnostic.copy(
+                stage = "ACK_MODE_MISMATCH",
+                details = baseDiagnostic.details + "failure=INVALID_DATA"
+            )
+        )
     }
     modules.scheduleLightControlReconciliation(deviceUid, firmwareMode)
-    val snapshot = (currentControl(systemOperations) as? DeviceLightControlResult.Available)
+    val current = currentControl(systemOperations)
+    val authoritativeMode = (current as? DeviceLightControlResult.Available)
         ?.snapshot
-        ?.takeIf { current -> current.hero.mode == requestedMode }
-    return snapshot
-        ?.let(DeviceLightModeMutationResult::Reconciled)
-        ?: DeviceLightModeMutationResult.Committed(requestedMode)
+        ?.hero
+        ?.mode
+    val snapshot = (current as? DeviceLightControlResult.Available)
+        ?.snapshot
+        ?.takeIf { candidate -> candidate.hero.mode == requestedMode }
+    return if (snapshot != null) {
+        DeviceLightModeMutationResult.Reconciled(
+            snapshot = snapshot,
+            diagnostic = baseDiagnostic.copy(
+                stage = "ACK_RECONCILED",
+                details = baseDiagnostic.details + ("authoritativeMode=" + snapshot.hero.mode)
+            )
+        )
+    } else {
+        DeviceLightModeMutationResult.Committed(requestedMode).copy(
+            diagnostic = baseDiagnostic.copy(
+                stage = "ACK_COMMITTED_READBACK_PENDING",
+                details = baseDiagnostic.details +
+                    "authoritativeMode=" + (authoritativeMode?.toString() ?: "UNAVAILABLE")
+            )
+        )
+    }
 }
 
 private suspend fun RuntimeResolution.Ready.refreshControl(
@@ -276,8 +340,13 @@ private fun String.toDeviceUidOrNull(): DeviceUid? = trim()
     .takeIf(String::isNotBlank)
     ?.let(::DeviceUid)
 
-private fun mutationFailed(failure: DeviceLightControlFailure) =
-    DeviceLightModeMutationResult.Failed(failure)
+private fun mutationFailed(
+    failure: DeviceLightControlFailure,
+    diagnostic: DeviceLightModeDiagnostic? = null
+) = DeviceLightModeMutationResult.Failed(
+    failure = failure,
+    diagnostic = diagnostic
+)
 
 private val SUPPORTED_LIGHT_PRODUCT_KEYS = DeviceLightProduct.entries
     .mapTo(hashSetOf()) { product -> product.wireValue }

@@ -18,6 +18,7 @@ import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightChannel
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightAdaptationSummary
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlResult
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlSnapshot
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightModeDiagnostic
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightModeMutationResult
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightHeroSnapshot
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanSnapshot
@@ -57,6 +58,7 @@ class DeviceLightRootViewModel(
     private var latestRootSnapshot: DeviceRootSnapshot? = null
     private var currentControlSnapshot: DeviceLightControlSnapshot? = null
     private var committedMode: DeviceLightControlMode? = null
+    private var modeDiagnostic: DeviceLightModeDiagnostic? = null
     private var surfacePreparationPending = false
     private var rootObserveJob: Job? = null
     private var controlObserveJob: Job? = null
@@ -82,6 +84,7 @@ class DeviceLightRootViewModel(
         boundDeviceUid = deviceUid
         currentControlSnapshot = null
         committedMode = null
+        modeDiagnostic = null
         latestRootSnapshot = rootOperations.current(deviceUid)
         acceptControlResult(lightControlOperations.currentControl(deviceUid))
         val preparedSurfaceStillCurrent = preparedHandoff &&
@@ -204,6 +207,7 @@ class DeviceLightRootViewModel(
             activeAutomaticProgramId = currentControlSnapshot?.activeAutomaticProgramId,
             hero = currentControlSnapshot?.hero ?: DeviceLightHeroSnapshot(),
             selectedMode = committedMode ?: currentControlSnapshot?.hero?.mode,
+            modeDiagnostic = modeDiagnostic,
             adaptation = currentControlSnapshot?.adaptation ?: DeviceLightAdaptationSummary(),
             systemSupported = currentControlSnapshot?.systemSupported == true,
             system = currentControlSnapshot?.system,
@@ -220,6 +224,7 @@ class DeviceLightRootViewModel(
         latestRootSnapshot = null
         currentControlSnapshot = null
         committedMode = null
+        modeDiagnostic = null
         surfacePreparationPending = false
         modeChangeJob = null
         _uiState.value = DeviceLightRootUiState()
@@ -235,6 +240,7 @@ class DeviceLightRootViewModel(
             when (val result = lightControlOperations.setMode(deviceUid, mode)) {
                 is DeviceLightModeMutationResult.Reconciled -> {
                     if (boundDeviceUid == deviceUid) {
+                        modeDiagnostic = result.diagnostic
                         committedMode = null
                         acceptControlResult(DeviceLightControlResult.Available(result.snapshot))
                         renderBoundState()
@@ -242,11 +248,14 @@ class DeviceLightRootViewModel(
                 }
                 is DeviceLightModeMutationResult.Committed -> {
                     if (boundDeviceUid == deviceUid) {
+                        modeDiagnostic = result.diagnostic
                         committedMode = result.mode
                         renderBoundState()
                     }
                 }
                 is DeviceLightModeMutationResult.Failed -> if (boundDeviceUid == deviceUid) {
+                    modeDiagnostic = result.diagnostic
+                    renderBoundState()
                     modeChangeFailureEventChannel.send(result.failure)
                 }
             }
@@ -274,6 +283,7 @@ data class DeviceLightRootUiState(
     val activeAutomaticProgramId: String? = null,
     val hero: DeviceLightHeroSnapshot = DeviceLightHeroSnapshot(),
     val selectedMode: DeviceLightControlMode? = null,
+    val modeDiagnostic: DeviceLightModeDiagnostic? = null,
     val adaptation: DeviceLightAdaptationSummary = DeviceLightAdaptationSummary(),
     val systemSupported: Boolean = false,
     val system: DeviceLightSystemSummary? = null,

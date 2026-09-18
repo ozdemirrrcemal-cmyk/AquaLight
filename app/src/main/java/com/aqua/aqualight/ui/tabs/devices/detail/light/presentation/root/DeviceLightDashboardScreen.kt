@@ -74,6 +74,14 @@ private fun LazyListScope.lightControlItems(
             modifier = Modifier.fillMaxWidth()
         )
     }
+    state.modeDiagnostic?.let { diagnostic ->
+        item(key = "light-mode-diagnostics") {
+            DeviceLightModeDiagnosticsCard(
+                diagnostic = diagnostic,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
     item(key = "light-controls-header") {
         DeviceLightControlsHeader(
             enabled = state.contentEnabled,

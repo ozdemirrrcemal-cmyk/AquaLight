@@ -424,4 +424,5 @@
     <string name="device_light_system_operation_error">System settings could not be updated.</string>
     <string name="device_light_system_data_unavailable">Live system data is unavailable. Reconnect to the device and try again.</string>
     <string name="device_light_mode_change_error">Working mode could not be changed. Check the device connection and try again.</string>
+    <string name="device_light_mode_diagnostics_title">Mode diagnostics · temporary</string>
 </resources>
