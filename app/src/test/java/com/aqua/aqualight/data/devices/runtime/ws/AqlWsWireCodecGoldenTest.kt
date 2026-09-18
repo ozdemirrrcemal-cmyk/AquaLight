@@ -24,11 +24,20 @@ class AqlWsWireCodecGoldenTest {
     private val codec = AqlWsWireCodec()
 
     @Test
-    @Suppress("LongMethod")
     fun `shared golden handshake and signed runtime frames are interoperable`() {
         val inputs = fixture.getJSONObject("testInputs")
         val handshake = fixture.getJSONObject("handshake")
         val runtime = fixture.getJSONObject("runtime")
+        withAuthenticatedSession(inputs, handshake) { session ->
+            assertRuntimeFrames(inputs, runtime, session)
+        }
+    }
+
+    private fun withAuthenticatedSession(
+        inputs: JSONObject,
+        handshake: JSONObject,
+        block: (AqlWsSecureSession) -> Unit
+    ) {
         val expectedDeviceUid = inputs.getString("deviceUid")
 
         val helloFrame = codec.decode(
@@ -61,10 +70,17 @@ class AqlWsWireCodecGoldenTest {
             secureSession = null
         ) as AqlWsDecodedFrame.Authenticated
         pending.close()
+        authenticated.secureSession.use(block)
+    }
 
-        authenticated.secureSession.use { session ->
-            val expectedCommand = runtime.getJSONObject("clientCommand")
-            val commandWire = codec.encode(
+    private fun assertRuntimeFrames(
+        inputs: JSONObject,
+        runtime: JSONObject,
+        session: AqlWsSecureSession
+    ) {
+        val expectedDeviceUid = inputs.getString("deviceUid")
+        val expectedCommand = runtime.getJSONObject("clientCommand")
+        val commandWire = codec.encode(
                 message = AqlWsOutgoingMessage.Command(
                     id = expectedCommand.getString("id"),
                     module = expectedCommand.getString("module"),
@@ -73,47 +89,46 @@ class AqlWsWireCodecGoldenTest {
                 ),
                 secureSession = session
             )
-            assertJsonEquals(expectedCommand, JSONObject(commandWire))
-            assertFalse(commandWire.contains(inputs.getString("runtimeToken")))
+        assertJsonEquals(expectedCommand, JSONObject(commandWire))
+        assertFalse(commandWire.contains(inputs.getString("runtimeToken")))
 
-            val response = codec.decode(
+        val response = codec.decode(
                 raw = runtime.getJSONObject("deviceResponse").toString(),
                 expectedDeviceUid = expectedDeviceUid,
                 pendingAuthentication = null,
                 secureSession = session
             ) as AqlWsDecodedFrame.Runtime
-            val typedResponse = response.message as AqlWsIncomingMessage.Response
-            assertTrue(typedResponse.ok)
-            assertEquals("192.168.1.42", typedResponse.data.getString("ip"))
+        val typedResponse = response.message as AqlWsIncomingMessage.Response
+        assertTrue(typedResponse.ok)
+        assertEquals("192.168.1.42", typedResponse.data.getString("ip"))
 
-            val event = codec.decode(
+        val event = codec.decode(
                 raw = runtime.getJSONObject("deviceEvent").toString(),
                 expectedDeviceUid = expectedDeviceUid,
                 pendingAuthentication = null,
                 secureSession = session
             ) as AqlWsDecodedFrame.Runtime
-            val typedEvent = event.message as AqlWsIncomingMessage.Event
-            assertEquals(42, typedEvent.data.getInt("progress"))
+        val typedEvent = event.message as AqlWsIncomingMessage.Event
+        assertEquals(42, typedEvent.data.getInt("progress"))
 
-            val error = codec.decode(
+        val error = codec.decode(
                 raw = runtime.getJSONObject("deviceError").toString(),
                 expectedDeviceUid = expectedDeviceUid,
                 pendingAuthentication = null,
                 secureSession = session
             ) as AqlWsDecodedFrame.Runtime
-            val typedError = error.message as AqlWsIncomingMessage.Error
-            assertEquals("invalid_field", typedError.code)
-            assertEquals("level", typedError.field)
-            assertEquals("Command rejected.", typedError.message)
+        val typedError = error.message as AqlWsIncomingMessage.Error
+        assertEquals("invalid_field", typedError.code)
+        assertEquals("level", typedError.field)
+        assertEquals("Command rejected.", typedError.message)
 
-            assertProtocolError(AqlWsProtocolError.REPLAY_OR_INVALID_MAC) {
+        assertProtocolError(AqlWsProtocolError.REPLAY_OR_INVALID_MAC) {
                 codec.decode(
                     raw = runtime.getJSONObject("deviceResponse").toString(),
                     expectedDeviceUid = expectedDeviceUid,
                     pendingAuthentication = null,
                     secureSession = session
                 )
-            }
         }
     }
 

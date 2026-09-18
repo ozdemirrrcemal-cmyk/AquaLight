@@ -158,14 +158,24 @@ class KnownDevicesStoreReducerTest {
         KnownDevicesStoreReducer.validate(invalid)
     }
 
-    @Suppress("LongMethod")
-    private fun snapshot(
-        uid: String,
-        customName: String
-    ): DeviceSnapshot {
-        return DeviceSnapshot(
-            identity = DeviceIdentity(
-                uid = DeviceUid(uid),
+    private fun snapshot(uid: String, customName: String): DeviceSnapshot = DeviceSnapshot(
+        identity = identity(uid, customName),
+        product = product(uid),
+        firmwareVersion = "1.2.3",
+        firmwareBuild = "42",
+        apiVersion = "2",
+        protocolVersion = "3",
+        endpoint = endpoint(),
+        capabilities = capabilities(),
+        limits = limits(),
+        supportedFeatures = listOf("manual", "program"),
+        supportedScreens = listOf("light", "settings"),
+        modules = listOf("light", "fan"),
+        lastSeenAtMillis = 1234L
+    )
+
+    private fun identity(uid: String, customName: String) = DeviceIdentity(
+        uid = DeviceUid(uid),
                 shortId = "short-$uid",
                 chipId = "chip-$uid",
                 espChipId = "esp-$uid",
@@ -177,8 +187,9 @@ class KnownDevicesStoreReducerTest {
                 customName = customName,
                 setupCode = "123456",
                 setupSsid = "Aqua-$uid"
-            ),
-            product = DeviceProduct(
+            )
+
+    private fun product(uid: String) = DeviceProduct(
                 brand = "AquaLight",
                 productId = "product-$uid",
                 productKey = "key-$uid",
@@ -191,12 +202,9 @@ class KnownDevicesStoreReducerTest {
                 skuCode = "code-$uid",
                 setupCode = "setup-$uid",
                 hardwareRevision = "rev-a"
-            ),
-            firmwareVersion = "1.2.3",
-            firmwareBuild = "42",
-            apiVersion = "2",
-            protocolVersion = "3",
-            endpoint = DeviceRuntimeEndpoint(
+            )
+
+    private fun endpoint() = DeviceRuntimeEndpoint(
                 ip = "192.168.1.20",
                 wifiMode = "sta",
                 wifiConnected = true,
@@ -207,8 +215,9 @@ class KnownDevicesStoreReducerTest {
                 wsProtocol = "aqualight",
                 wsProtocolVersion = 1,
                 discoveryPort = 4210
-            ),
-            capabilities = DeviceCapabilities(
+            )
+
+    private fun capabilities() = DeviceCapabilities(
                 light = true,
                 manualLight = true,
                 lightProgram = true,
@@ -221,20 +230,15 @@ class KnownDevicesStoreReducerTest {
                 dosing = false,
                 timeSync = true,
                 ota = true
-            ),
-            limits = DeviceLimits(
+            )
+
+    private fun limits() = DeviceLimits(
                 lightChannelCount = 6,
                 fanOutputCount = 2,
                 temperatureSensorCount = 1,
                 timerChannelCount = 4,
                 dosingChannelCount = 0
-            ),
-            supportedFeatures = listOf("manual", "program"),
-            supportedScreens = listOf("light", "settings"),
-            modules = listOf("light", "fan"),
-            lastSeenAtMillis = 1234L
-        )
-    }
+            )
 
     private fun emptyStore(): KnownDevicesStore {
         return KnownDevicesStore.getDefaultInstance()

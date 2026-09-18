@@ -381,9 +381,12 @@ class AqlFirmwareInteroperabilityTest {
         "DeviceFirmwareOtaStartPayload" to otaStartPayload().keySetExact()
     )
 
-    @Suppress("LongMethod")
     private fun lightSerializerFields(): Map<String, Set<String>> {
         val scene = DeviceLightScene.wrgb(red = 10, green = 20, blue = 30, white = 40)
+        return lightCoreSerializerFields(scene) + lightPreviewSerializerFields(scene)
+    }
+
+    private fun lightCoreSerializerFields(scene: DeviceLightScene): Map<String, Set<String>> {
         val create = DeviceLightAutoProgramCreatePayload(
             expectedRevision = 1,
             enabled = true,
@@ -426,6 +429,11 @@ class AqlFirmwareInteroperabilityTest {
                 DeviceLightAcclimationStartPayload(1, 50, 30).toJson().keySetExact(),
             "DeviceLightAcclimationStopPayload" to
                 DeviceLightAcclimationStopPayload(1).toJson().keySetExact(),
+        )
+    }
+
+    private fun lightPreviewSerializerFields(scene: DeviceLightScene): Map<String, Set<String>> =
+        linkedMapOf(
             "DeviceLightPreviewSetPayload.Scene" to
                 DeviceLightPreviewSetPayload.Scene(scene, 3_000).toJson().keySetExact(),
             "DeviceLightPreviewSetPayload.VirtualTime" to

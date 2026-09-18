@@ -108,15 +108,23 @@ class DeviceLightV1ContractTest {
     }
 
     @Test
-    @Suppress("LongMethod")
     fun `every Light V1 request serializer emits exact firmware keys and tuple width`() {
         val wrgb = DeviceLightScene.wrgb(10, 20, 30, 40)
         val rgb = DeviceLightScene.rgb(10, 20, 30)
+        assertBasicLightSerializers(wrgb, rgb)
+        assertProgramSerializers(wrgb)
+        assertCustomInstallSerializers(wrgb, rgb)
+        assertPreviewSerializers(wrgb)
+    }
+
+    private fun assertBasicLightSerializers(wrgb: DeviceLightScene, rgb: DeviceLightScene) {
         assertKeys(DeviceLightControlSetPayload(DeviceLightMode.AUTO).toJson(), "mode")
         assertKeys(DeviceLightManualSetPayload(wrgb).toJson(), "scene")
         assertKeys(wrgb.toJson(), "redPercent", "greenPercent", "bluePercent", "whitePercent")
         assertKeys(rgb.toJson(), "redPercent", "greenPercent", "bluePercent")
+    }
 
+    private fun assertProgramSerializers(wrgb: DeviceLightScene) {
         assertKeys(autoCreate(wrgb).toJson(), *AUTO_CREATE_FIELDS)
         assertKeys(autoUpdate(wrgb).toJson(), *AUTO_UPDATE_FIELDS)
         assertKeys(
@@ -130,7 +138,12 @@ class DeviceLightV1ContractTest {
             "expectedRevision",
             "programId"
         )
+    }
 
+    private fun assertCustomInstallSerializers(
+        wrgb: DeviceLightScene,
+        rgb: DeviceLightScene
+    ) {
         val wrgbCustom = DeviceLightCustomInstallPayload(
             expectedRevision = 2,
             weekdaysMask = 127,
@@ -144,7 +157,9 @@ class DeviceLightV1ContractTest {
         assertKeys(wrgbCustom, "expectedRevision", "weekdaysMask", "points")
         assertEquals(5, wrgbCustom.getJSONArray("points").getJSONArray(0).length())
         assertEquals(4, rgbCustom.getJSONArray("points").getJSONArray(0).length())
+    }
 
+    private fun assertPreviewSerializers(wrgb: DeviceLightScene) {
         assertKeys(
             DeviceLightAcclimationStartPayload(1, 50, 30).toJson(),
             "expectedRevision",
