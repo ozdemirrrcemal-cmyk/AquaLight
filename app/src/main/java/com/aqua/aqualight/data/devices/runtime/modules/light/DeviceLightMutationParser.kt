@@ -144,7 +144,7 @@ internal object DeviceLightMutationParser {
             remainingMs = data.requireLightLong(
                 "remainingMs",
                 0,
-                DeviceLightRuntimeContract.Limit.MAX_PREVIEW_DURATION_MS
+                DeviceLightRuntimeContract.Limit.MAX_PREVIEW_REMAINING_MS
             ),
             event = requireStatusEvent(data)
         )

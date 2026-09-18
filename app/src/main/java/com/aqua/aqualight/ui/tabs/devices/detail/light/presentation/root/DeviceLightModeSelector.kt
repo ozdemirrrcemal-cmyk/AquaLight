@@ -47,50 +47,59 @@ internal fun DeviceLightModeSelector(
             text = stringResource(R.string.device_light_mode_selector_title),
             style = typography.title.copy(color = colors.primaryText)
         )
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(AquaLightDashboardGeometry.modeSelectorHeight)
-                .clip(AquaLightDashboardGeometry.modeSelectorShape)
-                .background(colors.mediaSurface)
-                .border(
-                    width = AquaLightDashboardGeometry.modeSelectorOutlineWidth,
-                    color = colors.outline,
-                    shape = AquaLightDashboardGeometry.modeSelectorShape
-                )
-                .padding(AquaLightDashboardGeometry.modeSelectorOuterPadding),
-            horizontalArrangement = Arrangement.spacedBy(
-                AquaLightDashboardGeometry.modeSelectorSegmentGap
-            ),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            deviceLightModeDisplayOrder.forEach { mode ->
-                val selected = mode == selectedMode
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(AquaLightDashboardGeometry.modeSelectorSegmentHeight)
-                        .clip(AquaLightDashboardGeometry.modeSelectorSegmentShape)
-                        .clickable(
-                            enabled = enabled && !selected,
-                            onClick = { onModeSelected(mode) }
-                        )
-                        .background(
-                            if (selected) colors.accent else colors.mediaSurface
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    BasicText(
-                        text = stringResource(mode.labelRes()),
-                        style = typography.body.copy(
-                            color = if (selected) {
-                                colors.primaryText
-                            } else {
-                                colors.secondaryText
-                            }
-                        )
+        DeviceLightModeSegments(
+            selectedMode = selectedMode,
+            enabled = enabled,
+            onModeSelected = onModeSelected
+        )
+    }
+}
+
+@Composable
+private fun DeviceLightModeSegments(
+    selectedMode: DeviceLightControlMode?,
+    enabled: Boolean,
+    onModeSelected: (DeviceLightControlMode) -> Unit
+) {
+    val colors = aquaLightDashboardColors()
+    val typography = aquaLightDashboardTypography(colors)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(AquaLightDashboardGeometry.modeSelectorHeight)
+            .clip(AquaLightDashboardGeometry.modeSelectorShape)
+            .background(colors.mediaSurface)
+            .border(
+                width = AquaLightDashboardGeometry.modeSelectorOutlineWidth,
+                color = colors.outline,
+                shape = AquaLightDashboardGeometry.modeSelectorShape
+            )
+            .padding(AquaLightDashboardGeometry.modeSelectorOuterPadding),
+        horizontalArrangement = Arrangement.spacedBy(
+            AquaLightDashboardGeometry.modeSelectorSegmentGap
+        ),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        deviceLightModeDisplayOrder.forEach { mode ->
+            val selected = mode == selectedMode
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(AquaLightDashboardGeometry.modeSelectorSegmentHeight)
+                    .clip(AquaLightDashboardGeometry.modeSelectorSegmentShape)
+                    .clickable(
+                        enabled = enabled && !selected,
+                        onClick = { onModeSelected(mode) }
                     )
-                }
+                    .background(if (selected) colors.accent else colors.mediaSurface),
+                contentAlignment = Alignment.Center
+            ) {
+                BasicText(
+                    text = stringResource(mode.labelRes()),
+                    style = typography.body.copy(
+                        color = if (selected) colors.primaryText else colors.secondaryText
+                    )
+                )
             }
         }
     }

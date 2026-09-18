@@ -565,7 +565,7 @@ private fun requireRevision(value: Long) =
     require(value in 0..DeviceLightRuntimeContract.Limit.UINT32_MAX)
 private fun requireProgramId(value: String) = require(PROGRAM_ID.matches(value))
 private fun requirePreviewDuration(value: Long) =
-    require(value in 1..DeviceLightRuntimeContract.Limit.MAX_PREVIEW_DURATION_MS)
+    require(value in 1..DeviceLightRuntimeContract.Limit.MAX_TIMED_PREVIEW_DURATION_MS)
 
 private fun <T> enumByWire(value: String, entries: Iterable<T>, wire: (T) -> String): T =
     entries.singleOrNull { wire(it) == value } ?: error("Unknown Light V1 enum value: $value")

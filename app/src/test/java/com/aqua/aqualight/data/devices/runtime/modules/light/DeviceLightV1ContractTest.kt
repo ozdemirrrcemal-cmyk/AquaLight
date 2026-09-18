@@ -25,6 +25,18 @@ class DeviceLightV1ContractTest {
     }
 
     @Test
+    fun `Custom day preview pins the firmware feature revision`() {
+        assertEquals(
+            "feature/light-mode-custom-day-preview",
+            DeviceLightRuntimeContract.CUSTOM_DAY_PREVIEW_FIRMWARE_BRANCH
+        )
+        assertEquals(
+            "8b0f19bcf135d9450627a84582098add54524379",
+            DeviceLightRuntimeContract.CUSTOM_DAY_PREVIEW_FIRMWARE_COMMIT
+        )
+    }
+
+    @Test
     fun `both product status documents use one strict Light V1 parser`() {
         val wrgb = DeviceLightStatusParser.parse(
             DeviceLightRuntimeFixtures.status(DeviceLightProduct.WRGB_PRO_ELITE)
@@ -191,15 +203,37 @@ class DeviceLightV1ContractTest {
     }
 
     @Test
+    fun `timed preview rejects durations above the firmware maximum`() {
+        val scene = DeviceLightScene.wrgb(0, 0, 0, 0)
+        val maximum = DeviceLightRuntimeContract.Limit.MAX_TIMED_PREVIEW_DURATION_MS
+
+        assertTrue(runCatching {
+            DeviceLightPreviewSetPayload.Scene(scene, maximum).toJson()
+        }.isSuccess)
+        assertTrue(runCatching {
+            DeviceLightPreviewSetPayload.Scene(scene, maximum + 1L).toJson()
+        }.isFailure)
+        assertTrue(runCatching {
+            DeviceLightPreviewSetPayload.VirtualTime(0L, maximum + 1L).toJson()
+        }.isFailure)
+    }
+
+    @Test
     fun `preview response accepts the full custom day duration`() {
         val result = DeviceLightMutationParser.parsePreviewSet(
             JSONObject()
                 .put("active", true)
-                .put("remainingMs", 24_000)
+                .put(
+                    "remainingMs",
+                    DeviceLightRuntimeContract.Limit.CUSTOM_DAY_PREVIEW_DURATION_MS
+                )
                 .put("event", DeviceLightRuntimeContract.Event.STATUS_CHANGED)
         )
 
-        assertEquals(24_000L, result.remainingMs)
+        assertEquals(
+            DeviceLightRuntimeContract.Limit.CUSTOM_DAY_PREVIEW_DURATION_MS,
+            result.remainingMs
+        )
     }
 
     @Test

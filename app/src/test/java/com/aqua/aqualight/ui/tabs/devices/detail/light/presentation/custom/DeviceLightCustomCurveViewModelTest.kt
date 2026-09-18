@@ -132,6 +132,21 @@ class DeviceLightCustomCurveViewModelTest {
     }
 
     @Test
+    fun `custom day preview clock maps real playback to the full virtual day`() {
+        val realHourMs = CUSTOM_DAY_PREVIEW_DURATION_MS / HOURS_PER_PREVIEW_DAY
+
+        assertEquals(MILLIS_PER_HOUR, customDayPreviewVirtualTimeMs(realHourMs))
+        assertEquals(
+            MILLIS_PER_DAY / 2,
+            customDayPreviewVirtualTimeMs(CUSTOM_DAY_PREVIEW_DURATION_MS / 2)
+        )
+        assertEquals(
+            MILLIS_PER_DAY,
+            customDayPreviewVirtualTimeMs(CUSTOM_DAY_PREVIEW_DURATION_MS)
+        )
+    }
+
+    @Test
     fun `preview never opens blocking loading`() = runTest {
         val previewGate = CompletableDeferred<Unit>()
         val custom = FakeCustomOperations(snapshot(), previewGate)
@@ -370,6 +385,7 @@ class DeviceLightCustomCurveViewModelTest {
         const val UPDATED_BLUE = 73
         const val UPDATED_RED = 64
         const val SUNDAY_INDEX = 6
+        const val HOURS_PER_PREVIEW_DAY = 24L
         val WRGB_CHANNELS = listOf(
             DeviceLightCustomChannel.RED,
             DeviceLightCustomChannel.GREEN,

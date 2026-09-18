@@ -210,12 +210,8 @@ class DeviceLightRootViewModel(
     fun setMode(mode: DeviceLightControlMode) {
         val deviceUid = boundDeviceUid
         val state = _uiState.value
-        if (
-            deviceUid.isBlank() ||
-            !state.contentEnabled ||
-            state.hero.mode == mode ||
-            modeChangeJob?.isActive == true
-        ) return
+        if (deviceUid.isBlank() || !state.contentEnabled) return
+        if (state.hero.mode == mode || modeChangeJob?.isActive == true) return
 
         modeChangeJob = viewModelScope.launch {
             when (val result = lightControlOperations.setMode(deviceUid, mode)) {

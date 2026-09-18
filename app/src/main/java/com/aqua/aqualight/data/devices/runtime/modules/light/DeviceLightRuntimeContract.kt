@@ -4,6 +4,8 @@ package com.aqua.aqualight.data.devices.runtime.modules.light
 object DeviceLightRuntimeContract {
     const val FIRMWARE_REPOSITORY = "ozdemirrrcemal-cmyk/AquaLight-Firmware"
     const val PINNED_FIRMWARE_COMMIT = "7df97ce807ebb1e90ff63cc36206d6ce479a62fc"
+    const val CUSTOM_DAY_PREVIEW_FIRMWARE_BRANCH = "feature/light-mode-custom-day-preview"
+    const val CUSTOM_DAY_PREVIEW_FIRMWARE_COMMIT = "8b0f19bcf135d9450627a84582098add54524379"
     const val MODULE = "light"
     const val SCHEMA = "aqualight.light.v1"
     const val STORAGE_VERSION = 1
@@ -143,8 +145,9 @@ object DeviceLightRuntimeContract {
         const val GRAPH_SPAN_TUPLE_SIZE = 3
         const val GRAPH_SPAN_PROGRAM_ID_INDEX = 2
         const val DEFAULT_PREVIEW_DURATION_MS = 3_000L
+        const val MAX_TIMED_PREVIEW_DURATION_MS = 10_000L
         const val CUSTOM_DAY_PREVIEW_DURATION_MS = 24_000L
-        const val MAX_PREVIEW_DURATION_MS = CUSTOM_DAY_PREVIEW_DURATION_MS
+        const val MAX_PREVIEW_REMAINING_MS = CUSTOM_DAY_PREVIEW_DURATION_MS
         const val ACCLIMATION_START_PERCENT_MIN = 20
         const val ACCLIMATION_START_PERCENT_MAX = 90
         const val ACCLIMATION_START_PERCENT_STEP = 5

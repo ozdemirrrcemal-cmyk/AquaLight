@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomChannel
+import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomFailure
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomMutationResult
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomOperations
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomPoint
@@ -87,7 +88,7 @@ internal class DeviceLightCustomCurveViewModel(
                 when (result) {
                     is DeviceLightCustomReadResult.Available -> applySnapshot(result.snapshot)
                     is DeviceLightCustomReadResult.Failed -> if (!_uiState.value.initialLoading) {
-                        applyReadFailure(result.failure)
+                        _uiState.applyReadFailure(result.failure)
                     }
                 }
             }
@@ -111,7 +112,7 @@ internal class DeviceLightCustomCurveViewModel(
             when (val result = customOperations.read(deviceUid)) {
                 is DeviceLightCustomReadResult.Available -> applySnapshot(result.snapshot)
                 is DeviceLightCustomReadResult.Failed -> {
-                    applyReadFailure(result.failure)
+                    _uiState.applyReadFailure(result.failure)
                     emit(
                         DeviceLightCustomCurveEffect.ShowError(
                             result.failure.toCommercialLightError().messageRes
@@ -293,46 +294,40 @@ internal class DeviceLightCustomCurveViewModel(
     }
 
     private suspend fun playCustomDayPreview() {
+        val startedAtNanos = System.nanoTime()
         var elapsedMs = 0L
-        while (kotlinx.coroutines.currentCoroutineContext().isActive &&
+        while (
+            kotlinx.coroutines.currentCoroutineContext().isActive &&
             elapsedMs < CUSTOM_DAY_PREVIEW_DURATION_MS
         ) {
-            _uiState.update { it.copy(previewTimeMs = elapsedMs) }
-            delay(PREVIEW_FRAME_MS)
-            elapsedMs = (elapsedMs + PREVIEW_FRAME_MS)
-                .coerceAtMost(CUSTOM_DAY_PREVIEW_DURATION_MS)
+            elapsedMs = ((System.nanoTime() - startedAtNanos) / NANOS_PER_MILLISECOND)
+                .coerceIn(0L, CUSTOM_DAY_PREVIEW_DURATION_MS)
+            _uiState.update { state ->
+                state.copy(previewTimeMs = customDayPreviewVirtualTimeMs(elapsedMs))
+            }
+            if (elapsedMs < CUSTOM_DAY_PREVIEW_DURATION_MS) {
+                delay(PREVIEW_FRAME_MS)
+            }
         }
         if (!kotlinx.coroutines.currentCoroutineContext().isActive) return
 
         _uiState.update { it.copy(previewTimeMs = MILLIS_PER_DAY) }
-        restorePreviewToDeviceTime()
+        val deviceUid = boundDeviceUid.takeIf(String::isNotBlank)
+        if (deviceUid != null) {
+            val refreshed = customOperations.read(deviceUid)
+            val snapshot = (refreshed as? DeviceLightCustomReadResult.Available)?.snapshot
+                ?: (customOperations.current(deviceUid) as? DeviceLightCustomReadResult.Available)
+                    ?.snapshot
+            if (snapshot != null) {
+                applySnapshot(snapshot)
+                snapshot.currentTimeMs?.let { currentTimeMs ->
+                    _uiState.update { state ->
+                        state.copy(previewTimeMs = currentTimeMs.alignedTime())
+                    }
+                }
+            }
+        }
         _uiState.update { it.copy(operationInProgress = false) }
-    }
-
-    private suspend fun restorePreviewToDeviceTime() {
-        val deviceUid = boundDeviceUid.takeIf(String::isNotBlank) ?: return
-        val refreshed = customOperations.read(deviceUid)
-        val snapshot = (refreshed as? DeviceLightCustomReadResult.Available)?.snapshot
-            ?: (customOperations.current(deviceUid) as? DeviceLightCustomReadResult.Available)?.snapshot
-        snapshot ?: return
-        applySnapshot(snapshot)
-        snapshot.currentTimeMs?.let { currentTimeMs ->
-            _uiState.update { it.copy(previewTimeMs = currentTimeMs.alignedTime()) }
-        }
-    }
-
-    private fun applyReadFailure(
-        failure: com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomFailure
-    ) {
-        _uiState.update { state ->
-            state.copy(
-                connectionVisualState = failure.connectionState(),
-                initialLoading = false,
-                contentEnabled = state.channels.isNotEmpty(),
-                firmwareWriteAuthoritative = false,
-                readFailed = true
-            )
-        }
     }
 
     private fun setDraft(draft: DeviceLightCustomDraft, selectedTimeMs: Long?) {
@@ -351,6 +346,25 @@ internal class DeviceLightCustomCurveViewModel(
 
 }
 
+private fun MutableStateFlow<DeviceLightCustomCurveUiState>.applyReadFailure(
+    failure: DeviceLightCustomFailure
+) {
+    update { state ->
+        state.copy(
+            connectionVisualState = failure.connectionState(),
+            initialLoading = false,
+            contentEnabled = state.channels.isNotEmpty(),
+            firmwareWriteAuthoritative = false,
+            readFailed = true
+        )
+    }
+}
+
+internal fun customDayPreviewVirtualTimeMs(elapsedPreviewMs: Long): Long {
+    val elapsed = elapsedPreviewMs.coerceIn(0L, CUSTOM_DAY_PREVIEW_DURATION_MS)
+    return elapsed * MILLIS_PER_DAY / CUSTOM_DAY_PREVIEW_DURATION_MS
+}
+
 private fun DeviceLightCustomPointUiState.toApplicationPoint(): DeviceLightCustomPoint =
     DeviceLightCustomPoint(
         timeMs = timeMs,
@@ -367,3 +381,4 @@ private fun DeviceLightCustomChannelId.toApplicationChannel(): DeviceLightCustom
 }
 
 private const val PREVIEW_FRAME_MS = 16L
+private const val NANOS_PER_MILLISECOND = 1_000_000L
