@@ -37,8 +37,8 @@ internal fun DeviceLightStatus.toControlSnapshot(
         outputActive = outputActive,
         outputCondition = outputReason.toApplicationCondition(),
         outputHealthy = runtime.physicalOutputHealthy,
-        estimatedPowerWatts = power.estimatedFixturePowerW
-            ?.takeIf { power.available && power.estimatedFixturePowerAvailable },
+        estimatedPowerWatts = power.estimatedLedPowerW
+            ?.takeIf { power.available },
         estimatedColorTemperatureKelvin = color.estimatedCctK
             ?.takeIf { color.available && color.cctAvailable }
     ),

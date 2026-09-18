@@ -44,7 +44,7 @@ class DeviceLightControlSnapshotProjectionTest {
         assertEquals(true, snapshot.hero.outputActive)
         assertEquals(DeviceLightOutputCondition.ACTIVE, snapshot.hero.outputCondition)
         assertEquals(true, snapshot.hero.outputHealthy)
-        assertEquals(76.0, snapshot.hero.estimatedPowerWatts ?: Double.NaN, 0.0)
+        assertEquals(62.0, snapshot.hero.estimatedPowerWatts ?: Double.NaN, 0.0)
         assertEquals(5000, snapshot.hero.estimatedColorTemperatureKelvin)
         assertTrue(snapshot.adaptation.supported)
         assertEquals(DeviceLightAdaptationState.DISABLED, snapshot.adaptation.state)

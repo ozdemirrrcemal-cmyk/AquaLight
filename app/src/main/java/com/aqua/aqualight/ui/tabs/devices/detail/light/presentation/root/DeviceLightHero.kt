@@ -33,7 +33,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightHeroSnapshot
 import com.aqua.aqualight.i18n.LocaleFormatter
@@ -121,7 +123,6 @@ private fun resolveHeroContent(
         title = title,
         modeOutput = modeOutput,
         health = health,
-        estimated = stringResource(R.string.device_light_hero_estimated),
         power = power,
         colorTemperature = colorTemperature,
         accessibilityText = stringResource(
@@ -151,7 +152,8 @@ private fun HeroPrimaryCopy(
         text = content.modeOutput,
         style = typography.subtitle,
         bounds = AquaLightHeroGeometry.subtitleBounds,
-        parentSize = parentSize
+        parentSize = parentSize,
+        verticalOffset = 1.dp
     )
 }
 
@@ -169,13 +171,6 @@ private fun HeroMetrics(
         textAlign = TextAlign.Start
     )
     HeroLabel(
-        text = content.estimated,
-        style = typography.metricCaption,
-        bounds = AquaLightHeroGeometry.estimatedBounds,
-        parentSize = parentSize,
-        textAlign = TextAlign.Center
-    )
-    HeroLabel(
         text = content.colorTemperature,
         style = typography.metricValue,
         bounds = AquaLightHeroGeometry.colorTemperatureBounds,
@@ -190,10 +185,11 @@ private fun HeroLabel(
     style: TextStyle,
     bounds: AquaLightHeroBounds,
     parentSize: DpSize,
-    textAlign: TextAlign = TextAlign.Start
+    textAlign: TextAlign = TextAlign.Start,
+    verticalOffset: Dp = 0.dp
 ) {
     Box(
-        modifier = Modifier.placeInHero(bounds, parentSize),
+        modifier = Modifier.placeInHero(bounds, parentSize, verticalOffset),
         contentAlignment = Alignment.Center
     ) {
         BasicText(
@@ -217,7 +213,11 @@ private fun HeroHealthPill(
     val toneStyle = tone.toPillStyle(colors)
     Row(
         modifier = Modifier
-            .placeInHero(AquaLightHeroGeometry.statusBounds, parentSize)
+            .placeInHero(
+                AquaLightHeroGeometry.statusBounds,
+                parentSize,
+                verticalOffset = 2.dp
+            )
             .clip(CircleShape)
             .background(toneStyle.surface)
             .border(
@@ -269,7 +269,6 @@ private data class ResolvedDeviceLightHeroContent(
     val title: String,
     val modeOutput: String,
     val health: String,
-    val estimated: String,
     val power: String,
     val colorTemperature: String,
     val accessibilityText: String
@@ -297,9 +296,10 @@ private fun DeviceLightHeroHealthTone.toPillStyle(
 
 private fun Modifier.placeInHero(
     bounds: AquaLightHeroBounds,
-    parentSize: DpSize
+    parentSize: DpSize,
+    verticalOffset: Dp = 0.dp
 ): Modifier = absoluteOffset(
     x = parentSize.width * bounds.left,
-    y = parentSize.height * bounds.top
+    y = parentSize.height * bounds.top + verticalOffset
 ).width(parentSize.width * bounds.width)
     .height(parentSize.height * bounds.height)
