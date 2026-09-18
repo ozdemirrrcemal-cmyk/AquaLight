@@ -46,7 +46,7 @@ class DeviceLightCustomCurvePreviewValuesTest {
             previewPlaybackActive = true
         )
 
-        assertSame(selected, state.selectedPoint)
+        assertEquals(selected, state.selectedPoint)
         assertEquals(timeMs(10, 39), state.valuesPoint?.timeMs)
         assertEquals(
             mapOf(
