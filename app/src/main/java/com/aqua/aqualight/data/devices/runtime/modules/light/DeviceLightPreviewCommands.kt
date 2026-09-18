@@ -25,8 +25,12 @@ suspend fun DeviceLightRuntimeRepository.setPreview(
     action = DeviceLightRuntimeContract.Action.PREVIEW_SET,
     dataFactory = payload::toJson,
     parser = { data, product ->
-        if (payload is DeviceLightPreviewSetPayload.Scene) {
-            DeviceLightCommandValidation.requireProduct(payload.scene.product, product)
+        when (payload) {
+            is DeviceLightPreviewSetPayload.Scene ->
+                DeviceLightCommandValidation.requireProduct(payload.scene.product, product)
+            is DeviceLightPreviewSetPayload.CustomDay ->
+                DeviceLightCommandValidation.requireProduct(payload.points.first().scene.product, product)
+            is DeviceLightPreviewSetPayload.VirtualTime -> Unit
         }
         DeviceLightMutationParser.parsePreviewSet(data)
     },

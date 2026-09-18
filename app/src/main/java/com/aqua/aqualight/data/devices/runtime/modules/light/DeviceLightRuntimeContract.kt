@@ -72,6 +72,7 @@ object DeviceLightRuntimeContract {
         const val START_PERCENT = "startPercent"
         const val DURATION_DAYS = "durationDays"
         const val VIRTUAL_TIME_MS = "virtualTimeMs"
+        const val PLAYBACK = "playback"
         const val DURATION_MS = "durationMs"
         const val EVENT = "event"
         const val THRESHOLD_C = "thresholdC"
@@ -94,6 +95,10 @@ object DeviceLightRuntimeContract {
         const val RUNTIME_TRANSPORT = "runtimeTransport"
         const val COMMAND = "command"
         const val STATUS = "status"
+    }
+
+    object Playback {
+        const val CUSTOM_DAY = "CUSTOM_DAY"
     }
 
     object Operation {
@@ -138,7 +143,8 @@ object DeviceLightRuntimeContract {
         const val GRAPH_SPAN_TUPLE_SIZE = 3
         const val GRAPH_SPAN_PROGRAM_ID_INDEX = 2
         const val DEFAULT_PREVIEW_DURATION_MS = 3_000L
-        const val MAX_PREVIEW_DURATION_MS = 10_000L
+        const val CUSTOM_DAY_PREVIEW_DURATION_MS = 24_000L
+        const val MAX_PREVIEW_DURATION_MS = CUSTOM_DAY_PREVIEW_DURATION_MS
         const val ACCLIMATION_START_PERCENT_MIN = 20
         const val ACCLIMATION_START_PERCENT_MAX = 90
         const val ACCLIMATION_START_PERCENT_STEP = 5

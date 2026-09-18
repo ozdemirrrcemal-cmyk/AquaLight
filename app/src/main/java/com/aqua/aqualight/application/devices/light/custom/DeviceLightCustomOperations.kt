@@ -82,7 +82,10 @@ interface DeviceLightCustomOperations {
     fun observe(deviceUid: String): Flow<DeviceLightCustomReadResult>
     fun current(deviceUid: String): DeviceLightCustomReadResult
     suspend fun read(deviceUid: String): DeviceLightCustomReadResult
-    suspend fun preview(deviceUid: String, virtualTimeMs: Long): DeviceLightCustomMutationResult
+    suspend fun preview(
+        deviceUid: String,
+        points: List<DeviceLightCustomPoint>
+    ): DeviceLightCustomMutationResult
     suspend fun clearPreview(deviceUid: String): DeviceLightCustomMutationResult
 }
 

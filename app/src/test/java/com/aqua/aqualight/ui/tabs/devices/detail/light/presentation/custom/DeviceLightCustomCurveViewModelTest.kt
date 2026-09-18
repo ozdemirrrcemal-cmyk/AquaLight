@@ -109,18 +109,30 @@ class DeviceLightCustomCurveViewModelTest {
     }
 
     @Test
-    fun `preview uses firmware virtual time without installing draft`() {
+    fun `preview sends the complete editor draft without installing it`() {
         val custom = FakeCustomOperations(snapshot())
         val viewModel = boundViewModel(customOperations = custom)
         viewModel.pointEditor.updatePlayhead(PREVIEW_TIME_MS)
+        viewModel.pointEditor.updateSelectedChannel(DeviceLightCustomChannelId.BLUE, UPDATED_BLUE)
 
         viewModel.preview()
 
-        assertEquals(PREVIEW_TIME_MS, custom.previewTimeMs)
+        assertEquals(
+            viewModel.currentState.draft.points.map { point ->
+                DeviceLightCustomPoint(
+                    timeMs = point.timeMs,
+                    scene = DeviceLightCustomScene(
+                        point.channels.mapKeys { (channel, _) -> channel.toApplicationChannelForTest() }
+                    )
+                )
+            },
+            custom.previewPoints
+        )
+        viewModel.clearPreview()
     }
 
     @Test
-    fun `preview never opens blocking loading`() {
+    fun `preview never opens blocking loading`() = runTest {
         val previewGate = CompletableDeferred<Unit>()
         val custom = FakeCustomOperations(snapshot(), previewGate)
         val viewModel = boundViewModel(customOperations = custom)
@@ -131,6 +143,7 @@ class DeviceLightCustomCurveViewModelTest {
         assertFalse(viewModel.currentState.showGlobalLoading)
 
         previewGate.complete(Unit)
+        viewModel.clearPreview()
 
         assertFalse(viewModel.currentState.operationInProgress)
         assertFalse(viewModel.currentState.showGlobalLoading)
@@ -280,7 +293,7 @@ class DeviceLightCustomCurveViewModelTest {
         private val snapshot: DeviceLightCustomSnapshot,
         private val previewGate: CompletableDeferred<Unit>? = null
     ) : DeviceLightCustomOperations {
-        var previewTimeMs: Long? = null
+        var previewPoints: List<DeviceLightCustomPoint>? = null
 
         override fun observe(deviceUid: String): Flow<DeviceLightCustomReadResult> = emptyFlow()
 
@@ -288,9 +301,9 @@ class DeviceLightCustomCurveViewModelTest {
 
         override suspend fun read(deviceUid: String) = DeviceLightCustomReadResult.Available(snapshot)
 
-        override suspend fun preview(deviceUid: String, virtualTimeMs: Long):
+        override suspend fun preview(deviceUid: String, points: List<DeviceLightCustomPoint>):
             DeviceLightCustomMutationResult {
-            previewTimeMs = virtualTimeMs
+            previewPoints = points
             previewGate?.await()
             return DeviceLightCustomMutationResult.Success
         }
@@ -334,6 +347,13 @@ class DeviceLightCustomCurveViewModelTest {
             DeviceLightLibraryMutationResult.Success(entryId)
         override suspend fun load(deviceUid: String, entryId: String) =
             DeviceLightLibraryMutationResult.Success(entryId)
+    }
+
+    private fun DeviceLightCustomChannelId.toApplicationChannelForTest() = when (this) {
+        DeviceLightCustomChannelId.RED -> DeviceLightCustomChannel.RED
+        DeviceLightCustomChannelId.GREEN -> DeviceLightCustomChannel.GREEN
+        DeviceLightCustomChannelId.BLUE -> DeviceLightCustomChannel.BLUE
+        DeviceLightCustomChannelId.WHITE -> DeviceLightCustomChannel.WHITE
     }
 
     class MainDispatcherRule(

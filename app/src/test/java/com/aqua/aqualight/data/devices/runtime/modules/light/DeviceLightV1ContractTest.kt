@@ -160,6 +160,30 @@ class DeviceLightV1ContractTest {
             DeviceLightPreviewSetPayload.VirtualTime(43_200_000).toJson(),
             "virtualTimeMs"
         )
+        val customDay = DeviceLightPreviewSetPayload.CustomDay(
+            listOf(
+                DeviceLightCustomPoint(0, wrgb),
+                DeviceLightCustomPoint(60_000, DeviceLightScene.wrgb(50, 60, 70, 80))
+            )
+        ).toJson()
+        assertKeys(customDay, "playback", "points")
+        assertEquals(
+            DeviceLightRuntimeContract.Playback.CUSTOM_DAY,
+            customDay.getString(DeviceLightRuntimeContract.Field.PLAYBACK)
+        )
+        assertEquals(5, customDay.getJSONArray("points").getJSONArray(0).length())
+    }
+
+    @Test
+    fun `preview response accepts the full custom day duration`() {
+        val result = DeviceLightMutationParser.parsePreviewSet(
+            JSONObject()
+                .put("active", true)
+                .put("remainingMs", 24_000)
+                .put("event", DeviceLightRuntimeContract.Event.STATUS_CHANGED)
+        )
+
+        assertEquals(24_000L, result.remainingMs)
     }
 
     @Test

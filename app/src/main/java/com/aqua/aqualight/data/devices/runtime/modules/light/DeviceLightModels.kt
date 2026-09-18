@@ -517,6 +517,24 @@ sealed interface DeviceLightPreviewSetPayload {
             .put(DeviceLightRuntimeContract.Field.VIRTUAL_TIME_MS, virtualTimeMs)
             .also { json -> durationMs?.let { json.put(DeviceLightRuntimeContract.Field.DURATION_MS, it) } }
     }
+
+    data class CustomDay(
+        val points: List<DeviceLightCustomPoint>
+    ) : DeviceLightPreviewSetPayload {
+        init {
+            require(points.isNotEmpty())
+            require(points.size <= DeviceLightRuntimeContract.Limit.CUSTOM_POINT_CAPACITY)
+            require(points.zipWithNext().all { (left, right) -> left.timeMs < right.timeMs })
+            require(points.map { it.scene.product }.distinct().size == 1)
+        }
+
+        override fun toJson(): JSONObject = JSONObject()
+            .put(DeviceLightRuntimeContract.Field.PLAYBACK, DeviceLightRuntimeContract.Playback.CUSTOM_DAY)
+            .put(
+                DeviceLightRuntimeContract.Field.POINTS,
+                JSONArray(points.map(DeviceLightCustomPoint::toJsonTuple))
+            )
+    }
 }
 
 private fun validateAutoProgram(

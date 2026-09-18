@@ -13,6 +13,8 @@ import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightLibraryReadAuthority
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightLibraryRuntimeState
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightCustomPoint as RuntimeCustomPoint
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightScene
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightPreviewSetPayload
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.clearPreview
@@ -104,10 +106,22 @@ internal class DefaultDeviceLightCustomOperations(
 
     override suspend fun preview(
         deviceUid: String,
-        virtualTimeMs: Long
+        points: List<DeviceLightCustomPoint>
     ): DeviceLightCustomMutationResult = command(deviceUid) { uid ->
         val runtime = requireNotNull(devicesRepository.runtimeModules()?.light)
-        runtime.setPreview(uid, DeviceLightPreviewSetPayload.VirtualTime(virtualTimeMs))
+        val product = requireNotNull(runtime.currentStatus(uid)).product
+        val runtimePoints = points.map { point ->
+            RuntimeCustomPoint(
+                timeMs = point.timeMs,
+                scene = DeviceLightScene(
+                    product = product,
+                    percents = product.sceneFields.associateWith { field ->
+                        point.scene.channels.getValue(field.toCustomChannel())
+                    }
+                )
+            )
+        }
+        runtime.setPreview(uid, DeviceLightPreviewSetPayload.CustomDay(runtimePoints))
     }
 
     override suspend fun clearPreview(deviceUid: String): DeviceLightCustomMutationResult =

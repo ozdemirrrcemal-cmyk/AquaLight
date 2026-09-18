@@ -430,6 +430,10 @@ class AqlFirmwareInteroperabilityTest {
             "DeviceLightPreviewSetPayload.VirtualTime" to
                 DeviceLightPreviewSetPayload.VirtualTime(43_200_000, 3_000)
                     .toJson().keySetExact(),
+            "DeviceLightPreviewSetPayload.CustomDay" to
+                DeviceLightPreviewSetPayload.CustomDay(
+                    listOf(DeviceLightCustomPoint(0, scene))
+                ).toJson().keySetExact(),
             "DeviceLightTemperatureProtectionSetPayload" to
                 DeviceLightTemperatureProtectionSetPayload(60.0).toJson().keySetExact(),
             "DeviceLightThermalConfigApplyPayload" to DeviceLightThermalConfigApplyPayload(

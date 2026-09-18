@@ -110,7 +110,7 @@ internal data class DeviceLightCustomCurveUiState(
         get() = contentEnabled && !operationInProgress && draft.points.isNotEmpty()
 
     val canPreview: Boolean
-        get() = contentEnabled && firmwareWriteAuthoritative && !hasUnsavedChanges &&
+        get() = contentEnabled && firmwareWriteAuthoritative &&
             !operationInProgress && draft.points.isNotEmpty()
 
     val canDeleteSelectedPoint: Boolean
@@ -131,6 +131,7 @@ internal const val MINUTES_PER_HOUR = 60
 internal const val MILLIS_PER_HOUR = MINUTES_PER_HOUR * MILLIS_PER_MINUTE
 internal const val MINUTES_PER_DAY = 1_440
 internal const val MILLIS_PER_DAY = MINUTES_PER_DAY * MILLIS_PER_MINUTE
+internal const val CUSTOM_DAY_PREVIEW_DURATION_MS = 24_000L
 internal const val MAX_POINT_CAPACITY = 96
 internal const val MIN_LIGHT_CHANNEL_PERCENT = 0
 internal const val MAX_LIGHT_CHANNEL_PERCENT = 100
