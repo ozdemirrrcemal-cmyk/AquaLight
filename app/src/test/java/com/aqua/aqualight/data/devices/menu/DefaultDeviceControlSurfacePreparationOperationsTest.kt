@@ -37,6 +37,7 @@ import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightChannel
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlOperations
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlResult
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlSnapshot
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightModeMutationResult
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanReason
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanSnapshot
 import com.aqua.aqualight.application.devices.timer.control.DeviceTimerChannelRegime
@@ -616,7 +617,12 @@ class DefaultDeviceControlSurfacePreparationOperationsTest {
         override suspend fun setMode(
             deviceUid: String,
             mode: com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlMode
-        ): DeviceLightControlResult = result
+        ): DeviceLightModeMutationResult = when (result) {
+            is DeviceLightControlResult.Available ->
+                DeviceLightModeMutationResult.Reconciled(result.snapshot)
+            is DeviceLightControlResult.Failed ->
+                DeviceLightModeMutationResult.Failed(result.failure)
+        }
     }
 
     private companion object {

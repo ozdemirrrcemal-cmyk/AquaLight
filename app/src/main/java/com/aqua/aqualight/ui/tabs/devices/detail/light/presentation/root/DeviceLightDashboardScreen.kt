@@ -68,7 +68,7 @@ private fun LazyListScope.lightControlItems(
 ) {
     item(key = "light-mode-selector") {
         DeviceLightModeSelector(
-            selectedMode = state.hero.mode,
+            selectedMode = state.selectedMode,
             enabled = state.contentEnabled,
             onModeSelected = actions.onModeSelected,
             modifier = Modifier.fillMaxWidth()

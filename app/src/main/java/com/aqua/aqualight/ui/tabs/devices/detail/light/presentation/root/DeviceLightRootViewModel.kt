@@ -18,6 +18,7 @@ import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightChannel
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightAdaptationSummary
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlResult
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlSnapshot
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightModeMutationResult
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightHeroSnapshot
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanSnapshot
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightSystemSummary
@@ -55,6 +56,7 @@ class DeviceLightRootViewModel(
     private var boundDeviceUid = ""
     private var latestRootSnapshot: DeviceRootSnapshot? = null
     private var currentControlSnapshot: DeviceLightControlSnapshot? = null
+    private var committedMode: DeviceLightControlMode? = null
     private var surfacePreparationPending = false
     private var rootObserveJob: Job? = null
     private var controlObserveJob: Job? = null
@@ -79,6 +81,7 @@ class DeviceLightRootViewModel(
         cancelJobs()
         boundDeviceUid = deviceUid
         currentControlSnapshot = null
+        committedMode = null
         latestRootSnapshot = rootOperations.current(deviceUid)
         acceptControlResult(lightControlOperations.currentControl(deviceUid))
         val preparedSurfaceStillCurrent = preparedHandoff &&
@@ -167,7 +170,14 @@ class DeviceLightRootViewModel(
 
     private fun acceptControlResult(result: DeviceLightControlResult) {
         if (result is DeviceLightControlResult.Available) {
+            val previousMode = currentControlSnapshot?.hero?.mode
             currentControlSnapshot = result.snapshot
+            if (
+                committedMode != null &&
+                result.snapshot.hero.mode != previousMode
+            ) {
+                committedMode = null
+            }
         }
     }
 
@@ -193,6 +203,7 @@ class DeviceLightRootViewModel(
             showBlockingPreparation = surfacePreparationPending && !controlAvailable,
             activeAutomaticProgramId = currentControlSnapshot?.activeAutomaticProgramId,
             hero = currentControlSnapshot?.hero ?: DeviceLightHeroSnapshot(),
+            selectedMode = committedMode ?: currentControlSnapshot?.hero?.mode,
             adaptation = currentControlSnapshot?.adaptation ?: DeviceLightAdaptationSummary(),
             systemSupported = currentControlSnapshot?.systemSupported == true,
             system = currentControlSnapshot?.system,
@@ -208,6 +219,7 @@ class DeviceLightRootViewModel(
         boundDeviceUid = ""
         latestRootSnapshot = null
         currentControlSnapshot = null
+        committedMode = null
         surfacePreparationPending = false
         modeChangeJob = null
         _uiState.value = DeviceLightRootUiState()
@@ -217,17 +229,24 @@ class DeviceLightRootViewModel(
         val deviceUid = boundDeviceUid
         val state = _uiState.value
         if (deviceUid.isBlank() || !state.contentEnabled) return
-        if (state.hero.mode == mode || modeChangeJob?.isActive == true) return
+        if (state.selectedMode == mode || modeChangeJob?.isActive == true) return
 
         modeChangeJob = viewModelScope.launch {
             when (val result = lightControlOperations.setMode(deviceUid, mode)) {
-                is DeviceLightControlResult.Available -> {
+                is DeviceLightModeMutationResult.Reconciled -> {
                     if (boundDeviceUid == deviceUid) {
-                        acceptControlResult(result)
+                        committedMode = null
+                        acceptControlResult(DeviceLightControlResult.Available(result.snapshot))
                         renderBoundState()
                     }
                 }
-                is DeviceLightControlResult.Failed -> if (boundDeviceUid == deviceUid) {
+                is DeviceLightModeMutationResult.Committed -> {
+                    if (boundDeviceUid == deviceUid) {
+                        committedMode = result.mode
+                        renderBoundState()
+                    }
+                }
+                is DeviceLightModeMutationResult.Failed -> if (boundDeviceUid == deviceUid) {
                     modeChangeFailureEventChannel.send(result.failure)
                 }
             }
@@ -254,6 +273,7 @@ data class DeviceLightRootUiState(
     val showBlockingPreparation: Boolean = false,
     val activeAutomaticProgramId: String? = null,
     val hero: DeviceLightHeroSnapshot = DeviceLightHeroSnapshot(),
+    val selectedMode: DeviceLightControlMode? = null,
     val adaptation: DeviceLightAdaptationSummary = DeviceLightAdaptationSummary(),
     val systemSupported: Boolean = false,
     val system: DeviceLightSystemSummary? = null,

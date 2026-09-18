@@ -31,6 +31,7 @@ import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControl
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightChannelOutputSnapshot
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlResult
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlSnapshot
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightModeMutationResult
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanReason
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanSnapshot
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
@@ -293,7 +294,8 @@ class DeviceRootViewModelBoundaryTest {
         override suspend fun setMode(
             deviceUid: String,
             mode: com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlMode
-        ): DeviceLightControlResult = available
+        ): DeviceLightModeMutationResult =
+            DeviceLightModeMutationResult.Reconciled(available.snapshot)
     }
 
     private object PreparedLightSurfaceOperations :

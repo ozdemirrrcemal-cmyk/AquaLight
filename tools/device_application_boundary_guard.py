@@ -28,6 +28,9 @@ PREPARATION_ADAPTER = (
 LIGHT_CONTROL_ADAPTER = (
     SOURCE / "data/devices/light/dashboard/DefaultDeviceLightControlOperations.kt"
 )
+LIGHT_DASHBOARD_REFRESH_COORDINATOR = (
+    SOURCE / "data/devices/runtime/modules/light/DeviceLightDashboardRefreshCoordinator.kt"
+)
 LIGHT_SYSTEM_ADAPTER = (
     SOURCE / "data/devices/light/system/DefaultDeviceLightSystemOperations.kt"
 )
@@ -77,6 +80,7 @@ mapping = read(MAPPING)
 menu_adapter = read(MENU_ADAPTER)
 preparation_adapter = read(PREPARATION_ADAPTER)
 light_control_adapter = read(LIGHT_CONTROL_ADAPTER)
+light_dashboard_refresh_coordinator = read(LIGHT_DASHBOARD_REFRESH_COORDINATOR)
 light_system_adapter = read(LIGHT_SYSTEM_ADAPTER)
 family_settings_adapter = read(FAMILY_SETTINGS_ADAPTER)
 devices_view_model = read(DEVICES_VIEW_MODEL)
@@ -163,6 +167,14 @@ for token, reason in (
     ("fun currentControl(deviceUid: String)", "Light current authority must cross the boundary"),
     ("suspend fun refreshControl(deviceUid: String)", "Light freshness must cross the boundary"),
     ("data class DeviceLightControlSnapshot", "Light readiness needs an application DTO"),
+    (
+        "sealed interface DeviceLightModeMutationResult",
+        "Light mode writes must distinguish committed ACKs from authoritative readback",
+    ),
+    (
+        "data class Committed(",
+        "Light mode writes need an explicit committed-but-not-yet-reconciled result",
+    ),
 ):
     if token not in light_control_contract:
         errors.append(f"{LIGHT_CONTROL_CONTRACT.relative_to(ROOT)}: {reason}: {token}")
@@ -279,20 +291,55 @@ for token, reason in (
         "Light must reuse the owner-scoped central runtime",
     ),
     (
-        "resolved.runtime.requestStatus(resolved.deviceUid)",
-        "Light preparation must request one authoritative status document",
+        "modules.refreshLightDashboard(deviceUid)",
+        "Light preparation must delegate status/graph authority to the shared refresh coordinator",
     ),
     (
-        "resolved.runtime.isAuthoritative(resolved.deviceUid, generation)",
-        "Light refresh must prove the returned runtime generation",
+        "modules.scheduleLightControlReconciliation(deviceUid, firmwareMode)",
+        "Light committed mode writes must schedule owner-scoped reconciliation",
     ),
     (
-        "acceptedStatus == value",
-        "Light refresh must prove that the exact response was accepted",
+        "DeviceLightModeMutationResult.Committed(requestedMode)",
+        "Light must not report a durable firmware ACK as a failed readback",
     ),
 ):
     if token not in light_control_adapter:
         errors.append(f"{LIGHT_CONTROL_ADAPTER.relative_to(ROOT)}: {reason}: {token}")
+
+for token, reason in (
+    (
+        "class DeviceLightDashboardRefreshCoordinator",
+        "Light dashboard refreshes need one owner-scoped coordinator",
+    ),
+    (
+        "inFlight.putIfAbsent(deviceUid, pending)",
+        "Concurrent Light refresh callers must share one firmware readback flight",
+    ),
+    (
+        "val status = runtime.requestStatus(deviceUid)",
+        "Light reconciliation must read one authoritative status document",
+    ),
+    (
+        "val graph = runtime.requestGraph(deviceUid)",
+        "Light reconciliation must read the matching graph document",
+    ),
+    (
+        "status.generation != graph.generation",
+        "Light reconciliation must reject mixed connection generations",
+    ),
+    (
+        "dashboard?.status == status.value",
+        "Light reconciliation must prove the exact status response was accepted",
+    ),
+    (
+        "dashboard.graph == graph.value",
+        "Light reconciliation must prove the exact graph response was accepted",
+    ),
+):
+    if token not in light_dashboard_refresh_coordinator:
+        errors.append(
+            f"{LIGHT_DASHBOARD_REFRESH_COORDINATOR.relative_to(ROOT)}: {reason}: {token}"
+        )
 
 for token, reason in (
     (

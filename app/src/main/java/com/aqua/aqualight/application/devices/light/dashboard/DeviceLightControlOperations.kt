@@ -16,11 +16,30 @@ interface DeviceLightControlOperations {
     /** Refreshes the Light V1 status and graph documents used to prepare the root surface. */
     suspend fun refreshControl(deviceUid: String): DeviceLightControlResult
 
-    /** Writes the selected operating mode and returns the refreshed authoritative surface. */
+    /**
+     * Writes the selected operating mode.
+     *
+     * A firmware ACK is a committed mutation even when the authoritative status/graph readback is
+     * still pending. Callers must not reinterpret a delayed readback as a rejected device write.
+     */
     suspend fun setMode(
         deviceUid: String,
         mode: DeviceLightControlMode
-    ): DeviceLightControlResult
+    ): DeviceLightModeMutationResult
+}
+
+sealed interface DeviceLightModeMutationResult {
+    data class Reconciled(
+        val snapshot: DeviceLightControlSnapshot
+    ) : DeviceLightModeMutationResult
+
+    data class Committed(
+        val mode: DeviceLightControlMode
+    ) : DeviceLightModeMutationResult
+
+    data class Failed(
+        val failure: DeviceLightControlFailure
+    ) : DeviceLightModeMutationResult
 }
 
 sealed interface DeviceLightControlResult {

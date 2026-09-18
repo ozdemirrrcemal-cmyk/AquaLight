@@ -51,7 +51,7 @@ class DeviceLightRuntimeRepository internal constructor(
         action = DeviceLightRuntimeContract.Action.CONTROL_SET,
         dataFactory = payload::toJson,
         parser = { data, _ -> DeviceLightMutationParser.parseControl(data) },
-        refreshStatus = true
+        refreshStatus = false
     )
 
     suspend fun setManual(
