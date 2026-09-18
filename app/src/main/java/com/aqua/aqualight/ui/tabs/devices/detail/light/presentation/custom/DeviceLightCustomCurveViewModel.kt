@@ -12,11 +12,9 @@ import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomRead
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomScene
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomSnapshot
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryCustomPoint
-import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryFailure
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryKind
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryMutationResult
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryOperations
-import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryResult
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryScene
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.toCommercialLightError
@@ -30,7 +28,6 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -88,38 +85,6 @@ internal class DeviceLightCustomCurveViewModel(
                         state.previewTimeMs
                     }
                 )
-            }
-        }
-    }
-
-    val loadLibraryDraft: (String) -> Unit = { entryId ->
-        val deviceUid = boundDeviceUid.takeIf(String::isNotBlank)
-        if (deviceUid != null) {
-            viewModelScope.launch {
-                val result = runCatching {
-                    libraryOperations.observeLibrary(deviceUid).first()
-                }.getOrNull()
-                val entry = (result as? DeviceLightLibraryResult.Available)
-                    ?.snapshot
-                    ?.entries
-                    ?.singleOrNull { item -> item.id == entryId }
-                val state = _uiState.value
-                val draft = entry?.toCustomEditorDraft(state.channels)
-                if (draft != null) {
-                    val referenceTimeMs = state.deviceTimeMs ?: state.previewTimeMs
-                    val selectedTimeMs = draft.points.minByOrNull { point ->
-                        kotlin.math.abs(point.timeMs - referenceTimeMs)
-                    }?.timeMs
-                    setDraft(draft, selectedTimeMs)
-                } else {
-                    val failure = (result as? DeviceLightLibraryResult.Failed)?.failure
-                        ?: DeviceLightLibraryFailure.NOT_FOUND
-                    emit(
-                        DeviceLightCustomCurveEffect.ShowError(
-                            failure.toCommercialLightError().messageRes
-                        )
-                    )
-                }
             }
         }
     }
@@ -291,13 +256,11 @@ internal class DeviceLightCustomCurveViewModel(
         }
     }
 
-    fun resetDraft() {
+    fun resetToDevice() {
         clearPreview()
-        val state = _uiState.value
-        setDraft(
-            draft = state.draft.copy(points = emptyList()),
-            selectedTimeMs = null
-        )
+        restoredDraft = null
+        restoreDirty = false
+        refreshFromDevice()
     }
 
     private fun applySnapshot(snapshot: DeviceLightCustomSnapshot) {

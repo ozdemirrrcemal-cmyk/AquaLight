@@ -52,7 +52,7 @@ internal fun ManualLibraryCard(
     visuals: DeviceLightLibraryVisuals
 ) {
     LibraryCardSurface {
-        LibraryCardHeader(entry, presentation, actions, visuals)
+        LibraryCardHeader(entry, presentation.firmwareWritesEnabled, actions, visuals)
         ManualLibrarySummary(visuals)
         LibraryCardDivider(visuals)
         ManualChannelSummary(entry.channels, presentation.descriptors, payload.scene, visuals)
@@ -67,14 +67,8 @@ internal fun CustomLibraryCard(
     actions: DeviceLightLibraryActions,
     visuals: DeviceLightLibraryVisuals
 ) {
-    LibraryCardSurface(
-        onClick = if (presentation.customSelectionMode) {
-            { actions.onLoadClick(entry.id) }
-        } else {
-            null
-        }
-    ) {
-        LibraryCardHeader(entry, presentation, actions, visuals)
+    LibraryCardSurface {
+        LibraryCardHeader(entry, presentation.firmwareWritesEnabled, actions, visuals)
         CustomLibrarySummary(payload, visuals)
         LibraryCardDivider(visuals)
         CustomChannelSummary(entry.channels, presentation.descriptors, payload, visuals)
@@ -82,20 +76,9 @@ internal fun CustomLibraryCard(
 }
 
 @Composable
-private fun LibraryCardSurface(
-    onClick: (() -> Unit)? = null,
-    content: @Composable () -> Unit
-) {
+private fun LibraryCardSurface(content: @Composable () -> Unit) {
     AquaDeviceCardSurface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .then(
-                if (onClick != null) {
-                    Modifier.clickable(role = Role.Button, onClick = onClick)
-                } else {
-                    Modifier
-                }
-            ),
+        modifier = Modifier.fillMaxWidth(),
         contentPadding = DeviceLightAutomaticGeometry.cardContentPadding
     ) {
         Column(
@@ -112,7 +95,7 @@ private fun LibraryCardSurface(
 @Composable
 private fun LibraryCardHeader(
     entry: DeviceLightLibraryEntry,
-    presentation: DeviceLightLibraryCardPresentation,
+    firmwareWritesEnabled: Boolean,
     actions: DeviceLightLibraryActions,
     visuals: DeviceLightLibraryVisuals
 ) {
@@ -133,25 +116,18 @@ private fun LibraryCardHeader(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f)
         )
-        if (!presentation.customSelectionMode) {
-            Spacer(Modifier.width(DeviceLightAutomaticGeometry.headerControlGap))
-            LibraryLoadButton(
-                entry,
-                presentation.firmwareWritesEnabled,
-                actions.onLoadClick,
-                visuals
-            )
-            Spacer(Modifier.width(DeviceLightAutomaticGeometry.headerControlGap))
-            AutomaticMoreButton(
-                color = visuals.colors.card.secondaryText,
-                contentDescriptionText = stringResource(
-                    R.string.device_light_library_more_actions_description,
-                    entry.name
-                ),
-                enabled = true,
-                onClick = { actions.onMoreClick(entry.id) }
-            )
-        }
+        Spacer(Modifier.width(DeviceLightAutomaticGeometry.headerControlGap))
+        LibraryLoadButton(entry, firmwareWritesEnabled, actions.onLoadClick, visuals)
+        Spacer(Modifier.width(DeviceLightAutomaticGeometry.headerControlGap))
+        AutomaticMoreButton(
+            color = visuals.colors.card.secondaryText,
+            contentDescriptionText = stringResource(
+                R.string.device_light_library_more_actions_description,
+                entry.name
+            ),
+            enabled = true,
+            onClick = { actions.onMoreClick(entry.id) }
+        )
     }
 }
 

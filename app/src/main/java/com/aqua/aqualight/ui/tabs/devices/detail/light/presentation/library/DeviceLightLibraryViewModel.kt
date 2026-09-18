@@ -11,7 +11,6 @@ import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryEntry
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryFailure
-import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryKind
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryMutationResult
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryOperations
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryResult
@@ -60,23 +59,13 @@ class DeviceLightLibraryViewModel(
         }
     }
 
-    fun bind(
-        rawDeviceUid: String,
-        customSelectionMode: Boolean = false
-    ) {
+    fun bind(rawDeviceUid: String) {
         val deviceUid = rawDeviceUid.trim()
         require(deviceUid.isNotBlank()) { "Light-library deviceUid must not be blank." }
         if (deviceUid == boundDeviceUid) return
         boundDeviceUid = deviceUid
-        _uiState.value = DeviceLightLibraryUiState(
-            deviceUid = deviceUid,
-            selectedTab = if (customSelectionMode) {
-                DeviceLightLibraryTab.CUSTOM
-            } else {
-                DeviceLightLibraryTab.MANUAL
-            },
-            customSelectionMode = customSelectionMode
-        ).withRootSnapshot(rootOperations.current(deviceUid))
+        _uiState.value = DeviceLightLibraryUiState(deviceUid = deviceUid)
+            .withRootSnapshot(rootOperations.current(deviceUid))
         startObservation()
         startRootObservation()
     }
@@ -110,13 +99,7 @@ class DeviceLightLibraryViewModel(
     }
 
     internal val selectTab: (DeviceLightLibraryTab) -> Unit = { tab ->
-        _uiState.update { state ->
-            if (state.customSelectionMode) {
-                state.copy(selectedTab = DeviceLightLibraryTab.CUSTOM)
-            } else {
-                state.copy(selectedTab = tab)
-            }
-        }
+        _uiState.update { state -> state.copy(selectedTab = tab) }
     }
 
     internal fun retry() {
@@ -133,25 +116,18 @@ class DeviceLightLibraryViewModel(
     internal fun load(entryId: String) {
         val state = _uiState.value
         val entry = state.entries.singleOrNull { item -> item.id == entryId }
-        if (state.customSelectionMode) {
-            if (entry?.kind == DeviceLightLibraryKind.CUSTOM) {
-                _effects.tryEmit(DeviceLightLibraryEffect.ReturnCustomSelection(entry.id))
+        val operationIdle = state.activeLoadEntryId == null
+        val entryLoadable = entry?.isLoaded == false
+        if (!operationIdle || !state.firmwareWritesEnabled || !entryLoadable) return
+        _uiState.update { current -> current.copy(activeLoadEntryId = entryId) }
+        viewModelScope.launch {
+            val result = operations.load(boundDeviceUid, entryId)
+            if (result is DeviceLightLibraryMutationResult.Failed) {
+                _uiState.update { current -> current.copy(activeLoadEntryId = null) }
+            } else {
+                _uiState.update { current -> current.afterConfirmedLoad(entryId) }
             }
-        } else {
-            val operationIdle = state.activeLoadEntryId == null
-            val entryLoadable = entry?.isLoaded == false
-            if (operationIdle && state.firmwareWritesEnabled && entryLoadable) {
-                _uiState.update { current -> current.copy(activeLoadEntryId = entryId) }
-                viewModelScope.launch {
-                    val result = operations.load(boundDeviceUid, entryId)
-                    if (result is DeviceLightLibraryMutationResult.Failed) {
-                        _uiState.update { current -> current.copy(activeLoadEntryId = null) }
-                    } else {
-                        _uiState.update { current -> current.afterConfirmedLoad(entryId) }
-                    }
-                    _effects.emit(result.toEffect(R.string.device_light_library_loaded_success))
-                }
-            }
+            _effects.emit(result.toEffect(R.string.device_light_library_loaded_success))
         }
     }
 
@@ -284,10 +260,6 @@ private fun DeviceLightLibraryMutationResult.toEffect(
 }
 
 internal sealed interface DeviceLightLibraryEffect {
-    data class ReturnCustomSelection(
-        val entryId: String
-    ) : DeviceLightLibraryEffect
-
     data class OpenActions(
         val entryId: String,
         val entryName: String

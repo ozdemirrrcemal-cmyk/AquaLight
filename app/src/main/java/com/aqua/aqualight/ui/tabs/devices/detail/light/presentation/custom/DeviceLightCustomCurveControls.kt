@@ -3,11 +3,11 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
@@ -27,60 +27,32 @@ internal fun VirtualTimePreviewCard(
     visuals: DeviceLightCustomVisuals
 ) {
     AquaDeviceCardSurface(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(PREVIEW_ACTION_SPACING_DP.dp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                PreviewGlyph(visuals)
-                BasicText(
-                    text = stringResource(R.string.device_light_custom_virtual_preview_compact),
-                    style = visuals.typography.title.copy(
-                        color = visuals.colors.card.primaryText
+            PreviewGlyph(visuals)
+            BasicText(
+                text = stringResource(R.string.device_light_custom_virtual_preview_compact),
+                style = visuals.typography.title.copy(color = visuals.colors.card.primaryText),
+                modifier = Modifier.weight(1f).padding(start = PREVIEW_TITLE_GAP_DP.dp)
+            )
+            CustomOutlinedButton(
+                button = CustomOutlinedButtonState(
+                    label = stringResource(R.string.device_light_custom_preview),
+                    description = stringResource(
+                        R.string.device_light_custom_preview_at_time_description,
+                        formatTime(state.previewTimeMs)
                     ),
-                    modifier = Modifier.padding(start = PREVIEW_TITLE_GAP_DP.dp)
-                )
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(PREVIEW_ACTION_SPACING_DP.dp)
-            ) {
-                CustomOutlinedButton(
-                    button = CustomOutlinedButtonState(
-                        label = stringResource(R.string.device_light_custom_preview),
-                        description = stringResource(
-                            R.string.device_light_custom_preview_at_time_description,
-                            formatTime(state.previewTimeMs)
-                        ),
-                        enabled = state.canPreview
-                    ),
-                    appearance = CustomOutlinedButtonAppearance(
-                        color = visuals.colors.action,
-                        height = PREVIEW_BUTTON_HEIGHT_DP.dp
-                    ),
-                    onClick = actions.onPreviewClick,
-                    modifier = Modifier.weight(1f)
-                )
-                CustomOutlinedButton(
-                    button = CustomOutlinedButtonState(
-                        label = stringResource(R.string.device_light_custom_reset),
-                        description = stringResource(
-                            R.string.device_light_custom_reset_description
-                        ),
-                        enabled = state.contentEnabled &&
-                            !state.operationInProgress &&
-                            state.draft.points.isNotEmpty()
-                    ),
-                    appearance = CustomOutlinedButtonAppearance(
-                        color = visuals.colors.action,
-                        height = PREVIEW_BUTTON_HEIGHT_DP.dp
-                    ),
-                    onClick = actions.onResetClick,
-                    modifier = Modifier.weight(1f)
-                )
-            }
+                    enabled = state.canPreview
+                ),
+                appearance = CustomOutlinedButtonAppearance(
+                    color = visuals.colors.action,
+                    height = PREVIEW_BUTTON_HEIGHT_DP.dp
+                ),
+                onClick = actions.onPreviewClick,
+                modifier = Modifier.width(PREVIEW_BUTTON_WIDTH_DP.dp)
+            )
         }
     }
 }
@@ -152,7 +124,7 @@ internal fun LibraryActions(
 
 private const val PREVIEW_TITLE_GAP_DP = 12
 private const val PREVIEW_BUTTON_HEIGHT_DP = 44
-private const val PREVIEW_ACTION_SPACING_DP = 8
+private const val PREVIEW_BUTTON_WIDTH_DP = 126
 private const val PREVIEW_GLYPH_SIZE_DP = 42
 private const val PREVIEW_GLYPH_BORDER_DP = 2
 private const val PLAY_STROKE_DP = 2

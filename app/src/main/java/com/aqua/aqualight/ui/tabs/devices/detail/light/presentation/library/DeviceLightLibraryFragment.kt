@@ -41,10 +41,7 @@ class DeviceLightLibraryFragment : Fragment(R.layout.fragment_device_light_libra
         _binding = FragmentDeviceLightLibraryBinding.bind(view)
         registerSheetResults()
         setupContent()
-        viewModel.bind(
-            rawDeviceUid = args.deviceUid,
-            customSelectionMode = args.customSelectionMode
-        )
+        viewModel.bind(args.deviceUid)
         viewModel.selectTab(
             if (args.initialTab == INITIAL_TAB_CUSTOM) {
                 DeviceLightLibraryTab.CUSTOM
@@ -97,16 +94,6 @@ class DeviceLightLibraryFragment : Fragment(R.layout.fragment_device_light_libra
     private fun handleEffect(effect: DeviceLightLibraryEffect) {
         if (_binding == null) return
         when (effect) {
-            is DeviceLightLibraryEffect.ReturnCustomSelection -> {
-                val navController = findNavController()
-                navController.previousBackStackEntry
-                    ?.savedStateHandle
-                    ?.set(
-                        DEVICE_LIGHT_LIBRARY_CUSTOM_SELECTION_RESULT,
-                        effect.entryId
-                    )
-                navController.navigateUp()
-            }
             is DeviceLightLibraryEffect.OpenActions -> showActions(effect)
             is DeviceLightLibraryEffect.OpenRename -> showRename(effect)
             is DeviceLightLibraryEffect.OpenDeleteConfirmation -> showDeleteConfirmation(effect)

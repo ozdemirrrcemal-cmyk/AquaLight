@@ -277,8 +277,6 @@
     <string name="device_light_custom_virtual_preview_compact">Sanal önizleme</string>
     <string name="device_light_custom_preview">Önizle</string>
     <string name="device_light_custom_preview_at_time_description">Kurulu özel eğriyi %1$s saatinde önizle</string>
-    <string name="device_light_custom_reset">Sıfırla</string>
-    <string name="device_light_custom_reset_description">Özel ışık eğrisindeki tüm noktaları temizle</string>
     <string name="device_light_custom_days_heading">Günler</string>
     <string name="device_light_custom_load">Yükle</string>
     <string name="device_light_custom_load_description">Işık Kitaplığındaki kayıtlı özel eğrileri aç</string>

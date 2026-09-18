@@ -279,8 +279,6 @@
     <string name="device_light_custom_virtual_preview_compact">Virtual preview</string>
     <string name="device_light_custom_preview">Preview</string>
     <string name="device_light_custom_preview_at_time_description">Preview the installed custom curve at %1$s</string>
-    <string name="device_light_custom_reset">Reset</string>
-    <string name="device_light_custom_reset_description">Clear all points from the custom light curve</string>
     <string name="device_light_custom_days_heading">Days</string>
     <string name="device_light_custom_load">Load</string>
     <string name="device_light_custom_load_description">Open saved custom curves in the Light Library</string>

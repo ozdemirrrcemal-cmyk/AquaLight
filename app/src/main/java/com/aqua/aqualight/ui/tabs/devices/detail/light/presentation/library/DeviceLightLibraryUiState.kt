@@ -14,8 +14,7 @@ internal enum class DeviceLightLibraryTab {
 
 internal data class DeviceLightLibraryCardPresentation(
     val descriptors: List<DeviceLightLibraryChannelDescriptor>,
-    val firmwareWritesEnabled: Boolean,
-    val customSelectionMode: Boolean = false
+    val firmwareWritesEnabled: Boolean
 )
 
 internal data class DeviceLightLibraryUiState(
@@ -28,8 +27,7 @@ internal data class DeviceLightLibraryUiState(
     val connectionVisualState: DeviceConnectionVisualState = DeviceConnectionVisualState.OFFLINE,
     val centralFirmwareWritesEnabled: Boolean = false,
     val runtimeWriteAuthoritative: Boolean = false,
-    val activeLoadEntryId: String? = null,
-    val customSelectionMode: Boolean = false
+    val activeLoadEntryId: String? = null
 ) {
     val visibleEntries: List<DeviceLightLibraryEntry>
         get() = entries.filter { entry ->
@@ -55,7 +53,3 @@ internal data class DeviceLightLibraryActions(
     val onMoreClick: (String) -> Unit,
     val onRetryClick: () -> Unit
 )
-
-
-internal const val DEVICE_LIGHT_LIBRARY_CUSTOM_SELECTION_RESULT =
-    "device_light_library_custom_selection"
