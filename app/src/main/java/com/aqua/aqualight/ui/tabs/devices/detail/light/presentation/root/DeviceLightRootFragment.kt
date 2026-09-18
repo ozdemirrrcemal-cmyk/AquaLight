@@ -50,7 +50,8 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
         val actions = DeviceLightDashboardActions(
             onQuickSetupClick = ::openQuickSetup,
             onMenuClick = ::openDashboardDestination,
-            onPlanClick = ::openDashboardDestination
+            onPlanClick = ::openDashboardDestination,
+            onModeSelected = viewModel::setMode
         )
         binding.lightDashboardCompose.apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)

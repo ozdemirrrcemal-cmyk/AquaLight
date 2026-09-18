@@ -289,6 +289,11 @@ class DeviceRootViewModelBoundaryTest {
         override fun currentControl(deviceUid: String): DeviceLightControlResult = available
 
         override suspend fun refreshControl(deviceUid: String): DeviceLightControlResult = available
+
+        override suspend fun setMode(
+            deviceUid: String,
+            mode: com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlMode
+        ): DeviceLightControlResult = available
     }
 
     private object PreparedLightSurfaceOperations :

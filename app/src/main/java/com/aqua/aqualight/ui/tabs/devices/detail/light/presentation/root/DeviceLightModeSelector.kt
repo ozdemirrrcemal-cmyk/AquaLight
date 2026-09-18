@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -28,6 +29,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.aquaL
 internal fun DeviceLightModeSelector(
     selectedMode: DeviceLightControlMode?,
     enabled: Boolean,
+    onModeSelected: (DeviceLightControlMode) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val colors = aquaLightDashboardColors()
@@ -69,6 +71,10 @@ internal fun DeviceLightModeSelector(
                         .weight(1f)
                         .height(AquaLightDashboardGeometry.modeSelectorSegmentHeight)
                         .clip(AquaLightDashboardGeometry.modeSelectorSegmentShape)
+                        .clickable(
+                            enabled = enabled && !selected,
+                            onClick = { onModeSelected(mode) }
+                        )
                         .background(
                             if (selected) colors.accent else colors.mediaSurface
                         ),

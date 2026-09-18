@@ -15,6 +15,12 @@ interface DeviceLightControlOperations {
 
     /** Refreshes the Light V1 status and graph documents used to prepare the root surface. */
     suspend fun refreshControl(deviceUid: String): DeviceLightControlResult
+
+    /** Writes the selected operating mode and returns the refreshed authoritative surface. */
+    suspend fun setMode(
+        deviceUid: String,
+        mode: DeviceLightControlMode
+    ): DeviceLightControlResult
 }
 
 sealed interface DeviceLightControlResult {

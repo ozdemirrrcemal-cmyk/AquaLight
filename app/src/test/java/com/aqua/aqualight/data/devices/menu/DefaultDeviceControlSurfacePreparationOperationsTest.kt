@@ -612,6 +612,11 @@ class DefaultDeviceControlSurfacePreparationOperationsTest {
             refreshCalls += 1
             return result
         }
+
+        override suspend fun setMode(
+            deviceUid: String,
+            mode: com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlMode
+        ): DeviceLightControlResult = result
     }
 
     private companion object {

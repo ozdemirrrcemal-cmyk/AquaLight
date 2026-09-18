@@ -4,6 +4,7 @@ import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlFailure
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlMode
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlOperations
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlResult
 import com.aqua.aqualight.application.devices.light.dashboard.matchesLightControlSurface
@@ -16,6 +17,8 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightDashboardReadAuthority
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightControlSetPayload
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightMode
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightGraph
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightProduct
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRepository
@@ -77,6 +80,22 @@ internal class DefaultDeviceLightControlOperations(
             )
         }
 
+    override suspend fun setMode(
+        deviceUid: String,
+        mode: DeviceLightControlMode
+    ): DeviceLightControlResult = when (val resolved = resolveRuntime(deviceUid)) {
+        is RuntimeResolution.Failed -> failed(resolved.failure)
+        is RuntimeResolution.Ready -> runCatching {
+            when (val outcome = resolved.runtime.setControl(
+                resolved.deviceUid,
+                DeviceLightControlSetPayload(mode.toFirmwareMode())
+            )) {
+                is DeviceRuntimeCommandOutcome.Success -> refresh(resolved, systemOperations)
+                else -> failed(outcome.toControlFailure())
+            }
+        }.getOrElse { failed(DeviceLightControlFailure.INVALID_DATA) }
+    }
+
     private fun resolveRuntime(deviceUid: String): RuntimeResolution {
         val uid = deviceUid.toDeviceUidOrNull()
         val root = uid?.let { rootOperations.current(it.value) }
@@ -90,6 +109,12 @@ internal class DefaultDeviceLightControlOperations(
                 ?: RuntimeResolution.Failed(DeviceLightControlFailure.UNAVAILABLE)
         }
     }
+}
+
+private fun DeviceLightControlMode.toFirmwareMode(): DeviceLightMode = when (this) {
+    DeviceLightControlMode.MANUAL -> DeviceLightMode.MANUAL
+    DeviceLightControlMode.AUTOMATIC -> DeviceLightMode.AUTO
+    DeviceLightControlMode.CUSTOM -> DeviceLightMode.CUSTOM
 }
 
 private suspend fun refresh(

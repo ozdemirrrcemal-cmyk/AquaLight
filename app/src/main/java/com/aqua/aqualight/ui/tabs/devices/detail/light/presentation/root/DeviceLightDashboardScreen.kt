@@ -54,6 +54,7 @@ internal fun DeviceLightDashboardScreen(
             DeviceLightModeSelector(
                 selectedMode = state.hero.mode,
                 enabled = state.contentEnabled,
+                onModeSelected = actions.onModeSelected,
                 modifier = Modifier.fillMaxWidth()
             )
         }

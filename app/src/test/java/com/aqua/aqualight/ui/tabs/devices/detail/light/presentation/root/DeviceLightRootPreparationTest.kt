@@ -185,6 +185,11 @@ class DeviceLightRootPreparationTest {
 
         override suspend fun refreshControl(deviceUid: String): DeviceLightControlResult = results.value
 
+        override suspend fun setMode(
+            deviceUid: String,
+            mode: com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlMode
+        ): DeviceLightControlResult = results.value
+
         fun publish(result: DeviceLightControlResult) {
             results.value = result
         }

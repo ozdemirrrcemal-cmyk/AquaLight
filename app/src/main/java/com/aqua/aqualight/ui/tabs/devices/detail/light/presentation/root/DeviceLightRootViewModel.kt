@@ -12,6 +12,7 @@ import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlOperations
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlMode
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightChannelOutputSnapshot
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightAdaptationSummary
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlResult
@@ -52,6 +53,7 @@ class DeviceLightRootViewModel(
     private var rootObserveJob: Job? = null
     private var controlObserveJob: Job? = null
     private var surfacePreparationJob: Job? = null
+    private var modeChangeJob: Job? = null
 
     fun bind(deviceUidText: String) {
         val deviceUid = deviceUidText.trim()
@@ -201,16 +203,42 @@ class DeviceLightRootViewModel(
         latestRootSnapshot = null
         currentControlSnapshot = null
         surfacePreparationPending = false
+        modeChangeJob = null
         _uiState.value = DeviceLightRootUiState()
+    }
+
+    fun setMode(mode: DeviceLightControlMode) {
+        val deviceUid = boundDeviceUid
+        val state = _uiState.value
+        if (
+            deviceUid.isBlank() ||
+            !state.contentEnabled ||
+            state.hero.mode == mode ||
+            modeChangeJob?.isActive == true
+        ) return
+
+        modeChangeJob = viewModelScope.launch {
+            when (val result = lightControlOperations.setMode(deviceUid, mode)) {
+                is DeviceLightControlResult.Available -> {
+                    if (boundDeviceUid == deviceUid) {
+                        acceptControlResult(result)
+                        renderBoundState()
+                    }
+                }
+                is DeviceLightControlResult.Failed -> Unit
+            }
+        }
     }
 
     private fun cancelJobs() {
         rootObserveJob?.cancel()
         controlObserveJob?.cancel()
         surfacePreparationJob?.cancel()
+        modeChangeJob?.cancel()
         rootObserveJob = null
         controlObserveJob = null
         surfacePreparationJob = null
+        modeChangeJob = null
     }
 }
 

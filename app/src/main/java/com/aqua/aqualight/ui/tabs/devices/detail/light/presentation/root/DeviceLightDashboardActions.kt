@@ -1,9 +1,12 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root
 
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlMode
+
 internal data class DeviceLightDashboardActions(
     val onQuickSetupClick: () -> Unit,
     val onMenuClick: (DeviceLightMenuDestination) -> Unit,
-    val onPlanClick: (DeviceLightPlanDestination) -> Unit
+    val onPlanClick: (DeviceLightPlanDestination) -> Unit,
+    val onModeSelected: (DeviceLightControlMode) -> Unit
 )
 
 internal sealed interface DeviceLightDashboardDestination
