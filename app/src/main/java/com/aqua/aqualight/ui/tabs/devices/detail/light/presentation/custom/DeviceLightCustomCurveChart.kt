@@ -1,12 +1,12 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -31,6 +30,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
+import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 
 @Composable
@@ -39,11 +39,18 @@ internal fun CurveCard(
     actions: DeviceLightCustomCurveActions,
     visuals: DeviceLightCustomVisuals
 ) {
-    AquaDeviceCardSurface(modifier = Modifier.fillMaxWidth()) {
+    AquaDeviceCardSurface(
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(
+            start = AquaDeviceCardGeometry.contentHorizontalPadding,
+            top = AquaDeviceCardGeometry.contentVerticalPadding,
+            end = AquaDeviceCardGeometry.contentHorizontalPadding,
+            bottom = CURVE_CARD_BOTTOM_PADDING_DP.dp
+        )
+    ) {
         Column(verticalArrangement = Arrangement.spacedBy(CURVE_CONTENT_SPACING_DP.dp)) {
             CurveHeader(visuals)
             EditableCurveChart(state, actions, visuals)
-            CurveLegend(state.channels, visuals)
         }
     }
 }
@@ -141,12 +148,19 @@ private fun EditableCurveChart(
 @Composable
 private fun PercentAxis(visuals: DeviceLightCustomVisuals) {
     Column(
-        modifier = Modifier.width(CHART_PERCENT_AXIS_WIDTH_DP.dp).height(CHART_HEIGHT_DP.dp),
+        modifier = Modifier
+            .width(CHART_PERCENT_AXIS_WIDTH_DP.dp)
+            .height(CHART_HEIGHT_DP.dp)
+            .padding(bottom = CHART_BOTTOM_INSET_DP.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         CHART_PERCENT_LABELS.forEach { value ->
             BasicText(
-                text = stringResource(R.string.device_light_library_channel_percent_format, value),
+                text = if (value == null) {
+                    ""
+                } else {
+                    stringResource(R.string.device_light_library_channel_percent_format, value)
+                },
                 style = visuals.typography.micro
             )
         }
@@ -246,44 +260,19 @@ private fun HourAxis(visuals: DeviceLightCustomVisuals) {
     }
 }
 
-@Composable
-private fun CurveLegend(
-    channels: List<DeviceLightCustomChannelId>,
-    visuals: DeviceLightCustomVisuals
-) {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-        channels.forEach { channel ->
-            Row(
-                modifier = Modifier.padding(horizontal = LEGEND_ITEM_PADDING_DP.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    Modifier.size(LEGEND_DOT_SIZE_DP.dp).background(
-                        visuals.channelColor(channel),
-                        RoundedCornerShape(percent = CIRCLE_SHAPE_PERCENT)
-                    )
-                )
-                BasicText(
-                    text = channel.name.first().toString(),
-                    style = visuals.typography.micro,
-                    modifier = Modifier.padding(start = LEGEND_TEXT_PADDING_DP.dp)
-                )
-            }
-        }
-    }
-}
-
-private val CHART_PERCENT_LABELS = listOf(
+private val CHART_PERCENT_LABELS = listOf<Int?>(
     MAX_LIGHT_CHANNEL_PERCENT,
-    THREE_QUARTER_PERCENT,
-    HALF_PERCENT,
-    QUARTER_PERCENT,
-    MIN_LIGHT_CHANNEL_PERCENT
+    EIGHTY_PERCENT,
+    SIXTY_PERCENT,
+    FORTY_PERCENT,
+    TWENTY_PERCENT,
+    null
 )
 private val CHART_HOUR_LABELS = List(CHART_TIME_DIVISIONS + 1) { index ->
     index * HOURS_PER_GRID_DIVISION
 }
-private const val CURVE_CONTENT_SPACING_DP = 8
+private const val CURVE_CONTENT_SPACING_DP = 6
+private const val CURVE_CARD_BOTTOM_PADDING_DP = 4
 private const val HEADER_ICON_SIZE_DP = 34
 private const val HEADER_ICON_STROKE_DP = 2
 private const val GLYPH_START_X = 0.16f
@@ -301,9 +290,7 @@ private const val HOURS_PER_GRID_DIVISION = 4
 private const val HOUR_AXIS_LABEL_WIDTH_DP = 24
 private const val POINT_HIT_RADIUS_DP = 24
 private const val TIME_DIGITS = 2
-private const val LEGEND_ITEM_PADDING_DP = 11
-private const val LEGEND_DOT_SIZE_DP = 10
-private const val LEGEND_TEXT_PADDING_DP = 5
-private const val THREE_QUARTER_PERCENT = 75
-private const val HALF_PERCENT = 50
-private const val QUARTER_PERCENT = 25
+private const val EIGHTY_PERCENT = 80
+private const val SIXTY_PERCENT = 60
+private const val FORTY_PERCENT = 40
+private const val TWENTY_PERCENT = 20

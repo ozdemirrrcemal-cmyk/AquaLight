@@ -140,13 +140,13 @@ private fun DeviceLightCustomChartSample.chartCoordinate(
     y = height * (1f - (channels[channel] ?: 0) / MAX_LIGHT_CHANNEL_PERCENT.toFloat())
 )
 
-private const val CHART_PERCENT_DIVISIONS = 4
+private const val CHART_PERCENT_DIVISIONS = 5
 private const val HORIZONTAL_GRID_ALPHA = 0.45f
 private const val VERTICAL_GRID_ALPHA = 0.32f
 private const val SELECTED_GUIDE_ALPHA = 0.9f
 private const val SELECTED_HALO_ALPHA = 0.24f
 private const val GRID_WIDTH_DP = 1
-private const val CHART_BOTTOM_INSET_DP = 12
+internal const val CHART_BOTTOM_INSET_DP = 6
 private const val SELECTED_GUIDE_WIDTH_DP = 1.2f
 private const val GUIDE_DASH_DP = 5
 private const val GUIDE_GAP_DP = 4
