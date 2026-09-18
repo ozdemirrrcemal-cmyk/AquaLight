@@ -3,15 +3,9 @@ package com.aqua.aqualight.data.devices.light.library
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryChannel
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryPayload
 import com.aqua.aqualight.data.devices.model.DeviceUid
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightCustomDocument
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightCustomPoint
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightMode
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeFixtures
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightScene
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightStatusParser
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DeviceLightLibraryDescriptorMappingTest {
@@ -29,11 +23,7 @@ class DeviceLightLibraryDescriptorMappingTest {
         )
 
         val target = status.toLibraryTarget(DeviceUid(DEVICE_UID))
-        val entry = storedManual().toApplicationEntry(
-            product = status.product,
-            status = status,
-            installedCustom = null
-        )
+        val entry = storedManual().toApplicationEntry()
         val scene = (entry.payload as DeviceLightLibraryPayload.Manual).scene
 
         assertEquals(
@@ -45,36 +35,20 @@ class DeviceLightLibraryDescriptorMappingTest {
         assertEquals(30, scene.channels.getValue(DeviceLightLibraryChannel.GREEN))
         assertEquals(40, scene.channels.getValue(DeviceLightLibraryChannel.BLUE))
         assertEquals(50, scene.channels.getValue(DeviceLightLibraryChannel.WHITE))
-        assertTrue(entry.isLoaded)
     }
 
     @Test
-    fun `custom entry is loaded only while its matching curve is the active mode`() {
-        val manualStatus = DeviceLightStatusParser.parse(DeviceLightRuntimeFixtures.status())
-        val installed = DeviceLightCustomDocument(
-            revision = 1,
-            installed = true,
-            weekdaysMask = WEEKDAYS_MASK,
-            pointCount = 1,
-            points = listOf(
-                DeviceLightCustomPoint(
-                    timeMs = CUSTOM_POINT_TIME_MS,
-                    scene = DeviceLightScene.wrgb(20, 30, 40, 50)
-                )
-            ),
-            event = null
-        )
-        val stored = storedCustom()
+    fun `custom entry maps its persisted curve without runtime installation state`() {
+        val entry = storedCustom().toApplicationEntry()
+        val payload = entry.payload as DeviceLightLibraryPayload.Custom
 
-        assertFalse(
-            stored.toApplicationEntry(manualStatus.product, manualStatus, installed).isLoaded
-        )
-        assertTrue(
-            stored.toApplicationEntry(
-                manualStatus.product,
-                manualStatus.copy(mode = DeviceLightMode.CUSTOM),
-                installed
-            ).isLoaded
+        assertEquals(WEEKDAYS_MASK, payload.weekdaysMask)
+        assertEquals(CUSTOM_POINT_TIME_MS, payload.points.single().timeMs)
+        assertEquals(
+            PERCENTS,
+            DeviceLightLibraryChannel.entries.map { channel ->
+                payload.points.single().scene.channels.getValue(channel)
+            }
         )
     }
 

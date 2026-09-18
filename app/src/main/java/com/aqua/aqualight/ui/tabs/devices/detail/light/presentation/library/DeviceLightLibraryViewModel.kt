@@ -4,11 +4,9 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
-import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
-import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryEntry
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryFailure
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryMutationResult
@@ -28,7 +26,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.yield
 
 class DeviceLightLibraryViewModel(
     private val operations: DeviceLightLibraryOperations,
@@ -47,17 +44,6 @@ class DeviceLightLibraryViewModel(
     private var boundDeviceUid = ""
     private var observationJob: Job? = null
     private var rootObservationJob: Job? = null
-    private var firmwareRefreshJob: Job? = null
-    private val refreshFirmwareSnapshot = {
-        boundDeviceUid.takeIf(String::isNotBlank)?.let { deviceUid ->
-            firmwareRefreshJob?.cancel()
-            firmwareRefreshJob = viewModelScope.launch {
-                operations.refreshInstalledCustom(deviceUid)
-                yield()
-                _uiState.update { state -> state.afterColdRefresh() }
-            }
-        }
-    }
 
     fun bind(rawDeviceUid: String) {
         val deviceUid = rawDeviceUid.trim()
@@ -74,12 +60,8 @@ class DeviceLightLibraryViewModel(
         val deviceUid = boundDeviceUid.takeIf(String::isNotBlank) ?: return
         rootObservationJob?.cancel()
         rootObservationJob = viewModelScope.launch {
-            var wasWriteEnabled = false
             rootOperations.observe(deviceUid).collect { snapshot ->
-                val writeEnabled = snapshot.isLightLibraryWriteAvailable()
                 _uiState.update { state -> state.withRootSnapshot(snapshot) }
-                if (writeEnabled && !wasWriteEnabled) refreshFirmwareSnapshot()
-                wasWriteEnabled = writeEnabled
             }
         }
     }
@@ -110,25 +92,6 @@ class DeviceLightLibraryViewModel(
             )
         }
         startObservation()
-        if (_uiState.value.centralFirmwareWritesEnabled) refreshFirmwareSnapshot()
-    }
-
-    internal fun load(entryId: String) {
-        val state = _uiState.value
-        val entry = state.entries.singleOrNull { item -> item.id == entryId }
-        val operationIdle = state.activeLoadEntryId == null
-        val entryLoadable = entry?.isLoaded == false
-        if (!operationIdle || !state.firmwareWritesEnabled || !entryLoadable) return
-        _uiState.update { current -> current.copy(activeLoadEntryId = entryId) }
-        viewModelScope.launch {
-            val result = operations.load(boundDeviceUid, entryId)
-            if (result is DeviceLightLibraryMutationResult.Failed) {
-                _uiState.update { current -> current.copy(activeLoadEntryId = null) }
-            } else {
-                _uiState.update { current -> current.afterConfirmedLoad(entryId) }
-            }
-            _effects.emit(result.toEffect(R.string.device_light_library_loaded_success))
-        }
     }
 
     internal fun requestActions(entryId: String) {
@@ -182,25 +145,13 @@ class DeviceLightLibraryViewModel(
     }
 }
 
-private fun DeviceLightLibraryUiState.afterColdRefresh(): DeviceLightLibraryUiState =
-    if (initialLoading && !hasPresentationSnapshot) {
-        copy(
-            initialLoading = false,
-            readError = readError
-                ?: DeviceLightLibraryFailure.UNAVAILABLE.toCommercialLightReadError()
-        )
-    } else {
-        this
-    }
-
 private fun DeviceLightLibraryUiState.withRootSnapshot(
     snapshot: DeviceRootSnapshot?
 ): DeviceLightLibraryUiState = copy(
     connectionVisualState = snapshot.connectionVisualState(),
-    centralFirmwareWritesEnabled = snapshot.isLightLibraryWriteAvailable(),
     initialLoading = if (
         snapshot != null &&
-        !snapshot.isLightLibraryWriteAvailable() &&
+        snapshot.availability != OwnerDeviceAvailability.REACHABLE &&
         !hasPresentationSnapshot
     ) {
         false
@@ -209,13 +160,6 @@ private fun DeviceLightLibraryUiState.withRootSnapshot(
     }
 )
 
-private fun DeviceLightLibraryUiState.afterConfirmedLoad(
-    entryId: String
-): DeviceLightLibraryUiState {
-    val confirmed = entries.any { entry -> entry.id == entryId && entry.isLoaded }
-    return if (confirmed) copy(activeLoadEntryId = null) else this
-}
-
 private fun DeviceLightLibraryUiState.withResult(
     result: DeviceLightLibraryResult
 ): DeviceLightLibraryUiState = when (result) {
@@ -223,16 +167,11 @@ private fun DeviceLightLibraryUiState.withResult(
         target = result.snapshot.target,
         entries = result.snapshot.entries,
         initialLoading = false,
-        readError = null,
-        runtimeWriteAuthoritative = result.snapshot.firmwareWriteAuthoritative,
-        activeLoadEntryId = activeLoadEntryId?.takeUnless { entryId ->
-            result.snapshot.entries.any { entry -> entry.id == entryId && entry.isLoaded }
-        }
+        readError = null
     )
     is DeviceLightLibraryResult.Failed -> copy(
         initialLoading = initialLoading && !hasPresentationSnapshot,
-        readError = result.failure.toCommercialLightReadError(),
-        runtimeWriteAuthoritative = false
+        readError = result.failure.toCommercialLightReadError()
     )
 }
 
@@ -242,11 +181,6 @@ private fun DeviceRootSnapshot?.connectionVisualState(): DeviceConnectionVisualS
     } else {
         DeviceConnectionVisualState.OFFLINE
     }
-
-private fun DeviceRootSnapshot?.isLightLibraryWriteAvailable(): Boolean =
-    this?.availability == OwnerDeviceAvailability.REACHABLE &&
-        family == OwnerDeviceFamily.LIGHT &&
-        catalogState == DeviceRootCatalogState.VALID
 
 private fun DeviceLightLibraryMutationResult.toEffect(
     @StringRes successMessage: Int

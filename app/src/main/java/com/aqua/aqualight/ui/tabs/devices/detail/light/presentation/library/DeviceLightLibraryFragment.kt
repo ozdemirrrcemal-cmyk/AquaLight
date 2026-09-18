@@ -24,7 +24,6 @@ import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
 import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
-import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import kotlinx.coroutines.launch
 
 class DeviceLightLibraryFragment : Fragment(R.layout.fragment_device_light_library) {
@@ -56,7 +55,6 @@ class DeviceLightLibraryFragment : Fragment(R.layout.fragment_device_light_libra
     private fun setupContent() {
         val actions = DeviceLightLibraryActions(
             onTabSelected = viewModel.selectTab,
-            onLoadClick = viewModel::load,
             onMoreClick = viewModel::requestActions,
             onRetryClick = viewModel::retry
         )
@@ -88,7 +86,6 @@ class DeviceLightLibraryFragment : Fragment(R.layout.fragment_device_light_libra
                 statusIcon = state.connectionVisualState.toWifiHeaderStatusIcon(requireContext())
             )
         )
-        setFragmentGlobalLoading(state.showGlobalLoading)
     }
 
     private fun handleEffect(effect: DeviceLightLibraryEffect) {
@@ -98,7 +95,6 @@ class DeviceLightLibraryFragment : Fragment(R.layout.fragment_device_light_libra
             is DeviceLightLibraryEffect.OpenRename -> showRename(effect)
             is DeviceLightLibraryEffect.OpenDeleteConfirmation -> showDeleteConfirmation(effect)
             is DeviceLightLibraryEffect.ShowMessage -> {
-                setFragmentGlobalLoading(false)
                 (activity as? BaseActivity)?.showSnackBar(
                     message = getString(effect.messageRes),
                     type = if (effect.success) {
@@ -211,7 +207,6 @@ class DeviceLightLibraryFragment : Fragment(R.layout.fragment_device_light_libra
     }
 
     override fun onDestroyView() {
-        setFragmentGlobalLoading(false)
         _binding = null
         super.onDestroyView()
     }

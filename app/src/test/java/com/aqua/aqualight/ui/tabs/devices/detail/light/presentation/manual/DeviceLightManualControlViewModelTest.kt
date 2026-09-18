@@ -418,8 +418,7 @@ class DeviceLightManualControlViewModelTest {
                     },
                     estimatedPowerWatts = ESTIMATED_POWER_WATTS
                 ),
-                entries = emptyList(),
-                firmwareWriteAuthoritative = true
+                entries = emptyList()
             )
         )
 
@@ -428,7 +427,6 @@ class DeviceLightManualControlViewModelTest {
 
         override suspend fun usedNames(kind: DeviceLightLibraryKind): List<String> = emptyList()
 
-        override suspend fun refreshInstalledCustom(deviceUid: String) = Unit
 
         override suspend fun saveManual(
             deviceUid: String,
@@ -447,9 +445,6 @@ class DeviceLightManualControlViewModelTest {
             DeviceLightLibraryMutationResult.Success(entryId)
 
         override suspend fun delete(entryId: String) =
-            DeviceLightLibraryMutationResult.Success(entryId)
-
-        override suspend fun load(deviceUid: String, entryId: String) =
             DeviceLightLibraryMutationResult.Success(entryId)
     }
 

@@ -1,9 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.library
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,31 +9,20 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredWidthIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.disabled
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryEntry
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryPayload
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
-import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightLibraryAlpha
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightLibraryGeometry
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AutomaticCalendarIcon
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AutomaticClockIcon
@@ -52,7 +38,7 @@ internal fun ManualLibraryCard(
     visuals: DeviceLightLibraryVisuals
 ) {
     LibraryCardSurface {
-        LibraryCardHeader(entry, presentation.firmwareWritesEnabled, actions, visuals)
+        LibraryCardHeader(entry, actions, visuals)
         ManualLibrarySummary(visuals)
         LibraryCardDivider(visuals)
         ManualChannelSummary(entry.channels, presentation.descriptors, payload.scene, visuals)
@@ -68,7 +54,7 @@ internal fun CustomLibraryCard(
     visuals: DeviceLightLibraryVisuals
 ) {
     LibraryCardSurface {
-        LibraryCardHeader(entry, presentation.firmwareWritesEnabled, actions, visuals)
+        LibraryCardHeader(entry, actions, visuals)
         CustomLibrarySummary(payload, visuals)
         LibraryCardDivider(visuals)
         CustomChannelSummary(entry.channels, presentation.descriptors, payload, visuals)
@@ -95,7 +81,6 @@ private fun LibraryCardSurface(content: @Composable () -> Unit) {
 @Composable
 private fun LibraryCardHeader(
     entry: DeviceLightLibraryEntry,
-    firmwareWritesEnabled: Boolean,
     actions: DeviceLightLibraryActions,
     visuals: DeviceLightLibraryVisuals
 ) {
@@ -116,8 +101,6 @@ private fun LibraryCardHeader(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f)
         )
-        Spacer(Modifier.width(DeviceLightAutomaticGeometry.headerControlGap))
-        LibraryLoadButton(entry, firmwareWritesEnabled, actions.onLoadClick, visuals)
         Spacer(Modifier.width(DeviceLightAutomaticGeometry.headerControlGap))
         AutomaticMoreButton(
             color = visuals.colors.card.secondaryText,
@@ -243,72 +226,6 @@ private fun LibraryCardDivider(visuals: DeviceLightLibraryVisuals) {
             .height(DeviceLightAutomaticGeometry.cardDividerHeight)
             .background(visuals.colors.card.mediaOutline)
     )
-}
-
-@Composable
-private fun LibraryLoadButton(
-    entry: DeviceLightLibraryEntry,
-    firmwareWritesEnabled: Boolean,
-    onLoadClick: (String) -> Unit,
-    visuals: DeviceLightLibraryVisuals
-) {
-    val enabled = firmwareWritesEnabled && !entry.isLoaded
-    val text = stringResource(
-        if (entry.isLoaded) {
-            R.string.device_light_library_loaded
-        } else {
-            R.string.device_light_library_load
-        }
-    )
-    val description = stringResource(
-        if (entry.isLoaded) {
-            R.string.device_light_library_loaded_description
-        } else {
-            R.string.device_light_library_load_description
-        },
-        entry.name
-    )
-    val shape = RoundedCornerShape(AquaLightLibraryGeometry.loadButtonCornerRadius)
-    Row(
-        modifier = Modifier
-            .requiredWidthIn(min = AquaLightLibraryGeometry.loadButtonMinWidth)
-            .height(AquaLightLibraryGeometry.loadButtonHeight)
-            .alpha(if (enabled) 1f else AquaLightLibraryAlpha.disabled)
-            .border(
-                AquaLightLibraryGeometry.loadButtonOutlineWidth,
-                visuals.colors.action,
-                shape
-            )
-            .then(
-                if (enabled) {
-                    Modifier.clickable(role = Role.Button) { onLoadClick(entry.id) }
-                } else {
-                    Modifier
-                }
-            )
-            .semantics {
-                contentDescription = description
-                if (!enabled) disabled()
-            }
-            .padding(horizontal = AquaLightLibraryGeometry.loadButtonHorizontalPadding),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Image(
-            painter = painterResource(
-                if (entry.isLoaded) R.drawable.ic_check_24 else R.drawable.ic_light_library
-            ),
-            contentDescription = null,
-            colorFilter = ColorFilter.tint(visuals.colors.action),
-            modifier = Modifier.size(AquaLightLibraryGeometry.loadButtonIconSize)
-        )
-        Spacer(Modifier.width(AquaLightLibraryGeometry.loadButtonGap))
-        BasicText(
-            text = text,
-            style = visuals.typography.title.copy(color = visuals.colors.action),
-            maxLines = 1
-        )
-    }
 }
 
 @Composable

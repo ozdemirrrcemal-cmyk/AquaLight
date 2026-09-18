@@ -30,7 +30,6 @@ import kotlinx.coroutines.test.setMain
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -50,7 +49,6 @@ class DeviceLightLibraryViewModelTest {
 
         assertEquals(listOf(ENTRY_ID), viewModel.uiState.value.entries.map { entry -> entry.id })
         assertEquals(DeviceConnectionVisualState.ONLINE, viewModel.uiState.value.connectionVisualState)
-        assertTrue(viewModel.uiState.value.firmwareWritesEnabled)
 
         library.publish(DeviceLightLibraryResult.Failed(DeviceLightLibraryFailure.UNAVAILABLE))
         root.publish(onlineRoot(OwnerDeviceAvailability.UNREACHABLE))
@@ -61,72 +59,29 @@ class DeviceLightLibraryViewModelTest {
         assertNotNull(retained.readError)
         assertFalse(retained.initialLoading)
         assertEquals(DeviceConnectionVisualState.OFFLINE, retained.connectionVisualState)
-        assertFalse(retained.firmwareWritesEnabled)
 
-        viewModel.load(ENTRY_ID)
         viewModel.rename(ENTRY_ID, "Renamed")
         viewModel.delete(ENTRY_ID)
 
-        assertEquals(0, library.loadCalls)
         assertEquals(1, library.renameCalls)
         assertEquals(1, library.deleteCalls)
     }
 
     @Test
-    fun `successful load remains pending until firmware confirms the loaded entry`() {
-        val library = FakeLibraryOperations()
-        val viewModel = DeviceLightLibraryViewModel(
-            operations = library,
-            rootOperations = FakeRootOperations(onlineRoot())
-        ).apply { bind(DEVICE_UID) }
-
-        viewModel.load(ENTRY_ID)
-
-        assertEquals(ENTRY_ID, viewModel.uiState.value.activeLoadEntryId)
-        assertEquals(1, library.loadCalls)
-
-        library.publish(availableResult(isLoaded = true))
-
-        assertNull(viewModel.uiState.value.activeLoadEntryId)
-        assertTrue(viewModel.uiState.value.entries.single().isLoaded)
-    }
-
-    @Test
-    fun `central presence updates refresh data without reconnecting from Library`() {
+    fun `central presence updates connection state without mutating library records`() {
         val library = FakeLibraryOperations()
         val root = FakeRootOperations(onlineRoot())
         val viewModel = DeviceLightLibraryViewModel(library, root).apply { bind(DEVICE_UID) }
 
         assertEquals(0, root.connectCalls)
-        assertEquals(1, library.refreshCalls)
 
         root.publish(onlineRoot(OwnerDeviceAvailability.UNREACHABLE))
-        root.publish(onlineRoot())
+        assertEquals(DeviceConnectionVisualState.OFFLINE, viewModel.uiState.value.connectionVisualState)
 
-        assertEquals(2, library.refreshCalls)
+        root.publish(onlineRoot())
+        assertEquals(DeviceConnectionVisualState.ONLINE, viewModel.uiState.value.connectionVisualState)
         assertEquals(0, root.connectCalls)
         assertEquals(listOf(ENTRY_ID), viewModel.uiState.value.entries.map { entry -> entry.id })
-    }
-
-    @Test
-    fun `presentation remains visible while current generation write authority is pending`() {
-        val library = FakeLibraryOperations(availableResult(firmwareWriteAuthoritative = false))
-        val viewModel = DeviceLightLibraryViewModel(
-            operations = library,
-            rootOperations = FakeRootOperations(onlineRoot())
-        ).apply { bind(DEVICE_UID) }
-
-        assertEquals(DeviceConnectionVisualState.ONLINE, viewModel.uiState.value.connectionVisualState)
-        assertEquals(listOf(ENTRY_ID), viewModel.uiState.value.entries.map { entry -> entry.id })
-        assertFalse(viewModel.uiState.value.firmwareWritesEnabled)
-
-        viewModel.load(ENTRY_ID)
-        assertEquals(0, library.loadCalls)
-
-        library.publish(availableResult(firmwareWriteAuthoritative = true))
-        viewModel.load(ENTRY_ID)
-
-        assertEquals(1, library.loadCalls)
     }
 
     @Test
@@ -149,18 +104,12 @@ class DeviceLightLibraryViewModelTest {
         initial: DeviceLightLibraryResult = availableResult()
     ) : DeviceLightLibraryOperations {
         private val results = MutableStateFlow(initial)
-        var refreshCalls = 0
-        var loadCalls = 0
         var renameCalls = 0
         var deleteCalls = 0
 
         override fun observeLibrary(deviceUid: String): Flow<DeviceLightLibraryResult> = results
 
         override suspend fun usedNames(kind: DeviceLightLibraryKind): List<String> = emptyList()
-
-        override suspend fun refreshInstalledCustom(deviceUid: String) {
-            refreshCalls += 1
-        }
 
         override suspend fun saveManual(
             deviceUid: String,
@@ -185,14 +134,6 @@ class DeviceLightLibraryViewModelTest {
 
         override suspend fun delete(entryId: String): DeviceLightLibraryMutationResult.Success {
             deleteCalls += 1
-            return DeviceLightLibraryMutationResult.Success(entryId)
-        }
-
-        override suspend fun load(
-            deviceUid: String,
-            entryId: String
-        ): DeviceLightLibraryMutationResult.Success {
-            loadCalls += 1
             return DeviceLightLibraryMutationResult.Success(entryId)
         }
 
@@ -244,10 +185,7 @@ class DeviceLightLibraryViewModelTest {
             productKey = PRODUCT_KEY
         )
 
-        fun availableResult(
-            isLoaded: Boolean = false,
-            firmwareWriteAuthoritative: Boolean = true
-        ): DeviceLightLibraryResult.Available {
+        fun availableResult(): DeviceLightLibraryResult.Available {
             val channels = DeviceLightLibraryChannel.entries
             val scene = DeviceLightLibraryScene(channels.associateWith { channel -> channel.ordinal * 10 })
             return DeviceLightLibraryResult.Available(
@@ -274,11 +212,9 @@ class DeviceLightLibraryViewModelTest {
                             channels = channels,
                             payload = DeviceLightLibraryPayload.Manual(scene),
                             createdAtMillis = 1L,
-                            updatedAtMillis = 1L,
-                            isLoaded = isLoaded
+                            updatedAtMillis = 1L
                         )
-                    ),
-                    firmwareWriteAuthoritative = firmwareWriteAuthoritative
+                    )
                 )
             )
         }

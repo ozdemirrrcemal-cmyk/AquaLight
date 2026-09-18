@@ -9,10 +9,7 @@ import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryPa
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryScene
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryTarget
 import com.aqua.aqualight.data.devices.model.DeviceUid
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightCustomDocument
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightMode
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightProduct
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightScene
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightStatus
 
 internal fun DeviceLightStatus.toLibraryTarget(
@@ -56,11 +53,7 @@ internal fun DeviceLightControlSnapshot.toLibraryTarget(
         ?.toInt()
 )
 
-internal fun StoredDeviceLightLibraryEntry.toApplicationEntry(
-    product: DeviceLightProduct,
-    status: DeviceLightStatus?,
-    installedCustom: DeviceLightCustomDocument?
-): DeviceLightLibraryEntry {
+internal fun StoredDeviceLightLibraryEntry.toApplicationEntry(): DeviceLightLibraryEntry {
     val channels = channelKeysList.map { key ->
         requireNotNull(DeviceLightLibraryChannel.fromSceneKey(key))
     }
@@ -91,35 +84,8 @@ internal fun StoredDeviceLightLibraryEntry.toApplicationEntry(
         channels = channels,
         payload = payload,
         createdAtMillis = createdAtMillis,
-        updatedAtMillis = updatedAtMillis,
-        isLoaded = isLoaded(status, installedCustom, product)
+        updatedAtMillis = updatedAtMillis
     )
-}
-
-private fun StoredDeviceLightLibraryEntry.isLoaded(
-    status: DeviceLightStatus?,
-    installedCustom: DeviceLightCustomDocument?,
-    product: DeviceLightProduct
-): Boolean = when (kind) {
-    StoredDeviceLightLibraryKind.STORED_DEVICE_LIGHT_LIBRARY_KIND_MANUAL ->
-        status?.mode == DeviceLightMode.MANUAL &&
-            status.manual.scene.product == product &&
-            status.manual.scene.percents == manual.channelsList.associate { value ->
-                value.channelKey to value.percent
-            }
-    StoredDeviceLightLibraryKind.STORED_DEVICE_LIGHT_LIBRARY_KIND_CUSTOM ->
-        status?.mode == DeviceLightMode.CUSTOM &&
-            installedCustom?.installed == true &&
-            installedCustom.weekdaysMask == custom.weekdaysMask &&
-            installedCustom.points.size == custom.pointsCount &&
-            installedCustom.points.zip(custom.pointsList).all { (runtimePoint, storedPoint) ->
-                runtimePoint.timeMs == storedPoint.timeMs &&
-                    runtimePoint.scene.product == product &&
-                    runtimePoint.scene.percents == storedPoint.channelsList.associate { value ->
-                        value.channelKey to value.percent
-                    }
-            }
-    else -> false
 }
 
 internal fun DeviceLightLibraryScene.toStoredChannelValues(
@@ -134,16 +100,6 @@ internal fun DeviceLightLibraryScene.toStoredChannelValues(
 private fun List<StoredDeviceLightChannelValue>.toApplicationChannels() = associate { value ->
     requireNotNull(DeviceLightLibraryChannel.fromSceneKey(value.channelKey)) to value.percent
 }
-
-internal fun StoredDeviceLightManualScene.toRuntimeScene(product: DeviceLightProduct) =
-    channelsList.toRuntimeScene(product)
-
-internal fun List<StoredDeviceLightChannelValue>.toRuntimeScene(
-    product: DeviceLightProduct
-): DeviceLightScene = DeviceLightScene(
-    product = product,
-    percents = associate { value -> value.channelKey to value.percent }
-)
 
 internal fun requireExactScene(
     target: DeviceLightLibraryTarget,

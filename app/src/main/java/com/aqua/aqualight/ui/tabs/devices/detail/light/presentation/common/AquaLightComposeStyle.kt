@@ -253,14 +253,6 @@ object AquaLightLibraryGeometry {
     val sectionHeaderHorizontalPadding = 2.dp
     val badgeCornerRadius = 9.dp
 
-    val loadButtonHeight = 42.dp
-    val loadButtonMinWidth = 112.dp
-    val loadButtonCornerRadius = 12.dp
-    val loadButtonOutlineWidth = 1.dp
-    val loadButtonIconSize = 21.dp
-    val loadButtonGap = 7.dp
-    val loadButtonHorizontalPadding = 12.dp
-
     val customDaysMaxWidth = 94.dp
     val customMetadataGap = 6.dp
 
@@ -274,7 +266,6 @@ object AquaLightLibraryGeometry {
 
 object AquaLightLibraryAlpha {
     const val selectedTabSurface = 0.20f
-    const val disabled = 0.38f
 }
 
 object AquaLightManualTypographySpec {

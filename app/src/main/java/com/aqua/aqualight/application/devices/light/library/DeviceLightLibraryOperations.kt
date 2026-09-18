@@ -8,8 +8,6 @@ interface DeviceLightLibraryOperations {
 
     suspend fun usedNames(kind: DeviceLightLibraryKind): List<String>
 
-    suspend fun refreshInstalledCustom(deviceUid: String)
-
     suspend fun saveManual(
         deviceUid: String,
         name: String,
@@ -30,8 +28,4 @@ interface DeviceLightLibraryOperations {
 
     suspend fun delete(entryId: String): DeviceLightLibraryMutationResult
 
-    suspend fun load(
-        deviceUid: String,
-        entryId: String
-    ): DeviceLightLibraryMutationResult
 }

@@ -13,8 +13,7 @@ internal enum class DeviceLightLibraryTab {
 }
 
 internal data class DeviceLightLibraryCardPresentation(
-    val descriptors: List<DeviceLightLibraryChannelDescriptor>,
-    val firmwareWritesEnabled: Boolean
+    val descriptors: List<DeviceLightLibraryChannelDescriptor>
 )
 
 internal data class DeviceLightLibraryUiState(
@@ -24,10 +23,7 @@ internal data class DeviceLightLibraryUiState(
     val entries: List<DeviceLightLibraryEntry> = emptyList(),
     val initialLoading: Boolean = true,
     val readError: DeviceLightCommercialErrorMessage? = null,
-    val connectionVisualState: DeviceConnectionVisualState = DeviceConnectionVisualState.OFFLINE,
-    val centralFirmwareWritesEnabled: Boolean = false,
-    val runtimeWriteAuthoritative: Boolean = false,
-    val activeLoadEntryId: String? = null
+    val connectionVisualState: DeviceConnectionVisualState = DeviceConnectionVisualState.OFFLINE
 ) {
     val visibleEntries: List<DeviceLightLibraryEntry>
         get() = entries.filter { entry ->
@@ -37,19 +33,14 @@ internal data class DeviceLightLibraryUiState(
             }
         }
 
-    val showGlobalLoading: Boolean
-        get() = activeLoadEntryId != null
-
     val hasPresentationSnapshot: Boolean
         get() = target != null
 
-    val firmwareWritesEnabled: Boolean
-        get() = centralFirmwareWritesEnabled && runtimeWriteAuthoritative
+
 }
 
 internal data class DeviceLightLibraryActions(
     val onTabSelected: (DeviceLightLibraryTab) -> Unit,
-    val onLoadClick: (String) -> Unit,
     val onMoreClick: (String) -> Unit,
     val onRetryClick: () -> Unit
 )

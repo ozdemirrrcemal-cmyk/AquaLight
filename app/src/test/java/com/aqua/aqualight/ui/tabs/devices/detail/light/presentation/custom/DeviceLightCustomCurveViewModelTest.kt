@@ -365,7 +365,6 @@ class DeviceLightCustomCurveViewModelTest {
 
         override fun observeLibrary(deviceUid: String): Flow<DeviceLightLibraryResult> = emptyFlow()
         override suspend fun usedNames(kind: DeviceLightLibraryKind): List<String> = emptyList()
-        override suspend fun refreshInstalledCustom(deviceUid: String) = Unit
         override suspend fun saveManual(
             deviceUid: String,
             name: String,
@@ -388,8 +387,6 @@ class DeviceLightCustomCurveViewModelTest {
         override suspend fun rename(entryId: String, name: String) =
             DeviceLightLibraryMutationResult.Success(entryId)
         override suspend fun delete(entryId: String) =
-            DeviceLightLibraryMutationResult.Success(entryId)
-        override suspend fun load(deviceUid: String, entryId: String) =
             DeviceLightLibraryMutationResult.Success(entryId)
     }
 

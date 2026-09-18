@@ -214,11 +214,7 @@
     <string name="device_light_library_metadata_separator">·</string>
     <string name="device_light_library_light_duration_hours">%1$d sa ışık</string>
     <string name="device_light_library_channel_range_format">%1$s %2$d–%3$d%%</string>
-    <string name="device_light_library_load">Yükle</string>
-    <string name="device_light_library_loaded">✓ Yüklü</string>
     <string name="device_light_library_more_actions_description">%1$s için diğer işlemler</string>
-    <string name="device_light_library_load_description">%1$s ayarını cihaza yükle</string>
-    <string name="device_light_library_loaded_description">%1$s cihazda yüklü</string>
     <string name="device_light_library_actions_title">%1$s</string>
     <string name="device_light_library_rename">Yeniden adlandır</string>
     <string name="device_light_library_delete">Sil</string>
@@ -237,7 +233,6 @@
     <string name="device_light_library_saved_success">Işık ayarı kaydedildi</string>
     <string name="device_light_library_renamed_success">Işık ayarı yeniden adlandırıldı</string>
     <string name="device_light_library_deleted_success">Işık ayarı silindi</string>
-    <string name="device_light_library_loaded_success">Işık ayarı cihaza yüklendi</string>
     <string name="device_light_library_operation_error">Bu işlem tamamlanamadı. Tekrar deneyin.</string>
     <string name="device_light_error_not_connected_message">Cihaz bağlantısı kesildi. Yeniden bağlanıp tekrar deneyin.</string>
     <string name="device_light_library_empty_manual_title">Henüz manuel kayıt yok</string>

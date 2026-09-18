@@ -128,8 +128,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.libraryContent(
     visuals: DeviceLightLibraryVisuals
 ) {
     val cardPresentation = DeviceLightLibraryCardPresentation(
-        descriptors = requireNotNull(state.target).channelDescriptors,
-        firmwareWritesEnabled = state.firmwareWritesEnabled
+        descriptors = requireNotNull(state.target).channelDescriptors
     )
     item(key = "library-section-header") {
         LibrarySectionHeader(state, visuals)
@@ -422,7 +421,7 @@ private fun LibraryTextAction(
     onClick: () -> Unit,
     visuals: DeviceLightLibraryVisuals
 ) {
-    val shape = RoundedCornerShape(AquaLightLibraryGeometry.loadButtonCornerRadius)
+    val shape = RoundedCornerShape(AquaLightLibraryGeometry.badgeCornerRadius)
     BasicText(
         text = text,
         style = visuals.typography.body.copy(

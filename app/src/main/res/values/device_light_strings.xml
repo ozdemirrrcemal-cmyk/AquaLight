@@ -216,11 +216,7 @@
     <string name="device_light_library_metadata_separator">·</string>
     <string name="device_light_library_light_duration_hours">%1$d h light</string>
     <string name="device_light_library_channel_range_format">%1$s %2$d–%3$d%%</string>
-    <string name="device_light_library_load">Load</string>
-    <string name="device_light_library_loaded">✓ Loaded</string>
     <string name="device_light_library_more_actions_description">More actions for %1$s</string>
-    <string name="device_light_library_load_description">Load %1$s to the device</string>
-    <string name="device_light_library_loaded_description">%1$s is loaded on the device</string>
     <string name="device_light_library_actions_title">%1$s</string>
     <string name="device_light_library_rename">Rename</string>
     <string name="device_light_library_delete">Delete</string>
@@ -239,7 +235,6 @@
     <string name="device_light_library_saved_success">Light setting saved</string>
     <string name="device_light_library_renamed_success">Light setting renamed</string>
     <string name="device_light_library_deleted_success">Light setting deleted</string>
-    <string name="device_light_library_loaded_success">Light setting loaded to the device</string>
     <string name="device_light_library_operation_error">This action could not be completed. Try again.</string>
     <string name="device_light_error_not_connected_message">The device connection was lost. Reconnect and try again.</string>
     <string name="device_light_library_empty_manual_title">No manual scenes yet</string>

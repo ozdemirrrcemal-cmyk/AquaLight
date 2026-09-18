@@ -97,9 +97,7 @@ data class DeviceLightLibraryEntry(
     val channels: List<DeviceLightLibraryChannel>,
     val payload: DeviceLightLibraryPayload,
     val createdAtMillis: Long,
-    val updatedAtMillis: Long,
-    /** Derived from authoritative runtime payloads and deliberately never persisted. */
-    val isLoaded: Boolean
+    val updatedAtMillis: Long
 ) {
     init {
         require(id.isNotBlank())
@@ -125,9 +123,7 @@ data class DeviceLightLibraryEntry(
 
 data class DeviceLightLibrarySnapshot(
     val target: DeviceLightLibraryTarget,
-    val entries: List<DeviceLightLibraryEntry>,
-    /** Current generation authority for firmware writes; presentation may be older and retained. */
-    val firmwareWriteAuthoritative: Boolean
+    val entries: List<DeviceLightLibraryEntry>
 )
 
 sealed interface DeviceLightLibraryResult {
