@@ -11,17 +11,19 @@ import android.bluetooth.BluetoothProfile
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
+import androidx.core.content.ContextCompat
+import com.aqua.aqualight.data.devices.contract.AqlBleProvisioningContract
 import com.aqua.aqualight.data.devices.provisioning.model.AqlProvisioningDraft
 import java.net.URLDecoder
 import java.util.Locale
-import androidx.core.content.ContextCompat
-import com.aqua.aqualight.data.devices.contract.AqlBleProvisioningContract
 import java.util.UUID
 import kotlin.coroutines.resume
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONObject
-import kotlinx.coroutines.delay
 
 /**
  * Manual BLE setup preflight.
@@ -35,6 +37,14 @@ class AqlBleDeviceInfoPreflightClient(
 
     private val appContext = context.applicationContext
     private val bluetoothManager = appContext.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private val closeCoordinator = AqlBleConnectionCloseCoordinator<BluetoothGatt>(
+        schedule = { task, delayMillis -> mainHandler.postDelayed(task, delayMillis) },
+        cancel = { task -> mainHandler.removeCallbacks(task) },
+        disconnect = { gatt -> disconnectGatt(gatt) },
+        release = { gatt -> releaseGatt(gatt) },
+        fallbackDelayMillis = GATT_CLOSE_FALLBACK_MS
+    )
 
     override suspend fun verifyManualSetup(bleAddress: String): ManualSetupPreflightResult {
         val address = bleAddress.trim()
@@ -126,13 +136,25 @@ class AqlBleDeviceInfoPreflightClient(
             fun finish(result: Result<DeviceInfo>) {
                 if (completed) return
                 completed = true
-                runCatching { gattRef?.disconnect() }
-                runCatching { gattRef?.close() }
-                if (continuation.isActive) continuation.resume(result)
+                val gatt = gattRef
+                if (gatt == null) {
+                    if (continuation.isActive) continuation.resume(result)
+                } else {
+                    closeCoordinator.beginGracefulClose(gatt) {
+                        if (continuation.isActive) continuation.resume(result)
+                    }
+                }
             }
 
             val callback = object : BluetoothGattCallback() {
                 override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
+                    if (
+                        closeCoordinator.handleConnectionState(
+                            connection = gatt,
+                            disconnected = newState == BluetoothProfile.STATE_DISCONNECTED,
+                            failed = status != BluetoothGatt.GATT_SUCCESS
+                        )
+                    ) return
                     if (status != BluetoothGatt.GATT_SUCCESS) {
                         finish(Result.failure(IllegalStateException("BLE connection failed with status $status.")))
                         return
@@ -176,8 +198,9 @@ class AqlBleDeviceInfoPreflightClient(
             }
 
             continuation.invokeOnCancellation {
-                runCatching { gattRef?.disconnect() }
-                runCatching { gattRef?.close() }
+                gattRef?.let { connection ->
+                    closeCoordinator.beginGracefulClose(connection)
+                }
             }
 
             gattRef = runCatching {
@@ -205,6 +228,16 @@ class AqlBleDeviceInfoPreflightClient(
             return
         }
         finish(parseDeviceInfo(raw))
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun disconnectGatt(gatt: BluetoothGatt) {
+        gatt.disconnect()
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun releaseGatt(gatt: BluetoothGatt) {
+        gatt.close()
     }
 
     private fun parseDeviceInfo(raw: String): Result<DeviceInfo> {
@@ -482,6 +515,7 @@ class AqlBleDeviceInfoPreflightClient(
         const val PREFLIGHT_READ_ATTEMPTS = 2
         const val QR_CANDIDATE_PREFLIGHT_READ_ATTEMPTS = 2
         const val PREFLIGHT_RETRY_DELAY_MS = 650L
+        const val GATT_CLOSE_FALLBACK_MS = 1_500L
     }
 }
 

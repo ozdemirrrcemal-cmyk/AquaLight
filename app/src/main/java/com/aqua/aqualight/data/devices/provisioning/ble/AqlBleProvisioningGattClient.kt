@@ -36,6 +36,13 @@ class AqlBleProvisioningGattClient(
     private val appContext = context.applicationContext
     private val bluetoothManager = appContext.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
     private val mainHandler = Handler(Looper.getMainLooper())
+    private val closeCoordinator = AqlBleConnectionCloseCoordinator<BluetoothGatt>(
+        schedule = { task, delayMillis -> mainHandler.postDelayed(task, delayMillis) },
+        cancel = { task -> mainHandler.removeCallbacks(task) },
+        disconnect = { gatt -> disconnectGatt(gatt) },
+        release = { gatt -> releaseGatt(gatt) },
+        fallbackDelayMillis = GATT_CLOSE_FALLBACK_MS
+    )
 
     private val _events = MutableSharedFlow<AqlBleProvisioningGattEvent>(extraBufferCapacity = EVENT_BUFFER_CAPACITY)
     val events: SharedFlow<AqlBleProvisioningGattEvent> = _events.asSharedFlow()
@@ -155,8 +162,7 @@ class AqlBleProvisioningGattClient(
         readFailures.clear()
         val gatt = activeGatt
         activeGatt = null
-        runCatching { gatt?.disconnect() }
-        runCatching { gatt?.close() }
+        gatt?.let { connection -> closeCoordinator.beginGracefulClose(connection) }
         activeDraft = null
         deviceInfoCharacteristic = null
         startSessionCharacteristic = null
@@ -185,6 +191,13 @@ class AqlBleProvisioningGattClient(
 
     private val callback = object : BluetoothGattCallback() {
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
+            if (
+                closeCoordinator.handleConnectionState(
+                    connection = gatt,
+                    disconnected = newState == BluetoothProfile.STATE_DISCONNECTED,
+                    failed = status != BluetoothGatt.GATT_SUCCESS
+                )
+            ) return
             if (activeGatt !== gatt) return
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 failAndClose("BLE connection failed with status $status.")
@@ -906,6 +919,16 @@ class AqlBleProvisioningGattClient(
         } else true
     }
 
+    @SuppressLint("MissingPermission")
+    private fun disconnectGatt(gatt: BluetoothGatt) {
+        gatt.disconnect()
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun releaseGatt(gatt: BluetoothGatt) {
+        gatt.close()
+    }
+
     private fun scheduleStatusPoll() {
         if (activeGatt == null) return
         mainHandler.removeCallbacks(statusPollRunnable)
@@ -950,6 +973,7 @@ class AqlBleProvisioningGattClient(
         const val STATUS_POLL_INTERVAL_MS = 1_500L
         const val CONNECTION_TIMEOUT_MS = 20_000L
         const val SERVICE_DISCOVERY_TIMEOUT_MS = 15_000L
+        const val GATT_CLOSE_FALLBACK_MS = 1_500L
         const val MAX_DEVICE_INFO_READ_ATTEMPTS = 3
         const val DEVICE_INFO_RETRY_DELAY_MS = 350L
         const val GATT_OPERATION_START_RETRY_DELAY_MS = 700L
