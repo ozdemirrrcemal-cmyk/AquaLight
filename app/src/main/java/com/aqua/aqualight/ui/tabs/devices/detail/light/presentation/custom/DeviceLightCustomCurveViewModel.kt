@@ -19,6 +19,7 @@ import com.aqua.aqualight.application.devices.light.library.DeviceLightLibrarySc
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.toCommercialLightError
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -53,6 +54,7 @@ internal class DeviceLightCustomCurveViewModel(
     private var restoreDirty = false
     private var observeJob: Job? = null
     private var previewJob: Job? = null
+    private var clockJob: Job? = null
 
     val dayEditor = DeviceLightCustomDayEditor(
         currentState = { currentState },
@@ -75,7 +77,9 @@ internal class DeviceLightCustomCurveViewModel(
         if (boundDeviceUid == deviceUid) return
         observeJob?.cancel()
         previewJob?.cancel()
+        clockJob?.cancel()
         previewJob = null
+        clockJob = null
         boundDeviceUid = deviceUid
         this.restoredDraft = restoredDraft
         restoreDirty = restoredDraft != null && restoredDirty
@@ -128,15 +132,10 @@ internal class DeviceLightCustomCurveViewModel(
         if (!state.canPreview) return
         val points = state.draft.points.map { point -> point.toApplicationPoint() }
         val previousTimeMs = state.previewTimeMs
+        val previousPlayheadMode = state.playheadMode
         previewJob?.cancel()
         previewJob = viewModelScope.launch {
-            _uiState.update {
-                it.copy(
-                    operationInProgress = true,
-                    previewPlaybackActive = false,
-                    previewTimeMs = 0L
-                )
-            }
+            _uiState.update { it.copy(operationInProgress = true) }
             when (val result = customOperations.preview(boundDeviceUid, points)) {
                 DeviceLightCustomMutationResult.Success -> playCustomDayPreview()
                 is DeviceLightCustomMutationResult.Failed -> {
@@ -148,7 +147,7 @@ internal class DeviceLightCustomCurveViewModel(
                     _uiState.update {
                         it.copy(
                             operationInProgress = false,
-                            previewPlaybackActive = false,
+                            playheadMode = previousPlayheadMode,
                             previewTimeMs = previousTimeMs
                         )
                     }
@@ -160,10 +159,11 @@ internal class DeviceLightCustomCurveViewModel(
     val clearPreview: () -> Unit = {
         previewJob?.cancel()
         previewJob = null
-        _uiState.update {
-            it.copy(
+        _uiState.update { state ->
+            state.copy(
                 operationInProgress = false,
-                previewPlaybackActive = false
+                playheadMode = DeviceLightCustomPlayheadMode.CLOCK,
+                previewTimeMs = state.deviceTimeMs ?: state.previewTimeMs
             )
         }
         boundDeviceUid.takeIf(String::isNotBlank)?.let { deviceUid ->
@@ -242,20 +242,8 @@ internal class DeviceLightCustomCurveViewModel(
     }
 
     private fun applySnapshot(snapshot: DeviceLightCustomSnapshot) {
-        val previewTimeWhileAnimating = _uiState.value.previewTimeMs
-            .takeIf { previewJob?.isActive == true }
         val channels = snapshot.channels.map(DeviceLightCustomChannel::toUiChannel)
-        val firmwareDraft = DeviceLightCustomDraft(
-            weekdaysMask = snapshot.weekdaysMask,
-            points = snapshot.points.map { point ->
-                DeviceLightCustomPointUiState(
-                    timeMs = point.timeMs,
-                    channels = point.scene.channels.mapKeys { (channel, _) ->
-                        channel.toUiChannel()
-                    }
-                )
-            }
-        )
+        val firmwareDraft = snapshot.toUiDraft()
         persistedDraft = firmwareDraft
         val restored = restoredDraft?.takeIf { draft ->
             draft.points.all { point -> point.channels.keys == channels.toSet() } &&
@@ -273,10 +261,11 @@ internal class DeviceLightCustomCurveViewModel(
             else -> firmwareDraft
         }
         restoredDraft = null
-        val currentTimeMs = snapshot.currentTimeMs?.alignedTime() ?: _uiState.value.previewTimeMs
-        val initialPointTimeMs = draft.points.minByOrNull { point ->
-            kotlin.math.abs(point.timeMs - currentTimeMs)
-        }?.timeMs
+        val deviceTimeMs = snapshot.currentTimeMs
+            ?.takeIf { timeMs -> timeMs in 0 until MILLIS_PER_DAY }
+            ?: current.deviceTimeMs
+        val selectedTimeMs = draft.resolveSelection(current, deviceTimeMs)
+        val playheadTimeMs = current.resolvePlayheadTime(deviceTimeMs)
         _uiState.value = DeviceLightCustomCurveUiState(
             deviceUid = snapshot.deviceUid,
             connectionVisualState = if (snapshot.firmwareWriteAuthoritative) {
@@ -286,23 +275,33 @@ internal class DeviceLightCustomCurveViewModel(
             },
             channels = channels,
             draft = draft,
-            selectedTimeMs = initialPointTimeMs,
-            previewTimeMs = previewTimeWhileAnimating ?: initialPointTimeMs ?: currentTimeMs,
+            selectedTimeMs = selectedTimeMs,
+            previewTimeMs = playheadTimeMs,
+            deviceTimeMs = deviceTimeMs,
+            playheadMode = current.playheadMode,
             maxPoints = snapshot.maxPoints,
             timeStepMs = snapshot.timeStepMs,
             contentEnabled = true,
             firmwareWriteAuthoritative = snapshot.firmwareWriteAuthoritative,
             initialLoading = false,
             operationInProgress = current.operationInProgress,
-            previewPlaybackActive = current.previewPlaybackActive,
             blockingOperationInProgress = current.blockingOperationInProgress,
             hasUnsavedChanges = draft != firmwareDraft
         )
+        deviceTimeMs?.let { anchorTimeMs ->
+            clockJob?.cancel()
+            clockJob = viewModelScope.trackDeviceClock(anchorTimeMs, _uiState)
+        }
         restoreDirty = false
     }
 
     private suspend fun playCustomDayPreview() {
-        _uiState.update { it.copy(previewPlaybackActive = true) }
+        _uiState.update {
+            it.copy(
+                playheadMode = DeviceLightCustomPlayheadMode.PREVIEW,
+                previewTimeMs = 0L
+            )
+        }
         val startedAtNanos = System.nanoTime()
         var elapsedMs = 0L
         while (
@@ -320,28 +319,21 @@ internal class DeviceLightCustomCurveViewModel(
         }
         if (!kotlinx.coroutines.currentCoroutineContext().isActive) return
 
-        _uiState.update { it.copy(previewTimeMs = MILLIS_PER_DAY) }
+        _uiState.update { state ->
+            state.copy(
+                playheadMode = DeviceLightCustomPlayheadMode.CLOCK,
+                previewTimeMs = state.deviceTimeMs ?: state.previewTimeMs
+            )
+        }
         val deviceUid = boundDeviceUid.takeIf(String::isNotBlank)
         if (deviceUid != null) {
             val refreshed = customOperations.read(deviceUid)
             val snapshot = (refreshed as? DeviceLightCustomReadResult.Available)?.snapshot
                 ?: (customOperations.current(deviceUid) as? DeviceLightCustomReadResult.Available)
                     ?.snapshot
-            if (snapshot != null) {
-                applySnapshot(snapshot)
-                snapshot.currentTimeMs?.let { currentTimeMs ->
-                    _uiState.update { state ->
-                        state.copy(previewTimeMs = currentTimeMs.alignedTime())
-                    }
-                }
-            }
+            snapshot?.let(::applySnapshot)
         }
-        _uiState.update {
-            it.copy(
-                operationInProgress = false,
-                previewPlaybackActive = false
-            )
-        }
+        _uiState.update { it.copy(operationInProgress = false) }
     }
 
     private fun setDraft(draft: DeviceLightCustomDraft, selectedTimeMs: Long?) {
@@ -360,6 +352,31 @@ internal class DeviceLightCustomCurveViewModel(
 
 }
 
+private fun CoroutineScope.trackDeviceClock(
+    anchorTimeMs: Long,
+    state: MutableStateFlow<DeviceLightCustomCurveUiState>
+): Job = launch {
+    val startedAtNanos = System.nanoTime()
+    while (isActive) {
+        val elapsedMs = ((System.nanoTime() - startedAtNanos) / NANOS_PER_MILLISECOND)
+            .coerceAtLeast(0L)
+        val projectedTimeMs = (anchorTimeMs + elapsedMs).mod(MILLIS_PER_DAY)
+        state.update { current ->
+            current.copy(
+                deviceTimeMs = projectedTimeMs,
+                previewTimeMs = if (
+                    current.playheadMode == DeviceLightCustomPlayheadMode.CLOCK
+                ) {
+                    projectedTimeMs
+                } else {
+                    current.previewTimeMs
+                }
+            )
+        }
+        delay(CLOCK_TICK_MS)
+    }
+}
+
 private fun MutableStateFlow<DeviceLightCustomCurveUiState>.applyReadFailure(
     failure: DeviceLightCustomFailure
 ) {
@@ -372,6 +389,38 @@ private fun MutableStateFlow<DeviceLightCustomCurveUiState>.applyReadFailure(
             readFailed = true
         )
     }
+}
+
+private fun DeviceLightCustomSnapshot.toUiDraft() = DeviceLightCustomDraft(
+    weekdaysMask = weekdaysMask,
+    points = points.map { point ->
+        DeviceLightCustomPointUiState(
+            timeMs = point.timeMs,
+            channels = point.scene.channels.mapKeys { (channel, _) ->
+                channel.toUiChannel()
+            }
+        )
+    }
+)
+
+private fun DeviceLightCustomDraft.resolveSelection(
+    current: DeviceLightCustomCurveUiState,
+    deviceTimeMs: Long?
+): Long? {
+    val selectionReferenceMs = deviceTimeMs ?: current.previewTimeMs
+    return current.selectedTimeMs
+        ?.takeIf { selected -> points.any { point -> point.timeMs == selected } }
+        ?: points.minByOrNull { point ->
+            kotlin.math.abs(point.timeMs - selectionReferenceMs)
+        }?.timeMs
+}
+
+private fun DeviceLightCustomCurveUiState.resolvePlayheadTime(
+    deviceTimeMs: Long?
+): Long = when (playheadMode) {
+    DeviceLightCustomPlayheadMode.CLOCK -> deviceTimeMs ?: previewTimeMs
+    DeviceLightCustomPlayheadMode.EDIT,
+    DeviceLightCustomPlayheadMode.PREVIEW -> previewTimeMs
 }
 
 internal fun customDayPreviewVirtualTimeMs(elapsedPreviewMs: Long): Long {
@@ -395,4 +444,5 @@ private fun DeviceLightCustomChannelId.toApplicationChannel(): DeviceLightCustom
 }
 
 private const val PREVIEW_FRAME_MS = 16L
+private const val CLOCK_TICK_MS = 1_000L
 private const val NANOS_PER_MILLISECOND = 1_000_000L

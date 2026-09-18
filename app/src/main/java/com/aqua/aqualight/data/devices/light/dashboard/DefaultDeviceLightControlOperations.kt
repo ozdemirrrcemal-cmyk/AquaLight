@@ -87,7 +87,7 @@ internal class DefaultDeviceLightControlOperations(
         deviceUid: String,
         mode: DeviceLightControlMode
     ): DeviceLightModeMutationResult = when (val resolved = resolveRuntime(deviceUid)) {
-        is RuntimeResolution.Failed -> mutationFailed(resolved.failure)
+        is RuntimeResolution.Failed -> DeviceLightModeMutationResult.Failed(resolved.failure)
         is RuntimeResolution.Ready -> resolved.commitMode(mode, systemOperations)
     }
 
@@ -129,7 +129,7 @@ private suspend fun RuntimeResolution.Ready.commitMode(
 } catch (cancellation: CancellationException) {
     throw cancellation
 } catch (_: Exception) {
-    mutationFailed(DeviceLightControlFailure.INVALID_DATA)
+    DeviceLightModeMutationResult.Failed(DeviceLightControlFailure.INVALID_DATA)
 }
 
 private fun DeviceRuntimeCommandOutcome<DeviceLightControlSetResult>.toModeMutationResult(
@@ -144,7 +144,7 @@ private fun DeviceRuntimeCommandOutcome<DeviceLightControlSetResult>.toModeMutat
         firmwareMode = firmwareMode,
         systemOperations = systemOperations
     )
-    else -> mutationFailed(toControlFailure())
+    else -> DeviceLightModeMutationResult.Failed(toControlFailure())
 }
 
 private fun RuntimeResolution.Ready.confirmCommittedMode(
@@ -154,7 +154,7 @@ private fun RuntimeResolution.Ready.confirmCommittedMode(
     systemOperations: DeviceLightSystemOperations
 ): DeviceLightModeMutationResult {
     if (outcome.value.mode != firmwareMode) {
-        return mutationFailed(DeviceLightControlFailure.INVALID_DATA)
+        return DeviceLightModeMutationResult.Failed(DeviceLightControlFailure.INVALID_DATA)
     }
     modules.scheduleLightControlReconciliation(deviceUid, firmwareMode)
     val snapshot = (currentControl(systemOperations) as? DeviceLightControlResult.Available)
@@ -275,9 +275,6 @@ private fun DeviceRootSnapshot.isSupportedLightRoot(): Boolean = when {
 private fun String.toDeviceUidOrNull(): DeviceUid? = trim()
     .takeIf(String::isNotBlank)
     ?.let(::DeviceUid)
-
-private fun mutationFailed(failure: DeviceLightControlFailure) =
-    DeviceLightModeMutationResult.Failed(failure)
 
 private val SUPPORTED_LIGHT_PRODUCT_KEYS = DeviceLightProduct.entries
     .mapTo(hashSetOf()) { product -> product.wireValue }

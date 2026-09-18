@@ -70,13 +70,16 @@ internal class DefaultDeviceLightCustomOperations(
         uid: DeviceUid,
         runtime: DeviceLightRuntimeRepository
     ): DeviceLightCustomReadResult = try {
-        when (val result = runtime.requestCustom(uid)) {
-            is DeviceRuntimeCommandOutcome.Success -> projectCurrent(
-                uid,
-                runtime,
-                DeviceLightLibraryReadAuthority.AUTHORITATIVE
-            )
-            else -> DeviceLightCustomReadResult.Failed(result.toFailure())
+        when (val status = runtime.requestStatus(uid)) {
+            is DeviceRuntimeCommandOutcome.Success -> when (val result = runtime.requestCustom(uid)) {
+                is DeviceRuntimeCommandOutcome.Success -> projectCurrent(
+                    uid,
+                    runtime,
+                    DeviceLightLibraryReadAuthority.AUTHORITATIVE
+                )
+                else -> DeviceLightCustomReadResult.Failed(result.toFailure())
+            }
+            else -> DeviceLightCustomReadResult.Failed(status.toFailure())
         }
     } catch (error: CancellationException) {
         throw error

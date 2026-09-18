@@ -47,7 +47,12 @@ class DeviceLightCustomCurveViewModelTest {
         assertEquals(EVERY_DAY_MASK, viewModel.currentState.draft.weekdaysMask)
         assertEquals(1, viewModel.currentState.draft.points.size)
         assertEquals(INITIAL_TIME_MS, viewModel.currentState.selectedPoint?.timeMs)
-        assertEquals(INITIAL_TIME_MS, viewModel.currentState.previewTimeMs)
+        val state = viewModel.currentState
+        val deviceTimeMs = requireNotNull(state.deviceTimeMs)
+        val clockTolerance = CLOCK_TIME_MS until CLOCK_TIME_MS + CLOCK_TICK_TOLERANCE_MS
+        assertTrue(state.previewTimeMs in clockTolerance)
+        assertTrue(deviceTimeMs in clockTolerance)
+        assertEquals(DeviceLightCustomPlayheadMode.CLOCK, state.playheadMode)
         assertEquals(
             WRGB_CHANNELS.map(DeviceLightCustomChannel::toUiChannel),
             viewModel.currentState.channels
@@ -261,6 +266,30 @@ class DeviceLightCustomCurveViewModelTest {
         assertEquals(1, viewModel.currentState.draft.points.size)
         assertFalse(viewModel.currentState.hasUnsavedChanges)
         assertEquals(PREVIEW_TIME_MS, viewModel.currentState.previewTimeMs)
+        assertEquals(DeviceLightCustomPlayheadMode.EDIT, viewModel.currentState.playheadMode)
+    }
+
+    @Test
+    fun `authoritative refresh preserves a user positioned edit playhead`() {
+        val viewModel = boundViewModel()
+        viewModel.pointEditor.updatePlayhead(PREVIEW_TIME_MS)
+
+        viewModel.refreshFromDevice()
+
+        assertEquals(PREVIEW_TIME_MS, viewModel.currentState.previewTimeMs)
+        assertEquals(DeviceLightCustomPlayheadMode.EDIT, viewModel.currentState.playheadMode)
+    }
+
+    @Test
+    fun `clearing preview returns playhead ownership to device clock`() {
+        val viewModel = boundViewModel()
+        viewModel.pointEditor.updatePlayhead(PREVIEW_TIME_MS)
+
+        viewModel.clearPreview()
+
+        val state = viewModel.currentState
+        assertEquals(DeviceLightCustomPlayheadMode.CLOCK, state.playheadMode)
+        assertEquals(state.deviceTimeMs, state.previewTimeMs)
     }
 
     @Test
@@ -382,6 +411,8 @@ class DeviceLightCustomCurveViewModelTest {
         const val DEVICE_UID = "custom-light"
         const val INITIAL_TIME_MS = 12 * 60 * 60_000L
         const val PREVIEW_TIME_MS = 16 * 60 * 60_000L
+        const val CLOCK_TIME_MS = 27 * 60_000L + 30_000L
+        const val CLOCK_TICK_TOLERANCE_MS = 5_000L
         const val UPDATED_BLUE = 73
         const val UPDATED_RED = 64
         const val SUNDAY_INDEX = 6
@@ -418,7 +449,7 @@ class DeviceLightCustomCurveViewModelTest {
             weekdaysMask = EVERY_DAY_MASK,
             maxPoints = MAX_POINT_CAPACITY,
             timeStepMs = MILLIS_PER_MINUTE,
-            currentTimeMs = INITIAL_TIME_MS,
+            currentTimeMs = CLOCK_TIME_MS,
             channels = channels,
             points = points,
             firmwareWriteAuthoritative = true

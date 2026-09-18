@@ -22,7 +22,7 @@ class DeviceLightCustomCurvePreviewValuesTest {
             ),
             selectedTimeMs = selected.timeMs,
             previewTimeMs = timeMs(10, 39),
-            previewPlaybackActive = true
+            playheadMode = DeviceLightCustomPlayheadMode.PREVIEW
         )
 
         assertEquals(selected, state.selectedPoint)
@@ -50,7 +50,7 @@ class DeviceLightCustomCurvePreviewValuesTest {
             ),
             selectedTimeMs = timeMs(8, 0),
             previewTimeMs = timeMs(9, 0),
-            previewPlaybackActive = true
+            playheadMode = DeviceLightCustomPlayheadMode.PREVIEW
         )
 
         assertEquals(
@@ -77,7 +77,7 @@ class DeviceLightCustomCurvePreviewValuesTest {
             ),
             selectedTimeMs = selected.timeMs,
             previewTimeMs = timeMs(9, 0),
-            previewPlaybackActive = false
+            playheadMode = DeviceLightCustomPlayheadMode.EDIT
         )
 
         assertEquals(selected.timeMs, state.valuesPoint?.timeMs)

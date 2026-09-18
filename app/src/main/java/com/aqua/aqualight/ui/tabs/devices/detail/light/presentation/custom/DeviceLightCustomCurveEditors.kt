@@ -24,7 +24,7 @@ internal class DeviceLightCustomPointEditor(
     fun updatePlayhead(timeMs: Long) {
         val state = currentState()
         if (!state.contentEnabled || state.operationInProgress) return
-        updateState { current -> current.copy(previewTimeMs = timeMs.alignedTime()) }
+        updateState { current -> current.withEditPlayhead(timeMs) }
     }
 
     fun requestPlayheadTime(editSelected: Boolean) {
@@ -50,7 +50,7 @@ internal class DeviceLightCustomPointEditor(
             state.draft.points.size >= state.maxPoints -> {
                 emit(DeviceLightCustomCurveEffect.ShowPointLimit(state.maxPoints))
                 state.selectedTimeMs?.let { selectedTimeMs ->
-                    updateState { current -> current.copy(previewTimeMs = selectedTimeMs) }
+                    updateState { current -> current.withEditPlayhead(selectedTimeMs) }
                 }
             }
             else -> emit(
@@ -81,7 +81,8 @@ internal class DeviceLightCustomPointEditor(
                 updateState { current ->
                     current.copy(
                         selectedTimeMs = point.timeMs,
-                        previewTimeMs = point.timeMs
+                        previewTimeMs = point.timeMs,
+                        playheadMode = DeviceLightCustomPlayheadMode.EDIT
                     )
                 }
             }
@@ -105,7 +106,7 @@ internal class DeviceLightCustomPointEditor(
                 state.selectedTimeMs ?: purpose.preferredTimeMs
             is DeviceLightCustomTimePickerPurpose.Move -> purpose.originalTimeMs
         }
-        updateState { current -> current.copy(previewTimeMs = restoredTimeMs.alignedTime()) }
+        updateState { current -> current.withEditPlayhead(restoredTimeMs) }
     }
 
     fun addOrMovePoint(originalTimeMs: Long?, targetTimeMs: Long) {
@@ -125,7 +126,7 @@ internal class DeviceLightCustomPointEditor(
                     ),
                     aligned
                 )
-                updateState { current -> current.copy(previewTimeMs = aligned) }
+                updateState { current -> current.withEditPlayhead(aligned) }
             }
         }
     }
@@ -140,7 +141,7 @@ internal class DeviceLightCustomPointEditor(
             }?.timeMs
             setDraft(state.draft.copy(points = points), nextSelection)
             nextSelection?.let { nextTime ->
-                updateState { current -> current.copy(previewTimeMs = nextTime) }
+                updateState { current -> current.withEditPlayhead(nextTime) }
             }
         }
     }
@@ -156,6 +157,13 @@ internal class DeviceLightCustomPointEditor(
         }
     }
 }
+
+private fun DeviceLightCustomCurveUiState.withEditPlayhead(
+    timeMs: Long
+): DeviceLightCustomCurveUiState = copy(
+    previewTimeMs = timeMs.alignedTime(),
+    playheadMode = DeviceLightCustomPlayheadMode.EDIT
+)
 
 private fun DeviceLightCustomCurveUiState.changedPoints(
     originalTimeMs: Long?,
