@@ -133,6 +133,7 @@ internal class DeviceLightCustomCurveViewModel(
             _uiState.update {
                 it.copy(
                     operationInProgress = true,
+                    previewPlaybackActive = false,
                     previewTimeMs = 0L
                 )
             }
@@ -147,6 +148,7 @@ internal class DeviceLightCustomCurveViewModel(
                     _uiState.update {
                         it.copy(
                             operationInProgress = false,
+                            previewPlaybackActive = false,
                             previewTimeMs = previousTimeMs
                         )
                     }
@@ -158,7 +160,12 @@ internal class DeviceLightCustomCurveViewModel(
     val clearPreview: () -> Unit = {
         previewJob?.cancel()
         previewJob = null
-        _uiState.update { it.copy(operationInProgress = false) }
+        _uiState.update {
+            it.copy(
+                operationInProgress = false,
+                previewPlaybackActive = false
+            )
+        }
         boundDeviceUid.takeIf(String::isNotBlank)?.let { deviceUid ->
             viewModelScope.launch { customOperations.clearPreview(deviceUid) }
         }
@@ -287,6 +294,7 @@ internal class DeviceLightCustomCurveViewModel(
             firmwareWriteAuthoritative = snapshot.firmwareWriteAuthoritative,
             initialLoading = false,
             operationInProgress = current.operationInProgress,
+            previewPlaybackActive = current.previewPlaybackActive,
             blockingOperationInProgress = current.blockingOperationInProgress,
             hasUnsavedChanges = draft != firmwareDraft
         )
@@ -294,6 +302,7 @@ internal class DeviceLightCustomCurveViewModel(
     }
 
     private suspend fun playCustomDayPreview() {
+        _uiState.update { it.copy(previewPlaybackActive = true) }
         val startedAtNanos = System.nanoTime()
         var elapsedMs = 0L
         while (
@@ -327,7 +336,12 @@ internal class DeviceLightCustomCurveViewModel(
                 }
             }
         }
-        _uiState.update { it.copy(operationInProgress = false) }
+        _uiState.update {
+            it.copy(
+                operationInProgress = false,
+                previewPlaybackActive = false
+            )
+        }
     }
 
     private fun setDraft(draft: DeviceLightCustomDraft, selectedTimeMs: Long?) {
