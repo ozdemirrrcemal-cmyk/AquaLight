@@ -114,7 +114,11 @@ class DeviceLightCustomCurveFragment : Fragment(R.layout.fragment_device_light_c
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
-                DeviceLightCustomCurveScreen(state, actions)
+                DeviceLightCustomCurveScreen(
+                    state = state,
+                    actions = actions,
+                    onClockTick = viewModel.tickDeviceClock
+                )
             }
         }
     }

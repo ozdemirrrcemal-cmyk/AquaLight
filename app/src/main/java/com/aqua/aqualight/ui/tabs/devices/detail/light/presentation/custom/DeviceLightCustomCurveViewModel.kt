@@ -21,7 +21,6 @@ import com.aqua.aqualight.application.devices.light.library.DeviceLightLibrarySc
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.toCommercialLightError
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -57,7 +56,8 @@ internal class DeviceLightCustomCurveViewModel(
     private var restoreDirty = false
     private var observeJob: Job? = null
     private var previewJob: Job? = null
-    private var clockJob: Job? = null
+    private var deviceClockAnchorTimeMs: Long? = null
+    private var deviceClockAnchorNanos: Long = 0L
 
     val dayEditor = DeviceLightCustomDayEditor(
         currentState = { currentState },
@@ -69,6 +69,28 @@ internal class DeviceLightCustomCurveViewModel(
         setDraft = ::setDraft,
         emit = ::emit
     )
+
+    val tickDeviceClock: () -> Unit = {
+        val anchorTimeMs = deviceClockAnchorTimeMs
+        if (anchorTimeMs != null) {
+            val elapsedMs = (
+                (System.nanoTime() - deviceClockAnchorNanos) / NANOS_PER_MILLISECOND
+            ).coerceAtLeast(0L)
+            val projectedTimeMs = (anchorTimeMs + elapsedMs).mod(MILLIS_PER_DAY)
+            _uiState.update { state ->
+                state.copy(
+                    deviceTimeMs = projectedTimeMs,
+                    previewTimeMs = if (
+                        state.playheadMode == DeviceLightCustomPlayheadMode.CLOCK
+                    ) {
+                        projectedTimeMs
+                    } else {
+                        state.previewTimeMs
+                    }
+                )
+            }
+        }
+    }
 
     val loadLibraryDraft: (String) -> Unit = { entryId ->
         val deviceUid = boundDeviceUid.takeIf(String::isNotBlank)
@@ -112,9 +134,9 @@ internal class DeviceLightCustomCurveViewModel(
         if (boundDeviceUid == deviceUid) return
         observeJob?.cancel()
         previewJob?.cancel()
-        clockJob?.cancel()
         previewJob = null
-        clockJob = null
+        deviceClockAnchorTimeMs = null
+        deviceClockAnchorNanos = 0L
         boundDeviceUid = deviceUid
         this.restoredDraft = restoredDraft
         restoreDirty = restoredDraft != null && restoredDirty
@@ -325,10 +347,8 @@ internal class DeviceLightCustomCurveViewModel(
             blockingOperationInProgress = current.blockingOperationInProgress,
             hasUnsavedChanges = draft != firmwareDraft
         )
-        deviceTimeMs?.let { anchorTimeMs ->
-            clockJob?.cancel()
-            clockJob = viewModelScope.trackDeviceClock(anchorTimeMs, _uiState)
-        }
+        deviceClockAnchorTimeMs = deviceTimeMs
+        deviceClockAnchorNanos = System.nanoTime()
         restoreDirty = false
     }
 
@@ -387,31 +407,6 @@ internal class DeviceLightCustomCurveViewModel(
         viewModelScope.launch { _effects.emit(effect) }
     }
 
-}
-
-private fun CoroutineScope.trackDeviceClock(
-    anchorTimeMs: Long,
-    state: MutableStateFlow<DeviceLightCustomCurveUiState>
-): Job = launch {
-    val startedAtNanos = System.nanoTime()
-    while (isActive) {
-        val elapsedMs = ((System.nanoTime() - startedAtNanos) / NANOS_PER_MILLISECOND)
-            .coerceAtLeast(0L)
-        val projectedTimeMs = (anchorTimeMs + elapsedMs).mod(MILLIS_PER_DAY)
-        state.update { current ->
-            current.copy(
-                deviceTimeMs = projectedTimeMs,
-                previewTimeMs = if (
-                    current.playheadMode == DeviceLightCustomPlayheadMode.CLOCK
-                ) {
-                    projectedTimeMs
-                } else {
-                    current.previewTimeMs
-                }
-            )
-        }
-        delay(CLOCK_TICK_MS)
-    }
 }
 
 private fun MutableStateFlow<DeviceLightCustomCurveUiState>.applyReadFailure(
@@ -481,5 +476,4 @@ private fun DeviceLightCustomChannelId.toApplicationChannel(): DeviceLightCustom
 }
 
 private const val PREVIEW_FRAME_MS = 16L
-private const val CLOCK_TICK_MS = 1_000L
 private const val NANOS_PER_MILLISECOND = 1_000_000L

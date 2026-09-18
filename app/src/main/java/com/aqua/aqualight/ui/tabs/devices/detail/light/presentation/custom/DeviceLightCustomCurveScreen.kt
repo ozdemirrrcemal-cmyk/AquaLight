@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,16 +31,21 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.devicecard.aquaDeviceCardTypography
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.aquaLightManualColors
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 
 @Composable
 internal fun DeviceLightCustomCurveScreen(
     state: DeviceLightCustomCurveUiState,
     actions: DeviceLightCustomCurveActions,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClockTick: () -> Unit = {}
 ) {
     val background = colorResource(R.color.background_color)
     val colors = aquaLightManualColors()
     val visuals = DeviceLightCustomVisuals(colors, aquaDeviceCardTypography(colors.card))
+    DeviceClockTicker(state, onClockTick)
     if (state.channels.isEmpty()) {
         Box(
             modifier = modifier.fillMaxSize().background(background)
@@ -88,6 +94,21 @@ internal fun DeviceLightCustomCurveScreen(
                     bottom = STICKY_ACTION_BOTTOM_PADDING_DP.dp
                 )
         )
+    }
+}
+
+@Composable
+private fun DeviceClockTicker(
+    state: DeviceLightCustomCurveUiState,
+    onClockTick: () -> Unit
+) {
+    LaunchedEffect(state.deviceUid, state.contentEnabled, state.playheadMode) {
+        if (state.contentEnabled && state.playheadMode == DeviceLightCustomPlayheadMode.CLOCK) {
+            while (currentCoroutineContext().isActive) {
+                onClockTick()
+                delay(DEVICE_CLOCK_TICK_INTERVAL_MS)
+            }
+        }
     }
 }
 
@@ -191,6 +212,7 @@ private data class DayButtonState(
     val enabled: Boolean
 )
 
+private const val DEVICE_CLOCK_TICK_INTERVAL_MS = 1_000L
 private const val SCREEN_HORIZONTAL_PADDING_DP = 9
 private const val SCREEN_TOP_PADDING_DP = 2
 private const val SCREEN_BOTTOM_PADDING_DP = 86
