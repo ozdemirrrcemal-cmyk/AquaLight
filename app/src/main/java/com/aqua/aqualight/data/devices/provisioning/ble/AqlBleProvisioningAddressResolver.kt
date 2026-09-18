@@ -46,7 +46,7 @@ class AqlBleProvisioningAddressResolver(
             return Result.success(target)
         }
 
-        val scanner = scannerOrFailure().getOrElse { error ->
+        val scanner = scannerOrFailure(appContext, bluetoothManager).getOrElse { error ->
             return Result.failure(error)
         }
 
@@ -86,7 +86,7 @@ class AqlBleProvisioningAddressResolver(
             )
         }
 
-        val scanner = scannerOrFailure().getOrElse { error ->
+        val scanner = scannerOrFailure(appContext, bluetoothManager).getOrElse { error ->
             return Result.failure(error)
         }
 
@@ -111,26 +111,6 @@ class AqlBleProvisioningAddressResolver(
             targetName = targetName,
             candidates = candidates.values.toList()
         )
-    }
-
-    private fun scannerOrFailure(): Result<BluetoothLeScanner> {
-        val adapter = bluetoothManager?.adapter
-        return when {
-            !hasRequiredPermissions() -> Result.failure(
-                SecurityException("Bluetooth scan/connect permission is required.")
-            )
-            adapter == null -> Result.failure(
-                IllegalStateException("Bluetooth adapter is unavailable.")
-            )
-            !adapter.isEnabled -> Result.failure(
-                IllegalStateException("Bluetooth is disabled.")
-            )
-            else -> adapter.bluetoothLeScanner?.let { scanner ->
-                Result.success(scanner)
-            } ?: Result.failure(
-                IllegalStateException("Bluetooth LE scanner is unavailable.")
-            )
-        }
     }
 
     @SuppressLint("MissingPermission")
@@ -259,7 +239,7 @@ class AqlBleProvisioningAddressResolver(
         val advertisedName = scanRecord?.deviceName.orEmpty()
         val deviceName = if (
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
-            !hasPermission(Manifest.permission.BLUETOOTH_CONNECT)
+            !hasPermission(appContext, Manifest.permission.BLUETOOTH_CONNECT)
         ) {
             ""
         } else {
@@ -314,23 +294,6 @@ class AqlBleProvisioningAddressResolver(
             .build()
     }
 
-    private fun hasRequiredPermissions(): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            hasPermission(Manifest.permission.BLUETOOTH_SCAN) &&
-                hasPermission(Manifest.permission.BLUETOOTH_CONNECT)
-        } else {
-            hasPermission(Manifest.permission.ACCESS_FINE_LOCATION) ||
-                hasPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
-        }
-    }
-
-    private fun hasPermission(permission: String): Boolean {
-        return ContextCompat.checkSelfPermission(
-            appContext,
-            permission
-        ) == PackageManager.PERMISSION_GRANTED
-    }
-
     private data class ScanCandidate(
         val address: String,
         val advertisedName: String,
@@ -346,6 +309,44 @@ class AqlBleProvisioningAddressResolver(
             Regex("^[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}$")
     }
 }
+
+private fun scannerOrFailure(
+    context: Context,
+    bluetoothManager: BluetoothManager?
+): Result<BluetoothLeScanner> {
+    val adapter = bluetoothManager?.adapter
+    return when {
+        !hasRequiredPermissions(context) -> Result.failure(
+            SecurityException("Bluetooth scan/connect permission is required.")
+        )
+        adapter == null -> Result.failure(
+            IllegalStateException("Bluetooth adapter is unavailable.")
+        )
+        !adapter.isEnabled -> Result.failure(
+            IllegalStateException("Bluetooth is disabled.")
+        )
+        else -> adapter.bluetoothLeScanner?.let { scanner ->
+            Result.success(scanner)
+        } ?: Result.failure(
+            IllegalStateException("Bluetooth LE scanner is unavailable.")
+        )
+    }
+}
+
+private fun hasRequiredPermissions(context: Context): Boolean =
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        hasPermission(context, Manifest.permission.BLUETOOTH_SCAN) &&
+            hasPermission(context, Manifest.permission.BLUETOOTH_CONNECT)
+    } else {
+        hasPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ||
+            hasPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION)
+    }
+
+private fun hasPermission(context: Context, permission: String): Boolean =
+    ContextCompat.checkSelfPermission(
+        context,
+        permission
+    ) == PackageManager.PERMISSION_GRANTED
 
 private const val SCAN_FAILED_SCANNING_TOO_FREQUENTLY = 6
 

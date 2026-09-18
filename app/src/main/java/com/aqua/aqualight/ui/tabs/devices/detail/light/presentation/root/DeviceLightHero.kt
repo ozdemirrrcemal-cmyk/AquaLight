@@ -33,7 +33,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
@@ -148,13 +147,14 @@ private fun HeroPrimaryCopy(
         bounds = AquaLightHeroGeometry.titleBounds,
         parentSize = parentSize
     )
-    HeroLabel(
-        text = content.modeOutput,
-        style = typography.subtitle,
-        bounds = AquaLightHeroGeometry.subtitleBounds,
-        parentSize = parentSize,
-        verticalOffset = 1.dp
-    )
+    Box(modifier = Modifier.absoluteOffset(y = HERO_SUBTITLE_VERTICAL_OFFSET)) {
+        HeroLabel(
+            text = content.modeOutput,
+            style = typography.subtitle,
+            bounds = AquaLightHeroGeometry.subtitleBounds,
+            parentSize = parentSize
+        )
+    }
 }
 
 @Composable
@@ -185,11 +185,10 @@ private fun HeroLabel(
     style: TextStyle,
     bounds: AquaLightHeroBounds,
     parentSize: DpSize,
-    textAlign: TextAlign = TextAlign.Start,
-    verticalOffset: Dp = 0.dp
+    textAlign: TextAlign = TextAlign.Start
 ) {
     Box(
-        modifier = Modifier.placeInHero(bounds, parentSize, verticalOffset),
+        modifier = Modifier.placeInHero(bounds, parentSize),
         contentAlignment = Alignment.Center
     ) {
         BasicText(
@@ -213,11 +212,8 @@ private fun HeroHealthPill(
     val toneStyle = tone.toPillStyle(colors)
     Row(
         modifier = Modifier
-            .placeInHero(
-                AquaLightHeroGeometry.statusBounds,
-                parentSize,
-                verticalOffset = 2.dp
-            )
+            .placeInHero(AquaLightHeroGeometry.statusBounds, parentSize)
+            .absoluteOffset(y = HERO_STATUS_VERTICAL_OFFSET)
             .clip(CircleShape)
             .background(toneStyle.surface)
             .border(
@@ -296,10 +292,12 @@ private fun DeviceLightHeroHealthTone.toPillStyle(
 
 private fun Modifier.placeInHero(
     bounds: AquaLightHeroBounds,
-    parentSize: DpSize,
-    verticalOffset: Dp = 0.dp
+    parentSize: DpSize
 ): Modifier = absoluteOffset(
     x = parentSize.width * bounds.left,
-    y = parentSize.height * bounds.top + verticalOffset
+    y = parentSize.height * bounds.top
 ).width(parentSize.width * bounds.width)
     .height(parentSize.height * bounds.height)
+
+private val HERO_SUBTITLE_VERTICAL_OFFSET = 1.dp
+private val HERO_STATUS_VERTICAL_OFFSET = 2.dp

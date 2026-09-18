@@ -7,30 +7,9 @@ class DeviceLightCustomCurvePreviewValuesTest {
 
     @Test
     fun `preview values follow playhead without changing selected edit point`() {
-        val selected = point(
-            hour = 8,
-            minute = 0,
-            red = 0,
-            green = 0,
-            blue = 0,
-            white = 0
-        )
-        val plateauStart = point(
-            hour = 10,
-            minute = 0,
-            red = 30,
-            green = 52,
-            blue = 60,
-            white = 50
-        )
-        val plateauEnd = point(
-            hour = 16,
-            minute = 0,
-            red = 30,
-            green = 52,
-            blue = 60,
-            white = 50
-        )
+        val selected = point(8, 0, ChannelValues(0, 0, 0, 0))
+        val plateauStart = point(10, 0, ChannelValues(30, 52, 60, 50))
+        val plateauEnd = point(16, 0, ChannelValues(30, 52, 60, 50))
         val state = DeviceLightCustomCurveUiState(
             channels = CHANNELS,
             draft = DeviceLightCustomDraft(
@@ -38,7 +17,7 @@ class DeviceLightCustomCurvePreviewValuesTest {
                     selected,
                     plateauStart,
                     plateauEnd,
-                    point(18, 0, 0, 0, 0, 0)
+                    point(18, 0, ChannelValues(0, 0, 0, 0))
                 )
             ),
             selectedTimeMs = selected.timeMs,
@@ -65,8 +44,8 @@ class DeviceLightCustomCurvePreviewValuesTest {
             channels = CHANNELS,
             draft = DeviceLightCustomDraft(
                 points = listOf(
-                    point(8, 0, 0, 0, 0, 0),
-                    point(10, 0, 30, 50, 60, 40)
+                    point(8, 0, ChannelValues(0, 0, 0, 0)),
+                    point(10, 0, ChannelValues(30, 50, 60, 40))
                 )
             ),
             selectedTimeMs = timeMs(8, 0),
@@ -87,13 +66,13 @@ class DeviceLightCustomCurvePreviewValuesTest {
 
     @Test
     fun `editor values remain bound to selected point outside preview`() {
-        val selected = point(8, 0, 0, 0, 0, 0)
+        val selected = point(8, 0, ChannelValues(0, 0, 0, 0))
         val state = DeviceLightCustomCurveUiState(
             channels = CHANNELS,
             draft = DeviceLightCustomDraft(
                 points = listOf(
                     selected,
-                    point(10, 0, 30, 50, 60, 40)
+                    point(10, 0, ChannelValues(30, 50, 60, 40))
                 )
             ),
             selectedTimeMs = selected.timeMs,
@@ -108,18 +87,22 @@ class DeviceLightCustomCurvePreviewValuesTest {
     private fun point(
         hour: Int,
         minute: Int,
-        red: Int,
-        green: Int,
-        blue: Int,
-        white: Int
+        values: ChannelValues
     ) = DeviceLightCustomPointUiState(
         timeMs = timeMs(hour, minute),
         channels = mapOf(
-            DeviceLightCustomChannelId.RED to red,
-            DeviceLightCustomChannelId.GREEN to green,
-            DeviceLightCustomChannelId.BLUE to blue,
-            DeviceLightCustomChannelId.WHITE to white
+            DeviceLightCustomChannelId.RED to values.red,
+            DeviceLightCustomChannelId.GREEN to values.green,
+            DeviceLightCustomChannelId.BLUE to values.blue,
+            DeviceLightCustomChannelId.WHITE to values.white
         )
+    )
+
+    private data class ChannelValues(
+        val red: Int,
+        val green: Int,
+        val blue: Int,
+        val white: Int
     )
 
     private fun timeMs(hour: Int, minute: Int): Long =
