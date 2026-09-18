@@ -12,9 +12,12 @@ import com.aqua.aqualight.application.devices.light.library.DeviceLightLibrarySc
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibrarySnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightCustomInstallPayload
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightCustomPoint
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightControlSetPayload
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightLibraryReadAuthority
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightMode
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightManualSetPayload
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightStatus
@@ -194,7 +197,18 @@ internal class DefaultDeviceLightLibraryOperations(
                     )
                 }
             )
-            runtime.installCustom(uid, payload).toLibraryMutationResult(entry.id)
+            val installOutcome = runtime.installCustom(uid, payload)
+            if (
+                installOutcome is DeviceRuntimeCommandOutcome.Success &&
+                runtime.currentStatus(uid)?.mode != DeviceLightMode.CUSTOM
+            ) {
+                runtime.setControl(
+                    uid,
+                    DeviceLightControlSetPayload(DeviceLightMode.CUSTOM)
+                ).toLibraryMutationResult(entry.id)
+            } else {
+                installOutcome.toLibraryMutationResult(entry.id)
+            }
         }
         StoredDeviceLightLibraryKind.STORED_DEVICE_LIGHT_LIBRARY_KIND_UNSPECIFIED,
         StoredDeviceLightLibraryKind.UNRECOGNIZED ->

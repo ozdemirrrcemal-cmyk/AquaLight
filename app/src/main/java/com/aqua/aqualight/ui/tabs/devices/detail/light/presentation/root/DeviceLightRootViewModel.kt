@@ -18,6 +18,7 @@ import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControl
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlSnapshot
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightHeroSnapshot
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanSnapshot
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightSystemSummary
 import com.aqua.aqualight.application.devices.light.dashboard.matchesLightControlSurface
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import kotlinx.coroutines.CoroutineStart
@@ -186,6 +187,7 @@ class DeviceLightRootViewModel(
             hero = currentControlSnapshot?.hero ?: DeviceLightHeroSnapshot(),
             adaptation = currentControlSnapshot?.adaptation ?: DeviceLightAdaptationSummary(),
             systemSupported = currentControlSnapshot?.systemSupported == true,
+            system = currentControlSnapshot?.system,
             channels = currentControlSnapshot?.channels.orEmpty(),
             plan = currentControlSnapshot?.plan,
             automaticProgramCount = currentControlSnapshot?.automaticProgramCount,
@@ -222,6 +224,7 @@ data class DeviceLightRootUiState(
     val hero: DeviceLightHeroSnapshot = DeviceLightHeroSnapshot(),
     val adaptation: DeviceLightAdaptationSummary = DeviceLightAdaptationSummary(),
     val systemSupported: Boolean = false,
+    val system: DeviceLightSystemSummary? = null,
     val channels: List<DeviceLightChannelOutputSnapshot> = emptyList(),
     val plan: DeviceLightPlanSnapshot? = null,
     val automaticProgramCount: Int? = null,

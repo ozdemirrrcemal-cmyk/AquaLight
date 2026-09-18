@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -25,6 +26,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationState
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightAdaptationSummary
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightSystemSummary
+import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemCondition
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
@@ -38,9 +41,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.aquaL
 
 @Composable
 internal fun DeviceLightSecondaryScreensRow(
-    enabled: Boolean,
-    adaptation: DeviceLightAdaptationSummary,
-    systemSupported: Boolean,
+    state: DeviceLightSecondaryScreensState,
     onMenuClick: (DeviceLightMenuDestination) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -48,24 +49,24 @@ internal fun DeviceLightSecondaryScreensRow(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(AquaLightDashboardGeometry.secondaryCardGap)
     ) {
-        if (adaptation.supported) {
+        if (state.adaptation.supported) {
             DeviceLightSecondaryCard(
                 icon = AquaLightDashboardIconKind.ADAPTATION,
-                enabled = enabled,
+                enabled = state.enabled,
                 onClick = { onMenuClick(DeviceLightMenuDestination.ADAPTATION) },
                 modifier = Modifier.weight(AquaLightDashboardGeometry.adaptationCardWeight)
             ) { colors, typography ->
-                DeviceLightAdaptationContent(adaptation, colors, typography)
+                DeviceLightAdaptationContent(state.adaptation, colors, typography)
             }
         }
-        if (systemSupported) {
+        if (state.systemSupported) {
             DeviceLightSecondaryCard(
                 icon = AquaLightDashboardIconKind.SYSTEM,
-                enabled = enabled,
+                enabled = state.enabled,
                 onClick = { onMenuClick(DeviceLightMenuDestination.SYSTEM) },
                 modifier = Modifier.weight(AquaLightDashboardGeometry.systemCardWeight)
             ) { colors, typography ->
-                DeviceLightSystemContent(colors, typography)
+                DeviceLightSystemContent(state.system, colors, typography)
             }
         }
     }
@@ -124,7 +125,8 @@ private fun RowScope.DeviceLightAdaptationContent(
                 style = typography.body.copy(color = colors.primaryText),
                 maxLines = 1
             )
-            adaptation.remainingDays()?.let { days ->
+            adaptation.remainingSeconds?.let { seconds ->
+                val days = ((seconds + SECONDS_PER_DAY - 1L) / SECONDS_PER_DAY).toInt()
                 BasicText(
                     text = pluralStringResource(
                         R.plurals.device_light_adaptation_days_remaining,
@@ -163,10 +165,6 @@ private fun DeviceLightAdaptationSummary.displayPercent(): Int? = when (state) {
     null -> null
 }
 
-private fun DeviceLightAdaptationSummary.remainingDays(): Int? = remainingSeconds?.let { seconds ->
-    ((seconds + SECONDS_PER_DAY - 1L) / SECONDS_PER_DAY).toInt()
-}
-
 @Composable
 private fun DeviceLightAdaptationProgress(
     percent: Int,
@@ -192,6 +190,7 @@ private fun DeviceLightAdaptationProgress(
 
 @Composable
 private fun RowScope.DeviceLightSystemContent(
+    system: DeviceLightSystemSummary?,
     colors: AquaDeviceCardColors,
     typography: AquaDeviceCardTypography
 ) {
@@ -202,14 +201,82 @@ private fun RowScope.DeviceLightSystemContent(
         verticalArrangement = Arrangement.spacedBy(AquaLightDashboardGeometry.secondaryTitleGap)
     ) {
         DeviceLightSecondaryTitle(R.string.device_light_system_title, colors, typography)
+        if (system == null) {
+            BasicText(
+                text = stringResource(R.string.device_light_system_open_details),
+                style = typography.body.copy(color = colors.secondaryText),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+        } else {
+            BasicText(
+                text = system.temperatureCelsius?.let { temperature ->
+                    stringResource(R.string.device_light_system_temperature, temperature)
+                } ?: stringResource(R.string.device_light_system_temperature_unavailable),
+                style = typography.body.copy(color = colors.primaryText),
+                maxLines = 1
+            )
+            if (system.fanPercents.size == SYSTEM_FAN_COUNT) {
+                BasicText(
+                    text = stringResource(
+                        R.string.device_light_system_fans_summary,
+                        system.fanPercents[FIRST_FAN_INDEX],
+                        system.fanPercents[SECOND_FAN_INDEX]
+                    ),
+                    style = typography.micro.copy(color = colors.secondaryText),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            DeviceLightSystemStatus(system.condition, colors, typography)
+        }
+    }
+}
+
+@Composable
+private fun DeviceLightSystemStatus(
+    condition: DeviceLightSystemCondition,
+    colors: AquaDeviceCardColors,
+    typography: AquaDeviceCardTypography
+) {
+    val statusColor = condition.statusColor(colors)
+    Row(
+        modifier = Modifier.padding(top = AquaLightDashboardGeometry.systemStatusTopGap),
+        horizontalArrangement = Arrangement.spacedBy(AquaLightDashboardGeometry.systemStatusGap),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(AquaLightDashboardGeometry.systemStatusDotSize)
+                .clip(AquaLightDashboardGeometry.quickSetupShape)
+                .background(statusColor)
+        )
         BasicText(
-            text = stringResource(R.string.device_light_system_open_details),
-            style = typography.body.copy(color = colors.secondaryText),
-            maxLines = 2,
+            text = stringResource(condition.statusLabelRes()),
+            style = typography.micro.copy(color = statusColor),
+            maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
     }
 }
+
+@StringRes
+private fun DeviceLightSystemCondition.statusLabelRes(): Int = when (this) {
+    DeviceLightSystemCondition.NORMAL -> R.string.device_light_system_status_normal
+    DeviceLightSystemCondition.PROTECTION_ACTIVE ->
+        R.string.device_light_system_condition_protection
+    DeviceLightSystemCondition.SENSOR_FAIL_SAFE ->
+        R.string.device_light_system_condition_sensor_fail_safe
+    DeviceLightSystemCondition.FAN_FAULT -> R.string.device_light_system_condition_fan_fault
+}
+
+private fun DeviceLightSystemCondition.statusColor(colors: AquaDeviceCardColors): Color =
+    when (this) {
+        DeviceLightSystemCondition.NORMAL -> colors.accent
+        DeviceLightSystemCondition.PROTECTION_ACTIVE -> colors.warning
+        DeviceLightSystemCondition.SENSOR_FAIL_SAFE,
+        DeviceLightSystemCondition.FAN_FAULT -> colors.danger
+    }
 
 @Composable
 private fun DeviceLightSecondaryTitle(
@@ -228,3 +295,6 @@ private fun DeviceLightSecondaryTitle(
 private const val FULL_PERCENT = 100
 private const val PERMILLE_PER_PERCENT = 10
 private const val SECONDS_PER_DAY = 86_400L
+private const val SYSTEM_FAN_COUNT = 2
+private const val FIRST_FAN_INDEX = 0
+private const val SECOND_FAN_INDEX = 1

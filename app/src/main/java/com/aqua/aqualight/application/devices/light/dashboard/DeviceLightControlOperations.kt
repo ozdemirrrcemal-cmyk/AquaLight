@@ -2,6 +2,7 @@ package com.aqua.aqualight.application.devices.light.dashboard
 
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationState
+import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemCondition
 import kotlinx.coroutines.flow.Flow
 
 /** Firmware-independent application boundary for the shared Light V1 control surface. */
@@ -47,7 +48,8 @@ data class DeviceLightControlSnapshot(
     val activeAutomaticProgramId: String? = null,
     val hero: DeviceLightHeroSnapshot = DeviceLightHeroSnapshot(),
     val adaptation: DeviceLightAdaptationSummary = DeviceLightAdaptationSummary(),
-    val systemSupported: Boolean = false
+    val systemSupported: Boolean = false,
+    val system: DeviceLightSystemSummary? = null
 )
 
 /** Channel metadata and effective output exactly as reported by light.status.get. */
@@ -87,6 +89,12 @@ data class DeviceLightAdaptationSummary(
     val state: DeviceLightAdaptationState? = null,
     val currentPermille: Int? = null,
     val remainingSeconds: Long? = null
+)
+
+data class DeviceLightSystemSummary(
+    val temperatureCelsius: Double?,
+    val fanPercents: List<Int>,
+    val condition: DeviceLightSystemCondition
 )
 
 data class DeviceLightHeroSnapshot(

@@ -20,6 +20,8 @@ import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControl
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlSnapshot
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanReason
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanSnapshot
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightSystemSummary
+import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemCondition
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -142,6 +144,24 @@ class DeviceLightRootPreparationTest {
             assertTrue(state.contentEnabled)
         }
 
+    @Test
+    fun `validated system summary is exposed to the root card`() = runTest {
+        val system = DeviceLightSystemSummary(
+            temperatureCelsius = 42.8,
+            fanPercents = listOf(35, 40),
+            condition = DeviceLightSystemCondition.NORMAL
+        )
+        val viewModel = DeviceLightRootViewModel(
+            rootOperations = FakeRootOperations(lightRoot()),
+            lightControlOperations = FakeLightControlOperations(availableControl(system = system)),
+            controlSurfacePreparationOperations = FakePreparationOperations()
+        )
+
+        viewModel.bind(DEVICE_UID)
+
+        assertEquals(system, viewModel.uiState.value.system)
+    }
+
     private class FakeRootOperations(
         initial: DeviceRootSnapshot
     ) : DeviceRootOperations {
@@ -227,7 +247,8 @@ private fun lightRoot() = DeviceRootSnapshot(
 )
 
 private fun availableControl(
-    productKey: String = "LIGHT_WRGB_PRO_ELITE"
+    productKey: String = "LIGHT_WRGB_PRO_ELITE",
+    system: DeviceLightSystemSummary? = null
 ): DeviceLightControlResult = DeviceLightControlResult.Available(
     DeviceLightControlSnapshot(
         deviceUid = "light-pro",
@@ -246,7 +267,9 @@ private fun availableControl(
             points = emptyList()
         ),
         automaticProgramCount = 0,
-        customCurvePointCount = 0
+        customCurvePointCount = 0,
+        systemSupported = system != null,
+        system = system
     )
 )
 

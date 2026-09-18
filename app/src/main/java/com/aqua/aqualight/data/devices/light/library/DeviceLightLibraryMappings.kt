@@ -108,7 +108,8 @@ private fun StoredDeviceLightLibraryEntry.isLoaded(
                 value.channelKey to value.percent
             }
     StoredDeviceLightLibraryKind.STORED_DEVICE_LIGHT_LIBRARY_KIND_CUSTOM ->
-        installedCustom?.installed == true &&
+        status?.mode == DeviceLightMode.CUSTOM &&
+            installedCustom?.installed == true &&
             installedCustom.weekdaysMask == custom.weekdaysMask &&
             installedCustom.points.size == custom.pointsCount &&
             installedCustom.points.zip(custom.pointsList).all { (runtimePoint, storedPoint) ->

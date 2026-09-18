@@ -3,6 +3,11 @@ package com.aqua.aqualight.data.devices.light.dashboard
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlMode
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightOutputCondition
 import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationState
+import com.aqua.aqualight.application.devices.light.system.DeviceLightFanMode
+import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemCondition
+import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemFanSnapshot
+import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemSnapshot
+import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemTemperaturePolicy
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightMode
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightMutationParser
@@ -27,7 +32,12 @@ class DeviceLightControlSnapshotProjectionTest {
             DeviceLightRuntimeFixtures.graph(mode = DeviceLightMode.AUTO),
             status.product
         )
-        val snapshot = status.toControlSnapshot(DeviceUid("light-pro"), graph)
+        val snapshot = status.toControlSnapshot(
+            deviceUid = DeviceUid("light-pro"),
+            graph = graph,
+            systemSupported = true,
+            systemSnapshot = systemSnapshot()
+        )
 
         assertEquals(DeviceLightControlMode.AUTOMATIC, snapshot.hero.mode)
         assertEquals("program-1", snapshot.activeAutomaticProgramId)
@@ -47,6 +57,9 @@ class DeviceLightControlSnapshotProjectionTest {
         assertEquals(status.auto.programCount, snapshot.automaticProgramCount)
         assertEquals(status.custom.pointCount, snapshot.customCurvePointCount)
         assertTrue(snapshot.systemSupported)
+        assertEquals(42.8, snapshot.system?.temperatureCelsius ?: Double.NaN, 0.0)
+        assertEquals(listOf(35, 40), snapshot.system?.fanPercents)
+        assertEquals(DeviceLightSystemCondition.NORMAL, snapshot.system?.condition)
     }
 
     @Test
@@ -62,8 +75,34 @@ class DeviceLightControlSnapshotProjectionTest {
             status.product
         )
 
-        val snapshot = status.toControlSnapshot(DeviceUid("light-rgb"), graph)
+        val snapshot = status.toControlSnapshot(
+            deviceUid = DeviceUid("light-rgb"),
+            graph = graph,
+            systemSupported = false,
+            systemSnapshot = null
+        )
 
         assertEquals(false, snapshot.systemSupported)
+        assertEquals(null, snapshot.system)
     }
+
+    private fun systemSnapshot() = DeviceLightSystemSnapshot(
+        deviceUid = "light-pro",
+        temperatureCelsius = 42.8,
+        condition = DeviceLightSystemCondition.NORMAL,
+        sensorHealthy = true,
+        fans = listOf(
+            DeviceLightSystemFanSnapshot(key = "fan1", percent = 35, healthy = true),
+            DeviceLightSystemFanSnapshot(key = "fan2", percent = 40, healthy = true)
+        ),
+        mode = DeviceLightFanMode.AUTOMATIC,
+        startTemperatureCelsius = 35,
+        fullSpeedTemperatureCelsius = 50,
+        startTemperaturePolicy = DeviceLightSystemTemperaturePolicy(20, 45),
+        fullSpeedTemperaturePolicy = DeviceLightSystemTemperaturePolicy(30, 60),
+        protectionThresholdCelsius = 60,
+        protectionThresholdPolicy = DeviceLightSystemTemperaturePolicy(50, 70),
+        protectionActive = false,
+        firmwareWriteAuthoritative = true
+    )
 }

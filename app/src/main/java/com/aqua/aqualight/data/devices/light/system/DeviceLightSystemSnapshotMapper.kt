@@ -1,8 +1,6 @@
 package com.aqua.aqualight.data.devices.light.system
 
-import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
-import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.light.system.DeviceLightFanMode
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemCondition
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemFailure
@@ -11,6 +9,7 @@ import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemRead
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemSettings
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemSnapshot
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemTemperaturePolicy
+import com.aqua.aqualight.data.devices.light.supportsLightSystem
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTemperatureProtectionStatus
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightThermalFan
@@ -137,15 +136,6 @@ private fun DeviceLightThermalMode.toApplicationMode(): DeviceLightFanMode = whe
     DeviceLightThermalMode.OFF -> DeviceLightFanMode.OFF
 }
 
-internal fun DeviceRootSnapshot.supportsLightSystem(): Boolean =
-    catalogState == DeviceRootCatalogState.VALID &&
-        family == OwnerDeviceFamily.LIGHT &&
-        productKey == DeviceLightThermalV1Contract.PRODUCT_KEY &&
-        fanOutputCount == DeviceLightThermalV1Contract.FAN_OUTPUT_CAPACITY &&
-        temperatureSensorCount == DeviceLightThermalV1Contract.TEMPERATURE_SENSOR_CAPACITY &&
-        LIGHT_FAN_CONTROL in supportedFeatures &&
-        LIGHT_TEMPERATURE_PROTECTION in supportedFeatures
-
 private fun Double?.requireExactInt(): Int {
     val value = requireNotNull(this).also { require(it.isFinite()) }
     val rounded = value.roundToInt()
@@ -156,8 +146,6 @@ private fun Double?.requireExactInt(): Int {
 private fun systemReadFailure(failure: DeviceLightSystemFailure) =
     DeviceLightSystemReadResult.Failed(failure)
 
-private const val LIGHT_FAN_CONTROL = "LIGHT_FAN_CONTROL"
-private const val LIGHT_TEMPERATURE_PROTECTION = "LIGHT_TEMPERATURE_PROTECTION"
 private const val PWM_HEALTH_OK = "OK"
 private const val HARDWARE_FAULT = "HARDWARE_FAULT"
 private const val TEMPERATURE_EPSILON = 0.000_001

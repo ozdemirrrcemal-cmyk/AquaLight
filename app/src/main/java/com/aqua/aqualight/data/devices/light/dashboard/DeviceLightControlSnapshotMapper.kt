@@ -10,18 +10,22 @@ import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightOutputC
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanPointSnapshot
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanReason
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanSnapshot
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightSystemSummary
+import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemSnapshot
+import com.aqua.aqualight.data.devices.light.supportsLightAdaptation
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAcclimationState
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightGraph
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightGraphReason
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightMode
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightOutputReason
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightProduct
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightStatus
 
 internal fun DeviceLightStatus.toControlSnapshot(
     deviceUid: DeviceUid,
-    graph: DeviceLightGraph
+    graph: DeviceLightGraph,
+    systemSupported: Boolean,
+    systemSnapshot: DeviceLightSystemSnapshot?
 ) = DeviceLightControlSnapshot(
     deviceUid = deviceUid.value,
     productKey = product.wireValue,
@@ -39,13 +43,13 @@ internal fun DeviceLightStatus.toControlSnapshot(
             ?.takeIf { color.available && color.cctAvailable }
     ),
     adaptation = DeviceLightAdaptationSummary(
-        supported = features.acclimation && acclimation.supported,
+        supported = supportsLightAdaptation(),
         state = acclimation.state?.toApplicationState(),
         currentPermille = acclimation.currentPermille,
         remainingSeconds = acclimation.remainingSeconds
     ),
-    systemSupported = product == DeviceLightProduct.WRGB_PRO_ELITE &&
-        features.fanControl && features.temperatureSensor && features.thermal,
+    systemSupported = systemSupported,
+    system = systemSnapshot?.toDashboardSummary(),
     channels = channels.sortedBy { channel -> channel.order }.map { channel ->
         DeviceLightChannelOutputSnapshot(
             key = channel.key,
@@ -69,6 +73,12 @@ internal fun DeviceLightStatus.toControlSnapshot(
     ),
     automaticProgramCount = auto.programCount,
     customCurvePointCount = custom.pointCount
+)
+
+private fun DeviceLightSystemSnapshot.toDashboardSummary() = DeviceLightSystemSummary(
+    temperatureCelsius = temperatureCelsius,
+    fanPercents = fans.map { fan -> fan.percent },
+    condition = condition
 )
 
 private fun DeviceLightGraphReason.toApplicationReason(): DeviceLightPlanReason = when (this) {

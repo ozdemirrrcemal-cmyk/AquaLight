@@ -7,6 +7,7 @@ import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemMuta
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemOperations
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemReadResult
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemSettings
+import com.aqua.aqualight.data.devices.light.supportsLightSystem
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository

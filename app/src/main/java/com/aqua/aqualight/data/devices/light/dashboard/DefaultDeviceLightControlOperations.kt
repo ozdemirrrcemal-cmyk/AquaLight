@@ -7,7 +7,11 @@ import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControl
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlOperations
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlResult
 import com.aqua.aqualight.application.devices.light.dashboard.matchesLightControlSurface
+import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemOperations
+import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemReadResult
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
+import com.aqua.aqualight.data.devices.light.supportsLightSystem
+import com.aqua.aqualight.data.devices.light.system.DefaultDeviceLightSystemOperations
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
@@ -31,6 +35,8 @@ internal class DefaultDeviceLightControlOperations(
 ) : DeviceLightControlOperations {
 
     private val rootOperations = DefaultDeviceRootOperations(devicesRepository)
+    private val systemOperations: DeviceLightSystemOperations =
+        DefaultDeviceLightSystemOperations(devicesRepository)
 
     override fun observeControl(deviceUid: String): Flow<DeviceLightControlResult> {
         val uid = deviceUid.toDeviceUidOrNull()
@@ -43,7 +49,13 @@ internal class DefaultDeviceLightControlOperations(
                     uid,
                     DeviceLightDashboardReadAuthority.PRESENTATION
                 )
-                projectRead(uid, root, dashboard?.status, dashboard?.graph)
+                projectRead(
+                    uid,
+                    root,
+                    dashboard?.status,
+                    dashboard?.graph,
+                    systemOperations.current(uid.value)
+                )
             }.distinctUntilChanged()
         }
     }
@@ -51,25 +63,15 @@ internal class DefaultDeviceLightControlOperations(
     override fun currentControl(deviceUid: String): DeviceLightControlResult =
         when (val resolved = resolveRuntime(deviceUid)) {
             is RuntimeResolution.Failed -> failed(resolved.failure)
-            is RuntimeResolution.Ready -> resolved.runtime
-                .currentDashboard(
-                    resolved.deviceUid,
-                    DeviceLightDashboardReadAuthority.AUTHORITATIVE
-                )
-                .let { dashboard ->
-                    projectRead(
-                        resolved.deviceUid,
-                        resolved.root,
-                        dashboard?.status,
-                        dashboard?.graph
-                    )
-                }
+            is RuntimeResolution.Ready -> resolved.currentControl(systemOperations)
         }
 
     override suspend fun refreshControl(deviceUid: String): DeviceLightControlResult =
         when (val resolved = resolveRuntime(deviceUid)) {
             is RuntimeResolution.Failed -> failed(resolved.failure)
-            is RuntimeResolution.Ready -> runCatching { refresh(resolved) }.fold(
+            is RuntimeResolution.Ready -> runCatching {
+                refresh(resolved, systemOperations)
+            }.fold(
                 onSuccess = { result -> result },
                 onFailure = { failed(DeviceLightControlFailure.INVALID_DATA) }
             )
@@ -91,7 +93,8 @@ internal class DefaultDeviceLightControlOperations(
 }
 
 private suspend fun refresh(
-    resolved: RuntimeResolution.Ready
+    resolved: RuntimeResolution.Ready,
+    systemOperations: DeviceLightSystemOperations
 ): DeviceLightControlResult {
     val outcome = resolved.runtime.requestStatus(resolved.deviceUid)
     return when (outcome) {
@@ -103,7 +106,7 @@ private suspend fun refresh(
                 acceptedStatus == value &&
                 resolved.runtime.isAuthoritative(resolved.deviceUid, generation)
             ) {
-                resolved.refreshGraph()
+                resolved.refreshGraph(systemOperations)
             } else {
                 failed(DeviceLightControlFailure.UNAVAILABLE)
             }
@@ -112,25 +115,44 @@ private suspend fun refresh(
     }
 }
 
-private suspend fun RuntimeResolution.Ready.refreshGraph(): DeviceLightControlResult =
+private suspend fun RuntimeResolution.Ready.refreshGraph(
+    systemOperations: DeviceLightSystemOperations
+): DeviceLightControlResult =
     when (val graphOutcome = runtime.requestGraph(deviceUid)) {
-        is DeviceRuntimeCommandOutcome.Success -> graphOutcome.toControlResult(
-            resolution = this
-        )
+        is DeviceRuntimeCommandOutcome.Success -> {
+            val dashboardResult = graphOutcome.toControlResult(
+                resolution = this,
+                systemResult = systemOperations.current(deviceUid.value)
+            )
+            if (dashboardResult is DeviceLightControlResult.Available && root.supportsLightSystem()) {
+                systemOperations.refresh(deviceUid.value)
+                currentControl(systemOperations)
+            } else {
+                dashboardResult
+            }
+        }
         else -> failed(graphOutcome.toControlFailure())
     }
 
 private fun DeviceRuntimeCommandOutcome.Success<DeviceLightGraph>.toControlResult(
-    resolution: RuntimeResolution.Ready
-): DeviceLightControlResult {
-    val dashboard = resolution.runtime.currentDashboard(
-        resolution.deviceUid,
-        DeviceLightDashboardReadAuthority.AUTHORITATIVE
-    )
-    val graphAccepted = dashboard?.graph == value &&
+    resolution: RuntimeResolution.Ready,
+    systemResult: DeviceLightSystemReadResult
+): DeviceLightControlResult = resolution.runtime.currentDashboard(
+    resolution.deviceUid,
+    DeviceLightDashboardReadAuthority.AUTHORITATIVE
+).let { dashboard ->
+    val acceptedDashboard = dashboard?.takeIf { candidate ->
+        candidate.graph == value &&
         resolution.runtime.isGraphAuthoritative(resolution.deviceUid, generation)
-    return if (graphAccepted && dashboard != null) {
-        projectRead(resolution.deviceUid, resolution.root, dashboard.status, dashboard.graph)
+    }
+    if (acceptedDashboard != null) {
+        projectRead(
+            resolution.deviceUid,
+            resolution.root,
+            acceptedDashboard.status,
+            acceptedDashboard.graph,
+            systemResult
+        )
     } else {
         failed(DeviceLightControlFailure.UNAVAILABLE)
     }
@@ -146,17 +168,38 @@ private sealed interface RuntimeResolution {
     data class Failed(val failure: DeviceLightControlFailure) : RuntimeResolution
 }
 
+private fun RuntimeResolution.Ready.currentControl(
+    systemOperations: DeviceLightSystemOperations
+): DeviceLightControlResult = runtime.currentDashboard(
+    deviceUid,
+    DeviceLightDashboardReadAuthority.AUTHORITATIVE
+).let { dashboard ->
+    projectRead(
+        deviceUid,
+        root,
+        dashboard?.status,
+        dashboard?.graph,
+        systemOperations.current(deviceUid.value)
+    )
+}
+
 private fun projectRead(
     deviceUid: DeviceUid,
     root: DeviceRootSnapshot?,
     status: DeviceLightStatus?,
-    graph: DeviceLightGraph?
+    graph: DeviceLightGraph?,
+    systemResult: DeviceLightSystemReadResult
 ): DeviceLightControlResult = when {
     root == null || status == null || graph == null ->
         failed(DeviceLightControlFailure.UNAVAILABLE)
     !root.isSupportedLightRoot() -> failed(DeviceLightControlFailure.UNSUPPORTED)
     status.product.wireValue != root.productKey -> failed(DeviceLightControlFailure.INVALID_DATA)
-    else -> status.toControlSnapshot(deviceUid, graph)
+    else -> status.toControlSnapshot(
+        deviceUid = deviceUid,
+        graph = graph,
+        systemSupported = root.supportsLightSystem(),
+        systemSnapshot = (systemResult as? DeviceLightSystemReadResult.Available)?.snapshot
+    )
         .takeIf { snapshot -> snapshot.matchesLightControlSurface(deviceUid.value, root) }
         ?.let(DeviceLightControlResult::Available)
         ?: failed(DeviceLightControlFailure.INVALID_DATA)

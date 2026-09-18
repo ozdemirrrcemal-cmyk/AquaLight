@@ -5,11 +5,11 @@ import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdapta
 import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationReadResult
 import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationSnapshot
 import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationState
+import com.aqua.aqualight.data.devices.light.supportsLightAdaptation
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAcclimationPolicy
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAcclimationState
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAcclimationStatus
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightProduct
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightStatus
 
 internal fun project(
@@ -18,7 +18,7 @@ internal fun project(
     firmwareWriteAuthoritative: Boolean
 ): DeviceLightAdaptationReadResult = when {
     status == null -> readFailure(DeviceLightAdaptationFailure.UNAVAILABLE)
-    !status.supportsAdaptation() -> readFailure(DeviceLightAdaptationFailure.UNSUPPORTED)
+    !status.supportsLightAdaptation() -> readFailure(DeviceLightAdaptationFailure.UNSUPPORTED)
     else -> status.acclimation.toSnapshot(
         deviceUid,
         status.policy.acclimation,
@@ -27,12 +27,6 @@ internal fun project(
         ?.let(DeviceLightAdaptationReadResult::Available)
         ?: readFailure(DeviceLightAdaptationFailure.INVALID_DATA)
 }
-
-private fun DeviceLightStatus.supportsAdaptation(): Boolean =
-    product == DeviceLightProduct.WRGB_PRO_ELITE &&
-        features.acclimation &&
-        acclimation.supported &&
-        policy.acclimation.supported
 
 internal fun DeviceLightAcclimationPolicy.accepts(
     startPercent: Int,
