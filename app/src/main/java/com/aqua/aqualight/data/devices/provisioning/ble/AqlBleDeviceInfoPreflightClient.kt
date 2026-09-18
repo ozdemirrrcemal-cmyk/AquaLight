@@ -230,16 +230,6 @@ class AqlBleDeviceInfoPreflightClient(
         finish(parseDeviceInfo(raw))
     }
 
-    @SuppressLint("MissingPermission")
-    private fun disconnectGatt(gatt: BluetoothGatt) {
-        gatt.disconnect()
-    }
-
-    @SuppressLint("MissingPermission")
-    private fun releaseGatt(gatt: BluetoothGatt) {
-        gatt.close()
-    }
-
     private fun parseDeviceInfo(raw: String): Result<DeviceInfo> {
         return runCatching {
             val json = JSONObject(raw)
@@ -517,6 +507,16 @@ class AqlBleDeviceInfoPreflightClient(
         const val PREFLIGHT_RETRY_DELAY_MS = 650L
         const val GATT_CLOSE_FALLBACK_MS = 1_500L
     }
+}
+
+@SuppressLint("MissingPermission")
+private fun disconnectGatt(gatt: BluetoothGatt) {
+    gatt.disconnect()
+}
+
+@SuppressLint("MissingPermission")
+private fun releaseGatt(gatt: BluetoothGatt) {
+    gatt.close()
 }
 
 sealed interface ManualSetupPreflightResult {

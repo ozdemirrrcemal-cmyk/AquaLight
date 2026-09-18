@@ -191,27 +191,26 @@ class AqlBleProvisioningGattClient(
 
     private val callback = object : BluetoothGattCallback() {
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
-            if (
-                closeCoordinator.handleConnectionState(
-                    connection = gatt,
-                    disconnected = newState == BluetoothProfile.STATE_DISCONNECTED,
-                    failed = status != BluetoothGatt.GATT_SUCCESS
-                )
-            ) return
-            if (activeGatt !== gatt) return
-            if (status != BluetoothGatt.GATT_SUCCESS) {
-                failAndClose("BLE connection failed with status $status.")
-                return
-            }
-            when (newState) {
-                BluetoothProfile.STATE_CONNECTED -> {
-                    connectionTimeout.cancel()
-                    emit(AqlBleProvisioningGattEvent.Connected(gatt.device.address))
-                    discoverServices(gatt)
-                }
-                BluetoothProfile.STATE_DISCONNECTED -> {
-                    emit(AqlBleProvisioningGattEvent.Disconnected)
-                    close()
+            val closeHandled = closeCoordinator.handleConnectionState(
+                connection = gatt,
+                disconnected = newState == BluetoothProfile.STATE_DISCONNECTED,
+                failed = status != BluetoothGatt.GATT_SUCCESS
+            )
+            if (!closeHandled && activeGatt === gatt) {
+                if (status != BluetoothGatt.GATT_SUCCESS) {
+                    failAndClose("BLE connection failed with status $status.")
+                } else {
+                    when (newState) {
+                        BluetoothProfile.STATE_CONNECTED -> {
+                            connectionTimeout.cancel()
+                            emit(AqlBleProvisioningGattEvent.Connected(gatt.device.address))
+                            discoverServices(gatt)
+                        }
+                        BluetoothProfile.STATE_DISCONNECTED -> {
+                            emit(AqlBleProvisioningGattEvent.Disconnected)
+                            close()
+                        }
+                    }
                 }
             }
         }
@@ -919,16 +918,6 @@ class AqlBleProvisioningGattClient(
         } else true
     }
 
-    @SuppressLint("MissingPermission")
-    private fun disconnectGatt(gatt: BluetoothGatt) {
-        gatt.disconnect()
-    }
-
-    @SuppressLint("MissingPermission")
-    private fun releaseGatt(gatt: BluetoothGatt) {
-        gatt.close()
-    }
-
     private fun scheduleStatusPoll() {
         if (activeGatt == null) return
         mainHandler.removeCallbacks(statusPollRunnable)
@@ -1005,6 +994,16 @@ class AqlBleProvisioningGattClient(
         val FINALIZE_SETUP_UUID: UUID = UUID.fromString(AqlBleProvisioningContract.FINALIZE_SETUP_UUID)
         val CLIENT_CHARACTERISTIC_CONFIG_UUID: UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
     }
+}
+
+@SuppressLint("MissingPermission")
+private fun disconnectGatt(gatt: BluetoothGatt) {
+    gatt.disconnect()
+}
+
+@SuppressLint("MissingPermission")
+private fun releaseGatt(gatt: BluetoothGatt) {
+    gatt.close()
 }
 
 @SuppressLint("MissingPermission")
