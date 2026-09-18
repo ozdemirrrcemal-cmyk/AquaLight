@@ -114,22 +114,23 @@ class AqlBleProvisioningAddressResolver(
     }
 
     private fun scannerOrFailure(): Result<BluetoothLeScanner> {
-        if (!hasRequiredPermissions()) {
-            return Result.failure(
+        val adapter = bluetoothManager?.adapter
+        return when {
+            !hasRequiredPermissions() -> Result.failure(
                 SecurityException("Bluetooth scan/connect permission is required.")
             )
+            adapter == null -> Result.failure(
+                IllegalStateException("Bluetooth adapter is unavailable.")
+            )
+            !adapter.isEnabled -> Result.failure(
+                IllegalStateException("Bluetooth is disabled.")
+            )
+            else -> adapter.bluetoothLeScanner?.let { scanner ->
+                Result.success(scanner)
+            } ?: Result.failure(
+                IllegalStateException("Bluetooth LE scanner is unavailable.")
+            )
         }
-
-        val adapter = bluetoothManager?.adapter
-            ?: return Result.failure(IllegalStateException("Bluetooth adapter is unavailable."))
-
-        if (!adapter.isEnabled) {
-            return Result.failure(IllegalStateException("Bluetooth is disabled."))
-        }
-
-        return adapter.bluetoothLeScanner?.let { scanner ->
-            Result.success(scanner)
-        } ?: Result.failure(IllegalStateException("Bluetooth LE scanner is unavailable."))
     }
 
     @SuppressLint("MissingPermission")
