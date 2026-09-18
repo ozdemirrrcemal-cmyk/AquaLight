@@ -50,6 +50,13 @@ internal fun DeviceLightDashboardScreen(
         item(key = "light-live-output") {
             DeviceLightLiveOutputCard(channels = state.channels)
         }
+        item(key = "light-mode-selector") {
+            DeviceLightModeSelector(
+                selectedMode = state.hero.mode,
+                enabled = state.contentEnabled,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
         item(key = "light-controls-header") {
             DeviceLightControlsHeader(
                 enabled = state.contentEnabled,

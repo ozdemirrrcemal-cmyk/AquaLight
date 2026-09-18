@@ -69,6 +69,11 @@
     <string name="device_light_live_output_white">White</string>
     <string name="device_light_live_output_percent_format">%1$d%%</string>
     <string name="device_light_live_output_content_description">Live output. %1$s.</string>
+    <string name="device_light_mode_selector_title">Working mode</string>
+    <string name="device_light_mode_selector_custom">Custom</string>
+    <string name="device_light_mode_selector_manual">Manual</string>
+    <string name="device_light_mode_selector_automatic">Auto</string>
+
     <string name="device_light_controls_title">Control screens</string>
     <string name="device_light_quick_setup_button">Smart setup</string>
     <string name="device_light_manual_control_subtitle">Control channels directly</string>

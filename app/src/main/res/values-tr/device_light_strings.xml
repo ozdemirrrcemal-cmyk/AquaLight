@@ -69,6 +69,11 @@
     <string name="device_light_live_output_white">Beyaz</string>
     <string name="device_light_live_output_percent_format">%%%1$d</string>
     <string name="device_light_live_output_content_description">Anlık çıkış. %1$s.</string>
+    <string name="device_light_mode_selector_title">Çalışma Modu</string>
+    <string name="device_light_mode_selector_custom">Özel</string>
+    <string name="device_light_mode_selector_manual">Manuel</string>
+    <string name="device_light_mode_selector_automatic">Otomatik</string>
+
     <string name="device_light_controls_title">Kontrol ekranları</string>
     <string name="device_light_quick_setup_button">Akıllı kurulum</string>
     <string name="device_light_manual_control_subtitle">Kanalları doğrudan ayarla</string>

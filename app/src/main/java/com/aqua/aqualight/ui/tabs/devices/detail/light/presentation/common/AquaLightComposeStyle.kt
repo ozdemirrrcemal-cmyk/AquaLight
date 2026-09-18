@@ -118,6 +118,15 @@ object AquaLightDashboardGeometry {
     val liveOutputTrackValueGap = 12.dp
     val liveOutputValueWidth = 36.dp
     val liveOutputTrackShape = RoundedCornerShape(percent = 50)
+    val modeSelectorTitleBottomGap = 6.dp
+    val modeSelectorHeight = 40.dp
+    val modeSelectorSegmentHeight = 34.dp
+    val modeSelectorOuterPadding = 3.dp
+    val modeSelectorSegmentGap = 0.dp
+    val modeSelectorOutlineWidth = 1.dp
+    val modeSelectorShape = RoundedCornerShape(16.dp)
+    val modeSelectorSegmentShape = RoundedCornerShape(13.dp)
+
 
     val controlsHeaderHeight = 30.dp
     val controlsHeaderHorizontalPadding = 2.dp
