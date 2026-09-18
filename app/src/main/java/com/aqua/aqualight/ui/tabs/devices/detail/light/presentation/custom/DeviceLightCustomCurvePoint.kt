@@ -29,7 +29,7 @@ internal fun SelectedPointCard(
     visuals: DeviceLightCustomVisuals
 ) {
     AquaDeviceCardSurface(modifier = Modifier.fillMaxWidth()) {
-        state.selectedPoint?.let { point ->
+        state.valuesPoint?.let { point ->
             Column(verticalArrangement = Arrangement.spacedBy(POINT_CONTENT_SPACING_DP.dp)) {
                 BasicText(
                     text = stringResource(
