@@ -69,7 +69,7 @@ class AqlFirmwareInteroperabilityTest {
         val authenticated = commandAccess.getJSONArray("authenticated").asStringSet()
         val public = commandAccess.getJSONArray("public").asStringSet()
 
-        assertEquals(62, authenticated.size)
+        assertEquals(63, authenticated.size)
         assertEquals(FIRMWARE_COMMIT, DeviceLightRuntimeContract.PINNED_FIRMWARE_COMMIT)
         assertTrue(public.isEmpty())
         assertEquals(public, AqlWsContract.publicCommandKeys())
@@ -580,7 +580,7 @@ class AqlFirmwareInteroperabilityTest {
         const val TIMER_CONTRACT_FIXTURE = "aql_timer_contract_v1.json"
         const val PRODUCT_CATALOG_FIXTURE = "aql_product_catalog_v1.json"
         const val DOSING_PIN_FIXTURE = "aql_android_dosing_v1_pin.json"
-        const val FIRMWARE_COMMIT = "7df97ce807ebb1e90ff63cc36206d6ce479a62fc"
+        const val FIRMWARE_COMMIT = "202b0346363b9cffd079b686bd9db502c25e3108"
         const val DOSING_FIRMWARE_COMMIT = "fa147211749c2dcb2f56e15a617a00010e071984"
 
         val WEEKDAYS = listOf(true, false, false, false, false, false, false)
