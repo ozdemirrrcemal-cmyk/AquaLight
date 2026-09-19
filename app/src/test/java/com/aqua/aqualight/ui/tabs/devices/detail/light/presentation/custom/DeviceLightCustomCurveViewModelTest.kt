@@ -1,6 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom
 
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomChannel
+import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomFailure
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomMutationResult
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomOperations
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomPoint
