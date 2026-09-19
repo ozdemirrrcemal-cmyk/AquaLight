@@ -119,7 +119,7 @@ internal fun DeviceLightLibraryScreen(
                         )
                     }
                 }
-                libraryContent(state, actions, visuals)
+                libraryContent(state, actions, visuals, selectionMode)
             }
         }
     }
@@ -128,7 +128,8 @@ internal fun DeviceLightLibraryScreen(
 private fun androidx.compose.foundation.lazy.LazyListScope.libraryContent(
     state: DeviceLightLibraryUiState,
     actions: DeviceLightLibraryActions,
-    visuals: DeviceLightLibraryVisuals
+    visuals: DeviceLightLibraryVisuals,
+    selectionMode: Boolean
 ) {
     val cardPresentation = DeviceLightLibraryCardPresentation(
         descriptors = requireNotNull(state.target).channelDescriptors,
