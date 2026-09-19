@@ -99,6 +99,10 @@ internal object DeviceLightCommercialErrorResolver {
                 R.string.device_light_error_unsupported_title,
                 R.string.device_light_custom_operation_error
             )
+            DeviceLightCustomFailure.STALE_REVISION -> commercialError(
+                R.string.device_light_error_stale_title,
+                R.string.device_light_custom_stale_error
+            )
             DeviceLightCustomFailure.REJECTED -> rejectedError(
                 R.string.device_light_custom_operation_error
             )
