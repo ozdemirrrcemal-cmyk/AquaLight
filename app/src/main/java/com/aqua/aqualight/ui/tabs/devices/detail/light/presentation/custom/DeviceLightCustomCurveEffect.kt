@@ -11,6 +11,7 @@ internal sealed interface DeviceLightCustomCurveEffect {
     ) : DeviceLightCustomCurveEffect
     data class OpenPointActions(val timeMs: Long) : DeviceLightCustomCurveEffect
     data class OpenSaveAs(val usedCustomNames: List<String>) : DeviceLightCustomCurveEffect
+    data object OpenDeviceProgramActions : DeviceLightCustomCurveEffect
     data class ShowSuccess(@StringRes val messageRes: Int) : DeviceLightCustomCurveEffect
     data class ShowError(@StringRes val messageRes: Int) : DeviceLightCustomCurveEffect
     data class ShowPointLimit(val maxPoints: Int) : DeviceLightCustomCurveEffect
