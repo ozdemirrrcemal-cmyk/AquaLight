@@ -69,6 +69,7 @@ class DeviceLightCommercialErrorResolverTest {
             DeviceLightCustomFailure.NOT_CONNECTED to
                 R.string.device_light_error_not_connected_message,
             DeviceLightCustomFailure.UNSUPPORTED to R.string.device_light_custom_operation_error,
+            DeviceLightCustomFailure.STALE_REVISION to R.string.device_light_custom_stale_error,
             DeviceLightCustomFailure.REJECTED to R.string.device_light_custom_operation_error,
             DeviceLightCustomFailure.INVALID_DATA to R.string.device_light_custom_operation_error
         )
