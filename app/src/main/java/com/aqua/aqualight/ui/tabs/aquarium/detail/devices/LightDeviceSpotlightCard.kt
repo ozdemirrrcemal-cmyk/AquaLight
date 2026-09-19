@@ -95,15 +95,15 @@ private fun LightDeviceHeader(
     online: Boolean,
     visuals: LightDeviceCardVisuals
 ) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            LightDeviceThumbnail(item, online, visuals)
-            Spacer(Modifier.width(AquaLightTankCardGeometry.headerGap))
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.Top
+    ) {
+        LightDeviceThumbnail(item, online, visuals)
+        Spacer(Modifier.width(AquaLightTankCardGeometry.headerGap))
+        Column(modifier = Modifier.weight(1f)) {
             Row(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 val lampActive = online && item.snapshot?.hero?.outputActive == true
@@ -129,20 +129,20 @@ private fun LightDeviceHeader(
                     modifier = Modifier.size(AquaLightTankCardGeometry.titleIconSize)
                 )
             }
-        }
-        Spacer(Modifier.height(AquaLightTankCardGeometry.headerRowGap))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            LightStatusModeRow(item, online, visuals)
-            Spacer(Modifier.width(AquaLightTankCardGeometry.statusScheduleGap))
-            LightScheduleRow(
-                item = item,
-                online = online,
-                visuals = visuals,
-                modifier = Modifier.weight(1f)
-            )
+            Spacer(Modifier.height(AquaLightTankCardGeometry.headerRowGap))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                LightStatusModeRow(item, online, visuals)
+                Spacer(Modifier.width(AquaLightTankCardGeometry.statusScheduleGap))
+                LightScheduleRow(
+                    item = item,
+                    online = online,
+                    visuals = visuals,
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
     }
 }
@@ -206,13 +206,6 @@ private fun LightConnectionChip(
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            Modifier
-                .size(AquaLightTankCardGeometry.statusDotSize)
-                .clip(CircleShape)
-                .background(statusColor)
-        )
-        Spacer(Modifier.width(AquaLightTankCardGeometry.statusContentGap))
         BasicText(
             text = stringResource(item.header.statusStyle.statusLabelRes),
             style = visuals.typography.body.copy(color = statusColor),
@@ -250,25 +243,6 @@ private fun LightModeChip(
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            modifier = Modifier
-                .size(AquaLightTankCardGeometry.modeGlyphSize)
-                .border(
-                    AquaLightTankCardGeometry.modeGlyphBorderWidth,
-                    visuals.colors.action,
-                    CircleShape
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            BasicText(
-                text = mode.lightCardModeGlyph(),
-                style = visuals.typography.micro.copy(
-                    color = visuals.colors.action,
-                    textAlign = TextAlign.Center
-                )
-            )
-        }
-        Spacer(Modifier.width(AquaLightTankCardGeometry.modeGlyphGap))
         BasicText(
             text = stringResource(mode.lightCardModeLabelRes()),
             style = visuals.typography.body.copy(color = visuals.colors.action),
