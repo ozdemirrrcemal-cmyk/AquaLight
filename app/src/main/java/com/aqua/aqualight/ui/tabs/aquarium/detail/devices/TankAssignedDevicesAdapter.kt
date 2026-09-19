@@ -106,7 +106,10 @@ class TankAssignedDevicesAdapter(
                 ViewCompositionStrategy.DisposeOnDetachedFromWindowOrReleasedFromPool
             )
             binding.lightCardCompose.setContent {
-                cardUi?.let(::LightDeviceSpotlightCard)
+                val current = cardUi
+                if (current != null) {
+                    LightDeviceSpotlightCard(current)
+                }
             }
         }
 

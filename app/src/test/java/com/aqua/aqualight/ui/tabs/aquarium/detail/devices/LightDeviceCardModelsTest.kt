@@ -1,7 +1,7 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.devices
 
 import com.aqua.aqualight.R
-import com.aqua.aqualight.application.devices.light.card.DeviceLightCardState
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightCardState
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightChannelOutputSnapshot
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlMode
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlSnapshot
@@ -9,6 +9,7 @@ import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightHeroSna
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanPointSnapshot
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanReason
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanSnapshot
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanWindowSnapshot
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactCardUi
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import org.junit.Assert.assertEquals
@@ -56,6 +57,10 @@ class LightDeviceCardModelsTest {
             nowTimeMs = 12 * HOUR_MS,
             channelScale = 1000,
             hasScheduleToday = true,
+            activeWindow = DeviceLightPlanWindowSnapshot(
+                startTimeMs = 8 * HOUR_MS,
+                endTimeMs = 19 * HOUR_MS + 30 * MINUTE_MS
+            ),
             points = listOf(
                 point(0, 0),
                 point(8 * HOUR_MS, 0),

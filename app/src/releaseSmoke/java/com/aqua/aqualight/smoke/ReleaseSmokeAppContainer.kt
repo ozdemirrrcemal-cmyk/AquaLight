@@ -41,7 +41,7 @@ import com.aqua.aqualight.data.devices.cooling.DefaultDeviceCoolingTemperatureHi
 import com.aqua.aqualight.data.devices.cooling.control.DefaultDeviceCoolingControlOperations
 import com.aqua.aqualight.data.devices.light.adaptation.DefaultDeviceLightAdaptationOperations
 import com.aqua.aqualight.data.devices.light.automatic.DefaultDeviceLightAutomaticOperations
-import com.aqua.aqualight.data.devices.light.card.DefaultDeviceLightCardOperations
+import com.aqua.aqualight.data.devices.light.dashboard.DefaultDeviceLightCardOperations
 import com.aqua.aqualight.data.devices.light.dashboard.DefaultDeviceLightControlOperations
 import com.aqua.aqualight.data.devices.light.custom.DefaultDeviceLightCustomOperations
 import com.aqua.aqualight.data.devices.light.library.DefaultDeviceLightLibraryOperations
@@ -159,6 +159,10 @@ private class ReleaseSmokeViewModelFactory(
         adaptationOperations = DefaultDeviceLightAdaptationOperations(devicesRepository),
         controlOperations = lightControlOperations,
         automaticOperations = DefaultDeviceLightAutomaticOperations(devicesRepository),
+        cardOperations = DefaultDeviceLightCardOperations(
+            devicesRepository = devicesRepository,
+            controlOperations = lightControlOperations
+        ),
         customOperations = DefaultDeviceLightCustomOperations(devicesRepository),
         manualOperations = DefaultDeviceLightManualOperations(devicesRepository),
         systemOperations = DefaultDeviceLightSystemOperations(devicesRepository),
@@ -365,10 +369,7 @@ private class ReleaseSmokeViewModelFactory(
                 ),
                 menuOpenUseCase = deviceMenuOpenUseCase,
                 routeResolver = DeviceRouteResolver(),
-                lightCardOperations = DefaultDeviceLightCardOperations(
-                    devicesRepository = devicesRepository,
-                    controlOperations = lightControlOperations
-                )
+                lightCardOperations = lightOperations.cardOperations
             )
         modelClass.isAssignableFrom(TankDeviceSelectViewModel::class.java) ->
             TankDeviceSelectViewModel(

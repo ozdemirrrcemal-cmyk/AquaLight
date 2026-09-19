@@ -18,7 +18,7 @@ class LightDeviceCardContractTest(unittest.TestCase):
 
     def test_card_adapter_reuses_central_light_dashboard_projection(self) -> None:
         operations = (ROOT / (
-            "app/src/main/java/com/aqua/aqualight/data/devices/light/card/"
+            "app/src/main/java/com/aqua/aqualight/data/devices/light/dashboard/"
             "DefaultDeviceLightCardOperations.kt"
         )).read_text(encoding="utf-8")
 
@@ -34,6 +34,14 @@ class LightDeviceCardContractTest(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, operations)
 
+    def test_owner_light_bundle_constructs_card_boundary_once(self) -> None:
+        owner_graph = (ROOT / (
+            "app/src/main/java/com/aqua/aqualight/composition/OwnerDependencyGraph.kt"
+        )).read_text(encoding="utf-8")
+
+        self.assertIn("val cardOperations: DeviceLightCardOperations", owner_graph)
+        self.assertEqual(1, owner_graph.count("DefaultDeviceLightCardOperations("))
+
     def test_card_reuses_authoritative_output_and_auto_event_icon(self) -> None:
         card = (ROOT / (
             "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/devices/"
@@ -41,6 +49,7 @@ class LightDeviceCardContractTest(unittest.TestCase):
         )).read_text(encoding="utf-8")
 
         self.assertIn("snapshot?.hero?.outputActive", card)
+        self.assertNotIn("outerActiveWindow", card)
         self.assertIn("AutomaticCycleEventIcon", card)
         self.assertIn("AutomaticCycleEventKind.SUNRISE", card)
         self.assertIn("AutomaticCycleEventKind.SUNSET", card)

@@ -10,6 +10,7 @@ import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightOutputC
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanPointSnapshot
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanReason
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanSnapshot
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanWindowSnapshot
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightSystemSummary
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemSnapshot
 import com.aqua.aqualight.data.devices.light.supportsLightAdaptation
@@ -69,11 +70,34 @@ internal fun DeviceLightStatus.toControlSnapshot(
                 timeMs = point.timeMs,
                 channelLevels = point.channelPermille
             )
-        }
+        },
+        activeWindow = graph.toApplicationActiveWindow(auto.activeProgramId)
     ),
     automaticProgramCount = auto.programCount,
     customCurvePointCount = custom.pointCount
 )
+
+private fun DeviceLightGraph.toApplicationActiveWindow(
+    activeProgramId: String?
+): DeviceLightPlanWindowSnapshot? {
+    if (
+        mode != DeviceLightMode.AUTO ||
+        !available ||
+        reason != DeviceLightGraphReason.OK ||
+        !hasScheduleToday
+    ) {
+        return null
+    }
+    val selectedSpan = activeProgramId
+        ?.let { programId -> autoSpans.firstOrNull { span -> span.programId == programId } }
+        ?: autoSpans.singleOrNull()
+    return selectedSpan?.let { span ->
+        DeviceLightPlanWindowSnapshot(
+            startTimeMs = span.startTimeMsWithinToday,
+            endTimeMs = span.endTimeMsWithinToday
+        )
+    }
+}
 
 private fun DeviceLightSystemSnapshot.toDashboardSummary() = DeviceLightSystemSummary(
     temperatureCelsius = temperatureCelsius,

@@ -4,12 +4,10 @@ import android.content.Context
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import com.aqua.aqualight.R
-import com.aqua.aqualight.application.devices.light.card.DeviceLightCardState
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightCardState
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightChannelOutputSnapshot
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlMode
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlSnapshot
-import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanReason
-import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanSnapshot
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactCardUi
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 
@@ -38,7 +36,7 @@ internal fun DeviceCompactCardUi.toLightSpotlightCardUi(
     state: DeviceLightCardState?
 ): LightDeviceSpotlightCardUi {
     val snapshot = (state as? DeviceLightCardState.Ready)?.snapshot
-    val window = snapshot?.plan?.outerActiveWindow(snapshot.hero.mode)
+    val window = snapshot?.plan?.activeWindow
     val contentState = when (state) {
         is DeviceLightCardState.Ready -> LightDeviceSpotlightContentState.READY
         is DeviceLightCardState.Unavailable -> LightDeviceSpotlightContentState.UNAVAILABLE
@@ -113,37 +111,6 @@ internal fun DeviceLightChannelOutputSnapshot.lightCardLabelRes(): Int? = when (
     "blue" -> R.string.device_light_live_output_blue
     "white" -> R.string.device_light_live_output_white
     else -> null
-}
-
-private data class LightDeviceScheduleWindow(
-    val startTimeMs: Long,
-    val endTimeMs: Long
-)
-
-private fun DeviceLightPlanSnapshot.outerActiveWindow(
-    mode: DeviceLightControlMode?
-): LightDeviceScheduleWindow? {
-    val eligible = mode != null &&
-        mode != DeviceLightControlMode.MANUAL &&
-        available &&
-        reason == DeviceLightPlanReason.OK &&
-        hasScheduleToday
-    val activeIndices = if (eligible) {
-        points.indices.filter { index ->
-            points[index].channelLevels.any { level -> level > 0 }
-        }
-    } else {
-        emptyList()
-    }
-    return activeIndices.firstOrNull()?.let { firstActive ->
-        val lastActive = activeIndices.last()
-        val startIndex = (firstActive - 1).coerceAtLeast(0)
-        val endIndex = (lastActive + 1).coerceAtMost(points.lastIndex)
-        LightDeviceScheduleWindow(
-            startTimeMs = points[startIndex].timeMs,
-            endTimeMs = points[endIndex].timeMs
-        )
-    }
 }
 
 private fun Long?.lightCardTimeText(context: Context): String =

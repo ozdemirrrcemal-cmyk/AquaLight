@@ -1,8 +1,8 @@
-package com.aqua.aqualight.data.devices.light.card
+package com.aqua.aqualight.data.devices.light.dashboard
 
-import com.aqua.aqualight.application.devices.light.card.DeviceLightCardOperations
-import com.aqua.aqualight.application.devices.light.card.DeviceLightCardState
-import com.aqua.aqualight.application.devices.light.card.DeviceLightCardUnavailableReason
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightCardOperations
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightCardState
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightCardUnavailableReason
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlOperations
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlResult
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlSnapshot

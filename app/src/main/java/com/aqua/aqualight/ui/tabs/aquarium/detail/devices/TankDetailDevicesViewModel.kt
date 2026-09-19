@@ -16,8 +16,8 @@ import com.aqua.aqualight.application.devices.cooling.DeviceCoolingCardOperation
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingCardState
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardState
-import com.aqua.aqualight.application.devices.light.card.DeviceLightCardOperations
-import com.aqua.aqualight.application.devices.light.card.DeviceLightCardState
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightCardOperations
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightCardState
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactSnapshotMapper
 import com.aqua.aqualight.ui.common.devicepresence.DeviceMenuUnavailableMessageMapper
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRoute

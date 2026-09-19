@@ -1,6 +1,5 @@
-package com.aqua.aqualight.application.devices.light.card
+package com.aqua.aqualight.application.devices.light.dashboard
 
-import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlSnapshot
 import kotlinx.coroutines.flow.Flow
 
 /** Read-only application boundary for the tank-detail Light information card. */

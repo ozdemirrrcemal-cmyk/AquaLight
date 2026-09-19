@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
@@ -27,6 +26,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -104,14 +104,16 @@ private fun LightDeviceHeader(
         Column(modifier = Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 val lampActive = online && item.snapshot?.hero?.outputActive == true
-                Icon(
+                Image(
                     painter = painterResource(R.drawable.ic_care_light_24),
                     contentDescription = null,
-                    tint = if (lampActive) {
-                        visuals.colors.card.warning
-                    } else {
-                        colorResource(R.color.aqua_device_connection_offline)
-                    },
+                    colorFilter = ColorFilter.tint(
+                        if (lampActive) {
+                            visuals.colors.card.warning
+                        } else {
+                            colorResource(R.color.aqua_device_connection_offline)
+                        }
+                    ),
                     modifier = Modifier.size(AquaLightTankCardGeometry.titleIconSize)
                 )
                 Spacer(Modifier.width(AquaLightTankCardGeometry.titleIconGap))
