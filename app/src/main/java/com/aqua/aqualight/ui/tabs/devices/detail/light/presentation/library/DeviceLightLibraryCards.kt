@@ -49,8 +49,7 @@ internal fun ManualLibraryCard(
         LibraryCardHeader(
             entry = entry,
             actions = actions,
-            visuals = visuals,
-            showMore = !presentation.selectable
+            visuals = visuals
         )
         ManualLibrarySummary(visuals)
         LibraryCardDivider(visuals)
@@ -76,8 +75,7 @@ internal fun CustomLibraryCard(
         LibraryCardHeader(
             entry = entry,
             actions = actions,
-            visuals = visuals,
-            showMore = !presentation.selectable
+            visuals = visuals
         )
         CustomLibrarySummary(payload, visuals)
         LibraryCardDivider(visuals)
@@ -117,8 +115,7 @@ private fun LibraryCardSurface(
 private fun LibraryCardHeader(
     entry: DeviceLightLibraryEntry,
     actions: DeviceLightLibraryActions,
-    visuals: DeviceLightLibraryVisuals,
-    showMore: Boolean
+    visuals: DeviceLightLibraryVisuals
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -137,18 +134,16 @@ private fun LibraryCardHeader(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f)
         )
-        if (showMore) {
-            Spacer(Modifier.width(DeviceLightAutomaticGeometry.headerControlGap))
-            AutomaticMoreButton(
-                color = visuals.colors.card.secondaryText,
-                contentDescriptionText = stringResource(
-                    R.string.device_light_library_more_actions_description,
-                    entry.name
-                ),
-                enabled = true,
-                onClick = { actions.onMoreClick(entry.id) }
-            )
-        }
+        Spacer(Modifier.width(DeviceLightAutomaticGeometry.headerControlGap))
+        AutomaticMoreButton(
+            color = visuals.colors.card.secondaryText,
+            contentDescriptionText = stringResource(
+                R.string.device_light_library_more_actions_description,
+                entry.name
+            ),
+            enabled = true,
+            onClick = { actions.onMoreClick(entry.id) }
+        )
     }
 }
 
