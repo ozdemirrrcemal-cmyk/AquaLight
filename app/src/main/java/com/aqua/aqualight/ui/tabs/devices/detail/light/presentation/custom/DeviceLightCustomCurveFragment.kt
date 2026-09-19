@@ -14,6 +14,8 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryNamePolicy
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.library.DEVICE_LIGHT_LIBRARY_SELECTION_CUSTOM
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.library.DEVICE_LIGHT_LIBRARY_SELECTION_RESULT
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceLightCustomCurveBinding
@@ -38,7 +40,6 @@ class DeviceLightCustomCurveFragment : Fragment(R.layout.fragment_device_light_c
     private val binding get() = _binding!!
     private lateinit var unsavedGuard: UnsavedChangesExitGuard
     private lateinit var effectHandler: DeviceLightCustomCurveEffectHandler
-    private var refreshAfterLibrary = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -48,6 +49,19 @@ class DeviceLightCustomCurveFragment : Fragment(R.layout.fragment_device_light_c
             restoredDraft = savedInstanceState?.let(DeviceLightCustomDraft::restore),
             restoredDirty = savedInstanceState?.getBoolean(STATE_DRAFT_DIRTY, false) == true
         )
+        findNavController().currentBackStackEntry?.savedStateHandle?.let { stateHandle ->
+            stateHandle.getLiveData<String?>(
+                DEVICE_LIGHT_LIBRARY_SELECTION_RESULT
+            ).observe(viewLifecycleOwner) { entryId ->
+                if (!entryId.isNullOrBlank()) {
+                    stateHandle.set<String?>(
+                        DEVICE_LIGHT_LIBRARY_SELECTION_RESULT,
+                        null
+                    )
+                    viewModel.loadLibraryDraft(entryId)
+                }
+            }
+        }
         attachUnsavedGuard()
         effectHandler = DeviceLightCustomCurveEffectHandler(
             fragment = this,
@@ -57,14 +71,6 @@ class DeviceLightCustomCurveFragment : Fragment(R.layout.fragment_device_light_c
         setupContent()
         renderState()
         observeViewModel()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        if (refreshAfterLibrary) {
-            refreshAfterLibrary = false
-            viewModel.refreshIfClean()
-        }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -144,12 +150,12 @@ class DeviceLightCustomCurveFragment : Fragment(R.layout.fragment_device_light_c
         viewModel.clearPreview()
         val navController = findNavController()
         if (navController.currentDestination?.id != R.id.deviceLightCustomCurveFragment) return
-        refreshAfterLibrary = true
         navController.navigate(
             DeviceLightCustomCurveFragmentDirections
                 .actionDeviceLightCustomCurveFragmentToDeviceLightLibraryFragment(
                     deviceUid = args.deviceUid,
-                    initialTab = INITIAL_TAB_CUSTOM
+                    initialTab = DEVICE_LIGHT_LIBRARY_SELECTION_CUSTOM,
+                    selectionKind = DEVICE_LIGHT_LIBRARY_SELECTION_CUSTOM
                 )
         )
     }
@@ -172,7 +178,6 @@ class DeviceLightCustomCurveFragment : Fragment(R.layout.fragment_device_light_c
     private companion object {
         const val UNSAVED_REQUEST_KEY = "device_light_custom_unsaved"
         const val ACTION_DISCARD_DRAFT = "discard_custom_draft"
-        const val INITIAL_TAB_CUSTOM = "CUSTOM"
         const val STATE_DRAFT_DIRTY = "device_light_custom_draft_dirty"
     }
 }
