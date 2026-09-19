@@ -242,6 +242,7 @@ object AquaLightTankCardGeometry {
     val titleIconGap = 6.dp
     val headerRowGap = 6.dp
     val statusChipGap = 6.dp
+    val statusScheduleGap = 8.dp
     val statusDotSize = 7.dp
     val statusContentGap = 6.dp
     val modeGlyphSize = 19.dp
