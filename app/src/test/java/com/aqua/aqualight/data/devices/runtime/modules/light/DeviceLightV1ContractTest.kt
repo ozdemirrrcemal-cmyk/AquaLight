@@ -17,9 +17,9 @@ import org.junit.Test
 
 class DeviceLightV1ContractTest {
     @Test
-    fun `Light data layer pins the merged firmware main revision`() {
+    fun `Light data layer pins the reviewed firmware contract revision`() {
         assertEquals(
-            "7df97ce807ebb1e90ff63cc36206d6ce479a62fc",
+            "202b0346363b9cffd079b686bd9db502c25e3108",
             DeviceLightRuntimeContract.PINNED_FIRMWARE_COMMIT
         )
     }
