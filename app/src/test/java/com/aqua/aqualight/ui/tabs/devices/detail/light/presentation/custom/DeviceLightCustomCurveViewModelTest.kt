@@ -138,6 +138,42 @@ class DeviceLightCustomCurveViewModelTest {
     }
 
     @Test
+    fun `process restoration keeps saved profile checkpoint distinct from device baseline`() {
+        val profile = customLibraryEntry(
+            name = "Profile checkpoint",
+            red = UPDATED_RED
+        )
+        val library = FakeLibraryOperations(
+            libraryResult = DeviceLightLibraryResult.Available(
+                DeviceLightLibrarySnapshot(
+                    target = libraryTarget(),
+                    entries = listOf(profile)
+                )
+            )
+        )
+        val original = boundViewModel(libraryOperations = library)
+        original.openLibraryProfile(profile.id)
+        original.pointEditor.updateSelectedChannel(
+            DeviceLightCustomChannelId.RED,
+            INITIAL_RED
+        )
+        val restoredDraft = original.currentState.draft
+        val restoredCheckpoint = requireNotNull(original.currentEditorCheckpoint)
+
+        val restored = boundViewModel(
+            restoredDraft = restoredDraft,
+            restoredDirty = true,
+            restoredUnapplied = false,
+            restoredCheckpoint = restoredCheckpoint
+        )
+
+        assertTrue(restored.currentState.hasUnsavedChanges)
+        assertFalse(restored.currentState.hasUnappliedChanges)
+        assertEquals(restoredDraft, restored.currentState.draft)
+        assertEquals(restoredCheckpoint, restored.currentEditorCheckpoint)
+    }
+
+    @Test
     fun `apply to device sends authoritative revision and complete editor document`() {
         val custom = FakeCustomOperations(snapshot())
         val viewModel = boundViewModel(customOperations = custom)
@@ -443,9 +479,16 @@ class DeviceLightCustomCurveViewModelTest {
         libraryOperations: FakeLibraryOperations = FakeLibraryOperations(),
         restoredDraft: DeviceLightCustomDraft? = null,
         restoredDirty: Boolean = false,
-        restoredUnapplied: Boolean = false
+        restoredUnapplied: Boolean = false,
+        restoredCheckpoint: DeviceLightCustomDraft? = null
     ) = DeviceLightCustomCurveViewModel(customOperations, libraryOperations).apply {
-        bind(DEVICE_UID, restoredDraft, restoredDirty, restoredUnapplied)
+        bind(
+            deviceUidText = DEVICE_UID,
+            restoredDraft = restoredDraft,
+            restoredDirty = restoredDirty,
+            restoredUnapplied = restoredUnapplied,
+            restoredCheckpoint = restoredCheckpoint
+        )
     }
 
     private fun DeviceLightCustomCurveViewModel.addInitialPoint() {
@@ -650,6 +693,7 @@ class DeviceLightCustomCurveViewModelTest {
         const val CLOCK_TICK_TOLERANCE_MS = 5_000L
         const val UPDATED_BLUE = 73
         const val UPDATED_RED = 64
+        const val INITIAL_RED = 20
         const val SUNDAY_INDEX = 6
         const val HOURS_PER_PREVIEW_DAY = 24L
         val WRGB_CHANNELS = listOf(
