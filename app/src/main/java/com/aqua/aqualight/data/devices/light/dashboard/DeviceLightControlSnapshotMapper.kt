@@ -76,7 +76,7 @@ internal fun DeviceLightStatus.toControlSnapshot(
         activeWindow = graph.toApplicationActiveWindow(auto.activeProgramId, customDocument)
     ),
     automaticProgramCount = auto.programCount,
-    customCurvePointCount = customDocument.pointCount
+    customCurvePointCount = custom.pointCount
 )
 
 private fun DeviceLightGraph.toApplicationActiveWindow(
