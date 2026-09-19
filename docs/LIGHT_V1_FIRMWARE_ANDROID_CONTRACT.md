@@ -4,7 +4,7 @@
 
 - Firmware repository: `ozdemirrrcemal-cmyk/AquaLight-Firmware`
 - Firmware branch: `feat/custom-program-device-apply`
-- Firmware commit: `7df97ce807ebb1e90ff63cc36206d6ce479a62fc`
+- Firmware commit: `d73c59b2466430187538e9e9dbc5c163009b31dc`
 - Firmware tree: `5df1ba11e2d0d5c65e3c6fbb1e4aba5d47bd6c69`
 - Android branch: `feat/custom-program-device-apply` (base: `fix/provisioning-reliability`)
 - Schema: `aqualight.light.v1`, storage version `1`
