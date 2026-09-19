@@ -73,15 +73,15 @@ internal fun DeviceLightCustomCurveScreen(
             ),
             verticalArrangement = Arrangement.spacedBy(SECTION_SPACING_DP.dp)
         ) {
-            if (state.hasUnsavedChanges) {
-                item(key = "unsaved") { UnsavedChangesIndicator(visuals) }
+            if (state.hasUnsavedChanges || state.hasUnappliedChanges) {
+                item(key = "editor_state") { EditorStateIndicator(state, visuals) }
             }
             item(key = "curve") { CurveCard(state, actions, visuals) }
             item(key = "point") { SelectedPointCard(state, actions, visuals) }
             item(key = "days") { ProgramDaysCard(state, actions, visuals) }
             item(key = "preview") { VirtualTimePreviewCard(state, actions, visuals) }
         }
-        LibraryActions(
+        CustomEditorActions(
             state = state,
             actions = actions,
             visuals = visuals,
@@ -113,7 +113,10 @@ private fun DeviceClockTicker(
 }
 
 @Composable
-private fun UnsavedChangesIndicator(visuals: DeviceLightCustomVisuals) {
+private fun EditorStateIndicator(
+    state: DeviceLightCustomCurveUiState,
+    visuals: DeviceLightCustomVisuals
+) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(
             horizontal = UNSAVED_HORIZONTAL_PADDING_DP.dp,
@@ -128,7 +131,16 @@ private fun UnsavedChangesIndicator(visuals: DeviceLightCustomVisuals) {
             )
         )
         BasicText(
-            text = stringResource(R.string.device_light_custom_unsaved_changes),
+            text = stringResource(
+                when {
+                    state.hasUnsavedChanges && state.hasUnappliedChanges ->
+                        R.string.device_light_custom_unsaved_and_unapplied_changes
+                    state.hasUnappliedChanges ->
+                        R.string.device_light_custom_unapplied_changes
+                    else ->
+                        R.string.device_light_custom_unsaved_changes
+                }
+            ),
             style = visuals.typography.caption.copy(color = visuals.colors.card.warning),
             modifier = Modifier.padding(start = UNSAVED_TEXT_PADDING_DP.dp)
         )
@@ -215,7 +227,7 @@ private data class DayButtonState(
 private const val DEVICE_CLOCK_TICK_INTERVAL_MS = 1_000L
 private const val SCREEN_HORIZONTAL_PADDING_DP = 9
 private const val SCREEN_TOP_PADDING_DP = 2
-private const val SCREEN_BOTTOM_PADDING_DP = 86
+private const val SCREEN_BOTTOM_PADDING_DP = 150
 private const val SECTION_SPACING_DP = 8
 private const val STICKY_ACTION_TOP_PADDING_DP = 8
 private const val STICKY_ACTION_BOTTOM_PADDING_DP = 12
