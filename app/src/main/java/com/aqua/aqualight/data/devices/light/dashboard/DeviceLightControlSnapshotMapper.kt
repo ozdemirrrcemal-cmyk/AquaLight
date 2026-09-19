@@ -107,7 +107,7 @@ private fun DeviceLightGraph.toApplicationActiveWindow(
                 hasScheduleToday &&
                 it.isNotEmpty()
         }
-        ?.let(::customSchedulePoints)
+        ?.let { customSchedulePoints(it) }
         ?.let { authoredPoints ->
             DeviceLightPlanWindowSnapshot(
                 startTimeMs = authoredPoints.first().timeMs,
@@ -120,7 +120,7 @@ private fun DeviceLightGraph.toApplicationActiveWindow(
 
 private const val MIN_CUSTOM_WINDOW_POINTS = 2
 
-private fun DeviceLightGraph.customSchedulePoints(): List<DeviceLightGraphPoint> {
+private fun customSchedulePoints(points: List<DeviceLightGraphPoint>): List<DeviceLightGraphPoint> {
     if (points.size < MIN_CUSTOM_WINDOW_POINTS) return points
 
     val trimmed = points
