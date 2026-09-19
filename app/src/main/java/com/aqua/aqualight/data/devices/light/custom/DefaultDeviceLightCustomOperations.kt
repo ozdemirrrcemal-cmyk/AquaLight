@@ -8,17 +8,24 @@ import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomPoin
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomReadResult
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomScene
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomSnapshot
+import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomWriteResult
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightCustomClearPayload
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightCustomInstallPayload
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightErrorReason
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightLibraryReadAuthority
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightLibraryRuntimeState
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightCustomPoint as RuntimeCustomPoint
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightScene
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightPreviewSetPayload
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRepository
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightScene
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightCustomPoint as RuntimeCustomPoint
+import com.aqua.aqualight.data.devices.runtime.modules.light.clearCustom
 import com.aqua.aqualight.data.devices.runtime.modules.light.clearPreview
 import com.aqua.aqualight.data.devices.runtime.modules.light.currentLibrary
+import com.aqua.aqualight.data.devices.runtime.modules.light.installCustom
+import com.aqua.aqualight.data.devices.runtime.modules.light.lightV1Data
 import com.aqua.aqualight.data.devices.runtime.modules.light.requestCustom
 import com.aqua.aqualight.data.devices.runtime.modules.light.setPreview
 import java.util.concurrent.CancellationException
@@ -83,8 +90,10 @@ internal class DefaultDeviceLightCustomOperations(
         }
     } catch (error: CancellationException) {
         throw error
-    } catch (_: Exception) {
+    } catch (_: IllegalArgumentException) {
         DeviceLightCustomReadResult.Failed(DeviceLightCustomFailure.INVALID_DATA)
+    } catch (_: Exception) {
+        DeviceLightCustomReadResult.Failed(DeviceLightCustomFailure.UNAVAILABLE)
     }
 
     private fun projectCurrent(
@@ -107,24 +116,41 @@ internal class DefaultDeviceLightCustomOperations(
         }
     }
 
+    override suspend fun applyToDevice(
+        deviceUid: String,
+        expectedRevision: Long,
+        weekdaysMask: Int,
+        points: List<DeviceLightCustomPoint>
+    ): DeviceLightCustomWriteResult = persistentCommand(deviceUid) { uid, runtime ->
+        runtime.installCustom(
+            uid,
+            DeviceLightCustomInstallPayload(
+                expectedRevision = expectedRevision,
+                weekdaysMask = weekdaysMask,
+                points = points.toRuntimePoints(uid, runtime)
+            )
+        )
+    }
+
+    override suspend fun clearDeviceProgram(
+        deviceUid: String,
+        expectedRevision: Long
+    ): DeviceLightCustomWriteResult = persistentCommand(deviceUid) { uid, runtime ->
+        runtime.clearCustom(
+            uid,
+            DeviceLightCustomClearPayload(expectedRevision = expectedRevision)
+        )
+    }
+
     override suspend fun preview(
         deviceUid: String,
         points: List<DeviceLightCustomPoint>
     ): DeviceLightCustomMutationResult = command(deviceUid) { uid ->
         val runtime = requireNotNull(devicesRepository.runtimeModules()?.light)
-        val product = requireNotNull(runtime.currentStatus(uid)).product
-        val runtimePoints = points.map { point ->
-            RuntimeCustomPoint(
-                timeMs = point.timeMs,
-                scene = DeviceLightScene(
-                    product = product,
-                    percents = product.sceneFields.associateWith { field ->
-                        point.scene.channels.getValue(field.toCustomChannel())
-                    }
-                )
-            )
-        }
-        runtime.setPreview(uid, DeviceLightPreviewSetPayload.CustomDay(runtimePoints))
+        runtime.setPreview(
+            uid,
+            DeviceLightPreviewSetPayload.CustomDay(points.toRuntimePoints(uid, runtime))
+        )
     }
 
     override suspend fun clearPreview(deviceUid: String): DeviceLightCustomMutationResult =
@@ -132,6 +158,45 @@ internal class DefaultDeviceLightCustomOperations(
             val runtime = requireNotNull(devicesRepository.runtimeModules()?.light)
             runtime.clearPreview(uid)
         }
+
+    private suspend fun persistentCommand(
+        deviceUid: String,
+        execute: suspend (
+            DeviceUid,
+            DeviceLightRuntimeRepository
+        ) -> DeviceRuntimeCommandOutcome<*>
+    ): DeviceLightCustomWriteResult {
+        val uid = deviceUid.toUidOrNull()
+            ?: return DeviceLightCustomWriteResult.Failed(DeviceLightCustomFailure.INVALID_DATA)
+        val runtime = devicesRepository.runtimeModules()?.light
+            ?: return DeviceLightCustomWriteResult.Failed(DeviceLightCustomFailure.UNAVAILABLE)
+        if (runtime.currentStatus(uid) == null) {
+            return DeviceLightCustomWriteResult.Failed(DeviceLightCustomFailure.NOT_CONNECTED)
+        }
+        return try {
+            when (val outcome = execute(uid, runtime)) {
+                is DeviceRuntimeCommandOutcome.Success -> when (
+                    val current = projectCurrent(
+                        uid,
+                        runtime,
+                        DeviceLightLibraryReadAuthority.AUTHORITATIVE
+                    )
+                ) {
+                    is DeviceLightCustomReadResult.Available ->
+                        DeviceLightCustomWriteResult.Success(current.snapshot)
+                    is DeviceLightCustomReadResult.Failed ->
+                        DeviceLightCustomWriteResult.Failed(current.failure)
+                }
+                else -> DeviceLightCustomWriteResult.Failed(outcome.toFailure())
+            }
+        } catch (error: CancellationException) {
+            throw error
+        } catch (_: IllegalArgumentException) {
+            DeviceLightCustomWriteResult.Failed(DeviceLightCustomFailure.INVALID_DATA)
+        } catch (_: Exception) {
+            DeviceLightCustomWriteResult.Failed(DeviceLightCustomFailure.UNAVAILABLE)
+        }
+    }
 
     private suspend fun command(
         deviceUid: String,
@@ -153,10 +218,30 @@ internal class DefaultDeviceLightCustomOperations(
                 }
             } catch (error: CancellationException) {
                 throw error
+            } catch (_: IllegalArgumentException) {
+                DeviceLightCustomMutationResult.Failed(DeviceLightCustomFailure.INVALID_DATA)
             } catch (_: Exception) {
                 DeviceLightCustomMutationResult.Failed(DeviceLightCustomFailure.UNAVAILABLE)
             }
         }
+    }
+}
+
+private fun List<DeviceLightCustomPoint>.toRuntimePoints(
+    uid: DeviceUid,
+    runtime: DeviceLightRuntimeRepository
+): List<RuntimeCustomPoint> {
+    val product = requireNotNull(runtime.currentStatus(uid)).product
+    return map { point ->
+        RuntimeCustomPoint(
+            timeMs = point.timeMs,
+            scene = DeviceLightScene(
+                product = product,
+                percents = product.sceneFields.associateWith { field ->
+                    point.scene.channels.getValue(field.toCustomChannel())
+                }
+            )
+        )
     }
 }
 
@@ -202,7 +287,12 @@ private fun DeviceRuntimeCommandOutcome<*>.toFailure(): DeviceLightCustomFailure
     is DeviceRuntimeCommandOutcome.NotConnected,
     is DeviceRuntimeCommandOutcome.NotAuthenticated -> DeviceLightCustomFailure.NOT_CONNECTED
     is DeviceRuntimeCommandOutcome.UnsupportedByDevice -> DeviceLightCustomFailure.UNSUPPORTED
-    is DeviceRuntimeCommandOutcome.FirmwareError -> DeviceLightCustomFailure.REJECTED
+    is DeviceRuntimeCommandOutcome.FirmwareError -> when (
+        runCatching { lightV1Data().reason }.getOrNull()
+    ) {
+        DeviceLightErrorReason.Known.STALE_REVISION -> DeviceLightCustomFailure.STALE_REVISION
+        else -> DeviceLightCustomFailure.REJECTED
+    }
     is DeviceRuntimeCommandOutcome.ProtocolError -> DeviceLightCustomFailure.INVALID_DATA
     is DeviceRuntimeCommandOutcome.SendFailed,
     is DeviceRuntimeCommandOutcome.Timeout,
