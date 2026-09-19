@@ -116,10 +116,12 @@ internal data class DeviceLightCustomCurveUiState(
     val timeStepMs: Long = MILLIS_PER_MINUTE,
     val contentEnabled: Boolean = false,
     val firmwareWriteAuthoritative: Boolean = false,
+    val deviceProgramInstalled: Boolean = false,
     override val initialLoading: Boolean = false,
     override val operationInProgress: Boolean = false,
     val blockingOperationInProgress: Boolean = false,
     val hasUnsavedChanges: Boolean = false,
+    val hasUnappliedChanges: Boolean = false,
     val readFailed: Boolean = false
 ) : DeviceLightOperationLoadingState {
     override val showGlobalLoading: Boolean
@@ -153,6 +155,14 @@ internal data class DeviceLightCustomCurveUiState(
     val canPreview: Boolean
         get() = contentEnabled && firmwareWriteAuthoritative &&
             !operationInProgress && draft.points.isNotEmpty()
+
+    val canApplyToDevice: Boolean
+        get() = contentEnabled && firmwareWriteAuthoritative &&
+            !operationInProgress && draft.points.isNotEmpty() && hasUnappliedChanges
+
+    val canClearDeviceProgram: Boolean
+        get() = contentEnabled && firmwareWriteAuthoritative &&
+            !operationInProgress && deviceProgramInstalled
 
     val canDeleteSelectedPoint: Boolean
         get() = contentEnabled && !operationInProgress &&
