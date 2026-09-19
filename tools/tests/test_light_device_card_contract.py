@@ -42,18 +42,20 @@ class LightDeviceCardContractTest(unittest.TestCase):
         self.assertIn("val cardOperations: DeviceLightCardOperations", owner_graph)
         self.assertEqual(1, owner_graph.count("DefaultDeviceLightCardOperations("))
 
-    def test_card_reuses_authoritative_output_and_auto_event_icon(self) -> None:
+    def test_card_reuses_shared_connection_icon_and_auto_event_icon(self) -> None:
         card = (ROOT / (
             "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/devices/"
             "LightDeviceSpotlightCard.kt"
         )).read_text(encoding="utf-8")
 
-        self.assertIn("snapshot?.hero?.outputActive", card)
+        self.assertNotIn("snapshot?.hero?.outputActive", card)
         self.assertNotIn("outerActiveWindow", card)
         self.assertIn("AutomaticCycleEventIcon", card)
         self.assertIn("AutomaticCycleEventKind.SUNRISE", card)
         self.assertIn("AutomaticCycleEventKind.SUNSET", card)
-        self.assertNotIn("ic_status_wifi", card)
+        self.assertIn("ic_status_wifi", card)
+        self.assertIn("statusStyle.tintColorRes", card)
+        self.assertNotIn("ic_devices", card)
 
 
 if __name__ == "__main__":
