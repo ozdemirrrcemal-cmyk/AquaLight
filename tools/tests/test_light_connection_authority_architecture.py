@@ -13,6 +13,10 @@ PRESENCE = ROOT / (
 DEVICE_CARD = ROOT / (
     "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/DeviceCardMapper.kt"
 )
+COMPACT_DEVICE_CARD = ROOT / (
+    "app/src/main/java/com/aqua/aqualight/ui/common/devicecard/"
+    "DeviceCompactSnapshotMapper.kt"
+)
 
 CENTRAL_CONNECTION_VIEW_MODELS = (
     "automatic/programs/DeviceLightAutomaticProgramsViewModel.kt",
@@ -27,6 +31,7 @@ class LightConnectionAuthorityArchitectureTest(unittest.TestCase):
     def test_cards_and_headers_share_root_availability_projection(self):
         presence = PRESENCE.read_text(encoding="utf-8")
         cards = DEVICE_CARD.read_text(encoding="utf-8")
+        compact_cards = COMPACT_DEVICE_CARD.read_text(encoding="utf-8")
         root = (LIGHT_UI / "root/DeviceLightRootViewModel.kt").read_text(encoding="utf-8")
 
         self.assertIn(
@@ -38,6 +43,13 @@ class LightConnectionAuthorityArchitectureTest(unittest.TestCase):
             "device.availability.toDeviceConnectionVisualState()",
             cards,
         )
+        self.assertIn(
+            "device.availability.toDeviceConnectionVisualState()",
+            compact_cards,
+        )
+        self.assertNotIn("OwnerDeviceAvailability.REACHABLE", compact_cards)
+        self.assertNotIn("DeviceConnectionVisualState.ONLINE", compact_cards)
+        self.assertNotIn("DeviceConnectionVisualState.OFFLINE", compact_cards)
         self.assertIn("root.toDeviceConnectionVisualState()", root)
 
     def test_feature_authority_never_drives_connection_visual_state(self):
