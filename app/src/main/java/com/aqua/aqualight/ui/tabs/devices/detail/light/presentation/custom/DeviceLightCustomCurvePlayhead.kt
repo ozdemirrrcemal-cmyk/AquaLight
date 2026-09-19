@@ -114,9 +114,9 @@ private fun PlayheadTimeBubble(
 }
 
 internal val CHART_WINDOW = DeviceLightCustomChartWindow(0L, MILLIS_PER_DAY)
-internal const val PLAYHEAD_LABEL_SPACE_DP = 48
+internal const val PLAYHEAD_LABEL_SPACE_DP = 40
 internal const val CHART_PERCENT_AXIS_WIDTH_DP = 28
-internal const val CHART_HEIGHT_DP = 204
+internal const val CHART_HEIGHT_DP = 172
 private const val PLAYHEAD_LABEL_WIDTH_DP = 58
 private const val PLAYHEAD_LABEL_TOUCH_HEIGHT_DP = 48
 private const val PLAYHEAD_LABEL_VISUAL_HEIGHT_DP = 30

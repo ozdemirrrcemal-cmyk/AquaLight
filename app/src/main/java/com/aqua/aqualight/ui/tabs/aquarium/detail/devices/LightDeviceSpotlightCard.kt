@@ -263,7 +263,13 @@ private fun LightScheduleRow(
             .alpha(alpha),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        LightScheduleMetric(sunrise, visuals, Modifier.weight(1f))
+        LightScheduleMetric(
+            metric = sunrise,
+            visuals = visuals,
+            modifier = Modifier.weight(1f),
+            horizontalAlignment = Alignment.End
+        )
+        Spacer(Modifier.width(AquaLightTankCardGeometry.scheduleGap))
         Box(
             Modifier
                 .width(AquaLightTankCardGeometry.scheduleDividerWidth)
@@ -271,7 +277,12 @@ private fun LightScheduleRow(
                 .background(visuals.colors.card.outline)
         )
         Spacer(Modifier.width(AquaLightTankCardGeometry.scheduleGap))
-        LightScheduleMetric(sunset, visuals, Modifier.weight(1f))
+        LightScheduleMetric(
+            metric = sunset,
+            visuals = visuals,
+            modifier = Modifier.weight(1f),
+            horizontalAlignment = Alignment.Start
+        )
     }
 }
 
@@ -279,9 +290,13 @@ private fun LightScheduleRow(
 private fun LightScheduleMetric(
     metric: LightScheduleMetricUi,
     visuals: LightDeviceCardVisuals,
-    modifier: Modifier
+    modifier: Modifier,
+    horizontalAlignment: Alignment.Horizontal
 ) {
-    Column(modifier = modifier) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = horizontalAlignment
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             AutomaticCycleEventIcon(
                 kind = metric.kind,

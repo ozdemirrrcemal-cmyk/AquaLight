@@ -33,9 +33,9 @@ import com.aqua.aqualight.data.devices.runtime.modules.light.currentDashboard
 import com.aqua.aqualight.data.devices.runtime.modules.light.currentLibrary
 import java.util.concurrent.CancellationException
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 
 /** Stateless application adapter over the owner-scoped central Light V1 runtime repository. */
 internal class DefaultDeviceLightControlOperations(
@@ -52,26 +52,9 @@ internal class DefaultDeviceLightControlOperations(
         return if (uid == null || runtime == null) {
             flowOf(DeviceLightControlResult.Failed(DeviceLightControlFailure.UNAVAILABLE))
         } else {
-            combine(rootOperations.observe(uid.value), runtime.stateRevision) { root, _ ->
-                val dashboard = runtime.currentDashboard(
-                    uid,
-                    DeviceLightDashboardReadAuthority.PRESENTATION
-                )
-                val library = runtime.currentLibrary(
-                    uid,
-                    DeviceLightLibraryReadAuthority.PRESENTATION
-                )
-                projectRead(
-                    LightProjectionInput(
-                        deviceUid = uid,
-                        root = root,
-                        status = dashboard?.status,
-                        graph = dashboard?.graph,
-                        customDocument = library?.custom,
-                        systemResult = systemOperations.current(uid.value)
-                    )
-                )
-            }.distinctUntilChanged()
+            runtime.stateRevision
+                .map { projectLightControlPresentationRead(uid, runtime) }
+                .distinctUntilChanged()
         }
     }
 

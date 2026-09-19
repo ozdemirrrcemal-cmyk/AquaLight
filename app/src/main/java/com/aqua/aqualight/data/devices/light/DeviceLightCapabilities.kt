@@ -22,5 +22,17 @@ internal fun DeviceLightStatus.supportsLightAdaptation(): Boolean =
         acclimation.supported &&
         policy.acclimation.supported
 
+/**
+ * Presentation capability is derived from the last validated Light runtime snapshot.
+ *
+ * Runtime metadata generation controls write/navigation authority separately; a transient
+ * reconnect must not erase a previously validated Light presentation surface.
+ */
+internal fun DeviceLightStatus.supportsLightSystemPresentation(): Boolean =
+    product == DeviceLightProduct.WRGB_PRO_ELITE &&
+        features.fanControl &&
+        features.temperatureSensor &&
+        features.thermal
+
 private const val LIGHT_FAN_CONTROL = "LIGHT_FAN_CONTROL"
 private const val LIGHT_TEMPERATURE_PROTECTION = "LIGHT_TEMPERATURE_PROTECTION"

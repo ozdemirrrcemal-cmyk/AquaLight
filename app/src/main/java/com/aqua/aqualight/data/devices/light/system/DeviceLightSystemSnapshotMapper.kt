@@ -34,7 +34,39 @@ internal fun projectLightSystemSnapshot(
         root == null || !root.supportsLightSystem() ->
             systemReadFailure(DeviceLightSystemFailure.UNSUPPORTED)
         status == null -> systemReadFailure(DeviceLightSystemFailure.UNAVAILABLE)
-        status.productKey != root.productKey || protection?.supported != true ->
+        status.productKey != root.productKey ->
+            systemReadFailure(DeviceLightSystemFailure.INVALID_DATA)
+        else -> projectLightSystemPresentationSnapshot(
+            deviceUid = deviceUid,
+            thermal = thermal,
+            protection = protection,
+            firmwareWriteAuthoritative = firmwareWriteAuthoritative
+        )
+    }
+}
+
+/**
+ * Projects only firmware-validated retained state for presentation.
+ *
+ * This deliberately does not consume transient DeviceRoot runtime-metadata authority. The
+ * authoritative read/write path above still requires a currently validated root.
+ */
+internal fun projectLightSystemPresentationSnapshot(
+    deviceUid: DeviceUid,
+    thermal: DeviceLightThermalRuntimeState?,
+    protection: DeviceLightTemperatureProtectionStatus?,
+    firmwareWriteAuthoritative: Boolean
+): DeviceLightSystemReadResult {
+    val status = thermal?.status
+    return when {
+        status == null -> systemReadFailure(DeviceLightSystemFailure.UNAVAILABLE)
+        status.productKey != DeviceLightThermalV1Contract.PRODUCT_KEY ->
+            systemReadFailure(DeviceLightSystemFailure.INVALID_DATA)
+        status.topology.fanOutputCount != DeviceLightThermalV1Contract.FAN_OUTPUT_CAPACITY ||
+            status.topology.temperatureSensorCount !=
+            DeviceLightThermalV1Contract.TEMPERATURE_SENSOR_CAPACITY ->
+            systemReadFailure(DeviceLightSystemFailure.INVALID_DATA)
+        protection?.supported != true ->
             systemReadFailure(DeviceLightSystemFailure.INVALID_DATA)
         else -> runCatching {
             DeviceLightSystemReadResult.Available(

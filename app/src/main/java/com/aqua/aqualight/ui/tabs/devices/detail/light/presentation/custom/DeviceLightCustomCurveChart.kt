@@ -271,7 +271,7 @@ private val CHART_PERCENT_LABELS = listOf<Int?>(
 private val CHART_HOUR_LABELS = List(CHART_TIME_DIVISIONS + 1) { index ->
     index * HOURS_PER_GRID_DIVISION
 }
-private const val CURVE_CONTENT_SPACING_DP = 6
+private const val CURVE_CONTENT_SPACING_DP = 3
 private const val CURVE_CARD_BOTTOM_PADDING_DP = 4
 private const val HEADER_ICON_SIZE_DP = 34
 private const val HEADER_ICON_STROKE_DP = 2

@@ -10,7 +10,6 @@ import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightOutputC
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanPointSnapshot
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanReason
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanSnapshot
-import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanWindowSnapshot
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightSystemSummary
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemSnapshot
 import com.aqua.aqualight.data.devices.light.supportsLightAdaptation
@@ -78,54 +77,6 @@ internal fun DeviceLightStatus.toControlSnapshot(
     automaticProgramCount = auto.programCount,
     customCurvePointCount = custom.pointCount
 )
-
-private fun DeviceLightGraph.toApplicationActiveWindow(
-    activeProgramId: String?,
-    customDocument: DeviceLightCustomDocument?
-): DeviceLightPlanWindowSnapshot? = when (mode) {
-    DeviceLightMode.AUTO -> autoActiveWindow(activeProgramId)
-    DeviceLightMode.CUSTOM -> customActiveWindow(customDocument)
-    DeviceLightMode.MANUAL -> null
-}
-
-private fun DeviceLightGraph.autoActiveWindow(
-    activeProgramId: String?
-): DeviceLightPlanWindowSnapshot? {
-    if (!hasValidSchedule()) return null
-    val span = activeProgramId
-        ?.let { programId -> autoSpans.firstOrNull { it.programId == programId } }
-        ?: autoSpans.singleOrNull()
-    return span?.let {
-        DeviceLightPlanWindowSnapshot(
-            startTimeMs = it.startTimeMsWithinToday,
-            endTimeMs = it.endTimeMsWithinToday
-        )
-    }
-}
-
-private fun DeviceLightGraph.customActiveWindow(
-    customDocument: DeviceLightCustomDocument?
-): DeviceLightPlanWindowSnapshot? {
-    if (!hasValidSchedule()) return null
-    val points = customDocument
-        ?.takeIf { it.isCompleteSchedule() }
-        ?.points
-        ?: return null
-    return DeviceLightPlanWindowSnapshot(
-        startTimeMs = points.first().timeMs,
-        endTimeMs = points.last().timeMs
-    )
-}
-
-private fun DeviceLightGraph.hasValidSchedule(): Boolean =
-    available &&
-        reason == DeviceLightGraphReason.OK &&
-        hasScheduleToday
-
-private fun DeviceLightCustomDocument.isCompleteSchedule(): Boolean =
-    installed &&
-        pointCount == points.size &&
-        points.isNotEmpty()
 
 private fun DeviceLightSystemSnapshot.toDashboardSummary() = DeviceLightSystemSummary(
     temperatureCelsius = temperatureCelsius,

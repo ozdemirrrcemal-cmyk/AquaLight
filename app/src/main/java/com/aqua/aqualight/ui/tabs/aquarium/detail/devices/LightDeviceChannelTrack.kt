@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightDashboardAlpha
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightDashboardGeometry
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightTankCardGeometry
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightPlanChartSpec
 
 @Composable
@@ -23,7 +24,7 @@ internal fun LightChannelTrack(
 ) {
     Box(
         modifier = modifier
-            .height(AquaLightDashboardGeometry.liveOutputTrackHeight)
+            .height(AquaLightTankCardGeometry.channelTrackHeight)
             .clip(AquaLightDashboardGeometry.liveOutputTrackShape)
             .background(
                 rail.copy(alpha = AquaLightDashboardAlpha.liveOutputRail)
