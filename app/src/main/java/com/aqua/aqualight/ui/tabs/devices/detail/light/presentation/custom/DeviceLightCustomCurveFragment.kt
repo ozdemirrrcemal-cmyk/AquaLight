@@ -43,6 +43,7 @@ class DeviceLightCustomCurveFragment : Fragment(R.layout.fragment_device_light_c
     private val binding get() = _binding!!
     private lateinit var unsavedGuard: UnsavedChangesExitGuard
     private lateinit var effectHandler: DeviceLightCustomCurveEffectHandler
+    private lateinit var resultHandler: DeviceLightCustomCurveResultHandler
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -76,7 +77,11 @@ class DeviceLightCustomCurveFragment : Fragment(R.layout.fragment_device_light_c
             fragment = this,
             viewModel = viewModel
         )
-        effectHandler.registerResults()
+        resultHandler = DeviceLightCustomCurveResultHandler(
+            fragment = this,
+            viewModel = viewModel
+        )
+        resultHandler.register()
         setupContent()
         renderState()
         observeViewModel()
@@ -163,7 +168,7 @@ class DeviceLightCustomCurveFragment : Fragment(R.layout.fragment_device_light_c
                                 R.string.device_light_custom_more_actions_description
                             ),
                             enabled = !state.operationInProgress,
-                            onClick = viewModel::requestDeviceProgramActions
+                            onClick = viewModel.requestDeviceProgramActions
                         )
                     )
                 } else {
@@ -211,23 +216,32 @@ class DeviceLightCustomCurveFragment : Fragment(R.layout.fragment_device_light_c
     }
 }
 
-private class DeviceLightCustomCurveEffectHandler(
+private class DeviceLightCustomCurveResultHandler(
     private val fragment: DeviceLightCustomCurveFragment,
     private val viewModel: DeviceLightCustomCurveViewModel
 ) {
 
-    fun registerResults() {
+    fun register() {
+        registerTimePickerResult()
+        registerPointActionsResult()
+        registerDeviceProgramActionsResult()
+        registerDeviceProgramDeleteConfirmationResult()
+        registerSaveAsResult()
+    }
+
+    private fun registerTimePickerResult() {
         fragment.childFragmentManager.setFragmentResultListener(
             TIME_REQUEST_KEY,
             fragment.viewLifecycleOwner
         ) { _, result ->
             val purpose = result.getString(AquaTimePickerBottomSheet.RESULT_PAYLOAD_ID)
                 ?.toTimePickerPurpose() ?: return@setFragmentResultListener
-            if (result.getString(AquaTimePickerBottomSheet.RESULT_KEY) ==
+            val selected = result.getString(AquaTimePickerBottomSheet.RESULT_KEY) ==
                 AquaTimePickerBottomSheet.RESULT_SELECTED
-            ) {
-                val minutes = result.getInt(AquaTimePickerBottomSheet.RESULT_MINUTES_OF_DAY)
-                val targetTimeMs = minutes * MILLIS_PER_MINUTE
+            if (selected) {
+                val targetTimeMs = result.getInt(
+                    AquaTimePickerBottomSheet.RESULT_MINUTES_OF_DAY
+                ) * MILLIS_PER_MINUTE
                 when (purpose) {
                     is DeviceLightCustomTimePickerPurpose.Add ->
                         viewModel.pointEditor.addOrMovePoint(null, targetTimeMs)
@@ -238,62 +252,106 @@ private class DeviceLightCustomCurveEffectHandler(
                 viewModel.pointEditor.cancelTimeSelection(purpose)
             }
         }
+    }
+
+    private fun registerPointActionsResult() {
         fragment.childFragmentManager.setFragmentResultListener(
             POINT_ACTIONS_REQUEST_KEY,
             fragment.viewLifecycleOwner
         ) { _, result ->
-            if (result.getString(GlobalActionBottomSheet.RESULT_KEY) !=
-                GlobalActionBottomSheet.RESULT_ACTION
-            ) {
-                return@setFragmentResultListener
-            }
+            val action = result.getString(GlobalActionBottomSheet.RESULT_ACTION_ID)
+                .takeIf {
+                    result.getString(GlobalActionBottomSheet.RESULT_KEY) ==
+                        GlobalActionBottomSheet.RESULT_ACTION
+                } ?: return@setFragmentResultListener
             val timeMs = result.getString(GlobalActionBottomSheet.RESULT_PAYLOAD_ID)
                 ?.toLongOrNull() ?: return@setFragmentResultListener
             viewModel.pointEditor.selectGraphPoint(timeMs)
-            when (result.getString(GlobalActionBottomSheet.RESULT_ACTION_ID)) {
+            when (action) {
                 ACTION_EDIT_TIME -> viewModel.pointEditor.requestEditSelectedTime()
                 ACTION_DELETE_POINT -> viewModel.pointEditor.deletePoint(timeMs)
             }
         }
+    }
+
+    private fun registerDeviceProgramActionsResult() {
         fragment.childFragmentManager.setFragmentResultListener(
             DEVICE_PROGRAM_ACTIONS_REQUEST_KEY,
             fragment.viewLifecycleOwner
         ) { _, result ->
-            if (result.getString(GlobalActionBottomSheet.RESULT_KEY) !=
-                GlobalActionBottomSheet.RESULT_ACTION
-            ) {
-                return@setFragmentResultListener
-            }
-            if (result.getString(GlobalActionBottomSheet.RESULT_ACTION_ID) ==
-                ACTION_DELETE_DEVICE_PROGRAM
-            ) {
+            val deleteRequested =
+                result.getString(GlobalActionBottomSheet.RESULT_KEY) ==
+                    GlobalActionBottomSheet.RESULT_ACTION &&
+                    result.getString(GlobalActionBottomSheet.RESULT_ACTION_ID) ==
+                    ACTION_DELETE_DEVICE_PROGRAM
+            if (deleteRequested) {
                 showDeleteDeviceProgramConfirmation()
             }
         }
+    }
+
+    private fun registerDeviceProgramDeleteConfirmationResult() {
         fragment.childFragmentManager.setFragmentResultListener(
             DEVICE_PROGRAM_DELETE_CONFIRM_REQUEST_KEY,
             fragment.viewLifecycleOwner
         ) { _, result ->
             val confirmed = result.getString(ConfirmDialogFragment.RESULT_KEY) ==
                 ConfirmDialogFragment.RESULT_CONFIRM
-            val actionMatches =
-                result.getString(ConfirmDialogFragment.RESULT_ACTION_ID) ==
-                    ACTION_DELETE_DEVICE_PROGRAM
+            val actionMatches = result.getString(ConfirmDialogFragment.RESULT_ACTION_ID) ==
+                ACTION_DELETE_DEVICE_PROGRAM
             if (confirmed && actionMatches) {
                 viewModel.clearDeviceProgram()
             }
         }
+    }
+
+    private fun registerSaveAsResult() {
         fragment.childFragmentManager.setFragmentResultListener(
             SAVE_AS_REQUEST_KEY,
             fragment.viewLifecycleOwner
         ) { _, result ->
-            val saved = result.getString(TextInputBottomSheet.RESULT_KEY) ==
+            if (result.getString(TextInputBottomSheet.RESULT_KEY) ==
                 TextInputBottomSheet.RESULT_SAVED
-            if (saved) {
+            ) {
                 viewModel.saveAs(result.getString(TextInputBottomSheet.RESULT_VALUE).orEmpty())
             }
         }
     }
+
+    private fun showDeleteDeviceProgramConfirmation() {
+        val messageRes = if (viewModel.currentState.hasUnsavedChanges) {
+            R.string.device_light_custom_delete_device_program_unsaved_message
+        } else {
+            R.string.device_light_custom_delete_device_program_message
+        }
+        ConfirmDialogFragment.show(
+            fragmentManager = fragment.childFragmentManager,
+            request = ConfirmDialogFragment.Request(
+                title = fragment.getString(
+                    R.string.device_light_custom_delete_device_program_title
+                ),
+                message = fragment.getString(messageRes),
+                confirmText = fragment.getString(
+                    R.string.device_light_custom_delete_device_program_confirm
+                ),
+                cancelText = fragment.getString(R.string.cancel),
+                presentation = ConfirmDialogFragment.Presentation(
+                    type = DialogType.WARNING,
+                    destructive = true
+                ),
+                resultTarget = ConfirmDialogFragment.ResultTarget(
+                    requestKey = DEVICE_PROGRAM_DELETE_CONFIRM_REQUEST_KEY,
+                    actionId = ACTION_DELETE_DEVICE_PROGRAM
+                )
+            )
+        )
+    }
+}
+
+private class DeviceLightCustomCurveEffectHandler(
+    private val fragment: DeviceLightCustomCurveFragment,
+    private val viewModel: DeviceLightCustomCurveViewModel
+) {
 
     fun handle(effect: DeviceLightCustomCurveEffect) {
         when (effect) {
@@ -433,35 +491,6 @@ private class DeviceLightCustomCurveEffectHandler(
                 )
             ),
             requestKey = DEVICE_PROGRAM_ACTIONS_REQUEST_KEY
-        )
-    }
-
-    private fun showDeleteDeviceProgramConfirmation() {
-        val messageRes = if (viewModel.currentState.hasUnsavedChanges) {
-            R.string.device_light_custom_delete_device_program_unsaved_message
-        } else {
-            R.string.device_light_custom_delete_device_program_message
-        }
-        ConfirmDialogFragment.show(
-            fragmentManager = fragment.childFragmentManager,
-            request = ConfirmDialogFragment.Request(
-                title = fragment.getString(
-                    R.string.device_light_custom_delete_device_program_title
-                ),
-                message = fragment.getString(messageRes),
-                confirmText = fragment.getString(
-                    R.string.device_light_custom_delete_device_program_confirm
-                ),
-                cancelText = fragment.getString(R.string.cancel),
-                presentation = ConfirmDialogFragment.Presentation(
-                    type = DialogType.WARNING,
-                    destructive = true
-                ),
-                resultTarget = ConfirmDialogFragment.ResultTarget(
-                    requestKey = DEVICE_PROGRAM_DELETE_CONFIRM_REQUEST_KEY,
-                    actionId = ACTION_DELETE_DEVICE_PROGRAM
-                )
-            )
         )
     }
 
