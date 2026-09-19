@@ -259,7 +259,9 @@
     </plurals>
 
     <!-- Custom light curve editor -->
-    <string name="device_light_custom_unsaved_changes">Unsaved changes</string>
+    <string name="device_light_custom_unsaved_changes">Unsaved editor changes</string>
+    <string name="device_light_custom_unapplied_changes">Changes not applied to device</string>
+    <string name="device_light_custom_unsaved_and_unapplied_changes">Unsaved changes · not applied to device</string>
     <string name="device_light_custom_curve_heading">24-hour light curve</string>
     <string name="device_light_custom_curve_helper">Drag the time playhead for a new point</string>
     <plurals name="device_light_custom_point_limit_warning">
@@ -270,13 +272,23 @@
     <string name="device_light_custom_no_point_selected">Add or select a point to edit its time and channel levels.</string>
     <string name="device_light_custom_virtual_preview_compact">Virtual preview</string>
     <string name="device_light_custom_preview">Preview</string>
-    <string name="device_light_custom_preview_at_time_description">Preview the installed custom curve at %1$s</string>
+    <string name="device_light_custom_preview_at_time_description">Preview this editor draft at %1$s</string>
     <string name="device_light_custom_days_heading">Days</string>
-    <string name="device_light_custom_load">Load</string>
-    <string name="device_light_custom_load_description">Open saved custom curves in the Light Library</string>
+    <string name="device_light_custom_profiles">Profiles</string>
+    <string name="device_light_custom_profiles_description">Open saved custom curves in Profiles</string>
     <string name="device_light_custom_save_as">Save as</string>
     <string name="device_light_custom_save_as_description">Save this draft as a new custom curve in the Light Library</string>
-    <string name="device_light_custom_information">Save as adds to the library. Load opens saved custom curves.</string>
+    <string name="device_light_custom_information">Profiles opens saved curves in the editor. Save as stores a profile. Apply to device changes the device program.</string>
+    <string name="device_light_custom_apply_to_device">Apply to device</string>
+    <string name="device_light_custom_applied_to_device">Applied to device</string>
+    <string name="device_light_custom_apply_to_device_description">Install the current editor curve on the device</string>
+    <string name="device_light_custom_applied_success">Custom curve applied to device</string>
+    <string name="device_light_custom_stale_error">The device program changed. Your editor draft was kept; review it and apply again.</string>
+    <string name="device_light_custom_more_actions_description">More custom-program actions</string>
+    <string name="device_light_custom_device_program_actions_title">Device program</string>
+    <string name="device_light_custom_delete_device_program">Delete device program</string>
+    <string name="device_light_custom_delete_device_program_message">Deletes the installed Custom program from this device. Saved Profiles are not affected. The editor returns to the empty device state.</string>
+    <string name="device_light_custom_device_program_deleted_success">Device Custom program deleted</string>
     <string name="device_light_custom_add_time_title">Add time point</string>
     <string name="device_light_custom_add_time_message">Choose the exact time for the point</string>
     <string name="device_light_custom_add_time_helper">A new point will be created when you tap Done</string>
