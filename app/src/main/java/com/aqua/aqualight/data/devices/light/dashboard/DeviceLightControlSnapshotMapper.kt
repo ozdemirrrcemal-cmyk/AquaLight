@@ -21,6 +21,7 @@ import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightGraphRea
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightMode
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightOutputReason
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightStatus
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeContract
 
 internal fun DeviceLightStatus.toControlSnapshot(
     deviceUid: DeviceUid,
@@ -105,6 +106,7 @@ private fun DeviceLightGraph.toApplicationActiveWindow(
                 hasScheduleToday &&
                 it.isNotEmpty()
         }
+        ?.let(::customSchedulePoints)
         ?.let { authoredPoints ->
             DeviceLightPlanWindowSnapshot(
                 startTimeMs = authoredPoints.first().timeMs,
@@ -113,6 +115,21 @@ private fun DeviceLightGraph.toApplicationActiveWindow(
         }
 
     DeviceLightMode.MANUAL -> null
+}
+
+private fun DeviceLightGraph.customSchedulePoints(): List<DeviceLightGraphPoint> {
+    if (points.size < MIN_CUSTOM_WINDOW_POINTS) return points
+
+    val trimmed = points
+        .dropWhile { point ->
+            point.timeMs == 0L && point.channelPermille.all { level -> level == 0 }
+        }
+        .dropLastWhile { point ->
+            point.timeMs == DeviceLightRuntimeContract.Limit.MILLIS_IN_DAY &&
+                point.channelPermille.all { level -> level == 0 }
+        }
+
+    return trimmed.takeIf { it.size >= MIN_CUSTOM_WINDOW_POINTS } ?: points
 }
 
 private fun DeviceLightSystemSnapshot.toDashboardSummary() = DeviceLightSystemSummary(
