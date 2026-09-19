@@ -287,7 +287,10 @@
     <string name="device_light_custom_more_actions_description">More custom-program actions</string>
     <string name="device_light_custom_device_program_actions_title">Device program</string>
     <string name="device_light_custom_delete_device_program">Delete device program</string>
-    <string name="device_light_custom_delete_device_program_message">Deletes the installed Custom program from this device. Saved Profiles are not affected. The editor returns to the empty device state.</string>
+    <string name="device_light_custom_delete_device_program_title">Delete device program?</string>
+    <string name="device_light_custom_delete_device_program_message">The installed Custom program will be removed from this device. Saved Profiles are not affected. The editor will return to the empty device state.</string>
+    <string name="device_light_custom_delete_device_program_unsaved_message">The installed Custom program and unsaved editor changes will be removed. Saved Profiles are not affected. This cannot be undone.</string>
+    <string name="device_light_custom_delete_device_program_confirm">Delete</string>
     <string name="device_light_custom_device_program_deleted_success">Device Custom program deleted</string>
     <string name="device_light_custom_add_time_title">Add time point</string>
     <string name="device_light_custom_add_time_message">Choose the exact time for the point</string>
