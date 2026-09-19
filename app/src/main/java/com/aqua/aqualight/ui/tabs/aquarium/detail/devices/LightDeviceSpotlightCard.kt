@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -24,7 +23,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.colorResource
@@ -40,7 +38,6 @@ import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.editor.AutomaticCycleEventIcon
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.editor.AutomaticCycleEventKind
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.editor.automaticEditorTimeText
-import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightDashboardAlpha
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightDashboardGeometry
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualColors
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightPlanChartSpec
@@ -410,40 +407,6 @@ private fun LightChannelRow(
                 textAlign = TextAlign.End
             ),
             modifier = Modifier.width(AquaLightTankCardGeometry.channelValueWidth)
-        )
-    }
-}
-
-@Composable
-private fun LightChannelTrack(
-    percent: Int,
-    fill: Color,
-    rail: Color,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .height(AquaLightDashboardGeometry.liveOutputTrackHeight)
-            .clip(AquaLightDashboardGeometry.liveOutputTrackShape)
-            .background(
-                rail.copy(alpha = AquaLightDashboardAlpha.liveOutputRail)
-            )
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxHeight()
-                .fillMaxWidth(
-                    percent.toFloat() / AquaLightPlanChartSpec.maximumPercent.toFloat()
-                )
-                .clip(AquaLightDashboardGeometry.liveOutputTrackShape)
-                .background(
-                    Brush.horizontalGradient(
-                        listOf(
-                            fill.copy(alpha = AquaLightDashboardAlpha.liveOutputFillStart),
-                            fill
-                        )
-                    )
-                )
         )
     }
 }
