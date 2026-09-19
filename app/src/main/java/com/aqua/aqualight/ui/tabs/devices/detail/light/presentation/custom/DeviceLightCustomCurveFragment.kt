@@ -24,11 +24,13 @@ import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetAction
 import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetActionStyle
 import com.aqua.aqualight.ui.common.bottomsheet.GlobalActionBottomSheet
 import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
+import com.aqua.aqualight.ui.common.dialog.ConfirmDialogFragment
 import com.aqua.aqualight.ui.common.dialog.UnsavedChangesExitGuard
 import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
+import com.aqua.aqualight.utils.DialogType
 import kotlinx.coroutines.launch
 
 class DeviceLightCustomCurveFragment : Fragment(R.layout.fragment_device_light_custom_curve) {
@@ -263,6 +265,19 @@ private class DeviceLightCustomCurveEffectHandler(
             if (result.getString(GlobalActionBottomSheet.RESULT_ACTION_ID) ==
                 ACTION_DELETE_DEVICE_PROGRAM
             ) {
+                showDeleteDeviceProgramConfirmation()
+            }
+        }
+        fragment.childFragmentManager.setFragmentResultListener(
+            DEVICE_PROGRAM_DELETE_CONFIRM_REQUEST_KEY,
+            fragment.viewLifecycleOwner
+        ) { _, result ->
+            val confirmed = result.getString(ConfirmDialogFragment.RESULT_KEY) ==
+                ConfirmDialogFragment.RESULT_CONFIRM
+            val actionMatches =
+                result.getString(ConfirmDialogFragment.RESULT_ACTION_ID) ==
+                    ACTION_DELETE_DEVICE_PROGRAM
+            if (confirmed && actionMatches) {
                 viewModel.clearDeviceProgram()
             }
         }
@@ -419,6 +434,35 @@ private class DeviceLightCustomCurveEffectHandler(
         )
     }
 
+    private fun showDeleteDeviceProgramConfirmation() {
+        val messageRes = if (viewModel.currentState.hasUnsavedChanges) {
+            R.string.device_light_custom_delete_device_program_unsaved_message
+        } else {
+            R.string.device_light_custom_delete_device_program_message
+        }
+        ConfirmDialogFragment.show(
+            fragmentManager = fragment.childFragmentManager,
+            request = ConfirmDialogFragment.Request(
+                title = fragment.getString(
+                    R.string.device_light_custom_delete_device_program_title
+                ),
+                message = fragment.getString(messageRes),
+                confirmText = fragment.getString(
+                    R.string.device_light_custom_delete_device_program_confirm
+                ),
+                cancelText = fragment.getString(R.string.cancel),
+                presentation = ConfirmDialogFragment.Presentation(
+                    type = DialogType.WARNING,
+                    destructive = true
+                ),
+                resultTarget = ConfirmDialogFragment.ResultTarget(
+                    requestKey = DEVICE_PROGRAM_DELETE_CONFIRM_REQUEST_KEY,
+                    actionId = ACTION_DELETE_DEVICE_PROGRAM
+                )
+            )
+        )
+    }
+
     private fun showSaveAs(usedNames: List<String>) {
         TextInputBottomSheet.show(
             fragmentManager = fragment.childFragmentManager,
@@ -469,6 +513,8 @@ private const val POINT_ACTIONS_REQUEST_KEY = "device_light_custom_point_actions
 private const val SAVE_AS_REQUEST_KEY = "device_light_custom_save_as"
 private const val DEVICE_PROGRAM_ACTIONS_REQUEST_KEY =
     "device_light_custom_device_program_actions"
+private const val DEVICE_PROGRAM_DELETE_CONFIRM_REQUEST_KEY =
+    "device_light_custom_delete_device_program_confirm"
 private const val ACTION_EDIT_TIME = "edit_time"
 private const val ACTION_DELETE_DEVICE_PROGRAM = "delete_device_program"
 private const val ACTION_DELETE_POINT = "delete_point"
