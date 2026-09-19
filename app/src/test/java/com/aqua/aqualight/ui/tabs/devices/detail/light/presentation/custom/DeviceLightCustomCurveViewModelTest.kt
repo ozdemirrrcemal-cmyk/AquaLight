@@ -112,7 +112,14 @@ class DeviceLightCustomCurveViewModelTest {
             name = "Evening profile",
             red = UPDATED_RED
         )
-        val library = FakeLibraryOperations(entries = listOf(profile))
+        val library = FakeLibraryOperations(
+            libraryResult = DeviceLightLibraryResult.Available(
+                DeviceLightLibrarySnapshot(
+                    target = libraryTarget(),
+                    entries = listOf(profile)
+                )
+            )
+        )
         val custom = FakeCustomOperations(snapshot())
         val viewModel = boundViewModel(
             customOperations = custom,
@@ -528,7 +535,7 @@ class DeviceLightCustomCurveViewModelTest {
 
     private class FakeLibraryOperations(
         private val saveGate: CompletableDeferred<Unit>? = null,
-        private val entries: List<DeviceLightLibraryEntry> = emptyList()
+        private val libraryResult: DeviceLightLibraryResult? = null
     ) : DeviceLightLibraryOperations {
         var savedName: String? = null
         var savedWeekdaysMask: Int? = null
@@ -536,18 +543,7 @@ class DeviceLightCustomCurveViewModelTest {
         var deleteCount = 0
 
         override fun observeLibrary(deviceUid: String): Flow<DeviceLightLibraryResult> =
-            if (entries.isEmpty()) {
-                emptyFlow()
-            } else {
-                flowOf(
-                    DeviceLightLibraryResult.Available(
-                        DeviceLightLibrarySnapshot(
-                            target = libraryTarget(),
-                            entries = entries
-                        )
-                    )
-                )
-            }
+            libraryResult?.let(::flowOf) ?: emptyFlow()
         override suspend fun usedNames(kind: DeviceLightLibraryKind): List<String> = emptyList()
         override suspend fun saveManual(
             deviceUid: String,
