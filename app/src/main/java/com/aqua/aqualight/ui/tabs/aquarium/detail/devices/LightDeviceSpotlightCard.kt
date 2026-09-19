@@ -106,7 +106,6 @@ private fun LightDeviceHeader(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                val lampActive = online && item.snapshot?.hero?.outputActive == true
                 BasicText(
                     text = item.header.displayName,
                     style = visuals.typography.title.copy(
@@ -117,14 +116,12 @@ private fun LightDeviceHeader(
                 )
                 Spacer(Modifier.width(AquaLightTankCardGeometry.titleIconGap))
                 Image(
-                    painter = painterResource(R.drawable.ic_devices),
-                    contentDescription = null,
+                    painter = painterResource(R.drawable.ic_status_wifi),
+                    contentDescription = stringResource(
+                        item.header.statusStyle.accessibilityLabelRes
+                    ),
                     colorFilter = ColorFilter.tint(
-                        if (lampActive) {
-                            visuals.colors.card.warning
-                        } else {
-                            colorResource(R.color.aqua_device_connection_offline)
-                        }
+                        colorResource(item.header.statusStyle.tintColorRes)
                     ),
                     modifier = Modifier.size(AquaLightTankCardGeometry.titleIconSize)
                 )
@@ -181,36 +178,9 @@ private fun LightStatusModeRow(
     visuals: LightDeviceCardVisuals
 ) {
     Row(
-        horizontalArrangement = Arrangement.spacedBy(AquaLightTankCardGeometry.statusChipGap),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        LightConnectionChip(item, visuals)
         LightModeChip(item, online, visuals)
-    }
-}
-
-@Composable
-private fun LightConnectionChip(
-    item: LightDeviceSpotlightCardUi,
-    visuals: LightDeviceCardVisuals
-) {
-    val statusColor = colorResource(item.header.statusStyle.tintColorRes)
-    val chipShape = RoundedCornerShape(AquaDeviceCardGeometry.statusCornerRadius)
-    Row(
-        modifier = Modifier
-            .clip(chipShape)
-            .background(statusColor.copy(alpha = AquaLightTankCardAlpha.statusSurface))
-            .padding(
-                horizontal = AquaDeviceCardGeometry.statusHorizontalPadding,
-                vertical = AquaDeviceCardGeometry.statusVerticalPadding
-            ),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        BasicText(
-            text = stringResource(item.header.statusStyle.statusLabelRes),
-            style = visuals.typography.body.copy(color = statusColor),
-            maxLines = 1
-        )
     }
 }
 
@@ -243,6 +213,23 @@ private fun LightModeChip(
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        Box(
+            modifier = Modifier
+                .size(AquaLightTankCardGeometry.titleIconSize)
+                .border(
+                    AquaDeviceCardGeometry.outlineWidth,
+                    visuals.colors.action,
+                    CircleShape
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            BasicText(
+                text = mode.lightCardModeGlyph(),
+                style = visuals.typography.caption.copy(color = visuals.colors.action),
+                maxLines = 1
+            )
+        }
+        Spacer(Modifier.width(AquaLightTankCardGeometry.titleIconGap))
         BasicText(
             text = stringResource(mode.lightCardModeLabelRes()),
             style = visuals.typography.body.copy(color = visuals.colors.action),
