@@ -208,8 +208,8 @@ try:
     access = fixture["commandAccess"]
     if access["public"]:
         errors.append("WebSocket must not expose unauthenticated application commands")
-    if len(access["authenticated"]) != 62 or len(set(access["authenticated"])) != 62:
-        errors.append("golden authenticated command matrix must contain 62 unique commands")
+    if len(access["authenticated"]) != 63 or len(set(access["authenticated"])) != 63:
+        errors.append("golden authenticated command matrix must contain 63 unique commands")
 except (KeyError, TypeError, ValueError, UnicodeError, json.JSONDecodeError) as exc:
     errors.append(f"golden fixture could not be validated: {exc}")
 
