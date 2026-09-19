@@ -79,21 +79,25 @@ internal fun DeviceLightStatus.toControlSnapshot(
 
 private fun DeviceLightGraph.toApplicationActiveWindow(
     activeProgramId: String?
-): DeviceLightPlanWindowSnapshot? {
-    if (mode != DeviceLightMode.AUTO) return null
-    if (!available) return null
-    if (reason != DeviceLightGraphReason.OK) return null
-    if (!hasScheduleToday) return null
-    val selectedSpan = activeProgramId
-        ?.let { programId -> autoSpans.firstOrNull { span -> span.programId == programId } }
-        ?: autoSpans.singleOrNull()
-    return selectedSpan?.let { span ->
-        DeviceLightPlanWindowSnapshot(
-            startTimeMs = span.startTimeMsWithinToday,
-            endTimeMs = span.endTimeMsWithinToday
-        )
-    }
-}
+): DeviceLightPlanWindowSnapshot? =
+    autoSpans
+        .takeIf {
+            mode == DeviceLightMode.AUTO &&
+                available &&
+                reason == DeviceLightGraphReason.OK &&
+                hasScheduleToday
+        }
+        ?.let { spans ->
+            activeProgramId
+                ?.let { programId -> spans.firstOrNull { span -> span.programId == programId } }
+                ?: spans.singleOrNull()
+        }
+        ?.let { span ->
+            DeviceLightPlanWindowSnapshot(
+                startTimeMs = span.startTimeMsWithinToday,
+                endTimeMs = span.endTimeMsWithinToday
+            )
+        }
 
 private fun DeviceLightSystemSnapshot.toDashboardSummary() = DeviceLightSystemSummary(
     temperatureCelsius = temperatureCelsius,

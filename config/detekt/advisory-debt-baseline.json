@@ -3,7 +3,7 @@
   "policyId": "aqualight-detekt-advisory-debt",
   "detektVersion": "1.23.8",
   "sourceCommit": "a48942a06391e5463e85f9f20e80543c1ef41e69",
-  "totalFindings": 998,
+  "totalFindings": 988,
   "fingerprints": [
     {
       "ruleId": "detekt.complexity.ComplexCondition",
@@ -1219,12 +1219,6 @@
     },
     {
       "ruleId": "detekt.complexity.TooManyFunctions",
-      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/DeviceLightRootViewModel.kt",
-      "message": "Class 'DeviceLightRootViewModel' with '12' functions detected. Defined threshold inside classes is set to '11'",
-      "count": 1
-    },
-    {
-      "ruleId": "detekt.complexity.TooManyFunctions",
       "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AddCareTaskFragment.kt",
       "message": "Class 'AddCareTaskFragment' with '30' functions detected. Defined threshold inside classes is set to '11'",
       "count": 1
@@ -1759,18 +1753,6 @@
     },
     {
       "ruleId": "detekt.style.MagicNumber",
-      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/light/DeviceLightModels.kt",
-      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
-      "count": 2
-    },
-    {
-      "ruleId": "detekt.style.MagicNumber",
-      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/light/DeviceLightStatusParser.kt",
-      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
-      "count": 4
-    },
-    {
-      "ruleId": "detekt.style.MagicNumber",
       "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/time/DeviceSystemTimePayloadFactory.kt",
       "message": "This expression contains a magic number. Consider defining it to a well named constant.",
       "count": 7
@@ -1999,12 +1981,6 @@
     },
     {
       "ruleId": "detekt.style.MagicNumber",
-      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/DeviceLightRootViewModel.kt",
-      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
-      "count": 1
-    },
-    {
-      "ruleId": "detekt.style.MagicNumber",
       "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/maintenance/AddCareTaskFragment.kt",
       "message": "This expression contains a magic number. Consider defining it to a well named constant.",
       "count": 15
@@ -2110,12 +2086,6 @@
       "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/qr/AqlProvisioningQrParser.kt",
       "message": "Line detected, which is longer than the defined maximum line length in the code style.",
       "count": 1
-    },
-    {
-      "ruleId": "detekt.style.MaxLineLength",
-      "path": "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/light/DeviceLightModels.kt",
-      "message": "Line detected, which is longer than the defined maximum line length in the code style.",
-      "count": 2
     },
     {
       "ruleId": "detekt.style.MaxLineLength",
