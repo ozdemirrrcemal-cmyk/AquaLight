@@ -107,6 +107,15 @@ private fun LightDeviceHeader(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 val lampActive = online && item.snapshot?.hero?.outputActive == true
+                BasicText(
+                    text = item.header.displayName,
+                    style = visuals.typography.title.copy(
+                        color = visuals.colors.card.primaryText
+                    ),
+                    maxLines = 1,
+                    modifier = Modifier.weight(1f)
+                )
+                Spacer(Modifier.width(AquaLightTankCardGeometry.titleIconGap))
                 Image(
                     painter = painterResource(R.drawable.ic_care_light_24),
                     contentDescription = null,
@@ -118,15 +127,6 @@ private fun LightDeviceHeader(
                         }
                     ),
                     modifier = Modifier.size(AquaLightTankCardGeometry.titleIconSize)
-                )
-                Spacer(Modifier.width(AquaLightTankCardGeometry.titleIconGap))
-                BasicText(
-                    text = item.header.displayName,
-                    style = visuals.typography.title.copy(
-                        color = visuals.colors.card.primaryText
-                    ),
-                    maxLines = 1,
-                    modifier = Modifier.weight(1f)
                 )
             }
         }
