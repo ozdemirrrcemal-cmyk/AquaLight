@@ -25,6 +25,7 @@ import com.aqua.aqualight.ui.common.bottomsheet.BottomSheetActionStyle
 import com.aqua.aqualight.ui.common.bottomsheet.GlobalActionBottomSheet
 import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
 import com.aqua.aqualight.ui.common.dialog.UnsavedChangesExitGuard
+import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
@@ -47,7 +48,11 @@ class DeviceLightCustomCurveFragment : Fragment(R.layout.fragment_device_light_c
         viewModel.bind(
             deviceUidText = args.deviceUid,
             restoredDraft = savedInstanceState?.let(DeviceLightCustomDraft::restore),
-            restoredDirty = savedInstanceState?.getBoolean(STATE_DRAFT_DIRTY, false) == true
+            restoredDirty = savedInstanceState?.getBoolean(STATE_DRAFT_DIRTY, false) == true,
+            restoredUnapplied = savedInstanceState?.getBoolean(
+                STATE_DRAFT_UNAPPLIED,
+                false
+            ) == true
         )
         findNavController().currentBackStackEntry?.savedStateHandle?.let { stateHandle ->
             stateHandle.getLiveData<String?>(
@@ -76,6 +81,10 @@ class DeviceLightCustomCurveFragment : Fragment(R.layout.fragment_device_light_c
     override fun onSaveInstanceState(outState: Bundle) {
         viewModel.currentState.draft.writeTo(outState)
         outState.putBoolean(STATE_DRAFT_DIRTY, viewModel.currentState.hasUnsavedChanges)
+        outState.putBoolean(
+            STATE_DRAFT_UNAPPLIED,
+            viewModel.currentState.hasUnappliedChanges
+        )
         super.onSaveInstanceState(outState)
     }
 
@@ -107,8 +116,9 @@ class DeviceLightCustomCurveFragment : Fragment(R.layout.fragment_device_light_c
             },
             onChannelChanged = viewModel.pointEditor::updateSelectedChannel,
             onPreviewClick = viewModel::preview,
-            onLoadClick = { unsavedGuard.requestAction(::openLibrary) },
-            onSaveAsClick = viewModel::requestSaveAs
+            onProfilesClick = { unsavedGuard.requestAction(::openProfiles) },
+            onSaveAsClick = viewModel::requestSaveAs,
+            onApplyToDeviceClick = viewModel::applyToDevice
         )
         binding.customCurveCompose.apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
@@ -140,13 +150,27 @@ class DeviceLightCustomCurveFragment : Fragment(R.layout.fragment_device_light_c
             config = AquaHeaderConfig(
                 titleOverride = getString(R.string.device_light_custom_curve_title),
                 onBackClick = unsavedGuard::requestExit,
-                statusIcon = state.connectionVisualState?.toWifiHeaderStatusIcon(requireContext())
+                statusIcon = state.connectionVisualState?.toWifiHeaderStatusIcon(requireContext()),
+                actions = if (state.canClearDeviceProgram) {
+                    listOf(
+                        AquaHeaderAction(
+                            iconRes = R.drawable.ic_more_vert_24,
+                            contentDescription = getString(
+                                R.string.device_light_custom_more_actions_description
+                            ),
+                            enabled = !state.operationInProgress,
+                            onClick = viewModel::requestDeviceProgramActions
+                        )
+                    )
+                } else {
+                    emptyList()
+                }
             )
         )
         setFragmentGlobalLoading(state.showGlobalLoading)
     }
 
-    private fun openLibrary() {
+    private fun openProfiles() {
         viewModel.clearPreview()
         val navController = findNavController()
         if (navController.currentDestination?.id != R.id.deviceLightCustomCurveFragment) return
@@ -179,6 +203,7 @@ class DeviceLightCustomCurveFragment : Fragment(R.layout.fragment_device_light_c
         const val UNSAVED_REQUEST_KEY = "device_light_custom_unsaved"
         const val ACTION_DISCARD_DRAFT = "discard_custom_draft"
         const val STATE_DRAFT_DIRTY = "device_light_custom_draft_dirty"
+        const val STATE_DRAFT_UNAPPLIED = "device_light_custom_draft_unapplied"
     }
 }
 
@@ -227,6 +252,21 @@ private class DeviceLightCustomCurveEffectHandler(
             }
         }
         fragment.childFragmentManager.setFragmentResultListener(
+            DEVICE_PROGRAM_ACTIONS_REQUEST_KEY,
+            fragment.viewLifecycleOwner
+        ) { _, result ->
+            if (result.getString(GlobalActionBottomSheet.RESULT_KEY) !=
+                GlobalActionBottomSheet.RESULT_ACTION
+            ) {
+                return@setFragmentResultListener
+            }
+            if (result.getString(GlobalActionBottomSheet.RESULT_ACTION_ID) ==
+                ACTION_DELETE_DEVICE_PROGRAM
+            ) {
+                viewModel.clearDeviceProgram()
+            }
+        }
+        fragment.childFragmentManager.setFragmentResultListener(
             SAVE_AS_REQUEST_KEY,
             fragment.viewLifecycleOwner
         ) { _, result ->
@@ -243,6 +283,8 @@ private class DeviceLightCustomCurveEffectHandler(
             is DeviceLightCustomCurveEffect.OpenTimePicker -> showTimePicker(effect.purpose)
             is DeviceLightCustomCurveEffect.OpenPointActions -> showPointActions(effect.timeMs)
             is DeviceLightCustomCurveEffect.OpenSaveAs -> showSaveAs(effect.usedCustomNames)
+            DeviceLightCustomCurveEffect.OpenDeviceProgramActions ->
+                showDeviceProgramActions()
             is DeviceLightCustomCurveEffect.ShowSuccess -> showMessage(
                 message = fragment.getString(effect.messageRes),
                 type = BaseActivity.SnackType.SUCCESS
@@ -355,6 +397,28 @@ private class DeviceLightCustomCurveEffectHandler(
         )
     }
 
+    private fun showDeviceProgramActions() {
+        GlobalActionBottomSheet.show(
+            fragmentManager = fragment.childFragmentManager,
+            title = fragment.getString(
+                R.string.device_light_custom_device_program_actions_title
+            ),
+            message = fragment.getString(
+                R.string.device_light_custom_delete_device_program_message
+            ),
+            actions = listOf(
+                BottomSheetAction(
+                    id = ACTION_DELETE_DEVICE_PROGRAM,
+                    text = fragment.getString(
+                        R.string.device_light_custom_delete_device_program
+                    ),
+                    style = BottomSheetActionStyle.DANGER
+                )
+            ),
+            requestKey = DEVICE_PROGRAM_ACTIONS_REQUEST_KEY
+        )
+    }
+
     private fun showSaveAs(usedNames: List<String>) {
         TextInputBottomSheet.show(
             fragmentManager = fragment.childFragmentManager,
@@ -403,7 +467,10 @@ private fun String.toTimePickerPurpose(): DeviceLightCustomTimePickerPurpose? = 
 private const val TIME_REQUEST_KEY = "device_light_custom_point_time"
 private const val POINT_ACTIONS_REQUEST_KEY = "device_light_custom_point_actions"
 private const val SAVE_AS_REQUEST_KEY = "device_light_custom_save_as"
+private const val DEVICE_PROGRAM_ACTIONS_REQUEST_KEY =
+    "device_light_custom_device_program_actions"
 private const val ACTION_EDIT_TIME = "edit_time"
+private const val ACTION_DELETE_DEVICE_PROGRAM = "delete_device_program"
 private const val ACTION_DELETE_POINT = "delete_point"
 private const val ADD_POINT_PAYLOAD_PREFIX = "add:"
 private const val MOVE_POINT_PAYLOAD_PREFIX = "move:"
