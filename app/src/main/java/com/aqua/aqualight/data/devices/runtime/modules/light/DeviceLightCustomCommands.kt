@@ -35,6 +35,20 @@ suspend fun DeviceLightRuntimeRepository.installCustom(
     return acceptCustomDocument(outcome)
 }
 
+suspend fun DeviceLightRuntimeRepository.clearCustom(
+    deviceUid: DeviceUid,
+    payload: DeviceLightCustomClearPayload
+): DeviceRuntimeCommandOutcome<DeviceLightCustomDocument> {
+    val outcome = productCommand(
+        deviceUid = deviceUid,
+        action = DeviceLightRuntimeContract.Action.CUSTOM_CLEAR,
+        dataFactory = payload::toJson,
+        parser = DeviceLightMutationParser.CustomAndAcclimation::parseCustom,
+        refreshStatus = true
+    )
+    return acceptCustomDocument(outcome)
+}
+
 private suspend fun DeviceLightRuntimeRepository.acceptCustomDocument(
     outcome: DeviceRuntimeCommandOutcome<DeviceLightCustomDocument>
 ): DeviceRuntimeCommandOutcome<DeviceLightCustomDocument> = when (outcome) {
