@@ -113,7 +113,7 @@ private fun LightDeviceHeader(
                         color = visuals.colors.card.primaryText
                     ),
                     maxLines = 1,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f, fill = false)
                 )
                 Spacer(Modifier.width(AquaLightTankCardGeometry.titleIconGap))
                 Image(
@@ -339,7 +339,8 @@ private fun LightScheduleMetric(
                 text = stringResource(metric.labelRes),
                 style = visuals.typography.caption.copy(
                     color = visuals.colors.card.secondaryText
-                )
+                ),
+                maxLines = 1
             )
         }
     }
