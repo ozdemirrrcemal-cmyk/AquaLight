@@ -79,11 +79,10 @@ internal fun DeviceLightStatus.toControlSnapshot(
 
 private fun DeviceLightGraph.toApplicationActiveWindow(
     activeProgramId: String?
-): DeviceLightPlanWindowSnapshot? =
-    autoSpans
+): DeviceLightPlanWindowSnapshot? = when (mode) {
+    DeviceLightMode.AUTO -> autoSpans
         .takeIf {
-            mode == DeviceLightMode.AUTO &&
-                available &&
+            available &&
                 reason == DeviceLightGraphReason.OK &&
                 hasScheduleToday
         }
@@ -98,6 +97,23 @@ private fun DeviceLightGraph.toApplicationActiveWindow(
                 endTimeMs = span.endTimeMsWithinToday
             )
         }
+
+    DeviceLightMode.CUSTOM -> points
+        .takeIf {
+            available &&
+                reason == DeviceLightGraphReason.OK &&
+                hasScheduleToday &&
+                it.isNotEmpty()
+        }
+        ?.let { authoredPoints ->
+            DeviceLightPlanWindowSnapshot(
+                startTimeMs = authoredPoints.first().timeMs,
+                endTimeMs = authoredPoints.last().timeMs
+            )
+        }
+
+    DeviceLightMode.MANUAL -> null
+}
 
 private fun DeviceLightSystemSnapshot.toDashboardSummary() = DeviceLightSystemSummary(
     temperatureCelsius = temperatureCelsius,

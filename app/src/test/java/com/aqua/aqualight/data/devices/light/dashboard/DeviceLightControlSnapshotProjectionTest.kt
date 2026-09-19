@@ -63,6 +63,26 @@ class DeviceLightControlSnapshotProjectionTest {
     }
 
     @Test
+    fun `custom graph points project to the card schedule window`() {
+        val parsed = DeviceLightStatusParser.parse(DeviceLightRuntimeFixtures.status())
+        val status = parsed.copy(mode = DeviceLightMode.CUSTOM)
+        val graph = DeviceLightMutationParser.Graph.parseGraph(
+            DeviceLightRuntimeFixtures.graph(mode = DeviceLightMode.CUSTOM),
+            status.product
+        )
+
+        val snapshot = status.toControlSnapshot(
+            deviceUid = DeviceUid("light-custom"),
+            graph = graph,
+            systemSupported = false,
+            systemSnapshot = null
+        )
+
+        assertEquals(0L, snapshot.plan?.activeWindow?.startTimeMs)
+        assertEquals(86_400_000L, snapshot.plan?.activeWindow?.endTimeMs)
+    }
+
+    @Test
     fun `rgb product does not expose unsupported system surface`() {
         val status = DeviceLightStatusParser.parse(
             DeviceLightRuntimeFixtures.status(DeviceLightProduct.RGB_PRO_SLIM)
