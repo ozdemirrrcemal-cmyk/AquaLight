@@ -54,6 +54,9 @@ private fun LazyListScope.lightOverviewItems(
             onActionClick = {
                 state.hero.mode.planDestination(state.activeAutomaticProgramId)
                     ?.let(actions.onPlanClick)
+            },
+            onSwitchToAutomatic = {
+                actions.onModeSelected(DeviceLightControlMode.AUTOMATIC)
             }
         )
     }
@@ -115,7 +118,7 @@ private fun DeviceLightRootUiState.controlScreensState() = DeviceLightControlScr
 internal fun DeviceLightControlMode?.planDestination(
     activeAutomaticProgramId: String?
 ): DeviceLightPlanDestination? = when (this) {
-    DeviceLightControlMode.MANUAL -> DeviceLightPlanDestination.AutomaticPrograms
+    DeviceLightControlMode.MANUAL -> null
     DeviceLightControlMode.AUTOMATIC -> activeAutomaticProgramId
         ?.takeIf(String::isNotBlank)
         ?.let { programId -> DeviceLightPlanDestination.AutomaticProgramEditor(programId) }

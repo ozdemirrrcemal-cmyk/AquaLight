@@ -40,7 +40,6 @@
     <string name="device_light_hero_content_description">%1$s. %2$s. %3$s. Güç %4$s. Renk sıcaklığı %5$s.</string>
     <string name="device_light_library_title">Işık Kitaplığı</string>
     <string name="device_light_plan_title">Bugünün ışık planı</string>
-    <string name="device_light_plan_subtitle">Planlanan program</string>
     <string name="device_light_plan_view_program">Programı görüntüle</string>
     <string name="device_light_plan_manual_title">Günlük ışık planı</string>
     <string name="device_light_plan_manual_message">Manuel modda zaman planı kullanılmaz.</string>

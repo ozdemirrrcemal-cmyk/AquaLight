@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.absoluteOffset
@@ -33,6 +34,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanReason
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
+import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardTypography
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightDashboardAlpha
@@ -49,6 +51,7 @@ internal fun DeviceLightPlanCard(
     data: DeviceLightPlanCardData,
     enabled: Boolean,
     onActionClick: () -> Unit,
+    onSwitchToAutomatic: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val colors = aquaLightDashboardColors()
@@ -82,7 +85,13 @@ internal fun DeviceLightPlanCard(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = AquaLightDashboardGeometry.planCardMinimumHeight)
-            .semantics { contentDescription = description }
+            .semantics { contentDescription = description },
+        contentPadding = PaddingValues(
+            start = AquaDeviceCardGeometry.contentHorizontalPadding,
+            top = AquaDeviceCardGeometry.contentVerticalPadding,
+            end = AquaDeviceCardGeometry.contentHorizontalPadding,
+            bottom = AquaLightDashboardGeometry.planCardBottomPadding
+        )
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             DeviceLightPlanHeader(
@@ -97,7 +106,11 @@ internal fun DeviceLightPlanCard(
                 colors = colors,
                 chartColors = chartColors,
                 typography = typography,
-                onActionClick = onActionClick
+                onActionClick = if (state.manualMode) {
+                    onSwitchToAutomatic
+                } else {
+                    onActionClick
+                }
             )
         }
     }
@@ -111,7 +124,9 @@ private fun DeviceLightPlanHeader(
     onActionClick: () -> Unit
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(AquaLightDashboardGeometry.planActionHeight),
         verticalAlignment = Alignment.Top
     ) {
         Column(modifier = Modifier.weight(1f)) {
@@ -127,14 +142,6 @@ private fun DeviceLightPlanHeader(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-            if (!state.manualMode) {
-                BasicText(
-                    text = stringResource(R.string.device_light_plan_subtitle),
-                    style = typography.caption.copy(color = colors.secondaryText),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
         }
         if (state.showProgramAction) {
             Row(

@@ -74,18 +74,19 @@ object AquaLightDashboardGeometry {
     val screenBottomPadding = 24.dp
     val cardGap = 9.dp
 
-    val planCardMinimumHeight = 187.dp
+    val planCardMinimumHeight = 172.dp
+    val planCardBottomPadding = 4.dp
     val planHeaderGap = 2.dp
     val planContentTopGap = 4.dp
     val planMarkerLabelHeight = 18.dp
     val planMarkerLabelWidth = 76.dp
     val planPlotHeight = 76.dp
-    val planYAxisWidth = 31.dp
+    val planYAxisWidth = 28.dp
     val planYAxisStartOffset = PLAN_Y_AXIS_START_OFFSET_DP.dp
-    val planYAxisGap = 6.dp
-    val planXAxisHeight = 14.dp
-    val planLegendTopGap = 7.dp
-    val planLegendHeight = 16.dp
+    val planYAxisGap = 2.dp
+    val planXAxisHeight = 12.dp
+    val planLegendTopGap = 2.dp
+    val planLegendHeight = 14.dp
     val planLegendItemGap = 20.dp
     val planLegendDotSize = 8.dp
     val planLegendTextGap = 5.dp
@@ -168,7 +169,7 @@ object AquaLightDashboardGeometry {
     val dashboardIconStrokeWidth = 1.7.dp
 }
 
-private const val PLAN_Y_AXIS_START_OFFSET_DP = -4
+private const val PLAN_Y_AXIS_START_OFFSET_DP = -2
 
 /** Central layout contract for the product-adaptive Manual light surface. */
 object AquaLightManualGeometry {
@@ -289,6 +290,7 @@ object AquaLightPlanChartSpec {
     const val minimumHour = 0
     const val maximumHour = 24
     const val hourStep = 2
+    const val verticalGridHourStep = 1
     const val minimumPercent = 0
     const val maximumPercent = 100
     const val percentStep = 25

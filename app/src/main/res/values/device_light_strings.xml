@@ -40,7 +40,6 @@
     <string name="device_light_hero_content_description">%1$s. %2$s. %3$s. Power %4$s. Color temperature %5$s.</string>
     <string name="device_light_library_title">Light Library</string>
     <string name="device_light_plan_title">Today’s light plan</string>
-    <string name="device_light_plan_subtitle">Planned program</string>
     <string name="device_light_plan_view_program">View program</string>
     <string name="device_light_plan_manual_title">Daily light plan</string>
     <string name="device_light_plan_manual_message">Time scheduling is not used in Manual mode.</string>

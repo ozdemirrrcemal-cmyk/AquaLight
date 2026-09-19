@@ -28,7 +28,8 @@ internal fun DrawScope.drawLightPlanGrid(colors: AquaLightPlanChartColors) {
             strokeWidth = AquaLightDashboardGeometry.planGridStrokeWidth.toPx()
         )
     }
-    val verticalLines = AquaLightPlanChartSpec.maximumHour / AquaLightPlanChartSpec.hourStep
+    val verticalLines = AquaLightPlanChartSpec.maximumHour /
+        AquaLightPlanChartSpec.verticalGridHourStep
     repeat(verticalLines + 1) { index ->
         val x = size.width * index / verticalLines
         drawLine(

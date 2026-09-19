@@ -8,11 +8,8 @@ import org.junit.Test
 class DeviceLightPlanNavigationTest {
 
     @Test
-    fun manualCallToActionOpensAutomaticPrograms() {
-        assertEquals(
-            DeviceLightPlanDestination.AutomaticPrograms,
-            DeviceLightControlMode.MANUAL.planDestination(activeAutomaticProgramId = null)
-        )
+    fun manualModeDoesNotExposePlanNavigation() {
+        assertNull(DeviceLightControlMode.MANUAL.planDestination(activeAutomaticProgramId = null))
     }
 
     @Test
