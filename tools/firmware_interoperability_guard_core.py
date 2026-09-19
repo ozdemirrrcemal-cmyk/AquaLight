@@ -442,7 +442,7 @@ def verify_command_and_event_coverage(interoperability: dict[str, Any]) -> None:
     )
     require(
         core_coverage | dosing_action_set == command_set,
-        "request coverage plus Dosing v1 pin does not exactly classify all 62 commands",
+        "request coverage plus Dosing v1 pin does not exactly classify all 63 commands",
     )
 
 
