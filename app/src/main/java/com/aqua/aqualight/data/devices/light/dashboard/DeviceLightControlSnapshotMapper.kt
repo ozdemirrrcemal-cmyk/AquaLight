@@ -16,17 +16,17 @@ import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemSnap
 import com.aqua.aqualight.data.devices.light.supportsLightAdaptation
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAcclimationState
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightCustomDocument
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightGraph
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightGraphPoint
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightGraphReason
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightMode
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightOutputReason
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightStatus
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeContract
 
 internal fun DeviceLightStatus.toControlSnapshot(
     deviceUid: DeviceUid,
     graph: DeviceLightGraph,
+    custom: DeviceLightCustomDocument?,
     systemSupported: Boolean,
     systemSnapshot: DeviceLightSystemSnapshot?
 ) = DeviceLightControlSnapshot(
@@ -73,14 +73,15 @@ internal fun DeviceLightStatus.toControlSnapshot(
                 channelLevels = point.channelPermille
             )
         },
-        activeWindow = graph.toApplicationActiveWindow(auto.activeProgramId)
+        activeWindow = graph.toApplicationActiveWindow(auto.activeProgramId, custom)
     ),
     automaticProgramCount = auto.programCount,
     customCurvePointCount = custom.pointCount
 )
 
 private fun DeviceLightGraph.toApplicationActiveWindow(
-    activeProgramId: String?
+    activeProgramId: String?,
+    custom: DeviceLightCustomDocument?
 ): DeviceLightPlanWindowSnapshot? = when (mode) {
     DeviceLightMode.AUTO -> autoSpans
         .takeIf {
@@ -100,14 +101,15 @@ private fun DeviceLightGraph.toApplicationActiveWindow(
             )
         }
 
-    DeviceLightMode.CUSTOM -> points
-        .takeIf {
+    DeviceLightMode.CUSTOM -> custom?.points
+        ?.takeIf {
             available &&
                 reason == DeviceLightGraphReason.OK &&
                 hasScheduleToday &&
+                custom.installed &&
+                custom.pointCount == it.size &&
                 it.isNotEmpty()
         }
-        ?.let { customSchedulePoints(it) }
         ?.let { authoredPoints ->
             DeviceLightPlanWindowSnapshot(
                 startTimeMs = authoredPoints.first().timeMs,
@@ -116,23 +118,6 @@ private fun DeviceLightGraph.toApplicationActiveWindow(
         }
 
     DeviceLightMode.MANUAL -> null
-}
-
-private const val MIN_CUSTOM_WINDOW_POINTS = 2
-
-private fun customSchedulePoints(points: List<DeviceLightGraphPoint>): List<DeviceLightGraphPoint> {
-    if (points.size < MIN_CUSTOM_WINDOW_POINTS) return points
-
-    val trimmed = points
-        .dropWhile { point ->
-            point.timeMs == 0L && point.channelPermille.all { level -> level == 0 }
-        }
-        .dropLastWhile { point ->
-            point.timeMs == DeviceLightRuntimeContract.Limit.MILLIS_IN_DAY &&
-                point.channelPermille.all { level -> level == 0 }
-        }
-
-    return trimmed.takeIf { it.size >= MIN_CUSTOM_WINDOW_POINTS } ?: points
 }
 
 private fun DeviceLightSystemSnapshot.toDashboardSummary() = DeviceLightSystemSummary(

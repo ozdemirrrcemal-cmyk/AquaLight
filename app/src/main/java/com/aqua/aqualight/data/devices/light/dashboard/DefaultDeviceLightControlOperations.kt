@@ -27,7 +27,10 @@ import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightMode
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightProduct
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightStatus
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightCustomDocument
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightLibraryReadAuthority
 import com.aqua.aqualight.data.devices.runtime.modules.light.currentDashboard
+import com.aqua.aqualight.data.devices.runtime.modules.light.currentLibrary
 import java.util.concurrent.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -54,11 +57,16 @@ internal class DefaultDeviceLightControlOperations(
                     uid,
                     DeviceLightDashboardReadAuthority.PRESENTATION
                 )
+                val library = runtime.currentLibrary(
+                    uid,
+                    DeviceLightLibraryReadAuthority.PRESENTATION
+                )
                 projectRead(
                     uid,
                     root,
                     dashboard?.status,
                     dashboard?.graph,
+                    library?.custom,
                     systemOperations.current(uid.value)
                 )
             }.distinctUntilChanged()
@@ -174,6 +182,10 @@ private suspend fun RuntimeResolution.Ready.refreshControl(
             root = root,
             status = refresh.dashboard.status,
             graph = refresh.dashboard.graph,
+            custom = runtime.currentLibrary(
+                deviceUid,
+                DeviceLightLibraryReadAuthority.AUTHORITATIVE
+            )?.custom,
             systemResult = systemOperations.current(deviceUid.value)
         )
         if (result is DeviceLightControlResult.Available && root.supportsLightSystem()) {
@@ -219,6 +231,10 @@ private fun RuntimeResolution.Ready.currentControl(
         root,
         dashboard?.status,
         dashboard?.graph,
+        runtime.currentLibrary(
+            deviceUid,
+            DeviceLightLibraryReadAuthority.AUTHORITATIVE
+        )?.custom,
         systemOperations.current(deviceUid.value)
     )
 }
@@ -228,6 +244,7 @@ private fun projectRead(
     root: DeviceRootSnapshot?,
     status: DeviceLightStatus?,
     graph: DeviceLightGraph?,
+    custom: DeviceLightCustomDocument?,
     systemResult: DeviceLightSystemReadResult
 ): DeviceLightControlResult = when {
     root == null || status == null || graph == null ->
@@ -238,6 +255,7 @@ private fun projectRead(
     else -> status.toControlSnapshot(
         deviceUid = deviceUid,
         graph = graph,
+        custom = custom,
         systemSupported = root.supportsLightSystem(),
         systemSnapshot = (systemResult as? DeviceLightSystemReadResult.Available)?.snapshot
     )

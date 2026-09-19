@@ -51,8 +51,21 @@ internal class DeviceLightDashboardRefreshCoordinator(
     private suspend fun refreshOnce(
         deviceUid: DeviceUid
     ): DeviceLightDashboardRefreshResult = when (val status = runtime.requestStatus(deviceUid)) {
-        is DeviceRuntimeCommandOutcome.Success -> refreshGraph(deviceUid, status)
+        is DeviceRuntimeCommandOutcome.Success -> refreshCustomIfNeeded(deviceUid, status)
         else -> DeviceLightDashboardRefreshResult.Failed(status)
+    }
+
+    private suspend fun refreshCustomIfNeeded(
+        deviceUid: DeviceUid,
+        status: DeviceRuntimeCommandOutcome.Success<DeviceLightStatus>
+    ): DeviceLightDashboardRefreshResult {
+        if (status.value.mode != DeviceLightMode.CUSTOM) {
+            return refreshGraph(deviceUid, status)
+        }
+        return when (val custom = runtime.requestCustom(deviceUid)) {
+            is DeviceRuntimeCommandOutcome.Success -> refreshGraph(deviceUid, status)
+            else -> DeviceLightDashboardRefreshResult.Failed(custom)
+        }
     }
 
     private suspend fun refreshGraph(
