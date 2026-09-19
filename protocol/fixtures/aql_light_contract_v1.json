@@ -31,6 +31,7 @@
     "light.auto.program.delete",
     "light.custom.get",
     "light.custom.install",
+    "light.custom.clear",
     "light.acclimation.status.get",
     "light.acclimation.start",
     "light.acclimation.stop",
@@ -45,7 +46,6 @@
       "light.auto.set",
       "light.auto.clear",
       "light.custom.set",
-      "light.custom.clear",
       "light.channel.regime.set",
       "light.program.apply",
       "light.program.delete",
@@ -67,7 +67,16 @@
   "manual": {
     "completeSceneReplacement": true,
     "offWritesZeroScene": true,
-    "previewPersistent": false
+    "previewPersistent": false,
+    "manualSetSelectsManualMode": true,
+    "manualOffSelectsManualMode": true
+  },
+  "modeTransitions": {
+    "manualSelectionCopiesCurrentScheduledRequestedScene": true,
+    "manualSelectionCopiesSafetyDeratedEffectiveScene": false,
+    "manualSceneAndModePersistAtomically": true,
+    "modeChangeClearsPreview": true,
+    "returnToScheduledModeUsesTrustedRtc": true
   },
   "auto": {
     "capacity": 16,
@@ -118,7 +127,24 @@
     "sharedWeekdaysMask": true,
     "strictlyIncreasingTimes": true,
     "midnightWrapInterpolation": "LINEAR",
-    "clearCommand": null
+    "clearCommand": "light.custom.clear",
+    "clearRequestFields": ["expectedRevision"],
+    "clearIsAtomic": true,
+    "dayPreview": {
+      "command": "light.preview.set",
+      "requestFields": ["playback", "points"],
+      "playback": "CUSTOM_DAY",
+      "points": "COMPLETE_DRAFT_POINT_TUPLES",
+      "durationMs": 24000,
+      "virtualStartTimeMs": 0,
+      "virtualEndTimeMs": 86400000,
+      "usesVolatileDraft": true,
+      "mutatesInstalledDocument": false,
+      "ignoresWeekdayMask": true,
+      "persistent": false,
+      "changesSelectedMode": false,
+      "restoresSelectedModeAtEnd": true
+    }
   },
   "acclimation": {
     "supported": true,
