@@ -27,6 +27,7 @@ object DeviceLightRuntimeContract {
         const val AUTO_PROGRAM_DELETE = "auto.program.delete"
         const val CUSTOM_GET = "custom.get"
         const val CUSTOM_INSTALL = "custom.install"
+        const val CUSTOM_CLEAR = "custom.clear"
         const val ACCLIMATION_STATUS_GET = "acclimation.status.get"
         const val ACCLIMATION_START = "acclimation.start"
         const val ACCLIMATION_STOP = "acclimation.stop"
@@ -48,6 +49,7 @@ object DeviceLightRuntimeContract {
             AUTO_PROGRAM_DELETE,
             CUSTOM_GET,
             CUSTOM_INSTALL,
+            CUSTOM_CLEAR,
             GRAPH_GET,
             PREVIEW_SET,
             PREVIEW_CLEAR
