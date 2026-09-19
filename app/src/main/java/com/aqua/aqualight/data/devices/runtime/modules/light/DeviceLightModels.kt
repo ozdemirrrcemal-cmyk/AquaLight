@@ -463,6 +463,15 @@ data class DeviceLightCustomInstallPayload(
         )
 }
 
+data class DeviceLightCustomClearPayload(
+    val expectedRevision: Long
+) {
+    init { requireRevision(expectedRevision) }
+
+    fun toJson(): JSONObject = JSONObject()
+        .put(DeviceLightRuntimeContract.Field.EXPECTED_REVISION, expectedRevision)
+}
+
 data class DeviceLightAcclimationStartPayload(
     val expectedRevision: Long,
     val startPercent: Int,
