@@ -55,7 +55,10 @@ class DeviceLightCustomCurveFragment : Fragment(R.layout.fragment_device_light_c
             restoredUnapplied = savedInstanceState?.getBoolean(
                 STATE_DRAFT_UNAPPLIED,
                 false
-            ) == true
+            ) == true,
+            restoredCheckpoint = savedInstanceState
+                ?.getBundle(STATE_EDITOR_CHECKPOINT)
+                ?.let(DeviceLightCustomDraft::restore)
         )
         attachUnsavedGuard()
         findNavController().currentBackStackEntry?.savedStateHandle?.let { stateHandle ->
@@ -94,6 +97,12 @@ class DeviceLightCustomCurveFragment : Fragment(R.layout.fragment_device_light_c
             STATE_DRAFT_UNAPPLIED,
             viewModel.currentState.hasUnappliedChanges
         )
+        viewModel.currentEditorCheckpoint?.let { checkpoint ->
+            outState.putBundle(
+                STATE_EDITOR_CHECKPOINT,
+                Bundle().also(checkpoint::writeTo)
+            )
+        }
         super.onSaveInstanceState(outState)
     }
 
@@ -213,6 +222,7 @@ class DeviceLightCustomCurveFragment : Fragment(R.layout.fragment_device_light_c
         const val ACTION_DISCARD_DRAFT = "discard_custom_draft"
         const val STATE_DRAFT_DIRTY = "device_light_custom_draft_dirty"
         const val STATE_DRAFT_UNAPPLIED = "device_light_custom_draft_unapplied"
+        const val STATE_EDITOR_CHECKPOINT = "device_light_custom_editor_checkpoint"
     }
 }
 
