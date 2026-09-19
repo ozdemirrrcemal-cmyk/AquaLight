@@ -57,29 +57,8 @@ internal fun DeviceLightPlanCard(
     val colors = aquaLightDashboardColors()
     val typography = aquaLightDashboardTypography(colors)
     val chartColors = aquaLightPlanChartColors(colors)
-    val presentation = data.plan?.toPresentation(data.channels)
-    val currentTime = presentation?.nowTimeMs?.let { nowTimeMs ->
-        stringResource(
-            R.string.device_light_plan_time_format,
-            (nowTimeMs / MILLIS_PER_HOUR).toInt(),
-            ((nowTimeMs % MILLIS_PER_HOUR) / MILLIS_PER_MINUTE).toInt()
-        )
-    }
-    val state = DeviceLightPlanCardState(
-        mode = data.mode,
-        enabled = enabled,
-        plan = data.plan,
-        presentation = presentation,
-        currentTime = currentTime
-    )
-    val description = if (state.manualMode) {
-        stringResource(R.string.device_light_plan_manual_content_description)
-    } else {
-        stringResource(
-            R.string.device_light_plan_content_description,
-            currentTime ?: stringResource(R.string.device_light_plan_unavailable)
-        )
-    }
+    val state = data.toPlanCardState(enabled)
+    val description = state.planContentDescription()
 
     AquaDeviceCardSurface(
         modifier = modifier
@@ -497,5 +476,3 @@ private data class DeviceLightLegendItem(
     val color: Color
 )
 
-private const val MILLIS_PER_HOUR = 3_600_000L
-private const val MILLIS_PER_MINUTE = 60_000L
