@@ -95,11 +95,17 @@ private fun LightDeviceHeader(
     online: Boolean,
     visuals: LightDeviceCardVisuals
 ) {
-    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-        LightDeviceThumbnail(item, online, visuals)
-        Spacer(Modifier.width(AquaLightTankCardGeometry.headerGap))
-        Column(modifier = Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            LightDeviceThumbnail(item, online, visuals)
+            Spacer(Modifier.width(AquaLightTankCardGeometry.headerGap))
+            Row(
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 val lampActive = online && item.snapshot?.hero?.outputActive == true
                 Image(
                     painter = painterResource(R.drawable.ic_care_light_24),
@@ -123,10 +129,20 @@ private fun LightDeviceHeader(
                     modifier = Modifier.weight(1f)
                 )
             }
-            Spacer(Modifier.height(AquaLightTankCardGeometry.headerRowGap))
+        }
+        Spacer(Modifier.height(AquaLightTankCardGeometry.headerRowGap))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             LightStatusModeRow(item, online, visuals)
-            Spacer(Modifier.height(AquaLightTankCardGeometry.scheduleTopGap))
-            LightScheduleRow(item, online, visuals)
+            Spacer(Modifier.width(AquaLightTankCardGeometry.statusScheduleGap))
+            LightScheduleRow(
+                item = item,
+                online = online,
+                visuals = visuals,
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 }
@@ -265,7 +281,8 @@ private fun LightModeChip(
 private fun LightScheduleRow(
     item: LightDeviceSpotlightCardUi,
     online: Boolean,
-    visuals: LightDeviceCardVisuals
+    visuals: LightDeviceCardVisuals,
+    modifier: Modifier = Modifier
 ) {
     val alpha = if (online) 1f else AquaLightTankCardAlpha.offlineDetails
     val sunrise = LightScheduleMetricUi(
@@ -281,8 +298,7 @@ private fun LightScheduleRow(
         accent = visuals.colors.shrimp
     )
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
             .alpha(alpha),
         verticalAlignment = Alignment.CenterVertically
     ) {
