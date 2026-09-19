@@ -101,15 +101,16 @@ private fun DeviceLightGraph.toApplicationActiveWindow(
             )
         }
 
-    DeviceLightMode.CUSTOM -> custom?.points
-        ?.takeIf {
+    DeviceLightMode.CUSTOM -> custom
+        ?.takeIf { document ->
             available &&
                 reason == DeviceLightGraphReason.OK &&
                 hasScheduleToday &&
-                custom.installed &&
-                custom.pointCount == it.size &&
-                it.isNotEmpty()
+                document.installed &&
+                document.pointCount == document.points.size &&
+                document.points.isNotEmpty()
         }
+        ?.points
         ?.let { authoredPoints ->
             DeviceLightPlanWindowSnapshot(
                 startTimeMs = authoredPoints.first().timeMs,
