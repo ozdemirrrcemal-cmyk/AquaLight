@@ -2,25 +2,24 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlMode
-import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightDashboardAlpha
+import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightDashboardGeometry
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.aquaLightDashboardColors
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.aquaLightDashboardTypography
@@ -36,9 +35,7 @@ internal fun DeviceLightModeSelector(
     val typography = aquaLightDashboardTypography(colors)
 
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .alpha(if (enabled) 1f else AquaLightDashboardAlpha.disabledControl),
+        modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(
             AquaLightDashboardGeometry.modeSelectorTitleBottomGap
         )
@@ -63,43 +60,42 @@ private fun DeviceLightModeSegments(
 ) {
     val colors = aquaLightDashboardColors()
     val typography = aquaLightDashboardTypography(colors)
-    Row(
+    AquaDeviceCardSurface(
         modifier = Modifier
             .fillMaxWidth()
-            .height(AquaLightDashboardGeometry.modeSelectorHeight)
-            .clip(AquaLightDashboardGeometry.modeSelectorShape)
-            .background(colors.mediaSurface)
-            .border(
-                width = AquaLightDashboardGeometry.modeSelectorOutlineWidth,
-                color = colors.outline,
-                shape = AquaLightDashboardGeometry.modeSelectorShape
-            )
-            .padding(AquaLightDashboardGeometry.modeSelectorOuterPadding),
-        horizontalArrangement = Arrangement.spacedBy(
-            AquaLightDashboardGeometry.modeSelectorSegmentGap
-        ),
-        verticalAlignment = Alignment.CenterVertically
+            .height(AquaLightDashboardGeometry.modeSelectorHeight),
+        contentPadding = PaddingValues(AquaLightDashboardGeometry.modeSelectorOuterPadding)
     ) {
-        deviceLightModeDisplayOrder.forEach { mode ->
-            val selected = mode == selectedMode
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(AquaLightDashboardGeometry.modeSelectorSegmentHeight)
-                    .clip(AquaLightDashboardGeometry.modeSelectorSegmentShape)
-                    .clickable(
-                        enabled = enabled && !selected,
-                        onClick = { onModeSelected(mode) }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(),
+            horizontalArrangement = Arrangement.spacedBy(
+                AquaLightDashboardGeometry.modeSelectorSegmentGap
+            ),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            deviceLightModeDisplayOrder.forEach { mode ->
+                val selected = mode == selectedMode
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(AquaLightDashboardGeometry.modeSelectorSegmentHeight)
+                        .clip(AquaLightDashboardGeometry.modeSelectorSegmentShape)
+                        .clickable(
+                            enabled = enabled && !selected,
+                            onClick = { onModeSelected(mode) }
+                        )
+                        .background(if (selected) colors.accent else colors.surface),
+                    contentAlignment = Alignment.Center
+                ) {
+                    BasicText(
+                        text = stringResource(mode.labelRes()),
+                        style = typography.body.copy(
+                            color = if (selected) colors.primaryText else colors.secondaryText
+                        )
                     )
-                    .background(if (selected) colors.accent else colors.mediaSurface),
-                contentAlignment = Alignment.Center
-            ) {
-                BasicText(
-                    text = stringResource(mode.labelRes()),
-                    style = typography.body.copy(
-                        color = if (selected) colors.primaryText else colors.secondaryText
-                    )
-                )
+                }
             }
         }
     }

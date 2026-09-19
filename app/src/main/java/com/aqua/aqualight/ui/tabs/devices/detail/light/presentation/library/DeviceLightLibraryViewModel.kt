@@ -12,7 +12,7 @@ import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryFa
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryMutationResult
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryOperations
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryResult
-import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
+import com.aqua.aqualight.ui.common.devicepresence.toDeviceConnectionVisualState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.toCommercialLightError
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.toCommercialLightReadError
 import kotlinx.coroutines.Job
@@ -148,7 +148,7 @@ class DeviceLightLibraryViewModel(
 private fun DeviceLightLibraryUiState.withRootSnapshot(
     snapshot: DeviceRootSnapshot?
 ): DeviceLightLibraryUiState = copy(
-    connectionVisualState = snapshot.connectionVisualState(),
+    connectionVisualState = snapshot.toDeviceConnectionVisualState(),
     initialLoading = if (
         snapshot != null &&
         snapshot.availability != OwnerDeviceAvailability.REACHABLE &&
@@ -174,13 +174,6 @@ private fun DeviceLightLibraryUiState.withResult(
         readError = result.failure.toCommercialLightReadError()
     )
 }
-
-private fun DeviceRootSnapshot?.connectionVisualState(): DeviceConnectionVisualState =
-    if (this?.availability == OwnerDeviceAvailability.REACHABLE) {
-        DeviceConnectionVisualState.ONLINE
-    } else {
-        DeviceConnectionVisualState.OFFLINE
-    }
 
 private fun DeviceLightLibraryMutationResult.toEffect(
     @StringRes successMessage: Int

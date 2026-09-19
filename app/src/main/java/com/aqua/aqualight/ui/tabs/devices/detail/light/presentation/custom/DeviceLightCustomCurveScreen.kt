@@ -39,6 +39,7 @@ import kotlinx.coroutines.isActive
 internal fun DeviceLightCustomCurveScreen(
     state: DeviceLightCustomCurveUiState,
     actions: DeviceLightCustomCurveActions,
+    onDeleteDeviceProgramClick: () -> Unit,
     modifier: Modifier = Modifier,
     onClockTick: () -> Unit = {}
 ) {
@@ -47,21 +48,31 @@ internal fun DeviceLightCustomCurveScreen(
     val visuals = DeviceLightCustomVisuals(colors, aquaDeviceCardTypography(colors.card))
     DeviceClockTicker(state, onClockTick)
     if (state.channels.isEmpty()) {
-        Box(
-            modifier = modifier.fillMaxSize().background(background)
-                .padding(SCREEN_HORIZONTAL_PADDING_DP.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            BasicText(
-                text = stringResource(R.string.device_light_custom_data_unavailable),
-                style = visuals.typography.body.copy(
-                    color = visuals.colors.card.secondaryText,
-                    textAlign = TextAlign.Center
-                )
-            )
-        }
+        CustomCurveUnavailable(
+            modifier = modifier,
+            background = background,
+            visuals = visuals
+        )
         return
     }
+    CustomCurveLoadedContent(
+        state = state,
+        actions = actions,
+        visuals = visuals,
+        onDeleteDeviceProgramClick = onDeleteDeviceProgramClick,
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun CustomCurveLoadedContent(
+    state: DeviceLightCustomCurveUiState,
+    actions: DeviceLightCustomCurveActions,
+    visuals: DeviceLightCustomVisuals,
+    onDeleteDeviceProgramClick: () -> Unit,
+    modifier: Modifier
+) {
+    val background = colorResource(R.color.background_color)
     Box(modifier = modifier.fillMaxSize().background(background)) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -76,16 +87,24 @@ internal fun DeviceLightCustomCurveScreen(
             if (state.hasUnsavedChanges || state.hasUnappliedChanges) {
                 item(key = "editor_state") { EditorStateIndicator(state, visuals) }
             }
-            item(key = "curve") { CurveCard(state, actions, visuals) }
+            item(key = "curve") {
+                CurveCard(
+                    state = state,
+                    actions = actions,
+                    visuals = visuals,
+                    onDeleteDeviceProgramClick = onDeleteDeviceProgramClick
+                )
+            }
             item(key = "point") { SelectedPointCard(state, actions, visuals) }
             item(key = "days") { ProgramDaysCard(state, actions, visuals) }
-            item(key = "preview") { VirtualTimePreviewCard(state, actions, visuals) }
         }
         CustomEditorActions(
             state = state,
             actions = actions,
             visuals = visuals,
-            modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
                 .background(background)
                 .padding(
                     start = SCREEN_HORIZONTAL_PADDING_DP.dp,
@@ -93,6 +112,29 @@ internal fun DeviceLightCustomCurveScreen(
                     end = SCREEN_HORIZONTAL_PADDING_DP.dp,
                     bottom = STICKY_ACTION_BOTTOM_PADDING_DP.dp
                 )
+        )
+    }
+}
+
+@Composable
+private fun CustomCurveUnavailable(
+    modifier: Modifier,
+    background: Color,
+    visuals: DeviceLightCustomVisuals
+) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(background)
+            .padding(SCREEN_HORIZONTAL_PADDING_DP.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        BasicText(
+            text = stringResource(R.string.device_light_custom_data_unavailable),
+            style = visuals.typography.body.copy(
+                color = visuals.colors.card.secondaryText,
+                textAlign = TextAlign.Center
+            )
         )
     }
 }

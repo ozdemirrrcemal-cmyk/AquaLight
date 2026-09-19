@@ -54,14 +54,15 @@ class TankDetailDevicesViewModel(
 
     private val openingDeviceId = MutableStateFlow<String?>(null)
     private val removingDevice = MutableStateFlow(false)
-    private val lightCardStates = MutableStateFlow<Map<String, DeviceLightCardState>>(emptyMap())
-    private val dosingCardStates = MutableStateFlow<Map<String, DeviceDosingCardState>>(emptyMap())
-    private val coolingCardStates = MutableStateFlow<Map<String, DeviceCoolingCardState>>(emptyMap())
+    private val cardObservers = TankDeviceCardObserverRegistry()
+    private val lightCardStates = cardObservers.lightCardStates
+    private val dosingCardStates = cardObservers.dosingCardStates
+    private val coolingCardStates = cardObservers.coolingCardStates
     private val spotlightRotation = DosingSpotlightRotationController(viewModelScope)
 
-    private val lightObserverJobs = mutableMapOf<String, Job>()
-    private val dosingObserverJobs = mutableMapOf<String, Job>()
-    private val coolingObserverJobs = mutableMapOf<String, Job>()
+    private val lightObserverJobs = cardObservers.lightObserverJobs
+    private val dosingObserverJobs = cardObservers.dosingObserverJobs
+    private val coolingObserverJobs = cardObservers.coolingObserverJobs
     private var boundTankId: Long = 0L
     private var observeJob: Job? = null
     private var menuOpenJob: Job? = null
@@ -70,15 +71,7 @@ class TankDetailDevicesViewModel(
     fun bind(tankId: Long) {
         if (tankId <= 0L || boundTankId == tankId) return
 
-        lightObserverJobs.values.forEach(Job::cancel)
-        lightObserverJobs.clear()
-        lightCardStates.value = emptyMap()
-        dosingObserverJobs.values.forEach(Job::cancel)
-        dosingObserverJobs.clear()
-        dosingCardStates.value = emptyMap()
-        coolingObserverJobs.values.forEach(Job::cancel)
-        coolingObserverJobs.clear()
-        coolingCardStates.value = emptyMap()
+        cardObservers.reset()
         spotlightRotation.updateChannelCounts(emptyMap())
         boundTankId = tankId
         assignmentOperations.start(viewModelScope)

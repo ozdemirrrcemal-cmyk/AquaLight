@@ -77,6 +77,7 @@
     <string name="device_light_mode_selector_custom">Özel</string>
     <string name="device_light_mode_selector_manual">Manuel</string>
     <string name="device_light_mode_selector_automatic">Otomatik</string>
+    <string name="device_light_mode_unavailable">Kullanılamıyor</string>
 
     <string name="device_light_controls_title">Kontrol ekranları</string>
     <string name="device_light_quick_setup_button">Akıllı kurulum</string>
@@ -275,7 +276,6 @@
     </plurals>
     <string name="device_light_custom_point_values_title">%1$s değerleri</string>
     <string name="device_light_custom_no_point_selected">Saatini ve kanal seviyelerini düzenlemek için bir nokta ekleyin veya seçin.</string>
-    <string name="device_light_custom_virtual_preview_compact">Sanal önizleme</string>
     <string name="device_light_custom_preview">Önizle</string>
     <string name="device_light_custom_preview_at_time_description">Editördeki taslağı %1$s saatinde önizle</string>
     <string name="device_light_custom_days_heading">Günler</string>
@@ -289,7 +289,6 @@
     <string name="device_light_custom_apply_to_device_description">Editördeki güncel eğriyi cihaza kur</string>
     <string name="device_light_custom_applied_success">Özel eğri cihaza uygulandı</string>
     <string name="device_light_custom_stale_error">Cihaz programı başka bir işlemle değişti. Editördeki taslağınız korundu; gözden geçirip yeniden uygulayın.</string>
-    <string name="device_light_custom_more_actions_description">Diğer özel program işlemleri</string>
     <string name="device_light_custom_device_program_actions_title">Cihaz programı</string>
     <string name="device_light_custom_delete_device_program">Cihaz programını sil</string>
     <string name="device_light_custom_delete_device_program_title">Cihaz programı silinsin mi?</string>

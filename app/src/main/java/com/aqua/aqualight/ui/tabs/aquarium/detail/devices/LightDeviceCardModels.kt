@@ -94,7 +94,7 @@ internal fun DeviceLightControlMode?.lightCardModeLabelRes(): Int = when (this) 
     DeviceLightControlMode.MANUAL -> R.string.device_light_mode_selector_manual
     DeviceLightControlMode.AUTOMATIC -> R.string.device_light_mode_selector_automatic
     DeviceLightControlMode.CUSTOM -> R.string.device_light_mode_selector_custom
-    null -> R.string.device_light_hero_mode_unavailable
+    null -> R.string.device_light_mode_unavailable
 }
 
 internal fun DeviceLightControlMode?.lightCardModeGlyph(): String = when (this) {

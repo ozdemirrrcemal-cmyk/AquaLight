@@ -119,9 +119,9 @@ private data class ChannelSliderState(
     val enabled: Boolean
 )
 
-private const val POINT_CONTENT_SPACING_DP = 4
+private const val POINT_CONTENT_SPACING_DP = 3
 private const val EMPTY_POINT_PADDING_DP = 10
-private const val CHANNEL_ROW_HEIGHT_DP = 42
+private const val CHANNEL_ROW_HEIGHT_DP = 41
 private const val CHANNEL_LABEL_WIDTH_DP = 58
 private const val CHANNEL_PERCENT_WIDTH_DP = 42
 private const val CHANNEL_SLIDER_PADDING_DP = 6

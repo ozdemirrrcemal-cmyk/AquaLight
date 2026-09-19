@@ -95,6 +95,7 @@ internal class OwnerViewModelFactory(
         val graph = ownerGraphResolver.requireActive()
         val repository = graph.devicesRepository
         val assignments = graph.assignmentRepository
+        val rootOperations = DefaultDeviceRootOperations(repository)
 
         val viewModel: ViewModel = when (modelClass) {
             SettingsViewModel::class.java -> SettingsViewModel(
@@ -180,39 +181,44 @@ internal class OwnerViewModelFactory(
                 textResolver = maintenanceTextResolver
             )
             DeviceLightRootViewModel::class.java -> DeviceLightRootViewModel(
-                rootOperations = DefaultDeviceRootOperations(repository),
+                rootOperations = rootOperations,
                 lightControlOperations = graph.lightOperations.controlOperations,
                 controlSurfacePreparationOperations = graph.controlSurfacePreparationOperations
             )
             DeviceLightAdaptationViewModel::class.java -> DeviceLightAdaptationViewModel(
-                graph.lightOperations.adaptationOperations
+                operations = graph.lightOperations.adaptationOperations,
+                rootOperations = rootOperations
             )
             DeviceLightAutomaticProgramsViewModel::class.java ->
                 DeviceLightAutomaticProgramsViewModel(
-                    graph.lightOperations.automaticOperations
+                    operations = graph.lightOperations.automaticOperations,
+                    rootOperations = rootOperations
                 )
             DeviceLightAutomaticProgramEditorViewModel::class.java ->
                 DeviceLightAutomaticProgramEditorViewModel(
-                    graph.lightOperations.automaticOperations
+                    operations = graph.lightOperations.automaticOperations,
+                    rootOperations = rootOperations
                 )
             DeviceLightManualControlViewModel::class.java -> DeviceLightManualControlViewModel(
                 manualOperations = graph.lightOperations.manualOperations,
                 libraryOperations = graph.lightOperations.libraryOperations,
-                rootOperations = DefaultDeviceRootOperations(repository)
+                rootOperations = rootOperations
             )
             DeviceLightCustomCurveViewModel::class.java -> DeviceLightCustomCurveViewModel(
                 customOperations = graph.lightOperations.customOperations,
-                libraryOperations = graph.lightOperations.libraryOperations
+                libraryOperations = graph.lightOperations.libraryOperations,
+                rootOperations = rootOperations
             )
             DeviceLightLibraryViewModel::class.java -> DeviceLightLibraryViewModel(
                 operations = graph.lightOperations.libraryOperations,
-                rootOperations = DefaultDeviceRootOperations(repository)
+                rootOperations = rootOperations
             )
             DeviceLightSystemViewModel::class.java -> DeviceLightSystemViewModel(
-                operations = graph.lightOperations.systemOperations
+                operations = graph.lightOperations.systemOperations,
+                rootOperations = rootOperations
             )
             DeviceCoolingRootViewModel::class.java -> DeviceCoolingRootViewModel(
-                operations = DefaultDeviceRootOperations(repository),
+                operations = rootOperations,
                 controlOperations = DefaultDeviceCoolingControlOperations(repository),
                 historyOperations = DefaultDeviceCoolingTemperatureHistoryOperations(repository),
                 automaticSettingsOperations = DefaultDeviceCoolingAutomaticSettingsOperations(repository),
@@ -224,7 +230,7 @@ internal class OwnerViewModelFactory(
                 )
             DeviceCoolingSystemStatusViewModel::class.java ->
                 DeviceCoolingSystemStatusViewModel(
-                    rootOperations = DefaultDeviceRootOperations(repository),
+                    rootOperations = rootOperations,
                     controlOperations = DefaultDeviceCoolingControlOperations(repository)
                 )
             DeviceCoolingAutomaticSettingsViewModel::class.java ->
@@ -241,7 +247,7 @@ internal class OwnerViewModelFactory(
                 )
             DeviceTimerRootViewModel::class.java ->
                 DeviceTimerRootViewModel(
-                    operations = DefaultDeviceRootOperations(repository),
+                    operations = rootOperations,
                     timerControlOperations = graph.timerControlOperations,
                     controlSurfacePreparationOperations = graph.controlSurfacePreparationOperations
                 )
@@ -251,7 +257,7 @@ internal class OwnerViewModelFactory(
                 DeviceTimerChannelViewModel(graph.timerControlOperations)
             DeviceDosingRootViewModel::class.java -> graph.dosingOperations.let { dosing ->
                 DeviceDosingRootViewModel(
-                    operations = DefaultDeviceRootOperations(repository),
+                    operations = rootOperations,
                     channelNavigationOperations = dosing.navigationOperations,
                     channelOperations = dosing.channelOperations,
                     controlSurfacePreparationOperations = graph.controlSurfacePreparationOperations
@@ -269,7 +275,7 @@ internal class OwnerViewModelFactory(
             DeviceDosingReservoirViewModel::class.java ->
                 DeviceDosingReservoirViewModel(graph.dosingOperations.channelOperations)
             DeviceRootOverviewViewModel::class.java ->
-                DeviceRootOverviewViewModel(DefaultDeviceRootOperations(repository))
+                DeviceRootOverviewViewModel(rootOperations)
             DeviceFamilySettingsViewModel::class.java -> DeviceFamilySettingsViewModel(
                 settingsOperations = DefaultDeviceFamilySettingsOperations(
                     devicesRepository = repository
@@ -278,7 +284,7 @@ internal class OwnerViewModelFactory(
                 manifestUrl = BuildConfig.AQL_OTA_MANIFEST_URL
             )
             DeviceFirmwareUpdateViewModel::class.java -> DeviceFirmwareUpdateViewModel(
-                rootOperations = DefaultDeviceRootOperations(repository),
+                rootOperations = rootOperations,
                 firmwareUpdateOperations = graph.firmwareUpdateOperations,
                 manifestUrl = BuildConfig.AQL_OTA_MANIFEST_URL
             )

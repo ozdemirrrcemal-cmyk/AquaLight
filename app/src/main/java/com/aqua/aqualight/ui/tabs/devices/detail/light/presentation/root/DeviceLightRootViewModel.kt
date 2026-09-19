@@ -24,6 +24,7 @@ import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanSna
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightSystemSummary
 import com.aqua.aqualight.application.devices.light.dashboard.matchesLightControlSurface
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
+import com.aqua.aqualight.ui.common.devicepresence.toDeviceConnectionVisualState
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -194,11 +195,7 @@ class DeviceLightRootViewModel(
         _uiState.value = DeviceLightRootUiState(
             title = root?.title.orEmpty(),
             deviceUid = boundDeviceUid,
-            connectionVisualState = if (surfaceAvailable) {
-                DeviceConnectionVisualState.ONLINE
-            } else {
-                DeviceConnectionVisualState.OFFLINE
-            },
+            connectionVisualState = root.toDeviceConnectionVisualState(),
             contentEnabled = surfaceAvailable && !surfacePreparationPending,
             // Match Dosing: a refresh blocks only a cold surface. A validated frame already on
             // screen remains visible until its complete replacement is atomically published.

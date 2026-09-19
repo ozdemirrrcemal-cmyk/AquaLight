@@ -298,11 +298,11 @@ private class ReleaseSmokeViewModelFactory(
                     ReleaseSmokeControlSurfacePreparationOperations
             )
         modelClass.isAssignableFrom(DeviceLightAdaptationViewModel::class.java) ->
-            DeviceLightAdaptationViewModel(lightOperations.adaptationOperations)
+            DeviceLightAdaptationViewModel(lightOperations.adaptationOperations, rootOperations)
         modelClass.isAssignableFrom(DeviceLightAutomaticProgramsViewModel::class.java) ->
-            DeviceLightAutomaticProgramsViewModel(lightOperations.automaticOperations)
+            DeviceLightAutomaticProgramsViewModel(lightOperations.automaticOperations, rootOperations)
         modelClass.isAssignableFrom(DeviceLightAutomaticProgramEditorViewModel::class.java) ->
-            DeviceLightAutomaticProgramEditorViewModel(lightOperations.automaticOperations)
+            DeviceLightAutomaticProgramEditorViewModel(lightOperations.automaticOperations, rootOperations)
         modelClass.isAssignableFrom(DeviceLightManualControlViewModel::class.java) ->
             DeviceLightManualControlViewModel(
                 manualOperations = lightOperations.manualOperations,
@@ -312,7 +312,8 @@ private class ReleaseSmokeViewModelFactory(
         modelClass.isAssignableFrom(DeviceLightCustomCurveViewModel::class.java) ->
             DeviceLightCustomCurveViewModel(
                 customOperations = lightOperations.customOperations,
-                libraryOperations = lightOperations.libraryOperations
+                libraryOperations = lightOperations.libraryOperations,
+                rootOperations = rootOperations
             )
         modelClass.isAssignableFrom(DeviceLightLibraryViewModel::class.java) ->
             DeviceLightLibraryViewModel(
@@ -320,7 +321,7 @@ private class ReleaseSmokeViewModelFactory(
                 rootOperations = rootOperations
             )
         modelClass.isAssignableFrom(DeviceLightSystemViewModel::class.java) ->
-            DeviceLightSystemViewModel(lightOperations.systemOperations)
+            DeviceLightSystemViewModel(lightOperations.systemOperations, rootOperations)
         else -> null
     }
 

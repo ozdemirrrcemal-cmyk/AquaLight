@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.editor
 
+import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticChannel
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticMutationResult
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticOperations
@@ -9,6 +10,8 @@ import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomat
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticReadResult
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticScene
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticSnapshot
+import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.FakeLightDeviceRootOperations
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -42,7 +45,10 @@ class DeviceLightAutomaticProgramEditorViewModelTest {
         val program = automaticProgram(enabled = true)
         val operations = FakeAutomaticOperations(snapshot(program))
         val restored = DeviceLightAutomaticEditorDraft.fromProgram(program).copy(enabled = true)
-        val viewModel = DeviceLightAutomaticProgramEditorViewModel(operations)
+        val viewModel = DeviceLightAutomaticProgramEditorViewModel(
+            operations,
+            FakeLightDeviceRootOperations()
+        )
 
         viewModel.bind(
             deviceUidText = DEVICE_UID,
@@ -60,7 +66,11 @@ class DeviceLightAutomaticProgramEditorViewModelTest {
     fun `retained firmware frame stays visible but cannot save while authority is absent`() {
         val program = automaticProgram(enabled = true)
         val operations = FakeAutomaticOperations(snapshot(program))
-        val viewModel = DeviceLightAutomaticProgramEditorViewModel(operations)
+        val rootOperations = FakeLightDeviceRootOperations()
+        val viewModel = DeviceLightAutomaticProgramEditorViewModel(
+            operations,
+            rootOperations
+        )
         viewModel.bind(
             deviceUidText = DEVICE_UID,
             mode = DeviceLightAutomaticEditorMode.Edit(program.programId),
@@ -74,6 +84,17 @@ class DeviceLightAutomaticProgramEditorViewModelTest {
         assertEquals(program.startTimeMs, viewModel.currentState.draft.startTimeMs)
         assertFalse(viewModel.currentState.firmwareWriteAuthoritative)
         assertFalse(viewModel.currentState.canSave)
+        assertEquals(
+            DeviceConnectionVisualState.ONLINE,
+            viewModel.currentState.connectionVisualState
+        )
+
+        rootOperations.setAvailability(OwnerDeviceAvailability.UNREACHABLE)
+
+        assertEquals(
+            DeviceConnectionVisualState.OFFLINE,
+            viewModel.currentState.connectionVisualState
+        )
     }
 
     private class FakeAutomaticOperations(

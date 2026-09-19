@@ -4,6 +4,7 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.light.system.DeviceLightFanMode
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemFailure
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemMutationResult
@@ -11,7 +12,8 @@ import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemOper
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemReadResult
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemSettings
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemSnapshot
-import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
+import com.aqua.aqualight.ui.common.devicepresence.observeConnectionVisualState
+import com.aqua.aqualight.ui.common.devicepresence.toDeviceConnectionVisualState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.toCommercialLightError
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
@@ -26,7 +28,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 internal class DeviceLightSystemViewModel(
-    private val operations: DeviceLightSystemOperations
+    private val operations: DeviceLightSystemOperations,
+    private val rootOperations: DeviceRootOperations
 ) : ViewModel() {
 
     private val mutableUiState = MutableStateFlow(DeviceLightSystemUiState())
@@ -37,18 +40,26 @@ internal class DeviceLightSystemViewModel(
     private var boundDeviceUid = ""
     private var draftDirty = false
     private var observeJob: Job? = null
+    private var connectionJob: Job? = null
 
     fun bind(deviceUidText: String) {
         val deviceUid = deviceUidText.trim()
         require(deviceUid.isNotBlank()) { "System destination deviceUid must not be blank." }
         if (boundDeviceUid == deviceUid) return
         observeJob?.cancel()
+        connectionJob?.cancel()
         boundDeviceUid = deviceUid
         draftDirty = false
         mutableUiState.value = DeviceLightSystemUiState(
             deviceUid = deviceUid,
+            connectionVisualState = rootOperations.current(deviceUid).toDeviceConnectionVisualState(),
             initialLoading = true
         )
+        connectionJob = viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            rootOperations.observeConnectionVisualState(deviceUid).collect { connection ->
+                mutableUiState.update { state -> state.copy(connectionVisualState = connection) }
+            }
+        }
         observeJob = viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
             operations.observe(deviceUid).collect { result ->
                 when (result) {
@@ -197,11 +208,6 @@ internal class DeviceLightSystemViewModel(
             val keepDraft = draftDirty && !operationFinished
             state.copy(
                 deviceUid = snapshot.deviceUid,
-                connectionVisualState = if (snapshot.firmwareWriteAuthoritative) {
-                    DeviceConnectionVisualState.ONLINE
-                } else {
-                    DeviceConnectionVisualState.OFFLINE
-                },
                 snapshot = snapshot,
                 selectedMode = if (keepDraft) state.selectedMode else snapshot.mode,
                 selectedStartTemperatureCelsius = if (keepDraft) {
@@ -230,7 +236,6 @@ internal class DeviceLightSystemViewModel(
     private fun applyFailure(failure: DeviceLightSystemFailure) {
         mutableUiState.update { state ->
             state.copy(
-                connectionVisualState = failure.connectionState(),
                 contentEnabled = state.snapshot != null,
                 firmwareWriteAuthoritative = false,
                 initialLoading = false,
@@ -267,12 +272,5 @@ private class DeviceLightSystemEffectEmitter {
         mutableEffects.tryEmit(DeviceLightSystemEffect.CloseUnavailable)
     }
 }
-
-private fun DeviceLightSystemFailure.connectionState(): DeviceConnectionVisualState =
-    if (this == DeviceLightSystemFailure.NOT_CONNECTED) {
-        DeviceConnectionVisualState.OFFLINE
-    } else {
-        DeviceConnectionVisualState.WARNING
-    }
 
 private const val MINIMUM_TEMPERATURE_GAP = 1

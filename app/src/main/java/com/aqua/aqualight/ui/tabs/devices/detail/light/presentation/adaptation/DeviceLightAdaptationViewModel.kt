@@ -4,13 +4,15 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationFailure
 import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationMutationResult
 import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationOperations
 import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationReadResult
 import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationSnapshot
 import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationState
-import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
+import com.aqua.aqualight.ui.common.devicepresence.observeConnectionVisualState
+import com.aqua.aqualight.ui.common.devicepresence.toDeviceConnectionVisualState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.toCommercialLightError
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
@@ -25,7 +27,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 internal class DeviceLightAdaptationViewModel(
-    private val operations: DeviceLightAdaptationOperations
+    private val operations: DeviceLightAdaptationOperations,
+    private val rootOperations: DeviceRootOperations
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DeviceLightAdaptationUiState())
@@ -36,18 +39,26 @@ internal class DeviceLightAdaptationViewModel(
     private var boundDeviceUid = ""
     private var draftDirty = false
     private var observeJob: Job? = null
+    private var connectionJob: Job? = null
 
     fun bind(deviceUidText: String) {
         val deviceUid = deviceUidText.trim()
         require(deviceUid.isNotBlank()) { "Adaptation destination deviceUid must not be blank." }
         if (boundDeviceUid == deviceUid) return
         observeJob?.cancel()
+        connectionJob?.cancel()
         boundDeviceUid = deviceUid
         draftDirty = false
         _uiState.value = DeviceLightAdaptationUiState(
             deviceUid = deviceUid,
+            connectionVisualState = rootOperations.current(deviceUid).toDeviceConnectionVisualState(),
             initialLoading = true
         )
+        connectionJob = viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            rootOperations.observeConnectionVisualState(deviceUid).collect { connection ->
+                _uiState.update { state -> state.copy(connectionVisualState = connection) }
+            }
+        }
         observeJob = viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
             operations.observe(deviceUid).collect { result ->
                 when (result) {
@@ -191,11 +202,6 @@ internal class DeviceLightAdaptationViewModel(
             val keepDraft = draftDirty && state.screenState == DeviceLightAdaptationScreenState.SETUP
             state.copy(
                 deviceUid = snapshot.deviceUid,
-                connectionVisualState = if (snapshot.firmwareWriteAuthoritative) {
-                    DeviceConnectionVisualState.ONLINE
-                } else {
-                    DeviceConnectionVisualState.OFFLINE
-                },
                 snapshot = snapshot,
                 selectedStartPercent = if (keepDraft) {
                     state.selectedStartPercent
@@ -247,20 +253,12 @@ private fun Int.coercePolicyStep(minimum: Int, maximum: Int, step: Int): Int {
     return minimum + ((clamped - minimum + step / 2) / step) * step
 }
 
-private fun DeviceLightAdaptationFailure.connectionState(): DeviceConnectionVisualState =
-    if (this == DeviceLightAdaptationFailure.NOT_CONNECTED) {
-        DeviceConnectionVisualState.OFFLINE
-    } else {
-        DeviceConnectionVisualState.WARNING
-    }
-
 private fun MutableStateFlow<DeviceLightAdaptationUiState>.applyFailure(
     failure: DeviceLightAdaptationFailure,
     closeUnavailable: () -> Unit
 ) {
     update { state ->
         state.copy(
-            connectionVisualState = failure.connectionState(),
             contentEnabled = false,
             initialLoading = false,
             operationInProgress = false

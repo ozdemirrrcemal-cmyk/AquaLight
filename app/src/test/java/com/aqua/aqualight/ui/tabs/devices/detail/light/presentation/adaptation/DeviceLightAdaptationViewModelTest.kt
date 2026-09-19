@@ -6,6 +6,7 @@ import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdapta
 import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationReadResult
 import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationSnapshot
 import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.FakeLightDeviceRootOperations
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,7 +29,10 @@ class DeviceLightAdaptationViewModelTest {
 
     @Test
     fun `disabled firmware state opens setup with policy defaults`() {
-        val viewModel = DeviceLightAdaptationViewModel(FakeAdaptationOperations()).apply {
+        val viewModel = DeviceLightAdaptationViewModel(
+            FakeAdaptationOperations(),
+            FakeLightDeviceRootOperations()
+        ).apply {
             bind(DEVICE_UID)
         }
 
@@ -41,7 +45,12 @@ class DeviceLightAdaptationViewModelTest {
     @Test
     fun `start sends current revision and stepped user settings`() {
         val operations = FakeAdaptationOperations()
-        val viewModel = DeviceLightAdaptationViewModel(operations).apply { bind(DEVICE_UID) }
+        val viewModel = DeviceLightAdaptationViewModel(
+            operations,
+            FakeLightDeviceRootOperations()
+        ).apply {
+            bind(DEVICE_UID)
+        }
 
         viewModel.updateStartPercent(63)
         viewModel.updateDurationDays(21)
@@ -56,7 +65,12 @@ class DeviceLightAdaptationViewModelTest {
     @Test
     fun `clock not ready blocks start but active program remains stoppable`() {
         val operations = FakeAdaptationOperations(snapshot(clockReady = false))
-        val viewModel = DeviceLightAdaptationViewModel(operations).apply { bind(DEVICE_UID) }
+        val viewModel = DeviceLightAdaptationViewModel(
+            operations,
+            FakeLightDeviceRootOperations()
+        ).apply {
+            bind(DEVICE_UID)
+        }
 
         assertFalse(viewModel.uiState.value.canStart)
         viewModel.start()

@@ -21,6 +21,7 @@ import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryRe
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibrarySnapshot
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryTarget
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryScene
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.FakeLightDeviceRootOperations
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -481,7 +482,7 @@ class DeviceLightCustomCurveViewModelTest {
         customOperations: FakeCustomOperations = FakeCustomOperations(snapshot()),
         libraryOperations: FakeLibraryOperations = FakeLibraryOperations(),
         restoredState: RestoredEditorState = RestoredEditorState()
-    ) = DeviceLightCustomCurveViewModel(customOperations, libraryOperations).apply {
+    ) = DeviceLightCustomCurveViewModel(customOperations, libraryOperations, FakeLightDeviceRootOperations()).apply {
         bind(
             deviceUidText = DEVICE_UID,
             restoredDraft = restoredState.draft,

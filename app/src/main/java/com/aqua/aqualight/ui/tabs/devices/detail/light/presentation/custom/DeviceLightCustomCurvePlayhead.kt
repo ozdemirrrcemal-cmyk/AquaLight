@@ -1,6 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom
 
-import androidx.compose.foundation.border
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
@@ -18,12 +18,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.aqua.aqualight.R
 
 internal data class DeviceLightCustomCurvePlayhead(
     val availableWidth: Dp,
@@ -97,9 +99,11 @@ private fun PlayheadTimeBubble(
         contentAlignment = Alignment.Center
     ) {
         Box(
-            modifier = Modifier.fillMaxWidth().height(PLAYHEAD_LABEL_VISUAL_HEIGHT_DP.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(PLAYHEAD_LABEL_VISUAL_HEIGHT_DP.dp)
                 .clip(shape)
-                .border(PLAYHEAD_LABEL_BORDER_DP.dp, visuals.colors.action, shape),
+                .background(visuals.colors.action),
             contentAlignment = Alignment.Center
         ) {
             BasicText(
@@ -114,11 +118,10 @@ private fun PlayheadTimeBubble(
 }
 
 internal val CHART_WINDOW = DeviceLightCustomChartWindow(0L, MILLIS_PER_DAY)
-internal const val PLAYHEAD_LABEL_SPACE_DP = 48
+internal const val PLAYHEAD_LABEL_SPACE_DP = 36
 internal const val CHART_PERCENT_AXIS_WIDTH_DP = 28
-internal const val CHART_HEIGHT_DP = 204
-private const val PLAYHEAD_LABEL_WIDTH_DP = 58
+internal const val CHART_HEIGHT_DP = 172
+private const val PLAYHEAD_LABEL_WIDTH_DP = 52
 private const val PLAYHEAD_LABEL_TOUCH_HEIGHT_DP = 48
-private const val PLAYHEAD_LABEL_VISUAL_HEIGHT_DP = 30
-private const val PLAYHEAD_LABEL_CORNER_DP = 8
-private const val PLAYHEAD_LABEL_BORDER_DP = 1
+private const val PLAYHEAD_LABEL_VISUAL_HEIGHT_DP = 26
+private const val PLAYHEAD_LABEL_CORNER_DP = 7
