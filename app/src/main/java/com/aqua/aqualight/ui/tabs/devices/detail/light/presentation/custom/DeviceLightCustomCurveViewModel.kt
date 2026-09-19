@@ -455,79 +455,45 @@ internal class DeviceLightCustomCurveViewModel(
         forceDeviceDraft: Boolean = false,
         resetEditorFocus: Boolean = false
     ) {
+        val current = _uiState.value
         val channels = snapshot.channels.map(DeviceLightCustomChannel::toUiChannel)
         val firmwareDraft = snapshot.toUiDraft()
-        val previousCheckpoint = editorCheckpointDraft
-        val current = _uiState.value
-        val restored = restoredDraft?.takeIf { draft ->
-            draft.compatibleWith(channels, snapshot.maxPoints)
-        }
-        val preserveRestored = !forceDeviceDraft &&
-            restored != null && (restoreDirty || restoreUnapplied)
-        val preserveCurrent = !forceDeviceDraft &&
-            (current.hasUnsavedChanges || current.hasUnappliedChanges) &&
-            current.draft.compatibleWith(channels, snapshot.maxPoints)
+        val resolution = resolveSnapshotDraft(
+            context = DeviceLightCustomSnapshotDraftContext(
+                current = current,
+                restoredDraft = restoredDraft,
+                previousCheckpoint = editorCheckpointDraft,
+                restoreDirty = restoreDirty,
+                restoreUnapplied = restoreUnapplied,
+                forceDeviceDraft = forceDeviceDraft
+            ),
+            channels = channels,
+            maxPoints = snapshot.maxPoints,
+            firmwareDraft = firmwareDraft
+        )
 
         deviceBaselineDraft = firmwareDraft
+        editorCheckpointDraft = resolution.checkpoint
         authoritativeRevision = snapshot.revision
-
-        val draft = when {
-            preserveRestored -> requireNotNull(restored)
-            preserveCurrent -> current.draft
-            else -> firmwareDraft
-        }
-        editorCheckpointDraft = when {
-            forceDeviceDraft -> firmwareDraft
-            preserveRestored && !restoreDirty -> draft
-            preserveRestored -> firmwareDraft
-            preserveCurrent -> previousCheckpoint ?: firmwareDraft
-            else -> firmwareDraft
-        }
-
         restoredDraft = null
+
         val deviceTimeMs = snapshot.currentTimeMs
             ?.takeIf { timeMs -> timeMs in 0 until MILLIS_PER_DAY }
             ?: current.deviceTimeMs
-        val selectedTimeMs = if (resetEditorFocus) {
-            draft.points.minByOrNull { point ->
-                kotlin.math.abs(point.timeMs - (deviceTimeMs ?: current.previewTimeMs))
-            }?.timeMs
-        } else {
-            draft.resolveSelection(current, deviceTimeMs)
-        }
-        val playheadMode = if (resetEditorFocus) {
-            DeviceLightCustomPlayheadMode.CLOCK
-        } else {
-            current.playheadMode
-        }
-        val playheadTimeMs = if (resetEditorFocus) {
-            deviceTimeMs ?: current.previewTimeMs
-        } else {
-            current.resolvePlayheadTime(deviceTimeMs)
-        }
-        _uiState.value = DeviceLightCustomCurveUiState(
-            deviceUid = snapshot.deviceUid,
-            connectionVisualState = if (snapshot.firmwareWriteAuthoritative) {
-                DeviceConnectionVisualState.ONLINE
-            } else {
-                DeviceConnectionVisualState.OFFLINE
-            },
-            channels = channels,
-            draft = draft,
-            selectedTimeMs = selectedTimeMs,
-            previewTimeMs = playheadTimeMs,
-            deviceTimeMs = deviceTimeMs,
-            playheadMode = playheadMode,
-            maxPoints = snapshot.maxPoints,
-            timeStepMs = snapshot.timeStepMs,
-            contentEnabled = true,
-            firmwareWriteAuthoritative = snapshot.firmwareWriteAuthoritative,
-            deviceProgramInstalled = snapshot.installed,
-            initialLoading = false,
-            operationInProgress = current.operationInProgress,
-            blockingOperationInProgress = current.blockingOperationInProgress,
-            hasUnsavedChanges = draft != editorCheckpointDraft,
-            hasUnappliedChanges = draft != deviceBaselineDraft
+        val focus = resolveSnapshotFocus(
+            resetEditorFocus = resetEditorFocus,
+            draft = resolution.draft,
+            current = current,
+            deviceTimeMs = deviceTimeMs
+        )
+        _uiState.value = snapshot.toEditorUiState(
+            DeviceLightCustomSnapshotPresentation(
+                current = current,
+                channels = channels,
+                draftResolution = resolution,
+                focus = focus,
+                deviceTimeMs = deviceTimeMs
+            )
         )
         deviceClockAnchorTimeMs = deviceTimeMs
         deviceClockAnchorNanos = System.nanoTime()
@@ -577,6 +543,115 @@ internal class DeviceLightCustomCurveViewModel(
     }
 
 }
+
+private data class DeviceLightCustomSnapshotDraftContext(
+    val current: DeviceLightCustomCurveUiState,
+    val restoredDraft: DeviceLightCustomDraft?,
+    val previousCheckpoint: DeviceLightCustomDraft?,
+    val restoreDirty: Boolean,
+    val restoreUnapplied: Boolean,
+    val forceDeviceDraft: Boolean
+) {
+    val restoreRequested: Boolean
+        get() = restoreDirty || restoreUnapplied
+}
+
+private data class DeviceLightCustomDraftResolution(
+    val draft: DeviceLightCustomDraft,
+    val checkpoint: DeviceLightCustomDraft
+)
+
+private data class DeviceLightCustomSnapshotFocus(
+    val selectedTimeMs: Long?,
+    val playheadMode: DeviceLightCustomPlayheadMode,
+    val playheadTimeMs: Long
+)
+
+private data class DeviceLightCustomSnapshotPresentation(
+    val current: DeviceLightCustomCurveUiState,
+    val channels: List<DeviceLightCustomChannelId>,
+    val draftResolution: DeviceLightCustomDraftResolution,
+    val focus: DeviceLightCustomSnapshotFocus,
+    val deviceTimeMs: Long?
+)
+
+private fun resolveSnapshotDraft(
+    context: DeviceLightCustomSnapshotDraftContext,
+    channels: List<DeviceLightCustomChannelId>,
+    maxPoints: Int,
+    firmwareDraft: DeviceLightCustomDraft
+): DeviceLightCustomDraftResolution {
+    val restored = context.restoredDraft
+        ?.takeUnless { context.forceDeviceDraft }
+        ?.takeIf { context.restoreRequested }
+        ?.takeIf { draft -> draft.compatibleWith(channels, maxPoints) }
+    val currentDraft = context.current.draft
+        .takeUnless { context.forceDeviceDraft }
+        ?.takeIf {
+            context.current.hasUnsavedChanges || context.current.hasUnappliedChanges
+        }
+        ?.takeIf { draft -> draft.compatibleWith(channels, maxPoints) }
+    val draft = restored ?: currentDraft ?: firmwareDraft
+    val checkpoint = when {
+        context.forceDeviceDraft -> firmwareDraft
+        restored != null && !context.restoreDirty -> restored
+        restored != null -> firmwareDraft
+        currentDraft != null -> context.previousCheckpoint ?: firmwareDraft
+        else -> firmwareDraft
+    }
+    return DeviceLightCustomDraftResolution(draft = draft, checkpoint = checkpoint)
+}
+
+private fun resolveSnapshotFocus(
+    resetEditorFocus: Boolean,
+    draft: DeviceLightCustomDraft,
+    current: DeviceLightCustomCurveUiState,
+    deviceTimeMs: Long?
+): DeviceLightCustomSnapshotFocus {
+    if (!resetEditorFocus) {
+        return DeviceLightCustomSnapshotFocus(
+            selectedTimeMs = draft.resolveSelection(current, deviceTimeMs),
+            playheadMode = current.playheadMode,
+            playheadTimeMs = current.resolvePlayheadTime(deviceTimeMs)
+        )
+    }
+    val referenceTimeMs = deviceTimeMs ?: current.previewTimeMs
+    return DeviceLightCustomSnapshotFocus(
+        selectedTimeMs = draft.points.minByOrNull { point ->
+            kotlin.math.abs(point.timeMs - referenceTimeMs)
+        }?.timeMs,
+        playheadMode = DeviceLightCustomPlayheadMode.CLOCK,
+        playheadTimeMs = referenceTimeMs
+    )
+}
+
+private fun DeviceLightCustomSnapshot.toEditorUiState(
+    presentation: DeviceLightCustomSnapshotPresentation
+): DeviceLightCustomCurveUiState = DeviceLightCustomCurveUiState(
+    deviceUid = deviceUid,
+    connectionVisualState = if (firmwareWriteAuthoritative) {
+        DeviceConnectionVisualState.ONLINE
+    } else {
+        DeviceConnectionVisualState.OFFLINE
+    },
+    channels = presentation.channels,
+    draft = presentation.draftResolution.draft,
+    selectedTimeMs = presentation.focus.selectedTimeMs,
+    previewTimeMs = presentation.focus.playheadTimeMs,
+    deviceTimeMs = presentation.deviceTimeMs,
+    playheadMode = presentation.focus.playheadMode,
+    maxPoints = maxPoints,
+    timeStepMs = timeStepMs,
+    contentEnabled = true,
+    firmwareWriteAuthoritative = firmwareWriteAuthoritative,
+    deviceProgramInstalled = installed,
+    initialLoading = false,
+    operationInProgress = presentation.current.operationInProgress,
+    blockingOperationInProgress = presentation.current.blockingOperationInProgress,
+    hasUnsavedChanges =
+        presentation.draftResolution.draft != presentation.draftResolution.checkpoint,
+    hasUnappliedChanges = presentation.draftResolution.draft != toUiDraft()
+)
 
 private fun MutableStateFlow<DeviceLightCustomCurveUiState>.applyReadFailure(
     failure: DeviceLightCustomFailure
