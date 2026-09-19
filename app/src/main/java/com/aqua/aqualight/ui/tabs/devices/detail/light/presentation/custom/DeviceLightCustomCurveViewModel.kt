@@ -96,7 +96,7 @@ internal class DeviceLightCustomCurveViewModel(
         }
     }
 
-    val loadLibraryDraft: (String) -> Unit = { entryId ->
+    val openLibraryProfile: (String) -> Unit = { entryId ->
         val deviceUid = boundDeviceUid.takeIf(String::isNotBlank)
         if (deviceUid != null) {
             viewModelScope.launch {
