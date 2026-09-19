@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -81,27 +82,79 @@ private fun PreviewGlyph(visuals: DeviceLightCustomVisuals) {
 }
 
 @Composable
-internal fun LibraryActions(
+internal fun CustomEditorActions(
     state: DeviceLightCustomCurveUiState,
     actions: DeviceLightCustomCurveActions,
     visuals: DeviceLightCustomVisuals,
     modifier: Modifier = Modifier
 ) {
-    Row(
+    Column(
         modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(EDITOR_ACTION_SPACING_DP.dp)
+    ) {
+        ApplyToDeviceAction(
+            state = state,
+            actions = actions,
+            visuals = visuals
+        )
+        LibraryActions(
+            state = state,
+            actions = actions,
+            visuals = visuals
+        )
+    }
+}
+
+@Composable
+private fun ApplyToDeviceAction(
+    state: DeviceLightCustomCurveUiState,
+    actions: DeviceLightCustomCurveActions,
+    visuals: DeviceLightCustomVisuals
+) {
+    val alreadyApplied = state.deviceProgramInstalled && !state.hasUnappliedChanges
+    CustomOutlinedButton(
+        button = CustomOutlinedButtonState(
+            label = stringResource(
+                if (alreadyApplied) {
+                    R.string.device_light_custom_applied_to_device
+                } else {
+                    R.string.device_light_custom_apply_to_device
+                }
+            ),
+            description = stringResource(R.string.device_light_custom_apply_to_device_description),
+            enabled = state.canApplyToDevice
+        ),
+        appearance = CustomOutlinedButtonAppearance(
+            color = visuals.colors.action,
+            filled = true,
+            contentColor = visuals.colors.card.primaryText
+        ),
+        onClick = actions.onApplyToDeviceClick,
+        modifier = Modifier.fillMaxWidth()
+    )
+}
+
+@Composable
+private fun LibraryActions(
+    state: DeviceLightCustomCurveUiState,
+    actions: DeviceLightCustomCurveActions,
+    visuals: DeviceLightCustomVisuals
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(LIBRARY_ACTION_SPACING_DP.dp)
     ) {
         CustomOutlinedButton(
             button = CustomOutlinedButtonState(
-                label = stringResource(R.string.device_light_custom_load),
-                description = stringResource(R.string.device_light_custom_load_description),
+                label = stringResource(R.string.device_light_custom_profiles),
+                description = stringResource(R.string.device_light_custom_profiles_description),
                 enabled = state.contentEnabled && !state.operationInProgress
             ),
             appearance = CustomOutlinedButtonAppearance(
                 color = visuals.colors.action,
                 iconRes = R.drawable.ic_light_library
             ),
-            onClick = actions.onLoadClick,
+            onClick = actions.onProfilesClick,
             modifier = Modifier.weight(1f)
         )
         CustomOutlinedButton(
@@ -112,9 +165,7 @@ internal fun LibraryActions(
             ),
             appearance = CustomOutlinedButtonAppearance(
                 color = visuals.colors.action,
-                iconRes = R.drawable.ic_add_24,
-                filled = true,
-                contentColor = visuals.colors.card.primaryText
+                iconRes = R.drawable.ic_add_24
             ),
             onClick = actions.onSaveAsClick,
             modifier = Modifier.weight(1f)
@@ -133,4 +184,5 @@ private const val PLAY_TOP_FRACTION = 0.27f
 private const val PLAY_RIGHT_FRACTION = 0.72f
 private const val PLAY_CENTER_FRACTION = 0.5f
 private const val PLAY_BOTTOM_FRACTION = 0.73f
+private const val EDITOR_ACTION_SPACING_DP = 8
 private const val LIBRARY_ACTION_SPACING_DP = 8
