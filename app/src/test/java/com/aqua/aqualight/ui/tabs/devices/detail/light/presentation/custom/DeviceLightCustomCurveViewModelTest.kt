@@ -119,7 +119,7 @@ class DeviceLightCustomCurveViewModelTest {
             libraryOperations = library
         )
 
-        viewModel.loadLibraryDraft(profile.id)
+        viewModel.openLibraryProfile(profile.id)
 
         assertEquals(
             UPDATED_RED,
