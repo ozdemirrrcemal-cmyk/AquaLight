@@ -114,6 +114,7 @@ class DeviceLightControlSnapshotProjectionTest {
         val snapshot = status.toControlSnapshot(
             deviceUid = DeviceUid("light-rgb"),
             graph = graph,
+            customDocument = null,
             systemSupported = false,
             systemSnapshot = null
         )

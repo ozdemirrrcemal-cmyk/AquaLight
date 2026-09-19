@@ -83,43 +83,49 @@ private fun DeviceLightGraph.toApplicationActiveWindow(
     activeProgramId: String?,
     customDocument: DeviceLightCustomDocument?
 ): DeviceLightPlanWindowSnapshot? = when (mode) {
-    DeviceLightMode.AUTO -> autoSpans
-        .takeIf {
-            available &&
-                reason == DeviceLightGraphReason.OK &&
-                hasScheduleToday
-        }
-        ?.let { spans ->
-            activeProgramId
-                ?.let { programId -> spans.firstOrNull { span -> span.programId == programId } }
-                ?: spans.singleOrNull()
-        }
-        ?.let { span ->
-            DeviceLightPlanWindowSnapshot(
-                startTimeMs = span.startTimeMsWithinToday,
-                endTimeMs = span.endTimeMsWithinToday
-            )
-        }
-
-    DeviceLightMode.CUSTOM -> customDocument
-        ?.takeIf { document ->
-            available &&
-                reason == DeviceLightGraphReason.OK &&
-                hasScheduleToday &&
-                document.installed &&
-                document.pointCount == document.points.size &&
-                document.points.isNotEmpty()
-        }
-        ?.points
-        ?.let { authoredPoints ->
-            DeviceLightPlanWindowSnapshot(
-                startTimeMs = authoredPoints.first().timeMs,
-                endTimeMs = authoredPoints.last().timeMs
-            )
-        }
-
+    DeviceLightMode.AUTO -> autoActiveWindow(activeProgramId)
+    DeviceLightMode.CUSTOM -> customActiveWindow(customDocument)
     DeviceLightMode.MANUAL -> null
 }
+
+private fun DeviceLightGraph.autoActiveWindow(
+    activeProgramId: String?
+): DeviceLightPlanWindowSnapshot? {
+    if (!hasValidSchedule()) return null
+    val span = activeProgramId
+        ?.let { programId -> autoSpans.firstOrNull { it.programId == programId } }
+        ?: autoSpans.singleOrNull()
+    return span?.let {
+        DeviceLightPlanWindowSnapshot(
+            startTimeMs = it.startTimeMsWithinToday,
+            endTimeMs = it.endTimeMsWithinToday
+        )
+    }
+}
+
+private fun DeviceLightGraph.customActiveWindow(
+    customDocument: DeviceLightCustomDocument?
+): DeviceLightPlanWindowSnapshot? {
+    if (!hasValidSchedule()) return null
+    val points = customDocument
+        ?.takeIf { it.isCompleteSchedule() }
+        ?.points
+        ?: return null
+    return DeviceLightPlanWindowSnapshot(
+        startTimeMs = points.first().timeMs,
+        endTimeMs = points.last().timeMs
+    )
+}
+
+private fun DeviceLightGraph.hasValidSchedule(): Boolean =
+    available &&
+        reason == DeviceLightGraphReason.OK &&
+        hasScheduleToday
+
+private fun DeviceLightCustomDocument.isCompleteSchedule(): Boolean =
+    installed &&
+        pointCount == points.size &&
+        points.isNotEmpty()
 
 private fun DeviceLightSystemSnapshot.toDashboardSummary() = DeviceLightSystemSummary(
     temperatureCelsius = temperatureCelsius,

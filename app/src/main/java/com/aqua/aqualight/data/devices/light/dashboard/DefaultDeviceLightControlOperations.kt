@@ -62,12 +62,14 @@ internal class DefaultDeviceLightControlOperations(
                     DeviceLightLibraryReadAuthority.PRESENTATION
                 )
                 projectRead(
-                    uid,
-                    root,
-                    dashboard?.status,
-                    dashboard?.graph,
-                    library?.custom,
-                    systemOperations.current(uid.value)
+                    LightProjectionInput(
+                        deviceUid = uid,
+                        root = root,
+                        status = dashboard?.status,
+                        graph = dashboard?.graph,
+                        customDocument = library?.custom,
+                        systemResult = systemOperations.current(uid.value)
+                    )
                 )
             }.distinctUntilChanged()
         }
@@ -178,15 +180,17 @@ private suspend fun RuntimeResolution.Ready.refreshControl(
 ): DeviceLightControlResult = when (val refresh = modules.refreshLightDashboard(deviceUid)) {
     is DeviceLightDashboardRefreshResult.Success -> {
         val result = projectRead(
-            deviceUid = deviceUid,
-            root = root,
-            status = refresh.dashboard.status,
-            graph = refresh.dashboard.graph,
-            custom = runtime.currentLibrary(
-                deviceUid,
-                DeviceLightLibraryReadAuthority.AUTHORITATIVE
-            )?.custom,
-            systemResult = systemOperations.current(deviceUid.value)
+            LightProjectionInput(
+                deviceUid = deviceUid,
+                root = root,
+                status = refresh.dashboard.status,
+                graph = refresh.dashboard.graph,
+                customDocument = runtime.currentLibrary(
+                    deviceUid,
+                    DeviceLightLibraryReadAuthority.AUTHORITATIVE
+                )?.custom,
+                systemResult = systemOperations.current(deviceUid.value)
+            )
         )
         if (result is DeviceLightControlResult.Available && root.supportsLightSystem()) {
             systemOperations.refresh(deviceUid.value)
@@ -227,39 +231,46 @@ private fun RuntimeResolution.Ready.currentControl(
     DeviceLightDashboardReadAuthority.AUTHORITATIVE
 ).let { dashboard ->
     projectRead(
-        deviceUid,
-        root,
-        dashboard?.status,
-        dashboard?.graph,
-        runtime.currentLibrary(
-            deviceUid,
-            DeviceLightLibraryReadAuthority.AUTHORITATIVE
-        )?.custom,
-        systemOperations.current(deviceUid.value)
+        LightProjectionInput(
+            deviceUid = deviceUid,
+            root = root,
+            status = dashboard?.status,
+            graph = dashboard?.graph,
+            customDocument = runtime.currentLibrary(
+                deviceUid,
+                DeviceLightLibraryReadAuthority.AUTHORITATIVE
+            )?.custom,
+            systemResult = systemOperations.current(deviceUid.value)
+        )
     )
 }
 
-private fun projectRead(
-    deviceUid: DeviceUid,
-    root: DeviceRootSnapshot?,
-    status: DeviceLightStatus?,
-    graph: DeviceLightGraph?,
-    custom: DeviceLightCustomDocument?,
-    systemResult: DeviceLightSystemReadResult
-): DeviceLightControlResult = when {
-    root == null || status == null || graph == null ->
+private data class LightProjectionInput(
+    val deviceUid: DeviceUid,
+    val root: DeviceRootSnapshot?,
+    val status: DeviceLightStatus?,
+    val graph: DeviceLightGraph?,
+    val customDocument: DeviceLightCustomDocument?,
+    val systemResult: DeviceLightSystemReadResult
+)
+
+private fun projectRead(input: LightProjectionInput): DeviceLightControlResult = when {
+    input.root == null || input.status == null || input.graph == null ->
         DeviceLightControlResult.Failed(DeviceLightControlFailure.UNAVAILABLE)
-    !root.isSupportedLightRoot() -> DeviceLightControlResult.Failed(DeviceLightControlFailure.UNSUPPORTED)
-    status.product.wireValue != root.productKey ->
+    !input.root.isSupportedLightRoot() ->
+        DeviceLightControlResult.Failed(DeviceLightControlFailure.UNSUPPORTED)
+    input.status.product.wireValue != input.root.productKey ->
         DeviceLightControlResult.Failed(DeviceLightControlFailure.INVALID_DATA)
-    else -> status.toControlSnapshot(
-        deviceUid = deviceUid,
-        graph = graph,
-        customDocument = custom,
-        systemSupported = root.supportsLightSystem(),
-        systemSnapshot = (systemResult as? DeviceLightSystemReadResult.Available)?.snapshot
+    else -> input.status.toControlSnapshot(
+        deviceUid = input.deviceUid,
+        graph = input.graph,
+        customDocument = input.customDocument,
+        systemSupported = input.root.supportsLightSystem(),
+        systemSnapshot = (input.systemResult as? DeviceLightSystemReadResult.Available)?.snapshot
     )
-        .takeIf { snapshot -> snapshot.matchesLightControlSurface(deviceUid.value, root) }
+        .takeIf { snapshot ->
+            snapshot.matchesLightControlSurface(input.deviceUid.value, input.root)
+        }
         ?.let(DeviceLightControlResult::Available)
         ?: DeviceLightControlResult.Failed(DeviceLightControlFailure.INVALID_DATA)
 }
