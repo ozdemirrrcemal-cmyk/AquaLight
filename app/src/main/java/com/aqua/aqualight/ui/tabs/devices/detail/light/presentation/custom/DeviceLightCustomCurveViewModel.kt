@@ -54,6 +54,9 @@ internal class DeviceLightCustomCurveViewModel(
     private var boundDeviceUid = ""
     private var deviceBaselineDraft: DeviceLightCustomDraft? = null
     private var editorCheckpointDraft: DeviceLightCustomDraft? = null
+    val currentEditorCheckpoint: DeviceLightCustomDraft?
+        get() = editorCheckpointDraft
+
     private var authoritativeRevision: Long? = null
     private var restoredDraft: DeviceLightCustomDraft? = null
     private var restoreDirty = false
@@ -167,7 +170,8 @@ internal class DeviceLightCustomCurveViewModel(
         deviceUidText: String,
         restoredDraft: DeviceLightCustomDraft? = null,
         restoredDirty: Boolean = false,
-        restoredUnapplied: Boolean = false
+        restoredUnapplied: Boolean = false,
+        restoredCheckpoint: DeviceLightCustomDraft? = null
     ) {
         val deviceUid = deviceUidText.trim()
         require(deviceUid.isNotBlank()) { "Custom light destination deviceUid must not be blank." }
@@ -179,7 +183,7 @@ internal class DeviceLightCustomCurveViewModel(
         deviceClockAnchorNanos = 0L
         boundDeviceUid = deviceUid
         deviceBaselineDraft = null
-        editorCheckpointDraft = null
+        editorCheckpointDraft = restoredCheckpoint
         authoritativeRevision = null
         this.restoredDraft = restoredDraft
         restoreDirty = restoredDraft != null && restoredDirty
@@ -595,7 +599,7 @@ private fun resolveSnapshotDraft(
     val checkpoint = when {
         context.forceDeviceDraft -> firmwareDraft
         restored != null && !context.restoreDirty -> restored
-        restored != null -> firmwareDraft
+        restored != null -> context.previousCheckpoint ?: firmwareDraft
         currentDraft != null -> context.previousCheckpoint ?: firmwareDraft
         else -> firmwareDraft
     }
