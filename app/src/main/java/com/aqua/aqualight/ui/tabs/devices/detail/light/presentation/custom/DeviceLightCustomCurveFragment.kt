@@ -63,7 +63,7 @@ class DeviceLightCustomCurveFragment : Fragment(R.layout.fragment_device_light_c
                         DEVICE_LIGHT_LIBRARY_SELECTION_RESULT,
                         null
                     )
-                    viewModel.loadLibraryDraft(entryId)
+                    viewModel.openLibraryProfile(entryId)
                 }
             }
         }
