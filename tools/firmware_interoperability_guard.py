@@ -8,7 +8,7 @@ import firmware_interoperability_guard_core as guard
 import timer_v1_contract_guard as timer_guard
 
 
-guard.FIRMWARE_COMMIT = "d73c59b2466430187538e9e9dbc5c163009b31dc"
+guard.FIRMWARE_COMMIT = "cd01a8760fe4a349fe85265dbadbf4278add7bb6"
 guard.COMMAND_NAMES_BLOB = "a4a05ae219e449b42de2654c38b55d65804c91b0"
 guard.EVENT_CONTRACT_BLOB = "5e87fd043c0efaa849ed3ba8e5be9ce6f2727e24"
 guard.REQUEST_CONTRACT_BLOBS = {
