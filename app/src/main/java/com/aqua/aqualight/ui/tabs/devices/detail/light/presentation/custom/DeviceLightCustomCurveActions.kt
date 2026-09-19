@@ -9,6 +9,7 @@ internal data class DeviceLightCustomCurveActions(
     val onPlayheadTimeClick: () -> Unit,
     val onChannelChanged: (DeviceLightCustomChannelId, Int) -> Unit,
     val onPreviewClick: () -> Unit,
-    val onLoadClick: () -> Unit,
-    val onSaveAsClick: () -> Unit
+    val onProfilesClick: () -> Unit,
+    val onSaveAsClick: () -> Unit,
+    val onApplyToDeviceClick: () -> Unit
 )
