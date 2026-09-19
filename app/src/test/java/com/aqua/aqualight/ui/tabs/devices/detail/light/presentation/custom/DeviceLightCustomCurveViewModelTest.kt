@@ -7,11 +7,18 @@ import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomPoin
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomReadResult
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomScene
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomSnapshot
+import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomWriteResult
+import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryChannel
+import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryChannelDescriptor
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryCustomPoint
+import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryEntry
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryKind
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryMutationResult
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryOperations
+import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryPayload
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryResult
+import com.aqua.aqualight.application.devices.light.library.DeviceLightLibrarySnapshot
+import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryTarget
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryScene
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
@@ -20,6 +27,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -44,6 +52,8 @@ class DeviceLightCustomCurveViewModelTest {
 
         assertFalse(viewModel.currentState.initialLoading)
         assertFalse(viewModel.currentState.hasUnsavedChanges)
+        assertFalse(viewModel.currentState.hasUnappliedChanges)
+        assertTrue(viewModel.currentState.deviceProgramInstalled)
         assertEquals(EVERY_DAY_MASK, viewModel.currentState.draft.weekdaysMask)
         assertEquals(1, viewModel.currentState.draft.points.size)
         assertEquals(INITIAL_TIME_MS, viewModel.currentState.selectedPoint?.timeMs)
@@ -68,6 +78,7 @@ class DeviceLightCustomCurveViewModelTest {
         viewModel.dayEditor.toggleWeekday(SUNDAY_INDEX)
 
         assertTrue(viewModel.currentState.hasUnsavedChanges)
+        assertTrue(viewModel.currentState.hasUnappliedChanges)
         assertEquals(
             UPDATED_BLUE,
             viewModel.currentState.selectedPoint?.channels?.get(DeviceLightCustomChannelId.BLUE)
@@ -91,6 +102,105 @@ class DeviceLightCustomCurveViewModelTest {
         assertEquals(EVERY_DAY_MASK, library.savedWeekdaysMask)
         assertEquals(UPDATED_RED, library.savedPoints.single().scene.channels.values.first())
         assertFalse(viewModel.currentState.hasUnsavedChanges)
+        assertTrue(viewModel.currentState.hasUnappliedChanges)
+    }
+
+    @Test
+    fun `opening a saved profile changes editor only and remains unapplied`() {
+        val profile = customLibraryEntry(
+            name = "Evening profile",
+            red = UPDATED_RED
+        )
+        val library = FakeLibraryOperations(entries = listOf(profile))
+        val custom = FakeCustomOperations(snapshot())
+        val viewModel = boundViewModel(
+            customOperations = custom,
+            libraryOperations = library
+        )
+
+        viewModel.loadLibraryDraft(profile.id)
+
+        assertEquals(
+            UPDATED_RED,
+            viewModel.currentState.selectedPoint?.channels?.get(DeviceLightCustomChannelId.RED)
+        )
+        assertFalse(viewModel.currentState.hasUnsavedChanges)
+        assertTrue(viewModel.currentState.hasUnappliedChanges)
+        assertEquals(0, custom.applyCount)
+    }
+
+    @Test
+    fun `apply to device sends authoritative revision and complete editor document`() {
+        val custom = FakeCustomOperations(snapshot())
+        val viewModel = boundViewModel(customOperations = custom)
+        viewModel.pointEditor.updateSelectedChannel(DeviceLightCustomChannelId.RED, UPDATED_RED)
+        viewModel.dayEditor.toggleWeekday(SUNDAY_INDEX)
+
+        viewModel.applyToDevice()
+
+        assertEquals(1, custom.applyCount)
+        assertEquals(4L, custom.appliedRevision)
+        assertEquals(
+            EVERY_DAY_MASK xor customWeekdayMask(SUNDAY_INDEX),
+            custom.appliedWeekdaysMask
+        )
+        assertEquals(UPDATED_RED, custom.appliedPoints.single().scene.channels.getValue(
+            DeviceLightCustomChannel.RED
+        ))
+        assertFalse(viewModel.currentState.hasUnsavedChanges)
+        assertFalse(viewModel.currentState.hasUnappliedChanges)
+        assertTrue(viewModel.currentState.deviceProgramInstalled)
+    }
+
+    @Test
+    fun `stale apply refreshes device baseline but preserves editor draft`() {
+        val custom = FakeCustomOperations(snapshot())
+        val viewModel = boundViewModel(customOperations = custom)
+        viewModel.pointEditor.updateSelectedChannel(DeviceLightCustomChannelId.RED, UPDATED_RED)
+        val candidate = viewModel.currentState.draft
+
+        custom.failNextWrite = DeviceLightCustomFailure.STALE_REVISION
+        custom.updateSnapshot(
+            snapshot().copy(
+                revision = 5,
+                points = snapshot().points.map { point ->
+                    point.copy(
+                        scene = DeviceLightCustomScene(
+                            point.scene.channels.toMutableMap().apply {
+                                this[DeviceLightCustomChannel.RED] = 11
+                            }
+                        )
+                    )
+                }
+            )
+        )
+
+        viewModel.applyToDevice()
+
+        assertEquals(candidate, viewModel.currentState.draft)
+        assertTrue(viewModel.currentState.hasUnsavedChanges)
+        assertTrue(viewModel.currentState.hasUnappliedChanges)
+        assertEquals(1, custom.applyCount)
+    }
+
+    @Test
+    fun `delete device program clears firmware state without touching profiles`() {
+        val library = FakeLibraryOperations()
+        val custom = FakeCustomOperations(snapshot())
+        val viewModel = boundViewModel(
+            customOperations = custom,
+            libraryOperations = library
+        )
+
+        viewModel.clearDeviceProgram()
+
+        assertEquals(1, custom.clearCount)
+        assertEquals(4L, custom.clearedRevision)
+        assertFalse(viewModel.currentState.deviceProgramInstalled)
+        assertTrue(viewModel.currentState.draft.points.isEmpty())
+        assertFalse(viewModel.currentState.hasUnsavedChanges)
+        assertFalse(viewModel.currentState.hasUnappliedChanges)
+        assertEquals(0, library.deleteCount)
     }
 
     @Test
@@ -324,9 +434,10 @@ class DeviceLightCustomCurveViewModelTest {
         customOperations: FakeCustomOperations = FakeCustomOperations(snapshot()),
         libraryOperations: FakeLibraryOperations = FakeLibraryOperations(),
         restoredDraft: DeviceLightCustomDraft? = null,
-        restoredDirty: Boolean = false
+        restoredDirty: Boolean = false,
+        restoredUnapplied: Boolean = false
     ) = DeviceLightCustomCurveViewModel(customOperations, libraryOperations).apply {
-        bind(DEVICE_UID, restoredDraft, restoredDirty)
+        bind(DEVICE_UID, restoredDraft, restoredDirty, restoredUnapplied)
     }
 
     private fun DeviceLightCustomCurveViewModel.addInitialPoint() {
@@ -334,19 +445,77 @@ class DeviceLightCustomCurveViewModelTest {
     }
 
     private class FakeCustomOperations(
-        private val snapshot: DeviceLightCustomSnapshot,
+        snapshot: DeviceLightCustomSnapshot,
         private val previewGate: CompletableDeferred<Unit>? = null
     ) : DeviceLightCustomOperations {
+        private var authoritativeSnapshot = snapshot
         var previewPoints: List<DeviceLightCustomPoint>? = null
+        var applyCount = 0
+        var clearCount = 0
+        var appliedRevision: Long? = null
+        var appliedWeekdaysMask: Int? = null
+        var appliedPoints: List<DeviceLightCustomPoint> = emptyList()
+        var clearedRevision: Long? = null
+        var failNextWrite: DeviceLightCustomFailure? = null
+
+        fun updateSnapshot(snapshot: DeviceLightCustomSnapshot) {
+            authoritativeSnapshot = snapshot
+        }
 
         override fun observe(deviceUid: String): Flow<DeviceLightCustomReadResult> = emptyFlow()
 
-        override fun current(deviceUid: String) = DeviceLightCustomReadResult.Available(snapshot)
+        override fun current(deviceUid: String) =
+            DeviceLightCustomReadResult.Available(authoritativeSnapshot)
 
-        override suspend fun read(deviceUid: String) = DeviceLightCustomReadResult.Available(snapshot)
+        override suspend fun read(deviceUid: String) =
+            DeviceLightCustomReadResult.Available(authoritativeSnapshot)
 
-        override suspend fun preview(deviceUid: String, points: List<DeviceLightCustomPoint>):
-            DeviceLightCustomMutationResult {
+        override suspend fun applyToDevice(
+            deviceUid: String,
+            expectedRevision: Long,
+            weekdaysMask: Int,
+            points: List<DeviceLightCustomPoint>
+        ): DeviceLightCustomWriteResult {
+            applyCount += 1
+            appliedRevision = expectedRevision
+            appliedWeekdaysMask = weekdaysMask
+            appliedPoints = points
+            failNextWrite?.let { failure ->
+                failNextWrite = null
+                return DeviceLightCustomWriteResult.Failed(failure)
+            }
+            authoritativeSnapshot = authoritativeSnapshot.copy(
+                revision = authoritativeSnapshot.revision + 1,
+                installed = true,
+                weekdaysMask = weekdaysMask,
+                points = points
+            )
+            return DeviceLightCustomWriteResult.Success(authoritativeSnapshot)
+        }
+
+        override suspend fun clearDeviceProgram(
+            deviceUid: String,
+            expectedRevision: Long
+        ): DeviceLightCustomWriteResult {
+            clearCount += 1
+            clearedRevision = expectedRevision
+            failNextWrite?.let { failure ->
+                failNextWrite = null
+                return DeviceLightCustomWriteResult.Failed(failure)
+            }
+            authoritativeSnapshot = authoritativeSnapshot.copy(
+                revision = authoritativeSnapshot.revision + 1,
+                installed = false,
+                weekdaysMask = EVERY_DAY_MASK,
+                points = emptyList()
+            )
+            return DeviceLightCustomWriteResult.Success(authoritativeSnapshot)
+        }
+
+        override suspend fun preview(
+            deviceUid: String,
+            points: List<DeviceLightCustomPoint>
+        ): DeviceLightCustomMutationResult {
             previewPoints = points
             previewGate?.await()
             return DeviceLightCustomMutationResult.Success
@@ -357,13 +526,27 @@ class DeviceLightCustomCurveViewModelTest {
     }
 
     private class FakeLibraryOperations(
-        private val saveGate: CompletableDeferred<Unit>? = null
+        private val saveGate: CompletableDeferred<Unit>? = null,
+        private val entries: List<DeviceLightLibraryEntry> = emptyList()
     ) : DeviceLightLibraryOperations {
         var savedName: String? = null
         var savedWeekdaysMask: Int? = null
         var savedPoints: List<DeviceLightLibraryCustomPoint> = emptyList()
+        var deleteCount = 0
 
-        override fun observeLibrary(deviceUid: String): Flow<DeviceLightLibraryResult> = emptyFlow()
+        override fun observeLibrary(deviceUid: String): Flow<DeviceLightLibraryResult> =
+            if (entries.isEmpty()) {
+                emptyFlow()
+            } else {
+                flowOf(
+                    DeviceLightLibraryResult.Available(
+                        DeviceLightLibrarySnapshot(
+                            target = libraryTarget(),
+                            entries = entries
+                        )
+                    )
+                )
+            }
         override suspend fun usedNames(kind: DeviceLightLibraryKind): List<String> = emptyList()
         override suspend fun saveManual(
             deviceUid: String,
@@ -386,8 +569,66 @@ class DeviceLightCustomCurveViewModelTest {
 
         override suspend fun rename(entryId: String, name: String) =
             DeviceLightLibraryMutationResult.Success(entryId)
-        override suspend fun delete(entryId: String) =
-            DeviceLightLibraryMutationResult.Success(entryId)
+        override suspend fun delete(entryId: String): DeviceLightLibraryMutationResult {
+            deleteCount += 1
+            return DeviceLightLibraryMutationResult.Success(entryId)
+        }
+    }
+
+    private fun customLibraryEntry(
+        name: String,
+        red: Int
+    ): DeviceLightLibraryEntry {
+        val channels = DeviceLightLibraryChannel.entries
+        return DeviceLightLibraryEntry(
+            id = "profile-1",
+            name = name,
+            productKey = "LIGHT_WRGB_PRO_ELITE",
+            channels = channels,
+            payload = DeviceLightLibraryPayload.Custom(
+                weekdaysMask = EVERY_DAY_MASK,
+                points = listOf(
+                    DeviceLightLibraryCustomPoint(
+                        timeMs = INITIAL_TIME_MS,
+                        scene = DeviceLightLibraryScene(
+                            channels.associateWith { channel ->
+                                when (channel) {
+                                    DeviceLightLibraryChannel.RED -> red
+                                    DeviceLightLibraryChannel.GREEN -> 40
+                                    DeviceLightLibraryChannel.BLUE -> 60
+                                    DeviceLightLibraryChannel.WHITE -> 85
+                                }
+                            }
+                        )
+                    )
+                )
+            ),
+            createdAtMillis = 1L,
+            updatedAtMillis = 1L
+        )
+    }
+
+    private fun libraryTarget(): DeviceLightLibraryTarget {
+        val channels = DeviceLightLibraryChannel.entries
+        return DeviceLightLibraryTarget(
+            deviceUid = DEVICE_UID,
+            productKey = "LIGHT_WRGB_PRO_ELITE",
+            channelDescriptors = channels.mapIndexed { index, channel ->
+                DeviceLightLibraryChannelDescriptor(
+                    channel = channel,
+                    key = channel.name.lowercase(),
+                    displayName = channel.name,
+                    displayColorRgb = when (channel) {
+                        DeviceLightLibraryChannel.RED -> 0xFF0000
+                        DeviceLightLibraryChannel.GREEN -> 0x00FF00
+                        DeviceLightLibraryChannel.BLUE -> 0x0000FF
+                        DeviceLightLibraryChannel.WHITE -> 0xFFFFFF
+                    },
+                    order = index
+                )
+            },
+            estimatedPowerWatts = null
+        )
     }
 
     private fun DeviceLightCustomChannelId.toApplicationChannelForTest() = when (this) {
