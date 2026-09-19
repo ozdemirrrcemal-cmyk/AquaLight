@@ -117,6 +117,8 @@ private fun DeviceLightGraph.toApplicationActiveWindow(
     DeviceLightMode.MANUAL -> null
 }
 
+private const val MIN_CUSTOM_WINDOW_POINTS = 2
+
 private fun DeviceLightGraph.customSchedulePoints(): List<DeviceLightGraphPoint> {
     if (points.size < MIN_CUSTOM_WINDOW_POINTS) return points
 
