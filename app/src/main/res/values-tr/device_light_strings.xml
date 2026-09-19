@@ -257,7 +257,9 @@
     </plurals>
 
     <!-- Özel ışık eğrisi düzenleyicisi -->
-    <string name="device_light_custom_unsaved_changes">Kaydedilmemiş değişiklikler</string>
+    <string name="device_light_custom_unsaved_changes">Kaydedilmemiş editör değişiklikleri</string>
+    <string name="device_light_custom_unapplied_changes">Cihaza uygulanmamış değişiklikler</string>
+    <string name="device_light_custom_unsaved_and_unapplied_changes">Kaydedilmemiş · cihaza uygulanmamış değişiklikler</string>
     <string name="device_light_custom_curve_heading">24 saatlik ışık eğrisi</string>
     <string name="device_light_custom_curve_helper">Yeni nokta için zaman oynatıcısını sürükleyin</string>
     <plurals name="device_light_custom_point_limit_warning">
@@ -268,13 +270,23 @@
     <string name="device_light_custom_no_point_selected">Saatini ve kanal seviyelerini düzenlemek için bir nokta ekleyin veya seçin.</string>
     <string name="device_light_custom_virtual_preview_compact">Sanal önizleme</string>
     <string name="device_light_custom_preview">Önizle</string>
-    <string name="device_light_custom_preview_at_time_description">Kurulu özel eğriyi %1$s saatinde önizle</string>
+    <string name="device_light_custom_preview_at_time_description">Editördeki taslağı %1$s saatinde önizle</string>
     <string name="device_light_custom_days_heading">Günler</string>
-    <string name="device_light_custom_load">Yükle</string>
-    <string name="device_light_custom_load_description">Işık Kitaplığındaki kayıtlı özel eğrileri aç</string>
+    <string name="device_light_custom_profiles">Profiller</string>
+    <string name="device_light_custom_profiles_description">Kayıtlı özel eğrileri Profiller içinde aç</string>
     <string name="device_light_custom_save_as">Farklı kaydet</string>
     <string name="device_light_custom_save_as_description">Bu taslağı Işık Kitaplığına yeni bir özel eğri olarak kaydet</string>
-    <string name="device_light_custom_information">Farklı kaydet kitaplığa ekler. Yükle, kayıtlı özel eğrileri açar.</string>
+    <string name="device_light_custom_information">Profiller, kayıtlı eğrileri editörde açar. Farklı kaydet profil oluşturur. Cihaza uygula, cihaz programını değiştirir.</string>
+    <string name="device_light_custom_apply_to_device">Cihaza uygula</string>
+    <string name="device_light_custom_applied_to_device">Cihaza uygulandı</string>
+    <string name="device_light_custom_apply_to_device_description">Editördeki güncel eğriyi cihaza kur</string>
+    <string name="device_light_custom_applied_success">Özel eğri cihaza uygulandı</string>
+    <string name="device_light_custom_stale_error">Cihaz programı başka bir işlemle değişti. Editördeki taslağınız korundu; gözden geçirip yeniden uygulayın.</string>
+    <string name="device_light_custom_more_actions_description">Diğer özel program işlemleri</string>
+    <string name="device_light_custom_device_program_actions_title">Cihaz programı</string>
+    <string name="device_light_custom_delete_device_program">Cihaz programını sil</string>
+    <string name="device_light_custom_delete_device_program_message">Bu cihazdaki kurulu Özel program silinir. Profiller içindeki kayıtlar etkilenmez. Editör, cihazın boş program durumuna döner.</string>
+    <string name="device_light_custom_device_program_deleted_success">Cihazdaki Özel program silindi</string>
     <string name="device_light_custom_add_time_title">Zaman noktası ekle</string>
     <string name="device_light_custom_add_time_message">Noktanın kesin saatini seçin</string>
     <string name="device_light_custom_add_time_helper">Tamam dediğinizde yeni nokta oluşturulur</string>
