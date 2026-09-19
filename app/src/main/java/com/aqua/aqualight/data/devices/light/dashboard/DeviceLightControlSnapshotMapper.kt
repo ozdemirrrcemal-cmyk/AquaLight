@@ -17,6 +17,7 @@ import com.aqua.aqualight.data.devices.light.supportsLightAdaptation
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAcclimationState
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightGraph
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightGraphPoint
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightGraphReason
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightMode
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightOutputReason
