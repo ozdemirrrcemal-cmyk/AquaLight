@@ -285,7 +285,10 @@
     <string name="device_light_custom_more_actions_description">Diğer özel program işlemleri</string>
     <string name="device_light_custom_device_program_actions_title">Cihaz programı</string>
     <string name="device_light_custom_delete_device_program">Cihaz programını sil</string>
-    <string name="device_light_custom_delete_device_program_message">Bu cihazdaki kurulu Özel program silinir. Profiller içindeki kayıtlar etkilenmez. Editör, cihazın boş program durumuna döner.</string>
+    <string name="device_light_custom_delete_device_program_title">Cihaz programı silinsin mi?</string>
+    <string name="device_light_custom_delete_device_program_message">Bu cihazdaki kurulu Özel program silinecek. Profiller içindeki kayıtlar etkilenmez. Editör, cihazın boş program durumuna döner.</string>
+    <string name="device_light_custom_delete_device_program_unsaved_message">Cihazdaki kurulu Özel program ve kaydedilmemiş editör değişiklikleri silinecek. Profiller içindeki kayıtlar etkilenmez. Bu işlem geri alınamaz.</string>
+    <string name="device_light_custom_delete_device_program_confirm">Sil</string>
     <string name="device_light_custom_device_program_deleted_success">Cihazdaki Özel program silindi</string>
     <string name="device_light_custom_add_time_title">Zaman noktası ekle</string>
     <string name="device_light_custom_add_time_message">Noktanın kesin saatini seçin</string>
