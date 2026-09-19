@@ -45,7 +45,7 @@ internal class DefaultDeviceLightCustomOperations(
             flowOf(DeviceLightCustomReadResult.Failed(DeviceLightCustomFailure.UNAVAILABLE))
         } else {
             runtime.stateRevision.map {
-                projectCurrent(uid, runtime, DeviceLightLibraryReadAuthority.PRESENTATION)
+                runtime.projectCurrent(uid, DeviceLightLibraryReadAuthority.PRESENTATION)
             }.distinctUntilChanged()
         }
     }
@@ -56,7 +56,7 @@ internal class DefaultDeviceLightCustomOperations(
         return if (uid == null || runtime == null) {
             DeviceLightCustomReadResult.Failed(DeviceLightCustomFailure.UNAVAILABLE)
         } else {
-            projectCurrent(uid, runtime, DeviceLightLibraryReadAuthority.AUTHORITATIVE)
+            runtime.projectCurrent(uid, DeviceLightLibraryReadAuthority.AUTHORITATIVE)
         }
     }
 
@@ -69,50 +69,7 @@ internal class DefaultDeviceLightCustomOperations(
             runtime.currentStatus(uid) == null -> DeviceLightCustomReadResult.Failed(
                 DeviceLightCustomFailure.NOT_CONNECTED
             )
-            else -> readAvailable(uid, runtime)
-        }
-    }
-
-    private suspend fun readAvailable(
-        uid: DeviceUid,
-        runtime: DeviceLightRuntimeRepository
-    ): DeviceLightCustomReadResult = try {
-        when (val status = runtime.requestStatus(uid)) {
-            is DeviceRuntimeCommandOutcome.Success -> when (val result = runtime.requestCustom(uid)) {
-                is DeviceRuntimeCommandOutcome.Success -> projectCurrent(
-                    uid,
-                    runtime,
-                    DeviceLightLibraryReadAuthority.AUTHORITATIVE
-                )
-                else -> DeviceLightCustomReadResult.Failed(result.toFailure())
-            }
-            else -> DeviceLightCustomReadResult.Failed(status.toFailure())
-        }
-    } catch (error: CancellationException) {
-        throw error
-    } catch (_: IllegalArgumentException) {
-        DeviceLightCustomReadResult.Failed(DeviceLightCustomFailure.INVALID_DATA)
-    } catch (_: Exception) {
-        DeviceLightCustomReadResult.Failed(DeviceLightCustomFailure.UNAVAILABLE)
-    }
-
-    private fun projectCurrent(
-        uid: DeviceUid,
-        runtime: DeviceLightRuntimeRepository,
-        authority: DeviceLightLibraryReadAuthority
-    ): DeviceLightCustomReadResult {
-        val frame = runtime.currentLibrary(uid, authority)
-            ?: return DeviceLightCustomReadResult.Failed(DeviceLightCustomFailure.NOT_CONNECTED)
-        val writeAuthoritative = runtime.currentLibrary(
-            uid,
-            DeviceLightLibraryReadAuthority.AUTHORITATIVE
-        ) == frame
-        return runCatching {
-            DeviceLightCustomReadResult.Available(
-                frame.toApplicationSnapshot(uid, writeAuthoritative)
-            )
-        }.getOrElse {
-            DeviceLightCustomReadResult.Failed(DeviceLightCustomFailure.INVALID_DATA)
+            else -> runtime.readAvailable(uid)
         }
     }
 
@@ -167,34 +124,39 @@ internal class DefaultDeviceLightCustomOperations(
         ) -> DeviceRuntimeCommandOutcome<*>
     ): DeviceLightCustomWriteResult {
         val uid = deviceUid.toUidOrNull()
-            ?: return DeviceLightCustomWriteResult.Failed(DeviceLightCustomFailure.INVALID_DATA)
         val runtime = devicesRepository.runtimeModules()?.light
-            ?: return DeviceLightCustomWriteResult.Failed(DeviceLightCustomFailure.UNAVAILABLE)
-        if (runtime.currentStatus(uid) == null) {
-            return DeviceLightCustomWriteResult.Failed(DeviceLightCustomFailure.NOT_CONNECTED)
-        }
-        return try {
-            when (val outcome = execute(uid, runtime)) {
-                is DeviceRuntimeCommandOutcome.Success -> when (
-                    val current = projectCurrent(
-                        uid,
-                        runtime,
-                        DeviceLightLibraryReadAuthority.AUTHORITATIVE
-                    )
-                ) {
-                    is DeviceLightCustomReadResult.Available ->
-                        DeviceLightCustomWriteResult.Success(current.snapshot)
-                    is DeviceLightCustomReadResult.Failed ->
-                        DeviceLightCustomWriteResult.Failed(current.failure)
+        return when {
+            uid == null -> DeviceLightCustomWriteResult.Failed(
+                DeviceLightCustomFailure.INVALID_DATA
+            )
+            runtime == null -> DeviceLightCustomWriteResult.Failed(
+                DeviceLightCustomFailure.UNAVAILABLE
+            )
+            runtime.currentStatus(uid) == null -> DeviceLightCustomWriteResult.Failed(
+                DeviceLightCustomFailure.NOT_CONNECTED
+            )
+            else -> try {
+                when (val outcome = execute(uid, runtime)) {
+                    is DeviceRuntimeCommandOutcome.Success -> when (
+                        val current = runtime.projectCurrent(
+                            uid,
+                            DeviceLightLibraryReadAuthority.AUTHORITATIVE
+                        )
+                    ) {
+                        is DeviceLightCustomReadResult.Available ->
+                            DeviceLightCustomWriteResult.Success(current.snapshot)
+                        is DeviceLightCustomReadResult.Failed ->
+                            DeviceLightCustomWriteResult.Failed(current.failure)
+                    }
+                    else -> DeviceLightCustomWriteResult.Failed(outcome.toFailure())
                 }
-                else -> DeviceLightCustomWriteResult.Failed(outcome.toFailure())
+            } catch (error: CancellationException) {
+                throw error
+            } catch (_: IllegalArgumentException) {
+                DeviceLightCustomWriteResult.Failed(DeviceLightCustomFailure.INVALID_DATA)
+            } catch (_: Exception) {
+                DeviceLightCustomWriteResult.Failed(DeviceLightCustomFailure.UNAVAILABLE)
             }
-        } catch (error: CancellationException) {
-            throw error
-        } catch (_: IllegalArgumentException) {
-            DeviceLightCustomWriteResult.Failed(DeviceLightCustomFailure.INVALID_DATA)
-        } catch (_: Exception) {
-            DeviceLightCustomWriteResult.Failed(DeviceLightCustomFailure.UNAVAILABLE)
         }
     }
 
@@ -224,6 +186,46 @@ internal class DefaultDeviceLightCustomOperations(
                 DeviceLightCustomMutationResult.Failed(DeviceLightCustomFailure.UNAVAILABLE)
             }
         }
+    }
+}
+
+private suspend fun DeviceLightRuntimeRepository.readAvailable(
+    uid: DeviceUid
+): DeviceLightCustomReadResult = try {
+    when (val status = requestStatus(uid)) {
+        is DeviceRuntimeCommandOutcome.Success -> when (val result = requestCustom(uid)) {
+            is DeviceRuntimeCommandOutcome.Success -> projectCurrent(
+                uid,
+                DeviceLightLibraryReadAuthority.AUTHORITATIVE
+            )
+            else -> DeviceLightCustomReadResult.Failed(result.toFailure())
+        }
+        else -> DeviceLightCustomReadResult.Failed(status.toFailure())
+    }
+} catch (error: CancellationException) {
+    throw error
+} catch (_: IllegalArgumentException) {
+    DeviceLightCustomReadResult.Failed(DeviceLightCustomFailure.INVALID_DATA)
+} catch (_: Exception) {
+    DeviceLightCustomReadResult.Failed(DeviceLightCustomFailure.UNAVAILABLE)
+}
+
+private fun DeviceLightRuntimeRepository.projectCurrent(
+    uid: DeviceUid,
+    authority: DeviceLightLibraryReadAuthority
+): DeviceLightCustomReadResult {
+    val frame = currentLibrary(uid, authority)
+        ?: return DeviceLightCustomReadResult.Failed(DeviceLightCustomFailure.NOT_CONNECTED)
+    val writeAuthoritative = currentLibrary(
+        uid,
+        DeviceLightLibraryReadAuthority.AUTHORITATIVE
+    ) == frame
+    return runCatching {
+        DeviceLightCustomReadResult.Available(
+            frame.toApplicationSnapshot(uid, writeAuthoritative)
+        )
+    }.getOrElse {
+        DeviceLightCustomReadResult.Failed(DeviceLightCustomFailure.INVALID_DATA)
     }
 }
 
