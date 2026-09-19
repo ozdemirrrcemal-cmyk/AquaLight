@@ -17,6 +17,7 @@ import com.aqua.aqualight.data.devices.DefaultDeviceFamilySettingsOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceStatusOperations
 import com.aqua.aqualight.data.devices.DefaultOwnerDevicesOperations
+import com.aqua.aqualight.data.devices.light.card.DefaultDeviceLightCardOperations
 import com.aqua.aqualight.data.devices.cooling.DefaultDeviceCoolingAutomaticSettingsOperations
 import com.aqua.aqualight.data.devices.cooling.DefaultDeviceCoolingTemperatureHistoryOperations
 import com.aqua.aqualight.data.devices.cooling.control.DefaultDeviceCoolingControlOperations
@@ -286,6 +287,10 @@ internal class OwnerViewModelFactory(
                 assignmentOperations = DefaultTankDeviceAssignmentOperations(assignments, repository),
                 menuOpenUseCase = createDeviceMenuOpenUseCase(graph, repository),
                 routeResolver = DeviceRouteResolver(),
+                lightCardOperations = DefaultDeviceLightCardOperations(
+                    devicesRepository = repository,
+                    controlOperations = graph.lightOperations.controlOperations
+                ),
                 dosingCardOperations = graph.dosingOperations.cardOperations,
                 coolingCardOperations = graph.coolingCardOperations
             )

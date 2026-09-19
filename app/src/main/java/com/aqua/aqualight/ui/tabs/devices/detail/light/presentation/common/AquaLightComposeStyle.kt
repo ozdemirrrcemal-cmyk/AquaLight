@@ -230,6 +230,47 @@ object AquaLightManualGeometry {
     val informationHorizontalPadding = 8.dp
 }
 
+object AquaLightTankCardGeometry {
+    val contentPadding = AquaDeviceCardGeometry.contentHorizontalPadding
+    val verticalPadding = AquaDeviceCardGeometry.contentVerticalPadding
+    val cardMinimumHeight = 218.dp
+    val mediaSize = 72.dp
+    val mediaCornerRadius = RoundedCornerShape(15.dp)
+    val mediaImageSize = 58.dp
+    val headerGap = 10.dp
+    val titleIconSize = 22.dp
+    val titleIconGap = 7.dp
+    val headerRowGap = 7.dp
+    val statusChipGap = 7.dp
+    val statusDotSize = 7.dp
+    val statusContentGap = 6.dp
+    val modeGlyphSize = 19.dp
+    val modeGlyphBorderWidth = 1.dp
+    val modeGlyphGap = 6.dp
+    val scheduleTopGap = 8.dp
+    val scheduleGap = 8.dp
+    val scheduleIconSize = 22.dp
+    val scheduleIconGap = 6.dp
+    val scheduleDividerWidth = 1.dp
+    val scheduleDividerHeight = 42.dp
+    val dividerTopGap = 10.dp
+    val dividerBottomGap = 9.dp
+    val sectionTitleBottomGap = 8.dp
+    val channelRowHeight = 18.dp
+    val channelRowGap = 8.dp
+    val channelLabelWidth = 48.dp
+    val channelLabelGap = 8.dp
+    val channelValueGap = 10.dp
+    val channelValueWidth = 28.dp
+}
+
+object AquaLightTankCardAlpha {
+    const val offlineDetails = 0.38f
+    const val offlineMedia = 0.62f
+    const val statusSurface = 0.16f
+    const val modeSurface = 0.14f
+}
+
 object AquaLightManualAlpha {
     const val gaugeTrack = 0.24f
     const val channelTrack = 0.24f

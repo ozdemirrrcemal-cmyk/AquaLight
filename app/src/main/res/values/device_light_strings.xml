@@ -60,6 +60,13 @@
     <string name="device_light_plan_channel_white">W</string>
     <string name="device_light_plan_content_description">Today’s firmware light plan from 00:00 to 24:00. Device time: %1$s.</string>
     <string name="device_light_live_output_title">Live output</string>
+    <string name="device_light_card_channel_intensities">Channel intensities</string>
+    <string name="device_light_card_sunrise">Sunrise</string>
+    <string name="device_light_card_sunset">Sunset</string>
+    <string name="device_light_card_loading">Light data is being prepared</string>
+    <string name="device_light_card_unavailable">Light data is unavailable</string>
+    <string name="device_light_card_channel_value_format">%1$d</string>
+    <string name="device_light_card_accessibility">%1$s. %2$s. %3$s. Sunrise %4$s. Sunset %5$s. %6$s.</string>
     <string name="device_light_live_output_red">Red</string>
     <string name="device_light_live_output_green">Green</string>
     <string name="device_light_live_output_blue">Blue</string>

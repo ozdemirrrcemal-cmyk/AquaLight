@@ -41,6 +41,7 @@ import com.aqua.aqualight.data.devices.cooling.DefaultDeviceCoolingTemperatureHi
 import com.aqua.aqualight.data.devices.cooling.control.DefaultDeviceCoolingControlOperations
 import com.aqua.aqualight.data.devices.light.adaptation.DefaultDeviceLightAdaptationOperations
 import com.aqua.aqualight.data.devices.light.automatic.DefaultDeviceLightAutomaticOperations
+import com.aqua.aqualight.data.devices.light.card.DefaultDeviceLightCardOperations
 import com.aqua.aqualight.data.devices.light.dashboard.DefaultDeviceLightControlOperations
 import com.aqua.aqualight.data.devices.light.custom.DefaultDeviceLightCustomOperations
 import com.aqua.aqualight.data.devices.light.library.DefaultDeviceLightLibraryOperations
@@ -363,7 +364,11 @@ private class ReleaseSmokeViewModelFactory(
                     devicesRepository = devicesRepository
                 ),
                 menuOpenUseCase = deviceMenuOpenUseCase,
-                routeResolver = DeviceRouteResolver()
+                routeResolver = DeviceRouteResolver(),
+                lightCardOperations = DefaultDeviceLightCardOperations(
+                    devicesRepository = devicesRepository,
+                    controlOperations = lightControlOperations
+                )
             )
         modelClass.isAssignableFrom(TankDeviceSelectViewModel::class.java) ->
             TankDeviceSelectViewModel(
