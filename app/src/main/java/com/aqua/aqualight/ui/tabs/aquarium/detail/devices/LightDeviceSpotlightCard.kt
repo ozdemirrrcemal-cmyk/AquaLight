@@ -117,7 +117,7 @@ private fun LightDeviceHeader(
                 )
                 Spacer(Modifier.width(AquaLightTankCardGeometry.titleIconGap))
                 Image(
-                    painter = painterResource(R.drawable.ic_care_light_24),
+                    painter = painterResource(R.drawable.ic_devices),
                     contentDescription = null,
                     colorFilter = ColorFilter.tint(
                         if (lampActive) {
