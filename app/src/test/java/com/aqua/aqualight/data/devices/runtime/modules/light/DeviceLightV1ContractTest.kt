@@ -19,7 +19,7 @@ class DeviceLightV1ContractTest {
     @Test
     fun `Light data layer pins the reviewed firmware contract revision`() {
         assertEquals(
-            "d73c59b2466430187538e9e9dbc5c163009b31dc",
+            "cd01a8760fe4a349fe85265dbadbf4278add7bb6",
             DeviceLightRuntimeContract.PINNED_FIRMWARE_COMMIT
         )
     }
