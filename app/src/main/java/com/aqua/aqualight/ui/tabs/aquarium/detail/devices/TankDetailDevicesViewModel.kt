@@ -70,16 +70,7 @@ class TankDetailDevicesViewModel(
     fun bind(tankId: Long) {
         if (tankId <= 0L || boundTankId == tankId) return
 
-        lightObserverJobs.values.forEach(Job::cancel)
-        lightObserverJobs.clear()
-        lightCardStates.value = emptyMap()
-        dosingObserverJobs.values.forEach(Job::cancel)
-        dosingObserverJobs.clear()
-        dosingCardStates.value = emptyMap()
-        coolingObserverJobs.values.forEach(Job::cancel)
-        coolingObserverJobs.clear()
-        coolingCardStates.value = emptyMap()
-        spotlightRotation.updateChannelCounts(emptyMap())
+        resetCardObservers()
         boundTankId = tankId
         assignmentOperations.start(viewModelScope)
         observeJob?.cancel()
@@ -134,6 +125,19 @@ class TankDetailDevicesViewModel(
                 _uiState.value = state
             }
         }
+    }
+
+    private fun resetCardObservers() {
+        lightObserverJobs.values.forEach(Job::cancel)
+        lightObserverJobs.clear()
+        lightCardStates.value = emptyMap()
+        dosingObserverJobs.values.forEach(Job::cancel)
+        dosingObserverJobs.clear()
+        dosingCardStates.value = emptyMap()
+        coolingObserverJobs.values.forEach(Job::cancel)
+        coolingObserverJobs.clear()
+        coolingCardStates.value = emptyMap()
+        spotlightRotation.updateChannelCounts(emptyMap())
     }
 
     fun onDevicesSurfaceVisibilityChanged(visible: Boolean) {
