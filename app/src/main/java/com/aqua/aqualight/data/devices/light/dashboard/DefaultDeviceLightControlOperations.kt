@@ -27,12 +27,15 @@ import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightMode
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightProduct
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightStatus
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightCustomDocument
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightLibraryReadAuthority
 import com.aqua.aqualight.data.devices.runtime.modules.light.currentDashboard
+import com.aqua.aqualight.data.devices.runtime.modules.light.currentLibrary
 import java.util.concurrent.CancellationException
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 
 /** Stateless application adapter over the owner-scoped central Light V1 runtime repository. */
 internal class DefaultDeviceLightControlOperations(
@@ -49,19 +52,9 @@ internal class DefaultDeviceLightControlOperations(
         return if (uid == null || runtime == null) {
             flowOf(DeviceLightControlResult.Failed(DeviceLightControlFailure.UNAVAILABLE))
         } else {
-            combine(rootOperations.observe(uid.value), runtime.stateRevision) { root, _ ->
-                val dashboard = runtime.currentDashboard(
-                    uid,
-                    DeviceLightDashboardReadAuthority.PRESENTATION
-                )
-                projectRead(
-                    uid,
-                    root,
-                    dashboard?.status,
-                    dashboard?.graph,
-                    systemOperations.current(uid.value)
-                )
-            }.distinctUntilChanged()
+            runtime.stateRevision
+                .map { projectLightControlPresentationRead(uid, runtime) }
+                .distinctUntilChanged()
         }
     }
 
@@ -170,11 +163,17 @@ private suspend fun RuntimeResolution.Ready.refreshControl(
 ): DeviceLightControlResult = when (val refresh = modules.refreshLightDashboard(deviceUid)) {
     is DeviceLightDashboardRefreshResult.Success -> {
         val result = projectRead(
-            deviceUid = deviceUid,
-            root = root,
-            status = refresh.dashboard.status,
-            graph = refresh.dashboard.graph,
-            systemResult = systemOperations.current(deviceUid.value)
+            LightProjectionInput(
+                deviceUid = deviceUid,
+                root = root,
+                status = refresh.dashboard.status,
+                graph = refresh.dashboard.graph,
+                customDocument = runtime.currentLibrary(
+                    deviceUid,
+                    DeviceLightLibraryReadAuthority.AUTHORITATIVE
+                )?.custom,
+                systemResult = systemOperations.current(deviceUid.value)
+            )
         )
         if (result is DeviceLightControlResult.Available && root.supportsLightSystem()) {
             systemOperations.refresh(deviceUid.value)
@@ -215,33 +214,46 @@ private fun RuntimeResolution.Ready.currentControl(
     DeviceLightDashboardReadAuthority.AUTHORITATIVE
 ).let { dashboard ->
     projectRead(
-        deviceUid,
-        root,
-        dashboard?.status,
-        dashboard?.graph,
-        systemOperations.current(deviceUid.value)
+        LightProjectionInput(
+            deviceUid = deviceUid,
+            root = root,
+            status = dashboard?.status,
+            graph = dashboard?.graph,
+            customDocument = runtime.currentLibrary(
+                deviceUid,
+                DeviceLightLibraryReadAuthority.AUTHORITATIVE
+            )?.custom,
+            systemResult = systemOperations.current(deviceUid.value)
+        )
     )
 }
 
-private fun projectRead(
-    deviceUid: DeviceUid,
-    root: DeviceRootSnapshot?,
-    status: DeviceLightStatus?,
-    graph: DeviceLightGraph?,
-    systemResult: DeviceLightSystemReadResult
-): DeviceLightControlResult = when {
-    root == null || status == null || graph == null ->
+private data class LightProjectionInput(
+    val deviceUid: DeviceUid,
+    val root: DeviceRootSnapshot?,
+    val status: DeviceLightStatus?,
+    val graph: DeviceLightGraph?,
+    val customDocument: DeviceLightCustomDocument?,
+    val systemResult: DeviceLightSystemReadResult
+)
+
+private fun projectRead(input: LightProjectionInput): DeviceLightControlResult = when {
+    input.root == null || input.status == null || input.graph == null ->
         DeviceLightControlResult.Failed(DeviceLightControlFailure.UNAVAILABLE)
-    !root.isSupportedLightRoot() -> DeviceLightControlResult.Failed(DeviceLightControlFailure.UNSUPPORTED)
-    status.product.wireValue != root.productKey ->
+    !input.root.isSupportedLightRoot() ->
+        DeviceLightControlResult.Failed(DeviceLightControlFailure.UNSUPPORTED)
+    input.status.product.wireValue != input.root.productKey ->
         DeviceLightControlResult.Failed(DeviceLightControlFailure.INVALID_DATA)
-    else -> status.toControlSnapshot(
-        deviceUid = deviceUid,
-        graph = graph,
-        systemSupported = root.supportsLightSystem(),
-        systemSnapshot = (systemResult as? DeviceLightSystemReadResult.Available)?.snapshot
+    else -> input.status.toControlSnapshot(
+        deviceUid = input.deviceUid,
+        graph = input.graph,
+        customDocument = input.customDocument,
+        systemSupported = input.root.supportsLightSystem(),
+        systemSnapshot = (input.systemResult as? DeviceLightSystemReadResult.Available)?.snapshot
     )
-        .takeIf { snapshot -> snapshot.matchesLightControlSurface(deviceUid.value, root) }
+        .takeIf { snapshot ->
+            snapshot.matchesLightControlSurface(input.deviceUid.value, input.root)
+        }
         ?.let(DeviceLightControlResult::Available)
         ?: DeviceLightControlResult.Failed(DeviceLightControlFailure.INVALID_DATA)
 }

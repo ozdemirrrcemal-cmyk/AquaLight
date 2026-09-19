@@ -8,21 +8,24 @@ import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemOper
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemReadResult
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemSettings
 import com.aqua.aqualight.data.devices.light.supportsLightSystem
+import com.aqua.aqualight.data.devices.light.supportsLightSystemPresentation
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.modules.DeviceRuntimeModuleProvider
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTemperatureProtectionSetPayload
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightStatusReadAuthority
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightSystemReadAuthority
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightThermalConfigApplyPayload
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightThermalConfigApplyResult
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightThermalMode
+import com.aqua.aqualight.data.devices.runtime.modules.light.currentStatus
 import com.aqua.aqualight.data.devices.runtime.modules.light.currentSystem
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 
 /** Owner-scoped adapter over the authoritative Light thermal and protection runtime owners. */
 internal class DefaultDeviceLightSystemOperations(
@@ -32,14 +35,37 @@ internal class DefaultDeviceLightSystemOperations(
     private val rootOperations = DefaultDeviceRootOperations(devicesRepository)
 
     override fun observe(deviceUid: String): Flow<DeviceLightSystemReadResult> {
-        val resolution = resolve(deviceUid)
-        return when (resolution) {
-            is SystemRuntimeResolution.Failed -> flowOf(readFailure(resolution.failure))
-            is SystemRuntimeResolution.Ready -> combine(
-                rootOperations.observe(resolution.deviceUid.value),
-                resolution.modules.light.stateRevision
-            ) { root, _ ->
-                resolution.project(root, DeviceLightSystemReadAuthority.PRESENTATION)
+        val uid = deviceUid.trim().takeIf(String::isNotBlank)?.let(::DeviceUid)
+        val modules = devicesRepository.runtimeModules()
+        return if (uid == null || modules == null) {
+            flowOf(readFailure(DeviceLightSystemFailure.UNAVAILABLE))
+        } else {
+            modules.light.stateRevision.map {
+                val status = modules.light.currentStatus(
+                    uid,
+                    DeviceLightStatusReadAuthority.PRESENTATION
+                )
+                if (status == null) {
+                    readFailure(DeviceLightSystemFailure.UNAVAILABLE)
+                } else if (!status.supportsLightSystemPresentation()) {
+                    readFailure(DeviceLightSystemFailure.UNSUPPORTED)
+                } else {
+                    val frame = modules.light.currentSystem(
+                        uid,
+                        DeviceLightSystemReadAuthority.PRESENTATION
+                    )
+                    val authoritative = modules.light.currentSystem(
+                        uid,
+                        DeviceLightSystemReadAuthority.AUTHORITATIVE
+                    )
+                    projectLightSystemPresentationSnapshot(
+                        deviceUid = uid,
+                        thermal = frame?.thermal,
+                        protection = frame?.protection,
+                        firmwareWriteAuthoritative =
+                            frame != null && frame == authoritative
+                    )
+                }
             }.distinctUntilChanged()
         }
     }

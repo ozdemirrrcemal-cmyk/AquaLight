@@ -60,6 +60,13 @@
     <string name="device_light_plan_channel_white">W</string>
     <string name="device_light_plan_content_description">00:00 ile 24:00 arasındaki firmware ışık planı. Cihaz saati: %1$s.</string>
     <string name="device_light_live_output_title">Anlık çıkış</string>
+    <string name="device_light_card_channel_intensities">Kanal Yoğunlukları</string>
+    <string name="device_light_card_sunrise">Gün doğumu</string>
+    <string name="device_light_card_sunset">Gün batımı</string>
+    <string name="device_light_card_loading">Işık verileri hazırlanıyor</string>
+    <string name="device_light_card_unavailable">Işık verileri kullanılamıyor</string>
+    <string name="device_light_card_channel_value_format">%1$d</string>
+    <string name="device_light_card_accessibility">%1$s. %2$s. %3$s. Gün doğumu %4$s. Gün batımı %5$s. %6$s.</string>
     <string name="device_light_live_output_red">Kırmızı</string>
     <string name="device_light_live_output_green">Yeşil</string>
     <string name="device_light_live_output_blue">Mavi</string>

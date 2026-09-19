@@ -15,6 +15,7 @@ import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemSnap
 import com.aqua.aqualight.data.devices.light.supportsLightAdaptation
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAcclimationState
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightCustomDocument
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightGraph
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightGraphReason
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightMode
@@ -24,6 +25,7 @@ import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightStatus
 internal fun DeviceLightStatus.toControlSnapshot(
     deviceUid: DeviceUid,
     graph: DeviceLightGraph,
+    customDocument: DeviceLightCustomDocument?,
     systemSupported: Boolean,
     systemSnapshot: DeviceLightSystemSnapshot?
 ) = DeviceLightControlSnapshot(
@@ -69,7 +71,8 @@ internal fun DeviceLightStatus.toControlSnapshot(
                 timeMs = point.timeMs,
                 channelLevels = point.channelPermille
             )
-        }
+        },
+        activeWindow = graph.toApplicationActiveWindow(auto.activeProgramId, customDocument)
     ),
     automaticProgramCount = auto.programCount,
     customCurvePointCount = custom.pointCount

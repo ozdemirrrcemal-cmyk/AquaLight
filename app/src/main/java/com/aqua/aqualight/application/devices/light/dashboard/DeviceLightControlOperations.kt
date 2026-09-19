@@ -92,7 +92,13 @@ data class DeviceLightPlanSnapshot(
     val nowTimeMs: Long?,
     val channelScale: Int,
     val hasScheduleToday: Boolean,
-    val points: List<DeviceLightPlanPointSnapshot>
+    val points: List<DeviceLightPlanPointSnapshot>,
+    val activeWindow: DeviceLightPlanWindowSnapshot? = null
+)
+
+data class DeviceLightPlanWindowSnapshot(
+    val startTimeMs: Long,
+    val endTimeMs: Long
 )
 
 data class DeviceLightPlanPointSnapshot(

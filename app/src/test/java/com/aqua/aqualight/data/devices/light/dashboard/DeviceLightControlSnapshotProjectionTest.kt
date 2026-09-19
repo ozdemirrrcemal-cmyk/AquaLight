@@ -9,7 +9,10 @@ import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemFanS
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemSnapshot
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemTemperaturePolicy
 import com.aqua.aqualight.data.devices.model.DeviceUid
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightCustomDocument
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightCustomPoint
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightMode
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightScene
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightMutationParser
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightProduct
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeFixtures
@@ -35,6 +38,7 @@ class DeviceLightControlSnapshotProjectionTest {
         val snapshot = status.toControlSnapshot(
             deviceUid = DeviceUid("light-pro"),
             graph = graph,
+            customDocument = null,
             systemSupported = true,
             systemSnapshot = systemSnapshot()
         )
@@ -63,6 +67,38 @@ class DeviceLightControlSnapshotProjectionTest {
     }
 
     @Test
+    fun `custom graph points project to the card schedule window`() {
+        val parsed = DeviceLightStatusParser.parse(DeviceLightRuntimeFixtures.status())
+        val status = parsed.copy(mode = DeviceLightMode.CUSTOM)
+        val graph = DeviceLightMutationParser.Graph.parseGraph(
+            DeviceLightRuntimeFixtures.graph(mode = DeviceLightMode.CUSTOM),
+            status.product
+        )
+
+        val custom = DeviceLightCustomDocument(
+            revision = 3L,
+            installed = true,
+            weekdaysMask = 127,
+            pointCount = 2,
+            points = listOf(
+                DeviceLightCustomPoint(28_800_000L, DeviceLightScene.wrgb(20, 50, 60, 10)),
+                DeviceLightCustomPoint(72_000_000L, DeviceLightScene.wrgb(40, 70, 80, 20))
+            ),
+            event = null
+        )
+        val snapshot = status.toControlSnapshot(
+            deviceUid = DeviceUid("light-custom"),
+            graph = graph,
+            customDocument = custom,
+            systemSupported = false,
+            systemSnapshot = null
+        )
+
+        assertEquals(28_800_000L, snapshot.plan?.activeWindow?.startTimeMs)
+        assertEquals(72_000_000L, snapshot.plan?.activeWindow?.endTimeMs)
+    }
+
+    @Test
     fun `rgb product does not expose unsupported system surface`() {
         val status = DeviceLightStatusParser.parse(
             DeviceLightRuntimeFixtures.status(DeviceLightProduct.RGB_PRO_SLIM)
@@ -78,6 +114,7 @@ class DeviceLightControlSnapshotProjectionTest {
         val snapshot = status.toControlSnapshot(
             deviceUid = DeviceUid("light-rgb"),
             graph = graph,
+            customDocument = null,
             systemSupported = false,
             systemSnapshot = null
         )

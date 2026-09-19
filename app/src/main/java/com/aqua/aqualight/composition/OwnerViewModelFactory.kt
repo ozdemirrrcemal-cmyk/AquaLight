@@ -286,6 +286,7 @@ internal class OwnerViewModelFactory(
                 assignmentOperations = DefaultTankDeviceAssignmentOperations(assignments, repository),
                 menuOpenUseCase = createDeviceMenuOpenUseCase(graph, repository),
                 routeResolver = DeviceRouteResolver(),
+                lightCardOperations = graph.lightOperations.cardOperations,
                 dosingCardOperations = graph.dosingOperations.cardOperations,
                 coolingCardOperations = graph.coolingCardOperations
             )
