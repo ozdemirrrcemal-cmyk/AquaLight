@@ -69,10 +69,16 @@ sealed interface DeviceLightCustomMutationResult {
     data class Failed(val failure: DeviceLightCustomFailure) : DeviceLightCustomMutationResult
 }
 
+sealed interface DeviceLightCustomWriteResult {
+    data class Success(val snapshot: DeviceLightCustomSnapshot) : DeviceLightCustomWriteResult
+    data class Failed(val failure: DeviceLightCustomFailure) : DeviceLightCustomWriteResult
+}
+
 enum class DeviceLightCustomFailure {
     UNAVAILABLE,
     NOT_CONNECTED,
     UNSUPPORTED,
+    STALE_REVISION,
     REJECTED,
     INVALID_DATA
 }
@@ -82,6 +88,16 @@ interface DeviceLightCustomOperations {
     fun observe(deviceUid: String): Flow<DeviceLightCustomReadResult>
     fun current(deviceUid: String): DeviceLightCustomReadResult
     suspend fun read(deviceUid: String): DeviceLightCustomReadResult
+    suspend fun applyToDevice(
+        deviceUid: String,
+        expectedRevision: Long,
+        weekdaysMask: Int,
+        points: List<DeviceLightCustomPoint>
+    ): DeviceLightCustomWriteResult
+    suspend fun clearDeviceProgram(
+        deviceUid: String,
+        expectedRevision: Long
+    ): DeviceLightCustomWriteResult
     suspend fun preview(
         deviceUid: String,
         points: List<DeviceLightCustomPoint>
