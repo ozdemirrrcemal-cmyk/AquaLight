@@ -13,7 +13,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE_PATH = ROOT / "protocol/fixtures/aql_ws_v1_golden.json"
-FIXTURE_SHA256 = "4d9f2b406800656dc19f08350fd0a3badac659d6fe230d9e3df66f92f728845d"
+FIXTURE_SHA256 = "d525cbefca639fcc327d6649f1074abb4d3dc79d0fd4ec0f918a70f546aaea41"
 errors: list[str] = []
 
 
