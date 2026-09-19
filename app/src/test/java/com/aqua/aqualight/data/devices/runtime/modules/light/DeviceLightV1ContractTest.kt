@@ -167,6 +167,7 @@ class DeviceLightV1ContractTest {
             points = listOf(DeviceLightCustomPoint(0, rgb))
         ).toJson()
         assertKeys(wrgbCustom, "expectedRevision", "weekdaysMask", "points")
+        assertKeys(DeviceLightCustomClearPayload(2).toJson(), "expectedRevision")
         assertEquals(5, wrgbCustom.getJSONArray("points").getJSONArray(0).length())
         assertEquals(4, rgbCustom.getJSONArray("points").getJSONArray(0).length())
     }
