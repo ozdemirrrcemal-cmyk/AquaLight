@@ -80,14 +80,10 @@ internal fun DeviceLightStatus.toControlSnapshot(
 private fun DeviceLightGraph.toApplicationActiveWindow(
     activeProgramId: String?
 ): DeviceLightPlanWindowSnapshot? {
-    if (
-        mode != DeviceLightMode.AUTO ||
-        !available ||
-        reason != DeviceLightGraphReason.OK ||
-        !hasScheduleToday
-    ) {
-        return null
-    }
+    if (mode != DeviceLightMode.AUTO) return null
+    if (!available) return null
+    if (reason != DeviceLightGraphReason.OK) return null
+    if (!hasScheduleToday) return null
     val selectedSpan = activeProgramId
         ?.let { programId -> autoSpans.firstOrNull { span -> span.programId == programId } }
         ?: autoSpans.singleOrNull()
