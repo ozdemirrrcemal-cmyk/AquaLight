@@ -77,8 +77,8 @@ object AquaLightDashboardGeometry {
     val planCardMinimumHeight = 172.dp
     val planCardBottomPadding = 4.dp
     val planHeaderGap = 2.dp
-    val planContentTopGap = 4.dp
-    val planMarkerLabelHeight = 18.dp
+    val planContentTopGap = 2.dp
+    val planMarkerLabelHeight = 16.dp
     val planMarkerLabelWidth = 76.dp
     val planPlotHeight = 76.dp
     val planYAxisWidth = 28.dp

@@ -127,7 +127,7 @@ private fun DeviceLightPlanHeader(
         modifier = Modifier
             .fillMaxWidth()
             .height(AquaLightDashboardGeometry.planActionHeight),
-        verticalAlignment = Alignment.Top
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
             BasicText(
