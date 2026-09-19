@@ -21,6 +21,7 @@ import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAutoProg
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAutoProgramEnabledSetPayload
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAutoProgramUpdatePayload
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightControlSetPayload
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightCustomClearPayload
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightCustomInstallPayload
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightCustomPoint
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightManualSetPayload
@@ -425,6 +426,8 @@ class AqlFirmwareInteroperabilityTest {
                 weekdaysMask = 127,
                 points = listOf(DeviceLightCustomPoint(0, scene))
             ).toJson().keySetExact(),
+            "DeviceLightCustomClearPayload" to
+                DeviceLightCustomClearPayload(1).toJson().keySetExact(),
             "DeviceLightAcclimationStartPayload" to
                 DeviceLightAcclimationStartPayload(1, 50, 30).toJson().keySetExact(),
             "DeviceLightAcclimationStopPayload" to
