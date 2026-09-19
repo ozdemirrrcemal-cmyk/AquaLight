@@ -176,8 +176,8 @@
     <string name="device_light_manual_preset_scene_description">%1$s scene. Red %2$d%%, green %3$d%%, blue %4$d%%, white %5$d%%.</string>
     <string name="device_light_manual_preset_scene_description_rgb">%1$s scene. Red %2$d%%, green %3$d%%, blue %4$d%%.</string>
     <string name="device_light_manual_preset_scene_description_unavailable">%1$s scene.</string>
-    <string name="device_light_manual_load">Load</string>
-    <string name="device_light_manual_load_description">Load a saved light scene</string>
+    <string name="device_light_manual_load">Library</string>
+    <string name="device_light_manual_load_description">Open saved manual light scenes in the Light Library</string>
     <string name="device_light_manual_save_as">Save as</string>
     <string name="device_light_manual_save_as_description">Save the requested channel values as a new scene</string>
     <string name="device_light_manual_power_off">Turn light off</string>
@@ -274,11 +274,11 @@
     <string name="device_light_custom_preview">Preview</string>
     <string name="device_light_custom_preview_at_time_description">Preview this editor draft at %1$s</string>
     <string name="device_light_custom_days_heading">Days</string>
-    <string name="device_light_custom_profiles">Profiles</string>
-    <string name="device_light_custom_profiles_description">Open saved custom curves in Profiles</string>
+    <string name="device_light_custom_profiles">Library</string>
+    <string name="device_light_custom_profiles_description">Open saved custom curves in the Light Library</string>
     <string name="device_light_custom_save_as">Save as</string>
     <string name="device_light_custom_save_as_description">Save this draft as a new custom curve in the Light Library</string>
-    <string name="device_light_custom_information">Profiles opens saved curves in the editor. Save as stores a profile. Apply to device changes the device program.</string>
+    <string name="device_light_custom_information">Library opens saved curves in the editor. Save as stores a profile. Apply to device changes the device program.</string>
     <string name="device_light_custom_apply_to_device">Apply to device</string>
     <string name="device_light_custom_applied_to_device">Applied to device</string>
     <string name="device_light_custom_apply_to_device_description">Install the current editor curve on the device</string>

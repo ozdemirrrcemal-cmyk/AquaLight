@@ -174,8 +174,8 @@
     <string name="device_light_manual_preset_scene_description">%1$s sahnesi. Kırmızı %%%2$d, yeşil %%%3$d, mavi %%%4$d, beyaz %%%5$d.</string>
     <string name="device_light_manual_preset_scene_description_rgb">%1$s sahnesi. Kırmızı %%%2$d, yeşil %%%3$d, mavi %%%4$d.</string>
     <string name="device_light_manual_preset_scene_description_unavailable">%1$s sahnesi.</string>
-    <string name="device_light_manual_load">Yükle</string>
-    <string name="device_light_manual_load_description">Kayıtlı bir ışık sahnesini yükle</string>
+    <string name="device_light_manual_load">Kitaplık</string>
+    <string name="device_light_manual_load_description">Kayıtlı manuel ışık sahnelerini Işık Kitaplığında aç</string>
     <string name="device_light_manual_save_as">Farklı kaydet</string>
     <string name="device_light_manual_save_as_description">İstenen kanal değerlerini yeni bir sahne olarak kaydet</string>
     <string name="device_light_manual_power_off">Işığı kapat</string>
@@ -272,11 +272,11 @@
     <string name="device_light_custom_preview">Önizle</string>
     <string name="device_light_custom_preview_at_time_description">Editördeki taslağı %1$s saatinde önizle</string>
     <string name="device_light_custom_days_heading">Günler</string>
-    <string name="device_light_custom_profiles">Profiller</string>
-    <string name="device_light_custom_profiles_description">Kayıtlı özel eğrileri Profiller içinde aç</string>
+    <string name="device_light_custom_profiles">Kitaplık</string>
+    <string name="device_light_custom_profiles_description">Kayıtlı özel eğrileri Işık Kitaplığında aç</string>
     <string name="device_light_custom_save_as">Farklı kaydet</string>
     <string name="device_light_custom_save_as_description">Bu taslağı Işık Kitaplığına yeni bir özel eğri olarak kaydet</string>
-    <string name="device_light_custom_information">Profiller, kayıtlı eğrileri editörde açar. Farklı kaydet profil oluşturur. Cihaza uygula, cihaz programını değiştirir.</string>
+    <string name="device_light_custom_information">Kitaplık, kayıtlı eğrileri editörde açar. Farklı kaydet profil oluşturur. Cihaza uygula, cihaz programını değiştirir.</string>
     <string name="device_light_custom_apply_to_device">Cihaza uygula</string>
     <string name="device_light_custom_applied_to_device">Cihaza uygulandı</string>
     <string name="device_light_custom_apply_to_device_description">Editördeki güncel eğriyi cihaza kur</string>

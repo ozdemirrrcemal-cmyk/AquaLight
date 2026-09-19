@@ -147,13 +147,11 @@ internal class DefaultDeviceLightCustomOperations(
             DeviceLightRuntimeRepository
         ) -> DeviceRuntimeCommandOutcome<*>
     ): DeviceLightCustomWriteResult = try {
-        when (val outcome = execute(uid, runtime)) {
-            is DeviceRuntimeCommandOutcome.Success -> runtime.projectCurrent(
-                uid,
-                DeviceLightLibraryReadAuthority.AUTHORITATIVE
-            ).toWriteResult()
-            else -> DeviceLightCustomWriteResult.Failed(outcome.toFailure())
-        }
+        executeDeviceLightCustomPersistentWrite(
+            clearPreview = { runtime.clearPreview(uid).toMutationResult() },
+            mutate = { execute(uid, runtime).toMutationResult() },
+            readAuthoritative = { runtime.readAvailable(uid) }
+        )
     } catch (error: CancellationException) {
         throw error
     } catch (_: IllegalArgumentException) {
@@ -191,11 +189,11 @@ internal class DefaultDeviceLightCustomOperations(
     }
 }
 
-private fun DeviceLightCustomReadResult.toWriteResult(): DeviceLightCustomWriteResult =
-    when (this) {
-        is DeviceLightCustomReadResult.Available -> DeviceLightCustomWriteResult.Success(snapshot)
-        is DeviceLightCustomReadResult.Failed -> DeviceLightCustomWriteResult.Failed(failure)
-    }
+private fun DeviceRuntimeCommandOutcome<*>.toMutationResult():
+    DeviceLightCustomMutationResult = when (this) {
+    is DeviceRuntimeCommandOutcome.Success -> DeviceLightCustomMutationResult.Success
+    else -> DeviceLightCustomMutationResult.Failed(toFailure())
+}
 
 private suspend fun DeviceLightRuntimeRepository.readAvailable(
     uid: DeviceUid
