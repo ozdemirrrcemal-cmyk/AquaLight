@@ -255,7 +255,7 @@ private fun projectRead(
     else -> status.toControlSnapshot(
         deviceUid = deviceUid,
         graph = graph,
-        custom = custom,
+        customDocument = custom,
         systemSupported = root.supportsLightSystem(),
         systemSnapshot = (systemResult as? DeviceLightSystemReadResult.Available)?.snapshot
     )

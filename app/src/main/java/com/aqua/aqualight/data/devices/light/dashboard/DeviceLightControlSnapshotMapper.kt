@@ -26,7 +26,7 @@ import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightStatus
 internal fun DeviceLightStatus.toControlSnapshot(
     deviceUid: DeviceUid,
     graph: DeviceLightGraph,
-    custom: DeviceLightCustomDocument?,
+    customDocument: DeviceLightCustomDocument?,
     systemSupported: Boolean,
     systemSnapshot: DeviceLightSystemSnapshot?
 ) = DeviceLightControlSnapshot(
@@ -73,15 +73,15 @@ internal fun DeviceLightStatus.toControlSnapshot(
                 channelLevels = point.channelPermille
             )
         },
-        activeWindow = graph.toApplicationActiveWindow(auto.activeProgramId, custom)
+        activeWindow = graph.toApplicationActiveWindow(auto.activeProgramId, customDocument)
     ),
     automaticProgramCount = auto.programCount,
-    customCurvePointCount = custom.pointCount
+    customCurvePointCount = customDocument.pointCount
 )
 
 private fun DeviceLightGraph.toApplicationActiveWindow(
     activeProgramId: String?,
-    custom: DeviceLightCustomDocument?
+    customDocument: DeviceLightCustomDocument?
 ): DeviceLightPlanWindowSnapshot? = when (mode) {
     DeviceLightMode.AUTO -> autoSpans
         .takeIf {
@@ -101,7 +101,7 @@ private fun DeviceLightGraph.toApplicationActiveWindow(
             )
         }
 
-    DeviceLightMode.CUSTOM -> custom
+    DeviceLightMode.CUSTOM -> customDocument
         ?.takeIf { document ->
             available &&
                 reason == DeviceLightGraphReason.OK &&

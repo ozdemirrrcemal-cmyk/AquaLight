@@ -38,7 +38,7 @@ class DeviceLightControlSnapshotProjectionTest {
         val snapshot = status.toControlSnapshot(
             deviceUid = DeviceUid("light-pro"),
             graph = graph,
-            custom = null,
+            customDocument = null,
             systemSupported = true,
             systemSnapshot = systemSnapshot()
         )
@@ -89,7 +89,7 @@ class DeviceLightControlSnapshotProjectionTest {
         val snapshot = status.toControlSnapshot(
             deviceUid = DeviceUid("light-custom"),
             graph = graph,
-            custom = custom,
+            customDocument = custom,
             systemSupported = false,
             systemSnapshot = null
         )
