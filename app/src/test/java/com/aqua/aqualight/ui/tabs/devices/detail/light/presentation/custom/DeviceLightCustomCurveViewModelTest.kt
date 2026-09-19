@@ -161,10 +161,11 @@ class DeviceLightCustomCurveViewModelTest {
         val restoredCheckpoint = requireNotNull(original.currentEditorCheckpoint)
 
         val restored = boundViewModel(
-            restoredDraft = restoredDraft,
-            restoredDirty = true,
-            restoredUnapplied = false,
-            restoredCheckpoint = restoredCheckpoint
+            restoredState = RestoredEditorState(
+                draft = restoredDraft,
+                dirty = true,
+                checkpoint = restoredCheckpoint
+            )
         )
 
         assertTrue(restored.currentState.hasUnsavedChanges)
@@ -354,8 +355,10 @@ class DeviceLightCustomCurveViewModelTest {
             }
         )
         val viewModel = boundViewModel(
-            restoredDraft = restoredDraft,
-            restoredDirty = true
+            restoredState = RestoredEditorState(
+                draft = restoredDraft,
+                dirty = true
+            )
         )
         val effect = async(start = CoroutineStart.UNDISPATCHED) { viewModel.effects.first() }
 
@@ -477,19 +480,23 @@ class DeviceLightCustomCurveViewModelTest {
     private fun boundViewModel(
         customOperations: FakeCustomOperations = FakeCustomOperations(snapshot()),
         libraryOperations: FakeLibraryOperations = FakeLibraryOperations(),
-        restoredDraft: DeviceLightCustomDraft? = null,
-        restoredDirty: Boolean = false,
-        restoredUnapplied: Boolean = false,
-        restoredCheckpoint: DeviceLightCustomDraft? = null
+        restoredState: RestoredEditorState = RestoredEditorState()
     ) = DeviceLightCustomCurveViewModel(customOperations, libraryOperations).apply {
         bind(
             deviceUidText = DEVICE_UID,
-            restoredDraft = restoredDraft,
-            restoredDirty = restoredDirty,
-            restoredUnapplied = restoredUnapplied,
-            restoredCheckpoint = restoredCheckpoint
+            restoredDraft = restoredState.draft,
+            restoredDirty = restoredState.dirty,
+            restoredUnapplied = restoredState.unapplied,
+            restoredCheckpoint = restoredState.checkpoint
         )
     }
+
+    private data class RestoredEditorState(
+        val draft: DeviceLightCustomDraft? = null,
+        val dirty: Boolean = false,
+        val unapplied: Boolean = false,
+        val checkpoint: DeviceLightCustomDraft? = null
+    )
 
     private fun DeviceLightCustomCurveViewModel.addInitialPoint() {
         pointEditor.addOrMovePoint(null, INITIAL_TIME_MS)
