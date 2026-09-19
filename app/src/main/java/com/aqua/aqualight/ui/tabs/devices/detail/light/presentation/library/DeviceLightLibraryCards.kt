@@ -1,6 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.library
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import com.aqua.aqualight.R
@@ -37,8 +39,19 @@ internal fun ManualLibraryCard(
     actions: DeviceLightLibraryActions,
     visuals: DeviceLightLibraryVisuals
 ) {
-    LibraryCardSurface {
-        LibraryCardHeader(entry, actions, visuals)
+    LibraryCardSurface(
+        onClick = if (presentation.selectable) {
+            { actions.onEntryClick(entry.id) }
+        } else {
+            null
+        }
+    ) {
+        LibraryCardHeader(
+            entry = entry,
+            actions = actions,
+            visuals = visuals,
+            showMore = !presentation.selectable
+        )
         ManualLibrarySummary(visuals)
         LibraryCardDivider(visuals)
         ManualChannelSummary(entry.channels, presentation.descriptors, payload.scene, visuals)
@@ -53,8 +66,19 @@ internal fun CustomLibraryCard(
     actions: DeviceLightLibraryActions,
     visuals: DeviceLightLibraryVisuals
 ) {
-    LibraryCardSurface {
-        LibraryCardHeader(entry, actions, visuals)
+    LibraryCardSurface(
+        onClick = if (presentation.selectable) {
+            { actions.onEntryClick(entry.id) }
+        } else {
+            null
+        }
+    ) {
+        LibraryCardHeader(
+            entry = entry,
+            actions = actions,
+            visuals = visuals,
+            showMore = !presentation.selectable
+        )
         CustomLibrarySummary(payload, visuals)
         LibraryCardDivider(visuals)
         CustomChannelSummary(entry.channels, presentation.descriptors, payload, visuals)
@@ -62,9 +86,20 @@ internal fun CustomLibraryCard(
 }
 
 @Composable
-private fun LibraryCardSurface(content: @Composable () -> Unit) {
+private fun LibraryCardSurface(
+    onClick: (() -> Unit)? = null,
+    content: @Composable () -> Unit
+) {
     AquaDeviceCardSurface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                if (onClick != null) {
+                    Modifier.clickable(role = Role.Button, onClick = onClick)
+                } else {
+                    Modifier
+                }
+            ),
         contentPadding = DeviceLightAutomaticGeometry.cardContentPadding
     ) {
         Column(
@@ -82,7 +117,8 @@ private fun LibraryCardSurface(content: @Composable () -> Unit) {
 private fun LibraryCardHeader(
     entry: DeviceLightLibraryEntry,
     actions: DeviceLightLibraryActions,
-    visuals: DeviceLightLibraryVisuals
+    visuals: DeviceLightLibraryVisuals,
+    showMore: Boolean
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -101,16 +137,18 @@ private fun LibraryCardHeader(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f)
         )
-        Spacer(Modifier.width(DeviceLightAutomaticGeometry.headerControlGap))
-        AutomaticMoreButton(
-            color = visuals.colors.card.secondaryText,
-            contentDescriptionText = stringResource(
-                R.string.device_light_library_more_actions_description,
-                entry.name
-            ),
-            enabled = true,
-            onClick = { actions.onMoreClick(entry.id) }
-        )
+        if (showMore) {
+            Spacer(Modifier.width(DeviceLightAutomaticGeometry.headerControlGap))
+            AutomaticMoreButton(
+                color = visuals.colors.card.secondaryText,
+                contentDescriptionText = stringResource(
+                    R.string.device_light_library_more_actions_description,
+                    entry.name
+                ),
+                enabled = true,
+                onClick = { actions.onMoreClick(entry.id) }
+            )
+        }
     }
 }
 

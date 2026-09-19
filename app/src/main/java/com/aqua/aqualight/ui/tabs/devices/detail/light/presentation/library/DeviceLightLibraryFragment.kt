@@ -39,22 +39,36 @@ class DeviceLightLibraryFragment : Fragment(R.layout.fragment_device_light_libra
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentDeviceLightLibraryBinding.bind(view)
         registerSheetResults()
-        setupContent()
+        val selectionTab = when (args.selectionKind) {
+            DEVICE_LIGHT_LIBRARY_SELECTION_MANUAL -> DeviceLightLibraryTab.MANUAL
+            DEVICE_LIGHT_LIBRARY_SELECTION_CUSTOM -> DeviceLightLibraryTab.CUSTOM
+            else -> null
+        }
         viewModel.bind(args.deviceUid)
         viewModel.selectTab(
-            if (args.initialTab == INITIAL_TAB_CUSTOM) {
+            selectionTab ?: if (args.initialTab == INITIAL_TAB_CUSTOM) {
                 DeviceLightLibraryTab.CUSTOM
             } else {
                 DeviceLightLibraryTab.MANUAL
             }
         )
+        setupContent(selectionMode = selectionTab != null)
         renderState(viewModel.uiState.value)
         observeViewModel()
     }
 
-    private fun setupContent() {
+    private fun setupContent(selectionMode: Boolean) {
         val actions = DeviceLightLibraryActions(
             onTabSelected = viewModel.selectTab,
+            onEntryClick = { entryId ->
+                if (selectionMode) {
+                    val navController = findNavController()
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.set(DEVICE_LIGHT_LIBRARY_SELECTION_RESULT, entryId)
+                    navController.navigateUp()
+                }
+            },
             onMoreClick = viewModel::requestActions,
             onRetryClick = viewModel::retry
         )
@@ -62,7 +76,11 @@ class DeviceLightLibraryFragment : Fragment(R.layout.fragment_device_light_libra
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
-                DeviceLightLibraryScreen(state = state, actions = actions)
+                DeviceLightLibraryScreen(
+                    state = state,
+                    actions = actions,
+                    selectionMode = selectionMode
+                )
             }
         }
     }

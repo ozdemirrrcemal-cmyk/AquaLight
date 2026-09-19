@@ -63,7 +63,8 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.toCom
 internal fun DeviceLightLibraryScreen(
     state: DeviceLightLibraryUiState,
     actions: DeviceLightLibraryActions,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    selectionMode: Boolean = false
 ) {
     val lightColors = aquaLightManualColors()
     val visuals = DeviceLightLibraryVisuals(
@@ -82,8 +83,10 @@ internal fun DeviceLightLibraryScreen(
         ),
         verticalArrangement = Arrangement.spacedBy(AquaLightLibraryGeometry.sectionGap)
     ) {
-        item(key = "library-tabs") {
-            LibraryTabs(state.selectedTab, actions.onTabSelected, visuals)
+        if (!selectionMode) {
+            item(key = "library-tabs") {
+                LibraryTabs(state.selectedTab, actions.onTabSelected, visuals)
+            }
         }
         when {
             state.initialLoading && !state.hasPresentationSnapshot -> Unit
@@ -128,7 +131,8 @@ private fun androidx.compose.foundation.lazy.LazyListScope.libraryContent(
     visuals: DeviceLightLibraryVisuals
 ) {
     val cardPresentation = DeviceLightLibraryCardPresentation(
-        descriptors = requireNotNull(state.target).channelDescriptors
+        descriptors = requireNotNull(state.target).channelDescriptors,
+        selectable = selectionMode
     )
     item(key = "library-section-header") {
         LibrarySectionHeader(state, visuals)

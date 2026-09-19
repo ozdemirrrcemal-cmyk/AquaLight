@@ -13,7 +13,8 @@ internal enum class DeviceLightLibraryTab {
 }
 
 internal data class DeviceLightLibraryCardPresentation(
-    val descriptors: List<DeviceLightLibraryChannelDescriptor>
+    val descriptors: List<DeviceLightLibraryChannelDescriptor>,
+    val selectable: Boolean = false
 )
 
 internal data class DeviceLightLibraryUiState(
@@ -41,6 +42,12 @@ internal data class DeviceLightLibraryUiState(
 
 internal data class DeviceLightLibraryActions(
     val onTabSelected: (DeviceLightLibraryTab) -> Unit,
+    val onEntryClick: (String) -> Unit,
     val onMoreClick: (String) -> Unit,
     val onRetryClick: () -> Unit
 )
+
+internal const val DEVICE_LIGHT_LIBRARY_SELECTION_RESULT =
+    "device_light_library_selection_result"
+internal const val DEVICE_LIGHT_LIBRARY_SELECTION_MANUAL = "MANUAL"
+internal const val DEVICE_LIGHT_LIBRARY_SELECTION_CUSTOM = "CUSTOM"

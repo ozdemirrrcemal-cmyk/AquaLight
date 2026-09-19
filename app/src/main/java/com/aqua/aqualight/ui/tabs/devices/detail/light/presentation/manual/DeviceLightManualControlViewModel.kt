@@ -48,6 +48,25 @@ class DeviceLightManualControlViewModel(
         scope = viewModelScope,
         currentDeviceUid = { boundDeviceUid },
         currentState = { _uiState.value },
+        applyScene = { scene ->
+            val state = _uiState.value
+            val sceneChannels = scene.channels
+            val editorChannels = state.channels.map { channel ->
+                channel.id.toApplicationChannel()
+            }.toSet()
+            if (state.controlsEnabled && editorChannels == sceneChannels.keys) {
+                draftVersion += 1L
+                _uiState.value = state.copy(
+                    channels = state.channels.map { channel ->
+                        channel.copy(
+                            percent = sceneChannels.getValue(channel.id.toApplicationChannel())
+                        )
+                    },
+                    selectedPreset = null
+                )
+                commitScene()
+            }
+        },
         emitEffect = ::emitEffect
     )
 

@@ -38,7 +38,6 @@
     <string name="device_light_hero_color_temperature_value_format">%1$s K</string>
     <string name="device_light_hero_value_unavailable">—</string>
     <string name="device_light_hero_content_description">%1$s. %2$s. %3$s. Power %4$s. Color temperature %5$s.</string>
-    <string name="device_light_open_library_description">Open Light Library</string>
     <string name="device_light_library_title">Light Library</string>
     <string name="device_light_plan_title">Today’s light plan</string>
     <string name="device_light_plan_subtitle">Planned program</string>
@@ -245,7 +244,7 @@
     <string name="device_light_library_error_message">Saved light settings could not be loaded. Try again.</string>
     <string name="device_light_library_retry">Try again</string>
     <string name="device_light_library_manual_information">Records preserve your requested channel values.</string>
-    <string name="device_light_library_custom_information">Load applies the selected days and the complete time curve to the device.</string>
+    <string name="device_light_library_custom_information">Saved curves keep their selected days and complete time curve.</string>
     <string name="device_light_library_day_monday">Mon</string>
     <string name="device_light_library_day_tuesday">Tue</string>
     <string name="device_light_library_day_wednesday">Wed</string>
@@ -278,7 +277,7 @@
     <string name="device_light_custom_load_description">Open saved custom curves in the Light Library</string>
     <string name="device_light_custom_save_as">Save as</string>
     <string name="device_light_custom_save_as_description">Save this draft as a new custom curve in the Light Library</string>
-    <string name="device_light_custom_information">Save as adds to the library. Load applies the selected profile to the device.</string>
+    <string name="device_light_custom_information">Save as adds to the library. Load opens saved custom curves.</string>
     <string name="device_light_custom_add_time_title">Add time point</string>
     <string name="device_light_custom_add_time_message">Choose the exact time for the point</string>
     <string name="device_light_custom_add_time_helper">A new point will be created when you tap Done</string>

@@ -79,14 +79,6 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
                 statusIcon = state.connectionVisualState.toWifiHeaderStatusIcon(requireContext()),
                 actions = listOf(
                     AquaHeaderAction(
-                        iconRes = R.drawable.ic_light_library,
-                        contentDescription = getString(
-                            R.string.device_light_open_library_description
-                        ),
-                        enabled = state.contentEnabled,
-                        onClick = ::openLightLibrary
-                    ),
-                    AquaHeaderAction(
                         iconRes = R.drawable.ic_settings,
                         contentDescription = getString(
                             R.string.device_light_open_settings_description
@@ -96,18 +88,6 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
                     )
                 )
             )
-        )
-    }
-
-    private fun openLightLibrary() {
-        if (!viewModel.uiState.value.contentEnabled) return
-        val navController = findNavController()
-        if (navController.currentDestination?.id != R.id.deviceLightRootFragment) return
-        navController.navigate(
-            DeviceLightRootFragmentDirections
-                .actionDeviceLightRootFragmentToDeviceLightLibraryFragment(
-                    deviceUid = args.deviceUid
-                )
         )
     }
 

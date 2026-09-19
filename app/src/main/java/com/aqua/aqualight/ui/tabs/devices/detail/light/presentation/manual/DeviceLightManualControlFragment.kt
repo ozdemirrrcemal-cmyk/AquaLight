@@ -17,6 +17,8 @@ import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceLightManualControlBinding
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryNamePolicy
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.library.DEVICE_LIGHT_LIBRARY_SELECTION_MANUAL
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.library.DEVICE_LIGHT_LIBRARY_SELECTION_RESULT
 import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
@@ -39,6 +41,19 @@ class DeviceLightManualControlFragment : Fragment(R.layout.fragment_device_light
 
         registerSaveAsResult()
         viewModel.bind(args.deviceUid)
+        findNavController().currentBackStackEntry?.savedStateHandle?.let { stateHandle ->
+            stateHandle.getLiveData<String?>(
+                DEVICE_LIGHT_LIBRARY_SELECTION_RESULT
+            ).observe(viewLifecycleOwner) { entryId ->
+                if (!entryId.isNullOrBlank()) {
+                    stateHandle.set<String?>(
+                        DEVICE_LIGHT_LIBRARY_SELECTION_RESULT,
+                        null
+                    )
+                    viewModel.libraryActions.loadSavedScene(entryId)
+                }
+            }
+        }
         renderState(viewModel.uiState.value)
         setupManualContent()
         observeViewModel()
@@ -155,7 +170,9 @@ class DeviceLightManualControlFragment : Fragment(R.layout.fragment_device_light
         navController.navigate(
             DeviceLightManualControlFragmentDirections
                 .actionDeviceLightManualControlFragmentToDeviceLightLibraryFragment(
-                    deviceUid = args.deviceUid
+                    deviceUid = args.deviceUid,
+                    initialTab = DEVICE_LIGHT_LIBRARY_SELECTION_MANUAL,
+                    selectionKind = DEVICE_LIGHT_LIBRARY_SELECTION_MANUAL
                 )
         )
     }
