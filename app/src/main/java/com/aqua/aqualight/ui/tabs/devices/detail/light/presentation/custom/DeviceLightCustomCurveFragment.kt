@@ -56,6 +56,7 @@ class DeviceLightCustomCurveFragment : Fragment(R.layout.fragment_device_light_c
                 false
             ) == true
         )
+        attachUnsavedGuard()
         findNavController().currentBackStackEntry?.savedStateHandle?.let { stateHandle ->
             stateHandle.getLiveData<String?>(
                 DEVICE_LIGHT_LIBRARY_SELECTION_RESULT
@@ -65,11 +66,12 @@ class DeviceLightCustomCurveFragment : Fragment(R.layout.fragment_device_light_c
                         DEVICE_LIGHT_LIBRARY_SELECTION_RESULT,
                         null
                     )
-                    viewModel.openLibraryProfile(entryId)
+                    unsavedGuard.requestAction {
+                        viewModel.openLibraryProfile(entryId)
+                    }
                 }
             }
         }
-        attachUnsavedGuard()
         effectHandler = DeviceLightCustomCurveEffectHandler(
             fragment = this,
             viewModel = viewModel
@@ -118,7 +120,7 @@ class DeviceLightCustomCurveFragment : Fragment(R.layout.fragment_device_light_c
             },
             onChannelChanged = viewModel.pointEditor::updateSelectedChannel,
             onPreviewClick = viewModel::preview,
-            onProfilesClick = { unsavedGuard.requestAction(::openProfiles) },
+            onProfilesClick = ::openProfiles,
             onSaveAsClick = viewModel::requestSaveAs,
             onApplyToDeviceClick = viewModel::applyToDevice
         )
