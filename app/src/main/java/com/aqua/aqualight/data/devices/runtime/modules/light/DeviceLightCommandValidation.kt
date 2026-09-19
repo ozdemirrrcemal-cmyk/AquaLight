@@ -3,29 +3,43 @@ package com.aqua.aqualight.data.devices.runtime.modules.light
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import org.json.JSONObject
 
-enum class DeviceLightErrorReason(val wireValue: String) {
-    STALE_REVISION("STALE_REVISION"),
-    AUTO_CAPACITY_REACHED("AUTO_CAPACITY_REACHED"),
-    AUTO_PROGRAM_OVERLAP("AUTO_PROGRAM_OVERLAP"),
-    AUTO_PROGRAM_NOT_FOUND("AUTO_PROGRAM_NOT_FOUND"),
-    INVALID_WEEKDAYS_MASK("INVALID_WEEKDAYS_MASK"),
-    INVALID_TIME_VALUE("INVALID_TIME_VALUE"),
-    INVALID_RAMP_VALUE("INVALID_RAMP_VALUE"),
-    RAMP_DOES_NOT_FIT("RAMP_DOES_NOT_FIT"),
-    INVALID_SCENE_VALUE("INVALID_SCENE_VALUE"),
-    CUSTOM_POINT_COUNT("CUSTOM_POINT_COUNT"),
-    CUSTOM_POINT_ORDER("CUSTOM_POINT_ORDER"),
-    CUSTOM_POINT_VALUE("CUSTOM_POINT_VALUE"),
-    ACCLIMATION_START_PERCENT("ACCLIMATION_START_PERCENT"),
-    ACCLIMATION_DURATION("ACCLIMATION_DURATION"),
-    RTC_NOT_READY("RTC_NOT_READY"),
-    OUTPUT_TRANSACTION_FAILED("OUTPUT_TRANSACTION_FAILED"),
-    STORAGE_COMMIT_FAILED("STORAGE_COMMIT_FAILED");
+/** Known runtime reasons plus a lossless fallback for newer firmware contracts. */
+sealed interface DeviceLightErrorReason {
+    val wireValue: String
+
+    enum class Known(override val wireValue: String) : DeviceLightErrorReason {
+        STALE_REVISION("STALE_REVISION"),
+        AUTO_CAPACITY_REACHED("AUTO_CAPACITY_REACHED"),
+        AUTO_PROGRAM_OVERLAP("AUTO_PROGRAM_OVERLAP"),
+        AUTO_PROGRAM_NOT_FOUND("AUTO_PROGRAM_NOT_FOUND"),
+        INVALID_WEEKDAYS_MASK("INVALID_WEEKDAYS_MASK"),
+        INVALID_TIME_VALUE("INVALID_TIME_VALUE"),
+        INVALID_RAMP_VALUE("INVALID_RAMP_VALUE"),
+        RAMP_DOES_NOT_FIT("RAMP_DOES_NOT_FIT"),
+        INVALID_SCENE_VALUE("INVALID_SCENE_VALUE"),
+        CUSTOM_POINT_COUNT("CUSTOM_POINT_COUNT"),
+        CUSTOM_POINT_ORDER("CUSTOM_POINT_ORDER"),
+        CUSTOM_POINT_VALUE("CUSTOM_POINT_VALUE"),
+        ACCLIMATION_START_PERCENT("ACCLIMATION_START_PERCENT"),
+        ACCLIMATION_DURATION("ACCLIMATION_DURATION"),
+        RTC_NOT_READY("RTC_NOT_READY"),
+        OUTPUT_TRANSACTION_FAILED("OUTPUT_TRANSACTION_FAILED"),
+        STORAGE_COMMIT_FAILED("STORAGE_COMMIT_FAILED"),
+        // Executable firmware uses this when an Invalid mutation has no domain-specific reason.
+        INVALID_VALUE("INVALID_VALUE")
+    }
+
+    data class Unknown(
+        val rawValue: String
+    ) : DeviceLightErrorReason {
+        override val wireValue: String = rawValue
+    }
 
     companion object {
-        fun fromWireExact(value: String): DeviceLightErrorReason =
-            entries.singleOrNull { it.wireValue == value }
-                ?: error("Unknown Light V1 error reason: $value")
+        private val knownByWireValue = Known.entries.associateBy { it.wireValue }
+
+        fun fromWire(value: String): DeviceLightErrorReason =
+            knownByWireValue[value] ?: Unknown(value)
     }
 }
 
@@ -54,7 +68,10 @@ data class DeviceLightFirmwareErrorData(
     val rollbackOutputHealthy: Boolean? = null
 )
 
-/** Strict decoder for firmware error.data. Empty data is valid for envelope-level failures. */
+/**
+ * Strictly decodes known firmware error.data shapes. Empty envelope data is valid, while an
+ * unknown reason and its source JSON remain available for forward-compatible handling.
+ */
 fun DeviceRuntimeCommandOutcome.FirmwareError.lightV1Data(): DeviceLightFirmwareErrorData {
     require(module == DeviceLightRuntimeContract.MODULE)
     val data = JSONObject(structuredDataJson)
@@ -63,14 +80,15 @@ fun DeviceRuntimeCommandOutcome.FirmwareError.lightV1Data(): DeviceLightFirmware
 }
 
 private fun parseLightV1ErrorData(data: JSONObject): DeviceLightFirmwareErrorData {
-    val reason = DeviceLightErrorReason.fromWireExact(data.requireLightText("reason"))
+    val reason = DeviceLightErrorReason.fromWire(data.requireLightText("reason"))
     return when (reason) {
-        DeviceLightErrorReason.STALE_REVISION,
-        DeviceLightErrorReason.AUTO_PROGRAM_NOT_FOUND -> parseRevisionError(data, reason)
-        DeviceLightErrorReason.AUTO_CAPACITY_REACHED -> parseCapacityError(data, reason)
-        DeviceLightErrorReason.AUTO_PROGRAM_OVERLAP -> parseOverlapError(data, reason)
-        DeviceLightErrorReason.OUTPUT_TRANSACTION_FAILED,
-        DeviceLightErrorReason.STORAGE_COMMIT_FAILED -> parseRollbackError(data, reason)
+        DeviceLightErrorReason.Known.STALE_REVISION,
+        DeviceLightErrorReason.Known.AUTO_PROGRAM_NOT_FOUND -> parseRevisionError(data, reason)
+        DeviceLightErrorReason.Known.AUTO_CAPACITY_REACHED -> parseCapacityError(data, reason)
+        DeviceLightErrorReason.Known.AUTO_PROGRAM_OVERLAP -> parseOverlapError(data, reason)
+        DeviceLightErrorReason.Known.OUTPUT_TRANSACTION_FAILED,
+        DeviceLightErrorReason.Known.STORAGE_COMMIT_FAILED -> parseRollbackError(data, reason)
+        is DeviceLightErrorReason.Unknown -> DeviceLightFirmwareErrorData(reason = reason)
         else -> {
             data.requireLightKeys(setOf("reason"), "Light error.data")
             DeviceLightFirmwareErrorData(reason = reason)

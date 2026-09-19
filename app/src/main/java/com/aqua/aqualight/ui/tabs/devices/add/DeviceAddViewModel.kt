@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningCandidateSnapshot
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDiscoveryOperations
+import com.aqua.aqualight.application.devices.provisioning.ProvisioningManualPreflightResult
+import com.aqua.aqualight.application.devices.provisioning.ProvisioningScanFailure
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningScanStartResult
 import com.aqua.aqualight.application.text.AppTextResolver
 import kotlinx.coroutines.Job
@@ -22,6 +24,8 @@ class DeviceAddViewModel(
     private val textResolver: AppTextResolver
 ) : ViewModel() {
 
+    private val preflightPresentation = DeviceAddPreflightPresentation(textResolver)
+
     private val _uiState = MutableStateFlow(readyState())
     val uiState: StateFlow<DeviceAddUiState> = _uiState.asStateFlow()
 
@@ -29,7 +33,10 @@ class DeviceAddViewModel(
     val events: Flow<DeviceAddEvent> = _events.receiveAsFlow()
 
     private var scanCollectJob: Job? = null
+    private var scanFailureJob: Job? = null
     private var scanTimeoutJob: Job? = null
+    private var manualPreflightJob: Job? = null
+    private var candidatesByAddress: Map<String, ProvisioningCandidateSnapshot> = emptyMap()
     private var resetScanStateOnReturn = false
 
     fun onScreenVisible() {
@@ -41,6 +48,8 @@ class DeviceAddViewModel(
     }
 
     fun onQrClicked() {
+        manualPreflightJob?.cancel()
+        stopBleScan()
         viewModelScope.launch {
             _events.send(DeviceAddEvent.OpenQrScanner)
         }
@@ -60,6 +69,7 @@ class DeviceAddViewModel(
 
     fun startBleScan() {
         scanCollectJob?.cancel()
+        scanFailureJob?.cancel()
         scanTimeoutJob?.cancel()
 
         _uiState.value = DeviceAddUiState(
@@ -75,6 +85,9 @@ class DeviceAddViewModel(
         when (val result = discoveryOperations.startScan()) {
             ProvisioningScanStartResult.Started -> {
                 observeBleCandidates()
+                scanFailureJob = viewModelScope.launch {
+                    discoveryOperations.scanFailures.collect(::showScanFailure)
+                }
                 startScanTimeout()
             }
 
@@ -91,31 +104,65 @@ class DeviceAddViewModel(
             }
 
             is ProvisioningScanStartResult.Failed -> {
-                showBleError(result.message)
+                showScanFailure(result.failure)
             }
         }
     }
 
     fun onScanAgainClicked() {
+        manualPreflightJob?.cancel()
         startBleScan()
     }
 
     fun onCandidateClicked(candidate: DeviceAddCandidateUi) {
         if (candidate.bleAddress.isBlank()) {
-            showBleError(string(R.string.device_add_missing_ble_address))
+            val message = string(R.string.device_add_missing_ble_address)
+            _uiState.value = preflightPresentation
+                .failure(ProvisioningManualPreflightResult.ConnectionFailed)
+                .copy(heroSubtitle = message, emptyMessage = message)
             return
         }
 
-        resetScanStateOnReturn = true
+        val sourceCandidate = candidatesByAddress[candidate.bleAddress]
+        if (sourceCandidate == null) {
+            _uiState.value = preflightPresentation.failure(
+                ProvisioningManualPreflightResult.ConnectionFailed
+            )
+            return
+        }
+
         stopBleScan()
-        viewModelScope.launch {
-            _events.send(DeviceAddEvent.OpenWifiProvisioning(candidate = candidate))
+        _uiState.value = DeviceAddUiState(
+            mode = DeviceAddScanMode.VERIFYING,
+            heroTitle = string(R.string.device_add_verifying_title),
+            heroSubtitle = string(R.string.device_add_verifying_message),
+            scanBadge = string(R.string.device_add_scan_badge_verifying),
+            emptyTitle = string(R.string.device_add_verifying_title),
+            emptyMessage = string(R.string.device_add_verifying_message)
+        )
+        manualPreflightJob?.cancel()
+        manualPreflightJob = viewModelScope.launch {
+            when (val result = discoveryOperations.verifyManualCandidate(sourceCandidate)) {
+                is ProvisioningManualPreflightResult.Allowed -> {
+                    resetScanStateOnReturn = true
+                    _events.send(
+                        DeviceAddEvent.OpenWifiProvisioning(
+                            candidate = result.candidate.toUi()
+                        )
+                    )
+                }
+                ProvisioningManualPreflightResult.MissingPermission -> onBlePermissionDenied()
+                ProvisioningManualPreflightResult.BluetoothOff -> showBluetoothOff()
+                ProvisioningManualPreflightResult.BluetoothUnavailable -> showBluetoothUnavailable()
+                else -> _uiState.value = preflightPresentation.failure(result)
+            }
         }
     }
 
     private fun observeBleCandidates() {
         scanCollectJob = viewModelScope.launch {
             discoveryOperations.candidates.collect { candidates ->
+                candidatesByAddress = candidates.associateBy { candidate -> candidate.address }
                 val uiCandidates = candidates.map { candidate ->
                     candidate.toUi()
                 }
@@ -188,23 +235,35 @@ class DeviceAddViewModel(
         )
     }
 
-    private fun showBleError(message: String) {
+    private fun showScanFailure(failure: ProvisioningScanFailure) {
         stopBleScan()
+        val message = when (failure) {
+            ProvisioningScanFailure.ALREADY_RUNNING,
+            ProvisioningScanFailure.TOO_FREQUENT ->
+                string(R.string.device_add_scan_busy_message)
+            ProvisioningScanFailure.FEATURE_UNSUPPORTED ->
+                string(R.string.device_add_bluetooth_unavailable_empty_message)
+            ProvisioningScanFailure.APP_REGISTRATION_FAILED,
+            ProvisioningScanFailure.OUT_OF_RESOURCES ->
+                string(R.string.device_add_scan_service_message)
+            ProvisioningScanFailure.INTERNAL_ERROR ->
+                string(R.string.device_add_scan_failed_fallback)
+        }
         _uiState.value = DeviceAddUiState(
             mode = DeviceAddScanMode.ERROR,
             heroTitle = string(R.string.device_add_scan_failed_title),
             heroSubtitle = string(R.string.device_add_scan_failed_message),
             scanBadge = string(R.string.device_add_scan_badge_error),
             emptyTitle = string(R.string.device_add_scan_failed_empty_title),
-            emptyMessage = message.ifBlank {
-                string(R.string.device_add_scan_failed_fallback)
-            }
+            emptyMessage = message
         )
     }
 
     private fun stopBleScan() {
         scanCollectJob?.cancel()
         scanCollectJob = null
+        scanFailureJob?.cancel()
+        scanFailureJob = null
         scanTimeoutJob?.cancel()
         scanTimeoutJob = null
         discoveryOperations.stopScan()
@@ -222,9 +281,7 @@ class DeviceAddViewModel(
             title = displayTitle,
             serial = displaySerial,
             model = modelLabel,
-            status = displayStatus.ifBlank {
-                string(R.string.device_add_status_ready)
-            },
+            status = string(R.string.device_add_status_ready),
             rssiLabel = string(R.string.device_add_rssi_value_format, rssi),
             bleAddress = address,
             bleName = bleName
@@ -247,6 +304,7 @@ class DeviceAddViewModel(
         textResolver.get(resId, *args)
 
     override fun onCleared() {
+        manualPreflightJob?.cancel()
         stopBleScan()
         super.onCleared()
     }
@@ -270,7 +328,9 @@ enum class DeviceAddScanMode {
     READY,
     SCANNING,
     RESULTS,
+    VERIFYING,
     EMPTY,
+    QR_REQUIRED,
     PERMISSION_REQUIRED,
     BLUETOOTH_OFF,
     ERROR
@@ -284,4 +344,45 @@ sealed interface DeviceAddEvent {
     data class OpenWifiProvisioning(
         val candidate: DeviceAddCandidateUi
     ) : DeviceAddEvent
+}
+
+private class DeviceAddPreflightPresentation(
+    private val textResolver: AppTextResolver
+) {
+    fun failure(result: ProvisioningManualPreflightResult): DeviceAddUiState {
+        val (titleRes, messageRes) = when (result) {
+            ProvisioningManualPreflightResult.QrRequired ->
+                R.string.device_add_qr_required_title to
+                    R.string.device_add_qr_required_message
+            ProvisioningManualPreflightResult.ResetRequired ->
+                R.string.device_add_reset_required_title to
+                    R.string.device_add_reset_required_message
+            ProvisioningManualPreflightResult.IncompatibleDevice ->
+                R.string.device_add_incompatible_title to
+                    R.string.device_add_incompatible_message
+            else ->
+                R.string.device_add_verification_failed_title to
+                    R.string.device_add_verification_failed_message
+        }
+        val title = textResolver.get(titleRes)
+        val message = textResolver.get(messageRes)
+        return DeviceAddUiState(
+            mode = if (result == ProvisioningManualPreflightResult.QrRequired) {
+                DeviceAddScanMode.QR_REQUIRED
+            } else {
+                DeviceAddScanMode.ERROR
+            },
+            heroTitle = title,
+            heroSubtitle = message,
+            scanBadge = textResolver.get(
+                if (result == ProvisioningManualPreflightResult.QrRequired) {
+                    R.string.device_add_scan_badge_secure_qr
+                } else {
+                    R.string.device_add_scan_badge_error
+                }
+            ),
+            emptyTitle = title,
+            emptyMessage = message
+        )
+    }
 }

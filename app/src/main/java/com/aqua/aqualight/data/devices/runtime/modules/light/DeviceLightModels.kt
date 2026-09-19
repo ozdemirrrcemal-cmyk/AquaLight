@@ -432,7 +432,10 @@ data class DeviceLightAutoProgramDeletePayload(
 }
 
 data class DeviceLightCustomPoint(val timeMs: Long, val scene: DeviceLightScene) {
-    init { require(timeMs in 0..DeviceLightRuntimeContract.Limit.LAST_DAY_MILLISECOND) }
+    init {
+        require(timeMs in 0..DeviceLightRuntimeContract.Limit.LAST_DAY_MILLISECOND)
+        require(timeMs % DeviceLightRuntimeContract.Limit.SCHEDULE_TIME_STEP_MS == 0L)
+    }
     fun toJsonTuple(): JSONArray = scene.toTuple(timeMs)
 }
 
@@ -458,6 +461,15 @@ data class DeviceLightCustomInstallPayload(
             DeviceLightRuntimeContract.Field.POINTS,
             JSONArray(points.map(DeviceLightCustomPoint::toJsonTuple))
         )
+}
+
+data class DeviceLightCustomClearPayload(
+    val expectedRevision: Long
+) {
+    init { requireRevision(expectedRevision) }
+
+    fun toJson(): JSONObject = JSONObject()
+        .put(DeviceLightRuntimeContract.Field.EXPECTED_REVISION, expectedRevision)
 }
 
 data class DeviceLightAcclimationStartPayload(
@@ -514,6 +526,24 @@ sealed interface DeviceLightPreviewSetPayload {
             .put(DeviceLightRuntimeContract.Field.VIRTUAL_TIME_MS, virtualTimeMs)
             .also { json -> durationMs?.let { json.put(DeviceLightRuntimeContract.Field.DURATION_MS, it) } }
     }
+
+    data class CustomDay(
+        val points: List<DeviceLightCustomPoint>
+    ) : DeviceLightPreviewSetPayload {
+        init {
+            require(points.isNotEmpty())
+            require(points.size <= DeviceLightRuntimeContract.Limit.CUSTOM_POINT_CAPACITY)
+            require(points.zipWithNext().all { (left, right) -> left.timeMs < right.timeMs })
+            require(points.map { it.scene.product }.distinct().size == 1)
+        }
+
+        override fun toJson(): JSONObject = JSONObject()
+            .put(DeviceLightRuntimeContract.Field.PLAYBACK, DeviceLightRuntimeContract.Playback.CUSTOM_DAY)
+            .put(
+                DeviceLightRuntimeContract.Field.POINTS,
+                JSONArray(points.map(DeviceLightCustomPoint::toJsonTuple))
+            )
+    }
 }
 
 private fun validateAutoProgram(
@@ -544,7 +574,7 @@ private fun requireRevision(value: Long) =
     require(value in 0..DeviceLightRuntimeContract.Limit.UINT32_MAX)
 private fun requireProgramId(value: String) = require(PROGRAM_ID.matches(value))
 private fun requirePreviewDuration(value: Long) =
-    require(value in 1..DeviceLightRuntimeContract.Limit.MAX_PREVIEW_DURATION_MS)
+    require(value in 1..DeviceLightRuntimeContract.Limit.MAX_TIMED_PREVIEW_DURATION_MS)
 
 private fun <T> enumByWire(value: String, entries: Iterable<T>, wire: (T) -> String): T =
     entries.singleOrNull { wire(it) == value } ?: error("Unknown Light V1 enum value: $value")

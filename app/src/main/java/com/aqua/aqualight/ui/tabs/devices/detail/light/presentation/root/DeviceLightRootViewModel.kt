@@ -11,10 +11,18 @@ import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
-import com.aqua.aqualight.application.devices.light.control.DeviceLightControlOperations
-import com.aqua.aqualight.application.devices.light.control.DeviceLightControlResult
-import com.aqua.aqualight.application.devices.light.control.DeviceLightControlSnapshot
-import com.aqua.aqualight.application.devices.light.control.matchesLightControlSurface
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlFailure
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlOperations
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlMode
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightChannelOutputSnapshot
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightAdaptationSummary
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlResult
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlSnapshot
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightModeMutationResult
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightHeroSnapshot
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanSnapshot
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightSystemSummary
+import com.aqua.aqualight.application.devices.light.dashboard.matchesLightControlSurface
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
@@ -39,14 +47,22 @@ class DeviceLightRootViewModel(
     )
     val surfaceUnavailableEvents: Flow<DeviceMenuUnavailableReason> =
         surfaceUnavailableEventChannel.receiveAsFlow()
+    private val modeChangeFailureEventChannel = Channel<DeviceLightControlFailure>(
+        capacity = Channel.BUFFERED
+    )
+    val modeChangeFailureEvents: Flow<DeviceLightControlFailure> =
+        modeChangeFailureEventChannel.receiveAsFlow()
 
     private var boundDeviceUid = ""
     private var latestRootSnapshot: DeviceRootSnapshot? = null
     private var currentControlSnapshot: DeviceLightControlSnapshot? = null
+    private var pendingMode: DeviceLightControlMode? = null
+    private var committedMode: DeviceLightControlMode? = null
     private var surfacePreparationPending = false
     private var rootObserveJob: Job? = null
     private var controlObserveJob: Job? = null
     private var surfacePreparationJob: Job? = null
+    private var modeChangeJob: Job? = null
 
     fun bind(deviceUidText: String) {
         val deviceUid = deviceUidText.trim()
@@ -65,6 +81,9 @@ class DeviceLightRootViewModel(
         )
         cancelJobs()
         boundDeviceUid = deviceUid
+        currentControlSnapshot = null
+        pendingMode = null
+        committedMode = null
         latestRootSnapshot = rootOperations.current(deviceUid)
         acceptControlResult(lightControlOperations.currentControl(deviceUid))
         val preparedSurfaceStillCurrent = preparedHandoff &&
@@ -147,15 +166,20 @@ class DeviceLightRootViewModel(
 
     private suspend fun finishUnavailablePreparation(reason: DeviceMenuUnavailableReason) {
         surfacePreparationPending = false
-        currentControlSnapshot = null
         renderBoundState()
         surfaceUnavailableEventChannel.send(reason)
     }
 
     private fun acceptControlResult(result: DeviceLightControlResult) {
-        currentControlSnapshot = when (result) {
-            is DeviceLightControlResult.Available -> result.snapshot
-            is DeviceLightControlResult.Failed -> null
+        if (result is DeviceLightControlResult.Available) {
+            val previousMode = currentControlSnapshot?.hero?.mode
+            currentControlSnapshot = result.snapshot
+            if (
+                committedMode != null &&
+                result.snapshot.hero.mode != previousMode
+            ) {
+                committedMode = null
+            }
         }
     }
 
@@ -176,7 +200,19 @@ class DeviceLightRootViewModel(
                 DeviceConnectionVisualState.OFFLINE
             },
             contentEnabled = surfaceAvailable && !surfacePreparationPending,
-            showBlockingPreparation = surfacePreparationPending
+            // Match Dosing: a refresh blocks only a cold surface. A validated frame already on
+            // screen remains visible until its complete replacement is atomically published.
+            showBlockingPreparation = surfacePreparationPending && !controlAvailable,
+            activeAutomaticProgramId = currentControlSnapshot?.activeAutomaticProgramId,
+            hero = currentControlSnapshot?.hero ?: DeviceLightHeroSnapshot(),
+            selectedMode = pendingMode ?: committedMode ?: currentControlSnapshot?.hero?.mode,
+            adaptation = currentControlSnapshot?.adaptation ?: DeviceLightAdaptationSummary(),
+            systemSupported = currentControlSnapshot?.systemSupported == true,
+            system = currentControlSnapshot?.system,
+            channels = currentControlSnapshot?.channels.orEmpty(),
+            plan = currentControlSnapshot?.plan,
+            automaticProgramCount = currentControlSnapshot?.automaticProgramCount,
+            customCurvePointCount = currentControlSnapshot?.customCurvePointCount
         )
     }
 
@@ -185,17 +221,56 @@ class DeviceLightRootViewModel(
         boundDeviceUid = ""
         latestRootSnapshot = null
         currentControlSnapshot = null
+        pendingMode = null
+        committedMode = null
         surfacePreparationPending = false
+        modeChangeJob = null
         _uiState.value = DeviceLightRootUiState()
+    }
+
+    fun setMode(mode: DeviceLightControlMode) {
+        val deviceUid = boundDeviceUid
+        val state = _uiState.value
+        if (deviceUid.isBlank() || !state.contentEnabled) return
+        if (state.selectedMode == mode || modeChangeJob?.isActive == true) return
+
+        pendingMode = mode
+        renderBoundState()
+        modeChangeJob = viewModelScope.launch {
+            when (val result = lightControlOperations.setMode(deviceUid, mode)) {
+                is DeviceLightModeMutationResult.Reconciled -> {
+                    if (boundDeviceUid == deviceUid) {
+                        pendingMode = null
+                        committedMode = null
+                        acceptControlResult(DeviceLightControlResult.Available(result.snapshot))
+                        renderBoundState()
+                    }
+                }
+                is DeviceLightModeMutationResult.Committed -> {
+                    if (boundDeviceUid == deviceUid) {
+                        pendingMode = null
+                        committedMode = result.mode
+                        renderBoundState()
+                    }
+                }
+                is DeviceLightModeMutationResult.Failed -> if (boundDeviceUid == deviceUid) {
+                    pendingMode = null
+                    renderBoundState()
+                    modeChangeFailureEventChannel.send(result.failure)
+                }
+            }
+        }
     }
 
     private fun cancelJobs() {
         rootObserveJob?.cancel()
         controlObserveJob?.cancel()
         surfacePreparationJob?.cancel()
+        modeChangeJob?.cancel()
         rootObserveJob = null
         controlObserveJob = null
         surfacePreparationJob = null
+        modeChangeJob = null
     }
 }
 
@@ -204,7 +279,17 @@ data class DeviceLightRootUiState(
     val deviceUid: String = "",
     val connectionVisualState: DeviceConnectionVisualState = DeviceConnectionVisualState.OFFLINE,
     val contentEnabled: Boolean = false,
-    val showBlockingPreparation: Boolean = false
+    val showBlockingPreparation: Boolean = false,
+    val activeAutomaticProgramId: String? = null,
+    val hero: DeviceLightHeroSnapshot = DeviceLightHeroSnapshot(),
+    val selectedMode: DeviceLightControlMode? = null,
+    val adaptation: DeviceLightAdaptationSummary = DeviceLightAdaptationSummary(),
+    val systemSupported: Boolean = false,
+    val system: DeviceLightSystemSummary? = null,
+    val channels: List<DeviceLightChannelOutputSnapshot> = emptyList(),
+    val plan: DeviceLightPlanSnapshot? = null,
+    val automaticProgramCount: Int? = null,
+    val customCurvePointCount: Int? = null
 )
 
 private fun DeviceRootSnapshot?.isLightControlRootAvailable(deviceUid: String): Boolean = when {

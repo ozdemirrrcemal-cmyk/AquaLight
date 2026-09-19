@@ -52,7 +52,9 @@
     <string name="aquarium_tank_name_title">Tank adı</string>
     <string name="aquarium_tank_size_title">Tank boyutu</string>
     <string name="aquarium_validation_invalid_tank_size">Lütfen geçerli bir tank boyutu girin.</string>
+    <string name="aquarium_validation_setup_date_required">Lütfen bir kurulum tarihi seçin.</string>
     <string name="aquarium_validation_tank_name_min">Tank adı en az 2 karakter olmalıdır.</string>
+    <string name="aquarium_validation_tank_size_required">Lütfen tank boyutlarını girin.</string>
     <string name="aquarium_validation_tank_type_required">Lütfen bir tank türü seçin.</string>
     <string name="aquarium_action_add">+ Ekle</string>
     <string name="aquarium_action_add_livestock">+ Canlı Ekle</string>
@@ -160,7 +162,6 @@
     <string name="aquarium_text_0_of_0_care_details_completed">0 / 0 bakım ayrıntısı tamamlandı</string>
     <string name="aquarium_text_0percent">0%%</string>
     <string name="aquarium_text_1">1</string>
-    <string name="aquarium_text_10_w_x_10_l_x_10_h">10 G × 10 U × 10 Y</string>
     <string name="aquarium_text_10_w_x_10_l_x_10_h_2">10 G x 10 U x 10 Y</string>
     <string name="aquarium_text_120w_x_50l_x_50h">120G x 50U x 50Y</string>
     <string name="aquarium_text_120x50x50">120×50×50</string>

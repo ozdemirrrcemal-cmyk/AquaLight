@@ -1,0 +1,39 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="@dimen/aqua_size_24"
+    android:height="@dimen/aqua_size_24"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <path
+        android:fillColor="@color/aqua_color_transparent"
+        android:pathData="M8.4,21C8.8,16.4 10.5,12.7 13.5,9.6"
+        android:strokeColor="@color/aqua_content_on_dark"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:strokeWidth="1.8" />
+
+    <path
+        android:fillColor="@color/aqua_color_transparent"
+        android:pathData="M12.6,10.4C9.4,9.3 7.7,6.8 7.7,3.2C11.1,4.2 12.9,6.6 12.6,10.4Z"
+        android:strokeColor="@color/aqua_content_on_dark"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:strokeWidth="1.8" />
+
+    <path
+        android:fillColor="@color/aqua_color_transparent"
+        android:pathData="M10.4,14.3C13.4,11.8 16.5,11.1 19.7,12.4C18.1,15.4 15.1,16.2 10.4,14.3Z"
+        android:strokeColor="@color/aqua_content_on_dark"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:strokeWidth="1.8" />
+
+    <path
+        android:fillColor="@color/aqua_color_transparent"
+        android:pathData="M8.9,18C6.5,16.5 4.9,14.4 4.2,11.6C7.2,11.8 9,13.8 9.5,17.5"
+        android:strokeColor="@color/aqua_content_on_dark"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:strokeWidth="1.8" />
+
+</vector>

@@ -12,7 +12,9 @@
     <string name="device_settings_firmware_version_label">Yüklü yazılım sürümü</string>
     <string name="device_settings_check_updates_action">Güncellemeleri denetle</string>
     <string name="device_settings_update_check_description">En yeni uyumlu firmware sürümünü denetleyin.</string>
+    <string name="device_settings_firmware_loading_description">Cihazın yüklü firmware sürümünü güvenli biçimde bildirmesi bekleniyor.</string>
     <string name="device_settings_update_checking_description">En yeni imzalı sürüm doğrulanıyor…</string>
+    <string name="device_settings_update_not_published_description">Bu cihaz için henüz güncelleme bilgisi yayımlanmadı.</string>
     <string name="device_settings_update_up_to_date_description">Firmware %1$s yüklü ve güncel.</string>
     <string name="device_settings_update_installed_unknown_description">Yüklü firmware güncel.</string>
     <string name="device_settings_update_available_status">Firmware %1$s hazır</string>
@@ -130,7 +132,4 @@
     <string name="device_settings_update_notification_timeout_title">Cihaz yeniden bağlanmadı</string>
     <string name="device_settings_update_notification_timeout_message">%1$s cihazına yeniden bağlanmak veya kurtarma seçeneklerini incelemek için AquaLight’ı açın.</string>
 
-    <string name="device_settings_light_protection_section">Işık koruması</string>
-    <string name="device_settings_light_temperature_threshold_label">Sıcaklık koruma eşiği</string>
-    <string name="device_settings_light_edit_temperature_threshold_description">Sıcaklık koruma eşiğini düzenle</string>
 </resources>

@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.Flow
 /** Stable application boundary for Nearby Scan and QR preflight discovery. */
 interface ProvisioningDiscoveryOperations {
     val candidates: Flow<List<ProvisioningCandidateSnapshot>>
+    val scanFailures: Flow<ProvisioningScanFailure>
 
     fun startScan(): ProvisioningScanStartResult
 
@@ -20,6 +21,10 @@ interface ProvisioningDiscoveryOperations {
         payload: ProvisioningQrPayload,
         timeoutMillis: Long
     ): ProvisioningCandidateSnapshot?
+
+    suspend fun verifyManualCandidate(
+        candidate: ProvisioningCandidateSnapshot
+    ): ProvisioningManualPreflightResult
 
     fun hasCandidates(): Boolean
 
@@ -57,5 +62,28 @@ sealed interface ProvisioningScanStartResult {
     data object MissingPermission : ProvisioningScanStartResult
     data object BluetoothUnavailable : ProvisioningScanStartResult
     data object BluetoothOff : ProvisioningScanStartResult
-    data class Failed(val message: String) : ProvisioningScanStartResult
+    data class Failed(val failure: ProvisioningScanFailure) : ProvisioningScanStartResult
+}
+
+enum class ProvisioningScanFailure {
+    ALREADY_RUNNING,
+    APP_REGISTRATION_FAILED,
+    INTERNAL_ERROR,
+    FEATURE_UNSUPPORTED,
+    OUT_OF_RESOURCES,
+    TOO_FREQUENT
+}
+
+sealed interface ProvisioningManualPreflightResult {
+    data class Allowed(
+        val candidate: ProvisioningCandidateSnapshot
+    ) : ProvisioningManualPreflightResult
+
+    data object QrRequired : ProvisioningManualPreflightResult
+    data object ResetRequired : ProvisioningManualPreflightResult
+    data object MissingPermission : ProvisioningManualPreflightResult
+    data object BluetoothOff : ProvisioningManualPreflightResult
+    data object BluetoothUnavailable : ProvisioningManualPreflightResult
+    data object ConnectionFailed : ProvisioningManualPreflightResult
+    data object IncompatibleDevice : ProvisioningManualPreflightResult
 }

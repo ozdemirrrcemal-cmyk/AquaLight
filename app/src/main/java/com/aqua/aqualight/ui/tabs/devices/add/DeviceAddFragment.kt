@@ -110,10 +110,11 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
         val hasCandidates = state.candidates.isNotEmpty()
         val showSearchCard = !hasCandidates
         val isScanning = state.mode == DeviceAddScanMode.SCANNING
+        val isBusy = isScanning || state.mode == DeviceAddScanMode.VERIFYING
 
         binding.cardHero.isVisible = showSearchCard
         binding.tipContainer.isVisible = showSearchCard && state.mode == DeviceAddScanMode.READY
-        binding.btnQrSetup.isVisible = showSearchCard && !isScanning
+        binding.btnQrSetup.isVisible = showSearchCard && !isBusy
         binding.tvFoundDevicesLabel.isVisible = hasCandidates
         binding.tvFoundDevicesHint.isVisible = hasCandidates
         binding.rvCandidates.isVisible = hasCandidates
@@ -124,9 +125,12 @@ class DeviceAddFragment : Fragment(R.layout.fragment_device_add) {
 
         candidateAdapter.submitList(state.candidates)
 
-        if (isScanning) {
+        if (isBusy) {
             binding.scanPulseView.startScan()
-            binding.btnScan.text = getString(R.string.device_add_scan_button_scanning)
+            binding.btnScan.text = getString(
+                if (isScanning) R.string.device_add_scan_button_scanning
+                else R.string.device_add_scan_button_verifying
+            )
             binding.btnScan.isEnabled = false
             binding.btnScan.alpha = 0.72f
         } else {

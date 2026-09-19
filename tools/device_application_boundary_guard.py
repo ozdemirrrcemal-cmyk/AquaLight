@@ -12,10 +12,10 @@ MENU_CONTRACT = SOURCE / "application/devices/DeviceMenuAccessOperations.kt"
 MENU_OPEN_USE_CASE = SOURCE / "application/devices/DeviceMenuOpenUseCase.kt"
 PREPARATION_CONTRACT = SOURCE / "application/devices/DeviceControlSurfacePreparationOperations.kt"
 LIGHT_CONTROL_CONTRACT = (
-    SOURCE / "application/devices/light/control/DeviceLightControlOperations.kt"
+    SOURCE / "application/devices/light/dashboard/DeviceLightControlOperations.kt"
 )
-LIGHT_PROTECTION_CONTRACT = (
-    SOURCE / "application/devices/light/protection/DeviceLightProtectionOperations.kt"
+LIGHT_SYSTEM_CONTRACT = (
+    SOURCE / "application/devices/light/system/DeviceLightSystemOperations.kt"
 )
 STATUS_CONTRACT = SOURCE / "application/devices/DeviceStatusOperations.kt"
 OWNER_ADAPTER = SOURCE / "data/devices/DefaultOwnerDevicesOperations.kt"
@@ -26,10 +26,13 @@ PREPARATION_ADAPTER = (
     SOURCE / "data/devices/menu/DefaultDeviceControlSurfacePreparationOperations.kt"
 )
 LIGHT_CONTROL_ADAPTER = (
-    SOURCE / "data/devices/light/control/DefaultDeviceLightControlOperations.kt"
+    SOURCE / "data/devices/light/dashboard/DefaultDeviceLightControlOperations.kt"
 )
-LIGHT_PROTECTION_ADAPTER = (
-    SOURCE / "data/devices/light/protection/DefaultDeviceLightProtectionOperations.kt"
+LIGHT_DASHBOARD_REFRESH_COORDINATOR = (
+    SOURCE / "data/devices/runtime/modules/light/DeviceLightDashboardRefreshCoordinator.kt"
+)
+LIGHT_SYSTEM_ADAPTER = (
+    SOURCE / "data/devices/light/system/DefaultDeviceLightSystemOperations.kt"
 )
 FAMILY_SETTINGS_ADAPTER = SOURCE / "data/devices/DefaultDeviceFamilySettingsOperations.kt"
 DEVICES_VIEW_MODEL = SOURCE / "ui/tabs/devices/DevicesViewModel.kt"
@@ -69,7 +72,7 @@ menu_contract = read(MENU_CONTRACT)
 menu_open_use_case = read(MENU_OPEN_USE_CASE)
 preparation_contract = read(PREPARATION_CONTRACT)
 light_control_contract = read(LIGHT_CONTROL_CONTRACT)
-light_protection_contract = read(LIGHT_PROTECTION_CONTRACT)
+light_system_contract = read(LIGHT_SYSTEM_CONTRACT)
 status_contract = read(STATUS_CONTRACT)
 owner_adapter = read(OWNER_ADAPTER)
 status_adapter = read(STATUS_ADAPTER)
@@ -77,7 +80,8 @@ mapping = read(MAPPING)
 menu_adapter = read(MENU_ADAPTER)
 preparation_adapter = read(PREPARATION_ADAPTER)
 light_control_adapter = read(LIGHT_CONTROL_ADAPTER)
-light_protection_adapter = read(LIGHT_PROTECTION_ADAPTER)
+light_dashboard_refresh_coordinator = read(LIGHT_DASHBOARD_REFRESH_COORDINATOR)
+light_system_adapter = read(LIGHT_SYSTEM_ADAPTER)
 family_settings_adapter = read(FAMILY_SETTINGS_ADAPTER)
 devices_view_model = read(DEVICES_VIEW_MODEL)
 tank_devices_view_model = read(TANK_DEVICES_VIEW_MODEL)
@@ -163,20 +167,30 @@ for token, reason in (
     ("fun currentControl(deviceUid: String)", "Light current authority must cross the boundary"),
     ("suspend fun refreshControl(deviceUid: String)", "Light freshness must cross the boundary"),
     ("data class DeviceLightControlSnapshot", "Light readiness needs an application DTO"),
+    (
+        "sealed interface DeviceLightModeMutationResult",
+        "Light mode writes must distinguish committed ACKs from authoritative readback",
+    ),
+    (
+        "data class Committed(",
+        "Light mode writes need an explicit committed-but-not-yet-reconciled result",
+    ),
 ):
     if token not in light_control_contract:
         errors.append(f"{LIGHT_CONTROL_CONTRACT.relative_to(ROOT)}: {reason}: {token}")
 
 for token, reason in (
-    ("interface DeviceLightProtectionOperations", "Light protection needs an application contract"),
-    ("fun observeLightProtection(deviceUid: String)", "Light protection observation must cross the boundary"),
-    ("fun currentLightProtection(deviceUid: String)", "Light protection state must cross the boundary"),
-    ("suspend fun refreshLightProtection(deviceUid: String)", "Light protection refresh must cross the boundary"),
-    ("suspend fun updateLightProtectionThreshold(", "Light protection updates must cross the boundary"),
-    ("data class DeviceLightProtectionSnapshot", "Light protection needs an application DTO"),
+    ("interface DeviceLightSystemOperations", "Light System needs an application contract"),
+    ("fun observe(deviceUid: String)", "Light System observation must cross the boundary"),
+    ("fun current(deviceUid: String)", "Light System state must cross the boundary"),
+    ("suspend fun refresh(deviceUid: String)", "Light System refresh must cross the boundary"),
+    ("suspend fun save(", "Light System updates must cross the boundary"),
+    ("data class DeviceLightSystemSnapshot", "Light System needs an application DTO"),
+    ("data class DeviceLightSystemSettings", "Light System settings need an application DTO"),
+    ("sealed interface DeviceLightSystemMutationResult", "Light System writes need typed outcomes"),
 ):
-    if token not in light_protection_contract:
-        errors.append(f"{LIGHT_PROTECTION_CONTRACT.relative_to(ROOT)}: {reason}: {token}")
+    if token not in light_system_contract:
+        errors.append(f"{LIGHT_SYSTEM_CONTRACT.relative_to(ROOT)}: {reason}: {token}")
 
 for token, reason in (
     ("interface DeviceStatusOperations", "status access needs a read-only application contract"),
@@ -193,7 +207,7 @@ for path, text in (
     (MENU_OPEN_USE_CASE, menu_open_use_case),
     (PREPARATION_CONTRACT, preparation_contract),
     (LIGHT_CONTROL_CONTRACT, light_control_contract),
-    (LIGHT_PROTECTION_CONTRACT, light_protection_contract),
+    (LIGHT_SYSTEM_CONTRACT, light_system_contract),
     (STATUS_CONTRACT, status_contract),
 ):
     for forbidden in (
@@ -277,16 +291,16 @@ for token, reason in (
         "Light must reuse the owner-scoped central runtime",
     ),
     (
-        "resolved.runtime.requestStatus(resolved.deviceUid)",
-        "Light preparation must request one authoritative status document",
+        "modules.refreshLightDashboard(deviceUid)",
+        "Light preparation must delegate status/graph authority to the shared refresh coordinator",
     ),
     (
-        "resolved.runtime.isAuthoritative(resolved.deviceUid, generation)",
-        "Light refresh must prove the returned runtime generation",
+        "modules.scheduleLightControlReconciliation(deviceUid, firmwareMode)",
+        "Light committed mode writes must schedule owner-scoped reconciliation",
     ),
     (
-        "acceptedStatus == value",
-        "Light refresh must prove that the exact response was accepted",
+        "DeviceLightModeMutationResult.Committed(requestedMode)",
+        "Light must not report a durable firmware ACK as a failed readback",
     ),
 ):
     if token not in light_control_adapter:
@@ -294,30 +308,80 @@ for token, reason in (
 
 for token, reason in (
     (
-        "class DefaultDeviceLightProtectionOperations",
-        "Light protection must use a concrete data adapter",
+        "class DeviceLightDashboardRefreshCoordinator",
+        "Light dashboard refreshes need one owner-scoped coordinator",
+    ),
+    (
+        "inFlight.putIfAbsent(deviceUid, pending)",
+        "Concurrent Light refresh callers must share one firmware readback flight",
+    ),
+    (
+        "val status = runtime.requestStatus(deviceUid)",
+        "Light reconciliation must read one authoritative status document",
+    ),
+    (
+        "val graph = runtime.requestGraph(deviceUid)",
+        "Light reconciliation must read the matching graph document",
+    ),
+    (
+        "status.generation != graph.generation",
+        "Light reconciliation must reject mixed connection generations",
+    ),
+    (
+        "dashboard?.status == status.value",
+        "Light reconciliation must prove the exact status response was accepted",
+    ),
+    (
+        "dashboard.graph == graph.value",
+        "Light reconciliation must prove the exact graph response was accepted",
+    ),
+):
+    if token not in light_dashboard_refresh_coordinator:
+        errors.append(
+            f"{LIGHT_DASHBOARD_REFRESH_COORDINATOR.relative_to(ROOT)}: {reason}: {token}"
+        )
+
+for token, reason in (
+    (
+        "class DefaultDeviceLightSystemOperations",
+        "Light System must use a concrete data adapter",
     ),
     (
         "devicesRepository.runtimeModules()",
-        "Light protection must resolve the owner-scoped central module provider",
+        "Light System must resolve the owner-scoped central module provider",
     ),
     (
-        "modules.lightTemperatureProtection.requestStatus(uid)",
-        "Light protection refresh must use the central protection module",
+        "resolution.modules.lightThermal.requestStatus(resolution.deviceUid)",
+        "Light System refresh must use the central thermal module",
+    ),
+    (
+        "resolution.modules.lightTemperatureProtection.requestStatus(",
+        "Light System refresh must use the central protection module",
+    ),
+    (
+        "resolution.modules.lightThermal.applyConfig(",
+        "Light System must persist fan settings through the thermal owner",
+    ),
+    (
+        "resolution.modules.lightTemperatureProtection.setThreshold(",
+        "Light System must persist protection through the protection owner",
     ),
 ):
-    if token not in light_protection_adapter:
-        errors.append(f"{LIGHT_PROTECTION_ADAPTER.relative_to(ROOT)}: {reason}: {token}")
+    if token not in light_system_adapter:
+        errors.append(f"{LIGHT_SYSTEM_ADAPTER.relative_to(ROOT)}: {reason}: {token}")
 
 for token, reason in (
     ("val lightOperations: OwnerLightOperations", "the owner graph needs one Light operation bundle"),
     ("data class OwnerLightOperations", "Light application surfaces need one owner-scoped bundle"),
     ("val controlOperations: DeviceLightControlOperations", "the Light bundle must own control"),
-    ("val protectionOperations: DeviceLightProtectionOperations", "the Light bundle must own protection"),
+    ("val systemOperations: DeviceLightSystemOperations", "the Light bundle must own System controls"),
+    ("val libraryOperations: DeviceLightLibraryOperations", "the Light bundle must own its library"),
     (
-        "val lightOperations = createOwnerLightOperations(dependencies.devicesRepository)",
+        "val lightOperations = createOwnerLightOperations(",
         "the owner graph must create the Light bundle once",
     ),
+    ("ownerUid = dependencies.ownerUid", "the Light library must remain owner scoped"),
+    ("devicesRepository = dependencies.devicesRepository", "the Light bundle must reuse the owner runtime"),
     ("lightControlOperations = lightOperations.controlOperations", "menu preparation must reuse central Light control"),
 ):
     if token not in owner_graph:
@@ -331,7 +395,7 @@ for forbidden, reason in (
 
 for adapter in (
     "DefaultDeviceLightControlOperations(",
-    "DefaultDeviceLightProtectionOperations(",
+    "DefaultDeviceLightSystemOperations(",
 ):
     if owner_graph.count(adapter) != 1:
         errors.append(
@@ -344,8 +408,8 @@ for token, reason in (
         "the Light root must reuse owner-scoped control",
     ),
     (
-        "lightProtectionOperations = graph.lightOperations.protectionOperations",
-        "shared settings must reuse owner-scoped Light protection",
+        "operations = graph.lightOperations.systemOperations",
+        "the Light System screen must reuse owner-scoped System controls",
     ),
 ):
     if token not in factory:
@@ -363,30 +427,23 @@ for token, reason in (
 
 for adapter in (
     "DefaultDeviceLightControlOperations(",
-    "DefaultDeviceLightProtectionOperations(",
+    "DefaultDeviceLightSystemOperations(",
 ):
     if smoke_factory.count(adapter) != 1:
         errors.append(
             f"{SMOKE_FACTORY.relative_to(ROOT)}: release smoke must construct exactly one {adapter}"
         )
 
-for token, reason in (
-    (
-        "lightProtectionOperations: DeviceLightProtectionOperations",
-        "shared settings must require its owner-scoped Light protection dependency",
-    ),
-    (
-        "DeviceLightProtectionOperations by lightProtectionOperations",
-        "shared settings must delegate to the injected central Light protection boundary",
-    ),
+for forbidden in (
+    "DeviceLightProtectionOperations",
+    "DeviceLightSystemOperations",
+    "DefaultDeviceLightProtectionOperations(",
+    "DefaultDeviceLightSystemOperations(",
 ):
-    if token not in family_settings_adapter:
-        errors.append(f"{FAMILY_SETTINGS_ADAPTER.relative_to(ROOT)}: {reason}: {token}")
-
-if "DefaultDeviceLightProtectionOperations(" in family_settings_adapter:
-    errors.append(
-        f"{FAMILY_SETTINGS_ADAPTER.relative_to(ROOT)}: shared settings cannot create a parallel Light protection adapter"
-    )
+    if forbidden in family_settings_adapter:
+        errors.append(
+            f"{FAMILY_SETTINGS_ADAPTER.relative_to(ROOT)}: shared settings cannot own product runtime controls: {forbidden}"
+        )
 
 for token, reason in (
     (

@@ -5,14 +5,13 @@ import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.application.devices.DEVICE_FIRMWARE_MANIFEST_URL
 import com.aqua.aqualight.application.devices.DeviceFamilySettingsOperations
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
-import com.aqua.aqualight.application.devices.light.protection.DeviceLightProtectionSnapshot
-import com.aqua.aqualight.application.devices.light.protection.DeviceLightProtectionThresholdPolicy
 import com.aqua.aqualight.application.devices.DeviceOtaFailure
 import com.aqua.aqualight.application.devices.DeviceOtaFailureStage
 import com.aqua.aqualight.application.devices.DeviceOtaState
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -47,11 +46,10 @@ class DeviceFamilySettingsViewModel(
     private var boundDeviceUid = ""
     private var observeDeviceJob: Job? = null
     private var observeFirmwareJob: Job? = null
-    private var observeLightProtectionJob: Job? = null
     private var deviceNameUpdateJob: Job? = null
-    private var thresholdUpdateJob: Job? = null
     private var updateCheckJob: Job? = null
     private var automaticFirmwareCheckPending = false
+    private var connectionAttemptCompleted = false
 
     fun bind(deviceUidText: String) {
         val deviceUid = deviceUidText.trim()
@@ -64,28 +62,22 @@ class DeviceFamilySettingsViewModel(
         boundDeviceUid = deviceUid
         cancelBoundJobs()
         automaticFirmwareCheckPending = true
+        connectionAttemptCompleted = false
         val currentSnapshot = settingsOperations.current(deviceUid)
-        _uiState.value = currentSnapshot
-            .toInitialDeviceFamilySettingsUiState(deviceUid)
-            .withLightProtectionSnapshot(
-                settingsOperations.currentLightProtection(deviceUid)
-            )
-        settingsOperations.connect(deviceUid)
+        _uiState.value = currentSnapshot.toInitialDeviceFamilySettingsUiState()
 
-        observeDeviceJob = viewModelScope.launch {
+        observeDeviceJob = viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
             settingsOperations.observe(deviceUid).collect { snapshot ->
                 applyDeviceSnapshot(deviceUid, snapshot)
             }
         }
+        val connectionResult = settingsOperations.connect(deviceUid)
+        connectionAttemptCompleted = true
+        applyDeviceConnectionResult(deviceUid, connectionResult)
         val firmwareStates = firmwareUpdateOperations.observe(deviceUid)
         applyFirmwareState(firmwareStates.value)
         observeFirmwareJob = viewModelScope.launch {
             firmwareStates.collect(::applyFirmwareState)
-        }
-        observeLightProtectionJob = viewModelScope.launch {
-            settingsOperations.observeLightProtection(deviceUid).collect { snapshot ->
-                applyLightProtectionSnapshot(deviceUid, snapshot)
-            }
         }
         startAutomaticFirmwareAvailabilityCheckIfReady(deviceUid, currentSnapshot)
     }
@@ -157,70 +149,21 @@ class DeviceFamilySettingsViewModel(
         }
     }
 
-    fun updateTemperatureProtectionThreshold(valueCelsius: Int) {
-        val deviceUid = boundDeviceUid
-        val state = _uiState.value
-        val editor = state.lightProtection.editor
-        val canStart = deviceUid.isNotBlank() &&
-            editor != null &&
-            valueCelsius in editor.minimumCelsius..editor.maximumCelsius &&
-            (valueCelsius - editor.minimumCelsius) % editor.stepCelsius == 0 &&
-            valueCelsius != editor.currentCelsius &&
-            thresholdUpdateJob?.isActive != true
-        if (!canStart) return
-
-        _uiState.update { current ->
-            current.copy(
-                lightProtection = current.lightProtection.copy(updateInProgress = true)
-            )
-        }
-        thresholdUpdateJob = viewModelScope.launch {
-            val result = settingsOperations.updateLightProtectionThreshold(
-                deviceUid = deviceUid,
-                thresholdCelsius = valueCelsius
-            )
-            if (boundDeviceUid != deviceUid) return@launch
-
-            _uiState.update { current ->
-                val light = current.lightProtection
-                current.copy(
-                    lightProtection = light.copy(
-                        thresholdCelsius = if (result.isSuccess) {
-                            valueCelsius.toDouble()
-                        } else {
-                            light.thresholdCelsius
-                        },
-                        editor = if (result.isSuccess) {
-                            light.editor?.copy(currentCelsius = valueCelsius)
-                        } else {
-                            light.editor
-                        },
-                        updateInProgress = false
-                    )
-                )
-            }
-            if (result.isFailure) {
-                eventChannel.trySend(
-                    DeviceFamilySettingsEvent.TemperatureProtectionUpdateFailed
-                )
-            }
-        }
-    }
-
-    /**
-     * Kept temporarily for the existing Fragment callback surface. Runtime/domain bootstrap owns
-     * freshness; presentation must never issue a status request or retry loop.
-     */
-    fun retryLightProtection() = Unit
-
     fun checkForUpdates() {
+        if (_uiState.value.firmwareLoadState != DeviceSettingsFirmwareLoadState.READY) return
         startFirmwareAvailabilityCheck(deviceUid = boundDeviceUid, automatic = false)
     }
 
     fun onFirmwareUpdateAction() {
-        when (val state = _uiState.value.updateActionState) {
+        val current = _uiState.value
+        when (val state = current.updateActionState) {
             DeviceSettingsUpdateActionState.Idle,
-            DeviceSettingsUpdateActionState.UpToDate -> checkForUpdates()
+            DeviceSettingsUpdateActionState.ReleaseNotPublished,
+            DeviceSettingsUpdateActionState.UpToDate -> when (current.firmwareLoadState) {
+                DeviceSettingsFirmwareLoadState.LOADING -> Unit
+                DeviceSettingsFirmwareLoadState.READY -> checkForUpdates()
+                DeviceSettingsFirmwareLoadState.CONNECTION_FAILED -> retryDeviceConnection()
+            }
             DeviceSettingsUpdateActionState.Checking,
             DeviceSettingsUpdateActionState.Unsupported -> Unit
             is DeviceSettingsUpdateActionState.UpdateAvailable,
@@ -242,8 +185,10 @@ class DeviceFamilySettingsViewModel(
         snapshot: DeviceRootSnapshot?
     ) {
         val canStart = automaticFirmwareCheckPending &&
+            connectionAttemptCompleted &&
             boundDeviceUid == deviceUid &&
-            snapshot?.catalogState == DeviceRootCatalogState.VALID
+            snapshot?.catalogState == DeviceRootCatalogState.VALID &&
+            _uiState.value.firmwareLoadState == DeviceSettingsFirmwareLoadState.READY
         if (!canStart) return
 
         automaticFirmwareCheckPending = false
@@ -284,18 +229,39 @@ class DeviceFamilySettingsViewModel(
         }
     }
 
-    private fun applyLightProtectionSnapshot(
-        deviceUid: String,
-        snapshot: DeviceLightProtectionSnapshot
-    ) {
-        if (boundDeviceUid != deviceUid) return
-        _uiState.update { state -> state.withLightProtectionSnapshot(snapshot) }
-    }
-
     private fun applyFirmwareState(state: DeviceOtaState) {
         if (state.deviceUid != boundDeviceUid) return
         _uiState.update { current ->
             current.copy(updateActionState = state.toSettingsActionState())
+        }
+    }
+
+    private fun retryDeviceConnection() {
+        val deviceUid = boundDeviceUid
+        if (deviceUid.isBlank()) return
+        connectionAttemptCompleted = false
+        _uiState.update { current ->
+            current.copy(
+                firmwareVersion = "",
+                firmwareLoadState = DeviceSettingsFirmwareLoadState.LOADING
+            )
+        }
+        val connectionResult = settingsOperations.connect(deviceUid)
+        connectionAttemptCompleted = true
+        applyDeviceConnectionResult(deviceUid, connectionResult)
+        startAutomaticFirmwareAvailabilityCheckIfReady(
+            deviceUid,
+            settingsOperations.current(deviceUid)
+        )
+    }
+
+    private fun applyDeviceConnectionResult(deviceUid: String, result: Result<Unit>) {
+        if (boundDeviceUid != deviceUid || result.isSuccess) return
+        _uiState.update { current ->
+            current.copy(
+                firmwareVersion = "",
+                firmwareLoadState = DeviceSettingsFirmwareLoadState.CONNECTION_FAILED
+            )
         }
     }
 
@@ -304,16 +270,14 @@ class DeviceFamilySettingsViewModel(
             is DeviceOtaState.Idle -> DeviceSettingsUpdateActionState.Idle
             is DeviceOtaState.Checking -> DeviceSettingsUpdateActionState.Checking
             is DeviceOtaState.Unsupported -> DeviceSettingsUpdateActionState.Unsupported
+            is DeviceOtaState.ReleaseNotPublished ->
+                DeviceSettingsUpdateActionState.ReleaseNotPublished
             is DeviceOtaState.UpToDate,
             is DeviceOtaState.Succeeded -> DeviceSettingsUpdateActionState.UpToDate
-            is DeviceOtaState.RolledBack -> postUpdateAttention(
-                DeviceSettingsUpdateAttention.ROLLED_BACK
-            )
-            is DeviceOtaState.PostRestartTimeout -> postUpdateAttention(
-                DeviceSettingsUpdateAttention.CONNECTION_TIMEOUT
-            )
+            is DeviceOtaState.RolledBack,
+            is DeviceOtaState.PostRestartTimeout,
             is DeviceOtaState.UnexpectedFirmware -> postUpdateAttention(
-                DeviceSettingsUpdateAttention.UNEXPECTED_FIRMWARE
+                toSettingsUpdateAttention()
             )
             is DeviceOtaState.UpdateAvailable -> DeviceSettingsUpdateActionState.UpdateAvailable(
                 plan.targetVersion
@@ -337,6 +301,16 @@ class DeviceFamilySettingsViewModel(
             is DeviceOtaState.Failed -> DeviceSettingsUpdateActionState.Failed(failure)
         }
 
+    private fun DeviceOtaState.toSettingsUpdateAttention(): DeviceSettingsUpdateAttention =
+        when (this) {
+            is DeviceOtaState.RolledBack -> DeviceSettingsUpdateAttention.ROLLED_BACK
+            is DeviceOtaState.PostRestartTimeout ->
+                DeviceSettingsUpdateAttention.CONNECTION_TIMEOUT
+            is DeviceOtaState.UnexpectedFirmware ->
+                DeviceSettingsUpdateAttention.UNEXPECTED_FIRMWARE
+            else -> error("OTA state does not require post-update attention.")
+        }
+
     private fun postUpdateAttention(
         attention: DeviceSettingsUpdateAttention
     ): DeviceSettingsUpdateActionState =
@@ -344,15 +318,12 @@ class DeviceFamilySettingsViewModel(
 
     private fun applyDeviceSnapshot(deviceUid: String, snapshot: DeviceRootSnapshot?) {
         if (snapshot == null || snapshot.catalogState != DeviceRootCatalogState.VALID) {
-            preserveStableDeviceInformation(deviceUid, snapshot)
+            preserveStableDeviceInformation(snapshot)
         } else {
-            val previous = _uiState.value
             val deviceState = snapshot.toDeviceFamilySettingsUiState()
             _uiState.value = deviceState.copy(
-                showLightProtectionInventory = previous.showLightProtectionInventory,
-                deviceNameSaving = previous.deviceNameSaving,
-                lightProtection = previous.lightProtection,
-                updateActionState = previous.updateActionState,
+                deviceNameSaving = _uiState.value.deviceNameSaving,
+                updateActionState = _uiState.value.updateActionState,
                 informationLoadState = DeviceSettingsInformationLoadState.READY
             )
         }
@@ -360,10 +331,7 @@ class DeviceFamilySettingsViewModel(
         startAutomaticFirmwareAvailabilityCheckIfReady(deviceUid, snapshot)
     }
 
-    private fun preserveStableDeviceInformation(
-        deviceUid: String,
-        snapshot: DeviceRootSnapshot?
-    ) {
+    private fun preserveStableDeviceInformation(snapshot: DeviceRootSnapshot?) {
         _uiState.update { current ->
             val nameSnapshot = snapshot?.takeIf { it.productDisplayName.isNotBlank() }
             current.copy(
@@ -377,10 +345,16 @@ class DeviceFamilySettingsViewModel(
                 hasCustomDeviceName = nameSnapshot?.hasCustomName
                     ?: current.hasCustomDeviceName,
                 serialNumber = current.serialNumber.ifBlank {
-                    snapshot?.serialNumber?.ifBlank { deviceUid } ?: deviceUid
+                    snapshot?.serialNumber.orEmpty()
                 },
-                firmwareVersion = current.firmwareVersion.ifBlank {
-                    snapshot?.firmwareLabel.orEmpty()
+                firmwareVersion = "",
+                firmwareLoadState = if (
+                    current.firmwareLoadState ==
+                    DeviceSettingsFirmwareLoadState.CONNECTION_FAILED
+                ) {
+                    DeviceSettingsFirmwareLoadState.CONNECTION_FAILED
+                } else {
+                    DeviceSettingsFirmwareLoadState.LOADING
                 },
                 informationLoadState = if (current.hardwareRevision.isNotBlank()) {
                     DeviceSettingsInformationLoadState.READY
@@ -395,15 +369,14 @@ class DeviceFamilySettingsViewModel(
         cancelBoundJobs()
         boundDeviceUid = ""
         automaticFirmwareCheckPending = false
+        connectionAttemptCompleted = false
         _uiState.value = DeviceFamilySettingsUiState()
     }
 
     private fun cancelBoundJobs() {
         observeDeviceJob?.cancel()
         observeFirmwareJob?.cancel()
-        observeLightProtectionJob?.cancel()
         deviceNameUpdateJob?.cancel()
-        thresholdUpdateJob?.cancel()
         updateCheckJob?.cancel()
     }
 
@@ -420,7 +393,6 @@ class DeviceFamilySettingsViewModel(
 
 sealed interface DeviceFamilySettingsEvent {
     data object DeviceNameUpdateFailed : DeviceFamilySettingsEvent
-    data object TemperatureProtectionUpdateFailed : DeviceFamilySettingsEvent
     data object OpenFirmwareUpdate : DeviceFamilySettingsEvent
 }
 
@@ -429,16 +401,16 @@ enum class DeviceSettingsInformationLoadState {
     READY
 }
 
-enum class DeviceLightProtectionLoadState {
-    IDLE,
+enum class DeviceSettingsFirmwareLoadState {
     LOADING,
     READY,
-    FAILED
+    CONNECTION_FAILED
 }
 
 sealed interface DeviceSettingsUpdateActionState {
     data object Idle : DeviceSettingsUpdateActionState
     data object Checking : DeviceSettingsUpdateActionState
+    data object ReleaseNotPublished : DeviceSettingsUpdateActionState
     data object UpToDate : DeviceSettingsUpdateActionState
 
     data class UpdateAvailable(
@@ -474,6 +446,7 @@ private fun DeviceSettingsUpdateActionState.allowsAvailabilityCheck(
     automatic: Boolean
 ): Boolean = when (this) {
     DeviceSettingsUpdateActionState.Idle,
+    DeviceSettingsUpdateActionState.ReleaseNotPublished,
     DeviceSettingsUpdateActionState.UpToDate -> true
     is DeviceSettingsUpdateActionState.Failed ->
         !automatic && failure.canRetryAvailabilityCheck
@@ -484,21 +457,6 @@ private fun DeviceSettingsUpdateActionState.allowsAvailabilityCheck(
     DeviceSettingsUpdateActionState.Unsupported -> false
 }
 
-data class DeviceTemperatureProtectionEditorUiState(
-    val currentCelsius: Int,
-    val minimumCelsius: Int,
-    val maximumCelsius: Int,
-    val stepCelsius: Int
-)
-
-data class DeviceLightProtectionUiState(
-    val currentTemperatureCelsius: Double? = null,
-    val thresholdCelsius: Double? = null,
-    val editor: DeviceTemperatureProtectionEditorUiState? = null,
-    val loadState: DeviceLightProtectionLoadState = DeviceLightProtectionLoadState.IDLE,
-    val updateInProgress: Boolean = false
-)
-
 data class DeviceFamilySettingsUiState(
     val deviceName: String = "",
     val productDisplayName: String = "",
@@ -507,23 +465,27 @@ data class DeviceFamilySettingsUiState(
     val hardwareRevision: String = "",
     val firmwareVersion: String = "",
     val family: OwnerDeviceFamily = OwnerDeviceFamily.UNKNOWN,
-    val showLightProtectionInventory: Boolean = false,
     val deviceNameSaving: Boolean = false,
-    val lightProtection: DeviceLightProtectionUiState = DeviceLightProtectionUiState(),
     val informationLoadState: DeviceSettingsInformationLoadState =
         DeviceSettingsInformationLoadState.LOADING,
+    val firmwareLoadState: DeviceSettingsFirmwareLoadState =
+        DeviceSettingsFirmwareLoadState.LOADING,
     val updateActionState: DeviceSettingsUpdateActionState =
         DeviceSettingsUpdateActionState.Idle
 )
 
-internal fun DeviceRootSnapshot.toDeviceFamilySettingsUiState(): DeviceFamilySettingsUiState =
-    DeviceFamilySettingsUiState(
+internal fun DeviceRootSnapshot.toDeviceFamilySettingsUiState(): DeviceFamilySettingsUiState {
+    val hasAuthoritativeFirmware = catalogState == DeviceRootCatalogState.VALID &&
+        firmwareLabel.isNotBlank()
+    return DeviceFamilySettingsUiState(
         deviceName = title,
         productDisplayName = productDisplayName,
         hasCustomDeviceName = hasCustomName,
-        serialNumber = serialNumber.ifBlank { deviceUid },
+        serialNumber = serialNumber,
         hardwareRevision = hardwareRevision,
-        firmwareVersion = firmwareLabel,
+        firmwareVersion = firmwareLabel.takeIf {
+            hasAuthoritativeFirmware
+        }.orEmpty(),
         family = family,
         informationLoadState = if (
             catalogState == DeviceRootCatalogState.VALID && hardwareRevision.isNotBlank()
@@ -531,53 +493,15 @@ internal fun DeviceRootSnapshot.toDeviceFamilySettingsUiState(): DeviceFamilySet
             DeviceSettingsInformationLoadState.READY
         } else {
             DeviceSettingsInformationLoadState.LOADING
+        },
+        firmwareLoadState = if (hasAuthoritativeFirmware) {
+            DeviceSettingsFirmwareLoadState.READY
+        } else {
+            DeviceSettingsFirmwareLoadState.LOADING
         }
     )
-
-internal fun DeviceFamilySettingsUiState.withLightProtectionSnapshot(
-    snapshot: DeviceLightProtectionSnapshot
-): DeviceFamilySettingsUiState {
-    if (!snapshot.available) {
-        return copy(
-            showLightProtectionInventory = false,
-            lightProtection = DeviceLightProtectionUiState()
-        )
-    }
-
-    val previous = lightProtection
-    return copy(
-        showLightProtectionInventory = true,
-        lightProtection = previous.copy(
-            currentTemperatureCelsius = snapshot.currentTemperatureCelsius
-                ?: previous.currentTemperatureCelsius.takeIf { !snapshot.loaded },
-            thresholdCelsius = snapshot.thresholdCelsius
-                ?: previous.thresholdCelsius.takeIf { !snapshot.loaded },
-            editor = when {
-                snapshot.loaded -> snapshot.thresholdPolicy?.toEditorUiState()
-                snapshot.thresholdPolicy != null -> snapshot.thresholdPolicy.toEditorUiState()
-                else -> previous.editor
-            },
-            loadState = when {
-                snapshot.loaded -> DeviceLightProtectionLoadState.READY
-                previous.loadState == DeviceLightProtectionLoadState.IDLE ->
-                    DeviceLightProtectionLoadState.LOADING
-                else -> previous.loadState
-            }
-        )
-    )
 }
 
-private fun DeviceLightProtectionThresholdPolicy.toEditorUiState():
-    DeviceTemperatureProtectionEditorUiState = DeviceTemperatureProtectionEditorUiState(
-    currentCelsius = currentCelsius,
-    minimumCelsius = minimumCelsius,
-    maximumCelsius = maximumCelsius,
-    stepCelsius = stepCelsius
-)
-
-private fun DeviceRootSnapshot?.toInitialDeviceFamilySettingsUiState(
-    deviceUid: String
-): DeviceFamilySettingsUiState {
-    return this?.toDeviceFamilySettingsUiState()
-        ?: DeviceFamilySettingsUiState(serialNumber = deviceUid)
-}
+private fun DeviceRootSnapshot?.toInitialDeviceFamilySettingsUiState(): DeviceFamilySettingsUiState =
+    this?.toDeviceFamilySettingsUiState()
+        ?: DeviceFamilySettingsUiState()

@@ -56,7 +56,9 @@
     <string name="aquarium_tank_name_title">Tank name</string>
     <string name="aquarium_tank_size_title">Tank size</string>
     <string name="aquarium_validation_invalid_tank_size">Please enter a valid tank size.</string>
+    <string name="aquarium_validation_setup_date_required">Please select a setup date.</string>
     <string name="aquarium_validation_tank_name_min">Tank name must be at least 2 characters.</string>
+    <string name="aquarium_validation_tank_size_required">Please enter the tank dimensions.</string>
     <string name="aquarium_validation_tank_type_required">Please select a tank type.</string>
     <string name="aquarium_action_add">+ Add</string>
     <string name="aquarium_action_add_livestock">+ Add Livestock</string>
@@ -165,7 +167,6 @@
     <string name="aquarium_text_0_of_0_care_details_completed">0 of 0 care details completed</string>
     <string name="aquarium_text_0percent">0%%</string>
     <string name="aquarium_text_1">1</string>
-    <string name="aquarium_text_10_w_x_10_l_x_10_h">10 W × 10 L × 10 H</string>
     <string name="aquarium_text_10_w_x_10_l_x_10_h_2">10 W x 10 L x 10 H</string>
     <string name="aquarium_text_120w_x_50l_x_50h">120W x 50L x 50H</string>
     <string name="aquarium_text_120x50x50">120×50×50</string>

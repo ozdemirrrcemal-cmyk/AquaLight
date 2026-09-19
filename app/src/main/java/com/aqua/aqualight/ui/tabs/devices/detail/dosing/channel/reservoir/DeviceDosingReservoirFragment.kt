@@ -13,12 +13,16 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
-import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelRejection
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.ui.common.dialog.UnsavedChangesExitGuard
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.common.DeviceDosingChannelDestinationFragment
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.common.DeviceDosingCommercialErrorMessage
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.common.DeviceDosingErrorContext
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.common.DeviceDosingOperationFailure
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.common.toCommercialDosingError
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.common.toSnackType
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -137,16 +141,22 @@ class DeviceDosingReservoirFragment :
                             showReservoirMessage(R.string.device_dosing_reservoir_saved)
                             findNavController().navigateUp()
                         }
-                        is DeviceDosingReservoirEvent.SaveRejected -> showReservoirMessage(
-                            event.reason.messageRes,
-                            BaseActivity.SnackType.ERROR
+                        is DeviceDosingReservoirEvent.SaveRejected -> showReservoirError(
+                            event.reason.toCommercialDosingError(
+                                DeviceDosingErrorContext.RESERVOIR_SAVE
+                            )
                         )
                         DeviceDosingReservoirEvent.Refilled ->
                             showReservoirMessage(R.string.device_dosing_reservoir_refilled)
-                        DeviceDosingReservoirEvent.SaveFailed,
-                        DeviceDosingReservoirEvent.RefillFailed -> showReservoirMessage(
-                            R.string.device_dosing_detail_operation_failed,
-                            BaseActivity.SnackType.ERROR
+                        DeviceDosingReservoirEvent.SaveFailed -> showReservoirError(
+                            DeviceDosingOperationFailure.INTERNAL.toCommercialDosingError(
+                                DeviceDosingErrorContext.RESERVOIR_SAVE
+                            )
+                        )
+                        DeviceDosingReservoirEvent.RefillFailed -> showReservoirError(
+                            DeviceDosingOperationFailure.INTERNAL.toCommercialDosingError(
+                                DeviceDosingErrorContext.REFILL
+                            )
                         )
                     }
                 }
@@ -172,21 +182,11 @@ class DeviceDosingReservoirFragment :
         (activity as? BaseActivity)?.showSnackBar(getString(messageRes), type)
     }
 
-}
-
-private val DeviceDosingChannelRejection.messageRes: Int
-    get() = when (this) {
-        DeviceDosingChannelRejection.INVALID_DRAFT -> R.string.device_dosing_detail_error_invalid_input
-        DeviceDosingChannelRejection.NOT_EDITABLE -> R.string.device_dosing_detail_error_not_editable
-        DeviceDosingChannelRejection.NOT_CALIBRATED ->
-            R.string.device_dosing_detail_error_calibration_required
-        DeviceDosingChannelRejection.BUSY -> R.string.device_dosing_detail_error_busy
-        DeviceDosingChannelRejection.CONFLICT -> R.string.device_dosing_detail_error_state_changed
-        DeviceDosingChannelRejection.OUTPUT_STOP_UNCONFIRMED ->
-            R.string.device_dosing_error_output_stop_unconfirmed
-        DeviceDosingChannelRejection.UNSAFE -> R.string.device_dosing_detail_error_safety_blocked
-        DeviceDosingChannelRejection.UNKNOWN -> R.string.device_dosing_detail_operation_failed
+    private fun showReservoirError(error: DeviceDosingCommercialErrorMessage) {
+        showReservoirMessage(error.messageRes, error.severity.toSnackType())
     }
+
+}
 
 private const val UNSAVED_CHANGES_REQUEST_KEY = "dosing_reservoir_unsaved_changes"
 private const val ACTION_EXIT_WITHOUT_SAVING = "exit_dosing_reservoir_without_saving"

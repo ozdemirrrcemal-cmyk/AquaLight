@@ -23,6 +23,7 @@ import com.aqua.aqualight.data.devices.cooling.control.DefaultDeviceCoolingContr
 import com.aqua.aqualight.data.devices.cooling.program.DefaultDeviceCoolingProgramOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningDiscoveryOperations
+import com.aqua.aqualight.data.devices.provisioning.ble.AqlBleDeviceInfoPreflightClient
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningProgressOperations
 import com.aqua.aqualight.data.devices.provisioning.ble.DefaultBleProvisioningScanner
 import com.aqua.aqualight.data.devices.provisioning.qr.AqlProvisioningQrParser
@@ -51,7 +52,14 @@ import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.detail.DeviceDos
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.plan.DeviceDosingPlanViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.reservoir.DeviceDosingReservoirViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.root.DeviceDosingRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.programs.DeviceLightAutomaticProgramsViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.editor.DeviceLightAutomaticProgramEditorViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.adaptation.DeviceLightAdaptationViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.library.DeviceLightLibraryViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom.DeviceLightCustomCurveViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual.DeviceLightManualControlViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root.DeviceLightRootViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.system.DeviceLightSystemViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.settings.DeviceFamilySettingsViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.presentation.root.DeviceTimerRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.presentation.channel.DeviceTimerChannelViewModel
@@ -113,7 +121,8 @@ internal class OwnerViewModelFactory(
                     qrSecretStore = AqlProvisioningQrSecretStore(
                         context = appContext,
                         ownerUidProvider = { graph.ownerUid }
-                    )
+                    ),
+                    manualPreflightClient = AqlBleDeviceInfoPreflightClient(appContext)
                 ),
                 textResolver = appTextResolver
             )
@@ -125,7 +134,8 @@ internal class OwnerViewModelFactory(
                     qrSecretStore = AqlProvisioningQrSecretStore(
                         context = appContext,
                         ownerUidProvider = { graph.ownerUid }
-                    )
+                    ),
+                    manualPreflightClient = AqlBleDeviceInfoPreflightClient(appContext)
                 ),
                 textResolver = appTextResolver
             )
@@ -173,6 +183,33 @@ internal class OwnerViewModelFactory(
                 rootOperations = DefaultDeviceRootOperations(repository),
                 lightControlOperations = graph.lightOperations.controlOperations,
                 controlSurfacePreparationOperations = graph.controlSurfacePreparationOperations
+            )
+            DeviceLightAdaptationViewModel::class.java -> DeviceLightAdaptationViewModel(
+                graph.lightOperations.adaptationOperations
+            )
+            DeviceLightAutomaticProgramsViewModel::class.java ->
+                DeviceLightAutomaticProgramsViewModel(
+                    graph.lightOperations.automaticOperations
+                )
+            DeviceLightAutomaticProgramEditorViewModel::class.java ->
+                DeviceLightAutomaticProgramEditorViewModel(
+                    graph.lightOperations.automaticOperations
+                )
+            DeviceLightManualControlViewModel::class.java -> DeviceLightManualControlViewModel(
+                manualOperations = graph.lightOperations.manualOperations,
+                libraryOperations = graph.lightOperations.libraryOperations,
+                rootOperations = DefaultDeviceRootOperations(repository)
+            )
+            DeviceLightCustomCurveViewModel::class.java -> DeviceLightCustomCurveViewModel(
+                customOperations = graph.lightOperations.customOperations,
+                libraryOperations = graph.lightOperations.libraryOperations
+            )
+            DeviceLightLibraryViewModel::class.java -> DeviceLightLibraryViewModel(
+                operations = graph.lightOperations.libraryOperations,
+                rootOperations = DefaultDeviceRootOperations(repository)
+            )
+            DeviceLightSystemViewModel::class.java -> DeviceLightSystemViewModel(
+                operations = graph.lightOperations.systemOperations
             )
             DeviceCoolingRootViewModel::class.java -> DeviceCoolingRootViewModel(
                 operations = DefaultDeviceRootOperations(repository),
@@ -235,8 +272,7 @@ internal class OwnerViewModelFactory(
                 DeviceRootOverviewViewModel(DefaultDeviceRootOperations(repository))
             DeviceFamilySettingsViewModel::class.java -> DeviceFamilySettingsViewModel(
                 settingsOperations = DefaultDeviceFamilySettingsOperations(
-                    devicesRepository = repository,
-                    lightProtectionOperations = graph.lightOperations.protectionOperations
+                    devicesRepository = repository
                 ),
                 firmwareUpdateOperations = graph.firmwareUpdateOperations,
                 manifestUrl = BuildConfig.AQL_OTA_MANIFEST_URL
@@ -298,6 +334,13 @@ internal class OwnerViewModelFactory(
             AquariumTankViewModel::class.java,
             MaintenanceViewModel::class.java,
             DeviceLightRootViewModel::class.java,
+            DeviceLightAdaptationViewModel::class.java,
+            DeviceLightAutomaticProgramsViewModel::class.java,
+            DeviceLightAutomaticProgramEditorViewModel::class.java,
+            DeviceLightManualControlViewModel::class.java,
+            DeviceLightCustomCurveViewModel::class.java,
+            DeviceLightLibraryViewModel::class.java,
+            DeviceLightSystemViewModel::class.java,
             DeviceCoolingRootViewModel::class.java,
             DeviceCoolingTemperatureHistoryViewModel::class.java,
             DeviceCoolingSystemStatusViewModel::class.java,

@@ -222,6 +222,7 @@
       "light.auto.program.update",
       "light.auto.programs.get",
       "light.control.set",
+      "light.custom.clear",
       "light.custom.get",
       "light.custom.install",
       "light.graph.get",

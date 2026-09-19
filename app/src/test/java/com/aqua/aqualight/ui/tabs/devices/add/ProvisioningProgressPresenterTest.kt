@@ -64,6 +64,33 @@ class ProvisioningProgressPresenterTest {
         )
     }
 
+    @Test
+    fun `setup confirmation timeout does not blame WiFi credentials`() {
+        val presentation = presenter.status(
+            statusMessage(ProvisioningErrorCode.SETUP_CONFIRMATION_TIMEOUT)
+        )
+
+        assertNull(presentation.wifiCredentialFailure)
+        assertEquals(
+            text(R.string.device_provisioning_status_confirmation_timeout_message),
+            presentation.message
+        )
+    }
+
+    @Test
+    fun `unknown firmware text is never exposed to the customer`() {
+        val presentation = presenter.status(
+            statusMessage(ProvisioningErrorCode.UNKNOWN).copy(
+                message = "internal firmware diagnostic"
+            )
+        )
+
+        assertEquals(
+            text(R.string.device_provisioning_status_wifi_failed_message),
+            presentation.message
+        )
+    }
+
     private fun statusMessage(errorCode: ProvisioningErrorCode) = ProvisioningStatusMessage(
         status = ProvisioningStatus.WIFI_FAILED,
         message = "firmware fallback",

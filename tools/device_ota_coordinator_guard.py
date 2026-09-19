@@ -24,6 +24,7 @@ FILES = {
     "models": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareModels.kt",
     "manifest": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareManifestParser.kt",
     "status": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareStatusParser.kt",
+    "app_gradle": ROOT / "app/build.gradle",
 }
 
 errors: list[str] = []
@@ -86,6 +87,7 @@ require_tokens(
         "data class RolledBack(",
         "data class PostRestartTimeout(",
         "data class UnexpectedFirmware(",
+        "data class ReleaseNotPublished(",
         "suspend fun retryPostRestartConnection(",
     ),
 )
@@ -195,12 +197,11 @@ require_tokens(
         "requireValidatedSnapshot(snapshot)",
         "manifest.hasExpectedReleaseTag()",
         "Product-scoped OTA manifest must contain exactly one artifact.",
-        "compatible.size <= 1",
-        "return compatible.singleOrNull()",
-        "latestVersion = currentVersion",
+        "val artifact = manifest.artifacts.single()",
+        "validateArtifactAgainstSnapshot(artifact, manifest, snapshot)",
         "artifact.env == expectedEnvironment",
-        "artifact.compatibility.family == family",
-        "artifact.compatibility.line == line",
+        "artifact.compatibility.family == product.family.wireValue",
+        "artifact.compatibility.line == product.line",
         "artifact.product.capabilities == snapshot.capabilities",
         "artifact.product.limits == snapshot.limits",
         "version = artifact.firmware.version",
@@ -214,6 +215,8 @@ forbid_tokens(
     (
         "compatibleArtifacts.first()",
         "compatible.first()",
+        "exactSingleArtifactOrNull",
+        "latestVersion = currentVersion",
         "AqlCommercialDeviceCatalog",
         "AqlCommercialCatalogValidation",
         "requireValidatedProduct",
@@ -224,8 +227,8 @@ require_tokens(
     "repository",
     (
         "DeviceFirmwareManifestNotPublishedException",
-        "noPublishedRelease(snapshot)",
-        "latestVersion = currentVersion",
+        "releaseNotPublished(snapshot)",
+        "DeviceFirmwareAvailability.ReleaseNotPublished(currentVersion)",
         "throw error",
     ),
 )
@@ -266,9 +269,7 @@ require_tokens(
 require_tokens(
     "background_probe",
     (
-        "compatibleArtifacts.size <= 1",
-        "compatibleArtifacts.singleOrNull()",
-        "targetVersion = currentVersion",
+        "val artifact = manifest.artifacts.single()",
         "validateArtifact(snapshot, manifest, artifact)",
     ),
 )
@@ -286,6 +287,16 @@ require_tokens(
         "val version: String",
         "data class DeviceFirmwareFactoryAsset",
         "sealed interface DeviceFirmwareAvailability",
+        "data class ReleaseNotPublished(",
+    ),
+)
+require_tokens(
+    "app_gradle",
+    (
+        'tasks.register(\n        "verifyReleaseOtaManifestConfiguration"',
+        "AQL_OTA_MANIFEST_PUBLIC_KEY_PEM is required for production release builds.",
+        'task.name == "preReleaseBuild"',
+        "task.dependsOn(verifyReleaseOtaManifestConfiguration)",
     ),
 )
 require_tokens(

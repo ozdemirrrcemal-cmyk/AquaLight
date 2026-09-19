@@ -71,6 +71,7 @@ jobs:
         uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
         with:
           cmdline-tools-version: "15859902"
+          packages: "platform-tools"
         env:
           SKIP_JDK_VERSION_CHECK: true
 
@@ -107,6 +108,7 @@ jobs:
             --release-workflow .github/workflows/android_release.yml \
             --summary build/reports/stage14/policy-validation.json
           python3 tools/architecture_guard.py
+          python3 tools/installable_debug_real_device_guard.py
           python3 tools/dosing_architecture_guard.py
           python3 tools/navigation_guard.py
           python3 tools/ws_protocol_guard.py
@@ -346,4 +348,3 @@ jobs:
           rm -f app/src/staging/google-services.json
           rm -f app/src/releaseSmoke/google-services.json
           rm -f app/src/release/google-services.json
-

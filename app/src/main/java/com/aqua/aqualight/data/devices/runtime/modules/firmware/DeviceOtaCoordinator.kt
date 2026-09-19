@@ -156,6 +156,11 @@ internal class DeviceOtaCoordinator(
         deviceUid: DeviceUid,
         availability: DeviceFirmwareAvailability
     ): DeviceOtaState = when (availability) {
+        is DeviceFirmwareAvailability.ReleaseNotPublished ->
+            DeviceOtaState.ReleaseNotPublished(
+                deviceUid = deviceUid.value,
+                currentVersion = availability.currentVersion
+            ).also { clearPlanState(deviceUid) }
         is DeviceFirmwareAvailability.UpToDate -> DeviceOtaState.UpToDate(
             deviceUid = deviceUid.value,
             currentVersion = availability.currentVersion,

@@ -145,6 +145,26 @@ class DeviceFirmwareUpdateHeroPresentationMapperTest {
     }
 
     @Test
+    fun `unpublished release uses neutral copy instead of up to date copy`() {
+        val presentation = mapState(DeviceFirmwareUpdateMode.RELEASE_NOT_PUBLISHED)
+
+        assertEquals(
+            R.string.device_settings_update_hero_title_not_published,
+            presentation.titleRes
+        )
+        assertEquals(
+            DeviceFirmwareUpdateText(
+                R.string.device_settings_update_hero_summary_not_published
+            ),
+            presentation.summary
+        )
+        assertEquals(
+            R.string.device_settings_update_status_not_published,
+            presentation.statusTextRes
+        )
+    }
+
+    @Test
     fun `every mode produces a complete presentation`() {
         DeviceFirmwareUpdateMode.entries.forEach { mode ->
             val presentation = mapState(mode)

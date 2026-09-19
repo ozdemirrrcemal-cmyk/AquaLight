@@ -14,7 +14,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
-import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelRejection
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
@@ -24,6 +23,11 @@ import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.common.DeviceDos
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.DeviceDosingScheduleAmountContract
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.custom.DeviceDosingCustomScheduleContract
 import com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.schedule.timer.DeviceDosingTimerScheduleContract
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.common.DeviceDosingCommercialErrorMessage
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.common.DeviceDosingErrorContext
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.common.DeviceDosingOperationFailure
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.common.toCommercialDosingError
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.common.toSnackType
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -221,17 +225,20 @@ class DeviceDosingPlanFragment :
                             validationMessage(event.issue),
                             BaseActivity.SnackType.WARNING
                         )
-                        is DeviceDosingPlanEvent.SaveRejected -> showPlanMessage(
-                            rejectionMessage(event.reason),
-                            BaseActivity.SnackType.WARNING
+                        is DeviceDosingPlanEvent.SaveRejected -> showPlanError(
+                            event.reason.toCommercialDosingError(
+                                DeviceDosingErrorContext.PLAN_SAVE
+                            )
                         )
-                        DeviceDosingPlanEvent.SaveUnavailable -> showPlanMessage(
-                            R.string.device_dosing_plan_unavailable,
-                            BaseActivity.SnackType.ERROR
+                        DeviceDosingPlanEvent.SaveUnavailable -> showPlanError(
+                            DeviceDosingOperationFailure.UNAVAILABLE.toCommercialDosingError(
+                                DeviceDosingErrorContext.PLAN_SAVE
+                            )
                         )
-                        DeviceDosingPlanEvent.SaveFailed -> showPlanMessage(
-                            R.string.device_dosing_detail_operation_failed,
-                            BaseActivity.SnackType.ERROR
+                        DeviceDosingPlanEvent.SaveFailed -> showPlanError(
+                            DeviceDosingOperationFailure.INTERNAL.toCommercialDosingError(
+                                DeviceDosingErrorContext.PLAN_SAVE
+                            )
                         )
                     }
                 }
@@ -250,13 +257,6 @@ class DeviceDosingPlanFragment :
         }
     }
 
-    private fun showPlanMessage(
-        messageRes: Int,
-        type: BaseActivity.SnackType = BaseActivity.SnackType.SUCCESS
-    ) {
-        (activity as? BaseActivity)?.showSnackBar(getString(messageRes), type)
-    }
-
     private companion object {
         const val DAILY_DOSE_REQUEST_KEY = "dosing_daily_dose_input"
         const val DAILY_DOSE_INPUT_MAX_LENGTH = 12
@@ -265,6 +265,19 @@ class DeviceDosingPlanFragment :
         const val UNSAVED_CHANGES_REQUEST_KEY = "dosing_plan_unsaved_changes"
         const val ACTION_EXIT_WITHOUT_SAVING = "exit_dosing_plan_without_saving"
     }
+}
+
+private fun DeviceDosingPlanFragment.showPlanMessage(
+    messageRes: Int,
+    type: BaseActivity.SnackType = BaseActivity.SnackType.SUCCESS
+) {
+    (activity as? BaseActivity)?.showSnackBar(getString(messageRes), type)
+}
+
+private fun DeviceDosingPlanFragment.showPlanError(
+    error: DeviceDosingCommercialErrorMessage
+) {
+    showPlanMessage(error.messageRes, error.severity.toSnackType())
 }
 
 private fun scheduleDirection(
@@ -328,19 +341,6 @@ private fun validationMessage(issue: DosingPlanValidationIssue): Int = when (iss
     DosingPlanValidationIssue.RECOVERY_UNSUPPORTED ->
         R.string.device_dosing_plan_invalid_recovery
     DosingPlanValidationIssue.INVALID_SCHEDULE -> R.string.device_dosing_plan_invalid_schedule
-}
-
-private fun rejectionMessage(reason: DeviceDosingChannelRejection): Int = when (reason) {
-    DeviceDosingChannelRejection.INVALID_DRAFT -> R.string.device_dosing_plan_invalid_schedule
-    DeviceDosingChannelRejection.NOT_EDITABLE -> R.string.device_dosing_plan_rejected_not_editable
-    DeviceDosingChannelRejection.NOT_CALIBRATED ->
-        R.string.device_dosing_plan_rejected_not_calibrated
-    DeviceDosingChannelRejection.BUSY -> R.string.device_dosing_plan_rejected_busy
-    DeviceDosingChannelRejection.CONFLICT -> R.string.device_dosing_plan_rejected_conflict
-    DeviceDosingChannelRejection.OUTPUT_STOP_UNCONFIRMED ->
-        R.string.device_dosing_error_output_stop_unconfirmed
-    DeviceDosingChannelRejection.UNSAFE -> R.string.device_dosing_plan_rejected_unsafe
-    DeviceDosingChannelRejection.UNKNOWN -> R.string.device_dosing_detail_operation_failed
 }
 
 private fun DosingPlanDraft.hasSubMinuteTiming(mode: DosingPlanScheduleMode): Boolean = when (mode) {

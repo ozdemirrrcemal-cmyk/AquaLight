@@ -162,6 +162,11 @@ sealed interface DeviceOtaState {
         override val deviceUid: String
     ) : DeviceOtaState
 
+    data class ReleaseNotPublished(
+        override val deviceUid: String,
+        val currentVersion: String
+    ) : DeviceOtaState
+
     data class UpToDate(
         override val deviceUid: String,
         val currentVersion: String,

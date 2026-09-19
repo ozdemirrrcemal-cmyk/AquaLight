@@ -22,6 +22,7 @@
     "light.auto.program.delete",
     "light.custom.get",
     "light.custom.install",
+    "light.custom.clear",
     "light.graph.get",
     "light.preview.set",
     "light.preview.clear"

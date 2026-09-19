@@ -5,7 +5,7 @@ import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeTypedEvent
 
 /** Accepts only complete Light V1 snapshots; command-result events trigger a status refresh. */
 internal class DeviceLightTypedEventReducer(
-    private val stateStore: DeviceLightRuntimeStateStore
+    private val stateOwner: DeviceLightRuntimeStateOwner
 ) {
     fun apply(event: DeviceRuntimeTypedEvent): DeviceLightEventApplyResult {
         val snapshot = event.payload as? DeviceRuntimeEventPayload.Snapshot
@@ -13,7 +13,7 @@ internal class DeviceLightTypedEventReducer(
             DeviceLightEventApplyResult.Ignored
         } else {
             runCatching {
-                stateStore.recordStatus(
+                stateOwner.recordStatus(
                     event.deviceUid,
                     event.generation,
                     DeviceLightStatusParser.parse(snapshot.data)

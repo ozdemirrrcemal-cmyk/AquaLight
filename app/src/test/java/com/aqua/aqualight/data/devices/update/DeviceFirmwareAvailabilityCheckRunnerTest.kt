@@ -365,6 +365,7 @@ private class DeliverablePermissionPolicy : NotificationPermissionPolicy {
 
 private object NoOpNotificationScheduler : NotificationScheduler {
     override suspend fun scheduleCareTask(ownerUid: String, taskId: Long) = Unit
+    override suspend fun finalizeCareTaskDelivery(ownerUid: String, taskId: Long) = Unit
     override suspend fun cancelCareTask(ownerUid: String, taskId: Long) = Unit
     override suspend fun reconcileOwner(ownerUid: String) = Unit
     override suspend fun cancelOwner(ownerUid: String) = Unit

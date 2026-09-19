@@ -3,10 +3,9 @@
 ## Otorite ve kapsam
 
 - Firmware repository: `ozdemirrrcemal-cmyk/AquaLight-Firmware`
-- Firmware branch: `main`
-- Firmware commit: `7df97ce807ebb1e90ff63cc36206d6ce479a62fc`
-- Firmware tree: `5df1ba11e2d0d5c65e3c6fbb1e4aba5d47bd6c69`
-- Android branch: `agent/timer-ui-control-surface`
+- Firmware branch: `feat/custom-program-device-apply`
+- Firmware commit: `cd01a8760fe4a349fe85265dbadbf4278add7bb6`
+- Android branch: `feat/custom-program-device-apply` (base: `fix/provisioning-reliability`)
 - Schema: `aqualight.light.v1`, storage version `1`
 - Kapsam: firmware, Android veri katmanı ve Light cihaz menüsünün authoritative
   giriş kapısı. Dashboard'ın görsel bağlaması bu değişikliğin kapsamı dışındadır.
@@ -66,10 +65,10 @@ ekranda kullanılacak sıra her zaman firmware `channels[].order` değeridir.
 |---|---:|---:|
 | `productKey` | `LIGHT_WRGB_PRO_ELITE` | `LIGHT_RGB_PRO_SLIM` |
 | Kanal | red, green, blue, white | red, green, blue |
-| Ortak Light V1 komutları | 14 | 14 |
+| Ortak Light V1 komutları | 15 | 15 |
 | Acclimation komutları | 3 | 0 |
 | Thermal/temperature-protection komutları | 4 | 0 |
-| Toplam Light komutu | 21 | 14 |
+| Toplam Light komutu | 22 | 15 |
 | Acclimation | var | yok |
 | Fan / sıcaklık sensörü / thermal | var | yok |
 | Estimated Power / Estimated Color | var | yok |
@@ -90,6 +89,7 @@ ekranda kullanılacak sıra her zaman firmware `channels[].order` değeridir.
 | `light.auto.program.delete` | `expectedRevision,programId` | ✓ | ✓ |
 | `light.custom.get` | `{}` | ✓ | ✓ |
 | `light.custom.install` | `expectedRevision,weekdaysMask,points` | ✓ | ✓ |
+| `light.custom.clear` | `expectedRevision` | ✓ | ✓ |
 | `light.graph.get` | `{}` | ✓ | ✓ |
 | `light.preview.set` | `scene,durationMs?` veya `virtualTimeMs,durationMs?` | ✓ | ✓ |
 | `light.preview.clear` | `{}` | ✓ | ✓ |

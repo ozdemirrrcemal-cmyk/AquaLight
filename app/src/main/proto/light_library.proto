@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+option java_package = "com.aqua.aqualight.data.devices.light.library";
+option java_multiple_files = true;
+
+message DeviceLightLibraryStoreData {
+  repeated StoredDeviceLightLibraryEntry entries = 1;
+
+  // First commercial schema. Unsupported versions are corruption; no legacy bridge exists.
+  uint32 schema_version = 100;
+}
+
+enum StoredDeviceLightLibraryKind {
+  STORED_DEVICE_LIGHT_LIBRARY_KIND_UNSPECIFIED = 0;
+  STORED_DEVICE_LIGHT_LIBRARY_KIND_MANUAL = 1;
+  STORED_DEVICE_LIGHT_LIBRARY_KIND_CUSTOM = 2;
+}
+
+message StoredDeviceLightLibraryEntry {
+  string id = 1;
+  string owner_uid = 2;
+  string display_name = 3;
+  string normalized_name = 4;
+  StoredDeviceLightLibraryKind kind = 5;
+  string product_key = 6;
+  repeated string channel_keys = 7;
+  int64 created_at_millis = 8;
+  int64 updated_at_millis = 9;
+
+  oneof payload {
+    StoredDeviceLightManualScene manual = 20;
+    StoredDeviceLightCustomCurve custom = 21;
+  }
+}
+
+message StoredDeviceLightChannelValue {
+  string channel_key = 1;
+  uint32 percent = 2;
+}
+
+message StoredDeviceLightManualScene {
+  repeated StoredDeviceLightChannelValue channels = 1;
+}
+
+message StoredDeviceLightCustomCurve {
+  uint32 weekdays_mask = 1;
+  repeated StoredDeviceLightCustomPoint points = 2;
+}
+
+message StoredDeviceLightCustomPoint {
+  int64 time_ms = 1;
+  repeated StoredDeviceLightChannelValue channels = 2;
+}

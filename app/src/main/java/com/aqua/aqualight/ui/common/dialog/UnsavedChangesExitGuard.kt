@@ -12,51 +12,56 @@ import com.aqua.aqualight.utils.DialogType
  */
 class UnsavedChangesExitGuard private constructor(
     private val fragment: Fragment,
-    private val requestKey: String,
-    private val actionId: String,
-    private val hasUnsavedChanges: () -> Boolean,
-    private val isExitBlocked: () -> Boolean,
-    private val exit: () -> Unit
+    private val configuration: Configuration
 ) {
+    private var pendingAction: (() -> Unit)? = null
 
     data class Configuration(
         val requestKey: String,
         val actionId: String,
         val hasUnsavedChanges: () -> Boolean,
         val isExitBlocked: () -> Boolean = { false },
+        val beforeConfirmation: () -> Unit = {},
         val exit: () -> Unit
     )
 
-    fun requestExit() {
-        if (isExitBlocked()) return
-        if (!hasUnsavedChanges()) {
-            exit()
-            return
-        }
+    fun requestExit() = requestAction(configuration.exit)
 
-        ConfirmDialogFragment.show(
-            fragmentManager = fragment.childFragmentManager,
-            request = ConfirmDialogFragment.Request(
-                title = fragment.getString(R.string.common_unsaved_changes_exit_title),
-                message = fragment.getString(R.string.common_unsaved_changes_exit_message),
-                confirmText = fragment.getString(R.string.common_unsaved_changes_exit_action),
-                cancelText = fragment.getString(R.string.common_unsaved_changes_continue_action),
-                presentation = ConfirmDialogFragment.Presentation(
-                    type = DialogType.WARNING,
-                    destructive = true
-                ),
-                resultTarget = ConfirmDialogFragment.ResultTarget(
-                    requestKey = requestKey,
-                    actionId = actionId
+    /** Uses the same central Dosing confirmation for any action that discards the editor draft. */
+    fun requestAction(action: () -> Unit) {
+        if (configuration.isExitBlocked()) {
+            Unit
+        } else if (!configuration.hasUnsavedChanges()) {
+            action()
+        } else if (pendingAction == null) {
+            configuration.beforeConfirmation()
+            pendingAction = action
+            ConfirmDialogFragment.show(
+                fragmentManager = fragment.childFragmentManager,
+                request = ConfirmDialogFragment.Request(
+                    title = fragment.getString(R.string.common_unsaved_changes_exit_title),
+                    message = fragment.getString(R.string.common_unsaved_changes_exit_message),
+                    confirmText = fragment.getString(R.string.common_unsaved_changes_exit_action),
+                    cancelText = fragment.getString(R.string.common_unsaved_changes_continue_action),
+                    presentation = ConfirmDialogFragment.Presentation(
+                        type = DialogType.WARNING,
+                        destructive = true
+                    ),
+                    resultTarget = ConfirmDialogFragment.ResultTarget(
+                        requestKey = configuration.requestKey,
+                        actionId = configuration.actionId
+                    )
                 )
             )
-        )
+        }
     }
 
     private fun handleResult(result: String?, resultActionId: String?) {
-        if (resultActionId != actionId) return
-        if (result == ConfirmDialogFragment.RESULT_CONFIRM && !isExitBlocked()) {
-            exit()
+        if (resultActionId != configuration.actionId) return
+        val action = pendingAction
+        pendingAction = null
+        if (result == ConfirmDialogFragment.RESULT_CONFIRM && !configuration.isExitBlocked()) {
+            action?.invoke()
         }
     }
 
@@ -67,11 +72,7 @@ class UnsavedChangesExitGuard private constructor(
         ): UnsavedChangesExitGuard {
             val guard = UnsavedChangesExitGuard(
                 fragment = fragment,
-                requestKey = configuration.requestKey,
-                actionId = configuration.actionId,
-                hasUnsavedChanges = configuration.hasUnsavedChanges,
-                isExitBlocked = configuration.isExitBlocked,
-                exit = configuration.exit
+                configuration = configuration
             )
             fragment.childFragmentManager.setFragmentResultListener(
                 configuration.requestKey,

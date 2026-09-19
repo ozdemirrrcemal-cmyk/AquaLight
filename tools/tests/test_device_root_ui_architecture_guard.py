@@ -208,6 +208,296 @@ class DeviceRootUiArchitectureGuardTest(unittest.TestCase):
                 errors,
             )
 
+    def test_dosing_operational_error_resource_cannot_bypass_central_resolver(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repository_root = Path(temporary_directory)
+            resolver = repository_root / GUARD.DOSING_COMMERCIAL_ERROR_RESOLVER
+            resolver.parent.mkdir(parents=True)
+            resolver.write_text(
+                "internal object DeviceDosingCommercialErrorResolver\n",
+                encoding="utf-8",
+            )
+            bypass = (
+                repository_root
+                / GUARD.DOSING_UI_ROOT
+                / "channel/plan/DecentralizedDosingError.kt"
+            )
+            bypass.parent.mkdir(parents=True)
+            bypass.write_text(
+                "private val error = R.string.device_dosing_plan_unavailable\n",
+                encoding="utf-8",
+            )
+
+            errors = GUARD.validate_dosing_commercial_error_boundaries(repository_root)
+
+        self.assertTrue(
+            any("DeviceDosingCommercialErrorResolver" in error for error in errors),
+            errors,
+        )
+
+    def test_dosing_form_validation_copy_may_remain_local(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repository_root = Path(temporary_directory)
+            resolver = repository_root / GUARD.DOSING_COMMERCIAL_ERROR_RESOLVER
+            resolver.parent.mkdir(parents=True)
+            resolver.write_text(
+                "internal object DeviceDosingCommercialErrorResolver\n",
+                encoding="utf-8",
+            )
+            validation = (
+                repository_root
+                / GUARD.DOSING_UI_ROOT
+                / "channel/calibration/DosingCalibrationPresentation.kt"
+            )
+            validation.parent.mkdir(parents=True)
+            validation.write_text(
+                "private val error = R.string.device_dosing_calibration_invalid_measurement\n",
+                encoding="utf-8",
+            )
+
+            errors = GUARD.validate_dosing_commercial_error_boundaries(repository_root)
+
+        self.assertFalse(
+            any("operational error resources" in error for error in errors),
+            errors,
+        )
+
+    def test_legacy_light_menu_package_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repository_root = Path(temporary_directory)
+            legacy_file = (
+                repository_root
+                / GUARD.LIGHT_PRESENTATION_ROOT
+                / "menu/LegacyLightMenuFragment.kt"
+            )
+            legacy_file.parent.mkdir(parents=True)
+            legacy_file.write_text(
+                "package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.menu\n",
+                encoding="utf-8",
+            )
+
+            errors = GUARD.validate_light_feature_boundaries(repository_root)
+
+        self.assertTrue(
+            any("legacy Light package must not return" in error for error in errors),
+            errors,
+        )
+
+    def test_parallel_light_state_owner_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repository_root = Path(temporary_directory)
+            parallel_owner = (
+                repository_root
+                / GUARD.LIGHT_DATA_ROOT
+                / "system/ParallelOwner.kt"
+            )
+            parallel_owner.parent.mkdir(parents=True)
+            parallel_owner.write_text(
+                "package com.aqua.aqualight.data.devices.light.system\n\n"
+                "private val owner = DeviceLightRuntimeStateOwner()\n",
+                encoding="utf-8",
+            )
+
+            errors = GUARD.validate_light_feature_boundaries(repository_root)
+
+        self.assertTrue(
+            any("construct exactly one state owner only" in error for error in errors),
+            errors,
+        )
+
+    def test_duplicate_light_state_owner_in_composition_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repository_root = Path(temporary_directory)
+            provider = repository_root / GUARD.LIGHT_RUNTIME_PROVIDER
+            provider.parent.mkdir(parents=True)
+            provider.write_text(
+                "private val first = DeviceLightRuntimeStateOwner()\n"
+                "private val second = DeviceLightRuntimeStateOwner()\n",
+                encoding="utf-8",
+            )
+
+            errors = GUARD.validate_light_feature_boundaries(repository_root)
+
+        self.assertTrue(
+            any("construct exactly one state owner only" in error for error in errors),
+            errors,
+        )
+
+    def test_light_suppression_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repository_root = Path(temporary_directory)
+            source_file = (
+                repository_root
+                / GUARD.LIGHT_PRESENTATION_ROOT
+                / "manual/Suppressed.kt"
+            )
+            source_file.parent.mkdir(parents=True)
+            source_file.write_text(
+                '@file:Suppress("MagicNumber")\n\n'
+                "package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual\n",
+                encoding="utf-8",
+            )
+
+            errors = GUARD.validate_light_feature_boundaries(repository_root)
+
+        self.assertTrue(
+            any("instead of suppressing them" in error for error in errors),
+            errors,
+        )
+
+    def test_light_manual_slider_cannot_use_blocking_operation_loading(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repository_root = Path(temporary_directory)
+            state_file = (
+                repository_root
+                / GUARD.LIGHT_PRESENTATION_ROOT
+                / "manual/DeviceLightManualControlUiState.kt"
+            )
+            state_file.parent.mkdir(parents=True)
+            state_file.write_text(
+                "package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual\n\n"
+                "data class DeviceLightManualControlUiState(\n"
+                "    override val initialLoading: Boolean,\n"
+                "    override val operationInProgress: Boolean\n"
+                ") : DeviceLightOperationLoadingState\n",
+                encoding="utf-8",
+            )
+
+            errors = GUARD.validate_light_feature_boundaries(repository_root)
+
+        self.assertTrue(
+            any("slider commands must remain non-blocking" in error for error in errors),
+            errors,
+        )
+
+    def test_light_failure_copy_cannot_be_mapped_outside_central_resolver(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repository_root = Path(temporary_directory)
+            decentralized_mapper = (
+                repository_root
+                / GUARD.LIGHT_PRESENTATION_ROOT
+                / "manual/DecentralizedErrorMapper.kt"
+            )
+            decentralized_mapper.parent.mkdir(parents=True)
+            decentralized_mapper.write_text(
+                "package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual\n\n"
+                "private fun DeviceLightManualFailure.messageRes(): Int = 0\n",
+                encoding="utf-8",
+            )
+
+            errors = GUARD.validate_light_feature_boundaries(repository_root)
+
+        self.assertTrue(
+            any("DeviceLightCommercialErrorResolver" in error for error in errors),
+            errors,
+        )
+
+    def test_light_operational_error_resource_cannot_bypass_central_resolver(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repository_root = Path(temporary_directory)
+            bypass = (
+                repository_root
+                / GUARD.LIGHT_PRESENTATION_ROOT
+                / "automatic/programs/ResolverBypass.kt"
+            )
+            bypass.parent.mkdir(parents=True)
+            bypass.write_text(
+                "package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation."
+                "automatic.programs\n\n"
+                "private val error = R.string.device_light_auto_operation_error\n",
+                encoding="utf-8",
+            )
+
+            errors = GUARD.validate_light_feature_boundaries(repository_root)
+
+        self.assertTrue(
+            any("operational error resources" in error for error in errors),
+            errors,
+        )
+
+    def test_light_strings_cannot_be_split_across_resource_files(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repository_root = Path(temporary_directory)
+            split_resource = (
+                repository_root
+                / "app/src/main/res/values/device_light_auto_strings.xml"
+            )
+            split_resource.parent.mkdir(parents=True)
+            split_resource.write_text(
+                "<resources>\n"
+                "    <string name=\"device_light_auto_error\">Error</string>\n"
+                "</resources>\n",
+                encoding="utf-8",
+            )
+
+            errors = GUARD.validate_light_feature_boundaries(repository_root)
+
+        self.assertTrue(
+            any("canonical device_light_strings.xml" in error for error in errors),
+            errors,
+        )
+
+    def test_automatic_presentation_package_cycle_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repository_root = Path(temporary_directory)
+            editor = (
+                repository_root
+                / GUARD.LIGHT_PRESENTATION_ROOT
+                / "automatic/editor/Editor.kt"
+            )
+            preset = (
+                repository_root
+                / GUARD.LIGHT_PRESENTATION_ROOT
+                / "automatic/preset/Preset.kt"
+            )
+            editor.parent.mkdir(parents=True)
+            preset.parent.mkdir(parents=True)
+            editor.write_text(
+                "package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation."
+                "automatic.editor\n\n"
+                "import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation."
+                "automatic.preset.Preset\n",
+                encoding="utf-8",
+            )
+            preset.write_text(
+                "package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation."
+                "automatic.preset\n\n"
+                "import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation."
+                "automatic.editor.Editor\n",
+                encoding="utf-8",
+            )
+
+            errors = GUARD.validate_light_feature_boundaries(repository_root)
+
+        self.assertTrue(
+            any("dependency cycle" in error for error in errors),
+            errors,
+        )
+
+    def test_automatic_editor_cannot_import_preset_directly(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            repository_root = Path(temporary_directory)
+            editor = (
+                repository_root
+                / GUARD.LIGHT_PRESENTATION_ROOT
+                / "automatic/editor/Editor.kt"
+            )
+            editor.parent.mkdir(parents=True)
+            editor.write_text(
+                "package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation."
+                "automatic.editor\n\n"
+                "import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation."
+                "automatic.preset.Preset\n",
+                encoding="utf-8",
+            )
+
+            errors = GUARD.validate_light_feature_boundaries(repository_root)
+
+        self.assertTrue(
+            any("shared parent contract" in error for error in errors),
+            errors,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

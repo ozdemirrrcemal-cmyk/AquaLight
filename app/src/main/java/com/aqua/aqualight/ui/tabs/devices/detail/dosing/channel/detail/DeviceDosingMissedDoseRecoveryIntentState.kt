@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.dosing.channel.detail
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelCommittedResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperationResult
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
+import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelRejection
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -66,7 +67,9 @@ internal class DeviceDosingMissedDoseRecoveryIntentState {
             DeviceDosingMissedDoseRecoveryFeedback.Saved
         } else {
             DeviceDosingMissedDoseRecoveryFeedback.Failed(
-                DeviceDosingChannelDetailFailure.STATE_CHANGED
+                DeviceDosingChannelDetailFailure.Rejected(
+                    DeviceDosingChannelRejection.CONFLICT
+                )
             )
         }
     }
@@ -200,7 +203,7 @@ internal class DeviceDosingMissedDoseRecoveryController(
             )
             is DeviceDosingChannelOperationResult.Rejected -> intent.onFailure(
                 requestId,
-                result.reason.toDetailFailure()
+                DeviceDosingChannelDetailFailure.Rejected(result.reason)
             )
             DeviceDosingChannelOperationResult.Unavailable -> intent.onFailure(
                 requestId,
