@@ -171,79 +171,96 @@ private fun LightStatusModeRow(
         horizontalArrangement = Arrangement.spacedBy(AquaLightTankCardGeometry.statusChipGap),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        val statusColor = colorResource(item.header.statusStyle.tintColorRes)
-        val chipShape = RoundedCornerShape(AquaDeviceCardGeometry.statusCornerRadius)
-        Row(
-            modifier = Modifier
-                .clip(chipShape)
-                .background(statusColor.copy(alpha = AquaLightTankCardAlpha.statusSurface))
-                .padding(
-                    horizontal = AquaDeviceCardGeometry.statusHorizontalPadding,
-                    vertical = AquaDeviceCardGeometry.statusVerticalPadding
-                ),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                Modifier
-                    .size(AquaLightTankCardGeometry.statusDotSize)
-                    .clip(CircleShape)
-                    .background(statusColor)
-            )
-            Spacer(Modifier.width(AquaLightTankCardGeometry.statusContentGap))
-            BasicText(
-                text = stringResource(item.header.statusStyle.statusLabelRes),
-                style = visuals.typography.body.copy(color = statusColor),
-                maxLines = 1
-            )
-        }
+        LightConnectionChip(item, visuals)
+        LightModeChip(item, online, visuals)
+    }
+}
 
-        val detailAlpha = if (online) 1f else AquaLightTankCardAlpha.offlineDetails
-        val mode = item.snapshot?.hero?.mode
-        Row(
+@Composable
+private fun LightConnectionChip(
+    item: LightDeviceSpotlightCardUi,
+    visuals: LightDeviceCardVisuals
+) {
+    val statusColor = colorResource(item.header.statusStyle.tintColorRes)
+    val chipShape = RoundedCornerShape(AquaDeviceCardGeometry.statusCornerRadius)
+    Row(
+        modifier = Modifier
+            .clip(chipShape)
+            .background(statusColor.copy(alpha = AquaLightTankCardAlpha.statusSurface))
+            .padding(
+                horizontal = AquaDeviceCardGeometry.statusHorizontalPadding,
+                vertical = AquaDeviceCardGeometry.statusVerticalPadding
+            ),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            Modifier
+                .size(AquaLightTankCardGeometry.statusDotSize)
+                .clip(CircleShape)
+                .background(statusColor)
+        )
+        Spacer(Modifier.width(AquaLightTankCardGeometry.statusContentGap))
+        BasicText(
+            text = stringResource(item.header.statusStyle.statusLabelRes),
+            style = visuals.typography.body.copy(color = statusColor),
+            maxLines = 1
+        )
+    }
+}
+
+@Composable
+private fun LightModeChip(
+    item: LightDeviceSpotlightCardUi,
+    online: Boolean,
+    visuals: LightDeviceCardVisuals
+) {
+    val chipShape = RoundedCornerShape(AquaDeviceCardGeometry.statusCornerRadius)
+    val detailAlpha = if (online) 1f else AquaLightTankCardAlpha.offlineDetails
+    val mode = item.snapshot?.hero?.mode
+    Row(
+        modifier = Modifier
+            .alpha(detailAlpha)
+            .clip(chipShape)
+            .background(
+                visuals.colors.card.mediaSurface.copy(
+                    alpha = AquaLightTankCardAlpha.modeSurface
+                )
+            )
+            .border(
+                AquaDeviceCardGeometry.outlineWidth,
+                visuals.colors.card.mediaOutline,
+                chipShape
+            )
+            .padding(
+                horizontal = AquaDeviceCardGeometry.statusHorizontalPadding,
+                vertical = AquaDeviceCardGeometry.statusVerticalPadding
+            ),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
             modifier = Modifier
-                .alpha(detailAlpha)
-                .clip(chipShape)
-                .background(
-                    visuals.colors.card.mediaSurface.copy(
-                        alpha = AquaLightTankCardAlpha.modeSurface
-                    )
-                )
+                .size(AquaLightTankCardGeometry.modeGlyphSize)
                 .border(
-                    AquaDeviceCardGeometry.outlineWidth,
-                    visuals.colors.card.mediaOutline,
-                    chipShape
-                )
-                .padding(
-                    horizontal = AquaDeviceCardGeometry.statusHorizontalPadding,
-                    vertical = AquaDeviceCardGeometry.statusVerticalPadding
+                    AquaLightTankCardGeometry.modeGlyphBorderWidth,
+                    visuals.colors.action,
+                    CircleShape
                 ),
-            verticalAlignment = Alignment.CenterVertically
+            contentAlignment = Alignment.Center
         ) {
-            Box(
-                modifier = Modifier
-                    .size(AquaLightTankCardGeometry.modeGlyphSize)
-                    .border(
-                        AquaLightTankCardGeometry.modeGlyphBorderWidth,
-                        visuals.colors.action,
-                        CircleShape
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                BasicText(
-                    text = mode.lightCardModeGlyph(),
-                    style = visuals.typography.micro.copy(
-                        color = visuals.colors.action,
-                        textAlign = TextAlign.Center
-                    )
-                )
-            }
-            Spacer(Modifier.width(AquaLightTankCardGeometry.modeGlyphGap))
             BasicText(
-                text = stringResource(mode.lightCardModeLabelRes()),
-                style = visuals.typography.body.copy(color = visuals.colors.action),
-                maxLines = 1
+                text = mode.lightCardModeGlyph(),
+                style = visuals.typography.micro.copy(
+                    color = visuals.colors.action,
+                    textAlign = TextAlign.Center
+                )
             )
         }
+        Spacer(Modifier.width(AquaLightTankCardGeometry.modeGlyphGap))
+        BasicText(
+            text = stringResource(mode.lightCardModeLabelRes()),
+            style = visuals.typography.body.copy(color = visuals.colors.action),
+            maxLines = 1
+        )
     }
 }
 
@@ -379,34 +396,12 @@ private fun LightChannelRow(
             modifier = Modifier.width(AquaLightTankCardGeometry.channelLabelWidth)
         )
         Spacer(Modifier.width(AquaLightTankCardGeometry.channelLabelGap))
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .height(AquaLightDashboardGeometry.liveOutputTrackHeight)
-                .clip(AquaLightDashboardGeometry.liveOutputTrackShape)
-                .background(
-                    visuals.colors.card.secondaryText.copy(
-                        alpha = AquaLightDashboardAlpha.liveOutputRail
-                    )
-                )
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .fillMaxWidth(
-                        percent.toFloat() / AquaLightPlanChartSpec.maximumPercent.toFloat()
-                    )
-                    .clip(AquaLightDashboardGeometry.liveOutputTrackShape)
-                    .background(
-                        Brush.horizontalGradient(
-                            listOf(
-                                fill.copy(alpha = AquaLightDashboardAlpha.liveOutputFillStart),
-                                fill
-                            )
-                        )
-                    )
-            )
-        }
+        LightChannelTrack(
+            percent = percent,
+            fill = fill,
+            rail = visuals.colors.card.secondaryText,
+            modifier = Modifier.weight(1f)
+        )
         Spacer(Modifier.width(AquaLightTankCardGeometry.channelValueGap))
         BasicText(
             text = stringResource(R.string.device_light_card_channel_value_format, percent),
@@ -415,6 +410,40 @@ private fun LightChannelRow(
                 textAlign = TextAlign.End
             ),
             modifier = Modifier.width(AquaLightTankCardGeometry.channelValueWidth)
+        )
+    }
+}
+
+@Composable
+private fun LightChannelTrack(
+    percent: Int,
+    fill: Color,
+    rail: Color,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .height(AquaLightDashboardGeometry.liveOutputTrackHeight)
+            .clip(AquaLightDashboardGeometry.liveOutputTrackShape)
+            .background(
+                rail.copy(alpha = AquaLightDashboardAlpha.liveOutputRail)
+            )
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxHeight()
+                .fillMaxWidth(
+                    percent.toFloat() / AquaLightPlanChartSpec.maximumPercent.toFloat()
+                )
+                .clip(AquaLightDashboardGeometry.liveOutputTrackShape)
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(
+                            fill.copy(alpha = AquaLightDashboardAlpha.liveOutputFillStart),
+                            fill
+                        )
+                    )
+                )
         )
     }
 }
