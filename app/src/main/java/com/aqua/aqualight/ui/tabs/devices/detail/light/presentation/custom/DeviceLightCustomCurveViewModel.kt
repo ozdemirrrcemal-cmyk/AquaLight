@@ -63,15 +63,30 @@ internal class DeviceLightCustomCurveViewModel(
     private var deviceClockAnchorTimeMs: Long? = null
     private var deviceClockAnchorNanos: Long = 0L
 
+    private val emitEffect: (DeviceLightCustomCurveEffect) -> Unit = { effect ->
+        viewModelScope.launch { _effects.emit(effect) }
+    }
+    private val updateDraft: (DeviceLightCustomDraft, Long?) -> Unit =
+        { draft, selectedTimeMs ->
+            _uiState.update { state ->
+                state.copy(
+                    draft = draft,
+                    selectedTimeMs = selectedTimeMs,
+                    hasUnsavedChanges = draft != editorCheckpointDraft,
+                    hasUnappliedChanges = draft != deviceBaselineDraft
+                )
+            }
+        }
+
     val dayEditor = DeviceLightCustomDayEditor(
         currentState = { currentState },
-        setDraft = ::setDraft
+        setDraft = updateDraft
     )
     val pointEditor = DeviceLightCustomPointEditor(
         currentState = { currentState },
         updateState = { change -> _uiState.update(change) },
-        setDraft = ::setDraft,
-        emit = ::emit
+        setDraft = updateDraft,
+        emit = emitEffect
     )
 
     val tickDeviceClock: () -> Unit = {
@@ -118,7 +133,7 @@ internal class DeviceLightCustomCurveViewModel(
                         kotlin.math.abs(point.timeMs - referenceTimeMs)
                     }?.timeMs
                     editorCheckpointDraft = draft
-                    setDraft(draft, selectedTimeMs)
+                    updateDraft(draft, selectedTimeMs)
                     if (selectedTimeMs != null) {
                         _uiState.update { current ->
                             current.copy(
@@ -138,7 +153,7 @@ internal class DeviceLightCustomCurveViewModel(
                             }
                         null -> DeviceLightLibraryFailure.UNAVAILABLE
                     }
-                    emit(
+                    emitEffect(
                         DeviceLightCustomCurveEffect.ShowError(
                             failure.toCommercialLightError().messageRes
                         )
@@ -203,7 +218,7 @@ internal class DeviceLightCustomCurveViewModel(
                 is DeviceLightCustomReadResult.Available -> applySnapshot(result.snapshot)
                 is DeviceLightCustomReadResult.Failed -> {
                     _uiState.applyReadFailure(result.failure)
-                    emit(
+                    emitEffect(
                         DeviceLightCustomCurveEffect.ShowError(
                             result.failure.toCommercialLightError().messageRes
                         )
@@ -225,7 +240,7 @@ internal class DeviceLightCustomCurveViewModel(
             when (val result = customOperations.preview(boundDeviceUid, points)) {
                 DeviceLightCustomMutationResult.Success -> playCustomDayPreview()
                 is DeviceLightCustomMutationResult.Failed -> {
-                    emit(
+                    emitEffect(
                         DeviceLightCustomCurveEffect.ShowError(
                             result.failure.toCommercialLightError().messageRes
                         )
@@ -262,7 +277,7 @@ internal class DeviceLightCustomCurveViewModel(
         viewModelScope.launch {
             val names = runCatching { libraryOperations.usedNames(DeviceLightLibraryKind.CUSTOM) }
                 .getOrDefault(emptyList())
-            emit(DeviceLightCustomCurveEffect.OpenSaveAs(names))
+            emitEffect(DeviceLightCustomCurveEffect.OpenSaveAs(names))
         }
     }
 
@@ -302,7 +317,7 @@ internal class DeviceLightCustomCurveViewModel(
                             hasUnappliedChanges = current.draft != deviceBaselineDraft
                         )
                     }
-                    emit(
+                    emitEffect(
                         DeviceLightCustomCurveEffect.ShowSuccess(
                             R.string.device_light_library_saved_success
                         )
@@ -315,7 +330,7 @@ internal class DeviceLightCustomCurveViewModel(
                             blockingOperationInProgress = false
                         )
                     }
-                    emit(
+                    emitEffect(
                         DeviceLightCustomCurveEffect.ShowError(
                             result.failure.toCommercialLightError().messageRes
                         )
@@ -356,7 +371,7 @@ internal class DeviceLightCustomCurveViewModel(
                             blockingOperationInProgress = false
                         )
                     }
-                    emit(
+                    emitEffect(
                         DeviceLightCustomCurveEffect.ShowSuccess(
                             R.string.device_light_custom_applied_success
                         )
@@ -368,9 +383,9 @@ internal class DeviceLightCustomCurveViewModel(
         }
     }
 
-    fun requestDeviceProgramActions() {
+    val requestDeviceProgramActions: () -> Unit = {
         if (_uiState.value.canClearDeviceProgram) {
-            emit(DeviceLightCustomCurveEffect.OpenDeviceProgramActions)
+            emitEffect(DeviceLightCustomCurveEffect.OpenDeviceProgramActions)
         }
     }
 
@@ -403,7 +418,7 @@ internal class DeviceLightCustomCurveViewModel(
                             blockingOperationInProgress = false
                         )
                     }
-                    emit(
+                    emitEffect(
                         DeviceLightCustomCurveEffect.ShowSuccess(
                             R.string.device_light_custom_device_program_deleted_success
                         )
@@ -428,7 +443,7 @@ internal class DeviceLightCustomCurveViewModel(
                 is DeviceLightCustomReadResult.Failed -> Unit
             }
         }
-        emit(
+        emitEffect(
             DeviceLightCustomCurveEffect.ShowError(
                 failure.toCommercialLightError().messageRes
             )
@@ -561,20 +576,6 @@ internal class DeviceLightCustomCurveViewModel(
         _uiState.update { it.copy(operationInProgress = false) }
     }
 
-    private fun setDraft(draft: DeviceLightCustomDraft, selectedTimeMs: Long?) {
-        _uiState.update { state ->
-            state.copy(
-                draft = draft,
-                selectedTimeMs = selectedTimeMs,
-                hasUnsavedChanges = draft != editorCheckpointDraft,
-                hasUnappliedChanges = draft != deviceBaselineDraft
-            )
-        }
-    }
-
-    private fun emit(effect: DeviceLightCustomCurveEffect) {
-        viewModelScope.launch { _effects.emit(effect) }
-    }
 }
 
 private fun MutableStateFlow<DeviceLightCustomCurveUiState>.applyReadFailure(
