@@ -105,8 +105,8 @@ EXPECTED_FIXTURES = {
         True,
     ),
     "aql_cooling_telemetry_v1.json": (
-        "8257ed9ad10342d8cab2693087b2b1831f8287d6e6eede24da2875457f0075a7",
-        "83778df071f32d5996a3d55946275e8b63291336",
+        "72045d2955164898e2843440e27b41dbc610ff07935dc059c06e92dc6a3d460a",
+        "6e20c7dea0cd7c246454306bd560a0448ee42260",
         True,
     ),
     "aql_light_contract_v1.json": (
