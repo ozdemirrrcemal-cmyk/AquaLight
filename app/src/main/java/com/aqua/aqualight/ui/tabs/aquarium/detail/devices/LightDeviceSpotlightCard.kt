@@ -281,14 +281,14 @@ private fun LightScheduleMetric(
     visuals: LightDeviceCardVisuals,
     modifier: Modifier
 ) {
-    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
-        AutomaticCycleEventIcon(
-            kind = metric.kind,
-            color = metric.accent,
-            modifier = Modifier.size(AquaLightTankCardGeometry.scheduleIconSize)
-        )
-        Spacer(Modifier.width(AquaLightTankCardGeometry.scheduleIconGap))
-        Column {
+    Column(modifier = modifier) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            AutomaticCycleEventIcon(
+                kind = metric.kind,
+                color = metric.accent,
+                modifier = Modifier.size(AquaLightTankCardGeometry.scheduleIconSize)
+            )
+            Spacer(Modifier.width(AquaLightTankCardGeometry.scheduleIconGap))
             BasicText(
                 text = metric.timeMs?.let { automaticEditorTimeText(it) }
                     ?: stringResource(R.string.device_light_auto_editor_time_placeholder),
@@ -296,14 +296,14 @@ private fun LightScheduleMetric(
                     color = visuals.colors.card.primaryText
                 )
             )
-            BasicText(
-                text = stringResource(metric.labelRes),
-                style = visuals.typography.caption.copy(
-                    color = visuals.colors.card.secondaryText
-                ),
-                maxLines = 1
-            )
         }
+        BasicText(
+            text = stringResource(metric.labelRes),
+            style = visuals.typography.caption.copy(
+                color = visuals.colors.card.secondaryText
+            ),
+            maxLines = 1
+        )
     }
 }
 
