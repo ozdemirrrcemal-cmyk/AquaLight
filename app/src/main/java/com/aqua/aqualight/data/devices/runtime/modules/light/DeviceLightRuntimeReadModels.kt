@@ -26,6 +26,14 @@ internal fun DeviceLightRuntimeRepository.currentAutomatic(
     authority
 )
 
+internal fun DeviceLightRuntimeRepository.currentManagedAutoPlan(
+    deviceUid: DeviceUid,
+    authority: DeviceLightManagedPlanReadAuthority
+): DeviceLightManagedAutoPlan? = stateOwner.managedPlanProjection.current(
+    deviceUid,
+    authority
+)
+
 internal fun DeviceLightRuntimeRepository.currentSystem(
     deviceUid: DeviceUid,
     authority: DeviceLightSystemReadAuthority
@@ -40,3 +48,8 @@ internal fun DeviceLightRuntimeRepository.requiresAutomaticProgramsRefresh(
     deviceUid: DeviceUid
 ): Boolean = currentStatus(deviceUid) != null &&
     currentAutomatic(deviceUid, DeviceLightAutomaticReadAuthority.AUTHORITATIVE) == null
+
+internal fun DeviceLightRuntimeRepository.requiresManagedAutoPlanRefresh(
+    deviceUid: DeviceUid
+): Boolean = currentStatus(deviceUid)?.auto?.planInstalled == true &&
+    currentManagedAutoPlan(deviceUid, DeviceLightManagedPlanReadAuthority.AUTHORITATIVE) == null

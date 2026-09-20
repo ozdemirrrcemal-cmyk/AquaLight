@@ -9,9 +9,20 @@ sealed interface DeviceLightErrorReason {
 
     enum class Known(override val wireValue: String) : DeviceLightErrorReason {
         STALE_REVISION("STALE_REVISION"),
+        STALE_STORAGE_GENERATION("STALE_STORAGE_GENERATION"),
         AUTO_CAPACITY_REACHED("AUTO_CAPACITY_REACHED"),
         AUTO_PROGRAM_OVERLAP("AUTO_PROGRAM_OVERLAP"),
         AUTO_PROGRAM_NOT_FOUND("AUTO_PROGRAM_NOT_FOUND"),
+        AUTO_PLAN_ID_INVALID("AUTO_PLAN_ID_INVALID"),
+        AUTO_PLAN_PHASE_COUNT("AUTO_PLAN_PHASE_COUNT"),
+        AUTO_PLAN_INITIAL_START_PERCENT("AUTO_PLAN_INITIAL_START_PERCENT"),
+        AUTO_PLAN_DATE_RANGE("AUTO_PLAN_DATE_RANGE"),
+        AUTO_PLAN_PHASE_GAP("AUTO_PLAN_PHASE_GAP"),
+        AUTO_PLAN_OVERNIGHT_UNSUPPORTED("AUTO_PLAN_OVERNIGHT_UNSUPPORTED"),
+        AUTO_PLAN_TRANSITION("AUTO_PLAN_TRANSITION"),
+        AUTO_PLAN_NOT_FOUND("AUTO_PLAN_NOT_FOUND"),
+        AUTO_PLAN_SELECTED("AUTO_PLAN_SELECTED"),
+        AUTO_PLAN_INTERNAL_ERROR("AUTO_PLAN_INTERNAL_ERROR"),
         INVALID_WEEKDAYS_MASK("INVALID_WEEKDAYS_MASK"),
         INVALID_TIME_VALUE("INVALID_TIME_VALUE"),
         INVALID_RAMP_VALUE("INVALID_RAMP_VALUE"),
@@ -61,6 +72,7 @@ data class DeviceLightOverlapConflict(
 data class DeviceLightFirmwareErrorData(
     val reason: DeviceLightErrorReason?,
     val actualRevision: Long? = null,
+    val actualStorageGeneration: Long? = null,
     val capacity: Int? = null,
     val programCount: Int? = null,
     val conflict: DeviceLightOverlapConflict? = null,
@@ -84,6 +96,8 @@ private fun parseLightV1ErrorData(data: JSONObject): DeviceLightFirmwareErrorDat
     return when (reason) {
         DeviceLightErrorReason.Known.STALE_REVISION,
         DeviceLightErrorReason.Known.AUTO_PROGRAM_NOT_FOUND -> parseRevisionError(data, reason)
+        DeviceLightErrorReason.Known.STALE_STORAGE_GENERATION ->
+            parseStorageGenerationError(data, reason)
         DeviceLightErrorReason.Known.AUTO_CAPACITY_REACHED -> parseCapacityError(data, reason)
         DeviceLightErrorReason.Known.AUTO_PROGRAM_OVERLAP -> parseOverlapError(data, reason)
         DeviceLightErrorReason.Known.OUTPUT_TRANSACTION_FAILED,
@@ -105,6 +119,21 @@ private fun parseRevisionError(
         reason = reason,
         actualRevision = data.requireLightLong(
             "actualRevision",
+            0,
+            DeviceLightRuntimeContract.Limit.UINT32_MAX
+        )
+    )
+}
+
+private fun parseStorageGenerationError(
+    data: JSONObject,
+    reason: DeviceLightErrorReason
+): DeviceLightFirmwareErrorData {
+    data.requireLightKeys(setOf("reason", "actualStorageGeneration"), "Light error.data")
+    return DeviceLightFirmwareErrorData(
+        reason = reason,
+        actualStorageGeneration = data.requireLightLong(
+            "actualStorageGeneration",
             0,
             DeviceLightRuntimeContract.Limit.UINT32_MAX
         )

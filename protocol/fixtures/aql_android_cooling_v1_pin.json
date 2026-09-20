@@ -3,8 +3,8 @@
   "schema": "aql.android.cooling-v1.pin.v1",
   "firmware": {
     "repository": "ozdemirrrcemal-cmyk/AquaLight-Firmware",
-    "commit": "7df97ce807ebb1e90ff63cc36206d6ce479a62fc",
-    "tree": "5df1ba11e2d0d5c65e3c6fbb1e4aba5d47bd6c69",
+    "commit": "99aca74d3c2ae99e85584893822c0a63fe50bcd8",
+    "tree": "4b188f9b20a088bb3f38efd425ff3a6a72f17980",
     "sources": {
       "src/api/v1/commands/AqlCoolingCommands.hpp": "4df542d5106fce2810e64559667685c1c2ecfd69",
       "src/api/v1/telemetry/AqlCoolingTelemetry.hpp": "37d38ae2d5209ba7ab28040e0249e95f9e06ec10",
@@ -30,8 +30,8 @@
       "byteIdenticalWithFirmware": true
     },
     "aql_cooling_telemetry_v1.json": {
-      "sha256": "72045d2955164898e2843440e27b41dbc610ff07935dc059c06e92dc6a3d460a",
-      "firmwareBlobSha": "6e20c7dea0cd7c246454306bd560a0448ee42260",
+      "sha256": "94233acbc53001f446b638018d9cc05ea6e9fda2d409da02110945c68b45a3be",
+      "firmwareBlobSha": "e267331a9f6d4948087de617b5c50dc4762cc9d0",
       "byteIdenticalWithFirmware": true
     }
   },
@@ -39,7 +39,7 @@
     "aql_cooling_status_v1.json": {
       "sha256": "fb19c405ee0be60b8f52f05a307d0bcb8797a047c3bcbfcab3f0b36581060df4",
       "androidBlobSha": "b7529fa20c266c8ba48a2464e11de670174b3f2e",
-      "firmwareCommit": "7df97ce807ebb1e90ff63cc36206d6ce479a62fc",
+      "firmwareCommit": "99aca74d3c2ae99e85584893822c0a63fe50bcd8",
       "derivedFrom": [
         "src/api/v1/commands/AqlCoolingCommands.hpp",
         "src/modules/cooling/AqlCoolingAlarmModel.hpp",

@@ -5,10 +5,11 @@ from __future__ import annotations
 
 import cooling_v1_contract_guard as cooling_guard
 import firmware_interoperability_guard_core as guard
+import light_v1_contract_guard as light_guard
 import timer_v1_contract_guard as timer_guard
 
 
-guard.FIRMWARE_COMMIT = "cd01a8760fe4a349fe85265dbadbf4278add7bb6"
+guard.FIRMWARE_COMMIT = "99aca74d3c2ae99e85584893822c0a63fe50bcd8"
 guard.COMMAND_NAMES_BLOB = "a4a05ae219e449b42de2654c38b55d65804c91b0"
 guard.EVENT_CONTRACT_BLOB = "5e87fd043c0efaa849ed3ba8e5be9ce6f2727e24"
 guard.REQUEST_CONTRACT_BLOBS = {
@@ -17,8 +18,8 @@ guard.REQUEST_CONTRACT_BLOBS = {
     "src/api/v1/commands/AqlSecurityCommands.hpp": "1c16c3e7c6d1456b1802f494d91c104347ad09aa",
     "src/api/v1/commands/AqlTimeCommands.hpp": "ee6e87ab0e1152ffd3d9004fe8b5c7e380488a4f",
     "src/api/v1/commands/AqlLightCommands.hpp": "6fc17f55fb171060e1544f21a8f643a363b7da9e",
-    "src/api/v1/commands/AqlLightV1Commands.hpp": "e2728be2b297be50c2c0f0644aa386409d9507a7",
-    "src/api/v1/commands/names/AqlLightCommandNames.hpp": "4450ba78fb484993c1b1ca15d5e32a2d9b362b6f",
+    "src/api/v1/commands/AqlLightV1Commands.hpp": "3a55519fc4c8acdab2aa79deadff3e1206c923b5",
+    "src/api/v1/commands/names/AqlLightCommandNames.hpp": "49384214f3d083dff4c99c86b21e580f05973cc7",
     "src/modules/light/AqlLightProductContract.hpp": "c76f9c957672ffef62b96ba75f9b034a29c5fecb",
     "src/api/v1/commands/AqlLightTemperatureProtectionCommands.hpp": "e3f04116d2f6ae77e0a1adfd7112773a3e1d06fe",
     "src/api/v1/commands/AqlLightThermalCommands.hpp": "10f5e03237b16ad4bf0a26b64c2715e0985d094e",
@@ -63,6 +64,9 @@ if __name__ == "__main__":
     interoperability_result = guard.main()
     if interoperability_result != 0:
         raise SystemExit(interoperability_result)
+    light_result = light_guard.main()
+    if light_result != 0:
+        raise SystemExit(light_result)
     cooling_result = cooling_guard.main()
     if cooling_result != 0:
         raise SystemExit(cooling_result)

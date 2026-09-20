@@ -19,7 +19,7 @@ class DeviceLightV1ContractTest {
     @Test
     fun `Light data layer pins the reviewed firmware contract revision`() {
         assertEquals(
-            "cd01a8760fe4a349fe85265dbadbf4278add7bb6",
+            "99aca74d3c2ae99e85584893822c0a63fe50bcd8",
             DeviceLightRuntimeContract.PINNED_FIRMWARE_COMMIT
         )
     }
@@ -125,6 +125,7 @@ class DeviceLightV1ContractTest {
         val rgb = DeviceLightScene.rgb(10, 20, 30)
         assertBasicLightSerializers(wrgb, rgb)
         assertProgramSerializers(wrgb)
+        assertManagedPlanSerializers(wrgb)
         assertCustomInstallSerializers(wrgb, rgb)
         assertPreviewSerializers(wrgb)
     }
@@ -149,6 +150,54 @@ class DeviceLightV1ContractTest {
             DeviceLightAutoProgramDeletePayload(4, "ap-00000001").toJson(),
             "expectedRevision",
             "programId"
+        )
+    }
+
+    private fun assertManagedPlanSerializers(wrgb: DeviceLightScene) {
+        val phase = DeviceLightManagedPlanPhase(
+            validFromEpochDay = 20_000,
+            validUntilEpochDayExclusive = null,
+            transitionDays = 7,
+            weekdaysMask = 127,
+            startTimeMs = 28_800_000,
+            endTimeMs = 64_800_000,
+            rampDurationMs = 1_800_000,
+            scene = wrgb
+        )
+        assertKeys(
+            phase.toJson(),
+            "validFromEpochDay",
+            "validUntilEpochDayExclusive",
+            "transitionDays",
+            "weekdaysMask",
+            "startTimeMs",
+            "endTimeMs",
+            "rampDurationMs",
+            "scene"
+        )
+        assertKeys(
+            DeviceLightManagedAutoPlanApplyPayload(
+                expectedRevision = 4,
+                expectedStorageGeneration = 12,
+                planId = null,
+                initialStartPercent = 100,
+                phases = listOf(phase)
+            ).toJson(),
+            "expectedRevision",
+            "expectedStorageGeneration",
+            "planId",
+            "initialStartPercent",
+            "phases"
+        )
+        assertKeys(
+            DeviceLightManagedAutoPlanDeletePayload(
+                expectedRevision = 4,
+                expectedStorageGeneration = 12,
+                planId = "lp-00000001"
+            ).toJson(),
+            "expectedRevision",
+            "expectedStorageGeneration",
+            "planId"
         )
     }
 
@@ -301,6 +350,64 @@ class DeviceLightV1ContractTest {
         assertEquals(7L, parsed.actualRevision)
         assertEquals("ap-00000001", parsed.conflict?.withProgramId)
         assertEquals(2, parsed.additionalConflictCount)
+    }
+
+    @Test
+    fun `managed plan parser preserves canonical firmware document and CAS generation`() {
+        val scene = DeviceLightScene.wrgb(10, 20, 30, 40)
+        val data = JSONObject()
+            .put("storageGeneration", 12)
+            .put("revision", 4)
+            .put("installed", true)
+            .put("planId", "lp-00000001")
+            .put("initialStartPercent", 80)
+            .put("phaseCount", 1)
+            .put(
+                "phases",
+                JSONArray().put(
+                    DeviceLightManagedPlanPhase(
+                        validFromEpochDay = 20_000,
+                        validUntilEpochDayExclusive = null,
+                        transitionDays = 7,
+                        weekdaysMask = 127,
+                        startTimeMs = 28_800_000,
+                        endTimeMs = 64_800_000,
+                        rampDurationMs = 1_800_000,
+                        scene = scene
+                    ).toJson()
+                )
+            )
+            .put(
+                "runtime",
+                JSONObject()
+                    .put("clockReady", true)
+                    .put("state", "ACTIVE")
+                    .put("activePhaseIndex", 0)
+                    .put("transitionPermille", 1000)
+                    .put("nextTransitionEpochDay", JSONObject.NULL)
+            )
+
+        val parsed = DeviceLightManagedPlanParser.parsePlan(
+            data,
+            DeviceLightProduct.WRGB_PRO_ELITE
+        )
+
+        assertEquals(12L, parsed.storageGeneration)
+        assertEquals(4L, parsed.revision)
+        assertEquals("lp-00000001", parsed.planId)
+        assertEquals(DeviceLightManagedPlanRuntimeState.ACTIVE, parsed.runtime.state)
+    }
+
+    @Test
+    fun `stale managed plan storage generation retains firmware actual generation`() {
+        val error = lightFirmwareError(
+            structuredDataJson =
+                """{"reason":"STALE_STORAGE_GENERATION","actualStorageGeneration":13}"""
+        )
+
+        val parsed = error.lightV1Data()
+        assertEquals(DeviceLightErrorReason.Known.STALE_STORAGE_GENERATION, parsed.reason)
+        assertEquals(13L, parsed.actualStorageGeneration)
     }
 
     @Test

@@ -45,6 +45,24 @@ class DeviceLightRuntimeRefreshCoordinatorTest {
         }
 
     @Test
+    fun `central refresh hydrates managed AUTO plan only when firmware reports it installed`() =
+        runTest {
+            val fixture = fixture(
+                generation = generationOne,
+                managedPlanInstalled = true
+            )
+
+            assertTrue(fixture.coordinator.refreshGeneration(deviceUid, generationOne).isSuccess())
+            assertEquals(expectedManagedPlanRefreshActions, fixture.gateway.actions)
+            assertNotNull(
+                fixture.runtime.currentManagedAutoPlan(
+                    deviceUid,
+                    DeviceLightManagedPlanReadAuthority.AUTHORITATIVE
+                )
+            )
+        }
+
+    @Test
     fun `concurrent Light refresh callers share one device scoped firmware flight`() = runTest {
         val statusGate = CompletableDeferred<Unit>()
         val fixture = fixture(generationOne, statusGate)
@@ -66,9 +84,10 @@ class DeviceLightRuntimeRefreshCoordinatorTest {
 
     private fun fixture(
         generation: DeviceRuntimeConnectionGeneration,
-        statusGate: CompletableDeferred<Unit>? = null
+        statusGate: CompletableDeferred<Unit>? = null,
+        managedPlanInstalled: Boolean = false
     ): RefreshFixture {
-        val gateway = FixtureGateway(generation, statusGate)
+        val gateway = FixtureGateway(generation, statusGate, managedPlanInstalled)
         val owner = DeviceLightRuntimeStateOwner()
         owner.beginGeneration(deviceUid, generation)
         val runtime = DeviceLightRuntimeRepository(gateway, owner)
@@ -93,7 +112,8 @@ class DeviceLightRuntimeRefreshCoordinatorTest {
 
     private class FixtureGateway(
         var generation: DeviceRuntimeConnectionGeneration,
-        private val statusGate: CompletableDeferred<Unit>?
+        private val statusGate: CompletableDeferred<Unit>?,
+        private val managedPlanInstalled: Boolean
     ) : DeviceRuntimeCommandGateway {
         val actions = mutableListOf<String>()
 
@@ -127,9 +147,13 @@ class DeviceLightRuntimeRefreshCoordinatorTest {
         }
 
         private fun responseData(action: String): JSONObject = when (action) {
-            DeviceLightRuntimeContract.Action.STATUS_GET -> DeviceLightRuntimeFixtures.status()
+            DeviceLightRuntimeContract.Action.STATUS_GET -> status(managedPlanInstalled)
             DeviceLightRuntimeContract.Action.CUSTOM_GET -> customDocument()
             DeviceLightRuntimeContract.Action.AUTO_PROGRAMS_GET -> automaticPrograms()
+            DeviceLightRuntimeContract.Action.AUTO_PLAN_GET -> {
+                check(managedPlanInstalled)
+                managedAutoPlan()
+            }
             DeviceLightRuntimeContract.Action.GRAPH_GET -> DeviceLightRuntimeFixtures.graph()
             else -> error("Unexpected Light refresh action: $action")
         }
@@ -147,6 +171,25 @@ class DeviceLightRuntimeRefreshCoordinatorTest {
             DeviceLightRuntimeContract.Action.AUTO_PROGRAMS_GET,
             DeviceLightRuntimeContract.Action.GRAPH_GET
         )
+        val expectedManagedPlanRefreshActions = listOf(
+            DeviceLightRuntimeContract.Action.STATUS_GET,
+            DeviceLightRuntimeContract.Action.CUSTOM_GET,
+            DeviceLightRuntimeContract.Action.AUTO_PROGRAMS_GET,
+            DeviceLightRuntimeContract.Action.AUTO_PLAN_GET,
+            DeviceLightRuntimeContract.Action.GRAPH_GET
+        )
+
+        fun status(managedPlanInstalled: Boolean): JSONObject =
+            DeviceLightRuntimeFixtures.status().also { status ->
+                if (managedPlanInstalled) {
+                    status.getJSONObject("auto")
+                        .put("scheduleSource", "MANAGED_PLAN")
+                        .put("planRevision", 4)
+                        .put("planInstalled", true)
+                        .put("planId", "lp-00000001")
+                        .put("planRuntimeState", "NOT_SELECTED")
+                }
+            }
 
         fun customDocument(): JSONObject = JSONObject()
             .put("revision", 1)
@@ -161,6 +204,41 @@ class DeviceLightRuntimeRefreshCoordinatorTest {
             .put("programCount", 0)
             .put("enabledCount", 0)
             .put("programs", JSONArray())
+
+        fun managedAutoPlan(): JSONObject = JSONObject()
+            .put("storageGeneration", 12)
+            .put("revision", 4)
+            .put("installed", true)
+            .put("planId", "lp-00000001")
+            .put(
+                "initialStartPercent",
+                DeviceLightRuntimeContract.Limit.MANAGED_PLAN_INITIAL_START_PERCENT_DEFAULT
+            )
+            .put("phaseCount", 1)
+            .put(
+                "phases",
+                JSONArray().put(
+                    DeviceLightManagedPlanPhase(
+                        validFromEpochDay = 20_000,
+                        validUntilEpochDayExclusive = null,
+                        transitionDays = 7,
+                        weekdaysMask = 127,
+                        startTimeMs = 28_800_000,
+                        endTimeMs = 64_800_000,
+                        rampDurationMs = 1_800_000,
+                        scene = DeviceLightScene.wrgb(10, 20, 30, 40)
+                    ).toJson()
+                )
+            )
+            .put(
+                "runtime",
+                JSONObject()
+                    .put("clockReady", true)
+                    .put("state", "NOT_SELECTED")
+                    .put("activePhaseIndex", JSONObject.NULL)
+                    .put("transitionPermille", JSONObject.NULL)
+                    .put("nextTransitionEpochDay", JSONObject.NULL)
+            )
 
         fun DeviceLightRuntimeRepository.currentAuthoritativeSurface(): List<Any>? {
             val surface = listOfNotNull(

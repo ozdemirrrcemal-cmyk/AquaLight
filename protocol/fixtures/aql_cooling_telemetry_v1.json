@@ -2,7 +2,7 @@
   "schema": "aql.cooling.v1",
   "schemaVersion": 1,
   "event": "cooling.telemetry.changed",
-  "commandCount": 63,
+  "commandCount": 66,
   "requiredRootFields": [
     "schema",
     "schemaVersion",

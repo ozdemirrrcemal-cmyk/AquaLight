@@ -171,7 +171,12 @@ internal class DeviceLightRuntimeRefreshCoordinator(
         } else {
             null
         }
-        val graph = automatic ?: if (refreshGraph) {
+        val managedPlan = automatic ?: if (runtime.requiresManagedAutoPlanRefresh(deviceUid)) {
+            validateGeneration(runtime.requestManagedAutoPlan(deviceUid), generation)
+        } else {
+            null
+        }
+        val graph = managedPlan ?: if (refreshGraph) {
             validateGeneration(runtime.requestGraph(deviceUid), generation)
         } else {
             null
@@ -227,6 +232,11 @@ internal class DeviceLightRuntimeRefreshCoordinator(
             deviceUid,
             DeviceLightAutomaticReadAuthority.AUTHORITATIVE
         ) != null
+        val managedPlanReady = !status.auto.planInstalled ||
+            runtime.currentManagedAutoPlan(
+                deviceUid,
+                DeviceLightManagedPlanReadAuthority.AUTHORITATIVE
+            ) != null
         val systemReady = !requireSystem ||
             !status.requiresSystemRuntimeRefresh() ||
             runtime.currentSystem(deviceUid, DeviceLightSystemReadAuthority.AUTHORITATIVE) != null
@@ -235,6 +245,7 @@ internal class DeviceLightRuntimeRefreshCoordinator(
             dashboard?.status == status,
             libraryReady,
             automaticReady,
+            managedPlanReady,
             systemReady
         ).all { ready -> ready }
         return if (surfaceReady) {

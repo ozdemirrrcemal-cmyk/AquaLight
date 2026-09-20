@@ -77,6 +77,7 @@ internal enum class DeviceLightRuntimeProjection {
     STATUS,
     GRAPH,
     AUTO_PROGRAMS,
+    AUTO_PLAN,
     CUSTOM,
     TEMPERATURE_PROTECTION,
     THERMAL
