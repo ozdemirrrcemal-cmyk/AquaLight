@@ -80,8 +80,12 @@ private class HeroEmitterLayer(
             0f,
             0f,
             1f,
-            intArrayOf(Color.WHITE, Color.WHITE, Color.TRANSPARENT),
-            floatArrayOf(0f, 0.55f, 1f),
+            intArrayOf(
+                maskCoverageColor(HERO_MASK_FULL_ALPHA),
+                maskCoverageColor(HERO_MASK_FULL_ALPHA),
+                maskCoverageColor(0)
+            ),
+            floatArrayOf(0f, HERO_EMITTER_CORE_RADIUS, 1f),
             Shader.TileMode.CLAMP
         ).apply {
             setLocalMatrix(Matrix().apply {
@@ -113,3 +117,9 @@ private inline fun Canvas.withHeroLayer(bounds: RectF, paint: Paint, draw: () ->
         restoreToCount(checkpoint)
     }
 }
+
+// DST_IN consumes only alpha: these values describe mask coverage, not a UI palette.
+private fun maskCoverageColor(alpha: Int): Int = Color.argb(alpha, 0, 0, 0)
+
+private const val HERO_MASK_FULL_ALPHA = 255
+private const val HERO_EMITTER_CORE_RADIUS = 0.55f

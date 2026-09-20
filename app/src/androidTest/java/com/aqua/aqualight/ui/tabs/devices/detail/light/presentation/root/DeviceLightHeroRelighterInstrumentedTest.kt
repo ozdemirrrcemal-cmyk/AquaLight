@@ -54,7 +54,7 @@ class DeviceLightHeroRelighterInstrumentedTest {
     }
 
     @Test
-    fun aquariumReflectsChannelColorAndRepeatedFramesDoNotAccumulateLight() = withSource(realArtwork = false) { source ->
+    fun sceneColorAndRepeatedFramesRemainStable() = withSource(realArtwork = false) { source ->
         val output = DeviceLightHeroIllumination(1f, 0f, 0f, 0f)
         val relighter = DeviceLightHeroRelighter(source.width.toFloat(), source.height.toFloat())
         val first = render(source, output, relighter)
@@ -71,9 +71,16 @@ class DeviceLightHeroRelighterInstrumentedTest {
         try {
             if (realArtwork) {
                 val resources = InstrumentationRegistry.getInstrumentation().targetContext.resources
-                val original = requireNotNull(BitmapFactory.decodeResource(resources, R.drawable.device_light_hero_card))
+                val original = requireNotNull(
+                    BitmapFactory.decodeResource(resources, R.drawable.device_light_hero_card)
+                )
                 try {
-                    Canvas(source).drawBitmap(original, null, Rect(0, 0, source.width, source.height), Paint(Paint.FILTER_BITMAP_FLAG))
+                    Canvas(source).drawBitmap(
+                        original,
+                        null,
+                        Rect(0, 0, source.width, source.height),
+                        Paint(Paint.FILTER_BITMAP_FLAG)
+                    )
                 } finally {
                     original.recycle()
                 }

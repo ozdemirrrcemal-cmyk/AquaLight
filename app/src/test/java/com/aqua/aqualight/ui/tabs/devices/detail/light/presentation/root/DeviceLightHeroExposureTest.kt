@@ -60,7 +60,10 @@ class DeviceLightHeroExposureTest {
 
     @Test
     fun `artwork masks cover each emitter once and never overlap another emitter center`() {
-        assertEquals(DeviceLightHeroEmitterChannel.entries.toSet(), deviceLightHeroEmitterRegions.map { it.channel }.toSet())
+        assertEquals(
+            DeviceLightHeroEmitterChannel.entries.toSet(),
+            deviceLightHeroEmitterRegions.map { it.channel }.toSet()
+        )
         assertEquals(4, deviceLightHeroEmitterRegions.size)
         deviceLightHeroEmitterRegions.forEach { region ->
             assertTrue(region.centerX - region.radiusX >= 0f)

@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.absoluteOffset
@@ -12,7 +13,9 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -37,16 +40,19 @@ internal fun DeviceLightHero(
 ) {
     val typography = aquaLightHeroTypography()
     val content = resolveHeroContent(state)
+    val outputActive = state.outputActive == true
+    val illumination = rememberHeroIllumination(state.toHeroIllumination(channels), outputActive)
 
     AquaDeviceCardSurface(
         modifier = modifier.aspectRatio(AquaLightHeroGeometry.heroAspectRatio),
         contentPadding = AquaDeviceCardGeometry.edgeToEdgeContentPadding
     ) {
         BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-            DeviceLightHeroArtwork(
-                illumination = state.toHeroIllumination(channels),
-                outputActive = state.outputActive == true,
-                modifier = Modifier.matchParentSize()
+            Image(
+                painter = painterResource(R.drawable.device_light_hero_card),
+                contentDescription = null,
+                contentScale = ContentScale.FillBounds,
+                modifier = Modifier.matchParentSize().relightHero(illumination, outputActive)
             )
             HeroMetrics(
                 content = content,

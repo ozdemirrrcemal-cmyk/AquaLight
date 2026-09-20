@@ -12,7 +12,7 @@ internal data class DeviceLightHeroIllumination(
     val white: Float
 ) {
     val isFull: Boolean
-        get() = red == 1f && green == 1f && blue == 1f && white == 1f
+        get() = isUniform && red == 1f
 
     val isUniform: Boolean
         get() = red == green && green == blue && blue == white
@@ -26,9 +26,9 @@ internal data class DeviceLightHeroIllumination(
 
     /** White illuminates all three components; RGB preserves the reported spectral balance. */
     fun sceneGains() = DeviceLightHeroSceneGains(
-        red = heroDisplayGain((red + white) * 0.5f),
-        green = heroDisplayGain((green + white) * 0.5f),
-        blue = heroDisplayGain((blue + white) * 0.5f)
+        red = heroDisplayGain((red + white) / 2f),
+        green = heroDisplayGain((green + white) / 2f),
+        blue = heroDisplayGain((blue + white) / 2f)
     )
 
     companion object {
@@ -64,8 +64,8 @@ private fun List<DeviceLightChannelOutputSnapshot>.effectiveLevel(
     channel: DeviceLightHeroEmitterChannel
 ): Float = singleOrNull { it.key == channel.wireKey }
     ?.effectivePercent
-    ?.coerceIn(0, 100)
-    ?.div(100f)
+    ?.coerceIn(0, HERO_PERCENT_MAX)
+    ?.div(HERO_PERCENT_MAX.toFloat())
     ?: 0f
 
 /**
@@ -77,10 +77,17 @@ internal fun heroDisplayGain(level: Float): Float {
     val linear = if (level.isFinite()) level.coerceIn(0f, 1f) else 0f
     val encoded = when {
         linear == 1f -> 1f
-        linear <= 0.0031308f -> 12.92f * linear
-        else -> 1.055f * linear.pow(1f / 2.4f) - 0.055f
+        linear <= SRGB_LINEAR_THRESHOLD -> SRGB_LINEAR_SCALE * linear
+        else -> SRGB_NONLINEAR_SCALE * linear.pow(1f / SRGB_EXPONENT) - SRGB_OFFSET
     }
     return HERO_DARK_GAIN + (1f - HERO_DARK_GAIN) * encoded
 }
 
 internal const val HERO_DARK_GAIN = 0.04f
+
+private const val HERO_PERCENT_MAX = 100
+private const val SRGB_LINEAR_THRESHOLD = 0.0031308f
+private const val SRGB_LINEAR_SCALE = 12.92f
+private const val SRGB_NONLINEAR_SCALE = 1.055f
+private const val SRGB_EXPONENT = 2.4f
+private const val SRGB_OFFSET = 0.055f
