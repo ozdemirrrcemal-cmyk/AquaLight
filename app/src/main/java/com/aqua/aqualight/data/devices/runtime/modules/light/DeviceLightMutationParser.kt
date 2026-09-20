@@ -176,7 +176,8 @@ internal object DeviceLightMutationParser {
             }
             val result = buildGraph(data, points, spans, planSpans)
             result.requireCoherentStructure()
-            result.requireCoherentSemantics()
+            result.requireModeSemantics()
+            result.requireReasonSemantics()
             return result
         }
 
@@ -233,11 +234,6 @@ internal object DeviceLightMutationParser {
                     )
                 }
             )
-        }
-
-        private fun DeviceLightGraph.requireCoherentSemantics() {
-            requireModeSemantics()
-            requireReasonSemantics()
         }
 
         private fun DeviceLightGraph.requireModeSemantics() {
