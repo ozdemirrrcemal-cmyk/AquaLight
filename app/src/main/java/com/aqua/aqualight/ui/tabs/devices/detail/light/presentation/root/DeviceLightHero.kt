@@ -88,14 +88,14 @@ private fun HeroMetrics(
 ) {
     HeroLabel(
         text = content.power,
-        style = typography.metricValue,
+        style = typography.powerValue,
         bounds = AquaLightHeroGeometry.powerBounds,
         parentSize = parentSize,
         textAlign = TextAlign.Start
     )
     HeroLabel(
         text = content.colorTemperature,
-        style = typography.metricValue,
+        style = typography.colorTemperatureValue,
         bounds = AquaLightHeroGeometry.colorTemperatureBounds,
         parentSize = parentSize,
         textAlign = TextAlign.Start

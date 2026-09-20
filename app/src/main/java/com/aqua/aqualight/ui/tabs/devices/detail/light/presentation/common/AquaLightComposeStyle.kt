@@ -24,16 +24,16 @@ object AquaLightHeroGeometry {
     const val heroAspectRatio = HERO_ARTWORK_WIDTH / HERO_ARTWORK_HEIGHT
 
     val powerBounds = AquaLightHeroBounds(
-        left = 0.890f,
-        top = 0.510f,
-        width = 0.095f,
-        height = 0.100f
+        left = 0.042f,
+        top = 0.245f,
+        width = 0.275f,
+        height = 0.140f
     )
     val colorTemperatureBounds = AquaLightHeroBounds(
-        left = 0.890f,
-        top = 0.665f,
-        width = 0.095f,
-        height = 0.100f
+        left = 0.042f,
+        top = 0.360f,
+        width = 0.285f,
+        height = 0.085f
     )
 }
 
@@ -355,19 +355,28 @@ data class AquaLightHeroBounds(
 
 @Immutable
 data class AquaLightHeroTypography(
-    val metricValue: TextStyle
+    val powerValue: TextStyle,
+    val colorTemperatureValue: TextStyle
 )
 
+private val poppinsBold = FontFamily(Font(R.font.poppins_bold))
+private val interRegular = FontFamily(Font(R.font.inter_regular))
 private val interSemiBold = FontFamily(Font(R.font.inter_semibold))
 
 @Composable
 fun aquaLightHeroTypography(): AquaLightHeroTypography =
     AquaLightHeroTypography(
-        metricValue = TextStyle(
+        powerValue = TextStyle(
             color = colorResource(R.color.aqua_content_on_dark),
-            fontFamily = interSemiBold,
-            fontSize = 10.5.sp,
-            lineHeight = 13.sp
+            fontFamily = poppinsBold,
+            fontSize = 17.sp,
+            lineHeight = 20.sp
+        ),
+        colorTemperatureValue = TextStyle(
+            color = colorResource(R.color.aqua_content_primary_soft),
+            fontFamily = interRegular,
+            fontSize = 11.sp,
+            lineHeight = 14.sp
         )
     )
 
