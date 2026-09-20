@@ -353,76 +353,81 @@ internal object DeviceLightV1JsonParser {
     internal object Activity {
         fun parseAutoSummary(data: JSONObject): DeviceLightAutoSummary {
         data.requireLightKeys(AUTO_SUMMARY_KEYS, "light.status.auto")
-        val result = DeviceLightAutoSummary(
-            revision = data.requireLightLong(
-                "revision",
-                0,
-                DeviceLightRuntimeContract.Limit.UINT32_MAX
-            ),
-            programCount = data.requireLightInt(
-                "programCount",
-                0,
-                DeviceLightRuntimeContract.Limit.AUTO_PROGRAM_CAPACITY
-            ),
-            enabledCount = data.requireLightInt(
-                "enabledCount",
-                0,
-                DeviceLightRuntimeContract.Limit.AUTO_PROGRAM_CAPACITY
-            ),
-            runtimeState = DeviceLightAutoRuntimeState.fromWireExact(
-                data.requireLightText("runtimeState")
-            ),
-            activeProgramId = data.requireNullableLightText("activeProgramId"),
-            scheduleSource = DeviceLightAutoScheduleSource.fromWireExact(
-                data.requireLightText("scheduleSource")
-            ),
-            planRevision = data.requireLightLong(
-                "planRevision",
-                0,
-                DeviceLightRuntimeContract.Limit.UINT32_MAX
-            ),
-            planInstalled = data.requireLightBoolean("planInstalled"),
-            planId = data.requireNullableLightText("planId"),
-            activePlanPhaseIndex = data.requireNullableLightInt(
-                "activePlanPhaseIndex",
-                0,
-                DeviceLightRuntimeContract.Limit.MANAGED_PLAN_PHASE_CAPACITY - 1
-            ),
-            planRuntimeState = DeviceLightManagedPlanRuntimeState.fromWireExact(
-                data.requireLightText("planRuntimeState")
-            ),
-            planTransitionPermille = data.requireNullableLightInt(
-                "planTransitionPermille",
-                DeviceLightRuntimeContract.Limit.PERMILLE_MIN,
-                DeviceLightRuntimeContract.Limit.PERMILLE_MAX
-            ),
-            nextPlanTransitionEpochDay = data.requireNullableLightInt(
-                "nextPlanTransitionEpochDay",
-                DeviceLightRuntimeContract.Limit.MANAGED_PLAN_EPOCH_DAY_MIN,
-                DeviceLightRuntimeContract.Limit.MANAGED_PLAN_END_EPOCH_DAY_MAX
-            )
-        )
-        require(result.enabledCount <= result.programCount)
-        result.activeProgramId?.let(::requireLightProgramId)
-        result.planId?.let(::requireLightManagedPlanId)
-        require(
-            result.scheduleSource == if (result.planInstalled) {
-                DeviceLightAutoScheduleSource.MANAGED_PLAN
-            } else {
-                DeviceLightAutoScheduleSource.PROGRAMS
-            }
-        )
-        require((result.planId != null) == result.planInstalled)
-        require(
-            result.planInstalled ||
-                result.planRuntimeState == DeviceLightManagedPlanRuntimeState.NOT_INSTALLED
-        )
-        require(
-            (result.activePlanPhaseIndex != null) ==
-                (result.planTransitionPermille != null)
-        )
-        return result
+        return parseAutoSummaryFields(data).also(::validateAutoSummary)
     }
+
+        private fun parseAutoSummaryFields(data: JSONObject): DeviceLightAutoSummary =
+            DeviceLightAutoSummary(
+                revision = data.requireLightLong(
+                    "revision",
+                    0,
+                    DeviceLightRuntimeContract.Limit.UINT32_MAX
+                ),
+                programCount = data.requireLightInt(
+                    "programCount",
+                    0,
+                    DeviceLightRuntimeContract.Limit.AUTO_PROGRAM_CAPACITY
+                ),
+                enabledCount = data.requireLightInt(
+                    "enabledCount",
+                    0,
+                    DeviceLightRuntimeContract.Limit.AUTO_PROGRAM_CAPACITY
+                ),
+                runtimeState = DeviceLightAutoRuntimeState.fromWireExact(
+                    data.requireLightText("runtimeState")
+                ),
+                activeProgramId = data.requireNullableLightText("activeProgramId"),
+                scheduleSource = DeviceLightAutoScheduleSource.fromWireExact(
+                    data.requireLightText("scheduleSource")
+                ),
+                planRevision = data.requireLightLong(
+                    "planRevision",
+                    0,
+                    DeviceLightRuntimeContract.Limit.UINT32_MAX
+                ),
+                planInstalled = data.requireLightBoolean("planInstalled"),
+                planId = data.requireNullableLightText("planId"),
+                activePlanPhaseIndex = data.requireNullableLightInt(
+                    "activePlanPhaseIndex",
+                    0,
+                    DeviceLightRuntimeContract.Limit.MANAGED_PLAN_PHASE_CAPACITY - 1
+                ),
+                planRuntimeState = DeviceLightManagedPlanRuntimeState.fromWireExact(
+                    data.requireLightText("planRuntimeState")
+                ),
+                planTransitionPermille = data.requireNullableLightInt(
+                    "planTransitionPermille",
+                    DeviceLightRuntimeContract.Limit.PERMILLE_MIN,
+                    DeviceLightRuntimeContract.Limit.PERMILLE_MAX
+                ),
+                nextPlanTransitionEpochDay = data.requireNullableLightInt(
+                    "nextPlanTransitionEpochDay",
+                    DeviceLightRuntimeContract.Limit.MANAGED_PLAN_EPOCH_DAY_MIN,
+                    DeviceLightRuntimeContract.Limit.MANAGED_PLAN_END_EPOCH_DAY_MAX
+                )
+            )
+
+        private fun validateAutoSummary(result: DeviceLightAutoSummary) {
+            require(result.enabledCount <= result.programCount)
+            result.activeProgramId?.let(::requireLightProgramId)
+            result.planId?.let(::requireLightManagedPlanId)
+            require(
+                result.scheduleSource == if (result.planInstalled) {
+                    DeviceLightAutoScheduleSource.MANAGED_PLAN
+                } else {
+                    DeviceLightAutoScheduleSource.PROGRAMS
+                }
+            )
+            require((result.planId != null) == result.planInstalled)
+            require(
+                result.planInstalled ||
+                    result.planRuntimeState == DeviceLightManagedPlanRuntimeState.NOT_INSTALLED
+            )
+            require(
+                (result.activePlanPhaseIndex != null) ==
+                    (result.planTransitionPermille != null)
+            )
+        }
 
         fun parseCustomSummary(data: JSONObject): DeviceLightCustomSummary {
         data.requireLightKeys(CUSTOM_SUMMARY_KEYS, "light.status.custom")

@@ -387,7 +387,9 @@ class AqlFirmwareInteroperabilityTest {
 
     private fun lightSerializerFields(): Map<String, Set<String>> {
         val scene = DeviceLightScene.wrgb(red = 10, green = 20, blue = 30, white = 40)
-        return lightCoreSerializerFields(scene) + lightPreviewSerializerFields(scene)
+        return lightCoreSerializerFields(scene) +
+            lightManagedPlanSerializerFields(scene) +
+            lightPreviewSerializerFields(scene)
     }
 
     private fun lightCoreSerializerFields(scene: DeviceLightScene): Map<String, Set<String>> {
@@ -409,24 +411,6 @@ class AqlFirmwareInteroperabilityTest {
             rampDurationMs = 1_800_000,
             scene = scene
         )
-        val managedPhase = DeviceLightManagedPlanPhase(
-            validFromEpochDay = 20_000,
-            validUntilEpochDayExclusive = null,
-            transitionDays = 7,
-            weekdaysMask = 127,
-            startTimeMs = 28_800_000,
-            endTimeMs = 64_800_000,
-            rampDurationMs = 1_800_000,
-            scene = scene
-        )
-        val managedApply = DeviceLightManagedAutoPlanApplyPayload(
-            expectedRevision = 0,
-            expectedStorageGeneration = 12,
-            planId = null,
-            initialStartPercent = 100,
-            phases = listOf(managedPhase)
-        )
-
         return linkedMapOf(
             "DeviceLightControlSetPayload" to
                 DeviceLightControlSetPayload(DeviceLightMode.AUTO).toJson().keySetExact(),
@@ -441,15 +425,6 @@ class AqlFirmwareInteroperabilityTest {
             "DeviceLightAutoProgramDeletePayload" to
                 DeviceLightAutoProgramDeletePayload(1, "ap-00000001")
                     .toJson().keySetExact(),
-            "DeviceLightManagedAutoPlanApplyPayload" to
-                managedApply.toJson().keySetExact(),
-            "DeviceLightManagedPlanPhase" to managedPhase.toJson().keySetExact(),
-            "DeviceLightManagedAutoPlanDeletePayload" to
-                DeviceLightManagedAutoPlanDeletePayload(
-                    expectedRevision = 1,
-                    expectedStorageGeneration = 12,
-                    planId = "lp-00000001"
-                ).toJson().keySetExact(),
             "DeviceLightCustomInstallPayload" to DeviceLightCustomInstallPayload(
                 expectedRevision = 1,
                 weekdaysMask = 127,
@@ -461,6 +436,38 @@ class AqlFirmwareInteroperabilityTest {
                 DeviceLightAcclimationStartPayload(1, 50, 30).toJson().keySetExact(),
             "DeviceLightAcclimationStopPayload" to
                 DeviceLightAcclimationStopPayload(1).toJson().keySetExact(),
+        )
+    }
+
+    private fun lightManagedPlanSerializerFields(
+        scene: DeviceLightScene
+    ): Map<String, Set<String>> {
+        val phase = DeviceLightManagedPlanPhase(
+            validFromEpochDay = 20_000,
+            validUntilEpochDayExclusive = null,
+            transitionDays = 7,
+            weekdaysMask = 127,
+            startTimeMs = 28_800_000,
+            endTimeMs = 64_800_000,
+            rampDurationMs = 1_800_000,
+            scene = scene
+        )
+        val apply = DeviceLightManagedAutoPlanApplyPayload(
+            expectedRevision = 0,
+            expectedStorageGeneration = 12,
+            planId = null,
+            initialStartPercent = 100,
+            phases = listOf(phase)
+        )
+        return linkedMapOf(
+            "DeviceLightManagedAutoPlanApplyPayload" to apply.toJson().keySetExact(),
+            "DeviceLightManagedPlanPhase" to phase.toJson().keySetExact(),
+            "DeviceLightManagedAutoPlanDeletePayload" to
+                DeviceLightManagedAutoPlanDeletePayload(
+                    expectedRevision = 1,
+                    expectedStorageGeneration = 12,
+                    planId = "lp-00000001"
+                ).toJson().keySetExact()
         )
     }
 
