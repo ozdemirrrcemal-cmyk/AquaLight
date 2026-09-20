@@ -236,6 +236,11 @@ internal object DeviceLightMutationParser {
         }
 
         private fun DeviceLightGraph.requireCoherentSemantics() {
+            requireModeSemantics()
+            requireReasonSemantics()
+        }
+
+        private fun DeviceLightGraph.requireModeSemantics() {
             when (mode) {
                 DeviceLightMode.MANUAL -> requireManualSemantics()
                 DeviceLightMode.AUTO -> {
@@ -256,7 +261,9 @@ internal object DeviceLightMutationParser {
                     require(planSpans.isEmpty())
                 }
             }
+        }
 
+        private fun DeviceLightGraph.requireReasonSemantics() {
             when (reason) {
                 DeviceLightGraphReason.OK -> require(available && hasScheduleToday)
                 DeviceLightGraphReason.RTC_NOT_READY -> requireRtcUnavailableSemantics()
