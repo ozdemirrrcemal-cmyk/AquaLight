@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.res.imageResource
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import com.aqua.aqualight.R
 import kotlin.math.roundToInt
@@ -104,6 +105,18 @@ internal fun DeviceLightDynamicAquarium(
                     intensity * ILLUMINATED_PLATE_ALPHA_RANGE).coerceIn(0f, 1f),
                 colorFilter = illuminatedFilter
             )
+        }
+
+        // The source artwork contains a legacy metrics plate. Reconstruct that region from an
+        // adjacent clean aquarium slice before any glow is applied, then feather only the seam.
+        // This keeps a single decoded bitmap while removing the fixed plate from the rendered hero.
+        drawLegacyMetricsPlateReplacement(
+            artwork = artwork,
+            illuminatedFilter = illuminatedFilter,
+            intensity = intensity
+        )
+
+        if (intensity > MIN_VISIBLE_LIGHT) {
             drawAquariumLightSpill(
                 illuminationColor = illuminationColor,
                 intensity = intensity
@@ -116,9 +129,7 @@ internal fun DeviceLightDynamicAquarium(
             )
         }
 
-        // The original commercial artwork had fixed UI chrome at the edges. These continuous
-        // vignettes turn it back into scene artwork without introducing another heavyweight asset.
-        drawLegacyChromeOcclusion()
+        drawPowerReadabilityVignette()
     }
 }
 
@@ -212,35 +223,83 @@ private fun DrawScope.drawChannelGlow(
     )
 }
 
-private fun DrawScope.drawLegacyChromeOcclusion() {
-    val edge = AQUARIUM_EDGE_COLOR
+private fun DrawScope.drawLegacyMetricsPlateReplacement(
+    artwork: ImageBitmap,
+    illuminatedFilter: ColorFilter,
+    intensity: Float
+) {
+    val sourceOffset = IntOffset(
+        x = (artwork.width * METRICS_REPLACEMENT_SOURCE_X).roundToInt(),
+        y = (artwork.height * METRICS_REPLACEMENT_Y).roundToInt()
+    )
+    val sourceSize = IntSize(
+        width = (artwork.width * METRICS_REPLACEMENT_SOURCE_WIDTH).roundToInt(),
+        height = (artwork.height * METRICS_REPLACEMENT_HEIGHT).roundToInt()
+    )
+    val destinationOffset = IntOffset(
+        x = (size.width * METRICS_REPLACEMENT_DESTINATION_X).roundToInt(),
+        y = (size.height * METRICS_REPLACEMENT_Y).roundToInt()
+    )
+    val destinationSize = IntSize(
+        width = (size.width * METRICS_REPLACEMENT_DESTINATION_WIDTH).roundToInt(),
+        height = (size.height * METRICS_REPLACEMENT_HEIGHT).roundToInt()
+    )
+
+    drawImage(
+        image = artwork,
+        srcOffset = sourceOffset,
+        srcSize = sourceSize,
+        dstOffset = destinationOffset,
+        dstSize = destinationSize,
+        colorFilter = DARK_AQUARIUM_FILTER
+    )
+
+    if (intensity > MIN_VISIBLE_LIGHT) {
+        drawImage(
+            image = artwork,
+            srcOffset = sourceOffset,
+            srcSize = sourceSize,
+            dstOffset = destinationOffset,
+            dstSize = destinationSize,
+            alpha = (MIN_ILLUMINATED_PLATE_ALPHA +
+                intensity * ILLUMINATED_PLATE_ALPHA_RANGE).coerceIn(0f, 1f),
+            colorFilter = illuminatedFilter
+        )
+    }
 
     drawRect(
         brush = Brush.horizontalGradient(
             colors = listOf(
-                edge.copy(alpha = 0.94f),
-                edge.copy(alpha = 0.76f),
+                AQUARIUM_EDGE_COLOR.copy(alpha = 0.42f),
+                Color.Transparent
+            ),
+            startX = size.width * METRICS_REPLACEMENT_DESTINATION_X,
+            endX = size.width * METRICS_REPLACEMENT_FEATHER_END_X
+        ),
+        topLeft = Offset(
+            x = size.width * METRICS_REPLACEMENT_DESTINATION_X,
+            y = size.height * METRICS_REPLACEMENT_Y
+        ),
+        size = Size(
+            width = size.width * METRICS_REPLACEMENT_FEATHER_WIDTH,
+            height = size.height * METRICS_REPLACEMENT_HEIGHT
+        )
+    )
+}
+
+private fun DrawScope.drawPowerReadabilityVignette() {
+    drawRect(
+        brush = Brush.horizontalGradient(
+            colors = listOf(
+                AQUARIUM_EDGE_COLOR.copy(alpha = 0.88f),
+                AQUARIUM_EDGE_COLOR.copy(alpha = 0.58f),
                 Color.Transparent
             ),
             startX = 0f,
-            endX = size.width * 0.35f
+            endX = size.width * POWER_VIGNETTE_WIDTH
         ),
         topLeft = Offset.Zero,
-        size = Size(size.width * 0.35f, size.height)
-    )
-
-    drawRect(
-        brush = Brush.horizontalGradient(
-            colors = listOf(
-                Color.Transparent,
-                edge.copy(alpha = 0.80f),
-                edge.copy(alpha = 0.95f)
-            ),
-            startX = size.width * 0.78f,
-            endX = size.width
-        ),
-        topLeft = Offset(size.width * 0.78f, 0f),
-        size = Size(size.width * 0.22f, size.height)
+        size = Size(size.width * POWER_VIGNETTE_WIDTH, size.height)
     )
 }
 
@@ -307,3 +366,13 @@ private const val ILLUMINATED_PLATE_ALPHA_RANGE = 0.88f
 private const val WHITE_TO_RGB_VISUAL_MIX = 0.86f
 private const val COLOR_FLOOR = 0.04f
 private const val COLOR_MINIMUM_COMPONENT = 0.08f
+
+private const val METRICS_REPLACEMENT_SOURCE_X = 0.70f
+private const val METRICS_REPLACEMENT_SOURCE_WIDTH = 0.14f
+private const val METRICS_REPLACEMENT_DESTINATION_X = 0.84f
+private const val METRICS_REPLACEMENT_DESTINATION_WIDTH = 0.16f
+private const val METRICS_REPLACEMENT_Y = 0.34f
+private const val METRICS_REPLACEMENT_HEIGHT = 0.50f
+private const val METRICS_REPLACEMENT_FEATHER_END_X = 0.89f
+private const val METRICS_REPLACEMENT_FEATHER_WIDTH = 0.05f
+private const val POWER_VIGNETTE_WIDTH = 0.31f
