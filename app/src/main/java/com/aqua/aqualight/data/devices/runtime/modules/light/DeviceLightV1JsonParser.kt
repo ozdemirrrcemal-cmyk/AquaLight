@@ -239,11 +239,28 @@ internal object DeviceLightV1JsonParser {
         val autoPolicy = DeviceLightAutoPolicy(
             capacity = auto.requireLightInt("capacity", 0),
             timeStepMs = auto.requireLightLong("timeStepMs", 1),
-            rampDurationsMs = auto.requireLightArray("rampDurationsMs").toLightLongList(0)
+            rampDurationsMs = auto.requireLightArray("rampDurationsMs").toLightLongList(0),
+            managedPlanPhaseCapacity = auto.requireLightInt("managedPlanPhaseCapacity", 0),
+            managedPlanTransitionDaysMax = auto.requireLightInt(
+                "managedPlanTransitionDaysMax",
+                0
+            ),
+            managedPlanSameDayOnly = auto.requireLightBoolean("managedPlanSameDayOnly"),
+            managedPlanContiguous = auto.requireLightBoolean("managedPlanContiguous")
         )
         require(autoPolicy.capacity == DeviceLightRuntimeContract.Limit.AUTO_PROGRAM_CAPACITY)
         require(autoPolicy.timeStepMs == DeviceLightRuntimeContract.Limit.SCHEDULE_TIME_STEP_MS)
         require(autoPolicy.rampDurationsMs == EXPECTED_RAMPS)
+        require(
+            autoPolicy.managedPlanPhaseCapacity ==
+                DeviceLightRuntimeContract.Limit.MANAGED_PLAN_PHASE_CAPACITY
+        )
+        require(
+            autoPolicy.managedPlanTransitionDaysMax ==
+                DeviceLightRuntimeContract.Limit.MANAGED_PLAN_TRANSITION_DAYS_MAX
+        )
+        require(autoPolicy.managedPlanSameDayOnly)
+        require(autoPolicy.managedPlanContiguous)
 
         val custom = data.requireLightObject("custom")
         custom.requireLightKeys(CUSTOM_POLICY_KEYS, "light.status.policy.custom")
@@ -355,10 +372,55 @@ internal object DeviceLightV1JsonParser {
             runtimeState = DeviceLightAutoRuntimeState.fromWireExact(
                 data.requireLightText("runtimeState")
             ),
-            activeProgramId = data.requireNullableLightText("activeProgramId")
+            activeProgramId = data.requireNullableLightText("activeProgramId"),
+            scheduleSource = DeviceLightAutoScheduleSource.fromWireExact(
+                data.requireLightText("scheduleSource")
+            ),
+            planRevision = data.requireLightLong(
+                "planRevision",
+                0,
+                DeviceLightRuntimeContract.Limit.UINT32_MAX
+            ),
+            planInstalled = data.requireLightBoolean("planInstalled"),
+            planId = data.requireNullableLightText("planId"),
+            activePlanPhaseIndex = data.requireNullableLightInt(
+                "activePlanPhaseIndex",
+                0,
+                DeviceLightRuntimeContract.Limit.MANAGED_PLAN_PHASE_CAPACITY - 1
+            ),
+            planRuntimeState = DeviceLightManagedPlanRuntimeState.fromWireExact(
+                data.requireLightText("planRuntimeState")
+            ),
+            planTransitionPermille = data.requireNullableLightInt(
+                "planTransitionPermille",
+                DeviceLightRuntimeContract.Limit.PERMILLE_MIN,
+                DeviceLightRuntimeContract.Limit.PERMILLE_MAX
+            ),
+            nextPlanTransitionEpochDay = data.requireNullableLightInt(
+                "nextPlanTransitionEpochDay",
+                DeviceLightRuntimeContract.Limit.MANAGED_PLAN_EPOCH_DAY_MIN,
+                DeviceLightRuntimeContract.Limit.MANAGED_PLAN_END_EPOCH_DAY_MAX
+            )
         )
         require(result.enabledCount <= result.programCount)
         result.activeProgramId?.let(::requireLightProgramId)
+        result.planId?.let(::requireLightManagedPlanId)
+        require(
+            result.scheduleSource == if (result.planInstalled) {
+                DeviceLightAutoScheduleSource.MANAGED_PLAN
+            } else {
+                DeviceLightAutoScheduleSource.PROGRAMS
+            }
+        )
+        require((result.planId != null) == result.planInstalled)
+        require(
+            result.planInstalled ||
+                result.planRuntimeState == DeviceLightManagedPlanRuntimeState.NOT_INSTALLED
+        )
+        require(
+            (result.activePlanPhaseIndex != null) ==
+                (result.planTransitionPermille != null)
+        )
         return result
     }
 
@@ -551,7 +613,11 @@ internal object DeviceLightV1JsonParser {
     )
     private val DISPLAY_RGB_KEYS = setOf("red", "green", "blue")
     private val POLICY_KEYS = setOf("auto", "custom", "acclimation")
-    private val AUTO_POLICY_KEYS = setOf("capacity", "timeStepMs", "rampDurationsMs")
+    private val AUTO_POLICY_KEYS = setOf(
+        "capacity", "timeStepMs", "managedPlanPhaseCapacity",
+        "managedPlanTransitionDaysMax", "managedPlanSameDayOnly",
+        "managedPlanContiguous", "rampDurationsMs"
+    )
     private val CUSTOM_POLICY_KEYS = setOf("maxPoints", "timeStepMs")
     private val ACCLIMATION_POLICY_KEYS = setOf(
         "supported", "startPercentMin", "startPercentMax", "startPercentStep",
@@ -562,7 +628,10 @@ internal object DeviceLightV1JsonParser {
         "ready", "reason", "generation", "localDate", "currentWeekdayMask", "currentTimeMs"
     )
     private val AUTO_SUMMARY_KEYS = setOf(
-        "revision", "programCount", "enabledCount", "runtimeState", "activeProgramId"
+        "revision", "programCount", "enabledCount", "scheduleSource", "planRevision",
+        "planInstalled", "planId", "runtimeState", "activeProgramId",
+        "activePlanPhaseIndex", "planRuntimeState", "planTransitionPermille",
+        "nextPlanTransitionEpochDay"
     )
     private val CUSTOM_SUMMARY_KEYS = setOf(
         "revision", "installed", "weekdaysMask", "pointCount", "runtimeState"

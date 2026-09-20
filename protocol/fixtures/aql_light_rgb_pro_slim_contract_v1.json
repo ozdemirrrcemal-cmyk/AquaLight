@@ -20,6 +20,9 @@
     "light.auto.program.update",
     "light.auto.program.enabled.set",
     "light.auto.program.delete",
+    "light.auto.plan.get",
+    "light.auto.plan.apply",
+    "light.auto.plan.delete",
     "light.custom.get",
     "light.custom.install",
     "light.custom.clear",
@@ -51,10 +54,26 @@
   "sceneFields": ["redPercent", "greenPercent", "bluePercent"],
   "customPointTuple": ["timeMs", "redPercent", "greenPercent", "bluePercent"],
   "graphPointTuple": ["timeMs", "redPermille", "greenPermille", "bluePermille"],
+  "managedAutoPlan": {
+    "supported": true,
+    "phaseCapacity": 8,
+    "planIdPattern": "^lp-[0-9a-f]{8}$",
+    "dateEncoding": "LOCAL_DATE_EPOCH_DAY",
+    "minimumEpochDay": 10957,
+    "maximumEpochDay": 47481,
+    "validUntilExclusive": true,
+    "finalPhaseOpenEnded": true,
+    "contiguousPhases": true,
+    "overnightSupported": false,
+    "transitionDaysMaximum": 90,
+    "globalAcclimationBypass": true,
+    "mutationPreconditions": ["expectedRevision", "expectedStorageGeneration"]
+  },
   "status": {
     "rootFields": [
       "schema",
       "storageVersion",
+      "storageGeneration",
       "productKey",
       "channelScale",
       "channels",
@@ -143,6 +162,21 @@
       "endsAtEpochSeconds",
       "remainingSeconds"
     ],
+    "autoFields": [
+      "revision",
+      "programCount",
+      "enabledCount",
+      "scheduleSource",
+      "planRevision",
+      "planInstalled",
+      "planId",
+      "runtimeState",
+      "activeProgramId",
+      "activePlanPhaseIndex",
+      "planRuntimeState",
+      "planTransitionPermille",
+      "nextPlanTransitionEpochDay"
+    ],
     "runtimeFields": [
       "rtcReady",
       "physicalChannelCount",
@@ -164,6 +198,7 @@
       "mode",
       "manual",
       "auto",
+      "autoPlan",
       "custom",
       "acclimation"
     ],

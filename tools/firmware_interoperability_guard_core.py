@@ -34,7 +34,7 @@ INTEROPERABILITY_TEST_PATH = (
 )
 
 FIRMWARE_REPOSITORY = "ozdemirrrcemal-cmyk/AquaLight-Firmware"
-FIRMWARE_COMMIT = "cd01a8760fe4a349fe85265dbadbf4278add7bb6"
+FIRMWARE_COMMIT = "99aca74d3c2ae99e85584893822c0a63fe50bcd8"
 DOSING_FIRMWARE_COMMIT = "fa147211749c2dcb2f56e15a617a00010e071984"
 COMMAND_NAMES_BLOB = "a4a05ae219e449b42de2654c38b55d65804c91b0"
 EVENT_CONTRACT_BLOB = "5e87fd043c0efaa849ed3ba8e5be9ce6f2727e24"
@@ -56,10 +56,10 @@ REQUEST_CONTRACT_BLOBS = {
         "6fc17f55fb171060e1544f21a8f643a363b7da9e"
     ),
     "src/api/v1/commands/AqlLightV1Commands.hpp": (
-        "e2728be2b297be50c2c0f0644aa386409d9507a7"
+        "3a55519fc4c8acdab2aa79deadff3e1206c923b5"
     ),
     "src/api/v1/commands/names/AqlLightCommandNames.hpp": (
-        "4450ba78fb484993c1b1ca15d5e32a2d9b362b6f"
+        "49384214f3d083dff4c99c86b21e580f05973cc7"
     ),
     "src/modules/light/AqlLightProductContract.hpp": (
         "c76f9c957672ffef62b96ba75f9b034a29c5fecb"
@@ -95,8 +95,8 @@ REQUEST_CONTRACT_BLOBS = {
 
 EXPECTED_FIXTURES = {
     "aql_ws_v1_golden.json": (
-        "d525cbefca639fcc327d6649f1074abb4d3dc79d0fd4ec0f918a70f546aaea41",
-        "aae36fcaa8a88a63a0ab1a5f98d25632fdcb5edd",
+        "71e537ecd0be42833c3daa32d8abf2b8f053895c55e0cf6cfea75378ee378b74",
+        "568832d8999bc6208cec2cedc7dab33c1fb8adf2",
         True,
     ),
     "aql_cooling_contract_v1.json": (
@@ -105,28 +105,28 @@ EXPECTED_FIXTURES = {
         True,
     ),
     "aql_cooling_telemetry_v1.json": (
-        "72045d2955164898e2843440e27b41dbc610ff07935dc059c06e92dc6a3d460a",
-        "6e20c7dea0cd7c246454306bd560a0448ee42260",
+        "94233acbc53001f446b638018d9cc05ea6e9fda2d409da02110945c68b45a3be",
+        "e267331a9f6d4948087de617b5c50dc4762cc9d0",
         True,
     ),
     "aql_light_contract_v1.json": (
-        "475d6126933ab25ea2813f29e30e883fd7e01f5f9a3c4e50702518d5d94c08eb",
-        "b2009f69594dd70deb05d768f7583117bca65352",
+        "836fe5cd41a2d777db7c559dc7599cbd88a63fc9e51ce0b291c3cbb27b7b6b82",
+        "2f454296d12c4225d23cfb775e84295a4b935f7f",
         True,
     ),
     "aql_light_rgb_pro_slim_contract_v1.json": (
-        "89c7077a7b3c3d263b0ebe6daf04eb597d116864f63bc6373fbf0f8a1debdc24",
-        "cc1b96fff3858f198ca7b41302493ddfa4f2e7c2",
+        "b067ccd11749e26b862ce99df1ccd63e91ce04ddcaf580f53bb2d1fe84fe7e96",
+        "e2d878b503681507f89660ad68713b464d84f9f9",
         True,
     ),
     "aql_light_manual_control_v1.json": (
-        "84d9d61fc9ea233c72d4ae51a5c3ed9bc0b57b1ecac4f60359731a7161904869",
-        "7d06c67aa4db70bb53b83ff0def2feb11b896781",
+        "2f523a82eed615543bf1a3d645069627a41a45b1a62f2d1e9910914c19a4afd9",
+        "ded90c6fe8b2b014c8d75356dbf99f1b3d7112fb",
         True,
     ),
     "aql_light_graph_contract_v1.json": (
-        "49aa0c4e2e543e9e74421b94ad9b0906e460366c0edd11d6b380c0ca5ab5bcf5",
-        "375064486ab3236b09bae8f1e7508a1eb204581f",
+        "2ea04e333b95f01b8a27c2c80969b2fa121754821e2f9bef377cca19daaae2f7",
+        "686bce0c41df8749887cd7ff2b4c0fd1ffe3ed3b",
         True,
     ),
     "aql_light_thermal_contract_v1.json": (
@@ -350,12 +350,12 @@ def verify_command_and_event_coverage(interoperability: dict[str, Any]) -> None:
     require(public == [], "WebSocket public command matrix must be empty")
     require(isinstance(authenticated, list), "authenticated command matrix is missing")
     command_set = set(authenticated)
-    require(len(authenticated) == 63, "firmware fixture must contain 63 commands")
-    require(len(command_set) == 63, "firmware fixture command names must be unique")
+    require(len(authenticated) == 66, "firmware fixture must contain 66 commands")
+    require(len(command_set) == 66, "firmware fixture command names must be unique")
 
     ws_source = WS_CONTRACT_PATH.read_text(encoding="utf-8", errors="strict")
     event_source = EVENT_CONTRACT_PATH.read_text(encoding="utf-8", errors="strict")
-    require(android_commands(ws_source) == command_set, "Android 63-command matrix drifted")
+    require(android_commands(ws_source) == command_set, "Android 66-command matrix drifted")
 
     disconnected_modules = interoperability.get("androidDisconnectedModules")
     require(
@@ -442,7 +442,7 @@ def verify_command_and_event_coverage(interoperability: dict[str, Any]) -> None:
     )
     require(
         core_coverage | dosing_action_set == command_set,
-        "request coverage plus Dosing v1 pin does not exactly classify all 63 commands",
+        "request coverage plus Dosing v1 pin does not exactly classify all 66 commands",
     )
 
 
@@ -542,8 +542,8 @@ def main() -> int:
         return 1
 
     print(
-        "Firmware interoperability guard passed: 63 command names, 63 connected "
-        "Android commands (49 core + 14 feature-owned Dosing v1), 13/13 events, "
+        "Firmware interoperability guard passed: 66 command names, 66 connected "
+        "Android commands (52 core + 14 feature-owned Dosing v1), 13/13 events, "
         "core request serializers, byte-identical shared fixtures and 7/7 SKUs."
     )
     return 0

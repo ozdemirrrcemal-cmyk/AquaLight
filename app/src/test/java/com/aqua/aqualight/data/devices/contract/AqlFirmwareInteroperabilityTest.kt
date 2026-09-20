@@ -20,6 +20,9 @@ import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAutoProg
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAutoProgramDeletePayload
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAutoProgramEnabledSetPayload
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAutoProgramUpdatePayload
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightManagedAutoPlanApplyPayload
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightManagedAutoPlanDeletePayload
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightManagedPlanPhase
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightControlSetPayload
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightCustomClearPayload
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightCustomInstallPayload
@@ -69,7 +72,7 @@ class AqlFirmwareInteroperabilityTest {
         val authenticated = commandAccess.getJSONArray("authenticated").asStringSet()
         val public = commandAccess.getJSONArray("public").asStringSet()
 
-        assertEquals(63, authenticated.size)
+        assertEquals(66, authenticated.size)
         assertEquals(FIRMWARE_COMMIT, DeviceLightRuntimeContract.PINNED_FIRMWARE_COMMIT)
         assertTrue(public.isEmpty())
         assertEquals(public, AqlWsContract.publicCommandKeys())
@@ -406,6 +409,23 @@ class AqlFirmwareInteroperabilityTest {
             rampDurationMs = 1_800_000,
             scene = scene
         )
+        val managedPhase = DeviceLightManagedPlanPhase(
+            validFromEpochDay = 20_000,
+            validUntilEpochDayExclusive = null,
+            transitionDays = 7,
+            weekdaysMask = 127,
+            startTimeMs = 28_800_000,
+            endTimeMs = 64_800_000,
+            rampDurationMs = 1_800_000,
+            scene = scene
+        )
+        val managedApply = DeviceLightManagedAutoPlanApplyPayload(
+            expectedRevision = 0,
+            expectedStorageGeneration = 12,
+            planId = null,
+            initialStartPercent = 100,
+            phases = listOf(managedPhase)
+        )
 
         return linkedMapOf(
             "DeviceLightControlSetPayload" to
@@ -421,6 +441,15 @@ class AqlFirmwareInteroperabilityTest {
             "DeviceLightAutoProgramDeletePayload" to
                 DeviceLightAutoProgramDeletePayload(1, "ap-00000001")
                     .toJson().keySetExact(),
+            "DeviceLightManagedAutoPlanApplyPayload" to
+                managedApply.toJson().keySetExact(),
+            "DeviceLightManagedPlanPhase" to managedPhase.toJson().keySetExact(),
+            "DeviceLightManagedAutoPlanDeletePayload" to
+                DeviceLightManagedAutoPlanDeletePayload(
+                    expectedRevision = 1,
+                    expectedStorageGeneration = 12,
+                    planId = "lp-00000001"
+                ).toJson().keySetExact(),
             "DeviceLightCustomInstallPayload" to DeviceLightCustomInstallPayload(
                 expectedRevision = 1,
                 weekdaysMask = 127,
@@ -580,7 +609,7 @@ class AqlFirmwareInteroperabilityTest {
         const val TIMER_CONTRACT_FIXTURE = "aql_timer_contract_v1.json"
         const val PRODUCT_CATALOG_FIXTURE = "aql_product_catalog_v1.json"
         const val DOSING_PIN_FIXTURE = "aql_android_dosing_v1_pin.json"
-        const val FIRMWARE_COMMIT = "cd01a8760fe4a349fe85265dbadbf4278add7bb6"
+        const val FIRMWARE_COMMIT = "99aca74d3c2ae99e85584893822c0a63fe50bcd8"
         const val DOSING_FIRMWARE_COMMIT = "fa147211749c2dcb2f56e15a617a00010e071984"
 
         val WEEKDAYS = listOf(true, false, false, false, false, false, false)

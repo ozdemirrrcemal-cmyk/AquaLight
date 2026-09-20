@@ -170,7 +170,11 @@ internal object DeviceLightMutationParser {
             val spans = List(spanData.length()) { index ->
                 parseGraphSpan(spanData.requireLightArray(index))
             }
-            val result = buildGraph(data, points, spans)
+            val planSpanData = data.requireLightArray("planSpans")
+            val planSpans = List(planSpanData.length()) { index ->
+                parsePlanGraphSpan(planSpanData.requireLightArray(index))
+            }
+            val result = buildGraph(data, points, spans, planSpans)
             result.requireCoherentStructure()
             result.requireCoherentSemantics()
             return result
@@ -179,7 +183,8 @@ internal object DeviceLightMutationParser {
         private fun buildGraph(
             data: JSONObject,
             points: List<DeviceLightGraphPoint>,
-            spans: List<DeviceLightGraphSpan>
+            spans: List<DeviceLightGraphSpan>,
+            planSpans: List<DeviceLightManagedPlanGraphSpan>
         ) = DeviceLightGraph(
             mode = DeviceLightMode.fromWireExact(data.requireLightText("mode")),
             available = data.requireLightBoolean("available"),
@@ -205,7 +210,8 @@ internal object DeviceLightMutationParser {
             channelScale = data.requireLightInt("channelScale"),
             hasScheduleToday = data.requireLightBoolean("hasScheduleToday"),
             points = points,
-            autoSpans = spans
+            autoSpans = spans,
+            planSpans = planSpans
         )
 
         private fun parseGraphPoint(
@@ -232,10 +238,22 @@ internal object DeviceLightMutationParser {
         private fun DeviceLightGraph.requireCoherentSemantics() {
             when (mode) {
                 DeviceLightMode.MANUAL -> requireManualSemantics()
-                DeviceLightMode.AUTO,
+                DeviceLightMode.AUTO -> {
+                    require(
+                        basis == DeviceLightGraphBasis.AUTHORED_SCHEDULE ||
+                            basis == DeviceLightGraphBasis.MANAGED_PLAN
+                    )
+                    require(reason != DeviceLightGraphReason.MODE_HAS_NO_SCHEDULE)
+                    if (basis == DeviceLightGraphBasis.MANAGED_PLAN) {
+                        require(autoSpans.isEmpty())
+                    } else {
+                        require(planSpans.isEmpty())
+                    }
+                }
                 DeviceLightMode.CUSTOM -> {
                     require(basis == DeviceLightGraphBasis.AUTHORED_SCHEDULE)
                     require(reason != DeviceLightGraphReason.MODE_HAS_NO_SCHEDULE)
+                    require(planSpans.isEmpty())
                 }
             }
 
@@ -245,6 +263,12 @@ internal object DeviceLightMutationParser {
                 DeviceLightGraphReason.MODE_HAS_NO_SCHEDULE -> Unit
                 DeviceLightGraphReason.NO_ENABLED_AUTO_PROGRAM_TODAY -> {
                     require(mode == DeviceLightMode.AUTO)
+                    require(basis == DeviceLightGraphBasis.AUTHORED_SCHEDULE)
+                    require(available && !hasScheduleToday)
+                }
+                DeviceLightGraphReason.MANAGED_PLAN_NOT_SCHEDULED_TODAY -> {
+                    require(mode == DeviceLightMode.AUTO)
+                    require(basis == DeviceLightGraphBasis.MANAGED_PLAN)
                     require(available && !hasScheduleToday)
                 }
                 DeviceLightGraphReason.CUSTOM_NOT_INSTALLED,
@@ -265,6 +289,7 @@ internal object DeviceLightMutationParser {
             require(points.zipWithNext().all { (first, second) -> first.timeMs <= second.timeMs })
             require(hasScheduleToday == points.isNotEmpty())
             require(mode == DeviceLightMode.AUTO || autoSpans.isEmpty())
+            require(mode == DeviceLightMode.AUTO || planSpans.isEmpty())
         }
 
         private fun DeviceLightGraph.requireManualSemantics() {
@@ -275,6 +300,7 @@ internal object DeviceLightMutationParser {
             require(!hasScheduleToday)
             require(points.isEmpty())
             require(autoSpans.isEmpty())
+            require(planSpans.isEmpty())
         }
 
         private fun DeviceLightGraph.requireRtcUnavailableSemantics() {
@@ -283,6 +309,36 @@ internal object DeviceLightMutationParser {
             require(localDate == null)
             require(nowTimeMs == null)
             require(!hasScheduleToday)
+        }
+
+        private fun parsePlanGraphSpan(tuple: JSONArray): DeviceLightManagedPlanGraphSpan {
+            require(
+                tuple.length() ==
+                    DeviceLightRuntimeContract.Limit.GRAPH_PLAN_SPAN_TUPLE_SIZE
+            )
+            val planId = tuple.requireLightText(
+                DeviceLightRuntimeContract.Limit.GRAPH_PLAN_SPAN_PLAN_ID_INDEX
+            ).also(::requireLightManagedPlanId)
+            return DeviceLightManagedPlanGraphSpan(
+                startTimeMsWithinToday = tuple.requireLightLong(
+                    0,
+                    0,
+                    DeviceLightRuntimeContract.Limit.MILLIS_IN_DAY
+                ),
+                endTimeMsWithinToday = tuple.requireLightLong(
+                    1,
+                    0,
+                    DeviceLightRuntimeContract.Limit.MILLIS_IN_DAY
+                ),
+                planId = planId,
+                phaseIndex = tuple.requireLightInt(
+                    DeviceLightRuntimeContract.Limit.GRAPH_PLAN_SPAN_PHASE_INDEX,
+                    0,
+                    DeviceLightRuntimeContract.Limit.MANAGED_PLAN_PHASE_CAPACITY - 1
+                )
+            ).also { span ->
+                require(span.startTimeMsWithinToday < span.endTimeMsWithinToday)
+            }
         }
 
         private fun parseGraphSpan(tuple: JSONArray): DeviceLightGraphSpan {
@@ -348,7 +404,7 @@ internal object DeviceLightMutationParser {
     private val GRAPH_KEYS = setOf(
         "mode", "available", "reason", "sourceRevision", "schedulerGeneration", "localDate",
         "currentWeekdayMask", "nowTimeMs", "basis", "channelScale", "hasScheduleToday",
-        "points", "autoSpans"
+        "points", "autoSpans", "planSpans"
     )
     private val PROGRAM_ID = Regex("^ap-[0-9a-f]{8}$")
 }

@@ -99,6 +99,12 @@ internal class DeviceLightRuntimeStateOwner {
         statuses = { _statuses.value },
         publishChange = { _stateRevision.value += 1L }
     )
+    internal val managedPlanProjection = DeviceLightManagedPlanRuntimeProjection(
+        lock = lock,
+        authorityCoordinator = authorityCoordinator,
+        statuses = { _statuses.value },
+        publishChange = { _stateRevision.value += 1L }
+    )
     private val _temperatureProtection = MutableStateFlow<
         Map<DeviceUid, DeviceLightTemperatureProtectionStatus>
         >(emptyMap())
@@ -194,6 +200,7 @@ internal class DeviceLightRuntimeStateOwner {
         _statuses.value = _statuses.value + (deviceUid to status)
         dashboardProjection.reconcileStatus(deviceUid, generation)
         automaticProjection.reconcileStatus(deviceUid, generation, status)
+        managedPlanProjection.reconcileStatus(deviceUid, generation, status)
         val custom = customProjection.reconcileStatus(deviceUid, generation, status)
         libraryProjection.reconcileStatus(deviceUid, generation, status, custom)
         _stateRevision.value += 1L
@@ -302,6 +309,7 @@ internal class DeviceLightRuntimeStateOwner {
             _statuses.value = _statuses.value.without(deviceUid)
             dashboardProjection.clear(deviceUid)
             automaticProjection.clear(deviceUid)
+            managedPlanProjection.clear(deviceUid)
             libraryProjection.clear(deviceUid)
             customProjection.clear(deviceUid)
             _temperatureProtection.value = _temperatureProtection.value.without(deviceUid)
@@ -775,6 +783,7 @@ private fun DeviceLightAutoPrograms.isCoherentWith(status: DeviceLightStatus): B
 
 private fun DeviceLightGraph.isCoherentWith(status: DeviceLightStatus): Boolean =
     mode == status.mode &&
+        basis == status.graphBasis() &&
         sourceRevision == status.graphSourceRevision() &&
         schedulerMatches(status)
 
@@ -785,8 +794,18 @@ private fun DeviceLightGraph.schedulerMatches(status: DeviceLightStatus): Boolea
 
 private fun DeviceLightStatus.graphSourceRevision(): Long = when (mode) {
     DeviceLightMode.MANUAL -> 0L
-    DeviceLightMode.AUTO -> auto.revision
+    DeviceLightMode.AUTO -> if (auto.planInstalled) auto.planRevision else auto.revision
     DeviceLightMode.CUSTOM -> custom.revision
+}
+
+private fun DeviceLightStatus.graphBasis(): DeviceLightGraphBasis = when (mode) {
+    DeviceLightMode.MANUAL -> DeviceLightGraphBasis.NONE
+    DeviceLightMode.AUTO -> if (auto.planInstalled) {
+        DeviceLightGraphBasis.MANAGED_PLAN
+    } else {
+        DeviceLightGraphBasis.AUTHORED_SCHEDULE
+    }
+    DeviceLightMode.CUSTOM -> DeviceLightGraphBasis.AUTHORED_SCHEDULE
 }
 
 private fun DeviceLightCustomDocument.summary() = DeviceLightCustomDocumentSummary(
