@@ -44,6 +44,7 @@ private fun LazyListScope.lightOverviewItems(
     item(key = "light-hero") {
         DeviceLightHero(
             state = state.hero,
+            channels = state.channels,
             modifier = Modifier.fillMaxWidth()
         )
     }
