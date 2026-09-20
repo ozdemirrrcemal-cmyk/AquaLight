@@ -37,7 +37,7 @@ internal fun resolveDeviceLightAquariumLighting(
     val blue = channels.effectiveFraction("blue")
     val white = channels.effectiveFraction("white")
 
-    // Fixture-calibrated visual energy model. White contributes most of the scene luminance while
+    // Display-weighted visual energy model. White contributes most of the scene luminance while
     // RGB still has enough weight to make low-level sunrise/sunset ramps visible on a phone panel.
     val additiveEnergy =
         (white * WHITE_ENERGY_WEIGHT) +
