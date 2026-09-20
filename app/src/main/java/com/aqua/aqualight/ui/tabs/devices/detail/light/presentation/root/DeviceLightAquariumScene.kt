@@ -579,20 +579,16 @@ private fun DrawScope.drawWaterShimmer(
 private fun DrawScope.drawHeroLegibilityVeils() {
     drawRect(
         brush = Brush.horizontalGradient(
-            colorStops = arrayOf(
-                0.00f to Color(0xF2071724),
-                0.30f to Color(0xD9071724),
-                0.46f to Color.Transparent
-            )
+            0.00f to Color(0xF2071724),
+            0.30f to Color(0xD9071724),
+            0.46f to Color.Transparent
         )
     )
     drawRect(
         brush = Brush.horizontalGradient(
-            colorStops = arrayOf(
-                0.76f to Color.Transparent,
-                0.88f to Color(0xA8071724),
-                1.00f to Color(0xE6071724)
-            )
+            0.76f to Color.Transparent,
+            0.88f to Color(0xA8071724),
+            1.00f to Color(0xE6071724)
         )
     )
 }
