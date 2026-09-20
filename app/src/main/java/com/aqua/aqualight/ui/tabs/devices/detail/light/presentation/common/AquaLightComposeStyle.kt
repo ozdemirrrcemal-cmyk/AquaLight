@@ -21,50 +21,20 @@ import com.aqua.aqualight.ui.common.devicecard.aquaDeviceCardTypography
 object AquaLightHeroGeometry {
     val screenHorizontalPadding = 12.dp
     val screenTopPadding = 0.dp
-    val heroOutlineWidth = AquaDeviceCardGeometry.outlineWidth
     const val heroAspectRatio = HERO_ARTWORK_WIDTH / HERO_ARTWORK_HEIGHT
 
-    val titleBounds = AquaLightHeroBounds(
+    val powerBounds = AquaLightHeroBounds(
         left = 0.042f,
         top = 0.245f,
         width = 0.275f,
         height = 0.140f
     )
-    val subtitleBounds = AquaLightHeroBounds(
+    val colorTemperatureBounds = AquaLightHeroBounds(
         left = 0.042f,
         top = 0.360f,
         width = 0.285f,
         height = 0.085f
     )
-    val statusBounds = AquaLightHeroBounds(
-        left = 0.042f,
-        top = 0.455f,
-        width = 0.232f,
-        height = 0.149f
-    )
-    val powerBounds = AquaLightHeroBounds(
-        left = 0.890f,
-        top = 0.510f,
-        width = 0.095f,
-        height = 0.100f
-    )
-    val estimatedBounds = AquaLightHeroBounds(
-        left = 0.890f,
-        top = 0.595f,
-        width = 0.095f,
-        height = 0.070f
-    )
-    val colorTemperatureBounds = AquaLightHeroBounds(
-        left = 0.890f,
-        top = 0.665f,
-        width = 0.095f,
-        height = 0.100f
-    )
-
-    val statusHorizontalPadding = 5.dp
-    val statusIconSize = 14.dp
-    val statusIconGlyphSize = 10.dp
-    val statusContentGap = 5.dp
 }
 
 /** Central layout contract for the Light root below its hero. */
@@ -384,97 +354,29 @@ data class AquaLightHeroBounds(
 )
 
 @Immutable
-data class AquaLightHeroContentColors(
-    val primaryText: Color,
-    val secondaryText: Color,
-    val iconContent: Color
-)
-
-@Immutable
-data class AquaLightHeroStatusColors(
-    val healthyAccent: Color,
-    val healthySurface: Color,
-    val attentionAccent: Color,
-    val neutralAccent: Color,
-    val neutralSurface: Color
-)
-
-@Immutable
-data class AquaLightHeroColors(
-    val content: AquaLightHeroContentColors,
-    val status: AquaLightHeroStatusColors
-) {
-    val primaryText: Color get() = content.primaryText
-    val secondaryText: Color get() = content.secondaryText
-    val iconContent: Color get() = content.iconContent
-    val healthyAccent: Color get() = status.healthyAccent
-    val healthySurface: Color get() = status.healthySurface
-    val attentionAccent: Color get() = status.attentionAccent
-    val neutralAccent: Color get() = status.neutralAccent
-    val neutralSurface: Color get() = status.neutralSurface
-}
-
-@Immutable
 data class AquaLightHeroTypography(
-    val title: TextStyle,
-    val subtitle: TextStyle,
-    val status: TextStyle,
-    val metricValue: TextStyle,
-    val metricCaption: TextStyle
+    val powerValue: TextStyle,
+    val colorTemperatureValue: TextStyle
 )
 
 private val poppinsBold = FontFamily(Font(R.font.poppins_bold))
 private val interRegular = FontFamily(Font(R.font.inter_regular))
-private val interMedium = FontFamily(Font(R.font.inter_medium))
 private val interSemiBold = FontFamily(Font(R.font.inter_semibold))
 
 @Composable
-fun aquaLightHeroColors(): AquaLightHeroColors = AquaLightHeroColors(
-    content = AquaLightHeroContentColors(
-        primaryText = colorResource(R.color.aqua_content_on_dark),
-        secondaryText = colorResource(R.color.aqua_content_primary_soft),
-        iconContent = colorResource(R.color.aqua_card_device_surface)
-    ),
-    status = AquaLightHeroStatusColors(
-        healthyAccent = colorResource(R.color.aqua_accent),
-        healthySurface = colorResource(R.color.aqua_surface_positive),
-        attentionAccent = colorResource(R.color.aqua_card_state_warning),
-        neutralAccent = colorResource(R.color.aqua_card_text_secondary),
-        neutralSurface = colorResource(R.color.aqua_card_device_media_surface)
-    )
-)
-
-fun aquaLightHeroTypography(colors: AquaLightHeroColors): AquaLightHeroTypography =
+fun aquaLightHeroTypography(): AquaLightHeroTypography =
     AquaLightHeroTypography(
-        title = TextStyle(
-            color = colors.primaryText,
+        powerValue = TextStyle(
+            color = colorResource(R.color.aqua_content_on_dark),
             fontFamily = poppinsBold,
             fontSize = 17.sp,
             lineHeight = 20.sp
         ),
-        subtitle = TextStyle(
-            color = colors.secondaryText,
+        colorTemperatureValue = TextStyle(
+            color = colorResource(R.color.aqua_content_primary_soft),
             fontFamily = interRegular,
             fontSize = 11.sp,
             lineHeight = 14.sp
-        ),
-        status = TextStyle(
-            color = colors.healthyAccent,
-            fontFamily = interSemiBold,
-            fontSize = 8.sp,
-            lineHeight = 10.sp
-        ),
-        metricValue = TextStyle(
-            color = colors.primaryText,
-            fontFamily = interSemiBold,
-            fontSize = 10.5.sp,
-            lineHeight = 13.sp
-        ),
-        metricCaption = TextStyle(
-            color = colors.secondaryText,
-            fontFamily = interMedium,
-            fontSize = 7.5.sp,
-            lineHeight = 10.sp
         )
     )
 
