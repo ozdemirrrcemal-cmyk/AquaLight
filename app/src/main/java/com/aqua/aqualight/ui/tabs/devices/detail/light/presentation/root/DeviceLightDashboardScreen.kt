@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.colorResource
 import com.aqua.aqualight.R
@@ -42,10 +43,13 @@ private fun LazyListScope.lightOverviewItems(
     actions: DeviceLightDashboardActions
 ) {
     item(key = "light-hero") {
-        DeviceLightHero(
-            state = state.hero,
-            modifier = Modifier.fillMaxWidth()
-        )
+        key(state.deviceUid) {
+            DeviceLightHero(
+                state = state.hero,
+                channels = state.channels,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
     }
     item(key = "light-plan") {
         DeviceLightPlanCard(
