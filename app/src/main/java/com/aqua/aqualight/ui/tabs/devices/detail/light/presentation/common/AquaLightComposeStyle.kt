@@ -42,6 +42,12 @@ object AquaLightHeroGeometry {
         width = 0.232f,
         height = 0.149f
     )
+    val telemetryPanelBounds = AquaLightHeroBounds(
+        left = 0.850f,
+        top = 0.430f,
+        width = 0.135f,
+        height = 0.345f
+    )
     val powerBounds = AquaLightHeroBounds(
         left = 0.890f,
         top = 0.510f,
