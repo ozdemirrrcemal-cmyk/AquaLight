@@ -91,6 +91,8 @@ private fun DeviceLightGraphReason.toApplicationReason(): DeviceLightPlanReason 
     DeviceLightGraphReason.RTC_NOT_READY -> DeviceLightPlanReason.RTC_NOT_READY
     DeviceLightGraphReason.NO_ENABLED_AUTO_PROGRAM_TODAY ->
         DeviceLightPlanReason.NO_ENABLED_AUTO_PROGRAM_TODAY
+    DeviceLightGraphReason.MANAGED_PLAN_NOT_SCHEDULED_TODAY ->
+        DeviceLightPlanReason.MANAGED_PLAN_NOT_SCHEDULED_TODAY
     DeviceLightGraphReason.CUSTOM_NOT_INSTALLED -> DeviceLightPlanReason.CUSTOM_NOT_INSTALLED
     DeviceLightGraphReason.CUSTOM_NOT_SCHEDULED_TODAY ->
         DeviceLightPlanReason.CUSTOM_NOT_SCHEDULED_TODAY
