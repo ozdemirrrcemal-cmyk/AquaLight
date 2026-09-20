@@ -18,6 +18,7 @@ import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightErrorRea
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightLibraryReadAuthority
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightLibraryRuntimeState
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightPreviewSetPayload
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRefreshResult
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightScene
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightCustomPoint as RuntimeCustomPoint
@@ -26,7 +27,6 @@ import com.aqua.aqualight.data.devices.runtime.modules.light.clearPreview
 import com.aqua.aqualight.data.devices.runtime.modules.light.currentLibrary
 import com.aqua.aqualight.data.devices.runtime.modules.light.installCustom
 import com.aqua.aqualight.data.devices.runtime.modules.light.lightV1Data
-import com.aqua.aqualight.data.devices.runtime.modules.light.requestCustom
 import com.aqua.aqualight.data.devices.runtime.modules.light.setPreview
 import java.util.concurrent.CancellationException
 import kotlinx.coroutines.flow.Flow
@@ -62,14 +62,22 @@ internal class DefaultDeviceLightCustomOperations(
 
     override suspend fun read(deviceUid: String): DeviceLightCustomReadResult {
         val uid = deviceUid.toUidOrNull()
-        val runtime = devicesRepository.runtimeModules()?.light
+        val modules = devicesRepository.runtimeModules()
+        val runtime = modules?.light
         return when {
             uid == null -> DeviceLightCustomReadResult.Failed(DeviceLightCustomFailure.INVALID_DATA)
-            runtime == null -> DeviceLightCustomReadResult.Failed(DeviceLightCustomFailure.UNAVAILABLE)
-            runtime.currentStatus(uid) == null -> DeviceLightCustomReadResult.Failed(
-                DeviceLightCustomFailure.NOT_CONNECTED
-            )
-            else -> runtime.readAvailable(uid)
+            modules == null || runtime == null ->
+                DeviceLightCustomReadResult.Failed(DeviceLightCustomFailure.UNAVAILABLE)
+            else -> when (val refresh = modules.refreshLightRuntime(uid)) {
+                is DeviceLightRuntimeRefreshResult.Success ->
+                    runtime.projectCurrent(uid, DeviceLightLibraryReadAuthority.AUTHORITATIVE)
+                is DeviceLightRuntimeRefreshResult.Failed ->
+                    DeviceLightCustomReadResult.Failed(refresh.outcome.toFailure())
+                DeviceLightRuntimeRefreshResult.RejectedStale ->
+                    DeviceLightCustomReadResult.Failed(DeviceLightCustomFailure.UNAVAILABLE)
+                DeviceLightRuntimeRefreshResult.Malformed ->
+                    DeviceLightCustomReadResult.Failed(DeviceLightCustomFailure.INVALID_DATA)
+            }
         }
     }
 
@@ -150,7 +158,7 @@ internal class DefaultDeviceLightCustomOperations(
         executeDeviceLightCustomPersistentWrite(
             clearPreview = { runtime.clearPreview(uid).toMutationResult() },
             mutate = { execute(uid, runtime).toMutationResult() },
-            readAuthoritative = { runtime.readAvailable(uid) }
+            readAuthoritative = { read(uid.value) }
         )
     } catch (error: CancellationException) {
         throw error
@@ -193,27 +201,6 @@ private fun DeviceRuntimeCommandOutcome<*>.toMutationResult():
     DeviceLightCustomMutationResult = when (this) {
     is DeviceRuntimeCommandOutcome.Success -> DeviceLightCustomMutationResult.Success
     else -> DeviceLightCustomMutationResult.Failed(toFailure())
-}
-
-private suspend fun DeviceLightRuntimeRepository.readAvailable(
-    uid: DeviceUid
-): DeviceLightCustomReadResult = try {
-    when (val status = requestStatus(uid)) {
-        is DeviceRuntimeCommandOutcome.Success -> when (val result = requestCustom(uid)) {
-            is DeviceRuntimeCommandOutcome.Success -> projectCurrent(
-                uid,
-                DeviceLightLibraryReadAuthority.AUTHORITATIVE
-            )
-            else -> DeviceLightCustomReadResult.Failed(result.toFailure())
-        }
-        else -> DeviceLightCustomReadResult.Failed(status.toFailure())
-    }
-} catch (error: CancellationException) {
-    throw error
-} catch (_: IllegalArgumentException) {
-    DeviceLightCustomReadResult.Failed(DeviceLightCustomFailure.INVALID_DATA)
-} catch (_: Exception) {
-    DeviceLightCustomReadResult.Failed(DeviceLightCustomFailure.UNAVAILABLE)
 }
 
 private fun DeviceLightRuntimeRepository.projectCurrent(

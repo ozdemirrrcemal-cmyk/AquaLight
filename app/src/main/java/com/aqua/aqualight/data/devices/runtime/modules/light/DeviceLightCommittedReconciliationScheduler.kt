@@ -1,34 +1,40 @@
 package com.aqua.aqualight.data.devices.runtime.modules.light
 
 import com.aqua.aqualight.data.devices.model.DeviceUid
+import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
-/** Schedules optional post-ACK dashboard reconciliation without blocking the user mutation. */
+/** Schedules optional post-ACK central Light reconciliation without blocking the mutation. */
 internal class DeviceLightCommittedReconciliationScheduler(
     private val scope: CoroutineScope,
-    private val refreshCoordinator: DeviceLightDashboardRefreshCoordinator
+    private val refreshCoordinator: DeviceLightRuntimeRefreshCoordinator
 ) {
     private val lock = Any()
     private val scheduled = HashMap<DeviceUid, ScheduledReconciliation>()
 
-    fun schedule(deviceUid: DeviceUid, expectedMode: DeviceLightMode) {
+    fun schedule(
+        deviceUid: DeviceUid,
+        expectedMode: DeviceLightMode,
+        generation: DeviceRuntimeConnectionGeneration
+    ) {
         val job = scope.launch(start = CoroutineStart.LAZY) {
-            refreshCoordinator.reconcileCommitted(deviceUid, expectedMode)
+            refreshCoordinator.reconcileCommitted(deviceUid, expectedMode, generation)
         }
         val previous = synchronized(lock) {
             val current = scheduled[deviceUid]
             if (
                 current != null &&
                 current.expectedMode == expectedMode &&
+                current.generation == generation &&
                 !current.job.isCompleted
             ) {
                 job.cancel()
                 return
             }
-            scheduled[deviceUid] = ScheduledReconciliation(expectedMode, job)
+            scheduled[deviceUid] = ScheduledReconciliation(expectedMode, generation, job)
             current?.job
         }
         previous?.cancel()
@@ -46,6 +52,7 @@ internal class DeviceLightCommittedReconciliationScheduler(
 
     private data class ScheduledReconciliation(
         val expectedMode: DeviceLightMode,
+        val generation: DeviceRuntimeConnectionGeneration,
         val job: Job
     )
 }

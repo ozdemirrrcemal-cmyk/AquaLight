@@ -216,10 +216,6 @@ internal class DeviceLightCustomCurveViewModel(
         refreshFromDevice()
     }
 
-    val refreshIfClean: () -> Unit = {
-        if (!_uiState.value.hasUnsavedChanges) refreshFromDevice()
-    }
-
     fun refreshFromDevice() {
         val deviceUid = boundDeviceUid.takeIf(String::isNotBlank) ?: return
         viewModelScope.launch {

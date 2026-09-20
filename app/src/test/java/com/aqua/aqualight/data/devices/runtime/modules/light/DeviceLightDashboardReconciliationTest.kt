@@ -6,18 +6,12 @@ import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandGateway
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.test.advanceTimeBy
-import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class DeviceLightDashboardReconciliationTest {
 
     @Test
@@ -42,25 +36,16 @@ class DeviceLightDashboardReconciliationTest {
     }
 
     @Test
-    fun `concurrent dashboard refreshes share one status graph flight`() = runTest {
-        val gateway = FixtureGateway(statusDelayMillis = STATUS_DELAY_MS)
+    fun `dashboard helper reads one coherent status graph pair`() = runTest {
+        val gateway = FixtureGateway()
         val owner = DeviceLightRuntimeStateOwner()
         owner.beginGeneration(DEVICE_UID, GENERATION)
         val runtime = DeviceLightRuntimeRepository(gateway, owner)
         val coordinator = DeviceLightDashboardRefreshCoordinator(runtime)
 
-        val first = async { coordinator.refresh(DEVICE_UID) }
-        runCurrent()
-        val second = async { coordinator.refresh(DEVICE_UID) }
-        runCurrent()
+        val result = coordinator.refresh(DEVICE_UID)
 
-        assertEquals(listOf(DeviceLightRuntimeContract.Action.STATUS_GET), gateway.actions)
-
-        advanceTimeBy(STATUS_DELAY_MS)
-        runCurrent()
-
-        assertTrue(first.await() is DeviceLightDashboardRefreshResult.Success)
-        assertTrue(second.await() is DeviceLightDashboardRefreshResult.Success)
+        assertTrue(result is DeviceLightDashboardRefreshResult.Success)
         assertEquals(
             listOf(
                 DeviceLightRuntimeContract.Action.STATUS_GET,
@@ -70,9 +55,7 @@ class DeviceLightDashboardReconciliationTest {
         )
     }
 
-    private class FixtureGateway(
-        private val statusDelayMillis: Long = 0L
-    ) : DeviceRuntimeCommandGateway {
+    private class FixtureGateway : DeviceRuntimeCommandGateway {
         val actions = mutableListOf<String>()
 
         override suspend fun <T> execute(
@@ -81,12 +64,6 @@ class DeviceLightDashboardReconciliationTest {
             timeoutMillis: Long
         ): DeviceRuntimeCommandOutcome<T> {
             actions += command.action
-            if (
-                command.action == DeviceLightRuntimeContract.Action.STATUS_GET &&
-                statusDelayMillis > 0L
-            ) {
-                delay(statusDelayMillis)
-            }
             val data = when (command.action) {
                 DeviceLightRuntimeContract.Action.CONTROL_SET -> JSONObject()
                     .put(DeviceLightRuntimeContract.Field.MODE, DeviceLightMode.AUTO.wireValue)
@@ -124,7 +101,6 @@ class DeviceLightDashboardReconciliationTest {
     }
 
     private companion object {
-        const val STATUS_DELAY_MS = 1_000L
         val DEVICE_UID = DeviceUid("light-dashboard-reconciliation")
         val GENERATION = DeviceRuntimeConnectionGeneration(1L)
     }

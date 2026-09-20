@@ -16,6 +16,7 @@ import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.modules.DeviceRuntimeModuleProvider
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTemperatureProtectionSetPayload
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightStatusReadAuthority
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRefreshResult
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightSystemReadAuthority
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightThermalConfigApplyPayload
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightThermalConfigApplyResult
@@ -92,25 +93,16 @@ internal class DefaultDeviceLightSystemOperations(
 
     private suspend fun refresh(
         resolution: SystemRuntimeResolution.Ready
-    ): DeviceLightSystemReadResult {
-        val connection = devicesRepository.connectRuntime(resolution.deviceUid)
-        return if (connection.isFailure) {
-            readFailure(DeviceLightSystemFailure.NOT_CONNECTED)
-        } else {
-            val thermal = resolution.modules.lightThermal.requestStatus(resolution.deviceUid)
-            if (thermal !is DeviceRuntimeCommandOutcome.Success) {
-                readFailure(thermal.toSystemFailure())
-            } else {
-                val protection = resolution.modules.lightTemperatureProtection.requestStatus(
-                    resolution.deviceUid
-                )
-                if (protection is DeviceRuntimeCommandOutcome.Success) {
-                    resolution.projectCurrent()
-                } else {
-                    readFailure(protection.toSystemFailure())
-                }
-            }
-        }
+    ): DeviceLightSystemReadResult = when (
+        val refresh = resolution.modules.refreshLightRuntime(resolution.deviceUid)
+    ) {
+        is DeviceLightRuntimeRefreshResult.Success -> resolution.projectCurrent()
+        is DeviceLightRuntimeRefreshResult.Failed ->
+            readFailure(refresh.outcome.toSystemFailure())
+        DeviceLightRuntimeRefreshResult.RejectedStale ->
+            readFailure(DeviceLightSystemFailure.UNAVAILABLE)
+        DeviceLightRuntimeRefreshResult.Malformed ->
+            readFailure(DeviceLightSystemFailure.INVALID_DATA)
     }
 
     private suspend fun save(

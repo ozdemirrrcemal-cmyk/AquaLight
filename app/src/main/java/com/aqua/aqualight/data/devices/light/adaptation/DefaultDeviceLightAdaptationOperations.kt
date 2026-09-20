@@ -6,16 +6,17 @@ import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdapta
 import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationReadResult
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
-import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAcclimationPolicy
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAcclimationStartPayload
+import com.aqua.aqualight.data.devices.runtime.modules.DeviceRuntimeModuleProvider
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAcclimationStopPayload
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRefreshResult
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightStatusReadAuthority
 import com.aqua.aqualight.data.devices.runtime.modules.light.currentStatus
-import com.aqua.aqualight.data.devices.runtime.modules.light.requestAcclimationStatus
 import com.aqua.aqualight.data.devices.runtime.modules.light.startAcclimation
 import com.aqua.aqualight.data.devices.runtime.modules.light.stopAcclimation
+import java.util.concurrent.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOf
@@ -61,16 +62,25 @@ internal class DefaultDeviceLightAdaptationOperations(
     override suspend fun refresh(deviceUid: String): DeviceLightAdaptationReadResult =
         when (val resolution = resolve(deviceUid)) {
             is AdaptationRuntimeResolution.Failed -> readFailure(resolution.failure)
-            is AdaptationRuntimeResolution.Ready -> runCatching {
-                val outcome = resolution.runtime.requestAcclimationStatus(resolution.deviceUid)
-                if (outcome is DeviceRuntimeCommandOutcome.Success) {
-                    resolution.runtime.requestStatus(resolution.deviceUid)
+            is AdaptationRuntimeResolution.Ready -> try {
+                when (val refresh = resolution.modules.refreshLightRuntime(resolution.deviceUid)) {
+                    is DeviceLightRuntimeRefreshResult.Success -> project(
+                        resolution.deviceUid,
+                        resolution.runtime.currentStatus(resolution.deviceUid),
+                        firmwareWriteAuthoritative = true
+                    )
+                    is DeviceLightRuntimeRefreshResult.Failed ->
+                        readFailure(refresh.outcome.toAdaptationFailure())
+                    DeviceLightRuntimeRefreshResult.RejectedStale ->
+                        readFailure(DeviceLightAdaptationFailure.UNAVAILABLE)
+                    DeviceLightRuntimeRefreshResult.Malformed ->
+                        readFailure(DeviceLightAdaptationFailure.INVALID_DATA)
                 }
-                outcome
-            }.fold(
-                onSuccess = { outcome -> outcome.toReadResult(resolution) },
-                onFailure = { readFailure(DeviceLightAdaptationFailure.INVALID_DATA) }
-            )
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (_: Exception) {
+                readFailure(DeviceLightAdaptationFailure.INVALID_DATA)
+            }
         }
 
     override suspend fun start(
@@ -122,11 +132,11 @@ internal class DefaultDeviceLightAdaptationOperations(
 
     private fun resolve(deviceUid: String): AdaptationRuntimeResolution {
         val uid = deviceUid.trim().takeIf(String::isNotBlank)?.let(::DeviceUid)
-        val runtime = devicesRepository.runtimeModules()?.light
-        return if (uid == null || runtime == null) {
+        val modules = devicesRepository.runtimeModules()
+        return if (uid == null || modules == null) {
             AdaptationRuntimeResolution.Failed(DeviceLightAdaptationFailure.UNAVAILABLE)
         } else {
-            AdaptationRuntimeResolution.Ready(uid, runtime)
+            AdaptationRuntimeResolution.Ready(uid, modules.light, modules)
         }
     }
 }
@@ -134,7 +144,8 @@ internal class DefaultDeviceLightAdaptationOperations(
 internal sealed interface AdaptationRuntimeResolution {
     data class Ready(
         val deviceUid: DeviceUid,
-        val runtime: DeviceLightRuntimeRepository
+        val runtime: DeviceLightRuntimeRepository,
+        val modules: DeviceRuntimeModuleProvider
     ) : AdaptationRuntimeResolution {
         fun requirePolicy(): DeviceLightAcclimationPolicy =
             requireNotNull(runtime.currentStatus(deviceUid)).policy.acclimation

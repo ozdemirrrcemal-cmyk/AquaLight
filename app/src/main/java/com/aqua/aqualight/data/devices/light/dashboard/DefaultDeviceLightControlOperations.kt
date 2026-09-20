@@ -21,7 +21,7 @@ import com.aqua.aqualight.data.devices.runtime.modules.DeviceRuntimeModuleProvid
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightControlSetPayload
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightControlSetResult
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightDashboardReadAuthority
-import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightDashboardRefreshResult
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRefreshResult
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightGraph
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightMode
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightProduct
@@ -149,7 +149,11 @@ private fun RuntimeResolution.Ready.confirmCommittedMode(
     if (outcome.value.mode != firmwareMode) {
         return DeviceLightModeMutationResult.Failed(DeviceLightControlFailure.INVALID_DATA)
     }
-    modules.scheduleLightControlReconciliation(deviceUid, firmwareMode)
+    modules.scheduleLightControlReconciliation(
+        deviceUid = deviceUid,
+        expectedMode = firmwareMode,
+        generation = outcome.generation
+    )
     val snapshot = (currentControl(systemOperations) as? DeviceLightControlResult.Available)
         ?.snapshot
         ?.takeIf { current -> current.hero.mode == requestedMode }
@@ -160,33 +164,25 @@ private fun RuntimeResolution.Ready.confirmCommittedMode(
 
 private suspend fun RuntimeResolution.Ready.refreshControl(
     systemOperations: DeviceLightSystemOperations
-): DeviceLightControlResult = when (val refresh = modules.refreshLightDashboard(deviceUid)) {
-    is DeviceLightDashboardRefreshResult.Success -> {
-        val result = projectRead(
-            LightProjectionInput(
-                deviceUid = deviceUid,
-                root = root,
-                status = refresh.dashboard.status,
-                graph = refresh.dashboard.graph,
-                customDocument = runtime.currentLibrary(
-                    deviceUid,
-                    DeviceLightLibraryReadAuthority.AUTHORITATIVE
-                )?.custom,
-                systemResult = systemOperations.current(deviceUid.value)
-            )
+): DeviceLightControlResult = when (val refresh = modules.refreshLightRuntime(deviceUid)) {
+    is DeviceLightRuntimeRefreshResult.Success -> projectRead(
+        LightProjectionInput(
+            deviceUid = deviceUid,
+            root = root,
+            status = refresh.dashboard.status,
+            graph = refresh.dashboard.graph,
+            customDocument = runtime.currentLibrary(
+                deviceUid,
+                DeviceLightLibraryReadAuthority.AUTHORITATIVE
+            )?.custom,
+            systemResult = systemOperations.current(deviceUid.value)
         )
-        if (result is DeviceLightControlResult.Available && root.supportsLightSystem()) {
-            systemOperations.refresh(deviceUid.value)
-            currentControl(systemOperations)
-        } else {
-            result
-        }
-    }
-    is DeviceLightDashboardRefreshResult.Failed ->
+    )
+    is DeviceLightRuntimeRefreshResult.Failed ->
         DeviceLightControlResult.Failed(refresh.outcome.toControlFailure())
-    DeviceLightDashboardRefreshResult.RejectedStale ->
+    DeviceLightRuntimeRefreshResult.RejectedStale ->
         DeviceLightControlResult.Failed(DeviceLightControlFailure.UNAVAILABLE)
-    DeviceLightDashboardRefreshResult.Malformed ->
+    DeviceLightRuntimeRefreshResult.Malformed ->
         DeviceLightControlResult.Failed(DeviceLightControlFailure.INVALID_DATA)
 }
 

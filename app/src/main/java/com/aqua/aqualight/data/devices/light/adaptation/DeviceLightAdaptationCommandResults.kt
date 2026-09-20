@@ -51,7 +51,7 @@ internal fun DeviceRuntimeCommandOutcome<DeviceLightAcclimationStatus>.toMutatio
     else -> mutationFailure(toAdaptationFailure())
 }
 
-private fun DeviceRuntimeCommandOutcome<*>.toAdaptationFailure(): DeviceLightAdaptationFailure =
+internal fun DeviceRuntimeCommandOutcome<*>.toAdaptationFailure(): DeviceLightAdaptationFailure =
     when (this) {
         is DeviceRuntimeCommandOutcome.NotConnected,
         is DeviceRuntimeCommandOutcome.NotAuthenticated ->

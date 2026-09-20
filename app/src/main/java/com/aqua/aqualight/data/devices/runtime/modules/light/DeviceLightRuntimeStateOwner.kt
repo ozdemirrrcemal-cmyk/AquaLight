@@ -347,10 +347,6 @@ internal class DeviceLightAutomaticRuntimeProjection(
         }
     }
 
-    fun hasPresentation(deviceUid: DeviceUid): Boolean = synchronized(lock) {
-        frames.containsKey(deviceUid)
-    }
-
     fun record(
         deviceUid: DeviceUid,
         generation: DeviceRuntimeConnectionGeneration,

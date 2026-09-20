@@ -93,11 +93,6 @@ class DeviceLightAutomaticProgramsFragment :
         )
     }
 
-    override fun onResume() {
-        super.onResume()
-        if (_binding != null) viewModel.refresh()
-    }
-
     override fun onDestroyView() {
         setFragmentGlobalLoading(false)
         _binding = null

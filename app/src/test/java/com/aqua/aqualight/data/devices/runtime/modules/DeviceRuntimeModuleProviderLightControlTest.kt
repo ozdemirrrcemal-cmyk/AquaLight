@@ -8,9 +8,9 @@ import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGener
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeEventPayload
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeTypedEvent
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightMode
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightProduct
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeContract
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeFixtures
-import com.aqua.aqualight.data.devices.runtime.modules.light.requestCustom
 import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerRuntimeAccess
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
 import org.json.JSONArray
@@ -31,8 +31,7 @@ class DeviceRuntimeModuleProviderLightControlTest {
             )
             provider.beginRuntimeGeneration(DEVICE_UID, GENERATION)
 
-            provider.refreshLightDashboard(DEVICE_UID)
-            provider.light.requestCustom(DEVICE_UID)
+            provider.refreshLightRuntime(DEVICE_UID)
             gateway.actions.clear()
 
             provider.acceptTypedRuntimeEvent(
@@ -68,13 +67,22 @@ class DeviceRuntimeModuleProviderLightControlTest {
             val data = when (command.action) {
                 DeviceLightRuntimeContract.Action.STATUS_GET -> autoStatus()
                 DeviceLightRuntimeContract.Action.GRAPH_GET ->
-                    DeviceLightRuntimeFixtures.graph(mode = DeviceLightMode.AUTO)
+                    DeviceLightRuntimeFixtures.graph(
+                        product = DeviceLightProduct.RGB_PRO_SLIM,
+                        mode = DeviceLightMode.AUTO
+                    )
                 DeviceLightRuntimeContract.Action.CUSTOM_GET -> JSONObject()
                     .put("revision", 1)
                     .put("installed", false)
                     .put("weekdaysMask", 0)
                     .put("pointCount", 0)
                     .put("points", JSONArray())
+                DeviceLightRuntimeContract.Action.AUTO_PROGRAMS_GET -> JSONObject()
+                    .put("revision", 1)
+                    .put("capacity", DeviceLightRuntimeContract.Limit.AUTO_PROGRAM_CAPACITY)
+                    .put("programCount", 0)
+                    .put("enabledCount", 0)
+                    .put("programs", JSONArray())
                 else -> error("Unexpected Light action: ${command.action}")
             }
             val response = AqlWsIncomingMessage.Response(
@@ -97,7 +105,9 @@ class DeviceRuntimeModuleProviderLightControlTest {
             )
         }
 
-        private fun autoStatus(): JSONObject = DeviceLightRuntimeFixtures.status()
+        private fun autoStatus(): JSONObject = DeviceLightRuntimeFixtures.status(
+            DeviceLightProduct.RGB_PRO_SLIM
+        )
             .put(DeviceLightRuntimeContract.Field.MODE, DeviceLightMode.AUTO.wireValue)
             .also { status ->
                 status.getJSONObject("auto").put("runtimeState", "DARK")
