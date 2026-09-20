@@ -88,7 +88,14 @@ class DefaultMaintenanceOperationsMapperTest {
             smartCareEnabled = true,
             careRemindersEnabled = false,
             plants = listOf(
-                AquariumPlantTag(31L, "Monte Carlo", "Carpet", 0.2f, 0.8f)
+                AquariumPlantTag(
+                    31L,
+                    "plant:micranthemum_tweediei_monte_carlo",
+                    "Monte Carlo",
+                    "Carpet",
+                    0.2f,
+                    0.8f
+                )
             ),
             materials = listOf(
                 AquariumMaterialSelection(
@@ -114,6 +121,10 @@ class DefaultMaintenanceOperationsMapperTest {
         assertEquals(source.smartCareEnabled, mapped.smartCareEnabled)
         assertEquals(source.careRemindersEnabled, mapped.careRemindersEnabled)
         assertEquals(31L, mapped.plants.single().id)
+        assertEquals(
+            "plant:micranthemum_tweediei_monte_carlo",
+            mapped.plants.single().catalogId
+        )
         assertEquals("Monte Carlo", mapped.plants.single().plantName)
         assertEquals(32L, mapped.materials.single().id)
         assertEquals("Active Soil", mapped.materials.single().name)

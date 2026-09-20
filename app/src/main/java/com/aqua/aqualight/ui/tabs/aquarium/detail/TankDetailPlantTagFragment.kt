@@ -116,6 +116,9 @@ class TankDetailPlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
             PlantPickerFragment.RESULT_BUNDLE_KEY
         ).observe(viewLifecycleOwner) { bundle ->
             savedStateHandle.remove<Bundle>(PlantPickerFragment.RESULT_BUNDLE_KEY)
+            val catalogId = bundle.getString(
+                PlantPickerFragment.RESULT_PLANT_CATALOG_ID
+            ) ?: return@observe
             val plantName = bundle.getString(
                 PlantPickerFragment.RESULT_PLANT_NAME
             ) ?: return@observe
@@ -125,6 +128,7 @@ class TankDetailPlantTagFragment : Fragment(R.layout.fragment_plant_tag) {
 
             selectedPlants.add(
                 AquariumPlantTag(
+                    catalogId = catalogId,
                     plantName = plantName,
                     category = category,
                     markerX = pendingMarkerX,

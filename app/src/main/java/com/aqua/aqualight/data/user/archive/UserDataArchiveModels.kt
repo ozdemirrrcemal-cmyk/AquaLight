@@ -48,6 +48,7 @@ internal data class ArchiveMediaReference(
 
 internal data class ArchivePlant(
     val id: Long,
+    val catalogId: String,
     val plantName: String,
     val category: String,
     val markerX: Float,

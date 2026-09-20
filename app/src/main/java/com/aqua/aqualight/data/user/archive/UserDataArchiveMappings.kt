@@ -33,6 +33,7 @@ internal fun SavedAquariumTank.toArchiveAquarium(
         plants = plants.map { plant ->
             ArchivePlant(
                 id = plant.id,
+                catalogId = plant.catalogId,
                 plantName = plant.plantName,
                 category = plant.category,
                 markerX = plant.markerX,
@@ -71,6 +72,7 @@ internal fun ArchiveAquarium.toTankDraft(photoUri: String?): TankDraft {
         plants = plants.map { plant ->
             TankPlantTag(
                 id = plant.id,
+                catalogId = plant.catalogId,
                 plantName = plant.plantName,
                 category = plant.category,
                 markerX = plant.markerX,

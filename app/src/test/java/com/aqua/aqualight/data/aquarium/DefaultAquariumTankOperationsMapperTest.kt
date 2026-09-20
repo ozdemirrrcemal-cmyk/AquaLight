@@ -39,6 +39,7 @@ class DefaultAquariumTankOperationsMapperTest {
             plants = listOf(
                 SavedAquariumPlant(
                     id = 11L,
+                    catalogId = "plant:anubias_barteri",
                     plantName = "Anubias",
                     category = "Rhizome",
                     markerX = 0.25f,
@@ -86,7 +87,14 @@ class DefaultAquariumTankOperationsMapperTest {
         assertEquals(true, mapped.smartCareEnabled)
         assertEquals(false, mapped.careRemindersEnabled)
         assertEquals(
-            AquariumPlantTag(11L, "Anubias", "Rhizome", 0.25f, 0.75f),
+            AquariumPlantTag(
+                11L,
+                "plant:anubias_barteri",
+                "Anubias",
+                "Rhizome",
+                0.25f,
+                0.75f
+            ),
             mapped.plants.single()
         )
         assertEquals(
@@ -113,7 +121,16 @@ class DefaultAquariumTankOperationsMapperTest {
             name = "Planted",
             description = "High tech",
             photoUri = "content://draft",
-            plants = listOf(AquariumPlantTag(21L, "Monte Carlo", "Carpet", 0.1f, 0.9f)),
+            plants = listOf(
+                AquariumPlantTag(
+                    21L,
+                    "plant:micranthemum_tweediei_monte_carlo",
+                    "Monte Carlo",
+                    "Carpet",
+                    0.1f,
+                    0.9f
+                )
+            ),
             materials = listOf(
                 AquariumMaterialSelection(
                     id = 22L,
@@ -151,6 +168,10 @@ class DefaultAquariumTankOperationsMapperTest {
         assertEquals(source.tankType, mapped.tankType)
         assertEquals(source.tankStyle, mapped.tankStyle)
         assertEquals(21L, mapped.plants.single().id)
+        assertEquals(
+            "plant:micranthemum_tweediei_monte_carlo",
+            mapped.plants.single().catalogId
+        )
         assertEquals("Monte Carlo", mapped.plants.single().plantName)
         assertEquals(22L, mapped.materials.single().id)
         assertEquals("Macro", mapped.materials.single().name)

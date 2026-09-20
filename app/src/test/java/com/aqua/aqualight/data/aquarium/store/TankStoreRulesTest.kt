@@ -61,6 +61,20 @@ class TankStoreRulesTest {
         assertThrows(StoreInvariantViolation::class.java) {
             TankStoreRules.validateTank(duplicatePlantIds)
         }
+
+        val missingPlantCatalogId = validTank(id = 46L, ownerUid = "owner-a")
+            .toBuilder()
+            .addPlants(
+                validPlant(id = 10L)
+                    .toBuilder()
+                    .clearCatalogId()
+                    .build()
+            )
+            .build()
+
+        assertThrows(StoreInvariantViolation::class.java) {
+            TankStoreRules.validateTank(missingPlantCatalogId)
+        }
     }
 
     @Test
@@ -92,6 +106,7 @@ class TankStoreRulesTest {
 
     private fun validPlant(id: Long): StoredPlantTag = StoredPlantTag.newBuilder()
         .setId(id)
+        .setCatalogId("plant:anubias_barteri")
         .setPlantName("Anubias")
         .setCategory("Rhizome")
         .setMarkerX(0.5f)

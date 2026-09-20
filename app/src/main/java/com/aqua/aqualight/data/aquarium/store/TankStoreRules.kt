@@ -96,6 +96,11 @@ object TankStoreRules {
                 violation("Duplicate plant id ${plant.id} in tank ${tank.id}.")
             }
             requireCanonicalRequiredText(
+                "plant.catalogId",
+                plant.catalogId,
+                MAX_PRODUCT_ID_CHARS
+            )
+            requireCanonicalRequiredText(
                 "plant.plantName",
                 plant.plantName,
                 MAX_ENTITY_NAME_CHARS

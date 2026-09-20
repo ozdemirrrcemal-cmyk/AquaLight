@@ -38,6 +38,7 @@ class PopulatedTankLocalizationContractTest {
             plants = listOf(
                 AquariumPlantTag(
                     id = 1L,
+                    catalogId = "plant:anubias_barteri",
                     plantName = "Anubias",
                     category = "Rhizome"
                 )

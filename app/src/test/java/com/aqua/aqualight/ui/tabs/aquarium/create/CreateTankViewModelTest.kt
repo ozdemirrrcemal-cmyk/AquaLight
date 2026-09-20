@@ -31,6 +31,7 @@ class CreateTankViewModelTest {
             listOf(
                 AquariumPlantTag(
                     id = 91L,
+                    catalogId = "plant:anubias_barteri",
                     plantName = "Anubias",
                     category = "Rhizome"
                 )
@@ -43,6 +44,10 @@ class CreateTankViewModelTest {
         assertEquals("Restored after process death", recreated.tankDraft.description)
         assertEquals("content://aqualight/tank-photo", recreated.tankDraft.photoUri)
         assertEquals(91L, recreated.tankDraft.plants.single().id)
+        assertEquals(
+            "plant:anubias_barteri",
+            recreated.tankDraft.plants.single().catalogId
+        )
 
         recreated.completeTank()
         val afterCommit = CreateTankViewModel(state)

@@ -78,6 +78,7 @@ data class AquariumTankSize(
 
 data class AquariumPlantTag(
     val id: Long = AquariumEntityIdGenerator.newLong(),
+    val catalogId: String,
     val plantName: String,
     val category: String,
     val markerX: Float = 0.5f,

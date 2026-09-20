@@ -43,6 +43,7 @@ message StoredPlantTag {
   string category = 3;
   float markerX = 4;
   float markerY = 5;
+  string catalogId = 6;
 }
 
 message StoredMaterial {

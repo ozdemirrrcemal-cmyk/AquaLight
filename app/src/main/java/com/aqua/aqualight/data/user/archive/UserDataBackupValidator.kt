@@ -69,6 +69,13 @@ internal class UserDataBackupValidator {
             "Backup aquarium creation time is invalid."
         }
         validateArchiveItemIds(aquarium.plants.map(ArchivePlant::id))
+        aquarium.plants.forEach { plant ->
+            require(
+                plant.catalogId.isNotBlank() && plant.catalogId == plant.catalogId.trim()
+            ) {
+                "Backup aquarium plant catalog id is invalid."
+            }
+        }
         validateArchiveItemIds(aquarium.materials.map(ArchiveMaterial::id))
         validateArchiveItemIds(aquarium.livestock.map(ArchiveLivestock::id))
         aquarium.livestock.forEach { livestock ->

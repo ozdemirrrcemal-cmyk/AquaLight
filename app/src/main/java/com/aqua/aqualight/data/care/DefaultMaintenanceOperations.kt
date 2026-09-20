@@ -188,6 +188,7 @@ internal fun AquariumTankSnapshot.toDataTank(
 
 private fun AquariumPlantTag.toDataPlant(): SavedAquariumPlant = SavedAquariumPlant(
     id = id,
+    catalogId = catalogId,
     plantName = plantName,
     category = category,
     markerX = markerX,

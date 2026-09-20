@@ -580,6 +580,7 @@ class AquariumTankDataStoreManager(
     private fun TankPlantTag.toStoredPlantTag(): StoredPlantTag {
         return StoredPlantTag.newBuilder()
             .setId(id)
+            .setCatalogId(catalogId.trim())
             .setPlantName(plantName.trim())
             .setCategory(category.trim())
             .setMarkerX(markerX)
@@ -632,6 +633,7 @@ class AquariumTankDataStoreManager(
             plants = plantsList.map { plant ->
                 SavedAquariumPlant(
                     id = plant.id,
+                    catalogId = plant.catalogId,
                     plantName = plant.plantName,
                     category = plant.category,
                     markerX = plant.markerX,

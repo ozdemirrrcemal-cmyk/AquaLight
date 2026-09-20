@@ -217,6 +217,7 @@ internal fun SavedAquariumTank.toApplicationSnapshot(): AquariumTankSnapshot =
         plants = plants.map { plant ->
             AquariumPlantTag(
                 id = plant.id,
+                catalogId = plant.catalogId,
                 plantName = plant.plantName,
                 category = plant.category,
                 markerX = plant.markerX,
@@ -265,6 +266,7 @@ internal fun AquariumTankDraft.toDataDraft(): TankDraft = TankDraft(
 
 private fun AquariumPlantTag.toDataTag(): TankPlantTag = TankPlantTag(
     id = id,
+    catalogId = catalogId,
     plantName = plantName,
     category = category,
     markerX = markerX,

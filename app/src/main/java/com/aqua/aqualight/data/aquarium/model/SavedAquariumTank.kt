@@ -26,6 +26,7 @@ data class SavedAquariumTank(
 
 data class SavedAquariumPlant(
     val id: Long,
+    val catalogId: String,
     val plantName: String,
     val category: String,
     val markerX: Float,

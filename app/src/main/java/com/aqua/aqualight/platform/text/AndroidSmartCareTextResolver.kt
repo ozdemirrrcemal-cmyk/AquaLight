@@ -121,6 +121,7 @@ internal class AndroidSmartCareTextResolver(
 
     private fun AquariumPlantTag.toSavedPlant(): SavedAquariumPlant = SavedAquariumPlant(
         id = id,
+        catalogId = catalogId,
         plantName = plantName,
         category = category,
         markerX = markerX,
