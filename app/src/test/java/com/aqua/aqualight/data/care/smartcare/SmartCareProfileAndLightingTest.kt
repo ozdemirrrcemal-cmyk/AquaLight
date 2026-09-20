@@ -104,7 +104,14 @@ class SmartCareProfileAndLightingTest {
       tankStyle = tankStyle,
       createdAtMillis = 1L,
       plants = listOf(
-        SavedAquariumPlant(2L, "Monte Carlo", "Carpet", 0.5f, 0.5f)
+        SavedAquariumPlant(
+          id = 2L,
+          catalogId = "plant:micranthemum_tweediei_monte_carlo",
+          plantName = "Monte Carlo",
+          category = "Carpet",
+          markerX = 0.5f,
+          markerY = 0.5f
+        )
       ),
       materials = listOf(
         material(3L, "light", "light-device"),

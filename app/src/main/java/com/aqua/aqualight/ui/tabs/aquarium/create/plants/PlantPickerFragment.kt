@@ -196,6 +196,13 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
             }
         }
 
+        card.addView(createPlantCardContent(plant))
+        return card
+    }
+
+    private fun createPlantCardContent(
+        plant: AquariumPlant
+    ): View {
         val content = LinearLayout(requireContext()).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_VERTICAL
@@ -241,10 +248,7 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
 
         content.addView(categoryText)
         content.addView(plantNameText)
-
-        card.addView(content)
-
-        return card
+        return content
     }
 
     private fun selectPlant(

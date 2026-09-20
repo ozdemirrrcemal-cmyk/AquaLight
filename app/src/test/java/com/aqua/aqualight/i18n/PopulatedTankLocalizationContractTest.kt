@@ -17,9 +17,70 @@ class PopulatedTankLocalizationContractTest {
 
     @Test
     fun populatedTankKeepsCalendarDaysAndLocalizedMeasurementsAcrossLanguagesAndZones() {
+        val tank = populatedTankFixture()
+        assertDateRoundTripsAcrossZones(tank)
+
+        val turkish = Locale.forLanguageTag("tr-TR")
+        val english = Locale.ENGLISH
+        assertEquals(
+            "19 Tem 2026",
+            LocaleFormatter.formatDateEpochDay(requireNotNull(tank.setupDateEpochDay), turkish)
+        )
+        assertEquals(
+            "Jul 19, 2026",
+            LocaleFormatter.formatDateEpochDay(requireNotNull(tank.setupDateEpochDay), english)
+        )
+        assertEquals(
+            "23,62",
+            AquariumDimensionInputPolicy.format(tank.widthCm.toDouble(), tank.sizeUnit, turkish)
+        )
+        assertEquals(
+            "23.62",
+            AquariumDimensionInputPolicy.format(tank.widthCm.toDouble(), tank.sizeUnit, english)
+        )
+
+        val liters = AquariumVolumeCalculator.grossLiters(
+            tank.widthCm,
+            tank.lengthCm,
+            tank.heightCm
+        )
+        val gallons = AquariumVolumeCalculator.litersToGallons(liters)
+        assertEquals(96.0, liters, 0.0)
+        assertEquals("25,36", LocaleFormatter.formatDecimal(gallons, turkish))
+        assertEquals("25.36", LocaleFormatter.formatDecimal(gallons, english))
+        assertNotEquals(
+            LocaleFormatter.formatDecimal(gallons, turkish),
+            LocaleFormatter.formatDecimal(gallons, english)
+        )
+    }
+
+    private fun assertDateRoundTripsAcrossZones(tank: AquariumTankSnapshot) {
+        val zones = listOf(
+            ZoneId.of("Europe/Istanbul"),
+            ZoneId.of("America/Los_Angeles"),
+            ZoneId.of("Asia/Tokyo")
+        )
+
+        zones.forEach { zoneId ->
+            listOf(
+                requireNotNull(tank.setupDateEpochDay),
+                requireNotNull(tank.livestock.single().addedDateEpochDay)
+            ).forEach { epochDay ->
+                assertEquals(
+                    epochDay,
+                    DateOnly.fromPickerMillis(
+                        DateOnly.toPickerMillis(epochDay, zoneId),
+                        zoneId
+                    )
+                )
+            }
+        }
+    }
+
+    private fun populatedTankFixture(): AquariumTankSnapshot {
         val setupDate = LocalDate.of(2026, 7, 19)
         val livestockDate = LocalDate.of(2026, 7, 20)
-        val tank = AquariumTankSnapshot(
+        return AquariumTankSnapshot(
             id = 42L,
             name = "Reef 42",
             description = "Populated commercial fixture",
@@ -62,59 +123,6 @@ class PopulatedTankLocalizationContractTest {
                     note = "Pair"
                 )
             )
-        )
-        val zones = listOf(
-            ZoneId.of("Europe/Istanbul"),
-            ZoneId.of("America/Los_Angeles"),
-            ZoneId.of("Asia/Tokyo")
-        )
-
-        zones.forEach { zoneId ->
-            listOf(
-                requireNotNull(tank.setupDateEpochDay),
-                requireNotNull(tank.livestock.single().addedDateEpochDay)
-            ).forEach { epochDay ->
-                assertEquals(
-                    epochDay,
-                    DateOnly.fromPickerMillis(
-                        DateOnly.toPickerMillis(epochDay, zoneId),
-                        zoneId
-                    )
-                )
-            }
-        }
-
-        val turkish = Locale.forLanguageTag("tr-TR")
-        val english = Locale.ENGLISH
-        assertEquals(
-            "19 Tem 2026",
-            LocaleFormatter.formatDateEpochDay(requireNotNull(tank.setupDateEpochDay), turkish)
-        )
-        assertEquals(
-            "Jul 19, 2026",
-            LocaleFormatter.formatDateEpochDay(requireNotNull(tank.setupDateEpochDay), english)
-        )
-        assertEquals(
-            "23,62",
-            AquariumDimensionInputPolicy.format(tank.widthCm.toDouble(), tank.sizeUnit, turkish)
-        )
-        assertEquals(
-            "23.62",
-            AquariumDimensionInputPolicy.format(tank.widthCm.toDouble(), tank.sizeUnit, english)
-        )
-
-        val liters = AquariumVolumeCalculator.grossLiters(
-            tank.widthCm,
-            tank.lengthCm,
-            tank.heightCm
-        )
-        val gallons = AquariumVolumeCalculator.litersToGallons(liters)
-        assertEquals(96.0, liters, 0.0)
-        assertEquals("25,36", LocaleFormatter.formatDecimal(gallons, turkish))
-        assertEquals("25.36", LocaleFormatter.formatDecimal(gallons, english))
-        assertNotEquals(
-            LocaleFormatter.formatDecimal(gallons, turkish),
-            LocaleFormatter.formatDecimal(gallons, english)
         )
     }
 }

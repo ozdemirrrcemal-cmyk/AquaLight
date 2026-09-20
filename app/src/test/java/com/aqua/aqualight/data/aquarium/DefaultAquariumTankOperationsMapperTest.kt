@@ -19,7 +19,56 @@ class DefaultAquariumTankOperationsMapperTest {
 
     @Test
     fun `saved tank maps every UI-facing field without owner leakage`() {
-        val source = SavedAquariumTank(
+        val source = savedTankFixture()
+
+        val mapped = source.toApplicationSnapshot()
+
+        assertEquals(7L, mapped.id)
+        assertEquals("Reef", mapped.name)
+        assertEquals("Mixed reef", mapped.description)
+        assertEquals("content://tank/7", mapped.photoUri)
+        assertEquals(100L, mapped.setupDateEpochDay)
+        assertEquals(80, mapped.widthCm)
+        assertEquals(40, mapped.lengthCm)
+        assertEquals(45, mapped.heightCm)
+        assertEquals("cm", mapped.sizeUnit)
+        assertEquals("L", mapped.volumeUnit)
+        assertEquals("Saltwater", mapped.tankType)
+        assertEquals("Mixed", mapped.tankStyle)
+        assertEquals(200L, mapped.createdAtMillis)
+        assertEquals(true, mapped.smartCareEnabled)
+        assertEquals(false, mapped.careRemindersEnabled)
+        assertEquals(
+            AquariumPlantTag(
+                11L,
+                "plant:anubias_barteri",
+                "Anubias",
+                "Rhizome",
+                0.25f,
+                0.75f
+            ),
+            mapped.plants.single()
+        )
+        assertEquals(
+            AquariumMaterialSelection(
+                id = 12L,
+                productId = "soil-1",
+                categoryKey = "substrate",
+                categoryTitle = "Substrate",
+                name = "Active Soil",
+                brand = "Aqua",
+                note = "Dark"
+            ),
+            mapped.materials.single()
+        )
+        assertEquals(
+            AquariumLivestock(13L, "Clownfish", "Fish", 2, 300L, "Pair"),
+            mapped.livestock.single()
+        )
+    }
+
+    private fun savedTankFixture(): SavedAquariumTank {
+        return SavedAquariumTank(
             id = 7L,
             ownerUid = "owner-secret",
             name = "Reef",
@@ -67,51 +116,6 @@ class DefaultAquariumTankOperationsMapperTest {
                     note = "Pair"
                 )
             )
-        )
-
-        val mapped = source.toApplicationSnapshot()
-
-        assertEquals(7L, mapped.id)
-        assertEquals("Reef", mapped.name)
-        assertEquals("Mixed reef", mapped.description)
-        assertEquals("content://tank/7", mapped.photoUri)
-        assertEquals(100L, mapped.setupDateEpochDay)
-        assertEquals(80, mapped.widthCm)
-        assertEquals(40, mapped.lengthCm)
-        assertEquals(45, mapped.heightCm)
-        assertEquals("cm", mapped.sizeUnit)
-        assertEquals("L", mapped.volumeUnit)
-        assertEquals("Saltwater", mapped.tankType)
-        assertEquals("Mixed", mapped.tankStyle)
-        assertEquals(200L, mapped.createdAtMillis)
-        assertEquals(true, mapped.smartCareEnabled)
-        assertEquals(false, mapped.careRemindersEnabled)
-        assertEquals(
-            AquariumPlantTag(
-                11L,
-                "plant:anubias_barteri",
-                "Anubias",
-                "Rhizome",
-                0.25f,
-                0.75f
-            ),
-            mapped.plants.single()
-        )
-        assertEquals(
-            AquariumMaterialSelection(
-                id = 12L,
-                productId = "soil-1",
-                categoryKey = "substrate",
-                categoryTitle = "Substrate",
-                name = "Active Soil",
-                brand = "Aqua",
-                note = "Dark"
-            ),
-            mapped.materials.single()
-        )
-        assertEquals(
-            AquariumLivestock(13L, "Clownfish", "Fish", 2, 300L, "Pair"),
-            mapped.livestock.single()
         )
     }
 
