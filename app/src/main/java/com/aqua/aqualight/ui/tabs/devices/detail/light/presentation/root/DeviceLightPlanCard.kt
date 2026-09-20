@@ -265,7 +265,8 @@ private fun DeviceLightEmptyPlanNotice(
 ) {
     val messageRes = when (reason) {
         DeviceLightPlanReason.RTC_NOT_READY -> R.string.device_light_plan_rtc_not_ready
-        DeviceLightPlanReason.NO_ENABLED_AUTO_PROGRAM_TODAY ->
+        DeviceLightPlanReason.NO_ENABLED_AUTO_PROGRAM_TODAY,
+        DeviceLightPlanReason.MANAGED_PLAN_NOT_SCHEDULED_TODAY ->
             R.string.device_light_plan_no_automatic_program_today
         DeviceLightPlanReason.CUSTOM_NOT_INSTALLED ->
             R.string.device_light_plan_custom_not_installed
