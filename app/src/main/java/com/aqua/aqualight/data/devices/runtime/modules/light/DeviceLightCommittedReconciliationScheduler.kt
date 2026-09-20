@@ -25,12 +25,7 @@ internal class DeviceLightCommittedReconciliationScheduler(
         }
         val previous = synchronized(lock) {
             val current = scheduled[deviceUid]
-            if (
-                current != null &&
-                current.expectedMode == expectedMode &&
-                current.generation == generation &&
-                !current.job.isCompleted
-            ) {
+            if (current?.isPendingFor(expectedMode, generation) == true) {
                 job.cancel()
                 return
             }
@@ -49,6 +44,14 @@ internal class DeviceLightCommittedReconciliationScheduler(
     fun cancel(deviceUid: DeviceUid) {
         synchronized(lock) { scheduled.remove(deviceUid) }?.job?.cancel()
     }
+
+    private fun ScheduledReconciliation.isPendingFor(
+        expectedMode: DeviceLightMode,
+        generation: DeviceRuntimeConnectionGeneration
+    ): Boolean =
+        this.expectedMode == expectedMode &&
+            this.generation == generation &&
+            !job.isCompleted
 
     private data class ScheduledReconciliation(
         val expectedMode: DeviceLightMode,
