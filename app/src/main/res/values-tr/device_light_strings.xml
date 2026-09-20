@@ -50,7 +50,6 @@
     <string name="device_light_plan_custom_not_installed">Özel eğri yüklü değil.</string>
     <string name="device_light_plan_custom_not_scheduled_today">Özel eğri bugün için planlanmamış.</string>
     <string name="device_light_plan_unavailable">Işık planı kullanılamıyor.</string>
-    <string name="device_light_plan_current_time_format">Şimdi %1$s</string>
     <string name="device_light_plan_time_format">%1$02d:%2$02d</string>
     <string name="device_light_plan_hour_format">%1$02d</string>
     <string name="device_light_plan_percent_axis_format">%%%1$d</string>

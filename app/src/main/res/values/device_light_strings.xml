@@ -50,7 +50,6 @@
     <string name="device_light_plan_custom_not_installed">No custom curve is installed.</string>
     <string name="device_light_plan_custom_not_scheduled_today">The custom curve is not scheduled today.</string>
     <string name="device_light_plan_unavailable">Light plan is unavailable.</string>
-    <string name="device_light_plan_current_time_format">Now %1$s</string>
     <string name="device_light_plan_time_format">%1$02d:%2$02d</string>
     <string name="device_light_plan_hour_format">%1$02d</string>
     <string name="device_light_plan_percent_axis_format">%1$d%%</string>
