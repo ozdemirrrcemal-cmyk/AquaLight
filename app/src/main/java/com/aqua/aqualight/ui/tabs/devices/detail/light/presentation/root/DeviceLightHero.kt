@@ -30,7 +30,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.aquaL
 @Composable
 internal fun DeviceLightHero(
     state: DeviceLightHeroSnapshot,
-    channels: List<DeviceLightChannelOutputSnapshot>,
+    channels: List<DeviceLightChannelOutputSnapshot> = emptyList(),
     modifier: Modifier = Modifier
 ) {
     val lighting = resolveDeviceLightAquariumLighting(
