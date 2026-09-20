@@ -345,7 +345,7 @@ private fun DeviceLightCurrentTimeLabel(
         val plotFraction = nowTimeMs.toFloat() / MILLIS_IN_DAY
         val labelWidth = AquaLightDashboardGeometry.planMarkerLabelWidth
         BasicText(
-            text = stringResource(R.string.device_light_plan_current_time_format, currentTime),
+            text = currentTime,
             style = typography.micro.copy(
                 color = colors.secondaryText,
                 textAlign = TextAlign.Center
