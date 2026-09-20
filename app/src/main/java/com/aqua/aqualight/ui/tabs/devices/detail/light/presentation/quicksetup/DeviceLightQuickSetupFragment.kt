@@ -27,19 +27,6 @@ class DeviceLightQuickSetupFragment : Fragment(R.layout.fragment_device_light_qu
                 onBackClick = { findNavController().navigateUp() }
             )
         )
-        view.post {
-            val navController = findNavController()
-            if (navController.currentDestination?.id == R.id.deviceLightQuickSetupFragment) {
-                navController.navigate(
-                    DeviceLightQuickSetupFragmentDirections
-                        .actionDeviceLightQuickSetupFragmentToDeviceLightAutomaticProgramEditorFragment(
-                            deviceUid = args.deviceUid,
-                            programId = "",
-                            duplicate = false
-                        )
-                )
-            }
-        }
     }
 
     override fun onDestroyView() {

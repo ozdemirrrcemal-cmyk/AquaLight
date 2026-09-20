@@ -109,10 +109,8 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
         if (navController.currentDestination?.id != R.id.deviceLightRootFragment) return
         navController.navigate(
             DeviceLightRootFragmentDirections
-                .actionDeviceLightRootFragmentToDeviceLightAutomaticProgramEditorFragment(
-                    deviceUid = args.deviceUid,
-                    programId = "",
-                    duplicate = false
+                .actionDeviceLightRootFragmentToDeviceLightQuickSetupFragment(
+                    deviceUid = args.deviceUid
                 )
         )
     }
