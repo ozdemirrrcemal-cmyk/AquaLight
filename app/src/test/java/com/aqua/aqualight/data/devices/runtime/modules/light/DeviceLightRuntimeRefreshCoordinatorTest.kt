@@ -130,6 +130,7 @@ class DeviceLightRuntimeRefreshCoordinatorTest {
             DeviceLightRuntimeContract.Action.STATUS_GET -> DeviceLightRuntimeFixtures.status()
             DeviceLightRuntimeContract.Action.CUSTOM_GET -> customDocument()
             DeviceLightRuntimeContract.Action.AUTO_PROGRAMS_GET -> automaticPrograms()
+            DeviceLightRuntimeContract.Action.AUTO_PLAN_GET -> managedAutoPlan()
             DeviceLightRuntimeContract.Action.GRAPH_GET -> DeviceLightRuntimeFixtures.graph()
             else -> error("Unexpected Light refresh action: $action")
         }
@@ -140,11 +141,12 @@ class DeviceLightRuntimeRefreshCoordinatorTest {
         val generationOne = DeviceRuntimeConnectionGeneration(1L)
         val generationTwo = DeviceRuntimeConnectionGeneration(2L)
         const val HTTP_OK = 200
-        const val LIGHT_SURFACE_PART_COUNT = 4
+        const val LIGHT_SURFACE_PART_COUNT = 5
         val expectedRefreshActions = listOf(
             DeviceLightRuntimeContract.Action.STATUS_GET,
             DeviceLightRuntimeContract.Action.CUSTOM_GET,
             DeviceLightRuntimeContract.Action.AUTO_PROGRAMS_GET,
+            DeviceLightRuntimeContract.Action.AUTO_PLAN_GET,
             DeviceLightRuntimeContract.Action.GRAPH_GET
         )
 
@@ -162,11 +164,36 @@ class DeviceLightRuntimeRefreshCoordinatorTest {
             .put("enabledCount", 0)
             .put("programs", JSONArray())
 
+        fun managedAutoPlan(): JSONObject = JSONObject()
+            .put("storageGeneration", 12)
+            .put("revision", 0)
+            .put("installed", false)
+            .put("planId", JSONObject.NULL)
+            .put(
+                "initialStartPercent",
+                DeviceLightRuntimeContract.Limit.MANAGED_PLAN_INITIAL_START_PERCENT_DEFAULT
+            )
+            .put("phaseCount", 0)
+            .put("phases", JSONArray())
+            .put(
+                "runtime",
+                JSONObject()
+                    .put("clockReady", true)
+                    .put("state", "NOT_INSTALLED")
+                    .put("activePhaseIndex", JSONObject.NULL)
+                    .put("transitionPermille", JSONObject.NULL)
+                    .put("nextTransitionEpochDay", JSONObject.NULL)
+            )
+
         fun DeviceLightRuntimeRepository.currentAuthoritativeSurface(): List<Any>? {
             val surface = listOfNotNull(
                 currentStatus(deviceUid),
                 currentLibrary(deviceUid, DeviceLightLibraryReadAuthority.AUTHORITATIVE),
                 currentAutomatic(deviceUid, DeviceLightAutomaticReadAuthority.AUTHORITATIVE),
+                currentManagedAutoPlan(
+                    deviceUid,
+                    DeviceLightManagedPlanReadAuthority.AUTHORITATIVE
+                ),
                 currentDashboard(deviceUid, DeviceLightDashboardReadAuthority.AUTHORITATIVE)
             )
             return surface.takeIf { entries -> entries.size == LIGHT_SURFACE_PART_COUNT }
