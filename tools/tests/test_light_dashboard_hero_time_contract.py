@@ -23,12 +23,9 @@ class LightDashboardHeroTimeContractTest(unittest.TestCase):
         strings = TR_STRINGS.read_text(encoding="utf-8")
 
         self.assertIn("currentTime = checkNotNull(state.currentTime)", plan)
-        self.assertIn("device_light_plan_current_time_format, currentTime", plan)
+        self.assertIn("text = currentTime", plan)
         self.assertIn("text = formatTime(state.previewTimeMs)", custom)
-        self.assertIn(
-            '<string name="device_light_plan_current_time_format">Şimdi %1$s</string>',
-            strings,
-        )
+        self.assertNotIn("device_light_plan_current_time_format, currentTime", plan)
         self.assertNotIn("device_light_chart_time_marker_label", plan)
         self.assertNotIn("device_light_chart_time_marker_label", custom)
         self.assertNotIn("device_light_chart_time_marker_label", strings)
