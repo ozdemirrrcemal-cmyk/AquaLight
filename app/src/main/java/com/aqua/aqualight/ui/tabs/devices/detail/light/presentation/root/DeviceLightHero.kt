@@ -1,6 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root
 
 import androidx.annotation.DrawableRes
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -17,13 +18,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -36,6 +41,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightChannelOutputSnapshot
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightHeroSnapshot
 import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardGeometry
@@ -50,6 +56,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.aquaL
 @Composable
 internal fun DeviceLightHero(
     state: DeviceLightHeroSnapshot,
+    channels: List<DeviceLightChannelOutputSnapshot>,
     modifier: Modifier = Modifier
 ) {
     val presentation = state.toHeroPresentation()
@@ -66,13 +73,16 @@ internal fun DeviceLightHero(
         contentPadding = AquaDeviceCardGeometry.edgeToEdgeContentPadding
     ) {
         BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-            Image(
-                painter = painterResource(R.drawable.device_light_hero_card),
-                contentDescription = null,
-                contentScale = ContentScale.FillBounds,
+            DeviceLightAquariumScene(
+                channels = channels,
+                outputActive = state.outputActive,
                 modifier = Modifier.matchParentSize()
             )
             val parentSize = DpSize(maxWidth, maxHeight)
+            HeroTelemetryPanel(
+                colors = colors,
+                parentSize = parentSize
+            )
             HeroPrimaryCopy(
                 content = content,
                 typography = typography,
@@ -158,6 +168,69 @@ private fun HeroPrimaryCopy(
 }
 
 @Composable
+private fun HeroTelemetryPanel(
+    colors: AquaLightHeroColors,
+    parentSize: DpSize
+) {
+    val shape = RoundedCornerShape(HERO_TELEMETRY_CORNER_RADIUS)
+    Box(
+        modifier = Modifier
+            .placeInHero(AquaLightHeroGeometry.telemetryPanelBounds, parentSize)
+            .clip(shape)
+            .background(HERO_TELEMETRY_SURFACE)
+            .border(
+                width = AquaLightHeroGeometry.heroOutlineWidth,
+                color = Color.White.copy(alpha = HERO_TELEMETRY_OUTLINE_ALPHA),
+                shape = shape
+            )
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val iconColor = colors.secondaryText.copy(alpha = HERO_TELEMETRY_ICON_ALPHA)
+            val dividerY = size.height * 0.51f
+            drawLine(
+                color = Color.White.copy(alpha = HERO_TELEMETRY_DIVIDER_ALPHA),
+                start = Offset(size.width * 0.12f, dividerY),
+                end = Offset(size.width * 0.88f, dividerY),
+                strokeWidth = maxOf(1f, size.width * 0.010f)
+            )
+
+            val boltX = size.width * 0.19f
+            val boltY = size.height * 0.26f
+            val boltUnit = size.width * 0.13f
+            val bolt = Path().apply {
+                moveTo(boltX + boltUnit * 0.18f, boltY - boltUnit)
+                lineTo(boltX - boltUnit * 0.46f, boltY + boltUnit * 0.08f)
+                lineTo(boltX - boltUnit * 0.04f, boltY + boltUnit * 0.08f)
+                lineTo(boltX - boltUnit * 0.20f, boltY + boltUnit)
+                lineTo(boltX + boltUnit * 0.54f, boltY - boltUnit * 0.18f)
+                lineTo(boltX + boltUnit * 0.10f, boltY - boltUnit * 0.18f)
+                close()
+            }
+            drawPath(path = bolt, color = iconColor)
+
+            val thermometerX = size.width * 0.19f
+            val thermometerY = size.height * 0.74f
+            val thermometerUnit = size.width * 0.10f
+            drawLine(
+                color = iconColor,
+                start = Offset(thermometerX, thermometerY - thermometerUnit * 1.15f),
+                end = Offset(thermometerX, thermometerY + thermometerUnit * 0.35f),
+                strokeWidth = thermometerUnit * 0.34f,
+                cap = StrokeCap.Round
+            )
+            drawCircle(
+                color = iconColor,
+                radius = thermometerUnit * 0.46f,
+                center = Offset(
+                    thermometerX,
+                    thermometerY + thermometerUnit * 0.58f
+                )
+            )
+        }
+    }
+}
+
+@Composable
 private fun HeroMetrics(
     content: ResolvedDeviceLightHeroContent,
     typography: AquaLightHeroTypography,
@@ -235,6 +308,7 @@ private fun HeroHealthPill(
                 painter = painterResource(toneStyle.iconRes),
                 contentDescription = null,
                 colorFilter = ColorFilter.tint(colors.iconContent),
+                contentScale = ContentScale.Fit,
                 modifier = Modifier.size(AquaLightHeroGeometry.statusIconGlyphSize)
             )
         }
@@ -301,3 +375,8 @@ private fun Modifier.placeInHero(
 
 private val HERO_SUBTITLE_VERTICAL_OFFSET = 1.dp
 private val HERO_STATUS_VERTICAL_OFFSET = 2.dp
+private val HERO_TELEMETRY_CORNER_RADIUS = 10.dp
+private val HERO_TELEMETRY_SURFACE = Color(0xC20A1B28)
+private const val HERO_TELEMETRY_OUTLINE_ALPHA = 0.10f
+private const val HERO_TELEMETRY_DIVIDER_ALPHA = 0.10f
+private const val HERO_TELEMETRY_ICON_ALPHA = 0.88f
