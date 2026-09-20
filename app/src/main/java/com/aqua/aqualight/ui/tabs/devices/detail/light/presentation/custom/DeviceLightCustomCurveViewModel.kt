@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomChannel
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomFailure
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomMutationResult
@@ -19,6 +20,8 @@ import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryMu
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryOperations
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryResult
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryScene
+import com.aqua.aqualight.ui.common.devicepresence.observeConnectionVisualState
+import com.aqua.aqualight.ui.common.devicepresence.toDeviceConnectionVisualState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.toCommercialLightError
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
@@ -37,7 +40,8 @@ import kotlinx.coroutines.launch
 
 internal class DeviceLightCustomCurveViewModel(
     private val customOperations: DeviceLightCustomOperations,
-    private val libraryOperations: DeviceLightLibraryOperations
+    private val libraryOperations: DeviceLightLibraryOperations,
+    private val rootOperations: DeviceRootOperations
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DeviceLightCustomCurveUiState())
@@ -61,6 +65,7 @@ internal class DeviceLightCustomCurveViewModel(
     private var restoreDirty = false
     private var restoreUnapplied = false
     private var observeJob: Job? = null
+    private var connectionJob: Job? = null
     private var previewJob: Job? = null
     private var deviceClockAnchorTimeMs: Long? = null
     private var deviceClockAnchorNanos: Long = 0L
@@ -176,6 +181,7 @@ internal class DeviceLightCustomCurveViewModel(
         require(deviceUid.isNotBlank()) { "Custom light destination deviceUid must not be blank." }
         if (boundDeviceUid == deviceUid) return
         observeJob?.cancel()
+        connectionJob?.cancel()
         previewJob?.cancel()
         previewJob = null
         deviceClockAnchorTimeMs = null
@@ -189,23 +195,25 @@ internal class DeviceLightCustomCurveViewModel(
         restoreUnapplied = restoredDraft != null && restoredUnapplied
         _uiState.value = DeviceLightCustomCurveUiState(
             deviceUid = deviceUid,
+            connectionVisualState = rootOperations.current(deviceUid).toDeviceConnectionVisualState(),
             initialLoading = true
         )
+        connectionJob = viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            rootOperations.observeConnectionVisualState(deviceUid).collect { connection ->
+                _uiState.update { state -> state.copy(connectionVisualState = connection) }
+            }
+        }
         observeJob = viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
             customOperations.observe(deviceUid).collect { result ->
                 when (result) {
                     is DeviceLightCustomReadResult.Available -> applySnapshot(result.snapshot)
                     is DeviceLightCustomReadResult.Failed -> if (!_uiState.value.initialLoading) {
-                        _uiState.applyReadFailure(result.failure)
+                        _uiState.applyReadFailure()
                     }
                 }
             }
         }
         refreshFromDevice()
-    }
-
-    val refreshIfClean: () -> Unit = {
-        if (!_uiState.value.hasUnsavedChanges) refreshFromDevice()
     }
 
     fun refreshFromDevice() {
@@ -220,7 +228,7 @@ internal class DeviceLightCustomCurveViewModel(
             when (val result = customOperations.read(deviceUid)) {
                 is DeviceLightCustomReadResult.Available -> applySnapshot(result.snapshot)
                 is DeviceLightCustomReadResult.Failed -> {
-                    _uiState.applyReadFailure(result.failure)
+                    _uiState.applyReadFailure()
                     emitEffect(
                         DeviceLightCustomCurveEffect.ShowError(
                             result.failure.toCommercialLightError().messageRes
@@ -547,12 +555,9 @@ internal class DeviceLightCustomCurveViewModel(
 
 }
 
-private fun MutableStateFlow<DeviceLightCustomCurveUiState>.applyReadFailure(
-    failure: DeviceLightCustomFailure
-) {
+private fun MutableStateFlow<DeviceLightCustomCurveUiState>.applyReadFailure() {
     update { state ->
         state.copy(
-            connectionVisualState = failure.connectionState(),
             initialLoading = false,
             contentEnabled = state.channels.isNotEmpty(),
             firmwareWriteAuthoritative = false,

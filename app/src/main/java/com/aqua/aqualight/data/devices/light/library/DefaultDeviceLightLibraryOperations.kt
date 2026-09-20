@@ -12,6 +12,8 @@ import com.aqua.aqualight.application.devices.light.library.DeviceLightLibrarySn
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRepository
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightStatusReadAuthority
+import com.aqua.aqualight.data.devices.runtime.modules.light.currentStatus
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -55,8 +57,10 @@ internal class DefaultDeviceLightLibraryOperations(
         store.observeEntries(),
         runtime.stateRevision
     ) { storedEntries, _ ->
-        val status = runtime.currentStatus(uid)
-            ?: return@combine DeviceLightLibraryResult.Failed(
+        val status = runtime.currentStatus(
+            uid,
+            DeviceLightStatusReadAuthority.PRESENTATION
+        ) ?: return@combine DeviceLightLibraryResult.Failed(
                 DeviceLightLibraryFailure.NOT_CONNECTED
             )
         val product = status.product

@@ -26,6 +26,7 @@
     <color name="aqua_card_device_media_surface">@color/aqua_palette_hex_081c2b</color>
     <color name="aqua_card_device_outline">@color/aqua_palette_hex_2c3e52</color>
     <color name="aqua_card_device_media_outline">@color/aqua_palette_hex_30485f</color>
+    <color name="aqua_card_device_light_accent">@color/aqua_palette_hex_1474ff</color>
     <color name="aqua_card_device_cooling_accent">@color/aqua_palette_hex_1474ff</color>
     <color name="aqua_card_device_dosing_progress">@color/aqua_palette_hex_55d6c2</color>
     <color name="aqua_light_preset_shrimp_swatch">@color/aqua_palette_hex_a855f7</color>

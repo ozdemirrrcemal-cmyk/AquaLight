@@ -15,7 +15,7 @@ import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualOper
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualReadResult
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualScene
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualSnapshot
-import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
+import com.aqua.aqualight.ui.common.devicepresence.toDeviceConnectionVisualState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.toCommercialLightError
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
@@ -271,11 +271,7 @@ private fun DeviceLightManualControlUiState.toApplicationScene() = DeviceLightMa
 private fun DeviceLightManualControlUiState.withRootSnapshot(
     snapshot: DeviceRootSnapshot?
 ): DeviceLightManualControlUiState = copy(
-    connectionVisualState = if (snapshot?.availability == OwnerDeviceAvailability.REACHABLE) {
-        DeviceConnectionVisualState.ONLINE
-    } else {
-        DeviceConnectionVisualState.OFFLINE
-    },
+    connectionVisualState = snapshot.toDeviceConnectionVisualState(),
     centralFirmwareWritesEnabled = snapshot.isLightManualWriteAvailable()
 )
 

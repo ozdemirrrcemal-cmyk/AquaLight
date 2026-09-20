@@ -4,12 +4,13 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
-import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticFailure
+import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticMutationResult
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticOperations
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticReadResult
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticSnapshot
-import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
+import com.aqua.aqualight.ui.common.devicepresence.observeConnectionVisualState
+import com.aqua.aqualight.ui.common.devicepresence.toDeviceConnectionVisualState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.toCommercialLightError
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.CoroutineStart
@@ -24,7 +25,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 internal class DeviceLightAutomaticProgramsViewModel(
-    private val operations: DeviceLightAutomaticOperations
+    private val operations: DeviceLightAutomaticOperations,
+    private val rootOperations: DeviceRootOperations
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DeviceLightAutomaticProgramsUiState())
@@ -38,23 +40,31 @@ internal class DeviceLightAutomaticProgramsViewModel(
 
     private var boundDeviceUid = ""
     private var observeJob: Job? = null
+    private var connectionJob: Job? = null
 
     fun bind(deviceUidText: String) {
         val deviceUid = deviceUidText.trim()
         require(deviceUid.isNotBlank()) { "Automatic Light destination deviceUid must not be blank." }
         if (boundDeviceUid == deviceUid) return
         observeJob?.cancel()
+        connectionJob?.cancel()
         boundDeviceUid = deviceUid
         _uiState.value = DeviceLightAutomaticProgramsUiState(
             deviceUid = deviceUid,
+            connectionVisualState = rootOperations.current(deviceUid).toDeviceConnectionVisualState(),
             initialLoading = true
         )
+        connectionJob = viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            rootOperations.observeConnectionVisualState(deviceUid).collect { connection ->
+                _uiState.update { state -> state.copy(connectionVisualState = connection) }
+            }
+        }
         observeJob = viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
             operations.observe(deviceUid).collect { result ->
                 when (result) {
                     is DeviceLightAutomaticReadResult.Available -> applySnapshot(result.snapshot)
                     is DeviceLightAutomaticReadResult.Failed -> if (!_uiState.value.initialLoading) {
-                        applyFailure(result.failure)
+                        applyFailure()
                     }
                 }
             }
@@ -133,7 +143,7 @@ internal class DeviceLightAutomaticProgramsViewModel(
                 operationFinished = true
             )
             is DeviceLightAutomaticReadResult.Failed -> {
-                applyFailure(result.failure)
+                applyFailure()
             }
         }
     }
@@ -150,7 +160,7 @@ internal class DeviceLightAutomaticProgramsViewModel(
                     operationFinished = true
                 )
                 is DeviceLightAutomaticReadResult.Failed -> {
-                    applyFailure(result.failure)
+                    applyFailure()
                     if (showFailureMessage) {
                         emit(
                             DeviceLightAutomaticProgramsEffect.ShowMessage(
@@ -177,20 +187,15 @@ internal class DeviceLightAutomaticProgramsViewModel(
             programs = snapshot.programs,
             contentEnabled = true,
             firmwareWriteAuthoritative = snapshot.firmwareWriteAuthoritative,
-            connectionVisualState = if (snapshot.firmwareWriteAuthoritative) {
-                DeviceConnectionVisualState.ONLINE
-            } else {
-                DeviceConnectionVisualState.OFFLINE
-            },
+            connectionVisualState = _uiState.value.connectionVisualState,
             initialLoading = false,
             operationInProgress = operationInProgress
         )
     }
 
-    private fun applyFailure(failure: DeviceLightAutomaticFailure) {
+    private fun applyFailure() {
         _uiState.update { state ->
             state.copy(
-                connectionVisualState = failure.connectionState(),
                 contentEnabled = state.programs.isNotEmpty() || state.capacity > 0,
                 firmwareWriteAuthoritative = false,
                 initialLoading = false,
@@ -209,16 +214,4 @@ internal sealed interface DeviceLightAutomaticProgramsEffect {
         @StringRes val messageRes: Int,
         val success: Boolean
     ) : DeviceLightAutomaticProgramsEffect
-}
-
-private fun DeviceLightAutomaticFailure.connectionState(): DeviceConnectionVisualState = when (this) {
-    DeviceLightAutomaticFailure.NOT_CONNECTED -> DeviceConnectionVisualState.OFFLINE
-    DeviceLightAutomaticFailure.UNAVAILABLE -> DeviceConnectionVisualState.WARNING
-    DeviceLightAutomaticFailure.UNSUPPORTED,
-    DeviceLightAutomaticFailure.STALE_REVISION,
-    DeviceLightAutomaticFailure.CAPACITY_REACHED,
-    DeviceLightAutomaticFailure.OVERLAP,
-    DeviceLightAutomaticFailure.NOT_FOUND,
-    DeviceLightAutomaticFailure.REJECTED,
-    DeviceLightAutomaticFailure.INVALID_DATA -> DeviceConnectionVisualState.WARNING
 }

@@ -39,5 +39,4 @@ internal fun DeviceLightRuntimeRepository.requiresLibraryCustomRefresh(
 internal fun DeviceLightRuntimeRepository.requiresAutomaticProgramsRefresh(
     deviceUid: DeviceUid
 ): Boolean = currentStatus(deviceUid) != null &&
-    stateOwner.automaticProjection.hasPresentation(deviceUid) &&
     currentAutomatic(deviceUid, DeviceLightAutomaticReadAuthority.AUTHORITATIVE) == null

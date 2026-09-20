@@ -111,11 +111,6 @@ class DeviceLightSystemFragment : Fragment(R.layout.fragment_device_light_system
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        if (binding != null) viewModel.refresh()
-    }
-
     override fun onDestroyView() {
         setFragmentGlobalLoading(false)
         binding = null

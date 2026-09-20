@@ -41,6 +41,7 @@ import com.aqua.aqualight.data.devices.cooling.DefaultDeviceCoolingTemperatureHi
 import com.aqua.aqualight.data.devices.cooling.control.DefaultDeviceCoolingControlOperations
 import com.aqua.aqualight.data.devices.light.adaptation.DefaultDeviceLightAdaptationOperations
 import com.aqua.aqualight.data.devices.light.automatic.DefaultDeviceLightAutomaticOperations
+import com.aqua.aqualight.data.devices.light.dashboard.DefaultDeviceLightCardOperations
 import com.aqua.aqualight.data.devices.light.dashboard.DefaultDeviceLightControlOperations
 import com.aqua.aqualight.data.devices.light.custom.DefaultDeviceLightCustomOperations
 import com.aqua.aqualight.data.devices.light.library.DefaultDeviceLightLibraryOperations
@@ -158,6 +159,10 @@ private class ReleaseSmokeViewModelFactory(
         adaptationOperations = DefaultDeviceLightAdaptationOperations(devicesRepository),
         controlOperations = lightControlOperations,
         automaticOperations = DefaultDeviceLightAutomaticOperations(devicesRepository),
+        cardOperations = DefaultDeviceLightCardOperations(
+            devicesRepository = devicesRepository,
+            controlOperations = lightControlOperations
+        ),
         customOperations = DefaultDeviceLightCustomOperations(devicesRepository),
         manualOperations = DefaultDeviceLightManualOperations(devicesRepository),
         systemOperations = DefaultDeviceLightSystemOperations(devicesRepository),
@@ -293,11 +298,11 @@ private class ReleaseSmokeViewModelFactory(
                     ReleaseSmokeControlSurfacePreparationOperations
             )
         modelClass.isAssignableFrom(DeviceLightAdaptationViewModel::class.java) ->
-            DeviceLightAdaptationViewModel(lightOperations.adaptationOperations)
+            DeviceLightAdaptationViewModel(lightOperations.adaptationOperations, rootOperations)
         modelClass.isAssignableFrom(DeviceLightAutomaticProgramsViewModel::class.java) ->
-            DeviceLightAutomaticProgramsViewModel(lightOperations.automaticOperations)
+            DeviceLightAutomaticProgramsViewModel(lightOperations.automaticOperations, rootOperations)
         modelClass.isAssignableFrom(DeviceLightAutomaticProgramEditorViewModel::class.java) ->
-            DeviceLightAutomaticProgramEditorViewModel(lightOperations.automaticOperations)
+            DeviceLightAutomaticProgramEditorViewModel(lightOperations.automaticOperations, rootOperations)
         modelClass.isAssignableFrom(DeviceLightManualControlViewModel::class.java) ->
             DeviceLightManualControlViewModel(
                 manualOperations = lightOperations.manualOperations,
@@ -307,7 +312,8 @@ private class ReleaseSmokeViewModelFactory(
         modelClass.isAssignableFrom(DeviceLightCustomCurveViewModel::class.java) ->
             DeviceLightCustomCurveViewModel(
                 customOperations = lightOperations.customOperations,
-                libraryOperations = lightOperations.libraryOperations
+                libraryOperations = lightOperations.libraryOperations,
+                rootOperations = rootOperations
             )
         modelClass.isAssignableFrom(DeviceLightLibraryViewModel::class.java) ->
             DeviceLightLibraryViewModel(
@@ -315,7 +321,7 @@ private class ReleaseSmokeViewModelFactory(
                 rootOperations = rootOperations
             )
         modelClass.isAssignableFrom(DeviceLightSystemViewModel::class.java) ->
-            DeviceLightSystemViewModel(lightOperations.systemOperations)
+            DeviceLightSystemViewModel(lightOperations.systemOperations, rootOperations)
         else -> null
     }
 
@@ -363,7 +369,8 @@ private class ReleaseSmokeViewModelFactory(
                     devicesRepository = devicesRepository
                 ),
                 menuOpenUseCase = deviceMenuOpenUseCase,
-                routeResolver = DeviceRouteResolver()
+                routeResolver = DeviceRouteResolver(),
+                lightCardOperations = lightOperations.cardOperations
             )
         modelClass.isAssignableFrom(TankDeviceSelectViewModel::class.java) ->
             TankDeviceSelectViewModel(

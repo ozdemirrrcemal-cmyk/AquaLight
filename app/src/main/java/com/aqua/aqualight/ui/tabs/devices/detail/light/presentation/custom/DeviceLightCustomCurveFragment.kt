@@ -26,7 +26,6 @@ import com.aqua.aqualight.ui.common.bottomsheet.GlobalActionBottomSheet
 import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
 import com.aqua.aqualight.ui.common.dialog.ConfirmDialogFragment
 import com.aqua.aqualight.ui.common.dialog.UnsavedChangesExitGuard
-import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
@@ -145,6 +144,7 @@ class DeviceLightCustomCurveFragment : Fragment(R.layout.fragment_device_light_c
                 DeviceLightCustomCurveScreen(
                     state = state,
                     actions = actions,
+                    onDeleteDeviceProgramClick = viewModel.requestDeviceProgramActions,
                     onClockTick = viewModel.tickDeviceClock
                 )
             }
@@ -168,21 +168,7 @@ class DeviceLightCustomCurveFragment : Fragment(R.layout.fragment_device_light_c
             config = AquaHeaderConfig(
                 titleOverride = getString(R.string.device_light_custom_curve_title),
                 onBackClick = unsavedGuard::requestExit,
-                statusIcon = state.connectionVisualState?.toWifiHeaderStatusIcon(requireContext()),
-                actions = if (state.canClearDeviceProgram) {
-                    listOf(
-                        AquaHeaderAction(
-                            iconRes = R.drawable.ic_more_vert_24,
-                            contentDescription = getString(
-                                R.string.device_light_custom_more_actions_description
-                            ),
-                            enabled = !state.operationInProgress,
-                            onClick = viewModel.requestDeviceProgramActions
-                        )
-                    )
-                } else {
-                    emptyList()
-                }
+                statusIcon = state.connectionVisualState?.toWifiHeaderStatusIcon(requireContext())
             )
         )
         setFragmentGlobalLoading(state.showGlobalLoading)

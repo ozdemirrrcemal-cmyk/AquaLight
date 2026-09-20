@@ -114,7 +114,7 @@ class DeviceLightRootPreparationTest {
             viewModel.surfaceUnavailableEvents.first()
         )
         assertFalse(viewModel.uiState.value.contentEnabled)
-        assertEquals(DeviceConnectionVisualState.OFFLINE, viewModel.uiState.value.connectionVisualState)
+        assertEquals(DeviceConnectionVisualState.ONLINE, viewModel.uiState.value.connectionVisualState)
     }
 
     @Test

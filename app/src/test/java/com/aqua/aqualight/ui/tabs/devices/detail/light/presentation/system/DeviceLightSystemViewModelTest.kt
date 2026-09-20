@@ -9,6 +9,7 @@ import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemRead
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemSettings
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemSnapshot
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemTemperaturePolicy
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.FakeLightDeviceRootOperations
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -41,7 +42,7 @@ class DeviceLightSystemViewModelTest {
     @Test
     fun `projects live thermal state and preserves a local draft`() {
         val operations = FakeSystemOperations(snapshot())
-        val viewModel = DeviceLightSystemViewModel(operations)
+        val viewModel = DeviceLightSystemViewModel(operations, FakeLightDeviceRootOperations())
 
         viewModel.bind(DEVICE_UID)
         viewModel.updateMode(DeviceLightFanMode.ON)
@@ -56,7 +57,7 @@ class DeviceLightSystemViewModelTest {
 
     @Test
     fun `keeps automatic temperature points in strict order`() {
-        val viewModel = DeviceLightSystemViewModel(FakeSystemOperations(snapshot()))
+        val viewModel = DeviceLightSystemViewModel(FakeSystemOperations(snapshot()), FakeLightDeviceRootOperations())
         viewModel.bind(DEVICE_UID)
 
         viewModel.updateStartTemperature(80)
@@ -69,7 +70,7 @@ class DeviceLightSystemViewModelTest {
     @Test
     fun `saves fan and protection settings as one screen operation`() = runTest {
         val operations = FakeSystemOperations(snapshot())
-        val viewModel = DeviceLightSystemViewModel(operations)
+        val viewModel = DeviceLightSystemViewModel(operations, FakeLightDeviceRootOperations())
         viewModel.bind(DEVICE_UID)
 
         viewModel.updateMode(DeviceLightFanMode.OFF)

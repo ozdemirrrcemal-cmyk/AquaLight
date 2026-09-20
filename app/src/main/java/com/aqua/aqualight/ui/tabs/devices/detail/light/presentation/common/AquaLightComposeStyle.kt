@@ -124,9 +124,9 @@ object AquaLightDashboardGeometry {
     val modeSelectorSegmentHeight = 34.dp
     val modeSelectorOuterPadding = 3.dp
     val modeSelectorSegmentGap = 0.dp
-    val modeSelectorOutlineWidth = 1.dp
-    val modeSelectorShape = RoundedCornerShape(16.dp)
-    val modeSelectorSegmentShape = RoundedCornerShape(13.dp)
+    val modeSelectorSegmentShape = RoundedCornerShape(
+        AquaDeviceCardGeometry.cornerRadius - modeSelectorOuterPadding
+    )
 
 
     val controlsHeaderHeight = 30.dp
@@ -228,6 +228,49 @@ object AquaLightManualGeometry {
     val informationIconSize = 18.dp
     val informationContentGap = 7.dp
     val informationHorizontalPadding = 8.dp
+}
+
+object AquaLightTankCardGeometry {
+    val contentPadding = AquaDeviceCardGeometry.contentHorizontalPadding
+    val verticalPadding = 8.dp
+    val cardMinimumHeight = 0.dp
+    val mediaSize = 58.dp
+    val mediaCornerRadius = RoundedCornerShape(14.dp)
+    val mediaImageSize = 48.dp
+    val headerGap = 8.dp
+    val titleIconSize = 20.dp
+    val titleIconGap = 6.dp
+    val headerRowGap = 4.dp
+    val statusChipGap = 6.dp
+    val statusScheduleGap = 6.dp
+    val statusDotSize = 7.dp
+    val statusContentGap = 6.dp
+    val modeGlyphSize = 19.dp
+    val modeGlyphBorderWidth = 1.dp
+    val modeGlyphGap = 6.dp
+    val scheduleTopGap = 6.dp
+    val scheduleGap = 5.dp
+    val scheduleIconSize = 19.dp
+    val scheduleIconGap = 4.dp
+    val scheduleDividerWidth = 1.dp
+    val scheduleDividerHeight = 32.dp
+    val dividerTopGap = 5.dp
+    val dividerBottomGap = 5.dp
+    val sectionTitleBottomGap = 4.dp
+    val channelRowHeight = 15.dp
+    val channelRowGap = 3.dp
+    val channelTrackHeight = 7.dp
+    val channelLabelWidth = 48.dp
+    val channelLabelGap = 6.dp
+    val channelValueGap = 8.dp
+    val channelValueWidth = 28.dp
+}
+
+object AquaLightTankCardAlpha {
+    const val offlineDetails = 0.38f
+    const val offlineMedia = 0.62f
+    const val statusSurface = 0.16f
+    const val modeSurface = 0.14f
 }
 
 object AquaLightManualAlpha {
@@ -437,7 +480,7 @@ fun aquaLightHeroTypography(colors: AquaLightHeroColors): AquaLightHeroTypograph
 
 @Composable
 fun aquaLightDashboardColors(): AquaDeviceCardColors = aquaDeviceCardColors().copy(
-    accent = colorResource(R.color.aqua_card_device_cooling_accent)
+    accent = colorResource(R.color.aqua_card_device_light_accent)
 )
 
 fun aquaLightDashboardTypography(

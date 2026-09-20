@@ -21,13 +21,13 @@ import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAutoProg
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAutomaticReadAuthority
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightAutomaticRuntimeState
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightErrorReason
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRefreshResult
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightScene
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightStatus
 import com.aqua.aqualight.data.devices.runtime.modules.light.createAutoProgram
 import com.aqua.aqualight.data.devices.runtime.modules.light.currentAutomatic
 import com.aqua.aqualight.data.devices.runtime.modules.light.deleteAutoProgram
-import com.aqua.aqualight.data.devices.runtime.modules.light.requestAutoPrograms
 import com.aqua.aqualight.data.devices.runtime.modules.light.setAutoProgramEnabled
 import com.aqua.aqualight.data.devices.runtime.modules.light.updateAutoProgram
 import com.aqua.aqualight.data.devices.runtime.modules.light.lightV1Data
@@ -75,26 +75,29 @@ internal class DefaultDeviceLightAutomaticOperations(
 
     override suspend fun read(deviceUid: String): DeviceLightAutomaticReadResult {
         val uid = deviceUid.toUidOrNull()
-        val runtime = devicesRepository.runtimeModules()?.light
+        val modules = devicesRepository.runtimeModules()
+        val runtime = modules?.light
         return when {
             uid == null -> DeviceLightAutomaticReadResult.Failed(
                 DeviceLightAutomaticFailure.INVALID_DATA
             )
-            runtime == null -> DeviceLightAutomaticReadResult.Failed(
+            modules == null || runtime == null -> DeviceLightAutomaticReadResult.Failed(
                 DeviceLightAutomaticFailure.UNAVAILABLE
             )
-            runtime.currentStatus(uid) == null -> DeviceLightAutomaticReadResult.Failed(
-                DeviceLightAutomaticFailure.NOT_CONNECTED
-            )
             else -> try {
-                when (val result = runtime.requestAutoPrograms(uid)) {
-                    is DeviceRuntimeCommandOutcome.Success -> projectCurrent(
+                when (val refresh = modules.refreshLightRuntime(uid)) {
+                    is DeviceLightRuntimeRefreshResult.Success -> projectCurrent(
                         devicesRepository,
                         uid,
                         runtime,
                         DeviceLightAutomaticReadAuthority.AUTHORITATIVE
                     )
-                    else -> DeviceLightAutomaticReadResult.Failed(result.toFailure())
+                    is DeviceLightRuntimeRefreshResult.Failed ->
+                        DeviceLightAutomaticReadResult.Failed(refresh.outcome.toFailure())
+                    DeviceLightRuntimeRefreshResult.RejectedStale ->
+                        DeviceLightAutomaticReadResult.Failed(DeviceLightAutomaticFailure.UNAVAILABLE)
+                    DeviceLightRuntimeRefreshResult.Malformed ->
+                        DeviceLightAutomaticReadResult.Failed(DeviceLightAutomaticFailure.INVALID_DATA)
                 }
             } catch (error: CancellationException) {
                 throw error
@@ -231,7 +234,22 @@ internal class DefaultDeviceLightAutomaticOperations(
         ) -> DeviceRuntimeCommandOutcome<*>
     ): DeviceLightAutomaticMutationResult = try {
         when (val result = execute(uid, runtime)) {
-            is DeviceRuntimeCommandOutcome.Success -> DeviceLightAutomaticMutationResult.Success
+            is DeviceRuntimeCommandOutcome.Success -> when (
+                val refresh = devicesRepository.runtimeModules()?.refreshLightRuntime(uid)
+            ) {
+                is DeviceLightRuntimeRefreshResult.Success ->
+                    DeviceLightAutomaticMutationResult.Success
+                is DeviceLightRuntimeRefreshResult.Failed ->
+                    DeviceLightAutomaticMutationResult.Failed(refresh.outcome.toFailure())
+                DeviceLightRuntimeRefreshResult.RejectedStale ->
+                    DeviceLightAutomaticMutationResult.Failed(
+                        DeviceLightAutomaticFailure.UNAVAILABLE
+                    )
+                DeviceLightRuntimeRefreshResult.Malformed,
+                null -> DeviceLightAutomaticMutationResult.Failed(
+                    DeviceLightAutomaticFailure.INVALID_DATA
+                )
+            }
             else -> DeviceLightAutomaticMutationResult.Failed(result.toFailure())
         }
     } catch (error: CancellationException) {

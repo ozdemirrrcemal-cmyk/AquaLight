@@ -13,6 +13,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigati
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticOperations
 import com.aqua.aqualight.application.devices.light.adaptation.DeviceLightAdaptationOperations
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightCardOperations
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlOperations
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomOperations
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryOperations
@@ -41,6 +42,7 @@ import com.aqua.aqualight.data.devices.dosing.SharedPreferencesDeviceDosingLowLe
 import com.aqua.aqualight.data.devices.dosing.v1.DeviceDosingV1ProductionRuntime
 import com.aqua.aqualight.data.devices.light.automatic.DefaultDeviceLightAutomaticOperations
 import com.aqua.aqualight.data.devices.light.adaptation.DefaultDeviceLightAdaptationOperations
+import com.aqua.aqualight.data.devices.light.dashboard.DefaultDeviceLightCardOperations
 import com.aqua.aqualight.data.devices.light.dashboard.DefaultDeviceLightControlOperations
 import com.aqua.aqualight.data.devices.light.custom.DefaultDeviceLightCustomOperations
 import com.aqua.aqualight.data.devices.light.library.DefaultDeviceLightLibraryOperations
@@ -100,6 +102,7 @@ internal data class OwnerDosingOperations(
 internal data class OwnerLightOperations(
     val adaptationOperations: DeviceLightAdaptationOperations,
     val automaticOperations: DeviceLightAutomaticOperations,
+    val cardOperations: DeviceLightCardOperations,
     val controlOperations: DeviceLightControlOperations,
     val customOperations: DeviceLightCustomOperations,
     val manualOperations: DeviceLightManualOperations,
@@ -381,6 +384,10 @@ private fun createOwnerLightOperations(
     return OwnerLightOperations(
         adaptationOperations = DefaultDeviceLightAdaptationOperations(devicesRepository),
         automaticOperations = DefaultDeviceLightAutomaticOperations(devicesRepository),
+        cardOperations = DefaultDeviceLightCardOperations(
+            devicesRepository = devicesRepository,
+            controlOperations = controlOperations
+        ),
         controlOperations = controlOperations,
         customOperations = DefaultDeviceLightCustomOperations(devicesRepository),
         manualOperations = DefaultDeviceLightManualOperations(devicesRepository),

@@ -1,7 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom
 
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomSnapshot
-import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 
 internal data class DeviceLightCustomSnapshotDraftContext(
     val current: DeviceLightCustomCurveUiState,
@@ -88,11 +87,7 @@ internal fun DeviceLightCustomSnapshot.toEditorUiState(
     presentation: DeviceLightCustomSnapshotPresentation
 ): DeviceLightCustomCurveUiState = DeviceLightCustomCurveUiState(
     deviceUid = deviceUid,
-    connectionVisualState = if (firmwareWriteAuthoritative) {
-        DeviceConnectionVisualState.ONLINE
-    } else {
-        DeviceConnectionVisualState.OFFLINE
-    },
+    connectionVisualState = presentation.current.connectionVisualState,
     channels = presentation.channels,
     draft = presentation.draftResolution.draft,
     selectedTimeMs = presentation.focus.selectedTimeMs,

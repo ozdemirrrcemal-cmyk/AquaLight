@@ -4,6 +4,7 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticFailure
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticMutationResult
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticOperations
@@ -12,7 +13,8 @@ import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomat
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticSnapshot
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightPresetCatalog
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightPresetId
-import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
+import com.aqua.aqualight.ui.common.devicepresence.observeConnectionVisualState
+import com.aqua.aqualight.ui.common.devicepresence.toDeviceConnectionVisualState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.toCommercialLightError
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
@@ -27,7 +29,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 internal class DeviceLightAutomaticProgramEditorViewModel(
-    private val operations: DeviceLightAutomaticOperations
+    private val operations: DeviceLightAutomaticOperations,
+    private val rootOperations: DeviceRootOperations
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DeviceLightAutomaticProgramEditorUiState())
@@ -42,6 +45,7 @@ internal class DeviceLightAutomaticProgramEditorViewModel(
 
     private var boundDeviceUid = ""
     private var observeJob: Job? = null
+    private var connectionJob: Job? = null
 
     val draftEditor = DeviceLightAutomaticDraftEditor(
         currentState = { currentState },
@@ -66,11 +70,18 @@ internal class DeviceLightAutomaticProgramEditorViewModel(
         require(deviceUid.isNotBlank()) { "Automatic editor destination deviceUid is required." }
         if (boundDeviceUid == deviceUid) return
         observeJob?.cancel()
+        connectionJob?.cancel()
         boundDeviceUid = deviceUid
         _uiState.value = DeviceLightAutomaticProgramEditorUiState(
             mode = mode,
+            connectionVisualState = rootOperations.current(deviceUid).toDeviceConnectionVisualState(),
             initialLoading = true
         )
+        connectionJob = viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            rootOperations.observeConnectionVisualState(deviceUid).collect { connection ->
+                _uiState.update { state -> state.copy(connectionVisualState = connection) }
+            }
+        }
         observeJob = viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
             operations.observe(deviceUid).collect { result ->
                 when (result) {
@@ -180,11 +191,7 @@ internal class DeviceLightAutomaticProgramEditorViewModel(
             ),
             draft = restoredForMode ?: modeDraft,
             selectedPresetId = restoredPresetId?.takeIf { restoredForMode != null },
-            connectionVisualState = if (snapshot.firmwareWriteAuthoritative) {
-                DeviceConnectionVisualState.ONLINE
-            } else {
-                DeviceConnectionVisualState.OFFLINE
-            },
+            connectionVisualState = currentState.connectionVisualState,
             firmwareWriteAuthoritative = snapshot.firmwareWriteAuthoritative
         )
     }
@@ -203,11 +210,6 @@ internal class DeviceLightAutomaticProgramEditorViewModel(
                 source.channels == snapshot.channels ->
                 _uiState.update { state ->
                     state.copy(
-                        connectionVisualState = if (snapshot.firmwareWriteAuthoritative) {
-                            DeviceConnectionVisualState.ONLINE
-                        } else {
-                            DeviceConnectionVisualState.OFFLINE
-                        },
                         firmwareWriteAuthoritative = snapshot.firmwareWriteAuthoritative,
                         initialLoading = false
                     )
@@ -215,7 +217,6 @@ internal class DeviceLightAutomaticProgramEditorViewModel(
             !currentState.hasUnsavedChanges -> applySnapshot(snapshot, null, null)
             else -> _uiState.update { state ->
                 state.copy(
-                    connectionVisualState = DeviceConnectionVisualState.WARNING,
                     firmwareWriteAuthoritative = false,
                     initialLoading = false
                 )
@@ -251,7 +252,6 @@ internal class DeviceLightAutomaticProgramEditorViewModel(
     private fun applyReadFailure(failure: DeviceLightAutomaticFailure) {
         _uiState.update { state ->
             state.copy(
-                connectionVisualState = failure.connectionState(),
                 initialLoading = false,
                 operationInProgress = false,
                 firmwareWriteAuthoritative = false,
@@ -289,18 +289,6 @@ internal sealed interface DeviceLightAutomaticProgramEditorEffect {
         DeviceLightAutomaticProgramEditorEffect
 
     data class Saved(@StringRes val messageRes: Int) : DeviceLightAutomaticProgramEditorEffect
-}
-
-private fun DeviceLightAutomaticFailure.connectionState(): DeviceConnectionVisualState = when (this) {
-    DeviceLightAutomaticFailure.NOT_CONNECTED -> DeviceConnectionVisualState.OFFLINE
-    DeviceLightAutomaticFailure.UNAVAILABLE -> DeviceConnectionVisualState.WARNING
-    DeviceLightAutomaticFailure.UNSUPPORTED,
-    DeviceLightAutomaticFailure.STALE_REVISION,
-    DeviceLightAutomaticFailure.CAPACITY_REACHED,
-    DeviceLightAutomaticFailure.OVERLAP,
-    DeviceLightAutomaticFailure.NOT_FOUND,
-    DeviceLightAutomaticFailure.REJECTED,
-    DeviceLightAutomaticFailure.INVALID_DATA -> DeviceConnectionVisualState.WARNING
 }
 
 private const val EFFECT_BUFFER_CAPACITY = 2

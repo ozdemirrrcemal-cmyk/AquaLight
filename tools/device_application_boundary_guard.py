@@ -28,6 +28,9 @@ PREPARATION_ADAPTER = (
 LIGHT_CONTROL_ADAPTER = (
     SOURCE / "data/devices/light/dashboard/DefaultDeviceLightControlOperations.kt"
 )
+LIGHT_RUNTIME_REFRESH_COORDINATOR = (
+    SOURCE / "data/devices/runtime/modules/light/DeviceLightRuntimeRefreshCoordinator.kt"
+)
 LIGHT_DASHBOARD_REFRESH_COORDINATOR = (
     SOURCE / "data/devices/runtime/modules/light/DeviceLightDashboardRefreshCoordinator.kt"
 )
@@ -80,6 +83,7 @@ mapping = read(MAPPING)
 menu_adapter = read(MENU_ADAPTER)
 preparation_adapter = read(PREPARATION_ADAPTER)
 light_control_adapter = read(LIGHT_CONTROL_ADAPTER)
+light_runtime_refresh_coordinator = read(LIGHT_RUNTIME_REFRESH_COORDINATOR)
 light_dashboard_refresh_coordinator = read(LIGHT_DASHBOARD_REFRESH_COORDINATOR)
 light_system_adapter = read(LIGHT_SYSTEM_ADAPTER)
 family_settings_adapter = read(FAMILY_SETTINGS_ADAPTER)
@@ -291,12 +295,16 @@ for token, reason in (
         "Light must reuse the owner-scoped central runtime",
     ),
     (
-        "modules.refreshLightDashboard(deviceUid)",
-        "Light preparation must delegate status/graph authority to the shared refresh coordinator",
+        "modules.refreshLightRuntime(deviceUid)",
+        "Light preparation must delegate full authority to the shared runtime refresh coordinator",
     ),
     (
-        "modules.scheduleLightControlReconciliation(deviceUid, firmwareMode)",
+        "modules.scheduleLightControlReconciliation(",
         "Light committed mode writes must schedule owner-scoped reconciliation",
+    ),
+    (
+        "generation = outcome.generation",
+        "Light committed reconciliation must stay pinned to the ACK connection generation",
     ),
     (
         "DeviceLightModeMutationResult.Committed(requestedMode)",
@@ -308,12 +316,47 @@ for token, reason in (
 
 for token, reason in (
     (
-        "class DeviceLightDashboardRefreshCoordinator",
-        "Light dashboard refreshes need one owner-scoped coordinator",
+        "class DeviceLightRuntimeRefreshCoordinator",
+        "Light runtime refreshes need one owner-scoped coordinator",
     ),
     (
         "inFlight.putIfAbsent(deviceUid, pending)",
-        "Concurrent Light refresh callers must share one firmware readback flight",
+        "Concurrent Light refresh callers must share one device-scoped firmware flight",
+    ),
+    (
+        "dashboardRefresh.refresh(deviceUid)",
+        "The central Light refresh must include coherent dashboard hydration",
+    ),
+    (
+        "generation: DeviceRuntimeConnectionGeneration",
+        "Committed Light reconciliation must remain connection-generation aware",
+    ),
+    (
+        "runtime.requestCustom(deviceUid)",
+        "The central Light refresh must restore Custom authority",
+    ),
+    (
+        "runtime.requestAutoPrograms(deviceUid)",
+        "The central Light refresh must restore Automatic authority",
+    ),
+    (
+        "thermal.requestStatus(deviceUid)",
+        "The central Light refresh must restore thermal authority",
+    ),
+    (
+        "protection.requestStatus(deviceUid)",
+        "The central Light refresh must restore protection authority",
+    ),
+):
+    if token not in light_runtime_refresh_coordinator:
+        errors.append(
+            f"{LIGHT_RUNTIME_REFRESH_COORDINATOR.relative_to(ROOT)}: {reason}: {token}"
+        )
+
+for token, reason in (
+    (
+        "class DeviceLightDashboardRefreshCoordinator",
+        "Light dashboard refreshes need one owner-scoped coordinator",
     ),
     (
         "val status = runtime.requestStatus(deviceUid)",

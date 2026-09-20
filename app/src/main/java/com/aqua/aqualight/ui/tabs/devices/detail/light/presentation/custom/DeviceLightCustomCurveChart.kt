@@ -1,6 +1,8 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,17 +11,19 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -37,7 +41,8 @@ import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 internal fun CurveCard(
     state: DeviceLightCustomCurveUiState,
     actions: DeviceLightCustomCurveActions,
-    visuals: DeviceLightCustomVisuals
+    visuals: DeviceLightCustomVisuals,
+    onDeleteDeviceProgramClick: () -> Unit
 ) {
     AquaDeviceCardSurface(
         modifier = Modifier.fillMaxWidth(),
@@ -49,7 +54,7 @@ internal fun CurveCard(
         )
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(CURVE_CONTENT_SPACING_DP.dp)) {
-            CurveHeader(visuals)
+            CurveHeader(state, actions, visuals, onDeleteDeviceProgramClick)
             EditableCurveChart(state, actions, visuals)
         }
     }
@@ -57,48 +62,90 @@ internal fun CurveCard(
 
 @Composable
 private fun CurveHeader(
-    visuals: DeviceLightCustomVisuals
+    state: DeviceLightCustomCurveUiState,
+    actions: DeviceLightCustomCurveActions,
+    visuals: DeviceLightCustomVisuals,
+    onDeleteDeviceProgramClick: () -> Unit
 ) {
-    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-        CurveHeadingGlyph(visuals.colors.action)
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.Top
+    ) {
+        CurveHeadingGlyph(visuals)
         Column(
-            modifier = Modifier.weight(1f).padding(start = HEADER_ICON_GAP_DP.dp)
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = HEADER_ICON_GAP_DP.dp)
         ) {
-            BasicText(
-                text = stringResource(R.string.device_light_custom_curve_heading),
-                style = visuals.typography.title.copy(color = visuals.colors.card.primaryText)
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                BasicText(
+                    text = stringResource(R.string.device_light_custom_curve_heading),
+                    style = visuals.typography.title.copy(
+                        color = visuals.colors.card.primaryText
+                    ),
+                    maxLines = 1,
+                    modifier = Modifier.weight(1f)
+                )
+                Spacer(Modifier.width(HEADER_ACTIONS_GAP_DP.dp))
+                CurveHeaderActions(
+                    state = state,
+                    actions = actions,
+                    onDeleteDeviceProgramClick = onDeleteDeviceProgramClick,
+                    visuals = visuals
+                )
+            }
             BasicText(
                 text = stringResource(R.string.device_light_custom_curve_helper),
-                style = visuals.typography.caption.copy(color = visuals.colors.card.secondaryText)
+                style = visuals.typography.caption.copy(
+                    color = visuals.colors.card.secondaryText
+                ),
+                maxLines = 1
             )
         }
     }
 }
 
 @Composable
-private fun CurveHeadingGlyph(color: Color) {
-    Canvas(Modifier.size(HEADER_ICON_SIZE_DP.dp)) {
-        val stroke = HEADER_ICON_STROKE_DP.dp.toPx()
-        drawLine(
-            color = color,
-            start = Offset(stroke, stroke),
-            end = Offset(stroke, size.height - stroke),
-            strokeWidth = stroke
-        )
-        drawLine(
-            color = color,
-            start = Offset(stroke, size.height - stroke),
-            end = Offset(size.width - stroke, size.height - stroke),
-            strokeWidth = stroke
-        )
-        val path = Path().apply {
-            moveTo(size.width * GLYPH_START_X, size.height * GLYPH_START_Y)
-            lineTo(size.width * GLYPH_SECOND_X, size.height * GLYPH_SECOND_Y)
-            lineTo(size.width * GLYPH_THIRD_X, size.height * GLYPH_THIRD_Y)
-            lineTo(size.width * GLYPH_END_X, size.height * GLYPH_END_Y)
+private fun CurveHeadingGlyph(visuals: DeviceLightCustomVisuals) {
+    val shape = RoundedCornerShape(HEADER_ICON_CORNER_DP.dp)
+    Box(
+        modifier = Modifier
+            .size(HEADER_ICON_CONTAINER_SIZE_DP.dp)
+            .clip(shape)
+            .background(visuals.colors.card.mediaSurface)
+            .border(
+                HEADER_ICON_BORDER_DP.dp,
+                visuals.colors.card.mediaOutline,
+                shape
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Canvas(Modifier.size(HEADER_ICON_GLYPH_SIZE_DP.dp)) {
+            val stroke = HEADER_ICON_STROKE_DP.dp.toPx()
+            val color = visuals.colors.action
+            drawLine(
+                color = color,
+                start = Offset(stroke, stroke),
+                end = Offset(stroke, size.height - stroke),
+                strokeWidth = stroke
+            )
+            drawLine(
+                color = color,
+                start = Offset(stroke, size.height - stroke),
+                end = Offset(size.width - stroke, size.height - stroke),
+                strokeWidth = stroke
+            )
+            val path = Path().apply {
+                moveTo(size.width * GLYPH_START_X, size.height * GLYPH_START_Y)
+                lineTo(size.width * GLYPH_SECOND_X, size.height * GLYPH_SECOND_Y)
+                lineTo(size.width * GLYPH_THIRD_X, size.height * GLYPH_THIRD_Y)
+                lineTo(size.width * GLYPH_END_X, size.height * GLYPH_END_Y)
+            }
+            drawPath(path, color, style = Stroke(width = stroke))
         }
-        drawPath(path, color, style = Stroke(width = stroke))
     }
 }
 
@@ -271,9 +318,12 @@ private val CHART_PERCENT_LABELS = listOf<Int?>(
 private val CHART_HOUR_LABELS = List(CHART_TIME_DIVISIONS + 1) { index ->
     index * HOURS_PER_GRID_DIVISION
 }
-private const val CURVE_CONTENT_SPACING_DP = 6
+private const val CURVE_CONTENT_SPACING_DP = 3
 private const val CURVE_CARD_BOTTOM_PADDING_DP = 4
-private const val HEADER_ICON_SIZE_DP = 34
+private const val HEADER_ICON_CONTAINER_SIZE_DP = 40
+private const val HEADER_ICON_GLYPH_SIZE_DP = 28
+private const val HEADER_ICON_CORNER_DP = 10
+private const val HEADER_ICON_BORDER_DP = 1
 private const val HEADER_ICON_STROKE_DP = 2
 private const val GLYPH_START_X = 0.16f
 private const val GLYPH_START_Y = 0.68f
@@ -283,7 +333,8 @@ private const val GLYPH_THIRD_X = 0.62f
 private const val GLYPH_THIRD_Y = 0.58f
 private const val GLYPH_END_X = 0.88f
 private const val GLYPH_END_Y = 0.23f
-private const val HEADER_ICON_GAP_DP = 10
+private const val HEADER_ICON_GAP_DP = 8
+private const val HEADER_ACTIONS_GAP_DP = 6
 private const val CHART_TIME_DIVISIONS = 6
 private const val CHART_HOURLY_GRID_DIVISIONS = 24
 private const val HOURS_PER_GRID_DIVISION = 4
