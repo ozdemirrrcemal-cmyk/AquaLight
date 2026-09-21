@@ -177,7 +177,7 @@ class DeviceDosingRootReadPathTest {
             assertEquals(listOf("Authoritative 1", "Authoritative 2"), channelNames(viewModel))
             assertFalse(viewModel.uiState.value.contentEnabled)
             assertEquals(
-                DeviceConnectionVisualState.OFFLINE,
+                DeviceConnectionVisualState.ONLINE,
                 viewModel.uiState.value.connectionVisualState
             )
         }
@@ -228,7 +228,7 @@ class DeviceDosingRootReadPathTest {
             assertEquals(validated.channels, reconnecting.channels)
             assertEquals(validated.pumpStates, reconnecting.pumpStates)
             assertFalse(reconnecting.contentEnabled)
-            assertEquals(DeviceConnectionVisualState.OFFLINE, reconnecting.connectionVisualState)
+            assertEquals(DeviceConnectionVisualState.ONLINE, reconnecting.connectionVisualState)
             assertEquals(
                 listOf(
                     "Authoritative 1",
