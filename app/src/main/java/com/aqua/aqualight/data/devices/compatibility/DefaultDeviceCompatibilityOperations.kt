@@ -98,8 +98,9 @@ private object DeviceMenuUpdatePolicyProjector {
     private fun AqlDeviceFeatureKey.toMenuFeature(
         family: OwnerDeviceFamily
     ): DeviceRootMenuFeature? = when (this) {
-        AqlDeviceFeatureKey.LIGHT_QUICK_SETUP ->
+        AqlDeviceFeatureKey.LIGHT_MANAGED_AUTO_PLAN ->
             DeviceRootMenuFeature.LIGHT_QUICK_SETUP.takeIf { family == OwnerDeviceFamily.LIGHT }
+        AqlDeviceFeatureKey.LIGHT_QUICK_SETUP -> null
         AqlDeviceFeatureKey.LIGHT_CONTROL ->
             DeviceRootMenuFeature.LIGHT_MANUAL.takeIf { family == OwnerDeviceFamily.LIGHT }
         AqlDeviceFeatureKey.LIGHT_PRESETS ->
