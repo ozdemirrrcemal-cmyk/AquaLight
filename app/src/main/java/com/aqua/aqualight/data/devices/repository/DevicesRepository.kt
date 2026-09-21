@@ -20,6 +20,8 @@ import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeTypedEvent
 import com.aqua.aqualight.data.devices.runtime.modules.DeviceRuntimeModuleProvider
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
+import com.aqua.aqualight.data.devices.runtime.ws.AqlWsProtocolError
+import com.aqua.aqualight.data.devices.runtime.ws.AqlWsProtocolException
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
 import com.aqua.aqualight.data.devices.store.DeviceKnownStore
 import com.aqua.aqualight.data.devices.store.DeviceRegistryStore
@@ -610,11 +612,43 @@ class DevicesRepository(
                 }
             }
             is AqlWsConnectionState.Failed -> state.deviceUid?.let { deviceUid ->
-                applyRuntimeUnavailable(
-                    deviceUid,
-                    state.message.ifBlank { "Connection failed." }
-                )
+                if (state.isIncompatibleProtocol()) {
+                    applyRuntimeIncompatible(
+                        deviceUid,
+                        state.message.ifBlank { "Device protocol is incompatible." }
+                    )
+                } else {
+                    applyRuntimeUnavailable(
+                        deviceUid,
+                        state.message.ifBlank { "Connection failed." }
+                    )
+                }
             }
+        }
+    }
+
+    private fun applyRuntimeIncompatible(deviceUid: DeviceUid, message: String) {
+        invalidateRuntimeMetadata(deviceUid)
+        val nowElapsedMillis = elapsedRealtimeMillis()
+        registryStore.updateConnectionState(deviceUid) { previous ->
+            val clearedRuntimeState = previous.copy(
+                lastWsConnectedAtMillis = null,
+                lastWsConnectedElapsedMillis = null,
+                lastAuthenticatedAtMillis = null,
+                lastAuthenticatedElapsedMillis = null,
+                lastRuntimeMessageAtMillis = null,
+                lastRuntimeMessageElapsedMillis = null,
+                lastControlProofAtMillis = null,
+                lastControlProofElapsedMillis = null,
+                lastErrorMessage = message
+            )
+            clearedRuntimeState.copy(
+                onlineState = statusAggregator.resolve(
+                    state = clearedRuntimeState,
+                    nowElapsedMillis = nowElapsedMillis,
+                    localNetworkAvailable = presenceRuntimeMonitor.isLocalNetworkAvailable()
+                )
+            )
         }
     }
 
@@ -649,6 +683,9 @@ class DevicesRepository(
         }
     }
 }
+
+private fun AqlWsConnectionState.Failed.isIncompatibleProtocol(): Boolean =
+    (cause as? AqlWsProtocolException)?.protocolError == AqlWsProtocolError.INCOMPATIBLE_PROTOCOL
 
 private const val TYPED_RUNTIME_EVENT_BUFFER_CAPACITY = 256
 
