@@ -3,8 +3,8 @@ package com.aqua.aqualight.data.devices.compatibility
 import com.aqua.aqualight.application.devices.DeviceCompatibilityOperations
 import com.aqua.aqualight.application.devices.DeviceCompatibilitySnapshot
 import com.aqua.aqualight.application.devices.DeviceCompatibilityStatus
-import com.aqua.aqualight.application.devices.DeviceFirmwareUpdatePolicy
 import com.aqua.aqualight.application.devices.DeviceRootMenuFeature
+import com.aqua.aqualight.application.devices.PreparedDeviceFirmwareUpdate
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.data.devices.contract.AqlDeviceFeatureKey
 import com.aqua.aqualight.data.devices.model.DeviceUid
@@ -14,7 +14,7 @@ import com.aqua.aqualight.data.devices.toOwnerDeviceFamily
 /** Stateless owner-scoped adapter over the single DevicesRepository authority. */
 internal class DefaultDeviceCompatibilityOperations(
     private val devicesRepository: DevicesRepository,
-    private val updatePolicyProvider: (String) -> DeviceFirmwareUpdatePolicy? = { null }
+    private val updatePlanProvider: (String) -> PreparedDeviceFirmwareUpdate? = { null }
 ) : DeviceCompatibilityOperations {
 
     override fun current(deviceUid: String): DeviceCompatibilitySnapshot {
@@ -33,19 +33,22 @@ internal class DefaultDeviceCompatibilityOperations(
             )
 
         return when (val evaluation = DeviceCommercialCompatibilityEvaluator.evaluate(snapshot)) {
-            is DeviceCommercialCompatibilityEvaluation.Compatible -> DeviceCompatibilitySnapshot(
-                deviceUid = normalized,
-                family = evaluation.product.family.toOwnerDeviceFamily(),
-                status = DeviceCompatibilityStatus.COMPATIBLE,
-                menuFeatures = evaluation.menuFeatures,
-                firmwareUpdateRequiredFeatures = DeviceMenuUpdatePolicyProjector.resolve(
-                    family = evaluation.product.family.toOwnerDeviceFamily(),
-                    requiredFeatureTokens = updatePolicyProvider(normalized)
-                        ?.requiredFeatures
-                        .orEmpty()
-                ),
-                allowedRoutes = evaluation.allowedRoutes
-            )
+            is DeviceCommercialCompatibilityEvaluation.Compatible -> {
+                val family = evaluation.product.family.toOwnerDeviceFamily()
+                val targetFeatures = updatePlanProvider(normalized)?.targetFeatures.orEmpty()
+                val updateFeatures = DeviceMenuUpdatePolicyProjector.resolve(
+                    family = family,
+                    targetFeatureTokens = targetFeatures
+                ) - evaluation.menuFeatures
+                DeviceCompatibilitySnapshot(
+                    deviceUid = normalized,
+                    family = family,
+                    status = DeviceCompatibilityStatus.COMPATIBLE,
+                    menuFeatures = evaluation.menuFeatures,
+                    firmwareUpdateRequiredFeatures = updateFeatures,
+                    allowedRoutes = evaluation.allowedRoutes
+                )
+            }
             is DeviceCommercialCompatibilityEvaluation.Incompatible -> incompatible(
                 deviceUid = normalized,
                 family = snapshot.product.family.toOwnerDeviceFamily(),
@@ -82,8 +85,8 @@ private fun DeviceCommercialCompatibilityIssue.toApplicationStatus(): DeviceComp
 private object DeviceMenuUpdatePolicyProjector {
     fun resolve(
         family: OwnerDeviceFamily,
-        requiredFeatureTokens: Set<String>
-    ): Set<DeviceRootMenuFeature> = requiredFeatureTokens
+        targetFeatureTokens: Set<String>
+    ): Set<DeviceRootMenuFeature> = targetFeatureTokens
         .mapNotNull(AqlDeviceFeatureKey::fromWireExact)
         .mapNotNullTo(linkedSetOf()) { feature -> feature.toMenuFeature(family) }
 
