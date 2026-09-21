@@ -11,6 +11,7 @@ import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightMode
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightProduct
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeAccess
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeContract
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeFixtures
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRepository
