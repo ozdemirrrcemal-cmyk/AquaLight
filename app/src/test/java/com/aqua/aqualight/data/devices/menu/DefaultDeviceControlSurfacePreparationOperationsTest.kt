@@ -273,7 +273,7 @@ class DefaultDeviceControlSurfacePreparationOperationsTest {
 
         assertEquals(
             DeviceControlSurfacePreparationResult.Unavailable(
-                DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
+                DeviceMenuUnavailableReason.MALFORMED_DEVICE_STATE
             ),
             result
         )
@@ -417,7 +417,7 @@ class DefaultDeviceControlSurfacePreparationOperationsTest {
 
         assertEquals(
             DeviceControlSurfacePreparationResult.Unavailable(
-                DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
+                DeviceMenuUnavailableReason.MALFORMED_DEVICE_STATE
             ),
             operations.prepare(lightRequest())
         )
