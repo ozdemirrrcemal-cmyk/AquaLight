@@ -34,15 +34,25 @@ import java.util.concurrent.ConcurrentHashMap
  * declares a surface ready only after the central runtime owner exposes an authoritative first
  * frame that matches the validated commercial catalog.
  */
+internal data class DeviceControlSurfaceDependencies(
+    val rootOperations: DeviceRootOperations,
+    val dosingChannelOperations: DeviceDosingChannelOperations,
+    val coolingControlOperations: DeviceCoolingControlOperations,
+    val timerControlOperations: DeviceTimerControlOperations,
+    val lightControlOperations: DeviceLightControlOperations
+)
+
 internal class DefaultDeviceControlSurfacePreparationOperations(
-    private val rootOperations: DeviceRootOperations,
-    private val dosingChannelOperations: DeviceDosingChannelOperations,
-    private val coolingControlOperations: DeviceCoolingControlOperations,
-    private val timerControlOperations: DeviceTimerControlOperations,
-    private val lightControlOperations: DeviceLightControlOperations,
+    private val dependencies: DeviceControlSurfaceDependencies,
     private val compatibilityOperations: DeviceCompatibilityOperations? = null,
     private val accessPolicy: DeviceAccessPolicy = DefaultDeviceAccessPolicy
 ) : DeviceControlSurfacePreparationOperations {
+
+    private val rootOperations = dependencies.rootOperations
+    private val dosingChannelOperations = dependencies.dosingChannelOperations
+    private val coolingControlOperations = dependencies.coolingControlOperations
+    private val timerControlOperations = dependencies.timerControlOperations
+    private val lightControlOperations = dependencies.lightControlOperations
 
     private val freshlyPreparedSurfaces = ConcurrentHashMap.newKeySet<PreparedSurface>()
 
@@ -50,24 +60,34 @@ internal class DefaultDeviceControlSurfacePreparationOperations(
         request: DeviceControlSurfacePreparationRequest
     ): DeviceControlSurfacePreparationResult {
         val deviceUid = request.deviceUid.trim()
-        if (deviceUid.isBlank()) {
-            return unavailable(DeviceMenuUnavailableReason.INVALID_DEVICE_UID)
-        }
+        val unavailable = initialAccessFailure(deviceUid)
+        return unavailable ?: prepareFamily(deviceUid, request.family)
+    }
 
-        compatibilityOperations?.let { compatibility ->
-            when (val decision = accessPolicy.evaluateRoot(compatibility.current(deviceUid))) {
-                is DeviceAccessDecision.Blocked -> return unavailable(decision.reason)
-                DeviceAccessDecision.Allowed -> Unit
-            }
+    private fun initialAccessFailure(
+        deviceUid: String
+    ): DeviceControlSurfacePreparationResult.Unavailable? = when {
+        deviceUid.isBlank() -> unavailable(DeviceMenuUnavailableReason.INVALID_DEVICE_UID)
+        compatibilityOperations == null -> null
+        else -> when (
+            val decision = accessPolicy.evaluateRoot(
+                checkNotNull(compatibilityOperations).current(deviceUid)
+            )
+        ) {
+            DeviceAccessDecision.Allowed -> null
+            is DeviceAccessDecision.Blocked -> unavailable(decision.reason)
         }
+    }
 
-        return when (request.family) {
-            OwnerDeviceFamily.DOSING -> prepareDosing(deviceUid)
-            OwnerDeviceFamily.COOLING -> prepareCooling(deviceUid)
-            OwnerDeviceFamily.TIMER -> prepareTimer(deviceUid)
-            OwnerDeviceFamily.LIGHT -> prepareLight(deviceUid)
-            else -> DeviceControlSurfacePreparationResult.Ready
-        }
+    private suspend fun prepareFamily(
+        deviceUid: String,
+        family: OwnerDeviceFamily
+    ): DeviceControlSurfacePreparationResult = when (family) {
+        OwnerDeviceFamily.DOSING -> prepareDosing(deviceUid)
+        OwnerDeviceFamily.COOLING -> prepareCooling(deviceUid)
+        OwnerDeviceFamily.TIMER -> prepareTimer(deviceUid)
+        OwnerDeviceFamily.LIGHT -> prepareLight(deviceUid)
+        else -> DeviceControlSurfacePreparationResult.Ready
     }
 
     private suspend fun prepareLight(
