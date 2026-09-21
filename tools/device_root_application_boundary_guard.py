@@ -159,9 +159,10 @@ for token in (
 
 for token in (
     "fun DeviceSnapshot.toDeviceRootSnapshot",
-    "AqlCommercialDeviceCatalog.validateSnapshot(this)",
-    "DeviceRootMenuFeatureResolver.resolve(product)",
-    "DeviceRootRoutePolicy.allowedRoutes(product)",
+    "DeviceCommercialCompatibilityEvaluator.evaluate(this)",
+    "DeviceCommercialCompatibilityEvaluation.Compatible",
+    "compatibility.menuFeatures",
+    "compatibility.allowedRoutes",
 ):
     if token not in mapping:
         errors.append(f"{MAPPING.relative_to(ROOT)}: root mapping token is missing: {token}")
