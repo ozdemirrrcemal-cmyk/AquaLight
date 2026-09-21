@@ -12,7 +12,8 @@ import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightFixtur
  * request fails closed and the recommendation engine reports missing calibration.
  */
 internal class DefaultDeviceLightFixtureCalibration(
-    private val calibratedProfiles: Map<String, DeviceLightFixtureCalibration> = emptyMap()
+    private val calibratedProfiles: Map<String, DeviceLightFixtureCalibration> =
+        DeviceLightProductionCalibrationRegistry.calibrations
 ) : DeviceLightFixtureCalibration {
 
     override fun solve(

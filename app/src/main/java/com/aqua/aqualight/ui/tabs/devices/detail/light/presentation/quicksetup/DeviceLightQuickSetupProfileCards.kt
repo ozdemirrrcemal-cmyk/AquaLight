@@ -23,8 +23,10 @@ internal fun QuickSetupAquariumProfileCard(state: DeviceLightQuickSetupUiState) 
                 R.string.device_light_quick_setup_age_days,
                 ageDays
             ),
-            stringResource(R.string.device_light_quick_setup_type_label) to context.tankType,
-            stringResource(R.string.device_light_quick_setup_style_label) to context.tankStyle
+            stringResource(R.string.device_light_quick_setup_type_label) to
+                quickSetupTankTypeText(context.tankType),
+            stringResource(R.string.device_light_quick_setup_style_label) to
+                quickSetupTankStyleText(context.tankStyle)
         )
     )
 }

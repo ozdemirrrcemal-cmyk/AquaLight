@@ -240,6 +240,10 @@ Quick Setup has one runtime policy across all build variants:
 - no synthetic or percentage-based fixture fallback;
 - measured AquaLight calibration is mandatory;
 - missing calibration fails closed before recommendation/apply.
+- `tools/light_quick_setup_production_guard.py` is executed by the production release quality
+  pipeline and compares the runtime calibration registry against every catalog product exposing
+  `LIGHT_QUICK_SETUP`;
+- center-only or provenance-free calibration metadata is not releaseable.
 
 Build variants may differ for normal application packaging and CI, but they must not alter Quick Setup
 recommendation or calibration behavior.

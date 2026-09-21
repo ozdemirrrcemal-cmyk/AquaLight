@@ -899,11 +899,23 @@ measured calibration record missing
 
 The release guard must be machine enforced, not documentation only.
 
-Proposed guard:
+Enforced production guard:
 
 ~~~text
 tools/light_quick_setup_production_guard.py
 ~~~
+
+The release quality pipeline executes this guard against the exact commercial product catalog and
+the runtime production calibration registry:
+
+~~~text
+DeviceLightProductionCalibrationRegistry
+~~~
+
+For every product exposing `LIGHT_QUICK_SETUP`, release requires an exact measured profile with
+positive calibration/coverage revisions, exact channel layout, finite water/fixture/tank geometry
+domains, measurement-set identity, SHA-256 measurement-data provenance, at least three horizontal
+measurement positions, and PPFD sample coverage. Missing records fail release.
 
 Physical production calibration must include, at minimum:
 

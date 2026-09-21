@@ -74,7 +74,8 @@ for guard in \
   firebase_telemetry_guard.py \
   privacy_legal_guard.py \
   design_system_resource_guard.py \
-  localization_accessibility_guard.py; do
+  localization_accessibility_guard.py \
+  light_quick_setup_production_guard.py; do
   python3 "tools/$guard"
 done
 
