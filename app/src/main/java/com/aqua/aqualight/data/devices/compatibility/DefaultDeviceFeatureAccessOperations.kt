@@ -32,31 +32,36 @@ internal class DefaultDeviceFeatureAccessOperations(
             compatibility = compatibilityOperations.current(deviceUid),
             feature = feature
         )
-        if (
-            initial !is DeviceAccessDecision.Blocked ||
-            initial.reason != DeviceMenuUnavailableReason.FEATURE_UNAVAILABLE
-        ) {
-            return initial
+        val needsOtaDiscovery = initial is DeviceAccessDecision.Blocked &&
+            initial.reason == DeviceMenuUnavailableReason.FEATURE_UNAVAILABLE
+        return if (needsOtaDiscovery) {
+            refreshAndEvaluate(deviceUid, feature)
+        } else {
+            initial
         }
+    }
 
+    private suspend fun refreshAndEvaluate(
+        deviceUid: String,
+        feature: DeviceRootMenuFeature
+    ): DeviceAccessDecision {
         val refresh = firmwareUpdateOperations.refreshAvailabilityIfStale(
             deviceUid = deviceUid,
             manifestUrl = DEVICE_FIRMWARE_MANIFEST_URL,
             applyNow = true
         )
         val otaState = refresh.getOrNull() ?: firmwareUpdateOperations.observe(deviceUid).value
-        if (
-            otaState is DeviceOtaState.Failed &&
-            otaState.failure.reason == DeviceOtaFailureReason.APPLICATION_UPDATE_REQUIRED
-        ) {
-            return DeviceAccessDecision.Blocked(
-                DeviceMenuUnavailableReason.APPLICATION_UPDATE_REQUIRED
+        return if (otaState.requiresNewerApplication()) {
+            DeviceAccessDecision.Blocked(DeviceMenuUnavailableReason.APPLICATION_UPDATE_REQUIRED)
+        } else {
+            accessPolicy.evaluateFeature(
+                compatibility = compatibilityOperations.current(deviceUid),
+                feature = feature
             )
         }
-
-        return accessPolicy.evaluateFeature(
-            compatibility = compatibilityOperations.current(deviceUid),
-            feature = feature
-        )
     }
+
+    private fun DeviceOtaState.requiresNewerApplication(): Boolean =
+        this is DeviceOtaState.Failed &&
+            failure.reason == DeviceOtaFailureReason.APPLICATION_UPDATE_REQUIRED
 }
