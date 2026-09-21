@@ -323,6 +323,23 @@ object DeviceFirmwareManifestParser {
         }
     }
 
+    private fun validateCompatibilityMetadata(
+        artifact: DeviceFirmwareManifestArtifact
+    ) {
+        require(artifact.features.all(FEATURE_TOKEN_PATTERN::matches)) {
+            "OTA manifest features contain an invalid commercial feature token."
+        }
+        require(artifact.updatePolicy.requiredFeatures.all { feature -> feature in artifact.features }) {
+            "OTA update policy references a feature not advertised by the artifact."
+        }
+        require(artifact.contracts.requiredDomains.all(CONTRACT_ID_PATTERN::matches)) {
+            "OTA requiredDomains contains an invalid contract identifier."
+        }
+        require(artifact.contracts.optionalDomains.all(CONTRACT_ID_PATTERN::matches)) {
+            "OTA optionalDomains contains an invalid contract identifier."
+        }
+    }
+
     private fun validateFirmwareAsset(
         manifest: DeviceFirmwareManifest,
         artifact: DeviceFirmwareManifestArtifact
@@ -622,6 +639,8 @@ object DeviceFirmwareManifestParser {
         normalOtaAssetType = DeviceFirmwareRuntimeContract.Manifest.NORMAL_OTA_ASSET_TYPE
     )
     private val ENVIRONMENT_PATTERN = Regex("^[a-z0-9_]+$")
+    private val FEATURE_TOKEN_PATTERN = Regex("^[A-Z][A-Z0-9_]*$")
+    private val CONTRACT_ID_PATTERN = Regex("^[a-z0-9]+(?:[._-][a-z0-9]+)+$")
     private val FEATURE_TOKEN_PATTERN = Regex("^[A-Z][A-Z0-9_]*$")
     private val CONTRACT_ID_PATTERN = Regex("^[a-z0-9]+(?:[.-][a-z0-9]+)*$")
 }
