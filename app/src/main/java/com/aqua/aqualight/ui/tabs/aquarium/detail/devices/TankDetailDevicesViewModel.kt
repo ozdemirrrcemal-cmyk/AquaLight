@@ -155,7 +155,7 @@ class TankDetailDevicesViewModel(
                     }
                     is DeviceMenuOpenResult.Unavailable -> {
                         clearMenuOpen(deviceUid)
-                        _events.send(result.toUnavailableEvent())
+                        _events.send(result.toUnavailableEvent(deviceUid))
                     }
                 }
             } catch (error: Throwable) {
@@ -164,6 +164,7 @@ class TankDetailDevicesViewModel(
                 if (error is CancellationException) throw error
                 _events.send(
                     TankDetailDevicesEvent.ShowDeviceUnavailable(
+                        deviceUid = deviceUid,
                         title = _uiState.value.devices
                             .firstOrNull { device -> device.deviceUid == deviceUid }
                             ?.title
@@ -389,6 +390,7 @@ sealed interface TankDetailDevicesEvent {
     data class OpenDeviceRoute(val route: DeviceRoute) : TankDetailDevicesEvent
 
     data class ShowDeviceUnavailable(
+        val deviceUid: String,
         val title: String,
         val reason: DeviceMenuUnavailableReason
     ) : TankDetailDevicesEvent
@@ -524,8 +526,9 @@ private fun isDeviceRemovalAllowed(
     return requestIsValid && operationsAreIdle
 }
 
-private fun DeviceMenuOpenResult.Unavailable.toUnavailableEvent() =
+private fun DeviceMenuOpenResult.Unavailable.toUnavailableEvent(deviceUid: String) =
     TankDetailDevicesEvent.ShowDeviceUnavailable(
+        deviceUid = deviceUid,
         title = title,
         reason = reason
     )
