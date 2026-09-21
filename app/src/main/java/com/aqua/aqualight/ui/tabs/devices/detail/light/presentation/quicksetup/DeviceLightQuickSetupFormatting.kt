@@ -10,7 +10,10 @@ internal fun DeviceLightQuickSetupRecommendation.currentPhaseIndex(): Int {
     return phases.indexOfLast { phase -> phase.validFromEpochDay <= today }.coerceAtLeast(0)
 }
 
-internal fun Int.toClockText(): String = "%02d:%02d".format(\n    this / QUICK_SETUP_MINUTES_PER_HOUR,\n    this % QUICK_SETUP_MINUTES_PER_HOUR\n)
+internal fun Int.toClockText(): String = "%02d:%02d".format(
+    this / QUICK_SETUP_MINUTES_PER_HOUR,
+    this % QUICK_SETUP_MINUTES_PER_HOUR
+)
 
 internal fun AquariumPlantLightDemand.demandResource(): Int = when (this) {
     AquariumPlantLightDemand.LOW -> R.string.device_light_quick_setup_demand_low
@@ -18,5 +21,6 @@ internal fun AquariumPlantLightDemand.demandResource(): Int = when (this) {
     AquariumPlantLightDemand.HIGH -> R.string.device_light_quick_setup_demand_high
 }
 
+internal const val QUICK_SETUP_MINUTES_PER_HOUR = 60
 internal const val QUICK_SETUP_CO2_PRECHARGE_MINUTES = 120
 internal const val QUICK_SETUP_MINUTES_PER_DAY = 1_440

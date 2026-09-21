@@ -93,7 +93,8 @@ object AquariumSubstrateMetadataCatalog {
             "aquael_basalt_gravel",
             "https://www.aquael.com/products/aquaristics/substrates-gravels/bazaltowe/"
         ),
-        un"gravel_natural_river_sand".verified(
+        unverified(
+            "gravel_natural_river_sand",
             AquariumMaterialCategoryKeys.GRAVEL,
             "generic_natural_river_sand"
         )

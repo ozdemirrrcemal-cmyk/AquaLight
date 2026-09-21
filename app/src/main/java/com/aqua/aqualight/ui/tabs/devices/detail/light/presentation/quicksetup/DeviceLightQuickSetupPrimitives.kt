@@ -32,6 +32,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupBlockReason
 import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowButton
 import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowGeometry
 import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowSurface
@@ -220,7 +221,9 @@ internal fun QuickSetupSwitchRow(
 }
 
 @Composable
-internal fun QuickSetupErrorBanner(\n    reason: DeviceLightQuickSetupBlockReason\n) {
+internal fun QuickSetupErrorBanner(
+    reason: DeviceLightQuickSetupBlockReason
+) {
     val colors = aquaGuidedFlowColors()
     val typography = aquaGuidedFlowTypography(colors)
     val shape = androidx.compose.foundation.shape.RoundedCornerShape(AquaGuidedFlowGeometry.controlRadius)
