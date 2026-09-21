@@ -32,7 +32,7 @@ internal object DeviceLightQuickSetupGeometry {
     val actionBottomPadding = 12.dp
     val errorPadding = 12.dp
 
-    val profileValueWeight = 1.15f
+    const val profileValueWeight = 1.15f
     val illustrationPadding = 18.dp
     val illustrationOutlineStroke = 2.dp
     val illustrationBorderInset = 2.dp
