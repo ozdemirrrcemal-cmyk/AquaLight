@@ -490,8 +490,16 @@ for forbidden in (
 
 for token, reason in (
     (
-        "request.family == OwnerDeviceFamily.LIGHT -> prepareLight",
+        "OwnerDeviceFamily.LIGHT -> prepareLight(deviceUid)",
         "Light menus must use central surface preparation",
+    ),
+    (
+        "accessPolicy.evaluateRoot(compatibility.current(deviceUid))",
+        "control-surface preparation must pass through central compatibility policy",
+    ),
+    (
+        "DeviceAccessDecision.Blocked -> return unavailable(decision.reason)",
+        "central compatibility denial must preserve the typed commercial reason",
     ),
     (
         "lightControlOperations.refreshControl(deviceUid)",
