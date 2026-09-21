@@ -13,9 +13,11 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceLightRootBinding
+import com.aqua.aqualight.ui.common.devicepresence.DeviceAccessFeedbackPresenter
 import com.aqua.aqualight.ui.common.devicepresence.DeviceMenuUnavailableMessageMapper
 import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
@@ -104,7 +106,20 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
     }
 
     private fun openQuickSetup() {
-        if (!viewModel.uiState.value.contentEnabled) return
+        val state = viewModel.uiState.value
+        if (!state.contentEnabled) return
+        if (!state.quickSetupAvailable) {
+            val feedback = DeviceMenuUnavailableMessageMapper.feedback(
+                DeviceMenuUnavailableReason.FEATURE_UNAVAILABLE
+            )
+            DeviceAccessFeedbackPresenter.show(
+                context = requireContext(),
+                deviceTitle = state.title,
+                titleRes = feedback.titleRes,
+                messageRes = feedback.messageRes
+            )
+            return
+        }
         val navController = findNavController()
         if (navController.currentDestination?.id != R.id.deviceLightRootFragment) return
         navController.navigate(
