@@ -4,9 +4,10 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
-import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
 import com.aqua.aqualight.ui.navigation.AppRouteNavigator
+import com.aqua.aqualight.utils.DialogManager
+import com.aqua.aqualight.utils.DialogType
 
 /**
  * Single commercial presentation path for device-access failures.
@@ -30,10 +31,19 @@ object DeviceAccessFeedbackPresenter {
             feedback.action != DeviceAccessFeedbackAction.OPEN_FIRMWARE_UPDATE ||
             normalizedUid.isBlank()
         ) {
-            (fragment.activity as? BaseActivity)?.showDeviceAccessDialog(
-                deviceTitle = deviceTitle,
-                titleRes = feedback.titleRes,
-                messageRes = feedback.messageRes
+            val safeDeviceTitle = deviceTitle.trim().ifBlank {
+                fragment.getString(R.string.device_menu_default_title)
+            }
+            DialogManager.showInfoDialog(
+                context = fragment.requireContext(),
+                type = DialogType.WARNING,
+                title = fragment.getString(feedback.titleRes),
+                message = fragment.getString(
+                    R.string.device_access_dialog_message,
+                    safeDeviceTitle,
+                    fragment.getString(feedback.messageRes)
+                ),
+                buttonTextResId = android.R.string.ok
             )
             return
         }
