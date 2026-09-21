@@ -1,11 +1,18 @@
 package com.aqua.aqualight.data.devices.menu
 
+import com.aqua.aqualight.application.devices.DefaultDeviceAccessPolicy
+import com.aqua.aqualight.application.devices.DeviceCompatibilityOperations
+import com.aqua.aqualight.application.devices.DeviceCompatibilitySnapshot
+import com.aqua.aqualight.application.devices.DeviceCompatibilityStatus
 import com.aqua.aqualight.application.devices.DeviceMenuAccessOperations
 import com.aqua.aqualight.application.devices.DeviceMenuAccessResult
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.data.devices.catalog.AqlCommercialCatalogProduct
 import com.aqua.aqualight.data.devices.catalog.AqlCommercialDeviceCatalog
+import com.aqua.aqualight.data.devices.compatibility.DeviceCommercialCompatibilityEvaluation
+import com.aqua.aqualight.data.devices.compatibility.DeviceCommercialCompatibilityEvaluator
+import com.aqua.aqualight.data.devices.toOwnerDeviceFamily
 import com.aqua.aqualight.data.devices.model.DeviceCapabilities
 import com.aqua.aqualight.data.devices.model.DeviceIdentity
 import com.aqua.aqualight.data.devices.model.DeviceLimits
@@ -80,24 +87,30 @@ class CommercialDeviceMenuAccessOperationsTest {
     }
 
     @Test
-    fun `liveness rejection passes through without catalog access`() = runTest {
-        var snapshotReads = 0
+    fun `liveness rejection passes through without compatibility access`() = runTest {
+        var compatibilityReads = 0
         val unavailable = DeviceMenuAccessResult.Unavailable(
             title = "Offline device",
             reason = DeviceMenuUnavailableReason.DEVICE_UNRESPONSIVE
         )
         val operations = CommercialDeviceMenuAccessOperations(
             livenessOperations = fixedLiveness(unavailable),
-            currentSnapshot = {
-                snapshotReads += 1
-                null
-            }
+            compatibilityOperations = object : DeviceCompatibilityOperations {
+                override fun current(deviceUid: String): DeviceCompatibilitySnapshot {
+                    compatibilityReads += 1
+                    return DeviceCompatibilitySnapshot(
+                        deviceUid = deviceUid,
+                        status = DeviceCompatibilityStatus.DEVICE_NOT_REGISTERED
+                    )
+                }
+            },
+            accessPolicy = DefaultDeviceAccessPolicy
         )
 
         val result = operations.resolve("device-offline")
 
         assertTrue(result === unavailable)
-        assertEquals(0, snapshotReads)
+        assertEquals(0, compatibilityReads)
     }
 
     private fun operations(
@@ -105,8 +118,41 @@ class CommercialDeviceMenuAccessOperationsTest {
         liveness: DeviceMenuAccessResult
     ) = CommercialDeviceMenuAccessOperations(
         livenessOperations = fixedLiveness(liveness),
-        currentSnapshot = { snapshot }
+        compatibilityOperations = object : DeviceCompatibilityOperations {
+            override fun current(deviceUid: String): DeviceCompatibilitySnapshot =
+                snapshot.toCompatibilitySnapshot()
+        },
+        accessPolicy = DefaultDeviceAccessPolicy
     )
+
+    private fun DeviceSnapshot.toCompatibilitySnapshot(): DeviceCompatibilitySnapshot =
+        when (val evaluation = DeviceCommercialCompatibilityEvaluator.evaluate(this)) {
+            is DeviceCommercialCompatibilityEvaluation.Compatible -> DeviceCompatibilitySnapshot(
+                deviceUid = deviceUid.value,
+                family = evaluation.product.family.toOwnerDeviceFamily(),
+                status = DeviceCompatibilityStatus.COMPATIBLE,
+                menuFeatures = evaluation.menuFeatures,
+                allowedRoutes = evaluation.allowedRoutes
+            )
+            is DeviceCommercialCompatibilityEvaluation.Incompatible -> DeviceCompatibilitySnapshot(
+                deviceUid = deviceUid.value,
+                family = product.family.toOwnerDeviceFamily(),
+                status = when (evaluation.issue) {
+                    com.aqua.aqualight.data.devices.compatibility.DeviceCommercialCompatibilityIssue
+                        .RUNTIME_METADATA_UNAVAILABLE ->
+                        DeviceCompatibilityStatus.RUNTIME_METADATA_UNAVAILABLE
+                    com.aqua.aqualight.data.devices.compatibility.DeviceCommercialCompatibilityIssue
+                        .COMMERCIAL_PRODUCT_MISMATCH ->
+                        DeviceCompatibilityStatus.COMMERCIAL_PRODUCT_MISMATCH
+                    com.aqua.aqualight.data.devices.compatibility.DeviceCommercialCompatibilityIssue
+                        .BASE_CONTRACT_INCOMPATIBLE ->
+                        DeviceCompatibilityStatus.BASE_CONTRACT_INCOMPATIBLE
+                    com.aqua.aqualight.data.devices.compatibility.DeviceCommercialCompatibilityIssue
+                        .APPLICATION_UPDATE_REQUIRED ->
+                        DeviceCompatibilityStatus.APPLICATION_UPDATE_REQUIRED
+                }
+            )
+        }
 
     private fun fixedLiveness(result: DeviceMenuAccessResult): DeviceMenuAccessOperations =
         object : DeviceMenuAccessOperations {
