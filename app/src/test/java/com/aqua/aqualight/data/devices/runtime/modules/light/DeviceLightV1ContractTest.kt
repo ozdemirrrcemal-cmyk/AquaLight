@@ -72,6 +72,67 @@ class DeviceLightV1ContractTest {
     }
 
     @Test
+    fun `base Light V1 stays usable when managed plan capability is absent`() {
+        val status = DeviceLightStatusParser.parse(
+            data = DeviceLightRuntimeFixtures.baseStatus(),
+            managedAutoPlanSupported = false
+        )
+
+        assertFalse(status.auto.planInstalled)
+        assertEquals(DeviceLightAutoScheduleSource.PROGRAMS, status.auto.scheduleSource)
+        assertEquals(0L, status.storageGeneration)
+        assertTrue(
+            runCatching {
+                DeviceLightStatusParser.parse(
+                    data = DeviceLightRuntimeFixtures.baseStatus(),
+                    managedAutoPlanSupported = true
+                )
+            }.isFailure
+        )
+    }
+
+    @Test
+    fun `base Light V1 graph stays usable without managed plan fields`() {
+        val graph = DeviceLightMutationParser.Graph.parseGraph(
+            data = DeviceLightRuntimeFixtures.baseGraph(mode = DeviceLightMode.AUTO),
+            product = DeviceLightProduct.WRGB_PRO_ELITE,
+            managedAutoPlanSupported = false
+        )
+
+        assertTrue(graph.planSpans.isEmpty())
+        assertEquals(DeviceLightGraphBasis.AUTHORED_SCHEDULE, graph.basis)
+        assertTrue(
+            runCatching {
+                DeviceLightMutationParser.Graph.parseGraph(
+                    data = DeviceLightRuntimeFixtures.baseGraph(mode = DeviceLightMode.AUTO),
+                    product = DeviceLightProduct.WRGB_PRO_ELITE,
+                    managedAutoPlanSupported = true
+                )
+            }.isFailure
+        )
+    }
+
+    @Test
+    fun `managed plan command is not sent when capability is absent`() = runBlocking {
+        val gateway = RejectingGateway()
+        val repository = DeviceLightRuntimeRepository(
+            gateway = gateway,
+            stateOwner = DeviceLightRuntimeStateOwner(),
+            accessProvider = {
+                DeviceLightRuntimeAccess(
+                    supportsApi = true,
+                    supportsManagedAutoPlan = false
+                )
+            }
+        )
+
+        val result = repository.requestManagedAutoPlan(DEVICE_UID)
+
+        assertTrue(result is DeviceRuntimeCommandOutcome.UnsupportedByDevice)
+        assertEquals(0, gateway.calls)
+    }
+
+    @Test
     fun `graph parser preserves firmware time and channel tuples for both products`() {
         DeviceLightProduct.entries.forEach { product ->
             val graph = DeviceLightMutationParser.Graph.parseGraph(
