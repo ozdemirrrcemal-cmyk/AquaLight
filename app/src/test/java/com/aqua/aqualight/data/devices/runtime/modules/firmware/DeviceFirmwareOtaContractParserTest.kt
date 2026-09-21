@@ -186,6 +186,10 @@ class DeviceFirmwareOtaContractParserTest {
         assertEquals(DeviceFirmwareRuntimeContract.Manifest.FIRMWARE_FORMAT, artifact.firmware.format)
         assertTrue(artifact.product.capabilities.dosing)
         assertEquals(2, artifact.product.limits.dosingChannelCount)
+        assertEquals(setOf("aqualight.dosing.v1"), artifact.contracts.requiredDomains)
+        assertEquals(setOf("DOSING_CONTROL", "OTA_UPDATE"), artifact.features)
+        assertEquals("RECOMMENDED", artifact.updatePolicy.level.name)
+        assertTrue(artifact.updatePolicy.requiredFeatures.isEmpty())
         assertNull(artifact.factory)
     }
 
@@ -361,6 +365,14 @@ class DeviceFirmwareOtaContractParserTest {
                         .put("env", env)
                         .put("product", productJson())
                         .put("compatibility", compatibilityJson())
+                        .put("contracts", contractsJson())
+                        .put("features", JSONArray().put("DOSING_CONTROL").put("OTA_UPDATE"))
+                        .put(
+                            "updatePolicy",
+                            JSONObject()
+                                .put("level", "RECOMMENDED")
+                                .put("requiredFeatures", JSONArray())
+                        )
                         .put(
                             "firmware",
                             JSONObject()
@@ -425,6 +437,13 @@ class DeviceFirmwareOtaContractParserTest {
         .put("line", "dose_pro")
         .put("model", "dose_pro_2")
         .put("hardwareRevision", "2.0")
+
+    private fun contractsJson(): JSONObject = JSONObject()
+        .put("wsSchema", "aql.ws.v1")
+        .put("wsProtocolVersion", 1)
+        .put("deviceApiVersion", 1)
+        .put("requiredDomains", JSONArray().put("aqualight.dosing.v1"))
+        .put("optionalDomains", JSONArray())
 
     private fun capabilitiesJson(): JSONObject = JSONObject()
         .put("light", false)
