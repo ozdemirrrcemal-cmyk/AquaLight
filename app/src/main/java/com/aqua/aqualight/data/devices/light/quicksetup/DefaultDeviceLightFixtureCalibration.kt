@@ -11,8 +11,12 @@ import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightFixtur
  * chart, or a fallback profile. Until measured AquaLight calibration records are committed, every
  * request fails closed and the recommendation engine reports missing calibration.
  */
-internal class DefaultDeviceLightFixtureCalibration : DeviceLightFixtureCalibration {
+internal class DefaultDeviceLightFixtureCalibration(
+    private val calibratedProfiles: Map<String, DeviceLightFixtureCalibration> = emptyMap()
+) : DeviceLightFixtureCalibration {
+
     override fun solve(
         request: DeviceLightFixtureCalibrationRequest
-    ): DeviceLightFixtureCalibrationResult? = null
+    ): DeviceLightFixtureCalibrationResult? =
+        calibratedProfiles[request.productKey]?.solve(request)
 }
