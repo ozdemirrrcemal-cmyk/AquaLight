@@ -29,7 +29,7 @@ object DeviceLightQuickSetupEvidence {
         DeviceLightQuickSetupEvidenceRecord(
             id = TWO_HR_PAR_BANDS,
             organization = "The 2Hr Aquarist",
-            url = "https://www.2hraquarist.com/blogs/light-3pillars/planted-tank-lighting-101",
+            url = "https://www.2hraquarist.com/blogs/light-3pillars/par_for_planted_tank",
             policyUse = "Conservative planted-aquarium PAR target bands"
         ),
         DeviceLightQuickSetupEvidenceRecord(

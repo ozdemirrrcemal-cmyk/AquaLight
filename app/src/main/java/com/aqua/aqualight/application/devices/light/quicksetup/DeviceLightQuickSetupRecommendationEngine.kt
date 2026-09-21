@@ -149,7 +149,7 @@ class DeviceLightQuickSetupRecommendationEngine(
 
         // Lower/conservative points inside reviewed PAR bands; fixture calibration remains separate.
         const val LOW_TARGET_PPFD = 30
-        const val MEDIUM_TARGET_PPFD = 60
+        const val MEDIUM_TARGET_PPFD = 50
         const val HIGH_TARGET_PPFD = 90
         const val NO_PRECHARGE_PPFD_CAP = 60
 
