@@ -1,7 +1,10 @@
 package com.aqua.aqualight.composition
 
 import android.content.Context
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.createSavedStateHandle
+import androidx.lifecycle.viewmodel.CreationExtras
 import com.aqua.aqualight.BuildConfig
 import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
 import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
@@ -90,8 +93,37 @@ internal class OwnerViewModelFactory(
 
     override fun supports(modelClass: Class<out ViewModel>): Boolean = modelClass in OWNER_BINDINGS
 
+    override fun <T : ViewModel> create(modelClass: Class<T>): T =
+        createInternal(
+            modelClass = modelClass,
+            quickSetupSavedStateHandle = if (
+                modelClass == DeviceLightQuickSetupViewModel::class.java
+            ) {
+                SavedStateHandle()
+            } else {
+                null
+            }
+        )
+
+    override fun <T : ViewModel> create(
+        modelClass: Class<T>,
+        extras: CreationExtras
+    ): T = createInternal(
+        modelClass = modelClass,
+        quickSetupSavedStateHandle = if (
+            modelClass == DeviceLightQuickSetupViewModel::class.java
+        ) {
+            extras.createSavedStateHandle()
+        } else {
+            null
+        }
+    )
+
     @Suppress("LongMethod", "CyclomaticComplexMethod")
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+    private fun <T : ViewModel> createInternal(
+        modelClass: Class<T>,
+        quickSetupSavedStateHandle: SavedStateHandle?
+    ): T {
         check(supports(modelClass)) { "No owner-scoped ViewModel binding for ${modelClass.name}." }
         val graph = ownerGraphResolver.requireActive()
         val repository = graph.devicesRepository
@@ -211,6 +243,7 @@ internal class OwnerViewModelFactory(
                 rootOperations = rootOperations
             )
             DeviceLightQuickSetupViewModel::class.java -> DeviceLightQuickSetupViewModel(
+                savedStateHandle = checkNotNull(quickSetupSavedStateHandle),
                 contextOperations = graph.lightOperations.quickSetupContextOperations,
                 managedPlanOperations = graph.lightOperations.managedAutoPlanOperations,
                 controlOperations = graph.lightOperations.controlOperations,

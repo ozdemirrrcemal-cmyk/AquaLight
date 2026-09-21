@@ -1,6 +1,7 @@
 package com.aqua.aqualight.smoke
 
 import android.content.Context
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.application.auth.AccountSecurityOperations
@@ -332,6 +333,7 @@ private class ReleaseSmokeViewModelFactory(
             )
         modelClass.isAssignableFrom(DeviceLightQuickSetupViewModel::class.java) ->
             DeviceLightQuickSetupViewModel(
+                savedStateHandle = SavedStateHandle(),
                 contextOperations = lightOperations.quickSetupContextOperations,
                 managedPlanOperations = lightOperations.managedAutoPlanOperations,
                 controlOperations = lightOperations.controlOperations,

@@ -15,7 +15,7 @@ class DeviceLightQuickSetupRecommendationEngineTest {
     @Test
     fun fivePhasesAreAnchoredToAquariumSetupDate() {
         val result = engine.recommend(
-            context = context(plants = listOf("ammannia_gracilis")),
+            context = context(plants = listOf("plant:ammannia_gracilis")),
             input = input(DeviceLightQuickSetupCo2Readiness.PRESENT_PRECHARGED)
         ).requireAvailable()
 
@@ -35,7 +35,7 @@ class DeviceLightQuickSetupRecommendationEngineTest {
     @Test
     fun highDemandIsCappedWhenCo2IsNotPrecharged() {
         val result = engine.recommend(
-            context = context(plants = listOf("ammannia_gracilis")),
+            context = context(plants = listOf("plant:ammannia_gracilis")),
             input = input(DeviceLightQuickSetupCo2Readiness.PRESENT_NOT_PRECHARGED)
         ).requireAvailable()
 
@@ -51,9 +51,9 @@ class DeviceLightQuickSetupRecommendationEngineTest {
         val result = engine.recommend(
             context = context(
                 plants = listOf(
-                    "anubias_barteri",
-                    "anubias_barteri_var_nana",
-                    "ammannia_gracilis"
+                    "plant:anubias_barteri",
+                    "plant:anubias_barteri_var_nana",
+                    "plant:ammannia_gracilis"
                 )
             ),
             input = input(DeviceLightQuickSetupCo2Readiness.PRESENT_PRECHARGED)
@@ -67,14 +67,14 @@ class DeviceLightQuickSetupRecommendationEngineTest {
     @Test
     fun latestSameDayMatureStartIs1555() {
         val valid = engine.recommend(
-            context = context(plants = listOf("anubias_barteri")),
+            context = context(plants = listOf("plant:anubias_barteri")),
             input = input(
                 readiness = DeviceLightQuickSetupCo2Readiness.PRESENT_PRECHARGED,
                 startMinute = 15 * 60 + 55
             )
         )
         val invalid = engine.recommend(
-            context = context(plants = listOf("anubias_barteri")),
+            context = context(plants = listOf("plant:anubias_barteri")),
             input = input(
                 readiness = DeviceLightQuickSetupCo2Readiness.PRESENT_PRECHARGED,
                 startMinute = 16 * 60
@@ -92,7 +92,7 @@ class DeviceLightQuickSetupRecommendationEngineTest {
     fun co2PresenceMustMatchSavedAquariumContext() {
         val result = engine.recommend(
             context = context(
-                plants = listOf("anubias_barteri"),
+                plants = listOf("plant:anubias_barteri"),
                 co2Present = false
             ),
             input = input(DeviceLightQuickSetupCo2Readiness.PRESENT_PRECHARGED)
@@ -110,7 +110,7 @@ class DeviceLightQuickSetupRecommendationEngineTest {
             FakeCalibration(available = false)
         )
         val result = missingCalibrationEngine.recommend(
-            context = context(plants = listOf("anubias_barteri")),
+            context = context(plants = listOf("plant:anubias_barteri")),
             input = input(DeviceLightQuickSetupCo2Readiness.PRESENT_PRECHARGED)
         )
 
