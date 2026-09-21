@@ -11,6 +11,7 @@ import com.aqua.aqualight.data.devices.contract.AqlDeviceFeatureKey
 import com.aqua.aqualight.data.devices.contract.AqlDeviceScreenKey
 import com.aqua.aqualight.data.devices.model.DeviceFamily
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
+import com.aqua.aqualight.data.devices.model.SUPPORTED_DEVICE_API_VERSION
 
 /**
  * Single data-layer evaluator for authenticated commercial compatibility.
@@ -24,6 +25,17 @@ internal object DeviceCommercialCompatibilityEvaluator {
         if (!snapshot.hasValidatedRuntimeMetadata) {
             return DeviceCommercialCompatibilityEvaluation.Incompatible(
                 DeviceCommercialCompatibilityIssue.RUNTIME_METADATA_UNAVAILABLE
+            )
+        }
+
+        val apiVersion = snapshot.apiVersion.toIntOrNull()
+        if (apiVersion != SUPPORTED_DEVICE_API_VERSION) {
+            return DeviceCommercialCompatibilityEvaluation.Incompatible(
+                if (apiVersion != null && apiVersion > SUPPORTED_DEVICE_API_VERSION) {
+                    DeviceCommercialCompatibilityIssue.APPLICATION_UPDATE_REQUIRED
+                } else {
+                    DeviceCommercialCompatibilityIssue.BASE_CONTRACT_INCOMPATIBLE
+                }
             )
         }
 
@@ -81,7 +93,8 @@ internal sealed interface DeviceCommercialCompatibilityEvaluation {
 internal enum class DeviceCommercialCompatibilityIssue {
     RUNTIME_METADATA_UNAVAILABLE,
     COMMERCIAL_PRODUCT_MISMATCH,
-    BASE_CONTRACT_INCOMPATIBLE
+    BASE_CONTRACT_INCOMPATIBLE,
+    APPLICATION_UPDATE_REQUIRED
 }
 
 /**
