@@ -309,12 +309,13 @@ Each artifact adds three generic commercial sections:
 ```json
 {
   "contracts": {
-    "required": [
-      "aql.ws.v1",
-      "aql.device-core.v1",
+    "wsSchema": "aql.ws.v1",
+    "wsProtocolVersion": 1,
+    "deviceApiVersion": 1,
+    "requiredDomains": [
       "<family-base-contract-v1>"
     ],
-    "optional": [
+    "optionalDomains": [
       "<optional-domain-contract-v1>"
     ]
   },
@@ -330,15 +331,16 @@ Each artifact adds three generic commercial sections:
 
 Rules:
 
-1. `contracts.required` contains only contracts required for the base product control surface.
-2. Unknown required contracts mean the Android build must not install that firmware; the user receives App Update Required.
-3. `contracts.optional` may describe optional domain surfaces and never forces base-root rejection.
-4. `features` is generated from the authoritative firmware product profile; it is not handwritten in Android.
-5. `FEATURE_REQUIRED` must list one or more feature tokens from `features`.
-6. `OPTIONAL`, `RECOMMENDED`, and `COMPATIBILITY_REQUIRED` use an empty `requiredFeatures` list.
-7. Manifest signing covers these fields.
-8. The Android OTA planner validates target contracts before exposing the update action.
-9. Android never installs firmware that would make the currently running Android build unable to operate the product's required base contract.
+1. `contracts.wsSchema`, `wsProtocolVersion`, and `deviceApiVersion` mirror the existing Shared Device Core/transport V1 values; no invented second Device Core schema identifier is introduced.
+2. `contracts.requiredDomains` contains only domain contracts required for the base product control surface.
+3. Unknown/newer required transport, device API, or domain contracts mean the Android build must not install that firmware; the user receives App Update Required.
+4. `contracts.optionalDomains` may describe optional domain surfaces and never forces base-root rejection.
+5. `features` is generated from the authoritative firmware product profile; it is not handwritten in Android.
+6. `FEATURE_REQUIRED` must list one or more feature tokens from `features`.
+7. `OPTIONAL`, `RECOMMENDED`, and `COMPATIBILITY_REQUIRED` use an empty `requiredFeatures` list.
+8. Manifest signing covers these fields.
+9. The Android OTA planner validates target contracts before exposing the update action.
+10. Android never installs firmware that would make the currently running Android build unable to operate the product's required base contract.
 
 Family base contracts:
 
