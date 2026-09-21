@@ -63,6 +63,7 @@ import com.aqua.aqualight.data.devices.light.quicksetup.DefaultDeviceLightManage
 import com.aqua.aqualight.data.devices.light.quicksetup.DefaultDeviceLightQuickSetupContextOperations
 import com.aqua.aqualight.data.devices.light.system.DefaultDeviceLightSystemOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceControlSurfacePreparationOperations
+import com.aqua.aqualight.data.devices.menu.DeviceControlSurfaceDependencies
 import com.aqua.aqualight.data.devices.provisioning.repository.DefaultProvisioningDraftOperations
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningDraftStore
 import com.aqua.aqualight.data.devices.provisioning.store.AqlProvisioningQrSecretStore
@@ -127,6 +128,18 @@ internal data class OwnerLightOperations(
     val quickSetupContextOperations: DeviceLightQuickSetupContextOperations,
     val managedAutoPlanOperations: DeviceLightManagedAutoPlanOperations,
     val quickSetupCalibration: DeviceLightFixtureCalibration
+)
+
+private data class OwnerDeviceControlOperations(
+    val dosing: OwnerDosingOperations,
+    val timer: DeviceTimerControlOperations,
+    val light: OwnerLightOperations
+)
+
+private data class DeviceAccessComposition(
+    val compatibility: DeviceCompatibilityOperations,
+    val policy: DeviceAccessPolicy,
+    val featureAccess: DeviceFeatureAccessOperations
 )
 
 internal fun interface OwnerDependencyGraphResolver {
@@ -241,35 +254,14 @@ internal class ActiveOwnerDependencyGraphResolver(
     private fun composeGraph(
         dependencies: ActiveOwnerDependencies
     ): OwnerDependencyGraph {
-        val ownerUidProvider = { dependencies.ownerUid }
         val aquariumTankStore = AquariumTankDataStoreManager(appContext)
         val careTaskStore = CareTaskDataStoreManager.create(appContext)
-        val dosingOperations = createDosingOperations(dependencies)
-        val timerControlOperations = DefaultDeviceTimerControlOperations(
-            dependencies.devicesRepository
-        )
-        val lightOperations = createOwnerLightOperations(
-            context = appContext,
-            ownerUid = dependencies.ownerUid,
-            devicesRepository = dependencies.devicesRepository,
-            assignmentRepository = dependencies.assignmentRepository,
-            aquariumTankStore = aquariumTankStore
-        )
+        val controls = createOwnerDeviceControlOperations(dependencies, aquariumTankStore)
         val firmwareUpdateOperations = createFirmwareUpdateOperations(dependencies)
-        val compatibilityOperations = DefaultDeviceCompatibilityOperations(
-            devicesRepository = dependencies.devicesRepository,
-            updatePlanProvider = { deviceUid ->
-                (firmwareUpdateOperations.observe(deviceUid).value as? DeviceOtaState.UpdateAvailable)
-                    ?.plan
-            }
+        val access = createDeviceAccessComposition(
+            dependencies = dependencies,
+            firmwareUpdateOperations = firmwareUpdateOperations
         )
-        val accessPolicy: DeviceAccessPolicy = DefaultDeviceAccessPolicy
-        val featureAccessOperations: DeviceFeatureAccessOperations =
-            DefaultDeviceFeatureAccessOperations(
-                compatibilityOperations = compatibilityOperations,
-                accessPolicy = accessPolicy,
-                firmwareUpdateOperations = firmwareUpdateOperations
-            )
         return OwnerDependencyGraph(
             ownerUid = dependencies.ownerUid,
             sessionGeneration = dependencies.sessionGeneration,
@@ -284,31 +276,73 @@ internal class ActiveOwnerDependencyGraphResolver(
                 aquariumTankStore = aquariumTankStore,
                 careTaskStore = careTaskStore
             ),
-            provisioningDraftOperations = DefaultProvisioningDraftOperations(
-                draftStore = AqlProvisioningDraftStore(
-                    context = appContext,
-                    ownerUidProvider = ownerUidProvider
-                ),
-                qrSecretStore = AqlProvisioningQrSecretStore(
-                    context = appContext,
-                    ownerUidProvider = ownerUidProvider
-                )
-            ),
-            compatibilityOperations = compatibilityOperations,
-            accessPolicy = accessPolicy,
-            featureAccessOperations = featureAccessOperations,
+            provisioningDraftOperations = createProvisioningDraftOperations(dependencies.ownerUid),
+            compatibilityOperations = access.compatibility,
+            accessPolicy = access.policy,
+            featureAccessOperations = access.featureAccess,
             controlSurfacePreparationOperations = createControlSurfacePreparationOperations(
                 dependencies = dependencies,
-                dosingOperations = dosingOperations,
-                timerControlOperations = timerControlOperations,
-                lightOperations = lightOperations,
-                compatibilityOperations = compatibilityOperations,
-                accessPolicy = accessPolicy
+                controls = controls,
+                access = access
             ),
-            lightOperations = lightOperations,
-            timerControlOperations = timerControlOperations,
+            lightOperations = controls.light,
+            timerControlOperations = controls.timer,
             coolingCardOperations = createCoolingCardOperations(dependencies),
-            dosingOperations = dosingOperations
+            dosingOperations = controls.dosing
+        )
+    }
+
+    private fun createOwnerDeviceControlOperations(
+        dependencies: ActiveOwnerDependencies,
+        aquariumTankStore: AquariumTankDataStoreManager
+    ): OwnerDeviceControlOperations = OwnerDeviceControlOperations(
+        dosing = createDosingOperations(dependencies),
+        timer = DefaultDeviceTimerControlOperations(dependencies.devicesRepository),
+        light = createOwnerLightOperations(
+            context = appContext,
+            ownerUid = dependencies.ownerUid,
+            devicesRepository = dependencies.devicesRepository,
+            assignmentRepository = dependencies.assignmentRepository,
+            aquariumTankStore = aquariumTankStore
+        )
+    )
+
+    private fun createDeviceAccessComposition(
+        dependencies: ActiveOwnerDependencies,
+        firmwareUpdateOperations: DeviceFirmwareUpdateOperations
+    ): DeviceAccessComposition {
+        val compatibility = DefaultDeviceCompatibilityOperations(
+            devicesRepository = dependencies.devicesRepository,
+            updatePlanProvider = { deviceUid ->
+                (firmwareUpdateOperations.observe(deviceUid).value as? DeviceOtaState.UpdateAvailable)
+                    ?.plan
+            }
+        )
+        val policy: DeviceAccessPolicy = DefaultDeviceAccessPolicy
+        return DeviceAccessComposition(
+            compatibility = compatibility,
+            policy = policy,
+            featureAccess = DefaultDeviceFeatureAccessOperations(
+                compatibilityOperations = compatibility,
+                accessPolicy = policy,
+                firmwareUpdateOperations = firmwareUpdateOperations
+            )
+        )
+    }
+
+    private fun createProvisioningDraftOperations(
+        ownerUid: String
+    ): ProvisioningDraftOperations {
+        val ownerUidProvider = { ownerUid }
+        return DefaultProvisioningDraftOperations(
+            draftStore = AqlProvisioningDraftStore(
+                context = appContext,
+                ownerUidProvider = ownerUidProvider
+            ),
+            qrSecretStore = AqlProvisioningQrSecretStore(
+                context = appContext,
+                ownerUidProvider = ownerUidProvider
+            )
         )
     }
 
@@ -353,22 +387,21 @@ internal class ActiveOwnerDependencyGraphResolver(
 
     private fun createControlSurfacePreparationOperations(
         dependencies: ActiveOwnerDependencies,
-        dosingOperations: OwnerDosingOperations,
-        timerControlOperations: DeviceTimerControlOperations,
-        lightOperations: OwnerLightOperations,
-        compatibilityOperations: DeviceCompatibilityOperations,
-        accessPolicy: DeviceAccessPolicy
+        controls: OwnerDeviceControlOperations,
+        access: DeviceAccessComposition
     ): DeviceControlSurfacePreparationOperations =
         DefaultDeviceControlSurfacePreparationOperations(
-            rootOperations = DefaultDeviceRootOperations(dependencies.devicesRepository),
-            dosingChannelOperations = dosingOperations.channelOperations,
-            coolingControlOperations = DefaultDeviceCoolingControlOperations(
-                dependencies.devicesRepository
+            dependencies = DeviceControlSurfaceDependencies(
+                rootOperations = DefaultDeviceRootOperations(dependencies.devicesRepository),
+                dosingChannelOperations = controls.dosing.channelOperations,
+                coolingControlOperations = DefaultDeviceCoolingControlOperations(
+                    dependencies.devicesRepository
+                ),
+                timerControlOperations = controls.timer,
+                lightControlOperations = controls.light.controlOperations
             ),
-            timerControlOperations = timerControlOperations,
-            lightControlOperations = lightOperations.controlOperations,
-            compatibilityOperations = compatibilityOperations,
-            accessPolicy = accessPolicy
+            compatibilityOperations = access.compatibility,
+            accessPolicy = access.policy
         )
 
     private fun createDosingOperations(
