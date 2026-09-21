@@ -120,6 +120,80 @@ class DeviceLightV1ContractTest {
     }
 
     @Test
+    fun `base Light V1 remains usable when managed plan capability is absent`() {
+        val status = DeviceLightStatusParser.parse(
+            data = DeviceLightRuntimeFixtures.baseStatus(),
+            managedAutoPlanSupported = false
+        )
+        val graph = DeviceLightMutationParser.Graph.parseGraph(
+            data = DeviceLightRuntimeFixtures.baseGraph(mode = DeviceLightMode.AUTO),
+            product = DeviceLightProduct.WRGB_PRO_ELITE,
+            managedAutoPlanSupported = false
+        )
+
+        assertEquals(0L, status.storageGeneration)
+        assertFalse(status.auto.planInstalled)
+        assertEquals(DeviceLightAutoScheduleSource.PROGRAMS, status.auto.scheduleSource)
+        assertEquals(DeviceLightManagedPlanRuntimeState.NOT_INSTALLED, status.auto.planRuntimeState)
+        assertTrue(graph.planSpans.isEmpty())
+        assertEquals(DeviceLightGraphBasis.AUTHORED_SCHEDULE, graph.basis)
+    }
+
+    @Test
+    fun `managed capability and payload shape must agree in both directions`() {
+        val baseStatusWithManagedCapability = runCatching {
+            DeviceLightStatusParser.parse(
+                data = DeviceLightRuntimeFixtures.baseStatus(),
+                managedAutoPlanSupported = true
+            )
+        }
+        val managedStatusWithoutCapability = runCatching {
+            DeviceLightStatusParser.parse(
+                data = DeviceLightRuntimeFixtures.status(),
+                managedAutoPlanSupported = false
+            )
+        }
+        val baseGraphWithManagedCapability = runCatching {
+            DeviceLightMutationParser.Graph.parseGraph(
+                data = DeviceLightRuntimeFixtures.baseGraph(mode = DeviceLightMode.AUTO),
+                product = DeviceLightProduct.WRGB_PRO_ELITE,
+                managedAutoPlanSupported = true
+            )
+        }
+        val managedGraphWithoutCapability = runCatching {
+            DeviceLightMutationParser.Graph.parseGraph(
+                data = DeviceLightRuntimeFixtures.graph(mode = DeviceLightMode.AUTO),
+                product = DeviceLightProduct.WRGB_PRO_ELITE,
+                managedAutoPlanSupported = false
+            )
+        }
+
+        assertTrue(baseStatusWithManagedCapability.isFailure)
+        assertTrue(managedStatusWithoutCapability.isFailure)
+        assertTrue(baseGraphWithManagedCapability.isFailure)
+        assertTrue(managedGraphWithoutCapability.isFailure)
+    }
+
+    @Test
+    fun `base Light V1 rejects managed plan graph semantics without capability`() {
+        val invalid = DeviceLightRuntimeFixtures.baseGraph(mode = DeviceLightMode.AUTO)
+            .put("basis", "MANAGED_PLAN")
+            .put("reason", "MANAGED_PLAN_NOT_SCHEDULED_TODAY")
+            .put("hasScheduleToday", false)
+            .put("points", JSONArray())
+
+        assertTrue(
+            runCatching {
+                DeviceLightMutationParser.Graph.parseGraph(
+                    data = invalid,
+                    product = DeviceLightProduct.WRGB_PRO_ELITE,
+                    managedAutoPlanSupported = false
+                )
+            }.isFailure
+        )
+    }
+
+    @Test
     fun `every Light V1 request serializer emits exact firmware keys and tuple width`() {
         val wrgb = DeviceLightScene.wrgb(10, 20, 30, 40)
         val rgb = DeviceLightScene.rgb(10, 20, 30)
