@@ -3,6 +3,12 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.quicksetup
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aqua.aqualight.application.devices.DefaultDeviceAccessPolicy
+import com.aqua.aqualight.application.devices.DeviceAccessDecision
+import com.aqua.aqualight.application.devices.DeviceAccessPolicy
+import com.aqua.aqualight.application.devices.DeviceCompatibilityOperations
+import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
+import com.aqua.aqualight.application.devices.DeviceRootMenuFeature
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlOperations
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightFixtureCalibration
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightManagedAutoPlanOperations
@@ -10,9 +16,12 @@ import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickS
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupContextOperations
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupRecommendationEngine
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupRecommendationResult
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
@@ -22,7 +31,9 @@ class DeviceLightQuickSetupViewModel(
     contextOperations: DeviceLightQuickSetupContextOperations,
     managedPlanOperations: DeviceLightManagedAutoPlanOperations,
     controlOperations: DeviceLightControlOperations,
-    calibration: DeviceLightFixtureCalibration
+    calibration: DeviceLightFixtureCalibration,
+    private val compatibilityOperations: DeviceCompatibilityOperations? = null,
+    private val accessPolicy: DeviceAccessPolicy = DefaultDeviceAccessPolicy
 ) : ViewModel() {
 
     private val controller = DeviceLightQuickSetupController(
@@ -34,12 +45,33 @@ class DeviceLightQuickSetupViewModel(
     private val savedState = DeviceLightQuickSetupSavedState(savedStateHandle)
     private val _uiState = MutableStateFlow(DeviceLightQuickSetupUiState())
     internal val uiState: StateFlow<DeviceLightQuickSetupUiState> = _uiState.asStateFlow()
+    private val accessFailureChannel = Channel<DeviceMenuUnavailableReason>(Channel.BUFFERED)
+    internal val accessFailures: Flow<DeviceMenuUnavailableReason> =
+        accessFailureChannel.receiveAsFlow()
     private var boundDeviceUid: String? = null
 
     fun bind(deviceUid: String) {
         if (boundDeviceUid == deviceUid) return
         boundDeviceUid = deviceUid
         _uiState.value = savedState.bindDevice(deviceUid)
+
+        val compatibility = compatibilityOperations?.current(deviceUid)
+        if (compatibility != null) {
+            when (
+                val decision = accessPolicy.evaluateFeature(
+                    compatibility = compatibility,
+                    feature = DeviceRootMenuFeature.LIGHT_QUICK_SETUP
+                )
+            ) {
+                DeviceAccessDecision.Allowed -> Unit
+                is DeviceAccessDecision.Blocked -> {
+                    _uiState.update { state -> state.copy(loading = false) }
+                    accessFailureChannel.trySend(decision.reason)
+                    return
+                }
+            }
+        }
+
         load()
     }
 
