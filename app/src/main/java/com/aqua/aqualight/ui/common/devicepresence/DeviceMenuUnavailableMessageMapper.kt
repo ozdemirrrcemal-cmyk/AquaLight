@@ -17,6 +17,10 @@ data class DeviceAccessFeedback(
 object DeviceMenuUnavailableMessageMapper {
 
     fun feedback(reason: DeviceMenuUnavailableReason): DeviceAccessFeedback = when (reason) {
+        DeviceMenuUnavailableReason.DEVICE_OFFLINE -> DeviceAccessFeedback(
+            titleRes = R.string.device_access_offline_title,
+            messageRes = R.string.device_access_offline_message
+        )
         DeviceMenuUnavailableReason.LOCAL_NETWORK_UNAVAILABLE -> DeviceAccessFeedback(
             titleRes = R.string.device_access_local_network_title,
             messageRes = R.string.device_access_local_network_message
