@@ -385,8 +385,9 @@ internal object DeviceLightV1JsonParser {
         private fun parseAutoSummaryFields(
             data: JSONObject,
             managedAutoPlanSupported: Boolean
-        ): DeviceLightAutoSummary =
-            DeviceLightAutoSummary(
+        ): DeviceLightAutoSummary {
+            val managed = parseManagedAutoSummaryFields(data, managedAutoPlanSupported)
+            return DeviceLightAutoSummary(
                 revision = data.requireLightLong(
                     "revision",
                     0,
@@ -406,63 +407,79 @@ internal object DeviceLightV1JsonParser {
                     data.requireLightText("runtimeState")
                 ),
                 activeProgramId = data.requireNullableLightText("activeProgramId"),
-                scheduleSource = if (managedAutoPlanSupported) {
-                    DeviceLightAutoScheduleSource.fromWireExact(
-                        data.requireLightText("scheduleSource")
-                    )
-                } else {
-                    DeviceLightAutoScheduleSource.PROGRAMS
-                },
-                planRevision = if (managedAutoPlanSupported) {
-                    data.requireLightLong(
-                        "planRevision",
-                        0,
-                        DeviceLightRuntimeContract.Limit.UINT32_MAX
-                    )
-                } else {
-                    0L
-                },
-                planInstalled = managedAutoPlanSupported && data.requireLightBoolean("planInstalled"),
-                planId = if (managedAutoPlanSupported) {
-                    data.requireNullableLightText("planId")
-                } else {
-                    null
-                },
-                activePlanPhaseIndex = if (managedAutoPlanSupported) {
-                    data.requireNullableLightInt(
-                        "activePlanPhaseIndex",
-                        0,
-                        DeviceLightRuntimeContract.Limit.MANAGED_PLAN_PHASE_CAPACITY - 1
-                    )
-                } else {
-                    null
-                },
-                planRuntimeState = if (managedAutoPlanSupported) {
-                    DeviceLightManagedPlanRuntimeState.fromWireExact(
-                        data.requireLightText("planRuntimeState")
-                    )
-                } else {
-                    DeviceLightManagedPlanRuntimeState.NOT_INSTALLED
-                },
-                planTransitionPermille = if (managedAutoPlanSupported) {
-                    data.requireNullableLightInt(
-                        "planTransitionPermille",
-                        DeviceLightRuntimeContract.Limit.PERMILLE_MIN,
-                        DeviceLightRuntimeContract.Limit.PERMILLE_MAX
-                    )
-                } else {
-                    null
-                },
-                nextPlanTransitionEpochDay = if (managedAutoPlanSupported) {
-                    data.requireNullableLightInt(
-                        "nextPlanTransitionEpochDay",
-                        DeviceLightRuntimeContract.Limit.MANAGED_PLAN_EPOCH_DAY_MIN,
-                        DeviceLightRuntimeContract.Limit.MANAGED_PLAN_END_EPOCH_DAY_MAX
-                    )
-                } else {
-                    null
-                }
+                scheduleSource = managed.scheduleSource,
+                planRevision = managed.planRevision,
+                planInstalled = managed.planInstalled,
+                planId = managed.planId,
+                activePlanPhaseIndex = managed.activePlanPhaseIndex,
+                planRuntimeState = managed.planRuntimeState,
+                planTransitionPermille = managed.planTransitionPermille,
+                nextPlanTransitionEpochDay = managed.nextPlanTransitionEpochDay
             )
+        }
+
+        private fun parseManagedAutoSummaryFields(
+            data: JSONObject,
+            supported: Boolean
+        ): ManagedAutoSummaryFields =
+            if (supported) parseManagedAutoSummaryFields(data) else ManagedAutoSummaryFields.BASE
+
+        private fun parseManagedAutoSummaryFields(
+            data: JSONObject
+        ): ManagedAutoSummaryFields = ManagedAutoSummaryFields(
+            scheduleSource = DeviceLightAutoScheduleSource.fromWireExact(
+                data.requireLightText("scheduleSource")
+            ),
+            planRevision = data.requireLightLong(
+                "planRevision",
+                0,
+                DeviceLightRuntimeContract.Limit.UINT32_MAX
+            ),
+            planInstalled = data.requireLightBoolean("planInstalled"),
+            planId = data.requireNullableLightText("planId"),
+            activePlanPhaseIndex = data.requireNullableLightInt(
+                "activePlanPhaseIndex",
+                0,
+                DeviceLightRuntimeContract.Limit.MANAGED_PLAN_PHASE_CAPACITY - 1
+            ),
+            planRuntimeState = DeviceLightManagedPlanRuntimeState.fromWireExact(
+                data.requireLightText("planRuntimeState")
+            ),
+            planTransitionPermille = data.requireNullableLightInt(
+                "planTransitionPermille",
+                DeviceLightRuntimeContract.Limit.PERMILLE_MIN,
+                DeviceLightRuntimeContract.Limit.PERMILLE_MAX
+            ),
+            nextPlanTransitionEpochDay = data.requireNullableLightInt(
+                "nextPlanTransitionEpochDay",
+                DeviceLightRuntimeContract.Limit.MANAGED_PLAN_EPOCH_DAY_MIN,
+                DeviceLightRuntimeContract.Limit.MANAGED_PLAN_END_EPOCH_DAY_MAX
+            )
+        )
+
+        private data class ManagedAutoSummaryFields(
+            val scheduleSource: DeviceLightAutoScheduleSource,
+            val planRevision: Long,
+            val planInstalled: Boolean,
+            val planId: String?,
+            val activePlanPhaseIndex: Int?,
+            val planRuntimeState: DeviceLightManagedPlanRuntimeState,
+            val planTransitionPermille: Int?,
+            val nextPlanTransitionEpochDay: Int?
+        ) {
+            companion object {
+                val BASE = ManagedAutoSummaryFields(
+                    scheduleSource = DeviceLightAutoScheduleSource.PROGRAMS,
+                    planRevision = 0L,
+                    planInstalled = false,
+                    planId = null,
+                    activePlanPhaseIndex = null,
+                    planRuntimeState = DeviceLightManagedPlanRuntimeState.NOT_INSTALLED,
+                    planTransitionPermille = null,
+                    nextPlanTransitionEpochDay = null
+                )
+            }
+        }
 
         private fun validateAutoSummary(result: DeviceLightAutoSummary) {
             require(result.enabledCount <= result.programCount)
