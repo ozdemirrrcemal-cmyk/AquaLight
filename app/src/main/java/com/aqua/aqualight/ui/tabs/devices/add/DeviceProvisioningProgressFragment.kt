@@ -20,6 +20,7 @@ import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceProvisioningProgressBinding
 import com.aqua.aqualight.platform.permissions.AppCapability
+import com.aqua.aqualight.ui.common.devicepresence.DeviceMenuUnavailableMessageMapper
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.permission.CapabilityPermissionCoordinator
@@ -132,10 +133,13 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
                             val baseActivity = activity as? BaseActivity
                             val navController = findNavController()
                             navController.popBackStack(R.id.devicesFragment, false)
-                            baseActivity?.showDeviceAccessDialog(
-                                deviceTitle = event.title,
-                                reason = event.reason
-                            )
+                            DeviceMenuUnavailableMessageMapper.feedback(event.reason).let { feedback ->
+                                baseActivity?.showDeviceAccessDialog(
+                                    deviceTitle = event.title,
+                                    titleRes = feedback.titleRes,
+                                    messageRes = feedback.messageRes
+                                )
+                            }
                         }
                         DeviceProvisioningProgressEvent.ExitProvisioning -> {
                             val navController = findNavController()
