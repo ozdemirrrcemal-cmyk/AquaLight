@@ -15,6 +15,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentTankDetailDevicesBinding
+import com.aqua.aqualight.ui.common.devicepresence.DeviceMenuUnavailableMessageMapper
 import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankAssignedDeviceItem
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankAssignedDevicesAdapter
@@ -200,10 +201,13 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
         event: TankDetailDevicesEvent.ShowDeviceUnavailable
     ) {
         baseActivity()?.clearGlobalLoading(TANK_DEVICE_MENU_LOADING_OWNER)
-        baseActivity()?.showDeviceAccessDialog(
-            deviceTitle = event.title,
-            reason = event.reason
-        )
+        DeviceMenuUnavailableMessageMapper.feedback(event.reason).let { feedback ->
+            baseActivity()?.showDeviceAccessDialog(
+                deviceTitle = event.title,
+                titleRes = feedback.titleRes,
+                messageRes = feedback.messageRes
+            )
+        }
     }
 
     private fun showError(
