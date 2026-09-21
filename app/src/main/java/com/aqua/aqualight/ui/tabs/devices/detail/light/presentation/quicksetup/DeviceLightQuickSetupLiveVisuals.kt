@@ -49,7 +49,7 @@ internal fun QuickSetupManagedPlanCard(
             ReviewMetricRow(
                 stringResource(R.string.device_light_quick_setup_transition_label),
                 managed.transitionPermille?.let { value ->
-                    stringResource(R.string.device_light_quick_setup_transition_percent, value / DeviceLightQuickSetupGeometry.transitionPermillePerPercent)
+                    stringResource(R.string.device_light_quick_setup_transition_percent, value / 10f)
                 } ?: stringResource(R.string.device_light_quick_setup_not_available)
             )
             ReviewMetricRow(

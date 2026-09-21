@@ -206,7 +206,7 @@ internal fun QuickSetupSwitchRow(
                             x = if (checked) {
                                 DeviceLightQuickSetupGeometry.switchWidth -
                                     DeviceLightQuickSetupGeometry.switchThumbSize -
-                                    DeviceLightQuickSetupGeometry.switchInset + DeviceLightQuickSetupGeometry.switchInset
+                                    DeviceLightQuickSetupGeometry.switchInset * 2
                             } else {
                                 0.dp
                             }
@@ -220,7 +220,7 @@ internal fun QuickSetupSwitchRow(
 }
 
 @Composable
-internal fun QuickSetupErrorBanner(\n    reason: DeviceLightQuickSetupBlockReason\n) {
+internal fun QuickSetupErrorBanner(reason: com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupBlockReason) {
     val colors = aquaGuidedFlowColors()
     val typography = aquaGuidedFlowTypography(colors)
     val shape = androidx.compose.foundation.shape.RoundedCornerShape(AquaGuidedFlowGeometry.controlRadius)
@@ -289,4 +289,4 @@ internal fun QuickSetupInfoCard(text: String) {
 
 
 private const val TIME_STEP = 5
-private const val LAST_TIME_STEP = QUICK_SETUP_MINUTES_PER_DAY - TIME_STEP
+private const val LAST_TIME_STEP = 23 * 60 + 55

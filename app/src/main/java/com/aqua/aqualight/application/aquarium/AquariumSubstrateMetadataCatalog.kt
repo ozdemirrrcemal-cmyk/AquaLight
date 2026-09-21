@@ -16,84 +16,96 @@ object AquariumSubstrateMetadataCatalog {
     )
 
     private val records: Map<String, Record> = listOf(
-        "substrate_chihiros_aquasoil_9l".verified(
+        verified(
+            "substrate_chihiros_aquasoil_9l",
             AquariumMaterialCategoryKeys.SUBSTRATE,
             AquariumSubstrateSemantic.ACTIVE_SOIL,
             "Chihiros Aquatic Studio",
             "chihiros_aqua_soil_launch",
             "https://www.facebook.com/chihirosaquatic/posts/606277074868748/"
         ),
-        "substrate_chihiros_aquasoil_3l".verified(
+        verified(
+            "substrate_chihiros_aquasoil_3l",
             AquariumMaterialCategoryKeys.SUBSTRATE,
             AquariumSubstrateSemantic.ACTIVE_SOIL,
             "Chihiros Aquatic Studio",
             "chihiros_aqua_soil_launch",
             "https://www.facebook.com/chihirosaquatic/posts/606277074868748/"
         ),
-        "substrate_ada_tourmaline_bc".verified(
+        verified(
+            "substrate_ada_tourmaline_bc",
             AquariumMaterialCategoryKeys.SUBSTRATE,
             AquariumSubstrateSemantic.ADDITIVE,
             "Aqua Design Amano",
             "ada_tourmaline_bc",
             "https://www.adana.co.jp/en/contents/products/na_substrate/detail05.html"
         ),
-        "substrate_dennerle_deponitmix_4_8kg".verified(
+        verified(
+            "substrate_dennerle_deponitmix_4_8kg",
             AquariumMaterialCategoryKeys.SUBSTRATE,
             AquariumSubstrateSemantic.NUTRIENT_BASE,
             "Dennerle",
             "dennerle_deponit_mix_pro",
             "https://dennerle.com/en/products/deponit-mix-pro"
         ),
-        "gravel_ada_aqua_gravel_s".verified(
+        verified(
+            "gravel_ada_aqua_gravel_s",
             AquariumMaterialCategoryKeys.GRAVEL,
             AquariumSubstrateSemantic.INERT,
             "Aqua Design Amano",
             "ada_aqua_gravel",
             "https://www.adana.co.jp/en/contents/products/na_substrate/detail04.html"
         ),
-        "gravel_ada_aqua_gravel_m".verified(
+        verified(
+            "gravel_ada_aqua_gravel_m",
             AquariumMaterialCategoryKeys.GRAVEL,
             AquariumSubstrateSemantic.INERT,
             "Aqua Design Amano",
             "ada_aqua_gravel",
             "https://www.adana.co.jp/en/contents/products/na_substrate/detail04.html"
         ),
-        "gravel_dennerle_nano_gravel_black".verified(
+        verified(
+            "gravel_dennerle_nano_gravel_black",
             AquariumMaterialCategoryKeys.GRAVEL,
             AquariumSubstrateSemantic.INERT,
             "Dennerle",
             "dennerle_nano_shrimp_gravel",
             "https://dennerle.com/en/products/nano-shrimp-gravel"
         ),
-        "gravel_dennerle_nano_gravel_natural".verified(
+        verified(
+            "gravel_dennerle_nano_gravel_natural",
             AquariumMaterialCategoryKeys.GRAVEL,
             AquariumSubstrateSemantic.INERT,
             "Dennerle",
             "dennerle_nano_shrimp_gravel",
             "https://dennerle.com/en/products/nano-shrimp-gravel"
         ),
-        "gravel_jbl_sansibar_dark".verified(
+        verified(
+            "gravel_jbl_sansibar_dark",
             AquariumMaterialCategoryKeys.GRAVEL,
             AquariumSubstrateSemantic.INERT,
             "JBL",
             "jbl_sansibar_dark",
             JBL_SUBSTRATE_GUIDE_URL
         ),
-        "gravel_jbl_sansibar_white".verified(
+        verified(
+            "gravel_jbl_sansibar_white",
             AquariumMaterialCategoryKeys.GRAVEL,
             AquariumSubstrateSemantic.INERT,
             "JBL",
             "jbl_sansibar_white",
             JBL_SUBSTRATE_GUIDE_URL
         ),
-        "gravel_aquael_basaltsand".verified(
+        verified(
+            "gravel_aquael_basaltsand",
             AquariumMaterialCategoryKeys.GRAVEL,
             AquariumSubstrateSemantic.INERT,
             "Aquael",
             "aquael_basalt_gravel",
             "https://www.aquael.com/products/aquaristics/substrates-gravels/bazaltowe/"
         ),
-        un"gravel_natural_river_sand".verified(
+        unverified(
+            "gravel_natural_river_sand",
             AquariumMaterialCategoryKeys.GRAVEL,
             "generic_natural_river_sand"
         )
@@ -123,13 +135,14 @@ object AquariumSubstrateMetadataCatalog {
         return metadata(productId, categoryKey)?.semantic ?: AquariumSubstrateSemantic.UNKNOWN
     }
 
-    private fun String.verified(
+    private fun verified(
+        productId: String,
         categoryKey: String,
         semantic: AquariumSubstrateSemantic,
         sourceOrganization: String,
         sourceRecordId: String,
         sourceUrl: String
-    ): Pair<String, Record> = this to Record(
+    ): Pair<String, Record> = productId to Record(
         categoryKey = categoryKey,
         metadata = AquariumSubstrateProductMetadata(
             semantic = semantic,

@@ -213,12 +213,12 @@ private fun QuickSetupTimingMetrics(
         stringResource(R.string.device_light_quick_setup_photoperiod_label),
         stringResource(
             R.string.device_light_quick_setup_hours_decimal,
-            (phase.endMinuteOfDay - phase.startMinuteOfDay) /\n                QUICK_SETUP_MINUTES_PER_HOUR.toFloat()
+            (phase.endMinuteOfDay - phase.startMinuteOfDay) / 60f
         )
     )
     ReviewMetricRow(
         stringResource(R.string.device_light_quick_setup_mature_duration_label),
-        stringResource(\n            R.string.device_light_quick_setup_hours_decimal,\n            DeviceLightQuickSetupGeometry.maturePhotoperiodHours\n        )
+        stringResource(R.string.device_light_quick_setup_hours_decimal, 8f)
     )
 }
 
@@ -334,7 +334,7 @@ private fun QuickSetupChannelScene(recommendation: DeviceLightQuickSetupRecommen
                     ) {
                         Box(
                             Modifier
-                                .fillMaxWidth(value / DeviceLightQuickSetupGeometry.percentageScale)
+                                .fillMaxWidth(value / 100f)
                                 .height(DeviceLightQuickSetupGeometry.channelTrackHeight)
                                 .background(
                                     channelColor,

@@ -159,7 +159,7 @@ internal fun QuickSetupProfileCard(
                     BasicText(
                         text = value,
                         style = typography.body,
-                        modifier = Modifier.weight(DeviceLightQuickSetupGeometry.profileValueWeight)
+                        modifier = Modifier.weight(1.15f)
                     )
                 }
             }

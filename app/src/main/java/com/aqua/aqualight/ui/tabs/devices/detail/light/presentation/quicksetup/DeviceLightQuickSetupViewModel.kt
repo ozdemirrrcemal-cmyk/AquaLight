@@ -66,11 +66,7 @@ class DeviceLightQuickSetupViewModel(
                 _uiState.update { it.copy(co2Precharged = action.enabled, blockReason = null) }
             }
             DeviceLightQuickSetupAction.Next -> advance()
-            DeviceLightQuickSetupAction.Back -> {
-                val previous = previousState(_uiState.value)
-                savedState.persistStage(previous.stage)
-                _uiState.value = previous
-            }
+            DeviceLightQuickSetupAction.Back -> goBack()
             DeviceLightQuickSetupAction.Apply -> applyRecommendation()
             DeviceLightQuickSetupAction.Retry -> load()
             DeviceLightQuickSetupAction.Edit -> moveTo(DeviceLightQuickSetupStage.WATER_HEIGHT)
@@ -115,134 +111,134 @@ class DeviceLightQuickSetupViewModel(
     }
 
     private fun advance() {
-        when (val decision = resolveAdvanceDecision(_uiState.value)) {
-            is QuickSetupAdvanceDecision.MoveTo -> moveTo(decision.stage)
-            QuickSetupAdvanceDecision.Calculate -> calculateRecommendation()
-            QuickSetupAdvanceDecision.InvalidInput -> _uiState.update {
-                it.copy(blockReason = DeviceLightQuickSetupBlockReason.INVALID_INPUT)
+        val state = _uiState.value
+        val context = state.context ?: return
+        when (state.stage) {
+            DeviceLightQuickSetupStage.PROFILE -> moveTo(DeviceLightQuickSetupStage.WATER_HEIGHT)
+            DeviceLightQuickSetupStage.WATER_HEIGHT -> {
+                val water = state.waterHeightText.toIntOrNull()
+                if (water != null && water > 0 && water <= context.tankHeightCm) {
+                    moveTo(DeviceLightQuickSetupStage.FIXTURE_HEIGHT)
+                } else {
+                    showInvalidInput()
+                }
             }
-            QuickSetupAdvanceDecision.NoOp -> Unit
+            DeviceLightQuickSetupStage.FIXTURE_HEIGHT -> {
+                val fixture = state.fixtureHeightText.toIntOrNull()
+                if (fixture != null && fixture >= 0) {
+                    moveTo(DeviceLightQuickSetupStage.LIGHT_TIME)
+                } else {
+                    showInvalidInput()
+                }
+            }
+            DeviceLightQuickSetupStage.LIGHT_TIME -> {
+                if (validFirstLightTime(state.firstLightOnMinuteOfDay)) {
+                    if (context.co2Present) {
+                        moveTo(DeviceLightQuickSetupStage.CO2_CONFIRMATION)
+                    } else {
+                        calculateRecommendation()
+                    }
+                } else {
+                    showInvalidInput()
+                }
+            }
+            DeviceLightQuickSetupStage.CO2_CONFIRMATION -> calculateRecommendation()
+            else -> Unit
         }
     }
 
     private fun calculateRecommendation() {
         val state = _uiState.value
-        val context = state.context
-        val input = state.toInputOrNull()
-        if (context != null && input != null) {
-            _uiState.update {
-                it.copy(stage = DeviceLightQuickSetupStage.CALCULATING, blockReason = null)
-            }
-            viewModelScope.launch {
-                yield()
-                when (val result = engine.recommend(context, input)) {
-                    is DeviceLightQuickSetupRecommendationResult.Available -> {
-                        savedState.persistStage(DeviceLightQuickSetupStage.REVIEW)
-                        _uiState.update {
-                            it.copy(
-                                stage = DeviceLightQuickSetupStage.REVIEW,
-                                recommendation = result.recommendation,
-                                blockReason = null,
-                                reviewRequiredAfterStale = false
-                            )
-                        }
-                    }
-                    is DeviceLightQuickSetupRecommendationResult.Blocked -> {
-                        val fallbackStage = if (context.co2Present) {
-                            DeviceLightQuickSetupStage.CO2_CONFIRMATION
-                        } else {
-                            DeviceLightQuickSetupStage.LIGHT_TIME
-                        }
-                        savedState.persistStage(fallbackStage)
-                        _uiState.update {
-                            it.copy(stage = fallbackStage, blockReason = result.reason)
-                        }
+        val context = state.context ?: return
+        val input = state.toInputOrNull() ?: return showInvalidInput()
+        _uiState.update {
+            it.copy(stage = DeviceLightQuickSetupStage.CALCULATING, blockReason = null)
+        }
+        viewModelScope.launch {
+            yield()
+            when (val result = engine.recommend(context, input)) {
+                is DeviceLightQuickSetupRecommendationResult.Available -> {
+                    savedState.persistStage(DeviceLightQuickSetupStage.REVIEW)
+                    _uiState.update {
+                        it.copy(
+                            stage = DeviceLightQuickSetupStage.REVIEW,
+                            recommendation = result.recommendation,
+                            blockReason = null,
+                            reviewRequiredAfterStale = false
+                        )
                     }
                 }
-            }
-        } else {
-            _uiState.update {
-                it.copy(blockReason = DeviceLightQuickSetupBlockReason.INVALID_INPUT)
+                is DeviceLightQuickSetupRecommendationResult.Blocked -> {
+                    val fallbackStage = if (context.co2Present) {
+                        DeviceLightQuickSetupStage.CO2_CONFIRMATION
+                    } else {
+                        DeviceLightQuickSetupStage.LIGHT_TIME
+                    }
+                    savedState.persistStage(fallbackStage)
+                    _uiState.update {
+                        it.copy(stage = fallbackStage, blockReason = result.reason)
+                    }
+                }
             }
         }
     }
 
     private fun applyRecommendation() {
         val state = _uiState.value
-        val context = state.context
-        val recommendation = state.recommendation
-        val ready = state.stage == DeviceLightQuickSetupStage.REVIEW &&
-            context != null &&
-            recommendation != null
-        if (ready) {
-            _uiState.update {
-                it.copy(stage = DeviceLightQuickSetupStage.APPLYING, blockReason = null)
-            }
-            viewModelScope.launch {
-                handleApplyResult(
-                    controller.apply(
-                        deviceUid = state.deviceUid,
-                        context = checkNotNull(context),
-                        recommendation = checkNotNull(recommendation)
+        if (state.stage != DeviceLightQuickSetupStage.REVIEW) return
+        val context = state.context ?: return
+        val recommendation = state.recommendation ?: return
+        _uiState.update { it.copy(stage = DeviceLightQuickSetupStage.APPLYING, blockReason = null) }
+        viewModelScope.launch {
+            when (val result = controller.apply(state.deviceUid, context, recommendation)) {
+                is DeviceLightQuickSetupApplyResult.Applied -> _uiState.update {
+                    it.copy(
+                        stage = DeviceLightQuickSetupStage.LIVE,
+                        managedPlan = result.managedPlan,
+                        livePlan = result.livePlan,
+                        blockReason = null,
+                        reviewRequiredAfterStale = false
                     )
-                )
-            }
-        }
-    }
-
-    private fun handleApplyResult(result: DeviceLightQuickSetupApplyResult) {
-        when (result) {
-            is DeviceLightQuickSetupApplyResult.Applied -> _uiState.update {
-                it.copy(
-                    stage = DeviceLightQuickSetupStage.LIVE,
-                    managedPlan = result.managedPlan,
-                    livePlan = result.livePlan,
-                    blockReason = null,
-                    reviewRequiredAfterStale = false
-                )
-            }
-            is DeviceLightQuickSetupApplyResult.ContextChanged ->
-                acceptChangedContext(result)
-            is DeviceLightQuickSetupApplyResult.Stale -> {
-                savedState.persistStage(DeviceLightQuickSetupStage.REVIEW)
-                _uiState.update {
+                }
+                is DeviceLightQuickSetupApplyResult.ContextChanged -> {
+                    savedState.persistStage(DeviceLightQuickSetupStage.REVIEW)
+                    val input = _uiState.value.toInputOrNull()
+                    val rebuilt = if (input == null) null else engine.recommend(result.context, input)
+                    _uiState.update {
+                        it.copy(
+                            context = result.context,
+                            plantProfile = result.plantProfile,
+                            recommendation = (rebuilt as? DeviceLightQuickSetupRecommendationResult.Available)
+                                ?.recommendation,
+                            stage = DeviceLightQuickSetupStage.REVIEW,
+                            blockReason = if (rebuilt is DeviceLightQuickSetupRecommendationResult.Available) {
+                                DeviceLightQuickSetupBlockReason.STALE_CONTEXT
+                            } else {
+                                (rebuilt as? DeviceLightQuickSetupRecommendationResult.Blocked)?.reason
+                                    ?: DeviceLightQuickSetupBlockReason.STALE_CONTEXT
+                            },
+                            reviewRequiredAfterStale = true
+                        )
+                    }
+                }
+                is DeviceLightQuickSetupApplyResult.Stale -> {
+                    savedState.persistStage(DeviceLightQuickSetupStage.REVIEW)
+                    _uiState.update {
                     it.copy(
                         stage = DeviceLightQuickSetupStage.REVIEW,
                         managedPlan = result.latest,
                         blockReason = DeviceLightQuickSetupBlockReason.STALE_CONTEXT,
                         reviewRequiredAfterStale = true
-                    )
+                        )
+                    }
+                }
+                is DeviceLightQuickSetupApplyResult.Failed -> {
+                    savedState.persistStage(DeviceLightQuickSetupStage.REVIEW)
+                    _uiState.update {
+                        it.copy(stage = DeviceLightQuickSetupStage.REVIEW, blockReason = result.reason)
+                    }
                 }
             }
-            is DeviceLightQuickSetupApplyResult.Failed -> {
-                savedState.persistStage(DeviceLightQuickSetupStage.REVIEW)
-                _uiState.update {
-                    it.copy(
-                        stage = DeviceLightQuickSetupStage.REVIEW,
-                        blockReason = result.reason
-                    )
-                }
-            }
-        }
-    }
-
-    private fun acceptChangedContext(result: DeviceLightQuickSetupApplyResult.ContextChanged) {
-        savedState.persistStage(DeviceLightQuickSetupStage.REVIEW)
-        val input = _uiState.value.toInputOrNull()
-        val rebuilt = input?.let { engine.recommend(result.context, it) }
-        _uiState.update {
-            it.copy(
-                context = result.context,
-                plantProfile = result.plantProfile,
-                recommendation = (rebuilt as? DeviceLightQuickSetupRecommendationResult.Available)
-                    ?.recommendation,
-                stage = DeviceLightQuickSetupStage.REVIEW,
-                blockReason = when (rebuilt) {
-                    is DeviceLightQuickSetupRecommendationResult.Blocked -> rebuilt.reason
-                    else -> DeviceLightQuickSetupBlockReason.STALE_CONTEXT
-                },
-                reviewRequiredAfterStale = true
-            )
         }
     }
 
@@ -285,49 +281,14 @@ class DeviceLightQuickSetupViewModel(
         _uiState.update { it.copy(stage = stage, blockReason = null) }
     }
 
-}
+    private fun goBack() {
+        val previous = previousState(_uiState.value)
+        savedState.persistStage(previous.stage)
+        _uiState.value = previous
+    }
 
-private sealed interface QuickSetupAdvanceDecision {
-    data class MoveTo(val stage: DeviceLightQuickSetupStage) : QuickSetupAdvanceDecision
-    data object Calculate : QuickSetupAdvanceDecision
-    data object InvalidInput : QuickSetupAdvanceDecision
-    data object NoOp : QuickSetupAdvanceDecision
-}
-
-private fun resolveAdvanceDecision(
-    state: DeviceLightQuickSetupUiState
-): QuickSetupAdvanceDecision {
-    val context = state.context
-    return when {
-        context == null -> QuickSetupAdvanceDecision.NoOp
-        state.stage == DeviceLightQuickSetupStage.PROFILE ->
-            QuickSetupAdvanceDecision.MoveTo(DeviceLightQuickSetupStage.WATER_HEIGHT)
-        state.stage == DeviceLightQuickSetupStage.WATER_HEIGHT -> {
-            val water = state.waterHeightText.toIntOrNull()
-            if (water != null && water > 0 && water <= context.tankHeightCm) {
-                QuickSetupAdvanceDecision.MoveTo(DeviceLightQuickSetupStage.FIXTURE_HEIGHT)
-            } else {
-                QuickSetupAdvanceDecision.InvalidInput
-            }
-        }
-        state.stage == DeviceLightQuickSetupStage.FIXTURE_HEIGHT -> {
-            val fixture = state.fixtureHeightText.toIntOrNull()
-            if (fixture != null && fixture >= 0) {
-                QuickSetupAdvanceDecision.MoveTo(DeviceLightQuickSetupStage.LIGHT_TIME)
-            } else {
-                QuickSetupAdvanceDecision.InvalidInput
-            }
-        }
-        state.stage == DeviceLightQuickSetupStage.LIGHT_TIME -> when {
-            !validFirstLightTime(state.firstLightOnMinuteOfDay) ->
-                QuickSetupAdvanceDecision.InvalidInput
-            context.co2Present ->
-                QuickSetupAdvanceDecision.MoveTo(DeviceLightQuickSetupStage.CO2_CONFIRMATION)
-            else -> QuickSetupAdvanceDecision.Calculate
-        }
-        state.stage == DeviceLightQuickSetupStage.CO2_CONFIRMATION ->
-            QuickSetupAdvanceDecision.Calculate
-        else -> QuickSetupAdvanceDecision.NoOp
+    private fun showInvalidInput() {
+        _uiState.update { it.copy(blockReason = DeviceLightQuickSetupBlockReason.INVALID_INPUT) }
     }
 }
 
