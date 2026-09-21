@@ -8,8 +8,23 @@ import com.aqua.aqualight.data.devices.model.DeviceFamily
 
 internal object DeviceRootMenuFeatureResolver {
 
-    fun resolve(product: AqlCommercialCatalogProduct): Set<DeviceRootMenuFeature> {
-        val support = MenuSupport(product)
+    fun resolve(product: AqlCommercialCatalogProduct): Set<DeviceRootMenuFeature> =
+        resolve(
+            product = product,
+            features = product.profile.supportedFeatures,
+            screens = product.profile.supportedScreens
+        )
+
+    /**
+     * Runtime projection. Product identity/hardware comes from the commercial catalog while
+     * optional feature/screen availability comes from the authenticated device generation.
+     */
+    fun resolve(
+        product: AqlCommercialCatalogProduct,
+        features: Set<AqlDeviceFeatureKey>,
+        screens: Set<AqlDeviceScreenKey>
+    ): Set<DeviceRootMenuFeature> {
+        val support = MenuSupport(product, features, screens)
         return when (product.family) {
             DeviceFamily.LIGHT -> support.resolveLight()
             DeviceFamily.TIMER -> support.resolveTimer()
@@ -20,11 +35,11 @@ internal object DeviceRootMenuFeatureResolver {
     }
 
     private class MenuSupport(
-        product: AqlCommercialCatalogProduct
+        product: AqlCommercialCatalogProduct,
+        private val features: Set<AqlDeviceFeatureKey>,
+        private val screens: Set<AqlDeviceScreenKey>
     ) {
         private val capabilities = product.profile.capabilities
-        private val features = product.profile.supportedFeatures
-        private val screens = product.profile.supportedScreens
         private val limits = product.limits
 
         private val hasLightHardware = capabilities.light && limits.lightChannelCount > 0
