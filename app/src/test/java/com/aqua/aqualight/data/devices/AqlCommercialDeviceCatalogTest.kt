@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.devices
 
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
+import com.aqua.aqualight.application.devices.DeviceRootMenuFeature
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.data.devices.catalog.AqlCommercialCatalogFailureCode
 import com.aqua.aqualight.data.devices.catalog.AqlCommercialCatalogProduct
@@ -102,20 +103,21 @@ class AqlCommercialDeviceCatalogTest {
     }
 
     @Test
-    fun `unknown snapshot feature withdraws root family menus and routes`() {
+    fun `unknown additive snapshot feature is ignored without invalidating base family`() {
         val snapshot = product("DOSING_DOSE_PRO_2").toSnapshot().copy(
             supportedFeatures = listOf("DOSING_CONTROL", "LEGACY_DOSING_ALIAS")
         )
 
         val root = snapshot.toDeviceRootSnapshot()
 
-        assertEquals(DeviceRootCatalogState.INVALID, root.catalogState)
-        assertEquals(OwnerDeviceFamily.UNKNOWN, root.family)
-        assertTrue(root.menuFeatures.isEmpty())
-        assertTrue(root.allowedRoutes.isEmpty())
-        assertTrue(root.capabilities.isEmpty())
-        assertEquals("", root.productKey)
-        assertEquals("", root.firmwareLabel)
+        assertEquals(DeviceRootCatalogState.VALID, root.catalogState)
+        assertEquals(OwnerDeviceFamily.DOSING, root.family)
+        assertTrue(DeviceRootMenuFeature.DOSING_CHANNELS in root.menuFeatures)
+        assertTrue(DeviceRootMenuFeature.DOSING_CALIBRATION !in root.menuFeatures)
+        assertTrue(root.allowedRoutes.isNotEmpty())
+        assertTrue(root.capabilities.isNotEmpty())
+        assertEquals("DOSING_DOSE_PRO_2", root.productKey)
+        assertEquals("6.0.0", root.firmwareLabel)
     }
 
     private fun product(productKey: String): AqlCommercialCatalogProduct =
