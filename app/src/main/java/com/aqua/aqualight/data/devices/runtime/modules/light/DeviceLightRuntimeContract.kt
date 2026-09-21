@@ -3,7 +3,7 @@ package com.aqua.aqualight.data.devices.runtime.modules.light
 /** Exact, case-sensitive Android mirror of the firmware Light V1 wire surface. */
 object DeviceLightRuntimeContract {
     const val FIRMWARE_REPOSITORY = "ozdemirrrcemal-cmyk/AquaLight-Firmware"
-    const val PINNED_FIRMWARE_COMMIT = "99aca74d3c2ae99e85584893822c0a63fe50bcd8"
+    const val PINNED_FIRMWARE_COMMIT = "ae33ed602a48f85f4c9b030442d53cab7d658c84"
     const val CUSTOM_DAY_PREVIEW_FIRMWARE_BRANCH = "feature/light-mode-custom-day-preview"
     const val CUSTOM_DAY_PREVIEW_FIRMWARE_COMMIT = "8b0f19bcf135d9450627a84582098add54524379"
     const val MODULE = "light"
