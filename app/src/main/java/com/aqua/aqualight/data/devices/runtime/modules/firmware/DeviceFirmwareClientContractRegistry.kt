@@ -20,40 +20,30 @@ internal object DeviceFirmwareClientContractRegistry {
     fun validate(
         artifact: DeviceFirmwareManifestArtifact
     ) {
-        val contracts = artifact.contracts
-        val family = artifact.product.family
-        if (contracts.wsSchema != AqlWsContract.SCHEMA) {
-            throw DeviceFirmwareClientIncompatibleException(
-                "Target firmware WebSocket schema requires a newer AquaLight app."
-            )
-        }
-        if (contracts.wsProtocolVersion != AqlWsContract.PROTOCOL_VERSION) {
-            throw DeviceFirmwareClientIncompatibleException(
-                "Target firmware WebSocket protocol requires a newer AquaLight app."
-            )
-        }
-        if (contracts.deviceApiVersion != SUPPORTED_DEVICE_API_VERSION) {
-            throw DeviceFirmwareClientIncompatibleException(
-                "Target firmware Device API requires a newer AquaLight app."
-            )
-        }
+        val reason = incompatibilityReason(artifact)
+        if (reason != null) throw DeviceFirmwareClientIncompatibleException(reason)
+    }
 
-        val familyContracts = FAMILY_CONTRACTS[family]
-            ?: throw DeviceFirmwareClientIncompatibleException(
+    private fun incompatibilityReason(
+        artifact: DeviceFirmwareManifestArtifact
+    ): String? {
+        val contracts = artifact.contracts
+        val familyContracts = FAMILY_CONTRACTS[artifact.product.family]
+        return when {
+            contracts.wsSchema != AqlWsContract.SCHEMA ->
+                "Target firmware WebSocket schema requires a newer AquaLight app."
+            contracts.wsProtocolVersion != AqlWsContract.PROTOCOL_VERSION ->
+                "Target firmware WebSocket protocol requires a newer AquaLight app."
+            contracts.deviceApiVersion != SUPPORTED_DEVICE_API_VERSION ->
+                "Target firmware Device API requires a newer AquaLight app."
+            familyContracts == null ->
                 "Target firmware family is not supported by this AquaLight app."
-            )
-        if (contracts.requiredDomains != setOf(familyContracts.base)) {
-            throw DeviceFirmwareClientIncompatibleException(
+            contracts.requiredDomains != setOf(familyContracts.base) ->
                 "Target firmware base domain contract requires a newer AquaLight app."
-            )
-        }
-        if (familyContracts.baseFeature !in artifact.features) {
-            throw DeviceFirmwareClientIncompatibleException(
+            familyContracts.baseFeature !in artifact.features ->
                 "Target firmware does not advertise the required base control feature."
-            )
+            else -> null
         }
-        // optionalDomains are additive by definition. An older app may ignore an unknown optional
-        // domain as long as transport, device API and the one required family domain stay compatible.
     }
 
     private data class FamilyContracts(
