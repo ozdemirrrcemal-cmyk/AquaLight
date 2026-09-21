@@ -8,15 +8,11 @@ import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightFixtur
  * Production fixture-calibration boundary.
  *
  * AquaLight Quick Setup must never synthesize optical output from percentages, another brand's PAR
- * chart, or a development fallback. Until measured AquaLight calibration records are committed,
- * every request fails closed and the recommendation engine reports missing calibration.
+ * chart, or a fallback profile. Until measured AquaLight calibration records are committed, every
+ * request fails closed and the recommendation engine reports missing calibration.
  */
 internal class DefaultDeviceLightFixtureCalibration : DeviceLightFixtureCalibration {
     override fun solve(
         request: DeviceLightFixtureCalibrationRequest
-    ): DeviceLightFixtureCalibrationResult? {
-        @Suppress("UNUSED_VARIABLE")
-        val validatedRequest = request
-        return null
-    }
+    ): DeviceLightFixtureCalibrationResult? = null
 }
