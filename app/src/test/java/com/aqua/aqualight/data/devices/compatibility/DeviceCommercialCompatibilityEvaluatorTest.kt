@@ -63,11 +63,11 @@ class DeviceCommercialCompatibilityEvaluatorTest {
     }
 
     @Test
-    fun `missing optional light quick setup does not invalidate Light root`() {
+    fun `old Light without managed plan keeps base root while Quick Setup stays unavailable`() {
         val product = product("LIGHT_WRGB_PRO_ELITE")
         val snapshot = product.toSnapshot().copy(
             supportedFeatures = product.profile.supportedFeatures
-                .filterNot { feature -> feature == AqlDeviceFeatureKey.LIGHT_QUICK_SETUP }
+                .filterNot { feature -> feature == AqlDeviceFeatureKey.LIGHT_MANAGED_AUTO_PLAN }
                 .map { feature -> feature.wireValue }
         )
 
