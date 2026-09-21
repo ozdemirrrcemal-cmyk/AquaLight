@@ -118,7 +118,7 @@ class DefaultDeviceMenuAccessOperationsTest {
         val result = operations.resolve(snapshot.deviceUid.value)
 
         val unavailable = result as DeviceMenuAccessResult.Unavailable
-        assertEquals(DeviceMenuUnavailableReason.DEVICE_UNRESPONSIVE, unavailable.reason)
+        assertEquals(DeviceMenuUnavailableReason.DEVICE_OFFLINE, unavailable.reason)
         assertEquals(startedAt, testScheduler.currentTime)
         assertEquals(0, port.connectCalls)
         assertEquals(0, port.refreshNowCalls)
