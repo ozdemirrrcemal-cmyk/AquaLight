@@ -903,7 +903,8 @@ private fun DeviceFirmwareUpdatePlan.toApplicationPlan(): PreparedDeviceFirmware
         runtimeMetadataGeneration = runtimeMetadataGeneration,
         manifestTag = manifestTag,
         releaseContent = releaseContent,
-        updatePolicy = updatePolicy
+        updatePolicy = updatePolicy,
+        targetFeatures = targetFeatures
     )
 
 private fun PreparedDeviceFirmwareUpdate.toSelectedPlan(): DeviceOtaCoordinator.SelectedPlan =
@@ -942,7 +943,8 @@ private fun PreparedDeviceFirmwareUpdate.toSelectedPlan(): DeviceOtaCoordinator.
             runtimeMetadataGeneration = runtimeMetadataGeneration,
             manifestTag = manifestTag,
             releaseContent = releaseContent,
-            updatePolicy = updatePolicy
+            updatePolicy = updatePolicy,
+            targetFeatures = targetFeatures
         ),
         applicationPlan = this
     )
