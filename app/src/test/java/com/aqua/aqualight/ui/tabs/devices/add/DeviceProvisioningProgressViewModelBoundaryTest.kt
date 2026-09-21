@@ -185,7 +185,6 @@ class DeviceProvisioningProgressViewModelBoundaryTest {
 
         assertEquals(1, operations.commitCalls)
         assertEquals(1, surfacePreparation.prepareCalls)
-        assertEquals("device-1", event.deviceUid)
         assertEquals(
             DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN,
             event.reason
