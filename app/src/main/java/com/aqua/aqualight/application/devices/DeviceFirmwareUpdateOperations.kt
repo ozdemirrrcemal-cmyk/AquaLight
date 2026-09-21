@@ -287,6 +287,33 @@ sealed interface DeviceOtaState {
     ) : DeviceOtaState
 }
 
+enum class DeviceFirmwareUpdatePolicyLevel {
+    OPTIONAL,
+    RECOMMENDED,
+    FEATURE_REQUIRED,
+    COMPATIBILITY_REQUIRED
+}
+
+data class DeviceFirmwareUpdatePolicy(
+    val level: DeviceFirmwareUpdatePolicyLevel = DeviceFirmwareUpdatePolicyLevel.RECOMMENDED,
+    val requiredFeatures: Set<String> = emptySet()
+) {
+    init {
+        require(
+            if (level == DeviceFirmwareUpdatePolicyLevel.FEATURE_REQUIRED) {
+                requiredFeatures.isNotEmpty()
+            } else {
+                requiredFeatures.isEmpty()
+            }
+        ) {
+            "Only FEATURE_REQUIRED policy may carry required feature tokens."
+        }
+    }
+
+    val blocksBaseControls: Boolean
+        get() = level == DeviceFirmwareUpdatePolicyLevel.COMPATIBILITY_REQUIRED
+}
+
 data class PreparedDeviceFirmwareUpdate(
     val deviceUid: String,
     val currentVersion: String,
