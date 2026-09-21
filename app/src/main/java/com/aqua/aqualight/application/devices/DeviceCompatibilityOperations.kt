@@ -15,6 +15,7 @@ data class DeviceCompatibilitySnapshot(
     val family: OwnerDeviceFamily = OwnerDeviceFamily.UNKNOWN,
     val status: DeviceCompatibilityStatus,
     val menuFeatures: Set<DeviceRootMenuFeature> = emptySet(),
+    val firmwareUpdateRequiredFeatures: Set<DeviceRootMenuFeature> = emptySet(),
     val allowedRoutes: Set<DeviceRootRoute> = emptySet()
 )
 
@@ -60,10 +61,11 @@ object DefaultDeviceAccessPolicy : DeviceAccessPolicy {
     ): DeviceAccessDecision {
         val rootDecision = evaluateRoot(compatibility)
         if (rootDecision !is DeviceAccessDecision.Allowed) return rootDecision
-        return if (feature in compatibility.menuFeatures) {
-            DeviceAccessDecision.Allowed
-        } else {
-            DeviceAccessDecision.Blocked(DeviceMenuUnavailableReason.FEATURE_UNAVAILABLE)
+        return when {
+            feature in compatibility.menuFeatures -> DeviceAccessDecision.Allowed
+            feature in compatibility.firmwareUpdateRequiredFeatures ->
+                DeviceAccessDecision.Blocked(DeviceMenuUnavailableReason.FIRMWARE_UPDATE_REQUIRED)
+            else -> DeviceAccessDecision.Blocked(DeviceMenuUnavailableReason.FEATURE_UNAVAILABLE)
         }
     }
 
