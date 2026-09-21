@@ -132,11 +132,6 @@ internal class SharedPreferencesDeviceOtaTransactionStore private constructor(
         .put(FIELD_RELEASE_CONTENT, encodeReleaseContent(plan.releaseContent))
         .put(FIELD_UPDATE_POLICY, encodeUpdatePolicy(plan.updatePolicy))
         .put(FIELD_TARGET_FEATURES, JSONArray(plan.targetFeatures.sorted()))
-        .put(FIELD_UPDATE_POLICY_LEVEL, plan.updatePolicy.level.name)
-        .put(
-            FIELD_UPDATE_POLICY_REQUIRED_FEATURES,
-            JSONArray(plan.updatePolicy.requiredFeatures.sorted())
-        )
 
     private fun decodePlan(json: JSONObject): PreparedDeviceFirmwareUpdate =
         PreparedDeviceFirmwareUpdate(
@@ -158,15 +153,8 @@ internal class SharedPreferencesDeviceOtaTransactionStore private constructor(
             runtimeMetadataGeneration = json.getLong(FIELD_RUNTIME_GENERATION),
             manifestTag = json.optString(FIELD_MANIFEST_TAG),
             releaseContent = decodeReleaseContent(json.getJSONObject(FIELD_RELEASE_CONTENT)),
-            updatePolicy = DeviceFirmwareUpdatePolicy(
-                level = DeviceFirmwareUpdatePolicyLevel.valueOf(
-                    json.getString(FIELD_UPDATE_POLICY_LEVEL)
-                ),
-                requiredFeatures = json
-                    .getJSONArray(FIELD_UPDATE_POLICY_REQUIRED_FEATURES)
-                    .strings()
-                    .toSet()
-            )
+            updatePolicy = decodeUpdatePolicy(json.optJSONObject(FIELD_UPDATE_POLICY)),
+            targetFeatures = json.optJSONArray(FIELD_TARGET_FEATURES).stringSetOrEmpty()
         )
 
     private fun encodeUpdatePolicy(policy: DeviceFirmwareUpdatePolicy): JSONObject =
@@ -297,9 +285,10 @@ internal class SharedPreferencesDeviceOtaTransactionStore private constructor(
         private const val FIELD_RUNTIME_GENERATION = "runtime_generation"
         private const val FIELD_MANIFEST_TAG = "manifest_tag"
         private const val FIELD_RELEASE_CONTENT = "release_content"
-        private const val FIELD_UPDATE_POLICY_LEVEL = "update_policy_level"
-        private const val FIELD_UPDATE_POLICY_REQUIRED_FEATURES =
-            "update_policy_required_features"
+        private const val FIELD_UPDATE_POLICY = "update_policy"
+        private const val FIELD_TARGET_FEATURES = "target_features"
+        private const val FIELD_POLICY_LEVEL = "level"
+        private const val FIELD_POLICY_REQUIRED_FEATURES = "required_features"
         private const val FIELD_LOCALE_TAG = "locale_tag"
         private const val FIELD_TITLE = "title"
         private const val FIELD_SUMMARY = "summary"
