@@ -14,7 +14,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDevicesBinding
-import com.aqua.aqualight.ui.common.devicepresence.DeviceMenuUnavailableMessageMapper
+import com.aqua.aqualight.ui.common.devicepresence.DeviceAccessFeedbackPresenter
 import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderFilledIconAction
@@ -193,13 +193,12 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         event: DevicesEvent.ShowDeviceUnavailable
     ) {
         baseActivity()?.clearGlobalLoading(DEVICE_MENU_LOADING_OWNER)
-        DeviceMenuUnavailableMessageMapper.feedback(event.reason).let { feedback ->
-            baseActivity()?.showDeviceAccessDialog(
-                deviceTitle = event.title,
-                titleRes = feedback.titleRes,
-                messageRes = feedback.messageRes
-            )
-        }
+        DeviceAccessFeedbackPresenter.show(
+            fragment = this,
+            deviceUid = event.deviceUid,
+            deviceTitle = event.title,
+            reason = event.reason
+        )
     }
 
     private fun showDeletePartialSuccess(
