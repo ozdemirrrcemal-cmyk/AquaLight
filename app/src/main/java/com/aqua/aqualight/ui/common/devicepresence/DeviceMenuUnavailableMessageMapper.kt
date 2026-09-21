@@ -4,9 +4,15 @@ import androidx.annotation.StringRes
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 
+enum class DeviceAccessFeedbackAction {
+    DISMISS,
+    OPEN_FIRMWARE_UPDATE
+}
+
 data class DeviceAccessFeedback(
     @StringRes val titleRes: Int,
-    @StringRes val messageRes: Int
+    @StringRes val messageRes: Int,
+    val action: DeviceAccessFeedbackAction = DeviceAccessFeedbackAction.DISMISS
 )
 
 /**
@@ -49,7 +55,8 @@ object DeviceMenuUnavailableMessageMapper {
         )
         DeviceMenuUnavailableReason.CONTRACT_INCOMPATIBLE -> DeviceAccessFeedback(
             titleRes = R.string.device_access_contract_incompatible_title,
-            messageRes = R.string.device_access_contract_incompatible_message
+            messageRes = R.string.device_access_contract_incompatible_message,
+            action = DeviceAccessFeedbackAction.OPEN_FIRMWARE_UPDATE
         )
         DeviceMenuUnavailableReason.MALFORMED_DEVICE_STATE -> DeviceAccessFeedback(
             titleRes = R.string.device_access_malformed_state_title,
@@ -61,7 +68,8 @@ object DeviceMenuUnavailableMessageMapper {
         )
         DeviceMenuUnavailableReason.FIRMWARE_UPDATE_REQUIRED -> DeviceAccessFeedback(
             titleRes = R.string.device_access_firmware_update_required_title,
-            messageRes = R.string.device_access_firmware_update_required_message
+            messageRes = R.string.device_access_firmware_update_required_message,
+            action = DeviceAccessFeedbackAction.OPEN_FIRMWARE_UPDATE
         )
         DeviceMenuUnavailableReason.APPLICATION_UPDATE_REQUIRED -> DeviceAccessFeedback(
             titleRes = R.string.device_access_app_update_required_title,
