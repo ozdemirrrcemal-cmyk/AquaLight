@@ -7,6 +7,7 @@ import com.aqua.aqualight.application.devices.DefaultDeviceAccessPolicy
 import com.aqua.aqualight.application.devices.DeviceAccessPolicy
 import com.aqua.aqualight.application.devices.DeviceCompatibilityOperations
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
+import com.aqua.aqualight.application.devices.DeviceFeatureAccessOperations
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
 import com.aqua.aqualight.application.devices.DeviceOtaState
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingCardOperations
@@ -42,6 +43,7 @@ import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.devices.DefaultDeviceFirmwareUpdateOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.compatibility.DefaultDeviceCompatibilityOperations
+import com.aqua.aqualight.data.devices.compatibility.DefaultDeviceFeatureAccessOperations
 import com.aqua.aqualight.data.devices.cooling.DefaultDeviceCoolingCardOperations
 import com.aqua.aqualight.data.devices.cooling.control.DefaultDeviceCoolingControlOperations
 import com.aqua.aqualight.data.devices.dosing.DefaultDeviceDosingChannelNavigationOperations
@@ -95,6 +97,7 @@ internal data class OwnerDependencyGraph(
     val provisioningDraftOperations: ProvisioningDraftOperations,
     val compatibilityOperations: DeviceCompatibilityOperations,
     val accessPolicy: DeviceAccessPolicy,
+    val featureAccessOperations: DeviceFeatureAccessOperations,
     val controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations,
     val lightOperations: OwnerLightOperations,
     val timerControlOperations: DeviceTimerControlOperations,
@@ -255,13 +258,18 @@ internal class ActiveOwnerDependencyGraphResolver(
         val firmwareUpdateOperations = createFirmwareUpdateOperations(dependencies)
         val compatibilityOperations = DefaultDeviceCompatibilityOperations(
             devicesRepository = dependencies.devicesRepository,
-            updatePolicyProvider = { deviceUid ->
+            updatePlanProvider = { deviceUid ->
                 (firmwareUpdateOperations.observe(deviceUid).value as? DeviceOtaState.UpdateAvailable)
                     ?.plan
-                    ?.updatePolicy
             }
         )
         val accessPolicy: DeviceAccessPolicy = DefaultDeviceAccessPolicy
+        val featureAccessOperations: DeviceFeatureAccessOperations =
+            DefaultDeviceFeatureAccessOperations(
+                compatibilityOperations = compatibilityOperations,
+                accessPolicy = accessPolicy,
+                firmwareUpdateOperations = firmwareUpdateOperations
+            )
         return OwnerDependencyGraph(
             ownerUid = dependencies.ownerUid,
             sessionGeneration = dependencies.sessionGeneration,
@@ -288,6 +296,7 @@ internal class ActiveOwnerDependencyGraphResolver(
             ),
             compatibilityOperations = compatibilityOperations,
             accessPolicy = accessPolicy,
+            featureAccessOperations = featureAccessOperations,
             controlSurfacePreparationOperations = createControlSurfacePreparationOperations(
                 dependencies = dependencies,
                 dosingOperations = dosingOperations,
