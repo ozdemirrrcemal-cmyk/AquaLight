@@ -81,6 +81,9 @@ class DevicesViewModel(
                     openingDeviceUid.value = null
                 }
                 if (error is CancellationException) throw error
+                val feedback = DeviceMenuUnavailableMessageMapper.feedback(
+                    DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
+                )
                 _events.send(
                     DevicesEvent.ShowDeviceUnavailable(
                         title = _uiState.value.devices
@@ -88,9 +91,8 @@ class DevicesViewModel(
                             ?.card
                             ?.displayName
                             .orEmpty(),
-                        messageRes = DeviceMenuUnavailableMessageMapper.messageRes(
-                            DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
-                        )
+                        dialogTitleRes = feedback.titleRes,
+                        messageRes = feedback.messageRes
                     )
                 )
             }
@@ -253,8 +255,11 @@ class DevicesViewModel(
     )
 }
 
-private fun DeviceMenuOpenResult.Unavailable.toUnavailableEvent() =
-    DevicesEvent.ShowDeviceUnavailable(
+private fun DeviceMenuOpenResult.Unavailable.toUnavailableEvent(): DevicesEvent.ShowDeviceUnavailable {
+    val feedback = DeviceMenuUnavailableMessageMapper.feedback(reason)
+    return DevicesEvent.ShowDeviceUnavailable(
         title = title,
-        messageRes = DeviceMenuUnavailableMessageMapper.messageRes(reason)
+        dialogTitleRes = feedback.titleRes,
+        messageRes = feedback.messageRes
     )
+}
