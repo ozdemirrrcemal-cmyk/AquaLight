@@ -304,9 +304,10 @@ require_tokens(
 require_tokens(
     "compatibility",
     (
-        "!snapshot.hasValidatedRuntimeMetadata",
+        "!hasValidatedRuntimeMetadata",
         "DeviceCommercialCompatibilityIssue.RUNTIME_METADATA_UNAVAILABLE",
-        "apiVersion != SUPPORTED_DEVICE_API_VERSION",
+        "apiVersion == SUPPORTED_DEVICE_API_VERSION",
+        "apiVersion > SUPPORTED_DEVICE_API_VERSION",
         "DeviceCommercialCompatibilityIssue.APPLICATION_UPDATE_REQUIRED",
         "DeviceCommercialCompatibilityIssue.BASE_CONTRACT_INCOMPATIBLE",
         "AqlCommercialDeviceCatalog.validateSnapshot(snapshot)",
