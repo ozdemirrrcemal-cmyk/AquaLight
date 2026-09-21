@@ -9,6 +9,7 @@ sealed interface DeviceProvisioningProgressEvent {
     ) : DeviceProvisioningProgressEvent
 
     data class ShowAddedDeviceUnavailable(
+        val deviceUid: String,
         val title: String,
         val reason: DeviceMenuUnavailableReason
     ) : DeviceProvisioningProgressEvent
