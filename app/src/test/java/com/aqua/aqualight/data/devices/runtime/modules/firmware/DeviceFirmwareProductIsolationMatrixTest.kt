@@ -111,6 +111,10 @@ class DeviceFirmwareProductIsolationMatrixTest {
             model = product.model.value,
             hardwareRevision = product.hardwareRevision.value
         ),
+        contracts = product.releaseContracts(),
+        features = product.profile.supportedFeatures.map { feature -> feature.wireValue }.toSet(),
+        updatePolicy =
+            com.aqua.aqualight.application.devices.DeviceFirmwareUpdatePolicy.RECOMMENDED,
         firmware = DeviceFirmwareAsset(
             version = TARGET_VERSION,
             filename = filename,
@@ -142,6 +146,27 @@ class DeviceFirmwareProductIsolationMatrixTest {
         limits = product.limits(),
         runtimeMetadataGeneration = 1L
     )
+
+    private fun AqlCommercialCatalogProduct.releaseContracts() =
+        DeviceFirmwareManifestContracts(
+            wsSchema = "aql.ws.v1",
+            wsProtocolVersion = 1,
+            deviceApiVersion = 1,
+            requiredDomains = setOf(
+                when (family.wireValue) {
+                    "light" -> "aqualight.light.v1"
+                    "timer" -> "aqualight.timer.v1"
+                    "dosing" -> "aqualight.dosing.v1"
+                    "cooling" -> "aql.cooling.v1"
+                    else -> error("Unexpected commercial family: ${family.wireValue}")
+                }
+            ),
+            optionalDomains = if (productKey.value == "LIGHT_WRGB_PRO_ELITE") {
+                setOf("aql.light-thermal.v1")
+            } else {
+                emptySet()
+            }
+        )
 
     private fun AqlCommercialCatalogProduct.capabilities(): DeviceCapabilities =
         DeviceCapabilities(
