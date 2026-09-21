@@ -35,7 +35,8 @@ internal class DefaultDeviceCompatibilityOperations(
         return when (val evaluation = DeviceCommercialCompatibilityEvaluator.evaluate(snapshot)) {
             is DeviceCommercialCompatibilityEvaluation.Compatible -> {
                 val family = evaluation.product.family.toOwnerDeviceFamily()
-                val targetFeatures = updatePlanProvider(normalized)?.targetFeatures.orEmpty()
+                val updatePlan = updatePlanProvider(normalized)
+                val targetFeatures = updatePlan?.targetFeatures.orEmpty()
                 val updateFeatures = DeviceMenuUpdatePolicyProjector.resolve(
                     family = family,
                     targetFeatureTokens = targetFeatures
@@ -43,7 +44,11 @@ internal class DefaultDeviceCompatibilityOperations(
                 DeviceCompatibilitySnapshot(
                     deviceUid = normalized,
                     family = family,
-                    status = DeviceCompatibilityStatus.COMPATIBLE,
+                    status = if (updatePlan?.updatePolicy?.isGloballyRequired == true) {
+                        DeviceCompatibilityStatus.FIRMWARE_UPDATE_REQUIRED
+                    } else {
+                        DeviceCompatibilityStatus.COMPATIBLE
+                    },
                     menuFeatures = evaluation.menuFeatures,
                     firmwareUpdateRequiredFeatures = updateFeatures,
                     allowedRoutes = evaluation.allowedRoutes
