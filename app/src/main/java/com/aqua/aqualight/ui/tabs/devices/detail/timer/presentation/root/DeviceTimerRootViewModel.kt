@@ -23,6 +23,7 @@ import com.aqua.aqualight.application.devices.timer.control.DeviceTimerOutputHea
 import com.aqua.aqualight.application.devices.timer.control.DeviceTimerRuntimeReason
 import com.aqua.aqualight.application.devices.timer.control.DeviceTimerScheduleSnapshot
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
+import com.aqua.aqualight.ui.common.devicepresence.toDeviceConnectionVisualState
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -154,7 +155,7 @@ class DeviceTimerRootViewModel(
                 )
             }.getOrElse {
                 DeviceControlSurfacePreparationResult.Unavailable(
-                    DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
+                    DeviceMenuUnavailableReason.MALFORMED_DEVICE_STATE
                 )
             }
             if (boundDeviceUid != deviceUid) return@launch
@@ -180,7 +181,7 @@ class DeviceTimerRootViewModel(
                 renderBoundState()
             }
             is DeviceTimerControlResult.Failed -> finishUnavailablePreparation(
-                DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
+                DeviceMenuUnavailableReason.MALFORMED_DEVICE_STATE
             )
         }
     }
@@ -219,11 +220,7 @@ class DeviceTimerRootViewModel(
         _uiState.value = DeviceTimerRootUiState(
             title = root?.title.orEmpty(),
             deviceUid = boundDeviceUid,
-            connectionVisualState = if (rootAvailable && controlAvailable) {
-                DeviceConnectionVisualState.ONLINE
-            } else {
-                DeviceConnectionVisualState.OFFLINE
-            },
+            connectionVisualState = root.toDeviceConnectionVisualState(),
             contentEnabled = rootAvailable && controlAvailable && !surfacePreparationPending,
             showBlockingPreparation = surfacePreparationPending,
             control = lastControlPresentation,
