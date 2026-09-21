@@ -127,31 +127,6 @@ open class BaseActivity : AppCompatActivity() {
         )
     }
 
-    fun showDeviceAccessDialog(
-        deviceTitle: String,
-        @StringRes titleRes: Int,
-        @StringRes messageRes: Int
-    ) {
-        if (isFinishing || isDestroyed) return
-
-        val safeTitle = deviceTitle.trim().ifBlank {
-            getString(R.string.device_menu_default_title)
-        }
-        val safeMessage = getString(messageRes).trim()
-
-        DialogManager.showInfoDialog(
-            context = this,
-            type = DialogType.WARNING,
-            title = getString(titleRes),
-            message = getString(
-                R.string.device_access_dialog_message,
-                safeTitle,
-                safeMessage
-            ),
-            buttonTextResId = android.R.string.ok
-        )
-    }
-
     fun showDeviceOfflineDialog(
         deviceTitle: String,
         @StringRes messageRes: Int = R.string.device_menu_offline_message
