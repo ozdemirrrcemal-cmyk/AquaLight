@@ -14,6 +14,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDevicesBinding
+import com.aqua.aqualight.ui.common.devicepresence.DeviceAccessFeedbackPresenter
 import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderFilledIconAction
@@ -192,8 +193,10 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         event: DevicesEvent.ShowDeviceUnavailable
     ) {
         baseActivity()?.clearGlobalLoading(DEVICE_MENU_LOADING_OWNER)
-        baseActivity()?.showDeviceOfflineDialog(
+        DeviceAccessFeedbackPresenter.show(
+            context = requireContext(),
             deviceTitle = event.title,
+            titleRes = event.dialogTitleRes,
             messageRes = event.messageRes
         )
     }
