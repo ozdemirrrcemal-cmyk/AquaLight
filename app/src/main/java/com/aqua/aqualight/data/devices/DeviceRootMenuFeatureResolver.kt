@@ -8,8 +8,19 @@ import com.aqua.aqualight.data.devices.model.DeviceFamily
 
 internal object DeviceRootMenuFeatureResolver {
 
-    fun resolve(product: AqlCommercialCatalogProduct): Set<DeviceRootMenuFeature> {
-        val support = MenuSupport(product)
+    fun resolve(product: AqlCommercialCatalogProduct): Set<DeviceRootMenuFeature> =
+        resolve(
+            product = product,
+            features = product.profile.supportedFeatures,
+            screens = product.profile.supportedScreens
+        )
+
+    fun resolve(
+        product: AqlCommercialCatalogProduct,
+        features: Set<AqlDeviceFeatureKey>,
+        screens: Set<AqlDeviceScreenKey>
+    ): Set<DeviceRootMenuFeature> {
+        val support = MenuSupport(product, features, screens)
         return when (product.family) {
             DeviceFamily.LIGHT -> support.resolveLight()
             DeviceFamily.TIMER -> support.resolveTimer()
@@ -20,11 +31,11 @@ internal object DeviceRootMenuFeatureResolver {
     }
 
     private class MenuSupport(
-        product: AqlCommercialCatalogProduct
+        product: AqlCommercialCatalogProduct,
+        private val features: Set<AqlDeviceFeatureKey>,
+        private val screens: Set<AqlDeviceScreenKey>
     ) {
         private val capabilities = product.profile.capabilities
-        private val features = product.profile.supportedFeatures
-        private val screens = product.profile.supportedScreens
         private val limits = product.limits
 
         private val hasLightHardware = capabilities.light && limits.lightChannelCount > 0
@@ -38,6 +49,7 @@ internal object DeviceRootMenuFeatureResolver {
             AqlDeviceScreenKey.LIGHT_CONTROL in screens
         private val hasLightQuickSetupContract =
             AqlDeviceFeatureKey.LIGHT_QUICK_SETUP in features &&
+                AqlDeviceFeatureKey.LIGHT_MANAGED_AUTO_PLAN in features &&
                 AqlDeviceScreenKey.LIGHT_QUICK_SETUP in screens
         private val hasLightPresetContract = AqlDeviceFeatureKey.LIGHT_PRESETS in features &&
             AqlDeviceScreenKey.LIGHT_PRESETS in screens
