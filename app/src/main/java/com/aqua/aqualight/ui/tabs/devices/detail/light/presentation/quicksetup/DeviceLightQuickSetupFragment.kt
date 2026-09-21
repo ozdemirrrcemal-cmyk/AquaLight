@@ -16,6 +16,8 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceLightQuickSetupBinding
+import com.aqua.aqualight.ui.common.devicepresence.DeviceAccessFeedbackAction
+import com.aqua.aqualight.ui.common.devicepresence.DeviceAccessFeedbackPresenter
 import com.aqua.aqualight.ui.common.devicepresence.DeviceMenuUnavailableMessageMapper
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
@@ -65,16 +67,27 @@ class DeviceLightQuickSetupFragment : Fragment(R.layout.fragment_device_light_qu
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.accessFailures.collect { reason ->
                     if (_binding == null) return@collect
-                    DeviceMenuUnavailableMessageMapper.feedback(reason).let { feedback ->
+                    val feedback = DeviceMenuUnavailableMessageMapper.feedback(reason)
+                    if (feedback.action == DeviceAccessFeedbackAction.OPEN_FIRMWARE_UPDATE) {
+                        DeviceAccessFeedbackPresenter.show(
+                            fragment = this@DeviceLightQuickSetupFragment,
+                            deviceUid = args.deviceUid,
+                            deviceTitle = getString(R.string.device_family_light),
+                            reason = reason
+                        )
+                    } else {
                         (activity as? BaseActivity)?.showDeviceAccessDialog(
                             deviceTitle = getString(R.string.device_family_light),
                             titleRes = feedback.titleRes,
                             messageRes = feedback.messageRes
                         )
-                    }
-                    val navController = findNavController()
-                    if (navController.currentDestination?.id == R.id.deviceLightQuickSetupFragment) {
-                        navController.navigateUp()
+                        val navController = findNavController()
+                        if (
+                            navController.currentDestination?.id ==
+                            R.id.deviceLightQuickSetupFragment
+                        ) {
+                            navController.navigateUp()
+                        }
                     }
                 }
             }
