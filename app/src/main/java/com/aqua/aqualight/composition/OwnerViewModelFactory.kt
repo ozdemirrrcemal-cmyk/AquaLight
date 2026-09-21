@@ -214,7 +214,9 @@ internal class OwnerViewModelFactory(
             DeviceLightRootViewModel::class.java -> DeviceLightRootViewModel(
                 rootOperations = rootOperations,
                 lightControlOperations = graph.lightOperations.controlOperations,
-                controlSurfacePreparationOperations = graph.controlSurfacePreparationOperations
+                controlSurfacePreparationOperations = graph.controlSurfacePreparationOperations,
+                compatibilityOperations = graph.compatibilityOperations,
+                accessPolicy = graph.accessPolicy
             )
             DeviceLightAdaptationViewModel::class.java -> DeviceLightAdaptationViewModel(
                 operations = graph.lightOperations.adaptationOperations,
