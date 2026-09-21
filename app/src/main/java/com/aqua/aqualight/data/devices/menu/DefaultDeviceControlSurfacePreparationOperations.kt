@@ -48,6 +48,22 @@ internal class DefaultDeviceControlSurfacePreparationOperations(
     private val accessPolicy: DeviceAccessPolicy = DefaultDeviceAccessPolicy
 ) : DeviceControlSurfacePreparationOperations {
 
+    internal constructor(
+        rootOperations: DeviceRootOperations,
+        dosingChannelOperations: DeviceDosingChannelOperations,
+        coolingControlOperations: DeviceCoolingControlOperations,
+        timerControlOperations: DeviceTimerControlOperations,
+        lightControlOperations: DeviceLightControlOperations
+    ) : this(
+        dependencies = DeviceControlSurfaceDependencies(
+            rootOperations = rootOperations,
+            dosingChannelOperations = dosingChannelOperations,
+            coolingControlOperations = coolingControlOperations,
+            timerControlOperations = timerControlOperations,
+            lightControlOperations = lightControlOperations
+        )
+    )
+
     private val rootOperations = dependencies.rootOperations
     private val dosingChannelOperations = dependencies.dosingChannelOperations
     private val coolingControlOperations = dependencies.coolingControlOperations
