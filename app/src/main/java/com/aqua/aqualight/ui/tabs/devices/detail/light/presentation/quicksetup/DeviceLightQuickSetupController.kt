@@ -72,15 +72,17 @@ internal class DeviceLightQuickSetupController(
         context: DeviceLightQuickSetupContext
     ): DeviceLightQuickSetupLoadResult {
         val profile = DeviceLightQuickSetupPlantProfileResolver.resolve(context)
-        val managed = managedPlanOperations.read(deviceUid)
-        val snapshot = (managed as? DeviceLightManagedPlanReadResult.Available)?.snapshot
-        val livePlan = if (snapshot?.installed == true) readLivePlan(deviceUid) else null
-        return if (profile == null) {
-            DeviceLightQuickSetupLoadResult.Blocked(
+            ?: return DeviceLightQuickSetupLoadResult.Blocked(
                 DeviceLightQuickSetupBlockReason.UNKNOWN_PLANT_CATALOG_ID
             )
-        } else {
-            DeviceLightQuickSetupLoadResult.Available(context, profile, snapshot, livePlan)
+        return when (val managed = managedPlanOperations.read(deviceUid)) {
+            is DeviceLightManagedPlanReadResult.Failed ->
+                DeviceLightQuickSetupLoadResult.Blocked(managed.reason)
+            is DeviceLightManagedPlanReadResult.Available -> {
+                val snapshot = managed.snapshot
+                val livePlan = if (snapshot.installed) readLivePlan(deviceUid) else null
+                DeviceLightQuickSetupLoadResult.Available(context, profile, snapshot, livePlan)
+            }
         }
     }
 
