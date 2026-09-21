@@ -153,8 +153,10 @@ internal class SharedPreferencesDeviceOtaTransactionStore private constructor(
             runtimeMetadataGeneration = json.getLong(FIELD_RUNTIME_GENERATION),
             manifestTag = json.optString(FIELD_MANIFEST_TAG),
             releaseContent = decodeReleaseContent(json.getJSONObject(FIELD_RELEASE_CONTENT)),
-            updatePolicy = decodeUpdatePolicy(json.optJSONObject(FIELD_UPDATE_POLICY)),
-            targetFeatures = json.optJSONArray(FIELD_TARGET_FEATURES).stringSetOrEmpty()
+            updatePolicy = decodeUpdatePolicy(json.getJSONObject(FIELD_UPDATE_POLICY)),
+            targetFeatures = json.getJSONArray(FIELD_TARGET_FEATURES).requiredStringSet(
+                FIELD_TARGET_FEATURES
+            )
         )
 
     private fun encodeUpdatePolicy(policy: DeviceFirmwareUpdatePolicy): JSONObject =
@@ -162,17 +164,17 @@ internal class SharedPreferencesDeviceOtaTransactionStore private constructor(
             .put(FIELD_POLICY_LEVEL, policy.level.name)
             .put(FIELD_POLICY_REQUIRED_FEATURES, JSONArray(policy.requiredFeatures.sorted()))
 
-    private fun decodeUpdatePolicy(json: JSONObject?): DeviceFirmwareUpdatePolicy {
-        if (json == null) return DeviceFirmwareUpdatePolicy.RECOMMENDED
-        val level = runCatching {
-            DeviceFirmwareUpdatePolicyLevel.valueOf(json.getString(FIELD_POLICY_LEVEL))
-        }.getOrDefault(DeviceFirmwareUpdatePolicyLevel.RECOMMENDED)
+    private fun decodeUpdatePolicy(json: JSONObject): DeviceFirmwareUpdatePolicy {
+        require(json.keySet() == UPDATE_POLICY_KEYS) {
+            "OTA transaction update policy keys differ from the journal contract."
+        }
+        val level = DeviceFirmwareUpdatePolicyLevel.valueOf(
+            json.getString(FIELD_POLICY_LEVEL)
+        )
         val requiredFeatures = json
-            .optJSONArray(FIELD_POLICY_REQUIRED_FEATURES)
-            .stringSetOrEmpty()
-        return runCatching {
-            DeviceFirmwareUpdatePolicy(level, requiredFeatures)
-        }.getOrDefault(DeviceFirmwareUpdatePolicy.RECOMMENDED)
+            .getJSONArray(FIELD_POLICY_REQUIRED_FEATURES)
+            .requiredStringSet(FIELD_POLICY_REQUIRED_FEATURES, allowEmpty = true)
+        return DeviceFirmwareUpdatePolicy(level, requiredFeatures)
     }
 
     private fun encodeReleaseContent(content: DeviceFirmwareReleaseContent): JSONObject =
@@ -227,11 +229,23 @@ internal class SharedPreferencesDeviceOtaTransactionStore private constructor(
         repeat(length()) { index -> add(getString(index)) }
     }
 
-    private fun JSONArray?.stringSetOrEmpty(): Set<String> = this
-        ?.strings()
-        ?.filter(String::isNotBlank)
-        ?.toSet()
-        .orEmpty()
+    private fun JSONArray.requiredStringSet(
+        label: String,
+        allowEmpty: Boolean = false
+    ): Set<String> {
+        require(allowEmpty || length() > 0) { "$label must not be empty." }
+        val values = linkedSetOf<String>()
+        repeat(length()) { index ->
+            val value = get(index) as? String
+                ?: error("$label[$index] must be a string.")
+            require(value.isNotBlank()) { "$label[$index] must not be blank." }
+            require(value == value.trim()) {
+                "$label[$index] must not contain surrounding whitespace."
+            }
+            require(values.add(value)) { "$label must not contain duplicate values." }
+        }
+        return values
+    }
 
     private fun SharedPreferences.Editor.commitOrThrow() {
         check(commit()) { "OTA transaction journal write failed." }
@@ -289,6 +303,10 @@ internal class SharedPreferencesDeviceOtaTransactionStore private constructor(
         private const val FIELD_TARGET_FEATURES = "target_features"
         private const val FIELD_POLICY_LEVEL = "level"
         private const val FIELD_POLICY_REQUIRED_FEATURES = "required_features"
+        private val UPDATE_POLICY_KEYS = setOf(
+            FIELD_POLICY_LEVEL,
+            FIELD_POLICY_REQUIRED_FEATURES
+        )
         private const val FIELD_LOCALE_TAG = "locale_tag"
         private const val FIELD_TITLE = "title"
         private const val FIELD_SUMMARY = "summary"
