@@ -203,6 +203,9 @@ class CommercialDeviceMenuAccessOperationsTest {
         ),
         supportedFeatures = profile.supportedFeatures.map { it.wireValue },
         supportedScreens = profile.supportedScreens.map { it.wireValue },
+        firmwareVersion = "1.0.0",
+        apiVersion = "1",
+        protocolVersion = "1",
         runtimeMetadataGeneration = 1L
     )
 }
