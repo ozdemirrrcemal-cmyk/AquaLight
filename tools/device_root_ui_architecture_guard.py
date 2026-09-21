@@ -1374,8 +1374,12 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
             "Light root must leave an unavailable destination with a typed error",
         ),
         (
-            "DeviceMenuUnavailableMessageMapper.messageRes(reason)",
+            "DeviceMenuUnavailableMessageMapper.feedback(reason)",
             "Light root must use the shared unavailable reason presentation",
+        ),
+        (
+            "DeviceAccessFeedbackPresenter.show(",
+            "Light compatibility failures must keep the central OTA recovery presentation",
         ),
     ):
         _require(LIGHT_FRAGMENT, light_fragment, errors, token, reason)
