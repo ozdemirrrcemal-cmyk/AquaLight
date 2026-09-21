@@ -9,6 +9,7 @@ import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeEventPayload
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeTypedEvent
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightMode
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightProduct
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeAccess
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeContract
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeFixtures
 import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerRuntimeAccess
@@ -27,7 +28,13 @@ class DeviceRuntimeModuleProviderLightControlTest {
             val provider = DeviceRuntimeModuleProvider(
                 commandGateway = gateway,
                 revokeLocalCredential = { Result.success(Unit) },
-                timerAccessProvider = { DeviceTimerRuntimeAccess.UNAVAILABLE }
+                timerAccessProvider = { DeviceTimerRuntimeAccess.UNAVAILABLE },
+                lightAccessProvider = {
+                    DeviceLightRuntimeAccess(
+                        supportsApi = true,
+                        supportsManagedAutoPlan = true
+                    )
+                }
             )
             provider.beginRuntimeGeneration(DEVICE_UID, GENERATION)
 
