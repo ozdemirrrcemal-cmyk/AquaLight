@@ -1,5 +1,7 @@
 package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
+import com.aqua.aqualight.application.devices.DeviceFirmwareUpdatePolicy
+import com.aqua.aqualight.application.devices.DeviceFirmwareUpdatePolicyLevel
 import com.aqua.aqualight.data.devices.model.DeviceCapabilities
 import com.aqua.aqualight.data.devices.model.DeviceLimits
 import java.util.Locale
@@ -83,6 +85,15 @@ object DeviceFirmwareManifestParser {
                 json.requiredObject("compatibility"),
                 "$label.compatibility"
             ),
+            contracts = parseContracts(
+                json.requiredObject("contracts"),
+                "$label.contracts"
+            ),
+            features = json.requiredStringSet("features", "$label.features"),
+            updatePolicy = parseUpdatePolicy(
+                json.requiredObject("updatePolicy"),
+                "$label.updatePolicy"
+            ),
             firmware = parseFirmware(json.requiredObject("firmware"), "$label.firmware"),
             factory = json.requiredNullableObject("factory")?.let { factory ->
                 parseFactory(factory, "$label.factory")
@@ -151,6 +162,45 @@ object DeviceFirmwareManifestParser {
             line = json.requiredString("line"),
             model = json.requiredString("model"),
             hardwareRevision = json.requiredString("hardwareRevision")
+        )
+    }
+
+    private fun parseContracts(
+        json: JSONObject,
+        label: String
+    ): DeviceFirmwareManifestContracts {
+        json.requireExactKeys(CONTRACT_KEYS, label)
+        return DeviceFirmwareManifestContracts(
+            wsSchema = json.requiredString("wsSchema"),
+            wsProtocolVersion = json.requiredPositiveInt("wsProtocolVersion"),
+            deviceApiVersion = json.requiredPositiveInt("deviceApiVersion"),
+            requiredDomains = json.requiredStringSet("requiredDomains", "$label.requiredDomains"),
+            optionalDomains = json.requiredStringSet(
+                "optionalDomains",
+                "$label.optionalDomains",
+                allowEmpty = true
+            )
+        )
+    }
+
+    private fun parseUpdatePolicy(
+        json: JSONObject,
+        label: String
+    ): DeviceFirmwareUpdatePolicy {
+        json.requireExactKeys(UPDATE_POLICY_KEYS, label)
+        val level = runCatching {
+            DeviceFirmwareUpdatePolicyLevel.valueOf(json.requiredString("level"))
+        }.getOrElse {
+            error("OTA manifest $label.level is not a supported commercial update policy.")
+        }
+        val requiredFeatures = json.requiredStringSet(
+            "requiredFeatures",
+            "$label.requiredFeatures",
+            allowEmpty = true
+        )
+        return DeviceFirmwareUpdatePolicy(
+            level = level,
+            requiredFeatures = requiredFeatures
         )
     }
 
@@ -341,6 +391,31 @@ object DeviceFirmwareManifestParser {
         return get(key) as? JSONArray ?: error("OTA manifest field '$key' must be an array.")
     }
 
+    private fun JSONObject.requiredStringSet(
+        key: String,
+        label: String,
+        allowEmpty: Boolean = false
+    ): Set<String> {
+        val array = requiredArray(key)
+        if (!allowEmpty) {
+            require(array.length() > 0) { "OTA manifest $label must not be empty." }
+        }
+        val values = linkedSetOf<String>()
+        repeat(array.length()) { index ->
+            val value = array.get(index) as? String
+                ?: error("OTA manifest $label[$index] must be a string.")
+            require(value.isNotEmpty()) { "OTA manifest $label[$index] must not be empty." }
+            require(!value.first().isWhitespace() && !value.last().isWhitespace()) {
+                "OTA manifest $label[$index] must not contain surrounding whitespace."
+            }
+            require(value.none(Char::isISOControl)) {
+                "OTA manifest $label[$index] must not contain control characters."
+            }
+            require(values.add(value)) { "OTA manifest $label must not contain duplicates." }
+        }
+        return values
+    }
+
     private fun JSONObject.requiredString(key: String): String {
         require(has(key) && !isNull(key)) { "OTA manifest field '$key' is missing." }
         val value = get(key) as? String ?: error("OTA manifest field '$key' must be a string.")
@@ -454,7 +529,10 @@ object DeviceFirmwareManifestParser {
     private val RELEASE_NOTES_KEYS = setOf("schema", "defaultLocale", "items")
     private val RELEASE_NOTE_ITEM_KEYS = setOf("tr", "en")
     private val SIGNATURE_KEYS = setOf("scheme", "keyId", "payloadHash", "value")
-    private val ARTIFACT_KEYS = setOf("env", "product", "compatibility", "firmware", "factory")
+    private val ARTIFACT_KEYS = setOf(
+        "env", "product", "compatibility", "contracts", "features", "updatePolicy",
+        "firmware", "factory"
+    )
     private val PRODUCT_KEYS = setOf(
         "productKey",
         "productId",
@@ -492,6 +570,10 @@ object DeviceFirmwareManifestParser {
     private val COMPATIBILITY_KEYS = setOf(
         "productKey", "productId", "family", "line", "model", "hardwareRevision"
     )
+    private val CONTRACT_KEYS = setOf(
+        "wsSchema", "wsProtocolVersion", "deviceApiVersion", "requiredDomains", "optionalDomains"
+    )
+    private val UPDATE_POLICY_KEYS = setOf("level", "requiredFeatures")
     private val FIRMWARE_KEYS = setOf(
         "version", "filename", "url", "sha256", "size", "format", "otaSlotCompatible"
     )
