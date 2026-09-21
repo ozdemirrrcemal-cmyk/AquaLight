@@ -9,6 +9,7 @@ sealed class DevicesEvent {
     ) : DevicesEvent()
 
     data class ShowDeviceUnavailable(
+        val deviceUid: String,
         val title: String,
         val reason: DeviceMenuUnavailableReason
     ) : DevicesEvent()
