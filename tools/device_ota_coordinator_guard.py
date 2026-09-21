@@ -163,8 +163,8 @@ require_tokens(
         "FIELD_UPDATE_POLICY",
         "FIELD_TARGET_FEATURES",
         "encodeUpdatePolicy(plan.updatePolicy)",
-        "decodeUpdatePolicy(json.optJSONObject(FIELD_UPDATE_POLICY))",
-        "targetFeatures = json.optJSONArray(FIELD_TARGET_FEATURES).stringSetOrEmpty()",
+        "decodeUpdatePolicy(json.getJSONObject(FIELD_UPDATE_POLICY))",
+        "targetFeatures = json.getJSONArray(FIELD_TARGET_FEATURES).requiredStringSet(",
     ),
 )
 require_tokens(
