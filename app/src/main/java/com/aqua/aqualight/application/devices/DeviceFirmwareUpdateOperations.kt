@@ -70,6 +70,47 @@ data class DeviceFirmwareReleaseContent(
     }
 }
 
+enum class DeviceFirmwareUpdatePolicyLevel {
+    OPTIONAL,
+    RECOMMENDED,
+    FEATURE_REQUIRED,
+    COMPATIBILITY_REQUIRED
+}
+
+/**
+ * Signed release policy projected into the application layer.
+ *
+ * FEATURE_REQUIRED blocks only the listed feature surfaces. COMPATIBILITY_REQUIRED can block the
+ * affected base control surface but never the OTA/recovery plane.
+ */
+data class DeviceFirmwareUpdatePolicy(
+    val level: DeviceFirmwareUpdatePolicyLevel = DeviceFirmwareUpdatePolicyLevel.RECOMMENDED,
+    val requiredFeatures: Set<String> = emptySet()
+) {
+    init {
+        require(requiredFeatures.none(String::isBlank)) {
+            "Required firmware feature tokens must not be blank."
+        }
+        require(
+            (level == DeviceFirmwareUpdatePolicyLevel.FEATURE_REQUIRED) ==
+                requiredFeatures.isNotEmpty()
+        ) {
+            "Only FEATURE_REQUIRED may carry required feature tokens."
+        }
+    }
+
+    val isGloballyRequired: Boolean
+        get() = level == DeviceFirmwareUpdatePolicyLevel.COMPATIBILITY_REQUIRED
+
+    fun requiresFeature(featureToken: String): Boolean =
+        level == DeviceFirmwareUpdatePolicyLevel.FEATURE_REQUIRED &&
+            featureToken in requiredFeatures
+
+    companion object {
+        val RECOMMENDED = DeviceFirmwareUpdatePolicy()
+    }
+}
+
 enum class DeviceOtaProgressPhase {
     STARTING,
     SAFE_MODE,
@@ -264,7 +305,8 @@ data class PreparedDeviceFirmwareUpdate(
     val applyNow: Boolean,
     val runtimeMetadataGeneration: Long = 0L,
     val manifestTag: String = "",
-    val releaseContent: DeviceFirmwareReleaseContent = DeviceFirmwareReleaseContent.EMPTY
+    val releaseContent: DeviceFirmwareReleaseContent = DeviceFirmwareReleaseContent.EMPTY,
+    val updatePolicy: DeviceFirmwareUpdatePolicy = DeviceFirmwareUpdatePolicy.RECOMMENDED
 )
 
 data class DeviceFirmwareCommandResult(
