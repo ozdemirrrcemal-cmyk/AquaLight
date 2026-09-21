@@ -6,7 +6,6 @@ import com.aqua.aqualight.application.devices.DeviceMenuOpenResult
 import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.application.devices.OwnerDevicesOperations
-import com.aqua.aqualight.ui.common.devicepresence.DeviceMenuUnavailableMessageMapper
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 import java.util.concurrent.CancellationException
 import kotlinx.coroutines.Job
@@ -88,9 +87,7 @@ class DevicesViewModel(
                             ?.card
                             ?.displayName
                             .orEmpty(),
-                        messageRes = DeviceMenuUnavailableMessageMapper.messageRes(
-                            DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
-                        )
+                        reason = DeviceMenuUnavailableReason.MALFORMED_DEVICE_STATE
                     )
                 )
             }
@@ -256,5 +253,5 @@ class DevicesViewModel(
 private fun DeviceMenuOpenResult.Unavailable.toUnavailableEvent() =
     DevicesEvent.ShowDeviceUnavailable(
         title = title,
-        messageRes = DeviceMenuUnavailableMessageMapper.messageRes(reason)
+        reason = reason
     )
