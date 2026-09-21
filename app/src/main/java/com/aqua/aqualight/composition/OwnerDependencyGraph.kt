@@ -169,6 +169,13 @@ internal class ActiveOwnerDependencyGraphResolver(
 
     private val appContext = context.applicationContext
     private val sessionCoordinator = OwnerSessionCoordinator.create(appContext)
+    private val graphComposer = OwnerDependencyGraphComposer(
+        appContext = appContext,
+        deviceFirmwareNotifications = deviceFirmwareNotifications,
+        notificationPreferenceUseCase = notificationPreferenceUseCase,
+        notificationDispatchUseCase = notificationDispatchUseCase,
+        userPreferencesManager = userPreferencesManager
+    )
 
     @Volatile
     private var cachedGraph: OwnerDependencyGraph? = null
@@ -227,7 +234,7 @@ internal class ActiveOwnerDependencyGraphResolver(
             return graph
         }
         validateRepositoryIdentities(dependencies)
-        return composeGraph(dependencies).also { graph -> cachedGraph = graph }
+        return graphComposer.compose(dependencies).also { graph -> cachedGraph = graph }
     }
 
     private fun validateRepositoryIdentities(dependencies: ActiveOwnerDependencies) {
@@ -251,7 +258,18 @@ internal class ActiveOwnerDependencyGraphResolver(
         }
     }
 
-    private fun composeGraph(
+}
+
+
+private class OwnerDependencyGraphComposer(
+    private val appContext: Context,
+    private val deviceFirmwareNotifications: DeviceFirmwareUpdateNotificationOperations,
+    private val notificationPreferenceUseCase: NotificationPreferenceUseCase,
+    private val notificationDispatchUseCase: NotificationDispatchUseCase,
+    private val userPreferencesManager: UserPreferencesManager
+) {
+
+    fun compose(
         dependencies: ActiveOwnerDependencies
     ): OwnerDependencyGraph {
         val aquariumTankStore = AquariumTankDataStoreManager(appContext)
@@ -451,6 +469,7 @@ internal class ActiveOwnerDependencyGraphResolver(
             }
         ).also(dependencies.devicesRepository::registerOwnerScopedResource)
     }
+
 }
 
 private fun createOwnerLightOperations(
