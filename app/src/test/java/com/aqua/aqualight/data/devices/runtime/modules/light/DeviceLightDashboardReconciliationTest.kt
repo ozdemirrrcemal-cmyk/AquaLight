@@ -24,7 +24,11 @@ class DeviceLightDashboardReconciliationTest {
             GENERATION,
             DeviceLightStatusParser.parse(DeviceLightRuntimeFixtures.status())
         )
-        val runtime = DeviceLightRuntimeRepository(gateway, owner)
+        val runtime = DeviceLightRuntimeRepository(
+            gateway = gateway,
+            stateOwner = owner,
+            accessProvider = { MANAGED_LIGHT_ACCESS }
+        )
 
         val outcome = runtime.setControl(
             DEVICE_UID,
@@ -40,7 +44,11 @@ class DeviceLightDashboardReconciliationTest {
         val gateway = FixtureGateway()
         val owner = DeviceLightRuntimeStateOwner()
         owner.beginGeneration(DEVICE_UID, GENERATION)
-        val runtime = DeviceLightRuntimeRepository(gateway, owner)
+        val runtime = DeviceLightRuntimeRepository(
+            gateway = gateway,
+            stateOwner = owner,
+            accessProvider = { MANAGED_LIGHT_ACCESS }
+        )
         val coordinator = DeviceLightDashboardRefreshCoordinator(runtime)
 
         val result = coordinator.refresh(DEVICE_UID)
@@ -101,6 +109,10 @@ class DeviceLightDashboardReconciliationTest {
     }
 
     private companion object {
+        val MANAGED_LIGHT_ACCESS = DeviceLightRuntimeAccess(
+            supportsApi = true,
+            supportsManagedAutoPlan = true
+        )
         val DEVICE_UID = DeviceUid("light-dashboard-reconciliation")
         val GENERATION = DeviceRuntimeConnectionGeneration(1L)
     }
