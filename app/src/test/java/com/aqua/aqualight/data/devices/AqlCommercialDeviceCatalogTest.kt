@@ -102,20 +102,42 @@ class AqlCommercialDeviceCatalogTest {
     }
 
     @Test
-    fun `unknown snapshot feature withdraws root family menus and routes`() {
-        val snapshot = product("DOSING_DOSE_PRO_2").toSnapshot().copy(
-            supportedFeatures = listOf("DOSING_CONTROL", "LEGACY_DOSING_ALIAS")
+    fun `unknown additive feature does not invalidate a compatible product root`() {
+        val product = product("DOSING_DOSE_PRO_2")
+        val snapshot = product.toSnapshot().copy(
+            supportedFeatures = product.profile.supportedFeatures.map { it.wireValue } +
+                "DOSING_FUTURE_OPTIONAL_V9"
         )
 
         val root = snapshot.toDeviceRootSnapshot()
 
-        assertEquals(DeviceRootCatalogState.INVALID, root.catalogState)
-        assertEquals(OwnerDeviceFamily.UNKNOWN, root.family)
-        assertTrue(root.menuFeatures.isEmpty())
-        assertTrue(root.allowedRoutes.isEmpty())
-        assertTrue(root.capabilities.isEmpty())
-        assertEquals("", root.productKey)
-        assertEquals("", root.firmwareLabel)
+        assertEquals(DeviceRootCatalogState.VALID, root.catalogState)
+        assertEquals(OwnerDeviceFamily.DOSING, root.family)
+        assertTrue(root.menuFeatures.isNotEmpty())
+        assertTrue(root.allowedRoutes.isNotEmpty())
+    }
+
+    @Test
+    fun `missing managed plan hides Quick Setup without invalidating Light root`() {
+        val product = product("LIGHT_WRGB_PRO_ELITE")
+        val snapshot = product.toSnapshot().copy(
+            supportedFeatures = product.profile.supportedFeatures
+                .filterNot { it.wireValue == "LIGHT_MANAGED_AUTO_PLAN" }
+                .map { it.wireValue }
+        )
+
+        val root = snapshot.toDeviceRootSnapshot()
+
+        assertEquals(DeviceRootCatalogState.VALID, root.catalogState)
+        assertEquals(OwnerDeviceFamily.LIGHT, root.family)
+        assertTrue(
+            com.aqua.aqualight.application.devices.DeviceRootMenuFeature.LIGHT_QUICK_SETUP !in
+                root.menuFeatures
+        )
+        assertTrue(
+            com.aqua.aqualight.application.devices.DeviceRootMenuFeature.LIGHT_MANUAL in
+                root.menuFeatures
+        )
     }
 
     private fun product(productKey: String): AqlCommercialCatalogProduct =
