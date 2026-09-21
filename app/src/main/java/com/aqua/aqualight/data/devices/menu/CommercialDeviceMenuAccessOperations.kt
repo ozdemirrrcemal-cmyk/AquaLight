@@ -1,63 +1,40 @@
 package com.aqua.aqualight.data.devices.menu
 
+import com.aqua.aqualight.application.devices.DeviceAccessDecision
+import com.aqua.aqualight.application.devices.DeviceAccessPolicy
+import com.aqua.aqualight.application.devices.DeviceCompatibilityOperations
 import com.aqua.aqualight.application.devices.DeviceMenuAccessOperations
 import com.aqua.aqualight.application.devices.DeviceMenuAccessResult
-import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
-import com.aqua.aqualight.data.devices.catalog.AqlCommercialCatalogValidation
-import com.aqua.aqualight.data.devices.catalog.AqlCommercialDeviceCatalog
-import com.aqua.aqualight.data.devices.model.DeviceSnapshot
-import com.aqua.aqualight.data.devices.model.DeviceUid
-import com.aqua.aqualight.data.devices.toOwnerDeviceFamily
 
+/**
+ * Commercial compatibility gate layered after current liveness.
+ *
+ * Product/domain compatibility never mutates device presence. The device may remain Online while
+ * this gate blocks a control surface with a typed compatibility reason.
+ */
 internal class CommercialDeviceMenuAccessOperations(
     private val livenessOperations: DeviceMenuAccessOperations,
-    private val currentSnapshot: (DeviceUid) -> DeviceSnapshot?
+    private val compatibilityOperations: DeviceCompatibilityOperations,
+    private val accessPolicy: DeviceAccessPolicy
 ) : DeviceMenuAccessOperations {
 
     override suspend fun resolve(deviceUid: String): DeviceMenuAccessResult {
         return when (val liveness = livenessOperations.resolve(deviceUid)) {
             is DeviceMenuAccessResult.Unavailable -> liveness
-            is DeviceMenuAccessResult.Available -> validateCommercialProduct(liveness)
+            is DeviceMenuAccessResult.Available -> validateCompatibility(liveness)
         }
     }
 
-    private fun validateCommercialProduct(
+    private fun validateCompatibility(
         liveness: DeviceMenuAccessResult.Available
     ): DeviceMenuAccessResult {
-        val snapshot = currentSnapshot(DeviceUid(liveness.deviceUid))
-        return when {
-            snapshot == null -> unavailable(
-                liveness,
-                DeviceMenuUnavailableReason.DEVICE_NOT_REGISTERED
+        val compatibility = compatibilityOperations.current(liveness.deviceUid)
+        return when (val decision = accessPolicy.evaluateRoot(compatibility)) {
+            DeviceAccessDecision.Allowed -> liveness.copy(family = compatibility.family)
+            is DeviceAccessDecision.Blocked -> DeviceMenuAccessResult.Unavailable(
+                title = liveness.title,
+                reason = decision.reason
             )
-            !snapshot.hasValidatedRuntimeMetadata -> unavailable(
-                liveness,
-                DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
-            )
-            else -> validateCatalog(snapshot, liveness)
         }
     }
-
-    private fun validateCatalog(
-        snapshot: DeviceSnapshot,
-        liveness: DeviceMenuAccessResult.Available
-    ): DeviceMenuAccessResult = when (
-        val validation = AqlCommercialDeviceCatalog.validateSnapshot(snapshot)
-    ) {
-        is AqlCommercialCatalogValidation.Valid -> liveness.copy(
-            family = validation.product.family.toOwnerDeviceFamily()
-        )
-        is AqlCommercialCatalogValidation.Invalid -> unavailable(
-            liveness,
-            DeviceMenuUnavailableReason.COMMERCIAL_PRODUCT_MISMATCH
-        )
-    }
-
-    private fun unavailable(
-        liveness: DeviceMenuAccessResult.Available,
-        reason: DeviceMenuUnavailableReason
-    ): DeviceMenuAccessResult.Unavailable = DeviceMenuAccessResult.Unavailable(
-        title = liveness.title,
-        reason = reason
-    )
 }
