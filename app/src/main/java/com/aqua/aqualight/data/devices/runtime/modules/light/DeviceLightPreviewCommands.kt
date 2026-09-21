@@ -9,7 +9,13 @@ suspend fun DeviceLightRuntimeRepository.requestGraph(
     val outcome = productCommand(
         deviceUid = deviceUid,
         action = DeviceLightRuntimeContract.Action.GRAPH_GET,
-        parser = DeviceLightMutationParser.Graph::parseGraph
+        parser = { data, product ->
+            DeviceLightMutationParser.Graph.parseGraph(
+                data = data,
+                product = product,
+                managedAutoPlanSupported = runtimeAccess(deviceUid).supportsManagedAutoPlan
+            )
+        }
     )
     if (outcome is DeviceRuntimeCommandOutcome.Success) {
         stateOwner.dashboardProjection.record(deviceUid, outcome.generation, outcome.value)
