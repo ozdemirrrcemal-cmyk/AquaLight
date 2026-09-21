@@ -235,22 +235,25 @@ class DeviceLightRootViewModel(
 
     fun requestQuickSetupAccess() {
         val deviceUid = boundDeviceUid
-        if (deviceUid.isBlank() || !_uiState.value.contentEnabled) return
-        if (quickSetupAccessJob?.isActive == true) return
+        val canRequest = deviceUid.isNotBlank() &&
+            _uiState.value.contentEnabled &&
+            quickSetupAccessJob?.isActive != true
+        if (canRequest) dispatchQuickSetupAccess(deviceUid)
+    }
 
+    private fun dispatchQuickSetupAccess(deviceUid: String) {
         val featureAccess = featureAccessOperations
         if (featureAccess == null) {
             quickSetupAccessEventChannel.trySend(DeviceAccessDecision.Allowed)
-            return
-        }
-
-        quickSetupAccessJob = viewModelScope.launch {
-            quickSetupAccessEventChannel.send(
-                featureAccess.resolve(
-                    deviceUid = deviceUid,
-                    feature = DeviceRootMenuFeature.LIGHT_QUICK_SETUP
+        } else {
+            quickSetupAccessJob = viewModelScope.launch {
+                quickSetupAccessEventChannel.send(
+                    featureAccess.resolve(
+                        deviceUid = deviceUid,
+                        feature = DeviceRootMenuFeature.LIGHT_QUICK_SETUP
+                    )
                 )
-            )
+            }
         }
     }
 
