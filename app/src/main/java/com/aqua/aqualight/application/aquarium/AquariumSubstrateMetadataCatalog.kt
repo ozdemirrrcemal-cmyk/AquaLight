@@ -135,7 +135,6 @@ object AquariumSubstrateMetadataCatalog {
         return metadata(productId, categoryKey)?.semantic ?: AquariumSubstrateSemantic.UNKNOWN
     }
 
-    @Suppress("LongParameterList")
     private fun verified(
         productId: String,
         categoryKey: String,

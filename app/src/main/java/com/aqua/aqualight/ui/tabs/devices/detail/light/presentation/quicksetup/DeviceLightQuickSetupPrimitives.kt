@@ -1,4 +1,4 @@
-@file:Suppress("MagicNumber")\n\npackage com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.quicksetup
+package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.quicksetup
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -220,7 +220,7 @@ internal fun QuickSetupSwitchRow(
 }
 
 @Composable
-internal fun QuickSetupErrorBanner(\n    reason: DeviceLightQuickSetupBlockReason\n) {
+internal fun QuickSetupErrorBanner(reason: com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupBlockReason) {
     val colors = aquaGuidedFlowColors()
     val typography = aquaGuidedFlowTypography(colors)
     val shape = androidx.compose.foundation.shape.RoundedCornerShape(AquaGuidedFlowGeometry.controlRadius)

@@ -110,7 +110,6 @@ class DeviceLightQuickSetupViewModel(
         }
     }
 
-    @Suppress("CyclomaticComplexMethod")
     private fun advance() {
         val state = _uiState.value
         val context = state.context ?: return
@@ -184,7 +183,6 @@ class DeviceLightQuickSetupViewModel(
         }
     }
 
-    @Suppress("ReturnCount")
     private fun applyRecommendation() {
         val state = _uiState.value
         if (state.stage != DeviceLightQuickSetupStage.REVIEW) return

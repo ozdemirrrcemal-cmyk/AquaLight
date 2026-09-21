@@ -42,7 +42,6 @@ internal data class DeviceLightMeasuredCalibrationProfile(
         require(coverageModelRevision > 0)
     }
 
-    @Suppress("ReturnCount")
     override fun solve(
         request: DeviceLightFixtureCalibrationRequest
     ): DeviceLightFixtureCalibrationResult? {

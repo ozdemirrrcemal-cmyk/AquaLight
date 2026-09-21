@@ -5,7 +5,6 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupBlockReason
 
 @StringRes
-@Suppress("CyclomaticComplexMethod")
 internal fun DeviceLightQuickSetupBlockReason.messageResource(): Int = when (this) {
     DeviceLightQuickSetupBlockReason.INVALID_DEVICE_UID ->
         R.string.device_light_quick_setup_error_invalid_device

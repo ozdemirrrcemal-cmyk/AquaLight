@@ -4,7 +4,6 @@ import com.aqua.aqualight.application.aquarium.AquariumPlantLightCatalog
 import com.aqua.aqualight.application.aquarium.AquariumPlantLightDemand
 
 object DeviceLightQuickSetupPlantProfileResolver {
-    @Suppress("ReturnCount")
     fun resolve(context: DeviceLightQuickSetupContext): DeviceLightQuickSetupPlantProfile? {
         if (context.plants.isEmpty()) return null
         val records = context.plants.map { plant ->

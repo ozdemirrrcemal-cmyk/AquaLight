@@ -12,7 +12,6 @@ class DeviceLightQuickSetupRecommendationEngine(
     private val calibration: DeviceLightFixtureCalibration
 ) {
 
-    @Suppress("ReturnCount")
     fun recommend(
         context: DeviceLightQuickSetupContext,
         input: DeviceLightQuickSetupInput
