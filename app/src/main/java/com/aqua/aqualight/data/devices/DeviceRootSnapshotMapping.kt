@@ -2,7 +2,6 @@ package com.aqua.aqualight.data.devices
 
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
-import com.aqua.aqualight.data.devices.catalog.AqlCommercialCatalogProduct
 import com.aqua.aqualight.data.devices.compatibility.DeviceCommercialCompatibilityEvaluation
 import com.aqua.aqualight.data.devices.compatibility.DeviceCommercialCompatibilityEvaluator
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
