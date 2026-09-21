@@ -3,10 +3,8 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.quicksetup
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.aqua.aqualight.application.devices.DefaultDeviceAccessPolicy
 import com.aqua.aqualight.application.devices.DeviceAccessDecision
-import com.aqua.aqualight.application.devices.DeviceAccessPolicy
-import com.aqua.aqualight.application.devices.DeviceCompatibilityOperations
+import com.aqua.aqualight.application.devices.DeviceFeatureAccessOperations
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.application.devices.DeviceRootMenuFeature
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlOperations
@@ -32,8 +30,7 @@ class DeviceLightQuickSetupViewModel(
     managedPlanOperations: DeviceLightManagedAutoPlanOperations,
     controlOperations: DeviceLightControlOperations,
     calibration: DeviceLightFixtureCalibration,
-    private val compatibilityOperations: DeviceCompatibilityOperations? = null,
-    private val accessPolicy: DeviceAccessPolicy = DefaultDeviceAccessPolicy
+    private val featureAccessOperations: DeviceFeatureAccessOperations? = null
 ) : ViewModel() {
 
     private val controller = DeviceLightQuickSetupController(
@@ -55,24 +52,26 @@ class DeviceLightQuickSetupViewModel(
         boundDeviceUid = deviceUid
         _uiState.value = savedState.bindDevice(deviceUid)
 
-        val compatibility = compatibilityOperations?.current(deviceUid)
-        if (compatibility != null) {
-            when (
-                val decision = accessPolicy.evaluateFeature(
-                    compatibility = compatibility,
-                    feature = DeviceRootMenuFeature.LIGHT_QUICK_SETUP
-                )
-            ) {
-                DeviceAccessDecision.Allowed -> Unit
+        val featureAccess = featureAccessOperations
+        if (featureAccess == null) {
+            load()
+            return
+        }
+
+        viewModelScope.launch {
+            val decision = featureAccess.resolve(
+                deviceUid = deviceUid,
+                feature = DeviceRootMenuFeature.LIGHT_QUICK_SETUP
+            )
+            if (boundDeviceUid != deviceUid) return@launch
+            when (decision) {
+                DeviceAccessDecision.Allowed -> load()
                 is DeviceAccessDecision.Blocked -> {
                     _uiState.update { state -> state.copy(loading = false) }
-                    accessFailureChannel.trySend(decision.reason)
-                    return
+                    accessFailureChannel.send(decision.reason)
                 }
             }
         }
-
-        load()
     }
 
     internal fun dispatch(action: DeviceLightQuickSetupAction) {
