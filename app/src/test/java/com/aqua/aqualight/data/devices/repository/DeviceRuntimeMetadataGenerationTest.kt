@@ -114,7 +114,7 @@ class DeviceRuntimeMetadataGenerationTest {
     }
 
     @Test
-    fun `exact parsers reject runtime mismatch unknown fields and type coercion`() {
+    fun `exact parsers keep fixed fields strict while ignoring unknown additive features`() {
         assertEquals(
             identityEnvelope(),
             DeviceRuntimeIdentityParser.parse(deviceUid, identityJson()).getOrThrow()
@@ -140,10 +140,20 @@ class DeviceRuntimeMetadataGenerationTest {
         }
 
         assertTrue(DeviceRuntimeIdentityParser.parse(deviceUid, wrongPort).isFailure)
-        assertTrue(DeviceRuntimeIdentityParser.parse(deviceUid, wrongApi).isFailure)
+        assertEquals(
+            2,
+            DeviceRuntimeIdentityParser.parse(deviceUid, wrongApi)
+                .getOrThrow()
+                .identity
+                .apiVersion
+                .value
+        )
         assertTrue(DeviceRuntimeIdentityParser.parse(deviceUid, unknownIdentity).isFailure)
         assertTrue(DeviceRuntimeCapabilitiesParser.parse(coercedCapability).isFailure)
-        assertTrue(DeviceRuntimeCapabilitiesParser.parse(unknownFeature).isFailure)
+        assertEquals(
+            capabilities(),
+            DeviceRuntimeCapabilitiesParser.parse(unknownFeature).getOrThrow()
+        )
     }
 
     @Test
