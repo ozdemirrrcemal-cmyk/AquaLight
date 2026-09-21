@@ -1,47 +1,10 @@
 package com.aqua.aqualight.ui.tabs.aquarium.catalog.material
 
 import com.aqua.aqualight.R
-import com.aqua.aqualight.application.aquarium.AquariumSubstrateEvidenceStatus
+import com.aqua.aqualight.application.aquarium.AquariumSubstrateMetadataCatalog
 import com.aqua.aqualight.application.aquarium.AquariumSubstrateProductMetadata
-import com.aqua.aqualight.application.aquarium.AquariumSubstrateSemantic
 
 object GravelCatalog {
-
-    private const val REVIEW_DATE = "2026-09-16"
-
-    private val adaAquaGravelMetadata = verifiedInertMetadata(
-        sourceOrganization = "Aqua Design Amano",
-        sourceRecordId = "ada_aqua_gravel",
-        sourceUrl = "https://www.adana.co.jp/en/contents/products/na_substrate/detail04.html"
-    )
-    private val dennerleNanoGravelMetadata = verifiedInertMetadata(
-        sourceOrganization = "Dennerle",
-        sourceRecordId = "dennerle_nano_shrimp_gravel",
-        sourceUrl = "https://dennerle.com/en/products/nano-shrimp-gravel"
-    )
-    private val jblSansibarDarkMetadata = verifiedInertMetadata(
-        sourceOrganization = "JBL",
-        sourceRecordId = "jbl_sansibar_dark",
-        sourceUrl = JBL_SUBSTRATE_GUIDE_URL
-    )
-    private val jblSansibarWhiteMetadata = verifiedInertMetadata(
-        sourceOrganization = "JBL",
-        sourceRecordId = "jbl_sansibar_white",
-        sourceUrl = JBL_SUBSTRATE_GUIDE_URL
-    )
-    private val aquaelBasaltMetadata = verifiedInertMetadata(
-        sourceOrganization = "Aquael",
-        sourceRecordId = "aquael_basalt_gravel",
-        sourceUrl = "https://www.aquael.com/products/aquaristics/substrates-gravels/bazaltowe/"
-    )
-    private val genericRiverSandMetadata = AquariumSubstrateProductMetadata(
-        semantic = AquariumSubstrateSemantic.UNKNOWN,
-        evidenceStatus = AquariumSubstrateEvidenceStatus.UNVERIFIED_GENERIC,
-        sourceOrganization = "AquaLight catalog",
-        sourceRecordId = "generic_natural_river_sand",
-        sourceUrl = null,
-        reviewedOn = REVIEW_DATE
-    )
 
     val definitions: List<AquariumMaterialDefinition> = listOf(
         AquariumMaterialDefinition(
@@ -57,7 +20,7 @@ object GravelCatalog {
                 R.string.catalog_keyword_ada,
                 R.string.catalog_keyword_aqua_gravel
             ),
-            substrateMetadata = adaAquaGravelMetadata
+            substrateMetadata = metadata("gravel_ada_aqua_gravel_s")
         ),
         AquariumMaterialDefinition(
             id = "gravel_ada_aqua_gravel_m",
@@ -72,7 +35,7 @@ object GravelCatalog {
                 R.string.catalog_keyword_ada,
                 R.string.catalog_keyword_aqua_gravel
             ),
-            substrateMetadata = adaAquaGravelMetadata
+            substrateMetadata = metadata("gravel_ada_aqua_gravel_m")
         ),
         AquariumMaterialDefinition(
             id = "gravel_dennerle_nano_gravel_black",
@@ -86,7 +49,7 @@ object GravelCatalog {
                 R.string.catalog_keyword_nano,
                 R.string.catalog_keyword_dennerle
             ),
-            substrateMetadata = dennerleNanoGravelMetadata
+            substrateMetadata = metadata("gravel_dennerle_nano_gravel_black")
         ),
         AquariumMaterialDefinition(
             id = "gravel_dennerle_nano_gravel_natural",
@@ -100,7 +63,7 @@ object GravelCatalog {
                 R.string.catalog_keyword_nano,
                 R.string.catalog_keyword_dennerle
             ),
-            substrateMetadata = dennerleNanoGravelMetadata
+            substrateMetadata = metadata("gravel_dennerle_nano_gravel_natural")
         ),
         AquariumMaterialDefinition(
             id = "gravel_jbl_sansibar_dark",
@@ -115,7 +78,7 @@ object GravelCatalog {
                 R.string.catalog_keyword_dark,
                 R.string.catalog_keyword_jbl
             ),
-            substrateMetadata = jblSansibarDarkMetadata
+            substrateMetadata = metadata("gravel_jbl_sansibar_dark")
         ),
         AquariumMaterialDefinition(
             id = "gravel_jbl_sansibar_white",
@@ -129,7 +92,7 @@ object GravelCatalog {
                 R.string.catalog_keyword_white,
                 R.string.catalog_keyword_jbl
             ),
-            substrateMetadata = jblSansibarWhiteMetadata
+            substrateMetadata = metadata("gravel_jbl_sansibar_white")
         ),
         AquariumMaterialDefinition(
             id = "gravel_aquael_basaltsand",
@@ -144,7 +107,7 @@ object GravelCatalog {
                 R.string.catalog_keyword_black,
                 R.string.catalog_keyword_aquael
             ),
-            substrateMetadata = aquaelBasaltMetadata
+            substrateMetadata = metadata("gravel_aquael_basaltsand")
         ),
         AquariumMaterialDefinition(
             id = "gravel_natural_river_sand",
@@ -158,24 +121,11 @@ object GravelCatalog {
                 R.string.catalog_keyword_river,
                 R.string.catalog_keyword_natural
             ),
-            substrateMetadata = genericRiverSandMetadata
+            substrateMetadata = metadata("gravel_natural_river_sand")
         )
     )
 
-    private fun verifiedInertMetadata(
-        sourceOrganization: String,
-        sourceRecordId: String,
-        sourceUrl: String
-    ): AquariumSubstrateProductMetadata = AquariumSubstrateProductMetadata(
-        semantic = AquariumSubstrateSemantic.INERT,
-        evidenceStatus = AquariumSubstrateEvidenceStatus.VERIFIED_PRODUCT,
-        sourceOrganization = sourceOrganization,
-        sourceRecordId = sourceRecordId,
-        sourceUrl = sourceUrl,
-        reviewedOn = REVIEW_DATE
+    private fun metadata(productId: String): AquariumSubstrateProductMetadata = requireNotNull(
+        AquariumSubstrateMetadataCatalog.metadata(productId, MaterialCategoryKey.GRAVEL)
     )
-
-    private const val JBL_SUBSTRATE_GUIDE_URL =
-        "https://www.jbl.de/en/theme-world/essential_section/57/" +
-            "jbl-themeworld-for-your-hobby?country=lv"
 }

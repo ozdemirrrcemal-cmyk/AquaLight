@@ -419,7 +419,7 @@ private fun createOwnerLightOperations(
         ),
         managedAutoPlanOperations = DefaultDeviceLightManagedAutoPlanOperations(devicesRepository),
         quickSetupCalibration = DefaultDeviceLightFixtureCalibration(
-            placeholderEnabled = BuildConfig.DEBUG
+            placeholderEnabled = BuildConfig.AQL_QUICK_SETUP_PLACEHOLDER_ENABLED
         )
     )
 }

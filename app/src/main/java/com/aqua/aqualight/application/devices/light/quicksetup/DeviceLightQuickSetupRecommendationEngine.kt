@@ -1,6 +1,5 @@
 package com.aqua.aqualight.application.devices.light.quicksetup
 
-import com.aqua.aqualight.application.aquarium.AquariumPlantLightCatalog
 import com.aqua.aqualight.application.aquarium.AquariumPlantLightDemand
 
 /**
@@ -21,7 +20,7 @@ class DeviceLightQuickSetupRecommendationEngine(
         if (inputFailure != null) {
             return DeviceLightQuickSetupRecommendationResult.Blocked(inputFailure)
         }
-        val plantProfile = resolvePlantProfile(context)
+        val plantProfile = DeviceLightQuickSetupPlantProfileResolver.resolve(context)
             ?: return DeviceLightQuickSetupRecommendationResult.Blocked(
                 DeviceLightQuickSetupBlockReason.UNKNOWN_PLANT_CATALOG_ID
             )
@@ -89,24 +88,6 @@ class DeviceLightQuickSetupRecommendationEngine(
         context.co2Present && input.co2Readiness == DeviceLightQuickSetupCo2Readiness.NOT_PRESENT ->
             DeviceLightQuickSetupBlockReason.INVALID_INPUT
         else -> null
-    }
-
-    private fun resolvePlantProfile(
-        context: DeviceLightQuickSetupContext
-    ): DeviceLightQuickSetupPlantProfile? {
-        val records = context.plants.map { plant ->
-            AquariumPlantLightCatalog.record(plant.catalogId) ?: return null
-        }
-        val counts = records.groupingBy { record -> record.lightDemand }.eachCount()
-        return DeviceLightQuickSetupPlantProfile(
-            selectedPlantCount = context.plants.size,
-            uniqueSpeciesCount = context.plants.map { plant -> plant.catalogId }.distinct().size,
-            lowDemandCount = counts[AquariumPlantLightDemand.LOW] ?: 0,
-            mediumDemandCount = counts[AquariumPlantLightDemand.MEDIUM] ?: 0,
-            highDemandCount = counts[AquariumPlantLightDemand.HIGH] ?: 0,
-            highestDemand = records.maxOf { record -> record.lightDemand },
-            plantCatalogRevision = AquariumPlantLightCatalog.CATALOG_REVISION
-        )
     }
 
     private fun requestedTargetPpfd(demand: AquariumPlantLightDemand): Int = when (demand) {
