@@ -316,20 +316,10 @@ object DeviceFirmwareManifestParser {
         require(artifact.features.isNotEmpty()) {
             "OTA manifest feature advertisement must not be empty."
         }
-        if (artifact.updatePolicy.level == DeviceFirmwareUpdatePolicyLevel.FEATURE_REQUIRED) {
-            require(artifact.updatePolicy.requiredFeatures.all(artifact.features::contains)) {
-                "FEATURE_REQUIRED OTA policy references a feature absent from target firmware."
-            }
-        }
-    }
-
-    private fun validateCompatibilityMetadata(
-        artifact: DeviceFirmwareManifestArtifact
-    ) {
         require(artifact.features.all(FEATURE_TOKEN_PATTERN::matches)) {
             "OTA manifest features contain an invalid commercial feature token."
         }
-        require(artifact.updatePolicy.requiredFeatures.all { feature -> feature in artifact.features }) {
+        require(artifact.updatePolicy.requiredFeatures.all(artifact.features::contains)) {
             "OTA update policy references a feature not advertised by the artifact."
         }
         require(artifact.contracts.requiredDomains.all(CONTRACT_ID_PATTERN::matches)) {
@@ -641,6 +631,4 @@ object DeviceFirmwareManifestParser {
     private val ENVIRONMENT_PATTERN = Regex("^[a-z0-9_]+$")
     private val FEATURE_TOKEN_PATTERN = Regex("^[A-Z][A-Z0-9_]*$")
     private val CONTRACT_ID_PATTERN = Regex("^[a-z0-9]+(?:[._-][a-z0-9]+)+$")
-    private val FEATURE_TOKEN_PATTERN = Regex("^[A-Z][A-Z0-9_]*$")
-    private val CONTRACT_ID_PATTERN = Regex("^[a-z0-9]+(?:[.-][a-z0-9]+)*$")
 }
