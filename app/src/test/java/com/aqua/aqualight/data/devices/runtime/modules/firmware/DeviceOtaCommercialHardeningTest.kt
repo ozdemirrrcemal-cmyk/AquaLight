@@ -209,6 +209,16 @@ class DeviceOtaCommercialHardeningTest {
                 model = "dose_pro_2",
                 hardwareRevision = "2.0"
             ),
+            contracts = DeviceFirmwareManifestContracts(
+                wsSchema = "aql.ws.v1",
+                wsProtocolVersion = 1,
+                deviceApiVersion = 1,
+                requiredDomains = setOf("aqualight.dosing.v1"),
+                optionalDomains = emptySet()
+            ),
+            features = setOf("DOSING_CONTROL", "OTA_UPDATE"),
+            updatePolicy =
+                com.aqua.aqualight.application.devices.DeviceFirmwareUpdatePolicy.RECOMMENDED,
             firmware = DeviceFirmwareAsset(
                 version = TARGET_VERSION,
                 filename = filename,
