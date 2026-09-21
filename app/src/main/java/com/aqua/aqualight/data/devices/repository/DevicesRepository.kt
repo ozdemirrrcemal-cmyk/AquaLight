@@ -21,6 +21,8 @@ import com.aqua.aqualight.data.devices.runtime.modules.DeviceRuntimeModuleProvid
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsEvent
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsIncomingMessage
+import com.aqua.aqualight.data.devices.runtime.ws.AqlWsProtocolError
+import com.aqua.aqualight.data.devices.runtime.ws.AqlWsProtocolException
 import com.aqua.aqualight.data.devices.store.DeviceKnownStore
 import com.aqua.aqualight.data.devices.store.DeviceRegistryStore
 import com.aqua.aqualight.data.devices.store.DeviceSnapshotMerger
@@ -610,11 +612,47 @@ class DevicesRepository(
                 }
             }
             is AqlWsConnectionState.Failed -> state.deviceUid?.let { deviceUid ->
-                applyRuntimeUnavailable(
-                    deviceUid,
-                    state.message.ifBlank { "Connection failed." }
-                )
+                val protocolError = (state.cause as? AqlWsProtocolException)?.protocolError
+                if (protocolError == AqlWsProtocolError.INCOMPATIBLE_PROTOCOL) {
+                    applyRuntimeIncompatible(
+                        deviceUid,
+                        state.message.ifBlank { "Device protocol is incompatible." }
+                    )
+                } else {
+                    applyRuntimeUnavailable(
+                        deviceUid,
+                        state.message.ifBlank { "Connection failed." }
+                    )
+                }
             }
+        }
+    }
+
+    private fun applyRuntimeIncompatible(deviceUid: DeviceUid, message: String) {
+        // An incompatible authenticated transport/domain contract is not proof that the physical
+        // device is Offline. Withdraw runtime authority but preserve canonical LAN/discovery
+        // presence so the card can remain Online while access policy asks for an app update.
+        invalidateRuntimeMetadata(deviceUid)
+        val nowElapsedMillis = elapsedRealtimeMillis()
+        registryStore.updateConnectionState(deviceUid) { previous ->
+            val clearedRuntimeState = previous.copy(
+                lastWsConnectedAtMillis = null,
+                lastWsConnectedElapsedMillis = null,
+                lastAuthenticatedAtMillis = null,
+                lastAuthenticatedElapsedMillis = null,
+                lastRuntimeMessageAtMillis = null,
+                lastRuntimeMessageElapsedMillis = null,
+                lastControlProofAtMillis = null,
+                lastControlProofElapsedMillis = null,
+                lastErrorMessage = message
+            )
+            clearedRuntimeState.copy(
+                onlineState = statusAggregator.resolve(
+                    state = clearedRuntimeState,
+                    nowElapsedMillis = nowElapsedMillis,
+                    localNetworkAvailable = presenceRuntimeMonitor.isLocalNetworkAvailable()
+                )
+            )
         }
     }
 
