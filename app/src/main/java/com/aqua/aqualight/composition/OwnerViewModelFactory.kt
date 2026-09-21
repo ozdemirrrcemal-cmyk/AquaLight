@@ -215,8 +215,7 @@ internal class OwnerViewModelFactory(
                 rootOperations = rootOperations,
                 lightControlOperations = graph.lightOperations.controlOperations,
                 controlSurfacePreparationOperations = graph.controlSurfacePreparationOperations,
-                compatibilityOperations = graph.compatibilityOperations,
-                accessPolicy = graph.accessPolicy
+                featureAccessOperations = graph.featureAccessOperations
             )
             DeviceLightAdaptationViewModel::class.java -> DeviceLightAdaptationViewModel(
                 operations = graph.lightOperations.adaptationOperations,
@@ -248,8 +247,7 @@ internal class OwnerViewModelFactory(
                 managedPlanOperations = graph.lightOperations.managedAutoPlanOperations,
                 controlOperations = graph.lightOperations.controlOperations,
                 calibration = graph.lightOperations.quickSetupCalibration,
-                compatibilityOperations = graph.compatibilityOperations,
-                accessPolicy = graph.accessPolicy
+                featureAccessOperations = graph.featureAccessOperations
             )
             DeviceLightLibraryViewModel::class.java -> DeviceLightLibraryViewModel(
                 operations = graph.lightOperations.libraryOperations,
