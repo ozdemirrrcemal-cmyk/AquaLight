@@ -437,7 +437,10 @@
     <string name="device_light_quick_setup_dimensions_label">Dimensions</string>
     <string name="device_light_quick_setup_dimensions_value">%1$d × %2$d × %3$d cm</string>
     <string name="device_light_quick_setup_age_label">Tank age</string>
-    <string name="device_light_quick_setup_age_days">%1$d days</string>
+    <plurals name="device_light_quick_setup_age_days">
+        <item quantity="one">%1$d day</item>
+        <item quantity="other">%1$d days</item>
+    </plurals>
     <string name="device_light_quick_setup_type_label">Type</string>
     <string name="device_light_quick_setup_style_label">Style</string>
     <string name="device_light_quick_setup_plants_title">Plants</string>
@@ -508,7 +511,9 @@
     <string name="device_light_quick_setup_mature_duration_label">Mature target</string>
     <string name="device_light_quick_setup_target_ppfd_label">Requested PPFD</string>
     <string name="device_light_quick_setup_effective_ppfd_label">Effective target PPFD</string>
-    <string name="device_light_quick_setup_ppfd_value">%1$d µmol/m²/s</string>
+    <string name="device_light_quick_setup_integer_value">%1$d</string>
+    <string name="device_light_quick_setup_ppfd_unit">µmol/m²/s</string>
+    <string name="device_light_quick_setup_ppfd_value">%1$s %2$s</string>
     <string name="device_light_quick_setup_plant_demand_label">Plant demand</string>
     <string name="device_light_quick_setup_calibration_label">Calibration</string>
     <string name="device_light_quick_setup_calibrated">Calibrated</string>

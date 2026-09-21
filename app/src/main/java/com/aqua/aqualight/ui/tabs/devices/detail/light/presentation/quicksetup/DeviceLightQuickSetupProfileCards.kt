@@ -1,6 +1,7 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.quicksetup
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.aqua.aqualight.R
 import java.time.LocalDate
@@ -8,7 +9,10 @@ import java.time.LocalDate
 @Composable
 internal fun QuickSetupAquariumProfileCard(state: DeviceLightQuickSetupUiState) {
     val context = checkNotNull(state.context)
-    val ageDays = (LocalDate.now().toEpochDay() - context.setupDateEpochDay).coerceAtLeast(0)
+    val ageDays = (LocalDate.now().toEpochDay() - context.setupDateEpochDay)
+        .coerceAtLeast(0)
+        .coerceAtMost(Int.MAX_VALUE.toLong())
+        .toInt()
     QuickSetupProfileCard(
         title = stringResource(R.string.device_light_quick_setup_aquarium_title),
         rows = listOf(
@@ -19,8 +23,9 @@ internal fun QuickSetupAquariumProfileCard(state: DeviceLightQuickSetupUiState) 
                 context.tankWidthCm,
                 context.tankHeightCm
             ),
-            stringResource(R.string.device_light_quick_setup_age_label) to stringResource(
-                R.string.device_light_quick_setup_age_days,
+            stringResource(R.string.device_light_quick_setup_age_label) to pluralStringResource(
+                R.plurals.device_light_quick_setup_age_days,
+                ageDays,
                 ageDays
             ),
             stringResource(R.string.device_light_quick_setup_type_label) to

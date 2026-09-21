@@ -93,17 +93,15 @@ internal class OwnerViewModelFactory(
 
     override fun supports(modelClass: Class<out ViewModel>): Boolean = modelClass in OWNER_BINDINGS
 
-    override fun <T : ViewModel> create(modelClass: Class<T>): T =
-        createInternal(
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        check(modelClass != DeviceLightQuickSetupViewModel::class.java) {
+            "DeviceLightQuickSetupViewModel requires CreationExtras for SavedStateHandle."
+        }
+        return createInternal(
             modelClass = modelClass,
-            quickSetupSavedStateHandle = if (
-                modelClass == DeviceLightQuickSetupViewModel::class.java
-            ) {
-                SavedStateHandle()
-            } else {
-                null
-            }
+            quickSetupSavedStateHandle = null
         )
+    }
 
     override fun <T : ViewModel> create(
         modelClass: Class<T>,

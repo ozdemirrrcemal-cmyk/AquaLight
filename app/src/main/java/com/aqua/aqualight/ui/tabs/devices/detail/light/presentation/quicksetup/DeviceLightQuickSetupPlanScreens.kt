@@ -230,17 +230,11 @@ private fun QuickSetupTimingMetrics(
 private fun QuickSetupTargetMetrics(recommendation: DeviceLightQuickSetupRecommendation) {
     ReviewMetricRow(
         stringResource(R.string.device_light_quick_setup_target_ppfd_label),
-        stringResource(
-            R.string.device_light_quick_setup_ppfd_value,
-            recommendation.requestedTargetPpfd
-        )
+        quickSetupPpfdText(recommendation.requestedTargetPpfd)
     )
     ReviewMetricRow(
         stringResource(R.string.device_light_quick_setup_effective_ppfd_label),
-        stringResource(
-            R.string.device_light_quick_setup_ppfd_value,
-            recommendation.effectiveTargetPpfd
-        )
+        quickSetupPpfdText(recommendation.effectiveTargetPpfd)
     )
     ReviewMetricRow(
         stringResource(R.string.device_light_quick_setup_plant_demand_label),
@@ -251,6 +245,13 @@ private fun QuickSetupTargetMetrics(recommendation: DeviceLightQuickSetupRecomme
         stringResource(R.string.device_light_quick_setup_calibrated)
     )
 }
+
+@Composable
+private fun quickSetupPpfdText(value: Int): String = stringResource(
+    R.string.device_light_quick_setup_ppfd_value,
+    stringResource(R.string.device_light_quick_setup_integer_value, value),
+    stringResource(R.string.device_light_quick_setup_ppfd_unit)
+)
 
 @Composable
 private fun QuickSetupPhaseTimeline(
