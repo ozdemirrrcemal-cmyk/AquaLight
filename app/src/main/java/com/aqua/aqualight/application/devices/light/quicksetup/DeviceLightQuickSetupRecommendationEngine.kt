@@ -11,8 +11,6 @@ import com.aqua.aqualight.application.aquarium.AquariumPlantLightDemand
 class DeviceLightQuickSetupRecommendationEngine(
     private val calibration: DeviceLightFixtureCalibration
 ) {
-
-    @Suppress("ReturnCount")
     fun recommend(
         context: DeviceLightQuickSetupContext,
         input: DeviceLightQuickSetupInput

@@ -41,8 +41,6 @@ internal data class DeviceLightMeasuredCalibrationProfile(
         require(measuredPpfdSampleCount >= horizontalMeasurementPointCount)
         require(coverageModelRevision > 0)
     }
-
-    @Suppress("ReturnCount")
     override fun solve(
         request: DeviceLightFixtureCalibrationRequest
     ): DeviceLightFixtureCalibrationResult? {
