@@ -160,8 +160,15 @@ internal object DeviceLightMutationParser {
     }
 
     internal object Graph {
-        fun parseGraph(data: JSONObject, product: DeviceLightProduct): DeviceLightGraph {
-            data.requireLightKeys(GRAPH_KEYS, "light.graph.get.data")
+        fun parseGraph(
+            data: JSONObject,
+            product: DeviceLightProduct,
+            managedAutoPlanSupported: Boolean = true
+        ): DeviceLightGraph {
+            data.requireLightKeys(
+                if (managedAutoPlanSupported) GRAPH_KEYS_MANAGED_PLAN else GRAPH_KEYS_BASE,
+                "light.graph.get.data"
+            )
             val pointData = data.requireLightArray("points")
             val points = List(pointData.length()) { index ->
                 parseGraphPoint(pointData.requireLightArray(index), product)
@@ -170,11 +177,16 @@ internal object DeviceLightMutationParser {
             val spans = List(spanData.length()) { index ->
                 parseGraphSpan(spanData.requireLightArray(index))
             }
-            val planSpanData = data.requireLightArray("planSpans")
-            val planSpans = List(planSpanData.length()) { index ->
-                parsePlanGraphSpan(planSpanData.requireLightArray(index))
+            val planSpans = if (managedAutoPlanSupported) {
+                val planSpanData = data.requireLightArray("planSpans")
+                List(planSpanData.length()) { index ->
+                    parsePlanGraphSpan(planSpanData.requireLightArray(index))
+                }
+            } else {
+                emptyList()
             }
             val result = buildGraph(data, points, spans, planSpans)
+            if (!managedAutoPlanSupported) result.requireBaseGraphContract()
             result.requireCoherentStructure()
             result.requireModeSemantics()
             result.requireReasonSemantics()
@@ -234,6 +246,12 @@ internal object DeviceLightMutationParser {
                     )
                 }
             )
+        }
+
+        private fun DeviceLightGraph.requireBaseGraphContract() {
+            require(basis != DeviceLightGraphBasis.MANAGED_PLAN)
+            require(reason != DeviceLightGraphReason.MANAGED_PLAN_NOT_SCHEDULED_TODAY)
+            require(planSpans.isEmpty())
         }
 
         private fun DeviceLightGraph.requireModeSemantics() {
@@ -404,11 +422,12 @@ internal object DeviceLightMutationParser {
     )
     private val PREVIEW_SET_KEYS = setOf("active", "remainingMs", "event")
     private val PREVIEW_CLEAR_KEYS = setOf("active", "event")
-    private val GRAPH_KEYS = setOf(
+    private val GRAPH_KEYS_BASE = setOf(
         "mode", "available", "reason", "sourceRevision", "schedulerGeneration", "localDate",
         "currentWeekdayMask", "nowTimeMs", "basis", "channelScale", "hasScheduleToday",
-        "points", "autoSpans", "planSpans"
+        "points", "autoSpans"
     )
+    private val GRAPH_KEYS_MANAGED_PLAN = GRAPH_KEYS_BASE + "planSpans"
     private val PROGRAM_ID = Regex("^ap-[0-9a-f]{8}$")
 }
 
