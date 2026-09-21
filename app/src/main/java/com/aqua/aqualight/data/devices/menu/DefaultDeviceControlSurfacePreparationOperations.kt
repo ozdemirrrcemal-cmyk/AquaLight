@@ -1,5 +1,9 @@
 package com.aqua.aqualight.data.devices.menu
 
+import com.aqua.aqualight.application.devices.DefaultDeviceAccessPolicy
+import com.aqua.aqualight.application.devices.DeviceAccessDecision
+import com.aqua.aqualight.application.devices.DeviceAccessPolicy
+import com.aqua.aqualight.application.devices.DeviceCompatibilityOperations
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationRequest
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationResult
@@ -35,21 +39,35 @@ internal class DefaultDeviceControlSurfacePreparationOperations(
     private val dosingChannelOperations: DeviceDosingChannelOperations,
     private val coolingControlOperations: DeviceCoolingControlOperations,
     private val timerControlOperations: DeviceTimerControlOperations,
-    private val lightControlOperations: DeviceLightControlOperations
+    private val lightControlOperations: DeviceLightControlOperations,
+    private val compatibilityOperations: DeviceCompatibilityOperations? = null,
+    private val accessPolicy: DeviceAccessPolicy = DefaultDeviceAccessPolicy
 ) : DeviceControlSurfacePreparationOperations {
 
     private val freshlyPreparedSurfaces = ConcurrentHashMap.newKeySet<PreparedSurface>()
 
     override suspend fun prepare(
         request: DeviceControlSurfacePreparationRequest
-    ): DeviceControlSurfacePreparationResult = when {
-        request.deviceUid.trim().isBlank() ->
-            unavailable(DeviceMenuUnavailableReason.INVALID_DEVICE_UID)
-        request.family == OwnerDeviceFamily.DOSING -> prepareDosing(request.deviceUid.trim())
-        request.family == OwnerDeviceFamily.COOLING -> prepareCooling(request.deviceUid.trim())
-        request.family == OwnerDeviceFamily.TIMER -> prepareTimer(request.deviceUid.trim())
-        request.family == OwnerDeviceFamily.LIGHT -> prepareLight(request.deviceUid.trim())
-        else -> DeviceControlSurfacePreparationResult.Ready
+    ): DeviceControlSurfacePreparationResult {
+        val deviceUid = request.deviceUid.trim()
+        if (deviceUid.isBlank()) {
+            return unavailable(DeviceMenuUnavailableReason.INVALID_DEVICE_UID)
+        }
+
+        compatibilityOperations?.let { compatibility ->
+            when (val decision = accessPolicy.evaluateRoot(compatibility.current(deviceUid))) {
+                is DeviceAccessDecision.Blocked -> return unavailable(decision.reason)
+                DeviceAccessDecision.Allowed -> Unit
+            }
+        }
+
+        return when (request.family) {
+            OwnerDeviceFamily.DOSING -> prepareDosing(deviceUid)
+            OwnerDeviceFamily.COOLING -> prepareCooling(deviceUid)
+            OwnerDeviceFamily.TIMER -> prepareTimer(deviceUid)
+            OwnerDeviceFamily.LIGHT -> prepareLight(deviceUid)
+            else -> DeviceControlSurfacePreparationResult.Ready
+        }
     }
 
     private suspend fun prepareLight(
@@ -64,7 +82,7 @@ internal class DefaultDeviceControlSurfacePreparationOperations(
                 unavailable(DeviceMenuUnavailableReason.COMMERCIAL_PRODUCT_MISMATCH)
             else -> when (val control = lightControlOperations.refreshControl(deviceUid)) {
                 is DeviceLightControlResult.Failed ->
-                    unavailable(DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN)
+                    unavailable(DeviceControlSurfaceFailureClassifier.classify(control.failure))
                 is DeviceLightControlResult.Available -> {
                     if (control.snapshot.matchesLightControlSurface(deviceUid, root)) {
                         freshlyPreparedSurfaces += preparedSurface
@@ -93,9 +111,9 @@ internal class DefaultDeviceControlSurfacePreparationOperations(
             // authoritative Dosing refresh before navigation, even when an older complete projection
             // is still available for presentation continuity.
             !dosingChannelOperations.refreshAll(deviceUid) ->
-                unavailable(DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN)
+                unavailable(DeviceControlSurfaceFailureClassifier.dosingRefreshFailure())
             !hasAuthoritativeSurface(deviceUid, root.channelSlots.dosingChannels) ->
-                unavailable(DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN)
+                unavailable(DeviceMenuUnavailableReason.MALFORMED_DEVICE_STATE)
             else -> {
                 freshlyPreparedSurfaces += preparedSurface
                 DeviceControlSurfacePreparationResult.Ready
@@ -110,18 +128,19 @@ internal class DefaultDeviceControlSurfacePreparationOperations(
         val preparedSurface = PreparedSurface(deviceUid, OwnerDeviceFamily.COOLING)
         freshlyPreparedSurfaces.remove(preparedSurface)
         val root = rootOperations.current(deviceUid)
-        val result = when {
+        return when {
             root == null -> unavailable(DeviceMenuUnavailableReason.DEVICE_NOT_REGISTERED)
             !root.matchesCoolingCatalog() ->
                 unavailable(DeviceMenuUnavailableReason.COMMERCIAL_PRODUCT_MISMATCH)
-            coolingControlOperations.refreshControl(deviceUid) !is DeviceCoolingControlResult.Available ->
-                unavailable(DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN)
-            else -> {
-                freshlyPreparedSurfaces += preparedSurface
-                DeviceControlSurfacePreparationResult.Ready
+            else -> when (val control = coolingControlOperations.refreshControl(deviceUid)) {
+                is DeviceCoolingControlResult.Available -> {
+                    freshlyPreparedSurfaces += preparedSurface
+                    DeviceControlSurfacePreparationResult.Ready
+                }
+                is DeviceCoolingControlResult.Failed ->
+                    unavailable(DeviceControlSurfaceFailureClassifier.classify(control.failure))
             }
         }
-        return result
     }
 
     private suspend fun prepareTimer(
@@ -137,7 +156,7 @@ internal class DefaultDeviceControlSurfacePreparationOperations(
                 unavailable(DeviceMenuUnavailableReason.COMMERCIAL_PRODUCT_MISMATCH)
             else -> when (val control = timerControlOperations.refreshControl(deviceUid)) {
                 is DeviceTimerControlResult.Failed ->
-                    unavailable(DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN)
+                    unavailable(DeviceControlSurfaceFailureClassifier.classify(control.failure))
                 is DeviceTimerControlResult.Available -> {
                     if (control.snapshot.matchesTimerSurface(deviceUid, expectedSlots)) {
                         freshlyPreparedSurfaces += preparedSurface
