@@ -16,6 +16,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceLightQuickSetupBinding
+import com.aqua.aqualight.ui.common.devicepresence.DeviceMenuUnavailableMessageMapper
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import kotlinx.coroutines.launch
@@ -64,10 +65,13 @@ class DeviceLightQuickSetupFragment : Fragment(R.layout.fragment_device_light_qu
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.accessFailures.collect { reason ->
                     if (_binding == null) return@collect
-                    (activity as? BaseActivity)?.showDeviceAccessDialog(
-                        deviceTitle = getString(R.string.device_family_light),
-                        reason = reason
-                    )
+                    DeviceMenuUnavailableMessageMapper.feedback(reason).let { feedback ->
+                        (activity as? BaseActivity)?.showDeviceAccessDialog(
+                            deviceTitle = getString(R.string.device_family_light),
+                            titleRes = feedback.titleRes,
+                            messageRes = feedback.messageRes
+                        )
+                    }
                     val navController = findNavController()
                     if (navController.currentDestination?.id == R.id.deviceLightQuickSetupFragment) {
                         navController.navigateUp()
