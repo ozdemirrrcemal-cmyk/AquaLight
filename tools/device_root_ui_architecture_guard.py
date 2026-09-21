@@ -1003,8 +1003,16 @@ def validate_light_feature_boundaries(repository_root: Path) -> list[str]:
             "Light must construct exactly one owner-scoped runtime state owner",
         ),
         (
-            "DeviceLightRuntimeRepository(commandGateway, lightStateOwner)",
+            "val light = DeviceLightRuntimeRepository(",
+            "main Light runtime must remain owned by the central module provider",
+        ),
+        (
+            "stateOwner = lightStateOwner",
             "main Light runtime must share the central state owner",
+        ),
+        (
+            "accessProvider = lightAccessProvider",
+            "Light V1 optional capability negotiation must come from authenticated metadata",
         ),
         (
             "DeviceLightTemperatureProtectionRuntimeRepository(commandGateway, lightStateOwner)",
