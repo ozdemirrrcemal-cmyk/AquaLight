@@ -58,6 +58,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.adaptation.D
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.library.DeviceLightLibraryViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom.DeviceLightCustomCurveViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual.DeviceLightManualControlViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.quicksetup.DeviceLightQuickSetupViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.system.DeviceLightSystemViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.settings.DeviceFamilySettingsViewModel
@@ -209,6 +210,13 @@ internal class OwnerViewModelFactory(
                 libraryOperations = graph.lightOperations.libraryOperations,
                 rootOperations = rootOperations
             )
+            DeviceLightQuickSetupViewModel::class.java -> DeviceLightQuickSetupViewModel(
+                contextOperations = graph.lightOperations.quickSetupContextOperations,
+                managedPlanOperations = graph.lightOperations.managedAutoPlanOperations,
+                controlOperations = graph.lightOperations.controlOperations,
+                calibration = graph.lightOperations.quickSetupCalibration,
+                allowPlaceholderApply = BuildConfig.DEBUG
+            )
             DeviceLightLibraryViewModel::class.java -> DeviceLightLibraryViewModel(
                 operations = graph.lightOperations.libraryOperations,
                 rootOperations = rootOperations
@@ -346,6 +354,7 @@ internal class OwnerViewModelFactory(
             DeviceLightAutomaticProgramEditorViewModel::class.java,
             DeviceLightManualControlViewModel::class.java,
             DeviceLightCustomCurveViewModel::class.java,
+            DeviceLightQuickSetupViewModel::class.java,
             DeviceLightLibraryViewModel::class.java,
             DeviceLightSystemViewModel::class.java,
             DeviceCoolingRootViewModel::class.java,

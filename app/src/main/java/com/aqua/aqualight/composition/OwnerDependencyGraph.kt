@@ -18,6 +18,9 @@ import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControl
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomOperations
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryOperations
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualOperations
+import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightFixtureCalibration
+import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightManagedAutoPlanOperations
+import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupContextOperations
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftRequest
@@ -48,6 +51,9 @@ import com.aqua.aqualight.data.devices.light.custom.DefaultDeviceLightCustomOper
 import com.aqua.aqualight.data.devices.light.library.DefaultDeviceLightLibraryOperations
 import com.aqua.aqualight.data.devices.light.library.DeviceLightLibraryStore
 import com.aqua.aqualight.data.devices.light.manual.DefaultDeviceLightManualOperations
+import com.aqua.aqualight.data.devices.light.quicksetup.DefaultDeviceLightFixtureCalibration
+import com.aqua.aqualight.data.devices.light.quicksetup.DefaultDeviceLightManagedAutoPlanOperations
+import com.aqua.aqualight.data.devices.light.quicksetup.DefaultDeviceLightQuickSetupContextOperations
 import com.aqua.aqualight.data.devices.light.system.DefaultDeviceLightSystemOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceControlSurfacePreparationOperations
 import com.aqua.aqualight.data.devices.provisioning.repository.DefaultProvisioningDraftOperations
@@ -107,7 +113,10 @@ internal data class OwnerLightOperations(
     val customOperations: DeviceLightCustomOperations,
     val manualOperations: DeviceLightManualOperations,
     val systemOperations: DeviceLightSystemOperations,
-    val libraryOperations: DeviceLightLibraryOperations
+    val libraryOperations: DeviceLightLibraryOperations,
+    val quickSetupContextOperations: DeviceLightQuickSetupContextOperations,
+    val managedAutoPlanOperations: DeviceLightManagedAutoPlanOperations,
+    val quickSetupCalibration: DeviceLightFixtureCalibration
 )
 
 internal fun interface OwnerDependencyGraphResolver {
@@ -232,7 +241,9 @@ internal class ActiveOwnerDependencyGraphResolver(
         val lightOperations = createOwnerLightOperations(
             context = appContext,
             ownerUid = dependencies.ownerUid,
-            devicesRepository = dependencies.devicesRepository
+            devicesRepository = dependencies.devicesRepository,
+            assignmentRepository = dependencies.assignmentRepository,
+            aquariumTankStore = aquariumTankStore
         )
         return OwnerDependencyGraph(
             ownerUid = dependencies.ownerUid,
@@ -378,7 +389,9 @@ internal class ActiveOwnerDependencyGraphResolver(
 private fun createOwnerLightOperations(
     context: Context,
     ownerUid: String,
-    devicesRepository: DevicesRepository
+    devicesRepository: DevicesRepository,
+    assignmentRepository: TankDeviceAssignmentRepository,
+    aquariumTankStore: AquariumTankDataStoreManager
 ): OwnerLightOperations {
     val controlOperations = DefaultDeviceLightControlOperations(devicesRepository)
     return OwnerLightOperations(
@@ -397,6 +410,16 @@ private fun createOwnerLightOperations(
             store = DeviceLightLibraryStore.create(context, ownerUid),
             devicesRepository = devicesRepository,
             controlOperations = controlOperations
+        ),
+        quickSetupContextOperations = DefaultDeviceLightQuickSetupContextOperations(
+            ownerUid = ownerUid,
+            tankStore = aquariumTankStore,
+            assignmentRepository = assignmentRepository,
+            devicesRepository = devicesRepository
+        ),
+        managedAutoPlanOperations = DefaultDeviceLightManagedAutoPlanOperations(devicesRepository),
+        quickSetupCalibration = DefaultDeviceLightFixtureCalibration(
+            placeholderEnabled = BuildConfig.DEBUG
         )
     )
 }

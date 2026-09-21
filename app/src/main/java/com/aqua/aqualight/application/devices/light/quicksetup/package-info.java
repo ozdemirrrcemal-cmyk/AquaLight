@@ -1,6 +1,8 @@
 /**
- * Quick Setup application boundary reserved for the dedicated vertical slice.
+ * Application contracts and deterministic policy for Light Quick Setup.
  *
- * <p>Quick Setup currently has no device contract and remains an empty presentation destination.</p>
+ * Quick Setup owns aquarium-context resolution contracts, evidence-backed recommendation policy,
+ * fixture-calibration boundaries and managed-plan application contracts. Firmware remains the
+ * authority for durable plan state and live execution.
  */
 package com.aqua.aqualight.application.devices.light.quicksetup;

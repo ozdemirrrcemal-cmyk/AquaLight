@@ -47,6 +47,9 @@ import com.aqua.aqualight.data.devices.light.custom.DefaultDeviceLightCustomOper
 import com.aqua.aqualight.data.devices.light.library.DefaultDeviceLightLibraryOperations
 import com.aqua.aqualight.data.devices.light.library.DeviceLightLibraryStore
 import com.aqua.aqualight.data.devices.light.manual.DefaultDeviceLightManualOperations
+import com.aqua.aqualight.data.devices.light.quicksetup.DefaultDeviceLightFixtureCalibration
+import com.aqua.aqualight.data.devices.light.quicksetup.DefaultDeviceLightManagedAutoPlanOperations
+import com.aqua.aqualight.data.devices.light.quicksetup.DefaultDeviceLightQuickSetupContextOperations
 import com.aqua.aqualight.data.devices.light.system.DefaultDeviceLightSystemOperations
 import com.aqua.aqualight.data.devices.menu.DefaultDeviceMenuAccessOperations
 import com.aqua.aqualight.data.devices.provisioning.DefaultProvisioningDiscoveryOperations
@@ -80,6 +83,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.pr
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.library.DeviceLightLibraryViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom.DeviceLightCustomCurveViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual.DeviceLightManualControlViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.quicksetup.DeviceLightQuickSetupViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.system.DeviceLightSystemViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.timer.presentation.root.DeviceTimerRootViewModel
@@ -155,24 +159,37 @@ private class ReleaseSmokeViewModelFactory(
     private val devicesRepository = DevicesRepository()
     private val rootOperations = DefaultDeviceRootOperations(devicesRepository)
     private val lightControlOperations = DefaultDeviceLightControlOperations(devicesRepository)
-    private val lightOperations = OwnerLightOperations(
-        adaptationOperations = DefaultDeviceLightAdaptationOperations(devicesRepository),
-        controlOperations = lightControlOperations,
-        automaticOperations = DefaultDeviceLightAutomaticOperations(devicesRepository),
-        cardOperations = DefaultDeviceLightCardOperations(
-            devicesRepository = devicesRepository,
-            controlOperations = lightControlOperations
-        ),
-        customOperations = DefaultDeviceLightCustomOperations(devicesRepository),
-        manualOperations = DefaultDeviceLightManualOperations(devicesRepository),
-        systemOperations = DefaultDeviceLightSystemOperations(devicesRepository),
-        libraryOperations = DefaultDeviceLightLibraryOperations(
-            ownerUid = SMOKE_OWNER_UID,
-            store = DeviceLightLibraryStore.create(appContext, SMOKE_OWNER_UID),
-            devicesRepository = devicesRepository,
-            controlOperations = lightControlOperations
+    private val lightOperations by lazy(LazyThreadSafetyMode.NONE) {
+        OwnerLightOperations(
+            adaptationOperations = DefaultDeviceLightAdaptationOperations(devicesRepository),
+            controlOperations = lightControlOperations,
+            automaticOperations = DefaultDeviceLightAutomaticOperations(devicesRepository),
+            cardOperations = DefaultDeviceLightCardOperations(
+                devicesRepository = devicesRepository,
+                controlOperations = lightControlOperations
+            ),
+            customOperations = DefaultDeviceLightCustomOperations(devicesRepository),
+            manualOperations = DefaultDeviceLightManualOperations(devicesRepository),
+            systemOperations = DefaultDeviceLightSystemOperations(devicesRepository),
+            libraryOperations = DefaultDeviceLightLibraryOperations(
+                ownerUid = SMOKE_OWNER_UID,
+                store = DeviceLightLibraryStore.create(appContext, SMOKE_OWNER_UID),
+                devicesRepository = devicesRepository,
+                controlOperations = lightControlOperations
+            ),
+            quickSetupContextOperations = DefaultDeviceLightQuickSetupContextOperations(
+                ownerUid = SMOKE_OWNER_UID,
+                tankStore = tankStore,
+                assignmentRepository = assignmentRepository,
+                devicesRepository = devicesRepository
+            ),
+            managedAutoPlanOperations =
+                DefaultDeviceLightManagedAutoPlanOperations(devicesRepository),
+            quickSetupCalibration = DefaultDeviceLightFixtureCalibration(
+                placeholderEnabled = false
+            )
         )
-    )
+    }
     private val timerControlOperations = DefaultDeviceTimerControlOperations(devicesRepository)
     private val tankStore = AquariumTankDataStoreManager(appContext)
     private val careTaskStore = CareTaskDataStoreManager.create(appContext)
@@ -314,6 +331,14 @@ private class ReleaseSmokeViewModelFactory(
                 customOperations = lightOperations.customOperations,
                 libraryOperations = lightOperations.libraryOperations,
                 rootOperations = rootOperations
+            )
+        modelClass.isAssignableFrom(DeviceLightQuickSetupViewModel::class.java) ->
+            DeviceLightQuickSetupViewModel(
+                contextOperations = lightOperations.quickSetupContextOperations,
+                managedPlanOperations = lightOperations.managedAutoPlanOperations,
+                controlOperations = lightOperations.controlOperations,
+                calibration = lightOperations.quickSetupCalibration,
+                allowPlaceholderApply = false
             )
         modelClass.isAssignableFrom(DeviceLightLibraryViewModel::class.java) ->
             DeviceLightLibraryViewModel(
