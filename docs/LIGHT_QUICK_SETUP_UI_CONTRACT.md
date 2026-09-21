@@ -142,8 +142,8 @@ Review displays authored recommendation metadata before mutation:
 - calibration status;
 - evidence-driven explanation/warnings.
 
-Development builds may display PLACEHOLDER calibration. Production Apply remains fail-closed until a
-measured product calibration profile exists.
+There is no development or debug calibration mode. Review is reachable only when a measured,
+versioned AquaLight fixture calibration profile resolves for the exact product and geometry.
 
 ## 10. APPLYING
 
@@ -231,14 +231,18 @@ without display-name fallback.
 These sources do not constitute AquaLight fixture calibration. Production requires measured
 product-specific optical calibration for the supported geometry domain.
 
-## 15. Build-variant policy
+## 15. Calibration runtime policy
 
-`AQL_QUICK_SETUP_PLACEHOLDER_ENABLED` is a build contract:
+Quick Setup has one runtime policy across all build variants:
 
-- debug: true;
-- staging/release/releaseSmoke: false unless production calibration replaces the placeholder path.
+- no build-type feature flag;
+- no debug-only optical profile;
+- no synthetic or percentage-based fixture fallback;
+- measured AquaLight calibration is mandatory;
+- missing calibration fails closed before recommendation/apply.
 
-No `BuildConfig.DEBUG` branch is permitted in `src/main`.
+Build variants may differ for normal application packaging and CI, but they must not alter Quick Setup
+recommendation or calibration behavior.
 
 ## 16. Failure behavior
 
