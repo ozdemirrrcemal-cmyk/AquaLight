@@ -3,22 +3,23 @@ package com.aqua.aqualight.data.devices
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.data.devices.catalog.AqlCommercialCatalogProduct
-import com.aqua.aqualight.data.devices.catalog.AqlCommercialCatalogValidation
-import com.aqua.aqualight.data.devices.catalog.AqlCommercialDeviceCatalog
+import com.aqua.aqualight.data.devices.compatibility.DeviceCommercialCompatibilityEvaluation
+import com.aqua.aqualight.data.devices.compatibility.DeviceCommercialCompatibilityEvaluator
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 
-internal fun DeviceSnapshot.toDeviceRootSnapshot(): DeviceRootSnapshot {
-    if (!hasValidatedRuntimeMetadata) return toInvalidDeviceRootSnapshot()
-    return when (val validation = AqlCommercialDeviceCatalog.validateSnapshot(this)) {
-        is AqlCommercialCatalogValidation.Valid -> toValidatedDeviceRootSnapshot(validation.product)
-        is AqlCommercialCatalogValidation.Invalid -> toInvalidDeviceRootSnapshot()
+internal fun DeviceSnapshot.toDeviceRootSnapshot(): DeviceRootSnapshot =
+    when (val compatibility = DeviceCommercialCompatibilityEvaluator.evaluate(this)) {
+        is DeviceCommercialCompatibilityEvaluation.Compatible ->
+            toValidatedDeviceRootSnapshot(compatibility)
+        is DeviceCommercialCompatibilityEvaluation.Incompatible ->
+            toInvalidDeviceRootSnapshot()
     }
-}
 
 private fun DeviceSnapshot.toValidatedDeviceRootSnapshot(
-    product: AqlCommercialCatalogProduct
+    compatibility: DeviceCommercialCompatibilityEvaluation.Compatible
 ): DeviceRootSnapshot {
-    val menuFeatures = DeviceRootMenuFeatureResolver.resolve(product)
+    val product = compatibility.product
+    val menuFeatures = compatibility.menuFeatures
     val channelSlots = DeviceChannelSlotResolver.resolve(product)
     return DeviceRootSnapshot(
         deviceUid = deviceUid.value,
@@ -41,10 +42,10 @@ private fun DeviceSnapshot.toValidatedDeviceRootSnapshot(
         temperatureSensorCount = channelSlots.temperatureSensors.size,
         channelSlots = channelSlots,
         capabilities = product.profile.capabilities.toRootCapabilities(),
-        supportedFeatures = product.profile.supportedFeatures.map { it.wireValue },
-        supportedScreens = product.profile.supportedScreens.map { it.wireValue },
+        supportedFeatures = supportedFeatures,
+        supportedScreens = supportedScreens,
         menuFeatures = menuFeatures,
-        allowedRoutes = DeviceRootRoutePolicy.allowedRoutes(product),
+        allowedRoutes = compatibility.allowedRoutes,
         productDisplayName = product.displayName,
         hasCustomName = identity.customName.isNotBlank()
     )
