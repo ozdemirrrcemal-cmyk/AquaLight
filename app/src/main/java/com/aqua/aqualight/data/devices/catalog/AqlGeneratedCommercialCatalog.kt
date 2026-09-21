@@ -90,6 +90,7 @@ private val PROFILE_LIGHT_RGB_PRO_SLIM = AqlCommercialCatalogProfile(
         AqlDeviceFeatureKey.LAN_DISCOVERY,
         AqlDeviceFeatureKey.LIGHT_CONTROL,
         AqlDeviceFeatureKey.LIGHT_QUICK_SETUP,
+        AqlDeviceFeatureKey.LIGHT_MANAGED_AUTO_PLAN,
         AqlDeviceFeatureKey.LIGHT_PRESETS,
         AqlDeviceFeatureKey.OTA_UPDATE,
     ),
