@@ -42,22 +42,25 @@ internal data class DeviceLightMeasuredCalibrationProfile(
         require(coverageModelRevision > 0)
     }
 
+    @Suppress("ReturnCount")
     override fun solve(
         request: DeviceLightFixtureCalibrationRequest
     ): DeviceLightFixtureCalibrationResult? {
-        if (request.productKey != productKey) return null
-        if (request.channelKeys.toSet() != channelKeys) return null
-        if (request.waterHeightCm !in waterHeightCmRange) return null
-        if (request.fixtureHeightAboveWaterCm !in fixtureHeightAboveWaterCmRange) return null
-        if (request.tankWidthCm !in tankWidthCmRange) return null
-        if (request.tankLengthCm !in tankLengthCmRange) return null
-
-        val result = measuredCalibration.solve(request) ?: return null
-        require(result.status == DeviceLightFixtureCalibrationStatus.CALIBRATED)
-        require(result.calibrationRevision == calibrationRevision)
-        require(result.channelScenePercent.keys == channelKeys)
-        return result
+        val result = if (supports(request)) measuredCalibration.solve(request) else null
+        return result?.also { calibrated ->
+            require(calibrated.status == DeviceLightFixtureCalibrationStatus.CALIBRATED)
+            require(calibrated.calibrationRevision == calibrationRevision)
+            require(calibrated.channelScenePercent.keys == channelKeys)
+        }
     }
+
+    private fun supports(request: DeviceLightFixtureCalibrationRequest): Boolean =
+        request.productKey == productKey &&
+            request.channelKeys.toSet() == channelKeys &&
+            request.waterHeightCm in waterHeightCmRange &&
+            request.fixtureHeightAboveWaterCm in fixtureHeightAboveWaterCmRange &&
+            request.tankWidthCm in tankWidthCmRange &&
+            request.tankLengthCm in tankLengthCmRange
 
     private companion object {
         const val MIN_HORIZONTAL_POINTS = 3

@@ -5,8 +5,8 @@ import com.aqua.aqualight.application.aquarium.AquariumPlantLightCatalog
 import com.aqua.aqualight.application.aquarium.AquariumSubstrateMetadataCatalog
 import com.aqua.aqualight.application.aquarium.AquariumSubstrateSemantic
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
-import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
+import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupBlockReason
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupContext
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupContextOperations
@@ -31,21 +31,22 @@ internal class DefaultDeviceLightQuickSetupContextOperations(
 
     override suspend fun readContext(deviceUid: String): DeviceLightQuickSetupContextResult {
         val normalizedUid = deviceUid.trim()
-        if (normalizedUid.isBlank()) return blocked(DeviceLightQuickSetupBlockReason.INVALID_DEVICE_UID)
-        val uid = DeviceUid(normalizedUid)
-        val device = devicesRepository.currentDevice(uid)
-            ?: return blocked(DeviceLightQuickSetupBlockReason.DEVICE_NOT_REGISTERED)
-        if (!device.hasValidatedRuntimeMetadata) {
-            return blocked(DeviceLightQuickSetupBlockReason.DEVICE_METADATA_NOT_READY)
+        val uid = normalizedUid.takeIf(String::isNotBlank)?.let(::DeviceUid)
+        val device = uid?.let(devicesRepository::currentDevice)
+        val root = device?.toDeviceRootSnapshot()
+        return when {
+            uid == null -> blocked(DeviceLightQuickSetupBlockReason.INVALID_DEVICE_UID)
+            device == null -> blocked(DeviceLightQuickSetupBlockReason.DEVICE_NOT_REGISTERED)
+            !device.hasValidatedRuntimeMetadata ->
+                blocked(DeviceLightQuickSetupBlockReason.DEVICE_METADATA_NOT_READY)
+            root == null ||
+                root.catalogState != DeviceRootCatalogState.VALID ||
+                root.family != OwnerDeviceFamily.LIGHT ->
+                blocked(DeviceLightQuickSetupBlockReason.UNSUPPORTED_PRODUCT)
+            QUICK_SETUP_FEATURE !in root.supportedFeatures ->
+                blocked(DeviceLightQuickSetupBlockReason.UNSUPPORTED_PRODUCT)
+            else -> readAssignedContext(normalizedUid, uid, root)
         }
-        val root = device.toDeviceRootSnapshot()
-        if (root.catalogState != DeviceRootCatalogState.VALID || root.family != OwnerDeviceFamily.LIGHT) {
-            return blocked(DeviceLightQuickSetupBlockReason.UNSUPPORTED_PRODUCT)
-        }
-        if (QUICK_SETUP_FEATURE !in root.supportedFeatures) {
-            return blocked(DeviceLightQuickSetupBlockReason.UNSUPPORTED_PRODUCT)
-        }
-        return readAssignedContext(normalizedUid, uid, root)
     }
 
     private suspend fun readAssignedContext(
@@ -54,29 +55,47 @@ internal class DefaultDeviceLightQuickSetupContextOperations(
         root: DeviceRootSnapshot
     ): DeviceLightQuickSetupContextResult {
         val assignment = assignmentRepository.assignmentForDevice(uid)
-            ?: return blocked(DeviceLightQuickSetupBlockReason.DEVICE_NOT_ASSIGNED)
-        val tank = tankStore.tanksSnapshotForOwner(ownerUid)
-            .firstOrNull { candidate -> candidate.id == assignment.tankId }
-            ?: return blocked(DeviceLightQuickSetupBlockReason.AQUARIUM_NOT_FOUND)
-
-        val assignedLights = assignmentRepository.assignedDevicesForTank(tank.id)
-            .first()
-            .count { snapshot -> snapshot.product.family == DeviceFamily.LIGHT }
-        if (assignedLights != 1) {
-            return blocked(DeviceLightQuickSetupBlockReason.MULTIPLE_LIGHT_FIXTURES_UNSUPPORTED)
+        val tank = assignment?.let { resolved ->
+            tankStore.tanksSnapshotForOwner(ownerUid)
+                .firstOrNull { candidate -> candidate.id == resolved.tankId }
         }
-
-        val setupEpochDay = tank.setupDateEpochDay
-            ?: return blocked(DeviceLightQuickSetupBlockReason.MISSING_SETUP_DATE)
-        if (tank.plants.isEmpty()) return blocked(DeviceLightQuickSetupBlockReason.NO_PLANTS)
-        if (tank.plants.any { plant -> plant.catalogId.isBlank() }) {
-            return blocked(DeviceLightQuickSetupBlockReason.MISSING_PLANT_CATALOG_ID)
+        val assignedLightCount = tank?.let { resolvedTank ->
+            assignmentRepository.assignedDevicesForTank(resolvedTank.id)
+                .first()
+                .count { snapshot -> snapshot.product.family == DeviceFamily.LIGHT }
         }
-        if (tank.plants.any { plant -> AquariumPlantLightCatalog.record(plant.catalogId) == null }) {
-            return blocked(DeviceLightQuickSetupBlockReason.UNKNOWN_PLANT_CATALOG_ID)
-        }
+        val setupEpochDay = tank?.setupDateEpochDay
+        val hasBlankPlantId = tank?.plants?.any { plant -> plant.catalogId.isBlank() } == true
+        val hasUnknownPlant = tank?.plants?.any { plant ->
+            AquariumPlantLightCatalog.record(plant.catalogId) == null
+        } == true
 
-        return DeviceLightQuickSetupContextResult.Available(
+        return when {
+            assignment == null -> blocked(DeviceLightQuickSetupBlockReason.DEVICE_NOT_ASSIGNED)
+            tank == null -> blocked(DeviceLightQuickSetupBlockReason.AQUARIUM_NOT_FOUND)
+            assignedLightCount != 1 ->
+                blocked(DeviceLightQuickSetupBlockReason.MULTIPLE_LIGHT_FIXTURES_UNSUPPORTED)
+            setupEpochDay == null -> blocked(DeviceLightQuickSetupBlockReason.MISSING_SETUP_DATE)
+            tank.plants.isEmpty() -> blocked(DeviceLightQuickSetupBlockReason.NO_PLANTS)
+            hasBlankPlantId ->
+                blocked(DeviceLightQuickSetupBlockReason.MISSING_PLANT_CATALOG_ID)
+            hasUnknownPlant -> blocked(DeviceLightQuickSetupBlockReason.UNKNOWN_PLANT_CATALOG_ID)
+            else -> availableContext(
+                normalizedUid = normalizedUid,
+                root = root,
+                tank = tank,
+                setupEpochDay = setupEpochDay
+            )
+        }
+    }
+
+    private fun availableContext(
+        normalizedUid: String,
+        root: DeviceRootSnapshot,
+        tank: SavedAquariumTank,
+        setupEpochDay: Long
+    ): DeviceLightQuickSetupContextResult.Available =
+        DeviceLightQuickSetupContextResult.Available(
             DeviceLightQuickSetupContext(
                 deviceUid = normalizedUid,
                 productKey = root.productKey,
@@ -100,7 +119,6 @@ internal class DefaultDeviceLightQuickSetupContextOperations(
                 profileFingerprint = fingerprint(tank, root.productKey, normalizedUid)
             )
         )
-    }
 
     private fun resolveSubstrateSemantic(tank: SavedAquariumTank): AquariumSubstrateSemantic =
         tank.materials
@@ -115,7 +133,7 @@ internal class DefaultDeviceLightQuickSetupContextOperations(
                     material.categoryKey
                 )
             }
-            .maxByOrNull(::substrateRank)
+            .minByOrNull { semantic -> SUBSTRATE_PRIORITY.indexOf(semantic) }
             ?: AquariumSubstrateSemantic.UNKNOWN
 
     private fun fingerprint(
@@ -144,20 +162,20 @@ internal class DefaultDeviceLightQuickSetupContextOperations(
         return digest.joinToString(separator = "") { byte -> "%02x".format(byte) }
     }
 
-    private fun substrateRank(semantic: AquariumSubstrateSemantic): Int = when (semantic) {
-        AquariumSubstrateSemantic.ACTIVE_SOIL -> 5
-        AquariumSubstrateSemantic.NUTRIENT_BASE -> 4
-        AquariumSubstrateSemantic.INERT -> 3
-        AquariumSubstrateSemantic.ADDITIVE -> 2
-        AquariumSubstrateSemantic.UNKNOWN -> 1
-        AquariumSubstrateSemantic.NOT_APPLICABLE -> 0
-    }
-
     private fun blocked(
         reason: DeviceLightQuickSetupBlockReason
     ) = DeviceLightQuickSetupContextResult.Blocked(reason)
 
     private companion object {
         const val QUICK_SETUP_FEATURE = "LIGHT_QUICK_SETUP"
+
+        val SUBSTRATE_PRIORITY = listOf(
+            AquariumSubstrateSemantic.ACTIVE_SOIL,
+            AquariumSubstrateSemantic.NUTRIENT_BASE,
+            AquariumSubstrateSemantic.INERT,
+            AquariumSubstrateSemantic.ADDITIVE,
+            AquariumSubstrateSemantic.UNKNOWN,
+            AquariumSubstrateSemantic.NOT_APPLICABLE
+        )
     }
 }

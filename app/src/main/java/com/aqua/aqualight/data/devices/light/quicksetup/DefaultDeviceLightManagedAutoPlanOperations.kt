@@ -18,6 +18,7 @@ import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightManagedA
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightManagedPlanPhase
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightManagedPlanReadAuthority
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightProduct
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightScene
 import com.aqua.aqualight.data.devices.runtime.modules.light.applyManagedAutoPlan
 import com.aqua.aqualight.data.devices.runtime.modules.light.currentManagedAutoPlan
@@ -32,44 +33,40 @@ internal class DefaultDeviceLightManagedAutoPlanOperations(
     private val devicesRepository: DevicesRepository
 ) : DeviceLightManagedAutoPlanOperations {
 
-    override fun observe(deviceUid: String): Flow<DeviceLightManagedPlanSnapshot?> {
-        val uid = DeviceLightManagedPlanMapper.toUidOrNull(deviceUid) ?: return flowOf(null)
-        val runtime = devicesRepository.runtimeModules()?.light ?: return flowOf(null)
-        return runtime.stateRevision.map {
-            runtime.currentManagedAutoPlan(
-                uid,
-                DeviceLightManagedPlanReadAuthority.PRESENTATION
-            )?.let(DeviceLightManagedPlanMapper::toApplicationSnapshot)
+    override fun observe(deviceUid: String): Flow<DeviceLightManagedPlanSnapshot?> =
+        when (val access = access(deviceUid)) {
+            is ManagedPlanAccess.Ready -> access.runtime.stateRevision.map {
+                access.runtime.currentManagedAutoPlan(
+                    access.uid,
+                    DeviceLightManagedPlanReadAuthority.PRESENTATION
+                )?.let(DeviceLightManagedPlanMapper::toApplicationSnapshot)
+            }
+            ManagedPlanAccess.InvalidDeviceUid,
+            ManagedPlanAccess.RuntimeUnavailable -> flowOf(null)
         }
-    }
 
-    override fun current(deviceUid: String): DeviceLightManagedPlanSnapshot? {
-        val uid = DeviceLightManagedPlanMapper.toUidOrNull(deviceUid) ?: return null
-        val runtime = devicesRepository.runtimeModules()?.light ?: return null
-        return runtime.currentManagedAutoPlan(
-            uid,
-            DeviceLightManagedPlanReadAuthority.AUTHORITATIVE
-        )?.let(DeviceLightManagedPlanMapper::toApplicationSnapshot)
-    }
+    override fun current(deviceUid: String): DeviceLightManagedPlanSnapshot? =
+        when (val access = access(deviceUid)) {
+            is ManagedPlanAccess.Ready -> access.runtime.currentManagedAutoPlan(
+                access.uid,
+                DeviceLightManagedPlanReadAuthority.AUTHORITATIVE
+            )?.let(DeviceLightManagedPlanMapper::toApplicationSnapshot)
+            ManagedPlanAccess.InvalidDeviceUid,
+            ManagedPlanAccess.RuntimeUnavailable -> null
+        }
 
-    override suspend fun read(deviceUid: String): DeviceLightManagedPlanReadResult {
-        val uid = DeviceLightManagedPlanMapper.toUidOrNull(deviceUid)
-            ?: return DeviceLightManagedPlanReadResult.Failed(
+    override suspend fun read(deviceUid: String): DeviceLightManagedPlanReadResult =
+        when (val access = access(deviceUid)) {
+            ManagedPlanAccess.InvalidDeviceUid -> DeviceLightManagedPlanReadResult.Failed(
                 DeviceLightQuickSetupBlockReason.INVALID_DEVICE_UID
             )
-        val runtime = devicesRepository.runtimeModules()?.light
-            ?: return DeviceLightManagedPlanReadResult.Failed(
+            ManagedPlanAccess.RuntimeUnavailable -> DeviceLightManagedPlanReadResult.Failed(
                 DeviceLightQuickSetupBlockReason.CONNECTION_UNAVAILABLE
             )
-        return when (val outcome = runtime.requestManagedAutoPlan(uid)) {
-            is DeviceRuntimeCommandOutcome.Success -> DeviceLightManagedPlanReadResult.Available(
-                DeviceLightManagedPlanMapper.toApplicationSnapshot(outcome.value)
-            )
-            else -> DeviceLightManagedPlanReadResult.Failed(
-                DeviceLightManagedPlanFailureMapper.toBlockReason(outcome)
+            is ManagedPlanAccess.Ready -> mapReadOutcome(
+                access.runtime.requestManagedAutoPlan(access.uid)
             )
         }
-    }
 
     override suspend fun apply(
         deviceUid: String,
@@ -77,70 +74,98 @@ internal class DefaultDeviceLightManagedAutoPlanOperations(
         expectedStorageGeneration: Long,
         existingPlanId: String?,
         recommendation: DeviceLightQuickSetupRecommendation
-    ): DeviceLightManagedPlanApplyResult {
-        val uid = DeviceLightManagedPlanMapper.toUidOrNull(deviceUid)
-            ?: return DeviceLightManagedPlanApplyResult.Failed(
+    ): DeviceLightManagedPlanApplyResult =
+        when (val access = access(deviceUid)) {
+            ManagedPlanAccess.InvalidDeviceUid -> failedApply(
                 DeviceLightQuickSetupBlockReason.INVALID_DEVICE_UID
             )
-        val runtime = devicesRepository.runtimeModules()?.light
-            ?: return DeviceLightManagedPlanApplyResult.Failed(
+            ManagedPlanAccess.RuntimeUnavailable -> failedApply(
                 DeviceLightQuickSetupBlockReason.CONNECTION_UNAVAILABLE
             )
-        val product = runtime.currentStatus(uid)?.product
-            ?: return DeviceLightManagedPlanApplyResult.Failed(
-                DeviceLightQuickSetupBlockReason.CONNECTION_UNAVAILABLE
-            )
-        val phases = recommendation.phases.map { phase ->
-            DeviceLightManagedPlanMapper.toRuntimePhase(phase, product)
-                ?: return DeviceLightManagedPlanApplyResult.Failed(
-                    DeviceLightQuickSetupBlockReason.INVALID_INPUT
-                )
-        }
-        val outcome = runtime.applyManagedAutoPlan(
-            uid,
-            DeviceLightManagedAutoPlanApplyPayload(
+            is ManagedPlanAccess.Ready -> applyReady(
+                access = access,
                 expectedRevision = expectedRevision,
                 expectedStorageGeneration = expectedStorageGeneration,
-                planId = existingPlanId,
-                initialStartPercent = recommendation.initialStartPercent,
-                phases = phases
+                existingPlanId = existingPlanId,
+                recommendation = recommendation
             )
-        )
-        return mapApplyOutcome(deviceUid, outcome)
-    }
+        }
 
     override suspend fun delete(
         deviceUid: String,
         expectedRevision: Long,
         expectedStorageGeneration: Long,
         planId: String
-    ): DeviceLightManagedPlanApplyResult {
-        val uid = DeviceLightManagedPlanMapper.toUidOrNull(deviceUid)
-            ?: return DeviceLightManagedPlanApplyResult.Failed(
+    ): DeviceLightManagedPlanApplyResult =
+        when (val access = access(deviceUid)) {
+            ManagedPlanAccess.InvalidDeviceUid -> failedApply(
                 DeviceLightQuickSetupBlockReason.INVALID_DEVICE_UID
             )
-        val runtime = devicesRepository.runtimeModules()?.light
-            ?: return DeviceLightManagedPlanApplyResult.Failed(
+            ManagedPlanAccess.RuntimeUnavailable -> failedApply(
                 DeviceLightQuickSetupBlockReason.CONNECTION_UNAVAILABLE
             )
-        val outcome = runtime.deleteManagedAutoPlan(
-            uid,
+            is ManagedPlanAccess.Ready -> deleteReady(
+                deviceUid = deviceUid,
+                access = access,
+                expectedRevision = expectedRevision,
+                expectedStorageGeneration = expectedStorageGeneration,
+                planId = planId
+            )
+        }
+
+    private suspend fun applyReady(
+        access: ManagedPlanAccess.Ready,
+        expectedRevision: Long,
+        expectedStorageGeneration: Long,
+        existingPlanId: String?,
+        recommendation: DeviceLightQuickSetupRecommendation
+    ): DeviceLightManagedPlanApplyResult {
+        val product = access.runtime.currentStatus(access.uid)?.product
+        val phases = product?.let { exactProduct ->
+            recommendation.phases.mapNotNull { phase ->
+                DeviceLightManagedPlanMapper.toRuntimePhase(phase, exactProduct)
+            }
+        }
+        return when {
+            product == null -> failedApply(DeviceLightQuickSetupBlockReason.CONNECTION_UNAVAILABLE)
+            phases == null || phases.size != recommendation.phases.size ->
+                failedApply(DeviceLightQuickSetupBlockReason.INVALID_INPUT)
+            else -> mapApplyOutcome(
+                access.uid.value,
+                access.runtime.applyManagedAutoPlan(
+                    access.uid,
+                    DeviceLightManagedAutoPlanApplyPayload(
+                        expectedRevision = expectedRevision,
+                        expectedStorageGeneration = expectedStorageGeneration,
+                        planId = existingPlanId,
+                        initialStartPercent = recommendation.initialStartPercent,
+                        phases = phases
+                    )
+                )
+            )
+        }
+    }
+
+    private suspend fun deleteReady(
+        deviceUid: String,
+        access: ManagedPlanAccess.Ready,
+        expectedRevision: Long,
+        expectedStorageGeneration: Long,
+        planId: String
+    ): DeviceLightManagedPlanApplyResult {
+        val outcome = access.runtime.deleteManagedAutoPlan(
+            access.uid,
             DeviceLightManagedAutoPlanDeletePayload(
                 expectedRevision = expectedRevision,
                 expectedStorageGeneration = expectedStorageGeneration,
                 planId = planId
             )
         )
-        if (outcome !is DeviceRuntimeCommandOutcome.Success) {
-            return mapFailureOrStale(deviceUid, outcome)
-        }
-        return when (val readback = runtime.requestManagedAutoPlan(uid)) {
-            is DeviceRuntimeCommandOutcome.Success -> DeviceLightManagedPlanApplyResult.Applied(
-                DeviceLightManagedPlanMapper.toApplicationSnapshot(readback.value)
+        return when (outcome) {
+            is DeviceRuntimeCommandOutcome.Success -> mapDeleteReadback(
+                access.runtime.requestManagedAutoPlan(access.uid)
             )
-            else -> DeviceLightManagedPlanApplyResult.Failed(
-                DeviceLightManagedPlanFailureMapper.toBlockReason(readback)
-            )
+            else -> mapFailureOrStale(deviceUid, outcome)
         }
     }
 
@@ -157,15 +182,56 @@ internal class DefaultDeviceLightManagedAutoPlanOperations(
     private fun mapFailureOrStale(
         deviceUid: String,
         outcome: DeviceRuntimeCommandOutcome<*>
-    ): DeviceLightManagedPlanApplyResult {
-        return if (DeviceLightManagedPlanFailureMapper.isStale(outcome)) {
+    ): DeviceLightManagedPlanApplyResult =
+        if (DeviceLightManagedPlanFailureMapper.isStale(outcome)) {
             DeviceLightManagedPlanApplyResult.Stale(current(deviceUid))
         } else {
-            DeviceLightManagedPlanApplyResult.Failed(
-                DeviceLightManagedPlanFailureMapper.toBlockReason(outcome)
-            )
+            failedApply(DeviceLightManagedPlanFailureMapper.toBlockReason(outcome))
+        }
+
+    private fun access(deviceUid: String): ManagedPlanAccess {
+        val uid = DeviceLightManagedPlanMapper.toUidOrNull(deviceUid)
+        val runtime = devicesRepository.runtimeModules()?.light
+        return when {
+            uid == null -> ManagedPlanAccess.InvalidDeviceUid
+            runtime == null -> ManagedPlanAccess.RuntimeUnavailable
+            else -> ManagedPlanAccess.Ready(uid, runtime)
         }
     }
+
+}
+
+private fun mapReadOutcome(
+    outcome: DeviceRuntimeCommandOutcome<DeviceLightManagedAutoPlan>
+): DeviceLightManagedPlanReadResult = when (outcome) {
+    is DeviceRuntimeCommandOutcome.Success -> DeviceLightManagedPlanReadResult.Available(
+        DeviceLightManagedPlanMapper.toApplicationSnapshot(outcome.value)
+    )
+    else -> DeviceLightManagedPlanReadResult.Failed(
+        DeviceLightManagedPlanFailureMapper.toBlockReason(outcome)
+    )
+}
+
+private fun mapDeleteReadback(
+    outcome: DeviceRuntimeCommandOutcome<DeviceLightManagedAutoPlan>
+): DeviceLightManagedPlanApplyResult = when (outcome) {
+    is DeviceRuntimeCommandOutcome.Success -> DeviceLightManagedPlanApplyResult.Applied(
+        DeviceLightManagedPlanMapper.toApplicationSnapshot(outcome.value)
+    )
+    else -> failedApply(DeviceLightManagedPlanFailureMapper.toBlockReason(outcome))
+}
+
+private fun failedApply(
+    reason: DeviceLightQuickSetupBlockReason
+) = DeviceLightManagedPlanApplyResult.Failed(reason)
+
+private sealed interface ManagedPlanAccess {
+    data object InvalidDeviceUid : ManagedPlanAccess
+    data object RuntimeUnavailable : ManagedPlanAccess
+    data class Ready(
+        val uid: DeviceUid,
+        val runtime: DeviceLightRuntimeRepository
+    ) : ManagedPlanAccess
 }
 
 private object DeviceLightManagedPlanMapper {
@@ -175,9 +241,8 @@ private object DeviceLightManagedPlanMapper {
     fun toRuntimePhase(
         phase: DeviceLightQuickSetupPhase,
         product: DeviceLightProduct
-    ): DeviceLightManagedPlanPhase? {
-        val scene = toRuntimeScene(phase, product) ?: return null
-        return DeviceLightManagedPlanPhase(
+    ): DeviceLightManagedPlanPhase? = toRuntimeScene(phase, product)?.let { scene ->
+        DeviceLightManagedPlanPhase(
             validFromEpochDay = phase.validFromEpochDay,
             validUntilEpochDayExclusive = phase.validUntilEpochDayExclusive,
             transitionDays = phase.transitionDays,
@@ -206,13 +271,16 @@ private object DeviceLightManagedPlanMapper {
         product: DeviceLightProduct
     ): DeviceLightScene? {
         val expectedKeys = product.sceneFields.map(::logicalKeyForPercentField).toSet()
-        if (phase.channelScenePercent.keys != expectedKeys) return null
-        return DeviceLightScene(
-            product = product,
-            percents = product.sceneFields.associateWith { field ->
-                phase.channelScenePercent[logicalKeyForPercentField(field)] ?: return null
-            }
-        )
+        return if (phase.channelScenePercent.keys != expectedKeys) {
+            null
+        } else {
+            DeviceLightScene(
+                product = product,
+                percents = product.sceneFields.associateWith { field ->
+                    checkNotNull(phase.channelScenePercent[logicalKeyForPercentField(field)])
+                }
+            )
+        }
     }
 
     private fun logicalKeyForPercentField(field: String): String = when (field) {
@@ -228,8 +296,10 @@ private object DeviceLightManagedPlanMapper {
 
 private object DeviceLightManagedPlanFailureMapper {
     fun isStale(outcome: DeviceRuntimeCommandOutcome<*>): Boolean {
-        val firmware = outcome as? DeviceRuntimeCommandOutcome.FirmwareError ?: return false
-        val reason = runCatching { firmware.lightV1Data().reason }.getOrNull()
+        val firmware = outcome as? DeviceRuntimeCommandOutcome.FirmwareError
+        val reason = firmware?.let { error ->
+            runCatching { error.lightV1Data().reason }.getOrNull()
+        }
         return reason == DeviceLightErrorReason.Known.STALE_REVISION ||
             reason == DeviceLightErrorReason.Known.STALE_STORAGE_GENERATION
     }

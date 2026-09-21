@@ -20,65 +20,30 @@ internal class DeviceLightQuickSetupController(
     private val managedPlanOperations: DeviceLightManagedAutoPlanOperations,
     private val controlOperations: DeviceLightControlOperations
 ) {
-    suspend fun load(deviceUid: String): DeviceLightQuickSetupLoadResult {
-        val contextResult = contextOperations.readContext(deviceUid)
-        if (contextResult !is DeviceLightQuickSetupContextResult.Available) {
-            return DeviceLightQuickSetupLoadResult.Blocked(
-                (contextResult as DeviceLightQuickSetupContextResult.Blocked).reason
-            )
+    suspend fun load(deviceUid: String): DeviceLightQuickSetupLoadResult =
+        when (val contextResult = contextOperations.readContext(deviceUid)) {
+            is DeviceLightQuickSetupContextResult.Blocked ->
+                DeviceLightQuickSetupLoadResult.Blocked(contextResult.reason)
+            is DeviceLightQuickSetupContextResult.Available ->
+                loadAvailable(deviceUid, contextResult.context)
         }
-        val context = contextResult.context
-        val profile = DeviceLightQuickSetupPlantProfileResolver.resolve(context)
-            ?: return DeviceLightQuickSetupLoadResult.Blocked(
-                DeviceLightQuickSetupBlockReason.UNKNOWN_PLANT_CATALOG_ID
-            )
-        val managed = managedPlanOperations.read(deviceUid)
-        val snapshot = (managed as? DeviceLightManagedPlanReadResult.Available)?.snapshot
-        val livePlan = if (snapshot?.installed == true) readLivePlan(deviceUid) else null
-        return DeviceLightQuickSetupLoadResult.Available(context, profile, snapshot, livePlan)
-    }
 
     suspend fun apply(
         deviceUid: String,
         context: DeviceLightQuickSetupContext,
         recommendation: DeviceLightQuickSetupRecommendation
-    ): DeviceLightQuickSetupApplyResult {
-        val latestContext = contextOperations.readContext(deviceUid)
-        if (latestContext !is DeviceLightQuickSetupContextResult.Available) {
-            return DeviceLightQuickSetupApplyResult.Failed(
-                (latestContext as DeviceLightQuickSetupContextResult.Blocked).reason
-            )
+    ): DeviceLightQuickSetupApplyResult =
+        when (val latestContext = contextOperations.readContext(deviceUid)) {
+            is DeviceLightQuickSetupContextResult.Blocked ->
+                DeviceLightQuickSetupApplyResult.Failed(latestContext.reason)
+            is DeviceLightQuickSetupContextResult.Available ->
+                applyLatestContext(
+                    deviceUid = deviceUid,
+                    originalContext = context,
+                    latestContext = latestContext.context,
+                    recommendation = recommendation
+                )
         }
-        if (latestContext.context.profileFingerprint != recommendation.contextFingerprint) {
-            return DeviceLightQuickSetupApplyResult.ContextChanged(
-                latestContext.context,
-                DeviceLightQuickSetupPlantProfileResolver.resolve(latestContext.context)
-            )
-        }
-        val planRead = managedPlanOperations.read(deviceUid)
-        if (planRead !is DeviceLightManagedPlanReadResult.Available) {
-            return DeviceLightQuickSetupApplyResult.Failed(
-                (planRead as DeviceLightManagedPlanReadResult.Failed).reason
-            )
-        }
-        val current = planRead.snapshot
-        return when (
-            val applied = managedPlanOperations.apply(
-                deviceUid = deviceUid,
-                expectedRevision = current.revision,
-                expectedStorageGeneration = current.storageGeneration,
-                existingPlanId = current.planId.takeIf { current.installed },
-                recommendation = recommendation
-            )
-        ) {
-            is DeviceLightManagedPlanApplyResult.Applied ->
-                DeviceLightQuickSetupApplyResult.Applied(applied.snapshot, readLivePlan(deviceUid))
-            is DeviceLightManagedPlanApplyResult.Stale ->
-                DeviceLightQuickSetupApplyResult.Stale(applied.latest)
-            is DeviceLightManagedPlanApplyResult.Failed ->
-                DeviceLightQuickSetupApplyResult.Failed(applied.reason)
-        }
-    }
 
     suspend fun disable(
         deviceUid: String,
@@ -101,6 +66,78 @@ internal class DeviceLightQuickSetupController(
                 DeviceLightQuickSetupDisableResult.Failed(result.reason)
         }
     }
+
+    private suspend fun loadAvailable(
+        deviceUid: String,
+        context: DeviceLightQuickSetupContext
+    ): DeviceLightQuickSetupLoadResult {
+        val profile = DeviceLightQuickSetupPlantProfileResolver.resolve(context)
+        val managed = managedPlanOperations.read(deviceUid)
+        val snapshot = (managed as? DeviceLightManagedPlanReadResult.Available)?.snapshot
+        val livePlan = if (snapshot?.installed == true) readLivePlan(deviceUid) else null
+        return if (profile == null) {
+            DeviceLightQuickSetupLoadResult.Blocked(
+                DeviceLightQuickSetupBlockReason.UNKNOWN_PLANT_CATALOG_ID
+            )
+        } else {
+            DeviceLightQuickSetupLoadResult.Available(context, profile, snapshot, livePlan)
+        }
+    }
+
+    private suspend fun applyLatestContext(
+        deviceUid: String,
+        originalContext: DeviceLightQuickSetupContext,
+        latestContext: DeviceLightQuickSetupContext,
+        recommendation: DeviceLightQuickSetupRecommendation
+    ): DeviceLightQuickSetupApplyResult =
+        if (latestContext.profileFingerprint != recommendation.contextFingerprint) {
+            DeviceLightQuickSetupApplyResult.ContextChanged(
+                latestContext,
+                DeviceLightQuickSetupPlantProfileResolver.resolve(latestContext)
+            )
+        } else {
+            applyAuthoritativePlan(
+                deviceUid = deviceUid,
+                originalContext = originalContext,
+                recommendation = recommendation
+            )
+        }
+
+    private suspend fun applyAuthoritativePlan(
+        deviceUid: String,
+        originalContext: DeviceLightQuickSetupContext,
+        recommendation: DeviceLightQuickSetupRecommendation
+    ): DeviceLightQuickSetupApplyResult =
+        when (val planRead = managedPlanOperations.read(deviceUid)) {
+            is DeviceLightManagedPlanReadResult.Failed ->
+                DeviceLightQuickSetupApplyResult.Failed(planRead.reason)
+            is DeviceLightManagedPlanReadResult.Available -> {
+                check(originalContext.profileFingerprint == recommendation.contextFingerprint)
+                applyCurrentPlan(deviceUid, planRead.snapshot, recommendation)
+            }
+        }
+
+    private suspend fun applyCurrentPlan(
+        deviceUid: String,
+        current: DeviceLightManagedPlanSnapshot,
+        recommendation: DeviceLightQuickSetupRecommendation
+    ): DeviceLightQuickSetupApplyResult =
+        when (
+            val applied = managedPlanOperations.apply(
+                deviceUid = deviceUid,
+                expectedRevision = current.revision,
+                expectedStorageGeneration = current.storageGeneration,
+                existingPlanId = current.planId.takeIf { current.installed },
+                recommendation = recommendation
+            )
+        ) {
+            is DeviceLightManagedPlanApplyResult.Applied ->
+                DeviceLightQuickSetupApplyResult.Applied(applied.snapshot, readLivePlan(deviceUid))
+            is DeviceLightManagedPlanApplyResult.Stale ->
+                DeviceLightQuickSetupApplyResult.Stale(applied.latest)
+            is DeviceLightManagedPlanApplyResult.Failed ->
+                DeviceLightQuickSetupApplyResult.Failed(applied.reason)
+        }
 
     private suspend fun readLivePlan(deviceUid: String): DeviceLightPlanSnapshot? =
         when (val control = controlOperations.refreshControl(deviceUid)) {

@@ -61,20 +61,23 @@ internal sealed interface DeviceLightQuickSetupAction {
 }
 
 internal fun DeviceLightQuickSetupUiState.toInputOrNull(): DeviceLightQuickSetupInput? {
-    val context = context ?: return null
-    val water = waterHeightText.toIntOrNull() ?: return null
-    val fixture = fixtureHeightText.toIntOrNull() ?: return null
-    val co2 = when {
-        !context.co2Present -> DeviceLightQuickSetupCo2Readiness.NOT_PRESENT
-        co2Precharged -> DeviceLightQuickSetupCo2Readiness.PRESENT_PRECHARGED
-        else -> DeviceLightQuickSetupCo2Readiness.PRESENT_NOT_PRECHARGED
+    val resolvedContext = context
+    val water = waterHeightText.toIntOrNull()
+    val fixture = fixtureHeightText.toIntOrNull()
+    return if (resolvedContext == null || water == null || fixture == null) {
+        null
+    } else {
+        DeviceLightQuickSetupInput(
+            waterHeightCm = water,
+            fixtureHeightAboveWaterCm = fixture,
+            firstLightOnMinuteOfDay = firstLightOnMinuteOfDay,
+            co2Readiness = when {
+                !resolvedContext.co2Present -> DeviceLightQuickSetupCo2Readiness.NOT_PRESENT
+                co2Precharged -> DeviceLightQuickSetupCo2Readiness.PRESENT_PRECHARGED
+                else -> DeviceLightQuickSetupCo2Readiness.PRESENT_NOT_PRECHARGED
+            }
+        )
     }
-    return DeviceLightQuickSetupInput(
-        waterHeightCm = water,
-        fixtureHeightAboveWaterCm = fixture,
-        firstLightOnMinuteOfDay = firstLightOnMinuteOfDay,
-        co2Readiness = co2
-    )
 }
 
 internal fun sanitizeMeasurementInput(value: String): String =
