@@ -181,72 +181,85 @@ private fun QuickSetupRecommendationSummary(
 ) {
     val colors = aquaDeviceCardColors()
     val typography = aquaDeviceCardTypography(colors)
-    val phase = recommendation.phases[currentPhase]
     AquaDeviceCardSurface(Modifier.fillMaxWidth()) {
         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             BasicText(
                 text = stringResource(R.string.device_light_quick_setup_plan_summary_title),
                 style = typography.title
             )
-            ReviewMetricRow(
-                stringResource(R.string.device_light_quick_setup_current_phase_label),
-                stringResource(
-                    R.string.device_light_quick_setup_phase_value,
-                    currentPhase + 1,
-                    recommendation.phases.size
-                )
-            )
-            ReviewMetricRow(
-                stringResource(R.string.device_light_quick_setup_today_window_label),
-                stringResource(
-                    R.string.device_light_quick_setup_time_range,
-                    phase.startMinuteOfDay.toClockText(),
-                    phase.endMinuteOfDay.toClockText()
-                )
-            )
-            ReviewMetricRow(
-                stringResource(R.string.device_light_quick_setup_photoperiod_label),
-                stringResource(
-                    R.string.device_light_quick_setup_hours_decimal,
-                    (phase.endMinuteOfDay - phase.startMinuteOfDay) / 60f
-                )
-            )
-            ReviewMetricRow(
-                stringResource(R.string.device_light_quick_setup_mature_duration_label),
-                stringResource(R.string.device_light_quick_setup_hours_decimal, 8f)
-            )
-            ReviewMetricRow(
-                stringResource(R.string.device_light_quick_setup_target_ppfd_label),
-                stringResource(
-                    R.string.device_light_quick_setup_ppfd_value,
-                    recommendation.requestedTargetPpfd
-                )
-            )
-            ReviewMetricRow(
-                stringResource(R.string.device_light_quick_setup_effective_ppfd_label),
-                stringResource(
-                    R.string.device_light_quick_setup_ppfd_value,
-                    recommendation.effectiveTargetPpfd
-                )
-            )
-            ReviewMetricRow(
-                stringResource(R.string.device_light_quick_setup_plant_demand_label),
-                stringResource(recommendation.plantProfile.highestDemand.demandResource())
-            )
-            ReviewMetricRow(
-                stringResource(R.string.device_light_quick_setup_calibration_label),
-                stringResource(
-                    if (recommendation.calibration.status ==
-                        DeviceLightFixtureCalibrationStatus.CALIBRATED
-                    ) {
-                        R.string.device_light_quick_setup_calibrated
-                    } else {
-                        R.string.device_light_quick_setup_placeholder
-                    }
-                )
-            )
+            QuickSetupTimingMetrics(recommendation, currentPhase)
+            QuickSetupTargetMetrics(recommendation)
         }
     }
+}
+
+@Composable
+private fun QuickSetupTimingMetrics(
+    recommendation: DeviceLightQuickSetupRecommendation,
+    currentPhase: Int
+) {
+    val phase = recommendation.phases[currentPhase]
+    ReviewMetricRow(
+        stringResource(R.string.device_light_quick_setup_current_phase_label),
+        stringResource(
+            R.string.device_light_quick_setup_phase_value,
+            currentPhase + 1,
+            recommendation.phases.size
+        )
+    )
+    ReviewMetricRow(
+        stringResource(R.string.device_light_quick_setup_today_window_label),
+        stringResource(
+            R.string.device_light_quick_setup_time_range,
+            phase.startMinuteOfDay.toClockText(),
+            phase.endMinuteOfDay.toClockText()
+        )
+    )
+    ReviewMetricRow(
+        stringResource(R.string.device_light_quick_setup_photoperiod_label),
+        stringResource(
+            R.string.device_light_quick_setup_hours_decimal,
+            (phase.endMinuteOfDay - phase.startMinuteOfDay) / 60f
+        )
+    )
+    ReviewMetricRow(
+        stringResource(R.string.device_light_quick_setup_mature_duration_label),
+        stringResource(R.string.device_light_quick_setup_hours_decimal, 8f)
+    )
+}
+
+@Composable
+private fun QuickSetupTargetMetrics(recommendation: DeviceLightQuickSetupRecommendation) {
+    ReviewMetricRow(
+        stringResource(R.string.device_light_quick_setup_target_ppfd_label),
+        stringResource(
+            R.string.device_light_quick_setup_ppfd_value,
+            recommendation.requestedTargetPpfd
+        )
+    )
+    ReviewMetricRow(
+        stringResource(R.string.device_light_quick_setup_effective_ppfd_label),
+        stringResource(
+            R.string.device_light_quick_setup_ppfd_value,
+            recommendation.effectiveTargetPpfd
+        )
+    )
+    ReviewMetricRow(
+        stringResource(R.string.device_light_quick_setup_plant_demand_label),
+        stringResource(recommendation.plantProfile.highestDemand.demandResource())
+    )
+    ReviewMetricRow(
+        stringResource(R.string.device_light_quick_setup_calibration_label),
+        stringResource(
+            if (recommendation.calibration.status ==
+                DeviceLightFixtureCalibrationStatus.CALIBRATED
+            ) {
+                R.string.device_light_quick_setup_calibrated
+            } else {
+                R.string.device_light_quick_setup_placeholder
+            }
+        )
+    )
 }
 
 @Composable

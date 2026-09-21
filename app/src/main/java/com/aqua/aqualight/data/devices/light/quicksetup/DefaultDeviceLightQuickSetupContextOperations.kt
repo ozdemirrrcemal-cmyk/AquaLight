@@ -6,6 +6,7 @@ import com.aqua.aqualight.application.aquarium.AquariumSubstrateMetadataCatalog
 import com.aqua.aqualight.application.aquarium.AquariumSubstrateSemantic
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
+import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupBlockReason
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupContext
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupContextOperations
@@ -44,7 +45,14 @@ internal class DefaultDeviceLightQuickSetupContextOperations(
         if (QUICK_SETUP_FEATURE !in root.supportedFeatures) {
             return blocked(DeviceLightQuickSetupBlockReason.UNSUPPORTED_PRODUCT)
         }
+        return readAssignedContext(normalizedUid, uid, root)
+    }
 
+    private suspend fun readAssignedContext(
+        normalizedUid: String,
+        uid: DeviceUid,
+        root: DeviceRootSnapshot
+    ): DeviceLightQuickSetupContextResult {
         val assignment = assignmentRepository.assignmentForDevice(uid)
             ?: return blocked(DeviceLightQuickSetupBlockReason.DEVICE_NOT_ASSIGNED)
         val tank = tankStore.tanksSnapshotForOwner(ownerUid)

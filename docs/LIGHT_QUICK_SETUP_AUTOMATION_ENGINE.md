@@ -1,10 +1,12 @@
 # AquaLight Smart / Quick Setup Lighting Automation Engine
 
-Status: Android implementation specification  
-Android branch: feat/custom-program-device-apply  
-Firmware branch: feature/smart-light-automation-plan  
-Firmware reviewed commit: 455298833668537fedc16b851067558815d2cc7b  
+Status: Android implementation in progress  
+Android base branch: feat/custom-program-device-apply @ 93791a23aca95b3b714628af288f88b31d7f8a08  
+Android implementation branch: feat/light-quick-setup-commercial-ui  
+Firmware branch: feature/smart-light-automation-plan-v2  
+Firmware reviewed commit: 99aca74d3c2ae99e85584893822c0a63fe50bcd8  
 Firmware authoritative contract: docs/LIGHT_MANAGED_AUTO_PLAN_V1_CONTRACT.md  
+UI implementation contract: docs/LIGHT_QUICK_SETUP_UI_CONTRACT.md  
 Scope: planted freshwater Smart / Quick Setup lighting automation  
 Production calibration status: NOT READY - physical PAR/PPFD calibration is a release blocker
 
