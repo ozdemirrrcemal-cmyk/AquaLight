@@ -13,6 +13,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.devices.DeviceAccessDecision
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceLightRootBinding
@@ -104,18 +105,11 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
     }
 
     private fun openQuickSetup() {
-        val state = viewModel.uiState.value
-        if (!state.contentEnabled) return
-        viewModel.quickSetupUnavailableReason()?.let { reason ->
-            DeviceMenuUnavailableMessageMapper.feedback(reason).let { feedback ->
-                (activity as? BaseActivity)?.showDeviceAccessDialog(
-                    deviceTitle = state.title,
-                    titleRes = feedback.titleRes,
-                    messageRes = feedback.messageRes
-                )
-            }
-            return
-        }
+        if (!viewModel.uiState.value.contentEnabled) return
+        viewModel.requestQuickSetupAccess()
+    }
+
+    private fun navigateToQuickSetup() {
         val navController = findNavController()
         if (navController.currentDestination?.id != R.id.deviceLightRootFragment) return
         navController.navigate(
@@ -195,6 +189,23 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
                             ),
                             type = BaseActivity.SnackType.ERROR
                         )
+                    }
+                }
+                launch {
+                    viewModel.quickSetupAccessEvents.collect { decision ->
+                        if (_binding == null) return@collect
+                        when (decision) {
+                            DeviceAccessDecision.Allowed -> navigateToQuickSetup()
+                            is DeviceAccessDecision.Blocked -> {
+                                val feedback =
+                                    DeviceMenuUnavailableMessageMapper.feedback(decision.reason)
+                                (activity as? BaseActivity)?.showDeviceAccessDialog(
+                                    deviceTitle = viewModel.uiState.value.title,
+                                    titleRes = feedback.titleRes,
+                                    messageRes = feedback.messageRes
+                                )
+                            }
+                        }
                     }
                 }
                 launch {
