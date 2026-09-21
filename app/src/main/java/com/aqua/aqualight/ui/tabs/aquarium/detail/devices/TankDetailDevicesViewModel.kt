@@ -1,6 +1,5 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.devices
 
-import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.R
@@ -19,7 +18,6 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardState
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightCardOperations
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightCardState
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactSnapshotMapper
-import com.aqua.aqualight.ui.common.devicepresence.DeviceMenuUnavailableMessageMapper
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRoute
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteResolver
 import java.util.concurrent.CancellationException
@@ -170,9 +168,7 @@ class TankDetailDevicesViewModel(
                             .firstOrNull { device -> device.deviceUid == deviceUid }
                             ?.title
                             .orEmpty(),
-                        messageRes = DeviceMenuUnavailableMessageMapper.messageRes(
-                            DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
-                        )
+                        reason = DeviceMenuUnavailableReason.MALFORMED_DEVICE_STATE
                     )
                 )
             }
@@ -394,7 +390,7 @@ sealed interface TankDetailDevicesEvent {
 
     data class ShowDeviceUnavailable(
         val title: String,
-        @StringRes val messageRes: Int
+        val reason: DeviceMenuUnavailableReason
     ) : TankDetailDevicesEvent
 
     data object ShowRemoveFailed : TankDetailDevicesEvent
@@ -531,5 +527,5 @@ private fun isDeviceRemovalAllowed(
 private fun DeviceMenuOpenResult.Unavailable.toUnavailableEvent() =
     TankDetailDevicesEvent.ShowDeviceUnavailable(
         title = title,
-        messageRes = DeviceMenuUnavailableMessageMapper.messageRes(reason)
+        reason = reason
     )
