@@ -2,13 +2,11 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.aqua.aqualight.application.devices.DefaultDeviceAccessPolicy
 import com.aqua.aqualight.application.devices.DeviceAccessDecision
-import com.aqua.aqualight.application.devices.DeviceAccessPolicy
-import com.aqua.aqualight.application.devices.DeviceCompatibilityOperations
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationRequest
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationResult
+import com.aqua.aqualight.application.devices.DeviceFeatureAccessOperations
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootOperations
@@ -44,8 +42,7 @@ class DeviceLightRootViewModel(
     private val rootOperations: DeviceRootOperations,
     private val lightControlOperations: DeviceLightControlOperations,
     private val controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations,
-    private val compatibilityOperations: DeviceCompatibilityOperations? = null,
-    private val accessPolicy: DeviceAccessPolicy = DefaultDeviceAccessPolicy
+    private val featureAccessOperations: DeviceFeatureAccessOperations? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DeviceLightRootUiState())
@@ -60,6 +57,9 @@ class DeviceLightRootViewModel(
     )
     val modeChangeFailureEvents: Flow<DeviceLightControlFailure> =
         modeChangeFailureEventChannel.receiveAsFlow()
+    private val quickSetupAccessEventChannel = Channel<DeviceAccessDecision>(Channel.BUFFERED)
+    val quickSetupAccessEvents: Flow<DeviceAccessDecision> =
+        quickSetupAccessEventChannel.receiveAsFlow()
 
     private var boundDeviceUid = ""
     private var latestRootSnapshot: DeviceRootSnapshot? = null
@@ -71,6 +71,7 @@ class DeviceLightRootViewModel(
     private var controlObserveJob: Job? = null
     private var surfacePreparationJob: Job? = null
     private var modeChangeJob: Job? = null
+    private var quickSetupAccessJob: Job? = null
 
     fun bind(deviceUidText: String) {
         val deviceUid = deviceUidText.trim()
@@ -232,20 +233,24 @@ class DeviceLightRootViewModel(
         _uiState.value = DeviceLightRootUiState()
     }
 
-    fun quickSetupUnavailableReason(): DeviceMenuUnavailableReason? {
+    fun requestQuickSetupAccess() {
         val deviceUid = boundDeviceUid
-        val compatibility = compatibilityOperations
-            ?.takeIf { deviceUid.isNotBlank() }
-            ?.current(deviceUid)
-            ?: return null
-        return when (
-            val decision = accessPolicy.evaluateFeature(
-                compatibility = compatibility,
-                feature = DeviceRootMenuFeature.LIGHT_QUICK_SETUP
+        if (deviceUid.isBlank() || !_uiState.value.contentEnabled) return
+        if (quickSetupAccessJob?.isActive == true) return
+
+        val featureAccess = featureAccessOperations
+        if (featureAccess == null) {
+            quickSetupAccessEventChannel.trySend(DeviceAccessDecision.Allowed)
+            return
+        }
+
+        quickSetupAccessJob = viewModelScope.launch {
+            quickSetupAccessEventChannel.send(
+                featureAccess.resolve(
+                    deviceUid = deviceUid,
+                    feature = DeviceRootMenuFeature.LIGHT_QUICK_SETUP
+                )
             )
-        ) {
-            DeviceAccessDecision.Allowed -> null
-            is DeviceAccessDecision.Blocked -> decision.reason
         }
     }
 
@@ -288,10 +293,12 @@ class DeviceLightRootViewModel(
         controlObserveJob?.cancel()
         surfacePreparationJob?.cancel()
         modeChangeJob?.cancel()
+        quickSetupAccessJob?.cancel()
         rootObserveJob = null
         controlObserveJob = null
         surfacePreparationJob = null
         modeChangeJob = null
+        quickSetupAccessJob = null
     }
 }
 
