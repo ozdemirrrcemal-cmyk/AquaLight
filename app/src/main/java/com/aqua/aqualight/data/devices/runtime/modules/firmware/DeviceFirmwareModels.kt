@@ -1,6 +1,8 @@
 package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
 import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
+import com.aqua.aqualight.application.devices.DeviceFirmwareUpdatePolicy
+import com.aqua.aqualight.application.devices.DeviceFirmwareUpdatePolicyLevel
 import com.aqua.aqualight.data.devices.model.DeviceCapabilities
 import com.aqua.aqualight.data.devices.model.DeviceLimits
 import com.aqua.aqualight.data.devices.model.DeviceUid
@@ -274,9 +276,38 @@ data class DeviceFirmwareManifestArtifact(
     val env: String,
     val product: DeviceFirmwareManifestProduct,
     val compatibility: DeviceFirmwareCompatibility,
+    val contracts: DeviceFirmwareManifestContracts,
+    val features: Set<String>,
+    val updatePolicy: DeviceFirmwareUpdatePolicy,
     val firmware: DeviceFirmwareAsset,
     val factory: DeviceFirmwareFactoryAsset?
 )
+
+data class DeviceFirmwareManifestContracts(
+    val wsSchema: String,
+    val wsProtocolVersion: Int,
+    val deviceApiVersion: Int,
+    val requiredDomains: Set<String>,
+    val optionalDomains: Set<String>
+) {
+    init {
+        require(wsSchema.isNotBlank()) { "OTA manifest wsSchema must not be blank." }
+        require(wsProtocolVersion > 0) { "OTA manifest wsProtocolVersion must be positive." }
+        require(deviceApiVersion > 0) { "OTA manifest deviceApiVersion must be positive." }
+        require(requiredDomains.isNotEmpty()) {
+            "OTA manifest must declare at least one required domain contract."
+        }
+        require(requiredDomains.none(String::isBlank)) {
+            "OTA required domain contracts must not be blank."
+        }
+        require(optionalDomains.none(String::isBlank)) {
+            "OTA optional domain contracts must not be blank."
+        }
+        require(requiredDomains.intersect(optionalDomains).isEmpty()) {
+            "OTA required and optional domain contracts must be disjoint."
+        }
+    }
+}
 
 data class DeviceFirmwareManifestProduct(
     val productKey: String,
@@ -349,7 +380,8 @@ data class DeviceFirmwareUpdatePlan(
     val payload: DeviceFirmwareOtaStartPayload,
     val runtimeMetadataGeneration: Long = 0L,
     val manifestTag: String = "",
-    val releaseContent: DeviceFirmwareReleaseContent = DeviceFirmwareReleaseContent.EMPTY
+    val releaseContent: DeviceFirmwareReleaseContent = DeviceFirmwareReleaseContent.EMPTY,
+    val updatePolicy: DeviceFirmwareUpdatePolicy = DeviceFirmwareUpdatePolicy.RECOMMENDED
 )
 
 internal fun String.isSha256Hex(): Boolean {
