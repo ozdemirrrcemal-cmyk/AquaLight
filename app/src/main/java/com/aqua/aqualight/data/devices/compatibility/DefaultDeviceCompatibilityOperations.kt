@@ -7,6 +7,7 @@ import com.aqua.aqualight.application.devices.DeviceRootMenuFeature
 import com.aqua.aqualight.application.devices.PreparedDeviceFirmwareUpdate
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.data.devices.contract.AqlDeviceFeatureKey
+import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.toOwnerDeviceFamily
@@ -19,47 +20,53 @@ internal class DefaultDeviceCompatibilityOperations(
 
     override fun current(deviceUid: String): DeviceCompatibilitySnapshot {
         val normalized = deviceUid.trim()
-        if (normalized.isBlank()) {
-            return incompatible(
+        val snapshot = normalized
+            .takeIf(String::isNotBlank)
+            ?.let { value -> devicesRepository.currentDevice(DeviceUid(value)) }
+
+        return when {
+            normalized.isBlank() || snapshot == null -> incompatible(
                 deviceUid = normalized,
                 status = DeviceCompatibilityStatus.DEVICE_NOT_REGISTERED
             )
+            else -> snapshot.toCompatibilitySnapshot(normalized)
         }
+    }
 
-        val snapshot = devicesRepository.currentDevice(DeviceUid(normalized))
-            ?: return incompatible(
-                deviceUid = normalized,
-                status = DeviceCompatibilityStatus.DEVICE_NOT_REGISTERED
-            )
-
-        return when (val evaluation = DeviceCommercialCompatibilityEvaluator.evaluate(snapshot)) {
-            is DeviceCommercialCompatibilityEvaluation.Compatible -> {
-                val family = evaluation.product.family.toOwnerDeviceFamily()
-                val updatePlan = updatePlanProvider(normalized)
-                val targetFeatures = updatePlan?.targetFeatures.orEmpty()
-                val updateFeatures = DeviceMenuUpdatePolicyProjector.resolve(
-                    family = family,
-                    targetFeatureTokens = targetFeatures
-                ) - evaluation.menuFeatures
-                DeviceCompatibilitySnapshot(
-                    deviceUid = normalized,
-                    family = family,
-                    status = if (updatePlan?.updatePolicy?.isGloballyRequired == true) {
-                        DeviceCompatibilityStatus.FIRMWARE_UPDATE_REQUIRED
-                    } else {
-                        DeviceCompatibilityStatus.COMPATIBLE
-                    },
-                    menuFeatures = evaluation.menuFeatures,
-                    firmwareUpdateRequiredFeatures = updateFeatures,
-                    allowedRoutes = evaluation.allowedRoutes
-                )
-            }
+    private fun DeviceSnapshot.toCompatibilitySnapshot(
+        deviceUid: String
+    ): DeviceCompatibilitySnapshot =
+        when (val evaluation = DeviceCommercialCompatibilityEvaluator.evaluate(this)) {
+            is DeviceCommercialCompatibilityEvaluation.Compatible ->
+                evaluation.toCompatibleSnapshot(deviceUid)
             is DeviceCommercialCompatibilityEvaluation.Incompatible -> incompatible(
-                deviceUid = normalized,
-                family = snapshot.product.family.toOwnerDeviceFamily(),
+                deviceUid = deviceUid,
+                family = product.family.toOwnerDeviceFamily(),
                 status = evaluation.issue.toApplicationStatus()
             )
         }
+
+    private fun DeviceCommercialCompatibilityEvaluation.Compatible.toCompatibleSnapshot(
+        deviceUid: String
+    ): DeviceCompatibilitySnapshot {
+        val family = product.family.toOwnerDeviceFamily()
+        val updatePlan = updatePlanProvider(deviceUid)
+        val updateFeatures = DeviceMenuUpdatePolicyProjector.resolve(
+            family = family,
+            targetFeatureTokens = updatePlan?.targetFeatures.orEmpty()
+        ) - menuFeatures
+        return DeviceCompatibilitySnapshot(
+            deviceUid = deviceUid,
+            family = family,
+            status = if (updatePlan?.updatePolicy?.isGloballyRequired == true) {
+                DeviceCompatibilityStatus.FIRMWARE_UPDATE_REQUIRED
+            } else {
+                DeviceCompatibilityStatus.COMPATIBLE
+            },
+            menuFeatures = menuFeatures,
+            firmwareUpdateRequiredFeatures = updateFeatures,
+            allowedRoutes = allowedRoutes
+        )
     }
 
     private fun incompatible(
