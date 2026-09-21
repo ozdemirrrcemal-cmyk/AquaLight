@@ -13,7 +13,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
-import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceLightQuickSetupBinding
 import com.aqua.aqualight.ui.common.devicepresence.DeviceAccessFeedbackAction
@@ -68,19 +67,13 @@ class DeviceLightQuickSetupFragment : Fragment(R.layout.fragment_device_light_qu
                 viewModel.accessFailures.collect { reason ->
                     if (_binding == null) return@collect
                     val feedback = DeviceMenuUnavailableMessageMapper.feedback(reason)
-                    if (feedback.action == DeviceAccessFeedbackAction.OPEN_FIRMWARE_UPDATE) {
-                        DeviceAccessFeedbackPresenter.show(
-                            fragment = this@DeviceLightQuickSetupFragment,
-                            deviceUid = args.deviceUid,
-                            deviceTitle = getString(R.string.device_family_light),
-                            reason = reason
-                        )
-                    } else {
-                        (activity as? BaseActivity)?.showDeviceAccessDialog(
-                            deviceTitle = getString(R.string.device_family_light),
-                            titleRes = feedback.titleRes,
-                            messageRes = feedback.messageRes
-                        )
+                    DeviceAccessFeedbackPresenter.show(
+                        fragment = this@DeviceLightQuickSetupFragment,
+                        deviceUid = args.deviceUid,
+                        deviceTitle = getString(R.string.device_family_light),
+                        reason = reason
+                    )
+                    if (feedback.action != DeviceAccessFeedbackAction.OPEN_FIRMWARE_UPDATE) {
                         val navController = findNavController()
                         if (
                             navController.currentDestination?.id ==
