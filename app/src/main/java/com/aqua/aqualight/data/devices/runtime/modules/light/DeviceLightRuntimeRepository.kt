@@ -25,16 +25,6 @@ class DeviceLightRuntimeRepository internal constructor(
     internal fun runtimeAccess(deviceUid: DeviceUid): DeviceLightRuntimeAccess =
         accessProvider(deviceUid)
 
-    internal fun beginGeneration(
-        deviceUid: DeviceUid,
-        generation: DeviceRuntimeConnectionGeneration
-    ) = stateOwner.beginGeneration(deviceUid, generation)
-
-    internal fun invalidate(
-        deviceUid: DeviceUid,
-        generation: DeviceRuntimeConnectionGeneration? = null
-    ) = stateOwner.invalidate(deviceUid, generation)
-
     suspend fun requestStatus(deviceUid: DeviceUid): DeviceRuntimeCommandOutcome<DeviceLightStatus> {
         val outcome = gateway.execute(
             deviceUid,
@@ -150,6 +140,16 @@ class DeviceLightRuntimeRepository internal constructor(
         return outcome
     }
 }
+
+internal fun DeviceLightRuntimeRepository.beginGeneration(
+    deviceUid: DeviceUid,
+    generation: DeviceRuntimeConnectionGeneration
+) = stateOwner.beginGeneration(deviceUid, generation)
+
+internal fun DeviceLightRuntimeRepository.invalidate(
+    deviceUid: DeviceUid,
+    generation: DeviceRuntimeConnectionGeneration? = null
+) = stateOwner.invalidate(deviceUid, generation)
 
 internal fun DeviceLightRuntimeRepository.currentStatus(
     deviceUid: DeviceUid,
