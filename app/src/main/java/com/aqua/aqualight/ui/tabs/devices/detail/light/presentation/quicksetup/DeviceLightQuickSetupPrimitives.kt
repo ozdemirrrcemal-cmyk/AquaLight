@@ -30,9 +30,9 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupBlockReason
+import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowAlpha
 import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowButton
 import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowGeometry
 import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowSurface
@@ -44,7 +44,7 @@ internal fun QuickSetupProgress(state: DeviceLightQuickSetupUiState) {
     val colors = aquaGuidedFlowColors()
     val typography = aquaGuidedFlowTypography(colors)
     val fraction = state.stepNumber.toFloat() / state.totalSteps.toFloat()
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(AquaGuidedFlowGeometry.labelGap)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             BasicText(
                 text = stringResource(R.string.device_light_quick_setup_progress_label),
@@ -62,15 +62,15 @@ internal fun QuickSetupProgress(state: DeviceLightQuickSetupUiState) {
         Box(
             Modifier
                 .fillMaxWidth()
-                .height(DeviceLightQuickSetupGeometry.progressHeight)
-                .clip(DeviceLightQuickSetupGeometry.progressRadius)
-                .background(colors.outline.copy(alpha = DeviceLightQuickSetupAlpha.progressTrack))
+                .height(AquaGuidedFlowGeometry.progressHeight)
+                .clip(AquaGuidedFlowGeometry.progressRadius)
+                .background(colors.outline.copy(alpha = AquaGuidedFlowAlpha.progressTrack))
         ) {
             Box(
                 Modifier
                     .fillMaxWidth(fraction)
-                    .height(DeviceLightQuickSetupGeometry.progressHeight)
-                    .clip(DeviceLightQuickSetupGeometry.progressRadius)
+                    .height(AquaGuidedFlowGeometry.progressHeight)
+                    .clip(AquaGuidedFlowGeometry.progressRadius)
                     .background(colors.accent)
             )
         }
@@ -81,7 +81,7 @@ internal fun QuickSetupProgress(state: DeviceLightQuickSetupUiState) {
 internal fun QuickSetupHeading(title: String, description: String) {
     val colors = aquaGuidedFlowColors()
     val typography = aquaGuidedFlowTypography(colors)
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(AquaGuidedFlowGeometry.labelGap)) {
         BasicText(text = title, style = typography.title)
         BasicText(text = description, style = typography.body)
     }
@@ -103,11 +103,11 @@ internal fun QuickSetupNumberField(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(DeviceLightQuickSetupGeometry.inputHeight)
+            .height(AquaGuidedFlowGeometry.inputHeight)
             .clip(shape)
             .background(colors.surfaceRaised)
             .border(AquaGuidedFlowGeometry.outlineWidth, colors.outline, shape)
-            .padding(horizontal = DeviceLightQuickSetupGeometry.inputHorizontalPadding),
+            .padding(horizontal = AquaGuidedFlowGeometry.inputHorizontalPadding),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(Modifier.weight(1f)) {
@@ -128,7 +128,7 @@ internal fun QuickSetupNumberField(
                 modifier = Modifier.fillMaxWidth()
             )
         }
-        Spacer(Modifier.width(8.dp))
+        Spacer(Modifier.width(AquaGuidedFlowGeometry.footerGap))
         BasicText(text = suffix, style = typography.label.copy(color = colors.textSecondary))
     }
 }
@@ -144,7 +144,7 @@ internal fun QuickSetupTimeControl(
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(AquaGuidedFlowGeometry.denseSectionGap)
         ) {
             AquaGuidedFlowButton(
                 text = stringResource(R.string.device_light_quick_setup_time_minus),
@@ -156,7 +156,7 @@ internal fun QuickSetupTimeControl(
             BasicText(
                 text = minuteOfDay.toClockText(),
                 style = typography.metric,
-                modifier = Modifier.weight(DeviceLightQuickSetupGeometry.timeValueWeight)
+                modifier = Modifier.weight(AquaGuidedFlowGeometry.timeValueWeight)
             )
             AquaGuidedFlowButton(
                 text = stringResource(R.string.device_light_quick_setup_time_plus),
@@ -187,27 +187,32 @@ internal fun QuickSetupSwitchRow(
             Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(
+                    AquaGuidedFlowGeometry.microTextGap
+                )
+            ) {
                 BasicText(text = title, style = typography.label)
                 BasicText(text = summary, style = typography.body)
             }
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(AquaGuidedFlowGeometry.denseSectionGap))
             Box(
                 modifier = Modifier
-                    .width(DeviceLightQuickSetupGeometry.switchWidth)
-                    .height(DeviceLightQuickSetupGeometry.switchHeight)
-                    .clip(DeviceLightQuickSetupGeometry.switchShape)
+                    .width(AquaGuidedFlowGeometry.switchWidth)
+                    .height(AquaGuidedFlowGeometry.switchHeight)
+                    .clip(AquaGuidedFlowGeometry.switchShape)
                     .background(if (checked) colors.accent else colors.secondaryButton)
-                    .padding(DeviceLightQuickSetupGeometry.switchInset)
+                    .padding(AquaGuidedFlowGeometry.switchInset)
             ) {
                 Box(
                     Modifier
-                        .size(DeviceLightQuickSetupGeometry.switchThumbSize)
+                        .size(AquaGuidedFlowGeometry.switchThumbSize)
                         .offset(
                             x = if (checked) {
-                                DeviceLightQuickSetupGeometry.switchThumbTravel
+                                AquaGuidedFlowGeometry.switchThumbTravel
                             } else {
-                                0.dp
+                                AquaGuidedFlowGeometry.switchInactiveOffset
                             }
                         )
                         .clip(CircleShape)
@@ -231,9 +236,9 @@ internal fun QuickSetupErrorBanner(
         modifier = Modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(colors.danger.copy(alpha = DeviceLightQuickSetupAlpha.dangerSurface))
+            .background(colors.danger.copy(alpha = AquaGuidedFlowAlpha.dangerSurface))
             .border(AquaGuidedFlowGeometry.outlineWidth, colors.danger, shape)
-            .padding(DeviceLightQuickSetupGeometry.errorPadding)
+            .padding(AquaGuidedFlowGeometry.errorPadding)
     ) {
         BasicText(
             text = stringResource(reason.messageResource()),
@@ -253,8 +258,8 @@ internal fun QuickSetupFooter(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = DeviceLightQuickSetupGeometry.actionBottomPadding),
-        horizontalArrangement = Arrangement.spacedBy(DeviceLightQuickSetupGeometry.footerGap)
+            .padding(bottom = AquaGuidedFlowGeometry.actionBottomPadding),
+        horizontalArrangement = Arrangement.spacedBy(AquaGuidedFlowGeometry.footerGap)
     ) {
         if (showBack) {
             AquaGuidedFlowButton(
@@ -271,7 +276,7 @@ internal fun QuickSetupFooter(
             enabled = primaryEnabled,
             modifier = Modifier.weight(
                 if (showBack) {
-                    DeviceLightQuickSetupGeometry.footerPrimaryWeightWithBack
+                    AquaGuidedFlowGeometry.footerPrimaryWeightWithBack
                 } else {
                     1f
                 }

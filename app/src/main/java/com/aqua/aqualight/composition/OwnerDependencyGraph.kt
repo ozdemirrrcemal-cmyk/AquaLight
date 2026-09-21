@@ -18,9 +18,8 @@ import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControl
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomOperations
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryOperations
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualOperations
-import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightFixtureCalibration
-import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightManagedAutoPlanOperations
-import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupContextOperations
+import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupCoordinator
+import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupOperations
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftRequest
@@ -114,9 +113,7 @@ internal data class OwnerLightOperations(
     val manualOperations: DeviceLightManualOperations,
     val systemOperations: DeviceLightSystemOperations,
     val libraryOperations: DeviceLightLibraryOperations,
-    val quickSetupContextOperations: DeviceLightQuickSetupContextOperations,
-    val managedAutoPlanOperations: DeviceLightManagedAutoPlanOperations,
-    val quickSetupCalibration: DeviceLightFixtureCalibration
+    val quickSetupOperations: DeviceLightQuickSetupOperations
 )
 
 internal fun interface OwnerDependencyGraphResolver {
@@ -411,14 +408,17 @@ private fun createOwnerLightOperations(
             devicesRepository = devicesRepository,
             controlOperations = controlOperations
         ),
-        quickSetupContextOperations = DefaultDeviceLightQuickSetupContextOperations(
-            ownerUid = ownerUid,
-            tankStore = aquariumTankStore,
-            assignmentRepository = assignmentRepository,
-            devicesRepository = devicesRepository
-        ),
-        managedAutoPlanOperations = DefaultDeviceLightManagedAutoPlanOperations(devicesRepository),
-        quickSetupCalibration = DefaultDeviceLightFixtureCalibration()
+        quickSetupOperations = DeviceLightQuickSetupCoordinator(
+            contextOperations = DefaultDeviceLightQuickSetupContextOperations(
+                ownerUid = ownerUid,
+                tankStore = aquariumTankStore,
+                assignmentRepository = assignmentRepository,
+                devicesRepository = devicesRepository
+            ),
+            managedPlanOperations = DefaultDeviceLightManagedAutoPlanOperations(devicesRepository),
+            controlOperations = controlOperations,
+            calibration = DefaultDeviceLightFixtureCalibration()
+        )
     )
 }
 

@@ -242,10 +242,7 @@ internal class OwnerViewModelFactory(
             )
             DeviceLightQuickSetupViewModel::class.java -> DeviceLightQuickSetupViewModel(
                 savedStateHandle = checkNotNull(quickSetupSavedStateHandle),
-                contextOperations = graph.lightOperations.quickSetupContextOperations,
-                managedPlanOperations = graph.lightOperations.managedAutoPlanOperations,
-                controlOperations = graph.lightOperations.controlOperations,
-                calibration = graph.lightOperations.quickSetupCalibration
+                operations = graph.lightOperations.quickSetupOperations
             )
             DeviceLightLibraryViewModel::class.java -> DeviceLightLibraryViewModel(
                 operations = graph.lightOperations.libraryOperations,

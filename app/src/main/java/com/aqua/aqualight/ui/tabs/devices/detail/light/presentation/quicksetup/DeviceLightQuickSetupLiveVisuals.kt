@@ -25,6 +25,7 @@ import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightManage
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.devicecard.aquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.aquaDeviceCardTypography
+import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowGeometry
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.aquaLightManualColors
 import java.time.LocalDate
 
@@ -36,7 +37,7 @@ internal fun QuickSetupManagedPlanCard(
     val colors = aquaDeviceCardColors()
     val typography = aquaDeviceCardTypography(colors)
     AquaDeviceCardSurface(Modifier.fillMaxWidth()) {
-        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(AquaGuidedFlowGeometry.footerGap)) {
             BasicText(text = productName, style = typography.title)
             ReviewMetricRow(
                 stringResource(R.string.device_light_quick_setup_source_label),
@@ -53,7 +54,7 @@ internal fun QuickSetupManagedPlanCard(
                 managed.transitionPermille?.let { value ->
                     stringResource(
                         R.string.device_light_quick_setup_transition_percent,
-                        value / DeviceLightQuickSetupGeometry.transitionPermillePerPercent
+                        value / QUICK_SETUP_PERMILLE_PER_PERCENT
                     )
                 } ?: stringResource(R.string.device_light_quick_setup_not_available)
             )
@@ -85,7 +86,7 @@ internal fun QuickSetupLiveChart(
         listOf(lightColors.red, lightColors.green, lightColors.blue)
     }
     AquaDeviceCardSurface(Modifier.fillMaxWidth()) {
-        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(AquaGuidedFlowGeometry.footerGap)) {
             BasicText(
                 text = stringResource(R.string.device_light_quick_setup_live_graph_title),
                 style = typography.title
@@ -104,7 +105,7 @@ internal fun QuickSetupLiveChart(
                     drawLivePlan(
                         plan = plan,
                         seriesColors = seriesColors,
-                        gridColor = colors.outline.copy(alpha = DeviceLightQuickSetupAlpha.grid)
+                        gridColor = colors.outline.copy(alpha = DeviceLightQuickSetupDrawingAlpha.grid)
                     )
                 }
             }
@@ -167,7 +168,7 @@ private fun DrawScope.buildLiveSeriesPath(
 internal fun ReviewMetricRow(label: String, value: String) {
     val colors = aquaDeviceCardColors()
     val typography = aquaDeviceCardTypography(colors)
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(AquaGuidedFlowGeometry.denseSectionGap)) {
         BasicText(text = label, style = typography.caption, modifier = Modifier.weight(1f))
         BasicText(
             text = value,

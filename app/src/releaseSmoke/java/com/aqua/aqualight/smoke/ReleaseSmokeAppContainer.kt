@@ -24,6 +24,7 @@ import com.aqua.aqualight.application.user.UserProfileOperations
 import com.aqua.aqualight.application.user.UserProfileSnapshot
 import com.aqua.aqualight.application.user.UserSettingsOperations
 import com.aqua.aqualight.composition.AppContainer
+import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupCoordinator
 import com.aqua.aqualight.composition.OwnerLightOperations
 import com.aqua.aqualight.data.aquarium.DefaultAquariumTankOperations
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
@@ -180,15 +181,18 @@ private class ReleaseSmokeViewModelFactory(
                 devicesRepository = devicesRepository,
                 controlOperations = lightControlOperations
             ),
-            quickSetupContextOperations = DefaultDeviceLightQuickSetupContextOperations(
-                ownerUid = SMOKE_OWNER_UID,
-                tankStore = tankStore,
-                assignmentRepository = assignmentRepository,
-                devicesRepository = devicesRepository
-            ),
-            managedAutoPlanOperations =
-                DefaultDeviceLightManagedAutoPlanOperations(devicesRepository),
-            quickSetupCalibration = DefaultDeviceLightFixtureCalibration()
+            quickSetupOperations = DeviceLightQuickSetupCoordinator(
+                contextOperations = DefaultDeviceLightQuickSetupContextOperations(
+                    ownerUid = SMOKE_OWNER_UID,
+                    tankStore = tankStore,
+                    assignmentRepository = assignmentRepository,
+                    devicesRepository = devicesRepository
+                ),
+                managedPlanOperations =
+                    DefaultDeviceLightManagedAutoPlanOperations(devicesRepository),
+                controlOperations = lightControlOperations,
+                calibration = DefaultDeviceLightFixtureCalibration()
+            )
         )
     }
     private val timerControlOperations = DefaultDeviceTimerControlOperations(devicesRepository)
@@ -367,10 +371,7 @@ private class ReleaseSmokeViewModelFactory(
         modelClass.isAssignableFrom(DeviceLightQuickSetupViewModel::class.java) ->
             DeviceLightQuickSetupViewModel(
                 savedStateHandle = checkNotNull(quickSetupSavedStateHandle),
-                contextOperations = lightOperations.quickSetupContextOperations,
-                managedPlanOperations = lightOperations.managedAutoPlanOperations,
-                controlOperations = lightOperations.controlOperations,
-                calibration = lightOperations.quickSetupCalibration
+                operations = lightOperations.quickSetupOperations
             )
         modelClass.isAssignableFrom(DeviceLightLibraryViewModel::class.java) ->
             DeviceLightLibraryViewModel(

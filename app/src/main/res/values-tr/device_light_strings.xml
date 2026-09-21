@@ -553,4 +553,9 @@
     <string name="device_light_quick_setup_error_stale">Akvaryum veya cihaz durumu değişti. Yenilenen planı tekrar inceleyin.</string>
     <string name="device_light_quick_setup_error_firmware_state">Firmware beklenmeyen bir managed-plan durumu döndürdü.</string>
     <string name="device_light_quick_setup_error_write">Cihaz managed planı kaydetmedi. Başarı varsayılmadı.</string>
+    <string name="device_light_channel_red">Kırmızı</string>
+    <string name="device_light_channel_green">Yeşil</string>
+    <string name="device_light_channel_blue">Mavi</string>
+    <string name="device_light_channel_white">Beyaz</string>
+    <string name="device_light_unknown_value">Bilinmiyor</string>
 </resources>

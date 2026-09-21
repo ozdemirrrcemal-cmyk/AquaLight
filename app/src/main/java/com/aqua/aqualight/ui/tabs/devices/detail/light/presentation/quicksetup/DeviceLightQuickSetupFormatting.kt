@@ -24,3 +24,6 @@ internal fun AquariumPlantLightDemand.demandResource(): Int = when (this) {
 internal const val QUICK_SETUP_MINUTES_PER_HOUR = 60
 internal const val QUICK_SETUP_CO2_PRECHARGE_MINUTES = 120
 internal const val QUICK_SETUP_MINUTES_PER_DAY = 1_440
+internal const val QUICK_SETUP_PERMILLE_PER_PERCENT = 10f
+internal const val QUICK_SETUP_MATURE_PHOTOPERIOD_HOURS = 8f
+internal const val QUICK_SETUP_PERCENTAGE_SCALE = 100f

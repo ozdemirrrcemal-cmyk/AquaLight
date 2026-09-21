@@ -29,10 +29,13 @@ import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickS
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.devicecard.aquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.aquaDeviceCardTypography
+import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowAlpha
 import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowButton
+import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowGeometry
 import com.aqua.aqualight.ui.common.flow.aquaGuidedFlowColors
 import com.aqua.aqualight.ui.common.flow.aquaGuidedFlowTypography
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.aquaLightManualColors
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.deviceLightChannelNameResource
 
 @Composable
 internal fun QuickSetupCalculatingScreen() {
@@ -41,13 +44,13 @@ internal fun QuickSetupCalculatingScreen() {
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(18.dp)
+        verticalArrangement = Arrangement.spacedBy(AquaGuidedFlowGeometry.cardPadding)
     ) {
-        Spacer(Modifier.height(44.dp))
-        Canvas(Modifier.size(DeviceLightQuickSetupGeometry.spinnerSize)) {
+        Spacer(Modifier.height(AquaGuidedFlowGeometry.loadingTopPadding))
+        Canvas(Modifier.size(AquaGuidedFlowGeometry.spinnerSize)) {
             drawCircle(
-                color = colors.outline.copy(alpha = 0.35f),
-                style = Stroke(DeviceLightQuickSetupGeometry.spinnerStroke.toPx())
+                color = colors.outline.copy(alpha = AquaGuidedFlowAlpha.loadingTrack),
+                style = Stroke(AquaGuidedFlowGeometry.spinnerStroke.toPx())
             )
             drawArc(
                 color = colors.accent,
@@ -55,7 +58,7 @@ internal fun QuickSetupCalculatingScreen() {
                 sweepAngle = 240f,
                 useCenter = false,
                 style = Stroke(
-                    width = DeviceLightQuickSetupGeometry.spinnerStroke.toPx(),
+                    width = AquaGuidedFlowGeometry.spinnerStroke.toPx(),
                     cap = StrokeCap.Round
                 )
             )
@@ -76,7 +79,7 @@ internal fun QuickSetupCalculatingScreen() {
 internal fun QuickSetupReviewScreen(state: DeviceLightQuickSetupUiState) {
     val recommendation = checkNotNull(state.recommendation)
     val currentPhase = recommendation.currentPhaseIndex()
-    Column(verticalArrangement = Arrangement.spacedBy(DeviceLightQuickSetupGeometry.sectionGap)) {
+    Column(verticalArrangement = Arrangement.spacedBy(AquaGuidedFlowGeometry.denseSectionGap)) {
         QuickSetupHeading(
             title = stringResource(R.string.device_light_quick_setup_review_title),
             description = stringResource(R.string.device_light_quick_setup_review_description)
@@ -100,13 +103,13 @@ internal fun QuickSetupApplyingScreen() {
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(18.dp)
+        verticalArrangement = Arrangement.spacedBy(AquaGuidedFlowGeometry.cardPadding)
     ) {
-        Spacer(Modifier.height(38.dp))
-        Canvas(Modifier.size(DeviceLightQuickSetupGeometry.spinnerSize)) {
+        Spacer(Modifier.height(AquaGuidedFlowGeometry.applyingTopPadding))
+        Canvas(Modifier.size(AquaGuidedFlowGeometry.spinnerSize)) {
             drawCircle(
-                color = colors.outline.copy(alpha = 0.35f),
-                style = Stroke(DeviceLightQuickSetupGeometry.spinnerStroke.toPx())
+                color = colors.outline.copy(alpha = AquaGuidedFlowAlpha.loadingTrack),
+                style = Stroke(AquaGuidedFlowGeometry.spinnerStroke.toPx())
             )
             drawArc(
                 color = colors.accent,
@@ -114,7 +117,7 @@ internal fun QuickSetupApplyingScreen() {
                 sweepAngle = 285f,
                 useCenter = false,
                 style = Stroke(
-                    width = DeviceLightQuickSetupGeometry.spinnerStroke.toPx(),
+                    width = AquaGuidedFlowGeometry.spinnerStroke.toPx(),
                     cap = StrokeCap.Round
                 )
             )
@@ -139,7 +142,7 @@ internal fun QuickSetupLiveScreen(
 ) {
     val context = checkNotNull(state.context)
     val managed = checkNotNull(state.managedPlan)
-    Column(verticalArrangement = Arrangement.spacedBy(DeviceLightQuickSetupGeometry.sectionGap)) {
+    Column(verticalArrangement = Arrangement.spacedBy(AquaGuidedFlowGeometry.denseSectionGap)) {
         QuickSetupHeading(
             title = stringResource(R.string.device_light_quick_setup_live_title),
             description = stringResource(R.string.device_light_quick_setup_live_description)
@@ -148,7 +151,7 @@ internal fun QuickSetupLiveScreen(
         state.livePlan?.let { plan -> QuickSetupLiveChart(plan, context.productKey) }
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(AquaGuidedFlowGeometry.footerGap)
         ) {
             AquaGuidedFlowButton(
                 text = stringResource(R.string.device_light_quick_setup_edit_plan),
@@ -176,7 +179,7 @@ private fun QuickSetupRecommendationSummary(
     val colors = aquaDeviceCardColors()
     val typography = aquaDeviceCardTypography(colors)
     AquaDeviceCardSurface(Modifier.fillMaxWidth()) {
-        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(AquaGuidedFlowGeometry.footerGap)) {
             BasicText(
                 text = stringResource(R.string.device_light_quick_setup_plan_summary_title),
                 style = typography.title
@@ -221,7 +224,7 @@ private fun QuickSetupTimingMetrics(
         stringResource(R.string.device_light_quick_setup_mature_duration_label),
         stringResource(
             R.string.device_light_quick_setup_hours_decimal,
-            DeviceLightQuickSetupGeometry.maturePhotoperiodHours
+            QUICK_SETUP_MATURE_PHOTOPERIOD_HOURS
         )
     )
 }
@@ -261,7 +264,12 @@ private fun QuickSetupPhaseTimeline(
     val colors = aquaDeviceCardColors()
     val typography = aquaDeviceCardTypography(colors)
     AquaDeviceCardSurface(Modifier.fillMaxWidth()) {
-        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(
+                AquaGuidedFlowGeometry.listItemGap
+            )
+        ) {
             BasicText(
                 text = stringResource(R.string.device_light_quick_setup_five_phase_title),
                 style = typography.title
@@ -279,7 +287,7 @@ private fun QuickSetupPhaseTimeline(
                                 CircleShape
                             )
                     )
-                    Spacer(Modifier.width(9.dp))
+                    Spacer(Modifier.width(AquaGuidedFlowGeometry.listItemGap))
                     BasicText(
                         text = stringResource(
                             R.string.device_light_quick_setup_phase_name,
@@ -307,14 +315,18 @@ private fun QuickSetupChannelScene(recommendation: DeviceLightQuickSetupRecommen
     val colors = aquaDeviceCardColors()
     val typography = aquaDeviceCardTypography(colors)
     val lightColors = aquaLightManualColors()
-    val scene = recommendation.calibration.channelScenePercent
     AquaDeviceCardSurface(Modifier.fillMaxWidth()) {
-        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(
+                AquaGuidedFlowGeometry.listItemGap
+            )
+        ) {
             BasicText(
                 text = stringResource(R.string.device_light_quick_setup_scene_title),
                 style = typography.title
             )
-            scene.forEach { (channel, value) ->
+            recommendation.calibration.channelScenePercent.forEach { (channel, value) ->
                 val channelColor = when (channel) {
                     "red" -> lightColors.red
                     "green" -> lightColors.green
@@ -327,31 +339,31 @@ private fun QuickSetupChannelScene(recommendation: DeviceLightQuickSetupRecommen
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     BasicText(
-                        text = channel.uppercase(),
+                        text = stringResource(deviceLightChannelNameResource(channel)),
                         style = typography.micro,
-                        modifier = Modifier.width(44.dp)
+                        modifier = Modifier.width(DeviceLightQuickSetupGeometry.channelLabelWidth)
                     )
                     Box(
                         Modifier
                             .weight(1f)
                             .height(DeviceLightQuickSetupGeometry.channelTrackHeight)
-                            .background(colors.outline, DeviceLightQuickSetupGeometry.progressRadius)
+                            .background(colors.outline, AquaGuidedFlowGeometry.progressRadius)
                     ) {
                         Box(
                             Modifier
-                                .fillMaxWidth(value / DeviceLightQuickSetupGeometry.percentageScale)
+                                .fillMaxWidth(value / QUICK_SETUP_PERCENTAGE_SCALE)
                                 .height(DeviceLightQuickSetupGeometry.channelTrackHeight)
                                 .background(
                                     channelColor,
-                                    DeviceLightQuickSetupGeometry.progressRadius
+                                    AquaGuidedFlowGeometry.progressRadius
                                 )
                         )
                     }
-                    Spacer(Modifier.width(10.dp))
+                    Spacer(Modifier.width(AquaGuidedFlowGeometry.compactGap))
                     BasicText(
                         text = stringResource(R.string.device_light_quick_setup_percent, value),
                         style = typography.body,
-                        modifier = Modifier.width(42.dp)
+                        modifier = Modifier.width(DeviceLightQuickSetupGeometry.channelValueWidth)
                     )
                 }
             }

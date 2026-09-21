@@ -3,13 +3,14 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.quicksetup
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlOperations
-import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightFixtureCalibration
-import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightManagedAutoPlanOperations
+import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupApplyResult
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupBlockReason
-import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupContextOperations
-import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupRecommendationEngine
+import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupDisableResult
+import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupLoadResult
+import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupOperations
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupRecommendationResult
+import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupRuntimeSnapshot
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,27 +20,31 @@ import kotlinx.coroutines.yield
 
 class DeviceLightQuickSetupViewModel(
     savedStateHandle: SavedStateHandle,
-    contextOperations: DeviceLightQuickSetupContextOperations,
-    managedPlanOperations: DeviceLightManagedAutoPlanOperations,
-    controlOperations: DeviceLightControlOperations,
-    calibration: DeviceLightFixtureCalibration
+    private val operations: DeviceLightQuickSetupOperations
 ) : ViewModel() {
-
-    private val controller = DeviceLightQuickSetupController(
-        contextOperations = contextOperations,
-        managedPlanOperations = managedPlanOperations,
-        controlOperations = controlOperations
-    )
-    private val engine = DeviceLightQuickSetupRecommendationEngine(calibration)
     private val savedState = DeviceLightQuickSetupSavedState(savedStateHandle)
     private val _uiState = MutableStateFlow(DeviceLightQuickSetupUiState())
     internal val uiState: StateFlow<DeviceLightQuickSetupUiState> = _uiState.asStateFlow()
     private var boundDeviceUid: String? = null
+    private var runtimeObservationJob: Job? = null
+    private var runtimeSnapshotObserved: Boolean = false
 
     fun bind(deviceUid: String) {
         if (boundDeviceUid == deviceUid) return
+        runtimeObservationJob?.cancel()
         boundDeviceUid = deviceUid
+        runtimeSnapshotObserved = false
         _uiState.value = savedState.bindDevice(deviceUid)
+        runtimeObservationJob = viewModelScope.launch {
+            operations.observeRuntime(deviceUid).collect { snapshot ->
+                runtimeSnapshotObserved = true
+                val current = _uiState.value
+                val resetLiveStage = current.stage == DeviceLightQuickSetupStage.LIVE &&
+                    snapshot.managedPlan?.installed == false
+                if (resetLiveStage) savedState.persistStage(DeviceLightQuickSetupStage.PROFILE)
+                _uiState.value = current.withRuntimeSnapshot(snapshot, resetLiveStage)
+            }
+        }
         load()
     }
 
@@ -82,17 +87,18 @@ class DeviceLightQuickSetupViewModel(
         val deviceUid = boundDeviceUid ?: return
         _uiState.update { it.copy(loading = true, blockReason = null) }
         viewModelScope.launch {
-            when (val result = controller.load(deviceUid)) {
+            when (val result = operations.load(deviceUid)) {
                 is DeviceLightQuickSetupLoadResult.Available -> {
                     val restoredStage = savedState.restoredStage(result.context.co2Present)
                     _uiState.update { current ->
+                        val managedPlan = current.managedPlan ?: result.managedPlan
                         current.copy(
                             loading = false,
                             context = result.context,
                             plantProfile = result.plantProfile,
-                            managedPlan = result.managedPlan,
-                            livePlan = result.livePlan,
-                            stage = if (result.managedPlan?.installed == true) {
+                            managedPlan = managedPlan,
+                            livePlan = if (runtimeSnapshotObserved) current.livePlan else result.livePlan,
+                            stage = if (managedPlan?.installed == true) {
                                 DeviceLightQuickSetupStage.LIVE
                             } else {
                                 restoredStage
@@ -100,10 +106,7 @@ class DeviceLightQuickSetupViewModel(
                             blockReason = null
                         )
                     }
-                    if (
-                        result.managedPlan?.installed != true &&
-                        restoredStage == DeviceLightQuickSetupStage.REVIEW
-                    ) {
+                    if (_uiState.value.stage == DeviceLightQuickSetupStage.REVIEW) {
                         calculateRecommendation()
                     }
                 }
@@ -135,7 +138,7 @@ class DeviceLightQuickSetupViewModel(
             }
             viewModelScope.launch {
                 yield()
-                when (val result = engine.recommend(context, input)) {
+                when (val result = operations.recommend(context, input)) {
                     is DeviceLightQuickSetupRecommendationResult.Available -> {
                         savedState.persistStage(DeviceLightQuickSetupStage.REVIEW)
                         _uiState.update {
@@ -180,7 +183,7 @@ class DeviceLightQuickSetupViewModel(
             }
             viewModelScope.launch {
                 handleApplyResult(
-                    controller.apply(
+                    operations.apply(
                         deviceUid = state.deviceUid,
                         context = checkNotNull(context),
                         recommendation = checkNotNull(recommendation)
@@ -229,7 +232,7 @@ class DeviceLightQuickSetupViewModel(
     private fun acceptChangedContext(result: DeviceLightQuickSetupApplyResult.ContextChanged) {
         savedState.persistStage(DeviceLightQuickSetupStage.REVIEW)
         val input = _uiState.value.toInputOrNull()
-        val rebuilt = input?.let { engine.recommend(result.context, it) }
+        val rebuilt = input?.let { operations.recommend(result.context, it) }
         _uiState.update {
             it.copy(
                 context = result.context,
@@ -252,7 +255,7 @@ class DeviceLightQuickSetupViewModel(
         val managedPlan = state.managedPlan ?: return
         _uiState.update { it.copy(stage = DeviceLightQuickSetupStage.APPLYING, blockReason = null) }
         viewModelScope.launch {
-            when (val result = controller.disable(state.deviceUid, managedPlan)) {
+            when (val result = operations.disable(state.deviceUid, managedPlan)) {
                 is DeviceLightQuickSetupDisableResult.Disabled,
                 DeviceLightQuickSetupDisableResult.NotInstalled -> {
                     savedState.persistStage(DeviceLightQuickSetupStage.PROFILE)
@@ -286,6 +289,16 @@ class DeviceLightQuickSetupViewModel(
     }
 
 }
+
+private fun DeviceLightQuickSetupUiState.withRuntimeSnapshot(
+    snapshot: DeviceLightQuickSetupRuntimeSnapshot,
+    resetLiveStage: Boolean
+): DeviceLightQuickSetupUiState = copy(
+    stage = if (resetLiveStage) DeviceLightQuickSetupStage.PROFILE else stage,
+    managedPlan = snapshot.managedPlan,
+    livePlan = snapshot.livePlan,
+    recommendation = if (resetLiveStage) null else recommendation
+)
 
 private sealed interface QuickSetupAdvanceDecision {
     data class MoveTo(val stage: DeviceLightQuickSetupStage) : QuickSetupAdvanceDecision

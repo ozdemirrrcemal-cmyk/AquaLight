@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.aqua.aqualight.R
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.deviceLightChannelNameResource
 import java.time.LocalDate
 
 @Composable
@@ -72,13 +73,17 @@ internal fun QuickSetupSetupProfileCard(state: DeviceLightQuickSetupUiState) {
 @Composable
 internal fun QuickSetupLightingProfileCard(state: DeviceLightQuickSetupUiState) {
     val context = checkNotNull(state.context)
+    val channelLabels = mutableListOf<String>()
+    for (key in context.channelKeys) {
+        channelLabels += stringResource(deviceLightChannelNameResource(key))
+    }
     QuickSetupProfileCard(
         title = stringResource(R.string.device_light_quick_setup_lighting_title),
         rows = listOf(
             stringResource(R.string.device_light_quick_setup_product_label) to
                 context.productDisplayName,
             stringResource(R.string.device_light_quick_setup_channels_label) to
-                context.channelKeys.joinToString(separator = " · ") { it.uppercase() }
+                channelLabels.joinToString(separator = " · ")
         )
     )
 }

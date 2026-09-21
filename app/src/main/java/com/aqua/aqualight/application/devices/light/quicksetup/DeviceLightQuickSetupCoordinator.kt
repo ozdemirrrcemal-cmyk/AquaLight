@@ -1,26 +1,35 @@
-package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.quicksetup
+package com.aqua.aqualight.application.devices.light.quicksetup
 
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlOperations
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlResult
 import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanSnapshot
-import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightManagedAutoPlanOperations
-import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightManagedPlanApplyResult
-import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightManagedPlanReadResult
-import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightManagedPlanSnapshot
-import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupBlockReason
-import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupContext
-import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupContextOperations
-import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupContextResult
-import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupPlantProfile
-import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupPlantProfileResolver
-import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupRecommendation
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.combine
 
-internal class DeviceLightQuickSetupController(
+internal class DeviceLightQuickSetupCoordinator(
     private val contextOperations: DeviceLightQuickSetupContextOperations,
     private val managedPlanOperations: DeviceLightManagedAutoPlanOperations,
-    private val controlOperations: DeviceLightControlOperations
-) {
-    suspend fun load(deviceUid: String): DeviceLightQuickSetupLoadResult =
+    private val controlOperations: DeviceLightControlOperations,
+    calibration: DeviceLightFixtureCalibration
+) : DeviceLightQuickSetupOperations {
+
+    private val recommendationEngine = DeviceLightQuickSetupRecommendationEngine(calibration)
+
+    override fun observeRuntime(
+        deviceUid: String
+    ): Flow<DeviceLightQuickSetupRuntimeSnapshot> =
+        combine(
+            managedPlanOperations.observe(deviceUid),
+            controlOperations.observeControl(deviceUid)
+        ) { managedPlan, control ->
+            DeviceLightQuickSetupRuntimeSnapshot(
+                managedPlan = managedPlan,
+                livePlan = (control as? DeviceLightControlResult.Available)?.snapshot?.plan
+            )
+        }.distinctUntilChanged()
+
+    override suspend fun load(deviceUid: String): DeviceLightQuickSetupLoadResult =
         when (val contextResult = contextOperations.readContext(deviceUid)) {
             is DeviceLightQuickSetupContextResult.Blocked ->
                 DeviceLightQuickSetupLoadResult.Blocked(contextResult.reason)
@@ -28,7 +37,13 @@ internal class DeviceLightQuickSetupController(
                 loadAvailable(deviceUid, contextResult.context)
         }
 
-    suspend fun apply(
+    override fun recommend(
+        context: DeviceLightQuickSetupContext,
+        input: DeviceLightQuickSetupInput
+    ): DeviceLightQuickSetupRecommendationResult =
+        recommendationEngine.recommend(context, input)
+
+    override suspend fun apply(
         deviceUid: String,
         context: DeviceLightQuickSetupContext,
         recommendation: DeviceLightQuickSetupRecommendation
@@ -45,7 +60,7 @@ internal class DeviceLightQuickSetupController(
                 )
         }
 
-    suspend fun disable(
+    override suspend fun disable(
         deviceUid: String,
         managedPlan: DeviceLightManagedPlanSnapshot
     ): DeviceLightQuickSetupDisableResult {
@@ -96,11 +111,7 @@ internal class DeviceLightQuickSetupController(
                 DeviceLightQuickSetupPlantProfileResolver.resolve(latestContext)
             )
         } else {
-            applyAuthoritativePlan(
-                deviceUid = deviceUid,
-                originalContext = originalContext,
-                recommendation = recommendation
-            )
+            applyAuthoritativePlan(deviceUid, originalContext, recommendation)
         }
 
     private suspend fun applyAuthoritativePlan(
@@ -144,47 +155,4 @@ internal class DeviceLightQuickSetupController(
             is DeviceLightControlResult.Available -> control.snapshot.plan
             is DeviceLightControlResult.Failed -> null
         }
-}
-
-internal sealed interface DeviceLightQuickSetupLoadResult {
-    data class Available(
-        val context: DeviceLightQuickSetupContext,
-        val plantProfile: DeviceLightQuickSetupPlantProfile,
-        val managedPlan: DeviceLightManagedPlanSnapshot?,
-        val livePlan: DeviceLightPlanSnapshot?
-    ) : DeviceLightQuickSetupLoadResult
-
-    data class Blocked(
-        val reason: DeviceLightQuickSetupBlockReason
-    ) : DeviceLightQuickSetupLoadResult
-}
-
-internal sealed interface DeviceLightQuickSetupApplyResult {
-    data class Applied(
-        val managedPlan: DeviceLightManagedPlanSnapshot,
-        val livePlan: DeviceLightPlanSnapshot?
-    ) : DeviceLightQuickSetupApplyResult
-
-    data class ContextChanged(
-        val context: DeviceLightQuickSetupContext,
-        val plantProfile: DeviceLightQuickSetupPlantProfile?
-    ) : DeviceLightQuickSetupApplyResult
-
-    data class Stale(
-        val latest: DeviceLightManagedPlanSnapshot?
-    ) : DeviceLightQuickSetupApplyResult
-
-    data class Failed(
-        val reason: DeviceLightQuickSetupBlockReason
-    ) : DeviceLightQuickSetupApplyResult
-}
-
-internal sealed interface DeviceLightQuickSetupDisableResult {
-    data class Disabled(val managedPlan: DeviceLightManagedPlanSnapshot) :
-        DeviceLightQuickSetupDisableResult
-    data class Stale(val latest: DeviceLightManagedPlanSnapshot?) :
-        DeviceLightQuickSetupDisableResult
-    data class Failed(val reason: DeviceLightQuickSetupBlockReason) :
-        DeviceLightQuickSetupDisableResult
-    data object NotInstalled : DeviceLightQuickSetupDisableResult
 }

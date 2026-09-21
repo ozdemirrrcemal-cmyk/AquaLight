@@ -14,9 +14,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowButton
+import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowGeometry
 
 @Composable
 internal fun DeviceLightQuickSetupScreen(
@@ -28,12 +28,12 @@ internal fun DeviceLightQuickSetupScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(colorResource(R.color.background_color))
-            .padding(horizontal = DeviceLightQuickSetupGeometry.screenHorizontalPadding)
+            .padding(horizontal = AquaGuidedFlowGeometry.screenHorizontalPadding)
     ) {
         if (state.context != null) {
-            Spacer(Modifier.height(DeviceLightQuickSetupGeometry.screenTopPadding))
+            Spacer(Modifier.height(AquaGuidedFlowGeometry.screenTopPadding))
             QuickSetupProgress(state)
-            Spacer(Modifier.height(DeviceLightQuickSetupGeometry.sectionGap))
+            Spacer(Modifier.height(AquaGuidedFlowGeometry.denseSectionGap))
         }
 
         Box(
@@ -51,10 +51,10 @@ internal fun DeviceLightQuickSetupScreen(
 
         if (!state.loading && state.context != null) {
             state.blockReason?.let { reason ->
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(AquaGuidedFlowGeometry.footerGap))
                 QuickSetupErrorBanner(reason)
             }
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(AquaGuidedFlowGeometry.compactGap))
             QuickSetupStageFooter(state, onAction, onDone)
         }
     }
@@ -149,16 +149,16 @@ private fun QuickSetupBlockedScreen(
     onAction: (DeviceLightQuickSetupAction) -> Unit
 ) {
     Column(Modifier.fillMaxWidth()) {
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(AquaGuidedFlowGeometry.sectionGap))
         QuickSetupHeading(
             title = stringResource(R.string.device_light_quick_setup_unavailable_title),
             description = stringResource(R.string.device_light_quick_setup_unavailable_description)
         )
         state.blockReason?.let { reason ->
-            Spacer(Modifier.height(18.dp))
+            Spacer(Modifier.height(AquaGuidedFlowGeometry.cardPadding))
             QuickSetupErrorBanner(reason)
         }
-        Spacer(Modifier.height(18.dp))
+        Spacer(Modifier.height(AquaGuidedFlowGeometry.cardPadding))
         AquaGuidedFlowButton(
             text = stringResource(R.string.device_light_quick_setup_retry),
             onClick = { onAction(DeviceLightQuickSetupAction.Retry) },

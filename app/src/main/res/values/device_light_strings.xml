@@ -555,4 +555,9 @@
     <string name="device_light_quick_setup_error_stale">Aquarium or device state changed. Review the refreshed plan before applying again.</string>
     <string name="device_light_quick_setup_error_firmware_state">The firmware returned an unexpected managed-plan state.</string>
     <string name="device_light_quick_setup_error_write">The device did not commit the managed plan. No success state has been assumed.</string>
+    <string name="device_light_channel_red">Red</string>
+    <string name="device_light_channel_green">Green</string>
+    <string name="device_light_channel_blue">Blue</string>
+    <string name="device_light_channel_white">White</string>
+    <string name="device_light_unknown_value">Unknown</string>
 </resources>

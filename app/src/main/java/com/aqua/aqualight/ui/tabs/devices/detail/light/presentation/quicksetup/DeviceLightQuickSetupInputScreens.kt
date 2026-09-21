@@ -17,10 +17,11 @@ import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 import com.aqua.aqualight.ui.common.devicecard.aquaDeviceCardColors
 import com.aqua.aqualight.ui.common.devicecard.aquaDeviceCardTypography
 import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowSurface
+import com.aqua.aqualight.ui.common.flow.AquaGuidedFlowGeometry
 
 @Composable
 internal fun QuickSetupProfileScreen(state: DeviceLightQuickSetupUiState) {
-    Column(verticalArrangement = Arrangement.spacedBy(DeviceLightQuickSetupGeometry.sectionGap)) {
+    Column(verticalArrangement = Arrangement.spacedBy(AquaGuidedFlowGeometry.denseSectionGap)) {
         QuickSetupHeading(
             title = stringResource(R.string.device_light_quick_setup_title),
             description = stringResource(R.string.device_light_quick_setup_profile_description)
@@ -39,7 +40,7 @@ internal fun QuickSetupWaterHeightScreen(
     onValueChange: (String) -> Unit
 ) {
     val context = checkNotNull(state.context)
-    Column(verticalArrangement = Arrangement.spacedBy(DeviceLightQuickSetupGeometry.sectionGap)) {
+    Column(verticalArrangement = Arrangement.spacedBy(AquaGuidedFlowGeometry.denseSectionGap)) {
         QuickSetupHeading(
             title = stringResource(R.string.device_light_quick_setup_water_title),
             description = stringResource(R.string.device_light_quick_setup_water_description)
@@ -67,7 +68,7 @@ internal fun QuickSetupFixtureHeightScreen(
     state: DeviceLightQuickSetupUiState,
     onValueChange: (String) -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(DeviceLightQuickSetupGeometry.sectionGap)) {
+    Column(verticalArrangement = Arrangement.spacedBy(AquaGuidedFlowGeometry.denseSectionGap)) {
         QuickSetupHeading(
             title = stringResource(R.string.device_light_quick_setup_fixture_title),
             description = stringResource(R.string.device_light_quick_setup_fixture_description)
@@ -90,12 +91,12 @@ internal fun QuickSetupLightTimeScreen(
     state: DeviceLightQuickSetupUiState,
     onChanged: (Int) -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(DeviceLightQuickSetupGeometry.sectionGap)) {
+    Column(verticalArrangement = Arrangement.spacedBy(AquaGuidedFlowGeometry.denseSectionGap)) {
         QuickSetupHeading(
             title = stringResource(R.string.device_light_quick_setup_time_title),
             description = stringResource(R.string.device_light_quick_setup_time_description)
         )
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(AquaGuidedFlowGeometry.microGap))
         QuickSetupTimeControl(state.firstLightOnMinuteOfDay, onChanged)
         QuickSetupInfoCard(stringResource(R.string.device_light_quick_setup_time_info))
     }
@@ -110,7 +111,7 @@ internal fun QuickSetupCo2Screen(
     val co2Time = ((state.firstLightOnMinuteOfDay - QUICK_SETUP_CO2_PRECHARGE_MINUTES) + QUICK_SETUP_MINUTES_PER_DAY)
         .rem(QUICK_SETUP_MINUTES_PER_DAY)
         .toClockText()
-    Column(verticalArrangement = Arrangement.spacedBy(DeviceLightQuickSetupGeometry.sectionGap)) {
+    Column(verticalArrangement = Arrangement.spacedBy(AquaGuidedFlowGeometry.denseSectionGap)) {
         QuickSetupHeading(
             title = stringResource(R.string.device_light_quick_setup_co2_title),
             description = stringResource(R.string.device_light_quick_setup_co2_description)
@@ -142,13 +143,13 @@ internal fun QuickSetupProfileCard(
     AquaDeviceCardSurface(Modifier.fillMaxWidth()) {
         Column(
             Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(AquaGuidedFlowGeometry.footerGap)
         ) {
             BasicText(text = title, style = typography.title)
             rows.forEach { (label, value) ->
                 Row(
                     Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(AquaGuidedFlowGeometry.denseSectionGap),
                     verticalAlignment = Alignment.Top
                 ) {
                     BasicText(
@@ -159,7 +160,7 @@ internal fun QuickSetupProfileCard(
                     BasicText(
                         text = value,
                         style = typography.body,
-                        modifier = Modifier.weight(DeviceLightQuickSetupGeometry.profileValueWeight)
+                        modifier = Modifier.weight(AquaGuidedFlowGeometry.profileValueWeight)
                     )
                 }
             }

@@ -16,7 +16,7 @@ internal fun quickSetupTankTypeText(value: String): String = when (value.trim())
     AquariumTankTaxonomy.TYPE_SPS -> stringResource(R.string.aquarium_tank_type_sps)
     AquariumTankTaxonomy.TYPE_CORAL -> stringResource(R.string.aquarium_tank_type_coral)
     AquariumTankTaxonomy.TYPE_OTHER -> stringResource(R.string.aquarium_tank_type_other)
-    else -> value.trim()
+    else -> stringResource(R.string.device_light_unknown_value)
 }
 
 @Composable
@@ -31,5 +31,5 @@ internal fun quickSetupTankStyleText(value: String): String = when (value.trim()
     AquariumTankTaxonomy.STYLE_FOREST -> stringResource(R.string.aquarium_style_forest)
     AquariumTankTaxonomy.STYLE_MOUNTAIN -> stringResource(R.string.aquarium_style_mountain)
     AquariumTankTaxonomy.STYLE_ISLAND -> stringResource(R.string.aquarium_style_island)
-    else -> value.trim()
+    else -> stringResource(R.string.device_light_unknown_value)
 }
