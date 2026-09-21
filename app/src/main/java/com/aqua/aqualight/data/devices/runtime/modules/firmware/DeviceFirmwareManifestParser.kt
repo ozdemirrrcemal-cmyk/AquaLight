@@ -89,7 +89,8 @@ object DeviceFirmwareManifestParser {
                 json.requiredObject("contracts"),
                 "$label.contracts"
             ),
-            features = json.requiredStringSet("features", "$label.features"),
+            features = json.requiredStringSet("features", "$label.features")
+                .also(::requireFeatureTokens),
             updatePolicy = parseUpdatePolicy(
                 json.requiredObject("updatePolicy"),
                 "$label.updatePolicy"
@@ -174,12 +175,13 @@ object DeviceFirmwareManifestParser {
             wsSchema = json.requiredString("wsSchema"),
             wsProtocolVersion = json.requiredPositiveInt("wsProtocolVersion"),
             deviceApiVersion = json.requiredPositiveInt("deviceApiVersion"),
-            requiredDomains = json.requiredStringSet("requiredDomains", "$label.requiredDomains"),
+            requiredDomains = json.requiredStringSet("requiredDomains", "$label.requiredDomains")
+                .also(::requireContractIds),
             optionalDomains = json.requiredStringSet(
                 "optionalDomains",
                 "$label.optionalDomains",
                 allowEmpty = true
-            )
+            ).also(::requireContractIds)
         )
     }
 
@@ -197,7 +199,7 @@ object DeviceFirmwareManifestParser {
             "requiredFeatures",
             "$label.requiredFeatures",
             allowEmpty = true
-        )
+        ).also(::requireFeatureTokens)
         return DeviceFirmwareUpdatePolicy(
             level = level,
             requiredFeatures = requiredFeatures
@@ -264,6 +266,7 @@ object DeviceFirmwareManifestParser {
         artifact: DeviceFirmwareManifestArtifact
     ) {
         validateArtifactIdentity(manifest, artifact)
+        validateCompatibilityMetadata(artifact)
         validateFirmwareAsset(manifest, artifact)
         validateFactoryAsset(manifest, artifact)
     }
@@ -301,6 +304,22 @@ object DeviceFirmwareManifestParser {
         }
         require(artifact.product.capabilities.ota) {
             "Manifest product must declare OTA capability for ${artifact.env}."
+        }
+    }
+
+    private fun validateCompatibilityMetadata(
+        artifact: DeviceFirmwareManifestArtifact
+    ) {
+        require(CONTRACT_ID_PATTERN.matches(artifact.contracts.wsSchema)) {
+            "OTA manifest WebSocket schema has an invalid wire format."
+        }
+        require(artifact.features.isNotEmpty()) {
+            "OTA manifest feature advertisement must not be empty."
+        }
+        if (artifact.updatePolicy.level == DeviceFirmwareUpdatePolicyLevel.FEATURE_REQUIRED) {
+            require(artifact.updatePolicy.requiredFeatures.all(artifact.features::contains)) {
+                "FEATURE_REQUIRED OTA policy references a feature absent from target firmware."
+            }
         }
     }
 
@@ -414,6 +433,18 @@ object DeviceFirmwareManifestParser {
             require(values.add(value)) { "OTA manifest $label must not contain duplicates." }
         }
         return values
+    }
+
+    private fun requireFeatureTokens(values: Set<String>) {
+        require(values.all(FEATURE_TOKEN_PATTERN::matches)) {
+            "OTA manifest contains an invalid commercial feature token."
+        }
+    }
+
+    private fun requireContractIds(values: Set<String>) {
+        require(values.all(CONTRACT_ID_PATTERN::matches)) {
+            "OTA manifest contains an invalid contract identifier."
+        }
     }
 
     private fun JSONObject.requiredString(key: String): String {
@@ -591,4 +622,6 @@ object DeviceFirmwareManifestParser {
         normalOtaAssetType = DeviceFirmwareRuntimeContract.Manifest.NORMAL_OTA_ASSET_TYPE
     )
     private val ENVIRONMENT_PATTERN = Regex("^[a-z0-9_]+$")
+    private val FEATURE_TOKEN_PATTERN = Regex("^[A-Z][A-Z0-9_]*$")
+    private val CONTRACT_ID_PATTERN = Regex("^[a-z0-9]+(?:[.-][a-z0-9]+)*$")
 }
