@@ -17,6 +17,8 @@ import com.aqua.aqualight.application.devices.DeviceAccessDecision
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceLightRootBinding
+import com.aqua.aqualight.ui.common.devicepresence.DeviceAccessFeedbackAction
+import com.aqua.aqualight.ui.common.devicepresence.DeviceAccessFeedbackPresenter
 import com.aqua.aqualight.ui.common.devicepresence.DeviceMenuUnavailableMessageMapper
 import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
@@ -179,16 +181,27 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
                     viewModel.surfaceUnavailableEvents.collect { reason ->
                         if (_binding == null) return@collect
                         setFragmentGlobalLoading(false)
-                        val navController = findNavController()
-                        if (navController.currentDestination?.id == R.id.deviceLightRootFragment) {
-                            navController.navigateUp()
+                        val feedback = DeviceMenuUnavailableMessageMapper.feedback(reason)
+                        if (feedback.action == DeviceAccessFeedbackAction.OPEN_FIRMWARE_UPDATE) {
+                            DeviceAccessFeedbackPresenter.show(
+                                fragment = this@DeviceLightRootFragment,
+                                deviceUid = args.deviceUid,
+                                deviceTitle = viewModel.uiState.value.title,
+                                reason = reason
+                            )
+                        } else {
+                            val navController = findNavController()
+                            if (
+                                navController.currentDestination?.id ==
+                                R.id.deviceLightRootFragment
+                            ) {
+                                navController.navigateUp()
+                            }
+                            (activity as? BaseActivity)?.showSnackBar(
+                                message = getString(feedback.messageRes),
+                                type = BaseActivity.SnackType.ERROR
+                            )
                         }
-                        (activity as? BaseActivity)?.showSnackBar(
-                            message = getString(
-                                DeviceMenuUnavailableMessageMapper.messageRes(reason)
-                            ),
-                            type = BaseActivity.SnackType.ERROR
-                        )
                     }
                 }
                 launch {
@@ -196,15 +209,13 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
                         if (_binding == null) return@collect
                         when (decision) {
                             DeviceAccessDecision.Allowed -> navigateToQuickSetup()
-                            is DeviceAccessDecision.Blocked -> {
-                                val feedback =
-                                    DeviceMenuUnavailableMessageMapper.feedback(decision.reason)
-                                (activity as? BaseActivity)?.showDeviceAccessDialog(
+                            is DeviceAccessDecision.Blocked ->
+                                DeviceAccessFeedbackPresenter.show(
+                                    fragment = this@DeviceLightRootFragment,
+                                    deviceUid = args.deviceUid,
                                     deviceTitle = viewModel.uiState.value.title,
-                                    titleRes = feedback.titleRes,
-                                    messageRes = feedback.messageRes
+                                    reason = decision.reason
                                 )
-                            }
                         }
                     }
                 }
