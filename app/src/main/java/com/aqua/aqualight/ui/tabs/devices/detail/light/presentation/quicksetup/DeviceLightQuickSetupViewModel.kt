@@ -297,38 +297,54 @@ private sealed interface QuickSetupAdvanceDecision {
 private fun resolveAdvanceDecision(
     state: DeviceLightQuickSetupUiState
 ): QuickSetupAdvanceDecision {
-    val context = state.context
-    return when {
-        context == null -> QuickSetupAdvanceDecision.NoOp
-        state.stage == DeviceLightQuickSetupStage.PROFILE ->
+    val context = state.context ?: return QuickSetupAdvanceDecision.NoOp
+    return when (state.stage) {
+        DeviceLightQuickSetupStage.PROFILE ->
             QuickSetupAdvanceDecision.MoveTo(DeviceLightQuickSetupStage.WATER_HEIGHT)
-        state.stage == DeviceLightQuickSetupStage.WATER_HEIGHT -> {
-            val water = state.waterHeightText.toIntOrNull()
-            if (water != null && water > 0 && water <= context.tankHeightCm) {
-                QuickSetupAdvanceDecision.MoveTo(DeviceLightQuickSetupStage.FIXTURE_HEIGHT)
-            } else {
-                QuickSetupAdvanceDecision.InvalidInput
-            }
-        }
-        state.stage == DeviceLightQuickSetupStage.FIXTURE_HEIGHT -> {
-            val fixture = state.fixtureHeightText.toIntOrNull()
-            if (fixture != null && fixture >= 0) {
-                QuickSetupAdvanceDecision.MoveTo(DeviceLightQuickSetupStage.LIGHT_TIME)
-            } else {
-                QuickSetupAdvanceDecision.InvalidInput
-            }
-        }
-        state.stage == DeviceLightQuickSetupStage.LIGHT_TIME -> when {
-            !validFirstLightTime(state.firstLightOnMinuteOfDay) ->
-                QuickSetupAdvanceDecision.InvalidInput
-            context.co2Present ->
-                QuickSetupAdvanceDecision.MoveTo(DeviceLightQuickSetupStage.CO2_CONFIRMATION)
-            else -> QuickSetupAdvanceDecision.Calculate
-        }
-        state.stage == DeviceLightQuickSetupStage.CO2_CONFIRMATION ->
+        DeviceLightQuickSetupStage.WATER_HEIGHT ->
+            resolveWaterHeightAdvance(state, context.tankHeightCm)
+        DeviceLightQuickSetupStage.FIXTURE_HEIGHT ->
+            resolveFixtureHeightAdvance(state)
+        DeviceLightQuickSetupStage.LIGHT_TIME ->
+            resolveLightTimeAdvance(state, context.co2Present)
+        DeviceLightQuickSetupStage.CO2_CONFIRMATION ->
             QuickSetupAdvanceDecision.Calculate
         else -> QuickSetupAdvanceDecision.NoOp
     }
+}
+
+private fun resolveWaterHeightAdvance(
+    state: DeviceLightQuickSetupUiState,
+    tankHeightCm: Int
+): QuickSetupAdvanceDecision {
+    val water = state.waterHeightText.toIntOrNull()
+    return if (water != null && water > 0 && water <= tankHeightCm) {
+        QuickSetupAdvanceDecision.MoveTo(DeviceLightQuickSetupStage.FIXTURE_HEIGHT)
+    } else {
+        QuickSetupAdvanceDecision.InvalidInput
+    }
+}
+
+private fun resolveFixtureHeightAdvance(
+    state: DeviceLightQuickSetupUiState
+): QuickSetupAdvanceDecision {
+    val fixture = state.fixtureHeightText.toIntOrNull()
+    return if (fixture != null && fixture >= 0) {
+        QuickSetupAdvanceDecision.MoveTo(DeviceLightQuickSetupStage.LIGHT_TIME)
+    } else {
+        QuickSetupAdvanceDecision.InvalidInput
+    }
+}
+
+private fun resolveLightTimeAdvance(
+    state: DeviceLightQuickSetupUiState,
+    co2Present: Boolean
+): QuickSetupAdvanceDecision = when {
+    !validFirstLightTime(state.firstLightOnMinuteOfDay) ->
+        QuickSetupAdvanceDecision.InvalidInput
+    co2Present ->
+        QuickSetupAdvanceDecision.MoveTo(DeviceLightQuickSetupStage.CO2_CONFIRMATION)
+    else -> QuickSetupAdvanceDecision.Calculate
 }
 
 private fun previousState(state: DeviceLightQuickSetupUiState): DeviceLightQuickSetupUiState {

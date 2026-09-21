@@ -156,7 +156,7 @@ internal fun QuickSetupTimeControl(
             BasicText(
                 text = minuteOfDay.toClockText(),
                 style = typography.metric,
-                modifier = Modifier.weight(1.3f)
+                modifier = Modifier.weight(DeviceLightQuickSetupGeometry.timeValueWeight)
             )
             AquaGuidedFlowButton(
                 text = stringResource(R.string.device_light_quick_setup_time_plus),
@@ -205,9 +205,7 @@ internal fun QuickSetupSwitchRow(
                         .size(DeviceLightQuickSetupGeometry.switchThumbSize)
                         .offset(
                             x = if (checked) {
-                                DeviceLightQuickSetupGeometry.switchWidth -
-                                    DeviceLightQuickSetupGeometry.switchThumbSize -
-                                    DeviceLightQuickSetupGeometry.switchInset + DeviceLightQuickSetupGeometry.switchInset
+                                DeviceLightQuickSetupGeometry.switchThumbTravel
                             } else {
                                 0.dp
                             }
@@ -226,7 +224,9 @@ internal fun QuickSetupErrorBanner(
 ) {
     val colors = aquaGuidedFlowColors()
     val typography = aquaGuidedFlowTypography(colors)
-    val shape = androidx.compose.foundation.shape.RoundedCornerShape(AquaGuidedFlowGeometry.controlRadius)
+    val shape = androidx.compose.foundation.shape.RoundedCornerShape(
+        AquaGuidedFlowGeometry.controlRadius
+    )
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -269,7 +269,13 @@ internal fun QuickSetupFooter(
             text = primaryText,
             onClick = onPrimary,
             enabled = primaryEnabled,
-            modifier = Modifier.weight(if (showBack) 1.6f else 1f),
+            modifier = Modifier.weight(
+                if (showBack) {
+                    DeviceLightQuickSetupGeometry.footerPrimaryWeightWithBack
+                } else {
+                    1f
+                }
+            ),
             singleLineCompact = true
         )
     }

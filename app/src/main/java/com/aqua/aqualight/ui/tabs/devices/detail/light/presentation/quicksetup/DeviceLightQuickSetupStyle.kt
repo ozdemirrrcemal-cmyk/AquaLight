@@ -22,6 +22,7 @@ internal object DeviceLightQuickSetupGeometry {
     val switchThumbSize = 22.dp
     val switchInset = 3.dp
     val switchShape = RoundedCornerShape(percent = 50)
+    val switchThumbTravel = switchWidth - switchThumbSize - switchInset - switchInset
     val timelineDotSize = 10.dp
     val channelTrackHeight = 8.dp
     val chartHeight = 164.dp
@@ -67,6 +68,8 @@ internal object DeviceLightQuickSetupGeometry {
     const val chartGridIntervalCount = 4f
     const val maturePhotoperiodHours = 8f
     const val percentageScale = 100f
+    const val timeValueWeight = 1.3f
+    const val footerPrimaryWeightWithBack = 1.6f
 }
 
 internal object DeviceLightQuickSetupAlpha {

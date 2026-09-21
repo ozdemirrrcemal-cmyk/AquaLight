@@ -49,7 +49,10 @@ internal fun QuickSetupManagedPlanCard(
             ReviewMetricRow(
                 stringResource(R.string.device_light_quick_setup_transition_label),
                 managed.transitionPermille?.let { value ->
-                    stringResource(R.string.device_light_quick_setup_transition_percent, value / DeviceLightQuickSetupGeometry.transitionPermillePerPercent)
+                    stringResource(
+                        R.string.device_light_quick_setup_transition_percent,
+                        value / DeviceLightQuickSetupGeometry.transitionPermillePerPercent
+                    )
                 } ?: stringResource(R.string.device_light_quick_setup_not_available)
             )
             ReviewMetricRow(
@@ -97,9 +100,15 @@ internal fun QuickSetupLiveChart(
                         .height(DeviceLightQuickSetupGeometry.chartHeight)
                 ) {
                     val grid = colors.outline.copy(alpha = DeviceLightQuickSetupAlpha.grid)
-                    repeat(5) { index ->
-                        val y = size.height * index / 4f
-                        drawLine(grid, Offset(0f, y), Offset(size.width, y), 1.dp.toPx())
+                    repeat(DeviceLightQuickSetupGeometry.chartGridLineCount) { index ->
+                        val y = size.height * index /
+                            DeviceLightQuickSetupGeometry.chartGridIntervalCount
+                        drawLine(
+                            color = grid,
+                            start = Offset(0f, y),
+                            end = Offset(size.width, y),
+                            strokeWidth = DeviceLightQuickSetupGeometry.chartGridStroke.toPx()
+                        )
                     }
                     plan.points.firstOrNull()?.channelLevels?.indices?.forEach { channelIndex ->
                         if (channelIndex >= seriesColors.size) return@forEach
