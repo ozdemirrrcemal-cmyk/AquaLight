@@ -20,8 +20,7 @@ class DeviceLightQuickSetupViewModel(
     contextOperations: DeviceLightQuickSetupContextOperations,
     managedPlanOperations: DeviceLightManagedAutoPlanOperations,
     controlOperations: DeviceLightControlOperations,
-    calibration: DeviceLightFixtureCalibration,
-    private val allowPlaceholderApply: Boolean
+    calibration: DeviceLightFixtureCalibration
 ) : ViewModel() {
 
     private val controller = DeviceLightQuickSetupController(
@@ -172,12 +171,6 @@ class DeviceLightQuickSetupViewModel(
         val state = _uiState.value
         val context = state.context ?: return
         val recommendation = state.recommendation ?: return
-        if (!recommendation.productionReady && !allowPlaceholderApply) {
-            _uiState.update {
-                it.copy(blockReason = DeviceLightQuickSetupBlockReason.MISSING_CALIBRATION)
-            }
-            return
-        }
         _uiState.update { it.copy(stage = DeviceLightQuickSetupStage.APPLYING, blockReason = null) }
         viewModelScope.launch {
             when (val result = controller.apply(state.deviceUid, context, recommendation)) {

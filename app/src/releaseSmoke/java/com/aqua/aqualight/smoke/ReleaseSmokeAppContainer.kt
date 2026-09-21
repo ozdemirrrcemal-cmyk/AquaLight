@@ -185,9 +185,7 @@ private class ReleaseSmokeViewModelFactory(
             ),
             managedAutoPlanOperations =
                 DefaultDeviceLightManagedAutoPlanOperations(devicesRepository),
-            quickSetupCalibration = DefaultDeviceLightFixtureCalibration(
-                placeholderEnabled = false
-            )
+            quickSetupCalibration = DefaultDeviceLightFixtureCalibration()
         )
     }
     private val timerControlOperations = DefaultDeviceTimerControlOperations(devicesRepository)
@@ -337,8 +335,7 @@ private class ReleaseSmokeViewModelFactory(
                 contextOperations = lightOperations.quickSetupContextOperations,
                 managedPlanOperations = lightOperations.managedAutoPlanOperations,
                 controlOperations = lightOperations.controlOperations,
-                calibration = lightOperations.quickSetupCalibration,
-                allowPlaceholderApply = false
+                calibration = lightOperations.quickSetupCalibration
             )
         modelClass.isAssignableFrom(DeviceLightLibraryViewModel::class.java) ->
             DeviceLightLibraryViewModel(

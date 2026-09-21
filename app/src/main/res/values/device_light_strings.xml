@@ -488,7 +488,6 @@
     <string name="device_light_quick_setup_review_title">Recommended plan</string>
     <string name="device_light_quick_setup_review_description">Review the complete five-phase plan before it is written atomically to the light.</string>
     <string name="device_light_quick_setup_co2_limited_warning">The requested light target was capped because CO₂ is absent or not confirmed as precharged.</string>
-    <string name="device_light_quick_setup_placeholder_calibration_warning">Development calibration placeholder is active. It is not measured AquaLight PAR data and is blocked from production builds.</string>
     <string name="device_light_quick_setup_review_again">The aquarium or device state changed. The plan was rebuilt; review it again before applying.</string>
 
     <string name="device_light_quick_setup_applying_title">Applying smart plan</string>
@@ -513,7 +512,6 @@
     <string name="device_light_quick_setup_plant_demand_label">Plant demand</string>
     <string name="device_light_quick_setup_calibration_label">Calibration</string>
     <string name="device_light_quick_setup_calibrated">Calibrated</string>
-    <string name="device_light_quick_setup_placeholder">Development placeholder</string>
     <string name="device_light_quick_setup_five_phase_title">Five-phase progression</string>
     <string name="device_light_quick_setup_phase_name">Phase %1$d</string>
     <string name="device_light_quick_setup_scene_title">Channel scene</string>

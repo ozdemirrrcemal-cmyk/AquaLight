@@ -208,7 +208,6 @@ android {
         buildConfigField "String", "AQL_OTA_MANIFEST_PUBLIC_KEY_PEM", aqlBuildConfigString(otaManifestPublicKeyPem)
         buildConfigField "String", "AQL_OTA_MANIFEST_KEY_ID", aqlBuildConfigString(otaManifestKeyId)
         buildConfigField "String", "AQL_OTA_MANIFEST_URL", aqlBuildConfigString(stableOtaManifestUrl)
-        buildConfigField "boolean", "AQL_QUICK_SETUP_PLACEHOLDER_ENABLED", "false"
     }
 
     signingConfigs {
@@ -223,7 +222,6 @@ android {
     buildTypes {
         debug {
             buildConfigField "String", "AQL_OTA_MANIFEST_URL", aqlBuildConfigString(debugOtaManifestUrl)
-            buildConfigField "boolean", "AQL_QUICK_SETUP_PLACEHOLDER_ENABLED", "true"
         }
 
         release {

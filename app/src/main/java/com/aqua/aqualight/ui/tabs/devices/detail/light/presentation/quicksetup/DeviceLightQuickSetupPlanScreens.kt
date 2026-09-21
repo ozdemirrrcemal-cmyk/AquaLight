@@ -24,7 +24,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumPlantLightDemand
-import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightFixtureCalibrationStatus
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupPhase
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupRecommendation
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
@@ -87,11 +86,6 @@ internal fun QuickSetupReviewScreen(state: DeviceLightQuickSetupUiState) {
         QuickSetupChannelScene(recommendation)
         if (recommendation.co2Limited) {
             QuickSetupInfoCard(stringResource(R.string.device_light_quick_setup_co2_limited_warning))
-        }
-        if (recommendation.calibration.status == DeviceLightFixtureCalibrationStatus.PLACEHOLDER) {
-            QuickSetupInfoCard(
-                stringResource(R.string.device_light_quick_setup_placeholder_calibration_warning)
-            )
         }
         if (state.reviewRequiredAfterStale) {
             QuickSetupInfoCard(stringResource(R.string.device_light_quick_setup_review_again))
@@ -250,15 +244,7 @@ private fun QuickSetupTargetMetrics(recommendation: DeviceLightQuickSetupRecomme
     )
     ReviewMetricRow(
         stringResource(R.string.device_light_quick_setup_calibration_label),
-        stringResource(
-            if (recommendation.calibration.status ==
-                DeviceLightFixtureCalibrationStatus.CALIBRATED
-            ) {
-                R.string.device_light_quick_setup_calibrated
-            } else {
-                R.string.device_light_quick_setup_placeholder
-            }
-        )
+        stringResource(R.string.device_light_quick_setup_calibrated)
     )
 }
 

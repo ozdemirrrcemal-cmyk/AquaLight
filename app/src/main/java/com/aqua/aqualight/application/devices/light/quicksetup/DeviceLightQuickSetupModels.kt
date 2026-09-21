@@ -84,7 +84,6 @@ data class DeviceLightQuickSetupPlantProfile(
 )
 
 enum class DeviceLightFixtureCalibrationStatus {
-    PLACEHOLDER,
     CALIBRATED
 }
 
@@ -140,10 +139,7 @@ data class DeviceLightQuickSetupRecommendation(
     val initialStartPercent: Int,
     val phases: List<DeviceLightQuickSetupPhase>,
     val evidenceIds: Set<String>
-) {
-    val productionReady: Boolean
-        get() = calibration.status == DeviceLightFixtureCalibrationStatus.CALIBRATED
-}
+)
 
 sealed interface DeviceLightQuickSetupRecommendationResult {
     data class Available(

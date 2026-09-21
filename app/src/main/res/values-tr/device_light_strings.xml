@@ -486,7 +486,6 @@
     <string name="device_light_quick_setup_review_title">Önerilen plan</string>
     <string name="device_light_quick_setup_review_description">Cihaza atomik olarak yazılmadan önce beş fazın tamamını inceleyin.</string>
     <string name="device_light_quick_setup_co2_limited_warning">CO₂ yok veya önceden çalıştığı doğrulanmadığı için istenen ışık hedefi güvenli sınırla kısıtlandı.</string>
-    <string name="device_light_quick_setup_placeholder_calibration_warning">Geliştirme kalibrasyon yer tutucusu aktif. Ölçülmüş AquaLight PAR verisi değildir ve production build’de engellenir.</string>
     <string name="device_light_quick_setup_review_again">Akvaryum veya cihaz durumu değişti. Plan yeniden oluşturuldu; uygulamadan önce tekrar inceleyin.</string>
 
     <string name="device_light_quick_setup_applying_title">Akıllı plan uygulanıyor</string>
@@ -511,7 +510,6 @@
     <string name="device_light_quick_setup_plant_demand_label">Bitki ihtiyacı</string>
     <string name="device_light_quick_setup_calibration_label">Kalibrasyon</string>
     <string name="device_light_quick_setup_calibrated">Kalibre</string>
-    <string name="device_light_quick_setup_placeholder">Geliştirme yer tutucusu</string>
     <string name="device_light_quick_setup_five_phase_title">Beş fazlı ilerleme</string>
     <string name="device_light_quick_setup_phase_name">Faz %1$d</string>
     <string name="device_light_quick_setup_scene_title">Kanal sahnesi</string>

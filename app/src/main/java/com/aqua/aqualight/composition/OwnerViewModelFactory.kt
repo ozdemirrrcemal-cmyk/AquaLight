@@ -214,8 +214,7 @@ internal class OwnerViewModelFactory(
                 contextOperations = graph.lightOperations.quickSetupContextOperations,
                 managedPlanOperations = graph.lightOperations.managedAutoPlanOperations,
                 controlOperations = graph.lightOperations.controlOperations,
-                calibration = graph.lightOperations.quickSetupCalibration,
-                allowPlaceholderApply = BuildConfig.AQL_QUICK_SETUP_PLACEHOLDER_ENABLED
+                calibration = graph.lightOperations.quickSetupCalibration
             )
             DeviceLightLibraryViewModel::class.java -> DeviceLightLibraryViewModel(
                 operations = graph.lightOperations.libraryOperations,
