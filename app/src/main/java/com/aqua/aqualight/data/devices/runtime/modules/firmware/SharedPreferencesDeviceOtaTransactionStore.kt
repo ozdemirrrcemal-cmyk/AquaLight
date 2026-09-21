@@ -130,6 +130,8 @@ internal class SharedPreferencesDeviceOtaTransactionStore private constructor(
         .put(FIELD_RUNTIME_GENERATION, plan.runtimeMetadataGeneration)
         .put(FIELD_MANIFEST_TAG, plan.manifestTag)
         .put(FIELD_RELEASE_CONTENT, encodeReleaseContent(plan.releaseContent))
+        .put(FIELD_UPDATE_POLICY, encodeUpdatePolicy(plan.updatePolicy))
+        .put(FIELD_TARGET_FEATURES, JSONArray(plan.targetFeatures.sorted()))
         .put(FIELD_UPDATE_POLICY_LEVEL, plan.updatePolicy.level.name)
         .put(
             FIELD_UPDATE_POLICY_REQUIRED_FEATURES,
@@ -166,6 +168,24 @@ internal class SharedPreferencesDeviceOtaTransactionStore private constructor(
                     .toSet()
             )
         )
+
+    private fun encodeUpdatePolicy(policy: DeviceFirmwareUpdatePolicy): JSONObject =
+        JSONObject()
+            .put(FIELD_POLICY_LEVEL, policy.level.name)
+            .put(FIELD_POLICY_REQUIRED_FEATURES, JSONArray(policy.requiredFeatures.sorted()))
+
+    private fun decodeUpdatePolicy(json: JSONObject?): DeviceFirmwareUpdatePolicy {
+        if (json == null) return DeviceFirmwareUpdatePolicy.RECOMMENDED
+        val level = runCatching {
+            DeviceFirmwareUpdatePolicyLevel.valueOf(json.getString(FIELD_POLICY_LEVEL))
+        }.getOrDefault(DeviceFirmwareUpdatePolicyLevel.RECOMMENDED)
+        val requiredFeatures = json
+            .optJSONArray(FIELD_POLICY_REQUIRED_FEATURES)
+            .stringSetOrEmpty()
+        return runCatching {
+            DeviceFirmwareUpdatePolicy(level, requiredFeatures)
+        }.getOrDefault(DeviceFirmwareUpdatePolicy.RECOMMENDED)
+    }
 
     private fun encodeReleaseContent(content: DeviceFirmwareReleaseContent): JSONObject =
         JSONObject()
@@ -218,6 +238,12 @@ internal class SharedPreferencesDeviceOtaTransactionStore private constructor(
     private fun JSONArray.strings(): List<String> = buildList {
         repeat(length()) { index -> add(getString(index)) }
     }
+
+    private fun JSONArray?.stringSetOrEmpty(): Set<String> = this
+        ?.strings()
+        ?.filter(String::isNotBlank)
+        ?.toSet()
+        .orEmpty()
 
     private fun SharedPreferences.Editor.commitOrThrow() {
         check(commit()) { "OTA transaction journal write failed." }
