@@ -9,7 +9,7 @@ import light_v1_contract_guard as light_guard
 import timer_v1_contract_guard as timer_guard
 
 
-guard.FIRMWARE_COMMIT = "99aca74d3c2ae99e85584893822c0a63fe50bcd8"
+guard.FIRMWARE_COMMIT = "9b4fbc00d09f71d9a0c8958a71650aee3cc94840"
 guard.COMMAND_NAMES_BLOB = "a4a05ae219e449b42de2654c38b55d65804c91b0"
 guard.EVENT_CONTRACT_BLOB = "5e87fd043c0efaa849ed3ba8e5be9ce6f2727e24"
 guard.REQUEST_CONTRACT_BLOBS = {
