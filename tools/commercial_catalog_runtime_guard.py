@@ -22,6 +22,7 @@ MAPPING = SOURCE / "data/devices/DeviceRootSnapshotMapping.kt"
 ROOT_CONTRACT = SOURCE / "application/devices/DeviceRootOperations.kt"
 ROOT_ROUTING = SOURCE / "application/devices/DeviceRootRouting.kt"
 UI_MAPPER = SOURCE / "ui/tabs/devices/detail/common/DeviceRootMenuMapper.kt"
+COMPATIBILITY = SOURCE / "data/devices/compatibility/DeviceCommercialCompatibilityEvaluator.kt"
 MENU_ACCESS = SOURCE / "data/devices/menu/CommercialDeviceMenuAccessOperations.kt"
 DEFAULT_MENU_ACCESS = SOURCE / "data/devices/menu/DefaultDeviceMenuAccessOperations.kt"
 MENU_BOUNDARY = SOURCE / "application/devices/DeviceMenuAccessOperations.kt"
@@ -68,6 +69,7 @@ mapping = read(MAPPING)
 root_contract = read(ROOT_CONTRACT)
 root_routing = read(ROOT_ROUTING)
 ui_mapper = read(UI_MAPPER)
+compatibility = read(COMPATIBILITY)
 menu_access = read(MENU_ACCESS)
 default_menu_access = read(DEFAULT_MENU_ACCESS)
 menu_boundary = read(MENU_BOUNDARY)
@@ -123,13 +125,19 @@ for token in (
     "FAMILY_MISMATCH",
     "CAPABILITIES_MISMATCH",
     "LIMITS_MISMATCH",
+    "reported.compatibilityIdentity",
+):
+    require(token in catalog, f"exact catalog validator token is missing: {token}")
+for forbidden_identity_coupling in (
     "FEATURES_MISMATCH",
     "SCREENS_MISMATCH",
-    "reported.compatibilityIdentity",
     "reported.supportedFeatures != product.profile.supportedFeatures",
     "reported.supportedScreens != product.profile.supportedScreens",
 ):
-    require(token in catalog, f"exact catalog validator token is missing: {token}")
+    require(
+        forbidden_identity_coupling not in catalog,
+        f"optional feature availability must not be immutable product identity: {forbidden_identity_coupling}",
+    )
 for forbidden in (
     ".trim()",
     ".lowercase()",
@@ -141,8 +149,14 @@ for forbidden in (
 
 require(
     "fun resolve(product: AqlCommercialCatalogProduct)" in resolver,
-    "menu resolver must accept only a validated catalog product",
+    "menu resolver must retain the static catalog projection for catalog tooling",
 )
+for token in (
+    "features: Set<AqlDeviceFeatureKey>",
+    "screens: Set<AqlDeviceScreenKey>",
+    "MenuSupport(product, features, screens)",
+):
+    require(token in resolver, f"runtime feature projection token is missing: {token}")
 require("when (product.family)" in resolver, "menu resolution must be family-scoped")
 require("DeviceFamily.UNKNOWN -> emptySet()" in resolver, "unknown family must fail closed")
 for token in (
@@ -218,6 +232,9 @@ for forbidden in (
 
 for token in (
     "fun allowedRoutes(product: AqlCommercialCatalogProduct)",
+    "features: Set<AqlDeviceFeatureKey>",
+    "screens: Set<AqlDeviceScreenKey>",
+    "menuFeatures: Set<DeviceRootMenuFeature>",
     "fun authorize(",
     "route in allowedRoutes(product)",
 ):
@@ -229,11 +246,12 @@ require("val channelSlots: DeviceChannelSlots" in root_contract, "root typed cha
 require("val temperatureSensorCount: Int" in root_contract, "root temperature sensor count is missing")
 
 for token in (
-    "AqlCommercialDeviceCatalog.validateSnapshot(this)",
+    "DeviceCommercialCompatibilityEvaluator.evaluate(this)",
+    "DeviceCommercialCompatibilityEvaluation.Compatible",
     "DeviceRootCatalogState.VALID",
     "DeviceRootCatalogState.INVALID",
-    "DeviceRootMenuFeatureResolver.resolve(product)",
-    "DeviceRootRoutePolicy.allowedRoutes(product)",
+    "compatibility.menuFeatures",
+    "compatibility.allowedRoutes",
     "DeviceChannelSlotResolver.resolve(product)",
     "channelSlots = channelSlots",
     "lightChannelCount = channelSlots.lightChannels.size",
@@ -244,21 +262,34 @@ for token in (
 ):
     require(token in mapping, f"fail-closed root projection token is missing: {token}")
 
+for token in (
+    "object DeviceCommercialCompatibilityEvaluator",
+    "AqlCommercialDeviceCatalog.validateSnapshot(snapshot)",
+    "DeviceFamilyBaseContractPolicy",
+    "features = snapshot.supportedFeatures",
+    "screens = snapshot.supportedScreens",
+    "BASE_CONTRACT_INCOMPATIBLE",
+):
+    require(token in compatibility, f"central compatibility token is missing: {token}")
+
 require("listOfNotNull(" in ui_mapper, "unsupported menu items must be absent")
 require("val enabled: Boolean" not in ui_mapper, "disabled menu placeholders are forbidden")
 require("filter(DeviceRootMenuItemUi::enabled)" not in ui_mapper, "UI must not filter disabled placeholders")
 
 for token in (
     "class CommercialDeviceMenuAccessOperations",
-    "AqlCommercialDeviceCatalog.validateSnapshot(snapshot)",
-    "COMMERCIAL_PRODUCT_MISMATCH",
-    "validation.product.family.toOwnerDeviceFamily()",
+    "DeviceCompatibilityOperations",
+    "DeviceAccessPolicy",
+    "accessPolicy.evaluateRoot(compatibility)",
+    "decision.reason",
 ):
     require(token in menu_access, f"commercial menu access token is missing: {token}")
-require(
-    "fun create(devicesRepository: DevicesRepository): DeviceMenuAccessOperations" in default_menu_access,
-    "menu factory must return the composed application boundary",
-)
+for token in (
+    "compatibilityOperations: DeviceCompatibilityOperations",
+    "accessPolicy: DeviceAccessPolicy",
+    "CommercialDeviceMenuAccessOperations(",
+):
+    require(token in default_menu_access, f"menu factory compatibility token is missing: {token}")
 require(
     "CommercialDeviceMenuAccessOperations(" in default_menu_access,
     "liveness access must be followed by commercial catalog validation",
