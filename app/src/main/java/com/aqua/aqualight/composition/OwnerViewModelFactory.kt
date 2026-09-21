@@ -347,7 +347,11 @@ internal class OwnerViewModelFactory(
         graph: OwnerDependencyGraph,
         repository: DevicesRepository
     ): DeviceMenuOpenUseCase = DeviceMenuOpenUseCase(
-        menuAccessOperations = DefaultDeviceMenuAccessOperations.create(repository),
+        menuAccessOperations = DefaultDeviceMenuAccessOperations.create(
+            devicesRepository = repository,
+            compatibilityOperations = graph.compatibilityOperations,
+            accessPolicy = graph.accessPolicy
+        ),
         controlSurfacePreparationOperations = graph.controlSurfacePreparationOperations
     )
 
