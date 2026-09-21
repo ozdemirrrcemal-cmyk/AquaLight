@@ -70,6 +70,37 @@ data class DeviceFirmwareReleaseContent(
     }
 }
 
+enum class DeviceFirmwareUpdatePolicyLevel {
+    OPTIONAL,
+    RECOMMENDED,
+    FEATURE_REQUIRED,
+    COMPATIBILITY_REQUIRED
+}
+
+data class DeviceFirmwareUpdatePolicy(
+    val level: DeviceFirmwareUpdatePolicyLevel = DeviceFirmwareUpdatePolicyLevel.RECOMMENDED,
+    val requiredFeatures: Set<String> = emptySet()
+) {
+    init {
+        require(requiredFeatures.none(String::isBlank)) {
+            "Firmware update policy feature tokens must not be blank."
+        }
+        require(
+            (level == DeviceFirmwareUpdatePolicyLevel.FEATURE_REQUIRED) ==
+                requiredFeatures.isNotEmpty()
+        ) {
+            "FEATURE_REQUIRED must name at least one feature; other policies must not."
+        }
+    }
+
+    val isGloballyRequired: Boolean
+        get() = level == DeviceFirmwareUpdatePolicyLevel.COMPATIBILITY_REQUIRED
+
+    companion object {
+        val RECOMMENDED = DeviceFirmwareUpdatePolicy()
+    }
+}
+
 enum class DeviceOtaProgressPhase {
     STARTING,
     SAFE_MODE,
@@ -100,6 +131,7 @@ enum class DeviceOtaFailureReason {
     RELEASE_REQUEST_REJECTED,
     RELEASE_SERVER_UNAVAILABLE,
     INCOMPATIBLE_FIRMWARE,
+    APPLICATION_UPDATE_REQUIRED,
     INSUFFICIENT_SPACE,
     DOWNLOAD_CONNECTION_FAILED,
     DOWNLOAD_SEND_FAILED,
@@ -264,7 +296,9 @@ data class PreparedDeviceFirmwareUpdate(
     val applyNow: Boolean,
     val runtimeMetadataGeneration: Long = 0L,
     val manifestTag: String = "",
-    val releaseContent: DeviceFirmwareReleaseContent = DeviceFirmwareReleaseContent.EMPTY
+    val releaseContent: DeviceFirmwareReleaseContent = DeviceFirmwareReleaseContent.EMPTY,
+    val updatePolicy: DeviceFirmwareUpdatePolicy = DeviceFirmwareUpdatePolicy.RECOMMENDED,
+    val targetFeatures: Set<String> = emptySet()
 )
 
 data class DeviceFirmwareCommandResult(
