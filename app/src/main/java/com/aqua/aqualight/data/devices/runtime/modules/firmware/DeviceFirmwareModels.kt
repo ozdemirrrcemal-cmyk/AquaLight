@@ -293,8 +293,8 @@ data class DeviceFirmwareManifestContracts(
         require(wsSchema.isNotBlank()) { "OTA manifest wsSchema must not be blank." }
         require(wsProtocolVersion > 0) { "OTA manifest wsProtocolVersion must be positive." }
         require(deviceApiVersion > 0) { "OTA manifest deviceApiVersion must be positive." }
-        require(requiredDomains.isNotEmpty()) {
-            "OTA manifest must declare at least one required domain contract."
+        require(requiredDomains.size == 1) {
+            "OTA manifest must declare exactly one required base domain contract."
         }
         require(requiredDomains.none(String::isBlank)) {
             "OTA required domain contracts must not be blank."
