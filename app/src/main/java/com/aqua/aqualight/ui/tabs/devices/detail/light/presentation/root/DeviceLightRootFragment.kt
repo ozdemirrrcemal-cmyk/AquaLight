@@ -25,6 +25,7 @@ import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.toCommercialLightError
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
 class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
@@ -175,69 +176,67 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch {
-                    viewModel.uiState.collect { state -> renderState(state) }
-                }
-                launch {
-                    viewModel.surfaceUnavailableEvents.collect { reason ->
-                        if (_binding == null) return@collect
-                        setFragmentGlobalLoading(false)
-                        val feedback = DeviceMenuUnavailableMessageMapper.feedback(reason)
-                        if (feedback.action == DeviceAccessFeedbackAction.OPEN_FIRMWARE_UPDATE) {
-                            DeviceAccessFeedbackPresenter.show(
-                                fragment = this@DeviceLightRootFragment,
-                                deviceUid = args.deviceUid,
-                                deviceTitle = viewModel.uiState.value.title,
-                                reason = reason
-                            )
-                        } else {
-                            val navController = findNavController()
-                            if (
-                                navController.currentDestination?.id ==
-                                R.id.deviceLightRootFragment
-                            ) {
-                                navController.navigateUp()
-                            }
-                            (activity as? BaseActivity)?.showSnackBar(
-                                message = getString(feedback.messageRes),
-                                type = BaseActivity.SnackType.ERROR
-                            )
+                    viewModel.uiState.collect { state ->
+                        if (_binding != null) {
+                            setupHeader(state)
+                            setFragmentGlobalLoading(state.showBlockingPreparation)
                         }
                     }
                 }
-                launch {
-                    viewModel.quickSetupAccessEvents.collect { decision ->
-                        if (_binding == null) return@collect
-                        when (decision) {
-                            DeviceAccessDecision.Allowed -> navigateToQuickSetup()
-                            is DeviceAccessDecision.Blocked ->
-                                DeviceAccessFeedbackPresenter.show(
-                                    fragment = this@DeviceLightRootFragment,
-                                    deviceUid = args.deviceUid,
-                                    deviceTitle = viewModel.uiState.value.title,
-                                    reason = decision.reason
-                                )
-                        }
-                    }
-                }
-                launch {
-                    viewModel.modeChangeFailureEvents.collect { failure ->
-                        if (_binding == null) return@collect
-                        val copy = failure.toCommercialLightError()
-                        (activity as? BaseActivity)?.showSnackBar(
-                            message = getString(copy.messageRes),
-                            type = BaseActivity.SnackType.ERROR
-                        )
-                    }
-                }
+                collectViewModelEvents()
             }
         }
     }
 
-    private fun renderState(state: DeviceLightRootUiState) {
-        if (_binding == null) return
-
-        setupHeader(state)
-        setFragmentGlobalLoading(state.showBlockingPreparation)
+    private suspend fun collectViewModelEvents() = coroutineScope {
+        launch {
+            viewModel.surfaceUnavailableEvents.collect { reason ->
+                if (_binding == null) return@collect
+                setFragmentGlobalLoading(false)
+                val feedback = DeviceMenuUnavailableMessageMapper.feedback(reason)
+                if (feedback.action == DeviceAccessFeedbackAction.OPEN_FIRMWARE_UPDATE) {
+                    DeviceAccessFeedbackPresenter.show(
+                        fragment = this@DeviceLightRootFragment,
+                        deviceUid = args.deviceUid,
+                        deviceTitle = viewModel.uiState.value.title,
+                        reason = reason
+                    )
+                } else {
+                    val navController = findNavController()
+                    if (navController.currentDestination?.id == R.id.deviceLightRootFragment) {
+                        navController.navigateUp()
+                    }
+                    (activity as? BaseActivity)?.showSnackBar(
+                        message = getString(feedback.messageRes),
+                        type = BaseActivity.SnackType.ERROR
+                    )
+                }
+            }
+        }
+        launch {
+            viewModel.quickSetupAccessEvents.collect { decision ->
+                if (_binding == null) return@collect
+                when (decision) {
+                    DeviceAccessDecision.Allowed -> navigateToQuickSetup()
+                    is DeviceAccessDecision.Blocked -> DeviceAccessFeedbackPresenter.show(
+                        fragment = this@DeviceLightRootFragment,
+                        deviceUid = args.deviceUid,
+                        deviceTitle = viewModel.uiState.value.title,
+                        reason = decision.reason
+                    )
+                }
+            }
+        }
+        launch {
+            viewModel.modeChangeFailureEvents.collect { failure ->
+                if (_binding == null) return@collect
+                val copy = failure.toCommercialLightError()
+                (activity as? BaseActivity)?.showSnackBar(
+                    message = getString(copy.messageRes),
+                    type = BaseActivity.SnackType.ERROR
+                )
+            }
+        }
     }
 
     override fun onDestroyView() {
