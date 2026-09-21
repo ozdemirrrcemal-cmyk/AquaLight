@@ -6,6 +6,9 @@ import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 suspend fun DeviceLightRuntimeRepository.requestManagedAutoPlan(
     deviceUid: DeviceUid
 ): DeviceRuntimeCommandOutcome<DeviceLightManagedAutoPlan> {
+    if (!runtimeAccess(deviceUid).supportsManagedAutoPlan) {
+        return unsupportedManagedPlan(deviceUid, DeviceLightRuntimeContract.Action.AUTO_PLAN_GET)
+    }
     val outcome = productCommand(
         deviceUid = deviceUid,
         action = DeviceLightRuntimeContract.Action.AUTO_PLAN_GET,
@@ -18,6 +21,9 @@ suspend fun DeviceLightRuntimeRepository.applyManagedAutoPlan(
     deviceUid: DeviceUid,
     payload: DeviceLightManagedAutoPlanApplyPayload
 ): DeviceRuntimeCommandOutcome<DeviceLightManagedAutoPlan> {
+    if (!runtimeAccess(deviceUid).supportsManagedAutoPlan) {
+        return unsupportedManagedPlan(deviceUid, DeviceLightRuntimeContract.Action.AUTO_PLAN_APPLY)
+    }
     val outcome = productCommand(
         deviceUid = deviceUid,
         action = DeviceLightRuntimeContract.Action.AUTO_PLAN_APPLY,
@@ -36,13 +42,18 @@ suspend fun DeviceLightRuntimeRepository.applyManagedAutoPlan(
 suspend fun DeviceLightRuntimeRepository.deleteManagedAutoPlan(
     deviceUid: DeviceUid,
     payload: DeviceLightManagedAutoPlanDeletePayload
-): DeviceRuntimeCommandOutcome<DeviceLightManagedAutoPlanDeleteResult> = productCommand(
-    deviceUid = deviceUid,
-    action = DeviceLightRuntimeContract.Action.AUTO_PLAN_DELETE,
-    dataFactory = payload::toJson,
-    parser = { data, _ -> DeviceLightManagedPlanParser.parseDelete(data) },
-    refreshStatus = true
-)
+): DeviceRuntimeCommandOutcome<DeviceLightManagedAutoPlanDeleteResult> {
+    if (!runtimeAccess(deviceUid).supportsManagedAutoPlan) {
+        return unsupportedManagedPlan(deviceUid, DeviceLightRuntimeContract.Action.AUTO_PLAN_DELETE)
+    }
+    return productCommand(
+        deviceUid = deviceUid,
+        action = DeviceLightRuntimeContract.Action.AUTO_PLAN_DELETE,
+        dataFactory = payload::toJson,
+        parser = { data, _ -> DeviceLightManagedPlanParser.parseDelete(data) },
+        refreshStatus = true
+    )
+}
 
 private suspend fun DeviceLightRuntimeRepository.acceptManagedAutoPlan(
     outcome: DeviceRuntimeCommandOutcome<DeviceLightManagedAutoPlan>
@@ -79,3 +90,14 @@ private suspend fun DeviceLightRuntimeRepository.acceptManagedAutoPlan(
     }
     else -> outcome
 }
+
+
+private fun unsupportedManagedPlan(
+    deviceUid: DeviceUid,
+    action: String
+): DeviceRuntimeCommandOutcome.UnsupportedByDevice =
+    DeviceRuntimeCommandOutcome.UnsupportedByDevice(
+        deviceUid = deviceUid,
+        module = DeviceLightRuntimeContract.MODULE,
+        action = action
+    )
