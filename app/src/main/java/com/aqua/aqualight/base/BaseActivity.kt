@@ -10,10 +10,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.R
-import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.base.loading.LoadingOverlayDialogFragment
 import com.aqua.aqualight.composition.requireAppContainer
-import com.aqua.aqualight.ui.common.devicepresence.DeviceMenuUnavailableMessageMapper
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
 import com.google.android.material.snackbar.Snackbar
@@ -131,20 +129,20 @@ open class BaseActivity : AppCompatActivity() {
 
     fun showDeviceAccessDialog(
         deviceTitle: String,
-        reason: DeviceMenuUnavailableReason
+        @StringRes titleRes: Int,
+        @StringRes messageRes: Int
     ) {
         if (isFinishing || isDestroyed) return
 
-        val feedback = DeviceMenuUnavailableMessageMapper.feedback(reason)
         val safeTitle = deviceTitle.trim().ifBlank {
             getString(R.string.device_menu_default_title)
         }
-        val safeMessage = getString(feedback.messageRes).trim()
+        val safeMessage = getString(messageRes).trim()
 
         DialogManager.showInfoDialog(
             context = this,
             type = DialogType.WARNING,
-            title = getString(feedback.titleRes),
+            title = getString(titleRes),
             message = getString(
                 R.string.device_access_dialog_message,
                 safeTitle,
