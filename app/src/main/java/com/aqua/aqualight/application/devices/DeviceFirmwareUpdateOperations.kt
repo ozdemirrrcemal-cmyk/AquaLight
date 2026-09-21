@@ -313,6 +313,10 @@ data class DeviceFirmwareUpdatePolicy(
 
     val blocksBaseControls: Boolean
         get() = level == DeviceFirmwareUpdatePolicyLevel.COMPATIBILITY_REQUIRED
+
+    companion object {
+        val RECOMMENDED = DeviceFirmwareUpdatePolicy()
+    }
 }
 
 data class PreparedDeviceFirmwareUpdate(
@@ -334,7 +338,8 @@ data class PreparedDeviceFirmwareUpdate(
     val runtimeMetadataGeneration: Long = 0L,
     val manifestTag: String = "",
     val releaseContent: DeviceFirmwareReleaseContent = DeviceFirmwareReleaseContent.EMPTY,
-    val updatePolicy: DeviceFirmwareUpdatePolicy = DeviceFirmwareUpdatePolicy.RECOMMENDED
+    val updatePolicy: DeviceFirmwareUpdatePolicy = DeviceFirmwareUpdatePolicy.RECOMMENDED,
+    val targetFeatures: Set<String> = emptySet()
 )
 
 data class DeviceFirmwareCommandResult(
