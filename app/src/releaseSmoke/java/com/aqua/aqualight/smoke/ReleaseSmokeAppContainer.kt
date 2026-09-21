@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.createSavedStateHandle
+import androidx.lifecycle.viewmodel.CreationExtras
 import com.aqua.aqualight.application.auth.AccountSecurityOperations
 import com.aqua.aqualight.application.auth.AppSessionOperations
 import com.aqua.aqualight.application.auth.AuthenticatedOwnerIdentity
@@ -211,8 +213,35 @@ private class ReleaseSmokeViewModelFactory(
     )
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        check(modelClass != DeviceLightQuickSetupViewModel::class.java) {
+            "DeviceLightQuickSetupViewModel requires CreationExtras for SavedStateHandle."
+        }
+        return createInternal(
+            modelClass = modelClass,
+            quickSetupSavedStateHandle = null
+        )
+    }
+
+    override fun <T : ViewModel> create(
+        modelClass: Class<T>,
+        extras: CreationExtras
+    ): T = createInternal(
+        modelClass = modelClass,
+        quickSetupSavedStateHandle = if (
+            modelClass == DeviceLightQuickSetupViewModel::class.java
+        ) {
+            extras.createSavedStateHandle()
+        } else {
+            null
+        }
+    )
+
+    private fun <T : ViewModel> createInternal(
+        modelClass: Class<T>,
+        quickSetupSavedStateHandle: SavedStateHandle?
+    ): T {
         val viewModel = createPrimaryViewModel(modelClass)
-            ?: createDeviceRootViewModel(modelClass)
+            ?: createDeviceRootViewModel(modelClass, quickSetupSavedStateHandle)
             ?: createTankDeviceViewModel(modelClass)
             ?: error("Release smoke factory has no binding for ${modelClass.name}")
 
@@ -299,12 +328,16 @@ private class ReleaseSmokeViewModelFactory(
         )
 
     private fun createDeviceRootViewModel(
-        modelClass: Class<out ViewModel>
-    ): ViewModel? = createLightDeviceViewModel(modelClass)
-        ?: createOtherDeviceViewModel(modelClass)
+        modelClass: Class<out ViewModel>,
+        quickSetupSavedStateHandle: SavedStateHandle?
+    ): ViewModel? = createLightDeviceViewModel(
+        modelClass = modelClass,
+        quickSetupSavedStateHandle = quickSetupSavedStateHandle
+    ) ?: createOtherDeviceViewModel(modelClass)
 
     private fun createLightDeviceViewModel(
-        modelClass: Class<out ViewModel>
+        modelClass: Class<out ViewModel>,
+        quickSetupSavedStateHandle: SavedStateHandle?
     ): ViewModel? = when {
         modelClass.isAssignableFrom(DeviceLightRootViewModel::class.java) ->
             DeviceLightRootViewModel(
@@ -333,7 +366,7 @@ private class ReleaseSmokeViewModelFactory(
             )
         modelClass.isAssignableFrom(DeviceLightQuickSetupViewModel::class.java) ->
             DeviceLightQuickSetupViewModel(
-                savedStateHandle = SavedStateHandle(),
+                savedStateHandle = checkNotNull(quickSetupSavedStateHandle),
                 contextOperations = lightOperations.quickSetupContextOperations,
                 managedPlanOperations = lightOperations.managedAutoPlanOperations,
                 controlOperations = lightOperations.controlOperations,
