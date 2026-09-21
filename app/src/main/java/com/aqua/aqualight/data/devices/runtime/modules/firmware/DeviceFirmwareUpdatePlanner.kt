@@ -33,10 +33,7 @@ class DeviceFirmwareUpdatePlanner(
 
         val artifact = manifest.artifacts.single()
         validateArtifactAgainstSnapshot(artifact, manifest, snapshot)
-        DeviceFirmwareClientContractRegistry.validate(
-            contracts = artifact.contracts,
-            family = artifact.product.family
-        )
+        DeviceFirmwareClientContractRegistry.validate(artifact)
         val releaseContent = manifest.releaseNotes
             .resolve(preferredLocaleTags())
             .copy(mandatory = artifact.updatePolicy.isGloballyRequired)
@@ -135,7 +132,8 @@ class DeviceFirmwareUpdatePlanner(
             runtimeMetadataGeneration = snapshot.runtimeMetadataGeneration,
             manifestTag = manifest.tag,
             releaseContent = releaseContent,
-            updatePolicy = artifact.updatePolicy
+            updatePolicy = artifact.updatePolicy,
+            targetFeatures = artifact.features
         )
     }
 
