@@ -104,7 +104,15 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
     }
 
     private fun openQuickSetup() {
-        if (!viewModel.uiState.value.contentEnabled) return
+        val state = viewModel.uiState.value
+        if (!state.contentEnabled) return
+        viewModel.quickSetupUnavailableReason()?.let { reason ->
+            (activity as? BaseActivity)?.showDeviceAccessDialog(
+                deviceTitle = state.title,
+                reason = reason
+            )
+            return
+        }
         val navController = findNavController()
         if (navController.currentDestination?.id != R.id.deviceLightRootFragment) return
         navController.navigate(
