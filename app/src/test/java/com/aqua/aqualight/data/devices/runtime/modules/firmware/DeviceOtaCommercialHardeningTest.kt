@@ -99,6 +99,12 @@ class DeviceOtaCommercialHardeningTest {
                 artifactJson().getJSONObject("compatibility").put("legacyCompatibility", true)
             },
             manifestJson().apply {
+                artifactJson().getJSONObject("contracts").put("legacyContract", true)
+            },
+            manifestJson().apply {
+                artifactJson().getJSONObject("updatePolicy").put("legacyPolicy", true)
+            },
+            manifestJson().apply {
                 artifactJson().getJSONObject("firmware").put("legacyFirmware", true)
             },
             manifestJson().apply {
@@ -307,6 +313,22 @@ class DeviceOtaCommercialHardeningTest {
                 .put("line", compatibility.line)
                 .put("model", compatibility.model)
                 .put("hardwareRevision", compatibility.hardwareRevision)
+        )
+        .put(
+            "contracts",
+            JSONObject()
+                .put("wsSchema", contracts.wsSchema)
+                .put("wsProtocolVersion", contracts.wsProtocolVersion)
+                .put("deviceApiVersion", contracts.deviceApiVersion)
+                .put("requiredDomains", JSONArray(contracts.requiredDomains.toList()))
+                .put("optionalDomains", JSONArray(contracts.optionalDomains.toList()))
+        )
+        .put("features", JSONArray(features.sorted()))
+        .put(
+            "updatePolicy",
+            JSONObject()
+                .put("level", updatePolicy.level.name)
+                .put("requiredFeatures", JSONArray(updatePolicy.requiredFeatures.sorted()))
         )
         .put(
             "firmware",
