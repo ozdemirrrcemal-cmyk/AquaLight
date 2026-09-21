@@ -10,6 +10,20 @@ interface DeviceCompatibilityOperations {
     fun current(deviceUid: String): DeviceCompatibilitySnapshot
 }
 
+/**
+ * Central on-demand feature gate.
+ *
+ * Implementations may refresh signed OTA availability when a requested optional feature is absent,
+ * then re-evaluate through [DeviceAccessPolicy]. UI and family modules must not implement their own
+ * firmware/version checks.
+ */
+interface DeviceFeatureAccessOperations {
+    suspend fun resolve(
+        deviceUid: String,
+        feature: DeviceRootMenuFeature
+    ): DeviceAccessDecision
+}
+
 data class DeviceCompatibilitySnapshot(
     val deviceUid: String,
     val family: OwnerDeviceFamily = OwnerDeviceFamily.UNKNOWN,
