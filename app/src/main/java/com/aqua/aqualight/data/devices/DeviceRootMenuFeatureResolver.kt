@@ -53,6 +53,7 @@ internal object DeviceRootMenuFeatureResolver {
             AqlDeviceScreenKey.LIGHT_CONTROL in screens
         private val hasLightQuickSetupContract =
             AqlDeviceFeatureKey.LIGHT_QUICK_SETUP in features &&
+                AqlDeviceFeatureKey.LIGHT_MANAGED_AUTO_PLAN in features &&
                 AqlDeviceScreenKey.LIGHT_QUICK_SETUP in screens
         private val hasLightPresetContract = AqlDeviceFeatureKey.LIGHT_PRESETS in features &&
             AqlDeviceScreenKey.LIGHT_PRESETS in screens
