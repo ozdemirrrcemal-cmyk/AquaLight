@@ -33,7 +33,13 @@ class DeviceFirmwareUpdatePlanner(
 
         val artifact = manifest.artifacts.single()
         validateArtifactAgainstSnapshot(artifact, manifest, snapshot)
-        val releaseContent = manifest.releaseNotes.resolve(preferredLocaleTags())
+        DeviceFirmwareClientContractRegistry.validate(
+            contracts = artifact.contracts,
+            family = artifact.product.family
+        )
+        val releaseContent = manifest.releaseNotes
+            .resolve(preferredLocaleTags())
+            .copy(mandatory = artifact.updatePolicy.isGloballyRequired)
 
         if (DeviceFirmwareVersionComparator.compare(artifact.firmware.version, currentVersion) <= 0) {
             DeviceFirmwareAvailability.UpToDate(
@@ -128,7 +134,8 @@ class DeviceFirmwareUpdatePlanner(
             payload = payload,
             runtimeMetadataGeneration = snapshot.runtimeMetadataGeneration,
             manifestTag = manifest.tag,
-            releaseContent = releaseContent
+            releaseContent = releaseContent,
+            updatePolicy = artifact.updatePolicy
         )
     }
 
@@ -156,6 +163,9 @@ class DeviceFirmwareUpdatePlanner(
         }
         require(artifact.product.limits == snapshot.limits) {
             "OTA manifest limits differ from authenticated firmware metadata."
+        }
+        require(artifact.features.containsAll(artifact.updatePolicy.requiredFeatures)) {
+            "OTA update policy references a feature absent from the signed artifact."
         }
         require(artifact.compatibility.productKey == product.productKey)
         require(artifact.compatibility.productId == product.productId)
