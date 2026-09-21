@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_access_dialog_message">%1$s\n\n%2$s</string>
+    <string name="device_access_local_network_title">Local Network Unavailable</string>
+    <string name="device_access_authentication_title">Device Authentication Required</string>
+    <string name="device_access_unresponsive_title">Device Could Not Be Reached</string>
+    <string name="device_access_state_unverified_title">Device State Could Not Be Verified</string>
+    <string name="device_access_unavailable_title">Device Unavailable</string>
+    <string name="device_access_unavailable_message">This device is not available in the current account. Refresh your devices and try again.</string>
+    <string name="device_access_unsupported_title">Unsupported Device</string>
+    <string name="device_access_contract_incompatible_title">Device Software Incompatible</string>
+    <string name="device_access_contract_incompatible_message">The device is online, but its firmware control contract is not compatible with this app build.</string>
+    <string name="device_access_state_unverified_message">The device connection is available, but its current control state could not be verified safely. Try again.</string>
+    <string name="device_access_feature_unavailable_title">Feature Not Available</string>
+    <string name="device_access_feature_unavailable_message">This feature is not available on the device’s current software. Other compatible controls remain available.</string>
+    <string name="device_access_firmware_update_required_title">Firmware Update Required</string>
+    <string name="device_access_firmware_update_required_message">A firmware update is required to use this feature. Other compatible controls remain available.</string>
+    <string name="device_access_app_update_required_title">App Update Required</string>
+    <string name="device_access_app_update_required_message">The device is online, but it uses a newer protocol than this app supports. Update AquaLight to continue.</string>
+</resources>
