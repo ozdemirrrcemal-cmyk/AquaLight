@@ -16,6 +16,7 @@ import com.aqua.aqualight.application.aquarium.AquariumPlantLightDemand
 import com.aqua.aqualight.application.aquarium.AquariumSubstrateSemantic
 import com.aqua.aqualight.ui.common.flow.aquaGuidedFlowColors
 
+@Composable
 internal fun WaterHeightIllustration() {
     val colors = aquaGuidedFlowColors()
     Canvas(
@@ -149,7 +150,4 @@ internal fun substrateText(semantic: AquariumSubstrateSemantic): String = string
     }
 )
 
-internal fun Int.toClockTextForUi(): String = "%02d:%02d".format(this / 60, this % 60)
 
-private const val CO2_PRECHARGE_MINUTES = 120
-private const val MINUTES_PER_DAY = 1_440

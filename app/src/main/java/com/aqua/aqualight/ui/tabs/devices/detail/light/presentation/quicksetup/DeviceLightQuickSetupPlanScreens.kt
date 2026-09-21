@@ -354,4 +354,3 @@ private fun QuickSetupChannelScene(recommendation: DeviceLightQuickSetupRecommen
     }
 }
 
-@Composable

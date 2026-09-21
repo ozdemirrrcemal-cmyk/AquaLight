@@ -106,10 +106,10 @@ internal fun QuickSetupCo2Screen(
     state: DeviceLightQuickSetupUiState,
     onCheckedChange: (Boolean) -> Unit
 ) {
-    val lightTime = state.firstLightOnMinuteOfDay.toClockTextForUi()
-    val co2Time = ((state.firstLightOnMinuteOfDay - CO2_PRECHARGE_MINUTES) + MINUTES_PER_DAY)
-        .rem(MINUTES_PER_DAY)
-        .toClockTextForUi()
+    val lightTime = state.firstLightOnMinuteOfDay.toClockText()
+    val co2Time = ((state.firstLightOnMinuteOfDay - QUICK_SETUP_CO2_PRECHARGE_MINUTES) + QUICK_SETUP_MINUTES_PER_DAY)
+        .rem(QUICK_SETUP_MINUTES_PER_DAY)
+        .toClockText()
     Column(verticalArrangement = Arrangement.spacedBy(DeviceLightQuickSetupGeometry.sectionGap)) {
         QuickSetupHeading(
             title = stringResource(R.string.device_light_quick_setup_co2_title),
@@ -167,4 +167,3 @@ internal fun QuickSetupProfileCard(
     }
 }
 
-@Composable

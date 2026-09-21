@@ -287,7 +287,6 @@ internal fun QuickSetupInfoCard(text: String) {
     }
 }
 
-private fun Int.toClockText(): String = "%02d:%02d".format(this / 60, this % 60)
 
 private const val TIME_STEP = 5
 private const val LAST_TIME_STEP = 23 * 60 + 55

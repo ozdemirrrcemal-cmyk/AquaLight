@@ -17,3 +17,6 @@ internal fun AquariumPlantLightDemand.demandResource(): Int = when (this) {
     AquariumPlantLightDemand.MEDIUM -> R.string.device_light_quick_setup_demand_medium
     AquariumPlantLightDemand.HIGH -> R.string.device_light_quick_setup_demand_high
 }
+
+internal const val QUICK_SETUP_CO2_PRECHARGE_MINUTES = 120
+internal const val QUICK_SETUP_MINUTES_PER_DAY = 1_440

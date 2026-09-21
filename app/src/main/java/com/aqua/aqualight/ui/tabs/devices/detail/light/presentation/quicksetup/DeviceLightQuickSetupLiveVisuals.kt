@@ -26,6 +26,7 @@ import com.aqua.aqualight.ui.common.devicecard.aquaDeviceCardTypography
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.aquaLightManualColors
 import java.time.LocalDate
 
+@Composable
 internal fun QuickSetupManagedPlanCard(
     productName: String,
     managed: DeviceLightManagedPlanSnapshot
