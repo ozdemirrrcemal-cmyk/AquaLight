@@ -40,6 +40,7 @@
     <string name="device_settings_update_error_release_request_rejected">The official release server rejected the firmware download request.</string>
     <string name="device_settings_update_error_release_server_unavailable">The official release server is temporarily unavailable. Try again later.</string>
     <string name="device_settings_update_error_incompatible_firmware">This update is not compatible with the device identity, hardware revision, or currently installed firmware version.</string>
+    <string name="device_settings_update_error_app_update_required">This firmware release requires a newer AquaLight app contract. The update was not installed. Update the app, then check again.</string>
     <string name="device_settings_update_error_insufficient_space">The firmware package does not fit in the device update partition.</string>
     <string name="device_settings_update_error_download_connection_failed">The device could not establish a secure connection to the official release server. Device time, DNS, TLS trust or internet access may be unavailable.</string>
     <string name="device_settings_update_error_download_send_failed">The device connected to the release server but could not send the firmware download request.</string>
