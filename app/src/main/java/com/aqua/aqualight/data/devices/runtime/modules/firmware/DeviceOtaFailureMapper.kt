@@ -10,7 +10,13 @@ internal object DeviceOtaFailureMapper {
 
     fun availability(error: Throwable): DeviceOtaFailure {
         val manifestHttpFailure = error.findManifestHttpFailure()
+        val clientIncompatible = error.findClientIncompatibleFailure()
         val failure = when {
+            clientIncompatible != null -> simpleFailure(
+                reason = DeviceOtaFailureReason.APPLICATION_UPDATE_REQUIRED,
+                recoverable = false,
+                message = clientIncompatible.message.orEmpty()
+            )
             manifestHttpFailure != null -> DeviceManifestHttpFailureClassifier.map(
                 manifestHttpFailure,
                 error.message.orEmpty()
@@ -326,6 +332,11 @@ private fun DeviceFirmwareOtaSnapshot.toDiagnostics() = DeviceOtaFailureDiagnost
 private fun Throwable.findManifestHttpFailure(): DeviceFirmwareManifestHttpException? =
     generateSequence(this) { current -> current.cause }
         .filterIsInstance<DeviceFirmwareManifestHttpException>()
+        .firstOrNull()
+
+private fun Throwable.findClientIncompatibleFailure(): DeviceFirmwareClientIncompatibleException? =
+    generateSequence(this) { current -> current.cause }
+        .filterIsInstance<DeviceFirmwareClientIncompatibleException>()
         .firstOrNull()
 
 private fun Throwable.hasIoCause(): Boolean =
