@@ -1,5 +1,7 @@
 package com.aqua.aqualight.ui.common.devicepresence
 
+import android.content.Context
+
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
@@ -31,19 +33,10 @@ object DeviceAccessFeedbackPresenter {
             feedback.action != DeviceAccessFeedbackAction.OPEN_FIRMWARE_UPDATE ||
             normalizedUid.isBlank()
         ) {
-            val safeDeviceTitle = deviceTitle.trim().ifBlank {
-                fragment.getString(R.string.device_menu_default_title)
-            }
-            DialogManager.showInfoDialog(
+            showInformational(
                 context = fragment.requireContext(),
-                type = DialogType.WARNING,
-                title = fragment.getString(feedback.titleRes),
-                message = fragment.getString(
-                    R.string.device_access_dialog_message,
-                    safeDeviceTitle,
-                    fragment.getString(feedback.messageRes)
-                ),
-                buttonTextResId = android.R.string.ok
+                deviceTitle = deviceTitle,
+                reason = reason
             )
             return
         }
@@ -84,6 +77,28 @@ object DeviceAccessFeedbackPresenter {
             tone = FeedbackBottomSheet.FeedbackTone.WARNING,
             requestKey = requestKey,
             actionId = ACTION_FIRMWARE_UPDATE
+        )
+    }
+
+    fun showInformational(
+        context: Context,
+        deviceTitle: String,
+        reason: DeviceMenuUnavailableReason
+    ) {
+        val feedback = DeviceMenuUnavailableMessageMapper.feedback(reason)
+        val safeDeviceTitle = deviceTitle.trim().ifBlank {
+            context.getString(R.string.device_menu_default_title)
+        }
+        DialogManager.showInfoDialog(
+            context = context,
+            type = DialogType.WARNING,
+            title = context.getString(feedback.titleRes),
+            message = context.getString(
+                R.string.device_access_dialog_message,
+                safeDeviceTitle,
+                context.getString(feedback.messageRes)
+            ),
+            buttonTextResId = android.R.string.ok
         )
     }
 
