@@ -4,8 +4,14 @@ import org.json.JSONObject
 
 /** Fail-closed parser for the complete firmware `light.status.get.data` document. */
 object DeviceLightStatusParser {
-    fun parse(data: JSONObject): DeviceLightStatus {
-        data.requireLightKeys(STATUS_KEYS, "light.status.get.data")
+    fun parse(
+        data: JSONObject,
+        managedAutoPlanSupported: Boolean = true
+    ): DeviceLightStatus {
+        data.requireLightKeys(
+            if (managedAutoPlanSupported) STATUS_KEYS_MANAGED_PLAN else STATUS_KEYS_BASE,
+            "light.status.get.data"
+        )
         require(data.requireLightText("schema") == DeviceLightRuntimeContract.SCHEMA)
         require(data.requireLightInt("storageVersion") == DeviceLightRuntimeContract.STORAGE_VERSION)
 
@@ -17,7 +23,13 @@ object DeviceLightStatusParser {
         val scheduler = DeviceLightV1JsonParser.Policy.parseScheduler(
             data.requireLightObject("scheduler")
         )
-        val status = parseStatus(data, product, features, scheduler)
+        val status = parseStatus(
+            data = data,
+            product = product,
+            features = features,
+            scheduler = scheduler,
+            managedAutoPlanSupported = managedAutoPlanSupported
+        )
         require(status.runtime.rtcReady == status.scheduler.ready)
         return status
     }
@@ -26,15 +38,20 @@ object DeviceLightStatusParser {
         data: JSONObject,
         product: DeviceLightProduct,
         features: DeviceLightFeatures,
-        scheduler: DeviceLightSchedulerStatus
+        scheduler: DeviceLightSchedulerStatus,
+        managedAutoPlanSupported: Boolean
     ): DeviceLightStatus = DeviceLightStatus(
             schema = DeviceLightRuntimeContract.SCHEMA,
             storageVersion = DeviceLightRuntimeContract.STORAGE_VERSION,
-            storageGeneration = data.requireLightLong(
-                "storageGeneration",
-                0,
-                DeviceLightRuntimeContract.Limit.UINT32_MAX
-            ),
+            storageGeneration = if (managedAutoPlanSupported) {
+                data.requireLightLong(
+                    "storageGeneration",
+                    0,
+                    DeviceLightRuntimeContract.Limit.UINT32_MAX
+                )
+            } else {
+                0L
+            },
             product = product,
             channelScale = data.requireLightInt("channelScale").also {
                 require(it == DeviceLightRuntimeContract.Limit.PERCENT_MAX)
@@ -64,12 +81,14 @@ object DeviceLightStatusParser {
             preview = parsePreview(data.requireLightObject("preview")),
             manual = parseManual(data.requireLightObject("manual"), product),
             policy = DeviceLightV1JsonParser.Policy.parsePolicy(
-                data.requireLightObject("policy"),
-                product
+                data = data.requireLightObject("policy"),
+                product = product,
+                managedAutoPlanSupported = managedAutoPlanSupported
             ),
             scheduler = scheduler,
             auto = DeviceLightV1JsonParser.Activity.parseAutoSummary(
-                data.requireLightObject("auto")
+                data = data.requireLightObject("auto"),
+                managedAutoPlanSupported = managedAutoPlanSupported
             ),
             custom = DeviceLightV1JsonParser.Activity.parseCustomSummary(
                 data.requireLightObject("custom")
@@ -124,10 +143,9 @@ object DeviceLightStatusParser {
         )
     }
 
-    private val STATUS_KEYS = setOf(
+    private val STATUS_KEYS_BASE = setOf(
         "schema",
         "storageVersion",
-        "storageGeneration",
         "productKey",
         "channelScale",
         "channels",
@@ -150,6 +168,7 @@ object DeviceLightStatusParser {
         "acclimation",
         "runtime"
     )
+    private val STATUS_KEYS_MANAGED_PLAN = STATUS_KEYS_BASE + "storageGeneration"
     private val PREVIEW_KEYS = setOf("active", "remainingMs")
     private val MANUAL_KEYS = setOf("scene")
 }
