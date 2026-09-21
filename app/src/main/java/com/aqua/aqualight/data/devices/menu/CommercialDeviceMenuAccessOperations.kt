@@ -20,18 +20,14 @@ internal class CommercialDeviceMenuAccessOperations(
 
     private fun validateCompatibility(
         liveness: DeviceMenuAccessResult.Available
-    ): DeviceMenuAccessResult =
-        when (
-            val decision = accessPolicy.evaluateRoot(
-                compatibilityOperations.current(liveness.deviceUid)
-            )
-        ) {
-            DeviceAccessDecision.Allowed -> liveness.copy(
-                family = compatibilityOperations.current(liveness.deviceUid).family
-            )
+    ): DeviceMenuAccessResult {
+        val compatibility = compatibilityOperations.current(liveness.deviceUid)
+        return when (val decision = accessPolicy.evaluateRoot(compatibility)) {
+            DeviceAccessDecision.Allowed -> liveness.copy(family = compatibility.family)
             is DeviceAccessDecision.Blocked -> DeviceMenuAccessResult.Unavailable(
                 title = liveness.title,
                 reason = decision.reason
             )
         }
+    }
 }
