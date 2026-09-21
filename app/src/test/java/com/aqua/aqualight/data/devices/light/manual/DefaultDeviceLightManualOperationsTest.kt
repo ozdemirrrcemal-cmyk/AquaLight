@@ -66,7 +66,11 @@ class DefaultDeviceLightManualOperationsTest {
     private class RuntimeFixture(initialMode: DeviceLightMode) {
         private val stateOwner = DeviceLightRuntimeStateOwner()
         val gateway = StatefulLightGateway(initialMode)
-        val repository = DeviceLightRuntimeRepository(gateway, stateOwner)
+        val repository = DeviceLightRuntimeRepository(
+            gateway = gateway,
+            stateOwner = stateOwner,
+            accessProvider = { MANAGED_LIGHT_ACCESS }
+        )
 
         init {
             stateOwner.beginGeneration(DEVICE_UID, GENERATION)
@@ -162,6 +166,10 @@ class DefaultDeviceLightManualOperationsTest {
     }
 
     private companion object {
+        val MANAGED_LIGHT_ACCESS = DeviceLightRuntimeAccess(
+            supportsApi = true,
+            supportsManagedAutoPlan = true
+        )
         val DEVICE_UID = DeviceUid("manual-operations-light")
         val GENERATION = DeviceRuntimeConnectionGeneration(1L)
         val EXPECTED_MANUAL_MUTATION_ACTIONS = listOf(
