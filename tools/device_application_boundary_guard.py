@@ -420,12 +420,13 @@ for token, reason in (
     ("val systemOperations: DeviceLightSystemOperations", "the Light bundle must own System controls"),
     ("val libraryOperations: DeviceLightLibraryOperations", "the Light bundle must own its library"),
     (
-        "val lightOperations = createOwnerLightOperations(",
+        "light = createOwnerLightOperations(",
         "the owner graph must create the Light bundle once",
     ),
     ("ownerUid = dependencies.ownerUid", "the Light library must remain owner scoped"),
     ("devicesRepository = dependencies.devicesRepository", "the Light bundle must reuse the owner runtime"),
-    ("lightControlOperations = lightOperations.controlOperations", "menu preparation must reuse central Light control"),
+    ("lightOperations = controls.light", "the owner graph must expose the single Light bundle"),
+    ("lightControlOperations = controls.light.controlOperations", "menu preparation must reuse central Light control"),
 ):
     if token not in owner_graph:
         errors.append(f"{OWNER_GRAPH.relative_to(ROOT)}: {reason}: {token}")
@@ -494,11 +495,15 @@ for token, reason in (
         "Light menus must use central surface preparation",
     ),
     (
-        "accessPolicy.evaluateRoot(compatibility.current(deviceUid))",
+        "accessPolicy.evaluateRoot(",
         "control-surface preparation must pass through central compatibility policy",
     ),
     (
-        "DeviceAccessDecision.Blocked -> return unavailable(decision.reason)",
+        "checkNotNull(compatibilityOperations).current(deviceUid)",
+        "control-surface preparation must evaluate the current central compatibility snapshot",
+    ),
+    (
+        "is DeviceAccessDecision.Blocked -> unavailable(decision.reason)",
         "central compatibility denial must preserve the typed commercial reason",
     ),
     (
