@@ -40,6 +40,7 @@
     <string name="device_settings_update_error_release_request_rejected">Resmî sürüm sunucusu firmware indirme isteğini reddetti.</string>
     <string name="device_settings_update_error_release_server_unavailable">Resmî sürüm sunucusuna geçici olarak ulaşılamıyor. Daha sonra tekrar deneyin.</string>
     <string name="device_settings_update_error_incompatible_firmware">Bu güncelleme cihazın ürün kimliği, donanım revizyonu veya yüklü firmware sürümüyle uyumlu değil.</string>
+    <string name="device_settings_update_error_app_update_required">Bu firmware sürümü daha yeni bir AquaLight uygulama sözleşmesi gerektiriyor. Güncelleme yüklenmedi. Uygulamayı güncelleyip yeniden denetleyin.</string>
     <string name="device_settings_update_error_insufficient_space">Yazılım paketi cihazın güncelleme bölümüne sığmıyor.</string>
     <string name="device_settings_update_error_download_connection_failed">Cihaz resmî sürüm sunucusuyla güvenli bağlantı kuramadı. Cihaz saati, DNS, TLS güven zinciri veya internet erişimi hazır olmayabilir.</string>
     <string name="device_settings_update_error_download_send_failed">Cihaz sürüm sunucusuna bağlandı ancak firmware indirme isteğini gönderemedi.</string>
