@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_access_dialog_message">%1$s\n\n%2$s</string>
+
+    <string name="device_access_offline_title">Device Offline</string>
+    <string name="device_access_offline_message">Make sure the device is powered on and connected to the same local network, then try again.</string>
+
+    <string name="device_access_local_network_title">Local Network Unavailable</string>
+    <string name="device_access_local_network_message">Connect this phone to the same local network as the device, then try again.</string>
+
+    <string name="device_access_authentication_title">Device Authentication Required</string>
+    <string name="device_access_authentication_message">This device must be paired with your account again before its controls can be opened.</string>
+
+    <string name="device_access_unresponsive_title">Device Could Not Be Reached</string>
+    <string name="device_access_unresponsive_message">The device is visible on the local network but did not answer the current control check. Keep it powered on and try again.</string>
+
+    <string name="device_access_verification_title">Device State Could Not Be Verified</string>
+    <string name="device_access_verification_message">The device connection is available, but its current control state could not be verified safely. Try again.</string>
+
+    <string name="device_access_not_registered_title">Device Unavailable</string>
+    <string name="device_access_not_registered_message">This device is not available in the current account. Refresh your devices or add it again.</string>
+
+    <string name="device_access_unsupported_product_title">Unsupported Device</string>
+    <string name="device_access_unsupported_product_message">This device model or hardware profile is not supported by this AquaLight build.</string>
+
+    <string name="device_access_contract_incompatible_title">Device Software Incompatible</string>
+    <string name="device_access_contract_incompatible_message">The device is online, but its firmware control contract is not compatible with this app build. Check for a firmware or app update before using device controls.</string>
+
+    <string name="device_access_malformed_state_title">Device State Could Not Be Verified</string>
+    <string name="device_access_malformed_state_message">The device is online, but its current software state could not be validated safely. Device controls were not opened.</string>
+
+    <string name="device_access_feature_unavailable_title">Feature Not Available</string>
+    <string name="device_access_feature_unavailable_message">This feature is not available on the device’s current software. Other compatible device controls remain available.</string>
+
+    <string name="device_access_firmware_update_required_title">Firmware Update Required</string>
+    <string name="device_access_firmware_update_required_message">A firmware update is required to use this feature. Other compatible device controls remain available.</string>
+
+    <string name="device_access_app_update_required_title">App Update Required</string>
+    <string name="device_access_app_update_required_message">The device is online, but it uses a newer protocol than this app supports. Update the AquaLight app to continue.</string>
+</resources>
