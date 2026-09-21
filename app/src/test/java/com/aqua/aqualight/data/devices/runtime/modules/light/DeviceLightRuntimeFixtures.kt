@@ -38,6 +38,28 @@ internal object DeviceLightRuntimeFixtures {
             .putRuntimeSections(product)
     }
 
+    fun baseStatus(
+        product: DeviceLightProduct = DeviceLightProduct.WRGB_PRO_ELITE
+    ): JSONObject = status(product).also { data ->
+        data.remove("storageGeneration")
+        data.getJSONObject("policy").getJSONObject("auto").apply {
+            remove("managedPlanPhaseCapacity")
+            remove("managedPlanTransitionDaysMax")
+            remove("managedPlanSameDayOnly")
+            remove("managedPlanContiguous")
+        }
+        data.getJSONObject("auto").apply {
+            remove("scheduleSource")
+            remove("planRevision")
+            remove("planInstalled")
+            remove("planId")
+            remove("activePlanPhaseIndex")
+            remove("planRuntimeState")
+            remove("planTransitionPermille")
+            remove("nextPlanTransitionEpochDay")
+        }
+    }
+
     fun graph(
         product: DeviceLightProduct = DeviceLightProduct.WRGB_PRO_ELITE,
         mode: DeviceLightMode = DeviceLightMode.MANUAL,
@@ -65,6 +87,14 @@ internal object DeviceLightRuntimeFixtures {
             .put("points", points)
             .put("autoSpans", JSONArray())
             .put("planSpans", JSONArray())
+    }
+
+    fun baseGraph(
+        product: DeviceLightProduct = DeviceLightProduct.WRGB_PRO_ELITE,
+        mode: DeviceLightMode = DeviceLightMode.MANUAL,
+        sourceRevision: Long = if (mode == DeviceLightMode.MANUAL) 0L else 1L
+    ): JSONObject = graph(product, mode, sourceRevision).also { data ->
+        data.remove("planSpans")
     }
 
     private fun graphPoint(
