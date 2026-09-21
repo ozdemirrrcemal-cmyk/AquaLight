@@ -200,9 +200,9 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
         event: TankDetailDevicesEvent.ShowDeviceUnavailable
     ) {
         baseActivity()?.clearGlobalLoading(TANK_DEVICE_MENU_LOADING_OWNER)
-        baseActivity()?.showDeviceOfflineDialog(
+        baseActivity()?.showDeviceAccessDialog(
             deviceTitle = event.title,
-            messageRes = event.messageRes
+            reason = event.reason
         )
     }
 
