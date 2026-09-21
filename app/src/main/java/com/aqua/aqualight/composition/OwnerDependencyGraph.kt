@@ -3,6 +3,9 @@ package com.aqua.aqualight.composition
 import android.content.Context
 import com.aqua.aqualight.BuildConfig
 import com.aqua.aqualight.application.auth.AuthenticatedOwnerIdentity
+import com.aqua.aqualight.application.devices.DefaultDeviceAccessPolicy
+import com.aqua.aqualight.application.devices.DeviceAccessPolicy
+import com.aqua.aqualight.application.devices.DeviceCompatibilityOperations
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingCardOperations
@@ -37,6 +40,7 @@ import com.aqua.aqualight.data.auth.OwnerSessionStateMachine
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.devices.DefaultDeviceFirmwareUpdateOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
+import com.aqua.aqualight.data.devices.compatibility.DefaultDeviceCompatibilityOperations
 import com.aqua.aqualight.data.devices.cooling.DefaultDeviceCoolingCardOperations
 import com.aqua.aqualight.data.devices.cooling.control.DefaultDeviceCoolingControlOperations
 import com.aqua.aqualight.data.devices.dosing.DefaultDeviceDosingChannelNavigationOperations
@@ -88,6 +92,8 @@ internal data class OwnerDependencyGraph(
     val careTaskStore: CareTaskDataStoreManager,
     val userDataArchiveOperations: UserDataArchiveOperations,
     val provisioningDraftOperations: ProvisioningDraftOperations,
+    val compatibilityOperations: DeviceCompatibilityOperations,
+    val accessPolicy: DeviceAccessPolicy,
     val controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations,
     val lightOperations: OwnerLightOperations,
     val timerControlOperations: DeviceTimerControlOperations,
@@ -245,6 +251,10 @@ internal class ActiveOwnerDependencyGraphResolver(
             assignmentRepository = dependencies.assignmentRepository,
             aquariumTankStore = aquariumTankStore
         )
+        val compatibilityOperations = DefaultDeviceCompatibilityOperations(
+            dependencies.devicesRepository
+        )
+        val accessPolicy: DeviceAccessPolicy = DefaultDeviceAccessPolicy
         return OwnerDependencyGraph(
             ownerUid = dependencies.ownerUid,
             sessionGeneration = dependencies.sessionGeneration,
@@ -269,11 +279,15 @@ internal class ActiveOwnerDependencyGraphResolver(
                     ownerUidProvider = ownerUidProvider
                 )
             ),
+            compatibilityOperations = compatibilityOperations,
+            accessPolicy = accessPolicy,
             controlSurfacePreparationOperations = createControlSurfacePreparationOperations(
                 dependencies = dependencies,
                 dosingOperations = dosingOperations,
                 timerControlOperations = timerControlOperations,
-                lightOperations = lightOperations
+                lightOperations = lightOperations,
+                compatibilityOperations = compatibilityOperations,
+                accessPolicy = accessPolicy
             ),
             lightOperations = lightOperations,
             timerControlOperations = timerControlOperations,
@@ -325,7 +339,9 @@ internal class ActiveOwnerDependencyGraphResolver(
         dependencies: ActiveOwnerDependencies,
         dosingOperations: OwnerDosingOperations,
         timerControlOperations: DeviceTimerControlOperations,
-        lightOperations: OwnerLightOperations
+        lightOperations: OwnerLightOperations,
+        compatibilityOperations: DeviceCompatibilityOperations,
+        accessPolicy: DeviceAccessPolicy
     ): DeviceControlSurfacePreparationOperations =
         DefaultDeviceControlSurfacePreparationOperations(
             rootOperations = DefaultDeviceRootOperations(dependencies.devicesRepository),
@@ -334,7 +350,9 @@ internal class ActiveOwnerDependencyGraphResolver(
                 dependencies.devicesRepository
             ),
             timerControlOperations = timerControlOperations,
-            lightControlOperations = lightOperations.controlOperations
+            lightControlOperations = lightOperations.controlOperations,
+            compatibilityOperations = compatibilityOperations,
+            accessPolicy = accessPolicy
         )
 
     private fun createDosingOperations(
