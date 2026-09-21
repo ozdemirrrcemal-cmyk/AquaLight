@@ -1,6 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices.add
 
-import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
+import androidx.annotation.StringRes
 import com.aqua.aqualight.application.devices.provisioning.ProvisionedDevice
 
 sealed interface DeviceProvisioningProgressEvent {
@@ -10,7 +10,7 @@ sealed interface DeviceProvisioningProgressEvent {
 
     data class ShowAddedDeviceUnavailable(
         val title: String,
-        val reason: DeviceMenuUnavailableReason
+        @StringRes val messageRes: Int
     ) : DeviceProvisioningProgressEvent
 
     data object ExitProvisioning : DeviceProvisioningProgressEvent
