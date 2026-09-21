@@ -19,6 +19,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelNavigati
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingChannelSnapshot
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
+import com.aqua.aqualight.ui.common.devicepresence.toDeviceConnectionVisualState
 import com.aqua.aqualight.ui.common.text.AquaUiText
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootKind
 import com.aqua.aqualight.ui.tabs.devices.detail.common.DeviceRootMenuMapper
@@ -178,7 +179,7 @@ class DeviceDosingRootViewModel(
                 )
             }.getOrElse {
                 DeviceControlSurfacePreparationResult.Unavailable(
-                    DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
+                    DeviceMenuUnavailableReason.MALFORMED_DEVICE_STATE
                 )
             }
             if (boundDeviceUid != deviceUid) return@launch
@@ -193,7 +194,7 @@ class DeviceDosingRootViewModel(
                     val preparedSnapshots = currentAuthoritativeSurface(deviceUid)
                     if (preparedSnapshots.isEmpty()) {
                         finishUnavailablePreparation(
-                            DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
+                            DeviceMenuUnavailableReason.MALFORMED_DEVICE_STATE
                         )
                     } else {
                         channelSnapshots = preparedSnapshots
@@ -301,11 +302,7 @@ class DeviceDosingRootViewModel(
                 availability == OwnerDeviceAvailability.REACHABLE &&
                 catalogState == DeviceRootCatalogState.VALID &&
                 channelPresentation.authoritative
-        val connectionVisualState = if (contentEnabled) {
-            DeviceConnectionVisualState.ONLINE
-        } else {
-            DeviceConnectionVisualState.OFFLINE
-        }
+        val connectionVisualState = toDeviceConnectionVisualState()
         return DeviceDosingRootUiState(
             title = title,
             deviceUid = deviceUid,
