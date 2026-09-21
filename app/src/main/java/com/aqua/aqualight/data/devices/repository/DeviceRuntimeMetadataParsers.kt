@@ -1,8 +1,7 @@
 package com.aqua.aqualight.data.devices.repository
 
-import com.aqua.aqualight.data.devices.contract.AqlCatalogKeySet
-import com.aqua.aqualight.data.devices.contract.parseAqlDeviceFeatureKeysExact
-import com.aqua.aqualight.data.devices.contract.parseAqlDeviceScreenKeysExact
+import com.aqua.aqualight.data.devices.contract.AqlDeviceFeatureKey
+import com.aqua.aqualight.data.devices.contract.AqlDeviceScreenKey
 import com.aqua.aqualight.data.devices.model.DeviceApiVersion
 import com.aqua.aqualight.data.devices.model.DeviceCapabilitySet
 import com.aqua.aqualight.data.devices.model.DeviceFamily
@@ -116,18 +115,15 @@ object DeviceRuntimeCapabilitiesParser {
             "supportedScreens must not contain duplicate wire values."
         }
 
-        val featureKeys = when (val parsed = featureWireValues.parseAqlDeviceFeatureKeysExact()) {
-            is AqlCatalogKeySet.Valid -> parsed.values
-            is AqlCatalogKeySet.Invalid -> error(
-                "supportedFeatures contains unknown exact keys: ${parsed.unknownWireValues.sorted()}"
-            )
-        }
-        val screenKeys = when (val parsed = screenWireValues.parseAqlDeviceScreenKeysExact()) {
-            is AqlCatalogKeySet.Valid -> parsed.values
-            is AqlCatalogKeySet.Invalid -> error(
-                "supportedScreens contains unknown exact keys: ${parsed.unknownWireValues.sorted()}"
-            )
-        }
+        // These arrays are the V1 additive-extension boundary. Fixed capability/limit
+        // objects remain exact; future optional tokens are ignored by older clients and can never
+        // authorize a surface until this app build recognizes them.
+        val featureKeys = featureWireValues
+            .mapNotNull(AqlDeviceFeatureKey::fromWireExact)
+            .toSet()
+        val screenKeys = screenWireValues
+            .mapNotNull(AqlDeviceScreenKey::fromWireExact)
+            .toSet()
 
         DeviceRuntimeCapabilities(
             capabilities = DeviceCapabilitySet(
