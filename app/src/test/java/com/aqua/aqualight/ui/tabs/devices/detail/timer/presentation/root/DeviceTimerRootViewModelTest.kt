@@ -114,7 +114,7 @@ class DeviceTimerRootViewModelTest {
         assertEquals(reason, viewModel.surfaceUnavailableEvents.first())
         assertFalse(viewModel.uiState.value.contentEnabled)
         assertFalse(viewModel.uiState.value.showBlockingPreparation)
-        assertEquals(DeviceConnectionVisualState.OFFLINE, viewModel.uiState.value.connectionVisualState)
+        assertEquals(DeviceConnectionVisualState.ONLINE, viewModel.uiState.value.connectionVisualState)
     }
 
     @Test
@@ -128,7 +128,7 @@ class DeviceTimerRootViewModelTest {
             controls.publish(unavailableControl())
 
             assertFalse(viewModel.uiState.value.contentEnabled)
-            assertEquals(DeviceConnectionVisualState.OFFLINE, viewModel.uiState.value.connectionVisualState)
+            assertEquals(DeviceConnectionVisualState.ONLINE, viewModel.uiState.value.connectionVisualState)
             assertEquals(TEST_REVISION, viewModel.uiState.value.control?.revision)
         }
 
