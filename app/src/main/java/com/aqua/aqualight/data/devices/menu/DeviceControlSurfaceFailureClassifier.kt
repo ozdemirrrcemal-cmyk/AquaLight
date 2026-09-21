@@ -17,9 +17,9 @@ internal object DeviceControlSurfaceFailureClassifier {
     fun classify(failure: DeviceLightControlFailure): DeviceMenuUnavailableReason = when (failure) {
         DeviceLightControlFailure.NOT_CONNECTED ->
             DeviceMenuUnavailableReason.DEVICE_UNRESPONSIVE
-        DeviceLightControlFailure.UNSUPPORTED,
-        DeviceLightControlFailure.INVALID_DATA ->
+        DeviceLightControlFailure.UNSUPPORTED ->
             DeviceMenuUnavailableReason.CONTRACT_INCOMPATIBLE
+        DeviceLightControlFailure.INVALID_DATA,
         DeviceLightControlFailure.UNAVAILABLE,
         DeviceLightControlFailure.REJECTED ->
             DeviceMenuUnavailableReason.MALFORMED_DEVICE_STATE
@@ -28,9 +28,9 @@ internal object DeviceControlSurfaceFailureClassifier {
     fun classify(failure: DeviceTimerControlFailure): DeviceMenuUnavailableReason = when (failure) {
         DeviceTimerControlFailure.NotConnected ->
             DeviceMenuUnavailableReason.DEVICE_UNRESPONSIVE
-        DeviceTimerControlFailure.Unsupported,
-        DeviceTimerControlFailure.InvalidData ->
+        DeviceTimerControlFailure.Unsupported ->
             DeviceMenuUnavailableReason.CONTRACT_INCOMPATIBLE
+        DeviceTimerControlFailure.InvalidData,
         DeviceTimerControlFailure.Unavailable,
         is DeviceTimerControlFailure.Rejected ->
             DeviceMenuUnavailableReason.MALFORMED_DEVICE_STATE
@@ -39,9 +39,9 @@ internal object DeviceControlSurfaceFailureClassifier {
     fun classify(failure: DeviceCoolingControlFailure): DeviceMenuUnavailableReason = when (failure) {
         DeviceCoolingControlFailure.NotConnected ->
             DeviceMenuUnavailableReason.DEVICE_UNRESPONSIVE
-        DeviceCoolingControlFailure.Unsupported,
-        DeviceCoolingControlFailure.InvalidData ->
+        DeviceCoolingControlFailure.Unsupported ->
             DeviceMenuUnavailableReason.CONTRACT_INCOMPATIBLE
+        DeviceCoolingControlFailure.InvalidData,
         DeviceCoolingControlFailure.Unavailable,
         is DeviceCoolingControlFailure.Rejected ->
             DeviceMenuUnavailableReason.MALFORMED_DEVICE_STATE
