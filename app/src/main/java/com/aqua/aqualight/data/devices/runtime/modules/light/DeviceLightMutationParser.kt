@@ -248,90 +248,6 @@ internal object DeviceLightMutationParser {
             )
         }
 
-        private fun DeviceLightGraph.requireBaseGraphContract() {
-            require(basis != DeviceLightGraphBasis.MANAGED_PLAN)
-            require(reason != DeviceLightGraphReason.MANAGED_PLAN_NOT_SCHEDULED_TODAY)
-            require(planSpans.isEmpty())
-        }
-
-        private fun DeviceLightGraph.requireModeSemantics() {
-            when (mode) {
-                DeviceLightMode.MANUAL -> requireManualSemantics()
-                DeviceLightMode.AUTO -> {
-                    require(
-                        basis == DeviceLightGraphBasis.AUTHORED_SCHEDULE ||
-                            basis == DeviceLightGraphBasis.MANAGED_PLAN
-                    )
-                    require(reason != DeviceLightGraphReason.MODE_HAS_NO_SCHEDULE)
-                    if (basis == DeviceLightGraphBasis.MANAGED_PLAN) {
-                        require(autoSpans.isEmpty())
-                    } else {
-                        require(planSpans.isEmpty())
-                    }
-                }
-                DeviceLightMode.CUSTOM -> {
-                    require(basis == DeviceLightGraphBasis.AUTHORED_SCHEDULE)
-                    require(reason != DeviceLightGraphReason.MODE_HAS_NO_SCHEDULE)
-                    require(planSpans.isEmpty())
-                }
-            }
-        }
-
-        private fun DeviceLightGraph.requireReasonSemantics() {
-            when (reason) {
-                DeviceLightGraphReason.OK -> require(available && hasScheduleToday)
-                DeviceLightGraphReason.RTC_NOT_READY -> requireRtcUnavailableSemantics()
-                DeviceLightGraphReason.MODE_HAS_NO_SCHEDULE -> Unit
-                DeviceLightGraphReason.NO_ENABLED_AUTO_PROGRAM_TODAY -> {
-                    require(mode == DeviceLightMode.AUTO)
-                    require(basis == DeviceLightGraphBasis.AUTHORED_SCHEDULE)
-                    require(available && !hasScheduleToday)
-                }
-                DeviceLightGraphReason.MANAGED_PLAN_NOT_SCHEDULED_TODAY -> {
-                    require(mode == DeviceLightMode.AUTO)
-                    require(basis == DeviceLightGraphBasis.MANAGED_PLAN)
-                    require(available && !hasScheduleToday)
-                }
-                DeviceLightGraphReason.CUSTOM_NOT_INSTALLED,
-                DeviceLightGraphReason.CUSTOM_NOT_SCHEDULED_TODAY -> {
-                    require(mode == DeviceLightMode.CUSTOM)
-                    require(available && !hasScheduleToday)
-                }
-            }
-        }
-
-        private fun DeviceLightGraph.requireCoherentStructure() {
-            require(channelScale == DeviceLightRuntimeContract.Limit.PERMILLE_MAX)
-            val hasNoScheduler = schedulerGeneration == null && localDate == null &&
-                nowTimeMs == null
-            val hasCompleteScheduler = schedulerGeneration != null && localDate != null &&
-                nowTimeMs != null
-            require(hasNoScheduler || hasCompleteScheduler)
-            require(points.zipWithNext().all { (first, second) -> first.timeMs <= second.timeMs })
-            require(hasScheduleToday == points.isNotEmpty())
-            require(mode == DeviceLightMode.AUTO || autoSpans.isEmpty())
-            require(mode == DeviceLightMode.AUTO || planSpans.isEmpty())
-        }
-
-        private fun DeviceLightGraph.requireManualSemantics() {
-            require(available)
-            require(reason == DeviceLightGraphReason.MODE_HAS_NO_SCHEDULE)
-            require(sourceRevision == 0L)
-            require(basis == DeviceLightGraphBasis.NONE)
-            require(!hasScheduleToday)
-            require(points.isEmpty())
-            require(autoSpans.isEmpty())
-            require(planSpans.isEmpty())
-        }
-
-        private fun DeviceLightGraph.requireRtcUnavailableSemantics() {
-            require(!available)
-            require(schedulerGeneration == null)
-            require(localDate == null)
-            require(nowTimeMs == null)
-            require(!hasScheduleToday)
-        }
-
         private fun parsePlanGraphSpan(tuple: JSONArray): DeviceLightManagedPlanGraphSpan {
             require(
                 tuple.length() ==
@@ -429,6 +345,89 @@ internal object DeviceLightMutationParser {
     )
     private val GRAPH_KEYS_MANAGED_PLAN = GRAPH_KEYS_BASE + "planSpans"
     private val PROGRAM_ID = Regex("^ap-[0-9a-f]{8}$")
+}
+
+
+private fun DeviceLightGraph.requireBaseGraphContract() {
+    require(basis != DeviceLightGraphBasis.MANAGED_PLAN)
+    require(reason != DeviceLightGraphReason.MANAGED_PLAN_NOT_SCHEDULED_TODAY)
+    require(planSpans.isEmpty())
+}
+
+private fun DeviceLightGraph.requireModeSemantics() {
+    when (mode) {
+        DeviceLightMode.MANUAL -> requireManualSemantics()
+        DeviceLightMode.AUTO -> {
+            require(
+                basis == DeviceLightGraphBasis.AUTHORED_SCHEDULE ||
+                    basis == DeviceLightGraphBasis.MANAGED_PLAN
+            )
+            require(reason != DeviceLightGraphReason.MODE_HAS_NO_SCHEDULE)
+            if (basis == DeviceLightGraphBasis.MANAGED_PLAN) {
+                require(autoSpans.isEmpty())
+            } else {
+                require(planSpans.isEmpty())
+            }
+        }
+        DeviceLightMode.CUSTOM -> {
+            require(basis == DeviceLightGraphBasis.AUTHORED_SCHEDULE)
+            require(reason != DeviceLightGraphReason.MODE_HAS_NO_SCHEDULE)
+            require(planSpans.isEmpty())
+        }
+    }
+}
+
+private fun DeviceLightGraph.requireReasonSemantics() {
+    when (reason) {
+        DeviceLightGraphReason.OK -> require(available && hasScheduleToday)
+        DeviceLightGraphReason.RTC_NOT_READY -> requireRtcUnavailableSemantics()
+        DeviceLightGraphReason.MODE_HAS_NO_SCHEDULE -> Unit
+        DeviceLightGraphReason.NO_ENABLED_AUTO_PROGRAM_TODAY -> {
+            require(mode == DeviceLightMode.AUTO)
+            require(basis == DeviceLightGraphBasis.AUTHORED_SCHEDULE)
+            require(available && !hasScheduleToday)
+        }
+        DeviceLightGraphReason.MANAGED_PLAN_NOT_SCHEDULED_TODAY -> {
+            require(mode == DeviceLightMode.AUTO)
+            require(basis == DeviceLightGraphBasis.MANAGED_PLAN)
+            require(available && !hasScheduleToday)
+        }
+        DeviceLightGraphReason.CUSTOM_NOT_INSTALLED,
+        DeviceLightGraphReason.CUSTOM_NOT_SCHEDULED_TODAY -> {
+            require(mode == DeviceLightMode.CUSTOM)
+            require(available && !hasScheduleToday)
+        }
+    }
+}
+
+private fun DeviceLightGraph.requireCoherentStructure() {
+    require(channelScale == DeviceLightRuntimeContract.Limit.PERMILLE_MAX)
+    val hasNoScheduler = schedulerGeneration == null && localDate == null && nowTimeMs == null
+    val hasCompleteScheduler = schedulerGeneration != null && localDate != null && nowTimeMs != null
+    require(hasNoScheduler || hasCompleteScheduler)
+    require(points.zipWithNext().all { (first, second) -> first.timeMs <= second.timeMs })
+    require(hasScheduleToday == points.isNotEmpty())
+    require(mode == DeviceLightMode.AUTO || autoSpans.isEmpty())
+    require(mode == DeviceLightMode.AUTO || planSpans.isEmpty())
+}
+
+private fun DeviceLightGraph.requireManualSemantics() {
+    require(available)
+    require(reason == DeviceLightGraphReason.MODE_HAS_NO_SCHEDULE)
+    require(sourceRevision == 0L)
+    require(basis == DeviceLightGraphBasis.NONE)
+    require(!hasScheduleToday)
+    require(points.isEmpty())
+    require(autoSpans.isEmpty())
+    require(planSpans.isEmpty())
+}
+
+private fun DeviceLightGraph.requireRtcUnavailableSemantics() {
+    require(!available)
+    require(schedulerGeneration == null)
+    require(localDate == null)
+    require(nowTimeMs == null)
+    require(!hasScheduleToday)
 }
 
 private fun JSONObject.withoutOptionalLightEvent(): JSONObject = JSONObject(toString()).also {
