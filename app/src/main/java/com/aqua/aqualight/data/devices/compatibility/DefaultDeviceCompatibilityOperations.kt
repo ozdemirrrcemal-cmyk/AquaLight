@@ -63,4 +63,6 @@ private fun DeviceCommercialCompatibilityIssue.toApplicationStatus(): DeviceComp
             DeviceCompatibilityStatus.COMMERCIAL_PRODUCT_MISMATCH
         DeviceCommercialCompatibilityIssue.BASE_CONTRACT_INCOMPATIBLE ->
             DeviceCompatibilityStatus.BASE_CONTRACT_INCOMPATIBLE
+        DeviceCommercialCompatibilityIssue.APPLICATION_UPDATE_REQUIRED ->
+            DeviceCompatibilityStatus.APPLICATION_UPDATE_REQUIRED
     }
