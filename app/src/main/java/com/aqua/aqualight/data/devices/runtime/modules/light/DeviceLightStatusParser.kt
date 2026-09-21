@@ -40,18 +40,12 @@ object DeviceLightStatusParser {
         features: DeviceLightFeatures,
         scheduler: DeviceLightSchedulerStatus,
         managedAutoPlanSupported: Boolean
-    ): DeviceLightStatus = DeviceLightStatus(
+    ): DeviceLightStatus {
+        val sections = parseSections(data, product, features, managedAutoPlanSupported)
+        return DeviceLightStatus(
             schema = DeviceLightRuntimeContract.SCHEMA,
             storageVersion = DeviceLightRuntimeContract.STORAGE_VERSION,
-            storageGeneration = if (managedAutoPlanSupported) {
-                data.requireLightLong(
-                    "storageGeneration",
-                    0,
-                    DeviceLightRuntimeContract.Limit.UINT32_MAX
-                )
-            } else {
-                0L
-            },
+            storageGeneration = parseStorageGeneration(data, managedAutoPlanSupported),
             product = product,
             channelScale = data.requireLightInt("channelScale").also {
                 require(it == DeviceLightRuntimeContract.Limit.PERCENT_MAX)
@@ -66,42 +60,83 @@ object DeviceLightStatusParser {
             requested = parseScene(data, "requested", product),
             effective = parseScene(data, "effective", product),
             scales = DeviceLightV1JsonParser.parseScales(data.requireLightObject("scales")),
-            electricalDesign = DeviceLightV1JsonParser.Metrics.parseElectricalDesign(
-                data.requireLightObject("electricalDesign"),
-                product
-            ),
-            power = DeviceLightV1JsonParser.Metrics.parsePower(
-                data.requireLightObject("power"),
-                features
-            ),
-            color = DeviceLightV1JsonParser.Metrics.parseColor(
-                data.requireLightObject("color"),
-                features
-            ),
+            electricalDesign = sections.electricalDesign,
+            power = sections.power,
+            color = sections.color,
             preview = parsePreview(data.requireLightObject("preview")),
             manual = parseManual(data.requireLightObject("manual"), product),
-            policy = DeviceLightV1JsonParser.Policy.parsePolicy(
-                data = data.requireLightObject("policy"),
-                product = product,
-                managedAutoPlanSupported = managedAutoPlanSupported
-            ),
+            policy = sections.policy,
             scheduler = scheduler,
-            auto = DeviceLightV1JsonParser.Activity.parseAutoSummary(
-                data = data.requireLightObject("auto"),
-                managedAutoPlanSupported = managedAutoPlanSupported
-            ),
-            custom = DeviceLightV1JsonParser.Activity.parseCustomSummary(
-                data.requireLightObject("custom")
-            ),
-            acclimation = DeviceLightV1JsonParser.Activity.parseAcclimation(
-                data.requireLightObject("acclimation"),
-                product
-            ),
-            runtime = DeviceLightV1JsonParser.parseRuntime(
-                data.requireLightObject("runtime"),
-                product
-            )
+            auto = sections.auto,
+            custom = sections.custom,
+            acclimation = sections.acclimation,
+            runtime = sections.runtime
         )
+    }
+
+    private fun parseSections(
+        data: JSONObject,
+        product: DeviceLightProduct,
+        features: DeviceLightFeatures,
+        managedAutoPlanSupported: Boolean
+    ): ParsedStatusSections = ParsedStatusSections(
+        electricalDesign = DeviceLightV1JsonParser.Metrics.parseElectricalDesign(
+            data.requireLightObject("electricalDesign"),
+            product
+        ),
+        power = DeviceLightV1JsonParser.Metrics.parsePower(
+            data.requireLightObject("power"),
+            features
+        ),
+        color = DeviceLightV1JsonParser.Metrics.parseColor(
+            data.requireLightObject("color"),
+            features
+        ),
+        policy = DeviceLightV1JsonParser.Policy.parsePolicy(
+            data = data.requireLightObject("policy"),
+            product = product,
+            managedAutoPlanSupported = managedAutoPlanSupported
+        ),
+        auto = DeviceLightV1JsonParser.Activity.parseAutoSummary(
+            data = data.requireLightObject("auto"),
+            managedAutoPlanSupported = managedAutoPlanSupported
+        ),
+        custom = DeviceLightV1JsonParser.Activity.parseCustomSummary(
+            data.requireLightObject("custom")
+        ),
+        acclimation = DeviceLightV1JsonParser.Activity.parseAcclimation(
+            data.requireLightObject("acclimation"),
+            product
+        ),
+        runtime = DeviceLightV1JsonParser.parseRuntime(
+            data.requireLightObject("runtime"),
+            product
+        )
+    )
+
+    private fun parseStorageGeneration(
+        data: JSONObject,
+        managedAutoPlanSupported: Boolean
+    ): Long = if (managedAutoPlanSupported) {
+        data.requireLightLong(
+            "storageGeneration",
+            0,
+            DeviceLightRuntimeContract.Limit.UINT32_MAX
+        )
+    } else {
+        0L
+    }
+
+    private data class ParsedStatusSections(
+        val electricalDesign: DeviceLightElectricalDesign,
+        val power: DeviceLightPowerStatus,
+        val color: DeviceLightColorStatus,
+        val policy: DeviceLightPolicy,
+        val auto: DeviceLightAutoSummary,
+        val custom: DeviceLightCustomSummary,
+        val acclimation: DeviceLightAcclimationStatus,
+        val runtime: DeviceLightRuntimeStatus
+    )
 
     private fun parseChannels(
         data: JSONObject,
