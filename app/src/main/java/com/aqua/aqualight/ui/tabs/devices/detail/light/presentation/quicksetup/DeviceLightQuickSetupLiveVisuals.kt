@@ -12,8 +12,10 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -99,39 +101,65 @@ internal fun QuickSetupLiveChart(
                         .fillMaxWidth()
                         .height(DeviceLightQuickSetupGeometry.chartHeight)
                 ) {
-                    val grid = colors.outline.copy(alpha = DeviceLightQuickSetupAlpha.grid)
-                    repeat(DeviceLightQuickSetupGeometry.chartGridLineCount) { index ->
-                        val y = size.height * index /
-                            DeviceLightQuickSetupGeometry.chartGridIntervalCount
-                        drawLine(
-                            color = grid,
-                            start = Offset(0f, y),
-                            end = Offset(size.width, y),
-                            strokeWidth = DeviceLightQuickSetupGeometry.chartGridStroke.toPx()
-                        )
-                    }
-                    plan.points.firstOrNull()?.channelLevels?.indices?.forEach { channelIndex ->
-                        if (channelIndex >= seriesColors.size) return@forEach
-                        val path = Path()
-                        plan.points.forEachIndexed { pointIndex, point ->
-                            val x = (point.timeMs.toFloat() / MILLIS_PER_DAY) * size.width
-                            val value = point.channelLevels[channelIndex].toFloat() /
-                                plan.channelScale.toFloat()
-                            val y = size.height * (1f - value.coerceIn(0f, 1f))
-                            if (pointIndex == 0) path.moveTo(x, y) else path.lineTo(x, y)
-                        }
-                        drawPath(
-                            path = path,
-                            color = seriesColors[channelIndex],
-                            style = Stroke(
-                                width = DeviceLightQuickSetupGeometry.chartLineStroke.toPx(),
-                                cap = StrokeCap.Round
-                            )
-                        )
-                    }
+                    drawLivePlan(
+                        plan = plan,
+                        seriesColors = seriesColors,
+                        gridColor = colors.outline.copy(alpha = DeviceLightQuickSetupAlpha.grid)
+                    )
                 }
             }
         }
+    }
+}
+
+private fun DrawScope.drawLivePlan(
+    plan: DeviceLightPlanSnapshot,
+    seriesColors: List<Color>,
+    gridColor: Color
+) {
+    drawLiveGrid(gridColor)
+    drawLiveSeries(plan, seriesColors)
+}
+
+private fun DrawScope.drawLiveGrid(gridColor: Color) {
+    repeat(DeviceLightQuickSetupGeometry.chartGridLineCount) { index ->
+        val y = size.height * index / DeviceLightQuickSetupGeometry.chartGridIntervalCount
+        drawLine(
+            color = gridColor,
+            start = Offset(0f, y),
+            end = Offset(size.width, y),
+            strokeWidth = DeviceLightQuickSetupGeometry.chartGridStroke.toPx()
+        )
+    }
+}
+
+private fun DrawScope.drawLiveSeries(
+    plan: DeviceLightPlanSnapshot,
+    seriesColors: List<Color>
+) {
+    plan.points.firstOrNull()?.channelLevels?.indices?.forEach { channelIndex ->
+        if (channelIndex < seriesColors.size) {
+            drawPath(
+                path = buildLiveSeriesPath(plan, channelIndex),
+                color = seriesColors[channelIndex],
+                style = Stroke(
+                    width = DeviceLightQuickSetupGeometry.chartLineStroke.toPx(),
+                    cap = StrokeCap.Round
+                )
+            )
+        }
+    }
+}
+
+private fun DrawScope.buildLiveSeriesPath(
+    plan: DeviceLightPlanSnapshot,
+    channelIndex: Int
+): Path = Path().apply {
+    plan.points.forEachIndexed { pointIndex, point ->
+        val x = (point.timeMs.toFloat() / MILLIS_PER_DAY) * size.width
+        val value = point.channelLevels[channelIndex].toFloat() / plan.channelScale.toFloat()
+        val y = size.height * (1f - value.coerceIn(0f, 1f))
+        if (pointIndex == 0) moveTo(x, y) else lineTo(x, y)
     }
 }
 
