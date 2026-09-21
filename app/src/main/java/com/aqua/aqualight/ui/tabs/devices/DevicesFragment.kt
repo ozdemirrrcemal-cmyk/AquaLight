@@ -192,9 +192,9 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
         event: DevicesEvent.ShowDeviceUnavailable
     ) {
         baseActivity()?.clearGlobalLoading(DEVICE_MENU_LOADING_OWNER)
-        baseActivity()?.showDeviceOfflineDialog(
+        baseActivity()?.showDeviceAccessDialog(
             deviceTitle = event.title,
-            messageRes = event.messageRes
+            reason = event.reason
         )
     }
 
