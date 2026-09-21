@@ -71,7 +71,7 @@ class DevicesViewModel(
                         if (openingDeviceUid.value == deviceUid) {
                             openingDeviceUid.value = null
                         }
-                        _events.send(result.toUnavailableEvent())
+                        _events.send(result.toUnavailableEvent(deviceUid))
                     }
                 }
             } catch (error: Throwable) {
@@ -82,6 +82,7 @@ class DevicesViewModel(
                 if (error is CancellationException) throw error
                 _events.send(
                     DevicesEvent.ShowDeviceUnavailable(
+                        deviceUid = deviceUid,
                         title = _uiState.value.devices
                             .firstOrNull { device -> device.deviceUid == deviceUid }
                             ?.card
@@ -250,8 +251,9 @@ class DevicesViewModel(
     )
 }
 
-private fun DeviceMenuOpenResult.Unavailable.toUnavailableEvent() =
+private fun DeviceMenuOpenResult.Unavailable.toUnavailableEvent(deviceUid: String) =
     DevicesEvent.ShowDeviceUnavailable(
+        deviceUid = deviceUid,
         title = title,
         reason = reason
     )
