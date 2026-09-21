@@ -107,10 +107,13 @@ class DeviceLightRootFragment : Fragment(R.layout.fragment_device_light_root) {
         val state = viewModel.uiState.value
         if (!state.contentEnabled) return
         viewModel.quickSetupUnavailableReason()?.let { reason ->
-            (activity as? BaseActivity)?.showDeviceAccessDialog(
-                deviceTitle = state.title,
-                reason = reason
-            )
+            DeviceMenuUnavailableMessageMapper.feedback(reason).let { feedback ->
+                (activity as? BaseActivity)?.showDeviceAccessDialog(
+                    deviceTitle = state.title,
+                    titleRes = feedback.titleRes,
+                    messageRes = feedback.messageRes
+                )
+            }
             return
         }
         val navController = findNavController()
