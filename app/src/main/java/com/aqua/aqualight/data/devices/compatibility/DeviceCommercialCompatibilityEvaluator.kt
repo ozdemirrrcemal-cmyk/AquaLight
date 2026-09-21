@@ -21,58 +21,62 @@ import com.aqua.aqualight.data.devices.model.SUPPORTED_DEVICE_API_VERSION
  */
 internal object DeviceCommercialCompatibilityEvaluator {
 
-    fun evaluate(snapshot: DeviceSnapshot): DeviceCommercialCompatibilityEvaluation {
-        if (!snapshot.hasValidatedRuntimeMetadata) {
-            return DeviceCommercialCompatibilityEvaluation.Incompatible(
-                DeviceCommercialCompatibilityIssue.RUNTIME_METADATA_UNAVAILABLE
-            )
-        }
+    fun evaluate(snapshot: DeviceSnapshot): DeviceCommercialCompatibilityEvaluation =
+        snapshot.initialCompatibilityIssue()
+            ?.let(DeviceCommercialCompatibilityEvaluation::Incompatible)
+            ?: evaluateCatalog(snapshot)
 
-        val apiVersion = snapshot.apiVersion.toIntOrNull()
-        if (apiVersion != SUPPORTED_DEVICE_API_VERSION) {
-            return DeviceCommercialCompatibilityEvaluation.Incompatible(
-                if (apiVersion != null && apiVersion > SUPPORTED_DEVICE_API_VERSION) {
-                    DeviceCommercialCompatibilityIssue.APPLICATION_UPDATE_REQUIRED
-                } else {
-                    DeviceCommercialCompatibilityIssue.BASE_CONTRACT_INCOMPATIBLE
-                }
-            )
-        }
-
-        val product = when (val validation = AqlCommercialDeviceCatalog.validateSnapshot(snapshot)) {
-            is AqlCommercialCatalogValidation.Valid -> validation.product
+    private fun evaluateCatalog(
+        snapshot: DeviceSnapshot
+    ): DeviceCommercialCompatibilityEvaluation =
+        when (val validation = AqlCommercialDeviceCatalog.validateSnapshot(snapshot)) {
+            is AqlCommercialCatalogValidation.Valid ->
+                evaluateProduct(snapshot, validation.product)
             is AqlCommercialCatalogValidation.Invalid ->
-                return DeviceCommercialCompatibilityEvaluation.Incompatible(
+                DeviceCommercialCompatibilityEvaluation.Incompatible(
                     DeviceCommercialCompatibilityIssue.COMMERCIAL_PRODUCT_MISMATCH
                 )
         }
 
+    private fun evaluateProduct(
+        snapshot: DeviceSnapshot,
+        product: AqlCommercialCatalogProduct
+    ): DeviceCommercialCompatibilityEvaluation {
         val features = snapshot.supportedFeatures
             .mapNotNull(AqlDeviceFeatureKey::fromWireExact)
             .toSet()
         val screens = snapshot.supportedScreens
             .mapNotNull(AqlDeviceScreenKey::fromWireExact)
             .toSet()
-
-        if (!DeviceFamilyBaseContractPolicy.isCompatible(product.family, features, screens)) {
-            return DeviceCommercialCompatibilityEvaluation.Incompatible(
+        return if (DeviceFamilyBaseContractPolicy.isCompatible(product.family, features, screens)) {
+            DeviceCommercialCompatibilityEvaluation.Compatible(
+                product = product,
+                features = features,
+                screens = screens,
+                menuFeatures = DeviceRootMenuFeatureResolver.resolve(product, features, screens),
+                allowedRoutes = DeviceRootRoutePolicy.allowedRoutes(
+                    product = product,
+                    features = features,
+                    screens = screens
+                )
+            )
+        } else {
+            DeviceCommercialCompatibilityEvaluation.Incompatible(
                 DeviceCommercialCompatibilityIssue.BASE_CONTRACT_INCOMPATIBLE
             )
         }
+    }
 
-        val menuFeatures = DeviceRootMenuFeatureResolver.resolve(product, features, screens)
-        val routes = DeviceRootRoutePolicy.allowedRoutes(
-            product = product,
-            features = features,
-            screens = screens
-        )
-        return DeviceCommercialCompatibilityEvaluation.Compatible(
-            product = product,
-            features = features,
-            screens = screens,
-            menuFeatures = menuFeatures,
-            allowedRoutes = routes
-        )
+    private fun DeviceSnapshot.initialCompatibilityIssue(): DeviceCommercialCompatibilityIssue? {
+        val apiVersion = apiVersion.toIntOrNull()
+        return when {
+            !hasValidatedRuntimeMetadata ->
+                DeviceCommercialCompatibilityIssue.RUNTIME_METADATA_UNAVAILABLE
+            apiVersion == SUPPORTED_DEVICE_API_VERSION -> null
+            apiVersion != null && apiVersion > SUPPORTED_DEVICE_API_VERSION ->
+                DeviceCommercialCompatibilityIssue.APPLICATION_UPDATE_REQUIRED
+            else -> DeviceCommercialCompatibilityIssue.BASE_CONTRACT_INCOMPATIBLE
+        }
     }
 }
 
@@ -107,26 +111,47 @@ private object DeviceFamilyBaseContractPolicy {
         family: DeviceFamily,
         features: Set<AqlDeviceFeatureKey>,
         screens: Set<AqlDeviceScreenKey>
-    ): Boolean = when (family) {
-        DeviceFamily.LIGHT ->
-            AqlDeviceFeatureKey.LIGHT_CONTROL in features &&
-                AqlDeviceScreenKey.OVERVIEW in screens &&
-                AqlDeviceScreenKey.LIGHT_CONTROL in screens &&
-                AqlDeviceScreenKey.LIGHT_CHANNELS in screens
-        DeviceFamily.TIMER ->
-            AqlDeviceFeatureKey.TIMER_CONTROL in features &&
-                AqlDeviceScreenKey.OVERVIEW in screens &&
-                AqlDeviceScreenKey.TIMER_CONTROL in screens &&
-                AqlDeviceScreenKey.TIMER_CHANNELS in screens
-        DeviceFamily.DOSING ->
-            AqlDeviceFeatureKey.DOSING_CONTROL in features &&
-                AqlDeviceScreenKey.OVERVIEW in screens &&
-                AqlDeviceScreenKey.DOSING_CONTROL in screens &&
-                AqlDeviceScreenKey.DOSING_CHANNELS in screens
-        DeviceFamily.COOLING ->
-            AqlDeviceFeatureKey.COOLING_CONTROL in features &&
-                AqlDeviceScreenKey.OVERVIEW in screens &&
-                AqlDeviceScreenKey.COOLING_CONTROL in screens
-        DeviceFamily.UNKNOWN -> false
-    }
+    ): Boolean = REQUIREMENTS[family]?.let { requirement ->
+        requirement.features.all(features::contains) &&
+            requirement.screens.all(screens::contains)
+    } ?: false
+
+    private data class Requirement(
+        val features: Set<AqlDeviceFeatureKey>,
+        val screens: Set<AqlDeviceScreenKey>
+    )
+
+    private val REQUIREMENTS = mapOf(
+        DeviceFamily.LIGHT to Requirement(
+            features = setOf(AqlDeviceFeatureKey.LIGHT_CONTROL),
+            screens = setOf(
+                AqlDeviceScreenKey.OVERVIEW,
+                AqlDeviceScreenKey.LIGHT_CONTROL,
+                AqlDeviceScreenKey.LIGHT_CHANNELS
+            )
+        ),
+        DeviceFamily.TIMER to Requirement(
+            features = setOf(AqlDeviceFeatureKey.TIMER_CONTROL),
+            screens = setOf(
+                AqlDeviceScreenKey.OVERVIEW,
+                AqlDeviceScreenKey.TIMER_CONTROL,
+                AqlDeviceScreenKey.TIMER_CHANNELS
+            )
+        ),
+        DeviceFamily.DOSING to Requirement(
+            features = setOf(AqlDeviceFeatureKey.DOSING_CONTROL),
+            screens = setOf(
+                AqlDeviceScreenKey.OVERVIEW,
+                AqlDeviceScreenKey.DOSING_CONTROL,
+                AqlDeviceScreenKey.DOSING_CHANNELS
+            )
+        ),
+        DeviceFamily.COOLING to Requirement(
+            features = setOf(AqlDeviceFeatureKey.COOLING_CONTROL),
+            screens = setOf(
+                AqlDeviceScreenKey.OVERVIEW,
+                AqlDeviceScreenKey.COOLING_CONTROL
+            )
+        )
+    )
 }
