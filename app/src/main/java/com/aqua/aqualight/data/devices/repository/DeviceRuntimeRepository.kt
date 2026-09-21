@@ -20,6 +20,7 @@ import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCompletionDispo
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeConnectionGeneration
 import com.aqua.aqualight.data.devices.runtime.events.DeviceRuntimeLifecycleEvent
 import com.aqua.aqualight.data.devices.runtime.modules.DeviceRuntimeModuleProvider
+import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeAccess
 import com.aqua.aqualight.data.devices.runtime.modules.time.DeviceTimeSyncCoordinator
 import com.aqua.aqualight.data.devices.runtime.modules.timer.DeviceTimerRuntimeAccess
 import com.aqua.aqualight.data.devices.runtime.ws.AqlPrivateLanEndpoint
@@ -248,6 +249,9 @@ class DeviceRuntimeRepository(
         revokeLocalCredential = ::revokeLocalCredentialAndSession,
         timerAccessProvider = { deviceUid ->
             currentTimerRuntimeAccess(metadataBootstrapCoordinator, deviceUid)
+        },
+        lightAccessProvider = { deviceUid ->
+            currentLightRuntimeAccess(metadataBootstrapCoordinator, deviceUid)
         },
         reconciliationScope = repositoryScope
     )
@@ -825,6 +829,14 @@ private fun currentTimerRuntimeAccess(
     metadataBootstrapCoordinator: DeviceRuntimeMetadataBootstrapCoordinator,
     deviceUid: DeviceUid
 ): DeviceTimerRuntimeAccess = DeviceTimerRuntimeAccess.from(
+    (metadataBootstrapCoordinator.currentState(deviceUid) as?
+        DeviceRuntimeMetadataGenerationState.Ready)?.metadata
+)
+
+private fun currentLightRuntimeAccess(
+    metadataBootstrapCoordinator: DeviceRuntimeMetadataBootstrapCoordinator,
+    deviceUid: DeviceUid
+): DeviceLightRuntimeAccess = DeviceLightRuntimeAccess.from(
     (metadataBootstrapCoordinator.currentState(deviceUid) as?
         DeviceRuntimeMetadataGenerationState.Ready)?.metadata
 )
