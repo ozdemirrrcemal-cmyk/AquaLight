@@ -73,6 +73,7 @@ internal class DeviceProvisioningPreparedNavigation(
             onSuccess = { resolved -> resolved.toProgressEvent(device) },
             onFailure = {
                 unavailableEvent(
+                    deviceUid = device.deviceUid,
                     title = device.title,
                     reason = DeviceMenuUnavailableReason.MALFORMED_DEVICE_STATE
                 )
@@ -93,16 +94,19 @@ internal class DeviceProvisioningPreparedNavigation(
             )
         }
         is DeviceMenuOpenResult.Unavailable -> unavailableEvent(
+            deviceUid = device.deviceUid,
             title = title.ifBlank { device.title },
             reason = reason
         )
     }
 
     private fun unavailableEvent(
+        deviceUid: String,
         title: String,
         reason: DeviceMenuUnavailableReason
     ): DeviceProvisioningProgressEvent.ShowAddedDeviceUnavailable =
         DeviceProvisioningProgressEvent.ShowAddedDeviceUnavailable(
+            deviceUid = deviceUid,
             title = title,
             reason = reason
         )
