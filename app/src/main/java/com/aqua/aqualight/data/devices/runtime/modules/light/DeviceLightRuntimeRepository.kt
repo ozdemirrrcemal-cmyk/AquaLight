@@ -11,13 +11,19 @@ import org.json.JSONObject
 /** One product-neutral Light V1 data source for WRGB Pro Elite and RGB Pro Slim. */
 class DeviceLightRuntimeRepository internal constructor(
     private val gateway: DeviceRuntimeCommandGateway,
-    internal val stateOwner: DeviceLightRuntimeStateOwner
+    internal val stateOwner: DeviceLightRuntimeStateOwner,
+    private val accessProvider: (DeviceUid) -> DeviceLightRuntimeAccess = {
+        DeviceLightRuntimeAccess.UNAVAILABLE
+    }
 ) {
     val states: StateFlow<Map<DeviceUid, DeviceLightStatus>> = stateOwner.statuses
     val stateRevision: StateFlow<Long> = stateOwner.stateRevision
 
     fun currentStatus(deviceUid: DeviceUid): DeviceLightStatus? =
         stateOwner.currentStatus(deviceUid, DeviceLightStatusReadAuthority.AUTHORITATIVE)
+
+    internal fun runtimeAccess(deviceUid: DeviceUid): DeviceLightRuntimeAccess =
+        accessProvider(deviceUid)
 
     internal fun beginGeneration(
         deviceUid: DeviceUid,
@@ -34,7 +40,13 @@ class DeviceLightRuntimeRepository internal constructor(
             deviceUid,
             lightCommand(
                 action = DeviceLightRuntimeContract.Action.STATUS_GET,
-                parser = DeviceLightStatusParser::parse
+                parser = { data ->
+                    DeviceLightStatusParser.parse(
+                        data = data,
+                        managedAutoPlanSupported =
+                            accessProvider(deviceUid).supportsManagedAutoPlan
+                    )
+                }
             )
         )
         if (outcome is DeviceRuntimeCommandOutcome.Success) {
