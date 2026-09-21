@@ -6,6 +6,7 @@ import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.application.devices.provisioning.ProvisionedDevice
 import com.aqua.aqualight.application.text.AppTextResolver
+import com.aqua.aqualight.ui.common.devicepresence.DeviceMenuUnavailableMessageMapper
 import java.util.concurrent.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -74,7 +75,7 @@ internal class DeviceProvisioningPreparedNavigation(
             onFailure = {
                 unavailableEvent(
                     title = device.title,
-                    reason = DeviceMenuUnavailableReason.MALFORMED_DEVICE_STATE
+                    reason = DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
                 )
             }
         )
@@ -104,7 +105,7 @@ internal class DeviceProvisioningPreparedNavigation(
     ): DeviceProvisioningProgressEvent.ShowAddedDeviceUnavailable =
         DeviceProvisioningProgressEvent.ShowAddedDeviceUnavailable(
             title = title,
-            reason = reason
+            messageRes = DeviceMenuUnavailableMessageMapper.messageRes(reason)
         )
 }
 
