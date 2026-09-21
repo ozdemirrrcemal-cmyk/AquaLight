@@ -157,7 +157,8 @@ def validate_production_cutover(repository_root: Path, source_root: Path) -> lis
             "DeviceDosingV1ProductionRuntime(",
             "SharedPreferencesDeviceDosingLowLevelAlertLedger.create(",
             "notificationDispatch = notificationDispatchUseCase",
-            "dosingOperations = createDosingOperations(dependencies)",
+            "dosing = createDosingOperations(dependencies)",
+            "dosingOperations = controls.dosing",
             "registerOwnerScopedResource",
         )
 
