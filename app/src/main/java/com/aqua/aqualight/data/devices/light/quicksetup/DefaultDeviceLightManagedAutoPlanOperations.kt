@@ -32,6 +32,7 @@ internal class DefaultDeviceLightManagedAutoPlanOperations(
     private val devicesRepository: DevicesRepository
 ) : DeviceLightManagedAutoPlanOperations {
 
+    @Suppress("ReturnCount")
     override fun observe(deviceUid: String): Flow<DeviceLightManagedPlanSnapshot?> {
         val uid = DeviceLightManagedPlanMapper.toUidOrNull(deviceUid) ?: return flowOf(null)
         val runtime = devicesRepository.runtimeModules()?.light ?: return flowOf(null)

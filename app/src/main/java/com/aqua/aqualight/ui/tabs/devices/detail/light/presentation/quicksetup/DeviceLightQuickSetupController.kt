@@ -20,6 +20,7 @@ internal class DeviceLightQuickSetupController(
     private val managedPlanOperations: DeviceLightManagedAutoPlanOperations,
     private val controlOperations: DeviceLightControlOperations
 ) {
+    @Suppress("ReturnCount")
     suspend fun load(deviceUid: String): DeviceLightQuickSetupLoadResult {
         val contextResult = contextOperations.readContext(deviceUid)
         if (contextResult !is DeviceLightQuickSetupContextResult.Available) {

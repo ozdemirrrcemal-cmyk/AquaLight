@@ -29,6 +29,7 @@ internal class DefaultDeviceLightQuickSetupContextOperations(
     private val devicesRepository: DevicesRepository
 ) : DeviceLightQuickSetupContextOperations {
 
+    @Suppress("ReturnCount")
     override suspend fun readContext(deviceUid: String): DeviceLightQuickSetupContextResult {
         val normalizedUid = deviceUid.trim()
         if (normalizedUid.isBlank()) return blocked(DeviceLightQuickSetupBlockReason.INVALID_DEVICE_UID)
@@ -144,6 +145,7 @@ internal class DefaultDeviceLightQuickSetupContextOperations(
         return digest.joinToString(separator = "") { byte -> "%02x".format(byte) }
     }
 
+    @Suppress("MagicNumber")
     private fun substrateRank(semantic: AquariumSubstrateSemantic): Int = when (semantic) {
         AquariumSubstrateSemantic.ACTIVE_SOIL -> 5
         AquariumSubstrateSemantic.NUTRIENT_BASE -> 4

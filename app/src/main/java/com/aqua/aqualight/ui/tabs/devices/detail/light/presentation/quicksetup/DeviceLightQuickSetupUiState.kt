@@ -60,6 +60,7 @@ internal sealed interface DeviceLightQuickSetupAction {
     data object DisablePlan : DeviceLightQuickSetupAction
 }
 
+@Suppress("ReturnCount")
 internal fun DeviceLightQuickSetupUiState.toInputOrNull(): DeviceLightQuickSetupInput? {
     val context = context ?: return null
     val water = waterHeightText.toIntOrNull() ?: return null
