@@ -3,6 +3,8 @@ package com.aqua.aqualight.data.devices.runtime.modules.firmware
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
+import com.aqua.aqualight.application.devices.DeviceFirmwareUpdatePolicy
+import com.aqua.aqualight.application.devices.DeviceFirmwareUpdatePolicyLevel
 import com.aqua.aqualight.application.devices.PreparedDeviceFirmwareUpdate
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import org.junit.Assert.assertEquals
@@ -88,6 +90,11 @@ class SharedPreferencesDeviceOtaTransactionStoreTest {
             changes = listOf("Rollback doğrulaması."),
             warnings = emptyList(),
             mandatory = false
-        )
+        ),
+        updatePolicy = DeviceFirmwareUpdatePolicy(
+            level = DeviceFirmwareUpdatePolicyLevel.FEATURE_REQUIRED,
+            requiredFeatures = setOf("DOSING_CALIBRATION")
+        ),
+        targetFeatures = setOf("DOSING_CONTROL", "DOSING_CALIBRATION", "OTA_UPDATE")
     )
 }
