@@ -16,6 +16,7 @@ import com.aqua.aqualight.application.devices.cooling.DeviceCoolingTemperatureHi
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlOperations
 import com.aqua.aqualight.application.devices.cooling.control.DeviceCoolingControlResult
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
+import com.aqua.aqualight.ui.common.devicepresence.toDeviceConnectionVisualState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingControlMode
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingDataState
 import com.aqua.aqualight.ui.tabs.devices.detail.cooling.presentation.common.CoolingMutationState
@@ -277,7 +278,7 @@ class DeviceCoolingRootViewModel(
     }
 
     private suspend fun finishUnavailablePreparation(
-        reason: DeviceMenuUnavailableReason = DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
+        reason: DeviceMenuUnavailableReason = DeviceMenuUnavailableReason.MALFORMED_DEVICE_STATE
     ) {
         _uiState.update { state -> state.copy(surfacePreparationPending = false) }
         surfaceUnavailableEventChannel.send(reason)
@@ -338,11 +339,7 @@ private fun DeviceRootSnapshot.toRootUiState(
     return previous.copy(
         title = title,
         deviceUid = deviceUid,
-        connectionVisualState = if (contentEnabled) {
-            DeviceConnectionVisualState.ONLINE
-        } else {
-            DeviceConnectionVisualState.OFFLINE
-        },
+        connectionVisualState = toDeviceConnectionVisualState(),
         contentEnabled = contentEnabled,
         fanOutputCount = fanOutputCount,
         temperatureSensorCount = temperatureSensorCount
