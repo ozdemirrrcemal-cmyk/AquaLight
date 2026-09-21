@@ -189,6 +189,14 @@ class DeviceFirmwareOtaMainParityTest {
                         .put("env", env)
                         .put("product", productJson())
                         .put("compatibility", compatibilityJson())
+                        .put("contracts", contractsJson())
+                        .put("features", JSONArray().put("DOSING_CONTROL").put("OTA_UPDATE"))
+                        .put(
+                            "updatePolicy",
+                            JSONObject()
+                                .put("level", "RECOMMENDED")
+                                .put("requiredFeatures", JSONArray())
+                        )
                         .put(
                             "firmware",
                             JSONObject()
@@ -243,6 +251,13 @@ class DeviceFirmwareOtaMainParityTest {
         .put("line", "dose_pro")
         .put("model", MODEL)
         .put("hardwareRevision", HARDWARE_REVISION)
+
+    private fun contractsJson(): JSONObject = JSONObject()
+        .put("wsSchema", "aql.ws.v1")
+        .put("wsProtocolVersion", 1)
+        .put("deviceApiVersion", 1)
+        .put("requiredDomains", JSONArray().put("aqualight.dosing.v1"))
+        .put("optionalDomains", JSONArray())
 
     private fun capabilitiesJson(): JSONObject = JSONObject()
         .put("light", false)
