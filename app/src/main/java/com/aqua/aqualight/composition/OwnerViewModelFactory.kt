@@ -247,7 +247,9 @@ internal class OwnerViewModelFactory(
                 contextOperations = graph.lightOperations.quickSetupContextOperations,
                 managedPlanOperations = graph.lightOperations.managedAutoPlanOperations,
                 controlOperations = graph.lightOperations.controlOperations,
-                calibration = graph.lightOperations.quickSetupCalibration
+                calibration = graph.lightOperations.quickSetupCalibration,
+                compatibilityOperations = graph.compatibilityOperations,
+                accessPolicy = graph.accessPolicy
             )
             DeviceLightLibraryViewModel::class.java -> DeviceLightLibraryViewModel(
                 operations = graph.lightOperations.libraryOperations,
