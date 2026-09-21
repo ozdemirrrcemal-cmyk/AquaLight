@@ -1,6 +1,6 @@
 package com.aqua.aqualight.ui.tabs.devices
 
-import androidx.annotation.StringRes
+import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRoute
 
 sealed class DevicesEvent {
@@ -10,7 +10,7 @@ sealed class DevicesEvent {
 
     data class ShowDeviceUnavailable(
         val title: String,
-        @StringRes val messageRes: Int
+        val reason: DeviceMenuUnavailableReason
     ) : DevicesEvent()
 
     data class ShowDeletePartialSuccess(
