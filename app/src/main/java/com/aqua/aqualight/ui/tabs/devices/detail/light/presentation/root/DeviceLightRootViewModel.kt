@@ -7,6 +7,7 @@ import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationReq
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationResult
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
+import com.aqua.aqualight.application.devices.DeviceRootMenuFeature
 import com.aqua.aqualight.application.devices.DeviceRootOperations
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
@@ -197,6 +198,8 @@ class DeviceLightRootViewModel(
             deviceUid = boundDeviceUid,
             connectionVisualState = root.toDeviceConnectionVisualState(),
             contentEnabled = surfaceAvailable && !surfacePreparationPending,
+            quickSetupAvailable =
+                DeviceRootMenuFeature.LIGHT_QUICK_SETUP in root?.menuFeatures.orEmpty(),
             // Match Dosing: a refresh blocks only a cold surface. A validated frame already on
             // screen remains visible until its complete replacement is atomically published.
             showBlockingPreparation = surfacePreparationPending && !controlAvailable,
@@ -276,6 +279,7 @@ data class DeviceLightRootUiState(
     val deviceUid: String = "",
     val connectionVisualState: DeviceConnectionVisualState = DeviceConnectionVisualState.OFFLINE,
     val contentEnabled: Boolean = false,
+    val quickSetupAvailable: Boolean = false,
     val showBlockingPreparation: Boolean = false,
     val activeAutomaticProgramId: String? = null,
     val hero: DeviceLightHeroSnapshot = DeviceLightHeroSnapshot(),
