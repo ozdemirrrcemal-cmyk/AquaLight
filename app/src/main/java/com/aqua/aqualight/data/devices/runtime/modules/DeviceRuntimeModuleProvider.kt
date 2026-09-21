@@ -28,6 +28,8 @@ import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeS
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTemperatureProtectionRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightThermalRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTypedEventReducer
+import com.aqua.aqualight.data.devices.runtime.modules.light.beginGeneration
+import com.aqua.aqualight.data.devices.runtime.modules.light.invalidate
 import com.aqua.aqualight.data.devices.runtime.modules.network.DeviceNetworkRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.security.DeviceSecurityRuntimeRepository
 import com.aqua.aqualight.data.devices.runtime.modules.time.DeviceTimeRuntimeRepository
