@@ -39,8 +39,9 @@ data class DeviceLimitSet(
 /**
  * Complete capability metadata received from `device.capabilities.get`.
  *
- * Feature and screen values are already exact typed keys. Unknown wire values cannot be represented
- * by this model and must be rejected by the parser before construction.
+ * Known feature and screen values are exact typed keys. The wire arrays are additive extension
+ * points: an older app ignores unknown tokens while fixed capability/limit objects stay strict.
+ * A feature can authorize a surface only after it is recognized by this app build.
  */
 data class DeviceRuntimeCapabilities(
     val capabilities: DeviceCapabilitySet,
