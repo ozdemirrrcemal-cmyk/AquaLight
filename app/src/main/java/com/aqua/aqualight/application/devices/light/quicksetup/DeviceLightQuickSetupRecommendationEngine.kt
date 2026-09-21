@@ -11,21 +11,31 @@ import com.aqua.aqualight.application.aquarium.AquariumPlantLightDemand
 class DeviceLightQuickSetupRecommendationEngine(
     private val calibration: DeviceLightFixtureCalibration
 ) {
-
     fun recommend(
         context: DeviceLightQuickSetupContext,
         input: DeviceLightQuickSetupInput
     ): DeviceLightQuickSetupRecommendationResult {
         val inputFailure = validateInput(context, input)
-        if (inputFailure != null) {
-            return DeviceLightQuickSetupRecommendationResult.Blocked(inputFailure)
-        }
         val plantProfile = DeviceLightQuickSetupPlantProfileResolver.resolve(context)
-            ?: return DeviceLightQuickSetupRecommendationResult.Blocked(
+        return when {
+            inputFailure != null -> blocked(inputFailure)
+            plantProfile == null -> blocked(
                 DeviceLightQuickSetupBlockReason.UNKNOWN_PLANT_CATALOG_ID
             )
+            else -> recommendValidated(context, input, plantProfile)
+        }
+    }
+
+    private fun recommendValidated(
+        context: DeviceLightQuickSetupContext,
+        input: DeviceLightQuickSetupInput,
+        plantProfile: DeviceLightQuickSetupPlantProfile
+    ): DeviceLightQuickSetupRecommendationResult {
         val requestedPpfd = requestedTargetPpfd(plantProfile.highestDemand)
-        val effectivePpfd = effectiveTargetPpfd(requestedPpfd, input.co2Readiness)
+        val targets = PpfdTargets(
+            requested = requestedPpfd,
+            effective = effectiveTargetPpfd(requestedPpfd, input.co2Readiness)
+        )
         val calibrationResult = calibration.solve(
             DeviceLightFixtureCalibrationRequest(
                 productKey = context.productKey,
@@ -33,41 +43,59 @@ class DeviceLightQuickSetupRecommendationEngine(
                 tankLengthCm = context.tankLengthCm,
                 waterHeightCm = input.waterHeightCm,
                 fixtureHeightAboveWaterCm = input.fixtureHeightAboveWaterCm,
-                targetPpfd = effectivePpfd,
+                targetPpfd = targets.effective,
                 channelKeys = context.channelKeys
             )
-        ) ?: return DeviceLightQuickSetupRecommendationResult.Blocked(
-            DeviceLightQuickSetupBlockReason.MISSING_CALIBRATION
         )
-        if (calibrationResult.coverageStatus == DeviceLightFixtureCoverageStatus.INSUFFICIENT) {
-            return DeviceLightQuickSetupRecommendationResult.Blocked(
-                DeviceLightQuickSetupBlockReason.INSUFFICIENT_FIXTURE_COVERAGE
+        val phases = calibrationResult?.let { result ->
+            buildPhases(
+                setupEpochDay = context.setupDateEpochDay,
+                firstLightOnMinuteOfDay = input.firstLightOnMinuteOfDay,
+                scene = result.channelScenePercent
             )
         }
+        return when {
+            calibrationResult == null -> blocked(
+                DeviceLightQuickSetupBlockReason.MISSING_CALIBRATION
+            )
+            calibrationResult.coverageStatus == DeviceLightFixtureCoverageStatus.INSUFFICIENT ->
+                blocked(DeviceLightQuickSetupBlockReason.INSUFFICIENT_FIXTURE_COVERAGE)
+            phases == null -> blocked(DeviceLightQuickSetupBlockReason.INVALID_INPUT)
+            else -> availableRecommendation(
+                context = context,
+                plantProfile = plantProfile,
+                targets = targets,
+                calibrationResult = calibrationResult,
+                phases = phases
+            )
+        }
+    }
 
-        val phases = buildPhases(
-            setupEpochDay = context.setupDateEpochDay,
-            firstLightOnMinuteOfDay = input.firstLightOnMinuteOfDay,
-            scene = calibrationResult.channelScenePercent
-        ) ?: return DeviceLightQuickSetupRecommendationResult.Blocked(
-            DeviceLightQuickSetupBlockReason.INVALID_INPUT
-        )
-
-        return DeviceLightQuickSetupRecommendationResult.Available(
+    private fun availableRecommendation(
+        context: DeviceLightQuickSetupContext,
+        plantProfile: DeviceLightQuickSetupPlantProfile,
+        targets: PpfdTargets,
+        calibrationResult: DeviceLightFixtureCalibrationResult,
+        phases: List<DeviceLightQuickSetupPhase>
+    ): DeviceLightQuickSetupRecommendationResult.Available =
+        DeviceLightQuickSetupRecommendationResult.Available(
             DeviceLightQuickSetupRecommendation(
                 contextFingerprint = context.profileFingerprint,
                 algorithmRevision = DeviceLightQuickSetupEvidence.ALGORITHM_REVISION,
                 plantProfile = plantProfile,
-                requestedTargetPpfd = requestedPpfd,
-                effectiveTargetPpfd = effectivePpfd,
-                co2Limited = effectivePpfd < requestedPpfd,
+                requestedTargetPpfd = targets.requested,
+                effectiveTargetPpfd = targets.effective,
+                co2Limited = targets.effective < targets.requested,
                 calibration = calibrationResult,
                 initialStartPercent = calibrationResult.initialStartPercent,
                 phases = phases,
                 evidenceIds = evidenceIds(context)
             )
         )
-    }
+
+    private fun blocked(
+        reason: DeviceLightQuickSetupBlockReason
+    ) = DeviceLightQuickSetupRecommendationResult.Blocked(reason)
 
     private fun validateInput(
         context: DeviceLightQuickSetupContext,
@@ -132,6 +160,11 @@ class DeviceLightQuickSetupRecommendationEngine(
         add(DeviceLightQuickSetupEvidence.TWO_HR_PAR_BANDS)
         if (context.co2Present) add(DeviceLightQuickSetupEvidence.TWO_HR_CO2_PRECHARGE)
     }
+
+    private data class PpfdTargets(
+        val requested: Int,
+        val effective: Int
+    )
 
     private data class PhaseSpec(
         val startDayOffset: Int,
