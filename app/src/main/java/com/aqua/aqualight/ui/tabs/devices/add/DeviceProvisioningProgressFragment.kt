@@ -133,25 +133,17 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
                         }
                         is DeviceProvisioningProgressEvent.ShowAddedDeviceUnavailable -> {
                             val feedback = DeviceMenuUnavailableMessageMapper.feedback(event.reason)
+                            DeviceAccessFeedbackPresenter.show(
+                                fragment = this@DeviceProvisioningProgressFragment,
+                                deviceUid = event.deviceUid,
+                                deviceTitle = event.title,
+                                reason = event.reason
+                            )
                             if (
-                                feedback.action ==
+                                feedback.action !=
                                 DeviceAccessFeedbackAction.OPEN_FIRMWARE_UPDATE
                             ) {
-                                DeviceAccessFeedbackPresenter.show(
-                                    fragment = this@DeviceProvisioningProgressFragment,
-                                    deviceUid = event.deviceUid,
-                                    deviceTitle = event.title,
-                                    reason = event.reason
-                                )
-                            } else {
-                                val baseActivity = activity as? BaseActivity
-                                val navController = findNavController()
-                                navController.popBackStack(R.id.devicesFragment, false)
-                                baseActivity?.showDeviceAccessDialog(
-                                    deviceTitle = event.title,
-                                    titleRes = feedback.titleRes,
-                                    messageRes = feedback.messageRes
-                                )
+                                findNavController().popBackStack(R.id.devicesFragment, false)
                             }
                         }
                         DeviceProvisioningProgressEvent.ExitProvisioning -> {
