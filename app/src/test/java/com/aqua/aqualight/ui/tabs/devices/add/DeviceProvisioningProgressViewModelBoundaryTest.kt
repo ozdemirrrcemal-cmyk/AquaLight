@@ -185,7 +185,11 @@ class DeviceProvisioningProgressViewModelBoundaryTest {
 
         assertEquals(1, operations.commitCalls)
         assertEquals(1, surfacePreparation.prepareCalls)
-        assertEquals(R.string.device_menu_offline_message, event.messageRes)
+        assertEquals("device-1", event.deviceUid)
+        assertEquals(
+            DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN,
+            event.reason
+        )
         assertFalse(viewModel.uiState.value.showProgress)
     }
 
