@@ -14,6 +14,7 @@ FIRMWARE_ADAPTER = SOURCE / "data/devices/DefaultDeviceFirmwareUpdateOperations.
 OTA_COORDINATOR = SOURCE / "data/devices/runtime/modules/firmware/DeviceOtaCoordinator.kt"
 OTA_VALIDATION = SOURCE / "data/devices/runtime/modules/firmware/DeviceOtaValidation.kt"
 MAPPING = SOURCE / "data/devices/DeviceRootSnapshotMapping.kt"
+COMPATIBILITY = SOURCE / "data/devices/compatibility/DeviceCommercialCompatibilityEvaluator.kt"
 CAPABILITY_MAPPING = SOURCE / "data/devices/DeviceRootCapabilityMapping.kt"
 MENU_RESOLVER = SOURCE / "data/devices/DeviceRootMenuFeatureResolver.kt"
 ROUTE_POLICY = SOURCE / "data/devices/DeviceRootRoutePolicy.kt"
@@ -50,6 +51,7 @@ firmware_adapter = read(FIRMWARE_ADAPTER)
 ota_coordinator = read(OTA_COORDINATOR)
 ota_validation = read(OTA_VALIDATION)
 mapping = read(MAPPING)
+compatibility = read(COMPATIBILITY)
 capability_mapping = read(CAPABILITY_MAPPING)
 menu_resolver = read(MENU_RESOLVER)
 route_policy = read(ROUTE_POLICY)
@@ -159,12 +161,24 @@ for token in (
 
 for token in (
     "fun DeviceSnapshot.toDeviceRootSnapshot",
-    "AqlCommercialDeviceCatalog.validateSnapshot(this)",
-    "DeviceRootMenuFeatureResolver.resolve(product)",
-    "DeviceRootRoutePolicy.allowedRoutes(product)",
+    "DeviceCommercialCompatibilityEvaluator.evaluate(this)",
+    "DeviceCommercialCompatibilityEvaluation.Compatible",
+    "compatibility.menuFeatures",
+    "compatibility.allowedRoutes",
 ):
     if token not in mapping:
         errors.append(f"{MAPPING.relative_to(ROOT)}: root mapping token is missing: {token}")
+
+for token in (
+    "AqlCommercialDeviceCatalog.validateSnapshot(snapshot)",
+    "DeviceRootMenuFeatureResolver.resolve(product, features, screens)",
+    "DeviceRootRoutePolicy.allowedRoutes(product, features, screens)",
+    "DeviceFamilyBaseContractPolicy.isCompatible",
+):
+    if token not in compatibility:
+        errors.append(
+            f"{COMPATIBILITY.relative_to(ROOT)}: central compatibility token is missing: {token}"
+        )
 
 for token in (
     "fun DeviceCapabilitySet.toRootCapabilities",
