@@ -1,6 +1,6 @@
 // GENERATED FILE. DO NOT EDIT.
 // Source: protocol/fixtures/aql_product_catalog_v1.json
-// Source firmware commit: 7df97ce807ebb1e90ff63cc36206d6ce479a62fc
+// Source firmware commit: ae33ed602a48f85f4c9b030442d53cab7d658c84
 
 package com.aqua.aqualight.data.devices.catalog
 
@@ -37,6 +37,7 @@ private val PROFILE_LIGHT_WRGB_PRO_ELITE = AqlCommercialCatalogProfile(
         AqlDeviceFeatureKey.LAN_DISCOVERY,
         AqlDeviceFeatureKey.LIGHT_CONTROL,
         AqlDeviceFeatureKey.LIGHT_QUICK_SETUP,
+        AqlDeviceFeatureKey.LIGHT_MANAGED_AUTO_PLAN,
         AqlDeviceFeatureKey.LIGHT_PRESETS,
         AqlDeviceFeatureKey.LIGHT_ACCLIMATION,
         AqlDeviceFeatureKey.LIGHT_TEMPERATURE_PROTECTION,
