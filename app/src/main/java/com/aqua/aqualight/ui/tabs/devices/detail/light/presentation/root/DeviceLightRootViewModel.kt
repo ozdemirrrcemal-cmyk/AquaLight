@@ -2,12 +2,17 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aqua.aqualight.application.devices.DefaultDeviceAccessPolicy
+import com.aqua.aqualight.application.devices.DeviceAccessDecision
+import com.aqua.aqualight.application.devices.DeviceAccessPolicy
+import com.aqua.aqualight.application.devices.DeviceCompatibilityOperations
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationRequest
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationResult
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootOperations
+import com.aqua.aqualight.application.devices.DeviceRootMenuFeature
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
@@ -38,7 +43,9 @@ import kotlinx.coroutines.launch
 class DeviceLightRootViewModel(
     private val rootOperations: DeviceRootOperations,
     private val lightControlOperations: DeviceLightControlOperations,
-    private val controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations
+    private val controlSurfacePreparationOperations: DeviceControlSurfacePreparationOperations,
+    private val compatibilityOperations: DeviceCompatibilityOperations? = null,
+    private val accessPolicy: DeviceAccessPolicy = DefaultDeviceAccessPolicy
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DeviceLightRootUiState())
@@ -127,7 +134,7 @@ class DeviceLightRootViewModel(
                 )
             }.getOrElse {
                 DeviceControlSurfacePreparationResult.Unavailable(
-                    DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
+                    DeviceMenuUnavailableReason.MALFORMED_DEVICE_STATE
                 )
             }
             if (boundDeviceUid != deviceUid) return@launch
@@ -150,7 +157,7 @@ class DeviceLightRootViewModel(
         acceptControlResult(current)
         when (current) {
             is DeviceLightControlResult.Failed -> finishUnavailablePreparation(
-                DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
+                DeviceMenuUnavailableReason.MALFORMED_DEVICE_STATE
             )
             is DeviceLightControlResult.Available -> {
                 if (current.snapshot.matchesLightControlSurface(deviceUid, latestRootSnapshot)) {
@@ -223,6 +230,23 @@ class DeviceLightRootViewModel(
         surfacePreparationPending = false
         modeChangeJob = null
         _uiState.value = DeviceLightRootUiState()
+    }
+
+    fun quickSetupUnavailableReason(): DeviceMenuUnavailableReason? {
+        val deviceUid = boundDeviceUid
+        val compatibility = compatibilityOperations
+            ?.takeIf { deviceUid.isNotBlank() }
+            ?.current(deviceUid)
+            ?: return null
+        return when (
+            val decision = accessPolicy.evaluateFeature(
+                compatibility = compatibility,
+                feature = DeviceRootMenuFeature.LIGHT_QUICK_SETUP
+            )
+        ) {
+            DeviceAccessDecision.Allowed -> null
+            is DeviceAccessDecision.Blocked -> decision.reason
+        }
     }
 
     fun setMode(mode: DeviceLightControlMode) {
