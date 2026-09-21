@@ -8,6 +8,7 @@ import com.aqua.aqualight.application.devices.DeviceAccessPolicy
 import com.aqua.aqualight.application.devices.DeviceCompatibilityOperations
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
+import com.aqua.aqualight.application.devices.DeviceOtaState
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingCardOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationDraftOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationOperations
@@ -251,15 +252,21 @@ internal class ActiveOwnerDependencyGraphResolver(
             assignmentRepository = dependencies.assignmentRepository,
             aquariumTankStore = aquariumTankStore
         )
+        val firmwareUpdateOperations = createFirmwareUpdateOperations(dependencies)
         val compatibilityOperations = DefaultDeviceCompatibilityOperations(
-            dependencies.devicesRepository
+            devicesRepository = dependencies.devicesRepository,
+            updatePolicyProvider = { deviceUid ->
+                (firmwareUpdateOperations.observe(deviceUid).value as? DeviceOtaState.UpdateAvailable)
+                    ?.plan
+                    ?.updatePolicy
+            }
         )
         val accessPolicy: DeviceAccessPolicy = DefaultDeviceAccessPolicy
         return OwnerDependencyGraph(
             ownerUid = dependencies.ownerUid,
             sessionGeneration = dependencies.sessionGeneration,
             devicesRepository = dependencies.devicesRepository,
-            firmwareUpdateOperations = createFirmwareUpdateOperations(dependencies),
+            firmwareUpdateOperations = firmwareUpdateOperations,
             deviceFirmwareNotifications = deviceFirmwareNotifications,
             assignmentRepository = dependencies.assignmentRepository,
             aquariumTankStore = aquariumTankStore,
