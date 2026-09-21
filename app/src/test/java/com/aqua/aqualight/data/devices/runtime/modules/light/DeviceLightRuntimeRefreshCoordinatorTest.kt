@@ -90,7 +90,11 @@ class DeviceLightRuntimeRefreshCoordinatorTest {
         val gateway = FixtureGateway(generation, statusGate, managedPlanInstalled)
         val owner = DeviceLightRuntimeStateOwner()
         owner.beginGeneration(deviceUid, generation)
-        val runtime = DeviceLightRuntimeRepository(gateway, owner)
+        val runtime = DeviceLightRuntimeRepository(
+            gateway = gateway,
+            stateOwner = owner,
+            accessProvider = { MANAGED_LIGHT_ACCESS }
+        )
         return RefreshFixture(
             gateway = gateway,
             owner = owner,
@@ -160,6 +164,10 @@ class DeviceLightRuntimeRefreshCoordinatorTest {
     }
 
     private companion object {
+        val MANAGED_LIGHT_ACCESS = DeviceLightRuntimeAccess(
+            supportsApi = true,
+            supportsManagedAutoPlan = true
+        )
         val deviceUid = DeviceUid("central-light-refresh")
         val generationOne = DeviceRuntimeConnectionGeneration(1L)
         val generationTwo = DeviceRuntimeConnectionGeneration(2L)
