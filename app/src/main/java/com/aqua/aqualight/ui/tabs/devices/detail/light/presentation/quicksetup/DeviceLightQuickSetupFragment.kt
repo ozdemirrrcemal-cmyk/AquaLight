@@ -6,14 +6,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceLightQuickSetupBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import kotlinx.coroutines.launch
 
 class DeviceLightQuickSetupFragment : Fragment(R.layout.fragment_device_light_quick_setup) {
 
@@ -50,7 +55,26 @@ class DeviceLightQuickSetupFragment : Fragment(R.layout.fragment_device_light_qu
             }
         }
 
+        observeAccessFailures()
         viewModel.bind(args.deviceUid)
+    }
+
+    private fun observeAccessFailures() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.accessFailures.collect { reason ->
+                    if (_binding == null) return@collect
+                    (activity as? BaseActivity)?.showDeviceAccessDialog(
+                        deviceTitle = getString(R.string.device_family_light),
+                        reason = reason
+                    )
+                    val navController = findNavController()
+                    if (navController.currentDestination?.id == R.id.deviceLightQuickSetupFragment) {
+                        navController.navigateUp()
+                    }
+                }
+            }
+        }
     }
 
     private fun finishQuickSetup() {
