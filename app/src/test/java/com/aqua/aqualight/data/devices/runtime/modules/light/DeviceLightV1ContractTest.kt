@@ -391,6 +391,26 @@ class DeviceLightV1ContractTest {
     }
 
     @Test
+    fun `managed plan command is rejected locally when capability is absent`() = runBlocking {
+        val gateway = RejectingGateway()
+        val repository = DeviceLightRuntimeRepository(
+            gateway = gateway,
+            stateOwner = DeviceLightRuntimeStateOwner(),
+            accessProvider = {
+                DeviceLightRuntimeAccess(
+                    supportsApi = true,
+                    supportsManagedAutoPlan = false
+                )
+            }
+        )
+
+        val result = repository.requestManagedAutoPlan(DEVICE_UID)
+
+        assertTrue(result is DeviceRuntimeCommandOutcome.UnsupportedByDevice)
+        assertEquals(0, gateway.calls)
+    }
+
+    @Test
     fun `structured Light firmware errors retain every contract field`() {
         val error = DeviceRuntimeCommandOutcome.FirmwareError(
             deviceUid = DEVICE_UID,
