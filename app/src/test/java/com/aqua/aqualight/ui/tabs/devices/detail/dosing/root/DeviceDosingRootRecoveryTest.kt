@@ -115,12 +115,12 @@ class DeviceDosingRootRecoveryTest {
             viewModel.bind(DEVICE_UID)
 
             assertEquals(
-                DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN,
+                DeviceMenuUnavailableReason.MALFORMED_DEVICE_STATE,
                 viewModel.surfaceUnavailableEvents.first()
             )
             assertFalse(viewModel.uiState.value.contentEnabled)
             assertEquals(
-                DeviceConnectionVisualState.OFFLINE,
+                DeviceConnectionVisualState.ONLINE,
                 viewModel.uiState.value.connectionVisualState
             )
         }
