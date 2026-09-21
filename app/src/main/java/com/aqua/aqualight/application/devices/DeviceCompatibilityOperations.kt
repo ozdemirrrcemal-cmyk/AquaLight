@@ -39,6 +39,7 @@ enum class DeviceCompatibilityStatus {
     RUNTIME_METADATA_UNAVAILABLE,
     COMMERCIAL_PRODUCT_MISMATCH,
     BASE_CONTRACT_INCOMPATIBLE,
+    FIRMWARE_UPDATE_REQUIRED,
     APPLICATION_UPDATE_REQUIRED
 }
 
@@ -96,6 +97,9 @@ object DefaultDeviceAccessPolicy : DeviceAccessPolicy {
         )
         DeviceCompatibilityStatus.BASE_CONTRACT_INCOMPATIBLE -> DeviceAccessDecision.Blocked(
             DeviceMenuUnavailableReason.CONTRACT_INCOMPATIBLE
+        )
+        DeviceCompatibilityStatus.FIRMWARE_UPDATE_REQUIRED -> DeviceAccessDecision.Blocked(
+            DeviceMenuUnavailableReason.FIRMWARE_UPDATE_REQUIRED
         )
         DeviceCompatibilityStatus.APPLICATION_UPDATE_REQUIRED -> DeviceAccessDecision.Blocked(
             DeviceMenuUnavailableReason.APPLICATION_UPDATE_REQUIRED
