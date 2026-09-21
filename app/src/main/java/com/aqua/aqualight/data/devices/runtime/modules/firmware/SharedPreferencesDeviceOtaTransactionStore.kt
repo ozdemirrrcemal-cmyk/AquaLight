@@ -165,7 +165,7 @@ internal class SharedPreferencesDeviceOtaTransactionStore private constructor(
             .put(FIELD_POLICY_REQUIRED_FEATURES, JSONArray(policy.requiredFeatures.sorted()))
 
     private fun decodeUpdatePolicy(json: JSONObject): DeviceFirmwareUpdatePolicy {
-        require(json.keySet() == UPDATE_POLICY_KEYS) {
+        require(json.keys().asSequence().toSet() == UPDATE_POLICY_KEYS) {
             "OTA transaction update policy keys differ from the journal contract."
         }
         val level = DeviceFirmwareUpdatePolicyLevel.valueOf(
