@@ -3,7 +3,7 @@
   "schema": "aql.android-firmware.interoperability.v1",
   "firmware": {
     "repository": "ozdemirrrcemal-cmyk/AquaLight-Firmware",
-    "commit": "99aca74d3c2ae99e85584893822c0a63fe50bcd8",
+    "commit": "ae33ed602a48f85f4c9b030442d53cab7d658c84",
     "commandNames": {
       "path": "src/api/v1/commands/AqlCommandNames.hpp",
       "blobSha": "a4a05ae219e449b42de2654c38b55d65804c91b0"
@@ -83,8 +83,8 @@
       "byteIdenticalWithFirmware": false
     },
     "aql_product_catalog_v1.json": {
-      "sha256": "c0061ae2074ab249777d8682412bba22be9920992c8565d8e0c1d11f29000aa4",
-      "firmwareExportCommit": "7df97ce807ebb1e90ff63cc36206d6ce479a62fc",
+      "sha256": "ea21c0cce9dec4a30aeacb4f9d411c0ea8cd3c2c930f833f3e98a999e9f3c906",
+      "firmwareExportCommit": "ae33ed602a48f85f4c9b030442d53cab7d658c84",
       "byteIdenticalWithFirmware": false
     }
   },
