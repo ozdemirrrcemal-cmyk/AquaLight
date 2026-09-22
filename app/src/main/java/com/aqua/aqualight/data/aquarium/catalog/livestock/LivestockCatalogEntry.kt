@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.aquarium.catalog.livestock
 
 import android.content.Context
 import androidx.core.os.ConfigurationCompat
+import com.aqua.aqualight.application.aquarium.LivestockWaterRequirements
 
 data class LivestockCatalogEntry(
     val id: String,
