@@ -102,20 +102,18 @@ class AqlCommercialDeviceCatalogTest {
     }
 
     @Test
-    fun `unknown snapshot feature withdraws root family menus and routes`() {
+    fun `unknown additive snapshot feature does not invalidate product identity or base routes`() {
         val snapshot = product("DOSING_DOSE_PRO_2").toSnapshot().copy(
-            supportedFeatures = listOf("DOSING_CONTROL", "LEGACY_DOSING_ALIAS")
+            supportedFeatures = listOf("DOSING_CONTROL", "FUTURE_DOSING_CAPABILITY")
         )
 
         val root = snapshot.toDeviceRootSnapshot()
 
-        assertEquals(DeviceRootCatalogState.INVALID, root.catalogState)
-        assertEquals(OwnerDeviceFamily.UNKNOWN, root.family)
-        assertTrue(root.menuFeatures.isEmpty())
-        assertTrue(root.allowedRoutes.isEmpty())
-        assertTrue(root.capabilities.isEmpty())
-        assertEquals("", root.productKey)
-        assertEquals("", root.firmwareLabel)
+        assertEquals(DeviceRootCatalogState.VALID, root.catalogState)
+        assertEquals(OwnerDeviceFamily.DOSING, root.family)
+        assertTrue(root.menuFeatures.isNotEmpty())
+        assertTrue(root.allowedRoutes.isNotEmpty())
+        assertEquals("DOSING_DOSE_PRO_2", root.productKey)
     }
 
     private fun product(productKey: String): AqlCommercialCatalogProduct =
