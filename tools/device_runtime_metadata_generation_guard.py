@@ -222,10 +222,14 @@ require_tokens(
         "metadataBootstrapCoordinator.process(deviceUid, response)",
         "AqlCommercialDeviceCatalog.validate(state.metadata)",
         "CATALOG_VALIDATION_FAILED",
-        "disconnectMetadataFailure",
-        "METADATA_BOOTSTRAP_FAILED_REASON",
+        "enterMaintenanceOnlyMode",
+        "runtimeModules.invalidateRuntimeAuthority",
         "metadataBootstrapCoordinator.beginAndDispatch",
     ),
+)
+require(
+    "disconnectMetadataFailure" not in sources["runtime"],
+    "domain metadata rejection must not disconnect the authenticated maintenance plane",
 )
 for forbidden in (
     "securityStatus(",
