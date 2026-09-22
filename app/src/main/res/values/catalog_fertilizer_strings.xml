@@ -1,0 +1,753 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Fertilizer catalog brand names. -->
+    <string name="catalog_fertilizer_brand_2hr_aquarist" translatable="false">2Hr Aquarist</string>
+    <string name="catalog_fertilizer_brand_ada" translatable="false">ADA</string>
+    <string name="catalog_fertilizer_brand_green_aqua" translatable="false">Green Aqua</string>
+    <string name="catalog_fertilizer_brand_seachem" translatable="false">Seachem</string>
+    <string name="catalog_fertilizer_brand_tropica" translatable="false">Tropica</string>
+    <string name="catalog_fertilizer_brand_dennerle_plants" translatable="false">Dennerle Plants</string>
+    <string name="catalog_fertilizer_brand_dennerle" translatable="false">Dennerle</string>
+    <string name="catalog_fertilizer_brand_jbl" translatable="false">JBL</string>
+    <string name="catalog_fertilizer_brand_sera" translatable="false">Sera</string>
+    <string name="catalog_fertilizer_brand_easy_life" translatable="false">Easy-Life</string>
+    <string name="catalog_fertilizer_brand_masterline" translatable="false">MasterLine</string>
+    <string name="catalog_fertilizer_brand_aqua_rebell" translatable="false">Aqua Rebell</string>
+    <string name="catalog_fertilizer_brand_aquaforest" translatable="false">Aquaforest</string>
+    <string name="catalog_fertilizer_brand_aquario_neo" translatable="false">AQUARIO / NEO</string>
+    <string name="catalog_fertilizer_brand_brightwell_aquatics" translatable="false">Brightwell Aquatics</string>
+    <string name="catalog_fertilizer_brand_api" translatable="false">API</string>
+    <string name="catalog_fertilizer_brand_fluval" translatable="false">Fluval</string>
+    <string name="catalog_fertilizer_brand_aquarium_co_op" translatable="false">Aquarium Co-Op</string>
+    <string name="catalog_fertilizer_brand_nilocg" translatable="false">NilocG</string>
+    <string name="catalog_fertilizer_brand_green_leaf_aquariums_gla" translatable="false">Green Leaf Aquariums (GLA)</string>
+    <string name="catalog_fertilizer_brand_tetra" translatable="false">Tetra</string>
+    <string name="catalog_fertilizer_brand_dupla" translatable="false">Dupla</string>
+    <string name="catalog_fertilizer_brand_oase" translatable="false">Oase</string>
+    <string name="catalog_fertilizer_brand_vimi" translatable="false">VIMI</string>
+    <string name="catalog_fertilizer_brand_colombo" translatable="false">Colombo</string>
+    <string name="catalog_fertilizer_brand_ista" translatable="false">ISTA</string>
+    <string name="catalog_fertilizer_brand_tropical" translatable="false">Tropical</string>
+    <string name="catalog_fertilizer_brand_prodibio" translatable="false">Prodibio</string>
+    <string name="catalog_fertilizer_brand_ultum_nature_systems_uns" translatable="false">Ultum Nature Systems (UNS)</string>
+    <string name="catalog_fertilizer_brand_yokuchi" translatable="false">Yokuchi</string>
+    <string name="catalog_fertilizer_brand_aqua_art" translatable="false">Aqua Art</string>
+    <string name="catalog_fertilizer_brand_azoo" translatable="false">AZOO</string>
+    <string name="catalog_fertilizer_brand_microbe_lift" translatable="false">Microbe-Lift</string>
+    <string name="catalog_fertilizer_brand_reeflowers" translatable="false">ReeFlowers</string>
+    <string name="catalog_fertilizer_brand_nixa" translatable="false">NIXA</string>
+    <string name="catalog_fertilizer_brand_creaqua" translatable="false">Creaqua</string>
+    <string name="catalog_fertilizer_brand_crystalpro" translatable="false">Crystalpro</string>
+    <string name="catalog_fertilizer_brand_deep_fix" translatable="false">Deep Fix</string>
+    <string name="catalog_fertilizer_brand_aquamins" translatable="false">Aquamins</string>
+    <string name="catalog_fertilizer_brand_badem_akvaryum" translatable="false">Badem Akvaryum</string>
+    <string name="catalog_fertilizer_brand_sakura_akvaryum" translatable="false">Sakura Akvaryum</string>
+    <string name="catalog_fertilizer_brand_lab_formula" translatable="false">Lab Formula</string>
+    <string name="catalog_fertilizer_brand_ocean_nutrition" translatable="false">Ocean Nutrition</string>
+
+    <!-- Current fertilizer product/SKU names imported from the verified catalog. -->
+    <string name="catalog_material_fertilizer_0001_name" translatable="false">2Hr Aquarist APT 1 / Zero - 100 ml</string>
+    <string name="catalog_material_fertilizer_0002_name" translatable="false">2Hr Aquarist APT 1 / Zero - 200 ml</string>
+    <string name="catalog_material_fertilizer_0003_name" translatable="false">2Hr Aquarist APT 1 / Zero - 300 ml</string>
+    <string name="catalog_material_fertilizer_0004_name" translatable="false">2Hr Aquarist APT 1 / Zero - 500 ml</string>
+    <string name="catalog_material_fertilizer_0005_name" translatable="false">2Hr Aquarist APT 1 / Zero - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0006_name" translatable="false">2Hr Aquarist APT 3 / Complete - 100 ml</string>
+    <string name="catalog_material_fertilizer_0007_name" translatable="false">2Hr Aquarist APT 3 / Complete - 200 ml</string>
+    <string name="catalog_material_fertilizer_0008_name" translatable="false">2Hr Aquarist APT 3 / Complete - 300 ml</string>
+    <string name="catalog_material_fertilizer_0009_name" translatable="false">2Hr Aquarist APT 3 / Complete - 500 ml</string>
+    <string name="catalog_material_fertilizer_0010_name" translatable="false">2Hr Aquarist APT 3 / Complete - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0011_name" translatable="false">2Hr Aquarist APT e / Estimative Index - 100 ml</string>
+    <string name="catalog_material_fertilizer_0012_name" translatable="false">2Hr Aquarist APT e / Estimative Index - 200 ml</string>
+    <string name="catalog_material_fertilizer_0013_name" translatable="false">2Hr Aquarist APT e / Estimative Index - 300 ml</string>
+    <string name="catalog_material_fertilizer_0014_name" translatable="false">2Hr Aquarist APT e / Estimative Index - 500 ml</string>
+    <string name="catalog_material_fertilizer_0015_name" translatable="false">2Hr Aquarist APT e / Estimative Index - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0016_name" translatable="false">2Hr Aquarist APT Dew - 100 ml</string>
+    <string name="catalog_material_fertilizer_0017_name" translatable="false">2Hr Aquarist APT Dew - 300 ml</string>
+    <string name="catalog_material_fertilizer_0018_name" translatable="false">2Hr Aquarist APT Jazz - 18 caps</string>
+    <string name="catalog_material_fertilizer_0019_name" translatable="false">2Hr Aquarist APT Start - 45 g</string>
+    <string name="catalog_material_fertilizer_0020_name" translatable="false">2Hr Aquarist APT SKY - 150 g</string>
+    <string name="catalog_material_fertilizer_0021_name" translatable="false">2Hr Aquarist APT SKY Plus - 150 g</string>
+    <string name="catalog_material_fertilizer_0022_name" translatable="false">ADA Green Brighty Neutral K - 180 ml</string>
+    <string name="catalog_material_fertilizer_0023_name" translatable="false">ADA Green Brighty Neutral K - 300 ml</string>
+    <string name="catalog_material_fertilizer_0024_name" translatable="false">ADA Green Brighty Neutral K - 5000 ml</string>
+    <string name="catalog_material_fertilizer_0025_name" translatable="false">ADA Brighty K - 180 ml</string>
+    <string name="catalog_material_fertilizer_0026_name" translatable="false">ADA Brighty K - 300 ml</string>
+    <string name="catalog_material_fertilizer_0027_name" translatable="false">ADA Brighty K - 5000 ml</string>
+    <string name="catalog_material_fertilizer_0028_name" translatable="false">ADA Green Brighty Nitrogen - 180 ml</string>
+    <string name="catalog_material_fertilizer_0029_name" translatable="false">ADA Green Brighty Nitrogen - 300 ml</string>
+    <string name="catalog_material_fertilizer_0030_name" translatable="false">ADA Green Brighty Nitrogen - 5000 ml</string>
+    <string name="catalog_material_fertilizer_0031_name" translatable="false">ADA Green Brighty Mineral - 180 ml</string>
+    <string name="catalog_material_fertilizer_0032_name" translatable="false">ADA Green Brighty Mineral - 300 ml</string>
+    <string name="catalog_material_fertilizer_0033_name" translatable="false">ADA Green Brighty Mineral - 5000 ml</string>
+    <string name="catalog_material_fertilizer_0034_name" translatable="false">ADA Green Brighty Iron - 180 ml</string>
+    <string name="catalog_material_fertilizer_0035_name" translatable="false">ADA Green Brighty Iron - 300 ml</string>
+    <string name="catalog_material_fertilizer_0036_name" translatable="false">ADA Green Brighty Iron - 5000 ml</string>
+    <string name="catalog_material_fertilizer_0037_name" translatable="false">ADA ECA Plus - 50 ml</string>
+    <string name="catalog_material_fertilizer_0038_name" translatable="false">ADA ECA Plus - 500 ml</string>
+    <string name="catalog_material_fertilizer_0039_name" translatable="false">ADA Green Gain Plus - 50 ml</string>
+    <string name="catalog_material_fertilizer_0040_name" translatable="false">ADA Green Gain Plus - 500 ml</string>
+    <string name="catalog_material_fertilizer_0041_name" translatable="false">ADA Bottom Plus - 25 pcs</string>
+    <string name="catalog_material_fertilizer_0042_name" translatable="false">Green Aqua MACRO - 250 ml</string>
+    <string name="catalog_material_fertilizer_0043_name" translatable="false">Green Aqua MACRO - 500 ml</string>
+    <string name="catalog_material_fertilizer_0044_name" translatable="false">Green Aqua MACRO - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0045_name" translatable="false">Green Aqua MICRO - 250 ml</string>
+    <string name="catalog_material_fertilizer_0046_name" translatable="false">Green Aqua MICRO - 500 ml</string>
+    <string name="catalog_material_fertilizer_0047_name" translatable="false">Green Aqua MICRO - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0048_name" translatable="false">Green Aqua CARBON - 250 ml</string>
+    <string name="catalog_material_fertilizer_0049_name" translatable="false">Green Aqua CARBON - 500 ml</string>
+    <string name="catalog_material_fertilizer_0050_name" translatable="false">Green Aqua CARBON - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0051_name" translatable="false">Green Aqua BALANCE - 250 ml</string>
+    <string name="catalog_material_fertilizer_0052_name" translatable="false">Green Aqua BALANCE - 500 ml</string>
+    <string name="catalog_material_fertilizer_0053_name" translatable="false">Green Aqua BALANCE - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0054_name" translatable="false">Green Aqua Micro-Macro Wellness Pack - 250 ml</string>
+    <string name="catalog_material_fertilizer_0055_name" translatable="false">Green Aqua Micro-Macro Wellness Pack - 500 ml</string>
+    <string name="catalog_material_fertilizer_0056_name" translatable="false">Green Aqua Micro-Macro Wellness Pack - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0057_name" translatable="false">Green Aqua Balance Wellness Pack - 250 ml</string>
+    <string name="catalog_material_fertilizer_0058_name" translatable="false">Green Aqua Balance Wellness Pack - 500 ml</string>
+    <string name="catalog_material_fertilizer_0059_name" translatable="false">Green Aqua Balance Wellness Pack - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0060_name" translatable="false">Seachem Flourish - 50 ml</string>
+    <string name="catalog_material_fertilizer_0061_name" translatable="false">Seachem Flourish - 100 ml</string>
+    <string name="catalog_material_fertilizer_0062_name" translatable="false">Seachem Flourish - 250 ml</string>
+    <string name="catalog_material_fertilizer_0063_name" translatable="false">Seachem Flourish - 500 ml</string>
+    <string name="catalog_material_fertilizer_0064_name" translatable="false">Seachem Flourish - 2 L</string>
+    <string name="catalog_material_fertilizer_0065_name" translatable="false">Seachem Flourish - 4 L</string>
+    <string name="catalog_material_fertilizer_0066_name" translatable="false">Seachem Flourish Advance - 50 ml</string>
+    <string name="catalog_material_fertilizer_0067_name" translatable="false">Seachem Flourish Advance - 100 ml</string>
+    <string name="catalog_material_fertilizer_0068_name" translatable="false">Seachem Flourish Advance - 250 ml</string>
+    <string name="catalog_material_fertilizer_0069_name" translatable="false">Seachem Flourish Advance - 500 ml</string>
+    <string name="catalog_material_fertilizer_0070_name" translatable="false">Seachem Flourish Advance - 2 L</string>
+    <string name="catalog_material_fertilizer_0071_name" translatable="false">Seachem Flourish Advance - 4 L</string>
+    <string name="catalog_material_fertilizer_0072_name" translatable="false">Seachem Flourish Excel - 50 ml</string>
+    <string name="catalog_material_fertilizer_0073_name" translatable="false">Seachem Flourish Excel - 100 ml</string>
+    <string name="catalog_material_fertilizer_0074_name" translatable="false">Seachem Flourish Excel - 250 ml</string>
+    <string name="catalog_material_fertilizer_0075_name" translatable="false">Seachem Flourish Excel - 500 ml</string>
+    <string name="catalog_material_fertilizer_0076_name" translatable="false">Seachem Flourish Excel - 2 L</string>
+    <string name="catalog_material_fertilizer_0077_name" translatable="false">Seachem Flourish Excel - 4 L</string>
+    <string name="catalog_material_fertilizer_0078_name" translatable="false">Seachem Flourish Iron - 50 ml</string>
+    <string name="catalog_material_fertilizer_0079_name" translatable="false">Seachem Flourish Iron - 100 ml</string>
+    <string name="catalog_material_fertilizer_0080_name" translatable="false">Seachem Flourish Iron - 250 ml</string>
+    <string name="catalog_material_fertilizer_0081_name" translatable="false">Seachem Flourish Iron - 500 ml</string>
+    <string name="catalog_material_fertilizer_0082_name" translatable="false">Seachem Flourish Iron - 2 L</string>
+    <string name="catalog_material_fertilizer_0083_name" translatable="false">Seachem Flourish Iron - 4 L</string>
+    <string name="catalog_material_fertilizer_0084_name" translatable="false">Seachem Flourish Nitrogen - 100 ml</string>
+    <string name="catalog_material_fertilizer_0085_name" translatable="false">Seachem Flourish Nitrogen - 250 ml</string>
+    <string name="catalog_material_fertilizer_0086_name" translatable="false">Seachem Flourish Nitrogen - 500 ml</string>
+    <string name="catalog_material_fertilizer_0087_name" translatable="false">Seachem Flourish Nitrogen - 2 L</string>
+    <string name="catalog_material_fertilizer_0088_name" translatable="false">Seachem Flourish Nitrogen - 4 L</string>
+    <string name="catalog_material_fertilizer_0089_name" translatable="false">Seachem Flourish Phosphorus - 100 ml</string>
+    <string name="catalog_material_fertilizer_0090_name" translatable="false">Seachem Flourish Phosphorus - 250 ml</string>
+    <string name="catalog_material_fertilizer_0091_name" translatable="false">Seachem Flourish Phosphorus - 500 ml</string>
+    <string name="catalog_material_fertilizer_0092_name" translatable="false">Seachem Flourish Phosphorus - 2 L</string>
+    <string name="catalog_material_fertilizer_0093_name" translatable="false">Seachem Flourish Phosphorus - 4 L</string>
+    <string name="catalog_material_fertilizer_0094_name" translatable="false">Seachem Flourish Potassium - 50 ml</string>
+    <string name="catalog_material_fertilizer_0095_name" translatable="false">Seachem Flourish Potassium - 100 ml</string>
+    <string name="catalog_material_fertilizer_0096_name" translatable="false">Seachem Flourish Potassium - 250 ml</string>
+    <string name="catalog_material_fertilizer_0097_name" translatable="false">Seachem Flourish Potassium - 500 ml</string>
+    <string name="catalog_material_fertilizer_0098_name" translatable="false">Seachem Flourish Potassium - 2 L</string>
+    <string name="catalog_material_fertilizer_0099_name" translatable="false">Seachem Flourish Potassium - 4 L</string>
+    <string name="catalog_material_fertilizer_0100_name" translatable="false">Seachem Flourish Trace - 50 ml</string>
+    <string name="catalog_material_fertilizer_0101_name" translatable="false">Seachem Flourish Trace - 100 ml</string>
+    <string name="catalog_material_fertilizer_0102_name" translatable="false">Seachem Flourish Trace - 250 ml</string>
+    <string name="catalog_material_fertilizer_0103_name" translatable="false">Seachem Flourish Trace - 500 ml</string>
+    <string name="catalog_material_fertilizer_0104_name" translatable="false">Seachem Flourish Trace - 2 L</string>
+    <string name="catalog_material_fertilizer_0105_name" translatable="false">Seachem Flourish Trace - 4 L</string>
+    <string name="catalog_material_fertilizer_0106_name" translatable="false">Seachem Flourish Tabs - 10 tabs</string>
+    <string name="catalog_material_fertilizer_0107_name" translatable="false">Seachem Flourish Tabs - 40 tabs</string>
+    <string name="catalog_material_fertilizer_0108_name" translatable="false">Seachem Equilibrium - 300 g</string>
+    <string name="catalog_material_fertilizer_0109_name" translatable="false">Seachem Equilibrium - 600 g</string>
+    <string name="catalog_material_fertilizer_0110_name" translatable="false">Seachem Equilibrium - 4 kg</string>
+    <string name="catalog_material_fertilizer_0111_name" translatable="false">Seachem Plant Pack Fundamentals - 3 x 100 ml</string>
+    <string name="catalog_material_fertilizer_0112_name" translatable="false">Seachem Plant Pack Enhancer NPK - 3 x 100 ml</string>
+    <string name="catalog_material_fertilizer_0113_name" translatable="false">Tropica Premium Nutrition - 125 ml</string>
+    <string name="catalog_material_fertilizer_0114_name" translatable="false">Tropica Premium Nutrition - 300 ml</string>
+    <string name="catalog_material_fertilizer_0115_name" translatable="false">Tropica Premium Nutrition - 750 ml</string>
+    <string name="catalog_material_fertilizer_0116_name" translatable="false">Tropica Premium Nutrition - 3 L</string>
+    <string name="catalog_material_fertilizer_0117_name" translatable="false">Tropica Specialised Nutrition - 125 ml</string>
+    <string name="catalog_material_fertilizer_0118_name" translatable="false">Tropica Specialised Nutrition - 300 ml</string>
+    <string name="catalog_material_fertilizer_0119_name" translatable="false">Tropica Specialised Nutrition - 750 ml</string>
+    <string name="catalog_material_fertilizer_0120_name" translatable="false">Tropica Specialised Nutrition - 3 L</string>
+    <string name="catalog_material_fertilizer_0121_name" translatable="false">Tropica Carbon Nutrition - 125 ml</string>
+    <string name="catalog_material_fertilizer_0122_name" translatable="false">Tropica Carbon Nutrition - 300 ml</string>
+    <string name="catalog_material_fertilizer_0123_name" translatable="false">Tropica Carbon Nutrition - 750 ml</string>
+    <string name="catalog_material_fertilizer_0124_name" translatable="false">Tropica Nutrition Capsules - 3 pcs</string>
+    <string name="catalog_material_fertilizer_0125_name" translatable="false">Tropica Nutrition Capsules - 10 pcs</string>
+    <string name="catalog_material_fertilizer_0126_name" translatable="false">Tropica Nutrition Capsules - 50 pcs</string>
+    <string name="catalog_material_fertilizer_0127_name" translatable="false">Dennerle Plants Liquid - 125 ml</string>
+    <string name="catalog_material_fertilizer_0128_name" translatable="false">Dennerle Plants Liquid - 300 ml</string>
+    <string name="catalog_material_fertilizer_0129_name" translatable="false">Dennerle Plants Liquid Plus - 125 ml</string>
+    <string name="catalog_material_fertilizer_0130_name" translatable="false">Dennerle Plants Liquid Plus - 300 ml</string>
+    <string name="catalog_material_fertilizer_0131_name" translatable="false">Dennerle Plants Power Caps - 25 pcs</string>
+    <string name="catalog_material_fertilizer_0132_name" translatable="false">Dennerle Plant Care NPK - 250 ml</string>
+    <string name="catalog_material_fertilizer_0133_name" translatable="false">Dennerle Plant Care NPK - 500 ml</string>
+    <string name="catalog_material_fertilizer_0134_name" translatable="false">Dennerle Plant Care Pro - 250 ml</string>
+    <string name="catalog_material_fertilizer_0135_name" translatable="false">Dennerle Plant Care Pro - 500 ml</string>
+    <string name="catalog_material_fertilizer_0136_name" translatable="false">Dennerle Plant Elixir Basic - 250 ml</string>
+    <string name="catalog_material_fertilizer_0137_name" translatable="false">Dennerle Plant Elixir Basic - 500 ml</string>
+    <string name="catalog_material_fertilizer_0138_name" translatable="false">Dennerle Carbo Care Bio - 100 ml</string>
+    <string name="catalog_material_fertilizer_0139_name" translatable="false">Dennerle Carbo Care Bio - 250 ml</string>
+    <string name="catalog_material_fertilizer_0140_name" translatable="false">Dennerle Carbo Care Bio - 500 ml</string>
+    <string name="catalog_material_fertilizer_0141_name" translatable="false">Dennerle Carbo Care Pro - 250 ml</string>
+    <string name="catalog_material_fertilizer_0142_name" translatable="false">Dennerle Carbo Care Pro - 500 ml</string>
+    <string name="catalog_material_fertilizer_0143_name" translatable="false">Dennerle Plant System V30 - 100 ml</string>
+    <string name="catalog_material_fertilizer_0144_name" translatable="false">Dennerle Plant System V30 - 250 ml</string>
+    <string name="catalog_material_fertilizer_0145_name" translatable="false">Dennerle Plant System V30 - 500 ml</string>
+    <string name="catalog_material_fertilizer_0146_name" translatable="false">Dennerle Plant System S7 - 100 ml</string>
+    <string name="catalog_material_fertilizer_0147_name" translatable="false">Dennerle Plant System S7 - 250 ml</string>
+    <string name="catalog_material_fertilizer_0148_name" translatable="false">Dennerle Plant System S7 - 500 ml</string>
+    <string name="catalog_material_fertilizer_0149_name" translatable="false">Dennerle Plant Care K - 250 ml</string>
+    <string name="catalog_material_fertilizer_0150_name" translatable="false">Dennerle Plant Care N - 250 ml</string>
+    <string name="catalog_material_fertilizer_0151_name" translatable="false">Dennerle Plant Care P - 250 ml</string>
+    <string name="catalog_material_fertilizer_0152_name" translatable="false">Dennerle Plant Active Enzymes - 50 g</string>
+    <string name="catalog_material_fertilizer_0153_name" translatable="false">Dennerle Plant Care Basic Root - 10 pcs</string>
+    <string name="catalog_material_fertilizer_0154_name" translatable="false">Dennerle Plant Care Basic Root - 20 pcs</string>
+    <string name="catalog_material_fertilizer_0155_name" translatable="false">Dennerle Plant Care Basic Root - 40 pcs</string>
+    <string name="catalog_material_fertilizer_0156_name" translatable="false">Dennerle Plant Care Pro Root - 10 pcs</string>
+    <string name="catalog_material_fertilizer_0157_name" translatable="false">Dennerle Plant Care Pro Root - 30 pcs</string>
+    <string name="catalog_material_fertilizer_0158_name" translatable="false">Dennerle Plant System E15 - 20 pcs</string>
+    <string name="catalog_material_fertilizer_0159_name" translatable="false">Dennerle Plant System E15 - 40 pcs</string>
+    <string name="catalog_material_fertilizer_0160_name" translatable="false">Dennerle Plant System E15 - 100 pcs</string>
+    <string name="catalog_material_fertilizer_0161_name" translatable="false">JBL PROSCAPE NPK +MACROELEMENTS - 250 ml</string>
+    <string name="catalog_material_fertilizer_0162_name" translatable="false">JBL PROSCAPE NPK +MACROELEMENTS - 500 ml</string>
+    <string name="catalog_material_fertilizer_0163_name" translatable="false">JBL PROSCAPE K +MACROELEMENTS - 250 ml</string>
+    <string name="catalog_material_fertilizer_0164_name" translatable="false">JBL PROSCAPE P +MACROELEMENTS - 250 ml</string>
+    <string name="catalog_material_fertilizer_0165_name" translatable="false">JBL PROSCAPE Mg +MACROELEMENTS - 250 ml</string>
+    <string name="catalog_material_fertilizer_0166_name" translatable="false">JBL PROSCAPE N +MACROELEMENTS - 250 ml</string>
+    <string name="catalog_material_fertilizer_0167_name" translatable="false">JBL PROSCAPE Fe +MICROELEMENTS - 250 ml</string>
+    <string name="catalog_material_fertilizer_0168_name" translatable="false">JBL PROSCAPE Fe +MICROELEMENTS - 500 ml</string>
+    <string name="catalog_material_fertilizer_0169_name" translatable="false">JBL PROFLORA Ferropol - 100 ml</string>
+    <string name="catalog_material_fertilizer_0170_name" translatable="false">JBL PROFLORA Ferropol - 250 ml</string>
+    <string name="catalog_material_fertilizer_0171_name" translatable="false">JBL PROFLORA Ferropol - 500 ml</string>
+    <string name="catalog_material_fertilizer_0172_name" translatable="false">JBL PROFLORA Ferropol Refill - 625 ml</string>
+    <string name="catalog_material_fertilizer_0173_name" translatable="false">JBL PROFLORA Ferropol Root - 30 tabs</string>
+    <string name="catalog_material_fertilizer_0174_name" translatable="false">JBL PROFLORA 7 Balls - 7 balls</string>
+    <string name="catalog_material_fertilizer_0175_name" translatable="false">JBL PROFLORA 7+13 Balls - 20 balls</string>
+    <string name="catalog_material_fertilizer_0176_name" translatable="false">sera florena - 50 ml</string>
+    <string name="catalog_material_fertilizer_0177_name" translatable="false">sera florena - 100 ml</string>
+    <string name="catalog_material_fertilizer_0178_name" translatable="false">sera florena - 250 ml</string>
+    <string name="catalog_material_fertilizer_0179_name" translatable="false">sera florena - 500 ml</string>
+    <string name="catalog_material_fertilizer_0180_name" translatable="false">sera florena - 5000 ml</string>
+    <string name="catalog_material_fertilizer_0181_name" translatable="false">sera florenette - 24 tabs</string>
+    <string name="catalog_material_fertilizer_0182_name" translatable="false">sera florenette - 50 tabs</string>
+    <string name="catalog_material_fertilizer_0183_name" translatable="false">sera flore 1 carbo - 50 ml</string>
+    <string name="catalog_material_fertilizer_0184_name" translatable="false">sera flore 1 carbo - 250 ml</string>
+    <string name="catalog_material_fertilizer_0185_name" translatable="false">sera flore 1 carbo - 500 ml</string>
+    <string name="catalog_material_fertilizer_0186_name" translatable="false">sera flore 2 ferro - 50 ml</string>
+    <string name="catalog_material_fertilizer_0187_name" translatable="false">sera flore 2 ferro - 250 ml</string>
+    <string name="catalog_material_fertilizer_0188_name" translatable="false">sera flore 2 ferro - 500 ml</string>
+    <string name="catalog_material_fertilizer_0189_name" translatable="false">sera flore 3 vital - 50 ml</string>
+    <string name="catalog_material_fertilizer_0190_name" translatable="false">sera flore 3 vital - 250 ml</string>
+    <string name="catalog_material_fertilizer_0191_name" translatable="false">sera flore 4 plant - 50 ml</string>
+    <string name="catalog_material_fertilizer_0192_name" translatable="false">sera flore 4 plant - 250 ml</string>
+    <string name="catalog_material_fertilizer_0193_name" translatable="false">Easy-Life ProFito - 100 ml</string>
+    <string name="catalog_material_fertilizer_0194_name" translatable="false">Easy-Life ProFito - 250 ml</string>
+    <string name="catalog_material_fertilizer_0195_name" translatable="false">Easy-Life ProFito - 500 ml</string>
+    <string name="catalog_material_fertilizer_0196_name" translatable="false">Easy-Life ProFito - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0197_name" translatable="false">Easy-Life ProFito - 5000 ml</string>
+    <string name="catalog_material_fertilizer_0198_name" translatable="false">Easy-Life EasyCarbo - 100 ml</string>
+    <string name="catalog_material_fertilizer_0199_name" translatable="false">Easy-Life EasyCarbo - 250 ml</string>
+    <string name="catalog_material_fertilizer_0200_name" translatable="false">Easy-Life EasyCarbo - 500 ml</string>
+    <string name="catalog_material_fertilizer_0201_name" translatable="false">Easy-Life EasyCarbo - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0202_name" translatable="false">Easy-Life EasyCarbo - 5000 ml</string>
+    <string name="catalog_material_fertilizer_0203_name" translatable="false">Easy-Life EasyCarbo Bio - 100 ml</string>
+    <string name="catalog_material_fertilizer_0204_name" translatable="false">Easy-Life EasyCarbo Bio - 250 ml</string>
+    <string name="catalog_material_fertilizer_0205_name" translatable="false">Easy-Life EasyCarbo Bio - 500 ml</string>
+    <string name="catalog_material_fertilizer_0206_name" translatable="false">Easy-Life EasyCarbo Bio - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0207_name" translatable="false">Easy-Life EasyCarbo Bio - 5000 ml</string>
+    <string name="catalog_material_fertilizer_0208_name" translatable="false">Easy-Life Ferro - 250 ml</string>
+    <string name="catalog_material_fertilizer_0209_name" translatable="false">Easy-Life Ferro - 500 ml</string>
+    <string name="catalog_material_fertilizer_0210_name" translatable="false">Easy-Life Nitro - 250 ml</string>
+    <string name="catalog_material_fertilizer_0211_name" translatable="false">Easy-Life Nitro - 500 ml</string>
+    <string name="catalog_material_fertilizer_0212_name" translatable="false">Easy-Life Fosfo - 250 ml</string>
+    <string name="catalog_material_fertilizer_0213_name" translatable="false">Easy-Life Fosfo - 500 ml</string>
+    <string name="catalog_material_fertilizer_0214_name" translatable="false">Easy-Life Kalium-Potassium - 250 ml</string>
+    <string name="catalog_material_fertilizer_0215_name" translatable="false">Easy-Life Kalium-Potassium - 500 ml</string>
+    <string name="catalog_material_fertilizer_0216_name" translatable="false">Easy-Life RedScape - 100 ml</string>
+    <string name="catalog_material_fertilizer_0217_name" translatable="false">Easy-Life RedScape - 250 ml</string>
+    <string name="catalog_material_fertilizer_0218_name" translatable="false">Easy-Life RedScape - 500 ml</string>
+    <string name="catalog_material_fertilizer_0219_name" translatable="false">Easy-Life RedScape - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0220_name" translatable="false">Easy-Life RedScape - 5000 ml</string>
+    <string name="catalog_material_fertilizer_0221_name" translatable="false">Easy-Life GreenScape - 100 ml</string>
+    <string name="catalog_material_fertilizer_0222_name" translatable="false">Easy-Life GreenScape - 250 ml</string>
+    <string name="catalog_material_fertilizer_0223_name" translatable="false">Easy-Life GreenScape - 500 ml</string>
+    <string name="catalog_material_fertilizer_0224_name" translatable="false">Easy-Life GreenScape - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0225_name" translatable="false">Easy-Life GreenScape - 5000 ml</string>
+    <string name="catalog_material_fertilizer_0226_name" translatable="false">Easy-Life Root Sticks - 25 pcs</string>
+    <string name="catalog_material_fertilizer_0227_name" translatable="false">MasterLine I / Micro - 200 ml</string>
+    <string name="catalog_material_fertilizer_0228_name" translatable="false">MasterLine I / Micro - 500 ml</string>
+    <string name="catalog_material_fertilizer_0229_name" translatable="false">MasterLine I / Micro - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0230_name" translatable="false">MasterLine I / Micro - 5000 ml</string>
+    <string name="catalog_material_fertilizer_0231_name" translatable="false">MasterLine II / Macro - 200 ml</string>
+    <string name="catalog_material_fertilizer_0232_name" translatable="false">MasterLine II / Macro - 500 ml</string>
+    <string name="catalog_material_fertilizer_0233_name" translatable="false">MasterLine II / Macro - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0234_name" translatable="false">MasterLine II / Macro - 5000 ml</string>
+    <string name="catalog_material_fertilizer_0235_name" translatable="false">MasterLine Carbo - 200 ml</string>
+    <string name="catalog_material_fertilizer_0236_name" translatable="false">MasterLine Carbo - 500 ml</string>
+    <string name="catalog_material_fertilizer_0237_name" translatable="false">MasterLine Carbo - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0238_name" translatable="false">MasterLine Carbo - 5000 ml</string>
+    <string name="catalog_material_fertilizer_0239_name" translatable="false">MasterLine All In One Boost - 200 ml</string>
+    <string name="catalog_material_fertilizer_0240_name" translatable="false">MasterLine All In One Boost - 500 ml</string>
+    <string name="catalog_material_fertilizer_0241_name" translatable="false">MasterLine All In One Boost - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0242_name" translatable="false">MasterLine All In One Boost - 5000 ml</string>
+    <string name="catalog_material_fertilizer_0243_name" translatable="false">MasterLine All In One Golden - 200 ml</string>
+    <string name="catalog_material_fertilizer_0244_name" translatable="false">MasterLine All In One Golden - 500 ml</string>
+    <string name="catalog_material_fertilizer_0245_name" translatable="false">MasterLine All In One Golden - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0246_name" translatable="false">MasterLine All In One Golden - 5000 ml</string>
+    <string name="catalog_material_fertilizer_0247_name" translatable="false">MasterLine All In One Lean - 200 ml</string>
+    <string name="catalog_material_fertilizer_0248_name" translatable="false">MasterLine All In One Lean - 500 ml</string>
+    <string name="catalog_material_fertilizer_0249_name" translatable="false">MasterLine All In One Lean - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0250_name" translatable="false">MasterLine All In One Lean - 5000 ml</string>
+    <string name="catalog_material_fertilizer_0251_name" translatable="false">MasterLine All In One Red - 200 ml</string>
+    <string name="catalog_material_fertilizer_0252_name" translatable="false">MasterLine All In One Red - 500 ml</string>
+    <string name="catalog_material_fertilizer_0253_name" translatable="false">MasterLine Nitrate - 500 ml</string>
+    <string name="catalog_material_fertilizer_0254_name" translatable="false">MasterLine Nitrate - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0255_name" translatable="false">MasterLine Phosphate - 500 ml</string>
+    <string name="catalog_material_fertilizer_0256_name" translatable="false">MasterLine Phosphate - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0257_name" translatable="false">MasterLine Potassium - 500 ml</string>
+    <string name="catalog_material_fertilizer_0258_name" translatable="false">MasterLine Potassium - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0259_name" translatable="false">MasterLine Iron - 500 ml</string>
+    <string name="catalog_material_fertilizer_0260_name" translatable="false">MasterLine Iron - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0261_name" translatable="false">MasterLine Root Caps - 60 pcs</string>
+    <string name="catalog_material_fertilizer_0262_name" translatable="false">MasterLine Root Caps - 125 pcs</string>
+    <string name="catalog_material_fertilizer_0263_name" translatable="false">Aqua Rebell Mikro Basic Eisen - 500 ml</string>
+    <string name="catalog_material_fertilizer_0264_name" translatable="false">Aqua Rebell Mikro Basic Eisen - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0265_name" translatable="false">Aqua Rebell Mikro Basic Eisen - 5000 ml</string>
+    <string name="catalog_material_fertilizer_0266_name" translatable="false">Aqua Rebell Makro Basic NPK - 500 ml</string>
+    <string name="catalog_material_fertilizer_0267_name" translatable="false">Aqua Rebell Makro Basic NPK - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0268_name" translatable="false">Aqua Rebell Makro Basic NPK - 5000 ml</string>
+    <string name="catalog_material_fertilizer_0269_name" translatable="false">Aqua Rebell Mikro Spezial Flowgrow - 500 ml</string>
+    <string name="catalog_material_fertilizer_0270_name" translatable="false">Aqua Rebell Mikro Spezial Flowgrow - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0271_name" translatable="false">Aqua Rebell Mikro Spezial Flowgrow - 5000 ml</string>
+    <string name="catalog_material_fertilizer_0272_name" translatable="false">Aqua Rebell Makro Basic Estimative Index - 500 ml</string>
+    <string name="catalog_material_fertilizer_0273_name" translatable="false">Aqua Rebell Makro Basic Estimative Index - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0274_name" translatable="false">Aqua Rebell Makro Basic Estimative Index - 5000 ml</string>
+    <string name="catalog_material_fertilizer_0275_name" translatable="false">Aqua Rebell Advanced GH Boost N - 500 ml</string>
+    <string name="catalog_material_fertilizer_0276_name" translatable="false">Aqua Rebell Advanced GH Boost N - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0277_name" translatable="false">Aqua Rebell Advanced GH Boost N - 5000 ml</string>
+    <string name="catalog_material_fertilizer_0278_name" translatable="false">Aqua Rebell Mikro Spezial Eisen - 500 ml</string>
+    <string name="catalog_material_fertilizer_0279_name" translatable="false">Aqua Rebell Mikro Spezial Eisen - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0280_name" translatable="false">Aqua Rebell Mikro Spezial Eisen - 5000 ml</string>
+    <string name="catalog_material_fertilizer_0281_name" translatable="false">Aqua Rebell Makro Basic Kalium - 500 ml</string>
+    <string name="catalog_material_fertilizer_0282_name" translatable="false">Aqua Rebell Makro Basic Kalium - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0283_name" translatable="false">Aqua Rebell Makro Basic Kalium - 5000 ml</string>
+    <string name="catalog_material_fertilizer_0284_name" translatable="false">Aqua Rebell Makro Basic Phosphat - 500 ml</string>
+    <string name="catalog_material_fertilizer_0285_name" translatable="false">Aqua Rebell Makro Basic Phosphat - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0286_name" translatable="false">Aqua Rebell Makro Basic Phosphat - 5000 ml</string>
+    <string name="catalog_material_fertilizer_0287_name" translatable="false">Aqua Rebell Makro Spezial N - size varies by market</string>
+    <string name="catalog_material_fertilizer_0288_name" translatable="false">Aqua Rebell Makro Basic Nitrat - size varies by market</string>
+    <string name="catalog_material_fertilizer_0289_name" translatable="false">Aqua Rebell Makro Spezial NPK Soil - size varies by market</string>
+    <string name="catalog_material_fertilizer_0290_name" translatable="false">AF Macro - 125 ml</string>
+    <string name="catalog_material_fertilizer_0291_name" translatable="false">AF Macro - 250 ml</string>
+    <string name="catalog_material_fertilizer_0292_name" translatable="false">AF Macro - 500 ml</string>
+    <string name="catalog_material_fertilizer_0293_name" translatable="false">AF Macro - 2000 ml</string>
+    <string name="catalog_material_fertilizer_0294_name" translatable="false">AF Micro - 125 ml</string>
+    <string name="catalog_material_fertilizer_0295_name" translatable="false">AF Micro - 250 ml</string>
+    <string name="catalog_material_fertilizer_0296_name" translatable="false">AF Micro - 500 ml</string>
+    <string name="catalog_material_fertilizer_0297_name" translatable="false">AF Micro - 2000 ml</string>
+    <string name="catalog_material_fertilizer_0298_name" translatable="false">AF Iron Boost - 125 ml</string>
+    <string name="catalog_material_fertilizer_0299_name" translatable="false">AF Iron Boost - 250 ml</string>
+    <string name="catalog_material_fertilizer_0300_name" translatable="false">AF Iron Boost - 500 ml</string>
+    <string name="catalog_material_fertilizer_0301_name" translatable="false">AF Iron Boost - 2000 ml</string>
+    <string name="catalog_material_fertilizer_0302_name" translatable="false">AF K Boost - 125 ml</string>
+    <string name="catalog_material_fertilizer_0303_name" translatable="false">AF K Boost - 250 ml</string>
+    <string name="catalog_material_fertilizer_0304_name" translatable="false">AF K Boost - 500 ml</string>
+    <string name="catalog_material_fertilizer_0305_name" translatable="false">AF K Boost - 2000 ml</string>
+    <string name="catalog_material_fertilizer_0306_name" translatable="false">AF PO4 Boost - 125 ml</string>
+    <string name="catalog_material_fertilizer_0307_name" translatable="false">AF PO4 Boost - 250 ml</string>
+    <string name="catalog_material_fertilizer_0308_name" translatable="false">AF PO4 Boost - 500 ml</string>
+    <string name="catalog_material_fertilizer_0309_name" translatable="false">AF PO4 Boost - 2000 ml</string>
+    <string name="catalog_material_fertilizer_0310_name" translatable="false">AF N Boost - 125 ml</string>
+    <string name="catalog_material_fertilizer_0311_name" translatable="false">AF N Boost - 250 ml</string>
+    <string name="catalog_material_fertilizer_0312_name" translatable="false">AF N Boost - 500 ml</string>
+    <string name="catalog_material_fertilizer_0313_name" translatable="false">AF N Boost - 2000 ml</string>
+    <string name="catalog_material_fertilizer_0314_name" translatable="false">AF Carbon Boost - 125 ml</string>
+    <string name="catalog_material_fertilizer_0315_name" translatable="false">AF Carbon Boost - 250 ml</string>
+    <string name="catalog_material_fertilizer_0316_name" translatable="false">AF Carbon Boost - 500 ml</string>
+    <string name="catalog_material_fertilizer_0317_name" translatable="false">AF Carbon Boost - 2000 ml</string>
+    <string name="catalog_material_fertilizer_0318_name" translatable="false">AF Red Boost - 125 ml</string>
+    <string name="catalog_material_fertilizer_0319_name" translatable="false">AF Red Boost - 250 ml</string>
+    <string name="catalog_material_fertilizer_0320_name" translatable="false">AF Red Boost - 500 ml</string>
+    <string name="catalog_material_fertilizer_0321_name" translatable="false">AF Red Boost - 2000 ml</string>
+    <string name="catalog_material_fertilizer_0322_name" translatable="false">AF Starter Pack Freshwater - 1 pack</string>
+    <string name="catalog_material_fertilizer_0323_name" translatable="false">AQUARIO Neo Solution 1 - 150 ml</string>
+    <string name="catalog_material_fertilizer_0324_name" translatable="false">AQUARIO Neo Solution 1 - 300 ml</string>
+    <string name="catalog_material_fertilizer_0325_name" translatable="false">AQUARIO Neo Solution 1 - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0326_name" translatable="false">AQUARIO Neo Solution 2 - 150 ml</string>
+    <string name="catalog_material_fertilizer_0327_name" translatable="false">AQUARIO Neo Solution 2 - 300 ml</string>
+    <string name="catalog_material_fertilizer_0328_name" translatable="false">AQUARIO Neo Solution 2 - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0329_name" translatable="false">AQUARIO Neo Solution K - 150 ml</string>
+    <string name="catalog_material_fertilizer_0330_name" translatable="false">AQUARIO Neo Solution K - 300 ml</string>
+    <string name="catalog_material_fertilizer_0331_name" translatable="false">AQUARIO Neo Solution K - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0332_name" translatable="false">AQUARIO Neo Solution Fe - 150 ml</string>
+    <string name="catalog_material_fertilizer_0333_name" translatable="false">AQUARIO Neo Solution Fe - 300 ml</string>
+    <string name="catalog_material_fertilizer_0334_name" translatable="false">AQUARIO Neo Solution Fe - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0335_name" translatable="false">AQUARIO Neo Solution Complex - 150 ml</string>
+    <string name="catalog_material_fertilizer_0336_name" translatable="false">AQUARIO Neo Solution Complex - 300 ml</string>
+    <string name="catalog_material_fertilizer_0337_name" translatable="false">AQUARIO Neo Solution Complex - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0338_name" translatable="false">AQUARIO Neo Plants TAB - 70 g</string>
+    <string name="catalog_material_fertilizer_0339_name" translatable="false">AQUARIO Neo Plants K - 70 g</string>
+    <string name="catalog_material_fertilizer_0340_name" translatable="false">AQUARIO Neo Plants Fe - 70 g</string>
+    <string name="catalog_material_fertilizer_0341_name" translatable="false">AQUARIO Neo Plants ST.Long - 70 g</string>
+    <string name="catalog_material_fertilizer_0342_name" translatable="false">AQUARIO Neo Booster Plants - 300 ml</string>
+    <string name="catalog_material_fertilizer_0343_name" translatable="false">AQUARIO Neo Cap Tropical Booster - retail pack</string>
+    <string name="catalog_material_fertilizer_0344_name" translatable="false">AQUARIO Neo Plants Tab Solid Slim - retail pack</string>
+    <string name="catalog_material_fertilizer_0345_name" translatable="false">Brightwell FlorinMulti - 125 ml</string>
+    <string name="catalog_material_fertilizer_0346_name" translatable="false">Brightwell FlorinMulti - 250 ml</string>
+    <string name="catalog_material_fertilizer_0347_name" translatable="false">Brightwell FlorinMulti - 500 ml</string>
+    <string name="catalog_material_fertilizer_0348_name" translatable="false">Brightwell FlorinMulti - 2 L</string>
+    <string name="catalog_material_fertilizer_0349_name" translatable="false">Brightwell FlorinMulti - 20 L</string>
+    <string name="catalog_material_fertilizer_0350_name" translatable="false">Brightwell Florin-K - 125 ml</string>
+    <string name="catalog_material_fertilizer_0351_name" translatable="false">Brightwell Florin-K - 250 ml</string>
+    <string name="catalog_material_fertilizer_0352_name" translatable="false">Brightwell Florin-K - 500 ml</string>
+    <string name="catalog_material_fertilizer_0353_name" translatable="false">Brightwell Florin-K - 2 L</string>
+    <string name="catalog_material_fertilizer_0354_name" translatable="false">Brightwell Florin-K - 20 L</string>
+    <string name="catalog_material_fertilizer_0355_name" translatable="false">Brightwell Florin-Fe - 125 ml</string>
+    <string name="catalog_material_fertilizer_0356_name" translatable="false">Brightwell Florin-Fe - 250 ml</string>
+    <string name="catalog_material_fertilizer_0357_name" translatable="false">Brightwell Florin-Fe - 500 ml</string>
+    <string name="catalog_material_fertilizer_0358_name" translatable="false">Brightwell Florin-Fe - 2 L</string>
+    <string name="catalog_material_fertilizer_0359_name" translatable="false">Brightwell Florin-Fe - 20 L</string>
+    <string name="catalog_material_fertilizer_0360_name" translatable="false">Brightwell FlorinGro - 125 ml</string>
+    <string name="catalog_material_fertilizer_0361_name" translatable="false">Brightwell FlorinGro - 250 ml</string>
+    <string name="catalog_material_fertilizer_0362_name" translatable="false">Brightwell FlorinGro - 500 ml</string>
+    <string name="catalog_material_fertilizer_0363_name" translatable="false">Brightwell FlorinGro - 2 L</string>
+    <string name="catalog_material_fertilizer_0364_name" translatable="false">Brightwell FlorinGro - 20 L</string>
+    <string name="catalog_material_fertilizer_0365_name" translatable="false">Brightwell Florin-P - 125 ml</string>
+    <string name="catalog_material_fertilizer_0366_name" translatable="false">Brightwell Florin-P - 250 ml</string>
+    <string name="catalog_material_fertilizer_0367_name" translatable="false">Brightwell Florin-P - 500 ml</string>
+    <string name="catalog_material_fertilizer_0368_name" translatable="false">Brightwell Florin-P - 2 L</string>
+    <string name="catalog_material_fertilizer_0369_name" translatable="false">Brightwell Florin-P - 20 L</string>
+    <string name="catalog_material_fertilizer_0370_name" translatable="false">Brightwell FlorinAxis - 125 ml</string>
+    <string name="catalog_material_fertilizer_0371_name" translatable="false">Brightwell FlorinAxis - 250 ml</string>
+    <string name="catalog_material_fertilizer_0372_name" translatable="false">Brightwell FlorinAxis - 500 ml</string>
+    <string name="catalog_material_fertilizer_0373_name" translatable="false">Brightwell FlorinAxis - 2 L</string>
+    <string name="catalog_material_fertilizer_0374_name" translatable="false">Brightwell FlorinAxis - 20 L</string>
+    <string name="catalog_material_fertilizer_0375_name" translatable="false">Brightwell Florin Delta GH+ - 250 g</string>
+    <string name="catalog_material_fertilizer_0376_name" translatable="false">Brightwell Florin Delta GH+ - 500 g</string>
+    <string name="catalog_material_fertilizer_0377_name" translatable="false">Brightwell Florin Delta GH+ - 1 kg</string>
+    <string name="catalog_material_fertilizer_0378_name" translatable="false">Brightwell Florin Delta GH+ - 4 kg</string>
+    <string name="catalog_material_fertilizer_0379_name" translatable="false">Brightwell Florin Delta GH+ - 20 kg</string>
+    <string name="catalog_material_fertilizer_0380_name" translatable="false">Brightwell Florin Delta GH+ - 220 kg</string>
+    <string name="catalog_material_fertilizer_0381_name" translatable="false">Brightwell FlorinBase Laterite Powder - 160 g</string>
+    <string name="catalog_material_fertilizer_0382_name" translatable="false">Brightwell FlorinBase Laterite Powder - 320 g</string>
+    <string name="catalog_material_fertilizer_0383_name" translatable="false">Brightwell FlorinBase Laterite Powder - 600 g</string>
+    <string name="catalog_material_fertilizer_0384_name" translatable="false">Brightwell FlorinBase Laterite Powder - 1000 g</string>
+    <string name="catalog_material_fertilizer_0385_name" translatable="false">API Leaf Zone - 237 ml / 8 fl oz</string>
+    <string name="catalog_material_fertilizer_0386_name" translatable="false">API Leaf Zone - 473 ml / 16 fl oz</string>
+    <string name="catalog_material_fertilizer_0387_name" translatable="false">API CO2 Booster - 237 ml / 8 fl oz</string>
+    <string name="catalog_material_fertilizer_0388_name" translatable="false">API CO2 Booster - 473 ml / 16 fl oz</string>
+    <string name="catalog_material_fertilizer_0389_name" translatable="false">API Root Tabs - 10 tabs</string>
+    <string name="catalog_material_fertilizer_0390_name" translatable="false">Fluval Plant Gro+ - 120 ml</string>
+    <string name="catalog_material_fertilizer_0391_name" translatable="false">Fluval Plant Gro+ - 250 ml</string>
+    <string name="catalog_material_fertilizer_0392_name" translatable="false">Aquarium Co-Op Easy Green All-in-One Fertilizer - 120 ml</string>
+    <string name="catalog_material_fertilizer_0393_name" translatable="false">Aquarium Co-Op Easy Green All-in-One Fertilizer - 500 ml</string>
+    <string name="catalog_material_fertilizer_0394_name" translatable="false">Aquarium Co-Op Easy Green All-in-One Fertilizer - 2 L</string>
+    <string name="catalog_material_fertilizer_0395_name" translatable="false">Aquarium Co-Op Easy Potassium - 120 ml</string>
+    <string name="catalog_material_fertilizer_0396_name" translatable="false">Aquarium Co-Op Easy Potassium - 500 ml</string>
+    <string name="catalog_material_fertilizer_0397_name" translatable="false">Aquarium Co-Op Easy Iron - 120 ml</string>
+    <string name="catalog_material_fertilizer_0398_name" translatable="false">Aquarium Co-Op Easy Iron - 500 ml</string>
+    <string name="catalog_material_fertilizer_0399_name" translatable="false">Aquarium Co-Op Easy Root Tabs - 20 tabs</string>
+    <string name="catalog_material_fertilizer_0400_name" translatable="false">Aquarium Co-Op Easy Root Tabs - 60 tabs</string>
+    <string name="catalog_material_fertilizer_0401_name" translatable="false">NilocG Thrive - 500 ml</string>
+    <string name="catalog_material_fertilizer_0402_name" translatable="false">NilocG Thrive - 2000 ml</string>
+    <string name="catalog_material_fertilizer_0403_name" translatable="false">NilocG Thrive - 4000 ml</string>
+    <string name="catalog_material_fertilizer_0404_name" translatable="false">NilocG Thrive+ - 500 ml</string>
+    <string name="catalog_material_fertilizer_0405_name" translatable="false">NilocG Thrive+ - 2000 ml</string>
+    <string name="catalog_material_fertilizer_0406_name" translatable="false">NilocG Thrive+ - 4000 ml</string>
+    <string name="catalog_material_fertilizer_0407_name" translatable="false">NilocG ThriveC - 500 ml</string>
+    <string name="catalog_material_fertilizer_0408_name" translatable="false">NilocG ThriveC - 2000 ml</string>
+    <string name="catalog_material_fertilizer_0409_name" translatable="false">NilocG ThriveC - 4000 ml</string>
+    <string name="catalog_material_fertilizer_0410_name" translatable="false">NilocG ThriveS - current retail bottle</string>
+    <string name="catalog_material_fertilizer_0411_name" translatable="false">NilocG ThriveTabs - 75 tabs</string>
+    <string name="catalog_material_fertilizer_0412_name" translatable="false">NilocG ThriveCaps - current retail pack</string>
+    <string name="catalog_material_fertilizer_0413_name" translatable="false">NilocG Potassium Nitrate (KNO3) - 1 lb</string>
+    <string name="catalog_material_fertilizer_0414_name" translatable="false">NilocG Potassium Nitrate (KNO3) - 5 lb</string>
+    <string name="catalog_material_fertilizer_0415_name" translatable="false">NilocG Potassium Sulfate (K2SO4) - 1 lb</string>
+    <string name="catalog_material_fertilizer_0416_name" translatable="false">NilocG Potassium Sulfate (K2SO4) - 5 lb</string>
+    <string name="catalog_material_fertilizer_0417_name" translatable="false">NilocG Monopotassium Phosphate (KH2PO4) - 1 lb</string>
+    <string name="catalog_material_fertilizer_0418_name" translatable="false">NilocG Monopotassium Phosphate (KH2PO4) - 5 lb</string>
+    <string name="catalog_material_fertilizer_0419_name" translatable="false">NilocG Plantex CSM+B - 1 lb</string>
+    <string name="catalog_material_fertilizer_0420_name" translatable="false">NilocG Plantex CSM+B - 5 lb</string>
+    <string name="catalog_material_fertilizer_0421_name" translatable="false">NilocG GH Booster - 1 lb</string>
+    <string name="catalog_material_fertilizer_0422_name" translatable="false">NilocG GH Booster - 5 lb</string>
+    <string name="catalog_material_fertilizer_0423_name" translatable="false">NilocG Microplex - 0.5 lb</string>
+    <string name="catalog_material_fertilizer_0424_name" translatable="false">NilocG Microplex - 1 lb</string>
+    <string name="catalog_material_fertilizer_0425_name" translatable="false">NilocG Microplex - 5 lb</string>
+    <string name="catalog_material_fertilizer_0426_name" translatable="false">NilocG Manganese Sulfate (MnSO4) - dry salt</string>
+    <string name="catalog_material_fertilizer_0427_name" translatable="false">NilocG Calcium Sulfate (CaSO4) - dry salt</string>
+    <string name="catalog_material_fertilizer_0428_name" translatable="false">NilocG Magnesium Sulfate (MgSO4) - dry salt</string>
+    <string name="catalog_material_fertilizer_0429_name" translatable="false">NilocG Iron Gluconate - dry salt</string>
+    <string name="catalog_material_fertilizer_0430_name" translatable="false">NilocG Iron Chelate - dry salt</string>
+    <string name="catalog_material_fertilizer_0431_name" translatable="false">NilocG EI Based NPK &amp; CSM+B Fertilizer Package - 1 kit</string>
+    <string name="catalog_material_fertilizer_0432_name" translatable="false">NilocG PPS-Pro Fertilizer Package - 1 kit</string>
+    <string name="catalog_material_fertilizer_0433_name" translatable="false">GLA Potassium Nitrate (KNO3) Aquarium Fertilizer - 1 lb bag</string>
+    <string name="catalog_material_fertilizer_0434_name" translatable="false">GLA Potassium Nitrate (KNO3) Aquarium Fertilizer - 1 lb jar</string>
+    <string name="catalog_material_fertilizer_0435_name" translatable="false">GLA Monopotassium Phosphate (KH2PO4) Aquarium Fertilizer - 1 lb bag</string>
+    <string name="catalog_material_fertilizer_0436_name" translatable="false">GLA Monopotassium Phosphate (KH2PO4) Aquarium Fertilizer - 1 lb jar</string>
+    <string name="catalog_material_fertilizer_0437_name" translatable="false">GLA Potassium Sulfate (K2SO4) Aquarium Fertilizer - 1 lb bag</string>
+    <string name="catalog_material_fertilizer_0438_name" translatable="false">GLA Potassium Sulfate (K2SO4) Aquarium Fertilizer - 1 lb jar</string>
+    <string name="catalog_material_fertilizer_0439_name" translatable="false">GLA Macros - Macromix NPK &amp; Mg - 1 lb bag</string>
+    <string name="catalog_material_fertilizer_0440_name" translatable="false">GLA Macros &amp; Micros Fertilizer Kit (EI / PPS-Pro) - bag kit</string>
+    <string name="catalog_material_fertilizer_0441_name" translatable="false">GLA Macros &amp; Micros Fertilizer Kit (EI / PPS-Pro) - jar kit</string>
+    <string name="catalog_material_fertilizer_0442_name" translatable="false">GLA Macros &amp; Micros II Copper-Free Fertilizer Kit - bag kit</string>
+    <string name="catalog_material_fertilizer_0443_name" translatable="false">GLA Macros &amp; Micros II Copper-Free Fertilizer Kit - jar kit</string>
+    <string name="catalog_material_fertilizer_0444_name" translatable="false">Tetra PlantaMin - 100 ml</string>
+    <string name="catalog_material_fertilizer_0445_name" translatable="false">Tetra PlantaMin - 250 ml</string>
+    <string name="catalog_material_fertilizer_0446_name" translatable="false">Tetra PlantaMin - 500 ml</string>
+    <string name="catalog_material_fertilizer_0447_name" translatable="false">Tetra PlantaMin - 5 L</string>
+    <string name="catalog_material_fertilizer_0448_name" translatable="false">Tetra PlantaPro Micro - 250 ml</string>
+    <string name="catalog_material_fertilizer_0449_name" translatable="false">Tetra CO2 Plus - 250 ml</string>
+    <string name="catalog_material_fertilizer_0450_name" translatable="false">Tetra Crypto - 10 tabs</string>
+    <string name="catalog_material_fertilizer_0451_name" translatable="false">Tetra Crypto - 30 tabs</string>
+    <string name="catalog_material_fertilizer_0452_name" translatable="false">Tetra PlantaStart - 12 tabs</string>
+    <string name="catalog_material_fertilizer_0453_name" translatable="false">Dupla Plant 24 - 10 ml</string>
+    <string name="catalog_material_fertilizer_0454_name" translatable="false">Dupla Plant 24 - 50 ml</string>
+    <string name="catalog_material_fertilizer_0455_name" translatable="false">Dupla Plant 24 - 100 ml</string>
+    <string name="catalog_material_fertilizer_0456_name" translatable="false">Dupla Plant basic - 10 tabs</string>
+    <string name="catalog_material_fertilizer_0457_name" translatable="false">Dupla Plant basic - 50 tabs</string>
+    <string name="catalog_material_fertilizer_0458_name" translatable="false">Dupla Plant basic - 200 tabs</string>
+    <string name="catalog_material_fertilizer_0459_name" translatable="false">Oase ScaperLine Daily Fertilizer - 150 ml</string>
+    <string name="catalog_material_fertilizer_0460_name" translatable="false">Oase ScaperLine Daily Fertilizer - 300 ml</string>
+    <string name="catalog_material_fertilizer_0461_name" translatable="false">Oase ScaperLine MineralMix Fertilizer - 150 ml</string>
+    <string name="catalog_material_fertilizer_0462_name" translatable="false">Oase ScaperLine MineralMix Fertilizer - 300 ml</string>
+    <string name="catalog_material_fertilizer_0463_name" translatable="false">Oase ScaperLine Plant Boost Tablets - 10 pcs</string>
+    <string name="catalog_material_fertilizer_0464_name" translatable="false">Oase PlantGrow Daily - 250 ml</string>
+    <string name="catalog_material_fertilizer_0465_name" translatable="false">Oase PlantGrow Iron - 250 ml</string>
+    <string name="catalog_material_fertilizer_0466_name" translatable="false">Oase PlantGrow Weekly - 250 ml</string>
+    <string name="catalog_material_fertilizer_0467_name" translatable="false">Oase SOSGrow Quick Fertilizer Tablets - 10 pcs</string>
+    <string name="catalog_material_fertilizer_0468_name" translatable="false">Oase SOSGrow Quick Fertilizer Tablets - 20 pcs</string>
+    <string name="catalog_material_fertilizer_0469_name" translatable="false">VIMI All In One - 250 ml</string>
+    <string name="catalog_material_fertilizer_0470_name" translatable="false">VIMI All In One - 1175 ml</string>
+    <string name="catalog_material_fertilizer_0471_name" translatable="false">VIMI All In One - 5000 ml</string>
+    <string name="catalog_material_fertilizer_0472_name" translatable="false">VIMI All In Red - 250 ml</string>
+    <string name="catalog_material_fertilizer_0473_name" translatable="false">VIMI All In Red - 1175 ml</string>
+    <string name="catalog_material_fertilizer_0474_name" translatable="false">VIMI All In Red - 5000 ml</string>
+    <string name="catalog_material_fertilizer_0475_name" translatable="false">VIMI Micro - 250 ml</string>
+    <string name="catalog_material_fertilizer_0476_name" translatable="false">VIMI Micro - 1175 ml</string>
+    <string name="catalog_material_fertilizer_0477_name" translatable="false">VIMI Micro - 5000 ml</string>
+    <string name="catalog_material_fertilizer_0478_name" translatable="false">VIMI Accelerator - 250 ml</string>
+    <string name="catalog_material_fertilizer_0479_name" translatable="false">VIMI Accelerator - 1175 ml</string>
+    <string name="catalog_material_fertilizer_0480_name" translatable="false">VIMI Accelerator - 5000 ml</string>
+    <string name="catalog_material_fertilizer_0481_name" translatable="false">VIMI Solo N - 50 ml</string>
+    <string name="catalog_material_fertilizer_0482_name" translatable="false">VIMI Solo Fe - 50 ml</string>
+    <string name="catalog_material_fertilizer_0483_name" translatable="false">VIMI Solo P - 50 ml</string>
+    <string name="catalog_material_fertilizer_0484_name" translatable="false">VIMI Solo K - 50 ml</string>
+    <string name="catalog_material_fertilizer_0485_name" translatable="false">VIMI Solo Trace - 50 ml</string>
+    <string name="catalog_material_fertilizer_0486_name" translatable="false">VIMI Reminamin - 250 g</string>
+    <string name="catalog_material_fertilizer_0487_name" translatable="false">VIMI Reminamin - 500 g</string>
+    <string name="catalog_material_fertilizer_0488_name" translatable="false">VIMI Reminamin - 1000 g</string>
+    <string name="catalog_material_fertilizer_0489_name" translatable="false">VIMI Bottom Action - 20 pcs</string>
+    <string name="catalog_material_fertilizer_0490_name" translatable="false">VIMI Bottom Action - 50 pcs</string>
+    <string name="catalog_material_fertilizer_0491_name" translatable="false">VIMI Bottom Long Lasting - 20 pcs</string>
+    <string name="catalog_material_fertilizer_0492_name" translatable="false">VIMI Bottom Long Lasting - 50 pcs</string>
+    <string name="catalog_material_fertilizer_0493_name" translatable="false">Colombo FloraGrow - 250 ml</string>
+    <string name="catalog_material_fertilizer_0494_name" translatable="false">Colombo FloraGrow - 500 ml</string>
+    <string name="catalog_material_fertilizer_0495_name" translatable="false">Colombo FloraGrow - 2500 ml</string>
+    <string name="catalog_material_fertilizer_0496_name" translatable="false">Colombo FloraGrow Pro - 250 ml</string>
+    <string name="catalog_material_fertilizer_0497_name" translatable="false">Colombo FloraGrow Pro - 500 ml</string>
+    <string name="catalog_material_fertilizer_0498_name" translatable="false">Colombo FloraGrow Pro - 2500 ml</string>
+    <string name="catalog_material_fertilizer_0499_name" translatable="false">Colombo FloraGrow Carbo - 250 ml</string>
+    <string name="catalog_material_fertilizer_0500_name" translatable="false">Colombo FloraGrow Carbo - 500 ml</string>
+    <string name="catalog_material_fertilizer_0501_name" translatable="false">Colombo FloraGrow Carbo - 2500 ml</string>
+    <string name="catalog_material_fertilizer_0502_name" translatable="false">Colombo FE-Tabs - retail pack</string>
+    <string name="catalog_material_fertilizer_0503_name" translatable="false">ISTA Water Plant Fertilizer - 120 ml</string>
+    <string name="catalog_material_fertilizer_0504_name" translatable="false">ISTA Water Plant Fertilizer - 250 ml</string>
+    <string name="catalog_material_fertilizer_0505_name" translatable="false">ISTA Water Plant Fertilizer - 500 ml</string>
+    <string name="catalog_material_fertilizer_0506_name" translatable="false">ISTA Water Plant Fertilizer - 1 L</string>
+    <string name="catalog_material_fertilizer_0507_name" translatable="false">ISTA Water Plant Fertilizer - 2 L</string>
+    <string name="catalog_material_fertilizer_0508_name" translatable="false">ISTA Water Plant Fertilizer - 4 L</string>
+    <string name="catalog_material_fertilizer_0509_name" translatable="false">ISTA Premium Water Plant Fertilizer - 120 ml</string>
+    <string name="catalog_material_fertilizer_0510_name" translatable="false">ISTA Premium Water Plant Fertilizer - 240 ml</string>
+    <string name="catalog_material_fertilizer_0511_name" translatable="false">ISTA Premium Water Plant Fertilizer - 500 ml</string>
+    <string name="catalog_material_fertilizer_0512_name" translatable="false">ISTA Premium Water Plant Fertilizer - 1 L</string>
+    <string name="catalog_material_fertilizer_0513_name" translatable="false">ISTA Premium Water Plant Fertilizer - 2 L</string>
+    <string name="catalog_material_fertilizer_0514_name" translatable="false">ISTA Premium Water Plant Fertilizer - 4 L</string>
+    <string name="catalog_material_fertilizer_0515_name" translatable="false">ISTA Premium Water Plant Red Promote - 120 ml</string>
+    <string name="catalog_material_fertilizer_0516_name" translatable="false">ISTA Premium Water Plant Red Promote - 240 ml</string>
+    <string name="catalog_material_fertilizer_0517_name" translatable="false">ISTA Premium Water Plant Red Promote - 500 ml</string>
+    <string name="catalog_material_fertilizer_0518_name" translatable="false">ISTA Premium Water Plant Red Promote - 1 L</string>
+    <string name="catalog_material_fertilizer_0519_name" translatable="false">ISTA Premium Water Plant Red Promote - 2 L</string>
+    <string name="catalog_material_fertilizer_0520_name" translatable="false">ISTA Premium Water Plant Red Promote - 4 L</string>
+    <string name="catalog_material_fertilizer_0521_name" translatable="false">ISTA Water Plant Trace Elements - 120 ml</string>
+    <string name="catalog_material_fertilizer_0522_name" translatable="false">ISTA Water Plant Trace Elements - 250 ml</string>
+    <string name="catalog_material_fertilizer_0523_name" translatable="false">ISTA Water Plant Trace Elements - 500 ml</string>
+    <string name="catalog_material_fertilizer_0524_name" translatable="false">ISTA Water Plant Fertilizer Ball - 10 balls</string>
+    <string name="catalog_material_fertilizer_0525_name" translatable="false">ISTA Water Plant Fertilizer Ball - 20 balls</string>
+    <string name="catalog_material_fertilizer_0526_name" translatable="false">ISTA Water Plant Fertilizer Ball - 50 balls</string>
+    <string name="catalog_material_fertilizer_0527_name" translatable="false">ISTA Plant Fertilizer Tablets - 20 tabs / 100 g</string>
+    <string name="catalog_material_fertilizer_0528_name" translatable="false">Tropical Aqua Plant - 30 ml</string>
+    <string name="catalog_material_fertilizer_0529_name" translatable="false">Tropical Aqua Plant - 100 ml</string>
+    <string name="catalog_material_fertilizer_0530_name" translatable="false">Tropical Aqua Plant - 250 ml</string>
+    <string name="catalog_material_fertilizer_0531_name" translatable="false">Tropical Aqua Plant - 2 L</string>
+    <string name="catalog_material_fertilizer_0532_name" translatable="false">Tropical Aquaflorin Potassium - 30 ml</string>
+    <string name="catalog_material_fertilizer_0533_name" translatable="false">Tropical Aquaflorin Potassium - 100 ml</string>
+    <string name="catalog_material_fertilizer_0534_name" translatable="false">Tropical Aquaflorin Potassium - 250 ml</string>
+    <string name="catalog_material_fertilizer_0535_name" translatable="false">Tropical Aquaflorin Potassium - 500 ml</string>
+    <string name="catalog_material_fertilizer_0536_name" translatable="false">Tropical Aquaflorin Potassium - 2 L</string>
+    <string name="catalog_material_fertilizer_0537_name" translatable="false">Tropical Ferro-Aktiv - 30 ml</string>
+    <string name="catalog_material_fertilizer_0538_name" translatable="false">Tropical Ferro-Aktiv - 500 ml</string>
+    <string name="catalog_material_fertilizer_0539_name" translatable="false">Tropical Ferro-Aktiv - 2 L</string>
+    <string name="catalog_material_fertilizer_0540_name" translatable="false">Tropical Carbo - 100 ml</string>
+    <string name="catalog_material_fertilizer_0541_name" translatable="false">Tropical Carbo - 250 ml</string>
+    <string name="catalog_material_fertilizer_0542_name" translatable="false">Tropical Carbo - 500 ml</string>
+    <string name="catalog_material_fertilizer_0543_name" translatable="false">Prodibio BioVert Plus - 100 ml</string>
+    <string name="catalog_material_fertilizer_0544_name" translatable="false">Prodibio BioVert Plus - 250 ml</string>
+    <string name="catalog_material_fertilizer_0545_name" translatable="false">Prodibio BioVert Plus - 500 ml</string>
+    <string name="catalog_material_fertilizer_0546_name" translatable="false">Prodibio BioVert Ultimate - 100 ml</string>
+    <string name="catalog_material_fertilizer_0547_name" translatable="false">Prodibio BioVert Ultimate - 250 ml</string>
+    <string name="catalog_material_fertilizer_0548_name" translatable="false">Prodibio BioVert Ultimate - 500 ml</string>
+    <string name="catalog_material_fertilizer_0549_name" translatable="false">UNS Plant Food MIN - 500 ml</string>
+    <string name="catalog_material_fertilizer_0550_name" translatable="false">UNS Plant Food MAX - 500 ml</string>
+    <string name="catalog_material_fertilizer_0551_name" translatable="false">Yokuchi Gen X All in One - 30 ml</string>
+    <string name="catalog_material_fertilizer_0552_name" translatable="false">Yokuchi Gen X All in One - 400 ml</string>
+    <string name="catalog_material_fertilizer_0553_name" translatable="false">Yokuchi Gen N Nitrogen - 30 ml</string>
+    <string name="catalog_material_fertilizer_0554_name" translatable="false">Yokuchi Gen N Nitrogen - 400 ml</string>
+    <string name="catalog_material_fertilizer_0555_name" translatable="false">Yokuchi Gen P Phosphorus - 30 ml</string>
+    <string name="catalog_material_fertilizer_0556_name" translatable="false">Yokuchi Gen P Phosphorus - 400 ml</string>
+    <string name="catalog_material_fertilizer_0557_name" translatable="false">Yokuchi Gen K Potassium - 30 ml</string>
+    <string name="catalog_material_fertilizer_0558_name" translatable="false">Yokuchi Gen K Potassium - 400 ml</string>
+    <string name="catalog_material_fertilizer_0559_name" translatable="false">Yokuchi Gen Fe Iron - 30 ml</string>
+    <string name="catalog_material_fertilizer_0560_name" translatable="false">Yokuchi Gen Fe Iron - 400 ml</string>
+    <string name="catalog_material_fertilizer_0561_name" translatable="false">Yokuchi Gen BG Microelements - 30 ml</string>
+    <string name="catalog_material_fertilizer_0562_name" translatable="false">Yokuchi Gen BG Microelements - 400 ml</string>
+    <string name="catalog_material_fertilizer_0563_name" translatable="false">Yokuchi Gen C Carbon - 30 ml</string>
+    <string name="catalog_material_fertilizer_0564_name" translatable="false">Yokuchi Gen C Carbon - 400 ml</string>
+    <string name="catalog_material_fertilizer_0565_name" translatable="false">Yokuchi Sosei Caps - 15 pcs</string>
+    <string name="catalog_material_fertilizer_0566_name" translatable="false">Yokuchi Sosei Caps - 80 pcs</string>
+    <string name="catalog_material_fertilizer_0567_name" translatable="false">Aqua Art Planta Gainer Classic - 10 ml</string>
+    <string name="catalog_material_fertilizer_0568_name" translatable="false">Aqua Art Planta Gainer Classic - 100 ml</string>
+    <string name="catalog_material_fertilizer_0569_name" translatable="false">Aqua Art Planta Gainer Classic - 500 ml</string>
+    <string name="catalog_material_fertilizer_0570_name" translatable="false">Aqua Art Planta Gainer Pro Ferro+ - 100 ml</string>
+    <string name="catalog_material_fertilizer_0571_name" translatable="false">Aqua Art Planta Gainer Pro Ferro+ - 500 ml</string>
+    <string name="catalog_material_fertilizer_0572_name" translatable="false">Aqua Art Planta Gainer Pro Micro - 100 ml</string>
+    <string name="catalog_material_fertilizer_0573_name" translatable="false">Aqua Art Planta Gainer Pro Micro - 500 ml</string>
+    <string name="catalog_material_fertilizer_0574_name" translatable="false">Aqua Art Planta Gainer Pro Macro RED - 100 ml</string>
+    <string name="catalog_material_fertilizer_0575_name" translatable="false">Aqua Art Planta Gainer Pro Macro RED - 500 ml</string>
+    <string name="catalog_material_fertilizer_0576_name" translatable="false">Aqua Art Planta Gainer Pro Macro GREEN - 100 ml</string>
+    <string name="catalog_material_fertilizer_0577_name" translatable="false">Aqua Art Planta Gainer Pro Macro GREEN - 500 ml</string>
+    <string name="catalog_material_fertilizer_0578_name" translatable="false">Aqua Art Planta Gainer K+ - 100 ml</string>
+    <string name="catalog_material_fertilizer_0579_name" translatable="false">Aqua Art Planta Gainer K+ - 500 ml</string>
+    <string name="catalog_material_fertilizer_0580_name" translatable="false">Aqua Art Planta Gainer Carbo - 100 ml</string>
+    <string name="catalog_material_fertilizer_0581_name" translatable="false">Aqua Art Planta Gainer Carbo - 500 ml</string>
+    <string name="catalog_material_fertilizer_0582_name" translatable="false">Aqua Art Planta Gainer CAPS - retail pack</string>
+    <string name="catalog_material_fertilizer_0583_name" translatable="false">Aqua Art VivoVerde Tropical Rain - 500 ml</string>
+    <string name="catalog_material_fertilizer_0584_name" translatable="false">AZOO Plant Nutrients - size varies by market</string>
+    <string name="catalog_material_fertilizer_0585_name" translatable="false">AZOO Trace Elements - size varies by market</string>
+    <string name="catalog_material_fertilizer_0586_name" translatable="false">AZOO Red Plant Nutrients - size varies by market</string>
+    <string name="catalog_material_fertilizer_0587_name" translatable="false">AZOO Chelated Ferrite Liquid - size varies by market</string>
+    <string name="catalog_material_fertilizer_0588_name" translatable="false">AZOO Carbon Plus - size varies by market</string>
+    <string name="catalog_material_fertilizer_0589_name" translatable="false">AZOO Basic Fertilizer - size varies by market</string>
+    <string name="catalog_material_fertilizer_0590_name" translatable="false">AZOO Ferti-Stick - retail pack</string>
+    <string name="catalog_material_fertilizer_0591_name" translatable="false">Microbe-Lift All In One Aquatic Plant Supplement - 236 ml / 8 fl oz</string>
+    <string name="catalog_material_fertilizer_0592_name" translatable="false">Microbe-Lift All In One Aquatic Plant Supplement - 473 ml / 16 fl oz</string>
+    <string name="catalog_material_fertilizer_0593_name" translatable="false">Microbe-Lift Bloom &amp; Grow Iron - 236 ml / 8 fl oz</string>
+    <string name="catalog_material_fertilizer_0594_name" translatable="false">Microbe-Lift Bloom &amp; Grow Iron - 473 ml / 16 fl oz</string>
+    <string name="catalog_material_fertilizer_0595_name" translatable="false">Microbe-Lift Bloom &amp; Grow - 473 ml / 16 fl oz</string>
+    <string name="catalog_material_fertilizer_0596_name" translatable="false">Microbe-Lift Bloom &amp; Grow - 946 ml / 32 fl oz</string>
+    <string name="catalog_material_fertilizer_0597_name" translatable="false">Microbe-Lift Bloom &amp; Grow - 1 gal</string>
+    <string name="catalog_material_fertilizer_0598_name" translatable="false">ReeFlowers AquaPlants Nitrate - I - 85 ml</string>
+    <string name="catalog_material_fertilizer_0599_name" translatable="false">ReeFlowers AquaPlants Nitrate - I - 250 ml</string>
+    <string name="catalog_material_fertilizer_0600_name" translatable="false">ReeFlowers AquaPlants Nitrate - I - 500 ml</string>
+    <string name="catalog_material_fertilizer_0601_name" translatable="false">ReeFlowers AquaPlants Nitrate - I - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0602_name" translatable="false">ReeFlowers AquaPlants Phosphate - II - 85 ml</string>
+    <string name="catalog_material_fertilizer_0603_name" translatable="false">ReeFlowers AquaPlants Phosphate - II - 250 ml</string>
+    <string name="catalog_material_fertilizer_0604_name" translatable="false">ReeFlowers AquaPlants Phosphate - II - 500 ml</string>
+    <string name="catalog_material_fertilizer_0605_name" translatable="false">ReeFlowers AquaPlants Phosphate - II - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0606_name" translatable="false">ReeFlowers AquaPlants Liquid Carbon - III - 85 ml</string>
+    <string name="catalog_material_fertilizer_0607_name" translatable="false">ReeFlowers AquaPlants Liquid Carbon - III - 250 ml</string>
+    <string name="catalog_material_fertilizer_0608_name" translatable="false">ReeFlowers AquaPlants Liquid Carbon - III - 500 ml</string>
+    <string name="catalog_material_fertilizer_0609_name" translatable="false">ReeFlowers AquaPlants Liquid Carbon - III - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0610_name" translatable="false">ReeFlowers AquaPlants Potash - IV - 85 ml</string>
+    <string name="catalog_material_fertilizer_0611_name" translatable="false">ReeFlowers AquaPlants Potash - IV - 250 ml</string>
+    <string name="catalog_material_fertilizer_0612_name" translatable="false">ReeFlowers AquaPlants Potash - IV - 500 ml</string>
+    <string name="catalog_material_fertilizer_0613_name" translatable="false">ReeFlowers AquaPlants Potash - IV - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0614_name" translatable="false">ReeFlowers AquaPlants Ferrous - V - 85 ml</string>
+    <string name="catalog_material_fertilizer_0615_name" translatable="false">ReeFlowers AquaPlants Ferrous - V - 250 ml</string>
+    <string name="catalog_material_fertilizer_0616_name" translatable="false">ReeFlowers AquaPlants Ferrous - V - 500 ml</string>
+    <string name="catalog_material_fertilizer_0617_name" translatable="false">ReeFlowers AquaPlants Ferrous - V - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0618_name" translatable="false">ReeFlowers AquaPlants Trace - VI - 85 ml</string>
+    <string name="catalog_material_fertilizer_0619_name" translatable="false">ReeFlowers AquaPlants Trace - VI - 250 ml</string>
+    <string name="catalog_material_fertilizer_0620_name" translatable="false">ReeFlowers AquaPlants Trace - VI - 500 ml</string>
+    <string name="catalog_material_fertilizer_0621_name" translatable="false">ReeFlowers AquaPlants Trace - VI - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0622_name" translatable="false">ReeFlowers AquaPlants All Inclusive - 85 ml</string>
+    <string name="catalog_material_fertilizer_0623_name" translatable="false">ReeFlowers AquaPlants All Inclusive - 250 ml</string>
+    <string name="catalog_material_fertilizer_0624_name" translatable="false">ReeFlowers AquaPlants All Inclusive - 500 ml</string>
+    <string name="catalog_material_fertilizer_0625_name" translatable="false">ReeFlowers AquaPlants All Inclusive - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0626_name" translatable="false">NIXA Demir - 125 ml</string>
+    <string name="catalog_material_fertilizer_0627_name" translatable="false">NIXA Demir - 200 ml</string>
+    <string name="catalog_material_fertilizer_0628_name" translatable="false">NIXA Demir - 400 ml</string>
+    <string name="catalog_material_fertilizer_0629_name" translatable="false">NIXA Potasyum - 125 ml</string>
+    <string name="catalog_material_fertilizer_0630_name" translatable="false">NIXA Potasyum - 200 ml</string>
+    <string name="catalog_material_fertilizer_0631_name" translatable="false">NIXA Potasyum - 400 ml</string>
+    <string name="catalog_material_fertilizer_0632_name" translatable="false">NIXA NOPE - 125 ml</string>
+    <string name="catalog_material_fertilizer_0633_name" translatable="false">NIXA NOPE - 200 ml</string>
+    <string name="catalog_material_fertilizer_0634_name" translatable="false">NIXA NOPE - 400 ml</string>
+    <string name="catalog_material_fertilizer_0635_name" translatable="false">NIXA FINISH - 125 ml</string>
+    <string name="catalog_material_fertilizer_0636_name" translatable="false">NIXA FINISH - 200 ml</string>
+    <string name="catalog_material_fertilizer_0637_name" translatable="false">NIXA FINISH - 400 ml</string>
+    <string name="catalog_material_fertilizer_0638_name" translatable="false">NIXA GOLD - 125 ml</string>
+    <string name="catalog_material_fertilizer_0639_name" translatable="false">NIXA GOLD - 200 ml</string>
+    <string name="catalog_material_fertilizer_0640_name" translatable="false">NIXA GOLD - 400 ml</string>
+    <string name="catalog_material_fertilizer_0641_name" translatable="false">NIXA Akvaryum Kapsül Gübresi - 10 pcs</string>
+    <string name="catalog_material_fertilizer_0642_name" translatable="false">NIXA GH - 50 g</string>
+    <string name="catalog_material_fertilizer_0643_name" translatable="false">NIXA GH - 100 g</string>
+    <string name="catalog_material_fertilizer_0644_name" translatable="false">NIXA KH-GH - 50 g</string>
+    <string name="catalog_material_fertilizer_0645_name" translatable="false">NIXA KH-GH - 100 g</string>
+    <string name="catalog_material_fertilizer_0646_name" translatable="false">Creaqua Makro - 250 ml</string>
+    <string name="catalog_material_fertilizer_0647_name" translatable="false">Creaqua Mikro - 250 ml</string>
+    <string name="catalog_material_fertilizer_0648_name" translatable="false">Creaqua Potasyum - 250 ml</string>
+    <string name="catalog_material_fertilizer_0649_name" translatable="false">Creaqua GH Plus - 250 ml</string>
+    <string name="catalog_material_fertilizer_0650_name" translatable="false">Creaqua Nitrogen - 250 ml</string>
+    <string name="catalog_material_fertilizer_0651_name" translatable="false">Creaqua Phospate - 250 ml</string>
+    <string name="catalog_material_fertilizer_0652_name" translatable="false">Creaqua Iron - 250 ml</string>
+    <string name="catalog_material_fertilizer_0653_name" translatable="false">Creaqua Six Up - 250 ml</string>
+    <string name="catalog_material_fertilizer_0654_name" translatable="false">Creaqua Exalg - 250 ml</string>
+    <string name="catalog_material_fertilizer_0655_name" translatable="false">Creaqua Low Tech - 100 ml</string>
+    <string name="catalog_material_fertilizer_0656_name" translatable="false">Creaqua Low Tech - 250 ml</string>
+    <string name="catalog_material_fertilizer_0657_name" translatable="false">Crystalpro Flora Micro - 125 ml</string>
+    <string name="catalog_material_fertilizer_0658_name" translatable="false">Crystalpro Flora Micro - 500 ml</string>
+    <string name="catalog_material_fertilizer_0659_name" translatable="false">Crystalpro Flora Multi Minerals - 125 ml</string>
+    <string name="catalog_material_fertilizer_0660_name" translatable="false">Crystalpro Flora Multi Minerals - 500 ml</string>
+    <string name="catalog_material_fertilizer_0661_name" translatable="false">Crystalpro Flora NPK - 125 ml</string>
+    <string name="catalog_material_fertilizer_0662_name" translatable="false">Crystalpro Flora NPK - 500 ml</string>
+    <string name="catalog_material_fertilizer_0663_name" translatable="false">Crystalpro Potassium Plus - 125 ml</string>
+    <string name="catalog_material_fertilizer_0664_name" translatable="false">Crystalpro Potassium Plus - 500 ml</string>
+    <string name="catalog_material_fertilizer_0665_name" translatable="false">Crystalpro Flora Carbon - 125 ml</string>
+    <string name="catalog_material_fertilizer_0666_name" translatable="false">Crystalpro Flora Carbon - 500 ml</string>
+    <string name="catalog_material_fertilizer_0667_name" translatable="false">Crystalpro Nitrate Plus - 125 ml</string>
+    <string name="catalog_material_fertilizer_0668_name" translatable="false">Crystalpro Nitrate Plus - 500 ml</string>
+    <string name="catalog_material_fertilizer_0669_name" translatable="false">Crystalpro Flora Trace - 125 ml</string>
+    <string name="catalog_material_fertilizer_0670_name" translatable="false">Crystalpro Flora Trace - 500 ml</string>
+    <string name="catalog_material_fertilizer_0671_name" translatable="false">Crystalpro Phosphate Plus - 125 ml</string>
+    <string name="catalog_material_fertilizer_0672_name" translatable="false">Crystalpro Phosphate Plus - 500 ml</string>
+    <string name="catalog_material_fertilizer_0673_name" translatable="false">Crystalpro Ferro Plus - 125 ml</string>
+    <string name="catalog_material_fertilizer_0674_name" translatable="false">Crystalpro Ferro Plus - 500 ml</string>
+    <string name="catalog_material_fertilizer_0675_name" translatable="false">Deep Fix Floramin - 50 ml</string>
+    <string name="catalog_material_fertilizer_0676_name" translatable="false">Aquamins Aqua Plants All Included - 100 ml</string>
+    <string name="catalog_material_fertilizer_0677_name" translatable="false">Aquamins Aqua Plants All Included - 250 ml</string>
+    <string name="catalog_material_fertilizer_0678_name" translatable="false">Aquamins Aqua Plants All Included - 500 ml</string>
+    <string name="catalog_material_fertilizer_0679_name" translatable="false">Aquamins Aqua Plants All Included - 1000 ml</string>
+    <string name="catalog_material_fertilizer_0680_name" translatable="false">Aquamins Aqua Potasflow - 100 ml</string>
+    <string name="catalog_material_fertilizer_0681_name" translatable="false">Aquamins Aqua Potasflow - 250 ml</string>
+    <string name="catalog_material_fertilizer_0682_name" translatable="false">Badem Akvaryum Potasyum Bitki Gübresi - 250 ml</string>
+    <string name="catalog_material_fertilizer_0683_name" translatable="false">Badem Akvaryum Nitrat Bitki Gübresi - 250 ml</string>
+    <string name="catalog_material_fertilizer_0684_name" translatable="false">Badem Akvaryum Fosfat Bitki Gübresi - 250 ml</string>
+    <string name="catalog_material_fertilizer_0685_name" translatable="false">Badem Akvaryum Mikro Element Bitki Gübresi - 250 ml</string>
+    <string name="catalog_material_fertilizer_0686_name" translatable="false">Badem Akvaryum Demir Bitki Gübresi - 250 ml</string>
+    <string name="catalog_material_fertilizer_0687_name" translatable="false">Badem Akvaryum Excel / Sıvı Karbon - 250 ml</string>
+    <string name="catalog_material_fertilizer_0688_name" translatable="false">Badem Akvaryum Bitki Gübresi Seti - 5 x 250 ml</string>
+    <string name="catalog_material_fertilizer_0689_name" translatable="false">Badem Akvaryum Bitki Gübresi Seti - 6 x 250 ml</string>
+    <string name="catalog_material_fertilizer_0690_name" translatable="false">Badem Akvaryum Potasyum Gübre Kiti - 1 L hazırlama kiti</string>
+    <string name="catalog_material_fertilizer_0691_name" translatable="false">Badem Akvaryum Nitrat Gübre Kiti - 1 L hazırlama kiti</string>
+    <string name="catalog_material_fertilizer_0692_name" translatable="false">Badem Akvaryum Fosfat Gübre Kiti - 1 L hazırlama kiti</string>
+    <string name="catalog_material_fertilizer_0693_name" translatable="false">Badem Akvaryum Demir Gübre Kiti - 1 L hazırlama kiti</string>
+    <string name="catalog_material_fertilizer_0694_name" translatable="false">Badem Akvaryum Akıllı Kapsül Gübre - 10 pcs</string>
+    <string name="catalog_material_fertilizer_0695_name" translatable="false">Sakura Akvaryum Bitki Gübresi Demir - 250 ml</string>
+    <string name="catalog_material_fertilizer_0696_name" translatable="false">Sakura Akvaryum Bitki Gübresi Fosfat - 250 ml</string>
+    <string name="catalog_material_fertilizer_0697_name" translatable="false">Sakura Akvaryum Bitki Gübresi Nitrat - 250 ml</string>
+    <string name="catalog_material_fertilizer_0698_name" translatable="false">Sakura Akvaryum Bitki Gübresi Potasyum - 250 ml</string>
+    <string name="catalog_material_fertilizer_0699_name" translatable="false">Sakura Akvaryum Sıvı Karbon - 250 ml</string>
+    <string name="catalog_material_fertilizer_0700_name" translatable="false">Sakura Akvaryum Bitki Gübresi Seti - 5 x 250 ml</string>
+    <string name="catalog_material_fertilizer_0701_name" translatable="false">Sakura Akvaryum NPK Seti - 3 x 250 ml</string>
+    <string name="catalog_material_fertilizer_0702_name" translatable="false">Lab Formula PLANT FERTILIZER - 400 ml</string>
+    <string name="catalog_material_fertilizer_0703_name" translatable="false">Ocean Nutrition Giovanni\'s Starter - 200 g</string>
+    <string name="catalog_material_fertilizer_0704_name" translatable="false">JBL PROFLORA PlantStart - 2 x 8 g</string>
+</resources>
