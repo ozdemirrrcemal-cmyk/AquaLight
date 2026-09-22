@@ -45,6 +45,7 @@ data class SavedAquariumMaterial(
 
 data class SavedAquariumLivestock(
     val id: Long = AquariumIdGenerator.newLong(),
+    val catalogEntryId: String = "",
     val name: String = "",
     val category: String = "",
     val quantity: Int = 1,
