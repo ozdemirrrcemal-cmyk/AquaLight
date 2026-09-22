@@ -8,6 +8,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardColors
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.deviceLightChannelColor
 
 internal fun DrawScope.drawCurveGrid(
     colors: AquaDeviceCardColors,
@@ -58,7 +59,7 @@ internal fun DrawScope.drawChannelCurve(
     visuals: DeviceLightCustomVisuals
 ) {
     if (plot.samples.isEmpty()) return
-    val color = visuals.channelColor(plot.channel)
+    val color = deviceLightChannelColor(plot.channel.wireKey)
     val chartHeight = size.height - CHART_BOTTOM_INSET_DP.dp.toPx()
     val path = Path()
     plot.samples.forEachIndexed { index, sample ->

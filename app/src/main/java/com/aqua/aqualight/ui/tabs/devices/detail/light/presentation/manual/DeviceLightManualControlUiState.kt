@@ -12,11 +12,11 @@ import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualControlSpec
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.labelResource
 
-internal enum class DeviceLightManualChannelId {
-    RED,
-    GREEN,
-    BLUE,
-    WHITE
+internal enum class DeviceLightManualChannelId(val wireKey: String) {
+    RED("red"),
+    GREEN("green"),
+    BLUE("blue"),
+    WHITE("white")
 }
 
 internal data class DeviceLightManualChannelUiState(

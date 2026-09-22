@@ -220,14 +220,6 @@ internal fun SectionHeading(
     }
 }
 
-internal fun DeviceLightCustomVisuals.channelColor(channel: DeviceLightCustomChannelId): Color =
-    when (channel) {
-        DeviceLightCustomChannelId.RED -> colors.red
-        DeviceLightCustomChannelId.GREEN -> colors.green
-        DeviceLightCustomChannelId.BLUE -> colors.blue
-        DeviceLightCustomChannelId.WHITE -> colors.white
-    }
-
 @Immutable
 internal data class DeviceLightCustomVisuals(
     val colors: AquaLightManualColors,
