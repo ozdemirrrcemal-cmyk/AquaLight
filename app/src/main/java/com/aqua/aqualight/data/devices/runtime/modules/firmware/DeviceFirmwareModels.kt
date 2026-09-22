@@ -83,6 +83,7 @@ data class DeviceFirmwareOtaSnapshot(
     val targetVersion: String = "",
     val sha256Expected: String = "",
     val sha256Actual: String = "",
+    val failureCode: String = "",
     val lastError: String = "",
     val lastErrorField: String = "",
     val urlScheme: String = "",
