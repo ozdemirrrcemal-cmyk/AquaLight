@@ -125,6 +125,20 @@ object LivestockCatalog {
             "Livestock catalog contains duplicate ids."
         }
 
+        check(entries.all { entry ->
+            entry.id.isNotBlank() &&
+                entry.id == entry.id.trim() &&
+                AquariumLivestockIdentity.isCustom(entry.id).not()
+        }) {
+            "Livestock catalog contains an invalid stable id."
+        }
+
+        check(entries.all { entry ->
+            entry.warningMode in setOf("SOFT", "HARD", "INFORMATIONAL")
+        }) {
+            "Livestock catalog contains an unsupported warning mode."
+        }
+
         check(entries.all { entry -> entry.category in AquariumLivestockTaxonomy.categoryCodes }) {
             "Livestock catalog contains an unsupported category."
         }
