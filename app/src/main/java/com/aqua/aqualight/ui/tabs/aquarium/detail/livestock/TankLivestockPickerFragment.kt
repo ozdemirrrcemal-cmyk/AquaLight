@@ -16,6 +16,7 @@ import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderSearchField
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.LivestockCategories
+import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -197,8 +198,6 @@ class TankLivestockPickerFragment : Fragment(R.layout.fragment_tank_livestock_pi
             return
         }
 
-        isNavigating = true
-
         val directions = TankLivestockPickerFragmentDirections
             .actionTankLivestockPickerFragmentToTankDetailLivestockFormFragment(
                 tankId = args.tankId,
@@ -209,7 +208,10 @@ class TankLivestockPickerFragment : Fragment(R.layout.fragment_tank_livestock_pi
                 presetName = presetName.trim()
             )
 
-        findNavController().navigate(directions)
+        isNavigating = findNavController().navigateSafelyFrom(
+            sourceDestinationId = R.id.tankLivestockPickerFragment,
+            directions = directions
+        )
     }
 
     override fun onDestroyView() {
