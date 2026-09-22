@@ -15,11 +15,10 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/contentContainer"
         android:layout_width="@dimen/aqua_size_0"
         android:layout_height="@dimen/aqua_size_0"
-        android:orientation="vertical"
         android:paddingStart="@dimen/aqua_size_20"
         android:paddingTop="@dimen/aqua_size_8"
         android:paddingEnd="@dimen/aqua_size_20"
@@ -31,20 +30,26 @@
 
         <TextView
             android:id="@+id/tvKeywordTitle"
-            android:layout_width="match_parent"
+            android:layout_width="@dimen/aqua_size_0"
             android:layout_height="wrap_content"
             android:includeFontPadding="false"
             android:text="@string/material_picker_popular_keywords"
             android:textColor="@color/aqua_content_secondary"
-            android:textSize="@dimen/aqua_text_size_body_small" />
+            android:textSize="@dimen/aqua_text_size_body_small"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <HorizontalScrollView
             android:id="@+id/keywordScrollView"
-            android:layout_width="match_parent"
+            android:layout_width="@dimen/aqua_size_0"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/aqua_size_10"
             android:overScrollMode="never"
-            android:scrollbars="none">
+            android:scrollbars="none"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvKeywordTitle">
 
             <LinearLayout
                 android:id="@+id/keywordContainer"
@@ -57,15 +62,18 @@
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/materialRecyclerView"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
+            android:layout_width="@dimen/aqua_size_0"
+            android:layout_height="@dimen/aqua_size_0"
             android:layout_marginTop="@dimen/aqua_size_16"
-            android:layout_weight="1"
             android:clipToPadding="false"
             android:overScrollMode="never"
-            android:scrollbars="none" />
+            android:scrollbars="none"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/keywordScrollView" />
 
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <LinearLayout
         android:id="@+id/bottomContainer"
