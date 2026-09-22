@@ -92,20 +92,20 @@ class DeviceFirmwareExactArtifactPlannerTest {
     }
 
     @Test
-    fun `manifest capability drift from authenticated firmware fails closed`() {
+    fun `target firmware capability evolution does not alter immutable package identity`() {
         val exact = artifact()
-        val drifted = exact.copy(
+        val evolved = exact.copy(
             product = exact.product.copy(
                 capabilities = exact.product.capabilities.copy(dosing = false)
             )
         )
 
-        val failure = planner.evaluateUpdate(
+        val availability = planner.evaluateUpdate(
             snapshot(),
-            manifest(artifacts = listOf(drifted))
-        ).exceptionOrNull()
+            manifest(artifacts = listOf(evolved))
+        ).getOrThrow()
 
-        assertTrue(failure?.message.orEmpty().contains("capabilities differ"))
+        assertTrue(availability is DeviceFirmwareAvailability.UpdateAvailable)
     }
 
     @Test
