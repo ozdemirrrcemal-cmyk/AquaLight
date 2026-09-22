@@ -148,6 +148,17 @@ class TankDetailLivestockFormFragment :
             entryId = selectedCatalogEntryId
         )
 
+        if (
+            selectedCatalogEntryId.isNotBlank() &&
+            selectedCatalogEntry == null
+        ) {
+            showMissingDataDialogAndClose(
+                title = getString(R.string.aquarium_livestock_not_found_title),
+                message = getString(R.string.livestock_catalog_entry_missing_message)
+            )
+            return
+        }
+
         selectedCatalogEntry?.let { entry ->
             selectedCategory = entry.category
             binding.etLifeName.setText(entry.displayName(requireContext()))
