@@ -3,7 +3,6 @@ package com.aqua.aqualight.data.devices.runtime.modules.firmware
 import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
 import com.aqua.aqualight.application.devices.DeviceOtaProgressPhase
 import com.aqua.aqualight.application.devices.DeviceOtaState
-import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 
 internal object DeviceOtaValidator {
@@ -17,19 +16,17 @@ internal object DeviceOtaValidator {
         validateTransferIdentity(snapshot, plan) ?: validateCompletedTransfer(snapshot, plan)
     }
 
-    fun planAgainstSnapshot(
+    fun planAgainstMaintenanceIdentity(
         plan: DeviceFirmwareUpdatePlan,
-        snapshot: DeviceSnapshot
+        identity: DeviceFirmwareMaintenanceIdentity
     ): String? = when {
-        !snapshot.hasValidatedRuntimeMetadata -> "Current runtime metadata is not validated."
-        snapshot.runtimeMetadataGeneration != plan.runtimeMetadataGeneration ->
-            "OTA plan expired because runtime metadata generation changed."
-        snapshot.product.productKey != plan.productKey -> "OTA plan productKey changed."
-        snapshot.product.productId != plan.productId -> "OTA plan productId changed."
-        snapshot.product.model != plan.model -> "OTA plan model changed."
-        snapshot.product.hardwareRevision != plan.hardwareRevision ->
+        identity.deviceUid != plan.deviceUid -> "OTA plan device identity changed."
+        identity.productKey != plan.productKey -> "OTA plan productKey changed."
+        identity.productId != plan.productId -> "OTA plan productId changed."
+        identity.model != plan.model -> "OTA plan model changed."
+        identity.hardwareRevision != plan.hardwareRevision ->
             "OTA plan hardwareRevision changed."
-        snapshot.firmwareVersion != plan.currentVersion ->
+        identity.currentVersion != plan.currentVersion ->
             "OTA plan expired because the current firmware version changed."
         else -> null
     }
