@@ -56,6 +56,7 @@ internal object DeviceFirmwareReadParser {
             otaCompletedEvent = ota.getString("completedEvent"),
             otaStartCommand = ota.getString("startCommand"),
             otaStatusCommand = ota.getString("statusCommand"),
+            maintenanceSchema = data.getJSONObject("runtime").getString("maintenanceSchema"),
             ota = DeviceFirmwareStatusParser.parseOtaSnapshotExact(
                 ota.getJSONObject("status")
             ).getOrThrow()
@@ -154,6 +155,10 @@ internal object DeviceFirmwareReadParser {
             DeviceRuntimeJson.intValue(data, "wsProtocolVersion") ==
                 AqlWsContract.PROTOCOL_VERSION
         )
+        require(
+            DeviceRuntimeJson.stringValue(data, "maintenanceSchema") ==
+                DeviceFirmwareRuntimeContract.MAINTENANCE_SCHEMA
+        )
         require(DeviceRuntimeJson.booleanValue(data, "readOnly"))
     }
 
@@ -179,6 +184,6 @@ internal object DeviceFirmwareReadParser {
         "startCommand", "statusCommand", "status"
     )
     private val RUNTIME_KEYS = setOf(
-        "transport", "wsSchema", "wsProtocolVersion", "readOnly"
+        "transport", "wsSchema", "wsProtocolVersion", "maintenanceSchema", "readOnly"
     )
 }
