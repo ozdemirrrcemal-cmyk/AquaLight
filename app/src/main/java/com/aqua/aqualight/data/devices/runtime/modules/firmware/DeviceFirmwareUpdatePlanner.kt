@@ -33,10 +33,6 @@ class DeviceFirmwareUpdatePlanner(
 
         val artifact = manifest.artifacts.single()
         validateArtifactAgainstSnapshot(artifact, manifest, snapshot)
-        DeviceFirmwareContractRegistry.requireTargetCompatible(
-            artifact.contracts,
-            snapshot.product.family
-        )
         val releaseContent = manifest.releaseNotes
             .resolve(preferredLocaleTags())
             .copy(mandatory = artifact.updatePolicy.isRequired)
@@ -48,6 +44,10 @@ class DeviceFirmwareUpdatePlanner(
                 releaseContent = releaseContent
             )
         } else {
+            DeviceFirmwareContractRegistry.requireTargetCompatible(
+                artifact.contracts,
+                snapshot.product.family
+            )
             DeviceFirmwareAvailability.UpdateAvailable(
                 createPlan(
                     snapshot = snapshot,
