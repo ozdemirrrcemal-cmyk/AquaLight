@@ -63,6 +63,7 @@ require_tokens(
         '"90919c12ee269c20cff8affa4b417393126fabb6"',
         "OFFICIAL_CHANNEL_MANIFEST_URL_PREFIX",
         "raw.githubusercontent.com/$OFFICIAL_RELEASE_REPOSITORY/main/channels/",
+        'const val MAINTENANCE_SCHEMA = "aql.maintenance.v1"',
     ),
 )
 forbid_tokens(
@@ -118,9 +119,11 @@ require_tokens(
     (
         "events.collect(::processLifecycleEvent)",
         "events.collect(::processTypedEvent)",
-        "updates.collect(::processSnapshotUpdates)",
         "An OTA operation is already active for this device.",
-        "runtimeMetadataGeneration != selected.dataPlan.runtimeMetadataGeneration",
+        "requestFirmwareStatus(deviceUid)",
+        "fetchAndEvaluateMaintenanceUpdate(",
+        "planAgainstMaintenanceIdentity(",
+        "verifyInstalledFirmwareFromMaintenance",
         "parseOtaProgressEventExact",
         "selected.runtimeGeneration != event.generation",
         "Firmware OTA request echo differs from the selected plan.",
@@ -134,8 +137,8 @@ require_tokens(
         "recoverRuntime(deviceUid)",
         "DeviceRuntimeLifecycleEvent.Authenticated",
         "DeviceRuntimeLifecycleEvent.Unavailable",
-        "snapshot.firmwareVersion == selected.dataPlan.targetVersion",
-        "snapshot.firmwareVersion == selected.dataPlan.currentVersion",
+        "maintenance.currentVersion == selected.dataPlan.targetVersion",
+        "maintenance.currentVersion == selected.dataPlan.currentVersion",
         "DeviceOtaState.RolledBack",
         "DeviceOtaState.PostRestartTimeout",
         "DeviceOtaState.UnexpectedFirmware",
@@ -186,6 +189,8 @@ require_tokens(
     "validation",
     (
         "object DeviceOtaValidator",
+        "planAgainstMaintenanceIdentity(",
+        "identity.currentVersion != plan.currentVersion",
         "snapshot.targetVersion != plan.targetVersion",
         "snapshot.sha256Expected.equals(plan.firmware.sha256",
         "snapshot.contentLength != plan.firmware.size.toLong()",
@@ -198,19 +203,18 @@ require_tokens(
     "planner",
     (
         "fun evaluateUpdate(",
+        "fun evaluateMaintenanceUpdate(",
         "requireValidatedSnapshot(snapshot)",
         "manifest.hasExpectedReleaseTag()",
         "Product-scoped OTA manifest must contain exactly one artifact.",
         "val artifact = manifest.artifacts.single()",
-        "validateArtifactAgainstSnapshot(artifact, manifest, snapshot)",
+        "validateArtifactAgainstIdentity(artifact, manifest, identity)",
         "artifact.env == expectedEnvironment",
-        "artifact.compatibility.family == product.family.wireValue",
-        "artifact.compatibility.line == product.line",
-        "artifact.product.capabilities == snapshot.capabilities",
-        "artifact.product.limits == snapshot.limits",
+        "artifact.compatibility.family == identity.family.wireValue",
         "version = artifact.firmware.version",
-        "model = snapshot.product.model",
+        "model = identity.model",
         "runtimeMetadataGeneration = snapshot.runtimeMetadataGeneration",
+        "runtimeMetadataGeneration = 0L",
         "val releaseContent = manifest.releaseNotes",
         ".resolve(preferredLocaleTags())",
         "DeviceFirmwareContractRegistry.requireTargetCompatible(",
@@ -227,6 +231,8 @@ forbid_tokens(
         "AqlCommercialDeviceCatalog",
         "AqlCommercialCatalogValidation",
         "requireValidatedProduct",
+        "artifact.product.capabilities == snapshot.capabilities",
+        "artifact.product.limits == snapshot.limits",
         'require(compatible.isNotEmpty()) {\n            "No compatible OTA artifact found',
     ),
 )
@@ -236,6 +242,9 @@ require_tokens(
         "DeviceFirmwareManifestNotPublishedException",
         "releaseNotPublished(snapshot)",
         "DeviceFirmwareAvailability.ReleaseNotPublished(currentVersion)",
+        "requestFirmwareStatus(",
+        "fetchAndEvaluateMaintenanceUpdate(",
+        "planner.evaluateMaintenanceUpdate(identity, manifest, applyNow)",
         "throw error",
     ),
 )
@@ -287,6 +296,7 @@ require_tokens(
         "object DeviceFirmwareContractRegistry",
         "supportedRequiredDomains",
         "contracts.requiredDomains != listOf(expectedBaseContract)",
+        "contracts.maintenanceSchema != DeviceFirmwareRuntimeContract.MAINTENANCE_SCHEMA",
         "DeviceFirmwareApplicationUpdateRequiredException",
     ),
 )
@@ -303,7 +313,10 @@ require_tokens(
         "val limits: DeviceLimits",
         "val version: String",
         "data class DeviceFirmwareFactoryAsset",
+        "data class DeviceFirmwareMaintenanceIdentity",
+        "maintenanceSchema == DeviceFirmwareRuntimeContract.MAINTENANCE_SCHEMA",
         "data class DeviceFirmwareTargetContracts",
+        "val maintenanceSchema: String",
         "val contracts: DeviceFirmwareTargetContracts",
         "val updatePolicy: DeviceFirmwareUpdatePolicy",
         "sealed interface DeviceFirmwareAvailability",
@@ -329,6 +342,7 @@ require_tokens(
         "parseCapabilities",
         "parseLimits",
         "parseContracts",
+        'maintenanceSchema = json.requiredString("maintenanceSchema")',
         "parseUpdatePolicy",
         "requiredNullableObject(\"factory\")",
         "json.requireExactKeys(FIRMWARE_KEYS, label)",
@@ -348,6 +362,22 @@ forbid_tokens(
         "parseAsset(",
     ),
 )
+forbid_tokens(
+    "coordinator",
+    (
+        "planAgainstSnapshot(",
+        "snapshot.hasValidatedRuntimeMetadata",
+        "processSnapshotUpdates",
+    ),
+)
+forbid_tokens(
+    "background_probe",
+    (
+        "artifact.product.capabilities == snapshot.capabilities",
+        "artifact.product.limits == snapshot.limits",
+    ),
+)
+
 require_tokens(
     "status",
     (
