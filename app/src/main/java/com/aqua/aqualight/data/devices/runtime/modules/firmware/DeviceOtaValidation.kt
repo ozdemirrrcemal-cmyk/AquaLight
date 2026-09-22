@@ -91,12 +91,7 @@ internal object DeviceOtaStateMapper {
         )
         DeviceFirmwareOtaPhase.SUCCEEDED -> if (
             snapshot.failureCode ==
-            DeviceFirmwareRuntimeContract.FailureCode.SAFE_MODE_RESTORE_FAILED ||
-            (
-                snapshot.failureCode.isBlank() &&
-                    snapshot.lastErrorField ==
-                    DeviceFirmwareRuntimeContract.ErrorField.SAFE_MODE_RESTORE
-            )
+            DeviceFirmwareRuntimeContract.FailureCode.SAFE_MODE_RESTORE_FAILED
         ) {
             DeviceOtaState.Failed(
                 deviceUid = deviceUid.value,
