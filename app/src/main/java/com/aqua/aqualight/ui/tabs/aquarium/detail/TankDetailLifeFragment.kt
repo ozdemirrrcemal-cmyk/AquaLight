@@ -58,12 +58,37 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
 
     private fun setupClickListeners() {
         binding.btnAddLife.setOnClickListener {
-            openLivestockForm()
+            openLivestockPicker()
         }
 
         binding.btnEmptyAddLife.setOnClickListener {
-            openLivestockForm()
+            openLivestockPicker()
         }
+    }
+
+    private fun openLivestockPicker() {
+        if (isOpeningLivestockForm) {
+            return
+        }
+
+        val navController = findNavController()
+
+        navController.currentBackStackEntry
+            ?.savedStateHandle
+            ?.set(
+                TankDetailFragment.KEY_SELECTED_TAB,
+                TankDetailTabArgs.TANK_LIFE
+            )
+
+        val didNavigate = navController.navigateSafelyFrom(
+            sourceDestinationId = R.id.tankDetailFragment,
+            directions = TankDetailFragmentDirections
+                .actionTankDetailFragmentToTankLivestockPickerFragment(
+                    tankId = tankId
+                )
+        )
+
+        isOpeningLivestockForm = didNavigate
     }
 
     private fun openLivestockForm(
