@@ -1,76 +1,8 @@
 package com.aqua.aqualight.data.aquarium.catalog.livestock
 
-data class LivestockParameterRange(
-    val minimum: Double? = null,
-    val maximum: Double? = null,
-    val approximate: Boolean = false
-) {
-    init {
-        require(minimum?.isFinite() != false)
-        require(maximum?.isFinite() != false)
-        require(minimum == null || maximum == null || minimum <= maximum)
-    }
-
-    fun contains(
-        value: Double
-    ): Boolean {
-        if (!value.isFinite()) {
-            return false
-        }
-
-        return (minimum == null || value >= minimum) &&
-            (maximum == null || value <= maximum)
-    }
-}
-
-enum class LivestockWarningMode {
-    SOFT,
-    HARD,
-    INFORMATIONAL;
-
-    companion object {
-        fun fromCatalogValue(
-            value: String
-        ): LivestockWarningMode {
-            return entries.firstOrNull { mode ->
-                mode.name.equals(value.trim(), ignoreCase = true)
-            } ?: SOFT
-        }
-    }
-}
-
-data class LivestockWaterRequirements(
-    val temperatureC: LivestockParameterRange? = null,
-    val ph: LivestockParameterRange? = null,
-    val ghDgh: LivestockParameterRange? = null,
-    val khDkh: LivestockParameterRange? = null,
-    val tdsPpm: LivestockParameterRange? = null,
-    val specificGravity: LivestockParameterRange? = null,
-    val alkalinityDkh: LivestockParameterRange? = null,
-    val calciumPpm: LivestockParameterRange? = null,
-    val magnesiumPpm: LivestockParameterRange? = null,
-    val nitratePpm: LivestockParameterRange? = null,
-    val phosphatePpm: LivestockParameterRange? = null,
-    val par: LivestockParameterRange? = null,
-    val flow: String? = null,
-    val warningMode: LivestockWarningMode = LivestockWarningMode.SOFT
-) {
-    val hasAnyMeasuredRequirement: Boolean
-        get() = listOf(
-            temperatureC,
-            ph,
-            ghDgh,
-            khDkh,
-            tdsPpm,
-            specificGravity,
-            alkalinityDkh,
-            calciumPpm,
-            magnesiumPpm,
-            nitratePpm,
-            phosphatePpm,
-            par
-        ).any { range -> range != null }
-}
+import com.aqua.aqualight.application.aquarium.LivestockParameterRange
+import com.aqua.aqualight.application.aquarium.LivestockWarningMode
+import com.aqua.aqualight.application.aquarium.LivestockWaterRequirements
 
 internal object LivestockWaterRequirementParser {
 
