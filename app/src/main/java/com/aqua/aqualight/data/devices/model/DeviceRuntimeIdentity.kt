@@ -49,11 +49,7 @@ value class DeviceFirmwareVersion(val value: String) {
 
 @JvmInline
 value class DeviceApiVersion(val value: Int) {
-    init {
-        require(value == SUPPORTED_DEVICE_API_VERSION) {
-            "apiVersion is incompatible with the Android commercial contract."
-        }
-    }
+    init { require(value > 0) { "apiVersion must be a positive commercial API version." } }
 }
 
 @JvmInline
@@ -178,6 +174,6 @@ private val LOWER_SNAKE_PATTERN = Regex("^[a-z0-9]+(?:_[a-z0-9]+)*$")
 private val SKU_CODE_PATTERN = Regex("^[A-Z0-9]+(?:-[A-Z0-9]+)*$")
 private val HARDWARE_REVISION_PATTERN = Regex("^[0-9]+(?:\\.[0-9]+)*$")
 private const val AQUALIGHT_PRODUCT_ID_PREFIX = "com.aqualight."
-private const val SUPPORTED_DEVICE_API_VERSION = 1
+internal const val SUPPORTED_DEVICE_API_VERSION = 1
 private const val RUNTIME_TRANSPORT = "websocket"
 private const val RUNTIME_WS_PORT = 80
