@@ -3,6 +3,7 @@ package com.aqua.aqualight.data.aquarium.catalog.livestock
 import android.content.Context
 import com.aqua.aqualight.application.aquarium.AquariumLivestockIdentity
 import com.aqua.aqualight.application.aquarium.AquariumLivestockTaxonomy
+import com.aqua.aqualight.application.aquarium.LivestockWaterRequirements
 import org.json.JSONObject
 
 object LivestockCatalog {
