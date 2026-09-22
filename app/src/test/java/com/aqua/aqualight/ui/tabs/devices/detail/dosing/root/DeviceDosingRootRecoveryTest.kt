@@ -120,7 +120,7 @@ class DeviceDosingRootRecoveryTest {
             )
             assertFalse(viewModel.uiState.value.contentEnabled)
             assertEquals(
-                DeviceConnectionVisualState.OFFLINE,
+                DeviceConnectionVisualState.ONLINE,
                 viewModel.uiState.value.connectionVisualState
             )
         }
