@@ -4,6 +4,7 @@ import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdatePolicy
 import com.aqua.aqualight.data.devices.model.DeviceCapabilities
 import com.aqua.aqualight.data.devices.model.DeviceLimits
+import com.aqua.aqualight.data.devices.model.DeviceFamily
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import java.util.Locale
 import org.json.JSONObject
@@ -89,6 +90,29 @@ data class DeviceFirmwareOtaSnapshot(
     val urlScheme: String = "",
     val httpStatus: Int = 0
 )
+
+data class DeviceFirmwareMaintenanceIdentity(
+    val deviceUid: DeviceUid,
+    val currentVersion: String,
+    val productKey: String,
+    val productId: String,
+    val family: DeviceFamily,
+    val model: String,
+    val hardwareRevision: String,
+    val displayName: String,
+    val skuCode: String
+) {
+    init {
+        require(currentVersion.isNotBlank()) { "Maintenance firmware version must not be blank." }
+        require(productKey.isNotBlank()) { "Maintenance productKey must not be blank." }
+        require(productId.isNotBlank()) { "Maintenance productId must not be blank." }
+        require(family != DeviceFamily.UNKNOWN) { "Maintenance family must be commercial." }
+        require(model.isNotBlank()) { "Maintenance model must not be blank." }
+        require(hardwareRevision.isNotBlank()) { "Maintenance hardwareRevision must not be blank." }
+        require(displayName.isNotBlank()) { "Maintenance displayName must not be blank." }
+        require(skuCode.isNotBlank()) { "Maintenance skuCode must not be blank." }
+    }
+}
 
 data class DeviceFirmwareStatus(
     val version: String = "",
