@@ -1,8 +1,12 @@
 package com.aqua.aqualight.data.devices.menu
 
+import com.aqua.aqualight.application.devices.DefaultDeviceAccessPolicy
+import com.aqua.aqualight.application.devices.DeviceAccessPolicy
+import com.aqua.aqualight.application.devices.DeviceCompatibilityOperations
 import com.aqua.aqualight.application.devices.DeviceMenuAccessOperations
 import com.aqua.aqualight.application.devices.DeviceMenuAccessResult
 import com.aqua.aqualight.application.devices.DeviceMenuUnavailableReason
+import com.aqua.aqualight.data.devices.compatibility.DefaultDeviceCompatibilityOperations
 import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
@@ -11,6 +15,8 @@ import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.repository.recordControlFailure
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
+import com.aqua.aqualight.data.devices.runtime.ws.AqlWsProtocolError
+import com.aqua.aqualight.data.devices.runtime.ws.AqlWsProtocolException
 import com.aqua.aqualight.data.devices.toOwnerDeviceFamily
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CompletableDeferred
@@ -269,6 +275,9 @@ internal class DefaultDeviceMenuAccessOperations(
             AuthenticationOutcome.AuthRequired -> VerificationResult.Unavailable(
                 DeviceMenuUnavailableReason.AUTHENTICATION_REQUIRED
             )
+            AuthenticationOutcome.IncompatibleProtocol -> VerificationResult.Unavailable(
+                DeviceMenuUnavailableReason.APPLICATION_UPDATE_REQUIRED
+            )
             AuthenticationOutcome.Failed -> unavailableAfterControlFailure(
                 deviceUid = deviceUid,
                 reason = DeviceMenuUnavailableReason.DEVICE_UNRESPONSIVE
@@ -362,7 +371,9 @@ internal class DefaultDeviceMenuAccessOperations(
             DeviceOnlineState.AUTH_REQUIRED -> {
                 DeviceMenuUnavailableReason.AUTHENTICATION_REQUIRED
             }
-            DeviceOnlineState.OFFLINE,
+            DeviceOnlineState.OFFLINE -> {
+                DeviceMenuUnavailableReason.DEVICE_OFFLINE
+            }
             DeviceOnlineState.ERROR -> {
                 DeviceMenuUnavailableReason.DEVICE_UNRESPONSIVE
             }
@@ -413,13 +424,19 @@ internal class DefaultDeviceMenuAccessOperations(
     }
 
     companion object {
-        fun create(devicesRepository: DevicesRepository): DeviceMenuAccessOperations {
+        fun create(
+            devicesRepository: DevicesRepository,
+            compatibilityOperations: DeviceCompatibilityOperations =
+                DefaultDeviceCompatibilityOperations(devicesRepository),
+            accessPolicy: DeviceAccessPolicy = DefaultDeviceAccessPolicy
+        ): DeviceMenuAccessOperations {
             val livenessOperations = DefaultDeviceMenuAccessOperations(
                 runtimePort = RepositoryDeviceMenuRuntimePort(devicesRepository)
             )
             return CommercialDeviceMenuAccessOperations(
                 livenessOperations = livenessOperations,
-                currentSnapshot = devicesRepository::currentDevice
+                compatibilityOperations = compatibilityOperations,
+                accessPolicy = accessPolicy
             )
         }
 
@@ -435,6 +452,7 @@ internal class DefaultDeviceMenuAccessOperations(
 internal enum class AuthenticationOutcome {
     Authenticated,
     AuthRequired,
+    IncompatibleProtocol,
     Failed,
     TimedOut
 }
@@ -468,10 +486,15 @@ internal object DeviceMenuAuthenticationPolicy {
                 }
             }
             is AqlWsConnectionState.Failed -> {
-                if (state.deviceUid == requestedDeviceUid) {
-                    AuthenticationOutcome.Failed
-                } else {
+                if (state.deviceUid != requestedDeviceUid) {
                     null
+                } else if (
+                    (state.cause as? AqlWsProtocolException)?.protocolError ==
+                    AqlWsProtocolError.INCOMPATIBLE_PROTOCOL
+                ) {
+                    AuthenticationOutcome.IncompatibleProtocol
+                } else {
+                    AuthenticationOutcome.Failed
                 }
             }
             AqlWsConnectionState.Disconnected,
