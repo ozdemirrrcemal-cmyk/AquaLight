@@ -33,7 +33,10 @@ class DeviceFirmwareUpdatePlanner(
 
         val artifact = manifest.artifacts.single()
         validateArtifactAgainstSnapshot(artifact, manifest, snapshot)
-        val releaseContent = manifest.releaseNotes.resolve(preferredLocaleTags())
+        DeviceFirmwareContractRegistry.requireTargetCompatible(artifact.contracts)
+        val releaseContent = manifest.releaseNotes
+            .resolve(preferredLocaleTags())
+            .copy(mandatory = artifact.updatePolicy.isRequired)
 
         if (DeviceFirmwareVersionComparator.compare(artifact.firmware.version, currentVersion) <= 0) {
             DeviceFirmwareAvailability.UpToDate(
@@ -128,7 +131,8 @@ class DeviceFirmwareUpdatePlanner(
             payload = payload,
             runtimeMetadataGeneration = snapshot.runtimeMetadataGeneration,
             manifestTag = manifest.tag,
-            releaseContent = releaseContent
+            releaseContent = releaseContent,
+            updatePolicy = artifact.updatePolicy
         )
     }
 
