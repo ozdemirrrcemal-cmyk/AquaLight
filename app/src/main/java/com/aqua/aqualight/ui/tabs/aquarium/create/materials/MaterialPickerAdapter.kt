@@ -16,6 +16,10 @@ import com.aqua.aqualight.ui.tabs.aquarium.catalog.material.AquariumMaterial
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 
+private const val CATEGORY_TAG = "material_picker_category"
+private const val NAME_TAG = "material_picker_name"
+private const val CHECK_TAG = "material_picker_check"
+
 class MaterialPickerAdapter(
     private val categoryTitle: String,
     private val onProductClick: (String) -> Unit,
@@ -79,12 +83,12 @@ class MaterialPickerAdapter(
     ): RecyclerView.ViewHolder {
         return when (viewType) {
             VIEW_TYPE_PRODUCT -> ProductViewHolder(
-                card = createProductCard(parent),
+                card = MaterialPickerCardFactory.createProductCard(parent),
                 onProductClick = onProductClick
             )
 
             VIEW_TYPE_EMPTY -> EmptyViewHolder(
-                createEmptyView(parent)
+                MaterialPickerCardFactory.createEmptyView(parent)
             )
 
             VIEW_TYPE_ADD -> AddViewHolder(
@@ -200,147 +204,181 @@ class MaterialPickerAdapter(
 
         const val EMPTY_STATE_ITEM_COUNT = 1
         const val FOOTER_ITEM_COUNT = 1
+    }
+}
 
-        const val CATEGORY_TAG = "material_picker_category"
-        const val NAME_TAG = "material_picker_name"
-        const val CHECK_TAG = "material_picker_check"
+private object MaterialPickerCardFactory {
 
-        fun createProductCard(parent: ViewGroup): MaterialCardView {
-            val context = parent.context
-            val resources = context.resources
+    fun createProductCard(parent: ViewGroup): MaterialCardView {
+        val context = parent.context
+        val resources = context.resources
 
-            val card = MaterialCardView(context).apply {
-                radius = resources.getDimensionPixelOffset(R.dimen.aqua_size_16).toFloat()
-                strokeWidth = resources.getDimensionPixelOffset(R.dimen.aqua_size_1)
-                cardElevation = 0f
-                useCompatPadding = false
-                isClickable = true
-                isFocusable = true
-
-                layoutParams = RecyclerView.LayoutParams(
-                    RecyclerView.LayoutParams.MATCH_PARENT,
-                    RecyclerView.LayoutParams.WRAP_CONTENT
-                ).apply {
-                    bottomMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_9)
-                }
-            }
-
-            val row = LinearLayout(context).apply {
-                orientation = LinearLayout.HORIZONTAL
-                gravity = Gravity.CENTER_VERTICAL
-                minimumHeight = resources.getDimensionPixelOffset(R.dimen.aqua_size_74)
-                setPadding(
-                    resources.getDimensionPixelOffset(R.dimen.aqua_size_14),
-                    resources.getDimensionPixelOffset(R.dimen.aqua_size_10),
-                    resources.getDimensionPixelOffset(R.dimen.aqua_size_12),
-                    resources.getDimensionPixelOffset(R.dimen.aqua_size_10)
+        return MaterialCardView(context).apply {
+            radius = resources.getDimensionPixelOffset(
+                R.dimen.aqua_size_16
+            ).toFloat()
+            strokeWidth = resources.getDimensionPixelOffset(
+                R.dimen.aqua_size_1
+            )
+            cardElevation = 0f
+            useCompatPadding = false
+            isClickable = true
+            isFocusable = true
+            layoutParams = RecyclerView.LayoutParams(
+                RecyclerView.LayoutParams.MATCH_PARENT,
+                RecyclerView.LayoutParams.WRAP_CONTENT
+            ).apply {
+                bottomMargin = resources.getDimensionPixelOffset(
+                    R.dimen.aqua_size_9
                 )
             }
-
-            val textBox = LinearLayout(context).apply {
-                orientation = LinearLayout.VERTICAL
-                gravity = Gravity.CENTER_VERTICAL
-                layoutParams = LinearLayout.LayoutParams(
-                    0,
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    1f
-                ).apply {
-                    marginEnd = resources.getDimensionPixelOffset(R.dimen.aqua_size_12)
-                }
-            }
-
-            val category = TextView(context).apply {
-                tag = CATEGORY_TAG
-                setTextColor(
-                    ContextCompat.getColor(
-                        context,
-                        R.color.aqua_card_text_secondary
-                    )
-                )
-                setTextSizeResource(R.dimen.aqua_text_size_micro_plus)
-                includeFontPadding = false
-                maxLines = 1
-                ellipsize = TextUtils.TruncateAt.END
-            }
-
-            val name = TextView(context).apply {
-                tag = NAME_TAG
-                setTextColor(
-                    ContextCompat.getColor(
-                        context,
-                        R.color.aqua_card_text_primary
-                    )
-                )
-                setTextSizeResource(R.dimen.aqua_text_size_body_compact)
-                setTypeface(null, Typeface.NORMAL)
-                includeFontPadding = false
-                maxLines = 2
-                ellipsize = TextUtils.TruncateAt.END
-
-                layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                ).apply {
-                    topMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_6)
-                }
-            }
-
-            val check = TextView(context).apply {
-                tag = CHECK_TAG
-                gravity = Gravity.CENTER
-                setTextSizeResource(R.dimen.aqua_text_size_caption)
-                setTypeface(null, Typeface.BOLD)
-                setTextColor(
-                    ContextCompat.getColor(
-                        context,
-                        R.color.aqua_content_on_dark
-                    )
-                )
-                includeFontPadding = false
-
-                layoutParams = LinearLayout.LayoutParams(
-                    resources.getDimensionPixelOffset(R.dimen.aqua_size_24),
-                    resources.getDimensionPixelOffset(R.dimen.aqua_size_24)
-                )
-            }
-
-            textBox.addView(category)
-            textBox.addView(name)
-
-            row.addView(textBox)
-            row.addView(check)
-
-            card.addView(row)
-
-            return card
+            addView(createProductRow(parent))
         }
+    }
 
-        fun createEmptyView(parent: ViewGroup): TextView {
-            val context = parent.context
-            val resources = context.resources
+    private fun createProductRow(parent: ViewGroup): LinearLayout {
+        val context = parent.context
+        val resources = context.resources
 
-            return TextView(context).apply {
-                text = context.getString(R.string.material_picker_no_materials_found)
-                gravity = Gravity.CENTER
-                setTextColor(
-                    ContextCompat.getColor(
-                        context,
-                        R.color.aqua_state_text_secondary
-                    )
+        return LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            minimumHeight = resources.getDimensionPixelOffset(
+                R.dimen.aqua_size_74
+            )
+            setPadding(
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_14),
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_10),
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_12),
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_10)
+            )
+            addView(createProductTextBox(parent))
+            addView(createCheckView(parent))
+        }
+    }
+
+    private fun createProductTextBox(parent: ViewGroup): LinearLayout {
+        val context = parent.context
+        val resources = context.resources
+
+        return LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                0,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                1f
+            ).apply {
+                marginEnd = resources.getDimensionPixelOffset(
+                    R.dimen.aqua_size_12
                 )
-                setTextSize(
-                    android.util.TypedValue.COMPLEX_UNIT_PX,
-                    resources.getDimension(R.dimen.aqua_text_size_state_title_small)
-                )
-                includeFontPadding = false
+            }
+            addView(createCategoryView(parent))
+            addView(createNameView(parent))
+        }
+    }
 
-                layoutParams = RecyclerView.LayoutParams(
-                    RecyclerView.LayoutParams.MATCH_PARENT,
-                    RecyclerView.LayoutParams.WRAP_CONTENT
-                ).apply {
-                    topMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_34)
-                    bottomMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_18)
-                }
+    private fun createCategoryView(parent: ViewGroup): TextView {
+        val context = parent.context
+
+        return TextView(context).apply {
+            tag = CATEGORY_TAG
+            setTextColor(
+                ContextCompat.getColor(
+                    context,
+                    R.color.aqua_card_text_secondary
+                )
+            )
+            setTextSizeResource(R.dimen.aqua_text_size_micro_plus)
+            includeFontPadding = false
+            maxLines = 1
+            ellipsize = TextUtils.TruncateAt.END
+        }
+    }
+
+    private fun createNameView(parent: ViewGroup): TextView {
+        val context = parent.context
+        val resources = context.resources
+
+        return TextView(context).apply {
+            tag = NAME_TAG
+            setTextColor(
+                ContextCompat.getColor(
+                    context,
+                    R.color.aqua_card_text_primary
+                )
+            )
+            setTextSizeResource(R.dimen.aqua_text_size_body_compact)
+            setTypeface(null, Typeface.NORMAL)
+            includeFontPadding = false
+            maxLines = 2
+            ellipsize = TextUtils.TruncateAt.END
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                topMargin = resources.getDimensionPixelOffset(
+                    R.dimen.aqua_size_6
+                )
+            }
+        }
+    }
+
+    private fun createCheckView(parent: ViewGroup): TextView {
+        val context = parent.context
+        val resources = context.resources
+
+        return TextView(context).apply {
+            tag = CHECK_TAG
+            gravity = Gravity.CENTER
+            setTextSizeResource(R.dimen.aqua_text_size_caption)
+            setTypeface(null, Typeface.BOLD)
+            setTextColor(
+                ContextCompat.getColor(
+                    context,
+                    R.color.aqua_content_on_dark
+                )
+            )
+            includeFontPadding = false
+            layoutParams = LinearLayout.LayoutParams(
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_24),
+                resources.getDimensionPixelOffset(R.dimen.aqua_size_24)
+            )
+        }
+    }
+
+    fun createEmptyView(parent: ViewGroup): TextView {
+        val context = parent.context
+        val resources = context.resources
+
+        return TextView(context).apply {
+            text = context.getString(
+                R.string.material_picker_no_materials_found
+            )
+            gravity = Gravity.CENTER
+            setTextColor(
+                ContextCompat.getColor(
+                    context,
+                    R.color.aqua_state_text_secondary
+                )
+            )
+            setTextSize(
+                android.util.TypedValue.COMPLEX_UNIT_PX,
+                resources.getDimension(
+                    R.dimen.aqua_text_size_state_title_small
+                )
+            )
+            includeFontPadding = false
+            layoutParams = RecyclerView.LayoutParams(
+                RecyclerView.LayoutParams.MATCH_PARENT,
+                RecyclerView.LayoutParams.WRAP_CONTENT
+            ).apply {
+                topMargin = resources.getDimensionPixelOffset(
+                    R.dimen.aqua_size_34
+                )
+                bottomMargin = resources.getDimensionPixelOffset(
+                    R.dimen.aqua_size_18
+                )
             }
         }
     }

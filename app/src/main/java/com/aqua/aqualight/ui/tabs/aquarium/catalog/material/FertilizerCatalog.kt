@@ -2,744 +2,4295 @@ package com.aqua.aqualight.ui.tabs.aquarium.catalog.material
 
 import com.aqua.aqualight.R
 
+private val fertilizerBaseKeywords = listOf(
+    R.string.catalog_keyword_fertilizer,
+    R.string.catalog_keyword_plant
+)
+
+private val fertilizerLiquidKeywords = listOf(
+    R.string.catalog_keyword_fertilizer,
+    R.string.catalog_keyword_liquid,
+    R.string.catalog_keyword_plant
+)
+
+private val fertilizerCarbonLiquidKeywords = listOf(
+    R.string.catalog_keyword_fertilizer,
+    R.string.catalog_keyword_liquid,
+    R.string.catalog_keyword_plant,
+    R.string.catalog_keyword_carbon
+)
+
+private val fertilizerDefinitions0001To0088 = listOf(
+    fertilizer(
+        id = "fertilizer_0001",
+        brandRes = R.string.catalog_fertilizer_brand_2hr_aquarist,
+        nameRes = R.string.catalog_material_fertilizer_0001_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0002",
+        brandRes = R.string.catalog_fertilizer_brand_2hr_aquarist,
+        nameRes = R.string.catalog_material_fertilizer_0002_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0003",
+        brandRes = R.string.catalog_fertilizer_brand_2hr_aquarist,
+        nameRes = R.string.catalog_material_fertilizer_0003_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0004",
+        brandRes = R.string.catalog_fertilizer_brand_2hr_aquarist,
+        nameRes = R.string.catalog_material_fertilizer_0004_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0005",
+        brandRes = R.string.catalog_fertilizer_brand_2hr_aquarist,
+        nameRes = R.string.catalog_material_fertilizer_0005_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0006",
+        brandRes = R.string.catalog_fertilizer_brand_2hr_aquarist,
+        nameRes = R.string.catalog_material_fertilizer_0006_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0007",
+        brandRes = R.string.catalog_fertilizer_brand_2hr_aquarist,
+        nameRes = R.string.catalog_material_fertilizer_0007_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0008",
+        brandRes = R.string.catalog_fertilizer_brand_2hr_aquarist,
+        nameRes = R.string.catalog_material_fertilizer_0008_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0009",
+        brandRes = R.string.catalog_fertilizer_brand_2hr_aquarist,
+        nameRes = R.string.catalog_material_fertilizer_0009_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0010",
+        brandRes = R.string.catalog_fertilizer_brand_2hr_aquarist,
+        nameRes = R.string.catalog_material_fertilizer_0010_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0011",
+        brandRes = R.string.catalog_fertilizer_brand_2hr_aquarist,
+        nameRes = R.string.catalog_material_fertilizer_0011_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0012",
+        brandRes = R.string.catalog_fertilizer_brand_2hr_aquarist,
+        nameRes = R.string.catalog_material_fertilizer_0012_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0013",
+        brandRes = R.string.catalog_fertilizer_brand_2hr_aquarist,
+        nameRes = R.string.catalog_material_fertilizer_0013_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0014",
+        brandRes = R.string.catalog_fertilizer_brand_2hr_aquarist,
+        nameRes = R.string.catalog_material_fertilizer_0014_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0015",
+        brandRes = R.string.catalog_fertilizer_brand_2hr_aquarist,
+        nameRes = R.string.catalog_material_fertilizer_0015_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0016",
+        brandRes = R.string.catalog_fertilizer_brand_2hr_aquarist,
+        nameRes = R.string.catalog_material_fertilizer_0016_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0017",
+        brandRes = R.string.catalog_fertilizer_brand_2hr_aquarist,
+        nameRes = R.string.catalog_material_fertilizer_0017_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0018",
+        brandRes = R.string.catalog_fertilizer_brand_2hr_aquarist,
+        nameRes = R.string.catalog_material_fertilizer_0018_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0019",
+        brandRes = R.string.catalog_fertilizer_brand_2hr_aquarist,
+        nameRes = R.string.catalog_material_fertilizer_0019_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0020",
+        brandRes = R.string.catalog_fertilizer_brand_2hr_aquarist,
+        nameRes = R.string.catalog_material_fertilizer_0020_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0021",
+        brandRes = R.string.catalog_fertilizer_brand_2hr_aquarist,
+        nameRes = R.string.catalog_material_fertilizer_0021_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0022",
+        brandRes = R.string.catalog_brand_ada,
+        nameRes = R.string.catalog_material_fertilizer_0022_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0023",
+        brandRes = R.string.catalog_brand_ada,
+        nameRes = R.string.catalog_material_fertilizer_0023_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0024",
+        brandRes = R.string.catalog_brand_ada,
+        nameRes = R.string.catalog_material_fertilizer_0024_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0025",
+        brandRes = R.string.catalog_brand_ada,
+        nameRes = R.string.catalog_material_fertilizer_0025_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0026",
+        brandRes = R.string.catalog_brand_ada,
+        nameRes = R.string.catalog_material_fertilizer_0026_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0027",
+        brandRes = R.string.catalog_brand_ada,
+        nameRes = R.string.catalog_material_fertilizer_0027_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0028",
+        brandRes = R.string.catalog_brand_ada,
+        nameRes = R.string.catalog_material_fertilizer_0028_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0029",
+        brandRes = R.string.catalog_brand_ada,
+        nameRes = R.string.catalog_material_fertilizer_0029_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0030",
+        brandRes = R.string.catalog_brand_ada,
+        nameRes = R.string.catalog_material_fertilizer_0030_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0031",
+        brandRes = R.string.catalog_brand_ada,
+        nameRes = R.string.catalog_material_fertilizer_0031_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0032",
+        brandRes = R.string.catalog_brand_ada,
+        nameRes = R.string.catalog_material_fertilizer_0032_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0033",
+        brandRes = R.string.catalog_brand_ada,
+        nameRes = R.string.catalog_material_fertilizer_0033_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0034",
+        brandRes = R.string.catalog_brand_ada,
+        nameRes = R.string.catalog_material_fertilizer_0034_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0035",
+        brandRes = R.string.catalog_brand_ada,
+        nameRes = R.string.catalog_material_fertilizer_0035_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0036",
+        brandRes = R.string.catalog_brand_ada,
+        nameRes = R.string.catalog_material_fertilizer_0036_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0037",
+        brandRes = R.string.catalog_brand_ada,
+        nameRes = R.string.catalog_material_fertilizer_0037_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0038",
+        brandRes = R.string.catalog_brand_ada,
+        nameRes = R.string.catalog_material_fertilizer_0038_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0039",
+        brandRes = R.string.catalog_brand_ada,
+        nameRes = R.string.catalog_material_fertilizer_0039_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0040",
+        brandRes = R.string.catalog_brand_ada,
+        nameRes = R.string.catalog_material_fertilizer_0040_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0041",
+        brandRes = R.string.catalog_brand_ada,
+        nameRes = R.string.catalog_material_fertilizer_0041_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0042",
+        brandRes = R.string.catalog_brand_green_aqua,
+        nameRes = R.string.catalog_material_fertilizer_0042_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0043",
+        brandRes = R.string.catalog_brand_green_aqua,
+        nameRes = R.string.catalog_material_fertilizer_0043_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0044",
+        brandRes = R.string.catalog_brand_green_aqua,
+        nameRes = R.string.catalog_material_fertilizer_0044_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0045",
+        brandRes = R.string.catalog_brand_green_aqua,
+        nameRes = R.string.catalog_material_fertilizer_0045_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0046",
+        brandRes = R.string.catalog_brand_green_aqua,
+        nameRes = R.string.catalog_material_fertilizer_0046_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0047",
+        brandRes = R.string.catalog_brand_green_aqua,
+        nameRes = R.string.catalog_material_fertilizer_0047_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0048",
+        brandRes = R.string.catalog_brand_green_aqua,
+        nameRes = R.string.catalog_material_fertilizer_0048_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0049",
+        brandRes = R.string.catalog_brand_green_aqua,
+        nameRes = R.string.catalog_material_fertilizer_0049_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0050",
+        brandRes = R.string.catalog_brand_green_aqua,
+        nameRes = R.string.catalog_material_fertilizer_0050_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0051",
+        brandRes = R.string.catalog_brand_green_aqua,
+        nameRes = R.string.catalog_material_fertilizer_0051_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0052",
+        brandRes = R.string.catalog_brand_green_aqua,
+        nameRes = R.string.catalog_material_fertilizer_0052_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0053",
+        brandRes = R.string.catalog_brand_green_aqua,
+        nameRes = R.string.catalog_material_fertilizer_0053_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0054",
+        brandRes = R.string.catalog_brand_green_aqua,
+        nameRes = R.string.catalog_material_fertilizer_0054_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0055",
+        brandRes = R.string.catalog_brand_green_aqua,
+        nameRes = R.string.catalog_material_fertilizer_0055_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0056",
+        brandRes = R.string.catalog_brand_green_aqua,
+        nameRes = R.string.catalog_material_fertilizer_0056_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0057",
+        brandRes = R.string.catalog_brand_green_aqua,
+        nameRes = R.string.catalog_material_fertilizer_0057_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0058",
+        brandRes = R.string.catalog_brand_green_aqua,
+        nameRes = R.string.catalog_material_fertilizer_0058_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0059",
+        brandRes = R.string.catalog_brand_green_aqua,
+        nameRes = R.string.catalog_material_fertilizer_0059_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0060",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0060_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0061",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0061_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0062",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0062_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0063",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0063_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0064",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0064_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0065",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0065_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0066",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0066_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0067",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0067_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0068",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0068_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0069",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0069_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0070",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0070_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0071",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0071_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0072",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0072_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0073",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0073_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0074",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0074_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0075",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0075_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0076",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0076_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0077",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0077_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0078",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0078_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0079",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0079_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0080",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0080_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0081",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0081_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0082",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0082_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0083",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0083_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0084",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0084_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0085",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0085_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0086",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0086_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0087",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0087_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0088",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0088_name,
+        keywordRes = fertilizerLiquidKeywords
+    )
+)
+
+private val fertilizerDefinitions0089To0176 = listOf(
+    fertilizer(
+        id = "fertilizer_0089",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0089_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0090",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0090_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0091",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0091_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0092",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0092_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0093",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0093_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0094",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0094_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0095",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0095_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0096",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0096_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0097",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0097_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0098",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0098_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0099",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0099_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0100",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0100_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0101",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0101_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0102",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0102_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0103",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0103_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0104",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0104_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0105",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0105_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0106",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0106_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0107",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0107_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0108",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0108_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0109",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0109_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0110",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0110_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0111",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0111_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0112",
+        brandRes = R.string.catalog_fertilizer_brand_seachem,
+        nameRes = R.string.catalog_material_fertilizer_0112_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0113",
+        brandRes = R.string.catalog_brand_tropica,
+        nameRes = R.string.catalog_material_fertilizer_0113_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0114",
+        brandRes = R.string.catalog_brand_tropica,
+        nameRes = R.string.catalog_material_fertilizer_0114_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0115",
+        brandRes = R.string.catalog_brand_tropica,
+        nameRes = R.string.catalog_material_fertilizer_0115_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0116",
+        brandRes = R.string.catalog_brand_tropica,
+        nameRes = R.string.catalog_material_fertilizer_0116_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0117",
+        brandRes = R.string.catalog_brand_tropica,
+        nameRes = R.string.catalog_material_fertilizer_0117_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0118",
+        brandRes = R.string.catalog_brand_tropica,
+        nameRes = R.string.catalog_material_fertilizer_0118_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0119",
+        brandRes = R.string.catalog_brand_tropica,
+        nameRes = R.string.catalog_material_fertilizer_0119_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0120",
+        brandRes = R.string.catalog_brand_tropica,
+        nameRes = R.string.catalog_material_fertilizer_0120_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0121",
+        brandRes = R.string.catalog_brand_tropica,
+        nameRes = R.string.catalog_material_fertilizer_0121_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0122",
+        brandRes = R.string.catalog_brand_tropica,
+        nameRes = R.string.catalog_material_fertilizer_0122_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0123",
+        brandRes = R.string.catalog_brand_tropica,
+        nameRes = R.string.catalog_material_fertilizer_0123_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0124",
+        brandRes = R.string.catalog_brand_tropica,
+        nameRes = R.string.catalog_material_fertilizer_0124_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0125",
+        brandRes = R.string.catalog_brand_tropica,
+        nameRes = R.string.catalog_material_fertilizer_0125_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0126",
+        brandRes = R.string.catalog_brand_tropica,
+        nameRes = R.string.catalog_material_fertilizer_0126_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0127",
+        brandRes = R.string.catalog_fertilizer_brand_dennerle_plants,
+        nameRes = R.string.catalog_material_fertilizer_0127_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0128",
+        brandRes = R.string.catalog_fertilizer_brand_dennerle_plants,
+        nameRes = R.string.catalog_material_fertilizer_0128_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0129",
+        brandRes = R.string.catalog_fertilizer_brand_dennerle_plants,
+        nameRes = R.string.catalog_material_fertilizer_0129_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0130",
+        brandRes = R.string.catalog_fertilizer_brand_dennerle_plants,
+        nameRes = R.string.catalog_material_fertilizer_0130_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0131",
+        brandRes = R.string.catalog_fertilizer_brand_dennerle_plants,
+        nameRes = R.string.catalog_material_fertilizer_0131_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0132",
+        brandRes = R.string.catalog_brand_dennerle,
+        nameRes = R.string.catalog_material_fertilizer_0132_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0133",
+        brandRes = R.string.catalog_brand_dennerle,
+        nameRes = R.string.catalog_material_fertilizer_0133_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0134",
+        brandRes = R.string.catalog_brand_dennerle,
+        nameRes = R.string.catalog_material_fertilizer_0134_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0135",
+        brandRes = R.string.catalog_brand_dennerle,
+        nameRes = R.string.catalog_material_fertilizer_0135_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0136",
+        brandRes = R.string.catalog_brand_dennerle,
+        nameRes = R.string.catalog_material_fertilizer_0136_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0137",
+        brandRes = R.string.catalog_brand_dennerle,
+        nameRes = R.string.catalog_material_fertilizer_0137_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0138",
+        brandRes = R.string.catalog_brand_dennerle,
+        nameRes = R.string.catalog_material_fertilizer_0138_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0139",
+        brandRes = R.string.catalog_brand_dennerle,
+        nameRes = R.string.catalog_material_fertilizer_0139_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0140",
+        brandRes = R.string.catalog_brand_dennerle,
+        nameRes = R.string.catalog_material_fertilizer_0140_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0141",
+        brandRes = R.string.catalog_brand_dennerle,
+        nameRes = R.string.catalog_material_fertilizer_0141_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0142",
+        brandRes = R.string.catalog_brand_dennerle,
+        nameRes = R.string.catalog_material_fertilizer_0142_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0143",
+        brandRes = R.string.catalog_brand_dennerle,
+        nameRes = R.string.catalog_material_fertilizer_0143_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0144",
+        brandRes = R.string.catalog_brand_dennerle,
+        nameRes = R.string.catalog_material_fertilizer_0144_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0145",
+        brandRes = R.string.catalog_brand_dennerle,
+        nameRes = R.string.catalog_material_fertilizer_0145_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0146",
+        brandRes = R.string.catalog_brand_dennerle,
+        nameRes = R.string.catalog_material_fertilizer_0146_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0147",
+        brandRes = R.string.catalog_brand_dennerle,
+        nameRes = R.string.catalog_material_fertilizer_0147_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0148",
+        brandRes = R.string.catalog_brand_dennerle,
+        nameRes = R.string.catalog_material_fertilizer_0148_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0149",
+        brandRes = R.string.catalog_brand_dennerle,
+        nameRes = R.string.catalog_material_fertilizer_0149_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0150",
+        brandRes = R.string.catalog_brand_dennerle,
+        nameRes = R.string.catalog_material_fertilizer_0150_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0151",
+        brandRes = R.string.catalog_brand_dennerle,
+        nameRes = R.string.catalog_material_fertilizer_0151_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0152",
+        brandRes = R.string.catalog_brand_dennerle,
+        nameRes = R.string.catalog_material_fertilizer_0152_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0153",
+        brandRes = R.string.catalog_brand_dennerle,
+        nameRes = R.string.catalog_material_fertilizer_0153_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0154",
+        brandRes = R.string.catalog_brand_dennerle,
+        nameRes = R.string.catalog_material_fertilizer_0154_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0155",
+        brandRes = R.string.catalog_brand_dennerle,
+        nameRes = R.string.catalog_material_fertilizer_0155_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0156",
+        brandRes = R.string.catalog_brand_dennerle,
+        nameRes = R.string.catalog_material_fertilizer_0156_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0157",
+        brandRes = R.string.catalog_brand_dennerle,
+        nameRes = R.string.catalog_material_fertilizer_0157_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0158",
+        brandRes = R.string.catalog_brand_dennerle,
+        nameRes = R.string.catalog_material_fertilizer_0158_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0159",
+        brandRes = R.string.catalog_brand_dennerle,
+        nameRes = R.string.catalog_material_fertilizer_0159_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0160",
+        brandRes = R.string.catalog_brand_dennerle,
+        nameRes = R.string.catalog_material_fertilizer_0160_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0161",
+        brandRes = R.string.catalog_brand_jbl,
+        nameRes = R.string.catalog_material_fertilizer_0161_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0162",
+        brandRes = R.string.catalog_brand_jbl,
+        nameRes = R.string.catalog_material_fertilizer_0162_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0163",
+        brandRes = R.string.catalog_brand_jbl,
+        nameRes = R.string.catalog_material_fertilizer_0163_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0164",
+        brandRes = R.string.catalog_brand_jbl,
+        nameRes = R.string.catalog_material_fertilizer_0164_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0165",
+        brandRes = R.string.catalog_brand_jbl,
+        nameRes = R.string.catalog_material_fertilizer_0165_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0166",
+        brandRes = R.string.catalog_brand_jbl,
+        nameRes = R.string.catalog_material_fertilizer_0166_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0167",
+        brandRes = R.string.catalog_brand_jbl,
+        nameRes = R.string.catalog_material_fertilizer_0167_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0168",
+        brandRes = R.string.catalog_brand_jbl,
+        nameRes = R.string.catalog_material_fertilizer_0168_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0169",
+        brandRes = R.string.catalog_brand_jbl,
+        nameRes = R.string.catalog_material_fertilizer_0169_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0170",
+        brandRes = R.string.catalog_brand_jbl,
+        nameRes = R.string.catalog_material_fertilizer_0170_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0171",
+        brandRes = R.string.catalog_brand_jbl,
+        nameRes = R.string.catalog_material_fertilizer_0171_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0172",
+        brandRes = R.string.catalog_brand_jbl,
+        nameRes = R.string.catalog_material_fertilizer_0172_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0173",
+        brandRes = R.string.catalog_brand_jbl,
+        nameRes = R.string.catalog_material_fertilizer_0173_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0174",
+        brandRes = R.string.catalog_brand_jbl,
+        nameRes = R.string.catalog_material_fertilizer_0174_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0175",
+        brandRes = R.string.catalog_brand_jbl,
+        nameRes = R.string.catalog_material_fertilizer_0175_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0176",
+        brandRes = R.string.catalog_fertilizer_brand_sera,
+        nameRes = R.string.catalog_material_fertilizer_0176_name,
+        keywordRes = fertilizerLiquidKeywords
+    )
+)
+
+private val fertilizerDefinitions0177To0264 = listOf(
+    fertilizer(
+        id = "fertilizer_0177",
+        brandRes = R.string.catalog_fertilizer_brand_sera,
+        nameRes = R.string.catalog_material_fertilizer_0177_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0178",
+        brandRes = R.string.catalog_fertilizer_brand_sera,
+        nameRes = R.string.catalog_material_fertilizer_0178_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0179",
+        brandRes = R.string.catalog_fertilizer_brand_sera,
+        nameRes = R.string.catalog_material_fertilizer_0179_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0180",
+        brandRes = R.string.catalog_fertilizer_brand_sera,
+        nameRes = R.string.catalog_material_fertilizer_0180_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0181",
+        brandRes = R.string.catalog_fertilizer_brand_sera,
+        nameRes = R.string.catalog_material_fertilizer_0181_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0182",
+        brandRes = R.string.catalog_fertilizer_brand_sera,
+        nameRes = R.string.catalog_material_fertilizer_0182_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0183",
+        brandRes = R.string.catalog_fertilizer_brand_sera,
+        nameRes = R.string.catalog_material_fertilizer_0183_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0184",
+        brandRes = R.string.catalog_fertilizer_brand_sera,
+        nameRes = R.string.catalog_material_fertilizer_0184_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0185",
+        brandRes = R.string.catalog_fertilizer_brand_sera,
+        nameRes = R.string.catalog_material_fertilizer_0185_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0186",
+        brandRes = R.string.catalog_fertilizer_brand_sera,
+        nameRes = R.string.catalog_material_fertilizer_0186_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0187",
+        brandRes = R.string.catalog_fertilizer_brand_sera,
+        nameRes = R.string.catalog_material_fertilizer_0187_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0188",
+        brandRes = R.string.catalog_fertilizer_brand_sera,
+        nameRes = R.string.catalog_material_fertilizer_0188_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0189",
+        brandRes = R.string.catalog_fertilizer_brand_sera,
+        nameRes = R.string.catalog_material_fertilizer_0189_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0190",
+        brandRes = R.string.catalog_fertilizer_brand_sera,
+        nameRes = R.string.catalog_material_fertilizer_0190_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0191",
+        brandRes = R.string.catalog_fertilizer_brand_sera,
+        nameRes = R.string.catalog_material_fertilizer_0191_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0192",
+        brandRes = R.string.catalog_fertilizer_brand_sera,
+        nameRes = R.string.catalog_material_fertilizer_0192_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0193",
+        brandRes = R.string.catalog_fertilizer_brand_easy_life,
+        nameRes = R.string.catalog_material_fertilizer_0193_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0194",
+        brandRes = R.string.catalog_fertilizer_brand_easy_life,
+        nameRes = R.string.catalog_material_fertilizer_0194_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0195",
+        brandRes = R.string.catalog_fertilizer_brand_easy_life,
+        nameRes = R.string.catalog_material_fertilizer_0195_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0196",
+        brandRes = R.string.catalog_fertilizer_brand_easy_life,
+        nameRes = R.string.catalog_material_fertilizer_0196_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0197",
+        brandRes = R.string.catalog_fertilizer_brand_easy_life,
+        nameRes = R.string.catalog_material_fertilizer_0197_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0198",
+        brandRes = R.string.catalog_fertilizer_brand_easy_life,
+        nameRes = R.string.catalog_material_fertilizer_0198_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0199",
+        brandRes = R.string.catalog_fertilizer_brand_easy_life,
+        nameRes = R.string.catalog_material_fertilizer_0199_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0200",
+        brandRes = R.string.catalog_fertilizer_brand_easy_life,
+        nameRes = R.string.catalog_material_fertilizer_0200_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0201",
+        brandRes = R.string.catalog_fertilizer_brand_easy_life,
+        nameRes = R.string.catalog_material_fertilizer_0201_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0202",
+        brandRes = R.string.catalog_fertilizer_brand_easy_life,
+        nameRes = R.string.catalog_material_fertilizer_0202_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0203",
+        brandRes = R.string.catalog_fertilizer_brand_easy_life,
+        nameRes = R.string.catalog_material_fertilizer_0203_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0204",
+        brandRes = R.string.catalog_fertilizer_brand_easy_life,
+        nameRes = R.string.catalog_material_fertilizer_0204_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0205",
+        brandRes = R.string.catalog_fertilizer_brand_easy_life,
+        nameRes = R.string.catalog_material_fertilizer_0205_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0206",
+        brandRes = R.string.catalog_fertilizer_brand_easy_life,
+        nameRes = R.string.catalog_material_fertilizer_0206_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0207",
+        brandRes = R.string.catalog_fertilizer_brand_easy_life,
+        nameRes = R.string.catalog_material_fertilizer_0207_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0208",
+        brandRes = R.string.catalog_fertilizer_brand_easy_life,
+        nameRes = R.string.catalog_material_fertilizer_0208_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0209",
+        brandRes = R.string.catalog_fertilizer_brand_easy_life,
+        nameRes = R.string.catalog_material_fertilizer_0209_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0210",
+        brandRes = R.string.catalog_fertilizer_brand_easy_life,
+        nameRes = R.string.catalog_material_fertilizer_0210_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0211",
+        brandRes = R.string.catalog_fertilizer_brand_easy_life,
+        nameRes = R.string.catalog_material_fertilizer_0211_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0212",
+        brandRes = R.string.catalog_fertilizer_brand_easy_life,
+        nameRes = R.string.catalog_material_fertilizer_0212_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0213",
+        brandRes = R.string.catalog_fertilizer_brand_easy_life,
+        nameRes = R.string.catalog_material_fertilizer_0213_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0214",
+        brandRes = R.string.catalog_fertilizer_brand_easy_life,
+        nameRes = R.string.catalog_material_fertilizer_0214_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0215",
+        brandRes = R.string.catalog_fertilizer_brand_easy_life,
+        nameRes = R.string.catalog_material_fertilizer_0215_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0216",
+        brandRes = R.string.catalog_fertilizer_brand_easy_life,
+        nameRes = R.string.catalog_material_fertilizer_0216_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0217",
+        brandRes = R.string.catalog_fertilizer_brand_easy_life,
+        nameRes = R.string.catalog_material_fertilizer_0217_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0218",
+        brandRes = R.string.catalog_fertilizer_brand_easy_life,
+        nameRes = R.string.catalog_material_fertilizer_0218_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0219",
+        brandRes = R.string.catalog_fertilizer_brand_easy_life,
+        nameRes = R.string.catalog_material_fertilizer_0219_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0220",
+        brandRes = R.string.catalog_fertilizer_brand_easy_life,
+        nameRes = R.string.catalog_material_fertilizer_0220_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0221",
+        brandRes = R.string.catalog_fertilizer_brand_easy_life,
+        nameRes = R.string.catalog_material_fertilizer_0221_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0222",
+        brandRes = R.string.catalog_fertilizer_brand_easy_life,
+        nameRes = R.string.catalog_material_fertilizer_0222_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0223",
+        brandRes = R.string.catalog_fertilizer_brand_easy_life,
+        nameRes = R.string.catalog_material_fertilizer_0223_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0224",
+        brandRes = R.string.catalog_fertilizer_brand_easy_life,
+        nameRes = R.string.catalog_material_fertilizer_0224_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0225",
+        brandRes = R.string.catalog_fertilizer_brand_easy_life,
+        nameRes = R.string.catalog_material_fertilizer_0225_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0226",
+        brandRes = R.string.catalog_fertilizer_brand_easy_life,
+        nameRes = R.string.catalog_material_fertilizer_0226_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0227",
+        brandRes = R.string.catalog_fertilizer_brand_masterline,
+        nameRes = R.string.catalog_material_fertilizer_0227_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0228",
+        brandRes = R.string.catalog_fertilizer_brand_masterline,
+        nameRes = R.string.catalog_material_fertilizer_0228_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0229",
+        brandRes = R.string.catalog_fertilizer_brand_masterline,
+        nameRes = R.string.catalog_material_fertilizer_0229_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0230",
+        brandRes = R.string.catalog_fertilizer_brand_masterline,
+        nameRes = R.string.catalog_material_fertilizer_0230_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0231",
+        brandRes = R.string.catalog_fertilizer_brand_masterline,
+        nameRes = R.string.catalog_material_fertilizer_0231_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0232",
+        brandRes = R.string.catalog_fertilizer_brand_masterline,
+        nameRes = R.string.catalog_material_fertilizer_0232_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0233",
+        brandRes = R.string.catalog_fertilizer_brand_masterline,
+        nameRes = R.string.catalog_material_fertilizer_0233_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0234",
+        brandRes = R.string.catalog_fertilizer_brand_masterline,
+        nameRes = R.string.catalog_material_fertilizer_0234_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0235",
+        brandRes = R.string.catalog_fertilizer_brand_masterline,
+        nameRes = R.string.catalog_material_fertilizer_0235_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0236",
+        brandRes = R.string.catalog_fertilizer_brand_masterline,
+        nameRes = R.string.catalog_material_fertilizer_0236_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0237",
+        brandRes = R.string.catalog_fertilizer_brand_masterline,
+        nameRes = R.string.catalog_material_fertilizer_0237_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0238",
+        brandRes = R.string.catalog_fertilizer_brand_masterline,
+        nameRes = R.string.catalog_material_fertilizer_0238_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0239",
+        brandRes = R.string.catalog_fertilizer_brand_masterline,
+        nameRes = R.string.catalog_material_fertilizer_0239_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0240",
+        brandRes = R.string.catalog_fertilizer_brand_masterline,
+        nameRes = R.string.catalog_material_fertilizer_0240_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0241",
+        brandRes = R.string.catalog_fertilizer_brand_masterline,
+        nameRes = R.string.catalog_material_fertilizer_0241_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0242",
+        brandRes = R.string.catalog_fertilizer_brand_masterline,
+        nameRes = R.string.catalog_material_fertilizer_0242_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0243",
+        brandRes = R.string.catalog_fertilizer_brand_masterline,
+        nameRes = R.string.catalog_material_fertilizer_0243_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0244",
+        brandRes = R.string.catalog_fertilizer_brand_masterline,
+        nameRes = R.string.catalog_material_fertilizer_0244_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0245",
+        brandRes = R.string.catalog_fertilizer_brand_masterline,
+        nameRes = R.string.catalog_material_fertilizer_0245_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0246",
+        brandRes = R.string.catalog_fertilizer_brand_masterline,
+        nameRes = R.string.catalog_material_fertilizer_0246_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0247",
+        brandRes = R.string.catalog_fertilizer_brand_masterline,
+        nameRes = R.string.catalog_material_fertilizer_0247_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0248",
+        brandRes = R.string.catalog_fertilizer_brand_masterline,
+        nameRes = R.string.catalog_material_fertilizer_0248_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0249",
+        brandRes = R.string.catalog_fertilizer_brand_masterline,
+        nameRes = R.string.catalog_material_fertilizer_0249_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0250",
+        brandRes = R.string.catalog_fertilizer_brand_masterline,
+        nameRes = R.string.catalog_material_fertilizer_0250_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0251",
+        brandRes = R.string.catalog_fertilizer_brand_masterline,
+        nameRes = R.string.catalog_material_fertilizer_0251_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0252",
+        brandRes = R.string.catalog_fertilizer_brand_masterline,
+        nameRes = R.string.catalog_material_fertilizer_0252_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0253",
+        brandRes = R.string.catalog_fertilizer_brand_masterline,
+        nameRes = R.string.catalog_material_fertilizer_0253_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0254",
+        brandRes = R.string.catalog_fertilizer_brand_masterline,
+        nameRes = R.string.catalog_material_fertilizer_0254_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0255",
+        brandRes = R.string.catalog_fertilizer_brand_masterline,
+        nameRes = R.string.catalog_material_fertilizer_0255_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0256",
+        brandRes = R.string.catalog_fertilizer_brand_masterline,
+        nameRes = R.string.catalog_material_fertilizer_0256_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0257",
+        brandRes = R.string.catalog_fertilizer_brand_masterline,
+        nameRes = R.string.catalog_material_fertilizer_0257_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0258",
+        brandRes = R.string.catalog_fertilizer_brand_masterline,
+        nameRes = R.string.catalog_material_fertilizer_0258_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0259",
+        brandRes = R.string.catalog_fertilizer_brand_masterline,
+        nameRes = R.string.catalog_material_fertilizer_0259_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0260",
+        brandRes = R.string.catalog_fertilizer_brand_masterline,
+        nameRes = R.string.catalog_material_fertilizer_0260_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0261",
+        brandRes = R.string.catalog_fertilizer_brand_masterline,
+        nameRes = R.string.catalog_material_fertilizer_0261_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0262",
+        brandRes = R.string.catalog_fertilizer_brand_masterline,
+        nameRes = R.string.catalog_material_fertilizer_0262_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0263",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_rebell,
+        nameRes = R.string.catalog_material_fertilizer_0263_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0264",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_rebell,
+        nameRes = R.string.catalog_material_fertilizer_0264_name,
+        keywordRes = fertilizerLiquidKeywords
+    )
+)
+
+private val fertilizerDefinitions0265To0352 = listOf(
+    fertilizer(
+        id = "fertilizer_0265",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_rebell,
+        nameRes = R.string.catalog_material_fertilizer_0265_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0266",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_rebell,
+        nameRes = R.string.catalog_material_fertilizer_0266_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0267",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_rebell,
+        nameRes = R.string.catalog_material_fertilizer_0267_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0268",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_rebell,
+        nameRes = R.string.catalog_material_fertilizer_0268_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0269",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_rebell,
+        nameRes = R.string.catalog_material_fertilizer_0269_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0270",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_rebell,
+        nameRes = R.string.catalog_material_fertilizer_0270_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0271",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_rebell,
+        nameRes = R.string.catalog_material_fertilizer_0271_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0272",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_rebell,
+        nameRes = R.string.catalog_material_fertilizer_0272_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0273",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_rebell,
+        nameRes = R.string.catalog_material_fertilizer_0273_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0274",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_rebell,
+        nameRes = R.string.catalog_material_fertilizer_0274_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0275",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_rebell,
+        nameRes = R.string.catalog_material_fertilizer_0275_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0276",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_rebell,
+        nameRes = R.string.catalog_material_fertilizer_0276_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0277",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_rebell,
+        nameRes = R.string.catalog_material_fertilizer_0277_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0278",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_rebell,
+        nameRes = R.string.catalog_material_fertilizer_0278_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0279",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_rebell,
+        nameRes = R.string.catalog_material_fertilizer_0279_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0280",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_rebell,
+        nameRes = R.string.catalog_material_fertilizer_0280_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0281",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_rebell,
+        nameRes = R.string.catalog_material_fertilizer_0281_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0282",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_rebell,
+        nameRes = R.string.catalog_material_fertilizer_0282_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0283",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_rebell,
+        nameRes = R.string.catalog_material_fertilizer_0283_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0284",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_rebell,
+        nameRes = R.string.catalog_material_fertilizer_0284_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0285",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_rebell,
+        nameRes = R.string.catalog_material_fertilizer_0285_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0286",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_rebell,
+        nameRes = R.string.catalog_material_fertilizer_0286_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0287",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_rebell,
+        nameRes = R.string.catalog_material_fertilizer_0287_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0288",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_rebell,
+        nameRes = R.string.catalog_material_fertilizer_0288_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0289",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_rebell,
+        nameRes = R.string.catalog_material_fertilizer_0289_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0290",
+        brandRes = R.string.catalog_fertilizer_brand_aquaforest,
+        nameRes = R.string.catalog_material_fertilizer_0290_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0291",
+        brandRes = R.string.catalog_fertilizer_brand_aquaforest,
+        nameRes = R.string.catalog_material_fertilizer_0291_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0292",
+        brandRes = R.string.catalog_fertilizer_brand_aquaforest,
+        nameRes = R.string.catalog_material_fertilizer_0292_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0293",
+        brandRes = R.string.catalog_fertilizer_brand_aquaforest,
+        nameRes = R.string.catalog_material_fertilizer_0293_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0294",
+        brandRes = R.string.catalog_fertilizer_brand_aquaforest,
+        nameRes = R.string.catalog_material_fertilizer_0294_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0295",
+        brandRes = R.string.catalog_fertilizer_brand_aquaforest,
+        nameRes = R.string.catalog_material_fertilizer_0295_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0296",
+        brandRes = R.string.catalog_fertilizer_brand_aquaforest,
+        nameRes = R.string.catalog_material_fertilizer_0296_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0297",
+        brandRes = R.string.catalog_fertilizer_brand_aquaforest,
+        nameRes = R.string.catalog_material_fertilizer_0297_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0298",
+        brandRes = R.string.catalog_fertilizer_brand_aquaforest,
+        nameRes = R.string.catalog_material_fertilizer_0298_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0299",
+        brandRes = R.string.catalog_fertilizer_brand_aquaforest,
+        nameRes = R.string.catalog_material_fertilizer_0299_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0300",
+        brandRes = R.string.catalog_fertilizer_brand_aquaforest,
+        nameRes = R.string.catalog_material_fertilizer_0300_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0301",
+        brandRes = R.string.catalog_fertilizer_brand_aquaforest,
+        nameRes = R.string.catalog_material_fertilizer_0301_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0302",
+        brandRes = R.string.catalog_fertilizer_brand_aquaforest,
+        nameRes = R.string.catalog_material_fertilizer_0302_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0303",
+        brandRes = R.string.catalog_fertilizer_brand_aquaforest,
+        nameRes = R.string.catalog_material_fertilizer_0303_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0304",
+        brandRes = R.string.catalog_fertilizer_brand_aquaforest,
+        nameRes = R.string.catalog_material_fertilizer_0304_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0305",
+        brandRes = R.string.catalog_fertilizer_brand_aquaforest,
+        nameRes = R.string.catalog_material_fertilizer_0305_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0306",
+        brandRes = R.string.catalog_fertilizer_brand_aquaforest,
+        nameRes = R.string.catalog_material_fertilizer_0306_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0307",
+        brandRes = R.string.catalog_fertilizer_brand_aquaforest,
+        nameRes = R.string.catalog_material_fertilizer_0307_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0308",
+        brandRes = R.string.catalog_fertilizer_brand_aquaforest,
+        nameRes = R.string.catalog_material_fertilizer_0308_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0309",
+        brandRes = R.string.catalog_fertilizer_brand_aquaforest,
+        nameRes = R.string.catalog_material_fertilizer_0309_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0310",
+        brandRes = R.string.catalog_fertilizer_brand_aquaforest,
+        nameRes = R.string.catalog_material_fertilizer_0310_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0311",
+        brandRes = R.string.catalog_fertilizer_brand_aquaforest,
+        nameRes = R.string.catalog_material_fertilizer_0311_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0312",
+        brandRes = R.string.catalog_fertilizer_brand_aquaforest,
+        nameRes = R.string.catalog_material_fertilizer_0312_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0313",
+        brandRes = R.string.catalog_fertilizer_brand_aquaforest,
+        nameRes = R.string.catalog_material_fertilizer_0313_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0314",
+        brandRes = R.string.catalog_fertilizer_brand_aquaforest,
+        nameRes = R.string.catalog_material_fertilizer_0314_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0315",
+        brandRes = R.string.catalog_fertilizer_brand_aquaforest,
+        nameRes = R.string.catalog_material_fertilizer_0315_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0316",
+        brandRes = R.string.catalog_fertilizer_brand_aquaforest,
+        nameRes = R.string.catalog_material_fertilizer_0316_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0317",
+        brandRes = R.string.catalog_fertilizer_brand_aquaforest,
+        nameRes = R.string.catalog_material_fertilizer_0317_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0318",
+        brandRes = R.string.catalog_fertilizer_brand_aquaforest,
+        nameRes = R.string.catalog_material_fertilizer_0318_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0319",
+        brandRes = R.string.catalog_fertilizer_brand_aquaforest,
+        nameRes = R.string.catalog_material_fertilizer_0319_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0320",
+        brandRes = R.string.catalog_fertilizer_brand_aquaforest,
+        nameRes = R.string.catalog_material_fertilizer_0320_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0321",
+        brandRes = R.string.catalog_fertilizer_brand_aquaforest,
+        nameRes = R.string.catalog_material_fertilizer_0321_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0322",
+        brandRes = R.string.catalog_fertilizer_brand_aquaforest,
+        nameRes = R.string.catalog_material_fertilizer_0322_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0323",
+        brandRes = R.string.catalog_fertilizer_brand_aquario_neo,
+        nameRes = R.string.catalog_material_fertilizer_0323_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0324",
+        brandRes = R.string.catalog_fertilizer_brand_aquario_neo,
+        nameRes = R.string.catalog_material_fertilizer_0324_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0325",
+        brandRes = R.string.catalog_fertilizer_brand_aquario_neo,
+        nameRes = R.string.catalog_material_fertilizer_0325_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0326",
+        brandRes = R.string.catalog_fertilizer_brand_aquario_neo,
+        nameRes = R.string.catalog_material_fertilizer_0326_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0327",
+        brandRes = R.string.catalog_fertilizer_brand_aquario_neo,
+        nameRes = R.string.catalog_material_fertilizer_0327_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0328",
+        brandRes = R.string.catalog_fertilizer_brand_aquario_neo,
+        nameRes = R.string.catalog_material_fertilizer_0328_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0329",
+        brandRes = R.string.catalog_fertilizer_brand_aquario_neo,
+        nameRes = R.string.catalog_material_fertilizer_0329_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0330",
+        brandRes = R.string.catalog_fertilizer_brand_aquario_neo,
+        nameRes = R.string.catalog_material_fertilizer_0330_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0331",
+        brandRes = R.string.catalog_fertilizer_brand_aquario_neo,
+        nameRes = R.string.catalog_material_fertilizer_0331_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0332",
+        brandRes = R.string.catalog_fertilizer_brand_aquario_neo,
+        nameRes = R.string.catalog_material_fertilizer_0332_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0333",
+        brandRes = R.string.catalog_fertilizer_brand_aquario_neo,
+        nameRes = R.string.catalog_material_fertilizer_0333_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0334",
+        brandRes = R.string.catalog_fertilizer_brand_aquario_neo,
+        nameRes = R.string.catalog_material_fertilizer_0334_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0335",
+        brandRes = R.string.catalog_fertilizer_brand_aquario_neo,
+        nameRes = R.string.catalog_material_fertilizer_0335_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0336",
+        brandRes = R.string.catalog_fertilizer_brand_aquario_neo,
+        nameRes = R.string.catalog_material_fertilizer_0336_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0337",
+        brandRes = R.string.catalog_fertilizer_brand_aquario_neo,
+        nameRes = R.string.catalog_material_fertilizer_0337_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0338",
+        brandRes = R.string.catalog_fertilizer_brand_aquario_neo,
+        nameRes = R.string.catalog_material_fertilizer_0338_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0339",
+        brandRes = R.string.catalog_fertilizer_brand_aquario_neo,
+        nameRes = R.string.catalog_material_fertilizer_0339_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0340",
+        brandRes = R.string.catalog_fertilizer_brand_aquario_neo,
+        nameRes = R.string.catalog_material_fertilizer_0340_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0341",
+        brandRes = R.string.catalog_fertilizer_brand_aquario_neo,
+        nameRes = R.string.catalog_material_fertilizer_0341_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0342",
+        brandRes = R.string.catalog_fertilizer_brand_aquario_neo,
+        nameRes = R.string.catalog_material_fertilizer_0342_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0343",
+        brandRes = R.string.catalog_fertilizer_brand_aquario_neo,
+        nameRes = R.string.catalog_material_fertilizer_0343_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0344",
+        brandRes = R.string.catalog_fertilizer_brand_aquario_neo,
+        nameRes = R.string.catalog_material_fertilizer_0344_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0345",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0345_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0346",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0346_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0347",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0347_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0348",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0348_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0349",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0349_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0350",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0350_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0351",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0351_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0352",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0352_name,
+        keywordRes = fertilizerLiquidKeywords
+    )
+)
+
+private val fertilizerDefinitions0353To0440 = listOf(
+    fertilizer(
+        id = "fertilizer_0353",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0353_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0354",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0354_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0355",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0355_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0356",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0356_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0357",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0357_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0358",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0358_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0359",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0359_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0360",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0360_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0361",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0361_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0362",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0362_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0363",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0363_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0364",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0364_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0365",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0365_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0366",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0366_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0367",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0367_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0368",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0368_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0369",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0369_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0370",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0370_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0371",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0371_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0372",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0372_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0373",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0373_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0374",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0374_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0375",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0375_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0376",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0376_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0377",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0377_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0378",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0378_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0379",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0379_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0380",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0380_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0381",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0381_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0382",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0382_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0383",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0383_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0384",
+        brandRes = R.string.catalog_fertilizer_brand_brightwell_aquatics,
+        nameRes = R.string.catalog_material_fertilizer_0384_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0385",
+        brandRes = R.string.catalog_fertilizer_brand_api,
+        nameRes = R.string.catalog_material_fertilizer_0385_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0386",
+        brandRes = R.string.catalog_fertilizer_brand_api,
+        nameRes = R.string.catalog_material_fertilizer_0386_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0387",
+        brandRes = R.string.catalog_fertilizer_brand_api,
+        nameRes = R.string.catalog_material_fertilizer_0387_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0388",
+        brandRes = R.string.catalog_fertilizer_brand_api,
+        nameRes = R.string.catalog_material_fertilizer_0388_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0389",
+        brandRes = R.string.catalog_fertilizer_brand_api,
+        nameRes = R.string.catalog_material_fertilizer_0389_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0390",
+        brandRes = R.string.catalog_fertilizer_brand_fluval,
+        nameRes = R.string.catalog_material_fertilizer_0390_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0391",
+        brandRes = R.string.catalog_fertilizer_brand_fluval,
+        nameRes = R.string.catalog_material_fertilizer_0391_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0392",
+        brandRes = R.string.catalog_fertilizer_brand_aquarium_co_op,
+        nameRes = R.string.catalog_material_fertilizer_0392_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0393",
+        brandRes = R.string.catalog_fertilizer_brand_aquarium_co_op,
+        nameRes = R.string.catalog_material_fertilizer_0393_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0394",
+        brandRes = R.string.catalog_fertilizer_brand_aquarium_co_op,
+        nameRes = R.string.catalog_material_fertilizer_0394_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0395",
+        brandRes = R.string.catalog_fertilizer_brand_aquarium_co_op,
+        nameRes = R.string.catalog_material_fertilizer_0395_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0396",
+        brandRes = R.string.catalog_fertilizer_brand_aquarium_co_op,
+        nameRes = R.string.catalog_material_fertilizer_0396_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0397",
+        brandRes = R.string.catalog_fertilizer_brand_aquarium_co_op,
+        nameRes = R.string.catalog_material_fertilizer_0397_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0398",
+        brandRes = R.string.catalog_fertilizer_brand_aquarium_co_op,
+        nameRes = R.string.catalog_material_fertilizer_0398_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0399",
+        brandRes = R.string.catalog_fertilizer_brand_aquarium_co_op,
+        nameRes = R.string.catalog_material_fertilizer_0399_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0400",
+        brandRes = R.string.catalog_fertilizer_brand_aquarium_co_op,
+        nameRes = R.string.catalog_material_fertilizer_0400_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0401",
+        brandRes = R.string.catalog_fertilizer_brand_nilocg,
+        nameRes = R.string.catalog_material_fertilizer_0401_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0402",
+        brandRes = R.string.catalog_fertilizer_brand_nilocg,
+        nameRes = R.string.catalog_material_fertilizer_0402_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0403",
+        brandRes = R.string.catalog_fertilizer_brand_nilocg,
+        nameRes = R.string.catalog_material_fertilizer_0403_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0404",
+        brandRes = R.string.catalog_fertilizer_brand_nilocg,
+        nameRes = R.string.catalog_material_fertilizer_0404_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0405",
+        brandRes = R.string.catalog_fertilizer_brand_nilocg,
+        nameRes = R.string.catalog_material_fertilizer_0405_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0406",
+        brandRes = R.string.catalog_fertilizer_brand_nilocg,
+        nameRes = R.string.catalog_material_fertilizer_0406_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0407",
+        brandRes = R.string.catalog_fertilizer_brand_nilocg,
+        nameRes = R.string.catalog_material_fertilizer_0407_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0408",
+        brandRes = R.string.catalog_fertilizer_brand_nilocg,
+        nameRes = R.string.catalog_material_fertilizer_0408_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0409",
+        brandRes = R.string.catalog_fertilizer_brand_nilocg,
+        nameRes = R.string.catalog_material_fertilizer_0409_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0410",
+        brandRes = R.string.catalog_fertilizer_brand_nilocg,
+        nameRes = R.string.catalog_material_fertilizer_0410_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0411",
+        brandRes = R.string.catalog_fertilizer_brand_nilocg,
+        nameRes = R.string.catalog_material_fertilizer_0411_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0412",
+        brandRes = R.string.catalog_fertilizer_brand_nilocg,
+        nameRes = R.string.catalog_material_fertilizer_0412_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0413",
+        brandRes = R.string.catalog_fertilizer_brand_nilocg,
+        nameRes = R.string.catalog_material_fertilizer_0413_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0414",
+        brandRes = R.string.catalog_fertilizer_brand_nilocg,
+        nameRes = R.string.catalog_material_fertilizer_0414_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0415",
+        brandRes = R.string.catalog_fertilizer_brand_nilocg,
+        nameRes = R.string.catalog_material_fertilizer_0415_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0416",
+        brandRes = R.string.catalog_fertilizer_brand_nilocg,
+        nameRes = R.string.catalog_material_fertilizer_0416_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0417",
+        brandRes = R.string.catalog_fertilizer_brand_nilocg,
+        nameRes = R.string.catalog_material_fertilizer_0417_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0418",
+        brandRes = R.string.catalog_fertilizer_brand_nilocg,
+        nameRes = R.string.catalog_material_fertilizer_0418_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0419",
+        brandRes = R.string.catalog_fertilizer_brand_nilocg,
+        nameRes = R.string.catalog_material_fertilizer_0419_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0420",
+        brandRes = R.string.catalog_fertilizer_brand_nilocg,
+        nameRes = R.string.catalog_material_fertilizer_0420_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0421",
+        brandRes = R.string.catalog_fertilizer_brand_nilocg,
+        nameRes = R.string.catalog_material_fertilizer_0421_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0422",
+        brandRes = R.string.catalog_fertilizer_brand_nilocg,
+        nameRes = R.string.catalog_material_fertilizer_0422_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0423",
+        brandRes = R.string.catalog_fertilizer_brand_nilocg,
+        nameRes = R.string.catalog_material_fertilizer_0423_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0424",
+        brandRes = R.string.catalog_fertilizer_brand_nilocg,
+        nameRes = R.string.catalog_material_fertilizer_0424_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0425",
+        brandRes = R.string.catalog_fertilizer_brand_nilocg,
+        nameRes = R.string.catalog_material_fertilizer_0425_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0426",
+        brandRes = R.string.catalog_fertilizer_brand_nilocg,
+        nameRes = R.string.catalog_material_fertilizer_0426_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0427",
+        brandRes = R.string.catalog_fertilizer_brand_nilocg,
+        nameRes = R.string.catalog_material_fertilizer_0427_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0428",
+        brandRes = R.string.catalog_fertilizer_brand_nilocg,
+        nameRes = R.string.catalog_material_fertilizer_0428_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0429",
+        brandRes = R.string.catalog_fertilizer_brand_nilocg,
+        nameRes = R.string.catalog_material_fertilizer_0429_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0430",
+        brandRes = R.string.catalog_fertilizer_brand_nilocg,
+        nameRes = R.string.catalog_material_fertilizer_0430_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0431",
+        brandRes = R.string.catalog_fertilizer_brand_nilocg,
+        nameRes = R.string.catalog_material_fertilizer_0431_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0432",
+        brandRes = R.string.catalog_fertilizer_brand_nilocg,
+        nameRes = R.string.catalog_material_fertilizer_0432_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0433",
+        brandRes = R.string.catalog_fertilizer_brand_green_leaf_aquariums_gla,
+        nameRes = R.string.catalog_material_fertilizer_0433_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0434",
+        brandRes = R.string.catalog_fertilizer_brand_green_leaf_aquariums_gla,
+        nameRes = R.string.catalog_material_fertilizer_0434_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0435",
+        brandRes = R.string.catalog_fertilizer_brand_green_leaf_aquariums_gla,
+        nameRes = R.string.catalog_material_fertilizer_0435_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0436",
+        brandRes = R.string.catalog_fertilizer_brand_green_leaf_aquariums_gla,
+        nameRes = R.string.catalog_material_fertilizer_0436_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0437",
+        brandRes = R.string.catalog_fertilizer_brand_green_leaf_aquariums_gla,
+        nameRes = R.string.catalog_material_fertilizer_0437_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0438",
+        brandRes = R.string.catalog_fertilizer_brand_green_leaf_aquariums_gla,
+        nameRes = R.string.catalog_material_fertilizer_0438_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0439",
+        brandRes = R.string.catalog_fertilizer_brand_green_leaf_aquariums_gla,
+        nameRes = R.string.catalog_material_fertilizer_0439_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0440",
+        brandRes = R.string.catalog_fertilizer_brand_green_leaf_aquariums_gla,
+        nameRes = R.string.catalog_material_fertilizer_0440_name,
+        keywordRes = fertilizerBaseKeywords
+    )
+)
+
+private val fertilizerDefinitions0441To0528 = listOf(
+    fertilizer(
+        id = "fertilizer_0441",
+        brandRes = R.string.catalog_fertilizer_brand_green_leaf_aquariums_gla,
+        nameRes = R.string.catalog_material_fertilizer_0441_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0442",
+        brandRes = R.string.catalog_fertilizer_brand_green_leaf_aquariums_gla,
+        nameRes = R.string.catalog_material_fertilizer_0442_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0443",
+        brandRes = R.string.catalog_fertilizer_brand_green_leaf_aquariums_gla,
+        nameRes = R.string.catalog_material_fertilizer_0443_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0444",
+        brandRes = R.string.catalog_fertilizer_brand_tetra,
+        nameRes = R.string.catalog_material_fertilizer_0444_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0445",
+        brandRes = R.string.catalog_fertilizer_brand_tetra,
+        nameRes = R.string.catalog_material_fertilizer_0445_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0446",
+        brandRes = R.string.catalog_fertilizer_brand_tetra,
+        nameRes = R.string.catalog_material_fertilizer_0446_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0447",
+        brandRes = R.string.catalog_fertilizer_brand_tetra,
+        nameRes = R.string.catalog_material_fertilizer_0447_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0448",
+        brandRes = R.string.catalog_fertilizer_brand_tetra,
+        nameRes = R.string.catalog_material_fertilizer_0448_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0449",
+        brandRes = R.string.catalog_fertilizer_brand_tetra,
+        nameRes = R.string.catalog_material_fertilizer_0449_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0450",
+        brandRes = R.string.catalog_fertilizer_brand_tetra,
+        nameRes = R.string.catalog_material_fertilizer_0450_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0451",
+        brandRes = R.string.catalog_fertilizer_brand_tetra,
+        nameRes = R.string.catalog_material_fertilizer_0451_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0452",
+        brandRes = R.string.catalog_fertilizer_brand_tetra,
+        nameRes = R.string.catalog_material_fertilizer_0452_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0453",
+        brandRes = R.string.catalog_fertilizer_brand_dupla,
+        nameRes = R.string.catalog_material_fertilizer_0453_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0454",
+        brandRes = R.string.catalog_fertilizer_brand_dupla,
+        nameRes = R.string.catalog_material_fertilizer_0454_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0455",
+        brandRes = R.string.catalog_fertilizer_brand_dupla,
+        nameRes = R.string.catalog_material_fertilizer_0455_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0456",
+        brandRes = R.string.catalog_fertilizer_brand_dupla,
+        nameRes = R.string.catalog_material_fertilizer_0456_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0457",
+        brandRes = R.string.catalog_fertilizer_brand_dupla,
+        nameRes = R.string.catalog_material_fertilizer_0457_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0458",
+        brandRes = R.string.catalog_fertilizer_brand_dupla,
+        nameRes = R.string.catalog_material_fertilizer_0458_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0459",
+        brandRes = R.string.catalog_brand_oase,
+        nameRes = R.string.catalog_material_fertilizer_0459_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0460",
+        brandRes = R.string.catalog_brand_oase,
+        nameRes = R.string.catalog_material_fertilizer_0460_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0461",
+        brandRes = R.string.catalog_brand_oase,
+        nameRes = R.string.catalog_material_fertilizer_0461_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0462",
+        brandRes = R.string.catalog_brand_oase,
+        nameRes = R.string.catalog_material_fertilizer_0462_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0463",
+        brandRes = R.string.catalog_brand_oase,
+        nameRes = R.string.catalog_material_fertilizer_0463_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0464",
+        brandRes = R.string.catalog_brand_oase,
+        nameRes = R.string.catalog_material_fertilizer_0464_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0465",
+        brandRes = R.string.catalog_brand_oase,
+        nameRes = R.string.catalog_material_fertilizer_0465_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0466",
+        brandRes = R.string.catalog_brand_oase,
+        nameRes = R.string.catalog_material_fertilizer_0466_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0467",
+        brandRes = R.string.catalog_brand_oase,
+        nameRes = R.string.catalog_material_fertilizer_0467_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0468",
+        brandRes = R.string.catalog_brand_oase,
+        nameRes = R.string.catalog_material_fertilizer_0468_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0469",
+        brandRes = R.string.catalog_fertilizer_brand_vimi,
+        nameRes = R.string.catalog_material_fertilizer_0469_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0470",
+        brandRes = R.string.catalog_fertilizer_brand_vimi,
+        nameRes = R.string.catalog_material_fertilizer_0470_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0471",
+        brandRes = R.string.catalog_fertilizer_brand_vimi,
+        nameRes = R.string.catalog_material_fertilizer_0471_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0472",
+        brandRes = R.string.catalog_fertilizer_brand_vimi,
+        nameRes = R.string.catalog_material_fertilizer_0472_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0473",
+        brandRes = R.string.catalog_fertilizer_brand_vimi,
+        nameRes = R.string.catalog_material_fertilizer_0473_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0474",
+        brandRes = R.string.catalog_fertilizer_brand_vimi,
+        nameRes = R.string.catalog_material_fertilizer_0474_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0475",
+        brandRes = R.string.catalog_fertilizer_brand_vimi,
+        nameRes = R.string.catalog_material_fertilizer_0475_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0476",
+        brandRes = R.string.catalog_fertilizer_brand_vimi,
+        nameRes = R.string.catalog_material_fertilizer_0476_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0477",
+        brandRes = R.string.catalog_fertilizer_brand_vimi,
+        nameRes = R.string.catalog_material_fertilizer_0477_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0478",
+        brandRes = R.string.catalog_fertilizer_brand_vimi,
+        nameRes = R.string.catalog_material_fertilizer_0478_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0479",
+        brandRes = R.string.catalog_fertilizer_brand_vimi,
+        nameRes = R.string.catalog_material_fertilizer_0479_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0480",
+        brandRes = R.string.catalog_fertilizer_brand_vimi,
+        nameRes = R.string.catalog_material_fertilizer_0480_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0481",
+        brandRes = R.string.catalog_fertilizer_brand_vimi,
+        nameRes = R.string.catalog_material_fertilizer_0481_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0482",
+        brandRes = R.string.catalog_fertilizer_brand_vimi,
+        nameRes = R.string.catalog_material_fertilizer_0482_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0483",
+        brandRes = R.string.catalog_fertilizer_brand_vimi,
+        nameRes = R.string.catalog_material_fertilizer_0483_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0484",
+        brandRes = R.string.catalog_fertilizer_brand_vimi,
+        nameRes = R.string.catalog_material_fertilizer_0484_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0485",
+        brandRes = R.string.catalog_fertilizer_brand_vimi,
+        nameRes = R.string.catalog_material_fertilizer_0485_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0486",
+        brandRes = R.string.catalog_fertilizer_brand_vimi,
+        nameRes = R.string.catalog_material_fertilizer_0486_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0487",
+        brandRes = R.string.catalog_fertilizer_brand_vimi,
+        nameRes = R.string.catalog_material_fertilizer_0487_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0488",
+        brandRes = R.string.catalog_fertilizer_brand_vimi,
+        nameRes = R.string.catalog_material_fertilizer_0488_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0489",
+        brandRes = R.string.catalog_fertilizer_brand_vimi,
+        nameRes = R.string.catalog_material_fertilizer_0489_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0490",
+        brandRes = R.string.catalog_fertilizer_brand_vimi,
+        nameRes = R.string.catalog_material_fertilizer_0490_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0491",
+        brandRes = R.string.catalog_fertilizer_brand_vimi,
+        nameRes = R.string.catalog_material_fertilizer_0491_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0492",
+        brandRes = R.string.catalog_fertilizer_brand_vimi,
+        nameRes = R.string.catalog_material_fertilizer_0492_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0493",
+        brandRes = R.string.catalog_fertilizer_brand_colombo,
+        nameRes = R.string.catalog_material_fertilizer_0493_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0494",
+        brandRes = R.string.catalog_fertilizer_brand_colombo,
+        nameRes = R.string.catalog_material_fertilizer_0494_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0495",
+        brandRes = R.string.catalog_fertilizer_brand_colombo,
+        nameRes = R.string.catalog_material_fertilizer_0495_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0496",
+        brandRes = R.string.catalog_fertilizer_brand_colombo,
+        nameRes = R.string.catalog_material_fertilizer_0496_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0497",
+        brandRes = R.string.catalog_fertilizer_brand_colombo,
+        nameRes = R.string.catalog_material_fertilizer_0497_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0498",
+        brandRes = R.string.catalog_fertilizer_brand_colombo,
+        nameRes = R.string.catalog_material_fertilizer_0498_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0499",
+        brandRes = R.string.catalog_fertilizer_brand_colombo,
+        nameRes = R.string.catalog_material_fertilizer_0499_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0500",
+        brandRes = R.string.catalog_fertilizer_brand_colombo,
+        nameRes = R.string.catalog_material_fertilizer_0500_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0501",
+        brandRes = R.string.catalog_fertilizer_brand_colombo,
+        nameRes = R.string.catalog_material_fertilizer_0501_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0502",
+        brandRes = R.string.catalog_fertilizer_brand_colombo,
+        nameRes = R.string.catalog_material_fertilizer_0502_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0503",
+        brandRes = R.string.catalog_brand_ista,
+        nameRes = R.string.catalog_material_fertilizer_0503_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0504",
+        brandRes = R.string.catalog_brand_ista,
+        nameRes = R.string.catalog_material_fertilizer_0504_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0505",
+        brandRes = R.string.catalog_brand_ista,
+        nameRes = R.string.catalog_material_fertilizer_0505_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0506",
+        brandRes = R.string.catalog_brand_ista,
+        nameRes = R.string.catalog_material_fertilizer_0506_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0507",
+        brandRes = R.string.catalog_brand_ista,
+        nameRes = R.string.catalog_material_fertilizer_0507_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0508",
+        brandRes = R.string.catalog_brand_ista,
+        nameRes = R.string.catalog_material_fertilizer_0508_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0509",
+        brandRes = R.string.catalog_brand_ista,
+        nameRes = R.string.catalog_material_fertilizer_0509_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0510",
+        brandRes = R.string.catalog_brand_ista,
+        nameRes = R.string.catalog_material_fertilizer_0510_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0511",
+        brandRes = R.string.catalog_brand_ista,
+        nameRes = R.string.catalog_material_fertilizer_0511_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0512",
+        brandRes = R.string.catalog_brand_ista,
+        nameRes = R.string.catalog_material_fertilizer_0512_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0513",
+        brandRes = R.string.catalog_brand_ista,
+        nameRes = R.string.catalog_material_fertilizer_0513_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0514",
+        brandRes = R.string.catalog_brand_ista,
+        nameRes = R.string.catalog_material_fertilizer_0514_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0515",
+        brandRes = R.string.catalog_brand_ista,
+        nameRes = R.string.catalog_material_fertilizer_0515_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0516",
+        brandRes = R.string.catalog_brand_ista,
+        nameRes = R.string.catalog_material_fertilizer_0516_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0517",
+        brandRes = R.string.catalog_brand_ista,
+        nameRes = R.string.catalog_material_fertilizer_0517_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0518",
+        brandRes = R.string.catalog_brand_ista,
+        nameRes = R.string.catalog_material_fertilizer_0518_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0519",
+        brandRes = R.string.catalog_brand_ista,
+        nameRes = R.string.catalog_material_fertilizer_0519_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0520",
+        brandRes = R.string.catalog_brand_ista,
+        nameRes = R.string.catalog_material_fertilizer_0520_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0521",
+        brandRes = R.string.catalog_brand_ista,
+        nameRes = R.string.catalog_material_fertilizer_0521_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0522",
+        brandRes = R.string.catalog_brand_ista,
+        nameRes = R.string.catalog_material_fertilizer_0522_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0523",
+        brandRes = R.string.catalog_brand_ista,
+        nameRes = R.string.catalog_material_fertilizer_0523_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0524",
+        brandRes = R.string.catalog_brand_ista,
+        nameRes = R.string.catalog_material_fertilizer_0524_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0525",
+        brandRes = R.string.catalog_brand_ista,
+        nameRes = R.string.catalog_material_fertilizer_0525_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0526",
+        brandRes = R.string.catalog_brand_ista,
+        nameRes = R.string.catalog_material_fertilizer_0526_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0527",
+        brandRes = R.string.catalog_brand_ista,
+        nameRes = R.string.catalog_material_fertilizer_0527_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0528",
+        brandRes = R.string.catalog_fertilizer_brand_tropical,
+        nameRes = R.string.catalog_material_fertilizer_0528_name,
+        keywordRes = fertilizerLiquidKeywords
+    )
+)
+
+private val fertilizerDefinitions0529To0616 = listOf(
+    fertilizer(
+        id = "fertilizer_0529",
+        brandRes = R.string.catalog_fertilizer_brand_tropical,
+        nameRes = R.string.catalog_material_fertilizer_0529_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0530",
+        brandRes = R.string.catalog_fertilizer_brand_tropical,
+        nameRes = R.string.catalog_material_fertilizer_0530_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0531",
+        brandRes = R.string.catalog_fertilizer_brand_tropical,
+        nameRes = R.string.catalog_material_fertilizer_0531_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0532",
+        brandRes = R.string.catalog_fertilizer_brand_tropical,
+        nameRes = R.string.catalog_material_fertilizer_0532_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0533",
+        brandRes = R.string.catalog_fertilizer_brand_tropical,
+        nameRes = R.string.catalog_material_fertilizer_0533_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0534",
+        brandRes = R.string.catalog_fertilizer_brand_tropical,
+        nameRes = R.string.catalog_material_fertilizer_0534_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0535",
+        brandRes = R.string.catalog_fertilizer_brand_tropical,
+        nameRes = R.string.catalog_material_fertilizer_0535_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0536",
+        brandRes = R.string.catalog_fertilizer_brand_tropical,
+        nameRes = R.string.catalog_material_fertilizer_0536_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0537",
+        brandRes = R.string.catalog_fertilizer_brand_tropical,
+        nameRes = R.string.catalog_material_fertilizer_0537_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0538",
+        brandRes = R.string.catalog_fertilizer_brand_tropical,
+        nameRes = R.string.catalog_material_fertilizer_0538_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0539",
+        brandRes = R.string.catalog_fertilizer_brand_tropical,
+        nameRes = R.string.catalog_material_fertilizer_0539_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0540",
+        brandRes = R.string.catalog_fertilizer_brand_tropical,
+        nameRes = R.string.catalog_material_fertilizer_0540_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0541",
+        brandRes = R.string.catalog_fertilizer_brand_tropical,
+        nameRes = R.string.catalog_material_fertilizer_0541_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0542",
+        brandRes = R.string.catalog_fertilizer_brand_tropical,
+        nameRes = R.string.catalog_material_fertilizer_0542_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0543",
+        brandRes = R.string.catalog_fertilizer_brand_prodibio,
+        nameRes = R.string.catalog_material_fertilizer_0543_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0544",
+        brandRes = R.string.catalog_fertilizer_brand_prodibio,
+        nameRes = R.string.catalog_material_fertilizer_0544_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0545",
+        brandRes = R.string.catalog_fertilizer_brand_prodibio,
+        nameRes = R.string.catalog_material_fertilizer_0545_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0546",
+        brandRes = R.string.catalog_fertilizer_brand_prodibio,
+        nameRes = R.string.catalog_material_fertilizer_0546_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0547",
+        brandRes = R.string.catalog_fertilizer_brand_prodibio,
+        nameRes = R.string.catalog_material_fertilizer_0547_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0548",
+        brandRes = R.string.catalog_fertilizer_brand_prodibio,
+        nameRes = R.string.catalog_material_fertilizer_0548_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0549",
+        brandRes = R.string.catalog_fertilizer_brand_ultum_nature_systems_uns,
+        nameRes = R.string.catalog_material_fertilizer_0549_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0550",
+        brandRes = R.string.catalog_fertilizer_brand_ultum_nature_systems_uns,
+        nameRes = R.string.catalog_material_fertilizer_0550_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0551",
+        brandRes = R.string.catalog_fertilizer_brand_yokuchi,
+        nameRes = R.string.catalog_material_fertilizer_0551_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0552",
+        brandRes = R.string.catalog_fertilizer_brand_yokuchi,
+        nameRes = R.string.catalog_material_fertilizer_0552_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0553",
+        brandRes = R.string.catalog_fertilizer_brand_yokuchi,
+        nameRes = R.string.catalog_material_fertilizer_0553_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0554",
+        brandRes = R.string.catalog_fertilizer_brand_yokuchi,
+        nameRes = R.string.catalog_material_fertilizer_0554_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0555",
+        brandRes = R.string.catalog_fertilizer_brand_yokuchi,
+        nameRes = R.string.catalog_material_fertilizer_0555_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0556",
+        brandRes = R.string.catalog_fertilizer_brand_yokuchi,
+        nameRes = R.string.catalog_material_fertilizer_0556_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0557",
+        brandRes = R.string.catalog_fertilizer_brand_yokuchi,
+        nameRes = R.string.catalog_material_fertilizer_0557_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0558",
+        brandRes = R.string.catalog_fertilizer_brand_yokuchi,
+        nameRes = R.string.catalog_material_fertilizer_0558_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0559",
+        brandRes = R.string.catalog_fertilizer_brand_yokuchi,
+        nameRes = R.string.catalog_material_fertilizer_0559_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0560",
+        brandRes = R.string.catalog_fertilizer_brand_yokuchi,
+        nameRes = R.string.catalog_material_fertilizer_0560_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0561",
+        brandRes = R.string.catalog_fertilizer_brand_yokuchi,
+        nameRes = R.string.catalog_material_fertilizer_0561_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0562",
+        brandRes = R.string.catalog_fertilizer_brand_yokuchi,
+        nameRes = R.string.catalog_material_fertilizer_0562_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0563",
+        brandRes = R.string.catalog_fertilizer_brand_yokuchi,
+        nameRes = R.string.catalog_material_fertilizer_0563_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0564",
+        brandRes = R.string.catalog_fertilizer_brand_yokuchi,
+        nameRes = R.string.catalog_material_fertilizer_0564_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0565",
+        brandRes = R.string.catalog_fertilizer_brand_yokuchi,
+        nameRes = R.string.catalog_material_fertilizer_0565_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0566",
+        brandRes = R.string.catalog_fertilizer_brand_yokuchi,
+        nameRes = R.string.catalog_material_fertilizer_0566_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0567",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_art,
+        nameRes = R.string.catalog_material_fertilizer_0567_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0568",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_art,
+        nameRes = R.string.catalog_material_fertilizer_0568_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0569",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_art,
+        nameRes = R.string.catalog_material_fertilizer_0569_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0570",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_art,
+        nameRes = R.string.catalog_material_fertilizer_0570_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0571",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_art,
+        nameRes = R.string.catalog_material_fertilizer_0571_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0572",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_art,
+        nameRes = R.string.catalog_material_fertilizer_0572_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0573",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_art,
+        nameRes = R.string.catalog_material_fertilizer_0573_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0574",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_art,
+        nameRes = R.string.catalog_material_fertilizer_0574_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0575",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_art,
+        nameRes = R.string.catalog_material_fertilizer_0575_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0576",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_art,
+        nameRes = R.string.catalog_material_fertilizer_0576_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0577",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_art,
+        nameRes = R.string.catalog_material_fertilizer_0577_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0578",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_art,
+        nameRes = R.string.catalog_material_fertilizer_0578_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0579",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_art,
+        nameRes = R.string.catalog_material_fertilizer_0579_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0580",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_art,
+        nameRes = R.string.catalog_material_fertilizer_0580_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0581",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_art,
+        nameRes = R.string.catalog_material_fertilizer_0581_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0582",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_art,
+        nameRes = R.string.catalog_material_fertilizer_0582_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0583",
+        brandRes = R.string.catalog_fertilizer_brand_aqua_art,
+        nameRes = R.string.catalog_material_fertilizer_0583_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0584",
+        brandRes = R.string.catalog_fertilizer_brand_azoo,
+        nameRes = R.string.catalog_material_fertilizer_0584_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0585",
+        brandRes = R.string.catalog_fertilizer_brand_azoo,
+        nameRes = R.string.catalog_material_fertilizer_0585_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0586",
+        brandRes = R.string.catalog_fertilizer_brand_azoo,
+        nameRes = R.string.catalog_material_fertilizer_0586_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0587",
+        brandRes = R.string.catalog_fertilizer_brand_azoo,
+        nameRes = R.string.catalog_material_fertilizer_0587_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0588",
+        brandRes = R.string.catalog_fertilizer_brand_azoo,
+        nameRes = R.string.catalog_material_fertilizer_0588_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0589",
+        brandRes = R.string.catalog_fertilizer_brand_azoo,
+        nameRes = R.string.catalog_material_fertilizer_0589_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0590",
+        brandRes = R.string.catalog_fertilizer_brand_azoo,
+        nameRes = R.string.catalog_material_fertilizer_0590_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0591",
+        brandRes = R.string.catalog_fertilizer_brand_microbe_lift,
+        nameRes = R.string.catalog_material_fertilizer_0591_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0592",
+        brandRes = R.string.catalog_fertilizer_brand_microbe_lift,
+        nameRes = R.string.catalog_material_fertilizer_0592_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0593",
+        brandRes = R.string.catalog_fertilizer_brand_microbe_lift,
+        nameRes = R.string.catalog_material_fertilizer_0593_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0594",
+        brandRes = R.string.catalog_fertilizer_brand_microbe_lift,
+        nameRes = R.string.catalog_material_fertilizer_0594_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0595",
+        brandRes = R.string.catalog_fertilizer_brand_microbe_lift,
+        nameRes = R.string.catalog_material_fertilizer_0595_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0596",
+        brandRes = R.string.catalog_fertilizer_brand_microbe_lift,
+        nameRes = R.string.catalog_material_fertilizer_0596_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0597",
+        brandRes = R.string.catalog_fertilizer_brand_microbe_lift,
+        nameRes = R.string.catalog_material_fertilizer_0597_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0598",
+        brandRes = R.string.catalog_fertilizer_brand_reeflowers,
+        nameRes = R.string.catalog_material_fertilizer_0598_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0599",
+        brandRes = R.string.catalog_fertilizer_brand_reeflowers,
+        nameRes = R.string.catalog_material_fertilizer_0599_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0600",
+        brandRes = R.string.catalog_fertilizer_brand_reeflowers,
+        nameRes = R.string.catalog_material_fertilizer_0600_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0601",
+        brandRes = R.string.catalog_fertilizer_brand_reeflowers,
+        nameRes = R.string.catalog_material_fertilizer_0601_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0602",
+        brandRes = R.string.catalog_fertilizer_brand_reeflowers,
+        nameRes = R.string.catalog_material_fertilizer_0602_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0603",
+        brandRes = R.string.catalog_fertilizer_brand_reeflowers,
+        nameRes = R.string.catalog_material_fertilizer_0603_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0604",
+        brandRes = R.string.catalog_fertilizer_brand_reeflowers,
+        nameRes = R.string.catalog_material_fertilizer_0604_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0605",
+        brandRes = R.string.catalog_fertilizer_brand_reeflowers,
+        nameRes = R.string.catalog_material_fertilizer_0605_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0606",
+        brandRes = R.string.catalog_fertilizer_brand_reeflowers,
+        nameRes = R.string.catalog_material_fertilizer_0606_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0607",
+        brandRes = R.string.catalog_fertilizer_brand_reeflowers,
+        nameRes = R.string.catalog_material_fertilizer_0607_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0608",
+        brandRes = R.string.catalog_fertilizer_brand_reeflowers,
+        nameRes = R.string.catalog_material_fertilizer_0608_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0609",
+        brandRes = R.string.catalog_fertilizer_brand_reeflowers,
+        nameRes = R.string.catalog_material_fertilizer_0609_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0610",
+        brandRes = R.string.catalog_fertilizer_brand_reeflowers,
+        nameRes = R.string.catalog_material_fertilizer_0610_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0611",
+        brandRes = R.string.catalog_fertilizer_brand_reeflowers,
+        nameRes = R.string.catalog_material_fertilizer_0611_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0612",
+        brandRes = R.string.catalog_fertilizer_brand_reeflowers,
+        nameRes = R.string.catalog_material_fertilizer_0612_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0613",
+        brandRes = R.string.catalog_fertilizer_brand_reeflowers,
+        nameRes = R.string.catalog_material_fertilizer_0613_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0614",
+        brandRes = R.string.catalog_fertilizer_brand_reeflowers,
+        nameRes = R.string.catalog_material_fertilizer_0614_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0615",
+        brandRes = R.string.catalog_fertilizer_brand_reeflowers,
+        nameRes = R.string.catalog_material_fertilizer_0615_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0616",
+        brandRes = R.string.catalog_fertilizer_brand_reeflowers,
+        nameRes = R.string.catalog_material_fertilizer_0616_name,
+        keywordRes = fertilizerLiquidKeywords
+    )
+)
+
+private val fertilizerDefinitions0617To0704 = listOf(
+    fertilizer(
+        id = "fertilizer_0617",
+        brandRes = R.string.catalog_fertilizer_brand_reeflowers,
+        nameRes = R.string.catalog_material_fertilizer_0617_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0618",
+        brandRes = R.string.catalog_fertilizer_brand_reeflowers,
+        nameRes = R.string.catalog_material_fertilizer_0618_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0619",
+        brandRes = R.string.catalog_fertilizer_brand_reeflowers,
+        nameRes = R.string.catalog_material_fertilizer_0619_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0620",
+        brandRes = R.string.catalog_fertilizer_brand_reeflowers,
+        nameRes = R.string.catalog_material_fertilizer_0620_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0621",
+        brandRes = R.string.catalog_fertilizer_brand_reeflowers,
+        nameRes = R.string.catalog_material_fertilizer_0621_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0622",
+        brandRes = R.string.catalog_fertilizer_brand_reeflowers,
+        nameRes = R.string.catalog_material_fertilizer_0622_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0623",
+        brandRes = R.string.catalog_fertilizer_brand_reeflowers,
+        nameRes = R.string.catalog_material_fertilizer_0623_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0624",
+        brandRes = R.string.catalog_fertilizer_brand_reeflowers,
+        nameRes = R.string.catalog_material_fertilizer_0624_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0625",
+        brandRes = R.string.catalog_fertilizer_brand_reeflowers,
+        nameRes = R.string.catalog_material_fertilizer_0625_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0626",
+        brandRes = R.string.catalog_fertilizer_brand_nixa,
+        nameRes = R.string.catalog_material_fertilizer_0626_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0627",
+        brandRes = R.string.catalog_fertilizer_brand_nixa,
+        nameRes = R.string.catalog_material_fertilizer_0627_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0628",
+        brandRes = R.string.catalog_fertilizer_brand_nixa,
+        nameRes = R.string.catalog_material_fertilizer_0628_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0629",
+        brandRes = R.string.catalog_fertilizer_brand_nixa,
+        nameRes = R.string.catalog_material_fertilizer_0629_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0630",
+        brandRes = R.string.catalog_fertilizer_brand_nixa,
+        nameRes = R.string.catalog_material_fertilizer_0630_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0631",
+        brandRes = R.string.catalog_fertilizer_brand_nixa,
+        nameRes = R.string.catalog_material_fertilizer_0631_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0632",
+        brandRes = R.string.catalog_fertilizer_brand_nixa,
+        nameRes = R.string.catalog_material_fertilizer_0632_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0633",
+        brandRes = R.string.catalog_fertilizer_brand_nixa,
+        nameRes = R.string.catalog_material_fertilizer_0633_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0634",
+        brandRes = R.string.catalog_fertilizer_brand_nixa,
+        nameRes = R.string.catalog_material_fertilizer_0634_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0635",
+        brandRes = R.string.catalog_fertilizer_brand_nixa,
+        nameRes = R.string.catalog_material_fertilizer_0635_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0636",
+        brandRes = R.string.catalog_fertilizer_brand_nixa,
+        nameRes = R.string.catalog_material_fertilizer_0636_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0637",
+        brandRes = R.string.catalog_fertilizer_brand_nixa,
+        nameRes = R.string.catalog_material_fertilizer_0637_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0638",
+        brandRes = R.string.catalog_fertilizer_brand_nixa,
+        nameRes = R.string.catalog_material_fertilizer_0638_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0639",
+        brandRes = R.string.catalog_fertilizer_brand_nixa,
+        nameRes = R.string.catalog_material_fertilizer_0639_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0640",
+        brandRes = R.string.catalog_fertilizer_brand_nixa,
+        nameRes = R.string.catalog_material_fertilizer_0640_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0641",
+        brandRes = R.string.catalog_fertilizer_brand_nixa,
+        nameRes = R.string.catalog_material_fertilizer_0641_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0642",
+        brandRes = R.string.catalog_fertilizer_brand_nixa,
+        nameRes = R.string.catalog_material_fertilizer_0642_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0643",
+        brandRes = R.string.catalog_fertilizer_brand_nixa,
+        nameRes = R.string.catalog_material_fertilizer_0643_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0644",
+        brandRes = R.string.catalog_fertilizer_brand_nixa,
+        nameRes = R.string.catalog_material_fertilizer_0644_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0645",
+        brandRes = R.string.catalog_fertilizer_brand_nixa,
+        nameRes = R.string.catalog_material_fertilizer_0645_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0646",
+        brandRes = R.string.catalog_fertilizer_brand_creaqua,
+        nameRes = R.string.catalog_material_fertilizer_0646_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0647",
+        brandRes = R.string.catalog_fertilizer_brand_creaqua,
+        nameRes = R.string.catalog_material_fertilizer_0647_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0648",
+        brandRes = R.string.catalog_fertilizer_brand_creaqua,
+        nameRes = R.string.catalog_material_fertilizer_0648_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0649",
+        brandRes = R.string.catalog_fertilizer_brand_creaqua,
+        nameRes = R.string.catalog_material_fertilizer_0649_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0650",
+        brandRes = R.string.catalog_fertilizer_brand_creaqua,
+        nameRes = R.string.catalog_material_fertilizer_0650_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0651",
+        brandRes = R.string.catalog_fertilizer_brand_creaqua,
+        nameRes = R.string.catalog_material_fertilizer_0651_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0652",
+        brandRes = R.string.catalog_fertilizer_brand_creaqua,
+        nameRes = R.string.catalog_material_fertilizer_0652_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0653",
+        brandRes = R.string.catalog_fertilizer_brand_creaqua,
+        nameRes = R.string.catalog_material_fertilizer_0653_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0654",
+        brandRes = R.string.catalog_fertilizer_brand_creaqua,
+        nameRes = R.string.catalog_material_fertilizer_0654_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0655",
+        brandRes = R.string.catalog_fertilizer_brand_creaqua,
+        nameRes = R.string.catalog_material_fertilizer_0655_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0656",
+        brandRes = R.string.catalog_fertilizer_brand_creaqua,
+        nameRes = R.string.catalog_material_fertilizer_0656_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0657",
+        brandRes = R.string.catalog_fertilizer_brand_crystalpro,
+        nameRes = R.string.catalog_material_fertilizer_0657_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0658",
+        brandRes = R.string.catalog_fertilizer_brand_crystalpro,
+        nameRes = R.string.catalog_material_fertilizer_0658_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0659",
+        brandRes = R.string.catalog_fertilizer_brand_crystalpro,
+        nameRes = R.string.catalog_material_fertilizer_0659_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0660",
+        brandRes = R.string.catalog_fertilizer_brand_crystalpro,
+        nameRes = R.string.catalog_material_fertilizer_0660_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0661",
+        brandRes = R.string.catalog_fertilizer_brand_crystalpro,
+        nameRes = R.string.catalog_material_fertilizer_0661_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0662",
+        brandRes = R.string.catalog_fertilizer_brand_crystalpro,
+        nameRes = R.string.catalog_material_fertilizer_0662_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0663",
+        brandRes = R.string.catalog_fertilizer_brand_crystalpro,
+        nameRes = R.string.catalog_material_fertilizer_0663_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0664",
+        brandRes = R.string.catalog_fertilizer_brand_crystalpro,
+        nameRes = R.string.catalog_material_fertilizer_0664_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0665",
+        brandRes = R.string.catalog_fertilizer_brand_crystalpro,
+        nameRes = R.string.catalog_material_fertilizer_0665_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0666",
+        brandRes = R.string.catalog_fertilizer_brand_crystalpro,
+        nameRes = R.string.catalog_material_fertilizer_0666_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0667",
+        brandRes = R.string.catalog_fertilizer_brand_crystalpro,
+        nameRes = R.string.catalog_material_fertilizer_0667_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0668",
+        brandRes = R.string.catalog_fertilizer_brand_crystalpro,
+        nameRes = R.string.catalog_material_fertilizer_0668_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0669",
+        brandRes = R.string.catalog_fertilizer_brand_crystalpro,
+        nameRes = R.string.catalog_material_fertilizer_0669_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0670",
+        brandRes = R.string.catalog_fertilizer_brand_crystalpro,
+        nameRes = R.string.catalog_material_fertilizer_0670_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0671",
+        brandRes = R.string.catalog_fertilizer_brand_crystalpro,
+        nameRes = R.string.catalog_material_fertilizer_0671_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0672",
+        brandRes = R.string.catalog_fertilizer_brand_crystalpro,
+        nameRes = R.string.catalog_material_fertilizer_0672_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0673",
+        brandRes = R.string.catalog_fertilizer_brand_crystalpro,
+        nameRes = R.string.catalog_material_fertilizer_0673_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0674",
+        brandRes = R.string.catalog_fertilizer_brand_crystalpro,
+        nameRes = R.string.catalog_material_fertilizer_0674_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0675",
+        brandRes = R.string.catalog_fertilizer_brand_deep_fix,
+        nameRes = R.string.catalog_material_fertilizer_0675_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0676",
+        brandRes = R.string.catalog_fertilizer_brand_aquamins,
+        nameRes = R.string.catalog_material_fertilizer_0676_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0677",
+        brandRes = R.string.catalog_fertilizer_brand_aquamins,
+        nameRes = R.string.catalog_material_fertilizer_0677_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0678",
+        brandRes = R.string.catalog_fertilizer_brand_aquamins,
+        nameRes = R.string.catalog_material_fertilizer_0678_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0679",
+        brandRes = R.string.catalog_fertilizer_brand_aquamins,
+        nameRes = R.string.catalog_material_fertilizer_0679_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0680",
+        brandRes = R.string.catalog_fertilizer_brand_aquamins,
+        nameRes = R.string.catalog_material_fertilizer_0680_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0681",
+        brandRes = R.string.catalog_fertilizer_brand_aquamins,
+        nameRes = R.string.catalog_material_fertilizer_0681_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0682",
+        brandRes = R.string.catalog_fertilizer_brand_badem_akvaryum,
+        nameRes = R.string.catalog_material_fertilizer_0682_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0683",
+        brandRes = R.string.catalog_fertilizer_brand_badem_akvaryum,
+        nameRes = R.string.catalog_material_fertilizer_0683_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0684",
+        brandRes = R.string.catalog_fertilizer_brand_badem_akvaryum,
+        nameRes = R.string.catalog_material_fertilizer_0684_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0685",
+        brandRes = R.string.catalog_fertilizer_brand_badem_akvaryum,
+        nameRes = R.string.catalog_material_fertilizer_0685_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0686",
+        brandRes = R.string.catalog_fertilizer_brand_badem_akvaryum,
+        nameRes = R.string.catalog_material_fertilizer_0686_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0687",
+        brandRes = R.string.catalog_fertilizer_brand_badem_akvaryum,
+        nameRes = R.string.catalog_material_fertilizer_0687_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0688",
+        brandRes = R.string.catalog_fertilizer_brand_badem_akvaryum,
+        nameRes = R.string.catalog_material_fertilizer_0688_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0689",
+        brandRes = R.string.catalog_fertilizer_brand_badem_akvaryum,
+        nameRes = R.string.catalog_material_fertilizer_0689_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0690",
+        brandRes = R.string.catalog_fertilizer_brand_badem_akvaryum,
+        nameRes = R.string.catalog_material_fertilizer_0690_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0691",
+        brandRes = R.string.catalog_fertilizer_brand_badem_akvaryum,
+        nameRes = R.string.catalog_material_fertilizer_0691_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0692",
+        brandRes = R.string.catalog_fertilizer_brand_badem_akvaryum,
+        nameRes = R.string.catalog_material_fertilizer_0692_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0693",
+        brandRes = R.string.catalog_fertilizer_brand_badem_akvaryum,
+        nameRes = R.string.catalog_material_fertilizer_0693_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0694",
+        brandRes = R.string.catalog_fertilizer_brand_badem_akvaryum,
+        nameRes = R.string.catalog_material_fertilizer_0694_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0695",
+        brandRes = R.string.catalog_fertilizer_brand_sakura_akvaryum,
+        nameRes = R.string.catalog_material_fertilizer_0695_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0696",
+        brandRes = R.string.catalog_fertilizer_brand_sakura_akvaryum,
+        nameRes = R.string.catalog_material_fertilizer_0696_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0697",
+        brandRes = R.string.catalog_fertilizer_brand_sakura_akvaryum,
+        nameRes = R.string.catalog_material_fertilizer_0697_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0698",
+        brandRes = R.string.catalog_fertilizer_brand_sakura_akvaryum,
+        nameRes = R.string.catalog_material_fertilizer_0698_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0699",
+        brandRes = R.string.catalog_fertilizer_brand_sakura_akvaryum,
+        nameRes = R.string.catalog_material_fertilizer_0699_name,
+        keywordRes = fertilizerCarbonLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0700",
+        brandRes = R.string.catalog_fertilizer_brand_sakura_akvaryum,
+        nameRes = R.string.catalog_material_fertilizer_0700_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0701",
+        brandRes = R.string.catalog_fertilizer_brand_sakura_akvaryum,
+        nameRes = R.string.catalog_material_fertilizer_0701_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0702",
+        brandRes = R.string.catalog_fertilizer_brand_lab_formula,
+        nameRes = R.string.catalog_material_fertilizer_0702_name,
+        keywordRes = fertilizerLiquidKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0703",
+        brandRes = R.string.catalog_fertilizer_brand_ocean_nutrition,
+        nameRes = R.string.catalog_material_fertilizer_0703_name,
+        keywordRes = fertilizerBaseKeywords
+    ),
+    fertilizer(
+        id = "fertilizer_0704",
+        brandRes = R.string.catalog_brand_jbl,
+        nameRes = R.string.catalog_material_fertilizer_0704_name,
+        keywordRes = fertilizerBaseKeywords
+    )
+)
+
 object FertilizerCatalog {
 
-    private val baseKeywords = listOf(
-        R.string.catalog_keyword_fertilizer,
-        R.string.catalog_keyword_plant
-    )
-
-    private val liquidKeywords = listOf(
-        R.string.catalog_keyword_fertilizer,
-        R.string.catalog_keyword_liquid,
-        R.string.catalog_keyword_plant
-    )
-
-    private val carbonLiquidKeywords = listOf(
-        R.string.catalog_keyword_fertilizer,
-        R.string.catalog_keyword_liquid,
-        R.string.catalog_keyword_plant,
-        R.string.catalog_keyword_carbon
-    )
-
-    val definitions: List<AquariumMaterialDefinition> = listOf(
-        fertilizer("fertilizer_0001", R.string.catalog_fertilizer_brand_2hr_aquarist, R.string.catalog_material_fertilizer_0001_name, liquidKeywords),
-        fertilizer("fertilizer_0002", R.string.catalog_fertilizer_brand_2hr_aquarist, R.string.catalog_material_fertilizer_0002_name, liquidKeywords),
-        fertilizer("fertilizer_0003", R.string.catalog_fertilizer_brand_2hr_aquarist, R.string.catalog_material_fertilizer_0003_name, liquidKeywords),
-        fertilizer("fertilizer_0004", R.string.catalog_fertilizer_brand_2hr_aquarist, R.string.catalog_material_fertilizer_0004_name, liquidKeywords),
-        fertilizer("fertilizer_0005", R.string.catalog_fertilizer_brand_2hr_aquarist, R.string.catalog_material_fertilizer_0005_name, liquidKeywords),
-        fertilizer("fertilizer_0006", R.string.catalog_fertilizer_brand_2hr_aquarist, R.string.catalog_material_fertilizer_0006_name, liquidKeywords),
-        fertilizer("fertilizer_0007", R.string.catalog_fertilizer_brand_2hr_aquarist, R.string.catalog_material_fertilizer_0007_name, liquidKeywords),
-        fertilizer("fertilizer_0008", R.string.catalog_fertilizer_brand_2hr_aquarist, R.string.catalog_material_fertilizer_0008_name, liquidKeywords),
-        fertilizer("fertilizer_0009", R.string.catalog_fertilizer_brand_2hr_aquarist, R.string.catalog_material_fertilizer_0009_name, liquidKeywords),
-        fertilizer("fertilizer_0010", R.string.catalog_fertilizer_brand_2hr_aquarist, R.string.catalog_material_fertilizer_0010_name, liquidKeywords),
-        fertilizer("fertilizer_0011", R.string.catalog_fertilizer_brand_2hr_aquarist, R.string.catalog_material_fertilizer_0011_name, liquidKeywords),
-        fertilizer("fertilizer_0012", R.string.catalog_fertilizer_brand_2hr_aquarist, R.string.catalog_material_fertilizer_0012_name, liquidKeywords),
-        fertilizer("fertilizer_0013", R.string.catalog_fertilizer_brand_2hr_aquarist, R.string.catalog_material_fertilizer_0013_name, liquidKeywords),
-        fertilizer("fertilizer_0014", R.string.catalog_fertilizer_brand_2hr_aquarist, R.string.catalog_material_fertilizer_0014_name, liquidKeywords),
-        fertilizer("fertilizer_0015", R.string.catalog_fertilizer_brand_2hr_aquarist, R.string.catalog_material_fertilizer_0015_name, liquidKeywords),
-        fertilizer("fertilizer_0016", R.string.catalog_fertilizer_brand_2hr_aquarist, R.string.catalog_material_fertilizer_0016_name, liquidKeywords),
-        fertilizer("fertilizer_0017", R.string.catalog_fertilizer_brand_2hr_aquarist, R.string.catalog_material_fertilizer_0017_name, liquidKeywords),
-        fertilizer("fertilizer_0018", R.string.catalog_fertilizer_brand_2hr_aquarist, R.string.catalog_material_fertilizer_0018_name, baseKeywords),
-        fertilizer("fertilizer_0019", R.string.catalog_fertilizer_brand_2hr_aquarist, R.string.catalog_material_fertilizer_0019_name, baseKeywords),
-        fertilizer("fertilizer_0020", R.string.catalog_fertilizer_brand_2hr_aquarist, R.string.catalog_material_fertilizer_0020_name, baseKeywords),
-        fertilizer("fertilizer_0021", R.string.catalog_fertilizer_brand_2hr_aquarist, R.string.catalog_material_fertilizer_0021_name, baseKeywords),
-        fertilizer("fertilizer_0022", R.string.catalog_brand_ada, R.string.catalog_material_fertilizer_0022_name, liquidKeywords),
-        fertilizer("fertilizer_0023", R.string.catalog_brand_ada, R.string.catalog_material_fertilizer_0023_name, liquidKeywords),
-        fertilizer("fertilizer_0024", R.string.catalog_brand_ada, R.string.catalog_material_fertilizer_0024_name, liquidKeywords),
-        fertilizer("fertilizer_0025", R.string.catalog_brand_ada, R.string.catalog_material_fertilizer_0025_name, liquidKeywords),
-        fertilizer("fertilizer_0026", R.string.catalog_brand_ada, R.string.catalog_material_fertilizer_0026_name, liquidKeywords),
-        fertilizer("fertilizer_0027", R.string.catalog_brand_ada, R.string.catalog_material_fertilizer_0027_name, liquidKeywords),
-        fertilizer("fertilizer_0028", R.string.catalog_brand_ada, R.string.catalog_material_fertilizer_0028_name, liquidKeywords),
-        fertilizer("fertilizer_0029", R.string.catalog_brand_ada, R.string.catalog_material_fertilizer_0029_name, liquidKeywords),
-        fertilizer("fertilizer_0030", R.string.catalog_brand_ada, R.string.catalog_material_fertilizer_0030_name, liquidKeywords),
-        fertilizer("fertilizer_0031", R.string.catalog_brand_ada, R.string.catalog_material_fertilizer_0031_name, liquidKeywords),
-        fertilizer("fertilizer_0032", R.string.catalog_brand_ada, R.string.catalog_material_fertilizer_0032_name, liquidKeywords),
-        fertilizer("fertilizer_0033", R.string.catalog_brand_ada, R.string.catalog_material_fertilizer_0033_name, liquidKeywords),
-        fertilizer("fertilizer_0034", R.string.catalog_brand_ada, R.string.catalog_material_fertilizer_0034_name, liquidKeywords),
-        fertilizer("fertilizer_0035", R.string.catalog_brand_ada, R.string.catalog_material_fertilizer_0035_name, liquidKeywords),
-        fertilizer("fertilizer_0036", R.string.catalog_brand_ada, R.string.catalog_material_fertilizer_0036_name, liquidKeywords),
-        fertilizer("fertilizer_0037", R.string.catalog_brand_ada, R.string.catalog_material_fertilizer_0037_name, liquidKeywords),
-        fertilizer("fertilizer_0038", R.string.catalog_brand_ada, R.string.catalog_material_fertilizer_0038_name, liquidKeywords),
-        fertilizer("fertilizer_0039", R.string.catalog_brand_ada, R.string.catalog_material_fertilizer_0039_name, liquidKeywords),
-        fertilizer("fertilizer_0040", R.string.catalog_brand_ada, R.string.catalog_material_fertilizer_0040_name, liquidKeywords),
-        fertilizer("fertilizer_0041", R.string.catalog_brand_ada, R.string.catalog_material_fertilizer_0041_name, baseKeywords),
-        fertilizer("fertilizer_0042", R.string.catalog_brand_green_aqua, R.string.catalog_material_fertilizer_0042_name, liquidKeywords),
-        fertilizer("fertilizer_0043", R.string.catalog_brand_green_aqua, R.string.catalog_material_fertilizer_0043_name, liquidKeywords),
-        fertilizer("fertilizer_0044", R.string.catalog_brand_green_aqua, R.string.catalog_material_fertilizer_0044_name, liquidKeywords),
-        fertilizer("fertilizer_0045", R.string.catalog_brand_green_aqua, R.string.catalog_material_fertilizer_0045_name, liquidKeywords),
-        fertilizer("fertilizer_0046", R.string.catalog_brand_green_aqua, R.string.catalog_material_fertilizer_0046_name, liquidKeywords),
-        fertilizer("fertilizer_0047", R.string.catalog_brand_green_aqua, R.string.catalog_material_fertilizer_0047_name, liquidKeywords),
-        fertilizer("fertilizer_0048", R.string.catalog_brand_green_aqua, R.string.catalog_material_fertilizer_0048_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0049", R.string.catalog_brand_green_aqua, R.string.catalog_material_fertilizer_0049_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0050", R.string.catalog_brand_green_aqua, R.string.catalog_material_fertilizer_0050_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0051", R.string.catalog_brand_green_aqua, R.string.catalog_material_fertilizer_0051_name, liquidKeywords),
-        fertilizer("fertilizer_0052", R.string.catalog_brand_green_aqua, R.string.catalog_material_fertilizer_0052_name, liquidKeywords),
-        fertilizer("fertilizer_0053", R.string.catalog_brand_green_aqua, R.string.catalog_material_fertilizer_0053_name, liquidKeywords),
-        fertilizer("fertilizer_0054", R.string.catalog_brand_green_aqua, R.string.catalog_material_fertilizer_0054_name, baseKeywords),
-        fertilizer("fertilizer_0055", R.string.catalog_brand_green_aqua, R.string.catalog_material_fertilizer_0055_name, baseKeywords),
-        fertilizer("fertilizer_0056", R.string.catalog_brand_green_aqua, R.string.catalog_material_fertilizer_0056_name, baseKeywords),
-        fertilizer("fertilizer_0057", R.string.catalog_brand_green_aqua, R.string.catalog_material_fertilizer_0057_name, baseKeywords),
-        fertilizer("fertilizer_0058", R.string.catalog_brand_green_aqua, R.string.catalog_material_fertilizer_0058_name, baseKeywords),
-        fertilizer("fertilizer_0059", R.string.catalog_brand_green_aqua, R.string.catalog_material_fertilizer_0059_name, baseKeywords),
-        fertilizer("fertilizer_0060", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0060_name, liquidKeywords),
-        fertilizer("fertilizer_0061", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0061_name, liquidKeywords),
-        fertilizer("fertilizer_0062", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0062_name, liquidKeywords),
-        fertilizer("fertilizer_0063", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0063_name, liquidKeywords),
-        fertilizer("fertilizer_0064", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0064_name, liquidKeywords),
-        fertilizer("fertilizer_0065", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0065_name, liquidKeywords),
-        fertilizer("fertilizer_0066", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0066_name, liquidKeywords),
-        fertilizer("fertilizer_0067", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0067_name, liquidKeywords),
-        fertilizer("fertilizer_0068", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0068_name, liquidKeywords),
-        fertilizer("fertilizer_0069", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0069_name, liquidKeywords),
-        fertilizer("fertilizer_0070", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0070_name, liquidKeywords),
-        fertilizer("fertilizer_0071", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0071_name, liquidKeywords),
-        fertilizer("fertilizer_0072", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0072_name, liquidKeywords),
-        fertilizer("fertilizer_0073", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0073_name, liquidKeywords),
-        fertilizer("fertilizer_0074", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0074_name, liquidKeywords),
-        fertilizer("fertilizer_0075", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0075_name, liquidKeywords),
-        fertilizer("fertilizer_0076", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0076_name, liquidKeywords),
-        fertilizer("fertilizer_0077", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0077_name, liquidKeywords),
-        fertilizer("fertilizer_0078", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0078_name, liquidKeywords),
-        fertilizer("fertilizer_0079", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0079_name, liquidKeywords),
-        fertilizer("fertilizer_0080", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0080_name, liquidKeywords),
-        fertilizer("fertilizer_0081", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0081_name, liquidKeywords),
-        fertilizer("fertilizer_0082", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0082_name, liquidKeywords),
-        fertilizer("fertilizer_0083", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0083_name, liquidKeywords),
-        fertilizer("fertilizer_0084", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0084_name, liquidKeywords),
-        fertilizer("fertilizer_0085", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0085_name, liquidKeywords),
-        fertilizer("fertilizer_0086", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0086_name, liquidKeywords),
-        fertilizer("fertilizer_0087", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0087_name, liquidKeywords),
-        fertilizer("fertilizer_0088", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0088_name, liquidKeywords),
-        fertilizer("fertilizer_0089", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0089_name, liquidKeywords),
-        fertilizer("fertilizer_0090", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0090_name, liquidKeywords),
-        fertilizer("fertilizer_0091", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0091_name, liquidKeywords),
-        fertilizer("fertilizer_0092", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0092_name, liquidKeywords),
-        fertilizer("fertilizer_0093", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0093_name, liquidKeywords),
-        fertilizer("fertilizer_0094", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0094_name, liquidKeywords),
-        fertilizer("fertilizer_0095", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0095_name, liquidKeywords),
-        fertilizer("fertilizer_0096", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0096_name, liquidKeywords),
-        fertilizer("fertilizer_0097", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0097_name, liquidKeywords),
-        fertilizer("fertilizer_0098", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0098_name, liquidKeywords),
-        fertilizer("fertilizer_0099", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0099_name, liquidKeywords),
-        fertilizer("fertilizer_0100", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0100_name, liquidKeywords),
-        fertilizer("fertilizer_0101", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0101_name, liquidKeywords),
-        fertilizer("fertilizer_0102", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0102_name, liquidKeywords),
-        fertilizer("fertilizer_0103", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0103_name, liquidKeywords),
-        fertilizer("fertilizer_0104", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0104_name, liquidKeywords),
-        fertilizer("fertilizer_0105", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0105_name, liquidKeywords),
-        fertilizer("fertilizer_0106", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0106_name, baseKeywords),
-        fertilizer("fertilizer_0107", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0107_name, baseKeywords),
-        fertilizer("fertilizer_0108", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0108_name, baseKeywords),
-        fertilizer("fertilizer_0109", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0109_name, baseKeywords),
-        fertilizer("fertilizer_0110", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0110_name, baseKeywords),
-        fertilizer("fertilizer_0111", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0111_name, baseKeywords),
-        fertilizer("fertilizer_0112", R.string.catalog_fertilizer_brand_seachem, R.string.catalog_material_fertilizer_0112_name, baseKeywords),
-        fertilizer("fertilizer_0113", R.string.catalog_brand_tropica, R.string.catalog_material_fertilizer_0113_name, liquidKeywords),
-        fertilizer("fertilizer_0114", R.string.catalog_brand_tropica, R.string.catalog_material_fertilizer_0114_name, liquidKeywords),
-        fertilizer("fertilizer_0115", R.string.catalog_brand_tropica, R.string.catalog_material_fertilizer_0115_name, liquidKeywords),
-        fertilizer("fertilizer_0116", R.string.catalog_brand_tropica, R.string.catalog_material_fertilizer_0116_name, liquidKeywords),
-        fertilizer("fertilizer_0117", R.string.catalog_brand_tropica, R.string.catalog_material_fertilizer_0117_name, liquidKeywords),
-        fertilizer("fertilizer_0118", R.string.catalog_brand_tropica, R.string.catalog_material_fertilizer_0118_name, liquidKeywords),
-        fertilizer("fertilizer_0119", R.string.catalog_brand_tropica, R.string.catalog_material_fertilizer_0119_name, liquidKeywords),
-        fertilizer("fertilizer_0120", R.string.catalog_brand_tropica, R.string.catalog_material_fertilizer_0120_name, liquidKeywords),
-        fertilizer("fertilizer_0121", R.string.catalog_brand_tropica, R.string.catalog_material_fertilizer_0121_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0122", R.string.catalog_brand_tropica, R.string.catalog_material_fertilizer_0122_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0123", R.string.catalog_brand_tropica, R.string.catalog_material_fertilizer_0123_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0124", R.string.catalog_brand_tropica, R.string.catalog_material_fertilizer_0124_name, baseKeywords),
-        fertilizer("fertilizer_0125", R.string.catalog_brand_tropica, R.string.catalog_material_fertilizer_0125_name, baseKeywords),
-        fertilizer("fertilizer_0126", R.string.catalog_brand_tropica, R.string.catalog_material_fertilizer_0126_name, baseKeywords),
-        fertilizer("fertilizer_0127", R.string.catalog_brand_dennerle_plants, R.string.catalog_material_fertilizer_0127_name, liquidKeywords),
-        fertilizer("fertilizer_0128", R.string.catalog_brand_dennerle_plants, R.string.catalog_material_fertilizer_0128_name, liquidKeywords),
-        fertilizer("fertilizer_0129", R.string.catalog_brand_dennerle_plants, R.string.catalog_material_fertilizer_0129_name, liquidKeywords),
-        fertilizer("fertilizer_0130", R.string.catalog_brand_dennerle_plants, R.string.catalog_material_fertilizer_0130_name, liquidKeywords),
-        fertilizer("fertilizer_0131", R.string.catalog_brand_dennerle_plants, R.string.catalog_material_fertilizer_0131_name, baseKeywords),
-        fertilizer("fertilizer_0132", R.string.catalog_brand_dennerle, R.string.catalog_material_fertilizer_0132_name, liquidKeywords),
-        fertilizer("fertilizer_0133", R.string.catalog_brand_dennerle, R.string.catalog_material_fertilizer_0133_name, liquidKeywords),
-        fertilizer("fertilizer_0134", R.string.catalog_brand_dennerle, R.string.catalog_material_fertilizer_0134_name, liquidKeywords),
-        fertilizer("fertilizer_0135", R.string.catalog_brand_dennerle, R.string.catalog_material_fertilizer_0135_name, liquidKeywords),
-        fertilizer("fertilizer_0136", R.string.catalog_brand_dennerle, R.string.catalog_material_fertilizer_0136_name, liquidKeywords),
-        fertilizer("fertilizer_0137", R.string.catalog_brand_dennerle, R.string.catalog_material_fertilizer_0137_name, liquidKeywords),
-        fertilizer("fertilizer_0138", R.string.catalog_brand_dennerle, R.string.catalog_material_fertilizer_0138_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0139", R.string.catalog_brand_dennerle, R.string.catalog_material_fertilizer_0139_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0140", R.string.catalog_brand_dennerle, R.string.catalog_material_fertilizer_0140_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0141", R.string.catalog_brand_dennerle, R.string.catalog_material_fertilizer_0141_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0142", R.string.catalog_brand_dennerle, R.string.catalog_material_fertilizer_0142_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0143", R.string.catalog_brand_dennerle, R.string.catalog_material_fertilizer_0143_name, liquidKeywords),
-        fertilizer("fertilizer_0144", R.string.catalog_brand_dennerle, R.string.catalog_material_fertilizer_0144_name, liquidKeywords),
-        fertilizer("fertilizer_0145", R.string.catalog_brand_dennerle, R.string.catalog_material_fertilizer_0145_name, liquidKeywords),
-        fertilizer("fertilizer_0146", R.string.catalog_brand_dennerle, R.string.catalog_material_fertilizer_0146_name, liquidKeywords),
-        fertilizer("fertilizer_0147", R.string.catalog_brand_dennerle, R.string.catalog_material_fertilizer_0147_name, liquidKeywords),
-        fertilizer("fertilizer_0148", R.string.catalog_brand_dennerle, R.string.catalog_material_fertilizer_0148_name, liquidKeywords),
-        fertilizer("fertilizer_0149", R.string.catalog_brand_dennerle, R.string.catalog_material_fertilizer_0149_name, liquidKeywords),
-        fertilizer("fertilizer_0150", R.string.catalog_brand_dennerle, R.string.catalog_material_fertilizer_0150_name, liquidKeywords),
-        fertilizer("fertilizer_0151", R.string.catalog_brand_dennerle, R.string.catalog_material_fertilizer_0151_name, liquidKeywords),
-        fertilizer("fertilizer_0152", R.string.catalog_brand_dennerle, R.string.catalog_material_fertilizer_0152_name, baseKeywords),
-        fertilizer("fertilizer_0153", R.string.catalog_brand_dennerle, R.string.catalog_material_fertilizer_0153_name, baseKeywords),
-        fertilizer("fertilizer_0154", R.string.catalog_brand_dennerle, R.string.catalog_material_fertilizer_0154_name, baseKeywords),
-        fertilizer("fertilizer_0155", R.string.catalog_brand_dennerle, R.string.catalog_material_fertilizer_0155_name, baseKeywords),
-        fertilizer("fertilizer_0156", R.string.catalog_brand_dennerle, R.string.catalog_material_fertilizer_0156_name, baseKeywords),
-        fertilizer("fertilizer_0157", R.string.catalog_brand_dennerle, R.string.catalog_material_fertilizer_0157_name, baseKeywords),
-        fertilizer("fertilizer_0158", R.string.catalog_brand_dennerle, R.string.catalog_material_fertilizer_0158_name, baseKeywords),
-        fertilizer("fertilizer_0159", R.string.catalog_brand_dennerle, R.string.catalog_material_fertilizer_0159_name, baseKeywords),
-        fertilizer("fertilizer_0160", R.string.catalog_brand_dennerle, R.string.catalog_material_fertilizer_0160_name, baseKeywords),
-        fertilizer("fertilizer_0161", R.string.catalog_brand_jbl, R.string.catalog_material_fertilizer_0161_name, liquidKeywords),
-        fertilizer("fertilizer_0162", R.string.catalog_brand_jbl, R.string.catalog_material_fertilizer_0162_name, liquidKeywords),
-        fertilizer("fertilizer_0163", R.string.catalog_brand_jbl, R.string.catalog_material_fertilizer_0163_name, liquidKeywords),
-        fertilizer("fertilizer_0164", R.string.catalog_brand_jbl, R.string.catalog_material_fertilizer_0164_name, liquidKeywords),
-        fertilizer("fertilizer_0165", R.string.catalog_brand_jbl, R.string.catalog_material_fertilizer_0165_name, liquidKeywords),
-        fertilizer("fertilizer_0166", R.string.catalog_brand_jbl, R.string.catalog_material_fertilizer_0166_name, liquidKeywords),
-        fertilizer("fertilizer_0167", R.string.catalog_brand_jbl, R.string.catalog_material_fertilizer_0167_name, liquidKeywords),
-        fertilizer("fertilizer_0168", R.string.catalog_brand_jbl, R.string.catalog_material_fertilizer_0168_name, liquidKeywords),
-        fertilizer("fertilizer_0169", R.string.catalog_brand_jbl, R.string.catalog_material_fertilizer_0169_name, liquidKeywords),
-        fertilizer("fertilizer_0170", R.string.catalog_brand_jbl, R.string.catalog_material_fertilizer_0170_name, liquidKeywords),
-        fertilizer("fertilizer_0171", R.string.catalog_brand_jbl, R.string.catalog_material_fertilizer_0171_name, liquidKeywords),
-        fertilizer("fertilizer_0172", R.string.catalog_brand_jbl, R.string.catalog_material_fertilizer_0172_name, liquidKeywords),
-        fertilizer("fertilizer_0173", R.string.catalog_brand_jbl, R.string.catalog_material_fertilizer_0173_name, baseKeywords),
-        fertilizer("fertilizer_0174", R.string.catalog_brand_jbl, R.string.catalog_material_fertilizer_0174_name, baseKeywords),
-        fertilizer("fertilizer_0175", R.string.catalog_brand_jbl, R.string.catalog_material_fertilizer_0175_name, baseKeywords),
-        fertilizer("fertilizer_0176", R.string.catalog_fertilizer_brand_sera, R.string.catalog_material_fertilizer_0176_name, liquidKeywords),
-        fertilizer("fertilizer_0177", R.string.catalog_fertilizer_brand_sera, R.string.catalog_material_fertilizer_0177_name, liquidKeywords),
-        fertilizer("fertilizer_0178", R.string.catalog_fertilizer_brand_sera, R.string.catalog_material_fertilizer_0178_name, liquidKeywords),
-        fertilizer("fertilizer_0179", R.string.catalog_fertilizer_brand_sera, R.string.catalog_material_fertilizer_0179_name, liquidKeywords),
-        fertilizer("fertilizer_0180", R.string.catalog_fertilizer_brand_sera, R.string.catalog_material_fertilizer_0180_name, liquidKeywords),
-        fertilizer("fertilizer_0181", R.string.catalog_fertilizer_brand_sera, R.string.catalog_material_fertilizer_0181_name, baseKeywords),
-        fertilizer("fertilizer_0182", R.string.catalog_fertilizer_brand_sera, R.string.catalog_material_fertilizer_0182_name, baseKeywords),
-        fertilizer("fertilizer_0183", R.string.catalog_fertilizer_brand_sera, R.string.catalog_material_fertilizer_0183_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0184", R.string.catalog_fertilizer_brand_sera, R.string.catalog_material_fertilizer_0184_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0185", R.string.catalog_fertilizer_brand_sera, R.string.catalog_material_fertilizer_0185_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0186", R.string.catalog_fertilizer_brand_sera, R.string.catalog_material_fertilizer_0186_name, liquidKeywords),
-        fertilizer("fertilizer_0187", R.string.catalog_fertilizer_brand_sera, R.string.catalog_material_fertilizer_0187_name, liquidKeywords),
-        fertilizer("fertilizer_0188", R.string.catalog_fertilizer_brand_sera, R.string.catalog_material_fertilizer_0188_name, liquidKeywords),
-        fertilizer("fertilizer_0189", R.string.catalog_fertilizer_brand_sera, R.string.catalog_material_fertilizer_0189_name, liquidKeywords),
-        fertilizer("fertilizer_0190", R.string.catalog_fertilizer_brand_sera, R.string.catalog_material_fertilizer_0190_name, liquidKeywords),
-        fertilizer("fertilizer_0191", R.string.catalog_fertilizer_brand_sera, R.string.catalog_material_fertilizer_0191_name, liquidKeywords),
-        fertilizer("fertilizer_0192", R.string.catalog_fertilizer_brand_sera, R.string.catalog_material_fertilizer_0192_name, liquidKeywords),
-        fertilizer("fertilizer_0193", R.string.catalog_fertilizer_brand_easy_life, R.string.catalog_material_fertilizer_0193_name, liquidKeywords),
-        fertilizer("fertilizer_0194", R.string.catalog_fertilizer_brand_easy_life, R.string.catalog_material_fertilizer_0194_name, liquidKeywords),
-        fertilizer("fertilizer_0195", R.string.catalog_fertilizer_brand_easy_life, R.string.catalog_material_fertilizer_0195_name, liquidKeywords),
-        fertilizer("fertilizer_0196", R.string.catalog_fertilizer_brand_easy_life, R.string.catalog_material_fertilizer_0196_name, liquidKeywords),
-        fertilizer("fertilizer_0197", R.string.catalog_fertilizer_brand_easy_life, R.string.catalog_material_fertilizer_0197_name, liquidKeywords),
-        fertilizer("fertilizer_0198", R.string.catalog_fertilizer_brand_easy_life, R.string.catalog_material_fertilizer_0198_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0199", R.string.catalog_fertilizer_brand_easy_life, R.string.catalog_material_fertilizer_0199_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0200", R.string.catalog_fertilizer_brand_easy_life, R.string.catalog_material_fertilizer_0200_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0201", R.string.catalog_fertilizer_brand_easy_life, R.string.catalog_material_fertilizer_0201_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0202", R.string.catalog_fertilizer_brand_easy_life, R.string.catalog_material_fertilizer_0202_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0203", R.string.catalog_fertilizer_brand_easy_life, R.string.catalog_material_fertilizer_0203_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0204", R.string.catalog_fertilizer_brand_easy_life, R.string.catalog_material_fertilizer_0204_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0205", R.string.catalog_fertilizer_brand_easy_life, R.string.catalog_material_fertilizer_0205_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0206", R.string.catalog_fertilizer_brand_easy_life, R.string.catalog_material_fertilizer_0206_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0207", R.string.catalog_fertilizer_brand_easy_life, R.string.catalog_material_fertilizer_0207_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0208", R.string.catalog_fertilizer_brand_easy_life, R.string.catalog_material_fertilizer_0208_name, liquidKeywords),
-        fertilizer("fertilizer_0209", R.string.catalog_fertilizer_brand_easy_life, R.string.catalog_material_fertilizer_0209_name, liquidKeywords),
-        fertilizer("fertilizer_0210", R.string.catalog_fertilizer_brand_easy_life, R.string.catalog_material_fertilizer_0210_name, liquidKeywords),
-        fertilizer("fertilizer_0211", R.string.catalog_fertilizer_brand_easy_life, R.string.catalog_material_fertilizer_0211_name, liquidKeywords),
-        fertilizer("fertilizer_0212", R.string.catalog_fertilizer_brand_easy_life, R.string.catalog_material_fertilizer_0212_name, liquidKeywords),
-        fertilizer("fertilizer_0213", R.string.catalog_fertilizer_brand_easy_life, R.string.catalog_material_fertilizer_0213_name, liquidKeywords),
-        fertilizer("fertilizer_0214", R.string.catalog_fertilizer_brand_easy_life, R.string.catalog_material_fertilizer_0214_name, liquidKeywords),
-        fertilizer("fertilizer_0215", R.string.catalog_fertilizer_brand_easy_life, R.string.catalog_material_fertilizer_0215_name, liquidKeywords),
-        fertilizer("fertilizer_0216", R.string.catalog_fertilizer_brand_easy_life, R.string.catalog_material_fertilizer_0216_name, liquidKeywords),
-        fertilizer("fertilizer_0217", R.string.catalog_fertilizer_brand_easy_life, R.string.catalog_material_fertilizer_0217_name, liquidKeywords),
-        fertilizer("fertilizer_0218", R.string.catalog_fertilizer_brand_easy_life, R.string.catalog_material_fertilizer_0218_name, liquidKeywords),
-        fertilizer("fertilizer_0219", R.string.catalog_fertilizer_brand_easy_life, R.string.catalog_material_fertilizer_0219_name, liquidKeywords),
-        fertilizer("fertilizer_0220", R.string.catalog_fertilizer_brand_easy_life, R.string.catalog_material_fertilizer_0220_name, liquidKeywords),
-        fertilizer("fertilizer_0221", R.string.catalog_fertilizer_brand_easy_life, R.string.catalog_material_fertilizer_0221_name, liquidKeywords),
-        fertilizer("fertilizer_0222", R.string.catalog_fertilizer_brand_easy_life, R.string.catalog_material_fertilizer_0222_name, liquidKeywords),
-        fertilizer("fertilizer_0223", R.string.catalog_fertilizer_brand_easy_life, R.string.catalog_material_fertilizer_0223_name, liquidKeywords),
-        fertilizer("fertilizer_0224", R.string.catalog_fertilizer_brand_easy_life, R.string.catalog_material_fertilizer_0224_name, liquidKeywords),
-        fertilizer("fertilizer_0225", R.string.catalog_fertilizer_brand_easy_life, R.string.catalog_material_fertilizer_0225_name, liquidKeywords),
-        fertilizer("fertilizer_0226", R.string.catalog_fertilizer_brand_easy_life, R.string.catalog_material_fertilizer_0226_name, baseKeywords),
-        fertilizer("fertilizer_0227", R.string.catalog_fertilizer_brand_masterline, R.string.catalog_material_fertilizer_0227_name, liquidKeywords),
-        fertilizer("fertilizer_0228", R.string.catalog_fertilizer_brand_masterline, R.string.catalog_material_fertilizer_0228_name, liquidKeywords),
-        fertilizer("fertilizer_0229", R.string.catalog_fertilizer_brand_masterline, R.string.catalog_material_fertilizer_0229_name, liquidKeywords),
-        fertilizer("fertilizer_0230", R.string.catalog_fertilizer_brand_masterline, R.string.catalog_material_fertilizer_0230_name, liquidKeywords),
-        fertilizer("fertilizer_0231", R.string.catalog_fertilizer_brand_masterline, R.string.catalog_material_fertilizer_0231_name, liquidKeywords),
-        fertilizer("fertilizer_0232", R.string.catalog_fertilizer_brand_masterline, R.string.catalog_material_fertilizer_0232_name, liquidKeywords),
-        fertilizer("fertilizer_0233", R.string.catalog_fertilizer_brand_masterline, R.string.catalog_material_fertilizer_0233_name, liquidKeywords),
-        fertilizer("fertilizer_0234", R.string.catalog_fertilizer_brand_masterline, R.string.catalog_material_fertilizer_0234_name, liquidKeywords),
-        fertilizer("fertilizer_0235", R.string.catalog_fertilizer_brand_masterline, R.string.catalog_material_fertilizer_0235_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0236", R.string.catalog_fertilizer_brand_masterline, R.string.catalog_material_fertilizer_0236_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0237", R.string.catalog_fertilizer_brand_masterline, R.string.catalog_material_fertilizer_0237_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0238", R.string.catalog_fertilizer_brand_masterline, R.string.catalog_material_fertilizer_0238_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0239", R.string.catalog_fertilizer_brand_masterline, R.string.catalog_material_fertilizer_0239_name, liquidKeywords),
-        fertilizer("fertilizer_0240", R.string.catalog_fertilizer_brand_masterline, R.string.catalog_material_fertilizer_0240_name, liquidKeywords),
-        fertilizer("fertilizer_0241", R.string.catalog_fertilizer_brand_masterline, R.string.catalog_material_fertilizer_0241_name, liquidKeywords),
-        fertilizer("fertilizer_0242", R.string.catalog_fertilizer_brand_masterline, R.string.catalog_material_fertilizer_0242_name, liquidKeywords),
-        fertilizer("fertilizer_0243", R.string.catalog_fertilizer_brand_masterline, R.string.catalog_material_fertilizer_0243_name, liquidKeywords),
-        fertilizer("fertilizer_0244", R.string.catalog_fertilizer_brand_masterline, R.string.catalog_material_fertilizer_0244_name, liquidKeywords),
-        fertilizer("fertilizer_0245", R.string.catalog_fertilizer_brand_masterline, R.string.catalog_material_fertilizer_0245_name, liquidKeywords),
-        fertilizer("fertilizer_0246", R.string.catalog_fertilizer_brand_masterline, R.string.catalog_material_fertilizer_0246_name, liquidKeywords),
-        fertilizer("fertilizer_0247", R.string.catalog_fertilizer_brand_masterline, R.string.catalog_material_fertilizer_0247_name, liquidKeywords),
-        fertilizer("fertilizer_0248", R.string.catalog_fertilizer_brand_masterline, R.string.catalog_material_fertilizer_0248_name, liquidKeywords),
-        fertilizer("fertilizer_0249", R.string.catalog_fertilizer_brand_masterline, R.string.catalog_material_fertilizer_0249_name, liquidKeywords),
-        fertilizer("fertilizer_0250", R.string.catalog_fertilizer_brand_masterline, R.string.catalog_material_fertilizer_0250_name, liquidKeywords),
-        fertilizer("fertilizer_0251", R.string.catalog_fertilizer_brand_masterline, R.string.catalog_material_fertilizer_0251_name, liquidKeywords),
-        fertilizer("fertilizer_0252", R.string.catalog_fertilizer_brand_masterline, R.string.catalog_material_fertilizer_0252_name, liquidKeywords),
-        fertilizer("fertilizer_0253", R.string.catalog_fertilizer_brand_masterline, R.string.catalog_material_fertilizer_0253_name, liquidKeywords),
-        fertilizer("fertilizer_0254", R.string.catalog_fertilizer_brand_masterline, R.string.catalog_material_fertilizer_0254_name, liquidKeywords),
-        fertilizer("fertilizer_0255", R.string.catalog_fertilizer_brand_masterline, R.string.catalog_material_fertilizer_0255_name, liquidKeywords),
-        fertilizer("fertilizer_0256", R.string.catalog_fertilizer_brand_masterline, R.string.catalog_material_fertilizer_0256_name, liquidKeywords),
-        fertilizer("fertilizer_0257", R.string.catalog_fertilizer_brand_masterline, R.string.catalog_material_fertilizer_0257_name, liquidKeywords),
-        fertilizer("fertilizer_0258", R.string.catalog_fertilizer_brand_masterline, R.string.catalog_material_fertilizer_0258_name, liquidKeywords),
-        fertilizer("fertilizer_0259", R.string.catalog_fertilizer_brand_masterline, R.string.catalog_material_fertilizer_0259_name, liquidKeywords),
-        fertilizer("fertilizer_0260", R.string.catalog_fertilizer_brand_masterline, R.string.catalog_material_fertilizer_0260_name, liquidKeywords),
-        fertilizer("fertilizer_0261", R.string.catalog_fertilizer_brand_masterline, R.string.catalog_material_fertilizer_0261_name, baseKeywords),
-        fertilizer("fertilizer_0262", R.string.catalog_fertilizer_brand_masterline, R.string.catalog_material_fertilizer_0262_name, baseKeywords),
-        fertilizer("fertilizer_0263", R.string.catalog_fertilizer_brand_aqua_rebell, R.string.catalog_material_fertilizer_0263_name, liquidKeywords),
-        fertilizer("fertilizer_0264", R.string.catalog_fertilizer_brand_aqua_rebell, R.string.catalog_material_fertilizer_0264_name, liquidKeywords),
-        fertilizer("fertilizer_0265", R.string.catalog_fertilizer_brand_aqua_rebell, R.string.catalog_material_fertilizer_0265_name, liquidKeywords),
-        fertilizer("fertilizer_0266", R.string.catalog_fertilizer_brand_aqua_rebell, R.string.catalog_material_fertilizer_0266_name, liquidKeywords),
-        fertilizer("fertilizer_0267", R.string.catalog_fertilizer_brand_aqua_rebell, R.string.catalog_material_fertilizer_0267_name, liquidKeywords),
-        fertilizer("fertilizer_0268", R.string.catalog_fertilizer_brand_aqua_rebell, R.string.catalog_material_fertilizer_0268_name, liquidKeywords),
-        fertilizer("fertilizer_0269", R.string.catalog_fertilizer_brand_aqua_rebell, R.string.catalog_material_fertilizer_0269_name, liquidKeywords),
-        fertilizer("fertilizer_0270", R.string.catalog_fertilizer_brand_aqua_rebell, R.string.catalog_material_fertilizer_0270_name, liquidKeywords),
-        fertilizer("fertilizer_0271", R.string.catalog_fertilizer_brand_aqua_rebell, R.string.catalog_material_fertilizer_0271_name, liquidKeywords),
-        fertilizer("fertilizer_0272", R.string.catalog_fertilizer_brand_aqua_rebell, R.string.catalog_material_fertilizer_0272_name, liquidKeywords),
-        fertilizer("fertilizer_0273", R.string.catalog_fertilizer_brand_aqua_rebell, R.string.catalog_material_fertilizer_0273_name, liquidKeywords),
-        fertilizer("fertilizer_0274", R.string.catalog_fertilizer_brand_aqua_rebell, R.string.catalog_material_fertilizer_0274_name, liquidKeywords),
-        fertilizer("fertilizer_0275", R.string.catalog_fertilizer_brand_aqua_rebell, R.string.catalog_material_fertilizer_0275_name, liquidKeywords),
-        fertilizer("fertilizer_0276", R.string.catalog_fertilizer_brand_aqua_rebell, R.string.catalog_material_fertilizer_0276_name, liquidKeywords),
-        fertilizer("fertilizer_0277", R.string.catalog_fertilizer_brand_aqua_rebell, R.string.catalog_material_fertilizer_0277_name, liquidKeywords),
-        fertilizer("fertilizer_0278", R.string.catalog_fertilizer_brand_aqua_rebell, R.string.catalog_material_fertilizer_0278_name, liquidKeywords),
-        fertilizer("fertilizer_0279", R.string.catalog_fertilizer_brand_aqua_rebell, R.string.catalog_material_fertilizer_0279_name, liquidKeywords),
-        fertilizer("fertilizer_0280", R.string.catalog_fertilizer_brand_aqua_rebell, R.string.catalog_material_fertilizer_0280_name, liquidKeywords),
-        fertilizer("fertilizer_0281", R.string.catalog_fertilizer_brand_aqua_rebell, R.string.catalog_material_fertilizer_0281_name, liquidKeywords),
-        fertilizer("fertilizer_0282", R.string.catalog_fertilizer_brand_aqua_rebell, R.string.catalog_material_fertilizer_0282_name, liquidKeywords),
-        fertilizer("fertilizer_0283", R.string.catalog_fertilizer_brand_aqua_rebell, R.string.catalog_material_fertilizer_0283_name, liquidKeywords),
-        fertilizer("fertilizer_0284", R.string.catalog_fertilizer_brand_aqua_rebell, R.string.catalog_material_fertilizer_0284_name, liquidKeywords),
-        fertilizer("fertilizer_0285", R.string.catalog_fertilizer_brand_aqua_rebell, R.string.catalog_material_fertilizer_0285_name, liquidKeywords),
-        fertilizer("fertilizer_0286", R.string.catalog_fertilizer_brand_aqua_rebell, R.string.catalog_material_fertilizer_0286_name, liquidKeywords),
-        fertilizer("fertilizer_0287", R.string.catalog_fertilizer_brand_aqua_rebell, R.string.catalog_material_fertilizer_0287_name, liquidKeywords),
-        fertilizer("fertilizer_0288", R.string.catalog_fertilizer_brand_aqua_rebell, R.string.catalog_material_fertilizer_0288_name, liquidKeywords),
-        fertilizer("fertilizer_0289", R.string.catalog_fertilizer_brand_aqua_rebell, R.string.catalog_material_fertilizer_0289_name, liquidKeywords),
-        fertilizer("fertilizer_0290", R.string.catalog_fertilizer_brand_aquaforest, R.string.catalog_material_fertilizer_0290_name, liquidKeywords),
-        fertilizer("fertilizer_0291", R.string.catalog_fertilizer_brand_aquaforest, R.string.catalog_material_fertilizer_0291_name, liquidKeywords),
-        fertilizer("fertilizer_0292", R.string.catalog_fertilizer_brand_aquaforest, R.string.catalog_material_fertilizer_0292_name, liquidKeywords),
-        fertilizer("fertilizer_0293", R.string.catalog_fertilizer_brand_aquaforest, R.string.catalog_material_fertilizer_0293_name, liquidKeywords),
-        fertilizer("fertilizer_0294", R.string.catalog_fertilizer_brand_aquaforest, R.string.catalog_material_fertilizer_0294_name, liquidKeywords),
-        fertilizer("fertilizer_0295", R.string.catalog_fertilizer_brand_aquaforest, R.string.catalog_material_fertilizer_0295_name, liquidKeywords),
-        fertilizer("fertilizer_0296", R.string.catalog_fertilizer_brand_aquaforest, R.string.catalog_material_fertilizer_0296_name, liquidKeywords),
-        fertilizer("fertilizer_0297", R.string.catalog_fertilizer_brand_aquaforest, R.string.catalog_material_fertilizer_0297_name, liquidKeywords),
-        fertilizer("fertilizer_0298", R.string.catalog_fertilizer_brand_aquaforest, R.string.catalog_material_fertilizer_0298_name, liquidKeywords),
-        fertilizer("fertilizer_0299", R.string.catalog_fertilizer_brand_aquaforest, R.string.catalog_material_fertilizer_0299_name, liquidKeywords),
-        fertilizer("fertilizer_0300", R.string.catalog_fertilizer_brand_aquaforest, R.string.catalog_material_fertilizer_0300_name, liquidKeywords),
-        fertilizer("fertilizer_0301", R.string.catalog_fertilizer_brand_aquaforest, R.string.catalog_material_fertilizer_0301_name, liquidKeywords),
-        fertilizer("fertilizer_0302", R.string.catalog_fertilizer_brand_aquaforest, R.string.catalog_material_fertilizer_0302_name, liquidKeywords),
-        fertilizer("fertilizer_0303", R.string.catalog_fertilizer_brand_aquaforest, R.string.catalog_material_fertilizer_0303_name, liquidKeywords),
-        fertilizer("fertilizer_0304", R.string.catalog_fertilizer_brand_aquaforest, R.string.catalog_material_fertilizer_0304_name, liquidKeywords),
-        fertilizer("fertilizer_0305", R.string.catalog_fertilizer_brand_aquaforest, R.string.catalog_material_fertilizer_0305_name, liquidKeywords),
-        fertilizer("fertilizer_0306", R.string.catalog_fertilizer_brand_aquaforest, R.string.catalog_material_fertilizer_0306_name, liquidKeywords),
-        fertilizer("fertilizer_0307", R.string.catalog_fertilizer_brand_aquaforest, R.string.catalog_material_fertilizer_0307_name, liquidKeywords),
-        fertilizer("fertilizer_0308", R.string.catalog_fertilizer_brand_aquaforest, R.string.catalog_material_fertilizer_0308_name, liquidKeywords),
-        fertilizer("fertilizer_0309", R.string.catalog_fertilizer_brand_aquaforest, R.string.catalog_material_fertilizer_0309_name, liquidKeywords),
-        fertilizer("fertilizer_0310", R.string.catalog_fertilizer_brand_aquaforest, R.string.catalog_material_fertilizer_0310_name, liquidKeywords),
-        fertilizer("fertilizer_0311", R.string.catalog_fertilizer_brand_aquaforest, R.string.catalog_material_fertilizer_0311_name, liquidKeywords),
-        fertilizer("fertilizer_0312", R.string.catalog_fertilizer_brand_aquaforest, R.string.catalog_material_fertilizer_0312_name, liquidKeywords),
-        fertilizer("fertilizer_0313", R.string.catalog_fertilizer_brand_aquaforest, R.string.catalog_material_fertilizer_0313_name, liquidKeywords),
-        fertilizer("fertilizer_0314", R.string.catalog_fertilizer_brand_aquaforest, R.string.catalog_material_fertilizer_0314_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0315", R.string.catalog_fertilizer_brand_aquaforest, R.string.catalog_material_fertilizer_0315_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0316", R.string.catalog_fertilizer_brand_aquaforest, R.string.catalog_material_fertilizer_0316_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0317", R.string.catalog_fertilizer_brand_aquaforest, R.string.catalog_material_fertilizer_0317_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0318", R.string.catalog_fertilizer_brand_aquaforest, R.string.catalog_material_fertilizer_0318_name, liquidKeywords),
-        fertilizer("fertilizer_0319", R.string.catalog_fertilizer_brand_aquaforest, R.string.catalog_material_fertilizer_0319_name, liquidKeywords),
-        fertilizer("fertilizer_0320", R.string.catalog_fertilizer_brand_aquaforest, R.string.catalog_material_fertilizer_0320_name, liquidKeywords),
-        fertilizer("fertilizer_0321", R.string.catalog_fertilizer_brand_aquaforest, R.string.catalog_material_fertilizer_0321_name, liquidKeywords),
-        fertilizer("fertilizer_0322", R.string.catalog_fertilizer_brand_aquaforest, R.string.catalog_material_fertilizer_0322_name, baseKeywords),
-        fertilizer("fertilizer_0323", R.string.catalog_fertilizer_brand_aquario_neo, R.string.catalog_material_fertilizer_0323_name, liquidKeywords),
-        fertilizer("fertilizer_0324", R.string.catalog_fertilizer_brand_aquario_neo, R.string.catalog_material_fertilizer_0324_name, liquidKeywords),
-        fertilizer("fertilizer_0325", R.string.catalog_fertilizer_brand_aquario_neo, R.string.catalog_material_fertilizer_0325_name, liquidKeywords),
-        fertilizer("fertilizer_0326", R.string.catalog_fertilizer_brand_aquario_neo, R.string.catalog_material_fertilizer_0326_name, liquidKeywords),
-        fertilizer("fertilizer_0327", R.string.catalog_fertilizer_brand_aquario_neo, R.string.catalog_material_fertilizer_0327_name, liquidKeywords),
-        fertilizer("fertilizer_0328", R.string.catalog_fertilizer_brand_aquario_neo, R.string.catalog_material_fertilizer_0328_name, liquidKeywords),
-        fertilizer("fertilizer_0329", R.string.catalog_fertilizer_brand_aquario_neo, R.string.catalog_material_fertilizer_0329_name, liquidKeywords),
-        fertilizer("fertilizer_0330", R.string.catalog_fertilizer_brand_aquario_neo, R.string.catalog_material_fertilizer_0330_name, liquidKeywords),
-        fertilizer("fertilizer_0331", R.string.catalog_fertilizer_brand_aquario_neo, R.string.catalog_material_fertilizer_0331_name, liquidKeywords),
-        fertilizer("fertilizer_0332", R.string.catalog_fertilizer_brand_aquario_neo, R.string.catalog_material_fertilizer_0332_name, liquidKeywords),
-        fertilizer("fertilizer_0333", R.string.catalog_fertilizer_brand_aquario_neo, R.string.catalog_material_fertilizer_0333_name, liquidKeywords),
-        fertilizer("fertilizer_0334", R.string.catalog_fertilizer_brand_aquario_neo, R.string.catalog_material_fertilizer_0334_name, liquidKeywords),
-        fertilizer("fertilizer_0335", R.string.catalog_fertilizer_brand_aquario_neo, R.string.catalog_material_fertilizer_0335_name, liquidKeywords),
-        fertilizer("fertilizer_0336", R.string.catalog_fertilizer_brand_aquario_neo, R.string.catalog_material_fertilizer_0336_name, liquidKeywords),
-        fertilizer("fertilizer_0337", R.string.catalog_fertilizer_brand_aquario_neo, R.string.catalog_material_fertilizer_0337_name, liquidKeywords),
-        fertilizer("fertilizer_0338", R.string.catalog_fertilizer_brand_aquario_neo, R.string.catalog_material_fertilizer_0338_name, baseKeywords),
-        fertilizer("fertilizer_0339", R.string.catalog_fertilizer_brand_aquario_neo, R.string.catalog_material_fertilizer_0339_name, baseKeywords),
-        fertilizer("fertilizer_0340", R.string.catalog_fertilizer_brand_aquario_neo, R.string.catalog_material_fertilizer_0340_name, baseKeywords),
-        fertilizer("fertilizer_0341", R.string.catalog_fertilizer_brand_aquario_neo, R.string.catalog_material_fertilizer_0341_name, baseKeywords),
-        fertilizer("fertilizer_0342", R.string.catalog_fertilizer_brand_aquario_neo, R.string.catalog_material_fertilizer_0342_name, liquidKeywords),
-        fertilizer("fertilizer_0343", R.string.catalog_fertilizer_brand_aquario_neo, R.string.catalog_material_fertilizer_0343_name, baseKeywords),
-        fertilizer("fertilizer_0344", R.string.catalog_fertilizer_brand_aquario_neo, R.string.catalog_material_fertilizer_0344_name, baseKeywords),
-        fertilizer("fertilizer_0345", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0345_name, liquidKeywords),
-        fertilizer("fertilizer_0346", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0346_name, liquidKeywords),
-        fertilizer("fertilizer_0347", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0347_name, liquidKeywords),
-        fertilizer("fertilizer_0348", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0348_name, liquidKeywords),
-        fertilizer("fertilizer_0349", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0349_name, liquidKeywords),
-        fertilizer("fertilizer_0350", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0350_name, liquidKeywords),
-        fertilizer("fertilizer_0351", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0351_name, liquidKeywords),
-        fertilizer("fertilizer_0352", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0352_name, liquidKeywords),
-        fertilizer("fertilizer_0353", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0353_name, liquidKeywords),
-        fertilizer("fertilizer_0354", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0354_name, liquidKeywords),
-        fertilizer("fertilizer_0355", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0355_name, liquidKeywords),
-        fertilizer("fertilizer_0356", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0356_name, liquidKeywords),
-        fertilizer("fertilizer_0357", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0357_name, liquidKeywords),
-        fertilizer("fertilizer_0358", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0358_name, liquidKeywords),
-        fertilizer("fertilizer_0359", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0359_name, liquidKeywords),
-        fertilizer("fertilizer_0360", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0360_name, liquidKeywords),
-        fertilizer("fertilizer_0361", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0361_name, liquidKeywords),
-        fertilizer("fertilizer_0362", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0362_name, liquidKeywords),
-        fertilizer("fertilizer_0363", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0363_name, liquidKeywords),
-        fertilizer("fertilizer_0364", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0364_name, liquidKeywords),
-        fertilizer("fertilizer_0365", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0365_name, liquidKeywords),
-        fertilizer("fertilizer_0366", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0366_name, liquidKeywords),
-        fertilizer("fertilizer_0367", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0367_name, liquidKeywords),
-        fertilizer("fertilizer_0368", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0368_name, liquidKeywords),
-        fertilizer("fertilizer_0369", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0369_name, liquidKeywords),
-        fertilizer("fertilizer_0370", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0370_name, liquidKeywords),
-        fertilizer("fertilizer_0371", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0371_name, liquidKeywords),
-        fertilizer("fertilizer_0372", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0372_name, liquidKeywords),
-        fertilizer("fertilizer_0373", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0373_name, liquidKeywords),
-        fertilizer("fertilizer_0374", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0374_name, liquidKeywords),
-        fertilizer("fertilizer_0375", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0375_name, baseKeywords),
-        fertilizer("fertilizer_0376", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0376_name, baseKeywords),
-        fertilizer("fertilizer_0377", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0377_name, baseKeywords),
-        fertilizer("fertilizer_0378", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0378_name, baseKeywords),
-        fertilizer("fertilizer_0379", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0379_name, baseKeywords),
-        fertilizer("fertilizer_0380", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0380_name, baseKeywords),
-        fertilizer("fertilizer_0381", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0381_name, baseKeywords),
-        fertilizer("fertilizer_0382", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0382_name, baseKeywords),
-        fertilizer("fertilizer_0383", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0383_name, baseKeywords),
-        fertilizer("fertilizer_0384", R.string.catalog_fertilizer_brand_brightwell_aquatics, R.string.catalog_material_fertilizer_0384_name, baseKeywords),
-        fertilizer("fertilizer_0385", R.string.catalog_fertilizer_brand_api, R.string.catalog_material_fertilizer_0385_name, liquidKeywords),
-        fertilizer("fertilizer_0386", R.string.catalog_fertilizer_brand_api, R.string.catalog_material_fertilizer_0386_name, liquidKeywords),
-        fertilizer("fertilizer_0387", R.string.catalog_fertilizer_brand_api, R.string.catalog_material_fertilizer_0387_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0388", R.string.catalog_fertilizer_brand_api, R.string.catalog_material_fertilizer_0388_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0389", R.string.catalog_fertilizer_brand_api, R.string.catalog_material_fertilizer_0389_name, baseKeywords),
-        fertilizer("fertilizer_0390", R.string.catalog_fertilizer_brand_fluval, R.string.catalog_material_fertilizer_0390_name, liquidKeywords),
-        fertilizer("fertilizer_0391", R.string.catalog_fertilizer_brand_fluval, R.string.catalog_material_fertilizer_0391_name, liquidKeywords),
-        fertilizer("fertilizer_0392", R.string.catalog_fertilizer_brand_aquarium_co_op, R.string.catalog_material_fertilizer_0392_name, liquidKeywords),
-        fertilizer("fertilizer_0393", R.string.catalog_fertilizer_brand_aquarium_co_op, R.string.catalog_material_fertilizer_0393_name, liquidKeywords),
-        fertilizer("fertilizer_0394", R.string.catalog_fertilizer_brand_aquarium_co_op, R.string.catalog_material_fertilizer_0394_name, liquidKeywords),
-        fertilizer("fertilizer_0395", R.string.catalog_fertilizer_brand_aquarium_co_op, R.string.catalog_material_fertilizer_0395_name, liquidKeywords),
-        fertilizer("fertilizer_0396", R.string.catalog_fertilizer_brand_aquarium_co_op, R.string.catalog_material_fertilizer_0396_name, liquidKeywords),
-        fertilizer("fertilizer_0397", R.string.catalog_fertilizer_brand_aquarium_co_op, R.string.catalog_material_fertilizer_0397_name, liquidKeywords),
-        fertilizer("fertilizer_0398", R.string.catalog_fertilizer_brand_aquarium_co_op, R.string.catalog_material_fertilizer_0398_name, liquidKeywords),
-        fertilizer("fertilizer_0399", R.string.catalog_fertilizer_brand_aquarium_co_op, R.string.catalog_material_fertilizer_0399_name, baseKeywords),
-        fertilizer("fertilizer_0400", R.string.catalog_fertilizer_brand_aquarium_co_op, R.string.catalog_material_fertilizer_0400_name, baseKeywords),
-        fertilizer("fertilizer_0401", R.string.catalog_fertilizer_brand_nilocg, R.string.catalog_material_fertilizer_0401_name, liquidKeywords),
-        fertilizer("fertilizer_0402", R.string.catalog_fertilizer_brand_nilocg, R.string.catalog_material_fertilizer_0402_name, liquidKeywords),
-        fertilizer("fertilizer_0403", R.string.catalog_fertilizer_brand_nilocg, R.string.catalog_material_fertilizer_0403_name, liquidKeywords),
-        fertilizer("fertilizer_0404", R.string.catalog_fertilizer_brand_nilocg, R.string.catalog_material_fertilizer_0404_name, liquidKeywords),
-        fertilizer("fertilizer_0405", R.string.catalog_fertilizer_brand_nilocg, R.string.catalog_material_fertilizer_0405_name, liquidKeywords),
-        fertilizer("fertilizer_0406", R.string.catalog_fertilizer_brand_nilocg, R.string.catalog_material_fertilizer_0406_name, liquidKeywords),
-        fertilizer("fertilizer_0407", R.string.catalog_fertilizer_brand_nilocg, R.string.catalog_material_fertilizer_0407_name, liquidKeywords),
-        fertilizer("fertilizer_0408", R.string.catalog_fertilizer_brand_nilocg, R.string.catalog_material_fertilizer_0408_name, liquidKeywords),
-        fertilizer("fertilizer_0409", R.string.catalog_fertilizer_brand_nilocg, R.string.catalog_material_fertilizer_0409_name, liquidKeywords),
-        fertilizer("fertilizer_0410", R.string.catalog_fertilizer_brand_nilocg, R.string.catalog_material_fertilizer_0410_name, liquidKeywords),
-        fertilizer("fertilizer_0411", R.string.catalog_fertilizer_brand_nilocg, R.string.catalog_material_fertilizer_0411_name, baseKeywords),
-        fertilizer("fertilizer_0412", R.string.catalog_fertilizer_brand_nilocg, R.string.catalog_material_fertilizer_0412_name, baseKeywords),
-        fertilizer("fertilizer_0413", R.string.catalog_fertilizer_brand_nilocg, R.string.catalog_material_fertilizer_0413_name, baseKeywords),
-        fertilizer("fertilizer_0414", R.string.catalog_fertilizer_brand_nilocg, R.string.catalog_material_fertilizer_0414_name, baseKeywords),
-        fertilizer("fertilizer_0415", R.string.catalog_fertilizer_brand_nilocg, R.string.catalog_material_fertilizer_0415_name, baseKeywords),
-        fertilizer("fertilizer_0416", R.string.catalog_fertilizer_brand_nilocg, R.string.catalog_material_fertilizer_0416_name, baseKeywords),
-        fertilizer("fertilizer_0417", R.string.catalog_fertilizer_brand_nilocg, R.string.catalog_material_fertilizer_0417_name, baseKeywords),
-        fertilizer("fertilizer_0418", R.string.catalog_fertilizer_brand_nilocg, R.string.catalog_material_fertilizer_0418_name, baseKeywords),
-        fertilizer("fertilizer_0419", R.string.catalog_fertilizer_brand_nilocg, R.string.catalog_material_fertilizer_0419_name, baseKeywords),
-        fertilizer("fertilizer_0420", R.string.catalog_fertilizer_brand_nilocg, R.string.catalog_material_fertilizer_0420_name, baseKeywords),
-        fertilizer("fertilizer_0421", R.string.catalog_fertilizer_brand_nilocg, R.string.catalog_material_fertilizer_0421_name, baseKeywords),
-        fertilizer("fertilizer_0422", R.string.catalog_fertilizer_brand_nilocg, R.string.catalog_material_fertilizer_0422_name, baseKeywords),
-        fertilizer("fertilizer_0423", R.string.catalog_fertilizer_brand_nilocg, R.string.catalog_material_fertilizer_0423_name, baseKeywords),
-        fertilizer("fertilizer_0424", R.string.catalog_fertilizer_brand_nilocg, R.string.catalog_material_fertilizer_0424_name, baseKeywords),
-        fertilizer("fertilizer_0425", R.string.catalog_fertilizer_brand_nilocg, R.string.catalog_material_fertilizer_0425_name, baseKeywords),
-        fertilizer("fertilizer_0426", R.string.catalog_fertilizer_brand_nilocg, R.string.catalog_material_fertilizer_0426_name, baseKeywords),
-        fertilizer("fertilizer_0427", R.string.catalog_fertilizer_brand_nilocg, R.string.catalog_material_fertilizer_0427_name, baseKeywords),
-        fertilizer("fertilizer_0428", R.string.catalog_fertilizer_brand_nilocg, R.string.catalog_material_fertilizer_0428_name, baseKeywords),
-        fertilizer("fertilizer_0429", R.string.catalog_fertilizer_brand_nilocg, R.string.catalog_material_fertilizer_0429_name, baseKeywords),
-        fertilizer("fertilizer_0430", R.string.catalog_fertilizer_brand_nilocg, R.string.catalog_material_fertilizer_0430_name, baseKeywords),
-        fertilizer("fertilizer_0431", R.string.catalog_fertilizer_brand_nilocg, R.string.catalog_material_fertilizer_0431_name, baseKeywords),
-        fertilizer("fertilizer_0432", R.string.catalog_fertilizer_brand_nilocg, R.string.catalog_material_fertilizer_0432_name, baseKeywords),
-        fertilizer("fertilizer_0433", R.string.catalog_fertilizer_brand_green_leaf_aquariums_gla, R.string.catalog_material_fertilizer_0433_name, baseKeywords),
-        fertilizer("fertilizer_0434", R.string.catalog_fertilizer_brand_green_leaf_aquariums_gla, R.string.catalog_material_fertilizer_0434_name, baseKeywords),
-        fertilizer("fertilizer_0435", R.string.catalog_fertilizer_brand_green_leaf_aquariums_gla, R.string.catalog_material_fertilizer_0435_name, baseKeywords),
-        fertilizer("fertilizer_0436", R.string.catalog_fertilizer_brand_green_leaf_aquariums_gla, R.string.catalog_material_fertilizer_0436_name, baseKeywords),
-        fertilizer("fertilizer_0437", R.string.catalog_fertilizer_brand_green_leaf_aquariums_gla, R.string.catalog_material_fertilizer_0437_name, baseKeywords),
-        fertilizer("fertilizer_0438", R.string.catalog_fertilizer_brand_green_leaf_aquariums_gla, R.string.catalog_material_fertilizer_0438_name, baseKeywords),
-        fertilizer("fertilizer_0439", R.string.catalog_fertilizer_brand_green_leaf_aquariums_gla, R.string.catalog_material_fertilizer_0439_name, baseKeywords),
-        fertilizer("fertilizer_0440", R.string.catalog_fertilizer_brand_green_leaf_aquariums_gla, R.string.catalog_material_fertilizer_0440_name, baseKeywords),
-        fertilizer("fertilizer_0441", R.string.catalog_fertilizer_brand_green_leaf_aquariums_gla, R.string.catalog_material_fertilizer_0441_name, baseKeywords),
-        fertilizer("fertilizer_0442", R.string.catalog_fertilizer_brand_green_leaf_aquariums_gla, R.string.catalog_material_fertilizer_0442_name, baseKeywords),
-        fertilizer("fertilizer_0443", R.string.catalog_fertilizer_brand_green_leaf_aquariums_gla, R.string.catalog_material_fertilizer_0443_name, baseKeywords),
-        fertilizer("fertilizer_0444", R.string.catalog_fertilizer_brand_tetra, R.string.catalog_material_fertilizer_0444_name, liquidKeywords),
-        fertilizer("fertilizer_0445", R.string.catalog_fertilizer_brand_tetra, R.string.catalog_material_fertilizer_0445_name, liquidKeywords),
-        fertilizer("fertilizer_0446", R.string.catalog_fertilizer_brand_tetra, R.string.catalog_material_fertilizer_0446_name, liquidKeywords),
-        fertilizer("fertilizer_0447", R.string.catalog_fertilizer_brand_tetra, R.string.catalog_material_fertilizer_0447_name, liquidKeywords),
-        fertilizer("fertilizer_0448", R.string.catalog_fertilizer_brand_tetra, R.string.catalog_material_fertilizer_0448_name, liquidKeywords),
-        fertilizer("fertilizer_0449", R.string.catalog_fertilizer_brand_tetra, R.string.catalog_material_fertilizer_0449_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0450", R.string.catalog_fertilizer_brand_tetra, R.string.catalog_material_fertilizer_0450_name, baseKeywords),
-        fertilizer("fertilizer_0451", R.string.catalog_fertilizer_brand_tetra, R.string.catalog_material_fertilizer_0451_name, baseKeywords),
-        fertilizer("fertilizer_0452", R.string.catalog_fertilizer_brand_tetra, R.string.catalog_material_fertilizer_0452_name, baseKeywords),
-        fertilizer("fertilizer_0453", R.string.catalog_fertilizer_brand_dupla, R.string.catalog_material_fertilizer_0453_name, liquidKeywords),
-        fertilizer("fertilizer_0454", R.string.catalog_fertilizer_brand_dupla, R.string.catalog_material_fertilizer_0454_name, liquidKeywords),
-        fertilizer("fertilizer_0455", R.string.catalog_fertilizer_brand_dupla, R.string.catalog_material_fertilizer_0455_name, liquidKeywords),
-        fertilizer("fertilizer_0456", R.string.catalog_fertilizer_brand_dupla, R.string.catalog_material_fertilizer_0456_name, baseKeywords),
-        fertilizer("fertilizer_0457", R.string.catalog_fertilizer_brand_dupla, R.string.catalog_material_fertilizer_0457_name, baseKeywords),
-        fertilizer("fertilizer_0458", R.string.catalog_fertilizer_brand_dupla, R.string.catalog_material_fertilizer_0458_name, baseKeywords),
-        fertilizer("fertilizer_0459", R.string.catalog_brand_oase, R.string.catalog_material_fertilizer_0459_name, liquidKeywords),
-        fertilizer("fertilizer_0460", R.string.catalog_brand_oase, R.string.catalog_material_fertilizer_0460_name, liquidKeywords),
-        fertilizer("fertilizer_0461", R.string.catalog_brand_oase, R.string.catalog_material_fertilizer_0461_name, liquidKeywords),
-        fertilizer("fertilizer_0462", R.string.catalog_brand_oase, R.string.catalog_material_fertilizer_0462_name, liquidKeywords),
-        fertilizer("fertilizer_0463", R.string.catalog_brand_oase, R.string.catalog_material_fertilizer_0463_name, baseKeywords),
-        fertilizer("fertilizer_0464", R.string.catalog_brand_oase, R.string.catalog_material_fertilizer_0464_name, liquidKeywords),
-        fertilizer("fertilizer_0465", R.string.catalog_brand_oase, R.string.catalog_material_fertilizer_0465_name, liquidKeywords),
-        fertilizer("fertilizer_0466", R.string.catalog_brand_oase, R.string.catalog_material_fertilizer_0466_name, liquidKeywords),
-        fertilizer("fertilizer_0467", R.string.catalog_brand_oase, R.string.catalog_material_fertilizer_0467_name, baseKeywords),
-        fertilizer("fertilizer_0468", R.string.catalog_brand_oase, R.string.catalog_material_fertilizer_0468_name, baseKeywords),
-        fertilizer("fertilizer_0469", R.string.catalog_fertilizer_brand_vimi, R.string.catalog_material_fertilizer_0469_name, liquidKeywords),
-        fertilizer("fertilizer_0470", R.string.catalog_fertilizer_brand_vimi, R.string.catalog_material_fertilizer_0470_name, liquidKeywords),
-        fertilizer("fertilizer_0471", R.string.catalog_fertilizer_brand_vimi, R.string.catalog_material_fertilizer_0471_name, liquidKeywords),
-        fertilizer("fertilizer_0472", R.string.catalog_fertilizer_brand_vimi, R.string.catalog_material_fertilizer_0472_name, liquidKeywords),
-        fertilizer("fertilizer_0473", R.string.catalog_fertilizer_brand_vimi, R.string.catalog_material_fertilizer_0473_name, liquidKeywords),
-        fertilizer("fertilizer_0474", R.string.catalog_fertilizer_brand_vimi, R.string.catalog_material_fertilizer_0474_name, liquidKeywords),
-        fertilizer("fertilizer_0475", R.string.catalog_fertilizer_brand_vimi, R.string.catalog_material_fertilizer_0475_name, liquidKeywords),
-        fertilizer("fertilizer_0476", R.string.catalog_fertilizer_brand_vimi, R.string.catalog_material_fertilizer_0476_name, liquidKeywords),
-        fertilizer("fertilizer_0477", R.string.catalog_fertilizer_brand_vimi, R.string.catalog_material_fertilizer_0477_name, liquidKeywords),
-        fertilizer("fertilizer_0478", R.string.catalog_fertilizer_brand_vimi, R.string.catalog_material_fertilizer_0478_name, liquidKeywords),
-        fertilizer("fertilizer_0479", R.string.catalog_fertilizer_brand_vimi, R.string.catalog_material_fertilizer_0479_name, liquidKeywords),
-        fertilizer("fertilizer_0480", R.string.catalog_fertilizer_brand_vimi, R.string.catalog_material_fertilizer_0480_name, liquidKeywords),
-        fertilizer("fertilizer_0481", R.string.catalog_fertilizer_brand_vimi, R.string.catalog_material_fertilizer_0481_name, liquidKeywords),
-        fertilizer("fertilizer_0482", R.string.catalog_fertilizer_brand_vimi, R.string.catalog_material_fertilizer_0482_name, liquidKeywords),
-        fertilizer("fertilizer_0483", R.string.catalog_fertilizer_brand_vimi, R.string.catalog_material_fertilizer_0483_name, liquidKeywords),
-        fertilizer("fertilizer_0484", R.string.catalog_fertilizer_brand_vimi, R.string.catalog_material_fertilizer_0484_name, liquidKeywords),
-        fertilizer("fertilizer_0485", R.string.catalog_fertilizer_brand_vimi, R.string.catalog_material_fertilizer_0485_name, liquidKeywords),
-        fertilizer("fertilizer_0486", R.string.catalog_fertilizer_brand_vimi, R.string.catalog_material_fertilizer_0486_name, baseKeywords),
-        fertilizer("fertilizer_0487", R.string.catalog_fertilizer_brand_vimi, R.string.catalog_material_fertilizer_0487_name, baseKeywords),
-        fertilizer("fertilizer_0488", R.string.catalog_fertilizer_brand_vimi, R.string.catalog_material_fertilizer_0488_name, baseKeywords),
-        fertilizer("fertilizer_0489", R.string.catalog_fertilizer_brand_vimi, R.string.catalog_material_fertilizer_0489_name, baseKeywords),
-        fertilizer("fertilizer_0490", R.string.catalog_fertilizer_brand_vimi, R.string.catalog_material_fertilizer_0490_name, baseKeywords),
-        fertilizer("fertilizer_0491", R.string.catalog_fertilizer_brand_vimi, R.string.catalog_material_fertilizer_0491_name, baseKeywords),
-        fertilizer("fertilizer_0492", R.string.catalog_fertilizer_brand_vimi, R.string.catalog_material_fertilizer_0492_name, baseKeywords),
-        fertilizer("fertilizer_0493", R.string.catalog_fertilizer_brand_colombo, R.string.catalog_material_fertilizer_0493_name, liquidKeywords),
-        fertilizer("fertilizer_0494", R.string.catalog_fertilizer_brand_colombo, R.string.catalog_material_fertilizer_0494_name, liquidKeywords),
-        fertilizer("fertilizer_0495", R.string.catalog_fertilizer_brand_colombo, R.string.catalog_material_fertilizer_0495_name, liquidKeywords),
-        fertilizer("fertilizer_0496", R.string.catalog_fertilizer_brand_colombo, R.string.catalog_material_fertilizer_0496_name, liquidKeywords),
-        fertilizer("fertilizer_0497", R.string.catalog_fertilizer_brand_colombo, R.string.catalog_material_fertilizer_0497_name, liquidKeywords),
-        fertilizer("fertilizer_0498", R.string.catalog_fertilizer_brand_colombo, R.string.catalog_material_fertilizer_0498_name, liquidKeywords),
-        fertilizer("fertilizer_0499", R.string.catalog_fertilizer_brand_colombo, R.string.catalog_material_fertilizer_0499_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0500", R.string.catalog_fertilizer_brand_colombo, R.string.catalog_material_fertilizer_0500_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0501", R.string.catalog_fertilizer_brand_colombo, R.string.catalog_material_fertilizer_0501_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0502", R.string.catalog_fertilizer_brand_colombo, R.string.catalog_material_fertilizer_0502_name, baseKeywords),
-        fertilizer("fertilizer_0503", R.string.catalog_brand_ista, R.string.catalog_material_fertilizer_0503_name, liquidKeywords),
-        fertilizer("fertilizer_0504", R.string.catalog_brand_ista, R.string.catalog_material_fertilizer_0504_name, liquidKeywords),
-        fertilizer("fertilizer_0505", R.string.catalog_brand_ista, R.string.catalog_material_fertilizer_0505_name, liquidKeywords),
-        fertilizer("fertilizer_0506", R.string.catalog_brand_ista, R.string.catalog_material_fertilizer_0506_name, liquidKeywords),
-        fertilizer("fertilizer_0507", R.string.catalog_brand_ista, R.string.catalog_material_fertilizer_0507_name, liquidKeywords),
-        fertilizer("fertilizer_0508", R.string.catalog_brand_ista, R.string.catalog_material_fertilizer_0508_name, liquidKeywords),
-        fertilizer("fertilizer_0509", R.string.catalog_brand_ista, R.string.catalog_material_fertilizer_0509_name, liquidKeywords),
-        fertilizer("fertilizer_0510", R.string.catalog_brand_ista, R.string.catalog_material_fertilizer_0510_name, liquidKeywords),
-        fertilizer("fertilizer_0511", R.string.catalog_brand_ista, R.string.catalog_material_fertilizer_0511_name, liquidKeywords),
-        fertilizer("fertilizer_0512", R.string.catalog_brand_ista, R.string.catalog_material_fertilizer_0512_name, liquidKeywords),
-        fertilizer("fertilizer_0513", R.string.catalog_brand_ista, R.string.catalog_material_fertilizer_0513_name, liquidKeywords),
-        fertilizer("fertilizer_0514", R.string.catalog_brand_ista, R.string.catalog_material_fertilizer_0514_name, liquidKeywords),
-        fertilizer("fertilizer_0515", R.string.catalog_brand_ista, R.string.catalog_material_fertilizer_0515_name, liquidKeywords),
-        fertilizer("fertilizer_0516", R.string.catalog_brand_ista, R.string.catalog_material_fertilizer_0516_name, liquidKeywords),
-        fertilizer("fertilizer_0517", R.string.catalog_brand_ista, R.string.catalog_material_fertilizer_0517_name, liquidKeywords),
-        fertilizer("fertilizer_0518", R.string.catalog_brand_ista, R.string.catalog_material_fertilizer_0518_name, liquidKeywords),
-        fertilizer("fertilizer_0519", R.string.catalog_brand_ista, R.string.catalog_material_fertilizer_0519_name, liquidKeywords),
-        fertilizer("fertilizer_0520", R.string.catalog_brand_ista, R.string.catalog_material_fertilizer_0520_name, liquidKeywords),
-        fertilizer("fertilizer_0521", R.string.catalog_brand_ista, R.string.catalog_material_fertilizer_0521_name, liquidKeywords),
-        fertilizer("fertilizer_0522", R.string.catalog_brand_ista, R.string.catalog_material_fertilizer_0522_name, liquidKeywords),
-        fertilizer("fertilizer_0523", R.string.catalog_brand_ista, R.string.catalog_material_fertilizer_0523_name, liquidKeywords),
-        fertilizer("fertilizer_0524", R.string.catalog_brand_ista, R.string.catalog_material_fertilizer_0524_name, baseKeywords),
-        fertilizer("fertilizer_0525", R.string.catalog_brand_ista, R.string.catalog_material_fertilizer_0525_name, baseKeywords),
-        fertilizer("fertilizer_0526", R.string.catalog_brand_ista, R.string.catalog_material_fertilizer_0526_name, baseKeywords),
-        fertilizer("fertilizer_0527", R.string.catalog_brand_ista, R.string.catalog_material_fertilizer_0527_name, baseKeywords),
-        fertilizer("fertilizer_0528", R.string.catalog_brand_tropical, R.string.catalog_material_fertilizer_0528_name, liquidKeywords),
-        fertilizer("fertilizer_0529", R.string.catalog_brand_tropical, R.string.catalog_material_fertilizer_0529_name, liquidKeywords),
-        fertilizer("fertilizer_0530", R.string.catalog_brand_tropical, R.string.catalog_material_fertilizer_0530_name, liquidKeywords),
-        fertilizer("fertilizer_0531", R.string.catalog_brand_tropical, R.string.catalog_material_fertilizer_0531_name, liquidKeywords),
-        fertilizer("fertilizer_0532", R.string.catalog_brand_tropical, R.string.catalog_material_fertilizer_0532_name, liquidKeywords),
-        fertilizer("fertilizer_0533", R.string.catalog_brand_tropical, R.string.catalog_material_fertilizer_0533_name, liquidKeywords),
-        fertilizer("fertilizer_0534", R.string.catalog_brand_tropical, R.string.catalog_material_fertilizer_0534_name, liquidKeywords),
-        fertilizer("fertilizer_0535", R.string.catalog_brand_tropical, R.string.catalog_material_fertilizer_0535_name, liquidKeywords),
-        fertilizer("fertilizer_0536", R.string.catalog_brand_tropical, R.string.catalog_material_fertilizer_0536_name, liquidKeywords),
-        fertilizer("fertilizer_0537", R.string.catalog_brand_tropical, R.string.catalog_material_fertilizer_0537_name, liquidKeywords),
-        fertilizer("fertilizer_0538", R.string.catalog_brand_tropical, R.string.catalog_material_fertilizer_0538_name, liquidKeywords),
-        fertilizer("fertilizer_0539", R.string.catalog_brand_tropical, R.string.catalog_material_fertilizer_0539_name, liquidKeywords),
-        fertilizer("fertilizer_0540", R.string.catalog_brand_tropical, R.string.catalog_material_fertilizer_0540_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0541", R.string.catalog_brand_tropical, R.string.catalog_material_fertilizer_0541_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0542", R.string.catalog_brand_tropical, R.string.catalog_material_fertilizer_0542_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0543", R.string.catalog_fertilizer_brand_prodibio, R.string.catalog_material_fertilizer_0543_name, liquidKeywords),
-        fertilizer("fertilizer_0544", R.string.catalog_fertilizer_brand_prodibio, R.string.catalog_material_fertilizer_0544_name, liquidKeywords),
-        fertilizer("fertilizer_0545", R.string.catalog_fertilizer_brand_prodibio, R.string.catalog_material_fertilizer_0545_name, liquidKeywords),
-        fertilizer("fertilizer_0546", R.string.catalog_fertilizer_brand_prodibio, R.string.catalog_material_fertilizer_0546_name, liquidKeywords),
-        fertilizer("fertilizer_0547", R.string.catalog_fertilizer_brand_prodibio, R.string.catalog_material_fertilizer_0547_name, liquidKeywords),
-        fertilizer("fertilizer_0548", R.string.catalog_fertilizer_brand_prodibio, R.string.catalog_material_fertilizer_0548_name, liquidKeywords),
-        fertilizer("fertilizer_0549", R.string.catalog_fertilizer_brand_ultum_nature_systems_uns, R.string.catalog_material_fertilizer_0549_name, liquidKeywords),
-        fertilizer("fertilizer_0550", R.string.catalog_fertilizer_brand_ultum_nature_systems_uns, R.string.catalog_material_fertilizer_0550_name, liquidKeywords),
-        fertilizer("fertilizer_0551", R.string.catalog_fertilizer_brand_yokuchi, R.string.catalog_material_fertilizer_0551_name, liquidKeywords),
-        fertilizer("fertilizer_0552", R.string.catalog_fertilizer_brand_yokuchi, R.string.catalog_material_fertilizer_0552_name, liquidKeywords),
-        fertilizer("fertilizer_0553", R.string.catalog_fertilizer_brand_yokuchi, R.string.catalog_material_fertilizer_0553_name, liquidKeywords),
-        fertilizer("fertilizer_0554", R.string.catalog_fertilizer_brand_yokuchi, R.string.catalog_material_fertilizer_0554_name, liquidKeywords),
-        fertilizer("fertilizer_0555", R.string.catalog_fertilizer_brand_yokuchi, R.string.catalog_material_fertilizer_0555_name, liquidKeywords),
-        fertilizer("fertilizer_0556", R.string.catalog_fertilizer_brand_yokuchi, R.string.catalog_material_fertilizer_0556_name, liquidKeywords),
-        fertilizer("fertilizer_0557", R.string.catalog_fertilizer_brand_yokuchi, R.string.catalog_material_fertilizer_0557_name, liquidKeywords),
-        fertilizer("fertilizer_0558", R.string.catalog_fertilizer_brand_yokuchi, R.string.catalog_material_fertilizer_0558_name, liquidKeywords),
-        fertilizer("fertilizer_0559", R.string.catalog_fertilizer_brand_yokuchi, R.string.catalog_material_fertilizer_0559_name, liquidKeywords),
-        fertilizer("fertilizer_0560", R.string.catalog_fertilizer_brand_yokuchi, R.string.catalog_material_fertilizer_0560_name, liquidKeywords),
-        fertilizer("fertilizer_0561", R.string.catalog_fertilizer_brand_yokuchi, R.string.catalog_material_fertilizer_0561_name, liquidKeywords),
-        fertilizer("fertilizer_0562", R.string.catalog_fertilizer_brand_yokuchi, R.string.catalog_material_fertilizer_0562_name, liquidKeywords),
-        fertilizer("fertilizer_0563", R.string.catalog_fertilizer_brand_yokuchi, R.string.catalog_material_fertilizer_0563_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0564", R.string.catalog_fertilizer_brand_yokuchi, R.string.catalog_material_fertilizer_0564_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0565", R.string.catalog_fertilizer_brand_yokuchi, R.string.catalog_material_fertilizer_0565_name, baseKeywords),
-        fertilizer("fertilizer_0566", R.string.catalog_fertilizer_brand_yokuchi, R.string.catalog_material_fertilizer_0566_name, baseKeywords),
-        fertilizer("fertilizer_0567", R.string.catalog_fertilizer_brand_aqua_art, R.string.catalog_material_fertilizer_0567_name, liquidKeywords),
-        fertilizer("fertilizer_0568", R.string.catalog_fertilizer_brand_aqua_art, R.string.catalog_material_fertilizer_0568_name, liquidKeywords),
-        fertilizer("fertilizer_0569", R.string.catalog_fertilizer_brand_aqua_art, R.string.catalog_material_fertilizer_0569_name, liquidKeywords),
-        fertilizer("fertilizer_0570", R.string.catalog_fertilizer_brand_aqua_art, R.string.catalog_material_fertilizer_0570_name, liquidKeywords),
-        fertilizer("fertilizer_0571", R.string.catalog_fertilizer_brand_aqua_art, R.string.catalog_material_fertilizer_0571_name, liquidKeywords),
-        fertilizer("fertilizer_0572", R.string.catalog_fertilizer_brand_aqua_art, R.string.catalog_material_fertilizer_0572_name, liquidKeywords),
-        fertilizer("fertilizer_0573", R.string.catalog_fertilizer_brand_aqua_art, R.string.catalog_material_fertilizer_0573_name, liquidKeywords),
-        fertilizer("fertilizer_0574", R.string.catalog_fertilizer_brand_aqua_art, R.string.catalog_material_fertilizer_0574_name, liquidKeywords),
-        fertilizer("fertilizer_0575", R.string.catalog_fertilizer_brand_aqua_art, R.string.catalog_material_fertilizer_0575_name, liquidKeywords),
-        fertilizer("fertilizer_0576", R.string.catalog_fertilizer_brand_aqua_art, R.string.catalog_material_fertilizer_0576_name, liquidKeywords),
-        fertilizer("fertilizer_0577", R.string.catalog_fertilizer_brand_aqua_art, R.string.catalog_material_fertilizer_0577_name, liquidKeywords),
-        fertilizer("fertilizer_0578", R.string.catalog_fertilizer_brand_aqua_art, R.string.catalog_material_fertilizer_0578_name, liquidKeywords),
-        fertilizer("fertilizer_0579", R.string.catalog_fertilizer_brand_aqua_art, R.string.catalog_material_fertilizer_0579_name, liquidKeywords),
-        fertilizer("fertilizer_0580", R.string.catalog_fertilizer_brand_aqua_art, R.string.catalog_material_fertilizer_0580_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0581", R.string.catalog_fertilizer_brand_aqua_art, R.string.catalog_material_fertilizer_0581_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0582", R.string.catalog_fertilizer_brand_aqua_art, R.string.catalog_material_fertilizer_0582_name, baseKeywords),
-        fertilizer("fertilizer_0583", R.string.catalog_fertilizer_brand_aqua_art, R.string.catalog_material_fertilizer_0583_name, liquidKeywords),
-        fertilizer("fertilizer_0584", R.string.catalog_fertilizer_brand_azoo, R.string.catalog_material_fertilizer_0584_name, liquidKeywords),
-        fertilizer("fertilizer_0585", R.string.catalog_fertilizer_brand_azoo, R.string.catalog_material_fertilizer_0585_name, liquidKeywords),
-        fertilizer("fertilizer_0586", R.string.catalog_fertilizer_brand_azoo, R.string.catalog_material_fertilizer_0586_name, liquidKeywords),
-        fertilizer("fertilizer_0587", R.string.catalog_fertilizer_brand_azoo, R.string.catalog_material_fertilizer_0587_name, liquidKeywords),
-        fertilizer("fertilizer_0588", R.string.catalog_fertilizer_brand_azoo, R.string.catalog_material_fertilizer_0588_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0589", R.string.catalog_fertilizer_brand_azoo, R.string.catalog_material_fertilizer_0589_name, liquidKeywords),
-        fertilizer("fertilizer_0590", R.string.catalog_fertilizer_brand_azoo, R.string.catalog_material_fertilizer_0590_name, baseKeywords),
-        fertilizer("fertilizer_0591", R.string.catalog_fertilizer_brand_microbe_lift, R.string.catalog_material_fertilizer_0591_name, liquidKeywords),
-        fertilizer("fertilizer_0592", R.string.catalog_fertilizer_brand_microbe_lift, R.string.catalog_material_fertilizer_0592_name, liquidKeywords),
-        fertilizer("fertilizer_0593", R.string.catalog_fertilizer_brand_microbe_lift, R.string.catalog_material_fertilizer_0593_name, liquidKeywords),
-        fertilizer("fertilizer_0594", R.string.catalog_fertilizer_brand_microbe_lift, R.string.catalog_material_fertilizer_0594_name, liquidKeywords),
-        fertilizer("fertilizer_0595", R.string.catalog_fertilizer_brand_microbe_lift, R.string.catalog_material_fertilizer_0595_name, liquidKeywords),
-        fertilizer("fertilizer_0596", R.string.catalog_fertilizer_brand_microbe_lift, R.string.catalog_material_fertilizer_0596_name, liquidKeywords),
-        fertilizer("fertilizer_0597", R.string.catalog_fertilizer_brand_microbe_lift, R.string.catalog_material_fertilizer_0597_name, liquidKeywords),
-        fertilizer("fertilizer_0598", R.string.catalog_fertilizer_brand_reeflowers, R.string.catalog_material_fertilizer_0598_name, liquidKeywords),
-        fertilizer("fertilizer_0599", R.string.catalog_fertilizer_brand_reeflowers, R.string.catalog_material_fertilizer_0599_name, liquidKeywords),
-        fertilizer("fertilizer_0600", R.string.catalog_fertilizer_brand_reeflowers, R.string.catalog_material_fertilizer_0600_name, liquidKeywords),
-        fertilizer("fertilizer_0601", R.string.catalog_fertilizer_brand_reeflowers, R.string.catalog_material_fertilizer_0601_name, liquidKeywords),
-        fertilizer("fertilizer_0602", R.string.catalog_fertilizer_brand_reeflowers, R.string.catalog_material_fertilizer_0602_name, liquidKeywords),
-        fertilizer("fertilizer_0603", R.string.catalog_fertilizer_brand_reeflowers, R.string.catalog_material_fertilizer_0603_name, liquidKeywords),
-        fertilizer("fertilizer_0604", R.string.catalog_fertilizer_brand_reeflowers, R.string.catalog_material_fertilizer_0604_name, liquidKeywords),
-        fertilizer("fertilizer_0605", R.string.catalog_fertilizer_brand_reeflowers, R.string.catalog_material_fertilizer_0605_name, liquidKeywords),
-        fertilizer("fertilizer_0606", R.string.catalog_fertilizer_brand_reeflowers, R.string.catalog_material_fertilizer_0606_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0607", R.string.catalog_fertilizer_brand_reeflowers, R.string.catalog_material_fertilizer_0607_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0608", R.string.catalog_fertilizer_brand_reeflowers, R.string.catalog_material_fertilizer_0608_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0609", R.string.catalog_fertilizer_brand_reeflowers, R.string.catalog_material_fertilizer_0609_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0610", R.string.catalog_fertilizer_brand_reeflowers, R.string.catalog_material_fertilizer_0610_name, liquidKeywords),
-        fertilizer("fertilizer_0611", R.string.catalog_fertilizer_brand_reeflowers, R.string.catalog_material_fertilizer_0611_name, liquidKeywords),
-        fertilizer("fertilizer_0612", R.string.catalog_fertilizer_brand_reeflowers, R.string.catalog_material_fertilizer_0612_name, liquidKeywords),
-        fertilizer("fertilizer_0613", R.string.catalog_fertilizer_brand_reeflowers, R.string.catalog_material_fertilizer_0613_name, liquidKeywords),
-        fertilizer("fertilizer_0614", R.string.catalog_fertilizer_brand_reeflowers, R.string.catalog_material_fertilizer_0614_name, liquidKeywords),
-        fertilizer("fertilizer_0615", R.string.catalog_fertilizer_brand_reeflowers, R.string.catalog_material_fertilizer_0615_name, liquidKeywords),
-        fertilizer("fertilizer_0616", R.string.catalog_fertilizer_brand_reeflowers, R.string.catalog_material_fertilizer_0616_name, liquidKeywords),
-        fertilizer("fertilizer_0617", R.string.catalog_fertilizer_brand_reeflowers, R.string.catalog_material_fertilizer_0617_name, liquidKeywords),
-        fertilizer("fertilizer_0618", R.string.catalog_fertilizer_brand_reeflowers, R.string.catalog_material_fertilizer_0618_name, liquidKeywords),
-        fertilizer("fertilizer_0619", R.string.catalog_fertilizer_brand_reeflowers, R.string.catalog_material_fertilizer_0619_name, liquidKeywords),
-        fertilizer("fertilizer_0620", R.string.catalog_fertilizer_brand_reeflowers, R.string.catalog_material_fertilizer_0620_name, liquidKeywords),
-        fertilizer("fertilizer_0621", R.string.catalog_fertilizer_brand_reeflowers, R.string.catalog_material_fertilizer_0621_name, liquidKeywords),
-        fertilizer("fertilizer_0622", R.string.catalog_fertilizer_brand_reeflowers, R.string.catalog_material_fertilizer_0622_name, liquidKeywords),
-        fertilizer("fertilizer_0623", R.string.catalog_fertilizer_brand_reeflowers, R.string.catalog_material_fertilizer_0623_name, liquidKeywords),
-        fertilizer("fertilizer_0624", R.string.catalog_fertilizer_brand_reeflowers, R.string.catalog_material_fertilizer_0624_name, liquidKeywords),
-        fertilizer("fertilizer_0625", R.string.catalog_fertilizer_brand_reeflowers, R.string.catalog_material_fertilizer_0625_name, liquidKeywords),
-        fertilizer("fertilizer_0626", R.string.catalog_fertilizer_brand_nixa, R.string.catalog_material_fertilizer_0626_name, liquidKeywords),
-        fertilizer("fertilizer_0627", R.string.catalog_fertilizer_brand_nixa, R.string.catalog_material_fertilizer_0627_name, liquidKeywords),
-        fertilizer("fertilizer_0628", R.string.catalog_fertilizer_brand_nixa, R.string.catalog_material_fertilizer_0628_name, liquidKeywords),
-        fertilizer("fertilizer_0629", R.string.catalog_fertilizer_brand_nixa, R.string.catalog_material_fertilizer_0629_name, liquidKeywords),
-        fertilizer("fertilizer_0630", R.string.catalog_fertilizer_brand_nixa, R.string.catalog_material_fertilizer_0630_name, liquidKeywords),
-        fertilizer("fertilizer_0631", R.string.catalog_fertilizer_brand_nixa, R.string.catalog_material_fertilizer_0631_name, liquidKeywords),
-        fertilizer("fertilizer_0632", R.string.catalog_fertilizer_brand_nixa, R.string.catalog_material_fertilizer_0632_name, liquidKeywords),
-        fertilizer("fertilizer_0633", R.string.catalog_fertilizer_brand_nixa, R.string.catalog_material_fertilizer_0633_name, liquidKeywords),
-        fertilizer("fertilizer_0634", R.string.catalog_fertilizer_brand_nixa, R.string.catalog_material_fertilizer_0634_name, liquidKeywords),
-        fertilizer("fertilizer_0635", R.string.catalog_fertilizer_brand_nixa, R.string.catalog_material_fertilizer_0635_name, liquidKeywords),
-        fertilizer("fertilizer_0636", R.string.catalog_fertilizer_brand_nixa, R.string.catalog_material_fertilizer_0636_name, liquidKeywords),
-        fertilizer("fertilizer_0637", R.string.catalog_fertilizer_brand_nixa, R.string.catalog_material_fertilizer_0637_name, liquidKeywords),
-        fertilizer("fertilizer_0638", R.string.catalog_fertilizer_brand_nixa, R.string.catalog_material_fertilizer_0638_name, liquidKeywords),
-        fertilizer("fertilizer_0639", R.string.catalog_fertilizer_brand_nixa, R.string.catalog_material_fertilizer_0639_name, liquidKeywords),
-        fertilizer("fertilizer_0640", R.string.catalog_fertilizer_brand_nixa, R.string.catalog_material_fertilizer_0640_name, liquidKeywords),
-        fertilizer("fertilizer_0641", R.string.catalog_fertilizer_brand_nixa, R.string.catalog_material_fertilizer_0641_name, baseKeywords),
-        fertilizer("fertilizer_0642", R.string.catalog_fertilizer_brand_nixa, R.string.catalog_material_fertilizer_0642_name, baseKeywords),
-        fertilizer("fertilizer_0643", R.string.catalog_fertilizer_brand_nixa, R.string.catalog_material_fertilizer_0643_name, baseKeywords),
-        fertilizer("fertilizer_0644", R.string.catalog_fertilizer_brand_nixa, R.string.catalog_material_fertilizer_0644_name, baseKeywords),
-        fertilizer("fertilizer_0645", R.string.catalog_fertilizer_brand_nixa, R.string.catalog_material_fertilizer_0645_name, baseKeywords),
-        fertilizer("fertilizer_0646", R.string.catalog_fertilizer_brand_creaqua, R.string.catalog_material_fertilizer_0646_name, liquidKeywords),
-        fertilizer("fertilizer_0647", R.string.catalog_fertilizer_brand_creaqua, R.string.catalog_material_fertilizer_0647_name, liquidKeywords),
-        fertilizer("fertilizer_0648", R.string.catalog_fertilizer_brand_creaqua, R.string.catalog_material_fertilizer_0648_name, liquidKeywords),
-        fertilizer("fertilizer_0649", R.string.catalog_fertilizer_brand_creaqua, R.string.catalog_material_fertilizer_0649_name, liquidKeywords),
-        fertilizer("fertilizer_0650", R.string.catalog_fertilizer_brand_creaqua, R.string.catalog_material_fertilizer_0650_name, liquidKeywords),
-        fertilizer("fertilizer_0651", R.string.catalog_fertilizer_brand_creaqua, R.string.catalog_material_fertilizer_0651_name, liquidKeywords),
-        fertilizer("fertilizer_0652", R.string.catalog_fertilizer_brand_creaqua, R.string.catalog_material_fertilizer_0652_name, liquidKeywords),
-        fertilizer("fertilizer_0653", R.string.catalog_fertilizer_brand_creaqua, R.string.catalog_material_fertilizer_0653_name, liquidKeywords),
-        fertilizer("fertilizer_0654", R.string.catalog_fertilizer_brand_creaqua, R.string.catalog_material_fertilizer_0654_name, liquidKeywords),
-        fertilizer("fertilizer_0655", R.string.catalog_fertilizer_brand_creaqua, R.string.catalog_material_fertilizer_0655_name, liquidKeywords),
-        fertilizer("fertilizer_0656", R.string.catalog_fertilizer_brand_creaqua, R.string.catalog_material_fertilizer_0656_name, liquidKeywords),
-        fertilizer("fertilizer_0657", R.string.catalog_fertilizer_brand_crystalpro, R.string.catalog_material_fertilizer_0657_name, liquidKeywords),
-        fertilizer("fertilizer_0658", R.string.catalog_fertilizer_brand_crystalpro, R.string.catalog_material_fertilizer_0658_name, liquidKeywords),
-        fertilizer("fertilizer_0659", R.string.catalog_fertilizer_brand_crystalpro, R.string.catalog_material_fertilizer_0659_name, liquidKeywords),
-        fertilizer("fertilizer_0660", R.string.catalog_fertilizer_brand_crystalpro, R.string.catalog_material_fertilizer_0660_name, liquidKeywords),
-        fertilizer("fertilizer_0661", R.string.catalog_fertilizer_brand_crystalpro, R.string.catalog_material_fertilizer_0661_name, liquidKeywords),
-        fertilizer("fertilizer_0662", R.string.catalog_fertilizer_brand_crystalpro, R.string.catalog_material_fertilizer_0662_name, liquidKeywords),
-        fertilizer("fertilizer_0663", R.string.catalog_fertilizer_brand_crystalpro, R.string.catalog_material_fertilizer_0663_name, liquidKeywords),
-        fertilizer("fertilizer_0664", R.string.catalog_fertilizer_brand_crystalpro, R.string.catalog_material_fertilizer_0664_name, liquidKeywords),
-        fertilizer("fertilizer_0665", R.string.catalog_fertilizer_brand_crystalpro, R.string.catalog_material_fertilizer_0665_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0666", R.string.catalog_fertilizer_brand_crystalpro, R.string.catalog_material_fertilizer_0666_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0667", R.string.catalog_fertilizer_brand_crystalpro, R.string.catalog_material_fertilizer_0667_name, liquidKeywords),
-        fertilizer("fertilizer_0668", R.string.catalog_fertilizer_brand_crystalpro, R.string.catalog_material_fertilizer_0668_name, liquidKeywords),
-        fertilizer("fertilizer_0669", R.string.catalog_fertilizer_brand_crystalpro, R.string.catalog_material_fertilizer_0669_name, liquidKeywords),
-        fertilizer("fertilizer_0670", R.string.catalog_fertilizer_brand_crystalpro, R.string.catalog_material_fertilizer_0670_name, liquidKeywords),
-        fertilizer("fertilizer_0671", R.string.catalog_fertilizer_brand_crystalpro, R.string.catalog_material_fertilizer_0671_name, liquidKeywords),
-        fertilizer("fertilizer_0672", R.string.catalog_fertilizer_brand_crystalpro, R.string.catalog_material_fertilizer_0672_name, liquidKeywords),
-        fertilizer("fertilizer_0673", R.string.catalog_fertilizer_brand_crystalpro, R.string.catalog_material_fertilizer_0673_name, liquidKeywords),
-        fertilizer("fertilizer_0674", R.string.catalog_fertilizer_brand_crystalpro, R.string.catalog_material_fertilizer_0674_name, liquidKeywords),
-        fertilizer("fertilizer_0675", R.string.catalog_fertilizer_brand_deep_fix, R.string.catalog_material_fertilizer_0675_name, liquidKeywords),
-        fertilizer("fertilizer_0676", R.string.catalog_fertilizer_brand_aquamins, R.string.catalog_material_fertilizer_0676_name, liquidKeywords),
-        fertilizer("fertilizer_0677", R.string.catalog_fertilizer_brand_aquamins, R.string.catalog_material_fertilizer_0677_name, liquidKeywords),
-        fertilizer("fertilizer_0678", R.string.catalog_fertilizer_brand_aquamins, R.string.catalog_material_fertilizer_0678_name, liquidKeywords),
-        fertilizer("fertilizer_0679", R.string.catalog_fertilizer_brand_aquamins, R.string.catalog_material_fertilizer_0679_name, liquidKeywords),
-        fertilizer("fertilizer_0680", R.string.catalog_fertilizer_brand_aquamins, R.string.catalog_material_fertilizer_0680_name, liquidKeywords),
-        fertilizer("fertilizer_0681", R.string.catalog_fertilizer_brand_aquamins, R.string.catalog_material_fertilizer_0681_name, liquidKeywords),
-        fertilizer("fertilizer_0682", R.string.catalog_fertilizer_brand_badem_akvaryum, R.string.catalog_material_fertilizer_0682_name, liquidKeywords),
-        fertilizer("fertilizer_0683", R.string.catalog_fertilizer_brand_badem_akvaryum, R.string.catalog_material_fertilizer_0683_name, liquidKeywords),
-        fertilizer("fertilizer_0684", R.string.catalog_fertilizer_brand_badem_akvaryum, R.string.catalog_material_fertilizer_0684_name, liquidKeywords),
-        fertilizer("fertilizer_0685", R.string.catalog_fertilizer_brand_badem_akvaryum, R.string.catalog_material_fertilizer_0685_name, liquidKeywords),
-        fertilizer("fertilizer_0686", R.string.catalog_fertilizer_brand_badem_akvaryum, R.string.catalog_material_fertilizer_0686_name, liquidKeywords),
-        fertilizer("fertilizer_0687", R.string.catalog_fertilizer_brand_badem_akvaryum, R.string.catalog_material_fertilizer_0687_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0688", R.string.catalog_fertilizer_brand_badem_akvaryum, R.string.catalog_material_fertilizer_0688_name, baseKeywords),
-        fertilizer("fertilizer_0689", R.string.catalog_fertilizer_brand_badem_akvaryum, R.string.catalog_material_fertilizer_0689_name, baseKeywords),
-        fertilizer("fertilizer_0690", R.string.catalog_fertilizer_brand_badem_akvaryum, R.string.catalog_material_fertilizer_0690_name, baseKeywords),
-        fertilizer("fertilizer_0691", R.string.catalog_fertilizer_brand_badem_akvaryum, R.string.catalog_material_fertilizer_0691_name, baseKeywords),
-        fertilizer("fertilizer_0692", R.string.catalog_fertilizer_brand_badem_akvaryum, R.string.catalog_material_fertilizer_0692_name, baseKeywords),
-        fertilizer("fertilizer_0693", R.string.catalog_fertilizer_brand_badem_akvaryum, R.string.catalog_material_fertilizer_0693_name, baseKeywords),
-        fertilizer("fertilizer_0694", R.string.catalog_fertilizer_brand_badem_akvaryum, R.string.catalog_material_fertilizer_0694_name, baseKeywords),
-        fertilizer("fertilizer_0695", R.string.catalog_fertilizer_brand_sakura_akvaryum, R.string.catalog_material_fertilizer_0695_name, liquidKeywords),
-        fertilizer("fertilizer_0696", R.string.catalog_fertilizer_brand_sakura_akvaryum, R.string.catalog_material_fertilizer_0696_name, liquidKeywords),
-        fertilizer("fertilizer_0697", R.string.catalog_fertilizer_brand_sakura_akvaryum, R.string.catalog_material_fertilizer_0697_name, liquidKeywords),
-        fertilizer("fertilizer_0698", R.string.catalog_fertilizer_brand_sakura_akvaryum, R.string.catalog_material_fertilizer_0698_name, liquidKeywords),
-        fertilizer("fertilizer_0699", R.string.catalog_fertilizer_brand_sakura_akvaryum, R.string.catalog_material_fertilizer_0699_name, carbonLiquidKeywords),
-        fertilizer("fertilizer_0700", R.string.catalog_fertilizer_brand_sakura_akvaryum, R.string.catalog_material_fertilizer_0700_name, baseKeywords),
-        fertilizer("fertilizer_0701", R.string.catalog_fertilizer_brand_sakura_akvaryum, R.string.catalog_material_fertilizer_0701_name, baseKeywords),
-        fertilizer("fertilizer_0702", R.string.catalog_fertilizer_brand_lab_formula, R.string.catalog_material_fertilizer_0702_name, liquidKeywords),
-        fertilizer("fertilizer_0703", R.string.catalog_fertilizer_brand_ocean_nutrition, R.string.catalog_material_fertilizer_0703_name, baseKeywords),
-        fertilizer("fertilizer_0704", R.string.catalog_brand_jbl, R.string.catalog_material_fertilizer_0704_name, baseKeywords)
-    )
-
-    private fun fertilizer(
-        id: String,
-        brandRes: Int,
-        nameRes: Int,
-        keywordRes: List<Int>
-    ): AquariumMaterialDefinition = AquariumMaterialDefinition(
-        id = id,
-        brandRes = brandRes,
-        nameRes = nameRes,
-        categoryKey = MaterialCategoryKey.FERTILIZER,
-        categoryTitleRes = R.string.catalog_material_category_fertilizer_title,
-        keywordRes = keywordRes
-    )
+    val definitions: List<AquariumMaterialDefinition> =
+        fertilizerDefinitions0001To0088 +
+            fertilizerDefinitions0089To0176 +
+            fertilizerDefinitions0177To0264 +
+            fertilizerDefinitions0265To0352 +
+            fertilizerDefinitions0353To0440 +
+            fertilizerDefinitions0441To0528 +
+            fertilizerDefinitions0529To0616 +
+            fertilizerDefinitions0617To0704
 }
+
+private fun fertilizer(
+    id: String,
+    brandRes: Int,
+    nameRes: Int,
+    keywordRes: List<Int>
+): AquariumMaterialDefinition = AquariumMaterialDefinition(
+    id = id,
+    brandRes = brandRes,
+    nameRes = nameRes,
+    categoryKey = MaterialCategoryKey.FERTILIZER,
+    categoryTitleRes = R.string.catalog_material_category_fertilizer_title,
+    keywordRes = keywordRes
+)

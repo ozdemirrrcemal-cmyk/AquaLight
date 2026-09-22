@@ -93,7 +93,8 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
 
         _binding = FragmentMaterialPickerBinding.bind(view)
 
-        setupMaterialList()
+        materialAdapter = createMaterialAdapter()
+        configureMaterialRecyclerView()
         setupHeader()
         setupClickListeners()
         setupCustomMaterialResultListener()
@@ -236,25 +237,31 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
         )
     }
 
-    private fun setupMaterialList() {
-        materialAdapter = MaterialPickerAdapter(
+    private fun createMaterialAdapter(): MaterialPickerAdapter {
+        return MaterialPickerAdapter(
             categoryTitle = categoryTitle,
-            onProductClick = { productId ->
-                toggleSelection(productId)
-                materialAdapter.updateSelection(
-                    productId = productId,
-                    isSelected = selectedProductIds.contains(productId)
-                )
-                updateSelectedCount()
-            },
+            onProductClick = ::handleMaterialClick,
             onAddClick = ::showNewMaterialSheet
         )
+    }
 
+    private fun configureMaterialRecyclerView() {
         binding.materialRecyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = materialAdapter
             setHasFixedSize(true)
         }
+    }
+
+    private fun handleMaterialClick(
+        productId: String
+    ) {
+        toggleSelection(productId)
+        materialAdapter.updateSelection(
+            productId = productId,
+            isSelected = selectedProductIds.contains(productId)
+        )
+        updateSelectedCount()
     }
 
     private fun setupClickListeners() {
