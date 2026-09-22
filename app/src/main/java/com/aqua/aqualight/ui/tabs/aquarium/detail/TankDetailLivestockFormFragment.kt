@@ -202,15 +202,18 @@ class TankDetailLivestockFormFragment :
         livestock: AquariumLivestock
     ) {
         selectedCatalogEntryId = livestock.catalogEntryId.trim()
-        selectedCatalogEntry = LivestockCatalog.resolveSavedSelection(
+        selectedCatalogEntry = LivestockCatalog.findById(
             context = requireContext(),
-            catalogEntryId = selectedCatalogEntryId,
-            name = livestock.name,
-            category = livestock.category
+            entryId = selectedCatalogEntryId
         )
 
+        if (selectedCatalogEntryId.isNotBlank() && selectedCatalogEntry == null) {
+            throw IllegalStateException(
+                "Saved livestock references an unavailable catalog entry: $selectedCatalogEntryId"
+            )
+        }
+
         selectedCatalogEntry?.let { entry ->
-            selectedCatalogEntryId = entry.id
             selectedCategory = entry.category
         } ?: run {
             selectedCategory = livestock.category.takeIf { category ->
