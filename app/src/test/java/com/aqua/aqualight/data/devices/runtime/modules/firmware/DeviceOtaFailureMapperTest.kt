@@ -145,20 +145,6 @@ class DeviceOtaFailureMapperTest {
     }
 
     @Test
-    fun `legacy snapshot without failure code remains supported`() {
-        val failure = DeviceOtaFailureMapper.snapshot(
-            failedSnapshot(
-                field = DeviceFirmwareRuntimeContract.ErrorField.SIZE,
-                message = "downloaded byte count does not match manifest size"
-            )
-        )
-
-        assertEquals(DeviceOtaFailureReason.DOWNLOAD_SIZE_MISMATCH, failure.reason)
-        assertTrue(failure.recoverable)
-        assertEquals("", failure.code)
-    }
-
-    @Test
     fun `firmware invalid wifi value maps to device network guidance`() {
         val failure = DeviceOtaFailureMapper.command(
             firmwareError(
@@ -178,7 +164,8 @@ class DeviceOtaFailureMapperTest {
         val failure = DeviceOtaFailureMapper.snapshot(
             failedSnapshot(
                 field = DeviceFirmwareRuntimeContract.ErrorField.WIFI,
-                message = "Wi-Fi disconnected while preparing secure OTA"
+                message = "Wi-Fi disconnected while preparing secure OTA",
+                failureCode = DeviceFirmwareRuntimeContract.FailureCode.DEVICE_NETWORK_UNAVAILABLE
             )
         )
 
@@ -233,7 +220,8 @@ class DeviceOtaFailureMapperTest {
         val failure = DeviceOtaFailureMapper.snapshot(
             failedSnapshot(
                 field = DeviceFirmwareRuntimeContract.ErrorField.TLS,
-                message = "secure system time was not synchronized before OTA"
+                message = "secure system time was not synchronized before OTA",
+                failureCode = DeviceFirmwareRuntimeContract.FailureCode.SECURE_TIME_NOT_READY
             )
         )
 
@@ -246,7 +234,8 @@ class DeviceOtaFailureMapperTest {
         val failure = DeviceOtaFailureMapper.snapshot(
             failedSnapshot(
                 field = DeviceFirmwareRuntimeContract.ErrorField.TLS,
-                message = "OTA TLS root CA is required in production firmware"
+                message = "OTA TLS root CA is required in production firmware",
+                failureCode = DeviceFirmwareRuntimeContract.FailureCode.TLS_TRUST_UNAVAILABLE
             )
         )
 
@@ -287,7 +276,8 @@ class DeviceOtaFailureMapperTest {
         val failure = DeviceOtaFailureMapper.snapshot(
             failedSnapshot(
                 field = DeviceFirmwareRuntimeContract.ErrorField.SHA256,
-                message = "downloaded firmware SHA256 does not match manifest"
+                message = "downloaded firmware SHA256 does not match manifest",
+                failureCode = DeviceFirmwareRuntimeContract.FailureCode.INTEGRITY_CHECK_FAILED
             )
         )
 
@@ -300,7 +290,8 @@ class DeviceOtaFailureMapperTest {
         val failure = DeviceOtaFailureMapper.snapshot(
             failedSnapshot(
                 field = DeviceFirmwareRuntimeContract.ErrorField.SAFE_MODE_RESTORE,
-                message = "exact pre-OTA runtime restore failed"
+                message = "exact pre-OTA runtime restore failed",
+                failureCode = DeviceFirmwareRuntimeContract.FailureCode.SAFE_MODE_RESTORE_FAILED
             )
         )
 
@@ -314,7 +305,8 @@ class DeviceOtaFailureMapperTest {
             failedSnapshot(
                 field = DeviceFirmwareRuntimeContract.ErrorField.HTTP_STATUS,
                 message = "OTA download failed with HTTP status 404",
-                httpStatus = 404
+                httpStatus = 404,
+                failureCode = DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_HTTP_STATUS
             )
         )
 
@@ -329,7 +321,8 @@ class DeviceOtaFailureMapperTest {
             failedSnapshot(
                 field = DeviceFirmwareRuntimeContract.ErrorField.HTTP_STATUS,
                 message = "OTA download failed with HTTP status -1",
-                httpStatus = -1
+                httpStatus = -1,
+                failureCode = DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_HTTP_STATUS
             )
         )
 
@@ -344,7 +337,8 @@ class DeviceOtaFailureMapperTest {
             failedSnapshot(
                 field = DeviceFirmwareRuntimeContract.ErrorField.HTTP_STATUS,
                 message = "OTA download failed with HTTP status -11",
-                httpStatus = -11
+                httpStatus = -11,
+                failureCode = DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_HTTP_STATUS
             )
         )
 
@@ -358,7 +352,8 @@ class DeviceOtaFailureMapperTest {
             failedSnapshot(
                 field = DeviceFirmwareRuntimeContract.ErrorField.HTTP_STATUS,
                 message = "OTA download failed with HTTP status -7",
-                httpStatus = -7
+                httpStatus = -7,
+                failureCode = DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_HTTP_STATUS
             )
         )
 
@@ -372,7 +367,8 @@ class DeviceOtaFailureMapperTest {
             failedSnapshot(
                 field = DeviceFirmwareRuntimeContract.ErrorField.HTTP_STATUS,
                 message = "OTA download failed with HTTP status 403",
-                httpStatus = 403
+                httpStatus = 403,
+                failureCode = DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_HTTP_STATUS
             )
         )
 
@@ -386,7 +382,8 @@ class DeviceOtaFailureMapperTest {
             failedSnapshot(
                 field = DeviceFirmwareRuntimeContract.ErrorField.HTTP_STATUS,
                 message = "OTA download failed with HTTP status 503",
-                httpStatus = 503
+                httpStatus = 503,
+                failureCode = DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_HTTP_STATUS
             )
         )
 
@@ -399,7 +396,8 @@ class DeviceOtaFailureMapperTest {
         val failure = DeviceOtaFailureMapper.snapshot(
             failedSnapshot(
                 field = DeviceFirmwareRuntimeContract.ErrorField.STREAM,
-                message = "OTA stream timed out or closed before completion"
+                message = "OTA stream timed out or closed before completion",
+                failureCode = DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_STREAM_INTERRUPTED
             )
         )
 
@@ -412,7 +410,8 @@ class DeviceOtaFailureMapperTest {
         val failure = DeviceOtaFailureMapper.snapshot(
             failedSnapshot(
                 field = DeviceFirmwareRuntimeContract.ErrorField.SIZE,
-                message = "downloaded byte count does not match manifest size"
+                message = "downloaded byte count does not match manifest size",
+                failureCode = DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_SIZE_MISMATCH
             )
         )
 
@@ -425,7 +424,8 @@ class DeviceOtaFailureMapperTest {
         val failure = DeviceOtaFailureMapper.snapshot(
             failedSnapshot(
                 field = DeviceFirmwareRuntimeContract.ErrorField.SIZE,
-                message = "HTTP content length does not match manifest size"
+                message = "HTTP content length does not match manifest size",
+                failureCode = DeviceFirmwareRuntimeContract.FailureCode.RELEASE_SIZE_MISMATCH
             )
         )
 
@@ -453,7 +453,7 @@ class DeviceOtaFailureMapperTest {
         field: String,
         message: String,
         httpStatus: Int = 0,
-        failureCode: String = ""
+        failureCode: String
     ) = DeviceFirmwareOtaSnapshot(
         phase = DeviceFirmwareOtaPhase.FAILED,
         phaseRaw = DeviceFirmwareOtaPhase.FAILED.wireValue,
