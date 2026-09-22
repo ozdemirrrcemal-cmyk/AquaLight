@@ -10,6 +10,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
@@ -17,6 +18,7 @@ import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentTankDetailDevicesBinding
 import com.aqua.aqualight.ui.common.devicepresence.DeviceAccessFeedbackPresenter
 import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
+import com.aqua.aqualight.ui.navigation.AppRouteNavigator
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankAssignedDeviceItem
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankAssignedDevicesAdapter
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesEvent
@@ -137,6 +139,13 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
                 launch {
                     viewModel.events.collect { event ->
                         when (event) {
+                            is TankDetailDevicesEvent.OpenFirmwareUpdate -> {
+                                AppRouteNavigator.openDeviceFirmwareUpdate(
+                                    navController = findNavController(),
+                                    deviceUid = event.deviceUid
+                                )
+                            }
+
                             is TankDetailDevicesEvent.OpenDeviceRoute -> {
                                 var committed = false
                                 try {
