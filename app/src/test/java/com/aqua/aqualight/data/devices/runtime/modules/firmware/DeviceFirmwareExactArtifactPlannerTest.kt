@@ -109,6 +109,60 @@ class DeviceFirmwareExactArtifactPlannerTest {
     }
 
     @Test
+    fun `newer target requiring unsupported domain contract is rejected before OTA plan`() {
+        val exact = artifact()
+        val incompatible = exact.copy(
+            contracts = exact.contracts.copy(
+                requiredDomains = listOf("aqualight.dosing.v2")
+            )
+        )
+
+        val failure = planner.evaluateUpdate(
+            snapshot(),
+            manifest(artifacts = listOf(incompatible))
+        ).exceptionOrNull()
+
+        assertTrue(failure is DeviceFirmwareApplicationUpdateRequiredException)
+    }
+
+    @Test
+    fun `same or older target does not require app support because it is not installable`() {
+        val exact = artifact().copy(
+            firmware = artifact().firmware.copy(version = "1.0.0"),
+            contracts = artifact().contracts.copy(
+                requiredDomains = listOf("aqualight.dosing.v2")
+            )
+        )
+        val sameVersionManifest = manifest(
+            artifacts = listOf(exact)
+        ).copy(version = "1.0.0", tag = "dosing_dose_pro_2-v1.0.0")
+
+        val availability = planner.evaluateUpdate(
+            snapshot(),
+            sameVersionManifest
+        ).getOrThrow()
+
+        assertTrue(availability is DeviceFirmwareAvailability.UpToDate)
+    }
+
+    @Test
+    fun `required update policy is carried into prepared plan and release content`() {
+        val exact = artifact().copy(
+            updatePolicy = com.aqua.aqualight.application.devices.DeviceFirmwareUpdatePolicy(
+                com.aqua.aqualight.application.devices.DeviceFirmwareUpdatePolicyLevel.REQUIRED
+            )
+        )
+
+        val plan = planner.planUpdate(
+            snapshot(),
+            manifest(artifacts = listOf(exact))
+        ).getOrThrow()
+
+        assertTrue(plan.updatePolicy.isRequired)
+        assertTrue(plan.releaseContent.mandatory)
+    }
+
+    @Test
     fun `same version resolves up to date while preserving exact release items`() {
         val availability = planner.evaluateUpdate(
             snapshot().copy(firmwareVersion = "2.0.0"),
