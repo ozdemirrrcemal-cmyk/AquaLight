@@ -22,8 +22,11 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumIdGenerator
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
 import com.aqua.aqualight.application.aquarium.AquariumLivestockIdentity
+import com.aqua.aqualight.application.aquarium.LivestockCatalogItem
 import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentTankLivestockFormBinding
+import com.aqua.aqualight.i18n.AppLanguageController
 import com.aqua.aqualight.i18n.DateOnly
 import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.ui.common.dialog.AppDatePickerDialogFragment
@@ -32,8 +35,6 @@ import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.text.setTextSizeResource
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
-import com.aqua.aqualight.data.aquarium.catalog.livestock.LivestockCatalog
-import com.aqua.aqualight.data.aquarium.catalog.livestock.LivestockCatalogEntry
 import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.LivestockCategories
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.TankDetailTabArgs
 import java.util.Calendar
@@ -48,11 +49,14 @@ class TankDetailLivestockFormFragment :
     private val binding get() = _binding!!
 
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
+    private val livestockCatalogOperations by lazy(LazyThreadSafetyMode.NONE) {
+        requireContext().requireAppContainer().livestockCatalogOperations
+    }
 
     private var tankId: Long = 0L
     private var editingLivestockId: Long = 0L
     private var selectedCatalogEntryId: String = ""
-    private var selectedCatalogEntry: LivestockCatalogEntry? = null
+    private var selectedCatalogEntry: LivestockCatalogItem? = null
     private var openedFromPicker: Boolean = false
     private var selectedCategory: String = LivestockCategories.FISH
     private var selectedQuantity: Int = 1
@@ -143,10 +147,7 @@ class TankDetailLivestockFormFragment :
     }
 
     private fun initializeAddSelection() {
-        selectedCatalogEntry = LivestockCatalog.findById(
-            context = requireContext(),
-            entryId = selectedCatalogEntryId
-        )
+        selectedCatalogEntry = livestockCatalogOperations.findById(selectedCatalogEntryId)
 
         if (
             selectedCatalogEntryId.isNotBlank() &&
@@ -161,7 +162,7 @@ class TankDetailLivestockFormFragment :
 
         selectedCatalogEntry?.let { entry ->
             selectedCategory = entry.category
-            binding.etLifeName.setText(entry.displayName(requireContext()))
+            binding.etLifeName.setText(entry.displayName(AppLanguageController.current()))
         } ?: run {
             binding.etLifeName.setText(args.presetName.trim())
         }
@@ -222,10 +223,7 @@ class TankDetailLivestockFormFragment :
         selectedCatalogEntry = if (isCustomIdentity) {
             null
         } else {
-            LivestockCatalog.findById(
-                context = requireContext(),
-                entryId = selectedCatalogEntryId
-            )
+            livestockCatalogOperations.findById(selectedCatalogEntryId)
         }
 
         if (!isCustomIdentity && selectedCatalogEntry == null) {
@@ -250,7 +248,7 @@ class TankDetailLivestockFormFragment :
             ?: DateOnly.todayEpochDay()
 
         binding.etLifeName.setText(
-            selectedCatalogEntry?.displayName(requireContext()) ?: livestock.name
+            selectedCatalogEntry?.displayName(AppLanguageController.current()) ?: livestock.name
         )
         binding.etLifeNote.setText(livestock.note)
 
