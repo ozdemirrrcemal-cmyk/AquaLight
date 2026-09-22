@@ -126,8 +126,12 @@ class DeviceFirmwareOtaContractParserTest {
         val failedWithoutRestoreIdentity = otaSnapshot()
             .put("phase", "failed")
             .put("restartRequired", true)
+            .put(
+                "failureCode",
+                DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_STREAM_INTERRUPTED
+            )
             .put("lastError", "download failed")
-            .put("lastErrorField", "stream")
+            .put("lastErrorField", DeviceFirmwareRuntimeContract.ErrorField.STREAM)
         val restoreWithoutRestart = otaSnapshot()
             .put("phase", "failed")
             .put(
