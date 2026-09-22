@@ -603,6 +603,7 @@ class AquariumTankDataStoreManager(
     private fun SavedAquariumLivestock.toStoredLivestockStrict(): StoredLivestock {
         return StoredLivestock.newBuilder()
             .setId(id)
+            .setCatalogEntryId(catalogEntryId.trim())
             .setName(name.trim())
             .setCategory(category.trim())
             .setQuantity(quantity)
@@ -654,6 +655,7 @@ class AquariumTankDataStoreManager(
             livestock = livestockList.map { livestock ->
                 SavedAquariumLivestock(
                     id = livestock.id,
+                    catalogEntryId = livestock.catalogEntryId,
                     name = livestock.name,
                     category = livestock.category,
                     quantity = livestock.quantity,
