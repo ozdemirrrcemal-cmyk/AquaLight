@@ -158,6 +158,11 @@ object TankStoreRules {
             if (!ids.add(livestock.id)) {
                 violation("Duplicate livestock id ${livestock.id} in tank ${tank.id}.")
             }
+            requireCanonicalOptionalText(
+                "livestock.catalogEntryId",
+                livestock.catalogEntryId,
+                MAX_PRODUCT_ID_CHARS
+            )
             requireCanonicalRequiredText(
                 "livestock.name",
                 livestock.name,
