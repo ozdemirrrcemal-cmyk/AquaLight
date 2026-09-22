@@ -323,6 +323,10 @@
             android:name="openedFromPicker"
             app:argType="boolean"
             android:defaultValue="false" />
+        <argument
+            android:name="presetName"
+            app:argType="string"
+            android:defaultValue="" />
     </fragment>
 
     <fragment
