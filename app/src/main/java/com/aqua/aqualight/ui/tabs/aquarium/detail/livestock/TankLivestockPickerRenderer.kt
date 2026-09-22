@@ -37,10 +37,6 @@ internal class TankLivestockPickerRenderer(
             )
         }
 
-        binding.btnNewLivestock.text = context.getString(
-            R.string.livestock_picker_new_category,
-            context.getString(LivestockCategories.labelRes(selectedCategory))
-        )
     }
 
     fun renderList(
@@ -52,7 +48,7 @@ internal class TankLivestockPickerRenderer(
     ) {
         if (catalogLoadFailed) {
             adapter.submitList(emptyList())
-            binding.rvLivestock.isVisible = false
+            binding.rvLivestock.isVisible = true
             binding.tvEmptyState.isVisible = true
             binding.tvEmptyState.text = context.getString(
                 R.string.livestock_picker_catalog_unavailable
@@ -77,7 +73,7 @@ internal class TankLivestockPickerRenderer(
             }
         )
 
-        binding.rvLivestock.isVisible = filteredEntries.isNotEmpty()
+        binding.rvLivestock.isVisible = true
         binding.tvEmptyState.isVisible = filteredEntries.isEmpty()
         binding.tvEmptyState.text = context.getString(R.string.livestock_picker_empty)
         binding.tvResultCount.text = context.resources.getQuantityString(
