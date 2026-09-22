@@ -313,6 +313,7 @@ class DeviceOtaCommercialHardeningTest {
                 .put("wsSchema", contracts.wsSchema)
                 .put("wsProtocolVersion", contracts.wsProtocolVersion)
                 .put("deviceApiVersion", contracts.deviceApiVersion)
+                .put("maintenanceSchema", contracts.maintenanceSchema)
                 .put("requiredDomains", JSONArray(contracts.requiredDomains))
                 .put("optionalDomains", JSONArray(contracts.optionalDomains))
         )
