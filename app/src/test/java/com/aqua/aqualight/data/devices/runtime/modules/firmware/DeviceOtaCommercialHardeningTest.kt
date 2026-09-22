@@ -209,6 +209,14 @@ class DeviceOtaCommercialHardeningTest {
                 model = "dose_pro_2",
                 hardwareRevision = "2.0"
             ),
+            contracts = DeviceFirmwareTargetContracts(
+                wsSchema = "aql.ws.v1",
+                wsProtocolVersion = 1,
+                deviceApiVersion = 1,
+                requiredDomains = listOf("aqualight.dosing.v1"),
+                optionalDomains = emptyList()
+            ),
+            updatePolicy = com.aqua.aqualight.application.devices.DeviceFirmwareUpdatePolicy.RECOMMENDED,
             firmware = DeviceFirmwareAsset(
                 version = TARGET_VERSION,
                 filename = filename,
@@ -297,6 +305,19 @@ class DeviceOtaCommercialHardeningTest {
                 .put("line", compatibility.line)
                 .put("model", compatibility.model)
                 .put("hardwareRevision", compatibility.hardwareRevision)
+        )
+        .put(
+            "contracts",
+            JSONObject()
+                .put("wsSchema", contracts.wsSchema)
+                .put("wsProtocolVersion", contracts.wsProtocolVersion)
+                .put("deviceApiVersion", contracts.deviceApiVersion)
+                .put("requiredDomains", JSONArray(contracts.requiredDomains))
+                .put("optionalDomains", JSONArray(contracts.optionalDomains))
+        )
+        .put(
+            "updatePolicy",
+            JSONObject().put("level", updatePolicy.level.name)
         )
         .put(
             "firmware",
