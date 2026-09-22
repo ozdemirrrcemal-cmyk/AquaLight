@@ -85,9 +85,7 @@ internal class DeviceOtaCoordinator(
         runtimeTypedEvents?.let { events ->
             scope.launch { events.collect(::processTypedEvent) }
         }
-        snapshotUpdates?.let { updates ->
-            scope.launch { updates.collect(::processSnapshotUpdates) }
-        }
+        // OTA authority is the authenticated maintenance plane, not domain snapshot publication.
         transactionStore.activeTransactions().forEach(::restoreTransaction)
     }
 
@@ -127,25 +125,20 @@ internal class DeviceOtaCoordinator(
         manifestUrl: String,
         applyNow: Boolean
     ): DeviceOtaState {
-        val snapshot = requireNotNull(initial) { "Device snapshot is not available." }
-        require(snapshot.hasValidatedRuntimeMetadata) {
-            "OTA requires current authenticated runtime metadata."
-        }
-        if (!snapshot.capabilities.ota) {
-            return DeviceOtaState.Unsupported(deviceUid.value)
-        }
+        requireNotNull(initial) { "Device snapshot is not available." }
         connectRuntime(deviceUid).getOrThrow()
-        val current = requireNotNull(snapshotProvider(deviceUid)) {
-            "Device snapshot disappeared during OTA availability check."
-        }
-        require(current.runtimeMetadataGeneration == snapshot.runtimeMetadataGeneration) {
-            "Runtime metadata changed during OTA availability check."
-        }
         val updater = requireNotNull(updaterProvider()) {
             "Firmware update runtime is not configured."
         }
-        val availability = updater.fetchAndEvaluateUpdate(
-            snapshot = current,
+        val maintenance = when (val status = updater.requestFirmwareStatus(deviceUid)) {
+            is DeviceRuntimeCommandOutcome.Success ->
+                status.value.toMaintenanceIdentity(deviceUid)
+            is DeviceRuntimeCommandOutcome.UnsupportedByDevice ->
+                return DeviceOtaState.Unsupported(deviceUid.value)
+            else -> throw DeviceFirmwareMaintenanceStatusException(status)
+        }
+        val availability = updater.fetchAndEvaluateMaintenanceUpdate(
+            identity = maintenance,
             manifestUrl = manifestUrl,
             applyNow = applyNow
         ).getOrThrow()
@@ -212,7 +205,7 @@ internal class DeviceOtaCoordinator(
         onFailure = { error -> handleStartPreparationFailure(deviceUid, error) }
     )
 
-    private fun prepareStartContext(
+    private suspend fun prepareStartContext(
         deviceUid: DeviceUid,
         plan: PreparedDeviceFirmwareUpdate
     ): StartContext {
@@ -233,21 +226,29 @@ internal class DeviceOtaCoordinator(
                 )
             )
         }
-        val snapshot = snapshotProvider(deviceUid) ?: rejectStart(
-            DeviceOtaFailureMapper.connection("Device snapshot is not available.")
-        )
-        DeviceOtaValidator.planAgainstSnapshot(selected.dataPlan, snapshot)?.let { error ->
-            rejectStart(
-                failure = DeviceOtaFailureMapper.checkFailure(error),
-                publishFailure = true
-            )
-        }
         val updater = updaterProvider() ?: rejectStart(
             DeviceOtaFailureMapper.internal("Firmware update runtime is not configured.")
         )
         connectRuntime(deviceUid).exceptionOrNull()?.let { error ->
             rejectStart(
                 failure = DeviceOtaFailureMapper.connection(error.message.orEmpty()),
+                publishFailure = true
+            )
+        }
+        val maintenance = when (val status = updater.requestFirmwareStatus(deviceUid)) {
+            is DeviceRuntimeCommandOutcome.Success ->
+                status.value.toMaintenanceIdentity(deviceUid)
+            else -> rejectStart(
+                failure = DeviceOtaFailureMapper.command(status),
+                publishFailure = true
+            )
+        }
+        DeviceOtaValidator.planAgainstMaintenanceIdentity(
+            selected.dataPlan,
+            maintenance
+        )?.let { error ->
+            rejectStart(
+                failure = DeviceOtaFailureMapper.checkFailure(error),
                 publishFailure = true
             )
         }
@@ -461,12 +462,6 @@ internal class DeviceOtaCoordinator(
         }
     }
 
-    private fun processSnapshotUpdates(snapshots: Map<DeviceUid, DeviceSnapshot>) {
-        pendingVersionVerification.keys.toList().forEach { deviceUid ->
-            snapshots[deviceUid]?.let { snapshot -> verifyInstalledFirmware(deviceUid, snapshot) }
-        }
-    }
-
     private fun applySnapshot(
         deviceUid: DeviceUid,
         snapshot: DeviceFirmwareOtaSnapshot,
@@ -501,7 +496,7 @@ internal class DeviceOtaCoordinator(
             ) {
                 clearPlanState(deviceUid)
             }
-            verifyCurrentFirmwareIfReady(deviceUid, snapshot, activeSelection)
+            // Post-restart success is proven only by authenticated firmware.status.get.
         }
         return null
     }
@@ -559,41 +554,11 @@ internal class DeviceOtaCoordinator(
         }
     }
 
-    private fun verifyCurrentFirmwareIfReady(
-        deviceUid: DeviceUid,
-        snapshot: DeviceFirmwareOtaSnapshot,
-        selected: SelectedPlan?
-    ) {
-        if (
-            snapshot.phase == DeviceFirmwareOtaPhase.SUCCEEDED &&
-            snapshot.restartRequired &&
-            selected != null
-        ) {
-            snapshotProvider(deviceUid)?.let { current ->
-                verifyInstalledFirmware(deviceUid, current)
-            }
-        }
-    }
-
     private fun recoverAfterAuthentication(deviceUid: DeviceUid) {
         recoveryJobs.remove(deviceUid)?.cancel()
-        pendingVersionVerification[deviceUid]?.let {
-            snapshotProvider(deviceUid)?.let { snapshot ->
-                verifyInstalledFirmware(deviceUid, snapshot)
-            }
+        if (pendingVersionVerification.containsKey(deviceUid)) {
+            scope.launch { verifyInstalledFirmwareFromMaintenance(deviceUid) }
             return
-        }
-        selectedPlans[deviceUid]?.let { selected ->
-            snapshotProvider(deviceUid)?.takeIf { snapshot ->
-                snapshot.hasValidatedRuntimeMetadata &&
-                    snapshot.runtimeMetadataGeneration !=
-                    selected.dataPlan.runtimeMetadataGeneration &&
-                    snapshot.matchesProductIdentity(selected.dataPlan) &&
-                    snapshot.firmwareVersion == selected.dataPlan.targetVersion
-            }?.let { snapshot ->
-                completeInstalledFirmwareVerification(deviceUid, selected)
-                return
-            }
         }
         if (stateFlow(deviceUid).value.requiresOtaStatusRecovery) {
             scope.launch { requestStatus(deviceUid) }
@@ -660,22 +625,36 @@ internal class DeviceOtaCoordinator(
         }
     }
 
-    private fun verifyInstalledFirmware(deviceUid: DeviceUid, snapshot: DeviceSnapshot) {
-        val selected = pendingVersionVerification[deviceUid]
-        if (
-            selected != null &&
-            snapshot.hasValidatedRuntimeMetadata &&
-            snapshot.runtimeMetadataGeneration != selected.dataPlan.runtimeMetadataGeneration
-        ) {
-            when {
-                !snapshot.matchesProductIdentity(selected.dataPlan) ->
-                    publishUnexpectedFirmware(deviceUid, selected, snapshot.firmwareVersion)
-                snapshot.firmwareVersion == selected.dataPlan.targetVersion ->
-                    completeInstalledFirmwareVerification(deviceUid, selected)
-                snapshot.firmwareVersion == selected.dataPlan.currentVersion ->
-                    completeRollbackVerification(deviceUid, selected)
-                else -> publishUnexpectedFirmware(deviceUid, selected, snapshot.firmwareVersion)
+    private suspend fun verifyInstalledFirmwareFromMaintenance(deviceUid: DeviceUid) {
+        val selected = pendingVersionVerification[deviceUid] ?: return
+        val updater = updaterProvider() ?: return scheduleRecovery(deviceUid)
+        when (val status = updater.requestFirmwareStatus(deviceUid)) {
+            is DeviceRuntimeCommandOutcome.Success -> {
+                val maintenance = runCatching {
+                    status.value.toMaintenanceIdentity(deviceUid)
+                }.getOrElse {
+                    scheduleRecovery(deviceUid)
+                    return
+                }
+                when {
+                    !maintenance.matchesProductIdentity(selected.dataPlan) ->
+                        publishUnexpectedFirmware(
+                            deviceUid,
+                            selected,
+                            maintenance.currentVersion
+                        )
+                    maintenance.currentVersion == selected.dataPlan.targetVersion ->
+                        completeInstalledFirmwareVerification(deviceUid, selected)
+                    maintenance.currentVersion == selected.dataPlan.currentVersion ->
+                        completeRollbackVerification(deviceUid, selected)
+                    else -> publishUnexpectedFirmware(
+                        deviceUid,
+                        selected,
+                        maintenance.currentVersion
+                    )
+                }
             }
+            else -> scheduleRecovery(deviceUid)
         }
     }
 
@@ -994,11 +973,13 @@ private val DeviceOtaState.progressPermilleOrZero: Int
         else -> 0
     }
 
-private fun DeviceSnapshot.matchesProductIdentity(plan: DeviceFirmwareUpdatePlan): Boolean =
-    product.productKey == plan.productKey &&
-        product.productId == plan.productId &&
-        product.model == plan.model &&
-        product.hardwareRevision == plan.hardwareRevision
+private fun DeviceFirmwareMaintenanceIdentity.matchesProductIdentity(
+    plan: DeviceFirmwareUpdatePlan
+): Boolean =
+    productKey == plan.productKey &&
+        productId == plan.productId &&
+        model == plan.model &&
+        hardwareRevision == plan.hardwareRevision
 
 private fun DeviceRuntimeCommandOutcome<*>.mayHaveStartedOta(): Boolean = when (this) {
     is DeviceRuntimeCommandOutcome.Timeout -> true
