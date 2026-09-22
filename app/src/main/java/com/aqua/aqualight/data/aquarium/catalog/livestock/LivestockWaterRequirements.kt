@@ -38,16 +38,23 @@ internal object LivestockWaterRequirementParser {
             ?: return null
 
         val values = numberPattern.findAll(normalized)
-            .map { match ->
+            .mapNotNull { match ->
                 match.value.replace(',', '.').toDoubleOrNull()
             }
-            .filterNotNull()
             .toList()
 
-        if (values.isEmpty()) {
-            return null
+        return values.takeIf(List<Double>::isNotEmpty)?.let { parsedValues ->
+            buildRange(
+                normalized = normalized,
+                values = parsedValues
+            )
         }
+    }
 
+    private fun buildRange(
+        normalized: String,
+        values: List<Double>
+    ): LivestockParameterRange {
         val approximate = normalized.contains('~') ||
             normalized.contains('≈') ||
             normalized.contains("about", ignoreCase = true)
@@ -65,16 +72,11 @@ internal object LivestockWaterRequirementParser {
                     approximate = approximate
                 )
 
-            values.size >= 2 -> {
-                val first = values[0]
-                val second = values[1]
-
-                LivestockParameterRange(
-                    minimum = minOf(first, second),
-                    maximum = maxOf(first, second),
-                    approximate = approximate
-                )
-            }
+            values.size >= 2 -> LivestockParameterRange(
+                minimum = minOf(values[0], values[1]),
+                maximum = maxOf(values[0], values[1]),
+                approximate = approximate
+            )
 
             else -> LivestockParameterRange(
                 minimum = values.first(),
