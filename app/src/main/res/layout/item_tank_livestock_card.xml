@@ -19,13 +19,13 @@
         android:orientation="horizontal"
         android:paddingStart="@dimen/aqua_size_14"
         android:paddingTop="@dimen/aqua_size_12"
-        android:paddingEnd="@dimen/aqua_size_12"
+        android:paddingEnd="@dimen/aqua_size_14"
         android:paddingBottom="@dimen/aqua_size_12">
 
         <ImageView
             android:id="@+id/ivCategoryIcon"
-            android:layout_width="@dimen/aqua_size_46"
-            android:layout_height="@dimen/aqua_size_46"
+            android:layout_width="@dimen/aqua_size_42"
+            android:layout_height="@dimen/aqua_size_42"
             android:contentDescription="@null"
             android:padding="@dimen/aqua_size_10"
             android:scaleType="centerInside"
@@ -72,7 +72,7 @@
                 android:ellipsize="end"
                 android:includeFontPadding="false"
                 android:maxLines="1"
-                android:textColor="@color/aqua_accent_positive"
+                android:textColor="@color/aqua_card_text_secondary"
                 android:textSize="@dimen/aqua_text_size_caption"
                 tools:text="21 Eyl 2026 tarihinde eklendi" />
 
