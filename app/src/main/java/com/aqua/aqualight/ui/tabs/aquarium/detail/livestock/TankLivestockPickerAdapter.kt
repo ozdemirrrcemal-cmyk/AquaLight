@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.LivestockCatalogItem
 import com.aqua.aqualight.databinding.ItemLivestockCatalogBinding
+import com.aqua.aqualight.i18n.AppLanguageController
 import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.LivestockCategories
 import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.localizedName
 
