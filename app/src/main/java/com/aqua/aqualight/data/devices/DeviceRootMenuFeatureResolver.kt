@@ -8,8 +8,19 @@ import com.aqua.aqualight.data.devices.model.DeviceFamily
 
 internal object DeviceRootMenuFeatureResolver {
 
-    fun resolve(product: AqlCommercialCatalogProduct): Set<DeviceRootMenuFeature> {
-        val support = MenuSupport(product)
+    fun resolve(product: AqlCommercialCatalogProduct): Set<DeviceRootMenuFeature> =
+        resolve(
+            product = product,
+            features = product.profile.supportedFeatures,
+            screens = product.profile.supportedScreens
+        )
+
+    fun resolve(
+        product: AqlCommercialCatalogProduct,
+        features: Set<AqlDeviceFeatureKey>,
+        screens: Set<AqlDeviceScreenKey>
+    ): Set<DeviceRootMenuFeature> {
+        val support = MenuSupport(product, features, screens)
         return when (product.family) {
             DeviceFamily.LIGHT -> support.resolveLight()
             DeviceFamily.TIMER -> support.resolveTimer()
@@ -20,11 +31,11 @@ internal object DeviceRootMenuFeatureResolver {
     }
 
     private class MenuSupport(
-        product: AqlCommercialCatalogProduct
+        product: AqlCommercialCatalogProduct,
+        private val features: Set<AqlDeviceFeatureKey>,
+        private val screens: Set<AqlDeviceScreenKey>
     ) {
         private val capabilities = product.profile.capabilities
-        private val features = product.profile.supportedFeatures
-        private val screens = product.profile.supportedScreens
         private val limits = product.limits
 
         private val hasLightHardware = capabilities.light && limits.lightChannelCount > 0
@@ -49,14 +60,16 @@ internal object DeviceRootMenuFeatureResolver {
         private val hasTimerChannelContract = AqlDeviceFeatureKey.TIMER_CONTROL in features &&
             AqlDeviceScreenKey.TIMER_CONTROL in screens &&
             AqlDeviceScreenKey.TIMER_CHANNELS in screens
-        private val hasDosingChannelContract = AqlDeviceFeatureKey.DOSING_CONTROL in features &&
-            AqlDeviceScreenKey.DOSING_CONTROL in screens &&
-            AqlDeviceScreenKey.DOSING_CHANNELS in screens
+        private val hasDosingChannelContract =
+            AqlDeviceFeatureKey.DOSING_CONTROL in features &&
+                AqlDeviceScreenKey.DOSING_CONTROL in screens &&
+                AqlDeviceScreenKey.DOSING_CHANNELS in screens
         private val hasDosingCalibrationContract =
             AqlDeviceFeatureKey.DOSING_CALIBRATION in features &&
                 AqlDeviceScreenKey.DOSING_CALIBRATION in screens
-        private val hasCoolingControlContract = AqlDeviceFeatureKey.COOLING_CONTROL in features &&
-            AqlDeviceScreenKey.COOLING_CONTROL in screens
+        private val hasCoolingControlContract =
+            AqlDeviceFeatureKey.COOLING_CONTROL in features &&
+                AqlDeviceScreenKey.COOLING_CONTROL in screens
         private val hasCoolingTemperatureContract =
             AqlDeviceFeatureKey.TEMPERATURE_READ in features &&
                 AqlDeviceScreenKey.COOLING_CONTROL in screens
