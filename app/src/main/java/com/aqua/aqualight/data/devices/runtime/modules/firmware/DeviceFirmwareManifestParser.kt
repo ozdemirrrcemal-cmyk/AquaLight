@@ -1,5 +1,7 @@
 package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
+import com.aqua.aqualight.application.devices.DeviceFirmwareUpdatePolicy
+import com.aqua.aqualight.application.devices.DeviceFirmwareUpdatePolicyLevel
 import com.aqua.aqualight.data.devices.model.DeviceCapabilities
 import com.aqua.aqualight.data.devices.model.DeviceLimits
 import java.util.Locale
@@ -83,6 +85,14 @@ object DeviceFirmwareManifestParser {
                 json.requiredObject("compatibility"),
                 "$label.compatibility"
             ),
+            contracts = parseContracts(
+                json.requiredObject("contracts"),
+                "$label.contracts"
+            ),
+            updatePolicy = parseUpdatePolicy(
+                json.requiredObject("updatePolicy"),
+                "$label.updatePolicy"
+            ),
             firmware = parseFirmware(json.requiredObject("firmware"), "$label.firmware"),
             factory = json.requiredNullableObject("factory")?.let { factory ->
                 parseFactory(factory, "$label.factory")
@@ -152,6 +162,33 @@ object DeviceFirmwareManifestParser {
             model = json.requiredString("model"),
             hardwareRevision = json.requiredString("hardwareRevision")
         )
+    }
+
+    private fun parseContracts(
+        json: JSONObject,
+        label: String
+    ): DeviceFirmwareTargetContracts {
+        json.requireExactKeys(CONTRACT_KEYS, label)
+        return DeviceFirmwareTargetContracts(
+            wsSchema = json.requiredString("wsSchema"),
+            wsProtocolVersion = json.requiredPositiveInt("wsProtocolVersion"),
+            deviceApiVersion = json.requiredPositiveInt("deviceApiVersion"),
+            requiredDomains = json.requiredStringArray("requiredDomains", "$label.requiredDomains"),
+            optionalDomains = json.requiredStringArray("optionalDomains", "$label.optionalDomains")
+        )
+    }
+
+    private fun parseUpdatePolicy(
+        json: JSONObject,
+        label: String
+    ): DeviceFirmwareUpdatePolicy {
+        json.requireExactKeys(UPDATE_POLICY_KEYS, label)
+        val level = runCatching {
+            DeviceFirmwareUpdatePolicyLevel.valueOf(json.requiredString("level"))
+        }.getOrElse {
+            error("Unsupported OTA update policy level.")
+        }
+        return DeviceFirmwareUpdatePolicy(level)
     }
 
     private fun parseFirmware(json: JSONObject, label: String): DeviceFirmwareAsset {
@@ -370,6 +407,26 @@ object DeviceFirmwareManifestParser {
         return value
     }
 
+    private fun JSONObject.requiredStringArray(key: String, label: String): List<String> {
+        val array = requiredArray(key)
+        return buildList {
+            repeat(array.length()) { index ->
+                val value = array.get(index) as? String
+                    ?: error("OTA manifest $label[$index] must be a string.")
+                require(value.isNotEmpty()) {
+                    "OTA manifest $label[$index] must not be empty."
+                }
+                require(!value.first().isWhitespace() && !value.last().isWhitespace()) {
+                    "OTA manifest $label[$index] must not contain surrounding whitespace."
+                }
+                require(value.none(Char::isISOControl)) {
+                    "OTA manifest $label[$index] must not contain control characters."
+                }
+                add(value)
+            }
+        }
+    }
+
     private fun JSONObject.requiredBoolean(key: String): Boolean {
         require(has(key) && !isNull(key)) { "OTA manifest field '$key' is missing." }
         return get(key) as? Boolean ?: error("OTA manifest field '$key' must be a boolean.")
@@ -454,7 +511,9 @@ object DeviceFirmwareManifestParser {
     private val RELEASE_NOTES_KEYS = setOf("schema", "defaultLocale", "items")
     private val RELEASE_NOTE_ITEM_KEYS = setOf("tr", "en")
     private val SIGNATURE_KEYS = setOf("scheme", "keyId", "payloadHash", "value")
-    private val ARTIFACT_KEYS = setOf("env", "product", "compatibility", "firmware", "factory")
+    private val ARTIFACT_KEYS = setOf(
+        "env", "product", "compatibility", "contracts", "updatePolicy", "firmware", "factory"
+    )
     private val PRODUCT_KEYS = setOf(
         "productKey",
         "productId",
@@ -492,6 +551,10 @@ object DeviceFirmwareManifestParser {
     private val COMPATIBILITY_KEYS = setOf(
         "productKey", "productId", "family", "line", "model", "hardwareRevision"
     )
+    private val CONTRACT_KEYS = setOf(
+        "wsSchema", "wsProtocolVersion", "deviceApiVersion", "requiredDomains", "optionalDomains"
+    )
+    private val UPDATE_POLICY_KEYS = setOf("level")
     private val FIRMWARE_KEYS = setOf(
         "version", "filename", "url", "sha256", "size", "format", "otaSlotCompatible"
     )
