@@ -45,8 +45,8 @@ MANIFEST_PARSER_PATH = (
 )
 
 EXPECTED_FIRMWARE_REPOSITORY = "ozdemirrrcemal-cmyk/AquaLight-Firmware"
-EXPECTED_FIRMWARE_BRANCH = "main"
-EXPECTED_FIRMWARE_COMMIT = "e92f606059b451f846b779244de626a413306972"
+EXPECTED_FIRMWARE_BRANCH = "feat/ota-commercial-failure-contract"
+EXPECTED_FIRMWARE_COMMIT = "4de2ac1e85c67a4d6ee10fac2ca9bdc142635ef5"
 
 
 class GuardFailure(AssertionError):
@@ -244,6 +244,61 @@ def verify_phase_matrix(fixture: dict[str, Any], models: str) -> None:
     require(phases == fixture["phases"], "OTA phase wire matrix drifted")
 
 
+def verify_failure_code_matrix(
+    fixture: dict[str, Any],
+    runtime_contract: str,
+    status_parser: str,
+    models: str,
+    failure_mapper: str,
+) -> None:
+    expected_codes = fixture.get("failureCodes")
+    require(isinstance(expected_codes, list), "OTA failure code matrix is missing")
+
+    failure_code_block = extract_braced(runtime_contract, "object FailureCode")
+    actual_codes = list(string_constants(failure_code_block).values())
+    require(
+        actual_codes == expected_codes,
+        "Android OTA failure-code contract differs from pinned firmware",
+    )
+    require(
+        'val failureCode: String = ""' in models,
+        "OTA snapshot model does not retain failureCode",
+    )
+    require(
+        'OTA_LEGACY_SNAPSHOT_KEYS = OTA_SNAPSHOT_KEYS - "failureCode"' in status_parser,
+        "OTA parser lost compatibility with pre-failureCode firmware snapshots",
+    )
+    require(
+        'source.has("failureCode")' in status_parser,
+        "OTA parser does not distinguish current and legacy snapshot contracts",
+    )
+
+    typed_block = extract_braced(failure_mapper, "private fun typedFailure")
+    require(
+        ".contains(" not in typed_block,
+        "Typed OTA failure classification must not inspect diagnostic wording",
+    )
+    for constant_name in string_constants(failure_code_block):
+        require(
+            f"DeviceFirmwareRuntimeContract.FailureCode.{constant_name}" in typed_block,
+            f"Typed OTA failure mapper is missing {constant_name}",
+        )
+
+    semantics = fixture["wireSemantics"]
+    require(
+        semantics.get("failureCodeRequiredForCurrentFailedSnapshot") is True,
+        "Current failed OTA snapshots must require failureCode",
+    )
+    require(
+        semantics.get("legacySnapshotWithoutFailureCodeSupported") is True,
+        "Legacy OTA snapshot compatibility must remain explicit",
+    )
+    require(
+        semantics.get("diagnosticTextIsNotClassificationInput") is True,
+        "Diagnostic text must not be a current OTA classification input",
+    )
+
+
 def verify_download_diagnostic_mapping(failure_mapper: str) -> None:
     signed_http_client_codes = {
         "HTTPC_ERROR_CONNECTION_REFUSED": -1,
@@ -363,6 +418,13 @@ def verify() -> None:
     )
     verify_field_matrices(fixture, runtime_contract, status_parser, models)
     verify_phase_matrix(fixture, models)
+    verify_failure_code_matrix(
+        fixture,
+        runtime_contract,
+        status_parser,
+        models,
+        failure_mapper,
+    )
     verify_wire_semantics(
         fixture,
         status_parser,
