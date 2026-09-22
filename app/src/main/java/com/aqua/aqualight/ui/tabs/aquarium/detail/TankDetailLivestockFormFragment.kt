@@ -456,8 +456,7 @@ class TankDetailLivestockFormFragment :
     }
 
     private fun updatePreview() {
-        val displayName = selectedCatalogEntry
-            ?.displayName(AppLanguageController.current())
+        val displayName = selectedCatalogEntry?.localizedName(requireContext())
             ?: binding.etLifeName.text.toString().trim()
 
         binding.tvLifePreviewTitle.text = displayName.ifBlank {
@@ -509,8 +508,7 @@ class TankDetailLivestockFormFragment :
             return
         }
 
-        val name = selectedCatalogEntry
-            ?.displayName(AppLanguageController.current())
+        val name = selectedCatalogEntry?.localizedName(requireContext())
             ?: binding.etLifeName.text.toString().trim()
 
         if (name.length < 2) {
@@ -521,16 +519,11 @@ class TankDetailLivestockFormFragment :
             return
         }
 
-        val livestockId = if (editingLivestockId > 0L) {
-            editingLivestockId
-        } else {
-            AquariumIdGenerator.newLong()
-        }
-        val catalogIdentity = selectedCatalogEntry
-            ?.id
-            ?: selectedCatalogEntryId
-                .takeIf(AquariumLivestockIdentity::isCustom)
-            ?: AquariumLivestockIdentity.custom(livestockId)
+        val (livestockId, catalogIdentity) = resolveLivestockIdentity(
+            editingLivestockId = editingLivestockId,
+            selectedCatalogEntry = selectedCatalogEntry,
+            selectedCatalogEntryId = selectedCatalogEntryId
+        )
 
         val livestock = AquariumLivestock(
             id = livestockId,
@@ -714,6 +707,20 @@ class TankDetailLivestockFormFragment :
         private const val LIVESTOCK_DELETE_REQUEST_KEY = "livestock_delete_result"
         private const val LIVESTOCK_MISSING_REQUEST_KEY = "livestock_missing_result"
     }
+}
+
+private fun resolveLivestockIdentity(
+    editingLivestockId: Long,
+    selectedCatalogEntry: LivestockCatalogItem?,
+    selectedCatalogEntryId: String
+): Pair<Long, String> {
+    val livestockId = editingLivestockId.takeIf { id -> id > 0L }
+        ?: AquariumIdGenerator.newLong()
+    val catalogIdentity = selectedCatalogEntry?.id
+        ?: selectedCatalogEntryId.takeIf(AquariumLivestockIdentity::isCustom)
+        ?: AquariumLivestockIdentity.custom(livestockId)
+
+    return livestockId to catalogIdentity
 }
 
 private fun updateIdentityFieldVisibility(
