@@ -142,6 +142,7 @@ internal class AndroidSmartCareTextResolver(
     private fun AquariumLivestock.toSavedLivestock(): SavedAquariumLivestock =
         SavedAquariumLivestock(
             id = id,
+            catalogEntryId = catalogEntryId,
             name = name,
             category = category,
             quantity = quantity,
