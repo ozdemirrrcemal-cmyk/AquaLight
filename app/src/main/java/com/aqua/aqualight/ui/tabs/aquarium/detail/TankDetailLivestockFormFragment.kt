@@ -162,6 +162,8 @@ class TankDetailLivestockFormFragment :
         selectedCatalogEntry?.let { entry ->
             selectedCategory = entry.category
             binding.etLifeName.setText(entry.displayName(requireContext()))
+        } ?: run {
+            binding.etLifeName.setText(args.presetName.trim())
         }
 
         renderCategoryOptions()
