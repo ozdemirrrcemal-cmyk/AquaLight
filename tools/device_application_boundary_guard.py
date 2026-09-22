@@ -127,6 +127,7 @@ for token, reason in (
     ("enum class DeviceMenuUnavailableReason", "blocked decisions need typed reasons"),
     ("LOCAL_NETWORK_UNAVAILABLE", "local network loss needs a dedicated product reason"),
     ("AUTHENTICATION_REQUIRED", "pairing/authentication failure needs a dedicated product reason"),
+    ("DEVICE_OFFLINE", "definitive offline presence needs a dedicated product reason"),
     ("DEVICE_UNRESPONSIVE", "target-device failure needs a dedicated product reason"),
     ("VERIFICATION_TIMED_OUT", "bounded verification timeout needs a dedicated product reason"),
     ("CURRENT_LIVENESS_NOT_PROVEN", "UDP-only discovery must fail closed"),
@@ -272,6 +273,8 @@ for token, reason in (
     ("generation = success.generation", "the broker generation must guard the proof write"),
     ("MENU_ACCESS_BUDGET_MS", "interactive liveness verification must be bounded"),
     ("AUTHENTICATION_REQUIRED", "authentication failure must remain typed"),
+    ("DEVICE_OFFLINE", "definitive offline presence must remain typed"),
+    ("hasFreshLanDiscoveryProof", "precise unresponsive copy must require current LAN discovery evidence"),
     ("DEVICE_UNRESPONSIVE", "unresponsive target failure must remain typed"),
     ("VERIFICATION_TIMED_OUT", "timeout failure must remain typed"),
     ("CURRENT_LIVENESS_NOT_PROVEN", "UDP-only discovery must not authorize controls"),
@@ -517,6 +520,18 @@ for token, reason in (
     (
         "discovered endpoint still requires authenticated runtime proof",
         "endpoint discovery must not bypass authenticated runtime proof",
+    ),
+    (
+        "definitive offline snapshot maps to offline reason without verification",
+        "definitive offline presence must not be presented as an unresponsive endpoint",
+    ),
+    (
+        "runtime error without fresh LAN proof is presented offline",
+        "runtime errors without current LAN proof must not claim the device is locally visible",
+    ),
+    (
+        "stalled authentication without fresh LAN proof resolves offline",
+        "verification timeout copy requires current LAN discovery evidence",
     ),
 ):
     if token not in menu_access_test:

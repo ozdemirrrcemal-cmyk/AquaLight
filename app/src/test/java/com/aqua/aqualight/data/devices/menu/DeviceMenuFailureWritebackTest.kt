@@ -20,11 +20,8 @@ import org.junit.Test
 class DeviceMenuFailureWritebackTest {
 
     @Test
-    fun `failed control proof publishes offline before unavailable result`() = runTest {
-        val snapshot = DeviceSnapshot(
-            identity = DeviceIdentity(uid = DeviceUid("device-no-response")),
-            product = DeviceProduct(),
-            endpoint = DeviceRuntimeEndpoint(ip = "192.168.1.90", wsPort = 80),
+    fun `failed control proof without fresh LAN evidence returns offline reason`() = runTest {
+        val snapshot = snapshot(
             connectionState = DeviceConnectionState(
                 onlineState = DeviceOnlineState.AUTHENTICATED
             )
@@ -33,6 +30,34 @@ class DeviceMenuFailureWritebackTest {
         val operations = DefaultDeviceMenuAccessOperations(
             runtimePort = port,
             elapsedRealtimeMillis = { testScheduler.currentTime }
+        )
+
+        val result = operations.resolve(snapshot.deviceUid.value)
+
+        assertTrue(result is DeviceMenuAccessResult.Unavailable)
+        assertEquals(
+            DeviceMenuUnavailableReason.DEVICE_OFFLINE,
+            (result as DeviceMenuAccessResult.Unavailable).reason
+        )
+        assertEquals(1, port.controlFailureCalls)
+        assertEquals(
+            DeviceOnlineState.OFFLINE,
+            port.currentDevice(snapshot.deviceUid)?.connectionState?.onlineState
+        )
+    }
+
+    @Test
+    fun `failed control proof with fresh LAN evidence retains unresponsive reason`() = runTest {
+        val snapshot = snapshot(
+            connectionState = DeviceConnectionState(
+                onlineState = DeviceOnlineState.AUTHENTICATED,
+                lastUdpSeenElapsedMillis = 1_000L
+            )
+        )
+        val port = NoResponsePort(snapshot)
+        val operations = DefaultDeviceMenuAccessOperations(
+            runtimePort = port,
+            elapsedRealtimeMillis = { 1_000L }
         )
 
         val result = operations.resolve(snapshot.deviceUid.value)
@@ -48,6 +73,13 @@ class DeviceMenuFailureWritebackTest {
             port.currentDevice(snapshot.deviceUid)?.connectionState?.onlineState
         )
     }
+
+    private fun snapshot(connectionState: DeviceConnectionState) = DeviceSnapshot(
+        identity = DeviceIdentity(uid = DeviceUid("device-no-response")),
+        product = DeviceProduct(),
+        endpoint = DeviceRuntimeEndpoint(ip = "192.168.1.90", wsPort = 80),
+        connectionState = connectionState
+    )
 
     private class NoResponsePort(snapshot: DeviceSnapshot) : DeviceMenuRuntimePort {
         private val snapshotFlow = MutableStateFlow(snapshot)

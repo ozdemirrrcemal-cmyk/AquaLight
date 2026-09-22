@@ -102,11 +102,14 @@ internal class DeviceProvisioningPreparedNavigation(
     private fun unavailableEvent(
         title: String,
         reason: DeviceMenuUnavailableReason
-    ): DeviceProvisioningProgressEvent.ShowAddedDeviceUnavailable =
-        DeviceProvisioningProgressEvent.ShowAddedDeviceUnavailable(
+    ): DeviceProvisioningProgressEvent.ShowAddedDeviceUnavailable {
+        val presentation = DeviceMenuUnavailableMessageMapper.presentation(reason)
+        return DeviceProvisioningProgressEvent.ShowAddedDeviceUnavailable(
             title = title,
-            messageRes = DeviceMenuUnavailableMessageMapper.messageRes(reason)
+            titleRes = presentation.titleRes,
+            messageRes = presentation.messageRes
         )
+    }
 }
 
 internal fun DeviceProvisioningProgressViewModel.onDeviceNavigationFinished(

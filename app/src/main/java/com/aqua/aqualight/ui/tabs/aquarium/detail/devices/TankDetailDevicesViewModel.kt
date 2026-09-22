@@ -164,15 +164,17 @@ class TankDetailDevicesViewModel(
                 abandonPendingNavigation(deviceUid)
                 clearMenuOpen(deviceUid)
                 if (error is CancellationException) throw error
+                val presentation = DeviceMenuUnavailableMessageMapper.presentation(
+                    DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
+                )
                 _events.send(
                     TankDetailDevicesEvent.ShowDeviceUnavailable(
                         title = _uiState.value.devices
                             .firstOrNull { device -> device.deviceUid == deviceUid }
                             ?.title
                             .orEmpty(),
-                        messageRes = DeviceMenuUnavailableMessageMapper.messageRes(
-                            DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
-                        )
+                        titleRes = presentation.titleRes,
+                        messageRes = presentation.messageRes
                     )
                 )
             }
@@ -394,6 +396,7 @@ sealed interface TankDetailDevicesEvent {
 
     data class ShowDeviceUnavailable(
         val title: String,
+        @StringRes val titleRes: Int,
         @StringRes val messageRes: Int
     ) : TankDetailDevicesEvent
 
@@ -528,8 +531,12 @@ private fun isDeviceRemovalAllowed(
     return requestIsValid && operationsAreIdle
 }
 
-private fun DeviceMenuOpenResult.Unavailable.toUnavailableEvent() =
-    TankDetailDevicesEvent.ShowDeviceUnavailable(
+private fun DeviceMenuOpenResult.Unavailable.toUnavailableEvent():
+    TankDetailDevicesEvent.ShowDeviceUnavailable {
+    val presentation = DeviceMenuUnavailableMessageMapper.presentation(reason)
+    return TankDetailDevicesEvent.ShowDeviceUnavailable(
         title = title,
-        messageRes = DeviceMenuUnavailableMessageMapper.messageRes(reason)
+        titleRes = presentation.titleRes,
+        messageRes = presentation.messageRes
     )
+}

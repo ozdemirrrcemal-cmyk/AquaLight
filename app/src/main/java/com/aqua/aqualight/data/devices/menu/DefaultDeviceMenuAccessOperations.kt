@@ -7,6 +7,7 @@ import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.monitor.DeviceElapsedRealtimeClock
+import com.aqua.aqualight.data.devices.monitor.DeviceHeartbeatPolicy
 import com.aqua.aqualight.data.devices.repository.DevicesRepository
 import com.aqua.aqualight.data.devices.repository.recordControlFailure
 import com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome
@@ -88,7 +89,8 @@ internal class RepositoryDeviceMenuRuntimePort(
 @Suppress("TooManyFunctions")
 internal class DefaultDeviceMenuAccessOperations(
     private val runtimePort: DeviceMenuRuntimePort,
-    private val elapsedRealtimeMillis: () -> Long = DeviceElapsedRealtimeClock::nowMillis
+    private val elapsedRealtimeMillis: () -> Long = DeviceElapsedRealtimeClock::nowMillis,
+    private val heartbeatPolicy: DeviceHeartbeatPolicy = DeviceHeartbeatPolicy()
 ) : DeviceMenuAccessOperations {
 
     private val inFlight = ConcurrentHashMap<
@@ -304,8 +306,27 @@ internal class DefaultDeviceMenuAccessOperations(
         deviceUid: DeviceUid,
         reason: DeviceMenuUnavailableReason
     ): VerificationResult.Unavailable {
+        val resolvedReason = currentFailureReason(deviceUid, reason)
         runtimePort.recordControlFailure(deviceUid)
-        return VerificationResult.Unavailable(reason)
+        return VerificationResult.Unavailable(resolvedReason)
+    }
+
+    private fun currentFailureReason(
+        deviceUid: DeviceUid,
+        reason: DeviceMenuUnavailableReason
+    ): DeviceMenuUnavailableReason {
+        if (
+            reason != DeviceMenuUnavailableReason.DEVICE_UNRESPONSIVE &&
+            reason != DeviceMenuUnavailableReason.VERIFICATION_TIMED_OUT
+        ) {
+            return reason
+        }
+        val snapshot = runtimePort.currentDevice(deviceUid)
+        return if (snapshot?.hasFreshLanDiscoveryProof(elapsedRealtimeMillis()) == true) {
+            reason
+        } else {
+            DeviceMenuUnavailableReason.DEVICE_OFFLINE
+        }
     }
 
     private suspend fun awaitAuthenticatedRuntime(
@@ -362,9 +383,15 @@ internal class DefaultDeviceMenuAccessOperations(
             DeviceOnlineState.AUTH_REQUIRED -> {
                 DeviceMenuUnavailableReason.AUTHENTICATION_REQUIRED
             }
-            DeviceOnlineState.OFFLINE,
+            DeviceOnlineState.OFFLINE -> {
+                DeviceMenuUnavailableReason.DEVICE_OFFLINE
+            }
             DeviceOnlineState.ERROR -> {
-                DeviceMenuUnavailableReason.DEVICE_UNRESPONSIVE
+                if (snapshot.hasFreshLanDiscoveryProof(elapsedRealtimeMillis())) {
+                    DeviceMenuUnavailableReason.DEVICE_UNRESPONSIVE
+                } else {
+                    DeviceMenuUnavailableReason.DEVICE_OFFLINE
+                }
             }
             else -> null
         }
@@ -375,6 +402,18 @@ internal class DefaultDeviceMenuAccessOperations(
     ): Boolean {
         val proofAt = connectionState.lastControlProofElapsedMillis ?: return false
         return (nowElapsedMillis - proofAt).coerceAtLeast(0L) <= MENU_PROOF_REUSE_MS
+    }
+
+    /**
+     * A cached IP/WebSocket endpoint is not proof that the device is currently visible on LAN.
+     * Precise "unresponsive" or verification-timeout guidance requires a recent UDP discovery
+     * observation; otherwise the commercial presentation must fall back to definitive offline.
+     */
+    private fun DeviceSnapshot.hasFreshLanDiscoveryProof(
+        nowElapsedMillis: Long
+    ): Boolean {
+        val proofAt = connectionState.lastUdpSeenElapsedMillis ?: return false
+        return (nowElapsedMillis - proofAt).coerceAtLeast(0L) <= heartbeatPolicy.udpFreshMillis
     }
 
     private fun available(snapshot: DeviceSnapshot): DeviceMenuAccessResult.Available {

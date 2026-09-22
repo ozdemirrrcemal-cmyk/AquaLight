@@ -104,7 +104,7 @@ class DefaultDeviceMenuAccessOperationsTest {
     }
 
     @Test
-    fun `definitive offline snapshot does not wait for menu timeout`() = runTest {
+    fun `definitive offline snapshot maps to offline reason without verification`() = runTest {
         val snapshot = snapshot(
             state = DeviceConnectionState(onlineState = DeviceOnlineState.OFFLINE)
         )
@@ -118,8 +118,51 @@ class DefaultDeviceMenuAccessOperationsTest {
         val result = operations.resolve(snapshot.deviceUid.value)
 
         val unavailable = result as DeviceMenuAccessResult.Unavailable
+        assertEquals(DeviceMenuUnavailableReason.DEVICE_OFFLINE, unavailable.reason)
+        assertEquals(startedAt, testScheduler.currentTime)
+        assertEquals(0, port.connectCalls)
+        assertEquals(0, port.refreshNowCalls)
+    }
+
+    @Test
+    fun `runtime error with fresh LAN proof remains device unresponsive`() = runTest {
+        val snapshot = snapshot(
+            state = DeviceConnectionState(
+                onlineState = DeviceOnlineState.ERROR,
+                lastUdpSeenElapsedMillis = 1_000L
+            )
+        )
+        val port = FakeDeviceMenuRuntimePort(snapshot = snapshot)
+        val operations = DefaultDeviceMenuAccessOperations(
+            runtimePort = port,
+            elapsedRealtimeMillis = { 1_000L }
+        )
+
+        val startedAt = testScheduler.currentTime
+        val result = operations.resolve(snapshot.deviceUid.value)
+
+        val unavailable = result as DeviceMenuAccessResult.Unavailable
         assertEquals(DeviceMenuUnavailableReason.DEVICE_UNRESPONSIVE, unavailable.reason)
         assertEquals(startedAt, testScheduler.currentTime)
+        assertEquals(0, port.connectCalls)
+        assertEquals(0, port.refreshNowCalls)
+    }
+
+    @Test
+    fun `runtime error without fresh LAN proof is presented offline`() = runTest {
+        val snapshot = snapshot(
+            state = DeviceConnectionState(onlineState = DeviceOnlineState.ERROR)
+        )
+        val port = FakeDeviceMenuRuntimePort(snapshot = snapshot)
+        val operations = DefaultDeviceMenuAccessOperations(
+            runtimePort = port,
+            elapsedRealtimeMillis = { testScheduler.currentTime }
+        )
+
+        val result = operations.resolve(snapshot.deviceUid.value)
+
+        val unavailable = result as DeviceMenuAccessResult.Unavailable
+        assertEquals(DeviceMenuUnavailableReason.DEVICE_OFFLINE, unavailable.reason)
         assertEquals(0, port.connectCalls)
         assertEquals(0, port.refreshNowCalls)
     }
@@ -205,7 +248,34 @@ class DefaultDeviceMenuAccessOperationsTest {
     }
 
     @Test
-    fun `stalled authentication is bounded by commercial menu budget`() = runTest {
+    fun `stalled authentication with fresh LAN proof keeps timeout guidance`() = runTest {
+        val snapshot = snapshot(
+            state = DeviceConnectionState(
+                onlineState = DeviceOnlineState.CONNECTING_WS,
+                lastUdpSeenElapsedMillis = 0L
+            )
+        )
+        val port = FakeDeviceMenuRuntimePort(snapshot = snapshot).apply {
+            currentRuntimeState = AqlWsConnectionState.Connecting(
+                deviceUid = snapshot.deviceUid,
+                url = "ws://device.test/ws"
+            )
+        }
+        val operations = DefaultDeviceMenuAccessOperations(
+            runtimePort = port,
+            elapsedRealtimeMillis = { testScheduler.currentTime }
+        )
+
+        val result = operations.resolve(snapshot.deviceUid.value)
+
+        val unavailable = result as DeviceMenuAccessResult.Unavailable
+        assertEquals(DeviceMenuUnavailableReason.VERIFICATION_TIMED_OUT, unavailable.reason)
+        assertTrue(testScheduler.currentTime <= 2_500L)
+        assertEquals(1, port.connectCalls)
+    }
+
+    @Test
+    fun `stalled authentication without fresh LAN proof resolves offline`() = runTest {
         val snapshot = snapshot(
             state = DeviceConnectionState(onlineState = DeviceOnlineState.CONNECTING_WS)
         )
@@ -223,7 +293,7 @@ class DefaultDeviceMenuAccessOperationsTest {
         val result = operations.resolve(snapshot.deviceUid.value)
 
         val unavailable = result as DeviceMenuAccessResult.Unavailable
-        assertEquals(DeviceMenuUnavailableReason.VERIFICATION_TIMED_OUT, unavailable.reason)
+        assertEquals(DeviceMenuUnavailableReason.DEVICE_OFFLINE, unavailable.reason)
         assertTrue(testScheduler.currentTime <= 2_500L)
         assertEquals(1, port.connectCalls)
     }
