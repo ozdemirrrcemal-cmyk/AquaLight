@@ -15,6 +15,10 @@ class DeviceFirmwareReadParserTest {
         assertEquals(DeviceFirmwareOtaPhase.IDLE, parsed.ota.phase)
         assertEquals(DeviceFirmwareRuntimeContract.Event.OTA_PROGRESS, parsed.otaProgressEvent)
         assertEquals(DeviceFirmwareRuntimeContract.Event.OTA_COMPLETED, parsed.otaCompletedEvent)
+        assertEquals(
+            DeviceFirmwareRuntimeContract.MAINTENANCE_SCHEMA,
+            parsed.maintenanceSchema
+        )
     }
 
     @Test
@@ -99,6 +103,7 @@ class DeviceFirmwareReadParserTest {
                 .put("transport", "websocket")
                 .put("wsSchema", "aql.ws.v1")
                 .put("wsProtocolVersion", 1)
+                .put("maintenanceSchema", DeviceFirmwareRuntimeContract.MAINTENANCE_SCHEMA)
                 .put("readOnly", true)
         )
 
