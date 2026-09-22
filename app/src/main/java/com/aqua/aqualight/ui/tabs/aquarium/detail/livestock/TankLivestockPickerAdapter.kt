@@ -9,17 +9,18 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.aquarium.LivestockCatalogItem
 import com.aqua.aqualight.databinding.ItemLivestockCatalogBinding
-import com.aqua.aqualight.data.aquarium.catalog.livestock.LivestockCatalogEntry
 import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.LivestockCategories
+import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.localizedName
 
 data class TankLivestockPickerItem(
-    val entry: LivestockCatalogEntry,
+    val entry: LivestockCatalogItem,
     val selected: Boolean
 )
 
 class TankLivestockPickerAdapter(
-    private val onEntryClick: (LivestockCatalogEntry) -> Unit
+    private val onEntryClick: (LivestockCatalogItem) -> Unit
 ) : ListAdapter<TankLivestockPickerItem, TankLivestockPickerAdapter.ViewHolder>(DiffCallback) {
 
     override fun onCreateViewHolder(
@@ -47,7 +48,7 @@ class TankLivestockPickerAdapter(
 
     class ViewHolder(
         private val binding: ItemLivestockCatalogBinding,
-        private val onEntryClick: (LivestockCatalogEntry) -> Unit
+        private val onEntryClick: (LivestockCatalogItem) -> Unit
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(
@@ -55,7 +56,7 @@ class TankLivestockPickerAdapter(
         ) {
             val context = binding.root.context
             val entry = item.entry
-            val displayName = entry.displayName(context)
+            val displayName = entry.localizedName(context)
             val parameterSummary = entry.parameterSummary()
 
             binding.cardRoot.strokeColor = ContextCompat.getColor(
