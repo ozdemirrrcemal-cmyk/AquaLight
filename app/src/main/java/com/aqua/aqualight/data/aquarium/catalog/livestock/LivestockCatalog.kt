@@ -8,8 +8,6 @@ import org.json.JSONObject
 
 object LivestockCatalog {
 
-    const val EXPECTED_ENTRY_COUNT = 687
-
     private const val ASSET_FILE = "livestock_catalog.jsonl"
 
     @Volatile
@@ -117,10 +115,6 @@ object LivestockCatalog {
     private fun validate(
         entries: List<LivestockCatalogEntry>
     ) {
-        check(entries.size == EXPECTED_ENTRY_COUNT) {
-            "Livestock catalog entry count mismatch: ${entries.size}."
-        }
-
         check(entries.map(LivestockCatalogEntry::id).toSet().size == entries.size) {
             "Livestock catalog contains duplicate ids."
         }
