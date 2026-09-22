@@ -29,6 +29,10 @@ data class LivestockCatalogEntry(
     val warningMode: String
 ) {
 
+    val waterRequirements: LivestockWaterRequirements by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        LivestockWaterRequirementParser.parse(this)
+    }
+
     fun displayName(
         context: Context
     ): String {
