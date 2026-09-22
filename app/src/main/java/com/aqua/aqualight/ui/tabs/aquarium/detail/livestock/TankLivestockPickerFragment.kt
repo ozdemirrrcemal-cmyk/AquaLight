@@ -7,6 +7,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
+import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.LivestockCatalogItem
@@ -29,6 +30,7 @@ class TankLivestockPickerFragment : Fragment(R.layout.fragment_tank_livestock_pi
     private val binding get() = _binding!!
 
     private lateinit var adapter: TankLivestockPickerAdapter
+    private lateinit var addFooterAdapter: TankLivestockAddFooterAdapter
     private lateinit var renderer: TankLivestockPickerRenderer
 
     private val livestockCatalogOperations by lazy(LazyThreadSafetyMode.NONE) {
@@ -113,6 +115,13 @@ class TankLivestockPickerFragment : Fragment(R.layout.fragment_tank_livestock_pi
             renderList()
             renderer.renderSelection(selectedEntryId != null)
         }
+        addFooterAdapter = TankLivestockAddFooterAdapter {
+            openLivestockForm(
+                catalogEntryId = "",
+                category = selectedCategory,
+                presetName = searchQuery
+            )
+        }
         renderer = TankLivestockPickerRenderer(
             context = requireContext(),
             binding = binding,
@@ -120,26 +129,23 @@ class TankLivestockPickerFragment : Fragment(R.layout.fragment_tank_livestock_pi
             onCategorySelected = { category ->
                 selectedCategory = category
                 selectedEntryId = null
+                addFooterAdapter.setCategory(selectedCategory)
                 renderer.renderCategories(selectedCategory)
                 renderList()
                 renderer.renderSelection(false)
             }
         )
 
+        addFooterAdapter.setCategory(selectedCategory)
         binding.rvLivestock.layoutManager = LinearLayoutManager(requireContext())
-        binding.rvLivestock.adapter = adapter
+        binding.rvLivestock.adapter = ConcatAdapter(
+            adapter,
+            addFooterAdapter
+        )
         binding.rvLivestock.setHasFixedSize(false)
     }
 
     private fun setupClickListeners() {
-        binding.btnNewLivestock.setOnClickListener {
-            openLivestockForm(
-                catalogEntryId = "",
-                category = selectedCategory,
-                presetName = searchQuery
-            )
-        }
-
         binding.btnContinue.setOnClickListener {
             val selectedEntry = allEntries.firstOrNull { entry ->
                 entry.id == selectedEntryId
