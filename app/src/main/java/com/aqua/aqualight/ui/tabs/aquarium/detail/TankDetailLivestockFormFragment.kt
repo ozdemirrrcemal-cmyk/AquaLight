@@ -26,7 +26,6 @@ import com.aqua.aqualight.application.aquarium.LivestockCatalogItem
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentTankLivestockFormBinding
-import com.aqua.aqualight.i18n.AppLanguageController
 import com.aqua.aqualight.i18n.DateOnly
 import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.ui.common.dialog.AppDatePickerDialogFragment
@@ -36,6 +35,7 @@ import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.text.setTextSizeResource
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.LivestockCategories
+import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.localizedName
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.TankDetailTabArgs
 import java.util.Calendar
 import kotlinx.coroutines.launch
@@ -162,7 +162,7 @@ class TankDetailLivestockFormFragment :
 
         selectedCatalogEntry?.let { entry ->
             selectedCategory = entry.category
-            binding.etLifeName.setText(entry.displayName(AppLanguageController.current()))
+            binding.etLifeName.setText(entry.localizedName(requireContext()))
         } ?: run {
             binding.etLifeName.setText(args.presetName.trim())
         }
@@ -248,7 +248,7 @@ class TankDetailLivestockFormFragment :
             ?: DateOnly.todayEpochDay()
 
         binding.etLifeName.setText(
-            selectedCatalogEntry?.displayName(AppLanguageController.current()) ?: livestock.name
+            selectedCatalogEntry?.localizedName(requireContext()) ?: livestock.name
         )
         binding.etLifeNote.setText(livestock.note)
 
