@@ -111,6 +111,8 @@ class DeviceFirmwareProductIsolationMatrixTest {
             model = product.model.value,
             hardwareRevision = product.hardwareRevision.value
         ),
+        contracts = targetContracts(product.family),
+        updatePolicy = com.aqua.aqualight.application.devices.DeviceFirmwareUpdatePolicy.RECOMMENDED,
         firmware = DeviceFirmwareAsset(
             version = TARGET_VERSION,
             filename = filename,
@@ -122,6 +124,23 @@ class DeviceFirmwareProductIsolationMatrixTest {
         ),
         factory = null
     )
+
+    private fun targetContracts(family: DeviceFamily): DeviceFirmwareTargetContracts =
+        DeviceFirmwareTargetContracts(
+            wsSchema = "aql.ws.v1",
+            wsProtocolVersion = 1,
+            deviceApiVersion = 1,
+            requiredDomains = listOf(
+                when (family) {
+                    DeviceFamily.LIGHT -> "aqualight.light.v1"
+                    DeviceFamily.TIMER -> "aqualight.timer.v1"
+                    DeviceFamily.DOSING -> "aqualight.dosing.v1"
+                    DeviceFamily.COOLING -> "aql.cooling.v1"
+                    DeviceFamily.UNKNOWN -> error("Unknown commercial family.")
+                }
+            ),
+            optionalDomains = emptyList()
+        )
 
     private fun snapshot(product: AqlCommercialCatalogProduct): DeviceSnapshot = DeviceSnapshot(
         identity = DeviceIdentity(uid = DeviceUid("AQL-${product.productKey.value}")),
