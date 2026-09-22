@@ -21,6 +21,7 @@ import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumIdGenerator
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
+import com.aqua.aqualight.application.aquarium.AquariumLivestockIdentity
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentTankLivestockFormBinding
 import com.aqua.aqualight.i18n.DateOnly
@@ -496,13 +497,20 @@ class TankDetailLivestockFormFragment :
             return
         }
 
+        val livestockId = if (editingLivestockId > 0L) {
+            editingLivestockId
+        } else {
+            AquariumIdGenerator.newLong()
+        }
+        val catalogIdentity = selectedCatalogEntry
+            ?.id
+            ?: selectedCatalogEntryId
+                .takeIf(AquariumLivestockIdentity::isCustom)
+            ?: AquariumLivestockIdentity.custom(livestockId)
+
         val livestock = AquariumLivestock(
-            id = if (editingLivestockId > 0L) {
-                editingLivestockId
-            } else {
-                AquariumIdGenerator.newLong()
-            },
-            catalogEntryId = selectedCatalogEntryId,
+            id = livestockId,
+            catalogEntryId = catalogIdentity,
             name = name,
             category = selectedCategory,
             quantity = selectedQuantity.coerceAtLeast(1),
