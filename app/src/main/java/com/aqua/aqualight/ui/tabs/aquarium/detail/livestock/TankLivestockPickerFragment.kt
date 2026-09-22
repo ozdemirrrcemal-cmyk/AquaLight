@@ -130,7 +130,8 @@ class TankLivestockPickerFragment : Fragment(R.layout.fragment_tank_livestock_pi
         binding.btnNewLivestock.setOnClickListener {
             openLivestockForm(
                 catalogEntryId = "",
-                category = selectedCategory
+                category = selectedCategory,
+                presetName = searchQuery
             )
         }
 
@@ -141,7 +142,8 @@ class TankLivestockPickerFragment : Fragment(R.layout.fragment_tank_livestock_pi
 
             openLivestockForm(
                 catalogEntryId = selectedEntry.id,
-                category = selectedEntry.category
+                category = selectedEntry.category,
+                presetName = ""
             )
         }
     }
@@ -339,7 +341,8 @@ class TankLivestockPickerFragment : Fragment(R.layout.fragment_tank_livestock_pi
 
     private fun openLivestockForm(
         catalogEntryId: String,
-        category: String
+        category: String,
+        presetName: String
     ) {
         if (isNavigating) {
             return
@@ -353,7 +356,8 @@ class TankLivestockPickerFragment : Fragment(R.layout.fragment_tank_livestock_pi
                 livestockId = 0L,
                 catalogEntryId = catalogEntryId,
                 presetCategory = category,
-                openedFromPicker = true
+                openedFromPicker = true,
+                presetName = presetName.trim()
             )
 
         findNavController().navigate(directions)
