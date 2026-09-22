@@ -64,6 +64,30 @@ class DeviceFirmwareUpdateRepository(
         )
     }
 
+    suspend fun fetchAndEvaluateMaintenanceUpdate(
+        identity: DeviceFirmwareMaintenanceIdentity,
+        manifestUrl: String,
+        applyNow: Boolean = true
+    ): Result<DeviceFirmwareAvailability> = runCatching {
+        val resolvedManifestUrl = DeviceFirmwareManifestUrlResolver.resolve(
+            template = manifestUrl,
+            productKey = identity.productKey
+        )
+        val manifestResult = fetchManifest(resolvedManifestUrl)
+        manifestResult.fold(
+            onSuccess = { manifest ->
+                planner.evaluateMaintenanceUpdate(identity, manifest, applyNow).getOrThrow()
+            },
+            onFailure = { error ->
+                if (error is DeviceFirmwareManifestNotPublishedException) {
+                    DeviceFirmwareAvailability.ReleaseNotPublished(identity.currentVersion)
+                } else {
+                    throw error
+                }
+            }
+        )
+    }
+
     suspend fun fetchAndPlanUpdate(
         snapshot: DeviceSnapshot,
         manifestUrl: String,
@@ -82,6 +106,10 @@ class DeviceFirmwareUpdateRepository(
             }
         }
     }
+
+    suspend fun requestFirmwareStatus(
+        deviceUid: DeviceUid
+    ): DeviceRuntimeCommandOutcome<DeviceFirmwareStatus> = runtime.requestStatus(deviceUid)
 
     suspend fun requestOtaStatus(
         deviceUid: DeviceUid
