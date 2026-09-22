@@ -24,5 +24,4 @@
     <string name="livestock_category_coral">Mercan</string>
     <string name="livestock_category_other">Diğer</string>
     <string name="livestock_catalog_entry_missing_title">Canlı kataloğu kaydı bulunamadı</string>
-    <string name="livestock_catalog_entry_missing_message">Bu kayıt mevcut AquaLight canlı kataloğunda bulunmuyor. Kayıt düzenlenemiyor.</string>
 </resources>
