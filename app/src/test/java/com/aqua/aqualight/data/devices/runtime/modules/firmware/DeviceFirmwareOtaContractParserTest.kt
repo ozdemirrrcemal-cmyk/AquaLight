@@ -41,6 +41,56 @@ class DeviceFirmwareOtaContractParserTest {
     }
 
     @Test
+    fun `current failed snapshot requires exact failure code field pairing`() {
+        val parsed = DeviceFirmwareStatusParser.parseOtaSnapshotExact(
+            otaSnapshot()
+                .put("phase", "failed")
+                .put(
+                    "failureCode",
+                    DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_STREAM_INTERRUPTED
+                )
+                .put("lastError", "Diagnostic wording is not a UI contract.")
+                .put("lastErrorField", DeviceFirmwareRuntimeContract.ErrorField.STREAM)
+        ).getOrThrow()
+
+        assertEquals(
+            DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_STREAM_INTERRUPTED,
+            parsed.failureCode
+        )
+        assertEquals(DeviceFirmwareOtaPhase.FAILED, parsed.phase)
+    }
+
+    @Test
+    fun `current snapshot rejects unknown or mismatched failure code`() {
+        val unknown = otaSnapshot()
+            .put("phase", "failed")
+            .put("failureCode", "NEW_UNCOORDINATED_CODE")
+            .put("lastError", "diagnostic")
+            .put("lastErrorField", DeviceFirmwareRuntimeContract.ErrorField.STREAM)
+        val mismatched = otaSnapshot()
+            .put("phase", "failed")
+            .put(
+                "failureCode",
+                DeviceFirmwareRuntimeContract.FailureCode.INTEGRITY_CHECK_FAILED
+            )
+            .put("lastError", "diagnostic")
+            .put("lastErrorField", DeviceFirmwareRuntimeContract.ErrorField.STREAM)
+
+        assertTrue(DeviceFirmwareStatusParser.parseOtaSnapshotExact(unknown).isFailure)
+        assertTrue(DeviceFirmwareStatusParser.parseOtaSnapshotExact(mismatched).isFailure)
+    }
+
+    @Test
+    fun `legacy snapshot without failure code remains accepted`() {
+        val legacy = otaSnapshot().apply { remove("failureCode") }
+
+        val parsed = DeviceFirmwareStatusParser.parseOtaSnapshotExact(legacy).getOrThrow()
+
+        assertEquals("", parsed.failureCode)
+        assertEquals(DeviceFirmwareOtaPhase.IDLE, parsed.phase)
+    }
+
+    @Test
     fun `progress parser rejects phase and active flag disagreement`() {
         val invalid = otaEventJson().put("phase", "downloading").put("active", false)
 
@@ -53,6 +103,10 @@ class DeviceFirmwareOtaContractParserTest {
             otaSnapshot()
                 .put("phase", "failed")
                 .put("restartRequired", true)
+                .put(
+                    "failureCode",
+                    DeviceFirmwareRuntimeContract.FailureCode.SAFE_MODE_RESTORE_FAILED
+                )
                 .put("lastError", "exact pre-OTA runtime restore failed")
                 .put(
                     "lastErrorField",
@@ -77,7 +131,11 @@ class DeviceFirmwareOtaContractParserTest {
             .put("lastErrorField", "stream")
         val restoreWithoutRestart = otaSnapshot()
             .put("phase", "failed")
-            .put("lastError", "exact pre-OTA runtime restore failed")
+            .put(
+                    "failureCode",
+                    DeviceFirmwareRuntimeContract.FailureCode.SAFE_MODE_RESTORE_FAILED
+                )
+                .put("lastError", "exact pre-OTA runtime restore failed")
             .put("lastErrorField", DeviceFirmwareRuntimeContract.ErrorField.SAFE_MODE_RESTORE)
         val restoreWithScheduledRestart = otaSnapshot()
             .put("phase", "succeeded")
@@ -85,7 +143,11 @@ class DeviceFirmwareOtaContractParserTest {
             .put("progressPercent", 100.0)
             .put("restartRequired", true)
             .put("restartScheduled", true)
-            .put("lastError", "exact pre-OTA runtime restore failed")
+            .put(
+                    "failureCode",
+                    DeviceFirmwareRuntimeContract.FailureCode.SAFE_MODE_RESTORE_FAILED
+                )
+                .put("lastError", "exact pre-OTA runtime restore failed")
             .put("lastErrorField", DeviceFirmwareRuntimeContract.ErrorField.SAFE_MODE_RESTORE)
 
         assertTrue(
@@ -108,6 +170,10 @@ class DeviceFirmwareOtaContractParserTest {
                 .put("progressPermille", 1_000)
                 .put("progressPercent", 100.0)
                 .put("restartRequired", true)
+                .put(
+                    "failureCode",
+                    DeviceFirmwareRuntimeContract.FailureCode.SAFE_MODE_RESTORE_FAILED
+                )
                 .put("lastError", "exact pre-OTA runtime restore failed")
                 .put(
                     "lastErrorField",
@@ -153,7 +219,11 @@ class DeviceFirmwareOtaContractParserTest {
             .put("restartRequired", true)
             .put("restartScheduled", false)
             .put("targetVersion", "2.0.0")
-            .put("lastError", "exact pre-OTA runtime restore failed")
+            .put(
+                    "failureCode",
+                    DeviceFirmwareRuntimeContract.FailureCode.SAFE_MODE_RESTORE_FAILED
+                )
+                .put("lastError", "exact pre-OTA runtime restore failed")
             .put("lastErrorField", DeviceFirmwareRuntimeContract.ErrorField.SAFE_MODE_RESTORE)
         val parsed = DeviceFirmwareStatusParser.parseOtaClearResultExact(
             JSONObject()
@@ -315,6 +385,7 @@ class DeviceFirmwareOtaContractParserTest {
         .put("targetVersion", "2.0.0")
         .put("sha256Expected", "a".repeat(64))
         .put("sha256Actual", "")
+        .put("failureCode", "")
         .put("lastError", "")
         .put("lastErrorField", "")
         .put("urlScheme", "https")
