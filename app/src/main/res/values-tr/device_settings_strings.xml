@@ -33,11 +33,11 @@
     <string name="device_settings_update_error_device_busy">Cihaz şu anda başka bir işlem yapıyor. İşlem tamamlandıktan sonra tekrar deneyin.</string>
     <string name="device_settings_update_error_release_connection_failed">Güncelleme hizmetine ulaşılamadı. Telefonunuzun internet bağlantısını kontrol edip tekrar deneyin.</string>
     <string name="device_settings_update_error_device_network_unavailable">Cihazın internet bağlantısı güncelleme için hazır değil veya kesildi. Cihazın Wi-Fi bağlantısını kontrol edip tekrar deneyin.</string>
-    <string name="device_settings_update_error_release_unavailable">Güncelleme dosyası bulunamadı. Daha sonra tekrar deneyin; sorun sürerse destek alın.</string>
-    <string name="device_settings_update_error_release_access_denied">Güncelleme dosyasına erişilemedi. Daha sonra tekrar deneyin; sorun sürerse destek alın.</string>
+    <string name="device_settings_update_error_release_unavailable">Güncelleme dosyası bulunamadı. Destek alın.</string>
+    <string name="device_settings_update_error_release_access_denied">Güncelleme dosyasına erişilemedi. Destek alın.</string>
     <string name="device_settings_update_error_release_rate_limited">Güncelleme hizmeti şu anda yoğun. Kısa süre sonra tekrar deneyin.</string>
-    <string name="device_settings_update_error_release_redirect_failed">Güncelleme dosyasına güvenli biçimde ulaşılamadı. Daha sonra tekrar deneyin.</string>
-    <string name="device_settings_update_error_release_request_rejected">Güncelleme isteği kabul edilmedi. Daha sonra tekrar deneyin; sorun sürerse destek alın.</string>
+    <string name="device_settings_update_error_release_redirect_failed">Güncelleme dosyasına güvenli biçimde ulaşılamadı. Destek alın.</string>
+    <string name="device_settings_update_error_release_request_rejected">Güncelleme isteği kabul edilmedi. Destek alın.</string>
     <string name="device_settings_update_error_release_server_unavailable">Güncelleme hizmetine geçici olarak ulaşılamıyor. Daha sonra tekrar deneyin.</string>
     <string name="device_settings_update_error_incompatible_firmware">Bu yazılım sürümü cihazınızla uyumlu değil. Güncellemeyi yeniden denemeyin; destek alın.</string>
     <string name="device_settings_update_error_insufficient_space">Cihazda bu güncellemeyi güvenle yüklemek için yeterli alan yok. Destek alın.</string>
@@ -52,7 +52,7 @@
     <string name="device_settings_update_error_download_timeout">Güncelleme indirmesi zamanında tamamlanamadı. Bağlantıyı kontrol edip tekrar deneyin.</string>
     <string name="device_settings_update_error_download_url_open_failed">Güncelleme dosyasına ulaşılamadı. Cihazın internet bağlantısını kontrol edip tekrar deneyin.</string>
     <string name="device_settings_update_error_download_stream_interrupted">Güncelleme indirmesi tamamlanmadan kesildi. Bağlantıyı kontrol edip tekrar deneyin.</string>
-    <string name="device_settings_update_error_download_size_mismatch">İndirilen güncelleme dosyası beklenen paketle eşleşmiyor. Güncelleme uygulanmadı. Daha sonra tekrar deneyin; sorun sürerse destek alın.</string>
+    <string name="device_settings_update_error_download_size_mismatch">İndirilen güncelleme dosyası beklenen paketle eşleşmiyor. Güncelleme uygulanmadı. Sorun sürerse destek alın.</string>
     <string name="device_settings_update_error_download_failed">Güncelleme indirilemedi. Cihazın internet bağlantısını kontrol edip tekrar deneyin.</string>
     <string name="device_settings_update_error_integrity_check">İndirilen güncelleme doğrulanamadı ve uygulanmadı. Aynı güncellemeyi yeniden denemeyin; destek alın.</string>
     <string name="device_settings_update_error_safe_mode">Cihaz güncelleme için güvenli duruma geçemedi. Cihazı açık tutup tekrar deneyin.</string>
@@ -60,7 +60,7 @@
     <string name="device_settings_update_error_flash_write">Yazılım cihaza kaydedilemedi. Cihazın gücünü kesmeyin ve destek alın.</string>
     <string name="device_settings_update_error_security_validation">Güncellemenin güvenliği doğrulanamadı ve güncelleme uygulanmadı. Cihazın internet bağlantısını ve tarih-saat ayarını kontrol edin; sorun sürerse destek alın.</string>
     <string name="device_settings_update_error_protocol_mismatch">Uygulama ile cihazın güncelleme sistemi birbiriyle uyumlu değil. Uygulamayı güncelleyin; sorun sürerse destek alın.</string>
-    <string name="device_settings_update_error_device_internal">Cihaz güncellemeyi tamamlayamadı. Cihazı açık tutup tekrar deneyin; sorun sürerse destek alın.</string>
+    <string name="device_settings_update_error_device_internal">Cihaz güncellemeyi tamamlayamadı. Cihazı açık tutun; sorun sürerse destek alın.</string>
 
     <string name="device_settings_change_name_title">Cihaz adını değiştir</string>
     <string name="device_settings_save_action">Kaydet</string>
