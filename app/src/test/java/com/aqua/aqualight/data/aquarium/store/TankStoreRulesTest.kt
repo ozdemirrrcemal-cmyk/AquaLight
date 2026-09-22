@@ -78,6 +78,44 @@ class TankStoreRulesTest {
     }
 
     @Test
+    fun livestockRequiresStrictCatalogOrCustomIdentity() {
+        val blankIdentity = validTank(id = 47L, ownerUid = "owner-a")
+            .toBuilder()
+            .addLivestock(
+                validLivestock(id = 101L)
+                    .toBuilder()
+                    .clearCatalogEntryId()
+                    .build()
+            )
+            .build()
+
+        assertThrows(StoreInvariantViolation::class.java) {
+            TankStoreRules.validateTank(blankIdentity)
+        }
+
+        val mismatchedCustomIdentity = validTank(id = 48L, ownerUid = "owner-a")
+            .toBuilder()
+            .addLivestock(
+                validLivestock(id = 102L)
+                    .toBuilder()
+                    .setCatalogEntryId("custom:999")
+                    .build()
+            )
+            .build()
+
+        assertThrows(StoreInvariantViolation::class.java) {
+            TankStoreRules.validateTank(mismatchedCustomIdentity)
+        }
+
+        val validCustomIdentity = validTank(id = 49L, ownerUid = "owner-a")
+            .toBuilder()
+            .addLivestock(validLivestock(id = 103L))
+            .build()
+
+        assertEquals(validCustomIdentity, TankStoreRules.validateTank(validCustomIdentity))
+    }
+
+    @Test
     fun schemaConstantMatchesCurrentCommercialVersion() {
         assertEquals(
             CommercialStoreSchema.AQUARIUM_TANKS_VERSION,
@@ -111,5 +149,15 @@ class TankStoreRulesTest {
         .setCategory("Rhizome")
         .setMarkerX(0.5f)
         .setMarkerY(0.5f)
+        .build()
+
+    private fun validLivestock(id: Long): StoredLivestock = StoredLivestock.newBuilder()
+        .setId(id)
+        .setName("Custom Fish")
+        .setCategory("Fish")
+        .setQuantity(1)
+        .setAddedDateEpochDay(20_454L)
+        .setNote("")
+        .setCatalogEntryId("custom:$id")
         .build()
 }
