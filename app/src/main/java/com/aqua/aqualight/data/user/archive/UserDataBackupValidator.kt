@@ -1,5 +1,7 @@
 package com.aqua.aqualight.data.user.archive
 
+import com.aqua.aqualight.application.aquarium.AquariumLivestockIdentity
+import com.aqua.aqualight.application.aquarium.AquariumLivestockTaxonomy
 import com.aqua.aqualight.data.care.model.CareTaskSource
 import com.aqua.aqualight.data.care.model.CareTaskStatus
 import com.aqua.aqualight.data.care.model.CareTaskType
@@ -79,15 +81,28 @@ internal class UserDataBackupValidator {
         validateArchiveItemIds(aquarium.materials.map(ArchiveMaterial::id))
         validateArchiveItemIds(aquarium.livestock.map(ArchiveLivestock::id))
         aquarium.livestock.forEach { livestock ->
+            require(livestock.name.isNotBlank() && livestock.name == livestock.name.trim()) {
+                "Backup livestock name is invalid."
+            }
+            require(livestock.category in AquariumLivestockTaxonomy.categoryCodes) {
+                "Backup livestock category is invalid."
+            }
             require(livestock.quantity > 0) {
                 "Backup livestock quantity is invalid."
             }
-            require(
-                livestock.catalogEntryId.isNotBlank() &&
-                    livestock.catalogEntryId == livestock.catalogEntryId.trim() &&
-                    livestock.catalogEntryId.length <= 160
-            ) {
-                "Backup livestock catalog id is invalid."
+            require(livestock.catalogEntryId.length <= 160) {
+                "Backup livestock catalog id is too long."
+            }
+            runCatching {
+                AquariumLivestockIdentity.requireValid(
+                    livestockId = livestock.id,
+                    catalogEntryId = livestock.catalogEntryId
+                )
+            }.getOrElse { error ->
+                throw IllegalArgumentException(
+                    "Backup livestock catalog id is invalid.",
+                    error
+                )
             }
         }
     }
