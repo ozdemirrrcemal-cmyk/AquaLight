@@ -190,6 +190,22 @@ class DeviceFirmwareOtaMainParityTest {
                         .put("product", productJson())
                         .put("compatibility", compatibilityJson())
                         .put(
+                            "contracts",
+                            JSONObject()
+                                .put("wsSchema", "aql.ws.v1")
+                                .put("wsProtocolVersion", 1)
+                                .put("deviceApiVersion", 1)
+                                .put(
+                                    "requiredDomains",
+                                    JSONArray().put("aqualight.dosing.v1")
+                                )
+                                .put("optionalDomains", JSONArray())
+                        )
+                        .put(
+                            "updatePolicy",
+                            JSONObject().put("level", "RECOMMENDED")
+                        )
+                        .put(
                             "firmware",
                             JSONObject()
                                 .put("version", "2.0.0")
