@@ -110,9 +110,9 @@
     "nonPositiveHttpStatusIsTransportDiagnostic": true,
     "finishedAtMsMayBeZero": true,
     "releaseNoteRejectedControlRange": "U+0000..U+001F",
-    "failureCodeRequiredForCurrentFailedSnapshot": true,
-    "legacySnapshotWithoutFailureCodeSupported": true,
-    "diagnosticTextIsNotClassificationInput": true
+    "diagnosticTextIsNotClassificationInput": true,
+    "failureCodeFieldRequiredOnEverySnapshot": true,
+    "failedSnapshotRequiresNonEmptyFailureCode": true
   },
   "failureCodes": [
     "SECURE_TIME_NOT_READY",
