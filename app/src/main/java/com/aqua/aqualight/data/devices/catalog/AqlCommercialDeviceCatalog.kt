@@ -1,10 +1,5 @@
 package com.aqua.aqualight.data.devices.catalog
 
-import com.aqua.aqualight.data.devices.contract.AqlCatalogKeySet
-import com.aqua.aqualight.data.devices.contract.AqlDeviceFeatureKey
-import com.aqua.aqualight.data.devices.contract.AqlDeviceScreenKey
-import com.aqua.aqualight.data.devices.contract.parseAqlDeviceFeatureKeysExact
-import com.aqua.aqualight.data.devices.contract.parseAqlDeviceScreenKeysExact
 import com.aqua.aqualight.data.devices.model.DeviceCapabilities
 import com.aqua.aqualight.data.devices.model.DeviceCapabilitySet
 import com.aqua.aqualight.data.devices.model.DeviceCompatibilityIdentity
@@ -33,8 +28,6 @@ internal enum class AqlCommercialCatalogFailureCode {
     SKU_CODE_MISMATCH,
     CAPABILITIES_MISMATCH,
     LIMITS_MISMATCH,
-    FEATURES_MISMATCH,
-    SCREENS_MISMATCH,
     MODULES_MISMATCH
 }
 
@@ -124,14 +117,6 @@ internal object AqlCommercialDeviceCatalog {
             AqlCommercialCatalogFailureCode.LIMITS_MISMATCH,
             "limits"
         )
-        reported.supportedFeatures != product.profile.supportedFeatures -> mismatch(
-            AqlCommercialCatalogFailureCode.FEATURES_MISMATCH,
-            "supportedFeatures"
-        )
-        reported.supportedScreens != product.profile.supportedScreens -> mismatch(
-            AqlCommercialCatalogFailureCode.SCREENS_MISMATCH,
-            "supportedScreens"
-        )
         reported.modules != null && reported.modules != product.expectedRuntimeModules() -> mismatch(
             AqlCommercialCatalogFailureCode.MODULES_MISMATCH,
             "modules"
@@ -151,8 +136,6 @@ private data class ReportedCatalogProduct(
     val skuCode: DeviceSkuCode,
     val capabilities: DeviceCapabilitySet,
     val limits: DeviceLimitSet,
-    val supportedFeatures: Set<AqlDeviceFeatureKey>,
-    val supportedScreens: Set<AqlDeviceScreenKey>,
     val modules: DeviceRuntimeModules?
 )
 
@@ -166,8 +149,6 @@ private fun DeviceRuntimeMetadata.toReportedCatalogProduct(): ReportedCatalogPro
         skuCode = identity.skuCode,
         capabilities = capabilities.capabilities,
         limits = capabilities.limits,
-        supportedFeatures = capabilities.supportedFeatures,
-        supportedScreens = capabilities.supportedScreens,
         modules = modules
     )
 
@@ -181,8 +162,6 @@ private fun DeviceSnapshot.toReportedCatalogProduct(): Result<ReportedCatalogPro
         skuCode = DeviceSkuCode(product.skuCode),
         capabilities = capabilities.toExactCapabilitySet(),
         limits = limits.toExactLimitSet(),
-        supportedFeatures = supportedFeatures.toExactFeatureSet(),
-        supportedScreens = supportedScreens.toExactScreenSet(),
         modules = null
     )
 }
@@ -217,22 +196,6 @@ private fun DeviceLimits.toExactLimitSet(): DeviceLimitSet = DeviceLimitSet(
     timerChannelCount = timerChannelCount,
     dosingChannelCount = dosingChannelCount
 )
-
-private fun List<String>.toExactFeatureSet(): Set<AqlDeviceFeatureKey> {
-    require(size == toSet().size) { "supportedFeatures must not contain duplicates." }
-    return when (val parsed = parseAqlDeviceFeatureKeysExact()) {
-        is AqlCatalogKeySet.Valid -> parsed.values
-        is AqlCatalogKeySet.Invalid -> error("supportedFeatures contains unknown exact keys.")
-    }
-}
-
-private fun List<String>.toExactScreenSet(): Set<AqlDeviceScreenKey> {
-    require(size == toSet().size) { "supportedScreens must not contain duplicates." }
-    return when (val parsed = parseAqlDeviceScreenKeysExact()) {
-        is AqlCatalogKeySet.Valid -> parsed.values
-        is AqlCatalogKeySet.Invalid -> error("supportedScreens contains unknown exact keys.")
-    }
-}
 
 private fun requireExactText(value: String, field: String): String {
     require(value.isNotEmpty()) { "$field must not be empty." }
