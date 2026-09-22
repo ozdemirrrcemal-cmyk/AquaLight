@@ -11,12 +11,10 @@
     android:clickable="true"
     android:focusable="true">
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
         android:minHeight="@dimen/aqua_size_82"
-        android:orientation="horizontal"
         android:paddingStart="@dimen/aqua_size_14"
         android:paddingTop="@dimen/aqua_size_10"
         android:paddingEnd="@dimen/aqua_size_12"
@@ -30,15 +28,21 @@
             android:padding="@dimen/aqua_size_10"
             android:scaleType="centerInside"
             android:src="@drawable/ic_life_fish_24"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
             app:tint="@color/aqua_content_on_dark" />
 
         <LinearLayout
-            android:layout_width="0dp"
+            android:layout_width="@dimen/aqua_size_0"
             android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/aqua_size_14"
             android:layout_marginEnd="@dimen/aqua_size_12"
-            android:layout_weight="1"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/tvSelection"
+            app:layout_constraintStart_toEndOf="@id/ivCategoryIcon"
+            app:layout_constraintTop_toTopOf="parent">
 
             <TextView
                 android:id="@+id/tvCategory"
@@ -99,8 +103,11 @@
             android:textColor="@color/aqua_content_on_dark"
             android:textSize="@dimen/aqua_text_size_caption"
             android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
             tools:text="✓" />
 
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </com.google.android.material.card.MaterialCardView>

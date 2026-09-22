@@ -29,20 +29,23 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/appHeader">
 
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:layout_height="wrap_content">
 
             <TextView
-                android:layout_width="0dp"
+                android:id="@+id/tvCategoryLabel"
+                android:layout_width="@dimen/aqua_size_0"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:layout_marginEnd="@dimen/aqua_size_8"
                 android:includeFontPadding="false"
                 android:text="@string/livestock_picker_category_label"
                 android:textColor="@color/aqua_content_secondary"
-                android:textSize="@dimen/aqua_text_size_body_small" />
+                android:textSize="@dimen/aqua_text_size_body_small"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/tvResultCount"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
             <TextView
                 android:id="@+id/tvResultCount"
@@ -51,9 +54,12 @@
                 android:includeFontPadding="false"
                 android:text="@string/livestock_picker_result_zero"
                 android:textColor="@color/aqua_content_secondary"
-                android:textSize="@dimen/aqua_text_size_caption_plus" />
+                android:textSize="@dimen/aqua_text_size_caption_plus"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
-        </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
         <HorizontalScrollView
             android:layout_width="match_parent"
@@ -67,7 +73,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:paddingStart="0dp"
+                android:paddingStart="@dimen/aqua_size_0"
                 android:paddingEnd="@dimen/aqua_size_20" />
 
         </HorizontalScrollView>
