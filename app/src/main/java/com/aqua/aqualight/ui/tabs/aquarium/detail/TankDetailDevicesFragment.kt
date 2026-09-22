@@ -15,6 +15,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentTankDetailDevicesBinding
+import com.aqua.aqualight.ui.common.devicepresence.DeviceAccessFeedbackPresenter
 import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankAssignedDeviceItem
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankAssignedDevicesAdapter
@@ -200,8 +201,10 @@ class TankDetailDevicesFragment : Fragment(R.layout.fragment_tank_detail_devices
         event: TankDetailDevicesEvent.ShowDeviceUnavailable
     ) {
         baseActivity()?.clearGlobalLoading(TANK_DEVICE_MENU_LOADING_OWNER)
-        baseActivity()?.showDeviceOfflineDialog(
+        DeviceAccessFeedbackPresenter.show(
+            context = requireContext(),
             deviceTitle = event.title,
+            titleRes = event.dialogTitleRes,
             messageRes = event.messageRes
         )
     }
