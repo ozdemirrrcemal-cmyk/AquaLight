@@ -29,6 +29,7 @@ class DeviceFirmwareBackgroundAvailabilityProbe(
         val currentVersion = snapshot.firmwareVersion
         val artifact = manifest.artifacts.single()
         validateArtifact(snapshot, manifest, artifact)
+        DeviceFirmwareContractRegistry.requireTargetCompatible(artifact.contracts)
         val targetVersion = artifact.firmware.version
 
         if (DeviceFirmwareVersionComparator.compare(targetVersion, currentVersion) <= 0) {
