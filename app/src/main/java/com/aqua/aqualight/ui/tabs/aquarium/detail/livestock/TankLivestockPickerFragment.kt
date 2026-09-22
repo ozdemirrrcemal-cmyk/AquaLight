@@ -1,13 +1,7 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.livestock
 
-import android.graphics.Typeface
 import android.os.Bundle
-import android.view.Gravity
 import android.view.View
-import android.widget.FrameLayout
-import android.widget.LinearLayout
-import android.widget.TextView
-import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -21,9 +15,7 @@ import com.aqua.aqualight.databinding.FragmentTankLivestockPickerBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderSearchField
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
-import com.aqua.aqualight.ui.common.text.setTextSizeResource
 import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.LivestockCategories
-import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -36,6 +28,7 @@ class TankLivestockPickerFragment : Fragment(R.layout.fragment_tank_livestock_pi
     private val binding get() = _binding!!
 
     private lateinit var adapter: TankLivestockPickerAdapter
+    private lateinit var renderer: TankLivestockPickerRenderer
 
     private val livestockCatalogOperations by lazy(LazyThreadSafetyMode.NONE) {
         requireContext().requireAppContainer().livestockCatalogOperations
@@ -71,8 +64,8 @@ class TankLivestockPickerFragment : Fragment(R.layout.fragment_tank_livestock_pi
         setupHeader()
         setupRecycler()
         setupClickListeners()
-        renderCategoryChips()
-        updateSelectionUi()
+        renderer.renderCategories(selectedCategory)
+        renderer.renderSelection(selectedEntryId != null)
         loadCatalog()
     }
 
@@ -115,15 +108,22 @@ class TankLivestockPickerFragment : Fragment(R.layout.fragment_tank_livestock_pi
 
     private fun setupRecycler() {
         adapter = TankLivestockPickerAdapter { entry ->
-            selectedEntryId = if (selectedEntryId == entry.id) {
-                null
-            } else {
-                entry.id
-            }
-
+            selectedEntryId = if (selectedEntryId == entry.id) null else entry.id
             renderList()
-            updateSelectionUi()
+            renderer.renderSelection(selectedEntryId != null)
         }
+        renderer = TankLivestockPickerRenderer(
+            context = requireContext(),
+            binding = binding,
+            adapter = adapter,
+            onCategorySelected = { category ->
+                selectedCategory = category
+                selectedEntryId = null
+                renderer.renderCategories(selectedCategory)
+                renderList()
+                renderer.renderSelection(false)
+            }
+        )
 
         binding.rvLivestock.layoutManager = LinearLayoutManager(requireContext())
         binding.rvLivestock.adapter = adapter
@@ -178,166 +178,13 @@ class TankLivestockPickerFragment : Fragment(R.layout.fragment_tank_livestock_pi
         }
     }
 
-    private fun renderCategoryChips() {
-        binding.categoryContainer.removeAllViews()
-
-        LivestockCategories.all.forEach { category ->
-            binding.categoryContainer.addView(
-                createCategoryChip(
-                    category = category,
-                    selected = category == selectedCategory
-                )
-            )
-        }
-
-        updateCustomButtonText()
-    }
-
-    private fun createCategoryChip(
-        category: String,
-        selected: Boolean
-    ): View {
-        val card = MaterialCardView(requireContext()).apply {
-            radius = resources.getDimensionPixelOffset(R.dimen.aqua_size_13).toFloat()
-            strokeWidth = resources.getDimensionPixelOffset(R.dimen.aqua_size_1)
-            strokeColor = ContextCompat.getColor(
-                requireContext(),
-                if (selected) {
-                    R.color.aqua_card_accent
-                } else {
-                    R.color.aqua_card_outline
-                }
-            )
-            setCardBackgroundColor(
-                ContextCompat.getColor(
-                    requireContext(),
-                    if (selected) {
-                        R.color.aqua_card_surface_pressed
-                    } else {
-                        R.color.aqua_card_surface
-                    }
-                )
-            )
-            cardElevation = 0f
-            useCompatPadding = false
-            isClickable = true
-            isFocusable = true
-
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                resources.getDimensionPixelOffset(R.dimen.aqua_size_42)
-            ).apply {
-                marginEnd = resources.getDimensionPixelOffset(R.dimen.aqua_size_8)
-            }
-
-            setOnClickListener {
-                if (selectedCategory == category) {
-                    return@setOnClickListener
-                }
-
-                selectedCategory = category
-                selectedEntryId = null
-                renderCategoryChips()
-                renderList()
-                updateSelectionUi()
-            }
-        }
-
-        val text = TextView(requireContext()).apply {
-            text = getString(LivestockCategories.labelRes(category))
-            gravity = Gravity.CENTER
-            setTextSizeResource(R.dimen.aqua_text_size_caption_plus)
-            setTextColor(
-                ContextCompat.getColor(
-                    requireContext(),
-                    if (selected) {
-                        R.color.aqua_card_text_primary
-                    } else {
-                        R.color.aqua_card_text_secondary
-                    }
-                )
-            )
-            setTypeface(
-                null,
-                if (selected) Typeface.BOLD else Typeface.NORMAL
-            )
-            includeFontPadding = false
-            setPadding(
-                resources.getDimensionPixelOffset(R.dimen.aqua_size_15),
-                0,
-                resources.getDimensionPixelOffset(R.dimen.aqua_size_15),
-                0
-            )
-        }
-
-        card.addView(
-            text,
-            FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.WRAP_CONTENT,
-                FrameLayout.LayoutParams.MATCH_PARENT
-            )
-        )
-
-        return card
-    }
-
     private fun renderList() {
-        if (!::adapter.isInitialized) {
-            return
-        }
-
-        if (catalogLoadFailed) {
-            adapter.submitList(emptyList())
-            binding.rvLivestock.isVisible = false
-            binding.tvEmptyState.isVisible = true
-            binding.tvEmptyState.text = getString(
-                R.string.livestock_picker_catalog_unavailable
-            )
-            binding.tvResultCount.text = getString(
-                R.string.livestock_picker_result_zero
-            )
-            return
-        }
-
-        val filteredEntries = allEntries.asSequence()
-            .filter { entry -> entry.category == selectedCategory }
-            .filter { entry -> entry.matches(searchQuery) }
-            .toList()
-
-        val items = filteredEntries.map { entry ->
-            TankLivestockPickerItem(
-                entry = entry,
-                selected = entry.id == selectedEntryId
-            )
-        }
-
-        adapter.submitList(items)
-
-        binding.rvLivestock.isVisible = filteredEntries.isNotEmpty()
-        binding.tvEmptyState.isVisible = filteredEntries.isEmpty()
-        binding.tvEmptyState.text = getString(R.string.livestock_picker_empty)
-        binding.tvResultCount.text = resources.getQuantityString(
-            R.plurals.livestock_picker_result_count,
-            filteredEntries.size,
-            filteredEntries.size
-        )
-    }
-
-    private fun updateSelectionUi() {
-        val hasSelection = selectedEntryId != null
-
-        binding.tvSelectedCount.text = if (hasSelection) {
-            getString(R.string.livestock_picker_selected_one)
-        } else {
-            getString(R.string.livestock_picker_selected_zero)
-        }
-        binding.btnContinue.isEnabled = hasSelection
-    }
-
-    private fun updateCustomButtonText() {
-        binding.btnNewLivestock.text = getString(
-            R.string.livestock_picker_new_category,
-            getString(LivestockCategories.labelRes(selectedCategory))
+        renderer.renderList(
+            entries = allEntries,
+            selectedCategory = selectedCategory,
+            selectedEntryId = selectedEntryId,
+            searchQuery = searchQuery,
+            catalogLoadFailed = catalogLoadFailed
         )
     }
 
