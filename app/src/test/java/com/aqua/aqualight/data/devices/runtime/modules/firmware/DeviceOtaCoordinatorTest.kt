@@ -225,6 +225,10 @@ class DeviceOtaCoordinatorTest {
                     progressPermille = 1_000,
                     restartRequired = true
                 )
+                    .put(
+                        "failureCode",
+                        DeviceFirmwareRuntimeContract.FailureCode.SAFE_MODE_RESTORE_FAILED
+                    )
                     .put("lastError", "exact pre-OTA runtime restore failed")
                     .put(
                         "lastErrorField",
@@ -665,8 +669,19 @@ class DeviceOtaCoordinatorTest {
         .put("targetVersion", "2.0.0")
         .put("sha256Expected", "a".repeat(64))
         .put("sha256Actual", if (phase == "succeeded") "a".repeat(64) else "")
+        .put(
+            "failureCode",
+            if (phase == "failed") {
+                DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_STREAM_INTERRUPTED
+            } else {
+                ""
+            }
+        )
         .put("lastError", if (phase == "failed") "download failed" else "")
-        .put("lastErrorField", if (phase == "failed") "stream" else "")
+        .put(
+            "lastErrorField",
+            if (phase == "failed") DeviceFirmwareRuntimeContract.ErrorField.STREAM else ""
+        )
         .put("urlScheme", "https")
         .put("httpStatus", 200)
 
