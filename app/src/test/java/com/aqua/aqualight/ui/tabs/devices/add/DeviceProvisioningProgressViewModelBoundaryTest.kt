@@ -185,7 +185,8 @@ class DeviceProvisioningProgressViewModelBoundaryTest {
 
         assertEquals(1, operations.commitCalls)
         assertEquals(1, surfacePreparation.prepareCalls)
-        assertEquals(R.string.device_menu_offline_message, event.messageRes)
+        assertEquals(R.string.device_access_state_unverified_title, event.dialogTitleRes)
+        assertEquals(R.string.device_access_state_unverified_message, event.messageRes)
         assertFalse(viewModel.uiState.value.showProgress)
     }
 
