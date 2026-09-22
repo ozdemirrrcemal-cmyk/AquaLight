@@ -62,7 +62,7 @@ class TankLivestockPickerAdapter(
 
             bindCardState(context, item.selected)
             bindCategory(context, entry.category)
-            bindTexts(context, entry, displayName, parameterSummary)
+            bindTexts(entry, displayName, parameterSummary)
             bindSelection(context, item.selected)
             bindAccessibility(entry, displayName, parameterSummary)
 
@@ -117,7 +117,6 @@ class TankLivestockPickerAdapter(
         }
 
         private fun bindTexts(
-            context: Context,
             entry: LivestockCatalogItem,
             displayName: String,
             parameterSummary: String
