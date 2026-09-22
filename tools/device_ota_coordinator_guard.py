@@ -21,6 +21,7 @@ FILES = {
     "manifest_source": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareManifestHttpSource.kt",
     "manifest_identity": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareManifestReleaseIdentity.kt",
     "background_probe": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareBackgroundAvailabilityProbe.kt",
+    "contract_registry": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareContractRegistry.kt",
     "models": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareModels.kt",
     "manifest": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareManifestParser.kt",
     "status": SOURCE / "data/devices/runtime/modules/firmware/DeviceFirmwareStatusParser.kt",
@@ -88,6 +89,9 @@ require_tokens(
         "data class PostRestartTimeout(",
         "data class UnexpectedFirmware(",
         "data class ReleaseNotPublished(",
+        "enum class DeviceFirmwareUpdatePolicyLevel",
+        "data class DeviceFirmwareUpdatePolicy(",
+        "APPLICATION_UPDATE_REQUIRED",
         "suspend fun retryPostRestartConnection(",
     ),
 )
@@ -208,6 +212,8 @@ require_tokens(
         "model = snapshot.product.model",
         "runtimeMetadataGeneration = snapshot.runtimeMetadataGeneration",
         "manifest.releaseNotes.resolve",
+        "DeviceFirmwareContractRegistry.requireTargetCompatible(",
+        "updatePolicy = artifact.updatePolicy",
     ),
 )
 forbid_tokens(
@@ -271,6 +277,16 @@ require_tokens(
     (
         "val artifact = manifest.artifacts.single()",
         "validateArtifact(snapshot, manifest, artifact)",
+        "DeviceFirmwareContractRegistry.requireTargetCompatible(",
+    ),
+)
+require_tokens(
+    "contract_registry",
+    (
+        "object DeviceFirmwareContractRegistry",
+        "supportedRequiredDomains",
+        "contracts.requiredDomains != listOf(expectedBaseContract)",
+        "DeviceFirmwareApplicationUpdateRequiredException",
     ),
 )
 require_tokens(
@@ -286,6 +302,9 @@ require_tokens(
         "val limits: DeviceLimits",
         "val version: String",
         "data class DeviceFirmwareFactoryAsset",
+        "data class DeviceFirmwareTargetContracts",
+        "val contracts: DeviceFirmwareTargetContracts",
+        "val updatePolicy: DeviceFirmwareUpdatePolicy",
         "sealed interface DeviceFirmwareAvailability",
         "data class ReleaseNotPublished(",
     ),
@@ -308,6 +327,8 @@ require_tokens(
         "DeviceFirmwareReleaseNoteItem(",
         "parseCapabilities",
         "parseLimits",
+        "parseContracts",
+        "parseUpdatePolicy",
         "requiredNullableObject(\"factory\")",
         "json.requireExactKeys(FIRMWARE_KEYS, label)",
         "json.requireExactKeys(FACTORY_KEYS, label)",
