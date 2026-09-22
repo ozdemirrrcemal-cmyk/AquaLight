@@ -378,12 +378,6 @@
     <string name="catalog_keyword_liquid">liquid</string>
     <string name="catalog_keyword_plant">plant</string>
     <string name="catalog_keyword_carbon">carbon</string>
-    <string name="catalog_keyword_green_aqua" translatable="false">green aqua</string>
-    <string name="catalog_keyword_macro">macro</string>
-    <string name="catalog_keyword_nitrate">nitrate</string>
-    <string name="catalog_keyword_phosphate">phosphate</string>
-    <string name="catalog_keyword_micro">micro</string>
-    <string name="catalog_keyword_iron">iron</string>
     <string name="catalog_keyword_filter">filter</string>
     <string name="catalog_keyword_external">external</string>
     <string name="catalog_keyword_canister">canister</string>

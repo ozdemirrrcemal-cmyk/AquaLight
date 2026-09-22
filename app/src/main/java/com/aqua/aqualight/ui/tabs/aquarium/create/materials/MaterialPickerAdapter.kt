@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.text.setTextSizeResource
@@ -33,10 +34,23 @@ class MaterialPickerAdapter(
         products: List<AquariumMaterial>,
         selectedProductIds: Set<String>
     ) {
+        val previousProducts = this.products
+        val previousSelectedProductIds = this.selectedProductIds.toSet()
+        val nextSelectedProductIds = selectedProductIds.toSet()
+        val diff = DiffUtil.calculateDiff(
+            MaterialPickerDiffCallback(
+                oldProducts = previousProducts,
+                newProducts = products,
+                oldSelectedProductIds = previousSelectedProductIds,
+                newSelectedProductIds = nextSelectedProductIds
+            )
+        )
+
         this.products = products
         this.selectedProductIds.clear()
-        this.selectedProductIds.addAll(selectedProductIds)
-        notifyDataSetChanged()
+        this.selectedProductIds.addAll(nextSelectedProductIds)
+
+        diff.dispatchUpdatesTo(this)
     }
 
     fun updateSelection(
@@ -202,6 +216,74 @@ class MaterialPickerAdapter(
         const val VIEW_TYPE_EMPTY = 2
         const val VIEW_TYPE_ADD = 3
 
+        const val EMPTY_STATE_ITEM_COUNT = 1
+        const val FOOTER_ITEM_COUNT = 1
+    }
+}
+
+private class MaterialPickerDiffCallback(
+    private val oldProducts: List<AquariumMaterial>,
+    private val newProducts: List<AquariumMaterial>,
+    private val oldSelectedProductIds: Set<String>,
+    private val newSelectedProductIds: Set<String>
+) : DiffUtil.Callback() {
+
+    override fun getOldListSize(): Int = rowCount(oldProducts)
+
+    override fun getNewListSize(): Int = rowCount(newProducts)
+
+    override fun areItemsTheSame(
+        oldItemPosition: Int,
+        newItemPosition: Int
+    ): Boolean {
+        return rowId(oldProducts, oldItemPosition) ==
+            rowId(newProducts, newItemPosition)
+    }
+
+    override fun areContentsTheSame(
+        oldItemPosition: Int,
+        newItemPosition: Int
+    ): Boolean {
+        val oldId = rowId(oldProducts, oldItemPosition)
+        val newId = rowId(newProducts, newItemPosition)
+
+        if (oldId != newId || oldId == EMPTY_ROW_ID || oldId == ADD_ROW_ID) {
+            return oldId == newId
+        }
+
+        val oldProduct = oldProducts[oldItemPosition]
+        val newProduct = newProducts[newItemPosition]
+        return oldProduct == newProduct &&
+            oldSelectedProductIds.contains(oldId) ==
+            newSelectedProductIds.contains(newId)
+    }
+
+    private fun rowCount(products: List<AquariumMaterial>): Int {
+        return if (products.isEmpty()) {
+            EMPTY_STATE_ITEM_COUNT + FOOTER_ITEM_COUNT
+        } else {
+            products.size + FOOTER_ITEM_COUNT
+        }
+    }
+
+    private fun rowId(
+        products: List<AquariumMaterial>,
+        position: Int
+    ): String {
+        if (products.isEmpty()) {
+            return if (position == 0) EMPTY_ROW_ID else ADD_ROW_ID
+        }
+
+        return if (position == products.size) {
+            ADD_ROW_ID
+        } else {
+            products[position].id
+        }
+    }
+
+    private companion object {
+        const val EMPTY_ROW_ID = "__material_picker_empty__"
+        const val ADD_ROW_ID = "__material_picker_add__"
         const val EMPTY_STATE_ITEM_COUNT = 1
         const val FOOTER_ITEM_COUNT = 1
     }
