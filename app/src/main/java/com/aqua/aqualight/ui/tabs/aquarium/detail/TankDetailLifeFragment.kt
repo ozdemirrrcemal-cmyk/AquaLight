@@ -20,9 +20,9 @@ import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentTankDetailLifeBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.LivestockCategories
+import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.localizedName
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
 import com.aqua.aqualight.application.aquarium.AquariumLivestockIdentity
-import com.aqua.aqualight.i18n.AppLanguageController
 import com.aqua.aqualight.i18n.LocaleFormatter
 import com.google.android.material.card.MaterialCardView
 import androidx.navigation.fragment.findNavController
@@ -259,7 +259,7 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
         }
         val resolvedDisplayName = when {
             isCustom -> livestock.name
-            resolvedCatalogEntry != null -> resolvedCatalogEntry.displayName(AppLanguageController.current())
+            resolvedCatalogEntry != null -> resolvedCatalogEntry.localizedName(requireContext())
             else -> getString(R.string.livestock_catalog_entry_missing_title)
         }
 
