@@ -64,7 +64,7 @@ internal class DefaultDeviceControlSurfacePreparationOperations(
                 unavailable(DeviceMenuUnavailableReason.COMMERCIAL_PRODUCT_MISMATCH)
             else -> when (val control = lightControlOperations.refreshControl(deviceUid)) {
                 is DeviceLightControlResult.Failed ->
-                    unavailable(DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN)
+                    unavailable(DeviceControlSurfaceFailureClassifier.classify(control.failure))
                 is DeviceLightControlResult.Available -> {
                     if (control.snapshot.matchesLightControlSurface(deviceUid, root)) {
                         freshlyPreparedSurfaces += preparedSurface
@@ -114,11 +114,13 @@ internal class DefaultDeviceControlSurfacePreparationOperations(
             root == null -> unavailable(DeviceMenuUnavailableReason.DEVICE_NOT_REGISTERED)
             !root.matchesCoolingCatalog() ->
                 unavailable(DeviceMenuUnavailableReason.COMMERCIAL_PRODUCT_MISMATCH)
-            coolingControlOperations.refreshControl(deviceUid) !is DeviceCoolingControlResult.Available ->
-                unavailable(DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN)
-            else -> {
-                freshlyPreparedSurfaces += preparedSurface
-                DeviceControlSurfacePreparationResult.Ready
+            else -> when (val control = coolingControlOperations.refreshControl(deviceUid)) {
+                is DeviceCoolingControlResult.Failed ->
+                    unavailable(DeviceControlSurfaceFailureClassifier.classify(control.failure))
+                is DeviceCoolingControlResult.Available -> {
+                    freshlyPreparedSurfaces += preparedSurface
+                    DeviceControlSurfacePreparationResult.Ready
+                }
             }
         }
         return result
@@ -137,7 +139,7 @@ internal class DefaultDeviceControlSurfacePreparationOperations(
                 unavailable(DeviceMenuUnavailableReason.COMMERCIAL_PRODUCT_MISMATCH)
             else -> when (val control = timerControlOperations.refreshControl(deviceUid)) {
                 is DeviceTimerControlResult.Failed ->
-                    unavailable(DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN)
+                    unavailable(DeviceControlSurfaceFailureClassifier.classify(control.failure))
                 is DeviceTimerControlResult.Available -> {
                     if (control.snapshot.matchesTimerSurface(deviceUid, expectedSlots)) {
                         freshlyPreparedSurfaces += preparedSurface
