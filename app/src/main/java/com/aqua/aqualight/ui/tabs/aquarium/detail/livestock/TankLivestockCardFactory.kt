@@ -1,11 +1,9 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.livestock
 
 import android.content.Context
-import android.graphics.drawable.GradientDrawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
@@ -31,7 +29,6 @@ internal class TankLivestockCardFactory(
         binding.ivCategoryIcon.setImageResource(
             LivestockCategories.iconRes(livestock.category)
         )
-        binding.ivCategoryIcon.background = createIconBackground(livestock.category)
         binding.tvName.text = livestock.name.ifBlank {
             context.getString(R.string.aquarium_unnamed_livestock)
         }
@@ -75,20 +72,4 @@ internal class TankLivestockCardFactory(
         )
     }
 
-    private fun createIconBackground(
-        category: String
-    ): GradientDrawable {
-        return GradientDrawable().apply {
-            shape = GradientDrawable.RECTANGLE
-            setColor(
-                ContextCompat.getColor(
-                    context,
-                    LivestockCategories.colorRes(category)
-                )
-            )
-            cornerRadius = context.resources.getDimensionPixelOffset(
-                R.dimen.aqua_size_16
-            ).toFloat()
-        }
-    }
 }
