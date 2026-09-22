@@ -51,6 +51,14 @@ enum class DeviceLightSystemCondition {
     FAN_FAULT
 }
 
+enum class DeviceLightTemperatureSensorState {
+    HEALTHY,
+    NOT_DETECTED,
+    UNRESPONSIVE,
+    INVALID_READING,
+    STALE_READING
+}
+
 data class DeviceLightSystemFanSnapshot(
     val key: String,
     val percent: Int,
@@ -72,7 +80,8 @@ data class DeviceLightSystemSnapshot(
     val deviceUid: String,
     val temperatureCelsius: Double?,
     val condition: DeviceLightSystemCondition,
-    val sensorHealthy: Boolean,
+    val sensorState: DeviceLightTemperatureSensorState,
+    val sensorFailSafeActive: Boolean,
     val fans: List<DeviceLightSystemFanSnapshot>,
     val mode: DeviceLightFanMode,
     val startTemperatureCelsius: Int,
@@ -83,7 +92,10 @@ data class DeviceLightSystemSnapshot(
     val protectionThresholdPolicy: DeviceLightSystemTemperaturePolicy,
     val protectionActive: Boolean,
     val firmwareWriteAuthoritative: Boolean
-)
+) {
+    val sensorHealthy: Boolean
+        get() = sensorState == DeviceLightTemperatureSensorState.HEALTHY
+}
 
 data class DeviceLightSystemSettings(
     val mode: DeviceLightFanMode,

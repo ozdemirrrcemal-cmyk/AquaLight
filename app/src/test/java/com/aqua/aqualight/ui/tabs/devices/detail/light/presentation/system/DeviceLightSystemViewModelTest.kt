@@ -9,6 +9,7 @@ import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemRead
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemSettings
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemSnapshot
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemTemperaturePolicy
+import com.aqua.aqualight.application.devices.light.system.DeviceLightTemperatureSensorState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.FakeLightDeviceRootOperations
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -133,7 +134,8 @@ class DeviceLightSystemViewModelTest {
             deviceUid = DEVICE_UID,
             temperatureCelsius = 42.8,
             condition = DeviceLightSystemCondition.NORMAL,
-            sensorHealthy = true,
+            sensorState = DeviceLightTemperatureSensorState.HEALTHY,
+            sensorFailSafeActive = false,
             fans = listOf(
                 DeviceLightSystemFanSnapshot("FAN_1", 35, true),
                 DeviceLightSystemFanSnapshot("FAN_2", 35, true)

@@ -9,6 +9,7 @@ import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControl
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryFailure
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualFailure
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemFailure
+import com.aqua.aqualight.application.devices.light.system.DeviceLightTemperatureSensorState
 
 /** Customer-facing Light error copy resolved exclusively from stable application semantics. */
 internal object DeviceLightCommercialErrorResolver {
@@ -287,3 +288,18 @@ internal fun DeviceLightSystemFailure.toCommercialLightError(
     partialApplyPossible: Boolean = false
 ): DeviceLightCommercialErrorMessage =
     DeviceLightCommercialErrorResolver.resolve(this, partialApplyPossible)
+
+@StringRes
+internal fun DeviceLightTemperatureSensorState.toCommercialLightSensorStatusRes(): Int =
+    when (this) {
+        DeviceLightTemperatureSensorState.HEALTHY ->
+            R.string.device_light_system_sensor_healthy
+        DeviceLightTemperatureSensorState.NOT_DETECTED ->
+            R.string.device_light_system_sensor_not_detected
+        DeviceLightTemperatureSensorState.UNRESPONSIVE ->
+            R.string.device_light_system_sensor_unresponsive
+        DeviceLightTemperatureSensorState.INVALID_READING ->
+            R.string.device_light_system_sensor_invalid
+        DeviceLightTemperatureSensorState.STALE_READING ->
+            R.string.device_light_system_sensor_stale
+    }

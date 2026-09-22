@@ -8,6 +8,7 @@ import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemCond
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemFanSnapshot
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemSnapshot
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemTemperaturePolicy
+import com.aqua.aqualight.application.devices.light.system.DeviceLightTemperatureSensorState
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightCustomDocument
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightCustomPoint
@@ -127,7 +128,8 @@ class DeviceLightControlSnapshotProjectionTest {
         deviceUid = "light-pro",
         temperatureCelsius = 42.8,
         condition = DeviceLightSystemCondition.NORMAL,
-        sensorHealthy = true,
+        sensorState = DeviceLightTemperatureSensorState.HEALTHY,
+        sensorFailSafeActive = false,
         fans = listOf(
             DeviceLightSystemFanSnapshot(key = "fan1", percent = 35, healthy = true),
             DeviceLightSystemFanSnapshot(key = "fan2", percent = 40, healthy = true)

@@ -22,6 +22,7 @@ OWNER_ADAPTER = SOURCE / "data/devices/DefaultOwnerDevicesOperations.kt"
 STATUS_ADAPTER = SOURCE / "data/devices/DefaultDeviceStatusOperations.kt"
 MAPPING = SOURCE / "data/devices/DeviceApplicationMapping.kt"
 MENU_ADAPTER = SOURCE / "data/devices/menu/DefaultDeviceMenuAccessOperations.kt"
+CONTROL_FAILURE = SOURCE / "data/devices/repository/DeviceControlProofFailure.kt"
 PREPARATION_ADAPTER = (
     SOURCE / "data/devices/menu/DefaultDeviceControlSurfacePreparationOperations.kt"
 )
@@ -57,6 +58,7 @@ STATUS_TEST = ROOT / "app/src/test/java/com/aqua/aqualight/ui/tabs/settings/devi
 SETTINGS_TEST = ROOT / "app/src/test/java/com/aqua/aqualight/ui/tabs/settings/SettingsViewModelBoundaryTest.kt"
 AUTH_POLICY_TEST = ROOT / "app/src/test/java/com/aqua/aqualight/data/devices/menu/DeviceMenuAuthenticationPolicyTest.kt"
 MENU_ACCESS_TEST = ROOT / "app/src/test/java/com/aqua/aqualight/data/devices/menu/DefaultDeviceMenuAccessOperationsTest.kt"
+CONTROL_FAILURE_TEST = ROOT / "app/src/test/java/com/aqua/aqualight/data/devices/repository/DeviceControlProofFailureTest.kt"
 DISCOVERY_CONTRACT_TEST = ROOT / "app/src/test/java/com/aqua/aqualight/data/devices/discovery/udp/AqlDiscoveryParserContractTest.kt"
 SEQUENCE = ROOT / "docs/commercial-architecture-closure-record.md"
 
@@ -81,6 +83,7 @@ owner_adapter = read(OWNER_ADAPTER)
 status_adapter = read(STATUS_ADAPTER)
 mapping = read(MAPPING)
 menu_adapter = read(MENU_ADAPTER)
+control_failure = read(CONTROL_FAILURE)
 preparation_adapter = read(PREPARATION_ADAPTER)
 light_control_adapter = read(LIGHT_CONTROL_ADAPTER)
 light_runtime_refresh_coordinator = read(LIGHT_RUNTIME_REFRESH_COORDINATOR)
@@ -105,6 +108,7 @@ status_test = read(STATUS_TEST)
 settings_test = read(SETTINGS_TEST)
 auth_policy_test = read(AUTH_POLICY_TEST)
 menu_access_test = read(MENU_ACCESS_TEST)
+control_failure_test = read(CONTROL_FAILURE_TEST)
 discovery_contract_test = read(DISCOVERY_CONTRACT_TEST)
 sequence = read(SEQUENCE)
 
@@ -191,6 +195,18 @@ for token, reason in (
     ("suspend fun refresh(deviceUid: String)", "Light System refresh must cross the boundary"),
     ("suspend fun save(", "Light System updates must cross the boundary"),
     ("data class DeviceLightSystemSnapshot", "Light System needs an application DTO"),
+    (
+        "enum class DeviceLightTemperatureSensorState",
+        "Light System sensor failures need stable typed application semantics",
+    ),
+    (
+        "val sensorState: DeviceLightTemperatureSensorState",
+        "sensor root cause must cross the application boundary without UI inference",
+    ),
+    (
+        "val sensorFailSafeActive: Boolean",
+        "firmware safety action must stay separate from sensor root cause",
+    ),
     ("data class DeviceLightSystemSettings", "Light System settings need an application DTO"),
     ("sealed interface DeviceLightSystemMutationResult", "Light System writes need typed outcomes"),
 ):
@@ -274,7 +290,10 @@ for token, reason in (
     ("MENU_ACCESS_BUDGET_MS", "interactive liveness verification must be bounded"),
     ("AUTHENTICATION_REQUIRED", "authentication failure must remain typed"),
     ("DEVICE_OFFLINE", "definitive offline presence must remain typed"),
-    ("hasFreshLanDiscoveryProof", "precise unresponsive copy must require current LAN discovery evidence"),
+    (
+        "currentFailureReason(canonicalSnapshot, reason)",
+        "post-failure presentation must use the canonical repository writeback",
+    ),
     ("DEVICE_UNRESPONSIVE", "unresponsive target failure must remain typed"),
     ("VERIFICATION_TIMED_OUT", "timeout failure must remain typed"),
     ("CURRENT_LIVENESS_NOT_PROVEN", "UDP-only discovery must not authorize controls"),
@@ -282,11 +301,25 @@ for token, reason in (
     if token not in menu_adapter:
         errors.append(f"{MENU_ADAPTER.relative_to(ROOT)}: {reason}: {token}")
 
-for forbidden in ("verifyLanAccess", "hasFreshLanProof"):
+for forbidden in (
+    "verifyLanAccess",
+    "hasFreshLanProof",
+    "hasFreshLanDiscoveryProof",
+    "DeviceHeartbeatPolicy",
+):
     if forbidden in menu_adapter:
         errors.append(
             f"{MENU_ADAPTER.relative_to(ROOT)}: UDP discovery cannot authorize menu access: {forbidden}"
         )
+
+for token, reason in (
+    (
+        "applyRuntimeUnavailable(",
+        "control-proof failure must reuse the repository's central presence resolver",
+    ),
+):
+    if token not in control_failure:
+        errors.append(f"{CONTROL_FAILURE.relative_to(ROOT)}: {reason}: {token}")
 
 for token, reason in (
     (
@@ -526,16 +559,37 @@ for token, reason in (
         "definitive offline presence must not be presented as an unresponsive endpoint",
     ),
     (
-        "runtime error without fresh LAN proof is presented offline",
-        "runtime errors without current LAN proof must not claim the device is locally visible",
+        "runtime error does not infer definitive offline from missing UDP",
+        "runtime errors must not invent definitive offline presence from missing discovery evidence",
     ),
     (
-        "stalled authentication without fresh LAN proof resolves offline",
-        "verification timeout copy requires current LAN discovery evidence",
+        "stalled authentication with stale canonical presence resolves unverified",
+        "stale canonical presence must not be presented as definitive offline",
+    ),
+    (
+        "stalled authentication with canonical offline presence resolves offline",
+        "canonical offline presence must keep the offline commercial presentation",
     ),
 ):
     if token not in menu_access_test:
         errors.append(f"{MENU_ACCESS_TEST.relative_to(ROOT)}: {reason}")
+
+for token, reason in (
+    (
+        "failed proof without discovery evidence resolves offline and replaces stale session",
+        "control failure without usable discovery evidence must resolve offline centrally",
+    ),
+    (
+        "failed proof with fresh discovery evidence resolves online LAN",
+        "fresh discovery evidence must survive control-proof invalidation",
+    ),
+    (
+        "failed proof with stale discovery evidence resolves stale",
+        "stale discovery evidence must remain stale instead of being forced offline",
+    ),
+):
+    if token not in control_failure_test:
+        errors.append(f"{CONTROL_FAILURE_TEST.relative_to(ROOT)}: {reason}")
 
 for token, reason in (
     (

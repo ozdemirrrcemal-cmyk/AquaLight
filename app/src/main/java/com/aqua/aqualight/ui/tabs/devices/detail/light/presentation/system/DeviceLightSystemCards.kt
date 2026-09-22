@@ -28,6 +28,8 @@ import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.light.system.DeviceLightFanMode
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemFanSnapshot
+import com.aqua.aqualight.application.devices.light.system.DeviceLightTemperatureSensorState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.toCommercialLightSensorStatusRes
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
 
 @Composable
@@ -67,6 +69,11 @@ private fun DeviceLightSystemStatusContent(
                 modifier = Modifier.size(DeviceLightSystemGeometry.gaugeSize)
             )
         }
+        DeviceLightTemperatureStatus(
+            condition = snapshot.condition,
+            sensorState = snapshot.sensorState,
+            visuals = visuals
+        )
         Spacer(Modifier.height(DeviceLightSystemGeometry.gaugeFanGap))
         DeviceLightFanPair(state, visuals)
         Spacer(Modifier.height(DeviceLightSystemGeometry.dividerHeight))
@@ -140,7 +147,13 @@ private fun DeviceLightSensorHealth(
     state: DeviceLightSystemUiState,
     visuals: DeviceLightSystemVisuals
 ) {
-    val sensorFault = !requireNotNull(state.snapshot).sensorHealthy
+    val snapshot = requireNotNull(state.snapshot)
+    val sensorFault = snapshot.sensorState != DeviceLightTemperatureSensorState.HEALTHY
+    val statusRes = when {
+        snapshot.sensorFailSafeActive -> R.string.device_light_system_sensor_fault
+        sensorFault -> snapshot.sensorState.toCommercialLightSensorStatusRes()
+        else -> R.string.device_light_system_sensor_healthy
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -153,13 +166,7 @@ private fun DeviceLightSensorHealth(
         )
         Spacer(Modifier.width(DeviceLightSystemGeometry.infoTextGap))
         BasicText(
-            text = stringResource(
-                if (sensorFault) {
-                    R.string.device_light_system_sensor_fault
-                } else {
-                    R.string.device_light_system_sensor_healthy
-                }
-            ),
+            text = stringResource(statusRes),
             style = visuals.typography.caption.copy(
                 color = if (sensorFault) {
                     visuals.colors.card.danger

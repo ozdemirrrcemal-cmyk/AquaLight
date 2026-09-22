@@ -20,13 +20,13 @@ import org.junit.Test
 class DeviceMenuFailureWritebackTest {
 
     @Test
-    fun `failed control proof without fresh LAN evidence returns offline reason`() = runTest {
+    fun `failed control proof with canonical offline state returns offline reason`() = runTest {
         val snapshot = snapshot(
             connectionState = DeviceConnectionState(
                 onlineState = DeviceOnlineState.AUTHENTICATED
             )
         )
-        val port = NoResponsePort(snapshot)
+        val port = NoResponsePort(snapshot, DeviceOnlineState.OFFLINE)
         val operations = DefaultDeviceMenuAccessOperations(
             runtimePort = port,
             elapsedRealtimeMillis = { testScheduler.currentTime }
@@ -47,17 +47,16 @@ class DeviceMenuFailureWritebackTest {
     }
 
     @Test
-    fun `failed control proof with fresh LAN evidence retains unresponsive reason`() = runTest {
+    fun `failed control proof with canonical LAN presence retains unresponsive reason`() = runTest {
         val snapshot = snapshot(
             connectionState = DeviceConnectionState(
-                onlineState = DeviceOnlineState.AUTHENTICATED,
-                lastUdpSeenElapsedMillis = 1_000L
+                onlineState = DeviceOnlineState.AUTHENTICATED
             )
         )
-        val port = NoResponsePort(snapshot)
+        val port = NoResponsePort(snapshot, DeviceOnlineState.ONLINE_LAN)
         val operations = DefaultDeviceMenuAccessOperations(
             runtimePort = port,
-            elapsedRealtimeMillis = { 1_000L }
+            elapsedRealtimeMillis = { testScheduler.currentTime }
         )
 
         val result = operations.resolve(snapshot.deviceUid.value)
@@ -69,7 +68,34 @@ class DeviceMenuFailureWritebackTest {
         )
         assertEquals(1, port.controlFailureCalls)
         assertEquals(
-            DeviceOnlineState.OFFLINE,
+            DeviceOnlineState.ONLINE_LAN,
+            port.currentDevice(snapshot.deviceUid)?.connectionState?.onlineState
+        )
+    }
+
+    @Test
+    fun `failed control proof with canonical stale presence returns unverified reason`() = runTest {
+        val snapshot = snapshot(
+            connectionState = DeviceConnectionState(
+                onlineState = DeviceOnlineState.AUTHENTICATED
+            )
+        )
+        val port = NoResponsePort(snapshot, DeviceOnlineState.STALE)
+        val operations = DefaultDeviceMenuAccessOperations(
+            runtimePort = port,
+            elapsedRealtimeMillis = { testScheduler.currentTime }
+        )
+
+        val result = operations.resolve(snapshot.deviceUid.value)
+
+        assertTrue(result is DeviceMenuAccessResult.Unavailable)
+        assertEquals(
+            DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN,
+            (result as DeviceMenuAccessResult.Unavailable).reason
+        )
+        assertEquals(1, port.controlFailureCalls)
+        assertEquals(
+            DeviceOnlineState.STALE,
             port.currentDevice(snapshot.deviceUid)?.connectionState?.onlineState
         )
     }
@@ -81,7 +107,10 @@ class DeviceMenuFailureWritebackTest {
         connectionState = connectionState
     )
 
-    private class NoResponsePort(snapshot: DeviceSnapshot) : DeviceMenuRuntimePort {
+    private class NoResponsePort(
+        snapshot: DeviceSnapshot,
+        private val failureState: DeviceOnlineState
+    ) : DeviceMenuRuntimePort {
         private val snapshotFlow = MutableStateFlow(snapshot)
         private val authenticatedState = AqlWsConnectionState.Authenticated(
             deviceUid = snapshot.deviceUid,
@@ -117,13 +146,13 @@ class DeviceMenuFailureWritebackTest {
         override fun recordControlFailure(deviceUid: DeviceUid): DeviceSnapshot {
             controlFailureCalls += 1
             val current = snapshotFlow.value
-            val offline = current.copy(
+            val updated = current.copy(
                 connectionState = current.connectionState.copy(
-                    onlineState = DeviceOnlineState.OFFLINE
+                    onlineState = failureState
                 )
             )
-            snapshotFlow.value = offline
-            return offline
+            snapshotFlow.value = updated
+            return updated
         }
     }
 }

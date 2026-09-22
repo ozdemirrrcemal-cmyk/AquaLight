@@ -21,7 +21,7 @@ internal object DeviceLightSystemGeometry {
     val sectionGap = 8.dp
     val cardPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp)
     val protectionCardPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
-    val statusCardHeight = 224.dp
+    val statusCardHeight = 244.dp
     val modeCardHeight = 104.dp
     val automaticCardHeight = 169.dp
     val protectionCardHeight = 130.dp
@@ -32,9 +32,8 @@ internal object DeviceLightSystemGeometry {
     const val gaugeMinimumTemperature = 0f
     const val gaugeMaximumTemperature = 80f
     val gaugeValueSize = 22.sp
-    val gaugeStatusGap = 4.dp
     val gaugeFanGap = 4.dp
-    val statusDotSize = 7.dp
+    val temperatureStatusHeight = 20.dp
     val fanCardHeight = 46.dp
     val fanCardGap = 7.dp
     val fanCardShape = RoundedCornerShape(7.dp)

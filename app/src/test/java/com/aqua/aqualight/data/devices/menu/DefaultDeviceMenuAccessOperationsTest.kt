@@ -125,31 +125,7 @@ class DefaultDeviceMenuAccessOperationsTest {
     }
 
     @Test
-    fun `runtime error with fresh LAN proof remains device unresponsive`() = runTest {
-        val snapshot = snapshot(
-            state = DeviceConnectionState(
-                onlineState = DeviceOnlineState.ERROR,
-                lastUdpSeenElapsedMillis = 1_000L
-            )
-        )
-        val port = FakeDeviceMenuRuntimePort(snapshot = snapshot)
-        val operations = DefaultDeviceMenuAccessOperations(
-            runtimePort = port,
-            elapsedRealtimeMillis = { 1_000L }
-        )
-
-        val startedAt = testScheduler.currentTime
-        val result = operations.resolve(snapshot.deviceUid.value)
-
-        val unavailable = result as DeviceMenuAccessResult.Unavailable
-        assertEquals(DeviceMenuUnavailableReason.DEVICE_UNRESPONSIVE, unavailable.reason)
-        assertEquals(startedAt, testScheduler.currentTime)
-        assertEquals(0, port.connectCalls)
-        assertEquals(0, port.refreshNowCalls)
-    }
-
-    @Test
-    fun `runtime error without fresh LAN proof is presented offline`() = runTest {
+    fun `runtime error does not infer definitive offline from missing UDP`() = runTest {
         val snapshot = snapshot(
             state = DeviceConnectionState(onlineState = DeviceOnlineState.ERROR)
         )
@@ -162,7 +138,10 @@ class DefaultDeviceMenuAccessOperationsTest {
         val result = operations.resolve(snapshot.deviceUid.value)
 
         val unavailable = result as DeviceMenuAccessResult.Unavailable
-        assertEquals(DeviceMenuUnavailableReason.DEVICE_OFFLINE, unavailable.reason)
+        assertEquals(
+            DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN,
+            unavailable.reason
+        )
         assertEquals(0, port.connectCalls)
         assertEquals(0, port.refreshNowCalls)
     }
@@ -248,18 +227,16 @@ class DefaultDeviceMenuAccessOperationsTest {
     }
 
     @Test
-    fun `stalled authentication with fresh LAN proof keeps timeout guidance`() = runTest {
+    fun `stalled authentication with canonical LAN presence keeps timeout guidance`() = runTest {
         val snapshot = snapshot(
-            state = DeviceConnectionState(
-                onlineState = DeviceOnlineState.CONNECTING_WS,
-                lastUdpSeenElapsedMillis = 0L
-            )
+            state = DeviceConnectionState(onlineState = DeviceOnlineState.CONNECTING_WS)
         )
         val port = FakeDeviceMenuRuntimePort(snapshot = snapshot).apply {
             currentRuntimeState = AqlWsConnectionState.Connecting(
                 deviceUid = snapshot.deviceUid,
                 url = "ws://device.test/ws"
             )
+            controlFailureState = DeviceOnlineState.ONLINE_LAN
         }
         val operations = DefaultDeviceMenuAccessOperations(
             runtimePort = port,
@@ -275,7 +252,7 @@ class DefaultDeviceMenuAccessOperationsTest {
     }
 
     @Test
-    fun `stalled authentication without fresh LAN proof resolves offline`() = runTest {
+    fun `stalled authentication with stale canonical presence resolves unverified`() = runTest {
         val snapshot = snapshot(
             state = DeviceConnectionState(onlineState = DeviceOnlineState.CONNECTING_WS)
         )
@@ -284,6 +261,35 @@ class DefaultDeviceMenuAccessOperationsTest {
                 deviceUid = snapshot.deviceUid,
                 url = "ws://device.test/ws"
             )
+            controlFailureState = DeviceOnlineState.STALE
+        }
+        val operations = DefaultDeviceMenuAccessOperations(
+            runtimePort = port,
+            elapsedRealtimeMillis = { testScheduler.currentTime }
+        )
+
+        val result = operations.resolve(snapshot.deviceUid.value)
+
+        val unavailable = result as DeviceMenuAccessResult.Unavailable
+        assertEquals(
+            DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN,
+            unavailable.reason
+        )
+        assertTrue(testScheduler.currentTime <= 2_500L)
+        assertEquals(1, port.connectCalls)
+    }
+
+    @Test
+    fun `stalled authentication with canonical offline presence resolves offline`() = runTest {
+        val snapshot = snapshot(
+            state = DeviceConnectionState(onlineState = DeviceOnlineState.CONNECTING_WS)
+        )
+        val port = FakeDeviceMenuRuntimePort(snapshot = snapshot).apply {
+            currentRuntimeState = AqlWsConnectionState.Connecting(
+                deviceUid = snapshot.deviceUid,
+                url = "ws://device.test/ws"
+            )
+            controlFailureState = DeviceOnlineState.OFFLINE
         }
         val operations = DefaultDeviceMenuAccessOperations(
             runtimePort = port,
@@ -349,6 +355,7 @@ class DefaultDeviceMenuAccessOperationsTest {
         var snapshotAfterRefresh: DeviceSnapshot? = null
         var livenessProofSucceeds: Boolean = true
         var networkStatusRequestGate: CompletableDeferred<Unit>? = null
+        var controlFailureState: DeviceOnlineState? = null
 
         var currentDeviceCalls = 0
         var refreshVisibleCalls = 0
@@ -402,6 +409,18 @@ class DefaultDeviceMenuAccessOperationsTest {
                 )
             )
             return true
+        }
+
+        override fun recordControlFailure(deviceUid: DeviceUid): DeviceSnapshot? {
+            val current = snapshotFlow.value?.takeIf { it.deviceUid == deviceUid }
+            val nextState = controlFailureState
+            return if (current != null && nextState != null) {
+                current.copy(
+                    connectionState = current.connectionState.copy(onlineState = nextState)
+                ).also { snapshotFlow.value = it }
+            } else {
+                current
+            }
         }
     }
 

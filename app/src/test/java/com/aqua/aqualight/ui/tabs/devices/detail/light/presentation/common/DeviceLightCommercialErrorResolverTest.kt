@@ -7,6 +7,7 @@ import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomFail
 import com.aqua.aqualight.application.devices.light.library.DeviceLightLibraryFailure
 import com.aqua.aqualight.application.devices.light.manual.DeviceLightManualFailure
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemFailure
+import com.aqua.aqualight.application.devices.light.system.DeviceLightTemperatureSensorState
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -143,6 +144,27 @@ class DeviceLightCommercialErrorResolverTest {
 
         assertMessages(DeviceLightSystemFailure.entries.toSet(), expectedMessages) { failure ->
             failure.toCommercialLightError()
+        }
+    }
+
+    @Test
+    fun `every system sensor state resolves to centralized customer copy`() {
+        val expected = mapOf(
+            DeviceLightTemperatureSensorState.HEALTHY to
+                R.string.device_light_system_sensor_healthy,
+            DeviceLightTemperatureSensorState.NOT_DETECTED to
+                R.string.device_light_system_sensor_not_detected,
+            DeviceLightTemperatureSensorState.UNRESPONSIVE to
+                R.string.device_light_system_sensor_unresponsive,
+            DeviceLightTemperatureSensorState.INVALID_READING to
+                R.string.device_light_system_sensor_invalid,
+            DeviceLightTemperatureSensorState.STALE_READING to
+                R.string.device_light_system_sensor_stale
+        )
+
+        assertEquals(DeviceLightTemperatureSensorState.entries.toSet(), expected.keys)
+        expected.forEach { (state, expectedRes) ->
+            assertEquals(expectedRes, state.toCommercialLightSensorStatusRes())
         }
     }
 

@@ -2,12 +2,9 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.system
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -21,6 +18,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemCondition
+import com.aqua.aqualight.application.devices.light.system.DeviceLightTemperatureSensorState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.toCommercialLightSensorStatusRes
 
 @Composable
 internal fun DeviceLightTemperatureGauge(
@@ -34,7 +33,16 @@ internal fun DeviceLightTemperatureGauge(
         Canvas(Modifier.fillMaxSize()) {
             drawTemperatureGaugeRing(temperatureCelsius, statusColor, visuals)
         }
-        DeviceLightTemperatureGaugeLabel(temperatureCelsius, condition, statusColor, visuals)
+        BasicText(
+            text = temperatureCelsius?.let { value ->
+                stringResource(R.string.device_light_system_temperature, value)
+            } ?: stringResource(R.string.device_light_system_temperature_unavailable),
+            style = visuals.typography.title.copy(
+                fontSize = DeviceLightSystemGeometry.gaugeValueSize,
+                color = visuals.colors.card.primaryText,
+                textAlign = TextAlign.Center
+            )
+        )
     }
 }
 
@@ -67,36 +75,26 @@ private fun DrawScope.drawTemperatureGaugeRing(
 }
 
 @Composable
-private fun DeviceLightTemperatureGaugeLabel(
-    temperatureCelsius: Double?,
+internal fun DeviceLightTemperatureStatus(
     condition: DeviceLightSystemCondition,
-    statusColor: Color,
-    visuals: DeviceLightSystemVisuals
+    sensorState: DeviceLightTemperatureSensorState,
+    visuals: DeviceLightSystemVisuals,
+    modifier: Modifier = Modifier
 ) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    val statusColor = condition.statusColor(visuals)
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(DeviceLightSystemGeometry.temperatureStatusHeight),
+        contentAlignment = Alignment.Center
+    ) {
         BasicText(
-            text = temperatureCelsius?.let { value ->
-                stringResource(R.string.device_light_system_temperature, value)
-            } ?: stringResource(R.string.device_light_system_temperature_unavailable),
-            style = visuals.typography.title.copy(
-                fontSize = DeviceLightSystemGeometry.gaugeValueSize,
-                color = visuals.colors.card.primaryText,
+            text = stringResource(condition.statusLabelRes(sensorState)),
+            style = visuals.typography.caption.copy(
+                color = statusColor,
                 textAlign = TextAlign.Center
             )
         )
-        Spacer(Modifier.height(DeviceLightSystemGeometry.gaugeStatusGap))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Canvas(
-                Modifier
-                    .width(DeviceLightSystemGeometry.statusDotSize)
-                    .height(DeviceLightSystemGeometry.statusDotSize)
-            ) { drawCircle(statusColor) }
-            Spacer(Modifier.width(DeviceLightSystemGeometry.gaugeStatusGap))
-            BasicText(
-                text = stringResource(condition.statusLabelRes()),
-                style = visuals.typography.caption.copy(color = statusColor)
-            )
-        }
     }
 }
 
@@ -106,12 +104,19 @@ private fun Double?.gaugeFraction(): Float = this?.toFloat()?.let { value ->
             DeviceLightSystemGeometry.gaugeMinimumTemperature)).coerceIn(0f, 1f)
 } ?: 0f
 
-private fun DeviceLightSystemCondition.statusLabelRes(): Int = when (this) {
+private fun DeviceLightSystemCondition.statusLabelRes(
+    sensorState: DeviceLightTemperatureSensorState
+): Int = when (this) {
     DeviceLightSystemCondition.NORMAL -> R.string.device_light_system_status_normal
     DeviceLightSystemCondition.PROTECTION_ACTIVE ->
         R.string.device_light_system_condition_protection
-    DeviceLightSystemCondition.SENSOR_FAIL_SAFE ->
+    DeviceLightSystemCondition.SENSOR_FAIL_SAFE -> if (
+        sensorState == DeviceLightTemperatureSensorState.HEALTHY
+    ) {
         R.string.device_light_system_condition_sensor_fail_safe
+    } else {
+        sensorState.toCommercialLightSensorStatusRes()
+    }
     DeviceLightSystemCondition.FAN_FAULT -> R.string.device_light_system_condition_fan_fault
 }
 

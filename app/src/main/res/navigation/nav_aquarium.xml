@@ -367,6 +367,14 @@
         android:label="@string/device_light_library_title"
         tools:layout="@layout/fragment_device_light_library">
         <argument android:name="deviceUid" app:argType="string" />
+        <argument
+            android:name="initialTab"
+            android:defaultValue="MANUAL"
+            app:argType="string" />
+        <argument
+            android:name="selectionKind"
+            android:defaultValue=""
+            app:argType="string" />
     </fragment>
 
     <fragment
@@ -451,6 +459,13 @@
         android:label="@string/device_light_custom_curve_title"
         tools:layout="@layout/fragment_device_light_custom_curve">
         <argument android:name="deviceUid" app:argType="string" />
+        <action
+            android:id="@+id/action_deviceLightCustomCurveFragment_to_deviceLightLibraryFragment"
+            app:destination="@id/deviceLightLibraryFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
     </fragment>
 
     <fragment

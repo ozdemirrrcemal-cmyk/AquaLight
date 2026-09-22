@@ -9,6 +9,7 @@ import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemRead
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemSettings
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemSnapshot
 import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemTemperaturePolicy
+import com.aqua.aqualight.application.devices.light.system.DeviceLightTemperatureSensorState
 import com.aqua.aqualight.data.devices.light.supportsLightSystem
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightTemperatureProtectionStatus
@@ -88,10 +89,15 @@ private fun DeviceLightThermalStatus.toSystemSnapshot(
     firmwareWriteAuthoritative: Boolean
 ): DeviceLightSystemSnapshot {
     val liveTemperature = telemetry?.temperature ?: temperature
+    val liveUptimeMs = telemetry?.uptimeMs ?: uptimeMs
     val liveFans = telemetry?.fans ?: fans
     require(liveFans.size == DeviceLightThermalV1Contract.FAN_OUTPUT_CAPACITY)
-    val sensorHealthy = liveTemperature.isHealthy(
+    val sensorFailSafeActive =
         telemetry?.sensorFailSafeActive ?: runtime.sensorFailSafeActive
+    val sensorState = classifyLightSystemSensorState(
+        firmwareUptimeMs = liveUptimeMs,
+        temperature = liveTemperature,
+        failSafeActive = sensorFailSafeActive
     )
     val cycleHealthy = telemetry?.automaticOutputCycleHealthy
         ?: runtime.automaticOutputCycleHealthy
@@ -104,9 +110,12 @@ private fun DeviceLightThermalStatus.toSystemSnapshot(
         .map(DeviceLightThermalFan::toSystemFanSnapshot)
     return DeviceLightSystemSnapshot(
         deviceUid = deviceUid.value,
-        temperatureCelsius = liveTemperature.temperatureC,
-        condition = systemCondition(sensorHealthy, cycleHealthy, fanSnapshots, protectionActive),
-        sensorHealthy = sensorHealthy,
+        temperatureCelsius = liveTemperature.temperatureC.takeIf {
+            sensorState == DeviceLightTemperatureSensorState.HEALTHY
+        },
+        condition = systemCondition(sensorState, cycleHealthy, fanSnapshots, protectionActive),
+        sensorState = sensorState,
+        sensorFailSafeActive = sensorFailSafeActive,
         fans = fanSnapshots,
         mode = (telemetry?.mode ?: config.mode).toApplicationMode(),
         startTemperatureCelsius = config.minTemperatureC.requireExactInt(),
@@ -129,8 +138,26 @@ private fun DeviceLightThermalStatus.toSystemSnapshot(
     )
 }
 
-private fun DeviceLightThermalTemperature.isHealthy(failSafeActive: Boolean): Boolean =
-    readingValid && temperatureC != null && !failSafeActive
+internal fun classifyLightSystemSensorState(
+    firmwareUptimeMs: Long,
+    temperature: DeviceLightThermalTemperature,
+    failSafeActive: Boolean
+): DeviceLightTemperatureSensorState {
+    val sampleAgeMillis =
+        (firmwareUptimeMs - temperature.sampledAtMs).and(FIRMWARE_MILLIS_MASK)
+    return when {
+        temperature.sensorIndex != FIXTURE_SENSOR_INDEX ->
+            DeviceLightTemperatureSensorState.NOT_DETECTED
+        temperature.sampledAtMs == 0L ||
+            sampleAgeMillis > DeviceLightThermalV1Contract.SENSOR_STALE_AFTER_MS ->
+            DeviceLightTemperatureSensorState.STALE_READING
+        !temperature.readingValid || temperature.temperatureC == null ->
+            DeviceLightTemperatureSensorState.INVALID_READING
+        failSafeActive -> DeviceLightTemperatureSensorState.INVALID_READING
+        else -> DeviceLightTemperatureSensorState.HEALTHY
+    }
+}
+
 
 private fun DeviceLightThermalFan.toSystemFanSnapshot() = DeviceLightSystemFanSnapshot(
     key = fanKey,
@@ -142,12 +169,13 @@ private fun DeviceLightThermalFan.toSystemFanSnapshot() = DeviceLightSystemFanSn
 )
 
 private fun systemCondition(
-    sensorHealthy: Boolean,
+    sensorState: DeviceLightTemperatureSensorState,
     cycleHealthy: Boolean,
     fans: List<DeviceLightSystemFanSnapshot>,
     protectionActive: Boolean
 ): DeviceLightSystemCondition = when {
-    !sensorHealthy -> DeviceLightSystemCondition.SENSOR_FAIL_SAFE
+    sensorState != DeviceLightTemperatureSensorState.HEALTHY ->
+        DeviceLightSystemCondition.SENSOR_FAIL_SAFE
     !cycleHealthy || fans.any { fan -> !fan.healthy } -> DeviceLightSystemCondition.FAN_FAULT
     protectionActive -> DeviceLightSystemCondition.PROTECTION_ACTIVE
     else -> DeviceLightSystemCondition.NORMAL
@@ -180,4 +208,6 @@ private fun systemReadFailure(failure: DeviceLightSystemFailure) =
 
 private const val PWM_HEALTH_OK = "OK"
 private const val HARDWARE_FAULT = "HARDWARE_FAULT"
+private const val FIXTURE_SENSOR_INDEX = 0
+private const val FIRMWARE_MILLIS_MASK = 0xFFFF_FFFFL
 private const val TEMPERATURE_EPSILON = 0.000_001
