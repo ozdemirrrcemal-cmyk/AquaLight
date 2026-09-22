@@ -367,6 +367,7 @@ class DeviceFirmwareOtaContractParserTest {
                                 .put("wsSchema", "aql.ws.v1")
                                 .put("wsProtocolVersion", 1)
                                 .put("deviceApiVersion", 1)
+                                .put("maintenanceSchema", "aql.maintenance.v1")
                                 .put(
                                     "requiredDomains",
                                     JSONArray().put("aqualight.dosing.v1")
