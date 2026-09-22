@@ -111,7 +111,7 @@ class DeviceRuntimeMetadataLivePipelineTest {
     }
 
     @Test
-    fun `catalog module mismatch rejects generation and closes only current socket`() {
+    fun `catalog module mismatch rejects domain metadata but preserves maintenance socket`() {
         val transport = RecordingWsTransport()
         val repository = DeviceRuntimeRepository(
             wsClientFactory = { transport },
@@ -140,7 +140,7 @@ class DeviceRuntimeMetadataLivePipelineTest {
         )
 
         assertTrue(rejected is DeviceRuntimeMetadataUpdate.Rejected)
-        assertEquals("metadata bootstrap failed", transport.lastDisconnectReason)
+        assertEquals(null, transport.lastDisconnectReason)
         assertFalse(
             repository.metadataBootstrapCoordinator.currentState(DEVICE_UID)!!
                 .publishedMetadata != null
