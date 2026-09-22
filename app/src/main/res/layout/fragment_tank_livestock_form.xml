@@ -98,6 +98,18 @@
               android:textColor="@color/aqua_card_text_secondary"
               android:textSize="@dimen/aqua_text_size_body_small" />
 
+            <TextView
+              android:id="@+id/tvLifeParametersPreview"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:layout_marginTop="@dimen/aqua_size_5"
+              android:ellipsize="end"
+              android:includeFontPadding="false"
+              android:maxLines="1"
+              android:textColor="@color/aqua_content_secondary"
+              android:textSize="@dimen/aqua_text_size_caption"
+              android:visibility="gone" />
+
           </LinearLayout>
 
         </LinearLayout>
