@@ -70,10 +70,7 @@ object DeviceFirmwareStatusParser {
 
     fun parseOtaProgressEventExact(data: JSONObject): Result<DeviceFirmwareOtaSnapshot> =
         runCatching {
-            data.requireExactKeys(
-                if (data.has("failureCode")) OTA_EVENT_KEYS else OTA_LEGACY_EVENT_KEYS,
-                "firmware OTA event data"
-            )
+            data.requireExactKeys(OTA_EVENT_KEYS, "firmware OTA event data")
             require(data.requiredExactString("runtimeTransport") == "websocket")
             require(data.requiredExactString("binaryTransfer") == "firmware-download")
             val snapshot = parseOtaSnapshotFieldsExact(data)
@@ -109,10 +106,7 @@ object DeviceFirmwareStatusParser {
     }
 
     private fun parseOtaSnapshotExactObject(source: JSONObject): DeviceFirmwareOtaSnapshot {
-        source.requireExactKeys(
-            if (source.has("failureCode")) OTA_SNAPSHOT_KEYS else OTA_LEGACY_SNAPSHOT_KEYS,
-            "firmware OTA snapshot"
-        )
+        source.requireExactKeys(OTA_SNAPSHOT_KEYS, "firmware OTA snapshot")
         return parseOtaSnapshotFieldsExact(source)
     }
 
@@ -132,11 +126,7 @@ object DeviceFirmwareStatusParser {
         val targetVersion = source.requiredStringAllowEmpty("targetVersion")
         val sha256Expected = source.requiredStringAllowEmpty("sha256Expected")
         val sha256Actual = source.requiredStringAllowEmpty("sha256Actual")
-        val failureCode = if (source.has("failureCode")) {
-            source.requiredStringAllowEmpty("failureCode")
-        } else {
-            ""
-        }
+        val failureCode = source.requiredStringAllowEmpty("failureCode")
         val urlScheme = source.requiredStringAllowEmpty("urlScheme")
         val lastError = source.requiredStringAllowEmpty("lastError")
         val lastErrorField = source.requiredStringAllowEmpty("lastErrorField")
@@ -159,8 +149,7 @@ object DeviceFirmwareStatusParser {
         requireValidFailureCode(
             phase = phase,
             failureCode = failureCode,
-            lastErrorField = lastErrorField,
-            fieldPresent = source.has("failureCode")
+            lastErrorField = lastErrorField
         )
 
         val activePhase = phase in setOf(
@@ -211,11 +200,7 @@ object DeviceFirmwareStatusParser {
 
     private fun parseOtaClearPreviousExact(source: JSONObject): DeviceFirmwareOtaSnapshot {
         source.requireExactKeys(
-            if (source.has("failureCode")) {
-                OTA_CLEAR_PREVIOUS_KEYS
-            } else {
-                OTA_LEGACY_CLEAR_PREVIOUS_KEYS
-            },
+            OTA_CLEAR_PREVIOUS_KEYS,
             "firmware.ota.clear.data.previous"
         )
         val phaseRaw = source.requiredExactString("phase")
@@ -224,18 +209,13 @@ object DeviceFirmwareStatusParser {
         }
         val restartRequired = source.requiredExactBoolean("restartRequired")
         val restartScheduled = source.requiredExactBoolean("restartScheduled")
-        val failureCode = if (source.has("failureCode")) {
-            source.requiredStringAllowEmpty("failureCode")
-        } else {
-            ""
-        }
+        val failureCode = source.requiredStringAllowEmpty("failureCode")
         val lastError = source.requiredStringAllowEmpty("lastError")
         val lastErrorField = source.requiredStringAllowEmpty("lastErrorField")
         requireValidFailureCode(
             phase = phase,
             failureCode = failureCode,
-            lastErrorField = lastErrorField,
-            fieldPresent = source.has("failureCode")
+            lastErrorField = lastErrorField
         )
         requireValidRestartState(
             phase = phase,
@@ -263,10 +243,8 @@ object DeviceFirmwareStatusParser {
     private fun requireValidFailureCode(
         phase: DeviceFirmwareOtaPhase,
         failureCode: String,
-        lastErrorField: String,
-        fieldPresent: Boolean
+        lastErrorField: String
     ) {
-        if (!fieldPresent) return
         if (failureCode.isEmpty()) {
             require(phase != DeviceFirmwareOtaPhase.FAILED) {
                 "Failed OTA snapshot must include failureCode."
@@ -414,7 +392,6 @@ object DeviceFirmwareStatusParser {
         "phase", "restartRequired", "restartScheduled", "targetVersion", "failureCode",
         "lastError", "lastErrorField"
     )
-    private val OTA_LEGACY_CLEAR_PREVIOUS_KEYS = OTA_CLEAR_PREVIOUS_KEYS - "failureCode"
     private val OTA_REQUEST_ECHO_KEYS = setOf(
         "urlScheme", "version", "expectedSize", "applyNow", "allowInsecureHttp",
         "productKey", "productId", "model", "hardwareRevision"
@@ -425,11 +402,7 @@ object DeviceFirmwareStatusParser {
         "progressPercent", "targetVersion", "sha256Expected", "sha256Actual", "failureCode",
         "lastError", "lastErrorField", "urlScheme", "httpStatus"
     )
-    private val OTA_LEGACY_SNAPSHOT_KEYS = OTA_SNAPSHOT_KEYS - "failureCode"
     private val OTA_EVENT_KEYS = OTA_SNAPSHOT_KEYS + setOf(
-        "completed", "success", "failed", "runtimeTransport", "binaryTransfer"
-    )
-    private val OTA_LEGACY_EVENT_KEYS = OTA_LEGACY_SNAPSHOT_KEYS + setOf(
         "completed", "success", "failed", "runtimeTransport", "binaryTransfer"
     )
 }
