@@ -137,6 +137,7 @@ data class DeviceFirmwareStatus(
     val otaCompletedEvent: String = "",
     val otaStartCommand: String = "",
     val otaStatusCommand: String = "",
+    val maintenanceSchema: String = "",
     val ota: DeviceFirmwareOtaSnapshot = DeviceFirmwareOtaSnapshot()
 )
 
@@ -144,6 +145,9 @@ internal fun DeviceFirmwareStatus.toMaintenanceIdentity(
     deviceUid: DeviceUid
 ): DeviceFirmwareMaintenanceIdentity {
     require(otaSupported) { "Firmware maintenance plane does not advertise OTA support." }
+    require(maintenanceSchema == DeviceFirmwareRuntimeContract.MAINTENANCE_SCHEMA) {
+        "Firmware maintenance contract is incompatible with this Android build."
+    }
     val exactFamily = requireNotNull(DeviceFamily.fromWireExact(family)) {
         "Firmware maintenance family is not an exact commercial family."
     }
