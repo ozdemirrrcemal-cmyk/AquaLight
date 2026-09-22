@@ -91,6 +91,10 @@ data class DeviceFirmwareOtaSnapshot(
     val httpStatus: Int = 0
 )
 
+internal class DeviceFirmwareMaintenanceStatusException(
+    val outcome: com.aqua.aqualight.data.devices.runtime.core.DeviceRuntimeCommandOutcome<*>
+) : IllegalStateException("Authenticated firmware maintenance status could not be read.")
+
 data class DeviceFirmwareMaintenanceIdentity(
     val deviceUid: DeviceUid,
     val currentVersion: String,
