@@ -15,13 +15,13 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.aquarium.LivestockCatalogItem
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentTankLivestockPickerBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderSearchField
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.text.setTextSizeResource
-import com.aqua.aqualight.data.aquarium.catalog.livestock.LivestockCatalog
-import com.aqua.aqualight.data.aquarium.catalog.livestock.LivestockCatalogEntry
 import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.LivestockCategories
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.Dispatchers
@@ -37,7 +37,10 @@ class TankLivestockPickerFragment : Fragment(R.layout.fragment_tank_livestock_pi
 
     private lateinit var adapter: TankLivestockPickerAdapter
 
-    private var allEntries: List<LivestockCatalogEntry> = emptyList()
+    private val catalogOperations
+        get() = requireContext().requireAppContainer().livestockCatalogOperations
+
+    private var allEntries: List<LivestockCatalogItem> = emptyList()
     private var selectedCategory: String = LivestockCategories.FISH
     private var selectedEntryId: String? = null
     private var searchQuery: String = ""
@@ -149,8 +152,6 @@ class TankLivestockPickerFragment : Fragment(R.layout.fragment_tank_livestock_pi
     }
 
     private fun loadCatalog() {
-        val appContext = requireContext().applicationContext
-
         binding.loadingIndicator.isVisible = true
         binding.rvLivestock.isVisible = false
         binding.tvEmptyState.isVisible = false
@@ -158,7 +159,7 @@ class TankLivestockPickerFragment : Fragment(R.layout.fragment_tank_livestock_pi
         viewLifecycleOwner.lifecycleScope.launch {
             val result = runCatching {
                 withContext(Dispatchers.IO) {
-                    LivestockCatalog.entries(appContext)
+                    catalogOperations.entries()
                 }
             }
 
