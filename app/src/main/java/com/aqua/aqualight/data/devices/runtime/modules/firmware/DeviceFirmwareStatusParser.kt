@@ -159,6 +159,7 @@ object DeviceFirmwareStatusParser {
         requireValidFailureCode(
             phase = phase,
             failureCode = failureCode,
+            lastErrorField = lastErrorField,
             fieldPresent = source.has("failureCode")
         )
 
@@ -233,6 +234,7 @@ object DeviceFirmwareStatusParser {
         requireValidFailureCode(
             phase = phase,
             failureCode = failureCode,
+            lastErrorField = lastErrorField,
             fieldPresent = source.has("failureCode")
         )
         requireValidRestartState(
@@ -261,24 +263,61 @@ object DeviceFirmwareStatusParser {
     private fun requireValidFailureCode(
         phase: DeviceFirmwareOtaPhase,
         failureCode: String,
+        lastErrorField: String,
         fieldPresent: Boolean
     ) {
         if (!fieldPresent) return
-        require(
-            failureCode.isEmpty() ||
-                failureCode in DeviceFirmwareRuntimeContract.FailureCode.ALL
-        ) {
-            "Unknown firmware OTA failureCode: $failureCode"
-        }
-        if (phase == DeviceFirmwareOtaPhase.FAILED) {
-            require(failureCode.isNotBlank()) {
+        if (failureCode.isEmpty()) {
+            require(phase != DeviceFirmwareOtaPhase.FAILED) {
                 "Failed OTA snapshot must include failureCode."
             }
-        } else {
-            require(failureCode.isEmpty()) {
-                "Non-failed OTA snapshot must not include failureCode."
-            }
+            return
         }
+
+        require(failureCode in DeviceFirmwareRuntimeContract.FailureCode.ALL) {
+            "Unknown firmware OTA failureCode: $failureCode"
+        }
+        require(lastErrorField == expectedFailureField(failureCode)) {
+            "OTA failureCode and lastErrorField disagree."
+        }
+
+        val succeededRestoreFailure =
+            phase == DeviceFirmwareOtaPhase.SUCCEEDED &&
+                failureCode ==
+                DeviceFirmwareRuntimeContract.FailureCode.SAFE_MODE_RESTORE_FAILED
+        require(phase == DeviceFirmwareOtaPhase.FAILED || succeededRestoreFailure) {
+            "OTA failureCode is not valid for phase ${phase.wireValue}."
+        }
+    }
+
+    private fun expectedFailureField(failureCode: String): String = when (failureCode) {
+        DeviceFirmwareRuntimeContract.FailureCode.SECURE_TIME_NOT_READY,
+        DeviceFirmwareRuntimeContract.FailureCode.TLS_TRUST_UNAVAILABLE ->
+            DeviceFirmwareRuntimeContract.ErrorField.TLS
+        DeviceFirmwareRuntimeContract.FailureCode.DEVICE_NETWORK_UNAVAILABLE ->
+            DeviceFirmwareRuntimeContract.ErrorField.WIFI
+        DeviceFirmwareRuntimeContract.FailureCode.SAFE_MODE_ENTER_FAILED ->
+            DeviceFirmwareRuntimeContract.ErrorField.SAFE_MODE
+        DeviceFirmwareRuntimeContract.FailureCode.SAFE_MODE_RESTORE_FAILED ->
+            DeviceFirmwareRuntimeContract.ErrorField.SAFE_MODE_RESTORE
+        DeviceFirmwareRuntimeContract.FailureCode.INSECURE_TRANSPORT,
+        DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_URL_OPEN_FAILED ->
+            DeviceFirmwareRuntimeContract.ErrorField.URL
+        DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_HTTP_STATUS ->
+            DeviceFirmwareRuntimeContract.ErrorField.HTTP_STATUS
+        DeviceFirmwareRuntimeContract.FailureCode.RELEASE_SIZE_MISMATCH,
+        DeviceFirmwareRuntimeContract.FailureCode.INSUFFICIENT_SPACE,
+        DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_SIZE_MISMATCH ->
+            DeviceFirmwareRuntimeContract.ErrorField.SIZE
+        DeviceFirmwareRuntimeContract.FailureCode.FLASH_BEGIN_FAILED,
+        DeviceFirmwareRuntimeContract.FailureCode.FLASH_WRITE_FAILED,
+        DeviceFirmwareRuntimeContract.FailureCode.FLASH_FINALIZE_FAILED ->
+            DeviceFirmwareRuntimeContract.ErrorField.FLASH
+        DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_STREAM_INTERRUPTED ->
+            DeviceFirmwareRuntimeContract.ErrorField.STREAM
+        DeviceFirmwareRuntimeContract.FailureCode.INTEGRITY_CHECK_FAILED ->
+            DeviceFirmwareRuntimeContract.ErrorField.SHA256
+        else -> error("Unsupported firmware OTA failureCode: $failureCode")
     }
 
     private fun requireValidRestartState(
