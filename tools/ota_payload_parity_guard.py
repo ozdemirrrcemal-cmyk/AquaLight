@@ -265,12 +265,16 @@ def verify_failure_code_matrix(
         "OTA snapshot model does not retain failureCode",
     )
     require(
-        'OTA_LEGACY_SNAPSHOT_KEYS = OTA_SNAPSHOT_KEYS - "failureCode"' in status_parser,
-        "OTA parser lost compatibility with pre-failureCode firmware snapshots",
+        "OTA_LEGACY_" not in status_parser,
+        "OTA parser must not retain legacy snapshot/event field matrices",
     )
     require(
-        'source.has("failureCode")' in status_parser,
-        "OTA parser does not distinguish current and legacy snapshot contracts",
+        'source.has("failureCode")' not in status_parser,
+        "OTA parser must require failureCode instead of probing for it",
+    )
+    require(
+        'source.requiredStringAllowEmpty("failureCode")' in status_parser,
+        "OTA parser must read the required failureCode field",
     )
 
     typed_block = extract_braced(failure_mapper, "private fun typedFailure")
@@ -286,16 +290,24 @@ def verify_failure_code_matrix(
 
     semantics = fixture["wireSemantics"]
     require(
-        semantics.get("failureCodeRequiredForCurrentFailedSnapshot") is True,
-        "Current failed OTA snapshots must require failureCode",
+        semantics.get("failureCodeFieldRequiredOnEverySnapshot") is True,
+        "Every OTA snapshot must carry the failureCode field",
     )
     require(
-        semantics.get("legacySnapshotWithoutFailureCodeSupported") is True,
-        "Legacy OTA snapshot compatibility must remain explicit",
+        semantics.get("failedSnapshotRequiresNonEmptyFailureCode") is True,
+        "Failed OTA snapshots must carry a non-empty failureCode",
     )
     require(
         semantics.get("diagnosticTextIsNotClassificationInput") is True,
-        "Diagnostic text must not be a current OTA classification input",
+        "Diagnostic text must not be an OTA classification input",
+    )
+    require(
+        "legacyFailure" not in failure_mapper,
+        "OTA failure mapper must not retain a legacy diagnostic fallback",
+    )
+    require(
+        ".contains(" not in failure_mapper,
+        "OTA failure mapper must not classify from diagnostic wording",
     )
 
 
