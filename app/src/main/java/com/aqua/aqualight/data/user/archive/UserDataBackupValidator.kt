@@ -82,6 +82,14 @@ internal class UserDataBackupValidator {
             require(livestock.quantity > 0) {
                 "Backup livestock quantity is invalid."
             }
+            livestock.catalogEntryId?.let { catalogEntryId ->
+                require(
+                    catalogEntryId == catalogEntryId.trim() &&
+                        catalogEntryId.length <= 160
+                ) {
+                    "Backup livestock catalog id is invalid."
+                }
+            }
         }
     }
 
