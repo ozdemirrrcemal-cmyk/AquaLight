@@ -72,7 +72,11 @@ class DevicesViewModel(
                         if (openingDeviceUid.value == deviceUid) {
                             openingDeviceUid.value = null
                         }
-                        _events.send(result.toUnavailableEvent())
+                        if (result.reason.canOpenFirmwareMaintenance) {
+                            _events.send(DevicesEvent.OpenFirmwareUpdate(deviceUid))
+                        } else {
+                            _events.send(result.toUnavailableEvent())
+                        }
                     }
                 }
             } catch (error: Throwable) {
