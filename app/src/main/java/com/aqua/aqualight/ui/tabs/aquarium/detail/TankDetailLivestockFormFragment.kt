@@ -92,7 +92,11 @@ class TankDetailLivestockFormFragment :
         updatePreview()
         updateQuantity()
         updateDateText()
-        updateIdentityFieldVisibility()
+        updateIdentityFieldVisibility(
+            binding = binding,
+            hasCatalogIdentity = selectedCatalogEntry != null,
+            categoryLockedByPicker = openedFromPicker && editingLivestockId <= 0L
+        )
     }
 
     private fun setupResultListeners() {
@@ -168,7 +172,11 @@ class TankDetailLivestockFormFragment :
         }
 
         renderCategoryOptions()
-        updateIdentityFieldVisibility()
+        updateIdentityFieldVisibility(
+            binding = binding,
+            hasCatalogIdentity = selectedCatalogEntry != null,
+            categoryLockedByPicker = openedFromPicker && editingLivestockId <= 0L
+        )
         updatePreview()
     }
 
@@ -253,7 +261,11 @@ class TankDetailLivestockFormFragment :
         binding.etLifeNote.setText(livestock.note)
 
         renderCategoryOptions()
-        updateIdentityFieldVisibility()
+        updateIdentityFieldVisibility(
+            binding = binding,
+            hasCatalogIdentity = selectedCatalogEntry != null,
+            categoryLockedByPicker = openedFromPicker && editingLivestockId <= 0L
+        )
         updatePreview()
         updateQuantity()
         updateDateText()
@@ -376,16 +388,6 @@ class TankDetailLivestockFormFragment :
                 ) = Unit
             }
         )
-    }
-
-    private fun updateIdentityFieldVisibility() {
-        val hasCatalogIdentity = selectedCatalogEntry != null
-        val categoryLockedByPicker = openedFromPicker && editingLivestockId <= 0L
-
-        binding.tvLifeNameLabel.isVisible = !hasCatalogIdentity
-        binding.etLifeName.isVisible = !hasCatalogIdentity
-        binding.tvLifeCategoryLabel.isVisible = !hasCatalogIdentity && !categoryLockedByPicker
-        binding.categoryGrid.isVisible = !hasCatalogIdentity && !categoryLockedByPicker
     }
 
     private fun renderCategoryOptions() {
@@ -712,4 +714,15 @@ class TankDetailLivestockFormFragment :
         private const val LIVESTOCK_DELETE_REQUEST_KEY = "livestock_delete_result"
         private const val LIVESTOCK_MISSING_REQUEST_KEY = "livestock_missing_result"
     }
+}
+
+private fun updateIdentityFieldVisibility(
+    binding: FragmentTankLivestockFormBinding,
+    hasCatalogIdentity: Boolean,
+    categoryLockedByPicker: Boolean
+) {
+    binding.tvLifeNameLabel.isVisible = !hasCatalogIdentity
+    binding.etLifeName.isVisible = !hasCatalogIdentity
+    binding.tvLifeCategoryLabel.isVisible = !hasCatalogIdentity && !categoryLockedByPicker
+    binding.categoryGrid.isVisible = !hasCatalogIdentity && !categoryLockedByPicker
 }
