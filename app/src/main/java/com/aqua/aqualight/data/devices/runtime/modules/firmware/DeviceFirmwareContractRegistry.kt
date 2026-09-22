@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
 import com.aqua.aqualight.data.devices.contract.AqlWsContract
 import com.aqua.aqualight.data.devices.dosing.v1.DeviceDosingV1Contract
+import com.aqua.aqualight.data.devices.model.DeviceFamily
 import com.aqua.aqualight.data.devices.model.SUPPORTED_DEVICE_API_VERSION
 import com.aqua.aqualight.data.devices.runtime.modules.cooling.v1.DeviceCoolingV1Contract
 import com.aqua.aqualight.data.devices.runtime.modules.light.DeviceLightRuntimeContract
@@ -22,7 +23,10 @@ internal object DeviceFirmwareContractRegistry {
         DeviceCoolingV1Contract.SCHEMA
     )
 
-    fun requireTargetCompatible(contracts: DeviceFirmwareTargetContracts) {
+    fun requireTargetCompatible(
+        contracts: DeviceFirmwareTargetContracts,
+        family: DeviceFamily
+    ) {
         val unsupported = linkedSetOf<String>()
 
         if (contracts.wsSchema != AqlWsContract.SCHEMA) {
@@ -33,6 +37,23 @@ internal object DeviceFirmwareContractRegistry {
         }
         if (contracts.deviceApiVersion != SUPPORTED_DEVICE_API_VERSION) {
             unsupported += "deviceApiVersion=${contracts.deviceApiVersion}"
+        }
+
+        val expectedBaseContract = when (family) {
+            DeviceFamily.LIGHT -> DeviceLightRuntimeContract.SCHEMA
+            DeviceFamily.TIMER -> DeviceTimerRuntimeContract.SCHEMA
+            DeviceFamily.DOSING -> DeviceDosingV1Contract.SCHEMA
+            DeviceFamily.COOLING -> DeviceCoolingV1Contract.SCHEMA
+            DeviceFamily.UNKNOWN -> null
+        }
+        if (
+            expectedBaseContract == null ||
+            contracts.requiredDomains != listOf(expectedBaseContract)
+        ) {
+            unsupported += contracts.requiredDomains
+            if (expectedBaseContract != null) {
+                unsupported += "required:$expectedBaseContract"
+            }
         }
         unsupported += contracts.requiredDomains.filterNot(supportedRequiredDomains::contains)
 
