@@ -11,6 +11,8 @@ import com.aqua.aqualight.data.devices.model.DeviceRuntimeEndpoint
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.data.devices.runtime.ws.AqlWsConnectionState
+import com.aqua.aqualight.data.devices.runtime.ws.AqlWsProtocolError
+import com.aqua.aqualight.data.devices.runtime.ws.AqlWsProtocolException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
@@ -118,7 +120,7 @@ class DefaultDeviceMenuAccessOperationsTest {
         val result = operations.resolve(snapshot.deviceUid.value)
 
         val unavailable = result as DeviceMenuAccessResult.Unavailable
-        assertEquals(DeviceMenuUnavailableReason.DEVICE_UNRESPONSIVE, unavailable.reason)
+        assertEquals(DeviceMenuUnavailableReason.DEVICE_OFFLINE, unavailable.reason)
         assertEquals(startedAt, testScheduler.currentTime)
         assertEquals(0, port.connectCalls)
         assertEquals(0, port.refreshNowCalls)
@@ -182,6 +184,26 @@ class DefaultDeviceMenuAccessOperationsTest {
         assertTrue(second.await() is DeviceMenuAccessResult.Available)
         assertEquals(1, port.requestNetworkStatusCalls)
         assertEquals(1, port.recordControlProofCalls)
+    }
+
+    @Test
+    fun `incompatible websocket protocol requires app update without marking device offline`() = runTest {
+        val snapshot = snapshot(
+            state = DeviceConnectionState(onlineState = DeviceOnlineState.CONNECTING_WS)
+        )
+        val port = FakeDeviceMenuRuntimePort(snapshot = snapshot).apply {
+            currentRuntimeState = AqlWsConnectionState.Failed(
+                deviceUid = snapshot.deviceUid,
+                cause = AqlWsProtocolException(AqlWsProtocolError.INCOMPATIBLE_PROTOCOL)
+            )
+        }
+        val operations = DefaultDeviceMenuAccessOperations(port)
+
+        val result = operations.resolve(snapshot.deviceUid.value)
+
+        val unavailable = result as DeviceMenuAccessResult.Unavailable
+        assertEquals(DeviceMenuUnavailableReason.APPLICATION_UPDATE_REQUIRED, unavailable.reason)
+        assertEquals(0, port.requestNetworkStatusCalls)
     }
 
     @Test
