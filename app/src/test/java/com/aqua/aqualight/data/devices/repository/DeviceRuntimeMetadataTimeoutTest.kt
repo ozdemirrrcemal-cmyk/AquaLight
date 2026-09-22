@@ -31,7 +31,7 @@ import org.junit.Test
 class DeviceRuntimeMetadataTimeoutTest {
 
     @Test
-    fun `incomplete authenticated bootstrap expires and closes current socket`() = runTest {
+    fun `incomplete authenticated bootstrap expires without closing maintenance socket`() = runTest {
         val transport = RecordingWsTransport()
         val repository = DeviceRuntimeRepository(
             wsClientFactory = { transport },
@@ -55,7 +55,7 @@ class DeviceRuntimeMetadataTimeoutTest {
         val rejected = repository.metadataBootstrapCoordinator.currentState(deviceUid) as
             DeviceRuntimeMetadataGenerationState.Rejected
         assertEquals(DeviceRuntimeMetadataFailureCode.BOOTSTRAP_TIMEOUT, rejected.failure.code)
-        assertEquals(METADATA_BOOTSTRAP_FAILED_REASON, transport.lastDisconnectReason)
+        assertEquals(null, transport.lastDisconnectReason)
         repository.close()
     }
 
