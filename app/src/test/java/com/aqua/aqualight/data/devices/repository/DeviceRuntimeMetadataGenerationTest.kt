@@ -114,7 +114,7 @@ class DeviceRuntimeMetadataGenerationTest {
     }
 
     @Test
-    fun `exact parsers reject runtime mismatch unknown fields and type coercion`() {
+    fun `strict core rejects malformed fields while declared extension tokens remain forward compatible`() {
         assertEquals(
             identityEnvelope(),
             DeviceRuntimeIdentityParser.parse(deviceUid, identityJson()).getOrThrow()
@@ -127,7 +127,7 @@ class DeviceRuntimeMetadataGenerationTest {
         val wrongPort = JSONObject(identityJson().toString()).apply {
             getJSONObject("runtime").put("wsPort", 81)
         }
-        val wrongApi = JSONObject(identityJson().toString()).put("apiVersion", 2)
+        val newerApi = JSONObject(identityJson().toString()).put("apiVersion", 2)
         val unknownIdentity = JSONObject(identityJson().toString()).put(
             "legacyModel",
             "relay_pro_2"
@@ -140,10 +140,15 @@ class DeviceRuntimeMetadataGenerationTest {
         }
 
         assertTrue(DeviceRuntimeIdentityParser.parse(deviceUid, wrongPort).isFailure)
-        assertTrue(DeviceRuntimeIdentityParser.parse(deviceUid, wrongApi).isFailure)
         assertTrue(DeviceRuntimeIdentityParser.parse(deviceUid, unknownIdentity).isFailure)
         assertTrue(DeviceRuntimeCapabilitiesParser.parse(coercedCapability).isFailure)
-        assertTrue(DeviceRuntimeCapabilitiesParser.parse(unknownFeature).isFailure)
+
+        val parsedNewerApi = DeviceRuntimeIdentityParser.parse(deviceUid, newerApi).getOrThrow()
+        assertEquals(2, parsedNewerApi.identity.apiVersion.value)
+
+        val parsedFutureFeature =
+            DeviceRuntimeCapabilitiesParser.parse(unknownFeature).getOrThrow()
+        assertEquals(capabilities().supportedFeatures, parsedFutureFeature.supportedFeatures)
     }
 
     @Test
