@@ -39,6 +39,10 @@ internal object DeviceFirmwareContractRegistry {
             unsupported += "deviceApiVersion=${contracts.deviceApiVersion}"
         }
 
+        if (contracts.maintenanceSchema != DeviceFirmwareRuntimeContract.MAINTENANCE_SCHEMA) {
+            unsupported += contracts.maintenanceSchema
+        }
+
         val expectedBaseContract = when (family) {
             DeviceFamily.LIGHT -> DeviceLightRuntimeContract.SCHEMA
             DeviceFamily.TIMER -> DeviceTimerRuntimeContract.SCHEMA
