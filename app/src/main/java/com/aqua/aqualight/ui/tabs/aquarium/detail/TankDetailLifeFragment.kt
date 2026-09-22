@@ -16,12 +16,13 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.aqua.aqualight.R
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentTankDetailLifeBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
-import com.aqua.aqualight.data.aquarium.catalog.livestock.LivestockCatalog
 import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.LivestockCategories
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
 import com.aqua.aqualight.application.aquarium.AquariumLivestockIdentity
+import com.aqua.aqualight.i18n.AppLanguageController
 import com.aqua.aqualight.i18n.LocaleFormatter
 import com.google.android.material.card.MaterialCardView
 import androidx.navigation.fragment.findNavController
@@ -34,6 +35,9 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
     private val binding get() = _binding!!
 
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
+    private val livestockCatalogOperations by lazy(LazyThreadSafetyMode.NONE) {
+        requireContext().requireAppContainer().livestockCatalogOperations
+    }
 
     private var tankId: Long = 0L
     private var isOpeningLivestockForm: Boolean = false
@@ -251,14 +255,11 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
         val resolvedCatalogEntry = if (isCustom) {
             null
         } else {
-            LivestockCatalog.findById(
-                context = requireContext(),
-                entryId = livestock.catalogEntryId
-            )
+            livestockCatalogOperations.findById(livestock.catalogEntryId)
         }
         val resolvedDisplayName = when {
             isCustom -> livestock.name
-            resolvedCatalogEntry != null -> resolvedCatalogEntry.displayName(requireContext())
+            resolvedCatalogEntry != null -> resolvedCatalogEntry.displayName(AppLanguageController.current())
             else -> getString(R.string.livestock_catalog_entry_missing_title)
         }
 
