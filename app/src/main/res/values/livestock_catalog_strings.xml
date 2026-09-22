@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="screen_title_livestock_picker">Livestock Catalog</string>
+    <string name="livestock_picker_category_label">Category</string>
+    <string name="livestock_picker_empty">No matching livestock found.</string>
+    <string name="livestock_picker_catalog_unavailable">The livestock catalog could not be loaded. You can still add a custom livestock entry.</string>
+    <string name="livestock_picker_result_zero">0 livestock</string>
+    <plurals name="livestock_picker_result_count">
+        <item quantity="one">%1$d livestock</item>
+        <item quantity="other">%1$d livestock</item>
+    </plurals>
+    <string name="livestock_picker_selected_zero">Select a livestock item</string>
+    <string name="livestock_picker_selected_one">1 selected</string>
+    <string name="livestock_picker_continue">Continue</string>
+    <string name="livestock_picker_new_category">New %1$s</string>
+    <string name="livestock_picker_new_default">New Livestock</string>
+    <string name="livestock_picker_item_selected">Selected</string>
+    <string name="livestock_picker_item_not_selected">Not selected</string>
+    <string name="livestock_category_fish">Fish</string>
+    <string name="livestock_category_shrimp">Shrimp</string>
+    <string name="livestock_category_snail">Snail</string>
+    <string name="livestock_category_crab_crayfish">Crab / Crayfish</string>
+    <string name="livestock_category_coral">Coral</string>
+    <string name="livestock_category_other">Other</string>
+</resources>
