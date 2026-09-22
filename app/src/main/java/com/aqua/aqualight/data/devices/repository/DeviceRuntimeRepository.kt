@@ -585,7 +585,7 @@ class DeviceRuntimeRepository(
         is DeviceRuntimeMetadataReduction.IgnoredStale -> DeviceRuntimeMetadataUpdate.Unmatched
         is DeviceRuntimeMetadataReduction.Rejected -> {
             cancelMetadataTimeout(deviceUid)
-            disconnectMetadataFailure(deviceUid)
+            enterMaintenanceOnlyMode(deviceUid)
             DeviceRuntimeMetadataUpdate.Rejected(reduction.state)
         }
         is DeviceRuntimeMetadataReduction.Accepted -> when (val state = reduction.state) {
@@ -597,7 +597,7 @@ class DeviceRuntimeRepository(
             }
             is DeviceRuntimeMetadataGenerationState.Rejected -> {
                 cancelMetadataTimeout(deviceUid)
-                disconnectMetadataFailure(deviceUid)
+                enterMaintenanceOnlyMode(deviceUid)
                 DeviceRuntimeMetadataUpdate.Rejected(state)
             }
         }
@@ -622,7 +622,7 @@ class DeviceRuntimeRepository(
                         field = "${validation.failure.code}:${validation.failure.field}"
                     )
                 )
-                disconnectMetadataFailure(state.deviceUid)
+                enterMaintenanceOnlyMode(state.deviceUid)
                 DeviceRuntimeMetadataUpdate.Rejected(rejected)
             }
         }
@@ -638,20 +638,15 @@ class DeviceRuntimeRepository(
         generation: DeviceRuntimeConnectionGeneration? = null
     ) = domainBootstrapLifecycle.cancel(deviceUid, generation)
 
-    private fun disconnectMetadataFailure(deviceUid: DeviceUid) {
+    /**
+     * Domain metadata failure withdraws control authority but deliberately keeps the authenticated
+     * WebSocket alive. The stable maintenance plane (firmware.status/OTA + liveness) must remain
+     * reachable so an incompatible domain firmware can be recovered without USB service access.
+     */
+    private fun enterMaintenanceOnlyMode(deviceUid: DeviceUid) {
         val session = sessionStore.current(deviceUid) ?: return
         cancelDomainBootstrap(deviceUid, session.generation)
         runtimeModules.invalidateRuntimeAuthority(deviceUid, session.generation)
-        commandExecutor.cancelGeneration(
-            deviceUid = deviceUid,
-            generation = session.generation,
-            reason = COMMAND_CANCELLED_METADATA_FAILURE
-        )
-        synchronized(session) {
-            if (sessionStore.isCurrent(session)) {
-                session.wsClient.disconnect(reason = METADATA_BOOTSTRAP_FAILED_REASON)
-            }
-        }
     }
 
     private fun rejectActiveGeneration(deviceUid: DeviceUid, field: String) {
@@ -682,7 +677,7 @@ class DeviceRuntimeRepository(
                 generation = generation
             )
             if (rejected != null) {
-                disconnectMetadataFailure(session.deviceUid)
+                enterMaintenanceOnlyMode(session.deviceUid)
             }
         }
         metadataTimeoutJobs[session.deviceUid] = timeoutJob
@@ -864,7 +859,6 @@ private const val COMMAND_CANCELLED_DEVICE_CLOSED = "device runtime closed"
 private const val COMMAND_CANCELLED_CREDENTIAL_REVOKED = "runtime credential revoked"
 private const val COMMAND_CANCELLED_REPOSITORY_CLOSED = "runtime repository closed"
 private const val COMMAND_CANCELLED_REPOSITORY_SHUTDOWN = "runtime repository shutdown"
-private const val COMMAND_CANCELLED_METADATA_FAILURE = "metadata bootstrap failed"
 private const val COMMAND_CANCELLED_TRANSPORT_UNAVAILABLE = "runtime transport unavailable"
 private const val COMMAND_CANCELLED_SOCKET_CLOSED = "runtime socket closed"
 private const val COMMAND_CANCELLED_SOCKET_FAILURE = "runtime socket failure"
