@@ -58,7 +58,8 @@ internal fun SavedAquariumTank.toArchiveAquarium(
                 category = item.category,
                 quantity = item.quantity,
                 addedDateEpochDay = item.addedDateEpochDay,
-                note = item.note
+                note = item.note,
+                catalogEntryId = item.catalogEntryId.takeIf(String::isNotBlank)
             )
         }
     )
@@ -108,7 +109,8 @@ internal fun ArchiveLivestock.toSavedLivestock(): SavedAquariumLivestock {
         category = category,
         quantity = quantity,
         addedDateEpochDay = addedDateEpochDay,
-        note = note
+        note = note,
+        catalogEntryId = catalogEntryId.orEmpty()
     )
 }
 
