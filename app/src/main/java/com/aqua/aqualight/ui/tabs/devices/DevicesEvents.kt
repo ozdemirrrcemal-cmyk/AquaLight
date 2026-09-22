@@ -8,6 +8,10 @@ sealed class DevicesEvent {
         val route: DeviceRoute
     ) : DevicesEvent()
 
+    data class OpenFirmwareUpdate(
+        val deviceUid: String
+    ) : DevicesEvent()
+
     data class ShowDeviceUnavailable(
         val title: String,
         @StringRes val dialogTitleRes: Int,
