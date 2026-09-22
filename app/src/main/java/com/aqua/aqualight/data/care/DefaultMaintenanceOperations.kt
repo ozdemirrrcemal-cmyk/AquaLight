@@ -209,6 +209,7 @@ private fun AquariumMaterialSelection.toDataMaterial(): SavedAquariumMaterial =
 private fun AquariumLivestock.toDataLivestock(): SavedAquariumLivestock =
     SavedAquariumLivestock(
         id = id,
+        catalogEntryId = catalogEntryId,
         name = name,
         category = category,
         quantity = quantity,
