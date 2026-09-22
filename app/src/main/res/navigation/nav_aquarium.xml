@@ -109,6 +109,10 @@
                 android:name="openedFromPicker"
                 app:argType="boolean"
                 android:defaultValue="false" />
+            <argument
+                android:name="presetName"
+                app:argType="string"
+                android:defaultValue="" />
         </action>
         <action
             android:id="@+id/action_tankDetailFragment_to_tankDetailPlantTagFragment"
@@ -288,6 +292,10 @@
                 android:name="openedFromPicker"
                 app:argType="boolean"
                 android:defaultValue="true" />
+            <argument
+                android:name="presetName"
+                app:argType="string"
+                android:defaultValue="" />
         </action>
     </fragment>
 
