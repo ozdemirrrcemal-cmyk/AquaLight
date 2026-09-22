@@ -7,6 +7,8 @@ import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
+import com.aqua.aqualight.application.devices.DeviceFirmwareUpdatePolicy
+import com.aqua.aqualight.application.devices.DeviceFirmwareUpdatePolicyLevel
 import com.aqua.aqualight.application.devices.PreparedDeviceFirmwareUpdate
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import java.security.MessageDigest
@@ -127,6 +129,7 @@ internal class SharedPreferencesDeviceOtaTransactionStore private constructor(
         .put(FIELD_APPLY_NOW, plan.applyNow)
         .put(FIELD_RUNTIME_GENERATION, plan.runtimeMetadataGeneration)
         .put(FIELD_MANIFEST_TAG, plan.manifestTag)
+        .put(FIELD_UPDATE_POLICY_LEVEL, plan.updatePolicy.level.name)
         .put(FIELD_RELEASE_CONTENT, encodeReleaseContent(plan.releaseContent))
 
     private fun decodePlan(json: JSONObject): PreparedDeviceFirmwareUpdate =
@@ -148,7 +151,17 @@ internal class SharedPreferencesDeviceOtaTransactionStore private constructor(
             applyNow = json.getBoolean(FIELD_APPLY_NOW),
             runtimeMetadataGeneration = json.getLong(FIELD_RUNTIME_GENERATION),
             manifestTag = json.optString(FIELD_MANIFEST_TAG),
-            releaseContent = decodeReleaseContent(json.getJSONObject(FIELD_RELEASE_CONTENT))
+            releaseContent = decodeReleaseContent(json.getJSONObject(FIELD_RELEASE_CONTENT)),
+            updatePolicy = DeviceFirmwareUpdatePolicy(
+                runCatching {
+                    DeviceFirmwareUpdatePolicyLevel.valueOf(
+                        json.optString(
+                            FIELD_UPDATE_POLICY_LEVEL,
+                            DeviceFirmwareUpdatePolicyLevel.RECOMMENDED.name
+                        )
+                    )
+                }.getOrDefault(DeviceFirmwareUpdatePolicyLevel.RECOMMENDED)
+            )
         )
 
     private fun encodeReleaseContent(content: DeviceFirmwareReleaseContent): JSONObject =
@@ -254,6 +267,7 @@ internal class SharedPreferencesDeviceOtaTransactionStore private constructor(
         private const val FIELD_APPLY_NOW = "apply_now"
         private const val FIELD_RUNTIME_GENERATION = "runtime_generation"
         private const val FIELD_MANIFEST_TAG = "manifest_tag"
+        private const val FIELD_UPDATE_POLICY_LEVEL = "update_policy_level"
         private const val FIELD_RELEASE_CONTENT = "release_content"
         private const val FIELD_LOCALE_TAG = "locale_tag"
         private const val FIELD_TITLE = "title"
