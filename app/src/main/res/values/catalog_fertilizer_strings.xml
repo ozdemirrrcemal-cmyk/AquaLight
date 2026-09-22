@@ -2,13 +2,8 @@
 <resources>
     <!-- Fertilizer catalog brand names. -->
     <string name="catalog_fertilizer_brand_2hr_aquarist" translatable="false">2Hr Aquarist</string>
-    <string name="catalog_fertilizer_brand_ada" translatable="false">ADA</string>
-    <string name="catalog_fertilizer_brand_green_aqua" translatable="false">Green Aqua</string>
     <string name="catalog_fertilizer_brand_seachem" translatable="false">Seachem</string>
-    <string name="catalog_fertilizer_brand_tropica" translatable="false">Tropica</string>
     <string name="catalog_fertilizer_brand_dennerle_plants" translatable="false">Dennerle Plants</string>
-    <string name="catalog_fertilizer_brand_dennerle" translatable="false">Dennerle</string>
-    <string name="catalog_fertilizer_brand_jbl" translatable="false">JBL</string>
     <string name="catalog_fertilizer_brand_sera" translatable="false">Sera</string>
     <string name="catalog_fertilizer_brand_easy_life" translatable="false">Easy-Life</string>
     <string name="catalog_fertilizer_brand_masterline" translatable="false">MasterLine</string>
@@ -23,10 +18,8 @@
     <string name="catalog_fertilizer_brand_green_leaf_aquariums_gla" translatable="false">Green Leaf Aquariums (GLA)</string>
     <string name="catalog_fertilizer_brand_tetra" translatable="false">Tetra</string>
     <string name="catalog_fertilizer_brand_dupla" translatable="false">Dupla</string>
-    <string name="catalog_fertilizer_brand_oase" translatable="false">Oase</string>
     <string name="catalog_fertilizer_brand_vimi" translatable="false">VIMI</string>
     <string name="catalog_fertilizer_brand_colombo" translatable="false">Colombo</string>
-    <string name="catalog_fertilizer_brand_ista" translatable="false">ISTA</string>
     <string name="catalog_fertilizer_brand_tropical" translatable="false">Tropical</string>
     <string name="catalog_fertilizer_brand_prodibio" translatable="false">Prodibio</string>
     <string name="catalog_fertilizer_brand_ultum_nature_systems_uns" translatable="false">Ultum Nature Systems (UNS)</string>
