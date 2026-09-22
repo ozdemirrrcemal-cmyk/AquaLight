@@ -16,7 +16,7 @@
     <string name="device_settings_update_checking_description">Checking update information…</string>
     <string name="device_settings_update_not_published_description">No software update has been published for this device yet.</string>
     <string name="device_settings_update_up_to_date_description">Software %1$s is installed and up to date.</string>
-    <string name="device_settings_update_installed_unknown_description">The installed firmware is up to date.</string>
+    <string name="device_settings_update_installed_unknown_description">Installed software is up to date.</string>
     <string name="device_settings_update_available_status">Software %1$s is ready</string>
     <string name="device_settings_update_in_progress_status">Software %1$s · %2$d%%</string>
     <string name="device_settings_retry_update_check_action">Try again</string>
