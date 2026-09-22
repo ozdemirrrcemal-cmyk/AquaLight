@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_access_dialog_message">%1$s\n\n%2$s</string>
+    <string name="device_access_local_network_title">Yerel Ağ Kullanılamıyor</string>
+    <string name="device_access_authentication_title">Cihaz Doğrulaması Gerekli</string>
+    <string name="device_access_unresponsive_title">Cihaza Ulaşılamadı</string>
+    <string name="device_access_state_unverified_title">Cihaz Durumu Doğrulanamadı</string>
+    <string name="device_access_unavailable_title">Cihaz Kullanılamıyor</string>
+    <string name="device_access_unavailable_message">Bu cihaz mevcut hesapta kullanılamıyor. Cihaz listesini yenileyip yeniden deneyin.</string>
+    <string name="device_access_unsupported_title">Desteklenmeyen Cihaz</string>
+    <string name="device_access_contract_incompatible_title">Cihaz Yazılımı Uyumlu Değil</string>
+    <string name="device_access_contract_incompatible_message">Cihaz çevrimiçi ancak mevcut cihaz yazılımı bu AquaLight sürümüyle uyumlu değil.</string>
+    <string name="device_access_state_unverified_message">Cihaz bağlantısı kullanılabilir durumda ancak güncel kontrol durumu güvenli biçimde doğrulanamadı. Yeniden deneyin.</string>
+    <string name="device_access_feature_unavailable_title">Özellik Kullanılamıyor</string>
+    <string name="device_access_feature_unavailable_message">Bu işlev cihazdaki mevcut yazılımla kullanılamıyor. Uyumlu diğer kontroller kullanılmaya devam edebilir.</string>
+    <string name="device_access_firmware_update_required_title">Cihaz Güncellemesi Gerekli</string>
+    <string name="device_access_firmware_update_required_message">Bu işlevi kullanmadan önce cihaz yazılımının güncellenmesi gerekiyor.</string>
+    <string name="device_access_app_update_required_title">Uygulama Güncellemesi Gerekli</string>
+    <string name="device_access_app_update_required_message">Cihaz çevrimiçi ancak cihaz yazılımı daha yeni bir AquaLight sürümü gerektiriyor. Devam etmek için uygulamayı güncelleyin.</string>
+</resources>
