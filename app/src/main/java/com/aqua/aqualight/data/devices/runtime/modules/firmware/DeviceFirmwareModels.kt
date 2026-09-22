@@ -2,7 +2,6 @@ package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
 import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdatePolicy
-import com.aqua.aqualight.application.devices.DeviceFirmwareUpdatePolicyLevel
 import com.aqua.aqualight.data.devices.model.DeviceCapabilities
 import com.aqua.aqualight.data.devices.model.DeviceLimits
 import com.aqua.aqualight.data.devices.model.DeviceUid
