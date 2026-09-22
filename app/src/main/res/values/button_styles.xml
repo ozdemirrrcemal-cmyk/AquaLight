@@ -40,7 +40,7 @@
         <item name="strokeWidth">@dimen/aqua_size_0</item>
     </style>
 
-    <style name="Widget.Aqua.Button.LivestockCatalogAdd" parent="Widget.Aqua.Button.Primary">
+    <style name="Widget.Aqua.Button.CatalogAdd" parent="Widget.Aqua.Button.Primary">
         <item name="android:minHeight">@dimen/aqua_size_48</item>
         <item name="android:textSize">@dimen/aqua_text_size_body</item>
         <item name="cornerRadius">@dimen/aqua_size_14</item>
