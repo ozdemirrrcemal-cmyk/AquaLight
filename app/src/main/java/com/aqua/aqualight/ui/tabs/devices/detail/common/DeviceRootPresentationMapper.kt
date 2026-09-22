@@ -20,7 +20,7 @@ object DeviceRootPresentationMapper {
 
     @StringRes
     fun otaFailureMessageRes(reason: DeviceOtaFailureReason): Int =
-        OTA_FAILURE_MESSAGE_RESOURCES.getValue(reason)
+        OTA_COMMERCIAL_FAILURE_MESSAGE_RESOURCES.getValue(reason)
 
     fun primaryCount(snapshot: DeviceRootSnapshot, kind: DeviceRootKind): Int = when (kind) {
         DeviceRootKind.DOSING -> snapshot.dosingChannelCount
@@ -108,7 +108,13 @@ object DeviceRootPresentationMapper {
     }
 }
 
-private val OTA_FAILURE_MESSAGE_RESOURCES = mapOf(
+/**
+ * Sole customer-facing OTA failure copy mapping.
+ *
+ * Firmware diagnostics remain outside presentation; every settings and full-screen OTA failure
+ * resolves through this stable semantic map.
+ */
+private val OTA_COMMERCIAL_FAILURE_MESSAGE_RESOURCES = mapOf(
     DeviceOtaFailureReason.CHECK_FAILED to
         R.string.device_settings_update_error_check_failed,
     DeviceOtaFailureReason.CONNECTION to
