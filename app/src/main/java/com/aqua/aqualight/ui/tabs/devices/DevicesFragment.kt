@@ -20,6 +20,7 @@ import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderFilledIconAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderPrimaryAction
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.navigation.AppRouteNavigator
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRoute
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRouteTarget
 import com.aqua.aqualight.utils.DialogManager
@@ -152,6 +153,9 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
                     viewModel.events.collect { event ->
                         when (event) {
                             is DevicesEvent.OpenRoute -> openDeviceRoute(event.route)
+                            is DevicesEvent.OpenFirmwareUpdate -> {
+                                openFirmwareUpdate(event.deviceUid)
+                            }
                             is DevicesEvent.ShowDeviceUnavailable -> {
                                 showDeviceUnavailable(event)
                             }
@@ -266,6 +270,14 @@ class DevicesFragment : Fragment(R.layout.fragment_devices) {
             tone = FeedbackBottomSheet.FeedbackTone.WARNING,
             requestKey = DELETE_DEVICES_REQUEST_KEY,
             actionId = "delete_selected"
+        )
+    }
+
+    private fun openFirmwareUpdate(deviceUid: String) {
+        baseActivity()?.clearGlobalLoading(DEVICE_MENU_LOADING_OWNER)
+        AppRouteNavigator.openDeviceFirmwareUpdate(
+            navController = findNavController(),
+            deviceUid = deviceUid
         )
     }
 
