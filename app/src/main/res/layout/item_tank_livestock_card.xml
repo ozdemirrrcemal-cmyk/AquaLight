@@ -4,16 +4,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/cardRoot"
-    style="@style/Widget.Aqua.Card"
+    style="@style/Widget.Aqua.Card.TankListItem"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="@dimen/aqua_size_12"
+    android:layout_marginBottom="@dimen/aqua_size_10"
     android:clickable="true"
     android:focusable="true"
-    app:cardBackgroundColor="@color/aqua_surface_deep"
-    app:cardCornerRadius="@dimen/aqua_size_18"
-    app:strokeColor="@color/aqua_tank_detail_life_fragment_outline"
-    app:strokeWidth="@dimen/aqua_size_1">
+>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -50,8 +47,8 @@
                 android:ellipsize="end"
                 android:includeFontPadding="false"
                 android:maxLines="1"
-                android:textColor="@color/aqua_content_on_dark"
-                android:textSize="@dimen/aqua_text_size_body_plus"
+                android:textColor="@color/aqua_card_text_primary"
+                android:textSize="@dimen/aqua_text_size_body"
                 android:textStyle="bold"
                 tools:text="Amano Karidesi" />
 
@@ -63,8 +60,8 @@
                 android:ellipsize="end"
                 android:includeFontPadding="false"
                 android:maxLines="1"
-                android:textColor="@color/aqua_content_secondary"
-                android:textSize="@dimen/aqua_text_size_caption_plus"
+                android:textColor="@color/aqua_card_text_secondary"
+                android:textSize="@dimen/aqua_text_size_caption"
                 tools:text="Karides • 6 adet" />
 
             <TextView
@@ -87,7 +84,7 @@
                 android:ellipsize="end"
                 android:includeFontPadding="false"
                 android:maxLines="1"
-                android:textColor="@color/aqua_content_secondary"
+                android:textColor="@color/aqua_card_text_secondary"
                 android:textSize="@dimen/aqua_text_size_caption"
                 android:visibility="gone"
                 tools:text="Örnek not"
