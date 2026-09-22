@@ -40,6 +40,15 @@
         <item name="strokeWidth">@dimen/aqua_size_0</item>
     </style>
 
+    <style name="Widget.Aqua.Button.LivestockCatalogAdd" parent="Widget.Aqua.Button.Primary">
+        <item name="android:minHeight">@dimen/aqua_size_48</item>
+        <item name="android:textSize">@dimen/aqua_text_size_body</item>
+        <item name="cornerRadius">@dimen/aqua_size_14</item>
+        <item name="backgroundTint">@color/aqua_accent_primary</item>
+        <item name="android:textColor">@color/aqua_content_on_dark</item>
+        <item name="iconTint">@color/aqua_content_on_dark</item>
+    </style>
+
     <style name="Widget.Aqua.Button.IconToggle" parent="Widget.MaterialComponents.Button">
         <item name="android:minWidth">@dimen/aqua_size_0</item>
         <item name="android:minHeight">@dimen/aqua_size_0</item>
