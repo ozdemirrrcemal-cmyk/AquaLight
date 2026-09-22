@@ -1,6 +1,8 @@
 package com.aqua.aqualight.data.devices.runtime.modules.firmware
 
 import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
+import com.aqua.aqualight.application.devices.DeviceFirmwareUpdatePolicy
+import com.aqua.aqualight.application.devices.DeviceFirmwareUpdatePolicyLevel
 import com.aqua.aqualight.data.devices.model.DeviceCapabilities
 import com.aqua.aqualight.data.devices.model.DeviceLimits
 import com.aqua.aqualight.data.devices.model.DeviceUid
@@ -274,9 +276,43 @@ data class DeviceFirmwareManifestArtifact(
     val env: String,
     val product: DeviceFirmwareManifestProduct,
     val compatibility: DeviceFirmwareCompatibility,
+    val contracts: DeviceFirmwareTargetContracts,
+    val updatePolicy: DeviceFirmwareUpdatePolicy,
     val firmware: DeviceFirmwareAsset,
     val factory: DeviceFirmwareFactoryAsset?
 )
+
+data class DeviceFirmwareTargetContracts(
+    val wsSchema: String,
+    val wsProtocolVersion: Int,
+    val deviceApiVersion: Int,
+    val requiredDomains: List<String>,
+    val optionalDomains: List<String>
+) {
+    init {
+        require(wsSchema.isNotBlank()) { "Target wsSchema must not be blank." }
+        require(wsProtocolVersion > 0) { "Target wsProtocolVersion must be positive." }
+        require(deviceApiVersion > 0) { "Target deviceApiVersion must be positive." }
+        require(requiredDomains.isNotEmpty()) {
+            "Target firmware must declare at least one required domain contract."
+        }
+        require(requiredDomains.none(String::isBlank)) {
+            "Required domain contracts must not contain blank values."
+        }
+        require(optionalDomains.none(String::isBlank)) {
+            "Optional domain contracts must not contain blank values."
+        }
+        require(requiredDomains.size == requiredDomains.toSet().size) {
+            "Required domain contracts must be unique."
+        }
+        require(optionalDomains.size == optionalDomains.toSet().size) {
+            "Optional domain contracts must be unique."
+        }
+        require(requiredDomains.toSet().intersect(optionalDomains.toSet()).isEmpty()) {
+            "Required and optional domain contracts must be disjoint."
+        }
+    }
+}
 
 data class DeviceFirmwareManifestProduct(
     val productKey: String,
@@ -349,7 +385,8 @@ data class DeviceFirmwareUpdatePlan(
     val payload: DeviceFirmwareOtaStartPayload,
     val runtimeMetadataGeneration: Long = 0L,
     val manifestTag: String = "",
-    val releaseContent: DeviceFirmwareReleaseContent = DeviceFirmwareReleaseContent.EMPTY
+    val releaseContent: DeviceFirmwareReleaseContent = DeviceFirmwareReleaseContent.EMPTY,
+    val updatePolicy: DeviceFirmwareUpdatePolicy = DeviceFirmwareUpdatePolicy.RECOMMENDED
 )
 
 internal fun String.isSha256Hex(): Boolean {
