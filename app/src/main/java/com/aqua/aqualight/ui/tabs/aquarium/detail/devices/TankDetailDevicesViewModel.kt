@@ -157,7 +157,11 @@ class TankDetailDevicesViewModel(
                     }
                     is DeviceMenuOpenResult.Unavailable -> {
                         clearMenuOpen(deviceUid)
-                        _events.send(result.toUnavailableEvent())
+                        if (result.reason.canOpenFirmwareMaintenance) {
+                            _events.send(TankDetailDevicesEvent.OpenFirmwareUpdate(deviceUid))
+                        } else {
+                            _events.send(result.toUnavailableEvent())
+                        }
                     }
                 }
             } catch (error: Throwable) {
@@ -393,6 +397,8 @@ data class TankDetailDevicesUiState(
 
 sealed interface TankDetailDevicesEvent {
     data class OpenDeviceRoute(val route: DeviceRoute) : TankDetailDevicesEvent
+
+    data class OpenFirmwareUpdate(val deviceUid: String) : TankDetailDevicesEvent
 
     data class ShowDeviceUnavailable(
         val title: String,
