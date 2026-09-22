@@ -33,11 +33,11 @@
     <string name="device_settings_update_error_device_busy">The device is busy with another operation. Try again when it finishes.</string>
     <string name="device_settings_update_error_release_connection_failed">The update service could not be reached. Check this phone’s internet connection and try again.</string>
     <string name="device_settings_update_error_device_network_unavailable">The device internet connection is not ready for the update or was interrupted. Check the device Wi-Fi connection and try again.</string>
-    <string name="device_settings_update_error_release_unavailable">The update file could not be found. Try again later; if the problem continues, contact support.</string>
-    <string name="device_settings_update_error_release_access_denied">The update file could not be accessed. Try again later; if the problem continues, contact support.</string>
+    <string name="device_settings_update_error_release_unavailable">The update file could not be found. Contact support.</string>
+    <string name="device_settings_update_error_release_access_denied">The update file could not be accessed. Contact support.</string>
     <string name="device_settings_update_error_release_rate_limited">The update service is busy right now. Try again shortly.</string>
-    <string name="device_settings_update_error_release_redirect_failed">The update file could not be reached securely. Try again later.</string>
-    <string name="device_settings_update_error_release_request_rejected">The update request was not accepted. Try again later; if the problem continues, contact support.</string>
+    <string name="device_settings_update_error_release_redirect_failed">The update file could not be reached securely. Contact support.</string>
+    <string name="device_settings_update_error_release_request_rejected">The update request was not accepted. Contact support.</string>
     <string name="device_settings_update_error_release_server_unavailable">The update service is temporarily unavailable. Try again later.</string>
     <string name="device_settings_update_error_incompatible_firmware">This software version is not compatible with your device. Do not retry this update; contact support.</string>
     <string name="device_settings_update_error_insufficient_space">The device does not have enough space to install this update safely. Contact support.</string>
@@ -52,7 +52,7 @@
     <string name="device_settings_update_error_download_timeout">The update download did not finish in time. Check the connection and try again.</string>
     <string name="device_settings_update_error_download_url_open_failed">The update file could not be reached. Check the device internet connection and try again.</string>
     <string name="device_settings_update_error_download_stream_interrupted">The update download was interrupted before it finished. Check the connection and try again.</string>
-    <string name="device_settings_update_error_download_size_mismatch">The downloaded update does not match the expected package. It was not installed. Try again later; if the problem continues, contact support.</string>
+    <string name="device_settings_update_error_download_size_mismatch">The downloaded update does not match the expected package. It was not installed. If the problem continues, contact support.</string>
     <string name="device_settings_update_error_download_failed">The update could not be downloaded. Check the device internet connection and try again.</string>
     <string name="device_settings_update_error_integrity_check">The downloaded update could not be verified and was not installed. Do not retry the same update; contact support.</string>
     <string name="device_settings_update_error_safe_mode">The device could not prepare safely for the update. Keep it powered on and try again.</string>
@@ -60,7 +60,7 @@
     <string name="device_settings_update_error_flash_write">The software could not be saved to the device. Keep the device powered on and contact support.</string>
     <string name="device_settings_update_error_security_validation">The update could not be verified securely and was not installed. Check the device internet connection and date and time; if the problem continues, contact support.</string>
     <string name="device_settings_update_error_protocol_mismatch">The app and the device update system are not compatible. Update the app; if the problem continues, contact support.</string>
-    <string name="device_settings_update_error_device_internal">The device could not complete the update. Keep it powered on and try again; if the problem continues, contact support.</string>
+    <string name="device_settings_update_error_device_internal">The device could not complete the update. Keep it powered on; if the problem continues, contact support.</string>
 
     <string name="device_settings_change_name_title">Change device name</string>
     <string name="device_settings_save_action">Save</string>
