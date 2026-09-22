@@ -131,6 +131,7 @@ class DeviceFirmwareProductIsolationMatrixTest {
             wsSchema = "aql.ws.v1",
             wsProtocolVersion = 1,
             deviceApiVersion = 1,
+                maintenanceSchema = DeviceFirmwareRuntimeContract.MAINTENANCE_SCHEMA,
             requiredDomains = listOf(
                 when (family) {
                     DeviceFamily.LIGHT -> "aqualight.light.v1"
