@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.livestock
 
+import android.content.Context
 import android.graphics.drawable.GradientDrawable
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -59,87 +60,110 @@ class TankLivestockPickerAdapter(
             val displayName = entry.localizedName(context)
             val parameterSummary = entry.parameterSummary()
 
+            bindCardState(context, item.selected)
+            bindCategory(context, entry.category)
+            bindTexts(context, entry, displayName, parameterSummary)
+            bindSelection(context, item.selected)
+            bindAccessibility(entry, displayName, parameterSummary)
+
+            binding.root.setOnClickListener {
+                onEntryClick(entry)
+            }
+        }
+
+        private fun bindCardState(
+            context: Context,
+            selected: Boolean
+        ) {
             binding.cardRoot.strokeColor = ContextCompat.getColor(
                 context,
-                if (item.selected) {
-                    R.color.aqua_card_accent
-                } else {
-                    R.color.aqua_card_outline
-                }
+                if (selected) R.color.aqua_card_accent else R.color.aqua_card_outline
             )
             binding.cardRoot.setCardBackgroundColor(
                 ContextCompat.getColor(
                     context,
-                    if (item.selected) {
+                    if (selected) {
                         R.color.aqua_card_surface_pressed
                     } else {
                         R.color.aqua_card_surface
                     }
                 )
             )
+        }
 
-            binding.ivCategoryIcon.setImageResource(
-                LivestockCategories.iconRes(entry.category)
-            )
+        private fun bindCategory(
+            context: Context,
+            category: String
+        ) {
+            binding.ivCategoryIcon.setImageResource(LivestockCategories.iconRes(category))
             binding.ivCategoryIcon.setColorFilter(
-                ContextCompat.getColor(
-                    context,
-                    R.color.aqua_content_on_dark
-                )
+                ContextCompat.getColor(context, R.color.aqua_content_on_dark)
             )
             binding.ivCategoryIcon.background = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
                 setColor(
                     ContextCompat.getColor(
                         context,
-                        LivestockCategories.colorRes(entry.category)
+                        LivestockCategories.colorRes(category)
                     )
                 )
                 cornerRadius = context.resources.getDimensionPixelOffset(
                     R.dimen.aqua_size_14
                 ).toFloat()
             }
-
             binding.tvCategory.text = context.getString(
-                LivestockCategories.labelRes(entry.category)
+                LivestockCategories.labelRes(category)
             )
-            binding.tvName.text = displayName
+        }
 
+        private fun bindTexts(
+            context: Context,
+            entry: LivestockCatalogItem,
+            displayName: String,
+            parameterSummary: String
+        ) {
+            binding.tvName.text = displayName
             binding.tvScientificName.isVisible = entry.scientificName.isNullOrBlank().not()
             binding.tvScientificName.text = entry.scientificName.orEmpty()
-
             binding.tvParameters.isVisible = parameterSummary.isNotBlank()
             binding.tvParameters.text = parameterSummary
+        }
 
-            binding.tvSelection.text = if (item.selected) {
+        private fun bindSelection(
+            context: Context,
+            selected: Boolean
+        ) {
+            binding.tvSelection.text = if (selected) {
                 context.getString(R.string.aqua_selected_symbol)
             } else {
                 ""
             }
             binding.tvSelection.setBackgroundResource(
-                if (item.selected) {
+                if (selected) {
                     R.drawable.bg_material_check_selected
                 } else {
                     R.drawable.bg_material_check_unselected
                 }
             )
             binding.tvSelection.contentDescription = context.getString(
-                if (item.selected) {
+                if (selected) {
                     R.string.livestock_picker_item_selected
                 } else {
                     R.string.livestock_picker_item_not_selected
                 }
             )
+        }
 
+        private fun bindAccessibility(
+            entry: LivestockCatalogItem,
+            displayName: String,
+            parameterSummary: String
+        ) {
             binding.root.contentDescription = listOfNotNull(
                 displayName,
                 entry.scientificName,
                 parameterSummary.takeIf(String::isNotBlank)
             ).joinToString(separator = ", ")
-
-            binding.root.setOnClickListener {
-                onEntryClick(entry)
-            }
         }
     }
 
