@@ -40,41 +40,13 @@ object LivestockCatalog {
         }
     }
 
-    fun findBySavedSelection(
-        context: Context,
-        name: String,
-        category: String
-    ): LivestockCatalogEntry? {
-        return entries(context).firstOrNull { entry ->
-            entry.category == category && entry.matchesSavedName(name)
-        }
-    }
-
-    fun resolveSavedSelection(
-        context: Context,
-        catalogEntryId: String,
-        name: String,
-        category: String
-    ): LivestockCatalogEntry? {
-        return findById(context, catalogEntryId)
-            ?: findBySavedSelection(
-                context = context,
-                name = name,
-                category = category
-            )
-    }
-
     fun requirementsFor(
         context: Context,
-        catalogEntryId: String,
-        name: String,
-        category: String
+        catalogEntryId: String
     ): LivestockWaterRequirements? {
-        return resolveSavedSelection(
+        return findById(
             context = context,
-            catalogEntryId = catalogEntryId,
-            name = name,
-            category = category
+            entryId = catalogEntryId
         )?.waterRequirements
     }
 
