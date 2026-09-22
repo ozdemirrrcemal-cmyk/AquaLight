@@ -16,6 +16,7 @@
     <string name="livestock_picker_new_default">Yeni Canlı</string>
     <string name="livestock_picker_item_selected">Seçildi</string>
     <string name="livestock_picker_item_not_selected">Seçilmedi</string>
+    <string name="livestock_catalog_entry_missing_message">Bu canlı katalog kaydı artık mevcut değil.</string>
     <string name="livestock_category_fish">Balık</string>
     <string name="livestock_category_shrimp">Karides</string>
     <string name="livestock_category_snail">Salyangoz</string>
