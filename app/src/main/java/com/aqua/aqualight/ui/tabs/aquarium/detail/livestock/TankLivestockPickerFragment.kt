@@ -66,7 +66,6 @@ class TankLivestockPickerFragment : Fragment(R.layout.fragment_tank_livestock_pi
 
         setupHeader()
         setupRecycler()
-        setupClickListeners()
         renderer.renderCategories(selectedCategory)
         renderer.renderSelection(selectedEntryId != null)
         loadCatalog()
@@ -143,9 +142,7 @@ class TankLivestockPickerFragment : Fragment(R.layout.fragment_tank_livestock_pi
             addFooterAdapter
         )
         binding.rvLivestock.setHasFixedSize(false)
-    }
 
-    private fun setupClickListeners() {
         binding.btnContinue.setOnClickListener {
             val selectedEntry = allEntries.firstOrNull { entry ->
                 entry.id == selectedEntryId
