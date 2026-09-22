@@ -1,17 +1,15 @@
 package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom
 
 import android.os.Bundle
-import androidx.annotation.StringRes
-import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.light.custom.DeviceLightCustomChannel
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.DeviceLightOperationLoadingState
 
-internal enum class DeviceLightCustomChannelId(@StringRes val labelRes: Int) {
-    RED(R.string.device_light_live_output_red),
-    GREEN(R.string.device_light_live_output_green),
-    BLUE(R.string.device_light_live_output_blue),
-    WHITE(R.string.device_light_live_output_white)
+internal enum class DeviceLightCustomChannelId(val wireKey: String) {
+    RED("red"),
+    GREEN("green"),
+    BLUE("blue"),
+    WHITE("white")
 }
 
 internal enum class DeviceLightCustomPlayheadMode {

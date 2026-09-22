@@ -48,10 +48,6 @@ internal object DeviceLightAutomaticEditorGeometry {
     val presetHeight = 44.dp
     val presetChevronSize = 16.dp
 
-    val channelRowHeight = 42.dp
-    val channelLabelWidth = 54.dp
-    val channelValueWidth = 42.dp
-
     val actionHeight = 50.dp
     val actionTopPadding = 6.dp
     val actionGap = 8.dp

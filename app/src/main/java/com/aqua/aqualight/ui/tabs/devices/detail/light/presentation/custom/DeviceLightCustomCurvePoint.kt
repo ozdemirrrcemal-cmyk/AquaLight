@@ -2,25 +2,19 @@ package com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.aqua.aqualight.R
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
-import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualPercentSlider
-import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualPercentSliderActions
-import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualPercentSliderState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightChannelPercentRow
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightChannelPercentRowActions
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightChannelPercentRowState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.deviceLightChannelNameResource
 
 @Composable
 internal fun SelectedPointCard(
@@ -60,68 +54,35 @@ private fun CustomChannelRow(
     actions: DeviceLightCustomCurveActions,
     visuals: DeviceLightCustomVisuals
 ) {
-    val label = stringResource(channel.labelRes)
-    Row(
-        modifier = Modifier.fillMaxWidth().height(CHANNEL_ROW_HEIGHT_DP.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        BasicText(
-            text = label,
-            style = visuals.typography.body,
-            modifier = Modifier.width(CHANNEL_LABEL_WIDTH_DP.dp),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-        ChannelSlider(
-            state = ChannelSliderState(
-                channel = channel,
-                percent = percent,
-                label = label,
-                enabled = state.contentEnabled && !state.operationInProgress
-            ),
-            actions = actions,
-            visuals = visuals
-        )
-        BasicText(
-            text = stringResource(R.string.device_light_library_channel_percent_format, percent),
-            style = visuals.typography.body.copy(textAlign = TextAlign.End),
-            modifier = Modifier.width(CHANNEL_PERCENT_WIDTH_DP.dp)
-        )
-    }
-}
-
-@Composable
-private fun RowScope.ChannelSlider(
-    state: ChannelSliderState,
-    actions: DeviceLightCustomCurveActions,
-    visuals: DeviceLightCustomVisuals
-) {
-    AquaLightManualPercentSlider(
-        state = AquaLightManualPercentSliderState(
-            percent = state.percent,
-            enabled = state.enabled,
-            channelColor = visuals.channelColor(state.channel),
-            stateText = "${state.percent}%",
-            accessibilityDescription = state.label
+    val label = stringResource(deviceLightChannelNameResource(channel.wireKey))
+    AquaLightChannelPercentRow(
+        state = AquaLightChannelPercentRowState(
+            label = label,
+            percent = percent,
+            enabled = state.contentEnabled && !state.operationInProgress,
+            channelWireKey = channel.wireKey,
+            accessibilityDescription = stringResource(
+                R.string.device_light_manual_slider_description,
+                label
+            )
         ),
-        actions = AquaLightManualPercentSliderActions(
-            onValueChanged = { value -> actions.onChannelChanged(state.channel, value) },
-            onValueChangeFinished = {}
+        actions = AquaLightChannelPercentRowActions(
+            onValueChanged = { value -> actions.onChannelChanged(channel, value) },
+            onValueChangeFinished = {},
+            onStep = { delta ->
+                actions.onChannelChanged(
+                    channel,
+                    (percent + delta).coerceIn(
+                        MIN_LIGHT_CHANNEL_PERCENT,
+                        MAX_LIGHT_CHANNEL_PERCENT
+                    )
+                )
+            }
         ),
-        modifier = Modifier.weight(1f).padding(horizontal = CHANNEL_SLIDER_PADDING_DP.dp)
+        colors = visuals.colors,
+        typography = visuals.typography
     )
 }
 
-private data class ChannelSliderState(
-    val channel: DeviceLightCustomChannelId,
-    val percent: Int,
-    val label: String,
-    val enabled: Boolean
-)
-
 private const val POINT_CONTENT_SPACING_DP = 3
 private const val EMPTY_POINT_PADDING_DP = 10
-private const val CHANNEL_ROW_HEIGHT_DP = 41
-private const val CHANNEL_LABEL_WIDTH_DP = 58
-private const val CHANNEL_PERCENT_WIDTH_DP = 42
-private const val CHANNEL_SLIDER_PADDING_DP = 6

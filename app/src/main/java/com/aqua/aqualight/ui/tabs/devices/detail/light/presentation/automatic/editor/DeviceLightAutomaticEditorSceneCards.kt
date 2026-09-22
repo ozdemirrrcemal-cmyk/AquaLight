@@ -22,17 +22,14 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.style.TextAlign
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.light.automatic.DeviceLightAutomaticChannel
 import com.aqua.aqualight.ui.common.devicecard.AquaDeviceCardSurface
-import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightChannelStepButton
-import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightChannelStepButtonState
-import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualControlSpec
-import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualPercentSlider
-import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualPercentSliderActions
-import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightManualPercentSliderState
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightChannelPercentRow
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightChannelPercentRowActions
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.AquaLightChannelPercentRowState
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.DeviceLightAutomaticGeometry
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.deviceLightChannelNameResource
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.common.labelResource
 
 @Composable
@@ -130,96 +127,28 @@ private fun ChannelControl(
     visuals: DeviceLightAutomaticEditorVisuals,
     modifier: Modifier
 ) {
-    val label = stringResource(state.channel.labelRes())
-    Row(
-        modifier = modifier.height(DeviceLightAutomaticEditorGeometry.channelRowHeight),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        BasicText(
-            text = label,
-            style = visuals.typography.caption.copy(color = visuals.colors.card.primaryText),
-            modifier = Modifier.width(DeviceLightAutomaticEditorGeometry.channelLabelWidth)
-        )
-        ChannelStepButton(
-            state = state,
-            increase = false,
+    val label = stringResource(deviceLightChannelNameResource(state.channel.wireKey))
+    AquaLightChannelPercentRow(
+        state = AquaLightChannelPercentRowState(
             label = label,
+            percent = state.percent,
+            enabled = state.enabled,
+            channelWireKey = state.channel.wireKey,
+            accessibilityDescription = stringResource(
+                R.string.device_light_auto_editor_channel_description,
+                label
+            )
+        ),
+        actions = AquaLightChannelPercentRowActions(
             onValueChanged = onValueChanged,
-            visuals = visuals
-        )
-        AquaLightManualPercentSlider(
-            state = AquaLightManualPercentSliderState(
-                percent = state.percent,
-                enabled = state.enabled,
-                channelColor = state.channel.color(visuals),
-                stateText = stringResource(
-                    R.string.device_light_auto_percent_format,
-                    state.percent
-                ),
-                accessibilityDescription = stringResource(
-                    R.string.device_light_auto_editor_channel_description,
-                    label
-                )
-            ),
-            actions = AquaLightManualPercentSliderActions(
-                onValueChanged = onValueChanged,
-                onValueChangeFinished = {}
-            ),
-            modifier = Modifier.weight(CHANNEL_SLIDER_WEIGHT)
-        )
-        ChannelStepButton(
-            state = state,
-            increase = true,
-            label = label,
-            onValueChanged = onValueChanged,
-            visuals = visuals
-        )
-        BasicText(
-            text = stringResource(R.string.device_light_auto_percent_format, state.percent),
-            style = visuals.typography.caption.copy(
-                color = visuals.colors.card.primaryText,
-                textAlign = TextAlign.End
-            ),
-            modifier = Modifier.width(DeviceLightAutomaticEditorGeometry.channelValueWidth)
-        )
-    }
-}
-
-@Composable
-private fun ChannelStepButton(
-    state: ChannelControlState,
-    increase: Boolean,
-    label: String,
-    onValueChanged: (Int) -> Unit,
-    visuals: DeviceLightAutomaticEditorVisuals
-) {
-    val step = if (increase) {
-        AquaLightManualControlSpec.stepPercent
-    } else {
-        -AquaLightManualControlSpec.stepPercent
-    }
-    val limit = if (increase) MAX_PERCENT else MIN_PERCENT
-    val descriptionRes = if (increase) {
-        R.string.device_light_manual_increase_channel_description
-    } else {
-        R.string.device_light_manual_decrease_channel_description
-    }
-    val symbolRes = if (increase) {
-        R.string.device_light_manual_plus_symbol
-    } else {
-        R.string.device_light_manual_minus_symbol
-    }
-    AquaLightChannelStepButton(
-        state = AquaLightChannelStepButtonState(
-            symbol = stringResource(symbolRes),
-            contentDescription = stringResource(descriptionRes, label),
-            enabled = state.enabled && state.percent != limit
+            onValueChangeFinished = {},
+            onStep = { delta ->
+                onValueChanged((state.percent + delta).coerceIn(MIN_PERCENT, MAX_PERCENT))
+            }
         ),
         colors = visuals.colors,
         typography = visuals.typography,
-        onClick = {
-            onValueChanged((state.percent + step).coerceIn(MIN_PERCENT, MAX_PERCENT))
-        }
+        modifier = modifier
     )
 }
 
@@ -254,21 +183,6 @@ private fun ChannelSlidersIcon(color: Color) {
     }
 }
 
-private fun DeviceLightAutomaticChannel.labelRes(): Int = when (this) {
-    DeviceLightAutomaticChannel.RED -> R.string.device_light_live_output_red
-    DeviceLightAutomaticChannel.GREEN -> R.string.device_light_live_output_green
-    DeviceLightAutomaticChannel.BLUE -> R.string.device_light_live_output_blue
-    DeviceLightAutomaticChannel.WHITE -> R.string.device_light_live_output_white
-}
-
-private fun DeviceLightAutomaticChannel.color(visuals: DeviceLightAutomaticEditorVisuals): Color =
-    when (this) {
-        DeviceLightAutomaticChannel.RED -> visuals.colors.red
-        DeviceLightAutomaticChannel.GREEN -> visuals.colors.green
-        DeviceLightAutomaticChannel.BLUE -> visuals.colors.blue
-        DeviceLightAutomaticChannel.WHITE -> visuals.colors.white
-    }
-
 private val CHANNEL_ICON_X_FRACTIONS = listOf(
     CHANNEL_ICON_FIRST_X,
     CHANNEL_ICON_SECOND_X,
@@ -286,7 +200,6 @@ private val CHANNEL_ICON_THUMB_Y_FRACTIONS = listOf(
     CHANNEL_ICON_THIRD_THUMB_Y
 )
 private const val PRESET_COPY_WEIGHT = 1f
-private const val CHANNEL_SLIDER_WEIGHT = 1f
 private const val MIN_PERCENT = 0
 private const val MAX_PERCENT = 100
 private const val CHANNEL_ICON_FIRST_X = 0.22f

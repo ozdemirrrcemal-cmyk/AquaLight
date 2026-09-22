@@ -10,11 +10,14 @@ POINT = CUSTOM / "DeviceLightCustomCurvePoint.kt"
 
 
 class LightCustomCurveGeometryContractTest(unittest.TestCase):
-    def test_point_values_card_uses_compact_channel_rows(self):
+    def test_point_values_card_uses_shared_manual_channel_row(self):
         point = POINT.read_text(encoding="utf-8")
 
         self.assertIn("private const val POINT_CONTENT_SPACING_DP = 3", point)
-        self.assertIn("private const val CHANNEL_ROW_HEIGHT_DP = 41", point)
+        self.assertIn("AquaLightChannelPercentRow(", point)
+        self.assertNotIn("CHANNEL_ROW_HEIGHT_DP", point)
+        self.assertNotIn("CHANNEL_LABEL_WIDTH_DP", point)
+        self.assertNotIn("CHANNEL_PERCENT_WIDTH_DP", point)
 
     def test_curve_card_is_compact_without_shrinking_playhead_touch_target(self):
         chart = (CUSTOM / "DeviceLightCustomCurveChart.kt").read_text(encoding="utf-8")
