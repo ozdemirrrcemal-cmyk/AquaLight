@@ -33,9 +33,11 @@ class CommercialStoreMigrationPolicyTest {
         assertTrue(normalizedPolicy.contains("no legacy `DataMigration` is installed"))
         assertTrue(
             normalizedPolicy.contains(
-                "catalog-backed livestock is identified only by `catalogEntryId`"
+                "Every livestock record has a non-blank stable identity"
             )
         )
+        assertTrue(normalizedPolicy.contains("Blank identities are invalid"))
+        assertTrue(normalizedPolicy.contains("there is no name/category inference fallback"))
     }
 
     private fun locateRepositoryRoot(): File {
