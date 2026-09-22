@@ -29,7 +29,7 @@ internal class TankLivestockAddFooterAdapter(
         viewType: Int
     ): ViewHolder {
         val button = LayoutInflater.from(parent.context).inflate(
-            R.layout.item_catalog_inline_add_button,
+            R.layout.item_livestock_inline_add_button,
             parent,
             false
         ) as MaterialButton
