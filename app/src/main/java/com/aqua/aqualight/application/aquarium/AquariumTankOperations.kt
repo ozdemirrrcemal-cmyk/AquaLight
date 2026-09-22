@@ -97,6 +97,7 @@ data class AquariumMaterialSelection(
 
 data class AquariumLivestock(
     val id: Long = AquariumEntityIdGenerator.newLong(),
+    val catalogEntryId: String = "",
     val name: String = "",
     val category: String = "",
     val quantity: Int = 1,
