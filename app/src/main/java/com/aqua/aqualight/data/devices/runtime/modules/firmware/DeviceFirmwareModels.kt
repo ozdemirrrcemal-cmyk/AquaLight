@@ -140,6 +140,26 @@ data class DeviceFirmwareStatus(
     val ota: DeviceFirmwareOtaSnapshot = DeviceFirmwareOtaSnapshot()
 )
 
+internal fun DeviceFirmwareStatus.toMaintenanceIdentity(
+    deviceUid: DeviceUid
+): DeviceFirmwareMaintenanceIdentity {
+    require(otaSupported) { "Firmware maintenance plane does not advertise OTA support." }
+    val exactFamily = requireNotNull(DeviceFamily.fromWireExact(family)) {
+        "Firmware maintenance family is not an exact commercial family."
+    }
+    return DeviceFirmwareMaintenanceIdentity(
+        deviceUid = deviceUid,
+        currentVersion = version,
+        productKey = productKey,
+        productId = productId,
+        family = exactFamily,
+        model = model,
+        hardwareRevision = hardwareRevision,
+        displayName = displayName,
+        skuCode = skuCode
+    )
+}
+
 data class DeviceFirmwareOtaStartPayload(
     val url: String,
     val version: String,
