@@ -1,7 +1,10 @@
 package com.aqua.aqualight.composition
 
 import android.content.Context
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.createSavedStateHandle
+import androidx.lifecycle.viewmodel.CreationExtras
 import com.aqua.aqualight.BuildConfig
 import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
 import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
@@ -58,6 +61,7 @@ import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.adaptation.D
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.library.DeviceLightLibraryViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom.DeviceLightCustomCurveViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual.DeviceLightManualControlViewModel
+import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.quicksetup.DeviceLightQuickSetupViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.root.DeviceLightRootViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.system.DeviceLightSystemViewModel
 import com.aqua.aqualight.ui.tabs.devices.detail.settings.DeviceFamilySettingsViewModel
@@ -89,8 +93,35 @@ internal class OwnerViewModelFactory(
 
     override fun supports(modelClass: Class<out ViewModel>): Boolean = modelClass in OWNER_BINDINGS
 
-    @Suppress("LongMethod", "CyclomaticComplexMethod")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        check(modelClass != DeviceLightQuickSetupViewModel::class.java) {
+            "DeviceLightQuickSetupViewModel requires CreationExtras for SavedStateHandle."
+        }
+        return createInternal(
+            modelClass = modelClass,
+            quickSetupSavedStateHandle = null
+        )
+    }
+
+    override fun <T : ViewModel> create(
+        modelClass: Class<T>,
+        extras: CreationExtras
+    ): T = createInternal(
+        modelClass = modelClass,
+        quickSetupSavedStateHandle = if (
+            modelClass == DeviceLightQuickSetupViewModel::class.java
+        ) {
+            extras.createSavedStateHandle()
+        } else {
+            null
+        }
+    )
+
+    @Suppress("LongMethod", "CyclomaticComplexMethod")
+    private fun <T : ViewModel> createInternal(
+        modelClass: Class<T>,
+        quickSetupSavedStateHandle: SavedStateHandle?
+    ): T {
         check(supports(modelClass)) { "No owner-scoped ViewModel binding for ${modelClass.name}." }
         val graph = ownerGraphResolver.requireActive()
         val repository = graph.devicesRepository
@@ -208,6 +239,10 @@ internal class OwnerViewModelFactory(
                 customOperations = graph.lightOperations.customOperations,
                 libraryOperations = graph.lightOperations.libraryOperations,
                 rootOperations = rootOperations
+            )
+            DeviceLightQuickSetupViewModel::class.java -> DeviceLightQuickSetupViewModel(
+                savedStateHandle = checkNotNull(quickSetupSavedStateHandle),
+                operations = graph.lightOperations.quickSetupOperations
             )
             DeviceLightLibraryViewModel::class.java -> DeviceLightLibraryViewModel(
                 operations = graph.lightOperations.libraryOperations,
@@ -346,6 +381,7 @@ internal class OwnerViewModelFactory(
             DeviceLightAutomaticProgramEditorViewModel::class.java,
             DeviceLightManualControlViewModel::class.java,
             DeviceLightCustomCurveViewModel::class.java,
+            DeviceLightQuickSetupViewModel::class.java,
             DeviceLightLibraryViewModel::class.java,
             DeviceLightSystemViewModel::class.java,
             DeviceCoolingRootViewModel::class.java,

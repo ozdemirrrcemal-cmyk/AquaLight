@@ -4,8 +4,8 @@
 
 - Firmware repository: `ozdemirrrcemal-cmyk/AquaLight-Firmware`
 - Firmware branch: `feature/smart-light-automation-plan-v2`
-- Firmware commit: `99aca74d3c2ae99e85584893822c0a63fe50bcd8`
-- Firmware tree: `4b188f9b20a088bb3f38efd425ff3a6a72f17980`
+- Firmware commit: `9b4fbc00d09f71d9a0c8958a71650aee3cc94840`
+- Firmware tree: `b9434d71e6ecdfe0cc71689a374a7a4ae554a143`
 - Android branch: `feat/smart-light-automation-plan-v2-parity` (base: `feat/custom-program-device-apply`)
 - Schema: `aqualight.light.v1`, storage version `1`
 - Kapsam: firmware, Android veri katmanı ve Light cihaz menüsünün authoritative

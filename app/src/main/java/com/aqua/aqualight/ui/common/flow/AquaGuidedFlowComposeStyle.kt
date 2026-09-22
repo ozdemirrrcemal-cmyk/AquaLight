@@ -61,16 +61,51 @@ data class AquaGuidedFlowTypography(
 
 object AquaGuidedFlowGeometry {
     val screenHorizontalPadding = 20.dp
+    val screenTopPadding = 8.dp
     val screenBottomPadding = 32.dp
     val sectionGap = 20.dp
-    val compactGap = 10.dp
-    val cardRadius = 22.dp
     val cardPadding = 18.dp
+    val denseSectionGap = 12.dp
+    val compactGap = 10.dp
+    val listItemGap = 9.dp
+    val footerGap = 8.dp
+    val labelGap = 6.dp
+    val microGap = 4.dp
+    val microTextGap = 3.dp
+    val cardRadius = 22.dp
     val outlineWidth = 1.dp
     val buttonRadius = 15.dp
     val buttonMinHeight = 52.dp
     val controlRadius = 14.dp
+    val inputHeight = 56.dp
+    val inputHorizontalPadding = 16.dp
+    val metricHeight = 92.dp
+    val progressHeight = 4.dp
+    val progressRadius = RoundedCornerShape(percent = 50)
+    val switchWidth = 50.dp
+    val switchHeight = 28.dp
+    val switchThumbSize = 22.dp
+    val switchInset = 3.dp
+    val switchShape = RoundedCornerShape(percent = 50)
+    val switchThumbTravel = switchWidth - switchThumbSize - switchInset - switchInset
+    val switchInactiveOffset = 0.dp
+    val spinnerSize = 88.dp
+    val spinnerStroke = 8.dp
+    val loadingTopPadding = 44.dp
+    val applyingTopPadding = 38.dp
+    val actionBottomPadding = 12.dp
+    val errorPadding = 12.dp
+
+    const val profileValueWeight = 1.15f
+    const val timeValueWeight = 1.3f
+    const val footerPrimaryWeightWithBack = 1.6f
     val minimumTouchTarget = 48.dp
+}
+
+object AquaGuidedFlowAlpha {
+    const val progressTrack = 0.22f
+    const val loadingTrack = 0.35f
+    const val dangerSurface = 0.10f
 }
 
 private val InterRegular = FontFamily(Font(R.font.inter_regular))

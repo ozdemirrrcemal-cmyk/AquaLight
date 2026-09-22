@@ -1,10 +1,12 @@
 # AquaLight Smart / Quick Setup Lighting Automation Engine
 
-Status: Android implementation specification  
-Android branch: feat/custom-program-device-apply  
-Firmware branch: feature/smart-light-automation-plan  
-Firmware reviewed commit: 455298833668537fedc16b851067558815d2cc7b  
+Status: Android implementation in progress  
+Android base branch: feat/custom-program-device-apply @ 93791a23aca95b3b714628af288f88b31d7f8a08  
+Android implementation branch: feat/light-quick-setup-commercial-ui  
+Firmware branch: feature/smart-light-automation-plan-v2  
+Firmware reviewed commit: 99aca74d3c2ae99e85584893822c0a63fe50bcd8  
 Firmware authoritative contract: docs/LIGHT_MANAGED_AUTO_PLAN_V1_CONTRACT.md  
+UI implementation contract: docs/LIGHT_QUICK_SETUP_UI_CONTRACT.md  
 Scope: planted freshwater Smart / Quick Setup lighting automation  
 Production calibration status: NOT READY - physical PAR/PPFD calibration is a release blocker
 
@@ -408,31 +410,23 @@ The gradual-output mechanism then uses calibrated phase scenes and firmware tran
 
 ---
 
-# 13. Development placeholder intensity
+# 13. Production calibration only
 
-Development requires the complete firmware path to be testable before physical production calibration exists.
+Quick Setup has no development, debug, synthetic, or fallback optical calibration path.
 
-Therefore a development-only placeholder profile may use:
+All builds use the same rule:
 
 ~~~text
-CalibrationStatus = PLACEHOLDER
-initialStartPercent = 50
-phase 1 transitionDays = 20
-phase scenes = deterministic placeholder-calibration result
+no measured AquaLight fixture calibration
+=> recommendation blocked
+=> Apply blocked
 ~~~
 
-This exercises:
+Third-party biological guidance may inform plant-demand, PPFD target and CO2 policy, but it must never
+be converted into AquaLight fixture output percentages or presented as AquaLight PAR calibration.
 
-- first-phase initial scaling;
-- firmware transitionPermille;
-- managed-plan graph/status;
-- Android live UI;
-- Apply concurrency;
-- reboot/offline behavior.
-
-This value is NOT a production biological recommendation.
-
-A release build must fail if a product exposing LIGHT_QUICK_SETUP still resolves to PLACEHOLDER calibration.
+Firmware-path testing must use explicit test doubles in unit/integration tests rather than production
+runtime behavior.
 
 ---
 
@@ -883,32 +877,45 @@ supportedFixtureHeightRange
 Calibration status:
 
 ~~~text
-PLACEHOLDER
 CALIBRATED
 ~~~
+
+Any missing profile is represented by absence, not by a fallback status.
 
 ---
 
 # 36. Production release blocker
 
-A product exposing LIGHT_QUICK_SETUP cannot ship with PLACEHOLDER calibration.
+A product exposing LIGHT_QUICK_SETUP cannot ship without measured AquaLight fixture calibration.
 
 Release condition:
 
 ~~~text
 LIGHT_QUICK_SETUP exposed
 AND
-calibration.status != CALIBRATED
+measured calibration record missing
 => release FAIL
 ~~~
 
 The release guard must be machine enforced, not documentation only.
 
-Proposed guard:
+Enforced production guard:
 
 ~~~text
 tools/light_quick_setup_production_guard.py
 ~~~
+
+The release quality pipeline executes this guard against the exact commercial product catalog and
+the runtime production calibration registry:
+
+~~~text
+DeviceLightProductionCalibrationRegistry
+~~~
+
+For every product exposing `LIGHT_QUICK_SETUP`, release requires an exact measured profile with
+positive calibration/coverage revisions, exact channel layout, finite water/fixture/tank geometry
+domains, measurement-set identity, SHA-256 measurement-data provenance, at least three horizontal
+measurement positions, and PPFD sample coverage. Missing records fail release.
 
 Physical production calibration must include, at minimum:
 
@@ -1009,14 +1016,8 @@ phase0.scene * initialStartPercent
 
 Transition progresses by trusted local civil days.
 
-For development placeholder:
-
-~~~text
-initialStartPercent = 50
-transitionDays = 20
-~~~
-
-For production, both values are supplied by the calibrated startup-output policy.
+Both initialStartPercent and transitionDays are supplied by the measured, versioned production
+startup-output policy. No development fallback value exists in runtime code.
 
 ---
 
@@ -1406,13 +1407,8 @@ Before Apply show at least:
 - CO2 limit warning when applicable;
 - why-this-plan explanation.
 
-Development builds may show:
-
-~~~text
-Calibration: PLACEHOLDER
-~~~
-
-Release builds must never reach this state.
+The review screen may only show a calibrated result. If measured fixture calibration is unavailable,
+recommendation is blocked before Review and Apply.
 
 ---
 
@@ -1460,7 +1456,7 @@ exact channel layout supported
 water-depth domain defined
 fixture-height domain defined
 tank-footprint / coverage model defined
-no placeholder records reachable
+no synthetic/fallback calibration records reachable
 ~~~
 
 This check belongs in CI/release tooling.
@@ -1617,7 +1613,7 @@ Implement:
 
 ## Phase 5 - fixture calibration abstraction
 
-Implement PLACEHOLDER development calibration plus release-block structure.
+Implement measured production calibration abstraction and fail-closed absence handling.
 
 ## Phase 6 - recommendation engine
 
@@ -1641,7 +1637,7 @@ Lifecycle, SavedStateHandle, reconnect, stale state, double-submit, error mappin
 
 ## Phase 11 - production physical calibration
 
-Replace placeholder calibration with measured profiles.
+Commit measured AquaLight fixture profiles and keep the release guard machine-enforced.
 
 Release guard must become green before production.
 
@@ -1673,7 +1669,7 @@ Quick Setup is not complete until all are true:
 - stale revision/generation handled without blind retry;
 - RTC_BLOCKED displayed correctly;
 - multiple Light fixtures blocked in V1;
-- placeholder calibration blocked from release;
+- synthetic/fallback fixture calibration absent from runtime code;
 - unit tests green;
 - integration tests green;
 - Detekt green;

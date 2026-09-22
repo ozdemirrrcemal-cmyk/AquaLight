@@ -25,8 +25,8 @@ ANDROID_CONTRACT_PATH = (
 
 FIRMWARE_REPOSITORY = "ozdemirrrcemal-cmyk/AquaLight-Firmware"
 FIRMWARE_BRANCH = "feature/smart-light-automation-plan-v2"
-FIRMWARE_COMMIT = "99aca74d3c2ae99e85584893822c0a63fe50bcd8"
-FIRMWARE_TREE = "4b188f9b20a088bb3f38efd425ff3a6a72f17980"
+FIRMWARE_COMMIT = "9b4fbc00d09f71d9a0c8958a71650aee3cc94840"
+FIRMWARE_TREE = "b9434d71e6ecdfe0cc71689a374a7a4ae554a143"
 FIRMWARE_SOURCES = {
     "src/api/v1/commands/AqlLightV1Commands.hpp":
         "3a55519fc4c8acdab2aa79deadff3e1206c923b5",
@@ -45,11 +45,11 @@ FIRMWARE_SOURCES = {
     "src/modules/light/AqlLightScheduleEngine.hpp":
         "15d57dd57158c13339691cb44848f0351aecf889",
     "src/modules/light/AqlLightV1Service.hpp":
-        "f9086f4cb23b8c175d3c53deca21af32c0396cbb",
+        "f8cc0752880e9559132f0b3a15fa61b972c5e973",
     "docs/LIGHT_MANAGED_AUTO_PLAN_V1_CONTRACT.md":
         "3883cdaac535d6e3bce8ab1d418f787a39891ce1",
     "tools/check_light_contract_v1.py":
-        "ec9b53e0a285a024d37edda51da7b17ad668ed18",
+        "22cf84b1dfa5fe6df51ca4d8243838c432872801",
 }
 SHARED_FIXTURES = {
     "aql_light_contract_v1.json": (

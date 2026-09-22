@@ -1,6 +1,7 @@
 /**
- * Quick Setup data adapters reserved for the dedicated vertical slice.
+ * Owner-scoped adapters for the Light Quick Setup application boundary.
  *
- * <p>The package deliberately contains no runtime adapter while Quick Setup is an empty screen.</p>
+ * Data adapters resolve saved aquarium/device context and bridge the existing central Light runtime.
+ * They do not introduce a second runtime state owner.
  */
 package com.aqua.aqualight.data.devices.light.quicksetup;
