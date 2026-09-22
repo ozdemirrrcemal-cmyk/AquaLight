@@ -16,13 +16,10 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.aqua.aqualight.R
-import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentTankDetailLifeBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.LivestockCategories
-import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.localizedName
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
-import com.aqua.aqualight.application.aquarium.AquariumLivestockIdentity
 import com.aqua.aqualight.i18n.LocaleFormatter
 import com.google.android.material.card.MaterialCardView
 import androidx.navigation.fragment.findNavController
@@ -35,9 +32,6 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
     private val binding get() = _binding!!
 
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
-    private val livestockCatalogOperations by lazy(LazyThreadSafetyMode.NONE) {
-        requireContext().requireAppContainer().livestockCatalogOperations
-    }
 
     private var tankId: Long = 0L
     private var isOpeningLivestockForm: Boolean = false
@@ -251,20 +245,8 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
             layoutParams = params
         }
 
-        val isCustom = AquariumLivestockIdentity.isCustom(livestock.catalogEntryId)
-        val resolvedCatalogEntry = if (isCustom) {
-            null
-        } else {
-            livestockCatalogOperations.findById(livestock.catalogEntryId)
-        }
-        val resolvedDisplayName = when {
-            isCustom -> livestock.name
-            resolvedCatalogEntry != null -> resolvedCatalogEntry.localizedName(requireContext())
-            else -> getString(R.string.livestock_catalog_entry_missing_title)
-        }
-
         val nameText = TextView(requireContext()).apply {
-            text = resolvedDisplayName.ifBlank {
+            text = livestock.name.ifBlank {
                 getString(R.string.aquarium_unnamed_livestock)
             }
 
