@@ -17,6 +17,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.LivestockCatalogItem
 import com.aqua.aqualight.composition.requireAppContainer
+import com.aqua.aqualight.application.aquarium.LivestockCatalogItem
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentTankLivestockPickerBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderSearchField
@@ -36,6 +38,10 @@ class TankLivestockPickerFragment : Fragment(R.layout.fragment_tank_livestock_pi
     private val binding get() = _binding!!
 
     private lateinit var adapter: TankLivestockPickerAdapter
+
+    private val livestockCatalogOperations by lazy(LazyThreadSafetyMode.NONE) {
+        requireContext().requireAppContainer().livestockCatalogOperations
+    }
 
     private val catalogOperations
         get() = requireContext().requireAppContainer().livestockCatalogOperations
