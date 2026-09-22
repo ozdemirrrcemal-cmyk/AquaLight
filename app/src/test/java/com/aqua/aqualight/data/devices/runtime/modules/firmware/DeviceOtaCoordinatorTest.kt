@@ -126,12 +126,8 @@ class DeviceOtaCoordinatorTest {
             runCurrent()
             assertTrue(coordinator.observe(DEVICE_UID).value is DeviceOtaState.Recovering)
 
-            snapshots.value = mapOf(
-                DEVICE_UID to snapshot().copy(
-                    firmwareVersion = "2.0.0",
-                    runtimeMetadataGeneration = 8L
-                )
-            )
+            gateway.maintenanceData = firmwareStatusData(version = "2.0.0")
+            lifecycle.tryEmit(DeviceRuntimeLifecycleEvent.Authenticated(DEVICE_UID))
             runCurrent()
             assertTrue(coordinator.observe(DEVICE_UID).value is DeviceOtaState.Succeeded)
             assertEquals(0, discoveryRefreshes)
@@ -245,12 +241,8 @@ class DeviceOtaCoordinatorTest {
         runCurrent()
         assertTrue(coordinator.observe(DEVICE_UID).value is DeviceOtaState.Recovering)
 
-        snapshots.value = mapOf(
-            DEVICE_UID to snapshot().copy(
-                firmwareVersion = "2.0.0",
-                runtimeMetadataGeneration = 8L
-            )
-        )
+        gateway.maintenanceData = firmwareStatusData(version = "2.0.0")
+        lifecycle.tryEmit(DeviceRuntimeLifecycleEvent.Authenticated(DEVICE_UID))
         runCurrent()
         assertTrue(coordinator.observe(DEVICE_UID).value is DeviceOtaState.Succeeded)
         coordinator.close()
@@ -258,13 +250,15 @@ class DeviceOtaCoordinatorTest {
 
     @Test
     fun `reconnected old firmware proves rollback and quarantines exact release`() = runTest {
+        val lifecycle = MutableSharedFlow<DeviceRuntimeLifecycleEvent>(extraBufferCapacity = 8)
         val typedEvents = MutableSharedFlow<DeviceRuntimeTypedEvent>(extraBufferCapacity = 8)
         val snapshots = MutableStateFlow(mapOf(DEVICE_UID to snapshot()))
+        val gateway = RecordingGateway()
         val coordinator = DeviceOtaCoordinator(
             snapshotProvider = { deviceUid -> snapshots.value[deviceUid] },
             connectRuntime = { Result.success(Unit) },
-            updaterProvider = { updater(RecordingGateway()) },
-            runtimeLifecycleEvents = null,
+            updaterProvider = { updater(gateway) },
+            runtimeLifecycleEvents = lifecycle,
             runtimeTypedEvents = typedEvents,
             snapshotUpdates = snapshots,
             dispatcher = StandardTestDispatcher(testScheduler),
@@ -291,9 +285,7 @@ class DeviceOtaCoordinatorTest {
         )
         runCurrent()
 
-        snapshots.value = mapOf(
-            DEVICE_UID to snapshot().copy(runtimeMetadataGeneration = 8L)
-        )
+        lifecycle.tryEmit(DeviceRuntimeLifecycleEvent.Authenticated(DEVICE_UID))
         runCurrent()
 
         val rolledBack = coordinator.observe(DEVICE_UID).value as DeviceOtaState.RolledBack
@@ -344,24 +336,25 @@ class DeviceOtaCoordinatorTest {
         assertEquals(1, store.activeTransactions().size)
         first.close()
 
-        val restoredSnapshots = MutableStateFlow(
-            mapOf(
-                DEVICE_UID to snapshot().copy(
-                    firmwareVersion = "2.0.0",
-                    runtimeMetadataGeneration = 8L
-                )
-            )
+        val restoredSnapshots = MutableStateFlow(mapOf(DEVICE_UID to snapshot()))
+        val restoredLifecycle = MutableSharedFlow<DeviceRuntimeLifecycleEvent>(
+            extraBufferCapacity = 8
         )
+        val restoredGateway = RecordingGateway().apply {
+            maintenanceData = firmwareStatusData(version = "2.0.0")
+        }
         val restored = DeviceOtaCoordinator(
             snapshotProvider = { deviceUid -> restoredSnapshots.value[deviceUid] },
             connectRuntime = { Result.success(Unit) },
-            updaterProvider = { updater(RecordingGateway()) },
-            runtimeLifecycleEvents = null,
+            updaterProvider = { updater(restoredGateway) },
+            runtimeLifecycleEvents = restoredLifecycle,
             snapshotUpdates = restoredSnapshots,
             transactionStore = store,
             dispatcher = StandardTestDispatcher(testScheduler),
             restartWaitMillis = 1_000L
         )
+        runCurrent()
+        restoredLifecycle.tryEmit(DeviceRuntimeLifecycleEvent.Authenticated(DEVICE_UID))
         runCurrent()
 
         assertTrue(restored.observe(DEVICE_UID).value is DeviceOtaState.Succeeded)
@@ -465,12 +458,12 @@ class DeviceOtaCoordinatorTest {
         }
 
     @Test
-    fun `metadata generation change expires a prepared plan before start`() = runTest {
-        var currentSnapshot = snapshot()
+    fun `firmware version change expires a prepared plan before start`() = runTest {
+        val gateway = RecordingGateway()
         val coordinator = DeviceOtaCoordinator(
-            snapshotProvider = { currentSnapshot },
+            snapshotProvider = { snapshot() },
             connectRuntime = { Result.success(Unit) },
-            updaterProvider = { updater(RecordingGateway()) },
+            updaterProvider = { updater(gateway) },
             runtimeLifecycleEvents = null
         )
         val plan = (
@@ -478,13 +471,75 @@ class DeviceOtaCoordinatorTest {
                 as DeviceOtaState.UpdateAvailable
             ).plan
 
-        currentSnapshot = currentSnapshot.copy(runtimeMetadataGeneration = 8L)
+        gateway.maintenanceData = firmwareStatusData(version = "1.1.0")
         val result = coordinator.startUpdate(plan)
 
         assertFalse(result.isSuccess)
-        assertTrue(result.failure?.diagnosticMessage.orEmpty().contains("generation changed"))
+        assertTrue(
+            result.failure?.diagnosticMessage.orEmpty().contains("current firmware version changed")
+        )
         assertEquals(DeviceOtaFailureReason.CHECK_FAILED, result.failure?.reason)
         assertTrue(coordinator.observe(DEVICE_UID).value is DeviceOtaState.Failed)
+        coordinator.close()
+    }
+
+    @Test
+    fun `domain metadata can be invalid while maintenance plane still prepares OTA`() = runTest {
+        val domainInvalid = snapshot().copy(
+            capabilities = DeviceCapabilities(),
+            limits = DeviceLimits(),
+            runtimeMetadataGeneration = 0L
+        )
+        val gateway = RecordingGateway()
+        val coordinator = DeviceOtaCoordinator(
+            snapshotProvider = { domainInvalid },
+            connectRuntime = { Result.success(Unit) },
+            updaterProvider = { updater(gateway) },
+            runtimeLifecycleEvents = null
+        )
+
+        val availability = coordinator.checkAvailability(
+            DEVICE_UID,
+            MANIFEST_URL,
+            applyNow = true
+        ).getOrThrow()
+
+        assertTrue(availability is DeviceOtaState.UpdateAvailable)
+        assertEquals(
+            listOf(
+                DeviceFirmwareRuntimeContract.Action.STATUS_GET
+            ),
+            gateway.commands.map(RecordedCommand::action)
+        )
+        coordinator.close()
+    }
+
+    @Test
+    fun `start revalidates exact maintenance identity before sending ota start`() = runTest {
+        val gateway = RecordingGateway()
+        val coordinator = DeviceOtaCoordinator(
+            snapshotProvider = { snapshot().copy(runtimeMetadataGeneration = 0L) },
+            connectRuntime = { Result.success(Unit) },
+            updaterProvider = { updater(gateway) },
+            runtimeLifecycleEvents = null
+        )
+        val plan = (
+            coordinator.checkAvailability(DEVICE_UID, MANIFEST_URL, true).getOrThrow()
+                as DeviceOtaState.UpdateAvailable
+            ).plan
+
+        gateway.maintenanceData = firmwareStatusData(model = "dose_pro_4")
+        val result = coordinator.startUpdate(plan)
+
+        assertFalse(result.isSuccess)
+        assertEquals(DeviceOtaFailureReason.CHECK_FAILED, result.failure?.reason)
+        assertEquals(
+            listOf(
+                DeviceFirmwareRuntimeContract.Action.STATUS_GET,
+                DeviceFirmwareRuntimeContract.Action.STATUS_GET
+            ),
+            gateway.commands.map(RecordedCommand::action)
+        )
         coordinator.close()
     }
 
@@ -616,6 +671,77 @@ class DeviceOtaCoordinatorTest {
         )
         .put("ota", otaSnapshot("starting", active = true, progressPermille = 0))
 
+    private fun firmwareStatusData(
+        version: String = "1.0.0",
+        productKey: String = PRODUCT_KEY,
+        productId: String = PRODUCT_ID,
+        family: String = "dosing",
+        model: String = "dose_pro_2",
+        hardwareRevision: String = "2.0"
+    ): JSONObject = JSONObject()
+        .put("version", version)
+        .put("build", "test-build")
+        .put("hardwareRevision", hardwareRevision)
+        .put("sdkVersion", "5.5.0")
+        .put("uptimeMs", 10_000L)
+        .put(
+            "product",
+            JSONObject()
+                .put("productKey", productKey)
+                .put("productId", productId)
+                .put("family", family)
+                .put("model", model)
+                .put("displayName", "Dose Pro 2")
+                .put("skuCode", "AQL-D-DP2-GLB-BLK")
+        )
+        .put(
+            "flash",
+            JSONObject()
+                .put("chipSize", 16_777_216L)
+                .put("sketchSize", 2_000_000L)
+                .put("freeSketchSpace", 6_000_000L)
+        )
+        .put(
+            "partition",
+            JSONObject()
+                .put("running", JSONObject().put("present", false))
+                .put("boot", JSONObject().put("present", false))
+                .put("nextUpdate", JSONObject().put("present", false))
+                .put("bootMatchesRunning", false)
+                .put("runningState", "undefined")
+                .put("runningStateCode", 0)
+                .put("stateReadOk", false)
+                .put("stateReadError", 0)
+        )
+        .put(
+            "ota",
+            JSONObject()
+                .put("supported", true)
+                .put("transport", "websocket-control")
+                .put("binaryTransfer", "firmware-download")
+                .put("progressEvent", DeviceFirmwareRuntimeContract.Event.OTA_PROGRESS)
+                .put("completedEvent", DeviceFirmwareRuntimeContract.Event.OTA_COMPLETED)
+                .put("startCommand", "firmware.ota.start")
+                .put("statusCommand", "firmware.ota.status")
+                .put(
+                    "status",
+                    otaSnapshot(
+                        phase = "idle",
+                        active = false,
+                        progressPermille = 0
+                    )
+                )
+        )
+        .put(
+            "runtime",
+            JSONObject()
+                .put("transport", "websocket")
+                .put("wsSchema", "aql.ws.v1")
+                .put("wsProtocolVersion", 1)
+                .put("maintenanceSchema", DeviceFirmwareRuntimeContract.MAINTENANCE_SCHEMA)
+                .put("readOnly", true)
+        )
+
     private fun otaStatusData(snapshot: JSONObject): JSONObject = JSONObject()
         .put("operation", "otaStatus")
         .put("runtimeTransport", "websocket")
@@ -742,7 +868,7 @@ class DeviceOtaCoordinatorTest {
                         wsSchema = "aql.ws.v1",
                         wsProtocolVersion = 1,
                         deviceApiVersion = 1,
-                maintenanceSchema = DeviceFirmwareRuntimeContract.MAINTENANCE_SCHEMA,
+                        maintenanceSchema = DeviceFirmwareRuntimeContract.MAINTENANCE_SCHEMA,
                         requiredDomains = listOf("aqualight.dosing.v1"),
                         optionalDomains = emptyList()
                     ),
@@ -772,6 +898,7 @@ class DeviceOtaCoordinatorTest {
     private inner class RecordingGateway : DeviceRuntimeCommandGateway {
         val commands = CopyOnWriteArrayList<RecordedCommand>()
         var startData: JSONObject = startAcceptedData()
+        var maintenanceData: JSONObject = firmwareStatusData()
         var statusData: JSONObject = otaStatusData(
             otaSnapshot("starting", active = true, progressPermille = 0)
         )
@@ -783,6 +910,7 @@ class DeviceOtaCoordinatorTest {
         ): DeviceRuntimeCommandOutcome<T> {
             commands += RecordedCommand(command.action, command.encodeData())
             val data = when (command.action) {
+                DeviceFirmwareRuntimeContract.Action.STATUS_GET -> maintenanceData
                 DeviceFirmwareRuntimeContract.Action.OTA_START -> startData
                 DeviceFirmwareRuntimeContract.Action.OTA_STATUS -> statusData
                 else -> error("Unexpected OTA command: ${command.action}")
