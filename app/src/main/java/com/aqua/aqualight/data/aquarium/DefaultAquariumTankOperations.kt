@@ -238,6 +238,7 @@ internal fun SavedAquariumTank.toApplicationSnapshot(): AquariumTankSnapshot =
         livestock = livestock.map { item ->
             AquariumLivestock(
                 id = item.id,
+                catalogEntryId = item.catalogEntryId,
                 name = item.name,
                 category = item.category,
                 quantity = item.quantity,
@@ -287,6 +288,7 @@ private fun AquariumMaterialSelection.toDataSelection(): TankMaterialSelection =
 private fun AquariumLivestock.toDataLivestock(): SavedAquariumLivestock =
     SavedAquariumLivestock(
         id = id,
+        catalogEntryId = catalogEntryId,
         name = name,
         category = category,
         quantity = quantity,
