@@ -8,8 +8,13 @@ sealed interface DeviceProvisioningProgressEvent {
         val device: ProvisionedDevice
     ) : DeviceProvisioningProgressEvent
 
+    data class OpenFirmwareUpdate(
+        val deviceUid: String
+    ) : DeviceProvisioningProgressEvent
+
     data class ShowAddedDeviceUnavailable(
         val title: String,
+        @StringRes val dialogTitleRes: Int,
         @StringRes val messageRes: Int
     ) : DeviceProvisioningProgressEvent
 
