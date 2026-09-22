@@ -128,12 +128,13 @@ private object DeviceOtaFirmwareFailureClassifier {
 private object DeviceOtaSnapshotFailureClassifier {
 
     fun map(snapshot: DeviceFirmwareOtaSnapshot): DeviceOtaFailure {
-        val diagnostics = snapshot.toDiagnostics()
-        return if (snapshot.failureCode.isNotBlank()) {
-            typedFailure(snapshot.failureCode, diagnostics)
-        } else {
-            legacyFailure(snapshot, diagnostics)
+        require(snapshot.failureCode.isNotBlank()) {
+            "Firmware OTA failure snapshot is missing failureCode."
         }
+        return typedFailure(
+            failureCode = snapshot.failureCode,
+            diagnostics = snapshot.toDiagnostics()
+        )
     }
 
     private fun typedFailure(
@@ -172,64 +173,7 @@ private object DeviceOtaSnapshotFailureClassifier {
         else -> error("Unsupported firmware OTA failureCode: $failureCode")
     }
 
-    /**
-     * Compatibility path for already-shipped snapshots that predate failureCode.
-     *
-     * New firmware must never rely on diagnostic wording for customer behavior. This legacy path
-     * can be removed only after every supported deployed firmware generation emits failureCode.
-     */
-    private fun legacyFailure(
-        snapshot: DeviceFirmwareOtaSnapshot,
-        diagnostics: DeviceOtaFailureDiagnostics
-    ): DeviceOtaFailure = when (snapshot.lastErrorField) {
-        DeviceFirmwareRuntimeContract.ErrorField.HTTP_STATUS ->
-            DeviceOtaHttpFailureClassifier.map(diagnostics)
-        DeviceFirmwareRuntimeContract.ErrorField.URL ->
-            DOWNLOAD_URL_OPEN_FAILED.toFailure(diagnostics)
-        DeviceFirmwareRuntimeContract.ErrorField.STREAM ->
-            DOWNLOAD_STREAM_INTERRUPTED.toFailure(diagnostics)
-        DeviceFirmwareRuntimeContract.ErrorField.SIZE -> legacySizeFailure(diagnostics)
-        DeviceFirmwareRuntimeContract.ErrorField.WIFI ->
-            DEVICE_NETWORK_UNAVAILABLE.toFailure(diagnostics)
-        DeviceFirmwareRuntimeContract.ErrorField.TLS ->
-            legacySecurityFailure(diagnostics)
-        else -> {
-            val disposition = SNAPSHOT_FIELD_DISPOSITIONS[snapshot.lastErrorField]
-                ?: DEVICE_INTERNAL
-            disposition.toFailure(diagnostics)
-        }
-    }
 
-    private fun legacySizeFailure(
-        diagnostics: DeviceOtaFailureDiagnostics
-    ): DeviceOtaFailure {
-        val message = diagnostics.message
-        val disposition = when {
-            message.contains("larger than", ignoreCase = true) -> INSUFFICIENT_SPACE
-            message.contains("downloaded byte count", ignoreCase = true) ->
-                DOWNLOAD_SIZE_MISMATCH_RETRYABLE
-            message.contains("does not match", ignoreCase = true) ->
-                DOWNLOAD_SIZE_MISMATCH_TERMINAL
-            else -> INSUFFICIENT_SPACE
-        }
-        return disposition.toFailure(diagnostics)
-    }
-
-    private fun legacySecurityFailure(
-        diagnostics: DeviceOtaFailureDiagnostics
-    ): DeviceOtaFailure {
-        val disposition = if (
-            diagnostics.message.contains(
-                "secure system time was not synchronized",
-                ignoreCase = true
-            )
-        ) {
-            SECURITY_VALIDATION_RETRYABLE
-        } else {
-            SECURITY_VALIDATION_FAILED
-        }
-        return disposition.toFailure(diagnostics)
-    }
 }
 private object DeviceManifestHttpFailureClassifier {
 
