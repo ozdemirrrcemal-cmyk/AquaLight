@@ -81,13 +81,12 @@ class DeviceFirmwareOtaContractParserTest {
     }
 
     @Test
-    fun `legacy snapshot without failure code remains accepted`() {
-        val legacy = otaSnapshot().apply { remove("failureCode") }
+    fun `snapshot without required failure code field is rejected`() {
+        val missingFailureCode = otaSnapshot().apply { remove("failureCode") }
 
-        val parsed = DeviceFirmwareStatusParser.parseOtaSnapshotExact(legacy).getOrThrow()
-
-        assertEquals("", parsed.failureCode)
-        assertEquals(DeviceFirmwareOtaPhase.IDLE, parsed.phase)
+        assertTrue(
+            DeviceFirmwareStatusParser.parseOtaSnapshotExact(missingFailureCode).isFailure
+        )
     }
 
     @Test
@@ -201,8 +200,15 @@ class DeviceFirmwareOtaContractParserTest {
                         .put("restartRequired", false)
                         .put("restartScheduled", false)
                         .put("targetVersion", "2.0.0")
+                        .put(
+                            "failureCode",
+                            DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_STREAM_INTERRUPTED
+                        )
                         .put("lastError", "download failed")
-                        .put("lastErrorField", "download")
+                        .put(
+                            "lastErrorField",
+                            DeviceFirmwareRuntimeContract.ErrorField.STREAM
+                        )
                 )
                 .put("ota", otaSnapshot().put("targetVersion", "").put("sha256Expected", ""))
         ).getOrThrow()
