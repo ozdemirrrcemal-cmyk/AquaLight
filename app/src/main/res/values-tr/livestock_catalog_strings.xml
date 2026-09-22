@@ -13,7 +13,6 @@
     <string name="livestock_picker_selected_one">1 seçildi</string>
     <string name="livestock_picker_continue">Devam Et</string>
     <string name="livestock_picker_new_category">Yeni %1$s</string>
-    <string name="livestock_picker_new_default">Yeni Canlı</string>
     <string name="livestock_picker_item_selected">Seçildi</string>
     <string name="livestock_picker_item_not_selected">Seçilmedi</string>
     <string name="livestock_catalog_entry_missing_message">Bu canlı katalog kaydı artık mevcut değil.</string>
