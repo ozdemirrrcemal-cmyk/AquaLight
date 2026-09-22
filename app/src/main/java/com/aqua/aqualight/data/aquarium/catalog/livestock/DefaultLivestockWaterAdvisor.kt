@@ -19,47 +19,11 @@ class DefaultLivestockWaterAdvisor(
         livestock: AquariumLivestock,
         water: AquariumWaterSnapshot
     ): LivestockWaterAssessment {
-        val catalogEntryId = livestock.catalogEntryId
-
-        if (AquariumLivestockIdentity.isCustom(catalogEntryId)) {
-            return LivestockWaterAssessment(
-                livestockId = livestock.id,
-                catalogEntryId = catalogEntryId,
-                status = LivestockWaterAssessmentStatus.CUSTOM_UNVERIFIED
-            )
+        return if (AquariumLivestockIdentity.isCustom(livestock.catalogEntryId)) {
+            unverifiedCustomAssessment(livestock)
+        } else {
+            assessCatalogLivestock(livestock, water)
         }
-
-        val entry = LivestockCatalog.findById(
-            context = appContext,
-            entryId = catalogEntryId
-        ) ?: return LivestockWaterAssessment(
-            livestockId = livestock.id,
-            catalogEntryId = catalogEntryId,
-            status = LivestockWaterAssessmentStatus.CATALOG_ENTRY_MISSING
-        )
-
-        val compatibility = LivestockWaterCompatibilityEvaluator.evaluate(
-            requirements = entry.waterRequirements,
-            water = water
-        )
-
-        val status = when {
-            compatibility.checkedParameterCount == 0 ->
-                LivestockWaterAssessmentStatus.NO_COMPARABLE_MEASUREMENTS
-
-            compatibility.isCompatible ->
-                LivestockWaterAssessmentStatus.COMPATIBLE
-
-            else ->
-                LivestockWaterAssessmentStatus.OUT_OF_RANGE
-        }
-
-        return LivestockWaterAssessment(
-            livestockId = livestock.id,
-            catalogEntryId = catalogEntryId,
-            status = status,
-            compatibility = compatibility
-        )
     }
 
     override fun assessTank(
@@ -72,5 +36,64 @@ class DefaultLivestockWaterAdvisor(
                 water = water
             )
         }
+    }
+
+    private fun assessCatalogLivestock(
+        livestock: AquariumLivestock,
+        water: AquariumWaterSnapshot
+    ): LivestockWaterAssessment {
+        val entry = LivestockCatalog.findById(
+            context = appContext,
+            entryId = livestock.catalogEntryId
+        )
+
+        return if (entry == null) {
+            missingCatalogAssessment(livestock)
+        } else {
+            val compatibility = LivestockWaterCompatibilityEvaluator.evaluate(
+                requirements = entry.waterRequirements,
+                water = water
+            )
+            LivestockWaterAssessment(
+                livestockId = livestock.id,
+                catalogEntryId = livestock.catalogEntryId,
+                status = compatibility.toAssessmentStatus(),
+                compatibility = compatibility
+            )
+        }
+    }
+
+    private fun unverifiedCustomAssessment(
+        livestock: AquariumLivestock
+    ): LivestockWaterAssessment {
+        return LivestockWaterAssessment(
+            livestockId = livestock.id,
+            catalogEntryId = livestock.catalogEntryId,
+            status = LivestockWaterAssessmentStatus.CUSTOM_UNVERIFIED
+        )
+    }
+
+    private fun missingCatalogAssessment(
+        livestock: AquariumLivestock
+    ): LivestockWaterAssessment {
+        return LivestockWaterAssessment(
+            livestockId = livestock.id,
+            catalogEntryId = livestock.catalogEntryId,
+            status = LivestockWaterAssessmentStatus.CATALOG_ENTRY_MISSING
+        )
+    }
+}
+
+private fun com.aqua.aqualight.application.aquarium.LivestockWaterCompatibility.toAssessmentStatus():
+    LivestockWaterAssessmentStatus {
+    return when {
+        checkedParameterCount == 0 ->
+            LivestockWaterAssessmentStatus.NO_COMPARABLE_MEASUREMENTS
+
+        isCompatible ->
+            LivestockWaterAssessmentStatus.COMPATIBLE
+
+        else ->
+            LivestockWaterAssessmentStatus.OUT_OF_RANGE
     }
 }
