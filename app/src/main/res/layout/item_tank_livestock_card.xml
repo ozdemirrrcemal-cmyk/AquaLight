@@ -26,6 +26,7 @@
             android:id="@+id/ivCategoryIcon"
             android:layout_width="@dimen/aqua_size_42"
             android:layout_height="@dimen/aqua_size_42"
+            android:background="@drawable/bg_material_icon_box"
             android:contentDescription="@null"
             android:padding="@dimen/aqua_size_10"
             android:scaleType="centerInside"
