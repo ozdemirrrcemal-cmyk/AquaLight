@@ -22,4 +22,6 @@
     <string name="livestock_category_crab_crayfish">Crab / Crayfish</string>
     <string name="livestock_category_coral">Coral</string>
     <string name="livestock_category_other">Other</string>
+    <string name="livestock_catalog_entry_missing_title">Livestock catalog entry unavailable</string>
+    <string name="livestock_catalog_entry_missing_message">This record is not present in the current AquaLight livestock catalog and cannot be edited.</string>
 </resources>
