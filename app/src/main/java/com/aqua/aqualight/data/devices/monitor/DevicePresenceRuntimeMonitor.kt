@@ -298,7 +298,9 @@ class DevicePresenceRuntimeMonitor(
         while (isActive) {
             if (appForeground.get() && localNetworkAvailable.value) {
                 refreshDiscoverySafely()
-                reevaluateNow(localNetworkAvailable = true)
+                if (appForeground.get() && localNetworkAvailable.value) {
+                    reevaluateNow(localNetworkAvailable = true)
+                }
                 delay(DISCOVERY_REFRESH_INTERVAL_MS)
             } else {
                 delay(BACKGROUND_IDLE_INTERVAL_MS)

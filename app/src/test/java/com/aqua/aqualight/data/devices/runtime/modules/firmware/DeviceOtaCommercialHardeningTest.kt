@@ -407,6 +407,7 @@ class DeviceOtaCommercialHardeningTest {
             .put("targetVersion", TARGET_VERSION)
             .put("sha256Expected", "a".repeat(64))
             .put("sha256Actual", "")
+            .put("failureCode", "")
             .put("lastError", "")
             .put("lastErrorField", "")
             .put("urlScheme", "https")

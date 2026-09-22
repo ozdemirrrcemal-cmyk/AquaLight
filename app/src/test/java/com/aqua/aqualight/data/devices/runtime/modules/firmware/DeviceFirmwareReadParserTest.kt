@@ -117,6 +117,7 @@ class DeviceFirmwareReadParserTest {
         .put("targetVersion", "")
         .put("sha256Expected", "")
         .put("sha256Actual", "")
+        .put("failureCode", "")
         .put("lastError", "")
         .put("lastErrorField", "")
         .put("urlScheme", "")
