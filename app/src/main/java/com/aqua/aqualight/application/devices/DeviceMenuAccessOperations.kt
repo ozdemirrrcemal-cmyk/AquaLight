@@ -37,5 +37,14 @@ enum class DeviceMenuUnavailableReason {
     MALFORMED_DEVICE_STATE,
     FEATURE_UNAVAILABLE,
     FIRMWARE_UPDATE_REQUIRED,
-    APPLICATION_UPDATE_REQUIRED
+    APPLICATION_UPDATE_REQUIRED;
+
+    /**
+     * Domain incompatibility must not strand the device outside the in-app OTA path.
+     * These reasons may route to the shared maintenance-plane firmware screen.
+     */
+    val canOpenFirmwareMaintenance: Boolean
+        get() = this == CONTRACT_INCOMPATIBLE ||
+            this == MALFORMED_DEVICE_STATE ||
+            this == FIRMWARE_UPDATE_REQUIRED
 }
