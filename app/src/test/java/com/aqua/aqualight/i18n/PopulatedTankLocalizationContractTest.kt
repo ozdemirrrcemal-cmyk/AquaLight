@@ -120,7 +120,8 @@ class PopulatedTankLocalizationContractTest {
                     category = "Fish",
                     quantity = 2,
                     addedDateEpochDay = livestockDate.toEpochDay(),
-                    note = "Pair"
+                    note = "Pair",
+                    catalogEntryId = "custom:3"
                 )
             )
         )
