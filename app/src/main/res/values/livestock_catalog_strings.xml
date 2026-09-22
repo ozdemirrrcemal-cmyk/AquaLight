@@ -16,6 +16,7 @@
     <string name="livestock_picker_new_default">New Livestock</string>
     <string name="livestock_picker_item_selected">Selected</string>
     <string name="livestock_picker_item_not_selected">Not selected</string>
+    <string name="livestock_catalog_entry_missing_message">This livestock catalog record is no longer available.</string>
     <string name="livestock_category_fish">Fish</string>
     <string name="livestock_category_shrimp">Shrimp</string>
     <string name="livestock_category_snail">Snail</string>
