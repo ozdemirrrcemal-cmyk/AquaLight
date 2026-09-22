@@ -270,6 +270,7 @@ class DeviceFirmwareExactArtifactPlannerTest {
                 wsSchema = "aql.ws.v1",
                 wsProtocolVersion = 1,
                 deviceApiVersion = 1,
+                maintenanceSchema = DeviceFirmwareRuntimeContract.MAINTENANCE_SCHEMA,
                 requiredDomains = listOf("aqualight.dosing.v1"),
                 optionalDomains = emptyList()
             ),
