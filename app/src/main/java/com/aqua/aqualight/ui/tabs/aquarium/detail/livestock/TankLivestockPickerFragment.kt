@@ -20,8 +20,8 @@ import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderSearchField
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.text.setTextSizeResource
-import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.LivestockCatalog
-import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.LivestockCatalogEntry
+import com.aqua.aqualight.data.aquarium.catalog.livestock.LivestockCatalog
+import com.aqua.aqualight.data.aquarium.catalog.livestock.LivestockCatalogEntry
 import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.LivestockCategories
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.Dispatchers
