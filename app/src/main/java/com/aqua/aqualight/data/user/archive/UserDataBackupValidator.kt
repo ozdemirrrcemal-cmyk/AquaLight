@@ -20,6 +20,7 @@ internal object UserDataBackupLimits {
     const val MAX_CARE_TASKS = 10_000
     const val MAX_DEVICE_ASSIGNMENTS = 500
     const val MAX_ITEMS_PER_AQUARIUM = 2_000
+    const val MAX_LIVESTOCK_CATALOG_ID_CHARS = 160
     const val BUFFER_SIZE = 8 * 1024
 
     val mediaEntryPattern = Regex("media/tanks/[1-9][0-9]*\\.jpg")
@@ -90,7 +91,7 @@ internal class UserDataBackupValidator {
             require(livestock.quantity > 0) {
                 "Backup livestock quantity is invalid."
             }
-            require(livestock.catalogEntryId.length <= 160) {
+            require(livestock.catalogEntryId.length <= UserDataBackupLimits.MAX_LIVESTOCK_CATALOG_ID_CHARS) {
                 "Backup livestock catalog id is too long."
             }
             runCatching {
