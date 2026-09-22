@@ -62,6 +62,14 @@ class DosePro4NoPublishedArtifactRegressionTest {
             env = DOSE_PRO_2_ENV,
             product = dosePro2Product(),
             compatibility = dosePro2Compatibility(),
+            contracts = DeviceFirmwareTargetContracts(
+                wsSchema = "aql.ws.v1",
+                wsProtocolVersion = 1,
+                deviceApiVersion = 1,
+                requiredDomains = listOf("aqualight.dosing.v1"),
+                optionalDomains = emptyList()
+            ),
+            updatePolicy = com.aqua.aqualight.application.devices.DeviceFirmwareUpdatePolicy.RECOMMENDED,
             firmware = DeviceFirmwareAsset(
                 version = RELEASE_VERSION,
                 filename = filename,
