@@ -127,15 +127,23 @@ class DeviceFirmwareExactArtifactPlannerTest {
 
     @Test
     fun `same or older target does not require app support because it is not installable`() {
-        val exact = artifact().copy(
-            firmware = artifact().firmware.copy(version = "1.0.0"),
-            contracts = artifact().contracts.copy(
+        val tag = "dosing_dose_pro_2-v1.0.0"
+        val filename = "AquaLight-$tag-ota.bin"
+        val base = artifact()
+        val exact = base.copy(
+            firmware = base.firmware.copy(
+                version = "1.0.0",
+                filename = filename,
+                url = DeviceFirmwareRuntimeContract.OFFICIAL_RELEASE_URL_PREFIX + "$tag/$filename"
+            ),
+            contracts = base.contracts.copy(
                 requiredDomains = listOf("aqualight.dosing.v2")
             )
         )
         val sameVersionManifest = manifest(
+            tag = tag,
             artifacts = listOf(exact)
-        ).copy(version = "1.0.0", tag = "dosing_dose_pro_2-v1.0.0")
+        ).copy(version = "1.0.0")
 
         val availability = planner.evaluateUpdate(
             snapshot(),
