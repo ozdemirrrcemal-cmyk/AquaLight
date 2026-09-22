@@ -133,28 +133,42 @@ for token in (
     "suspend fun startUpdate(plan: PreparedDeviceFirmwareUpdate)",
     "events.collect(::processLifecycleEvent)",
     "events.collect(::processTypedEvent)",
-    "updates.collect(::processSnapshotUpdates)",
+    "requestFirmwareStatus(deviceUid)",
+    "fetchAndEvaluateMaintenanceUpdate(",
+    "planAgainstMaintenanceIdentity(",
+    "verifyInstalledFirmwareFromMaintenance",
     "parseOtaProgressEventExact",
-    "runtimeMetadataGeneration != selected.dataPlan.runtimeMetadataGeneration",
 ):
     if token not in ota_coordinator:
         errors.append(f"{OTA_COORDINATOR.relative_to(ROOT)}: shared OTA coordinator token is missing: {token}")
 
 for token in (
     "object DeviceOtaValidator",
+    "planAgainstMaintenanceIdentity(",
+    "identity.currentVersion != plan.currentVersion",
     "snapshot.sha256Actual.equals(plan.firmware.sha256",
 ):
     if token not in ota_validation:
         errors.append(f"{OTA_VALIDATION.relative_to(ROOT)}: OTA validation token is missing: {token}")
 
 for token in (
-    "snapshot.firmwareVersion == selected.dataPlan.targetVersion",
-    "snapshot.firmwareVersion == selected.dataPlan.currentVersion",
-    "publishUnexpectedFirmware(deviceUid, selected, snapshot.firmwareVersion)",
+    "maintenance.currentVersion == selected.dataPlan.targetVersion",
+    "maintenance.currentVersion == selected.dataPlan.currentVersion",
+    "maintenance.matchesProductIdentity(selected.dataPlan)",
 ):
     if token not in ota_coordinator:
         errors.append(
             f"{OTA_COORDINATOR.relative_to(ROOT)}: post-restart OTA outcome token is missing: {token}"
+        )
+
+for forbidden in (
+    "updates.collect(::processSnapshotUpdates)",
+    "runtimeMetadataGeneration != selected.dataPlan.runtimeMetadataGeneration",
+    "snapshot.firmwareVersion == selected.dataPlan.targetVersion",
+):
+    if forbidden in ota_coordinator:
+        errors.append(
+            f"{OTA_COORDINATOR.relative_to(ROOT)}: domain metadata must not own OTA recovery: {forbidden}"
         )
 
 for token in (
