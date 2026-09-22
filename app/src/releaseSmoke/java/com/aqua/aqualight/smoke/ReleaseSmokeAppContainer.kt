@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
+import com.aqua.aqualight.application.aquarium.LivestockCatalogOperations
 import com.aqua.aqualight.application.aquarium.LivestockWaterAdvisorOperations
 import com.aqua.aqualight.application.auth.AccountSecurityOperations
 import com.aqua.aqualight.application.auth.AppSessionOperations
@@ -28,6 +29,7 @@ import com.aqua.aqualight.composition.AppContainer
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupCoordinator
 import com.aqua.aqualight.composition.OwnerLightOperations
 import com.aqua.aqualight.data.aquarium.DefaultAquariumTankOperations
+import com.aqua.aqualight.data.aquarium.catalog.livestock.DefaultLivestockCatalogOperations
 import com.aqua.aqualight.data.aquarium.catalog.livestock.DefaultLivestockWaterAdvisor
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
 import com.aqua.aqualight.data.aquarium.devices.DefaultTankDeviceAssignmentOperations
@@ -121,6 +123,8 @@ internal class ReleaseSmokeAppContainer(context: Context) : AppContainer {
         get() = defaultViewModelFactory
     override val userProfileOperations: UserProfileOperations
         get() = profileOperations
+    override val livestockCatalogOperations: LivestockCatalogOperations =
+        DefaultLivestockCatalogOperations(context.applicationContext)
     override val livestockWaterAdvisorOperations: LivestockWaterAdvisorOperations =
         DefaultLivestockWaterAdvisor(context.applicationContext)
     override val startupAppearanceCache: StartupAppearanceCache
