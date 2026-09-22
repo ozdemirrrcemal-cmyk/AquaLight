@@ -194,6 +194,7 @@ class DefaultDeviceMenuAccessOperationsTest {
         val port = FakeDeviceMenuRuntimePort(snapshot = snapshot).apply {
             currentRuntimeState = AqlWsConnectionState.Failed(
                 deviceUid = snapshot.deviceUid,
+                message = "incompatible protocol",
                 cause = AqlWsProtocolException(AqlWsProtocolError.INCOMPATIBLE_PROTOCOL)
             )
         }
