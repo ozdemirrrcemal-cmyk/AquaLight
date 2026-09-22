@@ -129,27 +129,78 @@ private object DeviceOtaSnapshotFailureClassifier {
 
     fun map(snapshot: DeviceFirmwareOtaSnapshot): DeviceOtaFailure {
         val diagnostics = snapshot.toDiagnostics()
-        return when (snapshot.lastErrorField) {
-            DeviceFirmwareRuntimeContract.ErrorField.HTTP_STATUS ->
-                DeviceOtaHttpFailureClassifier.map(diagnostics)
-            DeviceFirmwareRuntimeContract.ErrorField.URL ->
-                DOWNLOAD_URL_OPEN_FAILED.toFailure(diagnostics)
-            DeviceFirmwareRuntimeContract.ErrorField.STREAM ->
-                DOWNLOAD_STREAM_INTERRUPTED.toFailure(diagnostics)
-            DeviceFirmwareRuntimeContract.ErrorField.SIZE -> sizeFailure(diagnostics)
-            DeviceFirmwareRuntimeContract.ErrorField.WIFI ->
-                DEVICE_NETWORK_UNAVAILABLE.toFailure(diagnostics)
-            DeviceFirmwareRuntimeContract.ErrorField.TLS ->
-                securityFailure(diagnostics)
-            else -> {
-                val disposition = SNAPSHOT_FIELD_DISPOSITIONS[snapshot.lastErrorField]
-                    ?: DEVICE_INTERNAL
-                disposition.toFailure(diagnostics)
-            }
+        return if (snapshot.failureCode.isNotBlank()) {
+            typedFailure(snapshot.failureCode, diagnostics)
+        } else {
+            legacyFailure(snapshot, diagnostics)
         }
     }
 
-    private fun sizeFailure(
+    private fun typedFailure(
+        failureCode: String,
+        diagnostics: DeviceOtaFailureDiagnostics
+    ): DeviceOtaFailure = when (failureCode) {
+        DeviceFirmwareRuntimeContract.FailureCode.SECURE_TIME_NOT_READY ->
+            SECURITY_VALIDATION_RETRYABLE.toFailure(diagnostics)
+        DeviceFirmwareRuntimeContract.FailureCode.DEVICE_NETWORK_UNAVAILABLE ->
+            DEVICE_NETWORK_UNAVAILABLE.toFailure(diagnostics)
+        DeviceFirmwareRuntimeContract.FailureCode.SAFE_MODE_ENTER_FAILED ->
+            SAFE_MODE_FAILED.toFailure(diagnostics)
+        DeviceFirmwareRuntimeContract.FailureCode.SAFE_MODE_RESTORE_FAILED ->
+            SAFE_MODE_RESTORE_FAILED.toFailure(diagnostics)
+        DeviceFirmwareRuntimeContract.FailureCode.TLS_TRUST_UNAVAILABLE,
+        DeviceFirmwareRuntimeContract.FailureCode.INSECURE_TRANSPORT ->
+            SECURITY_VALIDATION_FAILED.toFailure(diagnostics)
+        DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_URL_OPEN_FAILED ->
+            DOWNLOAD_URL_OPEN_FAILED.toFailure(diagnostics)
+        DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_HTTP_STATUS ->
+            DeviceOtaHttpFailureClassifier.map(diagnostics)
+        DeviceFirmwareRuntimeContract.FailureCode.RELEASE_SIZE_MISMATCH ->
+            DOWNLOAD_SIZE_MISMATCH_TERMINAL.toFailure(diagnostics)
+        DeviceFirmwareRuntimeContract.FailureCode.INSUFFICIENT_SPACE ->
+            INSUFFICIENT_SPACE.toFailure(diagnostics)
+        DeviceFirmwareRuntimeContract.FailureCode.FLASH_BEGIN_FAILED,
+        DeviceFirmwareRuntimeContract.FailureCode.FLASH_WRITE_FAILED,
+        DeviceFirmwareRuntimeContract.FailureCode.FLASH_FINALIZE_FAILED ->
+            FLASH_WRITE_FAILED.toFailure(diagnostics)
+        DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_STREAM_INTERRUPTED ->
+            DOWNLOAD_STREAM_INTERRUPTED.toFailure(diagnostics)
+        DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_SIZE_MISMATCH ->
+            DOWNLOAD_SIZE_MISMATCH_RETRYABLE.toFailure(diagnostics)
+        DeviceFirmwareRuntimeContract.FailureCode.INTEGRITY_CHECK_FAILED ->
+            INTEGRITY_CHECK_FAILED.toFailure(diagnostics)
+        else -> error("Unsupported firmware OTA failureCode: $failureCode")
+    }
+
+    /**
+     * Compatibility path for already-shipped snapshots that predate failureCode.
+     *
+     * New firmware must never rely on diagnostic wording for customer behavior. This legacy path
+     * can be removed only after every supported deployed firmware generation emits failureCode.
+     */
+    private fun legacyFailure(
+        snapshot: DeviceFirmwareOtaSnapshot,
+        diagnostics: DeviceOtaFailureDiagnostics
+    ): DeviceOtaFailure = when (snapshot.lastErrorField) {
+        DeviceFirmwareRuntimeContract.ErrorField.HTTP_STATUS ->
+            DeviceOtaHttpFailureClassifier.map(diagnostics)
+        DeviceFirmwareRuntimeContract.ErrorField.URL ->
+            DOWNLOAD_URL_OPEN_FAILED.toFailure(diagnostics)
+        DeviceFirmwareRuntimeContract.ErrorField.STREAM ->
+            DOWNLOAD_STREAM_INTERRUPTED.toFailure(diagnostics)
+        DeviceFirmwareRuntimeContract.ErrorField.SIZE -> legacySizeFailure(diagnostics)
+        DeviceFirmwareRuntimeContract.ErrorField.WIFI ->
+            DEVICE_NETWORK_UNAVAILABLE.toFailure(diagnostics)
+        DeviceFirmwareRuntimeContract.ErrorField.TLS ->
+            legacySecurityFailure(diagnostics)
+        else -> {
+            val disposition = SNAPSHOT_FIELD_DISPOSITIONS[snapshot.lastErrorField]
+                ?: DEVICE_INTERNAL
+            disposition.toFailure(diagnostics)
+        }
+    }
+
+    private fun legacySizeFailure(
         diagnostics: DeviceOtaFailureDiagnostics
     ): DeviceOtaFailure {
         val message = diagnostics.message
@@ -164,7 +215,7 @@ private object DeviceOtaSnapshotFailureClassifier {
         return disposition.toFailure(diagnostics)
     }
 
-    private fun securityFailure(
+    private fun legacySecurityFailure(
         diagnostics: DeviceOtaFailureDiagnostics
     ): DeviceOtaFailure {
         val disposition = if (
@@ -180,7 +231,6 @@ private object DeviceOtaSnapshotFailureClassifier {
         return disposition.toFailure(diagnostics)
     }
 }
-
 private object DeviceManifestHttpFailureClassifier {
 
     fun map(
@@ -318,6 +368,7 @@ private fun DeviceRuntimeCommandOutcome.FirmwareError.toDiagnostics() =
     )
 
 private fun DeviceFirmwareOtaSnapshot.toDiagnostics() = DeviceOtaFailureDiagnostics(
+    code = failureCode,
     field = lastErrorField,
     httpStatus = httpStatus,
     message = lastError
