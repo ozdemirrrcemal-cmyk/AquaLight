@@ -27,7 +27,7 @@ class CommercialStoreMigrationPolicyTest {
         )
         assertTrue(
             normalizedPolicy.contains(
-                "version `1` tank stores are rejected"
+                "Version `1` tank stores are rejected"
             )
         )
         assertTrue(normalizedPolicy.contains("no legacy `DataMigration` is installed"))
