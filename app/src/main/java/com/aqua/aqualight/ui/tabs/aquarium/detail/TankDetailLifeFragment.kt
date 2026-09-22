@@ -246,11 +246,9 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
             layoutParams = params
         }
 
-        val resolvedCatalogEntry = LivestockCatalog.resolveSavedSelection(
+        val resolvedCatalogEntry = LivestockCatalog.findById(
             context = requireContext(),
-            catalogEntryId = livestock.catalogEntryId,
-            name = livestock.name,
-            category = livestock.category
+            entryId = livestock.catalogEntryId
         )
         val resolvedDisplayName = resolvedCatalogEntry
             ?.displayName(requireContext())
@@ -273,7 +271,7 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
         val metaText = TextView(requireContext()).apply {
             text = getString(
                 R.string.aquarium_livestock_meta_format,
-                livestock.category.ifBlank { getString(R.string.aquarium_tank_type_other) },
+                getString(LivestockCategories.labelRes(livestock.category)),
                 getLivestockQuantityText(livestock.quantity)
             )
             setTextSizeResource(R.dimen.aqua_text_size_caption_plus)
