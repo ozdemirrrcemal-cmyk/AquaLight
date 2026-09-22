@@ -4,15 +4,16 @@ import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.aquarium.AquariumLivestockTaxonomy
 
 object LivestockCategories {
 
-    const val FISH = "Fish"
-    const val SHRIMP = "Shrimp"
-    const val SNAIL = "Snail"
-    const val CRAB_CRAYFISH = "Crab / Crayfish"
-    const val CORAL = "Coral"
-    const val OTHER = "Other"
+    const val FISH = AquariumLivestockTaxonomy.FISH
+    const val SHRIMP = AquariumLivestockTaxonomy.SHRIMP
+    const val SNAIL = AquariumLivestockTaxonomy.SNAIL
+    const val CRAB_CRAYFISH = AquariumLivestockTaxonomy.CRAB_CRAYFISH
+    const val CORAL = AquariumLivestockTaxonomy.CORAL
+    const val OTHER = AquariumLivestockTaxonomy.OTHER
 
     val all: List<String> = listOf(
         FISH,
