@@ -3,6 +3,7 @@ package com.aqua.aqualight.data.aquarium.catalog.livestock
 import android.content.Context
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
 import com.aqua.aqualight.application.aquarium.AquariumLivestockIdentity
+import com.aqua.aqualight.application.aquarium.LivestockWaterRequirements
 
 /**
  * Background-safe resolver for livestock husbandry requirements.
