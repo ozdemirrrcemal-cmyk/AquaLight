@@ -21,6 +21,7 @@ import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.data.aquarium.catalog.livestock.LivestockCatalog
 import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.LivestockCategories
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
+import com.aqua.aqualight.application.aquarium.AquariumLivestockIdentity
 import com.aqua.aqualight.i18n.LocaleFormatter
 import com.google.android.material.card.MaterialCardView
 import androidx.navigation.fragment.findNavController
@@ -246,14 +247,20 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
             layoutParams = params
         }
 
-        val resolvedCatalogEntry = LivestockCatalog.findById(
-            context = requireContext(),
-            entryId = livestock.catalogEntryId
-        )
-        val resolvedDisplayName = resolvedCatalogEntry
-            ?.displayName(requireContext())
-            ?.takeIf(String::isNotBlank)
-            ?: livestock.name
+        val isCustom = AquariumLivestockIdentity.isCustom(livestock.catalogEntryId)
+        val resolvedCatalogEntry = if (isCustom) {
+            null
+        } else {
+            LivestockCatalog.findById(
+                context = requireContext(),
+                entryId = livestock.catalogEntryId
+            )
+        }
+        val resolvedDisplayName = when {
+            isCustom -> livestock.name
+            resolvedCatalogEntry != null -> resolvedCatalogEntry.displayName(requireContext())
+            else -> getString(R.string.livestock_catalog_entry_missing_title)
+        }
 
         val nameText = TextView(requireContext()).apply {
             text = resolvedDisplayName.ifBlank {
