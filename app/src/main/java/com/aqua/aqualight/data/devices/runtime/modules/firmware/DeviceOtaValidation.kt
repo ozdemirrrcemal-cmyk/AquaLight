@@ -96,7 +96,7 @@ internal object DeviceOtaStateMapper {
                 snapshot.failureCode.isBlank() &&
                     snapshot.lastErrorField ==
                     DeviceFirmwareRuntimeContract.ErrorField.SAFE_MODE_RESTORE
-                )
+            )
         ) {
             DeviceOtaState.Failed(
                 deviceUid = deviceUid.value,
