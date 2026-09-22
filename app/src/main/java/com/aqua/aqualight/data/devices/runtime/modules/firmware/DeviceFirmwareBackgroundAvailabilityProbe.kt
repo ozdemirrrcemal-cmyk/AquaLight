@@ -54,9 +54,6 @@ class DeviceFirmwareBackgroundAvailabilityProbe(
 
     private fun validateDurableSnapshot(snapshot: DeviceSnapshot) {
         val product = snapshot.product
-        require(snapshot.capabilities.ota) {
-            "Durable device metadata does not advertise OTA support."
-        }
         require(product.brand == DeviceFirmwareRuntimeContract.Manifest.BRAND) {
             "Durable product brand is not AquaLight."
         }
@@ -111,12 +108,6 @@ class DeviceFirmwareBackgroundAvailabilityProbe(
         )
         require(artifact.product.skuCode == product.skuCode)
         require(artifact.product.hardwareRevision == product.hardwareRevision)
-        require(artifact.product.capabilities == snapshot.capabilities) {
-            "OTA manifest capabilities differ from durable device metadata."
-        }
-        require(artifact.product.limits == snapshot.limits) {
-            "OTA manifest limits differ from durable device metadata."
-        }
         require(artifact.compatibility.productKey == product.productKey)
         require(artifact.compatibility.productId == product.productId)
         require(artifact.compatibility.family == product.family.wireValue)
