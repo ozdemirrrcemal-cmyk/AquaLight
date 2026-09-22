@@ -139,6 +139,17 @@ require_tokens(
         "DEFAULT_RECOVERY_WINDOW_MILLIS = 120_000L",
         "transactionStore.saveQuarantine(",
         "transactionStore.activeTransactions().forEach(::restoreTransaction)",
+        "transactionStore.activeTransactions()",
+        "preserveProtocolUncertainty(",
+        "transactionStore.active(deviceUid) != null",
+        "is DeviceRuntimeCommandOutcome.ProtocolError -> messageId.isNotBlank()",
+        "preserveRecovery = transactionStore.active(deviceUid) != null",
+    ),
+)
+forbid_tokens(
+    "coordinator",
+    (
+        "Recovered firmware reported no active OTA operation.",
     ),
 )
 require_tokens(

@@ -129,6 +129,8 @@ private val OTA_COMMERCIAL_FAILURE_MESSAGE_RESOURCES = mapOf(
         R.string.device_settings_update_error_release_connection_failed,
     DeviceOtaFailureReason.DEVICE_NETWORK_UNAVAILABLE to
         R.string.device_settings_update_error_device_network_unavailable,
+    DeviceOtaFailureReason.SECURE_TIME_NOT_READY to
+        R.string.device_settings_update_error_secure_time_not_ready,
     DeviceOtaFailureReason.RELEASE_UNAVAILABLE to
         R.string.device_settings_update_error_release_unavailable,
     DeviceOtaFailureReason.RELEASE_ACCESS_DENIED to
@@ -141,6 +143,8 @@ private val OTA_COMMERCIAL_FAILURE_MESSAGE_RESOURCES = mapOf(
         R.string.device_settings_update_error_release_request_rejected,
     DeviceOtaFailureReason.RELEASE_SERVER_UNAVAILABLE to
         R.string.device_settings_update_error_release_server_unavailable,
+    DeviceOtaFailureReason.RELEASE_PACKAGE_MISMATCH to
+        R.string.device_settings_update_error_release_package_mismatch,
     DeviceOtaFailureReason.INCOMPATIBLE_FIRMWARE to
         R.string.device_settings_update_error_incompatible_firmware,
     DeviceOtaFailureReason.INSUFFICIENT_SPACE to

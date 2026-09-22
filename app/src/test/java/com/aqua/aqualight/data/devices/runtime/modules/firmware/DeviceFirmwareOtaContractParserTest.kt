@@ -90,6 +90,25 @@ class DeviceFirmwareOtaContractParserTest {
     }
 
     @Test
+    fun `snapshot without failure code rejects diagnostic failure field`() {
+        val contradictory = otaSnapshot()
+            .put("phase", "succeeded")
+            .put("active", false)
+            .put("progressPermille", 1_000)
+            .put("progressPercent", 100.0)
+            .put("sha256Actual", "a".repeat(64))
+            .put("restartRequired", true)
+            .put("failureCode", "")
+            .put("lastError", "exact pre-OTA runtime restore failed")
+            .put(
+                "lastErrorField",
+                DeviceFirmwareRuntimeContract.ErrorField.SAFE_MODE_RESTORE
+            )
+
+        assertTrue(DeviceFirmwareStatusParser.parseOtaSnapshotExact(contradictory).isFailure)
+    }
+
+    @Test
     fun `progress parser rejects phase and active flag disagreement`() {
         val invalid = otaEventJson().put("phase", "downloading").put("active", false)
 

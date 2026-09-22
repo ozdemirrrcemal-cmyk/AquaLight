@@ -27,18 +27,20 @@
     <string name="device_settings_update_unsupported_status">Bu cihaz yazılım güncellemelerini desteklemiyor.</string>
     <string name="device_settings_update_card_content_description">%1$s. %2$s</string>
     <string name="device_settings_update_card_open_details_description">%1$s. %2$s. Güncelleme ayrıntılarını açın.</string>
-    <string name="device_settings_update_error_check_failed">Güncelleme bilgileri doğrulanamadı. İnternet bağlantınızı kontrol edip tekrar deneyin. Sorun sürerse daha sonra yeniden deneyin.</string>
+    <string name="device_settings_update_error_check_failed">Güncelleme bilgileri doğrulanamadı. Daha sonra tekrar deneyin; sorun sürerse destek alın.</string>
     <string name="device_settings_update_error_connection">Uygulama cihaza bağlanamadı. Cihazın açık ve aynı ağda olduğundan emin olup tekrar deneyin.</string>
     <string name="device_settings_update_error_authentication">Cihazla güvenli bağlantı kurulamadı. Cihaza yeniden bağlanıp tekrar deneyin.</string>
     <string name="device_settings_update_error_device_busy">Cihaz şu anda başka bir işlem yapıyor. İşlem tamamlandıktan sonra tekrar deneyin.</string>
     <string name="device_settings_update_error_release_connection_failed">Güncelleme hizmetine ulaşılamadı. Telefonunuzun internet bağlantısını kontrol edip tekrar deneyin.</string>
     <string name="device_settings_update_error_device_network_unavailable">Cihazın internet bağlantısı güncelleme için hazır değil veya kesildi. Cihazın Wi-Fi bağlantısını kontrol edip tekrar deneyin.</string>
+    <string name="device_settings_update_error_secure_time_not_ready">Cihazın tarih ve saat bilgisi güncelleme için hazır değil. Cihazın internete bağlı olduğundan emin olup tekrar deneyin.</string>
     <string name="device_settings_update_error_release_unavailable">Güncelleme dosyası bulunamadı. Destek alın.</string>
     <string name="device_settings_update_error_release_access_denied">Güncelleme dosyasına erişilemedi. Destek alın.</string>
     <string name="device_settings_update_error_release_rate_limited">Güncelleme hizmeti şu anda yoğun. Kısa süre sonra tekrar deneyin.</string>
     <string name="device_settings_update_error_release_redirect_failed">Güncelleme dosyasına güvenli biçimde ulaşılamadı. Destek alın.</string>
     <string name="device_settings_update_error_release_request_rejected">Güncelleme isteği kabul edilmedi. Destek alın.</string>
     <string name="device_settings_update_error_release_server_unavailable">Güncelleme hizmetine geçici olarak ulaşılamıyor. Daha sonra tekrar deneyin.</string>
+    <string name="device_settings_update_error_release_package_mismatch">Yayımlanan güncelleme paketi beklenen bilgilerle eşleşmiyor. Güncelleme başlatılmadı. Destek alın.</string>
     <string name="device_settings_update_error_incompatible_firmware">Bu yazılım sürümü cihazınızla uyumlu değil. Güncellemeyi yeniden denemeyin; destek alın.</string>
     <string name="device_settings_update_error_insufficient_space">Cihazda bu güncellemeyi güvenle yüklemek için yeterli alan yok. Destek alın.</string>
     <string name="device_settings_update_error_download_connection_failed">Cihaz güncelleme hizmetine bağlanamadı. Cihazın internet bağlantısını ve tarih-saat ayarını kontrol edip tekrar deneyin.</string>
@@ -58,7 +60,7 @@
     <string name="device_settings_update_error_safe_mode">Cihaz güncelleme için güvenli duruma geçemedi. Cihazı açık tutup tekrar deneyin.</string>
     <string name="device_settings_update_error_safe_mode_restore">Cihaz güncelleme öncesindeki çalışma durumuna dönemedi. Cihazın gücünü kapatıp yeniden açın; ardından tekrar kontrol edin.</string>
     <string name="device_settings_update_error_flash_write">Yazılım cihaza kaydedilemedi. Cihazın gücünü kesmeyin ve destek alın.</string>
-    <string name="device_settings_update_error_security_validation">Güncellemenin güvenliği doğrulanamadı ve güncelleme uygulanmadı. Cihazın internet bağlantısını ve tarih-saat ayarını kontrol edin; sorun sürerse destek alın.</string>
+    <string name="device_settings_update_error_security_validation">Güncelleme güvenli biçimde başlatılamadı. Aynı güncellemeyi yeniden denemeyin; destek alın.</string>
     <string name="device_settings_update_error_protocol_mismatch">Uygulama ile cihazın güncelleme sistemi birbiriyle uyumlu değil. Uygulamayı güncelleyin; sorun sürerse destek alın.</string>
     <string name="device_settings_update_error_device_internal">Cihaz güncellemeyi tamamlayamadı. Cihazı açık tutun; sorun sürerse destek alın.</string>
 

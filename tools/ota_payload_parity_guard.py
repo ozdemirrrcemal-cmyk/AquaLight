@@ -45,8 +45,8 @@ MANIFEST_PARSER_PATH = (
 )
 
 EXPECTED_FIRMWARE_REPOSITORY = "ozdemirrrcemal-cmyk/AquaLight-Firmware"
-EXPECTED_FIRMWARE_BRANCH = "feat/ota-commercial-failure-contract"
-EXPECTED_FIRMWARE_COMMIT = "4de2ac1e85c67a4d6ee10fac2ca9bdc142635ef5"
+EXPECTED_FIRMWARE_BRANCH = "main"
+EXPECTED_FIRMWARE_COMMIT = "f0cb5dce3d17993d2994483e01295c7f1c096939"
 
 
 class GuardFailure(AssertionError):
@@ -282,11 +282,24 @@ def verify_failure_code_matrix(
         ".contains(" not in typed_block,
         "Typed OTA failure classification must not inspect diagnostic wording",
     )
-    for constant_name in string_constants(failure_code_block):
-        require(
-            f"DeviceFirmwareRuntimeContract.FailureCode.{constant_name}" in typed_block,
-            f"Typed OTA failure mapper is missing {constant_name}",
-        )
+    typed_map_marker = "private val TYPED_FAILURE_DISPOSITIONS = mapOf"
+    typed_map_index = failure_mapper.find(typed_map_marker)
+    require(typed_map_index >= 0, "Typed OTA failure disposition map is missing")
+    typed_map_block = extract_parenthesized(failure_mapper, typed_map_index)
+    expected_names = list(string_constants(failure_code_block))
+    http_failure_name = "DOWNLOAD_HTTP_STATUS"
+    mapped_names = re.findall(
+        r"DeviceFirmwareRuntimeContract\.FailureCode\.(\w+)\s+to",
+        typed_map_block,
+    )
+    require(
+        mapped_names == [name for name in expected_names if name != http_failure_name],
+        "Typed OTA disposition map differs from the stable failure-code matrix",
+    )
+    require(
+        f"DeviceFirmwareRuntimeContract.FailureCode.{http_failure_name}" in typed_block,
+        "Typed OTA HTTP failure must retain status-aware classification",
+    )
 
     semantics = fixture["wireSemantics"]
     require(

@@ -23,7 +23,7 @@ class DeviceOtaFailureMapperTest {
         val cases = listOf(
             Expected(
                 DeviceFirmwareRuntimeContract.FailureCode.SECURE_TIME_NOT_READY,
-                DeviceOtaFailureReason.SECURITY_VALIDATION_FAILED,
+                DeviceOtaFailureReason.SECURE_TIME_NOT_READY,
                 true
             ),
             Expected(
@@ -58,7 +58,7 @@ class DeviceOtaFailureMapperTest {
             ),
             Expected(
                 DeviceFirmwareRuntimeContract.FailureCode.RELEASE_SIZE_MISMATCH,
-                DeviceOtaFailureReason.DOWNLOAD_SIZE_MISMATCH,
+                DeviceOtaFailureReason.RELEASE_PACKAGE_MISMATCH,
                 false
             ),
             Expected(
@@ -216,7 +216,7 @@ class DeviceOtaFailureMapperTest {
     }
 
     @Test
-    fun `secure time readiness failure is retryable security validation`() {
+    fun `secure time readiness failure maps to retryable time guidance`() {
         val failure = DeviceOtaFailureMapper.snapshot(
             failedSnapshot(
                 field = DeviceFirmwareRuntimeContract.ErrorField.TLS,
@@ -225,7 +225,7 @@ class DeviceOtaFailureMapperTest {
             )
         )
 
-        assertEquals(DeviceOtaFailureReason.SECURITY_VALIDATION_FAILED, failure.reason)
+        assertEquals(DeviceOtaFailureReason.SECURE_TIME_NOT_READY, failure.reason)
         assertTrue(failure.recoverable)
     }
 
@@ -429,7 +429,7 @@ class DeviceOtaFailureMapperTest {
             )
         )
 
-        assertEquals(DeviceOtaFailureReason.DOWNLOAD_SIZE_MISMATCH, failure.reason)
+        assertEquals(DeviceOtaFailureReason.RELEASE_PACKAGE_MISMATCH, failure.reason)
         assertFalse(failure.recoverable)
     }
 

@@ -164,8 +164,8 @@ object DeviceFirmwareStatusParser {
             phase = phase,
             restartRequired = restartRequired,
             restartScheduled = restartScheduled,
-            lastError = lastError,
-            lastErrorField = lastErrorField
+            failureCode = failureCode,
+            lastError = lastError
         )
         if (active || phase.isTerminal) {
             require(targetVersion.isNotBlank()) { "Active/terminal OTA targetVersion is missing." }
@@ -221,8 +221,8 @@ object DeviceFirmwareStatusParser {
             phase = phase,
             restartRequired = restartRequired,
             restartScheduled = restartScheduled,
-            lastError = lastError,
-            lastErrorField = lastErrorField
+            failureCode = failureCode,
+            lastError = lastError
         )
         return DeviceFirmwareOtaSnapshot(
             phase = phase,
@@ -248,6 +248,9 @@ object DeviceFirmwareStatusParser {
         if (failureCode.isEmpty()) {
             require(phase != DeviceFirmwareOtaPhase.FAILED) {
                 "Failed OTA snapshot must include failureCode."
+            }
+            require(lastErrorField.isEmpty()) {
+                "OTA snapshot without failureCode cannot include lastErrorField."
             }
             return
         }
@@ -302,11 +305,12 @@ object DeviceFirmwareStatusParser {
         phase: DeviceFirmwareOtaPhase,
         restartRequired: Boolean,
         restartScheduled: Boolean,
-        lastError: String,
-        lastErrorField: String
+        failureCode: String,
+        lastError: String
     ) {
         val exactRestoreFailure =
-            lastErrorField == DeviceFirmwareRuntimeContract.ErrorField.SAFE_MODE_RESTORE
+            failureCode ==
+                DeviceFirmwareRuntimeContract.FailureCode.SAFE_MODE_RESTORE_FAILED
         val restartRequiredPhase = phase == DeviceFirmwareOtaPhase.SUCCEEDED ||
             (phase == DeviceFirmwareOtaPhase.FAILED && exactRestoreFailure)
 
