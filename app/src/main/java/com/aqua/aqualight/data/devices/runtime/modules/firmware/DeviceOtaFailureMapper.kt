@@ -10,7 +10,12 @@ internal object DeviceOtaFailureMapper {
 
     fun availability(error: Throwable): DeviceOtaFailure {
         val manifestHttpFailure = error.findManifestHttpFailure()
+        val maintenanceFailure = error.findMaintenanceStatusFailure()
         val failure = when {
+            maintenanceFailure != null ->
+                command(maintenanceFailure.outcome).copy(
+                    stage = DeviceOtaFailureStage.AVAILABILITY_CHECK
+                )
             error.findApplicationUpdateRequired() != null -> simpleFailure(
                 reason = DeviceOtaFailureReason.APPLICATION_UPDATE_REQUIRED,
                 recoverable = false,
@@ -327,6 +332,12 @@ private fun DeviceFirmwareOtaSnapshot.toDiagnostics() = DeviceOtaFailureDiagnost
     httpStatus = httpStatus,
     message = lastError
 )
+
+private fun Throwable.findMaintenanceStatusFailure():
+    DeviceFirmwareMaintenanceStatusException? =
+    generateSequence(this) { current -> current.cause }
+        .filterIsInstance<DeviceFirmwareMaintenanceStatusException>()
+        .firstOrNull()
 
 private fun Throwable.findApplicationUpdateRequired():
     DeviceFirmwareApplicationUpdateRequiredException? =
