@@ -14,7 +14,7 @@ class LivestockCatalogItemTest {
 
     @Test
     fun displayNameUsesTurkishNameOnlyForTurkishLocaleWhenAvailable() {
-        val item = catalogItem(
+        val item = baseItem().copy(
             commonName = "Harlequin Rasbora",
             turkishName = "Harlequin Rasbora TR"
         )
@@ -28,14 +28,14 @@ class LivestockCatalogItemTest {
     fun displayNameFallsBackToCommonNameWhenTurkishNameIsBlankOrMissing() {
         assertEquals(
             "Neon Tetra",
-            catalogItem(
+            baseItem().copy(
                 commonName = "Neon Tetra",
                 turkishName = " "
             ).displayName("tr")
         )
         assertEquals(
             "Neon Tetra",
-            catalogItem(
+            baseItem().copy(
                 commonName = "Neon Tetra",
                 turkishName = null
             ).displayName("tr")
@@ -44,13 +44,7 @@ class LivestockCatalogItemTest {
 
     @Test
     fun matchesSearchesCatalogIdentityFieldsCaseInsensitivelyAndTrimsQuery() {
-        val item = catalogItem(
-            commonName = "Neon Tetra",
-            turkishName = "Neon Tetra",
-            scientificName = "Paracheirodon innesi",
-            recordType = "Species",
-            waterGroup = "Freshwater"
-        )
+        val item = baseItem()
 
         assertTrue(item.matches(""))
         assertTrue(item.matches("   "))
@@ -63,12 +57,10 @@ class LivestockCatalogItemTest {
 
     @Test
     fun parameterSummaryIncludesOnlyAvailableNonBlankCatalogValues() {
-        val full = catalogItem(
-            temperatureC = "20–26",
-            ph = "5.0–7.5",
+        val full = baseItem().copy(
             specificGravity = "1.023–1.026"
         )
-        val partial = catalogItem(
+        val partial = baseItem().copy(
             temperatureC = " ",
             ph = "6.5–7.5",
             specificGravity = null
@@ -99,27 +91,18 @@ class LivestockCatalogItemTest {
         )
     }
 
-    private fun catalogItem(
-        commonName: String = "Neon Tetra",
-        turkishName: String? = "Neon Tetra",
-        scientificName: String? = "Paracheirodon innesi",
-        recordType: String? = "Species",
-        waterGroup: String? = "Freshwater",
-        temperatureC: String? = "20–26",
-        ph: String? = "5.0–7.5",
-        specificGravity: String? = null
-    ): LivestockCatalogItem {
+    private fun baseItem(): LivestockCatalogItem {
         return LivestockCatalogItem(
             id = "catalog-neon-tetra",
             category = AquariumLivestockTaxonomy.FISH,
-            commonName = commonName,
-            turkishName = turkishName,
-            scientificName = scientificName,
-            recordType = recordType,
-            waterGroup = waterGroup,
-            temperatureC = temperatureC,
-            ph = ph,
-            specificGravity = specificGravity,
+            commonName = "Neon Tetra",
+            turkishName = "Neon Tetra",
+            scientificName = "Paracheirodon innesi",
+            recordType = "Species",
+            waterGroup = "Freshwater",
+            temperatureC = "20–26",
+            ph = "5.0–7.5",
+            specificGravity = null,
             waterRequirements = requirements
         )
     }
