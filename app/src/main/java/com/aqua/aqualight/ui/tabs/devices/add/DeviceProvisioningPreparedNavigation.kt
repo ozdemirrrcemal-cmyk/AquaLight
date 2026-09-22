@@ -93,20 +93,27 @@ internal class DeviceProvisioningPreparedNavigation(
                 )
             )
         }
-        is DeviceMenuOpenResult.Unavailable -> unavailableEvent(
-            title = title.ifBlank { device.title },
-            reason = reason
-        )
+        is DeviceMenuOpenResult.Unavailable -> if (reason.canOpenFirmwareMaintenance) {
+            DeviceProvisioningProgressEvent.OpenFirmwareUpdate(device.deviceUid)
+        } else {
+            unavailableEvent(
+                title = title.ifBlank { device.title },
+                reason = reason
+            )
+        }
     }
 
     private fun unavailableEvent(
         title: String,
         reason: DeviceMenuUnavailableReason
-    ): DeviceProvisioningProgressEvent.ShowAddedDeviceUnavailable =
-        DeviceProvisioningProgressEvent.ShowAddedDeviceUnavailable(
+    ): DeviceProvisioningProgressEvent.ShowAddedDeviceUnavailable {
+        val feedback = DeviceMenuUnavailableMessageMapper.feedback(reason)
+        return DeviceProvisioningProgressEvent.ShowAddedDeviceUnavailable(
             title = title,
-            messageRes = DeviceMenuUnavailableMessageMapper.messageRes(reason)
+            dialogTitleRes = feedback.titleRes,
+            messageRes = feedback.messageRes
         )
+    }
 }
 
 internal fun DeviceProvisioningProgressViewModel.onDeviceNavigationFinished(
