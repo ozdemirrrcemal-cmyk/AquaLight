@@ -455,7 +455,7 @@ class TankDetailLivestockFormFragment :
 
     private fun updatePreview() {
         val displayName = selectedCatalogEntry
-            ?.displayName(requireContext())
+            ?.displayName(AppLanguageController.current())
             ?: binding.etLifeName.text.toString().trim()
 
         binding.tvLifePreviewTitle.text = displayName.ifBlank {
@@ -508,7 +508,7 @@ class TankDetailLivestockFormFragment :
         }
 
         val name = selectedCatalogEntry
-            ?.displayName(requireContext())
+            ?.displayName(AppLanguageController.current())
             ?: binding.etLifeName.text.toString().trim()
 
         if (name.length < 2) {
