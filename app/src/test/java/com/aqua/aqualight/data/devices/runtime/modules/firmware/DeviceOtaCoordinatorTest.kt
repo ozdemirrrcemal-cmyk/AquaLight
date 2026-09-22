@@ -738,6 +738,14 @@ class DeviceOtaCoordinatorTest {
                         model = "dose_pro_2",
                         hardwareRevision = "2.0"
                     ),
+                    contracts = DeviceFirmwareTargetContracts(
+                        wsSchema = "aql.ws.v1",
+                        wsProtocolVersion = 1,
+                        deviceApiVersion = 1,
+                        requiredDomains = listOf("aqualight.dosing.v1"),
+                        optionalDomains = emptyList()
+                    ),
+                    updatePolicy = com.aqua.aqualight.application.devices.DeviceFirmwareUpdatePolicy.RECOMMENDED,
                     firmware = DeviceFirmwareAsset(
                         version = "2.0.0",
                         filename = filename,
