@@ -25,6 +25,7 @@ FILES = {
     "module_contract": SOURCE / "catalog/AqlCommercialRuntimeModuleContract.kt",
     "snapshot": SOURCE / "model/DeviceSnapshot.kt",
     "root_mapping": SOURCE / "DeviceRootSnapshotMapping.kt",
+    "compatibility": SOURCE / "compatibility/DeviceCommercialCompatibilityEvaluator.kt",
 }
 
 errors: list[str] = []
@@ -68,7 +69,7 @@ require_tokens(
         "wsPath == AqlWsContract.DEFAULT_PATH",
         "wsPort == RUNTIME_WS_PORT",
         "wsProtocolVersion == AqlWsContract.PROTOCOL_VERSION",
-        "value == SUPPORTED_DEVICE_API_VERSION",
+        "value > 0",
     ),
 )
 
@@ -138,8 +139,8 @@ require_tokens(
         "data.requireExactKeys(CAPABILITY_RESPONSE_KEYS",
         "capabilities.requireExactKeys(CAPABILITY_KEYS",
         "limits.requireExactKeys(LIMIT_KEYS",
-        "parseAqlDeviceFeatureKeysExact",
-        "parseAqlDeviceScreenKeysExact",
+        ".mapNotNull(AqlDeviceFeatureKey::fromWireExact)",
+        ".mapNotNull(AqlDeviceScreenKey::fromWireExact)",
         "value is Boolean",
         "value is Number",
     ),
@@ -289,9 +290,19 @@ forbid_tokens(
         "AqlWsIncomingMessage",
     ),
 )
+require_tokens(
+    "compatibility",
+    (
+        "if (!hasValidatedRuntimeMetadata)",
+        "SUPPORTED_DEVICE_API_VERSION",
+        "reportedApiVersion > SUPPORTED_DEVICE_API_VERSION",
+        "DeviceCommercialCompatibilityIssue.APPLICATION_UPDATE_REQUIRED",
+        "DeviceCommercialCompatibilityIssue.RUNTIME_METADATA_UNAVAILABLE",
+    ),
+)
 require(
-    "!hasValidatedRuntimeMetadata" in sources["root_mapping"],
-    "root projection must fail closed without a current validated generation",
+    "DeviceCommercialCompatibilityEvaluator.evaluate(this)" in sources["root_mapping"],
+    "root projection must delegate runtime-generation and API compatibility to the central evaluator",
 )
 
 require_tokens(
