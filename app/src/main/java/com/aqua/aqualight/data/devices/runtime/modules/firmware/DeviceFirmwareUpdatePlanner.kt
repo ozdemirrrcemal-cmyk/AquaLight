@@ -21,7 +21,8 @@ class DeviceFirmwareUpdatePlanner(
             identity = snapshot.toMaintenanceIdentity(),
             manifest = manifest,
             applyNow = applyNow,
-            runtimeMetadataGeneration = snapshot.runtimeMetadataGeneration
+            runtimeMetadataGeneration = snapshot.runtimeMetadataGeneration,
+            presentationName = snapshot.title
         )
     }
 
@@ -41,7 +42,8 @@ class DeviceFirmwareUpdatePlanner(
             identity = identity,
             manifest = manifest,
             applyNow = applyNow,
-            runtimeMetadataGeneration = 0L
+            runtimeMetadataGeneration = 0L,
+            presentationName = identity.displayName
         )
     }
 
@@ -63,7 +65,8 @@ class DeviceFirmwareUpdatePlanner(
         identity: DeviceFirmwareMaintenanceIdentity,
         manifest: DeviceFirmwareManifest,
         applyNow: Boolean,
-        runtimeMetadataGeneration: Long
+        runtimeMetadataGeneration: Long,
+        presentationName: String
     ): DeviceFirmwareAvailability {
         validateManifestEnvelope(manifest)
 
@@ -96,7 +99,8 @@ class DeviceFirmwareUpdatePlanner(
                     artifact = artifact,
                     releaseContent = releaseContent,
                     applyNow = applyNow,
-                    runtimeMetadataGeneration = runtimeMetadataGeneration
+                    runtimeMetadataGeneration = runtimeMetadataGeneration,
+                    presentationName = presentationName
                 )
             )
         }
@@ -155,7 +159,8 @@ class DeviceFirmwareUpdatePlanner(
         artifact: DeviceFirmwareManifestArtifact,
         releaseContent: DeviceFirmwareReleaseContent,
         applyNow: Boolean,
-        runtimeMetadataGeneration: Long
+        runtimeMetadataGeneration: Long,
+        presentationName: String
     ): DeviceFirmwareUpdatePlan {
         val payload = DeviceFirmwareOtaStartPayload(
             url = artifact.firmware.url,
@@ -179,7 +184,7 @@ class DeviceFirmwareUpdatePlanner(
             productId = payload.productId,
             model = payload.model,
             hardwareRevision = payload.hardwareRevision,
-            displayName = identity.displayName,
+            displayName = presentationName.ifBlank { identity.displayName },
             firmware = artifact.firmware,
             payload = payload,
             runtimeMetadataGeneration = runtimeMetadataGeneration,
