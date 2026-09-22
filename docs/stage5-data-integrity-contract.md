@@ -50,10 +50,11 @@ does not infer catalog identity from a saved display name and does not retain a 
 for the pre-catalog tank schema. Version `1` tank stores are rejected by the same fail-closed schema
 gate used for unknown versions; no legacy `DataMigration` is installed.
 
-Catalog-backed livestock is identified only by `catalogEntryId`. A blank catalog id is reserved for a
-new user-defined custom livestock record created through the current picker flow; it is not interpreted
-as a legacy catalog match. Water-requirement data remains canonical in the bundled livestock catalog
-and is resolved by that stable id instead of being duplicated into every tank record.
+Every livestock record has a non-blank stable identity. Catalog-backed livestock uses its exact
+`catalogEntryId`; user-defined livestock uses `custom:<livestockId>`. Blank identities are invalid and
+there is no name/category inference fallback. Water-requirement data remains canonical in the bundled
+livestock catalog and is resolved only by that stable id instead of being duplicated into every tank
+record.
 
 Care Task, Light Library, and encrypted User Preferences stores remain on version `1`. Missing or
 unsupported versions for every store continue to fail closed.
