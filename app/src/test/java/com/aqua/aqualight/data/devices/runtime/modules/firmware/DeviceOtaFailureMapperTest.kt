@@ -13,6 +13,152 @@ import org.junit.Test
 class DeviceOtaFailureMapperTest {
 
     @Test
+    fun `typed snapshot failure codes map without diagnostic wording dependency`() {
+        data class Expected(
+            val code: String,
+            val reason: DeviceOtaFailureReason,
+            val recoverable: Boolean
+        )
+
+        val cases = listOf(
+            Expected(
+                DeviceFirmwareRuntimeContract.FailureCode.SECURE_TIME_NOT_READY,
+                DeviceOtaFailureReason.SECURITY_VALIDATION_FAILED,
+                true
+            ),
+            Expected(
+                DeviceFirmwareRuntimeContract.FailureCode.DEVICE_NETWORK_UNAVAILABLE,
+                DeviceOtaFailureReason.DEVICE_NETWORK_UNAVAILABLE,
+                true
+            ),
+            Expected(
+                DeviceFirmwareRuntimeContract.FailureCode.SAFE_MODE_ENTER_FAILED,
+                DeviceOtaFailureReason.SAFE_MODE_FAILED,
+                true
+            ),
+            Expected(
+                DeviceFirmwareRuntimeContract.FailureCode.SAFE_MODE_RESTORE_FAILED,
+                DeviceOtaFailureReason.SAFE_MODE_RESTORE_FAILED,
+                false
+            ),
+            Expected(
+                DeviceFirmwareRuntimeContract.FailureCode.TLS_TRUST_UNAVAILABLE,
+                DeviceOtaFailureReason.SECURITY_VALIDATION_FAILED,
+                false
+            ),
+            Expected(
+                DeviceFirmwareRuntimeContract.FailureCode.INSECURE_TRANSPORT,
+                DeviceOtaFailureReason.SECURITY_VALIDATION_FAILED,
+                false
+            ),
+            Expected(
+                DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_URL_OPEN_FAILED,
+                DeviceOtaFailureReason.DOWNLOAD_URL_OPEN_FAILED,
+                true
+            ),
+            Expected(
+                DeviceFirmwareRuntimeContract.FailureCode.RELEASE_SIZE_MISMATCH,
+                DeviceOtaFailureReason.DOWNLOAD_SIZE_MISMATCH,
+                false
+            ),
+            Expected(
+                DeviceFirmwareRuntimeContract.FailureCode.INSUFFICIENT_SPACE,
+                DeviceOtaFailureReason.INSUFFICIENT_SPACE,
+                false
+            ),
+            Expected(
+                DeviceFirmwareRuntimeContract.FailureCode.FLASH_BEGIN_FAILED,
+                DeviceOtaFailureReason.FLASH_WRITE_FAILED,
+                false
+            ),
+            Expected(
+                DeviceFirmwareRuntimeContract.FailureCode.FLASH_WRITE_FAILED,
+                DeviceOtaFailureReason.FLASH_WRITE_FAILED,
+                false
+            ),
+            Expected(
+                DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_STREAM_INTERRUPTED,
+                DeviceOtaFailureReason.DOWNLOAD_STREAM_INTERRUPTED,
+                true
+            ),
+            Expected(
+                DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_SIZE_MISMATCH,
+                DeviceOtaFailureReason.DOWNLOAD_SIZE_MISMATCH,
+                true
+            ),
+            Expected(
+                DeviceFirmwareRuntimeContract.FailureCode.INTEGRITY_CHECK_FAILED,
+                DeviceOtaFailureReason.INTEGRITY_CHECK_FAILED,
+                false
+            ),
+            Expected(
+                DeviceFirmwareRuntimeContract.FailureCode.FLASH_FINALIZE_FAILED,
+                DeviceOtaFailureReason.FLASH_WRITE_FAILED,
+                false
+            )
+        )
+
+        cases.forEach { expected ->
+            val failure = DeviceOtaFailureMapper.snapshot(
+                failedSnapshot(
+                    field = "diagnostic-field",
+                    message = "Diagnostic wording may change without changing behavior.",
+                    failureCode = expected.code
+                )
+            )
+
+            assertEquals(expected.code, failure.code)
+            assertEquals(expected.reason, failure.reason)
+            assertEquals(expected.recoverable, failure.recoverable)
+        }
+
+        assertEquals(
+            DeviceFirmwareRuntimeContract.FailureCode.ALL -
+                DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_HTTP_STATUS,
+            cases.mapTo(linkedSetOf()) { expected -> expected.code }
+        )
+    }
+
+    @Test
+    fun `typed HTTP failure code keeps signed status classification`() {
+        val unavailable = DeviceOtaFailureMapper.snapshot(
+            failedSnapshot(
+                field = DeviceFirmwareRuntimeContract.ErrorField.HTTP_STATUS,
+                message = "Diagnostic text is not part of classification.",
+                httpStatus = 503,
+                failureCode = DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_HTTP_STATUS
+            )
+        )
+        val timeout = DeviceOtaFailureMapper.snapshot(
+            failedSnapshot(
+                field = DeviceFirmwareRuntimeContract.ErrorField.HTTP_STATUS,
+                message = "Different diagnostic text.",
+                httpStatus = -11,
+                failureCode = DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_HTTP_STATUS
+            )
+        )
+
+        assertEquals(DeviceOtaFailureReason.RELEASE_SERVER_UNAVAILABLE, unavailable.reason)
+        assertTrue(unavailable.recoverable)
+        assertEquals(DeviceOtaFailureReason.DOWNLOAD_TIMEOUT, timeout.reason)
+        assertTrue(timeout.recoverable)
+    }
+
+    @Test
+    fun `legacy snapshot without failure code remains supported`() {
+        val failure = DeviceOtaFailureMapper.snapshot(
+            failedSnapshot(
+                field = DeviceFirmwareRuntimeContract.ErrorField.SIZE,
+                message = "downloaded byte count does not match manifest size"
+            )
+        )
+
+        assertEquals(DeviceOtaFailureReason.DOWNLOAD_SIZE_MISMATCH, failure.reason)
+        assertTrue(failure.recoverable)
+        assertEquals("", failure.code)
+    }
+
+    @Test
     fun `firmware invalid wifi value maps to device network guidance`() {
         val failure = DeviceOtaFailureMapper.command(
             firmwareError(
@@ -306,12 +452,14 @@ class DeviceOtaFailureMapperTest {
     private fun failedSnapshot(
         field: String,
         message: String,
-        httpStatus: Int = 0
+        httpStatus: Int = 0,
+        failureCode: String = ""
     ) = DeviceFirmwareOtaSnapshot(
         phase = DeviceFirmwareOtaPhase.FAILED,
         phaseRaw = DeviceFirmwareOtaPhase.FAILED.wireValue,
         completed = true,
         failed = true,
+        failureCode = failureCode,
         lastError = message,
         lastErrorField = field,
         httpStatus = httpStatus
