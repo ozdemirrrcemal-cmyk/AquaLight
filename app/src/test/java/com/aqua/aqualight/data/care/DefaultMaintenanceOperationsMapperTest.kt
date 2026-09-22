@@ -109,7 +109,7 @@ class DefaultMaintenanceOperationsMapperTest {
                 )
             ),
             livestock = listOf(
-                AquariumLivestock(33L, "Tetra", "Fish", 10, 3000L, "School")
+                AquariumLivestock(33L, "Tetra", "Fish", 10, 3000L, "School", "custom:33")
             )
         )
 
