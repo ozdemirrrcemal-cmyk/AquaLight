@@ -173,6 +173,7 @@ object DeviceFirmwareManifestParser {
             wsSchema = json.requiredString("wsSchema"),
             wsProtocolVersion = json.requiredPositiveInt("wsProtocolVersion"),
             deviceApiVersion = json.requiredPositiveInt("deviceApiVersion"),
+            maintenanceSchema = json.requiredString("maintenanceSchema"),
             requiredDomains = json.requiredStringArray("requiredDomains", "$label.requiredDomains"),
             optionalDomains = json.requiredStringArray("optionalDomains", "$label.optionalDomains")
         )
@@ -552,7 +553,12 @@ object DeviceFirmwareManifestParser {
         "productKey", "productId", "family", "line", "model", "hardwareRevision"
     )
     private val CONTRACT_KEYS = setOf(
-        "wsSchema", "wsProtocolVersion", "deviceApiVersion", "requiredDomains", "optionalDomains"
+        "wsSchema",
+        "wsProtocolVersion",
+        "deviceApiVersion",
+        "maintenanceSchema",
+        "requiredDomains",
+        "optionalDomains"
     )
     private val UPDATE_POLICY_KEYS = setOf("level")
     private val FIRMWARE_KEYS = setOf(
