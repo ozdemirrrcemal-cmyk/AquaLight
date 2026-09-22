@@ -71,7 +71,9 @@ internal data class ArchiveLivestock(
     val category: String,
     val quantity: Int,
     val addedDateEpochDay: Long?,
-    val note: String
+    val note: String,
+    // Optional additive field: older schema-v1 backups deserialize it as null.
+    val catalogEntryId: String? = null
 )
 
 internal data class ArchiveCareTask(
