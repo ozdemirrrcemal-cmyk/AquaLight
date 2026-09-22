@@ -10,6 +10,9 @@ object DeviceFirmwareRuntimeContract {
 
     const val MODULE = "firmware"
 
+    /** Stable authenticated rescue-plane contract, independent from product domains. */
+    const val MAINTENANCE_SCHEMA = "aql.maintenance.v1"
+
     const val OFFICIAL_RELEASE_REPOSITORY =
         "ozdemirrrcemal-cmyk/AquaLight-OTA-Releases"
 
