@@ -50,6 +50,34 @@ object LivestockCatalog {
         }
     }
 
+    fun resolveSavedSelection(
+        context: Context,
+        catalogEntryId: String,
+        name: String,
+        category: String
+    ): LivestockCatalogEntry? {
+        return findById(context, catalogEntryId)
+            ?: findBySavedSelection(
+                context = context,
+                name = name,
+                category = category
+            )
+    }
+
+    fun requirementsFor(
+        context: Context,
+        catalogEntryId: String,
+        name: String,
+        category: String
+    ): LivestockWaterRequirements? {
+        return resolveSavedSelection(
+            context = context,
+            catalogEntryId = catalogEntryId,
+            name = name,
+            category = category
+        )?.waterRequirements
+    }
+
     private fun loadEntries(
         context: Context
     ): List<LivestockCatalogEntry> {
