@@ -18,6 +18,7 @@ import androidx.fragment.app.activityViewModels
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentTankDetailLifeBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
+import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.LivestockCatalog
 import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.LivestockCategories
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
 import com.aqua.aqualight.i18n.LocaleFormatter
@@ -245,8 +246,19 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
             layoutParams = params
         }
 
+        val resolvedCatalogEntry = LivestockCatalog.resolveSavedSelection(
+            context = requireContext(),
+            catalogEntryId = livestock.catalogEntryId,
+            name = livestock.name,
+            category = livestock.category
+        )
+        val resolvedDisplayName = resolvedCatalogEntry
+            ?.displayName(requireContext())
+            ?.takeIf(String::isNotBlank)
+            ?: livestock.name
+
         val nameText = TextView(requireContext()).apply {
-            text = livestock.name.ifBlank {
+            text = resolvedDisplayName.ifBlank {
                 getString(R.string.aquarium_unnamed_livestock)
             }
 
@@ -365,16 +377,7 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
 
     private fun getLivestockCategoryIcon(
         category: String
-    ): Int {
-        return when (category) {
-            LivestockCategories.FISH -> R.drawable.ic_life_fish_24
-            LivestockCategories.SHRIMP -> R.drawable.ic_life_shrimp_24
-            LivestockCategories.SNAIL -> R.drawable.ic_life_snail_24
-            LivestockCategories.CRAB_CRAYFISH -> R.drawable.ic_life_crab_24
-            LivestockCategories.CORAL -> R.drawable.ic_life_coral_24
-            else -> R.drawable.ic_life_other_24
-        }
-    }
+    ): Int = LivestockCategories.iconRes(category)
 
     private fun getLivestockCategoryColor(
         category: String
