@@ -10,7 +10,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.ItemLivestockCatalogBinding
-import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.LivestockCatalogEntry
+import com.aqua.aqualight.data.aquarium.catalog.livestock.LivestockCatalogEntry
 import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.LivestockCategories
 
 data class TankLivestockPickerItem(
