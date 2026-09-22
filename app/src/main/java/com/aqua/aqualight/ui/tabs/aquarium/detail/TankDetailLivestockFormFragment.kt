@@ -203,15 +203,24 @@ class TankDetailLivestockFormFragment :
         livestock: AquariumLivestock
     ) {
         selectedCatalogEntryId = livestock.catalogEntryId.trim()
-        selectedCatalogEntry = LivestockCatalog.findById(
-            context = requireContext(),
-            entryId = selectedCatalogEntryId
+        val isCustomIdentity = AquariumLivestockIdentity.isCustom(
+            selectedCatalogEntryId
         )
-
-        if (selectedCatalogEntryId.isNotBlank() && selectedCatalogEntry == null) {
-            throw IllegalStateException(
-                "Saved livestock references an unavailable catalog entry: $selectedCatalogEntryId"
+        selectedCatalogEntry = if (isCustomIdentity) {
+            null
+        } else {
+            LivestockCatalog.findById(
+                context = requireContext(),
+                entryId = selectedCatalogEntryId
             )
+        }
+
+        if (!isCustomIdentity && selectedCatalogEntry == null) {
+            showMissingDataDialogAndClose(
+                title = getString(R.string.livestock_catalog_entry_missing_title),
+                message = getString(R.string.livestock_catalog_entry_missing_message)
+            )
+            return
         }
 
         selectedCatalogEntry?.let { entry ->
@@ -359,7 +368,7 @@ class TankDetailLivestockFormFragment :
     }
 
     private fun updateIdentityFieldVisibility() {
-        val hasCatalogIdentity = selectedCatalogEntryId.isNotBlank()
+        val hasCatalogIdentity = selectedCatalogEntry != null
         val categoryLockedByPicker = openedFromPicker && editingLivestockId <= 0L
 
         binding.tvLifeNameLabel.isVisible = !hasCatalogIdentity
@@ -386,7 +395,7 @@ class TankDetailLivestockFormFragment :
         selected: Boolean
     ): View {
         return TextView(requireContext()).apply {
-            text = category
+            text = getString(LivestockCategories.labelRes(category))
             gravity = Gravity.CENTER
             setTextSizeResource(R.dimen.aqua_text_size_body_compact)
             isSelected = selected
@@ -463,7 +472,9 @@ class TankDetailLivestockFormFragment :
             color = LivestockCategories.colorRes(selectedCategory)
         )
 
-        binding.tvLifeCategoryPreview.text = selectedCategory
+        binding.tvLifeCategoryPreview.text = getString(
+            LivestockCategories.labelRes(selectedCategory)
+        )
     }
 
     private fun updateQuantity() {
