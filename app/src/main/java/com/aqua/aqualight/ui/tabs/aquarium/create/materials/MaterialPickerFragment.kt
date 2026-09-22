@@ -541,23 +541,14 @@ class MaterialPickerFragment : Fragment(R.layout.fragment_material_picker) {
     }
 
     private fun createNewMaterialButton(): View {
-        return MaterialButton(requireContext()).apply {
+        return (
+            layoutInflater.inflate(
+                R.layout.item_material_picker_inline_add_button,
+                binding.listContainer,
+                false
+            ) as MaterialButton
+        ).apply {
             text = getString(R.string.material_picker_new_title, categoryTitle)
-            setTextSizeResource(R.dimen.aqua_text_size_body)
-            setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_content_on_dark))
-            setTypeface(null, Typeface.BOLD)
-            setAllCaps(false)
-            cornerRadius = resources.getDimensionPixelOffset(R.dimen.aqua_size_14)
-            setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.aqua_accent_primary))
-
-            val params = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                resources.getDimensionPixelOffset(R.dimen.aqua_size_48)
-            )
-            params.topMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_8)
-            params.bottomMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_16)
-            layoutParams = params
-
             setOnClickListener {
                 showNewMaterialSheet()
             }
