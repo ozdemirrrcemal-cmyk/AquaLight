@@ -123,13 +123,20 @@ for token in (
     "FAMILY_MISMATCH",
     "CAPABILITIES_MISMATCH",
     "LIMITS_MISMATCH",
+    "reported.compatibilityIdentity",
+):
+    require(token in catalog, f"exact catalog validator token is missing: {token}")
+for forbidden_identity_token in (
     "FEATURES_MISMATCH",
     "SCREENS_MISMATCH",
-    "reported.compatibilityIdentity",
     "reported.supportedFeatures != product.profile.supportedFeatures",
     "reported.supportedScreens != product.profile.supportedScreens",
 ):
-    require(token in catalog, f"exact catalog validator token is missing: {token}")
+    require(
+        forbidden_identity_token not in catalog,
+        "optional feature/screen availability must not be part of immutable product identity: "
+        + forbidden_identity_token,
+    )
 for forbidden in (
     ".trim()",
     ".lowercase()",
@@ -141,7 +148,12 @@ for forbidden in (
 
 require(
     "fun resolve(product: AqlCommercialCatalogProduct)" in resolver,
-    "menu resolver must accept only a validated catalog product",
+    "menu resolver must retain the validated-catalog convenience projection",
+)
+require(
+    "features: Set<AqlDeviceFeatureKey>" in resolver and
+    "screens: Set<AqlDeviceScreenKey>" in resolver,
+    "menu resolver must project optional surfaces from authenticated runtime advertisements",
 )
 require("when (product.family)" in resolver, "menu resolution must be family-scoped")
 require("DeviceFamily.UNKNOWN -> emptySet()" in resolver, "unknown family must fail closed")
@@ -229,11 +241,13 @@ require("val channelSlots: DeviceChannelSlots" in root_contract, "root typed cha
 require("val temperatureSensorCount: Int" in root_contract, "root temperature sensor count is missing")
 
 for token in (
-    "AqlCommercialDeviceCatalog.validateSnapshot(this)",
+    "DeviceCommercialCompatibilityEvaluator.evaluate(this)",
+    "DeviceCommercialCompatibilityEvaluation.Compatible",
+    "DeviceCommercialCompatibilityEvaluation.Incompatible",
     "DeviceRootCatalogState.VALID",
     "DeviceRootCatalogState.INVALID",
-    "DeviceRootMenuFeatureResolver.resolve(product)",
-    "DeviceRootRoutePolicy.allowedRoutes(product)",
+    "menuFeatures = compatibility.menuFeatures",
+    "allowedRoutes = compatibility.allowedRoutes",
     "DeviceChannelSlotResolver.resolve(product)",
     "channelSlots = channelSlots",
     "lightChannelCount = channelSlots.lightChannels.size",
@@ -250,18 +264,20 @@ require("filter(DeviceRootMenuItemUi::enabled)" not in ui_mapper, "UI must not f
 
 for token in (
     "class CommercialDeviceMenuAccessOperations",
-    "AqlCommercialDeviceCatalog.validateSnapshot(snapshot)",
-    "COMMERCIAL_PRODUCT_MISMATCH",
-    "validation.product.family.toOwnerDeviceFamily()",
+    "private val compatibilityOperations: DeviceCompatibilityOperations",
+    "private val accessPolicy: DeviceAccessPolicy",
+    "compatibilityOperations.current(liveness.deviceUid)",
+    "accessPolicy.evaluateRoot(compatibility)",
 ):
     require(token in menu_access, f"commercial menu access token is missing: {token}")
 require(
-    "fun create(devicesRepository: DevicesRepository): DeviceMenuAccessOperations" in default_menu_access,
-    "menu factory must return the composed application boundary",
+    "fun create(" in default_menu_access and
+    "compatibilityOperations: DeviceCompatibilityOperations" in default_menu_access,
+    "menu factory must compose liveness and compatibility boundaries",
 )
 require(
     "CommercialDeviceMenuAccessOperations(" in default_menu_access,
-    "liveness access must be followed by commercial catalog validation",
+    "liveness access must be followed by central compatibility policy",
 )
 require(
     "COMMERCIAL_PRODUCT_MISMATCH" in menu_boundary,
