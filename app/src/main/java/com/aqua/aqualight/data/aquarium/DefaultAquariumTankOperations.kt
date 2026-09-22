@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.aquarium
 
 import android.content.Context
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
+import com.aqua.aqualight.application.aquarium.AquariumLivestockIdentity
 import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
 import com.aqua.aqualight.application.aquarium.AquariumPlantTag
 import com.aqua.aqualight.application.aquarium.AquariumTankCleanupIssue
@@ -12,6 +13,7 @@ import com.aqua.aqualight.application.aquarium.AquariumTankSize
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.application.aquarium.DeleteAquariumTanksResult
 import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
+import com.aqua.aqualight.data.aquarium.catalog.livestock.LivestockCatalog
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumLivestock
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
@@ -156,11 +158,47 @@ class DefaultAquariumTankOperations(
     override suspend fun updateTankPlants(tankId: Long, plants: List<AquariumPlantTag>) =
         tankStore.updateTankPlants(tankId, plants.map(AquariumPlantTag::toDataTag))
 
-    override suspend fun addLivestock(tankId: Long, livestock: AquariumLivestock) =
+    override suspend fun addLivestock(
+        tankId: Long,
+        livestock: AquariumLivestock
+    ) {
+        requireCurrentLivestockIdentity(livestock)
         tankStore.addLivestockToTank(tankId, livestock.toDataLivestock())
+    }
 
-    override suspend fun updateLivestock(tankId: Long, livestock: AquariumLivestock) =
+    override suspend fun updateLivestock(
+        tankId: Long,
+        livestock: AquariumLivestock
+    ) {
+        requireCurrentLivestockIdentity(livestock)
         tankStore.updateLivestockInTank(tankId, livestock.toDataLivestock())
+    }
+
+    private fun requireCurrentLivestockIdentity(
+        livestock: AquariumLivestock
+    ) {
+        AquariumLivestockIdentity.requireValid(
+            livestockId = livestock.id,
+            catalogEntryId = livestock.catalogEntryId
+        )
+
+        if (AquariumLivestockIdentity.isCustom(livestock.catalogEntryId)) {
+            return
+        }
+
+        val entry = requireNotNull(
+            LivestockCatalog.findById(
+                context = appContext,
+                entryId = livestock.catalogEntryId
+            )
+        ) {
+            "Livestock catalog entry is unavailable: ${livestock.catalogEntryId}"
+        }
+
+        require(entry.category == livestock.category) {
+            "Livestock category does not match its catalog entry."
+        }
+    }
 
     override suspend fun removeLivestock(tankId: Long, livestockId: Long) =
         tankStore.removeLivestockFromTank(tankId, livestockId)
