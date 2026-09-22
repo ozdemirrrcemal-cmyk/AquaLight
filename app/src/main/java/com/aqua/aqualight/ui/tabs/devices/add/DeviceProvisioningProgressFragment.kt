@@ -16,13 +16,14 @@ import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.provisioning.ProvisionedDevice
-import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentDeviceProvisioningProgressBinding
 import com.aqua.aqualight.platform.permissions.AppCapability
+import com.aqua.aqualight.ui.common.devicepresence.DeviceAccessFeedbackPresenter
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.permission.CapabilityPermissionCoordinator
+import com.aqua.aqualight.ui.navigation.AppRouteNavigator
 import com.aqua.aqualight.ui.tabs.devices.DevicesFragmentDirections
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
@@ -128,12 +129,21 @@ class DeviceProvisioningProgressFragment : Fragment(R.layout.fragment_device_pro
                         is DeviceProvisioningProgressEvent.OpenAddedDevice -> {
                             openAddedDevice(event.device)
                         }
-                        is DeviceProvisioningProgressEvent.ShowAddedDeviceUnavailable -> {
-                            val baseActivity = activity as? BaseActivity
+                        is DeviceProvisioningProgressEvent.OpenFirmwareUpdate -> {
                             val navController = findNavController()
                             navController.popBackStack(R.id.devicesFragment, false)
-                            baseActivity?.showDeviceOfflineDialog(
+                            AppRouteNavigator.openDeviceFirmwareUpdate(
+                                navController = navController,
+                                deviceUid = event.deviceUid
+                            )
+                        }
+                        is DeviceProvisioningProgressEvent.ShowAddedDeviceUnavailable -> {
+                            val navController = findNavController()
+                            navController.popBackStack(R.id.devicesFragment, false)
+                            DeviceAccessFeedbackPresenter.show(
+                                context = requireContext(),
                                 deviceTitle = event.title,
+                                titleRes = event.dialogTitleRes,
                                 messageRes = event.messageRes
                             )
                         }
