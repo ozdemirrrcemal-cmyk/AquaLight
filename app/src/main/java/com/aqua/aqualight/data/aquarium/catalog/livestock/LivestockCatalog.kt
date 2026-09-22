@@ -149,7 +149,7 @@ object LivestockCatalog {
         lineNumber: Int
     ): String {
         return optionalString(key)
-            ?: throw IllegalStateException(
+            ?: error(
                 "Missing required livestock catalog field '$key' at line $lineNumber."
             )
     }
