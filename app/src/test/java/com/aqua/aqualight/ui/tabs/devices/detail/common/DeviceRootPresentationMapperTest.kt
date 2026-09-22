@@ -39,6 +39,8 @@ class DeviceRootPresentationMapperTest {
                 R.string.device_settings_update_error_release_server_unavailable,
             DeviceOtaFailureReason.INCOMPATIBLE_FIRMWARE to
                 R.string.device_settings_update_error_incompatible_firmware,
+            DeviceOtaFailureReason.APPLICATION_UPDATE_REQUIRED to
+                R.string.device_access_app_update_required_message,
             DeviceOtaFailureReason.INSUFFICIENT_SPACE to
                 R.string.device_settings_update_error_insufficient_space,
             DeviceOtaFailureReason.DOWNLOAD_CONNECTION_FAILED to
