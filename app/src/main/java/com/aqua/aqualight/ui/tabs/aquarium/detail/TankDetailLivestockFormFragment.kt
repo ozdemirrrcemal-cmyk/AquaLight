@@ -540,18 +540,12 @@ class TankDetailLivestockFormFragment :
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                if (editingLivestockId > 0L) {
-                    aquariumTankViewModel.updateLivestockInTank(
-                        tankId = tankId,
-                        livestock = livestock
-                    )
-                } else {
-                    aquariumTankViewModel.addLivestockToTank(
-                        tankId = tankId,
-                        livestock = livestock
-                    )
-                }
-
+                persistLivestock(
+                    viewModel = aquariumTankViewModel,
+                    tankId = tankId,
+                    editingLivestockId = editingLivestockId,
+                    livestock = livestock
+                )
                 finishAfterMutation()
             } catch (exception: Exception) {
                 exception.printStackTrace()
@@ -706,6 +700,19 @@ class TankDetailLivestockFormFragment :
         private const val LIVESTOCK_DATE_REQUEST_KEY = "livestock_added_date_result"
         private const val LIVESTOCK_DELETE_REQUEST_KEY = "livestock_delete_result"
         private const val LIVESTOCK_MISSING_REQUEST_KEY = "livestock_missing_result"
+    }
+}
+
+private suspend fun persistLivestock(
+    viewModel: AquariumTankViewModel,
+    tankId: Long,
+    editingLivestockId: Long,
+    livestock: AquariumLivestock
+) {
+    if (editingLivestockId > 0L) {
+        viewModel.updateLivestockInTank(tankId, livestock)
+    } else {
+        viewModel.addLivestockToTank(tankId, livestock)
     }
 }
 
