@@ -97,12 +97,12 @@ data class AquariumMaterialSelection(
 
 data class AquariumLivestock(
     val id: Long = AquariumEntityIdGenerator.newLong(),
-    val catalogEntryId: String = "",
     val name: String = "",
     val category: String = "",
     val quantity: Int = 1,
     val addedDateEpochDay: Long? = null,
-    val note: String = ""
+    val note: String = "",
+    val catalogEntryId: String = ""
 )
 
 sealed interface DeleteAquariumTanksResult {
