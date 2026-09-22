@@ -333,6 +333,7 @@ data class DeviceFirmwareTargetContracts(
     val wsSchema: String,
     val wsProtocolVersion: Int,
     val deviceApiVersion: Int,
+    val maintenanceSchema: String,
     val requiredDomains: List<String>,
     val optionalDomains: List<String>
 ) {
@@ -340,6 +341,9 @@ data class DeviceFirmwareTargetContracts(
         require(wsSchema.isNotBlank()) { "Target wsSchema must not be blank." }
         require(wsProtocolVersion > 0) { "Target wsProtocolVersion must be positive." }
         require(deviceApiVersion > 0) { "Target deviceApiVersion must be positive." }
+        require(maintenanceSchema.isNotBlank()) {
+            "Target maintenanceSchema must not be blank."
+        }
         require(requiredDomains.isNotEmpty()) {
             "Target firmware must declare at least one required domain contract."
         }
