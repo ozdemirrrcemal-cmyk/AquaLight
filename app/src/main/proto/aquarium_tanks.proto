@@ -63,6 +63,6 @@ message StoredLivestock {
   int32 quantity = 4;
   int64 added_date_epoch_day = 5;
   string note = 6;
-  // Stable reference into the bundled livestock catalog. Empty means user-defined/legacy.
+  // Required stable identity. Catalog records use their catalog id; user-defined records use custom:<livestockId>.
   string catalog_entry_id = 7;
 }
