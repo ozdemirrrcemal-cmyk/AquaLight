@@ -68,10 +68,6 @@
     <string name="catalog_material_heater_jbl_protemp_s_100_name" translatable="false">JBL ProTemp S 100</string>
     <string name="catalog_material_heater_aquael_ultra_heater_50w_name" translatable="false">Aquael Ultra Heater 50W</string>
     <string name="catalog_material_heater_aquael_ultra_heater_100w_name" translatable="false">Aquael Ultra Heater 100W</string>
-    <string name="catalog_material_light_chihiros_wrgb_ii_name" translatable="false">Chihiros WRGB II</string>
-    <string name="catalog_material_light_chihiros_wrgb_ii_slim_name" translatable="false">Chihiros WRGB II Slim</string>
-    <string name="catalog_material_light_chihiros_magnetic_lamp_led_name" translatable="false">Chihiros Magnetic Lamp - LED Light</string>
-    <string name="catalog_material_light_twinstar_s_series_name" translatable="false">Twinstar S Series</string>
 <!-- Scientific cultivar names are locale-independent catalog data. -->
     <string name="catalog_plant_anubias_barteri_name" translatable="false">Anubias barteri</string>
     <string name="catalog_plant_anubias_barteri_var_nana_name" translatable="false">Anubias barteri var. nana</string>
