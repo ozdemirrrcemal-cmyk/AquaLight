@@ -3,7 +3,12 @@ package com.aqua.aqualight.data.aquarium.delete
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.aqua.aqualight.application.aquarium.health.AquariumWaterReading
+import com.aqua.aqualight.application.aquarium.health.AquariumWaterTestInput
+import com.aqua.aqualight.application.aquarium.health.HealthWaterParameter
 import com.aqua.aqualight.data.aquarium.devices.TankAssignmentCleanupResult
+import com.aqua.aqualight.data.aquarium.health.AquariumHealthDataStoreManager
+import com.aqua.aqualight.data.aquarium.health.integrity.TankHealthIntegrityJournal
 import com.aqua.aqualight.data.aquarium.model.TankDraft
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
@@ -28,54 +33,103 @@ class OwnerTankDataCleanerMultiTankInstrumentedTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
 
     @Test
-    fun twoTanksWithCareTasksAreDeletedThroughOneCrashSafeOperation() = runBlocking {
+    fun twoTanksWithDependentRecordsAreDeletedThroughOneCrashSafeOperation() = runBlocking {
         val ownerUid = "bulk-delete-${UUID.randomUUID()}"
         val tankStore = AquariumTankDataStoreManager(context)
         val careStore = CareTaskDataStoreManager.create(context)
+        val healthStore = AquariumHealthDataStoreManager.create(context)
         TankCareIntegrityJournal.initialize(context)
+        TankHealthIntegrityJournal.initialize(context)
 
         try {
             UserDataScope.withOwnerUid(ownerUid) {
                 TankCareIntegrityJournal.clearOwner(ownerUid)
-                val firstTankId = tankStore.addTankFromDraft(validTankDraft("First Tank"))
-                val secondTankId = tankStore.addTankFromDraft(validTankDraft("Second Tank"))
+                TankHealthIntegrityJournal.clearOwner(ownerUid)
+
+                val firstTankId =
+                    tankStore.addTankFromDraft(validTankDraft("First Tank"))
+                val secondTankId =
+                    tankStore.addTankFromDraft(validTankDraft("Second Tank"))
+
                 addTask(careStore, firstTankId, "Inspect first filter")
                 addTask(careStore, secondTankId, "Inspect second filter")
+                addWaterTest(healthStore, ownerUid, firstTankId)
+                addWaterTest(healthStore, ownerUid, secondTankId)
 
                 val cleaner = OwnerTankDataCleaner(
-                    deleteTankRecords = tankStore::deleteTanks,
-                    snapshotCareTasksForTank = { tankId ->
-                        careStore.snapshotTasksForIntegrity(tankId)
-                    },
-                    deleteCareTasksForTank = careStore::deleteTasksForTank,
-                    restoreCareTasksForTank = { tankId, snapshots ->
-                        careStore.restoreTaskSnapshotsForIntegrity(
-                            tankId = tankId,
-                            snapshots = snapshots
-                        )
-                    },
-                    removeDeviceAssignmentsForTank = {
-                        TankAssignmentCleanupResult.Completed(0)
-                    },
-                    cancelCareTaskReminder = { _, _ -> },
-                    reconcileCareReminders = {}
+                    OwnerTankDeletionDependencies(
+                        deleteTankRecords = tankStore::deleteTanks,
+                        care = TankCareDeletionDependencies(
+                            snapshotForTank = { tankId ->
+                                careStore.snapshotTasksForIntegrity(tankId)
+                            },
+                            deleteForTank = careStore::deleteTasksForTank,
+                            restoreForTank = { tankId, snapshots ->
+                                careStore.restoreTaskSnapshotsForIntegrity(
+                                    tankId = tankId,
+                                    snapshots = snapshots
+                                )
+                            },
+                            cancelReminder = { _, _ -> },
+                            reconcileReminders = {}
+                        ),
+                        health = TankHealthDeletionDependencies(
+                            snapshotForTank = healthStore::snapshotForTank,
+                            deleteForTank = healthStore::deleteRecordsForTank,
+                            restoreForTank = healthStore::restoreSnapshotForIntegrity
+                        ),
+                        removeDeviceAssignmentsForTank = {
+                            TankAssignmentCleanupResult.Completed(0)
+                        }
+                    )
                 )
 
-                val result = cleaner.deleteTanks(listOf(firstTankId, secondTankId))
+                val result = cleaner
+                    .deleteTanks(listOf(firstTankId, secondTankId))
                     as OwnerTankDataCleaner.Result.Deleted
 
-                assertEquals(listOf(firstTankId, secondTankId), result.tankIds)
+                assertEquals(
+                    listOf(firstTankId, secondTankId),
+                    result.tankIds
+                )
                 assertFalse(result.hasCleanupIssues)
                 assertTrue(tankStore.tanksSnapshotForOwner(ownerUid).isEmpty())
-                assertTrue(careStore.tasksForTankFlow(firstTankId).first().isEmpty())
-                assertTrue(careStore.tasksForTankFlow(secondTankId).first().isEmpty())
-                assertTrue(TankCareIntegrityJournal.pendingForOwner(ownerUid).isEmpty())
+                assertTrue(
+                    careStore.tasksForTankFlow(firstTankId).first().isEmpty()
+                )
+                assertTrue(
+                    careStore.tasksForTankFlow(secondTankId).first().isEmpty()
+                )
+                assertTrue(
+                    healthStore.waterTestsForOwnerFlow(
+                        ownerUid,
+                        firstTankId
+                    ).first().isEmpty()
+                )
+                assertTrue(
+                    healthStore.waterTestsForOwnerFlow(
+                        ownerUid,
+                        secondTankId
+                    ).first().isEmpty()
+                )
+                assertTrue(
+                    TankCareIntegrityJournal
+                        .pendingForOwner(ownerUid)
+                        .isEmpty()
+                )
+                assertTrue(
+                    TankHealthIntegrityJournal
+                        .pendingForOwner(ownerUid)
+                        .isEmpty()
+                )
             }
         } finally {
             UserDataScope.withOwnerUid(ownerUid) {
                 careStore.clearAllTasks(ownerUid)
+                healthStore.clearAllRecords(ownerUid)
                 tankStore.clearAllTanks(ownerUid)
                 TankCareIntegrityJournal.clearOwner(ownerUid)
+                TankHealthIntegrityJournal.clearOwner(ownerUid)
             }
         }
     }
@@ -101,6 +155,27 @@ class OwnerTankDataCleanerMultiTankInstrumentedTest {
         )
     }
 
+    private suspend fun addWaterTest(
+        healthStore: AquariumHealthDataStoreManager,
+        ownerUid: String,
+        tankId: Long
+    ) {
+        healthStore.addWaterTest(
+            ownerUid = ownerUid,
+            input = AquariumWaterTestInput(
+                tankId = tankId,
+                measuredAtMillis = HEALTH_MEASURED_MILLIS,
+                readings = listOf(
+                    AquariumWaterReading(
+                        parameter = HealthWaterParameter.PH,
+                        value = 7.0
+                    )
+                )
+            ),
+            nowMillis = HEALTH_CREATED_MILLIS
+        )
+    }
+
     private fun validTankDraft(name: String): TankDraft = TankDraft(
         name = name,
         description = "",
@@ -120,5 +195,7 @@ class OwnerTankDataCleanerMultiTankInstrumentedTest {
     private companion object {
         const val SETUP_EPOCH_DAY = 20_454L
         const val DUE_MILLIS = 1_767_312_000_000L
+        const val HEALTH_MEASURED_MILLIS = 1_767_225_600_000L
+        const val HEALTH_CREATED_MILLIS = 1_767_229_200_000L
     }
 }
