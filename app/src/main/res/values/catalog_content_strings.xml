@@ -83,14 +83,6 @@
     <string name="catalog_material_filter_jbl_cristalprofi_e902_name" translatable="false">JBL CristalProfi e902</string>
     <string name="catalog_material_filter_aquael_versamax_name" translatable="false">Aquael Versamax Hang-on Filter</string>
     <string name="catalog_material_filter_sunsun_hw_603b_name" translatable="false">SunSun HW-603B External Filter</string>
-    <string name="catalog_material_gravel_ada_aqua_gravel_s_name" translatable="false">ADA Aqua Gravel S</string>
-    <string name="catalog_material_gravel_ada_aqua_gravel_m_name" translatable="false">ADA Aqua Gravel M</string>
-    <string name="catalog_material_gravel_dennerle_nano_gravel_black_name" translatable="false">Dennerle Nano Gravel Black</string>
-    <string name="catalog_material_gravel_dennerle_nano_gravel_natural_name" translatable="false">Dennerle Nano Gravel Natural</string>
-    <string name="catalog_material_gravel_jbl_sansibar_dark_name" translatable="false">JBL Sansibar Dark</string>
-    <string name="catalog_material_gravel_jbl_sansibar_white_name" translatable="false">JBL Sansibar White</string>
-    <string name="catalog_material_gravel_aquael_basaltsand_name" translatable="false">Aquael Basalt Sand</string>
-    <string name="catalog_material_gravel_natural_river_sand_name" translatable="false">Natural River Sand</string>
     <string name="catalog_material_heater_eheim_thermocontrol_50w_name" translatable="false">Eheim Thermocontrol 50W</string>
     <string name="catalog_material_heater_eheim_thermocontrol_100w_name" translatable="false">Eheim Thermocontrol 100W</string>
     <string name="catalog_material_heater_eheim_thermocontrol_150w_name" translatable="false">Eheim Thermocontrol 150W</string>

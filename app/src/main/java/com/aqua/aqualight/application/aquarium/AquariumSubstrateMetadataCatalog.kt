@@ -7,97 +7,52 @@ package com.aqua.aqualight.application.aquarium
  * text and free-form note parsing are forbidden fallbacks.
  */
 object AquariumSubstrateMetadataCatalog {
-    private const val REVIEW_DATE = "2026-09-16"
-    const val EXPECTED_RECORD_COUNT = 12
+    private const val SUBSTRATE_REVIEW_DATE = "2026-09-16"
+    private const val GRAVEL_CATALOG_REVIEW_DATE = "2026-09-23"
+    const val EXPECTED_RECORD_COUNT = 185
 
     private data class Record(
         val categoryKey: String,
         val metadata: AquariumSubstrateProductMetadata
     )
 
-    private val records: Map<String, Record> = listOf(
-        "substrate_chihiros_aquasoil_9l".verified(
-            AquariumMaterialCategoryKeys.SUBSTRATE,
-            AquariumSubstrateSemantic.ACTIVE_SOIL,
-            "Chihiros Aquatic Studio",
-            "chihiros_aqua_soil_launch",
-            "https://www.facebook.com/chihirosaquatic/posts/606277074868748/"
-        ),
-        "substrate_chihiros_aquasoil_3l".verified(
-            AquariumMaterialCategoryKeys.SUBSTRATE,
-            AquariumSubstrateSemantic.ACTIVE_SOIL,
-            "Chihiros Aquatic Studio",
-            "chihiros_aqua_soil_launch",
-            "https://www.facebook.com/chihirosaquatic/posts/606277074868748/"
-        ),
-        "substrate_ada_tourmaline_bc".verified(
-            AquariumMaterialCategoryKeys.SUBSTRATE,
-            AquariumSubstrateSemantic.ADDITIVE,
-            "Aqua Design Amano",
-            "ada_tourmaline_bc",
-            "https://www.adana.co.jp/en/contents/products/na_substrate/detail05.html"
-        ),
-        "substrate_dennerle_deponitmix_4_8kg".verified(
-            AquariumMaterialCategoryKeys.SUBSTRATE,
-            AquariumSubstrateSemantic.NUTRIENT_BASE,
-            "Dennerle",
-            "dennerle_deponit_mix_pro",
-            "https://dennerle.com/en/products/deponit-mix-pro"
-        ),
-        "gravel_ada_aqua_gravel_s".verified(
-            AquariumMaterialCategoryKeys.GRAVEL,
-            AquariumSubstrateSemantic.INERT,
-            "Aqua Design Amano",
-            "ada_aqua_gravel",
-            "https://www.adana.co.jp/en/contents/products/na_substrate/detail04.html"
-        ),
-        "gravel_ada_aqua_gravel_m".verified(
-            AquariumMaterialCategoryKeys.GRAVEL,
-            AquariumSubstrateSemantic.INERT,
-            "Aqua Design Amano",
-            "ada_aqua_gravel",
-            "https://www.adana.co.jp/en/contents/products/na_substrate/detail04.html"
-        ),
-        "gravel_dennerle_nano_gravel_black".verified(
-            AquariumMaterialCategoryKeys.GRAVEL,
-            AquariumSubstrateSemantic.INERT,
-            "Dennerle",
-            "dennerle_nano_shrimp_gravel",
-            "https://dennerle.com/en/products/nano-shrimp-gravel"
-        ),
-        "gravel_dennerle_nano_gravel_natural".verified(
-            AquariumMaterialCategoryKeys.GRAVEL,
-            AquariumSubstrateSemantic.INERT,
-            "Dennerle",
-            "dennerle_nano_shrimp_gravel",
-            "https://dennerle.com/en/products/nano-shrimp-gravel"
-        ),
-        "gravel_jbl_sansibar_dark".verified(
-            AquariumMaterialCategoryKeys.GRAVEL,
-            AquariumSubstrateSemantic.INERT,
-            "JBL",
-            "jbl_sansibar_dark",
-            JBL_SUBSTRATE_GUIDE_URL
-        ),
-        "gravel_jbl_sansibar_white".verified(
-            AquariumMaterialCategoryKeys.GRAVEL,
-            AquariumSubstrateSemantic.INERT,
-            "JBL",
-            "jbl_sansibar_white",
-            JBL_SUBSTRATE_GUIDE_URL
-        ),
-        "gravel_aquael_basaltsand".verified(
-            AquariumMaterialCategoryKeys.GRAVEL,
-            AquariumSubstrateSemantic.INERT,
-            "Aquael",
-            "aquael_basalt_gravel",
-            "https://www.aquael.com/products/aquaristics/substrates-gravels/bazaltowe/"
-        ),
-        unverified(
-            "gravel_natural_river_sand",
-            AquariumMaterialCategoryKeys.GRAVEL,
-            "generic_natural_river_sand"
-        )
+    private data class GravelEvidence(
+        val sourceOrganization: String,
+        val sourceRecordId: String,
+        val sourceUrl: String
+    )
+
+    private val records: Map<String, Record> = (
+        listOf(
+            "substrate_chihiros_aquasoil_9l".verified(
+                AquariumMaterialCategoryKeys.SUBSTRATE,
+                AquariumSubstrateSemantic.ACTIVE_SOIL,
+                "Chihiros Aquatic Studio",
+                "chihiros_aqua_soil_launch",
+                "https://www.facebook.com/chihirosaquatic/posts/606277074868748/"
+            ),
+            "substrate_chihiros_aquasoil_3l".verified(
+                AquariumMaterialCategoryKeys.SUBSTRATE,
+                AquariumSubstrateSemantic.ACTIVE_SOIL,
+                "Chihiros Aquatic Studio",
+                "chihiros_aqua_soil_launch",
+                "https://www.facebook.com/chihirosaquatic/posts/606277074868748/"
+            ),
+            "substrate_ada_tourmaline_bc".verified(
+                AquariumMaterialCategoryKeys.SUBSTRATE,
+                AquariumSubstrateSemantic.ADDITIVE,
+                "Aqua Design Amano",
+                "ada_tourmaline_bc",
+                "https://www.adana.co.jp/en/contents/products/na_substrate/detail05.html"
+            ),
+            "substrate_dennerle_deponitmix_4_8kg".verified(
+                AquariumMaterialCategoryKeys.SUBSTRATE,
+                AquariumSubstrateSemantic.NUTRIENT_BASE,
+                "Dennerle",
+                "dennerle_deponit_mix_pro",
+                "https://dennerle.com/en/products/deponit-mix-pro"
+            )
+        ) + replacementGravelRecords()
     ).associate { (productId, record) -> productId to record }
 
     init {
@@ -124,12 +79,267 @@ object AquariumSubstrateMetadataCatalog {
         return metadata(productId, categoryKey)?.semantic ?: AquariumSubstrateSemantic.UNKNOWN
     }
 
+    private fun replacementGravelRecords(): List<Pair<String, Record>> {
+        /*
+         * The existing catalog contract uses INERT for non-active gravel/mineral substrates.
+         * Some verified mineral gravels can buffer or raise pH/KH (for example dolomite,
+         * carbonate sands, Onyx and some WIO/AMTRA gravels), but they are not ACTIVE_SOIL:
+         * they do not provide the soil-style acidifying/softening behavior used by AquaLight's
+         * active-soil care rules.
+         */
+        return (1..181).map { index ->
+            val productId = gravelProductId(index)
+            val evidence = gravelEvidence(index)
+            productId.verified(
+                categoryKey = AquariumMaterialCategoryKeys.GRAVEL,
+                semantic = AquariumSubstrateSemantic.INERT,
+                sourceOrganization = evidence.sourceOrganization,
+                sourceRecordId = evidence.sourceRecordId,
+                sourceUrl = evidence.sourceUrl,
+                reviewedOn = GRAVEL_CATALOG_REVIEW_DATE
+            )
+        }
+    }
+
+    private fun gravelEvidence(index: Int): GravelEvidence {
+        val productId = gravelProductId(index)
+        return when (index) {
+            in 1..2 -> evidence(
+                "Aqua Design Amano",
+                productId,
+                "https://www.adana.co.jp/en/contents/products/na_substrate/detail04.html"
+            )
+
+            in 3..5 -> evidence(
+                "Dennerle",
+                productId,
+                "https://dennerle.com/en/products/natural-gravel-bairaman"
+            )
+
+            in 6..11 -> evidence(
+                "Dennerle",
+                productId,
+                "https://dennerle.com/en/products/natural-gravel-kongo-3-8mm"
+            )
+
+            in 12..13 -> evidence(
+                "Dennerle",
+                productId,
+                "https://dennerle.com/en/products/natural-gravel-mekong"
+            )
+
+            in 14..19 -> evidence(
+                "Dennerle",
+                productId,
+                "https://dennerle.com/en/products/natural-gravel-okavango-4-8mm"
+            )
+
+            in 20..21 -> evidence(
+                "Dennerle",
+                productId,
+                "https://dennerle.com/en/products/natural-gravel-rio-branco"
+            )
+
+            in 22..24 -> evidence(
+                "Dennerle",
+                productId,
+                "https://dennerle.com/en/products/natural-gravel-rio-xingu"
+            )
+
+            in 25..30 -> evidence(
+                "Dennerle",
+                productId,
+                "https://dennerle.com/en/collections/gravel"
+            )
+
+            in 31..34 -> evidence(
+                "Dennerle",
+                productId,
+                "https://dennerle.com/en/products/nano-shrimp-gravel"
+            )
+
+            in 35..67 -> evidence(
+                "WIO",
+                productId,
+                "https://www.wio.eco/product-lines/gravels"
+            )
+
+            in 68..81 -> evidence(
+                "JBL",
+                productId,
+                "https://www.jbl.de/en/areas/section/57/substrate?country=us"
+            )
+
+            in 82..101 -> evidence(
+                "sera",
+                productId,
+                "https://www.sera.de/us/freshwater-aquarium/Products/Page-10/"
+            )
+
+            in 102..103 -> evidence(
+                "Seachem",
+                productId,
+                "https://www.seachem.com/flourite.php"
+            )
+
+            in 104..105 -> evidence(
+                "Seachem",
+                productId,
+                "https://www.seachem.com/flourite-black.php"
+            )
+
+            in 106..107 -> evidence(
+                "Seachem",
+                productId,
+                "https://www.seachem.com/flourite-dark.php"
+            )
+
+            in 108..109 -> evidence(
+                "Seachem",
+                productId,
+                "https://www.seachem.com/flourite-red.php"
+            )
+
+            in 110..111 -> evidence(
+                "Seachem",
+                productId,
+                "https://www.seachem.com/flourite-sand.php"
+            )
+
+            in 112..113 -> evidence(
+                "Seachem",
+                productId,
+                "https://www.seachem.com/flourite-black-sand.php"
+            )
+
+            in 114..115 -> evidence(
+                "Seachem",
+                productId,
+                "https://www.seachem.com/onyx-sand.php"
+            )
+
+            116 -> evidence(
+                "Seachem",
+                productId,
+                "https://www.seachem.com/onyx.php"
+            )
+
+            in 117..135 -> evidence(
+                "CaribSea",
+                productId,
+                "https://caribsea.com/freshwater-substrates/"
+            )
+
+            in 136..141 -> evidence(
+                "Aquael",
+                productId,
+                "https://www.aquael.com/products/aquaristics/substrates-gravels/kwarcowe-wielobarwne/"
+            )
+
+            in 142..143 -> evidence(
+                "Aquael",
+                productId,
+                "https://www.aquael.com/products/aquaristics/substrates-gravels/bazaltowe/"
+            )
+
+            in 144..145 -> evidence(
+                "Aquael",
+                productId,
+                "https://www.aquael.com/products/aquaristics/substrates-gravels/dolomitowe/"
+            )
+
+            in 146..147 -> evidence(
+                "ReeFlowers",
+                productId,
+                "https://www.reeflowers.com/urunler/duzenleyici-ve-temizleyiciler/gravels/NAS7K05?lang=en"
+            )
+
+            in 148..151 -> evidence(
+                "ReeFlowers",
+                productId,
+                "https://www.reeflowers.com/urunler/duzenleyici-ve-temizleyiciler/gravels/IBS25K2?lang=en"
+            )
+
+            in 152..155 -> evidence(
+                "ReeFlowers",
+                productId,
+                "https://www.reeflowers.com/urunler/duzenleyici-ve-temizleyiciler/gravels/PWS7K1?lang=tr"
+            )
+
+            in 156..158 -> evidence(
+                "RFL",
+                productId,
+                "https://www.rfl.com.tr/marka/reeflowers"
+            )
+
+            in 159..161 -> evidence(
+                "CrystalPro Aquatics",
+                productId,
+                "https://www.crystalpro.com.tr/sands/black-sand-eng"
+            )
+
+            in 162..164 -> evidence(
+                "CrystalPro Aquatics",
+                productId,
+                "https://www.crystalpro.com.tr/sands/white-sand-eng"
+            )
+
+            in 165..166 -> evidence(
+                "CrystalPro Aquatics",
+                productId,
+                "https://www.crystalpro.com.tr/sands/silica-sand-eng"
+            )
+
+            in 167..168 -> evidence(
+                "CrystalPro Aquatics",
+                productId,
+                "https://www.crystalpro.com.tr/sands/river-sand-eng"
+            )
+
+            in 169..171 -> evidence(
+                "AMTRA",
+                productId,
+                "https://amtra.net/en/prodotti/acquarium/sands-and-decorations/sands-and-gravels/amtra-policromo-medio-3-4mm-2/"
+            )
+
+            in 172..175 -> evidence(
+                "AMTRA",
+                productId,
+                "https://amtra.net/en/prodotti/acquarium/sands-and-decorations/sands-and-gravels/ghiaia-noa-4-8mm-2/"
+            )
+
+            in 176..181 -> evidence(
+                "PRODAC International",
+                productId,
+                "https://www.prodacinternational.it/en/aquarium-gb/ghiaietti-gb.html"
+            )
+
+            else -> error("Unsupported gravel catalog index: $index")
+        }
+    }
+
+    private fun evidence(
+        sourceOrganization: String,
+        sourceRecordId: String,
+        sourceUrl: String
+    ): GravelEvidence = GravelEvidence(
+        sourceOrganization = sourceOrganization,
+        sourceRecordId = sourceRecordId,
+        sourceUrl = sourceUrl
+    )
+
+    private fun gravelProductId(index: Int): String {
+        require(index in 1..181)
+        return "gravel_${index.toString().padStart(4, '0')}"
+    }
+
     private fun String.verified(
         categoryKey: String,
         semantic: AquariumSubstrateSemantic,
         sourceOrganization: String,
         sourceRecordId: String,
-        sourceUrl: String
+        sourceUrl: String,
+        reviewedOn: String = SUBSTRATE_REVIEW_DATE
     ): Pair<String, Record> = this to Record(
         categoryKey = categoryKey,
         metadata = AquariumSubstrateProductMetadata(
@@ -138,27 +348,7 @@ object AquariumSubstrateMetadataCatalog {
             sourceOrganization = sourceOrganization,
             sourceRecordId = sourceRecordId,
             sourceUrl = sourceUrl,
-            reviewedOn = REVIEW_DATE
+            reviewedOn = reviewedOn
         )
     )
-
-    private fun unverified(
-        productId: String,
-        categoryKey: String,
-        sourceRecordId: String
-    ): Pair<String, Record> = productId to Record(
-        categoryKey = categoryKey,
-        metadata = AquariumSubstrateProductMetadata(
-            semantic = AquariumSubstrateSemantic.UNKNOWN,
-            evidenceStatus = AquariumSubstrateEvidenceStatus.UNVERIFIED_GENERIC,
-            sourceOrganization = "AquaLight catalog",
-            sourceRecordId = sourceRecordId,
-            sourceUrl = null,
-            reviewedOn = REVIEW_DATE
-        )
-    )
-
-    private const val JBL_SUBSTRATE_GUIDE_URL =
-        "https://www.jbl.de/en/theme-world/essential_section/57/" +
-            "jbl-themeworld-for-your-hobby?country=lv"
 }

@@ -3,7 +3,6 @@ package com.aqua.aqualight.ui.tabs.aquarium.catalog.material
 import com.aqua.aqualight.application.aquarium.AquariumSubstrateEvidenceStatus
 import com.aqua.aqualight.application.aquarium.AquariumSubstrateSemantic
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -20,36 +19,44 @@ class AquariumSubstrateCatalogTest {
     }
 
     @Test
-    fun reviewedProductsResolveToResearchBackedSemantics() {
+    fun reviewedSubstrateProductsKeepTheirResearchBackedSemantics() {
         val expectedSemantics = mapOf(
             "substrate_chihiros_aquasoil_9l" to AquariumSubstrateSemantic.ACTIVE_SOIL,
             "substrate_chihiros_aquasoil_3l" to AquariumSubstrateSemantic.ACTIVE_SOIL,
             "substrate_ada_tourmaline_bc" to AquariumSubstrateSemantic.ADDITIVE,
             "substrate_dennerle_deponitmix_4_8kg" to
-                AquariumSubstrateSemantic.NUTRIENT_BASE,
-            "gravel_ada_aqua_gravel_s" to AquariumSubstrateSemantic.INERT,
-            "gravel_ada_aqua_gravel_m" to AquariumSubstrateSemantic.INERT,
-            "gravel_dennerle_nano_gravel_black" to AquariumSubstrateSemantic.INERT,
-            "gravel_dennerle_nano_gravel_natural" to AquariumSubstrateSemantic.INERT,
-            "gravel_jbl_sansibar_dark" to AquariumSubstrateSemantic.INERT,
-            "gravel_jbl_sansibar_white" to AquariumSubstrateSemantic.INERT,
-            "gravel_aquael_basaltsand" to AquariumSubstrateSemantic.INERT,
-            "gravel_natural_river_sand" to AquariumSubstrateSemantic.UNKNOWN
+                AquariumSubstrateSemantic.NUTRIENT_BASE
         )
 
-        val actualSemantics = (SubstrateCatalog.definitions + GravelCatalog.definitions)
+        val actualSemantics = SubstrateCatalog.definitions
             .associate { product -> product.id to product.substrateMetadata?.semantic }
 
         assertEquals(expectedSemantics, actualSemantics)
     }
 
     @Test
-    fun verifiedProductsKeepAuditableInternetSources() {
+    fun replacementGravelCatalogIsVerifiedAsNonActiveSubstrate() {
+        val metadata = GravelCatalog.definitions
+            .mapNotNull(AquariumMaterialDefinition::substrateMetadata)
+
+        assertEquals(181, metadata.size)
+        assertTrue(metadata.all { record -> record.semantic == AquariumSubstrateSemantic.INERT })
+        assertTrue(
+            metadata.all { record ->
+                record.evidenceStatus == AquariumSubstrateEvidenceStatus.VERIFIED_PRODUCT
+            }
+        )
+        assertTrue(metadata.all { record -> record.isVerifiedProduct })
+        assertTrue(metadata.none { record -> record.semantic == AquariumSubstrateSemantic.ACTIVE_SOIL })
+    }
+
+    @Test
+    fun everyVerifiedCatalogProductKeepsAuditableInternetSources() {
         val metadata = (SubstrateCatalog.definitions + GravelCatalog.definitions)
             .mapNotNull(AquariumMaterialDefinition::substrateMetadata)
         val verified = metadata.filter { record -> record.isVerifiedProduct }
 
-        assertEquals(11, verified.size)
+        assertEquals(185, verified.size)
         assertTrue(verified.all { record -> record.sourceUrl?.startsWith("https://") == true })
         assertTrue(verified.all { record -> record.sourceOrganization.isNotBlank() })
         assertTrue(verified.all { record -> record.sourceRecordId.isNotBlank() })
@@ -57,21 +64,20 @@ class AquariumSubstrateCatalogTest {
     }
 
     @Test
-    fun genericAndCustomProductsFailClosedWithoutNameInference() {
-        val generic = MaterialCatalog.substrateMetadata(
-            productId = "gravel_natural_river_sand",
-            categoryKey = MaterialCategoryKey.GRAVEL
-        )
+    fun customProductsFailClosedWithoutNameInference() {
+        val customProductId = "custom_gravel_user_product"
 
-        assertEquals(AquariumSubstrateSemantic.UNKNOWN, generic?.semantic)
-        assertEquals(AquariumSubstrateEvidenceStatus.UNVERIFIED_GENERIC, generic?.evidenceStatus)
-        assertFalse(requireNotNull(generic).isVerifiedProduct)
-        assertNull(generic.sourceUrl)
+        assertNull(
+            MaterialCatalog.substrateMetadata(
+                productId = customProductId,
+                categoryKey = MaterialCategoryKey.GRAVEL
+            )
+        )
         assertEquals(
             AquariumSubstrateSemantic.UNKNOWN,
             MaterialCatalog.resolveSubstrateSemantic(
-                productId = "custom_substrate_user_product",
-                categoryKey = MaterialCategoryKey.SUBSTRATE
+                productId = customProductId,
+                categoryKey = MaterialCategoryKey.GRAVEL
             )
         )
     }
@@ -95,19 +101,14 @@ class AquariumSubstrateCatalogTest {
     }
 
     private companion object {
-        val EXPECTED_PRODUCT_IDS = setOf(
-            "substrate_chihiros_aquasoil_9l",
-            "substrate_chihiros_aquasoil_3l",
-            "substrate_ada_tourmaline_bc",
-            "substrate_dennerle_deponitmix_4_8kg",
-            "gravel_ada_aqua_gravel_s",
-            "gravel_ada_aqua_gravel_m",
-            "gravel_dennerle_nano_gravel_black",
-            "gravel_dennerle_nano_gravel_natural",
-            "gravel_jbl_sansibar_dark",
-            "gravel_jbl_sansibar_white",
-            "gravel_aquael_basaltsand",
-            "gravel_natural_river_sand"
-        )
+        val EXPECTED_PRODUCT_IDS =
+            setOf(
+                "substrate_chihiros_aquasoil_9l",
+                "substrate_chihiros_aquasoil_3l",
+                "substrate_ada_tourmaline_bc",
+                "substrate_dennerle_deponitmix_4_8kg"
+            ) + (1..181).mapTo(mutableSetOf()) { index ->
+                "gravel_${index.toString().padStart(4, '0')}"
+            }
     }
 }
