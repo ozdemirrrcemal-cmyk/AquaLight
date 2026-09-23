@@ -109,6 +109,7 @@ jobs:
             python3 tools/device_root_application_boundary_guard.py
             python3 tools/tank_device_assignment_boundary_guard.py
             python3 tools/aquarium_application_boundary_guard.py
+            python3 tools/aquarium_health_architecture_guard.py
             python3 tools/care_application_boundary_guard.py
             python3 tools/provisioning_discovery_boundary_guard.py
             python3 tools/provisioning_progress_boundary_guard.py
