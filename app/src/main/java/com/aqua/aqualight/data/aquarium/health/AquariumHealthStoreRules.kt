@@ -51,11 +51,11 @@ object AquariumHealthStoreRules {
         nowMillis: Long = System.currentTimeMillis()
     ): Long {
         val maxExistingId = sequenceOf(
-            store.waterTestsList.asSequence().map(StoredAquariumWaterTest::getId),
+            store.waterTestsList.asSequence().map { test -> test.id },
             store.livestockObservationsList.asSequence()
-                .map(StoredLivestockHealthObservation::getId),
+                .map { observation -> observation.id },
             store.plantObservationsList.asSequence()
-                .map(StoredPlantHealthObservation::getId)
+                .map { observation -> observation.id }
         ).flatten().maxOrNull() ?: 0L
 
         val next = maxOf(nowMillis, maxExistingId + 1L)
