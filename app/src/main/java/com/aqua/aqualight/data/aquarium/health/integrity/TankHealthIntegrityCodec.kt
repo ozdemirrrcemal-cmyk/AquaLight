@@ -166,18 +166,6 @@ internal object TankHealthIntegrityCodec {
             plantObservations = store.plantObservationsList
         )
 
-    private fun requireSameTank(
-        expectedTankId: Long,
-        actualTankId: Long,
-        recordName: String
-    ) {
-        if (actualTankId != expectedTankId) {
-            violation(
-                "Health snapshot $recordName references another tank."
-            )
-        }
-    }
-
     private fun violation(message: String): Nothing {
         throw StoreInvariantViolation(message)
     }
@@ -193,7 +181,6 @@ internal object TankHealthIntegrityCodec {
     private const val OWNER_INDEX = 2
     private const val TANK_ID_INDEX = 3
     private const val SNAPSHOT_INDEX = 4
-    private const val MAX_OWNER_UID_CHARS = 128
 
     private val encoder = Base64.getUrlEncoder().withoutPadding()
     private val decoder = Base64.getUrlDecoder()
