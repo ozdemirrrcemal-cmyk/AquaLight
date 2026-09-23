@@ -54,11 +54,14 @@ class TimerRootDependencyWiringTest(unittest.TestCase):
     def test_production_keeps_owner_scoped_timer_dependencies(self) -> None:
         production = COMPOSITIONS["production"].read_text(encoding="utf-8")
 
-        self.assertIn("timerControlOperations = graph.timerControlOperations", production)
-        self.assertIn(
-            "controlSurfacePreparationOperations = graph.controlSurfacePreparationOperations",
-            production,
-        )
+        for token in (
+            "timerControlOperations =",
+            "context.graph.timerControlOperations",
+            "controlSurfacePreparationOperations =",
+            "context.graph",
+            ".controlSurfacePreparationOperations",
+        ):
+            self.assertIn(token, production)
 
     def test_release_smoke_uses_a_single_stateless_timer_adapter(self) -> None:
         smoke = COMPOSITIONS["releaseSmoke"].read_text(encoding="utf-8")
