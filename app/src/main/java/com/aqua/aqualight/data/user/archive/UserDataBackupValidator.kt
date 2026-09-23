@@ -1,5 +1,7 @@
 package com.aqua.aqualight.data.user.archive
 
+import com.aqua.aqualight.application.aquarium.AquariumLivestockIdentity
+import com.aqua.aqualight.application.aquarium.AquariumLivestockTaxonomy
 import com.aqua.aqualight.data.care.model.CareTaskSource
 import com.aqua.aqualight.data.care.model.CareTaskStatus
 import com.aqua.aqualight.data.care.model.CareTaskType
@@ -18,6 +20,7 @@ internal object UserDataBackupLimits {
     const val MAX_CARE_TASKS = 10_000
     const val MAX_DEVICE_ASSIGNMENTS = 500
     const val MAX_ITEMS_PER_AQUARIUM = 2_000
+    const val MAX_LIVESTOCK_CATALOG_ID_CHARS = 160
     const val BUFFER_SIZE = 8 * 1024
 
     val mediaEntryPattern = Regex("media/tanks/[1-9][0-9]*\\.jpg")
@@ -79,8 +82,28 @@ internal class UserDataBackupValidator {
         validateArchiveItemIds(aquarium.materials.map(ArchiveMaterial::id))
         validateArchiveItemIds(aquarium.livestock.map(ArchiveLivestock::id))
         aquarium.livestock.forEach { livestock ->
+            require(livestock.name.isNotBlank() && livestock.name == livestock.name.trim()) {
+                "Backup livestock name is invalid."
+            }
+            require(livestock.category in AquariumLivestockTaxonomy.categoryCodes) {
+                "Backup livestock category is invalid."
+            }
             require(livestock.quantity > 0) {
                 "Backup livestock quantity is invalid."
+            }
+            require(livestock.catalogEntryId.length <= UserDataBackupLimits.MAX_LIVESTOCK_CATALOG_ID_CHARS) {
+                "Backup livestock catalog id is too long."
+            }
+            runCatching {
+                AquariumLivestockIdentity.requireValid(
+                    livestockId = livestock.id,
+                    catalogEntryId = livestock.catalogEntryId
+                )
+            }.getOrElse { error ->
+                throw IllegalArgumentException(
+                    "Backup livestock catalog id is invalid.",
+                    error
+                )
             }
         }
     }

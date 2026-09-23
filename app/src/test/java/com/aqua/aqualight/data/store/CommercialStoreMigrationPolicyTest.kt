@@ -8,8 +8,8 @@ import org.junit.Test
 class CommercialStoreMigrationPolicyTest {
 
     @Test
-    fun firstCommercialSchemasStartAtVersionOneWithoutMigrationLayer() {
-        assertEquals(1, CommercialStoreSchema.AQUARIUM_TANKS_VERSION)
+    fun tankCatalogCutoverHasNoLegacyMigrationLayer() {
+        assertEquals(2, CommercialStoreSchema.AQUARIUM_TANKS_VERSION)
         assertEquals(1, CommercialStoreSchema.CARE_TASKS_VERSION)
         assertEquals(1, CommercialStoreSchema.USER_PREFERENCES_VERSION)
         assertEquals(1, CommercialStoreSchema.LIGHT_LIBRARY_VERSION)
@@ -22,25 +22,22 @@ class CommercialStoreMigrationPolicyTest {
 
         assertTrue(
             normalizedPolicy.contains(
-                "Status: N/A for the first commercial release schema"
+                "Aquarium Tanks schema version `2` is a deliberate clean cutover"
             )
         )
         assertTrue(
             normalizedPolicy.contains(
-                "has not shipped a public Tank, Care Task, Light Library, or encrypted User Preferences schema"
-            )
-        )
-        assertTrue(
-            normalizedPolicy.contains(
-                "there is no legitimate source schema to migrate"
+                "Version `1` tank stores are rejected"
             )
         )
         assertTrue(normalizedPolicy.contains("no legacy `DataMigration` is installed"))
         assertTrue(
             normalizedPolicy.contains(
-                "The first post-release schema change must increment"
+                "Every livestock record has a non-blank stable identity"
             )
         )
+        assertTrue(normalizedPolicy.contains("Blank identities are invalid"))
+        assertTrue(normalizedPolicy.contains("there is no name/category inference fallback"))
     }
 
     private fun locateRepositoryRoot(): File {

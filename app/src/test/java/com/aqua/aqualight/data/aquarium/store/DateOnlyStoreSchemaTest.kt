@@ -9,8 +9,8 @@ import org.junit.Test
 class DateOnlyStoreSchemaTest {
 
     @Test
-    fun firstCommercialTankStoreSchemaUsesDateOnlyContract() {
-        assertEquals(1, CommercialStoreSchema.AQUARIUM_TANKS_VERSION)
+    fun currentTankStoreSchemaUsesDateOnlyContract() {
+        assertEquals(2, CommercialStoreSchema.AQUARIUM_TANKS_VERSION)
 
         val store = TankStoreRules.defaultStore().toBuilder()
             .addTanks(
@@ -33,6 +33,17 @@ class DateOnlyStoreSchemaTest {
             .build()
 
         assertEquals(store, TankStoreRules.validateStore(store))
+    }
+
+    @Test
+    fun previousTankStoreVersionIsRejectedWithoutMigration() {
+        val previousStore = AquariumTanksStore.newBuilder()
+            .setSchemaVersion(1)
+            .build()
+
+        assertThrows(StoreInvariantViolation::class.java) {
+            TankStoreRules.validateStore(previousStore)
+        }
     }
 
     @Test

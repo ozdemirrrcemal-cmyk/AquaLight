@@ -59,11 +59,6 @@
     <string name="catalog_keyword_liquid">sıvı</string>
     <string name="catalog_keyword_plant">bitki</string>
     <string name="catalog_keyword_carbon">karbon</string>
-    <string name="catalog_keyword_macro">makro</string>
-    <string name="catalog_keyword_nitrate">nitrat</string>
-    <string name="catalog_keyword_phosphate">fosfat</string>
-    <string name="catalog_keyword_micro">mikro</string>
-    <string name="catalog_keyword_iron">demir</string>
     <string name="catalog_keyword_filter">filtre</string>
     <string name="catalog_keyword_external">dış</string>
     <string name="catalog_keyword_canister">kova filtre</string>

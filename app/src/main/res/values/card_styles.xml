@@ -30,6 +30,16 @@
         <item name="strokeWidth">@dimen/aqua_size_1</item>
     </style>
 
+    <style name="Widget.Aqua.Card.TankListItem" parent="Widget.Aqua.Card">
+        <item name="cardBackgroundColor">@color/aqua_card_surface</item>
+        <item name="cardCornerRadius">@dimen/aqua_size_16</item>
+        <item name="cardElevation">@dimen/aqua_size_0</item>
+        <item name="cardUseCompatPadding">false</item>
+        <item name="strokeColor">@color/aqua_card_outline</item>
+        <item name="strokeWidth">@dimen/aqua_size_1</item>
+        <item name="rippleColor">@color/aqua_card_surface_pressed</item>
+    </style>
+
     <style name="Widget.Aqua.Card.Device" parent="Widget.Aqua.Card">
         <item name="cardBackgroundColor">@color/aqua_card_device_surface</item>
         <item name="cardCornerRadius">@dimen/aqua_size_14</item>

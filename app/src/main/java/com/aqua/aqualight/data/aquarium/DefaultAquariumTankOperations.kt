@@ -12,6 +12,7 @@ import com.aqua.aqualight.application.aquarium.AquariumTankSize
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.application.aquarium.DeleteAquariumTanksResult
 import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
+import com.aqua.aqualight.data.aquarium.catalog.livestock.LivestockSelectionValidator
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumLivestock
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
@@ -38,6 +39,7 @@ class DefaultAquariumTankOperations(
 ) : AquariumTankOperations {
 
     private val appContext = context.applicationContext
+    private val livestockSelectionValidator = LivestockSelectionValidator(appContext)
 
     override val tanks: Flow<List<AquariumTankSnapshot>> = tankStore.tanksFlow.map { tanks ->
         tanks.map(SavedAquariumTank::toApplicationSnapshot)
@@ -156,11 +158,21 @@ class DefaultAquariumTankOperations(
     override suspend fun updateTankPlants(tankId: Long, plants: List<AquariumPlantTag>) =
         tankStore.updateTankPlants(tankId, plants.map(AquariumPlantTag::toDataTag))
 
-    override suspend fun addLivestock(tankId: Long, livestock: AquariumLivestock) =
+    override suspend fun addLivestock(
+        tankId: Long,
+        livestock: AquariumLivestock
+    ) {
+        livestockSelectionValidator.requireCurrent(livestock)
         tankStore.addLivestockToTank(tankId, livestock.toDataLivestock())
+    }
 
-    override suspend fun updateLivestock(tankId: Long, livestock: AquariumLivestock) =
+    override suspend fun updateLivestock(
+        tankId: Long,
+        livestock: AquariumLivestock
+    ) {
+        livestockSelectionValidator.requireCurrent(livestock)
         tankStore.updateLivestockInTank(tankId, livestock.toDataLivestock())
+    }
 
     override suspend fun removeLivestock(tankId: Long, livestockId: Long) =
         tankStore.removeLivestockFromTank(tankId, livestockId)
@@ -238,6 +250,7 @@ internal fun SavedAquariumTank.toApplicationSnapshot(): AquariumTankSnapshot =
         livestock = livestock.map { item ->
             AquariumLivestock(
                 id = item.id,
+                catalogEntryId = item.catalogEntryId,
                 name = item.name,
                 category = item.category,
                 quantity = item.quantity,
@@ -287,6 +300,7 @@ private fun AquariumMaterialSelection.toDataSelection(): TankMaterialSelection =
 private fun AquariumLivestock.toDataLivestock(): SavedAquariumLivestock =
     SavedAquariumLivestock(
         id = id,
+        catalogEntryId = catalogEntryId,
         name = name,
         category = category,
         quantity = quantity,

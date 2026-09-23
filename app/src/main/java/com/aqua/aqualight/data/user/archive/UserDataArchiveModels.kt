@@ -3,9 +3,9 @@ package com.aqua.aqualight.data.user.archive
 import java.io.File
 
 internal const val USER_DATA_BACKUP_FORMAT = "aqualight-user-backup"
-internal const val USER_DATA_BACKUP_SCHEMA_VERSION = 1
+internal const val USER_DATA_BACKUP_SCHEMA_VERSION = 2
 internal const val USER_DATA_EXPORT_FORMAT = "aqualight-portable-data-export"
-internal const val USER_DATA_EXPORT_SCHEMA_VERSION = 1
+internal const val USER_DATA_EXPORT_SCHEMA_VERSION = 2
 internal const val USER_DATA_BACKUP_MIME_TYPE = "application/zip"
 internal const val USER_DATA_EXPORT_MIME_TYPE = "application/json"
 
@@ -71,7 +71,8 @@ internal data class ArchiveLivestock(
     val category: String,
     val quantity: Int,
     val addedDateEpochDay: Long?,
-    val note: String
+    val note: String,
+    val catalogEntryId: String
 )
 
 internal data class ArchiveCareTask(

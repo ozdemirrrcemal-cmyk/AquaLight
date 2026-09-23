@@ -73,6 +73,17 @@
                 android:defaultValue="basic" />
         </action>
         <action
+            android:id="@+id/action_tankDetailFragment_to_tankLivestockPickerFragment"
+            app:destination="@id/tankLivestockPickerFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right">
+            <argument
+                android:name="tankId"
+                app:argType="long" />
+        </action>
+        <action
             android:id="@+id/action_tankDetailFragment_to_tankDetailLivestockFormFragment"
             app:destination="@id/tankDetailLivestockFormFragment"
             app:enterAnim="@anim/nav_slide_in_right"
@@ -86,6 +97,22 @@
                 android:name="livestockId"
                 app:argType="long"
                 android:defaultValue="0L" />
+            <argument
+                android:name="catalogEntryId"
+                app:argType="string"
+                android:defaultValue="" />
+            <argument
+                android:name="presetCategory"
+                app:argType="string"
+                android:defaultValue="Fish" />
+            <argument
+                android:name="openedFromPicker"
+                app:argType="boolean"
+                android:defaultValue="false" />
+            <argument
+                android:name="presetName"
+                app:argType="string"
+                android:defaultValue="" />
         </action>
         <action
             android:id="@+id/action_tankDetailFragment_to_tankDetailPlantTagFragment"
@@ -232,6 +259,47 @@
     </fragment>
 
     <fragment
+        android:id="@+id/tankLivestockPickerFragment"
+        android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.livestock.TankLivestockPickerFragment"
+        android:label="@string/screen_title_livestock_picker"
+        tools:layout="@layout/fragment_tank_livestock_picker">
+        <argument
+            android:name="tankId"
+            app:argType="long" />
+        <action
+            android:id="@+id/action_tankLivestockPickerFragment_to_tankDetailLivestockFormFragment"
+            app:destination="@id/tankDetailLivestockFormFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right">
+            <argument
+                android:name="tankId"
+                app:argType="long" />
+            <argument
+                android:name="livestockId"
+                app:argType="long"
+                android:defaultValue="0L" />
+            <argument
+                android:name="catalogEntryId"
+                app:argType="string"
+                android:defaultValue="" />
+            <argument
+                android:name="presetCategory"
+                app:argType="string"
+                android:defaultValue="Fish" />
+            <argument
+                android:name="openedFromPicker"
+                app:argType="boolean"
+                android:defaultValue="true" />
+            <argument
+                android:name="presetName"
+                app:argType="string"
+                android:defaultValue="" />
+        </action>
+    </fragment>
+
+    <fragment
         android:id="@+id/tankDetailLivestockFormFragment"
         android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.TankDetailLivestockFormFragment"
         android:label="@string/screen_title_livestock_form"
@@ -243,6 +311,22 @@
             android:name="livestockId"
             app:argType="long"
             android:defaultValue="0L" />
+        <argument
+            android:name="catalogEntryId"
+            app:argType="string"
+            android:defaultValue="" />
+        <argument
+            android:name="presetCategory"
+            app:argType="string"
+            android:defaultValue="Fish" />
+        <argument
+            android:name="openedFromPicker"
+            app:argType="boolean"
+            android:defaultValue="false" />
+        <argument
+            android:name="presetName"
+            app:argType="string"
+            android:defaultValue="" />
     </fragment>
 
     <fragment

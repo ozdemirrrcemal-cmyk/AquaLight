@@ -3,6 +3,8 @@ package com.aqua.aqualight.composition
 import android.content.Context
 import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.app.AquaApp
+import com.aqua.aqualight.application.aquarium.LivestockCatalogOperations
+import com.aqua.aqualight.application.aquarium.LivestockWaterAdvisorOperations
 import com.aqua.aqualight.application.auth.AccountSecurityOperations
 import com.aqua.aqualight.application.auth.AppSessionOperations
 import com.aqua.aqualight.application.auth.AuthOperations
@@ -17,6 +19,8 @@ import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCas
 import com.aqua.aqualight.application.user.LocalDataRecoveryOperations
 import com.aqua.aqualight.application.user.UserProfileOperations
 import com.aqua.aqualight.application.user.UserSettingsOperations
+import com.aqua.aqualight.data.aquarium.catalog.livestock.DefaultLivestockCatalogOperations
+import com.aqua.aqualight.data.aquarium.catalog.livestock.DefaultLivestockWaterAdvisor
 import com.aqua.aqualight.data.auth.AppSessionCoordinator
 import com.aqua.aqualight.data.auth.AuthRepository
 import com.aqua.aqualight.data.auth.DefaultSessionExitOperations
@@ -60,6 +64,8 @@ interface AppContainer {
         }
     val authenticatedOwnerIdentity: AuthenticatedOwnerIdentity
     val userProfileOperations: UserProfileOperations
+    val livestockCatalogOperations: LivestockCatalogOperations
+    val livestockWaterAdvisorOperations: LivestockWaterAdvisorOperations
     val feedbackSubmissionOperations: FeedbackSubmissionUseCase
     val imageMediaProcessor: ImageMediaProcessor
     val provisioningDraftOperations: ProvisioningDraftOperations
@@ -137,6 +143,18 @@ internal class DefaultAppContainer(
         LazyThreadSafetyMode.SYNCHRONIZED
     ) {
         DefaultUserProfileOperations(appContext, userPreferencesManager)
+    }
+
+    override val livestockCatalogOperations: LivestockCatalogOperations by lazy(
+        LazyThreadSafetyMode.SYNCHRONIZED
+    ) {
+        DefaultLivestockCatalogOperations(appContext)
+    }
+
+    override val livestockWaterAdvisorOperations: LivestockWaterAdvisorOperations by lazy(
+        LazyThreadSafetyMode.SYNCHRONIZED
+    ) {
+        DefaultLivestockWaterAdvisor(appContext)
     }
 
     override val feedbackSubmissionOperations: FeedbackSubmissionUseCase by lazy(

@@ -101,7 +101,8 @@ data class AquariumLivestock(
     val category: String = "",
     val quantity: Int = 1,
     val addedDateEpochDay: Long? = null,
-    val note: String = ""
+    val note: String = "",
+    val catalogEntryId: String
 )
 
 sealed interface DeleteAquariumTanksResult {

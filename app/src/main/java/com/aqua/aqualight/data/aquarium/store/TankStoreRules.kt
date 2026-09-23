@@ -1,5 +1,7 @@
 package com.aqua.aqualight.data.aquarium.store
 
+import com.aqua.aqualight.application.aquarium.AquariumLivestockIdentity
+import com.aqua.aqualight.application.aquarium.AquariumLivestockTaxonomy
 import com.aqua.aqualight.application.aquarium.AquariumTankTaxonomy
 import com.aqua.aqualight.data.store.CommercialStoreSchema
 import com.aqua.aqualight.data.store.StoreInvariantViolation
@@ -159,6 +161,19 @@ object TankStoreRules {
                 violation("Duplicate livestock id ${livestock.id} in tank ${tank.id}.")
             }
             requireCanonicalRequiredText(
+                "livestock.catalogEntryId",
+                livestock.catalogEntryId,
+                MAX_PRODUCT_ID_CHARS
+            )
+            runCatching {
+                AquariumLivestockIdentity.requireValid(
+                    livestockId = livestock.id,
+                    catalogEntryId = livestock.catalogEntryId
+                )
+            }.getOrElse { error ->
+                violation(error.message ?: "livestock.catalogEntryId is invalid.")
+            }
+            requireCanonicalRequiredText(
                 "livestock.name",
                 livestock.name,
                 MAX_ENTITY_NAME_CHARS
@@ -168,6 +183,9 @@ object TankStoreRules {
                 livestock.category,
                 MAX_CATEGORY_CHARS
             )
+            if (livestock.category !in AquariumLivestockTaxonomy.categoryCodes) {
+                violation("livestock.category is not a supported value.")
+            }
             if (livestock.quantity !in 1..100_000) {
                 violation("livestock.quantity must be between 1 and 100000.")
             }

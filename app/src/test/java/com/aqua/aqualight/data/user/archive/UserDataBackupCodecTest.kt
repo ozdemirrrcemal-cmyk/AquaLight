@@ -57,6 +57,17 @@ class UserDataBackupCodecTest {
     }
 
     @Test
+    fun `decoder rejects the previous backup schema without compatibility`() {
+        val invalid = manifest().copy(schemaVersion = 1)
+        val encoded = rawZip(Gson().toJson(invalid))
+
+        assertThrows(IllegalArgumentException::class.java) {
+            codec.decode(encoded, File(encoded.parentFile, "decoded-previous-schema"))
+        }
+    }
+
+
+    @Test
     fun `decoder rejects path traversal entries`() {
         val encoded = rawZip(
             manifestJson = Gson().toJson(manifest()),

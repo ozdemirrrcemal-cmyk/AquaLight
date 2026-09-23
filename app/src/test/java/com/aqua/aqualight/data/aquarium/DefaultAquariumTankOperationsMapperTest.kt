@@ -62,7 +62,7 @@ class DefaultAquariumTankOperationsMapperTest {
             mapped.materials.single()
         )
         assertEquals(
-            AquariumLivestock(13L, "Clownfish", "Fish", 2, 300L, "Pair"),
+            AquariumLivestock(13L, "Clownfish", "Fish", 2, 300L, "Pair", "custom:13"),
             mapped.livestock.single()
         )
     }
@@ -113,7 +113,8 @@ class DefaultAquariumTankOperationsMapperTest {
                     category = "Fish",
                     quantity = 2,
                     addedDateEpochDay = 300L,
-                    note = "Pair"
+                    note = "Pair",
+                    catalogEntryId = "custom:13"
                 )
             )
         )
