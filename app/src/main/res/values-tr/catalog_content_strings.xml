@@ -25,7 +25,6 @@
     <string name="catalog_keyword_tank">tank</string>
     <string name="catalog_keyword_set">set</string>
     <string name="catalog_keyword_glass">cam</string>
-    <string name="catalog_keyword_magnetic">manyetik</string>
     <string name="catalog_keyword_regulator">regülatör</string>
     <string name="catalog_keyword_generator">jeneratör</string>
     <string name="catalog_keyword_system">sistem</string>
@@ -60,6 +59,5 @@
     <string name="catalog_keyword_light">aydınlatma</string>
     <string name="catalog_keyword_shade">gölge</string>
     <string name="catalog_keyword_screen">ekran</string>
-    <string name="catalog_keyword_slim">ince</string>
     <string name="catalog_keyword_lamp">lamba</string>
 </resources>

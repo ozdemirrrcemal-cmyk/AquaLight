@@ -49,8 +49,6 @@
     <string name="catalog_brand_oase" translatable="false">Oase</string>
     <string name="catalog_brand_sunsun" translatable="false">SunSun</string>
     <string name="catalog_brand_tropica" translatable="false">Tropica</string>
-    <string name="catalog_brand_twinstar" translatable="false">Twinstar</string>
-    <string name="catalog_brand_week_aqua" translatable="false">Week Aqua</string>
     <string name="catalog_material_cooler_aquael_fan_mini_name" translatable="false">Aquael Fan Mini</string>
     <string name="catalog_material_cooler_chihiros_cooling_fan_name" translatable="false">Chihiros Cooling Fan</string>
     <string name="catalog_material_cooler_ista_cooling_fan_name" translatable="false">ISTA Cooling Fan</string>
@@ -278,7 +276,6 @@
     <string name="catalog_keyword_set">set</string>
     <string name="catalog_keyword_chihiros" translatable="false">chihiros</string>
     <string name="catalog_keyword_glass">glass</string>
-    <string name="catalog_keyword_magnetic">magnetic</string>
     <string name="catalog_keyword_co2" translatable="false">co2</string>
     <string name="catalog_keyword_regulator">regulator</string>
     <string name="catalog_keyword_generator">generator</string>
@@ -323,11 +320,8 @@
     <string name="catalog_keyword_light">light</string>
     <string name="catalog_keyword_shade">shade</string>
     <string name="catalog_keyword_screen">screen</string>
-    <string name="catalog_keyword_twinstar" translatable="false">twinstar</string>
-    <string name="catalog_keyword_week_aqua" translatable="false">week aqua</string>
     <string name="catalog_keyword_rgb" translatable="false">rgb</string>
     <string name="catalog_keyword_wrgb" translatable="false">wrgb</string>
-    <string name="catalog_keyword_slim">slim</string>
     <string name="catalog_keyword_lamp">lamp</string>
 </resources>
 
