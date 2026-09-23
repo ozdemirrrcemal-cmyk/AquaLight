@@ -483,11 +483,27 @@ for adapter in (
 
 for token, reason in (
     (
-        "lightControlOperations = graph.lightOperations.controlOperations",
+        "private object OwnerLightViewModelBindings",
+        "Light ViewModels must remain grouped under the owner binding resolver",
+    ),
+    (
+        "lightControlOperations =",
+        "the Light root must receive the owner-scoped control boundary",
+    ),
+    (
+        "context.graph.lightOperations",
+        "Light bindings must resolve through the committed owner graph",
+    ),
+    (
+        ".controlOperations",
         "the Light root must reuse owner-scoped control",
     ),
     (
-        "operations = graph.lightOperations.systemOperations",
+        "DeviceLightSystemViewModel(",
+        "the Light System screen must remain owner-bound",
+    ),
+    (
+        ".systemOperations",
         "the Light System screen must reuse owner-scoped System controls",
     ),
 ):
@@ -731,7 +747,8 @@ for path, text in ((FACTORY, factory), (SMOKE_FACTORY, smoke_factory)):
 
 for token in (
     "clock = SystemDeviceStatusClock()",
-    "deviceStatusOperations = DefaultDeviceStatusOperations",
+    "deviceStatusOperations =",
+    "DefaultDeviceStatusOperations(",
 ):
     if token not in factory:
         errors.append(f"{FACTORY.relative_to(ROOT)}: production status binding is missing: {token}")
