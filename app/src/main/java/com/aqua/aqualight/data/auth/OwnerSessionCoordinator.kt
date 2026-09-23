@@ -3,6 +3,7 @@ package com.aqua.aqualight.data.auth
 import android.content.Context
 import com.aqua.aqualight.data.aquarium.devices.TankAssignmentRepairResult
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryProvider
+import com.aqua.aqualight.data.aquarium.health.integrity.TankHealthIntegrityRecovery
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.care.integrity.TankCareIntegrityRecovery
 import com.aqua.aqualight.data.devices.provisioning.repository.AqlProvisioningHandoffSaver
@@ -273,6 +274,9 @@ private class OwnerSessionOpenFlow(
             is TankAssignmentRepairResult.Failure -> throw repairResult.error
         }
         val tankCareRecovery = TankCareIntegrityRecovery
+            .create(appContext)
+            .recover(normalizedOwnerUid)
+        TankHealthIntegrityRecovery
             .create(appContext)
             .recover(normalizedOwnerUid)
         val careTaskCount = tankCareRecovery.removedTaskCount +
