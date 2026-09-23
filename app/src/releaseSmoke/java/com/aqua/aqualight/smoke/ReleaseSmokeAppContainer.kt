@@ -342,9 +342,9 @@ private class ReleaseSmokeViewModelFactory(
                             reconcileReminders = notificationPreferences::reconcileOwner
                         ),
                         health = TankHealthDeletionDependencies(
-                            snapshotForTank = healthStore::snapshotForTank,
-                            deleteForTank = healthStore::deleteRecordsForTank,
-                            restoreForTank = healthStore::restoreSnapshotForIntegrity
+                            snapshotForTank = healthStore.integrity::snapshotForTank,
+                            deleteForTank = healthStore.integrity::deleteRecordsForTank,
+                            restoreForTank = healthStore.integrity::restoreSnapshotForIntegrity
                         ),
                         removeDeviceAssignmentsForTank =
                             assignmentRepository::removeAssignmentsForTank,
