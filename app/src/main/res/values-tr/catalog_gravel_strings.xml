@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Localized Gravel search aliases. -->
+    <string name="catalog_keyword_gravel">çakıl</string>
+    <string name="catalog_keyword_sand">kum</string>
+    <string name="catalog_keyword_aqua_gravel">akvaryum çakılı</string>
+    <string name="catalog_keyword_black">siyah</string>
+    <string name="catalog_keyword_natural">doğal</string>
+    <string name="catalog_keyword_dark">koyu</string>
+    <string name="catalog_keyword_white">beyaz</string>
+    <string name="catalog_keyword_basalt">bazalt</string>
+    <string name="catalog_keyword_river">nehir</string>
+</resources>

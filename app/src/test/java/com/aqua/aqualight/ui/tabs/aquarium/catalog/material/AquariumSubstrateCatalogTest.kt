@@ -1,6 +1,7 @@
 package com.aqua.aqualight.ui.tabs.aquarium.catalog.material
 
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.aquarium.AquariumGravelProductIds
 import com.aqua.aqualight.application.aquarium.AquariumSubstrateEvidenceStatus
 import com.aqua.aqualight.application.aquarium.AquariumSubstrateMetadataCatalog
 import com.aqua.aqualight.application.aquarium.AquariumSubstrateProductIds
@@ -206,8 +207,6 @@ class AquariumSubstrateCatalogTest {
 
         val EXPECTED_PRODUCT_IDS =
             AquariumSubstrateProductIds.ALL.toMutableSet() +
-                (1..EXPECTED_GRAVEL_COUNT).mapTo(mutableSetOf()) { index ->
-                    "gravel_${index.toString().padStart(4, '0')}"
-                }
+                AquariumGravelProductIds.ALL
     }
 }

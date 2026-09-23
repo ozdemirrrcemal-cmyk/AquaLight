@@ -333,18 +333,9 @@
     <string name="catalog_keyword_hang_on">hang on</string>
     <string name="catalog_keyword_hob" translatable="false">hob</string>
     <string name="catalog_keyword_sunsun" translatable="false">sunsun</string>
-    <string name="catalog_keyword_gravel">gravel</string>
-    <string name="catalog_keyword_sand">sand</string>
-    <string name="catalog_keyword_substrate">substrate</string>
-    <string name="catalog_keyword_aqua_gravel">aqua gravel</string>
-    <string name="catalog_keyword_black">black</string>
-    <string name="catalog_keyword_nano">nano</string>
-    <string name="catalog_keyword_natural">natural</string>
-    <string name="catalog_keyword_dark">dark</string>
-    <string name="catalog_keyword_white">white</string>
-    <string name="catalog_keyword_basalt">basalt</string>
-    <string name="catalog_keyword_river">river</string>
-    <string name="catalog_keyword_heater">heater</string>
+<string name="catalog_keyword_substrate">substrate</string>
+<string name="catalog_keyword_nano">nano</string>
+<string name="catalog_keyword_heater">heater</string>
     <string name="catalog_keyword_thermo">thermo</string>
     <string name="catalog_keyword_protemp" translatable="false">protemp</string>
     <string name="catalog_keyword_led" translatable="false">led</string>
