@@ -77,7 +77,8 @@ if user_data_cleaner.is_file():
     text = user_data_cleaner.read_text(encoding="utf-8")
     for token in (
         "PROVISIONING_SESSIONS",
-        "clearProvisioningData(targetOwnerUid)",
+        "run.runStep(Step.PROVISIONING_SESSIONS)",
+        "clearProvisioningData(ownerUid)",
         "rollbackPendingRegistrationsForOwner(ownerUid)",
         "AqlProvisioningDraftStore(",
         "AqlProvisioningQrSecretStore(",
