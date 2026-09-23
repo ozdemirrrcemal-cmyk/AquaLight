@@ -4,31 +4,80 @@ import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 
 /** Application boundary for owner-scoped aquarium tank operations. */
-interface AquariumTankOperations {
-    val tanks: Flow<List<AquariumTankSnapshot>>
+interface AquariumTankOperations :
+    AquariumTankReadOperations,
+    AquariumTankLifecycleOperations,
+    AquariumTankDetailsOperations,
+    AquariumTankContentsOperations,
+    AquariumTankCareSettingsOperations
 
+interface AquariumTankReadOperations {
+    val tanks: Flow<List<AquariumTankSnapshot>>
+}
+
+interface AquariumTankLifecycleOperations {
     suspend fun addTank(draft: AquariumTankDraft): Long
     suspend fun duplicateTank(tankId: Long): Long
-    suspend fun deleteTanks(tankIds: Collection<Long>): DeleteAquariumTanksResult
+    suspend fun deleteTanks(
+        tankIds: Collection<Long>
+    ): DeleteAquariumTanksResult
+}
+
+interface AquariumTankDetailsOperations {
     suspend fun updateTankPhoto(tankId: Long, photoUri: String?)
     suspend fun updateTankName(tankId: Long, name: String)
     suspend fun updateTankType(tankId: Long, tankType: String)
     suspend fun updateTankSize(tankId: Long, size: AquariumTankSize)
     suspend fun updateTankVolumeUnit(tankId: Long, volumeUnit: String)
-    suspend fun updateTankSetupDate(tankId: Long, setupDateEpochDay: Long)
+    suspend fun updateTankSetupDate(
+        tankId: Long,
+        setupDateEpochDay: Long
+    )
     suspend fun updateTankStyle(tankId: Long, tankStyle: String)
-    suspend fun updateTankDescription(tankId: Long, description: String)
+    suspend fun updateTankDescription(
+        tankId: Long,
+        description: String
+    )
+}
+
+interface AquariumTankContentsOperations {
     suspend fun updateTankMaterials(
         tankId: Long,
         categoryKey: String,
         materials: List<AquariumMaterialSelection>
     )
-    suspend fun updateTankPlants(tankId: Long, plants: List<AquariumPlantTag>)
-    suspend fun addLivestock(tankId: Long, livestock: AquariumLivestock)
-    suspend fun updateLivestock(tankId: Long, livestock: AquariumLivestock)
-    suspend fun removeLivestock(tankId: Long, livestockId: Long)
-    suspend fun updateSmartCareEnabled(tankId: Long, enabled: Boolean)
-    suspend fun updateCareRemindersEnabled(tankId: Long, enabled: Boolean)
+
+    suspend fun updateTankPlants(
+        tankId: Long,
+        plants: List<AquariumPlantTag>
+    )
+
+    suspend fun addLivestock(
+        tankId: Long,
+        livestock: AquariumLivestock
+    )
+
+    suspend fun updateLivestock(
+        tankId: Long,
+        livestock: AquariumLivestock
+    )
+
+    suspend fun removeLivestock(
+        tankId: Long,
+        livestockId: Long
+    )
+}
+
+interface AquariumTankCareSettingsOperations {
+    suspend fun updateSmartCareEnabled(
+        tankId: Long,
+        enabled: Boolean
+    )
+
+    suspend fun updateCareRemindersEnabled(
+        tankId: Long,
+        enabled: Boolean
+    )
 }
 
 data class AquariumTankSnapshot(
