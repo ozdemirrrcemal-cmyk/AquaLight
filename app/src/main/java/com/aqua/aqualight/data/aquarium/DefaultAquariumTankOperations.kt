@@ -14,6 +14,7 @@ import com.aqua.aqualight.application.aquarium.DeleteAquariumTanksResult
 import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
 import com.aqua.aqualight.data.aquarium.catalog.livestock.LivestockSelectionValidator
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
+import com.aqua.aqualight.data.aquarium.health.AquariumHealthDataStoreManager
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumLivestock
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.data.aquarium.model.TankDraft
@@ -33,6 +34,7 @@ import kotlinx.coroutines.withContext
 class DefaultAquariumTankOperations(
     context: Context,
     private val tankStore: AquariumTankDataStoreManager,
+    private val healthStore: AquariumHealthDataStoreManager,
     private val tankDataCleaner: OwnerTankDataCleaner,
     private val notificationPreferences: NotificationPreferenceUseCase,
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
@@ -174,8 +176,17 @@ class DefaultAquariumTankOperations(
         tankStore.updateLivestockInTank(tankId, livestock.toDataLivestock())
     }
 
-    override suspend fun removeLivestock(tankId: Long, livestockId: Long) =
+    override suspend fun removeLivestock(
+        tankId: Long,
+        livestockId: Long
+    ) = withCurrentOwnerScope { ownerUid ->
         tankStore.removeLivestockFromTank(tankId, livestockId)
+        healthStore.removeObservationsForLivestock(
+            ownerUid = ownerUid,
+            tankId = tankId,
+            livestockId = livestockId
+        )
+    }
 
     override suspend fun updateSmartCareEnabled(tankId: Long, enabled: Boolean) =
         tankStore.updateSmartCareEnabled(tankId, enabled)
@@ -201,6 +212,8 @@ internal fun OwnerTankDataCleaner.Result.toApplicationResult(): DeleteAquariumTa
                     stage = when (issue.stage) {
                         OwnerTankDataCleaner.CleanupStage.CARE_TASKS ->
                             AquariumTankCleanupStage.CARE_TASKS
+                        OwnerTankDataCleaner.CleanupStage.HEALTH_RECORDS ->
+                            AquariumTankCleanupStage.HEALTH_RECORDS
                         OwnerTankDataCleaner.CleanupStage.DEVICE_ASSIGNMENTS ->
                             AquariumTankCleanupStage.DEVICE_ASSIGNMENTS
                     }
