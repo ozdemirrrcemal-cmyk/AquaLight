@@ -205,7 +205,7 @@ internal class OwnerViewModelFactory(
                                         snapshots
                                     )
                                 },
-                                cancelReminder = notificationPreferenceUseCase::cancelCareTask,
+                                cancelCareTaskReminder = notificationPreferenceUseCase::cancelCareTask,
                                 reconcileReminders =
                                     notificationPreferenceUseCase::reconcileOwner
                             ),
