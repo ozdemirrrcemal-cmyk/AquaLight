@@ -45,7 +45,7 @@ internal class TankHealthIntegrityRecovery private constructor(
                     }
 
                     TankHealthIntegrityJournal.State.SNAPSHOTS_CAPTURED -> {
-                        val before = healthStore.snapshotForTank(
+                        val before = healthStore.integrity.snapshotForTank(
                             ownerUid = owner,
                             tankId = pending.tankId
                         )
@@ -58,7 +58,7 @@ internal class TankHealthIntegrityRecovery private constructor(
                             ownerUid = owner,
                             tankId = pending.tankId
                         ) {
-                            healthStore.restoreSnapshotForIntegrity(
+                            healthStore.integrity.restoreSnapshotForIntegrity(
                                 ownerUid = owner,
                                 tankId = pending.tankId,
                                 snapshot = pending.snapshot
@@ -80,7 +80,7 @@ internal class TankHealthIntegrityRecovery private constructor(
                     ownerUid = owner,
                     tankId = pending.tankId
                 )
-                healthStore.deleteRecordsForTank(
+                healthStore.integrity.deleteRecordsForTank(
                     ownerUid = owner,
                     tankId = pending.tankId
                 )
@@ -91,7 +91,7 @@ internal class TankHealthIntegrityRecovery private constructor(
         }
 
         val removedOrphanRecordCount =
-            healthStore.repairOrphanedRecords(owner)
+            healthStore.integrity.repairOrphanedRecords(owner)
 
         return Result(
             restoredRecordCount = restoredRecordCount,
