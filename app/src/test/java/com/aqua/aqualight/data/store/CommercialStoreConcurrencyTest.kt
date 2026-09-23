@@ -1,6 +1,11 @@
 package com.aqua.aqualight.data.store
 
 import androidx.datastore.core.DataStoreFactory
+import com.aqua.aqualight.application.aquarium.health.HealthWaterParameter
+import com.aqua.aqualight.data.aquarium.health.AquariumHealthCommercialSerializer
+import com.aqua.aqualight.data.aquarium.health.AquariumHealthStoreRules
+import com.aqua.aqualight.data.aquarium.health.StoredAquariumWaterReading
+import com.aqua.aqualight.data.aquarium.health.StoredAquariumWaterTest
 import com.aqua.aqualight.data.aquarium.store.AquariumTanksSerializer
 import com.aqua.aqualight.data.aquarium.store.StoredTank
 import com.aqua.aqualight.data.aquarium.store.TankStoreRules
@@ -59,6 +64,40 @@ class CommercialStoreConcurrencyTest {
             assertEquals(WRITE_COUNT, ids.toSet().size)
             assertTrue(ids.all { id -> id > 0L })
             CareTaskStoreRules.validateStore(persisted)
+        }
+    }
+
+    @Test
+    fun concurrentHealthTransactionsPersistUniqueOwnerScopedIds() = runBlocking {
+        withTemporaryStore(
+            fileName = "aquarium_health.pb",
+            serializer = AquariumHealthCommercialSerializer
+        ) { store ->
+            coroutineScope {
+                repeat(WRITE_COUNT) { index ->
+                    launch(Dispatchers.Default) {
+                        store.updateData { current ->
+                            val id = AquariumHealthStoreRules.nextUniqueId(
+                                store = current,
+                                nowMillis = FIXED_NOW_MILLIS
+                            )
+                            AquariumHealthStoreRules.validateStore(
+                                current.toBuilder()
+                                    .addWaterTests(validHealthWaterTest(id, index))
+                                    .build()
+                            )
+                        }
+                    }
+                }
+            }
+
+            val persisted = store.data.first()
+            val ids = persisted.waterTestsList.map { test -> test.id }
+
+            assertEquals(WRITE_COUNT, persisted.waterTestsCount)
+            assertEquals(WRITE_COUNT, ids.toSet().size)
+            assertTrue(ids.all { id -> id > 0L })
+            AquariumHealthStoreRules.validateStore(persisted)
         }
     }
 
@@ -166,6 +205,24 @@ class CommercialStoreConcurrencyTest {
         .setMissedReminderDays(CareTaskStoreRules.MIN_MISSED_REMINDER_DAYS)
         .setWaterChangePercent(0)
         .setGeneratedRuleKey("")
+        .setCreatedAtMillis(FIXED_NOW_MILLIS)
+        .setUpdatedAtMillis(FIXED_NOW_MILLIS)
+        .build()
+
+    private fun validHealthWaterTest(
+        id: Long,
+        index: Int
+    ): StoredAquariumWaterTest = StoredAquariumWaterTest.newBuilder()
+        .setId(id)
+        .setOwnerUid(OWNER_UID)
+        .setTankId(TANK_ID)
+        .setMeasuredAtMillis(FIXED_NOW_MILLIS)
+        .addReadings(
+            StoredAquariumWaterReading.newBuilder()
+                .setParameter(HealthWaterParameter.PH.name)
+                .setValue(7.0 + (index % 10) / 100.0)
+        )
+        .setNote("")
         .setCreatedAtMillis(FIXED_NOW_MILLIS)
         .setUpdatedAtMillis(FIXED_NOW_MILLIS)
         .build()
