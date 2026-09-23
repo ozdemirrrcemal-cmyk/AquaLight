@@ -6,6 +6,7 @@ import com.aqua.aqualight.application.aquarium.AquariumSubstrateMetadataCatalog
 import com.aqua.aqualight.application.aquarium.AquariumSubstrateProductMetadata
 
 private const val GRAVEL_PRODUCT_COUNT = 181
+private const val GRAVEL_BRAND_COUNT = 12
 
 private data class GravelCatalogResource(
     val id: String,
@@ -1066,8 +1067,10 @@ object GravelCatalog {
     init {
         check(definitions.size == GRAVEL_PRODUCT_COUNT)
         check(definitions.map(AquariumMaterialDefinition::id).distinct().size == definitions.size)
-        check(definitions.map(AquariumMaterialDefinition::id) == AquariumGravelProductIds.ALL)
+        check(definitions.map(AquariumMaterialDefinition::nameRes).distinct().size == definitions.size)
+        check(definitions.map(AquariumMaterialDefinition::brandRes).distinct().size == GRAVEL_BRAND_COUNT)
         check(definitions.all { definition -> definition.id.startsWith("gravel_") })
+        check(definitions.map(AquariumMaterialDefinition::id) == AquariumGravelProductIds.ALL)
         check(definitions.none { definition -> Regex("^gravel_\\d{4}$").matches(definition.id) })
     }
 }
