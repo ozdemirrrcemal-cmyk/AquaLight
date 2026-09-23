@@ -11,11 +11,20 @@ CONTRACT = ROOT / "docs/architecture/AQUARIUM_HEALTH_CONTRACT.md"
 APPLICATION = APP / "application/aquarium/health/AquariumHealthRecordOperations.kt"
 POLICY = APP / "application/aquarium/health/AquariumHealthMeasurementPolicy.kt"
 SYMPTOMS = APP / "application/aquarium/health/LivestockHealthSymptomCatalog.kt"
+PLANT_SYMPTOMS = APP / "application/aquarium/health/PlantHealthObservationCatalog.kt"
 PROTO = ROOT / "app/src/main/proto/aquarium_health.proto"
 STORE_RULES = APP / "data/aquarium/health/AquariumHealthStoreRules.kt"
 SERIALIZER = APP / "data/aquarium/health/AquariumHealthCommercialSerializer.kt"
+STORE_ACCESS = APP / "data/aquarium/health/AquariumHealthStoreAccess.kt"
 MANAGER = APP / "data/aquarium/health/AquariumHealthDataStoreManager.kt"
+WATER_STORE = APP / "data/aquarium/health/AquariumWaterTestStore.kt"
+LIVESTOCK_STORE = APP / "data/aquarium/health/LivestockHealthObservationStore.kt"
+PLANT_STORE = APP / "data/aquarium/health/PlantHealthObservationStore.kt"
+INTEGRITY_STORE = APP / "data/aquarium/health/AquariumHealthIntegrityStore.kt"
 ADAPTER = APP / "data/aquarium/health/DefaultAquariumHealthRecordOperations.kt"
+WATER_ADAPTER = APP / "data/aquarium/health/DefaultAquariumWaterTestOperations.kt"
+LIVESTOCK_ADAPTER = APP / "data/aquarium/health/DefaultLivestockHealthObservationOperations.kt"
+PLANT_ADAPTER = APP / "data/aquarium/health/DefaultPlantHealthObservationOperations.kt"
 JOURNAL = (
     APP
     / "data/aquarium/health/integrity/TankHealthIntegrityJournal.kt"
@@ -62,11 +71,20 @@ contract = read(CONTRACT)
 application = read(APPLICATION)
 policy = read(POLICY)
 symptoms = read(SYMPTOMS)
+plant_symptoms = read(PLANT_SYMPTOMS)
 proto = read(PROTO)
 store_rules = read(STORE_RULES)
 serializer = read(SERIALIZER)
+store_access = read(STORE_ACCESS)
 manager = read(MANAGER)
+water_store = read(WATER_STORE)
+livestock_store = read(LIVESTOCK_STORE)
+plant_store = read(PLANT_STORE)
+integrity_store = read(INTEGRITY_STORE)
 adapter = read(ADAPTER)
+water_adapter = read(WATER_ADAPTER)
+livestock_adapter = read(LIVESTOCK_ADAPTER)
+plant_adapter = read(PLANT_ADAPTER)
 journal = read(JOURNAL)
 recovery = read(RECOVERY)
 tank_cleaner = read(TANK_CLEANER)
@@ -103,6 +121,10 @@ for token in (
     "interface AquariumHealthRecordOperations",
     "data class AquariumWaterTestRecord",
     "data class LivestockHealthObservation",
+    "data class PlantHealthObservation",
+    "interface AquariumWaterTestOperations",
+    "interface LivestockHealthObservationOperations",
+    "interface PlantHealthObservationOperations",
     "enum class HealthWaterParameter",
 ):
     if token not in application:
@@ -126,9 +148,20 @@ for token in (
         errors.append(f"Health symptom identity contract is missing: {token}")
 
 for token in (
+    'const val ALGAE_PRESENCE = "plant_algae_presence"',
+    'const val BLACK_BEARD_ALGAE = "black_beard_algae"',
+    "requireValidSelection",
+    "AquariumAlgaeCatalog",
+):
+    if token not in plant_symptoms:
+        errors.append(f"Plant Health observation identity is missing: {token}")
+
+for token in (
     "message AquariumHealthStore",
     "repeated StoredAquariumWaterTest water_tests",
     "repeated StoredLivestockHealthObservation livestock_observations",
+    "repeated StoredPlantHealthObservation plant_observations",
+    "message StoredPlantHealthObservation",
     "uint32 schema_version = 100;",
 ):
     if token not in proto:
@@ -163,17 +196,52 @@ for token in (
     'fileName = "aquarium_health.pb"',
     "ReplaceFileCorruptionHandler",
     "Area.AQUARIUM_HEALTH",
-    "nextUniqueId",
-    "requireTankExists",
-    "requireObservationTarget",
-    "repairOrphanedRecords",
-    "TankHealthIntegrityJournal.requireWritable",
+    "AquariumHealthStoreRules::validateStore",
 ):
-    if token not in manager:
-        errors.append(f"Health manager boundary is missing: {token}")
+    if token not in store_access:
+        errors.append(f"Health store access boundary is missing: {token}")
 
-if adapter.count("withCurrentOwnerScope") < 6:
+for label, text_value in (
+    ("water", water_store),
+    ("livestock", livestock_store),
+    ("plant", plant_store),
+):
+    for token in (
+        "AquariumHealthStoreRules.nextUniqueId",
+        "access.updateTank",
+        "access.requireTank",
+    ):
+        if token not in text_value and not (
+            label == "water" and token == "access.requireTank"
+        ):
+            errors.append(
+                f"{label} Health store is missing owner/tank invariant: {token}"
+            )
+
+for token in (
+    "snapshotForTank",
+    "deleteRecordsForTank",
+    "restoreSnapshotForIntegrity",
+    "repairOrphanedRecords",
+    "plantObservations",
+):
+    if token not in integrity_store:
+        errors.append(f"Health integrity store is missing: {token}")
+
+owner_scope_count = sum(
+    text_value.count("withCurrentOwnerScope")
+    for text_value in (water_adapter, livestock_adapter, plant_adapter)
+)
+if owner_scope_count < 9:
     errors.append("Every Health mutation must remain pinned to one owner scope")
+
+for token in (
+    "DefaultAquariumWaterTestOperations",
+    "DefaultLivestockHealthObservationOperations",
+    "DefaultPlantHealthObservationOperations",
+):
+    if token not in adapter:
+        errors.append(f"Health operation composition is missing: {token}")
 
 for token in (
     "TankHealthIntegrityTransactions",
@@ -185,8 +253,8 @@ for token in (
         errors.append(f"Health tank-deletion journal is incomplete: {token}")
 
 for token in (
-    "restoreSnapshotForIntegrity",
-    "repairOrphanedRecords",
+    "healthStore.integrity.restoreSnapshotForIntegrity",
+    "healthStore.integrity.repairOrphanedRecords",
     "pendingForOwner",
 ):
     if token not in recovery:
