@@ -40,7 +40,6 @@
     <string name="catalog_brand_aquario" translatable="false">Aquario</string>
     <string name="catalog_brand_chihiros" translatable="false">Chihiros</string>
     <string name="catalog_brand_dennerle" translatable="false">Dennerle</string>
-    <string name="catalog_brand_do_aqua" translatable="false">Do!aqua</string>
     <string name="catalog_brand_eheim" translatable="false">Eheim</string>
     <string name="catalog_brand_green_aqua" translatable="false">Green Aqua</string>
     <string name="catalog_brand_ista" translatable="false">ISTA</string>
@@ -52,14 +51,6 @@
     <string name="catalog_brand_tropica" translatable="false">Tropica</string>
     <string name="catalog_brand_twinstar" translatable="false">Twinstar</string>
     <string name="catalog_brand_week_aqua" translatable="false">Week Aqua</string>
-    <string name="catalog_material_co2_chihiros_co2_regulator_name" translatable="false">Chihiros CO2 Regulator</string>
-    <string name="catalog_material_co2_chihiros_co2_generator_name" translatable="false">Chihiros CO2 Generator System</string>
-    <string name="catalog_material_co2_ista_professional_regulator_name" translatable="false">ISTA Professional CO2 Regulator</string>
-    <string name="catalog_material_co2_ista_aluminium_cylinder_name" translatable="false">ISTA Aluminium CO2 Cylinder</string>
-    <string name="catalog_material_co2_jbl_proflora_u504_name" translatable="false">JBL ProFlora u504 CO2 Set</string>
-    <string name="catalog_material_co2_dennerle_quantum_name" translatable="false">Dennerle Quantum CO2 Regulator</string>
-    <string name="catalog_material_co2_aquario_neo_diffuser_name" translatable="false">Aquario Neo CO2 Diffuser</string>
-    <string name="catalog_material_co2_do_aqua_music_glass_name" translatable="false">Do!aqua CO2 Music Glass Diffuser</string>
     <string name="catalog_material_cooler_aquael_fan_mini_name" translatable="false">Aquael Fan Mini</string>
     <string name="catalog_material_cooler_chihiros_cooling_fan_name" translatable="false">Chihiros Cooling Fan</string>
     <string name="catalog_material_cooler_ista_cooling_fan_name" translatable="false">ISTA Cooling Fan</string>
@@ -319,12 +310,8 @@
     <string name="catalog_keyword_cylinder">cylinder</string>
     <string name="catalog_keyword_bottle">bottle</string>
     <string name="catalog_keyword_jbl" translatable="false">jbl</string>
-    <string name="catalog_keyword_proflora" translatable="false">proflora</string>
     <string name="catalog_keyword_dennerle" translatable="false">dennerle</string>
     <string name="catalog_keyword_diffuser">diffuser</string>
-    <string name="catalog_keyword_neo" translatable="false">neo</string>
-    <string name="catalog_keyword_aquario" translatable="false">aquario</string>
-    <string name="catalog_keyword_doaqua" translatable="false">doaqua</string>
     <string name="catalog_keyword_cooler">cooler</string>
     <string name="catalog_keyword_fan">fan</string>
     <string name="catalog_keyword_temperature">temperature</string>
