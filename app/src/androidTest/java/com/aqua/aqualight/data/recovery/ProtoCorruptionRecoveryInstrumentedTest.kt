@@ -8,6 +8,9 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentsSerializer
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentsStore
+import com.aqua.aqualight.data.aquarium.health.AquariumHealthCommercialSerializer
+import com.aqua.aqualight.data.aquarium.health.AquariumHealthStore
+import com.aqua.aqualight.data.aquarium.health.AquariumHealthStoreRules
 import com.aqua.aqualight.data.aquarium.store.AquariumTanksSerializer
 import com.aqua.aqualight.data.aquarium.store.AquariumTanksStore
 import com.aqua.aqualight.data.aquarium.store.TankStoreRules
@@ -64,6 +67,13 @@ class ProtoCorruptionRecoveryInstrumentedTest {
                 area = LocalDataRecoveryTracker.Area.AQUARIUM_TANKS,
                 scope = scope
             )
+            val healthStore = createCorruptedStore(
+                file = File(testDirectory, "aquarium_health.pb"),
+                serializer = AquariumHealthCommercialSerializer,
+                replacement = AquariumHealthStoreRules.defaultStore(),
+                area = LocalDataRecoveryTracker.Area.AQUARIUM_HEALTH,
+                scope = scope
+            )
             val careStore = createCorruptedStore(
                 file = File(testDirectory, "care_tasks.pb"),
                 serializer = CareTasksCommercialSerializer,
@@ -87,6 +97,8 @@ class ProtoCorruptionRecoveryInstrumentedTest {
             )
 
             assertTrue(tankStore.data.first().tanksList.isEmpty())
+            assertTrue(healthStore.data.first().waterTestsList.isEmpty())
+            assertTrue(healthStore.data.first().livestockObservationsList.isEmpty())
             assertTrue(careStore.data.first().tasksList.isEmpty())
             assertTrue(knownStore.data.first().devicesList.isEmpty())
             assertTrue(assignmentStore.data.first().assignmentsList.isEmpty())
@@ -100,6 +112,7 @@ class ProtoCorruptionRecoveryInstrumentedTest {
             assertEquals(
                 setOf(
                     LocalDataRecoveryTracker.Area.AQUARIUM_TANKS,
+                    LocalDataRecoveryTracker.Area.AQUARIUM_HEALTH,
                     LocalDataRecoveryTracker.Area.CARE_TASKS,
                     LocalDataRecoveryTracker.Area.KNOWN_DEVICES,
                     LocalDataRecoveryTracker.Area.TANK_DEVICE_ASSIGNMENTS
