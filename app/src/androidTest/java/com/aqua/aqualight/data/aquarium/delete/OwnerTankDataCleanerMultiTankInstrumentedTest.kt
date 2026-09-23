@@ -70,13 +70,13 @@ class OwnerTankDataCleanerMultiTankInstrumentedTest {
                                     snapshots = snapshots
                                 )
                             },
-                            cancelReminder = { _, _ -> },
+                            cancelCareTaskReminder = { _, _ -> },
                             reconcileReminders = {}
                         ),
                         health = TankHealthDeletionDependencies(
-                            snapshotForTank = healthStore::snapshotForTank,
-                            deleteForTank = healthStore::deleteRecordsForTank,
-                            restoreForTank = healthStore::restoreSnapshotForIntegrity
+                            snapshotForTank = healthStore.integrity::snapshotForTank,
+                            deleteForTank = healthStore.integrity::deleteRecordsForTank,
+                            restoreForTank = healthStore.integrity::restoreSnapshotForIntegrity
                         ),
                         removeDeviceAssignmentsForTank = {
                             TankAssignmentCleanupResult.Completed(0)
@@ -101,13 +101,13 @@ class OwnerTankDataCleanerMultiTankInstrumentedTest {
                     careStore.tasksForTankFlow(secondTankId).first().isEmpty()
                 )
                 assertTrue(
-                    healthStore.waterTestsForOwnerFlow(
+                    healthStore.waterTests.observe(
                         ownerUid,
                         firstTankId
                     ).first().isEmpty()
                 )
                 assertTrue(
-                    healthStore.waterTestsForOwnerFlow(
+                    healthStore.waterTests.observe(
                         ownerUid,
                         secondTankId
                     ).first().isEmpty()
@@ -126,7 +126,7 @@ class OwnerTankDataCleanerMultiTankInstrumentedTest {
         } finally {
             UserDataScope.withOwnerUid(ownerUid) {
                 careStore.clearAllTasks(ownerUid)
-                healthStore.clearAllRecords(ownerUid)
+                healthStore.integrity.clearAllRecords(ownerUid)
                 tankStore.clearAllTanks(ownerUid)
                 TankCareIntegrityJournal.clearOwner(ownerUid)
                 TankHealthIntegrityJournal.clearOwner(ownerUid)
@@ -160,7 +160,7 @@ class OwnerTankDataCleanerMultiTankInstrumentedTest {
         ownerUid: String,
         tankId: Long
     ) {
-        healthStore.addWaterTest(
+        healthStore.waterTests.add(
             ownerUid = ownerUid,
             input = AquariumWaterTestInput(
                 tankId = tankId,
