@@ -60,7 +60,7 @@ class UserDataCleaner private constructor(
         }
     }
 
-    private class CleanupRun {
+    private inner class CleanupRun {
         val issues = mutableListOf<CleanupIssue>()
 
         fun recordIssue(
@@ -179,7 +179,9 @@ class UserDataCleaner private constructor(
             context = appContext,
             cancelNotifications = true,
             expectedOwnerUid = ownerUid
-        ).getOrThrow()
+        ).exceptionOrNull()?.let { error ->
+            throw error
+        }
     }
 
     private suspend fun clearPrimaryOwnerStores(
