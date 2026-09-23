@@ -126,7 +126,7 @@ internal fun lightDefinition(
             R.string.catalog_light_keyword_lighting,
             R.string.catalog_light_keyword_aquarium_light
         ) +
-            extraKeywordRes +
+            extraKeywordRes.toList() +
             hardwareType.keywordRes
         ).distinct()
 )
