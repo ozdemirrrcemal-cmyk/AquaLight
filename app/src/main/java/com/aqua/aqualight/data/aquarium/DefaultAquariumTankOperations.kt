@@ -4,15 +4,18 @@ import android.content.Context
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
 import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
 import com.aqua.aqualight.application.aquarium.AquariumPlantTag
+import com.aqua.aqualight.application.aquarium.AquariumTankCareSettingsOperations
 import com.aqua.aqualight.application.aquarium.AquariumTankCleanupIssue
 import com.aqua.aqualight.application.aquarium.AquariumTankCleanupStage
+import com.aqua.aqualight.application.aquarium.AquariumTankContentsOperations
+import com.aqua.aqualight.application.aquarium.AquariumTankDetailsOperations
 import com.aqua.aqualight.application.aquarium.AquariumTankDraft
+import com.aqua.aqualight.application.aquarium.AquariumTankLifecycleOperations
 import com.aqua.aqualight.application.aquarium.AquariumTankOperations
-import com.aqua.aqualight.application.aquarium.AquariumTankSize
+import com.aqua.aqualight.application.aquarium.AquariumTankReadOperations
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.application.aquarium.DeleteAquariumTanksResult
 import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
-import com.aqua.aqualight.data.aquarium.catalog.livestock.LivestockSelectionValidator
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
 import com.aqua.aqualight.data.aquarium.health.AquariumHealthDataStoreManager
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumLivestock
@@ -21,300 +24,80 @@ import com.aqua.aqualight.data.aquarium.model.TankDraft
 import com.aqua.aqualight.data.aquarium.model.TankMaterialSelection
 import com.aqua.aqualight.data.aquarium.model.TankPlantTag
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
-import com.aqua.aqualight.data.user.UserDataScope
-import com.aqua.aqualight.data.user.withCurrentOwnerScope
-import com.aqua.aqualight.platform.media.AppMediaStorage
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.withContext
 
 class DefaultAquariumTankOperations(
     context: Context,
-    private val tankStore: AquariumTankDataStoreManager,
-    private val healthStore: AquariumHealthDataStoreManager,
-    private val tankDataCleaner: OwnerTankDataCleaner,
-    private val notificationPreferences: NotificationPreferenceUseCase,
-    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
-) : AquariumTankOperations {
-
-    private val appContext = context.applicationContext
-    private val livestockSelectionValidator = LivestockSelectionValidator(appContext)
-
-    override val tanks: Flow<List<AquariumTankSnapshot>> = tankStore.tanksFlow.map { tanks ->
-        tanks.map(SavedAquariumTank::toApplicationSnapshot)
-    }
-
-    override suspend fun addTank(draft: AquariumTankDraft): Long = withContext(NonCancellable) {
-        withContext(dispatcher) {
-            val pendingPhoto = draft.photoUri
-            val tankId = try {
-                tankStore.addTankFromDraft(draft.toDataDraft())
-            } catch (error: Throwable) {
-                runCatching { AppMediaStorage.rollbackPendingMedia(appContext, pendingPhoto) }
-                throw error
-            }
-
-            runCatching { AppMediaStorage.commitPendingMedia(appContext, pendingPhoto) }
-            tankId
-        }
-    }
-
-    override suspend fun duplicateTank(tankId: Long): Long = withContext(NonCancellable) {
-        withContext(dispatcher) {
-            val ownerUid = UserDataScope.requireCurrentUid()
-            val source = tankStore.tanksSnapshotForOwner(ownerUid)
-                .firstOrNull { tank -> tank.id == tankId }
-                ?: throw IllegalArgumentException("Tank not found for the active owner.")
-            val duplicateId = tankStore.duplicateTank(tankId)
-            val duplicate = tankStore.tanksSnapshotForOwner(ownerUid)
-                .firstOrNull { tank -> tank.id == duplicateId }
-                ?: throw IllegalStateException("Duplicated tank record is missing.")
-
-            val sourceIsOwned = AppMediaStorage.isAppOwned(appContext, source.photoUri)
-            val invalidSharedOwnership = sourceIsOwned &&
-                !source.photoUri.isNullOrBlank() &&
-                (duplicate.photoUri.isNullOrBlank() || duplicate.photoUri == source.photoUri)
-            if (invalidSharedOwnership) {
-                runCatching { tankStore.deleteTanks(listOf(duplicateId)) }
-                throw IllegalStateException(
-                    "Tank photo could not be copied with independent ownership."
-                )
-            }
-
-            runCatching { AppMediaStorage.commitPendingMedia(appContext, duplicate.photoUri) }
-            duplicateId
-        }
-    }
-
-    override suspend fun deleteTanks(
-        tankIds: Collection<Long>
-    ): DeleteAquariumTanksResult = withContext(dispatcher) {
-        withCurrentOwnerScope {
-            tankDataCleaner.deleteTanks(tankIds).toApplicationResult()
-        }
-    }
-
-    override suspend fun updateTankPhoto(tankId: Long, photoUri: String?): Unit =
-        withContext(NonCancellable) {
-            withContext(dispatcher) {
-                val ownerUid = UserDataScope.requireCurrentUid()
-                val previousPhoto = try {
-                    tankStore.updateTankPhoto(tankId, photoUri)
-                } catch (error: Throwable) {
-                    runCatching { AppMediaStorage.rollbackPendingMedia(appContext, photoUri) }
-                    throw error
-                }
-
-                runCatching { AppMediaStorage.commitPendingMedia(appContext, photoUri) }
-                runCatching {
-                    AppMediaStorage.deleteAfterCommit(
-                        context = appContext,
-                        ownerUid = ownerUid,
-                        uriString = previousPhoto
-                    )
-                }
-                Unit
-            }
-        }
-
-    override suspend fun updateTankName(tankId: Long, name: String) =
-        tankStore.updateTankName(tankId, name)
-
-    override suspend fun updateTankType(tankId: Long, tankType: String) =
-        tankStore.updateTankType(tankId, tankType)
-
-    override suspend fun updateTankSize(tankId: Long, size: AquariumTankSize) =
-        tankStore.updateTankSize(
-            tankId = tankId,
-            widthCm = size.widthCm,
-            lengthCm = size.lengthCm,
-            heightCm = size.heightCm,
-            sizeUnit = size.sizeUnit
+    tankStore: AquariumTankDataStoreManager,
+    healthStore: AquariumHealthDataStoreManager,
+    tankDataCleaner: OwnerTankDataCleaner,
+    notificationPreferences: NotificationPreferenceUseCase,
+    dispatcher: CoroutineDispatcher = Dispatchers.IO
+) : AquariumTankOperations,
+    AquariumTankReadOperations by DefaultAquariumTankReadOperations(
+        tankStore
+    ),
+    AquariumTankLifecycleOperations by DefaultAquariumTankLifecycleOperations(
+        context = context,
+        tankStore = tankStore,
+        tankDataCleaner = tankDataCleaner,
+        dispatcher = dispatcher
+    ),
+    AquariumTankDetailsOperations by DefaultAquariumTankDetailsOperations(
+        context = context,
+        tankStore = tankStore,
+        dispatcher = dispatcher
+    ),
+    AquariumTankContentsOperations by DefaultAquariumTankContentsOperations(
+        context = context,
+        tankStore = tankStore,
+        healthStore = healthStore
+    ),
+    AquariumTankCareSettingsOperations by
+        DefaultAquariumTankCareSettingsOperations(
+            tankStore = tankStore,
+            notificationPreferences = notificationPreferences
         )
 
-    override suspend fun updateTankVolumeUnit(tankId: Long, volumeUnit: String) =
-        tankStore.updateTankVolumeUnit(tankId, volumeUnit)
+internal fun OwnerTankDataCleaner.Result.toApplicationResult():
+    DeleteAquariumTanksResult = when (this) {
+    OwnerTankDataCleaner.Result.NoOp ->
+        DeleteAquariumTanksResult.NoOp
 
-    override suspend fun updateTankSetupDate(tankId: Long, setupDateEpochDay: Long) =
-        tankStore.updateTankSetupDate(tankId, setupDateEpochDay)
+    is OwnerTankDataCleaner.Result.DeleteFailed ->
+        DeleteAquariumTanksResult.DeleteFailed
 
-    override suspend fun updateTankStyle(tankId: Long, tankStyle: String) =
-        tankStore.updateTankStyle(tankId, tankStyle)
-
-    override suspend fun updateTankDescription(tankId: Long, description: String) =
-        tankStore.updateTankDescription(tankId, description)
-
-    override suspend fun updateTankMaterials(
-        tankId: Long,
-        categoryKey: String,
-        materials: List<AquariumMaterialSelection>
-    ) = tankStore.updateTankMaterialsForCategory(
-        tankId = tankId,
-        categoryKey = categoryKey,
-        materials = materials.map(AquariumMaterialSelection::toDataSelection)
-    )
-
-    override suspend fun updateTankPlants(
-        tankId: Long,
-        plants: List<AquariumPlantTag>
-    ) = withCurrentOwnerScope { ownerUid ->
-        val existingTank = tankStore.tanksSnapshotForOwner(ownerUid)
-            .firstOrNull { tank -> tank.id == tankId }
-            ?: throw IllegalArgumentException(
-                "Tank not found for the active owner."
-            )
-        val previousPlants = existingTank.plants.map { plant ->
-            TankPlantTag(
-                id = plant.id,
-                catalogId = plant.catalogId,
-                plantName = plant.plantName,
-                category = plant.category,
-                markerX = plant.markerX,
-                markerY = plant.markerY
-            )
-        }
-        val updatedPlants = plants.map(AquariumPlantTag::toDataTag)
-        val updateResult = runCatching {
-            tankStore.updateTankPlants(tankId, updatedPlants)
-            healthStore.plantObservations.retainPlantTargets(
-                ownerUid = ownerUid,
-                tankId = tankId,
-                validPlantIds = plants.mapTo(mutableSetOf()) { plant -> plant.id }
-            )
-        }
-        val updateError = updateResult.exceptionOrNull()
-        if (updateError != null) {
-            runCatching {
-                tankStore.updateTankPlants(tankId, previousPlants)
-            }.exceptionOrNull()?.let(updateError::addSuppressed)
-            throw updateError
-        }
-        Unit
-    }
-
-    override suspend fun addLivestock(
-        tankId: Long,
-        livestock: AquariumLivestock
-    ) {
-        livestockSelectionValidator.requireCurrent(livestock)
-        tankStore.addLivestockToTank(tankId, livestock.toDataLivestock())
-    }
-
-    override suspend fun updateLivestock(
-        tankId: Long,
-        livestock: AquariumLivestock
-    ) {
-        livestockSelectionValidator.requireCurrent(livestock)
-        tankStore.updateLivestockInTank(tankId, livestock.toDataLivestock())
-    }
-
-    override suspend fun removeLivestock(
-        tankId: Long,
-        livestockId: Long
-    ) = withCurrentOwnerScope { ownerUid ->
-        tankStore.removeLivestockFromTank(tankId, livestockId)
-        healthStore.livestockObservations.removeForLivestock(
-            ownerUid = ownerUid,
-            tankId = tankId,
-            livestockId = livestockId
-        )
-    }
-
-    override suspend fun updateSmartCareEnabled(tankId: Long, enabled: Boolean) =
-        tankStore.updateSmartCareEnabled(tankId, enabled)
-
-    override suspend fun updateCareRemindersEnabled(
-        tankId: Long,
-        enabled: Boolean
-    ) = withCurrentOwnerScope { ownerUid ->
-        tankStore.updateCareRemindersEnabled(tankId, enabled)
-        notificationPreferences.reconcileOwner(ownerUid)
-    }
-}
-
-internal fun OwnerTankDataCleaner.Result.toApplicationResult(): DeleteAquariumTanksResult =
-    when (this) {
-        OwnerTankDataCleaner.Result.NoOp -> DeleteAquariumTanksResult.NoOp
-        is OwnerTankDataCleaner.Result.DeleteFailed -> DeleteAquariumTanksResult.DeleteFailed
-        is OwnerTankDataCleaner.Result.Deleted -> DeleteAquariumTanksResult.Deleted(
+    is OwnerTankDataCleaner.Result.Deleted ->
+        DeleteAquariumTanksResult.Deleted(
             tankIds = tankIds,
             cleanupIssues = cleanupIssues.map { issue ->
                 AquariumTankCleanupIssue(
                     tankId = issue.tankId,
-                    stage = when (issue.stage) {
-                        OwnerTankDataCleaner.CleanupStage.CARE_TASKS ->
-                            AquariumTankCleanupStage.CARE_TASKS
-                        OwnerTankDataCleaner.CleanupStage.HEALTH_RECORDS ->
-                            AquariumTankCleanupStage.HEALTH_RECORDS
-                        OwnerTankDataCleaner.CleanupStage.DEVICE_ASSIGNMENTS ->
-                            AquariumTankCleanupStage.DEVICE_ASSIGNMENTS
-                    }
+                    stage = issue.stage.toApplicationStage()
                 )
             }
         )
-    }
+}
 
-internal fun SavedAquariumTank.toApplicationSnapshot(): AquariumTankSnapshot =
-    AquariumTankSnapshot(
-        id = id,
-        name = name,
-        description = description,
-        photoUri = photoUri,
-        setupDateEpochDay = setupDateEpochDay,
-        widthCm = widthCm,
-        lengthCm = lengthCm,
-        heightCm = heightCm,
-        sizeUnit = sizeUnit,
-        volumeUnit = volumeUnit,
-        tankType = tankType,
-        tankStyle = tankStyle,
-        createdAtMillis = createdAtMillis,
-        smartCareEnabled = smartCareEnabled,
-        careRemindersEnabled = careRemindersEnabled,
-        plants = plants.map { plant ->
-            AquariumPlantTag(
-                id = plant.id,
-                catalogId = plant.catalogId,
-                plantName = plant.plantName,
-                category = plant.category,
-                markerX = plant.markerX,
-                markerY = plant.markerY
-            )
-        },
-        materials = materials.map { material ->
-            AquariumMaterialSelection(
-                id = material.id,
-                productId = material.productId,
-                categoryKey = material.categoryKey,
-                categoryTitle = material.categoryTitle,
-                name = material.name,
-                brand = material.brand,
-                note = material.note
-            )
-        },
-        livestock = livestock.map { item ->
-            AquariumLivestock(
-                id = item.id,
-                catalogEntryId = item.catalogEntryId,
-                name = item.name,
-                category = item.category,
-                quantity = item.quantity,
-                addedDateEpochDay = item.addedDateEpochDay,
-                note = item.note
-            )
-        }
-    )
+private fun OwnerTankDataCleaner.CleanupStage.toApplicationStage():
+    AquariumTankCleanupStage = when (this) {
+    OwnerTankDataCleaner.CleanupStage.CARE_TASKS ->
+        AquariumTankCleanupStage.CARE_TASKS
 
-internal fun AquariumTankDraft.toDataDraft(): TankDraft = TankDraft(
+    OwnerTankDataCleaner.CleanupStage.HEALTH_RECORDS ->
+        AquariumTankCleanupStage.HEALTH_RECORDS
+
+    OwnerTankDataCleaner.CleanupStage.DEVICE_ASSIGNMENTS ->
+        AquariumTankCleanupStage.DEVICE_ASSIGNMENTS
+}
+
+internal fun SavedAquariumTank.toApplicationSnapshot():
+    AquariumTankSnapshot = AquariumTankSnapshot(
+    id = id,
     name = name,
     description = description,
     photoUri = photoUri,
-    plants = plants.map(AquariumPlantTag::toDataTag),
-    materials = materials.map(AquariumMaterialSelection::toDataSelection),
-    info = info,
     setupDateEpochDay = setupDateEpochDay,
     widthCm = widthCm,
     lengthCm = lengthCm,
@@ -322,36 +105,92 @@ internal fun AquariumTankDraft.toDataDraft(): TankDraft = TankDraft(
     sizeUnit = sizeUnit,
     volumeUnit = volumeUnit,
     tankType = tankType,
-    tankStyle = tankStyle
+    tankStyle = tankStyle,
+    createdAtMillis = createdAtMillis,
+    smartCareEnabled = smartCareEnabled,
+    careRemindersEnabled = careRemindersEnabled,
+    plants = plants.map { plant ->
+        AquariumPlantTag(
+            id = plant.id,
+            catalogId = plant.catalogId,
+            plantName = plant.plantName,
+            category = plant.category,
+            markerX = plant.markerX,
+            markerY = plant.markerY
+        )
+    },
+    materials = materials.map { material ->
+        AquariumMaterialSelection(
+            id = material.id,
+            productId = material.productId,
+            categoryKey = material.categoryKey,
+            categoryTitle = material.categoryTitle,
+            name = material.name,
+            brand = material.brand,
+            note = material.note
+        )
+    },
+    livestock = livestock.map { item ->
+        AquariumLivestock(
+            id = item.id,
+            catalogEntryId = item.catalogEntryId,
+            name = item.name,
+            category = item.category,
+            quantity = item.quantity,
+            addedDateEpochDay = item.addedDateEpochDay,
+            note = item.note
+        )
+    }
 )
 
-private fun AquariumPlantTag.toDataTag(): TankPlantTag = TankPlantTag(
-    id = id,
-    catalogId = catalogId,
-    plantName = plantName,
-    category = category,
-    markerX = markerX,
-    markerY = markerY
-)
-
-private fun AquariumMaterialSelection.toDataSelection(): TankMaterialSelection =
-    TankMaterialSelection(
-        id = id,
-        productId = productId,
-        categoryKey = categoryKey,
-        categoryTitle = categoryTitle,
+internal fun AquariumTankDraft.toDataDraft(): TankDraft =
+    TankDraft(
         name = name,
-        brand = brand,
-        note = note
+        description = description,
+        photoUri = photoUri,
+        plants = plants.map(AquariumPlantTag::toDataTag),
+        materials = materials.map(
+            AquariumMaterialSelection::toDataSelection
+        ),
+        info = info,
+        setupDateEpochDay = setupDateEpochDay,
+        widthCm = widthCm,
+        lengthCm = lengthCm,
+        heightCm = heightCm,
+        sizeUnit = sizeUnit,
+        volumeUnit = volumeUnit,
+        tankType = tankType,
+        tankStyle = tankStyle
     )
 
-private fun AquariumLivestock.toDataLivestock(): SavedAquariumLivestock =
-    SavedAquariumLivestock(
+internal fun AquariumPlantTag.toDataTag(): TankPlantTag =
+    TankPlantTag(
         id = id,
-        catalogEntryId = catalogEntryId,
-        name = name,
+        catalogId = catalogId,
+        plantName = plantName,
         category = category,
-        quantity = quantity,
-        addedDateEpochDay = addedDateEpochDay,
-        note = note
+        markerX = markerX,
+        markerY = markerY
     )
+
+internal fun AquariumMaterialSelection.toDataSelection():
+    TankMaterialSelection = TankMaterialSelection(
+    id = id,
+    productId = productId,
+    categoryKey = categoryKey,
+    categoryTitle = categoryTitle,
+    name = name,
+    brand = brand,
+    note = note
+)
+
+internal fun AquariumLivestock.toDataLivestock():
+    SavedAquariumLivestock = SavedAquariumLivestock(
+    id = id,
+    catalogEntryId = catalogEntryId,
+    name = name,
+    category = category,
+    quantity = quantity,
+    addedDateEpochDay = addedDateEpochDay,
+    note = note
+)
