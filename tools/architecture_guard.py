@@ -517,6 +517,10 @@ for token, reason in (
         "clean install must inspect durable tank state",
     ),
     (
+        "aquarium_health.pb",
+        "clean install must inspect durable Aquarium Health state",
+    ),
+    (
         "tank_device_assignments.pb",
         "clean install must inspect durable assignment state",
     ),
@@ -527,6 +531,10 @@ for token, reason in (
     (
         "tankCareIntegrityEntries",
         "clean install must inspect pending Tank/Care compensation state",
+    ),
+    (
+        "tankHealthIntegrityEntries",
+        "clean install must inspect pending Tank/Health compensation state",
     ),
     (
         "encryptedOwnerEntries",
