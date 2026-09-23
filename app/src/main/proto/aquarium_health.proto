@@ -6,6 +6,7 @@ option java_multiple_files = true;
 message AquariumHealthStore {
   repeated StoredAquariumWaterTest water_tests = 1;
   repeated StoredLivestockHealthObservation livestock_observations = 2;
+  repeated StoredPlantHealthObservation plant_observations = 3;
 
   // First Health schema. There is no pre-Health legacy store or migration path.
   uint32 schema_version = 100;
@@ -35,6 +36,23 @@ message StoredLivestockHealthObservation {
   int64 livestock_id = 4;
   string category_key = 5;
   string symptom_key = 6;
+  string intensity = 7;
+  int64 observed_at_millis = 8;
+  string note = 9;
+  int64 created_at_millis = 10;
+  int64 updated_at_millis = 11;
+}
+
+
+message StoredPlantHealthObservation {
+  int64 id = 1;
+  string owner_uid = 2;
+  int64 tank_id = 3;
+  // Zero means a tank-wide plant/algae observation with no specific saved plant target.
+  int64 plant_id = 4;
+  string symptom_key = 5;
+  // Empty unless symptom_key represents an algae-presence observation.
+  string algae_type_key = 6;
   string intensity = 7;
   int64 observed_at_millis = 8;
   string note = 9;
