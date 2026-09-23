@@ -1230,8 +1230,9 @@ object CoolerCatalog {
     init {
         check(definitions.size == COOLER_PRODUCT_COUNT)
         check(definitions.map(AquariumMaterialDefinition::id).distinct().size == definitions.size)
+        check(definitions.map(AquariumMaterialDefinition::nameRes).distinct().size == definitions.size)
+        check(definitions.map(AquariumMaterialDefinition::brandRes).distinct().size == COOLER_BRAND_COUNT)
         check(definitions.all { definition -> definition.id.startsWith("cooler_") })
-        check(coolerCatalogResources.map(CoolerCatalogResource::brandRes).distinct().size == COOLER_BRAND_COUNT)
     }
 }
 
