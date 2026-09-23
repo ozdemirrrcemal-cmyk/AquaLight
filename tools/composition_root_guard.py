@@ -194,12 +194,15 @@ require(
     "internal class OwnerViewModelFactory",
     "notificationPreferenceUseCase: NotificationPreferenceUseCase",
     "modelClass in OWNER_BINDINGS",
-    "val graph = ownerGraphResolver.requireActive()",
+    "OwnerViewModelBindingContext(",
+    "graph = ownerGraphResolver.requireActive()",
+    "OwnerViewModelFactoryServices(",
+    "notificationPreferenceUseCase = notificationPreferenceUseCase",
     "ownerUidProvider = { graph.ownerUid }",
-    "notificationPreferences = notificationPreferenceUseCase",
     "TankCareDeletionDependencies(",
     "cancelCareTaskReminder =",
     "TankHealthDeletionDependencies(",
+    "modelClass.cast(viewModel)",
     "No owner-scoped ViewModel binding",
 )
 forbid(
@@ -211,6 +214,7 @@ forbid(
     "DefaultProvisioningProgressOperations(appContext)",
     "val currentGraph = ownerGraphResolver.requireActive()",
     "Authenticated owner changed while constructing",
+    "@Suppress(",
 )
 
 require(
