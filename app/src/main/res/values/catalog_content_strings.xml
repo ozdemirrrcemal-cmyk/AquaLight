@@ -54,11 +54,6 @@
     <string name="catalog_material_cooler_ista_cooling_fan_name" translatable="false">ISTA Cooling Fan</string>
     <string name="catalog_material_cooler_jbl_cooler_100_name" translatable="false">JBL Cooler 100</string>
     <string name="catalog_material_cooler_jbl_cooler_200_name" translatable="false">JBL Cooler 200</string>
-    <string name="catalog_material_dosing_chihiros_dosing_pump_name" translatable="false">Chihiros Dosing Pump</string>
-    <string name="catalog_material_dosing_chihiros_dosing_system_name" translatable="false">Chihiros Dosing System</string>
-    <string name="catalog_material_dosing_jebao_dp_4_name" translatable="false">Jebao DP-4 Dosing Pump</string>
-    <string name="catalog_material_dosing_kamoer_x1_name" translatable="false">Kamoer X1 Dosing Pump</string>
-    <string name="catalog_material_dosing_kamoer_f4_name" translatable="false">Kamoer F4 Dosing Pump</string>
     <string name="catalog_material_heater_eheim_thermocontrol_50w_name" translatable="false">Eheim Thermocontrol 50W</string>
     <string name="catalog_material_heater_eheim_thermocontrol_100w_name" translatable="false">Eheim Thermocontrol 100W</string>
     <string name="catalog_material_heater_eheim_thermocontrol_150w_name" translatable="false">Eheim Thermocontrol 150W</string>
@@ -299,8 +294,6 @@
     <string name="catalog_keyword_dosing">dosing</string>
     <string name="catalog_keyword_pump">pump</string>
     <string name="catalog_keyword_fertilizer">fertilizer</string>
-    <string name="catalog_keyword_jebao" translatable="false">jebao</string>
-    <string name="catalog_keyword_kamoer" translatable="false">kamoer</string>
     <string name="catalog_keyword_liquid">liquid</string>
     <string name="catalog_keyword_plant">plant</string>
     <string name="catalog_keyword_carbon">carbon</string>
