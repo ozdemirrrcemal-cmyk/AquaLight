@@ -14,8 +14,15 @@ COMPOSITIONS = {
     ),
 }
 CONTROL_OPERATION_WIRING = {
-    "production": "controlOperations = DefaultDeviceCoolingControlOperations(",
-    "releaseSmoke": "controlOperations = DefaultDeviceCoolingControlOperations(",
+    "production": (
+        "controlOperations =",
+        "DefaultDeviceCoolingControlOperations(",
+        "context.repository",
+    ),
+    "releaseSmoke": (
+        "controlOperations = DefaultDeviceCoolingControlOperations(",
+        "devicesRepository",
+    ),
 }
 
 
@@ -45,7 +52,8 @@ class CoolingRootDependencyWiringTest(unittest.TestCase):
             with self.subTest(composition=name):
                 text = path.read_text(encoding="utf-8")
                 self.assertIn("DeviceCoolingRootViewModel(", text)
-                self.assertIn(CONTROL_OPERATION_WIRING[name], text)
+                for token in CONTROL_OPERATION_WIRING[name]:
+                    self.assertIn(token, text)
                 self.assertIn(
                     "historyOperations = DefaultDeviceCoolingTemperatureHistoryOperations(",
                     text,
