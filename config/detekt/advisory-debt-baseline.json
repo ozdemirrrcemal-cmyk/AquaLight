@@ -2,15 +2,9 @@
   "schemaVersion": 1,
   "policyId": "aqualight-detekt-advisory-debt",
   "detektVersion": "1.23.8",
-  "sourceCommit": "ff9cd9f9f7df3d8316d9051e42b9bdf165ca3947",
-  "totalFindings": 983,
+  "sourceCommit": "049cf9eb412173c8c1c36ff03b0b2998d3004913",
+  "totalFindings": 948,
   "fingerprints": [
-    {
-      "ruleId": "detekt.complexity.ComplexCondition",
-      "path": "app/src/main/java/com/aqua/aqualight/composition/OwnerDependencyGraph.kt",
-      "message": "This condition is too complex (4). Defined complexity threshold for conditions is set to '4'",
-      "count": 1
-    },
     {
       "ruleId": "detekt.complexity.ComplexCondition",
       "path": "app/src/main/java/com/aqua/aqualight/data/devices/provisioning/ble/AqlBleProvisioningGattClient.kt",
@@ -49,18 +43,6 @@
     },
     {
       "ruleId": "detekt.complexity.CyclomaticComplexMethod",
-      "path": "app/src/main/java/com/aqua/aqualight/composition/OwnerViewModelFactory.kt",
-      "message": "The function create appears to be too complex based on Cyclomatic Complexity (complexity: 17). Defined complexity threshold for methods is set to '15'",
-      "count": 1
-    },
-    {
-      "ruleId": "detekt.complexity.CyclomaticComplexMethod",
-      "path": "app/src/main/java/com/aqua/aqualight/data/aquarium/delete/OwnerTankDataCleaner.kt",
-      "message": "The function deleteTanks appears to be too complex based on Cyclomatic Complexity (complexity: 16). Defined complexity threshold for methods is set to '15'",
-      "count": 1
-    },
-    {
-      "ruleId": "detekt.complexity.CyclomaticComplexMethod",
       "path": "app/src/main/java/com/aqua/aqualight/data/auth/AccountDeletionManager.kt",
       "message": "The function deleteOrResumeLocked appears to be too complex based on Cyclomatic Complexity (complexity: 18). Defined complexity threshold for methods is set to '15'",
       "count": 1
@@ -69,12 +51,6 @@
       "ruleId": "detekt.complexity.CyclomaticComplexMethod",
       "path": "app/src/main/java/com/aqua/aqualight/data/auth/AuthErrorMapper.kt",
       "message": "The function messageFor appears to be too complex based on Cyclomatic Complexity (complexity: 34). Defined complexity threshold for methods is set to '15'",
-      "count": 1
-    },
-    {
-      "ruleId": "detekt.complexity.CyclomaticComplexMethod",
-      "path": "app/src/main/java/com/aqua/aqualight/data/auth/OwnerSessionCoordinator.kt",
-      "message": "The function open appears to be too complex based on Cyclomatic Complexity (complexity: 15). Defined complexity threshold for methods is set to '15'",
       "count": 1
     },
     {
@@ -147,12 +123,6 @@
       "ruleId": "detekt.complexity.CyclomaticComplexMethod",
       "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/userinfo/UserAddressFragment.kt",
       "message": "The function saveAddress appears to be too complex based on Cyclomatic Complexity (complexity: 15). Defined complexity threshold for methods is set to '15'",
-      "count": 1
-    },
-    {
-      "ruleId": "detekt.complexity.CyclomaticComplexMethod",
-      "path": "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/ReleaseSmokeAppContainer.kt",
-      "message": "The function create appears to be too complex based on Cyclomatic Complexity (complexity: 16). Defined complexity threshold for methods is set to '15'",
       "count": 1
     },
     {
@@ -241,30 +211,6 @@
     },
     {
       "ruleId": "detekt.complexity.LongMethod",
-      "path": "app/src/androidTest/java/com/aqua/aqualight/data/recovery/ProtoCorruptionRecoveryInstrumentedTest.kt",
-      "message": "The function allAuthoritativeProtoStoresRecoverFailClosedAndReportRecovery is too long (68). The maximum length is 60.",
-      "count": 1
-    },
-    {
-      "ruleId": "detekt.complexity.LongMethod",
-      "path": "app/src/main/java/com/aqua/aqualight/composition/OwnerDependencyGraph.kt",
-      "message": "The function requireActive is too long (87). The maximum length is 60.",
-      "count": 1
-    },
-    {
-      "ruleId": "detekt.complexity.LongMethod",
-      "path": "app/src/main/java/com/aqua/aqualight/composition/OwnerViewModelFactory.kt",
-      "message": "The function create is too long (139). The maximum length is 60.",
-      "count": 1
-    },
-    {
-      "ruleId": "detekt.complexity.LongMethod",
-      "path": "app/src/main/java/com/aqua/aqualight/data/aquarium/delete/OwnerTankDataCleaner.kt",
-      "message": "The function deleteTanks is too long (107). The maximum length is 60.",
-      "count": 1
-    },
-    {
-      "ruleId": "detekt.complexity.LongMethod",
       "path": "app/src/main/java/com/aqua/aqualight/data/aquarium/store/AquariumTankDataStoreManager.kt",
       "message": "The function duplicateTank is too long (64). The maximum length is 60.",
       "count": 1
@@ -279,12 +225,6 @@
       "ruleId": "detekt.complexity.LongMethod",
       "path": "app/src/main/java/com/aqua/aqualight/data/auth/AuthErrorMapper.kt",
       "message": "The function messageFor is too long (77). The maximum length is 60.",
-      "count": 1
-    },
-    {
-      "ruleId": "detekt.complexity.LongMethod",
-      "path": "app/src/main/java/com/aqua/aqualight/data/auth/OwnerSessionCoordinator.kt",
-      "message": "The function open is too long (115). The maximum length is 60.",
       "count": 1
     },
     {
@@ -369,12 +309,6 @@
       "ruleId": "detekt.complexity.LongMethod",
       "path": "app/src/main/java/com/aqua/aqualight/data/devices/store/KnownDeviceProtoMapper.kt",
       "message": "The function toSnapshot is too long (81). The maximum length is 60.",
-      "count": 1
-    },
-    {
-      "ruleId": "detekt.complexity.LongMethod",
-      "path": "app/src/main/java/com/aqua/aqualight/data/user/UserDataCleaner.kt",
-      "message": "The function clearLocalUserData is too long (73). The maximum length is 60.",
       "count": 1
     },
     {
@@ -553,18 +487,6 @@
     },
     {
       "ruleId": "detekt.complexity.LongMethod",
-      "path": "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/ReleaseSmokeAppContainer.kt",
-      "message": "The function create is too long (109). The maximum length is 60.",
-      "count": 1
-    },
-    {
-      "ruleId": "detekt.complexity.LongMethod",
-      "path": "app/src/test/java/com/aqua/aqualight/data/aquarium/DefaultAquariumTankOperationsMapperTest.kt",
-      "message": "The function saved tank maps every UI-facing field without owner leakage is too long (86). The maximum length is 60.",
-      "count": 1
-    },
-    {
-      "ruleId": "detekt.complexity.LongMethod",
       "path": "app/src/test/java/com/aqua/aqualight/data/devices/runtime/ws/AqlWsWireCodecGoldenTest.kt",
       "message": "The function shared golden handshake and signed runtime frames are interoperable is too long (82). The maximum length is 60.",
       "count": 1
@@ -585,12 +507,6 @@
       "ruleId": "detekt.complexity.LongParameterList",
       "path": "app/src/androidTest/java/com/aqua/aqualight/data/care/reminder/CareReminderLocaleInstrumentedTest.kt",
       "message": "The function task(type: CareTaskType, source: CareTaskSource, title: String, description: String, note: String, waterChangePercent: Int?, generatedRuleKey: String) has too many parameters. The current threshold is set to 6.",
-      "count": 1
-    },
-    {
-      "ruleId": "detekt.complexity.LongParameterList",
-      "path": "app/src/main/java/com/aqua/aqualight/data/aquarium/delete/OwnerTankDataCleaner.kt",
-      "message": "The constructor(deleteTankRecords: suspend (List<Long>) -> Unit, snapshotCareTasksForTank: suspend (Long) -> List<CareTask>, deleteCareTasksForTank: suspend (Long) -> Unit, restoreCareTasksForTank: suspend (Long, List<CareTask>) -> Unit, removeDeviceAssignmentsForTank: suspend (Long) -> TankAssignmentCleanupResult, cancelCareTaskReminder: suspend (String, Long) -> Unit, reconcileCareReminders: suspend (String) -> Unit, integrityTransactions: TankCareIntegrityTransactions, ownerUidProvider: () -> String) has too many parameters. The current threshold is set to 7.",
       "count": 1
     },
     {
@@ -757,12 +673,6 @@
     },
     {
       "ruleId": "detekt.complexity.LongParameterList",
-      "path": "app/src/test/java/com/aqua/aqualight/data/aquarium/delete/OwnerTankDataCleanerTest.kt",
-      "message": "The function cleaner(integrity: RecordingIntegrityTransactions, deleteTankRecords: suspend (List<Long>) -> Unit, snapshotCareTasksForTank: suspend (Long) -> List<CareTask>, deleteCareTasksForTank: suspend (Long) -> Unit, restoreCareTasksForTank: suspend (Long, List<CareTask>) -> Unit, removeAssignmentsForTank: suspend (Long) -> TankAssignmentCleanupResult, cancelCareTaskReminder: suspend (String, Long) -> Unit, reconcileCareReminders: suspend (String) -> Unit) has too many parameters. The current threshold is set to 6.",
-      "count": 1
-    },
-    {
-      "ruleId": "detekt.complexity.LongParameterList",
       "path": "app/src/test/java/com/aqua/aqualight/data/auth/AccountDeletionProcessDeathMatrixTest.kt",
       "message": "The constructor(currentUid: String?, cloudFailuresRemaining: Int, authFailuresRemaining: Int, localFailuresRemaining: Int, cloudCalls: Int, authDeleteCalls: Int, localCalls: Int, revokeCalls: Int, signOutCalls: Int) has too many parameters. The current threshold is set to 7.",
       "count": 1
@@ -793,20 +703,8 @@
     },
     {
       "ruleId": "detekt.complexity.TooManyFunctions",
-      "path": "app/src/main/java/com/aqua/aqualight/application/aquarium/AquariumTankOperations.kt",
-      "message": "Interface 'AquariumTankOperations' with '18' functions detected. Defined threshold inside interfaces is set to '11'",
-      "count": 1
-    },
-    {
-      "ruleId": "detekt.complexity.TooManyFunctions",
       "path": "app/src/main/java/com/aqua/aqualight/base/BaseActivity.kt",
       "message": "Class 'BaseActivity' with '14' functions detected. Defined threshold inside classes is set to '11'",
-      "count": 1
-    },
-    {
-      "ruleId": "detekt.complexity.TooManyFunctions",
-      "path": "app/src/main/java/com/aqua/aqualight/data/aquarium/DefaultAquariumTankOperations.kt",
-      "message": "Class 'DefaultAquariumTankOperations' with '18' functions detected. Defined threshold inside classes is set to '11'",
       "count": 1
     },
     {
@@ -1315,12 +1213,6 @@
     },
     {
       "ruleId": "detekt.exceptions.InstanceOfCheckForException",
-      "path": "app/src/main/java/com/aqua/aqualight/data/auth/OwnerSessionCoordinator.kt",
-      "message": "Instead of catching for a general exception type and checking for a specific exception type, use multiple catch blocks.",
-      "count": 2
-    },
-    {
-      "ruleId": "detekt.exceptions.InstanceOfCheckForException",
       "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/devices/TankDetailDevicesViewModel.kt",
       "message": "Instead of catching for a general exception type and checking for a specific exception type, use multiple catch blocks.",
       "count": 1
@@ -1399,18 +1291,6 @@
     },
     {
       "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
-      "path": "app/src/main/java/com/aqua/aqualight/data/aquarium/DefaultAquariumTankOperations.kt",
-      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
-      "count": 2
-    },
-    {
-      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
-      "path": "app/src/main/java/com/aqua/aqualight/data/aquarium/delete/OwnerTankDataCleaner.kt",
-      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
-      "count": 9
-    },
-    {
-      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
       "path": "app/src/main/java/com/aqua/aqualight/data/aquarium/devices/TankDeviceAssignmentRepository.kt",
       "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
       "count": 6
@@ -1430,12 +1310,6 @@
     {
       "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
       "path": "app/src/main/java/com/aqua/aqualight/data/auth/AuthenticatedOwnerProvider.kt",
-      "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
-      "count": 1
-    },
-    {
-      "ruleId": "detekt.exceptions.TooGenericExceptionCaught",
-      "path": "app/src/main/java/com/aqua/aqualight/data/auth/OwnerSessionCoordinator.kt",
       "message": "The caught exception is too generic. Prefer catching specific exceptions to the case that is currently handled.",
       "count": 1
     },
@@ -2323,12 +2197,6 @@
     },
     {
       "ruleId": "detekt.style.ReturnCount",
-      "path": "app/src/main/java/com/aqua/aqualight/data/aquarium/delete/OwnerTankDataCleaner.kt",
-      "message": "Function deleteTanks has 5 return statements which exceeds the limit of 2.",
-      "count": 1
-    },
-    {
-      "ruleId": "detekt.style.ReturnCount",
       "path": "app/src/main/java/com/aqua/aqualight/data/auth/AccountDeletionManager.kt",
       "message": "Function deleteCurrentAccount has 3 return statements which exceeds the limit of 2.",
       "count": 1
@@ -2659,12 +2527,6 @@
     },
     {
       "ruleId": "detekt.style.ReturnCount",
-      "path": "app/src/main/java/com/aqua/aqualight/data/user/UserDataCleaner.kt",
-      "message": "Function deleteAppOwnedUri has 3 return statements which exceeds the limit of 2.",
-      "count": 1
-    },
-    {
-      "ruleId": "detekt.style.ReturnCount",
       "path": "app/src/main/java/com/aqua/aqualight/i18n/LocaleFormatter.kt",
       "message": "Function parseDecimal has 4 return statements which exceeds the limit of 2.",
       "count": 1
@@ -2980,12 +2842,6 @@
       "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/settings/userinfo/UserInfoFragment.kt",
       "message": "Private property `USERNAME_MAX_LENGTH` is unused.",
       "count": 1
-    },
-    {
-      "ruleId": "detekt.style.UseCheckOrError",
-      "path": "app/src/main/java/com/aqua/aqualight/data/aquarium/DefaultAquariumTankOperations.kt",
-      "message": "Use check() or error() instead of throwing an IllegalStateException.",
-      "count": 2
     },
     {
       "ruleId": "detekt.style.UseCheckOrError",
