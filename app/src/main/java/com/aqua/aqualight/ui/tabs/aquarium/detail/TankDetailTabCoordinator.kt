@@ -41,7 +41,7 @@ internal class TankDetailTabCoordinator(
             fragment = fragment,
             tabLayout = binding.tankTabs,
             viewPager = binding.tankDetailPager,
-            tabs = TANK_DETAIL_TAB_ORDER,
+            tabs = tankDetailTabOrder,
             onTabSelected = { tab ->
                 selectedTab = tab
                 persistSelection()
@@ -154,7 +154,7 @@ internal enum class TankDetailTab(
     )
 }
 
-internal val TANK_DETAIL_TAB_ORDER = listOf(
+internal val tankDetailTabOrder = listOf(
     TankDetailTab.DEVICES,
     TankDetailTab.ACTIVITY,
     TankDetailTab.TANK,
