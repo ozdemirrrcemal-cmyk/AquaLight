@@ -54,15 +54,19 @@ class CoolingRootDependencyWiringTest(unittest.TestCase):
                 self.assertIn("DeviceCoolingRootViewModel(", text)
                 for token in CONTROL_OPERATION_WIRING[name]:
                     self.assertIn(token, text)
+                self.assertIn("historyOperations =", text)
                 self.assertIn(
-                    "historyOperations = DefaultDeviceCoolingTemperatureHistoryOperations(",
+                    "DefaultDeviceCoolingTemperatureHistoryOperations(",
                     text,
                 )
                 self.assertIn(
                     "automaticSettingsOperations =",
                     text,
                 )
-                self.assertIn("DefaultDeviceCoolingAutomaticSettingsOperations(", text)
+                self.assertIn(
+                    "DefaultDeviceCoolingAutomaticSettingsOperations(",
+                    text,
+                )
                 self.assertIn("controlSurfacePreparationOperations =", text)
 
 if __name__ == "__main__":
