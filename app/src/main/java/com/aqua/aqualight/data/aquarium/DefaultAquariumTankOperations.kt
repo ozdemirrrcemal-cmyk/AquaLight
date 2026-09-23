@@ -157,8 +157,43 @@ class DefaultAquariumTankOperations(
         materials = materials.map(AquariumMaterialSelection::toDataSelection)
     )
 
-    override suspend fun updateTankPlants(tankId: Long, plants: List<AquariumPlantTag>) =
-        tankStore.updateTankPlants(tankId, plants.map(AquariumPlantTag::toDataTag))
+    override suspend fun updateTankPlants(
+        tankId: Long,
+        plants: List<AquariumPlantTag>
+    ) = withCurrentOwnerScope { ownerUid ->
+        val existingTank = tankStore.tanksSnapshotForOwner(ownerUid)
+            .firstOrNull { tank -> tank.id == tankId }
+            ?: throw IllegalArgumentException(
+                "Tank not found for the active owner."
+            )
+        val previousPlants = existingTank.plants.map { plant ->
+            TankPlantTag(
+                id = plant.id,
+                catalogId = plant.catalogId,
+                plantName = plant.plantName,
+                category = plant.category,
+                markerX = plant.markerX,
+                markerY = plant.markerY
+            )
+        }
+        val updatedPlants = plants.map(AquariumPlantTag::toDataTag)
+        val updateResult = runCatching {
+            tankStore.updateTankPlants(tankId, updatedPlants)
+            healthStore.plantObservations.retainPlantTargets(
+                ownerUid = ownerUid,
+                tankId = tankId,
+                validPlantIds = plants.mapTo(mutableSetOf()) { plant -> plant.id }
+            )
+        }
+        val updateError = updateResult.exceptionOrNull()
+        if (updateError != null) {
+            runCatching {
+                tankStore.updateTankPlants(tankId, previousPlants)
+            }.exceptionOrNull()?.let(updateError::addSuppressed)
+            throw updateError
+        }
+        Unit
+    }
 
     override suspend fun addLivestock(
         tankId: Long,
@@ -181,7 +216,7 @@ class DefaultAquariumTankOperations(
         livestockId: Long
     ) = withCurrentOwnerScope { ownerUid ->
         tankStore.removeLivestockFromTank(tankId, livestockId)
-        healthStore.removeObservationsForLivestock(
+        healthStore.livestockObservations.removeForLivestock(
             ownerUid = ownerUid,
             tankId = tankId,
             livestockId = livestockId
