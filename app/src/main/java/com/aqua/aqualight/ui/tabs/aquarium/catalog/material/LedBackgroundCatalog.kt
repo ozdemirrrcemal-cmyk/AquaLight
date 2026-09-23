@@ -2,61 +2,499 @@ package com.aqua.aqualight.ui.tabs.aquarium.catalog.material
 
 import com.aqua.aqualight.R
 
+private const val LED_BACKGROUND_PRODUCT_COUNT = 50
 
-object LedBackgroundCatalog {
-
-    val definitions: List<AquariumMaterialDefinition> = listOf(
-        AquariumMaterialDefinition(
-            id = "led_background_chihiros_vivid_background",
-            brandRes = R.string.catalog_brand_chihiros,
-            nameRes = R.string.catalog_material_led_background_chihiros_vivid_background_name,
-            categoryKey = MaterialCategoryKey.LED_BACKGROUND,
-            categoryTitleRes = R.string.catalog_material_category_led_background_title,
-            keywordRes = listOf(
-                R.string.catalog_keyword_led,
-                R.string.catalog_keyword_background,
-                R.string.catalog_keyword_light,
-                R.string.catalog_keyword_chihiros
-            )
-        ),
-        AquariumMaterialDefinition(
-            id = "led_background_chihiros_shades",
-            brandRes = R.string.catalog_brand_chihiros,
-            nameRes = R.string.catalog_material_led_background_chihiros_shades_name,
-            categoryKey = MaterialCategoryKey.LED_BACKGROUND,
-            categoryTitleRes = R.string.catalog_material_category_led_background_title,
-            keywordRes = listOf(
-                R.string.catalog_keyword_led,
-                R.string.catalog_keyword_background,
-                R.string.catalog_keyword_shade,
-                R.string.catalog_keyword_chihiros
-            )
-        ),
-        AquariumMaterialDefinition(
-            id = "led_background_twinstar_light_screen",
-            brandRes = R.string.catalog_brand_twinstar,
-            nameRes = R.string.catalog_material_led_background_twinstar_light_screen_name,
-            categoryKey = MaterialCategoryKey.LED_BACKGROUND,
-            categoryTitleRes = R.string.catalog_material_category_led_background_title,
-            keywordRes = listOf(
-                R.string.catalog_keyword_led,
-                R.string.catalog_keyword_background,
-                R.string.catalog_keyword_screen,
-                R.string.catalog_keyword_twinstar
-            )
-        ),
-        AquariumMaterialDefinition(
-            id = "led_background_week_aqua_led_screen",
-            brandRes = R.string.catalog_brand_week_aqua,
-            nameRes = R.string.catalog_material_led_background_week_aqua_led_screen_name,
-            categoryKey = MaterialCategoryKey.LED_BACKGROUND,
-            categoryTitleRes = R.string.catalog_material_category_led_background_title,
-            keywordRes = listOf(
-                R.string.catalog_keyword_led,
-                R.string.catalog_keyword_background,
-                R.string.catalog_keyword_screen,
-                R.string.catalog_keyword_week_aqua
-            )
+private enum class LedBackgroundHardwareType(
+    val keywordRes: List<Int>
+) {
+    LIGHT_SCREEN(
+        listOf(
+            R.string.catalog_keyword_light,
+            R.string.catalog_keyword_screen,
+            R.string.catalog_keyword_light_screen,
+            R.string.catalog_keyword_backlight
+        )
+    ),
+    GRADATION_SHEET(
+        listOf(
+            R.string.catalog_keyword_gradation,
+            R.string.catalog_keyword_gradient,
+            R.string.catalog_keyword_sheet,
+            R.string.catalog_keyword_background_film
+        )
+    ),
+    BACKLIGHT(
+        listOf(
+            R.string.catalog_keyword_light,
+            R.string.catalog_keyword_backlight,
+            R.string.catalog_keyword_back_light,
+            R.string.catalog_keyword_background_light
+        )
+    ),
+    BACKGROUND_LIGHT(
+        listOf(
+            R.string.catalog_keyword_light,
+            R.string.catalog_keyword_background_light,
+            R.string.catalog_keyword_backlight,
+            R.string.catalog_keyword_back_light
+        )
+    ),
+    RGB_ILLUMINATED_BACKGROUND(
+        listOf(
+            R.string.catalog_keyword_rgb,
+            R.string.catalog_keyword_light,
+            R.string.catalog_keyword_illuminated_background,
+            R.string.catalog_keyword_background_light,
+            R.string.catalog_keyword_background_panel,
+            R.string.catalog_keyword_backlight
+        )
+    ),
+    GRADIENT_FILM(
+        listOf(
+            R.string.catalog_keyword_gradient,
+            R.string.catalog_keyword_film,
+            R.string.catalog_keyword_background_film,
+            R.string.catalog_keyword_sheet
         )
     )
 }
+
+private data class LedBackgroundCatalogResource(
+    val id: String,
+    val brandRes: Int,
+    val nameRes: Int,
+    val hardwareType: LedBackgroundHardwareType,
+    val extraKeywordRes: List<Int>
+)
+
+private val ledBackgroundCatalogResources = listOf(
+    ledBackgroundResource(
+        "led_background_ada_light_screen_300",
+        R.string.catalog_brand_ada,
+        R.string.catalog_material_led_background_0001_name,
+        LedBackgroundHardwareType.LIGHT_SCREEN,
+        R.string.catalog_keyword_aqua_design_amano
+    ),
+    ledBackgroundResource(
+        "led_background_ada_light_screen_600",
+        R.string.catalog_brand_ada,
+        R.string.catalog_material_led_background_0002_name,
+        LedBackgroundHardwareType.LIGHT_SCREEN,
+        R.string.catalog_keyword_aqua_design_amano
+    ),
+    ledBackgroundResource(
+        "led_background_ada_light_screen_900",
+        R.string.catalog_brand_ada,
+        R.string.catalog_material_led_background_0003_name,
+        LedBackgroundHardwareType.LIGHT_SCREEN,
+        R.string.catalog_keyword_aqua_design_amano
+    ),
+    ledBackgroundResource(
+        "led_background_ada_light_screen_1200",
+        R.string.catalog_brand_ada,
+        R.string.catalog_material_led_background_0004_name,
+        LedBackgroundHardwareType.LIGHT_SCREEN,
+        R.string.catalog_keyword_aqua_design_amano
+    ),
+    ledBackgroundResource(
+        "led_background_ada_gradation_sheet_60_blue",
+        R.string.catalog_brand_ada,
+        R.string.catalog_material_led_background_0005_name,
+        LedBackgroundHardwareType.GRADATION_SHEET,
+        R.string.catalog_keyword_aqua_design_amano
+    ),
+    ledBackgroundResource(
+        "led_background_ada_gradation_sheet_90_blue",
+        R.string.catalog_brand_ada,
+        R.string.catalog_material_led_background_0006_name,
+        LedBackgroundHardwareType.GRADATION_SHEET,
+        R.string.catalog_keyword_aqua_design_amano
+    ),
+    ledBackgroundResource(
+        "led_background_ada_gradation_sheet_90_green",
+        R.string.catalog_brand_ada,
+        R.string.catalog_material_led_background_0007_name,
+        LedBackgroundHardwareType.GRADATION_SHEET,
+        R.string.catalog_keyword_aqua_design_amano
+    ),
+    ledBackgroundResource(
+        "led_background_chihiros_led_background",
+        R.string.catalog_brand_chihiros,
+        R.string.catalog_material_led_background_0008_name,
+        LedBackgroundHardwareType.BACKLIGHT
+    ),
+    ledBackgroundResource(
+        "led_background_current_usa_colorcast_smart_background_light",
+        R.string.catalog_led_background_brand_current_usa,
+        R.string.catalog_material_led_background_0009_name,
+        LedBackgroundHardwareType.BACKGROUND_LIGHT,
+        R.string.catalog_keyword_smart,
+        R.string.catalog_led_background_alias_color_cast
+    ),
+    ledBackgroundResource(
+        "led_background_current_usa_serene_background_lighting",
+        R.string.catalog_led_background_brand_current_usa,
+        R.string.catalog_material_led_background_0010_name,
+        LedBackgroundHardwareType.BACKGROUND_LIGHT
+    ),
+    ledBackgroundResource(
+        "led_background_daytime_backlight",
+        R.string.catalog_led_background_brand_daytime,
+        R.string.catalog_material_led_background_0011_name,
+        LedBackgroundHardwareType.BACKLIGHT
+    ),
+    ledBackgroundResource(
+        "led_background_lightground_rgb_smart_illuminated_background_25x30_cm",
+        R.string.catalog_led_background_brand_lightground,
+        R.string.catalog_material_led_background_0012_name,
+        LedBackgroundHardwareType.RGB_ILLUMINATED_BACKGROUND,
+        R.string.catalog_keyword_smart,
+        R.string.catalog_led_background_alias_25x30_cm
+    ),
+    ledBackgroundResource(
+        "led_background_lightground_rgb_smart_illuminated_background_30x24_cm",
+        R.string.catalog_led_background_brand_lightground,
+        R.string.catalog_material_led_background_0013_name,
+        LedBackgroundHardwareType.RGB_ILLUMINATED_BACKGROUND,
+        R.string.catalog_keyword_smart,
+        R.string.catalog_led_background_alias_30x24_cm
+    ),
+    ledBackgroundResource(
+        "led_background_lightground_rgb_smart_illuminated_background_30x30_cm",
+        R.string.catalog_led_background_brand_lightground,
+        R.string.catalog_material_led_background_0014_name,
+        LedBackgroundHardwareType.RGB_ILLUMINATED_BACKGROUND,
+        R.string.catalog_keyword_smart,
+        R.string.catalog_led_background_alias_30x30_cm
+    ),
+    ledBackgroundResource(
+        "led_background_lightground_rgb_smart_illuminated_background_30x35_cm",
+        R.string.catalog_led_background_brand_lightground,
+        R.string.catalog_material_led_background_0015_name,
+        LedBackgroundHardwareType.RGB_ILLUMINATED_BACKGROUND,
+        R.string.catalog_keyword_smart,
+        R.string.catalog_led_background_alias_30x35_cm
+    ),
+    ledBackgroundResource(
+        "led_background_lightground_rgb_smart_illuminated_background_35x35_cm",
+        R.string.catalog_led_background_brand_lightground,
+        R.string.catalog_material_led_background_0016_name,
+        LedBackgroundHardwareType.RGB_ILLUMINATED_BACKGROUND,
+        R.string.catalog_keyword_smart,
+        R.string.catalog_led_background_alias_35x35_cm
+    ),
+    ledBackgroundResource(
+        "led_background_lightground_rgb_smart_illuminated_background_36x26_cm",
+        R.string.catalog_led_background_brand_lightground,
+        R.string.catalog_material_led_background_0017_name,
+        LedBackgroundHardwareType.RGB_ILLUMINATED_BACKGROUND,
+        R.string.catalog_keyword_smart,
+        R.string.catalog_led_background_alias_36x26_cm
+    ),
+    ledBackgroundResource(
+        "led_background_lightground_rgb_smart_illuminated_background_40x28_cm",
+        R.string.catalog_led_background_brand_lightground,
+        R.string.catalog_material_led_background_0018_name,
+        LedBackgroundHardwareType.RGB_ILLUMINATED_BACKGROUND,
+        R.string.catalog_keyword_smart,
+        R.string.catalog_led_background_alias_40x28_cm
+    ),
+    ledBackgroundResource(
+        "led_background_lightground_rgb_smart_illuminated_background_40x30_cm",
+        R.string.catalog_led_background_brand_lightground,
+        R.string.catalog_material_led_background_0019_name,
+        LedBackgroundHardwareType.RGB_ILLUMINATED_BACKGROUND,
+        R.string.catalog_keyword_smart,
+        R.string.catalog_led_background_alias_40x30_cm
+    ),
+    ledBackgroundResource(
+        "led_background_lightground_rgb_smart_illuminated_background_40x40_cm",
+        R.string.catalog_led_background_brand_lightground,
+        R.string.catalog_material_led_background_0020_name,
+        LedBackgroundHardwareType.RGB_ILLUMINATED_BACKGROUND,
+        R.string.catalog_keyword_smart,
+        R.string.catalog_led_background_alias_40x40_cm
+    ),
+    ledBackgroundResource(
+        "led_background_lightground_rgb_smart_illuminated_background_45x27_cm",
+        R.string.catalog_led_background_brand_lightground,
+        R.string.catalog_material_led_background_0021_name,
+        LedBackgroundHardwareType.RGB_ILLUMINATED_BACKGROUND,
+        R.string.catalog_keyword_smart,
+        R.string.catalog_led_background_alias_45x27_cm
+    ),
+    ledBackgroundResource(
+        "led_background_lightground_rgb_smart_illuminated_background_45x30_cm",
+        R.string.catalog_led_background_brand_lightground,
+        R.string.catalog_material_led_background_0022_name,
+        LedBackgroundHardwareType.RGB_ILLUMINATED_BACKGROUND,
+        R.string.catalog_keyword_smart,
+        R.string.catalog_led_background_alias_45x30_cm
+    ),
+    ledBackgroundResource(
+        "led_background_lightground_rgb_smart_illuminated_background_45x34_cm",
+        R.string.catalog_led_background_brand_lightground,
+        R.string.catalog_material_led_background_0023_name,
+        LedBackgroundHardwareType.RGB_ILLUMINATED_BACKGROUND,
+        R.string.catalog_keyword_smart,
+        R.string.catalog_led_background_alias_45x34_cm
+    ),
+    ledBackgroundResource(
+        "led_background_lightground_rgb_smart_illuminated_background_45x40_cm",
+        R.string.catalog_led_background_brand_lightground,
+        R.string.catalog_material_led_background_0024_name,
+        LedBackgroundHardwareType.RGB_ILLUMINATED_BACKGROUND,
+        R.string.catalog_keyword_smart,
+        R.string.catalog_led_background_alias_45x40_cm
+    ),
+    ledBackgroundResource(
+        "led_background_lightground_rgb_smart_illuminated_background_45x45_cm",
+        R.string.catalog_led_background_brand_lightground,
+        R.string.catalog_material_led_background_0025_name,
+        LedBackgroundHardwareType.RGB_ILLUMINATED_BACKGROUND,
+        R.string.catalog_keyword_smart,
+        R.string.catalog_led_background_alias_45x45_cm
+    ),
+    ledBackgroundResource(
+        "led_background_lightground_rgb_smart_illuminated_background_50x36_cm",
+        R.string.catalog_led_background_brand_lightground,
+        R.string.catalog_material_led_background_0026_name,
+        LedBackgroundHardwareType.RGB_ILLUMINATED_BACKGROUND,
+        R.string.catalog_keyword_smart,
+        R.string.catalog_led_background_alias_50x36_cm
+    ),
+    ledBackgroundResource(
+        "led_background_lightground_rgb_smart_illuminated_background_60x30_cm",
+        R.string.catalog_led_background_brand_lightground,
+        R.string.catalog_material_led_background_0027_name,
+        LedBackgroundHardwareType.RGB_ILLUMINATED_BACKGROUND,
+        R.string.catalog_keyword_smart,
+        R.string.catalog_led_background_alias_60x30_cm
+    ),
+    ledBackgroundResource(
+        "led_background_lightground_rgb_smart_illuminated_background_60x35_cm",
+        R.string.catalog_led_background_brand_lightground,
+        R.string.catalog_material_led_background_0028_name,
+        LedBackgroundHardwareType.RGB_ILLUMINATED_BACKGROUND,
+        R.string.catalog_keyword_smart,
+        R.string.catalog_led_background_alias_60x35_cm
+    ),
+    ledBackgroundResource(
+        "led_background_lightground_rgb_smart_illuminated_background_60x36_cm",
+        R.string.catalog_led_background_brand_lightground,
+        R.string.catalog_material_led_background_0029_name,
+        LedBackgroundHardwareType.RGB_ILLUMINATED_BACKGROUND,
+        R.string.catalog_keyword_smart,
+        R.string.catalog_led_background_alias_60x36_cm
+    ),
+    ledBackgroundResource(
+        "led_background_lightground_rgb_smart_illuminated_background_60x45_cm",
+        R.string.catalog_led_background_brand_lightground,
+        R.string.catalog_material_led_background_0030_name,
+        LedBackgroundHardwareType.RGB_ILLUMINATED_BACKGROUND,
+        R.string.catalog_keyword_smart,
+        R.string.catalog_led_background_alias_60x45_cm
+    ),
+    ledBackgroundResource(
+        "led_background_lightground_rgb_smart_illuminated_background_75x45_cm",
+        R.string.catalog_led_background_brand_lightground,
+        R.string.catalog_material_led_background_0031_name,
+        LedBackgroundHardwareType.RGB_ILLUMINATED_BACKGROUND,
+        R.string.catalog_keyword_smart,
+        R.string.catalog_led_background_alias_75x45_cm
+    ),
+    ledBackgroundResource(
+        "led_background_lightground_rgb_smart_illuminated_background_80x40_cm",
+        R.string.catalog_led_background_brand_lightground,
+        R.string.catalog_material_led_background_0032_name,
+        LedBackgroundHardwareType.RGB_ILLUMINATED_BACKGROUND,
+        R.string.catalog_keyword_smart,
+        R.string.catalog_led_background_alias_80x40_cm
+    ),
+    ledBackgroundResource(
+        "led_background_lightground_rgb_smart_illuminated_background_80x45_cm",
+        R.string.catalog_led_background_brand_lightground,
+        R.string.catalog_material_led_background_0033_name,
+        LedBackgroundHardwareType.RGB_ILLUMINATED_BACKGROUND,
+        R.string.catalog_keyword_smart,
+        R.string.catalog_led_background_alias_80x45_cm
+    ),
+    ledBackgroundResource(
+        "led_background_lightground_rgb_smart_illuminated_background_90x45_cm",
+        R.string.catalog_led_background_brand_lightground,
+        R.string.catalog_material_led_background_0034_name,
+        LedBackgroundHardwareType.RGB_ILLUMINATED_BACKGROUND,
+        R.string.catalog_keyword_smart,
+        R.string.catalog_led_background_alias_90x45_cm
+    ),
+    ledBackgroundResource(
+        "led_background_lightground_rgb_smart_illuminated_background_100x40_cm",
+        R.string.catalog_led_background_brand_lightground,
+        R.string.catalog_material_led_background_0035_name,
+        LedBackgroundHardwareType.RGB_ILLUMINATED_BACKGROUND,
+        R.string.catalog_keyword_smart,
+        R.string.catalog_led_background_alias_100x40_cm
+    ),
+    ledBackgroundResource(
+        "led_background_lightground_rgb_smart_illuminated_background_100x50_cm",
+        R.string.catalog_led_background_brand_lightground,
+        R.string.catalog_material_led_background_0036_name,
+        LedBackgroundHardwareType.RGB_ILLUMINATED_BACKGROUND,
+        R.string.catalog_keyword_smart,
+        R.string.catalog_led_background_alias_100x50_cm
+    ),
+    ledBackgroundResource(
+        "led_background_lightground_rgb_smart_illuminated_background_120x40_cm",
+        R.string.catalog_led_background_brand_lightground,
+        R.string.catalog_material_led_background_0037_name,
+        LedBackgroundHardwareType.RGB_ILLUMINATED_BACKGROUND,
+        R.string.catalog_keyword_smart,
+        R.string.catalog_led_background_alias_120x40_cm
+    ),
+    ledBackgroundResource(
+        "led_background_lightground_rgb_smart_illuminated_background_120x45_cm",
+        R.string.catalog_led_background_brand_lightground,
+        R.string.catalog_material_led_background_0038_name,
+        LedBackgroundHardwareType.RGB_ILLUMINATED_BACKGROUND,
+        R.string.catalog_keyword_smart,
+        R.string.catalog_led_background_alias_120x45_cm
+    ),
+    ledBackgroundResource(
+        "led_background_lightground_rgb_smart_illuminated_background_120x50_cm",
+        R.string.catalog_led_background_brand_lightground,
+        R.string.catalog_material_led_background_0039_name,
+        LedBackgroundHardwareType.RGB_ILLUMINATED_BACKGROUND,
+        R.string.catalog_keyword_smart,
+        R.string.catalog_led_background_alias_120x50_cm
+    ),
+    ledBackgroundResource(
+        "led_background_lightground_rgb_smart_illuminated_background_150x50_cm",
+        R.string.catalog_led_background_brand_lightground,
+        R.string.catalog_material_led_background_0040_name,
+        LedBackgroundHardwareType.RGB_ILLUMINATED_BACKGROUND,
+        R.string.catalog_keyword_smart,
+        R.string.catalog_led_background_alias_150x50_cm
+    ),
+    ledBackgroundResource(
+        "led_background_lightground_rgb_smart_illuminated_background_150x60_cm",
+        R.string.catalog_led_background_brand_lightground,
+        R.string.catalog_material_led_background_0041_name,
+        LedBackgroundHardwareType.RGB_ILLUMINATED_BACKGROUND,
+        R.string.catalog_keyword_smart,
+        R.string.catalog_led_background_alias_150x60_cm
+    ),
+    ledBackgroundResource(
+        "led_background_lightground_rgb_smart_illuminated_background_170x60_cm",
+        R.string.catalog_led_background_brand_lightground,
+        R.string.catalog_material_led_background_0042_name,
+        LedBackgroundHardwareType.RGB_ILLUMINATED_BACKGROUND,
+        R.string.catalog_keyword_smart,
+        R.string.catalog_led_background_alias_170x60_cm
+    ),
+    ledBackgroundResource(
+        "led_background_lightground_rgb_smart_illuminated_background_180x50_cm",
+        R.string.catalog_led_background_brand_lightground,
+        R.string.catalog_material_led_background_0043_name,
+        LedBackgroundHardwareType.RGB_ILLUMINATED_BACKGROUND,
+        R.string.catalog_keyword_smart,
+        R.string.catalog_led_background_alias_180x50_cm
+    ),
+    ledBackgroundResource(
+        "led_background_lightground_rgb_smart_illuminated_background_180x55_cm",
+        R.string.catalog_led_background_brand_lightground,
+        R.string.catalog_material_led_background_0044_name,
+        LedBackgroundHardwareType.RGB_ILLUMINATED_BACKGROUND,
+        R.string.catalog_keyword_smart,
+        R.string.catalog_led_background_alias_180x55_cm
+    ),
+    ledBackgroundResource(
+        "led_background_lightground_rgb_smart_illuminated_background_180x60_cm",
+        R.string.catalog_led_background_brand_lightground,
+        R.string.catalog_material_led_background_0045_name,
+        LedBackgroundHardwareType.RGB_ILLUMINATED_BACKGROUND,
+        R.string.catalog_keyword_smart,
+        R.string.catalog_led_background_alias_180x60_cm
+    ),
+    ledBackgroundResource(
+        "led_background_lightground_rgb_smart_illuminated_background_200x50_cm",
+        R.string.catalog_led_background_brand_lightground,
+        R.string.catalog_material_led_background_0046_name,
+        LedBackgroundHardwareType.RGB_ILLUMINATED_BACKGROUND,
+        R.string.catalog_keyword_smart,
+        R.string.catalog_led_background_alias_200x50_cm
+    ),
+    ledBackgroundResource(
+        "led_background_lightground_rgb_smart_illuminated_background_200x60_cm",
+        R.string.catalog_led_background_brand_lightground,
+        R.string.catalog_material_led_background_0047_name,
+        LedBackgroundHardwareType.RGB_ILLUMINATED_BACKGROUND,
+        R.string.catalog_keyword_smart,
+        R.string.catalog_led_background_alias_200x60_cm
+    ),
+    ledBackgroundResource(
+        "led_background_lightground_blue_white_gradient_film",
+        R.string.catalog_led_background_brand_lightground,
+        R.string.catalog_material_led_background_0048_name,
+        LedBackgroundHardwareType.GRADIENT_FILM,
+        R.string.catalog_keyword_blue_white
+    ),
+    ledBackgroundResource(
+        "led_background_lightground_blue_white_gradient_film_120x45_cm",
+        R.string.catalog_led_background_brand_lightground,
+        R.string.catalog_material_led_background_0049_name,
+        LedBackgroundHardwareType.GRADIENT_FILM,
+        R.string.catalog_keyword_blue_white,
+        R.string.catalog_led_background_alias_120x45_cm
+    ),
+    ledBackgroundResource(
+        "led_background_uns_atmos_backlight",
+        R.string.catalog_led_background_brand_uns,
+        R.string.catalog_material_led_background_0050_name,
+        LedBackgroundHardwareType.BACKLIGHT,
+        R.string.catalog_keyword_ultum_nature_systems
+    )
+)
+
+object LedBackgroundCatalog {
+
+    val definitions: List<AquariumMaterialDefinition> =
+        ledBackgroundCatalogResources.map { resource ->
+            AquariumMaterialDefinition(
+                id = resource.id,
+                brandRes = resource.brandRes,
+                nameRes = resource.nameRes,
+                categoryKey = MaterialCategoryKey.LED_BACKGROUND,
+                categoryTitleRes = R.string.catalog_material_category_led_background_title,
+                keywordRes = (
+                    listOf(
+                        R.string.catalog_keyword_led,
+                        R.string.catalog_keyword_background,
+                        R.string.catalog_keyword_led_background,
+                        R.string.catalog_keyword_aquarium_background
+                    ) +
+                        resource.hardwareType.keywordRes +
+                        resource.extraKeywordRes
+                    ).distinct()
+            )
+        }
+
+    init {
+        check(definitions.size == LED_BACKGROUND_PRODUCT_COUNT)
+        check(definitions.map(AquariumMaterialDefinition::id).distinct().size == definitions.size)
+        check(definitions.all { definition -> definition.id.startsWith("led_background_") })
+    }
+}
+
+private fun ledBackgroundResource(
+    id: String,
+    brandRes: Int,
+    nameRes: Int,
+    hardwareType: LedBackgroundHardwareType,
+    vararg extraKeywordRes: Int
+): LedBackgroundCatalogResource = LedBackgroundCatalogResource(
+    id = id,
+    brandRes = brandRes,
+    nameRes = nameRes,
+    hardwareType = hardwareType,
+    extraKeywordRes = extraKeywordRes.toList()
+)

@@ -68,10 +68,6 @@
     <string name="catalog_material_heater_jbl_protemp_s_100_name" translatable="false">JBL ProTemp S 100</string>
     <string name="catalog_material_heater_aquael_ultra_heater_50w_name" translatable="false">Aquael Ultra Heater 50W</string>
     <string name="catalog_material_heater_aquael_ultra_heater_100w_name" translatable="false">Aquael Ultra Heater 100W</string>
-    <string name="catalog_material_led_background_chihiros_vivid_background_name" translatable="false">Chihiros Vivid Background</string>
-    <string name="catalog_material_led_background_chihiros_shades_name" translatable="false">Chihiros LED Background Shades</string>
-    <string name="catalog_material_led_background_twinstar_light_screen_name" translatable="false">Twinstar Light Screen</string>
-    <string name="catalog_material_led_background_week_aqua_led_screen_name" translatable="false">Week Aqua LED Background Screen</string>
     <string name="catalog_material_light_chihiros_wrgb_ii_name" translatable="false">Chihiros WRGB II</string>
     <string name="catalog_material_light_chihiros_wrgb_ii_slim_name" translatable="false">Chihiros WRGB II Slim</string>
     <string name="catalog_material_light_chihiros_magnetic_lamp_led_name" translatable="false">Chihiros Magnetic Lamp - LED Light</string>
