@@ -19,7 +19,8 @@ object LocalDataRecoveryTracker {
         LIGHT_LIBRARY,
         NOTIFICATION_PREFERENCES,
         KNOWN_DEVICES,
-        TANK_DEVICE_ASSIGNMENTS
+        TANK_DEVICE_ASSIGNMENTS,
+        AQUARIUM_HEALTH
     }
 
     private val lock = Any()
