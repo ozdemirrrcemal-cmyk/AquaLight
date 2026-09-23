@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "policyId": "aqualight-detekt-advisory-debt",
   "detektVersion": "1.23.8",
-  "sourceCommit": "d3c4cf3d8503d1d8dc5cfe3c12ed57179d3b4e07",
-  "totalFindings": 988,
+  "sourceCommit": "ff9cd9f9f7df3d8316d9051e42b9bdf165ca3947",
+  "totalFindings": 983,
   "fingerprints": [
     {
       "ruleId": "detekt.complexity.ComplexCondition",
@@ -1123,12 +1123,6 @@
     },
     {
       "ruleId": "detekt.complexity.TooManyFunctions",
-      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailFragment.kt",
-      "message": "Class 'TankDetailFragment' with '22' functions detected. Defined threshold inside classes is set to '11'",
-      "count": 1
-    },
-    {
-      "ruleId": "detekt.complexity.TooManyFunctions",
       "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailLifeFragment.kt",
       "message": "Class 'TankDetailLifeFragment' with '14' functions detected. Defined threshold inside classes is set to '11'",
       "count": 1
@@ -1924,12 +1918,6 @@
       "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailActivityFragment.kt",
       "message": "This expression contains a magic number. Consider defining it to a well named constant.",
       "count": 1
-    },
-    {
-      "ruleId": "detekt.style.MagicNumber",
-      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailFragment.kt",
-      "message": "This expression contains a magic number. Consider defining it to a well named constant.",
-      "count": 3
     },
     {
       "ruleId": "detekt.style.MagicNumber",
@@ -2847,12 +2835,6 @@
       "ruleId": "detekt.style.ReturnCount",
       "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/create/steps/TankNameFragment.kt",
       "message": "Function validateAndSave has 3 return statements which exceeds the limit of 2.",
-      "count": 1
-    },
-    {
-      "ruleId": "detekt.style.ReturnCount",
-      "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailFragment.kt",
-      "message": "Function restoreSelectedTab has 4 return statements which exceeds the limit of 2.",
       "count": 1
     },
     {
