@@ -1,9 +1,11 @@
 package com.aqua.aqualight.data.aquarium.health
 
 import com.aqua.aqualight.application.aquarium.AquariumLivestockTaxonomy
+import com.aqua.aqualight.application.aquarium.health.AquariumAlgaeCatalog
 import com.aqua.aqualight.application.aquarium.health.HealthWaterParameter
 import com.aqua.aqualight.application.aquarium.health.LivestockHealthSymptomCatalog
 import com.aqua.aqualight.application.aquarium.health.ObservationIntensity
+import com.aqua.aqualight.application.aquarium.health.PlantHealthSymptomCatalog
 import com.aqua.aqualight.data.store.CommercialStoreSchema
 import com.aqua.aqualight.data.store.StoreInvariantViolation
 import org.junit.Assert.assertEquals
@@ -108,6 +110,50 @@ class AquariumHealthStoreRulesTest {
         }
     }
 
+    @Test
+    fun plantAlgaeObservationIsValid() {
+        val store = AquariumHealthStoreRules.defaultStore()
+            .toBuilder()
+            .addPlantObservations(validPlantObservation())
+            .build()
+
+        assertEquals(
+            store,
+            AquariumHealthStoreRules.validateStore(store)
+        )
+    }
+
+    @Test
+    fun plantObservationWithInvalidAlgaeRelationshipIsRejected() {
+        val observation = validPlantObservation().toBuilder()
+            .setSymptomKey(PlantHealthSymptomCatalog.YELLOWING)
+            .build()
+        val store = AquariumHealthStoreRules.defaultStore()
+            .toBuilder()
+            .addPlantObservations(observation)
+            .build()
+
+        assertThrows(StoreInvariantViolation::class.java) {
+            AquariumHealthStoreRules.validateStore(store)
+        }
+    }
+
+    @Test
+    fun recordIdsAreUniqueAcrossHealthRecordCategoriesForOneOwner() {
+        val plant = validPlantObservation().toBuilder()
+            .setId(101L)
+            .build()
+        val store = AquariumHealthStoreRules.defaultStore()
+            .toBuilder()
+            .addWaterTests(validWaterTest())
+            .addPlantObservations(plant)
+            .build()
+
+        assertThrows(StoreInvariantViolation::class.java) {
+            AquariumHealthStoreRules.validateStore(store)
+        }
+    }
+
     private fun validWaterTest(): StoredAquariumWaterTest =
         StoredAquariumWaterTest.newBuilder()
             .setId(101L)
@@ -134,6 +180,21 @@ class AquariumHealthStoreRulesTest {
             .setSymptomKey(
                 LivestockHealthSymptomCatalog.FISH_SURFACE_GASPING
             )
+            .setIntensity(ObservationIntensity.MODERATE.name)
+            .setObservedAtMillis(MEASURED_MILLIS)
+            .setNote("")
+            .setCreatedAtMillis(CREATED_MILLIS)
+            .setUpdatedAtMillis(CREATED_MILLIS)
+            .build()
+
+    private fun validPlantObservation(): StoredPlantHealthObservation =
+        StoredPlantHealthObservation.newBuilder()
+            .setId(301L)
+            .setOwnerUid(OWNER_UID)
+            .setTankId(TANK_ID)
+            .setPlantId(0L)
+            .setSymptomKey(PlantHealthSymptomCatalog.ALGAE_PRESENCE)
+            .setAlgaeTypeKey(AquariumAlgaeCatalog.BLACK_BEARD_ALGAE)
             .setIntensity(ObservationIntensity.MODERATE.name)
             .setObservedAtMillis(MEASURED_MILLIS)
             .setNote("")
