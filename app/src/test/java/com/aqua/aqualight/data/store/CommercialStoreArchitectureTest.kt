@@ -34,6 +34,13 @@ class CommercialStoreArchitectureTest {
             )
         )
         assertOnlyFilesContain(
+            token = "aquarium_health.pb",
+            expectedRelativePaths = setOf(
+                "app/src/main/java/com/aqua/aqualight/data/aquarium/health/" +
+                    "AquariumHealthDataStoreManager.kt"
+            )
+        )
+        assertOnlyFilesContain(
             token = "care_tasks.pb",
             expectedRelativePaths = setOf(
                 "app/src/main/java/com/aqua/aqualight/data/care/" +
@@ -60,6 +67,7 @@ class CommercialStoreArchitectureTest {
     fun everyCommercialProtoDeclaresAnExplicitSchemaVersion() {
         listOf(
             "app/src/main/proto/aquarium_tanks.proto",
+            "app/src/main/proto/aquarium_health.proto",
             "app/src/main/proto/care_tasks.proto",
             "app/src/main/proto/user_prefs.proto",
             "app/src/main/proto/light_library.proto"
@@ -77,6 +85,8 @@ class CommercialStoreArchitectureTest {
         listOf(
             "app/src/main/java/com/aqua/aqualight/data/aquarium/store/" +
                 "AquariumTanksSerializer.kt",
+            "app/src/main/java/com/aqua/aqualight/data/aquarium/health/" +
+                "AquariumHealthCommercialSerializer.kt",
             "app/src/main/java/com/aqua/aqualight/data/care/" +
                 "CareTasksCommercialSerializer.kt",
             "app/src/main/java/com/aqua/aqualight/data/user/" +
@@ -100,6 +110,11 @@ class CommercialStoreArchitectureTest {
             "app/src/main/java/com/aqua/aqualight/data/aquarium/store/" +
                 "AquariumTankDataStoreManager.kt"
         ).readText()
+        val healthManager = File(
+            repositoryRoot,
+            "app/src/main/java/com/aqua/aqualight/data/aquarium/health/" +
+                "AquariumHealthDataStoreManager.kt"
+        ).readText()
         val careManager = File(
             repositoryRoot,
             "app/src/main/java/com/aqua/aqualight/data/care/" +
@@ -118,6 +133,9 @@ class CommercialStoreArchitectureTest {
 
         assertTrue(tankManager.contains("TankStoreRules.validateStore"))
         assertTrue(tankManager.contains("TankStoreRules.validateTank"))
+        assertTrue(healthManager.contains("AquariumHealthCommercialSerializer"))
+        assertTrue(healthManager.contains("AquariumHealthStoreRules.nextUniqueId"))
+        assertTrue(healthManager.contains("ReplaceFileCorruptionHandler"))
         assertTrue(careManager.contains("CareTasksCommercialSerializer"))
         assertTrue(careManager.contains("CareTaskStoreRules.nextUniqueId"))
         assertTrue(careManager.contains("toCareTaskStrict"))
