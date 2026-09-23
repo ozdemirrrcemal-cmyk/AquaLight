@@ -70,9 +70,4 @@
     <string name="catalog_keyword_screen">ekran</string>
     <string name="catalog_keyword_slim">ince</string>
     <string name="catalog_keyword_lamp">lamba</string>
-    <string name="catalog_keyword_substrate">taban</string>
-    <string name="catalog_keyword_soil">toprak</string>
-    <string name="catalog_keyword_aquasoil">akvaryum toprağı</string>
-    <string name="catalog_keyword_additive">katkı</string>
-    <string name="catalog_keyword_base_layer">taban katmanı</string>
 </resources>

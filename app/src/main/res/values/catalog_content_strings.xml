@@ -311,8 +311,7 @@
     <string name="catalog_keyword_jbl" translatable="false">jbl</string>
     <string name="catalog_keyword_dennerle" translatable="false">dennerle</string>
     <string name="catalog_keyword_diffuser">diffuser</string>
-    <string name="catalog_keyword_aquario" translatable="false">aquario</string>
-    <string name="catalog_keyword_cooler">cooler</string>
+<string name="catalog_keyword_cooler">cooler</string>
     <string name="catalog_keyword_fan">fan</string>
     <string name="catalog_keyword_temperature">temperature</string>
     <string name="catalog_keyword_aquael" translatable="false">aquael</string>
@@ -365,10 +364,5 @@
     <string name="catalog_keyword_wrgb" translatable="false">wrgb</string>
     <string name="catalog_keyword_slim">slim</string>
     <string name="catalog_keyword_lamp">lamp</string>
-    <string name="catalog_keyword_substrate">substrate</string>
-    <string name="catalog_keyword_soil">soil</string>
-    <string name="catalog_keyword_aquasoil">aquasoil</string>
-    <string name="catalog_keyword_additive">additive</string>
-    <string name="catalog_keyword_base_layer">base layer</string>
 </resources>
 
