@@ -572,10 +572,11 @@ private object OwnerCoolingTimerViewModelBindings {
         modelClass: Class<out ViewModel>,
         context: OwnerViewModelBindingContext
     ): ViewModel? =
-        createCooling(modelClass, context)
+        createCoolingPrimary(modelClass, context)
+            ?: createCoolingSettings(modelClass, context)
             ?: createTimer(modelClass, context)
 
-    private fun createCooling(
+    private fun createCoolingPrimary(
         modelClass: Class<out ViewModel>,
         context: OwnerViewModelBindingContext
     ): ViewModel? = when (modelClass) {
@@ -615,6 +616,13 @@ private object OwnerCoolingTimerViewModelBindings {
                     )
             )
 
+        else -> null
+    }
+
+    private fun createCoolingSettings(
+        modelClass: Class<out ViewModel>,
+        context: OwnerViewModelBindingContext
+    ): ViewModel? = when (modelClass) {
         DeviceCoolingAutomaticSettingsViewModel::class.java ->
             DeviceCoolingAutomaticSettingsViewModel(
                 DefaultDeviceCoolingAutomaticSettingsOperations(
@@ -729,6 +737,13 @@ private object OwnerDosingTankViewModelBindings {
     private fun createRootAndTank(
         modelClass: Class<out ViewModel>,
         context: OwnerViewModelBindingContext
+    ): ViewModel? =
+        createRootAndSettings(modelClass, context)
+            ?: createTankDevices(modelClass, context)
+
+    private fun createRootAndSettings(
+        modelClass: Class<out ViewModel>,
+        context: OwnerViewModelBindingContext
     ): ViewModel? = when (modelClass) {
         DeviceRootOverviewViewModel::class.java ->
             DeviceRootOverviewViewModel(
@@ -759,6 +774,13 @@ private object OwnerDosingTankViewModelBindings {
                     BuildConfig.AQL_OTA_MANIFEST_URL
             )
 
+        else -> null
+    }
+
+    private fun createTankDevices(
+        modelClass: Class<out ViewModel>,
+        context: OwnerViewModelBindingContext
+    ): ViewModel? = when (modelClass) {
         TankDetailDevicesViewModel::class.java ->
             TankDetailDevicesViewModel(
                 assignmentOperations =
@@ -790,4 +812,5 @@ private object OwnerDosingTankViewModelBindings {
 
         else -> null
     }
+
 }
