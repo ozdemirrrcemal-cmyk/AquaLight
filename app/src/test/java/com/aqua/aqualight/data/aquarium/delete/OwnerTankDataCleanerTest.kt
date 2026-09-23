@@ -398,7 +398,8 @@ class OwnerTankDataCleanerTest {
 
         fun emptyHealthSnapshot() = TankHealthIntegritySnapshot(
             waterTests = emptyList(),
-            observations = emptyList()
+            livestockObservations = emptyList(),
+            plantObservations = emptyList()
         )
     }
 }
