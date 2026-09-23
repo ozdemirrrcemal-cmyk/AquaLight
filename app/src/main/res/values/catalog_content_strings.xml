@@ -52,10 +52,6 @@
     <string name="catalog_brand_tropica" translatable="false">Tropica</string>
     <string name="catalog_brand_twinstar" translatable="false">Twinstar</string>
     <string name="catalog_brand_week_aqua" translatable="false">Week Aqua</string>
-    <string name="catalog_material_aquarium_chihiros_tiny_terrarium_egg_wabi_kusa_name" translatable="false">Chihiros Tiny Terrarium Egg - Wabi Kusa Set (10W, 550 ml)</string>
-    <string name="catalog_material_aquarium_chihiros_wabi_kusa_magnetic_light_base_glass_air_name" translatable="false">Chihiros Wabi Kusa Set (Magnetic Light, Base, Glass Air)</string>
-    <string name="catalog_material_aquarium_chihiros_wabi_kusa_magnetic_light_base_glass_pot_name" translatable="false">Chihiros Wabi Kusa Set (Magnetic Light, Base, Glass Pot)</string>
-    <string name="catalog_material_aquarium_chihiros_magnetic_base_name" translatable="false">Chihiros Magnetic Base</string>
     <string name="catalog_material_co2_chihiros_co2_regulator_name" translatable="false">Chihiros CO2 Regulator</string>
     <string name="catalog_material_co2_chihiros_co2_generator_name" translatable="false">Chihiros CO2 Generator System</string>
     <string name="catalog_material_co2_ista_professional_regulator_name" translatable="false">ISTA Professional CO2 Regulator</string>
@@ -311,10 +307,8 @@
     <string name="catalog_keyword_aquarium">aquarium</string>
     <string name="catalog_keyword_tank">tank</string>
     <string name="catalog_keyword_set">set</string>
-    <string name="catalog_keyword_wabi_kusa" translatable="false">wabi kusa</string>
     <string name="catalog_keyword_chihiros" translatable="false">chihiros</string>
     <string name="catalog_keyword_glass">glass</string>
-    <string name="catalog_keyword_base">base</string>
     <string name="catalog_keyword_magnetic">magnetic</string>
     <string name="catalog_keyword_co2" translatable="false">co2</string>
     <string name="catalog_keyword_regulator">regulator</string>
