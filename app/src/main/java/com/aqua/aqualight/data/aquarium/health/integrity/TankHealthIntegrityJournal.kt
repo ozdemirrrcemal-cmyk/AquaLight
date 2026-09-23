@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.aquarium.health.integrity
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import com.aqua.aqualight.data.aquarium.health.TankHealthIntegritySnapshot
 import com.aqua.aqualight.data.store.StoreInvariantViolation
 
@@ -301,12 +302,8 @@ internal object TankHealthIntegrityJournal :
             linkedSetOf(),
             TankHealthIntegrityCodec::encode
         )
-        check(
-            targetPreferences.edit()
-                .putStringSet(KEY_PENDING_DELETIONS, encoded)
-                .commit()
-        ) {
-            "Tank-health integrity journal could not be committed."
+        targetPreferences.edit(commit = true) {
+            putStringSet(KEY_PENDING_DELETIONS, encoded)
         }
         entries.clear()
         entries.putAll(next)
