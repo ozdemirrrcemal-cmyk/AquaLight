@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.aquarium.catalog.material
 import com.aqua.aqualight.R
 
 private const val CO2_PRODUCT_COUNT = 135
+private const val CO2_BRAND_COUNT = 20
 
 private enum class Co2HardwareType(
     val keywordRes: List<Int>
@@ -950,6 +951,8 @@ object Co2Catalog {
     init {
         check(definitions.size == CO2_PRODUCT_COUNT)
         check(definitions.map(AquariumMaterialDefinition::id).distinct().size == definitions.size)
+        check(definitions.map(AquariumMaterialDefinition::nameRes).distinct().size == definitions.size)
+        check(definitions.map(AquariumMaterialDefinition::brandRes).distinct().size == CO2_BRAND_COUNT)
         check(definitions.all { definition -> definition.id.startsWith("co2_") })
     }
 }
