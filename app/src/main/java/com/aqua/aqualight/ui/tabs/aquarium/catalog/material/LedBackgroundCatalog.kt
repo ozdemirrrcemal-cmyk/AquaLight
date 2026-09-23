@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.aquarium.catalog.material
 import com.aqua.aqualight.R
 
 private const val LED_BACKGROUND_PRODUCT_COUNT = 50
+private const val LED_BACKGROUND_BRAND_COUNT = 6
 
 private enum class LedBackgroundHardwareType(
     val keywordRes: List<Int>
@@ -481,6 +482,8 @@ object LedBackgroundCatalog {
     init {
         check(definitions.size == LED_BACKGROUND_PRODUCT_COUNT)
         check(definitions.map(AquariumMaterialDefinition::id).distinct().size == definitions.size)
+        check(definitions.map(AquariumMaterialDefinition::nameRes).distinct().size == definitions.size)
+        check(definitions.map(AquariumMaterialDefinition::brandRes).distinct().size == LED_BACKGROUND_BRAND_COUNT)
         check(definitions.all { definition -> definition.id.startsWith("led_background_") })
     }
 }
