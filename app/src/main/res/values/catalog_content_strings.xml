@@ -311,6 +311,7 @@
     <string name="catalog_keyword_jbl" translatable="false">jbl</string>
     <string name="catalog_keyword_dennerle" translatable="false">dennerle</string>
     <string name="catalog_keyword_diffuser">diffuser</string>
+    <string name="catalog_keyword_aquario" translatable="false">aquario</string>
     <string name="catalog_keyword_cooler">cooler</string>
     <string name="catalog_keyword_fan">fan</string>
     <string name="catalog_keyword_temperature">temperature</string>
