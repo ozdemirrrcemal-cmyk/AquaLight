@@ -187,6 +187,7 @@ internal class OwnerViewModelFactory(
                 operations = DefaultAquariumTankOperations(
                     context = appContext,
                     tankStore = graph.aquariumTankStore,
+                    healthStore = graph.aquariumHealthStore,
                     tankDataCleaner = OwnerTankDataCleaner(
                         deleteTankRecords = graph.aquariumTankStore::deleteTanks,
                         snapshotCareTasksForTank = { tankId ->
@@ -196,6 +197,10 @@ internal class OwnerViewModelFactory(
                         restoreCareTasksForTank = { tankId, snapshots ->
                             graph.careTaskStore.restoreTaskSnapshotsForIntegrity(tankId, snapshots)
                         },
+                        snapshotHealthRecordsForTank = graph.aquariumHealthStore::snapshotForTank,
+                        deleteHealthRecordsForTank = graph.aquariumHealthStore::deleteRecordsForTank,
+                        restoreHealthRecordsForTank =
+                            graph.aquariumHealthStore::restoreSnapshotForIntegrity,
                         removeDeviceAssignmentsForTank = assignments::removeAssignmentsForTank,
                         cancelCareTaskReminder = notificationPreferenceUseCase::cancelCareTask,
                         reconcileCareReminders = notificationPreferenceUseCase::reconcileOwner
