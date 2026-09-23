@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "policyId": "aqualight-detekt-advisory-debt",
   "detektVersion": "1.23.8",
-  "sourceCommit": "a48942a06391e5463e85f9f20e80543c1ef41e69",
+  "sourceCommit": "d3c4cf3d8503d1d8dc5cfe3c12ed57179d3b4e07",
   "totalFindings": 988,
   "fingerprints": [
     {
@@ -1124,7 +1124,7 @@
     {
       "ruleId": "detekt.complexity.TooManyFunctions",
       "path": "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/TankDetailFragment.kt",
-      "message": "Class 'TankDetailFragment' with '23' functions detected. Defined threshold inside classes is set to '11'",
+      "message": "Class 'TankDetailFragment' with '22' functions detected. Defined threshold inside classes is set to '11'",
       "count": 1
     },
     {
