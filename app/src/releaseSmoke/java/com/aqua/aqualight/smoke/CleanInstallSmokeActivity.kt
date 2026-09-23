@@ -12,6 +12,7 @@ import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.aqua.aqualight.app.AquaApp
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentsStore
+import com.aqua.aqualight.data.aquarium.health.AquariumHealthStore
 import com.aqua.aqualight.data.aquarium.store.AquariumTanksStore
 import com.aqua.aqualight.data.care.CareTasksStore
 import com.aqua.aqualight.data.devices.store.KnownDevicesStore
@@ -147,6 +148,16 @@ private class CleanInstallEvidenceCollector(
                 { bytes -> AquariumTanksStore.parseFrom(bytes) },
                 AquariumTanksStore::getDefaultInstance
             ) { store -> store.tanksCount },
+            "healthWaterTests" to protoCount(
+                CleanInstallContract.AQUARIUM_HEALTH_FILE,
+                { bytes -> AquariumHealthStore.parseFrom(bytes) },
+                AquariumHealthStore::getDefaultInstance
+            ) { store -> store.waterTestsCount },
+            "healthObservations" to protoCount(
+                CleanInstallContract.AQUARIUM_HEALTH_FILE,
+                { bytes -> AquariumHealthStore.parseFrom(bytes) },
+                AquariumHealthStore::getDefaultInstance
+            ) { store -> store.livestockObservationsCount },
             "assignments" to protoCount(
                 CleanInstallContract.TANK_DEVICE_ASSIGNMENTS_FILE,
                 { bytes -> TankDeviceAssignmentsStore.parseFrom(bytes) },
@@ -178,6 +189,10 @@ private class CleanInstallEvidenceCollector(
             "tankCareIntegrityEntries" to sharedStringSetSize(
                 CleanInstallContract.TANK_CARE_INTEGRITY_PREFERENCES,
                 CleanInstallContract.TANK_CARE_INTEGRITY_KEY
+            ),
+            "tankHealthIntegrityEntries" to sharedStringSetSize(
+                CleanInstallContract.TANK_HEALTH_INTEGRITY_PREFERENCES,
+                CleanInstallContract.TANK_HEALTH_INTEGRITY_KEY
             ),
             "recoveryMarkers" to sharedStringSetSize(
                 CleanInstallContract.RECOVERY_PREFERENCES,
@@ -217,6 +232,10 @@ private class CleanInstallEvidenceCollector(
                     CountEvidence.isZero(counts, "ignoredDevices")
                 ),
             "tanksEmpty" to CountEvidence.isZero(counts, "tanks"),
+            "healthRecordsEmpty" to (
+                CountEvidence.isZero(counts, "healthWaterTests") &&
+                    CountEvidence.isZero(counts, "healthObservations")
+                ),
             "assignmentsEmpty" to CountEvidence.isZero(counts, "assignments"),
             "careTasksEmpty" to CountEvidence.isZero(counts, "careTasks"),
             "notificationPreferencesEmpty" to CountEvidence.isZero(
@@ -234,6 +253,10 @@ private class CleanInstallEvidenceCollector(
             "tankCareIntegrityJournalEmpty" to CountEvidence.isZero(
                 counts,
                 "tankCareIntegrityEntries"
+            ),
+            "tankHealthIntegrityJournalEmpty" to CountEvidence.isZero(
+                counts,
+                "tankHealthIntegrityEntries"
             ),
             "recoveryMarkersEmpty" to CountEvidence.isZero(
                 counts,
@@ -377,12 +400,15 @@ private object CleanInstallContract {
 
     const val KNOWN_DEVICES_FILE = "known_devices.pb"
     const val AQUARIUM_TANKS_FILE = "aquarium_tanks.pb"
+    const val AQUARIUM_HEALTH_FILE = "aquarium_health.pb"
     const val TANK_DEVICE_ASSIGNMENTS_FILE = "tank_device_assignments.pb"
     const val CARE_TASKS_FILE = "care_tasks.pb"
     const val NOTIFICATION_PREFERENCES_FILE = "notification_preferences.pb"
     const val NOTIFICATION_SCHEDULES_FILE = "notification_schedule_state.pb"
     const val TANK_CARE_INTEGRITY_PREFERENCES = "tank_care_integrity_journal"
     const val TANK_CARE_INTEGRITY_KEY = "pending_deletions"
+    const val TANK_HEALTH_INTEGRITY_PREFERENCES = "tank_health_integrity_journal"
+    const val TANK_HEALTH_INTEGRITY_KEY = "pending_deletions"
     const val RECOVERY_PREFERENCES = "local_data_recovery"
     const val RECOVERY_KEY = "recovered_areas"
 
