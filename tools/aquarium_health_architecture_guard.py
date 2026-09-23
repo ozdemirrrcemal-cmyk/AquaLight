@@ -275,7 +275,8 @@ for token in (
 for token in (
     "dependencies.health.deleteForTank",
     "dependencies.health.restoreForTank",
-    "dependencies.health.integrity.withRollbackWritesAllowed",
+    "dependencies.health.integrity",
+    ".withRollbackWritesAllowed(",
 ):
     if token not in tank_deletion_coordinator:
         errors.append(
