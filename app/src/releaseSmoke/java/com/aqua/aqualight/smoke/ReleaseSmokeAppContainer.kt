@@ -262,8 +262,7 @@ private class ReleaseSmokeViewModelFactory(
             ?: createTankDeviceViewModel(modelClass)
             ?: error("Release smoke factory has no binding for ${modelClass.name}")
 
-        @Suppress("UNCHECKED_CAST")
-        return viewModel as T
+        return modelClass.cast(viewModel)
     }
 
     private fun createPrimaryViewModel(modelClass: Class<out ViewModel>): ViewModel? = when {
