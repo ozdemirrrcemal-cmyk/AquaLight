@@ -8,24 +8,42 @@ object AquariumHealthMeasurementPolicy {
     private const val MIN_TIMESTAMP_MILLIS = 946_684_800_000L
     private const val MAX_TIMESTAMP_MILLIS = 4_102_444_800_000L
 
+    private const val ZERO = 0.0
+    private const val MIN_TEMPERATURE_C = -2.0
+    private const val MAX_TEMPERATURE_C = 60.0
+    private const val MAX_PH = 14.0
+    private const val MAX_HARDNESS_DH = 100.0
+    private const val MAX_TDS_PPM = 100_000.0
+    private const val MAX_TOTAL_AMMONIA_PPM = 10_000.0
+    private const val MAX_NITRITE_PPM = 10_000.0
+    private const val MAX_NITRATE_PPM = 100_000.0
+    private const val MAX_PHOSPHATE_PPM = 10_000.0
+    private const val MAX_DISSOLVED_OXYGEN_MG_L = 50.0
+    private const val MAX_CO2_MG_L = 500.0
+    private const val MIN_SPECIFIC_GRAVITY = 0.9
+    private const val MAX_SPECIFIC_GRAVITY = 1.2
+    private const val MAX_CALCIUM_PPM = 5_000.0
+    private const val MAX_MAGNESIUM_PPM = 10_000.0
+    private const val MAX_PAR_UMOL_M2_S = 10_000.0
+
     private val parameterBounds: Map<HealthWaterParameter, ClosedFloatingPointRange<Double>> =
         mapOf(
-            HealthWaterParameter.TEMPERATURE_C to -2.0..60.0,
-            HealthWaterParameter.PH to 0.0..14.0,
-            HealthWaterParameter.GH_DGH to 0.0..100.0,
-            HealthWaterParameter.KH_DKH to 0.0..100.0,
-            HealthWaterParameter.TDS_PPM to 0.0..100_000.0,
-            HealthWaterParameter.TOTAL_AMMONIA_PPM to 0.0..10_000.0,
-            HealthWaterParameter.NITRITE_PPM to 0.0..10_000.0,
-            HealthWaterParameter.NITRATE_PPM to 0.0..100_000.0,
-            HealthWaterParameter.PHOSPHATE_PPM to 0.0..10_000.0,
-            HealthWaterParameter.DISSOLVED_OXYGEN_MG_L to 0.0..50.0,
-            HealthWaterParameter.CO2_MG_L to 0.0..500.0,
-            HealthWaterParameter.SPECIFIC_GRAVITY to 0.9..1.2,
-            HealthWaterParameter.ALKALINITY_DKH to 0.0..100.0,
-            HealthWaterParameter.CALCIUM_PPM to 0.0..5_000.0,
-            HealthWaterParameter.MAGNESIUM_PPM to 0.0..10_000.0,
-            HealthWaterParameter.PAR_UMOL_M2_S to 0.0..10_000.0
+            HealthWaterParameter.TEMPERATURE_C to MIN_TEMPERATURE_C..MAX_TEMPERATURE_C,
+            HealthWaterParameter.PH to ZERO..MAX_PH,
+            HealthWaterParameter.GH_DGH to ZERO..MAX_HARDNESS_DH,
+            HealthWaterParameter.KH_DKH to ZERO..MAX_HARDNESS_DH,
+            HealthWaterParameter.TDS_PPM to ZERO..MAX_TDS_PPM,
+            HealthWaterParameter.TOTAL_AMMONIA_PPM to ZERO..MAX_TOTAL_AMMONIA_PPM,
+            HealthWaterParameter.NITRITE_PPM to ZERO..MAX_NITRITE_PPM,
+            HealthWaterParameter.NITRATE_PPM to ZERO..MAX_NITRATE_PPM,
+            HealthWaterParameter.PHOSPHATE_PPM to ZERO..MAX_PHOSPHATE_PPM,
+            HealthWaterParameter.DISSOLVED_OXYGEN_MG_L to ZERO..MAX_DISSOLVED_OXYGEN_MG_L,
+            HealthWaterParameter.CO2_MG_L to ZERO..MAX_CO2_MG_L,
+            HealthWaterParameter.SPECIFIC_GRAVITY to MIN_SPECIFIC_GRAVITY..MAX_SPECIFIC_GRAVITY,
+            HealthWaterParameter.ALKALINITY_DKH to ZERO..MAX_HARDNESS_DH,
+            HealthWaterParameter.CALCIUM_PPM to ZERO..MAX_CALCIUM_PPM,
+            HealthWaterParameter.MAGNESIUM_PPM to ZERO..MAX_MAGNESIUM_PPM,
+            HealthWaterParameter.PAR_UMOL_M2_S to ZERO..MAX_PAR_UMOL_M2_S
         )
 
     fun validateWaterTestInput(
