@@ -10,6 +10,12 @@ import com.aqua.aqualight.ui.common.tabs.AquaSwipeTabHost
 import com.aqua.aqualight.ui.common.tabs.AquaSwipeTabSpec
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.TankDetailTabArgs
 
+private const val DEVICES_TAB_STABLE_ID = 1L
+private const val ACTIVITY_TAB_STABLE_ID = 2L
+private const val TANK_TAB_STABLE_ID = 3L
+private const val PLANTS_TAB_STABLE_ID = 4L
+private const val TANK_LIFE_TAB_STABLE_ID = 5L
+
 internal class TankDetailTabCoordinator(
     private val navController: NavController
 ) {
@@ -128,23 +134,23 @@ internal enum class TankDetailTab(
 ) : AquaSwipeTabSpec {
     DEVICES(
         R.string.aquarium_detail_tab_devices,
-        1L
+        DEVICES_TAB_STABLE_ID
     ),
     ACTIVITY(
         R.string.aquarium_detail_tab_activity,
-        2L
+        ACTIVITY_TAB_STABLE_ID
     ),
     TANK(
         R.string.aquarium_detail_tab_tank,
-        3L
+        TANK_TAB_STABLE_ID
     ),
     PLANTS(
         R.string.aquarium_detail_tab_plants,
-        4L
+        PLANTS_TAB_STABLE_ID
     ),
     TANK_LIFE(
         R.string.aquarium_tank_life_title,
-        5L
+        TANK_LIFE_TAB_STABLE_ID
     )
 }
 
