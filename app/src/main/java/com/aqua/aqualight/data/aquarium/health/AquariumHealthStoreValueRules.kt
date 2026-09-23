@@ -31,7 +31,7 @@ internal object AquariumHealthStoreValueRules {
     }
 
     fun requireTimestamp(field: String, value: Long) {
-        contractUnit {
+        contractValue {
             AquariumHealthMeasurementPolicy.requireStoredTimestamp(field, value)
         }
     }
@@ -51,7 +51,7 @@ internal object AquariumHealthStoreValueRules {
     }
 
     fun requireCanonicalNote(value: String) {
-        contractUnit {
+        contractValue {
             AquariumHealthMeasurementPolicy.requireCanonicalOptionalText(
                 field = "note",
                 value = value,
@@ -82,18 +82,10 @@ internal object AquariumHealthStoreValueRules {
                 value = stored.value
             )
         }
-        contractUnit {
+        contractValue {
             AquariumHealthMeasurementPolicy.validateReadings(readings)
         }
         return readings
-    }
-
-    private fun contractUnit(block: () -> Unit) {
-        try {
-            block()
-        } catch (error: IllegalArgumentException) {
-            violation(error.message ?: "Health record violates the application contract.")
-        }
     }
 
     private fun <T> contractValue(block: () -> T): T {
