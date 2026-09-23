@@ -377,7 +377,7 @@ internal object TankHealthIntegrityJournal : TankHealthIntegrityTransactions {
         snapshot: TankHealthIntegritySnapshot
     ) {
         snapshot.waterTests.forEach { test ->
-            AquariumHealthStoreRules.validateWaterTest(test, ownerUid)
+            AquariumHealthStoredRecordRules.validateWaterTest(test, ownerUid)
             if (test.tankId != tankId) {
                 violation("Health snapshot water test references another tank.")
             }
