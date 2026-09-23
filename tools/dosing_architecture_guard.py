@@ -143,9 +143,12 @@ def validate_production_cutover(repository_root: Path, source_root: Path) -> lis
             repository_root,
             errors,
             "graph.dosingOperations",
-            "channelNavigationOperations = dosing.navigationOperations",
-            "channelOperations = dosing.channelOperations",
-            "graph.dosingOperations.calibrationOperations",
+            "channelNavigationOperations =",
+            "context.graph.dosingOperations",
+            ".navigationOperations",
+            "channelOperations =",
+            ".channelOperations",
+            ".calibrationOperations",
         )
 
     if owner_graph.is_file():
