@@ -16,7 +16,7 @@ internal data class TankCareDeletionDependencies(
     val snapshotForTank: suspend (Long) -> List<CareTask>,
     val deleteForTank: suspend (Long) -> Unit,
     val restoreForTank: suspend (Long, List<CareTask>) -> Unit,
-    val cancelReminder: suspend (String, Long) -> Unit,
+    val cancelCareTaskReminder: suspend (String, Long) -> Unit,
     val reconcileReminders: suspend (String) -> Unit,
     val integrity: TankCareIntegrityTransactions = TankCareIntegrityJournal
 )
@@ -309,7 +309,7 @@ private suspend fun cancelDeletedCareReminders(
 ) {
     tasks.forEach { task ->
         val error = runCatching {
-            dependencies.care.cancelReminder(ownerUid, task.id)
+            dependencies.care.cancelCareTaskReminder(ownerUid, task.id)
         }.exceptionOrNull()
         error?.throwIfCancellation()
         error?.let { failure ->
