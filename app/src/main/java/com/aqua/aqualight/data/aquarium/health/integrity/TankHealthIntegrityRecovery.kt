@@ -51,8 +51,12 @@ internal class TankHealthIntegrityRecovery private constructor(
                         )
                         val beforeWaterIds =
                             before.waterTests.mapTo(mutableSetOf()) { it.id }
-                        val beforeObservationIds =
-                            before.observations.mapTo(mutableSetOf()) { it.id }
+                        val beforeLivestockObservationIds =
+                            before.livestockObservations
+                                .mapTo(mutableSetOf()) { it.id }
+                        val beforePlantObservationIds =
+                            before.plantObservations
+                                .mapTo(mutableSetOf()) { it.id }
 
                         TankHealthIntegrityJournal.withRollbackWritesAllowed(
                             ownerUid = owner,
@@ -70,8 +74,11 @@ internal class TankHealthIntegrityRecovery private constructor(
                             pending.snapshot.waterTests.count { test ->
                                 test.id !in beforeWaterIds
                             } +
-                            pending.snapshot.observations.count { observation ->
-                                observation.id !in beforeObservationIds
+                            pending.snapshot.livestockObservations.count { observation ->
+                                observation.id !in beforeLivestockObservationIds
+                            } +
+                            pending.snapshot.plantObservations.count { observation ->
+                                observation.id !in beforePlantObservationIds
                             }
                     }
                 }
