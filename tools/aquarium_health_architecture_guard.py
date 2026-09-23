@@ -34,6 +34,10 @@ RECOVERY = (
     / "data/aquarium/health/integrity/TankHealthIntegrityRecovery.kt"
 )
 TANK_CLEANER = APP / "data/aquarium/delete/OwnerTankDataCleaner.kt"
+TANK_DELETION_COORDINATOR = (
+    APP
+    / "data/aquarium/delete/OwnerTankDeletionCoordinator.kt"
+)
 OWNER_SESSION = APP / "data/auth/OwnerSessionCoordinator.kt"
 USER_CLEANER = APP / "data/user/UserDataCleaner.kt"
 OWNER_GRAPH = APP / "composition/OwnerDependencyGraph.kt"
@@ -88,6 +92,7 @@ plant_adapter = read(PLANT_ADAPTER)
 journal = read(JOURNAL)
 recovery = read(RECOVERY)
 tank_cleaner = read(TANK_CLEANER)
+tank_deletion_coordinator = read(TANK_DELETION_COORDINATOR)
 owner_session = read(OWNER_SESSION)
 user_cleaner = read(USER_CLEANER)
 owner_graph = read(OWNER_GRAPH)
@@ -263,11 +268,19 @@ for token in (
 for token in (
     "TankHealthDeletionDependencies",
     "HEALTH_RECORDS",
-    "health.deleteForTank",
-    "health.restoreForTank",
 ):
     if token not in tank_cleaner:
         errors.append(f"Tank deletion does not protect Health records: {token}")
+
+for token in (
+    "dependencies.health.deleteForTank",
+    "dependencies.health.restoreForTank",
+    "dependencies.health.integrity.withRollbackWritesAllowed",
+):
+    if token not in tank_deletion_coordinator:
+        errors.append(
+            f"Tank deletion transaction does not protect Health records: {token}"
+        )
 
 if "TankHealthIntegrityRecovery" not in owner_session:
     errors.append("Owner activation must recover interrupted Health cleanup")
