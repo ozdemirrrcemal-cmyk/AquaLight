@@ -298,6 +298,9 @@
 <string name="catalog_keyword_substrate">substrate</string>
 <string name="catalog_keyword_nano">nano</string>
 
+    <!-- Shared thermal alias: used by multiple catalog categories (thermometers and heated filters). -->
+    <string name="catalog_keyword_thermo">thermo</string>
+
     <string name="catalog_keyword_led" translatable="false">led</string>
     <string name="catalog_keyword_background">background</string>
     <string name="catalog_keyword_light">light</string>

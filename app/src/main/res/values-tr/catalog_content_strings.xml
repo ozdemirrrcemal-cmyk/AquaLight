@@ -54,6 +54,9 @@
 <string name="catalog_keyword_substrate">taban</string>
 <string name="catalog_keyword_nano">nano</string>
 
+    <!-- Shared thermal alias: used by multiple catalog categories (thermometers and heated filters). -->
+    <string name="catalog_keyword_thermo">termo</string>
+
     <string name="catalog_keyword_background">arka plan</string>
     <string name="catalog_keyword_light">aydınlatma</string>
     <string name="catalog_keyword_shade">gölge</string>
