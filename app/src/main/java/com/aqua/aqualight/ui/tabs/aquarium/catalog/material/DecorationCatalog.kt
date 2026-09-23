@@ -363,7 +363,7 @@ private val wioDecorationDefinitions = listOf(
 private val adaDecorationDefinitions = listOf(
     decoration(
         id = "decoration_0051",
-        brandRes = R.string.catalog_decoration_brand_ada,
+        brandRes = R.string.catalog_brand_ada,
         nameRes = R.string.catalog_material_decoration_0051_name,
         keywordRes = decorationStoneKeywords + listOf(
             R.string.catalog_decoration_alias_seiryu,
@@ -372,55 +372,55 @@ private val adaDecorationDefinitions = listOf(
     ),
     decoration(
         id = "decoration_0052",
-        brandRes = R.string.catalog_decoration_brand_ada,
+        brandRes = R.string.catalog_brand_ada,
         nameRes = R.string.catalog_material_decoration_0052_name,
         keywordRes = decorationStoneKeywords
     ),
     decoration(
         id = "decoration_0053",
-        brandRes = R.string.catalog_decoration_brand_ada,
+        brandRes = R.string.catalog_brand_ada,
         nameRes = R.string.catalog_material_decoration_0053_name,
         keywordRes = decorationStoneKeywords
     ),
     decoration(
         id = "decoration_0054",
-        brandRes = R.string.catalog_decoration_brand_ada,
+        brandRes = R.string.catalog_brand_ada,
         nameRes = R.string.catalog_material_decoration_0054_name,
         keywordRes = decorationStoneKeywords
     ),
     decoration(
         id = "decoration_0055",
-        brandRes = R.string.catalog_decoration_brand_ada,
+        brandRes = R.string.catalog_brand_ada,
         nameRes = R.string.catalog_material_decoration_0055_name,
         keywordRes = decorationStoneKeywords
     ),
     decoration(
         id = "decoration_0056",
-        brandRes = R.string.catalog_decoration_brand_ada,
+        brandRes = R.string.catalog_brand_ada,
         nameRes = R.string.catalog_material_decoration_0056_name,
         keywordRes = decorationStoneKeywords
     ),
     decoration(
         id = "decoration_0057",
-        brandRes = R.string.catalog_decoration_brand_ada,
+        brandRes = R.string.catalog_brand_ada,
         nameRes = R.string.catalog_material_decoration_0057_name,
         keywordRes = decorationStoneKeywords
     ),
     decoration(
         id = "decoration_0058",
-        brandRes = R.string.catalog_decoration_brand_ada,
+        brandRes = R.string.catalog_brand_ada,
         nameRes = R.string.catalog_material_decoration_0058_name,
         keywordRes = decorationStoneKeywords
     ),
     decoration(
         id = "decoration_0059",
-        brandRes = R.string.catalog_decoration_brand_ada,
+        brandRes = R.string.catalog_brand_ada,
         nameRes = R.string.catalog_material_decoration_0059_name,
         keywordRes = decorationStoneKeywords
     ),
     decoration(
         id = "decoration_0060",
-        brandRes = R.string.catalog_decoration_brand_ada,
+        brandRes = R.string.catalog_brand_ada,
         nameRes = R.string.catalog_material_decoration_0060_name,
         keywordRes = decorationStoneKeywords + listOf(
             R.string.catalog_decoration_alias_dragon_stone
@@ -428,61 +428,61 @@ private val adaDecorationDefinitions = listOf(
     ),
     decoration(
         id = "decoration_0061",
-        brandRes = R.string.catalog_decoration_brand_ada,
+        brandRes = R.string.catalog_brand_ada,
         nameRes = R.string.catalog_material_decoration_0061_name,
         keywordRes = decorationStoneKeywords
     ),
     decoration(
         id = "decoration_0062",
-        brandRes = R.string.catalog_decoration_brand_ada,
+        brandRes = R.string.catalog_brand_ada,
         nameRes = R.string.catalog_material_decoration_0062_name,
         keywordRes = decorationStoneKeywords
     ),
     decoration(
         id = "decoration_0063",
-        brandRes = R.string.catalog_decoration_brand_ada,
+        brandRes = R.string.catalog_brand_ada,
         nameRes = R.string.catalog_material_decoration_0063_name,
         keywordRes = decorationStoneKeywords
     ),
     decoration(
         id = "decoration_0064",
-        brandRes = R.string.catalog_decoration_brand_ada,
+        brandRes = R.string.catalog_brand_ada,
         nameRes = R.string.catalog_material_decoration_0064_name,
         keywordRes = decorationStoneKeywords
     ),
     decoration(
         id = "decoration_0065",
-        brandRes = R.string.catalog_decoration_brand_ada,
+        brandRes = R.string.catalog_brand_ada,
         nameRes = R.string.catalog_material_decoration_0065_name,
         keywordRes = decorationWoodKeywords
     ),
     decoration(
         id = "decoration_0066",
-        brandRes = R.string.catalog_decoration_brand_ada,
+        brandRes = R.string.catalog_brand_ada,
         nameRes = R.string.catalog_material_decoration_0066_name,
         keywordRes = decorationWoodKeywords
     ),
     decoration(
         id = "decoration_0067",
-        brandRes = R.string.catalog_decoration_brand_ada,
+        brandRes = R.string.catalog_brand_ada,
         nameRes = R.string.catalog_material_decoration_0067_name,
         keywordRes = decorationWoodKeywords
     ),
     decoration(
         id = "decoration_0068",
-        brandRes = R.string.catalog_decoration_brand_ada,
+        brandRes = R.string.catalog_brand_ada,
         nameRes = R.string.catalog_material_decoration_0068_name,
         keywordRes = decorationWoodKeywords
     ),
     decoration(
         id = "decoration_0069",
-        brandRes = R.string.catalog_decoration_brand_ada,
+        brandRes = R.string.catalog_brand_ada,
         nameRes = R.string.catalog_material_decoration_0069_name,
         keywordRes = decorationWoodKeywords
     ),
     decoration(
         id = "decoration_0070",
-        brandRes = R.string.catalog_decoration_brand_ada,
+        brandRes = R.string.catalog_brand_ada,
         nameRes = R.string.catalog_material_decoration_0070_name,
         keywordRes = decorationWoodKeywords
     )
@@ -1463,31 +1463,31 @@ private val aquadecoDecorationDefinitions = listOf(
 private val aquaelDecorationDefinitions = listOf(
     decoration(
         id = "decoration_0218",
-        brandRes = R.string.catalog_decoration_brand_aquael,
+        brandRes = R.string.catalog_brand_aquael,
         nameRes = R.string.catalog_material_decoration_0218_name,
         keywordRes = decorationStoneKeywords
     ),
     decoration(
         id = "decoration_0219",
-        brandRes = R.string.catalog_decoration_brand_aquael,
+        brandRes = R.string.catalog_brand_aquael,
         nameRes = R.string.catalog_material_decoration_0219_name,
         keywordRes = decorationStoneKeywords
     ),
     decoration(
         id = "decoration_0220",
-        brandRes = R.string.catalog_decoration_brand_aquael,
+        brandRes = R.string.catalog_brand_aquael,
         nameRes = R.string.catalog_material_decoration_0220_name,
         keywordRes = decorationStoneKeywords
     ),
     decoration(
         id = "decoration_0221",
-        brandRes = R.string.catalog_decoration_brand_aquael,
+        brandRes = R.string.catalog_brand_aquael,
         nameRes = R.string.catalog_material_decoration_0221_name,
         keywordRes = decorationStoneKeywords
     ),
     decoration(
         id = "decoration_0222",
-        brandRes = R.string.catalog_decoration_brand_aquael,
+        brandRes = R.string.catalog_brand_aquael,
         nameRes = R.string.catalog_material_decoration_0222_name,
         keywordRes = decorationRootKeywords + listOf(
             R.string.catalog_decoration_alias_mangrow,
@@ -1497,31 +1497,31 @@ private val aquaelDecorationDefinitions = listOf(
     ),
     decoration(
         id = "decoration_0223",
-        brandRes = R.string.catalog_decoration_brand_aquael,
+        brandRes = R.string.catalog_brand_aquael,
         nameRes = R.string.catalog_material_decoration_0223_name,
         keywordRes = decorationRootKeywords
     ),
     decoration(
         id = "decoration_0224",
-        brandRes = R.string.catalog_decoration_brand_aquael,
+        brandRes = R.string.catalog_brand_aquael,
         nameRes = R.string.catalog_material_decoration_0224_name,
         keywordRes = decorationRootKeywords
     ),
     decoration(
         id = "decoration_0225",
-        brandRes = R.string.catalog_decoration_brand_aquael,
+        brandRes = R.string.catalog_brand_aquael,
         nameRes = R.string.catalog_material_decoration_0225_name,
         keywordRes = decorationRootKeywords
     ),
     decoration(
         id = "decoration_0226",
-        brandRes = R.string.catalog_decoration_brand_aquael,
+        brandRes = R.string.catalog_brand_aquael,
         nameRes = R.string.catalog_material_decoration_0226_name,
         keywordRes = decorationRootKeywords
     ),
     decoration(
         id = "decoration_0227",
-        brandRes = R.string.catalog_decoration_brand_aquael,
+        brandRes = R.string.catalog_brand_aquael,
         nameRes = R.string.catalog_material_decoration_0227_name,
         keywordRes = decorationRootKeywords
     )
@@ -1530,7 +1530,7 @@ private val aquaelDecorationDefinitions = listOf(
 private val dennerleDecorationDefinitions = listOf(
     decoration(
         id = "decoration_0228",
-        brandRes = R.string.catalog_decoration_brand_dennerle,
+        brandRes = R.string.catalog_brand_dennerle,
         nameRes = R.string.catalog_material_decoration_0228_name,
         keywordRes = decorationWoodKeywords + listOf(
             R.string.catalog_decoration_alias_spider_wood,
@@ -1541,13 +1541,13 @@ private val dennerleDecorationDefinitions = listOf(
     ),
     decoration(
         id = "decoration_0229",
-        brandRes = R.string.catalog_decoration_brand_dennerle,
+        brandRes = R.string.catalog_brand_dennerle,
         nameRes = R.string.catalog_material_decoration_0229_name,
         keywordRes = decorationBonsaiKeywords
     ),
     decoration(
         id = "decoration_0230",
-        brandRes = R.string.catalog_decoration_brand_dennerle,
+        brandRes = R.string.catalog_brand_dennerle,
         nameRes = R.string.catalog_material_decoration_0230_name,
         keywordRes = decorationHardscapeKeywords + listOf(
             R.string.catalog_decoration_alias_artificial,
@@ -1559,7 +1559,7 @@ private val dennerleDecorationDefinitions = listOf(
 private val istaDecorationDefinitions = listOf(
     decoration(
         id = "decoration_0231",
-        brandRes = R.string.catalog_decoration_brand_ista,
+        brandRes = R.string.catalog_brand_ista,
         nameRes = R.string.catalog_material_decoration_0231_name,
         keywordRes = decorationHardscapeKeywords + listOf(
             R.string.catalog_decoration_alias_artificial,
@@ -1568,7 +1568,7 @@ private val istaDecorationDefinitions = listOf(
     ),
     decoration(
         id = "decoration_0232",
-        brandRes = R.string.catalog_decoration_brand_ista,
+        brandRes = R.string.catalog_brand_ista,
         nameRes = R.string.catalog_material_decoration_0232_name,
         keywordRes = decorationHardscapeKeywords + listOf(
             R.string.catalog_decoration_alias_artificial,
@@ -1577,7 +1577,7 @@ private val istaDecorationDefinitions = listOf(
     ),
     decoration(
         id = "decoration_0233",
-        brandRes = R.string.catalog_decoration_brand_ista,
+        brandRes = R.string.catalog_brand_ista,
         nameRes = R.string.catalog_material_decoration_0233_name,
         keywordRes = decorationHardscapeKeywords + listOf(
             R.string.catalog_decoration_alias_artificial,

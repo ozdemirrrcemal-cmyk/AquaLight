@@ -2,15 +2,11 @@
 <resources>
     <!-- Decoration catalog brand names. -->
     <string name="catalog_decoration_brand_wio" translatable="false">WIO</string>
-    <string name="catalog_decoration_brand_ada" translatable="false">ADA</string>
     <string name="catalog_decoration_brand_creaqua" translatable="false">Creaqua</string>
     <string name="catalog_decoration_brand_uns" translatable="false">Ultum Nature Systems (UNS)</string>
     <string name="catalog_decoration_brand_greenworks" translatable="false">GreenWorks</string>
     <string name="catalog_decoration_brand_riverest" translatable="false">Riverest</string>
     <string name="catalog_decoration_brand_aquadeco" translatable="false">AquaDeco</string>
-    <string name="catalog_decoration_brand_aquael" translatable="false">Aquael</string>
-    <string name="catalog_decoration_brand_dennerle" translatable="false">Dennerle</string>
-    <string name="catalog_decoration_brand_ista" translatable="false">ISTA</string>
 
     <!-- Decoration catalog search aliases. -->
     <string name="catalog_decoration_alias_ohko" translatable="false">ohko</string>
