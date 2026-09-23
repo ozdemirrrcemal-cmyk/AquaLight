@@ -43,6 +43,9 @@ REQUIRED_TESTS = (
     ROOT
     / "app/src/androidTest/java/com/aqua/aqualight/data/aquarium/delete/"
     / "OwnerTankDataCleanerMultiTankInstrumentedTest.kt",
+    ROOT
+    / "app/src/androidTest/java/com/aqua/aqualight/data/aquarium/health/integrity/"
+    / "TankHealthIntegrityRecoveryInstrumentedTest.kt",
 )
 
 errors: list[str] = []
