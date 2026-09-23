@@ -72,12 +72,39 @@ data class LivestockHealthObservationInput(
     val note: String = ""
 )
 
+data class PlantHealthObservation(
+    val id: Long,
+    val tankId: Long,
+    val plantId: Long?,
+    val symptomKey: String,
+    val algaeTypeKey: String?,
+    val intensity: ObservationIntensity,
+    val observedAtMillis: Long,
+    val note: String,
+    val createdAtMillis: Long,
+    val updatedAtMillis: Long
+)
+
+data class PlantHealthObservationInput(
+    val tankId: Long,
+    val plantId: Long?,
+    val symptomKey: String,
+    val algaeTypeKey: String?,
+    val intensity: ObservationIntensity,
+    val observedAtMillis: Long,
+    val note: String = ""
+)
+
 interface AquariumHealthRecordOperations {
     fun waterTests(tankId: Long): Flow<List<AquariumWaterTestRecord>>
 
     fun livestockObservations(
         tankId: Long
     ): Flow<List<LivestockHealthObservation>>
+
+    fun plantObservations(
+        tankId: Long
+    ): Flow<List<PlantHealthObservation>>
 
     suspend fun addWaterTest(input: AquariumWaterTestInput): Long
 
@@ -98,4 +125,15 @@ interface AquariumHealthRecordOperations {
     )
 
     suspend fun deleteLivestockObservation(observationId: Long)
+
+    suspend fun addPlantObservation(
+        input: PlantHealthObservationInput
+    ): Long
+
+    suspend fun updatePlantObservation(
+        observationId: Long,
+        input: PlantHealthObservationInput
+    )
+
+    suspend fun deletePlantObservation(observationId: Long)
 }
