@@ -9,7 +9,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentsSerializer
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentsStore
 import com.aqua.aqualight.data.aquarium.health.AquariumHealthCommercialSerializer
-import com.aqua.aqualight.data.aquarium.health.AquariumHealthStore
 import com.aqua.aqualight.data.aquarium.health.AquariumHealthStoreRules
 import com.aqua.aqualight.data.aquarium.store.AquariumTanksSerializer
 import com.aqua.aqualight.data.aquarium.store.AquariumTanksStore
