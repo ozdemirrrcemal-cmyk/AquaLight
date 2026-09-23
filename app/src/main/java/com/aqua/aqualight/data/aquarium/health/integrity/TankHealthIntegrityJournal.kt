@@ -359,14 +359,16 @@ internal object TankHealthIntegrityJournal : TankHealthIntegrityTransactions {
         AquariumHealthStoreRules.defaultStore()
             .toBuilder()
             .addAllWaterTests(snapshot.waterTests)
-            .addAllLivestockObservations(snapshot.observations)
+            .addAllLivestockObservations(snapshot.livestockObservations)
+            .addAllPlantObservations(snapshot.plantObservations)
             .build()
     )
 
     private fun storeToSnapshot(store: AquariumHealthStore) =
         TankHealthIntegritySnapshot(
             waterTests = store.waterTestsList,
-            observations = store.livestockObservationsList
+            livestockObservations = store.livestockObservationsList,
+            plantObservations = store.plantObservationsList
         )
 
     private fun validateSnapshot(
@@ -380,17 +382,34 @@ internal object TankHealthIntegrityJournal : TankHealthIntegrityTransactions {
                 violation("Health snapshot water test references another tank.")
             }
         }
-        snapshot.observations.forEach { observation ->
-            AquariumHealthStoreRules.validateObservation(observation, ownerUid)
+        snapshot.livestockObservations.forEach { observation ->
+            AquariumHealthStoredRecordRules.validateLivestockObservation(
+                observation,
+                ownerUid
+            )
             if (observation.tankId != tankId) {
-                violation("Health snapshot observation references another tank.")
+                violation(
+                    "Health snapshot livestock observation references another tank."
+                )
+            }
+        }
+        snapshot.plantObservations.forEach { observation ->
+            AquariumHealthStoredRecordRules.validatePlantObservation(
+                observation,
+                ownerUid
+            )
+            if (observation.tankId != tankId) {
+                violation(
+                    "Health snapshot plant observation references another tank."
+                )
             }
         }
     }
 
     private fun emptySnapshot() = TankHealthIntegritySnapshot(
         waterTests = emptyList(),
-        observations = emptyList()
+        livestockObservations = emptyList(),
+        plantObservations = emptyList()
     )
 
     private fun PendingDeletion.key(): Key = Key(ownerUid, tankId)
