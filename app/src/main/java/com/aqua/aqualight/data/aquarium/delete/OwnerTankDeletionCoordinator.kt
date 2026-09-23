@@ -40,11 +40,12 @@ internal class OwnerTankDeletionCoordinator(
 
     private suspend fun prepare(): TankDeletionPreparation {
         val beginError = beginTransactions()
-        val snapshotResult = if (beginError == null) {
-            runCatching(::captureSnapshots)
-        } else {
-            Result.failure(beginError)
-        }
+        val snapshotResult: Result<TankDeletionSnapshots> =
+            if (beginError == null) {
+                runCatching { captureSnapshots() }
+            } else {
+                Result.failure(beginError)
+            }
         val error = snapshotResult.exceptionOrNull()
 
         return if (error == null) {
