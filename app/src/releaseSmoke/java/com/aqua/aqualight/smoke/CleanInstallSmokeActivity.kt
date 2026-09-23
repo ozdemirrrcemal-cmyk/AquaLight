@@ -237,11 +237,7 @@ private class CleanInstallEvidenceCollector(
                     CountEvidence.isZero(counts, "ignoredDevices")
                 ),
             "tanksEmpty" to CountEvidence.isZero(counts, "tanks"),
-            "healthRecordsEmpty" to (
-                CountEvidence.isZero(counts, "healthWaterTests") &&
-                    CountEvidence.isZero(counts, "healthLivestockObservations") &&
-                    CountEvidence.isZero(counts, "healthPlantObservations")
-                ),
+            "healthRecordsEmpty" to healthRecordsEmpty(counts),
             "assignmentsEmpty" to CountEvidence.isZero(counts, "assignments"),
             "careTasksEmpty" to CountEvidence.isZero(counts, "careTasks"),
             "notificationPreferencesEmpty" to CountEvidence.isZero(
@@ -271,6 +267,13 @@ private class CleanInstallEvidenceCollector(
             "ownerMediaEmpty" to CountEvidence.isZero(counts, "ownerMediaFiles")
         )
     }
+
+    private fun healthRecordsEmpty(
+        counts: Map<String, Int>
+    ): Boolean =
+        CountEvidence.isZero(counts, "healthWaterTests") &&
+            CountEvidence.isZero(counts, "healthLivestockObservations") &&
+            CountEvidence.isZero(counts, "healthPlantObservations")
 
     private fun userPrivateFieldCount(preferences: UserPreferences): Int {
         val textFields = listOf(
