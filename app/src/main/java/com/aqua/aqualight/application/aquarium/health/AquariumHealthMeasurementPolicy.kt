@@ -62,6 +62,25 @@ object AquariumHealthMeasurementPolicy {
         return input
     }
 
+    fun validatePlantObservationInput(
+        input: PlantHealthObservationInput,
+        nowMillis: Long = System.currentTimeMillis()
+    ): PlantHealthObservationInput {
+        requirePositiveId("tankId", input.tankId)
+        input.plantId?.let { id -> requirePositiveId("plantId", id) }
+        PlantHealthSymptomCatalog.requireValidSelection(
+            symptomKey = input.symptomKey,
+            algaeTypeKey = input.algaeTypeKey
+        )
+        requireObservationTimestamp(
+            field = "observedAtMillis",
+            value = input.observedAtMillis,
+            nowMillis = nowMillis
+        )
+        requireCanonicalOptionalText("note", input.note, MAX_NOTE_CHARS)
+        return input
+    }
+
     fun validateReadings(readings: List<AquariumWaterReading>) {
         require(readings.isNotEmpty()) {
             "A water test must contain at least one reading."
