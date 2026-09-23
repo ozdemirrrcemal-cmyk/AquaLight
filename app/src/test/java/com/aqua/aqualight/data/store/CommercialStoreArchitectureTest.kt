@@ -110,26 +110,6 @@ class CommercialStoreArchitectureTest {
             "app/src/main/java/com/aqua/aqualight/data/aquarium/store/" +
                 "AquariumTankDataStoreManager.kt"
         ).readText()
-        val healthStoreAccess = File(
-            repositoryRoot,
-            "app/src/main/java/com/aqua/aqualight/data/aquarium/health/" +
-                "AquariumHealthStoreAccess.kt"
-        ).readText()
-        val healthWaterStore = File(
-            repositoryRoot,
-            "app/src/main/java/com/aqua/aqualight/data/aquarium/health/" +
-                "AquariumWaterTestStore.kt"
-        ).readText()
-        val healthLivestockStore = File(
-            repositoryRoot,
-            "app/src/main/java/com/aqua/aqualight/data/aquarium/health/" +
-                "LivestockHealthObservationStore.kt"
-        ).readText()
-        val healthPlantStore = File(
-            repositoryRoot,
-            "app/src/main/java/com/aqua/aqualight/data/aquarium/health/" +
-                "PlantHealthObservationStore.kt"
-        ).readText()
         val careManager = File(
             repositoryRoot,
             "app/src/main/java/com/aqua/aqualight/data/care/" +
@@ -148,19 +128,7 @@ class CommercialStoreArchitectureTest {
 
         assertTrue(tankManager.contains("TankStoreRules.validateStore"))
         assertTrue(tankManager.contains("TankStoreRules.validateTank"))
-        assertTrue(
-            healthStoreAccess.contains("AquariumHealthCommercialSerializer")
-        )
-        assertTrue(healthStoreAccess.contains("ReplaceFileCorruptionHandler"))
-        assertTrue(
-            healthWaterStore.contains("AquariumHealthStoreRules.nextUniqueId")
-        )
-        assertTrue(
-            healthLivestockStore.contains("AquariumHealthStoreRules.nextUniqueId")
-        )
-        assertTrue(
-            healthPlantStore.contains("AquariumHealthStoreRules.nextUniqueId")
-        )
+        assertHealthStoreArchitecture()
         assertTrue(careManager.contains("CareTasksCommercialSerializer"))
         assertTrue(careManager.contains("CareTaskStoreRules.nextUniqueId"))
         assertTrue(careManager.contains("toCareTaskStrict"))
@@ -170,6 +138,31 @@ class CommercialStoreArchitectureTest {
         assertFalse(preferenceManager.contains("emit(UserPreferences"))
         assertTrue(lightLibraryStore.contains("DeviceLightLibraryStoreRules.validateStore"))
         assertTrue(lightLibraryStore.contains("ReplaceFileCorruptionHandler"))
+    }
+
+    private fun assertHealthStoreArchitecture() {
+        val healthRoot =
+            "app/src/main/java/com/aqua/aqualight/data/aquarium/health/"
+        val access = File(
+            repositoryRoot,
+            healthRoot + "AquariumHealthStoreAccess.kt"
+        ).readText()
+        assertTrue(access.contains("AquariumHealthCommercialSerializer"))
+        assertTrue(access.contains("ReplaceFileCorruptionHandler"))
+
+        listOf(
+            "AquariumWaterTestStore.kt",
+            "LivestockHealthObservationStore.kt",
+            "PlantHealthObservationStore.kt"
+        ).forEach { fileName ->
+            val store = File(
+                repositoryRoot,
+                healthRoot + fileName
+            ).readText()
+            assertTrue(
+                store.contains("AquariumHealthStoreRules.nextUniqueId")
+            )
+        }
     }
 
     @Test
