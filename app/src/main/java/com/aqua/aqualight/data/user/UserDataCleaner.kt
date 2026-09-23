@@ -123,6 +123,7 @@ class UserDataCleaner private constructor(
 
         runStep(Step.AQUARIUM_HEALTH) {
             AquariumHealthDataStoreManager.create(appContext)
+                .integrity
                 .clearAllRecords(targetOwnerUid)
             TankHealthIntegrityJournal.initialize(appContext)
             TankHealthIntegrityJournal.clearOwner(targetOwnerUid)
