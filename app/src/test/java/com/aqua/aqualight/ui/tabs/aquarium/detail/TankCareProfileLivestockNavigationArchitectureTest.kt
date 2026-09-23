@@ -17,12 +17,17 @@ class TankCareProfileLivestockNavigationArchitectureTest {
         )
 
         assertTrue(detailSource.contains("CARE_PROFILE_ACTION_LIVESTOCK"))
-        assertTrue(detailSource.contains("openLivestockPickerScreen()"))
+        assertTrue(
+            detailSource.contains(
+                "TankDetailCareProfileActionHandler.resolve(action)"
+            )
+        )
         assertTrue(
             detailSource.contains(
                 "actionTankDetailFragmentToTankLivestockPickerFragment"
             )
         )
+        assertTrue(detailSource.contains("navigateFromTankDetail"))
         assertFalse(detailSource.contains("openLivestockFormIfNeeded"))
         assertFalse(detailSource.contains("openLivestockFormScreen"))
         assertFalse(
@@ -67,6 +72,28 @@ class TankCareProfileLivestockNavigationArchitectureTest {
                 "action_tankLivestockPickerFragment_to_tankDetailLivestockFormFragment"
             )
         )
+    }
+
+    @Test
+    fun extractedPresentationHelpersCannotCreateParallelNavigation() {
+        val detailSource = source(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/" +
+                "TankDetailFragment.kt"
+        )
+        val tabCoordinator = source(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/" +
+                "TankDetailTabCoordinator.kt"
+        )
+        val careHandler = source(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/" +
+                "TankDetailCareProfileActionHandler.kt"
+        )
+
+        assertTrue(detailSource.contains("navController.navigate(directions)"))
+        assertTrue(detailSource.contains("tabCoordinator.persistSelection()"))
+        assertFalse(tabCoordinator.contains("navController.navigate("))
+        assertFalse(careHandler.contains("NavController"))
+        assertFalse(careHandler.contains(".navigate("))
     }
 
     private fun source(relativePath: String): String =
