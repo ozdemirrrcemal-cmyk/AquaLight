@@ -11,6 +11,9 @@ import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCas
 import com.aqua.aqualight.application.user.UserProfileOperations
 import com.aqua.aqualight.data.aquarium.DefaultAquariumTankOperations
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
+import com.aqua.aqualight.data.aquarium.delete.OwnerTankDeletionDependencies
+import com.aqua.aqualight.data.aquarium.delete.TankCareDeletionDependencies
+import com.aqua.aqualight.data.aquarium.delete.TankHealthDeletionDependencies
 import com.aqua.aqualight.data.aquarium.devices.DefaultTankDeviceAssignmentOperations
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
 import com.aqua.aqualight.data.care.DefaultMaintenanceOperations
@@ -189,21 +192,32 @@ internal class OwnerViewModelFactory(
                     tankStore = graph.aquariumTankStore,
                     healthStore = graph.aquariumHealthStore,
                     tankDataCleaner = OwnerTankDataCleaner(
-                        deleteTankRecords = graph.aquariumTankStore::deleteTanks,
-                        snapshotCareTasksForTank = { tankId ->
-                            graph.careTaskStore.snapshotTasksForIntegrity(tankId)
-                        },
-                        deleteCareTasksForTank = graph.careTaskStore::deleteTasksForTank,
-                        restoreCareTasksForTank = { tankId, snapshots ->
-                            graph.careTaskStore.restoreTaskSnapshotsForIntegrity(tankId, snapshots)
-                        },
-                        snapshotHealthRecordsForTank = graph.aquariumHealthStore::snapshotForTank,
-                        deleteHealthRecordsForTank = graph.aquariumHealthStore::deleteRecordsForTank,
-                        restoreHealthRecordsForTank =
-                            graph.aquariumHealthStore::restoreSnapshotForIntegrity,
-                        removeDeviceAssignmentsForTank = assignments::removeAssignmentsForTank,
-                        cancelCareTaskReminder = notificationPreferenceUseCase::cancelCareTask,
-                        reconcileCareReminders = notificationPreferenceUseCase::reconcileOwner
+                        OwnerTankDeletionDependencies(
+                            deleteTankRecords = graph.aquariumTankStore::deleteTanks,
+                            care = TankCareDeletionDependencies(
+                                snapshotForTank = { tankId ->
+                                    graph.careTaskStore.snapshotTasksForIntegrity(tankId)
+                                },
+                                deleteForTank = graph.careTaskStore::deleteTasksForTank,
+                                restoreForTank = { tankId, snapshots ->
+                                    graph.careTaskStore.restoreTaskSnapshotsForIntegrity(
+                                        tankId,
+                                        snapshots
+                                    )
+                                },
+                                cancelReminder = notificationPreferenceUseCase::cancelCareTask,
+                                reconcileReminders =
+                                    notificationPreferenceUseCase::reconcileOwner
+                            ),
+                            health = TankHealthDeletionDependencies(
+                                snapshotForTank = graph.aquariumHealthStore::snapshotForTank,
+                                deleteForTank = graph.aquariumHealthStore::deleteRecordsForTank,
+                                restoreForTank =
+                                    graph.aquariumHealthStore::restoreSnapshotForIntegrity
+                            ),
+                            removeDeviceAssignmentsForTank =
+                                assignments::removeAssignmentsForTank
+                        )
                     ),
                     notificationPreferences = notificationPreferenceUseCase
                 )
