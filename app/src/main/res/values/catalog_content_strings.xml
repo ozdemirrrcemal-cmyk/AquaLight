@@ -304,7 +304,6 @@
     <string name="catalog_keyword_cylinder">cylinder</string>
     <string name="catalog_keyword_bottle">bottle</string>
     <string name="catalog_keyword_jbl" translatable="false">jbl</string>
-    <string name="catalog_keyword_dennerle" translatable="false">dennerle</string>
     <string name="catalog_keyword_diffuser">diffuser</string>
 <string name="catalog_keyword_cooler">cooler</string>
     <string name="catalog_keyword_fan">fan</string>
@@ -345,7 +344,6 @@
     <string name="catalog_keyword_white">white</string>
     <string name="catalog_keyword_basalt">basalt</string>
     <string name="catalog_keyword_river">river</string>
-    <string name="catalog_keyword_ada" translatable="false">ada</string>
     <string name="catalog_keyword_heater">heater</string>
     <string name="catalog_keyword_thermo">thermo</string>
     <string name="catalog_keyword_protemp" translatable="false">protemp</string>
