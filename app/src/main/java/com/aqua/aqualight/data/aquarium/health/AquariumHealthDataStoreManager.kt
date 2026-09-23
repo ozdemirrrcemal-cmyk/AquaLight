@@ -62,7 +62,7 @@ class AquariumHealthDataStoreManager private constructor(
                 .filter { test ->
                     test.ownerUid == owner && test.tankId == tankId
                 }
-                .map(StoredAquariumWaterTest::toApplicationRecord)
+                .map { stored -> stored.toApplicationRecord() }
                 .sortedWith(
                     compareByDescending<AquariumWaterTestRecord> { it.measuredAtMillis }
                         .thenByDescending { it.id }
@@ -87,7 +87,7 @@ class AquariumHealthDataStoreManager private constructor(
                 .filter { observation ->
                     observation.ownerUid == owner && observation.tankId == tankId
                 }
-                .map(StoredLivestockHealthObservation::toApplicationRecord)
+                .map { stored -> stored.toApplicationRecord() }
                 .sortedWith(
                     compareByDescending<LivestockHealthObservation> { it.observedAtMillis }
                         .thenByDescending { it.id }
