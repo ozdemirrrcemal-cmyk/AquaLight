@@ -59,6 +59,7 @@ for guard in \
   device_root_application_boundary_guard.py \
   tank_device_assignment_boundary_guard.py \
   aquarium_application_boundary_guard.py \
+  aquarium_health_architecture_guard.py \
   care_application_boundary_guard.py \
   provisioning_discovery_boundary_guard.py \
   provisioning_progress_boundary_guard.py \
