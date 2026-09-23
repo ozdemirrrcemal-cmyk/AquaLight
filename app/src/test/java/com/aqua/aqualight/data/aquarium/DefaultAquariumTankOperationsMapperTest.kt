@@ -192,8 +192,18 @@ class DefaultAquariumTankOperationsMapperTest {
             cleanupIssues = listOf(
                 OwnerTankDataCleaner.CleanupIssue(
                     tankId = 7L,
+                    stage = OwnerTankDataCleaner.CleanupStage.CARE_TASKS,
+                    error = IllegalStateException("private care detail")
+                ),
+                OwnerTankDataCleaner.CleanupIssue(
+                    tankId = 7L,
+                    stage = OwnerTankDataCleaner.CleanupStage.HEALTH_RECORDS,
+                    error = IllegalStateException("private health detail")
+                ),
+                OwnerTankDataCleaner.CleanupIssue(
+                    tankId = 7L,
                     stage = OwnerTankDataCleaner.CleanupStage.DEVICE_ASSIGNMENTS,
-                    error = IllegalStateException("private cleanup detail")
+                    error = IllegalStateException("private assignment detail")
                 )
             )
         )
@@ -201,6 +211,13 @@ class DefaultAquariumTankOperationsMapperTest {
         assertSame(DeleteAquariumTanksResult.DeleteFailed, failure.toApplicationResult())
         val mapped = deleted.toApplicationResult() as DeleteAquariumTanksResult.Deleted
         assertEquals(listOf(7L), mapped.tankIds)
-        assertEquals(AquariumTankCleanupStage.DEVICE_ASSIGNMENTS, mapped.cleanupIssues.single().stage)
+        assertEquals(
+            listOf(
+                AquariumTankCleanupStage.CARE_TASKS,
+                AquariumTankCleanupStage.HEALTH_RECORDS,
+                AquariumTankCleanupStage.DEVICE_ASSIGNMENTS
+            ),
+            mapped.cleanupIssues.map { issue -> issue.stage }
+        )
     }
 }
