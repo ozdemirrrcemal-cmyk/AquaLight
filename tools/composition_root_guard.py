@@ -198,7 +198,7 @@ require(
     "ownerUidProvider = { graph.ownerUid }",
     "notificationPreferences = notificationPreferenceUseCase",
     "TankCareDeletionDependencies(",
-    "cancelReminder =",
+    "cancelCareTaskReminder =",
     "TankHealthDeletionDependencies(",
     "No owner-scoped ViewModel binding",
 )
