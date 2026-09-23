@@ -295,16 +295,6 @@ class UserDataCleaner private constructor(
         }
     }
 
-    private fun String?.orCurrentOwnerUidOrReturn(): String {
-        val explicitOwnerUid = UserDataScope.normalizeOwnerUid(this)
-        if (explicitOwnerUid.isNotBlank()) return explicitOwnerUid
-        return UserDataScope.currentUid()
-    }
-
-    private fun Throwable.throwIfCancellation() {
-        if (this is CancellationException) throw this
-    }
-
     private fun clearAppOwnedUserFiles(
         ownerUid: String,
         profilePhotoUri: String,
@@ -379,5 +369,20 @@ class UserDataCleaner private constructor(
             canonicalFile.path == canonicalRoot.path ||
                 canonicalFile.path.startsWith(canonicalRoot.path + File.separator)
         }
+    }
+}
+
+private fun String?.orCurrentOwnerUidOrReturn(): String {
+    val explicitOwnerUid = UserDataScope.normalizeOwnerUid(this)
+    return if (explicitOwnerUid.isNotBlank()) {
+        explicitOwnerUid
+    } else {
+        UserDataScope.currentUid()
+    }
+}
+
+private fun Throwable.throwIfCancellation() {
+    if (this is CancellationException) {
+        throw this
     }
 }
