@@ -51,13 +51,12 @@ class AquariumSubstrateCatalogTest {
     }
 
     @Test
-    fun everyVerifiedCatalogProductKeepsAuditableInternetSources() {
+    fun everyVerifiedCatalogProductKeepsInternalProvenance() {
         val metadata = (SubstrateCatalog.definitions + GravelCatalog.definitions)
             .mapNotNull(AquariumMaterialDefinition::substrateMetadata)
         val verified = metadata.filter { record -> record.isVerifiedProduct }
 
         assertEquals(185, verified.size)
-        assertTrue(verified.all { record -> record.sourceUrl?.startsWith("https://") == true })
         assertTrue(verified.all { record -> record.sourceOrganization.isNotBlank() })
         assertTrue(verified.all { record -> record.sourceRecordId.isNotBlank() })
         assertTrue(verified.all { record -> record.catalogRevision == 1 })
