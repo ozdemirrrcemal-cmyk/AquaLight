@@ -32,6 +32,9 @@ import com.aqua.aqualight.data.aquarium.DefaultAquariumTankOperations
 import com.aqua.aqualight.data.aquarium.catalog.livestock.DefaultLivestockCatalogOperations
 import com.aqua.aqualight.data.aquarium.catalog.livestock.DefaultLivestockWaterAdvisor
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
+import com.aqua.aqualight.data.aquarium.delete.OwnerTankDeletionDependencies
+import com.aqua.aqualight.data.aquarium.delete.TankCareDeletionDependencies
+import com.aqua.aqualight.data.aquarium.delete.TankHealthDeletionDependencies
 import com.aqua.aqualight.data.aquarium.devices.DefaultTankDeviceAssignmentOperations
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentStore
@@ -322,24 +325,31 @@ private class ReleaseSmokeViewModelFactory(
                 tankStore = tankStore,
                 healthStore = healthStore,
                 tankDataCleaner = OwnerTankDataCleaner(
-                    deleteTankRecords = tankStore::deleteTanks,
-                    snapshotCareTasksForTank = { tankId ->
-                        careTaskStore.snapshotTasksForIntegrity(tankId)
-                    },
-                    deleteCareTasksForTank = careTaskStore::deleteTasksForTank,
-                    restoreCareTasksForTank = { tankId, snapshots ->
-                        careTaskStore.restoreTaskSnapshotsForIntegrity(
-                            tankId = tankId,
-                            snapshots = snapshots
-                        )
-                    },
-                    snapshotHealthRecordsForTank = healthStore::snapshotForTank,
-                    deleteHealthRecordsForTank = healthStore::deleteRecordsForTank,
-                    restoreHealthRecordsForTank = healthStore::restoreSnapshotForIntegrity,
-                    removeDeviceAssignmentsForTank = assignmentRepository::removeAssignmentsForTank,
-                    cancelCareTaskReminder = notificationPreferences::cancelCareTask,
-                    reconcileCareReminders = notificationPreferences::reconcileOwner,
-                    ownerUidProvider = { SMOKE_OWNER_UID }
+                    OwnerTankDeletionDependencies(
+                        deleteTankRecords = tankStore::deleteTanks,
+                        care = TankCareDeletionDependencies(
+                            snapshotForTank = { tankId ->
+                                careTaskStore.snapshotTasksForIntegrity(tankId)
+                            },
+                            deleteForTank = careTaskStore::deleteTasksForTank,
+                            restoreForTank = { tankId, snapshots ->
+                                careTaskStore.restoreTaskSnapshotsForIntegrity(
+                                    tankId = tankId,
+                                    snapshots = snapshots
+                                )
+                            },
+                            cancelReminder = notificationPreferences::cancelCareTask,
+                            reconcileReminders = notificationPreferences::reconcileOwner
+                        ),
+                        health = TankHealthDeletionDependencies(
+                            snapshotForTank = healthStore::snapshotForTank,
+                            deleteForTank = healthStore::deleteRecordsForTank,
+                            restoreForTank = healthStore::restoreSnapshotForIntegrity
+                        ),
+                        removeDeviceAssignmentsForTank =
+                            assignmentRepository::removeAssignmentsForTank,
+                        ownerUidProvider = { SMOKE_OWNER_UID }
+                    )
                 ),
                 notificationPreferences = notificationPreferences
             )
