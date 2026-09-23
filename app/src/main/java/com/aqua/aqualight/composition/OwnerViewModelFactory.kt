@@ -213,7 +213,7 @@ internal class OwnerViewModelFactory(
                                 snapshotForTank = graph.aquariumHealthStore::snapshotForTank,
                                 deleteForTank = graph.aquariumHealthStore::deleteRecordsForTank,
                                 restoreForTank =
-                                    graph.aquariumHealthStore::restoreSnapshotForIntegrity
+                                    graph.aquariumHealthStore.integrity::restoreSnapshotForIntegrity
                             ),
                             removeDeviceAssignmentsForTank =
                                 assignments::removeAssignmentsForTank
