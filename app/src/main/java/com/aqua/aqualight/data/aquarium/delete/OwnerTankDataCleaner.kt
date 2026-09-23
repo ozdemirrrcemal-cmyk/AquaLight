@@ -1,6 +1,9 @@
 package com.aqua.aqualight.data.aquarium.delete
 
 import com.aqua.aqualight.data.aquarium.devices.TankAssignmentCleanupResult
+import com.aqua.aqualight.data.aquarium.health.TankHealthIntegritySnapshot
+import com.aqua.aqualight.data.aquarium.health.integrity.TankHealthIntegrityJournal
+import com.aqua.aqualight.data.aquarium.health.integrity.TankHealthIntegrityTransactions
 import com.aqua.aqualight.data.care.integrity.TankCareIntegrityJournal
 import com.aqua.aqualight.data.care.integrity.TankCareIntegrityTransactions
 import com.aqua.aqualight.data.care.model.CareTask
@@ -10,28 +13,36 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 
 /**
- * Coordinates authoritative tank deletion with a crash-safe compensating transaction.
+ * Coordinates authoritative tank deletion with crash-safe compensating transactions.
  *
- * Care-task writes are blocked before snapshots are captured. Care tasks are deleted
- * before the tank record, so an orphan reference is never committed. If the tank write
- * fails or the operation is cancelled, task snapshots are restored before the failure
- * is returned. A durable journal allows owner-session recovery after process death.
+ * Care and Health writes are blocked before snapshots are captured. Dependent records
+ * are deleted before the tank record. If the tank write fails or the operation is
+ * cancelled, both snapshot sets are restored before the failure is returned. Durable
+ * journals allow owner-session recovery after process death.
  */
 class OwnerTankDataCleaner internal constructor(
     private val deleteTankRecords: suspend (List<Long>) -> Unit,
     private val snapshotCareTasksForTank: suspend (Long) -> List<CareTask>,
     private val deleteCareTasksForTank: suspend (Long) -> Unit,
     private val restoreCareTasksForTank: suspend (Long, List<CareTask>) -> Unit,
+    private val snapshotHealthRecordsForTank:
+        suspend (String, Long) -> TankHealthIntegritySnapshot,
+    private val deleteHealthRecordsForTank: suspend (String, Long) -> Unit,
+    private val restoreHealthRecordsForTank:
+        suspend (String, Long, TankHealthIntegritySnapshot) -> Unit,
     private val removeDeviceAssignmentsForTank:
         suspend (Long) -> TankAssignmentCleanupResult,
     private val cancelCareTaskReminder: suspend (String, Long) -> Unit,
     private val reconcileCareReminders: suspend (String) -> Unit,
-    private val integrityTransactions: TankCareIntegrityTransactions =
+    private val careIntegrityTransactions: TankCareIntegrityTransactions =
         TankCareIntegrityJournal,
+    private val healthIntegrityTransactions: TankHealthIntegrityTransactions =
+        TankHealthIntegrityJournal,
     private val ownerUidProvider: () -> String = UserDataScope::requireCurrentUid
 ) {
     enum class CleanupStage {
         CARE_TASKS,
+        HEALTH_RECORDS,
         DEVICE_ASSIGNMENTS
     }
 
@@ -70,21 +81,30 @@ class OwnerTankDataCleaner internal constructor(
             }
         }
 
-        try {
-            integrityTransactions.begin(ownerUid, normalizedTankIds)
-        } catch (error: Throwable) {
-            error.throwIfCancellation()
-            return Result.DeleteFailed(error)
+        val beginFailure = beginTransactions(ownerUid, normalizedTankIds)
+        if (beginFailure != null) {
+            beginFailure.throwIfCancellation()
+            return Result.DeleteFailed(beginFailure)
         }
 
-        val snapshotsByTank = linkedMapOf<Long, List<CareTask>>()
+        val careSnapshotsByTank = linkedMapOf<Long, List<CareTask>>()
+        val healthSnapshotsByTank =
+            linkedMapOf<Long, TankHealthIntegritySnapshot>()
+
         try {
             normalizedTankIds.forEach { tankId ->
-                snapshotsByTank[tankId] = snapshotCareTasksForTank(tankId)
+                careSnapshotsByTank[tankId] =
+                    snapshotCareTasksForTank(tankId)
+                healthSnapshotsByTank[tankId] =
+                    snapshotHealthRecordsForTank(ownerUid, tankId)
             }
-            integrityTransactions.captureSnapshots(
+            careIntegrityTransactions.captureSnapshots(
                 ownerUid = ownerUid,
-                snapshotsByTank = snapshotsByTank
+                snapshotsByTank = careSnapshotsByTank
+            )
+            healthIntegrityTransactions.captureSnapshots(
+                ownerUid = ownerUid,
+                snapshotsByTank = healthSnapshotsByTank
             )
         } catch (error: Throwable) {
             val abortError = withContext(NonCancellable) {
@@ -98,13 +118,15 @@ class OwnerTankDataCleaner internal constructor(
         try {
             normalizedTankIds.forEach { tankId ->
                 deleteCareTasksForTank(tankId)
+                deleteHealthRecordsForTank(ownerUid, tankId)
             }
             deleteTankRecords(normalizedTankIds)
         } catch (error: Throwable) {
             val rollbackError = withContext(NonCancellable) {
-                rollbackCareTasks(
+                rollbackDependentData(
                     ownerUid = ownerUid,
-                    snapshotsByTank = snapshotsByTank
+                    careSnapshotsByTank = careSnapshotsByTank,
+                    healthSnapshotsByTank = healthSnapshotsByTank
                 )
             }
             rollbackError?.let(error::addSuppressed)
@@ -115,7 +137,7 @@ class OwnerTankDataCleaner internal constructor(
         val cleanupIssues = mutableListOf<CleanupIssue>()
 
         normalizedTankIds.forEach { tankId ->
-            snapshotsByTank[tankId].orEmpty().forEach { task ->
+            careSnapshotsByTank[tankId].orEmpty().forEach { task ->
                 try {
                     cancelCareTaskReminder(ownerUid, task.id)
                 } catch (error: Throwable) {
@@ -128,16 +150,11 @@ class OwnerTankDataCleaner internal constructor(
                 }
             }
 
-            try {
-                integrityTransactions.complete(ownerUid, tankId)
-            } catch (error: Throwable) {
-                error.throwIfCancellation()
-                cleanupIssues += CleanupIssue(
-                    tankId = tankId,
-                    stage = CleanupStage.CARE_TASKS,
-                    error = error
-                )
-            }
+            completeIntegrityTransaction(
+                ownerUid = ownerUid,
+                tankId = tankId,
+                cleanupIssues = cleanupIssues
+            )
 
             try {
                 when (val result = removeDeviceAssignmentsForTank(tankId)) {
@@ -175,38 +192,102 @@ class OwnerTankDataCleaner internal constructor(
         )
     }
 
-    private suspend fun rollbackCareTasks(
+    private fun beginTransactions(
         ownerUid: String,
-        snapshotsByTank: Map<Long, List<CareTask>>
+        tankIds: List<Long>
+    ): Throwable? {
+        return try {
+            careIntegrityTransactions.begin(ownerUid, tankIds)
+            try {
+                healthIntegrityTransactions.begin(ownerUid, tankIds)
+                null
+            } catch (healthError: Throwable) {
+                val careAbort = abortCareTransactions(ownerUid, tankIds)
+                careAbort?.let(healthError::addSuppressed)
+                healthError
+            }
+        } catch (error: Throwable) {
+            error
+        }
+    }
+
+    private fun completeIntegrityTransaction(
+        ownerUid: String,
+        tankId: Long,
+        cleanupIssues: MutableList<CleanupIssue>
+    ) {
+        try {
+            careIntegrityTransactions.complete(ownerUid, tankId)
+        } catch (error: Throwable) {
+            error.throwIfCancellation()
+            cleanupIssues += CleanupIssue(
+                tankId = tankId,
+                stage = CleanupStage.CARE_TASKS,
+                error = error
+            )
+        }
+
+        try {
+            healthIntegrityTransactions.complete(ownerUid, tankId)
+        } catch (error: Throwable) {
+            error.throwIfCancellation()
+            cleanupIssues += CleanupIssue(
+                tankId = tankId,
+                stage = CleanupStage.HEALTH_RECORDS,
+                error = error
+            )
+        }
+    }
+
+    private suspend fun rollbackDependentData(
+        ownerUid: String,
+        careSnapshotsByTank: Map<Long, List<CareTask>>,
+        healthSnapshotsByTank: Map<Long, TankHealthIntegritySnapshot>
     ): Throwable? {
         var rollbackFailure: Throwable? = null
 
-        snapshotsByTank.forEach { (tankId, snapshots) ->
+        careSnapshotsByTank.forEach { (tankId, snapshots) ->
             try {
-                integrityTransactions.withRollbackWritesAllowed(
+                careIntegrityTransactions.withRollbackWritesAllowed(
                     ownerUid = ownerUid,
                     tankId = tankId
                 ) {
                     restoreCareTasksForTank(tankId, snapshots)
                 }
-                integrityTransactions.abort(ownerUid, tankId)
             } catch (error: Throwable) {
-                if (rollbackFailure == null) {
-                    rollbackFailure = error
-                } else {
-                    rollbackFailure?.addSuppressed(error)
-                }
+                rollbackFailure = rollbackFailure.combine(error)
             }
+        }
+
+        healthSnapshotsByTank.forEach { (tankId, snapshot) ->
+            try {
+                healthIntegrityTransactions.withRollbackWritesAllowed(
+                    ownerUid = ownerUid,
+                    tankId = tankId
+                ) {
+                    restoreHealthRecordsForTank(
+                        ownerUid,
+                        tankId,
+                        snapshot
+                    )
+                }
+            } catch (error: Throwable) {
+                rollbackFailure = rollbackFailure.combine(error)
+            }
+        }
+
+        val abortFailure = abortTransactions(
+            ownerUid = ownerUid,
+            tankIds = careSnapshotsByTank.keys.toList()
+        )
+        if (abortFailure != null) {
+            rollbackFailure = rollbackFailure.combine(abortFailure)
         }
 
         try {
             reconcileCareReminders(ownerUid)
         } catch (error: Throwable) {
-            if (rollbackFailure == null) {
-                rollbackFailure = error
-            } else {
-                rollbackFailure?.addSuppressed(error)
-            }
+            rollbackFailure = rollbackFailure.combine(error)
         }
 
         return rollbackFailure
@@ -216,19 +297,45 @@ class OwnerTankDataCleaner internal constructor(
         ownerUid: String,
         tankIds: List<Long>
     ): Throwable? {
-        var abortFailure: Throwable? = null
+        var failure: Throwable? = null
         tankIds.forEach { tankId ->
             try {
-                integrityTransactions.abort(ownerUid, tankId)
+                careIntegrityTransactions.abort(ownerUid, tankId)
             } catch (error: Throwable) {
-                if (abortFailure == null) {
-                    abortFailure = error
-                } else {
-                    abortFailure?.addSuppressed(error)
-                }
+                failure = failure.combine(error)
+            }
+            try {
+                healthIntegrityTransactions.abort(ownerUid, tankId)
+            } catch (error: Throwable) {
+                failure = failure.combine(error)
             }
         }
-        return abortFailure
+        return failure
+    }
+
+    private fun abortCareTransactions(
+        ownerUid: String,
+        tankIds: List<Long>
+    ): Throwable? {
+        var failure: Throwable? = null
+        tankIds.forEach { tankId ->
+            try {
+                careIntegrityTransactions.abort(ownerUid, tankId)
+            } catch (error: Throwable) {
+                failure = failure.combine(error)
+            }
+        }
+        return failure
+    }
+
+    private fun Throwable?.combine(error: Throwable): Throwable {
+        val current = this
+        return if (current == null) {
+            error
+        } else {
+            current.addSuppressed(error)
+            current
+        }
     }
 
     private fun Throwable.throwIfCancellation() {
