@@ -9,11 +9,11 @@ internal class TankDetailPagerAdapter(
 ) : FragmentStateAdapter(fragment) {
 
     override fun getItemCount(): Int {
-        return TANK_DETAIL_TAB_ORDER.size
+        return tankDetailTabOrder.size
     }
 
     override fun createFragment(position: Int): Fragment {
-        return when (TANK_DETAIL_TAB_ORDER[position]) {
+        return when (tankDetailTabOrder[position]) {
             TankDetailTab.DEVICES -> TankDetailDevicesFragment.newInstance(tankId)
             TankDetailTab.ACTIVITY -> TankDetailActivityFragment.newInstance(tankId)
             TankDetailTab.TANK -> TankDetailTankFragment.newInstance(tankId)
@@ -23,11 +23,11 @@ internal class TankDetailPagerAdapter(
     }
 
     override fun getItemId(position: Int): Long {
-        return TANK_DETAIL_TAB_ORDER[position].stableId
+        return tankDetailTabOrder[position].stableId
     }
 
     override fun containsItem(itemId: Long): Boolean {
-        return TANK_DETAIL_TAB_ORDER.any { tab ->
+        return tankDetailTabOrder.any { tab ->
             tab.stableId == itemId
         }
     }
