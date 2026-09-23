@@ -48,15 +48,10 @@ internal object TankHealthIntegrityJournal :
         val snapshot: TankHealthIntegritySnapshot
     )
 
-    private data class Key(
-        val ownerUid: String,
-        val tankId: Long
-    )
-
     private val lock = Any()
-    private val entries = linkedMapOf<Key, PendingDeletion>()
-    private val processTombstones = linkedSetOf<Key>()
-    private val rollbackWritesAllowed = linkedSetOf<Key>()
+    private val entries = linkedMapOf<TankHealthIntegrityKey, PendingDeletion>()
+    private val processTombstones = linkedSetOf<TankHealthIntegrityKey>()
+    private val rollbackWritesAllowed = linkedSetOf<TankHealthIntegrityKey>()
 
     @Volatile
     private var preferences: SharedPreferences? = null
@@ -72,14 +67,14 @@ internal object TankHealthIntegrityJournal :
                     PREFERENCES_NAME,
                     Context.MODE_PRIVATE
                 )
-            val loadedEntries = linkedMapOf<Key, PendingDeletion>()
+            val loadedEntries = linkedMapOf<TankHealthIntegrityKey, PendingDeletion>()
 
             loadedPreferences
                 .getStringSet(KEY_PENDING_DELETIONS, emptySet())
                 .orEmpty()
                 .forEach { encoded ->
                     val entry = TankHealthIntegrityCodec.decode(encoded)
-                    val key = Key(entry.ownerUid, entry.tankId)
+                    val key = TankHealthIntegrityKey(entry.ownerUid, entry.tankId)
                     if (loadedEntries.put(key, entry) != null) {
                         throw StoreInvariantViolation(
                             "Duplicate tank-health integrity journal entry for " +
@@ -99,13 +94,13 @@ internal object TankHealthIntegrityJournal :
         tankIds: Collection<Long>
     ) {
         val owner =
-            TankHealthIntegrityCodec.canonicalOwnerUid(ownerUid)
+            TankHealthIntegrityValidation.canonicalOwnerUid(ownerUid)
         val normalizedIds = tankIds.distinct()
         require(normalizedIds.isNotEmpty()) {
             "At least one tank id is required for a Health integrity transaction."
         }
         normalizedIds.forEach(
-            TankHealthIntegrityCodec::requireTankId
+            TankHealthIntegrityValidation::requireTankId
         )
 
         synchronized(lock) {
@@ -114,7 +109,7 @@ internal object TankHealthIntegrityJournal :
             }
             val next = LinkedHashMap(entries)
             normalizedIds.forEach { tankId ->
-                val key = Key(owner, tankId)
+                val key = TankHealthIntegrityKey(owner, tankId)
                 if (key in processTombstones) {
                     throw StoreInvariantViolation(
                         "A deleted tank id cannot start another Health integrity transaction."
@@ -141,7 +136,7 @@ internal object TankHealthIntegrityJournal :
         snapshotsByTank: Map<Long, TankHealthIntegritySnapshot>
     ) {
         val owner =
-            TankHealthIntegrityCodec.canonicalOwnerUid(ownerUid)
+            TankHealthIntegrityValidation.canonicalOwnerUid(ownerUid)
         require(snapshotsByTank.isNotEmpty()) {
             "Health snapshot capture requires at least one tank."
         }
@@ -153,13 +148,13 @@ internal object TankHealthIntegrityJournal :
             val next = LinkedHashMap(entries)
 
             snapshotsByTank.forEach { (tankId, snapshot) ->
-                TankHealthIntegrityCodec.requireTankId(tankId)
-                TankHealthIntegrityCodec.validateSnapshot(
+                TankHealthIntegrityValidation.requireTankId(tankId)
+                TankHealthIntegrityValidation.validateSnapshot(
                     ownerUid = owner,
                     tankId = tankId,
                     snapshot = snapshot
                 )
-                val key = Key(owner, tankId)
+                val key = TankHealthIntegrityKey(owner, tankId)
                 val current = next[key]
                     ?: throw StoreInvariantViolation(
                         "Health snapshot capture has no matching blocked transaction."
@@ -184,7 +179,7 @@ internal object TankHealthIntegrityJournal :
         tankId: Long,
         block: suspend () -> T
     ): T {
-        val key = validatedKey(ownerUid, tankId)
+        val key = TankHealthIntegrityValidation.key(ownerUid, tankId)
         synchronized(lock) {
             check(preferences != null) {
                 NOT_INITIALIZED_MESSAGE
@@ -210,7 +205,7 @@ internal object TankHealthIntegrityJournal :
         ownerUid: String,
         tankId: Long
     ) {
-        val key = validatedKey(ownerUid, tankId)
+        val key = TankHealthIntegrityValidation.key(ownerUid, tankId)
         synchronized(lock) {
             check(preferences != null) {
                 NOT_INITIALIZED_MESSAGE
@@ -231,7 +226,7 @@ internal object TankHealthIntegrityJournal :
         ownerUid: String,
         tankId: Long
     ) {
-        val key = validatedKey(ownerUid, tankId)
+        val key = TankHealthIntegrityValidation.key(ownerUid, tankId)
         synchronized(lock) {
             check(preferences != null) {
                 NOT_INITIALIZED_MESSAGE
@@ -247,7 +242,7 @@ internal object TankHealthIntegrityJournal :
         ownerUid: String
     ): List<PendingDeletion> {
         val owner =
-            TankHealthIntegrityCodec.canonicalOwnerUid(ownerUid)
+            TankHealthIntegrityValidation.canonicalOwnerUid(ownerUid)
         return synchronized(lock) {
             check(preferences != null) {
                 NOT_INITIALIZED_MESSAGE
@@ -260,7 +255,7 @@ internal object TankHealthIntegrityJournal :
 
     fun clearOwner(ownerUid: String) {
         val owner =
-            TankHealthIntegrityCodec.canonicalOwnerUid(ownerUid)
+            TankHealthIntegrityValidation.canonicalOwnerUid(ownerUid)
         synchronized(lock) {
             check(preferences != null) {
                 NOT_INITIALIZED_MESSAGE
@@ -283,7 +278,7 @@ internal object TankHealthIntegrityJournal :
         ownerUid: String,
         tankId: Long
     ) {
-        val key = validatedKey(ownerUid, tankId)
+        val key = TankHealthIntegrityValidation.key(ownerUid, tankId)
         synchronized(lock) {
             val blocked =
                 key in entries || key in processTombstones
@@ -297,7 +292,7 @@ internal object TankHealthIntegrityJournal :
     }
 
     private fun persistAndReplace(
-        next: Map<Key, PendingDeletion>
+        next: Map<TankHealthIntegrityKey, PendingDeletion>
     ) {
         val targetPreferences = checkNotNull(preferences) {
             NOT_INITIALIZED_MESSAGE
@@ -315,17 +310,6 @@ internal object TankHealthIntegrityJournal :
         }
         entries.clear()
         entries.putAll(next)
-    }
-
-    private fun validatedKey(
-        ownerUid: String,
-        tankId: Long
-    ): Key {
-        TankHealthIntegrityCodec.requireTankId(tankId)
-        return Key(
-            TankHealthIntegrityCodec.canonicalOwnerUid(ownerUid),
-            tankId
-        )
     }
 
     private const val PREFERENCES_NAME =
