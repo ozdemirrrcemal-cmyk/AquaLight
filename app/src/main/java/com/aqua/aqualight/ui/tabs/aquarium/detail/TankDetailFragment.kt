@@ -277,22 +277,19 @@ class TankDetailFragment :
                             TankDetailTab.TANK_LIFE
                         )
 
-                        openLivestockFormIfNeeded()
+                        openLivestockPickerScreen()
                     }
                 }
             }
         }
     }
 
-    private fun openLivestockFormIfNeeded() {
-        val hasLivestock =
-            currentTank
-                ?.livestock
-                ?.isNotEmpty() == true
-
-        if (!hasLivestock) {
-            openLivestockFormScreen()
-        }
+    private fun openLivestockPickerScreen() {
+        navigateFromTankDetail(
+            TankDetailFragmentDirections.actionTankDetailFragmentToTankLivestockPickerFragment(
+                tankId = tankId
+            )
+        )
     }
 
     private fun openTankSettings() {
@@ -300,24 +297,6 @@ class TankDetailFragment :
             TankDetailFragmentDirections.actionTankDetailFragmentToTankSettingsFragment(
                 tankId = tankId,
                 startTab = AquariumTabArgs.BASIC
-            )
-        )
-    }
-
-    private fun openLivestockFormScreen(
-        livestockId: Long = 0L
-    ) {
-        selectedTab =
-            TankDetailTab.TANK_LIFE
-
-        saveSelectedTabState(
-            tab = TankDetailTab.TANK_LIFE
-        )
-
-        navigateFromTankDetail(
-            TankDetailFragmentDirections.actionTankDetailFragmentToTankDetailLivestockFormFragment(
-                tankId = tankId,
-                livestockId = livestockId
             )
         )
     }
