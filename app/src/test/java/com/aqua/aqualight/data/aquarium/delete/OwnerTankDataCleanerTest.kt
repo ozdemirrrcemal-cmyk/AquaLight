@@ -293,7 +293,7 @@ class OwnerTankDataCleanerTest {
                     snapshotForTank = snapshotCareTasksForTank,
                     deleteForTank = deleteCareTasksForTank,
                     restoreForTank = restoreCareTasksForTank,
-                    cancelReminder = cancelCareTaskReminder,
+                    cancelCareTaskReminder = cancelCareTaskReminder,
                     reconcileReminders = reconcileCareReminders,
                     integrity = careIntegrity
                 ),
