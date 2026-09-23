@@ -210,8 +210,8 @@ internal class OwnerViewModelFactory(
                                     notificationPreferenceUseCase::reconcileOwner
                             ),
                             health = TankHealthDeletionDependencies(
-                                snapshotForTank = graph.aquariumHealthStore::snapshotForTank,
-                                deleteForTank = graph.aquariumHealthStore::deleteRecordsForTank,
+                                snapshotForTank = graph.aquariumHealthStore.integrity::snapshotForTank,
+                                deleteForTank = graph.aquariumHealthStore.integrity::deleteRecordsForTank,
                                 restoreForTank =
                                     graph.aquariumHealthStore.integrity::restoreSnapshotForIntegrity
                             ),
