@@ -212,6 +212,8 @@ for token in (
 for token in (
     "AquariumHealthDataStoreManager.create(appContext)",
     "val aquariumHealthStore: AquariumHealthDataStoreManager",
+    "val aquariumHealthRecordOperations: AquariumHealthRecordOperations",
+    "DefaultAquariumHealthRecordOperations(aquariumHealthStore)",
 ):
     if token not in owner_graph:
         errors.append(f"Owner composition is missing Health store binding: {token}")
