@@ -36,16 +36,16 @@ class TankHealthIntegrityRecoveryInstrumentedTest {
                 val tankId = tankStore.addTankFromDraft(validTankDraft("Restore"))
                 addWaterTest(healthStore, ownerUid, tankId)
 
-                val snapshot = healthStore.snapshotForTank(ownerUid, tankId)
+                val snapshot = healthStore.integrity.snapshotForTank(ownerUid, tankId)
                 TankHealthIntegrityJournal.begin(ownerUid, listOf(tankId))
                 TankHealthIntegrityJournal.captureSnapshots(
                     ownerUid = ownerUid,
                     snapshotsByTank = mapOf(tankId to snapshot)
                 )
-                healthStore.deleteRecordsForTank(ownerUid, tankId)
+                healthStore.integrity.deleteRecordsForTank(ownerUid, tankId)
 
                 assertTrue(
-                    healthStore.waterTestsForOwnerFlow(ownerUid, tankId)
+                    healthStore.waterTests.observe(ownerUid, tankId)
                         .first()
                         .isEmpty()
                 )
@@ -58,7 +58,7 @@ class TankHealthIntegrityRecoveryInstrumentedTest {
                 assertEquals(1, result.recoveredTransactionCount)
                 assertEquals(
                     1,
-                    healthStore.waterTestsForOwnerFlow(ownerUid, tankId)
+                    healthStore.waterTests.observe(ownerUid, tankId)
                         .first()
                         .size
                 )
@@ -70,7 +70,7 @@ class TankHealthIntegrityRecoveryInstrumentedTest {
             }
         } finally {
             UserDataScope.withOwnerUid(ownerUid) {
-                healthStore.clearAllRecords(ownerUid)
+                healthStore.integrity.clearAllRecords(ownerUid)
                 tankStore.clearAllTanks(ownerUid)
                 TankHealthIntegrityJournal.clearOwner(ownerUid)
             }
@@ -90,13 +90,13 @@ class TankHealthIntegrityRecoveryInstrumentedTest {
                 val tankId = tankStore.addTankFromDraft(validTankDraft("Deleted"))
                 addWaterTest(healthStore, ownerUid, tankId)
 
-                val snapshot = healthStore.snapshotForTank(ownerUid, tankId)
+                val snapshot = healthStore.integrity.snapshotForTank(ownerUid, tankId)
                 TankHealthIntegrityJournal.begin(ownerUid, listOf(tankId))
                 TankHealthIntegrityJournal.captureSnapshots(
                     ownerUid = ownerUid,
                     snapshotsByTank = mapOf(tankId to snapshot)
                 )
-                healthStore.deleteRecordsForTank(ownerUid, tankId)
+                healthStore.integrity.deleteRecordsForTank(ownerUid, tankId)
                 tankStore.deleteTanks(listOf(tankId))
 
                 val result = TankHealthIntegrityRecovery
@@ -105,7 +105,7 @@ class TankHealthIntegrityRecoveryInstrumentedTest {
 
                 assertEquals(1, result.recoveredTransactionCount)
                 assertTrue(
-                    healthStore.waterTestsForOwnerFlow(ownerUid, tankId)
+                    healthStore.waterTests.observe(ownerUid, tankId)
                         .first()
                         .isEmpty()
                 )
@@ -117,7 +117,7 @@ class TankHealthIntegrityRecoveryInstrumentedTest {
             }
         } finally {
             UserDataScope.withOwnerUid(ownerUid) {
-                healthStore.clearAllRecords(ownerUid)
+                healthStore.integrity.clearAllRecords(ownerUid)
                 tankStore.clearAllTanks(ownerUid)
                 TankHealthIntegrityJournal.clearOwner(ownerUid)
             }
@@ -129,7 +129,7 @@ class TankHealthIntegrityRecoveryInstrumentedTest {
         ownerUid: String,
         tankId: Long
     ) {
-        healthStore.addWaterTest(
+        healthStore.waterTests.add(
             ownerUid = ownerUid,
             input = AquariumWaterTestInput(
                 tankId = tankId,
