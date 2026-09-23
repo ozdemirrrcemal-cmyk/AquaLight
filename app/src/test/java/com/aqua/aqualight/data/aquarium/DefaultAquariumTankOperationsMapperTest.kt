@@ -19,10 +19,18 @@ class DefaultAquariumTankOperationsMapperTest {
 
     @Test
     fun `saved tank maps every UI-facing field without owner leakage`() {
-        val source = savedTankFixture()
+        val mapped = savedTankFixture()
+            .toApplicationSnapshot()
 
-        val mapped = source.toApplicationSnapshot()
+        assertTankScalarFields(mapped)
+        assertMappedPlant(mapped)
+        assertMappedMaterial(mapped)
+        assertMappedLivestock(mapped)
+    }
 
+    private fun assertTankScalarFields(
+        mapped: com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
+    ) {
         assertEquals(7L, mapped.id)
         assertEquals("Reef", mapped.name)
         assertEquals("Mixed reef", mapped.description)
@@ -38,6 +46,11 @@ class DefaultAquariumTankOperationsMapperTest {
         assertEquals(200L, mapped.createdAtMillis)
         assertEquals(true, mapped.smartCareEnabled)
         assertEquals(false, mapped.careRemindersEnabled)
+    }
+
+    private fun assertMappedPlant(
+        mapped: com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
+    ) {
         assertEquals(
             AquariumPlantTag(
                 11L,
@@ -49,6 +62,11 @@ class DefaultAquariumTankOperationsMapperTest {
             ),
             mapped.plants.single()
         )
+    }
+
+    private fun assertMappedMaterial(
+        mapped: com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
+    ) {
         assertEquals(
             AquariumMaterialSelection(
                 id = 12L,
@@ -61,8 +79,21 @@ class DefaultAquariumTankOperationsMapperTest {
             ),
             mapped.materials.single()
         )
+    }
+
+    private fun assertMappedLivestock(
+        mapped: com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
+    ) {
         assertEquals(
-            AquariumLivestock(13L, "Clownfish", "Fish", 2, 300L, "Pair", "custom:13"),
+            AquariumLivestock(
+                13L,
+                "Clownfish",
+                "Fish",
+                2,
+                300L,
+                "Pair",
+                "custom:13"
+            ),
             mapped.livestock.single()
         )
     }
