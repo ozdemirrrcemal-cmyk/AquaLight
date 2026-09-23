@@ -29,13 +29,17 @@ class LocalDataRecoveryTrackerTest {
         LocalDataRecoveryTracker.markRecovered(
             LocalDataRecoveryTracker.Area.CARE_TASKS
         )
+        LocalDataRecoveryTracker.markRecovered(
+            LocalDataRecoveryTracker.Area.AQUARIUM_HEALTH
+        )
 
         assertEquals(
             setOf(
                 LocalDataRecoveryTracker.Area.KNOWN_DEVICES,
                 LocalDataRecoveryTracker.Area.TANK_DEVICE_ASSIGNMENTS,
                 LocalDataRecoveryTracker.Area.AQUARIUM_TANKS,
-                LocalDataRecoveryTracker.Area.CARE_TASKS
+                LocalDataRecoveryTracker.Area.CARE_TASKS,
+                LocalDataRecoveryTracker.Area.AQUARIUM_HEALTH
             ),
             LocalDataRecoveryTracker.consumeRecoveredAreas()
         )
