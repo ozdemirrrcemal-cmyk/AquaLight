@@ -25,6 +25,7 @@
     <string name="catalog_keyword_tank">tank</string>
     <string name="catalog_keyword_set">set</string>
     <string name="catalog_keyword_glass">cam</string>
+    <string name="catalog_keyword_base">taban</string>
     <string name="catalog_keyword_magnetic">manyetik</string>
     <string name="catalog_keyword_regulator">regülatör</string>
     <string name="catalog_keyword_generator">jeneratör</string>
