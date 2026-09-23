@@ -35,6 +35,7 @@ import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
 import com.aqua.aqualight.data.aquarium.devices.DefaultTankDeviceAssignmentOperations
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentStore
+import com.aqua.aqualight.data.aquarium.health.AquariumHealthDataStoreManager
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.auth.AppSessionCoordinator
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
@@ -205,6 +206,7 @@ private class ReleaseSmokeViewModelFactory(
     }
     private val timerControlOperations = DefaultDeviceTimerControlOperations(devicesRepository)
     private val tankStore = AquariumTankDataStoreManager(appContext)
+    private val healthStore = AquariumHealthDataStoreManager.create(appContext)
     private val careTaskStore = CareTaskDataStoreManager.create(appContext)
     private val assignmentRepository = TankDeviceAssignmentRepository(
         ownerUid = SMOKE_OWNER_UID,
@@ -318,6 +320,7 @@ private class ReleaseSmokeViewModelFactory(
             operations = DefaultAquariumTankOperations(
                 context = appContext,
                 tankStore = tankStore,
+                healthStore = healthStore,
                 tankDataCleaner = OwnerTankDataCleaner(
                     deleteTankRecords = tankStore::deleteTanks,
                     snapshotCareTasksForTank = { tankId ->
@@ -330,6 +333,9 @@ private class ReleaseSmokeViewModelFactory(
                             snapshots = snapshots
                         )
                     },
+                    snapshotHealthRecordsForTank = healthStore::snapshotForTank,
+                    deleteHealthRecordsForTank = healthStore::deleteRecordsForTank,
+                    restoreHealthRecordsForTank = healthStore::restoreSnapshotForIntegrity,
                     removeDeviceAssignmentsForTank = assignmentRepository::removeAssignmentsForTank,
                     cancelCareTaskReminder = notificationPreferences::cancelCareTask,
                     reconcileCareReminders = notificationPreferences::reconcileOwner,
