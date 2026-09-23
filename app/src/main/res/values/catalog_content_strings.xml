@@ -84,11 +84,6 @@
     <string name="catalog_material_dosing_jebao_dp_4_name" translatable="false">Jebao DP-4 Dosing Pump</string>
     <string name="catalog_material_dosing_kamoer_x1_name" translatable="false">Kamoer X1 Dosing Pump</string>
     <string name="catalog_material_dosing_kamoer_f4_name" translatable="false">Kamoer F4 Dosing Pump</string>
-    <string name="catalog_material_fertilizer_green_aqua_carbon_plant_wellness_1000_name" translatable="false">Green Aqua Carbon Plant Wellness - Fertilizer Pack 1000 ml</string>
-    <string name="catalog_material_fertilizer_green_aqua_carbon_plant_wellness_500_name" translatable="false">Green Aqua Carbon Plant Wellness - Fertilizer Pack 500 ml</string>
-    <string name="catalog_material_fertilizer_green_aqua_carbon_plant_wellness_250_name" translatable="false">Green Aqua Carbon Plant Wellness - Fertilizer Pack 250 ml</string>
-    <string name="catalog_material_fertilizer_tropica_specialised_nutrition_name" translatable="false">Tropica Specialised Nutrition</string>
-    <string name="catalog_material_fertilizer_tropica_premium_nutrition_name" translatable="false">Tropica Premium Nutrition</string>
     <string name="catalog_material_filter_eheim_classic_150_name" translatable="false">Eheim Classic 150</string>
     <string name="catalog_material_filter_eheim_classic_250_name" translatable="false">Eheim Classic 250</string>
     <string name="catalog_material_filter_eheim_experience_250_name" translatable="false">Eheim Experience 250</string>
@@ -383,12 +378,6 @@
     <string name="catalog_keyword_liquid">liquid</string>
     <string name="catalog_keyword_plant">plant</string>
     <string name="catalog_keyword_carbon">carbon</string>
-    <string name="catalog_keyword_green_aqua" translatable="false">green aqua</string>
-    <string name="catalog_keyword_macro">macro</string>
-    <string name="catalog_keyword_nitrate">nitrate</string>
-    <string name="catalog_keyword_phosphate">phosphate</string>
-    <string name="catalog_keyword_micro">micro</string>
-    <string name="catalog_keyword_iron">iron</string>
     <string name="catalog_keyword_filter">filter</string>
     <string name="catalog_keyword_external">external</string>
     <string name="catalog_keyword_canister">canister</string>
