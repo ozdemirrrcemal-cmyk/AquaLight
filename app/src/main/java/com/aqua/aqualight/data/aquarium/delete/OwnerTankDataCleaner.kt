@@ -156,7 +156,6 @@ private suspend fun prepareDeletion(
     }
 
     val error = snapshotResult.exceptionOrNull()
-    error?.throwIfCancellation()
 
     return if (error == null) {
         TankDeletionPreparation.Ready(snapshotResult.getOrThrow())
@@ -169,6 +168,7 @@ private suspend fun prepareDeletion(
             )
         }
         abortError?.let(error::addSuppressed)
+        error.throwIfCancellation()
         TankDeletionPreparation.Failed(error)
     }
 }
@@ -245,8 +245,6 @@ private suspend fun commitPreparedDeletion(
         dependencies.deleteTankRecords(tankIds)
     }.exceptionOrNull()
 
-    deleteError?.throwIfCancellation()
-
     return if (deleteError == null) {
         finishCommittedDeletion(
             dependencies = dependencies,
@@ -262,6 +260,7 @@ private suspend fun commitPreparedDeletion(
                 snapshots = snapshots
             )
         }?.let(deleteError::addSuppressed)
+        deleteError.throwIfCancellation()
         OwnerTankDataCleaner.Result.DeleteFailed(deleteError)
     }
 }
