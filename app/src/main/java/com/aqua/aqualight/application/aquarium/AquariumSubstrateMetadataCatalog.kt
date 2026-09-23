@@ -7,255 +7,409 @@ private const val SUBSTRATE_REVIEW_DATE = "2026-09-23"
 private const val GRAVEL_CATALOG_REVIEW_DATE = "2026-09-23"
 
 private data class SubstrateEvidenceGroup(
-    val firstProductId: String,
-    val lastProductId: String,
+    val productIds: List<String>,
     val semantic: AquariumSubstrateSemantic,
     val sourceOrganization: String
 )
 
 private val substrateEvidenceGroups = listOf(
     SubstrateEvidenceGroup(
-        firstProductId = "substrate_0005",
-        lastProductId = "substrate_0008",
+        productIds = listOf(
+            "substrate_chihiros_aquasoil_3l",
+            "substrate_chihiros_aquasoil_9l"
+        ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
-        sourceOrganization = "Aqua Design Amano"
+        sourceOrganization = "Chihiros Aquatic Studio"
     ),
     SubstrateEvidenceGroup(
-        firstProductId = "substrate_0009",
-        lastProductId = "substrate_0011",
-        semantic = AquariumSubstrateSemantic.NUTRIENT_BASE,
-        sourceOrganization = "Aqua Design Amano"
-    ),
-    SubstrateEvidenceGroup(
-        firstProductId = "substrate_0012",
-        lastProductId = "substrate_0014",
+        productIds = listOf(
+            "substrate_ada_tourmaline_bc"
+        ),
         semantic = AquariumSubstrateSemantic.ADDITIVE,
         sourceOrganization = "Aqua Design Amano"
     ),
     SubstrateEvidenceGroup(
-        firstProductId = "substrate_0015",
-        lastProductId = "substrate_0018",
-        semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
-        sourceOrganization = "Tropica Aquarium Plants"
-    ),
-    SubstrateEvidenceGroup(
-        firstProductId = "substrate_0019",
-        lastProductId = "substrate_0021",
-        semantic = AquariumSubstrateSemantic.NUTRIENT_BASE,
-        sourceOrganization = "Tropica Aquarium Plants"
-    ),
-    SubstrateEvidenceGroup(
-        firstProductId = "substrate_0022",
-        lastProductId = "substrate_0025",
-        semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
-        sourceOrganization = "Dennerle"
-    ),
-    SubstrateEvidenceGroup(
-        firstProductId = "substrate_0026",
-        lastProductId = "substrate_0027",
+        productIds = listOf(
+            "substrate_dennerle_deponit_mix_pro_10in1_4_8_kg"
+        ),
         semantic = AquariumSubstrateSemantic.NUTRIENT_BASE,
         sourceOrganization = "Dennerle"
     ),
     SubstrateEvidenceGroup(
-        firstProductId = "substrate_0028",
-        lastProductId = "substrate_0035",
+        productIds = listOf(
+            "substrate_ada_aqua_soil_amazonia_ver_2_3_l",
+            "substrate_ada_aqua_soil_amazonia_ver_2_9_l",
+            "substrate_ada_aqua_soil_amazonia_ver_2_powder_3_l",
+            "substrate_ada_aqua_soil_amazonia_ver_2_powder_9_l"
+        ),
+        semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
+        sourceOrganization = "Aqua Design Amano"
+    ),
+    SubstrateEvidenceGroup(
+        productIds = listOf(
+            "substrate_ada_power_sand_advance_s_2_l",
+            "substrate_ada_power_sand_advance_m_6_l",
+            "substrate_ada_power_sand_advance_l_6_l"
+        ),
+        semantic = AquariumSubstrateSemantic.NUTRIENT_BASE,
+        sourceOrganization = "Aqua Design Amano"
+    ),
+    SubstrateEvidenceGroup(
+        productIds = listOf(
+            "substrate_ada_bacter_100_100_g",
+            "substrate_ada_bacter_ball",
+            "substrate_ada_clear_super_50_g"
+        ),
+        semantic = AquariumSubstrateSemantic.ADDITIVE,
+        sourceOrganization = "Aqua Design Amano"
+    ),
+    SubstrateEvidenceGroup(
+        productIds = listOf(
+            "substrate_tropica_aquarium_soil_3_l",
+            "substrate_tropica_aquarium_soil_9_l",
+            "substrate_tropica_aquarium_soil_powder_3_l",
+            "substrate_tropica_aquarium_soil_powder_9_l"
+        ),
+        semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
+        sourceOrganization = "Tropica Aquarium Plants"
+    ),
+    SubstrateEvidenceGroup(
+        productIds = listOf(
+            "substrate_tropica_plant_growth_substrate_1_l",
+            "substrate_tropica_plant_growth_substrate_2_5_l",
+            "substrate_tropica_plant_growth_substrate_5_l"
+        ),
+        semantic = AquariumSubstrateSemantic.NUTRIENT_BASE,
+        sourceOrganization = "Tropica Aquarium Plants"
+    ),
+    SubstrateEvidenceGroup(
+        productIds = listOf(
+            "substrate_dennerle_scapers_soil_4_l",
+            "substrate_dennerle_scapers_soil_8_l",
+            "substrate_dennerle_shrimp_king_active_soil_4_l",
+            "substrate_dennerle_shrimp_king_active_soil_8_l"
+        ),
+        semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
+        sourceOrganization = "Dennerle"
+    ),
+    SubstrateEvidenceGroup(
+        productIds = listOf(
+            "substrate_dennerle_deponit_mix_pro_10in1_9_6_kg",
+            "substrate_dennerle_nutribasis_6in1"
+        ),
+        semantic = AquariumSubstrateSemantic.NUTRIENT_BASE,
+        sourceOrganization = "Dennerle"
+    ),
+    SubstrateEvidenceGroup(
+        productIds = listOf(
+            "substrate_jbl_proscape_plantsoil_brown_3_l",
+            "substrate_jbl_proscape_plantsoil_brown_9_l",
+            "substrate_jbl_proscape_plantsoil_beige_3_l",
+            "substrate_jbl_proscape_plantsoil_beige_9_l",
+            "substrate_jbl_proscape_shrimpsoil_brown_3_l",
+            "substrate_jbl_proscape_shrimpsoil_brown_9_l",
+            "substrate_jbl_proscape_shrimpsoil_beige_3_l",
+            "substrate_jbl_proscape_shrimpsoil_beige_9_l"
+        ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
         sourceOrganization = "JBL"
     ),
     SubstrateEvidenceGroup(
-        firstProductId = "substrate_0036",
-        lastProductId = "substrate_0039",
+        productIds = listOf(
+            "substrate_jbl_proflora_aquabasis_plus_2_5_l",
+            "substrate_jbl_proflora_aquabasis_plus_5_l",
+            "substrate_jbl_proscape_volcano_mineral_3_l",
+            "substrate_jbl_proscape_volcano_mineral_9_l"
+        ),
         semantic = AquariumSubstrateSemantic.NUTRIENT_BASE,
         sourceOrganization = "JBL"
     ),
     SubstrateEvidenceGroup(
-        firstProductId = "substrate_0040",
-        lastProductId = "substrate_0041",
+        productIds = listOf(
+            "substrate_jbl_proscape_volcano_powder_250_g",
+            "substrate_jbl_proscape_plantstart_2_x_8_g"
+        ),
         semantic = AquariumSubstrateSemantic.ADDITIVE,
         sourceOrganization = "JBL"
     ),
     SubstrateEvidenceGroup(
-        firstProductId = "substrate_0042",
-        lastProductId = "substrate_0046",
+        productIds = listOf(
+            "substrate_fluval_stratum_2_kg",
+            "substrate_fluval_stratum_4_kg",
+            "substrate_fluval_stratum_8_kg",
+            "substrate_fluval_bio_stratum",
+            "substrate_fluval_betta_stratum_0_8_kg"
+        ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
         sourceOrganization = "Fluval"
     ),
     SubstrateEvidenceGroup(
-        firstProductId = "substrate_0047",
-        lastProductId = "substrate_0054",
+        productIds = listOf(
+            "substrate_oase_scaperline_soil_black_3_l",
+            "substrate_oase_scaperline_soil_black_9_l",
+            "substrate_oase_scaperline_soil_brown_3_l",
+            "substrate_oase_scaperline_soil_brown_9_l",
+            "substrate_oase_scaperline_soil_small_black_3_l",
+            "substrate_oase_scaperline_soil_small_black_9_l",
+            "substrate_oase_scaperline_soil_small_brown_3_l",
+            "substrate_oase_scaperline_soil_small_brown_9_l"
+        ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
         sourceOrganization = "OASE"
     ),
     SubstrateEvidenceGroup(
-        firstProductId = "substrate_0055",
-        lastProductId = "substrate_0055",
+        productIds = listOf(
+            "substrate_oase_basesoil"
+        ),
         semantic = AquariumSubstrateSemantic.NUTRIENT_BASE,
         sourceOrganization = "OASE"
     ),
     SubstrateEvidenceGroup(
-        firstProductId = "substrate_0056",
-        lastProductId = "substrate_0065",
+        productIds = listOf(
+            "substrate_aquario_neo_soil_compact_plant_3_l",
+            "substrate_aquario_neo_soil_compact_plant_8_l",
+            "substrate_aquario_neo_soil_compact_plant_powder_3_l",
+            "substrate_aquario_neo_soil_compact_plant_powder_8_l",
+            "substrate_aquario_neo_soil_compact_shrimp_3_l",
+            "substrate_aquario_neo_soil_compact_shrimp_8_l",
+            "substrate_aquario_neo_soil_compact_shrimp_powder_3_l",
+            "substrate_aquario_neo_soil_compact_shrimp_powder_8_l",
+            "substrate_aquario_neo_soil_no_co2_3_l_8_l",
+            "substrate_aquario_neo_soil_brown_plant"
+        ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
         sourceOrganization = "Aquario"
     ),
     SubstrateEvidenceGroup(
-        firstProductId = "substrate_0066",
-        lastProductId = "substrate_0071",
+        productIds = listOf(
+            "substrate_uns_controsoil_black_normal_1_3_10_l",
+            "substrate_uns_controsoil_black_fine_1_3_10_l",
+            "substrate_uns_controsoil_black_extra_fine_1_3_10_l",
+            "substrate_uns_controsoil_brown_normal_1_3_10_l",
+            "substrate_uns_controsoil_brown_fine_1_3_10_l",
+            "substrate_uns_controsoil_brown_extra_fine_1_3_10_l"
+        ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
         sourceOrganization = "Ultum Nature Systems"
     ),
     SubstrateEvidenceGroup(
-        firstProductId = "substrate_0072",
-        lastProductId = "substrate_0072",
+        productIds = listOf(
+            "substrate_uns_controbase"
+        ),
         semantic = AquariumSubstrateSemantic.NUTRIENT_BASE,
         sourceOrganization = "Ultum Nature Systems"
     ),
     SubstrateEvidenceGroup(
-        firstProductId = "substrate_0073",
-        lastProductId = "substrate_0074",
+        productIds = listOf(
+            "substrate_2hr_aquarist_apt_feast_aquarium_soil_2_l",
+            "substrate_2hr_aquarist_apt_feast_aquarium_soil_5_l"
+        ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
         sourceOrganization = "2HR Aquarist"
     ),
     SubstrateEvidenceGroup(
-        firstProductId = "substrate_0075",
-        lastProductId = "substrate_0078",
+        productIds = listOf(
+            "substrate_glasgarten_environment_aquarium_soil_4_l",
+            "substrate_glasgarten_environment_aquarium_soil_9_l",
+            "substrate_glasgarten_environment_aquarium_soil_powder_4_l",
+            "substrate_glasgarten_environment_aquarium_soil_powder_9_l"
+        ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
         sourceOrganization = "GlasGarten"
     ),
     SubstrateEvidenceGroup(
-        firstProductId = "substrate_0079",
-        lastProductId = "substrate_0085",
+        productIds = listOf(
+            "substrate_sl_aqua_more_nature_soil_black_s_3_8_l",
+            "substrate_sl_aqua_more_nature_soil_black_m_3_8_l",
+            "substrate_sl_aqua_more_nature_soil_black_l_3_8_l",
+            "substrate_sl_aqua_more_nature_brown_soil_s_8_l",
+            "substrate_sl_aqua_more_nature_brown_soil_m_8_l",
+            "substrate_sl_aqua_more_nature_brown_soil_l_8_l",
+            "substrate_sl_aqua_gokujou_black_soil"
+        ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
         sourceOrganization = "SL-Aqua"
     ),
     SubstrateEvidenceGroup(
-        firstProductId = "substrate_0086",
-        lastProductId = "substrate_0086",
+        productIds = listOf(
+            "substrate_sl_aqua_sulawesi_volcanic_rock_soil"
+        ),
         semantic = AquariumSubstrateSemantic.INERT,
         sourceOrganization = "SL-Aqua"
     ),
     SubstrateEvidenceGroup(
-        firstProductId = "substrate_0087",
-        lastProductId = "substrate_0088",
+        productIds = listOf(
+            "substrate_sl_aqua_mironekuton",
+            "substrate_sl_aqua_montmorillonite"
+        ),
         semantic = AquariumSubstrateSemantic.ADDITIVE,
         sourceOrganization = "SL-Aqua"
     ),
     SubstrateEvidenceGroup(
-        firstProductId = "substrate_0089",
-        lastProductId = "substrate_0097",
+        productIds = listOf(
+            "substrate_jun_platinum_soil_black_normal_1_3_8_l",
+            "substrate_jun_platinum_soil_black_powder_1_3_8_l",
+            "substrate_jun_platinum_soil_black_super_powder_1_3_8_l",
+            "substrate_jun_platinum_soil_brown_normal_1_3_8_l",
+            "substrate_jun_platinum_soil_brown_powder_1_3_8_l",
+            "substrate_jun_platinum_soil_brown_super_powder_1_3_8_l",
+            "substrate_jun_master_soil_next_black_normal_3_8_l",
+            "substrate_jun_master_soil_next_black_powder_3_8_l",
+            "substrate_jun_master_soil_next_black_super_powder_3_l"
+        ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
         sourceOrganization = "JUN"
     ),
     SubstrateEvidenceGroup(
-        firstProductId = "substrate_0098",
-        lastProductId = "substrate_0102",
+        productIds = listOf(
+            "substrate_ista_water_plant_soil_ph_6_5_medium_2_9_l",
+            "substrate_ista_water_plant_soil_ph_6_5_small_2_9_l",
+            "substrate_ista_substrate_premium_soil_s_2_8_l",
+            "substrate_ista_substrate_premium_soil_l_2_8_l",
+            "substrate_ista_plant_shrimp_soil_ph_5_5_2_l"
+        ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
         sourceOrganization = "ISTA"
     ),
     SubstrateEvidenceGroup(
-        firstProductId = "substrate_0103",
-        lastProductId = "substrate_0108",
+        productIds = listOf(
+            "substrate_brightwell_aquatics_florinvolcanit_rio_escuro_fine_5_15_24_lb",
+            "substrate_brightwell_aquatics_florinvolcanit_rio_escuro_medium",
+            "substrate_brightwell_aquatics_florinvolcanit_rio_escuro_extra_fine",
+            "substrate_brightwell_aquatics_rio_cafe_fine",
+            "substrate_brightwell_aquatics_rio_cafe_medium",
+            "substrate_brightwell_aquatics_rio_cafe_extra_fine"
+        ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
         sourceOrganization = "Brightwell Aquatics"
     ),
     SubstrateEvidenceGroup(
-        firstProductId = "substrate_0109",
-        lastProductId = "substrate_0109",
+        productIds = listOf(
+            "substrate_brightwell_aquatics_florinbase_laterin_substrat_vf"
+        ),
         semantic = AquariumSubstrateSemantic.NUTRIENT_BASE,
         sourceOrganization = "Brightwell Aquatics"
     ),
     SubstrateEvidenceGroup(
-        firstProductId = "substrate_0110",
-        lastProductId = "substrate_0110",
+        productIds = listOf(
+            "substrate_brightwell_aquatics_florinbase_laterite_powder"
+        ),
         semantic = AquariumSubstrateSemantic.ADDITIVE,
         sourceOrganization = "Brightwell Aquatics"
     ),
     SubstrateEvidenceGroup(
-        firstProductId = "substrate_0111",
-        lastProductId = "substrate_0114",
+        productIds = listOf(
+            "substrate_ebi_gold_shrimp_soil_5_l",
+            "substrate_ebi_gold_waterplant_soil_5_l",
+            "substrate_ebi_gold_waterplant_soil_powder_5_l",
+            "substrate_ebi_gold_waterplant_soil_natural_brown_5_l"
+        ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
         sourceOrganization = "Ebi Gold"
     ),
     SubstrateEvidenceGroup(
-        firstProductId = "substrate_0115",
-        lastProductId = "substrate_0116",
+        productIds = listOf(
+            "substrate_tetra_activesubstrate_3_l",
+            "substrate_tetra_activesubstrate_6_l"
+        ),
         semantic = AquariumSubstrateSemantic.INERT,
         sourceOrganization = "Tetra"
     ),
     SubstrateEvidenceGroup(
-        firstProductId = "substrate_0117",
-        lastProductId = "substrate_0117",
+        productIds = listOf(
+            "substrate_tetra_completesubstrate_2_5_kg"
+        ),
         semantic = AquariumSubstrateSemantic.NUTRIENT_BASE,
         sourceOrganization = "Tetra"
     ),
     SubstrateEvidenceGroup(
-        firstProductId = "substrate_0118",
-        lastProductId = "substrate_0119",
+        productIds = listOf(
+            "substrate_sera_aquarium_gravel_floredepot_substrate_2_4_kg",
+            "substrate_sera_aquarium_gravel_floredepot_substrate_4_7_kg"
+        ),
         semantic = AquariumSubstrateSemantic.NUTRIENT_BASE,
         sourceOrganization = "sera"
     ),
     SubstrateEvidenceGroup(
-        firstProductId = "substrate_0120",
-        lastProductId = "substrate_0120",
+        productIds = listOf(
+            "substrate_aquaforest_af_natural_substrate_7_5_l"
+        ),
         semantic = AquariumSubstrateSemantic.NUTRIENT_BASE,
         sourceOrganization = "Aquaforest"
     ),
     SubstrateEvidenceGroup(
-        firstProductId = "substrate_0121",
-        lastProductId = "substrate_0122",
+        productIds = listOf(
+            "substrate_aquaforest_af_lava_soil_5_l",
+            "substrate_aquaforest_af_lava_soil_black_5_l"
+        ),
         semantic = AquariumSubstrateSemantic.UNKNOWN,
         sourceOrganization = "Aquaforest"
     ),
     SubstrateEvidenceGroup(
-        firstProductId = "substrate_0123",
-        lastProductId = "substrate_0124",
+        productIds = listOf(
+            "substrate_yokuchi_jiban_soil_10_l",
+            "substrate_yokuchi_jiban_soil_powder_10_l"
+        ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
         sourceOrganization = "Yokuchi"
     ),
     SubstrateEvidenceGroup(
-        firstProductId = "substrate_0125",
-        lastProductId = "substrate_0125",
+        productIds = listOf(
+            "substrate_benibachi_black_soil_5_kg"
+        ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
         sourceOrganization = "Benibachi"
     ),
     SubstrateEvidenceGroup(
-        firstProductId = "substrate_0126",
-        lastProductId = "substrate_0126",
+        productIds = listOf(
+            "substrate_shrimps_forever_shrimps_soil_9_l"
+        ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
         sourceOrganization = "Shrimps Forever"
     ),
     SubstrateEvidenceGroup(
-        firstProductId = "substrate_0127",
-        lastProductId = "substrate_0130",
+        productIds = listOf(
+            "substrate_prize_aquasoil_3_l",
+            "substrate_prize_aquasoil_9_l",
+            "substrate_prize_aquasoil_powder_3_l",
+            "substrate_prize_aquasoil_powder_9_l"
+        ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
         sourceOrganization = "Prize"
     ),
     SubstrateEvidenceGroup(
-        firstProductId = "substrate_0131",
-        lastProductId = "substrate_0131",
+        productIds = listOf(
+            "substrate_seachem_aquavitro_aquasolum_black_humate_4_kg"
+        ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
         sourceOrganization = "Seachem Laboratories"
     ),
     SubstrateEvidenceGroup(
-        firstProductId = "substrate_0132",
-        lastProductId = "substrate_0135",
+        productIds = listOf(
+            "substrate_seachem_flourite_7_kg",
+            "substrate_seachem_flourite_black_7_kg",
+            "substrate_seachem_flourite_dark_7_kg",
+            "substrate_seachem_flourite_red_7_kg"
+        ),
         semantic = AquariumSubstrateSemantic.INERT,
         sourceOrganization = "Seachem Laboratories"
     ),
     SubstrateEvidenceGroup(
-        firstProductId = "substrate_0136",
-        lastProductId = "substrate_0137",
+        productIds = listOf(
+            "substrate_caribsea_eco_complete_planted_aquarium_substrate_black",
+            "substrate_caribsea_eco_complete_planted_aquarium_substrate_red"
+        ),
         semantic = AquariumSubstrateSemantic.INERT,
         sourceOrganization = "CaribSea"
     ),
     SubstrateEvidenceGroup(
-        firstProductId = "substrate_0138",
-        lastProductId = "substrate_0138",
+        productIds = listOf(
+            "substrate_eurostar_aquaclay_5_10_l"
+        ),
         semantic = AquariumSubstrateSemantic.UNKNOWN,
         sourceOrganization = "EuroStar"
     )
 )
-
 private data class GravelEvidenceGroup(
     val firstProductId: String,
     val lastProductId: String,
@@ -323,11 +477,8 @@ object AquariumSubstrateMetadataCatalog {
     }
 
     private fun replacementSubstrateRecords(): List<Pair<String, Record>> {
-        val records = legacySubstrateRecords() + substrateEvidenceGroups.flatMap { group ->
-            AquariumSubstrateProductIds.productIds(
-                firstProductId = group.firstProductId,
-                lastProductId = group.lastProductId
-            ).map { productId ->
+        val records = substrateEvidenceGroups.flatMap { group ->
+            group.productIds.map { productId ->
                 if (group.semantic == AquariumSubstrateSemantic.UNKNOWN) {
                     productId.unverified(
                         categoryKey = AquariumMaterialCategoryKeys.SUBSTRATE,
@@ -345,35 +496,9 @@ object AquariumSubstrateMetadataCatalog {
             }
         }
         check(records.size == AquariumSubstrateProductIds.EXPECTED_CATALOG_PRODUCT_COUNT)
+        check(records.map { (productId, _) -> productId }.distinct().size == records.size)
         return records
     }
-
-    private fun legacySubstrateRecords(): List<Pair<String, Record>> = listOf(
-        "substrate_chihiros_aquasoil_3l".verified(
-            AquariumMaterialCategoryKeys.SUBSTRATE,
-            AquariumSubstrateSemantic.ACTIVE_SOIL,
-            "Chihiros Aquatic Studio",
-            "chihiros_aqua_soil_launch"
-        ),
-        "substrate_chihiros_aquasoil_9l".verified(
-            AquariumMaterialCategoryKeys.SUBSTRATE,
-            AquariumSubstrateSemantic.ACTIVE_SOIL,
-            "Chihiros Aquatic Studio",
-            "chihiros_aqua_soil_launch"
-        ),
-        "substrate_ada_tourmaline_bc".verified(
-            AquariumMaterialCategoryKeys.SUBSTRATE,
-            AquariumSubstrateSemantic.ADDITIVE,
-            "Aqua Design Amano",
-            "ada_tourmaline_bc"
-        ),
-        "substrate_dennerle_deponitmix_4_8kg".verified(
-            AquariumMaterialCategoryKeys.SUBSTRATE,
-            AquariumSubstrateSemantic.NUTRIENT_BASE,
-            "Dennerle",
-            "dennerle_deponit_mix_pro"
-        )
-    )
 
     private fun replacementGravelRecords(): List<Pair<String, Record>> {
         /*

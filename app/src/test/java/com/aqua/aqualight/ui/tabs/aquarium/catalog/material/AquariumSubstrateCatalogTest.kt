@@ -49,7 +49,7 @@ class AquariumSubstrateCatalogTest {
     }
 
     @Test
-    fun substrateKeywordsKeepExistingSearchContract() {
+    fun substrateKeywordsKeepCategoryAndSemanticSearchContract() {
         val firstProduct = SubstrateCatalog.definitions.first()
         val nutrientBase = SubstrateCatalog.definitions.first { product ->
             product.substrateMetadata?.semantic == AquariumSubstrateSemantic.NUTRIENT_BASE
@@ -63,7 +63,6 @@ class AquariumSubstrateCatalogTest {
                 R.string.catalog_keyword_substrate,
                 R.string.catalog_keyword_soil,
                 R.string.catalog_keyword_aquasoil,
-                R.string.catalog_keyword_chihiros,
                 R.string.catalog_keyword_plant
             ),
             firstProduct.keywordRes
@@ -80,23 +79,15 @@ class AquariumSubstrateCatalogTest {
     }
 
     @Test
-    fun legacySubstrateIdsStayStableForSavedTankCompatibility() {
-        assertEquals(
-            "substrate_chihiros_aquasoil_3l",
-            AquariumSubstrateProductIds.productId(CHIHIROS_AQUASOIL_3L_INDEX)
-        )
-        assertEquals(
-            "substrate_chihiros_aquasoil_9l",
-            AquariumSubstrateProductIds.productId(CHIHIROS_AQUASOIL_9L_INDEX)
-        )
-        assertEquals(
-            "substrate_ada_tourmaline_bc",
-            AquariumSubstrateProductIds.productId(ADA_TOURMALINE_BC_INDEX)
-        )
-        assertEquals(
-            "substrate_dennerle_deponitmix_4_8kg",
-            AquariumSubstrateProductIds.productId(DENNERLE_DEPONIT_MIX_INDEX)
-        )
+    fun substrateCatalogUsesSemanticOrderIndependentStableIds() {
+        val ids = SubstrateCatalog.definitions.map(AquariumMaterialDefinition::id)
+
+        assertEquals(EXPECTED_SUBSTRATE_COUNT, ids.size)
+        assertEquals(ids.size, ids.toSet().size)
+        assertEquals(AquariumSubstrateProductIds.ALL, ids)
+        assertEquals("substrate_chihiros_aquasoil_3l", ids.first())
+        assertEquals("substrate_eurostar_aquaclay_5_10_l", ids.last())
+        assertTrue(ids.none { productId -> Regex("^substrate_\\d{4}$").matches(productId) })
     }
 
     @Test
@@ -187,16 +178,10 @@ class AquariumSubstrateCatalogTest {
         const val EXPECTED_INERT_COUNT = 9
         const val EXPECTED_UNKNOWN_COUNT = 3
         const val EXPECTED_VERIFIED_COUNT = EXPECTED_TOTAL_COUNT - EXPECTED_UNKNOWN_COUNT
-        const val CHIHIROS_AQUASOIL_3L_INDEX = 1
-        const val CHIHIROS_AQUASOIL_9L_INDEX = 2
-        const val ADA_TOURMALINE_BC_INDEX = 3
-        const val DENNERLE_DEPONIT_MIX_INDEX = 4
 
         val EXPECTED_PRODUCT_IDS =
-            (1..AquariumSubstrateProductIds.EXPECTED_CATALOG_PRODUCT_COUNT)
-                .mapTo(mutableSetOf()) { index ->
-                    AquariumSubstrateProductIds.productId(index)
-                } + (1..EXPECTED_GRAVEL_COUNT).mapTo(mutableSetOf()) { index ->
+            AquariumSubstrateProductIds.ALL.toMutableSet() +
+                (1..EXPECTED_GRAVEL_COUNT).mapTo(mutableSetOf()) { index ->
                     "gravel_${index.toString().padStart(4, '0')}"
                 }
     }

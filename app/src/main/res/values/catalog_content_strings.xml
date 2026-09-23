@@ -85,12 +85,7 @@
     <string name="catalog_material_light_chihiros_wrgb_ii_slim_name" translatable="false">Chihiros WRGB II Slim</string>
     <string name="catalog_material_light_chihiros_magnetic_lamp_led_name" translatable="false">Chihiros Magnetic Lamp - LED Light</string>
     <string name="catalog_material_light_twinstar_s_series_name" translatable="false">Twinstar S Series</string>
-    <string name="catalog_material_substrate_chihiros_aquasoil_9l_name" translatable="false">Chihiros Aquasoil 9L</string>
-    <string name="catalog_material_substrate_chihiros_aquasoil_3l_name" translatable="false">Chihiros Aquasoil 3L</string>
-    <string name="catalog_material_substrate_ada_tourmaline_bc_name" translatable="false">ADA Tourmaline BC</string>
-    <string name="catalog_material_substrate_dennerle_deponitmix_4_8kg_name" translatable="false">Dennerle Deponit Mix Pro 10in1 — 4.8 kg</string>
-
-    <!-- Scientific cultivar names are locale-independent catalog data. -->
+<!-- Scientific cultivar names are locale-independent catalog data. -->
     <string name="catalog_plant_anubias_barteri_name" translatable="false">Anubias barteri</string>
     <string name="catalog_plant_anubias_barteri_var_nana_name" translatable="false">Anubias barteri var. nana</string>
     <string name="catalog_plant_anubias_barteri_var_nana_petite_name" translatable="false">Anubias barteri var. nana \'Petite\'</string>

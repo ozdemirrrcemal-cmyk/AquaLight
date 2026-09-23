@@ -6,207 +6,756 @@ import com.aqua.aqualight.application.aquarium.AquariumSubstrateProductIds
 import com.aqua.aqualight.application.aquarium.AquariumSubstrateProductMetadata
 import com.aqua.aqualight.application.aquarium.AquariumSubstrateSemantic
 
+private const val SUBSTRATE_PRODUCT_COUNT = 138
+
+private data class SubstrateCatalogResource(
+    val id: String,
+    val brandRes: Int,
+    val nameRes: Int
+)
+
 private val substrateCatalogResources = listOf(
-    R.string.catalog_brand_chihiros to R.string.catalog_material_substrate_chihiros_aquasoil_3l_name,
-    R.string.catalog_brand_chihiros to R.string.catalog_material_substrate_chihiros_aquasoil_9l_name,
-    R.string.catalog_brand_ada to R.string.catalog_material_substrate_ada_tourmaline_bc_name,
-    R.string.catalog_brand_dennerle to R.string.catalog_material_substrate_dennerle_deponitmix_4_8kg_name,
-    R.string.catalog_brand_ada to R.string.catalog_material_substrate_0005_name,
-    R.string.catalog_brand_ada to R.string.catalog_material_substrate_0006_name,
-    R.string.catalog_brand_ada to R.string.catalog_material_substrate_0007_name,
-    R.string.catalog_brand_ada to R.string.catalog_material_substrate_0008_name,
-    R.string.catalog_brand_ada to R.string.catalog_material_substrate_0009_name,
-    R.string.catalog_brand_ada to R.string.catalog_material_substrate_0010_name,
-    R.string.catalog_brand_ada to R.string.catalog_material_substrate_0011_name,
-    R.string.catalog_brand_ada to R.string.catalog_material_substrate_0012_name,
-    R.string.catalog_brand_ada to R.string.catalog_material_substrate_0013_name,
-    R.string.catalog_brand_ada to R.string.catalog_material_substrate_0014_name,
-    R.string.catalog_brand_tropica to R.string.catalog_material_substrate_0015_name,
-    R.string.catalog_brand_tropica to R.string.catalog_material_substrate_0016_name,
-    R.string.catalog_brand_tropica to R.string.catalog_material_substrate_0017_name,
-    R.string.catalog_brand_tropica to R.string.catalog_material_substrate_0018_name,
-    R.string.catalog_brand_tropica to R.string.catalog_material_substrate_0019_name,
-    R.string.catalog_brand_tropica to R.string.catalog_material_substrate_0020_name,
-    R.string.catalog_brand_tropica to R.string.catalog_material_substrate_0021_name,
-    R.string.catalog_brand_dennerle to R.string.catalog_material_substrate_0022_name,
-    R.string.catalog_brand_dennerle to R.string.catalog_material_substrate_0023_name,
-    R.string.catalog_brand_dennerle to R.string.catalog_material_substrate_0024_name,
-    R.string.catalog_brand_dennerle to R.string.catalog_material_substrate_0025_name,
-    R.string.catalog_brand_dennerle to R.string.catalog_material_substrate_0026_name,
-    R.string.catalog_brand_dennerle to R.string.catalog_material_substrate_0027_name,
-    R.string.catalog_brand_jbl to R.string.catalog_material_substrate_0028_name,
-    R.string.catalog_brand_jbl to R.string.catalog_material_substrate_0029_name,
-    R.string.catalog_brand_jbl to R.string.catalog_material_substrate_0030_name,
-    R.string.catalog_brand_jbl to R.string.catalog_material_substrate_0031_name,
-    R.string.catalog_brand_jbl to R.string.catalog_material_substrate_0032_name,
-    R.string.catalog_brand_jbl to R.string.catalog_material_substrate_0033_name,
-    R.string.catalog_brand_jbl to R.string.catalog_material_substrate_0034_name,
-    R.string.catalog_brand_jbl to R.string.catalog_material_substrate_0035_name,
-    R.string.catalog_brand_jbl to R.string.catalog_material_substrate_0036_name,
-    R.string.catalog_brand_jbl to R.string.catalog_material_substrate_0037_name,
-    R.string.catalog_brand_jbl to R.string.catalog_material_substrate_0038_name,
-    R.string.catalog_brand_jbl to R.string.catalog_material_substrate_0039_name,
-    R.string.catalog_brand_jbl to R.string.catalog_material_substrate_0040_name,
-    R.string.catalog_brand_jbl to R.string.catalog_material_substrate_0041_name,
-    R.string.catalog_substrate_brand_fluval to R.string.catalog_material_substrate_0042_name,
-    R.string.catalog_substrate_brand_fluval to R.string.catalog_material_substrate_0043_name,
-    R.string.catalog_substrate_brand_fluval to R.string.catalog_material_substrate_0044_name,
-    R.string.catalog_substrate_brand_fluval to R.string.catalog_material_substrate_0045_name,
-    R.string.catalog_substrate_brand_fluval to R.string.catalog_material_substrate_0046_name,
-    R.string.catalog_brand_oase to R.string.catalog_material_substrate_0047_name,
-    R.string.catalog_brand_oase to R.string.catalog_material_substrate_0048_name,
-    R.string.catalog_brand_oase to R.string.catalog_material_substrate_0049_name,
-    R.string.catalog_brand_oase to R.string.catalog_material_substrate_0050_name,
-    R.string.catalog_brand_oase to R.string.catalog_material_substrate_0051_name,
-    R.string.catalog_brand_oase to R.string.catalog_material_substrate_0052_name,
-    R.string.catalog_brand_oase to R.string.catalog_material_substrate_0053_name,
-    R.string.catalog_brand_oase to R.string.catalog_material_substrate_0054_name,
-    R.string.catalog_brand_oase to R.string.catalog_material_substrate_0055_name,
-    R.string.catalog_brand_aquario to R.string.catalog_material_substrate_0056_name,
-    R.string.catalog_brand_aquario to R.string.catalog_material_substrate_0057_name,
-    R.string.catalog_brand_aquario to R.string.catalog_material_substrate_0058_name,
-    R.string.catalog_brand_aquario to R.string.catalog_material_substrate_0059_name,
-    R.string.catalog_brand_aquario to R.string.catalog_material_substrate_0060_name,
-    R.string.catalog_brand_aquario to R.string.catalog_material_substrate_0061_name,
-    R.string.catalog_brand_aquario to R.string.catalog_material_substrate_0062_name,
-    R.string.catalog_brand_aquario to R.string.catalog_material_substrate_0063_name,
-    R.string.catalog_brand_aquario to R.string.catalog_material_substrate_0064_name,
-    R.string.catalog_brand_aquario to R.string.catalog_material_substrate_0065_name,
-    R.string.catalog_substrate_brand_uns to R.string.catalog_material_substrate_0066_name,
-    R.string.catalog_substrate_brand_uns to R.string.catalog_material_substrate_0067_name,
-    R.string.catalog_substrate_brand_uns to R.string.catalog_material_substrate_0068_name,
-    R.string.catalog_substrate_brand_uns to R.string.catalog_material_substrate_0069_name,
-    R.string.catalog_substrate_brand_uns to R.string.catalog_material_substrate_0070_name,
-    R.string.catalog_substrate_brand_uns to R.string.catalog_material_substrate_0071_name,
-    R.string.catalog_substrate_brand_uns to R.string.catalog_material_substrate_0072_name,
-    R.string.catalog_substrate_brand_2hr_aquarist to R.string.catalog_material_substrate_0073_name,
-    R.string.catalog_substrate_brand_2hr_aquarist to R.string.catalog_material_substrate_0074_name,
-    R.string.catalog_substrate_brand_glasgarten to R.string.catalog_material_substrate_0075_name,
-    R.string.catalog_substrate_brand_glasgarten to R.string.catalog_material_substrate_0076_name,
-    R.string.catalog_substrate_brand_glasgarten to R.string.catalog_material_substrate_0077_name,
-    R.string.catalog_substrate_brand_glasgarten to R.string.catalog_material_substrate_0078_name,
-    R.string.catalog_substrate_brand_sl_aqua to R.string.catalog_material_substrate_0079_name,
-    R.string.catalog_substrate_brand_sl_aqua to R.string.catalog_material_substrate_0080_name,
-    R.string.catalog_substrate_brand_sl_aqua to R.string.catalog_material_substrate_0081_name,
-    R.string.catalog_substrate_brand_sl_aqua to R.string.catalog_material_substrate_0082_name,
-    R.string.catalog_substrate_brand_sl_aqua to R.string.catalog_material_substrate_0083_name,
-    R.string.catalog_substrate_brand_sl_aqua to R.string.catalog_material_substrate_0084_name,
-    R.string.catalog_substrate_brand_sl_aqua to R.string.catalog_material_substrate_0085_name,
-    R.string.catalog_substrate_brand_sl_aqua to R.string.catalog_material_substrate_0086_name,
-    R.string.catalog_substrate_brand_sl_aqua to R.string.catalog_material_substrate_0087_name,
-    R.string.catalog_substrate_brand_sl_aqua to R.string.catalog_material_substrate_0088_name,
-    R.string.catalog_substrate_brand_jun to R.string.catalog_material_substrate_0089_name,
-    R.string.catalog_substrate_brand_jun to R.string.catalog_material_substrate_0090_name,
-    R.string.catalog_substrate_brand_jun to R.string.catalog_material_substrate_0091_name,
-    R.string.catalog_substrate_brand_jun to R.string.catalog_material_substrate_0092_name,
-    R.string.catalog_substrate_brand_jun to R.string.catalog_material_substrate_0093_name,
-    R.string.catalog_substrate_brand_jun to R.string.catalog_material_substrate_0094_name,
-    R.string.catalog_substrate_brand_jun to R.string.catalog_material_substrate_0095_name,
-    R.string.catalog_substrate_brand_jun to R.string.catalog_material_substrate_0096_name,
-    R.string.catalog_substrate_brand_jun to R.string.catalog_material_substrate_0097_name,
-    R.string.catalog_brand_ista to R.string.catalog_material_substrate_0098_name,
-    R.string.catalog_brand_ista to R.string.catalog_material_substrate_0099_name,
-    R.string.catalog_brand_ista to R.string.catalog_material_substrate_0100_name,
-    R.string.catalog_brand_ista to R.string.catalog_material_substrate_0101_name,
-    R.string.catalog_brand_ista to R.string.catalog_material_substrate_0102_name,
-    R.string.catalog_substrate_brand_brightwell_aquatics to R.string.catalog_material_substrate_0103_name,
-    R.string.catalog_substrate_brand_brightwell_aquatics to R.string.catalog_material_substrate_0104_name,
-    R.string.catalog_substrate_brand_brightwell_aquatics to R.string.catalog_material_substrate_0105_name,
-    R.string.catalog_substrate_brand_brightwell_aquatics to R.string.catalog_material_substrate_0106_name,
-    R.string.catalog_substrate_brand_brightwell_aquatics to R.string.catalog_material_substrate_0107_name,
-    R.string.catalog_substrate_brand_brightwell_aquatics to R.string.catalog_material_substrate_0108_name,
-    R.string.catalog_substrate_brand_brightwell_aquatics to R.string.catalog_material_substrate_0109_name,
-    R.string.catalog_substrate_brand_brightwell_aquatics to R.string.catalog_material_substrate_0110_name,
-    R.string.catalog_substrate_brand_ebi_gold to R.string.catalog_material_substrate_0111_name,
-    R.string.catalog_substrate_brand_ebi_gold to R.string.catalog_material_substrate_0112_name,
-    R.string.catalog_substrate_brand_ebi_gold to R.string.catalog_material_substrate_0113_name,
-    R.string.catalog_substrate_brand_ebi_gold to R.string.catalog_material_substrate_0114_name,
-    R.string.catalog_substrate_brand_tetra to R.string.catalog_material_substrate_0115_name,
-    R.string.catalog_substrate_brand_tetra to R.string.catalog_material_substrate_0116_name,
-    R.string.catalog_substrate_brand_tetra to R.string.catalog_material_substrate_0117_name,
-    R.string.catalog_substrate_brand_sera to R.string.catalog_material_substrate_0118_name,
-    R.string.catalog_substrate_brand_sera to R.string.catalog_material_substrate_0119_name,
-    R.string.catalog_substrate_brand_aquaforest to R.string.catalog_material_substrate_0120_name,
-    R.string.catalog_substrate_brand_aquaforest to R.string.catalog_material_substrate_0121_name,
-    R.string.catalog_substrate_brand_aquaforest to R.string.catalog_material_substrate_0122_name,
-    R.string.catalog_substrate_brand_yokuchi to R.string.catalog_material_substrate_0123_name,
-    R.string.catalog_substrate_brand_yokuchi to R.string.catalog_material_substrate_0124_name,
-    R.string.catalog_substrate_brand_benibachi to R.string.catalog_material_substrate_0125_name,
-    R.string.catalog_substrate_brand_shrimps_forever to R.string.catalog_material_substrate_0126_name,
-    R.string.catalog_substrate_brand_prize to R.string.catalog_material_substrate_0127_name,
-    R.string.catalog_substrate_brand_prize to R.string.catalog_material_substrate_0128_name,
-    R.string.catalog_substrate_brand_prize to R.string.catalog_material_substrate_0129_name,
-    R.string.catalog_substrate_brand_prize to R.string.catalog_material_substrate_0130_name,
-    R.string.catalog_substrate_brand_seachem_aquavitro to R.string.catalog_material_substrate_0131_name,
-    R.string.catalog_substrate_brand_seachem to R.string.catalog_material_substrate_0132_name,
-    R.string.catalog_substrate_brand_seachem to R.string.catalog_material_substrate_0133_name,
-    R.string.catalog_substrate_brand_seachem to R.string.catalog_material_substrate_0134_name,
-    R.string.catalog_substrate_brand_seachem to R.string.catalog_material_substrate_0135_name,
-    R.string.catalog_substrate_brand_caribsea to R.string.catalog_material_substrate_0136_name,
-    R.string.catalog_substrate_brand_caribsea to R.string.catalog_material_substrate_0137_name,
-    R.string.catalog_substrate_brand_eurostar to R.string.catalog_material_substrate_0138_name
+    substrateResource(
+        "substrate_chihiros_aquasoil_3l",
+        R.string.catalog_brand_chihiros,
+        R.string.catalog_material_substrate_0001_name
+    ),
+    substrateResource(
+        "substrate_chihiros_aquasoil_9l",
+        R.string.catalog_brand_chihiros,
+        R.string.catalog_material_substrate_0002_name
+    ),
+    substrateResource(
+        "substrate_ada_tourmaline_bc",
+        R.string.catalog_brand_ada,
+        R.string.catalog_material_substrate_0003_name
+    ),
+    substrateResource(
+        "substrate_dennerle_deponit_mix_pro_10in1_4_8_kg",
+        R.string.catalog_brand_dennerle,
+        R.string.catalog_material_substrate_0004_name
+    ),
+    substrateResource(
+        "substrate_ada_aqua_soil_amazonia_ver_2_3_l",
+        R.string.catalog_brand_ada,
+        R.string.catalog_material_substrate_0005_name
+    ),
+    substrateResource(
+        "substrate_ada_aqua_soil_amazonia_ver_2_9_l",
+        R.string.catalog_brand_ada,
+        R.string.catalog_material_substrate_0006_name
+    ),
+    substrateResource(
+        "substrate_ada_aqua_soil_amazonia_ver_2_powder_3_l",
+        R.string.catalog_brand_ada,
+        R.string.catalog_material_substrate_0007_name
+    ),
+    substrateResource(
+        "substrate_ada_aqua_soil_amazonia_ver_2_powder_9_l",
+        R.string.catalog_brand_ada,
+        R.string.catalog_material_substrate_0008_name
+    ),
+    substrateResource(
+        "substrate_ada_power_sand_advance_s_2_l",
+        R.string.catalog_brand_ada,
+        R.string.catalog_material_substrate_0009_name
+    ),
+    substrateResource(
+        "substrate_ada_power_sand_advance_m_6_l",
+        R.string.catalog_brand_ada,
+        R.string.catalog_material_substrate_0010_name
+    ),
+    substrateResource(
+        "substrate_ada_power_sand_advance_l_6_l",
+        R.string.catalog_brand_ada,
+        R.string.catalog_material_substrate_0011_name
+    ),
+    substrateResource(
+        "substrate_ada_bacter_100_100_g",
+        R.string.catalog_brand_ada,
+        R.string.catalog_material_substrate_0012_name
+    ),
+    substrateResource(
+        "substrate_ada_bacter_ball",
+        R.string.catalog_brand_ada,
+        R.string.catalog_material_substrate_0013_name
+    ),
+    substrateResource(
+        "substrate_ada_clear_super_50_g",
+        R.string.catalog_brand_ada,
+        R.string.catalog_material_substrate_0014_name
+    ),
+    substrateResource(
+        "substrate_tropica_aquarium_soil_3_l",
+        R.string.catalog_brand_tropica,
+        R.string.catalog_material_substrate_0015_name
+    ),
+    substrateResource(
+        "substrate_tropica_aquarium_soil_9_l",
+        R.string.catalog_brand_tropica,
+        R.string.catalog_material_substrate_0016_name
+    ),
+    substrateResource(
+        "substrate_tropica_aquarium_soil_powder_3_l",
+        R.string.catalog_brand_tropica,
+        R.string.catalog_material_substrate_0017_name
+    ),
+    substrateResource(
+        "substrate_tropica_aquarium_soil_powder_9_l",
+        R.string.catalog_brand_tropica,
+        R.string.catalog_material_substrate_0018_name
+    ),
+    substrateResource(
+        "substrate_tropica_plant_growth_substrate_1_l",
+        R.string.catalog_brand_tropica,
+        R.string.catalog_material_substrate_0019_name
+    ),
+    substrateResource(
+        "substrate_tropica_plant_growth_substrate_2_5_l",
+        R.string.catalog_brand_tropica,
+        R.string.catalog_material_substrate_0020_name
+    ),
+    substrateResource(
+        "substrate_tropica_plant_growth_substrate_5_l",
+        R.string.catalog_brand_tropica,
+        R.string.catalog_material_substrate_0021_name
+    ),
+    substrateResource(
+        "substrate_dennerle_scapers_soil_4_l",
+        R.string.catalog_brand_dennerle,
+        R.string.catalog_material_substrate_0022_name
+    ),
+    substrateResource(
+        "substrate_dennerle_scapers_soil_8_l",
+        R.string.catalog_brand_dennerle,
+        R.string.catalog_material_substrate_0023_name
+    ),
+    substrateResource(
+        "substrate_dennerle_shrimp_king_active_soil_4_l",
+        R.string.catalog_brand_dennerle,
+        R.string.catalog_material_substrate_0024_name
+    ),
+    substrateResource(
+        "substrate_dennerle_shrimp_king_active_soil_8_l",
+        R.string.catalog_brand_dennerle,
+        R.string.catalog_material_substrate_0025_name
+    ),
+    substrateResource(
+        "substrate_dennerle_deponit_mix_pro_10in1_9_6_kg",
+        R.string.catalog_brand_dennerle,
+        R.string.catalog_material_substrate_0026_name
+    ),
+    substrateResource(
+        "substrate_dennerle_nutribasis_6in1",
+        R.string.catalog_brand_dennerle,
+        R.string.catalog_material_substrate_0027_name
+    ),
+    substrateResource(
+        "substrate_jbl_proscape_plantsoil_brown_3_l",
+        R.string.catalog_brand_jbl,
+        R.string.catalog_material_substrate_0028_name
+    ),
+    substrateResource(
+        "substrate_jbl_proscape_plantsoil_brown_9_l",
+        R.string.catalog_brand_jbl,
+        R.string.catalog_material_substrate_0029_name
+    ),
+    substrateResource(
+        "substrate_jbl_proscape_plantsoil_beige_3_l",
+        R.string.catalog_brand_jbl,
+        R.string.catalog_material_substrate_0030_name
+    ),
+    substrateResource(
+        "substrate_jbl_proscape_plantsoil_beige_9_l",
+        R.string.catalog_brand_jbl,
+        R.string.catalog_material_substrate_0031_name
+    ),
+    substrateResource(
+        "substrate_jbl_proscape_shrimpsoil_brown_3_l",
+        R.string.catalog_brand_jbl,
+        R.string.catalog_material_substrate_0032_name
+    ),
+    substrateResource(
+        "substrate_jbl_proscape_shrimpsoil_brown_9_l",
+        R.string.catalog_brand_jbl,
+        R.string.catalog_material_substrate_0033_name
+    ),
+    substrateResource(
+        "substrate_jbl_proscape_shrimpsoil_beige_3_l",
+        R.string.catalog_brand_jbl,
+        R.string.catalog_material_substrate_0034_name
+    ),
+    substrateResource(
+        "substrate_jbl_proscape_shrimpsoil_beige_9_l",
+        R.string.catalog_brand_jbl,
+        R.string.catalog_material_substrate_0035_name
+    ),
+    substrateResource(
+        "substrate_jbl_proflora_aquabasis_plus_2_5_l",
+        R.string.catalog_brand_jbl,
+        R.string.catalog_material_substrate_0036_name
+    ),
+    substrateResource(
+        "substrate_jbl_proflora_aquabasis_plus_5_l",
+        R.string.catalog_brand_jbl,
+        R.string.catalog_material_substrate_0037_name
+    ),
+    substrateResource(
+        "substrate_jbl_proscape_volcano_mineral_3_l",
+        R.string.catalog_brand_jbl,
+        R.string.catalog_material_substrate_0038_name
+    ),
+    substrateResource(
+        "substrate_jbl_proscape_volcano_mineral_9_l",
+        R.string.catalog_brand_jbl,
+        R.string.catalog_material_substrate_0039_name
+    ),
+    substrateResource(
+        "substrate_jbl_proscape_volcano_powder_250_g",
+        R.string.catalog_brand_jbl,
+        R.string.catalog_material_substrate_0040_name
+    ),
+    substrateResource(
+        "substrate_jbl_proscape_plantstart_2_x_8_g",
+        R.string.catalog_brand_jbl,
+        R.string.catalog_material_substrate_0041_name
+    ),
+    substrateResource(
+        "substrate_fluval_stratum_2_kg",
+        R.string.catalog_substrate_brand_fluval,
+        R.string.catalog_material_substrate_0042_name
+    ),
+    substrateResource(
+        "substrate_fluval_stratum_4_kg",
+        R.string.catalog_substrate_brand_fluval,
+        R.string.catalog_material_substrate_0043_name
+    ),
+    substrateResource(
+        "substrate_fluval_stratum_8_kg",
+        R.string.catalog_substrate_brand_fluval,
+        R.string.catalog_material_substrate_0044_name
+    ),
+    substrateResource(
+        "substrate_fluval_bio_stratum",
+        R.string.catalog_substrate_brand_fluval,
+        R.string.catalog_material_substrate_0045_name
+    ),
+    substrateResource(
+        "substrate_fluval_betta_stratum_0_8_kg",
+        R.string.catalog_substrate_brand_fluval,
+        R.string.catalog_material_substrate_0046_name
+    ),
+    substrateResource(
+        "substrate_oase_scaperline_soil_black_3_l",
+        R.string.catalog_brand_oase,
+        R.string.catalog_material_substrate_0047_name
+    ),
+    substrateResource(
+        "substrate_oase_scaperline_soil_black_9_l",
+        R.string.catalog_brand_oase,
+        R.string.catalog_material_substrate_0048_name
+    ),
+    substrateResource(
+        "substrate_oase_scaperline_soil_brown_3_l",
+        R.string.catalog_brand_oase,
+        R.string.catalog_material_substrate_0049_name
+    ),
+    substrateResource(
+        "substrate_oase_scaperline_soil_brown_9_l",
+        R.string.catalog_brand_oase,
+        R.string.catalog_material_substrate_0050_name
+    ),
+    substrateResource(
+        "substrate_oase_scaperline_soil_small_black_3_l",
+        R.string.catalog_brand_oase,
+        R.string.catalog_material_substrate_0051_name
+    ),
+    substrateResource(
+        "substrate_oase_scaperline_soil_small_black_9_l",
+        R.string.catalog_brand_oase,
+        R.string.catalog_material_substrate_0052_name
+    ),
+    substrateResource(
+        "substrate_oase_scaperline_soil_small_brown_3_l",
+        R.string.catalog_brand_oase,
+        R.string.catalog_material_substrate_0053_name
+    ),
+    substrateResource(
+        "substrate_oase_scaperline_soil_small_brown_9_l",
+        R.string.catalog_brand_oase,
+        R.string.catalog_material_substrate_0054_name
+    ),
+    substrateResource(
+        "substrate_oase_basesoil",
+        R.string.catalog_brand_oase,
+        R.string.catalog_material_substrate_0055_name
+    ),
+    substrateResource(
+        "substrate_aquario_neo_soil_compact_plant_3_l",
+        R.string.catalog_brand_aquario,
+        R.string.catalog_material_substrate_0056_name
+    ),
+    substrateResource(
+        "substrate_aquario_neo_soil_compact_plant_8_l",
+        R.string.catalog_brand_aquario,
+        R.string.catalog_material_substrate_0057_name
+    ),
+    substrateResource(
+        "substrate_aquario_neo_soil_compact_plant_powder_3_l",
+        R.string.catalog_brand_aquario,
+        R.string.catalog_material_substrate_0058_name
+    ),
+    substrateResource(
+        "substrate_aquario_neo_soil_compact_plant_powder_8_l",
+        R.string.catalog_brand_aquario,
+        R.string.catalog_material_substrate_0059_name
+    ),
+    substrateResource(
+        "substrate_aquario_neo_soil_compact_shrimp_3_l",
+        R.string.catalog_brand_aquario,
+        R.string.catalog_material_substrate_0060_name
+    ),
+    substrateResource(
+        "substrate_aquario_neo_soil_compact_shrimp_8_l",
+        R.string.catalog_brand_aquario,
+        R.string.catalog_material_substrate_0061_name
+    ),
+    substrateResource(
+        "substrate_aquario_neo_soil_compact_shrimp_powder_3_l",
+        R.string.catalog_brand_aquario,
+        R.string.catalog_material_substrate_0062_name
+    ),
+    substrateResource(
+        "substrate_aquario_neo_soil_compact_shrimp_powder_8_l",
+        R.string.catalog_brand_aquario,
+        R.string.catalog_material_substrate_0063_name
+    ),
+    substrateResource(
+        "substrate_aquario_neo_soil_no_co2_3_l_8_l",
+        R.string.catalog_brand_aquario,
+        R.string.catalog_material_substrate_0064_name
+    ),
+    substrateResource(
+        "substrate_aquario_neo_soil_brown_plant",
+        R.string.catalog_brand_aquario,
+        R.string.catalog_material_substrate_0065_name
+    ),
+    substrateResource(
+        "substrate_uns_controsoil_black_normal_1_3_10_l",
+        R.string.catalog_substrate_brand_uns,
+        R.string.catalog_material_substrate_0066_name
+    ),
+    substrateResource(
+        "substrate_uns_controsoil_black_fine_1_3_10_l",
+        R.string.catalog_substrate_brand_uns,
+        R.string.catalog_material_substrate_0067_name
+    ),
+    substrateResource(
+        "substrate_uns_controsoil_black_extra_fine_1_3_10_l",
+        R.string.catalog_substrate_brand_uns,
+        R.string.catalog_material_substrate_0068_name
+    ),
+    substrateResource(
+        "substrate_uns_controsoil_brown_normal_1_3_10_l",
+        R.string.catalog_substrate_brand_uns,
+        R.string.catalog_material_substrate_0069_name
+    ),
+    substrateResource(
+        "substrate_uns_controsoil_brown_fine_1_3_10_l",
+        R.string.catalog_substrate_brand_uns,
+        R.string.catalog_material_substrate_0070_name
+    ),
+    substrateResource(
+        "substrate_uns_controsoil_brown_extra_fine_1_3_10_l",
+        R.string.catalog_substrate_brand_uns,
+        R.string.catalog_material_substrate_0071_name
+    ),
+    substrateResource(
+        "substrate_uns_controbase",
+        R.string.catalog_substrate_brand_uns,
+        R.string.catalog_material_substrate_0072_name
+    ),
+    substrateResource(
+        "substrate_2hr_aquarist_apt_feast_aquarium_soil_2_l",
+        R.string.catalog_substrate_brand_2hr_aquarist,
+        R.string.catalog_material_substrate_0073_name
+    ),
+    substrateResource(
+        "substrate_2hr_aquarist_apt_feast_aquarium_soil_5_l",
+        R.string.catalog_substrate_brand_2hr_aquarist,
+        R.string.catalog_material_substrate_0074_name
+    ),
+    substrateResource(
+        "substrate_glasgarten_environment_aquarium_soil_4_l",
+        R.string.catalog_substrate_brand_glasgarten,
+        R.string.catalog_material_substrate_0075_name
+    ),
+    substrateResource(
+        "substrate_glasgarten_environment_aquarium_soil_9_l",
+        R.string.catalog_substrate_brand_glasgarten,
+        R.string.catalog_material_substrate_0076_name
+    ),
+    substrateResource(
+        "substrate_glasgarten_environment_aquarium_soil_powder_4_l",
+        R.string.catalog_substrate_brand_glasgarten,
+        R.string.catalog_material_substrate_0077_name
+    ),
+    substrateResource(
+        "substrate_glasgarten_environment_aquarium_soil_powder_9_l",
+        R.string.catalog_substrate_brand_glasgarten,
+        R.string.catalog_material_substrate_0078_name
+    ),
+    substrateResource(
+        "substrate_sl_aqua_more_nature_soil_black_s_3_8_l",
+        R.string.catalog_substrate_brand_sl_aqua,
+        R.string.catalog_material_substrate_0079_name
+    ),
+    substrateResource(
+        "substrate_sl_aqua_more_nature_soil_black_m_3_8_l",
+        R.string.catalog_substrate_brand_sl_aqua,
+        R.string.catalog_material_substrate_0080_name
+    ),
+    substrateResource(
+        "substrate_sl_aqua_more_nature_soil_black_l_3_8_l",
+        R.string.catalog_substrate_brand_sl_aqua,
+        R.string.catalog_material_substrate_0081_name
+    ),
+    substrateResource(
+        "substrate_sl_aqua_more_nature_brown_soil_s_8_l",
+        R.string.catalog_substrate_brand_sl_aqua,
+        R.string.catalog_material_substrate_0082_name
+    ),
+    substrateResource(
+        "substrate_sl_aqua_more_nature_brown_soil_m_8_l",
+        R.string.catalog_substrate_brand_sl_aqua,
+        R.string.catalog_material_substrate_0083_name
+    ),
+    substrateResource(
+        "substrate_sl_aqua_more_nature_brown_soil_l_8_l",
+        R.string.catalog_substrate_brand_sl_aqua,
+        R.string.catalog_material_substrate_0084_name
+    ),
+    substrateResource(
+        "substrate_sl_aqua_gokujou_black_soil",
+        R.string.catalog_substrate_brand_sl_aqua,
+        R.string.catalog_material_substrate_0085_name
+    ),
+    substrateResource(
+        "substrate_sl_aqua_sulawesi_volcanic_rock_soil",
+        R.string.catalog_substrate_brand_sl_aqua,
+        R.string.catalog_material_substrate_0086_name
+    ),
+    substrateResource(
+        "substrate_sl_aqua_mironekuton",
+        R.string.catalog_substrate_brand_sl_aqua,
+        R.string.catalog_material_substrate_0087_name
+    ),
+    substrateResource(
+        "substrate_sl_aqua_montmorillonite",
+        R.string.catalog_substrate_brand_sl_aqua,
+        R.string.catalog_material_substrate_0088_name
+    ),
+    substrateResource(
+        "substrate_jun_platinum_soil_black_normal_1_3_8_l",
+        R.string.catalog_substrate_brand_jun,
+        R.string.catalog_material_substrate_0089_name
+    ),
+    substrateResource(
+        "substrate_jun_platinum_soil_black_powder_1_3_8_l",
+        R.string.catalog_substrate_brand_jun,
+        R.string.catalog_material_substrate_0090_name
+    ),
+    substrateResource(
+        "substrate_jun_platinum_soil_black_super_powder_1_3_8_l",
+        R.string.catalog_substrate_brand_jun,
+        R.string.catalog_material_substrate_0091_name
+    ),
+    substrateResource(
+        "substrate_jun_platinum_soil_brown_normal_1_3_8_l",
+        R.string.catalog_substrate_brand_jun,
+        R.string.catalog_material_substrate_0092_name
+    ),
+    substrateResource(
+        "substrate_jun_platinum_soil_brown_powder_1_3_8_l",
+        R.string.catalog_substrate_brand_jun,
+        R.string.catalog_material_substrate_0093_name
+    ),
+    substrateResource(
+        "substrate_jun_platinum_soil_brown_super_powder_1_3_8_l",
+        R.string.catalog_substrate_brand_jun,
+        R.string.catalog_material_substrate_0094_name
+    ),
+    substrateResource(
+        "substrate_jun_master_soil_next_black_normal_3_8_l",
+        R.string.catalog_substrate_brand_jun,
+        R.string.catalog_material_substrate_0095_name
+    ),
+    substrateResource(
+        "substrate_jun_master_soil_next_black_powder_3_8_l",
+        R.string.catalog_substrate_brand_jun,
+        R.string.catalog_material_substrate_0096_name
+    ),
+    substrateResource(
+        "substrate_jun_master_soil_next_black_super_powder_3_l",
+        R.string.catalog_substrate_brand_jun,
+        R.string.catalog_material_substrate_0097_name
+    ),
+    substrateResource(
+        "substrate_ista_water_plant_soil_ph_6_5_medium_2_9_l",
+        R.string.catalog_brand_ista,
+        R.string.catalog_material_substrate_0098_name
+    ),
+    substrateResource(
+        "substrate_ista_water_plant_soil_ph_6_5_small_2_9_l",
+        R.string.catalog_brand_ista,
+        R.string.catalog_material_substrate_0099_name
+    ),
+    substrateResource(
+        "substrate_ista_substrate_premium_soil_s_2_8_l",
+        R.string.catalog_brand_ista,
+        R.string.catalog_material_substrate_0100_name
+    ),
+    substrateResource(
+        "substrate_ista_substrate_premium_soil_l_2_8_l",
+        R.string.catalog_brand_ista,
+        R.string.catalog_material_substrate_0101_name
+    ),
+    substrateResource(
+        "substrate_ista_plant_shrimp_soil_ph_5_5_2_l",
+        R.string.catalog_brand_ista,
+        R.string.catalog_material_substrate_0102_name
+    ),
+    substrateResource(
+        "substrate_brightwell_aquatics_florinvolcanit_rio_escuro_fine_5_15_24_lb",
+        R.string.catalog_substrate_brand_brightwell_aquatics,
+        R.string.catalog_material_substrate_0103_name
+    ),
+    substrateResource(
+        "substrate_brightwell_aquatics_florinvolcanit_rio_escuro_medium",
+        R.string.catalog_substrate_brand_brightwell_aquatics,
+        R.string.catalog_material_substrate_0104_name
+    ),
+    substrateResource(
+        "substrate_brightwell_aquatics_florinvolcanit_rio_escuro_extra_fine",
+        R.string.catalog_substrate_brand_brightwell_aquatics,
+        R.string.catalog_material_substrate_0105_name
+    ),
+    substrateResource(
+        "substrate_brightwell_aquatics_rio_cafe_fine",
+        R.string.catalog_substrate_brand_brightwell_aquatics,
+        R.string.catalog_material_substrate_0106_name
+    ),
+    substrateResource(
+        "substrate_brightwell_aquatics_rio_cafe_medium",
+        R.string.catalog_substrate_brand_brightwell_aquatics,
+        R.string.catalog_material_substrate_0107_name
+    ),
+    substrateResource(
+        "substrate_brightwell_aquatics_rio_cafe_extra_fine",
+        R.string.catalog_substrate_brand_brightwell_aquatics,
+        R.string.catalog_material_substrate_0108_name
+    ),
+    substrateResource(
+        "substrate_brightwell_aquatics_florinbase_laterin_substrat_vf",
+        R.string.catalog_substrate_brand_brightwell_aquatics,
+        R.string.catalog_material_substrate_0109_name
+    ),
+    substrateResource(
+        "substrate_brightwell_aquatics_florinbase_laterite_powder",
+        R.string.catalog_substrate_brand_brightwell_aquatics,
+        R.string.catalog_material_substrate_0110_name
+    ),
+    substrateResource(
+        "substrate_ebi_gold_shrimp_soil_5_l",
+        R.string.catalog_substrate_brand_ebi_gold,
+        R.string.catalog_material_substrate_0111_name
+    ),
+    substrateResource(
+        "substrate_ebi_gold_waterplant_soil_5_l",
+        R.string.catalog_substrate_brand_ebi_gold,
+        R.string.catalog_material_substrate_0112_name
+    ),
+    substrateResource(
+        "substrate_ebi_gold_waterplant_soil_powder_5_l",
+        R.string.catalog_substrate_brand_ebi_gold,
+        R.string.catalog_material_substrate_0113_name
+    ),
+    substrateResource(
+        "substrate_ebi_gold_waterplant_soil_natural_brown_5_l",
+        R.string.catalog_substrate_brand_ebi_gold,
+        R.string.catalog_material_substrate_0114_name
+    ),
+    substrateResource(
+        "substrate_tetra_activesubstrate_3_l",
+        R.string.catalog_substrate_brand_tetra,
+        R.string.catalog_material_substrate_0115_name
+    ),
+    substrateResource(
+        "substrate_tetra_activesubstrate_6_l",
+        R.string.catalog_substrate_brand_tetra,
+        R.string.catalog_material_substrate_0116_name
+    ),
+    substrateResource(
+        "substrate_tetra_completesubstrate_2_5_kg",
+        R.string.catalog_substrate_brand_tetra,
+        R.string.catalog_material_substrate_0117_name
+    ),
+    substrateResource(
+        "substrate_sera_aquarium_gravel_floredepot_substrate_2_4_kg",
+        R.string.catalog_substrate_brand_sera,
+        R.string.catalog_material_substrate_0118_name
+    ),
+    substrateResource(
+        "substrate_sera_aquarium_gravel_floredepot_substrate_4_7_kg",
+        R.string.catalog_substrate_brand_sera,
+        R.string.catalog_material_substrate_0119_name
+    ),
+    substrateResource(
+        "substrate_aquaforest_af_natural_substrate_7_5_l",
+        R.string.catalog_substrate_brand_aquaforest,
+        R.string.catalog_material_substrate_0120_name
+    ),
+    substrateResource(
+        "substrate_aquaforest_af_lava_soil_5_l",
+        R.string.catalog_substrate_brand_aquaforest,
+        R.string.catalog_material_substrate_0121_name
+    ),
+    substrateResource(
+        "substrate_aquaforest_af_lava_soil_black_5_l",
+        R.string.catalog_substrate_brand_aquaforest,
+        R.string.catalog_material_substrate_0122_name
+    ),
+    substrateResource(
+        "substrate_yokuchi_jiban_soil_10_l",
+        R.string.catalog_substrate_brand_yokuchi,
+        R.string.catalog_material_substrate_0123_name
+    ),
+    substrateResource(
+        "substrate_yokuchi_jiban_soil_powder_10_l",
+        R.string.catalog_substrate_brand_yokuchi,
+        R.string.catalog_material_substrate_0124_name
+    ),
+    substrateResource(
+        "substrate_benibachi_black_soil_5_kg",
+        R.string.catalog_substrate_brand_benibachi,
+        R.string.catalog_material_substrate_0125_name
+    ),
+    substrateResource(
+        "substrate_shrimps_forever_shrimps_soil_9_l",
+        R.string.catalog_substrate_brand_shrimps_forever,
+        R.string.catalog_material_substrate_0126_name
+    ),
+    substrateResource(
+        "substrate_prize_aquasoil_3_l",
+        R.string.catalog_substrate_brand_prize,
+        R.string.catalog_material_substrate_0127_name
+    ),
+    substrateResource(
+        "substrate_prize_aquasoil_9_l",
+        R.string.catalog_substrate_brand_prize,
+        R.string.catalog_material_substrate_0128_name
+    ),
+    substrateResource(
+        "substrate_prize_aquasoil_powder_3_l",
+        R.string.catalog_substrate_brand_prize,
+        R.string.catalog_material_substrate_0129_name
+    ),
+    substrateResource(
+        "substrate_prize_aquasoil_powder_9_l",
+        R.string.catalog_substrate_brand_prize,
+        R.string.catalog_material_substrate_0130_name
+    ),
+    substrateResource(
+        "substrate_seachem_aquavitro_aquasolum_black_humate_4_kg",
+        R.string.catalog_substrate_brand_seachem_aquavitro,
+        R.string.catalog_material_substrate_0131_name
+    ),
+    substrateResource(
+        "substrate_seachem_flourite_7_kg",
+        R.string.catalog_substrate_brand_seachem,
+        R.string.catalog_material_substrate_0132_name
+    ),
+    substrateResource(
+        "substrate_seachem_flourite_black_7_kg",
+        R.string.catalog_substrate_brand_seachem,
+        R.string.catalog_material_substrate_0133_name
+    ),
+    substrateResource(
+        "substrate_seachem_flourite_dark_7_kg",
+        R.string.catalog_substrate_brand_seachem,
+        R.string.catalog_material_substrate_0134_name
+    ),
+    substrateResource(
+        "substrate_seachem_flourite_red_7_kg",
+        R.string.catalog_substrate_brand_seachem,
+        R.string.catalog_material_substrate_0135_name
+    ),
+    substrateResource(
+        "substrate_caribsea_eco_complete_planted_aquarium_substrate_black",
+        R.string.catalog_substrate_brand_caribsea,
+        R.string.catalog_material_substrate_0136_name
+    ),
+    substrateResource(
+        "substrate_caribsea_eco_complete_planted_aquarium_substrate_red",
+        R.string.catalog_substrate_brand_caribsea,
+        R.string.catalog_material_substrate_0137_name
+    ),
+    substrateResource(
+        "substrate_eurostar_aquaclay_5_10_l",
+        R.string.catalog_substrate_brand_eurostar,
+        R.string.catalog_material_substrate_0138_name
+    )
 )
 
 object SubstrateCatalog {
 
     val definitions: List<AquariumMaterialDefinition> =
-        substrateCatalogResources.mapIndexed { index, (brandRes, nameRes) ->
-            substrate(
-                productId = AquariumSubstrateProductIds.productId(index + 1),
-                brandRes = brandRes,
-                nameRes = nameRes
+        substrateCatalogResources.map { resource ->
+            val substrateMetadata = metadata(resource.id)
+            val semanticKeyword = when (substrateMetadata.semantic) {
+                AquariumSubstrateSemantic.ACTIVE_SOIL -> R.string.catalog_keyword_aquasoil
+                AquariumSubstrateSemantic.NUTRIENT_BASE -> R.string.catalog_keyword_base_layer
+                AquariumSubstrateSemantic.ADDITIVE -> R.string.catalog_keyword_additive
+                AquariumSubstrateSemantic.INERT,
+                AquariumSubstrateSemantic.UNKNOWN -> null
+                AquariumSubstrateSemantic.NOT_APPLICABLE -> error(
+                    "Substrate metadata cannot be NOT_APPLICABLE"
+                )
+            }
+
+            AquariumMaterialDefinition(
+                id = resource.id,
+                brandRes = resource.brandRes,
+                nameRes = resource.nameRes,
+                categoryKey = MaterialCategoryKey.SUBSTRATE,
+                categoryTitleRes = R.string.catalog_material_category_substrate_title,
+                keywordRes = listOfNotNull(
+                    R.string.catalog_keyword_substrate,
+                    R.string.catalog_keyword_soil,
+                    semanticKeyword,
+                    R.string.catalog_keyword_plant
+                ),
+                substrateMetadata = substrateMetadata
             )
         }
 
     init {
-        check(definitions.size == AquariumSubstrateProductIds.EXPECTED_CATALOG_PRODUCT_COUNT)
+        check(definitions.size == SUBSTRATE_PRODUCT_COUNT)
+        check(definitions.map(AquariumMaterialDefinition::id).distinct().size == definitions.size)
+        check(definitions.map(AquariumMaterialDefinition::id) == AquariumSubstrateProductIds.ALL)
+        check(definitions.none { definition -> Regex("^substrate_\\d{4}$").matches(definition.id) })
     }
 }
 
-private fun substrate(
-    productId: String,
+private fun substrateResource(
+    id: String,
     brandRes: Int,
     nameRes: Int
-): AquariumMaterialDefinition {
-    val substrateMetadata = metadata(productId)
-    val semanticKeyword = when (substrateMetadata.semantic) {
-        AquariumSubstrateSemantic.ACTIVE_SOIL -> R.string.catalog_keyword_aquasoil
-        AquariumSubstrateSemantic.NUTRIENT_BASE -> R.string.catalog_keyword_base_layer
-        AquariumSubstrateSemantic.ADDITIVE -> R.string.catalog_keyword_additive
-        AquariumSubstrateSemantic.INERT,
-        AquariumSubstrateSemantic.UNKNOWN -> null
-        AquariumSubstrateSemantic.NOT_APPLICABLE -> error(
-            "Substrate metadata cannot be NOT_APPLICABLE"
-        )
-    }
-
-    return AquariumMaterialDefinition(
-        id = productId,
-        brandRes = brandRes,
-        nameRes = nameRes,
-        categoryKey = MaterialCategoryKey.SUBSTRATE,
-        categoryTitleRes = R.string.catalog_material_category_substrate_title,
-        keywordRes = listOfNotNull(
-            R.string.catalog_keyword_substrate,
-            R.string.catalog_keyword_soil,
-            semanticKeyword,
-            brandKeywordRes(brandRes),
-            R.string.catalog_keyword_plant
-        ),
-        substrateMetadata = substrateMetadata
-    )
-}
-
-private fun brandKeywordRes(brandRes: Int): Int = when (brandRes) {
-    R.string.catalog_brand_chihiros -> R.string.catalog_keyword_chihiros
-    R.string.catalog_brand_ada -> R.string.catalog_keyword_ada
-    R.string.catalog_brand_dennerle -> R.string.catalog_keyword_dennerle
-    R.string.catalog_brand_jbl -> R.string.catalog_keyword_jbl
-    R.string.catalog_brand_oase -> R.string.catalog_keyword_oase
-    R.string.catalog_brand_aquario -> R.string.catalog_keyword_aquario
-    R.string.catalog_brand_ista -> R.string.catalog_keyword_ista
-    else -> brandRes
-}
+): SubstrateCatalogResource = SubstrateCatalogResource(
+    id = id,
+    brandRes = brandRes,
+    nameRes = nameRes
+)
 
 private fun metadata(productId: String): AquariumSubstrateProductMetadata = requireNotNull(
     AquariumSubstrateMetadataCatalog.metadata(productId, MaterialCategoryKey.SUBSTRATE)

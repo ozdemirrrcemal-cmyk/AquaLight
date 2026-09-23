@@ -55,7 +55,7 @@ class SmartCareProfileAndLightingTest {
       tankType = AquariumTankTaxonomy.TYPE_PLANTED,
       tankStyle = AquariumTankTaxonomy.STYLE_NATURE_AQUARIUM,
       setupDay = 1,
-      substrateProductId = "substrate_0086",
+      substrateProductId = "substrate_sl_aqua_sulawesi_volcanic_rock_soil",
       substrateName = "Active Soil Amazonia"
     )
 

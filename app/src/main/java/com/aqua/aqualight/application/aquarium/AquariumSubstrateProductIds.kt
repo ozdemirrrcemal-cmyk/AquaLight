@@ -3,37 +3,151 @@ package com.aqua.aqualight.application.aquarium
 object AquariumSubstrateProductIds {
     const val EXPECTED_CATALOG_PRODUCT_COUNT = 138
 
-    private const val FIRST_PRODUCT_INDEX = 1
-    private const val CHIHIROS_AQUASOIL_3L_INDEX = 1
-    private const val CHIHIROS_AQUASOIL_9L_INDEX = 2
-    private const val ADA_TOURMALINE_BC_INDEX = 3
-    private const val DENNERLE_DEPONIT_MIX_INDEX = 4
-    private const val ID_PADDING = 4
-    private const val ID_PREFIX = "substrate_"
+    val ALL: List<String> = listOf(
+        "substrate_chihiros_aquasoil_3l",
+        "substrate_chihiros_aquasoil_9l",
+        "substrate_ada_tourmaline_bc",
+        "substrate_dennerle_deponit_mix_pro_10in1_4_8_kg",
+        "substrate_ada_aqua_soil_amazonia_ver_2_3_l",
+        "substrate_ada_aqua_soil_amazonia_ver_2_9_l",
+        "substrate_ada_aqua_soil_amazonia_ver_2_powder_3_l",
+        "substrate_ada_aqua_soil_amazonia_ver_2_powder_9_l",
+        "substrate_ada_power_sand_advance_s_2_l",
+        "substrate_ada_power_sand_advance_m_6_l",
+        "substrate_ada_power_sand_advance_l_6_l",
+        "substrate_ada_bacter_100_100_g",
+        "substrate_ada_bacter_ball",
+        "substrate_ada_clear_super_50_g",
+        "substrate_tropica_aquarium_soil_3_l",
+        "substrate_tropica_aquarium_soil_9_l",
+        "substrate_tropica_aquarium_soil_powder_3_l",
+        "substrate_tropica_aquarium_soil_powder_9_l",
+        "substrate_tropica_plant_growth_substrate_1_l",
+        "substrate_tropica_plant_growth_substrate_2_5_l",
+        "substrate_tropica_plant_growth_substrate_5_l",
+        "substrate_dennerle_scapers_soil_4_l",
+        "substrate_dennerle_scapers_soil_8_l",
+        "substrate_dennerle_shrimp_king_active_soil_4_l",
+        "substrate_dennerle_shrimp_king_active_soil_8_l",
+        "substrate_dennerle_deponit_mix_pro_10in1_9_6_kg",
+        "substrate_dennerle_nutribasis_6in1",
+        "substrate_jbl_proscape_plantsoil_brown_3_l",
+        "substrate_jbl_proscape_plantsoil_brown_9_l",
+        "substrate_jbl_proscape_plantsoil_beige_3_l",
+        "substrate_jbl_proscape_plantsoil_beige_9_l",
+        "substrate_jbl_proscape_shrimpsoil_brown_3_l",
+        "substrate_jbl_proscape_shrimpsoil_brown_9_l",
+        "substrate_jbl_proscape_shrimpsoil_beige_3_l",
+        "substrate_jbl_proscape_shrimpsoil_beige_9_l",
+        "substrate_jbl_proflora_aquabasis_plus_2_5_l",
+        "substrate_jbl_proflora_aquabasis_plus_5_l",
+        "substrate_jbl_proscape_volcano_mineral_3_l",
+        "substrate_jbl_proscape_volcano_mineral_9_l",
+        "substrate_jbl_proscape_volcano_powder_250_g",
+        "substrate_jbl_proscape_plantstart_2_x_8_g",
+        "substrate_fluval_stratum_2_kg",
+        "substrate_fluval_stratum_4_kg",
+        "substrate_fluval_stratum_8_kg",
+        "substrate_fluval_bio_stratum",
+        "substrate_fluval_betta_stratum_0_8_kg",
+        "substrate_oase_scaperline_soil_black_3_l",
+        "substrate_oase_scaperline_soil_black_9_l",
+        "substrate_oase_scaperline_soil_brown_3_l",
+        "substrate_oase_scaperline_soil_brown_9_l",
+        "substrate_oase_scaperline_soil_small_black_3_l",
+        "substrate_oase_scaperline_soil_small_black_9_l",
+        "substrate_oase_scaperline_soil_small_brown_3_l",
+        "substrate_oase_scaperline_soil_small_brown_9_l",
+        "substrate_oase_basesoil",
+        "substrate_aquario_neo_soil_compact_plant_3_l",
+        "substrate_aquario_neo_soil_compact_plant_8_l",
+        "substrate_aquario_neo_soil_compact_plant_powder_3_l",
+        "substrate_aquario_neo_soil_compact_plant_powder_8_l",
+        "substrate_aquario_neo_soil_compact_shrimp_3_l",
+        "substrate_aquario_neo_soil_compact_shrimp_8_l",
+        "substrate_aquario_neo_soil_compact_shrimp_powder_3_l",
+        "substrate_aquario_neo_soil_compact_shrimp_powder_8_l",
+        "substrate_aquario_neo_soil_no_co2_3_l_8_l",
+        "substrate_aquario_neo_soil_brown_plant",
+        "substrate_uns_controsoil_black_normal_1_3_10_l",
+        "substrate_uns_controsoil_black_fine_1_3_10_l",
+        "substrate_uns_controsoil_black_extra_fine_1_3_10_l",
+        "substrate_uns_controsoil_brown_normal_1_3_10_l",
+        "substrate_uns_controsoil_brown_fine_1_3_10_l",
+        "substrate_uns_controsoil_brown_extra_fine_1_3_10_l",
+        "substrate_uns_controbase",
+        "substrate_2hr_aquarist_apt_feast_aquarium_soil_2_l",
+        "substrate_2hr_aquarist_apt_feast_aquarium_soil_5_l",
+        "substrate_glasgarten_environment_aquarium_soil_4_l",
+        "substrate_glasgarten_environment_aquarium_soil_9_l",
+        "substrate_glasgarten_environment_aquarium_soil_powder_4_l",
+        "substrate_glasgarten_environment_aquarium_soil_powder_9_l",
+        "substrate_sl_aqua_more_nature_soil_black_s_3_8_l",
+        "substrate_sl_aqua_more_nature_soil_black_m_3_8_l",
+        "substrate_sl_aqua_more_nature_soil_black_l_3_8_l",
+        "substrate_sl_aqua_more_nature_brown_soil_s_8_l",
+        "substrate_sl_aqua_more_nature_brown_soil_m_8_l",
+        "substrate_sl_aqua_more_nature_brown_soil_l_8_l",
+        "substrate_sl_aqua_gokujou_black_soil",
+        "substrate_sl_aqua_sulawesi_volcanic_rock_soil",
+        "substrate_sl_aqua_mironekuton",
+        "substrate_sl_aqua_montmorillonite",
+        "substrate_jun_platinum_soil_black_normal_1_3_8_l",
+        "substrate_jun_platinum_soil_black_powder_1_3_8_l",
+        "substrate_jun_platinum_soil_black_super_powder_1_3_8_l",
+        "substrate_jun_platinum_soil_brown_normal_1_3_8_l",
+        "substrate_jun_platinum_soil_brown_powder_1_3_8_l",
+        "substrate_jun_platinum_soil_brown_super_powder_1_3_8_l",
+        "substrate_jun_master_soil_next_black_normal_3_8_l",
+        "substrate_jun_master_soil_next_black_powder_3_8_l",
+        "substrate_jun_master_soil_next_black_super_powder_3_l",
+        "substrate_ista_water_plant_soil_ph_6_5_medium_2_9_l",
+        "substrate_ista_water_plant_soil_ph_6_5_small_2_9_l",
+        "substrate_ista_substrate_premium_soil_s_2_8_l",
+        "substrate_ista_substrate_premium_soil_l_2_8_l",
+        "substrate_ista_plant_shrimp_soil_ph_5_5_2_l",
+        "substrate_brightwell_aquatics_florinvolcanit_rio_escuro_fine_5_15_24_lb",
+        "substrate_brightwell_aquatics_florinvolcanit_rio_escuro_medium",
+        "substrate_brightwell_aquatics_florinvolcanit_rio_escuro_extra_fine",
+        "substrate_brightwell_aquatics_rio_cafe_fine",
+        "substrate_brightwell_aquatics_rio_cafe_medium",
+        "substrate_brightwell_aquatics_rio_cafe_extra_fine",
+        "substrate_brightwell_aquatics_florinbase_laterin_substrat_vf",
+        "substrate_brightwell_aquatics_florinbase_laterite_powder",
+        "substrate_ebi_gold_shrimp_soil_5_l",
+        "substrate_ebi_gold_waterplant_soil_5_l",
+        "substrate_ebi_gold_waterplant_soil_powder_5_l",
+        "substrate_ebi_gold_waterplant_soil_natural_brown_5_l",
+        "substrate_tetra_activesubstrate_3_l",
+        "substrate_tetra_activesubstrate_6_l",
+        "substrate_tetra_completesubstrate_2_5_kg",
+        "substrate_sera_aquarium_gravel_floredepot_substrate_2_4_kg",
+        "substrate_sera_aquarium_gravel_floredepot_substrate_4_7_kg",
+        "substrate_aquaforest_af_natural_substrate_7_5_l",
+        "substrate_aquaforest_af_lava_soil_5_l",
+        "substrate_aquaforest_af_lava_soil_black_5_l",
+        "substrate_yokuchi_jiban_soil_10_l",
+        "substrate_yokuchi_jiban_soil_powder_10_l",
+        "substrate_benibachi_black_soil_5_kg",
+        "substrate_shrimps_forever_shrimps_soil_9_l",
+        "substrate_prize_aquasoil_3_l",
+        "substrate_prize_aquasoil_9_l",
+        "substrate_prize_aquasoil_powder_3_l",
+        "substrate_prize_aquasoil_powder_9_l",
+        "substrate_seachem_aquavitro_aquasolum_black_humate_4_kg",
+        "substrate_seachem_flourite_7_kg",
+        "substrate_seachem_flourite_black_7_kg",
+        "substrate_seachem_flourite_dark_7_kg",
+        "substrate_seachem_flourite_red_7_kg",
+        "substrate_caribsea_eco_complete_planted_aquarium_substrate_black",
+        "substrate_caribsea_eco_complete_planted_aquarium_substrate_red",
+        "substrate_eurostar_aquaclay_5_10_l"
+    )
 
-    fun productId(index: Int): String {
-        require(index in FIRST_PRODUCT_INDEX..EXPECTED_CATALOG_PRODUCT_COUNT)
-        return when (index) {
-            CHIHIROS_AQUASOIL_3L_INDEX -> "substrate_chihiros_aquasoil_3l"
-            CHIHIROS_AQUASOIL_9L_INDEX -> "substrate_chihiros_aquasoil_9l"
-            ADA_TOURMALINE_BC_INDEX -> "substrate_ada_tourmaline_bc"
-            DENNERLE_DEPONIT_MIX_INDEX -> "substrate_dennerle_deponitmix_4_8kg"
-            else -> ID_PREFIX + index.toString().padStart(ID_PADDING, '0')
-        }
-    }
-
-    fun productIds(
-        firstProductId: String,
-        lastProductId: String
-    ): List<String> {
-        val firstIndex = productIndex(firstProductId)
-        val lastIndex = productIndex(lastProductId)
-        require(firstIndex <= lastIndex)
-        return (firstIndex..lastIndex).map(::productId)
-    }
-
-    private fun productIndex(productId: String): Int {
-        require(productId.startsWith(ID_PREFIX))
-        return productId.removePrefix(ID_PREFIX).toInt()
+    init {
+        check(ALL.size == EXPECTED_CATALOG_PRODUCT_COUNT)
+        check(ALL.distinct().size == ALL.size)
+        check(ALL.all { productId -> productId.startsWith("substrate_") })
+        check(ALL.none { productId -> Regex("^substrate_\\d{4}$").matches(productId) })
     }
 }

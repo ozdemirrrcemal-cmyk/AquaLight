@@ -22,6 +22,10 @@
     <string name="catalog_substrate_brand_eurostar" translatable="false">EuroStar</string>
 
     <!-- Official product names and package variants are not translated. -->
+    <string name="catalog_material_substrate_0001_name" translatable="false">Chihiros Aquasoil 3L</string>
+    <string name="catalog_material_substrate_0002_name" translatable="false">Chihiros Aquasoil 9L</string>
+    <string name="catalog_material_substrate_0003_name" translatable="false">ADA Tourmaline BC</string>
+    <string name="catalog_material_substrate_0004_name" translatable="false">Dennerle Deponit Mix Pro 10in1 — 4.8 kg</string>
     <string name="catalog_material_substrate_0005_name" translatable="false">ADA Aqua Soil Amazonia Ver.2 — 3 L</string>
     <string name="catalog_material_substrate_0006_name" translatable="false">ADA Aqua Soil Amazonia Ver.2 — 9 L</string>
     <string name="catalog_material_substrate_0007_name" translatable="false">ADA Aqua Soil Amazonia Ver.2 Powder — 3 L</string>
@@ -156,8 +160,8 @@
     <string name="catalog_material_substrate_0136_name" translatable="false">CaribSea Eco-Complete Planted Aquarium Substrate Black</string>
     <string name="catalog_material_substrate_0137_name" translatable="false">CaribSea Eco-Complete Planted Aquarium Substrate Red</string>
     <string name="catalog_material_substrate_0138_name" translatable="false">EuroStar AquaClay — 5 / 10 L</string>
+
     <!-- Substrate search aliases. Localized aliases live in values-tr. -->
-    <string name="catalog_keyword_aquario" translatable="false">aquario</string>
     <string name="catalog_keyword_soil">soil</string>
     <string name="catalog_keyword_aquasoil">aquasoil</string>
     <string name="catalog_keyword_additive">additive</string>
