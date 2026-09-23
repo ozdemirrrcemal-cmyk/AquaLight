@@ -133,7 +133,7 @@ internal val lightCatalogShard02: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_light_brand_aqua_one,
         R.string.catalog_material_light_0079_name,
         LightHardwareType.MOUNTING
-    )
+    ),
     lightDefinition(
         "light_aquael_leddy_slim_sunny_day_and_night",
         R.string.catalog_light_brand_aquael,
@@ -258,7 +258,7 @@ internal val lightCatalogShard02: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_keyword_led,
         R.string.catalog_light_keyword_tube,
         R.string.catalog_light_keyword_actinic
-    )
+    ),
     lightDefinition(
         "light_ai_hydra_edge_44hd",
         R.string.catalog_light_brand_aquaillumination,

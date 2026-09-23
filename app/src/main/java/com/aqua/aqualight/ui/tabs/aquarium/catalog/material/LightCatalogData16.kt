@@ -183,7 +183,7 @@ internal val lightCatalogShard16: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_material_light_0925_name,
         LightHardwareType.MOUNTING,
         R.string.catalog_light_search_alias_0925
-    )
+    ),
     lightDefinition(
         "light_uns_titan_1",
         R.string.catalog_light_brand_uns,
@@ -191,7 +191,7 @@ internal val lightCatalogShard16: List<AquariumMaterialDefinition> = listOf(
         LightHardwareType.LIGHT,
         R.string.catalog_light_brand_alias_ultum_nature_systems,
         R.string.catalog_keyword_led
-    )
+    ),
     lightDefinition(
         "light_week_aqua_mag_series",
         R.string.catalog_light_brand_week_aqua,
@@ -390,7 +390,7 @@ internal val lightCatalogShard16: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_light_brand_week_aqua,
         R.string.catalog_material_light_0954_name,
         LightHardwareType.MOUNTING
-    )
+    ),
     lightDefinition(
         "light_zetlight_m1_pro_m",
         R.string.catalog_light_brand_zetlight,

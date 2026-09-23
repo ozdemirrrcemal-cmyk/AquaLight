@@ -279,7 +279,7 @@ internal val lightCatalogShard12: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_material_light_0694_name,
         LightHardwareType.SHADE,
         R.string.catalog_light_search_alias_0694
-    )
+    ),
     lightDefinition(
         "light_orphek_natura_icon",
         R.string.catalog_light_brand_orphek,
@@ -320,7 +320,7 @@ internal val lightCatalogShard12: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_material_light_0700_name,
         LightHardwareType.MOUNTING,
         R.string.catalog_light_search_alias_0700
-    )
+    ),
     lightDefinition(
         "light_philips_coralcare_gen2_led_fixture_white",
         R.string.catalog_light_brand_philips_coralcare,
@@ -342,7 +342,7 @@ internal val lightCatalogShard12: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_light_brand_philips_coralcare,
         R.string.catalog_material_light_0703_name,
         LightHardwareType.MOUNTING
-    )
+    ),
     lightDefinition(
         "light_red_sea_reefled_g2_60",
         R.string.catalog_light_brand_red_sea,
@@ -427,7 +427,7 @@ internal val lightCatalogShard12: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_light_brand_red_sea,
         R.string.catalog_material_light_0715_name,
         LightHardwareType.MOUNTING
-    )
+    ),
     lightDefinition(
         "light_reefbreeders_meridian",
         R.string.catalog_light_brand_reefbreeders,

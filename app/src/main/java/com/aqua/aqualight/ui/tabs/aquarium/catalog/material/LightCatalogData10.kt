@@ -157,7 +157,7 @@ internal val lightCatalogShard10: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_material_light_0559_name,
         LightHardwareType.MOUNTING,
         R.string.catalog_light_search_alias_0559
-    )
+    ),
     lightDefinition(
         "light_jbl_led_solar_natur_gen2_16w_438_mm",
         R.string.catalog_light_brand_jbl,
@@ -258,7 +258,7 @@ internal val lightCatalogShard10: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_material_light_0572_name,
         LightHardwareType.MOUNTING,
         R.string.catalog_keyword_led
-    )
+    ),
     lightDefinition(
         "light_juwel_helialux_spectrum_550",
         R.string.catalog_light_brand_juwel,
@@ -415,7 +415,7 @@ internal val lightCatalogShard10: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_light_brand_juwel,
         R.string.catalog_material_light_0593_name,
         LightHardwareType.MOUNTING
-    )
+    ),
     lightDefinition(
         "light_kessil_ap9x",
         R.string.catalog_light_brand_kessil,

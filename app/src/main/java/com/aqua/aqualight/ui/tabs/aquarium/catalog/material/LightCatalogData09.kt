@@ -152,7 +152,7 @@ internal val lightCatalogShard09: List<AquariumMaterialDefinition> = listOf(
         LightHardwareType.LIGHT,
         R.string.catalog_keyword_led,
         R.string.catalog_light_search_alias_0498
-    )
+    ),
     lightDefinition(
         "light_fluval_plant_4_0_nano_led_20w",
         R.string.catalog_light_brand_fluval,
@@ -342,7 +342,7 @@ internal val lightCatalogShard09: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_material_light_0521_name,
         LightHardwareType.LIGHT,
         R.string.catalog_keyword_led
-    )
+    ),
     lightDefinition(
         "light_giesemann_teszla_evo",
         R.string.catalog_light_brand_giesemann,
@@ -426,7 +426,7 @@ internal val lightCatalogShard09: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_light_brand_giesemann,
         R.string.catalog_material_light_0533_name,
         LightHardwareType.MOUNTING
-    )
+    ),
     lightDefinition(
         "light_hygger_hg978_led_fish_tank_light_12_18",
         R.string.catalog_light_brand_hygger,

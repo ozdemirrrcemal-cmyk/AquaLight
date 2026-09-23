@@ -14,7 +14,7 @@ internal val lightCatalogShard08: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_light_brand_daytime,
         R.string.catalog_material_light_0422_name,
         LightHardwareType.MOUNTING
-    )
+    ),
     lightDefinition(
         "light_dennerle_trocal_led_40_cm_18w",
         R.string.catalog_light_brand_dennerle,
@@ -69,7 +69,7 @@ internal val lightCatalogShard08: List<AquariumMaterialDefinition> = listOf(
         LightHardwareType.LIGHT,
         R.string.catalog_keyword_led,
         R.string.catalog_light_search_alias_0429
-    )
+    ),
     lightDefinition(
         "light_dooa_paluda_light_ii_300",
         R.string.catalog_light_brand_dooa,
@@ -151,7 +151,7 @@ internal val lightCatalogShard08: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_light_brand_dooa,
         R.string.catalog_material_light_0442_name,
         LightHardwareType.MOUNTING
-    )
+    ),
     lightDefinition(
         "light_ecotech_radion_xr15_g6_pro",
         R.string.catalog_light_brand_ecotech_marine,
@@ -225,7 +225,7 @@ internal val lightCatalogShard08: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_light_brand_ecotech_marine,
         R.string.catalog_material_light_0453_name,
         LightHardwareType.MOUNTING
-    )
+    ),
     lightDefinition(
         "light_eheim_classicled_daylight",
         R.string.catalog_light_brand_eheim,
@@ -299,7 +299,7 @@ internal val lightCatalogShard08: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_material_light_0462_name,
         LightHardwareType.MOUNTING,
         R.string.catalog_light_search_alias_0462
-    )
+    ),
     lightDefinition(
         "light_finnex_stingray_12",
         R.string.catalog_light_brand_finnex,

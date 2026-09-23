@@ -54,7 +54,7 @@ internal val lightCatalogShard04: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_light_brand_aquareef,
         R.string.catalog_material_light_0188_name,
         LightHardwareType.MOUNTING
-    )
+    ),
     lightDefinition(
         "light_aqueon_betta_light_led",
         R.string.catalog_light_brand_aqueon,
@@ -146,7 +146,7 @@ internal val lightCatalogShard04: List<AquariumMaterialDefinition> = listOf(
         LightHardwareType.REPLACEMENT_LAMP,
         R.string.catalog_keyword_led,
         R.string.catalog_light_keyword_blue
-    )
+    ),
     lightDefinition(
         "light_aquatlantis_easy_led_universal_rgbw_ultra_600",
         R.string.catalog_light_brand_aquatlantis,
@@ -398,7 +398,7 @@ internal val lightCatalogShard04: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_light_brand_aquatlantis,
         R.string.catalog_material_light_0230_name,
         LightHardwareType.MOUNTING
-    )
+    ),
     lightDefinition(
         "light_armaturk_1030l_30_cm",
         R.string.catalog_light_brand_armaturk,

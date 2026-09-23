@@ -105,7 +105,7 @@ internal val lightCatalogShard01: List<AquariumMaterialDefinition> = listOf(
         LightHardwareType.MOUNTING,
         R.string.catalog_light_brand_alias_aqua_design_amano,
         R.string.catalog_keyword_rgb
-    )
+    ),
     lightDefinition(
         "light_aqua_medic_aquarius_plant_plus_series",
         R.string.catalog_light_brand_aqua_medic,
@@ -221,7 +221,7 @@ internal val lightCatalogShard01: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_material_light_0028_name,
         LightHardwareType.LIGHT,
         R.string.catalog_keyword_led
-    )
+    ),
     lightDefinition(
         "light_aqua_one_stripglo_plant_led_30_cm",
         R.string.catalog_light_brand_aqua_one,

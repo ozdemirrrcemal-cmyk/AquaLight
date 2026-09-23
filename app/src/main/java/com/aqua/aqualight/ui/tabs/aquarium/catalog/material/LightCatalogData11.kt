@@ -58,7 +58,7 @@ internal val lightCatalogShard11: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_light_brand_kessil,
         R.string.catalog_material_light_0609_name,
         LightHardwareType.MOUNTING
-    )
+    ),
     lightDefinition(
         "light_maxspect_jump_mj_l165",
         R.string.catalog_light_brand_maxspect,
@@ -114,7 +114,7 @@ internal val lightCatalogShard11: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_light_brand_maxspect,
         R.string.catalog_material_light_0617_name,
         LightHardwareType.MOUNTING
-    )
+    ),
     lightDefinition(
         "light_micmol_g3_aqua_mini_g3_am_marine",
         R.string.catalog_light_brand_micmol,
@@ -164,7 +164,7 @@ internal val lightCatalogShard11: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_light_brand_micmol,
         R.string.catalog_material_light_0623_name,
         LightHardwareType.MOUNTING
-    )
+    ),
     lightDefinition(
         "light_netlea_nl_545s_at5_z0_4_50w",
         R.string.catalog_light_brand_netlea,
@@ -257,7 +257,7 @@ internal val lightCatalogShard11: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_light_brand_netlea,
         R.string.catalog_material_light_0635_name,
         LightHardwareType.MOUNTING
-    )
+    ),
     lightDefinition(
         "light_oase_highline_premium_led_45",
         R.string.catalog_light_brand_oase,
@@ -313,7 +313,7 @@ internal val lightCatalogShard11: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_material_light_0643_name,
         LightHardwareType.MOUNTING,
         R.string.catalog_keyword_led
-    )
+    ),
     lightDefinition(
         "light_onf_mist_o_plus",
         R.string.catalog_light_brand_onf,
@@ -392,7 +392,7 @@ internal val lightCatalogShard11: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_material_light_0654_name,
         LightHardwareType.MOUNTING,
         R.string.catalog_light_search_alias_0654
-    )
+    ),
     lightDefinition(
         "light_orionled_aquaslim_grolux_fire",
         R.string.catalog_light_brand_orionled,

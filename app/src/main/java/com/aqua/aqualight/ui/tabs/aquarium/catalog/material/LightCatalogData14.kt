@@ -26,7 +26,7 @@ internal val lightCatalogShard14: List<AquariumMaterialDefinition> = listOf(
         LightHardwareType.LIGHT,
         R.string.catalog_keyword_led,
         R.string.catalog_light_keyword_grolux
-    )
+    ),
     lightDefinition(
         "light_skylight_hyperspot_f_fs",
         R.string.catalog_light_brand_skylight,
@@ -215,7 +215,7 @@ internal val lightCatalogShard14: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_light_brand_skylight,
         R.string.catalog_material_light_0810_name,
         LightHardwareType.MOUNTING
-    )
+    ),
     lightDefinition(
         "light_sobo_l_28c_mini_led_black",
         R.string.catalog_light_brand_sobo,
@@ -420,7 +420,7 @@ internal val lightCatalogShard14: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_material_light_0835_name,
         LightHardwareType.LIGHT,
         R.string.catalog_keyword_led
-    )
+    ),
     lightDefinition(
         "light_spectra_neo_super_blue_led",
         R.string.catalog_light_brand_spectra_aqua_knight,

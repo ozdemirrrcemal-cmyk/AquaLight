@@ -167,7 +167,7 @@ internal val lightCatalogShard05: List<AquariumMaterialDefinition> = listOf(
         LightHardwareType.LIGHT,
         R.string.catalog_keyword_led,
         R.string.catalog_light_search_alias_0260
-    )
+    ),
     lightDefinition(
         "light_ati_straton_x",
         R.string.catalog_light_brand_ati_aquaristik,
@@ -289,7 +289,7 @@ internal val lightCatalogShard05: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_light_brand_ati_aquaristik,
         R.string.catalog_material_light_0276_name,
         LightHardwareType.MOUNTING
-    )
+    ),
     lightDefinition(
         "light_bioloark_magnet_plant_light_dl_05",
         R.string.catalog_light_brand_bioloark,
@@ -319,7 +319,7 @@ internal val lightCatalogShard05: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_material_light_0280_name,
         LightHardwareType.LIGHT,
         R.string.catalog_keyword_led
-    )
+    ),
     lightDefinition(
         "light_chihiros_wrgb_vivid_3",
         R.string.catalog_light_brand_chihiros,

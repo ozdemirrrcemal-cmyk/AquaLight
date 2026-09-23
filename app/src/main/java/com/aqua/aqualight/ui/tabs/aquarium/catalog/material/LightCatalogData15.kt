@@ -104,7 +104,7 @@ internal val lightCatalogShard15: List<AquariumMaterialDefinition> = listOf(
         LightHardwareType.LIGHT,
         R.string.catalog_keyword_led,
         R.string.catalog_light_keyword_freshwater
-    )
+    ),
     lightDefinition(
         "light_sunsun_adp_080j",
         R.string.catalog_light_brand_sunsun_sensen,
@@ -181,7 +181,7 @@ internal val lightCatalogShard15: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_material_light_0864_name,
         LightHardwareType.LIGHT,
         R.string.catalog_keyword_led
-    )
+    ),
     lightDefinition(
         "light_sylvania_grolux_t5_24w",
         R.string.catalog_light_brand_sylvania,
@@ -225,7 +225,7 @@ internal val lightCatalogShard15: List<AquariumMaterialDefinition> = listOf(
         LightHardwareType.LIGHT,
         R.string.catalog_light_keyword_t8,
         R.string.catalog_light_search_alias_0869
-    )
+    ),
     lightDefinition(
         "light_tetra_lightwave_complete_set",
         R.string.catalog_light_brand_tetra,
@@ -262,7 +262,7 @@ internal val lightCatalogShard15: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_material_light_0874_name,
         LightHardwareType.LIGHT,
         R.string.catalog_keyword_led
-    )
+    ),
     lightDefinition(
         "light_tunze_led_marine_eco_chic_8811",
         R.string.catalog_light_brand_tunze,
@@ -294,7 +294,7 @@ internal val lightCatalogShard15: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_keyword_led,
         R.string.catalog_light_keyword_full_spectrum,
         R.string.catalog_light_keyword_spectrum
-    )
+    ),
     lightDefinition(
         "light_twinstar_s_line_v_200s",
         R.string.catalog_light_brand_twinstar,

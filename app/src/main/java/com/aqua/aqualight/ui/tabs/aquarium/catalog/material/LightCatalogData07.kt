@@ -65,7 +65,7 @@ internal val lightCatalogShard07: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_light_brand_chihiros,
         R.string.catalog_material_light_0369_name,
         LightHardwareType.MOUNTING
-    )
+    ),
     lightDefinition(
         "light_creaqua_alpha_rgb_plus_w_60",
         R.string.catalog_light_brand_creaqua,
@@ -245,7 +245,7 @@ internal val lightCatalogShard07: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_light_brand_creaqua,
         R.string.catalog_material_light_0391_name,
         LightHardwareType.MOUNTING
-    )
+    ),
     lightDefinition(
         "light_current_usa_colorplus_smart_freshwater_led",
         R.string.catalog_light_brand_current_usa,
@@ -396,7 +396,7 @@ internal val lightCatalogShard07: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_light_brand_current_usa,
         R.string.catalog_material_light_0411_name,
         LightHardwareType.MOUNTING
-    )
+    ),
     lightDefinition(
         "light_daytime_matrix",
         R.string.catalog_light_brand_daytime,

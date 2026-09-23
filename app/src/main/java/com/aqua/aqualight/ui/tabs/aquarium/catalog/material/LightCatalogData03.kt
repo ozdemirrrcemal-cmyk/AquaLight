@@ -173,7 +173,7 @@ internal val lightCatalogShard03: List<AquariumMaterialDefinition> = listOf(
         LightHardwareType.MOUNTING,
         R.string.catalog_light_brand_alias_ai,
         R.string.catalog_light_brand_alias_aqua_illumination
-    )
+    ),
     lightDefinition(
         "light_aqualed_meta_plant_plus_full_spectrum_3_row_led_black_body",
         R.string.catalog_light_brand_aqualed,
@@ -415,7 +415,7 @@ internal val lightCatalogShard03: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_material_light_0163_name,
         LightHardwareType.MOUNTING,
         R.string.catalog_keyword_led
-    )
+    ),
     lightDefinition(
         "light_aquareef_f30_f_v2_series",
         R.string.catalog_light_brand_aquareef,

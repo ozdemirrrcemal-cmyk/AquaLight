@@ -33,7 +33,7 @@ internal val lightCatalogShard13: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_light_brand_reefbreeders,
         R.string.catalog_material_light_0725_name,
         LightHardwareType.OPTICAL_ACCESSORY
-    )
+    ),
     lightDefinition(
         "light_reef_factory_reef_flare_pro_s",
         R.string.catalog_light_brand_reef_factory,
@@ -84,7 +84,7 @@ internal val lightCatalogShard13: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_keyword_led,
         R.string.catalog_light_keyword_reef,
         R.string.catalog_light_keyword_blue
-    )
+    ),
     lightDefinition(
         "light_reefi_uno_2_1_pro",
         R.string.catalog_light_brand_reefi,
@@ -110,7 +110,7 @@ internal val lightCatalogShard13: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_light_brand_reefi,
         R.string.catalog_material_light_0735_name,
         LightHardwareType.MOUNTING
-    )
+    ),
     lightDefinition(
         "light_sera_led_x_change_tube_daylight_sunrise_360_mm",
         R.string.catalog_light_brand_sera,
@@ -430,7 +430,7 @@ internal val lightCatalogShard13: List<AquariumMaterialDefinition> = listOf(
         R.string.catalog_material_light_0770_name,
         LightHardwareType.MOUNTING,
         R.string.catalog_light_keyword_t8
-    )
+    ),
     lightDefinition(
         "light_shark_one_series_30_45_cm",
         R.string.catalog_light_brand_shark_akvaryum_aydinlatma_sistemleri,
