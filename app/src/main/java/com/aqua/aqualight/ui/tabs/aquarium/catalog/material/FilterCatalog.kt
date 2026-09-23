@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.aquarium.catalog.material
 import com.aqua.aqualight.R
 
 private const val FILTER_PRODUCT_COUNT = 749
+private const val FILTER_BRAND_COUNT = 43
 
 private enum class FilterHardwareType(
     val keywordRes: List<Int>
@@ -4756,6 +4757,8 @@ object FilterCatalog {
     init {
         check(definitions.size == FILTER_PRODUCT_COUNT)
         check(definitions.map(AquariumMaterialDefinition::id).distinct().size == definitions.size)
+        check(definitions.map(AquariumMaterialDefinition::nameRes).distinct().size == definitions.size)
+        check(definitions.map(AquariumMaterialDefinition::brandRes).distinct().size == FILTER_BRAND_COUNT)
         check(definitions.all { definition -> definition.id.startsWith("filter_") })
     }
 }
