@@ -116,6 +116,64 @@ class AquariumHealthMeasurementPolicyTest {
         )
     }
 
+    @Test
+    fun algaeObservationRequiresKnownAlgaeType() {
+        val input = PlantHealthObservationInput(
+            tankId = 7L,
+            plantId = null,
+            symptomKey = PlantHealthSymptomCatalog.ALGAE_PRESENCE,
+            algaeTypeKey = null,
+            intensity = ObservationIntensity.MODERATE,
+            observedAtMillis = MEASURED_MILLIS
+        )
+
+        assertThrows(IllegalArgumentException::class.java) {
+            AquariumHealthMeasurementPolicy.validatePlantObservationInput(
+                input,
+                NOW_MILLIS
+            )
+        }
+    }
+
+    @Test
+    fun nonAlgaePlantSymptomRejectsAlgaeType() {
+        val input = PlantHealthObservationInput(
+            tankId = 7L,
+            plantId = 11L,
+            symptomKey = PlantHealthSymptomCatalog.YELLOWING,
+            algaeTypeKey = AquariumAlgaeCatalog.BLACK_BEARD_ALGAE,
+            intensity = ObservationIntensity.MILD,
+            observedAtMillis = MEASURED_MILLIS
+        )
+
+        assertThrows(IllegalArgumentException::class.java) {
+            AquariumHealthMeasurementPolicy.validatePlantObservationInput(
+                input,
+                NOW_MILLIS
+            )
+        }
+    }
+
+    @Test
+    fun tankWideKnownAlgaeObservationIsValid() {
+        val input = PlantHealthObservationInput(
+            tankId = 7L,
+            plantId = null,
+            symptomKey = PlantHealthSymptomCatalog.ALGAE_PRESENCE,
+            algaeTypeKey = AquariumAlgaeCatalog.BLACK_BEARD_ALGAE,
+            intensity = ObservationIntensity.MODERATE,
+            observedAtMillis = MEASURED_MILLIS
+        )
+
+        assertEquals(
+            input,
+            AquariumHealthMeasurementPolicy.validatePlantObservationInput(
+                input,
+                NOW_MILLIS
+            )
+        )
+    }
+
     private fun waterInput(
         measuredAtMillis: Long = MEASURED_MILLIS,
         readings: List<AquariumWaterReading> = listOf(
