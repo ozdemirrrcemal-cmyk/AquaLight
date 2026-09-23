@@ -98,6 +98,7 @@ class ProtoCorruptionRecoveryInstrumentedTest {
             assertTrue(tankStore.data.first().tanksList.isEmpty())
             assertTrue(healthStore.data.first().waterTestsList.isEmpty())
             assertTrue(healthStore.data.first().livestockObservationsList.isEmpty())
+            assertTrue(healthStore.data.first().plantObservationsList.isEmpty())
             assertTrue(careStore.data.first().tasksList.isEmpty())
             assertTrue(knownStore.data.first().devicesList.isEmpty())
             assertTrue(assignmentStore.data.first().assignmentsList.isEmpty())
