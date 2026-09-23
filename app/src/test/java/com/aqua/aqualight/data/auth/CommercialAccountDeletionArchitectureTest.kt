@@ -39,6 +39,7 @@ class CommercialAccountDeletionArchitectureTest {
         listOf(
             "SESSION_BOUND_SERVICES",
             "CARE_TASKS",
+            "AQUARIUM_HEALTH",
             "AQUARIUM_TANKS",
             "DEVICE_ASSIGNMENTS",
             "PROVISIONING_SESSIONS",
