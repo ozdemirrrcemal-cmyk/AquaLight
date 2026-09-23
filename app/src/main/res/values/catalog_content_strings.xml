@@ -309,7 +309,6 @@
     <string name="catalog_keyword_set">set</string>
     <string name="catalog_keyword_chihiros" translatable="false">chihiros</string>
     <string name="catalog_keyword_glass">glass</string>
-    <string name="catalog_keyword_base">base</string>
     <string name="catalog_keyword_magnetic">magnetic</string>
     <string name="catalog_keyword_co2" translatable="false">co2</string>
     <string name="catalog_keyword_regulator">regulator</string>
