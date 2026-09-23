@@ -1858,7 +1858,7 @@ private val aquariumCatalogResources = listOf(
 object AquariumCatalog {
 
     val definitions: List<AquariumMaterialDefinition> =
-        aquariumCatalogResources.mapIndexed { index, resource ->
+        aquariumCatalogResources.map { resource ->
             AquariumMaterialDefinition(
                 id = resource.id,
                 brandRes = resource.brandRes,
