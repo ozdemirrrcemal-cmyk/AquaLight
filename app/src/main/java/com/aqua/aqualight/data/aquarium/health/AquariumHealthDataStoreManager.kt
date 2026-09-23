@@ -53,6 +53,9 @@ class AquariumHealthDataStoreManager private constructor(
         val owner = requireOwnerUid(ownerUid)
         requirePositiveId("tankId", tankId)
         return appContext.aquariumHealthDataStore.data.map { store ->
+            if (UserDataScope.currentUid() != owner) {
+                return@map emptyList()
+            }
             AquariumHealthStoreRules.validateStore(store)
                 .waterTestsList
                 .asSequence()
@@ -75,6 +78,9 @@ class AquariumHealthDataStoreManager private constructor(
         val owner = requireOwnerUid(ownerUid)
         requirePositiveId("tankId", tankId)
         return appContext.aquariumHealthDataStore.data.map { store ->
+            if (UserDataScope.currentUid() != owner) {
+                return@map emptyList()
+            }
             AquariumHealthStoreRules.validateStore(store)
                 .livestockObservationsList
                 .asSequence()
