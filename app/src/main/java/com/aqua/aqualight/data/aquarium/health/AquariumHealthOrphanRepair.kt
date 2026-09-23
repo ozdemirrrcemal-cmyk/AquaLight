@@ -67,22 +67,28 @@ internal object AquariumHealthOrphanRepair {
         ownerUid: String,
         validTankIds: Set<Long>,
         livestockByTank: Map<Long, Set<Long>>
-    ): Boolean {
-        if (observation.ownerUid != ownerUid) return false
-        if (observation.tankId !in validTankIds) return true
-        return observation.livestockId > 0L &&
-            observation.livestockId !in livestockByTank[observation.tankId].orEmpty()
-    }
+    ): Boolean = observation.ownerUid == ownerUid &&
+        (
+            observation.tankId !in validTankIds ||
+                (
+                    observation.livestockId > 0L &&
+                        observation.livestockId !in
+                        livestockByTank[observation.tankId].orEmpty()
+                    )
+            )
 
     private fun isPlantOrphan(
         observation: StoredPlantHealthObservation,
         ownerUid: String,
         validTankIds: Set<Long>,
         plantsByTank: Map<Long, Set<Long>>
-    ): Boolean {
-        if (observation.ownerUid != ownerUid) return false
-        if (observation.tankId !in validTankIds) return true
-        return observation.plantId > 0L &&
-            observation.plantId !in plantsByTank[observation.tankId].orEmpty()
-    }
+    ): Boolean = observation.ownerUid == ownerUid &&
+        (
+            observation.tankId !in validTankIds ||
+                (
+                    observation.plantId > 0L &&
+                        observation.plantId !in
+                        plantsByTank[observation.tankId].orEmpty()
+                    )
+            )
 }
