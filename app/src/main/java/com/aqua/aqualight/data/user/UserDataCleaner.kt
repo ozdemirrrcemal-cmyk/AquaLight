@@ -348,27 +348,31 @@ class UserDataCleaner private constructor(
                 null, "" -> File(value)
                 else -> null
             }
-            if (file?.isAppOwnedFile() == true) {
+            if (file?.isAppOwnedFile(appContext) == true) {
                 file.deleteRecursively()
             }
         }
     }
 
-    private fun File.isAppOwnedFile(): Boolean {
-        val canonicalFile = runCatching { canonicalFile }.getOrNull() ?: return false
-        val allowedRoots = listOf(
-            File(appContext.filesDir, "profile_photos"),
-            File(appContext.filesDir, "tank_photos"),
-            File(appContext.cacheDir, "tank_exports"),
-            File(appContext.cacheDir, "image_processing")
-        )
+}
 
-        return allowedRoots.any { root ->
-            val canonicalRoot = runCatching { root.canonicalFile }.getOrNull()
-                ?: return@any false
-            canonicalFile.path == canonicalRoot.path ||
-                canonicalFile.path.startsWith(canonicalRoot.path + File.separator)
-        }
+private fun File.isAppOwnedFile(appContext: Context): Boolean {
+    val canonicalFile = runCatching { canonicalFile }.getOrNull()
+        ?: return false
+    val allowedRoots = listOf(
+        File(appContext.filesDir, "profile_photos"),
+        File(appContext.filesDir, "tank_photos"),
+        File(appContext.cacheDir, "tank_exports"),
+        File(appContext.cacheDir, "image_processing")
+    )
+
+    return allowedRoots.any { root ->
+        val canonicalRoot = runCatching { root.canonicalFile }.getOrNull()
+            ?: return@any false
+        canonicalFile.path == canonicalRoot.path ||
+            canonicalFile.path.startsWith(
+                canonicalRoot.path + File.separator
+            )
     }
 }
 
