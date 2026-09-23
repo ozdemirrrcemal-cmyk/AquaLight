@@ -81,11 +81,13 @@ internal class DefaultAquariumTankLifecycleOperations(
                             duplicate.photoUri == source.photoUri
                         )
 
-            check(!invalidSharedOwnership) {
+            if (invalidSharedOwnership) {
                 runCatching {
                     tankStore.deleteTanks(listOf(duplicateId))
                 }
-                "Tank photo could not be copied with independent ownership."
+                error(
+                    "Tank photo could not be copied with independent ownership."
+                )
             }
 
             runCatching {
