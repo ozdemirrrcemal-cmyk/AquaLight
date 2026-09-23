@@ -110,7 +110,7 @@ class UserDataArchiveArchitectureTest {
         assertTrue(graph.contains("DefaultUserDataArchiveOperations("))
         assertTrue(graph.contains("context = appContext"))
         assertTrue(factory.contains("DataManagementViewModel::class.java"))
-        assertTrue(factory.contains("archiveOperations = graph.userDataArchiveOperations"))
+        assertTrue(factory.contains("context.graph.userDataArchiveOperations"))
         assertTrue(sessionServices.contains("UserDataRestoreRecovery.create"))
         assertTrue(sessionServices.contains(".recover(normalizedOwnerUid)"))
         assertTrue(cleaner.contains("UserDataRestoreJournal(appContext).clearOwner(ownerUid)"))
