@@ -14,8 +14,9 @@ class AquariumCatalogTest {
         assertEquals(291, definitions.size)
         assertEquals(definitions.size, definitions.map(AquariumMaterialDefinition::id).toSet().size)
         assertTrue(definitions.all { definition -> definition.categoryKey == MaterialCategoryKey.AQUARIUM })
-        assertEquals("aquarium_0001", definitions.first().id)
-        assertEquals("aquarium_0291", definitions.last().id)
+        assertEquals("aquarium_ada_cube_garden_w15", definitions.first().id)
+        assertEquals("aquarium_tropica_spring_scissors", definitions.last().id)
+        assertTrue(definitions.none { definition -> Regex("^aquarium_\\d{4}$").matches(definition.id) })
     }
 
     @Test
