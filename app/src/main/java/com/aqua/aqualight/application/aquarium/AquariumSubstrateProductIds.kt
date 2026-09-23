@@ -21,4 +21,19 @@ object AquariumSubstrateProductIds {
             else -> ID_PREFIX + index.toString().padStart(ID_PADDING, '0')
         }
     }
+
+    fun productIds(
+        firstProductId: String,
+        lastProductId: String
+    ): List<String> {
+        val firstIndex = productIndex(firstProductId)
+        val lastIndex = productIndex(lastProductId)
+        require(firstIndex <= lastIndex)
+        return (firstIndex..lastIndex).map(::productId)
+    }
+
+    private fun productIndex(productId: String): Int {
+        require(productId.startsWith(ID_PREFIX))
+        return productId.removePrefix(ID_PREFIX).toInt()
+    }
 }

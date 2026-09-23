@@ -1,6 +1,5 @@
 package com.aqua.aqualight.application.aquarium
 
-private const val SUBSTRATE_ID_PREFIX = "substrate_"
 private const val GRAVEL_ID_PREFIX = "gravel_"
 private const val GRAVEL_ID_PADDING = 4
 private const val EXPECTED_GRAVEL_RECORD_COUNT = 181
@@ -325,7 +324,10 @@ object AquariumSubstrateMetadataCatalog {
 
     private fun replacementSubstrateRecords(): List<Pair<String, Record>> {
         val records = legacySubstrateRecords() + substrateEvidenceGroups.flatMap { group ->
-            substrateProductIds(group).map { productId ->
+            AquariumSubstrateProductIds.productIds(
+                firstProductId = group.firstProductId,
+                lastProductId = group.lastProductId
+            ).map { productId ->
                 if (group.semantic == AquariumSubstrateSemantic.UNKNOWN) {
                     productId.unverified(
                         categoryKey = AquariumMaterialCategoryKeys.SUBSTRATE,
@@ -372,18 +374,6 @@ object AquariumSubstrateMetadataCatalog {
             "dennerle_deponit_mix_pro"
         )
     )
-
-    private fun substrateProductIds(group: SubstrateEvidenceGroup): List<String> {
-        val firstNumber = substrateProductNumber(group.firstProductId)
-        val lastNumber = substrateProductNumber(group.lastProductId)
-        require(firstNumber <= lastNumber)
-        return (firstNumber..lastNumber).map(AquariumSubstrateProductIds::productId)
-    }
-
-    private fun substrateProductNumber(productId: String): Int {
-        require(productId.startsWith(SUBSTRATE_ID_PREFIX))
-        return productId.removePrefix(SUBSTRATE_ID_PREFIX).toInt()
-    }
 
     private fun replacementGravelRecords(): List<Pair<String, Record>> {
         /*
