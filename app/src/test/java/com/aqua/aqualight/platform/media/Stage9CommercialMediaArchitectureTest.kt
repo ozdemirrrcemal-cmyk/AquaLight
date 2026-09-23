@@ -62,7 +62,7 @@ class Stage9CommercialMediaArchitectureTest {
         )
         val tank = source(
             "app/src/main/java/com/aqua/aqualight/data/aquarium/" +
-                "DefaultAquariumTankOperations.kt"
+                "DefaultAquariumTankDetailsOperations.kt"
         )
         val coordinator = source(
             "app/src/main/java/com/aqua/aqualight/ui/common/media/" +
