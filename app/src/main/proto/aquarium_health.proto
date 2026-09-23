@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+option java_package = "com.aqua.aqualight.data.aquarium.health";
+option java_multiple_files = true;
+
+message AquariumHealthStore {
+  repeated StoredAquariumWaterTest water_tests = 1;
+  repeated StoredLivestockHealthObservation livestock_observations = 2;
+
+  // First Health schema. There is no pre-Health legacy store or migration path.
+  uint32 schema_version = 100;
+}
+
+message StoredAquariumWaterTest {
+  int64 id = 1;
+  string owner_uid = 2;
+  int64 tank_id = 3;
+  int64 measured_at_millis = 4;
+  repeated StoredAquariumWaterReading readings = 5;
+  string note = 6;
+  int64 created_at_millis = 7;
+  int64 updated_at_millis = 8;
+}
+
+message StoredAquariumWaterReading {
+  string parameter = 1;
+  double value = 2;
+}
+
+message StoredLivestockHealthObservation {
+  int64 id = 1;
+  string owner_uid = 2;
+  int64 tank_id = 3;
+  // Zero means a category-level observation with no specific saved livestock target.
+  int64 livestock_id = 4;
+  string category_key = 5;
+  string symptom_key = 6;
+  string intensity = 7;
+  int64 observed_at_millis = 8;
+  string note = 9;
+  int64 created_at_millis = 10;
+  int64 updated_at_millis = 11;
+}
