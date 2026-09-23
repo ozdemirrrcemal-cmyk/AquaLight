@@ -191,15 +191,15 @@ private class CleanInstallEvidenceCollector(
             "activeProfileCaches" to preferences.profileCachesCount,
             "userPrivateProjectionFields" to userPrivateFieldCount(preferences),
             "encryptedOwnerEntries" to encryptedOwnerEntryCount(),
-            "tankCareIntegrityEntries" to sharedStringSetSize(
+            "tankCareIntegrityEntries" to activity.sharedStringSetSize(
                 CleanInstallContract.TANK_CARE_INTEGRITY_PREFERENCES,
                 CleanInstallContract.TANK_CARE_INTEGRITY_KEY
             ),
-            "tankHealthIntegrityEntries" to sharedStringSetSize(
+            "tankHealthIntegrityEntries" to activity.sharedStringSetSize(
                 CleanInstallContract.TANK_HEALTH_INTEGRITY_PREFERENCES,
                 CleanInstallContract.TANK_HEALTH_INTEGRITY_KEY
             ),
-            "recoveryMarkers" to sharedStringSetSize(
+            "recoveryMarkers" to activity.sharedStringSetSize(
                 CleanInstallContract.RECOVERY_PREFERENCES,
                 CleanInstallContract.RECOVERY_KEY
             ),
@@ -335,13 +335,6 @@ private class CleanInstallEvidenceCollector(
         }
     }
 
-    private fun sharedStringSetSize(fileName: String, key: String): Int {
-        return activity.getSharedPreferences(fileName, Context.MODE_PRIVATE)
-            .getStringSet(key, emptySet())
-            .orEmpty()
-            .size
-    }
-
     private fun <T> protoCount(
         fileName: String,
         parse: (ByteArray) -> T,
@@ -359,6 +352,14 @@ private class CleanInstallEvidenceCollector(
     }
 
 }
+
+private fun Activity.sharedStringSetSize(
+    fileName: String,
+    key: String
+): Int = getSharedPreferences(fileName, Context.MODE_PRIVATE)
+    .getStringSet(key, emptySet())
+    .orEmpty()
+    .size
 
 private object PackageVersionReader {
     fun versionCode(packageInfo: PackageInfo): Long {
