@@ -256,21 +256,17 @@
     <string name="catalog_keyword_aquarium">aquarium</string>
     <string name="catalog_keyword_tank">tank</string>
     <string name="catalog_keyword_set">set</string>
-    <string name="catalog_keyword_chihiros" translatable="false">chihiros</string>
     <string name="catalog_keyword_glass">glass</string>
     <string name="catalog_keyword_co2" translatable="false">co2</string>
     <string name="catalog_keyword_regulator">regulator</string>
     <string name="catalog_keyword_generator">generator</string>
     <string name="catalog_keyword_system">system</string>
-    <string name="catalog_keyword_ista" translatable="false">ista</string>
     <string name="catalog_keyword_cylinder">cylinder</string>
     <string name="catalog_keyword_bottle">bottle</string>
-    <string name="catalog_keyword_jbl" translatable="false">jbl</string>
     <string name="catalog_keyword_diffuser">diffuser</string>
 <string name="catalog_keyword_cooler">cooler</string>
     <string name="catalog_keyword_fan">fan</string>
     <string name="catalog_keyword_temperature">temperature</string>
-    <string name="catalog_keyword_aquael" translatable="false">aquael</string>
     <string name="catalog_keyword_decoration">decoration</string>
     <string name="catalog_keyword_stone">stone</string>
     <string name="catalog_keyword_rock">rock</string>
@@ -287,7 +283,6 @@
     <string name="catalog_keyword_filter">filter</string>
     <string name="catalog_keyword_external">external</string>
     <string name="catalog_keyword_canister">canister</string>
-    <string name="catalog_keyword_eheim" translatable="false">eheim</string>
     <string name="catalog_keyword_hang_on">hang on</string>
     <string name="catalog_keyword_hob" translatable="false">hob</string>
 <string name="catalog_keyword_substrate">substrate</string>
