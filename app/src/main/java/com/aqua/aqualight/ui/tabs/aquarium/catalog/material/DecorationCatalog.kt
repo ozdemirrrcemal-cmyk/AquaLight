@@ -1625,13 +1625,9 @@ object DecorationCatalog {
     init {
         check(definitions.size == DECORATION_PRODUCT_COUNT)
         check(definitions.map(AquariumMaterialDefinition::id).distinct().size == definitions.size)
+        check(definitions.map(AquariumMaterialDefinition::nameRes).distinct().size == definitions.size)
+        check(definitions.map(AquariumMaterialDefinition::brandRes).distinct().size == DECORATION_BRAND_COUNT)
         check(definitions.all { definition -> definition.id.startsWith("decoration_") })
-        check(
-            decorationCatalogResources
-                .map(DecorationCatalogResource::brandRes)
-                .distinct()
-                .size == DECORATION_BRAND_COUNT
-        )
     }
 }
 
