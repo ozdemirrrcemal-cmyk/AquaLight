@@ -8,6 +8,11 @@ TESTS = ROOT / "app/src/test/java/com/aqua/aqualight"
 
 contract = APP / "application/aquarium/AquariumTankOperations.kt"
 adapter = APP / "data/aquarium/DefaultAquariumTankOperations.kt"
+lifecycle_adapter = APP / "data/aquarium/DefaultAquariumTankLifecycleOperations.kt"
+contents_adapter = APP / "data/aquarium/DefaultAquariumTankContentsOperations.kt"
+care_settings_adapter = (
+    APP / "data/aquarium/DefaultAquariumTankCareSettingsOperations.kt"
+)
 adapter_test = TESTS / "data/aquarium/DefaultAquariumTankOperationsMapperTest.kt"
 owner_scope = APP / "data/user/OwnerScopedDataOperation.kt"
 owner_scope_test = TESTS / "data/user/UserDataScopeTest.kt"
@@ -24,6 +29,9 @@ errors = []
 for path in (
     contract,
     adapter,
+    lifecycle_adapter,
+    contents_adapter,
+    care_settings_adapter,
     adapter_test,
     owner_scope,
     owner_scope_test,
@@ -43,17 +51,32 @@ if contract.is_file():
 
 if adapter.is_file():
     text = read(adapter)
-    if text.count("withCurrentOwnerScope") < 2:
-        errors.append(
-            "aquarium deletion and reminder mutation must remain pinned to one owner scope"
-        )
     for token in (
+        "AquariumTankReadOperations by",
+        "AquariumTankLifecycleOperations by",
+        "AquariumTankDetailsOperations by",
+        "AquariumTankContentsOperations by",
+        "AquariumTankCareSettingsOperations by",
         "toApplicationSnapshot",
         "toDataDraft",
         "toApplicationResult",
     ):
         if token not in text:
-            errors.append(f"aquarium adapter mapping is missing: {token}")
+            errors.append(f"aquarium adapter composition/mapping is missing: {token}")
+
+owner_scoped_adapter_text = "\n".join(
+    read(path)
+    for path in (
+        lifecycle_adapter,
+        contents_adapter,
+        care_settings_adapter,
+    )
+    if path.is_file()
+)
+if owner_scoped_adapter_text.count("withCurrentOwnerScope") < 4:
+    errors.append(
+        "aquarium lifecycle/content/reminder mutations must remain pinned to one owner scope"
+    )
 
 if adapter_test.is_file():
     text = read(adapter_test)
