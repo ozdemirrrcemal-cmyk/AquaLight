@@ -2,7 +2,6 @@ package com.aqua.aqualight.data.aquarium.health.integrity
 
 import com.aqua.aqualight.data.aquarium.health.AquariumHealthStore
 import com.aqua.aqualight.data.aquarium.health.AquariumHealthStoreRules
-import com.aqua.aqualight.data.aquarium.health.AquariumHealthStoredRecordRules
 import com.aqua.aqualight.data.aquarium.health.TankHealthIntegritySnapshot
 import com.aqua.aqualight.data.store.StoreInvariantViolation
 import java.util.Base64
@@ -60,13 +59,13 @@ internal object TankHealthIntegrityCodec {
             ?: violation(
                 "Tank-health integrity journal contains an invalid tank id."
             )
-        requireTankId(tankId)
+        TankHealthIntegrityValidation.requireTankId(tankId)
 
         val snapshot = decodeSnapshot(
             state = state,
             token = parts[SNAPSHOT_INDEX]
         )
-        validateSnapshot(
+        TankHealthIntegrityValidation.validateSnapshot(
             ownerUid = ownerUid,
             tankId = tankId,
             snapshot = snapshot
@@ -86,68 +85,6 @@ internal object TankHealthIntegrityCodec {
             livestockObservations = emptyList(),
             plantObservations = emptyList()
         )
-
-    fun validateSnapshot(
-        ownerUid: String,
-        tankId: Long,
-        snapshot: TankHealthIntegritySnapshot
-    ) {
-        snapshot.waterTests.forEach { test ->
-            AquariumHealthStoredRecordRules.validateWaterTest(
-                test,
-                ownerUid
-            )
-            requireSameTank(
-                expectedTankId = tankId,
-                actualTankId = test.tankId,
-                recordName = "water test"
-            )
-        }
-        snapshot.livestockObservations.forEach { observation ->
-            AquariumHealthStoredRecordRules.validateLivestockObservation(
-                observation,
-                ownerUid
-            )
-            requireSameTank(
-                expectedTankId = tankId,
-                actualTankId = observation.tankId,
-                recordName = "livestock observation"
-            )
-        }
-        snapshot.plantObservations.forEach { observation ->
-            AquariumHealthStoredRecordRules.validatePlantObservation(
-                observation,
-                ownerUid
-            )
-            requireSameTank(
-                expectedTankId = tankId,
-                actualTankId = observation.tankId,
-                recordName = "plant observation"
-            )
-        }
-    }
-
-    fun canonicalOwnerUid(value: String): String {
-        val canonical = value.trim()
-        if (
-            canonical.isBlank() ||
-            canonical != value ||
-            canonical.length > MAX_OWNER_UID_CHARS
-        ) {
-            violation(
-                "Tank-health integrity owner uid must be canonical and non-blank."
-            )
-        }
-        return canonical
-    }
-
-    fun requireTankId(tankId: Long) {
-        if (tankId <= 0L) {
-            violation(
-                "Tank-health integrity tank id must be positive."
-            )
-        }
-    }
 
     private fun decodeState(
         token: String
@@ -172,7 +109,7 @@ internal object TankHealthIntegrityCodec {
                     error.message.orEmpty()
             )
         }
-        return canonicalOwnerUid(decoded)
+        return TankHealthIntegrityValidation.canonicalOwnerUid(decoded)
     }
 
     private fun decodeSnapshot(
