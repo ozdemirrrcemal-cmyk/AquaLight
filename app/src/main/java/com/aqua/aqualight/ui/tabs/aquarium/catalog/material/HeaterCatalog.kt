@@ -4460,8 +4460,9 @@ object HeaterCatalog {
     init {
         check(definitions.size == HEATER_PRODUCT_COUNT)
         check(definitions.map(AquariumMaterialDefinition::id).distinct().size == definitions.size)
+        check(definitions.map(AquariumMaterialDefinition::nameRes).distinct().size == definitions.size)
+        check(definitions.map(AquariumMaterialDefinition::brandRes).distinct().size == HEATER_BRAND_COUNT)
         check(definitions.all { definition -> definition.id.startsWith("heater_") })
-        check(heaterCatalogResources.map(HeaterCatalogResource::brandRes).distinct().size == HEATER_BRAND_COUNT)
     }
 }
 
