@@ -1,5 +1,7 @@
 package com.aqua.aqualight.data.care.smartcare
 
+import com.aqua.aqualight.application.aquarium.AquariumSubstrateMetadataCatalog
+import com.aqua.aqualight.application.aquarium.AquariumSubstrateSemantic
 import com.aqua.aqualight.application.aquarium.AquariumTankTaxonomy
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumMaterial
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
@@ -109,13 +111,12 @@ object SmartCareTankClassifier {
   }
 
   private fun hasActiveSoil(materials: List<SavedAquariumMaterial>): Boolean {
-    return SmartCareTextMatcher.hasMaterialKeyword(
-      materials,
-      arrayOf(
-        "active soil", "aqua soil", "aquasoil", "soil", "amazonia",
-        "controsoil", "stratum", "plant substrate"
-      )
-    )
+    return materials.any { material ->
+      AquariumSubstrateMetadataCatalog.resolveSemantic(
+        productId = material.productId,
+        categoryKey = material.categoryKey
+      ) == AquariumSubstrateSemantic.ACTIVE_SOIL
+    }
   }
 
   private fun hasFilter(materials: List<SavedAquariumMaterial>): Boolean {

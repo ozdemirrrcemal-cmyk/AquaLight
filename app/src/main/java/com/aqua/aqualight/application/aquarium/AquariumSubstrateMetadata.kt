@@ -7,7 +7,15 @@ package com.aqua.aqualight.application.aquarium
 enum class AquariumSubstrateSemantic {
     NOT_APPLICABLE,
     UNKNOWN,
+
+    /**
+     * Legacy gravel semantic: the product is not active soil, a nutrient base, or an additive.
+     *
+     * This does not mean the material is chemically neutral. Mineral gravels can still buffer or
+     * raise pH/KH/GH while remaining non-active for AquaLight's active-soil care rules.
+     */
     INERT,
+
     NUTRIENT_BASE,
     ACTIVE_SOIL,
     ADDITIVE
@@ -18,13 +26,18 @@ enum class AquariumSubstrateEvidenceStatus {
     UNVERIFIED_GENERIC
 }
 
-/** Auditable product metadata attached to an exact, stable material-catalog identity. */
+/**
+ * Auditable product metadata attached to an exact, stable material-catalog identity.
+ *
+ * Source URLs are intentionally not shipped in the application. Verification is performed during
+ * catalog review; runtime metadata keeps only a provenance organization and an internal evidence
+ * record key.
+ */
 data class AquariumSubstrateProductMetadata(
     val semantic: AquariumSubstrateSemantic,
     val evidenceStatus: AquariumSubstrateEvidenceStatus,
     val sourceOrganization: String,
     val sourceRecordId: String,
-    val sourceUrl: String?,
     val reviewedOn: String,
     val catalogRevision: Int = 1
 ) {
@@ -38,12 +51,10 @@ data class AquariumSubstrateProductMetadata(
         when (evidenceStatus) {
             AquariumSubstrateEvidenceStatus.VERIFIED_PRODUCT -> {
                 require(semantic != AquariumSubstrateSemantic.UNKNOWN)
-                require(sourceUrl?.startsWith("https://") == true)
             }
 
             AquariumSubstrateEvidenceStatus.UNVERIFIED_GENERIC -> {
                 require(semantic == AquariumSubstrateSemantic.UNKNOWN)
-                require(sourceUrl == null)
             }
         }
     }
