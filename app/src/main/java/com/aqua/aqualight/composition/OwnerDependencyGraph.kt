@@ -29,6 +29,7 @@ import com.aqua.aqualight.application.notifications.NotificationDispatchUseCase
 import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
 import com.aqua.aqualight.application.user.UserDataArchiveOperations
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
+import com.aqua.aqualight.data.aquarium.health.AquariumHealthDataStoreManager
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryProvider
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.auth.OwnerSessionCoordinator
@@ -84,6 +85,7 @@ internal data class OwnerDependencyGraph(
     val deviceFirmwareNotifications: DeviceFirmwareUpdateNotificationOperations,
     val assignmentRepository: TankDeviceAssignmentRepository,
     val aquariumTankStore: AquariumTankDataStoreManager,
+    val aquariumHealthStore: AquariumHealthDataStoreManager,
     val careTaskStore: CareTaskDataStoreManager,
     val userDataArchiveOperations: UserDataArchiveOperations,
     val provisioningDraftOperations: ProvisioningDraftOperations,
@@ -230,6 +232,7 @@ internal class ActiveOwnerDependencyGraphResolver(
     ): OwnerDependencyGraph {
         val ownerUidProvider = { dependencies.ownerUid }
         val aquariumTankStore = AquariumTankDataStoreManager(appContext)
+        val aquariumHealthStore = AquariumHealthDataStoreManager.create(appContext)
         val careTaskStore = CareTaskDataStoreManager.create(appContext)
         val dosingOperations = createDosingOperations(dependencies)
         val timerControlOperations = DefaultDeviceTimerControlOperations(
@@ -250,6 +253,7 @@ internal class ActiveOwnerDependencyGraphResolver(
             deviceFirmwareNotifications = deviceFirmwareNotifications,
             assignmentRepository = dependencies.assignmentRepository,
             aquariumTankStore = aquariumTankStore,
+            aquariumHealthStore = aquariumHealthStore,
             careTaskStore = careTaskStore,
             userDataArchiveOperations = createUserDataArchiveOperations(
                 dependencies = dependencies,
