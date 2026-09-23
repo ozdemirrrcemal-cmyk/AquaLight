@@ -213,16 +213,27 @@ if app_container.is_file():
 
 if production.is_file():
     text = production.read_text(encoding="utf-8")
-    if text.count("DefaultProvisioningDiscoveryOperations(") < 2:
-        errors.append(
-            f"owner-scoped production discovery bindings are incomplete in {production.relative_to(ROOT)}"
-        )
     for token in (
+        "private fun OwnerViewModelBindingContext.discoveryOperations()",
+        "DefaultProvisioningDiscoveryOperations(",
+        "DeviceAddViewModel(",
+        "DeviceQrScanViewModel(",
+        "context.discoveryOperations()",
         "repository = repository",
         "ownerUidProvider = { graph.ownerUid }",
     ):
         if token not in text:
-            errors.append(f"owner-scoped production discovery binding is missing: {token}")
+            errors.append(
+                f"owner-scoped production discovery binding is missing: {token}"
+            )
+    if text.count("DefaultProvisioningDiscoveryOperations(") != 1:
+        errors.append(
+            "owner-scoped production discovery must use one shared construction path"
+        )
+    if text.count("context.discoveryOperations()") < 2:
+        errors.append(
+            "Nearby and QR ViewModels must both use the shared owner discovery builder"
+        )
     for forbidden in (
         "DefaultProvisioningDiscoveryOperations.create(",
         "DevicesRepositoryProvider.get(",
