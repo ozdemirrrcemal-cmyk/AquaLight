@@ -56,71 +56,24 @@ class OwnerTankDataCleanerMultiTankInstrumentedTest {
                 addWaterTest(healthStore, ownerUid, firstTankId)
                 addWaterTest(healthStore, ownerUid, secondTankId)
 
-                val cleaner = OwnerTankDataCleaner(
-                    OwnerTankDeletionDependencies(
-                        deleteTankRecords = tankStore::deleteTanks,
-                        care = TankCareDeletionDependencies(
-                            snapshotForTank = { tankId ->
-                                careStore.snapshotTasksForIntegrity(tankId)
-                            },
-                            deleteForTank = careStore::deleteTasksForTank,
-                            restoreForTank = { tankId, snapshots ->
-                                careStore.restoreTaskSnapshotsForIntegrity(
-                                    tankId = tankId,
-                                    snapshots = snapshots
-                                )
-                            },
-                            cancelCareTaskReminder = { _, _ -> },
-                            reconcileReminders = {}
-                        ),
-                        health = TankHealthDeletionDependencies(
-                            snapshotForTank = healthStore.integrity::snapshotForTank,
-                            deleteForTank = healthStore.integrity::deleteRecordsForTank,
-                            restoreForTank = healthStore.integrity::restoreSnapshotForIntegrity
-                        ),
-                        removeDeviceAssignmentsForTank = {
-                            TankAssignmentCleanupResult.Completed(0)
-                        }
-                    )
+                val cleaner = createCleaner(
+                    tankStore = tankStore,
+                    careStore = careStore,
+                    healthStore = healthStore
                 )
 
                 val result = cleaner
                     .deleteTanks(listOf(firstTankId, secondTankId))
                     as OwnerTankDataCleaner.Result.Deleted
 
-                assertEquals(
-                    listOf(firstTankId, secondTankId),
-                    result.tankIds
-                )
-                assertFalse(result.hasCleanupIssues)
-                assertTrue(tankStore.tanksSnapshotForOwner(ownerUid).isEmpty())
-                assertTrue(
-                    careStore.tasksForTankFlow(firstTankId).first().isEmpty()
-                )
-                assertTrue(
-                    careStore.tasksForTankFlow(secondTankId).first().isEmpty()
-                )
-                assertTrue(
-                    healthStore.waterTests.observe(
-                        ownerUid,
-                        firstTankId
-                    ).first().isEmpty()
-                )
-                assertTrue(
-                    healthStore.waterTests.observe(
-                        ownerUid,
-                        secondTankId
-                    ).first().isEmpty()
-                )
-                assertTrue(
-                    TankCareIntegrityJournal
-                        .pendingForOwner(ownerUid)
-                        .isEmpty()
-                )
-                assertTrue(
-                    TankHealthIntegrityJournal
-                        .pendingForOwner(ownerUid)
-                        .isEmpty()
+                assertDeletedState(
+                    ownerUid = ownerUid,
+                    firstTankId = firstTankId,
+                    secondTankId = secondTankId,
+                    result = result,
+                    tankStore = tankStore,
+                    careStore = careStore,
+                    healthStore = healthStore
                 )
             }
         } finally {
@@ -132,6 +85,86 @@ class OwnerTankDataCleanerMultiTankInstrumentedTest {
                 TankHealthIntegrityJournal.clearOwner(ownerUid)
             }
         }
+    }
+
+    private fun createCleaner(
+        tankStore: AquariumTankDataStoreManager,
+        careStore: CareTaskDataStoreManager,
+        healthStore: AquariumHealthDataStoreManager
+    ): OwnerTankDataCleaner = OwnerTankDataCleaner(
+        OwnerTankDeletionDependencies(
+            deleteTankRecords = tankStore::deleteTanks,
+            care = TankCareDeletionDependencies(
+                snapshotForTank = { tankId ->
+                    careStore.snapshotTasksForIntegrity(tankId)
+                },
+                deleteForTank = careStore::deleteTasksForTank,
+                restoreForTank = { tankId, snapshots ->
+                    careStore.restoreTaskSnapshotsForIntegrity(
+                        tankId = tankId,
+                        snapshots = snapshots
+                    )
+                },
+                cancelCareTaskReminder = { _, _ -> },
+                reconcileReminders = {}
+            ),
+            health = TankHealthDeletionDependencies(
+                snapshotForTank = healthStore.integrity::snapshotForTank,
+                deleteForTank = healthStore.integrity::deleteRecordsForTank,
+                restoreForTank =
+                    healthStore.integrity::restoreSnapshotForIntegrity
+            ),
+            removeDeviceAssignmentsForTank = {
+                TankAssignmentCleanupResult.Completed(0)
+            }
+        )
+    )
+
+    private suspend fun assertDeletedState(
+        ownerUid: String,
+        firstTankId: Long,
+        secondTankId: Long,
+        result: OwnerTankDataCleaner.Result.Deleted,
+        tankStore: AquariumTankDataStoreManager,
+        careStore: CareTaskDataStoreManager,
+        healthStore: AquariumHealthDataStoreManager
+    ) {
+        assertEquals(
+            listOf(firstTankId, secondTankId),
+            result.tankIds
+        )
+        assertFalse(result.hasCleanupIssues)
+        assertTrue(
+            tankStore.tanksSnapshotForOwner(ownerUid).isEmpty()
+        )
+        assertTrue(
+            careStore.tasksForTankFlow(firstTankId).first().isEmpty()
+        )
+        assertTrue(
+            careStore.tasksForTankFlow(secondTankId).first().isEmpty()
+        )
+        assertTrue(
+            healthStore.waterTests.observe(
+                ownerUid,
+                firstTankId
+            ).first().isEmpty()
+        )
+        assertTrue(
+            healthStore.waterTests.observe(
+                ownerUid,
+                secondTankId
+            ).first().isEmpty()
+        )
+        assertTrue(
+            TankCareIntegrityJournal
+                .pendingForOwner(ownerUid)
+                .isEmpty()
+        )
+        assertTrue(
+            TankHealthIntegrityJournal
+                .pendingForOwner(ownerUid)
+                .isEmpty()
+        )
     }
 
     private suspend fun addTask(
