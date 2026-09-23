@@ -69,16 +69,6 @@
     <string name="catalog_material_cooler_ista_cooling_fan_name" translatable="false">ISTA Cooling Fan</string>
     <string name="catalog_material_cooler_jbl_cooler_100_name" translatable="false">JBL Cooler 100</string>
     <string name="catalog_material_cooler_jbl_cooler_200_name" translatable="false">JBL Cooler 200</string>
-    <string name="catalog_material_decoration_seiryu_stone_name" translatable="false">Seiryu Stone</string>
-    <string name="catalog_material_decoration_dragon_stone_name" translatable="false">Dragon Stone</string>
-    <string name="catalog_material_decoration_lava_rock_name" translatable="false">Lava Rock</string>
-    <string name="catalog_material_decoration_manten_stone_name" translatable="false">Manten Stone</string>
-    <string name="catalog_material_decoration_ohko_stone_name" translatable="false">Ohko Stone</string>
-    <string name="catalog_material_decoration_spider_wood_name" translatable="false">Spider Wood</string>
-    <string name="catalog_material_decoration_mopani_wood_name" translatable="false">Mopani Wood</string>
-    <string name="catalog_material_decoration_red_moor_wood_name" translatable="false">Red Moor Wood</string>
-    <string name="catalog_material_decoration_mangrove_root_name" translatable="false">Mangrove Root</string>
-    <string name="catalog_material_decoration_cholla_wood_name" translatable="false">Cholla Wood</string>
     <string name="catalog_material_dosing_chihiros_dosing_pump_name" translatable="false">Chihiros Dosing Pump</string>
     <string name="catalog_material_dosing_chihiros_dosing_system_name" translatable="false">Chihiros Dosing System</string>
     <string name="catalog_material_dosing_jebao_dp_4_name" translatable="false">Jebao DP-4 Dosing Pump</string>
@@ -356,20 +346,9 @@
     <string name="catalog_keyword_stone">stone</string>
     <string name="catalog_keyword_rock">rock</string>
     <string name="catalog_keyword_hardscape">hardscape</string>
-    <string name="catalog_keyword_seiryu" translatable="false">seiryu</string>
-    <string name="catalog_keyword_dragon">dragon</string>
-    <string name="catalog_keyword_lava">lava</string>
-    <string name="catalog_keyword_manten">manten</string>
-    <string name="catalog_keyword_ohko">ohko</string>
     <string name="catalog_keyword_wood">wood</string>
     <string name="catalog_keyword_driftwood">driftwood</string>
-    <string name="catalog_keyword_spider">spider</string>
-    <string name="catalog_keyword_mopani">mopani</string>
-    <string name="catalog_keyword_moor">moor</string>
     <string name="catalog_keyword_root">root</string>
-    <string name="catalog_keyword_mangrove">mangrove</string>
-    <string name="catalog_keyword_shrimp">shrimp</string>
-    <string name="catalog_keyword_cholla">cholla</string>
     <string name="catalog_keyword_dosing">dosing</string>
     <string name="catalog_keyword_pump">pump</string>
     <string name="catalog_keyword_fertilizer">fertilizer</string>
