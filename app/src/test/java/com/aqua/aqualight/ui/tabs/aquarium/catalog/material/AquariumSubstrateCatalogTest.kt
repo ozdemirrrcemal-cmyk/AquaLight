@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.aquarium.catalog.material
 
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumSubstrateEvidenceStatus
+import com.aqua.aqualight.application.aquarium.AquariumSubstrateMetadataCatalog
 import com.aqua.aqualight.application.aquarium.AquariumSubstrateProductIds
 import com.aqua.aqualight.application.aquarium.AquariumSubstrateSemantic
 import org.junit.Assert.assertEquals
@@ -88,6 +89,30 @@ class AquariumSubstrateCatalogTest {
         assertEquals("substrate_chihiros_aquasoil_3l", ids.first())
         assertEquals("substrate_eurostar_aquaclay_5_10_l", ids.last())
         assertTrue(ids.none { productId -> Regex("^substrate_\\d{4}$").matches(productId) })
+    }
+
+    @Test
+    fun semanticStableIdsResolveThroughTheQuickSetupSubstrateClassifier() {
+        SubstrateCatalog.definitions.forEach { definition ->
+            assertEquals(
+                definition.substrateMetadata?.semantic,
+                AquariumSubstrateMetadataCatalog.resolveSemantic(
+                    productId = definition.id,
+                    categoryKey = MaterialCategoryKey.SUBSTRATE
+                )
+            )
+        }
+
+        val activeSoil = SubstrateCatalog.definitions.first { definition ->
+            definition.id == "substrate_ada_aqua_soil_amazonia_ver_2_3_l"
+        }
+        assertEquals(
+            AquariumSubstrateSemantic.ACTIVE_SOIL,
+            AquariumSubstrateMetadataCatalog.resolveSemantic(
+                productId = activeSoil.id,
+                categoryKey = MaterialCategoryKey.SUBSTRATE
+            )
+        )
     }
 
     @Test
