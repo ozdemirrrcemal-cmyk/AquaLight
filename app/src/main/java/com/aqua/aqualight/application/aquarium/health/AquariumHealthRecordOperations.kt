@@ -96,44 +96,34 @@ data class PlantHealthObservationInput(
 )
 
 interface AquariumHealthRecordOperations {
-    fun waterTests(tankId: Long): Flow<List<AquariumWaterTestRecord>>
+    val waterTests: AquariumWaterTestOperations
+    val livestockObservations: LivestockHealthObservationOperations
+    val plantObservations: PlantHealthObservationOperations
+}
 
-    fun livestockObservations(
-        tankId: Long
-    ): Flow<List<LivestockHealthObservation>>
+interface AquariumWaterTestOperations {
+    fun observe(tankId: Long): Flow<List<AquariumWaterTestRecord>>
+    suspend fun add(input: AquariumWaterTestInput): Long
+    suspend fun update(testId: Long, input: AquariumWaterTestInput)
+    suspend fun delete(testId: Long)
+}
 
-    fun plantObservations(
-        tankId: Long
-    ): Flow<List<PlantHealthObservation>>
-
-    suspend fun addWaterTest(input: AquariumWaterTestInput): Long
-
-    suspend fun updateWaterTest(
-        testId: Long,
-        input: AquariumWaterTestInput
-    )
-
-    suspend fun deleteWaterTest(testId: Long)
-
-    suspend fun addLivestockObservation(
-        input: LivestockHealthObservationInput
-    ): Long
-
-    suspend fun updateLivestockObservation(
+interface LivestockHealthObservationOperations {
+    fun observe(tankId: Long): Flow<List<LivestockHealthObservation>>
+    suspend fun add(input: LivestockHealthObservationInput): Long
+    suspend fun update(
         observationId: Long,
         input: LivestockHealthObservationInput
     )
+    suspend fun delete(observationId: Long)
+}
 
-    suspend fun deleteLivestockObservation(observationId: Long)
-
-    suspend fun addPlantObservation(
-        input: PlantHealthObservationInput
-    ): Long
-
-    suspend fun updatePlantObservation(
+interface PlantHealthObservationOperations {
+    fun observe(tankId: Long): Flow<List<PlantHealthObservation>>
+    suspend fun add(input: PlantHealthObservationInput): Long
+    suspend fun update(
         observationId: Long,
         input: PlantHealthObservationInput
     )
-
-    suspend fun deletePlantObservation(observationId: Long)
+    suspend fun delete(observationId: Long)
 }
