@@ -338,7 +338,7 @@ private class ReleaseSmokeViewModelFactory(
                                     snapshots = snapshots
                                 )
                             },
-                            cancelReminder = notificationPreferences::cancelCareTask,
+                            cancelCareTaskReminder = notificationPreferences::cancelCareTask,
                             reconcileReminders = notificationPreferences::reconcileOwner
                         ),
                         health = TankHealthDeletionDependencies(
