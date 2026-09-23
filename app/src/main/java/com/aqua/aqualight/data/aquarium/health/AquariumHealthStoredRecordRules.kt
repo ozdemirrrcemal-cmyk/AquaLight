@@ -129,7 +129,9 @@ internal object AquariumHealthStoredRecordRules {
         } catch (error: IllegalArgumentException) {
             throw StoreInvariantViolation(
                 error.message ?: "Health observation violates the application contract."
-            )
+            ).also { violation ->
+                violation.initCause(error)
+            }
         }
     }
 }
