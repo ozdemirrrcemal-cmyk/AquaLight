@@ -60,6 +60,31 @@ class UserDataCleaner private constructor(
         }
     }
 
+    private class CleanupRun {
+        val issues = mutableListOf<CleanupIssue>()
+
+        fun recordIssue(
+            step: Step,
+            error: Throwable
+        ) {
+            error.throwIfCancellation()
+            issues += CleanupIssue(
+                step = step,
+                error = error
+            )
+        }
+
+        suspend fun runStep(
+            step: Step,
+            block: suspend () -> Unit
+        ) {
+            runCatching { block() }
+                .onFailure { error ->
+                    recordIssue(step, error)
+                }
+        }
+    }
+
     companion object {
         fun create(context: Context): UserDataCleaner {
             return UserDataCleaner(context.applicationContext)
@@ -71,78 +96,39 @@ class UserDataCleaner private constructor(
         clearUserPreferences: Boolean = true,
         stopSessionBoundServices: Boolean = true
     ): CleanupResult {
-        val targetOwnerUid = ownerUid.orCurrentOwnerUidOrReturn()
-        val issues = mutableListOf<CleanupIssue>()
-        val tankDataStoreManager = AquariumTankDataStoreManager(appContext)
-        val userPreferencesManager = UserPreferencesManager.create(appContext)
+        val targetOwnerUid =
+            ownerUid.orCurrentOwnerUidOrReturn()
+        val run = CleanupRun()
+        val tankStore =
+            AquariumTankDataStoreManager(appContext)
+        val preferences =
+            UserPreferencesManager.create(appContext)
 
-        fun recordIssue(step: Step, error: Throwable) {
-            error.throwIfCancellation()
-            issues += CleanupIssue(step = step, error = error)
-        }
-
-        val tankPhotoUris = runCatching {
-            tankDataStoreManager.tanksSnapshotForOwner(targetOwnerUid)
-                .mapNotNull { tank -> tank.photoUri }
-        }.getOrElse { error ->
-            recordIssue(Step.AQUARIUM_TANKS, error)
-            emptyList()
-        }
-
-        val profilePhotoUri = runCatching {
-            userPreferencesManager.profilePhotoUrlForOwner(targetOwnerUid)
-        }.getOrElse { error ->
-            recordIssue(Step.USER_PREFERENCES, error)
-            ""
-        }
-
-        suspend fun runStep(step: Step, block: suspend () -> Unit) {
-            runCatching { block() }.onFailure { error ->
-                recordIssue(step, error)
-            }
-        }
+        val tankPhotoUris = loadTankPhotoUris(
+            ownerUid = targetOwnerUid,
+            tankStore = tankStore,
+            run = run
+        )
+        val profilePhotoUri = loadProfilePhotoUri(
+            ownerUid = targetOwnerUid,
+            preferences = preferences,
+            run = run
+        )
 
         if (stopSessionBoundServices) {
-            runStep(Step.SESSION_BOUND_SERVICES) {
-                val stopResult = SessionBoundServiceManager.stop(
-                    context = appContext,
-                    cancelNotifications = true,
-                    expectedOwnerUid = targetOwnerUid
-                )
-                stopResult.exceptionOrNull()?.let { error -> throw error }
+            run.runStep(Step.SESSION_BOUND_SERVICES) {
+                stopSessionServices(targetOwnerUid)
             }
         }
 
-        runStep(Step.CARE_TASKS) {
-            NotificationPlatform.get(appContext)
-                .preferenceUseCase
-                .cancelOwner(targetOwnerUid)
-            CareTaskDataStoreManager.create(appContext)
-                .clearAllTasks(ownerUid = targetOwnerUid)
-        }
+        clearPrimaryOwnerStores(
+            ownerUid = targetOwnerUid,
+            tankStore = tankStore,
+            run = run
+        )
+        clearDeviceStores(targetOwnerUid, run::runStep)
 
-        runStep(Step.AQUARIUM_HEALTH) {
-            AquariumHealthDataStoreManager.create(appContext)
-                .integrity
-                .clearAllRecords(targetOwnerUid)
-            TankHealthIntegrityJournal.initialize(appContext)
-            TankHealthIntegrityJournal.clearOwner(targetOwnerUid)
-        }
-
-        runStep(Step.AQUARIUM_TANKS) { tankDataStoreManager.clearAllTanks(targetOwnerUid) }
-
-        runStep(Step.DEVICE_ASSIGNMENTS) {
-            TankDeviceAssignmentStore.get(appContext)
-                .clearOwnerAssignments(ownerUid = targetOwnerUid)
-        }
-
-        runStep(Step.PROVISIONING_SESSIONS) {
-            clearProvisioningData(targetOwnerUid)
-        }
-
-        clearDeviceStores(targetOwnerUid) { step, block -> runStep(step, block) }
-
-        runStep(Step.APP_OWNED_FILES) {
+        run.runStep(Step.APP_OWNED_FILES) {
             clearAppOwnedUserFiles(
                 ownerUid = targetOwnerUid,
                 profilePhotoUri = profilePhotoUri,
@@ -151,12 +137,84 @@ class UserDataCleaner private constructor(
         }
 
         if (clearUserPreferences) {
-            runStep(Step.USER_PREFERENCES) {
-                userPreferencesManager.clearUserDataForOwner(targetOwnerUid)
+            run.runStep(Step.USER_PREFERENCES) {
+                preferences.clearUserDataForOwner(
+                    targetOwnerUid
+                )
             }
         }
 
-        return CleanupResult(issues = issues.toList())
+        return CleanupResult(
+            issues = run.issues.toList()
+        )
+    }
+
+    private suspend fun loadTankPhotoUris(
+        ownerUid: String,
+        tankStore: AquariumTankDataStoreManager,
+        run: CleanupRun
+    ): List<String> = runCatching {
+        tankStore.tanksSnapshotForOwner(ownerUid)
+            .mapNotNull { tank -> tank.photoUri }
+    }.getOrElse { error ->
+        run.recordIssue(Step.AQUARIUM_TANKS, error)
+        emptyList()
+    }
+
+    private suspend fun loadProfilePhotoUri(
+        ownerUid: String,
+        preferences: UserPreferencesManager,
+        run: CleanupRun
+    ): String = runCatching {
+        preferences.profilePhotoUrlForOwner(ownerUid)
+    }.getOrElse { error ->
+        run.recordIssue(Step.USER_PREFERENCES, error)
+        ""
+    }
+
+    private suspend fun stopSessionServices(
+        ownerUid: String
+    ) {
+        SessionBoundServiceManager.stop(
+            context = appContext,
+            cancelNotifications = true,
+            expectedOwnerUid = ownerUid
+        ).getOrThrow()
+    }
+
+    private suspend fun clearPrimaryOwnerStores(
+        ownerUid: String,
+        tankStore: AquariumTankDataStoreManager,
+        run: CleanupRun
+    ) {
+        run.runStep(Step.CARE_TASKS) {
+            NotificationPlatform.get(appContext)
+                .preferenceUseCase
+                .cancelOwner(ownerUid)
+            CareTaskDataStoreManager.create(appContext)
+                .clearAllTasks(ownerUid = ownerUid)
+        }
+
+        run.runStep(Step.AQUARIUM_HEALTH) {
+            AquariumHealthDataStoreManager.create(appContext)
+                .integrity
+                .clearAllRecords(ownerUid)
+            TankHealthIntegrityJournal.initialize(appContext)
+            TankHealthIntegrityJournal.clearOwner(ownerUid)
+        }
+
+        run.runStep(Step.AQUARIUM_TANKS) {
+            tankStore.clearAllTanks(ownerUid)
+        }
+
+        run.runStep(Step.DEVICE_ASSIGNMENTS) {
+            TankDeviceAssignmentStore.get(appContext)
+                .clearOwnerAssignments(ownerUid = ownerUid)
+        }
+
+        run.runStep(Step.PROVISIONING_SESSIONS) {
+            clearProvisioningData(ownerUid)
+        }
     }
 
     private suspend fun clearDeviceStores(
@@ -280,22 +338,28 @@ class UserDataCleaner private constructor(
     }
 
     private fun deleteAppOwnedUri(value: String) {
-        val uri = runCatching { Uri.parse(value) }.getOrNull() ?: return
+        val uri = runCatching {
+            Uri.parse(value)
+        }.getOrNull()
 
-        if (uri.scheme == "content") {
+        if (uri != null && uri.scheme == "content") {
             runCatching {
-                appContext.contentResolver.delete(uri, null, null)
+                appContext.contentResolver.delete(
+                    uri,
+                    null,
+                    null
+                )
             }
-            return
+        } else if (uri != null) {
+            val file = when (uri.scheme) {
+                "file" -> uri.path?.let(::File)
+                null, "" -> File(value)
+                else -> null
+            }
+            if (file?.isAppOwnedFile() == true) {
+                file.deleteRecursively()
+            }
         }
-
-        val file = when (uri.scheme) {
-            "file" -> uri.path?.let(::File)
-            null, "" -> File(value)
-            else -> null
-        } ?: return
-
-        if (file.isAppOwnedFile()) file.deleteRecursively()
     }
 
     private fun File.isAppOwnedFile(): Boolean {
