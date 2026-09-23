@@ -12,11 +12,13 @@ import com.aqua.aqualight.application.aquarium.health.HealthWaterParameter
 import com.aqua.aqualight.application.aquarium.health.LivestockHealthObservation
 import com.aqua.aqualight.application.aquarium.health.LivestockHealthObservationInput
 import com.aqua.aqualight.application.aquarium.health.ObservationIntensity
+import com.aqua.aqualight.data.aquarium.health.integrity.TankHealthIntegrityJournal
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker
 import com.aqua.aqualight.data.store.StoreInvariantViolation
 import com.aqua.aqualight.data.user.UserDataScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 private val Context.aquariumHealthDataStore: DataStore<AquariumHealthStore> by dataStore(
@@ -105,6 +107,7 @@ class AquariumHealthDataStoreManager private constructor(
         var createdId = 0L
         appContext.aquariumHealthDataStore.updateData { current ->
             requireOwnerScope(owner)
+            TankHealthIntegrityJournal.requireWritable(owner, canonicalInput.tankId)
             val id = AquariumHealthStoreRules.nextUniqueId(current, nowMillis)
             val stored = canonicalInput.toStoredWaterTest(
                 id = id,
@@ -147,6 +150,7 @@ class AquariumHealthDataStoreManager private constructor(
             val updated = current.waterTestsList.map { stored ->
                 if (stored.ownerUid == owner && stored.id == testId) {
                     found = true
+                    TankHealthIntegrityJournal.requireWritable(owner, stored.tankId)
                     if (stored.tankId != canonicalInput.tankId) {
                         throw StoreInvariantViolation(
                             "A water-test record cannot move between tanks."
@@ -186,13 +190,14 @@ class AquariumHealthDataStoreManager private constructor(
 
         appContext.aquariumHealthDataStore.updateData { current ->
             requireOwnerScope(owner)
+            val target = current.waterTestsList.firstOrNull { stored ->
+                stored.ownerUid == owner && stored.id == testId
+            } ?: throw IllegalArgumentException(
+                "Water-test record not found for the active owner."
+            )
+            TankHealthIntegrityJournal.requireWritable(owner, target.tankId)
             val remaining = current.waterTestsList.filterNot { stored ->
                 stored.ownerUid == owner && stored.id == testId
-            }
-            if (remaining.size == current.waterTestsCount) {
-                throw IllegalArgumentException(
-                    "Water-test record not found for the active owner."
-                )
             }
             AquariumHealthStoreRules.validateStore(
                 current.toBuilder()
@@ -220,6 +225,7 @@ class AquariumHealthDataStoreManager private constructor(
         var createdId = 0L
         appContext.aquariumHealthDataStore.updateData { current ->
             requireOwnerScope(owner)
+            TankHealthIntegrityJournal.requireWritable(owner, canonicalInput.tankId)
             val id = AquariumHealthStoreRules.nextUniqueId(current, nowMillis)
             val stored = canonicalInput.toStoredObservation(
                 id = id,
@@ -262,6 +268,7 @@ class AquariumHealthDataStoreManager private constructor(
             val updated = current.livestockObservationsList.map { stored ->
                 if (stored.ownerUid == owner && stored.id == observationId) {
                     found = true
+                    TankHealthIntegrityJournal.requireWritable(owner, stored.tankId)
                     if (stored.tankId != canonicalInput.tankId) {
                         throw StoreInvariantViolation(
                             "A livestock observation cannot move between tanks."
@@ -301,13 +308,14 @@ class AquariumHealthDataStoreManager private constructor(
 
         appContext.aquariumHealthDataStore.updateData { current ->
             requireOwnerScope(owner)
+            val target = current.livestockObservationsList.firstOrNull { stored ->
+                stored.ownerUid == owner && stored.id == observationId
+            } ?: throw IllegalArgumentException(
+                "Livestock health observation not found for the active owner."
+            )
+            TankHealthIntegrityJournal.requireWritable(owner, target.tankId)
             val remaining = current.livestockObservationsList.filterNot { stored ->
                 stored.ownerUid == owner && stored.id == observationId
-            }
-            if (remaining.size == current.livestockObservationsCount) {
-                throw IllegalArgumentException(
-                    "Livestock health observation not found for the active owner."
-                )
             }
             AquariumHealthStoreRules.validateStore(
                 current.toBuilder()
@@ -329,6 +337,7 @@ class AquariumHealthDataStoreManager private constructor(
         UserDataScope.withOwnerUid(owner) {
             appContext.aquariumHealthDataStore.updateData { current ->
                 requireOwnerScope(owner)
+                TankHealthIntegrityJournal.requireWritable(owner, tankId)
                 AquariumHealthStoreRules.validateStore(
                     current.toBuilder()
                         .clearLivestockObservations()
@@ -353,7 +362,7 @@ class AquariumHealthDataStoreManager private constructor(
         requirePositiveId("tankId", tankId)
         val store = appContext.aquariumHealthDataStore.data
             .map(AquariumHealthStoreRules::validateStore)
-            .firstValue()
+            .first()
         return TankHealthIntegritySnapshot(
             waterTests = store.waterTestsList.filter { test ->
                 test.ownerUid == owner && test.tankId == tankId
@@ -417,6 +426,7 @@ class AquariumHealthDataStoreManager private constructor(
         UserDataScope.withOwnerUid(owner) {
             appContext.aquariumHealthDataStore.updateData { current ->
                 requireOwnerScope(owner)
+                TankHealthIntegrityJournal.requireWritable(owner, tankId)
                 val waterIds = snapshot.waterTests.mapTo(mutableSetOf()) { it.id }
                 val observationIds =
                     snapshot.observations.mapTo(mutableSetOf()) { it.id }
@@ -657,9 +667,6 @@ class AquariumHealthDataStoreManager private constructor(
             createdAtMillis = createdAtMillis,
             updatedAtMillis = updatedAtMillis
         )
-
-    private suspend fun <T> Flow<T>.firstValue(): T =
-        kotlinx.coroutines.flow.first(this)
 
     companion object {
         fun create(context: Context): AquariumHealthDataStoreManager {
