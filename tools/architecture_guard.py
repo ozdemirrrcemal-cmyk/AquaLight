@@ -897,6 +897,10 @@ for token, reason in (
         "PR CI must reject WS v1 migration residue and parallel runtime paths",
     ),
     (
+        "python3 tools/aquarium_health_architecture_guard.py",
+        "PR CI must enforce Aquarium Health persistence and ownership boundaries",
+    ),
+    (
         "python3 tools/dosing_architecture_guard.py",
         "PR CI must enforce Dosing package ownership and dependency direction",
     ),
@@ -929,6 +933,10 @@ for token, reason in (
     (
         "ws_v1_commercial_closure_guard.py",
         "commercial release quality must enforce WS v1 closure",
+    ),
+    (
+        "aquarium_health_architecture_guard.py",
+        "commercial release quality must enforce Aquarium Health boundaries",
     ),
     (
         "dosing_architecture_guard.py",
@@ -1109,6 +1117,10 @@ pr_workflow_path = ".github/workflows/codeql.yml"
 pr_workflow = read(pr_workflow_path)
 for token, reason in (
     ("python3 tools/navigation_guard.py", "PR validation must enforce navigation contracts"),
+    (
+        "python3 tools/aquarium_health_architecture_guard.py",
+        "PR validation must enforce Aquarium Health persistence and ownership boundaries",
+    ),
     (
         "python3 tools/dosing_architecture_guard.py",
         "PR validation must enforce Dosing package ownership and dependency direction",
