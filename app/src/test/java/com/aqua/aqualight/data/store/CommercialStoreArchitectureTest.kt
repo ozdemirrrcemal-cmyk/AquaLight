@@ -37,7 +37,7 @@ class CommercialStoreArchitectureTest {
             token = "aquarium_health.pb",
             expectedRelativePaths = setOf(
                 "app/src/main/java/com/aqua/aqualight/data/aquarium/health/" +
-                    "AquariumHealthDataStoreManager.kt"
+                    "AquariumHealthStoreAccess.kt"
             )
         )
         assertOnlyFilesContain(
@@ -110,10 +110,25 @@ class CommercialStoreArchitectureTest {
             "app/src/main/java/com/aqua/aqualight/data/aquarium/store/" +
                 "AquariumTankDataStoreManager.kt"
         ).readText()
-        val healthManager = File(
+        val healthStoreAccess = File(
             repositoryRoot,
             "app/src/main/java/com/aqua/aqualight/data/aquarium/health/" +
-                "AquariumHealthDataStoreManager.kt"
+                "AquariumHealthStoreAccess.kt"
+        ).readText()
+        val healthWaterStore = File(
+            repositoryRoot,
+            "app/src/main/java/com/aqua/aqualight/data/aquarium/health/" +
+                "AquariumWaterTestStore.kt"
+        ).readText()
+        val healthLivestockStore = File(
+            repositoryRoot,
+            "app/src/main/java/com/aqua/aqualight/data/aquarium/health/" +
+                "LivestockHealthObservationStore.kt"
+        ).readText()
+        val healthPlantStore = File(
+            repositoryRoot,
+            "app/src/main/java/com/aqua/aqualight/data/aquarium/health/" +
+                "PlantHealthObservationStore.kt"
         ).readText()
         val careManager = File(
             repositoryRoot,
@@ -133,9 +148,19 @@ class CommercialStoreArchitectureTest {
 
         assertTrue(tankManager.contains("TankStoreRules.validateStore"))
         assertTrue(tankManager.contains("TankStoreRules.validateTank"))
-        assertTrue(healthManager.contains("AquariumHealthCommercialSerializer"))
-        assertTrue(healthManager.contains("AquariumHealthStoreRules.nextUniqueId"))
-        assertTrue(healthManager.contains("ReplaceFileCorruptionHandler"))
+        assertTrue(
+            healthStoreAccess.contains("AquariumHealthCommercialSerializer")
+        )
+        assertTrue(healthStoreAccess.contains("ReplaceFileCorruptionHandler"))
+        assertTrue(
+            healthWaterStore.contains("AquariumHealthStoreRules.nextUniqueId")
+        )
+        assertTrue(
+            healthLivestockStore.contains("AquariumHealthStoreRules.nextUniqueId")
+        )
+        assertTrue(
+            healthPlantStore.contains("AquariumHealthStoreRules.nextUniqueId")
+        )
         assertTrue(careManager.contains("CareTasksCommercialSerializer"))
         assertTrue(careManager.contains("CareTaskStoreRules.nextUniqueId"))
         assertTrue(careManager.contains("toCareTaskStrict"))
