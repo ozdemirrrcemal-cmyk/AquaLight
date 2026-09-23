@@ -1,20 +1,20 @@
 # AquaLight Aquarium Health Architecture Contract
 
-**Status:** Normative architecture contract; implementation has not started.
+**Status:** Normative architecture contract; Stage 1 persistence implementation is in progress.
 
 **Working branch:** `feat/aquarium-health-contract`
 
 **Base branch:** `feat/cooler-hardware-catalog`
 
-**Scope of this commit:** Documentation only. No runtime code, persistence schema, migration, navigation graph, resource, UI, or behavior change is authorized by this document commit.
+**Implementation scope:** This contract governs the Stage 1 persistence work on this branch. Health UI/navigation remains deferred until Stage 1 is green.
 
 ---
 
 ## 1. Purpose
 
-Aquarium Health is a new product domain that turns existing aquarium state, maintenance history, livestock catalog requirements, user-entered water measurements, and user-entered livestock observations into explainable tank-health and livestock-health assessments.
+Aquarium Health is a new product domain that turns existing aquarium state, maintenance history, livestock/plant catalog context, user-entered water measurements, livestock observations, and plant/algae observations into explainable tank-health, livestock-health, and plant-health assessments.
 
-The domain has two product surfaces inside one health destination:
+The domain has three product surfaces inside one health destination:
 
 1. **Tank Health**
    - water-quality measurements;
@@ -30,6 +30,14 @@ The domain has two product surfaces inside one health destination:
    - user observations/symptoms;
    - evidence-backed possible factors;
    - recommendations derived from available evidence.
+
+3. **Plant Health**
+   - saved plant identities from the tank;
+   - user plant symptoms and algae observations;
+   - water-test and maintenance evidence;
+   - selected substrate/soil and fertilizer context;
+   - assigned-light evidence through application boundaries;
+   - later, source-backed plant requirements and automation recommendations.
 
 Health is not a settings domain and is not a replacement for Maintenance, Tank Life, device control, or catalog ownership. It reads those authoritative domains and owns only data that is intrinsically health-specific.
 
@@ -72,10 +80,11 @@ The product has one Health destination:
 
 `TankHealthFragment(tankId)`
 
-The Health destination contains two local sections:
+The Health destination contains three local sections:
 
 - **Tank Health** — selected by default;
-- **Livestock Health**.
+- **Livestock Health**;
+- **Plant Health**.
 
 These are tabs/segments within the Health destination. They are not separate top-level navigation destinations.
 
@@ -106,7 +115,7 @@ Extracted presentation coordinators may calculate a semantic target but may not 
 
 Back from Health returns to the Tank Detail destination with the Tank tab selected.
 
-A future entry point from Tank Life may open the same Health destination with Livestock Health selected and, optionally, a livestock target. That future route must reuse the same Health destination instead of creating a second livestock-health screen.
+A future entry point from Tank Life may open the same Health destination with Livestock Health selected and, optionally, a livestock target. A future Plants entry point may open the same destination with Plant Health selected and, optionally, a plant target. Neither flow may create a parallel Health destination.
 
 ---
 
@@ -187,10 +196,11 @@ Examples:
 
 ## 4. Health-owned authoritative data
 
-Health owns exactly two new categories of user-created records in the first implementation:
+Health owns exactly three new categories of user-created records in the first implementation:
 
 1. water-test records;
-2. livestock-health observations.
+2. livestock-health observations;
+3. plant-health/algae observations.
 
 Derived assessments, findings, statuses, explanations, and recommendations are not authoritative persisted user data in v1. They are calculated from authoritative inputs.
 
@@ -208,6 +218,9 @@ interface AquariumHealthRecordOperations {
     fun livestockObservations(
         tankId: Long
     ): Flow<List<LivestockHealthObservation>>
+    fun plantObservations(
+        tankId: Long
+    ): Flow<List<PlantHealthObservation>>
 
     suspend fun addWaterTest(input: AquariumWaterTestInput): Long
     suspend fun updateWaterTest(
@@ -224,6 +237,15 @@ interface AquariumHealthRecordOperations {
         input: LivestockHealthObservationInput
     )
     suspend fun deleteLivestockObservation(observationId: Long)
+
+    suspend fun addPlantObservation(
+        input: PlantHealthObservationInput
+    ): Long
+    suspend fun updatePlantObservation(
+        observationId: Long,
+        input: PlantHealthObservationInput
+    )
+    suspend fun deletePlantObservation(observationId: Long)
 }
 ```
 
@@ -1708,3 +1730,214 @@ No arrow is allowed from Health UI directly to a data store, device command path
 No derived Health result becomes a substitute source of truth for the authoritative domain that produced its evidence.
 
 That separation is the basis for adding future automation without destabilizing Tank Detail, Tank Settings, Maintenance, Tank Life, device control, or the current commercial data contract.
+
+
+---
+
+## 43. Plant Health extension
+
+Plant Health is the third local section of the single `TankHealthFragment`. It is not a
+sixth Tank Detail tab and it is not a separate navigation subsystem.
+
+The first Plant Health persistence release owns user observations only. It does not copy
+the authoritative plant inventory, substrate, fertilizer, maintenance history, light
+assignment, or device state into the Health store.
+
+### 43.1 Authoritative evidence sources
+
+Plant Health consumes, through application boundaries:
+
+- saved `AquariumPlantTag` records and their stable `catalogId`;
+- completed water changes and plant-trim/fertilizer care history from Maintenance;
+- Health-owned water-test records;
+- selected substrate/soil and fertilizer materials from the tank snapshot;
+- CO2 equipment presence as context only;
+- assigned Light device identity from the tank-device assignment boundary;
+- authoritative Light state/program/intensity evidence through Light application contracts;
+- future source-backed plant requirement metadata.
+
+A selected fertilizer product is not proof of correct dosing. An assigned Light is not
+proof of suitable PAR or photoperiod. CO2 equipment presence is not proof of CO2
+concentration or stability.
+
+### 43.2 Plant observation model
+
+```kotlin
+data class PlantHealthObservation(
+    val id: Long,
+    val tankId: Long,
+    val plantId: Long?,
+    val symptomKey: String,
+    val algaeTypeKey: String?,
+    val intensity: ObservationIntensity,
+    val observedAtMillis: Long,
+    val note: String,
+    val createdAtMillis: Long,
+    val updatedAtMillis: Long
+)
+```
+
+`plantId == null` represents a tank-wide plant/algae observation. A non-null plant ID
+must belong to the selected tank.
+
+Stable symptom identities include general decline, yellowing, blackening, melting, leaf
+holes, stunted growth, pale new growth, twisted growth, leaf loss, root damage, and algae
+presence. Localized labels are never persistence identities.
+
+### 43.3 Algae observation identity
+
+An algae observation stores:
+
+- `symptomKey = plant_algae_presence`;
+- one stable `algaeTypeKey`.
+
+Non-algae symptoms must not persist an algae type.
+
+The product algae catalog is an observable aquarium-problem taxonomy, not a biological
+taxonomy. Cyanobacteria may be included because users encounter it through the same
+diagnostic workflow, while presentation and source-backed guidance must describe it
+accurately.
+
+The catalog is extensible through stable IDs without changing the Health Proto schema.
+Adding an algae type requires catalog uniqueness tests and, before evaluator use, reviewed
+source-backed factor/recommendation rules.
+
+### 43.4 Plant deletion integrity
+
+A specific-plant observation must never be reassigned by plant name.
+
+When a saved plant disappears from the authoritative tank plant list:
+
+- observations targeting that `plantId` are removed through the owner-scoped cleanup path;
+- tank-wide plant/algae observations remain;
+- owner-session orphan repair removes any stale reference left by an interrupted operation;
+- no localized name or `catalogId` guessing is used to reconnect a deleted plant.
+
+Tank deletion treats all Health record categories as dependent data and therefore must
+snapshot/delete/restore water tests, livestock observations, and plant observations
+together.
+
+---
+
+## 44. Plant requirement catalog boundary
+
+The current presentation Plant catalog is not sufficient evidence for Health rules because
+it primarily owns display identity/category data. Plant Health must not import or execute a
+UI catalog from an evaluator.
+
+Before species-specific Plant Health findings ship, plant requirement metadata must be
+available behind an application/data boundary with stable `catalogId` lookup.
+
+The requirement model may include, where supported by reviewed evidence:
+
+- light demand and usable PAR guidance;
+- photoperiod context;
+- CO2 demand;
+- temperature range;
+- pH/GH/KH context;
+- nutrient demand;
+- substrate/root-feeding preference;
+- growth rate and maintenance context.
+
+Missing requirement metadata is represented as unknown. It is never inferred from the
+localized plant name.
+
+---
+
+## 45. Plant and algae evidence engine
+
+A plant or algae observation is not a diagnosis.
+
+The Plant Health evaluator may correlate an observation with:
+
+- coherent water measurements and freshness;
+- water-change recency;
+- fertilizer product and actual care history when available;
+- substrate/soil selection;
+- plant catalog requirement evidence;
+- assigned Light program/state;
+- measured PAR when available;
+- CO2 measurements/estimates only under the existing CO2 evidence restrictions;
+- tank age and other reviewed environmental evidence.
+
+A rule must distinguish measured fact, configuration context, association, and unknown
+evidence. Black-beard-algae observation plus CO2 equipment presence, for example, does not
+permit the statement that CO2 is low or that CO2 instability caused the observation.
+
+---
+
+## 46. Verified-source rule governance
+
+Plant/algae evaluator and automation rules are curated product knowledge, not free-form
+presentation logic.
+
+Every rule that can produce a factor, recommendation, severity, or automatic-task candidate
+must have:
+
+- a stable rule key;
+- a rule version;
+- applicable symptom/algae keys;
+- required and optional evidence;
+- explicit threshold/decision logic;
+- confidence semantics;
+- recommendation keys;
+- one or more reviewed source references;
+- a review date.
+
+Source metadata must retain enough information to audit the rule, including organization or
+author, document/title, publication/revision date when available, canonical URL/DOI or
+equivalent identifier, and access/review date.
+
+Primary/authoritative technical documentation, peer-reviewed literature, recognized
+academic/extension resources, and established specialist references are preferred. A forum
+post, anonymous article, SEO content, or single hobbyist claim must not be the sole basis
+for a health/automation rule.
+
+Runtime Health evaluation remains deterministic and local. It consumes the reviewed,
+versioned rule catalog; it does not browse the web or generate unsupported causal claims.
+
+---
+
+## 47. Updated Stage 1 completion
+
+Stage 1 is not complete until schema version 1 supports and validates all three Health-owned
+record categories:
+
+```text
+AquariumHealthStore v1
+├── Water Tests
+├── Livestock Health Observations
+└── Plant Health / Algae Observations
+```
+
+Required Stage 1 plant coverage includes:
+
+- add/update/delete;
+- owner isolation;
+- specific-plant target validation;
+- tank-wide observation support;
+- symptom/algae relationship validation;
+- orphan repair after plant removal;
+- tank-deletion snapshot/delete/rollback participation;
+- corruption/schema validation;
+- deterministic ordering;
+- concurrent unique ID allocation across all Health record categories.
+
+No Plant Health assessment, recommendation, automation task, or UI is required to complete
+Stage 1.
+
+---
+
+## 48. Updated post-Stage-1 order
+
+After Stage 1 is green:
+
+1. Stage 2 creates the Health card and one `TankHealthFragment` with Tank Health,
+   Livestock Health, and Plant Health local sections.
+2. Water Analysis becomes the first end-to-end input/read slice.
+3. Livestock observations and existing livestock water compatibility are connected.
+4. Plant observations/algae selection are connected.
+5. A source-backed plant-requirement boundary and evidence catalog are completed.
+6. The deterministic Tank/Livestock/Plant Health evaluators are integrated.
+7. Only then may Health findings feed the separate Smart Care automation policy with
+   idempotency, cooldown, owner scope, and notification gates.
