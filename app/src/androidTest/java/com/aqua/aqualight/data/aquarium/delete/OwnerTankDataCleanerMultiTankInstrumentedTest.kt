@@ -67,13 +67,14 @@ class OwnerTankDataCleanerMultiTankInstrumentedTest {
                     as OwnerTankDataCleaner.Result.Deleted
 
                 assertDeletedState(
-                    ownerUid = ownerUid,
-                    firstTankId = firstTankId,
-                    secondTankId = secondTankId,
-                    result = result,
-                    tankStore = tankStore,
-                    careStore = careStore,
-                    healthStore = healthStore
+                    DeletedStateFixture(
+                        ownerUid = ownerUid,
+                        tankIds = listOf(firstTankId, secondTankId),
+                        result = result,
+                        tankStore = tankStore,
+                        careStore = careStore,
+                        healthStore = healthStore
+                    )
                 )
             }
         } finally {
@@ -121,51 +122,49 @@ class OwnerTankDataCleanerMultiTankInstrumentedTest {
     )
 
     private suspend fun assertDeletedState(
-        ownerUid: String,
-        firstTankId: Long,
-        secondTankId: Long,
-        result: OwnerTankDataCleaner.Result.Deleted,
-        tankStore: AquariumTankDataStoreManager,
-        careStore: CareTaskDataStoreManager,
-        healthStore: AquariumHealthDataStoreManager
+        fixture: DeletedStateFixture
     ) {
-        assertEquals(
-            listOf(firstTankId, secondTankId),
-            result.tankIds
-        )
-        assertFalse(result.hasCleanupIssues)
+        assertEquals(fixture.tankIds, fixture.result.tankIds)
+        assertFalse(fixture.result.hasCleanupIssues)
         assertTrue(
-            tankStore.tanksSnapshotForOwner(ownerUid).isEmpty()
+            fixture.tankStore
+                .tanksSnapshotForOwner(fixture.ownerUid)
+                .isEmpty()
         )
-        assertTrue(
-            careStore.tasksForTankFlow(firstTankId).first().isEmpty()
-        )
-        assertTrue(
-            careStore.tasksForTankFlow(secondTankId).first().isEmpty()
-        )
-        assertTrue(
-            healthStore.waterTests.observe(
-                ownerUid,
-                firstTankId
-            ).first().isEmpty()
-        )
-        assertTrue(
-            healthStore.waterTests.observe(
-                ownerUid,
-                secondTankId
-            ).first().isEmpty()
-        )
+        fixture.tankIds.forEach { tankId ->
+            assertTrue(
+                fixture.careStore
+                    .tasksForTankFlow(tankId)
+                    .first()
+                    .isEmpty()
+            )
+            assertTrue(
+                fixture.healthStore.waterTests
+                    .observe(fixture.ownerUid, tankId)
+                    .first()
+                    .isEmpty()
+            )
+        }
         assertTrue(
             TankCareIntegrityJournal
-                .pendingForOwner(ownerUid)
+                .pendingForOwner(fixture.ownerUid)
                 .isEmpty()
         )
         assertTrue(
             TankHealthIntegrityJournal
-                .pendingForOwner(ownerUid)
+                .pendingForOwner(fixture.ownerUid)
                 .isEmpty()
         )
     }
+
+    private data class DeletedStateFixture(
+        val ownerUid: String,
+        val tankIds: List<Long>,
+        val result: OwnerTankDataCleaner.Result.Deleted,
+        val tankStore: AquariumTankDataStoreManager,
+        val careStore: CareTaskDataStoreManager,
+        val healthStore: AquariumHealthDataStoreManager
+    )
 
     private suspend fun addTask(
         careStore: CareTaskDataStoreManager,
