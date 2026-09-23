@@ -53,8 +53,7 @@
     <string name="catalog_keyword_hang_on">askı filtre</string>
 <string name="catalog_keyword_substrate">taban</string>
 <string name="catalog_keyword_nano">nano</string>
-<string name="catalog_keyword_heater">ısıtıcı</string>
-    <string name="catalog_keyword_thermo">termo</string>
+
     <string name="catalog_keyword_background">arka plan</string>
     <string name="catalog_keyword_light">aydınlatma</string>
     <string name="catalog_keyword_shade">gölge</string>
