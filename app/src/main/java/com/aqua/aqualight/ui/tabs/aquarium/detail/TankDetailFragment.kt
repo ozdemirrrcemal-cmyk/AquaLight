@@ -45,7 +45,6 @@ class TankDetailFragment :
 
     private var tankId: Long = 0L
     private var selectedTab: TankDetailTab = TankDetailTab.DEVICES
-    private var currentTank: AquariumTankSnapshot? = null
     private var tabHost: AquaSwipeTabHost<TankDetailTab>? = null
 
     override fun onCreate(
@@ -426,9 +425,6 @@ class TankDetailFragment :
     private fun bindTank(
         tank: AquariumTankSnapshot
     ) {
-        currentTank =
-            tank
-
         setupHeader(
             title = tank.name
         )
