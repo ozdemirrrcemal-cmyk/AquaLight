@@ -6,22 +6,129 @@ private const val AQUARIUM_PRODUCT_COUNT = 291
 private enum class AquariumHardwareType(
     val keywordRes: List<Int>
 ) {
-    TANK(listOf(R.string.catalog_keyword_tank, R.string.catalog_keyword_glass)),
-    MAT(listOf(R.string.catalog_keyword_mat, R.string.catalog_keyword_pad)),
-    THERMOMETER(listOf(R.string.catalog_keyword_thermometer, R.string.catalog_keyword_thermo, R.string.catalog_keyword_temperature)),
-    LILY_PIPE_INFLOW(listOf(R.string.catalog_keyword_lily_pipe, R.string.catalog_keyword_inflow, R.string.catalog_keyword_inlet, R.string.catalog_keyword_intake, R.string.catalog_keyword_pipe)),
-    LILY_PIPE_OUTFLOW(listOf(R.string.catalog_keyword_lily_pipe, R.string.catalog_keyword_outflow, R.string.catalog_keyword_outlet, R.string.catalog_keyword_return, R.string.catalog_keyword_pipe)),
-    LILY_PIPE_SET(listOf(R.string.catalog_keyword_lily_pipe, R.string.catalog_keyword_inflow, R.string.catalog_keyword_outflow, R.string.catalog_keyword_inlet, R.string.catalog_keyword_outlet, R.string.catalog_keyword_pipe, R.string.catalog_keyword_set)),
-    PIPE_ACCESSORY(listOf(R.string.catalog_keyword_pipe, R.string.catalog_keyword_accessory)),
-    TANK_COVER(listOf(R.string.catalog_keyword_cover, R.string.catalog_keyword_lid, R.string.catalog_keyword_glass)),
-    TANK_COVER_ACCESSORY(listOf(R.string.catalog_keyword_cover, R.string.catalog_keyword_lid, R.string.catalog_keyword_clip, R.string.catalog_keyword_accessory)),
-    SCISSORS(listOf(R.string.catalog_keyword_aquascaping, R.string.catalog_keyword_scissors, R.string.catalog_keyword_tool)),
-    TWEEZERS(listOf(R.string.catalog_keyword_aquascaping, R.string.catalog_keyword_tweezers, R.string.catalog_keyword_pinsettes, R.string.catalog_keyword_tool)),
-    LEVELER(listOf(R.string.catalog_keyword_aquascaping, R.string.catalog_keyword_leveler, R.string.catalog_keyword_flattener, R.string.catalog_keyword_tool)),
-    TOOL_SET(listOf(R.string.catalog_keyword_aquascaping, R.string.catalog_keyword_tool, R.string.catalog_keyword_set)),
-    CLEANING_TOOL(listOf(R.string.catalog_keyword_cleaning, R.string.catalog_keyword_cleaner, R.string.catalog_keyword_scraper, R.string.catalog_keyword_tool)),
-    PIPE_CLEANING_TOOL(listOf(R.string.catalog_keyword_pipe, R.string.catalog_keyword_cleaning, R.string.catalog_keyword_brush, R.string.catalog_keyword_tool)),
-    WATER_TESTER(listOf(R.string.catalog_keyword_water, R.string.catalog_keyword_tester, R.string.catalog_keyword_tds, R.string.catalog_keyword_temperature))
+    TANK(
+        listOf(
+            R.string.catalog_keyword_tank,
+            R.string.catalog_keyword_glass
+        )
+    ),
+    MAT(
+        listOf(
+            R.string.catalog_keyword_mat,
+            R.string.catalog_keyword_pad
+        )
+    ),
+    THERMOMETER(
+        listOf(
+            R.string.catalog_keyword_thermometer,
+            R.string.catalog_keyword_thermo,
+            R.string.catalog_keyword_temperature
+        )
+    ),
+    LILY_PIPE_INFLOW(
+        listOf(
+            R.string.catalog_keyword_lily_pipe,
+            R.string.catalog_keyword_inflow,
+            R.string.catalog_keyword_inlet,
+            R.string.catalog_keyword_intake,
+            R.string.catalog_keyword_pipe
+        )
+    ),
+    LILY_PIPE_OUTFLOW(
+        listOf(
+            R.string.catalog_keyword_lily_pipe,
+            R.string.catalog_keyword_outflow,
+            R.string.catalog_keyword_outlet,
+            R.string.catalog_keyword_return,
+            R.string.catalog_keyword_pipe
+        )
+    ),
+    LILY_PIPE_SET(
+        listOf(
+            R.string.catalog_keyword_lily_pipe,
+            R.string.catalog_keyword_inflow,
+            R.string.catalog_keyword_outflow,
+            R.string.catalog_keyword_inlet,
+            R.string.catalog_keyword_outlet,
+            R.string.catalog_keyword_pipe,
+            R.string.catalog_keyword_set
+        )
+    ),
+    PIPE_ACCESSORY(
+        listOf(
+            R.string.catalog_keyword_pipe,
+            R.string.catalog_keyword_accessory
+        )
+    ),
+    TANK_COVER(
+        listOf(
+            R.string.catalog_keyword_cover,
+            R.string.catalog_keyword_lid,
+            R.string.catalog_keyword_glass
+        )
+    ),
+    TANK_COVER_ACCESSORY(
+        listOf(
+            R.string.catalog_keyword_cover,
+            R.string.catalog_keyword_lid,
+            R.string.catalog_keyword_clip,
+            R.string.catalog_keyword_accessory
+        )
+    ),
+    SCISSORS(
+        listOf(
+            R.string.catalog_keyword_aquascaping,
+            R.string.catalog_keyword_scissors,
+            R.string.catalog_keyword_tool
+        )
+    ),
+    TWEEZERS(
+        listOf(
+            R.string.catalog_keyword_aquascaping,
+            R.string.catalog_keyword_tweezers,
+            R.string.catalog_keyword_pinsettes,
+            R.string.catalog_keyword_tool
+        )
+    ),
+    LEVELER(
+        listOf(
+            R.string.catalog_keyword_aquascaping,
+            R.string.catalog_keyword_leveler,
+            R.string.catalog_keyword_flattener,
+            R.string.catalog_keyword_tool
+        )
+    ),
+    TOOL_SET(
+        listOf(
+            R.string.catalog_keyword_aquascaping,
+            R.string.catalog_keyword_tool,
+            R.string.catalog_keyword_set
+        )
+    ),
+    CLEANING_TOOL(
+        listOf(
+            R.string.catalog_keyword_cleaning,
+            R.string.catalog_keyword_cleaner,
+            R.string.catalog_keyword_scraper,
+            R.string.catalog_keyword_tool
+        )
+    ),
+    PIPE_CLEANING_TOOL(
+        listOf(
+            R.string.catalog_keyword_pipe,
+            R.string.catalog_keyword_cleaning,
+            R.string.catalog_keyword_brush,
+            R.string.catalog_keyword_tool
+        )
+    ),
+    WATER_TESTER(
+        listOf(
+            R.string.catalog_keyword_water,
+            R.string.catalog_keyword_tester,
+            R.string.catalog_keyword_tds,
+            R.string.catalog_keyword_temperature
+        )
+    )
 }
 
 private data class AquariumCatalogResource(
