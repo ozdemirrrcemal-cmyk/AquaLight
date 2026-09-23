@@ -153,11 +153,16 @@ private class CleanInstallEvidenceCollector(
                 { bytes -> AquariumHealthStore.parseFrom(bytes) },
                 AquariumHealthStore::getDefaultInstance
             ) { store -> store.waterTestsCount },
-            "healthObservations" to protoCount(
+            "healthLivestockObservations" to protoCount(
                 CleanInstallContract.AQUARIUM_HEALTH_FILE,
                 { bytes -> AquariumHealthStore.parseFrom(bytes) },
                 AquariumHealthStore::getDefaultInstance
             ) { store -> store.livestockObservationsCount },
+            "healthPlantObservations" to protoCount(
+                CleanInstallContract.AQUARIUM_HEALTH_FILE,
+                { bytes -> AquariumHealthStore.parseFrom(bytes) },
+                AquariumHealthStore::getDefaultInstance
+            ) { store -> store.plantObservationsCount },
             "assignments" to protoCount(
                 CleanInstallContract.TANK_DEVICE_ASSIGNMENTS_FILE,
                 { bytes -> TankDeviceAssignmentsStore.parseFrom(bytes) },
@@ -234,7 +239,8 @@ private class CleanInstallEvidenceCollector(
             "tanksEmpty" to CountEvidence.isZero(counts, "tanks"),
             "healthRecordsEmpty" to (
                 CountEvidence.isZero(counts, "healthWaterTests") &&
-                    CountEvidence.isZero(counts, "healthObservations")
+                    CountEvidence.isZero(counts, "healthLivestockObservations") &&
+                    CountEvidence.isZero(counts, "healthPlantObservations")
                 ),
             "assignmentsEmpty" to CountEvidence.isZero(counts, "assignments"),
             "careTasksEmpty" to CountEvidence.isZero(counts, "careTasks"),
