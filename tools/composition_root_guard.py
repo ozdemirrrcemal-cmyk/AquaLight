@@ -197,7 +197,9 @@ require(
     "val graph = ownerGraphResolver.requireActive()",
     "ownerUidProvider = { graph.ownerUid }",
     "notificationPreferences = notificationPreferenceUseCase",
-    "cancelCareTaskReminder =",
+    "TankCareDeletionDependencies(",
+    "cancelReminder =",
+    "TankHealthDeletionDependencies(",
     "No owner-scoped ViewModel binding",
 )
 forbid(
