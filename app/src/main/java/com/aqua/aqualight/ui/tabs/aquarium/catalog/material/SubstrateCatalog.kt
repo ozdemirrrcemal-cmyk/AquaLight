@@ -7,6 +7,7 @@ import com.aqua.aqualight.application.aquarium.AquariumSubstrateProductMetadata
 import com.aqua.aqualight.application.aquarium.AquariumSubstrateSemantic
 
 private const val SUBSTRATE_PRODUCT_COUNT = 138
+private const val SUBSTRATE_BRAND_COUNT = 27
 
 private data class SubstrateCatalogResource(
     val id: String,
@@ -742,6 +743,9 @@ object SubstrateCatalog {
     init {
         check(definitions.size == SUBSTRATE_PRODUCT_COUNT)
         check(definitions.map(AquariumMaterialDefinition::id).distinct().size == definitions.size)
+        check(definitions.map(AquariumMaterialDefinition::nameRes).distinct().size == definitions.size)
+        check(definitions.map(AquariumMaterialDefinition::brandRes).distinct().size == SUBSTRATE_BRAND_COUNT)
+        check(definitions.all { definition -> definition.id.startsWith("substrate_") })
         check(definitions.map(AquariumMaterialDefinition::id) == AquariumSubstrateProductIds.ALL)
         check(definitions.none { definition -> Regex("^substrate_\\d{4}$").matches(definition.id) })
     }
