@@ -11,6 +11,7 @@ object CommercialStoreSchema {
     const val CARE_TASKS_VERSION = 1
     const val USER_PREFERENCES_VERSION = 1
     const val LIGHT_LIBRARY_VERSION = 1
+    const val AQUARIUM_HEALTH_VERSION = 1
 
     fun requireCurrent(
         storeName: String,
