@@ -158,7 +158,6 @@
     <string name="catalog_material_substrate_0138_name" translatable="false">EuroStar AquaClay — 5 / 10 L</string>
     <!-- Substrate search aliases. Localized aliases live in values-tr. -->
     <string name="catalog_keyword_aquario" translatable="false">aquario</string>
-    <string name="catalog_keyword_substrate">substrate</string>
     <string name="catalog_keyword_soil">soil</string>
     <string name="catalog_keyword_aquasoil">aquasoil</string>
     <string name="catalog_keyword_additive">additive</string>

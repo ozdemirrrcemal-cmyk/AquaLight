@@ -341,6 +341,7 @@
     <string name="catalog_keyword_sunsun" translatable="false">sunsun</string>
     <string name="catalog_keyword_gravel">gravel</string>
     <string name="catalog_keyword_sand">sand</string>
+    <string name="catalog_keyword_substrate">substrate</string>
     <string name="catalog_keyword_aqua_gravel">aqua gravel</string>
     <string name="catalog_keyword_black">black</string>
     <string name="catalog_keyword_nano">nano</string>
