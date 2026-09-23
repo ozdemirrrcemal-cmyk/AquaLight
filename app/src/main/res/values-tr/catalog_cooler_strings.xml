@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="catalog_cooler_keyword_aquarium_cooler">akvaryum soğutucu</string>
+    <string name="catalog_cooler_keyword_cooling_fan">soğutma fanı</string>
+    <string name="catalog_cooler_keyword_chiller">chiller</string>
+    <string name="catalog_cooler_keyword_water_chiller">su soğutucu</string>
+    <string name="catalog_cooler_keyword_thermostat">termostat</string>
+    <string name="catalog_cooler_keyword_digital">dijital</string>
+    <string name="catalog_cooler_keyword_smart">akıllı</string>
+    <string name="catalog_cooler_keyword_thermoelectric">termoelektrik</string>
+    <string name="catalog_cooler_keyword_inline">hat içi</string>
+    <string name="catalog_cooler_keyword_drop_in">daldırma</string>
+    <string name="catalog_cooler_keyword_heating">ısıtma</string>
+</resources>

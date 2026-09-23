@@ -47,11 +47,6 @@
     <string name="catalog_brand_oase" translatable="false">Oase</string>
     <string name="catalog_brand_sunsun" translatable="false">SunSun</string>
     <string name="catalog_brand_tropica" translatable="false">Tropica</string>
-    <string name="catalog_material_cooler_aquael_fan_mini_name" translatable="false">Aquael Fan Mini</string>
-    <string name="catalog_material_cooler_chihiros_cooling_fan_name" translatable="false">Chihiros Cooling Fan</string>
-    <string name="catalog_material_cooler_ista_cooling_fan_name" translatable="false">ISTA Cooling Fan</string>
-    <string name="catalog_material_cooler_jbl_cooler_100_name" translatable="false">JBL Cooler 100</string>
-    <string name="catalog_material_cooler_jbl_cooler_200_name" translatable="false">JBL Cooler 200</string>
 
 <!-- Scientific cultivar names are locale-independent catalog data. -->
     <string name="catalog_plant_anubias_barteri_name" translatable="false">Anubias barteri</string>
