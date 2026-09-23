@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Substrate-only brand names not already present in shared catalog resources. -->
+    <string name="catalog_substrate_brand_fluval" translatable="false">Fluval</string>
+    <string name="catalog_substrate_brand_uns" translatable="false">UNS</string>
+    <string name="catalog_substrate_brand_2hr_aquarist" translatable="false">2HR Aquarist</string>
+    <string name="catalog_substrate_brand_glasgarten" translatable="false">GlasGarten</string>
+    <string name="catalog_substrate_brand_sl_aqua" translatable="false">SL-Aqua</string>
+    <string name="catalog_substrate_brand_jun" translatable="false">JUN</string>
+    <string name="catalog_substrate_brand_brightwell_aquatics" translatable="false">Brightwell Aquatics</string>
+    <string name="catalog_substrate_brand_ebi_gold" translatable="false">Ebi Gold</string>
+    <string name="catalog_substrate_brand_tetra" translatable="false">Tetra</string>
+    <string name="catalog_substrate_brand_sera" translatable="false">Sera</string>
+    <string name="catalog_substrate_brand_aquaforest" translatable="false">Aquaforest</string>
+    <string name="catalog_substrate_brand_yokuchi" translatable="false">Yokuchi</string>
+    <string name="catalog_substrate_brand_benibachi" translatable="false">Benibachi</string>
+    <string name="catalog_substrate_brand_shrimps_forever" translatable="false">Shrimps Forever</string>
+    <string name="catalog_substrate_brand_prize" translatable="false">Prize</string>
+    <string name="catalog_substrate_brand_seachem_aquavitro" translatable="false">Seachem / aquavitro</string>
+    <string name="catalog_substrate_brand_seachem" translatable="false">Seachem</string>
+    <string name="catalog_substrate_brand_caribsea" translatable="false">CaribSea</string>
+    <string name="catalog_substrate_brand_eurostar" translatable="false">EuroStar</string>
+
+    <!-- Official product names and package variants are not translated. -->
+    <string name="catalog_material_substrate_0005_name" translatable="false">ADA Aqua Soil Amazonia Ver.2 — 3 L</string>
+    <string name="catalog_material_substrate_0006_name" translatable="false">ADA Aqua Soil Amazonia Ver.2 — 9 L</string>
+    <string name="catalog_material_substrate_0007_name" translatable="false">ADA Aqua Soil Amazonia Ver.2 Powder — 3 L</string>
+    <string name="catalog_material_substrate_0008_name" translatable="false">ADA Aqua Soil Amazonia Ver.2 Powder — 9 L</string>
+    <string name="catalog_material_substrate_0009_name" translatable="false">ADA Power Sand Advance S — 2 L</string>
+    <string name="catalog_material_substrate_0010_name" translatable="false">ADA Power Sand Advance M — 6 L</string>
+    <string name="catalog_material_substrate_0011_name" translatable="false">ADA Power Sand Advance L — 6 L</string>
+    <string name="catalog_material_substrate_0012_name" translatable="false">ADA Bacter 100 — 100 g</string>
+    <string name="catalog_material_substrate_0013_name" translatable="false">ADA Bacter Ball</string>
+    <string name="catalog_material_substrate_0014_name" translatable="false">ADA Clear Super — 50 g</string>
+    <string name="catalog_material_substrate_0015_name" translatable="false">Tropica Aquarium Soil — 3 L</string>
+    <string name="catalog_material_substrate_0016_name" translatable="false">Tropica Aquarium Soil — 9 L</string>
+    <string name="catalog_material_substrate_0017_name" translatable="false">Tropica Aquarium Soil Powder — 3 L</string>
+    <string name="catalog_material_substrate_0018_name" translatable="false">Tropica Aquarium Soil Powder — 9 L</string>
+    <string name="catalog_material_substrate_0019_name" translatable="false">Tropica Plant Growth Substrate — 1 L</string>
+    <string name="catalog_material_substrate_0020_name" translatable="false">Tropica Plant Growth Substrate — 2.5 L</string>
+    <string name="catalog_material_substrate_0021_name" translatable="false">Tropica Plant Growth Substrate — 5 L</string>
+    <string name="catalog_material_substrate_0022_name" translatable="false">Dennerle Scaper\'s Soil — 4 L</string>
+    <string name="catalog_material_substrate_0023_name" translatable="false">Dennerle Scaper\'s Soil — 8 L</string>
+    <string name="catalog_material_substrate_0024_name" translatable="false">Dennerle Shrimp King Active Soil — 4 L</string>
+    <string name="catalog_material_substrate_0025_name" translatable="false">Dennerle Shrimp King Active Soil — 8 L</string>
+    <string name="catalog_material_substrate_0026_name" translatable="false">Dennerle Deponit Mix Pro 10in1 — 9.6 kg</string>
+    <string name="catalog_material_substrate_0027_name" translatable="false">Dennerle NutriBasis 6in1</string>
+    <string name="catalog_material_substrate_0028_name" translatable="false">JBL ProScape PlantSoil Brown — 3 L</string>
+    <string name="catalog_material_substrate_0029_name" translatable="false">JBL ProScape PlantSoil Brown — 9 L</string>
+    <string name="catalog_material_substrate_0030_name" translatable="false">JBL ProScape PlantSoil Beige — 3 L</string>
+    <string name="catalog_material_substrate_0031_name" translatable="false">JBL ProScape PlantSoil Beige — 9 L</string>
+    <string name="catalog_material_substrate_0032_name" translatable="false">JBL ProScape ShrimpSoil Brown — 3 L</string>
+    <string name="catalog_material_substrate_0033_name" translatable="false">JBL ProScape ShrimpSoil Brown — 9 L</string>
+    <string name="catalog_material_substrate_0034_name" translatable="false">JBL ProScape ShrimpSoil Beige — 3 L</string>
+    <string name="catalog_material_substrate_0035_name" translatable="false">JBL ProScape ShrimpSoil Beige — 9 L</string>
+    <string name="catalog_material_substrate_0036_name" translatable="false">JBL ProFlora AquaBasis Plus — 2.5 L</string>
+    <string name="catalog_material_substrate_0037_name" translatable="false">JBL ProFlora AquaBasis Plus — 5 L</string>
+    <string name="catalog_material_substrate_0038_name" translatable="false">JBL ProScape Volcano Mineral — 3 L</string>
+    <string name="catalog_material_substrate_0039_name" translatable="false">JBL ProScape Volcano Mineral — 9 L</string>
+    <string name="catalog_material_substrate_0040_name" translatable="false">JBL ProScape Volcano Powder — 250 g</string>
+    <string name="catalog_material_substrate_0041_name" translatable="false">JBL ProScape PlantStart — 2 x 8 g</string>
+    <string name="catalog_material_substrate_0042_name" translatable="false">Fluval Stratum — 2 kg</string>
+    <string name="catalog_material_substrate_0043_name" translatable="false">Fluval Stratum — 4 kg</string>
+    <string name="catalog_material_substrate_0044_name" translatable="false">Fluval Stratum — 8 kg</string>
+    <string name="catalog_material_substrate_0045_name" translatable="false">Fluval Bio-Stratum</string>
+    <string name="catalog_material_substrate_0046_name" translatable="false">Fluval Betta Stratum — 0.8 kg</string>
+    <string name="catalog_material_substrate_0047_name" translatable="false">OASE ScaperLine Soil Black — 3 L</string>
+    <string name="catalog_material_substrate_0048_name" translatable="false">OASE ScaperLine Soil Black — 9 L</string>
+    <string name="catalog_material_substrate_0049_name" translatable="false">OASE ScaperLine Soil Brown — 3 L</string>
+    <string name="catalog_material_substrate_0050_name" translatable="false">OASE ScaperLine Soil Brown — 9 L</string>
+    <string name="catalog_material_substrate_0051_name" translatable="false">OASE ScaperLine Soil Small Black — 3 L</string>
+    <string name="catalog_material_substrate_0052_name" translatable="false">OASE ScaperLine Soil Small Black — 9 L</string>
+    <string name="catalog_material_substrate_0053_name" translatable="false">OASE ScaperLine Soil Small Brown — 3 L</string>
+    <string name="catalog_material_substrate_0054_name" translatable="false">OASE ScaperLine Soil Small Brown — 9 L</string>
+    <string name="catalog_material_substrate_0055_name" translatable="false">OASE BaseSoil</string>
+    <string name="catalog_material_substrate_0056_name" translatable="false">AQUARIO Neo Soil Compact Plant — 3 L</string>
+    <string name="catalog_material_substrate_0057_name" translatable="false">AQUARIO Neo Soil Compact Plant — 8 L</string>
+    <string name="catalog_material_substrate_0058_name" translatable="false">AQUARIO Neo Soil Compact Plant Powder — 3 L</string>
+    <string name="catalog_material_substrate_0059_name" translatable="false">AQUARIO Neo Soil Compact Plant Powder — 8 L</string>
+    <string name="catalog_material_substrate_0060_name" translatable="false">AQUARIO Neo Soil Compact Shrimp — 3 L</string>
+    <string name="catalog_material_substrate_0061_name" translatable="false">AQUARIO Neo Soil Compact Shrimp — 8 L</string>
+    <string name="catalog_material_substrate_0062_name" translatable="false">AQUARIO Neo Soil Compact Shrimp Powder — 3 L</string>
+    <string name="catalog_material_substrate_0063_name" translatable="false">AQUARIO Neo Soil Compact Shrimp Powder — 8 L</string>
+    <string name="catalog_material_substrate_0064_name" translatable="false">AQUARIO Neo Soil No CO2 — 3 L / 8 L</string>
+    <string name="catalog_material_substrate_0065_name" translatable="false">AQUARIO Neo Soil Brown Plant</string>
+    <string name="catalog_material_substrate_0066_name" translatable="false">UNS Controsoil Black Normal — 1 / 3 / 10 L</string>
+    <string name="catalog_material_substrate_0067_name" translatable="false">UNS Controsoil Black Fine — 1 / 3 / 10 L</string>
+    <string name="catalog_material_substrate_0068_name" translatable="false">UNS Controsoil Black Extra Fine — 1 / 3 / 10 L</string>
+    <string name="catalog_material_substrate_0069_name" translatable="false">UNS Controsoil Brown Normal — 1 / 3 / 10 L</string>
+    <string name="catalog_material_substrate_0070_name" translatable="false">UNS Controsoil Brown Fine — 1 / 3 / 10 L</string>
+    <string name="catalog_material_substrate_0071_name" translatable="false">UNS Controsoil Brown Extra Fine — 1 / 3 / 10 L</string>
+    <string name="catalog_material_substrate_0072_name" translatable="false">UNS Controbase</string>
+    <string name="catalog_material_substrate_0073_name" translatable="false">2HR Aquarist APT Feast Aquarium Soil — 2 L</string>
+    <string name="catalog_material_substrate_0074_name" translatable="false">2HR Aquarist APT Feast Aquarium Soil — 5 L</string>
+    <string name="catalog_material_substrate_0075_name" translatable="false">GlasGarten Environment Aquarium Soil — 4 L</string>
+    <string name="catalog_material_substrate_0076_name" translatable="false">GlasGarten Environment Aquarium Soil — 9 L</string>
+    <string name="catalog_material_substrate_0077_name" translatable="false">GlasGarten Environment Aquarium Soil Powder — 4 L</string>
+    <string name="catalog_material_substrate_0078_name" translatable="false">GlasGarten Environment Aquarium Soil Powder — 9 L</string>
+    <string name="catalog_material_substrate_0079_name" translatable="false">SL-Aqua MORE Nature Soil Black S — 3 / 8 L</string>
+    <string name="catalog_material_substrate_0080_name" translatable="false">SL-Aqua MORE Nature Soil Black M — 3 / 8 L</string>
+    <string name="catalog_material_substrate_0081_name" translatable="false">SL-Aqua MORE Nature Soil Black L — 3 / 8 L</string>
+    <string name="catalog_material_substrate_0082_name" translatable="false">SL-Aqua MORE Nature Brown Soil S — 8 L</string>
+    <string name="catalog_material_substrate_0083_name" translatable="false">SL-Aqua MORE Nature Brown Soil M — 8 L</string>
+    <string name="catalog_material_substrate_0084_name" translatable="false">SL-Aqua MORE Nature Brown Soil L — 8 L</string>
+    <string name="catalog_material_substrate_0085_name" translatable="false">SL-Aqua Gokujou Black Soil</string>
+    <string name="catalog_material_substrate_0086_name" translatable="false">SL-Aqua Sulawesi Volcanic Rock Soil</string>
+    <string name="catalog_material_substrate_0087_name" translatable="false">SL-Aqua Mironekuton</string>
+    <string name="catalog_material_substrate_0088_name" translatable="false">SL-Aqua Montmorillonite</string>
+    <string name="catalog_material_substrate_0089_name" translatable="false">JUN Platinum Soil Black Normal — 1 / 3 / 8 L</string>
+    <string name="catalog_material_substrate_0090_name" translatable="false">JUN Platinum Soil Black Powder — 1 / 3 / 8 L</string>
+    <string name="catalog_material_substrate_0091_name" translatable="false">JUN Platinum Soil Black Super Powder — 1 / 3 / 8 L</string>
+    <string name="catalog_material_substrate_0092_name" translatable="false">JUN Platinum Soil Brown Normal — 1 / 3 / 8 L</string>
+    <string name="catalog_material_substrate_0093_name" translatable="false">JUN Platinum Soil Brown Powder — 1 / 3 / 8 L</string>
+    <string name="catalog_material_substrate_0094_name" translatable="false">JUN Platinum Soil Brown Super Powder — 1 / 3 / 8 L</string>
+    <string name="catalog_material_substrate_0095_name" translatable="false">JUN Master Soil Next Black Normal — 3 / 8 L</string>
+    <string name="catalog_material_substrate_0096_name" translatable="false">JUN Master Soil Next Black Powder — 3 / 8 L</string>
+    <string name="catalog_material_substrate_0097_name" translatable="false">JUN Master Soil Next Black Super Powder — 3 L</string>
+    <string name="catalog_material_substrate_0098_name" translatable="false">ISTA Water Plant Soil pH 6.5 Medium — 2 / 9 L</string>
+    <string name="catalog_material_substrate_0099_name" translatable="false">ISTA Water Plant Soil pH 6.5 Small — 2 / 9 L</string>
+    <string name="catalog_material_substrate_0100_name" translatable="false">ISTA Substrate Premium Soil S — 2 / 8 L</string>
+    <string name="catalog_material_substrate_0101_name" translatable="false">ISTA Substrate Premium Soil L — 2 / 8 L</string>
+    <string name="catalog_material_substrate_0102_name" translatable="false">ISTA Plant &amp; Shrimp Soil pH 5.5 — 2 L</string>
+    <string name="catalog_material_substrate_0103_name" translatable="false">Brightwell Aquatics FlorinVolcanit / Rio Escuro Fine — 5 / 15 / 24 lb</string>
+    <string name="catalog_material_substrate_0104_name" translatable="false">Brightwell Aquatics FlorinVolcanit / Rio Escuro Medium</string>
+    <string name="catalog_material_substrate_0105_name" translatable="false">Brightwell Aquatics FlorinVolcanit / Rio Escuro Extra Fine</string>
+    <string name="catalog_material_substrate_0106_name" translatable="false">Brightwell Aquatics Rio Cafe Fine</string>
+    <string name="catalog_material_substrate_0107_name" translatable="false">Brightwell Aquatics Rio Cafe Medium</string>
+    <string name="catalog_material_substrate_0108_name" translatable="false">Brightwell Aquatics Rio Cafe Extra Fine</string>
+    <string name="catalog_material_substrate_0109_name" translatable="false">Brightwell Aquatics FlorinBase Laterin Substrat VF</string>
+    <string name="catalog_material_substrate_0110_name" translatable="false">Brightwell Aquatics FlorinBase Laterite Powder</string>
+    <string name="catalog_material_substrate_0111_name" translatable="false">Ebi Gold Shrimp Soil — 5 L</string>
+    <string name="catalog_material_substrate_0112_name" translatable="false">Ebi Gold Waterplant Soil — 5 L</string>
+    <string name="catalog_material_substrate_0113_name" translatable="false">Ebi Gold Waterplant Soil Powder — 5 L</string>
+    <string name="catalog_material_substrate_0114_name" translatable="false">Ebi Gold Waterplant Soil Natural Brown — 5 L</string>
+    <string name="catalog_material_substrate_0115_name" translatable="false">Tetra ActiveSubstrate — 3 L</string>
+    <string name="catalog_material_substrate_0116_name" translatable="false">Tetra ActiveSubstrate — 6 L</string>
+    <string name="catalog_material_substrate_0117_name" translatable="false">Tetra CompleteSubstrate — 2.5 kg</string>
+    <string name="catalog_material_substrate_0118_name" translatable="false">Sera Aquarium Gravel Floredepot Substrate — 2.4 kg</string>
+    <string name="catalog_material_substrate_0119_name" translatable="false">Sera Aquarium Gravel Floredepot Substrate — 4.7 kg</string>
+    <string name="catalog_material_substrate_0120_name" translatable="false">Aquaforest AF Natural Substrate — 7.5 L</string>
+    <string name="catalog_material_substrate_0121_name" translatable="false">Aquaforest AF Lava Soil — 5 L</string>
+    <string name="catalog_material_substrate_0122_name" translatable="false">Aquaforest AF Lava Soil Black — 5 L</string>
+    <string name="catalog_material_substrate_0123_name" translatable="false">Yokuchi Jiban Soil — 10 L</string>
+    <string name="catalog_material_substrate_0124_name" translatable="false">Yokuchi Jiban Soil Powder — 10 L</string>
+    <string name="catalog_material_substrate_0125_name" translatable="false">Benibachi Black Soil — 5 kg</string>
+    <string name="catalog_material_substrate_0126_name" translatable="false">Shrimps Forever Shrimps Soil — 9 L</string>
+    <string name="catalog_material_substrate_0127_name" translatable="false">Prize Aquasoil — 3 L</string>
+    <string name="catalog_material_substrate_0128_name" translatable="false">Prize Aquasoil — 9 L</string>
+    <string name="catalog_material_substrate_0129_name" translatable="false">Prize Aquasoil Powder — 3 L</string>
+    <string name="catalog_material_substrate_0130_name" translatable="false">Prize Aquasoil Powder — 9 L</string>
+    <string name="catalog_material_substrate_0131_name" translatable="false">Seachem / aquavitro Aquasolum Black Humate — 4 kg</string>
+    <string name="catalog_material_substrate_0132_name" translatable="false">Seachem Flourite — 7 kg</string>
+    <string name="catalog_material_substrate_0133_name" translatable="false">Seachem Flourite Black — 7 kg</string>
+    <string name="catalog_material_substrate_0134_name" translatable="false">Seachem Flourite Dark — 7 kg</string>
+    <string name="catalog_material_substrate_0135_name" translatable="false">Seachem Flourite Red — 7 kg</string>
+    <string name="catalog_material_substrate_0136_name" translatable="false">CaribSea Eco-Complete Planted Aquarium Substrate Black</string>
+    <string name="catalog_material_substrate_0137_name" translatable="false">CaribSea Eco-Complete Planted Aquarium Substrate Red</string>
+    <string name="catalog_material_substrate_0138_name" translatable="false">EuroStar AquaClay — 5 / 10 L</string>
+</resources>

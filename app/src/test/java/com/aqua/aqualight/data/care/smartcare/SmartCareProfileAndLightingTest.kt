@@ -37,6 +37,45 @@ class SmartCareProfileAndLightingTest {
   }
 
   @Test
+  fun `active soil classification follows exact product identity`() {
+    val profile = profile(
+      tankType = AquariumTankTaxonomy.TYPE_PLANTED,
+      tankStyle = AquariumTankTaxonomy.STYLE_NATURE_AQUARIUM,
+      setupDay = 1,
+      substrateProductId = "substrate_chihiros_aquasoil_9l",
+      substrateName = "Neutral display text"
+    )
+
+    assertTrue(profile.hasActiveSoil)
+  }
+
+  @Test
+  fun `inert substrate never inherits active soil from its display name`() {
+    val profile = profile(
+      tankType = AquariumTankTaxonomy.TYPE_PLANTED,
+      tankStyle = AquariumTankTaxonomy.STYLE_NATURE_AQUARIUM,
+      setupDay = 1,
+      substrateProductId = "substrate_0086",
+      substrateName = "Active Soil Amazonia"
+    )
+
+    assertFalse(profile.hasActiveSoil)
+  }
+
+  @Test
+  fun `unknown custom substrate fails closed even when its name says soil`() {
+    val profile = profile(
+      tankType = AquariumTankTaxonomy.TYPE_PLANTED,
+      tankStyle = AquariumTankTaxonomy.STYLE_NATURE_AQUARIUM,
+      setupDay = 1,
+      substrateProductId = "custom_substrate_active_soil",
+      substrateName = "Active Soil"
+    )
+
+    assertFalse(profile.hasActiveSoil)
+  }
+
+  @Test
   fun `first three weeks recommend six hours without invented intensity`() {
     val recommendation = requireNotNull(
       SmartCareLightingAdvisor.recommend(
@@ -88,7 +127,9 @@ class SmartCareProfileAndLightingTest {
   private fun profile(
     tankType: String,
     tankStyle: String,
-    setupDay: Int
+    setupDay: Int,
+    substrateProductId: String = "substrate_chihiros_aquasoil_9l",
+    substrateName: String = "Chihiros Aquasoil 9L"
   ): SmartCareTankProfile {
     val tank = SavedAquariumTank(
       id = 1L,
@@ -115,7 +156,12 @@ class SmartCareProfileAndLightingTest {
       ),
       materials = listOf(
         material(3L, "light", "light-device"),
-        material(4L, "substrate", "ADA Amazonia Soil")
+        material(
+          id = 4L,
+          category = "substrate",
+          productId = substrateProductId,
+          name = substrateName
+        )
       )
     )
     return SmartCareProfileBuilder.build(tank, nowMillis)
@@ -124,11 +170,12 @@ class SmartCareProfileAndLightingTest {
   private fun material(
     id: Long,
     category: String,
-    name: String
+    productId: String,
+    name: String = productId
   ): SavedAquariumMaterial {
     return SavedAquariumMaterial(
       id = id,
-      productId = name,
+      productId = productId,
       categoryKey = category,
       categoryTitle = category,
       name = name,

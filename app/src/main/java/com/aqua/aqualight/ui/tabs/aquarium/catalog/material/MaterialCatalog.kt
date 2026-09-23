@@ -7,7 +7,7 @@ import com.aqua.aqualight.application.aquarium.AquariumSubstrateSemantic
 object MaterialCatalog {
 
     private const val POPULAR_KEYWORD_LIMIT = 4
-    const val EXPECTED_SUBSTRATE_PRODUCT_COUNT = 185
+    const val EXPECTED_SUBSTRATE_PRODUCT_COUNT = 319
 
     val definitions: List<AquariumMaterialDefinition> =
         FertilizerCatalog.definitions +
