@@ -75,7 +75,7 @@ class AlgaeAnalysisEngineTest {
                 trend = AlgaeTrend.STABLE
             ),
             context = AlgaeTankContext(
-                lightDurationMinutes = 8 * 60,
+                lightDurationState = AlgaeLightDurationState.WITHIN_RANGE,
                 lightExposureState = AlgaeLightExposureState.WITHIN_RANGE,
                 waterQuality = AlgaeWaterQualityContext(
                     nitrateState = WaterParameterState.NORMAL,
@@ -109,7 +109,7 @@ class AlgaeAnalysisEngineTest {
             )
         )
 
-        assertTrue(AlgaeMissingData.LIGHT_SCHEDULE in result.missingData)
+        assertTrue(AlgaeMissingData.LIGHT_PROFILE in result.missingData)
         assertTrue(result.factors.none { factor ->
             factor.factor == AlgaeFactorId.LIGHT_DURATION ||
                 factor.factor == AlgaeFactorId.LIGHT_INTENSITY
