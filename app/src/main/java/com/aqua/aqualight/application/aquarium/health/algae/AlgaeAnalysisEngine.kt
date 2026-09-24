@@ -2,10 +2,6 @@ package com.aqua.aqualight.application.aquarium.health.algae
 
 object AlgaeAnalysisEngine {
 
-    private const val LONG_LIGHT_MINUTES = 10 * 60
-    private const val STARTUP_TANK_DAYS = 90
-    private const val WARM_WATER_C = 26.0
-
     fun analyze(
         observation: AlgaeObservationInput,
         context: AlgaeTankContext
@@ -21,7 +17,7 @@ object AlgaeAnalysisEngine {
         evaluateTankMaturity(profile, context, factorScores)
         evaluatePlantStress(profile, context, factorScores)
         evaluateFlow(observation, profile, context, factorScores)
-        evaluateTemperature(profile, context, factorScores)
+        evaluateTemperature(profile, context, factorScores, missingData)
 
         val factors = factorScores
             .map { (factor, score) ->
@@ -54,17 +50,22 @@ object AlgaeAnalysisEngine {
         missingData: MutableSet<AlgaeMissingData>
     ) {
         profile.factorWeights[AlgaeFactorId.LIGHT_DURATION]?.let { weight ->
-            val duration = context.lightDurationMinutes
-            if (duration == null) {
-                missingData += AlgaeMissingData.LIGHT_SCHEDULE
-            } else if (duration > LONG_LIGHT_MINUTES) {
-                factorScores[AlgaeFactorId.LIGHT_DURATION] = weight
+            when (context.lightDurationState) {
+                AlgaeLightDurationState.UNKNOWN ->
+                    missingData += AlgaeMissingData.LIGHT_PROFILE
+                AlgaeLightDurationState.EXTENDED ->
+                    factorScores[AlgaeFactorId.LIGHT_DURATION] = weight
+                AlgaeLightDurationState.WITHIN_RANGE -> Unit
             }
         }
 
-        if (context.lightExposureState == AlgaeLightExposureState.HIGH) {
-            profile.factorWeights[AlgaeFactorId.LIGHT_INTENSITY]?.let { weight ->
-                factorScores[AlgaeFactorId.LIGHT_INTENSITY] = weight
+        profile.factorWeights[AlgaeFactorId.LIGHT_INTENSITY]?.let { weight ->
+            when (context.lightExposureState) {
+                AlgaeLightExposureState.UNKNOWN ->
+                    missingData += AlgaeMissingData.LIGHT_PROFILE
+                AlgaeLightExposureState.HIGH ->
+                    factorScores[AlgaeFactorId.LIGHT_INTENSITY] = weight
+                AlgaeLightExposureState.WITHIN_RANGE -> Unit
             }
         }
     }
@@ -195,10 +196,7 @@ object AlgaeAnalysisEngine {
         context: AlgaeTankContext,
         factorScores: MutableMap<AlgaeFactorId, Int>
     ) {
-        if (
-            context.tankAgeDays != null &&
-            context.tankAgeDays <= STARTUP_TANK_DAYS
-        ) {
+        if (context.startupPeriod == true) {
             profile.factorWeights[AlgaeFactorId.IMMATURE_TANK]?.let { weight ->
                 factorScores[AlgaeFactorId.IMMATURE_TANK] = weight
             }
@@ -242,11 +240,16 @@ object AlgaeAnalysisEngine {
     private fun evaluateTemperature(
         profile: AlgaeKnowledgeProfile,
         context: AlgaeTankContext,
-        factorScores: MutableMap<AlgaeFactorId, Int>
+        factorScores: MutableMap<AlgaeFactorId, Int>,
+        missingData: MutableSet<AlgaeMissingData>
     ) {
-        if (context.temperatureC != null && context.temperatureC >= WARM_WATER_C) {
-            profile.factorWeights[AlgaeFactorId.WARM_WATER]?.let { weight ->
-                factorScores[AlgaeFactorId.WARM_WATER] = weight
+        profile.factorWeights[AlgaeFactorId.WARM_WATER]?.let { weight ->
+            when (context.temperatureState) {
+                AlgaeTemperatureState.UNKNOWN ->
+                    missingData += AlgaeMissingData.TEMPERATURE_CONTEXT
+                AlgaeTemperatureState.WARM ->
+                    factorScores[AlgaeFactorId.WARM_WATER] = weight
+                AlgaeTemperatureState.WITHIN_RANGE -> Unit
             }
         }
     }
