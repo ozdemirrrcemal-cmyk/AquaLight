@@ -151,47 +151,6 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
         }
     }
 
-    private fun renderTabState(
-        selected: Boolean,
-        card: com.google.android.material.card.MaterialCardView,
-        text: android.widget.TextView
-    ) {
-        val context = requireContext()
-
-        card.setCardBackgroundColor(
-            ContextCompat.getColor(
-                context,
-                if (selected) {
-                    R.color.aqua_surface_action
-                } else {
-                    R.color.aqua_card_metric_surface
-                }
-            )
-        )
-        card.strokeColor = ContextCompat.getColor(
-            context,
-            if (selected) {
-                R.color.aqua_accent_primary
-            } else {
-                R.color.aqua_card_metric_outline
-            }
-        )
-        text.setTextColor(
-            ContextCompat.getColor(
-                context,
-                if (selected) {
-                    R.color.aqua_content_on_dark
-                } else {
-                    R.color.aqua_card_text_secondary
-                }
-            )
-        )
-        text.setTypeface(
-            text.typeface,
-            if (selected) Typeface.BOLD else Typeface.NORMAL
-        )
-    }
-
     private fun ensureAlgaeControlFragment() {
         if (childFragmentManager.findFragmentByTag(ALGAE_FRAGMENT_TAG) != null) {
             return
@@ -228,4 +187,35 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
         private const val KEY_SELECTED_SECTION = "selectedSection"
         private const val ALGAE_FRAGMENT_TAG = "tankAlgaeControl"
     }
+}
+
+private fun Fragment.renderTabState(
+    selected: Boolean,
+    card: com.google.android.material.card.MaterialCardView,
+    text: android.widget.TextView
+) {
+    val context = requireContext()
+    val backgroundColor = if (selected) {
+        R.color.aqua_surface_action
+    } else {
+        R.color.aqua_card_metric_surface
+    }
+    val strokeColor = if (selected) {
+        R.color.aqua_accent_primary
+    } else {
+        R.color.aqua_card_metric_outline
+    }
+    val textColor = if (selected) {
+        R.color.aqua_content_on_dark
+    } else {
+        R.color.aqua_card_text_secondary
+    }
+
+    card.setCardBackgroundColor(ContextCompat.getColor(context, backgroundColor))
+    card.strokeColor = ContextCompat.getColor(context, strokeColor)
+    text.setTextColor(ContextCompat.getColor(context, textColor))
+    text.setTypeface(
+        text.typeface,
+        if (selected) Typeface.BOLD else Typeface.NORMAL
+    )
 }
