@@ -12,7 +12,6 @@
 
     <string name="algae_control_type_title">1. Algae Type</string>
     <string name="algae_control_type_subtitle">Select the closest match to what you see in the tank.</string>
-    <string name="algae_control_search_hint">Search algae…</string>
     <string name="algae_control_location_title">2. Where Is It Visible?</string>
     <string name="algae_control_location_subtitle">Select every area where you can see it.</string>
     <string name="algae_location_front_glass">Front glass</string>
