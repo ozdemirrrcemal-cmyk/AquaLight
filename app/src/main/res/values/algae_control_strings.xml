@@ -67,11 +67,10 @@
     <string name="algae_factor_water_change_interval">Water-change interval</string>
     <string name="algae_factor_nitrogen_waste">Nitrogen waste</string>
     <string name="algae_factor_nutrient_imbalance">Nutrient balance</string>
-    <string name="algae_factor_low_phosphate">Low-phosphate context</string>
+    <string name="algae_factor_phosphate_imbalance">Phosphate balance context</string>
     <string name="algae_factor_low_nitrate">Low-nitrate context</string>
     <string name="algae_factor_immature_tank">Young tank</string>
     <string name="algae_factor_plant_stress">Plant stress</string>
-    <string name="algae_factor_low_plant_mass">Low plant mass</string>
     <string name="algae_factor_flow_oxygenation">Flow / oxygenation</string>
     <string name="algae_factor_warm_water">Warm water</string>
 
