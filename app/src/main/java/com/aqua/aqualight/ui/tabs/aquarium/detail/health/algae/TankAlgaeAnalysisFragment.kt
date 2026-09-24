@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail.health.algae
 
 import android.os.Bundle
 import android.view.View
+import androidx.activity.OnBackPressedCallback
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -66,6 +67,14 @@ class TankAlgaeAnalysisFragment : Fragment(R.layout.fragment_tank_algae_analysis
         _binding = FragmentTankAlgaeAnalysisBinding.bind(view)
 
         setupHeader()
+        requireActivity().onBackPressedDispatcher.addCallback(
+            viewLifecycleOwner,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    returnToOverview()
+                }
+            }
+        )
         setupActions()
         renderObservationHeader()
         observeTankAndAnalyze()
