@@ -37,6 +37,14 @@ enum class AlgaeTrend {
     DECREASING
 }
 
+enum class AlgaeSignalState {
+    LOW,
+    NORMAL,
+    ELEVATED,
+    HIGH,
+    UNKNOWN
+}
+
 enum class AlgaeFactorId {
     LIGHT_DURATION,
     LIGHT_INTENSITY,
@@ -76,10 +84,12 @@ enum class AlgaeActionId {
 }
 
 enum class AlgaeMissingData {
-    LIGHT_SCHEDULE,
+    LIGHT_PROFILE,
     CO2_SCHEDULE,
     WATER_ANALYSIS,
-    MAINTENANCE_HISTORY
+    MAINTENANCE_HISTORY,
+    PLANT_MASS,
+    TEMPERATURE_CONTEXT
 }
 
 enum class AlgaeFactorStrength {
@@ -94,32 +104,27 @@ enum class AlgaeAnalysisPriority {
     ACTION_RECOMMENDED
 }
 
-enum class WaterParameterState {
-    LOW,
-    NORMAL,
-    ELEVATED,
-    HIGH,
-    UNKNOWN
-}
-
 data class AlgaeWaterQualityContext(
-    val nitrateState: WaterParameterState = WaterParameterState.UNKNOWN,
-    val phosphateState: WaterParameterState = WaterParameterState.UNKNOWN,
-    val nitriteState: WaterParameterState = WaterParameterState.UNKNOWN,
-    val ammoniaState: WaterParameterState = WaterParameterState.UNKNOWN
+    val nitrateState: AlgaeSignalState = AlgaeSignalState.UNKNOWN,
+    val phosphateState: AlgaeSignalState = AlgaeSignalState.UNKNOWN,
+    val nitriteState: AlgaeSignalState = AlgaeSignalState.UNKNOWN,
+    val ammoniaState: AlgaeSignalState = AlgaeSignalState.UNKNOWN
 )
 
 data class AlgaeTankContext(
-    val tankAgeDays: Int? = null,
-    val lightDurationMinutes: Int? = null,
-    val lightIntensityPercent: Int? = null,
+    val startupPeriod: Boolean? = null,
+    val lightDurationState: AlgaeSignalState = AlgaeSignalState.UNKNOWN,
+    val lightIntensityState: AlgaeSignalState = AlgaeSignalState.UNKNOWN,
     val hasCo2: Boolean? = null,
     val co2ScheduleKnown: Boolean = false,
-    val co2LeadMinutesBeforeLight: Int? = null,
-    val daysSinceWaterChange: Int? = null,
-    val daysSinceFilterMaintenance: Int? = null,
-    val plantCount: Int? = null,
-    val temperatureC: Double? = null,
+    val co2TimingState: AlgaeSignalState = AlgaeSignalState.UNKNOWN,
+    val waterChangeOverdue: Boolean? = null,
+    val filterMaintenanceOverdue: Boolean? = null,
+    val organicLoadState: AlgaeSignalState = AlgaeSignalState.UNKNOWN,
+    val plantStressState: AlgaeSignalState = AlgaeSignalState.UNKNOWN,
+    val plantMassState: AlgaeSignalState = AlgaeSignalState.UNKNOWN,
+    val flowOrOxygenationState: AlgaeSignalState = AlgaeSignalState.UNKNOWN,
+    val temperatureState: AlgaeSignalState = AlgaeSignalState.UNKNOWN,
     val waterQuality: AlgaeWaterQualityContext = AlgaeWaterQualityContext()
 )
 
