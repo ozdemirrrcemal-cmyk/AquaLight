@@ -15,11 +15,7 @@ internal class AlgaeCatalogController(
 ) {
 
     private val commonAdapter = AlgaeCatalogAdapter(onCommonSelected)
-    private val typeAdapter = AlgaeCatalogAdapter { type ->
-        selectedType = type
-        typeAdapter.setSelected(type)
-        onTypeSelected(type)
-    }
+    private val typeAdapter = AlgaeCatalogAdapter(::handleTypeSelected)
 
     var selectedType: AlgaeTypeId? = null
         private set
@@ -49,6 +45,12 @@ internal class AlgaeCatalogController(
     fun select(type: AlgaeTypeId?) {
         selectedType = type
         typeAdapter.setSelected(type)
+    }
+
+    private fun handleTypeSelected(type: AlgaeTypeId) {
+        selectedType = type
+        typeAdapter.setSelected(type)
+        onTypeSelected(type)
     }
 
     fun reset() {
