@@ -263,28 +263,11 @@
                 android:textColor="@color/aqua_card_text_secondary"
                 android:textSize="@dimen/aqua_text_size_body_small" />
 
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.Aqua.Input.Layout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/aqua_size_12"
-                android:hint="@string/algae_control_search_hint">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etAlgaeSearch"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="text"
-                    android:maxLines="1"
-                    android:singleLine="true" />
-
-            </com.google.android.material.textfield.TextInputLayout>
-
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/algaeTypeRecycler"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/aqua_size_10"
+                android:layout_marginTop="@dimen/aqua_size_12"
                 android:clipToPadding="false"
                 android:nestedScrollingEnabled="false"
                 android:overScrollMode="never" />
