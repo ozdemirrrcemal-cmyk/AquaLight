@@ -19,19 +19,15 @@ class AlgaeAnalysisEngineTest {
                 trend = AlgaeTrend.INCREASING
             ),
             context = AlgaeTankContext(
-                lightDurationMinutes = 8 * 60,
-                lightIntensityPercent = 70,
+                lightDurationState = AlgaeSignalState.NORMAL,
+                lightIntensityState = AlgaeSignalState.NORMAL,
                 hasCo2 = true,
                 co2ScheduleKnown = true,
-                co2LeadMinutesBeforeLight = 30,
-                daysSinceWaterChange = 12,
-                daysSinceFilterMaintenance = 35,
-                waterQuality = AlgaeWaterQualityContext(
-                    nitrateState = WaterParameterState.NORMAL,
-                    phosphateState = WaterParameterState.NORMAL,
-                    nitriteState = WaterParameterState.NORMAL,
-                    ammoniaState = WaterParameterState.NORMAL
-                )
+                co2TimingState = AlgaeSignalState.ELEVATED,
+                waterChangeOverdue = true,
+                filterMaintenanceOverdue = true,
+                organicLoadState = AlgaeSignalState.ELEVATED,
+                waterQuality = normalWater()
             )
         )
 
@@ -81,13 +77,13 @@ class AlgaeAnalysisEngineTest {
                 trend = AlgaeTrend.STABLE
             ),
             context = AlgaeTankContext(
-                lightDurationMinutes = 8 * 60,
-                lightIntensityPercent = 70,
+                lightDurationState = AlgaeSignalState.NORMAL,
+                lightIntensityState = AlgaeSignalState.NORMAL,
                 waterQuality = AlgaeWaterQualityContext(
-                    nitrateState = WaterParameterState.NORMAL,
-                    phosphateState = WaterParameterState.LOW,
-                    nitriteState = WaterParameterState.NORMAL,
-                    ammoniaState = WaterParameterState.NORMAL
+                    nitrateState = AlgaeSignalState.NORMAL,
+                    phosphateState = AlgaeSignalState.LOW,
+                    nitriteState = AlgaeSignalState.NORMAL,
+                    ammoniaState = AlgaeSignalState.NORMAL
                 )
             )
         )
@@ -99,4 +95,32 @@ class AlgaeAnalysisEngineTest {
             action.action == AlgaeActionId.REVIEW_NO3_PO4_BALANCE
         })
     }
+
+    @Test
+    fun unknownLightProfileIsMissingDataNotHighLight() {
+        val result = AlgaeAnalysisEngine.analyze(
+            observation = AlgaeObservationInput(
+                algaeType = AlgaeTypeId.GREEN_WATER,
+                locations = setOf(AlgaeObservationLocation.WATER_COLUMN),
+                density = AlgaeDensity.MEDIUM,
+                trend = AlgaeTrend.STABLE
+            ),
+            context = AlgaeTankContext(
+                waterQuality = normalWater()
+            )
+        )
+
+        assertTrue(AlgaeMissingData.LIGHT_PROFILE in result.missingData)
+        assertTrue(result.factors.none { factor ->
+            factor.factor == AlgaeFactorId.LIGHT_DURATION ||
+                factor.factor == AlgaeFactorId.LIGHT_INTENSITY
+        })
+    }
+
+    private fun normalWater() = AlgaeWaterQualityContext(
+        nitrateState = AlgaeSignalState.NORMAL,
+        phosphateState = AlgaeSignalState.NORMAL,
+        nitriteState = AlgaeSignalState.NORMAL,
+        ammoniaState = AlgaeSignalState.NORMAL
+    )
 }
