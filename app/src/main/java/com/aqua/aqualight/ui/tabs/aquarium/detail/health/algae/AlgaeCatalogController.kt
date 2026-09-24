@@ -26,9 +26,7 @@ internal class AlgaeCatalogController(
             adapter = commonAdapter
             itemAnimator = null
         }
-        commonAdapter.submitItems(
-            AlgaeUiCatalog.definitions.take(COMMON_TYPE_COUNT)
-        )
+        commonAdapter.submitItems(AlgaeUiCatalog.commonDefinitions)
 
         binding.algaeTypeRecycler.apply {
             layoutManager = GridLayoutManager(context, TYPE_GRID_COLUMNS)
@@ -66,9 +64,12 @@ internal class AlgaeCatalogController(
             AlgaeUiCatalog.definitions
         } else {
             AlgaeUiCatalog.definitions.filter { definition ->
-                context.getString(definition.nameRes)
+                val name = context.getString(definition.nameRes)
                     .lowercase(Locale.getDefault())
-                    .contains(normalized)
+                val description = context.getString(definition.shortDescriptionRes)
+                    .lowercase(Locale.getDefault())
+
+                name.contains(normalized) || description.contains(normalized)
             }
         }
 
@@ -81,6 +82,5 @@ internal class AlgaeCatalogController(
     companion object {
         private const val COMMON_GRID_COLUMNS = 4
         private const val TYPE_GRID_COLUMNS = 3
-        private const val COMMON_TYPE_COUNT = 4
     }
 }
