@@ -78,7 +78,7 @@
                             android:contentDescription="@null"
                             android:importantForAccessibility="no"
                             android:scaleType="centerCrop"
-                            android:src="@drawable/algae_hair_thread" />
+                            android:src="@drawable/algae_hair" />
 
                     </GridLayout>
 
