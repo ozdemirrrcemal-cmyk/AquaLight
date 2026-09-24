@@ -135,12 +135,10 @@ class TankAlgaeControlFragment : Fragment(R.layout.fragment_tank_algae_control) 
         val trend = choices?.trend
         val locations = choices?.locations.orEmpty()
 
-        if (
-            algaeType != null &&
-            density != null &&
-            trend != null &&
-            locations.isNotEmpty()
-        ) {
+        val hasCoreSelection = algaeType != null && density != null
+        val hasCompleteSelection = hasCoreSelection && trend != null
+
+        if (hasCompleteSelection && locations.isNotEmpty()) {
             findNavController().navigateSafelyFrom(
                 sourceDestinationId = R.id.tankHealthFragment,
                 directions = TankHealthFragmentDirections
