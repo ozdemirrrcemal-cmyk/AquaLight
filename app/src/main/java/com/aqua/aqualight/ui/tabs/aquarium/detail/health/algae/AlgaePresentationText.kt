@@ -51,11 +51,11 @@ object AlgaePresentationText {
         AlgaeFactorId.WATER_CHANGE_INTERVAL -> R.string.algae_factor_water_change_interval
         AlgaeFactorId.NITROGEN_WASTE -> R.string.algae_factor_nitrogen_waste
         AlgaeFactorId.NUTRIENT_IMBALANCE -> R.string.algae_factor_nutrient_imbalance
-        AlgaeFactorId.LOW_PHOSPHATE_CONTEXT -> R.string.algae_factor_low_phosphate
+        AlgaeFactorId.PHOSPHATE_IMBALANCE_CONTEXT ->
+            R.string.algae_factor_phosphate_imbalance
         AlgaeFactorId.LOW_NITRATE_CONTEXT -> R.string.algae_factor_low_nitrate
         AlgaeFactorId.IMMATURE_TANK -> R.string.algae_factor_immature_tank
         AlgaeFactorId.PLANT_STRESS -> R.string.algae_factor_plant_stress
-        AlgaeFactorId.LOW_PLANT_MASS -> R.string.algae_factor_low_plant_mass
         AlgaeFactorId.FLOW_OR_OXYGENATION -> R.string.algae_factor_flow_oxygenation
         AlgaeFactorId.WARM_WATER -> R.string.algae_factor_warm_water
     }
