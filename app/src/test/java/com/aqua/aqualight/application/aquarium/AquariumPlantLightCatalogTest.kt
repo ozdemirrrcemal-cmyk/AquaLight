@@ -8,11 +8,11 @@ class AquariumPlantLightCatalogTest {
     @Test
     fun everyPlantHasOneMinimumLightRequirement() {
         val records = AquariumPlantLightCatalog.records
-        assertEquals(248, records.size)
+        assertEquals(257, records.size)
         assertEquals(records.size, records.map { it.catalogId }.toSet().size)
         assertEquals(
             mapOf(
-                AquariumPlantLightDemand.LOW to 63,
+                AquariumPlantLightDemand.LOW to 72,
                 AquariumPlantLightDemand.MEDIUM to 136,
                 AquariumPlantLightDemand.HIGH to 49
             ),

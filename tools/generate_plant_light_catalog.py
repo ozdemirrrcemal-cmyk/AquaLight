@@ -19,12 +19,12 @@ def render():
     raw = ASSET.read_text(encoding="utf-8")
     catalog = json.loads(raw)
     records = catalog["records"]
-    assert catalog["recordCount"] == len(records) == 248
+    assert catalog["recordCount"] == len(records) == 257
     assert not re.search(r"https?://|www\.|sourceUrl|sourceOrganization|selectedRecordEvidence", raw, re.I)
     ids = ["plant:" + row["recordId"].removeprefix("plant-").replace("-", "_") for row in records]
-    assert len(set(ids)) == 248
+    assert len(set(ids)) == len(records)
     assert all(row["placement"] and row["lightRequirement"] in MINIMUM for row in records)
-    assert Counter(row["healthDataStatus"] for row in records) == {"VERIFIED": 182, "PARTIAL": 66}
+    assert Counter(row["healthDataStatus"] for row in records) == {"VERIFIED": 182, "PARTIAL": 75}
 
     lines = [
         "package com.aqua.aqualight.application.aquarium", "",
@@ -35,16 +35,19 @@ def render():
         "    val catalogRevision: Int = AquariumPlantLightCatalog.CATALOG_REVISION", ")", "",
         "/** Exact catalog identities. A range uses its lowest supported light as the minimum demand. */",
         "object AquariumPlantLightCatalog {", "    const val CATALOG_REVISION: Int = 2",
-        "    const val EXPECTED_RECORD_COUNT: Int = 248", "",
+        "    const val EXPECTED_RECORD_COUNT: Int = 257", "",
         "    val records: List<AquariumPlantLightCatalogRecord> = listOf("
     ]
     for i, (row, identity) in enumerate(zip(records, ids)):
         demand = MINIMUM[row["lightRequirement"]]
-        comma = "," if i < 247 else ""
-        lines.append(
-            f'        AquariumPlantLightCatalogRecord("{identity}", '
-            f'AquariumPlantLightDemand.{demand}, "{row["lightRequirement"]}"){comma}'
-        )
+        comma = "," if i < len(records) - 1 else ""
+        lines.extend([
+            "        AquariumPlantLightCatalogRecord(",
+            f'            catalogId = "{identity}",',
+            f"            lightDemand = AquariumPlantLightDemand.{demand},",
+            f'            lightRequirement = "{row["lightRequirement"]}"',
+            f"        ){comma}",
+        ])
     lines.extend([
         "    )", "", "    private val byCatalogId = records.associateBy(AquariumPlantLightCatalogRecord::catalogId)",
         "    val catalogIds: Set<String> get() = byCatalogId.keys", "", "    init {",
@@ -67,6 +70,6 @@ if __name__ == "__main__":
     if args.check:
         if OUTPUT.read_text(encoding="utf-8") != generated:
             cli.error("plant light index is out of date; regenerate it")
-        print("Plant catalog and light index match (248 records).")
+        print("Plant catalog and light index match (257 records).")
     else:
         OUTPUT.write_text(generated, encoding="utf-8")

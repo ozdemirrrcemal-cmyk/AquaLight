@@ -12,12 +12,10 @@
     <string name="catalog_material_category_cooler_title">Soğutucu</string>
     <string name="catalog_material_category_dosing_title">Dozajlama</string>
     <string name="catalog_material_category_led_background_title">LED Arka Plan</string>
-    <string name="catalog_plant_category_epiphytes_title">Epifitler</string>
     <string name="catalog_plant_category_foreground_title">Ön Plan</string>
     <string name="catalog_plant_category_ground_cover_title">Zemin Örtücüler</string>
     <string name="catalog_plant_category_middle_ground_title">Orta Plan</string>
     <string name="catalog_plant_category_background_title">Arka Plan</string>
-    <string name="catalog_plant_category_mosses_title">Yosunlar</string>
     <string name="catalog_plant_category_floating_plants_title">Yüzen Bitkiler</string>
 
     <string name="catalog_keyword_aquarium">akvaryum</string>

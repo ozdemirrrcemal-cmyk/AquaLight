@@ -25,12 +25,10 @@
     <string name="catalog_material_category_dosing_short_code" translatable="false">Do</string>
     <string name="catalog_material_category_led_background_title">LED Background</string>
     <string name="catalog_material_category_led_background_short_code" translatable="false">LED</string>
-    <string name="catalog_plant_category_epiphytes_title">Epiphytes</string>
     <string name="catalog_plant_category_foreground_title">Foreground</string>
     <string name="catalog_plant_category_ground_cover_title">Ground Cover</string>
     <string name="catalog_plant_category_middle_ground_title">Middle Ground</string>
     <string name="catalog_plant_category_background_title">Background</string>
-    <string name="catalog_plant_category_mosses_title">Mosses</string>
     <string name="catalog_plant_category_floating_plants_title">Floating Plants</string>
 
     <!-- Official brand and product names are not translated. -->
@@ -96,4 +94,3 @@
     <string name="catalog_keyword_wrgb" translatable="false">wrgb</string>
     <string name="catalog_keyword_lamp">lamp</string>
 </resources>
-

@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
+import android.widget.ImageView
 import androidx.activity.OnBackPressedCallback
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -252,31 +253,10 @@ class TankDetailFragment :
                 binding.appHeader.tvTitle.text = tank.name
             }
 
-            bindTankPhoto(tank.photoUri)
+            binding.imgTankPhoto.bindTankPhoto(tank.photoUri)
 
             binding.markerContainer.removeAllViews()
             binding.markerContainer.isVisible = false
-        }
-    }
-
-    private fun bindTankPhoto(photoUri: String?) {
-        val normalizedPhotoUri = photoUri?.trim()?.takeIf(String::isNotEmpty)
-        val photoKey = normalizedPhotoUri ?: DEFAULT_TANK_PHOTO_KEY
-        if (binding.imgTankPhoto.tag == photoKey) {
-            return
-        }
-        binding.imgTankPhoto.tag = photoKey
-
-        if (normalizedPhotoUri == null) {
-            binding.imgTankPhoto.load(R.drawable.nature_aquarium) {
-                crossfade(false)
-            }
-            return
-        }
-
-        binding.imgTankPhoto.load(Uri.parse(normalizedPhotoUri)) {
-            error(R.drawable.nature_aquarium)
-            crossfade(false)
         }
     }
 
@@ -305,12 +285,26 @@ class TankDetailFragment :
     }
 
     companion object {
-        private const val DEFAULT_TANK_PHOTO_KEY = "default_tank_photo"
-
         const val KEY_SELECTED_TAB = "tank_detail_selected_tab"
         const val KEY_RETURN_TAB = "tank_detail_return_tab"
         const val KEY_CARE_PROFILE_ACTION = "care_profile_action"
         const val CARE_PROFILE_ACTION_PLANTS = "plants"
         const val CARE_PROFILE_ACTION_LIVESTOCK = "livestock"
+    }
+}
+
+private fun ImageView.bindTankPhoto(photoUri: String?) {
+    val normalizedPhotoUri = photoUri?.trim()?.takeIf(String::isNotEmpty)
+    val photoKey = normalizedPhotoUri ?: "default_tank_photo"
+    if (tag == photoKey) return
+    tag = photoKey
+
+    if (normalizedPhotoUri == null) {
+        load(R.drawable.nature_aquarium) { crossfade(false) }
+    } else {
+        load(Uri.parse(normalizedPhotoUri)) {
+            error(R.drawable.nature_aquarium)
+            crossfade(false)
+        }
     }
 }

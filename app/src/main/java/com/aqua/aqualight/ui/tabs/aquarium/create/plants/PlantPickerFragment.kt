@@ -98,7 +98,7 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
             text = if (plantList.size == plants.size) {
                 getString(R.string.plant_picker_title)
             } else {
-                getString(R.string.plant_picker_found, plantList.size)
+                getString(R.string.plant_picker_found, plantList.distinctBy(AquariumPlant::catalogId).size)
             }
 
             setTextColor(
@@ -125,10 +125,29 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
             return
         }
 
+        var currentCategory: String? = null
         plantList.forEach { plant ->
+            if (plant.category != currentCategory) {
+                binding.listContainer.addView(createCategoryHeader(plant.category))
+                currentCategory = plant.category
+            }
             binding.listContainer.addView(
                 createPlantCard(plant)
             )
+        }
+    }
+
+    private fun createCategoryHeader(category: String): TextView = TextView(requireContext()).apply {
+        text = category
+        setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_card_text_primary))
+        setTextSizeResource(R.dimen.aqua_text_size_body_large)
+        includeFontPadding = false
+        layoutParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        ).apply {
+            topMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_16)
+            bottomMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_12)
         }
     }
 

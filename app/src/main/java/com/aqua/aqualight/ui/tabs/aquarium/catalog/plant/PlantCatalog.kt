@@ -6,30 +6,34 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumPlantCatalogRecord
 import com.aqua.aqualight.application.aquarium.AquariumPlantLightCatalog
 
-/** The aquarium picker uses the same stable-record catalog pattern as material pickers. */
+/** Spatial sections contain references to stable records; a plant can appear in several sections. */
 object PlantCatalog {
-    fun resolve(context: Context): List<AquariumPlant> = AquariumPlantCatalog.records(context).map { record ->
-        AquariumPlant(
-            catalogId = record.id,
-            name = record.displayName,
-            category = context.getString(categoryFor(record)),
-            lightDemand = AquariumPlantLightCatalog.requireRecord(record.id).lightDemand
-        )
-    }
+    private val sections = listOf(
+        Section("FOREGROUND", R.string.catalog_plant_category_foreground_title),
+        Section("MIDGROUND", R.string.catalog_plant_category_middle_ground_title),
+        Section("CARPET", R.string.catalog_plant_category_ground_cover_title),
+        Section("BACKGROUND", R.string.catalog_plant_category_background_title),
+        Section("FLOATING", R.string.catalog_plant_category_floating_plants_title)
+    )
 
-    @StringRes
-    private fun categoryFor(record: AquariumPlantCatalogRecord): Int {
-        val placement = record.placement
-        return when {
-            record.growthForm == "MOSS" -> R.string.catalog_plant_category_mosses_title
-            "FLOATING" in placement || ("SURFACE" in placement && "BACKGROUND" !in placement) ->
-                R.string.catalog_plant_category_floating_plants_title
-            "EPIPHYTE" in placement -> R.string.catalog_plant_category_epiphytes_title
-            "CARPET" in placement -> R.string.catalog_plant_category_ground_cover_title
-            "FOREGROUND" in placement -> R.string.catalog_plant_category_foreground_title
-            "MIDGROUND" in placement -> R.string.catalog_plant_category_middle_ground_title
-            "BACKGROUND" in placement -> R.string.catalog_plant_category_background_title
-            else -> error("Missing plant category for ${record.id}")
+    fun resolve(context: Context): List<AquariumPlant> {
+        val records = AquariumPlantCatalog.records(context)
+        require(records.all { record -> sections.any { it.placement in record.placement } })
+        return sections.flatMap { section ->
+            records.asSequence()
+                .filter { section.placement in it.placement }
+                .sortedBy { it.displayName.lowercase() }
+                .map { it.toPlant(context.getString(section.title)) }
+                .toList()
         }
     }
+
+    private fun AquariumPlantCatalogRecord.toPlant(sectionTitle: String) = AquariumPlant(
+        catalogId = id,
+        name = displayName,
+        category = sectionTitle,
+        lightDemand = AquariumPlantLightCatalog.requireRecord(id).lightDemand
+    )
+
+    private data class Section(val placement: String, @StringRes val title: Int)
 }

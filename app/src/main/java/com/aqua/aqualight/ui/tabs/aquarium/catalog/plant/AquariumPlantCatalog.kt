@@ -7,7 +7,7 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 
 object AquariumPlantCatalog {
-    const val EXPECTED_RECORD_COUNT = 248
+    const val EXPECTED_RECORD_COUNT = 257
     private const val ASSET_NAME = "aqualight_plant_catalog.json"
 
     @Volatile private var cachedRecords: List<AquariumPlantCatalogRecord>? = null
