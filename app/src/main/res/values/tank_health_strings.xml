@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="screen_title_tank_health">Tank Health</string>
-    <string name="tank_health_info_content_description">Tank health information</string>
-    <string name="tank_health_info_message">Water quality, maintenance status and the tank system summary are collected on this screen.</string>
     <string name="tank_health_entry_title">Tank Health</string>
     <string name="tank_health_entry_summary">Tank condition looks good</string>
     <string name="tank_health_entry_last_analysis">Last analysis: 2 days ago</string>
