@@ -1,17 +1,13 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.health.algae
 
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.widget.LinearLayout
-import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
-import com.aqua.aqualight.application.aquarium.AquariumMaterialCategoryKeys
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.application.aquarium.health.algae.AlgaeAnalysisEngine
 import com.aqua.aqualight.application.aquarium.health.algae.AlgaeAnalysisPriority
@@ -19,18 +15,13 @@ import com.aqua.aqualight.application.aquarium.health.algae.AlgaeDensity
 import com.aqua.aqualight.application.aquarium.health.algae.AlgaeFactorStrength
 import com.aqua.aqualight.application.aquarium.health.algae.AlgaeObservationInput
 import com.aqua.aqualight.application.aquarium.health.algae.AlgaeObservationLocation
-import com.aqua.aqualight.application.aquarium.health.algae.AlgaeTankContext
 import com.aqua.aqualight.application.aquarium.health.algae.AlgaeTrend
 import com.aqua.aqualight.application.aquarium.health.algae.AlgaeTypeId
 import com.aqua.aqualight.databinding.FragmentTankAlgaeAnalysisBinding
-import com.aqua.aqualight.databinding.ItemAlgaeAnalysisRowBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.health.TankHealthFragment
-import com.google.android.material.card.MaterialCardView
-import java.time.LocalDate
-import java.time.temporal.ChronoUnit
 
 class TankAlgaeAnalysisFragment : Fragment(R.layout.fragment_tank_algae_analysis) {
 
@@ -148,7 +139,7 @@ class TankAlgaeAnalysisFragment : Fragment(R.layout.fragment_tank_algae_analysis
                 density = density,
                 trend = trend
             ),
-            context = buildAvailableContext(tank)
+            context = buildAlgaeTankContext(tank)
         )
 
         renderAssessment(result.priority)
@@ -156,19 +147,19 @@ class TankAlgaeAnalysisFragment : Fragment(R.layout.fragment_tank_algae_analysis
         binding.factorsContainer.removeAllViews()
         binding.tvNoFactors.isVisible = result.factors.isEmpty()
         result.factors.forEach { factor ->
-            addRow(
+            addAlgaeAnalysisRow(
                 parent = binding.factorsContainer,
                 title = getString(AlgaePresentationText.factor(factor.factor)),
                 subtitle = getString(
                     AlgaePresentationText.factorStrength(factor.strength)
                 ),
-                subtitleColor = factorStrengthColor(factor.strength)
+                subtitleColor = algaeFactorStrengthColor(requireContext(), factor.strength)
             )
         }
 
         binding.actionsContainer.removeAllViews()
         result.actions.forEachIndexed { index, recommendation ->
-            addRow(
+            addAlgaeAnalysisRow(
                 parent = binding.actionsContainer,
                 title = (index + 1).toString() + ". " +
                     getString(AlgaePresentationText.action(recommendation.action)),
@@ -179,129 +170,12 @@ class TankAlgaeAnalysisFragment : Fragment(R.layout.fragment_tank_algae_analysis
         binding.missingSection.isVisible = result.missingData.isNotEmpty()
         binding.missingContainer.removeAllViews()
         result.missingData.forEach { missing ->
-            addRow(
+            addAlgaeAnalysisRow(
                 parent = binding.missingContainer,
                 title = getString(AlgaePresentationText.missing(missing)),
                 subtitle = ""
             )
         }
-    }
-
-    private fun buildAvailableContext(
-        tank: AquariumTankSnapshot
-    ): AlgaeTankContext {
-        val tankAgeDays = tank.setupDateEpochDay?.let { setupEpochDay ->
-            ChronoUnit.DAYS
-                .between(
-                    LocalDate.ofEpochDay(setupEpochDay),
-                    LocalDate.now()
-                )
-                .coerceAtLeast(0L)
-                .coerceAtMost(Int.MAX_VALUE.toLong())
-                .toInt()
-        }
-
-        val hasCo2 = tank.materials.any { material ->
-            material.categoryKey == AquariumMaterialCategoryKeys.CO2
-        }
-
-        return AlgaeTankContext(
-            tankAgeDays = tankAgeDays,
-            hasCo2 = hasCo2,
-            co2ScheduleKnown = false,
-            plantCount = tank.plants.size
-        )
-    }
-
-    private fun renderAssessment(priority: AlgaeAnalysisPriority) {
-        binding.tvAssessmentTitle.setText(
-            AlgaePresentationText.priorityTitle(priority)
-        )
-        binding.tvAssessmentBody.setText(
-            AlgaePresentationText.priorityBody(priority)
-        )
-
-        applyAssessmentColors(
-            card = binding.cardAssessment,
-            priority = priority
-        )
-    }
-
-    private fun applyAssessmentColors(
-        card: MaterialCardView,
-        priority: AlgaeAnalysisPriority
-    ) {
-        val context = requireContext()
-
-        val background = when (priority) {
-            AlgaeAnalysisPriority.ACTION_RECOMMENDED ->
-                R.color.aqua_bg_maintenance_profile_percent_warning_fill
-            AlgaeAnalysisPriority.REVIEW ->
-                R.color.aqua_surface_action
-            AlgaeAnalysisPriority.MONITOR ->
-                R.color.aqua_surface_positive
-        }
-
-        val stroke = when (priority) {
-            AlgaeAnalysisPriority.ACTION_RECOMMENDED ->
-                R.color.aqua_content_warning
-            AlgaeAnalysisPriority.REVIEW ->
-                R.color.aqua_accent_primary
-            AlgaeAnalysisPriority.MONITOR ->
-                R.color.aqua_outline_positive
-        }
-
-        val title = when (priority) {
-            AlgaeAnalysisPriority.ACTION_RECOMMENDED ->
-                R.color.aqua_content_warning
-            AlgaeAnalysisPriority.REVIEW ->
-                R.color.aqua_accent_primary
-            AlgaeAnalysisPriority.MONITOR ->
-                R.color.aqua_accent_positive
-        }
-
-        card.setCardBackgroundColor(
-            ContextCompat.getColor(context, background)
-        )
-        card.strokeColor = ContextCompat.getColor(context, stroke)
-        binding.tvAssessmentTitle.setTextColor(
-            ContextCompat.getColor(context, title)
-        )
-    }
-
-    private fun addRow(
-        parent: LinearLayout,
-        title: String,
-        subtitle: String,
-        subtitleColor: Int? = null
-    ) {
-        val row = ItemAlgaeAnalysisRowBinding.inflate(
-            LayoutInflater.from(parent.context),
-            parent,
-            false
-        )
-
-        row.tvTitle.text = title
-        row.tvSubtitle.text = subtitle
-        row.tvSubtitle.isVisible = subtitle.isNotBlank()
-
-        if (subtitleColor != null) {
-            row.tvSubtitle.setTextColor(subtitleColor)
-        }
-
-        parent.addView(row.root)
-    }
-
-    private fun factorStrengthColor(
-        strength: AlgaeFactorStrength
-    ): Int {
-        val colorRes = when (strength) {
-            AlgaeFactorStrength.HIGH -> R.color.aqua_content_warning
-            AlgaeFactorStrength.MEDIUM -> R.color.aqua_accent_primary
-            AlgaeFactorStrength.LOW -> R.color.aqua_accent_positive
-        }
-
-        return ContextCompat.getColor(requireContext(), colorRes)
     }
 
     override fun onDestroyView() {
