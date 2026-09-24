@@ -97,6 +97,13 @@ object AlgaeUiCatalog {
 
     private val byId = definitions.associateBy(AlgaeUiDefinition::id)
 
+    val commonDefinitions: List<AlgaeUiDefinition> = listOf(
+        AlgaeTypeId.BROWN_DIATOM,
+        AlgaeTypeId.GREEN_SPOT,
+        AlgaeTypeId.BLACK_BEARD,
+        AlgaeTypeId.HAIR
+    ).map(::requireDefinition)
+
     init {
         require(definitions.size == AlgaeTypeId.entries.size)
         require(byId.size == definitions.size)
