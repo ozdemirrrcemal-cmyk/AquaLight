@@ -133,7 +133,13 @@ object AlgaeAnalysisEngine {
             water.ammoniaState
         )
 
-        if (states.all { state -> state == WaterParameterState.UNKNOWN }) {
+        val needsWaterData = profile.factorWeights.keys.any { factor ->
+            factor in WATER_QUALITY_FACTORS
+        }
+        if (
+            needsWaterData &&
+            states.all { state -> state == WaterParameterState.UNKNOWN }
+        ) {
             missingData += AlgaeMissingData.WATER_ANALYSIS
         }
 
@@ -236,6 +242,13 @@ private val MAINTENANCE_FACTORS = setOf(
     AlgaeFactorId.WATER_CHANGE_INTERVAL
 )
 
+private val WATER_QUALITY_FACTORS = setOf(
+    AlgaeFactorId.NITROGEN_WASTE,
+    AlgaeFactorId.NUTRIENT_IMBALANCE,
+    AlgaeFactorId.PHOSPHATE_IMBALANCE_CONTEXT,
+    AlgaeFactorId.LOW_NITRATE_CONTEXT
+)
+
 private val FACTOR_ACTIONS = mapOf(
     AlgaeFactorId.LIGHT_DURATION to AlgaeActionId.REVIEW_LIGHT_DURATION,
     AlgaeFactorId.LIGHT_INTENSITY to AlgaeActionId.REVIEW_LIGHT_INTENSITY,
@@ -276,6 +289,13 @@ private fun algaeActionPlan(
 
     if (AlgaeMissingData.CO2_SCHEDULE in missingData) {
         ordered += AlgaeActionId.ADD_CO2_SCHEDULE_DATA
+    }
+    if (
+        observation.algaeType == AlgaeTypeId.GREEN_WATER &&
+        (observation.density == AlgaeDensity.HIGH ||
+            observation.trend == AlgaeTrend.INCREASING)
+    ) {
+        ordered += AlgaeActionId.UV_FOR_GREEN_WATER
     }
     if (observation.trend == AlgaeTrend.INCREASING) {
         ordered += AlgaeActionId.RECHECK_IN_FEW_DAYS
