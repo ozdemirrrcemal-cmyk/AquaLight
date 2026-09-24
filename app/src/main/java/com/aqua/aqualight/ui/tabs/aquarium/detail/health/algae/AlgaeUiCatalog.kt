@@ -61,7 +61,7 @@ object AlgaeUiCatalog {
             AlgaeTypeId.HAIR,
             R.string.algae_hair_name,
             R.string.algae_hair_short,
-            R.drawable.algae_hair_thread
+            R.drawable.algae_hair
         ),
         definition(
             AlgaeTypeId.THREAD,
