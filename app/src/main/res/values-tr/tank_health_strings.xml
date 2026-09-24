@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="screen_title_tank_health">Tank Sağlığı</string>
-    <string name="tank_health_info_content_description">Tank sağlığı bilgisi</string>\n    <string name="tank_health_info_message">Su kalitesi, bakım durumu ve tank sistem özeti bu ekranda birlikte gösterilir.</string>
+    <string name="tank_health_info_content_description">Tank sağlığı bilgisi</string>
+    <string name="tank_health_info_message">Su kalitesi, bakım durumu ve tank sistem özeti bu ekranda birlikte gösterilir.</string>
     <string name="tank_health_entry_title">Tank Sağlığı</string>
     <string name="tank_health_entry_summary">Tank durumu iyi görünüyor</string>
     <string name="tank_health_entry_last_analysis">Son analiz: 2 gün önce</string>
@@ -16,7 +17,7 @@
     <string name="tank_health_status_approaching">Yaklaşıyor</string>
 
     <string name="tank_health_metric_temperature">Sıcaklık</string>
-    <string name="tank_health_add_analysis">Analiz\nEkle</string>
+    <string name="tank_health_add_analysis">Analiz Ekle</string>
 
     <string name="tank_health_maintenance_title">Bakım Durumu</string>
     <string name="tank_health_water_change">Su değişimi</string>
