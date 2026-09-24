@@ -69,7 +69,8 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
             selectSection(HealthSection.ALGAE_CONTROL)
         }
     }
-\n    private fun setupReturnActions() {
+
+    private fun setupReturnActions() {
         val savedStateHandle = findNavController()
             .currentBackStackEntry
             ?.savedStateHandle
