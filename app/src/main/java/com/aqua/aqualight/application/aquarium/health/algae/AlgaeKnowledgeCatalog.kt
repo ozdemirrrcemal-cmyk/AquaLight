@@ -50,10 +50,6 @@ object AlgaeKnowledgeCatalog {
     private val FILAMENTOUS_BASE_ACTIONS = listOf(
         AlgaeActionId.MANUAL_REMOVAL,
         AlgaeActionId.TRIM_AFFECTED_LEAVES,
-        AlgaeActionId.REVIEW_LIGHT_DURATION,
-        AlgaeActionId.REVIEW_LIGHT_INTENSITY,
-        AlgaeActionId.REVIEW_FERTILIZER_PLAN,
-        AlgaeActionId.VERIFY_CO2_STABILITY,
         AlgaeActionId.RECHECK_IN_FEW_DAYS
     )
 
@@ -87,8 +83,6 @@ object AlgaeKnowledgeCatalog {
             actions = listOf(
                 AlgaeActionId.MANUAL_REMOVAL,
                 AlgaeActionId.TRIM_AFFECTED_LEAVES,
-                AlgaeActionId.REVIEW_LIGHT_INTENSITY,
-                AlgaeActionId.REVIEW_NO3_PO4_BALANCE,
                 AlgaeActionId.RECHECK_IN_FEW_DAYS
             ),
             evidence = setOf(
@@ -108,9 +102,6 @@ object AlgaeKnowledgeCatalog {
             ),
             actions = listOf(
                 AlgaeActionId.MANUAL_REMOVAL,
-                AlgaeActionId.REVIEW_LIGHT_INTENSITY,
-                AlgaeActionId.PERFORM_WATER_CHANGE,
-                AlgaeActionId.ALLOW_TANK_TO_MATURE,
                 AlgaeActionId.RECHECK_IN_FEW_DAYS
             ),
             evidence = setOf(
@@ -130,7 +121,6 @@ object AlgaeKnowledgeCatalog {
             ),
             actions = listOf(
                 AlgaeActionId.MANUAL_REMOVAL,
-                AlgaeActionId.REVIEW_LIGHT_INTENSITY,
                 AlgaeActionId.RECHECK_IN_FEW_DAYS
             ),
             evidence = setOf(
@@ -151,8 +141,6 @@ object AlgaeKnowledgeCatalog {
             actions = listOf(
                 AlgaeActionId.TRIM_AFFECTED_LEAVES,
                 AlgaeActionId.CLEAN_HARDSCAPE,
-                AlgaeActionId.VERIFY_CO2_STABILITY,
-                AlgaeActionId.SERVICE_FILTER,
                 AlgaeActionId.SIPHON_SUBSTRATE,
                 AlgaeActionId.RECHECK_IN_FEW_DAYS
             ),
@@ -173,7 +161,6 @@ object AlgaeKnowledgeCatalog {
             actions = listOf(
                 AlgaeActionId.TRIM_AFFECTED_LEAVES,
                 AlgaeActionId.MANUAL_REMOVAL,
-                AlgaeActionId.VERIFY_CO2_STABILITY,
                 AlgaeActionId.RECHECK_IN_FEW_DAYS
             ),
             evidence = setOf(
@@ -290,8 +277,6 @@ object AlgaeKnowledgeCatalog {
                 AlgaeActionId.MANUAL_REMOVAL,
                 AlgaeActionId.SIPHON_SUBSTRATE,
                 AlgaeActionId.PERFORM_WATER_CHANGE,
-                AlgaeActionId.IMPROVE_FLOW_OR_OXYGENATION,
-                AlgaeActionId.TEMPORARY_BLACKOUT,
                 AlgaeActionId.RECHECK_IN_FEW_DAYS
             ),
             evidence = setOf(
@@ -310,10 +295,7 @@ object AlgaeKnowledgeCatalog {
                 AlgaeFactorId.IMMATURE_TANK to WEIGHT_MODERATE
             ),
             actions = listOf(
-                AlgaeActionId.REVIEW_LIGHT_DURATION,
-                AlgaeActionId.REVIEW_LIGHT_INTENSITY,
-                AlgaeActionId.UV_FOR_GREEN_WATER,
-                AlgaeActionId.TEMPORARY_BLACKOUT,
+                AlgaeActionId.PERFORM_WATER_CHANGE,
                 AlgaeActionId.RECHECK_IN_FEW_DAYS
             ),
             evidence = setOf(
