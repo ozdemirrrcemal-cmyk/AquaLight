@@ -26,8 +26,6 @@ internal fun buildAlgaeTankContext(
                 LocalDate.now()
             )
             .coerceAtLeast(0L)
-            .coerceAtMost(Int.MAX_VALUE.toLong())
-            .toInt()
     }
 
     val hasCo2 = tank.materials.any { material ->
@@ -35,12 +33,15 @@ internal fun buildAlgaeTankContext(
     }
 
     return AlgaeTankContext(
-        tankAgeDays = tankAgeDays,
+        startupPeriod = tankAgeDays?.let { ageDays ->
+            ageDays <= SMART_CARE_STARTUP_DAYS
+        },
         hasCo2 = hasCo2,
-        co2ScheduleKnown = false,
-        plantCount = tank.plants.size
+        co2ScheduleKnown = false
     )
 }
+
+private const val SMART_CARE_STARTUP_DAYS = 90L
 
 internal fun applyAlgaeAssessmentColors(
     context: Context,
