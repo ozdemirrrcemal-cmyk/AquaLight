@@ -58,7 +58,15 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
             }
         )
 
-        setupTabs()
+        setupTankHealthTabs(
+            binding = binding,
+            onWaterQuality = {
+                selectSection(HealthSection.WATER_QUALITY)
+            },
+            onAlgaeControl = {
+                selectSection(HealthSection.ALGAE_CONTROL)
+            }
+        )
         setupReturnActions()
         renderSelectedSection()
     }
@@ -75,15 +83,6 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
             algaeFragment.openOverview()
         } else {
             findNavController().navigateUp()
-        }
-    }
-
-    private fun setupTabs() {
-        binding.tabWaterQuality.setOnClickListener {
-            selectSection(HealthSection.WATER_QUALITY)
-        }
-        binding.tabAlgaeControl.setOnClickListener {
-            selectSection(HealthSection.ALGAE_CONTROL)
         }
     }
 
@@ -249,4 +248,17 @@ private fun setupTankHealthHeader(
             onBackClick = onBackClick
         )
     )
+}
+
+private fun setupTankHealthTabs(
+    binding: FragmentTankHealthBinding,
+    onWaterQuality: () -> Unit,
+    onAlgaeControl: () -> Unit
+) {
+    binding.tabWaterQuality.setOnClickListener {
+        onWaterQuality()
+    }
+    binding.tabAlgaeControl.setOnClickListener {
+        onAlgaeControl()
+    }
 }
