@@ -174,7 +174,7 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
 
     private fun observeTankActivity() {
         viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
                 maintenanceViewModel.tankActivityStateFlow(
                     tankId = tankId
                 ).collect {

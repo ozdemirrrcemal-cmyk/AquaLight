@@ -52,8 +52,7 @@ internal class TankDetailTabCoordinator(
                     fragment = fragment,
                     tankId = tankId
                 ),
-                initialTab = selectedTab,
-                offscreenPageLimit = TANK_PAGER_OFFSCREEN_LIMIT
+                initialTab = selectedTab
             )
         }
     }
@@ -123,9 +122,6 @@ internal class TankDetailTabCoordinator(
         }
     }
 
-    private companion object {
-        const val TANK_PAGER_OFFSCREEN_LIMIT = 1
-    }
 }
 
 internal enum class TankDetailTab(
