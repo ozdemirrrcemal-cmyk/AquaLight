@@ -49,18 +49,6 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
         renderSelectedSection()
     }
 
-    private fun setupHeader() {
-        binding.appHeader.setupAquaHeader(
-            fragment = this,
-            config = AquaHeaderConfig(
-                titleOverride = getString(R.string.screen_title_tank_health),
-                onBackClick = {
-                    findNavController().navigateUp()
-                }
-            )
-        )
-    }
-
     private fun setupTabs() {
         binding.tabWaterQuality.setOnClickListener {
             selectSection(HealthSection.WATER_QUALITY)
@@ -219,3 +207,18 @@ private fun Fragment.renderTabState(
         if (selected) Typeface.BOLD else Typeface.NORMAL
     )
 }
+
+private fun TankHealthFragment.setupHeader() {
+    bindingForHeader().setupAquaHeader(
+        fragment = this,
+        config = AquaHeaderConfig(
+            titleOverride = getString(R.string.screen_title_tank_health),
+            onBackClick = {
+                findNavController().navigateUp()
+            }
+        )
+    )
+}
+
+private fun TankHealthFragment.bindingForHeader() =
+    requireView().findViewById<android.view.ViewGroup>(R.id.appHeader)
