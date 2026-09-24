@@ -165,12 +165,33 @@
             app:popEnterAnim="@anim/nav_slide_in_left"
             app:popExitAnim="@anim/nav_slide_out_right" />
         <action
+            android:id="@+id/action_tankDetailFragment_to_tankHealthFragment"
+            app:destination="@id/tankHealthFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right">
+            <argument
+                android:name="tankId"
+                app:argType="long" />
+        </action>
+        <action
             android:id="@+id/action_tankDetailFragment_to_unsupportedDeviceFragment"
             app:destination="@id/unsupportedDeviceFragment"
             app:enterAnim="@anim/nav_slide_in_right"
             app:exitAnim="@anim/nav_slide_out_left"
             app:popEnterAnim="@anim/nav_slide_in_left"
             app:popExitAnim="@anim/nav_slide_out_right" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/tankHealthFragment"
+        android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.health.TankHealthFragment"
+        android:label="@string/screen_title_tank_health"
+        tools:layout="@layout/fragment_tank_health">
+        <argument
+            android:name="tankId"
+            app:argType="long" />
     </fragment>
 
     <fragment
