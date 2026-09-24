@@ -28,16 +28,22 @@ object AlgaeUiCatalog {
             R.drawable.algae_green_spot
         ),
         definition(
+            AlgaeTypeId.GREEN_DUST,
+            R.string.algae_green_dust_name,
+            R.string.algae_green_dust_short,
+            R.drawable.algae_green_dust
+        ),
+        definition(
+            AlgaeTypeId.GREEN_COAT,
+            R.string.algae_green_coat_name,
+            R.string.algae_green_coat_short,
+            R.drawable.algae_green_coat
+        ),
+        definition(
             AlgaeTypeId.BLACK_BEARD,
             R.string.algae_black_beard_name,
             R.string.algae_black_beard_short,
             R.drawable.algae_black_beard
-        ),
-        definition(
-            AlgaeTypeId.HAIR_THREAD,
-            R.string.algae_hair_thread_name,
-            R.string.algae_hair_thread_short,
-            R.drawable.algae_hair_thread
         ),
         definition(
             AlgaeTypeId.STAGHORN,
@@ -46,10 +52,34 @@ object AlgaeUiCatalog {
             R.drawable.algae_staghorn
         ),
         definition(
-            AlgaeTypeId.GREEN_DUST,
-            R.string.algae_green_dust_name,
-            R.string.algae_green_dust_short,
-            R.drawable.algae_green_dust
+            AlgaeTypeId.FUZZ,
+            R.string.algae_fuzz_name,
+            R.string.algae_fuzz_short,
+            R.drawable.algae_fuzz
+        ),
+        definition(
+            AlgaeTypeId.HAIR,
+            R.string.algae_hair_name,
+            R.string.algae_hair_short,
+            R.drawable.algae_hair_thread
+        ),
+        definition(
+            AlgaeTypeId.THREAD,
+            R.string.algae_thread_name,
+            R.string.algae_thread_short,
+            R.drawable.algae_thread
+        ),
+        definition(
+            AlgaeTypeId.FLUFF,
+            R.string.algae_fluff_name,
+            R.string.algae_fluff_short,
+            R.drawable.algae_fluff
+        ),
+        definition(
+            AlgaeTypeId.CLADOPHORA,
+            R.string.algae_cladophora_name,
+            R.string.algae_cladophora_short,
+            R.drawable.algae_cladophora
         ),
         definition(
             AlgaeTypeId.CYANOBACTERIA,
@@ -62,12 +92,6 @@ object AlgaeUiCatalog {
             R.string.algae_green_water_name,
             R.string.algae_green_water_short,
             R.drawable.algae_green_water
-        ),
-        definition(
-            AlgaeTypeId.CLADOPHORA,
-            R.string.algae_cladophora_name,
-            R.string.algae_cladophora_short,
-            R.drawable.algae_cladophora
         )
     )
 
