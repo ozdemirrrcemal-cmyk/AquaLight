@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="@dimen/aqua_size_10"
+    android:gravity="center_vertical"
+    android:orientation="horizontal">
+
+    <TextView
+        android:id="@+id/tvWaterQualityTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:includeFontPadding="false"
+        android:text="@string/tank_health_water_quality_title"
+        android:textColor="@color/aqua_card_text_primary"
+        android:textSize="@dimen/aqua_text_size_body_xlarge"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvLastAnalysis"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:includeFontPadding="false"
+        android:text="@string/tank_health_last_analysis"
+        android:textColor="@color/aqua_content_muted"
+        android:textSize="@dimen/aqua_text_size_caption" />
+
+</LinearLayout>
