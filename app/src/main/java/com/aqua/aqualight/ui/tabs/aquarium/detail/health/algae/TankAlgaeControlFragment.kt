@@ -135,24 +135,23 @@ class TankAlgaeControlFragment : Fragment(R.layout.fragment_tank_algae_control) 
         val trend = choices?.trend
         val locations = choices?.locations.orEmpty()
 
-        val hasCoreSelection = algaeType != null && density != null
-        val hasCompleteSelection = hasCoreSelection && trend != null
-
-        if (hasCompleteSelection && locations.isNotEmpty()) {
-            findNavController().navigateSafelyFrom(
-                sourceDestinationId = R.id.tankHealthFragment,
-                directions = TankHealthFragmentDirections
-                    .actionTankHealthFragmentToTankAlgaeAnalysisFragment(
-                        tankId = tankId,
-                        algaeType = algaeType.name,
-                        locations = locations.joinToString(separator = ",") { location ->
-                            location.name
-                        },
-                        density = density.name,
-                        trend = trend.name,
-                        note = binding.etObservationNote.text?.toString().orEmpty().trim()
-                    )
-            )
+        if (algaeType != null && density != null) {
+            if (trend != null && locations.isNotEmpty()) {
+                findNavController().navigateSafelyFrom(
+                    sourceDestinationId = R.id.tankHealthFragment,
+                    directions = TankHealthFragmentDirections
+                        .actionTankHealthFragmentToTankAlgaeAnalysisFragment(
+                            tankId = tankId,
+                            algaeType = algaeType.name,
+                            locations = locations.joinToString(separator = ",") { location ->
+                                location.name
+                            },
+                            density = density.name,
+                            trend = trend.name,
+                            note = binding.etObservationNote.text?.toString().orEmpty().trim()
+                        )
+                )
+            }
         }
     }
 
