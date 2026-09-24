@@ -2,14 +2,6 @@ package com.aqua.aqualight.application.aquarium.health.algae
 
 object AlgaeAnalysisEngine {
 
-    private const val LONG_LIGHT_MINUTES = 9 * 60
-    private const val HIGH_LIGHT_PERCENT = 80
-    private const val STARTUP_TANK_DAYS = 60
-    private const val WATER_CHANGE_REVIEW_DAYS = 10
-    private const val FILTER_REVIEW_DAYS = 28
-    private const val LOW_PLANT_COUNT = 5
-    private const val WARM_WATER_C = 26.0
-
     fun analyze(
         observation: AlgaeObservationInput,
         context: AlgaeTankContext
@@ -23,9 +15,9 @@ object AlgaeAnalysisEngine {
         evaluateMaintenance(profile, context, factorScores, missingData)
         evaluateWater(profile, context, factorScores, missingData)
         evaluateTankMaturity(profile, context, factorScores)
-        evaluatePlantMass(profile, context, factorScores)
-        evaluateTemperature(profile, context, factorScores)
-        evaluateLocation(observation, profile, factorScores)
+        evaluatePlantContext(profile, context, factorScores, missingData)
+        evaluateFlow(profile, context, factorScores)
+        evaluateTemperature(profile, context, factorScores, missingData)
 
         val factors = factorScores
             .map { (factor, score) ->
@@ -37,18 +29,16 @@ object AlgaeAnalysisEngine {
             }
             .sortedByDescending(AlgaeFactorAssessment::score)
 
-        val actions = buildActions(
-            observation = observation,
-            profile = profile,
-            factors = factors,
-            missingData = missingData
-        )
-
         return AlgaeAnalysisResult(
             algaeType = observation.algaeType,
             priority = priorityFor(observation, factors),
             factors = factors,
-            actions = actions,
+            actions = buildActions(
+                observation = observation,
+                profile = profile,
+                factors = factors,
+                missingData = missingData
+            ),
             missingData = missingData
         )
     }
@@ -62,19 +52,26 @@ object AlgaeAnalysisEngine {
         val durationWeight = profile.factorWeights[AlgaeFactorId.LIGHT_DURATION]
         val intensityWeight = profile.factorWeights[AlgaeFactorId.LIGHT_INTENSITY]
 
-        if (durationWeight != null) {
-            val duration = context.lightDurationMinutes
-            if (duration == null) {
-                missingData += AlgaeMissingData.LIGHT_SCHEDULE
-            } else if (duration >= LONG_LIGHT_MINUTES) {
-                factorScores[AlgaeFactorId.LIGHT_DURATION] = durationWeight
-            }
+        if (
+            durationWeight != null &&
+            context.lightDurationState == AlgaeSignalState.UNKNOWN
+        ) {
+            missingData += AlgaeMissingData.LIGHT_PROFILE
+        } else if (
+            durationWeight != null &&
+            isElevated(context.lightDurationState)
+        ) {
+            factorScores[AlgaeFactorId.LIGHT_DURATION] = durationWeight
         }
 
         if (
             intensityWeight != null &&
-            context.lightIntensityPercent != null &&
-            context.lightIntensityPercent >= HIGH_LIGHT_PERCENT
+            context.lightIntensityState == AlgaeSignalState.UNKNOWN
+        ) {
+            missingData += AlgaeMissingData.LIGHT_PROFILE
+        } else if (
+            intensityWeight != null &&
+            isElevated(context.lightIntensityState)
         ) {
             factorScores[AlgaeFactorId.LIGHT_INTENSITY] = intensityWeight
         }
@@ -90,13 +87,13 @@ object AlgaeAnalysisEngine {
         if (context.hasCo2 != true) {
             return
         }
+
         if (!context.co2ScheduleKnown) {
             missingData += AlgaeMissingData.CO2_SCHEDULE
             return
         }
 
-        val leadMinutes = context.co2LeadMinutesBeforeLight
-        if (leadMinutes != null && leadMinutes < 60) {
+        if (isElevated(context.co2TimingState)) {
             factorScores[AlgaeFactorId.CO2_STABILITY] = weight
         }
     }
@@ -107,44 +104,31 @@ object AlgaeAnalysisEngine {
         factorScores: MutableMap<AlgaeFactorId, Int>,
         missingData: MutableSet<AlgaeMissingData>
     ) {
-        val needsMaintenanceData = profile.factorWeights.keys.any { factor ->
-            factor == AlgaeFactorId.ORGANIC_LOAD ||
-                factor == AlgaeFactorId.FILTER_MAINTENANCE ||
-                factor == AlgaeFactorId.WATER_CHANGE_INTERVAL
-        }
+        val maintenanceFactors = setOf(
+            AlgaeFactorId.ORGANIC_LOAD,
+            AlgaeFactorId.FILTER_MAINTENANCE,
+            AlgaeFactorId.WATER_CHANGE_INTERVAL
+        )
 
         if (
-            needsMaintenanceData &&
-            context.daysSinceWaterChange == null &&
-            context.daysSinceFilterMaintenance == null
+            profile.factorWeights.keys.any(maintenanceFactors::contains) &&
+            context.waterChangeOverdue == null &&
+            context.filterMaintenanceOverdue == null &&
+            context.organicLoadState == AlgaeSignalState.UNKNOWN
         ) {
             missingData += AlgaeMissingData.MAINTENANCE_HISTORY
         }
 
-        val daysSinceWaterChange = context.daysSinceWaterChange
-        if (daysSinceWaterChange != null && daysSinceWaterChange > WATER_CHANGE_REVIEW_DAYS) {
-            profile.factorWeights[AlgaeFactorId.WATER_CHANGE_INTERVAL]?.let { weight ->
-                factorScores[AlgaeFactorId.WATER_CHANGE_INTERVAL] = weight
-            }
-            profile.factorWeights[AlgaeFactorId.ORGANIC_LOAD]?.let { weight ->
-                factorScores[AlgaeFactorId.ORGANIC_LOAD] = maxOf(
-                    factorScores[AlgaeFactorId.ORGANIC_LOAD] ?: 0,
-                    weight
-                )
-            }
+        if (context.waterChangeOverdue == true) {
+            addFactor(profile, factorScores, AlgaeFactorId.WATER_CHANGE_INTERVAL)
         }
 
-        val daysSinceFilterMaintenance = context.daysSinceFilterMaintenance
-        if (daysSinceFilterMaintenance != null && daysSinceFilterMaintenance > FILTER_REVIEW_DAYS) {
-            profile.factorWeights[AlgaeFactorId.FILTER_MAINTENANCE]?.let { weight ->
-                factorScores[AlgaeFactorId.FILTER_MAINTENANCE] = weight
-            }
-            profile.factorWeights[AlgaeFactorId.ORGANIC_LOAD]?.let { weight ->
-                factorScores[AlgaeFactorId.ORGANIC_LOAD] = maxOf(
-                    factorScores[AlgaeFactorId.ORGANIC_LOAD] ?: 0,
-                    weight
-                )
-            }
+        if (context.filterMaintenanceOverdue == true) {
+            addFactor(profile, factorScores, AlgaeFactorId.FILTER_MAINTENANCE)
+        }
+
+        if (isElevated(context.organicLoadState)) {
+            addFactor(profile, factorScores, AlgaeFactorId.ORGANIC_LOAD)
         }
     }
 
@@ -155,51 +139,34 @@ object AlgaeAnalysisEngine {
         missingData: MutableSet<AlgaeMissingData>
     ) {
         val water = context.waterQuality
-        val hasAnyWaterData = listOf(
+        val states = listOf(
             water.nitrateState,
             water.phosphateState,
             water.nitriteState,
             water.ammoniaState
-        ).any { state -> state != WaterParameterState.UNKNOWN }
+        )
 
-        if (!hasAnyWaterData) {
+        if (states.all { state -> state == AlgaeSignalState.UNKNOWN }) {
             missingData += AlgaeMissingData.WATER_ANALYSIS
         }
 
+        if (isElevated(water.ammoniaState) || isElevated(water.nitriteState)) {
+            addFactor(profile, factorScores, AlgaeFactorId.NITROGEN_WASTE)
+        }
+
+        if (water.phosphateState == AlgaeSignalState.LOW) {
+            addFactor(profile, factorScores, AlgaeFactorId.LOW_PHOSPHATE_CONTEXT)
+        }
+
+        if (water.nitrateState == AlgaeSignalState.LOW) {
+            addFactor(profile, factorScores, AlgaeFactorId.LOW_NITRATE_CONTEXT)
+        }
+
         if (
-            water.ammoniaState == WaterParameterState.ELEVATED ||
-            water.ammoniaState == WaterParameterState.HIGH ||
-            water.nitriteState == WaterParameterState.ELEVATED ||
-            water.nitriteState == WaterParameterState.HIGH
+            water.nitrateState.isOutsideNormal() ||
+            water.phosphateState.isOutsideNormal()
         ) {
-            profile.factorWeights[AlgaeFactorId.NITROGEN_WASTE]?.let { weight ->
-                factorScores[AlgaeFactorId.NITROGEN_WASTE] = weight
-            }
-        }
-
-        if (water.phosphateState == WaterParameterState.LOW) {
-            profile.factorWeights[AlgaeFactorId.LOW_PHOSPHATE_CONTEXT]?.let { weight ->
-                factorScores[AlgaeFactorId.LOW_PHOSPHATE_CONTEXT] = weight
-            }
-        }
-
-        if (water.nitrateState == WaterParameterState.LOW) {
-            profile.factorWeights[AlgaeFactorId.LOW_NITRATE_CONTEXT]?.let { weight ->
-                factorScores[AlgaeFactorId.LOW_NITRATE_CONTEXT] = weight
-            }
-        }
-
-        val nutrientStates = listOf(water.nitrateState, water.phosphateState)
-        if (
-            nutrientStates.any { state ->
-                state == WaterParameterState.LOW ||
-                    state == WaterParameterState.ELEVATED ||
-                    state == WaterParameterState.HIGH
-            }
-        ) {
-            profile.factorWeights[AlgaeFactorId.NUTRIENT_IMBALANCE]?.let { weight ->
-                factorScores[AlgaeFactorId.NUTRIENT_IMBALANCE] = weight
-            }
+            addFactor(profile, factorScores, AlgaeFactorId.NUTRIENT_IMBALANCE)
         }
     }
 
@@ -208,64 +175,54 @@ object AlgaeAnalysisEngine {
         context: AlgaeTankContext,
         factorScores: MutableMap<AlgaeFactorId, Int>
     ) {
-        if (
-            context.tankAgeDays != null &&
-            context.tankAgeDays <= STARTUP_TANK_DAYS
-        ) {
-            profile.factorWeights[AlgaeFactorId.IMMATURE_TANK]?.let { weight ->
-                factorScores[AlgaeFactorId.IMMATURE_TANK] = weight
-            }
+        if (context.startupPeriod == true) {
+            addFactor(profile, factorScores, AlgaeFactorId.IMMATURE_TANK)
         }
     }
 
-    private fun evaluatePlantMass(
+    private fun evaluatePlantContext(
+        profile: AlgaeKnowledgeProfile,
+        context: AlgaeTankContext,
+        factorScores: MutableMap<AlgaeFactorId, Int>,
+        missingData: MutableSet<AlgaeMissingData>
+    ) {
+        if (isElevated(context.plantStressState)) {
+            addFactor(profile, factorScores, AlgaeFactorId.PLANT_STRESS)
+        }
+
+        if (
+            profile.factorWeights.containsKey(AlgaeFactorId.LOW_PLANT_MASS) &&
+            context.plantMassState == AlgaeSignalState.UNKNOWN
+        ) {
+            missingData += AlgaeMissingData.PLANT_MASS
+        } else if (context.plantMassState == AlgaeSignalState.LOW) {
+            addFactor(profile, factorScores, AlgaeFactorId.LOW_PLANT_MASS)
+        }
+    }
+
+    private fun evaluateFlow(
         profile: AlgaeKnowledgeProfile,
         context: AlgaeTankContext,
         factorScores: MutableMap<AlgaeFactorId, Int>
     ) {
-        if (context.plantCount != null && context.plantCount < LOW_PLANT_COUNT) {
-            profile.factorWeights[AlgaeFactorId.LOW_PLANT_MASS]?.let { weight ->
-                factorScores[AlgaeFactorId.LOW_PLANT_MASS] = weight
-            }
+        if (context.flowOrOxygenationState == AlgaeSignalState.LOW) {
+            addFactor(profile, factorScores, AlgaeFactorId.FLOW_OR_OXYGENATION)
         }
     }
 
     private fun evaluateTemperature(
         profile: AlgaeKnowledgeProfile,
         context: AlgaeTankContext,
-        factorScores: MutableMap<AlgaeFactorId, Int>
-    ) {
-        if (context.temperatureC != null && context.temperatureC >= WARM_WATER_C) {
-            profile.factorWeights[AlgaeFactorId.WARM_WATER]?.let { weight ->
-                factorScores[AlgaeFactorId.WARM_WATER] = weight
-            }
-        }
-    }
-
-    private fun evaluateLocation(
-        observation: AlgaeObservationInput,
-        profile: AlgaeKnowledgeProfile,
-        factorScores: MutableMap<AlgaeFactorId, Int>
+        factorScores: MutableMap<AlgaeFactorId, Int>,
+        missingData: MutableSet<AlgaeMissingData>
     ) {
         if (
-            observation.algaeType == AlgaeTypeId.CYANOBACTERIA &&
-            AlgaeObservationLocation.SUBSTRATE in observation.locations
+            profile.factorWeights.containsKey(AlgaeFactorId.WARM_WATER) &&
+            context.temperatureState == AlgaeSignalState.UNKNOWN
         ) {
-            profile.factorWeights[AlgaeFactorId.FLOW_OR_OXYGENATION]?.let { weight ->
-                factorScores[AlgaeFactorId.FLOW_OR_OXYGENATION] = weight
-            }
-        }
-
-        if (
-            observation.algaeType == AlgaeTypeId.BLACK_BEARD &&
-            AlgaeObservationLocation.EQUIPMENT in observation.locations
-        ) {
-            profile.factorWeights[AlgaeFactorId.ORGANIC_LOAD]?.let { weight ->
-                factorScores[AlgaeFactorId.ORGANIC_LOAD] = maxOf(
-                    factorScores[AlgaeFactorId.ORGANIC_LOAD] ?: 0,
-                    weight
-                )
-            }
+            missingData += AlgaeMissingData.TEMPERATURE_CONTEXT
+        } else if (isElevated(context.temperatureState)) {
+            addFactor(profile, factorScores, AlgaeFactorId.WARM_WATER)
         }
     }
 
@@ -295,7 +252,7 @@ object AlgaeAnalysisEngine {
                 }
                 AlgaeFactorId.IMMATURE_TANK -> ordered += AlgaeActionId.ALLOW_TANK_TO_MATURE
                 AlgaeFactorId.PLANT_STRESS -> ordered += AlgaeActionId.TRIM_AFFECTED_LEAVES
-                AlgaeFactorId.LOW_PLANT_MASS -> Unit
+                AlgaeFactorId.LOW_PLANT_MASS,
                 AlgaeFactorId.WARM_WATER -> Unit
             }
         }
@@ -338,7 +295,25 @@ object AlgaeAnalysisEngine {
         return AlgaeAnalysisPriority.MONITOR
     }
 
+    private fun addFactor(
+        profile: AlgaeKnowledgeProfile,
+        factorScores: MutableMap<AlgaeFactorId, Int>,
+        factor: AlgaeFactorId
+    ) {
+        profile.factorWeights[factor]?.let { weight ->
+            factorScores[factor] = weight
+        }
+    }
 }
+
+private fun AlgaeSignalState.isOutsideNormal(): Boolean =
+    this == AlgaeSignalState.LOW ||
+        this == AlgaeSignalState.ELEVATED ||
+        this == AlgaeSignalState.HIGH
+
+private fun isElevated(state: AlgaeSignalState): Boolean =
+    state == AlgaeSignalState.ELEVATED ||
+        state == AlgaeSignalState.HIGH
 
 private fun strengthFor(score: Int): AlgaeFactorStrength =
     when {
