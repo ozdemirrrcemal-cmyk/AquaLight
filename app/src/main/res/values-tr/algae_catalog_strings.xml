@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="algae_brown_diatom_name">Kahverengi Diyatom</string>
+    <string name="algae_brown_diatom_short">Özellikle yeni tanklarda görülen yumuşak kahverengi toz tabakası.</string>
+    <string name="algae_green_spot_name">Yeşil Nokta Yosunu</string>
+    <string name="algae_green_spot_short">Camda ve yaşlı, yavaş büyüyen yapraklarda sert yeşil noktalar.</string>
+    <string name="algae_black_beard_name">Siyah Sakal Yosunu</string>
+    <string name="algae_black_beard_short">Yaprak, kök, kaya ve ekipmanda koyu fırça benzeri kümeler.</string>
+    <string name="algae_hair_thread_name">İpliksi / Saç Yosunu</string>
+    <string name="algae_hair_thread_short">Bitki ve dekorlara dolanan uzun yeşil iplikler.</string>
+    <string name="algae_staghorn_name">Geyik Boynuzu Yosunu</string>
+    <string name="algae_staghorn_short">Küçük boynuzları andıran gri-yeşil dallanan yapılar.</string>
+    <string name="algae_green_dust_name">Yeşil Toz Yosunu</string>
+    <string name="algae_green_dust_short">Akvaryum camında hızlı oluşan yumuşak yeşil film.</string>
+    <string name="algae_cyanobacteria_name">Mavi-Yeşil Tabaka</string>
+    <string name="algae_cyanobacteria_short">Kaygan mavi-yeşil tabaka; teknik olarak yosun değil siyanobakteridir.</string>
+    <string name="algae_green_water_name">Yeşil Su</string>
+    <string name="algae_green_water_short">Suda asılı hücrelerin suyu bulanık yeşile çevirdiği oluşum.</string>
+    <string name="algae_cladophora_name">Cladophora</string>
+    <string name="algae_cladophora_short">Bitki veya dekorlara tutunan yoğun ve kaba yeşil kümeler.</string>
+</resources>
