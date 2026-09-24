@@ -12,7 +12,6 @@ import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.application.aquarium.health.algae.AlgaeAnalysisEngine
 import com.aqua.aqualight.application.aquarium.health.algae.AlgaeAnalysisPriority
 import com.aqua.aqualight.application.aquarium.health.algae.AlgaeDensity
-import com.aqua.aqualight.application.aquarium.health.algae.AlgaeFactorStrength
 import com.aqua.aqualight.application.aquarium.health.algae.AlgaeObservationInput
 import com.aqua.aqualight.application.aquarium.health.algae.AlgaeObservationLocation
 import com.aqua.aqualight.application.aquarium.health.algae.AlgaeTrend
@@ -176,6 +175,20 @@ class TankAlgaeAnalysisFragment : Fragment(R.layout.fragment_tank_algae_analysis
                 subtitle = ""
             )
         }
+    }
+
+    private fun renderAssessment(priority: AlgaeAnalysisPriority) {
+        binding.tvAssessmentTitle.setText(
+            AlgaePresentationText.priorityTitle(priority)
+        )
+        binding.tvAssessmentBody.setText(
+            AlgaePresentationText.priorityBody(priority)
+        )
+        applyAlgaeAssessmentColors(
+            context = requireContext(),
+            binding = binding,
+            priority = priority
+        )
     }
 
     override fun onDestroyView() {
