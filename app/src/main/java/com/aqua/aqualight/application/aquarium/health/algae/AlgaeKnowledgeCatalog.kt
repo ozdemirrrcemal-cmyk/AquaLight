@@ -345,42 +345,4 @@ object AlgaeKnowledgeCatalog {
         evidence = evidence
     )
 
-    private val FILM_LOCATIONS = setOf(
-        AlgaeObservationLocation.FRONT_GLASS,
-        AlgaeObservationLocation.BACK_GLASS,
-        AlgaeObservationLocation.SIDE_GLASS,
-        AlgaeObservationLocation.PLANTS,
-        AlgaeObservationLocation.ROCKS
-    )
-
-    private val GLASS_AND_HARDSCAPE_LOCATIONS = setOf(
-        AlgaeObservationLocation.FRONT_GLASS,
-        AlgaeObservationLocation.BACK_GLASS,
-        AlgaeObservationLocation.SIDE_GLASS,
-        AlgaeObservationLocation.ROCKS
-    )
-
-    private val ATTACHED_LOCATIONS = setOf(
-        AlgaeObservationLocation.PLANTS,
-        AlgaeObservationLocation.ROOT_WOOD,
-        AlgaeObservationLocation.ROCKS,
-        AlgaeObservationLocation.EQUIPMENT
-    )
-
-    private val FILAMENTOUS_LOCATIONS = setOf(
-        AlgaeObservationLocation.PLANTS,
-        AlgaeObservationLocation.ROOT_WOOD,
-        AlgaeObservationLocation.ROCKS,
-        AlgaeObservationLocation.EQUIPMENT
-    )
-
-    private val FILAMENTOUS_BASE_ACTIONS = listOf(
-        AlgaeActionId.MANUAL_REMOVAL,
-        AlgaeActionId.TRIM_AFFECTED_LEAVES,
-        AlgaeActionId.REVIEW_LIGHT_DURATION,
-        AlgaeActionId.REVIEW_LIGHT_INTENSITY,
-        AlgaeActionId.REVIEW_FERTILIZER_PLAN,
-        AlgaeActionId.VERIFY_CO2_STABILITY,
-        AlgaeActionId.RECHECK_IN_FEW_DAYS
-    )
 }
