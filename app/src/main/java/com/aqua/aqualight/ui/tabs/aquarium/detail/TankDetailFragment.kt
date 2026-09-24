@@ -39,6 +39,8 @@ class TankDetailFragment :
 
     private var tankId: Long = 0L
     private lateinit var tabCoordinator: TankDetailTabCoordinator
+    private var pendingPagerSavedState: Bundle? = null
+    private var isTabPagerAttached: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,13 +55,7 @@ class TankDetailFragment :
         _binding = FragmentTankDetailBinding.bind(view)
 
         tabCoordinator = TankDetailTabCoordinator(findNavController())
-        tabCoordinator.attach(
-            fragment = this,
-            binding = binding,
-            tankId = tankId,
-            startTab = args.startTab,
-            savedInstanceState = savedInstanceState
-        )
+        pendingPagerSavedState = savedInstanceState ?: pendingPagerSavedState
 
         renderHeader(getString(R.string.screen_title_aquarium))
 
@@ -74,6 +70,27 @@ class TankDetailFragment :
 
         observeCareProfileActions()
         observeTank()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        attachTabPagerIfNeeded()
+    }
+
+    private fun attachTabPagerIfNeeded() {
+        if (isTabPagerAttached || _binding == null) {
+            return
+        }
+
+        tabCoordinator.attach(
+            fragment = this,
+            binding = binding,
+            tankId = tankId,
+            startTab = args.startTab,
+            savedInstanceState = pendingPagerSavedState
+        )
+        pendingPagerSavedState = null
+        isTabPagerAttached = true
     }
 
     private fun renderHeader(title: String) {
@@ -247,8 +264,14 @@ class TankDetailFragment :
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
 
-        if (::tabCoordinator.isInitialized) {
+        if (::tabCoordinator.isInitialized && isTabPagerAttached) {
             tabCoordinator.saveInstanceState(outState)
+        } else {
+            pendingPagerSavedState
+                ?.getString(KEY_SELECTED_TAB)
+                ?.let { selectedTab ->
+                    outState.putString(KEY_SELECTED_TAB, selectedTab)
+                }
         }
     }
 
@@ -256,6 +279,7 @@ class TankDetailFragment :
         if (::tabCoordinator.isInitialized) {
             tabCoordinator.detach()
         }
+        isTabPagerAttached = false
 
         _binding = null
         super.onDestroyView()
