@@ -1,22 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="@dimen/aqua_size_10"
-    android:gravity="center_vertical"
-    android:orientation="horizontal">
+    android:layout_marginBottom="@dimen/aqua_size_10">
 
     <TextView
         android:id="@+id/tvWaterQualityTitle"
-        android:layout_width="0dp"
+        android:layout_width="@dimen/aqua_size_0"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
         android:includeFontPadding="false"
         android:text="@string/tank_health_water_quality_title"
         android:textColor="@color/aqua_card_text_primary"
         android:textSize="@dimen/aqua_text_size_body_xlarge"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/tvLastAnalysis"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/tvLastAnalysis"
@@ -25,6 +27,9 @@
         android:includeFontPadding="false"
         android:text="@string/tank_health_last_analysis"
         android:textColor="@color/aqua_content_muted"
-        android:textSize="@dimen/aqua_text_size_caption" />
+        android:textSize="@dimen/aqua_text_size_caption"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
