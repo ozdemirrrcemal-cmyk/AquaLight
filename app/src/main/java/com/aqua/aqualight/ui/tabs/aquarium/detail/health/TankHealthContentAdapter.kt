@@ -81,7 +81,10 @@ internal class TankHealthContentAdapter :
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val item = items[position]
         if (holder is MetricViewHolder && item is TankHealthContentItem.Metric) {
-            holder.bind(item)
+            holder.bind(
+                item = item,
+                metricIndex = position - FIRST_METRIC_ADAPTER_POSITION
+            )
         }
     }
 
@@ -103,7 +106,10 @@ internal class TankHealthContentAdapter :
         private val binding: ItemTankHealthMetricBinding
     ) : RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(item: TankHealthContentItem.Metric) {
+        fun bind(
+            item: TankHealthContentItem.Metric,
+            metricIndex: Int
+        ) {
             val context = binding.root.context
             binding.metricLabel.setText(item.labelRes)
             binding.metricValue.setText(item.valueRes)
@@ -115,13 +121,13 @@ internal class TankHealthContentAdapter :
             val layoutParams = binding.root.layoutParams as ViewGroup.MarginLayoutParams
             val horizontalSpacing = context.resources.getDimensionPixelSize(R.dimen.aqua_size_3)
             val rowSpacing = context.resources.getDimensionPixelSize(R.dimen.aqua_size_6)
-            val column = item.index % GRID_SPAN_COUNT
+            val column = metricIndex % GRID_SPAN_COUNT
 
             layoutParams.marginStart = if (column == 0) 0 else horizontalSpacing
             layoutParams.marginEnd =
                 if (column == GRID_SPAN_COUNT - 1) 0 else horizontalSpacing
             layoutParams.bottomMargin =
-                if (item.index < GRID_SPAN_COUNT) rowSpacing else 0
+                if (metricIndex < GRID_SPAN_COUNT) rowSpacing else 0
             binding.root.layoutParams = layoutParams
         }
     }
@@ -130,7 +136,6 @@ internal class TankHealthContentAdapter :
         object WaterQualityHeader : TankHealthContentItem
 
         data class Metric(
-            val index: Int,
             @StringRes val labelRes: Int,
             @StringRes val valueRes: Int,
             @StringRes val statusRes: Int,
@@ -151,32 +156,27 @@ internal class TankHealthContentAdapter :
         private const val VIEW_TYPE_MAINTENANCE_SECTION = 3
         private const val VIEW_TYPE_SYSTEM_SECTION = 4
         private const val METRIC_SPAN_SIZE = 1
+        private const val FIRST_METRIC_ADAPTER_POSITION = 1
 
         private fun buildItems(): List<TankHealthContentItem> {
             return listOf(
                 TankHealthContentItem.WaterQualityHeader,
-                metric(0, R.string.tank_health_metric_ph, R.string.tank_health_value_ph),
-                metric(
-                    1,
-                    R.string.tank_health_metric_no3,
+                metric(R.string.tank_health_metric_ph, R.string.tank_health_value_ph),
+                metric(R.string.tank_health_metric_no3,
                     R.string.tank_health_value_no3,
                     R.string.tank_health_status_moderate,
                     R.color.aqua_content_warning
                 ),
-                metric(2, R.string.tank_health_metric_no2, R.string.tank_health_value_no2),
-                metric(
-                    3,
-                    R.string.tank_health_metric_nh3_nh4,
+                metric(R.string.tank_health_metric_no2, R.string.tank_health_value_no2),
+                metric(R.string.tank_health_metric_nh3_nh4,
                     R.string.tank_health_value_nh3_nh4
                 ),
-                metric(
-                    4,
-                    R.string.tank_health_metric_temperature,
+                metric(R.string.tank_health_metric_temperature,
                     R.string.tank_health_value_temperature
                 ),
-                metric(5, R.string.tank_health_metric_gh, R.string.tank_health_value_gh),
-                metric(6, R.string.tank_health_metric_kh, R.string.tank_health_value_kh),
-                metric(7, R.string.tank_health_metric_po4, R.string.tank_health_value_po4),
+                metric(R.string.tank_health_metric_gh, R.string.tank_health_value_gh),
+                metric(R.string.tank_health_metric_kh, R.string.tank_health_value_kh),
+                metric(R.string.tank_health_metric_po4, R.string.tank_health_value_po4),
                 TankHealthContentItem.AddAnalysis,
                 TankHealthContentItem.MaintenanceSection,
                 TankHealthContentItem.SystemSection
@@ -184,14 +184,12 @@ internal class TankHealthContentAdapter :
         }
 
         private fun metric(
-            index: Int,
             @StringRes labelRes: Int,
             @StringRes valueRes: Int,
             @StringRes statusRes: Int = R.string.tank_health_status_normal,
             @ColorRes statusColorRes: Int = R.color.aqua_status_success
         ): TankHealthContentItem.Metric {
             return TankHealthContentItem.Metric(
-                index = index,
                 labelRes = labelRes,
                 valueRes = valueRes,
                 statusRes = statusRes,
