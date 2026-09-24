@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="algae_factor_light_duration">Lighting duration</string>
+    <string name="algae_factor_light_intensity">Lighting intensity</string>
+    <string name="algae_factor_co2_stability">CO₂ stability</string>
+    <string name="algae_factor_organic_load">Organic load</string>
+    <string name="algae_factor_filter_maintenance">Filter maintenance</string>
+    <string name="algae_factor_water_change_interval">Water-change interval</string>
+    <string name="algae_factor_nitrogen_waste">Nitrogen waste</string>
+    <string name="algae_factor_nutrient_imbalance">Nutrient balance</string>
+    <string name="algae_factor_low_phosphate">Low phosphate context</string>
+    <string name="algae_factor_low_nitrate">Low nitrate context</string>
+    <string name="algae_factor_immature_tank">Biologically immature tank</string>
+    <string name="algae_factor_plant_stress">Plant stress</string>
+    <string name="algae_factor_low_plant_mass">Low plant mass</string>
+    <string name="algae_factor_flow_oxygenation">Flow / oxygenation</string>
+    <string name="algae_factor_warm_water">Warm-water context</string>
+
+    <string name="algae_action_manual_removal">Remove visible algae manually</string>
+    <string name="algae_action_trim_affected_leaves">Trim heavily affected leaves</string>
+    <string name="algae_action_clean_hardscape">Clean affected hardscape</string>
+    <string name="algae_action_siphon_substrate">Siphon affected substrate and detritus</string>
+    <string name="algae_action_review_light_duration">Review the lighting duration</string>
+    <string name="algae_action_review_light_intensity">Review the lighting intensity</string>
+    <string name="algae_action_verify_co2">Verify CO₂ timing and stability</string>
+    <string name="algae_action_add_co2_schedule">Add CO₂ schedule information</string>
+    <string name="algae_action_service_filter">Review filter flow and maintenance</string>
+    <string name="algae_action_water_change">Perform an appropriate water change</string>
+    <string name="algae_action_improve_flow">Review flow and oxygenation in the affected area</string>
+    <string name="algae_action_review_fertilizer">Review the fertilizer plan</string>
+    <string name="algae_action_review_no3_po4">Review NO3 and PO4 together</string>
+    <string name="algae_action_allow_maturation">Allow the aquarium to mature while maintaining routine care</string>
+    <string name="algae_action_uv_green_water">Consider UV clarification for persistent green water</string>
+    <string name="algae_action_temporary_blackout">Consider a temporary blackout when appropriate</string>
+    <string name="algae_action_recheck">Record another observation in a few days</string>
+
+    <string name="algae_missing_light_profile">Lighting profile is unavailable.</string>
+    <string name="algae_missing_co2_schedule">CO₂ schedule is unavailable.</string>
+    <string name="algae_missing_water_analysis">Current water analysis is unavailable.</string>
+    <string name="algae_missing_maintenance_history">Maintenance history is incomplete.</string>
+    <string name="algae_missing_plant_mass">Plant-mass context is unavailable.</string>
+    <string name="algae_missing_temperature_context">Temperature context is unavailable.</string>
+</resources>
