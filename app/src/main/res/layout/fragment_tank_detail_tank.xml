@@ -25,7 +25,7 @@
             android:id="@+id/cardTankHealth"
             style="@style/Widget.Aqua.Card.Metric"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/aqua_size_88"
+            android:layout_height="@dimen/aqua_size_86"
             android:layout_marginBottom="@dimen/aqua_size_16"
             android:clickable="true"
             android:focusable="true"
