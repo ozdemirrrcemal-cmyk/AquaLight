@@ -1,7 +1,7 @@
 package com.aqua.aqualight.application.aquarium.health.algae
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class AlgaeKnowledgeCatalogTest {
@@ -15,13 +15,20 @@ class AlgaeKnowledgeCatalogTest {
     }
 
     @Test
-    fun profilesDoNotEmbedSourceLinks() {
+    fun everyProfileUsesRegisteredEvidenceRecords() {
         AlgaeKnowledgeCatalog.records.forEach { profile ->
-            assertFalse(
-                profile.evidenceKeys.any { key ->
-                    key.contains("http", ignoreCase = true)
-                }
-            )
+            assertTrue(profile.evidence.isNotEmpty())
+            profile.evidence.forEach { evidenceId ->
+                AlgaeEvidenceCatalog.requireRecord(evidenceId)
+            }
         }
+    }
+
+    @Test
+    fun evidenceCatalogHasOneRecordPerEvidenceId() {
+        assertEquals(
+            AlgaeEvidenceId.entries.toSet(),
+            AlgaeEvidenceCatalog.records.map(AlgaeEvidenceRecord::id).toSet()
+        )
     }
 }
