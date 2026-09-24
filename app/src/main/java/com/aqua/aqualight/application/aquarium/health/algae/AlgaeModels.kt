@@ -3,13 +3,17 @@ package com.aqua.aqualight.application.aquarium.health.algae
 enum class AlgaeTypeId {
     BROWN_DIATOM,
     GREEN_SPOT,
-    BLACK_BEARD,
-    HAIR_THREAD,
-    STAGHORN,
     GREEN_DUST,
+    GREEN_COAT,
+    BLACK_BEARD,
+    STAGHORN,
+    FUZZ,
+    HAIR,
+    THREAD,
+    FLUFF,
+    CLADOPHORA,
     CYANOBACTERIA,
-    GREEN_WATER,
-    CLADOPHORA
+    GREEN_WATER
 }
 
 enum class AlgaeObservationLocation {
