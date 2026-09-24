@@ -61,11 +61,17 @@ class TankAlgaeControlFragment : Fragment(R.layout.fragment_tank_algae_control) 
     }
 
     fun openNewObservation() {
+        resetObservationDraft()
         showObservationForm(preselectedType = null)
+    }
+
+    fun openOverview() {
+        showOverview()
     }
 
     private fun setupCatalogs() {
         commonAdapter = AlgaeCatalogAdapter { type ->
+            resetObservationDraft()
             showObservationForm(type)
         }
         binding.commonAlgaeRecycler.apply {
@@ -162,7 +168,7 @@ class TankAlgaeControlFragment : Fragment(R.layout.fragment_tank_algae_control) 
 
     private fun setupActions() {
         binding.btnNewObservation.setOnClickListener {
-            showObservationForm(preselectedType = null)
+            openNewObservation()
         }
         binding.btnBackToOverview.setOnClickListener {
             showOverview()
@@ -188,6 +194,20 @@ class TankAlgaeControlFragment : Fragment(R.layout.fragment_tank_algae_control) 
         renderMode()
         binding.algaeOverviewScroll.scrollTo(0, 0)
     }
+\n    private fun resetObservationDraft() {
+        selectedType = null
+        selectedLocations.clear()
+        selectedDensity = null
+        selectedTrend = null
+
+        if (_binding != null) {
+            binding.etAlgaeSearch.setText("")
+            binding.etObservationNote.setText("")
+            restoreSelections()
+            updateAnalyzeEnabled()
+        }
+    }
+
 
     private fun renderMode() {
         binding.algaeOverviewScroll.isVisible = !formVisible
@@ -318,13 +338,13 @@ class TankAlgaeControlFragment : Fragment(R.layout.fragment_tank_algae_control) 
         formVisible = savedInstanceState.getBoolean(KEY_FORM_VISIBLE)
         selectedType = savedInstanceState
             .getString(KEY_SELECTED_TYPE)
-            ?.let(::enumValueOrNull)
+            ?.let { value -> enumValueOrNull<AlgaeTypeId>(value) }
         selectedDensity = savedInstanceState
             .getString(KEY_SELECTED_DENSITY)
-            ?.let(::enumValueOrNull)
+            ?.let { value -> enumValueOrNull<AlgaeDensity>(value) }
         selectedTrend = savedInstanceState
             .getString(KEY_SELECTED_TREND)
-            ?.let(::enumValueOrNull)
+            ?.let { value -> enumValueOrNull<AlgaeTrend>(value) }
 
         savedInstanceState
             .getStringArrayList(KEY_SELECTED_LOCATIONS)
