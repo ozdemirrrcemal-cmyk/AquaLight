@@ -7,7 +7,7 @@ import org.junit.Test
 class AlgaeAnalysisEngineTest {
 
     @Test
-    fun blackBeardUsesKnownCo2AndMaintenanceSignals() {
+    fun blackBeardUsesExplicitCo2AndMaintenanceSignals() {
         val result = AlgaeAnalysisEngine.analyze(
             observation = AlgaeObservationInput(
                 algaeType = AlgaeTypeId.BLACK_BEARD,
@@ -19,14 +19,11 @@ class AlgaeAnalysisEngineTest {
                 trend = AlgaeTrend.INCREASING
             ),
             context = AlgaeTankContext(
-                lightDurationState = AlgaeSignalState.NORMAL,
-                lightIntensityState = AlgaeSignalState.NORMAL,
                 hasCo2 = true,
                 co2ScheduleKnown = true,
-                co2TimingState = AlgaeSignalState.ELEVATED,
+                co2Stability = AlgaeCo2Stability.UNSTABLE,
                 waterChangeOverdue = true,
                 filterMaintenanceOverdue = true,
-                organicLoadState = AlgaeSignalState.ELEVATED,
                 waterQuality = normalWater()
             )
         )
@@ -54,7 +51,8 @@ class AlgaeAnalysisEngineTest {
             ),
             context = AlgaeTankContext(
                 hasCo2 = true,
-                co2ScheduleKnown = false
+                co2ScheduleKnown = false,
+                co2Stability = AlgaeCo2Stability.UNKNOWN
             )
         )
 
@@ -68,7 +66,7 @@ class AlgaeAnalysisEngineTest {
     }
 
     @Test
-    fun greenSpotUsesLowPhosphateOnlyWhenWaterAnalysisSaysItIsLow() {
+    fun greenSpotUsesPhosphateImbalanceOnlyWhenWaterAnalysisSupportsIt() {
         val result = AlgaeAnalysisEngine.analyze(
             observation = AlgaeObservationInput(
                 algaeType = AlgaeTypeId.GREEN_SPOT,
@@ -77,19 +75,19 @@ class AlgaeAnalysisEngineTest {
                 trend = AlgaeTrend.STABLE
             ),
             context = AlgaeTankContext(
-                lightDurationState = AlgaeSignalState.NORMAL,
-                lightIntensityState = AlgaeSignalState.NORMAL,
+                lightDurationMinutes = 8 * 60,
+                lightExposureState = AlgaeLightExposureState.WITHIN_RANGE,
                 waterQuality = AlgaeWaterQualityContext(
-                    nitrateState = AlgaeSignalState.NORMAL,
-                    phosphateState = AlgaeSignalState.LOW,
-                    nitriteState = AlgaeSignalState.NORMAL,
-                    ammoniaState = AlgaeSignalState.NORMAL
+                    nitrateState = WaterParameterState.NORMAL,
+                    phosphateState = WaterParameterState.LOW,
+                    nitriteState = WaterParameterState.NORMAL,
+                    ammoniaState = WaterParameterState.NORMAL
                 )
             )
         )
 
         assertTrue(result.factors.any { factor ->
-            factor.factor == AlgaeFactorId.LOW_PHOSPHATE_CONTEXT
+            factor.factor == AlgaeFactorId.PHOSPHATE_IMBALANCE_CONTEXT
         })
         assertTrue(result.actions.any { action ->
             action.action == AlgaeActionId.REVIEW_NO3_PO4_BALANCE
@@ -97,7 +95,7 @@ class AlgaeAnalysisEngineTest {
     }
 
     @Test
-    fun unknownLightProfileIsMissingDataNotHighLight() {
+    fun unknownLightScheduleIsMissingDataNotHighLight() {
         val result = AlgaeAnalysisEngine.analyze(
             observation = AlgaeObservationInput(
                 algaeType = AlgaeTypeId.GREEN_WATER,
@@ -106,21 +104,45 @@ class AlgaeAnalysisEngineTest {
                 trend = AlgaeTrend.STABLE
             ),
             context = AlgaeTankContext(
+                lightExposureState = AlgaeLightExposureState.UNKNOWN,
                 waterQuality = normalWater()
             )
         )
 
-        assertTrue(AlgaeMissingData.LIGHT_PROFILE in result.missingData)
+        assertTrue(AlgaeMissingData.LIGHT_SCHEDULE in result.missingData)
         assertTrue(result.factors.none { factor ->
             factor.factor == AlgaeFactorId.LIGHT_DURATION ||
                 factor.factor == AlgaeFactorId.LIGHT_INTENSITY
         })
     }
 
+    @Test
+    fun cyanobacteriaUsesLowFlowOnlyWhenFlowWasObserved() {
+        val result = AlgaeAnalysisEngine.analyze(
+            observation = AlgaeObservationInput(
+                algaeType = AlgaeTypeId.CYANOBACTERIA,
+                locations = setOf(AlgaeObservationLocation.SUBSTRATE),
+                density = AlgaeDensity.MEDIUM,
+                trend = AlgaeTrend.STABLE
+            ),
+            context = AlgaeTankContext(
+                flowState = AlgaeFlowState.LOW,
+                waterQuality = normalWater()
+            )
+        )
+
+        assertTrue(result.factors.any { factor ->
+            factor.factor == AlgaeFactorId.FLOW_OR_OXYGENATION
+        })
+        assertTrue(result.actions.any { action ->
+            action.action == AlgaeActionId.IMPROVE_FLOW_OR_OXYGENATION
+        })
+    }
+
     private fun normalWater() = AlgaeWaterQualityContext(
-        nitrateState = AlgaeSignalState.NORMAL,
-        phosphateState = AlgaeSignalState.NORMAL,
-        nitriteState = AlgaeSignalState.NORMAL,
-        ammoniaState = AlgaeSignalState.NORMAL
+        nitrateState = WaterParameterState.NORMAL,
+        phosphateState = WaterParameterState.NORMAL,
+        nitriteState = WaterParameterState.NORMAL,
+        ammoniaState = WaterParameterState.NORMAL
     )
 }
