@@ -137,6 +137,7 @@ data class AlgaeTankContext(
     val waterChangeOverdue: Boolean? = null,
     val filterMaintenanceOverdue: Boolean? = null,
     val flowState: AlgaeFlowState = AlgaeFlowState.UNKNOWN,
+    val plantStressObserved: Boolean? = null,
     val temperatureC: Double? = null,
     val waterQuality: AlgaeWaterQualityContext = AlgaeWaterQualityContext()
 )
