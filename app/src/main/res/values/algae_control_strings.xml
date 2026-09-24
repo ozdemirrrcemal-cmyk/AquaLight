@@ -96,5 +96,5 @@
     <string name="algae_missing_light">Lighting schedule is not available.</string>
     <string name="algae_missing_co2">CO₂ operating hours are not available.</string>
     <string name="algae_missing_water">A recent structured water analysis is not available.</string>
-    <string name="algae_missing_maintenance">Maintenance history is not available.</string>
+    <string name="algae_missing_maintenance">Maintenance history is not available.</string>\n    <string name="algae_missing_plant_mass">Plant-mass context is not available.</string>\n    <string name="algae_missing_temperature">Temperature context is not available.</string>
 </resources>
