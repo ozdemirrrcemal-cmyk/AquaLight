@@ -1,11 +1,9 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.health.algae
 
 import android.content.Context
-import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.GridLayoutManager
 import com.aqua.aqualight.application.aquarium.health.algae.AlgaeTypeId
 import com.aqua.aqualight.databinding.FragmentTankAlgaeControlBinding
-import java.util.Locale
 
 internal class AlgaeCatalogController(
     private val context: Context,
@@ -35,9 +33,6 @@ internal class AlgaeCatalogController(
         }
         typeAdapter.submitItems(AlgaeUiCatalog.definitions)
 
-        binding.etAlgaeSearch.doAfterTextChanged { editable ->
-            filter(editable?.toString().orEmpty())
-        }
     }
 
     fun select(type: AlgaeTypeId?) {
@@ -53,30 +48,8 @@ internal class AlgaeCatalogController(
 
     fun reset() {
         selectedType = null
-        binding.etAlgaeSearch.setText("")
         typeAdapter.submitItems(AlgaeUiCatalog.definitions)
         typeAdapter.setSelected(null)
-    }
-
-    private fun filter(query: String) {
-        val normalized = query.trim().lowercase(Locale.getDefault())
-        val definitions = if (normalized.isBlank()) {
-            AlgaeUiCatalog.definitions
-        } else {
-            AlgaeUiCatalog.definitions.filter { definition ->
-                val name = context.getString(definition.nameRes)
-                    .lowercase(Locale.getDefault())
-                val description = context.getString(definition.shortDescriptionRes)
-                    .lowercase(Locale.getDefault())
-
-                name.contains(normalized) || description.contains(normalized)
-            }
-        }
-
-        typeAdapter.submitItems(
-            definitions = definitions,
-            selected = selectedType
-        )
     }
 
     companion object {
