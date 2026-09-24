@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="screen_title_tank_health">Tank Health</string>
-    <string name="tank_health_info_content_description">Tank health information</string>\n    <string name="tank_health_info_message">Water quality, maintenance status and the tank system summary are collected on this screen.</string>
+    <string name="tank_health_info_content_description">Tank health information</string>
+    <string name="tank_health_info_message">Water quality, maintenance status and the tank system summary are collected on this screen.</string>
     <string name="tank_health_entry_title">Tank Health</string>
     <string name="tank_health_entry_summary">Tank condition looks good</string>
     <string name="tank_health_entry_last_analysis">Last analysis: 2 days ago</string>
@@ -18,6 +19,7 @@
 
     <string name="tank_health_metric_ph" translatable="false">pH</string>
     <string name="tank_health_metric_no3" translatable="false">NO3</string>
+    <string name="tank_health_metric_po4" translatable="false">PO4</string>
     <string name="tank_health_metric_no2" translatable="false">NO2</string>
     <string name="tank_health_metric_nh3_nh4" translatable="false">NH3/NH4</string>
     <string name="tank_health_metric_temperature">Temperature</string>
@@ -26,12 +28,13 @@
 
     <string name="tank_health_value_ph" translatable="false">6.8</string>
     <string name="tank_health_value_no3" translatable="false">18 mg/L</string>
+    <string name="tank_health_value_po4" translatable="false">0.7 mg/L</string>
     <string name="tank_health_value_no2" translatable="false">0 mg/L</string>
     <string name="tank_health_value_nh3_nh4" translatable="false">0 mg/L</string>
     <string name="tank_health_value_temperature" translatable="false">25 °C</string>
     <string name="tank_health_value_gh" translatable="false">6 dGH</string>
     <string name="tank_health_value_kh" translatable="false">4 dKH</string>
-    <string name="tank_health_add_analysis">Analysis\nAdd</string>
+    <string name="tank_health_add_analysis">Add Analysis</string>
     <string name="tank_health_add_analysis_symbol" translatable="false">＋</string>
 
     <string name="tank_health_maintenance_title">Maintenance Status</string>
