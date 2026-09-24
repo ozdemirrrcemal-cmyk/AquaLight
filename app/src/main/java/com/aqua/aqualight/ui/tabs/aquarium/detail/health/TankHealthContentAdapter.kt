@@ -127,7 +127,7 @@ internal class TankHealthContentAdapter :
     }
 
     private sealed interface TankHealthContentItem {
-        data object WaterQualityHeader : TankHealthContentItem
+        object WaterQualityHeader : TankHealthContentItem
 
         data class Metric(
             val index: Int,
@@ -137,12 +137,13 @@ internal class TankHealthContentAdapter :
             @ColorRes val statusColorRes: Int
         ) : TankHealthContentItem
 
-        data object AddAnalysis : TankHealthContentItem
-        data object MaintenanceSection : TankHealthContentItem
-        data object SystemSection : TankHealthContentItem
+        object AddAnalysis : TankHealthContentItem
+        object MaintenanceSection : TankHealthContentItem
+        object SystemSection : TankHealthContentItem
     }
 
-    private companion object {
+    internal companion object {
+        const val GRID_SPAN_COUNT = 4
         const val VIEW_TYPE_WATER_QUALITY_HEADER = 0
         const val VIEW_TYPE_METRIC = 1
         const val VIEW_TYPE_ADD_ANALYSIS = 2
@@ -218,7 +219,4 @@ internal class TankHealthContentAdapter :
         }
     }
 
-    internal companion object Layout {
-        const val GRID_SPAN_COUNT = 4
-    }
 }
