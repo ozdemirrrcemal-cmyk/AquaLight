@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 import android.graphics.Typeface
 import android.os.Bundle
 import android.view.View
+import androidx.activity.OnBackPressedCallback
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -43,10 +44,38 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentTankHealthBinding.bind(view)
 
-        setupTankHealthHeader(this, binding)
+        setupTankHealthHeader(
+            fragment = this,
+            binding = binding,
+            onBackClick = ::handleBackNavigation
+        )
+        requireActivity().onBackPressedDispatcher.addCallback(
+            viewLifecycleOwner,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    handleBackNavigation()
+                }
+            }
+        )
+
         setupTabs()
         setupReturnActions()
         renderSelectedSection()
+    }
+
+    private fun handleBackNavigation() {
+        val algaeFragment = childFragmentManager
+            .findFragmentByTag(ALGAE_FRAGMENT_TAG)
+            as? TankAlgaeControlFragment
+
+        if (
+            selectedSection == HealthSection.ALGAE_CONTROL &&
+            algaeFragment?.isObservationFormVisible == true
+        ) {
+            algaeFragment.openOverview()
+        } else {
+            findNavController().navigateUp()
+        }
     }
 
     private fun setupTabs() {
@@ -210,15 +239,14 @@ private fun Fragment.renderTabState(
 
 private fun setupTankHealthHeader(
     fragment: TankHealthFragment,
-    binding: FragmentTankHealthBinding
+    binding: FragmentTankHealthBinding,
+    onBackClick: () -> Unit
 ) {
     binding.appHeader.setupAquaHeader(
         fragment = fragment,
         config = AquaHeaderConfig(
             titleOverride = fragment.getString(R.string.screen_title_tank_health),
-            onBackClick = {
-                fragment.findNavController().navigateUp()
-            }
+            onBackClick = onBackClick
         )
     )
 }
