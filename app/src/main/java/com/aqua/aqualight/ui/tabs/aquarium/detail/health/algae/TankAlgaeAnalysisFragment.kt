@@ -196,12 +196,11 @@ class TankAlgaeAnalysisFragment : Fragment(R.layout.fragment_tank_algae_analysis
         super.onDestroyView()
     }
 
-    private inline fun <reified T : Enum<T>> requireEnum(
-        value: String,
-        field: String
-    ): T {
-        return enumValues<T>().firstOrNull { entry ->
-            entry.name == value
-        } ?: error("Invalid $field value: $value")
-    }
 }
+
+private inline fun <reified T : Enum<T>> requireEnum(
+    value: String,
+    field: String
+): T = enumValues<T>().firstOrNull { entry ->
+    entry.name == value
+} ?: error("Invalid $field value: $value")
