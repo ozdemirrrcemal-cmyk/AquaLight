@@ -96,5 +96,5 @@
     <string name="algae_missing_light">Aydınlatma programı bilinmiyor.</string>
     <string name="algae_missing_co2">CO₂ çalışma saatleri bilinmiyor.</string>
     <string name="algae_missing_water">Yakın tarihli yapılandırılmış su analizi bulunmuyor.</string>
-    <string name="algae_missing_maintenance">Bakım geçmişi bulunmuyor.</string>
+    <string name="algae_missing_maintenance">Bakım geçmişi bulunmuyor.</string>\n    <string name="algae_missing_plant_mass">Bitki yoğunluğu bağlamı bulunamadı.</string>\n    <string name="algae_missing_temperature">Sıcaklık bağlamı bulunamadı.</string>
 </resources>
