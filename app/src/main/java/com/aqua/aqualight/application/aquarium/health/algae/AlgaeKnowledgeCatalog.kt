@@ -13,6 +13,11 @@ object AlgaeKnowledgeCatalog {
     const val CATALOG_REVISION: Int = 1
     const val EXPECTED_RECORD_COUNT: Int = 9
 
+    private const val WEIGHT_CONTEXTUAL = 2
+    private const val WEIGHT_MODERATE = 3
+    private const val WEIGHT_STRONG = 4
+    private const val WEIGHT_PRIMARY = 5
+
     val records: List<AlgaeKnowledgeProfile> = listOf(
         profile(
             id = AlgaeTypeId.BROWN_DIATOM,
@@ -25,7 +30,7 @@ object AlgaeKnowledgeCatalog {
                 AlgaeObservationLocation.SUBSTRATE
             ),
             factors = mapOf(
-                AlgaeFactorId.IMMATURE_TANK to 5
+                AlgaeFactorId.IMMATURE_TANK to WEIGHT_PRIMARY
             ),
             actions = listOf(
                 AlgaeActionId.MANUAL_REMOVAL,
@@ -49,9 +54,9 @@ object AlgaeKnowledgeCatalog {
                 AlgaeObservationLocation.ROCKS
             ),
             factors = mapOf(
-                AlgaeFactorId.LIGHT_INTENSITY to 4,
-                AlgaeFactorId.PHOSPHATE_IMBALANCE_CONTEXT to 4,
-                AlgaeFactorId.NUTRIENT_IMBALANCE to 2
+                AlgaeFactorId.LIGHT_INTENSITY to WEIGHT_STRONG,
+                AlgaeFactorId.PHOSPHATE_IMBALANCE_CONTEXT to WEIGHT_STRONG,
+                AlgaeFactorId.NUTRIENT_IMBALANCE to WEIGHT_CONTEXTUAL
             ),
             actions = listOf(
                 AlgaeActionId.MANUAL_REMOVAL,
@@ -74,11 +79,11 @@ object AlgaeKnowledgeCatalog {
                 AlgaeObservationLocation.EQUIPMENT
             ),
             factors = mapOf(
-                AlgaeFactorId.CO2_STABILITY to 5,
-                AlgaeFactorId.ORGANIC_LOAD to 4,
-                AlgaeFactorId.FILTER_MAINTENANCE to 3,
-                AlgaeFactorId.PLANT_STRESS to 3,
-                AlgaeFactorId.FLOW_OR_OXYGENATION to 2
+                AlgaeFactorId.CO2_STABILITY to WEIGHT_PRIMARY,
+                AlgaeFactorId.ORGANIC_LOAD to WEIGHT_STRONG,
+                AlgaeFactorId.FILTER_MAINTENANCE to WEIGHT_MODERATE,
+                AlgaeFactorId.PLANT_STRESS to WEIGHT_MODERATE,
+                AlgaeFactorId.FLOW_OR_OXYGENATION to WEIGHT_CONTEXTUAL
             ),
             actions = listOf(
                 AlgaeActionId.TRIM_AFFECTED_LEAVES,
@@ -103,12 +108,12 @@ object AlgaeKnowledgeCatalog {
                 AlgaeObservationLocation.EQUIPMENT
             ),
             factors = mapOf(
-                AlgaeFactorId.LIGHT_DURATION to 4,
-                AlgaeFactorId.LIGHT_INTENSITY to 3,
-                AlgaeFactorId.NUTRIENT_IMBALANCE to 3,
-                AlgaeFactorId.PLANT_STRESS to 3,
-                AlgaeFactorId.NITROGEN_WASTE to 3,
-                AlgaeFactorId.WARM_WATER to 2
+                AlgaeFactorId.LIGHT_DURATION to WEIGHT_STRONG,
+                AlgaeFactorId.LIGHT_INTENSITY to WEIGHT_MODERATE,
+                AlgaeFactorId.NUTRIENT_IMBALANCE to WEIGHT_MODERATE,
+                AlgaeFactorId.PLANT_STRESS to WEIGHT_MODERATE,
+                AlgaeFactorId.NITROGEN_WASTE to WEIGHT_MODERATE,
+                AlgaeFactorId.WARM_WATER to WEIGHT_CONTEXTUAL
             ),
             actions = listOf(
                 AlgaeActionId.MANUAL_REMOVAL,
@@ -132,9 +137,9 @@ object AlgaeKnowledgeCatalog {
                 AlgaeObservationLocation.EQUIPMENT
             ),
             factors = mapOf(
-                AlgaeFactorId.PLANT_STRESS to 5,
-                AlgaeFactorId.CO2_STABILITY to 4,
-                AlgaeFactorId.ORGANIC_LOAD to 2
+                AlgaeFactorId.PLANT_STRESS to WEIGHT_PRIMARY,
+                AlgaeFactorId.CO2_STABILITY to WEIGHT_STRONG,
+                AlgaeFactorId.ORGANIC_LOAD to WEIGHT_CONTEXTUAL
             ),
             actions = listOf(
                 AlgaeActionId.TRIM_AFFECTED_LEAVES,
@@ -156,11 +161,11 @@ object AlgaeKnowledgeCatalog {
                 AlgaeObservationLocation.ROCKS
             ),
             factors = mapOf(
-                AlgaeFactorId.LIGHT_INTENSITY to 4,
-                AlgaeFactorId.NITROGEN_WASTE to 4,
-                AlgaeFactorId.IMMATURE_TANK to 3,
-                AlgaeFactorId.FLOW_OR_OXYGENATION to 2,
-                AlgaeFactorId.WARM_WATER to 2
+                AlgaeFactorId.LIGHT_INTENSITY to WEIGHT_STRONG,
+                AlgaeFactorId.NITROGEN_WASTE to WEIGHT_STRONG,
+                AlgaeFactorId.IMMATURE_TANK to WEIGHT_MODERATE,
+                AlgaeFactorId.FLOW_OR_OXYGENATION to WEIGHT_CONTEXTUAL,
+                AlgaeFactorId.WARM_WATER to WEIGHT_CONTEXTUAL
             ),
             actions = listOf(
                 AlgaeActionId.MANUAL_REMOVAL,
@@ -183,9 +188,9 @@ object AlgaeKnowledgeCatalog {
                 AlgaeObservationLocation.EQUIPMENT
             ),
             factors = mapOf(
-                AlgaeFactorId.FLOW_OR_OXYGENATION to 5,
-                AlgaeFactorId.ORGANIC_LOAD to 4,
-                AlgaeFactorId.LOW_NITRATE_CONTEXT to 3
+                AlgaeFactorId.FLOW_OR_OXYGENATION to WEIGHT_PRIMARY,
+                AlgaeFactorId.ORGANIC_LOAD to WEIGHT_STRONG,
+                AlgaeFactorId.LOW_NITRATE_CONTEXT to WEIGHT_MODERATE
             ),
             actions = listOf(
                 AlgaeActionId.MANUAL_REMOVAL,
@@ -204,10 +209,10 @@ object AlgaeKnowledgeCatalog {
             id = AlgaeTypeId.GREEN_WATER,
             locations = setOf(AlgaeObservationLocation.WATER_COLUMN),
             factors = mapOf(
-                AlgaeFactorId.LIGHT_INTENSITY to 5,
-                AlgaeFactorId.LIGHT_DURATION to 4,
-                AlgaeFactorId.NITROGEN_WASTE to 5,
-                AlgaeFactorId.IMMATURE_TANK to 3
+                AlgaeFactorId.LIGHT_INTENSITY to WEIGHT_PRIMARY,
+                AlgaeFactorId.LIGHT_DURATION to WEIGHT_STRONG,
+                AlgaeFactorId.NITROGEN_WASTE to WEIGHT_PRIMARY,
+                AlgaeFactorId.IMMATURE_TANK to WEIGHT_MODERATE
             ),
             actions = listOf(
                 AlgaeActionId.REVIEW_LIGHT_DURATION,
@@ -231,9 +236,9 @@ object AlgaeKnowledgeCatalog {
                 AlgaeObservationLocation.SUBSTRATE
             ),
             factors = mapOf(
-                AlgaeFactorId.FLOW_OR_OXYGENATION to 4,
-                AlgaeFactorId.LIGHT_INTENSITY to 3,
-                AlgaeFactorId.PLANT_STRESS to 2
+                AlgaeFactorId.FLOW_OR_OXYGENATION to WEIGHT_STRONG,
+                AlgaeFactorId.LIGHT_INTENSITY to WEIGHT_MODERATE,
+                AlgaeFactorId.PLANT_STRESS to WEIGHT_CONTEXTUAL
             ),
             actions = listOf(
                 AlgaeActionId.MANUAL_REMOVAL,
