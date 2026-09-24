@@ -292,6 +292,7 @@ class TankAlgaeControlFragment : Fragment(R.layout.fragment_tank_algae_control) 
             binding.btnLocationRocks to AlgaeObservationLocation.ROCKS,
             binding.btnLocationSubstrate to AlgaeObservationLocation.SUBSTRATE,
             binding.btnLocationEquipment to AlgaeObservationLocation.EQUIPMENT,
+            binding.btnLocationWaterColumn to AlgaeObservationLocation.WATER_COLUMN,
             binding.btnLocationOther to AlgaeObservationLocation.OTHER
         )
 
