@@ -45,6 +45,7 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
 
         setupHeader()
         setupTabs()
+        setupReturnActions()
         renderSelectedSection()
     }
 
@@ -68,6 +69,55 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
             selectSection(HealthSection.ALGAE_CONTROL)
         }
     }
+\n    private fun setupReturnActions() {
+        val savedStateHandle = findNavController()
+            .currentBackStackEntry
+            ?.savedStateHandle
+            ?: return
+
+        savedStateHandle.getLiveData<Boolean>(
+            KEY_RETURN_ALGAE_OVERVIEW
+        ).observe(viewLifecycleOwner) { shouldOpen ->
+            if (shouldOpen != true) {
+                return@observe
+            }
+
+            savedStateHandle.set(KEY_RETURN_ALGAE_OVERVIEW, false)
+            openAlgaeSection {
+                it.openOverview()
+            }
+        }
+
+        savedStateHandle.getLiveData<Boolean>(
+            KEY_OPEN_NEW_ALGAE_OBSERVATION
+        ).observe(viewLifecycleOwner) { shouldOpen ->
+            if (shouldOpen != true) {
+                return@observe
+            }
+
+            savedStateHandle.set(KEY_OPEN_NEW_ALGAE_OBSERVATION, false)
+            openAlgaeSection {
+                it.openNewObservation()
+            }
+        }
+    }
+
+    private fun openAlgaeSection(
+        action: (TankAlgaeControlFragment) -> Unit
+    ) {
+        selectedSection = HealthSection.ALGAE_CONTROL
+        renderSelectedSection()
+
+        childFragmentManager.executePendingTransactions()
+        val algaeFragment = childFragmentManager
+            .findFragmentByTag(ALGAE_FRAGMENT_TAG)
+            as? TankAlgaeControlFragment
+
+        if (algaeFragment != null) {
+            action(algaeFragment)
+        }
+    }
+
 
     private fun selectSection(section: HealthSection) {
         if (selectedSection == section) {
@@ -171,6 +221,9 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
     }
 
     companion object {
+        const val KEY_RETURN_ALGAE_OVERVIEW = "returnAlgaeOverview"
+        const val KEY_OPEN_NEW_ALGAE_OBSERVATION = "openNewAlgaeObservation"
+
         private const val KEY_SELECTED_SECTION = "selectedSection"
         private const val ALGAE_FRAGMENT_TAG = "tankAlgaeControl"
     }
