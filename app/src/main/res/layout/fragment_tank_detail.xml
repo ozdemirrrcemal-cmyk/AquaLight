@@ -2,6 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background_color">
@@ -41,7 +42,7 @@
                 android:layout_height="match_parent"
                 android:contentDescription="@string/aquarium_content_desc_aquarium_photo"
                 android:scaleType="centerCrop"
-                android:src="@drawable/nature_aquarium" />
+                tools:src="@drawable/nature_aquarium" />
 
             <View
                 android:layout_width="match_parent"

@@ -13,7 +13,6 @@ import androidx.navigation.fragment.navArgs
 import coil3.load
 import coil3.request.crossfade
 import coil3.request.error
-import coil3.request.placeholder
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentTankDetailBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderAction
@@ -57,7 +56,12 @@ class TankDetailFragment :
         tabCoordinator = TankDetailTabCoordinator(findNavController())
         pendingPagerSavedState = savedInstanceState ?: pendingPagerSavedState
 
-        renderHeader(getString(R.string.screen_title_aquarium))
+        val initialTitle = aquariumTankViewModel.tanks.value
+            ?.firstOrNull { tank -> tank.id == tankId }
+            ?.name
+            ?.takeIf(String::isNotBlank)
+            ?: getString(R.string.screen_title_aquarium)
+        renderHeader(initialTitle)
 
         requireActivity().onBackPressedDispatcher.addCallback(
             viewLifecycleOwner,
@@ -244,20 +248,35 @@ class TankDetailFragment :
                 return@observe
             }
 
-            renderHeader(tank.name)
-
-            if (!tank.photoUri.isNullOrBlank()) {
-                binding.imgTankPhoto.load(Uri.parse(tank.photoUri)) {
-                    placeholder(R.drawable.nature_aquarium)
-                    error(R.drawable.nature_aquarium)
-                    crossfade(true)
-                }
-            } else {
-                binding.imgTankPhoto.setImageResource(R.drawable.nature_aquarium)
+            if (binding.appHeader.tvTitle.text.toString() != tank.name) {
+                binding.appHeader.tvTitle.text = tank.name
             }
+
+            bindTankPhoto(tank.photoUri)
 
             binding.markerContainer.removeAllViews()
             binding.markerContainer.isVisible = false
+        }
+    }
+
+    private fun bindTankPhoto(photoUri: String?) {
+        val normalizedPhotoUri = photoUri?.trim()?.takeIf(String::isNotEmpty)
+        val photoKey = normalizedPhotoUri ?: DEFAULT_TANK_PHOTO_KEY
+        if (binding.imgTankPhoto.tag == photoKey) {
+            return
+        }
+        binding.imgTankPhoto.tag = photoKey
+
+        if (normalizedPhotoUri == null) {
+            binding.imgTankPhoto.load(R.drawable.nature_aquarium) {
+                crossfade(false)
+            }
+            return
+        }
+
+        binding.imgTankPhoto.load(Uri.parse(normalizedPhotoUri)) {
+            error(R.drawable.nature_aquarium)
+            crossfade(false)
         }
     }
 
@@ -286,6 +305,8 @@ class TankDetailFragment :
     }
 
     companion object {
+        private const val DEFAULT_TANK_PHOTO_KEY = "default_tank_photo"
+
         const val KEY_SELECTED_TAB = "tank_detail_selected_tab"
         const val KEY_RETURN_TAB = "tank_detail_return_tab"
         const val KEY_CARE_PROFILE_ACTION = "care_profile_action"
