@@ -1,21 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="algae_brown_diatom_name">Brown Diatom</string>
-    <string name="algae_brown_diatom_short">Soft brown dust-like film, common in newer aquariums.</string>
+    <string name="algae_brown_diatom_short">Soft brown film or dust on glass, plants and hardscape, especially in newer aquariums.</string>
+
     <string name="algae_green_spot_name">Green Spot Algae</string>
-    <string name="algae_green_spot_short">Hard green dots on glass and older slow-growing leaves.</string>
-    <string name="algae_black_beard_name">Black Beard Algae</string>
-    <string name="algae_black_beard_short">Dark brush-like tufts on leaves, wood, rocks and equipment.</string>
-    <string name="algae_hair_thread_name">Hair / Thread Algae</string>
-    <string name="algae_hair_thread_short">Long green strands that tangle around plants and hardscape.</string>
-    <string name="algae_staghorn_name">Staghorn Algae</string>
-    <string name="algae_staghorn_short">Grey-green branching growth resembling small antlers.</string>
+    <string name="algae_green_spot_short">Hard green dots on glass and older, slow-growing leaves.</string>
+
     <string name="algae_green_dust_name">Green Dust Algae</string>
-    <string name="algae_green_dust_short">Soft green film that forms quickly on aquarium glass.</string>
-    <string name="algae_cyanobacteria_name">Blue-Green Slime</string>
-    <string name="algae_cyanobacteria_short">Slimy blue-green sheets; technically cyanobacteria, not algae.</string>
-    <string name="algae_green_water_name">Green Water</string>
-    <string name="algae_green_water_short">Free-floating algae that turns the water cloudy green.</string>
+    <string name="algae_green_dust_short">Soft green dust-like film that wipes off glass easily and can settle again quickly.</string>
+
+    <string name="algae_green_coat_name">Green Algae Coat</string>
+    <string name="algae_green_coat_short">Broader green patina on glass, rocks, wood or equipment that is not clearly spot or dust algae.</string>
+
+    <string name="algae_black_beard_name">Black Beard Algae</string>
+    <string name="algae_black_beard_short">Short, dark brush-like tufts attached firmly to leaves, wood, rocks and equipment.</string>
+
+    <string name="algae_staghorn_name">Staghorn Algae</string>
+    <string name="algae_staghorn_short">Grey-green branching strands that resemble small antlers.</string>
+
+    <string name="algae_fuzz_name">Fuzz Algae</string>
+    <string name="algae_fuzz_short">Very short individual green filaments, often on plant leaves and decoration.</string>
+
+    <string name="algae_hair_name">Hair Algae</string>
+    <string name="algae_hair_short">Longer soft green strands forming tangled or carpet-like growth on plants and hardscape.</string>
+
+    <string name="algae_thread_name">Thread / String Algae</string>
+    <string name="algae_thread_short">Fine, long individual green threads that hang from plants or become caught on decoration.</string>
+
+    <string name="algae_fluff_name">Fluff Algae</string>
+    <string name="algae_fluff_short">Very soft, light-green cottony cushions or fluffy tufts.</string>
+
     <string name="algae_cladophora_name">Cladophora</string>
-    <string name="algae_cladophora_short">Dense coarse green clumps attached to plants or hardscape.</string>
+    <string name="algae_cladophora_short">Coarse, tough branching green tufts that resist breaking and cling to plants or hardscape.</string>
+
+    <string name="algae_cyanobacteria_name">Blue-Green Slime</string>
+    <string name="algae_cyanobacteria_short">Slimy blue-green sheets; technically cyanobacteria rather than algae.</string>
+
+    <string name="algae_green_water_name">Green Water</string>
+    <string name="algae_green_water_short">Free-floating microscopic algae that turn the water cloudy green.</string>
 </resources>
