@@ -405,6 +405,17 @@
                     android:textSize="@dimen/aqua_text_size_caption" />
 
                 <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnLocationWaterColumn"
+                    style="@style/Widget.Aqua.Button.Secondary.Compact"
+                    android:layout_width="@dimen/aqua_size_0"
+                    android:layout_height="@dimen/aqua_size_44"
+                    android:layout_columnWeight="1"
+                    android:layout_marginEnd="@dimen/aqua_size_3"
+                    android:layout_marginTop="@dimen/aqua_size_6"
+                    android:text="@string/algae_location_water_column"
+                    android:textSize="@dimen/aqua_text_size_caption" />
+
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnLocationOther"
                     style="@style/Widget.Aqua.Button.Secondary.Compact"
                     android:layout_width="@dimen/aqua_size_0"
