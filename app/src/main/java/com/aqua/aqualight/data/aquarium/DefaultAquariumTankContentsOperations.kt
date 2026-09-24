@@ -110,15 +110,48 @@ internal class DefaultAquariumTankContentsOperations(
         tankId: Long,
         livestockId: Long
     ) = withCurrentOwnerScope { ownerUid ->
-        tankStore.removeLivestockFromTank(
-            tankId,
-            livestockId
-        )
-        healthStore.livestockObservations
-            .removeForLivestock(
-                ownerUid = ownerUid,
-                tankId = tankId,
-                livestockId = livestockId
+        val livestock = tankStore
+            .tanksSnapshotForOwner(ownerUid)
+            .firstOrNull { tank -> tank.id == tankId }
+            ?.livestock
+            ?.firstOrNull { item -> item.id == livestockId }
+            ?: throw IllegalArgumentException(
+                "Livestock record not found in the selected tank."
             )
+
+        val removalError = runCatching {
+            tankStore.removeLivestockFromTank(
+                tankId,
+                livestockId
+            )
+            healthStore.livestockObservations
+                .removeForLivestock(
+                    ownerUid = ownerUid,
+                    tankId = tankId,
+                    livestockId = livestockId
+                )
+        }.exceptionOrNull()
+
+        if (removalError != null) {
+            val livestockStillExists = tankStore
+                .tanksSnapshotForOwner(ownerUid)
+                .firstOrNull { tank -> tank.id == tankId }
+                ?.livestock
+                ?.any { item -> item.id == livestockId }
+                ?: false
+
+            if (!livestockStillExists) {
+                runCatching {
+                    tankStore.addLivestockToTank(
+                        tankId,
+                        livestock
+                    )
+                }.exceptionOrNull()?.let(
+                    removalError::addSuppressed
+                )
+            }
+            throw removalError
+        }
+        Unit
     }
 }
