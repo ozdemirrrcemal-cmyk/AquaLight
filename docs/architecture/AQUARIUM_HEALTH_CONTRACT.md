@@ -513,11 +513,35 @@ Required rules:
 
 The first commercial Health implementation must not leave dangling specific-livestock observation references.
 
-When a saved livestock record is deleted:
+Livestock deletion is a cross-store integrity operation because the authoritative livestock
+record belongs to the aquarium tank store while specific-livestock Health observations
+belong to the Health store. A sequential "delete livestock, then try Health cleanup" flow
+is not sufficient.
 
-- observations targeting that specific `livestockId` are deleted in the same owner-scoped cleanup workflow;
+The deletion workflow must be owner-pinned and compensating:
+
+1. validate the tank/livestock target under the captured owner;
+2. capture the specific-livestock Health observation snapshot required for rollback;
+3. remove the dependent Health observations;
+4. delete the authoritative livestock record;
+5. if the authoritative livestock deletion fails, restore the captured Health observations
+   before returning the failure;
+6. if process death interrupts the operation, recovery must converge to either:
+   - livestock present + its pre-delete specific observations restored; or
+   - livestock absent + no specific observations targeting that livestock.
+
+The inverse partial state is forbidden:
+
+> livestock absent while specific Health observations for that deleted `livestockId`
+> remain reachable.
+
+When a saved livestock record is successfully deleted:
+
+- observations targeting that specific `livestockId` are deleted;
 - category-level observations remain;
-- no name-based reassignment occurs.
+- no name-based reassignment occurs;
+- no observation is reassigned to another livestock record merely because display names
+  or catalog names match.
 
 If historical preservation of deleted-livestock observations is desired later, that requires a separate explicit archival contract; it must not be improvised with orphan IDs or copied localized names.
 
@@ -571,6 +595,7 @@ Deleting a tank must remove:
 
 - its water-test records;
 - its livestock-health observations;
+- its plant-health/algae observations;
 - any Health-owned derived cache if one is ever introduced.
 
 Health cleanup must participate in the same fail-closed/compensating integrity design as other dependent tank data. A tank may not be stably deleted while owner-visible Health records for that tank remain reachable.
@@ -1400,6 +1425,28 @@ Deleting an observation:
 - causes assessment recomputation;
 - does not delete livestock.
 
+### Livestock
+
+Deleting a livestock record is not equivalent to deleting an observation.
+
+The operation must remove specific-livestock Health observations and the authoritative
+livestock record as one compensating integrity workflow. If either side fails, the system
+must restore/converge to a consistent state rather than leave an orphan reference.
+
+Category-level observations are not deleted solely because one livestock record is removed.
+
+### Plant observation
+
+Deleting a plant observation:
+
+- removes that authoritative Health observation;
+- causes assessment recomputation;
+- does not delete the saved plant.
+
+When the authoritative saved plant is removed, specific-plant Health observations are
+removed through the plant-target cleanup contract while tank-wide plant/algae observations
+remain.
+
 ### Tank
 
 Deleting a tank removes all Health records under that tank as part of dependent cleanup.
@@ -1477,6 +1524,10 @@ Must cover:
 - future timestamp rejection;
 - update/delete;
 - livestock deletion cleanup;
+- livestock deletion cleanup failure rollback/compensation;
+- process-death convergence for livestock deletion;
+- no orphan specific-livestock observation after successful deletion;
+- category-level observation preservation after livestock deletion;
 - tank deletion cleanup;
 - owner isolation.
 
@@ -1580,9 +1631,12 @@ Implement:
 - version-1 owner-scoped Health store;
 - water tests;
 - livestock observations;
+- plant/algae observations;
 - validation;
 - corruption policy;
-- tank/livestock cleanup integration;
+- crash-safe tank cleanup integration;
+- compensating livestock-observation cleanup integration;
+- plant-target orphan cleanup integration;
 - owner-isolation/concurrency tests.
 
 No Health UI is required to complete the persistence core.
@@ -1688,17 +1742,20 @@ Aquarium Health is commercially complete only when all of the following are true
 2. Tank, Maintenance, livestock catalog, and device ownership remain unchanged.
 3. Water-test and observation identity/validation are deterministic.
 4. Tank deletion cannot leave reachable Health records.
-5. Owner switching cannot leak or cross-write Health state.
+5. Livestock deletion cannot leave reachable specific-livestock Health observations and
+   cannot permanently delete those observations if the authoritative livestock deletion
+   does not commit.
+7. Owner switching cannot leak or cross-write Health state.
 6. Health assessment is pure, deterministic, explainable, and independently tested.
-7. Missing/stale data cannot produce false GOOD status.
-8. Species-specific conclusions use stable catalog identity and reviewed requirements.
-9. CO2 and stocking conclusions obey the evidence restrictions in this contract.
-10. Recommendations retain evidence linkage.
-11. Health does not directly write care tasks or device state.
-12. Automation, when introduced, is idempotent and respects Smart Care/reminder policy.
-13. Navigation stays inside the existing Tank Detail graph and central navigation contract.
-14. Turkish/English localization, accessibility, API 27/API 36, process recreation, and owner isolation are validated.
-15. Detekt, Lint, unit/integration tests, CodeQL, and architecture guards pass with zero new debt.
+8. Missing/stale data cannot produce false GOOD status.
+9. Species-specific conclusions use stable catalog identity and reviewed requirements.
+10. CO2 and stocking conclusions obey the evidence restrictions in this contract.
+11. Recommendations retain evidence linkage.
+12. Health does not directly write care tasks or device state.
+13. Automation, when introduced, is idempotent and respects Smart Care/reminder policy.
+14. Navigation stays inside the existing Tank Detail graph and central navigation contract.
+15. Turkish/English localization, accessibility, API 27/API 36, process recreation, and owner isolation are validated.
+16. Detekt, Lint, unit/integration tests, CodeQL, and architecture guards pass with zero new debt.
 
 ---
 
@@ -1910,21 +1967,33 @@ AquariumHealthStore v1
 └── Plant Health / Algae Observations
 ```
 
-Required Stage 1 plant coverage includes:
+Required Stage 1 persistence/integrity coverage includes:
 
-- add/update/delete;
-- owner isolation;
+- water-test add/update/delete and deterministic ordering;
+- livestock observation add/update/delete;
+- plant observation add/update/delete;
+- owner isolation for all three record categories;
+- specific-livestock target validation;
+- category-level livestock observation support;
 - specific-plant target validation;
-- tank-wide observation support;
+- tank-wide plant/algae observation support;
 - symptom/algae relationship validation;
 - orphan repair after plant removal;
-- tank-deletion snapshot/delete/rollback participation;
+- crash-safe tank-deletion snapshot/delete/rollback participation for all Health records;
+- compensating livestock deletion so Health cleanup and authoritative livestock deletion
+  cannot leave a stable partial state;
+- livestock-deletion failure rollback;
+- livestock-deletion process-death convergence;
+- category-level observations preserved when one livestock record is deleted;
 - corruption/schema validation;
-- deterministic ordering;
-- concurrent unique ID allocation across all Health record categories.
+- concurrent unique ID allocation across all Health record categories;
+- API 27/API 36 integration evidence covering the new Health persistent state.
 
-No Plant Health assessment, recommendation, automation task, or UI is required to complete
-Stage 1.
+Stage 1 is not green merely because normal CRUD passes. The deletion-integrity edge cases
+above are release blockers.
+
+No Tank/Livestock/Plant Health assessment, recommendation, automation task, or Health UI is
+required to complete Stage 1.
 
 ---
 
