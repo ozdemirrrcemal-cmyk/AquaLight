@@ -1,0 +1,897 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_color">
+
+    <include
+        android:id="@+id/appHeader"
+        layout="@layout/layout_aqua_header"
+        android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <LinearLayout
+        android:id="@+id/healthTabs"
+        android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="@dimen/aqua_size_44"
+        android:layout_marginStart="@dimen/aqua_size_14"
+        android:layout_marginTop="@dimen/aqua_size_8"
+        android:layout_marginEnd="@dimen/aqua_size_14"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/appHeader">
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/tabWaterQuality"
+            style="@style/Widget.Aqua.Card.Inline"
+            android:layout_width="@dimen/aqua_size_0"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="@dimen/aqua_size_3"
+            android:layout_weight="1"
+            app:cardBackgroundColor="@color/aqua_surface_action"
+            app:cardCornerRadius="@dimen/aqua_size_10"
+            app:cardElevation="@dimen/aqua_size_0"
+            app:strokeColor="@color/aqua_accent_primary"
+            app:strokeWidth="@dimen/aqua_size_1">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:text="@string/tank_health_tab_water_quality"
+                android:textColor="@color/aqua_content_on_dark"
+                android:textSize="@dimen/aqua_text_size_body_small"
+                android:textStyle="bold" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/tabAlgaeControl"
+            style="@style/Widget.Aqua.Card.Inline"
+            android:layout_width="@dimen/aqua_size_0"
+            android:layout_height="match_parent"
+            android:layout_marginStart="@dimen/aqua_size_3"
+            android:layout_weight="1"
+            app:cardBackgroundColor="@color/aqua_card_metric_surface"
+            app:cardCornerRadius="@dimen/aqua_size_10"
+            app:cardElevation="@dimen/aqua_size_0"
+            app:strokeColor="@color/aqua_card_metric_outline"
+            app:strokeWidth="@dimen/aqua_size_1">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:text="@string/tank_health_tab_algae_control"
+                android:textColor="@color/aqua_card_text_secondary"
+                android:textSize="@dimen/aqua_text_size_body_small" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+    </LinearLayout>
+
+    <ScrollView
+        android:id="@+id/waterQualityScroll"
+        android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="@dimen/aqua_size_0"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:overScrollMode="never"
+        android:paddingStart="@dimen/aqua_size_14"
+        android:paddingTop="@dimen/aqua_size_16"
+        android:paddingEnd="@dimen/aqua_size_14"
+        android:paddingBottom="@dimen/aqua_size_32"
+        android:scrollbars="none"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/healthTabs">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="@dimen/aqua_size_0"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:includeFontPadding="false"
+                    android:text="@string/tank_health_water_quality_title"
+                    android:textColor="@color/aqua_card_text_primary"
+                    android:textSize="@dimen/aqua_text_size_body_xlarge"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:includeFontPadding="false"
+                    android:text="@string/tank_health_last_analysis"
+                    android:textColor="@color/aqua_content_muted"
+                    android:textSize="@dimen/aqua_text_size_caption" />
+
+            </LinearLayout>
+
+            <GridLayout
+                android:id="@+id/waterMetricsGrid"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_10"
+                android:columnCount="4"
+                android:rowCount="2">
+
+                <com.google.android.material.card.MaterialCardView
+                    style="@style/Widget.Aqua.Card.Metric"
+                    android:layout_width="@dimen/aqua_size_0"
+                    android:layout_height="@dimen/aqua_size_72"
+                    android:layout_columnWeight="1"
+                    android:layout_marginEnd="@dimen/aqua_size_3"
+                    android:layout_marginBottom="@dimen/aqua_size_6">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center_vertical"
+                        android:orientation="vertical"
+                        android:paddingHorizontal="@dimen/aqua_size_8">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:includeFontPadding="false"
+                            android:text="@string/tank_health_metric_ph"
+                            android:textColor="@color/aqua_card_text_secondary"
+                            android:textSize="@dimen/aqua_text_size_micro_caption" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/aqua_size_3"
+                            android:includeFontPadding="false"
+                            android:text="@string/tank_health_value_ph"
+                            android:textColor="@color/aqua_card_text_primary"
+                            android:textSize="@dimen/aqua_text_size_body"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/aqua_size_2"
+                            android:includeFontPadding="false"
+                            android:text="@string/tank_health_status_normal"
+                            android:textColor="@color/aqua_status_success"
+                            android:textSize="@dimen/aqua_text_size_status_micro" />
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    style="@style/Widget.Aqua.Card.Metric"
+                    android:layout_width="@dimen/aqua_size_0"
+                    android:layout_height="@dimen/aqua_size_72"
+                    android:layout_columnWeight="1"
+                    android:layout_marginStart="@dimen/aqua_size_3"
+                    android:layout_marginEnd="@dimen/aqua_size_3"
+                    android:layout_marginBottom="@dimen/aqua_size_6">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center_vertical"
+                        android:orientation="vertical"
+                        android:paddingHorizontal="@dimen/aqua_size_8">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:includeFontPadding="false"
+                            android:text="@string/tank_health_metric_no3"
+                            android:textColor="@color/aqua_card_text_secondary"
+                            android:textSize="@dimen/aqua_text_size_micro_caption" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/aqua_size_3"
+                            android:includeFontPadding="false"
+                            android:text="@string/tank_health_value_no3"
+                            android:textColor="@color/aqua_card_text_primary"
+                            android:textSize="@dimen/aqua_text_size_body"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/aqua_size_2"
+                            android:includeFontPadding="false"
+                            android:text="@string/tank_health_status_moderate"
+                            android:textColor="@color/aqua_content_warning"
+                            android:textSize="@dimen/aqua_text_size_status_micro" />
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    style="@style/Widget.Aqua.Card.Metric"
+                    android:layout_width="@dimen/aqua_size_0"
+                    android:layout_height="@dimen/aqua_size_72"
+                    android:layout_columnWeight="1"
+                    android:layout_marginStart="@dimen/aqua_size_3"
+                    android:layout_marginEnd="@dimen/aqua_size_3"
+                    android:layout_marginBottom="@dimen/aqua_size_6">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center_vertical"
+                        android:orientation="vertical"
+                        android:paddingHorizontal="@dimen/aqua_size_8">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:includeFontPadding="false"
+                            android:text="@string/tank_health_metric_no2"
+                            android:textColor="@color/aqua_card_text_secondary"
+                            android:textSize="@dimen/aqua_text_size_micro_caption" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/aqua_size_3"
+                            android:includeFontPadding="false"
+                            android:text="@string/tank_health_value_no2"
+                            android:textColor="@color/aqua_card_text_primary"
+                            android:textSize="@dimen/aqua_text_size_body"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/aqua_size_2"
+                            android:includeFontPadding="false"
+                            android:text="@string/tank_health_status_normal"
+                            android:textColor="@color/aqua_status_success"
+                            android:textSize="@dimen/aqua_text_size_status_micro" />
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    style="@style/Widget.Aqua.Card.Metric"
+                    android:layout_width="@dimen/aqua_size_0"
+                    android:layout_height="@dimen/aqua_size_72"
+                    android:layout_columnWeight="1"
+                    android:layout_marginStart="@dimen/aqua_size_3"
+                    android:layout_marginBottom="@dimen/aqua_size_6">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center_vertical"
+                        android:orientation="vertical"
+                        android:paddingHorizontal="@dimen/aqua_size_8">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:includeFontPadding="false"
+                            android:text="@string/tank_health_metric_nh3_nh4"
+                            android:textColor="@color/aqua_card_text_secondary"
+                            android:textSize="@dimen/aqua_text_size_micro_caption" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/aqua_size_3"
+                            android:includeFontPadding="false"
+                            android:text="@string/tank_health_value_nh3_nh4"
+                            android:textColor="@color/aqua_card_text_primary"
+                            android:textSize="@dimen/aqua_text_size_body"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/aqua_size_2"
+                            android:includeFontPadding="false"
+                            android:text="@string/tank_health_status_normal"
+                            android:textColor="@color/aqua_status_success"
+                            android:textSize="@dimen/aqua_text_size_status_micro" />
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    style="@style/Widget.Aqua.Card.Metric"
+                    android:layout_width="@dimen/aqua_size_0"
+                    android:layout_height="@dimen/aqua_size_72"
+                    android:layout_columnWeight="1"
+                    android:layout_marginEnd="@dimen/aqua_size_3">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center_vertical"
+                        android:orientation="vertical"
+                        android:paddingHorizontal="@dimen/aqua_size_8">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:includeFontPadding="false"
+                            android:text="@string/tank_health_metric_temperature"
+                            android:textColor="@color/aqua_card_text_secondary"
+                            android:textSize="@dimen/aqua_text_size_micro_caption" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/aqua_size_3"
+                            android:includeFontPadding="false"
+                            android:text="@string/tank_health_value_temperature"
+                            android:textColor="@color/aqua_card_text_primary"
+                            android:textSize="@dimen/aqua_text_size_body"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/aqua_size_2"
+                            android:includeFontPadding="false"
+                            android:text="@string/tank_health_status_normal"
+                            android:textColor="@color/aqua_status_success"
+                            android:textSize="@dimen/aqua_text_size_status_micro" />
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    style="@style/Widget.Aqua.Card.Metric"
+                    android:layout_width="@dimen/aqua_size_0"
+                    android:layout_height="@dimen/aqua_size_72"
+                    android:layout_columnWeight="1"
+                    android:layout_marginStart="@dimen/aqua_size_3"
+                    android:layout_marginEnd="@dimen/aqua_size_3">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center_vertical"
+                        android:orientation="vertical"
+                        android:paddingHorizontal="@dimen/aqua_size_8">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:includeFontPadding="false"
+                            android:text="@string/tank_health_metric_gh"
+                            android:textColor="@color/aqua_card_text_secondary"
+                            android:textSize="@dimen/aqua_text_size_micro_caption" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/aqua_size_3"
+                            android:includeFontPadding="false"
+                            android:text="@string/tank_health_value_gh"
+                            android:textColor="@color/aqua_card_text_primary"
+                            android:textSize="@dimen/aqua_text_size_body"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/aqua_size_2"
+                            android:includeFontPadding="false"
+                            android:text="@string/tank_health_status_normal"
+                            android:textColor="@color/aqua_status_success"
+                            android:textSize="@dimen/aqua_text_size_status_micro" />
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    style="@style/Widget.Aqua.Card.Metric"
+                    android:layout_width="@dimen/aqua_size_0"
+                    android:layout_height="@dimen/aqua_size_72"
+                    android:layout_columnWeight="1"
+                    android:layout_marginStart="@dimen/aqua_size_3"
+                    android:layout_marginEnd="@dimen/aqua_size_3">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center_vertical"
+                        android:orientation="vertical"
+                        android:paddingHorizontal="@dimen/aqua_size_8">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:includeFontPadding="false"
+                            android:text="@string/tank_health_metric_kh"
+                            android:textColor="@color/aqua_card_text_secondary"
+                            android:textSize="@dimen/aqua_text_size_micro_caption" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/aqua_size_3"
+                            android:includeFontPadding="false"
+                            android:text="@string/tank_health_value_kh"
+                            android:textColor="@color/aqua_card_text_primary"
+                            android:textSize="@dimen/aqua_text_size_body"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/aqua_size_2"
+                            android:includeFontPadding="false"
+                            android:text="@string/tank_health_status_normal"
+                            android:textColor="@color/aqua_status_success"
+                            android:textSize="@dimen/aqua_text_size_status_micro" />
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardAddAnalysis"
+                    style="@style/Widget.Aqua.Card.Metric"
+                    android:layout_width="@dimen/aqua_size_0"
+                    android:layout_height="@dimen/aqua_size_72"
+                    android:layout_columnWeight="1"
+                    android:layout_marginStart="@dimen/aqua_size_3">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:includeFontPadding="false"
+                            android:text="@string/tank_health_add_analysis_symbol"
+                            android:textColor="@color/aqua_accent_primary"
+                            android:textSize="@dimen/aqua_text_size_title_small" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:includeFontPadding="false"
+                            android:text="@string/tank_health_add_analysis"
+                            android:textColor="@color/aqua_card_text_secondary"
+                            android:textSize="@dimen/aqua_text_size_status_micro" />
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+            </GridLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_18"
+                android:includeFontPadding="false"
+                android:text="@string/tank_health_maintenance_title"
+                android:textColor="@color/aqua_card_text_primary"
+                android:textSize="@dimen/aqua_text_size_body_xlarge"
+                android:textStyle="bold" />
+
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Aqua.Card.Metric"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_8">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/aqua_size_56"
+                        android:gravity="center_vertical"
+                        android:paddingStart="@dimen/aqua_size_12"
+                        android:paddingEnd="@dimen/aqua_size_10">
+
+                        <ImageView
+                            android:layout_width="@dimen/aqua_size_22"
+                            android:layout_height="@dimen/aqua_size_22"
+                            android:contentDescription="@null"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/ic_care_water_change_24"
+                            app:tint="@color/aqua_accent_primary" />
+
+                        <LinearLayout
+                            android:layout_width="@dimen/aqua_size_0"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/aqua_size_12"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:includeFontPadding="false"
+                                android:text="@string/tank_health_water_change"
+                                android:textColor="@color/aqua_card_text_primary"
+                                android:textSize="@dimen/aqua_text_size_body_small" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/aqua_size_2"
+                                android:includeFontPadding="false"
+                                android:text="@string/tank_health_water_change_age"
+                                android:textColor="@color/aqua_content_muted"
+                                android:textSize="@dimen/aqua_text_size_caption" />
+
+                        </LinearLayout>
+
+                        <com.google.android.material.card.MaterialCardView
+                            style="@style/Widget.Aqua.Card.Inline"
+                            android:layout_width="wrap_content"
+                            android:layout_height="@dimen/aqua_size_24"
+                            app:cardBackgroundColor="@color/aqua_surface_positive"
+                            app:cardCornerRadius="@dimen/aqua_size_12"
+                            app:cardElevation="@dimen/aqua_size_0">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:gravity="center"
+                                android:includeFontPadding="false"
+                                android:paddingStart="@dimen/aqua_size_10"
+                                android:paddingEnd="@dimen/aqua_size_10"
+                                android:text="@string/tank_health_status_normal"
+                                android:textColor="@color/aqua_accent_positive"
+                                android:textSize="@dimen/aqua_text_size_status_micro" />
+
+                        </com.google.android.material.card.MaterialCardView>
+
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/aqua_size_1"
+                        android:layout_marginStart="@dimen/aqua_size_46"
+                        android:background="@color/aqua_card_divider" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/aqua_size_56"
+                        android:gravity="center_vertical"
+                        android:paddingStart="@dimen/aqua_size_12"
+                        android:paddingEnd="@dimen/aqua_size_10">
+
+                        <ImageView
+                            android:layout_width="@dimen/aqua_size_22"
+                            android:layout_height="@dimen/aqua_size_22"
+                            android:contentDescription="@null"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/ic_care_trim_24"
+                            app:tint="@color/aqua_accent_positive" />
+
+                        <LinearLayout
+                            android:layout_width="@dimen/aqua_size_0"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/aqua_size_12"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:includeFontPadding="false"
+                                android:text="@string/tank_health_pruning"
+                                android:textColor="@color/aqua_card_text_primary"
+                                android:textSize="@dimen/aqua_text_size_body_small" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/aqua_size_2"
+                                android:includeFontPadding="false"
+                                android:text="@string/tank_health_pruning_age"
+                                android:textColor="@color/aqua_content_muted"
+                                android:textSize="@dimen/aqua_text_size_caption" />
+
+                        </LinearLayout>
+
+                        <com.google.android.material.card.MaterialCardView
+                            style="@style/Widget.Aqua.Card.Inline"
+                            android:layout_width="wrap_content"
+                            android:layout_height="@dimen/aqua_size_24"
+                            app:cardBackgroundColor="@color/aqua_surface_positive"
+                            app:cardCornerRadius="@dimen/aqua_size_12"
+                            app:cardElevation="@dimen/aqua_size_0">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:gravity="center"
+                                android:includeFontPadding="false"
+                                android:paddingStart="@dimen/aqua_size_10"
+                                android:paddingEnd="@dimen/aqua_size_10"
+                                android:text="@string/tank_health_status_normal"
+                                android:textColor="@color/aqua_accent_positive"
+                                android:textSize="@dimen/aqua_text_size_status_micro" />
+
+                        </com.google.android.material.card.MaterialCardView>
+
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/aqua_size_1"
+                        android:layout_marginStart="@dimen/aqua_size_46"
+                        android:background="@color/aqua_card_divider" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/aqua_size_56"
+                        android:gravity="center_vertical"
+                        android:paddingStart="@dimen/aqua_size_12"
+                        android:paddingEnd="@dimen/aqua_size_10">
+
+                        <ImageView
+                            android:layout_width="@dimen/aqua_size_22"
+                            android:layout_height="@dimen/aqua_size_22"
+                            android:contentDescription="@null"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/ic_care_filter_24"
+                            app:tint="@color/aqua_card_text_secondary" />
+
+                        <LinearLayout
+                            android:layout_width="@dimen/aqua_size_0"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/aqua_size_12"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:includeFontPadding="false"
+                                android:text="@string/tank_health_filter_maintenance"
+                                android:textColor="@color/aqua_card_text_primary"
+                                android:textSize="@dimen/aqua_text_size_body_small" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/aqua_size_2"
+                                android:includeFontPadding="false"
+                                android:text="@string/tank_health_filter_maintenance_age"
+                                android:textColor="@color/aqua_content_muted"
+                                android:textSize="@dimen/aqua_text_size_caption" />
+
+                        </LinearLayout>
+
+                        <com.google.android.material.card.MaterialCardView
+                            style="@style/Widget.Aqua.Card.Inline"
+                            android:layout_width="wrap_content"
+                            android:layout_height="@dimen/aqua_size_24"
+                            app:cardBackgroundColor="@color/aqua_bg_maintenance_profile_percent_warning_fill"
+                            app:cardCornerRadius="@dimen/aqua_size_12"
+                            app:cardElevation="@dimen/aqua_size_0">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="match_parent"
+                                android:gravity="center"
+                                android:includeFontPadding="false"
+                                android:paddingStart="@dimen/aqua_size_10"
+                                android:paddingEnd="@dimen/aqua_size_10"
+                                android:text="@string/tank_health_status_approaching"
+                                android:textColor="@color/aqua_content_warning"
+                                android:textSize="@dimen/aqua_text_size_status_micro" />
+
+                        </com.google.android.material.card.MaterialCardView>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_18"
+                android:includeFontPadding="false"
+                android:text="@string/tank_health_system_summary_title"
+                android:textColor="@color/aqua_card_text_primary"
+                android:textSize="@dimen/aqua_text_size_body_xlarge"
+                android:textStyle="bold" />
+
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Aqua.Card.Metric"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_8">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingTop="@dimen/aqua_size_4"
+                    android:paddingBottom="@dimen/aqua_size_4">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/aqua_size_44"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="@dimen/aqua_size_12">
+
+                        <ImageView
+                            android:layout_width="@dimen/aqua_size_20"
+                            android:layout_height="@dimen/aqua_size_20"
+                            android:contentDescription="@null"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/ic_care_co2_24"
+                            app:tint="@color/aqua_card_text_secondary" />
+
+                        <TextView
+                            android:layout_width="@dimen/aqua_size_0"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/aqua_size_12"
+                            android:layout_weight="1"
+                            android:includeFontPadding="false"
+                            android:text="@string/tank_health_system_co2"
+                            android:textColor="@color/aqua_card_text_primary"
+                            android:textSize="@dimen/aqua_text_size_body_small" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:includeFontPadding="false"
+                            android:text="@string/tank_health_system_co2_value"
+                            android:textColor="@color/aqua_card_text_secondary"
+                            android:textSize="@dimen/aqua_text_size_body_small" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/aqua_size_44"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="@dimen/aqua_size_12">
+
+                        <ImageView
+                            android:layout_width="@dimen/aqua_size_20"
+                            android:layout_height="@dimen/aqua_size_20"
+                            android:contentDescription="@null"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/ic_devices"
+                            app:tint="@color/aqua_card_text_secondary" />
+
+                        <TextView
+                            android:layout_width="@dimen/aqua_size_0"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/aqua_size_12"
+                            android:layout_weight="1"
+                            android:includeFontPadding="false"
+                            android:text="@string/tank_health_system_lighting"
+                            android:textColor="@color/aqua_card_text_primary"
+                            android:textSize="@dimen/aqua_text_size_body_small" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:ellipsize="end"
+                            android:includeFontPadding="false"
+                            android:maxLines="1"
+                            android:text="@string/tank_health_system_lighting_value"
+                            android:textColor="@color/aqua_card_text_secondary"
+                            android:textSize="@dimen/aqua_text_size_caption" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/aqua_size_44"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="@dimen/aqua_size_12">
+
+                        <ImageView
+                            android:layout_width="@dimen/aqua_size_20"
+                            android:layout_height="@dimen/aqua_size_20"
+                            android:contentDescription="@null"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/ic_care_filter_24"
+                            app:tint="@color/aqua_card_text_secondary" />
+
+                        <TextView
+                            android:layout_width="@dimen/aqua_size_0"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/aqua_size_12"
+                            android:layout_weight="1"
+                            android:includeFontPadding="false"
+                            android:text="@string/tank_health_system_filter"
+                            android:textColor="@color/aqua_card_text_primary"
+                            android:textSize="@dimen/aqua_text_size_body_small" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:ellipsize="end"
+                            android:includeFontPadding="false"
+                            android:maxLines="1"
+                            android:text="@string/tank_health_system_filter_value"
+                            android:textColor="@color/aqua_card_text_secondary"
+                            android:textSize="@dimen/aqua_text_size_caption" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/aqua_size_44"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="@dimen/aqua_size_12">
+
+                        <ImageView
+                            android:layout_width="@dimen/aqua_size_20"
+                            android:layout_height="@dimen/aqua_size_20"
+                            android:contentDescription="@null"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/ic_care_livestock_24"
+                            app:tint="@color/aqua_card_text_secondary" />
+
+                        <TextView
+                            android:layout_width="@dimen/aqua_size_0"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/aqua_size_12"
+                            android:layout_weight="1"
+                            android:includeFontPadding="false"
+                            android:text="@string/tank_health_system_livestock_load"
+                            android:textColor="@color/aqua_card_text_primary"
+                            android:textSize="@dimen/aqua_text_size_body_small" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:includeFontPadding="false"
+                            android:text="@string/tank_health_system_livestock_load_value"
+                            android:textColor="@color/aqua_card_text_secondary"
+                            android:textSize="@dimen/aqua_text_size_body_small" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
