@@ -12,7 +12,6 @@
 
     <string name="algae_control_type_title">1. Yosun Türü</string>
     <string name="algae_control_type_subtitle">Tankta gördüğünüz oluşuma en yakın türü seçin.</string>
-    <string name="algae_control_search_hint">Yosun ara…</string>
     <string name="algae_control_location_title">2. Nerede Görülüyor?</string>
     <string name="algae_control_location_subtitle">Gördüğünüz tüm bölgeleri seçin.</string>
     <string name="algae_location_front_glass">Ön cam</string>
