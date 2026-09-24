@@ -3,7 +3,6 @@ package com.aqua.aqualight.ui.tabs.aquarium.catalog.plant
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.aqua.aqualight.application.aquarium.AquariumPlantCatalog
 import com.aqua.aqualight.application.aquarium.AquariumPlantLightCatalog
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

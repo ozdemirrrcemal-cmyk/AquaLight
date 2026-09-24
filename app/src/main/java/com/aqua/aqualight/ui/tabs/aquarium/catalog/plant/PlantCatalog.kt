@@ -3,7 +3,6 @@ package com.aqua.aqualight.ui.tabs.aquarium.catalog.plant
 import android.content.Context
 import androidx.annotation.StringRes
 import com.aqua.aqualight.R
-import com.aqua.aqualight.application.aquarium.AquariumPlantCatalog
 import com.aqua.aqualight.application.aquarium.AquariumPlantCatalogRecord
 import com.aqua.aqualight.application.aquarium.AquariumPlantLightCatalog
 
