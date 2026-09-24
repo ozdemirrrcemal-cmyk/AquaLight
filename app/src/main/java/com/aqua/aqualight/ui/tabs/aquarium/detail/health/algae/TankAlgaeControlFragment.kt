@@ -129,29 +129,33 @@ class TankAlgaeControlFragment : Fragment(R.layout.fragment_tank_algae_control) 
     }
 
     private fun openAnalysis() {
-        val algaeType = catalogController?.selectedType ?: return
-        val choices = choicesController ?: return
-        val density = choices.density ?: return
-        val trend = choices.trend ?: return
-        val locations = choices.locations
-        if (locations.isEmpty()) {
-            return
-        }
+        val algaeType = catalogController?.selectedType
+        val choices = choicesController
+        val density = choices?.density
+        val trend = choices?.trend
+        val locations = choices?.locations.orEmpty()
 
-        findNavController().navigateSafelyFrom(
-            sourceDestinationId = R.id.tankHealthFragment,
-            directions = TankHealthFragmentDirections
-                .actionTankHealthFragmentToTankAlgaeAnalysisFragment(
-                    tankId = tankId,
-                    algaeType = algaeType.name,
-                    locations = locations.joinToString(separator = ",") { location ->
-                        location.name
-                    },
-                    density = density.name,
-                    trend = trend.name,
-                    note = binding.etObservationNote.text?.toString().orEmpty().trim()
-                )
-        )
+        if (
+            algaeType != null &&
+            density != null &&
+            trend != null &&
+            locations.isNotEmpty()
+        ) {
+            findNavController().navigateSafelyFrom(
+                sourceDestinationId = R.id.tankHealthFragment,
+                directions = TankHealthFragmentDirections
+                    .actionTankHealthFragmentToTankAlgaeAnalysisFragment(
+                        tankId = tankId,
+                        algaeType = algaeType.name,
+                        locations = locations.joinToString(separator = ",") { location ->
+                            location.name
+                        },
+                        density = density.name,
+                        trend = trend.name,
+                        note = binding.etObservationNote.text?.toString().orEmpty().trim()
+                    )
+            )
+        }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
