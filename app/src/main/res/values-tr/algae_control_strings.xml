@@ -67,11 +67,10 @@
     <string name="algae_factor_water_change_interval">Su değişim aralığı</string>
     <string name="algae_factor_nitrogen_waste">Azotlu atık yükü</string>
     <string name="algae_factor_nutrient_imbalance">Besin dengesi</string>
-    <string name="algae_factor_low_phosphate">Düşük fosfat bağlamı</string>
+    <string name="algae_factor_phosphate_imbalance">Fosfat dengesi bağlamı</string>
     <string name="algae_factor_low_nitrate">Düşük nitrat bağlamı</string>
     <string name="algae_factor_immature_tank">Yeni tank</string>
     <string name="algae_factor_plant_stress">Bitki stresi</string>
-    <string name="algae_factor_low_plant_mass">Düşük bitki yoğunluğu</string>
     <string name="algae_factor_flow_oxygenation">Akış / oksijenlenme</string>
     <string name="algae_factor_warm_water">Yüksek sıcaklık bağlamı</string>
 
