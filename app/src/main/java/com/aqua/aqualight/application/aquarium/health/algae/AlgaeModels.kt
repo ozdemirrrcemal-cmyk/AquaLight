@@ -75,10 +75,11 @@ enum class AlgaeActionId {
 }
 
 enum class AlgaeMissingData {
-    LIGHT_SCHEDULE,
+    LIGHT_PROFILE,
     CO2_SCHEDULE,
     WATER_ANALYSIS,
-    MAINTENANCE_HISTORY
+    MAINTENANCE_HISTORY,
+    TEMPERATURE_CONTEXT
 }
 
 enum class AlgaeFactorStrength {
@@ -101,6 +102,12 @@ enum class WaterParameterState {
     UNKNOWN
 }
 
+enum class AlgaeLightDurationState {
+    UNKNOWN,
+    WITHIN_RANGE,
+    EXTENDED
+}
+
 enum class AlgaeLightExposureState {
     UNKNOWN,
     WITHIN_RANGE,
@@ -120,6 +127,12 @@ enum class AlgaeFlowState {
     TURBULENT
 }
 
+enum class AlgaeTemperatureState {
+    UNKNOWN,
+    WITHIN_RANGE,
+    WARM
+}
+
 data class AlgaeWaterQualityContext(
     val nitrateState: WaterParameterState = WaterParameterState.UNKNOWN,
     val phosphateState: WaterParameterState = WaterParameterState.UNKNOWN,
@@ -128,8 +141,8 @@ data class AlgaeWaterQualityContext(
 )
 
 data class AlgaeTankContext(
-    val tankAgeDays: Int? = null,
-    val lightDurationMinutes: Int? = null,
+    val startupPeriod: Boolean? = null,
+    val lightDurationState: AlgaeLightDurationState = AlgaeLightDurationState.UNKNOWN,
     val lightExposureState: AlgaeLightExposureState = AlgaeLightExposureState.UNKNOWN,
     val hasCo2: Boolean? = null,
     val co2ScheduleKnown: Boolean = false,
@@ -138,7 +151,7 @@ data class AlgaeTankContext(
     val filterMaintenanceOverdue: Boolean? = null,
     val flowState: AlgaeFlowState = AlgaeFlowState.UNKNOWN,
     val plantStressObserved: Boolean? = null,
-    val temperatureC: Double? = null,
+    val temperatureState: AlgaeTemperatureState = AlgaeTemperatureState.UNKNOWN,
     val waterQuality: AlgaeWaterQualityContext = AlgaeWaterQualityContext()
 )
 
