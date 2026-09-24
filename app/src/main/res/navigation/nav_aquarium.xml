@@ -192,6 +192,39 @@
         <argument
             android:name="tankId"
             app:argType="long" />
+        <action
+            android:id="@+id/action_tankHealthFragment_to_tankAlgaeAnalysisFragment"
+            app:destination="@id/tankAlgaeAnalysisFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/tankAlgaeAnalysisFragment"
+        android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.health.algae.TankAlgaeAnalysisFragment"
+        android:label="@string/screen_title_algae_analysis"
+        tools:layout="@layout/fragment_tank_algae_analysis">
+        <argument
+            android:name="tankId"
+            app:argType="long" />
+        <argument
+            android:name="algaeType"
+            app:argType="string" />
+        <argument
+            android:name="locations"
+            app:argType="string" />
+        <argument
+            android:name="density"
+            app:argType="string" />
+        <argument
+            android:name="trend"
+            app:argType="string" />
+        <argument
+            android:name="note"
+            app:argType="string"
+            android:defaultValue="" />
     </fragment>
 
     <fragment
