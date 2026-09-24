@@ -19,13 +19,15 @@ import java.time.temporal.ChronoUnit
 internal fun buildAlgaeTankContext(
     tank: AquariumTankSnapshot
 ): AlgaeTankContext {
-    val tankAgeDays = tank.setupDateEpochDay?.let { setupEpochDay ->
-        ChronoUnit.DAYS
+    val startupPeriod = tank.setupDateEpochDay?.let { setupEpochDay ->
+        val elapsedDays = ChronoUnit.DAYS
             .between(
                 LocalDate.ofEpochDay(setupEpochDay),
                 LocalDate.now()
             )
             .coerceAtLeast(0L)
+
+        elapsedDays < SMART_CARE_STARTUP_LENGTH_DAYS
     }
 
     val hasCo2 = tank.materials.any { material ->
@@ -33,13 +35,13 @@ internal fun buildAlgaeTankContext(
     }
 
     return AlgaeTankContext(
-        tankAgeDays = tankAgeDays
-            ?.coerceAtMost(Int.MAX_VALUE.toLong())
-            ?.toInt(),
+        startupPeriod = startupPeriod,
         hasCo2 = hasCo2,
         co2ScheduleKnown = false
     )
 }
+
+private const val SMART_CARE_STARTUP_LENGTH_DAYS = 90L
 
 internal fun applyAlgaeAssessmentColors(
     context: Context,
