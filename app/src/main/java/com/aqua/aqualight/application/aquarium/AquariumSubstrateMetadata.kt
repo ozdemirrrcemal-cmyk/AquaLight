@@ -29,22 +29,16 @@ enum class AquariumSubstrateEvidenceStatus {
 /**
  * Auditable product metadata attached to an exact, stable material-catalog identity.
  *
- * Source URLs are intentionally not shipped in the application. Verification is performed during
- * catalog review; runtime metadata keeps only a provenance organization and an internal evidence
- * record key.
+ * Catalog review remains outside the application. Runtime metadata contains only the classification.
  */
 data class AquariumSubstrateProductMetadata(
     val semantic: AquariumSubstrateSemantic,
     val evidenceStatus: AquariumSubstrateEvidenceStatus,
-    val sourceOrganization: String,
-    val sourceRecordId: String,
     val reviewedOn: String,
     val catalogRevision: Int = 1
 ) {
     init {
         require(catalogRevision > 0)
-        require(sourceOrganization.isNotBlank())
-        require(sourceRecordId.isNotBlank())
         require(reviewedOn.matches(ISO_DATE_PATTERN))
         require(semantic != AquariumSubstrateSemantic.NOT_APPLICABLE)
 

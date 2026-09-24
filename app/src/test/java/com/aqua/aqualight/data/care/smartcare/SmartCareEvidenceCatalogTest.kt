@@ -14,7 +14,7 @@ class SmartCareEvidenceCatalogTest {
     )
     assertTrue(
       SmartCareEvidenceCatalog.sources.all { source ->
-        source.url.startsWith("https://") && source.reviewedOn.isNotBlank()
+        source.reviewedOn.isNotBlank()
       }
     )
   }

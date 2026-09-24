@@ -6,7 +6,6 @@ private const val GRAVEL_CATALOG_REVIEW_DATE = "2026-09-23"
 private data class SubstrateEvidenceGroup(
     val productIds: List<String>,
     val semantic: AquariumSubstrateSemantic,
-    val sourceOrganization: String
 )
 
 private val substrateEvidenceGroups = listOf(
@@ -16,21 +15,18 @@ private val substrateEvidenceGroups = listOf(
             "substrate_chihiros_aquasoil_9l"
         ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
-        sourceOrganization = "Chihiros Aquatic Studio"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
             "substrate_ada_tourmaline_bc"
         ),
         semantic = AquariumSubstrateSemantic.ADDITIVE,
-        sourceOrganization = "Aqua Design Amano"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
             "substrate_dennerle_deponit_mix_pro_10in1_4_8_kg"
         ),
         semantic = AquariumSubstrateSemantic.NUTRIENT_BASE,
-        sourceOrganization = "Dennerle"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
@@ -40,7 +36,6 @@ private val substrateEvidenceGroups = listOf(
             "substrate_ada_aqua_soil_amazonia_ver_2_powder_9_l"
         ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
-        sourceOrganization = "Aqua Design Amano"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
@@ -49,7 +44,6 @@ private val substrateEvidenceGroups = listOf(
             "substrate_ada_power_sand_advance_l_6_l"
         ),
         semantic = AquariumSubstrateSemantic.NUTRIENT_BASE,
-        sourceOrganization = "Aqua Design Amano"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
@@ -58,7 +52,6 @@ private val substrateEvidenceGroups = listOf(
             "substrate_ada_clear_super_50_g"
         ),
         semantic = AquariumSubstrateSemantic.ADDITIVE,
-        sourceOrganization = "Aqua Design Amano"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
@@ -68,7 +61,6 @@ private val substrateEvidenceGroups = listOf(
             "substrate_tropica_aquarium_soil_powder_9_l"
         ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
-        sourceOrganization = "Tropica Aquarium Plants"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
@@ -77,7 +69,6 @@ private val substrateEvidenceGroups = listOf(
             "substrate_tropica_plant_growth_substrate_5_l"
         ),
         semantic = AquariumSubstrateSemantic.NUTRIENT_BASE,
-        sourceOrganization = "Tropica Aquarium Plants"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
@@ -87,7 +78,6 @@ private val substrateEvidenceGroups = listOf(
             "substrate_dennerle_shrimp_king_active_soil_8_l"
         ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
-        sourceOrganization = "Dennerle"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
@@ -95,7 +85,6 @@ private val substrateEvidenceGroups = listOf(
             "substrate_dennerle_nutribasis_6in1"
         ),
         semantic = AquariumSubstrateSemantic.NUTRIENT_BASE,
-        sourceOrganization = "Dennerle"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
@@ -109,7 +98,6 @@ private val substrateEvidenceGroups = listOf(
             "substrate_jbl_proscape_shrimpsoil_beige_9_l"
         ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
-        sourceOrganization = "JBL"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
@@ -119,7 +107,6 @@ private val substrateEvidenceGroups = listOf(
             "substrate_jbl_proscape_volcano_mineral_9_l"
         ),
         semantic = AquariumSubstrateSemantic.NUTRIENT_BASE,
-        sourceOrganization = "JBL"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
@@ -127,7 +114,6 @@ private val substrateEvidenceGroups = listOf(
             "substrate_jbl_proscape_plantstart_2_x_8_g"
         ),
         semantic = AquariumSubstrateSemantic.ADDITIVE,
-        sourceOrganization = "JBL"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
@@ -138,7 +124,6 @@ private val substrateEvidenceGroups = listOf(
             "substrate_fluval_betta_stratum_0_8_kg"
         ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
-        sourceOrganization = "Fluval"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
@@ -152,14 +137,12 @@ private val substrateEvidenceGroups = listOf(
             "substrate_oase_scaperline_soil_small_brown_9_l"
         ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
-        sourceOrganization = "OASE"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
             "substrate_oase_basesoil"
         ),
         semantic = AquariumSubstrateSemantic.NUTRIENT_BASE,
-        sourceOrganization = "OASE"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
@@ -175,7 +158,6 @@ private val substrateEvidenceGroups = listOf(
             "substrate_aquario_neo_soil_brown_plant"
         ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
-        sourceOrganization = "Aquario"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
@@ -187,14 +169,12 @@ private val substrateEvidenceGroups = listOf(
             "substrate_uns_controsoil_brown_extra_fine_1_3_10_l"
         ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
-        sourceOrganization = "Ultum Nature Systems"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
             "substrate_uns_controbase"
         ),
         semantic = AquariumSubstrateSemantic.NUTRIENT_BASE,
-        sourceOrganization = "Ultum Nature Systems"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
@@ -202,7 +182,6 @@ private val substrateEvidenceGroups = listOf(
             "substrate_2hr_aquarist_apt_feast_aquarium_soil_5_l"
         ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
-        sourceOrganization = "2HR Aquarist"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
@@ -212,7 +191,6 @@ private val substrateEvidenceGroups = listOf(
             "substrate_glasgarten_environment_aquarium_soil_powder_9_l"
         ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
-        sourceOrganization = "GlasGarten"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
@@ -225,14 +203,12 @@ private val substrateEvidenceGroups = listOf(
             "substrate_sl_aqua_gokujou_black_soil"
         ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
-        sourceOrganization = "SL-Aqua"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
             "substrate_sl_aqua_sulawesi_volcanic_rock_soil"
         ),
         semantic = AquariumSubstrateSemantic.INERT,
-        sourceOrganization = "SL-Aqua"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
@@ -240,7 +216,6 @@ private val substrateEvidenceGroups = listOf(
             "substrate_sl_aqua_montmorillonite"
         ),
         semantic = AquariumSubstrateSemantic.ADDITIVE,
-        sourceOrganization = "SL-Aqua"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
@@ -255,7 +230,6 @@ private val substrateEvidenceGroups = listOf(
             "substrate_jun_master_soil_next_black_super_powder_3_l"
         ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
-        sourceOrganization = "JUN"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
@@ -266,7 +240,6 @@ private val substrateEvidenceGroups = listOf(
             "substrate_ista_plant_shrimp_soil_ph_5_5_2_l"
         ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
-        sourceOrganization = "ISTA"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
@@ -278,21 +251,18 @@ private val substrateEvidenceGroups = listOf(
             "substrate_brightwell_aquatics_rio_cafe_extra_fine"
         ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
-        sourceOrganization = "Brightwell Aquatics"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
             "substrate_brightwell_aquatics_florinbase_laterin_substrat_vf"
         ),
         semantic = AquariumSubstrateSemantic.NUTRIENT_BASE,
-        sourceOrganization = "Brightwell Aquatics"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
             "substrate_brightwell_aquatics_florinbase_laterite_powder"
         ),
         semantic = AquariumSubstrateSemantic.ADDITIVE,
-        sourceOrganization = "Brightwell Aquatics"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
@@ -302,7 +272,6 @@ private val substrateEvidenceGroups = listOf(
             "substrate_ebi_gold_waterplant_soil_natural_brown_5_l"
         ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
-        sourceOrganization = "Ebi Gold"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
@@ -310,14 +279,12 @@ private val substrateEvidenceGroups = listOf(
             "substrate_tetra_activesubstrate_6_l"
         ),
         semantic = AquariumSubstrateSemantic.INERT,
-        sourceOrganization = "Tetra"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
             "substrate_tetra_completesubstrate_2_5_kg"
         ),
         semantic = AquariumSubstrateSemantic.NUTRIENT_BASE,
-        sourceOrganization = "Tetra"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
@@ -325,14 +292,12 @@ private val substrateEvidenceGroups = listOf(
             "substrate_sera_aquarium_gravel_floredepot_substrate_4_7_kg"
         ),
         semantic = AquariumSubstrateSemantic.NUTRIENT_BASE,
-        sourceOrganization = "sera"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
             "substrate_aquaforest_af_natural_substrate_7_5_l"
         ),
         semantic = AquariumSubstrateSemantic.NUTRIENT_BASE,
-        sourceOrganization = "Aquaforest"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
@@ -340,7 +305,6 @@ private val substrateEvidenceGroups = listOf(
             "substrate_aquaforest_af_lava_soil_black_5_l"
         ),
         semantic = AquariumSubstrateSemantic.UNKNOWN,
-        sourceOrganization = "Aquaforest"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
@@ -348,21 +312,18 @@ private val substrateEvidenceGroups = listOf(
             "substrate_yokuchi_jiban_soil_powder_10_l"
         ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
-        sourceOrganization = "Yokuchi"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
             "substrate_benibachi_black_soil_5_kg"
         ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
-        sourceOrganization = "Benibachi"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
             "substrate_shrimps_forever_shrimps_soil_9_l"
         ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
-        sourceOrganization = "Shrimps Forever"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
@@ -372,14 +333,12 @@ private val substrateEvidenceGroups = listOf(
             "substrate_prize_aquasoil_powder_9_l"
         ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
-        sourceOrganization = "Prize"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
             "substrate_seachem_aquavitro_aquasolum_black_humate_4_kg"
         ),
         semantic = AquariumSubstrateSemantic.ACTIVE_SOIL,
-        sourceOrganization = "Seachem Laboratories"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
@@ -389,7 +348,6 @@ private val substrateEvidenceGroups = listOf(
             "substrate_seachem_flourite_red_7_kg"
         ),
         semantic = AquariumSubstrateSemantic.INERT,
-        sourceOrganization = "Seachem Laboratories"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
@@ -397,19 +355,16 @@ private val substrateEvidenceGroups = listOf(
             "substrate_caribsea_eco_complete_planted_aquarium_substrate_red"
         ),
         semantic = AquariumSubstrateSemantic.INERT,
-        sourceOrganization = "CaribSea"
     ),
     SubstrateEvidenceGroup(
         productIds = listOf(
             "substrate_eurostar_aquaclay_5_10_l"
         ),
         semantic = AquariumSubstrateSemantic.UNKNOWN,
-        sourceOrganization = "EuroStar"
     )
 )
 private data class GravelEvidenceGroup(
     val productIds: List<String>,
-    val sourceOrganization: String
 )
 
 private val gravelEvidenceGroups = listOf(
@@ -418,7 +373,6 @@ private val gravelEvidenceGroups = listOf(
             "gravel_ada_aqua_gravel_s_2_kg",
             "gravel_ada_aqua_gravel_s_8_kg"
         ),
-        sourceOrganization = "Aqua Design Amano"
     ),
     GravelEvidenceGroup(
         productIds = listOf(
@@ -455,7 +409,6 @@ private val gravelEvidenceGroups = listOf(
             "gravel_dennerle_nano_shrimp_gravel_borneo_brown_0_7_1_2_mm_2_kg",
             "gravel_dennerle_nano_shrimp_gravel_sunda_white_0_7_1_2_mm_2_kg"
         ),
-        sourceOrganization = "Dennerle"
     ),
     GravelEvidenceGroup(
         productIds = listOf(
@@ -493,7 +446,6 @@ private val gravelEvidenceGroups = listOf(
             "gravel_wio_venom_gravel_mix_8_40_mm_2_kg",
             "gravel_wio_venom_gravel_mix_8_40_mm_5_kg"
         ),
-        sourceOrganization = "WIO"
     ),
     GravelEvidenceGroup(
         productIds = listOf(
@@ -512,7 +464,6 @@ private val gravelEvidenceGroups = listOf(
             "gravel_jbl_sansibar_river_approx_0_8_mm_5_kg",
             "gravel_jbl_sansibar_river_approx_0_8_mm_10_kg"
         ),
-        sourceOrganization = "JBL"
     ),
     GravelEvidenceGroup(
         productIds = listOf(
@@ -537,7 +488,6 @@ private val gravelEvidenceGroups = listOf(
             "gravel_sera_aquarium_gravel_lava_substrate_2_8_mm_3_l_4_kg",
             "gravel_sera_aquarium_gravel_lava_substrate_2_8_mm_6_l_8_kg"
         ),
-        sourceOrganization = "sera"
     ),
     GravelEvidenceGroup(
         productIds = listOf(
@@ -557,7 +507,6 @@ private val gravelEvidenceGroups = listOf(
             "gravel_seachem_onyx_sand_7_kg",
             "gravel_seachem_onyx_7_kg"
         ),
-        sourceOrganization = "Seachem"
     ),
     GravelEvidenceGroup(
         productIds = listOf(
@@ -581,7 +530,6 @@ private val gravelEvidenceGroups = listOf(
             "gravel_caribsea_super_naturals_shadow_creek_sand_1_3_mm_20_lb",
             "gravel_caribsea_super_naturals_shadow_creek_sand_1_3_mm_40_lb"
         ),
-        sourceOrganization = "CaribSea"
     ),
     GravelEvidenceGroup(
         productIds = listOf(
@@ -596,7 +544,6 @@ private val gravelEvidenceGroups = listOf(
             "gravel_aquael_dolomite_gravel_2_4_mm_2_kg",
             "gravel_aquael_dolomite_gravel_2_4_mm_10_kg"
         ),
-        sourceOrganization = "Aquael"
     ),
     GravelEvidenceGroup(
         productIds = listOf(
@@ -614,7 +561,6 @@ private val gravelEvidenceGroups = listOf(
             "gravel_reeflowers_natural_tara_gravel_2_4_mm_25_kg",
             "gravel_reeflowers_natural_sahara_sand_0_5_1_mm_25_kg"
         ),
-        sourceOrganization = "ReeFlowers"
     ),
     GravelEvidenceGroup(
         productIds = listOf(
@@ -629,7 +575,6 @@ private val gravelEvidenceGroups = listOf(
             "gravel_crystalpro_river_sand_3_5_mm_6_kg",
             "gravel_crystalpro_river_sand_3_5_mm_12_kg"
         ),
-        sourceOrganization = "CrystalPro Aquatics"
     ),
     GravelEvidenceGroup(
         productIds = listOf(
@@ -641,7 +586,6 @@ private val gravelEvidenceGroups = listOf(
             "gravel_amtra_gravel_noa_4_8_mm_5_kg",
             "gravel_amtra_gravel_noa_4_8_mm_10_kg"
         ),
-        sourceOrganization = "AMTRA"
     ),
     GravelEvidenceGroup(
         productIds = listOf(
@@ -652,7 +596,6 @@ private val gravelEvidenceGroups = listOf(
             "gravel_prodac_polycrome_2_3_mm_2_5_kg",
             "gravel_prodac_polycrome_2_3_mm_25_kg"
         ),
-        sourceOrganization = "PRODAC International"
     )
 )
 /**
@@ -706,16 +649,12 @@ object AquariumSubstrateMetadataCatalog {
             group.productIds.map { productId ->
                 if (group.semantic == AquariumSubstrateSemantic.UNKNOWN) {
                     productId.unverified(
-                        categoryKey = AquariumMaterialCategoryKeys.SUBSTRATE,
-                        sourceOrganization = group.sourceOrganization,
-                        sourceRecordId = productId
+                        categoryKey = AquariumMaterialCategoryKeys.SUBSTRATE
                     )
                 } else {
                     productId.verified(
                         categoryKey = AquariumMaterialCategoryKeys.SUBSTRATE,
-                        semantic = group.semantic,
-                        sourceOrganization = group.sourceOrganization,
-                        sourceRecordId = productId
+                        semantic = group.semantic
                     )
                 }
             }
@@ -739,8 +678,6 @@ object AquariumSubstrateMetadataCatalog {
                 productId.verified(
                     categoryKey = AquariumMaterialCategoryKeys.GRAVEL,
                     semantic = AquariumSubstrateSemantic.INERT,
-                    sourceOrganization = group.sourceOrganization,
-                    sourceRecordId = productId,
                     reviewedOn = GRAVEL_CATALOG_REVIEW_DATE
                 )
             }
@@ -753,31 +690,21 @@ object AquariumSubstrateMetadataCatalog {
     private fun String.verified(
         categoryKey: String,
         semantic: AquariumSubstrateSemantic,
-        sourceOrganization: String,
-        sourceRecordId: String,
         reviewedOn: String = SUBSTRATE_REVIEW_DATE
     ): Pair<String, Record> = this to Record(
         categoryKey = categoryKey,
         metadata = AquariumSubstrateProductMetadata(
             semantic = semantic,
             evidenceStatus = AquariumSubstrateEvidenceStatus.VERIFIED_PRODUCT,
-            sourceOrganization = sourceOrganization,
-            sourceRecordId = sourceRecordId,
             reviewedOn = reviewedOn
         )
     )
 
-    private fun String.unverified(
-        categoryKey: String,
-        sourceOrganization: String,
-        sourceRecordId: String
-    ): Pair<String, Record> = this to Record(
+    private fun String.unverified(categoryKey: String): Pair<String, Record> = this to Record(
         categoryKey = categoryKey,
         metadata = AquariumSubstrateProductMetadata(
             semantic = AquariumSubstrateSemantic.UNKNOWN,
             evidenceStatus = AquariumSubstrateEvidenceStatus.UNVERIFIED_GENERIC,
-            sourceOrganization = sourceOrganization,
-            sourceRecordId = sourceRecordId,
             reviewedOn = SUBSTRATE_REVIEW_DATE
         )
     )

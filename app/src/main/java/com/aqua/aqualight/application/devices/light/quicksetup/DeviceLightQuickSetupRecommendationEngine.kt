@@ -155,10 +155,10 @@ class DeviceLightQuickSetupRecommendationEngine(
     }
 
     private fun evidenceIds(context: DeviceLightQuickSetupContext): Set<String> = buildSet {
-        add(DeviceLightQuickSetupEvidence.TROPICA_LIGHT_DEMAND)
-        add(DeviceLightQuickSetupEvidence.GREEN_AQUA_PHOTOPERIOD)
-        add(DeviceLightQuickSetupEvidence.TWO_HR_PAR_BANDS)
-        if (context.co2Present) add(DeviceLightQuickSetupEvidence.TWO_HR_CO2_PRECHARGE)
+        add(DeviceLightQuickSetupEvidence.PLANT_LIGHT_REQUIREMENT)
+        add(DeviceLightQuickSetupEvidence.PHOTOPERIOD_POLICY)
+        add(DeviceLightQuickSetupEvidence.LIGHT_PAR_TARGET)
+        if (context.co2Present) add(DeviceLightQuickSetupEvidence.CO2_PRECHARGE_POLICY)
     }
 
     private data class PpfdTargets(
