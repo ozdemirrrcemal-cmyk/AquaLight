@@ -338,10 +338,11 @@ object AlgaeAnalysisEngine {
         return AlgaeAnalysisPriority.MONITOR
     }
 
-    private fun strengthFor(score: Int): AlgaeFactorStrength =
-        when {
-            score >= 5 -> AlgaeFactorStrength.HIGH
-            score >= 3 -> AlgaeFactorStrength.MEDIUM
-            else -> AlgaeFactorStrength.LOW
-        }
 }
+
+private fun strengthFor(score: Int): AlgaeFactorStrength =
+    when {
+        score >= 5 -> AlgaeFactorStrength.HIGH
+        score >= 3 -> AlgaeFactorStrength.MEDIUM
+        else -> AlgaeFactorStrength.LOW
+    }
