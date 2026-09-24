@@ -7,8 +7,6 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentTankHealthBinding
-import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
-import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 
@@ -40,30 +38,8 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
                 titleOverride = getString(R.string.screen_title_tank_health),
                 onBackClick = {
                     findNavController().navigateUp()
-                },
-                actions = listOf(
-                    AquaHeaderAction(
-                        iconRes = R.drawable.ic_info,
-                        contentDescription = getString(
-                            R.string.tank_health_info_content_description
-                        ),
-                        onClick = ::showHealthInfo
-                    )
-                )
+                }
             )
-        )
-    }
-
-    private fun showHealthInfo() {
-        FeedbackBottomSheet.show(
-            fragmentManager = childFragmentManager,
-            title = getString(R.string.screen_title_tank_health),
-            message = getString(R.string.tank_health_info_message),
-            primaryText = getString(R.string.ok),
-            cancelText = null,
-            tone = FeedbackBottomSheet.FeedbackTone.INFO,
-            requestKey = HEALTH_INFO_REQUEST_KEY,
-            actionId = ""
         )
     }
 
@@ -72,7 +48,4 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
         super.onDestroyView()
     }
 
-    companion object {
-        private const val HEALTH_INFO_REQUEST_KEY = "tank_health_info_result"
-    }
 }
