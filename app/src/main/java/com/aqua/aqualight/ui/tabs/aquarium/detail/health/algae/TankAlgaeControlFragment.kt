@@ -20,6 +20,9 @@ class TankAlgaeControlFragment : Fragment(R.layout.fragment_tank_algae_control) 
     private var formVisible: Boolean = false
     private var restoredState = AlgaeObservationSavedState()
 
+    val isObservationFormVisible: Boolean
+        get() = formVisible
+
     private var catalogController: AlgaeCatalogController? = null
     private var choicesController: AlgaeObservationChoicesController? = null
 
