@@ -9,7 +9,13 @@ enum class AlgaeEvidenceId {
     TWO_HOUR_GREEN_DUST,
     TWO_HOUR_BLACK_BEARD,
     TWO_HOUR_CLADOPHORA,
-    TWO_HOUR_GREEN_WATER
+    TWO_HOUR_GREEN_WATER,
+    TWO_HOUR_FILAMENTOUS_ALGAE,
+    AQUASABI_ALGAE_OVERVIEW,
+    AQUASABI_GREEN_COATS,
+    AQUASABI_FUZZ_ALGAE,
+    AQUASABI_THREAD_ALGAE,
+    AQUASABI_HAIR_ALGAE
 }
 
 data class AlgaeEvidenceRecord(
@@ -56,9 +62,9 @@ object AlgaeEvidenceCatalog {
         record(
             id = AlgaeEvidenceId.TWO_HOUR_GREEN_DUST,
             organization = "The 2Hr Aquarist",
-            title = "How to get rid of green dust algae",
+            title = "Green Dust Algae",
             sourceUrl = "https://www.2hraquarist.com/blogs/algae-control/" +
-                "how-to-control-green-dust-algae"
+                "green-dust-algae-gda-a-focused-study"
         ),
         record(
             id = AlgaeEvidenceId.TWO_HOUR_BLACK_BEARD,
@@ -79,6 +85,43 @@ object AlgaeEvidenceCatalog {
             title = "Aquarium Green Water",
             sourceUrl = "https://www.2hraquarist.com/blogs/algae-control/" +
                 "control-green-water-algae"
+        ),
+        record(
+            id = AlgaeEvidenceId.TWO_HOUR_FILAMENTOUS_ALGAE,
+            organization = "The 2Hr Aquarist",
+            title = "Green Hair, Fuzz, String and Thread Algae",
+            sourceUrl = "https://www.2hraquarist.com/blogs/algae-control/" +
+                "hair-algae-planted-aquarium-causes-fixes"
+        ),
+        record(
+            id = AlgaeEvidenceId.AQUASABI_ALGAE_OVERVIEW,
+            organization = "Aquasabi",
+            title = "Algae in the aquarium",
+            sourceUrl = "https://www.aquasabi.com/aquascaping-wiki_algae_algae-in-the-aquarium"
+        ),
+        record(
+            id = AlgaeEvidenceId.AQUASABI_GREEN_COATS,
+            organization = "Aquasabi",
+            title = "Green algae coats",
+            sourceUrl = "https://www.aquasabi.com/aquascaping-wiki_algae_green-algae-coats"
+        ),
+        record(
+            id = AlgaeEvidenceId.AQUASABI_FUZZ_ALGAE,
+            organization = "Aquasabi",
+            title = "Fuzz algae",
+            sourceUrl = "https://www.aquasabi.com/aquascaping-wiki_algae_fuzz-algae"
+        ),
+        record(
+            id = AlgaeEvidenceId.AQUASABI_THREAD_ALGAE,
+            organization = "Aquasabi",
+            title = "Green thread algae",
+            sourceUrl = "https://www.aquasabi.com/aquascaping-wiki_algae_green-thread-algae"
+        ),
+        record(
+            id = AlgaeEvidenceId.AQUASABI_HAIR_ALGAE,
+            organization = "Aquasabi",
+            title = "Hair algae",
+            sourceUrl = "https://www.aquasabi.com/aquascaping-wiki_algae_hair-algae"
         )
     )
 
