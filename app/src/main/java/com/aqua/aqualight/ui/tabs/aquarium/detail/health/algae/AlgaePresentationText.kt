@@ -90,10 +90,11 @@ object AlgaePresentationText {
 
     @StringRes
     fun missing(value: AlgaeMissingData): Int = when (value) {
-        AlgaeMissingData.LIGHT_SCHEDULE -> R.string.algae_missing_light
+        AlgaeMissingData.LIGHT_PROFILE -> R.string.algae_missing_light
         AlgaeMissingData.CO2_SCHEDULE -> R.string.algae_missing_co2
         AlgaeMissingData.WATER_ANALYSIS -> R.string.algae_missing_water
         AlgaeMissingData.MAINTENANCE_HISTORY -> R.string.algae_missing_maintenance
+        AlgaeMissingData.TEMPERATURE_CONTEXT -> R.string.algae_missing_temperature
     }
 
     @StringRes
