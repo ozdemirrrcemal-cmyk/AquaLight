@@ -144,65 +144,46 @@ internal class TankHealthContentAdapter :
 
     internal companion object {
         const val GRID_SPAN_COUNT = 4
-        const val VIEW_TYPE_WATER_QUALITY_HEADER = 0
-        const val VIEW_TYPE_METRIC = 1
-        const val VIEW_TYPE_ADD_ANALYSIS = 2
-        const val VIEW_TYPE_MAINTENANCE_SECTION = 3
-        const val VIEW_TYPE_SYSTEM_SECTION = 4
-        const val METRIC_SPAN_SIZE = 1
 
-        fun buildItems(): List<TankHealthContentItem> {
+        private const val VIEW_TYPE_WATER_QUALITY_HEADER = 0
+        private const val VIEW_TYPE_METRIC = 1
+        private const val VIEW_TYPE_ADD_ANALYSIS = 2
+        private const val VIEW_TYPE_MAINTENANCE_SECTION = 3
+        private const val VIEW_TYPE_SYSTEM_SECTION = 4
+        private const val METRIC_SPAN_SIZE = 1
+
+        private fun buildItems(): List<TankHealthContentItem> {
             return listOf(
                 TankHealthContentItem.WaterQualityHeader,
+                metric(0, R.string.tank_health_metric_ph, R.string.tank_health_value_ph),
                 metric(
-                    index = 0,
-                    labelRes = R.string.tank_health_metric_ph,
-                    valueRes = R.string.tank_health_value_ph
+                    1,
+                    R.string.tank_health_metric_no3,
+                    R.string.tank_health_value_no3,
+                    R.string.tank_health_status_moderate,
+                    R.color.aqua_content_warning
+                ),
+                metric(2, R.string.tank_health_metric_no2, R.string.tank_health_value_no2),
+                metric(
+                    3,
+                    R.string.tank_health_metric_nh3_nh4,
+                    R.string.tank_health_value_nh3_nh4
                 ),
                 metric(
-                    index = 1,
-                    labelRes = R.string.tank_health_metric_no3,
-                    valueRes = R.string.tank_health_value_no3,
-                    statusRes = R.string.tank_health_status_moderate,
-                    statusColorRes = R.color.aqua_content_warning
+                    4,
+                    R.string.tank_health_metric_temperature,
+                    R.string.tank_health_value_temperature
                 ),
-                metric(
-                    index = 2,
-                    labelRes = R.string.tank_health_metric_no2,
-                    valueRes = R.string.tank_health_value_no2
-                ),
-                metric(
-                    index = 3,
-                    labelRes = R.string.tank_health_metric_nh3_nh4,
-                    valueRes = R.string.tank_health_value_nh3_nh4
-                ),
-                metric(
-                    index = 4,
-                    labelRes = R.string.tank_health_metric_temperature,
-                    valueRes = R.string.tank_health_value_temperature
-                ),
-                metric(
-                    index = 5,
-                    labelRes = R.string.tank_health_metric_gh,
-                    valueRes = R.string.tank_health_value_gh
-                ),
-                metric(
-                    index = 6,
-                    labelRes = R.string.tank_health_metric_kh,
-                    valueRes = R.string.tank_health_value_kh
-                ),
-                metric(
-                    index = 7,
-                    labelRes = R.string.tank_health_metric_po4,
-                    valueRes = R.string.tank_health_value_po4
-                ),
+                metric(5, R.string.tank_health_metric_gh, R.string.tank_health_value_gh),
+                metric(6, R.string.tank_health_metric_kh, R.string.tank_health_value_kh),
+                metric(7, R.string.tank_health_metric_po4, R.string.tank_health_value_po4),
                 TankHealthContentItem.AddAnalysis,
                 TankHealthContentItem.MaintenanceSection,
                 TankHealthContentItem.SystemSection
             )
         }
 
-        fun metric(
+        private fun metric(
             index: Int,
             @StringRes labelRes: Int,
             @StringRes valueRes: Int,
