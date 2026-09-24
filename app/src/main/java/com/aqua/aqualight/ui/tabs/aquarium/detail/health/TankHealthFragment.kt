@@ -43,7 +43,7 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentTankHealthBinding.bind(view)
 
-        setupHeader()
+        setupTankHealthHeader(this, binding)
         setupTabs()
         setupReturnActions()
         renderSelectedSection()
@@ -208,17 +208,17 @@ private fun Fragment.renderTabState(
     )
 }
 
-private fun TankHealthFragment.setupHeader() {
-    bindingForHeader().setupAquaHeader(
-        fragment = this,
+private fun setupTankHealthHeader(
+    fragment: TankHealthFragment,
+    binding: FragmentTankHealthBinding
+) {
+    binding.appHeader.setupAquaHeader(
+        fragment = fragment,
         config = AquaHeaderConfig(
-            titleOverride = getString(R.string.screen_title_tank_health),
+            titleOverride = fragment.getString(R.string.screen_title_tank_health),
             onBackClick = {
-                findNavController().navigateUp()
+                fragment.findNavController().navigateUp()
             }
         )
     )
 }
-
-private fun TankHealthFragment.bindingForHeader() =
-    requireView().findViewById<android.view.ViewGroup>(R.id.appHeader)
