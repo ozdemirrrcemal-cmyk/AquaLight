@@ -44,6 +44,7 @@ message StoredPlantTag {
   float markerX = 4;
   float markerY = 5;
   string catalogId = 6;
+  string photoUri = 7;
 }
 
 message StoredMaterial {
