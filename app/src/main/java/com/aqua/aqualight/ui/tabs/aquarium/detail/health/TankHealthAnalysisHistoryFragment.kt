@@ -72,6 +72,69 @@ class TankHealthAnalysisHistoryFragment :
                 R.string.tank_health_value_temperature,
                 R.string.tank_health_status_normal,
                 TemperatureSource.SENSOR
+            ),
+            record(
+                R.string.tank_health_analysis_record_date_6,
+                R.string.tank_health_analysis_record_time_6,
+                R.string.tank_health_value_ph,
+                R.string.tank_health_analysis_value_no3_10,
+                R.string.tank_health_value_temperature,
+                R.string.tank_health_status_normal,
+                TemperatureSource.SENSOR
+            ),
+            record(
+                R.string.tank_health_analysis_record_date_7,
+                R.string.tank_health_analysis_record_time_7,
+                R.string.tank_health_analysis_value_ph_70,
+                R.string.tank_health_analysis_value_no3_22,
+                R.string.tank_health_analysis_value_temp_26,
+                R.string.tank_health_status_moderate,
+                TemperatureSource.SENSOR
+            ),
+            record(
+                R.string.tank_health_analysis_record_date_8,
+                R.string.tank_health_analysis_record_time_8,
+                R.string.tank_health_analysis_value_ph_66,
+                R.string.tank_health_analysis_value_no3_8,
+                R.string.tank_health_analysis_value_temp_24,
+                R.string.tank_health_status_normal,
+                TemperatureSource.MANUAL
+            ),
+            record(
+                R.string.tank_health_analysis_record_date_9,
+                R.string.tank_health_analysis_record_time_9,
+                R.string.tank_health_analysis_value_ph_72,
+                R.string.tank_health_analysis_value_no3_16,
+                R.string.tank_health_value_temperature,
+                R.string.tank_health_status_normal,
+                TemperatureSource.SENSOR
+            ),
+            record(
+                R.string.tank_health_analysis_record_date_10,
+                R.string.tank_health_analysis_record_time_10,
+                R.string.tank_health_analysis_value_ph_69,
+                R.string.tank_health_analysis_value_no3_10,
+                R.string.tank_health_analysis_value_temp_24,
+                R.string.tank_health_status_normal,
+                TemperatureSource.MANUAL
+            ),
+            record(
+                R.string.tank_health_analysis_record_date_11,
+                R.string.tank_health_analysis_record_time_11,
+                R.string.tank_health_value_ph,
+                R.string.tank_health_analysis_value_no3_8,
+                R.string.tank_health_value_temperature,
+                R.string.tank_health_status_normal,
+                TemperatureSource.SENSOR
+            ),
+            record(
+                R.string.tank_health_analysis_record_date_12,
+                R.string.tank_health_analysis_record_time_12,
+                R.string.tank_health_analysis_value_ph_70,
+                R.string.tank_health_analysis_value_no3_16,
+                R.string.tank_health_analysis_value_temp_26,
+                R.string.tank_health_status_normal,
+                TemperatureSource.SENSOR
             )
         )
     }
