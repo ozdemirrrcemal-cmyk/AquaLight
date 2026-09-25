@@ -74,6 +74,12 @@
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/aqua_size_1"
+                android:layout_marginStart="@dimen/aqua_size_46"
+                android:background="@color/aqua_card_divider" />
+
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/aqua_size_44"
@@ -121,6 +127,12 @@
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/aqua_size_1"
+                android:layout_marginStart="@dimen/aqua_size_46"
+                android:background="@color/aqua_card_divider" />
+
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/aqua_size_44"
@@ -167,6 +179,12 @@
                     app:layout_constraintTop_toTopOf="parent" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/aqua_size_1"
+                android:layout_marginStart="@dimen/aqua_size_46"
+                android:background="@color/aqua_card_divider" />
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
