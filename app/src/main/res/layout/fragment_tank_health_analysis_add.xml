@@ -829,16 +829,12 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnHistory"
-                    style="@style/Widget.Aqua.Button"
+                    style="@style/Widget.Aqua.Button.OutlineAccent"
                     android:layout_width="@dimen/aqua_size_0"
                     android:layout_height="match_parent"
                     android:layout_marginStart="@dimen/aqua_size_4"
                     android:layout_weight="1"
-                    android:text="@string/tank_health_analysis_history_action"
-                    android:textColor="@color/aqua_card_text_primary"
-                    app:backgroundTint="@color/aqua_color_transparent"
-                    app:strokeColor="@color/aqua_accent_primary"
-                    app:strokeWidth="@dimen/aqua_size_1" />
+                    android:text="@string/tank_health_analysis_history_action" />
 
             </LinearLayout>
 
