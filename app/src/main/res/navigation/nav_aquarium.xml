@@ -176,12 +176,54 @@
                 app:argType="long" />
         </action>
         <action
+            android:id="@+id/action_tankDetailFragment_to_plantHealthFragment"
+            app:destination="@id/plantHealthFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right">
+            <argument
+                android:name="tankId"
+                app:argType="long" />
+        </action>
+        <action
+            android:id="@+id/action_tankDetailFragment_to_livestockHealthFragment"
+            app:destination="@id/livestockHealthFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right">
+            <argument
+                android:name="tankId"
+                app:argType="long" />
+        </action>
+        <action
             android:id="@+id/action_tankDetailFragment_to_unsupportedDeviceFragment"
             app:destination="@id/unsupportedDeviceFragment"
             app:enterAnim="@anim/nav_slide_in_right"
             app:exitAnim="@anim/nav_slide_out_left"
             app:popEnterAnim="@anim/nav_slide_in_left"
             app:popExitAnim="@anim/nav_slide_out_right" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/plantHealthFragment"
+        android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.health.PlantHealthFragment"
+        android:label="@string/screen_title_plant_health"
+        tools:layout="@layout/fragment_aquarium_health_placeholder">
+        <argument
+            android:name="tankId"
+            app:argType="long" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/livestockHealthFragment"
+        android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.health.LivestockHealthFragment"
+        android:label="@string/screen_title_livestock_health"
+        tools:layout="@layout/fragment_aquarium_health_placeholder">
+        <argument
+            android:name="tankId"
+            app:argType="long" />
     </fragment>
 
     <fragment

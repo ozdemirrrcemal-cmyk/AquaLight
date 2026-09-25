@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="screen_title_plant_health">Plant Health</string>
+    <string name="screen_title_livestock_health">Livestock Health</string>
+
+    <string name="plant_health_entry_title">Plant Health</string>
+    <string name="plant_health_entry_summary">Plants look healthy overall</string>
+    <string name="plant_health_entry_last_check">Last check: 1 day ago</string>
+
+    <string name="livestock_health_entry_title">Livestock Health</string>
+    <string name="livestock_health_entry_summary">Livestock are active and doing well</string>
+    <string name="livestock_health_entry_last_check">Last check: today</string>
+</resources>
