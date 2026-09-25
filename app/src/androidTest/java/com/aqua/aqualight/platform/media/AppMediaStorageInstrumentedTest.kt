@@ -91,6 +91,32 @@ class AppMediaStorageInstrumentedTest {
     }
 
     @Test
+    fun plantPhotosUseCanonicalOwnerScopedOrphanRecovery() {
+        val committed = pendingSavedMedia(
+            ownerUid = "owner-plant",
+            ownerToken = "7",
+            scope = AppMediaScope.PLANT
+        )
+        AppMediaStorage.commitPendingMedia(context, committed)
+        val file = requireNotNull(
+            AppMediaStorage.resolveInternalMediaFile(
+                context = context,
+                uriString = committed,
+                expectedScope = AppMediaScope.PLANT
+            )
+        )
+        check(file.setLastModified(System.currentTimeMillis() - TWO_DAYS_MILLIS))
+
+        AppMediaStorage.reconcileUnreferencedCommittedMedia(
+            context = context,
+            ownerUid = "owner-plant",
+            referencedUris = emptyList()
+        )
+
+        assertFalse(AppMediaStorage.isAppOwned(context, committed))
+    }
+
+    @Test
     fun committedCandidateIsNeverRemovedByLaterReconciliation() {
         val committed = pendingSavedMedia("owner-a", "committed")
         AppMediaStorage.commitPendingMedia(context, committed)
@@ -106,11 +132,15 @@ class AppMediaStorageInstrumentedTest {
         AppMediaStorage.deleteInternalMedia(context, committed)
     }
 
-    private fun pendingSavedMedia(ownerUid: String, ownerToken: String): String {
+    private fun pendingSavedMedia(
+        ownerUid: String,
+        ownerToken: String,
+        scope: AppMediaScope = AppMediaScope.TANK
+    ): String {
         val crop = requireNotNull(
             AppMediaStorage.createCropOutputUri(
                 context = context,
-                scope = AppMediaScope.TANK,
+                scope = scope,
                 ownerToken = ownerToken
             )
         )
@@ -118,7 +148,7 @@ class AppMediaStorageInstrumentedTest {
         return requireNotNull(
             AppMediaStorage.promoteCropOutput(
                 context = context,
-                scope = AppMediaScope.TANK,
+                scope = scope,
                 ownerToken = ownerToken,
                 ownerUid = ownerUid,
                 outputUri = crop
