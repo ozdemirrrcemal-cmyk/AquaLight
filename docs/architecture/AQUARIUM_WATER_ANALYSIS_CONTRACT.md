@@ -6,7 +6,7 @@ This document freezes the architectural, data, analysis, persistence, and UI-int
 
 The existing Tank Health / Water Quality UI is considered visually complete for this stage. Implementation work governed by this contract must connect that UI to authoritative data and analysis without redesigning the approved screens unless a later explicit UI change is requested.
 
-Accepted clarification on 26 September 2026 (K03.0): the selected tank type determines which measurement fields are shown. Preserve the existing screen structure, cards, field styling, grid, and navigation while populating them with the applicable measurements in section 25.1. Basic, tank-specific, and additional measurements are logical groups, not approval for a new visual layout. K03.1 subsequently freezes nitrate, nitrite, and phosphate recording semantics in section 6.1. K03.2 freezes the test/device selection, source-semantic resolution, and normalization workflow in sections 6.2, 6.5, 7, and 28.1; the remaining K03 decisions stay open.
+Accepted clarification on 26 September 2026 (K03.0): the selected tank type determines which measurement fields are shown. Preserve the existing screen structure, cards, field styling, grid, and navigation while populating them with the applicable measurements in section 25.1. Basic, tank-specific, and additional measurements are logical groups, not approval for a new visual layout. K03.1 subsequently freezes nitrate, nitrite, and phosphate recording semantics in section 6.1. K03.2 freezes the test/device selection, source-semantic resolution, and normalization workflow in sections 6.2, 6.5, 7, and 28.1. K03.3 freezes the canonical ammonia reporting bases in section 6.3; the remaining K03 decisions stay open.
 
 This contract is intentionally broader than a screen implementation. It defines the foundation that later powers:
 
@@ -358,7 +358,7 @@ The original Water Analysis UI contains the following measurement set:
 - KH;
 - PO4 / phosphate.
 
-This original set is an inventory, not a fixed eight-field limit. The accepted tank-type field matrix in section 25.1 now defines the default measurement scope; section 25.2 records additional measurement support. The shared product-level core is temperature, pH, total ammonia, nitrite, and nitrate. Selecting total ammonia as the main field does not yet choose whether its concentration is expressed as nitrogen or another reporting basis.
+This original set is an inventory, not a fixed eight-field limit. The accepted tank-type field matrix in section 25.1 now defines the default measurement scope; section 25.2 records additional measurement support. The shared product-level core is temperature, pH, total ammonia, nitrite, and nitrate. Under accepted K03.3, the canonical total-ammonia metric is Total Ammonia Nitrogen (TAN), expressed as mg/L as N; direct free ammonia is a separate metric expressed as mg/L as NH3.
 
 ### 6.1 Canonical units
 
@@ -411,9 +411,18 @@ Different tests may report:
 
 Therefore the persistence model must not use an ambiguous field such as only `ammonia = 0.2`.
 
-Before implementation, the supported metric must be explicitly named in the domain enum / model. For example, if the product chooses combined total ammonia, the domain representation must say so explicitly.
+Accepted with the user on 26 September 2026 (K03.3):
 
-Under K03.0, the main product field is named "Toplam amonyak" (total ammonia). The proposed explanatory text is "Amonyak ve amonyum toplamı"; its placement follows the pending help interaction decision in section 25.3. Its exact canonical concentration basis remains a K03 decision. Under accepted K03.2, a verified multi-mode test may expose total-ammonia and direct free-NH3 as separate explicit result modes; when more than one mode is possible, the user must choose the measured mode and the application must not infer it. A direct free-NH3 or NH4-only result must not be silently stored as total ammonia. Every supported profile/mode must declare its reporting basis and source unit before it can be normalized or assessed. Preserve the approved field styling while making the label understandable.
+- canonical total ammonia is **`TOTAL_AMMONIA_NITROGEN` (TAN)**, normalized and assessed as **mg/L as N**;
+- a directly measured free-ammonia result is **`FREE_AMMONIA_NH3`**, normalized and assessed as **mg/L as NH3**;
+- ammonium-only (`NH4+`) and other reporting conventions remain distinct source semantics and must not be relabelled as either canonical metric without an explicitly verified conversion policy;
+- the raw test/device result, its source unit/reporting basis, source profile/revision, and normalized canonical value are preserved separately under K03.2 provenance rules;
+- conversion to TAN or free-NH3 canonical form occurs only when the selected verified profile or guided typed source semantics establish a supported conversion; no result is converted merely because a label contains `ammonia`, `NH3`, `NH4`, or `ppm`;
+- a direct free-NH3 measurement is never substituted for TAN, and a TAN measurement is never presented as a direct free-NH3 measurement. Any future calculated free-NH3 value remains a separately identified derived result.
+
+UI contract for K03.3: keep the approved field/card design. The primary user-facing label remains **"Toplam amonyak"**, with the selected test/device's source unit/reporting context visible at entry. Users should not be forced to understand or manually convert to `mg/L as N`. When the selected profile reports direct free ammonia, present it explicitly as **"Serbest amonyak (NH3)"**. Technical canonical/provenance detail may be shown in record detail where useful, but the entry screen must not replace the familiar label with internal enum terminology.
+
+The explanatory text **"Amonyak ve amonyum toplamı"** remains appropriate for the total-ammonia field; its exact help-control placement follows the pending section 25.3 interaction decision. Whether one analysis event can store both a total-ammonia result and a direct free-NH3 result from the same multi-result kit is a separate K03 interaction/model decision; K03.3 does not silently choose one-or-the-other or overwrite either result.
 
 ### 6.4 Accepted reuse of existing measurement models (K02)
 
@@ -427,7 +436,7 @@ Decision accepted with the user on 26 September 2026:
 
 The approved UI already contains NO2 and NH3/NH4 input controls. The missing support refers to the underlying measurement contracts and the future persistence/assessment integration, not missing UI fields. K02 alone did not authorize additional controls; the later K03.0 decision in section 25 defines the tank-specific field additions while preserving the existing UI design.
 
-K03 is partially decided: K03.0 defines measurement scope, K03.1 defines nitrate/nitrite/phosphate canonical meanings, and K03.2 defines test/device selection plus source-aware normalization behavior. Existing `nitratePpm` and `phosphatePpm` names do not, by themselves, establish the source data's chemical reporting basis or authorize treating those values as mg/L. The exact total-ammonia canonical reporting basis, evidence-backed profile/conversion entries, remaining parameter semantics, and rule thresholds still require their own decisions before implementation. Adding parameters must not invent livestock requirements where the catalog has none.
+K03 is partially decided: K03.0 defines measurement scope, K03.1 defines nitrate/nitrite/phosphate canonical meanings, K03.2 defines test/device selection plus source-aware normalization behavior, and K03.3 defines TAN as mg/L as N plus direct free NH3 as mg/L as NH3. Existing `nitratePpm` and `phosphatePpm` names do not, by themselves, establish the source data's chemical reporting basis or authorize treating those values as mg/L. Evidence-backed profile/conversion entries, remaining parameter semantics, multi-result event behavior, and rule thresholds still require their own decisions before implementation. Adding parameters must not invent livestock requirements where the catalog has none.
 
 ### 6.5 Accepted test/device selection and source-normalization policy (K03.2)
 
@@ -444,7 +453,7 @@ Decision accepted with the user on 26 September 2026: measurement meaning must b
 - **Direct free-ammonia measurement:** when a verified test/profile exposes direct free-NH3, store it as a distinct measured metric/result mode, never as total ammonia and never as a calculated value.
 - **Calculated free ammonia remains a separate open decision:** if later accepted, derive it only from a compatible total-ammonia result and pH/temperature belonging to the same measurement event; marine calculations also need compatible salinity. Never substitute today's sensor temperature for an older sample. Allowed time differences, equation, applicability range, concentration basis, and precision must be researched and decided before enabling the calculation. Present any future derived output as **"Hesaplanan değer"** and preserve calculation provenance.
 
-Scientific background is in research references R7–R8. K03.2 accepts the source-selection and resolution workflow; it does not yet freeze the exact total-ammonia canonical reporting basis, a complete commercial product catalog, a calculation equation, or toxicity thresholds.
+Scientific background is in research references R7–R8. K03.2 accepts the source-selection and resolution workflow; K03.3 freezes TAN as mg/L as N and direct free NH3 as mg/L as NH3. Neither decision freezes a complete commercial product catalog, a derived-ammonia calculation equation, or toxicity thresholds.
 
 ---
 
@@ -1039,7 +1048,7 @@ For `Other`/unknown profiles, the supported fields listed above and the profile-
 - A visible field is not a promise of a complete assessment. Unmeasured, measured zero, inapplicable, unknown test basis, and missing assessment rules must remain distinct. A critical known result must not be hidden by a partial-data state.
 - Preserve entered drafts and persisted measurements when tank type changes; no field hidden by the new profile may silently discard its value or be persisted invisibly. Resolve affected draft values explicitly before saving. Detailed interaction belongs to the later state/UI decision.
 - Store the assessment's tank-type/profile context with its provenance. History/detail render the saved measurement set and assessment context; today's tank type must not erase or reinterpret yesterday's fields. The latest result must expose a context mismatch if the tank type has since changed.
-- K03.1 fixes nitrate/nitrite/phosphate canonical meanings and units in section 6.1, and K03.2 fixes the test/device-driven source-resolution and normalization workflow. Remaining K03 decisions include the exact total-ammonia canonical reporting basis, remaining fields' chemical reporting bases/units, evidence-backed profile/conversion entries and precision, and derived-measurement prerequisites. K03.0–K03.2 do not accept numerical safety thresholds, complete implementation, or all of K03/K11/K13.
+- K03.1 fixes nitrate/nitrite/phosphate canonical meanings and units in section 6.1, K03.2 fixes the test/device-driven source-resolution and normalization workflow, and K03.3 fixes TAN as mg/L as N plus direct free NH3 as mg/L as NH3. Remaining K03 decisions include same-event multi-result ammonia behavior, remaining fields' chemical reporting bases/units, evidence-backed profile/conversion entries and precision, and derived-measurement prerequisites. K03.0–K03.3 do not accept numerical safety thresholds, complete implementation, or all of K03/K11/K13.
 
 Evidence and repository references for this scope are recorded in [the K03 research note](research/WATER_ANALYSIS_CONCENTRATION_UNITS_K03.md). The per-type visibility matrix is a product decision informed by those sources, not a scientific claim that all listed tests must be performed at every save.
 
@@ -1503,7 +1512,9 @@ Cover:
 - source change after value entry without silent reinterpretation;
 - unresolved source semantics staying draft-only while other resolved fields can commit;
 - raw/source-profile/revision/normalized provenance round-trip;
-- ammonia semantic mapping;
+- TAN `mg/L as N` canonical mapping;
+- direct free-NH3 `mg/L as NH3` canonical mapping;
+- no substitution between TAN, direct free NH3, NH4-only, and calculated free NH3;
 - no implicit zero for empty input.
 
 ### 43.5 Temperature tests
@@ -1598,7 +1609,7 @@ The implementation order is frozen as follows.
 1. controlled extension of the existing AquariumWaterParameter enum and AquariumWaterSnapshot measurement model (accepted K02; exact chemical semantics follow K03);
 2. canonical units;
 3. K03.2 source/test profile selection, guided source resolution, and normalization policy (accepted; exact evidence-backed profile/conversion entries remain implementation data);
-4. NH3/NH4 exact semantic;
+4. K03.3 ammonia canonical semantics: TAN as mg/L as N; direct free NH3 as mg/L as NH3 (accepted);
 5. severity/status model;
 6. species-range intersection/conflict policy;
 7. intrinsic chemistry rule catalog and evidence revision.
@@ -1667,6 +1678,7 @@ Water Quality is complete only when all of the following are true:
 - all nine canonical tank types follow the accepted measurement matrix without locale-dependent matching; unknown types never silently become freshwater;
 - additional measurements preserve the existing design and have explicit supported semantics before being enabled;
 - each parameter can retain its own remembered test/device selection; known profiles drive analyte/unit/result-mode semantics, unknown products use guided typed fallback, and multi-mode results are never inferred;
+- total ammonia normalizes to TAN in mg/L as N, while directly measured free ammonia normalizes separately to mg/L as NH3; neither is silently substituted for the other;
 - unresolved source semantics are excluded from committed analysis and may remain in draft while other resolved measurements are saved; changing a source never silently reinterprets an entered number;
 - tank-type changes do not silently lose draft values or remove historical measurements;
 - a user can enter a physically valid analysis and save it;
