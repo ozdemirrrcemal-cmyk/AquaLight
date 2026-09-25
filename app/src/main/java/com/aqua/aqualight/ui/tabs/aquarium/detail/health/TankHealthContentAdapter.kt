@@ -13,8 +13,9 @@ import com.aqua.aqualight.databinding.ItemTankHealthMetricBinding
 import com.aqua.aqualight.databinding.ItemTankHealthSystemSectionBinding
 import com.aqua.aqualight.databinding.ItemTankHealthWaterQualityHeaderBinding
 
-internal class TankHealthContentAdapter :
-    RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+internal class TankHealthContentAdapter(
+    private val onAddAnalysisClick: () -> Unit = {}
+) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private val items: List<TankHealthContentItem> = buildItems()
 
@@ -50,13 +51,17 @@ internal class TankHealthContentAdapter :
                 )
             )
 
-            VIEW_TYPE_ADD_ANALYSIS -> StaticViewHolder(
-                ItemTankHealthAddAnalysisBinding.inflate(
+            VIEW_TYPE_ADD_ANALYSIS -> {
+                val binding = ItemTankHealthAddAnalysisBinding.inflate(
                     inflater,
                     parent,
                     false
-                ).root
-            )
+                )
+                binding.root.setOnClickListener {
+                    onAddAnalysisClick()
+                }
+                StaticViewHolder(binding.root)
+            }
 
             VIEW_TYPE_MAINTENANCE_SECTION -> StaticViewHolder(
                 ItemTankHealthMaintenanceSectionBinding.inflate(
