@@ -6,20 +6,23 @@ import android.content.res.ColorStateList
 import android.os.Bundle
 import android.view.View
 import androidx.core.content.ContextCompat
-import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentTankHealthAnalysisAddBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 class TankHealthAnalysisAddFragment :
     Fragment(R.layout.fragment_tank_health_analysis_add) {
+
+    private val args: TankHealthAnalysisAddFragmentArgs by navArgs()
 
     private var _binding: FragmentTankHealthAnalysisAddBinding? = null
     private val binding get() = _binding!!
@@ -28,12 +31,9 @@ class TankHealthAnalysisAddFragment :
     private var selectedTime: LocalTime = LocalTime.of(14, 10)
     private var temperatureSource: TemperatureSource = TemperatureSource.SENSOR
 
-    private val tankId: Long
-        get() = requireArguments().getLong(ARG_TANK_ID)
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        require(tankId > 0L) {
+        require(args.tankId > 0L) {
             "TankHealthAnalysisAddFragment requires a positive tankId."
         }
     }
@@ -103,14 +103,12 @@ class TankHealthAnalysisAddFragment :
 
     private fun setupNavigation() {
         binding.btnHistory.setOnClickListener {
-            val navController = findNavController()
-            if (navController.currentDestination?.id != R.id.tankHealthAnalysisAddFragment) {
-                return@setOnClickListener
-            }
-
-            navController.navigate(
-                R.id.action_tankHealthAnalysisAddFragment_to_tankHealthAnalysisHistoryFragment,
-                bundleOf(ARG_TANK_ID to tankId)
+            findNavController().navigateSafelyFrom(
+                sourceDestinationId = R.id.tankHealthAnalysisAddFragment,
+                directions = TankHealthAnalysisAddFragmentDirections
+                    .actionTankHealthAnalysisAddFragmentToTankHealthAnalysisHistoryFragment(
+                        args.tankId
+                    )
             )
         }
 
@@ -169,7 +167,6 @@ class TankHealthAnalysisAddFragment :
     }
 
     private companion object {
-        const val ARG_TANK_ID = "tankId"
         const val DATE_PATTERN = "d MMM yyyy"
         const val TIME_PATTERN = "HH:mm"
     }
