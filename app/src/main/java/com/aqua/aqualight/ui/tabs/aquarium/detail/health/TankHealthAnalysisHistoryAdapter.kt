@@ -11,9 +11,11 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.ItemTankHealthAnalysisHistoryRecordBinding
 
 internal class TankHealthAnalysisHistoryAdapter(
-    private val items: List<TankHealthAnalysisHistoryRecord>,
+    items: List<TankHealthAnalysisHistoryRecord>,
     private val onRecordClick: (TankHealthAnalysisHistoryRecord) -> Unit
 ) : RecyclerView.Adapter<TankHealthAnalysisHistoryAdapter.RecordViewHolder>() {
+
+    private var items: List<TankHealthAnalysisHistoryRecord> = items
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecordViewHolder {
         return RecordViewHolder(
@@ -31,6 +33,11 @@ internal class TankHealthAnalysisHistoryAdapter(
     }
 
     override fun getItemCount(): Int = items.size
+
+    fun submitList(newItems: List<TankHealthAnalysisHistoryRecord>) {
+        items = newItems
+        notifyDataSetChanged()
+    }
 
     internal class RecordViewHolder(
         private val binding: ItemTankHealthAnalysisHistoryRecordBinding,
