@@ -6,7 +6,7 @@ This document freezes the architectural, data, analysis, persistence, and UI-int
 
 The existing Tank Health / Water Quality UI is considered visually complete for this stage. Implementation work governed by this contract must connect that UI to authoritative data and analysis without redesigning the approved screens unless a later explicit UI change is requested.
 
-Accepted clarification on 26 September 2026 (K03.0): the selected tank type determines which measurement fields are shown. Preserve the existing screen structure, cards, field styling, grid, and navigation while populating them with the applicable measurements in section 25.1. Basic, tank-specific, and additional measurements are logical groups, not approval for a new visual layout. K03.1 subsequently freezes nitrate, nitrite, and phosphate recording semantics in section 6.1. K03.2 freezes the test/device selection, source-semantic resolution, and normalization workflow in sections 6.2, 6.5, 7, and 28.1. K03.3 freezes the canonical ammonia reporting bases in section 6.3. K03.4 freezes concurrent multi-result measurement/cardinality behavior in section 6.6. K03.5 freezes marine salinity/specific-gravity semantics and conversion safety in section 6.7. K03.6 freezes alkalinity/KH semantics, canonical units, and duplicate-field prevention in section 6.8. K03.7 freezes dissolved-oxygen concentration/saturation semantics and conversion prerequisites in section 6.9. K03.8 freezes chlorine/chloramine semantics, sample-context requirements, and multi-result handling in section 6.10; the remaining K03 decisions stay open.
+Accepted clarification on 26 September 2026 (K03.0): the selected tank type determines which measurement fields are shown. Preserve the existing screen structure, cards, field styling, grid, and navigation while populating them with the applicable measurements in section 25.1. Basic, tank-specific, and additional measurements are logical groups, not approval for a new visual layout. K03.1 subsequently freezes nitrate, nitrite, and phosphate recording semantics in section 6.1. K03.2 freezes the test/device selection, source-semantic resolution, and normalization workflow in sections 6.2, 6.5, 7, and 28.1. K03.3 freezes the canonical ammonia reporting bases in section 6.3. K03.4 freezes concurrent multi-result measurement/cardinality behavior in section 6.6. K03.5 freezes marine salinity/specific-gravity semantics and conversion safety in section 6.7. K03.6 freezes alkalinity/KH semantics, canonical units, and duplicate-field prevention in section 6.8. K03.7 freezes dissolved-oxygen concentration/saturation semantics and conversion prerequisites in section 6.9. K03.8 freezes chlorine/chloramine semantics, sample-context requirements, and multi-result handling in section 6.10. K03.9 freezes marine calcium/magnesium elemental semantics and hardness separation in section 6.11; the remaining K03 decisions stay open.
 
 This contract is intentionally broader than a screen implementation. It defines the foundation that later powers:
 
@@ -537,7 +537,26 @@ Decision accepted on 26 September 2026 for commercial-safety behavior: AquaLight
 - **Assessment fail-closed:** rule evaluation compares matching typed metrics and sample contexts. Unknown analyte/basis, unsupported matrix, mismatched sample contexts, or invalid derivation prerequisites produce `INSUFFICIENT_DATA` / semantic-or-method unavailable rather than a guessed safe/unsafe result.
 
 K03.8 deliberately separates measurement semantics from later safety thresholds. It freezes what was measured and where the sample came from; numerical hazard/action thresholds remain evidence-backed rule-catalog decisions.
+### 6.11 Accepted marine calcium / magnesium elemental-basis policy (K03.9)
+
+Decision accepted on 26 September 2026 for production-grade reef chemistry semantics: marine/reef calcium and magnesium are stored and assessed as elemental ion concentrations, not as generic hardness or CaCO3-equivalent values.
+
+- **Calcium canonical metric:** use `CALCIUM_CONCENTRATION` with canonical unit **mg/L as Ca2+**.
+- **Magnesium canonical metric:** use `MAGNESIUM_CONCENTRATION` with canonical unit **mg/L as Mg2+**.
+- **Generic `ppm` is not enough:** a product/display value labelled only `ppm` is normalized only when the verified source profile establishes that the manufacturer means elemental calcium or elemental magnesium on an mg/L-equivalent basis for that method. The UI may preserve the product's familiar `ppm` display, but domain semantics come from the profile.
+- **Hardness is separate:** `CALCIUM_HARDNESS_AS_CACO3`, `MAGNESIUM_HARDNESS_AS_CACO3`, `GENERAL_HARDNESS`, and related CaCO3-equivalent hardness results are not the same metrics as elemental Ca2+/Mg2+ concentration. They must never be inserted directly into reef calcium/magnesium rules by label similarity.
+- **Derived hardness conversions require explicit method support:** a hardness result may be converted to elemental Ca or Mg only when the source method, reporting basis, stoichiometric conversion, sample matrix, interference policy, and precision are all explicitly supported and versioned. A generic GH result must never be split into calcium and magnesium by assumption.
+- **Difference methods remain derived:** if a method obtains magnesium hardness by subtracting calcium hardness from total hardness, preserve that derivation and its source/uncertainty. Do not present the result as a directly measured elemental magnesium value unless the complete verified conversion path establishes that semantic.
+- **Marine matrix applicability:** verified profiles declare marine/seawater applicability, range, temperature constraints, dilution requirements, and known interferences. A freshwater hardness method is not automatically valid for reef Ca/Mg assessment.
+- **Concurrent results:** a multi-test product that independently measures Ca and Mg exposes separate **"Kalsiyum"** and **"Magnezyum"** inputs/metrics under K03.4. Neither value is inferred from the other, alkalinity, salinity, or GH.
+- **No duplicate evidence:** alternate representations of the same Ca or Mg observation are one measurement/provenance chain, not multiple independent evidence signals.
+- **UI:** marine/coral profiles show separate `Kalsiyum` and `Magnezyum` fields. The selected verified product's actual source unit/display may be shown, while storage and rules use mg/L as Ca2+ and mg/L as Mg2+ respectively.
+- **Fail closed:** unresolved elemental basis, unsupported matrix, invalid dilution/method prerequisites, or a hardness-only result without an approved conversion path produces source-native/`INSUFFICIENT_DATA` behavior rather than a fabricated reef calcium/magnesium assessment.
+
+K03.9 does not freeze target reef ranges or dosing advice. Those remain evidence-backed rule/recommendation decisions.
 ---
+
+## 7. Measurement provenance---
 
 ## 7. Measurement provenance
 
@@ -1117,7 +1136,7 @@ These measurements are supported scope beyond the default fields above. "Additio
 | Conductivity / İletkenlik and TDS | Additional for freshwater types; `Other` may record explicitly identified results | Useful tracking scope, not a replacement for GH/KH or an overall health score; conductivity and TDS are not the same measurement |
 | Carbon dioxide / CO2 | Additional for freshwater types, especially planted tanks with CO2 use | Equipment presence is not a measured concentration; a pH/KH-derived estimate needs a separately accepted method and prerequisites |
 | Iron / Demir (Fe) and potassium / Potasyum (K) | Additional for freshwater nutrient/plant investigation | Test method, analytical scope, interpretation, and exact units remain open; do not generate fertilizer dosing from a bare value |
-| Calcium / Kalsiyum (Ca) and magnesium / Magnezyum (Mg) | Additional for `Marine`; already default for coral profiles; recordable for `Other` with explicit semantics | Their presence does not resolve an unknown water profile |
+| Calcium / Kalsiyum (Ca) and magnesium / Magnezyum (Mg) | Additional for `Marine`; already default for coral profiles; recordable for `Other` with explicit semantics | K03.9: canonical reef metrics are elemental `CALCIUM_CONCENTRATION` in mg/L as Ca2+ and `MAGNESIUM_CONCENTRATION` in mg/L as Mg2+. Hardness-as-CaCO3/GH results are separate semantics and require an explicit verified conversion path |
 
 For `Other`/unknown profiles, the supported fields listed above and the profile-specific fields from section 25.1 may be explicitly selected as additional measurements, once their semantics are defined. No such selection acts as an implicit freshwater/marine profile declaration. Support and interpretation must stay separate. Missing context restricts assessment rather than changing the entered result.
 
@@ -1130,7 +1149,7 @@ For `Other`/unknown profiles, the supported fields listed above and the profile-
 - A visible field is not a promise of a complete assessment. Unmeasured, measured zero, inapplicable, unknown test basis, and missing assessment rules must remain distinct. A critical known result must not be hidden by a partial-data state.
 - Preserve entered drafts and persisted measurements when tank type changes; no field hidden by the new profile may silently discard its value or be persisted invisibly. Resolve affected draft values explicitly before saving. Detailed interaction belongs to the later state/UI decision.
 - Store the assessment's tank-type/profile context with its provenance. History/detail render the saved measurement set and assessment context; today's tank type must not erase or reinterpret yesterday's fields. The latest result must expose a context mismatch if the tank type has since changed.
-- K03.1 fixes nitrate/nitrite/phosphate meanings, K03.2 source-resolution/normalization, K03.3 TAN/direct-NH3 bases, K03.4 concurrent multi-result behavior, K03.5 marine salinity/SG safety, K03.6 alkalinity/KH semantics, K03.7 dissolved-oxygen concentration/saturation, and K03.8 chlorine/chloramine/sample-context semantics. Remaining K03 decisions include other fields' chemical reporting bases/units, evidence-backed profile/conversion entries and precision, and derived-measurement prerequisites. K03.0–K03.8 do not accept numerical safety thresholds, complete implementation, or all of K03/K11/K13.
+- K03.1 fixes nitrate/nitrite/phosphate meanings, K03.2 source-resolution/normalization, K03.3 TAN/direct-NH3 bases, K03.4 concurrent multi-result behavior, K03.5 marine salinity/SG safety, K03.6 alkalinity/KH semantics, K03.7 dissolved oxygen, K03.8 chlorine/chloramine/sample-context, and K03.9 marine elemental Ca/Mg semantics. Remaining K03 decisions include other fields' chemical reporting bases/units, evidence-backed profile/conversion entries and precision, and derived-measurement prerequisites. K03.0–K03.9 do not accept numerical safety thresholds, complete implementation, or all of K03/K11/K13.
 
 Evidence and repository references for this scope are recorded in [the K03 research note](research/WATER_ANALYSIS_CONCENTRATION_UNITS_K03.md). The per-type visibility matrix is a product decision informed by those sources, not a scientific claim that all listed tests must be performed at every save.
 
@@ -1613,6 +1632,9 @@ Cover:
 - raw-source / conditioned-source / tank-water chlorine contexts do not cross-subtract or overwrite one another;
 - direct monochloramine requires a method/profile that measures monochloramine specifically;
 - unsupported chlorine sample matrix/interference or unknown basis fails closed;
+- marine calcium canonicalizes only to mg/L as Ca2+ and marine magnesium only to mg/L as Mg2+ from verified elemental source semantics;
+- calcium/magnesium hardness as CaCO3 and GH remain distinct from elemental Ca/Mg and never enter reef rules without an approved conversion path;
+- difference-derived magnesium preserves derivation provenance and is not silently treated as a direct elemental measurement;
 - SG conversion requires declared reference/calibration temperature and all algorithm prerequisites;
 - conductivity→PSS-78 uses a versioned standards-based algorithm with golden-vector tests and applicability checks;
 - unknown/ambiguous `ppt` never normalizes by label alone;
@@ -1717,63 +1739,64 @@ The implementation order is frozen as follows.
 7. K03.6 total-alkalinity/KH semantic separation and canonical meq/L policy (accepted);
 8. K03.7 dissolved-oxygen mg/L / % saturation semantic separation and same-event conversion policy (accepted);
 9. K03.8 free/total/combined chlorine and direct-monochloramine semantics plus sample-context policy (accepted);
-10. severity/status model;
-11. species-range intersection/conflict policy;
-12. intrinsic chemistry rule catalog and evidence revision.
+10. K03.9 marine calcium/magnesium elemental mg/L semantics and hardness separation (accepted);
+11. severity/status model;
+12. species-range intersection/conflict policy;
+13. intrinsic chemistry rule catalog and evidence revision.
 
 ### Phase 2 - Application/domain foundation
 
-13. WaterAnalysis input/record models;
-14. structured assessment models;
-15. recommendation/reason codes;
-16. PlantCareCatalogOperations boundary;
-17. AquariumHealthContext model/provider;
-18. reuse/integrate LivestockWaterAdvisorOperations;
-19. WaterQualityAssessmentEngine;
-20. TankWaterTemperatureOperations boundary.
+14. WaterAnalysis input/record models;
+15. structured assessment models;
+16. recommendation/reason codes;
+17. PlantCareCatalogOperations boundary;
+18. AquariumHealthContext model/provider;
+19. reuse/integrate LivestockWaterAdvisorOperations;
+20. WaterQualityAssessmentEngine;
+21. TankWaterTemperatureOperations boundary.
 
 ### Phase 3 - Persistence
 
-21. dedicated water-analysis proto/store;
-22. schema version;
-23. strict store rules;
-24. owner/tank-scoped queries;
-25. create/delete/latest operations;
-26. persisted assessment/provenance snapshot.
+22. dedicated water-analysis proto/store;
+23. schema version;
+24. strict store rules;
+25. owner/tank-scoped queries;
+26. create/delete/latest operations;
+27. persisted assessment/provenance snapshot.
 
 ### Phase 4 - Integrity
 
-27. integrate Water Analysis into tank deletion transaction;
-28. process-death recovery;
-29. account deletion cleanup;
-30. backup/restore policy and implementation if included;
-31. data inventory / export updates where applicable.
+28. integrate Water Analysis into tank deletion transaction;
+29. process-death recovery;
+30. account deletion cleanup;
+31. backup/restore policy and implementation if included;
+32. data inventory / export updates where applicable.
 
 ### Phase 5 - UI integration
 
-32. WaterAnalysisViewModel;
-33. save real analysis;
-34. replace mock history;
-35. pass analysisId through Safe Args;
-36. bind real record detail;
-37. implement real delete;
-38. bind latest analysis to Tank Health Water Quality metrics;
-39. connect fresh cooling sensor temperature.
+33. WaterAnalysisViewModel;
+34. save real analysis;
+35. replace mock history;
+36. pass analysisId through Safe Args;
+37. bind real record detail;
+38. implement real delete;
+39. bind latest analysis to Tank Health Water Quality metrics;
+40. connect fresh cooling sensor temperature.
 
 ### Phase 6 - Validation
 
-40. engine tests;
-41. persistence tests;
-42. owner/process-death tests;
-43. ViewModel/UI contract tests;
-44. architecture/lint/detekt/CodeQL;
-45. all CI green.
+41. engine tests;
+42. persistence tests;
+43. owner/process-death tests;
+44. ViewModel/UI contract tests;
+45. architecture/lint/detekt/CodeQL;
+46. all CI green.
 
 Only after this sequence:
 
-46. Algae Control;
-47. Plant Health;
-48. Livestock Health.
+47. Algae Control;
+48. Plant Health;
+49. Livestock Health.
 
 ---
 
@@ -1791,6 +1814,7 @@ Water Quality is complete only when all of the following are true:
 - marine/coral alkalinity uses one `TOTAL_ALKALINITY` metric with canonical meq/L and verified dKH / mg/L as CaCO3 representations; no duplicate KH+alkalinity field/evidence is created, and freshwater `CARBONATE_HARDNESS`/`GENERAL_HARDNESS` remain semantically distinct;
 - dissolved oxygen concentration uses canonical mg/L O2 while `% saturation` remains a separate context-dependent metric/representation; conversions require same-event method inputs and linked device outputs are not double-counted;
 - free chlorine and total chlorine use separate mg/L as Cl2 metrics; combined chlorine is only a compatible same-sample derived value and never a synonym for monochloramine; direct monochloramine requires a specific verified method and chlorine assessments retain raw/conditioned/tank sample context;
+- marine/coral calcium and magnesium use elemental mg/L as Ca2+ and mg/L as Mg2+ canonical metrics; hardness-as-CaCO3/GH representations never silently substitute for them;
 - unresolved source semantics are excluded from committed analysis and may remain in draft while other resolved measurements are saved; changing a source never silently reinterprets an entered number;
 - tank-type changes do not silently lose draft values or remove historical measurements;
 - a user can enter a physically valid analysis and save it;
