@@ -2,9 +2,9 @@
 
 Araştırma tarihi: 26.09.2026 (Europe/Istanbul).
 
-Durum: **K03.0 ölçüm kapsamı/görünürlük yaklaşımı kabul edildi; K03.1 kimyasal raporlama temeli ve sonraki birim kararları açık.** Kabul edilen normatif kapsam ana sözleşme §25.1–25.3'te kayıtlıdır. Bu araştırma dosyası uygulama kodu veya bilimsel güvenlik eşiği değildir.
+Durum: **K03.0 ölçüm kapsamı ve K03.1 NO3/NO2/PO4 kanonik kayıt anlamı/birimleri kabul edildi. K03.2 kaynak birimleri/dönüşüm politikası ve sonraki kararlar açık.** Kabul edilen normatif kapsam ana sözleşme §6.1 ve §25.1–25.3'te kayıtlıdır. Bu araştırma dosyası uygulama kodu veya bilimsel güvenlik eşiği değildir.
 
-Kapsam: K03.0 için ölçüm seçiminin kaynaklarını korumak; K03.1 kapsamında NO3, NO2 ve PO4 alanlarının motor/kayıt içindeki ortak raporlama temelini seçmek. Kaynak birimlerinin dönüştürülmesi, test kiti giriş yöntemi, toplam amonyağın kesin raporlama temeli ve ek parametrelerin semantiği sonraki ayrı kararlar olacak.
+Kapsam: K03.0 için ölçüm seçiminin kaynaklarını ve K03.1'de kabul edilen NO3, NO2 ve PO4 ortak raporlama temelinin dayanaklarını korumak. Kaynak birimlerinin dönüştürülmesi, test kiti giriş yöntemi, toplam amonyağın kesin raporlama temeli ve ek parametrelerin semantiği sonraki ayrı kararlar olacak.
 
 ## Doğrulanan ayrımlar
 
@@ -21,11 +21,11 @@ Kapsam: K03.0 için ölçüm seçiminin kaynaklarını korumak; K03.1 kapsamınd
 - `application/aquarium/LivestockWaterRequirements.kt` içindeki ölçüm ve gereksinim modellerinde `nitratePpm` ve `phosphatePpm` alanları var.
 - `app/src/main/assets/livestock_catalog.jsonl` içindeki 687 kaydın anahtarlarının birleşimi tarandı. Alan başına `source`, `evidence`, `basis`, `unit`, `revision` veya `reference` anahtarı bulunmadı.
 - Bu dosya incelemesi, kaynakların repo dışında veya başka belgelerde hiç bulunmadığı anlamına gelmez. Mevcut JSONL tek başına NO3/NO3-N, PO4/P veya ppm temelini kanıtlamıyor.
-- Mevcut UI NO3, NO2 ve PO4 değerlerini mg/L ile sunuyor. K02, mevcut ölçüm modellerinin genişletilmesini kabul etti. Sonraki K03.0 kararı ana alanı toplam amonyak olarak adlandırır; NO3/NO2/PO4 dahil kesin kanonik raporlama temelleri henüz dondurulmadı.
+- Mevcut UI NO3, NO2 ve PO4 değerlerini mg/L ile sunuyor. K02, mevcut ölçüm modellerinin genişletilmesini kabul etti. Sonraki K03.0 kararı ana alanı toplam amonyak olarak adlandırır; K03.1, aşağıdaki NO3/NO2/PO4 kanonik standardını kabul eder. Bu kararlar mevcut katalog değerlerinin kaynak temelini kanıtlamaz.
 
-## K03.1 için önerilen karar — onay bekliyor
+## K03.1 — kabul edilen karar, 26.09.2026
 
-| UI alanı | Önerilen kanonik kayıt/motor temeli |
+| UI alanı | Kabul edilen kanonik kayıt/motor temeli |
 | --- | --- |
 | NO3 | Nitrat, mg/L olarak NO3 |
 | NO2 | Nitrit, mg/L olarak NO2 |
@@ -33,7 +33,7 @@ Kapsam: K03.0 için ölçüm seçiminin kaynaklarını korumak; K03.1 kapsamınd
 
 Buradaki “PO4 olarak” ifadesi raporlanan kütle temelidir; suda bütün fosfatın yalnız tek bir iyonlaşma halinde bulunduğu iddiası değildir.
 
-Gerekçe: Mevcut ekran adlarıyla doğrudan eşleşen, tek anlamlı bir iç temsil sağlar. N veya P temelinde gelen sonuçlar doğru kaynak bilgisiyle daha sonra normalize edilebilir. Alternatif, NO3/NO2'yi N ve fosfatı P temelinde saklamaktır; o yaklaşım da geçerlidir fakat mevcut UI ile sürekli açık dönüşüm gerektirir. Kullanıcı hangi yaklaşımın seçileceğine henüz karar vermedi.
+Gerekçe: Ekran adlarıyla doğrudan eşleşen, tek anlamlı bir iç temsil sağlar. Kullanıcı bu yaklaşımı kabul etti; normatif karşılığı ana sözleşme §6.1'dir. Örneğin kaynak zaten 18 mg/L NO3 raporluyorsa standart sonuç yine 18 mg/L nitrat olur. N veya P temelinde gelen uyumlu analitik sonuçların dönüşümü kaynak bilgisi doğrulandıktan sonra ayrı politikayla ele alınacaktır. Toplam fosfor yalnız katsayıyla ortofosfat ölçümüne dönüşmez.
 
 ## K03.1'in tek başına kapatmadığı konular
 
@@ -44,7 +44,18 @@ Gerekçe: Mevcut ekran adlarıyla doğrudan eşleşen, tek anlamlı bir iç tems
 - Ana alan olarak kabul edilen toplam amonyağın N veya başka kimyasal kütle temelinde raporlanması; serbest NH3 / yalnız NH4 sonuçlarının ayrı desteklenip desteklenmeyeceği ve pH/sıcaklık/tuzluluk önkoşulları.
 - Güvenli/tehlikeli eşikler ve türetilmiş kimyasal hesaplamalar.
 
-K03.1 kabul edilse bile bu kalan konular onaylanmış veya uygulanmış sayılmayacak. Belirsiz kaynak birimleri sessizce kanonik değere çevrilmeyecek.
+K03.1'in kabul edilmesi bu kalan konuları onaylamaz veya uygulanmış yapmaz. Belirsiz kaynak birimleri sessizce kanonik değere çevrilmeyecek.
+
+## K03.2 — sonraki karar önerisi, onay bekliyor
+
+Öneri: **Ham kaynak sonucunu koru; yalnız doğrulanmış anlam ve birimle standart değeri üret.** Bu bölüm karar hazırlığıdır; henüz kabul edilmiş kayıt davranışı değildir.
+
+1. Girilen sonuç, kaynağın belirttiği birim/kimyasal temel ve biliniyorsa test/yöntem bilgisi korunur; normalize edilmiş sonuç ayrı tutulur. Böylece geçmişte kullanıcı ne girdi, uygulama ne dönüştürdü açıklanabilir.
+2. Kaynak aynı anlam/birimdeyse sayısal değer değişmez. Farklı ama uyumlu bir temel/birimdeyse doğrulanmış dönüşüm application politikasında uygulanır; kullanıcıya elle dönüşüm yaptırılmaz. Kural/sürüm ve kullanılan önkoşullar izlenebilir olur; yuvarlama yalnız sunumda yapılır.
+3. `ppm` etiketi tek başına `mg/L` sayılmaz. Kaynağın tanımı ve gerekiyorsa yoğunluk koşulları doğrulanmadan dönüşüm yapılmaz; tatlı/deniz suyu için varsayılan katsayı uydurulmaz. NO3-N/NO2-N/ortofosfat-P ile analitik kapsamı farklı toplam fosfor ayrımı korunur.
+4. Kaynak anlamı/birimi bilinmiyorsa, diğer girdi doğrulamalarını geçen sonucu açıkça çözümlenmemiş ham kayıt olarak saklama önerilir; kanonik değer üretilmez ve bu sonuç motor karşılaştırmalarına veya türetilmiş hesaplara girmez. “Ölçüm türü/birimi doğrulanamadı” nedeni gösterilir; diğer doğrulanmış sonuçlar değerlendirilebilir. Bu, ölçülmemiş veya sıfır sonucu değildir; bozuk/geçersiz sayıyı kaydetme izni vermez.
+
+Ürün/test kataloğu, UI seçim akışı, kesin dönüşüm katsayıları/hassasiyetleri ve bu kayıtların nihai model şekli ayrı uygulama öncesi kararlar olmaya devam eder. Katalogdaki karşılaştırma aralıkları da aynı anlam/birim doğrulamasından geçmelidir.
 
 ## Birincil kaynaklar
 

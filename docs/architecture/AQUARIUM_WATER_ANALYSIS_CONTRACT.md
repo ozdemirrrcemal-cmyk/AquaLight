@@ -6,7 +6,7 @@ This document freezes the architectural, data, analysis, persistence, and UI-int
 
 The existing Tank Health / Water Quality UI is considered visually complete for this stage. Implementation work governed by this contract must connect that UI to authoritative data and analysis without redesigning the approved screens unless a later explicit UI change is requested.
 
-Accepted clarification on 26 September 2026 (K03.0): the selected tank type determines which measurement fields are shown. Preserve the existing screen structure, cards, field styling, grid, and navigation while populating them with the applicable measurements in section 25.1. Basic, tank-specific, and additional measurements are logical groups, not approval for a new visual layout. This decision records the measurement scope; exact chemical reporting bases and units remain open under K03.
+Accepted clarification on 26 September 2026 (K03.0): the selected tank type determines which measurement fields are shown. Preserve the existing screen structure, cards, field styling, grid, and navigation while populating them with the applicable measurements in section 25.1. Basic, tank-specific, and additional measurements are logical groups, not approval for a new visual layout. K03.1 subsequently freezes nitrate, nitrite, and phosphate recording semantics in section 6.1; the remaining K03 decisions stay open.
 
 This contract is intentionally broader than a screen implementation. It defines the foundation that later powers:
 
@@ -364,15 +364,24 @@ This original set is an inventory, not a fixed eight-field limit. The accepted t
 
 The domain must define one canonical unit per parameter.
 
-Recommended canonical contract:
+Accepted with the user on 26 September 2026 (K03.1):
+
+| UI label | Canonical recording and assessment meaning | Unit / reporting basis |
+| --- | --- | --- |
+| Nitrat (NO3) | Nitrate concentration | mg/L as NO3 |
+| Nitrit (NO2) | Nitrite concentration | mg/L as NO2 |
+| Fosfat (PO4) | Orthophosphate / reactive phosphate test result | mg/L as PO4 |
+
+These meanings must stay consistent between input interpretation, normalized records, history, and the analysis engine. "As PO4" specifies the reported mass basis, not a claim that all phosphate exists in one ionic form. Total phosphorus is a different analytical scope and must not be treated as an orthophosphate measurement merely by multiplying a value.
+
+For a compatible source already reporting the same basis and unit, normalization is an identity operation: a test result of 18 mg/L as NO3 remains 18 mg/L nitrate. This example is not a safe-range threshold. K03.1 does not authorize guessing the basis of an unidentified test result or relabelling existing `nitratePpm` / `phosphatePpm` catalog values. Source-unit verification and conversion policy remain open under K03.2.
+
+The other original unit proposals remain subject to their own decisions:
 
 - temperature: degrees Celsius;
 - pH: unitless;
 - GH: degrees dGH;
 - KH: degrees dKH;
-- nitrate: mg/L as the exact catalog/rule semantic selected below;
-- nitrite: mg/L as the exact rule semantic selected below;
-- phosphate: mg/L as the exact catalog/rule semantic selected below;
 - ammonia: canonical ammonia semantic defined in section 6.3.
 
 UI formatting and parsing must use `LocaleFormatter` or the central locale policy. The UI must not use ad-hoc `toDoubleOrNull`, comma replacement, or locale-blind number parsing.
@@ -383,7 +392,7 @@ The livestock catalog currently names some fields `nitratePpm` and `phosphatePpm
 
 The engine must not silently compare differently named unit semantics.
 
-Before implementing persistence and rules, one canonical concentration policy must be frozen and conversion / equivalence must be explicit in code and tests.
+K03.1 fixes the three canonical concentration meanings in section 6.1. Before implementing persistence and rules, K03.2 must settle source-unit normalization policy; supported conversions, equivalence conditions, and precision must be explicit in code and tests. The next proposal is recorded in the K03 research note and is not yet an accepted decision.
 
 If the source data represents dilute freshwater mass concentration where numeric equivalence is intentionally accepted, that equivalence must be documented by the rule/catalog ingestion layer rather than assumed by UI code.
 
@@ -418,7 +427,7 @@ Decision accepted with the user on 26 September 2026:
 
 The approved UI already contains NO2 and NH3/NH4 input controls. The missing support refers to the underlying measurement contracts and the future persistence/assessment integration, not missing UI fields. K02 alone did not authorize additional controls; the later K03.0 decision in section 25 defines the tank-specific field additions while preserving the existing UI design.
 
-K03 remains open. Existing `nitratePpm` and `phosphatePpm` names do not, by themselves, establish the source data's chemical reporting basis or authorize treating those values as mg/L. Field naming, explicit normalization, ammonia semantics, and rule thresholds must follow their own evidence-backed decisions before implementation. Adding parameters must not invent livestock requirements where the catalog has none.
+K03 is partially decided: K03.0 defines measurement scope and K03.1 defines nitrate/nitrite/phosphate canonical meanings. Existing `nitratePpm` and `phosphatePpm` names do not, by themselves, establish the source data's chemical reporting basis or authorize treating those values as mg/L. Field naming, explicit normalization, ammonia semantics, and rule thresholds must follow their own evidence-backed decisions before implementation. Adding parameters must not invent livestock requirements where the catalog has none.
 
 ### 6.5 Retained test-selection and derived-ammonia proposals
 
@@ -1024,7 +1033,7 @@ For `Other`/unknown profiles, the supported fields listed above and the profile-
 - A visible field is not a promise of a complete assessment. Unmeasured, measured zero, inapplicable, unknown test basis, and missing assessment rules must remain distinct. A critical known result must not be hidden by a partial-data state.
 - Preserve entered drafts and persisted measurements when tank type changes; no field hidden by the new profile may silently discard its value or be persisted invisibly. Resolve affected draft values explicitly before saving. Detailed interaction belongs to the later state/UI decision.
 - Store the assessment's tank-type/profile context with its provenance. History/detail render the saved measurement set and assessment context; today's tank type must not erase or reinterpret yesterday's fields. The latest result must expose a context mismatch if the tank type has since changed.
-- Remaining K03 decisions include every field's chemical reporting basis, canonical/source units, test-method compatibility, precision, conversions, and derived-measurement prerequisites. K03.0 does not accept numerical safety thresholds, implementation, or all of K03/K11/K13.
+- K03.1 fixes nitrate/nitrite/phosphate canonical meanings and units in section 6.1. Remaining K03 decisions include their source-unit policy plus the other fields' chemical reporting bases/units, test-method compatibility, precision, conversions, and derived-measurement prerequisites. Neither K03.0 nor K03.1 accepts numerical safety thresholds, implementation, or all of K03/K11/K13.
 
 Evidence and repository references for this scope are recorded in [the K03 research note](research/WATER_ANALYSIS_CONCENTRATION_UNITS_K03.md). The per-type visibility matrix is a product decision informed by those sources, not a scientific claim that all listed tests must be performed at every save.
 
