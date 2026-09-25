@@ -26,98 +26,46 @@ internal class UserDataArchiveMediaGateway(
     fun snapshotTankPhoto(
         uriString: String?,
         destination: File
-    ): File? {
-        val source = resolveSupportedTankPhoto(uriString) ?: return null
-        destination.parentFile?.let { parent ->
-            check(parent.isDirectory || parent.mkdirs()) {
-                "Tank-photo staging directory could not be created."
-            }
-        }
-        var completed = false
-        return try {
-            source.inputStream().buffered().use { input ->
-                destination.outputStream().buffered().use { output ->
-                    copyLimited(input, output, MAX_TANK_PHOTO_BYTES)
-                }
-            }
-            require(destination.length() == source.length()) {
-                "Staged tank photo size changed during copy."
-            }
-            require(isSupportedImage(destination)) {
-                "Staged tank photo is not a supported image."
-            }
-            completed = true
-            destination
-        } finally {
-            if (!completed) destination.delete()
-        }
-    }
+    ): File? = snapshotPhoto(uriString, destination, AppMediaScope.TANK)
 
-    fun canSnapshotTankPhoto(uriString: String?): Boolean {
-        return resolveSupportedTankPhoto(uriString) != null
-    }
+    fun snapshotPlantPhoto(
+        uriString: String?,
+        destination: File
+    ): File? = snapshotPhoto(uriString, destination, AppMediaScope.PLANT)
 
-    fun fingerprintTankPhoto(uriString: String?): UserDataArchiveMediaFingerprint? {
-        val source = resolveSupportedTankPhoto(uriString) ?: return null
-        return UserDataArchiveMediaFingerprint(
-            byteSize = source.length().toInt(),
-            sha256 = sha256(source)
-        )
-    }
+    fun canSnapshotTankPhoto(uriString: String?): Boolean =
+        resolveSupportedPhoto(uriString, AppMediaScope.TANK) != null
+
+    fun canSnapshotPlantPhoto(uriString: String?): Boolean =
+        resolveSupportedPhoto(uriString, AppMediaScope.PLANT) != null
+
+    fun fingerprintTankPhoto(uriString: String?): UserDataArchiveMediaFingerprint? =
+        fingerprintPhoto(uriString, AppMediaScope.TANK)
+
+    fun fingerprintPlantPhoto(uriString: String?): UserDataArchiveMediaFingerprint? =
+        fingerprintPhoto(uriString, AppMediaScope.PLANT)
 
     fun prepareRestoredTankPhoto(
         ownerUid: String,
         ownerToken: String,
         source: File
-    ): String {
-        require(ownerUid.isNotBlank()) { "ownerUid must not be blank" }
-        require(
-            source.isFile && source.length() in 1L..MAX_TANK_PHOTO_BYTES.toLong()
-        ) {
-            "Restored tank photo exceeds the supported size."
-        }
-        require(isSupportedImage(source)) {
-            "Restored tank photo is not a supported image."
-        }
+    ): String = prepareRestoredPhoto(
+        ownerUid = ownerUid,
+        ownerToken = ownerToken,
+        source = source,
+        scope = AppMediaScope.TANK
+    )
 
-        val temporaryUri = requireNotNull(
-            AppMediaStorage.createCropOutputUri(
-                context = appContext,
-                scope = AppMediaScope.TANK,
-                ownerToken = ownerToken
-            )
-        ) {
-            "A temporary tank-photo file could not be created."
-        }
-        val temporaryFile = requireNotNull(temporaryUri.path?.let(::File)) {
-            "The temporary tank-photo file is unavailable."
-        }
-
-        var promoted = false
-        return try {
-            source.inputStream().buffered().use { input ->
-                temporaryFile.outputStream().buffered().use { output ->
-                    copyLimited(input, output, MAX_TANK_PHOTO_BYTES)
-                }
-            }
-            require(temporaryFile.length() == source.length()) {
-                "Restored tank photo copy was incomplete."
-            }
-            requireNotNull(
-                AppMediaStorage.promoteCropOutput(
-                    context = appContext,
-                    scope = AppMediaScope.TANK,
-                    ownerToken = ownerToken,
-                    ownerUid = ownerUid,
-                    outputUri = temporaryUri
-                )
-            ) {
-                "The restored tank photo could not be promoted."
-            }.toString().also { promoted = true }
-        } finally {
-            if (!promoted) temporaryFile.delete()
-        }
-    }
+    fun prepareRestoredPlantPhoto(
+        ownerUid: String,
+        ownerToken: String,
+        source: File
+    ): String = prepareRestoredPhoto(
+        ownerUid = ownerUid,
+        ownerToken = ownerToken,
+        source = source,
+        scope = AppMediaScope.PLANT
+    )
 
     fun commit(uriString: String?) {
         AppMediaStorage.commitPendingMedia(appContext, uriString)
@@ -127,15 +75,115 @@ internal class UserDataArchiveMediaGateway(
         AppMediaStorage.rollbackPendingMedia(appContext, uriString)
     }
 
-    private fun resolveSupportedTankPhoto(uriString: String?): File? {
+    private fun snapshotPhoto(
+        uriString: String?,
+        destination: File,
+        scope: AppMediaScope
+    ): File? {
+        val source = resolveSupportedPhoto(uriString, scope) ?: return null
+        destination.parentFile?.let { parent ->
+            check(parent.isDirectory || parent.mkdirs()) {
+                "Photo staging directory could not be created."
+            }
+        }
+        var completed = false
+        return try {
+            source.inputStream().buffered().use { input ->
+                destination.outputStream().buffered().use { output ->
+                    copyLimited(input, output, MAX_ARCHIVED_PHOTO_BYTES)
+                }
+            }
+            require(destination.length() == source.length()) {
+                "Staged photo size changed during copy."
+            }
+            require(isSupportedImage(destination)) {
+                "Staged photo is not a supported image."
+            }
+            completed = true
+            destination
+        } finally {
+            if (!completed) destination.delete()
+        }
+    }
+
+    private fun fingerprintPhoto(
+        uriString: String?,
+        scope: AppMediaScope
+    ): UserDataArchiveMediaFingerprint? {
+        val source = resolveSupportedPhoto(uriString, scope) ?: return null
+        return UserDataArchiveMediaFingerprint(
+            byteSize = source.length().toInt(),
+            sha256 = sha256(source)
+        )
+    }
+
+    private fun prepareRestoredPhoto(
+        ownerUid: String,
+        ownerToken: String,
+        source: File,
+        scope: AppMediaScope
+    ): String {
+        require(ownerUid.isNotBlank()) { "ownerUid must not be blank" }
+        require(
+            source.isFile && source.length() in 1L..MAX_ARCHIVED_PHOTO_BYTES.toLong()
+        ) {
+            "Restored photo exceeds the supported size."
+        }
+        require(isSupportedImage(source)) {
+            "Restored photo is not a supported image."
+        }
+
+        val temporaryUri = requireNotNull(
+            AppMediaStorage.createCropOutputUri(
+                context = appContext,
+                scope = scope,
+                ownerToken = ownerToken
+            )
+        ) {
+            "A temporary photo file could not be created."
+        }
+        val temporaryFile = requireNotNull(temporaryUri.path?.let(::File)) {
+            "The temporary photo file is unavailable."
+        }
+
+        var promoted = false
+        return try {
+            source.inputStream().buffered().use { input ->
+                temporaryFile.outputStream().buffered().use { output ->
+                    copyLimited(input, output, MAX_ARCHIVED_PHOTO_BYTES)
+                }
+            }
+            require(temporaryFile.length() == source.length()) {
+                "Restored photo copy was incomplete."
+            }
+            requireNotNull(
+                AppMediaStorage.promoteCropOutput(
+                    context = appContext,
+                    scope = scope,
+                    ownerToken = ownerToken,
+                    ownerUid = ownerUid,
+                    outputUri = temporaryUri
+                )
+            ) {
+                "The restored photo could not be promoted."
+            }.toString().also { promoted = true }
+        } finally {
+            if (!promoted) temporaryFile.delete()
+        }
+    }
+
+    private fun resolveSupportedPhoto(
+        uriString: String?,
+        scope: AppMediaScope
+    ): File? {
         val source = AppMediaStorage.resolveInternalMediaFile(
             context = appContext,
             uriString = uriString,
-            expectedScope = AppMediaScope.TANK
+            expectedScope = scope
         )
         return source?.takeIf { file ->
             file.isFile &&
-                file.length() in 1L..MAX_TANK_PHOTO_BYTES.toLong() &&
+                file.length() in 1L..MAX_ARCHIVED_PHOTO_BYTES.toLong() &&
                 isSupportedImage(file)
         }
     }
@@ -163,7 +211,7 @@ internal class UserDataArchiveMediaGateway(
             if (read < 0) break
             total += read
             require(total <= maximumBytes.toLong()) {
-                "Tank photo exceeds the supported size."
+                "Photo exceeds the supported size."
             }
             output.write(buffer, 0, read)
         }
@@ -188,7 +236,7 @@ internal class UserDataArchiveMediaGateway(
     }
 
     private companion object {
-        const val MAX_TANK_PHOTO_BYTES = 8 * 1024 * 1024
+        const val MAX_ARCHIVED_PHOTO_BYTES = 8 * 1024 * 1024
         const val MAX_IMAGE_DIMENSION = 8_192
         const val BUFFER_SIZE = 8 * 1024
         const val UNSIGNED_BYTE_MASK = 0xFF
