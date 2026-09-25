@@ -101,11 +101,15 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
             }.getOrNull() ?: return@setFragmentResultListener
 
             if (selectedType == CareTaskType.WATER_CHANGE) {
-                WaterChangePercentPicker.show(
-                    fragmentManager = childFragmentManager,
-                    context = requireContext(),
-                    requestKey = ACTIVITY_WATER_PERCENT_REQUEST_KEY
-                )
+                binding.root.post {
+                    val currentContext = context ?: return@post
+                    if (_binding == null) return@post
+                    WaterChangePercentPicker.show(
+                        fragmentManager = childFragmentManager,
+                        context = currentContext,
+                        requestKey = ACTIVITY_WATER_PERCENT_REQUEST_KEY
+                    )
+                }
                 return@setFragmentResultListener
             }
 
