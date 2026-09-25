@@ -54,7 +54,8 @@ internal class UserDataBackupRestorer(
             existingCareTasks = existingCareTasks,
             ownerUid = ownerUid,
             snapshotTankPhoto = mediaOperations.snapshotTankPhoto,
-            provenance = provenance.snapshot(ownerUid)
+            provenance = provenance.snapshot(ownerUid),
+            snapshotPlantPhoto = mediaOperations.snapshotPlantPhoto
         )
         transactions.begin(
             ownerUid = ownerUid,
@@ -132,26 +133,43 @@ internal class UserDataBackupRestorer(
         archived: ArchiveAquarium,
         backup: DecodedUserDataBackup
     ): SavedAquariumTank {
-        val photoUri = archived.photo?.let { reference ->
-            val bytes = requireNotNull(backup.mediaByEntryName[reference.entryName])
-            mediaOperations.prepareRestoredTankPhoto(
-                ownerUid,
-                "restore_${archived.id}",
-                bytes
-            )
-        }
+        val preparedMedia = mutableListOf<String>()
         var tankWasCreated = false
         return try {
+            val photoUri = archived.photo?.let { reference ->
+                val bytes = requireNotNull(backup.mediaByEntryName[reference.entryName])
+                mediaOperations.prepareRestoredTankPhoto(
+                    ownerUid,
+                    "restore_${archived.id}",
+                    bytes
+                ).also(preparedMedia::add)
+            }
+            val plantPhotoUris = linkedMapOf<Long, String>()
+            archived.plants.forEach { plant ->
+                val reference = plant.photo ?: return@forEach
+                val bytes = requireNotNull(backup.mediaByEntryName[reference.entryName])
+                plantPhotoUris[plant.id] = mediaOperations.prepareRestoredPlantPhoto(
+                    ownerUid,
+                    "restore_${archived.id}_plant_${plant.id}",
+                    bytes
+                ).also(preparedMedia::add)
+            }
+
             val local = dataSources.tanks.addFromDraft(
                 ownerUid,
-                archived.toTankDraft(photoUri)
+                archived.toTankDraft(
+                    photoUri = photoUri,
+                    plantPhotoUris = plantPhotoUris
+                )
             )
             tankWasCreated = true
             restoreAquariumDetails(archived, local.id)
-            mediaOperations.commit(photoUri)
+            preparedMedia.forEach(mediaOperations.commit)
             local
         } finally {
-            if (!tankWasCreated) mediaOperations.rollback(photoUri)
+            if (!tankWasCreated) {
+                preparedMedia.forEach(mediaOperations.rollback)
+            }
         }
     }
 
