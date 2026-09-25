@@ -4,27 +4,27 @@ import android.content.res.ColorStateList
 import android.os.Bundle
 import android.view.View
 import androidx.core.content.ContextCompat
-import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentTankHealthAnalysisHistoryBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
 import com.google.android.material.button.MaterialButton
 
 class TankHealthAnalysisHistoryFragment :
     Fragment(R.layout.fragment_tank_health_analysis_history) {
+
+    private val args: TankHealthAnalysisHistoryFragmentArgs by navArgs()
 
     private var _binding: FragmentTankHealthAnalysisHistoryBinding? = null
     private val binding get() = _binding!!
 
     private lateinit var historyAdapter: TankHealthAnalysisHistoryAdapter
     private var selectedFilter: HistoryFilter = HistoryFilter.ALL
-
-    private val tankId: Long
-        get() = requireArguments().getLong(ARG_TANK_ID)
 
     private val allRecords: List<TankHealthAnalysisHistoryRecord> by lazy {
         listOf(
@@ -141,7 +141,7 @@ class TankHealthAnalysisHistoryFragment :
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        require(tankId > 0L) {
+        require(args.tankId > 0L) {
             "TankHealthAnalysisHistoryFragment requires a positive tankId."
         }
     }
@@ -198,13 +198,12 @@ class TankHealthAnalysisHistoryFragment :
 
     private fun setupNewAnalysisAction() {
         binding.btnNewAnalysis.setOnClickListener {
-            val navController = findNavController()
-            if (navController.currentDestination?.id != R.id.tankHealthAnalysisHistoryFragment) {
-                return@setOnClickListener
-            }
-            navController.navigate(
-                R.id.action_tankHealthAnalysisHistoryFragment_to_tankHealthAnalysisAddFragment,
-                bundleOf(ARG_TANK_ID to tankId)
+            findNavController().navigateSafelyFrom(
+                sourceDestinationId = R.id.tankHealthAnalysisHistoryFragment,
+                directions = TankHealthAnalysisHistoryFragmentDirections
+                    .actionTankHealthAnalysisHistoryFragmentToTankHealthAnalysisAddFragment(
+                        args.tankId
+                    )
             )
         }
     }
@@ -242,13 +241,12 @@ class TankHealthAnalysisHistoryFragment :
     }
 
     private fun openRecordDetail() {
-        val navController = findNavController()
-        if (navController.currentDestination?.id != R.id.tankHealthAnalysisHistoryFragment) {
-            return
-        }
-        navController.navigate(
-            R.id.action_tankHealthAnalysisHistoryFragment_to_tankHealthAnalysisDetailFragment,
-            bundleOf(ARG_TANK_ID to tankId)
+        findNavController().navigateSafelyFrom(
+            sourceDestinationId = R.id.tankHealthAnalysisHistoryFragment,
+            directions = TankHealthAnalysisHistoryFragmentDirections
+                .actionTankHealthAnalysisHistoryFragmentToTankHealthAnalysisDetailFragment(
+                    args.tankId
+                )
         )
     }
 
@@ -282,9 +280,5 @@ class TankHealthAnalysisHistoryFragment :
         ALL,
         SENSOR,
         MANUAL
-    }
-
-    private companion object {
-        const val ARG_TANK_ID = "tankId"
     }
 }
