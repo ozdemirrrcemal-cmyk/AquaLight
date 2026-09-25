@@ -2,9 +2,9 @@
 
 Araştırma tarihi: 26.09.2026 (Europe/Istanbul).
 
-Durum: **K03.0 ölçüm kapsamı, K03.1 NO3/NO2/PO4 kanonik kayıt anlamı/birimleri, K03.2 test/cihaz seçimi + kaynak semantiği çözümleme + normalizasyon akışı, K03.3 amonyak kanonik temelleri ve K03.4 concurrent multi-result kayıt/UI politikası kabul edildi. K03.5 ve sonraki kararlar açık.** Kabul edilen normatif kapsam ana sözleşme §6.1–6.6, §7, §25.1–25.3 ve §28.1'de kayıtlıdır. Bu araştırma dosyası uygulama kodu veya bilimsel güvenlik eşiği değildir.
+Durum: **K03.0 ölçüm kapsamı, K03.1 NO3/NO2/PO4 kanonik kayıt anlamı/birimleri, K03.2 test/cihaz seçimi + kaynak semantiği çözümleme + normalizasyon akışı, K03.3 amonyak kanonik temelleri, K03.4 concurrent multi-result kayıt/UI politikası ve K03.5 deniz salinity/SG dönüşüm güvenliği kabul edildi. K03.6 ve sonraki kararlar açık.** Kabul edilen normatif kapsam ana sözleşme §6.1–6.6, §7, §25.1–25.3 ve §28.1'de kayıtlıdır. Bu araştırma dosyası uygulama kodu veya bilimsel güvenlik eşiği değildir.
 
-Kapsam: K03.0 için ölçüm seçiminin kaynaklarını, K03.1'de kabul edilen NO3/NO2/PO4 ortak raporlama temelini, K03.2'de kabul edilen source-aware giriş/normalizasyon yaklaşımını, K03.3'te kabul edilen amonyak kanonik temellerini ve K03.4'te kabul edilen concurrent multi-result cardinality/UI davranışını izlenebilir tutmak. Tuzluluk/SG, diğer ek parametrelerin semantiği, kanıtlı profil/dönüşüm tablolarının ayrıntıları ve türetilmiş hesaplar sonraki ayrı kararlar olacak.
+Kapsam: K03.0 için ölçüm seçiminin kaynaklarını, K03.1'de kabul edilen NO3/NO2/PO4 ortak raporlama temelini, K03.2'de kabul edilen source-aware giriş/normalizasyon yaklaşımını, K03.3'te kabul edilen amonyak kanonik temellerini, K03.4'te kabul edilen concurrent multi-result cardinality/UI davranışını ve K03.5'te kabul edilen marine salinity/SG/conductivity ayrımını izlenebilir tutmak. Alkalinite/KH, diğer ek parametrelerin semantiği, kanıtlı profil/dönüşüm tablolarının ayrıntıları ve türetilmiş hesaplar sonraki ayrı kararlar olacak.
 
 ## Doğrulanan ayrımlar
 
@@ -88,9 +88,25 @@ Bu karar bilimsel güvenlik/toxicity eşiği, hesaplanmış serbest NH3 formül�
 
 Bu karar Seachem'e özel istisna değildir; verified source capability metadata'sına dayanan genel ürün davranışıdır.
 
-## K03.5 — sıradaki açık karar
+## K03.5 — kabul edilen deniz salinity / specific-gravity güvenlik politikası
 
-Deniz/resif ölçümlerinde **tuzluluk (salinity)** ile **specific gravity** için kanonik kayıt biçimi, sıcaklık referansı, desteklenen kaynak cihaz/test türleri ve doğrulanmış dönüşüm politikası kararlaştırılacak. İki değer aynı sayı değildir ve sıcaklık/referans koşulu olmadan körlemesine birbirine çevrilmeyecektir.
+26.09.2026 tarihinde ticari güvenlik standardı olarak kabul edildi:
+
+- `PRACTICAL_SALINITY_PSS78` ayrı typed metric'tir; PSS-78 domain'de unitless tutulur. Bir cihaz `PSU` gösterebilir, ancak bu display/source metadata'sıdır.
+- `SPECIFIC_GRAVITY` ayrı typed metric'tir; salt sayı olarak salinity ile eşitlenmez. Kaynak/method gerektiriyorsa calibration/reference temperature ve sample temperature provenance'ta zorunludur.
+- Conductivity ayrı measured metric'tir. Conductivity→PSS-78 yalnız standarda dayalı, versioned algoritma ve gerekli conductivity/temperature/pressure-reference girdileriyle yapılır; yaklaşık hobby formülü kullanılmaz.
+- `ABSOLUTE_SALINITY_G_PER_KG` veya başka mass-fraction basis yalnız kaynak açıkça o semantiği tanımlıyorsa kullanılır. Generic `ppt` ifadesi tek başına TEOS-10 Absolute Salinity veya PSS-78 değildir.
+- SG↔salinity dönüşümü sayıya bakılarak yapılmaz. Source type, scale/calibration, temperature/reference metadata ve evidence-backed algoritma tam değilse conversion unavailable/insufficient-data sonucu üretilir.
+- Kapalı/sentetik akvaryuma okyanus longitude/latitude anomaly correction uygulayarak TEOS-10 Absolute Salinity türetilmez.
+- Rule catalog her hedef/aralık için metric/basis/reference semantics taşır; motor yalnız aynı basis'i veya doğrulanmış dönüşümü karşılaştırır.
+- Aynı elektronik cihaz tek conductivity/temperature observation'dan hem salinity hem SG türetiyorsa bunlar bağımsız iki kanıt sayılmaz; ortak source-observation provenance ile ilişkilendirilir.
+- UI kaynak gerçekte ne raporluyorsa onu gösterir. SG değeri `Tuzluluk 1.026` diye yeniden etiketlenmez; `Specific Gravity (SG)` olarak görünür. Bilinmeyen `ppt` semantiği tahmin edilmez.
+
+Bu kararın güvenlik ilkesi: **yanlış normalize edilmiş kesin sonuç yerine doğru source-native kayıt + açık yetersiz veri durumu tercih edilir.**
+
+## K03.6 — sıradaki açık karar
+
+Deniz/resif için **alkalinite / KH** semantiği, canonical unit ve aynı ölçümün iki ayrı alan gibi gösterilmesini önleyen UI/model politikası kararlaştırılacak.
 
 ## Birincil kaynaklar
 
@@ -122,6 +138,10 @@ Aşağıdaki kaynaklar önceki karar araştırmasında 26.09.2026 tarihinde aç�
 | R6 | [OATA — How to test water quality in your freshwater tank](https://ornamentalfish.org/what-we-do/advice-information/care-sheets/caresheets-tropical-freshwater-fish/how-to-test-water-quality-in-your-freshwater-tank-aquarium/) | Tatlı suda amonyak, nitrit, nitrat, pH, sertlik ve fosfat takibi; oksijen ve şebeke suyu bağlamı. Her kayıtta tüm alanların zorunlu olduğu anlamına gelmez. |
 | R7 | [UF/IFAS — Ammonia in Aquatic Systems](https://ask.ifas.ufl.edu/publication/FA031) | NH3/NH4 ayrımı; serbest amonyak payının pH, sıcaklık ve tuzlulukla ilişkisi. Sayfadaki genel TAN/ppm anlatımı tüm kitlerin raporlama temelinin aynı olduğunu kanıtlamaz. |
 | R8 | [Seachem — MultiTest Ammonia](https://www.seachem.com/multitest-ammonia.php) | Aynı üretici toplam ve serbest amonyak ölçümlerini ayırır; yalnız etiket benzerliğine göre kayıt anlamı seçilemez. |
+| R12 | [TEOS-10 — official overview](https://www.teos-10.org/) | Practical Salinity ile Absolute Salinity ayrı niceliklerdir; Practical Salinity conductivity tabanlıdır ve arşivlenen measured salinity olarak kalır, Absolute Salinity g/kg'dır. |
+| R13 | [TEOS-10 GSW — Practical Salinity from conductivity](https://www.teos-10.org/pubs/gsw/html/gsw_SP_from_C.html) | PSS-78 Practical Salinity conductivity, in-situ temperature ve pressure girdilerinden hesaplanır; algoritma/applicability explicit olmalıdır. |
+| R14 | [NOAA — salinity measurement methods](https://repository.library.noaa.gov/view/noaa/13165/noaa_13165_DS1.pdf) | Practical salinity conductivity ratioyla; SG hydrometerla ölçülebilir ve SG için temperature correction gerekir; refractive-index yönteminde de temperature correction gerekir. |
+| R15 | [Red Sea — Seawater Refractometer](https://g1.redseafish.com/red-sea-salts/seawater-refractometer-salinity-test/) | Refractometer scale/calibration temperature ve seawater-vs-brine kalibrasyonu sonucu anlamlı etkiler; yanlış ölçek yaklaşık 1–1.5 ppt sapmaya yol açabilir. |
 | R9 | [MSD Veterinary Manual — Equipment Needed for Aquatic Systems and Water Analysis](https://www.msdvetmanual.com/exotic-and-laboratory-animals/aquatic-systems/equipment-needed-for-aquatic-systems-and-water-analysis) | Oksijen, sıcaklık, pH, amonyak, nitrit, alkalinite, sertlik, deniz suyunda tuzluluk ve bağlama göre ek testler. Veteriner değerlendirme kapsamı UI'daki zorunlu alan listesi değildir. |
 | R10 | [Red Sea — Foundation manual, “Optimal levels of the Foundation Elements”](https://redseafish.com/wp-content/uploads/2020/11/24653-NEW-Manual-Foundation-Complete-GB-_2018c.pdf) | Deniz/resif profillerinde tuzluluk, alkalinite, kalsiyum ve magnezyum ayrımı. Üretici hedefleri tüm akvaryumlar için evrensel güvenlik sınırı sayılmaz. |
 | R11 | [MSD Veterinary Manual — Environmental Diseases, chlorine/chloramine section](https://www.msdvetmanual.com/exotic-and-laboratory-animals/aquatic-systems/environmental-diseases-of-aquatic-animals-in-aquatic-systems) | Serbest klor ve toplam klor ayrı ölçümlerdir; kloramin için yalnız serbest klor sonucunun yeterli olmaması. |
