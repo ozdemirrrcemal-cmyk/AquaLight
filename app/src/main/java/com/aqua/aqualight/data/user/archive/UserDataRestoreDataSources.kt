@@ -232,7 +232,11 @@ internal data class UserDataRestoreMediaOperations(
     val snapshotTankPhoto: (String?) -> UserDataArchiveMediaFingerprint?,
     val prepareRestoredTankPhoto: (String, String, File) -> String,
     val commit: (String?) -> Unit,
-    val rollback: (String?) -> Unit
+    val rollback: (String?) -> Unit,
+    val snapshotPlantPhoto: (String?) -> UserDataArchiveMediaFingerprint? = { null },
+    val prepareRestoredPlantPhoto: (String, String, File) -> String = { _, _, _ ->
+        error("No plant photo restore operation is configured.")
+    }
 ) {
     companion object {
         fun from(mediaGateway: UserDataArchiveMediaGateway): UserDataRestoreMediaOperations {
@@ -240,7 +244,9 @@ internal data class UserDataRestoreMediaOperations(
                 snapshotTankPhoto = mediaGateway::fingerprintTankPhoto,
                 prepareRestoredTankPhoto = mediaGateway::prepareRestoredTankPhoto,
                 commit = mediaGateway::commit,
-                rollback = mediaGateway::rollback
+                rollback = mediaGateway::rollback,
+                snapshotPlantPhoto = mediaGateway::fingerprintPlantPhoto,
+                prepareRestoredPlantPhoto = mediaGateway::prepareRestoredPlantPhoto
             )
         }
     }
