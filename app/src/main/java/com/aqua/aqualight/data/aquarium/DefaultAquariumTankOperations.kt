@@ -180,10 +180,30 @@ class DefaultAquariumTankOperations(
         tankStore.removeLivestockFromTank(tankId, livestockId)
 
     override suspend fun addHealthObservation(tankId: Long, observation: LivestockHealthObservation) =
-        tankStore.addHealthObservation(tankId, observation)
+        withContext(NonCancellable) {
+            withContext(dispatcher) {
+                try {
+                    tankStore.addHealthObservation(tankId, observation)
+                } catch (error: Throwable) {
+                    runCatching { AppMediaStorage.rollbackPendingMedia(appContext, observation.photoUri) }
+                    throw error
+                }
+                runCatching { AppMediaStorage.commitPendingMedia(appContext, observation.photoUri) }
+            }
+        }
 
     override suspend fun addHealthCheck(tankId: Long, observationId: Long, check: LivestockHealthCheck) =
-        tankStore.addHealthCheck(tankId, observationId, check)
+        withContext(NonCancellable) {
+            withContext(dispatcher) {
+                try {
+                    tankStore.addHealthCheck(tankId, observationId, check)
+                } catch (error: Throwable) {
+                    runCatching { AppMediaStorage.rollbackPendingMedia(appContext, check.photoUri) }
+                    throw error
+                }
+                runCatching { AppMediaStorage.commitPendingMedia(appContext, check.photoUri) }
+            }
+        }
 
     override suspend fun closeHealthObservation(tankId: Long, observationId: Long, atMillis: Long) =
         tankStore.closeHealthObservation(tankId, observationId, atMillis)

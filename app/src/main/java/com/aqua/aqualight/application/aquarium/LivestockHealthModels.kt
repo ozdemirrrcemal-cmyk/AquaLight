@@ -46,7 +46,8 @@ data class LivestockHealthCheck(
     val observedAtMillis: Long,
     val affectedCount: Int,
     val trend: LivestockHealthTrend,
-    val note: String
+    val note: String,
+    val photoUri: String? = null
 )
 
 data class LivestockHealthObservation(
@@ -64,7 +65,8 @@ data class LivestockHealthObservation(
     val baselineChange: BaselineChange?,
     val closedAtMillis: Long?,
     val outcome: LivestockHealthTrend?,
-    val checks: List<LivestockHealthCheck>
+    val checks: List<LivestockHealthCheck>,
+    val photoUri: String? = null
 ) {
     val isActive: Boolean get() = closedAtMillis == null
     val latestTrend: LivestockHealthTrend get() = checks.lastOrNull()?.trend ?: trend

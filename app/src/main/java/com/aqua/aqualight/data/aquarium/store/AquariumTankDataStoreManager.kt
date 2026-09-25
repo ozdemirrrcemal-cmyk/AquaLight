@@ -186,6 +186,7 @@ class AquariumTankDataStoreManager(
                     if (storedTank.photoUri.isNotBlank()) {
                         photoUrisToDelete += storedTank.photoUri
                     }
+                    photoUrisToDelete += storedTank.healthPhotoUris()
                 }
                 shouldDelete
             }
@@ -223,6 +224,7 @@ class AquariumTankDataStoreManager(
                     if (storedTank.photoUri.isNotBlank()) {
                         deletedPhotoUris += storedTank.photoUri
                     }
+                    deletedPhotoUris += storedTank.healthPhotoUris()
                 }
                 shouldDelete
             }
@@ -829,6 +831,15 @@ class AquariumTankDataStoreManager(
                 return candidate
             }
             copyNumber += 1
+        }
+    }
+}
+
+private fun StoredTank.healthPhotoUris(): Set<String> = buildSet {
+    healthObservationsList.forEach { observation ->
+        observation.photoUri.takeIf(String::isNotBlank)?.let(::add)
+        observation.checksList.forEach { check ->
+            check.photoUri.takeIf(String::isNotBlank)?.let(::add)
         }
     }
 }

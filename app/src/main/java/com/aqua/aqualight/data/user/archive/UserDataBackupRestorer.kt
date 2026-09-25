@@ -147,7 +147,7 @@ internal class UserDataBackupRestorer(
                 archived.toTankDraft(photoUri)
             )
             tankWasCreated = true
-            restoreAquariumDetails(archived, local.id)
+            restoreAquariumDetails(archived, local.id, backup)
             mediaOperations.commit(photoUri)
             local
         } finally {
@@ -157,7 +157,8 @@ internal class UserDataBackupRestorer(
 
     private suspend fun restoreAquariumDetails(
         archived: ArchiveAquarium,
-        newTankId: Long
+        newTankId: Long,
+        backup: DecodedUserDataBackup
     ) {
         dataSources.tanks.updateSmartCareEnabled(newTankId, archived.smartCareEnabled)
         dataSources.tanks.updateCareRemindersEnabled(newTankId, archived.careRemindersEnabled)
@@ -165,7 +166,22 @@ internal class UserDataBackupRestorer(
             dataSources.tanks.addLivestockToTank(newTankId, item.toSavedLivestock())
         }
         archived.healthObservations.orEmpty().forEach { observation ->
-            dataSources.tanks.restoreHealthObservation(newTankId, observation.toApplication())
+            val references = listOfNotNull(observation.photo) +
+                observation.checks.orEmpty().mapNotNull(ArchiveHealthCheck::photo)
+            val photos = linkedMapOf<String, String>()
+            try {
+                references.forEach { reference ->
+                    val bytes = requireNotNull(backup.mediaByEntryName[reference.entryName])
+                    photos[reference.entryName] = mediaOperations.prepareRestoredTankPhoto(
+                        ownerUid, "restore_${newTankId}_${observation.id}", bytes)
+                }
+                dataSources.tanks.restoreHealthObservation(newTankId,
+                    observation.toApplication(photos))
+                photos.values.forEach(mediaOperations::commit)
+            } catch (error: Exception) {
+                photos.values.forEach(mediaOperations::rollback)
+                throw error
+            }
         }
     }
 

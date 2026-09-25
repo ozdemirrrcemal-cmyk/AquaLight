@@ -23,7 +23,9 @@ internal object UserDataBackupLimits {
     const val MAX_LIVESTOCK_CATALOG_ID_CHARS = 160
     const val BUFFER_SIZE = 8 * 1024
 
-    val mediaEntryPattern = Regex("media/tanks/[1-9][0-9]*\\.jpg")
+    val mediaEntryPattern = Regex(
+        "media/tanks/[1-9][0-9]*(?:_observation_[1-9][0-9]*(?:_check_[1-9][0-9]*)?)?\\.jpg"
+    )
     val sha256Pattern = Regex("[0-9a-fA-F]{64}")
 }
 
@@ -178,13 +180,29 @@ internal class UserDataBackupValidator {
         aquariums: List<ArchiveAquarium>,
         mediaByEntryName: Map<String, File>
     ) {
-        val referenced = aquariums.mapNotNull { aquarium ->
-            aquarium.photo?.also { reference ->
-                validateMediaReference(reference, aquarium.id, mediaByEntryName)
-            }?.entryName
-        }.toSet()
-        require(referenced.size == aquariums.count { aquarium -> aquarium.photo != null }) {
-            "Backup reuses a media entry for multiple aquariums."
+        val references = aquariums.flatMap { aquarium ->
+            buildList {
+                aquarium.photo?.let { reference ->
+                    add(reference to "${UserDataBackupLimits.MEDIA_PREFIX}${aquarium.id}.jpg")
+                }
+                aquarium.healthObservations.orEmpty().forEach { observation ->
+                    observation.photo?.let { reference ->
+                        add(reference to "${UserDataBackupLimits.MEDIA_PREFIX}${aquarium.id}_observation_${observation.id}.jpg")
+                    }
+                    observation.checks.orEmpty().forEach { check ->
+                        check.photo?.let { reference ->
+                            add(reference to "${UserDataBackupLimits.MEDIA_PREFIX}${aquarium.id}_observation_${observation.id}_check_${check.id}.jpg")
+                        }
+                    }
+                }
+            }
+        }
+        references.forEach { (reference, entryName) ->
+            validateMediaReference(reference, entryName, mediaByEntryName)
+        }
+        val referenced = references.map { it.first.entryName }.toSet()
+        require(referenced.size == references.size) {
+            "Backup reuses a media entry for multiple photos."
         }
         require(mediaByEntryName.keys == referenced) {
             "Backup contains unreferenced or missing media entries."
@@ -232,12 +250,12 @@ private fun requireValidArchiveMediaEntryName(entryName: String) {
 
 private fun validateMediaReference(
     reference: ArchiveMediaReference,
-    tankId: Long,
+    expectedEntryName: String,
     mediaByEntryName: Map<String, File>
 ) {
     requireValidArchiveMediaEntryName(reference.entryName)
-    require(reference.entryName == "${UserDataBackupLimits.MEDIA_PREFIX}$tankId.jpg") {
-        "Backup aquarium photo entry does not match its aquarium."
+    require(reference.entryName == expectedEntryName) {
+        "Backup photo entry does not match its record."
     }
     require(reference.byteSize in 1..UserDataBackupLimits.MAX_MEDIA_ENTRY_BYTES) {
         "Backup aquarium photo size is invalid."

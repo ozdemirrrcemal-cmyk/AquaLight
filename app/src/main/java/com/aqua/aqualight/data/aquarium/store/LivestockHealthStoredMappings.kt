@@ -19,6 +19,7 @@ internal fun LivestockHealthObservation.toStored(): StoredLivestockHealthObserva
         .addAllSymptomCodes(symptoms.map(LivestockHealthSymptom::code))
         .setTrendCode(trend.code)
         .setNote(note)
+        .setPhotoUri(photoUri.orEmpty())
         .setBaselineChangeCode(baselineChange?.code.orEmpty())
         .setClosedAtMillis(closedAtMillis ?: 0L)
         .setOutcomeCode(outcome?.code.orEmpty())
@@ -32,6 +33,7 @@ internal fun LivestockHealthCheck.toStored(): StoredLivestockHealthCheck =
         .setAffectedCount(affectedCount)
         .setTrendCode(trend.code)
         .setNote(note)
+        .setPhotoUri(photoUri.orEmpty())
         .build()
 
 internal fun StoredLivestockHealthObservation.toApplication(): LivestockHealthObservation =
@@ -47,6 +49,7 @@ internal fun StoredLivestockHealthObservation.toApplication(): LivestockHealthOb
         symptoms = symptomCodesList.map(LivestockHealthSymptom::fromCode),
         trend = LivestockHealthTrend.fromCode(trendCode),
         note = note,
+        photoUri = photoUri.ifBlank { null },
         baselineChange = baselineChangeCode.takeIf(String::isNotBlank)
             ?.let(BaselineChange::fromCode),
         closedAtMillis = closedAtMillis.takeIf { it > 0L },
@@ -58,7 +61,8 @@ internal fun StoredLivestockHealthObservation.toApplication(): LivestockHealthOb
                 observedAtMillis = check.observedAtMillis,
                 affectedCount = check.affectedCount,
                 trend = LivestockHealthTrend.fromCode(check.trendCode),
-                note = check.note
+                note = check.note,
+                photoUri = check.photoUri.ifBlank { null }
             )
         }
     )

@@ -222,6 +222,7 @@ object TankStoreRules {
                 violation("Health symptom onset cannot follow its observation.")
             }
             requireCanonicalOptionalText("health.note", observation.note, MAX_NOTE_CHARS)
+            requireCanonicalOptionalText("health.photoUri", observation.photoUri, MAX_URI_CHARS)
             if (observation.symptomCodesCount !in 1..5 ||
                 observation.symptomCodesList.size != observation.symptomCodesList.toSet().size ||
                 observation.symptomCodesList.any { code ->
@@ -251,6 +252,7 @@ object TankStoreRules {
                     violation("Health check trend is invalid.")
                 }
                 requireCanonicalOptionalText("health.check.note", check.note, MAX_NOTE_CHARS)
+                requireCanonicalOptionalText("health.check.photoUri", check.photoUri, MAX_URI_CHARS)
             }
             if (observation.closedAtMillis == 0L) {
                 if (observation.outcomeCode.isNotEmpty()) violation("Open health observation has an outcome.")

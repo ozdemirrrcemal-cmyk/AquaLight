@@ -57,7 +57,8 @@ internal data class ArchiveHealthObservation(
     val baselineChangeCode: String?,
     val closedAtMillis: Long?,
     val outcomeCode: String?,
-    val checks: List<ArchiveHealthCheck>?
+    val checks: List<ArchiveHealthCheck>?,
+    val photo: ArchiveMediaReference? = null
 )
 
 internal data class ArchiveHealthCheck(
@@ -65,7 +66,8 @@ internal data class ArchiveHealthCheck(
     val observedAtMillis: Long,
     val affectedCount: Int,
     val trendCode: String,
-    val note: String
+    val note: String,
+    val photo: ArchiveMediaReference? = null
 )
 
 internal data class ArchiveMediaReference(

@@ -59,7 +59,31 @@ internal class UserDataArchiveSnapshotCollector(
                     )
                 }
             }
-            tank.toArchiveAquarium(photoReference)
+            val observationPhotoReferences = mutableMapOf<String, ArchiveMediaReference>()
+            tank.healthObservations.forEach { observation ->
+                val photos = listOfNotNull(
+                    observation.photoUri?.let { uri -> uri to
+                        "${UserDataBackupLimits.MEDIA_PREFIX}${tank.id}_observation_${observation.id}.jpg" }
+                ) + observation.checks.mapNotNull { check ->
+                    check.photoUri?.let { uri -> uri to
+                        "${UserDataBackupLimits.MEDIA_PREFIX}${tank.id}_observation_${observation.id}_check_${check.id}.jpg" }
+                }
+                photos.forEach { (uri, entryName) ->
+                    if (mediaDirectory == null) {
+                        if (mediaGateway.canSnapshotTankPhoto(uri)) archivedPhotoCount++
+                    } else {
+                        val destination = File(mediaDirectory, entryName.substringAfterLast('/') + ".media")
+                        val staged = requireNotNull(mediaGateway.snapshotTankPhoto(uri, destination)) {
+                            "Observation photo could not be included in the backup."
+                        }
+                        archivedPhotoCount++
+                        media[entryName] = staged
+                        observationPhotoReferences[uri] = ArchiveMediaReference(
+                            entryName, staged.length().toInt(), sha256(staged))
+                    }
+                }
+            }
+            tank.toArchiveAquarium(photoReference, observationPhotoReferences)
         }
         requireOwner()
         return UserDataAquariumSnapshot(

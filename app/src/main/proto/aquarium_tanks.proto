@@ -55,6 +55,7 @@ message StoredLivestockHealthObservation {
   int64 closed_at_millis = 13;
   string outcome_code = 14;
   repeated StoredLivestockHealthCheck checks = 15;
+  string photo_uri = 16;
 }
 
 message StoredLivestockHealthCheck {
@@ -63,6 +64,7 @@ message StoredLivestockHealthCheck {
   int32 affected_count = 3;
   string trend_code = 4;
   string note = 5;
+  string photo_uri = 6;
 }
 
 message StoredPlantTag {

@@ -127,6 +127,16 @@ private class FakeAquariumTankOperations(
     override suspend fun addLivestock(tankId: Long, livestock: AquariumLivestock) = Unit
     override suspend fun updateLivestock(tankId: Long, livestock: AquariumLivestock) = Unit
     override suspend fun removeLivestock(tankId: Long, livestockId: Long) = Unit
+    override suspend fun addHealthObservation(
+        tankId: Long,
+        observation: com.aqua.aqualight.application.aquarium.LivestockHealthObservation
+    ) = Unit
+    override suspend fun addHealthCheck(
+        tankId: Long,
+        observationId: Long,
+        check: com.aqua.aqualight.application.aquarium.LivestockHealthCheck
+    ) = Unit
+    override suspend fun closeHealthObservation(tankId: Long, observationId: Long, atMillis: Long) = Unit
     override suspend fun updateSmartCareEnabled(tankId: Long, enabled: Boolean) = Unit
     override suspend fun updateCareRemindersEnabled(tankId: Long, enabled: Boolean) {
         latestUpdate = Triple(tankId, latestUpdate?.second.orEmpty(), enabled)

@@ -17,7 +17,8 @@ import com.aqua.aqualight.data.care.model.CareTaskStatus
 import com.aqua.aqualight.data.care.model.CareTaskType
 
 internal fun SavedAquariumTank.toArchiveAquarium(
-    photoReference: ArchiveMediaReference?
+    photoReference: ArchiveMediaReference?,
+    healthPhotoReferences: Map<String, ArchiveMediaReference> = emptyMap()
 ): ArchiveAquarium {
     return ArchiveAquarium(
         id = id,
@@ -80,19 +81,23 @@ internal fun SavedAquariumTank.toArchiveAquarium(
                 symptomCodes = observation.symptoms.map { it.code },
                 trendCode = observation.trend.code,
                 note = observation.note,
+                photo = observation.photoUri?.let(healthPhotoReferences::get),
                 baselineChangeCode = observation.baselineChange?.code,
                 closedAtMillis = observation.closedAtMillis,
                 outcomeCode = observation.outcome?.code ?: if (observation.closedAtMillis != null) "ended" else null,
                 checks = observation.checks.map { check ->
                     ArchiveHealthCheck(check.id, check.observedAtMillis,
-                        check.affectedCount, check.trend.code, check.note)
+                        check.affectedCount, check.trend.code, check.note,
+                        check.photoUri?.let(healthPhotoReferences::get))
                 }
             )
         }
     )
 }
 
-internal fun ArchiveHealthObservation.toApplication(): LivestockHealthObservation =
+internal fun ArchiveHealthObservation.toApplication(
+    photoUris: Map<String, String> = emptyMap()
+): LivestockHealthObservation =
     LivestockHealthObservation(
         id = id, livestockId = livestockId, livestockName = livestockName,
         livestockCategory = livestockCategory, catalogEntryId = catalogEntryId,
@@ -100,12 +105,14 @@ internal fun ArchiveHealthObservation.toApplication(): LivestockHealthObservatio
         startedAtMillis = startedAtMillis,
         symptoms = symptomCodes.map(LivestockHealthSymptom::fromCode),
         trend = LivestockHealthTrend.fromCode(trendCode), note = note,
+        photoUri = photo?.let { reference -> photoUris[reference.entryName] },
         baselineChange = baselineChangeCode?.let(BaselineChange::fromCode),
         closedAtMillis = closedAtMillis,
         outcome = outcomeCode?.takeUnless { it == "ended" }?.let(LivestockHealthTrend::fromCode),
         checks = checks.orEmpty().map { check ->
             LivestockHealthCheck(check.id, check.observedAtMillis, check.affectedCount,
-                LivestockHealthTrend.fromCode(check.trendCode), check.note)
+                LivestockHealthTrend.fromCode(check.trendCode), check.note,
+                check.photo?.let { reference -> photoUris[reference.entryName] })
         }
     )
 

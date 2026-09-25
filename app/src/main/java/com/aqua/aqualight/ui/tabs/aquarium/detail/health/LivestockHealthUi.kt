@@ -89,13 +89,23 @@ internal class LivestockHealthUi(private val context: Context) {
             setImageResource(imageRes)
         }
 
-    fun speciesImage(livestock: AquariumLivestock, width: Int, height: Int): ImageView =
+    fun speciesImage(
+        livestock: AquariumLivestock, width: Int, height: Int, photoUri: String? = null
+    ): ImageView =
         image(LivestockCategories.iconRes(livestock.category), width, height).apply {
-            scaleType = ImageView.ScaleType.CENTER_INSIDE
-            setPadding(size(R.dimen.aqua_size_12), size(R.dimen.aqua_size_12),
-                size(R.dimen.aqua_size_12), size(R.dimen.aqua_size_12))
-            setColorFilter(ContextCompat.getColor(context,
-                LivestockCategories.colorRes(livestock.category)))
+            if (photoUri.isNullOrBlank()) {
+                scaleType = ImageView.ScaleType.CENTER_INSIDE
+                setPadding(size(R.dimen.aqua_size_12), size(R.dimen.aqua_size_12),
+                    size(R.dimen.aqua_size_12), size(R.dimen.aqua_size_12))
+                setColorFilter(ContextCompat.getColor(context,
+                    LivestockCategories.colorRes(livestock.category)))
+            } else {
+                scaleType = ImageView.ScaleType.CENTER_CROP
+                load(Uri.parse(photoUri)) {
+                    placeholder(LivestockCategories.iconRes(livestock.category))
+                    error(LivestockCategories.iconRes(livestock.category))
+                }
+            }
             contentDescription = context.getString(
                 R.string.livestock_health_accessibility_species_image,
                 context.getString(LivestockCategories.labelRes(livestock.category))
@@ -134,10 +144,12 @@ internal class LivestockHealthUi(private val context: Context) {
     fun speciesChoice(
         livestock: AquariumLivestock,
         selected: Boolean,
+        photoUri: String?,
         onClick: () -> Unit
     ): MaterialCardView {
         val content = row()
-        content.addView(speciesImage(livestock, R.dimen.aqua_size_52, R.dimen.aqua_size_52))
+        content.addView(speciesImage(livestock, R.dimen.aqua_size_52,
+            R.dimen.aqua_size_52, photoUri))
         val labels = column()
         labels.addView(text(livestock.name, bold = true))
         labels.addView(text(
@@ -145,6 +157,9 @@ internal class LivestockHealthUi(private val context: Context) {
                 " · " + livestock.quantity,
             colorRes = R.color.aqua_card_text_secondary
         ))
+        labels.layoutParams = LinearLayout.LayoutParams(0, wrap, 1f).apply {
+            marginStart = size(R.dimen.aqua_size_12)
+        }
         content.addView(labels)
         return card(
             if (selected) R.color.aqua_accent_primary else R.color.aqua_card_outline,
@@ -172,20 +187,14 @@ internal class LivestockHealthUi(private val context: Context) {
         }
     )
 
-    fun hero(tankPhotoUri: String?): MaterialCardView {
+    fun hero(isEmpty: Boolean, enabled: Boolean, onNewObservation: () -> Unit): MaterialCardView {
         val content = column()
         val frame = FrameLayout(context)
-        frame.layoutParams = LinearLayout.LayoutParams(match, size(R.dimen.aqua_size_240))
+        frame.layoutParams = LinearLayout.LayoutParams(match, size(R.dimen.aqua_size_320))
         frame.addView(ImageView(context).apply {
             scaleType = ImageView.ScaleType.CENTER_CROP
-            if (tankPhotoUri.isNullOrBlank()) {
-                setImageResource(R.drawable.nature_aquarium)
-            } else {
-                load(Uri.parse(tankPhotoUri)) {
-                    placeholder(R.drawable.nature_aquarium)
-                    error(R.drawable.nature_aquarium)
-                }
-            }
+            setImageResource(if (isEmpty) R.drawable.livestock_health_empty_hero
+                else R.drawable.livestock_health_hero)
             contentDescription = null
         }, FrameLayout.LayoutParams(match, match))
         frame.addView(View(context).apply {
@@ -201,16 +210,48 @@ internal class LivestockHealthUi(private val context: Context) {
                 size(R.dimen.aqua_size_16), size(R.dimen.aqua_size_16)
             )
             addView(text(
-                context.getString(R.string.livestock_health_home_hero_title),
+                context.getString(if (isEmpty) R.string.livestock_health_empty_hero_title
+                    else R.string.livestock_health_home_hero_title),
                 R.dimen.aqua_text_size_title_small, bold = true
             ))
             addView(text(
-                context.getString(R.string.livestock_health_home_hero_subtitle),
+                context.getString(if (isEmpty) R.string.livestock_health_empty_hero_subtitle
+                    else R.string.livestock_health_home_hero_subtitle),
                 colorRes = R.color.aqua_card_text_secondary
             ))
+            addView(spacer(R.dimen.aqua_size_12))
+            addView(button(R.string.livestock_health_home_new_observation, onNewObservation).apply {
+                isEnabled = enabled
+            })
         }
         frame.addView(captions, FrameLayout.LayoutParams(match, wrap, Gravity.BOTTOM))
         content.addView(frame)
+        return card(content = content)
+    }
+
+    fun emptyState(): MaterialCardView {
+        val content = column().apply {
+            gravity = Gravity.CENTER
+            minimumHeight = size(R.dimen.aqua_size_220)
+            addView(image(R.drawable.ic_life_fish_24,
+                R.dimen.aqua_size_72, R.dimen.aqua_size_72).apply {
+                setColorFilter(ContextCompat.getColor(context, R.color.aqua_accent_primary))
+            })
+            addView(spacer())
+            addView(text(context.getString(R.string.livestock_health_home_no_records),
+                R.dimen.aqua_text_size_title_small, bold = true))
+            addView(spacer(R.dimen.aqua_size_8))
+            addView(text(context.getString(R.string.livestock_health_home_no_records_hint),
+                colorRes = R.color.aqua_card_text_secondary))
+        }
+        content.background = GradientDrawable().apply {
+            setColor(ContextCompat.getColor(context, R.color.aqua_card_surface))
+            cornerRadius = size(R.dimen.aqua_size_20).toFloat()
+            setStroke(size(R.dimen.aqua_size_1),
+                ContextCompat.getColor(context, R.color.aqua_card_outline),
+                size(R.dimen.aqua_size_8).toFloat(),
+                size(R.dimen.aqua_size_8).toFloat())
+        }
         return card(content = content)
     }
 

@@ -1,6 +1,8 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 
 import android.os.Bundle
+import android.app.Activity
+import android.net.Uri
 import android.text.format.DateFormat
 import android.view.View
 import android.view.ViewGroup
@@ -10,6 +12,9 @@ import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.repeatOnLifecycle
@@ -25,14 +30,26 @@ import com.aqua.aqualight.application.aquarium.LivestockHealthSymptom
 import com.aqua.aqualight.application.aquarium.LivestockHealthTrend
 import com.aqua.aqualight.application.care.CareTaskType
 import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentLivestockHealthBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
+import com.aqua.aqualight.ui.common.header.AquaHeaderPrimaryAction
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.dialog.AppDatePickerDialogFragment
 import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
+import com.aqua.aqualight.ui.common.bottomsheet.PhotoSourceBottomSheet
+import com.aqua.aqualight.ui.common.media.MediaCropPreparationResult
+import com.aqua.aqualight.ui.common.media.MediaCropSpec
+import com.aqua.aqualight.ui.common.media.MediaFlowCoordinatorViewModel
+import com.aqua.aqualight.platform.media.AppMediaScope
+import com.aqua.aqualight.platform.permissions.AppCapability
+import com.aqua.aqualight.ui.common.permission.CapabilityPermissionCoordinator
+import com.yalantis.ucrop.UCrop
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.LivestockCategories
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
+import com.aqua.aqualight.ui.tabs.aquarium.navigation.TankDetailTabArgs
+import com.aqua.aqualight.ui.tabs.aquarium.detail.TankDetailFragment
 import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
 import com.aqua.aqualight.ui.tabs.maintenance.TankActivityUiState
 import java.util.Calendar
@@ -43,11 +60,46 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
     private val args: LivestockHealthFragmentArgs by navArgs()
     private val tanks: AquariumTankViewModel by activityViewModels()
     private val maintenance: MaintenanceViewModel by activityViewModels()
+    private val mediaFlow: MediaFlowCoordinatorViewModel by viewModels {
+        val container = requireContext().requireAppContainer()
+        MediaFlowCoordinatorViewModel.factory(requireContext().applicationContext,
+            AppMediaScope.TANK, "${args.tankId}_health",
+            container.authenticatedOwnerIdentity.requireOwnerUid(), MediaCropSpec.TANK,
+            container.imageMediaProcessor)
+    }
+    private val permissionCoordinator = CapabilityPermissionCoordinator(this) { action ->
+        if (action == ACTION_CAPTURE) openCamera()
+    }
+    private val galleryLauncher = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null && _binding != null) viewLifecycleOwner.lifecycleScope.launch { preparePhoto(uri) }
+    }
+    private val cameraLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+        lifecycleScope.launch {
+            val uri = mediaFlow.currentCameraUri()
+            if (success && uri != null && _binding != null) preparePhoto(uri)
+            else mediaFlow.cancelCamera()
+        }
+    }
+    private val cropLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        lifecycleScope.launch {
+            if (_binding == null) { mediaFlow.cancelCrop(); return@launch }
+            val uri = if (result.resultCode == Activity.RESULT_OK) result.data?.let(UCrop::getOutput)
+                else null
+            val accepted = uri?.let { mediaFlow.acceptCrop(it) }
+            if (accepted == null) {
+                mediaFlow.cancelCrop()
+                showError(R.string.aquarium_photo_crop_failed)
+            } else {
+                photoUri = accepted.toString()
+                tank?.let(::render)
+            }
+        }
+    }
     private var _binding: FragmentLivestockHealthBinding? = null
     private val binding get() = requireNotNull(_binding)
     private lateinit var ui: LivestockHealthUi
     private var tank: AquariumTankSnapshot? = null
-    private var activity: TankActivityUiState = TankActivityUiState()
+    private var tankActivity: TankActivityUiState = TankActivityUiState()
     private var selectedLivestockId = 0L
     private val selectedSymptoms = linkedSetOf<LivestockHealthSymptom>()
     private var affectedCount = 1
@@ -55,17 +107,20 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
     private var trend = LivestockHealthTrend.SAME
     private var baseline: BaselineChange? = null
     private var note = ""
+    private var photoUri: String? = null
     private var saving = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentLivestockHealthBinding.bind(view)
         ui = LivestockHealthUi(requireContext())
+        if (args.page == PAGE_FORM) mediaFlow.initializeSelection(null)
         savedInstanceState?.let { state ->
             selectedLivestockId = state.getLong(STATE_LIVESTOCK)
             affectedCount = state.getInt(STATE_COUNT, 1)
             startedAtMillis = state.getLong(STATE_ONSET)
             note = state.getString(STATE_NOTE).orEmpty()
+            photoUri = state.getString(STATE_PHOTO)
             trend = LivestockHealthTrend.fromCode(
                 state.getString(STATE_TREND) ?: LivestockHealthTrend.SAME.code
             )
@@ -101,6 +156,22 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
                 FeedbackBottomSheet.RESULT_PRIMARY
             ) closeRecord(result.getString(FeedbackBottomSheet.RESULT_ACTION_ID)?.toLongOrNull())
         }
+        childFragmentManager.setFragmentResultListener(PhotoSourceBottomSheet.REQUEST_KEY,
+            viewLifecycleOwner) { _, result ->
+            when (result.getString(PhotoSourceBottomSheet.RESULT_KEY)) {
+                PhotoSourceBottomSheet.RESULT_CAMERA -> permissionCoordinator.runWhenGranted(
+                    AppCapability.CAMERA_PHOTO, ACTION_CAPTURE)
+                PhotoSourceBottomSheet.RESULT_GALLERY -> galleryLauncher.launch(
+                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                PhotoSourceBottomSheet.RESULT_REMOVE -> {
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        mediaFlow.selectRemoval()
+                        photoUri = null
+                        tank?.let(::render)
+                    }
+                }
+            }
+        }
         tanks.tanks.observe(viewLifecycleOwner) { snapshots ->
             val current = snapshots.firstOrNull { it.id == args.tankId }
             if (current == null) {
@@ -113,7 +184,7 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 maintenance.tankActivityStateFlow(args.tankId).collect { state ->
-                    activity = state
+                    tankActivity = state
                     tank?.let(::render)
                 }
             }
@@ -127,6 +198,7 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
         outState.putString(STATE_TREND, trend.code)
         outState.putString(STATE_BASELINE, baseline?.code)
         outState.putString(STATE_NOTE, note)
+        outState.putString(STATE_PHOTO, photoUri)
         outState.putStringArrayList(STATE_SYMPTOMS, ArrayList(selectedSymptoms.map { it.code }))
         super.onSaveInstanceState(outState)
     }
@@ -140,18 +212,18 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
             PAGE_DETAIL -> renderDetail(current, content)
             else -> renderHome(current, content)
         }
-        binding.healthScroll.post { binding.healthScroll.scrollTo(0, 0) }
     }
 
     private fun renderHome(current: AquariumTankSnapshot, content: LinearLayout) {
-        content.addView(ui.hero(current.photoUri))
+        val noRecords = current.healthObservations.isEmpty()
+        content.addView(ui.hero(noRecords, current.livestock.isNotEmpty()) { navigate(PAGE_FORM) })
         content.addView(ui.spacer())
-        section(content, R.string.livestock_health_home_active)
+        section(content, if (noRecords) R.string.livestock_health_home_followups
+            else R.string.livestock_health_home_active)
         val active = current.healthObservations.filter { it.isActive }.sortedByDescending { it.observedAtMillis }
         val recent = current.healthObservations.filterNot { it.isActive }.sortedByDescending { it.observedAtMillis }
         if (active.isEmpty()) {
-            panel(content, getString(R.string.livestock_health_home_no_records),
-                getString(R.string.livestock_health_home_no_records_hint))
+            if (noRecords) content.addView(ui.emptyState())
         } else {
             active.forEach { record -> observationCard(content, current, record) }
         }
@@ -159,16 +231,15 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
             section(content, R.string.livestock_health_home_recent)
             recent.forEach { record -> observationCard(content, current, record) }
         }
-        section(content, R.string.livestock_health_home_tank_data)
+        section(content, R.string.livestock_health_home_tank_summary)
         panel(content, getString(R.string.livestock_health_home_tank_data_pending),
             getString(R.string.livestock_health_assessment_missing_water))
         maintenanceContext(content)
+        content.addView(ui.button(R.string.livestock_health_home_tank_open) { openTank() })
         content.addView(ui.spacer())
         content.addView(ui.text(getString(R.string.livestock_health_home_no_records_disclaimer),
             colorRes = R.color.aqua_card_text_secondary))
-        primary(R.string.livestock_health_home_new_observation, current.livestock.isNotEmpty()) {
-            navigate(PAGE_FORM)
-        }
+        binding.healthPrimaryAction.isVisible = false
         if (current.livestock.isEmpty()) {
             panel(content, getString(R.string.livestock_health_home_no_livestock))
         }
@@ -183,11 +254,15 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
         val existing = current.livestock.firstOrNull { it.id == observation.livestockId }
         val header = ui.row()
         if (existing != null) header.addView(ui.speciesImage(existing,
-            R.dimen.aqua_size_52, R.dimen.aqua_size_52))
+            R.dimen.aqua_size_52, R.dimen.aqua_size_52, observation.photoUri))
         val textColumn = ui.column()
         textColumn.addView(ui.text(observation.livestockName, bold = true))
         textColumn.addView(ui.text(observation.symptoms.joinToString { ui.symptomName(it) },
             colorRes = R.color.aqua_card_text_secondary))
+        textColumn.layoutParams = LinearLayout.LayoutParams(0,
+            ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
+            marginStart = ui.size(R.dimen.aqua_size_12)
+        }
         header.addView(textColumn)
         cardContent.addView(header)
         cardContent.addView(ui.spacer(R.dimen.aqua_size_8))
@@ -212,8 +287,10 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
             colorRes = R.color.aqua_card_text_secondary))
         content.addView(ui.spacer())
         current.livestock.forEach { item ->
+            val userPhoto = current.healthObservations
+                .lastOrNull { it.livestockId == item.id && it.photoUri != null }?.photoUri
             content.addView(ui.speciesChoice(item,
-                selectedLivestockId == item.id) {
+                selectedLivestockId == item.id, userPhoto) {
                 selectedLivestockId = item.id
                 affectedCount = affectedCount.coerceIn(1, item.quantity)
                 selectedSymptoms.clear()
@@ -238,14 +315,24 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
         content.addView(ui.text(getString(R.string.livestock_health_form_symptoms_hint),
             colorRes = R.color.aqua_card_text_secondary))
         content.addView(ui.spacer())
-        symptomsFor(selected.category).forEach { symptom ->
-            content.addView(ui.choice(ui.symptomName(symptom), symptom in selectedSymptoms) {
-                if (!selectedSymptoms.remove(symptom) && selectedSymptoms.size < 5) {
-                    selectedSymptoms += symptom
-                }
-                if (LivestockHealthSymptom.SURFACE_FREQUENCY_CHANGE !in selectedSymptoms) baseline = null
-                render(current)
-            })
+        symptomsFor(selected.category).chunked(3).forEach { group ->
+            val row = ui.row()
+            group.forEach { symptom ->
+                row.addView(ui.choice(ui.symptomName(symptom), symptom in selectedSymptoms) {
+                    if (!selectedSymptoms.remove(symptom) && selectedSymptoms.size < 5) {
+                        selectedSymptoms += symptom
+                    }
+                    if (LivestockHealthSymptom.SURFACE_FREQUENCY_CHANGE !in selectedSymptoms) baseline = null
+                    render(current)
+                }.apply {
+                    layoutParams = LinearLayout.LayoutParams(0,
+                        ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
+                        marginEnd = ui.size(R.dimen.aqua_size_8)
+                    }
+                    minimumHeight = ui.size(R.dimen.aqua_size_80)
+                })
+            }
+            content.addView(row)
             content.addView(ui.spacer(R.dimen.aqua_size_8))
         }
         if (LivestockHealthSymptom.SURFACE_FREQUENCY_CHANGE in selectedSymptoms) {
@@ -295,6 +382,20 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
             })
             content.addView(ui.spacer(R.dimen.aqua_size_8))
         }
+        section(content, R.string.livestock_health_form_photo_title)
+        if (!photoUri.isNullOrBlank()) {
+            content.addView(ui.speciesImage(selected, R.dimen.aqua_size_96,
+                R.dimen.aqua_size_96, photoUri))
+            content.addView(ui.spacer(R.dimen.aqua_size_8))
+        }
+        content.addView(ui.choice(if (photoUri.isNullOrBlank())
+            getString(R.string.livestock_health_form_photo_add)
+            else getString(R.string.livestock_health_form_photo_selected),
+            !photoUri.isNullOrBlank()) {
+            PhotoSourceBottomSheet.newInstance(getString(R.string.livestock_health_form_photo_title),
+                !photoUri.isNullOrBlank()).show(childFragmentManager, PhotoSourceBottomSheet.TAG)
+        })
+        content.addView(ui.spacer())
         noteField(content, note) { note = it }
     }
 
@@ -311,13 +412,15 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
             catalogEntryId = item.catalogEntryId, affectedCount = affectedCount,
             observedAtMillis = now, startedAtMillis = onset,
             symptoms = selectedSymptoms.toList(), trend = trend, note = note.trim(),
-            baselineChange = baseline, closedAtMillis = null, outcome = null, checks = emptyList()
+            baselineChange = baseline, closedAtMillis = null, outcome = null, checks = emptyList(),
+            photoUri = photoUri
         )
         saving = true
         binding.healthPrimaryAction.isEnabled = false
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 tanks.addHealthObservation(args.tankId, observation)
+                mediaFlow.commitSelection(deletePersistedMedia = false)
                 navigate(PAGE_ASSESSMENT, observation.id)
             } catch (error: Exception) {
                 if (_binding != null) {
@@ -351,39 +454,100 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
         tips.forEach { panel(content, getString(it)) }
         panel(content, getString(R.string.livestock_health_assessment_no_diagnosis),
             getString(R.string.livestock_health_assessment_disclaimer))
+        content.addView(ui.button(R.string.livestock_health_assessment_open_tank) { openTank() })
+        content.addView(ui.spacer())
         primary(R.string.livestock_health_assessment_follow) { navigate(PAGE_DETAIL, record.id) }
     }
 
     private fun renderDetail(current: AquariumTankSnapshot, content: LinearLayout) {
         val record = current.healthObservations.firstOrNull { it.id == args.observationId }
         if (record == null) { missing(content); return }
-        panel(content, record.livestockName,
-            getString(R.string.livestock_health_detail_first, date(record.observedAtMillis)))
+        binding.appHeader.setupAquaHeader(this, AquaHeaderConfig(
+            titleOverride = getString(R.string.livestock_health_detail_title),
+            onBackClick = { findNavController().popBackStack() },
+            primaryAction = if (record.isActive) AquaHeaderPrimaryAction(
+                getString(R.string.livestock_health_detail_end)) { closeDialog(record) }
+            else null
+        ))
+        val animal = current.livestock.firstOrNull { it.id == record.livestockId }
+            ?: AquariumLivestock(id = record.livestockId, name = record.livestockName,
+                category = record.livestockCategory, quantity = record.affectedCount,
+                catalogEntryId = record.catalogEntryId)
+        val header = ui.column()
+        val overview = ui.row()
+        overview.addView(ui.speciesImage(animal, R.dimen.aqua_size_96,
+            R.dimen.aqua_size_96, record.photoUri))
+        val labels = ui.column().apply {
+            setPadding(ui.size(R.dimen.aqua_size_12), 0, 0, 0)
+            addView(ui.text(record.livestockName, bold = true))
+            addView(ui.text(getString(R.string.livestock_health_home_affected_short,
+                record.latestAffectedCount, animal.quantity),
+                colorRes = R.color.aqua_card_text_secondary))
+            addView(ui.text(getString(if (record.isActive) R.string.livestock_health_home_tracking
+                else if (record.outcome == LivestockHealthTrend.RESOLVED)
+                    R.string.livestock_health_home_resolved
+                else R.string.livestock_health_home_ended),
+                colorRes = R.color.aqua_content_warning))
+        }
+        labels.layoutParams = LinearLayout.LayoutParams(0,
+            ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+        overview.addView(labels)
+        header.addView(overview)
+        header.addView(ui.spacer(R.dimen.aqua_size_12))
+        header.addView(ui.text(record.symptoms.joinToString { ui.symptomName(it) }, bold = true))
+        header.addView(ui.text(getString(R.string.livestock_health_detail_first,
+            date(record.observedAtMillis)), colorRes = R.color.aqua_card_text_secondary))
+        content.addView(ui.card(content = header))
         section(content, R.string.livestock_health_detail_status_title)
-        panel(content, getString(if (record.isActive) R.string.livestock_health_home_tracking
-            else if (record.outcome == LivestockHealthTrend.RESOLVED)
-                R.string.livestock_health_home_resolved else R.string.livestock_health_home_ended),
-            getString(R.string.livestock_health_home_affected_short,
-                record.latestAffectedCount,
-                current.livestock.firstOrNull { it.id == record.livestockId }?.quantity
-                    ?: record.affectedCount))
-        section(content, R.string.livestock_health_detail_history)
-        panel(content, getString(R.string.livestock_health_detail_initial),
-            date(record.observedAtMillis) + " · " + record.symptoms.joinToString { ui.symptomName(it) })
-        record.checks.forEach { check ->
-            panel(content, date(check.observedAtMillis),
-                getString(trendOptions().first { it.first == check.trend }.second) +
-                    " · " + check.affectedCount + " · " + check.note)
-        }
-        if (record.isActive) {
-            content.addView(ui.button(R.string.livestock_health_detail_end) {
-                closeDialog(record)
+        val latest = ui.row()
+        trendOptions().forEach { (value, label) ->
+            latest.addView(ui.choice(getString(label), record.latestTrend == value) {
+                if (record.isActive) LivestockHealthCheckSheet.show(
+                    childFragmentManager, args.tankId, record.id)
+            }.apply {
+                layoutParams = LinearLayout.LayoutParams(0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
+                    marginEnd = ui.size(R.dimen.aqua_size_8)
+                }
             })
-            content.addView(ui.spacer())
         }
+        content.addView(latest)
+        section(content, R.string.livestock_health_detail_history)
+        record.checks.asReversed().forEach { check ->
+            historyCard(content, animal, date(check.observedAtMillis),
+                getString(trendOptions().first { it.first == check.trend }.second),
+                check.affectedCount, check.note, check.photoUri)
+        }
+        historyCard(content, animal, date(record.observedAtMillis),
+            getString(R.string.livestock_health_detail_initial),
+            record.affectedCount, record.note, record.photoUri)
+        section(content, R.string.livestock_health_home_tank_data)
+        panel(content, getString(R.string.livestock_health_home_tank_data_pending))
+        maintenanceContext(content)
+        content.addView(ui.button(R.string.livestock_health_home_tank_open) { openTank() })
+        content.addView(ui.spacer())
         primary(R.string.livestock_health_detail_add_check, record.isActive) {
             LivestockHealthCheckSheet.show(childFragmentManager, args.tankId, record.id)
         }
+    }
+
+    private fun historyCard(content: LinearLayout, animal: AquariumLivestock,
+        dateText: String, status: String, count: Int, noteText: String, imageUri: String?) {
+        val line = ui.row()
+        val labels = ui.column()
+        labels.addView(ui.text(dateText, colorRes = R.color.aqua_accent_primary))
+        labels.addView(ui.text(status, bold = true))
+        labels.addView(ui.text(getString(R.string.livestock_health_detail_affected,
+            count) + if (noteText.isBlank()) "" else " · $noteText",
+            colorRes = R.color.aqua_card_text_secondary))
+        line.addView(labels.apply {
+            layoutParams = LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+        })
+        line.addView(ui.speciesImage(animal, R.dimen.aqua_size_80,
+            R.dimen.aqua_size_80, imageUri))
+        content.addView(ui.card(content = ui.column().apply { addView(line) }))
+        content.addView(ui.spacer(R.dimen.aqua_size_12))
     }
 
     private fun closeDialog(record: LivestockHealthObservation) {
@@ -406,9 +570,25 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
     }
 
     private fun showError(resource: Int) {
-        (activity as? BaseActivity)?.showSnackBar(
+        (requireActivity() as? BaseActivity)?.showSnackBar(
             getString(resource), BaseActivity.SnackType.ERROR
         )
+    }
+
+    private fun openCamera() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val uri = mediaFlow.createCameraUri()
+            if (uri == null) showError(R.string.aquarium_photo_temp_file_failed)
+            else cameraLauncher.launch(uri)
+        }
+    }
+
+    private suspend fun preparePhoto(uri: Uri) {
+        when (val prepared = mediaFlow.prepareCropIntent(uri,
+            getString(R.string.aquarium_photo_crop_title))) {
+            is MediaCropPreparationResult.Ready -> cropLauncher.launch(prepared.intent)
+            else -> showError(R.string.aquarium_photo_crop_failed)
+        }
     }
 
     private fun noteField(content: LinearLayout, value: String, onChange: (String) -> Unit) {
@@ -423,7 +603,7 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
     }
 
     private fun maintenanceContext(content: LinearLayout) {
-        val lastWater = activity.completedTasks.firstOrNull { it.type == CareTaskType.WATER_CHANGE }
+        val lastWater = tankActivity.completedTasks.firstOrNull { it.type == CareTaskType.WATER_CHANGE }
         if (lastWater == null) {
             panel(content, getString(R.string.livestock_health_maintenance_none))
         } else {
@@ -433,7 +613,7 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
             }.orEmpty()
             panel(content, getString(R.string.livestock_health_maintenance_water, date, percent))
         }
-        val lastFilter = activity.completedTasks.firstOrNull { it.type in setOf(
+        val lastFilter = tankActivity.completedTasks.firstOrNull { it.type in setOf(
             CareTaskType.FILTER_MAINTENANCE, CareTaskType.FILTER_CHANGE,
             CareTaskType.PRE_FILTER_CLEANING
         ) }
@@ -478,6 +658,13 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
             LivestockHealthFragmentDirections.actionLivestockHealthFragmentSelf(
                 args.tankId, page, observationId)
         )
+    }
+
+    private fun openTank() {
+        val controller = findNavController()
+        controller.getBackStackEntry(R.id.tankDetailFragment)
+            .savedStateHandle[TankDetailFragment.KEY_RETURN_TAB] = TankDetailTabArgs.TANK
+        controller.popBackStack(R.id.tankDetailFragment, false)
     }
 
     private fun date(timestamp: Long): String =
@@ -535,6 +722,8 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
         const val STATE_BASELINE = "baseline"
         const val STATE_NOTE = "note"
         const val STATE_SYMPTOMS = "symptoms"
+        const val STATE_PHOTO = "photoUri"
+        const val ACTION_CAPTURE = "health_photo_capture"
         const val DATE_REQUEST = "livestock_health_onset_date"
         const val CLOSE_REQUEST = "livestock_health_close_confirmation"
     }
