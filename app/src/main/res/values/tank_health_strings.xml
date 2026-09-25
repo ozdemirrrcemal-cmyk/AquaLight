@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="screen_title_tank_health">Tank Health</string>
+    <string name="tank_health_entry_title">Tank Health</string>
+    <string name="tank_health_entry_summary">Tank condition looks good</string>
+    <string name="tank_health_entry_last_analysis">Last analysis: 2 days ago</string>
+    <string name="tank_health_entry_score" translatable="false">82</string>
+
+    <string name="tank_health_tab_water_quality">Water Quality</string>
+    <string name="tank_health_tab_algae_control">Algae Control</string>
+
+    <string name="tank_health_water_quality_title">Water Quality</string>
+    <string name="tank_health_last_analysis">Last analysis: 2 days ago</string>
+    <string name="tank_health_status_normal">Normal</string>
+    <string name="tank_health_status_moderate">Moderate</string>
+    <string name="tank_health_status_approaching">Approaching</string>
+
+    <string name="tank_health_metric_ph" translatable="false">pH</string>
+    <string name="tank_health_metric_no3" translatable="false">NO3</string>
+    <string name="tank_health_metric_po4" translatable="false">PO4</string>
+    <string name="tank_health_metric_no2" translatable="false">NO2</string>
+    <string name="tank_health_metric_nh3_nh4" translatable="false">NH3/NH4</string>
+    <string name="tank_health_metric_temperature">Temperature</string>
+    <string name="tank_health_metric_gh" translatable="false">GH</string>
+    <string name="tank_health_metric_kh" translatable="false">KH</string>
+
+    <string name="tank_health_value_ph" translatable="false">6.8</string>
+    <string name="tank_health_value_no3" translatable="false">18 mg/L</string>
+    <string name="tank_health_value_po4" translatable="false">0.7 mg/L</string>
+    <string name="tank_health_value_no2" translatable="false">0 mg/L</string>
+    <string name="tank_health_value_nh3_nh4" translatable="false">0 mg/L</string>
+    <string name="tank_health_value_temperature" translatable="false">25 °C</string>
+    <string name="tank_health_value_gh" translatable="false">6 dGH</string>
+    <string name="tank_health_value_kh" translatable="false">4 dKH</string>
+    <string name="tank_health_add_analysis">Add Analysis</string>
+    <string name="tank_health_add_analysis_symbol" translatable="false">＋</string>
+
+    <string name="tank_health_maintenance_title">Maintenance Status</string>
+    <string name="tank_health_water_change">Water change</string>
+    <string name="tank_health_water_change_age">5 days ago</string>
+    <string name="tank_health_pruning">Pruning</string>
+    <string name="tank_health_pruning_age">9 days ago</string>
+    <string name="tank_health_filter_maintenance">Filter maintenance</string>
+    <string name="tank_health_filter_maintenance_age">18 days ago</string>
+
+    <string name="tank_health_system_summary_title">System Summary</string>
+    <string name="tank_health_system_co2" translatable="false">CO₂</string>
+    <string name="tank_health_system_co2_value">Present</string>
+    <string name="tank_health_system_lighting">Lighting</string>
+    <string name="tank_health_system_lighting_value" translatable="false">WRGB Pro Elite 120</string>
+    <string name="tank_health_system_filter">Filter</string>
+    <string name="tank_health_system_filter_value" translatable="false">EHEIM eXperience 150</string>
+    <string name="tank_health_system_livestock_load">Livestock load</string>
+    <string name="tank_health_system_livestock_load_value">28 livestock</string>
+</resources>

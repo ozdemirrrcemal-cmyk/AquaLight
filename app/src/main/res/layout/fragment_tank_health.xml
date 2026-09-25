@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_color">
+
+    <include
+        android:id="@+id/appHeader"
+        layout="@layout/layout_aqua_header"
+        android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/healthTabs"
+        android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="@dimen/aqua_size_44"
+        android:layout_marginStart="@dimen/aqua_size_14"
+        android:layout_marginTop="@dimen/aqua_size_8"
+        android:layout_marginEnd="@dimen/aqua_size_14"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/appHeader">
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/tabWaterQuality"
+            style="@style/Widget.Aqua.Card.Inline"
+            android:layout_width="@dimen/aqua_size_0"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="@dimen/aqua_size_3"
+            app:cardBackgroundColor="@color/aqua_surface_action"
+            app:cardCornerRadius="@dimen/aqua_size_10"
+            app:cardElevation="@dimen/aqua_size_0"
+            app:layout_constraintEnd_toStartOf="@id/tabAlgaeControl"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:strokeColor="@color/aqua_accent_primary"
+            app:strokeWidth="@dimen/aqua_size_1">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:text="@string/tank_health_tab_water_quality"
+                android:textColor="@color/aqua_content_on_dark"
+                android:textSize="@dimen/aqua_text_size_body_small"
+                android:textStyle="bold" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/tabAlgaeControl"
+            style="@style/Widget.Aqua.Card.Inline"
+            android:layout_width="@dimen/aqua_size_0"
+            android:layout_height="match_parent"
+            android:layout_marginStart="@dimen/aqua_size_3"
+            app:cardBackgroundColor="@color/aqua_card_metric_surface"
+            app:cardCornerRadius="@dimen/aqua_size_10"
+            app:cardElevation="@dimen/aqua_size_0"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/tabWaterQuality"
+            app:layout_constraintTop_toTopOf="parent"
+            app:strokeColor="@color/aqua_card_metric_outline"
+            app:strokeWidth="@dimen/aqua_size_1">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:text="@string/tank_health_tab_algae_control"
+                android:textColor="@color/aqua_card_text_secondary"
+                android:textSize="@dimen/aqua_text_size_body_small" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/healthContent"
+        android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="@dimen/aqua_size_0"
+        android:clipToPadding="false"
+        android:overScrollMode="never"
+        android:paddingStart="@dimen/aqua_size_14"
+        android:paddingTop="@dimen/aqua_size_16"
+        android:paddingEnd="@dimen/aqua_size_14"
+        android:paddingBottom="@dimen/aqua_size_32"
+        android:scrollbars="none"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/healthTabs" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -21,6 +21,138 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardTankHealth"
+            style="@style/Widget.Aqua.Card.Metric"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/aqua_size_86"
+            android:layout_marginBottom="@dimen/aqua_size_16"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            app:strokeColor="@color/aqua_status_success"
+            app:strokeWidth="@dimen/aqua_size_2">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingStart="@dimen/aqua_size_14"
+                android:paddingEnd="@dimen/aqua_size_12">
+
+                <com.google.android.material.card.MaterialCardView
+                    style="@style/Widget.Aqua.Card.Inline"
+                    android:id="@+id/cardTankHealthIcon"
+                    android:layout_width="@dimen/aqua_size_44"
+                    android:layout_height="@dimen/aqua_size_44"
+                    app:cardBackgroundColor="@color/aqua_surface_positive"
+                    app:cardCornerRadius="@dimen/aqua_size_22"
+                    app:cardElevation="@dimen/aqua_size_0"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <ImageView
+                        android:layout_width="@dimen/aqua_size_22"
+                        android:layout_height="@dimen/aqua_size_22"
+                        android:layout_gravity="center"
+                        android:contentDescription="@null"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_health_heart_24"
+                        app:tint="@color/aqua_status_success" />
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <TextView
+                    android:id="@+id/tvTankHealthTitle"
+                    android:layout_width="@dimen/aqua_size_0"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/aqua_size_12"
+                    android:includeFontPadding="false"
+                    android:text="@string/tank_health_entry_title"
+                    android:textColor="@color/aqua_card_text_primary"
+                    android:textSize="@dimen/aqua_text_size_body"
+                    android:textStyle="bold"
+                    app:layout_constraintBottom_toTopOf="@id/tvTankHealthSummary"
+                    app:layout_constraintEnd_toStartOf="@id/cardTankHealthScore"
+                    app:layout_constraintStart_toEndOf="@id/cardTankHealthIcon"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintVertical_chainStyle="packed" />
+
+                <TextView
+                    android:id="@+id/tvTankHealthSummary"
+                    android:layout_width="@dimen/aqua_size_0"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/aqua_size_12"
+                    android:layout_marginTop="@dimen/aqua_size_3"
+                    android:ellipsize="end"
+                    android:includeFontPadding="false"
+                    android:maxLines="1"
+                    android:text="@string/tank_health_entry_summary"
+                    android:textColor="@color/aqua_card_text_secondary"
+                    android:textSize="@dimen/aqua_text_size_body_small"
+                    app:layout_constraintBottom_toTopOf="@id/tvTankHealthLastAnalysis"
+                    app:layout_constraintEnd_toStartOf="@id/cardTankHealthScore"
+                    app:layout_constraintStart_toEndOf="@id/cardTankHealthIcon"
+                    app:layout_constraintTop_toBottomOf="@id/tvTankHealthTitle" />
+
+                <TextView
+                    android:id="@+id/tvTankHealthLastAnalysis"
+                    android:layout_width="@dimen/aqua_size_0"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/aqua_size_12"
+                    android:layout_marginTop="@dimen/aqua_size_3"
+                    android:includeFontPadding="false"
+                    android:text="@string/tank_health_entry_last_analysis"
+                    android:textColor="@color/aqua_content_muted"
+                    android:textSize="@dimen/aqua_text_size_caption"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/cardTankHealthScore"
+                    app:layout_constraintStart_toEndOf="@id/cardTankHealthIcon"
+                    app:layout_constraintTop_toBottomOf="@id/tvTankHealthSummary" />
+
+                <com.google.android.material.card.MaterialCardView
+                    style="@style/Widget.Aqua.Card.Inline"
+                    android:id="@+id/cardTankHealthScore"
+                    android:layout_width="@dimen/aqua_size_40"
+                    android:layout_height="@dimen/aqua_size_40"
+                    android:layout_marginEnd="@dimen/aqua_size_8"
+                    app:cardBackgroundColor="@color/aqua_color_transparent"
+                    app:cardCornerRadius="@dimen/aqua_size_20"
+                    app:cardElevation="@dimen/aqua_size_0"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/ivTankHealthArrow"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:strokeColor="@color/aqua_status_success"
+                    app:strokeWidth="@dimen/aqua_size_2">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:includeFontPadding="false"
+                        android:text="@string/tank_health_entry_score"
+                        android:textColor="@color/aqua_status_success"
+                        android:textSize="@dimen/aqua_text_size_body"
+                        android:textStyle="bold" />
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <ImageView
+                    android:id="@+id/ivTankHealthArrow"
+                    android:layout_width="@dimen/aqua_size_20"
+                    android:layout_height="@dimen/aqua_size_20"
+                    android:contentDescription="@null"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_arrow_right"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:tint="@color/aqua_card_text_secondary" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
         <GridLayout
             android:id="@+id/tankSummaryGrid"
             android:layout_width="match_parent"
