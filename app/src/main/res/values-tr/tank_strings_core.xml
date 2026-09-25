@@ -58,7 +58,6 @@
     <string name="aquarium_validation_tank_type_required">Lütfen bir tank türü seçin.</string>
     <string name="aquarium_action_add">+ Ekle</string>
     <string name="aquarium_action_add_livestock">+ Canlı Ekle</string>
-    <string name="aquarium_action_add_plant">+ Bitki Ekle</string>
     <string name="aquarium_components_title">Bileşenler</string>
     <string name="aquarium_concept_field_title">Akvaryum Konsepti</string>
     <string name="aquarium_days_title">Gün</string>

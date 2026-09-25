@@ -62,7 +62,6 @@
     <string name="aquarium_validation_tank_type_required">Please select a tank type.</string>
     <string name="aquarium_action_add">+ Add</string>
     <string name="aquarium_action_add_livestock">+ Add Livestock</string>
-    <string name="aquarium_action_add_plant">+  Add Plant</string>
 <string name="aquarium_components_title">Components</string>
     <string name="aquarium_concept_field_title">Aquarium Concept</string>
     <string name="aquarium_days_title">Days</string>
