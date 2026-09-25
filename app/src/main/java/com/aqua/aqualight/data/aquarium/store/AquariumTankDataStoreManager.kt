@@ -39,6 +39,8 @@ class AquariumTankDataStoreManager(
     private val context: Context
 ) {
 
+    internal val plantPhotos = TankPlantPhotoMutations(context, ::updateCurrentOwnerTank)
+
     val tanksFlow: Flow<List<SavedAquariumTank>> =
         context.aquariumTanksDataStore.data.map { store ->
             TankStoreRules.validateStore(store)
@@ -56,7 +58,7 @@ class AquariumTankDataStoreManager(
         draft: TankDraft
     ): Long {
         val ownerUid = UserDataScope.requireCurrentUid()
-        draft.plants.forEach { plant -> requireNewPlantPhoto(plant.photoUri, ownerUid) }
+        draft.plants.forEach { plant -> requireNewPlantPhoto(context, plant.photoUri, ownerUid) }
         var newTankId = 0L
 
         context.aquariumTanksDataStore.updateData { currentStore ->
@@ -99,48 +101,7 @@ class AquariumTankDataStoreManager(
                 .filter { tank -> tank.belongsToOwner(ownerUid) }
                 .mapTo(mutableSetOf()) { tank -> tank.id }
         )
-        val sourcePhotoAtPreparation = sourceSnapshot.photoUri
-        val duplicatedPhotoUri = AppMediaStorage.copyInternalMedia(
-            context = context,
-            sourceUriString = sourcePhotoAtPreparation,
-            targetScope = AppMediaScope.TANK,
-            ownerToken = newTankId.toString(),
-            ownerUid = ownerUid
-        )
-        val sourceWasOwned = AppMediaStorage.isAppOwned(context, sourcePhotoAtPreparation)
-        if (sourceWasOwned && duplicatedPhotoUri.isNullOrBlank()) {
-            throw IllegalStateException("Tank photo could not be copied with independent ownership.")
-        }
-
-        val sourcePlantPhotosAtPreparation = sourceSnapshot.plantsList
-            .associate { plant -> plant.id to plant.photoUri }
-        val duplicatedPlantPhotoUris = linkedMapOf<Long, String?>()
-        try {
-            sourceSnapshot.plantsList.forEach { plant ->
-                val duplicatedPlantPhotoUri = AppMediaStorage.copyInternalMedia(
-                    context = context,
-                    sourceUriString = plant.photoUri,
-                    targetScope = AppMediaScope.PLANT,
-                    ownerToken = newTankId.toString(),
-                    ownerUid = ownerUid
-                )
-                if (
-                    AppMediaStorage.isAppOwned(context, plant.photoUri) &&
-                    duplicatedPlantPhotoUri.isNullOrBlank()
-                ) {
-                    throw IllegalStateException(
-                        "Plant photo could not be copied with independent ownership."
-                    )
-                }
-                duplicatedPlantPhotoUris[plant.id] = duplicatedPlantPhotoUri
-            }
-        } catch (error: Throwable) {
-            runCatching { AppMediaStorage.rollbackPendingMedia(context, duplicatedPhotoUri) }
-            duplicatedPlantPhotoUris.values.forEach { uri ->
-                runCatching { AppMediaStorage.rollbackPendingMedia(context, uri) }
-            }
-            throw error
-        }
+        val media = TankDuplicateMedia(context, ownerUid, newTankId, sourceSnapshot)
 
         // Freeze the active per-app language before entering the retryable DataStore transform.
         // This keeps every retry deterministic and supports non-Activity contexts on API 17+.
@@ -156,25 +117,10 @@ class AquariumTankDataStoreManager(
                     storedTank.id == tankId && storedTank.belongsToOwner(ownerUid)
                 } ?: throw IllegalArgumentException("Tank not found for the active owner.")
                 TankStoreRules.validateTank(sourceTank)
-                check(sourceTank.photoUri == sourcePhotoAtPreparation) {
-                    "Tank photo changed while duplication was being prepared."
-                }
-                check(
-                    sourceTank.plantsList.associate { plant -> plant.id to plant.photoUri } ==
-                        sourcePlantPhotosAtPreparation
-                ) {
-                    "Plant photos changed while duplication was being prepared."
-                }
-
                 val existingNames = currentStore.tanksList
                     .filter { storedTank -> storedTank.belongsToOwner(ownerUid) }
                     .mapTo(mutableSetOf()) { storedTank -> storedTank.name }
-                val duplicatedPlants = sourceTank.plantsList.map { plant ->
-                    plant.toBuilder()
-                        .setPhotoUri(duplicatedPlantPhotoUris[plant.id].orEmpty().trim())
-                        .build()
-                }
-                val duplicatedTank = sourceTank.toBuilder()
+                val duplicatedTank = media.applyTo(sourceTank)
                     .setId(newTankId)
                     .setOwnerUid(ownerUid)
                     .setName(
@@ -184,19 +130,13 @@ class AquariumTankDataStoreManager(
                             localizedContext = duplicateNameContext
                         )
                     )
-                    .setPhotoUri(duplicatedPhotoUri.orEmpty().trim())
                     .setCreatedAtMillis(System.currentTimeMillis())
-                    .clearPlants()
-                    .addAllPlants(duplicatedPlants)
                     .build()
                 TankStoreRules.validateTank(duplicatedTank)
                 currentStore.appendValidated(duplicatedTank)
             }
         } catch (error: Throwable) {
-            runCatching { AppMediaStorage.rollbackPendingMedia(context, duplicatedPhotoUri) }
-            duplicatedPlantPhotoUris.values.forEach { uri ->
-                runCatching { AppMediaStorage.rollbackPendingMedia(context, uri) }
-            }
+            media.rollback()
             throw error
         }
 
@@ -338,49 +278,6 @@ class AquariumTankDataStoreManager(
         return previousPhotoUri
     }
 
-    /** Returns the superseded plant URI only after the owner-scoped store commit succeeds. */
-    suspend fun updatePlantPhoto(
-        tankId: Long,
-        plantId: Long,
-        photoUri: String?
-    ): String? {
-        require(plantId > 0L) { "plantId must be positive" }
-        val normalizedPhotoUri = photoUri.orEmpty().trim()
-        val ownerUid = UserDataScope.requireCurrentUid()
-        val validCandidate = normalizedPhotoUri.isBlank() || AppMediaStorage.isPendingMediaForOwner(
-            context, normalizedPhotoUri, ownerUid, AppMediaScope.PLANT
-        )
-        var previousPhotoUri: String? = null
-        updateCurrentOwnerTank(tankId) { storedTank ->
-            var replaced = false
-            val updatedPlants = storedTank.plantsList.map { plant ->
-                if (plant.id == plantId) {
-                    require(storedTank.ownerUid == ownerUid) { "Plant photo owner changed." }
-                    require(plant.photoUri == normalizedPhotoUri || validCandidate) {
-                        "New plant photo is not pending media for this owner."
-                    }
-                    replaced = true
-                    previousPhotoUri = plant.photoUri.takeIf { uri ->
-                        uri.isNotBlank() && uri != normalizedPhotoUri
-                    }
-                    plant.toBuilder()
-                        .setPhotoUri(normalizedPhotoUri)
-                        .build()
-                } else {
-                    plant
-                }
-            }
-            if (!replaced) {
-                throw IllegalArgumentException("Plant not found in the selected tank.")
-            }
-            storedTank.toBuilder()
-                .clearPlants()
-                .addAllPlants(updatedPlants)
-                .build()
-        }
-        return previousPhotoUri
-    }
-
     suspend fun updateTankStyle(
         tankId: Long,
         tankStyle: String
@@ -477,7 +374,7 @@ class AquariumTankDataStoreManager(
         val ownerUid = UserDataScope.requireCurrentUid()
         val validCandidates = plants.mapNotNull { plant -> plant.photoUri }
             .filter { uri ->
-                AppMediaStorage.isPendingMediaForOwner(context, uri, ownerUid, AppMediaScope.PLANT)
+                AppMediaStorage.pendingMediaOwner(context, uri, AppMediaScope.PLANT) == ownerUid
             }.toSet()
         var supersededPhotoUris: Set<String> = emptySet()
         updateCurrentOwnerTank(tankId) { storedTank ->
@@ -625,13 +522,6 @@ class AquariumTankDataStoreManager(
             storedTank.toBuilder()
                 .setCareRemindersDisabled(!enabled)
                 .build()
-        }
-    }
-
-    private fun requireNewPlantPhoto(photoUri: String?, ownerUid: String) {
-        if (photoUri.isNullOrBlank()) return
-        require(AppMediaStorage.isPendingMediaForOwner(context, photoUri, ownerUid, AppMediaScope.PLANT)) {
-            "New plant photos must be pending app-owned plant media for the record owner."
         }
     }
 

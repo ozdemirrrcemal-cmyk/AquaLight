@@ -137,11 +137,11 @@ class AppMediaStorageInstrumentedTest {
         val owner = "plant/owner"
         val photo = pendingSavedMedia(owner, "7", AppMediaScope.PLANT)
         try {
-            assertTrue(AppMediaStorage.isPendingMediaForOwner(context, photo, owner, AppMediaScope.PLANT))
-            assertFalse(AppMediaStorage.isPendingMediaForOwner(context, photo, "plant?owner", AppMediaScope.PLANT))
-            assertFalse(AppMediaStorage.isPendingMediaForOwner(context, photo, owner, AppMediaScope.TANK))
+            assertTrue(AppMediaStorage.pendingMediaOwner(context, photo, AppMediaScope.PLANT) == owner)
+            assertFalse(AppMediaStorage.pendingMediaOwner(context, photo, AppMediaScope.PLANT) == "plant?owner")
+            assertFalse(AppMediaStorage.pendingMediaOwner(context, photo, AppMediaScope.TANK) == owner)
             AppMediaStorage.commitPendingMedia(context, photo)
-            assertFalse(AppMediaStorage.isPendingMediaForOwner(context, photo, owner, AppMediaScope.PLANT))
+            assertFalse(AppMediaStorage.pendingMediaOwner(context, photo, AppMediaScope.PLANT) == owner)
         } finally {
             AppMediaStorage.deleteInternalMedia(context, photo)
         }

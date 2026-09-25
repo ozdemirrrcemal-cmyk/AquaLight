@@ -10,6 +10,7 @@ import com.aqua.aqualight.data.aquarium.model.TankDraft
 import com.aqua.aqualight.data.care.model.CareTask
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.platform.media.UserDataArchiveMediaFingerprint
+import com.aqua.aqualight.platform.media.AppMediaScope
 import com.aqua.aqualight.platform.media.UserDataArchiveMediaGateway
 import java.io.File
 import kotlinx.coroutines.NonCancellable
@@ -241,12 +242,16 @@ internal data class UserDataRestoreMediaOperations(
     companion object {
         fun from(mediaGateway: UserDataArchiveMediaGateway): UserDataRestoreMediaOperations {
             return UserDataRestoreMediaOperations(
-                snapshotTankPhoto = mediaGateway::fingerprintTankPhoto,
-                prepareRestoredTankPhoto = mediaGateway::prepareRestoredTankPhoto,
+                snapshotTankPhoto = { uri -> mediaGateway.fingerprintPhoto(uri) },
+                prepareRestoredTankPhoto = { owner, token, file ->
+                    mediaGateway.prepareRestoredPhoto(owner, token, file)
+                },
                 commit = mediaGateway::commit,
                 rollback = mediaGateway::rollback,
-                snapshotPlantPhoto = mediaGateway::fingerprintPlantPhoto,
-                prepareRestoredPlantPhoto = mediaGateway::prepareRestoredPlantPhoto
+                snapshotPlantPhoto = { uri -> mediaGateway.fingerprintPhoto(uri, AppMediaScope.PLANT) },
+                prepareRestoredPlantPhoto = { owner, token, file ->
+                    mediaGateway.prepareRestoredPhoto(owner, token, file, AppMediaScope.PLANT)
+                }
             )
         }
     }

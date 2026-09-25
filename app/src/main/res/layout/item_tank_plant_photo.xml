@@ -20,12 +20,11 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
-        android:minHeight="@dimen/aqua_size_80"
         android:orientation="horizontal"
         android:paddingStart="@dimen/aqua_size_14"
-        android:paddingTop="@dimen/aqua_size_12"
+        android:paddingTop="@dimen/aqua_size_6"
         android:paddingEnd="@dimen/aqua_size_14"
-        android:paddingBottom="@dimen/aqua_size_12">
+        android:paddingBottom="@dimen/aqua_size_6">
 
         <FrameLayout
             android:layout_width="@dimen/aqua_size_56"
@@ -95,13 +94,7 @@
 
         </LinearLayout>
 
-        <ImageView
-            android:id="@+id/ivPlantPhotoChevron"
-            android:layout_width="@dimen/aqua_size_24"
-            android:layout_height="@dimen/aqua_size_24"
-            android:layout_marginStart="@dimen/aqua_size_8"
-            android:contentDescription="@null"
-            android:src="@drawable/ic_arrow_right" />
+
 
     </LinearLayout>
 

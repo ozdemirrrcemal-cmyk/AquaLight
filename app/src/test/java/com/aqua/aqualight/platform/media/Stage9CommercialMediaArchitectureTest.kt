@@ -35,7 +35,7 @@ class Stage9CommercialMediaArchitectureTest {
     fun tankDuplicationPerformsNoFilesystemSideEffectInsideDataStoreTransform() {
         val manager = source(
             "app/src/main/java/com/aqua/aqualight/data/aquarium/store/" +
-                "AquariumTankDataStoreManager.kt"
+                "TankDuplicateMedia.kt"
         )
         val duplicate = manager.substringBetween(
             "suspend fun duplicateTank(",
@@ -62,7 +62,7 @@ class Stage9CommercialMediaArchitectureTest {
         )
         val tank = source(
             "app/src/main/java/com/aqua/aqualight/data/aquarium/" +
-                "DefaultAquariumTankOperations.kt"
+                "DefaultPlantPhotoOperations.kt"
         )
         val coordinator = source(
             "app/src/main/java/com/aqua/aqualight/ui/common/media/" +
@@ -93,11 +93,11 @@ class Stage9CommercialMediaArchitectureTest {
         )
         val manager = source(
             "app/src/main/java/com/aqua/aqualight/data/aquarium/store/" +
-                "AquariumTankDataStoreManager.kt"
+                "TankDuplicateMedia.kt"
         )
         val operations = source(
             "app/src/main/java/com/aqua/aqualight/data/aquarium/" +
-                "DefaultAquariumTankOperations.kt"
+                "DefaultPlantPhotoOperations.kt"
         )
         val recovery = source(
             "app/src/main/java/com/aqua/aqualight/data/media/AppMediaRecoveryManager.kt"

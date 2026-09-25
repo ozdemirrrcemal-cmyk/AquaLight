@@ -124,7 +124,34 @@ class DefaultAquariumTankOperationsMapperTest {
 
     @Test
     fun `application draft maps nested values to persistence draft`() {
-        val source = AquariumTankDraft(
+        val source = applicationDraftFixture()
+
+        val mapped = source.toDataDraft()
+
+        assertEquals(source.name, mapped.name)
+        assertEquals(source.description, mapped.description)
+        assertEquals(source.photoUri, mapped.photoUri)
+        assertEquals(source.info, mapped.info)
+        assertEquals(source.setupDateEpochDay, mapped.setupDateEpochDay)
+        assertEquals(source.widthCm, mapped.widthCm)
+        assertEquals(source.lengthCm, mapped.lengthCm)
+        assertEquals(source.heightCm, mapped.heightCm)
+        assertEquals(source.sizeUnit, mapped.sizeUnit)
+        assertEquals(source.volumeUnit, mapped.volumeUnit)
+        assertEquals(source.tankType, mapped.tankType)
+        assertEquals(source.tankStyle, mapped.tankStyle)
+        assertEquals(21L, mapped.plants.single().id)
+        assertEquals(
+            "plant:micranthemum_tweediei_monte_carlo",
+            mapped.plants.single().catalogId
+        )
+        assertEquals("Monte Carlo", mapped.plants.single().plantName)
+        assertEquals("content://plant/21", mapped.plants.single().photoUri)
+        assertEquals(22L, mapped.materials.single().id)
+        assertEquals("Macro", mapped.materials.single().name)
+    }
+
+    private fun applicationDraftFixture() = AquariumTankDraft(
             name = "Planted",
             description = "High tech",
             photoUri = "content://draft",
@@ -160,31 +187,6 @@ class DefaultAquariumTankOperationsMapperTest {
             tankType = "Freshwater",
             tankStyle = "Nature"
         )
-
-        val mapped = source.toDataDraft()
-
-        assertEquals(source.name, mapped.name)
-        assertEquals(source.description, mapped.description)
-        assertEquals(source.photoUri, mapped.photoUri)
-        assertEquals(source.info, mapped.info)
-        assertEquals(source.setupDateEpochDay, mapped.setupDateEpochDay)
-        assertEquals(source.widthCm, mapped.widthCm)
-        assertEquals(source.lengthCm, mapped.lengthCm)
-        assertEquals(source.heightCm, mapped.heightCm)
-        assertEquals(source.sizeUnit, mapped.sizeUnit)
-        assertEquals(source.volumeUnit, mapped.volumeUnit)
-        assertEquals(source.tankType, mapped.tankType)
-        assertEquals(source.tankStyle, mapped.tankStyle)
-        assertEquals(21L, mapped.plants.single().id)
-        assertEquals(
-            "plant:micranthemum_tweediei_monte_carlo",
-            mapped.plants.single().catalogId
-        )
-        assertEquals("Monte Carlo", mapped.plants.single().plantName)
-        assertEquals("content://plant/21", mapped.plants.single().photoUri)
-        assertEquals(22L, mapped.materials.single().id)
-        assertEquals("Macro", mapped.materials.single().name)
-    }
 
     @Test
     fun `delete result keeps public stages and hides throwable details`() {

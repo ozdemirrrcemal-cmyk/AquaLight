@@ -3,6 +3,7 @@ package com.aqua.aqualight.data.aquarium
 import android.content.Context
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
 import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
+import com.aqua.aqualight.application.aquarium.AquariumPlantPhotoOperations
 import com.aqua.aqualight.application.aquarium.AquariumPlantTag
 import com.aqua.aqualight.application.aquarium.AquariumTankCleanupIssue
 import com.aqua.aqualight.application.aquarium.AquariumTankCleanupStage
@@ -37,7 +38,8 @@ class DefaultAquariumTankOperations(
     private val tankDataCleaner: OwnerTankDataCleaner,
     private val notificationPreferences: NotificationPreferenceUseCase,
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
-) : AquariumTankOperations {
+) : AquariumTankOperations,
+    AquariumPlantPhotoOperations by DefaultPlantPhotoOperations(context, tankStore, dispatcher) {
 
     private val appContext = context.applicationContext
     private val livestockSelectionValidator = LivestockSelectionValidator(appContext)
@@ -59,7 +61,7 @@ class DefaultAquariumTankOperations(
             } catch (error: Throwable) {
                 pendingMedia.forEach { uri ->
                     val scope = if (uri == draft.photoUri) AppMediaScope.TANK else AppMediaScope.PLANT
-                    rollbackUnreferencedCandidate(uri, ownerUid, scope)
+                    rollbackUnreferencedCandidate(appContext, tankStore, uri, ownerUid, scope)
                 }
                 throw error
             }
@@ -145,49 +147,6 @@ class DefaultAquariumTankOperations(
                 Unit
             }
         }
-
-    override suspend fun updatePlantPhoto(
-        tankId: Long,
-        plantId: Long,
-        photoUri: String?,
-        expectedOwnerUid: String
-    ): Unit = withCurrentOwnerScope { ownerUid ->
-        require(ownerUid == expectedOwnerUid) { "Plant photo selection belongs to another owner." }
-        withContext(NonCancellable + dispatcher) {
-            val previousPhoto = try {
-                tankStore.updatePlantPhoto(tankId, plantId, photoUri)
-            } catch (error: Throwable) {
-                rollbackUnreferencedCandidate(photoUri, ownerUid, AppMediaScope.PLANT)
-                throw error
-            }
-
-            runCatching { AppMediaStorage.commitPendingMedia(appContext, photoUri) }
-            runCatching {
-                AppMediaStorage.deleteAfterCommit(
-                    context = appContext,
-                    ownerUid = ownerUid,
-                    uriString = previousPhoto
-                )
-            }
-            Unit
-        }
-    }
-
-    private suspend fun rollbackUnreferencedCandidate(
-        uri: String?,
-        ownerUid: String,
-        scope: AppMediaScope
-    ) {
-        runCatching {
-            if (!AppMediaStorage.isPendingMediaForOwner(appContext, uri, ownerUid, scope)) {
-                return@runCatching
-            }
-            val referenced = tankStore.tanksSnapshotForOwner(ownerUid).any { tank ->
-                tank.photoUri == uri || tank.plants.any { plant -> plant.photoUri == uri }
-            }
-            if (!referenced) AppMediaStorage.rollbackPendingMedia(appContext, uri)
-        }
-    }
 
     override suspend fun updateTankName(tankId: Long, name: String) =
         tankStore.updateTankName(tankId, name)

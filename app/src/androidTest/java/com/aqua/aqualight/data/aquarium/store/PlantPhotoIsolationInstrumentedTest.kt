@@ -41,7 +41,7 @@ class PlantPhotoIsolationInstrumentedTest {
             val second = store.addTankFromDraft(draft)
             try {
                 val photo = pending(owner)
-                assertNull(store.updatePlantPhoto(first, 12L, photo))
+                assertNull(store.plantPhotos.updatePhoto(first, 12L, photo))
                 AppMediaStorage.commitPendingMedia(context, photo)
                 // A stale editor reorders plants after the photo was saved.
                 store.updateTankPlants(first, draft.plants.reversed())
@@ -50,7 +50,7 @@ class PlantPhotoIsolationInstrumentedTest {
                 assertEquals(photo, selected.getValue(12L).photoUri)
                 assertNull(selected.getValue(11L).photoUri)
                 assertTrue(tanks.getValue(second).plants.all { it.photoUri == null })
-                assertEquals(photo, store.updatePlantPhoto(first, 12L, null))
+                assertEquals(photo, store.plantPhotos.updatePhoto(first, 12L, null))
                 assertTrue(store.tanksSnapshotForOwner(owner).all { tank ->
                     tank.plants.all { it.photoUri == null }
                 })
@@ -71,20 +71,20 @@ class PlantPhotoIsolationInstrumentedTest {
         UserDataScope.withOwnerUid(owner) {
             val tankId = store.addTankFromDraft(draft())
             try {
-                assertTrue(runCatching { store.updatePlantPhoto(tankId, 11L, foreign) }.isFailure)
-                assertTrue(runCatching { store.updatePlantPhoto(tankId, 11L, wrongScope) }.isFailure)
+                assertTrue(runCatching { store.plantPhotos.updatePhoto(tankId, 11L, foreign) }.isFailure)
+                assertTrue(runCatching { store.plantPhotos.updatePhoto(tankId, 11L, wrongScope) }.isFailure)
                 val own = pending(owner)
-                assertTrue(runCatching { store.updatePlantPhoto(tankId, 999L, own) }.isFailure)
+                assertTrue(runCatching { store.plantPhotos.updatePhoto(tankId, 999L, own) }.isFailure)
                 assertTrue(AppMediaStorage.isAppOwned(context, foreign))
                 assertTrue(AppMediaStorage.isAppOwned(context, own))
-                store.updatePlantPhoto(tankId, 11L, own)
+                store.plantPhotos.updatePhoto(tankId, 11L, own)
                 // Even before the pending journal is committed, a second record cannot share it.
-                assertTrue(runCatching { store.updatePlantPhoto(tankId, 12L, own) }.isFailure)
+                assertTrue(runCatching { store.plantPhotos.updatePhoto(tankId, 12L, own) }.isFailure)
                 AppMediaStorage.commitPendingMedia(context, own)
-                assertTrue(runCatching { store.updatePlantPhoto(tankId, 12L, own) }.isFailure)
-                assertNull(store.updatePlantPhoto(tankId, 11L, own))
+                assertTrue(runCatching { store.plantPhotos.updatePhoto(tankId, 12L, own) }.isFailure)
+                assertNull(store.plantPhotos.updatePhoto(tankId, 11L, own))
                 UserDataScope.withOwnerUid(other) {
-                    assertTrue(runCatching { store.updatePlantPhoto(tankId, 11L, foreign) }.isFailure)
+                    assertTrue(runCatching { store.plantPhotos.updatePhoto(tankId, 11L, foreign) }.isFailure)
                 }
                 val plants = store.tanksSnapshotForOwner(owner).single().plants
                 assertEquals(own, plants.first { it.id == 11L }.photoUri)
@@ -114,7 +114,7 @@ class PlantPhotoIsolationInstrumentedTest {
                 }.isFailure)
                 assertTrue(AppMediaStorage.isAppOwned(context, foreign))
                 val first = pending(owner)
-                store.updatePlantPhoto(tankId, 11L, first)
+                store.plantPhotos.updatePhoto(tankId, 11L, first)
                 assertTrue(runCatching {
                     operations.updatePlantPhoto(tankId, 12L, first, owner)
                 }.isFailure)

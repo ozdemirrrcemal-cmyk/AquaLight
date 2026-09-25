@@ -80,14 +80,7 @@ class UserDataCleaner private constructor(
 
         val aquariumPhotoUris = runCatching {
             tankDataStoreManager.tanksSnapshotForOwner(targetOwnerUid)
-                .flatMap { tank ->
-                    buildList {
-                        tank.photoUri?.takeIf(String::isNotBlank)?.let(::add)
-                        tank.plants
-                            .mapNotNull { plant -> plant.photoUri?.takeIf(String::isNotBlank) }
-                            .forEach(::add)
-                    }
-                }
+                .flatMap { tank -> tank.photoUris() }
         }.getOrElse { error ->
             recordIssue(Step.AQUARIUM_TANKS, error)
             emptyList()
@@ -312,3 +305,9 @@ class UserDataCleaner private constructor(
         }
     }
 }
+
+private fun com.aqua.aqualight.data.aquarium.model.SavedAquariumTank.photoUris(): List<String> =
+    buildList {
+        photoUri?.takeIf(String::isNotBlank)?.let(::add)
+        plants.mapNotNull { plant -> plant.photoUri?.takeIf(String::isNotBlank) }.forEach(::add)
+    }

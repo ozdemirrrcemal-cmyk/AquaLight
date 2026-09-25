@@ -147,21 +147,21 @@ object AppMediaStorage {
         }
     }
 
-    /** Exact journal ownership, scope and canonical URI are required before attaching new media. */
-    fun isPendingMediaForOwner(
+    /** Resolves exact journal ownership only for a canonical candidate in the requested scope. */
+    fun pendingMediaOwner(
         context: Context,
         uriString: String?,
-        ownerUid: String,
-        scope: AppMediaScope
-    ): Boolean {
-        if (uriString.isNullOrBlank() || ownerUid.isBlank()) return false
-        val file = resolveInternalMediaFile(context, uriString, scope) ?: return false
-        if (!file.isFile || file.length() <= 0L) return false
-        if (runCatching { toContentUri(context, file).toString() }.getOrNull() != uriString) {
-            return false
-        }
-        return pendingEntries(context).any { entry ->
-            entry.uri == uriString && entry.ownerUid == ownerUid
+        scope: AppMediaScope? = null
+    ): String? {
+        val file = resolveInternalMediaFile(context, uriString, scope)
+        return file?.takeIf { it.isFile && it.length() > 0L }?.let { candidate ->
+            val canonicalUri = runCatching { toContentUri(context, candidate).toString() }.getOrNull()
+            if (canonicalUri == uriString) {
+                pendingEntries(context).filter { it.uri == uriString }
+                    .map { it.ownerUid }.distinct().singleOrNull()
+            } else {
+                null
+            }
         }
     }
 
@@ -183,7 +183,8 @@ object AppMediaStorage {
         uriString: String?,
         deleteFile: (File) -> Boolean
     ): Boolean {
-        if (uriString.isNullOrBlank() || !isPending(context, uriString)) return false
+        val pending = pendingEntries(context).any { entry -> entry.uri == uriString }
+        if (uriString.isNullOrBlank() || !pending) return false
         val file = resolveInternalMediaFile(context, uriString) ?: return false
         val deleted = runCatching { !file.exists() || deleteFile(file) }.getOrDefault(false)
         if (deleted) removePendingEntries(context, uriString)
@@ -576,9 +577,6 @@ object AppMediaStorage {
                 )
             }.getOrNull()
         }
-
-    private fun isPending(context: Context, uriString: String): Boolean =
-        pendingEntries(context).any { entry -> entry.uri == uriString }
 
     private fun removePendingEntries(context: Context, uriString: String?) {
         if (uriString.isNullOrBlank()) return

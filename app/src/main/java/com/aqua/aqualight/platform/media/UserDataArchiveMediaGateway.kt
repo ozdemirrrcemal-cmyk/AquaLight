@@ -23,49 +23,8 @@ internal class UserDataArchiveMediaGateway(
 ) {
     private val appContext = context.applicationContext
 
-    fun snapshotTankPhoto(
-        uriString: String?,
-        destination: File
-    ): File? = snapshotPhoto(uriString, destination, AppMediaScope.TANK)
-
-    fun snapshotPlantPhoto(
-        uriString: String?,
-        destination: File
-    ): File? = snapshotPhoto(uriString, destination, AppMediaScope.PLANT)
-
-    fun canSnapshotTankPhoto(uriString: String?): Boolean =
-        resolveSupportedPhoto(uriString, AppMediaScope.TANK) != null
-
-    fun canSnapshotPlantPhoto(uriString: String?): Boolean =
-        resolveSupportedPhoto(uriString, AppMediaScope.PLANT) != null
-
-    fun fingerprintTankPhoto(uriString: String?): UserDataArchiveMediaFingerprint? =
-        fingerprintPhoto(uriString, AppMediaScope.TANK)
-
-    fun fingerprintPlantPhoto(uriString: String?): UserDataArchiveMediaFingerprint? =
-        fingerprintPhoto(uriString, AppMediaScope.PLANT)
-
-    fun prepareRestoredTankPhoto(
-        ownerUid: String,
-        ownerToken: String,
-        source: File
-    ): String = prepareRestoredPhoto(
-        ownerUid = ownerUid,
-        ownerToken = ownerToken,
-        source = source,
-        scope = AppMediaScope.TANK
-    )
-
-    fun prepareRestoredPlantPhoto(
-        ownerUid: String,
-        ownerToken: String,
-        source: File
-    ): String = prepareRestoredPhoto(
-        ownerUid = ownerUid,
-        ownerToken = ownerToken,
-        source = source,
-        scope = AppMediaScope.PLANT
-    )
+    fun canSnapshotPhoto(uriString: String?, scope: AppMediaScope = AppMediaScope.TANK): Boolean =
+        resolveSupportedPhoto(uriString, scope) != null
 
     fun commit(uriString: String?) {
         AppMediaStorage.commitPendingMedia(appContext, uriString)
@@ -75,10 +34,10 @@ internal class UserDataArchiveMediaGateway(
         AppMediaStorage.rollbackPendingMedia(appContext, uriString)
     }
 
-    private fun snapshotPhoto(
+    fun snapshotPhoto(
         uriString: String?,
         destination: File,
-        scope: AppMediaScope
+        scope: AppMediaScope = AppMediaScope.TANK
     ): File? {
         val source = resolveSupportedPhoto(uriString, scope) ?: return null
         destination.parentFile?.let { parent ->
@@ -106,9 +65,9 @@ internal class UserDataArchiveMediaGateway(
         }
     }
 
-    private fun fingerprintPhoto(
+    fun fingerprintPhoto(
         uriString: String?,
-        scope: AppMediaScope
+        scope: AppMediaScope = AppMediaScope.TANK
     ): UserDataArchiveMediaFingerprint? {
         val source = resolveSupportedPhoto(uriString, scope) ?: return null
         return UserDataArchiveMediaFingerprint(
@@ -117,11 +76,11 @@ internal class UserDataArchiveMediaGateway(
         )
     }
 
-    private fun prepareRestoredPhoto(
+    fun prepareRestoredPhoto(
         ownerUid: String,
         ownerToken: String,
         source: File,
-        scope: AppMediaScope
+        scope: AppMediaScope = AppMediaScope.TANK
     ): String {
         require(ownerUid.isNotBlank()) { "ownerUid must not be blank" }
         require(
