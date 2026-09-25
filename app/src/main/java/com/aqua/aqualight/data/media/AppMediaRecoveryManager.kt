@@ -33,8 +33,12 @@ class AppMediaRecoveryManager(
                 .takeIf(String::isNotBlank)
                 ?.let(::add)
             tanks.tanksSnapshotForOwner(normalizedOwnerUid)
-                .mapNotNull { tank -> tank.photoUri?.takeIf(String::isNotBlank) }
-                .forEach(::add)
+                .forEach { tank ->
+                    tank.photoUri?.takeIf(String::isNotBlank)?.let(::add)
+                    tank.plants
+                        .mapNotNull { plant -> plant.photoUri?.takeIf(String::isNotBlank) }
+                        .forEach(::add)
+                }
         }
 
         AppMediaStorage.reconcilePendingMedia(
