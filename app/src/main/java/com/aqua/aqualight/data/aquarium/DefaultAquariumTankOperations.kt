@@ -217,6 +217,11 @@ class DefaultAquariumTankOperations(
                 tankId,
                 plants.map(AquariumPlantTag::toDataTag)
             )
+            plants
+                .mapNotNull { plant -> plant.photoUri?.takeIf(String::isNotBlank) }
+                .forEach { uri ->
+                    runCatching { AppMediaStorage.commitPendingMedia(appContext, uri) }
+                }
             supersededPhotos.forEach { uri ->
                 runCatching {
                     AppMediaStorage.deleteAfterCommit(
