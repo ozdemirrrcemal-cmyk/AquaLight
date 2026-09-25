@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tank_health_analysis_input_ph" translatable="false">6.8</string>
+    <string name="tank_health_analysis_input_no3" translatable="false">18</string>
+    <string name="tank_health_analysis_input_no2" translatable="false">0</string>
+    <string name="tank_health_analysis_input_nh3_nh4" translatable="false">0</string>
+    <string name="tank_health_analysis_input_gh" translatable="false">6</string>
+    <string name="tank_health_analysis_input_kh" translatable="false">4</string>
+    <string name="tank_health_analysis_input_po4" translatable="false">0.7</string>
+    <string name="tank_health_analysis_unit_mg_l" translatable="false">mg/L</string>
+    <string name="tank_health_analysis_unit_dgh" translatable="false">dGH</string>
+    <string name="tank_health_analysis_unit_dkh" translatable="false">dKH</string>
+</resources>
