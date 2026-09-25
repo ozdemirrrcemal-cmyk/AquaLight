@@ -7,8 +7,10 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentTankHealthAnalysisDetailBinding
+import com.aqua.aqualight.ui.common.dialog.ConfirmDialogFragment
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.utils.DialogType
 
 class TankHealthAnalysisDetailFragment :
     Fragment(R.layout.fragment_tank_health_analysis_detail) {
@@ -47,13 +49,13 @@ class TankHealthAnalysisDetailFragment :
     }
 
     private fun setupDeleteResult() {
-        parentFragmentManager.setFragmentResultListener(
-            TankHealthAnalysisDeleteDialogFragment.REQUEST_KEY,
+        childFragmentManager.setFragmentResultListener(
+            DELETE_REQUEST_KEY,
             viewLifecycleOwner
         ) { _, result ->
             if (
-                result.getString(TankHealthAnalysisDeleteDialogFragment.RESULT_KEY) ==
-                TankHealthAnalysisDeleteDialogFragment.RESULT_CONFIRM
+                result.getString(ConfirmDialogFragment.RESULT_KEY) ==
+                ConfirmDialogFragment.RESULT_CONFIRM
             ) {
                 // Persistence is intentionally deferred to the data-integration stage.
                 findNavController().navigateUp()
@@ -67,12 +69,33 @@ class TankHealthAnalysisDetailFragment :
         }
 
         binding.btnDeleteRecord.setOnClickListener {
-            TankHealthAnalysisDeleteDialogFragment.show(parentFragmentManager)
+            ConfirmDialogFragment.show(
+                fragmentManager = childFragmentManager,
+                request = ConfirmDialogFragment.Request(
+                    title = getString(R.string.tank_health_analysis_delete_title),
+                    message = getString(R.string.tank_health_analysis_delete_message),
+                    confirmText = getString(R.string.tank_health_analysis_delete_confirm),
+                    cancelText = getString(R.string.tank_health_analysis_delete_cancel),
+                    presentation = ConfirmDialogFragment.Presentation(
+                        type = DialogType.ERROR,
+                        destructive = true
+                    ),
+                    resultTarget = ConfirmDialogFragment.ResultTarget(
+                        requestKey = DELETE_REQUEST_KEY,
+                        actionId = DELETE_ACTION_ID
+                    )
+                )
+            )
         }
     }
 
     override fun onDestroyView() {
         _binding = null
         super.onDestroyView()
+    }
+
+    private companion object {
+        const val DELETE_REQUEST_KEY = "tank_health_analysis_delete_request"
+        const val DELETE_ACTION_ID = "delete_analysis_record"
     }
 }
