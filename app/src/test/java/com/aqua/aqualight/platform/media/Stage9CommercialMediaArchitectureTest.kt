@@ -35,24 +35,34 @@ class Stage9CommercialMediaArchitectureTest {
     fun tankDuplicationPerformsNoFilesystemSideEffectInsideDataStoreTransform() {
         val manager = source(
             "app/src/main/java/com/aqua/aqualight/data/aquarium/store/" +
-                "TankDuplicateMedia.kt"
+                "AquariumTankDataStoreManager.kt"
+        )
+        val media = source(
+            "app/src/main/java/com/aqua/aqualight/data/aquarium/store/TankDuplicateMedia.kt"
         )
         val duplicate = manager.substringBetween(
             "suspend fun duplicateTank(",
             "suspend fun deleteTanks("
         )
         val firstUpdate = duplicate.indexOf("aquariumTanksDataStore.updateData")
-        val copy = duplicate.indexOf("AppMediaStorage.copyInternalMedia")
+        val copy = duplicate.indexOf("val media = TankDuplicateMedia(")
 
         assertTrue("Duplicate photo must be prepared before DataStore.updateData.", copy >= 0)
         assertTrue("DataStore update must exist.", firstUpdate > copy)
-        val transform = duplicate.substring(firstUpdate)
+        val transform = duplicate.substringBetween("aquariumTanksDataStore.updateData", "} catch")
         assertFalse(
             "DataStore transform must not perform media copy.",
-            transform.contains("copyInternalMedia")
+            transform.contains("AppMediaStorage") || transform.contains("TankDuplicateMedia(")
         )
-        assertTrue(duplicate.contains("rollbackPendingMedia"))
-        assertTrue(duplicate.contains("sourceTank.photoUri == sourcePhotoAtPreparation"))
+        assertTrue(transform.contains("media.applyTo(sourceTank)"))
+        val apply = media.substringBetween("fun applyTo(", "fun rollback(")
+        assertFalse("Applying prepared media must remain pure.", apply.contains("AppMediaStorage"))
+        assertFalse("Applying prepared media must not copy files.", apply.contains("copy("))
+        assertTrue(media.contains("AppMediaStorage.copyInternalMedia"))
+        assertTrue(duplicate.contains("media.rollback()"))
+        assertTrue(media.contains("rollbackPendingMedia"))
+        assertTrue(apply.contains("source.photoUri == sourcePhotoAtPreparation"))
+        assertTrue(apply.contains("sourcePlantPhotosAtPreparation"))
     }
 
     @Test
