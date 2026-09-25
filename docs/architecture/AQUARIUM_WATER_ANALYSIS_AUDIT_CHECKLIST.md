@@ -1,0 +1,387 @@
+# AquaLight — Su Analizi Sözleşmesi İncelemesi ve Uygulama Checklist’i
+
+İnceleme tarihi: 26 Eylül 2026, Europe/Istanbul.
+
+Repo: `ozdemirrrcemal-cmyk/AquaLight` · Branch: `feat/cooler-hardware-catalog`.
+
+İncelenen güncel branch snapshot’ı: `ca996f241470117a5a797733a13e4c69ffab176c`.
+
+Ana belge: `docs/architecture/AQUARIUM_WATER_ANALYSIS_CONTRACT.md` — 47 bölüm, 1566 satır.
+
+Bu dosya, mevcut sözleşmenin kodla karşılaştırılmış incelemesi ve önerilen uygulama ekidir. İlk inceleme sırasında repo dosyaları değiştirilmedi. Checklist, kullanıcının isteğiyle `feat/water-analysis-foundation` çalışma branch'ine eklenmiştir. Aşağıdaki yeni modeller ve dosya adları öneridir; onaylanmış karar veya uygulanmış kod kabul edilmemelidir. Açık checklist maddeleri geliştirme sırasında test/kanıt ile kapatılmalıdır.
+
+## Birlikte karar verme ve uygulama kuralı
+
+- Maddeler sırayla, kullanıcıyla birlikte ele alınır. Her maddede neyin neden yapılacağı, seçenekler, öneri ve önemli etkiler sunulur; kullanıcı karar vermeden o maddenin çözümü uygulanmaz.
+- Araştırma veya veri toplama gereken maddelerde kaynakların güvenilirliği, kapsamı, tarihi, birimleri ve birbiriyle tutarlılığı doğrulanır. Doğrulanamayan bilgi açıkça belirsiz bırakılır.
+- Bir madde birden fazla bağımsız karar içeriyorsa kararlar tek tek alınır. Özellikle W0.1 altındaki K01–K18 topluca onaylanmış sayılmaz.
+- Verilen karar ilgili sözleşme bölümüne işlenir; uygulama ve gerekli doğrulama tamamlandıktan sonra checklist maddesi kapatılır. Bir sonraki bağımsız karar kullanıcıya sunulur.
+- Bu dosyanın branch'e eklenmesi mimari seçeneklerin veya bilimsel eşiklerin onaylandığı anlamına gelmez. İlk karar noktası: W0.1 / K01 — klasör yapısı ve katman sahipliği.
+
+## 1. Sonuç
+
+**Sözleşmenin mimari yönü doğru; mevcut hali uygulamaya başlamak için bütün kararları dondurmuş değil.** Bölüm 45’teki temel sıra korunmalı; önüne kararların kesinleştirildiği bir hazırlık aşaması eklenmeli. Testler yalnız son aşamada yazılmamalı, her aşamanın kabul şartı olmalı.
+
+Korunacak ilkeler: onaylı Su Kalitesi tasarımı; uygulama sınırları; owner/tank izolasyonu; deterministik motor; mevcut canlı karşılaştırıcısının yeniden kullanılması; doğrulanmış bitki verisi; eksik veriyi normal saymama; tarihsel assessment snapshot’ı; tank/hesap silme bütünlüğü; ortak bağlam ve ayrı sağlık motorları.
+
+**Uygulama sırası:** kararlar → ortak modeller/katalog sınırları → bağlam ve sensör → saf analiz motoru → kalıcılık → silme/hesap/restore bütünlüğü → composition → gerçek UI verisi ve fixture temizliği → kabul testleri → Yosun Kontrolü → Bitki Sağlığı → Canlı Sağlığı.
+
+“Hiç eksik yok” onayı ancak bu maddeler uygulanıp doğrulandıktan sonra verilebilir. Bu inceleme, belirtilen commit’in kaynak kodu ve sözleşmesi içindir; cihazdaki davranışın tamamının doğrulandığı anlamına gelmez.
+
+## 2. Doğrulanan mevcut durum
+
+| Alan | Kodda doğrulanan durum | Anlamı |
+| --- | --- | --- |
+| Bitki kataloğu | 271 kayıt; 182 VERIFIED/ready, 89 PARTIAL; 240 kayıtta verifiedCareFields; 124 kayıt %100, 185 kayıt en az %90 tamamlanmış | Sözleşmedeki sayılar doğru. Alan doluluğu tek başına bilimsel doğrulama değildir. |
+| Canlı kataloğu | 687 benzersiz kayıt; sıcaklık 687, pH 687, NO3 686, GH 343, KH 167, PO4 147, TDS 34, SG 348, alkalinite 280, Ca 157, Mg 157, PAR 113, akış 121 | Kapsam sayıları doğru; eksik alanlar motor sonucunda korunmalı. |
+| Canlı güven bilgisi | 687 kaydın tamamı SOFT; confidence: 660 MEDIUM, 27 LOW–MEDIUM | Katalog aralıklarını otomatik HARD/CRITICAL sınıflandırmaya çevirmek için tanımlı politika yok. |
+| Mevcut modeller | AquariumWaterParameter, AquariumWaterSnapshot, LivestockWaterRequirements ve LivestockWaterCompatibilityEvaluator var | İkinci bağımsız parametre/range sistemi kurulması önlenmeli. NO2 ve ammonia mevcut enum/snapshot’ta yok. |
+| Yeni altyapı | WaterAnalysisOperations, WaterQualityAssessmentEngine, AquariumHealthContext, PlantCareCatalogOperations, TankWaterTemperatureOperations isimleri main/test kaynaklarında bulunmadı | Sözleşme hedefi henüz çalışan altyapı değil. |
+| Ekleme | Save listener boş; başlangıç tarihi 26.09.2026 14:10; sensör modu başlangıçta seçili | Gerçek kalıcılık ve sensör kaynağı henüz bağlanmamış. |
+| Geçmiş/detay | 12 fixture kayıt; detay rotasında yalnız tankId; silme onayı sadece geri gidiyor | analysisId ve gerçek store sorgusu şart. |
+| Diğer sağlık ekranları | PlantHealthFragment ve LivestockHealthFragment placeholder | Sonraki tasarım aşamaları için mevcut giriş noktaları var. |
+
+Kaynaklar: [S1], [S2], [S3], [S4], [S5], [S6], [S7], [S8].
+
+## 3. Sözleşmeye eklenmesi veya kesinleştirilmesi gereken noktalar
+
+Burada “kritik”, ilgili katmanı uygulamadan önce kararı verilmesi gereken konu anlamındadır.
+
+| No | Öncelik | Bulgu / açık karar | Gerekli ek |
+| --- | --- | --- | --- |
+| K01 | Kritik | §4/§30 sorumlulukları tarif ediyor; gerçek paket/dosya yerleşimi yok. Repo’da ayrı domain kökü bulunmuyor. | Bölüm 4’teki paket haritasını ve import kurallarını kabul et; bu iş için yeni Gradle/domain katmanı açma. |
+| K02 | Kritik | §45 yeni WaterParameter öneriyor; AquariumWaterParameter zaten var. | Mevcut modeli kontrollü genişletme veya birebir testli adapter kararı; iki farklı birim/parametre gerçeği oluşmasın. |
+| K03 | Kritik | §6 ppm/mg/L ve ammonia kararlarını sonraya bırakıyor. | NO3/NO3-N, NO2/NO2-N, PO4/P temeli; ammonia türü; tatlı/deniz suyu politikası; desteklenmeyen kit sonucu davranışı kesinleşsin. Yalnız etiketi değiştirmek yeterli değil. |
+| K04 | Kritik | §14 yön, tehlike, çatışma ve veri eksikliğini tek örnek enum’da topluyor. | Şiddet, LOW/HIGH yönü, veri yeterliliği ve conflict birlikte temsil edilsin. CRITICAL + missingData + conflict aynı sonuçta kaybolmadan saklansın. |
+| K05 | Kritik | Canlı parser’ı `<` ile `≤`, `>` ile `≥` ayrımını kaybediyor; contains sınırları dahil sayıyor. Yaklaşık tek değer de eşitlik aralığına dönüşüyor. | Mevcut parser/evaluator üzerinde sınır semantiği ve approximate/SOFT politikası kesinleşsin. Örneğin `<20` sınırında 20’nin mevcut sonuçta uyumlu sayılması testle yakalansın. Ayrı evaluator yazılmasın. |
+| K06 | Kritik | AquariumPlantCatalog JSON okuyucusu ui/.../catalog/plant altında. | Parser/cache data/aquarium/catalog/plant altına taşınsın; picker ve motor aynı katalog kaynağını kullansın; application/data → UI import’u oluşmasın. |
+| K07 | Kritik | Advisor çıktısı bütün gereksinim aralıklarını sağlamıyor; ölçüm yokken conflict hesaplanmalı. | Mevcut LivestockCatalogOperations üzerinden typed requirements ve sürüm çözümlemesi bağlamda sağlansın; comparison aynı evaluator’da kalsın. Catalog I/O saf engine dışında olsun. |
+| K08 | Kritik | §7/§27 tazeliği istiyor; kart özeti sample zamanı taşımıyor. Ayrı telemetri uptime, sequence ve timeGeneration taşıyor. | Saat alanı, cihaz/runtime kimliği, tazelik süresi, yeniden başlama, bağlantı ve atama doğrulaması; birden çok sensör seçimi; kaydetme anında yeniden kontrol tanımlansın. |
+| K09 | Kritik | observedAt/createdAt ayrımı var; geriye dönük girişin sensör ve bağlam anlamı yok. | Bugünün sensörü geçmiş ölçüme eklenmesin. Geçmiş bağlam yoksa bugünkü bağlamla değerlendirme açıkça işaretlensin; tarihsel bağlam varmış gibi davranılmasın. |
+| K10 | Kritik | §21 silme snapshot/rollback içeriyor; yeni store’un eşzamanlı create/delete bariyeri tarif edilmiyor. | Water Analysis yazmaları mevcut bütünlük journal/guard mekanizmasına katılsın; tank kontrolü ile commit arasındaki yarış kapatılsın. |
+| K11 | Kritik | §24 zorunlu alanları, giriş hassasiyetini ve zaman politikasını kesinleştirmiyor. | Boş analiz, yalnız bazı ölçümler, gelecek tarih, timezone, precision, çok büyük değer, ölçüm limiti altı sonuçlar için açık politika. Boş ile ölçülmüş sıfır farklı olmalı. |
+| K12 | Yüksek | §28 ağırlıkla ölçüm kartlarını kapsıyor; ana ekran ve tank giriş kartındaki başka fixture’lar kapsam dışı kalıyor. | Bakım yaşı/durumu, cihaz adı/bağlantısı, sistem özeti, canlı sayısı, geçmiş sayısı, tüm durum renkleri, giriş kartındaki 82 skoru dahil edilsin. |
+| K13 | Yüksek | §28 “approved empty state” diyor; mevcut sağlık akışında buna karşılık gelen dinamik veri durumu akışı yok. | Loading, NoAnalysis, Partial, Error, NotFound, SensorUnavailable durumları onaylı bileşenlerle tanımlansın; hata boş listeye dönüştürülmesin. |
+| K14 | Yüksek | Tek ViewModel’in edit/history/detail/dashboard kapsamı, state restorasyonu ve write retry semantiği açık değil. | Route/owner kapsamı, SavedStateHandle, tekrar tıklama, commit sonrası cevap kaybı, iptal ve süreç ölümü davranışı belirlenmeli. |
+| K15 | Yüksek | Ayrı proto öneriliyor; büyüyen geçmiş ve rollback snapshot kapasitesi tanımlanmıyor. | Kayıt/byte sınırları ve performans hedefleri; geçmiş sorgulama; retention; büyük snapshot’ların mevcut SharedPreferences journal’a etkisi için karar ve test. |
+| K16 | Yüksek | §19 snapshot deniyor; silinen canlı/bitkinin açıklaması için saklanacak minimum alan seti açık değil. | Yerel varlık kimliği, catalogId, tarihsel ad/özellik, kullanılan aralık, kanıt/sürüm, bağlamın alınma zamanı ve değerlendirme zamanı sabitlensin. |
+| K17 | Yüksek | §23 backup dahil/haricini açık bırakıyor; duplicate davranışı yok. | Kullanıcı arşivi kararı depolama öncesinde verilsin; Android otomatik backup politikası ayrı kalsın. Tank duplicate v1’de analiz geçmişini kopyalamasın önerisi açıkça kayda geçsin. |
+| K18 | Yüksek | §11 çoğunlukla canlı-canlı çatışması; §12 yalnız bitki uygunluğu. | Bitki-bitki ve bitki-canlı uyumsuzluğu, açık uçlar, eksik alanlar ve bağlama özgü kuralların önceliği de tanımlansın. |
+
+Kaynaklar: [S1], [S2], [S5], [S9], [S10], [S11], [S12], [S13], [S14], [S15].
+
+## 4. Önerilen klasörler ve katman sahipliği
+
+Aşağıdaki yollar `app/src/main/java/com/aqua/aqualight/` tabanına göredir. Yeni adlar hedef yerleşimdir. Mevcut Fragment ve XML dosyalarını sırf klasör düzeni için taşımak gerekmiyor.
+
+| Paket / konum | Sahibi olduğu iş | Örnek dosyalar |
+| --- | --- | --- |
+| application/aquarium/health/context/ | Dört motorun ortak, immutable bağlamı; tipli çözümleme sonuçları | AquariumHealthContext, AquariumHealthContextProvider, ResolvedPlantCare, ResolvedLivestockCare, ContextCompleteness |
+| application/aquarium/health/water/model/ | Kanonik giriş, ölçüm, sonuç ve provenance | WaterAnalysisInput, WaterAnalysisRecord, WaterQualityAssessment, MeasurementProvenance, WaterAnalysisFailure |
+| application/aquarium/health/water/policy/ | Birim, girdi, tarih, şiddet, freshness ve kanıt politikaları | WaterInputPolicy, WaterUnitPolicy, AssessmentAggregationPolicy, SensorFreshnessPolicy |
+| application/aquarium/health/water/engine/ | I/O yapmayan deterministik hesaplama | WaterQualityAssessmentEngine, RequirementIntersection, WaterRecommendationPolicy |
+| application/aquarium/health/water/ | UI ve diğer motorların tükettiği operations | WaterAnalysisOperations |
+| application/aquarium/health/temperature/ | Tanka ait sıcaklık okumasının tipli sınırı | TankWaterTemperatureOperations, TankTemperatureState |
+| application/aquarium/catalog/plant/ | Android/JSON içermeyen bitki bakım katalog sınırı | PlantCareCatalogOperations |
+| data/aquarium/catalog/plant/ | Taşınan tek parser/cache; katalog revision üretimi | DefaultPlantCareCatalogOperations, PlantCatalogParser |
+| data/aquarium/catalog/livestock/ | Var olan katalog/advisor implementasyonları ve gerekli küçük düzeltmeler | DefaultLivestockWaterAdvisor, LivestockWaterRequirementParser; mevcut dosyalar korunur |
+| data/aquarium/health/context/ | Tank, katalog ve donanım girdilerinden tek snapshot oluşturma | DefaultAquariumHealthContextProvider |
+| data/aquarium/health/temperature/ | Atama + Cooling telemetri adaptasyonu | DefaultTankWaterTemperatureOperations |
+| data/aquarium/health/water/ | Owner kapsamı, validasyon, değerlendirme ve commit orkestrasyonu | DefaultWaterAnalysisOperations |
+| data/aquarium/health/water/store/ | Dedicated storage, serializer, mapping, sorgu ve write guard | WaterAnalysisStore, WaterAnalysisDataStoreManager, WaterAnalysesSerializer, WaterAnalysisStoreRules, WaterAnalysisProtoMapper |
+| data/aquarium/health/water/rules/ | Kanıtlı kural kataloğunu yükleme/doğrulama; engine’e typed kurallar verme | PackagedWaterChemistryRuleCatalog |
+| ui/tabs/aquarium/detail/health/presentation/water/ | Route state, ViewModel, input/UI mapper | WaterAnalysisViewModel, WaterAnalysisUiState, WaterAnalysisUiMapper, WaterAnalysisInputParser |
+| ui/tabs/aquarium/detail/health/ | Mevcut ekran ve adapter’ların gerçek UiState render etmesi | TankHealthFragment, TankHealthContentAdapter, TankHealthAnalysis* |
+| composition/ | Üretim bağımlılıklarını oluşturma ve committed owner graph’a bağlama | OwnerDependencyGraph, OwnerViewModelFactory, gerekli AppContainer bağlantıları |
+| data/aquarium/delete/ ve data/care/integrity/ | Var olan deletion/journal/recovery’nin genişletilmesi | OwnerTankDataCleaner, TankCareIntegrityJournal, TankCareIntegrityRecovery, write guard |
+| data/user/ ve data/user/archive/ | Hesap temizleme, kullanıcı arşivi ve restore | UserDataCleaner, mevcut archive/restore sınıfları |
+
+Diğer dosyalar:
+
+- `app/src/main/proto/water_analyses.proto`: storage modeli; opsiyonel sayıların presence bilgisini korur.
+- `app/src/main/assets/water_chemistry_rules.json`: kaynak/versiyon içeren kural verisi seçilirse hedef dosya; sayılar UI’a yazılmaz.
+- `app/src/test/java/com/aqua/aqualight/...`: model/engine/policy/store/adapter/ViewModel paketlerine paralel testler.
+- `app/src/androidTest/...`: süreç ölümü, persistence, owner değişimi ve UI entegrasyonu.
+- `app/src/releaseSmoke/...`: üretimle aynı application binding davranışı.
+- `tools/water_analysis_boundary_guard.py`: yeni sınırları denetleyen kontrol önerisi; CI zincirine eklenir.
+- `docs/architecture/AQUARIUM_WATER_ANALYSIS_CONTRACT.md`: aşağıdaki kesin kararlar ana sözleşmeye işlenir.
+
+**Bağımlılık kuralları:** UI yalnız application modelleri/operations kullanır. application; Android, JSON parser, data, Firebase, UI ve kaynak R sınıfını bilmez. data; application sınırlarını uygular. composition somut bağımlılıkları kurar. Engine’e hazır ölçüm, bağlam, kurallar ve açık zaman girdisi verilir; engine owner çözmez, store okumaz, sensör sorgulamaz.
+
+WaterAnalysisRecord içindeki kalıcı owner kimliğinin UI’a açılması gerekmez. UI DTO’su ownerUid almaz/göndermez. Paket değişikliği mevcut `AquariumPlantCare`, `AquariumWaterSnapshot` veya evaluator’ın gereksiz yere kopyalanması anlamına gelmez.
+
+## 5. Sıralı uygulama checklist’i
+
+### W0 — Sözleşme kararlarını kapat
+
+- [ ] W0.1 K01–K18 kararlarını ilgili sözleşme bölümlerine işle; “recommended”, “may choose”, “exact names later” kalan üretim davranışlarını kesinleştir.
+- [ ] W0.2 Sekiz parametre için canonical unit, kimyasal temel, nullable/required, hassasiyet ve fiziksel giriş sınırı tablosunu tamamla. Tehlikeli ama fiziksel olarak geçerli ölçümleri kabul et.
+- [ ] W0.3 NH3/NH4 alanının desteklediği test sonucunu açık adlandır; kullanıcı hangi test sonucunu gireceğini anlayabilsin. Desteklenmeyen semantik için sessiz dönüşüm kullanma.
+- [ ] W0.4 Kanıtlı chemistry rule kataloğuna kural kimliği, kaynak, kapsam, sayı/birim, sınır dahil/harici bilgisi, önkoşul ve revision ekle. Bu rapor herhangi bir sayısal güvenlik eşiğini bilimsel olarak onaylamaz.
+- [ ] W0.5 Freshwater/shrimp/planted/marine/reef eşlemesini AquariumTankTaxonomy sabitlerine bağla. Tank sınıfı ve kayıtlı canlıların waterGroup bilgisi çelişirse açık incompatibility üret.
+- [ ] W0.6 Deniz suyu değerlendirmesinin sekiz alanla hangi kapsamı karşıladığını tanımla; eksik salinity/SG gibi gerekli bağlam olmadan “tam güvenli reef” sonucu verme. Yeni parametre UI’ı bu işte kendiliğinden açılmasın.
+- [ ] W0.7 Severity, direction, completeness, conflict öncelik matrisini dondur. Eksik ölçüm kritik sonucu gizleyemesin; tüm bilgiler eksikken OPTIMAL çıkamasın.
+- [ ] W0.8 VERIFIED + ready bitkiler hard değerlendirmeye uygun; PARTIAL v1’de informational/insufficient. VERIFIED kaydın eksik alanına da aralık uydurma.
+- [ ] W0.9 SOFT/HARD/INFORMATIONAL, confidence ve approximate canlı verisinin hard conflict ve uyarıya etkisini belirle. Katalog doluluğunu bilimsel güven düzeyiyle karıştırma.
+- [ ] W0.10 Canlı-canlı, bitki-bitki ve canlı-bitki aralık kesişimi; tek taraflı sınır; tam sınır teması; çatışmada etkilenen varlıklar politikası yazılsın.
+- [ ] W0.11 Gelecek zaman toleransı, timezone/offset, eski tarihli giriş, latest sıralaması ve zaman aşımı politikası dondurulsun.
+- [ ] W0.12 Backup dahil/haricini, tank duplicate geçmiş politikasını, storage kapasitesini ve note alanının v1 kapsamını kesinleştir. Not UI’da alınmıyorsa olmayan not üretilmesin.
+- [ ] W0.13 Sağlık giriş kartındaki sayısal skor için sürümlü/kanıtlı hesaplama tanımlanmıyorsa mevcut kartta veri yok sunumu kullan; `82` veya keyfi formül gösterme.
+
+**Geçiş ölçütü:** Kimya, model, storage ve UI davranışını değiştirecek açık karar kalmamış; her kararın örnek sonucu ve test beklentisi yazılmış.
+
+### W1 — Modelleri ve katalog sınırlarını kur
+
+- [ ] W1.1 Kanonik parametre modelini mevcut AquariumWaterParameter ile birleştir veya tek noktadaki adapter ile eşleştir; NO2/ammonia desteğini ekle; ppm isimlerini anlam değiştirerek sessizce kullanma.
+- [ ] W1.2 Input, raw measurements, record, parameter/entity assessment, reasons, recommendations, conflicts, missingData ve typed failure modellerini oluştur.
+- [ ] W1.3 `null`, ölçülmüş `0`, okunamayan sayı ve değerlendirme için uygulanamaz parametreyi birbirinden ayır. Sınır altı/üstü test sonuçları v1’de desteklenmiyorsa bunu açıkça reddet.
+- [ ] W1.4 Parse/normalization öncesi anlamı koru; birim dönüşümünü UI metninden değil typed source-unit politikasından yap. Yuvarlama değerlendirme sonrasında yalnız sunumda olsun.
+- [ ] W1.5 engineVersion, ruleRevision, plantCatalogRevision ve livestockCatalogRevision alanlarını zorunlu yap. Şema sürümünü içerik revision’ı yerine kullanma; mevcut plant JSON yalnız schema/count taşıyor.
+- [ ] W1.6 Bitki parser/cache’ini data katmanına taşı; mevcut bitki seçim ekranlarını aynı application boundary’ye bağla. İkinci catalog asset/parser/cache oluşturma.
+- [ ] W1.7 Bitki min/max tutarlılığı, finite değerler, sabit kimlik, verified field anahtarları ve ready/status tutarlılığını katalog yüklemede doğrula.
+- [ ] W1.8 Canlı requirements için mevcut LivestockCatalogOperations’ı kullan; gereken confidence/evidence/revision bilgisini mevcut sınırda tamamla.
+- [ ] W1.9 `<`, `≤`, `>`, `≥`, aralık ayıracı ve approximate parser politikası için mevcut parser/evaluator’a hedefli değişiklik ve regresyon testleri ekle. Format bozukluğunu “bilinmiyor” diye sessizce yutma.
+- [ ] W1.10 Salt isCompatible kontrolü kullanma: mevcut değer `issues.isEmpty()` olduğu için sıfır karşılaştırmada da true olabilir; NO_COMPARABLE_MEASUREMENTS ve parametre bazlı coverage korunmalı.
+
+**Geçiş ölçütü:** Mevcut canlı evaluator’ı ve katalog kimlikleri korunuyor; picker davranışı bozulmuyor; eksik ve sınırlı güvene sahip veri tiplerde taşınıyor.
+
+### W2 — Ortak AquariumHealthContext’i oluştur
+
+- [ ] W2.1 Tek owner/tank snapshot’ından tank türü, kurulum tarihi, boyut/hacim, malzemeler, canlılar ve bitkileri çözümle.
+- [ ] W2.2 Context’e capturedAt, bağlam revision/hash politikası ve veri tamlık bilgisini ekle; create sırasında hangi snapshot’ın kullanıldığı açıklanabilsin.
+- [ ] W2.3 Yerel livestockId/plantId ile catalogId ayrımını koru. Bir türün adedi range’i çoğaltmasın; kayıtların ayrı kimliği kaybolmasın.
+- [ ] W2.4 Custom canlı, silinmiş katalog kimliği, PARTIAL bitki ve çözümleme hatasını ayrı sonuçlara dönüştür.
+- [ ] W2.5 CO2/light/filter/fertilizer/substrate/cooler/heater bağlamını canonical category/product metadata’dan çıkar. Kayıtlı ekipman varlığı ile cihazın çalıştığı bilgisi ayrı olsun.
+- [ ] W2.6 Tank yaşı bilinmiyorsa mature varsayma; hacmi boyutlardan türetiyorsan brüt/geometrik hacim olduğunu koru; net su miktarı diye kimyasal doz önerme.
+- [ ] W2.7 Katalog yükleme hatası ile boş tankı ayır. Bilinmeyen taxonomy ve malzeme anahtarını generic freshwater olarak kullanma.
+- [ ] W2.8 Geriye dönük analizde kullanıcının eski tank bağlamı bulunmuyorsa `contextAsOfCreation` benzeri açık semantik sakla; kayıt tarihi itibarıyla bağlam biliniyormuş izlenimi verme.
+- [ ] W2.9 Bağlamı UI’ın her render’ında yeniden kurma; katalogları revision ile cache’le; tank/owner değişiminde eski sonuç taşınmasını engelle.
+
+**Geçiş ölçütü:** Dört motorun kullanabileceği tek, immutable, açıklanabilir snapshot var; application/data katmanı UI sınıflarına bağımlı değil.
+
+### W3 — Gerçek sıcaklık ve provenance
+
+- [ ] W3.1 TankWaterTemperatureOperations üzerinden Fresh, NoSensor, Unavailable, Stale, Invalid ve gerekiyorsa Ambiguous sonuçlarını üret.
+- [ ] W3.2 Owner, tank-device ataması, cihaz ailesi/capability, doğru WATER sensörü ve valid reading şartlarını doğrula.
+- [ ] W3.3 DeviceCoolingCardSummary.waterTemperatureC’yi tek başına tazelik kanıtı sayma; mevcut Cooling telemetri sample modelini uygun adapter üzerinden kullan.
+- [ ] W3.4 Device UID/sensor key, inputSampleSequence, timeGeneration, runtime/boot kimliği, cihaz uptime zamanları, alım zamanı ve freshness kararını birbirine karıştırmadan modelle.
+- [ ] W3.5 Cihaz uptime’ını Unix epoch veya telefon elapsedRealtime değeri gibi kullanma. Epoch dönüşümü gerekiyorsa kanıtlı anchor ve belirsizlik politikası tanımla; alınma anını ölçüm anı diye kaydetme.
+- [ ] W3.6 Merkezi freshness süresini ölçüm ve transport/session koşullarıyla belirle. Donmuş bağlantıda aynı sample tekrar yayımlandığında tazelik yenilenmesin.
+- [ ] W3.7 Birden çok uygun sensörde primary/explicit seçim politikası olsun; listedeki ilk cihazı veya ortalamayı sessizce seçme.
+- [ ] W3.8 Kaydetme anında atama, session generation ve freshness yeniden doğrulansın. Ekran açıldıktan sonra taşınan cihazın ölçümü eski tanka yazılmasın.
+- [ ] W3.9 Geçmiş observedAt için güncel sensör okumasını kullanma. V1’de o ana ait doğrulanmış örnek yoksa manuel ölçüm gerekir; sınır açık anlatılsın.
+- [ ] W3.10 Manuel giriş kullanıcının açık seçimi olsun; sensör hatası otomatik olarak MANUAL etiketli eski sensör değerine dönüşmesin.
+- [ ] W3.11 Kayıtta source, measurement value ve provenance atomik saklansın; ekran dönüşü veya süreç ölümü kaynağı değiştirmesin.
+
+**Geçiş ölçütü:** Tazelik sınırı, reboot, eski/out-of-order sample, offline, atama değişimi, yanlış aile, çoklu sensör ve geriye dönük giriş testleri geçiyor.
+
+### W4 — Saf analiz motoru
+
+- [ ] W4.1 Engine yalnız hazır measurements/context/rules/explicit time girdileriyle çalışsın; Android kaynakları, ağ, JSON, store ve Clock çağrısı yapmasın.
+- [ ] W4.2 Önce girdi geçerliliği, sonra chemistry kuralları, canlı/bitki değerlendirmeleri, conflict ve recommendation birleşimi çalışsın.
+- [ ] W4.3 Mevcut LivestockWaterCompatibilityEvaluator tek range comparison kaynağı kalsın. Advisor’ın catalog I/O’su engine’in içine taşınmasın; gerekirse hazır profile kabul eden sınır uyarlaması yap.
+- [ ] W4.4 Gereksinim kesişimini ölçümden bağımsız hesapla; ölçüm yokken de uyumsuz habitat gereksinimleri görünür olsun.
+- [ ] W4.5 Partial/missing gereksinimi sonsuz aralık kabul edip compatible sayma; değerlendirilmiş ve değerlendirilememiş parametreleri ayrı say.
+- [ ] W4.6 Her sekiz parametre için measured/missing/applicability, değerlendirme yönü/şiddeti, nedenler, kullanılan aralıklar ve etkilenen varlıkları üret.
+- [ ] W4.7 Chemistry tehlikesini bitki ihtiyacı, filtre varlığı veya genel ortalama iyileştirmesin. Bir kritik parametre çok sayıda normal parametreyle bastırılmasın.
+- [ ] W4.8 Birden fazla profil/rule uygulanırsa öncelik ve birleşim deterministik olsun; JSON/list sırası sonucu değiştirmesin.
+- [ ] W4.9 Recommendation code → reason → rule/evidence bağı kur; yinelenen önerileri sabit sırayla birleştir. Belirsizlikte yeniden ölçüm gibi tanımlı konservatif öneriler kullan.
+- [ ] W4.10 Sıcaklık/pH veya başka önkoşula ihtiyaç duyan türetilmiş hesaplamayı eksik girdilerle yapma; türetilmiş değer ölçülmüş değer diye saklanmasın.
+- [ ] W4.11 Smart Care task yaratma, donanım kontrolü veya dozlama engine yan etkisi olmasın.
+
+**Geçiş ölçütü:** Aynı girdiler aynı structured sonucu veriyor; list sırası/adet varyasyonları gereksinim aralığını değiştirmiyor; tehlike/çatışma/eksik veri kaybolmuyor.
+
+### W5 — Kalıcılık ve application operations
+
+- [ ] W5.1 Sözleşmedeki ayrı store yaklaşımını uygula; büyüyen geçmiş aquarium_tanks.pb’ye eklenmesin. DataStore seçimi kapasite bütçesiyle doğrulansın; sınırsız geçmiş gerekiyorsa schema yazılmadan storage kararı tekrar değerlendirilsin.
+- [ ] W5.2 Tek store instance/yaşam döngüsü, CommercialStoreSchema sürümü, serializer, rules ve mapper’ları mevcut politika ile kur.
+- [ ] W5.3 Proto numeric presence ve enum UNSPECIFIED/unknown davranışını doğrula; alan yokluğu default 0/normal sonucuna dönüşmesin.
+- [ ] W5.4 ownerUid/tankId/analysisId geçerliliği; owner içinde benzersiz ID; tank ownership; finite sayılar; timestamp ve provenance alanları commit öncesinde doğrulansın.
+- [ ] W5.5 Raw measurement + relevant context snapshot + assessment + sürümler tek atomik commit olsun. Bir parça yazıldıktan sonra assessment üretme.
+- [ ] W5.6 observeForTank, observeRecord, latestForTank, createAnalysis ve deleteAnalysis uygulansın; sorgu/mutasyon kimliği owner+tank+analysis ile sınırlandırılsın.
+- [ ] W5.7 Tarih sırası observedAt DESC, createdAt DESC ve sabit ID tie-break ile dondurulsun. Yeni girilen eski tarihli kayıt son ölçümü yanlış değiştirmesin.
+- [ ] W5.8 V1 dashboard tek latest record kullansın; son kayıtta eksik GH varsa önceki kaydın GH’ını kaynak/zaman belirtmeden doldurmasın.
+- [ ] W5.9 Create için request/idempotency politikası olsun: çift tıklama ve commit sonrası süreç ölümü/cevap kaybı retry’ında ikinci kayıt oluşmasın.
+- [ ] W5.10 Delete exact record için idempotent/NotFound semantiğine sahip olsun; son kaydın silinmesi latest’i yeniden seçsin; tek kayıt silinince NoAnalysis olsun.
+- [ ] W5.11 Geçmiş açılışında yeniden değerlendirme yapma. Katalog değişimi veya bitki/canlı silinmesi tarihsel sonuç ve açıklamayı değiştirmesin.
+- [ ] W5.12 Corruption, unsupported schema, disk full ve I/O error’ı NoAnalysis/başarılı kayıt gibi göstermeyen typed sonuçlar kullan; mevcut commercial recovery/cutover politikasını koru.
+- [ ] W5.13 Geçmiş üst sınırı, query/list page boyutu, serileştirme süresi/belleği ve retention politikası belgelensin. Sessiz kayıt atma veya sınırsız UI listesi büyümesi olmasın.
+
+**Geçiş ölçütü:** Round-trip veri kaybı yok; process death sonrası başarılı commit duruyor; schema/corruption politikası ve tekrar işlem davranışı testli.
+
+### W6 — Silme, hesap değişimi ve restore bütünlüğü
+
+- [ ] W6.1 OwnerTankDataCleaner transaction’ına Water Analysis snapshot/delete/restore adımlarını ekle; yeni store yazmalarını tank silme başlangıcında engelle.
+- [ ] W6.2 Write guard’ı gerçek commit yoluna bağla. Yalnız create başında tank var mı kontrolü yapıp daha sonra korumasız commit etme.
+- [ ] W6.3 Mevcut durable journal snapshot formatını sürümlendir; eski pending journal durumu için açık recovery/cutover davranışı tanımla.
+- [ ] W6.4 Büyük analiz snapshot’larını mevcut SharedPreferences journal’a sınırsız gömmeyi önle. Kapasiteyle uyumlu durable snapshot/staging yaklaşımını recovery testleriyle seç.
+- [ ] W6.5 Snapshot alma, dependent silme, tank commit, rollback ve journal complete aralarındaki her crash/cancellation noktası için yeniden başlama sonucu test edilsin.
+- [ ] W6.6 Rollback hem care hem analysis snapshot’larını geri getirsin; rollback başarısızsa journal silinmesin ve recovery devam edebilsin.
+- [ ] W6.7 Eşzamanlı save/delete, iki analiz yazması, aynı ID retry, restore/create ve owner logout/account switch senaryoları bariyerlerden geçsin.
+- [ ] W6.8 Mevcut device assignment cleanup ve reminder davranışları korunmalı; analiz entegrasyonu bu adımları atlatmamalı.
+- [ ] W6.9 UserDataCleaner ve account deletion checkpoint/retry akışına owner’a ait analiz store’u, draft/idempotency kayıtları ve yeni journal payload’ları katılsın.
+- [ ] W6.10 Owner graph generation değişince eski collector/event/draft UI’a taşınmasın; eski oturumun işlemi yeni hesaba yazamasın. Aynı owner ile yeni oturum generation’ı da kapsansın.
+- [ ] W6.11 Backup dahilse archive schema/validator/snapshot/codec/restore/deduplication/journal’da yer alsın; owner/tank/analysis kimliği ve gerekiyorsa yerel entity referansları canonical restore politikasıyla eşlensin.
+- [ ] W6.12 Backup hariçse export/restore sonucu kullanıcıya açıkça belirtilsin; “tüm veri geri geldi” ifadesi eksik geçmişi gizlemesin. Android otomatik backup/data-extraction kuralları ayrı denetlensin.
+- [ ] W6.13 Tank duplicate’de geçmiş kopyalanmasın önerisini sözleşme ve regresyon testinde sabitle; açıkça istenen başka davranış varsa bağımsız provenance tasarla.
+- [ ] W6.14 Data inventory/retention/export belgelerini güncelle; log/analytics’e ham ölçüm, owner kimliği veya notların kontrolsüz düşmesini önle.
+
+**Geçiş ölçütü:** Tank silindikten sonra orphan analiz oluşmuyor; silme başarısız olduğunda geçmiş korunuyor; owner ve restore izolasyonu testli.
+
+### W7 — Composition, ViewModel ve lifecycle
+
+- [ ] W7.1 Dependencies committed OwnerDependencyGraph/OwnerViewModelFactory üzerinden kurulsun; releaseSmoke karşılığı aynı application yolunu kullansın.
+- [ ] W7.2 UI/VM’de repository, DataStore, JSON reader, device provider veya Firebase construction/lookup olmasın.
+- [ ] W7.3 Mevcut tek WaterAnalysisViewModel hedefi korunacaksa add/history/detail/latest state’lerini ayrı immutable alanlarda tut ve kapsamını açık tanımla. Ayrı VM gerekirse önce sözleşme kararını güncelle; dev bir feature VM oluşmasın.
+- [ ] W7.4 Route tankId/analysisId, form girdileri, seçilen ölçüm zamanı ve MANUAL/SENSOR tercihi SavedStateHandle veya proje standardı ile restore edilsin; tüm geçmiş Bundle’a konulmasın.
+- [ ] W7.5 Lifecycle-aware collection, tank değişiminde eski akışın iptali, view binding temizliği ve navigation event tüketimi sağlansın.
+- [ ] W7.6 Saving/Deleting durumları tekrar komutu engellesin; işlemin başarı sinyali yalnız commit sonrası gelsin; cancellation yutulmasın.
+- [ ] W7.7 ValidationError, TankMissing, SensorStale, ContextUnavailable, StoreFailure ve RecordMissing sonuçları merkezi process-safe feedback’e bağlansın.
+- [ ] W7.8 Katalog I/O ve yoğun değerlendirme uygun dispatcher’da yürüsün; dispatcher/clock/ID generation test edilebilir şekilde sağlansın.
+
+**Geçiş ölçütü:** Rotation, geri dönme, tank değişimi, süreç yeniden yaratma ve owner değişimi kayıt kimliğini veya form kaynağını bozmuyor.
+
+### W8 — Onaylı UI’ı gerçek veriyle bağla ve fixture’ları temizle
+
+- [ ] W8.1 Form XML’lerindeki gerçek android:text ölçüm doldurmalarını kaldır; tasarım örnekleri gerekiyorsa yalnız tools:text veya test/debug fixture’ında kalsın.
+- [ ] W8.2 Sabit 26.09.2026 14:10 başlangıcını kaldır; Clock ve restore edilmiş draft kullan. LocaleFormatter parsing/formatting; boş ile invalid ayrımı; alan bazlı hata gösterimi bağlansın.
+- [ ] W8.3 Date picker saat kısmını, time picker tarih kısmını beklenmedik değiştirmesin; locale/12–24 saat/timezone davranışları sınansın.
+- [ ] W8.4 Sensör adı, bağlantı rozeti, sıcaklık ve “sensörden okundu” etiketi gerçek source state’e bağlansın; sensör yokken varsayılan 25 değeri kalmasın.
+- [ ] W8.5 Save boş listener yerine application create’i çağırıp başarı sonrası onaylı rotayı izlesin; hatada form verileri korunmalı.
+- [ ] W8.6 History 12 fixture yerine owner/tank flow kullansın; toplam kayıt sayısı store’dan türesin; her satır stable analysisId taşısın.
+- [ ] W8.7 History’de pH, NO3 ve sıcaklığın tüm değer/status/color alanları bind edilsin; XML’de pH/sıcaklık için kalan “Normal” etiketleri unutulmasın.
+- [ ] W8.8 nav_aquarium.xml detay rotasına analysisId ekle; generated Directions ve navigateSafelyFrom kullan. Deep link/restore/yanlış ID merkezi eksik kayıt davranışıyla ele alınsın.
+- [ ] W8.9 Detail tamamıyla persisted snapshot okusun; değerler, nedenler, tarih ve not alanı gerçek kayda ait olsun. Kayıt yoksa sahte detay oluşturulmasın.
+- [ ] W8.10 Delete dialog tarihi seçili kayıttan locale-aware formatlansın; hard-coded 26 Sep 2026 kalksın; navigation yalnız gerçek delete başarısından sonra olsun.
+- [ ] W8.11 TankHealthContentAdapter immutable fixture buildItems yerine real presentation model kullansın; default status=Normal ve yeşil renk fallback’i kaldırılmış olsun.
+- [ ] W8.12 “Son analiz” tarihi, data age/stale işareti ve sekiz kart latest record’dan beslensin. Eski ölçüm güncel canlı su durumu gibi sunulmasın.
+- [ ] W8.13 Bakım bölümünü MaintenanceOperations tamamlanmış kayıtlarından bağla; completedAt ile dueAt birbirine karışmasın. Son bakım kaydı yoksa “5 gün önce/Normal” uydurulmasın; overdue/approaching için tanımlı takvim politikası kullanılsın.
+- [ ] W8.14 Sistem özeti canonical material selections/assigned cihaz/context verisinden gelsin; birden fazla ürün, kayıt yokluğu ve offline durumları ayrı olsun.
+- [ ] W8.15 “28 canlı” gerçek quantity toplamından gelsin; sayıyı doğrulanmamış biyolojik yük/risk skoruna dönüştürme.
+- [ ] W8.16 TankDetailTankFragment giriş kartındaki sabit 82, “iyi görünüyor” ve “2 gün önce” metinleri de gerçek summary/NoAnalysis durumuna bağlansın.
+- [ ] W8.17 NoAnalysis, Loading, Partial, Error, NotFound ve SensorUnavailable görünümü mevcut tasarım diliyle tamamlanmış olsun. Tasarım dondurulmuş olması sahte başarı göstermeyi gerektirmez.
+- [ ] W8.18 Tüm locale resource’larında kullanımdan düşen fixture değer/tarih/model string’leri temizlensin; geçerli statik etiketler ve açık empty-state metinleri korunmalı.
+- [ ] W8.19 Yosun sekmesi henüz geliştirilmemişken çalışan analiz sonucu gibi görünmesin; kapsamı açık placeholder/non-active davranışı olsun.
+
+**Geçiş ölçütü:** Sağlık giriş kartı dahil kullanıcıya gösterilen her dinamik değer için gerçek kaynak veya açık veri-yok/hata durumu var. Onaylı ekran düzeni korunuyor.
+
+### W9 — Water Quality kabul kapısı
+
+- [ ] W9.1 Her parametre için normal/low/high/critical/missing/unsupported/rule-missing ve tam sınır testleri geçsin.
+- [ ] W9.2 Tür ve bitki kesişimleri, approximate/SOFT politikası, custom/missing kimlik ve conflict + critical + partial bileşimleri test edilsin.
+- [ ] W9.3 Birim/ammonia semantiği, decimal locale, precision, nonfinite, negatif, aşırı büyük sayı, boş/sıfır ve zaman testleri geçsin.
+- [ ] W9.4 Save/history/detail/delete/latest round-trip; owner/tank isolation; çift işlem; veri kaybı/corruption; exact ID; eski tarihli kayıt testleri geçsin.
+- [ ] W9.5 Sıcaklık freshness/reboot/reassignment/backdating ve geçmiş context açıklaması testleri geçsin.
+- [ ] W9.6 Tank silme/rollback/process-death/account deletion/restore test matrisi tamamlanmış olsun; eski care/device davranışları korunmuş olsun.
+- [ ] W9.7 En büyük desteklenen geçmiş/katalog bağlamı ile süre/bellek ölçümleri bütçe içinde olsun; ana thread disk okuması ve kontrolsüz collector/list büyümesi olmasın.
+- [ ] W9.8 Dark/light, büyük font, TalkBack, Türkçe/İngilizce, rotation, boş ve uzun hata metni görsel/işlevsel regresyon kontrolü yapılsın; durum sadece renkle anlatılmasın.
+- [ ] W9.9 Yeni water-analysis architecture guard; mevcut aquarium/care/composition/navigation/localization/feedback kontrolleri geçsin; yeni suppress/baseline veya devre dışı guard eklenmesin.
+- [ ] W9.10 Debug/Release unit, lint, detekt, minified release, CodeQL, installable APK ve API 27/API 36 release-smoke/emulator akışları gereken commit üzerinde yeşil olsun.
+- [ ] W9.11 Fiziksel Cooling sensör testi ile epoch/uptime, bağlantı kesilmesi ve gerçek atama davranışı doğrulansın; emulator kanıtı fiziksel sensör kanıtı yerine geçmesin.
+- [ ] W9.12 Ana sözleşme §46 kabul maddelerinin her biri test adı/CI run/manuel kanıtla işaretlensin; fixture temizliği tam repo taramasıyla doğrulansın.
+
+**Geçiş ölçütü:** Water Quality uçtan uca tamam ve doğrulanmış. Bundan sonra aşağıdaki ekranların tasarım/uygulamasına sırayla geçilir.
+
+## 6. Sonraki ekranların sırası ve sınırları
+
+### A — Yosun Kontrolü
+
+- [ ] A.1 Water Quality kabul kapısı kapandıktan sonra observation/input/output sözleşmesini ve ekran akışını tasarla.
+- [ ] A.2 Tank-level yosun gözlemi: gözlem tarihi, konum/yayılım ve doğrulanabilir kullanıcı bulguları; fotoğraf varsa mevcut media ownership altyapısı.
+- [ ] A.3 Ortak AquariumHealthContext + WaterAnalysisOperations üzerinden uygun zaman penceresindeki gerçek analizlere bağlan; “recent/current” yaş politikasını kullan.
+- [ ] A.4 Ekipman varlığıyla gerçek fotoperiyot, ışık şiddeti, CO2 kararlılığı veya doz geçmişini aynı sayma; gerekli yeni girdilerin application sınırlarını belirle.
+- [ ] A.5 Ayrı AlgaeAssessmentEngine, neden/kanıt/eksik veri/öneri modeli ve gözlem-müdahale-takip geçmişi kur.
+- [ ] A.6 Tür/gözlem kesin değilse kesin yosun teşhisi veya otomatik kimyasal müdahale üretme; canlı/bitki güven koşulları önerilere dahil olsun.
+- [ ] A.7 Owner/tank/snapshot/silme/restore/test kurallarını uygula; ardından kabul kapısını kapat.
+
+### P — Bitki Sağlığı
+
+- [ ] P.1 Yosun Kontrolü tamamlandıktan sonra `tankId + plantId` seçimi ve gözlem ekranlarını tasarla; catalogId tek başına kayıt kimliği olmasın.
+- [ ] P.2 VERIFIED/PARTIAL bakım profili, ortak bağlam ve zamanına uygun su analizlerini kullan.
+- [ ] P.3 Yaprak/büyüme/besin bulgularının tarihli gözlem modeli ve ayrı PlantHealthAssessmentEngine olsun; uyumsuz su değerini hastalık teşhisine çevirmesin.
+- [ ] P.4 Bitki üzerindeki yosun bir bulgu olarak kaydedilsin; yosun değerlendirme/müdahalesi tankın Yosun Kontrolü akışına yönlensin.
+- [ ] P.5 Fotoğraf ve kayıtlı bitki silinmesi/yeniden adlandırılması durumlarında tarihsel kayıt ve media sahipliği tanımlansın; gözlem geçmişi canlı katalog adına bağımlı kalmasın.
+- [ ] P.6 Kayıt/silme/restore/owner/lifecycle ve motor testleriyle kabul kapısını kapat.
+
+### L — Canlı Sağlığı
+
+- [ ] L.1 Bitki Sağlığı tamamlandıktan sonra `tankId + livestockId` seçimiyle davranış/stres/belirti ve geçmiş ekranlarını tasarla.
+- [ ] L.2 Mevcut water compatibility sonucu, shared context ve uygun tarihli analizleri tüket; ikinci su uyumluluğu motoru oluşturma.
+- [ ] L.3 Ayrı LivestockHealthAssessmentEngine ve gözlem modeli; custom/unverified canlı, çoklu adet, kaldırılmış kayıt ve belirsiz gözlem durumlarını tanımla.
+- [ ] L.4 Su uyumsuzluğu ile hastalık/belirti değerlendirmesi ayrı kalsın; kesin veteriner teşhisi üretme.
+- [ ] L.5 Fotoğraf/observation history, owner izolasyonu, tank/canlı silme, restore ve lifecycle testleriyle kabul kapısını kapat.
+
+Ortak altyapı yeniden kullanılır; dört motorun iş kuralları ve geçmiş kayıt türleri ayrı kalır. WaterAnalysisRecord gelecekte tüm sağlık kayıtlarını içine dolduran genel bir modele dönüşmemelidir.
+
+## 7. Fixture ve gerçek kaynak eşlemesi
+
+| Görünen veri / işlem | Mevcut yer | Bağlanacak kaynak veya davranış |
+| --- | --- | --- |
+| Sekiz ölçüm ve durum rengi | TankHealthContentAdapter; detail XML; değer string’leri | WaterAnalysisOperations.latestForTank / observeRecord → UiMapper |
+| İlk form değerleri | item_tank_health_analysis_water_parameters.xml | Boş veya açık draft; normal ölçüm varsayımı yok |
+| Tarih/saat | TankHealthAnalysisAddFragment selectedCalendar; measurement_time XML | Clock + kullanıcı seçimi + restored draft |
+| Sensör adı/bağlı/25 °C/kaynak | sensor_section XML + TemperatureSource | TankWaterTemperatureOperations |
+| Kayıt listesi ve “12 kayıt” | HistoryFragment.allRecords; history summary string | observeForTank + gerçek sayı |
+| Satırdaki pH/sıcaklık “Normal” | history_record XML | İlgili kaydın parameter assessment’ı |
+| Detail kimliği | History openRecordDetail; nav_aquarium.xml | tankId + analysisId |
+| Silme ve dialog tarihi | DetailFragment.setupDeleteResult; delete_message | Seçili kayıt tarihi + delete sonucu |
+| Son analiz tarihi | water_quality_header XML | Latest persisted observedAt ve açık veri yaşı |
+| Su değişimi/budama/filtre yaşı | maintenance_section XML | MaintenanceOperations COMPLETED olayları; overdue için ayrı due politikası |
+| CO2, ışık, filtre, canlı sayısı | system_section XML | Tank snapshot + canonical context + quantity toplamı |
+| Giriş kartı skor/durum/tarih | fragment_tank_detail_tank.xml | Gerçek health summary; tanımlı skor yoksa veri yok |
+| “Not eklenmedi” | detail XML | Gerçek note boşsa geçerli empty metni; mock diye körlemesine kaldırılmaz |
+
+Sahte ölçüm/başarı üreten fallback kaldırılır. Açık NoData/Error durumları, kullanıcının seçtiği manuel sıcaklık ve güvenli navigation davranışı geçerli hata yönetimidir; bunlar aynı kapsamda silinmez.
+
+## 8. Sözleşme bölümlerinin checklist karşılığı
+
+| Sözleşme bölümleri | Checklist |
+| --- | --- |
+| Status, §1–3: hedef, kapsam, envanter | İnceleme §1–2; W0; W8 |
+| §4: mimari sınır | Paket haritası; W1–W3; W7 |
+| §5–7: kimlik, zaman, ölçüm/birim, provenance | W0–W1; W3; W5 |
+| §8–12: bağlam, canlı/bitki, kesişim | W1–W2; W4 |
+| §13–16: chemistry, severity, structured output, öneri | W0; W4 |
+| §17–20: store, operations, tarihsel snapshot, sürüm | W1; W5 |
+| §21–23: tank/hesap silme, backup/export | W0.12; W6 |
+| §24–27: validation, taxonomy, ekipman, sensör | W0–W3; W4 |
+| §28–30: UI, ViewModel, composition | W7–W8 |
+| §31–36: saflık, nedenler, conflict, eksik veri, kanıt, güven | W0; W2–W5 |
+| §37: Smart Care sınırı | W4.11; W8.13 |
+| §38–40: diğer sağlık motorları | A; P; L |
+| §41–42: invariants ve process death | W3; W5–W7; W9 |
+| §43–44: test ve CI | Her aşamanın geçiş ölçütü; W9 |
+| §45–47: sıra, kabul, ortak mimari | W0–W9; A → P → L; paket haritası |
+
+## 9. Bu incelemede yapılan doğrulamalar
+
+- GitHub branch’i fetch edildi; inceleme yukarıdaki commit’e sabitlendi.
+- Sözleşme; ilgili application/data/UI/proto/navigation/resources/composition/integrity/backup kodlarıyla karşılaştırıldı.
+- JSON/JSONL dosyalarından katalog sayıları, alan doluluğu, plant readiness, completeness, livestock warningMode/confidence yeniden sayıldı; sonuçlar bölüm 2’de.
+- `python3 tools/aquarium_application_boundary_guard.py`: geçti.
+- `python3 tools/care_application_boundary_guard.py`: geçti.
+- `python3 tools/composition_root_guard.py`: geçti.
+- `python3 tools/navigation_guard.py`: geçti.
+- İncelenen worktree’de uygulama kodu değişikliği yok.
+
+Çalıştırılmayanlar: Gradle build/unit/lint/detekt, CodeQL, emulator, fiziksel cihaz ve sensör testleri. Bu rapor mevcut CI’ın tamamının yeşil olduğunu veya yeni motorun test edildiğini iddia etmez. Mevcut dört guard’ın geçmesi yeni Water Analysis sınırlarının hazır olduğunu kanıtlamaz.
+
+## 10. Kod kanıtları
+
+Aşağıdaki bağlantılar branch’in hareketli adı yerine incelenen commit’e sabitlenmiştir.
+
+[S1]: https://github.com/ozdemirrrcemal-cmyk/AquaLight/blob/ca996f241470117a5a797733a13e4c69ffab176c/docs/architecture/AQUARIUM_WATER_ANALYSIS_CONTRACT.md
+[S2]: https://github.com/ozdemirrrcemal-cmyk/AquaLight/blob/ca996f241470117a5a797733a13e4c69ffab176c/app/src/main/java/com/aqua/aqualight/application/aquarium/LivestockWaterRequirements.kt
+[S3]: https://github.com/ozdemirrrcemal-cmyk/AquaLight/blob/ca996f241470117a5a797733a13e4c69ffab176c/app/src/main/assets/aqualight_plant_catalog.json
+[S4]: https://github.com/ozdemirrrcemal-cmyk/AquaLight/blob/ca996f241470117a5a797733a13e4c69ffab176c/app/src/main/assets/livestock_catalog.jsonl
+[S5]: https://github.com/ozdemirrrcemal-cmyk/AquaLight/blob/ca996f241470117a5a797733a13e4c69ffab176c/app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/TankHealthAnalysisAddFragment.kt
+[S6]: https://github.com/ozdemirrrcemal-cmyk/AquaLight/blob/ca996f241470117a5a797733a13e4c69ffab176c/app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/TankHealthAnalysisHistoryFragment.kt
+[S7]: https://github.com/ozdemirrrcemal-cmyk/AquaLight/blob/ca996f241470117a5a797733a13e4c69ffab176c/app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/TankHealthAnalysisDetailFragment.kt
+[S8]: https://github.com/ozdemirrrcemal-cmyk/AquaLight/blob/ca996f241470117a5a797733a13e4c69ffab176c/app/src/main/res/navigation/nav_aquarium.xml
+[S9]: https://github.com/ozdemirrrcemal-cmyk/AquaLight/blob/ca996f241470117a5a797733a13e4c69ffab176c/app/src/main/java/com/aqua/aqualight/data/aquarium/catalog/livestock/LivestockWaterRequirementParser.kt
+[S10]: https://github.com/ozdemirrrcemal-cmyk/AquaLight/blob/ca996f241470117a5a797733a13e4c69ffab176c/app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/catalog/plant/AquariumPlantCatalog.kt
+[S11]: https://github.com/ozdemirrrcemal-cmyk/AquaLight/blob/ca996f241470117a5a797733a13e4c69ffab176c/app/src/main/java/com/aqua/aqualight/application/devices/cooling/DeviceCoolingTelemetrySnapshot.kt
+[S12]: https://github.com/ozdemirrrcemal-cmyk/AquaLight/blob/ca996f241470117a5a797733a13e4c69ffab176c/app/src/main/java/com/aqua/aqualight/data/aquarium/delete/OwnerTankDataCleaner.kt
+[S13]: https://github.com/ozdemirrrcemal-cmyk/AquaLight/blob/ca996f241470117a5a797733a13e4c69ffab176c/app/src/main/java/com/aqua/aqualight/data/care/integrity/TankCareIntegrityJournal.kt
+[S14]: https://github.com/ozdemirrrcemal-cmyk/AquaLight/blob/ca996f241470117a5a797733a13e4c69ffab176c/app/src/main/res/values/tank_health_strings.xml
+[S15]: https://github.com/ozdemirrrcemal-cmyk/AquaLight/blob/ca996f241470117a5a797733a13e4c69ffab176c/app/src/main/java/com/aqua/aqualight/application/aquarium/LivestockCatalogOperations.kt
