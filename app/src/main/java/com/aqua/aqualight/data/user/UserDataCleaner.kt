@@ -78,9 +78,16 @@ class UserDataCleaner private constructor(
             issues += CleanupIssue(step = step, error = error)
         }
 
-        val tankPhotoUris = runCatching {
+        val aquariumPhotoUris = runCatching {
             tankDataStoreManager.tanksSnapshotForOwner(targetOwnerUid)
-                .mapNotNull { tank -> tank.photoUri }
+                .flatMap { tank ->
+                    buildList {
+                        tank.photoUri?.takeIf(String::isNotBlank)?.let(::add)
+                        tank.plants
+                            .mapNotNull { plant -> plant.photoUri?.takeIf(String::isNotBlank) }
+                            .forEach(::add)
+                    }
+                }
         }.getOrElse { error ->
             recordIssue(Step.AQUARIUM_TANKS, error)
             emptyList()
@@ -135,7 +142,7 @@ class UserDataCleaner private constructor(
             clearAppOwnedUserFiles(
                 ownerUid = targetOwnerUid,
                 profilePhotoUri = profilePhotoUri,
-                tankPhotoUris = tankPhotoUris
+                aquariumPhotoUris = aquariumPhotoUris
             )
         }
 
@@ -237,9 +244,9 @@ class UserDataCleaner private constructor(
     private fun clearAppOwnedUserFiles(
         ownerUid: String,
         profilePhotoUri: String,
-        tankPhotoUris: List<String>
+        aquariumPhotoUris: List<String>
     ) {
-        (tankPhotoUris + profilePhotoUri)
+        (aquariumPhotoUris + profilePhotoUri)
             .filter(String::isNotBlank)
             .forEach { uri ->
                 if (!AppMediaStorage.deleteInternalMedia(appContext, uri)) {
@@ -292,6 +299,7 @@ class UserDataCleaner private constructor(
         val allowedRoots = listOf(
             File(appContext.filesDir, "profile_photos"),
             File(appContext.filesDir, "tank_photos"),
+            File(appContext.filesDir, "plant_photos"),
             File(appContext.cacheDir, "tank_exports"),
             File(appContext.cacheDir, "image_processing")
         )
