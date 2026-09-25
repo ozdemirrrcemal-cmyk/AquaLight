@@ -33,6 +33,7 @@ import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentLivestockHealthBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
+import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderPrimaryAction
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.dialog.AppDatePickerDialogFragment
@@ -72,18 +73,18 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
         if (action == HEALTH_CAPTURE_ACTION) openCamera()
     }
     internal val galleryLauncher = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-        if (uri != null && _binding != null) viewLifecycleOwner.lifecycleScope.launch { preparePhoto(uri) }
+        if (uri != null && healthBinding != null) viewLifecycleOwner.lifecycleScope.launch { preparePhoto(uri) }
     }
     private val cameraLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         lifecycleScope.launch {
             val uri = mediaFlow.currentCameraUri()
-            if (success && uri != null && _binding != null) preparePhoto(uri)
+            if (success && uri != null && healthBinding != null) preparePhoto(uri)
             else mediaFlow.cancelCamera()
         }
     }
     private val cropLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         lifecycleScope.launch {
-            if (_binding == null) { mediaFlow.cancelCrop(); return@launch }
+            if (healthBinding == null) { mediaFlow.cancelCrop(); return@launch }
             val uri = if (result.resultCode == Activity.RESULT_OK) result.data?.let(UCrop::getOutput)
                 else null
             val accepted = uri?.let { mediaFlow.acceptCrop(it) }
@@ -96,8 +97,8 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
             }
         }
     }
-    internal var _binding: FragmentLivestockHealthBinding? = null
-    internal val binding get() = requireNotNull(_binding)
+    internal var healthBinding: FragmentLivestockHealthBinding? = null
+    internal val binding get() = requireNotNull(healthBinding)
     internal lateinit var ui: LivestockHealthUi
     internal var tank: AquariumTankSnapshot? = null
     internal var tankActivity: TankActivityUiState = TankActivityUiState()
@@ -109,11 +110,12 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
     internal var baseline: BaselineChange? = null
     internal var note = ""
     internal var photoUri: String? = null
+    internal var showAllObservations = false
     internal var saving = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        _binding = FragmentLivestockHealthBinding.bind(view)
+        healthBinding = FragmentLivestockHealthBinding.bind(view)
         ui = LivestockHealthUi(requireContext())
         if (args.page == PAGE_FORM) mediaFlow.initializeSelection(null)
         savedInstanceState?.let { state ->
@@ -122,6 +124,7 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
             startedAtMillis = state.getLong(STATE_ONSET)
             note = state.getString(STATE_NOTE).orEmpty()
             photoUri = state.getString(STATE_PHOTO)
+            showAllObservations = state.getBoolean(STATE_SHOW_ALL)
             trend = LivestockHealthTrend.fromCode(
                 state.getString(STATE_TREND) ?: LivestockHealthTrend.SAME.code
             )
@@ -141,7 +144,10 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
                         else -> R.string.livestock_health_home_title
                     }
                 ),
-                onBackClick = { findNavController().popBackStack() }
+                onBackClick = { findNavController().popBackStack() },
+                actions = if (args.page == PAGE_FORM || args.page == PAGE_DETAIL) emptyList()
+                else listOf(AquaHeaderAction(R.drawable.ic_info,
+                    getString(R.string.livestock_health_home_info_title)) { showHealthInfo() })
             )
         )
         registerHealthResultListeners()
@@ -156,6 +162,7 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
         outState.putString(STATE_BASELINE, baseline?.code)
         outState.putString(STATE_NOTE, note)
         outState.putString(STATE_PHOTO, photoUri)
+        outState.putBoolean(STATE_SHOW_ALL, showAllObservations)
         outState.putStringArrayList(STATE_SYMPTOMS, ArrayList(selectedSymptoms.map { it.code }))
         super.onSaveInstanceState(outState)
     }
@@ -196,7 +203,7 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
             }
             saving = false
             outcome.onFailure { error ->
-                if (_binding != null) {
+                if (healthBinding != null) {
                     binding.healthPrimaryAction.isEnabled = true
                     reportHealthError(error, R.string.livestock_health_form_save_failed)
                 }
@@ -229,7 +236,7 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
     }
 
     override fun onDestroyView() {
-        _binding = null
+        healthBinding = null
         super.onDestroyView()
     }
 
@@ -245,5 +252,6 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
         const val STATE_NOTE = "note"
         const val STATE_SYMPTOMS = "symptoms"
         const val STATE_PHOTO = "photoUri"
+        const val STATE_SHOW_ALL = "showAllObservations"
     }
 }

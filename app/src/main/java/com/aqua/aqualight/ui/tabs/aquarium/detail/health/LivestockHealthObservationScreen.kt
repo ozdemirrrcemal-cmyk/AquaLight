@@ -14,14 +14,13 @@ import com.aqua.aqualight.ui.common.bottomsheet.SingleChoiceBottomSheet
 
 private const val SYMPTOMS_PER_ROW = 3
 private const val MAX_SELECTED_SYMPTOMS = 5
+private const val TREND_CHOICE_COLUMNS = 3
 
 internal fun LivestockHealthFragment.isValidObservation(item: AquariumLivestock): Boolean {
     if (saving || selectedSymptoms.isEmpty()) return false
-    if (affectedCount !in 1..item.quantity) return false
-    if (LivestockHealthSymptom.SURFACE_FREQUENCY_CHANGE in selectedSymptoms &&
-        baseline == null
-    ) return false
-    return true
+    val validCount = affectedCount in 1..item.quantity
+    val surfaceChange = LivestockHealthSymptom.SURFACE_FREQUENCY_CHANGE in selectedSymptoms
+    return validCount && (!surfaceChange || baseline != null)
 }
 
 internal fun LivestockHealthFragment.renderForm(current: AquariumTankSnapshot, content: LinearLayout) {
@@ -140,7 +139,7 @@ private fun LivestockHealthFragment.renderCountAndDate(
                 getString(R.string.livestock_health_form_trend_title),
                 trendOptions().filterNot { it.first == LivestockHealthTrend.RESOLVED }
                     .map { it.first.code to getString(it.second) },
-                trend.code, 3, TREND_REQUEST)
+                trend.code, TREND_CHOICE_COLUMNS, TREND_REQUEST)
         }.apply { layoutParams = LinearLayout.LayoutParams(0,
             ViewGroup.LayoutParams.WRAP_CONTENT, 1f) })
         content.addView(dateAndTrend)

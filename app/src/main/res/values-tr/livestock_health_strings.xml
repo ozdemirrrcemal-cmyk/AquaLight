@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="livestock_health_home_title">Canlı Sağlığı</string>
+    <string name="livestock_health_home_info_title">Canlı sağlığı hakkında</string>
+    <string name="livestock_health_home_info_body">Bu tankta kayıtlı canlılarında gördüğün değişimleri kaydet ve zaman içindeki durumlarını izle. Tek başına gözlem tanı koymak için yeterli değildir.</string>
+    <string name="livestock_health_home_view_all">Tümünü gör</string>
+    <string name="livestock_health_home_show_less">Daha az göster</string>
+    <string name="livestock_health_home_observed_with_check">%1$s · Son kontrol: %2$s</string>
+    <string name="livestock_health_home_today">bugün</string>
+    <string name="livestock_health_home_today_time">Bugün %1$s</string>
+    <string name="livestock_health_home_tank_context">%1$s · %2$s</string>
     <string name="livestock_health_home_entry_subtitle">Gözlemleri ve takipleri gör</string>
     <string name="livestock_health_home_hero_title">Canlılarını takip et</string>
     <string name="livestock_health_home_hero_subtitle">Belirti kaydet, değişimi izle.</string>

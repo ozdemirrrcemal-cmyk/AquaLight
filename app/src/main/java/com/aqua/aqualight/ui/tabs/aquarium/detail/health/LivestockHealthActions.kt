@@ -19,6 +19,14 @@ internal fun LivestockHealthFragment.closeDialog(record: LivestockHealthObservat
             FeedbackBottomSheet.FeedbackTone.WARNING, CLOSE_REQUEST, record.id.toString())
     }
 
+internal fun LivestockHealthFragment.showHealthInfo() {
+    FeedbackBottomSheet.show(childFragmentManager,
+        getString(R.string.livestock_health_home_info_title),
+        getString(R.string.livestock_health_home_info_body),
+        getString(R.string.ok), null, FeedbackBottomSheet.FeedbackTone.INFO,
+        "livestock_health_info", "")
+}
+
 internal fun LivestockHealthFragment.closeRecord(observationId: Long?) {
         if (observationId == null) return
         viewLifecycleOwner.lifecycleScope.launch {

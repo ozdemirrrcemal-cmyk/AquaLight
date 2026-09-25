@@ -88,9 +88,9 @@ class AquariumTankDataStoreManager(
         TankStoreRules.requireValidTankId(tankId)
         val ownerUid = UserDataScope.requireCurrentUid()
         val snapshot = TankStoreRules.validateStore(context.aquariumTanksDataStore.data.first())
-        val sourceSnapshot = snapshot.tanksList.firstOrNull { storedTank ->
+        val sourceSnapshot = requireNotNull(snapshot.tanksList.firstOrNull { storedTank ->
             storedTank.id == tankId && storedTank.belongsToOwner(ownerUid)
-        } ?: throw IllegalArgumentException("Tank not found for the active owner.")
+        }) { "Tank not found for the active owner." }
         TankStoreRules.validateTank(sourceSnapshot)
 
         val newTankId = AquariumIdGenerator.newLong(
@@ -99,7 +99,17 @@ class AquariumTankDataStoreManager(
                 .mapTo(mutableSetOf()) { tank -> tank.id }
         )
         val sourcePhotoAtPreparation = sourceSnapshot.photoUri
-        val duplicatedPhotoUri = copyTankPhoto(sourcePhotoAtPreparation, newTankId, ownerUid)
+        val duplicatedPhotoUri = AppMediaStorage.copyInternalMedia(
+            context = context,
+            sourceUriString = sourcePhotoAtPreparation,
+            targetScope = AppMediaScope.TANK,
+            ownerToken = newTankId.toString(),
+            ownerUid = ownerUid
+        )
+        check(!AppMediaStorage.isAppOwned(context, sourcePhotoAtPreparation) ||
+            !duplicatedPhotoUri.isNullOrBlank()) {
+            "Tank photo could not be copied with independent ownership."
+        }
 
         // Freeze the active per-app language before entering the retryable DataStore transform.
         // This keeps every retry deterministic and supports non-Activity contexts on API 17+.
@@ -111,9 +121,9 @@ class AquariumTankDataStoreManager(
                 check(currentStore.tanksList.none { storedTank -> storedTank.id == newTankId }) {
                     "Generated tank id was concurrently claimed."
                 }
-                val sourceTank = currentStore.tanksList.firstOrNull { storedTank ->
+                val sourceTank = requireNotNull(currentStore.tanksList.firstOrNull { storedTank ->
                     storedTank.id == tankId && storedTank.belongsToOwner(ownerUid)
-                } ?: throw IllegalArgumentException("Tank not found for the active owner.")
+                }) { "Tank not found for the active owner." }
                 TankStoreRules.validateTank(sourceTank)
                 check(sourceTank.photoUri == sourcePhotoAtPreparation) {
                     "Tank photo changed while duplication was being prepared."
@@ -123,14 +133,8 @@ class AquariumTankDataStoreManager(
                     .mapTo(mutableSetOf()) { it.name }
                 val duplicateName = createDuplicateTankName(sourceTank.name,
                     existingNames, duplicateNameContext)
-                val duplicatedTank = sourceTank.toBuilder()
-                    .setId(newTankId)
-                    .setOwnerUid(ownerUid)
-                    .setName(duplicateName)
-                    .setPhotoUri(duplicatedPhotoUri.orEmpty().trim())
-                    .setCreatedAtMillis(System.currentTimeMillis())
-                    .clearHealthObservations()
-                    .build()
+                val duplicatedTank = prepareDuplicateTank(sourceTank, newTankId, ownerUid,
+                    duplicateName, duplicatedPhotoUri)
                 TankStoreRules.validateTank(duplicatedTank)
                 currentStore.appendValidated(duplicatedTank)
             }
@@ -142,19 +146,15 @@ class AquariumTankDataStoreManager(
         return newTankId
     }
 
-    private fun copyTankPhoto(sourceUri: String, newTankId: Long, ownerUid: String): String? {
-        val copied = AppMediaStorage.copyInternalMedia(
-            context = context,
-            sourceUriString = sourceUri,
-            targetScope = AppMediaScope.TANK,
-            ownerToken = newTankId.toString(),
-            ownerUid = ownerUid
-        )
-        if (AppMediaStorage.isAppOwned(context, sourceUri) && copied.isNullOrBlank()) {
-            throw IllegalStateException("Tank photo could not be copied with independent ownership.")
-        }
-        return copied
-    }
+    private fun prepareDuplicateTank(source: StoredTank, id: Long, ownerUid: String,
+        name: String, photoUri: String?): StoredTank = source.toBuilder()
+        .setId(id)
+        .setOwnerUid(ownerUid)
+        .setName(name)
+        .setPhotoUri(photoUri.orEmpty().trim())
+        .setCreatedAtMillis(System.currentTimeMillis())
+        .clearHealthObservations()
+        .build()
 
     suspend fun deleteTanks(
         tankIds: List<Long>

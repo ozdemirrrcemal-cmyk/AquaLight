@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="livestock_health_home_title">Livestock health</string>
+    <string name="livestock_health_home_info_title">About livestock health</string>
+    <string name="livestock_health_home_info_body">Record changes you observe in animals registered in this tank. Follow their progress over time. An observation alone cannot establish a diagnosis.</string>
+    <string name="livestock_health_home_view_all">View all</string>
+    <string name="livestock_health_home_show_less">Show less</string>
+    <string name="livestock_health_home_observed_with_check">%1$s · Last check: %2$s</string>
+    <string name="livestock_health_home_today">Today</string>
+    <string name="livestock_health_home_today_time">Today %1$s</string>
+    <string name="livestock_health_home_tank_context">%1$s · %2$s</string>
     <string name="livestock_health_home_entry_subtitle">View observations and follow-ups</string>
     <string name="livestock_health_home_hero_title">Follow your livestock</string>
     <string name="livestock_health_home_hero_subtitle">Record changes and follow their progress.</string>

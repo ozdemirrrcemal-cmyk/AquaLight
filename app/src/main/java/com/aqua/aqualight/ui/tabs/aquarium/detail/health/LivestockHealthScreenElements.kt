@@ -88,4 +88,3 @@ internal fun LivestockHealthFragment.statusBadge(label: String, active: Boolean)
             else R.color.aqua_bg_maintenance_tab_unselected_fill))
         }
     }
-

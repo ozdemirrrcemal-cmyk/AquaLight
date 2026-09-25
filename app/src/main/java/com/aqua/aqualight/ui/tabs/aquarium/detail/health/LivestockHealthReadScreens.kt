@@ -15,6 +15,10 @@ import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderPrimaryAction
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 
+private const val SURFACE_CHECK_STEP = 1
+private const val WATER_CHECK_STEP = 2
+private const val OTHER_ANIMALS_CHECK_STEP = 3
+
 internal fun LivestockHealthFragment.renderAssessment(current: AquariumTankSnapshot, content: LinearLayout) {
         val record = current.healthObservations.firstOrNull { it.id == args.observationId }
         if (record == null) { missing(content); return }
@@ -54,17 +58,17 @@ private fun LivestockHealthFragment.renderAssessmentChecks(content: LinearLayout
     review: LivestockHealthAssessmentUi, record: LivestockHealthObservation) {
         section(content, R.string.livestock_health_assessment_check_title)
         val surface = LivestockHealthSymptom.SURFACE_FREQUENCY_CHANGE in record.symptoms
-        content.addView(review.step(1, R.drawable.ic_health_surface,
+        content.addView(review.step(SURFACE_CHECK_STEP, R.drawable.ic_health_surface,
             getString(if (surface) R.string.livestock_health_assessment_step_surface_title
                 else R.string.livestock_health_assessment_step_general_title),
             getString(if (surface) R.string.livestock_health_assessment_check_surface
                 else R.string.livestock_health_assessment_check_general)) { openTank() })
         content.addView(ui.spacer(R.dimen.aqua_size_8))
-        content.addView(review.step(2, R.drawable.ic_care_water_test_24,
+        content.addView(review.step(WATER_CHECK_STEP, R.drawable.ic_care_water_test_24,
             getString(R.string.livestock_health_assessment_step_water_title),
             getString(R.string.livestock_health_assessment_check_water)) { openTank() })
         content.addView(ui.spacer(R.dimen.aqua_size_8))
-        content.addView(review.step(3, R.drawable.ic_life_fish_24,
+        content.addView(review.step(OTHER_ANIMALS_CHECK_STEP, R.drawable.ic_life_fish_24,
             getString(R.string.livestock_health_assessment_step_others_title),
             getString(R.string.livestock_health_assessment_check_others)) {
             navigate(LivestockHealthPages.DETAIL, record.id)

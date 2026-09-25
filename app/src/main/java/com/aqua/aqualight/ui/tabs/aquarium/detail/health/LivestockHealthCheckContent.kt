@@ -138,4 +138,3 @@ private fun LivestockHealthCheckSheet.renderCheckPhotoAndFooter(observation: Liv
         body.addView(ui.spacer(R.dimen.aqua_size_8))
         body.addView(ui.button(R.string.livestock_health_check_save) { save(observation) })
 }
-

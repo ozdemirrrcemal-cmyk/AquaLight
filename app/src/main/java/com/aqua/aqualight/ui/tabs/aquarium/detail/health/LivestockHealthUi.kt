@@ -29,8 +29,13 @@ internal class LivestockHealthUi(context: Context) : LivestockHealthComponents(c
         image(LivestockCategories.iconRes(livestock.category), width, height).apply {
             if (photoUri.isNullOrBlank()) {
                 scaleType = ImageView.ScaleType.CENTER_INSIDE
-                setPadding(size(R.dimen.aqua_size_12), size(R.dimen.aqua_size_12),
-                    size(R.dimen.aqua_size_12), size(R.dimen.aqua_size_12))
+                background = GradientDrawable().apply {
+                    cornerRadius = size(R.dimen.aqua_size_12).toFloat()
+                    setColor(ContextCompat.getColor(context,
+                        R.color.aqua_bg_maintenance_tab_unselected_fill))
+                }
+                setPadding(size(R.dimen.aqua_size_8), size(R.dimen.aqua_size_8),
+                    size(R.dimen.aqua_size_8), size(R.dimen.aqua_size_8))
                 setColorFilter(ContextCompat.getColor(context,
                     LivestockCategories.colorRes(livestock.category)))
             } else {
@@ -181,6 +186,10 @@ internal class LivestockHealthUi(context: Context) : LivestockHealthComponents(c
             addView(spacer(R.dimen.aqua_size_12))
             addView(button(R.string.livestock_health_home_new_observation, onNewObservation).apply {
                 isEnabled = enabled
+                setIconResource(R.drawable.ic_add_24)
+                iconTint = ContextCompat.getColorStateList(context, R.color.aqua_content_on_dark)
+                iconGravity = com.google.android.material.button.MaterialButton.ICON_GRAVITY_TEXT_START
+                iconPadding = size(R.dimen.aqua_size_8)
             })
         }
         frame.addView(captions, FrameLayout.LayoutParams(match, wrap, Gravity.BOTTOM))
@@ -224,7 +233,7 @@ internal class LivestockHealthUi(context: Context) : LivestockHealthComponents(c
 
     fun tankContext(summary: String, onOpen: () -> Unit): MaterialCardView {
         val layout = row()
-        layout.addView(image(R.drawable.ic_care_water_test_24,
+        layout.addView(image(R.drawable.ic_care_water_change_24,
             R.dimen.aqua_size_48, R.dimen.aqua_size_48).apply {
             setPadding(size(R.dimen.aqua_size_10), size(R.dimen.aqua_size_10),
                 size(R.dimen.aqua_size_10), size(R.dimen.aqua_size_10))
@@ -241,6 +250,8 @@ internal class LivestockHealthUi(context: Context) : LivestockHealthComponents(c
         })
         layout.addView(text(context.getString(R.string.livestock_health_home_tank_open),
             R.dimen.aqua_text_size_body_small, R.color.aqua_accent_primary))
+        layout.addView(image(R.drawable.ic_arrow_right, R.dimen.aqua_size_24,
+            R.dimen.aqua_size_24))
         return card(content = column().apply { addView(layout) }).apply {
             isClickable = true
             isFocusable = true
