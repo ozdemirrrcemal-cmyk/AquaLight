@@ -5,6 +5,7 @@
     android:id="@+id/plantCard"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:layout_marginBottom="@dimen/aqua_size_12"
     android:clickable="true"
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground"
