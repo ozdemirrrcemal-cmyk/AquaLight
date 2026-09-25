@@ -129,6 +129,16 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         tankId = requireArguments().getLong(ARG_TANK_ID)
+        activePhotoPlantId = savedInstanceState
+            ?.getLong(STATE_ACTIVE_PHOTO_PLANT_ID)
+            ?.takeIf { plantId -> plantId > 0L }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        activePhotoPlantId?.let { plantId ->
+            outState.putLong(STATE_ACTIVE_PHOTO_PLANT_ID, plantId)
+        }
+        super.onSaveInstanceState(outState)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -267,14 +277,14 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
     }
 
     private fun openGallery() {
-        if (activePhotoPlant() == null) return
+        if (activePhotoPlantId == null) return
         galleryLauncher.launch(
             PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
         )
     }
 
     private fun checkCameraPermissionAndOpen() {
-        if (activePhotoPlant() == null) return
+        if (activePhotoPlantId == null) return
         permissionCoordinator.runWhenGranted(
             capability = AppCapability.CAMERA_PHOTO,
             actionToken = ACTION_CAPTURE_PLANT_PHOTO
@@ -282,7 +292,7 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
     }
 
     private fun openCamera() {
-        if (activePhotoPlant() == null) return
+        if (activePhotoPlantId == null) return
         lifecycleScope.launch {
             val cameraUri = mediaFlow.createCameraUri()
             if (_binding == null) {
@@ -301,7 +311,7 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
     }
 
     private suspend fun startImageCrop(sourceUri: Uri) {
-        if (_binding == null || activePhotoPlant() == null) {
+        if (_binding == null || activePhotoPlantId == null) {
             mediaFlow.cancelCamera()
             return
         }
@@ -338,8 +348,8 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
     }
 
     private suspend fun savePlantPhoto(contentUri: Uri) {
-        val plant = activePhotoPlant()
-        if (_binding == null || plant == null || isPhotoMutationInProgress) {
+        val plantId = activePhotoPlantId
+        if (_binding == null || plantId == null || isPhotoMutationInProgress) {
             mediaFlow.rollbackSelection()
             return
         }
@@ -348,7 +358,7 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
         try {
             aquariumTankViewModel.updatePlantPhoto(
                 tankId = tankId,
-                plantId = plant.id,
+                plantId = plantId,
                 photoUri = contentUri.toString()
             )
             mediaFlow.commitSelection(deletePersistedMedia = false)
@@ -423,6 +433,7 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
 
     companion object {
         private const val ARG_TANK_ID = "tankId"
+        private const val STATE_ACTIVE_PHOTO_PLANT_ID = "activePhotoPlantId"
         private const val ACTION_CAPTURE_PLANT_PHOTO = "capture_plant_photo"
 
         fun newInstance(tankId: Long): TankDetailPlantsFragment {
