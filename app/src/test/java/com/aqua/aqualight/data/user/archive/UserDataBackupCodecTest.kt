@@ -47,6 +47,33 @@ class UserDataBackupCodecTest {
     }
 
     @Test
+    fun `backup codec round trips plant photo media`() {
+        val root = tempDirectory()
+        val photo = "plant-image-bytes".toByteArray()
+        val photoFile = File(root, "plant-photo.jpg").apply { writeBytes(photo) }
+        val entryName = "media/tanks/7_plant_11.jpg"
+        val manifest = manifest(
+            plantPhoto = ArchiveMediaReference(
+                entryName = entryName,
+                byteSize = photo.size,
+                sha256 = sha256(photo)
+            )
+        )
+        val encoded = File(root, "plant-backup.aqlbackup")
+        val decodedMedia = File(root, "decoded-plant")
+
+        codec.encode(
+            manifest = manifest,
+            mediaByEntryName = mapOf(entryName to photoFile),
+            destination = encoded
+        )
+        val decoded = codec.decode(encoded, decodedMedia)
+
+        assertEquals(manifest, decoded.manifest)
+        assertArrayEquals(photo, decoded.mediaByEntryName.getValue(entryName).readBytes())
+    }
+
+    @Test
     fun `decoder rejects a backup with an unsupported schema`() {
         val invalid = manifest().copy(schemaVersion = USER_DATA_BACKUP_SCHEMA_VERSION + 1)
         val encoded = rawZip(Gson().toJson(invalid))
@@ -135,7 +162,10 @@ class UserDataBackupCodecTest {
         assertTrue("deviceUid" in assignmentFields)
     }
 
-    private fun manifest(photo: ArchiveMediaReference? = null): UserDataBackupManifest {
+    private fun manifest(
+        photo: ArchiveMediaReference? = null,
+        plantPhoto: ArchiveMediaReference? = null
+    ): UserDataBackupManifest {
         return UserDataBackupManifest(
             format = USER_DATA_BACKUP_FORMAT,
             schemaVersion = USER_DATA_BACKUP_SCHEMA_VERSION,
@@ -158,7 +188,21 @@ class UserDataBackupCodecTest {
                     createdAtMillis = 900L,
                     smartCareEnabled = true,
                     careRemindersEnabled = true,
-                    plants = emptyList(),
+                    plants = if (plantPhoto == null) {
+                        emptyList()
+                    } else {
+                        listOf(
+                            ArchivePlant(
+                                id = 11L,
+                                catalogId = "plant:anubias_barteri",
+                                plantName = "Anubias",
+                                category = "Epiphyte",
+                                markerX = 0.25f,
+                                markerY = 0.75f,
+                                photo = plantPhoto
+                            )
+                        )
+                    },
                     materials = emptyList(),
                     livestock = emptyList()
                 )
