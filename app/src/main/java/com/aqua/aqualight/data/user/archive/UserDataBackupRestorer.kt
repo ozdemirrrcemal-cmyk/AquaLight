@@ -177,9 +177,9 @@ internal class UserDataBackupRestorer(
                 }
                 dataSources.tanks.restoreHealthObservation(newTankId,
                     observation.toApplication(photos))
-                photos.values.forEach(mediaOperations::commit)
+                photos.values.forEach { photoUri -> mediaOperations.commit(photoUri) }
             } catch (error: Exception) {
-                photos.values.forEach(mediaOperations::rollback)
+                photos.values.forEach { photoUri -> mediaOperations.rollback(photoUri) }
                 throw error
             }
         }

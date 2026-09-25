@@ -61,13 +61,13 @@ internal class UserDataRestoreDeduplicator(
                 val current = healthObservations.firstOrNull { it.id == observation.id }
                 observation.photo?.let { reference ->
                     current?.photoUri?.let { uri ->
-                        if (matchesFingerprint(uri, reference)) put(uri, reference)
+                        if (matchesFingerprint(uri, reference)) put(reference.entryName, reference)
                     }
                 }
                 observation.checks.orEmpty().forEach { check ->
                     val uri = current?.checks?.firstOrNull { it.id == check.id }?.photoUri
                     if (uri != null && check.photo != null && matchesFingerprint(uri, check.photo)) {
-                        put(uri, check.photo)
+                        put(check.photo.entryName, check.photo)
                     }
                 }
             }

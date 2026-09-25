@@ -189,6 +189,7 @@ class DefaultAquariumTankOperations(
                     throw error
                 }
                 runCatching { AppMediaStorage.commitPendingMedia(appContext, observation.photoUri) }
+                Unit
             }
         }
 
@@ -202,6 +203,7 @@ class DefaultAquariumTankOperations(
                     throw error
                 }
                 runCatching { AppMediaStorage.commitPendingMedia(appContext, check.photoUri) }
+                Unit
             }
         }
 

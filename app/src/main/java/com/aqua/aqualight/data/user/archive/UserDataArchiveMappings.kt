@@ -81,14 +81,16 @@ internal fun SavedAquariumTank.toArchiveAquarium(
                 symptomCodes = observation.symptoms.map { it.code },
                 trendCode = observation.trend.code,
                 note = observation.note,
-                photo = observation.photoUri?.let(healthPhotoReferences::get),
+                photo = healthPhotoReferences["${UserDataBackupLimits.MEDIA_PREFIX}${id}_observation_${observation.id}.jpg"],
                 baselineChangeCode = observation.baselineChange?.code,
                 closedAtMillis = observation.closedAtMillis,
                 outcomeCode = observation.outcome?.code ?: if (observation.closedAtMillis != null) "ended" else null,
                 checks = observation.checks.map { check ->
                     ArchiveHealthCheck(check.id, check.observedAtMillis,
                         check.affectedCount, check.trend.code, check.note,
-                        check.photoUri?.let(healthPhotoReferences::get))
+                        healthPhotoReferences[
+                            "${UserDataBackupLimits.MEDIA_PREFIX}${id}_observation_${observation.id}_check_${check.id}.jpg"
+                        ])
                 }
             )
         }

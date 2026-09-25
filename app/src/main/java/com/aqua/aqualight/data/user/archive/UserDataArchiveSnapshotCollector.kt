@@ -78,7 +78,7 @@ internal class UserDataArchiveSnapshotCollector(
                         }
                         archivedPhotoCount++
                         media[entryName] = staged
-                        observationPhotoReferences[uri] = ArchiveMediaReference(
+                        observationPhotoReferences[entryName] = ArchiveMediaReference(
                             entryName, staged.length().toInt(), sha256(staged))
                     }
                 }
