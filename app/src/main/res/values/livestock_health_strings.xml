@@ -17,6 +17,10 @@
     <string name="livestock_health_home_affected_short">%1$d / %2$d animals</string>
     <string name="livestock_health_home_tank_data">Tank context</string>
     <string name="livestock_health_home_tank_data_pending">Water measurements are not recorded yet</string>
+    <string name="livestock_health_maintenance_water">Last water change: %1$s%2$s</string>
+    <string name="livestock_health_maintenance_percent"> · %1$d%%</string>
+    <string name="livestock_health_maintenance_filter">Last filter care: %1$s</string>
+    <string name="livestock_health_maintenance_none">No completed water change on record</string>
     <string name="livestock_health_form_title">New observation</string>
     <string name="livestock_health_form_species_title">1. Which livestock?</string>
     <string name="livestock_health_form_species_hint">Choose a record from this tank.</string>

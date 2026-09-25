@@ -3,6 +3,8 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 import android.content.Context
 import android.net.Uri
 import android.graphics.Typeface
+import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -130,6 +132,31 @@ internal class LivestockHealthUi(private val context: Context) {
         }
     }
 
+    fun speciesChoice(
+        livestock: AquariumLivestock,
+        selected: Boolean,
+        onClick: () -> Unit
+    ): MaterialCardView {
+        val content = row()
+        content.addView(speciesImage(livestock, R.dimen.aqua_size_52, R.dimen.aqua_size_52))
+        val labels = column()
+        labels.addView(text(livestock.name, bold = true))
+        labels.addView(text(
+            context.getString(LivestockCategories.labelRes(livestock.category)) +
+                " · " + livestock.quantity,
+            colorRes = R.color.aqua_card_text_secondary
+        ))
+        content.addView(labels)
+        return card(
+            if (selected) R.color.aqua_accent_primary else R.color.aqua_card_outline,
+            content
+        ).apply {
+            isClickable = true
+            isFocusable = true
+            setOnClickListener { onClick() }
+        }
+    }
+
     fun symptomName(symptom: LivestockHealthSymptom): String = context.getString(
         when (symptom) {
             LivestockHealthSymptom.SURFACE_FREQUENCY_CHANGE -> R.string.livestock_health_symptom_surface
@@ -161,6 +188,13 @@ internal class LivestockHealthUi(private val context: Context) {
                 }
             }
             contentDescription = null
+        }, FrameLayout.LayoutParams(match, match))
+        frame.addView(View(context).apply {
+            background = GradientDrawable(
+                GradientDrawable.Orientation.TOP_BOTTOM,
+                intArrayOf(Color.TRANSPARENT,
+                    ContextCompat.getColor(context, R.color.aqua_card_surface))
+            )
         }, FrameLayout.LayoutParams(match, match))
         val captions = column().apply {
             setPadding(

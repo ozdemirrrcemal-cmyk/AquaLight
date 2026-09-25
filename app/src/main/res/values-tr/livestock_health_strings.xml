@@ -17,6 +17,10 @@
     <string name="livestock_health_home_affected_short">%1$d / %2$d canlı</string>
     <string name="livestock_health_home_tank_data">Tanktan gelen bağlam</string>
     <string name="livestock_health_home_tank_data_pending">Bu tankta henüz su ölçümü kayıtlı değil</string>
+    <string name="livestock_health_maintenance_water">Son su değişimi: %1$s%2$s</string>
+    <string name="livestock_health_maintenance_percent"> · %%%1$d</string>
+    <string name="livestock_health_maintenance_filter">Son filtre bakımı: %1$s</string>
+    <string name="livestock_health_maintenance_none">Kayıtlı tamamlanmış su değişimi yok</string>
     <string name="livestock_health_form_title">Yeni gözlem</string>
     <string name="livestock_health_form_species_title">1. Hangi canlı?</string>
     <string name="livestock_health_form_species_hint">Tankındaki kayıtlı canlılardan seç.</string>
