@@ -52,7 +52,8 @@ internal data class ArchivePlant(
     val plantName: String,
     val category: String,
     val markerX: Float,
-    val markerY: Float
+    val markerY: Float,
+    val photo: ArchiveMediaReference? = null
 )
 
 internal data class ArchiveMaterial(
