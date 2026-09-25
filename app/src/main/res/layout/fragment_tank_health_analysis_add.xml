@@ -384,7 +384,7 @@
                             android:textSize="@dimen/aqua_text_size_body_small" />
 
                         <LinearLayout
-                            android:layout_width="@dimen/aqua_size_190"
+                            android:layout_width="@dimen/aqua_size_170"
                             android:layout_height="@dimen/aqua_size_38"
                             android:orientation="horizontal">
 
@@ -481,7 +481,7 @@
                         <com.google.android.material.textfield.TextInputLayout
                             android:id="@+id/inputTemperatureLayout"
                             style="@style/Widget.Aqua.Input.Layout"
-                            android:layout_width="@dimen/aqua_size_150"
+                            android:layout_width="@dimen/aqua_size_112"
                             android:layout_height="wrap_content"
                             app:suffixText="@string/tank_health_analysis_temperature_unit">
 
