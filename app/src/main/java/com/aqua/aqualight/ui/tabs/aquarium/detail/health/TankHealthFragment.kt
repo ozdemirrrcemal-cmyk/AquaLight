@@ -10,6 +10,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentTankHealthBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
 
 class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
 
@@ -46,7 +47,9 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
     }
 
     private fun setupContent() {
-        val contentAdapter = TankHealthContentAdapter()
+        val contentAdapter = TankHealthContentAdapter(
+            onAddAnalysisClick = ::openAddAnalysis
+        )
         val contentLayoutManager = GridLayoutManager(
             requireContext(),
             TankHealthContentAdapter.GRID_SPAN_COUNT
@@ -61,6 +64,14 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
         binding.healthContent.layoutManager = contentLayoutManager
         binding.healthContent.adapter = contentAdapter
         binding.healthContent.itemAnimator = null
+    }
+
+    private fun openAddAnalysis() {
+        findNavController().navigateSafelyFrom(
+            sourceDestinationId = R.id.tankHealthFragment,
+            directions = TankHealthFragmentDirections
+                .actionTankHealthFragmentToTankHealthAnalysisAddFragment(args.tankId)
+        )
     }
 
     override fun onDestroyView() {

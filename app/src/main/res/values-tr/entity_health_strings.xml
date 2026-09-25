@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="screen_title_plant_health">Bitki Sağlığı</string>
+    <string name="screen_title_livestock_health">Canlı Sağlığı</string>
+
+    <string name="plant_health_entry_title">Bitki Sağlığı</string>
+    <string name="plant_health_entry_summary">Bitkiler genel olarak sağlıklı</string>
+    <string name="plant_health_entry_last_check">Son kontrol: 1 gün önce</string>
+
+    <string name="livestock_health_entry_title">Canlı Sağlığı</string>
+    <string name="livestock_health_entry_summary">Canlılar aktif ve iyi durumda</string>
+    <string name="livestock_health_entry_last_check">Son kontrol: bugün</string>
+</resources>

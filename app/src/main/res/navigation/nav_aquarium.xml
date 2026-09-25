@@ -176,6 +176,28 @@
                 app:argType="long" />
         </action>
         <action
+            android:id="@+id/action_tankDetailFragment_to_plantHealthFragment"
+            app:destination="@id/plantHealthFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right">
+            <argument
+                android:name="tankId"
+                app:argType="long" />
+        </action>
+        <action
+            android:id="@+id/action_tankDetailFragment_to_livestockHealthFragment"
+            app:destination="@id/livestockHealthFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right">
+            <argument
+                android:name="tankId"
+                app:argType="long" />
+        </action>
+        <action
             android:id="@+id/action_tankDetailFragment_to_unsupportedDeviceFragment"
             app:destination="@id/unsupportedDeviceFragment"
             app:enterAnim="@anim/nav_slide_in_right"
@@ -185,10 +207,104 @@
     </fragment>
 
     <fragment
+        android:id="@+id/plantHealthFragment"
+        android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.health.PlantHealthFragment"
+        android:label="@string/screen_title_plant_health"
+        tools:layout="@layout/fragment_aquarium_health_placeholder">
+        <argument
+            android:name="tankId"
+            app:argType="long" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/livestockHealthFragment"
+        android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.health.LivestockHealthFragment"
+        android:label="@string/screen_title_livestock_health"
+        tools:layout="@layout/fragment_aquarium_health_placeholder">
+        <argument
+            android:name="tankId"
+            app:argType="long" />
+    </fragment>
+
+    <fragment
         android:id="@+id/tankHealthFragment"
         android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.health.TankHealthFragment"
         android:label="@string/screen_title_tank_health"
         tools:layout="@layout/fragment_tank_health">
+        <argument
+            android:name="tankId"
+            app:argType="long" />
+        <action
+            android:id="@+id/action_tankHealthFragment_to_tankHealthAnalysisAddFragment"
+            app:destination="@id/tankHealthAnalysisAddFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right">
+            <argument
+                android:name="tankId"
+                app:argType="long" />
+        </action>
+    </fragment>
+
+    <fragment
+        android:id="@+id/tankHealthAnalysisAddFragment"
+        android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.health.TankHealthAnalysisAddFragment"
+        android:label="@string/screen_title_tank_health_analysis_add"
+        tools:layout="@layout/fragment_tank_health_analysis_add">
+        <argument
+            android:name="tankId"
+            app:argType="long" />
+        <action
+            android:id="@+id/action_tankHealthAnalysisAddFragment_to_tankHealthAnalysisHistoryFragment"
+            app:destination="@id/tankHealthAnalysisHistoryFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right">
+            <argument
+                android:name="tankId"
+                app:argType="long" />
+        </action>
+    </fragment>
+
+    <fragment
+        android:id="@+id/tankHealthAnalysisHistoryFragment"
+        android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.health.TankHealthAnalysisHistoryFragment"
+        android:label="@string/screen_title_tank_health_analysis_history"
+        tools:layout="@layout/fragment_tank_health_analysis_history">
+        <argument
+            android:name="tankId"
+            app:argType="long" />
+        <action
+            android:id="@+id/action_tankHealthAnalysisHistoryFragment_to_tankHealthAnalysisAddFragment"
+            app:destination="@id/tankHealthAnalysisAddFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right">
+            <argument
+                android:name="tankId"
+                app:argType="long" />
+        </action>
+        <action
+            android:id="@+id/action_tankHealthAnalysisHistoryFragment_to_tankHealthAnalysisDetailFragment"
+            app:destination="@id/tankHealthAnalysisDetailFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right">
+            <argument
+                android:name="tankId"
+                app:argType="long" />
+        </action>
+    </fragment>
+
+    <fragment
+        android:id="@+id/tankHealthAnalysisDetailFragment"
+        android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.health.TankHealthAnalysisDetailFragment"
+        android:label="@string/screen_title_tank_health_analysis_detail"
+        tools:layout="@layout/fragment_tank_health_analysis_detail">
         <argument
             android:name="tankId"
             app:argType="long" />

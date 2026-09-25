@@ -16,6 +16,8 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumPlantTag
 import com.aqua.aqualight.databinding.FragmentTankDetailPlantsBinding
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
+import com.aqua.aqualight.ui.tabs.aquarium.navigation.TankDetailTabArgs
+import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
 import com.google.android.material.card.MaterialCardView
 
 class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) {
@@ -24,6 +26,7 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
     private var tankId: Long = 0L
     private var isOpeningPlantTagScreen: Boolean = false
+    private var isOpeningPlantHealth: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,6 +36,23 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentTankDetailPlantsBinding.bind(view)
+
+        binding.plantHealthEntry.ivHealthEntryIcon.setImageResource(
+            R.drawable.ic_health_plant_24
+        )
+        binding.plantHealthEntry.tvHealthEntryTitle.setText(
+            R.string.plant_health_entry_title
+        )
+        binding.plantHealthEntry.tvHealthEntrySummary.setText(
+            R.string.plant_health_entry_summary
+        )
+        binding.plantHealthEntry.tvHealthEntryLastCheck.setText(
+            R.string.plant_health_entry_last_check
+        )
+        binding.plantHealthEntry.root.setOnClickListener {
+            openPlantHealth()
+        }
+
         binding.btnAddPlant.setOnClickListener { openPlantTagScreen() }
         aquariumTankViewModel.tanks.observe(viewLifecycleOwner) { tanks ->
             val tank = tanks.firstOrNull { it.id == tankId } ?: return@observe
@@ -43,6 +63,29 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
     override fun onResume() {
         super.onResume()
         isOpeningPlantTagScreen = false
+        isOpeningPlantHealth = false
+    }
+
+    private fun openPlantHealth() {
+        if (isOpeningPlantHealth) {
+            return
+        }
+
+        val navController = findNavController()
+        navController.currentBackStackEntry
+            ?.savedStateHandle
+            ?.set(
+                TankDetailFragment.KEY_SELECTED_TAB,
+                TankDetailTabArgs.PLANTS
+            )
+
+        val didNavigate = navController.navigateSafelyFrom(
+            sourceDestinationId = R.id.tankDetailFragment,
+            directions = TankDetailFragmentDirections
+                .actionTankDetailFragmentToPlantHealthFragment(tankId)
+        )
+
+        isOpeningPlantHealth = didNavigate
     }
 
     private fun openPlantTagScreen() {
