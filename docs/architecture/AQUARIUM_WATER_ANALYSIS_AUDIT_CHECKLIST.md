@@ -6,9 +6,9 @@ Repo: `ozdemirrrcemal-cmyk/AquaLight` · Branch: `feat/cooler-hardware-catalog`.
 
 İncelenen güncel branch snapshot’ı: `ca996f241470117a5a797733a13e4c69ffab176c`.
 
-Ana belge: `docs/architecture/AQUARIUM_WATER_ANALYSIS_CONTRACT.md` — 47 bölüm, 1566 satır.
+İlk incelemedeki ana belge: `docs/architecture/AQUARIUM_WATER_ANALYSIS_CONTRACT.md` — 47 bölüm, 1566 satır. Sonraki kabul edilen kararlar aynı sözleşmeye eklenir.
 
-Bu dosya, mevcut sözleşmenin kodla karşılaştırılmış incelemesi ve önerilen uygulama ekidir. İlk inceleme sırasında repo dosyaları değiştirilmedi. Checklist, kullanıcının isteğiyle `feat/water-analysis-foundation` çalışma branch'ine eklenmiştir. Aşağıdaki yeni modeller ve dosya adları öneridir; onaylanmış karar veya uygulanmış kod kabul edilmemelidir. Açık checklist maddeleri geliştirme sırasında test/kanıt ile kapatılmalıdır.
+Bu dosya, mevcut sözleşmenin kodla karşılaştırılmış incelemesi ve önerilen uygulama ekidir. İlk inceleme sırasında repo dosyaları değiştirilmedi. Checklist, kullanıcının isteğiyle `feat/water-analysis-foundation` çalışma branch'ine eklenmiştir. Karar kaydında açıkça kabul edildiği belirtilen kapsamın dışındaki modeller ve dosya adları öneridir; onaylanmış karar veya uygulanmış kod kabul edilmemelidir. Açık checklist maddeleri geliştirme sırasında test/kanıt ile kapatılmalıdır.
 
 ## Birlikte karar verme ve uygulama kuralı
 
@@ -16,7 +16,15 @@ Bu dosya, mevcut sözleşmenin kodla karşılaştırılmış incelemesi ve öner
 - Araştırma veya veri toplama gereken maddelerde kaynakların güvenilirliği, kapsamı, tarihi, birimleri ve birbiriyle tutarlılığı doğrulanır. Doğrulanamayan bilgi açıkça belirsiz bırakılır.
 - Bir madde birden fazla bağımsız karar içeriyorsa kararlar tek tek alınır. Özellikle W0.1 altındaki K01–K18 topluca onaylanmış sayılmaz.
 - Verilen karar ilgili sözleşme bölümüne işlenir; uygulama ve gerekli doğrulama tamamlandıktan sonra checklist maddesi kapatılır. Bir sonraki bağımsız karar kullanıcıya sunulur.
-- Bu dosyanın branch'e eklenmesi mimari seçeneklerin veya bilimsel eşiklerin onaylandığı anlamına gelmez. İlk karar noktası: W0.1 / K01 — klasör yapısı ve katman sahipliği.
+- Bu dosyanın branch'e eklenmesi mimari seçeneklerin veya bilimsel eşiklerin onaylandığı anlamına gelmez. Kabul edilen kararlar aşağıdaki kayıt üzerinden izlenir.
+
+## Karar kaydı
+
+| Madde | Durum / tarih | Kabul edilen kapsam | Sözleşme karşılığı |
+| --- | --- | --- | --- |
+| W0.1 / K01 | Kullanıcıyla kararlaştırıldı — 26.09.2026 | Mevcut application/data/UI/composition mimarisi korunacak. Ortak bağlam ve saf su analiz motoru application altında, veri/sensör/store implementasyonları data altında yer alacak. Bitki okuyucusunun hedefi data/aquarium/catalog/plant olacak. Mevcut sağlık UI'ı ve composition kullanılacak; yeni domain kökü veya Gradle modülü açılmayacak. | Ana sözleşme §4.1 |
+
+Bu kayıt mimari kararı belgeler; paketlerin/kodun uygulanmış olduğunu göstermez. W0.1, K02–K18 kararları henüz alınmadığı için açık kalır. Sıradaki karar: **W0.1 / K02 — mevcut su parametresi ve ölçüm modellerinin yeniden kullanılması**.
 
 ## 1. Sonuç
 
@@ -49,7 +57,7 @@ Burada “kritik”, ilgili katmanı uygulamadan önce kararı verilmesi gereken
 
 | No | Öncelik | Bulgu / açık karar | Gerekli ek |
 | --- | --- | --- | --- |
-| K01 | Kritik | §4/§30 sorumlulukları tarif ediyor; gerçek paket/dosya yerleşimi yok. Repo’da ayrı domain kökü bulunmuyor. | Bölüm 4’teki paket haritasını ve import kurallarını kabul et; bu iş için yeni Gradle/domain katmanı açma. |
+| K01 | Karar alındı | Mevcut mimari ve temel paket sahipliği kullanıcı tarafından kabul edildi; uygulama aşaması bekliyor. | Ana sözleşme §4.1 ve karar kaydı. Yeni domain kökü/Gradle modülü açılmayacak. |
 | K02 | Kritik | §45 yeni WaterParameter öneriyor; AquariumWaterParameter zaten var. | Mevcut modeli kontrollü genişletme veya birebir testli adapter kararı; iki farklı birim/parametre gerçeği oluşmasın. |
 | K03 | Kritik | §6 ppm/mg/L ve ammonia kararlarını sonraya bırakıyor. | NO3/NO3-N, NO2/NO2-N, PO4/P temeli; ammonia türü; tatlı/deniz suyu politikası; desteklenmeyen kit sonucu davranışı kesinleşsin. Yalnız etiketi değiştirmek yeterli değil. |
 | K04 | Kritik | §14 yön, tehlike, çatışma ve veri eksikliğini tek örnek enum’da topluyor. | Şiddet, LOW/HIGH yönü, veri yeterliliği ve conflict birlikte temsil edilsin. CRITICAL + missingData + conflict aynı sonuçta kaybolmadan saklansın. |
@@ -70,9 +78,9 @@ Burada “kritik”, ilgili katmanı uygulamadan önce kararı verilmesi gereken
 
 Kaynaklar: [S1], [S2], [S5], [S9], [S10], [S11], [S12], [S13], [S14], [S15].
 
-## 4. Önerilen klasörler ve katman sahipliği
+## 4. Klasörler ve katman sahipliği
 
-Aşağıdaki yollar `app/src/main/java/com/aqua/aqualight/` tabanına göredir. Yeni adlar hedef yerleşimdir. Mevcut Fragment ve XML dosyalarını sırf klasör düzeni için taşımak gerekmiyor.
+Aşağıdaki yollar `app/src/main/java/com/aqua/aqualight/` tabanına göredir. Temel application/data/UI/composition yerleşimi K01 ile onaylanmıştır. Ayrıntılı alt paket ve sınıf adları ilgili maddelerde kesinleştirilecek hedef önerileridir. Mevcut Fragment ve XML dosyaları sırf klasör düzeni için taşınmayacaktır.
 
 | Paket / konum | Sahibi olduğu iş | Örnek dosyalar |
 | --- | --- | --- |

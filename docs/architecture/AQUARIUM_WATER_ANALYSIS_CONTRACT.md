@@ -227,6 +227,32 @@ The UI must not directly depend on:
 
 Ownership is resolved below the application boundary.
 
+### 4.1 Accepted package and layer ownership (K01)
+
+Decision accepted with the user on 26 September 2026: preserve AquaLight's existing application, data, UI, and composition architecture for this feature.
+
+Paths below are relative to `app/src/main/java/com/aqua/aqualight/`.
+
+| Location | Responsibility |
+| --- | --- |
+| `application/aquarium/health/context/` | Shared immutable Aquarium Health context and context-provider contracts used by the four health engines. |
+| `application/aquarium/health/water/` | Water Analysis contracts, models, policies, and the pure deterministic assessment engine; model/policy/engine concerns may use focused subpackages here. |
+| `data/aquarium/health/` | Implementations for context assembly, sensor adaptation, owner-scoped analysis orchestration, persistence, and queries. |
+| `data/aquarium/catalog/plant/` | Plant catalog loading, parsing, and caching behind an application contract; the existing UI reader must move here during its implementation stage. |
+| Existing `ui/tabs/aquarium/detail/health/` | Approved screens, ViewModels, and presentation models; focused `presentation/water/` code stays within this UI boundary. |
+| Existing `composition/` | Concrete dependency construction and committed owner-scoped dependency wiring. |
+
+The accepted constraints are:
+
+- keep these responsibilities within the existing application module; do not introduce a separate domain root or a new Gradle module for this work;
+- keep pure models, policies, and assessment logic in the application layer, independent of Android, data implementations, JSON readers, Firebase, and UI resources;
+- keep storage, catalog I/O, and sensor access in data implementations behind application contracts;
+- keep approved Fragments and XML layouts in place; do not move them solely to reorganize folders;
+- preserve the existing owner/session lifecycle and composition boundaries;
+- introduce concrete files when their implementation stage is reached, rather than creating empty scaffolding as part of this decision.
+
+K01 settles package and layer ownership only. Exact model shapes, parameter reuse, unit semantics, scientific rules, and the remaining checklist decisions require their own item-by-item decisions. Recording K01 does not mark those decisions or implementation tasks as complete.
+
 ---
 
 ## 5. Canonical Water Analysis record
