@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="screen_title_tank_health_analysis_add">Analiz Ekle</string>
+    <string name="screen_title_tank_health_analysis_history">Geçmiş Kayıtlar</string>
+    <string name="screen_title_tank_health_analysis_detail">Kayıt Detayı</string>
+
+    <string name="tank_health_analysis_measurement_time_title">Ölçüm Zamanı</string>
+    <string name="tank_health_analysis_measurement_time_subtitle">Analizin tarih ve saatini seçin.</string>
+    <string name="tank_health_analysis_date_label">Tarih</string>
+    <string name="tank_health_analysis_time_label">Saat</string>
+    <string name="tank_health_analysis_date_value">26 Eyl 2026</string>
+
+    <string name="tank_health_analysis_sensor_title">Sensör Verisi</string>
+    <string name="tank_health_analysis_sensor_subtitle">Sıcaklık, bağlı soğutucu cihazın sensöründen alınabilir.</string>
+    <string name="tank_health_analysis_assigned_device">Bağlı cihaz</string>
+    <string name="tank_health_analysis_connected">Bağlı</string>
+    <string name="tank_health_analysis_temperature_source">Sıcaklık kaynağı</string>
+    <string name="tank_health_analysis_source_sensor">Sensör</string>
+    <string name="tank_health_analysis_source_manual">Manuel</string>
+    <string name="tank_health_analysis_temperature">Sıcaklık</string>
+    <string name="tank_health_analysis_from_sensor">Sensörden alındı</string>
+    <string name="tank_health_analysis_sensor_helper">Soğutucu cihaz bağlı değilse sıcaklığı manuel olarak girebilirsiniz.</string>
+
+    <string name="tank_health_analysis_water_parameters_title">Su Parametreleri</string>
+    <string name="tank_health_analysis_water_parameters_subtitle">Su değerlerinizi ölçüp girin.</string>
+    <string name="tank_health_analysis_all_manual_note">Sıcaklık hariç tüm ölçümler kullanıcı tarafından girilir.</string>
+    <string name="tank_health_analysis_test_kit_note">Daha doğru sonuçlar için güvenilir test kitleri kullanın.</string>
+    <string name="tank_health_analysis_save">Analizi Kaydet</string>
+    <string name="tank_health_analysis_history_action">Geçmiş Kayıtlar</string>
+    <string name="tank_health_analysis_new">Yeni Analiz</string>
+
+    <string name="tank_health_analysis_history_summary">Toplam 12 kayıt</string>
+    <string name="tank_health_analysis_history_summary_subtitle">Tankınızdaki tüm analiz geçmişi</string>
+    <string name="tank_health_analysis_filter_all">Tümü (12)</string>
+    <string name="tank_health_analysis_filter_sensor">Sensör (8)</string>
+    <string name="tank_health_analysis_filter_manual">Manuel (4)</string>
+    <string name="tank_health_analysis_source_sensor_badge">Sensörden alındı</string>
+    <string name="tank_health_analysis_source_manual_badge">Elle girildi</string>
+
+    <string name="tank_health_analysis_record_date_1">26 Eyl 2026</string>
+    <string name="tank_health_analysis_record_date_2">24 Eyl 2026</string>
+    <string name="tank_health_analysis_record_date_3">21 Eyl 2026</string>
+    <string name="tank_health_analysis_record_date_4">18 Eyl 2026</string>
+    <string name="tank_health_analysis_record_date_5">15 Eyl 2026</string>
+
+    <string name="tank_health_analysis_record_info_title">Kayıt Bilgisi</string>
+    <string name="tank_health_analysis_record_info_subtitle">Bu kayda ait tarih, saat ve kaynak bilgileri.</string>
+    <string name="tank_health_analysis_date_time_label">Tarih ve Saat</string>
+    <string name="tank_health_analysis_record_date_time">26 Eyl 2026 • 14:10</string>
+    <string name="tank_health_analysis_temperature_source_label">Sıcaklık kaynağı</string>
+    <string name="tank_health_analysis_temperature_source_value">Sensörden alındı</string>
+    <string name="tank_health_analysis_record_type_label">Kayıt tipi</string>
+    <string name="tank_health_analysis_record_type_value">Manuel ölçüm + sensör sıcaklığı</string>
+    <string name="tank_health_analysis_values_title">Su Değerleri</string>
+    <string name="tank_health_analysis_values_subtitle">Bu kayıttaki ölçüm sonuçları.</string>
+    <string name="tank_health_analysis_sensor_detail_subtitle">Sıcaklık, bağlı soğutucu cihazın sensöründen alınmıştır.</string>
+    <string name="tank_health_analysis_extra_title">Ek Bilgiler</string>
+    <string name="tank_health_analysis_extra_subtitle">Bu kayda ait diğer bilgiler.</string>
+    <string name="tank_health_analysis_created_by_label">Oluşturan</string>
+    <string name="tank_health_analysis_created_by_value">Kullanıcı</string>
+    <string name="tank_health_analysis_note_label">Not</string>
+    <string name="tank_health_analysis_note_value">Not eklenmemiş</string>
+    <string name="tank_health_analysis_delete">Kaydı Sil</string>
+    <string name="tank_health_analysis_back">Geri</string>
+
+    <string name="tank_health_analysis_delete_title">Kaydı Sil?</string>
+    <string name="tank_health_analysis_delete_message">26 Eyl 2026 14:10 tarihli analiz kaydını silmek istediğinize emin misiniz? Bu işlem geri alınamaz.</string>
+    <string name="tank_health_analysis_delete_confirm">Sil</string>
+    <string name="tank_health_analysis_delete_cancel">İptal</string>
+</resources>
