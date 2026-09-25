@@ -6,7 +6,7 @@ This document freezes the architectural, data, analysis, persistence, and UI-int
 
 The existing Tank Health / Water Quality UI is considered visually complete for this stage. Implementation work governed by this contract must connect that UI to authoritative data and analysis without redesigning the approved screens unless a later explicit UI change is requested.
 
-Accepted clarification on 26 September 2026 (K03.0): the selected tank type determines which measurement fields are shown. Preserve the existing screen structure, cards, field styling, grid, and navigation while populating them with the applicable measurements in section 25.1. Basic, tank-specific, and additional measurements are logical groups, not approval for a new visual layout. K03.1 subsequently freezes nitrate, nitrite, and phosphate recording semantics in section 6.1. K03.2 freezes the test/device selection, source-semantic resolution, and normalization workflow in sections 6.2, 6.5, 7, and 28.1. K03.3 freezes the canonical ammonia reporting bases in section 6.3. K03.4 freezes concurrent multi-result measurement/cardinality behavior in section 6.6. K03.5 freezes marine salinity/specific-gravity semantics and conversion safety in section 6.7. K03.6 freezes alkalinity/KH semantics, canonical units, and duplicate-field prevention in section 6.8; the remaining K03 decisions stay open.
+Accepted clarification on 26 September 2026 (K03.0): the selected tank type determines which measurement fields are shown. Preserve the existing screen structure, cards, field styling, grid, and navigation while populating them with the applicable measurements in section 25.1. Basic, tank-specific, and additional measurements are logical groups, not approval for a new visual layout. K03.1 subsequently freezes nitrate, nitrite, and phosphate recording semantics in section 6.1. K03.2 freezes the test/device selection, source-semantic resolution, and normalization workflow in sections 6.2, 6.5, 7, and 28.1. K03.3 freezes the canonical ammonia reporting bases in section 6.3. K03.4 freezes concurrent multi-result measurement/cardinality behavior in section 6.6. K03.5 freezes marine salinity/specific-gravity semantics and conversion safety in section 6.7. K03.6 freezes alkalinity/KH semantics, canonical units, and duplicate-field prevention in section 6.8. K03.7 freezes dissolved-oxygen concentration/saturation semantics and conversion prerequisites in section 6.9; the remaining K03 decisions stay open.
 
 This contract is intentionally broader than a screen implementation. It defines the foundation that later powers:
 
@@ -500,6 +500,22 @@ Decision accepted with the user on 26 September 2026: AquaLight must treat alkal
 - **UI:** marine/resif shows one alkalinity input, not separate `KH` and `Alkalinite` inputs for the same result. Freshwater retains the approved familiar label where appropriate, with source-profile/help/detail text making the resolved semantic explicit without forcing users to understand internal enum names.
 
 K03.6 prioritizes semantic correctness over aquarium-industry shorthand. The UI may use familiar terminology, but storage, normalization, rules, history, and assessment use the resolved typed metric.
+### 6.9 Accepted dissolved-oxygen concentration / saturation policy (K03.7)
+
+Decision accepted with the user on 26 September 2026: AquaLight must distinguish measured dissolved-oxygen concentration from percent saturation and must not infer one from the other without the same-event environmental inputs and a versioned standards-based calculation.
+
+- **Canonical concentration metric:** use `DISSOLVED_OXYGEN_CONCENTRATION` with canonical unit **mg/L O2**. This is the primary canonical value used by concentration-based water-quality rules.
+- **Saturation metric/representation:** use `DISSOLVED_OXYGEN_SATURATION_PERCENT` for **% air saturation**. Percent saturation is related to concentration but is not the same physical/reporting value and must not be stored in the concentration field.
+- **Same observation, not duplicate evidence:** when one verified probe/device reports both mg/L and % saturation from the same underlying oxygen observation, preserve both source outputs if useful, link them through the same source-observation/provenance identity, and do not count them as two independent measurements/evidence signals.
+- **Context-dependent conversion:** conversion between mg/L and % saturation is permitted only when the calculation has the required same-event inputs for the selected method: water temperature, barometric/pressure reference, and salinity or specific conductance where applicable. The exact algorithm, applicability range, constants, and revision must be versioned and tested.
+- **No present-context substitution for historical samples:** never use today's temperature, salinity/conductivity, pressure, or sensor state to convert a historical/backdated oxygen result. Required inputs must belong to the same measurement event or be explicitly proven to represent that event.
+- **Verified device compensation:** if a device internally applies temperature, salinity, altitude/barometric-pressure, or other compensation, the source profile must declare that behavior and the stored provenance must retain the compensation inputs/settings available from the device. AquaLight must not silently compensate a value a second time.
+- **Source-native-only is valid:** a valid source may report only mg/L or only % saturation. Store the verified source-native result. If prerequisites for a safe cross-representation conversion are missing, conversion remains unavailable; do not fabricate the missing representation.
+- **Fail closed for assessment:** a concentration rule compares to `DISSOLVED_OXYGEN_CONCENTRATION`; a saturation rule compares to `DISSOLVED_OXYGEN_SATURATION_PERCENT`. If a required representation is unavailable and no verified conversion path exists, return `INSUFFICIENT_DATA` / conversion unavailable rather than a guessed normal, warning, or critical status.
+- **100% is not a health verdict:** `% saturation = 100` represents equilibrium with the relevant atmospheric conditions, not an automatic aquarium-health score or universal safe state. Supersaturation above 100% is possible and requires its own evidence-backed interpretation.
+- **UI:** preserve the approved card/grid design. The field label remains **"Çözünmüş oksijen"** and the selected verified source's actual unit is shown (`mg/L O2` or `% doygunluk`). If a device provides both values concurrently, the UI may show the second representation as a linked secondary value/detail without creating a second independent oxygen health signal.
+
+K03.7 prioritizes the directly measured/source-native oxygen result and same-event provenance over convenience conversion. A precise-looking converted value is forbidden when its temperature, salinity/conductivity, pressure, or method context is missing.
 ---
 
 ## 7. Measurement provenance
@@ -1075,7 +1091,7 @@ These measurements are supported scope beyond the default fields above. "Additio
 | Measurement / Turkish name | Availability / context | Important boundary |
 | --- | --- | --- |
 | Phosphate / Fosfat (PO4) | Additional for `Fish` and `Shrimp`; already default for `Planted` and marine/coral types; recordable for `Other` | Supports nutrient, plant, and algae investigation; no diagnosis from this value alone |
-| Dissolved oxygen / Çözünmüş oksijen | Additional for all nine types | Biologically critical; unmeasured oxygen is unknown. Temperature or installed aeration cannot establish the actual concentration |
+| Dissolved oxygen / Çözünmüş oksijen | Additional for all nine types | K03.7: canonical concentration is `DISSOLVED_OXYGEN_CONCENTRATION` in mg/L O2; `% saturation` is a separate context-dependent metric/representation. Temperature, aeration, or saturation alone must not fabricate a concentration without the required same-event conversion context |
 | Free chlorine + total chlorine / Serbest klor + Toplam klor | Additional for all types, particularly when municipal source water is used | Separate results; a negative free-chlorine test alone does not rule out chloramine. Record source-water versus tank-water context explicitly before assessment |
 | Conductivity / İletkenlik and TDS | Additional for freshwater types; `Other` may record explicitly identified results | Useful tracking scope, not a replacement for GH/KH or an overall health score; conductivity and TDS are not the same measurement |
 | Carbon dioxide / CO2 | Additional for freshwater types, especially planted tanks with CO2 use | Equipment presence is not a measured concentration; a pH/KH-derived estimate needs a separately accepted method and prerequisites |
@@ -1093,7 +1109,7 @@ For `Other`/unknown profiles, the supported fields listed above and the profile-
 - A visible field is not a promise of a complete assessment. Unmeasured, measured zero, inapplicable, unknown test basis, and missing assessment rules must remain distinct. A critical known result must not be hidden by a partial-data state.
 - Preserve entered drafts and persisted measurements when tank type changes; no field hidden by the new profile may silently discard its value or be persisted invisibly. Resolve affected draft values explicitly before saving. Detailed interaction belongs to the later state/UI decision.
 - Store the assessment's tank-type/profile context with its provenance. History/detail render the saved measurement set and assessment context; today's tank type must not erase or reinterpret yesterday's fields. The latest result must expose a context mismatch if the tank type has since changed.
-- K03.1 fixes nitrate/nitrite/phosphate canonical meanings and units, K03.2 source-resolution/normalization, K03.3 TAN/direct-NH3 bases, K03.4 concurrent multi-result behavior, K03.5 marine salinity/SG safety, and K03.6 total-alkalinity/KH semantics and units. Remaining K03 decisions include other fields' chemical reporting bases/units, evidence-backed profile/conversion entries and precision, and derived-measurement prerequisites. K03.0–K03.6 do not accept numerical safety thresholds, complete implementation, or all of K03/K11/K13.
+- K03.1 fixes nitrate/nitrite/phosphate canonical meanings and units, K03.2 source-resolution/normalization, K03.3 TAN/direct-NH3 bases, K03.4 concurrent multi-result behavior, K03.5 marine salinity/SG safety, K03.6 total-alkalinity/KH semantics, and K03.7 dissolved-oxygen concentration/saturation semantics and conversion prerequisites. Remaining K03 decisions include other fields' chemical reporting bases/units, evidence-backed profile/conversion entries and precision, and derived-measurement prerequisites. K03.0–K03.7 do not accept numerical safety thresholds, complete implementation, or all of K03/K11/K13.
 
 Evidence and repository references for this scope are recorded in [the K03 research note](research/WATER_ANALYSIS_CONCENTRATION_UNITS_K03.md). The per-type visibility matrix is a product decision informed by those sources, not a scientific claim that all listed tests must be performed at every save.
 
@@ -1567,6 +1583,10 @@ Cover:
 - `TOTAL_ALKALINITY`, `CARBONATE_HARDNESS`, and `GENERAL_HARDNESS` never alias by label/unit alone;
 - marine UI does not double-enter the same alkalinity observation as both KH and alkalinity;
 - unknown `KH` source semantics produce unavailable/insufficient-data rather than a guessed metric;
+- dissolved oxygen mg/L and % saturation remain distinct typed values; conversion requires same-event temperature, pressure reference, and salinity/specific-conductance inputs required by the method;
+- one DO probe observation reporting mg/L + % saturation is not double-counted as two independent measurements;
+- historical DO conversion never substitutes today's environmental context;
+- missing DO conversion prerequisites produce conversion-unavailable/`INSUFFICIENT_DATA`;
 - SG conversion requires declared reference/calibration temperature and all algorithm prerequisites;
 - conductivity→PSS-78 uses a versioned standards-based algorithm with golden-vector tests and applicability checks;
 - unknown/ambiguous `ppt` never normalizes by label alone;
@@ -1669,63 +1689,64 @@ The implementation order is frozen as follows.
 5. K03.4 concurrent multi-result measurement policy: separate canonical metrics/inputs for simultaneous outputs; selector only for mutually exclusive modes (accepted);
 6. K03.5 marine salinity/SG/conductivity typed semantics and conversion-safety policy (accepted);
 7. K03.6 total-alkalinity/KH semantic separation and canonical meq/L policy (accepted);
-8. severity/status model;
-9. species-range intersection/conflict policy;
-10. intrinsic chemistry rule catalog and evidence revision.
+8. K03.7 dissolved-oxygen mg/L / % saturation semantic separation and same-event conversion policy (accepted);
+9. severity/status model;
+10. species-range intersection/conflict policy;
+11. intrinsic chemistry rule catalog and evidence revision.
 
 ### Phase 2 - Application/domain foundation
 
-11. WaterAnalysis input/record models;
-12. structured assessment models;
-13. recommendation/reason codes;
-14. PlantCareCatalogOperations boundary;
-15. AquariumHealthContext model/provider;
-16. reuse/integrate LivestockWaterAdvisorOperations;
-17. WaterQualityAssessmentEngine;
-18. TankWaterTemperatureOperations boundary.
+12. WaterAnalysis input/record models;
+13. structured assessment models;
+14. recommendation/reason codes;
+15. PlantCareCatalogOperations boundary;
+16. AquariumHealthContext model/provider;
+17. reuse/integrate LivestockWaterAdvisorOperations;
+18. WaterQualityAssessmentEngine;
+19. TankWaterTemperatureOperations boundary.
 
 ### Phase 3 - Persistence
 
-19. dedicated water-analysis proto/store;
-20. schema version;
-21. strict store rules;
-22. owner/tank-scoped queries;
-23. create/delete/latest operations;
-24. persisted assessment/provenance snapshot.
+20. dedicated water-analysis proto/store;
+21. schema version;
+22. strict store rules;
+23. owner/tank-scoped queries;
+24. create/delete/latest operations;
+25. persisted assessment/provenance snapshot.
 
 ### Phase 4 - Integrity
 
-25. integrate Water Analysis into tank deletion transaction;
-26. process-death recovery;
-27. account deletion cleanup;
-28. backup/restore policy and implementation if included;
-29. data inventory / export updates where applicable.
+26. integrate Water Analysis into tank deletion transaction;
+27. process-death recovery;
+28. account deletion cleanup;
+29. backup/restore policy and implementation if included;
+30. data inventory / export updates where applicable.
 
 ### Phase 5 - UI integration
 
-30. WaterAnalysisViewModel;
-31. save real analysis;
-32. replace mock history;
-33. pass analysisId through Safe Args;
-34. bind real record detail;
-35. implement real delete;
-36. bind latest analysis to Tank Health Water Quality metrics;
-37. connect fresh cooling sensor temperature.
+31. WaterAnalysisViewModel;
+32. save real analysis;
+33. replace mock history;
+34. pass analysisId through Safe Args;
+35. bind real record detail;
+36. implement real delete;
+37. bind latest analysis to Tank Health Water Quality metrics;
+38. connect fresh cooling sensor temperature.
 
 ### Phase 6 - Validation
 
-38. engine tests;
-39. persistence tests;
-40. owner/process-death tests;
-41. ViewModel/UI contract tests;
-42. architecture/lint/detekt/CodeQL;
-43. all CI green.
+39. engine tests;
+40. persistence tests;
+41. owner/process-death tests;
+42. ViewModel/UI contract tests;
+43. architecture/lint/detekt/CodeQL;
+44. all CI green.
 
 Only after this sequence:
 
-44. Algae Control;
-45. Plant Health;
-46. Livestock Health.
+45. Algae Control;
+46. Plant Health;
+47. Livestock Health.
 
 ---
 
@@ -1741,6 +1762,7 @@ Water Quality is complete only when all of the following are true:
 - when a source can measure TAN and direct free NH3 in the same event, both can be entered and persisted as separate measured metrics with separate provenance; concurrent outputs are not collapsed into a selector;
 - marine salinity assessment never assumes SG, PSS-78, conductivity, absolute/mass salinity, or generic `ppt` are equivalent; cross-representation comparison requires an explicit verified conversion with all required reference conditions, otherwise the result remains source-native/insufficient for that rule;
 - marine/coral alkalinity uses one `TOTAL_ALKALINITY` metric with canonical meq/L and verified dKH / mg/L as CaCO3 representations; no duplicate KH+alkalinity field/evidence is created, and freshwater `CARBONATE_HARDNESS`/`GENERAL_HARDNESS` remain semantically distinct;
+- dissolved oxygen concentration uses canonical mg/L O2 while `% saturation` remains a separate context-dependent metric/representation; conversions require same-event method inputs and linked device outputs are not double-counted;
 - unresolved source semantics are excluded from committed analysis and may remain in draft while other resolved measurements are saved; changing a source never silently reinterprets an entered number;
 - tank-type changes do not silently lose draft values or remove historical measurements;
 - a user can enter a physically valid analysis and save it;
