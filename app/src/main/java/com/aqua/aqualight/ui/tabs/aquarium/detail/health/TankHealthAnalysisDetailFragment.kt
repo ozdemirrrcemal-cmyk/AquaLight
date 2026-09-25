@@ -64,7 +64,7 @@ class TankHealthAnalysisDetailFragment :
     }
 
     private fun setupActions() {
-        binding.btnBack.setOnClickListener {
+        binding.btnDetailBack.setOnClickListener {
             findNavController().navigateUp()
         }
 
