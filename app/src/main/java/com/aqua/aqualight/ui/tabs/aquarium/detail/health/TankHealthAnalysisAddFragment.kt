@@ -1,7 +1,5 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 
-import android.app.DatePickerDialog
-import android.app.TimePickerDialog
 import android.content.res.ColorStateList
 import android.os.Bundle
 import android.view.View
@@ -12,12 +10,13 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentTankHealthAnalysisAddBinding
+import com.aqua.aqualight.i18n.LocaleFormatter
+import com.aqua.aqualight.ui.common.dialog.AppDatePickerDialogFragment
+import com.aqua.aqualight.ui.common.dialog.AppTimePickerDialogFragment
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
-import java.time.LocalDate
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
+import java.util.Calendar
 
 class TankHealthAnalysisAddFragment :
     Fragment(R.layout.fragment_tank_health_analysis_add) {
@@ -27,8 +26,17 @@ class TankHealthAnalysisAddFragment :
     private var _binding: FragmentTankHealthAnalysisAddBinding? = null
     private val binding get() = _binding!!
 
-    private var selectedDate: LocalDate = LocalDate.of(2026, 9, 26)
-    private var selectedTime: LocalTime = LocalTime.of(14, 10)
+    private val selectedCalendar: Calendar = Calendar.getInstance().apply {
+        set(
+            INITIAL_YEAR,
+            Calendar.SEPTEMBER,
+            INITIAL_DAY,
+            INITIAL_HOUR,
+            INITIAL_MINUTE,
+            0
+        )
+        set(Calendar.MILLISECOND, 0)
+    }
     private var temperatureSource: TemperatureSource = TemperatureSource.SENSOR
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,6 +51,7 @@ class TankHealthAnalysisAddFragment :
         _binding = FragmentTankHealthAnalysisAddBinding.bind(view)
 
         setupHeader()
+        setupPickerResultListeners()
         setupMeasurementTime()
         setupTemperatureSource()
         setupNavigation()
@@ -62,31 +71,59 @@ class TankHealthAnalysisAddFragment :
         )
     }
 
+    private fun setupPickerResultListeners() {
+        childFragmentManager.setFragmentResultListener(
+            DATE_PICKER_REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            if (
+                result.getString(AppDatePickerDialogFragment.RESULT_KEY) !=
+                AppDatePickerDialogFragment.RESULT_SELECTED
+            ) {
+                return@setFragmentResultListener
+            }
+
+            selectedCalendar.timeInMillis = result.getLong(
+                AppDatePickerDialogFragment.RESULT_MILLIS
+            )
+            renderMeasurementTime()
+        }
+
+        childFragmentManager.setFragmentResultListener(
+            TIME_PICKER_REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            if (
+                result.getString(AppTimePickerDialogFragment.RESULT_KEY) !=
+                AppTimePickerDialogFragment.RESULT_SELECTED
+            ) {
+                return@setFragmentResultListener
+            }
+
+            selectedCalendar.timeInMillis = result.getLong(
+                AppTimePickerDialogFragment.RESULT_MILLIS
+            )
+            selectedCalendar.set(Calendar.SECOND, 0)
+            selectedCalendar.set(Calendar.MILLISECOND, 0)
+            renderMeasurementTime()
+        }
+    }
+
     private fun setupMeasurementTime() {
         binding.cardDate.setOnClickListener {
-            DatePickerDialog(
-                requireContext(),
-                { _, year, month, dayOfMonth ->
-                    selectedDate = LocalDate.of(year, month + 1, dayOfMonth)
-                    renderMeasurementTime()
-                },
-                selectedDate.year,
-                selectedDate.monthValue - 1,
-                selectedDate.dayOfMonth
-            ).show()
+            AppDatePickerDialogFragment.show(
+                fragmentManager = childFragmentManager,
+                requestKey = DATE_PICKER_REQUEST_KEY,
+                initialMillis = selectedCalendar.timeInMillis
+            )
         }
 
         binding.cardTime.setOnClickListener {
-            TimePickerDialog(
-                requireContext(),
-                { _, hourOfDay, minute ->
-                    selectedTime = LocalTime.of(hourOfDay, minute)
-                    renderMeasurementTime()
-                },
-                selectedTime.hour,
-                selectedTime.minute,
-                true
-            ).show()
+            AppTimePickerDialogFragment.show(
+                fragmentManager = childFragmentManager,
+                requestKey = TIME_PICKER_REQUEST_KEY,
+                initialMillis = selectedCalendar.timeInMillis
+            )
         }
     }
 
@@ -117,12 +154,13 @@ class TankHealthAnalysisAddFragment :
     }
 
     private fun renderMeasurementTime() {
-        val locale = resources.configuration.locales[0]
-        binding.tvDateValue.text = selectedDate.format(
-            DateTimeFormatter.ofPattern(DATE_PATTERN, locale)
+        binding.tvDateValue.text = LocaleFormatter.formatDate(
+            requireContext(),
+            selectedCalendar.timeInMillis
         )
-        binding.tvTimeValue.text = selectedTime.format(
-            DateTimeFormatter.ofPattern(TIME_PATTERN, locale)
+        binding.tvTimeValue.text = LocaleFormatter.formatTime(
+            requireContext(),
+            selectedCalendar.timeInMillis
         )
     }
 
@@ -167,7 +205,11 @@ class TankHealthAnalysisAddFragment :
     }
 
     private companion object {
-        const val DATE_PATTERN = "d MMM yyyy"
-        const val TIME_PATTERN = "HH:mm"
+        const val INITIAL_YEAR = 2026
+        const val INITIAL_DAY = 26
+        const val INITIAL_HOUR = 14
+        const val INITIAL_MINUTE = 10
+        const val DATE_PICKER_REQUEST_KEY = "tank_health_analysis_date_picker"
+        const val TIME_PICKER_REQUEST_KEY = "tank_health_analysis_time_picker"
     }
 }
