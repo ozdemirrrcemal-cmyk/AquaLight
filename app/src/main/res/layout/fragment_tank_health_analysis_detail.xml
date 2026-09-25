@@ -857,7 +857,7 @@
                     app:iconGravity="textStart" />
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnBack"
+                    android:id="@+id/btnDetailBack"
                     style="@style/Widget.Aqua.Button.Primary"
                     android:layout_width="@dimen/aqua_size_0"
                     android:layout_height="match_parent"
