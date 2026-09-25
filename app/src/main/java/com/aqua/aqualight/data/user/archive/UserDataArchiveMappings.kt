@@ -12,7 +12,8 @@ import com.aqua.aqualight.data.care.model.CareTaskStatus
 import com.aqua.aqualight.data.care.model.CareTaskType
 
 internal fun SavedAquariumTank.toArchiveAquarium(
-    photoReference: ArchiveMediaReference?
+    photoReference: ArchiveMediaReference?,
+    plantPhotoReferences: Map<Long, ArchiveMediaReference> = emptyMap()
 ): ArchiveAquarium {
     return ArchiveAquarium(
         id = id,
@@ -37,7 +38,8 @@ internal fun SavedAquariumTank.toArchiveAquarium(
                 plantName = plant.plantName,
                 category = plant.category,
                 markerX = plant.markerX,
-                markerY = plant.markerY
+                markerY = plant.markerY,
+                photo = plantPhotoReferences[plant.id]
             )
         },
         materials = materials.map { material ->
@@ -65,7 +67,10 @@ internal fun SavedAquariumTank.toArchiveAquarium(
     )
 }
 
-internal fun ArchiveAquarium.toTankDraft(photoUri: String?): TankDraft {
+internal fun ArchiveAquarium.toTankDraft(
+    photoUri: String?,
+    plantPhotoUris: Map<Long, String> = emptyMap()
+): TankDraft {
     return TankDraft(
         name = name,
         description = description,
@@ -77,7 +82,8 @@ internal fun ArchiveAquarium.toTankDraft(photoUri: String?): TankDraft {
                 plantName = plant.plantName,
                 category = plant.category,
                 markerX = plant.markerX,
-                markerY = plant.markerY
+                markerY = plant.markerY,
+                photoUri = plantPhotoUris[plant.id]
             )
         },
         materials = materials.map { material ->
