@@ -24,101 +24,101 @@ class TankHealthAnalysisHistoryFragment :
 
     private val allRecords: List<TankHealthAnalysisHistoryRecord> by lazy {
         listOf(
-            record(
-                R.string.tank_health_analysis_record_date_1,
-                R.string.tank_health_analysis_record_time_1,
-                R.string.tank_health_value_ph,
-                R.string.tank_health_value_no3,
-                R.string.tank_health_value_temperature,
-                R.string.tank_health_status_moderate
+            TankHealthAnalysisHistoryRecord(
+                dateRes = R.string.tank_health_analysis_record_date_1,
+                timeRes = R.string.tank_health_analysis_record_time_1,
+                phValueRes = R.string.tank_health_value_ph,
+                no3ValueRes = R.string.tank_health_value_no3,
+                temperatureValueRes = R.string.tank_health_value_temperature,
+                no3StatusRes = R.string.tank_health_status_moderate
             ),
-            record(
-                R.string.tank_health_analysis_record_date_2,
-                R.string.tank_health_analysis_record_time_2,
-                R.string.tank_health_analysis_value_ph_70,
-                R.string.tank_health_analysis_value_no3_10,
-                R.string.tank_health_analysis_value_temp_24,
-                R.string.tank_health_status_normal
+            TankHealthAnalysisHistoryRecord(
+                dateRes = R.string.tank_health_analysis_record_date_2,
+                timeRes = R.string.tank_health_analysis_record_time_2,
+                phValueRes = R.string.tank_health_analysis_value_ph_70,
+                no3ValueRes = R.string.tank_health_analysis_value_no3_10,
+                temperatureValueRes = R.string.tank_health_analysis_value_temp_24,
+                no3StatusRes = R.string.tank_health_status_normal
             ),
-            record(
-                R.string.tank_health_analysis_record_date_3,
-                R.string.tank_health_analysis_record_time_3,
-                R.string.tank_health_analysis_value_ph_66,
-                R.string.tank_health_analysis_value_no3_22,
-                R.string.tank_health_analysis_value_temp_26,
-                R.string.tank_health_status_moderate
+            TankHealthAnalysisHistoryRecord(
+                dateRes = R.string.tank_health_analysis_record_date_3,
+                timeRes = R.string.tank_health_analysis_record_time_3,
+                phValueRes = R.string.tank_health_analysis_value_ph_66,
+                no3ValueRes = R.string.tank_health_analysis_value_no3_22,
+                temperatureValueRes = R.string.tank_health_analysis_value_temp_26,
+                no3StatusRes = R.string.tank_health_status_moderate
             ),
-            record(
-                R.string.tank_health_analysis_record_date_4,
-                R.string.tank_health_analysis_record_time_4,
-                R.string.tank_health_analysis_value_ph_72,
-                R.string.tank_health_analysis_value_no3_8,
-                R.string.tank_health_analysis_value_temp_24,
-                R.string.tank_health_status_normal
+            TankHealthAnalysisHistoryRecord(
+                dateRes = R.string.tank_health_analysis_record_date_4,
+                timeRes = R.string.tank_health_analysis_record_time_4,
+                phValueRes = R.string.tank_health_analysis_value_ph_72,
+                no3ValueRes = R.string.tank_health_analysis_value_no3_8,
+                temperatureValueRes = R.string.tank_health_analysis_value_temp_24,
+                no3StatusRes = R.string.tank_health_status_normal
             ),
-            record(
-                R.string.tank_health_analysis_record_date_5,
-                R.string.tank_health_analysis_record_time_5,
-                R.string.tank_health_analysis_value_ph_69,
-                R.string.tank_health_analysis_value_no3_16,
-                R.string.tank_health_value_temperature,
-                R.string.tank_health_status_normal
+            TankHealthAnalysisHistoryRecord(
+                dateRes = R.string.tank_health_analysis_record_date_5,
+                timeRes = R.string.tank_health_analysis_record_time_5,
+                phValueRes = R.string.tank_health_analysis_value_ph_69,
+                no3ValueRes = R.string.tank_health_analysis_value_no3_16,
+                temperatureValueRes = R.string.tank_health_value_temperature,
+                no3StatusRes = R.string.tank_health_status_normal
             ),
-            record(
-                R.string.tank_health_analysis_record_date_6,
-                R.string.tank_health_analysis_record_time_6,
-                R.string.tank_health_value_ph,
-                R.string.tank_health_analysis_value_no3_10,
-                R.string.tank_health_value_temperature,
-                R.string.tank_health_status_normal
+            TankHealthAnalysisHistoryRecord(
+                dateRes = R.string.tank_health_analysis_record_date_6,
+                timeRes = R.string.tank_health_analysis_record_time_6,
+                phValueRes = R.string.tank_health_value_ph,
+                no3ValueRes = R.string.tank_health_analysis_value_no3_10,
+                temperatureValueRes = R.string.tank_health_value_temperature,
+                no3StatusRes = R.string.tank_health_status_normal
             ),
-            record(
-                R.string.tank_health_analysis_record_date_7,
-                R.string.tank_health_analysis_record_time_7,
-                R.string.tank_health_analysis_value_ph_70,
-                R.string.tank_health_analysis_value_no3_22,
-                R.string.tank_health_analysis_value_temp_26,
-                R.string.tank_health_status_moderate
+            TankHealthAnalysisHistoryRecord(
+                dateRes = R.string.tank_health_analysis_record_date_7,
+                timeRes = R.string.tank_health_analysis_record_time_7,
+                phValueRes = R.string.tank_health_analysis_value_ph_70,
+                no3ValueRes = R.string.tank_health_analysis_value_no3_22,
+                temperatureValueRes = R.string.tank_health_analysis_value_temp_26,
+                no3StatusRes = R.string.tank_health_status_moderate
             ),
-            record(
-                R.string.tank_health_analysis_record_date_8,
-                R.string.tank_health_analysis_record_time_8,
-                R.string.tank_health_analysis_value_ph_66,
-                R.string.tank_health_analysis_value_no3_8,
-                R.string.tank_health_analysis_value_temp_24,
-                R.string.tank_health_status_normal
+            TankHealthAnalysisHistoryRecord(
+                dateRes = R.string.tank_health_analysis_record_date_8,
+                timeRes = R.string.tank_health_analysis_record_time_8,
+                phValueRes = R.string.tank_health_analysis_value_ph_66,
+                no3ValueRes = R.string.tank_health_analysis_value_no3_8,
+                temperatureValueRes = R.string.tank_health_analysis_value_temp_24,
+                no3StatusRes = R.string.tank_health_status_normal
             ),
-            record(
-                R.string.tank_health_analysis_record_date_9,
-                R.string.tank_health_analysis_record_time_9,
-                R.string.tank_health_analysis_value_ph_72,
-                R.string.tank_health_analysis_value_no3_16,
-                R.string.tank_health_value_temperature,
-                R.string.tank_health_status_normal
+            TankHealthAnalysisHistoryRecord(
+                dateRes = R.string.tank_health_analysis_record_date_9,
+                timeRes = R.string.tank_health_analysis_record_time_9,
+                phValueRes = R.string.tank_health_analysis_value_ph_72,
+                no3ValueRes = R.string.tank_health_analysis_value_no3_16,
+                temperatureValueRes = R.string.tank_health_value_temperature,
+                no3StatusRes = R.string.tank_health_status_normal
             ),
-            record(
-                R.string.tank_health_analysis_record_date_10,
-                R.string.tank_health_analysis_record_time_10,
-                R.string.tank_health_analysis_value_ph_69,
-                R.string.tank_health_analysis_value_no3_10,
-                R.string.tank_health_analysis_value_temp_24,
-                R.string.tank_health_status_normal
+            TankHealthAnalysisHistoryRecord(
+                dateRes = R.string.tank_health_analysis_record_date_10,
+                timeRes = R.string.tank_health_analysis_record_time_10,
+                phValueRes = R.string.tank_health_analysis_value_ph_69,
+                no3ValueRes = R.string.tank_health_analysis_value_no3_10,
+                temperatureValueRes = R.string.tank_health_analysis_value_temp_24,
+                no3StatusRes = R.string.tank_health_status_normal
             ),
-            record(
-                R.string.tank_health_analysis_record_date_11,
-                R.string.tank_health_analysis_record_time_11,
-                R.string.tank_health_value_ph,
-                R.string.tank_health_analysis_value_no3_8,
-                R.string.tank_health_value_temperature,
-                R.string.tank_health_status_normal
+            TankHealthAnalysisHistoryRecord(
+                dateRes = R.string.tank_health_analysis_record_date_11,
+                timeRes = R.string.tank_health_analysis_record_time_11,
+                phValueRes = R.string.tank_health_value_ph,
+                no3ValueRes = R.string.tank_health_analysis_value_no3_8,
+                temperatureValueRes = R.string.tank_health_value_temperature,
+                no3StatusRes = R.string.tank_health_status_normal
             ),
-            record(
-                R.string.tank_health_analysis_record_date_12,
-                R.string.tank_health_analysis_record_time_12,
-                R.string.tank_health_analysis_value_ph_70,
-                R.string.tank_health_analysis_value_no3_16,
-                R.string.tank_health_analysis_value_temp_26,
-                R.string.tank_health_status_normal
+            TankHealthAnalysisHistoryRecord(
+                dateRes = R.string.tank_health_analysis_record_date_12,
+                timeRes = R.string.tank_health_analysis_record_time_12,
+                phValueRes = R.string.tank_health_analysis_value_ph_70,
+                no3ValueRes = R.string.tank_health_analysis_value_no3_16,
+                temperatureValueRes = R.string.tank_health_analysis_value_temp_26,
+                no3StatusRes = R.string.tank_health_status_normal
             )
         )
     }
@@ -189,24 +189,6 @@ class TankHealthAnalysisHistoryFragment :
         binding.historyList.adapter = null
         _binding = null
         super.onDestroyView()
-    }
-
-    private fun record(
-        dateRes: Int,
-        timeRes: Int,
-        phValueRes: Int,
-        no3ValueRes: Int,
-        temperatureValueRes: Int,
-        no3StatusRes: Int
-    ): TankHealthAnalysisHistoryRecord {
-        return TankHealthAnalysisHistoryRecord(
-            dateRes = dateRes,
-            timeRes = timeRes,
-            phValueRes = phValueRes,
-            no3ValueRes = no3ValueRes,
-            temperatureValueRes = temperatureValueRes,
-            no3StatusRes = no3StatusRes
-        )
     }
 
 }
