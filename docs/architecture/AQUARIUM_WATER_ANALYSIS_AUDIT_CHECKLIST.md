@@ -24,8 +24,9 @@ Bu dosya, mevcut sözleşmenin kodla karşılaştırılmış incelemesi ve öner
 | --- | --- | --- | --- |
 | W0.1 / K01 | Kullanıcıyla kararlaştırıldı — 26.09.2026 | Mevcut application/data/UI/composition mimarisi korunacak. Ortak bağlam ve saf su analiz motoru application altında, veri/sensör/store implementasyonları data altında yer alacak. Bitki okuyucusunun hedefi data/aquarium/catalog/plant olacak. Mevcut sağlık UI'ı ve composition kullanılacak; yeni domain kökü veya Gradle modülü açılmayacak. | Ana sözleşme §4.1 |
 | W0.1 / K02 | Kullanıcıyla kararlaştırıldı — 26.09.2026 | AquariumWaterParameter ve AquariumWaterSnapshot kontrollü genişletilecek. UI'da bulunan NO2/amonyak alanlarının veri modeli desteği eklenecek; kesin kimyasal anlam ve birimler K03'te belirlenecek. Canlı karşılaştırması mevcut evaluator'da kalacak; analiz kaydı, assessment ve provenance ayrı modellenecek. | Ana sözleşme §6.4 ve §45 |
+| W0.1 / K03.0 | Kullanıcıyla kararlaştırıldı — 26.09.2026 | Temel ölçümler + tank türüne göre alanlar + ek ölçümler yaklaşımı kabul edildi. Tank oluştururken seçilen mevcut 9 tür kullanılacak; tür başına varsayılan ve ek testler sözleşmeye işlendi. Mevcut UI tasarımı korunacak; anlaşılır Türkçe adlar kullanılacak. Ana amonyak alanı toplam amonyak olacak; kesin raporlama temeli/birimleri henüz kabul edilmedi. | Ana sözleşme §6, §25.1–25.3 ve §28.2 |
 
-Bu kayıt kabul edilen kararları belgeler; paketlerin/kodun uygulanmış olduğunu göstermez. W0.1, K03–K18 kararları henüz alınmadığı için açık kalır. Sıradaki karar: **W0.1 / K03 — kimyasal raporlama temeli ve birimler**. K03 birden fazla bağımsız karar içerir; önce NO3/NO2/PO4 için kanonik raporlama temeli, ardından kaynak/ppm dönüşüm politikası ve amonyak semantiği ayrı ayrı ele alınacaktır.
+Bu kayıt kabul edilen kararları belgeler; paketlerin/kodun uygulanmış olduğunu göstermez. W0.1, K03'ün kalan kararları ve K04–K18 açık olduğu için kapanmaz. **K03.0 yalnız ölçüm kapsamı/görünürlük kararını kapatır.** Sıradaki karar: **W0.1 / K03.1 — NO3/NO2/PO4 kimyasal raporlama temeli ve birimler**. Ardından kaynak/ppm dönüşüm politikası, toplam amonyağın kesin raporlama temeli ve yeni ek ölçümlerin semantiği ayrı ayrı ele alınacaktır. Ek ölçümleri açma etkileşimi ayrıca kararlaştırılacak; kapsam onayı yeni görsel düzen onayı değildir.
 
 K03.1 için doğrulanan kaynaklar ve henüz onaylanmamış öneri: [Konsantrasyon birimleri araştırma notu](research/WATER_ANALYSIS_CONCENTRATION_UNITS_K03.md).
 
@@ -62,7 +63,7 @@ Burada “kritik”, ilgili katmanı uygulamadan önce kararı verilmesi gereken
 | --- | --- | --- | --- |
 | K01 | Karar alındı | Mevcut mimari ve temel paket sahipliği kullanıcı tarafından kabul edildi; uygulama aşaması bekliyor. | Ana sözleşme §4.1 ve karar kaydı. Yeni domain kökü/Gradle modülü açılmayacak. |
 | K02 | Karar alındı | Mevcut AquariumWaterParameter/AquariumWaterSnapshot modellerinin kontrollü genişletilmesi kullanıcı tarafından kabul edildi; uygulama ve K03 semantiği bekliyor. | Ana sözleşme §6.4 ve §45. Canlı evaluator'ı korunacak; kayıt/assessment/provenance ayrı modeller olacak. |
-| K03 | Kritik | §6 ppm/mg/L ve ammonia kararlarını sonraya bırakıyor. | NO3/NO3-N, NO2/NO2-N, PO4/P temeli; ammonia türü; tatlı/deniz suyu politikası; desteklenmeyen kit sonucu davranışı kesinleşsin. Yalnız etiketi değiştirmek yeterli değil. |
+| K03 | Kısmen kararlaştırıldı; kalanlar kritik | K03.0 ölçüm kapsamı ve mevcut tasarım korunarak tank türüne göre alan görünürlüğü kabul edildi (§25). Birim ve kesin kimyasal anlamlar açık. | NO3/NO3-N, NO2/NO2-N, PO4/P temeli; toplam amonyak raporlama temeli; tuzluluk/SG, KH/alkalinite ve ek ölçümler; desteklenmeyen test sonucu davranışı kesinleşsin. Yalnız etiketi değiştirmek yeterli değil. |
 | K04 | Kritik | §14 yön, tehlike, çatışma ve veri eksikliğini tek örnek enum’da topluyor. | Şiddet, LOW/HIGH yönü, veri yeterliliği ve conflict birlikte temsil edilsin. CRITICAL + missingData + conflict aynı sonuçta kaybolmadan saklansın. |
 | K05 | Kritik | Canlı parser’ı `<` ile `≤`, `>` ile `≥` ayrımını kaybediyor; contains sınırları dahil sayıyor. Yaklaşık tek değer de eşitlik aralığına dönüşüyor. | Mevcut parser/evaluator üzerinde sınır semantiği ve approximate/SOFT politikası kesinleşsin. Örneğin `<20` sınırında 20’nin mevcut sonuçta uyumlu sayılması testle yakalansın. Ayrı evaluator yazılmasın. |
 | K06 | Kritik | AquariumPlantCatalog JSON okuyucusu ui/.../catalog/plant altında. | Parser/cache data/aquarium/catalog/plant altına taşınsın; picker ve motor aynı katalog kaynağını kullansın; application/data → UI import’u oluşmasın. |
@@ -126,11 +127,11 @@ WaterAnalysisRecord içindeki kalıcı owner kimliğinin UI’a açılması gere
 ### W0 — Sözleşme kararlarını kapat
 
 - [ ] W0.1 K01–K18 kararlarını ilgili sözleşme bölümlerine işle; “recommended”, “may choose”, “exact names later” kalan üretim davranışlarını kesinleştir.
-- [ ] W0.2 Sekiz parametre için canonical unit, kimyasal temel, nullable/required, hassasiyet ve fiziksel giriş sınırı tablosunu tamamla. Tehlikeli ama fiziksel olarak geçerli ölçümleri kabul et.
+- [ ] W0.2 §25'teki varsayılan ve ek parametrelerin tamamı için canonical unit, kimyasal temel, nullable/required, hassasiyet ve fiziksel giriş sınırı tablosunu tamamla. Görünür alan ile zorunlu kayıt alanını ayır; tehlikeli ama fiziksel olarak geçerli ölçümleri kabul et.
 - [ ] W0.3 NH3/NH4 alanının desteklediği test sonucunu açık adlandır; kullanıcı hangi test sonucunu gireceğini anlayabilsin. Desteklenmeyen semantik için sessiz dönüşüm kullanma.
 - [ ] W0.4 Kanıtlı chemistry rule kataloğuna kural kimliği, kaynak, kapsam, sayı/birim, sınır dahil/harici bilgisi, önkoşul ve revision ekle. Bu rapor herhangi bir sayısal güvenlik eşiğini bilimsel olarak onaylamaz.
-- [ ] W0.5 Freshwater/shrimp/planted/marine/reef eşlemesini AquariumTankTaxonomy sabitlerine bağla. Tank sınıfı ve kayıtlı canlıların waterGroup bilgisi çelişirse açık incompatibility üret.
-- [ ] W0.6 Deniz suyu değerlendirmesinin sekiz alanla hangi kapsamı karşıladığını tanımla; eksik salinity/SG gibi gerekli bağlam olmadan “tam güvenli reef” sonucu verme. Yeni parametre UI’ı bu işte kendiliğinden açılmasın.
+- [ ] W0.5 Kabul edilen §25.1 matrisini AquariumTankTaxonomy'nin 9 sabitine ve snapshot.tankType'a bağla; application görünürlük politikasını tanımla. Other/boş/bilinmeyen kodda profil uydurma; tank sınıfı ve kayıtlı canlıların waterGroup bilgisi çelişirse açık incompatibility üret.
+- [ ] W0.6 §25.1–25.2'deki deniz/resif ve ek ölçüm kapsamının birimlerini/yorum önkoşullarını kesinleştir; eksik tuzluluk gibi bağlamda tam değerlendirme üretme. Mevcut UI tasarımı korunacak; ek ölçüm açma etkileşimi ayrıca kararlaştırılacak.
 - [ ] W0.7 Severity, direction, completeness, conflict öncelik matrisini dondur. Eksik ölçüm kritik sonucu gizleyemesin; tüm bilgiler eksikken OPTIMAL çıkamasın.
 - [ ] W0.8 VERIFIED + ready bitkiler hard değerlendirmeye uygun; PARTIAL v1’de informational/insufficient. VERIFIED kaydın eksik alanına da aralık uydurma.
 - [ ] W0.9 SOFT/HARD/INFORMATIONAL, confidence ve approximate canlı verisinin hard conflict ve uyarıya etkisini belirle. Katalog doluluğunu bilimsel güven düzeyiyle karıştırma.
@@ -143,7 +144,7 @@ WaterAnalysisRecord içindeki kalıcı owner kimliğinin UI’a açılması gere
 
 ### W1 — Modelleri ve katalog sınırlarını kur
 
-- [ ] W1.1 K02 kararına göre mevcut AquariumWaterParameter ve AquariumWaterSnapshot modellerini kontrollü genişlet; K03'te kesinleştirilen anlam/birimlerle NO2/ammonia desteğini ekle; ppm isimlerini anlam değiştirerek sessizce kullanma. UI giriş alanları zaten mevcuttur.
+- [ ] W1.1 K02 kararına göre mevcut AquariumWaterParameter ve AquariumWaterSnapshot modellerini kontrollü genişlet; K03'te kesinleştirilen anlam/birimlerle NO2/toplam amonyak ve §25 kapsamındaki eksik parametre desteğini ekle; ppm isimlerini anlam değiştirerek sessizce kullanma. NO2/amonyak UI alanları zaten mevcuttur; diğer alanların görünürlüğü §25'e bağlıdır.
 - [ ] W1.2 Input, raw measurements, record, parameter/entity assessment, reasons, recommendations, conflicts, missingData ve typed failure modellerini oluştur.
 - [ ] W1.3 `null`, ölçülmüş `0`, okunamayan sayı ve değerlendirme için uygulanamaz parametreyi birbirinden ayır. Sınır altı/üstü test sonuçları v1’de desteklenmiyorsa bunu açıkça reddet.
 - [ ] W1.4 Parse/normalization öncesi anlamı koru; birim dönüşümünü UI metninden değil typed source-unit politikasından yap. Yuvarlama değerlendirme sonrasında yalnız sunumda olsun.
@@ -193,7 +194,7 @@ WaterAnalysisRecord içindeki kalıcı owner kimliğinin UI’a açılması gere
 - [ ] W4.3 Mevcut LivestockWaterCompatibilityEvaluator tek range comparison kaynağı kalsın. Advisor’ın catalog I/O’su engine’in içine taşınmasın; gerekirse hazır profile kabul eden sınır uyarlaması yap.
 - [ ] W4.4 Gereksinim kesişimini ölçümden bağımsız hesapla; ölçüm yokken de uyumsuz habitat gereksinimleri görünür olsun.
 - [ ] W4.5 Partial/missing gereksinimi sonsuz aralık kabul edip compatible sayma; değerlendirilmiş ve değerlendirilememiş parametreleri ayrı say.
-- [ ] W4.6 Her sekiz parametre için measured/missing/applicability, değerlendirme yönü/şiddeti, nedenler, kullanılan aralıklar ve etkilenen varlıkları üret.
+- [ ] W4.6 §25 kapsamındaki her desteklenen parametre için measured/missing/applicability, değerlendirme yönü/şiddeti, nedenler, kullanılan aralıklar ve etkilenen varlıkları üret; sabit sekiz parametre varsayımı kullanma.
 - [ ] W4.7 Chemistry tehlikesini bitki ihtiyacı, filtre varlığı veya genel ortalama iyileştirmesin. Bir kritik parametre çok sayıda normal parametreyle bastırılmasın.
 - [ ] W4.8 Birden fazla profil/rule uygulanırsa öncelik ve birleşim deterministik olsun; JSON/list sırası sonucu değiştirmesin.
 - [ ] W4.9 Recommendation code → reason → rule/evidence bağı kur; yinelenen önerileri sabit sırayla birleştir. Belirsizlikte yeniden ölçüm gibi tanımlı konservatif öneriler kullan.
@@ -254,7 +255,7 @@ WaterAnalysisRecord içindeki kalıcı owner kimliğinin UI’a açılması gere
 
 ### W8 — Onaylı UI’ı gerçek veriyle bağla ve fixture’ları temizle
 
-- [ ] W8.1 Form XML’lerindeki gerçek android:text ölçüm doldurmalarını kaldır; tasarım örnekleri gerekiyorsa yalnız tools:text veya test/debug fixture’ında kalsın.
+- [ ] W8.1 Form XML’lerindeki gerçek android:text ölçüm doldurmalarını kaldır; mevcut kart/grid/alan tasarımını koruyarak §25 görünürlük politikasını ve Türkçe adları bağla. Ek alan etkileşimi kararlaştırılmış olmalı; tasarım örnekleri yalnız tools:text veya test/debug fixture'ında kalsın.
 - [ ] W8.2 Sabit 26.09.2026 14:10 başlangıcını kaldır; Clock ve restore edilmiş draft kullan. LocaleFormatter parsing/formatting; boş ile invalid ayrımı; alan bazlı hata gösterimi bağlansın.
 - [ ] W8.3 Date picker saat kısmını, time picker tarih kısmını beklenmedik değiştirmesin; locale/12–24 saat/timezone davranışları sınansın.
 - [ ] W8.4 Sensör adı, bağlantı rozeti, sıcaklık ve “sensörden okundu” etiketi gerçek source state’e bağlansın; sensör yokken varsayılan 25 değeri kalmasın.
@@ -265,7 +266,7 @@ WaterAnalysisRecord içindeki kalıcı owner kimliğinin UI’a açılması gere
 - [ ] W8.9 Detail tamamıyla persisted snapshot okusun; değerler, nedenler, tarih ve not alanı gerçek kayda ait olsun. Kayıt yoksa sahte detay oluşturulmasın.
 - [ ] W8.10 Delete dialog tarihi seçili kayıttan locale-aware formatlansın; hard-coded 26 Sep 2026 kalksın; navigation yalnız gerçek delete başarısından sonra olsun.
 - [ ] W8.11 TankHealthContentAdapter immutable fixture buildItems yerine real presentation model kullansın; default status=Normal ve yeşil renk fallback’i kaldırılmış olsun.
-- [ ] W8.12 “Son analiz” tarihi, data age/stale işareti ve sekiz kart latest record’dan beslensin. Eski ölçüm güncel canlı su durumu gibi sunulmasın.
+- [ ] W8.12 “Son analiz” tarihi, data age/stale işareti ve §25'e uygun ölçüm kartları latest record'dan beslensin; sabit sekiz kart varsayımı kalksın. Tank türü değişikliği eski kaydın ölçümlerini gizlemesin; eski ölçüm güncel canlı su durumu gibi sunulmasın.
 - [ ] W8.13 Bakım bölümünü MaintenanceOperations tamamlanmış kayıtlarından bağla; completedAt ile dueAt birbirine karışmasın. Son bakım kaydı yoksa “5 gün önce/Normal” uydurulmasın; overdue/approaching için tanımlı takvim politikası kullanılsın.
 - [ ] W8.14 Sistem özeti canonical material selections/assigned cihaz/context verisinden gelsin; birden fazla ürün, kayıt yokluğu ve offline durumları ayrı olsun.
 - [ ] W8.15 “28 canlı” gerçek quantity toplamından gelsin; sayıyı doğrulanmamış biyolojik yük/risk skoruna dönüştürme.
@@ -279,7 +280,7 @@ WaterAnalysisRecord içindeki kalıcı owner kimliğinin UI’a açılması gere
 ### W9 — Water Quality kabul kapısı
 
 - [ ] W9.1 Her parametre için normal/low/high/critical/missing/unsupported/rule-missing ve tam sınır testleri geçsin.
-- [ ] W9.2 Tür ve bitki kesişimleri, approximate/SOFT politikası, custom/missing kimlik ve conflict + critical + partial bileşimleri test edilsin.
+- [ ] W9.2 Dokuz tank türünün alan matrisi, Other/boş/bilinmeyen kod, tank türü değişirken draft/geçmiş verisinin korunması; tür ve bitki kesişimleri, approximate/SOFT politikası, custom/missing kimlik ve conflict + critical + partial bileşimleri test edilsin.
 - [ ] W9.3 Birim/ammonia semantiği, decimal locale, precision, nonfinite, negatif, aşırı büyük sayı, boş/sıfır ve zaman testleri geçsin.
 - [ ] W9.4 Save/history/detail/delete/latest round-trip; owner/tank isolation; çift işlem; veri kaybı/corruption; exact ID; eski tarihli kayıt testleri geçsin.
 - [ ] W9.5 Sıcaklık freshness/reboot/reassignment/backdating ve geçmiş context açıklaması testleri geçsin.
