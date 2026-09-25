@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Official dosing hardware brand and product names are locale-independent. -->
+    <string name="catalog_dosing_brand_aqua_medic" translatable="false">Aqua Medic</string>
+    <string name="catalog_dosing_brand_aqua_nova" translatable="false">Aqua Nova</string>
+    <string name="catalog_dosing_brand_aqua_trend" translatable="false">Aqua-Trend</string>
+    <string name="catalog_dosing_brand_aquatronica" translatable="false">Aquatronica</string>
+    <string name="catalog_dosing_brand_aquavitro" translatable="false">AquaVitro</string>
+    <string name="catalog_dosing_brand_ati" translatable="false">ATI</string>
+    <string name="catalog_dosing_brand_autoaqua" translatable="false">AUTOAQUA</string>
+    <string name="catalog_dosing_brand_blau_aquaristic" translatable="false">Blau Aquaristic</string>
+    <string name="catalog_dosing_brand_blue_marine" translatable="false">Blue Marine</string>
+    <string name="catalog_dosing_brand_bubble_magus" translatable="false">Bubble Magus</string>
+    <string name="catalog_dosing_brand_bulk_reef_supply_brs" translatable="false">Bulk Reef Supply (BRS)</string>
+    <string name="catalog_dosing_brand_chihiros" translatable="false">Chihiros</string>
+    <string name="catalog_dosing_brand_coral_box" translatable="false">Coral Box</string>
+    <string name="catalog_dosing_brand_d_d_h2ocean" translatable="false">D-D / H2Ocean</string>
+    <string name="catalog_dosing_brand_deltec" translatable="false">Deltec</string>
+    <string name="catalog_dosing_brand_dupla_marin" translatable="false">Dupla Marin</string>
+    <string name="catalog_dosing_brand_easyreefs" translatable="false">EasyReefs</string>
+    <string name="catalog_dosing_brand_ecotech_marine" translatable="false">EcoTech Marine</string>
+    <string name="catalog_dosing_brand_ekoral" translatable="false">eKoral</string>
+    <string name="catalog_dosing_brand_focustronic" translatable="false">Focustronic</string>
+    <string name="catalog_dosing_brand_ghl" translatable="false">GHL</string>
+    <string name="catalog_dosing_brand_grotech" translatable="false">Grotech</string>
+    <string name="catalog_dosing_brand_hsbao" translatable="false">HSBAO</string>
+    <string name="catalog_dosing_brand_hydros" translatable="false">HYDROS</string>
+    <string name="catalog_dosing_brand_jebao_jecod" translatable="false">Jebao / Jecod</string>
+    <string name="catalog_dosing_brand_kamoer" translatable="false">Kamoer</string>
+    <string name="catalog_dosing_brand_milwaukee_instruments" translatable="false">Milwaukee Instruments</string>
+    <string name="catalog_dosing_brand_neptune_systems" translatable="false">Neptune Systems</string>
+    <string name="catalog_dosing_brand_pacific_sun" translatable="false">Pacific Sun</string>
+    <string name="catalog_dosing_brand_red_sea" translatable="false">Red Sea</string>
+    <string name="catalog_dosing_brand_reef_breeders" translatable="false">Reef Breeders</string>
+    <string name="catalog_dosing_brand_reef_factory" translatable="false">Reef Factory</string>
+    <string name="catalog_dosing_brand_simplicity_aquatics" translatable="false">Simplicity Aquatics</string>
+    <string name="catalog_dosing_brand_spectrapure" translatable="false">SpectraPure</string>
+    <string name="catalog_dosing_brand_tmc_reef" translatable="false">TMC / REEF</string>
+
+    <string name="catalog_material_dosing_0001_name" translatable="false">Aqua Medic reefdoser EVO 1</string>
+    <string name="catalog_material_dosing_0002_name" translatable="false">Aqua Medic reefdoser EVO 4</string>
+    <string name="catalog_material_dosing_0003_name" translatable="false">Aqua Medic reefdoser EVO 5</string>
+    <string name="catalog_material_dosing_0004_name" translatable="false">Aqua Nova NMDP-4</string>
+    <string name="catalog_material_dosing_0005_name" translatable="false">Aqua Nova NMDP-5</string>
+    <string name="catalog_material_dosing_0006_name" translatable="false">Aqua Nova NXDP-4</string>
+    <string name="catalog_material_dosing_0007_name" translatable="false">Aqua Nova NXDP-6</string>
+    <string name="catalog_material_dosing_0008_name" translatable="false">Aqua-Trend SAMUDRA DoserX – 5 Channel</string>
+    <string name="catalog_material_dosing_0009_name" translatable="false">Aqua-Trend SAMUDRA DoserXs – 3 Channel</string>
+    <string name="catalog_material_dosing_0010_name" translatable="false">Aquatronica ACQ450 Dosing Pump – 3 Head</string>
+    <string name="catalog_material_dosing_0011_name" translatable="false">AquaVitro Sentia Doser Primary</string>
+    <string name="catalog_material_dosing_0012_name" translatable="false">AquaVitro Sentia Doser Secondary</string>
+    <string name="catalog_material_dosing_0013_name" translatable="false">ATI Auto Dosing Pump DP-6</string>
+    <string name="catalog_material_dosing_0014_name" translatable="false">AUTOAQUA Smart Doser 2 (ASD-200)</string>
+    <string name="catalog_material_dosing_0015_name" translatable="false">AUTOAQUA Smart Doser 4 (ASD-400)</string>
+    <string name="catalog_material_dosing_0016_name" translatable="false">Blau Aquaristic Multi Dosing Pump</string>
+    <string name="catalog_material_dosing_0017_name" translatable="false">Blau Aquaristic Extension Multi Dosing Pump</string>
+    <string name="catalog_material_dosing_0018_name" translatable="false">Blau Aquaristic Single Dosing Pump</string>
+    <string name="catalog_material_dosing_0019_name" translatable="false">Blue Marine Dosing Pump 4 Channel</string>
+    <string name="catalog_material_dosing_0020_name" translatable="false">Bubble Magus BM-T01 Dosing Pump</string>
+    <string name="catalog_material_dosing_0021_name" translatable="false">Bubble Magus BM-T02 Add-On Dosing Pump</string>
+    <string name="catalog_material_dosing_0022_name" translatable="false">Bubble Magus BM-T11 Dosing Pump</string>
+    <string name="catalog_material_dosing_0023_name" translatable="false">Bubble Magus BM-T12 Add-On Dosing Pump</string>
+    <string name="catalog_material_dosing_0024_name" translatable="false">Bubble Magus TS1 Single Dosing Pump – Master</string>
+    <string name="catalog_material_dosing_0025_name" translatable="false">Bubble Magus TS2 Single Dosing Pump – Add-On</string>
+    <string name="catalog_material_dosing_0026_name" translatable="false">Bubble Magus TS4 Single Dosing Pump</string>
+    <string name="catalog_material_dosing_0027_name" translatable="false">Bubble Magus TS5 Single Dosing Pump</string>
+    <string name="catalog_material_dosing_0028_name" translatable="false">BRS 2 Part Doser – 1.1 mL/min</string>
+    <string name="catalog_material_dosing_0029_name" translatable="false">Bulk Reef Supply Drew’s Doser v2.0</string>
+    <string name="catalog_material_dosing_0030_name" translatable="false">Chihiros Dosing Pump System – 4 Pump Heads</string>
+    <string name="catalog_material_dosing_0031_name" translatable="false">Chihiros Dosing Pump Mate System – 2 Pump Heads</string>
+    <string name="catalog_material_dosing_0032_name" translatable="false">Coral Box WF-01 Wi-Fi Dosing Pump</string>
+    <string name="catalog_material_dosing_0033_name" translatable="false">Coral Box WF-04 Wi-Fi Dosing Pump</string>
+    <string name="catalog_material_dosing_0034_name" translatable="false">D-D / H2Ocean P1+ Dosing Pump</string>
+    <string name="catalog_material_dosing_0035_name" translatable="false">D-D / H2Ocean P1 PRO Dosing Pump</string>
+    <string name="catalog_material_dosing_0036_name" translatable="false">D-D / H2Ocean P1-STP Connect Peristaltic Pump</string>
+    <string name="catalog_material_dosing_0037_name" translatable="false">D-D / H2Ocean P4 Connect Dosing Pump</string>
+    <string name="catalog_material_dosing_0038_name" translatable="false">D-D / H2Ocean P4 PRO Connect Dosing Pump</string>
+    <string name="catalog_material_dosing_0039_name" translatable="false">Deltec Dosing Pump – 2 Channel</string>
+    <string name="catalog_material_dosing_0040_name" translatable="false">Deltec Dosing Pump – 3 Channel</string>
+    <string name="catalog_material_dosing_0041_name" translatable="false">Deltec Dosing Pump – 4 Channel</string>
+    <string name="catalog_material_dosing_0042_name" translatable="false">Deltec Dosing Pump 3 S – Slave Module</string>
+    <string name="catalog_material_dosing_0043_name" translatable="false">Deltec Dosing Pump 4 S – Slave Module</string>
+    <string name="catalog_material_dosing_0044_name" translatable="false">Dupla Marin Dosing Pump P4 Smart</string>
+    <string name="catalog_material_dosing_0045_name" translatable="false">EasyReefs EasyFeeder Master</string>
+    <string name="catalog_material_dosing_0046_name" translatable="false">EasyReefs EasyFeeder Slave</string>
+    <string name="catalog_material_dosing_0047_name" translatable="false">EcoTech Marine Versa VX-1 Peristaltic Dosing Pump</string>
+    <string name="catalog_material_dosing_0048_name" translatable="false">EcoTech Marine Versa VXF-1 Four Pack Dosing Pumps</string>
+    <string name="catalog_material_dosing_0049_name" translatable="false">eKoral eK Doser – 4 Channel</string>
+    <string name="catalog_material_dosing_0050_name" translatable="false">Focustronic Dosetronic Pro</string>
+    <string name="catalog_material_dosing_0051_name" translatable="false">Focustronic Dosetronic DC</string>
+    <string name="catalog_material_dosing_0052_name" translatable="false">GHL Doser 2.2 SA</string>
+    <string name="catalog_material_dosing_0053_name" translatable="false">GHL Doser 2.2 EXT</string>
+    <string name="catalog_material_dosing_0054_name" translatable="false">GHL Doser 2.2 Maxi SA</string>
+    <string name="catalog_material_dosing_0055_name" translatable="false">GHL Doser 2.2 Maxi EXT</string>
+    <string name="catalog_material_dosing_0056_name" translatable="false">GHL Doser 3 SA</string>
+    <string name="catalog_material_dosing_0057_name" translatable="false">GHL Doser 3 EXT</string>
+    <string name="catalog_material_dosing_0058_name" translatable="false">GHL Doser 3 Maxi SA</string>
+    <string name="catalog_material_dosing_0059_name" translatable="false">GHL Doser 3 Maxi EXT</string>
+    <string name="catalog_material_dosing_0060_name" translatable="false">Grotech EP 3-MCS – 3 Channel Dosing Pump Extension</string>
+    <string name="catalog_material_dosing_0061_name" translatable="false">Grotech EP 5-MCS – 5 Channel Dosing Pump Extension</string>
+    <string name="catalog_material_dosing_0062_name" translatable="false">Grotech EP IV – 4 Channel Dosing Pump Extension</string>
+    <string name="catalog_material_dosing_0063_name" translatable="false">HSBAO DS-4 Dosing Pump</string>
+    <string name="catalog_material_dosing_0064_name" translatable="false">HYDROS Control X10 – Integrated 4-Pump Dosing System</string>
+    <string name="catalog_material_dosing_0065_name" translatable="false">HYDROS Blenny – 4-Pump Dosing System</string>
+    <string name="catalog_material_dosing_0066_name" translatable="false">HYDROS Minnow – 2-Pump Dosing System</string>
+    <string name="catalog_material_dosing_0067_name" translatable="false">HYDROS Sole – Continuous-Duty Dosing Pump</string>
+    <string name="catalog_material_dosing_0068_name" translatable="false">HYDROS 2 mL/min Dosing Pump</string>
+    <string name="catalog_material_dosing_0069_name" translatable="false">HYDROS Dosing Pump – Drive Port</string>
+    <string name="catalog_material_dosing_0070_name" translatable="false">Jebao / Jecod DP-2</string>
+    <string name="catalog_material_dosing_0071_name" translatable="false">Jebao / Jecod DP-3</string>
+    <string name="catalog_material_dosing_0072_name" translatable="false">Jebao / Jecod DP-3S</string>
+    <string name="catalog_material_dosing_0073_name" translatable="false">Jebao / Jecod DP-4</string>
+    <string name="catalog_material_dosing_0074_name" translatable="false">Jebao / Jecod DP-4S</string>
+    <string name="catalog_material_dosing_0075_name" translatable="false">Jebao / Jecod DP-5</string>
+    <string name="catalog_material_dosing_0076_name" translatable="false">Jebao / Jecod DP-6 Superior</string>
+    <string name="catalog_material_dosing_0077_name" translatable="false">Jebao / Jecod Doser 2.4 Wi-Fi</string>
+    <string name="catalog_material_dosing_0078_name" translatable="false">Jebao / Jecod Doser 3.1</string>
+    <string name="catalog_material_dosing_0079_name" translatable="false">Jebao / Jecod Doser 3.4</string>
+    <string name="catalog_material_dosing_0080_name" translatable="false">Jebao / Jecod MD-4.4</string>
+    <string name="catalog_material_dosing_0081_name" translatable="false">Jebao / Jecod Doser 5.4</string>
+    <string name="catalog_material_dosing_0082_name" translatable="false">Jebao / Jecod Doser 5.6</string>
+    <string name="catalog_material_dosing_0083_name" translatable="false">Kamoer F1 Liquid Dosing Pump</string>
+    <string name="catalog_material_dosing_0084_name" translatable="false">Kamoer F4 PRO Wi-Fi Dosing Pump</string>
+    <string name="catalog_material_dosing_0085_name" translatable="false">Kamoer FX-STP Wi-Fi Continuous-Duty Dosing Pump</string>
+    <string name="catalog_material_dosing_0086_name" translatable="false">Kamoer FX-STP2 Wi-Fi Peristaltic Dosing Pump</string>
+    <string name="catalog_material_dosing_0087_name" translatable="false">Kamoer FX-STP3 Bluetooth &amp; Wi-Fi Peristaltic Pump</string>
+    <string name="catalog_material_dosing_0088_name" translatable="false">Kamoer X1 PRO 2 Dosing Pump</string>
+    <string name="catalog_material_dosing_0089_name" translatable="false">Kamoer X1 PRO T2 Wi-Fi Stepper Pump</string>
+    <string name="catalog_material_dosing_0090_name" translatable="false">Kamoer X4 PRO Wi-Fi Dosing Pump</string>
+    <string name="catalog_material_dosing_0091_name" translatable="false">Kamoer X5S Wi-Fi Dosing Pump</string>
+    <string name="catalog_material_dosing_0092_name" translatable="false">Milwaukee Instruments MP810 Peristaltic Dosing Pump</string>
+    <string name="catalog_material_dosing_0093_name" translatable="false">Milwaukee Instruments MP815 Dosing Pump</string>
+    <string name="catalog_material_dosing_0094_name" translatable="false">Neptune Systems DŌS QuietDrive Dosing Pump</string>
+    <string name="catalog_material_dosing_0095_name" translatable="false">Pacific Sun Kore 7TH Dosing Station – Starter Edition</string>
+    <string name="catalog_material_dosing_0096_name" translatable="false">Red Sea ReefDose 2</string>
+    <string name="catalog_material_dosing_0097_name" translatable="false">Red Sea ReefDose 4</string>
+    <string name="catalog_material_dosing_0098_name" translatable="false">Reef Breeders A1 Precision Wireless Doser</string>
+    <string name="catalog_material_dosing_0099_name" translatable="false">Reef Breeders Quattro Precision Wireless Doser</string>
+    <string name="catalog_material_dosing_0100_name" translatable="false">Reef Factory Dosing Pump</string>
+    <string name="catalog_material_dosing_0101_name" translatable="false">Reef Factory Dosing Pump X3</string>
+    <string name="catalog_material_dosing_0102_name" translatable="false">Reef Factory Dosing Pump X4</string>
+    <string name="catalog_material_dosing_0103_name" translatable="false">Reef Factory Dosing Pump Pro X1</string>
+    <string name="catalog_material_dosing_0104_name" translatable="false">Reef Factory Dosing Pump Pro X4</string>
+    <string name="catalog_material_dosing_0105_name" translatable="false">Reef Factory Dosing Pump ATO</string>
+    <string name="catalog_material_dosing_0106_name" translatable="false">Reef Factory Dosing Pump CR</string>
+    <string name="catalog_material_dosing_0107_name" translatable="false">Simplicity Aquatics 4-Head Dosing Pump (SIM4501)</string>
+    <string name="catalog_material_dosing_0108_name" translatable="false">SpectraPure G7 LiterMeter Stand-Alone Dosing Pump</string>
+    <string name="catalog_material_dosing_0109_name" translatable="false">TMC Reef AccuDose</string>
+
+    <!-- Locale-independent aliases preserve model, punctuation and brand variants. -->
+    <string name="catalog_dosing_search_alias_0001" translatable="false">aqua medic reef doser evo 1; aqua medic reefdoser evo 1; reef doser evo 1; reefdoser evo 1; aqua medic dosing pump; aqua medic doser</string>
+    <string name="catalog_dosing_search_alias_0002" translatable="false">aqua medic reef doser evo 4; aqua medic reefdoser evo 4; reef doser evo 4; reefdoser evo 4; aqua medic dosing pump; aqua medic doser</string>
+    <string name="catalog_dosing_search_alias_0003" translatable="false">aqua medic reef doser evo 5; aqua medic reefdoser evo 5; reef doser evo 5; reefdoser evo 5; aqua medic dosing pump; aqua medic doser</string>
+    <string name="catalog_dosing_search_alias_0004" translatable="false">aqua nova nmdp 4; aqua nova nmdp4; nmdp 4; nmdp4; aqua nova dosing pump; aqua nova doser</string>
+    <string name="catalog_dosing_search_alias_0005" translatable="false">aqua nova nmdp 5; aqua nova nmdp5; nmdp 5; nmdp5; aqua nova dosing pump; aqua nova doser</string>
+    <string name="catalog_dosing_search_alias_0006" translatable="false">aqua nova nxdp 4; aqua nova nxdp4; nxdp 4; nxdp4; aqua nova dosing pump; aqua nova doser</string>
+    <string name="catalog_dosing_search_alias_0007" translatable="false">aqua nova nxdp 6; aqua nova nxdp6; nxdp 6; nxdp6; aqua nova dosing pump; aqua nova doser</string>
+    <string name="catalog_dosing_search_alias_0008" translatable="false">aqua trend samudra doser x 5 channel; aquatrend samudra doser x 5 channel; samudra doser x 5 channel; aqua trend dosing pump; aqua trend doser</string>
+    <string name="catalog_dosing_search_alias_0009" translatable="false">aqua trend samudra doser xs 3 channel; aquatrend samudra doser xs 3 channel; samudra doser xs 3 channel; aqua trend dosing pump; aqua trend doser</string>
+    <string name="catalog_dosing_search_alias_0010" translatable="false">aquatronica acq450 dosing pump 3 head; acq450 dosing pump 3 head; aquatronica dosing pump; aquatronica doser</string>
+    <string name="catalog_dosing_search_alias_0011" translatable="false">aqua vitro sentia doser primary; sentia doser primary; aqua vitro dosing pump; aqua vitro doser</string>
+    <string name="catalog_dosing_search_alias_0012" translatable="false">aqua vitro sentia doser secondary; sentia doser secondary; aqua vitro dosing pump; aqua vitro doser</string>
+    <string name="catalog_dosing_search_alias_0013" translatable="false">ati auto dosing pump dp 6; ati auto dosing pump dp6; auto dosing pump dp 6; auto dosing pump dp6; ati dosing pump; ati doser</string>
+    <string name="catalog_dosing_search_alias_0014" translatable="false">autoaqua smart doser 2 asd 200; autoaqua smart doser 2 asd200; smart doser 2 asd 200; smart doser 2 asd200; autoaqua dosing pump; autoaqua doser; auto aqua smart doser 2 asd 200; auto aqua smart doser 2 asd200; auto aqua dosing pump; auto aqua doser</string>
+    <string name="catalog_dosing_search_alias_0015" translatable="false">autoaqua smart doser 4 asd 400; autoaqua smart doser 4 asd400; smart doser 4 asd 400; smart doser 4 asd400; autoaqua dosing pump; autoaqua doser; auto aqua smart doser 4 asd 400; auto aqua smart doser 4 asd400; auto aqua dosing pump; auto aqua doser</string>
+    <string name="catalog_dosing_search_alias_0016" translatable="false">blau aquaristic multi dosing pump; multi dosing pump; blau aquaristic dosing pump; blau aquaristic doser</string>
+    <string name="catalog_dosing_search_alias_0017" translatable="false">blau aquaristic extension multi dosing pump; extension multi dosing pump; blau aquaristic dosing pump; blau aquaristic doser</string>
+    <string name="catalog_dosing_search_alias_0018" translatable="false">blau aquaristic single dosing pump; single dosing pump; blau aquaristic dosing pump; blau aquaristic doser</string>
+    <string name="catalog_dosing_search_alias_0019" translatable="false">blue marine dosing pump 4 channel; dosing pump 4 channel; blue marine dosing pump; blue marine doser</string>
+    <string name="catalog_dosing_search_alias_0020" translatable="false">bubble magus bm t01 dosing pump; bubble magus bmt01 dosing pump; bm t01 dosing pump; bmt01 dosing pump; bubble magus dosing pump; bubble magus doser</string>
+    <string name="catalog_dosing_search_alias_0021" translatable="false">bubble magus bm t02 add on dosing pump; bubble magus bmt02 addon dosing pump; bm t02 add on dosing pump; bmt02 addon dosing pump; bubble magus dosing pump; bubble magus doser</string>
+    <string name="catalog_dosing_search_alias_0022" translatable="false">bubble magus bm t11 dosing pump; bubble magus bmt11 dosing pump; bm t11 dosing pump; bmt11 dosing pump; bubble magus dosing pump; bubble magus doser</string>
+    <string name="catalog_dosing_search_alias_0023" translatable="false">bubble magus bm t12 add on dosing pump; bubble magus bmt12 addon dosing pump; bm t12 add on dosing pump; bmt12 addon dosing pump; bubble magus dosing pump; bubble magus doser</string>
+    <string name="catalog_dosing_search_alias_0024" translatable="false">bubble magus ts1 single dosing pump master; ts1 single dosing pump master; bubble magus dosing pump; bubble magus doser</string>
+    <string name="catalog_dosing_search_alias_0025" translatable="false">bubble magus ts2 single dosing pump add on; bubble magus ts2 single dosing pump addon; ts2 single dosing pump add on; ts2 single dosing pump addon; bubble magus dosing pump; bubble magus doser</string>
+    <string name="catalog_dosing_search_alias_0026" translatable="false">bubble magus ts4 single dosing pump; ts4 single dosing pump; bubble magus dosing pump; bubble magus doser</string>
+    <string name="catalog_dosing_search_alias_0027" translatable="false">bubble magus ts5 single dosing pump; ts5 single dosing pump; bubble magus dosing pump; bubble magus doser</string>
+    <string name="catalog_dosing_search_alias_0028" translatable="false">brs 2 part doser 1 1 m l min; brs 2 part doser 11 m lmin; bulk reef supply brs 2 part doser 1 1 m l min; bulk reef supply brs 2 part doser 11 m lmin; bulk reef supply dosing pump; bulk reef supply doser; brs brs 2 part doser 1 1 m l min; brs brs 2 part doser 11 m lmin; brs dosing pump; brs doser</string>
+    <string name="catalog_dosing_search_alias_0029" translatable="false">bulk reef supply drews doser v2 0; bulk reef supply drews doser v20; drews doser v2 0; drews doser v20; bulk reef supply dosing pump; bulk reef supply doser; brs drews doser v2 0; brs drews doser v20; brs dosing pump; brs doser</string>
+    <string name="catalog_dosing_search_alias_0030" translatable="false">chihiros dosing pump system 4 pump heads; dosing pump system 4 pump heads; chihiros dosing pump; chihiros doser</string>
+    <string name="catalog_dosing_search_alias_0031" translatable="false">chihiros dosing pump mate system 2 pump heads; dosing pump mate system 2 pump heads; chihiros dosing pump; chihiros doser</string>
+    <string name="catalog_dosing_search_alias_0032" translatable="false">coral box wf 01 wi fi dosing pump; coral box wf01 wifi dosing pump; wf 01 wi fi dosing pump; wf01 wifi dosing pump; coral box dosing pump; coral box doser</string>
+    <string name="catalog_dosing_search_alias_0033" translatable="false">coral box wf 04 wi fi dosing pump; coral box wf04 wifi dosing pump; wf 04 wi fi dosing pump; wf04 wifi dosing pump; coral box dosing pump; coral box doser</string>
+    <string name="catalog_dosing_search_alias_0034" translatable="false">d d h2 ocean p1 dosing pump; dd h2 ocean p1 dosing pump; p1 dosing pump; d d p1 dosing pump; d d dosing pump; d d doser; dd p1 dosing pump; dd dosing pump; dd doser; h2 ocean p1 dosing pump; h2 ocean dosing pump; h2 ocean doser; d d h2 ocean dosing pump; d d h2 ocean doser</string>
+    <string name="catalog_dosing_search_alias_0035" translatable="false">d d h2 ocean p1 pro dosing pump; dd h2 ocean p1 pro dosing pump; p1 pro dosing pump; d d p1 pro dosing pump; d d dosing pump; d d doser; dd p1 pro dosing pump; dd dosing pump; dd doser; h2 ocean p1 pro dosing pump; h2 ocean dosing pump; h2 ocean doser; d d h2 ocean dosing pump; d d h2 ocean doser</string>
+    <string name="catalog_dosing_search_alias_0036" translatable="false">d d h2 ocean p1 stp connect peristaltic pump; dd h2 ocean p1stp connect peristaltic pump; p1 stp connect peristaltic pump; p1stp connect peristaltic pump; d d p1 stp connect peristaltic pump; d d p1stp connect peristaltic pump; d d dosing pump; d d doser; dd p1 stp connect peristaltic pump; dd p1stp connect peristaltic pump; dd dosing pump; dd doser; h2 ocean p1 stp connect peristaltic pump; h2 ocean p1stp connect peristaltic pump; h2 ocean dosing pump; h2 ocean doser; d d h2 ocean p1stp connect peristaltic pump; d d h2 ocean dosing pump; d d h2 ocean doser</string>
+    <string name="catalog_dosing_search_alias_0037" translatable="false">d d h2 ocean p4 connect dosing pump; dd h2 ocean p4 connect dosing pump; p4 connect dosing pump; d d p4 connect dosing pump; d d dosing pump; d d doser; dd p4 connect dosing pump; dd dosing pump; dd doser; h2 ocean p4 connect dosing pump; h2 ocean dosing pump; h2 ocean doser; d d h2 ocean dosing pump; d d h2 ocean doser</string>
+    <string name="catalog_dosing_search_alias_0038" translatable="false">d d h2 ocean p4 pro connect dosing pump; dd h2 ocean p4 pro connect dosing pump; p4 pro connect dosing pump; d d p4 pro connect dosing pump; d d dosing pump; d d doser; dd p4 pro connect dosing pump; dd dosing pump; dd doser; h2 ocean p4 pro connect dosing pump; h2 ocean dosing pump; h2 ocean doser; d d h2 ocean dosing pump; d d h2 ocean doser</string>
+    <string name="catalog_dosing_search_alias_0039" translatable="false">deltec dosing pump 2 channel; dosing pump 2 channel; deltec dosing pump; deltec doser</string>
+    <string name="catalog_dosing_search_alias_0040" translatable="false">deltec dosing pump 3 channel; dosing pump 3 channel; deltec dosing pump; deltec doser</string>
+    <string name="catalog_dosing_search_alias_0041" translatable="false">deltec dosing pump 4 channel; dosing pump 4 channel; deltec dosing pump; deltec doser</string>
+    <string name="catalog_dosing_search_alias_0042" translatable="false">deltec dosing pump 3 s slave module; dosing pump 3 s slave module; deltec dosing pump; deltec doser</string>
+    <string name="catalog_dosing_search_alias_0043" translatable="false">deltec dosing pump 4 s slave module; dosing pump 4 s slave module; deltec dosing pump; deltec doser</string>
+    <string name="catalog_dosing_search_alias_0044" translatable="false">dupla marin dosing pump p4 smart; dosing pump p4 smart; dupla marin dosing pump; dupla marin doser</string>
+    <string name="catalog_dosing_search_alias_0045" translatable="false">easy reefs easy feeder master; easy feeder master; easy reefs dosing pump; easy reefs doser</string>
+    <string name="catalog_dosing_search_alias_0046" translatable="false">easy reefs easy feeder slave; easy feeder slave; easy reefs dosing pump; easy reefs doser</string>
+    <string name="catalog_dosing_search_alias_0047" translatable="false">eco tech marine versa vx 1 peristaltic dosing pump; eco tech marine versa vx1 peristaltic dosing pump; versa vx 1 peristaltic dosing pump; versa vx1 peristaltic dosing pump; eco tech marine dosing pump; eco tech marine doser; eco tech versa vx 1 peristaltic dosing pump; eco tech versa vx1 peristaltic dosing pump; eco tech dosing pump; eco tech doser</string>
+    <string name="catalog_dosing_search_alias_0048" translatable="false">eco tech marine versa vxf 1 four pack dosing pumps; eco tech marine versa vxf1 four pack dosing pumps; versa vxf 1 four pack dosing pumps; versa vxf1 four pack dosing pumps; eco tech marine dosing pump; eco tech marine doser; eco tech versa vxf 1 four pack dosing pumps; eco tech versa vxf1 four pack dosing pumps; eco tech dosing pump; eco tech doser</string>
+    <string name="catalog_dosing_search_alias_0049" translatable="false">e koral e k doser 4 channel; e k doser 4 channel; e koral dosing pump; e koral doser</string>
+    <string name="catalog_dosing_search_alias_0050" translatable="false">focustronic dose tronic pro; focustronic dosetronic pro; dose tronic pro; dosetronic pro; focustronic dosing pump; focustronic doser</string>
+    <string name="catalog_dosing_search_alias_0051" translatable="false">focustronic dose tronic dc; focustronic dosetronic dc; dose tronic dc; dosetronic dc; focustronic dosing pump; focustronic doser</string>
+    <string name="catalog_dosing_search_alias_0052" translatable="false">ghl doser 2 2 sa; ghl doser 22 sa; doser 2 2 sa; doser 22 sa; ghl dosing pump; ghl doser</string>
+    <string name="catalog_dosing_search_alias_0053" translatable="false">ghl doser 2 2 ext; ghl doser 22 ext; doser 2 2 ext; doser 22 ext; ghl dosing pump; ghl doser</string>
+    <string name="catalog_dosing_search_alias_0054" translatable="false">ghl doser 2 2 maxi sa; ghl doser 22 maxi sa; doser 2 2 maxi sa; doser 22 maxi sa; ghl dosing pump; ghl doser</string>
+    <string name="catalog_dosing_search_alias_0055" translatable="false">ghl doser 2 2 maxi ext; ghl doser 22 maxi ext; doser 2 2 maxi ext; doser 22 maxi ext; ghl dosing pump; ghl doser</string>
+    <string name="catalog_dosing_search_alias_0056" translatable="false">ghl doser 3 sa; doser 3 sa; ghl dosing pump; ghl doser</string>
+    <string name="catalog_dosing_search_alias_0057" translatable="false">ghl doser 3 ext; doser 3 ext; ghl dosing pump; ghl doser</string>
+    <string name="catalog_dosing_search_alias_0058" translatable="false">ghl doser 3 maxi sa; doser 3 maxi sa; ghl dosing pump; ghl doser</string>
+    <string name="catalog_dosing_search_alias_0059" translatable="false">ghl doser 3 maxi ext; doser 3 maxi ext; ghl dosing pump; ghl doser</string>
+    <string name="catalog_dosing_search_alias_0060" translatable="false">grotech ep 3 mcs 3 channel dosing pump extension; grotech ep 3mcs 3 channel dosing pump extension; ep 3 mcs 3 channel dosing pump extension; ep 3mcs 3 channel dosing pump extension; grotech dosing pump; grotech doser</string>
+    <string name="catalog_dosing_search_alias_0061" translatable="false">grotech ep 5 mcs 5 channel dosing pump extension; grotech ep 5mcs 5 channel dosing pump extension; ep 5 mcs 5 channel dosing pump extension; ep 5mcs 5 channel dosing pump extension; grotech dosing pump; grotech doser</string>
+    <string name="catalog_dosing_search_alias_0062" translatable="false">grotech ep iv 4 channel dosing pump extension; ep iv 4 channel dosing pump extension; grotech dosing pump; grotech doser</string>
+    <string name="catalog_dosing_search_alias_0063" translatable="false">hsbao ds 4 dosing pump; hsbao ds4 dosing pump; ds 4 dosing pump; ds4 dosing pump; hsbao dosing pump; hsbao doser</string>
+    <string name="catalog_dosing_search_alias_0064" translatable="false">hydros control x10 integrated 4 pump dosing system; hydros control x10 integrated 4pump dosing system; control x10 integrated 4 pump dosing system; control x10 integrated 4pump dosing system; hydros dosing pump; hydros doser</string>
+    <string name="catalog_dosing_search_alias_0065" translatable="false">hydros blenny 4 pump dosing system; hydros blenny 4pump dosing system; blenny 4 pump dosing system; blenny 4pump dosing system; hydros dosing pump; hydros doser</string>
+    <string name="catalog_dosing_search_alias_0066" translatable="false">hydros minnow 2 pump dosing system; hydros minnow 2pump dosing system; minnow 2 pump dosing system; minnow 2pump dosing system; hydros dosing pump; hydros doser</string>
+    <string name="catalog_dosing_search_alias_0067" translatable="false">hydros sole continuous duty dosing pump; hydros sole continuousduty dosing pump; sole continuous duty dosing pump; sole continuousduty dosing pump; hydros dosing pump; hydros doser</string>
+    <string name="catalog_dosing_search_alias_0068" translatable="false">hydros 2 m l min dosing pump; hydros 2 m lmin dosing pump; hydros hydros 2 m l min dosing pump; hydros hydros 2 m lmin dosing pump; hydros dosing pump; hydros doser</string>
+    <string name="catalog_dosing_search_alias_0069" translatable="false">hydros dosing pump drive port; hydros hydros dosing pump drive port; hydros dosing pump; hydros doser</string>
+    <string name="catalog_dosing_search_alias_0070" translatable="false">jebao jecod dp 2; jebao jecod dp2; dp 2; dp2; jebao dp 2; jebao dp2; jebao dosing pump; jebao doser; jecod dp 2; jecod dp2; jecod dosing pump; jecod doser; jebao jecod dosing pump; jebao jecod doser</string>
+    <string name="catalog_dosing_search_alias_0071" translatable="false">jebao jecod dp 3; jebao jecod dp3; dp 3; dp3; jebao dp 3; jebao dp3; jebao dosing pump; jebao doser; jecod dp 3; jecod dp3; jecod dosing pump; jecod doser; jebao jecod dosing pump; jebao jecod doser</string>
+    <string name="catalog_dosing_search_alias_0072" translatable="false">jebao jecod dp 3 s; jebao jecod dp3 s; dp 3 s; dp3 s; jebao dp 3 s; jebao dp3 s; jebao dosing pump; jebao doser; jecod dp 3 s; jecod dp3 s; jecod dosing pump; jecod doser; jebao jecod dosing pump; jebao jecod doser</string>
+    <string name="catalog_dosing_search_alias_0073" translatable="false">jebao jecod dp 4; jebao jecod dp4; dp 4; dp4; jebao dp 4; jebao dp4; jebao dosing pump; jebao doser; jecod dp 4; jecod dp4; jecod dosing pump; jecod doser; jebao jecod dosing pump; jebao jecod doser</string>
+    <string name="catalog_dosing_search_alias_0074" translatable="false">jebao jecod dp 4 s; jebao jecod dp4 s; dp 4 s; dp4 s; jebao dp 4 s; jebao dp4 s; jebao dosing pump; jebao doser; jecod dp 4 s; jecod dp4 s; jecod dosing pump; jecod doser; jebao jecod dosing pump; jebao jecod doser</string>
+    <string name="catalog_dosing_search_alias_0075" translatable="false">jebao jecod dp 5; jebao jecod dp5; dp 5; dp5; jebao dp 5; jebao dp5; jebao dosing pump; jebao doser; jecod dp 5; jecod dp5; jecod dosing pump; jecod doser; jebao jecod dosing pump; jebao jecod doser</string>
+    <string name="catalog_dosing_search_alias_0076" translatable="false">jebao jecod dp 6 superior; jebao jecod dp6 superior; dp 6 superior; dp6 superior; jebao dp 6 superior; jebao dp6 superior; jebao dosing pump; jebao doser; jecod dp 6 superior; jecod dp6 superior; jecod dosing pump; jecod doser; jebao jecod dosing pump; jebao jecod doser</string>
+    <string name="catalog_dosing_search_alias_0077" translatable="false">jebao jecod doser 2 4 wi fi; jebao jecod doser 24 wifi; doser 2 4 wi fi; doser 24 wifi; jebao doser 2 4 wi fi; jebao doser 24 wifi; jebao dosing pump; jebao doser; jecod doser 2 4 wi fi; jecod doser 24 wifi; jecod dosing pump; jecod doser; jebao jecod dosing pump; jebao jecod doser</string>
+    <string name="catalog_dosing_search_alias_0078" translatable="false">jebao jecod doser 3 1; jebao jecod doser 31; doser 3 1; doser 31; jebao doser 3 1; jebao doser 31; jebao dosing pump; jebao doser; jecod doser 3 1; jecod doser 31; jecod dosing pump; jecod doser; jebao jecod dosing pump; jebao jecod doser</string>
+    <string name="catalog_dosing_search_alias_0079" translatable="false">jebao jecod doser 3 4; jebao jecod doser 34; doser 3 4; doser 34; jebao doser 3 4; jebao doser 34; jebao dosing pump; jebao doser; jecod doser 3 4; jecod doser 34; jecod dosing pump; jecod doser; jebao jecod dosing pump; jebao jecod doser</string>
+    <string name="catalog_dosing_search_alias_0080" translatable="false">jebao jecod md 4 4; jebao jecod md44; md 4 4; md44; jebao md 4 4; jebao md44; jebao dosing pump; jebao doser; jecod md 4 4; jecod md44; jecod dosing pump; jecod doser; jebao jecod dosing pump; jebao jecod doser</string>
+    <string name="catalog_dosing_search_alias_0081" translatable="false">jebao jecod doser 5 4; jebao jecod doser 54; doser 5 4; doser 54; jebao doser 5 4; jebao doser 54; jebao dosing pump; jebao doser; jecod doser 5 4; jecod doser 54; jecod dosing pump; jecod doser; jebao jecod dosing pump; jebao jecod doser</string>
+    <string name="catalog_dosing_search_alias_0082" translatable="false">jebao jecod doser 5 6; jebao jecod doser 56; doser 5 6; doser 56; jebao doser 5 6; jebao doser 56; jebao dosing pump; jebao doser; jecod doser 5 6; jecod doser 56; jecod dosing pump; jecod doser; jebao jecod dosing pump; jebao jecod doser</string>
+    <string name="catalog_dosing_search_alias_0083" translatable="false">kamoer f1 liquid dosing pump; f1 liquid dosing pump; kamoer dosing pump; kamoer doser</string>
+    <string name="catalog_dosing_search_alias_0084" translatable="false">kamoer f4 pro wi fi dosing pump; kamoer f4 pro wifi dosing pump; f4 pro wi fi dosing pump; f4 pro wifi dosing pump; kamoer dosing pump; kamoer doser</string>
+    <string name="catalog_dosing_search_alias_0085" translatable="false">kamoer fx stp wi fi continuous duty dosing pump; kamoer fxstp wifi continuousduty dosing pump; fx stp wi fi continuous duty dosing pump; fxstp wifi continuousduty dosing pump; kamoer dosing pump; kamoer doser</string>
+    <string name="catalog_dosing_search_alias_0086" translatable="false">kamoer fx stp2 wi fi peristaltic dosing pump; kamoer fxstp2 wifi peristaltic dosing pump; fx stp2 wi fi peristaltic dosing pump; fxstp2 wifi peristaltic dosing pump; kamoer dosing pump; kamoer doser</string>
+    <string name="catalog_dosing_search_alias_0087" translatable="false">kamoer fx stp3 bluetooth and wi fi peristaltic pump; kamoer fxstp3 bluetooth wifi peristaltic pump; fx stp3 bluetooth and wi fi peristaltic pump; fxstp3 bluetooth wifi peristaltic pump; kamoer dosing pump; kamoer doser</string>
+    <string name="catalog_dosing_search_alias_0088" translatable="false">kamoer x1 pro 2 dosing pump; x1 pro 2 dosing pump; kamoer dosing pump; kamoer doser</string>
+    <string name="catalog_dosing_search_alias_0089" translatable="false">kamoer x1 pro t2 wi fi stepper pump; kamoer x1 pro t2 wifi stepper pump; x1 pro t2 wi fi stepper pump; x1 pro t2 wifi stepper pump; kamoer dosing pump; kamoer doser</string>
+    <string name="catalog_dosing_search_alias_0090" translatable="false">kamoer x4 pro wi fi dosing pump; kamoer x4 pro wifi dosing pump; x4 pro wi fi dosing pump; x4 pro wifi dosing pump; kamoer dosing pump; kamoer doser</string>
+    <string name="catalog_dosing_search_alias_0091" translatable="false">kamoer x5 s wi fi dosing pump; kamoer x5 s wifi dosing pump; x5 s wi fi dosing pump; x5 s wifi dosing pump; kamoer dosing pump; kamoer doser</string>
+    <string name="catalog_dosing_search_alias_0092" translatable="false">milwaukee instruments mp810 peristaltic dosing pump; mp810 peristaltic dosing pump; milwaukee instruments dosing pump; milwaukee instruments doser</string>
+    <string name="catalog_dosing_search_alias_0093" translatable="false">milwaukee instruments mp815 dosing pump; mp815 dosing pump; milwaukee instruments dosing pump; milwaukee instruments doser</string>
+    <string name="catalog_dosing_search_alias_0094" translatable="false">neptune systems dos quiet drive dosing pump; dos quiet drive dosing pump; neptune systems dosing pump; neptune systems doser</string>
+    <string name="catalog_dosing_search_alias_0095" translatable="false">pacific sun kore 7 th dosing station starter edition; kore 7 th dosing station starter edition; pacific sun dosing pump; pacific sun doser</string>
+    <string name="catalog_dosing_search_alias_0096" translatable="false">red sea reef dose 2; reef dose 2; red sea dosing pump; red sea doser</string>
+    <string name="catalog_dosing_search_alias_0097" translatable="false">red sea reef dose 4; reef dose 4; red sea dosing pump; red sea doser</string>
+    <string name="catalog_dosing_search_alias_0098" translatable="false">reef breeders a1 precision wireless doser; a1 precision wireless doser; reef breeders dosing pump; reef breeders doser</string>
+    <string name="catalog_dosing_search_alias_0099" translatable="false">reef breeders quattro precision wireless doser; quattro precision wireless doser; reef breeders dosing pump; reef breeders doser</string>
+    <string name="catalog_dosing_search_alias_0100" translatable="false">reef factory dosing pump; dosing pump; reef factory doser</string>
+    <string name="catalog_dosing_search_alias_0101" translatable="false">reef factory dosing pump x3; dosing pump x3; reef factory dosing pump; reef factory doser</string>
+    <string name="catalog_dosing_search_alias_0102" translatable="false">reef factory dosing pump x4; dosing pump x4; reef factory dosing pump; reef factory doser</string>
+    <string name="catalog_dosing_search_alias_0103" translatable="false">reef factory dosing pump pro x1; dosing pump pro x1; reef factory dosing pump; reef factory doser</string>
+    <string name="catalog_dosing_search_alias_0104" translatable="false">reef factory dosing pump pro x4; dosing pump pro x4; reef factory dosing pump; reef factory doser</string>
+    <string name="catalog_dosing_search_alias_0105" translatable="false">reef factory dosing pump ato; dosing pump ato; reef factory dosing pump; reef factory doser</string>
+    <string name="catalog_dosing_search_alias_0106" translatable="false">reef factory dosing pump cr; dosing pump cr; reef factory dosing pump; reef factory doser</string>
+    <string name="catalog_dosing_search_alias_0107" translatable="false">simplicity aquatics 4 head dosing pump sim4501; simplicity aquatics 4head dosing pump sim4501; 4 head dosing pump sim4501; 4head dosing pump sim4501; simplicity aquatics dosing pump; simplicity aquatics doser</string>
+    <string name="catalog_dosing_search_alias_0108" translatable="false">spectra pure g7 liter meter stand alone dosing pump; spectra pure g7 liter meter standalone dosing pump; g7 liter meter stand alone dosing pump; g7 liter meter standalone dosing pump; spectra pure dosing pump; spectra pure doser</string>
+    <string name="catalog_dosing_search_alias_0109" translatable="false">tmc reef accu dose; reef accu dose; tmc dosing pump; tmc doser; reef reef accu dose; reef dosing pump; reef doser; tmc reef reef accu dose; tmc reef dosing pump; tmc reef doser</string>
+
+    <!-- Dosing search aliases. Localized aliases live in values-tr. -->
+    <string name="catalog_dosing_keyword_dosing_pump">dosing pump</string>
+    <string name="catalog_dosing_keyword_doser">doser</string>
+    <string name="catalog_dosing_keyword_aquarium_doser">aquarium doser</string>
+    <string name="catalog_dosing_keyword_dosing_en" translatable="false">dosing</string>
+    <string name="catalog_dosing_keyword_pump_en" translatable="false">pump</string>
+    <string name="catalog_dosing_keyword_dosing_pump_en" translatable="false">dosing pump</string>
+    <string name="catalog_dosing_keyword_doser_en" translatable="false">doser</string>
+    <string name="catalog_dosing_keyword_dosing_system">dosing system</string>
+    <string name="catalog_dosing_keyword_dosing_station">dosing station</string>
+    <string name="catalog_dosing_keyword_extension">extension</string>
+    <string name="catalog_dosing_keyword_slave">slave</string>
+    <string name="catalog_dosing_keyword_add_on">add-on</string>
+    <string name="catalog_dosing_keyword_peristaltic">peristaltic</string>
+    <string name="catalog_dosing_keyword_peristaltic_pump">peristaltic pump</string>
+    <string name="catalog_dosing_keyword_continuous_duty">continuous duty</string>
+    <string name="catalog_dosing_keyword_stepper">stepper</string>
+    <string name="catalog_dosing_keyword_multi_channel">multi-channel</string>
+    <string name="catalog_dosing_keyword_multi_head">multi-head</string>
+    <string name="catalog_dosing_keyword_wifi" translatable="false">wi-fi</string>
+    <string name="catalog_dosing_keyword_bluetooth" translatable="false">bluetooth</string>
+    <string name="catalog_dosing_keyword_smart">smart</string>
+    <string name="catalog_dosing_keyword_wireless">wireless</string>
+    <string name="catalog_dosing_keyword_master">master</string>
+    <string name="catalog_dosing_keyword_integrated">integrated</string>
+    <string name="catalog_dosing_keyword_drive_port">drive port</string>
+    <string name="catalog_dosing_keyword_starter_edition">starter edition</string>
+</resources>

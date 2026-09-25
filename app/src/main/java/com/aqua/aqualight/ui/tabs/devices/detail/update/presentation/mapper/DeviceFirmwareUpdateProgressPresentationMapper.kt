@@ -33,6 +33,8 @@ internal object DeviceFirmwareUpdateProgressPresentationMapper {
             R.string.device_settings_update_phase_post_restart_timeout
         DeviceFirmwareUpdateMode.UNEXPECTED_FIRMWARE ->
             R.string.device_settings_update_phase_unexpected_firmware
+        DeviceFirmwareUpdateMode.RELEASE_NOT_PUBLISHED ->
+            R.string.device_settings_update_phase_not_published
         DeviceFirmwareUpdateMode.UP_TO_DATE -> R.string.device_settings_update_phase_up_to_date
         DeviceFirmwareUpdateMode.FAILED -> when {
             state.failure?.stage == DeviceOtaFailureStage.AVAILABILITY_CHECK ->
@@ -62,6 +64,11 @@ internal object DeviceFirmwareUpdateProgressPresentationMapper {
                 R.drawable.ic_warning,
                 R.color.aqua_content_warning
             )
+            DeviceFirmwareUpdateMode.RELEASE_NOT_PUBLISHED ->
+                DeviceFirmwareUpdateIconPresentation(
+                    R.drawable.ic_info,
+                    R.color.aqua_accent_primary
+                )
             else -> null
         }
 
@@ -87,6 +94,7 @@ internal object DeviceFirmwareUpdateProgressPresentationMapper {
             DeviceFirmwareUpdateMode.SUCCEEDED,
             DeviceFirmwareUpdateMode.ROLLED_BACK,
             DeviceFirmwareUpdateMode.UNEXPECTED_FIRMWARE,
+            DeviceFirmwareUpdateMode.RELEASE_NOT_PUBLISHED,
             DeviceFirmwareUpdateMode.UP_TO_DATE -> DeviceFirmwareUpdateActionPresentation(
                 R.string.device_settings_update_done_action,
                 enabled = true

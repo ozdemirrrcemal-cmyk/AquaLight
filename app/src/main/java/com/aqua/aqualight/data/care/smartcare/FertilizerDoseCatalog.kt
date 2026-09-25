@@ -12,8 +12,15 @@ object FertilizerDoseCatalog {
       baseVolumeL = 50.0,
       frequency = FertilizerFrequency.WEEKLY,
       doseType = FertilizerDoseType.COMPLETE_MACRO_MICRO,
+      startupGuidance = FertilizerStartupGuidance.WITHHOLD_OR_LIMIT_FIRST_28_DAYS,
+      catalogProductIds = setOf("fertilizer_tropica_specialised_nutrition"),
+      evidenceSourceIds = SmartCareEvidenceCatalog.tags(
+        SmartCareEvidenceId.PLANT_STARTUP_METHOD,
+        SmartCareEvidenceId.PLANT_NUTRITION_MACRO_MICRO_GUIDE
+      ),
+      algaeResponse = FertilizerAlgaeResponse.HALVE_DOSE_AND_INCREASE_WATER_CHANGES,
       noteTr = "Makro ve mikro besin içerir. Yosun artışı varsa doz dikkatli azaltılmalıdır.",
-      sourceTags = listOf("Tropica")
+      sourceTags = emptyList()
     ),
 
     FertilizerDoseRule(
@@ -24,8 +31,14 @@ object FertilizerDoseCatalog {
       baseVolumeL = 50.0,
       frequency = FertilizerFrequency.WEEKLY,
       doseType = FertilizerDoseType.MICRO_TRACE,
+      startupGuidance = FertilizerStartupGuidance.WITHHOLD_OR_LIMIT_FIRST_28_DAYS,
+      catalogProductIds = setOf("fertilizer_tropica_premium_nutrition"),
+      evidenceSourceIds = SmartCareEvidenceCatalog.tags(
+        SmartCareEvidenceId.PLANT_STARTUP_METHOD,
+        SmartCareEvidenceId.PLANT_NUTRITION_MICRO_GUIDE
+      ),
       noteTr = "Azot ve fosfor içermez. Daha çok balıklı veya düşük/orta bitkili tanklar için uygundur.",
-      sourceTags = listOf("Tropica")
+      sourceTags = emptyList()
     ),
 
     FertilizerDoseRule(
@@ -38,7 +51,7 @@ object FertilizerDoseCatalog {
       doseType = FertilizerDoseType.MACRO_NPK,
       requiresWaterTest = true,
       noteTr = "Nitrat, fosfat ve potasyum içerir. Ölçüm yaparak kullanmak daha güvenlidir.",
-      sourceTags = listOf("Dennerle")
+      sourceTags = emptyList()
     ),
 
     FertilizerDoseRule(
@@ -50,7 +63,7 @@ object FertilizerDoseCatalog {
       frequency = FertilizerFrequency.WEEKLY,
       doseType = FertilizerDoseType.MICRO_TRACE,
       noteTr = "Haftalık genel bitki bakım gübresidir.",
-      sourceTags = listOf("Dennerle")
+      sourceTags = emptyList()
     ),
 
     FertilizerDoseRule(
@@ -62,7 +75,7 @@ object FertilizerDoseCatalog {
       frequency = FertilizerFrequency.DAILY,
       doseType = FertilizerDoseType.MICRO_TRACE,
       noteTr = "Nano akvaryumlar ve hassas günlük dozlama için uygundur.",
-      sourceTags = listOf("Dennerle")
+      sourceTags = emptyList()
     ),
 
     FertilizerDoseRule(
@@ -74,7 +87,7 @@ object FertilizerDoseCatalog {
       frequency = FertilizerFrequency.DAILY,
       doseType = FertilizerDoseType.COMPLETE,
       noteTr = "Günlük dozlama için tasarlanmıştır. Bitki yoğunluğuna göre ayarlanmalıdır.",
-      sourceTags = listOf("2Hr Aquarist")
+      sourceTags = emptyList()
     ),
 
     FertilizerDoseRule(
@@ -86,7 +99,7 @@ object FertilizerDoseCatalog {
       frequency = FertilizerFrequency.DAILY,
       doseType = FertilizerDoseType.COMPLETE,
       noteTr = "CO₂ destekli ve yoğun bitkili tanklarda günlük dozlama için uygundur.",
-      sourceTags = listOf("2Hr Aquarist")
+      sourceTags = emptyList()
     ),
 
     FertilizerDoseRule(
@@ -98,7 +111,7 @@ object FertilizerDoseCatalog {
       frequency = FertilizerFrequency.DAILY,
       doseType = FertilizerDoseType.COMPLETE,
       noteTr = "Daha düşük günlük dozla kullanılan APT serisi gübredir.",
-      sourceTags = listOf("2Hr Aquarist")
+      sourceTags = emptyList()
     ),
 
     FertilizerDoseRule(
@@ -109,8 +122,13 @@ object FertilizerDoseCatalog {
       baseVolumeL = 20.0,
       frequency = FertilizerFrequency.DAILY,
       doseType = FertilizerDoseType.NITROGEN,
+      startupGuidance = FertilizerStartupGuidance.APPLY_ONLY_WHEN_NEEDED,
+      evidenceSourceIds = SmartCareEvidenceCatalog.tags(
+        SmartCareEvidenceId.AQUASCAPE_FERTILIZATION_GUIDE
+      ),
+      requiresWaterTest = true,
       noteTr = "Azot desteği içindir. Özellikle nitrat ihtiyacı gözlemlenmelidir.",
-      sourceTags = listOf("ADA")
+      sourceTags = emptyList()
     ),
 
     FertilizerDoseRule(
@@ -121,8 +139,11 @@ object FertilizerDoseCatalog {
       baseVolumeL = 20.0,
       frequency = FertilizerFrequency.DAILY,
       doseType = FertilizerDoseType.POTASSIUM,
+      evidenceSourceIds = SmartCareEvidenceCatalog.tags(
+        SmartCareEvidenceId.AQUASCAPE_FERTILIZATION_GUIDE
+      ),
       noteTr = "Potasyum desteği içindir.",
-      sourceTags = listOf("ADA")
+      sourceTags = emptyList()
     ),
 
     FertilizerDoseRule(
@@ -133,8 +154,12 @@ object FertilizerDoseCatalog {
       baseVolumeL = 20.0,
       frequency = FertilizerFrequency.DAILY,
       doseType = FertilizerDoseType.IRON,
+      startupGuidance = FertilizerStartupGuidance.DEFER_UNTIL_DAY_61,
+      evidenceSourceIds = SmartCareEvidenceCatalog.tags(
+        SmartCareEvidenceId.AQUASCAPE_FERTILIZATION_GUIDE
+      ),
       noteTr = "Demir desteği içindir. Bitki yoğunluğuna göre dikkatli ayarlanmalıdır.",
-      sourceTags = listOf("ADA")
+      sourceTags = emptyList()
     ),
 
     FertilizerDoseRule(
@@ -146,7 +171,7 @@ object FertilizerDoseCatalog {
       frequency = FertilizerFrequency.ONCE_OR_TWICE_WEEKLY,
       doseType = FertilizerDoseType.MICRO_TRACE,
       noteTr = "Genel iz element desteğidir. Haftada 1-2 kez kullanılabilir.",
-      sourceTags = listOf("Seachem")
+      sourceTags = emptyList()
     ),
 
     FertilizerDoseRule(
@@ -158,7 +183,7 @@ object FertilizerDoseCatalog {
       frequency = FertilizerFrequency.TWICE_WEEKLY,
       doseType = FertilizerDoseType.NITROGEN,
       noteTr = "Azot eksikliği belirtilerine göre kullanılmalıdır.",
-      sourceTags = listOf("Seachem")
+      sourceTags = emptyList()
     ),
 
     FertilizerDoseRule(
@@ -170,7 +195,7 @@ object FertilizerDoseCatalog {
       frequency = FertilizerFrequency.TWO_TO_THREE_TIMES_WEEKLY,
       doseType = FertilizerDoseType.POTASSIUM,
       noteTr = "Potasyum eksikliği belirtilerine göre kullanılmalıdır.",
-      sourceTags = listOf("Seachem")
+      sourceTags = emptyList()
     ),
 
     FertilizerDoseRule(
@@ -182,7 +207,7 @@ object FertilizerDoseCatalog {
       frequency = FertilizerFrequency.ONCE_OR_TWICE_WEEKLY,
       doseType = FertilizerDoseType.PHOSPHORUS,
       noteTr = "Fosfor eksikliği belirtilerine göre kullanılmalıdır.",
-      sourceTags = listOf("Seachem")
+      sourceTags = emptyList()
     )
   )
 

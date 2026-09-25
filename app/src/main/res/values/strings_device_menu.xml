@@ -1,12 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="device_menu_default_title">Device</string>
+    <string name="device_menu_unavailable_dialog_title">Device Unavailable</string>
+    <string name="device_menu_unavailable_dialog_message">%1$s\n\n%2$s</string>
     <string name="device_menu_offline_dialog_title">Device Offline</string>
-    <string name="device_menu_offline_dialog_message">%1$s is offline right now.\n\n%2$s</string>
     <string name="device_menu_offline_message">Make sure it is powered on and connected to the same Wi-Fi network.</string>
     <string name="device_menu_checking_accessibility">Checking device connection</string>
+    <string name="device_menu_local_network_unavailable_title">Local Network Unavailable</string>
     <string name="device_menu_local_network_unavailable_message">Connect this phone to the same Wi-Fi network as the device, then try again.</string>
+    <string name="device_menu_authentication_required_title">Pair Device Again</string>
     <string name="device_menu_authentication_required_message">This device must be paired with your account again before its controls can be opened.</string>
+    <string name="device_menu_device_unresponsive_title">Device Unreachable</string>
     <string name="device_menu_device_unresponsive_message">The device is on the local network but is not responding. Check its power and Wi-Fi connection.</string>
+    <string name="device_menu_verification_timed_out_title">Device Status Could Not Be Verified</string>
     <string name="device_menu_verification_timed_out_message">The connection check took too long. AquaLight will keep trying automatically.</string>
+    <string name="device_menu_status_unverified_title">Device Status Could Not Be Verified</string>
+    <string name="device_menu_status_unverified_message">AquaLight could not verify the device’s current connection. Make sure it is powered on and connected to the same Wi-Fi network, then try again.</string>
+    <string name="device_menu_invalid_device_message">Device information could not be verified. Refresh the Devices screen and try again.</string>
+    <string name="device_menu_not_registered_message">This device is no longer registered to the current account. Refresh the Devices screen and try again.</string>
+    <string name="device_menu_commercial_product_mismatch_message">The device product information does not match a supported AquaLight profile. Update the app and try again; contact support if the problem continues.</string>
 </resources>

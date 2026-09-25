@@ -59,6 +59,7 @@ object DeviceFirmwareNotificationActionabilityPolicy {
             state.failure.stage == DeviceOtaFailureStage.UPDATE_EXECUTION
         is DeviceOtaState.Idle,
         is DeviceOtaState.Checking,
+        is DeviceOtaState.ReleaseNotPublished,
         is DeviceOtaState.Unsupported,
         is DeviceOtaState.UpToDate,
         is DeviceOtaState.UpdateAvailable -> false

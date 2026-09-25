@@ -618,10 +618,13 @@ class DevicesRepository(
         }
     }
 
-    private fun applyRuntimeUnavailable(deviceUid: DeviceUid, message: String? = null) {
+    internal fun applyRuntimeUnavailable(
+        deviceUid: DeviceUid,
+        message: String? = null
+    ): DeviceSnapshot? {
         invalidateRuntimeMetadata(deviceUid)
         val nowElapsedMillis = elapsedRealtimeMillis()
-        registryStore.updateConnectionState(deviceUid) { previous ->
+        return registryStore.updateConnectionState(deviceUid) { previous ->
             val clearedRuntimeState = previous.copy(
                 lastWsConnectedAtMillis = null,
                 lastWsConnectedElapsedMillis = null,

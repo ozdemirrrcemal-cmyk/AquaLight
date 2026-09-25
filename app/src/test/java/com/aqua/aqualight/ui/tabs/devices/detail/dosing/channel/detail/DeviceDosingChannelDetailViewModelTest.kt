@@ -14,6 +14,7 @@ import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirSettin
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingReservoirSnapshot
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingRuntimeReason
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingSchedulingPolicy
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.common.DeviceDosingErrorContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -612,6 +613,34 @@ class DeviceDosingChannelDetailViewModelTest {
             assertEquals(1, operations.resetCallCount)
         }
 
+    @Test
+    fun `failed manual dose retains manual operation context`() = runTest(dispatcher) {
+        val initial = snapshot(
+            calibrated = true,
+            manualDoseSupported = true
+        )
+        val viewModel = DeviceDosingChannelDetailViewModel(FakeOperations(initial))
+        val events = mutableListOf<DeviceDosingChannelDetailEvent>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.events.toList(events)
+        }
+
+        viewModel.bind(DEVICE_UID, SLOT_ID)
+        testScheduler.advanceUntilIdle()
+        viewModel.startManualDose("1")
+        testScheduler.advanceUntilIdle()
+
+        assertEquals(
+            listOf(
+                DeviceDosingChannelDetailEvent.OperationFailed(
+                    failure = DeviceDosingChannelDetailFailure.TRY_AGAIN,
+                    context = DeviceDosingErrorContext.MANUAL_DOSE
+                )
+            ),
+            events
+        )
+    }
+
     private class FakeOperations(
         private val refreshSnapshot: DeviceDosingChannelSnapshot,
         private val currentSnapshot: DeviceDosingChannelSnapshot? = null,
@@ -719,7 +748,8 @@ class DeviceDosingChannelDetailViewModelTest {
             calibrated: Boolean,
             missedDoseRecoveryEnabled: Boolean? = null,
             revision: Long = 1L,
-            resetSupported: Boolean = false
+            resetSupported: Boolean = false,
+            manualDoseSupported: Boolean = false
         ): DeviceDosingChannelSnapshot =
             DeviceDosingChannelSnapshot(
                 deviceUid = DEVICE_UID,
@@ -740,6 +770,7 @@ class DeviceDosingChannelDetailViewModelTest {
                 activeRun = DeviceDosingActiveRun(),
                 controls = DeviceDosingChannelControls(
                     programEditable = missedDoseRecoveryEnabled != null,
+                    manualDoseSupported = manualDoseSupported,
                     resetSupported = resetSupported
                 )
             )

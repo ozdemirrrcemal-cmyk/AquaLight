@@ -6,6 +6,11 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.ui.common.bottomsheet.TextInputBottomSheet
 import com.aqua.aqualight.ui.common.dialog.ConfirmDialogFragment
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.common.DeviceDosingCommercialErrorMessage
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.common.DeviceDosingErrorContext
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.common.DeviceDosingOperationFailure
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.common.toCommercialDosingError
+import com.aqua.aqualight.ui.tabs.devices.detail.dosing.presentation.common.toSnackType
 import com.aqua.aqualight.utils.DialogType
 
 /** Owns modal input and feedback for the channel-detail navigation host. */
@@ -26,8 +31,25 @@ internal class DeviceDosingChannelDetailDialogs(
         }
     }
 
-    fun showOperationFailure(failure: DeviceDosingChannelDetailFailure) {
-        showOperationMessage(failure.messageResource(), BaseActivity.SnackType.ERROR)
+    fun showOperationFailure(
+        failure: DeviceDosingChannelDetailFailure,
+        context: DeviceDosingErrorContext
+    ) {
+        when (failure) {
+            DeviceDosingChannelDetailFailure.INVALID_INPUT -> showOperationMessage(
+                R.string.device_dosing_detail_error_invalid_input,
+                BaseActivity.SnackType.ERROR
+            )
+            is DeviceDosingChannelDetailFailure.Rejected -> showCommercialError(
+                failure.reason.toCommercialDosingError(context)
+            )
+            DeviceDosingChannelDetailFailure.UNAVAILABLE -> showCommercialError(
+                DeviceDosingOperationFailure.UNAVAILABLE.toCommercialDosingError(context)
+            )
+            DeviceDosingChannelDetailFailure.TRY_AGAIN -> showCommercialError(
+                DeviceDosingOperationFailure.INTERNAL.toCommercialDosingError(context)
+            )
+        }
     }
 
     fun showOperationMessage(
@@ -35,6 +57,10 @@ internal class DeviceDosingChannelDetailDialogs(
         type: BaseActivity.SnackType = BaseActivity.SnackType.SUCCESS
     ) {
         (fragment.activity as? BaseActivity)?.showSnackBar(fragment.getString(messageRes), type)
+    }
+
+    private fun showCommercialError(error: DeviceDosingCommercialErrorMessage) {
+        showOperationMessage(error.messageRes, error.severity.toSnackType())
     }
 
     fun showResetChannelConfirmation() {
@@ -112,18 +138,4 @@ internal class DeviceDosingChannelDetailDialogs(
         const val RESET_CONFIRM_REQUEST_KEY = "dosing_channel_reset_confirm"
         const val ACTION_RESET_CHANNEL = "reset_dosing_channel"
     }
-}
-
-private fun DeviceDosingChannelDetailFailure.messageResource(): Int = when (this) {
-    DeviceDosingChannelDetailFailure.INVALID_INPUT -> R.string.device_dosing_detail_error_invalid_input
-    DeviceDosingChannelDetailFailure.NOT_EDITABLE -> R.string.device_dosing_detail_error_not_editable
-    DeviceDosingChannelDetailFailure.CALIBRATION_REQUIRED ->
-        R.string.device_dosing_detail_error_calibration_required
-    DeviceDosingChannelDetailFailure.BUSY -> R.string.device_dosing_detail_error_busy
-    DeviceDosingChannelDetailFailure.STATE_CHANGED -> R.string.device_dosing_detail_error_state_changed
-    DeviceDosingChannelDetailFailure.OUTPUT_STOP_UNCONFIRMED ->
-        R.string.device_dosing_error_output_stop_unconfirmed
-    DeviceDosingChannelDetailFailure.SAFETY_BLOCKED -> R.string.device_dosing_detail_error_safety_blocked
-    DeviceDosingChannelDetailFailure.UNAVAILABLE -> R.string.device_dosing_detail_error_unavailable
-    DeviceDosingChannelDetailFailure.TRY_AGAIN -> R.string.device_dosing_detail_operation_failed
 }

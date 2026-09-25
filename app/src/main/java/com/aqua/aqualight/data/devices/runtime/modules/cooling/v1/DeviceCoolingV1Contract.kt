@@ -3,7 +3,7 @@ package com.aqua.aqualight.data.devices.runtime.modules.cooling.v1
 /** Exact Android mirror of firmware's strict Cool Pro 1F contract. */
 object DeviceCoolingV1Contract {
     const val FIRMWARE_REPOSITORY = "ozdemirrrcemal-cmyk/AquaLight-Firmware"
-    const val PINNED_FIRMWARE_COMMIT = "7df97ce807ebb1e90ff63cc36206d6ce479a62fc"
+    const val PINNED_FIRMWARE_COMMIT = "99aca74d3c2ae99e85584893822c0a63fe50bcd8"
     const val SCHEMA = "aql.cooling.v1"
     const val SCHEMA_VERSION = 1
     const val CATALOG_VERSION = 1

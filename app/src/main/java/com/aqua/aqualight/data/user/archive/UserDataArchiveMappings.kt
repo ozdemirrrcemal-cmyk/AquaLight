@@ -12,7 +12,9 @@ import com.aqua.aqualight.data.care.model.CareTaskStatus
 import com.aqua.aqualight.data.care.model.CareTaskType
 
 internal fun SavedAquariumTank.toArchiveAquarium(
-    photoReference: ArchiveMediaReference?
+    photoReference: ArchiveMediaReference?,
+    plantPhotoReferences: Map<Long, ArchiveMediaReference> = emptyMap(),
+    livestockPhotoReferences: Map<Long, ArchiveMediaReference> = emptyMap()
 ): ArchiveAquarium {
     return ArchiveAquarium(
         id = id,
@@ -33,10 +35,12 @@ internal fun SavedAquariumTank.toArchiveAquarium(
         plants = plants.map { plant ->
             ArchivePlant(
                 id = plant.id,
+                catalogId = plant.catalogId,
                 plantName = plant.plantName,
                 category = plant.category,
                 markerX = plant.markerX,
-                markerY = plant.markerY
+                markerY = plant.markerY,
+                photo = plantPhotoReferences[plant.id]
             )
         },
         materials = materials.map { material ->
@@ -57,13 +61,18 @@ internal fun SavedAquariumTank.toArchiveAquarium(
                 category = item.category,
                 quantity = item.quantity,
                 addedDateEpochDay = item.addedDateEpochDay,
-                note = item.note
+                note = item.note,
+                catalogEntryId = item.catalogEntryId,
+                photo = livestockPhotoReferences[item.id]
             )
         }
     )
 }
 
-internal fun ArchiveAquarium.toTankDraft(photoUri: String?): TankDraft {
+internal fun ArchiveAquarium.toTankDraft(
+    photoUri: String?,
+    plantPhotoUris: Map<Long, String> = emptyMap()
+): TankDraft {
     return TankDraft(
         name = name,
         description = description,
@@ -71,10 +80,12 @@ internal fun ArchiveAquarium.toTankDraft(photoUri: String?): TankDraft {
         plants = plants.map { plant ->
             TankPlantTag(
                 id = plant.id,
+                catalogId = plant.catalogId,
                 plantName = plant.plantName,
                 category = plant.category,
                 markerX = plant.markerX,
-                markerY = plant.markerY
+                markerY = plant.markerY,
+                photoUri = plantPhotoUris[plant.id]
             )
         },
         materials = materials.map { material ->
@@ -99,14 +110,16 @@ internal fun ArchiveAquarium.toTankDraft(photoUri: String?): TankDraft {
     )
 }
 
-internal fun ArchiveLivestock.toSavedLivestock(): SavedAquariumLivestock {
+internal fun ArchiveLivestock.toSavedLivestock(photoUri: String? = null): SavedAquariumLivestock {
     return SavedAquariumLivestock(
         id = id,
         name = name,
         category = category,
         quantity = quantity,
         addedDateEpochDay = addedDateEpochDay,
-        note = note
+        note = note,
+        catalogEntryId = catalogEntryId,
+        photoUri = photoUri
     )
 }
 

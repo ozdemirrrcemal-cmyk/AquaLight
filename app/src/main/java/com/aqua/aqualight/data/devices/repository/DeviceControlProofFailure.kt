@@ -1,6 +1,5 @@
 package com.aqua.aqualight.data.devices.repository
 
-import com.aqua.aqualight.data.devices.model.DeviceOnlineState
 import com.aqua.aqualight.data.devices.model.DeviceSnapshot
 import com.aqua.aqualight.data.devices.model.DeviceUid
 
@@ -14,26 +13,10 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
  */
 internal fun DevicesRepository.recordControlFailure(deviceUid: DeviceUid): DeviceSnapshot? {
     val localNetworkAvailable = isLocalNetworkAvailable()
-    val visibleState = if (localNetworkAvailable) {
-        DeviceOnlineState.OFFLINE
-    } else {
-        DeviceOnlineState.LOCAL_NETWORK_OFFLINE
-    }
-
-    val updated = updateConnectionState(deviceUid) { previous ->
-        previous.copy(
-            onlineState = visibleState,
-            lastWsConnectedAtMillis = null,
-            lastWsConnectedElapsedMillis = null,
-            lastAuthenticatedAtMillis = null,
-            lastAuthenticatedElapsedMillis = null,
-            lastRuntimeMessageAtMillis = null,
-            lastRuntimeMessageElapsedMillis = null,
-            lastControlProofAtMillis = null,
-            lastControlProofElapsedMillis = null,
-            lastErrorMessage = CONTROL_PROOF_FAILURE_MESSAGE
-        )
-    }
+    val updated = applyRuntimeUnavailable(
+        deviceUid = deviceUid,
+        message = CONTROL_PROOF_FAILURE_MESSAGE
+    )
 
     if (localNetworkAvailable) {
         replaceRuntimeAfterControlFailure(deviceUid)

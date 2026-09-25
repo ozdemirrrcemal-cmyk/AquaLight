@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="catalog_keyword_led_background">led arka plan</string>
+    <string name="catalog_keyword_aquarium_background">akvaryum arka planı</string>
+    <string name="catalog_keyword_backlight">arka aydınlatma</string>
+    <string name="catalog_keyword_back_light">arka ışık</string>
+    <string name="catalog_keyword_background_light">arka plan aydınlatması</string>
+    <string name="catalog_keyword_light_screen">ışıklı ekran</string>
+    <string name="catalog_keyword_gradation">geçişli</string>
+    <string name="catalog_keyword_gradient">gradyan</string>
+    <string name="catalog_keyword_sheet">tabaka</string>
+    <string name="catalog_keyword_film">film</string>
+    <string name="catalog_keyword_background_film">arka plan filmi</string>
+    <string name="catalog_keyword_illuminated_background">aydınlatmalı arka plan</string>
+    <string name="catalog_keyword_background_panel">arka plan paneli</string>
+    <string name="catalog_keyword_smart">akıllı</string>
+    <string name="catalog_keyword_blue_white">mavi beyaz</string>
+</resources>

@@ -29,8 +29,12 @@
     "light.auto.program.update",
     "light.auto.program.enabled.set",
     "light.auto.program.delete",
+    "light.auto.plan.get",
+    "light.auto.plan.apply",
+    "light.auto.plan.delete",
     "light.custom.get",
     "light.custom.install",
+    "light.custom.clear",
     "light.acclimation.status.get",
     "light.acclimation.start",
     "light.acclimation.stop",
@@ -45,7 +49,6 @@
       "light.auto.set",
       "light.auto.clear",
       "light.custom.set",
-      "light.custom.clear",
       "light.channel.regime.set",
       "light.program.apply",
       "light.program.delete",
@@ -67,7 +70,16 @@
   "manual": {
     "completeSceneReplacement": true,
     "offWritesZeroScene": true,
-    "previewPersistent": false
+    "previewPersistent": false,
+    "manualSetSelectsManualMode": true,
+    "manualOffSelectsManualMode": true
+  },
+  "modeTransitions": {
+    "manualSelectionCopiesCurrentScheduledRequestedScene": true,
+    "manualSelectionCopiesSafetyDeratedEffectiveScene": false,
+    "manualSceneAndModePersistAtomically": true,
+    "modeChangeClearsPreview": true,
+    "returnToScheduledModeUsesTrustedRtc": true
   },
   "auto": {
     "capacity": 16,
@@ -104,6 +116,55 @@
       "structuredReason": "AUTO_PROGRAM_OVERLAP"
     }
   },
+  "managedAutoPlan": {
+    "installedDocumentCount": 1,
+    "initialRevision": 0,
+    "phaseCapacity": 8,
+    "planIdPattern": "^lp-[0-9a-f]{8}$",
+    "planIdSequenceMinimum": 1,
+    "planIdReuse": false,
+    "dateEncoding": "LOCAL_DATE_EPOCH_DAY",
+    "minimumEpochDay": 10957,
+    "maximumEpochDay": 47481,
+    "validUntilExclusive": true,
+    "finalPhaseOpenEnded": true,
+    "contiguousPhases": true,
+    "overnightSupported": false,
+    "transitionDays": {"minimum": 0, "maximum": 90},
+    "initialStartPercent": {"minimum": 20, "maximum": 100, "step": 5, "default": 100},
+    "applySetsMode": "AUTO",
+    "authorityWhileInstalledInAuto": "MANAGED_PLAN",
+    "userAutoProgramsPreserved": true,
+    "globalAcclimationBypass": true,
+    "mutationPreconditions": ["expectedRevision", "expectedStorageGeneration"],
+    "phaseFields": [
+      "validFromEpochDay",
+      "validUntilEpochDayExclusive",
+      "transitionDays",
+      "weekdaysMask",
+      "startTimeMs",
+      "endTimeMs",
+      "rampDurationMs",
+      "scene"
+    ],
+    "responseFields": [
+      "storageGeneration",
+      "revision",
+      "installed",
+      "planId",
+      "initialStartPercent",
+      "phaseCount",
+      "phases",
+      "runtime"
+    ],
+    "runtimeFields": [
+      "clockReady",
+      "state",
+      "activePhaseIndex",
+      "transitionPermille",
+      "nextTransitionEpochDay"
+    ]
+  },
   "custom": {
     "installedDocumentCount": 1,
     "initialRevision": 0,
@@ -118,7 +179,24 @@
     "sharedWeekdaysMask": true,
     "strictlyIncreasingTimes": true,
     "midnightWrapInterpolation": "LINEAR",
-    "clearCommand": null
+    "clearCommand": "light.custom.clear",
+    "clearRequestFields": ["expectedRevision"],
+    "clearIsAtomic": true,
+    "dayPreview": {
+      "command": "light.preview.set",
+      "requestFields": ["playback", "points"],
+      "playback": "CUSTOM_DAY",
+      "points": "COMPLETE_DRAFT_POINT_TUPLES",
+      "durationMs": 24000,
+      "virtualStartTimeMs": 0,
+      "virtualEndTimeMs": 86400000,
+      "usesVolatileDraft": true,
+      "mutatesInstalledDocument": false,
+      "ignoresWeekdayMask": true,
+      "persistent": false,
+      "changesSelectedMode": false,
+      "restoresSelectedModeAtEnd": true
+    }
   },
   "acclimation": {
     "supported": true,
@@ -129,6 +207,7 @@
     "clock": "AqlTimeService",
     "continuousElapsedTime": true,
     "manualBypass": true,
+    "managedAutoPlanBypass": true,
     "naturalCompletionDurable": true,
     "persistentEpochFields": [
       "startedAtEpochSeconds",
@@ -140,6 +219,7 @@
     "rootFields": [
       "schema",
       "storageVersion",
+      "storageGeneration",
       "productKey",
       "channelScale",
       "channels",
@@ -228,6 +308,29 @@
       "endsAtEpochSeconds",
       "remainingSeconds"
     ],
+    "autoFields": [
+      "revision",
+      "programCount",
+      "enabledCount",
+      "scheduleSource",
+      "planRevision",
+      "planInstalled",
+      "planId",
+      "runtimeState",
+      "activeProgramId",
+      "activePlanPhaseIndex",
+      "planRuntimeState",
+      "planTransitionPermille",
+      "nextPlanTransitionEpochDay"
+    ],
+    "autoScheduleSources": ["PROGRAMS", "MANAGED_PLAN"],
+    "managedPlanRuntimeStates": [
+      "NOT_INSTALLED",
+      "NOT_SELECTED",
+      "RTC_BLOCKED",
+      "BEFORE_PLAN",
+      "ACTIVE"
+    ],
     "runtimeFields": [
       "rtcReady",
       "physicalChannelCount",
@@ -268,6 +371,17 @@
     "ACCLIMATION_START_PERCENT",
     "ACCLIMATION_DURATION",
     "RTC_NOT_READY",
+    "STALE_STORAGE_GENERATION",
+    "AUTO_PLAN_ID_INVALID",
+    "AUTO_PLAN_PHASE_COUNT",
+    "AUTO_PLAN_INITIAL_START_PERCENT",
+    "AUTO_PLAN_DATE_RANGE",
+    "AUTO_PLAN_PHASE_GAP",
+    "AUTO_PLAN_OVERNIGHT_UNSUPPORTED",
+    "AUTO_PLAN_TRANSITION",
+    "AUTO_PLAN_NOT_FOUND",
+    "AUTO_PLAN_SELECTED",
+    "AUTO_PLAN_INTERNAL_ERROR",
     "OUTPUT_TRANSACTION_FAILED",
     "STORAGE_COMMIT_FAILED"
   ],
@@ -280,6 +394,7 @@
       "mode",
       "manual",
       "auto",
+      "autoPlan",
       "custom",
       "acclimation"
     ],

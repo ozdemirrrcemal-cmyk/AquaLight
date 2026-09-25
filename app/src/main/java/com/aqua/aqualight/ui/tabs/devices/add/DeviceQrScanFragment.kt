@@ -156,7 +156,7 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
     }
 
     private fun requestQrCameraAccess() {
-        showCameraPermissionRequired()
+        showCameraState(permissionRequired = true)
         permissionCoordinator.runWhenGranted(
             capability = AppCapability.CAMERA_QR,
             actionToken = ACTION_START_CAMERA
@@ -182,14 +182,29 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
         }
     }
 
-    private fun showCameraPermissionRequired() {
+    private fun showCameraState(permissionRequired: Boolean) {
         if (_binding == null) return
 
-        primaryAction = DeviceQrScanPrimaryAction.REQUEST_CAMERA_PERMISSION
+        if (!permissionRequired) {
+            stopCamera()
+            hasResult = false
+            isProcessingFrame = false
+        }
+        primaryAction = if (permissionRequired) {
+            DeviceQrScanPrimaryAction.REQUEST_CAMERA_PERMISSION
+        } else {
+            DeviceQrScanPrimaryAction.SCAN_AGAIN
+        }
         binding.btnRequestCamera.isVisible = true
         binding.btnRequestCamera.text = primaryAction?.buttonText()
-        binding.tvScanTitle.text = getString(R.string.device_qr_camera_permission_title)
-        binding.tvScanStatus.text = getString(R.string.device_qr_camera_permission_message)
+        binding.tvScanTitle.text = getString(
+            if (permissionRequired) R.string.device_qr_camera_permission_title
+            else R.string.device_qr_camera_unavailable_title
+        )
+        binding.tvScanStatus.text = getString(
+            if (permissionRequired) R.string.device_qr_camera_permission_message
+            else R.string.device_qr_camera_unavailable_message
+        )
     }
 
     private fun restartScanner() {
@@ -217,7 +232,10 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
 
         providerFuture.addListener(
             {
-                val provider = providerFuture.get()
+                val provider = runCatching { providerFuture.get() }.getOrElse {
+                    showCameraState(permissionRequired = false)
+                    return@addListener
+                }
                 cameraProvider = provider
 
                 val preview = Preview.Builder()
@@ -245,15 +263,8 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
                     )
                 }.onSuccess { camera ->
                     bindTorchControl(camera)
-                }.onFailure { error ->
-                    clearTorchControl()
-                    if (_binding != null) {
-                        binding.tvScanTitle.text = getString(
-                            R.string.device_qr_camera_unavailable_title
-                        )
-                        binding.tvScanStatus.text = error.message
-                            ?: getString(R.string.device_qr_camera_unavailable_message)
-                    }
+                }.onFailure {
+                    showCameraState(permissionRequired = false)
                 }
             },
             ContextCompat.getMainExecutor(requireContext())
@@ -352,10 +363,9 @@ class DeviceQrScanFragment : Fragment(R.layout.fragment_device_qr_scan) {
                 if (rawValue != null && _binding != null && !hasResult) {
                     handleQrPayload(rawValue)
                 }
-            }.onFailure { error ->
+            }.onFailure {
                 if (_binding != null && !hasResult) {
-                    binding.tvScanStatus.text = error.message
-                        ?: getString(R.string.device_qr_read_failed)
+                    binding.tvScanStatus.text = getString(R.string.device_qr_read_failed)
                 }
             }
         }

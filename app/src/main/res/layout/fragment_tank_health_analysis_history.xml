@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_color">
+
+    <include
+        android:id="@+id/appHeader"
+        layout="@layout/layout_aqua_header"
+        android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/historySummaryCard"
+        style="@style/Widget.Aqua.Card.Metric"
+        android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="@dimen/aqua_size_64"
+        android:layout_marginStart="@dimen/aqua_size_14"
+        android:layout_marginTop="@dimen/aqua_size_8"
+        android:layout_marginEnd="@dimen/aqua_size_14"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/appHeader">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingHorizontal="@dimen/aqua_size_14">
+
+            <ImageView
+                android:id="@+id/historySummaryIcon"
+                android:layout_width="@dimen/aqua_size_28"
+                android:layout_height="@dimen/aqua_size_28"
+                android:contentDescription="@null"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_tank_health_history_24"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:tint="@color/aqua_card_text_secondary" />
+
+            <LinearLayout
+                android:layout_width="@dimen/aqua_size_0"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/aqua_size_12"
+                android:orientation="vertical"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@id/historySummaryIcon"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:includeFontPadding="false"
+                    android:text="@string/tank_health_analysis_history_summary"
+                    android:textColor="@color/aqua_card_text_primary"
+                    android:textSize="@dimen/aqua_text_size_body_xlarge"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/aqua_size_3"
+                    android:includeFontPadding="false"
+                    android:text="@string/tank_health_analysis_history_summary_subtitle"
+                    android:textColor="@color/aqua_card_text_secondary"
+                    android:textSize="@dimen/aqua_text_size_caption" />
+
+            </LinearLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/historyList"
+        android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="@dimen/aqua_size_0"
+        android:layout_marginTop="@dimen/aqua_size_10"
+        android:clipToPadding="false"
+        android:overScrollMode="never"
+        android:paddingStart="@dimen/aqua_size_14"
+        android:paddingEnd="@dimen/aqua_size_14"
+        android:paddingBottom="@dimen/aqua_size_8"
+        android:scrollbars="none"
+        app:layout_constraintBottom_toTopOf="@id/btnNewAnalysis"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/historySummaryCard" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnNewAnalysis"
+        style="@style/Widget.Aqua.Button.Primary"
+        android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="@dimen/aqua_size_52"
+        android:layout_marginStart="@dimen/aqua_size_14"
+        android:layout_marginTop="@dimen/aqua_size_8"
+        android:layout_marginEnd="@dimen/aqua_size_14"
+        android:layout_marginBottom="@dimen/aqua_size_18"
+        android:text="@string/tank_health_analysis_new"
+        app:icon="@drawable/ic_tank_health_add_24"
+        app:iconGravity="textStart"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

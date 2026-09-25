@@ -4,15 +4,12 @@ import com.aqua.aqualight.application.devices.DeviceFamilySettingsOperations
 import com.aqua.aqualight.application.devices.DeviceFirmwareCommandResult
 import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
-import com.aqua.aqualight.application.devices.light.protection.DeviceLightProtectionSnapshot
-import com.aqua.aqualight.application.devices.light.protection.DeviceLightProtectionThresholdPolicy
 import com.aqua.aqualight.application.devices.DeviceOtaState
 import com.aqua.aqualight.application.devices.DeviceRootCatalogState
 import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
 import com.aqua.aqualight.application.devices.PreparedDeviceFirmwareUpdate
-import java.util.ArrayDeque
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -70,6 +67,93 @@ class DeviceFamilySettingsViewModelTest {
     }
 
     @Test
+    fun `shows only supplied serial and retains it through transient blank snapshots`() {
+        val operations = FakeDeviceFamilySettingsOperations(null)
+        val viewModel = DeviceFamilySettingsViewModel(operations, FakeFirmwareOperations())
+
+        viewModel.bind(DEVICE_UID)
+
+        assertEquals("", viewModel.uiState.value.serialNumber)
+
+        operations.emitDevice(invalidSnapshot())
+        assertEquals("AQL-WPE-123456", viewModel.uiState.value.serialNumber)
+
+        operations.emitDevice(invalidSnapshot().copy(serialNumber = ""))
+        assertEquals("AQL-WPE-123456", viewModel.uiState.value.serialNumber)
+
+        operations.emitDevice(validSnapshot().copy(serialNumber = "AQL-WPE-654321"))
+        assertEquals("AQL-WPE-654321", viewModel.uiState.value.serialNumber)
+    }
+
+    @Test
+    fun `clears firmware without runtime authority and accepts the next live version`() {
+        val operations = FakeDeviceFamilySettingsOperations(validSnapshot())
+        val viewModel = DeviceFamilySettingsViewModel(operations, FakeFirmwareOperations())
+
+        viewModel.bind(DEVICE_UID)
+
+        assertEquals("1.2.3", viewModel.uiState.value.firmwareVersion)
+        assertEquals(
+            DeviceSettingsFirmwareLoadState.READY,
+            viewModel.uiState.value.firmwareLoadState
+        )
+
+        operations.emitDevice(
+            invalidSnapshot().copy(firmwareLabel = "1.2.3 / cached build 42")
+        )
+
+        assertEquals("", viewModel.uiState.value.firmwareVersion)
+        assertEquals(
+            DeviceSettingsFirmwareLoadState.LOADING,
+            viewModel.uiState.value.firmwareLoadState
+        )
+
+        operations.emitDevice(
+            validSnapshot().copy(
+                firmwareLabel = "1.3.0"
+            )
+        )
+
+        assertEquals("1.3.0", viewModel.uiState.value.firmwareVersion)
+        assertEquals(
+            DeviceSettingsFirmwareLoadState.READY,
+            viewModel.uiState.value.firmwareLoadState
+        )
+    }
+
+    @Test
+    fun `surfaces direct connection failure until valid metadata arrives`() {
+        val operations = FakeDeviceFamilySettingsOperations(invalidSnapshot()).apply {
+            connectResult = Result.failure(IllegalStateException("connection failed"))
+        }
+        val viewModel = DeviceFamilySettingsViewModel(operations, FakeFirmwareOperations())
+
+        viewModel.bind(DEVICE_UID)
+
+        assertEquals("", viewModel.uiState.value.firmwareVersion)
+        assertEquals(
+            DeviceSettingsFirmwareLoadState.CONNECTION_FAILED,
+            viewModel.uiState.value.firmwareLoadState
+        )
+
+        operations.connectResult = Result.success(Unit)
+        viewModel.onFirmwareUpdateAction()
+
+        assertEquals(2, operations.connectCalls)
+        assertEquals(
+            DeviceSettingsFirmwareLoadState.LOADING,
+            viewModel.uiState.value.firmwareLoadState
+        )
+
+        operations.emitDevice(validSnapshot())
+        assertEquals(
+            DeviceSettingsFirmwareLoadState.READY,
+            viewModel.uiState.value.firmwareLoadState
+        )
+        assertEquals("1.2.3", viewModel.uiState.value.firmwareVersion)
+    }
+
+    @Test
     fun `persists device name through owner scoped settings operations`() {
         val operations = FakeDeviceFamilySettingsOperations(validSnapshot())
         val viewModel = DeviceFamilySettingsViewModel(operations, FakeFirmwareOperations())
@@ -101,11 +185,8 @@ class DeviceFamilySettingsViewModelTest {
     }
 
     @Test
-    fun `ignores duplicate writes while name and threshold persistence are pending`() {
-        val operations = FakeDeviceFamilySettingsOperations(
-            initialSnapshot = validSnapshot(),
-            initialLightProtection = lightProtectionSnapshot()
-        )
+    fun `ignores duplicate writes while name persistence is pending`() {
+        val operations = FakeDeviceFamilySettingsOperations(validSnapshot())
         val viewModel = DeviceFamilySettingsViewModel(operations, FakeFirmwareOperations())
 
         operations.deviceNameGate = CompletableDeferred()
@@ -118,115 +199,6 @@ class DeviceFamilySettingsViewModelTest {
         operations.deviceNameGate?.complete(Unit)
         mainDispatcherRule.runCurrent()
         assertFalse(viewModel.uiState.value.deviceNameSaving)
-
-        operations.thresholdGate = CompletableDeferred()
-        viewModel.updateTemperatureProtectionThreshold(61)
-        viewModel.updateTemperatureProtectionThreshold(62)
-
-        assertEquals(listOf(61), operations.updatedThresholds)
-        assertTrue(viewModel.uiState.value.lightProtection.updateInProgress)
-        operations.thresholdGate?.complete(Unit)
-        mainDispatcherRule.runCurrent()
-        assertFalse(viewModel.uiState.value.lightProtection.updateInProgress)
-    }
-
-    @Test
-    fun `renders and persists light temperature protection through application state`() {
-        val operations = FakeDeviceFamilySettingsOperations(
-            initialSnapshot = validSnapshot(),
-            initialLightProtection = lightProtectionSnapshot()
-        )
-        val viewModel = DeviceFamilySettingsViewModel(operations, FakeFirmwareOperations())
-
-        viewModel.bind(DEVICE_UID)
-
-        assertEquals(
-            54.5,
-            viewModel.uiState.value.lightProtection.currentTemperatureCelsius ?: 0.0,
-            0.0
-        )
-        assertEquals(
-            DeviceTemperatureProtectionEditorUiState(
-                currentCelsius = 60,
-                minimumCelsius = 50,
-                maximumCelsius = 70,
-                stepCelsius = 1
-            ),
-            viewModel.uiState.value.lightProtection.editor
-        )
-
-        viewModel.updateTemperatureProtectionThreshold(63)
-
-        assertEquals(listOf(63), operations.updatedThresholds)
-        assertEquals(
-            63.0,
-            viewModel.uiState.value.lightProtection.thresholdCelsius ?: 0.0,
-            0.0
-        )
-        assertEquals(63, viewModel.uiState.value.lightProtection.editor?.currentCelsius)
-    }
-
-    @Test
-    fun `restores threshold and emits failure when firmware rejects persistence`() = runTest {
-        val operations = FakeDeviceFamilySettingsOperations(
-            initialSnapshot = validSnapshot(),
-            initialLightProtection = lightProtectionSnapshot()
-        ).apply {
-            thresholdResult = Result.failure(IllegalStateException("firmware mismatch"))
-        }
-        val viewModel = DeviceFamilySettingsViewModel(operations, FakeFirmwareOperations())
-
-        viewModel.bind(DEVICE_UID)
-        viewModel.updateTemperatureProtectionThreshold(64)
-
-        assertEquals(
-            60.0,
-            viewModel.uiState.value.lightProtection.thresholdCelsius ?: 0.0,
-            0.0
-        )
-        assertFalse(viewModel.uiState.value.lightProtection.updateInProgress)
-        assertEquals(
-            DeviceFamilySettingsEvent.TemperatureProtectionUpdateFailed,
-            viewModel.events.first()
-        )
-    }
-
-    @Test
-    fun `presentation never refreshes Light protection and observes runtime updates`() {
-        val operations = FakeDeviceFamilySettingsOperations(
-            initialSnapshot = validSnapshot(),
-            initialLightProtection = DeviceLightProtectionSnapshot(
-                available = true,
-                loaded = false
-            )
-        )
-        val viewModel = DeviceFamilySettingsViewModel(operations, FakeFirmwareOperations())
-
-        viewModel.bind(DEVICE_UID)
-
-        assertEquals(0, operations.refreshCalls)
-        assertEquals(
-            DeviceLightProtectionLoadState.LOADING,
-            viewModel.uiState.value.lightProtection.loadState
-        )
-
-        operations.emitDevice(
-            validSnapshot().copy(availability = OwnerDeviceAvailability.UNREACHABLE)
-        )
-        operations.emitDevice(
-            validSnapshot().copy(availability = OwnerDeviceAvailability.REACHABLE)
-        )
-
-        assertEquals(0, operations.refreshCalls)
-
-        operations.emitLightProtection(lightProtectionSnapshot())
-
-        assertEquals(0, operations.refreshCalls)
-        assertEquals(
-            DeviceLightProtectionLoadState.READY,
-            viewModel.uiState.value.lightProtection.loadState
-        )
-        assertEquals(60, viewModel.uiState.value.lightProtection.editor?.currentCelsius)
     }
 
     @Test
@@ -250,21 +222,14 @@ class DeviceFamilySettingsViewModelTest {
     }
 
     private class FakeDeviceFamilySettingsOperations(
-        initialSnapshot: DeviceRootSnapshot?,
-        initialLightProtection: DeviceLightProtectionSnapshot = DeviceLightProtectionSnapshot()
+        initialSnapshot: DeviceRootSnapshot?
     ) : DeviceFamilySettingsOperations {
         private val snapshots = MutableStateFlow(initialSnapshot)
-        private val lightProtection = MutableStateFlow(initialLightProtection)
         var connectCalls: Int = 0
-        var refreshCalls: Int = 0
+        var connectResult: Result<Unit> = Result.success(Unit)
         var deviceNameResult: Result<Unit> = Result.success(Unit)
-        var thresholdResult: Result<Unit> = Result.success(Unit)
         var deviceNameGate: CompletableDeferred<Unit>? = null
-        var thresholdGate: CompletableDeferred<Unit>? = null
-        var successfulRefreshSnapshot: DeviceLightProtectionSnapshot? = null
-        val refreshResults: ArrayDeque<Result<Unit>> = ArrayDeque()
         val updatedNames = mutableListOf<String>()
-        val updatedThresholds = mutableListOf<Int>()
 
         override fun observe(deviceUid: String): Flow<DeviceRootSnapshot?> = snapshots
 
@@ -272,7 +237,7 @@ class DeviceFamilySettingsViewModelTest {
 
         override fun connect(deviceUid: String): Result<Unit> {
             connectCalls += 1
-            return Result.success(Unit)
+            return connectResult
         }
 
         override suspend fun updateCustomName(
@@ -288,50 +253,10 @@ class DeviceFamilySettingsViewModelTest {
             return result
         }
 
-        override fun observeLightProtection(
-            deviceUid: String
-        ): Flow<DeviceLightProtectionSnapshot> = lightProtection
-
-        override fun currentLightProtection(deviceUid: String): DeviceLightProtectionSnapshot =
-            lightProtection.value
-
-        override suspend fun refreshLightProtection(deviceUid: String): Result<Unit> {
-            refreshCalls += 1
-            val result = refreshResults.pollFirst() ?: Result.success(Unit)
-            if (result.isSuccess) {
-                successfulRefreshSnapshot?.let { snapshot ->
-                    lightProtection.value = snapshot
-                }
-            }
-            return result
-        }
-
-        override suspend fun updateLightProtectionThreshold(
-            deviceUid: String,
-            thresholdCelsius: Int
-        ): Result<Unit> {
-            updatedThresholds += thresholdCelsius
-            thresholdGate?.await()
-            val result = thresholdResult
-            if (result.isSuccess) {
-                val previous = lightProtection.value
-                lightProtection.value = previous.copy(
-                    thresholdCelsius = thresholdCelsius.toDouble(),
-                    thresholdPolicy = previous.thresholdPolicy?.copy(
-                        currentCelsius = thresholdCelsius
-                    )
-                )
-            }
-            return result
-        }
-
         fun emitDevice(snapshot: DeviceRootSnapshot?) {
             snapshots.value = snapshot
         }
 
-        fun emitLightProtection(snapshot: DeviceLightProtectionSnapshot) {
-            lightProtection.value = snapshot
-        }
     }
 
     private class FakeFirmwareOperations(
@@ -404,19 +329,6 @@ class DeviceFamilySettingsViewModelTest {
         const val DEVICE_UID = "device-wrgb-settings"
         const val MANIFEST_URL = "https://example.invalid/manifest-stable.json"
 
-        fun lightProtectionSnapshot() = DeviceLightProtectionSnapshot(
-            available = true,
-            currentTemperatureCelsius = 54.5,
-            thresholdCelsius = 60.0,
-            thresholdPolicy = DeviceLightProtectionThresholdPolicy(
-                currentCelsius = 60,
-                minimumCelsius = 50,
-                maximumCelsius = 70,
-                stepCelsius = 1
-            ),
-            loaded = true
-        )
-
         fun preparedPlan() = PreparedDeviceFirmwareUpdate(
             deviceUid = DEVICE_UID,
             currentVersion = "1.2.3",
@@ -454,7 +366,7 @@ class DeviceFamilySettingsViewModelTest {
             model = "wrgb_pro_elite_120",
             serialNumber = "AQL-WPE-123456",
             hardwareRevision = "2.0",
-            firmwareLabel = "1.2.3 / build 42",
+            firmwareLabel = "1.2.3",
             temperatureSensorCount = 1,
             supportedFeatures = listOf("LIGHT_TEMPERATURE_PROTECTION")
         )

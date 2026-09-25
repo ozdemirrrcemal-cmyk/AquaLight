@@ -21,20 +21,51 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
+        <include
+            android:id="@+id/plantHealthEntry"
+            layout="@layout/item_aquarium_health_entry_card"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/aqua_size_86"
+            android:layout_marginBottom="@dimen/aqua_size_16" />
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/plantsHeaderRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/tvPlantsTitle"
+                android:layout_width="@dimen/aqua_size_0"
+                android:layout_height="wrap_content"
+                android:includeFontPadding="false"
+                android:text="@string/aquarium_detail_tab_plants"
+                android:textColor="@color/aqua_card_text_primary"
+                android:textSize="@dimen/aqua_text_size_title_small"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/btnAddPlant"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAddPlant"
+                style="@style/Widget.Aqua.Button.InlineAdd"
+                android:layout_width="wrap_content"
+                android:layout_height="@dimen/aqua_size_34"
+                android:text="@string/aquarium_action_add"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
         <LinearLayout
             android:id="@+id/plantListContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical" />
-
-        <com.google.android.material.button.MaterialButton
-            style="@style/Widget.Aqua.Button.Secondary.Compact"
-            android:id="@+id/btnAddPlant"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/aqua_button_height"
             android:layout_marginTop="@dimen/aqua_size_14"
-            android:text="@string/aquarium_action_add_plant"
-            android:textStyle="bold" />
+            android:orientation="vertical" />
 
     </LinearLayout>
 

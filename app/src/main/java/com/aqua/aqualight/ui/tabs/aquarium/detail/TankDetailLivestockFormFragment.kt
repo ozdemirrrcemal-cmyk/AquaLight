@@ -1,57 +1,67 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail
 
-import com.aqua.aqualight.ui.common.text.setTextSizeResource
 import android.graphics.Typeface
-import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.Gravity
 import android.view.View
-import android.widget.FrameLayout
 import android.widget.GridLayout
-import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.annotation.ColorRes
 import androidx.activity.OnBackPressedCallback
-import androidx.core.view.isVisible
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.Fragment
+import androidx.core.view.isVisible
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.aquarium.AquariumIdGenerator
+import com.aqua.aqualight.application.aquarium.AquariumLivestock
+import com.aqua.aqualight.application.aquarium.AquariumLivestockIdentity
+import com.aqua.aqualight.application.aquarium.LivestockCatalogItem
 import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentTankLivestockFormBinding
 import com.aqua.aqualight.i18n.DateOnly
 import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.ui.common.dialog.AppDatePickerDialogFragment
 import com.aqua.aqualight.ui.common.feedback.FeedbackBottomSheet
-import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
-import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.LivestockCategories
-import com.aqua.aqualight.application.aquarium.AquariumLivestock
-import com.aqua.aqualight.application.aquarium.AquariumIdGenerator
-import kotlinx.coroutines.launch
-import java.util.Calendar
-import android.text.Editable
-import android.text.TextWatcher
-import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
-import androidx.navigation.fragment.navArgs
+import com.aqua.aqualight.ui.common.text.setTextSizeResource
+import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
+import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.LivestockCategories
+import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.localizedName
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.TankDetailTabArgs
-
+import java.util.Calendar
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class TankDetailLivestockFormFragment :
-Fragment(R.layout.fragment_tank_livestock_form) {
+    TankLivestockPhotoFormFragment() {
 
     private val args: TankDetailLivestockFormFragmentArgs by navArgs()
 
-
     private var _binding: FragmentTankLivestockFormBinding? = null
     private val binding get() = _binding!!
+    override val hasPhotoView: Boolean get() = _binding != null
+    override val photoTankId: Long get() = tankId
+    override val photoActionsBlocked: Boolean get() = isSavingLivestock || isDeletingLivestock
+    private var restoredFormState: Bundle? = null
 
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
+    private val livestockCatalogOperations by lazy(LazyThreadSafetyMode.NONE) {
+        requireContext().requireAppContainer().livestockCatalogOperations
+    }
 
     private var tankId: Long = 0L
     private var editingLivestockId: Long = 0L
+    private var selectedCatalogEntryId: String = ""
+    private var selectedCatalogEntry: LivestockCatalogItem? = null
+    private var openedFromPicker: Boolean = false
     private var selectedCategory: String = LivestockCategories.FISH
     private var selectedQuantity: Int = 1
     private var selectedAddedDateEpochDay: Long = DateOnly.todayEpochDay()
@@ -65,76 +75,126 @@ Fragment(R.layout.fragment_tank_livestock_form) {
         view: View,
         savedInstanceState: Bundle?
     ) {
-        super.onViewCreated(
-            view,
-            savedInstanceState
-        )
+        super.onViewCreated(view, savedInstanceState)
 
         _binding = FragmentTankLivestockFormBinding.bind(view)
 
+        restoredFormState = savedInstanceState
         readArguments()
+        setupLivestockPhoto(binding, editingLivestockId)
         setupInitialUi()
         setupClickListeners()
         setupResultListeners()
         setupSystemBackButton()
         setupNamePreviewListener()
         renderCategoryOptions()
+
+        if (editingLivestockId > 0L) {
+            observeEditingLivestockIfNeeded()
+        } else {
+            initializeAddSelection()
+        }
+
         updatePreview()
         updateQuantity()
         updateDateText()
-        observeEditingLivestockIfNeeded()
+        updateIdentityFieldVisibility(
+            binding = binding,
+            hasCatalogIdentity = selectedCatalogEntry != null,
+            categoryLockedByPicker = openedFromPicker && editingLivestockId <= 0L
+        )
     }
-
 
     private fun setupResultListeners() {
         childFragmentManager.setFragmentResultListener(
             LIVESTOCK_DATE_REQUEST_KEY,
             viewLifecycleOwner
         ) { _, result ->
-            if (result.getString(AppDatePickerDialogFragment.RESULT_KEY) !=
+            if (
+                result.getString(AppDatePickerDialogFragment.RESULT_KEY) !=
                 AppDatePickerDialogFragment.RESULT_SELECTED
-            ) return@setFragmentResultListener
+            ) {
+                return@setFragmentResultListener
+            }
+
             selectedAddedDateEpochDay = DateOnly.fromPickerMillis(
                 result.getLong(AppDatePickerDialogFragment.RESULT_MILLIS)
             )
             updateDateText()
         }
+
         childFragmentManager.setFragmentResultListener(
             LIVESTOCK_DELETE_REQUEST_KEY,
             viewLifecycleOwner
         ) { _, result ->
-            if (result.getString(FeedbackBottomSheet.RESULT_KEY) ==
+            if (
+                result.getString(FeedbackBottomSheet.RESULT_KEY) ==
                 FeedbackBottomSheet.RESULT_PRIMARY
-            ) deleteLivestock()
+            ) {
+                deleteLivestock()
+            }
         }
+
         childFragmentManager.setFragmentResultListener(
             LIVESTOCK_MISSING_REQUEST_KEY,
             viewLifecycleOwner
-        ) { _, _ -> closeForm() }
+        ) { _, _ ->
+            closeForm()
+        }
     }
 
     private fun readArguments() {
         tankId = args.tankId
         editingLivestockId = args.livestockId
+        selectedCatalogEntryId = args.catalogEntryId.trim()
+        openedFromPicker = args.openedFromPicker
 
-        selectedCategory = LivestockCategories.FISH
-        selectedQuantity = 1
-        selectedAddedDateEpochDay = DateOnly.todayEpochDay()
+        selectedCategory = (restoredFormState?.getString("form.category") ?: args.presetCategory)
+            .takeIf { category -> category in LivestockCategories.all }
+            ?: LivestockCategories.FISH
+        selectedQuantity = restoredFormState?.getInt("form.quantity", 1) ?: 1
+        selectedAddedDateEpochDay = restoredFormState?.getLong("form.date", DateOnly.todayEpochDay())
+            ?: DateOnly.todayEpochDay()
+        binding.etLifeNote.setText(restoredFormState?.getString("form.note").orEmpty())
     }
 
-    private fun observeEditingLivestockIfNeeded() {
-        if (editingLivestockId <= 0L) {
+    private fun initializeAddSelection() {
+        selectedCatalogEntry = livestockCatalogOperations.findById(selectedCatalogEntryId)
+
+        if (
+            selectedCatalogEntryId.isNotBlank() &&
+            selectedCatalogEntry == null
+        ) {
+            showMissingDataDialogAndClose(
+                title = getString(R.string.aquarium_livestock_not_found_title),
+                message = getString(R.string.livestock_catalog_entry_missing_message)
+            )
             return
         }
 
-        aquariumTankViewModel.tanks.observe(viewLifecycleOwner) {
-            tanks ->
+        selectedCatalogEntry?.let { entry ->
+            selectedCategory = entry.category
+            binding.etLifeName.setText(entry.localizedName(requireContext()))
+        } ?: run {
+            binding.etLifeName.setText(restoredFormState?.getString("form.name") ?: args.presetName.trim())
+        }
+
+        renderCategoryOptions()
+        updateIdentityFieldVisibility(
+            binding = binding,
+            hasCatalogIdentity = selectedCatalogEntry != null,
+            categoryLockedByPicker = openedFromPicker && editingLivestockId <= 0L
+        )
+        updatePreview()
+    }
+
+    private fun observeEditingLivestockIfNeeded() {
+        aquariumTankViewModel.tanks.observe(viewLifecycleOwner) { tanks ->
             if (isNavigatingBack || isDeletingLivestock) {
                 return@observe
             }
 
-            val tank = tanks.firstOrNull {
-                tank ->
+            val tank = tanks.firstOrNull { tank ->
                 tank.id == tankId
             }
 
@@ -146,8 +206,7 @@ Fragment(R.layout.fragment_tank_livestock_form) {
                 return@observe
             }
 
-            val livestock = tank.livestock.firstOrNull {
-                item ->
+            val livestock = tank.livestock.firstOrNull { item ->
                 item.id == editingLivestockId
             }
 
@@ -158,7 +217,6 @@ Fragment(R.layout.fragment_tank_livestock_form) {
                         message = getString(R.string.aquarium_livestock_no_longer_exists_message)
                     )
                 }
-
                 return@observe
             }
 
@@ -174,20 +232,46 @@ Fragment(R.layout.fragment_tank_livestock_form) {
     private fun bindEditingLivestock(
         livestock: AquariumLivestock
     ) {
-        selectedCategory = livestock.category.ifBlank {
-            LivestockCategories.FISH
+        selectedCatalogEntryId = livestock.catalogEntryId.trim()
+        val isCustomIdentity = AquariumLivestockIdentity.isCustom(
+            selectedCatalogEntryId
+        )
+        selectedCatalogEntry = if (isCustomIdentity) {
+            null
+        } else {
+            livestockCatalogOperations.findById(selectedCatalogEntryId)
         }
 
-        selectedQuantity = livestock.quantity.coerceAtLeast(1)
+        if (!isCustomIdentity && selectedCatalogEntry == null) {
+            showMissingDataDialogAndClose(
+                title = getString(R.string.livestock_catalog_entry_missing_title),
+                message = getString(R.string.livestock_catalog_entry_missing_message)
+            )
+            return
+        }
 
-        selectedAddedDateEpochDay = livestock.addedDateEpochDay
+        selectedCategory = resolveEditingCategory(
+            selectedCatalogEntry, restoredFormState, livestock
+        )
+
+        mediaFlow.initializeSelection(livestock.photoUri)
+        selectedQuantity = restoredFormState?.getInt("form.quantity") ?: livestock.quantity.coerceAtLeast(1)
+        selectedAddedDateEpochDay = restoredFormState?.getLong("form.date") ?: livestock.addedDateEpochDay
             ?.takeIf { epochDay -> epochDay > 0L }
             ?: DateOnly.todayEpochDay()
 
-        binding.etLifeName.setText(livestock.name)
-        binding.etLifeNote.setText(livestock.note)
+        binding.etLifeName.setText(
+            selectedCatalogEntry?.localizedName(requireContext())
+                ?: restoredFormState?.getString("form.name") ?: livestock.name
+        )
+        binding.etLifeNote.setText(restoredFormState?.getString("form.note") ?: livestock.note)
 
         renderCategoryOptions()
+        updateIdentityFieldVisibility(
+            binding = binding,
+            hasCatalogIdentity = selectedCatalogEntry != null,
+            categoryLockedByPicker = openedFromPicker && editingLivestockId <= 0L
+        )
         updatePreview()
         updateQuantity()
         updateDateText()
@@ -250,7 +334,6 @@ Fragment(R.layout.fragment_tank_livestock_form) {
     }
 
     private fun setupClickListeners() {
-
         binding.btnDecreaseQuantity.setOnClickListener {
             if (selectedQuantity > 1) {
                 selectedQuantity--
@@ -290,7 +373,6 @@ Fragment(R.layout.fragment_tank_livestock_form) {
     private fun setupNamePreviewListener() {
         binding.etLifeName.addTextChangedListener(
             object : TextWatcher {
-
                 override fun beforeTextChanged(
                     s: CharSequence?,
                     start: Int,
@@ -317,8 +399,7 @@ Fragment(R.layout.fragment_tank_livestock_form) {
     private fun renderCategoryOptions() {
         binding.categoryGrid.removeAllViews()
 
-        LivestockCategories.all.forEach {
-            category ->
+        LivestockCategories.all.forEach { category ->
             binding.categoryGrid.addView(
                 createCategoryOption(
                     category = category,
@@ -333,7 +414,7 @@ Fragment(R.layout.fragment_tank_livestock_form) {
         selected: Boolean
     ): View {
         return TextView(requireContext()).apply {
-            text = category
+            text = getString(LivestockCategories.labelRes(category))
             gravity = Gravity.CENTER
             setTextSizeResource(R.dimen.aqua_text_size_body_compact)
             isSelected = selected
@@ -357,7 +438,7 @@ Fragment(R.layout.fragment_tank_livestock_form) {
             )
             includeFontPadding = false
 
-            val params = GridLayout.LayoutParams().apply {
+            layoutParams = GridLayout.LayoutParams().apply {
                 width = 0
                 height = resources.getDimensionPixelOffset(R.dimen.aqua_size_46)
                 columnSpec = GridLayout.spec(
@@ -372,8 +453,6 @@ Fragment(R.layout.fragment_tank_livestock_form) {
                 )
             }
 
-            layoutParams = params
-
             setOnClickListener {
                 selectedCategory = category
                 renderCategoryOptions()
@@ -383,25 +462,24 @@ Fragment(R.layout.fragment_tank_livestock_form) {
     }
 
     private fun updatePreview() {
-        val lifeName = binding.etLifeName.text
-        .toString()
-        .trim()
+        val displayName = selectedCatalogEntry?.localizedName(requireContext())
+            ?: binding.etLifeName.text.toString().trim()
 
-        binding.tvLifePreviewTitle.text = lifeName.ifBlank {
+        binding.tvLifePreviewTitle.text = displayName.ifBlank {
             getString(R.string.aquarium_livestock_default_title)
         }
 
-        binding.ivLifeIconPreview.setImageResource(
-            getCategoryIcon(selectedCategory)
+        val scientificName = selectedCatalogEntry?.scientificName.orEmpty()
+        binding.tvLifeScientificPreview.isVisible = scientificName.isNotBlank()
+        binding.tvLifeScientificPreview.text = scientificName
+
+        val parameterSummary = selectedCatalogEntry?.parameterSummary().orEmpty()
+        binding.tvLifeParametersPreview.isVisible = parameterSummary.isNotBlank()
+        binding.tvLifeParametersPreview.text = parameterSummary
+
+        binding.tvLifeCategoryPreview.text = getString(
+            LivestockCategories.labelRes(selectedCategory)
         )
-
-        binding.ivLifeIconPreview.setColorFilter(ContextCompat.getColor(requireContext(), R.color.aqua_content_on_dark))
-
-        binding.ivLifeIconPreview.background = createIconBackground(
-            color = getCategoryColor(selectedCategory)
-        )
-
-        binding.tvLifeCategoryPreview.text = selectedCategory
     }
 
     private fun updateQuantity() {
@@ -419,13 +497,12 @@ Fragment(R.layout.fragment_tank_livestock_form) {
     }
 
     private fun saveLivestock() {
-        if (isSavingLivestock) {
+        if (isSavingLivestock || isDeletingLivestock || photoTarget.isInProgress) {
             return
         }
 
-        val name = binding.etLifeName.text
-        .toString()
-        .trim()
+        val name = selectedCatalogEntry?.localizedName(requireContext())
+            ?: binding.etLifeName.text.toString().trim()
 
         if (name.length < 2) {
             showSnackBar(
@@ -435,19 +512,20 @@ Fragment(R.layout.fragment_tank_livestock_form) {
             return
         }
 
+        val (livestockId, catalogIdentity) = resolveLivestockIdentity(
+            editingLivestockId = requireNotNull(photoDraft.recordId),
+            selectedCatalogEntry = selectedCatalogEntry,
+            selectedCatalogEntryId = selectedCatalogEntryId
+        )
+
         val livestock = AquariumLivestock(
-            id = if (editingLivestockId > 0L) {
-                editingLivestockId
-            } else {
-                AquariumIdGenerator.newLong()
-            },
+            id = livestockId,
+            catalogEntryId = catalogIdentity,
             name = name,
             category = selectedCategory,
             quantity = selectedQuantity.coerceAtLeast(1),
             addedDateEpochDay = selectedAddedDateEpochDay,
-            note = binding.etLifeNote.text
-            .toString()
-            .trim()
+            note = binding.etLifeNote.text.toString().trim()
         )
 
         isSavingLivestock = true
@@ -455,24 +533,19 @@ Fragment(R.layout.fragment_tank_livestock_form) {
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                if (editingLivestockId > 0L) {
-                    aquariumTankViewModel.updateLivestockInTank(
-                        tankId = tankId,
-                        livestock = livestock
-                    )
-                } else {
-                    aquariumTankViewModel.addLivestockToTank(
-                        tankId = tankId,
-                        livestock = livestock
-                    )
-                }
-
-                closeForm()
+                saveLivestockPhoto(
+                    aquariumTankViewModel,
+                    livestock,
+                    isNew = editingLivestockId <= 0L
+                )
+                isSavingLivestock = false
+                finishAfterMutation()
+            } catch (exception: CancellationException) {
+                throw exception
             } catch (exception: Exception) {
                 exception.printStackTrace()
-
                 isSavingLivestock = false
-                binding.btnSaveLife.isEnabled = true
+                _binding?.btnSaveLife?.isEnabled = true
 
                 showSnackBar(
                     message = getString(R.string.aquarium_error_livestock_save_failed),
@@ -496,15 +569,21 @@ Fragment(R.layout.fragment_tank_livestock_form) {
     }
 
     private fun deleteLivestock() {
-        if (editingLivestockId <= 0L || isDeletingLivestock) return
+        val busy = isDeletingLivestock || isSavingLivestock || photoTarget.isInProgress
+        if (editingLivestockId <= 0L || busy) {
+            return
+        }
+
         isDeletingLivestock = true
+
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                aquariumTankViewModel.removeLivestockFromTank(
-                    tankId = tankId,
-                    livestockId = editingLivestockId
+                aquariumTankViewModel.removeLivestockWithPhoto(
+                    tankId, editingLivestockId, requireNotNull(photoDraft.ownerUid)
                 )
-                closeForm()
+                finishAfterMutation()
+            } catch (cancellation: CancellationException) {
+                throw cancellation
             } catch (exception: Exception) {
                 exception.printStackTrace()
                 isDeletingLivestock = false
@@ -526,6 +605,7 @@ Fragment(R.layout.fragment_tank_livestock_form) {
             set(currentYear + 5, Calendar.DECEMBER, 31, 23, 59, 59)
             set(Calendar.MILLISECOND, 999)
         }.timeInMillis
+
         AppDatePickerDialogFragment.show(
             fragmentManager = childFragmentManager,
             requestKey = LIVESTOCK_DATE_REQUEST_KEY,
@@ -535,23 +615,58 @@ Fragment(R.layout.fragment_tank_livestock_form) {
         )
     }
 
-    private fun closeForm() {
+    private fun finishAfterMutation() {
         if (isNavigatingBack) {
             return
         }
 
-        isNavigatingBack = true
-
         val navController = findNavController()
 
-        navController.previousBackStackEntry
-            ?.savedStateHandle
-            ?.set(
-                TankDetailFragment.KEY_RETURN_TAB,
-                TankDetailTabArgs.TANK_LIFE
-            )
+        if (openedFromPicker && editingLivestockId <= 0L) {
+            isNavigatingBack = true
 
-        navController.navigateUp()
+            runCatching {
+                navController.getBackStackEntry(R.id.tankDetailFragment)
+                    .savedStateHandle
+                    .set(
+                        TankDetailFragment.KEY_RETURN_TAB,
+                        TankDetailTabArgs.TANK_LIFE
+                    )
+            }
+
+            if (navController.popBackStack(R.id.tankDetailFragment, false)) {
+                return
+            }
+
+            isNavigatingBack = false
+        }
+
+        closeForm()
+    }
+
+    private fun closeForm() {
+        val cannotClose = isSavingLivestock || photoTarget.isInProgress || isNavigatingBack
+        if (cannotClose) return
+
+        isNavigatingBack = true
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                // The pending file belongs to this draft, not to the persisted livestock record.
+                withContext(NonCancellable) {
+                    mediaFlow.rollbackSelection()
+                }
+            } finally {
+                if (_binding != null && isAdded) {
+                    val navController = findNavController()
+                    if (!openedFromPicker) {
+                        navController.previousBackStackEntry
+                            ?.savedStateHandle
+                            ?.set(TankDetailFragment.KEY_RETURN_TAB, TankDetailTabArgs.TANK_LIFE)
+                    }
+                    navController.navigateUp()
+                }
+            }
+        }
     }
 
     private fun showSnackBar(
@@ -564,43 +679,18 @@ Fragment(R.layout.fragment_tank_livestock_form) {
         )
     }
 
-    private fun getCategoryIcon(
-        category: String
-    ): Int {
-        return when (category) {
-            LivestockCategories.FISH -> R.drawable.ic_life_fish_24
-            LivestockCategories.SHRIMP -> R.drawable.ic_life_shrimp_24
-            LivestockCategories.SNAIL -> R.drawable.ic_life_snail_24
-            LivestockCategories.CRAB_CRAYFISH -> R.drawable.ic_life_crab_24
-            LivestockCategories.CORAL -> R.drawable.ic_life_coral_24
-            else -> R.drawable.ic_life_other_24
-        }
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putString("form.category", selectedCategory)
+        outState.putInt("form.quantity", selectedQuantity)
+        outState.putLong("form.date", selectedAddedDateEpochDay)
+        outState.putString("form.name", _binding?.etLifeName?.text?.toString())
+        outState.putString("form.note", _binding?.etLifeNote?.text?.toString())
+        super.onSaveInstanceState(outState)
     }
 
-    private fun getCategoryColor(
-        category: String
-    ): Int {
-        return when (category) {
-            LivestockCategories.FISH -> R.color.aqua_tank_detail_livestock_form_fragment_color
-            LivestockCategories.SHRIMP -> R.color.aqua_tank_detail_livestock_form_fragment_color_variant_2
-            LivestockCategories.SNAIL -> R.color.aqua_tank_detail_livestock_form_fragment_color_variant_3
-            LivestockCategories.CRAB_CRAYFISH -> R.color.aqua_tank_detail_livestock_form_fragment_color_variant_4
-            LivestockCategories.CORAL -> R.color.aqua_tank_detail_livestock_form_fragment_color_variant_5
-            else -> R.color.aqua_tank_detail_livestock_form_fragment_color_variant_6
-        }
-    }
-
-    private fun createIconBackground(
-        @ColorRes color: Int
-    ): GradientDrawable {
-        return GradientDrawable().apply {
-            shape = GradientDrawable.RECTANGLE
-            setColor(ContextCompat.getColor(requireContext(), color))
-            cornerRadius = resources.getDimensionPixelOffset(R.dimen.aqua_size_18).toFloat()
-        }
-    }
     override fun onDestroyView() {
         super.onDestroyView()
+        hasLoadedEditingLivestock = false
         _binding = null
     }
 
@@ -608,7 +698,39 @@ Fragment(R.layout.fragment_tank_livestock_form) {
         private const val LIVESTOCK_DATE_REQUEST_KEY = "livestock_added_date_result"
         private const val LIVESTOCK_DELETE_REQUEST_KEY = "livestock_delete_result"
         private const val LIVESTOCK_MISSING_REQUEST_KEY = "livestock_missing_result"
-        private const val ARG_TANK_ID = "tankId"
-        private const val ARG_LIVESTOCK_ID = "livestockId"
     }
+}
+
+private fun resolveLivestockIdentity(
+    editingLivestockId: Long,
+    selectedCatalogEntry: LivestockCatalogItem?,
+    selectedCatalogEntryId: String
+): Pair<Long, String> {
+    val livestockId = editingLivestockId.takeIf { id -> id > 0L }
+        ?: AquariumIdGenerator.newLong()
+    val catalogIdentity = selectedCatalogEntry?.id
+        ?: selectedCatalogEntryId.takeIf(AquariumLivestockIdentity::isCustom)
+        ?: AquariumLivestockIdentity.custom(livestockId)
+
+    return livestockId to catalogIdentity
+}
+
+private fun resolveEditingCategory(
+    catalogEntry: LivestockCatalogItem?,
+    savedState: Bundle?,
+    livestock: AquariumLivestock
+): String = catalogEntry?.category
+    ?: (savedState?.getString("form.category") ?: livestock.category)
+        .takeIf { it in LivestockCategories.all }
+    ?: LivestockCategories.FISH
+
+private fun updateIdentityFieldVisibility(
+    binding: FragmentTankLivestockFormBinding,
+    hasCatalogIdentity: Boolean,
+    categoryLockedByPicker: Boolean
+) {
+    binding.tvLifeNameLabel.isVisible = !hasCatalogIdentity
+    binding.etLifeName.isVisible = !hasCatalogIdentity
+    binding.tvLifeCategoryLabel.isVisible = !hasCatalogIdentity && !categoryLockedByPicker
+    binding.categoryGrid.isVisible = !hasCatalogIdentity && !categoryLockedByPicker
 }

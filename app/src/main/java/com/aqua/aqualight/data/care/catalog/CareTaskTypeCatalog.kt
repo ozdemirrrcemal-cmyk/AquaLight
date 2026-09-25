@@ -181,7 +181,7 @@ object CareTaskTypeCatalog {
       type = CareTaskType.LIGHT_CHECK,
       titleRes = R.string.maintenance_task_type_light_check,
       categoryRes = R.string.maintenance_category_equipment,
-      iconRes = R.drawable.ic_care_light_24,
+      iconRes = R.drawable.ic_devices,
       accentColorRes = R.color.aqua_care_task_type_catalog_color_variant_16,
       defaultDescriptionRes = R.string.maintenance_task_desc_light_check
     ),

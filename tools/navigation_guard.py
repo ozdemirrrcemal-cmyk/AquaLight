@@ -37,6 +37,38 @@ for path in SOURCE_ROOT.rglob("*.kt"):
         )
 
 ANDROID_NS = "{http://schemas.android.com/apk/res/android}"
+APP_NS = "{http://schemas.android.com/apk/res-auto}"
+LIGHT_DESTINATION_PREFIX = "com.aqua.aqualight.ui.tabs.devices.detail.light."
+light_safe_args_contracts: dict[str, tuple[Path, tuple[object, ...]]] = {}
+
+def argument_signature(element: ET.Element) -> tuple[tuple[str, str, str, str], ...]:
+    return tuple(
+        sorted(
+            (
+                child.get(f"{ANDROID_NS}name", ""),
+                child.get(f"{APP_NS}argType", ""),
+                child.get(f"{ANDROID_NS}defaultValue", ""),
+                child.get(f"{APP_NS}nullable", ""),
+            )
+            for child in list(element)
+            if child.tag == "argument"
+        )
+    )
+
+def safe_args_signature(fragment: ET.Element) -> tuple[object, ...]:
+    actions = tuple(
+        sorted(
+            (
+                action.get(f"{ANDROID_NS}id", ""),
+                action.get(f"{APP_NS}destination", ""),
+                argument_signature(action),
+            )
+            for action in list(fragment)
+            if action.tag == "action"
+        )
+    )
+    return argument_signature(fragment), actions
+
 manual_arg_tokens = (
     "requireArguments().get",
     "arguments?.get",
@@ -54,8 +86,23 @@ for nav_path in NAV_ROOT.glob("*.xml"):
 
     for fragment in graph.iter("fragment"):
         fragment_class = fragment.get(f"{ANDROID_NS}name")
-        has_nav_args = any(child.tag == "argument" for child in list(fragment))
-        if not fragment_class or not has_nav_args:
+        if not fragment_class:
+            continue
+
+        signature = safe_args_signature(fragment)
+        if fragment_class.startswith(LIGHT_DESTINATION_PREFIX):
+            previous_contract = light_safe_args_contracts.get(fragment_class)
+            if previous_contract is None:
+                light_safe_args_contracts[fragment_class] = (nav_path, signature)
+            elif previous_contract[1] != signature:
+                violations.append(
+                    "inconsistent Light Safe Args contract for "
+                    f"{fragment_class}: {previous_contract[0].relative_to(ROOT)} vs "
+                    f"{nav_path.relative_to(ROOT)}"
+                )
+
+        has_nav_args = bool(signature[0])
+        if not has_nav_args:
             continue
 
         source_path = SOURCE_ROOT / Path(*fragment_class.split(".")).with_suffix(".kt")
@@ -97,6 +144,6 @@ if violations:
     sys.exit(1)
 
 print(
-    "Navigation guard passed: Safe Args, shared device-root UI, device-family isolation "
-    "and UI/data layer isolation contracts are enforced."
+    "Navigation guard passed: Light Safe Args parity, shared device-root UI, "
+    "device-family isolation and UI/data layer isolation contracts are enforced."
 )

@@ -304,8 +304,38 @@ internal class DefaultDeviceMenuAccessOperations(
         deviceUid: DeviceUid,
         reason: DeviceMenuUnavailableReason
     ): VerificationResult.Unavailable {
-        runtimePort.recordControlFailure(deviceUid)
-        return VerificationResult.Unavailable(reason)
+        val canonicalSnapshot = runtimePort.recordControlFailure(deviceUid)
+            ?: runtimePort.currentDevice(deviceUid)
+        return VerificationResult.Unavailable(
+            currentFailureReason(canonicalSnapshot, reason)
+        )
+    }
+
+    private fun currentFailureReason(
+        snapshot: DeviceSnapshot?,
+        reason: DeviceMenuUnavailableReason
+    ): DeviceMenuUnavailableReason {
+        if (
+            reason != DeviceMenuUnavailableReason.DEVICE_UNRESPONSIVE &&
+            reason != DeviceMenuUnavailableReason.VERIFICATION_TIMED_OUT
+        ) {
+            return reason
+        }
+
+        return when (snapshot?.connectionState?.onlineState) {
+            DeviceOnlineState.OFFLINE -> DeviceMenuUnavailableReason.DEVICE_OFFLINE
+            DeviceOnlineState.LOCAL_NETWORK_OFFLINE ->
+                DeviceMenuUnavailableReason.LOCAL_NETWORK_UNAVAILABLE
+            DeviceOnlineState.AUTH_REQUIRED ->
+                DeviceMenuUnavailableReason.AUTHENTICATION_REQUIRED
+            DeviceOnlineState.UNKNOWN,
+            DeviceOnlineState.DISCOVERING,
+            DeviceOnlineState.CONNECTING_WS,
+            DeviceOnlineState.STALE,
+            DeviceOnlineState.ERROR,
+            null -> DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
+            else -> reason
+        }
     }
 
     private suspend fun awaitAuthenticatedRuntime(
@@ -362,9 +392,11 @@ internal class DefaultDeviceMenuAccessOperations(
             DeviceOnlineState.AUTH_REQUIRED -> {
                 DeviceMenuUnavailableReason.AUTHENTICATION_REQUIRED
             }
-            DeviceOnlineState.OFFLINE,
+            DeviceOnlineState.OFFLINE -> {
+                DeviceMenuUnavailableReason.DEVICE_OFFLINE
+            }
             DeviceOnlineState.ERROR -> {
-                DeviceMenuUnavailableReason.DEVICE_UNRESPONSIVE
+                DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
             }
             else -> null
         }
@@ -376,6 +408,7 @@ internal class DefaultDeviceMenuAccessOperations(
         val proofAt = connectionState.lastControlProofElapsedMillis ?: return false
         return (nowElapsedMillis - proofAt).coerceAtLeast(0L) <= MENU_PROOF_REUSE_MS
     }
+
 
     private fun available(snapshot: DeviceSnapshot): DeviceMenuAccessResult.Available {
         return DeviceMenuAccessResult.Available(

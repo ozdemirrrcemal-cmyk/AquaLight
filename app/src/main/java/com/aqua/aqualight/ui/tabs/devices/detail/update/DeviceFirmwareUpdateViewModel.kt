@@ -179,6 +179,12 @@ private class DeviceFirmwareUpdateStateMapper {
                     recoverable = false
                 )
             )
+            is DeviceOtaState.ReleaseNotPublished -> common.copy(
+                mode = DeviceFirmwareUpdateMode.RELEASE_NOT_PUBLISHED,
+                currentVersion = state.currentVersion,
+                targetVersion = "",
+                progressPermille = COMPLETE_PROGRESS_PERMILLE
+            )
             is DeviceOtaState.UpToDate -> common.copy(
                 mode = DeviceFirmwareUpdateMode.UP_TO_DATE,
                 currentVersion = state.currentVersion,
@@ -259,6 +265,10 @@ private class DeviceFirmwareUpdateStateMapper {
         when (state) {
             is DeviceOtaState.UpdateAvailable -> selectedPlan = state.plan
             is DeviceOtaState.Starting -> selectedPlan = state.plan
+            is DeviceOtaState.ReleaseNotPublished -> {
+                selectedPlan = null
+                retainedReleaseContent = DeviceFirmwareReleaseContent.EMPTY
+            }
             else -> Unit
         }
         val content = state.releaseContentOrEmpty()
@@ -310,6 +320,7 @@ enum class DeviceFirmwareUpdateMode {
     ROLLED_BACK,
     POST_RESTART_TIMEOUT,
     UNEXPECTED_FIRMWARE,
+    RELEASE_NOT_PUBLISHED,
     UP_TO_DATE,
     FAILED,
     UNSUPPORTED;

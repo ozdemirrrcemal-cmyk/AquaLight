@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="screen_title_tank_health">Tank Sağlığı</string>
+    <string name="tank_health_entry_title">Tank Sağlığı</string>
+    <string name="tank_health_entry_summary">Tank durumu iyi görünüyor</string>
+    <string name="tank_health_entry_last_analysis">Son analiz: 2 gün önce</string>
+
+    <string name="tank_health_tab_water_quality">Su Kalitesi</string>
+    <string name="tank_health_tab_algae_control">Yosun Kontrolü</string>
+
+    <string name="tank_health_water_quality_title">Su Kalitesi</string>
+    <string name="tank_health_last_analysis">Son analiz: 2 gün önce</string>
+    <string name="tank_health_status_normal">Normal</string>
+    <string name="tank_health_status_moderate">Orta</string>
+    <string name="tank_health_status_approaching">Yaklaşıyor</string>
+
+    <string name="tank_health_metric_temperature">Sıcaklık</string>
+    <string name="tank_health_add_analysis">Analiz Ekle</string>
+
+    <string name="tank_health_maintenance_title">Bakım Durumu</string>
+    <string name="tank_health_water_change">Su değişimi</string>
+    <string name="tank_health_water_change_age">5 gün önce</string>
+    <string name="tank_health_pruning">Budama</string>
+    <string name="tank_health_pruning_age">9 gün önce</string>
+    <string name="tank_health_filter_maintenance">Filtre bakımı</string>
+    <string name="tank_health_filter_maintenance_age">18 gün önce</string>
+
+    <string name="tank_health_system_summary_title">Sistem Özeti</string>
+    <string name="tank_health_system_co2_value">Mevcut</string>
+    <string name="tank_health_system_lighting">Aydınlatma</string>
+    <string name="tank_health_system_filter">Filtre</string>
+    <string name="tank_health_system_livestock_load">Canlı yükü</string>
+    <string name="tank_health_system_livestock_load_value">28 canlı</string>
+</resources>

@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Official CO2 hardware brand and product names are not translated. -->
+    <string name="catalog_co2_brand_co2art" translatable="false">CO2Art</string>
+    <string name="catalog_co2_brand_fluval" translatable="false">Fluval</string>
+    <string name="catalog_co2_brand_fzone" translatable="false">FZONE</string>
+    <string name="catalog_co2_brand_sera" translatable="false">sera</string>
+    <string name="catalog_co2_brand_up_aqua" translatable="false">UP AQUA</string>
+    <string name="catalog_co2_brand_aqua_noa" translatable="false">AQUA-NOA</string>
+    <string name="catalog_co2_brand_aqua_medic" translatable="false">Aqua Medic</string>
+    <string name="catalog_co2_brand_oxyturbo" translatable="false">Oxyturbo</string>
+    <string name="catalog_co2_brand_mufan" translatable="false">Mufan</string>
+    <string name="catalog_co2_brand_creaqua" translatable="false">Creaqua</string>
+    <string name="catalog_co2_brand_zrdr" translatable="false">ZRDR</string>
+
+    <string name="catalog_material_co2_0001_name" translatable="false">Chihiros CO2 Regulator Pro Limited Edition</string>
+    <string name="catalog_material_co2_0002_name" translatable="false">Chihiros CO2 Regulator Mate</string>
+    <string name="catalog_material_co2_0003_name" translatable="false">Chihiros Mini CO2 Regulator Kit</string>
+    <string name="catalog_material_co2_0004_name" translatable="false">Chihiros CO2 Regulator With Needle Valve</string>
+    <string name="catalog_material_co2_0005_name" translatable="false">JBL PROFLORA CO2 STARTER BIO SET</string>
+    <string name="catalog_material_co2_0006_name" translatable="false">JBL PROFLORA CO2 BASIC BIO SET</string>
+    <string name="catalog_material_co2_0007_name" translatable="false">JBL PROFLORA CO2 ADVANCED BIO SET</string>
+    <string name="catalog_material_co2_0008_name" translatable="false">JBL PROFLORA CO2 BASIC SET M</string>
+    <string name="catalog_material_co2_0009_name" translatable="false">JBL PROFLORA CO2 BASIC SET U</string>
+    <string name="catalog_material_co2_0010_name" translatable="false">JBL PROFLORA CO2 BASIC SET V</string>
+    <string name="catalog_material_co2_0011_name" translatable="false">JBL PROFLORA CO2 ADVANCED SET M</string>
+    <string name="catalog_material_co2_0012_name" translatable="false">JBL PROFLORA CO2 ADVANCED SET U</string>
+    <string name="catalog_material_co2_0013_name" translatable="false">JBL PROFLORA CO2 ADVANCED SET V</string>
+    <string name="catalog_material_co2_0014_name" translatable="false">JBL PROFLORA CO2 PROFESSIONAL SET M</string>
+    <string name="catalog_material_co2_0015_name" translatable="false">JBL PROFLORA CO2 PROFESSIONAL SET U</string>
+    <string name="catalog_material_co2_0016_name" translatable="false">JBL PROFLORA CO2 PROFESSIONAL SET V</string>
+    <string name="catalog_material_co2_0017_name" translatable="false">JBL PROFLORA CO2 REGULATOR BASIC</string>
+    <string name="catalog_material_co2_0018_name" translatable="false">JBL PROFLORA CO2 REGULATOR ADVANCED</string>
+    <string name="catalog_material_co2_0019_name" translatable="false">JBL PROFLORA CO2 REGULATOR PROFESSIONAL</string>
+    <string name="catalog_material_co2_0020_name" translatable="false">Dennerle Carbo Soda M200</string>
+    <string name="catalog_material_co2_0021_name" translatable="false">Dennerle Carbo Start M200</string>
+    <string name="catalog_material_co2_0022_name" translatable="false">Dennerle Carbo Start E200</string>
+    <string name="catalog_material_co2_0023_name" translatable="false">Dennerle Carbo Start E200 Special Edition</string>
+    <string name="catalog_material_co2_0024_name" translatable="false">Dennerle Carbo Start Flex200</string>
+    <string name="catalog_material_co2_0025_name" translatable="false">Dennerle Carbo Start Flex200 Special Edition</string>
+    <string name="catalog_material_co2_0026_name" translatable="false">Dennerle Carbo Power M400</string>
+    <string name="catalog_material_co2_0027_name" translatable="false">Dennerle Carbo Power E400</string>
+    <string name="catalog_material_co2_0028_name" translatable="false">Dennerle Carbo Power E400 Special Edition</string>
+    <string name="catalog_material_co2_0029_name" translatable="false">Dennerle Carbo Power Flex400</string>
+    <string name="catalog_material_co2_0030_name" translatable="false">Dennerle Carbo Night M400</string>
+    <string name="catalog_material_co2_0031_name" translatable="false">Dennerle Carbo Night Flex400</string>
+    <string name="catalog_material_co2_0032_name" translatable="false">Dennerle CO2 Pressure Reducer Start</string>
+    <string name="catalog_material_co2_0033_name" translatable="false">Dennerle CO2 Pressure Reducer Power</string>
+    <string name="catalog_material_co2_0034_name" translatable="false">Dennerle Carbo Bio Start 60</string>
+    <string name="catalog_material_co2_0035_name" translatable="false">Dennerle Carbo Bio Start 80</string>
+    <string name="catalog_material_co2_0036_name" translatable="false">Dennerle Carbo Bio Style 120</string>
+    <string name="catalog_material_co2_0037_name" translatable="false">EHEIM CO2Set200</string>
+    <string name="catalog_material_co2_0038_name" translatable="false">EHEIM CO2Set400</string>
+    <string name="catalog_material_co2_0039_name" translatable="false">EHEIM CO2Set600</string>
+    <string name="catalog_material_co2_0040_name" translatable="false">EHEIM CO2Set400 incl. night shut-off</string>
+    <string name="catalog_material_co2_0041_name" translatable="false">EHEIM CO2Set600 incl. night shut-off</string>
+    <string name="catalog_material_co2_0042_name" translatable="false">EHEIM CO2Set400 without Bottle</string>
+    <string name="catalog_material_co2_0043_name" translatable="false">EHEIM CO2Set600 without Bottle</string>
+    <string name="catalog_material_co2_0044_name" translatable="false">EHEIM CO2Set400 without Bottle, incl. night shut-off</string>
+    <string name="catalog_material_co2_0045_name" translatable="false">EHEIM CO2Set600 without Bottle, incl. night shut-off</string>
+    <string name="catalog_material_co2_0046_name" translatable="false">EHEIM CO2 Pressure Reducer</string>
+    <string name="catalog_material_co2_0047_name" translatable="false">CO2Art PRO-SE Series Aquarium CO2 Dual Stage Regulator with Integrated Solenoid</string>
+    <string name="catalog_material_co2_0048_name" translatable="false">CO2Art Pro-Elite Series V2 Aquarium Dual Stage CO2 Regulator</string>
+    <string name="catalog_material_co2_0049_name" translatable="false">CO2Art Pro-SE Series Complete Aquarium CO2 System with in-tank Flux Diffuser</string>
+    <string name="catalog_material_co2_0050_name" translatable="false">CO2Art Pro-SE Series Complete Aquarium CO2 System with New Inline CO2 Diffuser</string>
+    <string name="catalog_material_co2_0051_name" translatable="false">CO2Art New Pro-Elite Series V2 Complete Aquarium CO2 System with in-tank Flux Diffuser</string>
+    <string name="catalog_material_co2_0052_name" translatable="false">CO2Art New Pro-Elite Series V2 Complete Aquarium CO2 System with New Inline CO2 Diffuser</string>
+    <string name="catalog_material_co2_0053_name" translatable="false">Green Aqua CO2 System S - Max 60L</string>
+    <string name="catalog_material_co2_0054_name" translatable="false">Green Aqua CO2 System M - Max 120L</string>
+    <string name="catalog_material_co2_0055_name" translatable="false">Green Aqua CO2 System L - Max 240L</string>
+    <string name="catalog_material_co2_0056_name" translatable="false">Green Aqua CO2 System With CO2 Reactor - 13mm 12/16mm</string>
+    <string name="catalog_material_co2_0057_name" translatable="false">Green Aqua CO2 System With CO2 Reactor - 17mm 16/22mm</string>
+    <string name="catalog_material_co2_0058_name" translatable="false">Tropica CO2 System Nano</string>
+    <string name="catalog_material_co2_0059_name" translatable="false">Tropica CO2 System Bio</string>
+    <string name="catalog_material_co2_0060_name" translatable="false">Tropica CO2 System Nano Regulator</string>
+    <string name="catalog_material_co2_0061_name" translatable="false">Aquario NEO CO2 System</string>
+    <string name="catalog_material_co2_0062_name" translatable="false">Fluval Bio-CO2 Pro Low-Pressure System, up to 33 US Gal / 125 L</string>
+    <string name="catalog_material_co2_0063_name" translatable="false">Fluval Bio-CO2 Pro Low-Pressure System, up to 66 US Gal / 250 L</string>
+    <string name="catalog_material_co2_0064_name" translatable="false">Fluval Bio-CO2 Pro Low-Pressure System, up to 132 US Gal / 500 L</string>
+    <string name="catalog_material_co2_0065_name" translatable="false">Fluval Pressurized CO2 Kit, 45 g, up to 30 US Gal / 115 L</string>
+    <string name="catalog_material_co2_0066_name" translatable="false">Fzone Studio Desktop Aquarium CO2 System with 45g Disposable CO2 Cartridge</string>
+    <string name="catalog_material_co2_0067_name" translatable="false">Fzone Studio Aquarium CO2 System Mini Regulator Kit</string>
+    <string name="catalog_material_co2_0068_name" translatable="false">Fzone Studio Desktop Aquarium Complete CO2 Kit with Solenoid, 80g CO2 Cartridge</string>
+    <string name="catalog_material_co2_0069_name" translatable="false">Fzone Aquatic Studio Pro Series CO2 Regulator (FZ-2020Pro)</string>
+    <string name="catalog_material_co2_0070_name" translatable="false">Fzone Aquatic Studio Single Stage CO2 Regulator CGA320 &amp; W21.8 (FZ-0100)</string>
+    <string name="catalog_material_co2_0071_name" translatable="false">Fzone Aquatic Studio Mini Dual Stage CO2 Regulator (FZ-1011)</string>
+    <string name="catalog_material_co2_0072_name" translatable="false">ADA CO2 Advanced System - Forest</string>
+    <string name="catalog_material_co2_0073_name" translatable="false">ADA CO2 System 74-YA/Ver.2</string>
+    <string name="catalog_material_co2_0074_name" translatable="false">ADA CO2 System 74-SA</string>
+    <string name="catalog_material_co2_0075_name" translatable="false">ADA CO2 System 74-DA</string>
+    <string name="catalog_material_co2_0076_name" translatable="false">ADA CO2 Attache Regulator</string>
+    <string name="catalog_material_co2_0077_name" translatable="false">ADA CO2 Speed Regulator</string>
+    <string name="catalog_material_co2_0078_name" translatable="false">sera flore CO2 fertilization system</string>
+    <string name="catalog_material_co2_0079_name" translatable="false">sera flore CO2 pressure reducer</string>
+    <string name="catalog_material_co2_0080_name" translatable="false">sera CO2-Start</string>
+    <string name="catalog_material_co2_0081_name" translatable="false">UP AQUA A-171 CO2 Omnibus Regulator</string>
+    <string name="catalog_material_co2_0082_name" translatable="false">UP AQUA A-126 CO2 Regulator-Double Gauge</string>
+    <string name="catalog_material_co2_0083_name" translatable="false">UP AQUA A-164 CO2 Regulator-Working Pressure Adjustable</string>
+    <string name="catalog_material_co2_0084_name" translatable="false">UP AQUA A-168 CO2 Omnibus Regulator</string>
+    <string name="catalog_material_co2_0085_name" translatable="false">UP AQUA A-153 CO2 Regulator-Two Gauge</string>
+    <string name="catalog_material_co2_0086_name" translatable="false">UP AQUA A-165 CO2 Regulator-Working Pressure Adjustable</string>
+    <string name="catalog_material_co2_0087_name" translatable="false">UP AQUA A-152 CO2 Regulator-One Gauge</string>
+    <string name="catalog_material_co2_0088_name" translatable="false">UP AQUA A-100 CO2 Regulator-Double Gauge</string>
+    <string name="catalog_material_co2_0089_name" translatable="false">AQUA-NOA CO2 Druckminderer Basic M1</string>
+    <string name="catalog_material_co2_0090_name" translatable="false">AQUA-NOA CO2 Druckminderer Basic E2</string>
+    <string name="catalog_material_co2_0091_name" translatable="false">AQUA-NOA CO2 Druckminderer Basic M2</string>
+    <string name="catalog_material_co2_0092_name" translatable="false">AQUA-NOA CO2 Druckminderer Profi E</string>
+    <string name="catalog_material_co2_0093_name" translatable="false">AQUA-NOA CO2 Druckminderer Profi M1</string>
+    <string name="catalog_material_co2_0094_name" translatable="false">AQUA-NOA CO2 Druckminderer Profi M2</string>
+    <string name="catalog_material_co2_0095_name" translatable="false">AQUA-NOA CO2 Druckminderer Profi M3</string>
+    <string name="catalog_material_co2_0096_name" translatable="false">AQUA-NOA CO2 Druckminderer Profi M1+</string>
+    <string name="catalog_material_co2_0097_name" translatable="false">AQUA-NOA CO2 Doppelkammer Druckminderer Profi M</string>
+    <string name="catalog_material_co2_0098_name" translatable="false">AQUA-NOA CO2 Doppelkammer Druckminderer Profi M+</string>
+    <string name="catalog_material_co2_0099_name" translatable="false">AQUA-NOA CO2 Druckminderer Profi M1-BZ</string>
+    <string name="catalog_material_co2_0100_name" translatable="false">AQUA-NOA CO2 Druckminderer Profi MV-BZ</string>
+    <string name="catalog_material_co2_0101_name" translatable="false">AQUA-NOA CO2 Druckminderer Profi M2RV-MV</string>
+    <string name="catalog_material_co2_0102_name" translatable="false">AQUA-NOA CO2 Druckminderer Profi M2RV-MV-LED</string>
+    <string name="catalog_material_co2_0103_name" translatable="false">AQUA-NOA CO2 Druckminderer Profi M3RV-MV</string>
+    <string name="catalog_material_co2_0104_name" translatable="false">AQUA-NOA CO2 Druckminderer Profi M3RV-MV-LED</string>
+    <string name="catalog_material_co2_0105_name" translatable="false">AQUA-NOA CO2 Druckminderer Profi MV</string>
+    <string name="catalog_material_co2_0106_name" translatable="false">AQUA-NOA CO2 Druckminderer Profi MVR</string>
+    <string name="catalog_material_co2_0107_name" translatable="false">AQUA-NOA CO2 Doppelkammer Druckminderer Profi MM+</string>
+    <string name="catalog_material_co2_0108_name" translatable="false">Aqua Medic regular mini</string>
+    <string name="catalog_material_co2_0109_name" translatable="false">Oxyturbo Major 2 CO2 Pressure Regulator With Solenoid and Needle Valve</string>
+    <string name="catalog_material_co2_0110_name" translatable="false">Oxyturbo Major 2 CO2 Pressure Regulator With Needle Valve</string>
+    <string name="catalog_material_co2_0111_name" translatable="false">Ista CO2 Set 1 Lt Professional</string>
+    <string name="catalog_material_co2_0112_name" translatable="false">Ista CO2 Tüp 1Lt Advanced</string>
+    <string name="catalog_material_co2_0113_name" translatable="false">Ista CO2 Tüp 1Lt Basic Set</string>
+    <string name="catalog_material_co2_0114_name" translatable="false">Ista CO2 Tüp (1L) + Regülatör + Diffusör + Damla Sayacı</string>
+    <string name="catalog_material_co2_0115_name" translatable="false">Ista CO2 Tüp (1Lt) + Digital Control + Diffusör + Indicator</string>
+    <string name="catalog_material_co2_0116_name" translatable="false">Ista CO2 Karbondioksit Set 0,50Lt Advance</string>
+    <string name="catalog_material_co2_0117_name" translatable="false">Ista CO2 Karbondioksit Set 0,50Lt Basic</string>
+    <string name="catalog_material_co2_0118_name" translatable="false">Ista CO2 Karbondioksit Basic Set 95gr</string>
+    <string name="catalog_material_co2_0119_name" translatable="false">Ista CO2 Karbondioksit Easy Set 95gr</string>
+    <string name="catalog_material_co2_0120_name" translatable="false">Ista CO2 Karbondioksit Set 45gr</string>
+    <string name="catalog_material_co2_0121_name" translatable="false">Ista CO2 Set 16gr</string>
+    <string name="catalog_material_co2_0122_name" translatable="false">Ista CO2 Regülatör</string>
+    <string name="catalog_material_co2_0123_name" translatable="false">Mufan W21.8 CO2 Regülatörü</string>
+    <string name="catalog_material_co2_0124_name" translatable="false">Mufan W21.8 Selenoid Valfli CO2 Regülatörü</string>
+    <string name="catalog_material_co2_0125_name" translatable="false">Mufan Damla Sayaçlı Çift Göstergeli CO2 Regülatörü</string>
+    <string name="catalog_material_co2_0126_name" translatable="false">Creaqua Diox Profesyonel Selenoid Valfli Damla Sayaçlı CO2 Regülatörü</string>
+    <string name="catalog_material_co2_0127_name" translatable="false">ZRDR Selenoid Valfli Profesyonel CO2 Regülatörü</string>
+    <string name="catalog_material_co2_0128_name" translatable="false">Chihiros CO2 Regulator Pro</string>
+    <string name="catalog_material_co2_0129_name" translatable="false">Chihiros CO2 Regulator</string>
+    <string name="catalog_material_co2_0130_name" translatable="false">Chihiros CO2 Generator Kit 2.5L</string>
+    <string name="catalog_material_co2_0131_name" translatable="false">JBL Proflora m501 500gr Tüp Seti</string>
+    <string name="catalog_material_co2_0132_name" translatable="false">JBL Proflora m502 500gr Tüp Seti</string>
+    <string name="catalog_material_co2_0133_name" translatable="false">JBL Proflora m503 500gr Tüp Seti</string>
+    <string name="catalog_material_co2_0134_name" translatable="false">JBL Proflora M1003 CO2 Set</string>
+    <string name="catalog_material_co2_0135_name" translatable="false">JBL Proflora m2003 2000gr Tüp Seti</string>
+
+    <!-- CO2 search aliases. Localized aliases live in values-tr. -->
+    <string name="catalog_keyword_carbon_dioxide">carbon dioxide</string>
+    <string name="catalog_keyword_co2_regulator">co2 regulator</string>
+    <string name="catalog_keyword_pressure_regulator">pressure regulator</string>
+    <string name="catalog_keyword_pressure_reducer">pressure reducer</string>
+    <string name="catalog_keyword_co2_system">co2 system</string>
+    <string name="catalog_keyword_co2_set">co2 set</string>
+    <string name="catalog_keyword_bio">bio</string>
+    <string name="catalog_keyword_bio_co2">bio co2</string>
+    <string name="catalog_keyword_fermentation">fermentation</string>
+    <string name="catalog_keyword_kit">kit</string>
+    <string name="catalog_keyword_needle_valve">needle valve</string>
+    <string name="catalog_keyword_solenoid_valve">solenoid valve</string>
+    <string name="catalog_keyword_dual_stage">dual stage</string>
+    <string name="catalog_keyword_single_stage">single stage</string>
+    <string name="catalog_keyword_reactor">reactor</string>
+    <string name="catalog_keyword_inline">inline</string>
+    <string name="catalog_keyword_cartridge">cartridge</string>
+    <string name="catalog_keyword_disposable">disposable</string>
+    <string name="catalog_keyword_night_shutoff">night shut-off</string>
+    <string name="catalog_keyword_gauge">gauge</string>
+    <string name="catalog_keyword_digital_control">digital control</string>
+    <string name="catalog_keyword_bubble_counter">bubble counter</string>
+    <string name="catalog_keyword_low_pressure">low pressure</string>
+    <string name="catalog_keyword_pressurized">pressurized</string>
+    <string name="catalog_keyword_fertilization">fertilization</string>
+</resources>

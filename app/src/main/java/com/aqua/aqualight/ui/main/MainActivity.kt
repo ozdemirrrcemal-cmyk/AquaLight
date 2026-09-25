@@ -247,6 +247,9 @@ class MainActivity : BaseActivity() {
             setOf(LocalDataRecoveryArea.TANK_DEVICE_ASSIGNMENTS) ->
                 R.string.local_data_recovery_assignments_message
 
+            setOf(LocalDataRecoveryArea.LIGHT_LIBRARY) ->
+                R.string.local_data_recovery_light_library_message
+
             else -> R.string.local_data_recovery_combined_message
         }
 

@@ -4,7 +4,6 @@ import com.aqua.aqualight.application.devices.DeviceFamilySettingsOperations
 import com.aqua.aqualight.application.devices.DeviceFirmwareCommandResult
 import com.aqua.aqualight.application.devices.DeviceFirmwareReleaseContent
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
-import com.aqua.aqualight.application.devices.light.protection.DeviceLightProtectionSnapshot
 import com.aqua.aqualight.application.devices.DeviceOtaFailure
 import com.aqua.aqualight.application.devices.DeviceOtaFailureReason
 import com.aqua.aqualight.application.devices.DeviceOtaFailureStage
@@ -92,6 +91,23 @@ class DeviceFamilySettingsFirmwareFailureActionTest {
         )
     }
 
+    @Test
+    fun `unpublished release remains neutral and allows an explicit recheck`() {
+        val firmware = FakeFirmwareOperations()
+        val viewModel = createViewModel(firmware)
+        viewModel.bind(DEVICE_UID)
+        firmware.emit(DeviceOtaState.ReleaseNotPublished(DEVICE_UID, CURRENT_VERSION))
+
+        assertEquals(
+            DeviceSettingsUpdateActionState.ReleaseNotPublished,
+            viewModel.uiState.value.updateActionState
+        )
+
+        viewModel.onFirmwareUpdateAction()
+
+        assertEquals(1, firmware.checkCalls)
+    }
+
     private fun createViewModel(firmware: FakeFirmwareOperations) =
         DeviceFamilySettingsViewModel(
             settingsOperations = FakeSettingsOperations(),
@@ -107,7 +123,6 @@ class DeviceFamilySettingsFirmwareFailureActionTest {
 
     private class FakeSettingsOperations : DeviceFamilySettingsOperations {
         private val snapshot = MutableStateFlow<DeviceRootSnapshot?>(validSnapshot())
-        private val light = MutableStateFlow(DeviceLightProtectionSnapshot())
 
         override fun observe(deviceUid: String): Flow<DeviceRootSnapshot?> = snapshot
         override fun current(deviceUid: String): DeviceRootSnapshot? = snapshot.value
@@ -117,20 +132,6 @@ class DeviceFamilySettingsFirmwareFailureActionTest {
             customName: String
         ): Result<Unit> = Result.success(Unit)
 
-        override fun observeLightProtection(
-            deviceUid: String
-        ): Flow<DeviceLightProtectionSnapshot> = light
-
-        override fun currentLightProtection(deviceUid: String): DeviceLightProtectionSnapshot =
-            light.value
-
-        override suspend fun refreshLightProtection(deviceUid: String): Result<Unit> =
-            Result.success(Unit)
-
-        override suspend fun updateLightProtectionThreshold(
-            deviceUid: String,
-            thresholdCelsius: Int
-        ): Result<Unit> = Result.success(Unit)
     }
 
     private class FakeFirmwareOperations : DeviceFirmwareUpdateOperations {

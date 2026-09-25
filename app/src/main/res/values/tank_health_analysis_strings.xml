@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="screen_title_tank_health_analysis_add">Add Analysis</string>
+    <string name="screen_title_tank_health_analysis_history">Analysis History</string>
+    <string name="screen_title_tank_health_analysis_detail">Record Detail</string>
+
+    <string name="tank_health_analysis_measurement_time_title">Measurement Time</string>
+    <string name="tank_health_analysis_measurement_time_subtitle">Choose the analysis date and time.</string>
+    <string name="tank_health_analysis_date_label">Date</string>
+    <string name="tank_health_analysis_time_label">Time</string>
+    <string name="tank_health_analysis_date_value">26 Sep 2026</string>
+    <string name="tank_health_analysis_time_value" translatable="false">14:10</string>
+
+    <string name="tank_health_analysis_sensor_title">Sensor Data</string>
+    <string name="tank_health_analysis_sensor_subtitle">Temperature can be read from the assigned cooling device sensor.</string>
+    <string name="tank_health_analysis_assigned_device">Assigned device</string>
+    <string name="tank_health_analysis_device_name" translatable="false">Cooling Mini v2</string>
+    <string name="tank_health_analysis_connected">Connected</string>
+    <string name="tank_health_analysis_temperature_source">Temperature source</string>
+    <string name="tank_health_analysis_source_sensor">Sensor</string>
+    <string name="tank_health_analysis_source_manual">Manual</string>
+    <string name="tank_health_analysis_temperature">Temperature</string>
+    <string name="tank_health_analysis_temperature_value" translatable="false">25</string>
+    <string name="tank_health_analysis_temperature_unit" translatable="false">°C</string>
+    <string name="tank_health_analysis_from_sensor">Read from sensor</string>
+    <string name="tank_health_analysis_sensor_helper">If no cooling device is assigned, you can enter temperature manually.</string>
+
+    <string name="tank_health_analysis_water_parameters_title">Water Parameters</string>
+    <string name="tank_health_analysis_water_parameters_subtitle">Measure and enter your water values.</string>
+    <string name="tank_health_analysis_test_kit_note">Use reliable test kits for more accurate results.</string>
+    <string name="tank_health_analysis_save">Save Analysis</string>
+    <string name="tank_health_analysis_history_action">Analysis History</string>
+    <string name="tank_health_analysis_new">New Analysis</string>
+
+    <string name="tank_health_analysis_history_summary">Total 12 records</string>
+    <string name="tank_health_analysis_history_summary_subtitle">All analysis history for this tank</string>
+
+    <string name="tank_health_analysis_record_date_1">26 Sep 2026</string>
+    <string name="tank_health_analysis_record_time_1" translatable="false">14:10</string>
+    <string name="tank_health_analysis_record_date_2">24 Sep 2026</string>
+    <string name="tank_health_analysis_record_time_2" translatable="false">10:32</string>
+    <string name="tank_health_analysis_record_date_3">21 Sep 2026</string>
+    <string name="tank_health_analysis_record_time_3" translatable="false">16:45</string>
+    <string name="tank_health_analysis_record_date_4">18 Sep 2026</string>
+    <string name="tank_health_analysis_record_time_4" translatable="false">11:20</string>
+    <string name="tank_health_analysis_record_date_5">15 Sep 2026</string>
+    <string name="tank_health_analysis_record_time_5" translatable="false">09:15</string>
+    <string name="tank_health_analysis_record_date_6">12 Sep 2026</string>
+    <string name="tank_health_analysis_record_time_6" translatable="false">13:40</string>
+    <string name="tank_health_analysis_record_date_7">9 Sep 2026</string>
+    <string name="tank_health_analysis_record_time_7" translatable="false">18:05</string>
+    <string name="tank_health_analysis_record_date_8">6 Sep 2026</string>
+    <string name="tank_health_analysis_record_time_8" translatable="false">08:55</string>
+    <string name="tank_health_analysis_record_date_9">3 Sep 2026</string>
+    <string name="tank_health_analysis_record_time_9" translatable="false">20:12</string>
+    <string name="tank_health_analysis_record_date_10">31 Aug 2026</string>
+    <string name="tank_health_analysis_record_time_10" translatable="false">12:30</string>
+    <string name="tank_health_analysis_record_date_11">28 Aug 2026</string>
+    <string name="tank_health_analysis_record_time_11" translatable="false">17:20</string>
+    <string name="tank_health_analysis_record_date_12">25 Aug 2026</string>
+    <string name="tank_health_analysis_record_time_12" translatable="false">09:05</string>
+    <string name="tank_health_analysis_value_ph_70" translatable="false">7.0</string>
+    <string name="tank_health_analysis_value_ph_66" translatable="false">6.6</string>
+    <string name="tank_health_analysis_value_ph_72" translatable="false">7.2</string>
+    <string name="tank_health_analysis_value_ph_69" translatable="false">6.9</string>
+    <string name="tank_health_analysis_value_no3_10" translatable="false">10 mg/L</string>
+    <string name="tank_health_analysis_value_no3_22" translatable="false">22 mg/L</string>
+    <string name="tank_health_analysis_value_no3_8" translatable="false">8 mg/L</string>
+    <string name="tank_health_analysis_value_no3_16" translatable="false">16 mg/L</string>
+    <string name="tank_health_analysis_value_temp_24" translatable="false">24 °C</string>
+    <string name="tank_health_analysis_value_temp_26" translatable="false">26 °C</string>
+
+    <string name="tank_health_analysis_record_info_title">Record Information</string>
+    <string name="tank_health_analysis_record_info_subtitle">Date and time information for this record.</string>
+    <string name="tank_health_analysis_date_time_label">Date and Time</string>
+    <string name="tank_health_analysis_record_date_time">26 Sep 2026 • 14:10</string>
+    <string name="tank_health_analysis_values_title">Water Values</string>
+    <string name="tank_health_analysis_values_subtitle">Measurement results in this record.</string>
+    <string name="tank_health_analysis_extra_title">Additional Information</string>
+    <string name="tank_health_analysis_extra_subtitle">Other information for this record.</string>
+    <string name="tank_health_analysis_note_label">Note</string>
+    <string name="tank_health_analysis_note_value">No note added</string>
+    <string name="tank_health_analysis_delete">Delete Record</string>
+    <string name="tank_health_analysis_back">Back</string>
+
+    <string name="tank_health_analysis_delete_title">Delete Record?</string>
+    <string name="tank_health_analysis_delete_message">Are you sure you want to delete the analysis record dated 26 Sep 2026 14:10? This action cannot be undone.</string>
+    <string name="tank_health_analysis_delete_confirm">Delete</string>
+    <string name="tank_health_analysis_delete_cancel">Cancel</string>
+</resources>

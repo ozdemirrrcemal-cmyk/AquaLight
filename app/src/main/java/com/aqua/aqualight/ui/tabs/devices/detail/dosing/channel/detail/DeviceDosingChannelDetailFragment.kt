@@ -152,7 +152,7 @@ class DeviceDosingChannelDetailFragment :
                         DeviceDosingChannelDetailEvent.ChannelReset ->
                             dialogs.showOperationMessage(R.string.device_dosing_detail_channel_reset_done)
                         is DeviceDosingChannelDetailEvent.OperationFailed ->
-                            dialogs.showOperationFailure(event.failure)
+                            dialogs.showOperationFailure(event.failure, event.context)
                     }
                 }
             }

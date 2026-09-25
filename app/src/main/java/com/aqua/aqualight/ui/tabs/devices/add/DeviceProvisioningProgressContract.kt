@@ -10,6 +10,7 @@ sealed interface DeviceProvisioningProgressEvent {
 
     data class ShowAddedDeviceUnavailable(
         val title: String,
+        @StringRes val titleRes: Int,
         @StringRes val messageRes: Int
     ) : DeviceProvisioningProgressEvent
 

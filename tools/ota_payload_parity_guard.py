@@ -45,8 +45,8 @@ MANIFEST_PARSER_PATH = (
 )
 
 EXPECTED_FIRMWARE_REPOSITORY = "ozdemirrrcemal-cmyk/AquaLight-Firmware"
-EXPECTED_FIRMWARE_BRANCH = "feature/cooling-contract-v1"
-EXPECTED_FIRMWARE_COMMIT = "980b03f0d83cdeb997698fc6b207064aa709cec8"
+EXPECTED_FIRMWARE_BRANCH = "main"
+EXPECTED_FIRMWARE_COMMIT = "f0cb5dce3d17993d2994483e01295c7f1c096939"
 
 
 class GuardFailure(AssertionError):
@@ -244,6 +244,86 @@ def verify_phase_matrix(fixture: dict[str, Any], models: str) -> None:
     require(phases == fixture["phases"], "OTA phase wire matrix drifted")
 
 
+def verify_failure_code_matrix(
+    fixture: dict[str, Any],
+    runtime_contract: str,
+    status_parser: str,
+    models: str,
+    failure_mapper: str,
+) -> None:
+    expected_codes = fixture.get("failureCodes")
+    require(isinstance(expected_codes, list), "OTA failure code matrix is missing")
+
+    failure_code_block = extract_braced(runtime_contract, "object FailureCode")
+    actual_codes = list(string_constants(failure_code_block).values())
+    require(
+        actual_codes == expected_codes,
+        "Android OTA failure-code contract differs from pinned firmware",
+    )
+    require(
+        'val failureCode: String = ""' in models,
+        "OTA snapshot model does not retain failureCode",
+    )
+    require(
+        "OTA_LEGACY_" not in status_parser,
+        "OTA parser must not retain legacy snapshot/event field matrices",
+    )
+    require(
+        'source.has("failureCode")' not in status_parser,
+        "OTA parser must require failureCode instead of probing for it",
+    )
+    require(
+        'source.requiredStringAllowEmpty("failureCode")' in status_parser,
+        "OTA parser must read the required failureCode field",
+    )
+
+    typed_block = extract_braced(failure_mapper, "private fun typedFailure")
+    require(
+        ".contains(" not in typed_block,
+        "Typed OTA failure classification must not inspect diagnostic wording",
+    )
+    typed_map_marker = "private val TYPED_FAILURE_DISPOSITIONS = mapOf"
+    typed_map_index = failure_mapper.find(typed_map_marker)
+    require(typed_map_index >= 0, "Typed OTA failure disposition map is missing")
+    typed_map_block = extract_parenthesized(failure_mapper, typed_map_index)
+    expected_names = list(string_constants(failure_code_block))
+    http_failure_name = "DOWNLOAD_HTTP_STATUS"
+    mapped_names = re.findall(
+        r"DeviceFirmwareRuntimeContract\.FailureCode\.(\w+)\s+to",
+        typed_map_block,
+    )
+    require(
+        mapped_names == [name for name in expected_names if name != http_failure_name],
+        "Typed OTA disposition map differs from the stable failure-code matrix",
+    )
+    require(
+        f"DeviceFirmwareRuntimeContract.FailureCode.{http_failure_name}" in typed_block,
+        "Typed OTA HTTP failure must retain status-aware classification",
+    )
+
+    semantics = fixture["wireSemantics"]
+    require(
+        semantics.get("failureCodeFieldRequiredOnEverySnapshot") is True,
+        "Every OTA snapshot must carry the failureCode field",
+    )
+    require(
+        semantics.get("failedSnapshotRequiresNonEmptyFailureCode") is True,
+        "Failed OTA snapshots must carry a non-empty failureCode",
+    )
+    require(
+        semantics.get("diagnosticTextIsNotClassificationInput") is True,
+        "Diagnostic text must not be an OTA classification input",
+    )
+    require(
+        "legacyFailure" not in failure_mapper,
+        "OTA failure mapper must not retain a legacy diagnostic fallback",
+    )
+    require(
+        ".contains(" not in failure_mapper,
+        "OTA failure mapper must not classify from diagnostic wording",
+    )
+
+
 def verify_download_diagnostic_mapping(failure_mapper: str) -> None:
     signed_http_client_codes = {
         "HTTPC_ERROR_CONNECTION_REFUSED": -1,
@@ -363,6 +443,13 @@ def verify() -> None:
     )
     verify_field_matrices(fixture, runtime_contract, status_parser, models)
     verify_phase_matrix(fixture, models)
+    verify_failure_code_matrix(
+        fixture,
+        runtime_contract,
+        status_parser,
+        models,
+        failure_mapper,
+    )
     verify_wire_semantics(
         fixture,
         status_parser,

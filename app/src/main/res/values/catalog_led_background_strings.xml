@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Official LED-background brand and product names are not translated. -->
+    <string name="catalog_led_background_brand_current_usa" translatable="false">Current USA</string>
+    <string name="catalog_led_background_brand_daytime" translatable="false">daytime</string>
+    <string name="catalog_led_background_brand_lightground" translatable="false">Lightground</string>
+    <string name="catalog_led_background_brand_uns" translatable="false">UNS</string>
+
+    <string name="catalog_material_led_background_0001_name" translatable="false">ADA LIGHT SCREEN 300</string>
+    <string name="catalog_material_led_background_0002_name" translatable="false">ADA LIGHT SCREEN 600</string>
+    <string name="catalog_material_led_background_0003_name" translatable="false">ADA LIGHT SCREEN 900</string>
+    <string name="catalog_material_led_background_0004_name" translatable="false">ADA LIGHT SCREEN 1200</string>
+    <string name="catalog_material_led_background_0005_name" translatable="false">ADA Gradation Sheet 60 Blue</string>
+    <string name="catalog_material_led_background_0006_name" translatable="false">ADA Gradation Sheet 90 Blue</string>
+    <string name="catalog_material_led_background_0007_name" translatable="false">ADA Gradation Sheet 90 Green</string>
+    <string name="catalog_material_led_background_0008_name" translatable="false">Chihiros LED Background</string>
+    <string name="catalog_material_led_background_0009_name" translatable="false">Current USA ColorCast Smart Background Light</string>
+    <string name="catalog_material_led_background_0010_name" translatable="false">Current USA Serene Background Lighting</string>
+    <string name="catalog_material_led_background_0011_name" translatable="false">daytime backlight</string>
+    <string name="catalog_material_led_background_0012_name" translatable="false">Lightground RGB Smart Illuminated Background — 25×30 cm</string>
+    <string name="catalog_material_led_background_0013_name" translatable="false">Lightground RGB Smart Illuminated Background — 30×24 cm</string>
+    <string name="catalog_material_led_background_0014_name" translatable="false">Lightground RGB Smart Illuminated Background — 30×30 cm</string>
+    <string name="catalog_material_led_background_0015_name" translatable="false">Lightground RGB Smart Illuminated Background — 30×35 cm</string>
+    <string name="catalog_material_led_background_0016_name" translatable="false">Lightground RGB Smart Illuminated Background — 35×35 cm</string>
+    <string name="catalog_material_led_background_0017_name" translatable="false">Lightground RGB Smart Illuminated Background — 36×26 cm</string>
+    <string name="catalog_material_led_background_0018_name" translatable="false">Lightground RGB Smart Illuminated Background — 40×28 cm</string>
+    <string name="catalog_material_led_background_0019_name" translatable="false">Lightground RGB Smart Illuminated Background — 40×30 cm</string>
+    <string name="catalog_material_led_background_0020_name" translatable="false">Lightground RGB Smart Illuminated Background — 40×40 cm</string>
+    <string name="catalog_material_led_background_0021_name" translatable="false">Lightground RGB Smart Illuminated Background — 45×27 cm</string>
+    <string name="catalog_material_led_background_0022_name" translatable="false">Lightground RGB Smart Illuminated Background — 45×30 cm</string>
+    <string name="catalog_material_led_background_0023_name" translatable="false">Lightground RGB Smart Illuminated Background — 45×34 cm</string>
+    <string name="catalog_material_led_background_0024_name" translatable="false">Lightground RGB Smart Illuminated Background — 45×40 cm</string>
+    <string name="catalog_material_led_background_0025_name" translatable="false">Lightground RGB Smart Illuminated Background — 45×45 cm</string>
+    <string name="catalog_material_led_background_0026_name" translatable="false">Lightground RGB Smart Illuminated Background — 50×36 cm</string>
+    <string name="catalog_material_led_background_0027_name" translatable="false">Lightground RGB Smart Illuminated Background — 60×30 cm</string>
+    <string name="catalog_material_led_background_0028_name" translatable="false">Lightground RGB Smart Illuminated Background — 60×35 cm</string>
+    <string name="catalog_material_led_background_0029_name" translatable="false">Lightground RGB Smart Illuminated Background — 60×36 cm</string>
+    <string name="catalog_material_led_background_0030_name" translatable="false">Lightground RGB Smart Illuminated Background — 60×45 cm</string>
+    <string name="catalog_material_led_background_0031_name" translatable="false">Lightground RGB Smart Illuminated Background — 75×45 cm</string>
+    <string name="catalog_material_led_background_0032_name" translatable="false">Lightground RGB Smart Illuminated Background — 80×40 cm</string>
+    <string name="catalog_material_led_background_0033_name" translatable="false">Lightground RGB Smart Illuminated Background — 80×45 cm</string>
+    <string name="catalog_material_led_background_0034_name" translatable="false">Lightground RGB Smart Illuminated Background — 90×45 cm</string>
+    <string name="catalog_material_led_background_0035_name" translatable="false">Lightground RGB Smart Illuminated Background — 100×40 cm</string>
+    <string name="catalog_material_led_background_0036_name" translatable="false">Lightground RGB Smart Illuminated Background — 100×50 cm</string>
+    <string name="catalog_material_led_background_0037_name" translatable="false">Lightground RGB Smart Illuminated Background — 120×40 cm</string>
+    <string name="catalog_material_led_background_0038_name" translatable="false">Lightground RGB Smart Illuminated Background — 120×45 cm</string>
+    <string name="catalog_material_led_background_0039_name" translatable="false">Lightground RGB Smart Illuminated Background — 120×50 cm</string>
+    <string name="catalog_material_led_background_0040_name" translatable="false">Lightground RGB Smart Illuminated Background — 150×50 cm</string>
+    <string name="catalog_material_led_background_0041_name" translatable="false">Lightground RGB Smart Illuminated Background — 150×60 cm</string>
+    <string name="catalog_material_led_background_0042_name" translatable="false">Lightground RGB Smart Illuminated Background — 170×60 cm</string>
+    <string name="catalog_material_led_background_0043_name" translatable="false">Lightground RGB Smart Illuminated Background — 180×50 cm</string>
+    <string name="catalog_material_led_background_0044_name" translatable="false">Lightground RGB Smart Illuminated Background — 180×55 cm</string>
+    <string name="catalog_material_led_background_0045_name" translatable="false">Lightground RGB Smart Illuminated Background — 180×60 cm</string>
+    <string name="catalog_material_led_background_0046_name" translatable="false">Lightground RGB Smart Illuminated Background — 200×50 cm</string>
+    <string name="catalog_material_led_background_0047_name" translatable="false">Lightground RGB Smart Illuminated Background — 200×60 cm</string>
+    <string name="catalog_material_led_background_0048_name" translatable="false">Lightground Blue-White Gradient Film</string>
+    <string name="catalog_material_led_background_0049_name" translatable="false">Lightground Blue-White Gradient Film — 120×45 cm</string>
+    <string name="catalog_material_led_background_0050_name" translatable="false">UNS Atmos Backlight</string>
+
+    <!-- Search aliases and hardware-type keywords. -->
+    <string name="catalog_keyword_led_background">led background</string>
+    <string name="catalog_keyword_aquarium_background">aquarium background</string>
+    <string name="catalog_keyword_backlight">backlight</string>
+    <string name="catalog_keyword_back_light">back light</string>
+    <string name="catalog_keyword_background_light">background light</string>
+    <string name="catalog_keyword_light_screen">light screen</string>
+    <string name="catalog_keyword_gradation">gradation</string>
+    <string name="catalog_keyword_gradient">gradient</string>
+    <string name="catalog_keyword_sheet">sheet</string>
+    <string name="catalog_keyword_film">film</string>
+    <string name="catalog_keyword_background_film">background film</string>
+    <string name="catalog_keyword_illuminated_background">illuminated background</string>
+    <string name="catalog_keyword_background_panel">background panel</string>
+    <string name="catalog_keyword_smart">smart</string>
+    <string name="catalog_keyword_blue_white">blue white</string>
+    <string name="catalog_keyword_aqua_design_amano" translatable="false">aqua design amano</string>
+    <string name="catalog_keyword_ultum_nature_systems" translatable="false">ultum nature systems</string>
+    <string name="catalog_led_background_alias_color_cast" translatable="false">color cast</string>
+
+    <!-- ASCII dimension aliases keep searches such as "120x45" working for names that use ×. -->
+    <string name="catalog_led_background_alias_25x30_cm" translatable="false">25x30 cm</string>
+    <string name="catalog_led_background_alias_30x24_cm" translatable="false">30x24 cm</string>
+    <string name="catalog_led_background_alias_30x30_cm" translatable="false">30x30 cm</string>
+    <string name="catalog_led_background_alias_30x35_cm" translatable="false">30x35 cm</string>
+    <string name="catalog_led_background_alias_35x35_cm" translatable="false">35x35 cm</string>
+    <string name="catalog_led_background_alias_36x26_cm" translatable="false">36x26 cm</string>
+    <string name="catalog_led_background_alias_40x28_cm" translatable="false">40x28 cm</string>
+    <string name="catalog_led_background_alias_40x30_cm" translatable="false">40x30 cm</string>
+    <string name="catalog_led_background_alias_40x40_cm" translatable="false">40x40 cm</string>
+    <string name="catalog_led_background_alias_45x27_cm" translatable="false">45x27 cm</string>
+    <string name="catalog_led_background_alias_45x30_cm" translatable="false">45x30 cm</string>
+    <string name="catalog_led_background_alias_45x34_cm" translatable="false">45x34 cm</string>
+    <string name="catalog_led_background_alias_45x40_cm" translatable="false">45x40 cm</string>
+    <string name="catalog_led_background_alias_45x45_cm" translatable="false">45x45 cm</string>
+    <string name="catalog_led_background_alias_50x36_cm" translatable="false">50x36 cm</string>
+    <string name="catalog_led_background_alias_60x30_cm" translatable="false">60x30 cm</string>
+    <string name="catalog_led_background_alias_60x35_cm" translatable="false">60x35 cm</string>
+    <string name="catalog_led_background_alias_60x36_cm" translatable="false">60x36 cm</string>
+    <string name="catalog_led_background_alias_60x45_cm" translatable="false">60x45 cm</string>
+    <string name="catalog_led_background_alias_75x45_cm" translatable="false">75x45 cm</string>
+    <string name="catalog_led_background_alias_80x40_cm" translatable="false">80x40 cm</string>
+    <string name="catalog_led_background_alias_80x45_cm" translatable="false">80x45 cm</string>
+    <string name="catalog_led_background_alias_90x45_cm" translatable="false">90x45 cm</string>
+    <string name="catalog_led_background_alias_100x40_cm" translatable="false">100x40 cm</string>
+    <string name="catalog_led_background_alias_100x50_cm" translatable="false">100x50 cm</string>
+    <string name="catalog_led_background_alias_120x40_cm" translatable="false">120x40 cm</string>
+    <string name="catalog_led_background_alias_120x45_cm" translatable="false">120x45 cm</string>
+    <string name="catalog_led_background_alias_120x50_cm" translatable="false">120x50 cm</string>
+    <string name="catalog_led_background_alias_150x50_cm" translatable="false">150x50 cm</string>
+    <string name="catalog_led_background_alias_150x60_cm" translatable="false">150x60 cm</string>
+    <string name="catalog_led_background_alias_170x60_cm" translatable="false">170x60 cm</string>
+    <string name="catalog_led_background_alias_180x50_cm" translatable="false">180x50 cm</string>
+    <string name="catalog_led_background_alias_180x55_cm" translatable="false">180x55 cm</string>
+    <string name="catalog_led_background_alias_180x60_cm" translatable="false">180x60 cm</string>
+    <string name="catalog_led_background_alias_200x50_cm" translatable="false">200x50 cm</string>
+    <string name="catalog_led_background_alias_200x60_cm" translatable="false">200x60 cm</string>
+</resources>

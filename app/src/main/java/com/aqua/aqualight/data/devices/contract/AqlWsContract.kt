@@ -70,8 +70,12 @@ object AqlWsContract {
     const val ACTION_LIGHT_AUTO_PROGRAM_UPDATE = "auto.program.update"
     const val ACTION_LIGHT_AUTO_PROGRAM_ENABLED_SET = "auto.program.enabled.set"
     const val ACTION_LIGHT_AUTO_PROGRAM_DELETE = "auto.program.delete"
+    const val ACTION_LIGHT_AUTO_PLAN_GET = "auto.plan.get"
+    const val ACTION_LIGHT_AUTO_PLAN_APPLY = "auto.plan.apply"
+    const val ACTION_LIGHT_AUTO_PLAN_DELETE = "auto.plan.delete"
     const val ACTION_LIGHT_CUSTOM_GET = "custom.get"
     const val ACTION_LIGHT_CUSTOM_INSTALL = "custom.install"
+    const val ACTION_LIGHT_CUSTOM_CLEAR = "custom.clear"
     const val ACTION_LIGHT_ACCLIMATION_STATUS_GET = "acclimation.status.get"
     const val ACTION_LIGHT_ACCLIMATION_START = "acclimation.start"
     const val ACTION_LIGHT_ACCLIMATION_STOP = "acclimation.stop"
@@ -192,8 +196,12 @@ object AqlWsContract {
         commandKey(MODULE_LIGHT, ACTION_LIGHT_AUTO_PROGRAM_UPDATE),
         commandKey(MODULE_LIGHT, ACTION_LIGHT_AUTO_PROGRAM_ENABLED_SET),
         commandKey(MODULE_LIGHT, ACTION_LIGHT_AUTO_PROGRAM_DELETE),
+        commandKey(MODULE_LIGHT, ACTION_LIGHT_AUTO_PLAN_GET),
+        commandKey(MODULE_LIGHT, ACTION_LIGHT_AUTO_PLAN_APPLY),
+        commandKey(MODULE_LIGHT, ACTION_LIGHT_AUTO_PLAN_DELETE),
         commandKey(MODULE_LIGHT, ACTION_LIGHT_CUSTOM_GET),
         commandKey(MODULE_LIGHT, ACTION_LIGHT_CUSTOM_INSTALL),
+        commandKey(MODULE_LIGHT, ACTION_LIGHT_CUSTOM_CLEAR),
         commandKey(MODULE_LIGHT, ACTION_LIGHT_ACCLIMATION_STATUS_GET),
         commandKey(MODULE_LIGHT, ACTION_LIGHT_ACCLIMATION_START),
         commandKey(MODULE_LIGHT, ACTION_LIGHT_ACCLIMATION_STOP),

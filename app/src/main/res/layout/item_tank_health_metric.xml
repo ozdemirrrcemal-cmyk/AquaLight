@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/Widget.Aqua.Card.Metric"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/aqua_size_72">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical"
+        android:orientation="vertical"
+        android:paddingHorizontal="@dimen/aqua_size_8">
+
+        <TextView
+            android:id="@+id/metricLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:includeFontPadding="false"
+            android:textColor="@color/aqua_card_text_secondary"
+            android:textSize="@dimen/aqua_text_size_micro_caption" />
+
+        <TextView
+            android:id="@+id/metricValue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/aqua_size_3"
+            android:includeFontPadding="false"
+            android:textColor="@color/aqua_card_text_primary"
+            android:textSize="@dimen/aqua_text_size_body"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/metricStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/aqua_size_2"
+            android:includeFontPadding="false"
+            android:textSize="@dimen/aqua_text_size_status_micro" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

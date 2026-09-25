@@ -120,6 +120,7 @@ enum class DeviceLightGraphReason(val wireValue: String) {
     MODE_HAS_NO_SCHEDULE("MODE_HAS_NO_SCHEDULE"),
     RTC_NOT_READY("RTC_NOT_READY"),
     NO_ENABLED_AUTO_PROGRAM_TODAY("NO_ENABLED_AUTO_PROGRAM_TODAY"),
+    MANAGED_PLAN_NOT_SCHEDULED_TODAY("MANAGED_PLAN_NOT_SCHEDULED_TODAY"),
     CUSTOM_NOT_INSTALLED("CUSTOM_NOT_INSTALLED"),
     CUSTOM_NOT_SCHEDULED_TODAY("CUSTOM_NOT_SCHEDULED_TODAY");
 
@@ -131,6 +132,7 @@ enum class DeviceLightGraphReason(val wireValue: String) {
 
 enum class DeviceLightGraphBasis(val wireValue: String) {
     AUTHORED_SCHEDULE("AUTHORED_SCHEDULE"),
+    MANAGED_PLAN("MANAGED_PLAN"),
     NONE("NONE");
 
     companion object {
@@ -260,7 +262,12 @@ data class DeviceLightManualStatus(val scene: DeviceLightScene)
 data class DeviceLightAutoPolicy(
     val capacity: Int,
     val timeStepMs: Long,
-    val rampDurationsMs: List<Long>
+    val rampDurationsMs: List<Long>,
+    val managedPlanPhaseCapacity: Int = DeviceLightRuntimeContract.Limit.MANAGED_PLAN_PHASE_CAPACITY,
+    val managedPlanTransitionDaysMax: Int =
+        DeviceLightRuntimeContract.Limit.MANAGED_PLAN_TRANSITION_DAYS_MAX,
+    val managedPlanSameDayOnly: Boolean = true,
+    val managedPlanContiguous: Boolean = true
 )
 
 data class DeviceLightCustomPolicy(val maxPoints: Int, val timeStepMs: Long)
@@ -298,7 +305,16 @@ data class DeviceLightAutoSummary(
     val programCount: Int,
     val enabledCount: Int,
     val runtimeState: DeviceLightAutoRuntimeState,
-    val activeProgramId: String?
+    val activeProgramId: String?,
+    val scheduleSource: DeviceLightAutoScheduleSource = DeviceLightAutoScheduleSource.PROGRAMS,
+    val planRevision: Long = 0L,
+    val planInstalled: Boolean = false,
+    val planId: String? = null,
+    val activePlanPhaseIndex: Int? = null,
+    val planRuntimeState: DeviceLightManagedPlanRuntimeState =
+        DeviceLightManagedPlanRuntimeState.NOT_INSTALLED,
+    val planTransitionPermille: Int? = null,
+    val nextPlanTransitionEpochDay: Int? = null
 )
 
 data class DeviceLightCustomSummary(
@@ -353,7 +369,8 @@ data class DeviceLightStatus(
     val auto: DeviceLightAutoSummary,
     val custom: DeviceLightCustomSummary,
     val acclimation: DeviceLightAcclimationStatus,
-    val runtime: DeviceLightRuntimeStatus
+    val runtime: DeviceLightRuntimeStatus,
+    val storageGeneration: Long = 0L
 )
 
 data class DeviceLightControlSetPayload(val mode: DeviceLightMode) {
@@ -432,7 +449,10 @@ data class DeviceLightAutoProgramDeletePayload(
 }
 
 data class DeviceLightCustomPoint(val timeMs: Long, val scene: DeviceLightScene) {
-    init { require(timeMs in 0..DeviceLightRuntimeContract.Limit.LAST_DAY_MILLISECOND) }
+    init {
+        require(timeMs in 0..DeviceLightRuntimeContract.Limit.LAST_DAY_MILLISECOND)
+        require(timeMs % DeviceLightRuntimeContract.Limit.SCHEDULE_TIME_STEP_MS == 0L)
+    }
     fun toJsonTuple(): JSONArray = scene.toTuple(timeMs)
 }
 
@@ -458,6 +478,15 @@ data class DeviceLightCustomInstallPayload(
             DeviceLightRuntimeContract.Field.POINTS,
             JSONArray(points.map(DeviceLightCustomPoint::toJsonTuple))
         )
+}
+
+data class DeviceLightCustomClearPayload(
+    val expectedRevision: Long
+) {
+    init { requireRevision(expectedRevision) }
+
+    fun toJson(): JSONObject = JSONObject()
+        .put(DeviceLightRuntimeContract.Field.EXPECTED_REVISION, expectedRevision)
 }
 
 data class DeviceLightAcclimationStartPayload(
@@ -514,6 +543,24 @@ sealed interface DeviceLightPreviewSetPayload {
             .put(DeviceLightRuntimeContract.Field.VIRTUAL_TIME_MS, virtualTimeMs)
             .also { json -> durationMs?.let { json.put(DeviceLightRuntimeContract.Field.DURATION_MS, it) } }
     }
+
+    data class CustomDay(
+        val points: List<DeviceLightCustomPoint>
+    ) : DeviceLightPreviewSetPayload {
+        init {
+            require(points.isNotEmpty())
+            require(points.size <= DeviceLightRuntimeContract.Limit.CUSTOM_POINT_CAPACITY)
+            require(points.zipWithNext().all { (left, right) -> left.timeMs < right.timeMs })
+            require(points.map { it.scene.product }.distinct().size == 1)
+        }
+
+        override fun toJson(): JSONObject = JSONObject()
+            .put(DeviceLightRuntimeContract.Field.PLAYBACK, DeviceLightRuntimeContract.Playback.CUSTOM_DAY)
+            .put(
+                DeviceLightRuntimeContract.Field.POINTS,
+                JSONArray(points.map(DeviceLightCustomPoint::toJsonTuple))
+            )
+    }
 }
 
 private fun validateAutoProgram(
@@ -544,7 +591,7 @@ private fun requireRevision(value: Long) =
     require(value in 0..DeviceLightRuntimeContract.Limit.UINT32_MAX)
 private fun requireProgramId(value: String) = require(PROGRAM_ID.matches(value))
 private fun requirePreviewDuration(value: Long) =
-    require(value in 1..DeviceLightRuntimeContract.Limit.MAX_PREVIEW_DURATION_MS)
+    require(value in 1..DeviceLightRuntimeContract.Limit.MAX_TIMED_PREVIEW_DURATION_MS)
 
 private fun <T> enumByWire(value: String, entries: Iterable<T>, wire: (T) -> String): T =
     entries.singleOrNull { wire(it) == value } ?: error("Unknown Light V1 enum value: $value")

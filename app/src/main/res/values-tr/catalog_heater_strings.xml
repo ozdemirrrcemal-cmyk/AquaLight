@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="catalog_heater_keyword_heater">ısıtıcı</string>
+    <string name="catalog_heater_keyword_aquarium_heater">akvaryum ısıtıcısı</string>
+    <string name="catalog_heater_keyword_submersible">dalgıç</string>
+    <string name="catalog_heater_keyword_in_tank">akvaryum içi</string>
+    <string name="catalog_heater_keyword_inline">hat içi</string>
+    <string name="catalog_heater_keyword_external">harici</string>
+    <string name="catalog_heater_keyword_titanium">titanyum</string>
+    <string name="catalog_heater_keyword_preset">sabit sıcaklık</string>
+    <string name="catalog_heater_keyword_digital">dijital</string>
+    <string name="catalog_heater_keyword_electronic">elektronik</string>
+    <string name="catalog_heater_keyword_controller">kontrolcü</string>
+    <string name="catalog_heater_keyword_remote">uzaktan kontrollü</string>
+    <string name="catalog_heater_keyword_system">sistem</string>
+</resources>

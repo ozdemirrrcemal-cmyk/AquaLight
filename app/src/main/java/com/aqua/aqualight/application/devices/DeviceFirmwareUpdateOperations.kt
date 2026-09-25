@@ -93,12 +93,14 @@ enum class DeviceOtaFailureReason {
     UNSUPPORTED,
     RELEASE_CONNECTION_FAILED,
     DEVICE_NETWORK_UNAVAILABLE,
+    SECURE_TIME_NOT_READY,
     RELEASE_UNAVAILABLE,
     RELEASE_ACCESS_DENIED,
     RELEASE_RATE_LIMITED,
     RELEASE_REDIRECT_FAILED,
     RELEASE_REQUEST_REJECTED,
     RELEASE_SERVER_UNAVAILABLE,
+    RELEASE_PACKAGE_MISMATCH,
     INCOMPATIBLE_FIRMWARE,
     INSUFFICIENT_SPACE,
     DOWNLOAD_CONNECTION_FAILED,
@@ -160,6 +162,11 @@ sealed interface DeviceOtaState {
 
     data class Unsupported(
         override val deviceUid: String
+    ) : DeviceOtaState
+
+    data class ReleaseNotPublished(
+        override val deviceUid: String,
+        val currentVersion: String
     ) : DeviceOtaState
 
     data class UpToDate(

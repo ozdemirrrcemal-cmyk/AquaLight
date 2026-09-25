@@ -20,10 +20,17 @@ ROUTE_RESOLVER = Path(
     "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/route/DeviceRouteResolver.kt"
 )
 NAV_DEVICES = Path("app/src/main/res/navigation/nav_devices.xml")
+NAV_AQUARIUM = Path("app/src/main/res/navigation/nav_aquarium.xml")
 MAIN_LAYOUT = Path("app/src/main/res/layout/activity_main.xml")
 DOSING_FRAGMENT = Path(
     "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing/root/"
     "DeviceDosingRootFragment.kt"
+)
+DOSING_UI_ROOT = Path(
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/dosing"
+)
+DOSING_COMMERCIAL_ERROR_RESOLVER = (
+    DOSING_UI_ROOT / "presentation/common/DeviceDosingCommercialErrorResolver.kt"
 )
 COOLING_FRAGMENT = Path(
     "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/cooling/presentation/root/"
@@ -66,6 +73,77 @@ LIGHT_VIEW_MODEL = Path(
     "DeviceLightRootViewModel.kt"
 )
 LIGHT_LAYOUT = LAYOUT_ROOT / "fragment_device_light_root.xml"
+LIGHT_LIBRARY_FRAGMENT = Path(
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/presentation/library/"
+    "DeviceLightLibraryFragment.kt"
+)
+LIGHT_LIBRARY_LAYOUT = LAYOUT_ROOT / "fragment_device_light_library.xml"
+LIGHT_QUICK_SETUP_FRAGMENT = Path(
+    "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light/presentation/quicksetup/"
+    "DeviceLightQuickSetupFragment.kt"
+)
+LIGHT_QUICK_SETUP_LAYOUT = LAYOUT_ROOT / "fragment_device_light_quick_setup.xml"
+LIGHT_APPLICATION_ROOT = Path(
+    "app/src/main/java/com/aqua/aqualight/application/devices/light"
+)
+LIGHT_DATA_ROOT = Path("app/src/main/java/com/aqua/aqualight/data/devices/light")
+LIGHT_UI_ROOT = Path("app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/light")
+LIGHT_PRESENTATION_ROOT = LIGHT_UI_ROOT / "presentation"
+LIGHT_APPLICATION_AREAS = frozenset(
+    {
+        "adaptation",
+        "automatic",
+        "custom",
+        "dashboard",
+        "library",
+        "manual",
+        "quicksetup",
+        "system",
+    }
+)
+LIGHT_DATA_AREAS = LIGHT_APPLICATION_AREAS
+LIGHT_PRESENTATION_AREAS = frozenset(
+    {
+        "adaptation",
+        "automatic",
+        "common",
+        "custom",
+        "library",
+        "manual",
+        "quicksetup",
+        "root",
+        "settings",
+        "system",
+    }
+)
+LIGHT_AUTOMATIC_AREAS = frozenset({"editor", "preset", "programs"})
+LIGHT_RUNTIME_PROVIDER = Path(
+    "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/"
+    "DeviceRuntimeModuleProvider.kt"
+)
+LIGHT_OPERATION_LOADING_STATE = (
+    LIGHT_PRESENTATION_ROOT / "common/DeviceLightOperationLoadingState.kt"
+)
+LIGHT_COMMERCIAL_ERROR_RESOLVER = (
+    LIGHT_PRESENTATION_ROOT / "common/DeviceLightCommercialErrorResolver.kt"
+)
+LIGHT_STRING_RESOURCES = (
+    Path("app/src/main/res/values/device_light_strings.xml"),
+    Path("app/src/main/res/values-tr/device_light_strings.xml"),
+)
+LIGHT_BLOCKING_OPERATION_SURFACES = (
+    ("adaptation/DeviceLightAdaptationUiState.kt", "adaptation/DeviceLightAdaptationFragment.kt"),
+    (
+        "automatic/editor/DeviceLightAutomaticProgramEditorUiState.kt",
+        "automatic/editor/DeviceLightAutomaticProgramEditorFragment.kt",
+    ),
+    (
+        "automatic/programs/DeviceLightAutomaticProgramsUiState.kt",
+        "automatic/programs/DeviceLightAutomaticProgramsFragment.kt",
+    ),
+    ("custom/DeviceLightCustomCurveUiState.kt", "custom/DeviceLightCustomCurveFragment.kt"),
+    ("system/DeviceLightSystemUiState.kt", "system/DeviceLightSystemFragment.kt"),
+)
 COOLING_LAYOUT = LAYOUT_ROOT / "fragment_device_cooling_root.xml"
 TIMER_FRAGMENT = Path(
     "app/src/main/java/com/aqua/aqualight/ui/tabs/devices/detail/timer/presentation/root/"
@@ -95,6 +173,49 @@ RAW_COLOR = re.compile(r'android:(?:background|textColor|tint)="#[0-9A-Fa-f]{3,8
 RAW_TEXT_SIZE = re.compile(r'android:textSize="[0-9.]+sp"')
 HARD_CODED_COMPOSE_TEXT = re.compile(r'\bText\s*\(\s*"[^"$]+"')
 HARD_CODED_CONTENT_DESCRIPTION = re.compile(r'\bcontentDescription\s*=\s*"[^"$]+"')
+LIGHT_FAILURE_MESSAGE_MAPPER = re.compile(
+    r"fun\s+DeviceLight(?:Adaptation|Automatic|Custom|Library|Manual|System)"
+    r"Failure\.messageRes\s*\("
+)
+LIGHT_COMMERCIAL_ERROR_REFERENCE = re.compile(
+    r"R\.string\.(?:"
+    r"device_light_adaptation_(?:stale|clock|unsupported|invalid|not_connected|operation)_error|"
+    r"device_light_auto_operation_error|"
+    r"device_light_auto_editor_(?:stale|capacity|overlap|not_found|not_connected)|"
+    r"device_light_error_not_connected_message|"
+    r"device_light_manual_(?:operation|not_connected)_error|"
+    r"device_light_library_(?:operation|load_not_connected)_error|"
+    r"device_light_library_error_(?:title|message)|"
+    r"device_light_custom_operation_error|"
+    r"device_light_system_(?:partial_save|not_connected|unsupported|invalid_data|operation)_error"
+    r")\b"
+)
+DOSING_COMMERCIAL_ERROR_REFERENCE = re.compile(
+    r"R\.string\.(?:"
+    r"device_dosing_channel_open_failed|"
+    r"device_dosing_plan_rejected_(?:not_editable|not_calibrated|busy|conflict|unsafe)|"
+    r"device_dosing_plan_invalid_schedule|"
+    r"device_dosing_plan_unavailable|"
+    r"device_dosing_detail_error_(?:invalid_input|not_editable|calibration_required|busy|"
+    r"state_changed|safety_blocked|unavailable)|"
+    r"device_dosing_error_output_stop_unconfirmed|"
+    r"device_dosing_detail_operation_failed|"
+    r"device_dosing_calibration_(?:connection_error|storage_error|hardware_error|"
+    r"operation_in_progress|device_time_not_ready|state_mismatch|operation_failed|"
+    r"invalid_measurement)"
+    r")"
+)
+DOSING_LOCAL_VALIDATION_RESOURCE_OWNERS = {
+    DOSING_UI_ROOT / "channel/detail/DeviceDosingChannelDetailDialogs.kt": (
+        "device_dosing_detail_error_invalid_input",
+    ),
+    DOSING_UI_ROOT / "channel/plan/DeviceDosingPlanFragment.kt": (
+        "device_dosing_plan_invalid_schedule",
+    ),
+    DOSING_UI_ROOT / "channel/calibration/DosingCalibrationPresentation.kt": (
+        "device_dosing_calibration_invalid_measurement",
+    ),
+}
 
 COOLING_UI_FORBIDDEN = (
     "import com.aqua.aqualight.data.",
@@ -531,21 +652,420 @@ def validate_cooling_feature_boundaries(repository_root: Path) -> list[str]:
     return errors
 
 
+def validate_dosing_commercial_error_boundaries(repository_root: Path) -> list[str]:
+    """Keep Dosing operational failure copy behind one feature-scoped resolver."""
+    errors: list[str] = []
+    resolver = _read(repository_root, DOSING_COMMERCIAL_ERROR_RESOLVER, errors)
+    _require(
+        DOSING_COMMERCIAL_ERROR_RESOLVER,
+        resolver,
+        errors,
+        "object DeviceDosingCommercialErrorResolver",
+        "Dosing command failures must use one feature-scoped commercial error resolver",
+    )
+
+    absolute_ui_root = repository_root / DOSING_UI_ROOT
+    if not absolute_ui_root.is_dir():
+        errors.append(f"{DOSING_UI_ROOT}: Dosing UI root is missing")
+        return errors
+
+    for path in sorted(absolute_ui_root.rglob("*.kt")):
+        relative_path = path.relative_to(repository_root)
+        if relative_path == DOSING_COMMERCIAL_ERROR_RESOLVER:
+            continue
+        source = path.read_text(encoding="utf-8", errors="ignore")
+        for resource_name in DOSING_LOCAL_VALIDATION_RESOURCE_OWNERS.get(relative_path, ()):
+            source = source.replace(f"R.string.{resource_name}", "")
+        if DOSING_COMMERCIAL_ERROR_REFERENCE.search(source):
+            errors.append(
+                f"{relative_path}: Dosing operational error resources must be owned by "
+                "DeviceDosingCommercialErrorResolver"
+            )
+    return errors
+
+
+def validate_light_feature_boundaries(repository_root: Path) -> list[str]:
+    """Keep every Light destination in its vertical slice and one central runtime owner."""
+    errors: list[str] = []
+
+    commercial_error_resolver = _read(
+        repository_root,
+        LIGHT_COMMERCIAL_ERROR_RESOLVER,
+        errors,
+    )
+    _require(
+        LIGHT_COMMERCIAL_ERROR_RESOLVER,
+        commercial_error_resolver,
+        errors,
+        "object DeviceLightCommercialErrorResolver",
+        "Light command failures must use one feature-scoped commercial error resolver",
+    )
+    for string_resource in LIGHT_STRING_RESOURCES:
+        _read(repository_root, string_resource, errors)
+    allowed_string_resources = set(LIGHT_STRING_RESOURCES)
+    for values_root in (Path("app/src/main/res/values"), Path("app/src/main/res/values-tr")):
+        absolute_values_root = repository_root / values_root
+        if not absolute_values_root.is_dir():
+            continue
+        for path in sorted(absolute_values_root.glob("*.xml")):
+            relative_path = path.relative_to(repository_root)
+            if relative_path in allowed_string_resources:
+                continue
+            source = path.read_text(encoding="utf-8", errors="ignore")
+            if re.search(r'name="device_light_', source):
+                errors.append(
+                    f"{relative_path}: Light-specific strings must stay in the canonical "
+                    "device_light_strings.xml for this locale"
+                )
+
+    for root, expected_areas, label in (
+        (LIGHT_APPLICATION_ROOT, LIGHT_APPLICATION_AREAS, "application"),
+        (LIGHT_DATA_ROOT, LIGHT_DATA_AREAS, "data"),
+        (LIGHT_PRESENTATION_ROOT, LIGHT_PRESENTATION_AREAS, "presentation"),
+    ):
+        absolute_root = repository_root / root
+        if not absolute_root.is_dir():
+            errors.append(f"{root}: Light {label} root is missing")
+            continue
+        actual_areas = {path.name for path in absolute_root.iterdir() if path.is_dir()}
+        for missing in sorted(expected_areas - actual_areas):
+            errors.append(f"{root / missing}: required Light {label} package is missing")
+        for unexpected in sorted(actual_areas - expected_areas):
+            errors.append(f"{root / unexpected}: unexpected Light {label} package")
+
+    automatic_root = repository_root / LIGHT_PRESENTATION_ROOT / "automatic"
+    if automatic_root.is_dir():
+        actual_automatic_areas = {
+            path.name for path in automatic_root.iterdir() if path.is_dir()
+        }
+        for missing in sorted(LIGHT_AUTOMATIC_AREAS - actual_automatic_areas):
+            errors.append(
+                f"{LIGHT_PRESENTATION_ROOT / 'automatic' / missing}: "
+                "required Automatic destination package is missing"
+            )
+        for unexpected in sorted(actual_automatic_areas - LIGHT_AUTOMATIC_AREAS):
+            errors.append(
+                f"{LIGHT_PRESENTATION_ROOT / 'automatic' / unexpected}: "
+                "unexpected Automatic destination package"
+            )
+        for path in automatic_root.glob("*.kt"):
+            errors.append(
+                f"{path.relative_to(repository_root)}: Automatic presentation files must live "
+                "in programs, editor or preset"
+            )
+
+    for source_root in (LIGHT_APPLICATION_ROOT, LIGHT_DATA_ROOT, LIGHT_PRESENTATION_ROOT):
+        absolute_root = repository_root / source_root
+        if not absolute_root.is_dir():
+            continue
+        layer_name = {
+            LIGHT_APPLICATION_ROOT: "application",
+            LIGHT_DATA_ROOT: "data",
+            LIGHT_PRESENTATION_ROOT: "presentation",
+        }[source_root]
+        for path in sorted(
+            source_path
+            for pattern in ("*.kt", "*.java")
+            for source_path in absolute_root.rglob(pattern)
+        ):
+            source = path.read_text(encoding="utf-8", errors="ignore")
+            relative_path = path.relative_to(repository_root)
+            package_match = re.search(r"^package\s+([\w.]+)", source, re.MULTILINE)
+            expected_package = ".".join(
+                path.parent.relative_to(repository_root / MAIN_SOURCE_ROOT).parts
+            )
+            if package_match is None or package_match.group(1) != expected_package:
+                actual_package = package_match.group(1) if package_match else "<missing>"
+                errors.append(
+                    f"{path.relative_to(repository_root)}: Package must match Light path: "
+                    f"expected {expected_package}, found {actual_package}"
+                )
+            if re.search(r"@(?:file:)?Suppress\s*\(", source):
+                errors.append(
+                    f"{path.relative_to(repository_root)}: Light production code must resolve "
+                    "static-analysis findings instead of suppressing them"
+                )
+            forbidden_imports = {
+                LIGHT_APPLICATION_ROOT: (
+                    "import com.aqua.aqualight.data.",
+                    "import com.aqua.aqualight.platform.",
+                    "import com.aqua.aqualight.ui.",
+                ),
+                LIGHT_DATA_ROOT: ("import com.aqua.aqualight.ui.",),
+                LIGHT_PRESENTATION_ROOT: (
+                    "import com.aqua.aqualight.data.",
+                    "import com.aqua.aqualight.platform.",
+                ),
+            }[source_root]
+            for forbidden_import in forbidden_imports:
+                if forbidden_import in source:
+                    errors.append(
+                        f"{path.relative_to(repository_root)}: Light {layer_name} "
+                        f"layer imports a forbidden outer layer: {forbidden_import}"
+                    )
+            if (
+                source_root == LIGHT_PRESENTATION_ROOT
+                and relative_path != LIGHT_COMMERCIAL_ERROR_RESOLVER
+            ):
+                if LIGHT_FAILURE_MESSAGE_MAPPER.search(source):
+                    errors.append(
+                        f"{relative_path}: Light failure copy must be resolved by "
+                        "DeviceLightCommercialErrorResolver"
+                    )
+                if LIGHT_COMMERCIAL_ERROR_REFERENCE.search(source):
+                    errors.append(
+                        f"{relative_path}: Light operational error resources must be owned by "
+                        "DeviceLightCommercialErrorResolver"
+                    )
+
+    legacy_roots = (
+        LIGHT_UI_ROOT / "presentation/menu",
+        Path("app/src/main/java/com/aqua/aqualight/ui/common/light"),
+        LIGHT_APPLICATION_ROOT / "control",
+        LIGHT_APPLICATION_ROOT / "preset",
+        LIGHT_DATA_ROOT / "control",
+    )
+    for legacy_root in legacy_roots:
+        if (repository_root / legacy_root).exists():
+            errors.append(f"{legacy_root}: legacy Light package must not return")
+
+    manual_contract = LIGHT_APPLICATION_ROOT / "manual/DeviceLightManualOperations.kt"
+    manual_adapter = LIGHT_DATA_ROOT / "manual/DefaultDeviceLightManualOperations.kt"
+    for required_path, token in (
+        (manual_contract, "interface DeviceLightManualOperations"),
+        (manual_adapter, "class DefaultDeviceLightManualOperations"),
+    ):
+        source = _read(repository_root, required_path, errors)
+        _require(
+            required_path,
+            source,
+            errors,
+            token,
+            "Manual Light must keep a real application/data vertical slice",
+        )
+
+    automatic_edges = {area: set() for area in LIGHT_AUTOMATIC_AREAS}
+    automatic_import = re.compile(
+        r"^import\s+com\.aqua\.aqualight\.ui\.tabs\.devices\.detail\.light\."
+        r"presentation\.automatic\.(editor|preset|programs)\.",
+        re.MULTILINE,
+    )
+    if automatic_root.is_dir():
+        for source_area in LIGHT_AUTOMATIC_AREAS:
+            area_root = automatic_root / source_area
+            if not area_root.is_dir():
+                continue
+            for path in area_root.rglob("*.kt"):
+                source = path.read_text(encoding="utf-8", errors="ignore")
+                for target_area in automatic_import.findall(source):
+                    if target_area != source_area:
+                        automatic_edges[source_area].add(target_area)
+                        if {source_area, target_area} == {"editor", "preset"}:
+                            errors.append(
+                                f"{path.relative_to(repository_root)}: Automatic editor and "
+                                "preset must communicate through a shared parent contract"
+                            )
+    remaining = {area: set(targets) for area, targets in automatic_edges.items()}
+    while True:
+        roots = {area for area, targets in remaining.items() if not targets}
+        if not roots:
+            break
+        for root in roots:
+            remaining.pop(root)
+        for targets in remaining.values():
+            targets.difference_update(roots)
+    if remaining:
+        errors.append(
+            "Light Automatic presentation package dependency cycle: "
+            + ", ".join(sorted(remaining))
+        )
+
+    library_adapter = _read(
+        repository_root,
+        LIGHT_DATA_ROOT / "library/DefaultDeviceLightLibraryOperations.kt",
+        errors,
+    )
+    if "installedCustomDocuments" in library_adapter:
+        errors.append(
+            "Light Library must read installed custom documents from the central runtime owner"
+        )
+
+    manual_fragment = _read(
+        repository_root,
+        LIGHT_PRESENTATION_ROOT / "manual/DeviceLightManualControlFragment.kt",
+        errors,
+    )
+    _require(
+        LIGHT_PRESENTATION_ROOT / "manual/DeviceLightManualControlFragment.kt",
+        manual_fragment,
+        errors,
+        "onChannelValueChangeFinished = { viewModel.commitScene() }",
+        "Manual slider completion must commit through the application boundary",
+    )
+
+    loading_contract = _read(repository_root, LIGHT_OPERATION_LOADING_STATE, errors)
+    for token, reason in (
+        (
+            "interface DeviceLightOperationLoadingState",
+            "blocking Light commands must share one presentation loading policy",
+        ),
+        (
+            "get() = initialLoading || operationInProgress",
+            "Light loading policy must cover initial reads and blocking commands",
+        ),
+    ):
+        _require(LIGHT_OPERATION_LOADING_STATE, loading_contract, errors, token, reason)
+
+    for state_suffix, fragment_suffix in LIGHT_BLOCKING_OPERATION_SURFACES:
+        state_path = LIGHT_PRESENTATION_ROOT / state_suffix
+        fragment_path = LIGHT_PRESENTATION_ROOT / fragment_suffix
+        state_source = _read(repository_root, state_path, errors)
+        fragment_source = _read(repository_root, fragment_path, errors)
+        _require(
+            state_path,
+            state_source,
+            errors,
+            "DeviceLightOperationLoadingState",
+            "blocking Light command state must use the central loading policy",
+        )
+        _require(
+            fragment_path,
+            fragment_source,
+            errors,
+            "setFragmentGlobalLoading(state.showGlobalLoading)",
+            "blocking Light commands must use owner-keyed global loading",
+        )
+
+    custom_state_path = (
+        LIGHT_PRESENTATION_ROOT / "custom/DeviceLightCustomCurveUiState.kt"
+    )
+    custom_state = _read(repository_root, custom_state_path, errors)
+    for token, reason in (
+        (
+            "val blockingOperationInProgress: Boolean = false",
+            "Custom preview and persistent operations must have distinct loading semantics",
+        ),
+        (
+            "get() = initialLoading || blockingOperationInProgress",
+            "Custom preview must not open blocking global loading",
+        ),
+    ):
+        _require(custom_state_path, custom_state, errors, token, reason)
+
+    manual_state_path = (
+        LIGHT_PRESENTATION_ROOT / "manual/DeviceLightManualControlUiState.kt"
+    )
+    manual_state = _read(repository_root, manual_state_path, errors)
+    _require(
+        manual_state_path,
+        manual_state,
+        errors,
+        "get() = initialLoading",
+        "Manual live controls may block only for the first authoritative read",
+    )
+    _require(
+        LIGHT_PRESENTATION_ROOT / "manual/DeviceLightManualControlFragment.kt",
+        manual_fragment,
+        errors,
+        "setFragmentGlobalLoading(state.showGlobalLoading)",
+        "Manual initial loading must use the owner-keyed global loading host",
+    )
+    if "DeviceLightOperationLoadingState" in manual_state:
+        errors.append(
+            f"{manual_state_path}: Manual slider commands must remain non-blocking"
+        )
+
+    light_state_owner_path = Path(
+        "app/src/main/java/com/aqua/aqualight/data/devices/runtime/modules/light/"
+        "DeviceLightRuntimeStateOwner.kt"
+    )
+    light_state_owner = _read(repository_root, light_state_owner_path, errors)
+    for token, reason in (
+        (
+            "internal val customProjection = DeviceLightCustomRuntimeProjection(",
+            "central Light runtime owner must own custom documents",
+        ),
+        (
+            "fun currentAuthoritative",
+            "custom reads must enforce current-generation authority",
+        ),
+        (
+            "fun record(",
+            "custom replies must publish through the central Light runtime owner",
+        ),
+    ):
+        _require(light_state_owner_path, light_state_owner, errors, token, reason)
+
+    provider = _read(repository_root, LIGHT_RUNTIME_PROVIDER, errors)
+    for token, reason in (
+        (
+            "private val lightStateOwner = DeviceLightRuntimeStateOwner()",
+            "Light must construct exactly one owner-scoped runtime state owner",
+        ),
+        (
+            "DeviceLightRuntimeRepository(commandGateway, lightStateOwner)",
+            "main Light runtime must share the central state owner",
+        ),
+        (
+            "DeviceLightTemperatureProtectionRuntimeRepository(commandGateway, lightStateOwner)",
+            "Light protection runtime must share the central state owner",
+        ),
+        (
+            "DeviceLightThermalRuntimeRepository(commandGateway, lightStateOwner)",
+            "Light thermal runtime must share the central state owner",
+        ),
+    ):
+        _require(LIGHT_RUNTIME_PROVIDER, provider, errors, token, reason)
+
+    production_owner_constructions: list[tuple[Path, int]] = []
+    main_source_root = repository_root / MAIN_SOURCE_ROOT
+    if main_source_root.is_dir():
+        for path in main_source_root.rglob("*.kt"):
+            source = path.read_text(encoding="utf-8", errors="ignore")
+            construction_count = len(
+                re.findall(r"\bDeviceLightRuntimeStateOwner\s*\(", source)
+            )
+            if construction_count:
+                production_owner_constructions.append(
+                    (path.relative_to(repository_root), construction_count)
+                )
+            if "DeviceLightThermalRuntimeStateOwner" in source:
+                errors.append(
+                    f"{path.relative_to(repository_root)}: parallel Light thermal state owner "
+                    "must not return"
+                )
+    if production_owner_constructions != [(LIGHT_RUNTIME_PROVIDER, 1)]:
+        errors.append(
+            "Light production must construct exactly one state owner only in "
+            f"{LIGHT_RUNTIME_PROVIDER}; found {production_owner_constructions}"
+        )
+    return errors
+
+
 def validate_repository(repository_root: Path = ROOT) -> list[str]:
     errors: list[str] = []
     devices_view_model = _read(repository_root, DEVICES_VIEW_MODEL, errors)
     devices_fragment = _read(repository_root, DEVICES_FRAGMENT, errors)
     route_resolver = _read(repository_root, ROUTE_RESOLVER, errors)
     nav_devices = _read(repository_root, NAV_DEVICES, errors)
+    nav_aquarium = _read(repository_root, NAV_AQUARIUM, errors)
     main_layout = _read(repository_root, MAIN_LAYOUT, errors)
     dosing_fragment = _read(repository_root, DOSING_FRAGMENT, errors)
     light_fragment = _read(repository_root, LIGHT_FRAGMENT, errors)
     light_view_model = _read(repository_root, LIGHT_VIEW_MODEL, errors)
+    light_library_fragment = _read(repository_root, LIGHT_LIBRARY_FRAGMENT, errors)
+    light_quick_setup_fragment = _read(
+        repository_root,
+        LIGHT_QUICK_SETUP_FRAGMENT,
+        errors,
+    )
     cooling_fragment = _read(repository_root, COOLING_FRAGMENT, errors)
     cooling_view_model = _read(repository_root, COOLING_VIEW_MODEL, errors)
     cooling_availability = _read(repository_root, COOLING_AVAILABILITY, errors)
     dosing_layout = _read(repository_root, DOSING_LAYOUT, errors)
     light_layout = _read(repository_root, LIGHT_LAYOUT, errors)
+    light_library_layout = _read(repository_root, LIGHT_LIBRARY_LAYOUT, errors)
+    light_quick_setup_layout = _read(repository_root, LIGHT_QUICK_SETUP_LAYOUT, errors)
     cooling_layout = _read(repository_root, COOLING_LAYOUT, errors)
     timer_fragment = _read(repository_root, TIMER_FRAGMENT, errors)
     timer_view_model = _read(repository_root, TIMER_VIEW_MODEL, errors)
@@ -633,8 +1153,86 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
             'app:destination="@id/deviceCoolingSettingsFragment"',
             "Cooling settings action must target the canonical destination",
         ),
+        (
+            'android:id="@+id/action_deviceLightRootFragment_to_deviceLightLibraryFragment"',
+            "Light Library action must remain in the shared devices navigation graph",
+        ),
+        (
+            'app:destination="@id/deviceLightLibraryFragment"',
+            "Light Library action must target the canonical destination",
+        ),
+        (
+            'android:id="@+id/action_deviceLightRootFragment_to_deviceLightQuickSetupFragment"',
+            "Light Quick setup action must remain in the shared devices navigation graph",
+        ),
+        (
+            'app:destination="@id/deviceLightQuickSetupFragment"',
+            "Light Quick setup action must target the canonical destination",
+        ),
     ):
         _require(NAV_DEVICES, nav_devices, errors, token, reason)
+
+    for token, reason in (
+        (
+            'android:id="@+id/action_deviceLightRootFragment_to_deviceLightLibraryFragment"',
+            "Aquarium navigation must expose the Light Library action",
+        ),
+        (
+            'android:id="@+id/action_deviceLightRootFragment_to_deviceLightQuickSetupFragment"',
+            "Aquarium navigation must expose the Light Quick setup action",
+        ),
+        (
+            'app:destination="@id/deviceLightQuickSetupFragment"',
+            "Aquarium navigation must target the canonical Light Quick setup destination",
+        ),
+    ):
+        _require(NAV_AQUARIUM, nav_aquarium, errors, token, reason)
+
+    light_dashboard_destinations = (
+        "DeviceLightManualControlFragment",
+        "DeviceLightAutomaticProgramsFragment",
+        "DeviceLightAutomaticProgramEditorFragment",
+        "DeviceLightCustomCurveFragment",
+        "DeviceLightAdaptationFragment",
+        "DeviceLightSystemFragment",
+    )
+    for destination in light_dashboard_destinations:
+        action_token = (
+            'android:id="@+id/action_deviceLightRootFragment_to_'
+            f'{destination[0].lower()}{destination[1:]}"'
+        )
+        destination_token = (
+            'app:destination="@id/'
+            f'{destination[0].lower()}{destination[1:]}"'
+        )
+        _require(
+            NAV_DEVICES,
+            nav_devices,
+            errors,
+            action_token,
+            f"Light dashboard action must remain in the devices graph: {destination}",
+        )
+        _require(
+            NAV_DEVICES,
+            nav_devices,
+            errors,
+            destination_token,
+            f"Light dashboard action must target its canonical destination: {destination}",
+        )
+        _require(
+            NAV_AQUARIUM,
+            nav_aquarium,
+            errors,
+            action_token,
+            f"Light dashboard action must remain in the aquarium graph: {destination}",
+        )
+        _require(
+            LIGHT_FRAGMENT,
+            light_fragment,
+            errors,
+            f"actionDeviceLightRootFragmentTo{destination}(",
+            f"Light dashboard navigation must use Safe Args: {destination}",
+        )
 
     errors.extend(
         validate_header_contract(
@@ -646,6 +1244,66 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
             directions_action="actionDeviceLightRootFragmentToDeviceLightSettingsFragment(",
         )
     )
+    for token, reason in (
+        (
+            "binding.appHeader.setupAquaHeader(",
+            "Light Library must use the shared AquaHeader binder",
+        ),
+        (
+            "config = AquaHeaderConfig(",
+            "Light Library must use the shared AquaHeader config",
+        ),
+        (
+            "getString(R.string.device_light_library_title)",
+            "Light Library title must come from String resources",
+        ),
+        (
+            "findNavController().navigateUp()",
+            "Light Library back behavior must use the shared navigation host",
+        ),
+    ):
+        _require(LIGHT_LIBRARY_FRAGMENT, light_library_fragment, errors, token, reason)
+
+    for forbidden, reason in (
+        ("MaterialToolbar", "Light Library must not construct a parallel toolbar"),
+        ("setSupportActionBar", "Light Library must not construct a parallel action bar"),
+        ('titleOverride = "', "Light Library title must not be hard-coded"),
+    ):
+        if forbidden in light_library_fragment:
+            errors.append(f"{LIGHT_LIBRARY_FRAGMENT}: {reason}: {forbidden}")
+    for token, reason in (
+        (
+            "binding.appHeader.setupAquaHeader(",
+            "Light Quick setup must use the shared AquaHeader binder",
+        ),
+        (
+            "config = AquaHeaderConfig(",
+            "Light Quick setup must use the shared AquaHeader config",
+        ),
+        (
+            "getString(R.string.device_menu_quick_setup_title)",
+            "Light Quick setup title must come from String resources",
+        ),
+        (
+            "findNavController().navigateUp()",
+            "Light Quick setup back behavior must use the shared navigation host",
+        ),
+    ):
+        _require(
+            LIGHT_QUICK_SETUP_FRAGMENT,
+            light_quick_setup_fragment,
+            errors,
+            token,
+            reason,
+        )
+
+    for forbidden, reason in (
+        ("MaterialToolbar", "Light Quick setup must not construct a parallel toolbar"),
+        ("setSupportActionBar", "Light Quick setup must not construct a parallel action bar"),
+        ('titleOverride = "', "Light Quick setup title must not be hard-coded"),
+    ):
+        if forbidden in light_quick_setup_fragment:
+            errors.append(f"{LIGHT_QUICK_SETUP_FRAGMENT}: {reason}: {forbidden}")
     errors.extend(
         validate_header_contract(
             DOSING_FRAGMENT,
@@ -727,7 +1385,7 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
         "runtime.modules.light",
         "DevicesRepository",
         "DeviceLightRuntimeRepository",
-        "DeviceLightRuntimeStateStore",
+        "DeviceLightRuntimeStateOwner",
     ):
         if forbidden in light_view_model or forbidden in light_fragment:
             errors.append(
@@ -787,6 +1445,18 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
     )
     errors.extend(
         validate_layout_contract(
+            LIGHT_LIBRARY_LAYOUT,
+            light_library_layout,
+        )
+    )
+    errors.extend(
+        validate_layout_contract(
+            LIGHT_QUICK_SETUP_LAYOUT,
+            light_quick_setup_layout,
+        )
+    )
+    errors.extend(
+        validate_layout_contract(
             COOLING_LAYOUT,
             cooling_layout,
             background_owned_by_shell=True,
@@ -804,6 +1474,8 @@ def validate_repository(repository_root: Path = ROOT) -> list[str]:
     )
     errors.extend(validate_timer_feature_boundaries(repository_root))
     errors.extend(validate_cooling_feature_boundaries(repository_root))
+    errors.extend(validate_dosing_commercial_error_boundaries(repository_root))
+    errors.extend(validate_light_feature_boundaries(repository_root))
     return errors
 
 

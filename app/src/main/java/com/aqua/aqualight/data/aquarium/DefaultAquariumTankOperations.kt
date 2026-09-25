@@ -3,6 +3,8 @@ package com.aqua.aqualight.data.aquarium
 import android.content.Context
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
 import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
+import com.aqua.aqualight.application.aquarium.AquariumLivestockPhotoOperations
+import com.aqua.aqualight.application.aquarium.AquariumPlantPhotoOperations
 import com.aqua.aqualight.application.aquarium.AquariumPlantTag
 import com.aqua.aqualight.application.aquarium.AquariumTankCleanupIssue
 import com.aqua.aqualight.application.aquarium.AquariumTankCleanupStage
@@ -12,6 +14,7 @@ import com.aqua.aqualight.application.aquarium.AquariumTankSize
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.application.aquarium.DeleteAquariumTanksResult
 import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
+import com.aqua.aqualight.data.aquarium.catalog.livestock.LivestockSelectionValidator
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumLivestock
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
@@ -21,6 +24,7 @@ import com.aqua.aqualight.data.aquarium.model.TankPlantTag
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.data.user.withCurrentOwnerScope
+import com.aqua.aqualight.platform.media.AppMediaScope
 import com.aqua.aqualight.platform.media.AppMediaStorage
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -35,25 +39,38 @@ class DefaultAquariumTankOperations(
     private val tankDataCleaner: OwnerTankDataCleaner,
     private val notificationPreferences: NotificationPreferenceUseCase,
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
-) : AquariumTankOperations {
+) : AquariumTankOperations,
+    AquariumPlantPhotoOperations by DefaultPlantPhotoOperations(context, tankStore, dispatcher),
+    AquariumLivestockPhotoOperations by DefaultLivestockPhotoOperations(context, tankStore, dispatcher) {
 
     private val appContext = context.applicationContext
+    private val livestockSelectionValidator = LivestockSelectionValidator(appContext)
 
     override val tanks: Flow<List<AquariumTankSnapshot>> = tankStore.tanksFlow.map { tanks ->
         tanks.map(SavedAquariumTank::toApplicationSnapshot)
     }
 
-    override suspend fun addTank(draft: AquariumTankDraft): Long = withContext(NonCancellable) {
-        withContext(dispatcher) {
-            val pendingPhoto = draft.photoUri
+    override suspend fun addTank(draft: AquariumTankDraft): Long = withCurrentOwnerScope { ownerUid ->
+        withContext(NonCancellable + dispatcher) {
+            val pendingMedia = buildList {
+                draft.photoUri?.takeIf(String::isNotBlank)?.let(::add)
+                draft.plants
+                    .mapNotNull { plant -> plant.photoUri?.takeIf(String::isNotBlank) }
+                    .forEach(::add)
+            }
             val tankId = try {
                 tankStore.addTankFromDraft(draft.toDataDraft())
             } catch (error: Throwable) {
-                runCatching { AppMediaStorage.rollbackPendingMedia(appContext, pendingPhoto) }
+                pendingMedia.forEach { uri ->
+                    val scope = if (uri == draft.photoUri) AppMediaScope.TANK else AppMediaScope.PLANT
+                    rollbackUnreferencedCandidate(appContext, tankStore, uri, ownerUid, scope)
+                }
                 throw error
             }
 
-            runCatching { AppMediaStorage.commitPendingMedia(appContext, pendingPhoto) }
+            pendingMedia.forEach { uri ->
+                runCatching { AppMediaStorage.commitPendingMedia(appContext, uri) }
+            }
             tankId
         }
     }
@@ -73,14 +90,33 @@ class DefaultAquariumTankOperations(
             val invalidSharedOwnership = sourceIsOwned &&
                 !source.photoUri.isNullOrBlank() &&
                 (duplicate.photoUri.isNullOrBlank() || duplicate.photoUri == source.photoUri)
-            if (invalidSharedOwnership) {
+            val duplicatePlantsById = duplicate.plants.associateBy { plant -> plant.id }
+            val hasInvalidPlantOwnership = source.plants.any { sourcePlant ->
+                val duplicatedPlant = duplicatePlantsById[sourcePlant.id]
+                AppMediaStorage.isAppOwned(appContext, sourcePlant.photoUri) &&
+                    !sourcePlant.photoUri.isNullOrBlank() &&
+                    (
+                        duplicatedPlant?.photoUri.isNullOrBlank() ||
+                            duplicatedPlant?.photoUri == sourcePlant.photoUri
+                        )
+            }
+            if (
+                invalidSharedOwnership || hasInvalidPlantOwnership ||
+                !source.hasIndependentLivestockPhotos(duplicate)
+            ) {
                 runCatching { tankStore.deleteTanks(listOf(duplicateId)) }
                 throw IllegalStateException(
-                    "Tank photo could not be copied with independent ownership."
+                    "Tank media could not be copied with independent ownership."
                 )
             }
 
-            runCatching { AppMediaStorage.commitPendingMedia(appContext, duplicate.photoUri) }
+            buildList {
+                duplicate.photoUri?.takeIf(String::isNotBlank)?.let(::add)
+                duplicate.plants.mapNotNull { it.photoUri?.takeIf(String::isNotBlank) }.forEach(::add)
+                duplicate.livestock.mapNotNull { it.photoUri?.takeIf(String::isNotBlank) }.forEach(::add)
+            }.forEach { uri ->
+                runCatching { AppMediaStorage.commitPendingMedia(appContext, uri) }
+            }
             duplicateId
         }
     }
@@ -153,14 +189,48 @@ class DefaultAquariumTankOperations(
         materials = materials.map(AquariumMaterialSelection::toDataSelection)
     )
 
-    override suspend fun updateTankPlants(tankId: Long, plants: List<AquariumPlantTag>) =
-        tankStore.updateTankPlants(tankId, plants.map(AquariumPlantTag::toDataTag))
+    override suspend fun updateTankPlants(
+        tankId: Long,
+        plants: List<AquariumPlantTag>
+    ): Unit = withCurrentOwnerScope { ownerUid ->
+        withContext(NonCancellable + dispatcher) {
+            val supersededPhotos = tankStore.updateTankPlants(
+                tankId,
+                plants.map(AquariumPlantTag::toDataTag)
+            )
+            runCatching {
+                tankStore.tanksSnapshotForOwner(ownerUid)
+                    .firstOrNull { tank -> tank.id == tankId }?.plants
+                    ?.mapNotNull { plant -> plant.photoUri }
+                    ?.forEach { uri -> AppMediaStorage.commitPendingMedia(appContext, uri) }
+            }
+            supersededPhotos.forEach { uri ->
+                runCatching {
+                    AppMediaStorage.deleteAfterCommit(
+                        context = appContext,
+                        ownerUid = ownerUid,
+                        uriString = uri
+                    )
+                }
+            }
+        }
+    }
 
-    override suspend fun addLivestock(tankId: Long, livestock: AquariumLivestock) =
+    override suspend fun addLivestock(
+        tankId: Long,
+        livestock: AquariumLivestock
+    ) {
+        livestockSelectionValidator.requireCurrent(livestock)
         tankStore.addLivestockToTank(tankId, livestock.toDataLivestock())
+    }
 
-    override suspend fun updateLivestock(tankId: Long, livestock: AquariumLivestock) =
+    override suspend fun updateLivestock(
+        tankId: Long,
+        livestock: AquariumLivestock
+    ) {
+        livestockSelectionValidator.requireCurrent(livestock)
         tankStore.updateLivestockInTank(tankId, livestock.toDataLivestock())
+    }
 
     override suspend fun removeLivestock(tankId: Long, livestockId: Long) =
         tankStore.removeLivestockFromTank(tankId, livestockId)
@@ -217,10 +287,12 @@ internal fun SavedAquariumTank.toApplicationSnapshot(): AquariumTankSnapshot =
         plants = plants.map { plant ->
             AquariumPlantTag(
                 id = plant.id,
+                catalogId = plant.catalogId,
                 plantName = plant.plantName,
                 category = plant.category,
                 markerX = plant.markerX,
-                markerY = plant.markerY
+                markerY = plant.markerY,
+                photoUri = plant.photoUri
             )
         },
         materials = materials.map { material ->
@@ -237,11 +309,13 @@ internal fun SavedAquariumTank.toApplicationSnapshot(): AquariumTankSnapshot =
         livestock = livestock.map { item ->
             AquariumLivestock(
                 id = item.id,
+                catalogEntryId = item.catalogEntryId,
                 name = item.name,
                 category = item.category,
                 quantity = item.quantity,
                 addedDateEpochDay = item.addedDateEpochDay,
-                note = item.note
+                note = item.note,
+                photoUri = item.photoUri
             )
         }
     )
@@ -265,10 +339,12 @@ internal fun AquariumTankDraft.toDataDraft(): TankDraft = TankDraft(
 
 private fun AquariumPlantTag.toDataTag(): TankPlantTag = TankPlantTag(
     id = id,
+    catalogId = catalogId,
     plantName = plantName,
     category = category,
     markerX = markerX,
-    markerY = markerY
+    markerY = markerY,
+    photoUri = photoUri
 )
 
 private fun AquariumMaterialSelection.toDataSelection(): TankMaterialSelection =
@@ -282,12 +358,14 @@ private fun AquariumMaterialSelection.toDataSelection(): TankMaterialSelection =
         note = note
     )
 
-private fun AquariumLivestock.toDataLivestock(): SavedAquariumLivestock =
+internal fun AquariumLivestock.toDataLivestock(): SavedAquariumLivestock =
     SavedAquariumLivestock(
         id = id,
+        catalogEntryId = catalogEntryId,
         name = name,
         category = category,
         quantity = quantity,
         addedDateEpochDay = addedDateEpochDay,
-        note = note
+        note = note,
+        photoUri = photoUri
     )

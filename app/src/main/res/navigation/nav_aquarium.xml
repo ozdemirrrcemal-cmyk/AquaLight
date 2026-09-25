@@ -73,6 +73,17 @@
                 android:defaultValue="basic" />
         </action>
         <action
+            android:id="@+id/action_tankDetailFragment_to_tankLivestockPickerFragment"
+            app:destination="@id/tankLivestockPickerFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right">
+            <argument
+                android:name="tankId"
+                app:argType="long" />
+        </action>
+        <action
             android:id="@+id/action_tankDetailFragment_to_tankDetailLivestockFormFragment"
             app:destination="@id/tankDetailLivestockFormFragment"
             app:enterAnim="@anim/nav_slide_in_right"
@@ -86,6 +97,22 @@
                 android:name="livestockId"
                 app:argType="long"
                 android:defaultValue="0L" />
+            <argument
+                android:name="catalogEntryId"
+                app:argType="string"
+                android:defaultValue="" />
+            <argument
+                android:name="presetCategory"
+                app:argType="string"
+                android:defaultValue="Fish" />
+            <argument
+                android:name="openedFromPicker"
+                app:argType="boolean"
+                android:defaultValue="false" />
+            <argument
+                android:name="presetName"
+                app:argType="string"
+                android:defaultValue="" />
         </action>
         <action
             android:id="@+id/action_tankDetailFragment_to_tankDetailPlantTagFragment"
@@ -138,12 +165,149 @@
             app:popEnterAnim="@anim/nav_slide_in_left"
             app:popExitAnim="@anim/nav_slide_out_right" />
         <action
+            android:id="@+id/action_tankDetailFragment_to_tankHealthFragment"
+            app:destination="@id/tankHealthFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right">
+            <argument
+                android:name="tankId"
+                app:argType="long" />
+        </action>
+        <action
+            android:id="@+id/action_tankDetailFragment_to_plantHealthFragment"
+            app:destination="@id/plantHealthFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right">
+            <argument
+                android:name="tankId"
+                app:argType="long" />
+        </action>
+        <action
+            android:id="@+id/action_tankDetailFragment_to_livestockHealthFragment"
+            app:destination="@id/livestockHealthFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right">
+            <argument
+                android:name="tankId"
+                app:argType="long" />
+        </action>
+        <action
             android:id="@+id/action_tankDetailFragment_to_unsupportedDeviceFragment"
             app:destination="@id/unsupportedDeviceFragment"
             app:enterAnim="@anim/nav_slide_in_right"
             app:exitAnim="@anim/nav_slide_out_left"
             app:popEnterAnim="@anim/nav_slide_in_left"
             app:popExitAnim="@anim/nav_slide_out_right" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/plantHealthFragment"
+        android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.health.PlantHealthFragment"
+        android:label="@string/screen_title_plant_health"
+        tools:layout="@layout/fragment_aquarium_health_placeholder">
+        <argument
+            android:name="tankId"
+            app:argType="long" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/livestockHealthFragment"
+        android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.health.LivestockHealthFragment"
+        android:label="@string/screen_title_livestock_health"
+        tools:layout="@layout/fragment_aquarium_health_placeholder">
+        <argument
+            android:name="tankId"
+            app:argType="long" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/tankHealthFragment"
+        android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.health.TankHealthFragment"
+        android:label="@string/screen_title_tank_health"
+        tools:layout="@layout/fragment_tank_health">
+        <argument
+            android:name="tankId"
+            app:argType="long" />
+        <action
+            android:id="@+id/action_tankHealthFragment_to_tankHealthAnalysisAddFragment"
+            app:destination="@id/tankHealthAnalysisAddFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right">
+            <argument
+                android:name="tankId"
+                app:argType="long" />
+        </action>
+    </fragment>
+
+    <fragment
+        android:id="@+id/tankHealthAnalysisAddFragment"
+        android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.health.TankHealthAnalysisAddFragment"
+        android:label="@string/screen_title_tank_health_analysis_add"
+        tools:layout="@layout/fragment_tank_health_analysis_add">
+        <argument
+            android:name="tankId"
+            app:argType="long" />
+        <action
+            android:id="@+id/action_tankHealthAnalysisAddFragment_to_tankHealthAnalysisHistoryFragment"
+            app:destination="@id/tankHealthAnalysisHistoryFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right">
+            <argument
+                android:name="tankId"
+                app:argType="long" />
+        </action>
+    </fragment>
+
+    <fragment
+        android:id="@+id/tankHealthAnalysisHistoryFragment"
+        android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.health.TankHealthAnalysisHistoryFragment"
+        android:label="@string/screen_title_tank_health_analysis_history"
+        tools:layout="@layout/fragment_tank_health_analysis_history">
+        <argument
+            android:name="tankId"
+            app:argType="long" />
+        <action
+            android:id="@+id/action_tankHealthAnalysisHistoryFragment_to_tankHealthAnalysisAddFragment"
+            app:destination="@id/tankHealthAnalysisAddFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right">
+            <argument
+                android:name="tankId"
+                app:argType="long" />
+        </action>
+        <action
+            android:id="@+id/action_tankHealthAnalysisHistoryFragment_to_tankHealthAnalysisDetailFragment"
+            app:destination="@id/tankHealthAnalysisDetailFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right">
+            <argument
+                android:name="tankId"
+                app:argType="long" />
+        </action>
+    </fragment>
+
+    <fragment
+        android:id="@+id/tankHealthAnalysisDetailFragment"
+        android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.health.TankHealthAnalysisDetailFragment"
+        android:label="@string/screen_title_tank_health_analysis_detail"
+        tools:layout="@layout/fragment_tank_health_analysis_detail">
+        <argument
+            android:name="tankId"
+            app:argType="long" />
     </fragment>
 
     <fragment
@@ -232,6 +396,47 @@
     </fragment>
 
     <fragment
+        android:id="@+id/tankLivestockPickerFragment"
+        android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.livestock.TankLivestockPickerFragment"
+        android:label="@string/screen_title_livestock_picker"
+        tools:layout="@layout/fragment_tank_livestock_picker">
+        <argument
+            android:name="tankId"
+            app:argType="long" />
+        <action
+            android:id="@+id/action_tankLivestockPickerFragment_to_tankDetailLivestockFormFragment"
+            app:destination="@id/tankDetailLivestockFormFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right">
+            <argument
+                android:name="tankId"
+                app:argType="long" />
+            <argument
+                android:name="livestockId"
+                app:argType="long"
+                android:defaultValue="0L" />
+            <argument
+                android:name="catalogEntryId"
+                app:argType="string"
+                android:defaultValue="" />
+            <argument
+                android:name="presetCategory"
+                app:argType="string"
+                android:defaultValue="Fish" />
+            <argument
+                android:name="openedFromPicker"
+                app:argType="boolean"
+                android:defaultValue="true" />
+            <argument
+                android:name="presetName"
+                app:argType="string"
+                android:defaultValue="" />
+        </action>
+    </fragment>
+
+    <fragment
         android:id="@+id/tankDetailLivestockFormFragment"
         android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.TankDetailLivestockFormFragment"
         android:label="@string/screen_title_livestock_form"
@@ -243,6 +448,22 @@
             android:name="livestockId"
             app:argType="long"
             android:defaultValue="0L" />
+        <argument
+            android:name="catalogEntryId"
+            app:argType="string"
+            android:defaultValue="" />
+        <argument
+            android:name="presetCategory"
+            app:argType="string"
+            android:defaultValue="Fish" />
+        <argument
+            android:name="openedFromPicker"
+            app:argType="boolean"
+            android:defaultValue="false" />
+        <argument
+            android:name="presetName"
+            app:argType="string"
+            android:defaultValue="" />
     </fragment>
 
     <fragment
@@ -303,6 +524,185 @@
             app:exitAnim="@anim/nav_slide_out_right"
             app:popEnterAnim="@anim/nav_slide_in_right"
             app:popExitAnim="@anim/nav_slide_out_left" />
+        <action
+            android:id="@+id/action_deviceLightRootFragment_to_deviceLightLibraryFragment"
+            app:destination="@id/deviceLightLibraryFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+        <action
+            android:id="@+id/action_deviceLightRootFragment_to_deviceLightQuickSetupFragment"
+            app:destination="@id/deviceLightQuickSetupFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+        <action
+            android:id="@+id/action_deviceLightRootFragment_to_deviceLightManualControlFragment"
+            app:destination="@id/deviceLightManualControlFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+        <action
+            android:id="@+id/action_deviceLightRootFragment_to_deviceLightAutomaticProgramsFragment"
+            app:destination="@id/deviceLightAutomaticProgramsFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+        <action
+            android:id="@+id/action_deviceLightRootFragment_to_deviceLightAutomaticProgramEditorFragment"
+            app:destination="@id/deviceLightAutomaticProgramEditorFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+        <action
+            android:id="@+id/action_deviceLightRootFragment_to_deviceLightCustomCurveFragment"
+            app:destination="@id/deviceLightCustomCurveFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+        <action
+            android:id="@+id/action_deviceLightRootFragment_to_deviceLightAdaptationFragment"
+            app:destination="@id/deviceLightAdaptationFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+        <action
+            android:id="@+id/action_deviceLightRootFragment_to_deviceLightSystemFragment"
+            app:destination="@id/deviceLightSystemFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceLightLibraryFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.library.DeviceLightLibraryFragment"
+        android:label="@string/device_light_library_title"
+        tools:layout="@layout/fragment_device_light_library">
+        <argument android:name="deviceUid" app:argType="string" />
+        <argument
+            android:name="initialTab"
+            android:defaultValue="MANUAL"
+            app:argType="string" />
+        <argument
+            android:name="selectionKind"
+            android:defaultValue=""
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceLightQuickSetupFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.quicksetup.DeviceLightQuickSetupFragment"
+        android:label="@string/device_menu_quick_setup_title"
+        tools:layout="@layout/fragment_device_light_quick_setup">
+        <argument android:name="deviceUid" app:argType="string" />
+        <action
+            android:id="@+id/action_deviceLightQuickSetupFragment_to_deviceLightAutomaticProgramEditorFragment"
+            app:destination="@id/deviceLightAutomaticProgramEditorFragment"
+            app:popUpTo="@id/deviceLightQuickSetupFragment"
+            app:popUpToInclusive="true"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceLightManualControlFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.manual.DeviceLightManualControlFragment"
+        android:label="@string/device_menu_manual_control_title"
+        tools:layout="@layout/fragment_device_light_manual_control">
+        <argument android:name="deviceUid" app:argType="string" />
+        <action
+            android:id="@+id/action_deviceLightManualControlFragment_to_deviceLightLibraryFragment"
+            app:destination="@id/deviceLightLibraryFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceLightAutomaticProgramsFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.programs.DeviceLightAutomaticProgramsFragment"
+        android:label="@string/device_light_automatic_programs_title"
+        tools:layout="@layout/fragment_device_light_automatic_programs">
+        <argument android:name="deviceUid" app:argType="string" />
+        <action
+            android:id="@+id/action_deviceLightAutomaticProgramsFragment_to_deviceLightAutomaticProgramEditorFragment"
+            app:destination="@id/deviceLightAutomaticProgramEditorFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceLightAutomaticProgramEditorFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.editor.DeviceLightAutomaticProgramEditorFragment"
+        android:label="@string/device_light_auto_editor_title"
+        tools:layout="@layout/fragment_device_light_automatic_program_editor">
+        <argument android:name="deviceUid" app:argType="string" />
+        <argument android:name="programId" app:argType="string" android:defaultValue="" />
+        <argument android:name="duplicate" app:argType="boolean" android:defaultValue="false" />
+        <action
+            android:id="@+id/action_deviceLightAutomaticProgramEditorFragment_to_deviceLightAutomaticPresetFragment"
+            app:destination="@id/deviceLightAutomaticPresetFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceLightAutomaticPresetFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.automatic.preset.DeviceLightAutomaticPresetFragment"
+        android:label="@string/device_light_auto_preset_title"
+        tools:layout="@layout/fragment_device_light_automatic_preset">
+        <argument android:name="deviceUid" app:argType="string" />
+        <argument
+            android:name="selectedPresetId"
+            android:defaultValue=""
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceLightCustomCurveFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.custom.DeviceLightCustomCurveFragment"
+        android:label="@string/device_light_custom_curve_title"
+        tools:layout="@layout/fragment_device_light_custom_curve">
+        <argument android:name="deviceUid" app:argType="string" />
+        <action
+            android:id="@+id/action_deviceLightCustomCurveFragment_to_deviceLightLibraryFragment"
+            app:destination="@id/deviceLightLibraryFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceLightAdaptationFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.adaptation.DeviceLightAdaptationFragment"
+        android:label="@string/device_light_adaptation_title"
+        tools:layout="@layout/fragment_device_light_adaptation">
+        <argument android:name="deviceUid" app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceLightSystemFragment"
+        android:name="com.aqua.aqualight.ui.tabs.devices.detail.light.presentation.system.DeviceLightSystemFragment"
+        android:label="@string/device_light_system_title"
+        tools:layout="@layout/fragment_device_light_system">
+        <argument android:name="deviceUid" app:argType="string" />
     </fragment>
 
     <fragment

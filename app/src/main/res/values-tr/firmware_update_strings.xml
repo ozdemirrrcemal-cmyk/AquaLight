@@ -14,39 +14,43 @@
     <string name="device_settings_update_hero_title_rolled_back">Cihaz güvenle kurtarıldı</string>
     <string name="device_settings_update_hero_title_post_restart_timeout">Cihaz yeniden bağlanmadı</string>
     <string name="device_settings_update_hero_title_unexpected_firmware">Beklenmeyen yazılım sürümü</string>
+    <string name="device_settings_update_hero_title_not_published">Henüz güncelleme yayımlanmadı</string>
     <string name="device_settings_update_hero_title_up_to_date">Cihazınız güncel</string>
     <string name="device_settings_update_hero_title_failed">Güncelleme ilgilenmenizi gerektiriyor</string>
     <string name="device_settings_update_hero_title_unsupported">Uyumlu güncelleme bulunamadı</string>
 
-    <string name="device_settings_update_hero_summary_checking">AquaLight, imzalı sürümü ve bu cihazla uyumluluğunu doğruluyor.</string>
-    <string name="device_settings_update_hero_summary_available_version">%1$s sürümü yüklemeye hazır. Devam etmeden önce aşağıdaki doğrulanmış sürüm bilgilerini inceleyin.</string>
-    <string name="device_settings_update_hero_summary_available">Uyumlu ve imzalı bir güncelleme yüklemeye hazır. Devam etmeden önce aşağıdaki doğrulanmış sürüm bilgilerini inceleyin.</string>
-    <string name="device_settings_update_hero_summary_required_version">%1$s sürümü bu cihaz için zorunludur. Yüklemeden önce doğrulanmış sürüm bilgilerini inceleyin.</string>
+    <string name="device_settings_update_hero_summary_checking">AquaLight, cihazınız için yayımlanmış güncellemeleri ve uyumluluğu kontrol ediyor.</string>
+    <string name="device_settings_update_hero_summary_available_version">%1$s sürümü yüklemeye hazır. Devam etmeden önce aşağıdaki güncelleme bilgilerini inceleyin.</string>
+    <string name="device_settings_update_hero_summary_available">Bir yazılım güncellemesi yüklemeye hazır. Devam etmeden önce aşağıdaki güncelleme bilgilerini inceleyin.</string>
+    <string name="device_settings_update_hero_summary_required_version">%1$s sürümü bu cihaz için zorunludur. Yüklemeden önce aşağıdaki güncelleme bilgilerini inceleyin.</string>
     <string name="device_settings_update_hero_summary_starting">Güvenli güncelleme oturumu hazırlanıyor. Cihazın gücünü ve bağlantısını koruyun.</string>
     <string name="device_settings_update_hero_summary_installing">Doğrulanmış paket aktarılıyor ve yükleniyor. Cihazın gücünü kesmeyin.</string>
     <string name="device_settings_update_hero_summary_recovering">Güncelleme adımından sonra cihaz yeniden bağlanıyor. Bu işlem biraz sürebilir.</string>
     <string name="device_settings_update_hero_summary_restarting">Cihaz yeniden başlatılıyor ve doğrulama sonrasında otomatik olarak yeniden bağlanacak.</string>
     <string name="device_settings_update_hero_summary_succeeded_version">%1$s sürümü başarıyla yüklendi ve doğrulandı.</string>
     <string name="device_settings_update_hero_summary_succeeded">Yeni yazılım başarıyla yüklendi ve doğrulandı.</string>
-    <string name="device_settings_update_hero_summary_rolled_back">Yeni imaj açılış doğrulamasını geçemedi. Cihaz önceki çalışan yazılımına döndü ve bu sürümün aynısının yeniden yüklenmesi engellendi.</string>
-    <string name="device_settings_update_hero_summary_post_restart_timeout">AquaLight cihazı 120 saniye içinde doğrulayamadı. Cihazı açık ve aynı ağda tutup yeniden bağlanmayı deneyin. Cihaz yine dönmezse factory kurtarması için destek alın.</string>
-    <string name="device_settings_update_hero_summary_unexpected_firmware">Yeniden bağlanan sürüm veya ürün kimliği bu güncelleme denemesiyle eşleşmedi. Aynı güncellemeyi yeniden denemeyin; destek alın.</string>
-    <string name="device_settings_update_hero_summary_up_to_date_version">%1$s sürümü bu cihaz için en yeni uyumlu ve imzalı sürümdür.</string>
-    <string name="device_settings_update_hero_summary_up_to_date">En yeni uyumlu ve imzalı sürüm zaten yüklü.</string>
-    <string name="device_settings_update_hero_summary_unsupported">AquaLight bu cihaz profili için uyumlu ve imzalı bir sürüm bulamadı.</string>
+    <string name="device_settings_update_hero_summary_rolled_back">Yeni yazılım başlatılamadığı için cihaz önceki çalışan sürüme güvenle döndü. Aynı güncelleme yeniden önerilmeyecek.</string>
+    <string name="device_settings_update_hero_summary_post_restart_timeout">Cihaz güncellemeden sonra yeniden bağlanmadı. Cihazı açık ve aynı ağda tutup yeniden bağlanmayı deneyin. Sorun sürerse destek alın.</string>
+    <string name="device_settings_update_hero_summary_unexpected_firmware">Cihaz güncelleme sonrasında beklenmeyen bir yazılım sürümü bildirdi. Aynı güncellemeyi yeniden denemeyin; destek alın.</string>
+    <string name="device_settings_update_hero_summary_not_published">Bu cihaz için henüz bir yazılım güncellemesi yayımlanmadı.</string>
+    <string name="device_settings_update_hero_summary_up_to_date_version">%1$s sürümü cihazınız için yayımlanmış en yeni uyumlu sürümdür.</string>
+    <string name="device_settings_update_hero_summary_up_to_date">Cihazınız için yayımlanmış en yeni uyumlu yazılım zaten yüklü.</string>
+    <string name="device_settings_update_hero_summary_unsupported">Bu cihaz için uygun bir yazılım güncellemesi bulunamadı.</string>
 
     <string name="device_settings_update_status_check_failed">Güncelleme denetlenemedi</string>
+    <string name="device_settings_update_status_not_published">Henüz güncelleme yayımlanmadı</string>
     <string name="device_settings_update_phase_check_failed">AquaLight güncelleme bilgilerini doğrulayamadı. Aşağıdaki sorunu giderip tekrar deneyin.</string>
+    <string name="device_settings_update_phase_not_published">Bu cihaz için sürüm bilgisi yayımlanmadı.</string>
 
     <string name="device_settings_update_release_warnings_heading">Sürüme özel notlar</string>
-    <string name="device_settings_update_release_details_unavailable_title">Ayrıntılı sürüm notları sağlanmadı</string>
-    <string name="device_settings_update_release_details_unavailable_message">Bu imzalı yazılım açıklayıcı sürüm notları içermiyor. Yalnızca sürümle birlikte sağlanan doğrulanmış bilgiler gösterilir.</string>
+    <string name="device_settings_update_release_details_unavailable_title">Ayrıntılı güncelleme notları sağlanmadı</string>
+    <string name="device_settings_update_release_details_unavailable_message">Bu güncelleme için ayrıntılı açıklama yayımlanmadı. Yalnızca doğrulanmış sürüm bilgileri gösteriliyor.</string>
 
     <string name="device_settings_update_requirements_heading">Yüklemeden önce</string>
     <string name="device_settings_update_requirements_summary">Yükleme ve doğrulama tamamlanana kadar güncelleme ortamını kararlı tutun.</string>
     <string name="device_settings_update_requirement_network">Paket indirilirken cihazın ağ bağlantısını kararlı tutun.</string>
     <string name="device_settings_update_requirement_restart">Cihaz doğrulama sırasında otomatik olarak yeniden başlayıp bağlanabilir.</string>
-    <string name="device_settings_update_requirement_signed_package">AquaLight yalnızca bu cihaz için seçilen imzalı paketi yükler.</string>
+    <string name="device_settings_update_requirement_signed_package">AquaLight yalnızca cihazınız için doğrulanmış güncelleme paketini yükler.</string>
     <string name="device_settings_update_requirement_description">Güncelleme gereksinimi: %1$s</string>
 
     <string name="device_settings_update_now_action">Şimdi güncelle</string>

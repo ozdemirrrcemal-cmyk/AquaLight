@@ -46,7 +46,7 @@ class DeviceFirmwareOtaMainParityTest {
     }
 
     @Test
-    fun `connection refused diagnostic maps to exact retryable download failure`() {
+    fun `typed HTTP failure maps signed transport diagnostic to retryable download failure`() {
         val failure = DeviceOtaFailureMapper.snapshot(
             DeviceFirmwareOtaSnapshot(
                 phase = DeviceFirmwareOtaPhase.FAILED,
@@ -55,6 +55,7 @@ class DeviceFirmwareOtaMainParityTest {
                 completed = true,
                 failed = true,
                 targetVersion = "2.0.0",
+                failureCode = DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_HTTP_STATUS,
                 lastError = "connection refused",
                 lastErrorField = DeviceFirmwareRuntimeContract.ErrorField.HTTP_STATUS,
                 httpStatus = -1
@@ -119,6 +120,7 @@ class DeviceFirmwareOtaMainParityTest {
         .put("targetVersion", "2.0.0")
         .put("sha256Expected", "a".repeat(64))
         .put("sha256Actual", "")
+        .put("failureCode", "")
         .put("lastError", "")
         .put("lastErrorField", "")
         .put("urlScheme", "https")
@@ -139,6 +141,10 @@ class DeviceFirmwareOtaMainParityTest {
         .put("targetVersion", "2.0.0")
         .put("sha256Expected", "a".repeat(64))
         .put("sha256Actual", "")
+        .put(
+            "failureCode",
+            DeviceFirmwareRuntimeContract.FailureCode.DOWNLOAD_HTTP_STATUS
+        )
         .put("lastError", "connection refused")
         .put("lastErrorField", DeviceFirmwareRuntimeContract.ErrorField.HTTP_STATUS)
         .put("urlScheme", "https")

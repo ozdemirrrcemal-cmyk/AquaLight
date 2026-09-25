@@ -29,7 +29,6 @@
     <dimen name="aqua_text_size_title_large">22sp</dimen>
     <dimen name="aqua_text_size_title_intermediate">19sp</dimen>
     <dimen name="aqua_text_size_body_xlarge">16sp</dimen>
-    <dimen name="aqua_text_size_body_plus">14.5sp</dimen>
     <dimen name="aqua_text_size_body_precise">13.2sp</dimen>
     <dimen name="aqua_text_size_caption_precise">11.8sp</dimen>
     <dimen name="aqua_text_size_micro_label">10.6sp</dimen>

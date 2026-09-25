@@ -21,6 +21,13 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
+        <include
+            android:id="@+id/livestockHealthEntry"
+            layout="@layout/item_aquarium_health_entry_card"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/aqua_size_86"
+            android:layout_marginBottom="@dimen/aqua_size_16" />
+
         <LinearLayout
             android:id="@+id/tankLifeHeaderRow"
             android:layout_width="match_parent"
@@ -49,16 +56,6 @@
                 android:contentDescription="@string/devices_scan_button_desc" />
 
         </LinearLayout>
-
-        <TextView
-            android:id="@+id/tvTankLifeSummary"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/aqua_size_8"
-            android:includeFontPadding="false"
-            android:text="@string/aquarium_no_livestock_yet"
-            android:textColor="@color/aqua_card_text_secondary"
-            android:textSize="@dimen/aqua_text_size_body_small" />
 
         <com.google.android.material.card.MaterialCardView
             style="@style/Widget.Aqua.Card"

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    style="@style/Widget.Aqua.Card.Device"
+    android:id="@+id/card"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="@dimen/aqua_size_4"
+    android:layout_marginTop="@dimen/aqua_size_6"
+    android:layout_marginBottom="@dimen/aqua_size_4"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    app:cardUseCompatPadding="false"
+    app:rippleColor="@color/aqua_card_ripple"
+    app:strokeWidth="@dimen/aqua_size_1">
+
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/lightCardCompose"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:importantForAccessibility="no" />
+
+</com.google.android.material.card.MaterialCardView>

@@ -13,10 +13,18 @@ import com.aqua.aqualight.application.devices.DeviceRootSnapshot
 import com.aqua.aqualight.application.devices.DeviceSlotIndex
 import com.aqua.aqualight.application.devices.OwnerDeviceAvailability
 import com.aqua.aqualight.application.devices.OwnerDeviceFamily
-import com.aqua.aqualight.application.devices.light.control.DeviceLightControlFailure
-import com.aqua.aqualight.application.devices.light.control.DeviceLightControlOperations
-import com.aqua.aqualight.application.devices.light.control.DeviceLightControlResult
-import com.aqua.aqualight.application.devices.light.control.DeviceLightControlSnapshot
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlFailure
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlMode
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightChannelOutputSnapshot
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlOperations
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlResult
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightControlSnapshot
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightHeroSnapshot
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightModeMutationResult
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanReason
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightPlanSnapshot
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightSystemSummary
+import com.aqua.aqualight.application.devices.light.system.DeviceLightSystemCondition
 import com.aqua.aqualight.ui.common.devicepresence.DeviceConnectionVisualState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -106,7 +114,116 @@ class DeviceLightRootPreparationTest {
             viewModel.surfaceUnavailableEvents.first()
         )
         assertFalse(viewModel.uiState.value.contentEnabled)
-        assertEquals(DeviceConnectionVisualState.OFFLINE, viewModel.uiState.value.connectionVisualState)
+        assertEquals(DeviceConnectionVisualState.ONLINE, viewModel.uiState.value.connectionVisualState)
+    }
+
+    @Test
+    fun `refresh transition keeps the last validated Light frame without blocking flicker`() =
+        runTest {
+            val validated = availableControl()
+            val controls = FakeLightControlOperations(validated)
+            lateinit var viewModel: DeviceLightRootViewModel
+            var retainedDuringRefresh = false
+            val preparation = FakePreparationOperations(
+                onPrepare = {
+                    controls.publish(unavailableControl())
+                    retainedDuringRefresh =
+                        viewModel.uiState.value.channels.size == LIGHT_CHANNEL_COUNT &&
+                            !viewModel.uiState.value.showBlockingPreparation
+                }
+            )
+            viewModel = DeviceLightRootViewModel(
+                rootOperations = FakeRootOperations(lightRoot()),
+                lightControlOperations = controls,
+                controlSurfacePreparationOperations = preparation
+            )
+
+            viewModel.bind(DEVICE_UID)
+
+            val state = viewModel.uiState.value
+            assertTrue(retainedDuringRefresh)
+            assertEquals(LIGHT_CHANNEL_COUNT, state.channels.size)
+            assertFalse(state.showBlockingPreparation)
+            assertTrue(state.contentEnabled)
+        }
+
+    @Test
+    fun `successful mode mutation publishes the authoritative returned mode`() = runTest {
+        val controls = FakeLightControlOperations(availableControl()).apply {
+            modeResult = DeviceLightModeMutationResult.Reconciled(
+                availableSnapshot(mode = DeviceLightControlMode.AUTOMATIC)
+            )
+        }
+        val viewModel = DeviceLightRootViewModel(
+            rootOperations = FakeRootOperations(lightRoot()),
+            lightControlOperations = controls,
+            controlSurfacePreparationOperations = FakePreparationOperations()
+        )
+        viewModel.bind(DEVICE_UID)
+
+        viewModel.setMode(DeviceLightControlMode.AUTOMATIC)
+
+        assertEquals(DeviceLightControlMode.AUTOMATIC, viewModel.uiState.value.hero.mode)
+    }
+
+    @Test
+    fun `failed mode mutation is surfaced and retains the last validated mode`() = runTest {
+        val controls = FakeLightControlOperations(availableControl()).apply {
+            modeResult = DeviceLightModeMutationResult.Failed(DeviceLightControlFailure.REJECTED)
+        }
+        val viewModel = DeviceLightRootViewModel(
+            rootOperations = FakeRootOperations(lightRoot()),
+            lightControlOperations = controls,
+            controlSurfacePreparationOperations = FakePreparationOperations()
+        )
+        viewModel.bind(DEVICE_UID)
+
+        viewModel.setMode(DeviceLightControlMode.AUTOMATIC)
+
+        assertEquals(
+            DeviceLightControlFailure.REJECTED,
+            viewModel.modeChangeFailureEvents.first()
+        )
+        assertEquals(DeviceLightControlMode.MANUAL, viewModel.uiState.value.hero.mode)
+    }
+
+    @Test
+    fun `committed mode waits for authoritative dashboard without reporting failure`() = runTest {
+        val controls = FakeLightControlOperations(availableControl()).apply {
+            modeResult = DeviceLightModeMutationResult.Committed(DeviceLightControlMode.AUTOMATIC)
+        }
+        val viewModel = DeviceLightRootViewModel(
+            rootOperations = FakeRootOperations(lightRoot()),
+            lightControlOperations = controls,
+            controlSurfacePreparationOperations = FakePreparationOperations()
+        )
+        viewModel.bind(DEVICE_UID)
+
+        viewModel.setMode(DeviceLightControlMode.AUTOMATIC)
+
+        assertEquals(DeviceLightControlMode.MANUAL, viewModel.uiState.value.hero.mode)
+        assertEquals(DeviceLightControlMode.AUTOMATIC, viewModel.uiState.value.selectedMode)
+        controls.publish(availableControl(mode = DeviceLightControlMode.AUTOMATIC))
+        assertEquals(DeviceLightControlMode.AUTOMATIC, viewModel.uiState.value.hero.mode)
+        assertEquals(DeviceLightControlMode.AUTOMATIC, viewModel.uiState.value.selectedMode)
+    }
+
+    @Test
+    fun `validated system summary is exposed to the root card`() = runTest {
+        val system = DeviceLightSystemSummary(
+            temperatureCelsius = 42.8,
+            fanPercents = listOf(35, 40),
+            condition = DeviceLightSystemCondition.NORMAL
+        )
+        val viewModel = DeviceLightRootViewModel(
+            rootOperations = FakeRootOperations(lightRoot()),
+            lightControlOperations = FakeLightControlOperations(availableControl(system = system)),
+            controlSurfacePreparationOperations = FakePreparationOperations()
+        )
+
+        viewModel.bind(DEVICE_UID)
+
+        assertEquals(system, viewModel.uiState.value.system)
     }
 
     private class FakeRootOperations(
@@ -125,12 +242,23 @@ class DeviceLightRootPreparationTest {
         initial: DeviceLightControlResult
     ) : DeviceLightControlOperations {
         private val results = MutableStateFlow(initial)
+        var modeResult: DeviceLightModeMutationResult? = null
 
         override fun observeControl(deviceUid: String): Flow<DeviceLightControlResult> = results
 
         override fun currentControl(deviceUid: String): DeviceLightControlResult = results.value
 
         override suspend fun refreshControl(deviceUid: String): DeviceLightControlResult = results.value
+
+        override suspend fun setMode(
+            deviceUid: String,
+            mode: DeviceLightControlMode
+        ): DeviceLightModeMutationResult = modeResult ?: when (val current = results.value) {
+            is DeviceLightControlResult.Available ->
+                DeviceLightModeMutationResult.Reconciled(current.snapshot)
+            is DeviceLightControlResult.Failed ->
+                DeviceLightModeMutationResult.Failed(current.failure)
+        }
 
         fun publish(result: DeviceLightControlResult) {
             results.value = result
@@ -194,17 +322,41 @@ private fun lightRoot() = DeviceRootSnapshot(
 )
 
 private fun availableControl(
-    productKey: String = "LIGHT_WRGB_PRO_ELITE"
+    productKey: String = "LIGHT_WRGB_PRO_ELITE",
+    system: DeviceLightSystemSummary? = null,
+    mode: DeviceLightControlMode = DeviceLightControlMode.MANUAL
 ): DeviceLightControlResult = DeviceLightControlResult.Available(
     DeviceLightControlSnapshot(
         deviceUid = "light-pro",
         productKey = productKey,
         physicalChannelCount = LIGHT_CHANNEL_COUNT,
-        channelKeys = listOf("red", "green", "blue", "white")
+        channelKeys = LIGHT_CHANNEL_KEYS,
+        channels = LIGHT_CHANNEL_KEYS.map { key ->
+            DeviceLightChannelOutputSnapshot(key, key, 0, 0)
+        },
+        plan = DeviceLightPlanSnapshot(
+            available = true,
+            reason = DeviceLightPlanReason.MODE_HAS_NO_SCHEDULE,
+            nowTimeMs = null,
+            channelScale = 1_000,
+            hasScheduleToday = false,
+            points = emptyList()
+        ),
+        automaticProgramCount = 0,
+        customCurvePointCount = 0,
+        hero = DeviceLightHeroSnapshot(mode = mode),
+        systemSupported = system != null,
+        system = system
     )
 )
+
+private fun availableSnapshot(
+    mode: DeviceLightControlMode
+): DeviceLightControlSnapshot =
+    (availableControl(mode = mode) as DeviceLightControlResult.Available).snapshot
 
 private fun unavailableControl(): DeviceLightControlResult =
     DeviceLightControlResult.Failed(DeviceLightControlFailure.UNAVAILABLE)
 
 private const val LIGHT_CHANNEL_COUNT = 4
+private val LIGHT_CHANNEL_KEYS = listOf("red", "green", "blue", "white")

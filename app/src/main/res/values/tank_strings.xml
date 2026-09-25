@@ -56,11 +56,12 @@
     <string name="aquarium_tank_name_title">Tank name</string>
     <string name="aquarium_tank_size_title">Tank size</string>
     <string name="aquarium_validation_invalid_tank_size">Please enter a valid tank size.</string>
+    <string name="aquarium_validation_setup_date_required">Please select a setup date.</string>
     <string name="aquarium_validation_tank_name_min">Tank name must be at least 2 characters.</string>
+    <string name="aquarium_validation_tank_size_required">Please enter the tank dimensions.</string>
     <string name="aquarium_validation_tank_type_required">Please select a tank type.</string>
     <string name="aquarium_action_add">+ Add</string>
     <string name="aquarium_action_add_livestock">+ Add Livestock</string>
-    <string name="aquarium_action_add_plant">+  Add Plant</string>
 <string name="aquarium_components_title">Components</string>
     <string name="aquarium_concept_field_title">Aquarium Concept</string>
     <string name="aquarium_days_title">Days</string>
@@ -76,7 +77,6 @@
     <string name="aquarium_no_activity_yet">No activity yet.</string>
     <string name="aquarium_no_device_connected">No device assigned</string>
     <string name="aquarium_no_livestock_added">No livestock added</string>
-    <string name="aquarium_no_livestock_yet">No livestock yet</string>
     <string name="aquarium_photo_title_full">Aquarium Photo</string>
     <string name="aquarium_settings_tab_basic">Basic</string>
     <string name="aquarium_settings_tab_details">Details</string>
@@ -95,7 +95,7 @@
     <string name="aquarium_style_nature_aquarium">Nature\nAquarium</string>
     <string name="aquarium_style_title">Style</string>
     <string name="aquarium_tank_concept_title">Tank Concept</string>
-    <string name="aquarium_tank_life_title">Tank Life</string>
+    <string name="aquarium_tank_life_title">Livestock</string>
     <string name="aquarium_tank_size_cm_title">Tank Size (cm)</string>
     <string name="aquarium_tank_style_title">Tank Style</string>
     <string name="aquarium_tank_type_coral">Coral</string>
@@ -165,7 +165,6 @@
     <string name="aquarium_text_0_of_0_care_details_completed">0 of 0 care details completed</string>
     <string name="aquarium_text_0percent">0%%</string>
     <string name="aquarium_text_1">1</string>
-    <string name="aquarium_text_10_w_x_10_l_x_10_h">10 W × 10 L × 10 H</string>
     <string name="aquarium_text_10_w_x_10_l_x_10_h_2">10 W x 10 L x 10 H</string>
     <string name="aquarium_text_120w_x_50l_x_50h">120W x 50L x 50H</string>
     <string name="aquarium_text_120x50x50">120×50×50</string>
@@ -261,7 +260,7 @@
     <string name="tank_pdf_section_tank_summary">1. Tank Summary</string>
     <string name="tank_pdf_section_tank_photo">2. Tank Photo</string>
     <string name="tank_pdf_section_devices">3. Devices</string>
-    <string name="tank_pdf_section_tank_life">4. Tank Life</string>
+    <string name="tank_pdf_section_tank_life">4. Livestock</string>
     <string name="tank_pdf_section_plants">5. Plants</string>
     <string name="tank_pdf_section_bio_components">6. Bio Components</string>
     <string name="tank_pdf_section_hardware_components">7. Hardware Components</string>
@@ -319,7 +318,6 @@
     <string name="aquarium_day_format">Day %1$d</string>
     <string name="aquarium_activity_date_today_format">%1$s · Today</string>
     <string name="aquarium_activity_date_yesterday_format">%1$s · Yesterday</string>
-<string name="aquarium_livestock_summary_format">%1$d species • %2$d total livestock</string>
     <string name="aquarium_livestock_added_date_not_set">Added date not set</string>
     <string name="aquarium_livestock_added_date_format">Added %1$s</string>
     <string name="aquarium_livestock_default_title">Livestock</string>
@@ -356,4 +354,14 @@
         <item quantity="other">%d pcs</item>
     </plurals>
 
+    <string name="aquarium_plant_photo_title">Plant photo</string>
+    <string name="aquarium_plant_photo_crop_title">Edit plant photo</string>
+    <string name="aquarium_plant_photo_updated">Plant photo updated.</string>
+    <string name="aquarium_plant_photo_removed">Plant photo removed.</string>
+    <string name="aquarium_plant_photo_save_failed">Plant photo could not be saved. Please try again.</string>
+    <string name="aquarium_plant_photo_remove_failed">Plant photo could not be removed. Please try again.</string>
+    <string name="aquarium_plant_photo_action_description">Add or change photo for %1$s</string>
+    <string name="aquarium_livestock_photo_title">Livestock photo</string>
+    <string name="aquarium_livestock_photo_crop_title">Crop livestock photo</string>
+    <string name="aquarium_livestock_photo_action">Add, change or remove livestock photo</string>
 </resources>

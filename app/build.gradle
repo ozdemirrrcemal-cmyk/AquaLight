@@ -113,6 +113,33 @@ def otaManifestKeyId = providers
         .orElse(providers.environmentVariable("AQL_OTA_MANIFEST_KEY_ID"))
         .getOrElse("aql-ota-manifest-2026-01")
 
+def verifyReleaseOtaManifestConfiguration = tasks.register(
+        "verifyReleaseOtaManifestConfiguration"
+) {
+    group = "verification"
+    description = "Fails production release builds without OTA manifest trust configuration."
+
+    doLast {
+        def publicKey = otaManifestPublicKeyPem.trim()
+        if (publicKey.isEmpty()) {
+            throw new GradleException(
+                    "AQL_OTA_MANIFEST_PUBLIC_KEY_PEM is required for production release builds."
+            )
+        }
+        if (!publicKey.contains("-----BEGIN PUBLIC KEY-----") ||
+                !publicKey.contains("-----END PUBLIC KEY-----")) {
+            throw new GradleException(
+                    "AQL_OTA_MANIFEST_PUBLIC_KEY_PEM must contain an X.509 public key PEM."
+            )
+        }
+        if (otaManifestKeyId.trim().isEmpty()) {
+            throw new GradleException(
+                    "AQL_OTA_MANIFEST_KEY_ID is required for production release builds."
+            )
+        }
+    }
+}
+
 def requireProductScopedManifestTemplate = { String label, String value ->
     def officialChannelPattern = java.util.regex.Pattern.compile(
             '^https://raw\\.githubusercontent\\.com/' +
@@ -254,6 +281,9 @@ android {
 }
 
 tasks.configureEach { task ->
+    if (task.name == "preReleaseBuild") {
+        task.dependsOn(verifyReleaseOtaManifestConfiguration)
+    }
     def taskName = task.name.toLowerCase()
     if (!finalLintMode &&
             task.name != "prepareLintBaseline" &&

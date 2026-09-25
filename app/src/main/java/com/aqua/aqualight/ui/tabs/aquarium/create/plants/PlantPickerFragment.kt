@@ -82,7 +82,7 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
                     plant.category.contains(
                         normalizedQuery,
                         ignoreCase = true
-                    )
+                    ) || plant.searchNames.any { it.contains(normalizedQuery, ignoreCase = true) }
             }
         }
 
@@ -98,7 +98,7 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
             text = if (plantList.size == plants.size) {
                 getString(R.string.plant_picker_title)
             } else {
-                getString(R.string.plant_picker_found, plantList.size)
+                getString(R.string.plant_picker_found, plantList.distinctBy(AquariumPlant::catalogId).size)
             }
 
             setTextColor(
@@ -189,12 +189,20 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
 
             setOnClickListener {
                 selectPlant(
+                    catalogId = plant.catalogId,
                     plantName = plant.name,
                     category = plant.category
                 )
             }
         }
 
+        card.addView(createPlantCardContent(plant))
+        return card
+    }
+
+    private fun createPlantCardContent(
+        plant: AquariumPlant
+    ): View {
         val content = LinearLayout(requireContext()).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_VERTICAL
@@ -240,18 +248,17 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
 
         content.addView(categoryText)
         content.addView(plantNameText)
-
-        card.addView(content)
-
-        return card
+        return content
     }
 
     private fun selectPlant(
+        catalogId: String,
         plantName: String,
         category: String
     ) {
         val navController = findNavController()
         val resultBundle = bundleOf(
+            RESULT_PLANT_CATALOG_ID to catalogId,
             RESULT_PLANT_NAME to plantName,
             RESULT_PLANT_CATEGORY to category
         )
@@ -279,6 +286,7 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
 
         const val RESULT_BUNDLE_KEY = "plant_picker_result_bundle"
 
+        const val RESULT_PLANT_CATALOG_ID = "plant_catalog_id"
         const val RESULT_PLANT_NAME = "plant_name"
         const val RESULT_PLANT_CATEGORY = "plant_category"
     }

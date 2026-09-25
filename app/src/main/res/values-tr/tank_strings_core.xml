@@ -52,11 +52,12 @@
     <string name="aquarium_tank_name_title">Tank adı</string>
     <string name="aquarium_tank_size_title">Tank boyutu</string>
     <string name="aquarium_validation_invalid_tank_size">Lütfen geçerli bir tank boyutu girin.</string>
+    <string name="aquarium_validation_setup_date_required">Lütfen bir kurulum tarihi seçin.</string>
     <string name="aquarium_validation_tank_name_min">Tank adı en az 2 karakter olmalıdır.</string>
+    <string name="aquarium_validation_tank_size_required">Lütfen tank boyutlarını girin.</string>
     <string name="aquarium_validation_tank_type_required">Lütfen bir tank türü seçin.</string>
     <string name="aquarium_action_add">+ Ekle</string>
     <string name="aquarium_action_add_livestock">+ Canlı Ekle</string>
-    <string name="aquarium_action_add_plant">+ Bitki Ekle</string>
     <string name="aquarium_components_title">Bileşenler</string>
     <string name="aquarium_concept_field_title">Akvaryum Konsepti</string>
     <string name="aquarium_days_title">Gün</string>
@@ -72,7 +73,6 @@
     <string name="aquarium_no_activity_yet">Henüz etkinlik yok.</string>
     <string name="aquarium_no_device_connected">Atanmış cihaz yok</string>
     <string name="aquarium_no_livestock_added">Canlı eklenmedi</string>
-    <string name="aquarium_no_livestock_yet">Henüz canlı yok</string>
     <string name="aquarium_photo_title_full">Akvaryum Fotoğrafı</string>
     <string name="aquarium_settings_tab_basic">Temel</string>
     <string name="aquarium_settings_tab_details">Ayrıntılar</string>
@@ -91,7 +91,7 @@
     <string name="aquarium_style_nature_aquarium">Doğa\nAkvaryumu</string>
     <string name="aquarium_style_title">Stil</string>
     <string name="aquarium_tank_concept_title">Tank Konsepti</string>
-    <string name="aquarium_tank_life_title">Tank Yaşamı</string>
+    <string name="aquarium_tank_life_title">Canlılar</string>
     <string name="aquarium_tank_size_cm_title">Tank Boyutu (cm)</string>
     <string name="aquarium_tank_style_title">Tank Stili</string>
     <string name="aquarium_tank_type_coral">Mercan</string>
@@ -160,7 +160,6 @@
     <string name="aquarium_text_0_of_0_care_details_completed">0 / 0 bakım ayrıntısı tamamlandı</string>
     <string name="aquarium_text_0percent">0%%</string>
     <string name="aquarium_text_1">1</string>
-    <string name="aquarium_text_10_w_x_10_l_x_10_h">10 G × 10 U × 10 Y</string>
     <string name="aquarium_text_10_w_x_10_l_x_10_h_2">10 G x 10 U x 10 Y</string>
     <string name="aquarium_text_120w_x_50l_x_50h">120G x 50U x 50Y</string>
     <string name="aquarium_text_120x50x50">120×50×50</string>
@@ -169,4 +168,14 @@
     <string name="aquarium_text_18_may_2026">18 Mayıs 2026</string>
     <string name="aquarium_text_1_l">1 L</string>
     <string name="aquarium_text_79_gal">79 gal</string>
+    <string name="aquarium_plant_photo_title">Bitki fotoğrafı</string>
+    <string name="aquarium_plant_photo_crop_title">Bitki fotoğrafını düzenle</string>
+    <string name="aquarium_plant_photo_updated">Bitki fotoğrafı güncellendi.</string>
+    <string name="aquarium_plant_photo_removed">Bitki fotoğrafı kaldırıldı.</string>
+    <string name="aquarium_plant_photo_save_failed">Bitki fotoğrafı kaydedilemedi. Lütfen yeniden deneyin.</string>
+    <string name="aquarium_plant_photo_remove_failed">Bitki fotoğrafı kaldırılamadı. Lütfen yeniden deneyin.</string>
+    <string name="aquarium_plant_photo_action_description">%1$s için fotoğraf ekle veya değiştir</string>
+    <string name="aquarium_livestock_photo_title">Canlı fotoğrafı</string>
+    <string name="aquarium_livestock_photo_crop_title">Canlı fotoğrafını kırp</string>
+    <string name="aquarium_livestock_photo_action">Canlı fotoğrafı ekle, değiştir veya kaldır</string>
 </resources>

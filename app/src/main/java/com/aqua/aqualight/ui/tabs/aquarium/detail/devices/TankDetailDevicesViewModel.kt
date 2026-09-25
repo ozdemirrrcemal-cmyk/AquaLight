@@ -16,6 +16,8 @@ import com.aqua.aqualight.application.devices.cooling.DeviceCoolingCardOperation
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingCardState
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardState
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightCardOperations
+import com.aqua.aqualight.application.devices.light.dashboard.DeviceLightCardState
 import com.aqua.aqualight.ui.common.devicecard.DeviceCompactSnapshotMapper
 import com.aqua.aqualight.ui.common.devicepresence.DeviceMenuUnavailableMessageMapper
 import com.aqua.aqualight.ui.tabs.devices.route.DeviceRoute
@@ -39,6 +41,7 @@ class TankDetailDevicesViewModel(
     private val assignmentOperations: TankDeviceAssignmentOperations,
     private val menuOpenUseCase: DeviceMenuOpenUseCase,
     private val routeResolver: DeviceRouteResolver,
+    private val lightCardOperations: DeviceLightCardOperations? = null,
     private val dosingCardOperations: DeviceDosingCardOperations? = null,
     private val coolingCardOperations: DeviceCoolingCardOperations? = null
 ) : ViewModel() {
@@ -51,12 +54,15 @@ class TankDetailDevicesViewModel(
 
     private val openingDeviceId = MutableStateFlow<String?>(null)
     private val removingDevice = MutableStateFlow(false)
-    private val dosingCardStates = MutableStateFlow<Map<String, DeviceDosingCardState>>(emptyMap())
-    private val coolingCardStates = MutableStateFlow<Map<String, DeviceCoolingCardState>>(emptyMap())
+    private val cardObservers = TankDeviceCardObserverRegistry()
+    private val lightCardStates = cardObservers.lightCardStates
+    private val dosingCardStates = cardObservers.dosingCardStates
+    private val coolingCardStates = cardObservers.coolingCardStates
     private val spotlightRotation = DosingSpotlightRotationController(viewModelScope)
 
-    private val dosingObserverJobs = mutableMapOf<String, Job>()
-    private val coolingObserverJobs = mutableMapOf<String, Job>()
+    private val lightObserverJobs = cardObservers.lightObserverJobs
+    private val dosingObserverJobs = cardObservers.dosingObserverJobs
+    private val coolingObserverJobs = cardObservers.coolingObserverJobs
     private var boundTankId: Long = 0L
     private var observeJob: Job? = null
     private var menuOpenJob: Job? = null
@@ -65,12 +71,7 @@ class TankDetailDevicesViewModel(
     fun bind(tankId: Long) {
         if (tankId <= 0L || boundTankId == tankId) return
 
-        dosingObserverJobs.values.forEach(Job::cancel)
-        dosingObserverJobs.clear()
-        dosingCardStates.value = emptyMap()
-        coolingObserverJobs.values.forEach(Job::cancel)
-        coolingObserverJobs.clear()
-        coolingCardStates.value = emptyMap()
+        cardObservers.reset()
         spotlightRotation.updateChannelCounts(emptyMap())
         boundTankId = tankId
         assignmentOperations.start(viewModelScope)
@@ -78,6 +79,13 @@ class TankDetailDevicesViewModel(
 
         val assignedDevices = assignmentOperations.assignedDevices(tankId)
             .onEach { devices ->
+                syncLightObservers(
+                    devices = devices,
+                    operations = lightCardOperations,
+                    observerJobs = lightObserverJobs,
+                    cardStates = lightCardStates,
+                    scope = viewModelScope
+                )
                 syncDosingObservers(devices)
                 syncCoolingObservers(
                     devices = devices,
@@ -92,6 +100,7 @@ class TankDetailDevicesViewModel(
             removingDevice = removingDevice
         )
         val devicePresentationState = observeDevicePresentationState(
+            lightCardStates = lightCardStates,
             dosingPresentation = observeDosingPresentationState(
                 dosingCardStates = dosingCardStates,
                 spotlightIndices = spotlightRotation.indices
@@ -155,15 +164,17 @@ class TankDetailDevicesViewModel(
                 abandonPendingNavigation(deviceUid)
                 clearMenuOpen(deviceUid)
                 if (error is CancellationException) throw error
+                val presentation = DeviceMenuUnavailableMessageMapper.presentation(
+                    DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
+                )
                 _events.send(
                     TankDetailDevicesEvent.ShowDeviceUnavailable(
                         title = _uiState.value.devices
                             .firstOrNull { device -> device.deviceUid == deviceUid }
                             ?.title
                             .orEmpty(),
-                        messageRes = DeviceMenuUnavailableMessageMapper.messageRes(
-                            DeviceMenuUnavailableReason.CURRENT_LIVENESS_NOT_PROVEN
-                        )
+                        titleRes = presentation.titleRes,
+                        messageRes = presentation.messageRes
                     )
                 )
             }
@@ -287,6 +298,48 @@ class TankDetailDevicesViewModel(
     }
 }
 
+private fun syncLightObservers(
+    devices: List<TankDeviceListItem>,
+    operations: DeviceLightCardOperations?,
+    observerJobs: MutableMap<String, Job>,
+    cardStates: MutableStateFlow<Map<String, DeviceLightCardState>>,
+    scope: CoroutineScope
+) {
+    val assignedDeviceIds = devices
+        .asSequence()
+        .filter { device -> device.family == OwnerDeviceFamily.LIGHT }
+        .map(TankDeviceListItem::deviceUid)
+        .toSet()
+    val reachableDeviceIds = devices
+        .asSequence()
+        .filter { device ->
+            device.family == OwnerDeviceFamily.LIGHT &&
+                device.availability == OwnerDeviceAvailability.REACHABLE
+        }
+        .map(TankDeviceListItem::deviceUid)
+        .toSet()
+
+    (observerJobs.keys - reachableDeviceIds).forEach { deviceUid ->
+        observerJobs.remove(deviceUid)?.cancel()
+    }
+    val removedDeviceIds = cardStates.value.keys - assignedDeviceIds
+    if (removedDeviceIds.isNotEmpty()) {
+        cardStates.update { states -> states - removedDeviceIds }
+    }
+
+    operations?.let { lightOperations ->
+        reachableDeviceIds
+            .filterNot(observerJobs::containsKey)
+            .forEach { deviceUid ->
+                observerJobs[deviceUid] = scope.launch {
+                    lightOperations.observe(deviceUid).collect { state ->
+                        cardStates.update { states -> states + (deviceUid to state) }
+                    }
+                }
+            }
+    }
+}
+
 private fun syncCoolingObservers(
     devices: List<TankDeviceListItem>,
     operations: DeviceCoolingCardOperations?,
@@ -343,6 +396,7 @@ sealed interface TankDetailDevicesEvent {
 
     data class ShowDeviceUnavailable(
         val title: String,
+        @StringRes val titleRes: Int,
         @StringRes val messageRes: Int
     ) : TankDetailDevicesEvent
 
@@ -361,6 +415,7 @@ private data class TankDosingPresentationState(
 )
 
 private data class TankDevicePresentationState(
+    val lightStates: Map<String, DeviceLightCardState>,
     val dosing: TankDosingPresentationState,
     val coolingStates: Map<String, DeviceCoolingCardState>
 )
@@ -392,13 +447,19 @@ private fun observeDosingPresentationState(
 }
 
 private fun observeDevicePresentationState(
+    lightCardStates: Flow<Map<String, DeviceLightCardState>>,
     dosingPresentation: Flow<TankDosingPresentationState>,
     coolingCardStates: Flow<Map<String, DeviceCoolingCardState>>
 ): Flow<TankDevicePresentationState> = combine(
+    lightCardStates,
     dosingPresentation,
     coolingCardStates
-) { dosing, cooling ->
-    TankDevicePresentationState(dosing = dosing, coolingStates = cooling)
+) { light, dosing, cooling ->
+    TankDevicePresentationState(
+        lightStates = light,
+        dosing = dosing,
+        coolingStates = cooling
+    )
 }
 
 private fun buildTankDetailDevicesUiState(
@@ -408,6 +469,13 @@ private fun buildTankDetailDevicesUiState(
 ): TankDetailDevicesUiState {
     val items = devices.map { device ->
         val compactCard = DeviceCompactSnapshotMapper.map(device)
+        val lightCard = if (device.family == OwnerDeviceFamily.LIGHT) {
+            compactCard.toLightSpotlightCardUi(
+                state = presentation.lightStates[device.deviceUid]
+            )
+        } else {
+            null
+        }
         val dosingState = presentation.dosing.states[device.deviceUid]
         val dosingCard = if (device.family == OwnerDeviceFamily.DOSING) {
             compactCard.toDosingSpotlightCardUi(
@@ -428,6 +496,7 @@ private fun buildTankDetailDevicesUiState(
             deviceUid = device.deviceUid,
             title = device.displayName,
             card = compactCard,
+            lightCard = lightCard,
             dosingCard = dosingCard,
             coolingCard = coolingCard
         )
@@ -462,8 +531,12 @@ private fun isDeviceRemovalAllowed(
     return requestIsValid && operationsAreIdle
 }
 
-private fun DeviceMenuOpenResult.Unavailable.toUnavailableEvent() =
-    TankDetailDevicesEvent.ShowDeviceUnavailable(
+private fun DeviceMenuOpenResult.Unavailable.toUnavailableEvent():
+    TankDetailDevicesEvent.ShowDeviceUnavailable {
+    val presentation = DeviceMenuUnavailableMessageMapper.presentation(reason)
+    return TankDetailDevicesEvent.ShowDeviceUnavailable(
         title = title,
-        messageRes = DeviceMenuUnavailableMessageMapper.messageRes(reason)
+        titleRes = presentation.titleRes,
+        messageRes = presentation.messageRes
     )
+}
