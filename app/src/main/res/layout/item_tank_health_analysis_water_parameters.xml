@@ -214,9 +214,9 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:drawableStart="@drawable/ic_tank_health_info_24"
+                app:drawableStartCompat="@drawable/ic_tank_health_info_24"
                 android:drawablePadding="@dimen/aqua_size_10"
-                android:drawableTint="@color/aqua_accent_primary"
+                app:drawableTint="@color/aqua_accent_primary"
                 android:gravity="center_vertical"
                 android:includeFontPadding="false"
                 android:padding="@dimen/aqua_size_12"

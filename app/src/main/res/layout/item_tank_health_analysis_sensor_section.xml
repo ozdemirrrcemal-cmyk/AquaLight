@@ -310,9 +310,9 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
-                    android:drawableStart="@drawable/ic_tank_health_sensor_24"
+                    app:drawableStartCompat="@drawable/ic_tank_health_sensor_24"
                     android:drawablePadding="@dimen/aqua_size_4"
-                    android:drawableTint="@color/aqua_accent_positive"
+                    app:drawableTint="@color/aqua_accent_positive"
                     android:gravity="center"
                     android:includeFontPadding="false"
                     android:paddingHorizontal="@dimen/aqua_size_10"
