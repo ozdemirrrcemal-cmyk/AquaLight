@@ -2,9 +2,9 @@
 
 Araştırma tarihi: 26.09.2026 (Europe/Istanbul).
 
-Durum: **K03.0 ölçüm kapsamı, K03.1 NO3/NO2/PO4 kanonik kayıt anlamı/birimleri ve K03.2 test/cihaz seçimi + kaynak semantiği çözümleme + normalizasyon akışı kabul edildi. K03.3 ve sonraki kararlar açık.** Kabul edilen normatif kapsam ana sözleşme §6.1–6.5, §7, §25.1–25.3 ve §28.1'de kayıtlıdır. Bu araştırma dosyası uygulama kodu veya bilimsel güvenlik eşiği değildir.
+Durum: **K03.0 ölçüm kapsamı, K03.1 NO3/NO2/PO4 kanonik kayıt anlamı/birimleri, K03.2 test/cihaz seçimi + kaynak semantiği çözümleme + normalizasyon akışı ve K03.3 amonyak kanonik temelleri kabul edildi. K03.4 ve sonraki kararlar açık.** Kabul edilen normatif kapsam ana sözleşme §6.1–6.5, §7, §25.1–25.3 ve §28.1'de kayıtlıdır. Bu araştırma dosyası uygulama kodu veya bilimsel güvenlik eşiği değildir.
 
-Kapsam: K03.0 için ölçüm seçiminin kaynaklarını, K03.1'de kabul edilen NO3/NO2/PO4 ortak raporlama temelini ve K03.2'de kabul edilen source-aware giriş/normalizasyon yaklaşımını izlenebilir tutmak. Toplam amonyağın kesin kanonik raporlama temeli, ek parametrelerin semantiği, kanıtlı profil/dönüşüm tablolarının ayrıntıları ve türetilmiş hesaplar sonraki ayrı kararlar olacak.
+Kapsam: K03.0 için ölçüm seçiminin kaynaklarını, K03.1'de kabul edilen NO3/NO2/PO4 ortak raporlama temelini, K03.2'de kabul edilen source-aware giriş/normalizasyon yaklaşımını ve K03.3'te kabul edilen amonyak kanonik temellerini izlenebilir tutmak. Aynı ölçüm olayında çok-sonuçlu amonyak testlerinin kayıt/UI davranışı, ek parametrelerin semantiği, kanıtlı profil/dönüşüm tablolarının ayrıntıları ve türetilmiş hesaplar sonraki ayrı kararlar olacak.
 
 ## Doğrulanan ayrımlar
 
@@ -62,9 +62,22 @@ K03.1'in kabul edilmesi bu kalan konuları onaylamaz veya uygulanmış yapmaz. B
 
 Bu karar UI davranışını ve source-resolution mimarisini dondurur; tam ticari ürün kataloğunun içeriği, profil revision sahipliği, her dönüşüm katsayısının hassasiyeti ve bilimsel eşikler yine kanıtlı veri/uygulama işi olarak tamamlanmalıdır. Katalogdaki karşılaştırma aralıkları da aynı anlam/birim doğrulamasından geçmelidir.
 
-## K03.3 — sıradaki açık karar
+## K03.3 — kabul edilen amonyak kanonik temeli
 
-Toplam amonyağın kanonik kayıt/assessment temeli ve birimi kesinleştirilecek. K03.2, toplam ve doğrudan serbest amonyak result mode'larının birbirine karıştırılmamasını kabul eder; ancak toplam amonyağın içeride hangi raporlama temeline normalize edileceğini henüz seçmez.
+26.09.2026 tarihinde kabul edildi:
+
+- **Toplam amonyak:** `TOTAL_AMMONIA_NITROGEN (TAN)` → **mg/L as N**.
+- **Doğrudan serbest amonyak:** `FREE_AMMONIA_NH3` → **mg/L as NH3**.
+- Test/cihazın verdiği ham sonuç, kaynak birimi/raporlama temeli ve profil/revision korunur; kanonik değer ayrı tutulur.
+- Dönüşüm yalnız K03.2'deki doğrulanmış profil veya kontrollü typed source semantics destekliyorsa yapılır. `ammonia`, `NH3`, `NH4` veya `ppm` etiketi tek başına dönüşüm yetkisi değildir.
+- TAN, doğrudan serbest NH3, NH4-only sonuç ve gelecekteki hesaplanmış NH3 birbirinin yerine kullanılmaz.
+- UI ana alanı kullanıcı dostu **`Toplam amonyak`** olarak kalır; seçili testin kaynak birimi/raporlama bağlamı gösterilir ve kullanıcıya `mg/L as N` dönüşümü yaptırılmaz. Direct result varsa **`Serbest amonyak (NH3)`** olarak açıkça ayrılır.
+
+Bu karar bilimsel güvenlik/toxicity eşiği, hesaplanmış serbest NH3 formülü veya tam ticari ürün kataloğu kabulü değildir.
+
+## K03.4 — sıradaki açık karar
+
+Aynı çok-sonuçlu test/kit aynı ölçüm olayında hem toplam amonyak hem doğrudan serbest NH3 sonucu veriyorsa, iki sonucun **aynı WaterAnalysisRecord içinde birlikte saklanıp saklanmayacağı**, giriş UI'ında bunun nasıl açılacağı ve history/detail'de iki ayrı measured metric olarak nasıl gösterileceği kararlaştırılacak. K03.3 iki metriğin anlamını dondurur ancak aynı olayda cardinality/UI davranışını seçmez.
 
 ## Birincil kaynaklar
 
