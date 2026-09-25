@@ -34,6 +34,8 @@ import com.aqua.aqualight.ui.tabs.aquarium.navigation.TankDetailTabArgs
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
 import com.yalantis.ucrop.UCrop
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.launch
 
 class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) {
@@ -55,7 +57,7 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
 
     private var tankId: Long = 0L
     private var currentPlants: List<AquariumPlantTag> = emptyList()
-    private var activePhotoPlantId: Long? = null
+    private val photoTarget: PlantPhotoTargetViewModel by viewModels()
     private var isOpeningPlantTagScreen: Boolean = false
     private var isOpeningPlantHealth: Boolean = false
     private var isPhotoMutationInProgress: Boolean = false
@@ -67,8 +69,10 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
     private val galleryLauncher = registerForActivityResult(
         ActivityResultContracts.PickVisualMedia()
     ) { uri ->
-        if (_binding != null && uri != null) {
+        if (_binding != null && uri != null && photoTarget.isInProgress) {
             lifecycleScope.launch { startImageCrop(uri) }
+        } else {
+            photoTarget.finish()
         }
     }
 
@@ -79,12 +83,14 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
             val cameraUri = mediaFlow.currentCameraUri()
             if (_binding == null) {
                 mediaFlow.cancelCamera()
+                photoTarget.finish()
                 return@launch
             }
             if (success && cameraUri != null) {
                 startImageCrop(cameraUri)
             } else {
                 mediaFlow.cancelCamera()
+                photoTarget.finish()
             }
         }
     }
@@ -95,6 +101,7 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
         lifecycleScope.launch {
             if (_binding == null) {
                 mediaFlow.cancelCrop()
+                photoTarget.finish()
                 return@launch
             }
             when {
@@ -105,6 +112,7 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
                         savePlantPhoto(accepted)
                     } else {
                         mediaFlow.cancelCrop()
+                        photoTarget.finish()
                         showSnackBar(
                             getString(R.string.aquarium_photo_crop_failed),
                             BaseActivity.SnackType.ERROR
@@ -115,13 +123,17 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
                 result.resultCode == UCrop.RESULT_ERROR -> {
                     val error = result.data?.let(UCrop::getError)
                     mediaFlow.cancelCrop()
+                    photoTarget.finish()
                     showSnackBar(
                         error?.message ?: getString(R.string.aquarium_photo_crop_failed),
                         BaseActivity.SnackType.ERROR
                     )
                 }
 
-                else -> mediaFlow.cancelCrop()
+                else -> {
+                    mediaFlow.cancelCrop()
+                    photoTarget.finish()
+                }
             }
         }
     }
@@ -129,16 +141,6 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         tankId = requireArguments().getLong(ARG_TANK_ID)
-        activePhotoPlantId = savedInstanceState
-            ?.getLong(STATE_ACTIVE_PHOTO_PLANT_ID)
-            ?.takeIf { plantId -> plantId > 0L }
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        activePhotoPlantId?.let { plantId ->
-            outState.putLong(STATE_ACTIVE_PHOTO_PLANT_ID, plantId)
-        }
-        super.onSaveInstanceState(outState)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -178,7 +180,7 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
     }
 
     private fun openPlantHealth() {
-        if (isOpeningPlantHealth) return
+        if (isOpeningPlantHealth || photoTarget.isInProgress) return
 
         val navController = findNavController()
         navController.currentBackStackEntry
@@ -198,7 +200,7 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
     }
 
     private fun openPlantTagScreen() {
-        if (isOpeningPlantTagScreen) return
+        if (isOpeningPlantTagScreen || photoTarget.isInProgress) return
         val navController = findNavController()
         if (navController.currentDestination?.id != R.id.tankDetailFragment) return
         isOpeningPlantTagScreen = true
@@ -265,26 +267,34 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
     }
 
     private fun showPlantPhotoSource(plant: AquariumPlantTag) {
-        if (isPhotoMutationInProgress) return
+        if (isPhotoMutationInProgress || photoTarget.isInProgress) return
         if (childFragmentManager.findFragmentByTag(PhotoSourceBottomSheet.TAG) != null) return
 
-        activePhotoPlantId = plant.id
+        val ownerUid = requireContext().requireAppContainer()
+            .authenticatedOwnerIdentity.requireOwnerUid()
+        if (!photoTarget.select(ownerUid, plant.id)) return
+        permissionCoordinator.cancelPending()
         mediaFlow.markExternallyOwnedSelection(plant.photoUri)
         PhotoSourceBottomSheet.newInstance(
             title = getString(R.string.aquarium_plant_photo_title),
             showRemove = !plant.photoUri.isNullOrBlank()
-        ).show(childFragmentManager, PhotoSourceBottomSheet.TAG)
+        ).showNow(childFragmentManager, PhotoSourceBottomSheet.TAG)
     }
 
     private fun openGallery() {
-        if (activePhotoPlantId == null) return
-        galleryLauncher.launch(
-            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-        )
+        if (!photoTarget.begin()) return
+        try {
+            galleryLauncher.launch(
+                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+            )
+        } catch (error: Exception) {
+            photoTarget.finish()
+            showSnackBar(getString(R.string.aquarium_photo_crop_failed), BaseActivity.SnackType.ERROR)
+        }
     }
 
     private fun checkCameraPermissionAndOpen() {
-        if (activePhotoPlantId == null) return
+        if (photoTarget.plantId == null) return
         permissionCoordinator.runWhenGranted(
             capability = AppCapability.CAMERA_PHOTO,
             actionToken = ACTION_CAPTURE_PLANT_PHOTO
@@ -292,27 +302,38 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
     }
 
     private fun openCamera() {
-        if (activePhotoPlantId == null) return
+        if (!photoTarget.begin()) return
         lifecycleScope.launch {
-            val cameraUri = mediaFlow.createCameraUri()
-            if (_binding == null) {
-                mediaFlow.cancelCamera()
-                return@launch
-            }
-            if (cameraUri == null) {
+            var launched = false
+            try {
+                val cameraUri = mediaFlow.createCameraUri()
+                if (_binding != null && cameraUri != null) {
+                    cameraLauncher.launch(cameraUri)
+                    launched = true
+                } else if (_binding != null) {
+                    showSnackBar(
+                        getString(R.string.aquarium_photo_temp_file_failed), BaseActivity.SnackType.ERROR
+                    )
+                }
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (error: Exception) {
                 showSnackBar(
-                    getString(R.string.aquarium_photo_temp_file_failed),
-                    BaseActivity.SnackType.ERROR
+                    getString(R.string.aquarium_photo_temp_file_failed), BaseActivity.SnackType.ERROR
                 )
-                return@launch
+            } finally {
+                if (!launched) {
+                    withContext(NonCancellable) { mediaFlow.cancelCamera() }
+                    photoTarget.finish()
+                }
             }
-            cameraLauncher.launch(cameraUri)
         }
     }
 
     private suspend fun startImageCrop(sourceUri: Uri) {
-        if (_binding == null || activePhotoPlantId == null) {
+        if (_binding == null || !photoTarget.isInProgress) {
             mediaFlow.cancelCamera()
+            photoTarget.finish()
             return
         }
         setFragmentGlobalLoading(true)
@@ -328,12 +349,14 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
                         cropLauncher.launch(preparation.intent)
                     } else {
                         mediaFlow.cancelCrop()
+                        photoTarget.finish()
                     }
                 }
 
                 is MediaCropPreparationResult.Failure,
                 MediaCropPreparationResult.StorageFailure -> {
                     mediaFlow.cancelCamera()
+                    photoTarget.finish()
                     showSnackBar(
                         getString(R.string.aquarium_photo_crop_failed),
                         BaseActivity.SnackType.ERROR
@@ -341,16 +364,24 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
                 }
             }
         } catch (cancellation: CancellationException) {
+            withContext(NonCancellable) { mediaFlow.cancelCrop() }
+            photoTarget.finish()
             throw cancellation
+        } catch (error: Exception) {
+            mediaFlow.cancelCrop()
+            photoTarget.finish()
+            showSnackBar(getString(R.string.aquarium_photo_crop_failed), BaseActivity.SnackType.ERROR)
         } finally {
             setFragmentGlobalLoading(false)
         }
     }
 
     private suspend fun savePlantPhoto(contentUri: Uri) {
-        val plantId = activePhotoPlantId
-        if (_binding == null || plantId == null || isPhotoMutationInProgress) {
+        val plantId = photoTarget.plantId
+        val ownerUid = photoTarget.ownerUid
+        if (_binding == null || plantId == null || ownerUid == null || isPhotoMutationInProgress) {
             mediaFlow.rollbackSelection()
+            photoTarget.finish()
             return
         }
 
@@ -359,7 +390,8 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
             aquariumTankViewModel.updatePlantPhoto(
                 tankId = tankId,
                 plantId = plantId,
-                photoUri = contentUri.toString()
+                photoUri = contentUri.toString(),
+                expectedOwnerUid = ownerUid
             )
             mediaFlow.commitSelection(deletePersistedMedia = false)
             showSnackBar(
@@ -377,12 +409,15 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
             )
         } finally {
             isPhotoMutationInProgress = false
+            photoTarget.finish()
         }
     }
 
     private fun removePlantPhoto() {
         val plant = activePhotoPlant() ?: return
+        val ownerUid = photoTarget.ownerUid ?: return
         if (plant.photoUri.isNullOrBlank() || isPhotoMutationInProgress) return
+        if (!photoTarget.begin()) return
 
         isPhotoMutationInProgress = true
         lifecycleScope.launch {
@@ -391,7 +426,8 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
                 aquariumTankViewModel.updatePlantPhoto(
                     tankId = tankId,
                     plantId = plant.id,
-                    photoUri = null
+                    photoUri = null,
+                    expectedOwnerUid = ownerUid
                 )
                 mediaFlow.commitSelection(deletePersistedMedia = false)
                 showSnackBar(
@@ -409,12 +445,13 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
                 )
             } finally {
                 isPhotoMutationInProgress = false
+                photoTarget.finish()
             }
         }
     }
 
     private fun activePhotoPlant(): AquariumPlantTag? {
-        val plantId = activePhotoPlantId ?: return null
+        val plantId = photoTarget.plantId ?: return null
         return currentPlants.firstOrNull { plant -> plant.id == plantId }
     }
 
@@ -433,7 +470,6 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
 
     companion object {
         private const val ARG_TANK_ID = "tankId"
-        private const val STATE_ACTIVE_PHOTO_PLANT_ID = "activePhotoPlantId"
         private const val ACTION_CAPTURE_PLANT_PHOTO = "capture_plant_photo"
 
         fun newInstance(tankId: Long): TankDetailPlantsFragment {

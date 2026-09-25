@@ -31,11 +31,16 @@ internal class UserDataBackupCodec(
         mediaByEntryName: Map<String, File>,
         destination: File
     ) {
+        validateEntryCount(mediaByEntryName.size + 1)
         validator.validate(manifest, mediaByEntryName)
         requireStagingDirectory(destination, "Backup staging directory could not be created.")
         val manifestBytes = gson.toJson(manifest).toByteArray(StandardCharsets.UTF_8)
         require(manifestBytes.size <= UserDataBackupLimits.MAX_MANIFEST_BYTES) {
             "Backup manifest exceeds the supported size."
+        }
+        require(manifestBytes.size.toLong() + mediaByEntryName.values.sumOf(File::length) <=
+            maxUncompressedArchiveBytes.toLong()) {
+            "Backup exceeds the supported uncompressed archive size."
         }
         var completed = false
         try {

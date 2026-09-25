@@ -28,8 +28,12 @@ class AquariumTankViewModel(
     suspend fun updateTankPhoto(tankId: Long, photoUri: String?) =
         operations.updateTankPhoto(tankId, photoUri)
 
-    suspend fun updatePlantPhoto(tankId: Long, plantId: Long, photoUri: String?) =
-        operations.updatePlantPhoto(tankId, plantId, photoUri)
+    suspend fun updatePlantPhoto(
+        tankId: Long,
+        plantId: Long,
+        photoUri: String?,
+        expectedOwnerUid: String
+    ) = operations.updatePlantPhoto(tankId, plantId, photoUri, expectedOwnerUid)
 
     suspend fun updateTankName(tankId: Long, name: String) =
         operations.updateTankName(tankId, name)

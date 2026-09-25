@@ -56,6 +56,7 @@ class AquariumTankDataStoreManager(
         draft: TankDraft
     ): Long {
         val ownerUid = UserDataScope.requireCurrentUid()
+        draft.plants.forEach { plant -> requireNewPlantPhoto(plant.photoUri, ownerUid) }
         var newTankId = 0L
 
         context.aquariumTanksDataStore.updateData { currentStore ->
@@ -345,11 +346,19 @@ class AquariumTankDataStoreManager(
     ): String? {
         require(plantId > 0L) { "plantId must be positive" }
         val normalizedPhotoUri = photoUri.orEmpty().trim()
+        val ownerUid = UserDataScope.requireCurrentUid()
+        val validCandidate = normalizedPhotoUri.isBlank() || AppMediaStorage.isPendingMediaForOwner(
+            context, normalizedPhotoUri, ownerUid, AppMediaScope.PLANT
+        )
         var previousPhotoUri: String? = null
         updateCurrentOwnerTank(tankId) { storedTank ->
             var replaced = false
             val updatedPlants = storedTank.plantsList.map { plant ->
                 if (plant.id == plantId) {
+                    require(storedTank.ownerUid == ownerUid) { "Plant photo owner changed." }
+                    require(plant.photoUri == normalizedPhotoUri || validCandidate) {
+                        "New plant photo is not pending media for this owner."
+                    }
                     replaced = true
                     previousPhotoUri = plant.photoUri.takeIf { uri ->
                         uri.isNotBlank() && uri != normalizedPhotoUri
@@ -465,24 +474,34 @@ class AquariumTankDataStoreManager(
         tankId: Long,
         plants: List<TankPlantTag>
     ): List<String> {
-        val replacementPhotoUris = plants
-            .mapNotNull { plant -> plant.photoUri?.trim()?.takeIf(String::isNotBlank) }
-            .toSet()
+        val ownerUid = UserDataScope.requireCurrentUid()
+        val validCandidates = plants.mapNotNull { plant -> plant.photoUri }
+            .filter { uri ->
+                AppMediaStorage.isPendingMediaForOwner(context, uri, ownerUid, AppMediaScope.PLANT)
+            }.toSet()
         var supersededPhotoUris: Set<String> = emptySet()
         updateCurrentOwnerTank(tankId) { storedTank ->
+            val currentPlants = storedTank.plantsList.associateBy { plant -> plant.id }
+            val updatedPlants = plants.map { plant ->
+                val existing = currentPlants[plant.id]
+                val photoUri = if (existing != null) {
+                    // Marker/list edits cannot overwrite a photo saved after the editor opened.
+                    existing.photoUri
+                } else {
+                    require(storedTank.ownerUid == ownerUid) { "Plant photo owner changed." }
+                    require(plant.photoUri.isNullOrBlank() || plant.photoUri in validCandidates) {
+                        "New plant photo is not pending media for this owner."
+                    }
+                    plant.photoUri.orEmpty()
+                }
+                plant.toStoredPlantTag().toBuilder().setPhotoUri(photoUri).build()
+            }
+            val replacementPhotoUris = updatedPlants.map { plant -> plant.photoUri }.toSet()
             supersededPhotoUris = storedTank.plantsList
                 .mapNotNull { plant -> plant.photoUri.takeIf(String::isNotBlank) }
                 .filterNot(replacementPhotoUris::contains)
                 .toSet()
-
-            storedTank.toBuilder()
-                .clearPlants()
-                .addAllPlants(
-                    plants.map { plant ->
-                        plant.toStoredPlantTag()
-                    }
-                )
-                .build()
+            storedTank.toBuilder().clearPlants().addAllPlants(updatedPlants).build()
         }
         return supersededPhotoUris.toList()
     }
@@ -606,6 +625,13 @@ class AquariumTankDataStoreManager(
             storedTank.toBuilder()
                 .setCareRemindersDisabled(!enabled)
                 .build()
+        }
+    }
+
+    private fun requireNewPlantPhoto(photoUri: String?, ownerUid: String) {
+        if (photoUri.isNullOrBlank()) return
+        require(AppMediaStorage.isPendingMediaForOwner(context, photoUri, ownerUid, AppMediaScope.PLANT)) {
+            "New plant photos must be pending app-owned plant media for the record owner."
         }
     }
 

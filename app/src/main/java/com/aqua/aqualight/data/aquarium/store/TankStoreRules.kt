@@ -43,9 +43,15 @@ object TankStoreRules {
         )
 
         val ownerScopedIds = mutableSetOf<Pair<String, Long>>()
+        val plantPhotoUris = mutableSetOf<String>()
 
         store.tanksList.forEach { tank ->
             validateTank(tank)
+            tank.plantsList.forEach { plant ->
+                if (plant.photoUri.isNotBlank() && !plantPhotoUris.add(plant.photoUri)) {
+                    violation("Plant photo files must not be shared between records.")
+                }
+            }
 
             val ownerKey = canonicalOwnerUid(tank.ownerUid)
             if (!ownerScopedIds.add(ownerKey to tank.id)) {

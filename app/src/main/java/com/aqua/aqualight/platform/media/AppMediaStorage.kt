@@ -147,6 +147,24 @@ object AppMediaStorage {
         }
     }
 
+    /** Exact journal ownership, scope and canonical URI are required before attaching new media. */
+    fun isPendingMediaForOwner(
+        context: Context,
+        uriString: String?,
+        ownerUid: String,
+        scope: AppMediaScope
+    ): Boolean {
+        if (uriString.isNullOrBlank() || ownerUid.isBlank()) return false
+        val file = resolveInternalMediaFile(context, uriString, scope) ?: return false
+        if (!file.isFile || file.length() <= 0L) return false
+        if (runCatching { toContentUri(context, file).toString() }.getOrNull() != uriString) {
+            return false
+        }
+        return pendingEntries(context).any { entry ->
+            entry.uri == uriString && entry.ownerUid == ownerUid
+        }
+    }
+
     /** Marks a pending media candidate as owned by a successfully committed domain record. */
     fun commitPendingMedia(context: Context, uriString: String?) {
         if (uriString.isNullOrBlank()) return

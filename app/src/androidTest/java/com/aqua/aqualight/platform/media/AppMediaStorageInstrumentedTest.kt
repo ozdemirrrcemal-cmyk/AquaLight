@@ -132,6 +132,21 @@ class AppMediaStorageInstrumentedTest {
         AppMediaStorage.deleteInternalMedia(context, committed)
     }
 
+    @Test
+    fun candidateOwnershipUsesExactUidAndScopeInsteadOfSanitizedFilename() {
+        val owner = "plant/owner"
+        val photo = pendingSavedMedia(owner, "7", AppMediaScope.PLANT)
+        try {
+            assertTrue(AppMediaStorage.isPendingMediaForOwner(context, photo, owner, AppMediaScope.PLANT))
+            assertFalse(AppMediaStorage.isPendingMediaForOwner(context, photo, "plant?owner", AppMediaScope.PLANT))
+            assertFalse(AppMediaStorage.isPendingMediaForOwner(context, photo, owner, AppMediaScope.TANK))
+            AppMediaStorage.commitPendingMedia(context, photo)
+            assertFalse(AppMediaStorage.isPendingMediaForOwner(context, photo, owner, AppMediaScope.PLANT))
+        } finally {
+            AppMediaStorage.deleteInternalMedia(context, photo)
+        }
+    }
+
     private fun pendingSavedMedia(
         ownerUid: String,
         ownerToken: String,

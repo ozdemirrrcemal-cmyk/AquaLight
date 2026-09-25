@@ -162,6 +162,66 @@ class UserDataBackupCodecTest {
         assertTrue("deviceUid" in assignmentFields)
     }
 
+    @Test
+    fun `maximum photo count round trips including manifest entry`() {
+        val root = tempDirectory()
+        val (manifest, media) = plantPhotoArchive(root, UserDataBackupLimits.MAX_ZIP_ENTRIES - 1)
+        val encoded = File(root, "maximum.aqlbackup")
+        codec.encode(manifest, media, encoded)
+        val decoded = codec.decode(encoded, File(root, "decoded-maximum"))
+        assertEquals(manifest, decoded.manifest)
+        assertEquals(media.keys, decoded.mediaByEntryName.keys)
+    }
+
+    @Test
+    fun `writer rejects photo count that reader cannot restore`() {
+        val root = tempDirectory()
+        val (manifest, media) = plantPhotoArchive(root, UserDataBackupLimits.MAX_ZIP_ENTRIES)
+        val encoded = File(root, "overflow.aqlbackup")
+        assertThrows(IllegalArgumentException::class.java) {
+            codec.encode(manifest, media, encoded)
+        }
+        assertFalse(encoded.exists())
+        val raw = rawZip(Gson().toJson(manifest), media.mapValues { it.value.readBytes() })
+        assertThrows(IllegalArgumentException::class.java) {
+            codec.decode(raw, File(root, "decoded-overflow"))
+        }
+    }
+
+    @Test
+    fun `writer enforces reader uncompressed limit before exporting`() {
+        val root = tempDirectory()
+        val (manifest, media) = plantPhotoArchive(root, 2)
+        val bytes = Gson().toJson(manifest).toByteArray(StandardCharsets.UTF_8).size +
+            media.values.sumOf(File::length).toInt()
+        val encoded = File(root, "too-large.aqlbackup")
+        assertThrows(IllegalArgumentException::class.java) {
+            UserDataBackupCodec(maxUncompressedArchiveBytes = bytes - 1)
+                .encode(manifest, media, encoded)
+        }
+        assertFalse(encoded.exists())
+    }
+
+    private fun plantPhotoArchive(
+        root: File,
+        count: Int
+    ): Pair<UserDataBackupManifest, Map<String, File>> {
+        val bytes = "small-plant-photo".toByteArray()
+        val file = File(root, "source.jpg").apply { writeBytes(bytes) }
+        val media = linkedMapOf<String, File>()
+        val plants = (1..count).map { id ->
+            val entryName = "media/tanks/7_plant_$id.jpg"
+            media[entryName] = file
+            ArchivePlant(
+                id = id.toLong(), catalogId = "plant:anubias_barteri",
+                plantName = "Anubias", category = "Epiphyte", markerX = 0.5f, markerY = 0.5f,
+                photo = ArchiveMediaReference(entryName, bytes.size, sha256(bytes))
+            )
+        }
+        val base = manifest()
+        return base.copy(aquariums = listOf(base.aquariums.single().copy(plants = plants))) to media
+    }
+
     private fun manifest(
         photo: ArchiveMediaReference? = null,
         plantPhoto: ArchiveMediaReference? = null

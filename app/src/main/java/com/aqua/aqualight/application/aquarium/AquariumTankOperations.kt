@@ -11,7 +11,12 @@ interface AquariumTankOperations {
     suspend fun duplicateTank(tankId: Long): Long
     suspend fun deleteTanks(tankIds: Collection<Long>): DeleteAquariumTanksResult
     suspend fun updateTankPhoto(tankId: Long, photoUri: String?)
-    suspend fun updatePlantPhoto(tankId: Long, plantId: Long, photoUri: String?)
+    suspend fun updatePlantPhoto(
+        tankId: Long,
+        plantId: Long,
+        photoUri: String?,
+        expectedOwnerUid: String
+    )
     suspend fun updateTankName(tankId: Long, name: String)
     suspend fun updateTankType(tankId: Long, tankType: String)
     suspend fun updateTankSize(tankId: Long, size: AquariumTankSize)

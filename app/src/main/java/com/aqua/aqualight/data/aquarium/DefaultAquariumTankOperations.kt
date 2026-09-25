@@ -22,6 +22,7 @@ import com.aqua.aqualight.data.aquarium.model.TankPlantTag
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.data.user.withCurrentOwnerScope
+import com.aqua.aqualight.platform.media.AppMediaScope
 import com.aqua.aqualight.platform.media.AppMediaStorage
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -45,8 +46,8 @@ class DefaultAquariumTankOperations(
         tanks.map(SavedAquariumTank::toApplicationSnapshot)
     }
 
-    override suspend fun addTank(draft: AquariumTankDraft): Long = withContext(NonCancellable) {
-        withContext(dispatcher) {
+    override suspend fun addTank(draft: AquariumTankDraft): Long = withCurrentOwnerScope { ownerUid ->
+        withContext(NonCancellable + dispatcher) {
             val pendingMedia = buildList {
                 draft.photoUri?.takeIf(String::isNotBlank)?.let(::add)
                 draft.plants
@@ -57,7 +58,11 @@ class DefaultAquariumTankOperations(
                 tankStore.addTankFromDraft(draft.toDataDraft())
             } catch (error: Throwable) {
                 pendingMedia.forEach { uri ->
-                    runCatching { AppMediaStorage.rollbackPendingMedia(appContext, uri) }
+                    if (uri == draft.photoUri) {
+                        runCatching { AppMediaStorage.rollbackPendingMedia(appContext, uri) }
+                    } else {
+                        rollbackUnreferencedPlantCandidate(uri, ownerUid)
+                    }
                 }
                 throw error
             }
@@ -147,14 +152,15 @@ class DefaultAquariumTankOperations(
     override suspend fun updatePlantPhoto(
         tankId: Long,
         plantId: Long,
-        photoUri: String?
-    ): Unit = withContext(NonCancellable) {
-        withContext(dispatcher) {
-            val ownerUid = UserDataScope.requireCurrentUid()
+        photoUri: String?,
+        expectedOwnerUid: String
+    ): Unit = withCurrentOwnerScope { ownerUid ->
+        require(ownerUid == expectedOwnerUid) { "Plant photo selection belongs to another owner." }
+        withContext(NonCancellable + dispatcher) {
             val previousPhoto = try {
                 tankStore.updatePlantPhoto(tankId, plantId, photoUri)
             } catch (error: Throwable) {
-                runCatching { AppMediaStorage.rollbackPendingMedia(appContext, photoUri) }
+                rollbackUnreferencedPlantCandidate(photoUri, ownerUid)
                 throw error
             }
 
@@ -167,6 +173,18 @@ class DefaultAquariumTankOperations(
                 )
             }
             Unit
+        }
+    }
+
+    private suspend fun rollbackUnreferencedPlantCandidate(uri: String?, ownerUid: String) {
+        runCatching {
+            if (!AppMediaStorage.isPendingMediaForOwner(appContext, uri, ownerUid, AppMediaScope.PLANT)) {
+                return@runCatching
+            }
+            val referenced = tankStore.tanksSnapshotForOwner(ownerUid).any { tank ->
+                tank.plants.any { plant -> plant.photoUri == uri }
+            }
+            if (!referenced) AppMediaStorage.rollbackPendingMedia(appContext, uri)
         }
     }
 
@@ -210,9 +228,8 @@ class DefaultAquariumTankOperations(
     override suspend fun updateTankPlants(
         tankId: Long,
         plants: List<AquariumPlantTag>
-    ): Unit = withContext(NonCancellable) {
-        withContext(dispatcher) {
-            val ownerUid = UserDataScope.requireCurrentUid()
+    ): Unit = withCurrentOwnerScope { ownerUid ->
+        withContext(NonCancellable + dispatcher) {
             val supersededPhotos = tankStore.updateTankPlants(
                 tankId,
                 plants.map(AquariumPlantTag::toDataTag)
