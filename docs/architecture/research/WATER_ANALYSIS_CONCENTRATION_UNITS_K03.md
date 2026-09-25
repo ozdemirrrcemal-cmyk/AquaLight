@@ -2,9 +2,9 @@
 
 Araştırma tarihi: 26.09.2026 (Europe/Istanbul).
 
-Durum: **K03.0 ölçüm kapsamı, K03.1 NO3/NO2/PO4 kanonik kayıt anlamı/birimleri, K03.2 test/cihaz seçimi + kaynak semantiği çözümleme + normalizasyon akışı ve K03.3 amonyak kanonik temelleri kabul edildi. K03.4 ve sonraki kararlar açık.** Kabul edilen normatif kapsam ana sözleşme §6.1–6.5, §7, §25.1–25.3 ve §28.1'de kayıtlıdır. Bu araştırma dosyası uygulama kodu veya bilimsel güvenlik eşiği değildir.
+Durum: **K03.0 ölçüm kapsamı, K03.1 NO3/NO2/PO4 kanonik kayıt anlamı/birimleri, K03.2 test/cihaz seçimi + kaynak semantiği çözümleme + normalizasyon akışı, K03.3 amonyak kanonik temelleri ve K03.4 concurrent multi-result kayıt/UI politikası kabul edildi. K03.5 ve sonraki kararlar açık.** Kabul edilen normatif kapsam ana sözleşme §6.1–6.6, §7, §25.1–25.3 ve §28.1'de kayıtlıdır. Bu araştırma dosyası uygulama kodu veya bilimsel güvenlik eşiği değildir.
 
-Kapsam: K03.0 için ölçüm seçiminin kaynaklarını, K03.1'de kabul edilen NO3/NO2/PO4 ortak raporlama temelini, K03.2'de kabul edilen source-aware giriş/normalizasyon yaklaşımını ve K03.3'te kabul edilen amonyak kanonik temellerini izlenebilir tutmak. Aynı ölçüm olayında çok-sonuçlu amonyak testlerinin kayıt/UI davranışı, ek parametrelerin semantiği, kanıtlı profil/dönüşüm tablolarının ayrıntıları ve türetilmiş hesaplar sonraki ayrı kararlar olacak.
+Kapsam: K03.0 için ölçüm seçiminin kaynaklarını, K03.1'de kabul edilen NO3/NO2/PO4 ortak raporlama temelini, K03.2'de kabul edilen source-aware giriş/normalizasyon yaklaşımını, K03.3'te kabul edilen amonyak kanonik temellerini ve K03.4'te kabul edilen concurrent multi-result cardinality/UI davranışını izlenebilir tutmak. Tuzluluk/SG, diğer ek parametrelerin semantiği, kanıtlı profil/dönüşüm tablolarının ayrıntıları ve türetilmiş hesaplar sonraki ayrı kararlar olacak.
 
 ## Doğrulanan ayrımlar
 
@@ -53,7 +53,7 @@ K03.1'in kabul edilmesi bu kalan konuları onaylamaz veya uygulanmış yapmaz. B
 1. Test/cihaz tercihi ölçüm parametresine göre tutulur ve owner izolasyonuyla hatırlanır; tek bir global ürün bütün parametrelere uygulanmaz. Tank-bound cihazlarda tank/device assignment sınırı ayrıca geçerlidir.
 2. Bilinen üründe marka tek başına yeterli değildir. Doğrulanmış marka+model/yöntem/sonuç modu profili ölçülen analiti, kimyasal raporlama temelini, kaynak birimini, desteklenen sonuç modlarını ve dönüşüm metadata'sını sağlar.
 3. Sonraki ölçümlerde kullanıcı normalde yalnız sonucu girer; giriş kutusunda kaynak birimi/raporlama bağlamı görünür, desteklenen dönüşümü application katmanı yapar. Kullanıcıya elle katsayı uygulattırılmaz.
-4. Aynı ürün birden fazla semantik sonuç veriyorsa yalnız gerekli açık seçim gösterilir. Örneğin toplam amonyak ile doğrudan serbest NH3 birbirinden ayrı result mode'dur; uygulama hangisinin ölçüldüğünü sayıya veya önceki tercihe bakarak tahmin etmez.
+4. Profil birden fazla semantik sonuç yeteneğini açıkça tanımlar. Kaynak bu sonuçları aynı ölçüm olayında birlikte üretebiliyorsa K03.4 uyarınca ayrı input/metric gösterilir ve birlikte kaydedilebilir. Yalnız kaynağın kendi çalışma biçimi sonuçları gerçekten mutually-exclusive yapıyorsa açık mode seçimi gösterilir; uygulama modu sayıya veya önceki tercihe bakarak tahmin etmez.
 5. Ürün katalogda yoksa destek bitmez. Kullanıcı kontrollü listeden ölçüm türü, kimyasal raporlama temeli ve kaynak birimini seçer. Serbest metin kimyasal anlamın kaynağı değildir; çözümlenen typed semantik provenance'a yazılır.
 6. Girilen ham sonuç, kaynak semantiği, varsa profil kimliği/revision, result mode ve normalize edilmiş sonuç ayrı tutulur. Kaynak aynı anlam/birimdeyse değer değişmez; uyumlu farklı temel/birimde doğrulanmış dönüşüm uygulanır. Yuvarlama yalnız sunumdadır.
 7. `ppm` etiketi tek başına `mg/L` sayılmaz. Kaynağın tanımı ve gerekiyorsa yoğunluk koşulları doğrulanmadan dönüşüm yapılmaz; tatlı/deniz suyu için varsayılan katsayı uydurulmaz. NO3-N/NO2-N/ortofosfat-P ile analitik kapsamı farklı toplam fosfor ayrımı korunur.
@@ -75,9 +75,22 @@ Bu karar UI davranışını ve source-resolution mimarisini dondurur; tam ticari
 
 Bu karar bilimsel güvenlik/toxicity eşiği, hesaplanmış serbest NH3 formülü veya tam ticari ürün kataloğu kabulü değildir.
 
-## K03.4 — sıradaki açık karar
+## K03.4 — kabul edilen concurrent multi-result politikası
 
-Aynı çok-sonuçlu test/kit aynı ölçüm olayında hem toplam amonyak hem doğrudan serbest NH3 sonucu veriyorsa, iki sonucun **aynı WaterAnalysisRecord içinde birlikte saklanıp saklanmayacağı**, giriş UI'ında bunun nasıl açılacağı ve history/detail'de iki ayrı measured metric olarak nasıl gösterileceği kararlaştırılacak. K03.3 iki metriğin anlamını dondurur ancak aynı olayda cardinality/UI davranışını seçmez.
+26.09.2026 tarihinde kabul edildi: gerçek test/cihaz aynı örnekleme/ölçüm olayında birden fazla bağımsız semantik sonuç üretebiliyorsa AquaLight bu sonuçları tek bir mode alanına sıkıştırmaz.
+
+- TAN ve doğrudan serbest NH3 aynı `WaterAnalysisRecord` içinde aynı `observedAt` olayına ait **iki ayrı measured metric** olarak birlikte saklanabilir.
+- Add Analysis ekranında kaynak profili ikisini concurrent destekliyorsa **`Toplam amonyak`** ve **`Serbest amonyak (NH3)`** ayrı input olarak görünür; kullanıcı gerçekten ölçtüğü birini veya ikisini girebilir.
+- Her metric kendi raw value, source unit/reporting basis, result/channel identity, normalize canonical value ve provenance bilgisini taşır.
+- Mode selector yalnız test/cihaz gerçekten mutually-exclusive çıkış modlarından birini seçtiriyorsa kullanılır. Concurrent çıktıları selector ile birbirinin alternatifi yapmak yasaktır.
+- TAN girişi direct NH3'ü silmez veya üretmez; direct NH3 TAN'ı silmez veya türetmez. Gelecekte kabul edilecek calculated NH3 de ayrı derived provenance ile tutulur ve measured NH3'ün üzerine yazmaz.
+- Detail ekranı iki measured metric'i ayrı gösterir. History özeti kompakt kalabilir ancak birini diğerinin etiketiyle gösteremez.
+
+Bu karar Seachem'e özel istisna değildir; verified source capability metadata'sına dayanan genel ürün davranışıdır.
+
+## K03.5 — sıradaki açık karar
+
+Deniz/resif ölçümlerinde **tuzluluk (salinity)** ile **specific gravity** için kanonik kayıt biçimi, sıcaklık referansı, desteklenen kaynak cihaz/test türleri ve doğrulanmış dönüşüm politikası kararlaştırılacak. İki değer aynı sayı değildir ve sıcaklık/referans koşulu olmadan körlemesine birbirine çevrilmeyecektir.
 
 ## Birincil kaynaklar
 
