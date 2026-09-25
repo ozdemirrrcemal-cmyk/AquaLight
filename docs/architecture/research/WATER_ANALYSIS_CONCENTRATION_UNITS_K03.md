@@ -2,9 +2,9 @@
 
 Araştırma tarihi: 26.09.2026 (Europe/Istanbul).
 
-Durum: **K03.0 ölçüm kapsamı, K03.1 NO3/NO2/PO4 kanonik kayıt anlamı/birimleri, K03.2 test/cihaz seçimi + kaynak semantiği çözümleme + normalizasyon akışı, K03.3 amonyak kanonik temelleri, K03.4 concurrent multi-result kayıt/UI politikası ve K03.5 deniz salinity/SG dönüşüm güvenliği kabul edildi. K03.6 ve sonraki kararlar açık.** Kabul edilen normatif kapsam ana sözleşme §6.1–6.6, §7, §25.1–25.3 ve §28.1'de kayıtlıdır. Bu araştırma dosyası uygulama kodu veya bilimsel güvenlik eşiği değildir.
+Durum: **K03.0 ölçüm kapsamı, K03.1 NO3/NO2/PO4 kanonik kayıt anlamı/birimleri, K03.2 test/cihaz seçimi + kaynak semantiği çözümleme + normalizasyon akışı, K03.3 amonyak kanonik temelleri, K03.4 concurrent multi-result kayıt/UI politikası, K03.5 deniz salinity/SG dönüşüm güvenliği ve K03.6 alkalinite/KH semantik-birim politikası kabul edildi. K03.7 ve sonraki kararlar açık.** Kabul edilen normatif kapsam ana sözleşme §6.1–6.6, §7, §25.1–25.3 ve §28.1'de kayıtlıdır. Bu araştırma dosyası uygulama kodu veya bilimsel güvenlik eşiği değildir.
 
-Kapsam: K03.0 için ölçüm seçiminin kaynaklarını, K03.1'de kabul edilen NO3/NO2/PO4 ortak raporlama temelini, K03.2'de kabul edilen source-aware giriş/normalizasyon yaklaşımını, K03.3'te kabul edilen amonyak kanonik temellerini, K03.4'te kabul edilen concurrent multi-result cardinality/UI davranışını ve K03.5'te kabul edilen marine salinity/SG/conductivity ayrımını izlenebilir tutmak. Alkalinite/KH, diğer ek parametrelerin semantiği, kanıtlı profil/dönüşüm tablolarının ayrıntıları ve türetilmiş hesaplar sonraki ayrı kararlar olacak.
+Kapsam: K03.0 için ölçüm seçiminin kaynaklarını, K03.1'de kabul edilen NO3/NO2/PO4 ortak raporlama temelini, K03.2'de kabul edilen source-aware giriş/normalizasyon yaklaşımını, K03.3'te kabul edilen amonyak kanonik temellerini, K03.4'te kabul edilen concurrent multi-result cardinality/UI davranışını, K03.5'te kabul edilen marine salinity/SG/conductivity ayrımını ve K03.6'da kabul edilen total-alkalinity/KH semantik-birim politikasını izlenebilir tutmak. Çözünmüş oksijen ve diğer ek parametrelerin semantiği, kanıtlı profil/dönüşüm tablolarının ayrıntıları ve türetilmiş hesaplar sonraki ayrı kararlar olacak.
 
 ## Doğrulanan ayrımlar
 
@@ -104,9 +104,24 @@ Bu karar Seachem'e özel istisna değildir; verified source capability metadata'
 
 Bu kararın güvenlik ilkesi: **yanlış normalize edilmiş kesin sonuç yerine doğru source-native kayıt + açık yetersiz veri durumu tercih edilir.**
 
-## K03.6 — sıradaki açık karar
+## K03.6 — kabul edilen alkalinite / KH semantik ve birim politikası
 
-Deniz/resif için **alkalinite / KH** semantiği, canonical unit ve aynı ölçümün iki ayrı alan gibi gösterilmesini önleyen UI/model politikası kararlaştırılacak.
+26.09.2026 tarihinde kabul edildi:
+
+- `TOTAL_ALKALINITY` kanonik acid-neutralizing-capacity metric'idir; canonical unit **meq/L**.
+- Aynı `TOTAL_ALKALINITY` semantiğini doğrulanmış şekilde raporlayan kaynaklar `dKH`, `meq/L` veya `mg/L as CaCO3` gösterebilir. Raw source value korunur; canonical normalization application katmanında yapılır.
+- Verified total-alkalinity kaynaklarında dönüşüm ilişkileri: **1 dKH = 17.86 mg/L as CaCO3 = 0.358 meq/L** ve **1 meq/L = 50 mg/L as CaCO3**. `ppm` tek başına `mg/L as CaCO3` kabul edilmez.
+- Marine/reef profilinde tek alkalinite metric'i `TOTAL_ALKALINITY`'dir. UI'da `Alkalinite` alanı gösterilir; aynı test sonucunu ikinci bir `KH` alanı olarak tekrar girmek yasaktır. Reef kullanıcıları için doğrulanmış source/display dKH olabilir; engine/store canonical meq/L kullanır.
+- Freshwater'ta `TOTAL_ALKALINITY`, `CARBONATE_HARDNESS` ve `GENERAL_HARDNESS` ayrı semantiktir. `Tampon kapasitesi (KH)` gibi kullanıcı dostu etiket domain semantic'i tek başına belirlemez; verified test profili belirler.
+- Carbonate hardness alkalinity ile ilişkili olsa da aynı fiziksel nicelik değildir. Gerekli total-hardness/alkalinity girdileri ve kabul edilmiş yöntem yoksa alkalinity değerinden tek başına `CARBONATE_HARDNESS` sentezlenmez.
+- Aynı alkalinite ölçümünün dKH, meq/L ve mg/L as CaCO3 gösterimleri tek measurement/evidence'dır; ayrı kanıt sayılmaz.
+- Unknown `KH` test semantic'i fail-closed davranır: source-native değer korunabilir ancak total-alkalinity veya carbonate-hardness rule'una tahminle sokulmaz; gerekirse `INSUFFICIENT_DATA` üretilir.
+
+Bu kararın amacı aquarium-industry shorthand'ını kullanıcıya korurken domain ve analiz motorunda kimyasal semantiği kaybetmemektir.
+
+## K03.7 — sıradaki açık karar
+
+Çözünmüş oksijen için kanonik metric/birim, `mg/L` ile `% saturation` ayrımı, sıcaklık/tuzluluk/basınç bağımlılığı ve aynı ölçümün iki gösteriminin double-count edilmemesi kararlaştırılacak.
 
 ## Birincil kaynaklar
 
@@ -142,6 +157,9 @@ Aşağıdaki kaynaklar önceki karar araştırmasında 26.09.2026 tarihinde aç�
 | R13 | [TEOS-10 GSW — Practical Salinity from conductivity](https://www.teos-10.org/pubs/gsw/html/gsw_SP_from_C.html) | PSS-78 Practical Salinity conductivity, in-situ temperature ve pressure girdilerinden hesaplanır; algoritma/applicability explicit olmalıdır. |
 | R14 | [NOAA — salinity measurement methods](https://repository.library.noaa.gov/view/noaa/13165/noaa_13165_DS1.pdf) | Practical salinity conductivity ratioyla; SG hydrometerla ölçülebilir ve SG için temperature correction gerekir; refractive-index yönteminde de temperature correction gerekir. |
 | R15 | [Red Sea — Seawater Refractometer](https://g1.redseafish.com/red-sea-salts/seawater-refractometer-salinity-test/) | Refractometer scale/calibration temperature ve seawater-vs-brine kalibrasyonu sonucu anlamlı etkiler; yanlış ölçek yaklaşık 1–1.5 ppt sapmaya yol açabilir. |
+| R16 | [USGS Water-Supply Paper 2254 — alkalinity](https://pubs.usgs.gov/wsp/wsp2254/pdf/wsp2254a.pdf) | Total alkalinity farklı türlerin toplam acid-neutralizing capacity'sidir; yaygın raporlama mg/L as CaCO3 veya meq/L'dir ve `meq/L = mg/L as CaCO3 / 50` ilişkisi verilir. |
+| R17 | [Hanna HI772 Marine Alkalinity manual](https://www.documentation.hannainst.com/manuals/preview/3589) | Marine alkalinity cihazı sonucu ppm olarak verir ve `1 dKH = 17.86 ppm CaCO3 = 0.358 meq/L` dönüşümünü açıkça tanımlar. |
+| R18 | [Hach — Hardness vs Alkalinity](https://www.hach.com/parameters/hardness) | Hardness çok değerlikli metal iyonlarıyla, alkalinity acid-neutralizing capacity ile ilgilidir; carbonate hardness total hardness ve total alkalinity ilişkisiyle belirlenir, iki kavram aynı değildir. |
 | R9 | [MSD Veterinary Manual — Equipment Needed for Aquatic Systems and Water Analysis](https://www.msdvetmanual.com/exotic-and-laboratory-animals/aquatic-systems/equipment-needed-for-aquatic-systems-and-water-analysis) | Oksijen, sıcaklık, pH, amonyak, nitrit, alkalinite, sertlik, deniz suyunda tuzluluk ve bağlama göre ek testler. Veteriner değerlendirme kapsamı UI'daki zorunlu alan listesi değildir. |
 | R10 | [Red Sea — Foundation manual, “Optimal levels of the Foundation Elements”](https://redseafish.com/wp-content/uploads/2020/11/24653-NEW-Manual-Foundation-Complete-GB-_2018c.pdf) | Deniz/resif profillerinde tuzluluk, alkalinite, kalsiyum ve magnezyum ayrımı. Üretici hedefleri tüm akvaryumlar için evrensel güvenlik sınırı sayılmaz. |
 | R11 | [MSD Veterinary Manual — Environmental Diseases, chlorine/chloramine section](https://www.msdvetmanual.com/exotic-and-laboratory-animals/aquatic-systems/environmental-diseases-of-aquatic-animals-in-aquatic-systems) | Serbest klor ve toplam klor ayrı ölçümlerdir; kloramin için yalnız serbest klor sonucunun yeterli olmaması. |
