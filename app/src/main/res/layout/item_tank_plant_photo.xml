@@ -16,20 +16,21 @@
     app:strokeColor="@color/aqua_card_outline"
     app:strokeWidth="@dimen/aqua_size_1">
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-          android:baselineAligned="false"
         android:paddingStart="@dimen/aqua_size_14"
         android:paddingTop="@dimen/aqua_size_6"
         android:paddingEnd="@dimen/aqua_size_14"
         android:paddingBottom="@dimen/aqua_size_6">
 
         <FrameLayout
+            android:id="@+id/plantPhotoFrame"
             android:layout_width="@dimen/aqua_size_56"
-            android:layout_height="@dimen/aqua_size_56">
+            android:layout_height="@dimen/aqua_size_56"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
 
             <com.google.android.material.card.MaterialCardView
                 style="@style/Widget.Aqua.Card.Device.Media"
@@ -66,11 +67,14 @@
         </FrameLayout>
 
         <LinearLayout
-            android:layout_width="0dp"
+            android:layout_width="@dimen/aqua_size_0"
             android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/aqua_size_14"
-            android:layout_weight="1"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            app:layout_constraintStart_toEndOf="@id/plantPhotoFrame"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
 
             <TextView
                 android:id="@+id/tvPlantCategory"
@@ -97,6 +101,6 @@
 
 
 
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </com.google.android.material.card.MaterialCardView>
