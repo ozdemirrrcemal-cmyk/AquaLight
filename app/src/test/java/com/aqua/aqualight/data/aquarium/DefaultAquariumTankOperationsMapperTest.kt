@@ -45,7 +45,8 @@ class DefaultAquariumTankOperationsMapperTest {
                 "Anubias",
                 "Rhizome",
                 0.25f,
-                0.75f
+                0.75f,
+                "content://plant/11"
             ),
             mapped.plants.single()
         )
@@ -92,7 +93,8 @@ class DefaultAquariumTankOperationsMapperTest {
                     plantName = "Anubias",
                     category = "Rhizome",
                     markerX = 0.25f,
-                    markerY = 0.75f
+                    markerY = 0.75f,
+                    photoUri = "content://plant/11"
                 )
             ),
             materials = listOf(
@@ -133,7 +135,8 @@ class DefaultAquariumTankOperationsMapperTest {
                     "Monte Carlo",
                     "Carpet",
                     0.1f,
-                    0.9f
+                    0.9f,
+                    "content://plant/21"
                 )
             ),
             materials = listOf(
@@ -178,6 +181,7 @@ class DefaultAquariumTankOperationsMapperTest {
             mapped.plants.single().catalogId
         )
         assertEquals("Monte Carlo", mapped.plants.single().plantName)
+        assertEquals("content://plant/21", mapped.plants.single().photoUri)
         assertEquals(22L, mapped.materials.single().id)
         assertEquals("Macro", mapped.materials.single().name)
     }
