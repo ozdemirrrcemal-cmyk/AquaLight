@@ -167,11 +167,11 @@ internal class LivestockHealthUi(context: Context) : LivestockHealthComponents(c
                 intArrayOf(ContextCompat.getColor(context, R.color.aqua_color_transparent),
                     ContextCompat.getColor(context, R.color.aqua_card_surface))
             )
-        }, FrameLayout.LayoutParams(match, match))
+        }, FrameLayout.LayoutParams(match, size(R.dimen.aqua_size_160), Gravity.BOTTOM))
         val captions = column().apply {
             setPadding(
                 size(R.dimen.aqua_size_16), size(R.dimen.aqua_size_8),
-                size(R.dimen.aqua_size_16), size(R.dimen.aqua_size_16)
+                size(R.dimen.aqua_size_16), size(R.dimen.aqua_size_4)
             )
             addView(text(
                 context.getString(if (isEmpty) R.string.livestock_health_empty_hero_title
@@ -235,6 +235,11 @@ internal class LivestockHealthUi(context: Context) : LivestockHealthComponents(c
         val layout = row()
         layout.addView(image(R.drawable.ic_care_water_change_24,
             R.dimen.aqua_size_48, R.dimen.aqua_size_48).apply {
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(ContextCompat.getColor(context,
+                    R.color.aqua_bg_maintenance_tab_selected_fill))
+            }
             setPadding(size(R.dimen.aqua_size_10), size(R.dimen.aqua_size_10),
                 size(R.dimen.aqua_size_10), size(R.dimen.aqua_size_10))
             setColorFilter(ContextCompat.getColor(context, R.color.aqua_accent_primary))

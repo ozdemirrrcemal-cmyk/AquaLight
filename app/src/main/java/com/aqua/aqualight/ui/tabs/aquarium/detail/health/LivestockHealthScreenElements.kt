@@ -86,5 +86,7 @@ internal fun LivestockHealthFragment.statusBadge(label: String, active: Boolean)
             setColor(ContextCompat.getColor(requireContext(), if (active)
                 R.color.aqua_bg_maintenance_profile_percent_warning_fill
             else R.color.aqua_bg_maintenance_tab_unselected_fill))
+            setStroke(ui.size(R.dimen.aqua_size_1), ContextCompat.getColor(requireContext(),
+                if (active) R.color.aqua_content_warning else R.color.aqua_card_outline))
         }
     }

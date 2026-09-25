@@ -62,18 +62,18 @@ private fun LivestockHealthFragment.recentObservations(content: LinearLayout,
     heading.addView(ui.heading(R.string.livestock_health_home_recent).apply {
         layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
     })
-    heading.addView(ui.text(getString(if (showAllObservations)
-        R.string.livestock_health_home_show_less else R.string.livestock_health_home_view_all),
-        colorRes = R.color.aqua_accent_primary).apply {
-        isClickable = true
-        isFocusable = true
-        setOnClickListener {
-            showAllObservations = !showAllObservations
-            tank?.let(::render)
-        }
-    })
+    val toggleLabel = getString(if (showAllObservations)
+        R.string.livestock_health_home_show_less else R.string.livestock_health_home_view_all)
+    heading.addView(ui.text(toggleLabel, colorRes = R.color.aqua_accent_primary))
     heading.addView(ui.image(R.drawable.ic_arrow_right, R.dimen.aqua_size_24,
         R.dimen.aqua_size_24))
+    heading.isClickable = true
+    heading.isFocusable = true
+    heading.contentDescription = toggleLabel
+    heading.setOnClickListener {
+        showAllObservations = !showAllObservations
+        tank?.let(::render)
+    }
     content.addView(ui.spacer())
     content.addView(heading)
     content.addView(ui.spacer(R.dimen.aqua_size_12))

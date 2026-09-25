@@ -146,8 +146,9 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
                 ),
                 onBackClick = { findNavController().popBackStack() },
                 actions = if (args.page == PAGE_FORM || args.page == PAGE_DETAIL) emptyList()
-                else listOf(AquaHeaderAction(R.drawable.ic_info,
-                    getString(R.string.livestock_health_home_info_title)) { showHealthInfo() })
+                else listOf(AquaHeaderAction(iconRes = R.drawable.ic_info,
+                    contentDescription = getString(R.string.livestock_health_home_info_title),
+                    onClick = { showHealthInfo() }))
             )
         )
         registerHealthResultListeners()
