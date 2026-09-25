@@ -248,10 +248,9 @@ class TankDetailLivestockFormFragment :
             return
         }
 
-        selectedCategory = selectedCatalogEntry?.category
-            ?: (restoredFormState?.getString("form.category") ?: livestock.category)
-                .takeIf { it in LivestockCategories.all }
-            ?: LivestockCategories.FISH
+        selectedCategory = resolveEditingCategory(
+            selectedCatalogEntry, restoredFormState, livestock
+        )
 
         mediaFlow.initializeSelection(livestock.photoUri)
         selectedQuantity = restoredFormState?.getInt("form.quantity") ?: livestock.quantity.coerceAtLeast(1)
@@ -706,6 +705,15 @@ private fun resolveLivestockIdentity(
 
     return livestockId to catalogIdentity
 }
+
+private fun resolveEditingCategory(
+    catalogEntry: LivestockCatalogItem?,
+    savedState: Bundle?,
+    livestock: AquariumLivestock
+): String = catalogEntry?.category
+    ?: (savedState?.getString("form.category") ?: livestock.category)
+        .takeIf { it in LivestockCategories.all }
+    ?: LivestockCategories.FISH
 
 private fun updateIdentityFieldVisibility(
     binding: FragmentTankLivestockFormBinding,
