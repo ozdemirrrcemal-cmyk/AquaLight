@@ -112,54 +112,9 @@ internal class UserDataArchiveMediaGateway(
             }
         }
         try {
-            return promoteNormalizedPhoto(ownerUid, ownerToken, normalized, scope)
+            return appContext.promoteNormalizedPhoto(ownerUid, ownerToken, normalized, scope)
         } finally {
             normalized.delete()
-        }
-    }
-
-    private fun promoteNormalizedPhoto(
-        ownerUid: String,
-        ownerToken: String,
-        normalized: File,
-        scope: AppMediaScope
-    ): String {
-        val temporaryUri = requireNotNull(
-            AppMediaStorage.createCropOutputUri(
-                context = appContext,
-                scope = scope,
-                ownerToken = ownerToken
-            )
-        ) {
-            "A temporary photo file could not be created."
-        }
-        val temporaryFile = requireNotNull(temporaryUri.path?.let(::File)) {
-            "The temporary photo file is unavailable."
-        }
-
-        var promoted = false
-        return try {
-            normalized.inputStream().buffered().use { input ->
-                temporaryFile.outputStream().buffered().use { output ->
-                    copyLimited(input, output, ImageMediaPolicy.MAX_OUTPUT_BYTES.toInt())
-                }
-            }
-            require(temporaryFile.length() == normalized.length()) {
-                "Restored photo copy was incomplete."
-            }
-            requireNotNull(
-                AppMediaStorage.promoteCropOutput(
-                    context = appContext,
-                    scope = scope,
-                    ownerToken = ownerToken,
-                    ownerUid = ownerUid,
-                    outputUri = temporaryUri
-                )
-            ) {
-                "The restored photo could not be promoted."
-            }.toString().also { promoted = true }
-        } finally {
-            if (!promoted) temporaryFile.delete()
         }
     }
 
@@ -190,29 +145,10 @@ internal class UserDataArchiveMediaGateway(
             options.outHeight in 1..MAX_IMAGE_DIMENSION
     }
 
-    private fun copyLimited(
-        input: InputStream,
-        output: OutputStream,
-        maximumBytes: Int
-    ) {
-        val buffer = ByteArray(BUFFER_SIZE)
-        var total = 0L
-        while (true) {
-            val read = input.read(buffer)
-            if (read < 0) break
-            total += read
-            require(total <= maximumBytes.toLong()) {
-                "Photo exceeds the supported size."
-            }
-            output.write(buffer, 0, read)
-        }
-        output.flush()
-    }
-
     private fun sha256(file: File): String {
         val digest = MessageDigest.getInstance("SHA-256")
         file.inputStream().buffered().use { input ->
-            val buffer = ByteArray(BUFFER_SIZE)
+            val buffer = ByteArray(ARCHIVE_MEDIA_BUFFER_SIZE)
             while (true) {
                 val read = input.read(buffer)
                 if (read < 0) break
@@ -229,7 +165,6 @@ internal class UserDataArchiveMediaGateway(
     private companion object {
         const val MAX_ARCHIVED_PHOTO_BYTES = 8 * 1024 * 1024
         const val MAX_IMAGE_DIMENSION = 8_192
-        const val BUFFER_SIZE = 8 * 1024
         const val UNSIGNED_BYTE_MASK = 0xFF
         const val HEX_RADIX = 16
         val SUPPORTED_MIME_TYPES = setOf(
@@ -239,6 +174,51 @@ internal class UserDataArchiveMediaGateway(
         )
     }
 }
+
+private fun Context.promoteNormalizedPhoto(
+    ownerUid: String,
+    ownerToken: String,
+    normalized: File,
+    scope: AppMediaScope
+): String {
+    val temporaryUri = requireNotNull(
+        AppMediaStorage.createCropOutputUri(this, scope, ownerToken)
+    ) { "A temporary photo file could not be created." }
+    val temporaryFile = requireNotNull(temporaryUri.path?.let(::File)) {
+        "The temporary photo file is unavailable."
+    }
+    var promoted = false
+    return try {
+        normalized.inputStream().buffered().use { input ->
+            temporaryFile.outputStream().buffered().use { output ->
+                copyLimited(input, output, ImageMediaPolicy.MAX_OUTPUT_BYTES.toInt())
+            }
+        }
+        require(temporaryFile.length() == normalized.length()) {
+            "Restored photo copy was incomplete."
+        }
+        requireNotNull(
+            AppMediaStorage.promoteCropOutput(this, scope, ownerToken, ownerUid, temporaryUri)
+        ) { "The restored photo could not be promoted." }.toString().also { promoted = true }
+    } finally {
+        if (!promoted) temporaryFile.delete()
+    }
+}
+
+private fun copyLimited(input: InputStream, output: OutputStream, maximumBytes: Int) {
+    val buffer = ByteArray(ARCHIVE_MEDIA_BUFFER_SIZE)
+    var total = 0L
+    while (true) {
+        val read = input.read(buffer)
+        if (read < 0) break
+        total += read
+        require(total <= maximumBytes.toLong()) { "Photo exceeds the supported size." }
+        output.write(buffer, 0, read)
+    }
+    output.flush()
+}
+
+private const val ARCHIVE_MEDIA_BUFFER_SIZE = 8 * 1024
 
 private class ArchivePhotoSourceAccess(private val source: File) : ImageMediaSourceAccess {
     override fun mimeType(uri: Uri): String? = null

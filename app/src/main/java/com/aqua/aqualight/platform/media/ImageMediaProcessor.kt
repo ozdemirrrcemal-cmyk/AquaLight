@@ -238,8 +238,7 @@ class AndroidImageMediaProcessor internal constructor(
             oriented = applyExifOrientation(stagedSource, decoded)
             val target = ImageMediaPolicy.targetSize(
                 width = oriented.width,
-                height = oriented.height,
-                maxEdgePx = maxOutputEdgePx
+                height = oriented.height, maxEdgePx = maxOutputEdgePx
             )
             scaled = if (target.first == oriented.width && target.second == oriented.height) {
                 oriented

@@ -36,7 +36,9 @@ import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.localizedName
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.TankDetailTabArgs
 import java.util.Calendar
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class TankDetailLivestockFormFragment :
     TankLivestockPhotoFormFragment() {
@@ -650,17 +652,19 @@ class TankDetailLivestockFormFragment :
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 // The pending file belongs to this draft, not to the persisted livestock record.
-                kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
+                withContext(NonCancellable) {
                     mediaFlow.rollbackSelection()
                 }
             } finally {
-                val navController = findNavController()
-                if (!openedFromPicker) {
-                    navController.previousBackStackEntry
-                        ?.savedStateHandle
-                        ?.set(TankDetailFragment.KEY_RETURN_TAB, TankDetailTabArgs.TANK_LIFE)
+                if (_binding != null && isAdded) {
+                    val navController = findNavController()
+                    if (!openedFromPicker) {
+                        navController.previousBackStackEntry
+                            ?.savedStateHandle
+                            ?.set(TankDetailFragment.KEY_RETURN_TAB, TankDetailTabArgs.TANK_LIFE)
+                    }
+                    navController.navigateUp()
                 }
-                navController.navigateUp()
             }
         }
     }
