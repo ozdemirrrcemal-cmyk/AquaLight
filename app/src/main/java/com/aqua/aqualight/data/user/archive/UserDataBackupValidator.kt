@@ -24,7 +24,7 @@ internal object UserDataBackupLimits {
     const val BUFFER_SIZE = 8 * 1024
 
     val mediaEntryPattern =
-        Regex("media/tanks/[1-9][0-9]*(?:_plant_[1-9][0-9]*)?\\.jpg")
+        Regex("media/tanks/[1-9][0-9]*(?:_(?:plant|livestock)_[1-9][0-9]*)?\\.jpg")
     val sha256Pattern = Regex("[0-9a-fA-F]{64}")
 }
 

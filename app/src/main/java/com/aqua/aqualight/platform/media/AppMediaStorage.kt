@@ -5,6 +5,8 @@ import android.net.Uri
 import androidx.core.content.FileProvider
 import com.aqua.aqualight.data.user.UserDataScope
 import java.io.File
+import java.security.MessageDigest
+import java.util.Locale
 import java.util.UUID
 import org.json.JSONObject
 
@@ -474,8 +476,14 @@ object AppMediaStorage {
     ): String = savedOwnerPrefix(scope, ownerUid) +
         "${safeOwnerToken(ownerToken)}_${System.currentTimeMillis()}_${UUID.randomUUID()}.jpg"
 
-    private fun savedOwnerPrefix(scope: AppMediaScope, ownerUid: String): String =
-        "${scope.prefix}_${MediaFileRole.SAVED.token}_${safeOwnerToken(ownerUid)}_"
+    private fun savedOwnerPrefix(scope: AppMediaScope, ownerUid: String): String {
+        val ownerDigest = MessageDigest.getInstance("SHA-256")
+            .digest(ownerUid.toByteArray(Charsets.UTF_8))
+            .joinToString("") { byte -> String.format(Locale.ROOT, "%02x", byte) }
+        // Fixed-width owner identity avoids sanitized-UID and prefix collisions during recovery.
+        // The dot separates this format from every old sanitized filename; old URIs stay readable.
+        return "${scope.prefix}_${MediaFileRole.SAVED.token}.v2_${ownerDigest}_"
+    }
 
     private fun mediaDirectory(context: Context, scope: AppMediaScope): File {
         return File(context.applicationContext.filesDir, scope.directoryName).apply {

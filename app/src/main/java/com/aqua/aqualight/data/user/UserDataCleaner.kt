@@ -293,6 +293,7 @@ class UserDataCleaner private constructor(
             File(appContext.filesDir, "profile_photos"),
             File(appContext.filesDir, "tank_photos"),
             File(appContext.filesDir, "plant_photos"),
+            File(appContext.filesDir, "livestock_photos"),
             File(appContext.cacheDir, "tank_exports"),
             File(appContext.cacheDir, "image_processing")
         )

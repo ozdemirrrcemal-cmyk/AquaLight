@@ -147,6 +147,27 @@ class AppMediaStorageInstrumentedTest {
         }
     }
 
+    @Test
+    fun committedOrphanRecoveryDoesNotMatchAnotherOwnersSanitizedOrPrefixedUid() {
+        val prefix = "photo-owner-${java.util.UUID.randomUUID()}"
+        val owners = listOf(prefix, "${prefix}_other", "$prefix/a", "$prefix?a")
+        val photos = owners.map { owner -> pendingSavedMedia(owner, "7", AppMediaScope.LIVESTOCK) }
+        try {
+            photos.forEach { AppMediaStorage.commitPendingMedia(context, it) }
+            owners.forEachIndexed { index, owner ->
+                AppMediaStorage.reconcileUnreferencedCommittedMedia(
+                    context, owner, emptyList(), System.currentTimeMillis() + TWO_DAYS_MILLIS
+                )
+                assertFalse(AppMediaStorage.isAppOwned(context, photos[index]))
+                photos.drop(index + 1).forEach { photo ->
+                    assertTrue(AppMediaStorage.isAppOwned(context, photo))
+                }
+            }
+        } finally {
+            photos.forEach { AppMediaStorage.deleteInternalMedia(context, it) }
+        }
+    }
+
     private fun pendingSavedMedia(
         ownerUid: String,
         ownerToken: String,

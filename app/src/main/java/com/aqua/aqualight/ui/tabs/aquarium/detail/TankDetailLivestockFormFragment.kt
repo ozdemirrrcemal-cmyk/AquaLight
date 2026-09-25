@@ -639,11 +639,8 @@ class TankDetailLivestockFormFragment :
     }
 
     private fun closeForm() {
-        if (isSavingLivestock && !isNavigatingBack) return
-        if (photoTarget.isInProgress) return
-        if (isNavigatingBack) {
-            return
-        }
+        val cannotClose = isSavingLivestock || photoTarget.isInProgress || isNavigatingBack
+        if (cannotClose) return
 
         isNavigatingBack = true
 
@@ -682,6 +679,7 @@ class TankDetailLivestockFormFragment :
 
     override fun onDestroyView() {
         super.onDestroyView()
+        hasLoadedEditingLivestock = false
         _binding = null
     }
 

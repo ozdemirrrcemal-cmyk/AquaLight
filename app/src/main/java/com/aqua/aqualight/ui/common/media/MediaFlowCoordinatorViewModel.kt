@@ -469,6 +469,5 @@ data class MediaCropSpec(
             showCropFrame = true,
             compressionQuality = 88
         )
-        val PLANT = RECORD
     }
 }
