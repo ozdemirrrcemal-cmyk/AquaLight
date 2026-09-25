@@ -18,6 +18,7 @@
         android:paddingEnd="@dimen/aqua_size_12">
 
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardHealthEntryIcon"
             style="@style/Widget.Aqua.Card.Inline"
             android:layout_width="@dimen/aqua_size_44"
             android:layout_height="@dimen/aqua_size_44"
@@ -50,7 +51,7 @@
             android:textStyle="bold"
             app:layout_constraintBottom_toTopOf="@id/tvHealthEntrySummary"
             app:layout_constraintEnd_toStartOf="@id/ivHealthEntryArrow"
-            app:layout_constraintStart_toEndOf="@id/ivHealthEntryIcon"
+            app:layout_constraintStart_toEndOf="@id/cardHealthEntryIcon"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_chainStyle="packed" />
 
@@ -67,7 +68,7 @@
             android:textSize="@dimen/aqua_text_size_body_small"
             app:layout_constraintBottom_toTopOf="@id/tvHealthEntryLastCheck"
             app:layout_constraintEnd_toStartOf="@id/ivHealthEntryArrow"
-            app:layout_constraintStart_toEndOf="@id/ivHealthEntryIcon"
+            app:layout_constraintStart_toEndOf="@id/cardHealthEntryIcon"
             app:layout_constraintTop_toBottomOf="@id/tvHealthEntryTitle" />
 
         <TextView
@@ -81,7 +82,7 @@
             android:textSize="@dimen/aqua_text_size_caption"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@id/ivHealthEntryArrow"
-            app:layout_constraintStart_toEndOf="@id/ivHealthEntryIcon"
+            app:layout_constraintStart_toEndOf="@id/cardHealthEntryIcon"
             app:layout_constraintTop_toBottomOf="@id/tvHealthEntrySummary" />
 
         <ImageView
