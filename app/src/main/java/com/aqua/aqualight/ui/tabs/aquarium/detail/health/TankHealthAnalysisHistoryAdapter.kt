@@ -1,21 +1,17 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 
-import android.content.res.ColorStateList
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
-import androidx.core.widget.ImageViewCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.ItemTankHealthAnalysisHistoryRecordBinding
 
 internal class TankHealthAnalysisHistoryAdapter(
-    items: List<TankHealthAnalysisHistoryRecord>,
+    private val items: List<TankHealthAnalysisHistoryRecord>,
     private val onRecordClick: (TankHealthAnalysisHistoryRecord) -> Unit
 ) : RecyclerView.Adapter<TankHealthAnalysisHistoryAdapter.RecordViewHolder>() {
-
-    private var items: List<TankHealthAnalysisHistoryRecord> = items
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecordViewHolder {
         return RecordViewHolder(
@@ -33,11 +29,6 @@ internal class TankHealthAnalysisHistoryAdapter(
     }
 
     override fun getItemCount(): Int = items.size
-
-    fun submitList(newItems: List<TankHealthAnalysisHistoryRecord>) {
-        items = newItems
-        notifyDataSetChanged()
-    }
 
     internal class RecordViewHolder(
         private val binding: ItemTankHealthAnalysisHistoryRecordBinding,
@@ -64,43 +55,6 @@ internal class TankHealthAnalysisHistoryAdapter(
                 )
             )
 
-            val sensorSource = item.temperatureSource == TemperatureSource.SENSOR
-            binding.tvSource.setText(
-                if (sensorSource) {
-                    R.string.tank_health_analysis_source_sensor_badge
-                } else {
-                    R.string.tank_health_analysis_source_manual_badge
-                }
-            )
-            binding.ivSource.setImageResource(
-                if (sensorSource) {
-                    R.drawable.ic_tank_health_sensor_24
-                } else {
-                    R.drawable.ic_tank_health_device_24
-                }
-            )
-
-            val badgeBackground = ContextCompat.getColor(
-                context,
-                if (sensorSource) R.color.aqua_surface_positive else R.color.aqua_surface_action
-            )
-            val badgeOutline = ContextCompat.getColor(
-                context,
-                if (sensorSource) R.color.aqua_outline_positive else R.color.aqua_card_metric_outline
-            )
-            val badgeContent = ContextCompat.getColor(
-                context,
-                if (sensorSource) R.color.aqua_accent_positive else R.color.aqua_card_text_secondary
-            )
-
-            binding.sourceBadge.setCardBackgroundColor(badgeBackground)
-            binding.sourceBadge.strokeColor = badgeOutline
-            binding.tvSource.setTextColor(badgeContent)
-            ImageViewCompat.setImageTintList(
-                binding.ivSource,
-                ColorStateList.valueOf(badgeContent)
-            )
-
             binding.root.setOnClickListener {
                 onRecordClick(item)
             }
@@ -114,11 +68,5 @@ internal data class TankHealthAnalysisHistoryRecord(
     @StringRes val phValueRes: Int,
     @StringRes val no3ValueRes: Int,
     @StringRes val temperatureValueRes: Int,
-    @StringRes val no3StatusRes: Int,
-    val temperatureSource: TemperatureSource
+    @StringRes val no3StatusRes: Int
 )
-
-internal enum class TemperatureSource {
-    SENSOR,
-    MANUAL
-}

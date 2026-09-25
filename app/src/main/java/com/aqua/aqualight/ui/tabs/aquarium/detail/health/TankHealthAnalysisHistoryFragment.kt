@@ -1,9 +1,7 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 
-import android.content.res.ColorStateList
 import android.os.Bundle
 import android.view.View
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
@@ -13,7 +11,6 @@ import com.aqua.aqualight.databinding.FragmentTankHealthAnalysisHistoryBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
-import com.google.android.material.button.MaterialButton
 
 class TankHealthAnalysisHistoryFragment :
     Fragment(R.layout.fragment_tank_health_analysis_history) {
@@ -24,7 +21,6 @@ class TankHealthAnalysisHistoryFragment :
     private val binding get() = _binding!!
 
     private lateinit var historyAdapter: TankHealthAnalysisHistoryAdapter
-    private var selectedFilter: HistoryFilter = HistoryFilter.ALL
 
     private val allRecords: List<TankHealthAnalysisHistoryRecord> by lazy {
         listOf(
@@ -34,8 +30,7 @@ class TankHealthAnalysisHistoryFragment :
                 R.string.tank_health_value_ph,
                 R.string.tank_health_value_no3,
                 R.string.tank_health_value_temperature,
-                R.string.tank_health_status_moderate,
-                TemperatureSource.SENSOR
+                R.string.tank_health_status_moderate
             ),
             record(
                 R.string.tank_health_analysis_record_date_2,
@@ -43,8 +38,7 @@ class TankHealthAnalysisHistoryFragment :
                 R.string.tank_health_analysis_value_ph_70,
                 R.string.tank_health_analysis_value_no3_10,
                 R.string.tank_health_analysis_value_temp_24,
-                R.string.tank_health_status_normal,
-                TemperatureSource.MANUAL
+                R.string.tank_health_status_normal
             ),
             record(
                 R.string.tank_health_analysis_record_date_3,
@@ -52,8 +46,7 @@ class TankHealthAnalysisHistoryFragment :
                 R.string.tank_health_analysis_value_ph_66,
                 R.string.tank_health_analysis_value_no3_22,
                 R.string.tank_health_analysis_value_temp_26,
-                R.string.tank_health_status_moderate,
-                TemperatureSource.SENSOR
+                R.string.tank_health_status_moderate
             ),
             record(
                 R.string.tank_health_analysis_record_date_4,
@@ -61,8 +54,7 @@ class TankHealthAnalysisHistoryFragment :
                 R.string.tank_health_analysis_value_ph_72,
                 R.string.tank_health_analysis_value_no3_8,
                 R.string.tank_health_analysis_value_temp_24,
-                R.string.tank_health_status_normal,
-                TemperatureSource.MANUAL
+                R.string.tank_health_status_normal
             ),
             record(
                 R.string.tank_health_analysis_record_date_5,
@@ -70,8 +62,7 @@ class TankHealthAnalysisHistoryFragment :
                 R.string.tank_health_analysis_value_ph_69,
                 R.string.tank_health_analysis_value_no3_16,
                 R.string.tank_health_value_temperature,
-                R.string.tank_health_status_normal,
-                TemperatureSource.SENSOR
+                R.string.tank_health_status_normal
             ),
             record(
                 R.string.tank_health_analysis_record_date_6,
@@ -79,8 +70,7 @@ class TankHealthAnalysisHistoryFragment :
                 R.string.tank_health_value_ph,
                 R.string.tank_health_analysis_value_no3_10,
                 R.string.tank_health_value_temperature,
-                R.string.tank_health_status_normal,
-                TemperatureSource.SENSOR
+                R.string.tank_health_status_normal
             ),
             record(
                 R.string.tank_health_analysis_record_date_7,
@@ -88,8 +78,7 @@ class TankHealthAnalysisHistoryFragment :
                 R.string.tank_health_analysis_value_ph_70,
                 R.string.tank_health_analysis_value_no3_22,
                 R.string.tank_health_analysis_value_temp_26,
-                R.string.tank_health_status_moderate,
-                TemperatureSource.SENSOR
+                R.string.tank_health_status_moderate
             ),
             record(
                 R.string.tank_health_analysis_record_date_8,
@@ -97,8 +86,7 @@ class TankHealthAnalysisHistoryFragment :
                 R.string.tank_health_analysis_value_ph_66,
                 R.string.tank_health_analysis_value_no3_8,
                 R.string.tank_health_analysis_value_temp_24,
-                R.string.tank_health_status_normal,
-                TemperatureSource.MANUAL
+                R.string.tank_health_status_normal
             ),
             record(
                 R.string.tank_health_analysis_record_date_9,
@@ -106,8 +94,7 @@ class TankHealthAnalysisHistoryFragment :
                 R.string.tank_health_analysis_value_ph_72,
                 R.string.tank_health_analysis_value_no3_16,
                 R.string.tank_health_value_temperature,
-                R.string.tank_health_status_normal,
-                TemperatureSource.SENSOR
+                R.string.tank_health_status_normal
             ),
             record(
                 R.string.tank_health_analysis_record_date_10,
@@ -115,8 +102,7 @@ class TankHealthAnalysisHistoryFragment :
                 R.string.tank_health_analysis_value_ph_69,
                 R.string.tank_health_analysis_value_no3_10,
                 R.string.tank_health_analysis_value_temp_24,
-                R.string.tank_health_status_normal,
-                TemperatureSource.MANUAL
+                R.string.tank_health_status_normal
             ),
             record(
                 R.string.tank_health_analysis_record_date_11,
@@ -124,8 +110,7 @@ class TankHealthAnalysisHistoryFragment :
                 R.string.tank_health_value_ph,
                 R.string.tank_health_analysis_value_no3_8,
                 R.string.tank_health_value_temperature,
-                R.string.tank_health_status_normal,
-                TemperatureSource.SENSOR
+                R.string.tank_health_status_normal
             ),
             record(
                 R.string.tank_health_analysis_record_date_12,
@@ -133,8 +118,7 @@ class TankHealthAnalysisHistoryFragment :
                 R.string.tank_health_analysis_value_ph_70,
                 R.string.tank_health_analysis_value_no3_16,
                 R.string.tank_health_analysis_value_temp_26,
-                R.string.tank_health_status_normal,
-                TemperatureSource.SENSOR
+                R.string.tank_health_status_normal
             )
         )
     }
@@ -152,9 +136,7 @@ class TankHealthAnalysisHistoryFragment :
 
         setupHeader()
         setupHistoryList()
-        setupFilters()
         setupNewAnalysisAction()
-        renderFilter()
     }
 
     private fun setupHeader() {
@@ -181,21 +163,6 @@ class TankHealthAnalysisHistoryFragment :
         binding.historyList.itemAnimator = null
     }
 
-    private fun setupFilters() {
-        binding.btnFilterAll.setOnClickListener {
-            selectedFilter = HistoryFilter.ALL
-            renderFilter()
-        }
-        binding.btnFilterSensor.setOnClickListener {
-            selectedFilter = HistoryFilter.SENSOR
-            renderFilter()
-        }
-        binding.btnFilterManual.setOnClickListener {
-            selectedFilter = HistoryFilter.MANUAL
-            renderFilter()
-        }
-    }
-
     private fun setupNewAnalysisAction() {
         binding.btnNewAnalysis.setOnClickListener {
             findNavController().navigateSafelyFrom(
@@ -206,38 +173,6 @@ class TankHealthAnalysisHistoryFragment :
                     )
             )
         }
-    }
-
-    private fun renderFilter() {
-        styleFilterButton(binding.btnFilterAll, selectedFilter == HistoryFilter.ALL)
-        styleFilterButton(binding.btnFilterSensor, selectedFilter == HistoryFilter.SENSOR)
-        styleFilterButton(binding.btnFilterManual, selectedFilter == HistoryFilter.MANUAL)
-
-        historyAdapter.submitList(
-            when (selectedFilter) {
-                HistoryFilter.ALL -> allRecords
-                HistoryFilter.SENSOR -> allRecords.filter {
-                    it.temperatureSource == TemperatureSource.SENSOR
-                }
-                HistoryFilter.MANUAL -> allRecords.filter {
-                    it.temperatureSource == TemperatureSource.MANUAL
-                }
-            }
-        )
-    }
-
-    private fun styleFilterButton(button: MaterialButton, selected: Boolean) {
-        val context = requireContext()
-        val primary = ContextCompat.getColor(context, R.color.aqua_accent_primary)
-        val transparent = ContextCompat.getColor(context, R.color.aqua_color_transparent)
-        val outline = ContextCompat.getColor(context, R.color.aqua_card_metric_outline)
-        val selectedText = ContextCompat.getColor(context, R.color.aqua_content_on_dark)
-        val normalText = ContextCompat.getColor(context, R.color.aqua_card_text_primary)
-
-        button.backgroundTintList = ColorStateList.valueOf(if (selected) primary else transparent)
-        button.strokeColor = ColorStateList.valueOf(if (selected) primary else outline)
-        button.strokeWidth = resources.getDimensionPixelSize(R.dimen.aqua_size_1)
-        button.setTextColor(if (selected) selectedText else normalText)
     }
 
     private fun openRecordDetail() {
@@ -262,8 +197,7 @@ class TankHealthAnalysisHistoryFragment :
         phValueRes: Int,
         no3ValueRes: Int,
         temperatureValueRes: Int,
-        no3StatusRes: Int,
-        temperatureSource: TemperatureSource
+        no3StatusRes: Int
     ): TankHealthAnalysisHistoryRecord {
         return TankHealthAnalysisHistoryRecord(
             dateRes = dateRes,
@@ -271,14 +205,8 @@ class TankHealthAnalysisHistoryFragment :
             phValueRes = phValueRes,
             no3ValueRes = no3ValueRes,
             temperatureValueRes = temperatureValueRes,
-            no3StatusRes = no3StatusRes,
-            temperatureSource = temperatureSource
+            no3StatusRes = no3StatusRes
         )
     }
 
-    private enum class HistoryFilter {
-        ALL,
-        SENSOR,
-        MANUAL
-    }
 }

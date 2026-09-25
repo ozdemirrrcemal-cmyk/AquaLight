@@ -34,11 +34,6 @@
 
     <string name="tank_health_analysis_history_summary">Total 12 records</string>
     <string name="tank_health_analysis_history_summary_subtitle">All analysis history for this tank</string>
-    <string name="tank_health_analysis_filter_all">All (12)</string>
-    <string name="tank_health_analysis_filter_sensor">Sensor (8)</string>
-    <string name="tank_health_analysis_filter_manual">Manual (4)</string>
-    <string name="tank_health_analysis_source_sensor_badge">Read from sensor</string>
-    <string name="tank_health_analysis_source_manual_badge">Entered manually</string>
 
     <string name="tank_health_analysis_record_date_1">26 Sep 2026</string>
     <string name="tank_health_analysis_record_time_1" translatable="false">14:10</string>

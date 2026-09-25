@@ -30,11 +30,6 @@
 
     <string name="tank_health_analysis_history_summary">Toplam 12 kayıt</string>
     <string name="tank_health_analysis_history_summary_subtitle">Tankınızdaki tüm analiz geçmişi</string>
-    <string name="tank_health_analysis_filter_all">Tümü (12)</string>
-    <string name="tank_health_analysis_filter_sensor">Sensör (8)</string>
-    <string name="tank_health_analysis_filter_manual">Manuel (4)</string>
-    <string name="tank_health_analysis_source_sensor_badge">Sensörden alındı</string>
-    <string name="tank_health_analysis_source_manual_badge">Elle girildi</string>
 
     <string name="tank_health_analysis_record_date_1">26 Eyl 2026</string>
     <string name="tank_health_analysis_record_date_2">24 Eyl 2026</string>

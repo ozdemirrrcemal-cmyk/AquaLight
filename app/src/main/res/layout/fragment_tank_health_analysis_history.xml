@@ -73,59 +73,6 @@
 
     </com.google.android.material.card.MaterialCardView>
 
-    <LinearLayout
-        android:id="@+id/filterRow"
-        android:layout_width="@dimen/aqua_size_0"
-        android:layout_height="@dimen/aqua_size_42"
-        android:layout_marginStart="@dimen/aqua_size_14"
-        android:layout_marginTop="@dimen/aqua_size_10"
-        android:layout_marginEnd="@dimen/aqua_size_14"
-        android:baselineAligned="false"
-        android:orientation="horizontal"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/historySummaryCard">
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnFilterAll"
-            style="@style/Widget.Aqua.Button.Primary"
-            android:layout_width="@dimen/aqua_size_0"
-            android:layout_height="match_parent"
-            android:layout_marginEnd="@dimen/aqua_size_3"
-            android:layout_weight="1"
-            android:text="@string/tank_health_analysis_filter_all"
-            android:textSize="@dimen/aqua_text_size_body_small" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnFilterSensor"
-            style="@style/Widget.Aqua.Button"
-            android:layout_width="@dimen/aqua_size_0"
-            android:layout_height="match_parent"
-            android:layout_marginHorizontal="@dimen/aqua_size_3"
-            android:layout_weight="1"
-            android:text="@string/tank_health_analysis_filter_sensor"
-            android:textColor="@color/aqua_card_text_primary"
-            android:textSize="@dimen/aqua_text_size_body_small"
-            app:backgroundTint="@color/aqua_color_transparent"
-            app:strokeColor="@color/aqua_card_metric_outline"
-            app:strokeWidth="@dimen/aqua_size_1" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnFilterManual"
-            style="@style/Widget.Aqua.Button"
-            android:layout_width="@dimen/aqua_size_0"
-            android:layout_height="match_parent"
-            android:layout_marginStart="@dimen/aqua_size_3"
-            android:layout_weight="1"
-            android:text="@string/tank_health_analysis_filter_manual"
-            android:textColor="@color/aqua_card_text_primary"
-            android:textSize="@dimen/aqua_text_size_body_small"
-            app:backgroundTint="@color/aqua_color_transparent"
-            app:strokeColor="@color/aqua_card_metric_outline"
-            app:strokeWidth="@dimen/aqua_size_1" />
-
-    </LinearLayout>
-
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/historyList"
         android:layout_width="@dimen/aqua_size_0"
@@ -140,7 +87,7 @@
         app:layout_constraintBottom_toTopOf="@id/btnNewAnalysis"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/filterRow" />
+        app:layout_constraintTop_toBottomOf="@id/historySummaryCard" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnNewAnalysis"

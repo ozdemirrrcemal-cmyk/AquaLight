@@ -39,7 +39,7 @@
                 android:layout_marginStart="@dimen/aqua_size_10"
                 android:orientation="vertical"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@id/sourceBadge"
+                app:layout_constraintEnd_toStartOf="@id/ivChevron"
                 app:layout_constraintStart_toEndOf="@id/ivCalendar"
                 app:layout_constraintTop_toTopOf="parent">
 
@@ -62,50 +62,6 @@
                     android:textSize="@dimen/aqua_text_size_caption" />
 
             </LinearLayout>
-
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/sourceBadge"
-                style="@style/Widget.Aqua.Card.Inline"
-                android:layout_width="wrap_content"
-                android:layout_height="@dimen/aqua_size_28"
-                android:layout_marginEnd="@dimen/aqua_size_8"
-                app:cardBackgroundColor="@color/aqua_surface_positive"
-                app:cardCornerRadius="@dimen/aqua_size_14"
-                app:cardElevation="@dimen/aqua_size_0"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@id/ivChevron"
-                app:layout_constraintTop_toTopOf="parent"
-                app:strokeColor="@color/aqua_outline_positive"
-                app:strokeWidth="@dimen/aqua_size_1">
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:orientation="horizontal"
-                    android:paddingHorizontal="@dimen/aqua_size_10">
-
-                    <ImageView
-                        android:id="@+id/ivSource"
-                        android:layout_width="@dimen/aqua_size_16"
-                        android:layout_height="@dimen/aqua_size_16"
-                        android:contentDescription="@null"
-                        android:importantForAccessibility="no"
-                        android:src="@drawable/ic_tank_health_sensor_24"
-                        app:tint="@color/aqua_accent_positive" />
-
-                    <TextView
-                        android:id="@+id/tvSource"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="@dimen/aqua_size_4"
-                        android:includeFontPadding="false"
-                        android:textColor="@color/aqua_accent_positive"
-                        android:textSize="@dimen/aqua_text_size_status_micro" />
-
-                </LinearLayout>
-
-            </com.google.android.material.card.MaterialCardView>
 
             <ImageView
                 android:id="@+id/ivChevron"
