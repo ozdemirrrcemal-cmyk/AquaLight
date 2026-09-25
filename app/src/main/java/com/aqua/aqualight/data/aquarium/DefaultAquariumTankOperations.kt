@@ -58,11 +58,8 @@ class DefaultAquariumTankOperations(
                 tankStore.addTankFromDraft(draft.toDataDraft())
             } catch (error: Throwable) {
                 pendingMedia.forEach { uri ->
-                    if (uri == draft.photoUri) {
-                        runCatching { AppMediaStorage.rollbackPendingMedia(appContext, uri) }
-                    } else {
-                        rollbackUnreferencedPlantCandidate(uri, ownerUid)
-                    }
+                    val scope = if (uri == draft.photoUri) AppMediaScope.TANK else AppMediaScope.PLANT
+                    rollbackUnreferencedCandidate(uri, ownerUid, scope)
                 }
                 throw error
             }
@@ -160,7 +157,7 @@ class DefaultAquariumTankOperations(
             val previousPhoto = try {
                 tankStore.updatePlantPhoto(tankId, plantId, photoUri)
             } catch (error: Throwable) {
-                rollbackUnreferencedPlantCandidate(photoUri, ownerUid)
+                rollbackUnreferencedCandidate(photoUri, ownerUid, AppMediaScope.PLANT)
                 throw error
             }
 
@@ -176,13 +173,17 @@ class DefaultAquariumTankOperations(
         }
     }
 
-    private suspend fun rollbackUnreferencedPlantCandidate(uri: String?, ownerUid: String) {
+    private suspend fun rollbackUnreferencedCandidate(
+        uri: String?,
+        ownerUid: String,
+        scope: AppMediaScope
+    ) {
         runCatching {
-            if (!AppMediaStorage.isPendingMediaForOwner(appContext, uri, ownerUid, AppMediaScope.PLANT)) {
+            if (!AppMediaStorage.isPendingMediaForOwner(appContext, uri, ownerUid, scope)) {
                 return@runCatching
             }
             val referenced = tankStore.tanksSnapshotForOwner(ownerUid).any { tank ->
-                tank.plants.any { plant -> plant.photoUri == uri }
+                tank.photoUri == uri || tank.plants.any { plant -> plant.photoUri == uri }
             }
             if (!referenced) AppMediaStorage.rollbackPendingMedia(appContext, uri)
         }
@@ -234,11 +235,12 @@ class DefaultAquariumTankOperations(
                 tankId,
                 plants.map(AquariumPlantTag::toDataTag)
             )
-            plants
-                .mapNotNull { plant -> plant.photoUri?.takeIf(String::isNotBlank) }
-                .forEach { uri ->
-                    runCatching { AppMediaStorage.commitPendingMedia(appContext, uri) }
-                }
+            runCatching {
+                tankStore.tanksSnapshotForOwner(ownerUid)
+                    .firstOrNull { tank -> tank.id == tankId }?.plants
+                    ?.mapNotNull { plant -> plant.photoUri }
+                    ?.forEach { uri -> AppMediaStorage.commitPendingMedia(appContext, uri) }
+            }
             supersededPhotos.forEach { uri ->
                 runCatching {
                     AppMediaStorage.deleteAfterCommit(

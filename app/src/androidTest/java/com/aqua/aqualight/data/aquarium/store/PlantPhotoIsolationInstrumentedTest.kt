@@ -3,15 +3,25 @@ package com.aqua.aqualight.data.aquarium.store
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.aqua.aqualight.application.notifications.DeviceUpdateNotificationWorkCoordinator
+import com.aqua.aqualight.application.notifications.NotificationPermissionPolicy
+import com.aqua.aqualight.application.notifications.NotificationPreferenceRepository
+import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
+import com.aqua.aqualight.application.notifications.NotificationRenderer
+import com.aqua.aqualight.application.notifications.NotificationScheduler
+import com.aqua.aqualight.data.aquarium.DefaultAquariumTankOperations
+import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
 import com.aqua.aqualight.data.aquarium.model.TankDraft
 import com.aqua.aqualight.data.aquarium.model.TankPlantTag
 import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.platform.media.AppMediaScope
 import com.aqua.aqualight.platform.media.AppMediaStorage
 import java.io.File
+import java.lang.reflect.Proxy
 import java.util.UUID
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -86,6 +96,76 @@ class PlantPhotoIsolationInstrumentedTest {
             }
         }
     }
+
+    @Test
+    fun applicationBoundaryRejectsChangedOwnerAndPreservesForeignOrReferencedFiles() = runBlocking {
+        val owner = "plant-application-${UUID.randomUUID()}"
+        val foreignOwner = "${owner}_other"
+        val foreign = pending(foreignOwner)
+        UserDataScope.withOwnerUid(owner) {
+            val tankId = store.addTankFromDraft(draft())
+            val operations = operations()
+            try {
+                assertTrue(runCatching {
+                    operations.updatePlantPhoto(tankId, 11L, foreign, foreignOwner)
+                }.isFailure)
+                assertTrue(runCatching {
+                    operations.updatePlantPhoto(tankId, 11L, foreign, owner)
+                }.isFailure)
+                assertTrue(AppMediaStorage.isAppOwned(context, foreign))
+                val first = pending(owner)
+                store.updatePlantPhoto(tankId, 11L, first)
+                assertTrue(runCatching {
+                    operations.updatePlantPhoto(tankId, 12L, first, owner)
+                }.isFailure)
+                assertTrue(AppMediaStorage.isAppOwned(context, first))
+                operations.updatePlantPhoto(tankId, 11L, first, owner)
+                val rejected = pending(owner)
+                assertTrue(runCatching {
+                    operations.updatePlantPhoto(tankId, 999L, rejected, owner)
+                }.isFailure)
+                assertFalse(AppMediaStorage.isAppOwned(context, rejected))
+                assertTrue(AppMediaStorage.isAppOwned(context, first))
+                val replacement = pending(owner)
+                operations.updatePlantPhoto(tankId, 11L, replacement, owner)
+                assertFalse(AppMediaStorage.isAppOwned(context, first))
+                assertTrue(AppMediaStorage.isAppOwned(context, replacement))
+                operations.updatePlantPhoto(tankId, 11L, null, owner)
+                assertFalse(AppMediaStorage.isAppOwned(context, replacement))
+            } finally {
+                store.deleteTanks(listOf(tankId))
+                AppMediaStorage.discardPendingMediaForOwner(context, owner)
+                AppMediaStorage.discardPendingMediaForOwner(context, foreignOwner)
+            }
+        }
+    }
+
+    private fun operations() = DefaultAquariumTankOperations(
+        context = context,
+        tankStore = store,
+        tankDataCleaner = OwnerTankDataCleaner(
+            deleteTankRecords = { error("Unexpected tank deletion") },
+            snapshotCareTasksForTank = { error("Unexpected care access") },
+            deleteCareTasksForTank = { error("Unexpected care deletion") },
+            restoreCareTasksForTank = { _, _ -> error("Unexpected care restore") },
+            removeDeviceAssignmentsForTank = { error("Unexpected device access") },
+            cancelCareTaskReminder = { _, _ -> error("Unexpected notification access") },
+            reconcileCareReminders = { error("Unexpected notification access") }
+        ),
+        notificationPreferences = NotificationPreferenceUseCase(
+            repository = unused(NotificationPreferenceRepository::class.java),
+            permissionPolicy = unused(NotificationPermissionPolicy::class.java),
+            scheduler = unused(NotificationScheduler::class.java),
+            deviceUpdateWorkCoordinator = unused(DeviceUpdateNotificationWorkCoordinator::class.java),
+            renderer = unused(NotificationRenderer::class.java)
+        )
+    )
+
+    private fun <T> unused(type: Class<T>): T = type.cast(
+        Proxy.newProxyInstance(type.classLoader, arrayOf(type)) { _, method, _ ->
+            error("Photo mutation unexpectedly called ${method.name}")
+        }
+    )
 
     private fun pending(owner: String, scope: AppMediaScope = AppMediaScope.PLANT): String {
         val crop = requireNotNull(AppMediaStorage.createCropOutputUri(context, scope, "7"))

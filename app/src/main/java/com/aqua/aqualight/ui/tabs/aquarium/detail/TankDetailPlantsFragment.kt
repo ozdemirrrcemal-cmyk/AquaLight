@@ -35,8 +35,8 @@ import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
 import com.yalantis.ucrop.UCrop
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) {
     private var _binding: FragmentTankDetailPlantsBinding? = null
@@ -99,41 +99,39 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         lifecycleScope.launch {
-            if (_binding == null) {
-                mediaFlow.cancelCrop()
-                photoTarget.finish()
-                return@launch
-            }
-            when {
-                result.resultCode == Activity.RESULT_OK -> {
-                    val outputUri = result.data?.let(UCrop::getOutput)
-                    val accepted = outputUri?.let { mediaFlow.acceptCrop(it) }
-                    if (accepted != null) {
-                        savePlantPhoto(accepted)
-                    } else {
+            try {
+                if (_binding == null || !photoTarget.isInProgress) {
+                    mediaFlow.cancelCrop()
+                    return@launch
+                }
+                when {
+                    result.resultCode == Activity.RESULT_OK -> {
+                        val outputUri = result.data?.let(UCrop::getOutput)
+                        val accepted = outputUri?.let { mediaFlow.acceptCrop(it) }
+                        if (accepted != null) {
+                            savePlantPhoto(accepted)
+                        } else {
+                            mediaFlow.cancelCrop()
+                            showSnackBar(
+                                getString(R.string.aquarium_photo_crop_failed),
+                                BaseActivity.SnackType.ERROR
+                            )
+                        }
+                    }
+
+                    result.resultCode == UCrop.RESULT_ERROR -> {
+                        val error = result.data?.let(UCrop::getError)
                         mediaFlow.cancelCrop()
-                        photoTarget.finish()
                         showSnackBar(
-                            getString(R.string.aquarium_photo_crop_failed),
+                            error?.message ?: getString(R.string.aquarium_photo_crop_failed),
                             BaseActivity.SnackType.ERROR
                         )
                     }
-                }
 
-                result.resultCode == UCrop.RESULT_ERROR -> {
-                    val error = result.data?.let(UCrop::getError)
-                    mediaFlow.cancelCrop()
-                    photoTarget.finish()
-                    showSnackBar(
-                        error?.message ?: getString(R.string.aquarium_photo_crop_failed),
-                        BaseActivity.SnackType.ERROR
-                    )
+                    else -> mediaFlow.cancelCrop()
                 }
-
-                else -> {
-                    mediaFlow.cancelCrop()
-                    photoTarget.finish()
-                }
+            } finally {
+                photoTarget.finish()
             }
         }
     }
