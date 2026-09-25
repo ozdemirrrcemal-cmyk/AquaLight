@@ -51,6 +51,20 @@
     <string name="tank_health_analysis_record_time_4" translatable="false">11:20</string>
     <string name="tank_health_analysis_record_date_5">15 Sep 2026</string>
     <string name="tank_health_analysis_record_time_5" translatable="false">09:15</string>
+    <string name="tank_health_analysis_record_date_6">12 Sep 2026</string>
+    <string name="tank_health_analysis_record_time_6" translatable="false">13:40</string>
+    <string name="tank_health_analysis_record_date_7">9 Sep 2026</string>
+    <string name="tank_health_analysis_record_time_7" translatable="false">18:05</string>
+    <string name="tank_health_analysis_record_date_8">6 Sep 2026</string>
+    <string name="tank_health_analysis_record_time_8" translatable="false">08:55</string>
+    <string name="tank_health_analysis_record_date_9">3 Sep 2026</string>
+    <string name="tank_health_analysis_record_time_9" translatable="false">20:12</string>
+    <string name="tank_health_analysis_record_date_10">31 Aug 2026</string>
+    <string name="tank_health_analysis_record_time_10" translatable="false">12:30</string>
+    <string name="tank_health_analysis_record_date_11">28 Aug 2026</string>
+    <string name="tank_health_analysis_record_time_11" translatable="false">17:20</string>
+    <string name="tank_health_analysis_record_date_12">25 Aug 2026</string>
+    <string name="tank_health_analysis_record_time_12" translatable="false">09:05</string>
     <string name="tank_health_analysis_value_ph_70" translatable="false">7.0</string>
     <string name="tank_health_analysis_value_ph_66" translatable="false">6.6</string>
     <string name="tank_health_analysis_value_ph_72" translatable="false">7.2</string>
