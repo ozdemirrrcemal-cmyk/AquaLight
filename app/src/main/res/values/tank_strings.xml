@@ -78,7 +78,6 @@
     <string name="aquarium_no_activity_yet">No activity yet.</string>
     <string name="aquarium_no_device_connected">No device assigned</string>
     <string name="aquarium_no_livestock_added">No livestock added</string>
-    <string name="aquarium_no_livestock_yet">No livestock yet</string>
     <string name="aquarium_photo_title_full">Aquarium Photo</string>
     <string name="aquarium_settings_tab_basic">Basic</string>
     <string name="aquarium_settings_tab_details">Details</string>
@@ -97,7 +96,7 @@
     <string name="aquarium_style_nature_aquarium">Nature\nAquarium</string>
     <string name="aquarium_style_title">Style</string>
     <string name="aquarium_tank_concept_title">Tank Concept</string>
-    <string name="aquarium_tank_life_title">Tank Life</string>
+    <string name="aquarium_tank_life_title">Livestock</string>
     <string name="aquarium_tank_size_cm_title">Tank Size (cm)</string>
     <string name="aquarium_tank_style_title">Tank Style</string>
     <string name="aquarium_tank_type_coral">Coral</string>
@@ -262,7 +261,7 @@
     <string name="tank_pdf_section_tank_summary">1. Tank Summary</string>
     <string name="tank_pdf_section_tank_photo">2. Tank Photo</string>
     <string name="tank_pdf_section_devices">3. Devices</string>
-    <string name="tank_pdf_section_tank_life">4. Tank Life</string>
+    <string name="tank_pdf_section_tank_life">4. Livestock</string>
     <string name="tank_pdf_section_plants">5. Plants</string>
     <string name="tank_pdf_section_bio_components">6. Bio Components</string>
     <string name="tank_pdf_section_hardware_components">7. Hardware Components</string>
@@ -320,7 +319,6 @@
     <string name="aquarium_day_format">Day %1$d</string>
     <string name="aquarium_activity_date_today_format">%1$s · Today</string>
     <string name="aquarium_activity_date_yesterday_format">%1$s · Yesterday</string>
-<string name="aquarium_livestock_summary_format">%1$d species • %2$d total livestock</string>
     <string name="aquarium_livestock_added_date_not_set">Added date not set</string>
     <string name="aquarium_livestock_added_date_format">Added %1$s</string>
     <string name="aquarium_livestock_default_title">Livestock</string>

@@ -50,16 +50,6 @@
 
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/tvTankLifeSummary"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/aqua_size_8"
-            android:includeFontPadding="false"
-            android:text="@string/aquarium_no_livestock_yet"
-            android:textColor="@color/aqua_card_text_secondary"
-            android:textSize="@dimen/aqua_text_size_body_small" />
-
         <com.google.android.material.card.MaterialCardView
             style="@style/Widget.Aqua.Card"
             android:id="@+id/cardTankLifeEmpty"

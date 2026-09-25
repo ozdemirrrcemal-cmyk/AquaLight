@@ -133,21 +133,6 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
     ) {
         binding.tankLifeListContainer.removeAllViews()
 
-        val totalQuantity = livestock.sumOf {
-            item ->
-            item.quantity.coerceAtLeast(1)
-        }
-
-        binding.tvTankLifeSummary.text = if (livestock.isEmpty()) {
-            getString(R.string.aquarium_no_livestock_yet)
-        } else {
-            getString(
-                R.string.aquarium_livestock_summary_format,
-                livestock.size,
-                totalQuantity
-            )
-        }
-
         binding.cardTankLifeEmpty.isVisible = livestock.isEmpty()
         binding.tankLifeListContainer.isVisible = livestock.isNotEmpty()
 
