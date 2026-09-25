@@ -62,4 +62,3 @@ internal suspend fun rollbackUnreferencedCandidate(
         if (!referenced) AppMediaStorage.rollbackPendingMedia(appContext, uri)
     }
 }
-
