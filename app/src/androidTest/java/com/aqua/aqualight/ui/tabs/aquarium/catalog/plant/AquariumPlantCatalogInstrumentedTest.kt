@@ -54,7 +54,10 @@ class AquariumPlantCatalogInstrumentedTest {
             assertEquals(names.sortedBy(String::lowercase), names)
         }
         val sharedPlant = plants.filter { it.name == "Anubias barteri var. nana" }
-        assertEquals(sectionNames.take(2), sharedPlant.map(AquariumPlant::category))
+        assertEquals(
+            listOf(sectionNames[0], sectionNames[1], sectionNames[6]),
+            sharedPlant.map(AquariumPlant::category)
+        )
         assertEquals(1, sharedPlant.map(AquariumPlant::catalogId).distinct().size)
         val javaMoss = plants.filter { it.name == "Ectropothecium barbieri" }
         assertTrue(javaMoss.map(AquariumPlant::category).contains(sectionNames[4]))
