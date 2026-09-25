@@ -6,7 +6,6 @@ import android.net.Uri
 import android.view.View
 import android.widget.EditText
 import android.widget.LinearLayout
-import android.widget.ScrollView
 import android.text.format.DateFormat
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.FragmentManager
@@ -41,7 +40,9 @@ import kotlinx.coroutines.launch
 private const val CHECK_NOTE_MAX_LINES = 4
 
 /** Fragment owned sheet: restores its draft and queries the current owner's tank on recreation. */
-class LivestockHealthCheckSheet : BottomSheetDialogFragment() {
+class LivestockHealthCheckSheet : BottomSheetDialogFragment(
+    R.layout.bottom_sheet_livestock_health_check
+) {
     private val tanks: AquariumTankViewModel by activityViewModels()
     private val mediaFlow: MediaFlowCoordinatorViewModel by viewModels {
         val container = requireContext().requireAppContainer()
@@ -100,21 +101,10 @@ class LivestockHealthCheckSheet : BottomSheetDialogFragment() {
         }
     }
 
-    override fun onCreateView(
-        inflater: android.view.LayoutInflater,
-        container: android.view.ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        ui = LivestockHealthUi(requireContext())
-        body = ui.column().apply {
-            setPadding(ui.size(R.dimen.aqua_size_20), ui.size(R.dimen.aqua_size_24),
-                ui.size(R.dimen.aqua_size_20), ui.size(R.dimen.aqua_size_24))
-        }
-        return ScrollView(requireContext()).apply { addView(body) }
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        ui = LivestockHealthUi(requireContext())
+        body = view.findViewById(R.id.healthCheckBody)
         mediaFlow.initializeSelection(null)
         childFragmentManager.setFragmentResultListener(DATE_REQUEST, viewLifecycleOwner) { _, result ->
             if (result.getString(AppDatePickerDialogFragment.RESULT_KEY) ==
@@ -178,9 +168,25 @@ class LivestockHealthCheckSheet : BottomSheetDialogFragment() {
 
     private fun render(observation: LivestockHealthObservation) {
         body.removeAllViews()
-        body.addView(ui.heading(R.string.livestock_health_check_title))
+        val header = ui.row()
+        header.addView(ui.heading(R.string.livestock_health_check_title).apply {
+            layoutParams = LinearLayout.LayoutParams(0,
+                android.view.ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+        })
+        header.addView(ui.text(getString(R.string.common_close),
+            R.dimen.aqua_text_size_title_large).apply {
+            contentDescription = getString(R.string.livestock_health_check_close)
+            isClickable = true
+            isFocusable = true
+            setOnClickListener { dismiss() }
+        })
+        body.addView(header)
+        body.addView(ui.text(getString(R.string.livestock_health_check_context,
+            observation.livestockName, observation.latestAffectedCount,
+            maxCount(observation)), colorRes = R.color.aqua_card_text_secondary))
         body.addView(ui.spacer())
         body.addView(ui.heading(R.string.livestock_health_check_question))
+        body.addView(ui.spacer(R.dimen.aqua_size_8))
         val trends = listOf(
             LivestockHealthTrend.INCREASING to R.string.livestock_health_form_increasing,
             LivestockHealthTrend.SAME to R.string.livestock_health_form_same,
@@ -189,7 +195,7 @@ class LivestockHealthCheckSheet : BottomSheetDialogFragment() {
         )
         val trendsRow = ui.row()
         trends.forEach { (value, label) ->
-            trendsRow.addView(ui.choice(getString(label), value == checkTrend) {
+            trendsRow.addView(ui.compactChoice(getString(label), value == checkTrend) {
                 checkTrend = value
                 render(observation)
             }.apply {
@@ -203,31 +209,32 @@ class LivestockHealthCheckSheet : BottomSheetDialogFragment() {
         body.addView(ui.spacer())
         body.addView(ui.heading(R.string.livestock_health_check_count))
         val maximum = maxCount(observation)
-        val counter = ui.row()
-        counter.addView(ui.button(R.string.livestock_health_count_decrease) {
+        body.addView(ui.spacer(R.dimen.aqua_size_8))
+        body.addView(ui.countStepper(checkCount, maximum, onDecrease = {
             checkCount = (checkCount - 1).coerceAtLeast(1)
             render(observation)
-        }.apply { text = "−"; contentDescription = getString(R.string.livestock_health_count_decrease) })
-        counter.addView(ui.text("$checkCount / $maximum"))
-        counter.addView(ui.button(R.string.livestock_health_count_increase) {
+        }, onIncrease = {
             checkCount = (checkCount + 1).coerceAtMost(maximum)
             render(observation)
-        }.apply { text = "+"; contentDescription = getString(R.string.livestock_health_count_increase) })
-        body.addView(counter)
+        }))
         body.addView(ui.spacer())
         body.addView(ui.heading(R.string.livestock_health_check_when_title))
-        body.addView(ui.choice(DateFormat.getDateFormat(requireContext()).format(Date(checkTimeMillis)),
+        body.addView(ui.spacer(R.dimen.aqua_size_8))
+        val dateTime = ui.row()
+        dateTime.addView(ui.choice(DateFormat.getDateFormat(requireContext()).format(Date(checkTimeMillis)),
             false) {
             val last = observation.checks.lastOrNull()?.observedAtMillis
                 ?: observation.observedAtMillis
             AppDatePickerDialogFragment.show(childFragmentManager, DATE_REQUEST,
                 checkTimeMillis, minMillis = last, maxMillis = System.currentTimeMillis())
-        })
-        body.addView(ui.spacer(R.dimen.aqua_size_8))
-        body.addView(ui.choice(DateFormat.getTimeFormat(requireContext()).format(Date(checkTimeMillis)),
+        }.apply { layoutParams = LinearLayout.LayoutParams(0,
+            android.view.ViewGroup.LayoutParams.WRAP_CONTENT, 1f) })
+        dateTime.addView(ui.choice(DateFormat.getTimeFormat(requireContext()).format(Date(checkTimeMillis)),
             false) {
             AppTimePickerDialogFragment.show(childFragmentManager, TIME_REQUEST, checkTimeMillis)
-        })
+        }.apply { layoutParams = LinearLayout.LayoutParams(0,
+            android.view.ViewGroup.LayoutParams.WRAP_CONTENT, 1f) })
+        body.addView(dateTime)
         body.addView(ui.spacer())
         body.addView(EditText(requireContext()).apply {
             hint = getString(R.string.livestock_health_form_note_hint)
@@ -252,9 +259,13 @@ class LivestockHealthCheckSheet : BottomSheetDialogFragment() {
                 !photoUri.isNullOrBlank()).show(childFragmentManager, PhotoSourceBottomSheet.TAG)
         })
         if (checkTrend == LivestockHealthTrend.RESOLVED) {
-            body.addView(ui.text(getString(R.string.livestock_health_check_resolved_note)))
+            body.addView(ui.text(getString(R.string.livestock_health_check_resolved_note),
+                colorRes = R.color.aqua_card_text_secondary))
         }
         body.addView(ui.spacer())
+        body.addView(ui.text(getString(R.string.livestock_health_assessment_missing_water),
+            colorRes = R.color.aqua_card_text_secondary))
+        body.addView(ui.spacer(R.dimen.aqua_size_8))
         body.addView(ui.button(R.string.livestock_health_check_save) { save(observation) })
     }
 

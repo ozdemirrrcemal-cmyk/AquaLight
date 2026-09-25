@@ -19,6 +19,7 @@
     <string name="livestock_health_home_resolved">Resolved</string>
     <string name="livestock_health_home_ended">Ended</string>
     <string name="livestock_health_home_affected_short">%1$d / %2$d animals</string>
+    <string name="livestock_health_counter">%1$d / %2$d</string>
     <string name="livestock_health_home_tank_data">Tank context</string>
     <string name="livestock_health_home_tank_open">Open tank</string>
     <string name="livestock_health_home_tank_data_pending">Water measurements are not recorded yet</string>
@@ -27,6 +28,7 @@
     <string name="livestock_health_maintenance_filter">Last filter care: %1$s</string>
     <string name="livestock_health_maintenance_none">No completed water change on record</string>
     <string name="livestock_health_form_title">New observation</string>
+    <string name="livestock_health_form_progress">Observation</string>
     <string name="livestock_health_form_species_title">1. Which livestock?</string>
     <string name="livestock_health_form_species_hint">Choose a record from this tank.</string>
     <string name="livestock_health_form_symptoms_title">2. What did you observe?</string>
@@ -35,11 +37,13 @@
     <string name="livestock_health_form_yes">Yes</string>
     <string name="livestock_health_form_unsure">Not sure</string>
     <string name="livestock_health_form_count_title">3. How many are affected?</string>
+    <string name="livestock_health_form_count_hint">Registered in this tank: %1$d</string>
     <string name="livestock_health_count_decrease">Decrease affected count</string>
     <string name="livestock_health_count_increase">Increase affected count</string>
     <string name="livestock_health_form_when_title">4. Since when?</string>
     <string name="livestock_health_form_started_today">Started today</string>
-    <string name="livestock_health_form_started_earlier">Started earlier</string>
+    <string name="livestock_health_form_started_label">Start\n%1$s</string>
+    <string name="livestock_health_form_trend_label">Change\n%1$s</string>
     <string name="livestock_health_form_trend_title">How has it changed?</string>
     <string name="livestock_health_form_increasing">Increasing</string>
     <string name="livestock_health_form_same">Unchanged</string>
@@ -47,13 +51,22 @@
     <string name="livestock_health_form_resolved">Resolved</string>
     <string name="livestock_health_form_note_hint">Note (optional)</string>
     <string name="livestock_health_form_photo_title">Add photo (optional)</string>
+    <string name="livestock_health_form_photo_formats">Optional photo · JPG, PNG</string>
     <string name="livestock_health_form_photo_add">Take a photo or choose one</string>
     <string name="livestock_health_form_photo_selected">Photo added · tap to change or remove</string>
     <string name="livestock_health_form_save">Save observation and review</string>
     <string name="livestock_health_form_save_failed">Observation could not be saved. Please try again.</string>
     <string name="livestock_health_assessment_title">Review</string>
     <string name="livestock_health_assessment_attention">Check this change</string>
-    <string name="livestock_health_assessment_context">This observation is being followed. Compare it with the animal’s usual behavior.</string>
+    <string name="livestock_health_assessment_observation_context">%1$s · %2$d / %3$d animals · %4$s</string>
+    <string name="livestock_health_assessment_water_title">Latest water reading</string>
+    <string name="livestock_health_assessment_water_change">Latest water change</string>
+    <string name="livestock_health_assessment_step_surface_title">Observe surface movement and aeration</string>
+    <string name="livestock_health_assessment_step_general_title">Observe behavior and feeding</string>
+    <string name="livestock_health_assessment_step_water_title">Check current tank measurements</string>
+    <string name="livestock_health_assessment_step_others_title">Do other animals show the same sign?</string>
+    <string name="livestock_health_assessment_rationale_title">What is this based on?</string>
+    <string name="livestock_health_assessment_rationale_subtitle">Recorded signs and tank data. Current measurements are needed to assess possible causes.</string>
     <string name="livestock_health_assessment_evidence">Information used in this review</string>
     <string name="livestock_health_assessment_missing_water">No water measurement history is available for this tank.</string>
     <string name="livestock_health_assessment_missing_data">Missing: recent ammonia, nitrite and oxygen information</string>
@@ -70,6 +83,8 @@
     <string name="livestock_health_detail_first">First observation: %1$s</string>
     <string name="livestock_health_detail_status_title">Latest status</string>
     <string name="livestock_health_detail_history">Observation history</string>
+    <string name="livestock_health_history_event">%1$s · %2$s</string>
+    <string name="livestock_health_timeline_marker" translatable="false">●</string>
     <string name="livestock_health_detail_initial">First observation</string>
     <string name="livestock_health_detail_affected">%1$d animals affected</string>
     <string name="livestock_health_detail_add_check">New check</string>
@@ -77,6 +92,8 @@
     <string name="livestock_health_detail_end_info">Ending a follow-up does not mark the animal as recovered. History is kept.</string>
     <string name="livestock_health_detail_check_failed">Check could not be saved. Please try again.</string>
     <string name="livestock_health_check_title">New check</string>
+    <string name="livestock_health_check_close">Close follow-up sheet</string>
+    <string name="livestock_health_check_context">%1$s · %2$d / %3$d animals</string>
     <string name="livestock_health_check_photo_title">Photo or note (optional)</string>
     <string name="livestock_health_check_question">How is it now?</string>
     <string name="livestock_health_check_count">How many are affected?</string>

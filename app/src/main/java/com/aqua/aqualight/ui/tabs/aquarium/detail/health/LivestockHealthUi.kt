@@ -49,8 +49,8 @@ internal class LivestockHealthUi(context: Context) : LivestockHealthComponents(c
         onClick: () -> Unit
     ): MaterialCardView {
         val content = row()
-        content.addView(speciesImage(livestock, R.dimen.aqua_size_52,
-            R.dimen.aqua_size_52))
+        content.addView(speciesImage(livestock, R.dimen.aqua_size_40,
+            R.dimen.aqua_size_40))
         val labels = column()
         labels.addView(text(livestock.name, bold = true))
         labels.addView(text(
@@ -78,6 +78,8 @@ internal class LivestockHealthUi(context: Context) : LivestockHealthComponents(c
             if (selected) R.color.aqua_accent_primary else R.color.aqua_card_outline,
             content
         ).apply {
+            content.setPadding(size(R.dimen.aqua_size_10), size(R.dimen.aqua_size_8),
+                size(R.dimen.aqua_size_10), size(R.dimen.aqua_size_8))
             minimumHeight = size(R.dimen.aqua_size_56)
             isClickable = true
             isFocusable = true
@@ -105,16 +107,16 @@ internal class LivestockHealthUi(context: Context) : LivestockHealthComponents(c
         onClick: () -> Unit): MaterialCardView {
         val content = column().apply {
             gravity = Gravity.CENTER
-            minimumHeight = size(R.dimen.aqua_size_60)
-            addView(image(symptomIcon(symptom), R.dimen.aqua_size_32,
-                R.dimen.aqua_size_32).apply {
+            minimumHeight = size(R.dimen.aqua_size_52)
+            addView(image(symptomIcon(symptom), R.dimen.aqua_size_24,
+                R.dimen.aqua_size_24).apply {
                 setColorFilter(ContextCompat.getColor(context,
                     if (selected) R.color.aqua_accent_primary else R.color.aqua_card_text_secondary))
-                layoutParams = LinearLayout.LayoutParams(size(R.dimen.aqua_size_32),
-                    size(R.dimen.aqua_size_32)).apply { gravity = Gravity.CENTER_HORIZONTAL }
+                layoutParams = LinearLayout.LayoutParams(size(R.dimen.aqua_size_24),
+                    size(R.dimen.aqua_size_24)).apply { gravity = Gravity.CENTER_HORIZONTAL }
                 contentDescription = null
             })
-            addView(spacer(R.dimen.aqua_size_8))
+            addView(spacer(R.dimen.aqua_size_4))
             addView(text(symptomName(symptom), R.dimen.aqua_text_size_body_small).apply {
                 gravity = Gravity.CENTER
                 maxLines = 3
@@ -122,7 +124,9 @@ internal class LivestockHealthUi(context: Context) : LivestockHealthComponents(c
         }
         return card(if (selected) R.color.aqua_accent_primary else R.color.aqua_card_outline,
             content).apply {
-            minimumHeight = size(R.dimen.aqua_size_78)
+            content.setPadding(size(R.dimen.aqua_size_4), size(R.dimen.aqua_size_4),
+                size(R.dimen.aqua_size_4), size(R.dimen.aqua_size_4))
+            minimumHeight = size(R.dimen.aqua_size_60)
             isClickable = true
             isFocusable = true
             isSelected = selected
@@ -193,7 +197,7 @@ internal class LivestockHealthUi(context: Context) : LivestockHealthComponents(c
         val content = column().apply {
             gravity = Gravity.CENTER
             minimumHeight = size(R.dimen.aqua_size_220)
-            addView(image(R.drawable.ic_life_fish_24,
+            addView(image(R.drawable.ic_health_empty_fish,
                 R.dimen.aqua_size_72, R.dimen.aqua_size_72).apply {
                 setColorFilter(ContextCompat.getColor(context, R.color.aqua_accent_primary))
             })
@@ -253,6 +257,57 @@ internal class LivestockHealthUi(context: Context) : LivestockHealthComponents(c
                 R.color.aqua_bg_maintenance_profile_percent_warning_fill
             else R.color.aqua_bg_maintenance_tab_unselected_fill))
         }
+    }
+
+    fun compactChoice(label: String, selected: Boolean, onClick: () -> Unit): MaterialCardView {
+        val content = column().apply {
+            gravity = Gravity.CENTER
+            minimumHeight = size(R.dimen.aqua_size_40)
+            setPadding(size(R.dimen.aqua_size_6), size(R.dimen.aqua_size_6),
+                size(R.dimen.aqua_size_6), size(R.dimen.aqua_size_6))
+            addView(text(label, R.dimen.aqua_text_size_body_small, bold = selected).apply {
+                gravity = Gravity.CENTER
+                maxLines = 2
+            })
+        }
+        return card(if (selected) R.color.aqua_accent_primary else R.color.aqua_card_outline,
+            content).apply {
+            if (selected) setCardBackgroundColor(ContextCompat.getColor(context,
+                R.color.aqua_bg_maintenance_tab_selected_fill))
+            isClickable = true
+            isFocusable = true
+            isSelected = selected
+            setOnClickListener { onClick() }
+        }
+    }
+
+    fun countStepper(count: Int, maximum: Int, onDecrease: () -> Unit,
+        onIncrease: () -> Unit): MaterialCardView {
+        val content = row()
+        content.addView(text(context.getString(R.string.common_minus),
+            R.dimen.aqua_text_size_title_large, R.color.aqua_accent_primary).apply {
+            gravity = Gravity.CENTER
+            layoutParams = LinearLayout.LayoutParams(0, size(R.dimen.aqua_size_48), 1f)
+            contentDescription = context.getString(R.string.livestock_health_count_decrease)
+            isClickable = true
+            isFocusable = true
+            setOnClickListener { onDecrease() }
+        })
+        content.addView(text(context.getString(R.string.livestock_health_counter,
+            count, maximum), R.dimen.aqua_text_size_body_large, bold = true).apply {
+            gravity = Gravity.CENTER
+            layoutParams = LinearLayout.LayoutParams(0, size(R.dimen.aqua_size_48), 2f)
+        })
+        content.addView(text(context.getString(R.string.common_plus),
+            R.dimen.aqua_text_size_title_large, R.color.aqua_accent_primary).apply {
+            gravity = Gravity.CENTER
+            layoutParams = LinearLayout.LayoutParams(0, size(R.dimen.aqua_size_48), 1f)
+            contentDescription = context.getString(R.string.livestock_health_count_increase)
+            isClickable = true
+            isFocusable = true
+            setOnClickListener { onIncrease() }
+        })
+        return card(content = column().apply { addView(content) })
     }
 
 }
