@@ -354,4 +354,14 @@
         <item quantity="other">%d pcs</item>
     </plurals>
 
+    <string name="aquarium_plant_photo_title">Plant photo</string>
+    <string name="aquarium_plant_photo_crop_title">Edit plant photo</string>
+    <string name="aquarium_plant_photo_updated">Plant photo updated.</string>
+    <string name="aquarium_plant_photo_removed">Plant photo removed.</string>
+    <string name="aquarium_plant_photo_save_failed">Plant photo could not be saved. Please try again.</string>
+    <string name="aquarium_plant_photo_remove_failed">Plant photo could not be removed. Please try again.</string>
+    <string name="aquarium_plant_photo_action_description">Add or change photo for %1$s</string>
+    <string name="aquarium_livestock_photo_title">Livestock photo</string>
+    <string name="aquarium_livestock_photo_crop_title">Crop livestock photo</string>
+    <string name="aquarium_livestock_photo_action">Add, change or remove livestock photo</string>
 </resources>

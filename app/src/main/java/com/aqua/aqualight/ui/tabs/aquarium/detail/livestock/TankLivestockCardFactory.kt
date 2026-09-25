@@ -8,6 +8,7 @@ import androidx.core.view.isVisible
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
 import com.aqua.aqualight.databinding.ItemTankLivestockCardBinding
+import com.aqua.aqualight.ui.common.media.bindRecordPhoto
 import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.LivestockCategories
 
@@ -26,9 +27,7 @@ internal class TankLivestockCardFactory(
             false
         )
 
-        binding.ivCategoryIcon.setImageResource(
-            LivestockCategories.iconRes(livestock.category)
-        )
+        binding.ivCategoryIcon.bindRecordPhoto(livestock.photoUri)
         binding.tvName.text = livestock.name.ifBlank {
             context.getString(R.string.aquarium_unnamed_livestock)
         }

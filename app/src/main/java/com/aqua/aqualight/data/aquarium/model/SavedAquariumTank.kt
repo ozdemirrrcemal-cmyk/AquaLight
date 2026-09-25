@@ -30,7 +30,8 @@ data class SavedAquariumPlant(
     val plantName: String,
     val category: String,
     val markerX: Float,
-    val markerY: Float
+    val markerY: Float,
+    val photoUri: String? = null
 )
 
 data class SavedAquariumMaterial(
@@ -50,5 +51,6 @@ data class SavedAquariumLivestock(
     val quantity: Int = 1,
     val addedDateEpochDay: Long? = null,
     val note: String = "",
-    val catalogEntryId: String
+    val catalogEntryId: String,
+    val photoUri: String? = null
 )

@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    style="@style/Widget.Aqua.Card.TankListItem"
+    android:id="@+id/plantCard"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="@dimen/aqua_size_12"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    app:cardBackgroundColor="@color/aqua_card_surface"
+    app:cardCornerRadius="@dimen/aqua_size_18"
+    app:cardElevation="@dimen/aqua_size_0"
+    app:strokeColor="@color/aqua_card_outline"
+    app:strokeWidth="@dimen/aqua_size_1">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="@dimen/aqua_size_14"
+        android:paddingTop="@dimen/aqua_size_6"
+        android:paddingEnd="@dimen/aqua_size_14"
+        android:paddingBottom="@dimen/aqua_size_6">
+
+        <FrameLayout
+            android:id="@+id/plantPhotoFrame"
+            android:layout_width="@dimen/aqua_size_56"
+            android:layout_height="@dimen/aqua_size_56"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Aqua.Card.Device.Media"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:cardBackgroundColor="@color/aqua_card_device_media_surface"
+                app:cardCornerRadius="@dimen/aqua_size_12"
+                app:cardElevation="@dimen/aqua_size_0"
+                app:strokeColor="@color/aqua_card_device_media_outline"
+                app:strokeWidth="@dimen/aqua_size_1">
+
+                <ImageView
+                    android:id="@+id/imgPlantPhoto"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:contentDescription="@null"
+                    android:scaleType="center"
+                    android:src="@drawable/ic_camera_24" />
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:id="@+id/tvPlantOrderBadge"
+                android:layout_width="@dimen/aqua_size_24"
+                android:layout_height="@dimen/aqua_size_24"
+                android:layout_gravity="top|start"
+                android:background="@drawable/bg_plant_photo_order_badge"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:textColor="@color/aqua_content_on_dark"
+                android:textSize="@dimen/aqua_text_size_caption"
+                android:textStyle="bold" />
+
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="@dimen/aqua_size_0"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/aqua_size_14"
+            android:orientation="vertical"
+            app:layout_constraintStart_toEndOf="@id/plantPhotoFrame"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <TextView
+                android:id="@+id/tvPlantCategory"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:includeFontPadding="false"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:textColor="@color/aqua_card_text_secondary"
+                android:textSize="@dimen/aqua_text_size_caption" />
+
+            <TextView
+                android:id="@+id/tvPlantName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_6"
+                android:ellipsize="end"
+                android:includeFontPadding="false"
+                android:maxLines="2"
+                android:textColor="@color/aqua_card_text_primary"
+                android:textSize="@dimen/aqua_text_size_body" />
+
+        </LinearLayout>
+
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

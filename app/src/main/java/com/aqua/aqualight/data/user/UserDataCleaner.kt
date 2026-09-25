@@ -78,9 +78,9 @@ class UserDataCleaner private constructor(
             issues += CleanupIssue(step = step, error = error)
         }
 
-        val tankPhotoUris = runCatching {
+        val aquariumPhotoUris = runCatching {
             tankDataStoreManager.tanksSnapshotForOwner(targetOwnerUid)
-                .mapNotNull { tank -> tank.photoUri }
+                .flatMap { tank -> tank.photoUris() }
         }.getOrElse { error ->
             recordIssue(Step.AQUARIUM_TANKS, error)
             emptyList()
@@ -135,7 +135,7 @@ class UserDataCleaner private constructor(
             clearAppOwnedUserFiles(
                 ownerUid = targetOwnerUid,
                 profilePhotoUri = profilePhotoUri,
-                tankPhotoUris = tankPhotoUris
+                aquariumPhotoUris = aquariumPhotoUris
             )
         }
 
@@ -237,9 +237,9 @@ class UserDataCleaner private constructor(
     private fun clearAppOwnedUserFiles(
         ownerUid: String,
         profilePhotoUri: String,
-        tankPhotoUris: List<String>
+        aquariumPhotoUris: List<String>
     ) {
-        (tankPhotoUris + profilePhotoUri)
+        (aquariumPhotoUris + profilePhotoUri)
             .filter(String::isNotBlank)
             .forEach { uri ->
                 if (!AppMediaStorage.deleteInternalMedia(appContext, uri)) {
@@ -292,6 +292,8 @@ class UserDataCleaner private constructor(
         val allowedRoots = listOf(
             File(appContext.filesDir, "profile_photos"),
             File(appContext.filesDir, "tank_photos"),
+            File(appContext.filesDir, "plant_photos"),
+            File(appContext.filesDir, "livestock_photos"),
             File(appContext.cacheDir, "tank_exports"),
             File(appContext.cacheDir, "image_processing")
         )
@@ -304,3 +306,10 @@ class UserDataCleaner private constructor(
         }
     }
 }
+
+private fun com.aqua.aqualight.data.aquarium.model.SavedAquariumTank.photoUris(): List<String> =
+    buildList {
+        photoUri?.takeIf(String::isNotBlank)?.let(::add)
+        plants.mapNotNull { plant -> plant.photoUri?.takeIf(String::isNotBlank) }.forEach(::add)
+        livestock.mapNotNull { item -> item.photoUri?.takeIf(String::isNotBlank) }.forEach(::add)
+    }

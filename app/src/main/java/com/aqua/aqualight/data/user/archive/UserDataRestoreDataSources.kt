@@ -10,6 +10,7 @@ import com.aqua.aqualight.data.aquarium.model.TankDraft
 import com.aqua.aqualight.data.care.model.CareTask
 import com.aqua.aqualight.data.devices.model.DeviceUid
 import com.aqua.aqualight.platform.media.UserDataArchiveMediaFingerprint
+import com.aqua.aqualight.platform.media.AppMediaScope
 import com.aqua.aqualight.platform.media.UserDataArchiveMediaGateway
 import java.io.File
 import kotlinx.coroutines.NonCancellable
@@ -230,17 +231,34 @@ private suspend fun UserDataRestoreDataSources.AssignmentDataSource.compensateCr
 /** Restore-only media boundary; presentation never receives paths, streams or Android URIs. */
 internal data class UserDataRestoreMediaOperations(
     val snapshotTankPhoto: (String?) -> UserDataArchiveMediaFingerprint?,
-    val prepareRestoredTankPhoto: (String, String, File) -> String,
+    val prepareRestoredTankPhoto: suspend (String, String, File) -> String,
     val commit: (String?) -> Unit,
-    val rollback: (String?) -> Unit
+    val rollback: (String?) -> Unit,
+    val snapshotPlantPhoto: (String?) -> UserDataArchiveMediaFingerprint? = { null },
+    val prepareRestoredPlantPhoto: suspend (String, String, File) -> String = { _, _, _ ->
+        error("No plant photo restore operation is configured.")
+    },
+    val livestock: LivestockRestoreMedia = LivestockRestoreMedia()
 ) {
     companion object {
         fun from(mediaGateway: UserDataArchiveMediaGateway): UserDataRestoreMediaOperations {
             return UserDataRestoreMediaOperations(
-                snapshotTankPhoto = mediaGateway::fingerprintTankPhoto,
-                prepareRestoredTankPhoto = mediaGateway::prepareRestoredTankPhoto,
+                snapshotTankPhoto = { uri -> mediaGateway.fingerprintPhoto(uri) },
+                prepareRestoredTankPhoto = { owner, token, file ->
+                    mediaGateway.prepareRestoredPhoto(owner, token, file)
+                },
                 commit = mediaGateway::commit,
-                rollback = mediaGateway::rollback
+                rollback = mediaGateway::rollback,
+                snapshotPlantPhoto = { uri -> mediaGateway.fingerprintPhoto(uri, AppMediaScope.PLANT) },
+                prepareRestoredPlantPhoto = { owner, token, file ->
+                    mediaGateway.prepareRestoredPhoto(owner, token, file, AppMediaScope.PLANT)
+                },
+                livestock = LivestockRestoreMedia(
+                    snapshot = { uri -> mediaGateway.fingerprintPhoto(uri, AppMediaScope.LIVESTOCK) },
+                    prepare = { owner, token, file ->
+                        mediaGateway.prepareRestoredPhoto(owner, token, file, AppMediaScope.LIVESTOCK)
+                    }
+                )
             )
         }
     }

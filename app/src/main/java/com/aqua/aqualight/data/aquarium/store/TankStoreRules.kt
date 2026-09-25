@@ -43,9 +43,15 @@ object TankStoreRules {
         )
 
         val ownerScopedIds = mutableSetOf<Pair<String, Long>>()
+        val plantPhotoUris = mutableSetOf<String>()
 
         store.tanksList.forEach { tank ->
             validateTank(tank)
+            tank.recordPhotoUris().forEach { uri ->
+                if (!plantPhotoUris.add(uri)) {
+                    violation("Photo files must not be shared between records.")
+                }
+            }
 
             val ownerKey = canonicalOwnerUid(tank.ownerUid)
             if (!ownerScopedIds.add(ownerKey to tank.id)) {
@@ -112,6 +118,7 @@ object TankStoreRules {
                 plant.category,
                 MAX_CATEGORY_CHARS
             )
+            requireCanonicalOptionalText("plant.photoUri", plant.photoUri, MAX_URI_CHARS)
             requireNormalizedMarker("plant.markerX", plant.markerX)
             requireNormalizedMarker("plant.markerY", plant.markerY)
         }
@@ -194,6 +201,7 @@ object TankStoreRules {
                 livestock.addedDateEpochDay
             )
             requireCanonicalOptionalText("livestock.note", livestock.note, MAX_NOTE_CHARS)
+            requireCanonicalOptionalText("livestock.photoUri", livestock.photoUri, MAX_URI_CHARS)
         }
     }
 

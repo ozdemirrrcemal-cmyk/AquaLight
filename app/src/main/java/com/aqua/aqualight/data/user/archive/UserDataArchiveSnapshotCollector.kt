@@ -5,6 +5,7 @@ import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.data.user.UserPreferencesManager
+import com.aqua.aqualight.platform.media.AppMediaScope
 import com.aqua.aqualight.platform.media.UserDataArchiveMediaGateway
 import java.io.File
 import kotlinx.coroutines.flow.first
@@ -44,12 +45,12 @@ internal class UserDataArchiveSnapshotCollector(
         var archivedPhotoCount = 0
         val aquariums = tanks.map { tank ->
             val photoReference = if (mediaDirectory == null) {
-                if (mediaGateway.canSnapshotTankPhoto(tank.photoUri)) archivedPhotoCount += 1
+                if (mediaGateway.canSnapshotPhoto(tank.photoUri)) archivedPhotoCount += 1
                 null
             } else {
                 val entryName = "${UserDataBackupLimits.MEDIA_PREFIX}${tank.id}.jpg"
                 val destination = File(mediaDirectory, "tank_${tank.id}.media")
-                mediaGateway.snapshotTankPhoto(tank.photoUri, destination)?.let { staged ->
+                mediaGateway.snapshotPhoto(tank.photoUri, destination)?.let { staged ->
                     archivedPhotoCount += 1
                     media[entryName] = staged
                     ArchiveMediaReference(
@@ -59,7 +60,14 @@ internal class UserDataArchiveSnapshotCollector(
                     )
                 }
             }
-            tank.toArchiveAquarium(photoReference)
+
+            val plantPhotoReferences = collectPlantPhotos(tank, mediaDirectory, media) { archivedPhotoCount += 1 }
+            val livestockPhotos = collectLivestockPhotos(tank, mediaDirectory, media) { archivedPhotoCount += 1 }
+            tank.toArchiveAquarium(
+                photoReference = photoReference,
+                plantPhotoReferences = plantPhotoReferences,
+                livestockPhotoReferences = livestockPhotos
+            )
         }
         requireOwner()
         return UserDataAquariumSnapshot(
@@ -69,6 +77,39 @@ internal class UserDataArchiveSnapshotCollector(
             mediaByEntryName = media.toMap(),
             archivedPhotoCount = archivedPhotoCount
         )
+    }
+
+    private fun collectPlantPhotos(
+        tank: com.aqua.aqualight.data.aquarium.model.SavedAquariumTank,
+        mediaDirectory: File?,
+        media: MutableMap<String, File>,
+        onPhoto: () -> Unit
+    ): Map<Long, ArchiveMediaReference> {
+        val plantPhotoReferences = linkedMapOf<Long, ArchiveMediaReference>()
+        tank.plants.forEach { plant ->
+            if (mediaDirectory == null) {
+                if (mediaGateway.canSnapshotPhoto(plant.photoUri, AppMediaScope.PLANT)) {
+                    onPhoto()
+                }
+            } else {
+                val entryName =
+                    "${UserDataBackupLimits.MEDIA_PREFIX}${tank.id}_plant_${plant.id}.jpg"
+                val destination = File(
+                    mediaDirectory,
+                    "plant_${tank.id}_${plant.id}.media"
+                )
+                mediaGateway.snapshotPhoto(plant.photoUri, destination, AppMediaScope.PLANT)?.let { staged ->
+                    onPhoto()
+                    media[entryName] = staged
+                    plantPhotoReferences[plant.id] = ArchiveMediaReference(
+                        entryName = entryName,
+                        byteSize = staged.length().toInt(),
+                        sha256 = sha256(staged)
+                    )
+                }
+            }
+        }
+        return plantPhotoReferences
     }
 
     suspend fun collectPortableProfile(): PortableProfileSnapshot {
@@ -108,6 +149,39 @@ internal class UserDataArchiveSnapshotCollector(
                 lastEventDescription = prefs.lastEventDescription
             )
         )
+    }
+
+    private fun collectLivestockPhotos(
+        tank: com.aqua.aqualight.data.aquarium.model.SavedAquariumTank,
+        mediaDirectory: File?,
+        media: MutableMap<String, File>,
+        onPhoto: () -> Unit
+    ): Map<Long, ArchiveMediaReference> {
+        val livestockPhotoReferences = linkedMapOf<Long, ArchiveMediaReference>()
+        tank.livestock.forEach { item ->
+            if (mediaDirectory == null) {
+                if (mediaGateway.canSnapshotPhoto(item.photoUri, AppMediaScope.LIVESTOCK)) {
+                    onPhoto()
+                }
+            } else {
+                val entryName =
+                    "${UserDataBackupLimits.MEDIA_PREFIX}${tank.id}_livestock_${item.id}.jpg"
+                val destination = File(
+                    mediaDirectory,
+                    "livestock_${tank.id}_${item.id}.media"
+                )
+                mediaGateway.snapshotPhoto(item.photoUri, destination, AppMediaScope.LIVESTOCK)?.let { staged ->
+                    onPhoto()
+                    media[entryName] = staged
+                    livestockPhotoReferences[item.id] = ArchiveMediaReference(
+                        entryName = entryName,
+                        byteSize = staged.length().toInt(),
+                        sha256 = sha256(staged)
+                    )
+                }
+            }
+        }
+        return livestockPhotoReferences
     }
 
     private suspend fun collectAssignments(tankIds: Set<Long>): List<ArchiveDeviceAssignment> {

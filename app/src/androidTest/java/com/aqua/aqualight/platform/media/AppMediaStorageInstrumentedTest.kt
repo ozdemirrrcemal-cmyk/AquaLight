@@ -91,6 +91,32 @@ class AppMediaStorageInstrumentedTest {
     }
 
     @Test
+    fun plantPhotosUseCanonicalOwnerScopedOrphanRecovery() {
+        val committed = pendingSavedMedia(
+            ownerUid = "owner-plant",
+            ownerToken = "7",
+            scope = AppMediaScope.PLANT
+        )
+        AppMediaStorage.commitPendingMedia(context, committed)
+        val file = requireNotNull(
+            AppMediaStorage.resolveInternalMediaFile(
+                context = context,
+                uriString = committed,
+                expectedScope = AppMediaScope.PLANT
+            )
+        )
+        check(file.setLastModified(System.currentTimeMillis() - TWO_DAYS_MILLIS))
+
+        AppMediaStorage.reconcileUnreferencedCommittedMedia(
+            context = context,
+            ownerUid = "owner-plant",
+            referencedUris = emptyList()
+        )
+
+        assertFalse(AppMediaStorage.isAppOwned(context, committed))
+    }
+
+    @Test
     fun committedCandidateIsNeverRemovedByLaterReconciliation() {
         val committed = pendingSavedMedia("owner-a", "committed")
         AppMediaStorage.commitPendingMedia(context, committed)
@@ -106,11 +132,51 @@ class AppMediaStorageInstrumentedTest {
         AppMediaStorage.deleteInternalMedia(context, committed)
     }
 
-    private fun pendingSavedMedia(ownerUid: String, ownerToken: String): String {
+    @Test
+    fun candidateOwnershipUsesExactUidAndScopeInsteadOfSanitizedFilename() {
+        val owner = "plant/owner"
+        val photo = pendingSavedMedia(owner, "7", AppMediaScope.PLANT)
+        try {
+            assertTrue(AppMediaStorage.pendingMediaOwner(context, photo, AppMediaScope.PLANT) == owner)
+            assertFalse(AppMediaStorage.pendingMediaOwner(context, photo, AppMediaScope.PLANT) == "plant?owner")
+            assertFalse(AppMediaStorage.pendingMediaOwner(context, photo, AppMediaScope.TANK) == owner)
+            AppMediaStorage.commitPendingMedia(context, photo)
+            assertFalse(AppMediaStorage.pendingMediaOwner(context, photo, AppMediaScope.PLANT) == owner)
+        } finally {
+            AppMediaStorage.deleteInternalMedia(context, photo)
+        }
+    }
+
+    @Test
+    fun committedOrphanRecoveryDoesNotMatchAnotherOwnersSanitizedOrPrefixedUid() {
+        val prefix = "photo-owner-${java.util.UUID.randomUUID()}"
+        val owners = listOf(prefix, "${prefix}_other", "$prefix/a", "$prefix?a")
+        val photos = owners.map { owner -> pendingSavedMedia(owner, "7", AppMediaScope.LIVESTOCK) }
+        try {
+            photos.forEach { AppMediaStorage.commitPendingMedia(context, it) }
+            owners.forEachIndexed { index, owner ->
+                AppMediaStorage.reconcileUnreferencedCommittedMedia(
+                    context, owner, emptyList(), System.currentTimeMillis() + TWO_DAYS_MILLIS
+                )
+                assertFalse(AppMediaStorage.isAppOwned(context, photos[index]))
+                photos.drop(index + 1).forEach { photo ->
+                    assertTrue(AppMediaStorage.isAppOwned(context, photo))
+                }
+            }
+        } finally {
+            photos.forEach { AppMediaStorage.deleteInternalMedia(context, it) }
+        }
+    }
+
+    private fun pendingSavedMedia(
+        ownerUid: String,
+        ownerToken: String,
+        scope: AppMediaScope = AppMediaScope.TANK
+    ): String {
         val crop = requireNotNull(
             AppMediaStorage.createCropOutputUri(
                 context = context,
-                scope = AppMediaScope.TANK,
+                scope = scope,
                 ownerToken = ownerToken
             )
         )
@@ -118,7 +184,7 @@ class AppMediaStorageInstrumentedTest {
         return requireNotNull(
             AppMediaStorage.promoteCropOutput(
                 context = context,
-                scope = AppMediaScope.TANK,
+                scope = scope,
                 ownerToken = ownerToken,
                 ownerUid = ownerUid,
                 outputUri = crop

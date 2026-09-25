@@ -1,37 +1,29 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail
 
-import com.aqua.aqualight.ui.common.text.setTextSizeResource
-import android.graphics.Typeface
 import android.os.Bundle
-import android.text.TextUtils
-import android.view.Gravity
 import android.view.View
-import android.widget.LinearLayout
-import android.widget.TextView
-import androidx.core.content.ContextCompat
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
+import android.widget.ImageView
+import androidx.core.net.toUri
 import androidx.navigation.fragment.findNavController
+import coil3.load
+import coil3.request.crossfade
+import coil3.request.error
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumPlantTag
 import com.aqua.aqualight.databinding.FragmentTankDetailPlantsBinding
-import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
+import com.aqua.aqualight.databinding.ItemTankPlantPhotoBinding
+import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.TankDetailTabArgs
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
-import com.google.android.material.card.MaterialCardView
 
-class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) {
+class TankDetailPlantsFragment : TankPlantPhotoFragment() {
     private var _binding: FragmentTankDetailPlantsBinding? = null
     private val binding get() = _binding!!
-    private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
-    private var tankId: Long = 0L
-    private var isOpeningPlantTagScreen: Boolean = false
-    private var isOpeningPlantHealth: Boolean = false
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        tankId = requireArguments().getLong(ARG_TANK_ID)
-    }
+    private var currentPlants: List<AquariumPlantTag> = emptyList()
+    protected override val hasPhotoView: Boolean get() = _binding != null
+    private var isOpeningPlantTagScreen = false
+    private var isOpeningPlantHealth = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -54,9 +46,12 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
         }
 
         binding.btnAddPlant.setOnClickListener { openPlantTagScreen() }
+        setupPhotoSourceResultListener()
+
         aquariumTankViewModel.tanks.observe(viewLifecycleOwner) { tanks ->
             val tank = tanks.firstOrNull { it.id == tankId } ?: return@observe
-            renderPlants(tank.plants)
+            currentPlants = tank.plants
+            renderPlants(currentPlants)
         }
     }
 
@@ -67,9 +62,7 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
     }
 
     private fun openPlantHealth() {
-        if (isOpeningPlantHealth) {
-            return
-        }
+        if (isOpeningPlantHealth || photoTarget.isInProgress) return
 
         val navController = findNavController()
         navController.currentBackStackEntry
@@ -89,7 +82,7 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
     }
 
     private fun openPlantTagScreen() {
-        if (isOpeningPlantTagScreen) return
+        if (isOpeningPlantTagScreen || photoTarget.isInProgress) return
         val navController = findNavController()
         if (navController.currentDestination?.id != R.id.tankDetailFragment) return
         isOpeningPlantTagScreen = true
@@ -101,6 +94,7 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
     }
 
     private fun renderPlants(plants: List<AquariumPlantTag>) {
+        if (_binding == null) return
         binding.plantListContainer.removeAllViews()
         plants.forEachIndexed { index, plant ->
             binding.plantListContainer.addView(createPlantCard(index, plant))
@@ -108,74 +102,46 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
     }
 
     private fun createPlantCard(index: Int, plant: AquariumPlantTag): View {
-        val card = MaterialCardView(requireContext()).apply {
-            radius = resources.getDimensionPixelOffset(R.dimen.aqua_size_18).toFloat()
-            strokeWidth = resources.getDimensionPixelOffset(R.dimen.aqua_size_1)
-            strokeColor = ContextCompat.getColor(requireContext(), R.color.aqua_card_outline)
-            setCardBackgroundColor(ContextCompat.getColor(requireContext(), R.color.aqua_card_surface))
-            cardElevation = 0f
-            useCompatPadding = false
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply { bottomMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_12) }
+        val item = ItemTankPlantPhotoBinding.inflate(
+            layoutInflater,
+            binding.plantListContainer,
+            false
+        )
+        item.tvPlantOrderBadge.text = LocaleFormatter.formatInteger(requireContext(), index + 1)
+        item.tvPlantCategory.text = plant.category
+        item.tvPlantName.text = plant.plantName
+        item.plantCard.contentDescription = getString(
+            R.string.aquarium_plant_photo_action_description,
+            plant.plantName
+        )
+        bindPlantPhoto(item.imgPlantPhoto, plant.photoUri)
+        item.plantCard.setOnClickListener {
+            showPlantPhotoSource(plant)
         }
-        val row = LinearLayout(requireContext()).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(resources.getDimensionPixelOffset(R.dimen.aqua_size_14), resources.getDimensionPixelOffset(R.dimen.aqua_size_12), resources.getDimensionPixelOffset(R.dimen.aqua_size_14), resources.getDimensionPixelOffset(R.dimen.aqua_size_12))
-        }
-        val number = TextView(requireContext()).apply {
-            text = "${index + 1}"
-            gravity = Gravity.CENTER
-            setTextSizeResource(R.dimen.aqua_text_size_body_small)
-            setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_content_on_dark))
-            setTypeface(null, Typeface.NORMAL)
-            setBackgroundResource(R.drawable.bg_plant_number_circle)
-            includeFontPadding = false
-            layoutParams = LinearLayout.LayoutParams(resources.getDimensionPixelOffset(R.dimen.aqua_size_38), resources.getDimensionPixelOffset(R.dimen.aqua_size_38))
-        }
-        val textBox = LinearLayout(requireContext()).apply {
-            orientation = LinearLayout.VERTICAL
-            layoutParams = LinearLayout.LayoutParams(
-                0,
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                1f
-            ).apply { marginStart = resources.getDimensionPixelOffset(R.dimen.aqua_size_14) }
-        }
-        val categoryText = TextView(requireContext()).apply {
-            text = plant.category
-            setTextSizeResource(R.dimen.aqua_text_size_caption)
-            setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_card_text_secondary))
-            includeFontPadding = false
-        }
-        val nameText = TextView(requireContext()).apply {
-            text = plant.plantName
-            setTextSizeResource(R.dimen.aqua_text_size_body)
-            setTextColor(ContextCompat.getColor(requireContext(), R.color.aqua_card_text_primary))
-            setTypeface(null, Typeface.NORMAL)
-            includeFontPadding = false
-            maxLines = 2
-            ellipsize = TextUtils.TruncateAt.END
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply { topMargin = resources.getDimensionPixelOffset(R.dimen.aqua_size_6) }
-        }
-        textBox.addView(categoryText)
-        textBox.addView(nameText)
-        row.addView(number)
-        row.addView(textBox)
-        card.addView(row)
-        return card
+        return item.root
     }
+
+    private fun bindPlantPhoto(imageView: ImageView, photoUri: String?) {
+        if (photoUri.isNullOrBlank()) {
+            imageView.scaleType = ImageView.ScaleType.CENTER
+            imageView.setImageResource(R.drawable.ic_camera_24)
+            return
+        }
+
+        imageView.scaleType = ImageView.ScaleType.CENTER_CROP
+        imageView.load(photoUri.toUri()) {
+            error(R.drawable.ic_camera_24)
+            crossfade(true)
+        }
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
     }
 
     companion object {
-        private const val ARG_TANK_ID = "tankId"
+        internal const val ARG_TANK_ID = "tankId"
 
         fun newInstance(tankId: Long): TankDetailPlantsFragment {
             return TankDetailPlantsFragment().apply {

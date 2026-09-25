@@ -44,6 +44,7 @@ message StoredPlantTag {
   float markerX = 4;
   float markerY = 5;
   string catalogId = 6;
+  string photoUri = 7;
 }
 
 message StoredMaterial {
@@ -65,4 +66,5 @@ message StoredLivestock {
   string note = 6;
   // Required stable identity. Catalog records use their catalog id; user-defined records use custom:<livestockId>.
   string catalog_entry_id = 7;
+  string photoUri = 8;
 }
