@@ -34,6 +34,7 @@ def render():
         "    val lightRequirement: String,",
         "    val catalogRevision: Int = AquariumPlantLightCatalog.CATALOG_REVISION", ")", "",
         "/** Exact catalog identities. A range uses its lowest supported light as the minimum demand. */",
+        '@Suppress("LargeClass") // Static catalog entries intentionally share one record table.',
         "object AquariumPlantLightCatalog {", "    const val CATALOG_REVISION: Int = 2",
         "    const val EXPECTED_RECORD_COUNT: Int = 271", "",
         "    val records: List<AquariumPlantLightCatalogRecord> = listOf("
