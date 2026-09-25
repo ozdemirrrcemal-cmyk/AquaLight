@@ -3,7 +3,6 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 import android.content.Context
 import android.net.Uri
 import android.graphics.Typeface
-import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
 import android.view.View
@@ -192,7 +191,7 @@ internal class LivestockHealthUi(private val context: Context) {
         frame.addView(View(context).apply {
             background = GradientDrawable(
                 GradientDrawable.Orientation.TOP_BOTTOM,
-                intArrayOf(Color.TRANSPARENT,
+                intArrayOf(ContextCompat.getColor(context, R.color.aqua_color_transparent),
                     ContextCompat.getColor(context, R.color.aqua_card_surface))
             )
         }, FrameLayout.LayoutParams(match, match))
