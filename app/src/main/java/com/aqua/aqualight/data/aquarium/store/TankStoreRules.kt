@@ -112,6 +112,7 @@ object TankStoreRules {
                 plant.category,
                 MAX_CATEGORY_CHARS
             )
+            requireCanonicalOptionalText("plant.photoUri", plant.photoUri, MAX_URI_CHARS)
             requireNormalizedMarker("plant.markerX", plant.markerX)
             requireNormalizedMarker("plant.markerY", plant.markerY)
         }
