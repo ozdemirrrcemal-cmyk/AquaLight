@@ -402,6 +402,20 @@ Before implementation, the supported metric must be explicitly named in the doma
 
 The UI label may remain visually unchanged, but the internal semantic may not be ambiguous.
 
+### 6.4 Accepted reuse of existing measurement models (K02)
+
+Decision accepted with the user on 26 September 2026:
+
+- extend the existing `AquariumWaterParameter` and `AquariumWaterSnapshot` models in a controlled way rather than introducing a parallel independent measurement model and a second parameter vocabulary;
+- add the missing nitrite and ammonia support to these application-level measurement contracts during implementation, after K03 has established the exact chemical reporting basis and canonical units;
+- continue using `LivestockWaterCompatibilityEvaluator` as the single authority for livestock range comparison through the existing application boundary;
+- introduce separate models for the analysis record, structured assessment, and provenance; these event/result/source responsibilities must not be collapsed into the measurement snapshot;
+- preserve existing callers through targeted mapping and regression checks; this decision does not approve a broad refactor.
+
+The approved UI already contains NO2 and NH3/NH4 input controls. The missing support refers to the underlying measurement contracts and the future persistence/assessment integration, not missing UI fields. No additional input controls are authorized by K02.
+
+K03 remains open. Existing `nitratePpm` and `phosphatePpm` names do not, by themselves, establish the source data's chemical reporting basis or authorize treating those values as mg/L. Field naming, explicit normalization, ammonia semantics, and rule thresholds must follow their own evidence-backed decisions before implementation. Adding parameters must not invent livestock requirements where the catalog has none.
+
 ---
 
 ## 7. Measurement provenance
@@ -1470,7 +1484,7 @@ The implementation order is frozen as follows.
 
 ### Phase 1 - Freeze scientific/domain semantics
 
-1. canonical WaterParameter enum;
+1. controlled extension of the existing AquariumWaterParameter enum and AquariumWaterSnapshot measurement model (accepted K02; exact chemical semantics follow K03);
 2. canonical units;
 3. nitrate/phosphate unit policy;
 4. NH3/NH4 exact semantic;

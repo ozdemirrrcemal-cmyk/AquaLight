@@ -23,8 +23,11 @@ Bu dosya, mevcut sözleşmenin kodla karşılaştırılmış incelemesi ve öner
 | Madde | Durum / tarih | Kabul edilen kapsam | Sözleşme karşılığı |
 | --- | --- | --- | --- |
 | W0.1 / K01 | Kullanıcıyla kararlaştırıldı — 26.09.2026 | Mevcut application/data/UI/composition mimarisi korunacak. Ortak bağlam ve saf su analiz motoru application altında, veri/sensör/store implementasyonları data altında yer alacak. Bitki okuyucusunun hedefi data/aquarium/catalog/plant olacak. Mevcut sağlık UI'ı ve composition kullanılacak; yeni domain kökü veya Gradle modülü açılmayacak. | Ana sözleşme §4.1 |
+| W0.1 / K02 | Kullanıcıyla kararlaştırıldı — 26.09.2026 | AquariumWaterParameter ve AquariumWaterSnapshot kontrollü genişletilecek. UI'da bulunan NO2/amonyak alanlarının veri modeli desteği eklenecek; kesin kimyasal anlam ve birimler K03'te belirlenecek. Canlı karşılaştırması mevcut evaluator'da kalacak; analiz kaydı, assessment ve provenance ayrı modellenecek. | Ana sözleşme §6.4 ve §45 |
 
-Bu kayıt mimari kararı belgeler; paketlerin/kodun uygulanmış olduğunu göstermez. W0.1, K02–K18 kararları henüz alınmadığı için açık kalır. Sıradaki karar: **W0.1 / K02 — mevcut su parametresi ve ölçüm modellerinin yeniden kullanılması**.
+Bu kayıt kabul edilen kararları belgeler; paketlerin/kodun uygulanmış olduğunu göstermez. W0.1, K03–K18 kararları henüz alınmadığı için açık kalır. Sıradaki karar: **W0.1 / K03 — kimyasal raporlama temeli ve birimler**. K03 birden fazla bağımsız karar içerir; önce NO3/NO2/PO4 için kanonik raporlama temeli, ardından kaynak/ppm dönüşüm politikası ve amonyak semantiği ayrı ayrı ele alınacaktır.
+
+K03.1 için doğrulanan kaynaklar ve henüz onaylanmamış öneri: [Konsantrasyon birimleri araştırma notu](research/WATER_ANALYSIS_CONCENTRATION_UNITS_K03.md).
 
 ## 1. Sonuç
 
@@ -58,7 +61,7 @@ Burada “kritik”, ilgili katmanı uygulamadan önce kararı verilmesi gereken
 | No | Öncelik | Bulgu / açık karar | Gerekli ek |
 | --- | --- | --- | --- |
 | K01 | Karar alındı | Mevcut mimari ve temel paket sahipliği kullanıcı tarafından kabul edildi; uygulama aşaması bekliyor. | Ana sözleşme §4.1 ve karar kaydı. Yeni domain kökü/Gradle modülü açılmayacak. |
-| K02 | Kritik | §45 yeni WaterParameter öneriyor; AquariumWaterParameter zaten var. | Mevcut modeli kontrollü genişletme veya birebir testli adapter kararı; iki farklı birim/parametre gerçeği oluşmasın. |
+| K02 | Karar alındı | Mevcut AquariumWaterParameter/AquariumWaterSnapshot modellerinin kontrollü genişletilmesi kullanıcı tarafından kabul edildi; uygulama ve K03 semantiği bekliyor. | Ana sözleşme §6.4 ve §45. Canlı evaluator'ı korunacak; kayıt/assessment/provenance ayrı modeller olacak. |
 | K03 | Kritik | §6 ppm/mg/L ve ammonia kararlarını sonraya bırakıyor. | NO3/NO3-N, NO2/NO2-N, PO4/P temeli; ammonia türü; tatlı/deniz suyu politikası; desteklenmeyen kit sonucu davranışı kesinleşsin. Yalnız etiketi değiştirmek yeterli değil. |
 | K04 | Kritik | §14 yön, tehlike, çatışma ve veri eksikliğini tek örnek enum’da topluyor. | Şiddet, LOW/HIGH yönü, veri yeterliliği ve conflict birlikte temsil edilsin. CRITICAL + missingData + conflict aynı sonuçta kaybolmadan saklansın. |
 | K05 | Kritik | Canlı parser’ı `<` ile `≤`, `>` ile `≥` ayrımını kaybediyor; contains sınırları dahil sayıyor. Yaklaşık tek değer de eşitlik aralığına dönüşüyor. | Mevcut parser/evaluator üzerinde sınır semantiği ve approximate/SOFT politikası kesinleşsin. Örneğin `<20` sınırında 20’nin mevcut sonuçta uyumlu sayılması testle yakalansın. Ayrı evaluator yazılmasın. |
@@ -140,7 +143,7 @@ WaterAnalysisRecord içindeki kalıcı owner kimliğinin UI’a açılması gere
 
 ### W1 — Modelleri ve katalog sınırlarını kur
 
-- [ ] W1.1 Kanonik parametre modelini mevcut AquariumWaterParameter ile birleştir veya tek noktadaki adapter ile eşleştir; NO2/ammonia desteğini ekle; ppm isimlerini anlam değiştirerek sessizce kullanma.
+- [ ] W1.1 K02 kararına göre mevcut AquariumWaterParameter ve AquariumWaterSnapshot modellerini kontrollü genişlet; K03'te kesinleştirilen anlam/birimlerle NO2/ammonia desteğini ekle; ppm isimlerini anlam değiştirerek sessizce kullanma. UI giriş alanları zaten mevcuttur.
 - [ ] W1.2 Input, raw measurements, record, parameter/entity assessment, reasons, recommendations, conflicts, missingData ve typed failure modellerini oluştur.
 - [ ] W1.3 `null`, ölçülmüş `0`, okunamayan sayı ve değerlendirme için uygulanamaz parametreyi birbirinden ayır. Sınır altı/üstü test sonuçları v1’de desteklenmiyorsa bunu açıkça reddet.
 - [ ] W1.4 Parse/normalization öncesi anlamı koru; birim dönüşümünü UI metninden değil typed source-unit politikasından yap. Yuvarlama değerlendirme sonrasında yalnız sunumda olsun.
