@@ -2,9 +2,9 @@
 
 Araştırma tarihi: 26.09.2026 (Europe/Istanbul).
 
-Durum: **K03.0 ölçüm kapsamı ve K03.1 NO3/NO2/PO4 kanonik kayıt anlamı/birimleri kabul edildi. K03.2 kaynak birimleri/dönüşüm politikası ve sonraki kararlar açık.** Kabul edilen normatif kapsam ana sözleşme §6.1 ve §25.1–25.3'te kayıtlıdır. Bu araştırma dosyası uygulama kodu veya bilimsel güvenlik eşiği değildir.
+Durum: **K03.0 ölçüm kapsamı, K03.1 NO3/NO2/PO4 kanonik kayıt anlamı/birimleri ve K03.2 test/cihaz seçimi + kaynak semantiği çözümleme + normalizasyon akışı kabul edildi. K03.3 ve sonraki kararlar açık.** Kabul edilen normatif kapsam ana sözleşme §6.1–6.5, §7, §25.1–25.3 ve §28.1'de kayıtlıdır. Bu araştırma dosyası uygulama kodu veya bilimsel güvenlik eşiği değildir.
 
-Kapsam: K03.0 için ölçüm seçiminin kaynaklarını ve K03.1'de kabul edilen NO3, NO2 ve PO4 ortak raporlama temelinin dayanaklarını korumak. Kaynak birimlerinin dönüştürülmesi, test kiti giriş yöntemi, toplam amonyağın kesin raporlama temeli ve ek parametrelerin semantiği sonraki ayrı kararlar olacak.
+Kapsam: K03.0 için ölçüm seçiminin kaynaklarını, K03.1'de kabul edilen NO3/NO2/PO4 ortak raporlama temelini ve K03.2'de kabul edilen source-aware giriş/normalizasyon yaklaşımını izlenebilir tutmak. Toplam amonyağın kesin kanonik raporlama temeli, ek parametrelerin semantiği, kanıtlı profil/dönüşüm tablolarının ayrıntıları ve türetilmiş hesaplar sonraki ayrı kararlar olacak.
 
 ## Doğrulanan ayrımlar
 
@@ -46,16 +46,25 @@ Gerekçe: Ekran adlarıyla doğrudan eşleşen, tek anlamlı bir iç temsil sağ
 
 K03.1'in kabul edilmesi bu kalan konuları onaylamaz veya uygulanmış yapmaz. Belirsiz kaynak birimleri sessizce kanonik değere çevrilmeyecek.
 
-## K03.2 — sonraki karar önerisi, onay bekliyor
+## K03.2 — kabul edilen test/cihaz ve kaynak-normalizasyon kararı
 
-Öneri: **Ham kaynak sonucunu koru; yalnız doğrulanmış anlam ve birimle standart değeri üret.** Bu bölüm karar hazırlığıdır; henüz kabul edilmiş kayıt davranışı değildir.
+26.09.2026 tarihinde kabul edildi: **Ham kaynak sonucunu koru; ölçüm anlamını girişte test/cihaz profili veya rehberli typed seçimle çöz; yalnız doğrulanmış anlam ve birimle standart değeri üret.**
 
-1. Girilen sonuç, kaynağın belirttiği birim/kimyasal temel ve biliniyorsa test/yöntem bilgisi korunur; normalize edilmiş sonuç ayrı tutulur. Böylece geçmişte kullanıcı ne girdi, uygulama ne dönüştürdü açıklanabilir.
-2. Kaynak aynı anlam/birimdeyse sayısal değer değişmez. Farklı ama uyumlu bir temel/birimdeyse doğrulanmış dönüşüm application politikasında uygulanır; kullanıcıya elle dönüşüm yaptırılmaz. Kural/sürüm ve kullanılan önkoşullar izlenebilir olur; yuvarlama yalnız sunumda yapılır.
-3. `ppm` etiketi tek başına `mg/L` sayılmaz. Kaynağın tanımı ve gerekiyorsa yoğunluk koşulları doğrulanmadan dönüşüm yapılmaz; tatlı/deniz suyu için varsayılan katsayı uydurulmaz. NO3-N/NO2-N/ortofosfat-P ile analitik kapsamı farklı toplam fosfor ayrımı korunur.
-4. Kaynak anlamı/birimi bilinmiyorsa, diğer girdi doğrulamalarını geçen sonucu açıkça çözümlenmemiş ham kayıt olarak saklama önerilir; kanonik değer üretilmez ve bu sonuç motor karşılaştırmalarına veya türetilmiş hesaplara girmez. “Ölçüm türü/birimi doğrulanamadı” nedeni gösterilir; diğer doğrulanmış sonuçlar değerlendirilebilir. Bu, ölçülmemiş veya sıfır sonucu değildir; bozuk/geçersiz sayıyı kaydetme izni vermez.
+1. Test/cihaz tercihi ölçüm parametresine göre tutulur ve owner izolasyonuyla hatırlanır; tek bir global ürün bütün parametrelere uygulanmaz. Tank-bound cihazlarda tank/device assignment sınırı ayrıca geçerlidir.
+2. Bilinen üründe marka tek başına yeterli değildir. Doğrulanmış marka+model/yöntem/sonuç modu profili ölçülen analiti, kimyasal raporlama temelini, kaynak birimini, desteklenen sonuç modlarını ve dönüşüm metadata'sını sağlar.
+3. Sonraki ölçümlerde kullanıcı normalde yalnız sonucu girer; giriş kutusunda kaynak birimi/raporlama bağlamı görünür, desteklenen dönüşümü application katmanı yapar. Kullanıcıya elle katsayı uygulattırılmaz.
+4. Aynı ürün birden fazla semantik sonuç veriyorsa yalnız gerekli açık seçim gösterilir. Örneğin toplam amonyak ile doğrudan serbest NH3 birbirinden ayrı result mode'dur; uygulama hangisinin ölçüldüğünü sayıya veya önceki tercihe bakarak tahmin etmez.
+5. Ürün katalogda yoksa destek bitmez. Kullanıcı kontrollü listeden ölçüm türü, kimyasal raporlama temeli ve kaynak birimini seçer. Serbest metin kimyasal anlamın kaynağı değildir; çözümlenen typed semantik provenance'a yazılır.
+6. Girilen ham sonuç, kaynak semantiği, varsa profil kimliği/revision, result mode ve normalize edilmiş sonuç ayrı tutulur. Kaynak aynı anlam/birimdeyse değer değişmez; uyumlu farklı temel/birimde doğrulanmış dönüşüm uygulanır. Yuvarlama yalnız sunumdadır.
+7. `ppm` etiketi tek başına `mg/L` sayılmaz. Kaynağın tanımı ve gerekiyorsa yoğunluk koşulları doğrulanmadan dönüşüm yapılmaz; tatlı/deniz suyu için varsayılan katsayı uydurulmaz. NO3-N/NO2-N/ortofosfat-P ile analitik kapsamı farklı toplam fosfor ayrımı korunur.
+8. Ürün/yöntem/birim/result mode değeri girildikten sonra değişirse mevcut sayı sessizce yeniden anlamlandırılmaz; açık yeniden onay/re-entry gerekir veya eski ham değer eski source binding'iyle korunur.
+9. Ölçüm anlamı/birimi hâlâ çözülemiyorsa o alan normal analiz kaydına commit edilmez ve motor karşılaştırmalarına/türetilmiş hesaplara girmez. Girdi taslak/form durumunda kalabilir; diğer doğrulanmış alanlar değerlendirilebilir ve kaydedilebilir. Bu davranış ölçülmemiş veya sıfır sonucu değildir ve tek başına durable draft-store kararı vermez.
 
-Ürün/test kataloğu, UI seçim akışı, kesin dönüşüm katsayıları/hassasiyetleri ve bu kayıtların nihai model şekli ayrı uygulama öncesi kararlar olmaya devam eder. Katalogdaki karşılaştırma aralıkları da aynı anlam/birim doğrulamasından geçmelidir.
+Bu karar UI davranışını ve source-resolution mimarisini dondurur; tam ticari ürün kataloğunun içeriği, profil revision sahipliği, her dönüşüm katsayısının hassasiyeti ve bilimsel eşikler yine kanıtlı veri/uygulama işi olarak tamamlanmalıdır. Katalogdaki karşılaştırma aralıkları da aynı anlam/birim doğrulamasından geçmelidir.
+
+## K03.3 — sıradaki açık karar
+
+Toplam amonyağın kanonik kayıt/assessment temeli ve birimi kesinleştirilecek. K03.2, toplam ve doğrudan serbest amonyak result mode'larının birbirine karıştırılmamasını kabul eder; ancak toplam amonyağın içeride hangi raporlama temeline normalize edileceğini henüz seçmez.
 
 ## Birincil kaynaklar
 
