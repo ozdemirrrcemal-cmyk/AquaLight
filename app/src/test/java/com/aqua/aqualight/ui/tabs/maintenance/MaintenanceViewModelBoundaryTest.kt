@@ -23,6 +23,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestWatcher
@@ -142,7 +143,7 @@ class MaintenanceViewModelBoundaryTest {
             completedAtMillis = 5000L,
             waterChangePercent = 30,
             note = "Done"
-        ).join()
+        )
 
         assertEquals(
             CompletedCareActivityInput(
@@ -156,6 +157,31 @@ class MaintenanceViewModelBoundaryTest {
         )
     }
 
+    @Test
+    fun `completed activity propagates operation validation failure`() = runTest {
+        val operations = FakeMaintenanceOperations()
+        val failure = IllegalArgumentException("invalid completed activity")
+        operations.completedActivityFailure = failure
+        val viewModel = MaintenanceViewModel(
+            operations = operations,
+            textResolver = FakeMaintenanceTextResolver
+        )
+
+        var thrown: IllegalArgumentException? = null
+        try {
+            viewModel.addCompletedActivity(
+                tankId = 21L,
+                type = CareTaskType.WATER_CHANGE,
+                completedAtMillis = 5000L,
+                waterChangePercent = 30
+            )
+        } catch (exception: IllegalArgumentException) {
+            thrown = exception
+        }
+
+        assertSame(failure, thrown)
+    }
+
     private class FakeMaintenanceOperations : MaintenanceOperations {
         override val tasks = MutableStateFlow<List<CareTaskSnapshot>>(emptyList())
 
@@ -166,6 +192,7 @@ class MaintenanceViewModelBoundaryTest {
         var updatedManualTaskId: Long? = null
         var updatedManualInput: ManualCareTaskInput? = null
         var completedActivityInput: CompletedCareActivityInput? = null
+        var completedActivityFailure: IllegalArgumentException? = null
 
         override fun task(taskId: Long): Flow<CareTaskSnapshot?> = flowOf(null)
 
@@ -184,6 +211,7 @@ class MaintenanceViewModelBoundaryTest {
         ) = Unit
 
         override suspend fun addCompletedActivity(input: CompletedCareActivityInput) {
+            completedActivityFailure?.let { throw it }
             completedActivityInput = input
         }
 

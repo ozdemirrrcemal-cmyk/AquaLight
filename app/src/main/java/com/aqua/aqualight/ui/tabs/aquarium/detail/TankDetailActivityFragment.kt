@@ -1,6 +1,7 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail
 
 import com.aqua.aqualight.ui.common.text.setTextSizeResource
+import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import android.graphics.Color
 import android.graphics.Typeface
@@ -39,6 +40,7 @@ import com.aqua.aqualight.ui.common.timeline.TimelineDayStatus
 import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
 import com.aqua.aqualight.ui.tabs.maintenance.TankActivityUiState
 import com.aqua.aqualight.ui.tabs.maintenance.TankNextCareStatus
+import com.aqua.aqualight.ui.tabs.maintenance.WaterChangePercentPicker
 import com.aqua.aqualight.application.care.CareTaskType
 import com.aqua.aqualight.ui.tabs.maintenance.model.CareTaskUi
 import kotlinx.coroutines.launch
@@ -90,36 +92,45 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
         childFragmentManager.setFragmentResultListener(
             CareTaskTypeBottomSheetFragment.REQUEST_KEY_ADD_ACTIVITY,
             viewLifecycleOwner
-        ) {
-            _, result ->
-
+        ) { _, result ->
             val typeName = result.getString(
                 CareTaskTypeBottomSheetFragment.RESULT_TASK_TYPE
             ) ?: return@setFragmentResultListener
-
             val selectedType = runCatching {
                 CareTaskType.valueOf(typeName)
             }.getOrNull() ?: return@setFragmentResultListener
 
-            viewLifecycleOwner.lifecycleScope.launch {
-                try {
-                    showGlobalLoading(true)
+            if (selectedType == CareTaskType.WATER_CHANGE) {
+                WaterChangePercentPicker.show(
+                    fragmentManager = childFragmentManager,
+                    context = requireContext(),
+                    requestKey = ACTIVITY_WATER_PERCENT_REQUEST_KEY
+                )
+                return@setFragmentResultListener
+            }
 
-                    maintenanceViewModel.addCompletedActivity(
-                        tankId = tankId,
-                        type = selectedType,
-                        completedAtMillis = System.currentTimeMillis()
-                    ).join()
-                } catch (exception: Exception) {
-                    exception.printStackTrace()
+            launchActivityMutation(R.string.aquarium_error_activity_add_failed) {
+                maintenanceViewModel.addCompletedActivity(
+                    tankId = tankId,
+                    type = selectedType,
+                    completedAtMillis = System.currentTimeMillis()
+                )
+            }
+        }
 
-                    showSnackBar(
-                        message = getString(R.string.aquarium_error_activity_add_failed),
-                        type = BaseActivity.SnackType.ERROR
-                    )
-                } finally {
-                    showGlobalLoading(false)
-                }
+        childFragmentManager.setFragmentResultListener(
+            ACTIVITY_WATER_PERCENT_REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            val waterChangePercent = WaterChangePercentPicker.selectedPercent(result)
+                ?: return@setFragmentResultListener
+            launchActivityMutation(R.string.aquarium_error_activity_add_failed) {
+                maintenanceViewModel.addCompletedActivity(
+                    tankId = tankId,
+                    type = CareTaskType.WATER_CHANGE,
+                    completedAtMillis = System.currentTimeMillis(),
+                    waterChangePercent = waterChangePercent
+                )
             }
         }
     }
@@ -334,22 +345,11 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
     }
 
     private fun updateCompletedTaskDate(taskId: Long, millis: Long) {
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                showGlobalLoading(true)
-                maintenanceViewModel.updateCompletedTaskDate(
-                    taskId = taskId,
-                    completedAtMillis = millis
-                ).join()
-            } catch (exception: Exception) {
-                exception.printStackTrace()
-                showSnackBar(
-                    message = getString(R.string.aquarium_error_activity_date_update_failed),
-                    type = BaseActivity.SnackType.ERROR
-                )
-            } finally {
-                showGlobalLoading(false)
-            }
+        launchActivityMutation(R.string.aquarium_error_activity_date_update_failed) {
+            maintenanceViewModel.updateCompletedTaskDate(
+                taskId = taskId,
+                completedAtMillis = millis
+            )
         }
     }
 
@@ -368,19 +368,8 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
     }
 
     private fun deleteActivityTask(taskId: Long) {
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                showGlobalLoading(true)
-                maintenanceViewModel.deleteTask(taskId = taskId).join()
-            } catch (exception: Exception) {
-                exception.printStackTrace()
-                showSnackBar(
-                    message = getString(R.string.aquarium_error_activity_delete_failed),
-                    type = BaseActivity.SnackType.ERROR
-                )
-            } finally {
-                showGlobalLoading(false)
-            }
+        launchActivityMutation(R.string.aquarium_error_activity_delete_failed) {
+            maintenanceViewModel.deleteTask(taskId = taskId)
         }
     }
 
@@ -736,10 +725,24 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
         )
     }
 
-    private fun showGlobalLoading(
-        show: Boolean
+    private fun launchActivityMutation(
+        @StringRes errorMessageRes: Int,
+        mutation: suspend () -> Unit
     ) {
-        setFragmentGlobalLoading(show)
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                setFragmentGlobalLoading(true)
+                mutation()
+            } catch (exception: IllegalArgumentException) {
+                exception.printStackTrace()
+                showSnackBar(
+                    message = getString(errorMessageRes),
+                    type = BaseActivity.SnackType.ERROR
+                )
+            } finally {
+                setFragmentGlobalLoading(false)
+            }
+        }
     }
 
     private fun showSnackBar(
@@ -761,6 +764,8 @@ class TankDetailActivityFragment : Fragment(R.layout.fragment_tank_detail_activi
         private const val ACTIVITY_ACTION_REQUEST_KEY = "tank_activity_action_result"
         private const val ACTIVITY_DELETE_REQUEST_KEY = "tank_activity_delete_result"
         private const val ACTIVITY_DATE_REQUEST_KEY = "tank_activity_date_result"
+        private const val ACTIVITY_WATER_PERCENT_REQUEST_KEY =
+            "tank_activity_water_percent_result"
         private const val ACTION_CHANGE_DATE = "change_date"
         private const val ACTION_DELETE = "delete"
 

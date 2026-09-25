@@ -151,12 +151,9 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
             WATER_PERCENT_REQUEST_KEY,
             viewLifecycleOwner
         ) { _, result ->
-            if (result.getString(SingleChoiceBottomSheet.RESULT_KEY) !=
-                SingleChoiceBottomSheet.RESULT_SELECTED
-            ) return@setFragmentResultListener
-            selectedWaterChangePercent = result
-                .getString(SingleChoiceBottomSheet.RESULT_SELECTED_ID)
-                ?.toIntOrNull()
+            selectedWaterChangePercent =
+                WaterChangePercentPicker.selectedPercent(result)
+                    ?: return@setFragmentResultListener
             updateSelectedTaskTypeUi()
             updateSaveButtonState()
         }
@@ -309,16 +306,11 @@ class AddCareTaskFragment : Fragment(R.layout.fragment_add_care_task) {
     }
 
     private fun showWaterChangePercentBottomSheet() {
-        val options = listOf(10, 20, 30, 40, 50, 60, 70, 80, 90, 100).map { percent ->
-            percent.toString() to getString(R.string.maintenance_percent_value, percent)
-        }
-        SingleChoiceBottomSheet.show(
+        WaterChangePercentPicker.show(
             fragmentManager = childFragmentManager,
-            title = getString(R.string.maintenance_select_water_change_percentage),
-            options = options,
-            selectedId = selectedWaterChangePercent?.toString(),
-            columns = 4,
-            requestKey = WATER_PERCENT_REQUEST_KEY
+            context = requireContext(),
+            requestKey = WATER_PERCENT_REQUEST_KEY,
+            selectedPercent = selectedWaterChangePercent
         )
     }
 
