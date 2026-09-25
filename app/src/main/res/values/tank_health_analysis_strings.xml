@@ -71,20 +71,13 @@
     <string name="tank_health_analysis_value_temp_26" translatable="false">26 °C</string>
 
     <string name="tank_health_analysis_record_info_title">Record Information</string>
-    <string name="tank_health_analysis_record_info_subtitle">Date, time and source information for this record.</string>
+    <string name="tank_health_analysis_record_info_subtitle">Date and time information for this record.</string>
     <string name="tank_health_analysis_date_time_label">Date and Time</string>
     <string name="tank_health_analysis_record_date_time">26 Sep 2026 • 14:10</string>
-    <string name="tank_health_analysis_temperature_source_label">Temperature source</string>
-    <string name="tank_health_analysis_temperature_source_value">Read from sensor</string>
-    <string name="tank_health_analysis_record_type_label">Record type</string>
-    <string name="tank_health_analysis_record_type_value">Manual measurements + sensor temperature</string>
     <string name="tank_health_analysis_values_title">Water Values</string>
     <string name="tank_health_analysis_values_subtitle">Measurement results in this record.</string>
-    <string name="tank_health_analysis_sensor_detail_subtitle">Temperature was read from the assigned cooling device sensor.</string>
     <string name="tank_health_analysis_extra_title">Additional Information</string>
     <string name="tank_health_analysis_extra_subtitle">Other information for this record.</string>
-    <string name="tank_health_analysis_created_by_label">Created by</string>
-    <string name="tank_health_analysis_created_by_value">User</string>
     <string name="tank_health_analysis_note_label">Note</string>
     <string name="tank_health_analysis_note_value">No note added</string>
     <string name="tank_health_analysis_delete">Delete Record</string>

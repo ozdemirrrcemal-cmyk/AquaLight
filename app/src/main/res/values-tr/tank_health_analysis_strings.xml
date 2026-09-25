@@ -45,20 +45,13 @@
     <string name="tank_health_analysis_record_date_12">25 Ağu 2026</string>
 
     <string name="tank_health_analysis_record_info_title">Kayıt Bilgisi</string>
-    <string name="tank_health_analysis_record_info_subtitle">Bu kayda ait tarih, saat ve kaynak bilgileri.</string>
+    <string name="tank_health_analysis_record_info_subtitle">Bu kayda ait tarih ve saat bilgileri.</string>
     <string name="tank_health_analysis_date_time_label">Tarih ve Saat</string>
     <string name="tank_health_analysis_record_date_time">26 Eyl 2026 • 14:10</string>
-    <string name="tank_health_analysis_temperature_source_label">Sıcaklık kaynağı</string>
-    <string name="tank_health_analysis_temperature_source_value">Sensörden alındı</string>
-    <string name="tank_health_analysis_record_type_label">Kayıt tipi</string>
-    <string name="tank_health_analysis_record_type_value">Manuel ölçüm + sensör sıcaklığı</string>
     <string name="tank_health_analysis_values_title">Su Değerleri</string>
     <string name="tank_health_analysis_values_subtitle">Bu kayıttaki ölçüm sonuçları.</string>
-    <string name="tank_health_analysis_sensor_detail_subtitle">Sıcaklık, bağlı soğutucu cihazın sensöründen alınmıştır.</string>
     <string name="tank_health_analysis_extra_title">Ek Bilgiler</string>
     <string name="tank_health_analysis_extra_subtitle">Bu kayda ait diğer bilgiler.</string>
-    <string name="tank_health_analysis_created_by_label">Oluşturan</string>
-    <string name="tank_health_analysis_created_by_value">Kullanıcı</string>
     <string name="tank_health_analysis_note_label">Not</string>
     <string name="tank_health_analysis_note_value">Not eklenmemiş</string>
     <string name="tank_health_analysis_delete">Kaydı Sil</string>
