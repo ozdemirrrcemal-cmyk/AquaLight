@@ -457,5 +457,17 @@ data class MediaCropSpec(
             showCropFrame = true,
             compressionQuality = 88
         )
+
+        val PLANT = MediaCropSpec(
+            aspectRatioX = 1f,
+            aspectRatioY = 1f,
+            maxWidth = 1_024,
+            maxHeight = 1_024,
+            maxSourceBitmapSize = 2_048,
+            circleDimmedLayer = false,
+            showCropGrid = true,
+            showCropFrame = true,
+            compressionQuality = 88
+        )
     }
 }
