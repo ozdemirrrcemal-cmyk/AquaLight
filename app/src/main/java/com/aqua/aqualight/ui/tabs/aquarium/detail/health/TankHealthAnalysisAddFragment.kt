@@ -17,7 +17,6 @@ import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 class TankHealthAnalysisAddFragment :
     Fragment(R.layout.fragment_tank_health_analysis_add) {
@@ -120,7 +119,7 @@ class TankHealthAnalysisAddFragment :
     }
 
     private fun renderMeasurementTime() {
-        val locale = resources.configuration.locales[0] ?: Locale.getDefault()
+        val locale = resources.configuration.locales[0]
         binding.tvDateValue.text = selectedDate.format(
             DateTimeFormatter.ofPattern(DATE_PATTERN, locale)
         )
