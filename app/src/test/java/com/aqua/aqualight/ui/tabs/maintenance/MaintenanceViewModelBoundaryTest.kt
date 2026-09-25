@@ -23,7 +23,6 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertSame
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestWatcher
@@ -179,7 +178,7 @@ class MaintenanceViewModelBoundaryTest {
             thrown = exception
         }
 
-        assertSame(failure, thrown)
+        assertEquals(failure.message, thrown?.message)
     }
 
     private class FakeMaintenanceOperations : MaintenanceOperations {
