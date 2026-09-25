@@ -79,31 +79,54 @@
                             android:src="@drawable/ic_tank_health_calendar_24"
                             app:tint="@color/aqua_card_text_secondary" />
 
-                        <LinearLayout
-                            android:layout_width="@dimen/aqua_size_0"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="@dimen/aqua_size_12"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
+                        <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/aqua_size_60"
+        android:layout_marginTop="@dimen/aqua_size_3">
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:includeFontPadding="false"
-                                android:text="@string/tank_health_analysis_date_time_label"
-                                android:textColor="@color/aqua_card_text_secondary"
-                                android:textSize="@dimen/aqua_text_size_caption" />
+        <ImageView
+            android:id="@+id/recordDateIcon"
+            android:layout_width="@dimen/aqua_size_24"
+            android:layout_height="@dimen/aqua_size_24"
+            android:contentDescription="@null"
+            android:importantForAccessibility="no"
+            android:src="@drawable/ic_tank_health_calendar_24"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="@color/aqua_card_text_secondary" />
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="@dimen/aqua_size_3"
-                                android:includeFontPadding="false"
-                                android:text="@string/tank_health_analysis_record_date_time"
-                                android:textColor="@color/aqua_card_text_primary"
-                                android:textSize="@dimen/aqua_text_size_body" />
+        <LinearLayout
+            android:id="@+id/recordDateText"
+            android:layout_width="@dimen/aqua_size_0"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/aqua_size_12"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/recordDateIcon"
+            app:layout_constraintTop_toTopOf="parent">
 
-                        </LinearLayout>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:includeFontPadding="false"
+                android:text="@string/tank_health_analysis_date_time_label"
+                android:textColor="@color/aqua_card_text_secondary"
+                android:textSize="@dimen/aqua_text_size_caption" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_3"
+                android:includeFontPadding="false"
+                android:text="@string/tank_health_analysis_record_date_time"
+                android:textColor="@color/aqua_card_text_primary"
+                android:textSize="@dimen/aqua_text_size_body" />
+
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
                     </LinearLayout>
 
@@ -546,31 +569,54 @@
                             android:src="@drawable/ic_tank_health_history_24"
                             app:tint="@color/aqua_card_text_secondary" />
 
-                        <LinearLayout
-                            android:layout_width="@dimen/aqua_size_0"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="@dimen/aqua_size_10"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
+                        <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/aqua_size_60"
+        android:layout_marginTop="@dimen/aqua_size_3">
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:includeFontPadding="false"
-                                android:text="@string/tank_health_analysis_note_label"
-                                android:textColor="@color/aqua_card_text_secondary"
-                                android:textSize="@dimen/aqua_text_size_caption" />
+        <ImageView
+            android:id="@+id/recordNoteIcon"
+            android:layout_width="@dimen/aqua_size_24"
+            android:layout_height="@dimen/aqua_size_24"
+            android:contentDescription="@null"
+            android:importantForAccessibility="no"
+            android:src="@drawable/ic_tank_health_history_24"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="@color/aqua_card_text_secondary" />
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="@dimen/aqua_size_3"
-                                android:includeFontPadding="false"
-                                android:text="@string/tank_health_analysis_note_value"
-                                android:textColor="@color/aqua_card_text_primary"
-                                android:textSize="@dimen/aqua_text_size_body_small" />
+        <LinearLayout
+            android:id="@+id/recordNoteText"
+            android:layout_width="@dimen/aqua_size_0"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/aqua_size_12"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/recordNoteIcon"
+            app:layout_constraintTop_toTopOf="parent">
 
-                        </LinearLayout>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:includeFontPadding="false"
+                android:text="@string/tank_health_analysis_note_label"
+                android:textColor="@color/aqua_card_text_secondary"
+                android:textSize="@dimen/aqua_text_size_caption" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_3"
+                android:includeFontPadding="false"
+                android:text="@string/tank_health_analysis_note_value"
+                android:textColor="@color/aqua_card_text_primary"
+                android:textSize="@dimen/aqua_text_size_body_small" />
+
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
                     </LinearLayout>
 

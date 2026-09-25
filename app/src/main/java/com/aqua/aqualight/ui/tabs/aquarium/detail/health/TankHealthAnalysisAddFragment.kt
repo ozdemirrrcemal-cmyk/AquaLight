@@ -110,7 +110,7 @@ class TankHealthAnalysisAddFragment :
     }
 
     private fun setupMeasurementTime() {
-        binding.cardDate.setOnClickListener {
+        binding.measurementTimeSection.cardDate.setOnClickListener {
             AppDatePickerDialogFragment.show(
                 fragmentManager = childFragmentManager,
                 requestKey = DATE_PICKER_REQUEST_KEY,
@@ -118,7 +118,7 @@ class TankHealthAnalysisAddFragment :
             )
         }
 
-        binding.cardTime.setOnClickListener {
+        binding.measurementTimeSection.cardTime.setOnClickListener {
             AppTimePickerDialogFragment.show(
                 fragmentManager = childFragmentManager,
                 requestKey = TIME_PICKER_REQUEST_KEY,
@@ -128,11 +128,11 @@ class TankHealthAnalysisAddFragment :
     }
 
     private fun setupTemperatureSource() {
-        binding.cardSensorSource.setOnClickListener {
+        binding.sensorSection.cardSensorSource.setOnClickListener {
             temperatureSource = TemperatureSource.SENSOR
             renderTemperatureSource()
         }
-        binding.cardManualSource.setOnClickListener {
+        binding.sensorSection.cardManualSource.setOnClickListener {
             temperatureSource = TemperatureSource.MANUAL
             renderTemperatureSource()
         }
@@ -154,11 +154,11 @@ class TankHealthAnalysisAddFragment :
     }
 
     private fun renderMeasurementTime() {
-        binding.tvDateValue.text = LocaleFormatter.formatDate(
+        binding.measurementTimeSection.tvDateValue.text = LocaleFormatter.formatDate(
             requireContext(),
             selectedCalendar.timeInMillis
         )
-        binding.tvTimeValue.text = LocaleFormatter.formatTime(
+        binding.measurementTimeSection.tvTimeValue.text = LocaleFormatter.formatTime(
             requireContext(),
             selectedCalendar.timeInMillis
         )
@@ -173,23 +173,23 @@ class TankHealthAnalysisAddFragment :
         val unselectedText = ContextCompat.getColor(context, R.color.aqua_card_text_secondary)
 
         val sensorSelected = temperatureSource == TemperatureSource.SENSOR
-        binding.cardSensorSource.setCardBackgroundColor(
+        binding.sensorSection.cardSensorSource.setCardBackgroundColor(
             if (sensorSelected) primary else transparent
         )
-        binding.cardSensorSource.strokeColor = if (sensorSelected) primary else outline
-        binding.tvSensorSource.setTextColor(if (sensorSelected) selectedText else unselectedText)
+        binding.sensorSection.cardSensorSource.strokeColor = if (sensorSelected) primary else outline
+        binding.sensorSection.tvSensorSource.setTextColor(if (sensorSelected) selectedText else unselectedText)
 
-        binding.cardManualSource.setCardBackgroundColor(
+        binding.sensorSection.cardManualSource.setCardBackgroundColor(
             if (sensorSelected) transparent else primary
         )
-        binding.cardManualSource.strokeColor = if (sensorSelected) outline else primary
-        binding.tvManualSource.setTextColor(if (sensorSelected) unselectedText else selectedText)
+        binding.sensorSection.cardManualSource.strokeColor = if (sensorSelected) outline else primary
+        binding.sensorSection.tvManualSource.setTextColor(if (sensorSelected) unselectedText else selectedText)
 
-        binding.cardSensorReadingBadge.isVisible = sensorSelected
-        binding.inputTemperature.isFocusable = !sensorSelected
-        binding.inputTemperature.isFocusableInTouchMode = !sensorSelected
-        binding.inputTemperature.isClickable = !sensorSelected
-        binding.inputTemperatureLayout.defaultHintTextColor = ColorStateList.valueOf(
+        binding.sensorSection.cardSensorReadingBadge.isVisible = sensorSelected
+        binding.sensorSection.inputTemperature.isFocusable = !sensorSelected
+        binding.sensorSection.inputTemperature.isFocusableInTouchMode = !sensorSelected
+        binding.sensorSection.inputTemperature.isClickable = !sensorSelected
+        binding.sensorSection.inputTemperatureLayout.defaultHintTextColor = ColorStateList.valueOf(
             unselectedText
         )
     }

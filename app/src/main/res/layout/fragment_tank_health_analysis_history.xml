@@ -42,12 +42,32 @@
                 android:src="@drawable/ic_tank_health_history_24"
                 app:tint="@color/aqua_card_text_secondary" />
 
+            <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingHorizontal="@dimen/aqua_size_14">
+
+            <ImageView
+                android:id="@+id/historySummaryIcon"
+                android:layout_width="@dimen/aqua_size_28"
+                android:layout_height="@dimen/aqua_size_28"
+                android:contentDescription="@null"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_tank_health_history_24"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:tint="@color/aqua_card_text_secondary" />
+
             <LinearLayout
                 android:layout_width="@dimen/aqua_size_0"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/aqua_size_12"
-                android:layout_weight="1"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@id/historySummaryIcon"
+                app:layout_constraintTop_toTopOf="parent">
 
                 <TextView
                     android:layout_width="match_parent"
@@ -68,6 +88,8 @@
                     android:textSize="@dimen/aqua_text_size_caption" />
 
             </LinearLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
         </LinearLayout>
 

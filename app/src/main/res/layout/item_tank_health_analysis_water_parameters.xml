@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+                style="@style/Widget.Aqua.Card.Metric"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_12">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/aqua_size_12">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:includeFontPadding="false"
+                        android:text="@string/tank_health_analysis_water_parameters_title"
+                        android:textColor="@color/aqua_card_text_primary"
+                        android:textSize="@dimen/aqua_text_size_body_xlarge"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/aqua_size_4"
+                        android:includeFontPadding="false"
+                        android:text="@string/tank_health_analysis_water_parameters_subtitle"
+                        android:textColor="@color/aqua_card_text_secondary"
+                        android:textSize="@dimen/aqua_text_size_caption" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/aqua_size_10"
+                        android:baselineAligned="false"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            style="@style/Widget.Aqua.Input.Layout"
+                            android:layout_width="@dimen/aqua_size_0"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="@dimen/aqua_size_4"
+                            android:layout_weight="1"
+                            android:hint="@string/tank_health_metric_ph">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                style="@style/Widget.Aqua.Input.EditText"
+                                android:layout_width="match_parent"
+                                android:layout_height="@dimen/aqua_size_54"
+                                android:inputType="numberDecimal"
+                                android:selectAllOnFocus="true"
+                                android:text="@string/tank_health_analysis_input_ph" />
+
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            style="@style/Widget.Aqua.Input.Layout"
+                            android:layout_width="@dimen/aqua_size_0"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/aqua_size_4"
+                            android:layout_weight="1"
+                            android:hint="@string/tank_health_metric_no3"
+                            app:suffixText="@string/tank_health_analysis_unit_mg_l">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                style="@style/Widget.Aqua.Input.EditText"
+                                android:layout_width="match_parent"
+                                android:layout_height="@dimen/aqua_size_54"
+                                android:inputType="numberDecimal"
+                                android:selectAllOnFocus="true"
+                                android:text="@string/tank_health_analysis_input_no3" />
+
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/aqua_size_8"
+                        android:baselineAligned="false"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            style="@style/Widget.Aqua.Input.Layout"
+                            android:layout_width="@dimen/aqua_size_0"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="@dimen/aqua_size_4"
+                            android:layout_weight="1"
+                            android:hint="@string/tank_health_metric_no2"
+                            app:suffixText="@string/tank_health_analysis_unit_mg_l">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                style="@style/Widget.Aqua.Input.EditText"
+                                android:layout_width="match_parent"
+                                android:layout_height="@dimen/aqua_size_54"
+                                android:inputType="numberDecimal"
+                                android:selectAllOnFocus="true"
+                                android:text="@string/tank_health_analysis_input_no2" />
+
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            style="@style/Widget.Aqua.Input.Layout"
+                            android:layout_width="@dimen/aqua_size_0"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/aqua_size_4"
+                            android:layout_weight="1"
+                            android:hint="@string/tank_health_metric_nh3_nh4"
+                            app:suffixText="@string/tank_health_analysis_unit_mg_l">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                style="@style/Widget.Aqua.Input.EditText"
+                                android:layout_width="match_parent"
+                                android:layout_height="@dimen/aqua_size_54"
+                                android:inputType="numberDecimal"
+                                android:selectAllOnFocus="true"
+                                android:text="@string/tank_health_analysis_input_nh3_nh4" />
+
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/aqua_size_8"
+                        android:baselineAligned="false"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            style="@style/Widget.Aqua.Input.Layout"
+                            android:layout_width="@dimen/aqua_size_0"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="@dimen/aqua_size_4"
+                            android:layout_weight="1"
+                            android:hint="@string/tank_health_metric_gh"
+                            app:suffixText="@string/tank_health_analysis_unit_dgh">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                style="@style/Widget.Aqua.Input.EditText"
+                                android:layout_width="match_parent"
+                                android:layout_height="@dimen/aqua_size_54"
+                                android:inputType="numberDecimal"
+                                android:selectAllOnFocus="true"
+                                android:text="@string/tank_health_analysis_input_gh" />
+
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            style="@style/Widget.Aqua.Input.Layout"
+                            android:layout_width="@dimen/aqua_size_0"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/aqua_size_4"
+                            android:layout_weight="1"
+                            android:hint="@string/tank_health_metric_kh"
+                            app:suffixText="@string/tank_health_analysis_unit_dkh">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                style="@style/Widget.Aqua.Input.EditText"
+                                android:layout_width="match_parent"
+                                android:layout_height="@dimen/aqua_size_54"
+                                android:inputType="numberDecimal"
+                                android:selectAllOnFocus="true"
+                                android:text="@string/tank_health_analysis_input_kh" />
+
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/aqua_size_8"
+                        android:baselineAligned="false"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            style="@style/Widget.Aqua.Input.Layout"
+                            android:layout_width="@dimen/aqua_size_0"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="@dimen/aqua_size_4"
+                            android:layout_weight="1"
+                            android:hint="@string/tank_health_metric_po4"
+                            app:suffixText="@string/tank_health_analysis_unit_mg_l">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                style="@style/Widget.Aqua.Input.EditText"
+                                android:layout_width="match_parent"
+                                android:layout_height="@dimen/aqua_size_54"
+                                android:inputType="numberDecimal"
+                                android:selectAllOnFocus="true"
+                                android:text="@string/tank_health_analysis_input_po4" />
+
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <Space
+                            android:layout_width="@dimen/aqua_size_0"
+                            android:layout_height="@dimen/aqua_size_1"
+                            android:layout_marginStart="@dimen/aqua_size_4"
+                            android:layout_weight="1" />
+
+                    </LinearLayout>
+
+                    <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.Aqua.Card.Info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/aqua_size_12">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:drawableStart="@drawable/ic_tank_health_info_24"
+                android:drawablePadding="@dimen/aqua_size_10"
+                android:drawableTint="@color/aqua_accent_primary"
+                android:gravity="center_vertical"
+                android:includeFontPadding="false"
+                android:padding="@dimen/aqua_size_12"
+                android:text="@string/tank_health_analysis_test_kit_note"
+                android:textColor="@color/aqua_accent_primary"
+                android:textSize="@dimen/aqua_text_size_caption" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>

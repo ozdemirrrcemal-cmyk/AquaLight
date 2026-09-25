@@ -106,17 +106,26 @@
                         android:textColor="@color/aqua_card_text_secondary"
                         android:textSize="@dimen/aqua_text_size_micro_caption" />
 
-                    <LinearLayout
+                    <FrameLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/aqua_size_3"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
+                        android:layout_marginTop="@dimen/aqua_size_3">
 
-                        <TextView
+<TextView
+                            android:id="@+id/tvPhValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="start|center_vertical"
+                            android:includeFontPadding="false"
+                            android:textColor="@color/aqua_card_text_primary"
+                            android:textSize="@dimen/aqua_text_size_body"
+                            android:textStyle="bold" />
+
+<TextView
                             android:id="@+id/tvPhValue"
                             android:layout_width="@dimen/aqua_size_0"
                             android:layout_height="wrap_content"
+                            android:layout_gravity="end|center_vertical"
                             android:layout_weight="1"
                             android:includeFontPadding="false"
                             android:textColor="@color/aqua_card_text_primary"
@@ -131,7 +140,7 @@
                             android:textColor="@color/aqua_status_success"
                             android:textSize="@dimen/aqua_text_size_status_micro" />
 
-                    </LinearLayout>
+                    </FrameLayout>
 
                 </LinearLayout>
 
@@ -159,17 +168,26 @@
                         android:textColor="@color/aqua_card_text_secondary"
                         android:textSize="@dimen/aqua_text_size_micro_caption" />
 
-                    <LinearLayout
+                    <FrameLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/aqua_size_3"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
+                        android:layout_marginTop="@dimen/aqua_size_3">
 
-                        <TextView
+<TextView
+                            android:id="@+id/tvNo3Value"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="start|center_vertical"
+                            android:includeFontPadding="false"
+                            android:textColor="@color/aqua_card_text_primary"
+                            android:textSize="@dimen/aqua_text_size_body"
+                            android:textStyle="bold" />
+
+<TextView
                             android:id="@+id/tvNo3Value"
                             android:layout_width="@dimen/aqua_size_0"
                             android:layout_height="wrap_content"
+                            android:layout_gravity="end|center_vertical"
                             android:layout_weight="1"
                             android:includeFontPadding="false"
                             android:textColor="@color/aqua_card_text_primary"
@@ -183,7 +201,7 @@
                             android:includeFontPadding="false"
                             android:textSize="@dimen/aqua_text_size_status_micro" />
 
-                    </LinearLayout>
+                    </FrameLayout>
 
                 </LinearLayout>
 
@@ -211,17 +229,26 @@
                         android:textColor="@color/aqua_card_text_secondary"
                         android:textSize="@dimen/aqua_text_size_micro_caption" />
 
-                    <LinearLayout
+                    <FrameLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/aqua_size_3"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
+                        android:layout_marginTop="@dimen/aqua_size_3">
 
-                        <TextView
+<TextView
+                            android:id="@+id/tvTemperatureValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="start|center_vertical"
+                            android:includeFontPadding="false"
+                            android:textColor="@color/aqua_card_text_primary"
+                            android:textSize="@dimen/aqua_text_size_body"
+                            android:textStyle="bold" />
+
+<TextView
                             android:id="@+id/tvTemperatureValue"
                             android:layout_width="@dimen/aqua_size_0"
                             android:layout_height="wrap_content"
+                            android:layout_gravity="end|center_vertical"
                             android:layout_weight="1"
                             android:includeFontPadding="false"
                             android:textColor="@color/aqua_card_text_primary"
@@ -236,7 +263,7 @@
                             android:textColor="@color/aqua_status_success"
                             android:textSize="@dimen/aqua_text_size_status_micro" />
 
-                    </LinearLayout>
+                    </FrameLayout>
 
                 </LinearLayout>
 
