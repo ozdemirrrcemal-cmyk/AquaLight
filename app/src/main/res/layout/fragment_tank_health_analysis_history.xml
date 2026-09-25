@@ -27,22 +27,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/appHeader">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingHorizontal="@dimen/aqua_size_14">
-
-            <ImageView
-                android:layout_width="@dimen/aqua_size_28"
-                android:layout_height="@dimen/aqua_size_28"
-                android:contentDescription="@null"
-                android:importantForAccessibility="no"
-                android:src="@drawable/ic_tank_health_history_24"
-                app:tint="@color/aqua_card_text_secondary" />
-
-            <androidx.constraintlayout.widget.ConstraintLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:paddingHorizontal="@dimen/aqua_size_14">
@@ -90,8 +75,6 @@
             </LinearLayout>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
-
-        </LinearLayout>
 
     </com.google.android.material.card.MaterialCardView>
 
