@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 
 import android.os.Bundle
 import android.view.View
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
@@ -46,7 +47,9 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
     }
 
     private fun setupContent() {
-        val contentAdapter = TankHealthContentAdapter()
+        val contentAdapter = TankHealthContentAdapter(
+            onAddAnalysisClick = ::openAddAnalysis
+        )
         val contentLayoutManager = GridLayoutManager(
             requireContext(),
             TankHealthContentAdapter.GRID_SPAN_COUNT
@@ -63,10 +66,26 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
         binding.healthContent.itemAnimator = null
     }
 
+    private fun openAddAnalysis() {
+        val navController = findNavController()
+        if (navController.currentDestination?.id != R.id.tankHealthFragment) {
+            return
+        }
+
+        navController.navigate(
+            R.id.action_tankHealthFragment_to_tankHealthAnalysisAddFragment,
+            bundleOf(ARG_TANK_ID to args.tankId)
+        )
+    }
+
     override fun onDestroyView() {
         binding.healthContent.adapter = null
         _binding = null
         super.onDestroyView()
+    }
+
+    private companion object {
+        const val ARG_TANK_ID = "tankId"
     }
 
 }
