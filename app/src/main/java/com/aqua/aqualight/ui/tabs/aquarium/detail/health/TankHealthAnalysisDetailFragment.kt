@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentTankHealthAnalysisDetailBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
@@ -12,15 +13,14 @@ import com.aqua.aqualight.ui.common.header.setupAquaHeader
 class TankHealthAnalysisDetailFragment :
     Fragment(R.layout.fragment_tank_health_analysis_detail) {
 
+    private val args: TankHealthAnalysisDetailFragmentArgs by navArgs()
+
     private var _binding: FragmentTankHealthAnalysisDetailBinding? = null
     private val binding get() = _binding!!
 
-    private val tankId: Long
-        get() = requireArguments().getLong(ARG_TANK_ID)
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        require(tankId > 0L) {
+        require(args.tankId > 0L) {
             "TankHealthAnalysisDetailFragment requires a positive tankId."
         }
     }
@@ -74,9 +74,5 @@ class TankHealthAnalysisDetailFragment :
     override fun onDestroyView() {
         _binding = null
         super.onDestroyView()
-    }
-
-    private companion object {
-        const val ARG_TANK_ID = "tankId"
     }
 }
