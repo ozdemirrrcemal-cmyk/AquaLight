@@ -82,7 +82,7 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
                     plant.category.contains(
                         normalizedQuery,
                         ignoreCase = true
-                    )
+                    ) || plant.searchNames.any { it.contains(normalizedQuery, ignoreCase = true) }
             }
         }
 
@@ -98,7 +98,7 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
             text = if (plantList.size == plants.size) {
                 getString(R.string.plant_picker_title)
             } else {
-                getString(R.string.plant_picker_found, plantList.size)
+                getString(R.string.plant_picker_found, plantList.distinctBy(AquariumPlant::catalogId).size)
             }
 
             setTextColor(

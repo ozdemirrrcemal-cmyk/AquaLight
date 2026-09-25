@@ -19,10 +19,10 @@ object SmartCareLightingAdvisor {
             null
         } else {
             val sourceIds = buildSet {
-                add(SmartCareEvidenceId.TROPICA_GROWING_IN.stableId)
-                add(SmartCareEvidenceId.TROPICA_QUICK_GUIDE.stableId)
+                add(SmartCareEvidenceId.PLANT_STARTUP_METHOD.stableId)
+                add(SmartCareEvidenceId.PLANT_STARTUP_QUICK_GUIDE.stableId)
                 if (profile.isNatureAquarium) {
-                    add(SmartCareEvidenceId.ADA_STARTING_FROM_ZERO.stableId)
+                    add(SmartCareEvidenceId.AQUASCAPE_STARTUP_GUIDE.stableId)
                 }
             }
 

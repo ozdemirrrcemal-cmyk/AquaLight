@@ -783,7 +783,7 @@ class AquariumMaintenanceFragment :
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 showGlobalLoading(true)
-                maintenanceViewModel.deleteTask(taskId = taskId).join()
+                maintenanceViewModel.deleteTask(taskId = taskId)
             } finally {
                 showGlobalLoading(false)
             }

@@ -17,8 +17,8 @@ object SmartCareRuleCatalog {
       priority = SmartCarePriority.HIGH,
       repeatMode = SmartCareRepeatMode.ONCE,
       sourceTags = SmartCareEvidenceCatalog.tags(
-        SmartCareEvidenceId.TROPICA_GROWING_IN,
-        SmartCareEvidenceId.UF_IFAS_FISH_HEALTH
+        SmartCareEvidenceId.PLANT_STARTUP_METHOD,
+        SmartCareEvidenceId.FISH_HEALTH_REFERENCE
       )
     ),
 
@@ -37,8 +37,8 @@ object SmartCareRuleCatalog {
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.WEEKLY,
       sourceTags = SmartCareEvidenceCatalog.tags(
-        SmartCareEvidenceId.TROPICA_GROWING_IN,
-        SmartCareEvidenceId.TROPICA_QUICK_GUIDE
+        SmartCareEvidenceId.PLANT_STARTUP_METHOD,
+        SmartCareEvidenceId.PLANT_STARTUP_QUICK_GUIDE
       )
     ),
 
@@ -57,7 +57,7 @@ object SmartCareRuleCatalog {
       priority = SmartCarePriority.HIGH,
       repeatMode = SmartCareRepeatMode.EVERY_2_DAYS,
       sourceTags = SmartCareEvidenceCatalog.tags(
-        SmartCareEvidenceId.TROPICA_GROWING_IN
+        SmartCareEvidenceId.PLANT_STARTUP_METHOD
       )
     ),
 
@@ -76,8 +76,8 @@ object SmartCareRuleCatalog {
       priority = SmartCarePriority.HIGH,
       repeatMode = SmartCareRepeatMode.DAILY,
       sourceTags = SmartCareEvidenceCatalog.tags(
-        SmartCareEvidenceId.ADA_STARTING_FROM_ZERO,
-        SmartCareEvidenceId.TROPICA_GROWING_IN
+        SmartCareEvidenceId.AQUASCAPE_STARTUP_GUIDE,
+        SmartCareEvidenceId.PLANT_STARTUP_METHOD
       )
     ),
 
@@ -95,7 +95,7 @@ object SmartCareRuleCatalog {
       priority = SmartCarePriority.HIGH,
       repeatMode = SmartCareRepeatMode.EVERY_3_DAYS,
       sourceTags = SmartCareEvidenceCatalog.tags(
-        SmartCareEvidenceId.TROPICA_GROWING_IN
+        SmartCareEvidenceId.PLANT_STARTUP_METHOD
       )
     ),
 
@@ -113,8 +113,8 @@ object SmartCareRuleCatalog {
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.EVERY_3_DAYS,
       sourceTags = SmartCareEvidenceCatalog.tags(
-        SmartCareEvidenceId.TROPICA_GROWING_IN,
-        SmartCareEvidenceId.ADA_STARTING_FROM_ZERO
+        SmartCareEvidenceId.PLANT_STARTUP_METHOD,
+        SmartCareEvidenceId.AQUASCAPE_STARTUP_GUIDE
       )
     ),
 
@@ -132,7 +132,7 @@ object SmartCareRuleCatalog {
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.WEEKLY,
       sourceTags = SmartCareEvidenceCatalog.tags(
-        SmartCareEvidenceId.TROPICA_GROWING_IN
+        SmartCareEvidenceId.PLANT_STARTUP_METHOD
       )
     ),
 
@@ -151,7 +151,7 @@ object SmartCareRuleCatalog {
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.ONCE,
       sourceTags = SmartCareEvidenceCatalog.tags(
-        SmartCareEvidenceId.TROPICA_GROWING_IN
+        SmartCareEvidenceId.PLANT_STARTUP_METHOD
       )
     ),
 
@@ -170,8 +170,8 @@ object SmartCareRuleCatalog {
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.PRODUCT_SCHEDULE,
       sourceTags = SmartCareEvidenceCatalog.tags(
-        SmartCareEvidenceId.TROPICA_GROWING_IN,
-        SmartCareEvidenceId.ADA_LIQUID_FERTILIZERS
+        SmartCareEvidenceId.PLANT_STARTUP_METHOD,
+        SmartCareEvidenceId.AQUASCAPE_FERTILIZATION_GUIDE
       )
     ),
 
@@ -190,8 +190,8 @@ object SmartCareRuleCatalog {
       repeatMode = SmartCareRepeatMode.WEEKLY,
       requiresWaterTest = true,
       sourceTags = SmartCareEvidenceCatalog.tags(
-        SmartCareEvidenceId.ADA_STARTING_FROM_ZERO,
-        SmartCareEvidenceId.UF_IFAS_FISH_HEALTH
+        SmartCareEvidenceId.AQUASCAPE_STARTUP_GUIDE,
+        SmartCareEvidenceId.FISH_HEALTH_REFERENCE
       )
     ),
 
@@ -210,8 +210,8 @@ object SmartCareRuleCatalog {
       repeatMode = SmartCareRepeatMode.ONCE,
       requiresWaterTest = true,
       sourceTags = SmartCareEvidenceCatalog.tags(
-        SmartCareEvidenceId.TROPICA_GROWING_IN,
-        SmartCareEvidenceId.ADA_STARTING_FROM_ZERO
+        SmartCareEvidenceId.PLANT_STARTUP_METHOD,
+        SmartCareEvidenceId.AQUASCAPE_STARTUP_GUIDE
       )
     ),
 
@@ -230,9 +230,9 @@ object SmartCareRuleCatalog {
       repeatMode = SmartCareRepeatMode.ONCE,
       requiresWaterTest = true,
       sourceTags = SmartCareEvidenceCatalog.tags(
-        SmartCareEvidenceId.TROPICA_GROWING_IN,
-        SmartCareEvidenceId.ADA_STARTING_FROM_ZERO,
-        SmartCareEvidenceId.UF_IFAS_FISH_HEALTH
+        SmartCareEvidenceId.PLANT_STARTUP_METHOD,
+        SmartCareEvidenceId.AQUASCAPE_STARTUP_GUIDE,
+        SmartCareEvidenceId.FISH_HEALTH_REFERENCE
       )
     ),
 
@@ -251,8 +251,8 @@ object SmartCareRuleCatalog {
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.ONCE,
       sourceTags = SmartCareEvidenceCatalog.tags(
-        SmartCareEvidenceId.TROPICA_GROWING_IN,
-        SmartCareEvidenceId.TROPICA_QUICK_GUIDE
+        SmartCareEvidenceId.PLANT_STARTUP_METHOD,
+        SmartCareEvidenceId.PLANT_STARTUP_QUICK_GUIDE
       )
     ),
 
@@ -270,7 +270,7 @@ object SmartCareRuleCatalog {
       priority = SmartCarePriority.LOW,
       repeatMode = SmartCareRepeatMode.ONCE,
       sourceTags = SmartCareEvidenceCatalog.tags(
-        SmartCareEvidenceId.ADA_STARTING_FROM_ZERO
+        SmartCareEvidenceId.AQUASCAPE_STARTUP_GUIDE
       )
     ),
 
@@ -288,7 +288,7 @@ object SmartCareRuleCatalog {
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.WEEKLY,
       sourceTags = SmartCareEvidenceCatalog.tags(
-        SmartCareEvidenceId.TROPICA_GROWING_IN
+        SmartCareEvidenceId.PLANT_STARTUP_METHOD
       )
     ),
 
@@ -305,7 +305,7 @@ object SmartCareRuleCatalog {
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.EVERY_2_WEEKS,
       sourceTags = SmartCareEvidenceCatalog.tags(
-        SmartCareEvidenceId.UF_IFAS_FISH_HEALTH
+        SmartCareEvidenceId.FISH_HEALTH_REFERENCE
       )
     ),
 
@@ -323,7 +323,7 @@ object SmartCareRuleCatalog {
       priority = SmartCarePriority.HIGH,
       repeatMode = SmartCareRepeatMode.WEEKLY,
       sourceTags = SmartCareEvidenceCatalog.tags(
-        SmartCareEvidenceId.UF_IFAS_FISH_HEALTH
+        SmartCareEvidenceId.FISH_HEALTH_REFERENCE
       )
     ),
 
@@ -340,8 +340,8 @@ object SmartCareRuleCatalog {
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.EVERY_3_DAYS,
       sourceTags = SmartCareEvidenceCatalog.tags(
-        SmartCareEvidenceId.ADA_STARTING_FROM_ZERO,
-        SmartCareEvidenceId.UF_IFAS_FISH_HEALTH
+        SmartCareEvidenceId.AQUASCAPE_STARTUP_GUIDE,
+        SmartCareEvidenceId.FISH_HEALTH_REFERENCE
       )
     ),
 
@@ -358,7 +358,7 @@ object SmartCareRuleCatalog {
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.ONCE,
       sourceTags = SmartCareEvidenceCatalog.tags(
-        SmartCareEvidenceId.TROPICA_GROWING_IN
+        SmartCareEvidenceId.PLANT_STARTUP_METHOD
       )
     )
   )
@@ -379,7 +379,7 @@ object SmartCareRuleCatalog {
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.WEEKLY,
       sourceTags = SmartCareEvidenceCatalog.tags(
-        SmartCareEvidenceId.TROPICA_GROWING_IN
+        SmartCareEvidenceId.PLANT_STARTUP_METHOD
       )
     ),
 
@@ -398,7 +398,7 @@ object SmartCareRuleCatalog {
       priority = SmartCarePriority.LOW,
       repeatMode = SmartCareRepeatMode.WEEKLY,
       sourceTags = SmartCareEvidenceCatalog.tags(
-        SmartCareEvidenceId.ADA_STARTING_FROM_ZERO
+        SmartCareEvidenceId.AQUASCAPE_STARTUP_GUIDE
       )
     ),
 
@@ -416,7 +416,7 @@ object SmartCareRuleCatalog {
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.MONTHLY,
       sourceTags = SmartCareEvidenceCatalog.tags(
-        SmartCareEvidenceId.UF_IFAS_FISH_HEALTH
+        SmartCareEvidenceId.FISH_HEALTH_REFERENCE
       )
     ),
 
@@ -436,7 +436,7 @@ object SmartCareRuleCatalog {
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.WEEKLY,
       sourceTags = SmartCareEvidenceCatalog.tags(
-        SmartCareEvidenceId.TROPICA_GROWING_IN
+        SmartCareEvidenceId.PLANT_STARTUP_METHOD
       )
     ),
 
@@ -456,9 +456,9 @@ object SmartCareRuleCatalog {
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.PRODUCT_SCHEDULE,
       sourceTags = SmartCareEvidenceCatalog.tags(
-        SmartCareEvidenceId.TROPICA_SPECIALISED_NUTRITION,
-        SmartCareEvidenceId.TROPICA_PREMIUM_NUTRITION,
-        SmartCareEvidenceId.ADA_LIQUID_FERTILIZERS
+        SmartCareEvidenceId.PLANT_NUTRITION_MACRO_MICRO_GUIDE,
+        SmartCareEvidenceId.PLANT_NUTRITION_MICRO_GUIDE,
+        SmartCareEvidenceId.AQUASCAPE_FERTILIZATION_GUIDE
       )
     ),
 
@@ -478,8 +478,8 @@ object SmartCareRuleCatalog {
       priority = SmartCarePriority.LOW,
       repeatMode = SmartCareRepeatMode.MONTHLY,
       sourceTags = SmartCareEvidenceCatalog.tags(
-        SmartCareEvidenceId.TROPICA_GROWING_IN,
-        SmartCareEvidenceId.TROPICA_QUICK_GUIDE
+        SmartCareEvidenceId.PLANT_STARTUP_METHOD,
+        SmartCareEvidenceId.PLANT_STARTUP_QUICK_GUIDE
       )
     ),
 
@@ -497,7 +497,7 @@ object SmartCareRuleCatalog {
       priority = SmartCarePriority.MEDIUM,
       repeatMode = SmartCareRepeatMode.WEEKLY,
       sourceTags = SmartCareEvidenceCatalog.tags(
-        SmartCareEvidenceId.UF_IFAS_FISH_HEALTH
+        SmartCareEvidenceId.FISH_HEALTH_REFERENCE
       )
     )
   )

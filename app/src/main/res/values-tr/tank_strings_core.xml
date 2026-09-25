@@ -74,7 +74,6 @@
     <string name="aquarium_no_activity_yet">Henüz etkinlik yok.</string>
     <string name="aquarium_no_device_connected">Atanmış cihaz yok</string>
     <string name="aquarium_no_livestock_added">Canlı eklenmedi</string>
-    <string name="aquarium_no_livestock_yet">Henüz canlı yok</string>
     <string name="aquarium_photo_title_full">Akvaryum Fotoğrafı</string>
     <string name="aquarium_settings_tab_basic">Temel</string>
     <string name="aquarium_settings_tab_details">Ayrıntılar</string>
@@ -93,7 +92,7 @@
     <string name="aquarium_style_nature_aquarium">Doğa\nAkvaryumu</string>
     <string name="aquarium_style_title">Stil</string>
     <string name="aquarium_tank_concept_title">Tank Konsepti</string>
-    <string name="aquarium_tank_life_title">Tank Yaşamı</string>
+    <string name="aquarium_tank_life_title">Canlılar</string>
     <string name="aquarium_tank_size_cm_title">Tank Boyutu (cm)</string>
     <string name="aquarium_tank_style_title">Tank Stili</string>
     <string name="aquarium_tank_type_coral">Mercan</string>
