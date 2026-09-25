@@ -85,7 +85,10 @@ internal class DefaultUserDataArchiveOperations(
                     aquariumCount = manifest.aquariums.size,
                     careTaskCount = manifest.careTasks.size,
                     deviceAssignmentCount = manifest.deviceAssignments.size,
-                    photoCount = manifest.aquariums.count { aquarium -> aquarium.photo != null }
+                    photoCount = manifest.aquariums.sumOf { aquarium ->
+                        (if (aquarium.photo != null) 1 else 0) +
+                            aquarium.plants.count { plant -> plant.photo != null }
+                    }
                 )
             }
             UserDataBackupCandidate(
@@ -124,7 +127,12 @@ internal class DefaultUserDataArchiveOperations(
                         appPreferences = profile.preferences,
                         usage = profile.usage,
                         aquariumData = PortableAquariumData(
-                            aquariums = aquarium.aquariums.map { item -> item.copy(photo = null) },
+                            aquariums = aquarium.aquariums.map { item ->
+                                item.copy(
+                                    photo = null,
+                                    plants = item.plants.map { plant -> plant.copy(photo = null) }
+                                )
+                            },
                             careTasks = aquarium.careTasks,
                             deviceAssignments = aquarium.deviceAssignments,
                             archivedPhotoCount = aquarium.archivedPhotoCount
