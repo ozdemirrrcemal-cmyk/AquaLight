@@ -6,7 +6,7 @@ This document freezes the architectural, data, analysis, persistence, and UI-int
 
 The existing Tank Health / Water Quality UI is considered visually complete for this stage. Implementation work governed by this contract must connect that UI to authoritative data and analysis without redesigning the approved screens unless a later explicit UI change is requested.
 
-Accepted clarification on 26 September 2026 (K03.0): the selected tank type determines which measurement fields are shown. Preserve the existing screen structure, cards, field styling, grid, and navigation while populating them with the applicable measurements in section 25.1. Basic, tank-specific, and additional measurements are logical groups, not approval for a new visual layout. K03.1 subsequently freezes nitrate, nitrite, and phosphate recording semantics in section 6.1. K03.2 freezes the test/device selection, source-semantic resolution, and normalization workflow in sections 6.2, 6.5, 7, and 28.1. K03.3 freezes the canonical ammonia reporting bases in section 6.3. K03.4 freezes concurrent multi-result measurement/cardinality behavior in section 6.6. K03.5 freezes marine salinity/specific-gravity semantics and conversion safety in section 6.7; the remaining K03 decisions stay open.
+Accepted clarification on 26 September 2026 (K03.0): the selected tank type determines which measurement fields are shown. Preserve the existing screen structure, cards, field styling, grid, and navigation while populating them with the applicable measurements in section 25.1. Basic, tank-specific, and additional measurements are logical groups, not approval for a new visual layout. K03.1 subsequently freezes nitrate, nitrite, and phosphate recording semantics in section 6.1. K03.2 freezes the test/device selection, source-semantic resolution, and normalization workflow in sections 6.2, 6.5, 7, and 28.1. K03.3 freezes the canonical ammonia reporting bases in section 6.3. K03.4 freezes concurrent multi-result measurement/cardinality behavior in section 6.6. K03.5 freezes marine salinity/specific-gravity semantics and conversion safety in section 6.7. K03.6 freezes alkalinity/KH semantics, canonical units, and duplicate-field prevention in section 6.8; the remaining K03 decisions stay open.
 
 This contract is intentionally broader than a screen implementation. It defines the foundation that later powers:
 
@@ -484,6 +484,22 @@ Decision accepted on 26 September 2026 for commercial-safety behavior: AquaLight
 - **UI:** preserve the approved card/grid layout but render the selected source's real representation. A PSS-78 source can show `Tuzluluk` with its device display convention; an SG source shows `Specific Gravity (SG)` rather than relabelling the number as salinity. Required reference-temperature/calibration context belongs in the source/profile/help/detail presentation, not as an invisible assumption.
 
 K03.5 prioritizes a correct partial assessment over a precise-looking but unsupported conversion. A source-native SG or salinity result may still be stored historically when valid; if no matching rule or verified normalization path exists, that measurement is retained but not used to fabricate an assessment.
+### 6.8 Accepted alkalinity / KH semantic and unit policy (K03.6)
+
+Decision accepted with the user on 26 September 2026: AquaLight must treat alkalinity, carbonate hardness, general hardness, and their display units as distinct concepts. A familiar aquarium label such as `KH` or a unit such as `dKH` must never decide the domain semantic by itself.
+
+- **Canonical total alkalinity:** use `TOTAL_ALKALINITY` as the canonical acid-neutralizing-capacity metric. Its canonical unit is **meq/L**. A verified source may report the same total-alkalinity semantic as `dKH`, `meq/L`, or `mg/L as CaCO3`; supported conversions are performed below the UI boundary and the raw source result is preserved.
+- **Verified conversion only:** for a source explicitly verified as total alkalinity, the conversion policy may use the documented relationships `1 dKH = 17.86 mg/L as CaCO3 = 0.358 meq/L` and `1 meq/L = 50 mg/L as CaCO3`, with conversion constants/revision covered by tests. Bare `ppm` is not sufficient unless the source profile establishes `ppm as CaCO3`/equivalent semantics.
+- **Marine/reef primary semantic:** the marine/coral profile uses `TOTAL_ALKALINITY`; do not create a second independent `KH` measurement field for the same titration/result. In the UI the field is **"Alkalinite"**; reef-friendly `dKH` may be the preferred display unit when the resolved source supports that representation, while the engine/storage canonical value remains meq/L.
+- **Freshwater semantic separation:** `TOTAL_ALKALINITY` and `CARBONATE_HARDNESS` are distinct domain concepts. Existing user-facing **"Tampon kapasitesi (KH)"** may remain as a familiar label, but its selected verified test profile must state whether the result is total alkalinity or a true carbonate-hardness value/derivation. The label must not silently alias the two semantics.
+- **Carbonate hardness is not total alkalinity:** `CARBONATE_HARDNESS` is related to hardness chemistry, while alkalinity is acid-neutralizing capacity. A carbonate-hardness value may be derived only from the required hardness/alkalinity information using an explicitly accepted method; it must not be synthesized from alkalinity alone or from a field name.
+- **GH remains separate:** `GENERAL_HARDNESS` / total hardness is not alkalinity and is never substituted for `TOTAL_ALKALINITY` or `CARBONATE_HARDNESS`, even though multiple results may be reported as CaCO3 equivalents.
+- **No duplicate evidence:** the same total-alkalinity observation represented in `dKH`, `meq/L`, and `mg/L as CaCO3` is one measurement with alternate representations, not three independent measurements or three independent pieces of evidence.
+- **Typed rule matching:** rule/catalog thresholds carry metric and reporting-basis metadata. A total-alkalinity rule is compared to `TOTAL_ALKALINITY`; a true carbonate-hardness rule is compared to `CARBONATE_HARDNESS`. Conversion changes representation, not semantic identity.
+- **Unknown KH tests fail closed:** if a product says only `KH` and its verified method/semantic cannot be resolved, preserve the source-native value in draft/history as allowed by K03.2 but do not feed it to a total-alkalinity or carbonate-hardness assessment. Return conversion/semantic unavailable or `INSUFFICIENT_DATA` rather than guessing.
+- **UI:** marine/resif shows one alkalinity input, not separate `KH` and `Alkalinite` inputs for the same result. Freshwater retains the approved familiar label where appropriate, with source-profile/help/detail text making the resolved semantic explicit without forcing users to understand internal enum names.
+
+K03.6 prioritizes semantic correctness over aquarium-industry shorthand. The UI may use familiar terminology, but storage, normalization, rules, history, and assessment use the resolved typed metric.
 ---
 
 ## 7. Measurement provenance
@@ -1047,7 +1063,7 @@ Product interpretation and limits:
 - `Fish`, `Shrimp`, and `Planted` follow the existing canonical freshwater grouping; the five marine/coral codes follow the existing marine grouping. This does not claim all fish or shrimp species live in freshwater. Conflicting registered livestock `waterGroup` must be reported, not used to silently relabel the tank.
 - Nitrite remains available in marine profiles for cycle/setup monitoring; this does not imply identical freshwater/marine toxicity rules or testing frequency.
 - The same default fields for the four coral profiles do not imply identical target values, consumption, or dosing. These depend on the evidence-backed rules and inhabitants.
-- Marine alkalinity is not GH. KH wording, carbonate hardness, total alkalinity, and their supported test methods must be reconciled under K03; do not expose duplicated KH and alkalinity fields for the same recorded measurement.
+- Under accepted K03.6, marine/coral profiles use `TOTAL_ALKALINITY` as the single alkalinity metric; do not expose duplicate `KH` and `Alkalinite` fields for the same test result. The canonical unit is meq/L, while verified source/display representations may be dKH or mg/L as CaCO3. `GENERAL_HARDNESS` and true `CARBONATE_HARDNESS` remain separate semantics.
 - Under accepted K03.5, salinity and specific gravity are distinct typed metrics. PSS-78, SG, conductivity, mass/absolute salinity, and vendor `ppt` displays are not silently interchangeable. The selected source profile determines the representation; only evidence-backed conversions with required temperature/reference metadata may normalize across representations.
 - `Other`, blank, and unsupported legacy codes do not inherit freshwater or marine thresholds. Additional measurements with known semantics can be recorded without fabricating a profile-dependent assessment. How a user explicitly supplies missing profile context is a later interaction decision.
 - Field selection must be an application-layer policy under the accepted `application/aquarium/health/water/` ownership, using the existing parameter vocabulary. Presentation renders this policy; Fragments/XML must not own a second classification table or chemistry rules.
@@ -1077,7 +1093,7 @@ For `Other`/unknown profiles, the supported fields listed above and the profile-
 - A visible field is not a promise of a complete assessment. Unmeasured, measured zero, inapplicable, unknown test basis, and missing assessment rules must remain distinct. A critical known result must not be hidden by a partial-data state.
 - Preserve entered drafts and persisted measurements when tank type changes; no field hidden by the new profile may silently discard its value or be persisted invisibly. Resolve affected draft values explicitly before saving. Detailed interaction belongs to the later state/UI decision.
 - Store the assessment's tank-type/profile context with its provenance. History/detail render the saved measurement set and assessment context; today's tank type must not erase or reinterpret yesterday's fields. The latest result must expose a context mismatch if the tank type has since changed.
-- K03.1 fixes nitrate/nitrite/phosphate canonical meanings and units in section 6.1, K03.2 fixes source-resolution/normalization, K03.3 fixes TAN/direct-NH3 canonical bases, K03.4 fixes concurrent multi-result behavior, and K03.5 fixes marine salinity/SG/conductivity representation and conversion safety. Remaining K03 decisions include alkalinity/KH and other fields' chemical reporting bases/units, evidence-backed profile/conversion entries and precision, and derived-measurement prerequisites. K03.0–K03.5 do not accept numerical safety thresholds, complete implementation, or all of K03/K11/K13.
+- K03.1 fixes nitrate/nitrite/phosphate canonical meanings and units, K03.2 source-resolution/normalization, K03.3 TAN/direct-NH3 bases, K03.4 concurrent multi-result behavior, K03.5 marine salinity/SG safety, and K03.6 total-alkalinity/KH semantics and units. Remaining K03 decisions include other fields' chemical reporting bases/units, evidence-backed profile/conversion entries and precision, and derived-measurement prerequisites. K03.0–K03.6 do not accept numerical safety thresholds, complete implementation, or all of K03/K11/K13.
 
 Evidence and repository references for this scope are recorded in [the K03 research note](research/WATER_ANALYSIS_CONCENTRATION_UNITS_K03.md). The per-type visibility matrix is a product decision informed by those sources, not a scientific claim that all listed tests must be performed at every save.
 
@@ -1547,6 +1563,10 @@ Cover:
 - direct free-NH3 `mg/L as NH3` canonical mapping;
 - no substitution between TAN, direct free NH3, NH4-only, and calculated free NH3;
 - PSS-78 practical salinity remains distinct from SG, conductivity, absolute/mass salinity, and ambiguous vendor `ppt`;
+- total alkalinity canonicalizes to meq/L only from a source verified as the same alkalinity semantic; dKH / mg/L as CaCO3 conversion round-trips preserve raw source representation;
+- `TOTAL_ALKALINITY`, `CARBONATE_HARDNESS`, and `GENERAL_HARDNESS` never alias by label/unit alone;
+- marine UI does not double-enter the same alkalinity observation as both KH and alkalinity;
+- unknown `KH` source semantics produce unavailable/insufficient-data rather than a guessed metric;
 - SG conversion requires declared reference/calibration temperature and all algorithm prerequisites;
 - conductivity→PSS-78 uses a versioned standards-based algorithm with golden-vector tests and applicability checks;
 - unknown/ambiguous `ppt` never normalizes by label alone;
@@ -1648,63 +1668,64 @@ The implementation order is frozen as follows.
 4. K03.3 ammonia canonical semantics: TAN as mg/L as N; direct free NH3 as mg/L as NH3 (accepted);
 5. K03.4 concurrent multi-result measurement policy: separate canonical metrics/inputs for simultaneous outputs; selector only for mutually exclusive modes (accepted);
 6. K03.5 marine salinity/SG/conductivity typed semantics and conversion-safety policy (accepted);
-7. severity/status model;
-8. species-range intersection/conflict policy;
-9. intrinsic chemistry rule catalog and evidence revision.
+7. K03.6 total-alkalinity/KH semantic separation and canonical meq/L policy (accepted);
+8. severity/status model;
+9. species-range intersection/conflict policy;
+10. intrinsic chemistry rule catalog and evidence revision.
 
 ### Phase 2 - Application/domain foundation
 
-10. WaterAnalysis input/record models;
-11. structured assessment models;
-12. recommendation/reason codes;
-13. PlantCareCatalogOperations boundary;
-14. AquariumHealthContext model/provider;
-15. reuse/integrate LivestockWaterAdvisorOperations;
-16. WaterQualityAssessmentEngine;
-17. TankWaterTemperatureOperations boundary.
+11. WaterAnalysis input/record models;
+12. structured assessment models;
+13. recommendation/reason codes;
+14. PlantCareCatalogOperations boundary;
+15. AquariumHealthContext model/provider;
+16. reuse/integrate LivestockWaterAdvisorOperations;
+17. WaterQualityAssessmentEngine;
+18. TankWaterTemperatureOperations boundary.
 
 ### Phase 3 - Persistence
 
-18. dedicated water-analysis proto/store;
-19. schema version;
-20. strict store rules;
-21. owner/tank-scoped queries;
-22. create/delete/latest operations;
-23. persisted assessment/provenance snapshot.
+19. dedicated water-analysis proto/store;
+20. schema version;
+21. strict store rules;
+22. owner/tank-scoped queries;
+23. create/delete/latest operations;
+24. persisted assessment/provenance snapshot.
 
 ### Phase 4 - Integrity
 
-24. integrate Water Analysis into tank deletion transaction;
-25. process-death recovery;
-26. account deletion cleanup;
-27. backup/restore policy and implementation if included;
-28. data inventory / export updates where applicable.
+25. integrate Water Analysis into tank deletion transaction;
+26. process-death recovery;
+27. account deletion cleanup;
+28. backup/restore policy and implementation if included;
+29. data inventory / export updates where applicable.
 
 ### Phase 5 - UI integration
 
-29. WaterAnalysisViewModel;
-30. save real analysis;
-31. replace mock history;
-32. pass analysisId through Safe Args;
-33. bind real record detail;
-34. implement real delete;
-35. bind latest analysis to Tank Health Water Quality metrics;
-36. connect fresh cooling sensor temperature.
+30. WaterAnalysisViewModel;
+31. save real analysis;
+32. replace mock history;
+33. pass analysisId through Safe Args;
+34. bind real record detail;
+35. implement real delete;
+36. bind latest analysis to Tank Health Water Quality metrics;
+37. connect fresh cooling sensor temperature.
 
 ### Phase 6 - Validation
 
-37. engine tests;
-38. persistence tests;
-39. owner/process-death tests;
-40. ViewModel/UI contract tests;
-41. architecture/lint/detekt/CodeQL;
-42. all CI green.
+38. engine tests;
+39. persistence tests;
+40. owner/process-death tests;
+41. ViewModel/UI contract tests;
+42. architecture/lint/detekt/CodeQL;
+43. all CI green.
 
 Only after this sequence:
 
-43. Algae Control;
-44. Plant Health;
-45. Livestock Health.
+44. Algae Control;
+45. Plant Health;
+46. Livestock Health.
 
 ---
 
@@ -1719,6 +1740,7 @@ Water Quality is complete only when all of the following are true:
 - total ammonia normalizes to TAN in mg/L as N, while directly measured free ammonia normalizes separately to mg/L as NH3; neither is silently substituted for the other;
 - when a source can measure TAN and direct free NH3 in the same event, both can be entered and persisted as separate measured metrics with separate provenance; concurrent outputs are not collapsed into a selector;
 - marine salinity assessment never assumes SG, PSS-78, conductivity, absolute/mass salinity, or generic `ppt` are equivalent; cross-representation comparison requires an explicit verified conversion with all required reference conditions, otherwise the result remains source-native/insufficient for that rule;
+- marine/coral alkalinity uses one `TOTAL_ALKALINITY` metric with canonical meq/L and verified dKH / mg/L as CaCO3 representations; no duplicate KH+alkalinity field/evidence is created, and freshwater `CARBONATE_HARDNESS`/`GENERAL_HARDNESS` remain semantically distinct;
 - unresolved source semantics are excluded from committed analysis and may remain in draft while other resolved measurements are saved; changing a source never silently reinterprets an entered number;
 - tank-type changes do not silently lose draft values or remove historical measurements;
 - a user can enter a physically valid analysis and save it;
