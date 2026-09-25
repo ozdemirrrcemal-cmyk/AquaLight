@@ -57,7 +57,8 @@ internal suspend fun rollbackUnreferencedCandidate(
             return@runCatching
         }
         val referenced = tankStore.tanksSnapshotForOwner(ownerUid).any { tank ->
-            tank.photoUri == uri || tank.plants.any { plant -> plant.photoUri == uri }
+            tank.photoUri == uri || tank.plants.any { plant -> plant.photoUri == uri } ||
+                tank.livestock.any { item -> item.photoUri == uri }
         }
         if (!referenced) AppMediaStorage.rollbackPendingMedia(appContext, uri)
     }

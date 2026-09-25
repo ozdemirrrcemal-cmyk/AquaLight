@@ -47,9 +47,9 @@ object TankStoreRules {
 
         store.tanksList.forEach { tank ->
             validateTank(tank)
-            tank.plantsList.forEach { plant ->
-                if (plant.photoUri.isNotBlank() && !plantPhotoUris.add(plant.photoUri)) {
-                    violation("Plant photo files must not be shared between records.")
+            tank.recordPhotoUris().forEach { uri ->
+                if (!plantPhotoUris.add(uri)) {
+                    violation("Photo files must not be shared between records.")
                 }
             }
 
@@ -201,6 +201,7 @@ object TankStoreRules {
                 livestock.addedDateEpochDay
             )
             requireCanonicalOptionalText("livestock.note", livestock.note, MAX_NOTE_CHARS)
+            requireCanonicalOptionalText("livestock.photoUri", livestock.photoUri, MAX_URI_CHARS)
         }
     }
 

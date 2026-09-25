@@ -73,7 +73,8 @@ internal data class ArchiveLivestock(
     val quantity: Int,
     val addedDateEpochDay: Long?,
     val note: String,
-    val catalogEntryId: String
+    val catalogEntryId: String,
+    val photo: ArchiveMediaReference? = null
 )
 
 internal data class ArchiveCareTask(

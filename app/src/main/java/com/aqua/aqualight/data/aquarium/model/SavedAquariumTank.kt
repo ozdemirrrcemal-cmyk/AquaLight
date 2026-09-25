@@ -51,5 +51,6 @@ data class SavedAquariumLivestock(
     val quantity: Int = 1,
     val addedDateEpochDay: Long? = null,
     val note: String = "",
-    val catalogEntryId: String
+    val catalogEntryId: String,
+    val photoUri: String? = null
 )

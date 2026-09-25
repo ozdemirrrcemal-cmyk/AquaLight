@@ -21,6 +21,7 @@
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal"
+          android:baselineAligned="false"
         android:paddingStart="@dimen/aqua_size_14"
         android:paddingTop="@dimen/aqua_size_6"
         android:paddingEnd="@dimen/aqua_size_14"

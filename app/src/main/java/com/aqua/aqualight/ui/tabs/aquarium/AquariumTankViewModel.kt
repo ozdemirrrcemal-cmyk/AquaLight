@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
 import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
+import com.aqua.aqualight.application.aquarium.AquariumLivestockPhotoOperations
 import com.aqua.aqualight.application.aquarium.AquariumPlantPhotoOperations
 import com.aqua.aqualight.application.aquarium.AquariumPlantTag
 import com.aqua.aqualight.application.aquarium.AquariumTankDraft
@@ -15,7 +16,7 @@ import com.aqua.aqualight.application.aquarium.DeleteAquariumTanksResult
 
 class AquariumTankViewModel(
     private val operations: AquariumTankOperations
-) : ViewModel(), AquariumPlantPhotoOperations by operations {
+) : ViewModel(), AquariumPlantPhotoOperations by operations, AquariumLivestockPhotoOperations by operations {
 
     val tanks: LiveData<List<AquariumTankSnapshot>> = operations.tanks.asLiveData()
 

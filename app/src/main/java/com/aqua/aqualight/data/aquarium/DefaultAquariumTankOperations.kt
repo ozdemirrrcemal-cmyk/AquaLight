@@ -3,6 +3,7 @@ package com.aqua.aqualight.data.aquarium
 import android.content.Context
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
 import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
+import com.aqua.aqualight.application.aquarium.AquariumLivestockPhotoOperations
 import com.aqua.aqualight.application.aquarium.AquariumPlantPhotoOperations
 import com.aqua.aqualight.application.aquarium.AquariumPlantTag
 import com.aqua.aqualight.application.aquarium.AquariumTankCleanupIssue
@@ -39,7 +40,8 @@ class DefaultAquariumTankOperations(
     private val notificationPreferences: NotificationPreferenceUseCase,
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : AquariumTankOperations,
-    AquariumPlantPhotoOperations by DefaultPlantPhotoOperations(context, tankStore, dispatcher) {
+    AquariumPlantPhotoOperations by DefaultPlantPhotoOperations(context, tankStore, dispatcher),
+    AquariumLivestockPhotoOperations by DefaultLivestockPhotoOperations(context, tankStore, dispatcher) {
 
     private val appContext = context.applicationContext
     private val livestockSelectionValidator = LivestockSelectionValidator(appContext)
@@ -98,7 +100,7 @@ class DefaultAquariumTankOperations(
                             duplicatedPlant?.photoUri == sourcePlant.photoUri
                         )
             }
-            if (invalidSharedOwnership || hasInvalidPlantOwnership) {
+            if (invalidSharedOwnership || hasInvalidPlantOwnership || !source.hasIndependentLivestockPhotos(duplicate)) {
                 runCatching { tankStore.deleteTanks(listOf(duplicateId)) }
                 throw IllegalStateException(
                     "Tank media could not be copied with independent ownership."
@@ -107,9 +109,8 @@ class DefaultAquariumTankOperations(
 
             buildList {
                 duplicate.photoUri?.takeIf(String::isNotBlank)?.let(::add)
-                duplicate.plants
-                    .mapNotNull { plant -> plant.photoUri?.takeIf(String::isNotBlank) }
-                    .forEach(::add)
+                duplicate.plants.mapNotNull { it.photoUri?.takeIf(String::isNotBlank) }.forEach(::add)
+                duplicate.livestock.mapNotNull { it.photoUri?.takeIf(String::isNotBlank) }.forEach(::add)
             }.forEach { uri ->
                 runCatching { AppMediaStorage.commitPendingMedia(appContext, uri) }
             }
@@ -310,7 +311,8 @@ internal fun SavedAquariumTank.toApplicationSnapshot(): AquariumTankSnapshot =
                 category = item.category,
                 quantity = item.quantity,
                 addedDateEpochDay = item.addedDateEpochDay,
-                note = item.note
+                note = item.note,
+                photoUri = item.photoUri
             )
         }
     )
@@ -353,7 +355,7 @@ private fun AquariumMaterialSelection.toDataSelection(): TankMaterialSelection =
         note = note
     )
 
-private fun AquariumLivestock.toDataLivestock(): SavedAquariumLivestock =
+internal fun AquariumLivestock.toDataLivestock(): SavedAquariumLivestock =
     SavedAquariumLivestock(
         id = id,
         catalogEntryId = catalogEntryId,
@@ -361,5 +363,6 @@ private fun AquariumLivestock.toDataLivestock(): SavedAquariumLivestock =
         category = category,
         quantity = quantity,
         addedDateEpochDay = addedDateEpochDay,
-        note = note
+        note = note,
+        photoUri = photoUri
     )

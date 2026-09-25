@@ -62,9 +62,11 @@ internal class UserDataArchiveSnapshotCollector(
             }
 
             val plantPhotoReferences = collectPlantPhotos(tank, mediaDirectory, media) { archivedPhotoCount += 1 }
+            val livestockPhotos = collectLivestockPhotos(tank, mediaDirectory, media) { archivedPhotoCount += 1 }
             tank.toArchiveAquarium(
                 photoReference = photoReference,
-                plantPhotoReferences = plantPhotoReferences
+                plantPhotoReferences = plantPhotoReferences,
+                livestockPhotoReferences = livestockPhotos
             )
         }
         requireOwner()
@@ -147,6 +149,39 @@ internal class UserDataArchiveSnapshotCollector(
                 lastEventDescription = prefs.lastEventDescription
             )
         )
+    }
+
+    private fun collectLivestockPhotos(
+        tank: com.aqua.aqualight.data.aquarium.model.SavedAquariumTank,
+        mediaDirectory: File?,
+        media: MutableMap<String, File>,
+        onPhoto: () -> Unit
+    ): Map<Long, ArchiveMediaReference> {
+        val livestockPhotoReferences = linkedMapOf<Long, ArchiveMediaReference>()
+        tank.livestock.forEach { item ->
+            if (mediaDirectory == null) {
+                if (mediaGateway.canSnapshotPhoto(item.photoUri, AppMediaScope.LIVESTOCK)) {
+                    onPhoto()
+                }
+            } else {
+                val entryName =
+                    "${UserDataBackupLimits.MEDIA_PREFIX}${tank.id}_livestock_${item.id}.jpg"
+                val destination = File(
+                    mediaDirectory,
+                    "livestock_${tank.id}_${item.id}.media"
+                )
+                mediaGateway.snapshotPhoto(item.photoUri, destination, AppMediaScope.LIVESTOCK)?.let { staged ->
+                    onPhoto()
+                    media[entryName] = staged
+                    livestockPhotoReferences[item.id] = ArchiveMediaReference(
+                        entryName = entryName,
+                        byteSize = staged.length().toInt(),
+                        sha256 = sha256(staged)
+                    )
+                }
+            }
+        }
+        return livestockPhotoReferences
     }
 
     private suspend fun collectAssignments(tankIds: Set<Long>): List<ArchiveDeviceAssignment> {

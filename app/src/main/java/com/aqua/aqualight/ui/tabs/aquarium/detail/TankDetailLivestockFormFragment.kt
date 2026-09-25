@@ -1,7 +1,6 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail
 
 import android.graphics.Typeface
-import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -10,10 +9,8 @@ import android.view.View
 import android.widget.GridLayout
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
-import androidx.annotation.ColorRes
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -41,12 +38,16 @@ import java.util.Calendar
 import kotlinx.coroutines.launch
 
 class TankDetailLivestockFormFragment :
-    Fragment(R.layout.fragment_tank_livestock_form) {
+    TankLivestockPhotoFormFragment() {
 
     private val args: TankDetailLivestockFormFragmentArgs by navArgs()
 
     private var _binding: FragmentTankLivestockFormBinding? = null
     private val binding get() = _binding!!
+    override val hasPhotoView: Boolean get() = _binding != null
+    override val photoTankId: Long get() = tankId
+    override val photoActionsBlocked: Boolean get() = isSavingLivestock || isDeletingLivestock
+    private var restoredFormState: Bundle? = null
 
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
     private val livestockCatalogOperations by lazy(LazyThreadSafetyMode.NONE) {
@@ -75,7 +76,9 @@ class TankDetailLivestockFormFragment :
 
         _binding = FragmentTankLivestockFormBinding.bind(view)
 
+        restoredFormState = savedInstanceState
         readArguments()
+        setupLivestockPhoto(binding, editingLivestockId)
         setupInitialUi()
         setupClickListeners()
         setupResultListeners()
@@ -143,11 +146,13 @@ class TankDetailLivestockFormFragment :
         selectedCatalogEntryId = args.catalogEntryId.trim()
         openedFromPicker = args.openedFromPicker
 
-        selectedCategory = args.presetCategory
+        selectedCategory = (restoredFormState?.getString("form.category") ?: args.presetCategory)
             .takeIf { category -> category in LivestockCategories.all }
             ?: LivestockCategories.FISH
-        selectedQuantity = 1
-        selectedAddedDateEpochDay = DateOnly.todayEpochDay()
+        selectedQuantity = restoredFormState?.getInt("form.quantity", 1) ?: 1
+        selectedAddedDateEpochDay = restoredFormState?.getLong("form.date", DateOnly.todayEpochDay())
+            ?: DateOnly.todayEpochDay()
+        binding.etLifeNote.setText(restoredFormState?.getString("form.note").orEmpty())
     }
 
     private fun initializeAddSelection() {
@@ -168,7 +173,7 @@ class TankDetailLivestockFormFragment :
             selectedCategory = entry.category
             binding.etLifeName.setText(entry.localizedName(requireContext()))
         } ?: run {
-            binding.etLifeName.setText(args.presetName.trim())
+            binding.etLifeName.setText(restoredFormState?.getString("form.name") ?: args.presetName.trim())
         }
 
         renderCategoryOptions()
@@ -245,20 +250,22 @@ class TankDetailLivestockFormFragment :
         selectedCatalogEntry?.let { entry ->
             selectedCategory = entry.category
         } ?: run {
-            selectedCategory = livestock.category.takeIf { category ->
+            selectedCategory = (restoredFormState?.getString("form.category") ?: livestock.category).takeIf { category ->
                 category in LivestockCategories.all
             } ?: LivestockCategories.FISH
         }
 
-        selectedQuantity = livestock.quantity.coerceAtLeast(1)
-        selectedAddedDateEpochDay = livestock.addedDateEpochDay
+        mediaFlow.initializeSelection(livestock.photoUri)
+        selectedQuantity = restoredFormState?.getInt("form.quantity") ?: livestock.quantity.coerceAtLeast(1)
+        selectedAddedDateEpochDay = restoredFormState?.getLong("form.date") ?: livestock.addedDateEpochDay
             ?.takeIf { epochDay -> epochDay > 0L }
             ?: DateOnly.todayEpochDay()
 
         binding.etLifeName.setText(
-            selectedCatalogEntry?.localizedName(requireContext()) ?: livestock.name
+            selectedCatalogEntry?.localizedName(requireContext())
+                ?: restoredFormState?.getString("form.name") ?: livestock.name
         )
-        binding.etLifeNote.setText(livestock.note)
+        binding.etLifeNote.setText(restoredFormState?.getString("form.note") ?: livestock.note)
 
         renderCategoryOptions()
         updateIdentityFieldVisibility(
@@ -471,19 +478,6 @@ class TankDetailLivestockFormFragment :
         binding.tvLifeParametersPreview.isVisible = parameterSummary.isNotBlank()
         binding.tvLifeParametersPreview.text = parameterSummary
 
-        binding.ivLifeIconPreview.setImageResource(
-            LivestockCategories.iconRes(selectedCategory)
-        )
-        binding.ivLifeIconPreview.setColorFilter(
-            ContextCompat.getColor(
-                requireContext(),
-                R.color.aqua_content_on_dark
-            )
-        )
-        binding.ivLifeIconPreview.background = createIconBackground(
-            color = LivestockCategories.colorRes(selectedCategory)
-        )
-
         binding.tvLifeCategoryPreview.text = getString(
             LivestockCategories.labelRes(selectedCategory)
         )
@@ -504,7 +498,7 @@ class TankDetailLivestockFormFragment :
     }
 
     private fun saveLivestock() {
-        if (isSavingLivestock) {
+        if (isSavingLivestock || isDeletingLivestock || photoTarget.isInProgress) {
             return
         }
 
@@ -520,7 +514,7 @@ class TankDetailLivestockFormFragment :
         }
 
         val (livestockId, catalogIdentity) = resolveLivestockIdentity(
-            editingLivestockId = editingLivestockId,
+            editingLivestockId = requireNotNull(photoDraft.recordId),
             selectedCatalogEntry = selectedCatalogEntry,
             selectedCatalogEntryId = selectedCatalogEntryId
         )
@@ -540,18 +534,14 @@ class TankDetailLivestockFormFragment :
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                persistLivestock(
-                    viewModel = aquariumTankViewModel,
-                    tankId = tankId,
-                    editingLivestockId = editingLivestockId,
-                    livestock = livestock
-                )
+                saveLivestockPhoto(aquariumTankViewModel, livestock, isNew = editingLivestockId <= 0L)
+                isSavingLivestock = false
                 finishAfterMutation()
             } catch (exception: Exception) {
+                if (exception is kotlinx.coroutines.CancellationException) throw exception
                 exception.printStackTrace()
-
                 isSavingLivestock = false
-                binding.btnSaveLife.isEnabled = true
+                _binding?.btnSaveLife?.isEnabled = true
 
                 showSnackBar(
                     message = getString(R.string.aquarium_error_livestock_save_failed),
@@ -575,7 +565,8 @@ class TankDetailLivestockFormFragment :
     }
 
     private fun deleteLivestock() {
-        if (editingLivestockId <= 0L || isDeletingLivestock) {
+        val busy = isDeletingLivestock || isSavingLivestock || photoTarget.isInProgress
+        if (editingLivestockId <= 0L || busy) {
             return
         }
 
@@ -583,9 +574,8 @@ class TankDetailLivestockFormFragment :
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                aquariumTankViewModel.removeLivestockFromTank(
-                    tankId = tankId,
-                    livestockId = editingLivestockId
+                aquariumTankViewModel.removeLivestockWithPhoto(
+                    tankId, editingLivestockId, requireNotNull(photoDraft.ownerUid)
                 )
                 finishAfterMutation()
             } catch (exception: Exception) {
@@ -649,6 +639,8 @@ class TankDetailLivestockFormFragment :
     }
 
     private fun closeForm() {
+        if (isSavingLivestock && !isNavigatingBack) return
+        if (photoTarget.isInProgress) return
         if (isNavigatingBack) {
             return
         }
@@ -679,16 +671,13 @@ class TankDetailLivestockFormFragment :
         )
     }
 
-    private fun createIconBackground(
-        @ColorRes color: Int
-    ): GradientDrawable {
-        return GradientDrawable().apply {
-            shape = GradientDrawable.RECTANGLE
-            setColor(ContextCompat.getColor(requireContext(), color))
-            cornerRadius = resources.getDimensionPixelOffset(
-                R.dimen.aqua_size_18
-            ).toFloat()
-        }
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putString("form.category", selectedCategory)
+        outState.putInt("form.quantity", selectedQuantity)
+        outState.putLong("form.date", selectedAddedDateEpochDay)
+        outState.putString("form.name", _binding?.etLifeName?.text?.toString())
+        outState.putString("form.note", _binding?.etLifeNote?.text?.toString())
+        super.onSaveInstanceState(outState)
     }
 
     override fun onDestroyView() {
@@ -700,19 +689,6 @@ class TankDetailLivestockFormFragment :
         private const val LIVESTOCK_DATE_REQUEST_KEY = "livestock_added_date_result"
         private const val LIVESTOCK_DELETE_REQUEST_KEY = "livestock_delete_result"
         private const val LIVESTOCK_MISSING_REQUEST_KEY = "livestock_missing_result"
-    }
-}
-
-private suspend fun persistLivestock(
-    viewModel: AquariumTankViewModel,
-    tankId: Long,
-    editingLivestockId: Long,
-    livestock: AquariumLivestock
-) {
-    if (editingLivestockId > 0L) {
-        viewModel.updateLivestockInTank(tankId, livestock)
-    } else {
-        viewModel.addLivestockToTank(tankId, livestock)
     }
 }
 

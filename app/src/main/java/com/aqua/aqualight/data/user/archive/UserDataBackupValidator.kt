@@ -187,6 +187,17 @@ internal class UserDataBackupValidator {
                         )
                     }?.entryName?.let(::add)
                 }
+                aquarium.livestock.forEach { item ->
+                    item.photo?.also { reference ->
+                        validateMediaReference(
+                            reference = reference,
+                            expectedEntryName =
+                                "${UserDataBackupLimits.MEDIA_PREFIX}" +
+                                    "${aquarium.id}_livestock_${item.id}.jpg",
+                            mediaByEntryName = mediaByEntryName
+                        )
+                    }?.entryName?.let(::add)
+                }
             }
         }
         require(referenced.distinct().size == referenced.size) {

@@ -175,4 +175,7 @@
     <string name="aquarium_plant_photo_save_failed">Bitki fotoğrafı kaydedilemedi. Lütfen yeniden deneyin.</string>
     <string name="aquarium_plant_photo_remove_failed">Bitki fotoğrafı kaldırılamadı. Lütfen yeniden deneyin.</string>
     <string name="aquarium_plant_photo_action_description">%1$s için fotoğraf ekle veya değiştir</string>
+    <string name="aquarium_livestock_photo_title">Canlı fotoğrafı</string>
+    <string name="aquarium_livestock_photo_crop_title">Canlı fotoğrafını kırp</string>
+    <string name="aquarium_livestock_photo_action">Canlı fotoğrafı ekle, değiştir veya kaldır</string>
 </resources>

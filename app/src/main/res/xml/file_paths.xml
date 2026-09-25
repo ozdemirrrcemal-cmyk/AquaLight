@@ -25,4 +25,5 @@
         name="tank_exports"
         path="tank_exports/" />
 
+    <files-path name="livestock_photos" path="livestock_photos/" />
 </paths>

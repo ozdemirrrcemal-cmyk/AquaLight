@@ -13,6 +13,8 @@ internal class TankDuplicateMedia(
 ) {
     private val sourcePhotoAtPreparation = source.photoUri
     private val sourcePlantPhotosAtPreparation = source.plantsList.associate { it.id to it.photoUri }
+    private val sourceLivestockPhotos = source.livestockList.associate { it.id to it.photoUri }
+    private val livestockPhotos = linkedMapOf<Long, String?>()
     private var tankPhoto: String? = null
     private val plantPhotos = linkedMapOf<Long, String?>()
 
@@ -21,6 +23,9 @@ internal class TankDuplicateMedia(
             tankPhoto = copy(source.photoUri, AppMediaScope.TANK)
             source.plantsList.forEach { plant ->
                 plantPhotos[plant.id] = copy(plant.photoUri, AppMediaScope.PLANT)
+            }
+            source.livestockList.forEach { item ->
+                livestockPhotos[item.id] = copy(item.photoUri, AppMediaScope.LIVESTOCK)
             }
         }.onFailure { rollback() }.getOrThrow()
     }
@@ -32,15 +37,21 @@ internal class TankDuplicateMedia(
         check(source.plantsList.associate { it.id to it.photoUri } == sourcePlantPhotosAtPreparation) {
             "Plant photos changed while duplication was being prepared."
         }
+        check(source.livestockList.associate { it.id to it.photoUri } == sourceLivestockPhotos) {
+            "Livestock photos changed while duplication was being prepared."
+        }
+        val livestock = source.livestockList.map { item ->
+            item.toBuilder().setPhotoUri(livestockPhotos[item.id].orEmpty()).build()
+        }
         val plants = source.plantsList.map { plant ->
             plant.toBuilder().setPhotoUri(plantPhotos[plant.id].orEmpty().trim()).build()
         }
         return source.toBuilder().setPhotoUri(tankPhoto.orEmpty().trim())
-            .clearPlants().addAllPlants(plants)
+            .clearPlants().addAllPlants(plants).clearLivestock().addAllLivestock(livestock)
     }
 
     fun rollback() {
-        (plantPhotos.values + tankPhoto).forEach { uri ->
+        (plantPhotos.values + livestockPhotos.values + tankPhoto).forEach { uri ->
             runCatching { AppMediaStorage.rollbackPendingMedia(context, uri) }
         }
     }

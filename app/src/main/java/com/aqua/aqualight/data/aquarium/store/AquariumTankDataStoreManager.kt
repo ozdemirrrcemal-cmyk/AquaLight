@@ -39,6 +39,7 @@ class AquariumTankDataStoreManager(
     private val context: Context
 ) {
 
+    internal val livestockPhotos = TankLivestockMutations(context, ::updateCurrentOwnerTank) { it.toStoredLivestockStrict() }
     internal val plantPhotos = TankPlantPhotoMutations(context, ::updateCurrentOwnerTank)
 
     val tanksFlow: Flow<List<SavedAquariumTank>> =
@@ -166,12 +167,7 @@ class AquariumTankDataStoreManager(
                     storedTank.belongsToOwner(ownerUid)
                 if (shouldDelete) {
                     deletedTankIds += storedTank.id
-                    if (storedTank.photoUri.isNotBlank()) {
-                        mediaUrisToDelete += storedTank.photoUri
-                    }
-                    storedTank.plantsList
-                        .mapNotNull { plant -> plant.photoUri.takeIf(String::isNotBlank) }
-                        .forEach(mediaUrisToDelete::add)
+                    mediaUrisToDelete += storedTank.recordPhotoUris()
                 }
                 shouldDelete
             }
@@ -194,6 +190,7 @@ class AquariumTankDataStoreManager(
                 scope = AppMediaScope.PLANT,
                 ownerToken = deletedTankId.toString()
             )
+            AppMediaStorage.deleteOwnerTemporaryFiles(context, AppMediaScope.LIVESTOCK, deletedTankId.toString())
         }
     }
 
@@ -211,12 +208,7 @@ class AquariumTankDataStoreManager(
                 val shouldDelete = storedTank.belongsToOwner(targetOwnerUid)
                 if (shouldDelete) {
                     deletedTankIds += storedTank.id
-                    if (storedTank.photoUri.isNotBlank()) {
-                        deletedMediaUris += storedTank.photoUri
-                    }
-                    storedTank.plantsList
-                        .mapNotNull { plant -> plant.photoUri.takeIf(String::isNotBlank) }
-                        .forEach(deletedMediaUris::add)
+                    deletedMediaUris += storedTank.recordPhotoUris()
                 }
                 shouldDelete
             }
@@ -238,6 +230,7 @@ class AquariumTankDataStoreManager(
                 scope = AppMediaScope.PLANT,
                 ownerToken = deletedTankId.toString()
             )
+            AppMediaStorage.deleteOwnerTemporaryFiles(context, AppMediaScope.LIVESTOCK, deletedTankId.toString())
         }
     }
 
@@ -434,74 +427,22 @@ class AquariumTankDataStoreManager(
         }
     }
 
-    suspend fun addLivestockToTank(
-        tankId: Long,
-        livestock: SavedAquariumLivestock
-    ) {
-        val storedLivestock = livestock.toStoredLivestockStrict()
-        updateCurrentOwnerTank(tankId) { storedTank ->
-            if (storedTank.livestockList.any { item -> item.id == storedLivestock.id }) {
-                throw StoreInvariantViolation(
-                    "Duplicate livestock id ${storedLivestock.id} in tank ${storedTank.id}."
-                )
-            }
-            storedTank.toBuilder()
-                .addLivestock(storedLivestock)
-                .build()
-        }
+    suspend fun addLivestockToTank(tankId: Long, livestock: SavedAquariumLivestock) {
+        livestockPhotos.save(tankId, livestock, isNew = true, photoChanged = true)
     }
 
-    suspend fun updateLivestockInTank(
-        tankId: Long,
-        livestock: SavedAquariumLivestock
-    ) {
-        val storedReplacement = livestock.toStoredLivestockStrict()
-        updateCurrentOwnerTank(tankId) { storedTank ->
-            var replaced = false
-            val updatedLivestock = storedTank.livestockList.map { storedLivestock ->
-                if (storedLivestock.id == storedReplacement.id) {
-                    replaced = true
-                    storedReplacement
-                } else {
-                    storedLivestock
-                }
-            }
-            if (!replaced) {
-                throw IllegalArgumentException(
-                    "Livestock record not found in the selected tank."
-                )
-            }
-            storedTank.toBuilder()
-                .clearLivestock()
-                .addAllLivestock(updatedLivestock)
-                .build()
-        }
+    suspend fun updateLivestockInTank(tankId: Long, livestock: SavedAquariumLivestock) {
+        livestockPhotos.save(tankId, livestock, isNew = false, photoChanged = false)
     }
 
-    suspend fun removeLivestockFromTank(
-        tankId: Long,
-        livestockId: Long
-    ) {
-        require(livestockId > 0L) {
-            "livestockId must be positive"
-        }
-        updateCurrentOwnerTank(tankId) { storedTank ->
-            val exists = storedTank.livestockList.any { item -> item.id == livestockId }
-            if (!exists) {
-                throw IllegalArgumentException(
-                    "Livestock record not found in the selected tank."
-                )
+    suspend fun removeLivestockFromTank(tankId: Long, livestockId: Long) =
+        com.aqua.aqualight.data.user.withCurrentOwnerScope { ownerUid ->
+            kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable + kotlinx.coroutines.Dispatchers.IO) {
+                val previous = livestockPhotos.remove(tankId, livestockId)
+                runCatching { AppMediaStorage.deleteAfterCommit(context, ownerUid, previous) }
+                Unit
             }
-            storedTank.toBuilder()
-                .clearLivestock()
-                .addAllLivestock(
-                    storedTank.livestockList.filterNot { item ->
-                        item.id == livestockId
-                    }
-                )
-                .build()
         }
-    }
 
     suspend fun updateSmartCareEnabled(
         tankId: Long,
@@ -624,17 +565,11 @@ class AquariumTankDataStoreManager(
             .build()
     }
 
-    private fun SavedAquariumLivestock.toStoredLivestockStrict(): StoredLivestock {
-        return StoredLivestock.newBuilder()
-            .setId(id)
-            .setCatalogEntryId(catalogEntryId.trim())
-            .setName(name.trim())
-            .setCategory(category.trim())
-            .setQuantity(quantity)
-            .setAddedDateEpochDay(addedDateEpochDay ?: 0L)
-            .setNote(note.trim())
-            .build()
-    }
+
+    private fun SavedAquariumLivestock.toStoredLivestockStrict(): StoredLivestock = StoredLivestock.newBuilder()
+        .setId(id).setCatalogEntryId(catalogEntryId.trim()).setName(name.trim()).setCategory(category.trim())
+        .setQuantity(quantity).setAddedDateEpochDay(addedDateEpochDay ?: 0L).setNote(note.trim())
+        .setPhotoUri(photoUri.orEmpty().trim()).build()
 
     private fun StoredTank.toSavedAquariumTankStrict(): SavedAquariumTank {
         TankStoreRules.validateTank(this)
@@ -685,7 +620,8 @@ class AquariumTankDataStoreManager(
                     category = livestock.category,
                     quantity = livestock.quantity,
                     addedDateEpochDay = livestock.addedDateEpochDay.takeIf { value -> value > 0L },
-                    note = livestock.note
+                    note = livestock.note,
+                    photoUri = livestock.photoUri.takeIf(String::isNotBlank)
                 )
             }
         )

@@ -113,6 +113,13 @@ private class FakeAquariumTankOperations(
         deletedTankIds = tankIds.toList()
         return deleteResult
     }
+    override suspend fun saveLivestockWithPhoto(
+        tankId: Long, livestock: AquariumLivestock, expectedOwnerUid: String,
+        isNew: Boolean, photoChanged: Boolean
+    ) = Unit
+    override suspend fun removeLivestockWithPhoto(
+        tankId: Long, livestockId: Long, expectedOwnerUid: String
+    ) = Unit
     override suspend fun updateTankPhoto(tankId: Long, photoUri: String?) = Unit
     var photoUpdate: List<Any?>? = null
     override suspend fun updatePlantPhoto(

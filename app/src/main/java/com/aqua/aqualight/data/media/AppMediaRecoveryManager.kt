@@ -38,6 +38,7 @@ class AppMediaRecoveryManager(
                     tank.plants
                         .mapNotNull { plant -> plant.photoUri?.takeIf(String::isNotBlank) }
                         .forEach(::add)
+                    tank.livestock.mapNotNull { it.photoUri?.takeIf(String::isNotBlank) }.forEach(::add)
                 }
         }
 

@@ -310,4 +310,5 @@ private fun com.aqua.aqualight.data.aquarium.model.SavedAquariumTank.photoUris()
     buildList {
         photoUri?.takeIf(String::isNotBlank)?.let(::add)
         plants.mapNotNull { plant -> plant.photoUri?.takeIf(String::isNotBlank) }.forEach(::add)
+        livestock.mapNotNull { item -> item.photoUri?.takeIf(String::isNotBlank) }.forEach(::add)
     }

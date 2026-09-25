@@ -4,7 +4,7 @@ import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 
 /** Application boundary for owner-scoped aquarium tank operations. */
-interface AquariumTankOperations : AquariumPlantPhotoOperations {
+interface AquariumTankOperations : AquariumPlantPhotoOperations, AquariumLivestockPhotoOperations {
     val tanks: Flow<List<AquariumTankSnapshot>>
 
     suspend fun addTank(draft: AquariumTankDraft): Long
@@ -103,7 +103,8 @@ data class AquariumLivestock(
     val quantity: Int = 1,
     val addedDateEpochDay: Long? = null,
     val note: String = "",
-    val catalogEntryId: String
+    val catalogEntryId: String,
+    val photoUri: String? = null
 )
 
 sealed interface DeleteAquariumTanksResult {

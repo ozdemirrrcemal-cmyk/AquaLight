@@ -55,7 +55,8 @@ internal class UserDataBackupRestorer(
             ownerUid = ownerUid,
             snapshotTankPhoto = mediaOperations.snapshotTankPhoto,
             provenance = provenance.snapshot(ownerUid),
-            snapshotPlantPhoto = mediaOperations.snapshotPlantPhoto
+            snapshotPlantPhoto = mediaOperations.snapshotPlantPhoto,
+            livestockMedia = mediaOperations.livestock
         )
         transactions.begin(
             ownerUid = ownerUid,
@@ -163,7 +164,7 @@ internal class UserDataBackupRestorer(
                 )
             )
             tankWasCreated = true
-            restoreAquariumDetails(archived, local.id)
+            restoreAquariumDetails(archived, local.id, backup, preparedMedia)
             preparedMedia.forEach(mediaOperations.commit)
             local
         } finally {
@@ -175,12 +176,20 @@ internal class UserDataBackupRestorer(
 
     private suspend fun restoreAquariumDetails(
         archived: ArchiveAquarium,
-        newTankId: Long
+        newTankId: Long,
+        backup: DecodedUserDataBackup,
+        preparedMedia: MutableList<String>
     ) {
         dataSources.tanks.updateSmartCareEnabled(newTankId, archived.smartCareEnabled)
         dataSources.tanks.updateCareRemindersEnabled(newTankId, archived.careRemindersEnabled)
         archived.livestock.forEach { item ->
-            dataSources.tanks.addLivestockToTank(newTankId, item.toSavedLivestock())
+            val photo = item.photo?.let { reference ->
+                mediaOperations.livestock.prepare(
+                    ownerUid, "restore_${archived.id}_livestock_${item.id}",
+                    requireNotNull(backup.mediaByEntryName[reference.entryName])
+                ).also(preparedMedia::add)
+            }
+            dataSources.tanks.addLivestockToTank(newTankId, item.toSavedLivestock(photo))
         }
     }
 

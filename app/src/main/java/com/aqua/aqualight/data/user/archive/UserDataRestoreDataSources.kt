@@ -237,7 +237,8 @@ internal data class UserDataRestoreMediaOperations(
     val snapshotPlantPhoto: (String?) -> UserDataArchiveMediaFingerprint? = { null },
     val prepareRestoredPlantPhoto: (String, String, File) -> String = { _, _, _ ->
         error("No plant photo restore operation is configured.")
-    }
+    },
+    val livestock: LivestockRestoreMedia = LivestockRestoreMedia()
 ) {
     companion object {
         fun from(mediaGateway: UserDataArchiveMediaGateway): UserDataRestoreMediaOperations {
@@ -251,7 +252,13 @@ internal data class UserDataRestoreMediaOperations(
                 snapshotPlantPhoto = { uri -> mediaGateway.fingerprintPhoto(uri, AppMediaScope.PLANT) },
                 prepareRestoredPlantPhoto = { owner, token, file ->
                     mediaGateway.prepareRestoredPhoto(owner, token, file, AppMediaScope.PLANT)
-                }
+                },
+                livestock = LivestockRestoreMedia(
+                    snapshot = { uri -> mediaGateway.fingerprintPhoto(uri, AppMediaScope.LIVESTOCK) },
+                    prepare = { owner, token, file ->
+                        mediaGateway.prepareRestoredPhoto(owner, token, file, AppMediaScope.LIVESTOCK)
+                    }
+                )
             )
         }
     }

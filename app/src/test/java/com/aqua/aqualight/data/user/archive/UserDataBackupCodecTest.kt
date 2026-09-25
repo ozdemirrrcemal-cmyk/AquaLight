@@ -74,6 +74,29 @@ class UserDataBackupCodecTest {
     }
 
     @Test
+    fun `livestock photos round trip and mismatched record media names are rejected`() {
+        val root = tempDirectory()
+        val bytes = "livestock-photo".toByteArray()
+        val file = File(root, "livestock.jpg").apply { writeBytes(bytes) }
+        val entry = "media/tanks/7_livestock_42.jpg"
+        val reference = ArchiveMediaReference(entry, bytes.size, sha256(bytes))
+        val item = ArchiveLivestock(42, "Fish", "Fish", 4, null, "", "custom:42", reference)
+        val original = manifest()
+        val archive = original.copy(aquariums = listOf(original.aquariums.single().copy(livestock = listOf(item))))
+        val zip = File(root, "livestock.aqlbackup")
+        codec.encode(archive, mapOf(entry to file), zip)
+        val decoded = codec.decode(zip, File(root, "livestock-decoded"))
+        assertEquals(archive, decoded.manifest)
+        assertArrayEquals(bytes, decoded.mediaByEntryName.getValue(entry).readBytes())
+        val wrong = archive.copy(aquariums = listOf(archive.aquariums.single().copy(
+            livestock = listOf(item.copy(id = 43, catalogEntryId = "custom:43"))
+        )))
+        assertThrows(IllegalArgumentException::class.java) {
+            codec.encode(wrong, mapOf(entry to file), File(root, "wrong.aqlbackup"))
+        }
+    }
+
+    @Test
     fun `decoder rejects a backup with an unsupported schema`() {
         val invalid = manifest().copy(schemaVersion = USER_DATA_BACKUP_SCHEMA_VERSION + 1)
         val encoded = rawZip(Gson().toJson(invalid))

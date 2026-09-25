@@ -12,7 +12,8 @@ internal class UserDataRestoreDeduplicator(
     private val snapshotTankPhoto: (String?) -> UserDataArchiveMediaFingerprint?,
     private val provenance: UserDataRestoreProvenanceSnapshot =
         UserDataRestoreProvenanceSnapshot.Empty,
-    private val snapshotPlantPhoto: (String?) -> UserDataArchiveMediaFingerprint? = { null }
+    private val snapshotPlantPhoto: (String?) -> UserDataArchiveMediaFingerprint? = { null },
+    private val livestockMedia: LivestockRestoreMedia = LivestockRestoreMedia()
 ) {
     private val unmatchedAquariums = existingAquariums.toMutableList()
     private val unmatchedCareTasks = existingCareTasks.toMutableList()
@@ -62,14 +63,16 @@ internal class UserDataRestoreDeduplicator(
         }.toMap()
         val normalizedCurrent = toArchiveAquarium(
             photoReference = archived.photo,
-            plantPhotoReferences = plantPhotoReferences
+            plantPhotoReferences = plantPhotoReferences,
+            livestockPhotoReferences = archived.livestock.mapNotNull { item ->
+                item.photo?.let { item.id to it }
+            }.toMap()
         ).copy(
             id = archived.id,
             createdAtMillis = archived.createdAtMillis
         )
-        return normalizedCurrent == archived &&
-            matchesArchivedTankPhoto(archived.photo) &&
-            matchesArchivedPlantPhotos(archived)
+        val recordPhotosMatch = matchesArchivedPlantPhotos(archived) && matchesArchivedLivestockPhotos(archived)
+        return normalizedCurrent == archived && matchesArchivedTankPhoto(archived.photo) && recordPhotosMatch
     }
 
     private fun SavedAquariumTank.matchesArchivedTankPhoto(
@@ -94,6 +97,16 @@ internal class UserDataRestoreDeduplicator(
             } else {
                 snapshotPlantPhoto(currentPlant.photoUri).matches(reference)
             }
+        }
+    }
+
+    private fun SavedAquariumTank.matchesArchivedLivestockPhotos(archived: ArchiveAquarium): Boolean {
+        val items = livestock.associateBy { it.id }
+        return archived.livestock.all { item ->
+            val current = items[item.id] ?: return@all false
+            val reference = item.photo
+            if (reference == null) current.photoUri.isNullOrBlank()
+            else livestockMedia.snapshot(current.photoUri).matches(reference)
         }
     }
 

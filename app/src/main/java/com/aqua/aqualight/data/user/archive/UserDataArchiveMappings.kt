@@ -13,7 +13,8 @@ import com.aqua.aqualight.data.care.model.CareTaskType
 
 internal fun SavedAquariumTank.toArchiveAquarium(
     photoReference: ArchiveMediaReference?,
-    plantPhotoReferences: Map<Long, ArchiveMediaReference> = emptyMap()
+    plantPhotoReferences: Map<Long, ArchiveMediaReference> = emptyMap(),
+    livestockPhotoReferences: Map<Long, ArchiveMediaReference> = emptyMap()
 ): ArchiveAquarium {
     return ArchiveAquarium(
         id = id,
@@ -61,7 +62,8 @@ internal fun SavedAquariumTank.toArchiveAquarium(
                 quantity = item.quantity,
                 addedDateEpochDay = item.addedDateEpochDay,
                 note = item.note,
-                catalogEntryId = item.catalogEntryId
+                catalogEntryId = item.catalogEntryId,
+                photo = livestockPhotoReferences[item.id]
             )
         }
     )
@@ -108,7 +110,7 @@ internal fun ArchiveAquarium.toTankDraft(
     )
 }
 
-internal fun ArchiveLivestock.toSavedLivestock(): SavedAquariumLivestock {
+internal fun ArchiveLivestock.toSavedLivestock(photoUri: String? = null): SavedAquariumLivestock {
     return SavedAquariumLivestock(
         id = id,
         name = name,
@@ -116,7 +118,8 @@ internal fun ArchiveLivestock.toSavedLivestock(): SavedAquariumLivestock {
         quantity = quantity,
         addedDateEpochDay = addedDateEpochDay,
         note = note,
-        catalogEntryId = catalogEntryId
+        catalogEntryId = catalogEntryId,
+        photoUri = photoUri
     )
 }
 
