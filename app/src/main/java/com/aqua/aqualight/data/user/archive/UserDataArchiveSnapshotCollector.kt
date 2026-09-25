@@ -59,7 +59,35 @@ internal class UserDataArchiveSnapshotCollector(
                     )
                 }
             }
-            tank.toArchiveAquarium(photoReference)
+
+            val plantPhotoReferences = linkedMapOf<Long, ArchiveMediaReference>()
+            tank.plants.forEach { plant ->
+                if (mediaDirectory == null) {
+                    if (mediaGateway.canSnapshotPlantPhoto(plant.photoUri)) {
+                        archivedPhotoCount += 1
+                    }
+                } else {
+                    val entryName =
+                        "${UserDataBackupLimits.MEDIA_PREFIX}${tank.id}_plant_${plant.id}.jpg"
+                    val destination = File(
+                        mediaDirectory,
+                        "plant_${tank.id}_${plant.id}.media"
+                    )
+                    mediaGateway.snapshotPlantPhoto(plant.photoUri, destination)?.let { staged ->
+                        archivedPhotoCount += 1
+                        media[entryName] = staged
+                        plantPhotoReferences[plant.id] = ArchiveMediaReference(
+                            entryName = entryName,
+                            byteSize = staged.length().toInt(),
+                            sha256 = sha256(staged)
+                        )
+                    }
+                }
+            }
+            tank.toArchiveAquarium(
+                photoReference = photoReference,
+                plantPhotoReferences = plantPhotoReferences
+            )
         }
         requireOwner()
         return UserDataAquariumSnapshot(
