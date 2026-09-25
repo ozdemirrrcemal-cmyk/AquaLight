@@ -2,7 +2,6 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 
 import android.os.Bundle
 import android.view.View
-import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
@@ -11,6 +10,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.FragmentTankHealthBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
 
 class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
 
@@ -67,14 +67,10 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
     }
 
     private fun openAddAnalysis() {
-        val navController = findNavController()
-        if (navController.currentDestination?.id != R.id.tankHealthFragment) {
-            return
-        }
-
-        navController.navigate(
-            R.id.action_tankHealthFragment_to_tankHealthAnalysisAddFragment,
-            bundleOf(ARG_TANK_ID to args.tankId)
+        findNavController().navigateSafelyFrom(
+            sourceDestinationId = R.id.tankHealthFragment,
+            directions = TankHealthFragmentDirections
+                .actionTankHealthFragmentToTankHealthAnalysisAddFragment(args.tankId)
         )
     }
 
@@ -82,10 +78,6 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
         binding.healthContent.adapter = null
         _binding = null
         super.onDestroyView()
-    }
-
-    private companion object {
-        const val ARG_TANK_ID = "tankId"
     }
 
 }
