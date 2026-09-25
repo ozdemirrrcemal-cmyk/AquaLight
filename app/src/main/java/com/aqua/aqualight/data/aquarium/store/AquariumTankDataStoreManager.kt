@@ -120,7 +120,7 @@ class AquariumTankDataStoreManager(
                     context = context,
                     sourceUriString = plant.photoUri,
                     targetScope = AppMediaScope.PLANT,
-                    ownerToken = plantPhotoOwnerToken(newTankId),
+                    ownerToken = newTankId.toString(),
                     ownerUid = ownerUid
                 )
                 if (
@@ -251,7 +251,7 @@ class AquariumTankDataStoreManager(
             AppMediaStorage.deleteOwnerTemporaryFiles(
                 context = context,
                 scope = AppMediaScope.PLANT,
-                ownerToken = plantPhotoOwnerToken(deletedTankId)
+                ownerToken = deletedTankId.toString()
             )
         }
     }
@@ -295,7 +295,7 @@ class AquariumTankDataStoreManager(
             AppMediaStorage.deleteOwnerTemporaryFiles(
                 context = context,
                 scope = AppMediaScope.PLANT,
-                ownerToken = plantPhotoOwnerToken(deletedTankId)
+                ownerToken = deletedTankId.toString()
             )
         }
     }
@@ -831,8 +831,6 @@ class AquariumTankDataStoreManager(
         }
         return ownerUid
     }
-
-    private fun plantPhotoOwnerToken(tankId: Long): String = "tank_$tankId"
 
     private fun createDuplicateTankName(
         originalName: String,
