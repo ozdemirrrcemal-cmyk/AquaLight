@@ -788,18 +788,9 @@
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
                                     android:includeFontPadding="false"
-                                    android:text="@string/tank_health_analysis_all_manual_note"
+                                    android:text="@string/tank_health_analysis_test_kit_note"
                                     android:textColor="@color/aqua_accent_primary"
                                     android:textSize="@dimen/aqua_text_size_caption" />
-
-                                <TextView
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="@dimen/aqua_size_2"
-                                    android:includeFontPadding="false"
-                                    android:text="@string/tank_health_analysis_test_kit_note"
-                                    android:textColor="@color/aqua_content_muted"
-                                    android:textSize="@dimen/aqua_text_size_micro_caption" />
 
                             </LinearLayout>
 

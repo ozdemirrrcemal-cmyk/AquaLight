@@ -23,7 +23,6 @@
 
     <string name="tank_health_analysis_water_parameters_title">Su Parametreleri</string>
     <string name="tank_health_analysis_water_parameters_subtitle">Su değerlerinizi ölçüp girin.</string>
-    <string name="tank_health_analysis_all_manual_note">Sıcaklık hariç tüm ölçümler kullanıcı tarafından girilir.</string>
     <string name="tank_health_analysis_test_kit_note">Daha doğru sonuçlar için güvenilir test kitleri kullanın.</string>
     <string name="tank_health_analysis_save">Analizi Kaydet</string>
     <string name="tank_health_analysis_history_action">Geçmiş Kayıtlar</string>
