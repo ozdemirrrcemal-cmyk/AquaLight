@@ -468,12 +468,12 @@ class AquariumTankDataStoreManager(
         val replacementPhotoUris = plants
             .mapNotNull { plant -> plant.photoUri?.trim()?.takeIf(String::isNotBlank) }
             .toSet()
-        val supersededPhotoUris = linkedSetOf<String>()
+        var supersededPhotoUris: Set<String> = emptySet()
         updateCurrentOwnerTank(tankId) { storedTank ->
-            storedTank.plantsList
+            supersededPhotoUris = storedTank.plantsList
                 .mapNotNull { plant -> plant.photoUri.takeIf(String::isNotBlank) }
                 .filterNot(replacementPhotoUris::contains)
-                .forEach(supersededPhotoUris::add)
+                .toSet()
 
             storedTank.toBuilder()
                 .clearPlants()
