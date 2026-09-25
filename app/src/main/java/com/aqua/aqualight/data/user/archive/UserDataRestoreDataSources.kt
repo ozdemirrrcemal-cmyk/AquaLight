@@ -6,6 +6,7 @@ import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentResult
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceRemovalResult
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumLivestock
 import com.aqua.aqualight.application.aquarium.LivestockHealthObservation
+import com.aqua.aqualight.data.aquarium.store.AquariumHealthStore
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.data.aquarium.model.TankDraft
 import com.aqua.aqualight.data.care.model.CareTask
@@ -67,7 +68,7 @@ internal data class UserDataRestoreDataSources(
                     updateCareRemindersEnabled = aquariumStore::updateCareRemindersEnabled,
                     addLivestockToTank = aquariumStore::addLivestockToTank,
                     deleteTanks = aquariumStore::deleteTanks,
-                    restoreHealthObservation = aquariumStore::restoreHealthObservation
+                    restoreHealthObservation = AquariumHealthStore(aquariumStore)::restoreHealthObservation
                 ),
                 careTasks = CareTaskDataSource(
                     snapshot = { careTaskStore.tasksFlow.first() },

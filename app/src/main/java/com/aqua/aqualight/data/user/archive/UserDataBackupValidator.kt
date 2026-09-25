@@ -21,6 +21,10 @@ internal object UserDataBackupLimits {
     const val MAX_DEVICE_ASSIGNMENTS = 500
     const val MAX_ITEMS_PER_AQUARIUM = 2_000
     const val MAX_LIVESTOCK_CATALOG_ID_CHARS = 160
+    const val MAX_HEALTH_OBSERVATIONS = 500
+    const val MAX_HEALTH_CHECKS = 300
+    const val MAX_HEALTH_SYMPTOMS = 5
+    const val MAX_AFFECTED_LIVESTOCK = 100_000
     const val BUFFER_SIZE = 8 * 1024
 
     val mediaEntryPattern = Regex(
@@ -108,20 +112,7 @@ internal class UserDataBackupValidator {
                 )
             }
         }
-        val observations = aquarium.healthObservations.orEmpty()
-        require(observations.size <= 500) { "Too many archived health observations." }
-        validateArchiveItemIds(observations.map(ArchiveHealthObservation::id))
-        observations.forEach { observation ->
-            require(observation.livestockId > 0L && observation.livestockName.isNotBlank())
-            require(observation.livestockCategory in AquariumLivestockTaxonomy.categoryCodes)
-            require(observation.catalogEntryId.isNotBlank())
-            require(observation.affectedCount in 1..100_000)
-            require(observation.startedAtMillis in 1..observation.observedAtMillis)
-            require(observation.symptomCodes.size in 1..5 &&
-                observation.symptomCodes.distinct().size == observation.symptomCodes.size)
-            require(observation.checks.orEmpty().size <= 300)
-            observation.toApplication()
-        }
+        validateArchivedHealthObservations(aquarium.healthObservations.orEmpty())
     }
 
     private fun validateCareTasks(
@@ -187,11 +178,15 @@ internal class UserDataBackupValidator {
                 }
                 aquarium.healthObservations.orEmpty().forEach { observation ->
                     observation.photo?.let { reference ->
-                        add(reference to "${UserDataBackupLimits.MEDIA_PREFIX}${aquarium.id}_observation_${observation.id}.jpg")
+                        val entry = "${UserDataBackupLimits.MEDIA_PREFIX}${aquarium.id}" +
+                            "_observation_${observation.id}.jpg"
+                        add(reference to entry)
                     }
                     observation.checks.orEmpty().forEach { check ->
                         check.photo?.let { reference ->
-                            add(reference to "${UserDataBackupLimits.MEDIA_PREFIX}${aquarium.id}_observation_${observation.id}_check_${check.id}.jpg")
+                            val entry = "${UserDataBackupLimits.MEDIA_PREFIX}${aquarium.id}" +
+                                "_observation_${observation.id}_check_${check.id}.jpg"
+                            add(reference to entry)
                         }
                     }
                 }
@@ -207,6 +202,24 @@ internal class UserDataBackupValidator {
         require(mediaByEntryName.keys == referenced) {
             "Backup contains unreferenced or missing media entries."
         }
+    }
+}
+
+private fun validateArchivedHealthObservations(observations: List<ArchiveHealthObservation>) {
+    require(observations.size <= UserDataBackupLimits.MAX_HEALTH_OBSERVATIONS) {
+        "Too many archived health observations."
+    }
+    validateArchiveItemIds(observations.map(ArchiveHealthObservation::id))
+    observations.forEach { observation ->
+        require(observation.livestockId > 0L && observation.livestockName.isNotBlank())
+        require(observation.livestockCategory in AquariumLivestockTaxonomy.categoryCodes)
+        require(observation.catalogEntryId.isNotBlank())
+        require(observation.affectedCount in 1..UserDataBackupLimits.MAX_AFFECTED_LIVESTOCK)
+        require(observation.startedAtMillis in 1..observation.observedAtMillis)
+        require(observation.symptomCodes.size in 1..UserDataBackupLimits.MAX_HEALTH_SYMPTOMS &&
+            observation.symptomCodes.distinct().size == observation.symptomCodes.size)
+        require(observation.checks.orEmpty().size <= UserDataBackupLimits.MAX_HEALTH_CHECKS)
+        observation.toApplication()
     }
 }
 

@@ -55,6 +55,10 @@ import com.aqua.aqualight.ui.tabs.maintenance.TankActivityUiState
 import java.util.Calendar
 import kotlinx.coroutines.launch
 
+private const val SYMPTOMS_PER_ROW = 3
+private const val MAX_SELECTED_SYMPTOMS = 5
+private const val NOTE_MAX_LINES = 4
+
 /** Every displayed livestock entry comes from the selected tank, never from the full catalog. */
 class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
     private val args: LivestockHealthFragmentArgs by navArgs()
@@ -315,11 +319,12 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
         content.addView(ui.text(getString(R.string.livestock_health_form_symptoms_hint),
             colorRes = R.color.aqua_card_text_secondary))
         content.addView(ui.spacer())
-        symptomsFor(selected.category).chunked(3).forEach { group ->
+        symptomsFor(selected.category).chunked(SYMPTOMS_PER_ROW).forEach { group ->
             val row = ui.row()
             group.forEach { symptom ->
                 row.addView(ui.choice(ui.symptomName(symptom), symptom in selectedSymptoms) {
-                    if (!selectedSymptoms.remove(symptom) && selectedSymptoms.size < 5) {
+                    if (!selectedSymptoms.remove(symptom) &&
+                        selectedSymptoms.size < MAX_SELECTED_SYMPTOMS) {
                         selectedSymptoms += symptom
                     }
                     if (LivestockHealthSymptom.SURFACE_FREQUENCY_CHANGE !in selectedSymptoms) baseline = null
@@ -400,10 +405,12 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
     }
 
     private fun saveObservation() {
-        val current = tank ?: return
-        val item = current.livestock.firstOrNull { it.id == selectedLivestockId } ?: return
-        if (saving || selectedSymptoms.isEmpty() || affectedCount !in 1..item.quantity) return
-        if (LivestockHealthSymptom.SURFACE_FREQUENCY_CHANGE in selectedSymptoms && baseline == null) return
+        val current = tank
+        val item = current?.livestock?.firstOrNull { it.id == selectedLivestockId }
+        if (current == null || item == null || saving || selectedSymptoms.isEmpty() ||
+            affectedCount !in 1..item.quantity ||
+            (LivestockHealthSymptom.SURFACE_FREQUENCY_CHANGE in selectedSymptoms && baseline == null)
+        ) return
         val now = System.currentTimeMillis()
         val onset = startedAtMillis.takeIf { it in 1..now } ?: now
         val observation = LivestockHealthObservation(
@@ -595,7 +602,7 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
         val field = EditText(requireContext()).apply {
             hint = getString(R.string.livestock_health_form_note_hint)
             minLines = 2
-            maxLines = 4
+            maxLines = NOTE_MAX_LINES
             setText(value)
             doAfterTextChanged { onChange(it?.toString().orEmpty()) }
         }

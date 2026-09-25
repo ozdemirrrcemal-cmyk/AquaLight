@@ -7,16 +7,15 @@ import com.aqua.aqualight.application.aquarium.AquariumLivestock
 import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
 import com.aqua.aqualight.application.aquarium.AquariumPlantTag
 import com.aqua.aqualight.application.aquarium.AquariumTankDraft
+import com.aqua.aqualight.application.aquarium.AquariumHealthOperations
 import com.aqua.aqualight.application.aquarium.AquariumTankOperations
 import com.aqua.aqualight.application.aquarium.AquariumTankSize
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.application.aquarium.DeleteAquariumTanksResult
-import com.aqua.aqualight.application.aquarium.LivestockHealthCheck
-import com.aqua.aqualight.application.aquarium.LivestockHealthObservation
 
 class AquariumTankViewModel(
     private val operations: AquariumTankOperations
-) : ViewModel() {
+) : ViewModel(), AquariumHealthOperations by operations {
 
     val tanks: LiveData<List<AquariumTankSnapshot>> = operations.tanks.asLiveData()
 
@@ -81,15 +80,6 @@ class AquariumTankViewModel(
 
     suspend fun removeLivestockFromTank(tankId: Long, livestockId: Long) =
         operations.removeLivestock(tankId, livestockId)
-
-    suspend fun addHealthObservation(tankId: Long, observation: LivestockHealthObservation) =
-        operations.addHealthObservation(tankId, observation)
-
-    suspend fun addHealthCheck(tankId: Long, observationId: Long, check: LivestockHealthCheck) =
-        operations.addHealthCheck(tankId, observationId, check)
-
-    suspend fun closeHealthObservation(tankId: Long, observationId: Long, atMillis: Long) =
-        operations.closeHealthObservation(tankId, observationId, atMillis)
 
     suspend fun updateSmartCareEnabled(tankId: Long, enabled: Boolean) =
         operations.updateSmartCareEnabled(tankId, enabled)

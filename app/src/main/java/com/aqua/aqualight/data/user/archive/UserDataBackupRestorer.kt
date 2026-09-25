@@ -169,7 +169,7 @@ internal class UserDataBackupRestorer(
             val references = listOfNotNull(observation.photo) +
                 observation.checks.orEmpty().mapNotNull(ArchiveHealthCheck::photo)
             val photos = linkedMapOf<String, String>()
-            try {
+            runCatching {
                 references.forEach { reference ->
                     val bytes = requireNotNull(backup.mediaByEntryName[reference.entryName])
                     photos[reference.entryName] = mediaOperations.prepareRestoredTankPhoto(
@@ -178,10 +178,9 @@ internal class UserDataBackupRestorer(
                 dataSources.tanks.restoreHealthObservation(newTankId,
                     observation.toApplication(photos))
                 photos.values.forEach { photoUri -> mediaOperations.commit(photoUri) }
-            } catch (error: Exception) {
+            }.onFailure {
                 photos.values.forEach { photoUri -> mediaOperations.rollback(photoUri) }
-                throw error
-            }
+            }.getOrThrow()
         }
     }
 

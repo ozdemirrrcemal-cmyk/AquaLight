@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.user.archive
 
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
+import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.data.user.UserPreferencesManager
@@ -59,30 +60,9 @@ internal class UserDataArchiveSnapshotCollector(
                     )
                 }
             }
-            val observationPhotoReferences = mutableMapOf<String, ArchiveMediaReference>()
-            tank.healthObservations.forEach { observation ->
-                val photos = listOfNotNull(
-                    observation.photoUri?.let { uri -> uri to
-                        "${UserDataBackupLimits.MEDIA_PREFIX}${tank.id}_observation_${observation.id}.jpg" }
-                ) + observation.checks.mapNotNull { check ->
-                    check.photoUri?.let { uri -> uri to
-                        "${UserDataBackupLimits.MEDIA_PREFIX}${tank.id}_observation_${observation.id}_check_${check.id}.jpg" }
-                }
-                photos.forEach { (uri, entryName) ->
-                    if (mediaDirectory == null) {
-                        if (mediaGateway.canSnapshotTankPhoto(uri)) archivedPhotoCount++
-                    } else {
-                        val destination = File(mediaDirectory, entryName.substringAfterLast('/') + ".media")
-                        val staged = requireNotNull(mediaGateway.snapshotTankPhoto(uri, destination)) {
-                            "Observation photo could not be included in the backup."
-                        }
-                        archivedPhotoCount++
-                        media[entryName] = staged
-                        observationPhotoReferences[entryName] = ArchiveMediaReference(
-                            entryName, staged.length().toInt(), sha256(staged))
-                    }
-                }
-            }
+            val (observationPhotoReferences, observationPhotoCount) =
+                collectHealthPhotoReferences(tank, mediaDirectory, mediaGateway, media)
+            archivedPhotoCount += observationPhotoCount
             tank.toArchiveAquarium(photoReference, observationPhotoReferences)
         }
         requireOwner()
@@ -145,6 +125,38 @@ internal class UserDataArchiveSnapshotCollector(
             "Authenticated owner changed during user-data archive operation."
         }
     }
+}
+
+private fun collectHealthPhotoReferences(
+    tank: SavedAquariumTank,
+    mediaDirectory: File?,
+    mediaGateway: UserDataArchiveMediaGateway,
+    media: MutableMap<String, File>
+): Pair<Map<String, ArchiveMediaReference>, Int> {
+    val references = mutableMapOf<String, ArchiveMediaReference>()
+    var photoCount = 0
+    tank.healthObservations.forEach { observation ->
+        val prefix = "${UserDataBackupLimits.MEDIA_PREFIX}${tank.id}_observation_${observation.id}"
+        val photos = listOfNotNull(observation.photoUri?.let { uri -> uri to "$prefix.jpg" }) +
+            observation.checks.mapNotNull { check ->
+                check.photoUri?.let { uri -> uri to "${prefix}_check_${check.id}.jpg" }
+            }
+        photos.forEach { (uri, entryName) ->
+            if (mediaDirectory == null) {
+                if (mediaGateway.canSnapshotTankPhoto(uri)) photoCount++
+            } else {
+                val destination = File(mediaDirectory, entryName.substringAfterLast('/') + ".media")
+                val staged = requireNotNull(mediaGateway.snapshotTankPhoto(uri, destination)) {
+                    "Observation photo could not be included in the backup."
+                }
+                photoCount++
+                media[entryName] = staged
+                references[entryName] = ArchiveMediaReference(
+                    entryName, staged.length().toInt(), sha256(staged))
+            }
+        }
+    }
+    return references to photoCount
 }
 
 internal data class UserDataAquariumSnapshot(

@@ -7,12 +7,11 @@ import com.aqua.aqualight.application.aquarium.AquariumPlantTag
 import com.aqua.aqualight.application.aquarium.AquariumTankCleanupIssue
 import com.aqua.aqualight.application.aquarium.AquariumTankCleanupStage
 import com.aqua.aqualight.application.aquarium.AquariumTankDraft
+import com.aqua.aqualight.application.aquarium.AquariumHealthOperations
 import com.aqua.aqualight.application.aquarium.AquariumTankOperations
 import com.aqua.aqualight.application.aquarium.AquariumTankSize
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.application.aquarium.DeleteAquariumTanksResult
-import com.aqua.aqualight.application.aquarium.LivestockHealthCheck
-import com.aqua.aqualight.application.aquarium.LivestockHealthObservation
 import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
 import com.aqua.aqualight.data.aquarium.catalog.livestock.LivestockSelectionValidator
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
@@ -38,7 +37,8 @@ class DefaultAquariumTankOperations(
     private val tankDataCleaner: OwnerTankDataCleaner,
     private val notificationPreferences: NotificationPreferenceUseCase,
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
-) : AquariumTankOperations {
+) : AquariumTankOperations,
+    AquariumHealthOperations by DefaultAquariumHealthOperations(context, tankStore, dispatcher) {
 
     private val appContext = context.applicationContext
     private val livestockSelectionValidator = LivestockSelectionValidator(appContext)
@@ -178,37 +178,6 @@ class DefaultAquariumTankOperations(
 
     override suspend fun removeLivestock(tankId: Long, livestockId: Long) =
         tankStore.removeLivestockFromTank(tankId, livestockId)
-
-    override suspend fun addHealthObservation(tankId: Long, observation: LivestockHealthObservation) =
-        withContext(NonCancellable) {
-            withContext(dispatcher) {
-                try {
-                    tankStore.addHealthObservation(tankId, observation)
-                } catch (error: Throwable) {
-                    runCatching { AppMediaStorage.rollbackPendingMedia(appContext, observation.photoUri) }
-                    throw error
-                }
-                runCatching { AppMediaStorage.commitPendingMedia(appContext, observation.photoUri) }
-                Unit
-            }
-        }
-
-    override suspend fun addHealthCheck(tankId: Long, observationId: Long, check: LivestockHealthCheck) =
-        withContext(NonCancellable) {
-            withContext(dispatcher) {
-                try {
-                    tankStore.addHealthCheck(tankId, observationId, check)
-                } catch (error: Throwable) {
-                    runCatching { AppMediaStorage.rollbackPendingMedia(appContext, check.photoUri) }
-                    throw error
-                }
-                runCatching { AppMediaStorage.commitPendingMedia(appContext, check.photoUri) }
-                Unit
-            }
-        }
-
-    override suspend fun closeHealthObservation(tankId: Long, observationId: Long, atMillis: Long) =
-        tankStore.closeHealthObservation(tankId, observationId, atMillis)
 
     override suspend fun updateSmartCareEnabled(tankId: Long, enabled: Boolean) =
         tankStore.updateSmartCareEnabled(tankId, enabled)

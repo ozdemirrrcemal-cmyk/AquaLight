@@ -68,7 +68,13 @@ internal fun SavedAquariumTank.toArchiveAquarium(
                 catalogEntryId = item.catalogEntryId
             )
         },
-        healthObservations = healthObservations.map { observation ->
+        healthObservations = archiveHealthObservations(healthPhotoReferences)
+    )
+}
+
+private fun SavedAquariumTank.archiveHealthObservations(
+    healthPhotoReferences: Map<String, ArchiveMediaReference>
+): List<ArchiveHealthObservation> = healthObservations.map { observation ->
             ArchiveHealthObservation(
                 id = observation.id,
                 livestockId = observation.livestockId,
@@ -94,8 +100,6 @@ internal fun SavedAquariumTank.toArchiveAquarium(
                 }
             )
         }
-    )
-}
 
 internal fun ArchiveHealthObservation.toApplication(
     photoUris: Map<String, String> = emptyMap()

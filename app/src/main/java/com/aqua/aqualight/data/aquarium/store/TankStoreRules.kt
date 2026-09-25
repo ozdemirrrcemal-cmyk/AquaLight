@@ -3,9 +3,6 @@ package com.aqua.aqualight.data.aquarium.store
 import com.aqua.aqualight.application.aquarium.AquariumLivestockIdentity
 import com.aqua.aqualight.application.aquarium.AquariumLivestockTaxonomy
 import com.aqua.aqualight.application.aquarium.AquariumTankTaxonomy
-import com.aqua.aqualight.application.aquarium.BaselineChange
-import com.aqua.aqualight.application.aquarium.LivestockHealthSymptom
-import com.aqua.aqualight.application.aquarium.LivestockHealthTrend
 import com.aqua.aqualight.data.store.CommercialStoreSchema
 import com.aqua.aqualight.data.store.StoreInvariantViolation
 import java.time.LocalDate
@@ -85,7 +82,7 @@ object TankStoreRules {
         validatePlants(tank)
         validateMaterials(tank)
         validateLivestock(tank)
-        validateHealthObservations(tank)
+        StoredLivestockHealthRules.validate(tank)
 
         return tank
     }
@@ -201,70 +198,6 @@ object TankStoreRules {
         }
     }
 
-    private fun validateHealthObservations(tank: StoredTank) {
-        if (tank.healthObservationsCount > 500) {
-            violation("Too many health observations in tank ${tank.id}.")
-        }
-        val ids = mutableSetOf<Long>()
-        tank.healthObservationsList.forEach { observation ->
-            requirePositiveId("health.id", observation.id)
-            if (!ids.add(observation.id)) violation("Duplicate health observation id.")
-            requirePositiveId("health.livestockId", observation.livestockId)
-            requireCanonicalRequiredText("health.livestockName", observation.livestockName, MAX_ENTITY_NAME_CHARS)
-            requireCanonicalRequiredText("health.catalogEntryId", observation.catalogEntryId, MAX_PRODUCT_ID_CHARS)
-            if (observation.livestockCategory !in AquariumLivestockTaxonomy.categoryCodes) {
-                violation("health.livestockCategory is invalid.")
-            }
-            if (observation.affectedCount !in 1..100_000) violation("health.affectedCount is invalid.")
-            requireTimestamp("health.observedAtMillis", observation.observedAtMillis)
-            requireTimestamp("health.startedAtMillis", observation.startedAtMillis)
-            if (observation.startedAtMillis > observation.observedAtMillis) {
-                violation("Health symptom onset cannot follow its observation.")
-            }
-            requireCanonicalOptionalText("health.note", observation.note, MAX_NOTE_CHARS)
-            requireCanonicalOptionalText("health.photoUri", observation.photoUri, MAX_URI_CHARS)
-            if (observation.symptomCodesCount !in 1..5 ||
-                observation.symptomCodesList.size != observation.symptomCodesList.toSet().size ||
-                observation.symptomCodesList.any { code ->
-                    LivestockHealthSymptom.entries.none { it.code == code }
-                }
-            ) violation("Health symptoms are invalid.")
-            if (observation.trendCode !in LivestockHealthTrend.entries.map { it.code } ||
-                observation.trendCode == LivestockHealthTrend.RESOLVED.code
-            ) violation("Initial health trend is invalid.")
-            if (observation.baselineChangeCode.isNotEmpty() &&
-                BaselineChange.entries.none { it.code == observation.baselineChangeCode }
-            ) violation("Health baseline change is invalid.")
-            if (LivestockHealthSymptom.SURFACE_FREQUENCY_CHANGE.code in observation.symptomCodesList &&
-                observation.baselineChangeCode.isEmpty()
-            ) violation("Surface behavior requires baseline context.")
-            if (observation.checksCount > 300) violation("Too many follow-up checks.")
-            var lastAt = observation.observedAtMillis
-            val checkIds = mutableSetOf<Long>()
-            observation.checksList.forEach { check ->
-                requirePositiveId("health.check.id", check.id)
-                if (!checkIds.add(check.id)) violation("Duplicate health check id.")
-                requireTimestamp("health.check.observedAtMillis", check.observedAtMillis)
-                if (check.observedAtMillis < lastAt) violation("Health checks must be chronological.")
-                lastAt = check.observedAtMillis
-                if (check.affectedCount !in 1..100_000) violation("Health check count is invalid.")
-                if (LivestockHealthTrend.entries.none { it.code == check.trendCode }) {
-                    violation("Health check trend is invalid.")
-                }
-                requireCanonicalOptionalText("health.check.note", check.note, MAX_NOTE_CHARS)
-                requireCanonicalOptionalText("health.check.photoUri", check.photoUri, MAX_URI_CHARS)
-            }
-            if (observation.closedAtMillis == 0L) {
-                if (observation.outcomeCode.isNotEmpty()) violation("Open health observation has an outcome.")
-            } else {
-                requireTimestamp("health.closedAtMillis", observation.closedAtMillis)
-                if (observation.closedAtMillis < lastAt ||
-                    observation.outcomeCode !in setOf("ended", LivestockHealthTrend.RESOLVED.code)
-                ) violation("Health closure is invalid.")
-            }
-        }
-    }
-
     private fun canonicalOwnerUid(value: String): String {
         val canonical = value.trim()
         if (canonical.isBlank() || canonical != value) {
@@ -276,7 +209,7 @@ object TankStoreRules {
         return canonical
     }
 
-    private fun requirePositiveId(field: String, value: Long) {
+    internal fun requirePositiveId(field: String, value: Long) {
         if (value <= 0L) {
             violation("$field must be positive.")
         }
@@ -288,7 +221,7 @@ object TankStoreRules {
         }
     }
 
-    private fun requireCanonicalRequiredText(
+    internal fun requireCanonicalRequiredText(
         field: String,
         value: String,
         maxChars: Int
@@ -300,7 +233,7 @@ object TankStoreRules {
         requireTextLength(field, canonical, maxChars)
     }
 
-    private fun requireCanonicalOptionalText(
+    internal fun requireCanonicalOptionalText(
         field: String,
         value: String,
         maxChars: Int
@@ -329,13 +262,13 @@ object TankStoreRules {
         }
     }
 
-    private fun requireTimestamp(field: String, value: Long) {
+    internal fun requireTimestamp(field: String, value: Long) {
         if (value !in MIN_TIMESTAMP_MILLIS..MAX_TIMESTAMP_MILLIS) {
             violation("$field is outside the supported commercial timestamp range.")
         }
     }
 
-    private fun violation(message: String): Nothing {
+    internal fun violation(message: String): Nothing {
         throw StoreInvariantViolation(message)
     }
 }

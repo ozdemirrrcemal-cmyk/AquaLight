@@ -10,9 +10,6 @@ import com.aqua.aqualight.data.aquarium.model.SavedAquariumLivestock
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumMaterial
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumPlant
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
-import com.aqua.aqualight.application.aquarium.LivestockHealthCheck
-import com.aqua.aqualight.application.aquarium.LivestockHealthObservation
-import com.aqua.aqualight.application.aquarium.LivestockHealthTrend
 import com.aqua.aqualight.data.aquarium.model.TankDraft
 import com.aqua.aqualight.data.aquarium.model.TankMaterialSelection
 import com.aqua.aqualight.data.aquarium.model.TankPlantTag
@@ -132,19 +129,14 @@ class AquariumTankDataStoreManager(
                     "Tank photo changed while duplication was being prepared."
                 }
 
-                val existingNames = currentStore.tanksList
-                    .filter { storedTank -> storedTank.belongsToOwner(ownerUid) }
-                    .mapTo(mutableSetOf()) { storedTank -> storedTank.name }
+                val existingNames = currentStore.tanksList.filter { it.belongsToOwner(ownerUid) }
+                    .mapTo(mutableSetOf()) { it.name }
+                val duplicateName = createDuplicateTankName(sourceTank.name,
+                    existingNames, duplicateNameContext)
                 val duplicatedTank = sourceTank.toBuilder()
                     .setId(newTankId)
                     .setOwnerUid(ownerUid)
-                    .setName(
-                        createDuplicateTankName(
-                            originalName = sourceTank.name,
-                            existingNames = existingNames,
-                            localizedContext = duplicateNameContext
-                        )
-                    )
+                    .setName(duplicateName)
                     .setPhotoUri(duplicatedPhotoUri.orEmpty().trim())
                     .setCreatedAtMillis(System.currentTimeMillis())
                     .clearHealthObservations()
@@ -486,73 +478,6 @@ class AquariumTankDataStoreManager(
         }
     }
 
-    suspend fun addHealthObservation(tankId: Long, observation: LivestockHealthObservation) {
-        require(observation.checks.isEmpty() && observation.closedAtMillis == null)
-        updateCurrentOwnerTank(tankId) { tank ->
-            require(tank.livestockList.any { it.id == observation.livestockId }) {
-                "Observation requires a livestock record in the active tank."
-            }
-            require(tank.healthObservationsList.none { it.id == observation.id }) {
-                "Duplicate health observation id."
-            }
-            val livestock = tank.livestockList.first { it.id == observation.livestockId }
-            require(observation.affectedCount in 1..livestock.quantity)
-            require(observation.livestockName == livestock.name)
-            require(observation.livestockCategory == livestock.category)
-            require(observation.catalogEntryId == livestock.catalogEntryId)
-            tank.toBuilder().addHealthObservations(observation.toStored()).build()
-        }
-    }
-
-    /** Restores an archived timeline in one validated, owner-scoped transaction. */
-    suspend fun restoreHealthObservation(tankId: Long, observation: LivestockHealthObservation) {
-        updateCurrentOwnerTank(tankId) { tank ->
-            require(tank.healthObservationsList.none { it.id == observation.id })
-            tank.toBuilder().addHealthObservations(observation.toStored()).build()
-        }
-    }
-
-    suspend fun addHealthCheck(tankId: Long, observationId: Long, check: LivestockHealthCheck) {
-        updateCurrentOwnerTank(tankId) { tank ->
-            val index = tank.healthObservationsList.indexOfFirst { it.id == observationId }
-            require(index >= 0) { "Health observation not found." }
-            val observation = tank.getHealthObservations(index)
-            require(observation.closedAtMillis == 0L) { "Health observation is closed." }
-            require(check.observedAtMillis >= observation.observedAtMillis)
-            require(observation.checksList.none { it.id == check.id })
-            val currentQuantity = tank.livestockList.firstOrNull {
-                it.id == observation.livestockId
-            }?.quantity ?: observation.affectedCount
-            require(check.affectedCount in 1..currentQuantity)
-            val updated = observation.toBuilder()
-                .addChecks(check.toStored())
-                .apply {
-                    if (check.trend == LivestockHealthTrend.RESOLVED) {
-                        closedAtMillis = check.observedAtMillis
-                        outcomeCode = LivestockHealthTrend.RESOLVED.code
-                    }
-                }.build()
-            tank.toBuilder().setHealthObservations(index, updated).build()
-        }
-    }
-
-    suspend fun closeHealthObservation(tankId: Long, observationId: Long, atMillis: Long) {
-        updateCurrentOwnerTank(tankId) { tank ->
-            val index = tank.healthObservationsList.indexOfFirst { it.id == observationId }
-            require(index >= 0) { "Health observation not found." }
-            val observation = tank.getHealthObservations(index)
-            require(observation.closedAtMillis == 0L) { "Health observation is already closed." }
-            val lastAt = observation.checksList.lastOrNull()?.observedAtMillis
-                ?: observation.observedAtMillis
-            require(atMillis >= lastAt)
-            tank.toBuilder().setHealthObservations(
-                index,
-                observation.toBuilder().setClosedAtMillis(atMillis)
-                    .setOutcomeCode("ended").build()
-            ).build()
-        }
-    }
-
     suspend fun updateSmartCareEnabled(
         tankId: Long,
         enabled: Boolean
@@ -575,7 +500,7 @@ class AquariumTankDataStoreManager(
         }
     }
 
-    private suspend fun updateCurrentOwnerTank(
+    internal suspend fun updateCurrentOwnerTank(
         tankId: Long,
         transform: (StoredTank) -> StoredTank
     ) {

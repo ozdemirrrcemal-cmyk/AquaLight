@@ -38,6 +38,8 @@ import com.yalantis.ucrop.UCrop
 import java.util.Date
 import kotlinx.coroutines.launch
 
+private const val CHECK_NOTE_MAX_LINES = 4
+
 /** Fragment owned sheet: restores its draft and queries the current owner's tank on recreation. */
 class LivestockHealthCheckSheet : BottomSheetDialogFragment() {
     private val tanks: AquariumTankViewModel by activityViewModels()
@@ -230,7 +232,7 @@ class LivestockHealthCheckSheet : BottomSheetDialogFragment() {
         body.addView(EditText(requireContext()).apply {
             hint = getString(R.string.livestock_health_form_note_hint)
             setText(checkNote)
-            maxLines = 4
+            maxLines = CHECK_NOTE_MAX_LINES
             doAfterTextChanged { checkNote = it?.toString().orEmpty() }
         })
         body.addView(ui.spacer())
