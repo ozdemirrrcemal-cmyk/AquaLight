@@ -43,7 +43,7 @@ class DeviceLightQuickSetupRecommendationEngineTest {
         assertEquals(90, result.requestedTargetPpfd)
         assertEquals(60, result.effectiveTargetPpfd)
         assertTrue(result.co2Limited)
-        assertTrue(DeviceLightQuickSetupEvidence.TWO_HR_CO2_PRECHARGE in result.evidenceIds)
+        assertTrue(DeviceLightQuickSetupEvidence.CO2_PRECHARGE_POLICY in result.evidenceIds)
     }
 
     @Test
@@ -123,7 +123,7 @@ class DeviceLightQuickSetupRecommendationEngineTest {
     @Test
     fun evidenceRegistryUsesReviewedHttpsSources() {
         assertEquals(4, DeviceLightQuickSetupEvidence.records.size)
-        assertTrue(DeviceLightQuickSetupEvidence.records.values.all { it.url.startsWith("https://") })
+        assertTrue(DeviceLightQuickSetupEvidence.records.values.all { it.policyUse.isNotBlank() })
     }
 
     private fun context(

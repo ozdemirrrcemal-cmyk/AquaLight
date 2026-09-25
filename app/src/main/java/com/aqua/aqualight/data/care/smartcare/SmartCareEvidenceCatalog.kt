@@ -22,37 +22,31 @@ enum class SmartCareEvidenceKind {
 }
 
 enum class SmartCareEvidenceId(val stableId: String) {
-    TROPICA_GROWING_IN("tropica_growing_in"),
-    TROPICA_QUICK_GUIDE("tropica_quick_guide"),
-    TROPICA_SPECIALISED_NUTRITION("tropica_specialised_nutrition"),
-    TROPICA_PREMIUM_NUTRITION("tropica_premium_nutrition"),
-    ADA_STARTING_FROM_ZERO("ada_starting_from_zero"),
-    ADA_LIQUID_FERTILIZERS("ada_liquid_fertilizers"),
-    UF_IFAS_FISH_HEALTH("uf_ifas_fish_health")
+    PLANT_STARTUP_METHOD("plant_startup_method"),
+    PLANT_STARTUP_QUICK_GUIDE("plant_startup_quick_guide"),
+    PLANT_NUTRITION_MACRO_MICRO_GUIDE("plant_nutrition_macro_micro_guide"),
+    PLANT_NUTRITION_MICRO_GUIDE("plant_nutrition_micro_guide"),
+    AQUASCAPE_STARTUP_GUIDE("aquascape_startup_guide"),
+    AQUASCAPE_FERTILIZATION_GUIDE("aquascape_fertilization_guide"),
+    FISH_HEALTH_REFERENCE("fish_health_reference")
 }
 
 data class SmartCareEvidenceSource(
     val id: SmartCareEvidenceId,
-    val organization: String,
-    val title: String,
-    val url: String,
     val kind: SmartCareEvidenceKind,
     val topics: Set<SmartCareEvidenceTopic>,
     val reviewedOn: String,
     val requiresProfessionalDiagnosis: Boolean = false
 )
 
-/** Versioned, auditable evidence behind Smart Care decisions. */
+/** Versioned internal evidence categories behind Smart Care decisions. */
 object SmartCareEvidenceCatalog {
 
     private const val REVIEW_DATE = "2026-09-15"
 
     val sources: List<SmartCareEvidenceSource> = listOf(
         SmartCareEvidenceSource(
-            id = SmartCareEvidenceId.TROPICA_GROWING_IN,
-            organization = "Tropica Aquarium Plants",
-            title = "Starting a new aquarium: Growing-in",
-            url = "https://tropica.com/en/guide/get-the-right-start/growing-in/",
+            id = SmartCareEvidenceId.PLANT_STARTUP_METHOD,
             kind = SmartCareEvidenceKind.OFFICIAL_METHOD_GUIDE,
             topics = setOf(
                 SmartCareEvidenceTopic.STARTUP,
@@ -66,10 +60,7 @@ object SmartCareEvidenceCatalog {
             reviewedOn = REVIEW_DATE
         ),
         SmartCareEvidenceSource(
-            id = SmartCareEvidenceId.TROPICA_QUICK_GUIDE,
-            organization = "Tropica Aquarium Plants",
-            title = "Make your aquarium a success",
-            url = "https://tropica.com/media/870849/REDUCEDP14-11434-Quickguide_ny-UK.pdf",
+            id = SmartCareEvidenceId.PLANT_STARTUP_QUICK_GUIDE,
             kind = SmartCareEvidenceKind.OFFICIAL_METHOD_GUIDE,
             topics = setOf(
                 SmartCareEvidenceTopic.STARTUP,
@@ -78,10 +69,7 @@ object SmartCareEvidenceCatalog {
             reviewedOn = REVIEW_DATE
         ),
         SmartCareEvidenceSource(
-            id = SmartCareEvidenceId.TROPICA_SPECIALISED_NUTRITION,
-            organization = "Tropica Aquarium Plants",
-            title = "Specialised Nutrition",
-            url = "https://tropica.com/en/plant-care/liquid-fertilisers/specialised-nutrition/",
+            id = SmartCareEvidenceId.PLANT_NUTRITION_MACRO_MICRO_GUIDE,
             kind = SmartCareEvidenceKind.OFFICIAL_PRODUCT_GUIDE,
             topics = setOf(
                 SmartCareEvidenceTopic.FERTILIZER,
@@ -91,10 +79,7 @@ object SmartCareEvidenceCatalog {
             reviewedOn = REVIEW_DATE
         ),
         SmartCareEvidenceSource(
-            id = SmartCareEvidenceId.TROPICA_PREMIUM_NUTRITION,
-            organization = "Tropica Aquarium Plants",
-            title = "Premium Nutrition",
-            url = "https://tropica.com/en/plant-care/liquid-fertilisers/premium-nutrition/",
+            id = SmartCareEvidenceId.PLANT_NUTRITION_MICRO_GUIDE,
             kind = SmartCareEvidenceKind.OFFICIAL_PRODUCT_GUIDE,
             topics = setOf(
                 SmartCareEvidenceTopic.FERTILIZER,
@@ -104,10 +89,7 @@ object SmartCareEvidenceCatalog {
             reviewedOn = REVIEW_DATE
         ),
         SmartCareEvidenceSource(
-            id = SmartCareEvidenceId.ADA_STARTING_FROM_ZERO,
-            organization = "Aqua Design Amano",
-            title = "Nature Aquarium Starting from Zero",
-            url = "https://www.adana.co.jp/en/contents/process/index.html",
+            id = SmartCareEvidenceId.AQUASCAPE_STARTUP_GUIDE,
             kind = SmartCareEvidenceKind.OFFICIAL_METHOD_GUIDE,
             topics = setOf(
                 SmartCareEvidenceTopic.STARTUP,
@@ -121,10 +103,7 @@ object SmartCareEvidenceCatalog {
             reviewedOn = REVIEW_DATE
         ),
         SmartCareEvidenceSource(
-            id = SmartCareEvidenceId.ADA_LIQUID_FERTILIZERS,
-            organization = "Aqua Design Amano",
-            title = "The New Green Brighty",
-            url = "https://www.adana.co.jp/en/contents/products/na_liquid/new_liquid/index.html",
+            id = SmartCareEvidenceId.AQUASCAPE_FERTILIZATION_GUIDE,
             kind = SmartCareEvidenceKind.OFFICIAL_PRODUCT_GUIDE,
             topics = setOf(
                 SmartCareEvidenceTopic.FERTILIZER,
@@ -133,10 +112,7 @@ object SmartCareEvidenceCatalog {
             reviewedOn = REVIEW_DATE
         ),
         SmartCareEvidenceSource(
-            id = SmartCareEvidenceId.UF_IFAS_FISH_HEALTH,
-            organization = "University of Florida IFAS Extension",
-            title = "Fish Health Management in Recirculating Aquaculture Systems, Part 3",
-            url = "https://ask.ifas.ufl.edu/publication/FA101",
+            id = SmartCareEvidenceId.FISH_HEALTH_REFERENCE,
             kind = SmartCareEvidenceKind.VETERINARY_REFERENCE,
             topics = setOf(
                 SmartCareEvidenceTopic.WATER_QUALITY,
@@ -153,7 +129,6 @@ object SmartCareEvidenceCatalog {
 
     init {
         require(sourcesById.size == SmartCareEvidenceId.entries.size)
-        require(sources.all { source -> source.url.startsWith("https://") })
         require(sources.all { source -> source.topics.isNotEmpty() })
     }
 

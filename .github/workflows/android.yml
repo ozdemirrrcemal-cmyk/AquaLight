@@ -108,6 +108,7 @@ jobs:
             --release-workflow .github/workflows/android_release.yml \
             --summary build/reports/stage14/policy-validation.json
           python3 tools/architecture_guard.py
+          python3 tools/generate_plant_light_catalog.py --check
           python3 tools/installable_debug_real_device_guard.py
           python3 tools/dosing_architecture_guard.py
           python3 tools/navigation_guard.py

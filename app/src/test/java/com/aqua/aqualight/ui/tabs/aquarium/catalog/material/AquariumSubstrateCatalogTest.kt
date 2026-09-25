@@ -146,8 +146,6 @@ class AquariumSubstrateCatalogTest {
         assertEquals(EXPECTED_TOTAL_COUNT, metadata.size)
         assertEquals(EXPECTED_VERIFIED_COUNT, verified.size)
         assertEquals(EXPECTED_UNKNOWN_COUNT, unresolved.size)
-        assertTrue(metadata.all { record -> record.sourceOrganization.isNotBlank() })
-        assertTrue(metadata.all { record -> record.sourceRecordId.isNotBlank() })
         assertTrue(metadata.all { record -> record.catalogRevision == 1 })
         assertTrue(
             unresolved.all { record ->
