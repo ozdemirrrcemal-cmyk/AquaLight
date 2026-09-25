@@ -17,6 +17,7 @@ import com.aqua.aqualight.ui.tabs.maintenance.model.MaintenanceTab
 import com.aqua.aqualight.ui.tabs.maintenance.text.MaintenanceTextResolver
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -184,18 +185,24 @@ class MaintenanceViewModel(
     }
 
     suspend fun completeTask(taskId: Long) {
-        operations.completeTask(taskId)
+        viewModelScope.async {
+            operations.completeTask(taskId)
+        }.await()
     }
 
     suspend fun deleteTask(taskId: Long) {
-        operations.deleteTask(taskId)
+        viewModelScope.async {
+            operations.deleteTask(taskId)
+        }.await()
     }
 
     suspend fun updateCompletedTaskDate(
         taskId: Long,
         completedAtMillis: Long
     ) {
-        operations.updateCompletedTaskDate(taskId, completedAtMillis)
+        viewModelScope.async {
+            operations.updateCompletedTaskDate(taskId, completedAtMillis)
+        }.await()
     }
 
     suspend fun addCompletedActivity(
@@ -205,15 +212,17 @@ class MaintenanceViewModel(
         waterChangePercent: Int? = null,
         note: String = ""
     ) {
-        operations.addCompletedActivity(
-            CompletedCareActivityInput(
-                tankId = tankId,
-                type = type,
-                completedAtMillis = completedAtMillis,
-                waterChangePercent = waterChangePercent,
-                note = note
+        viewModelScope.async {
+            operations.addCompletedActivity(
+                CompletedCareActivityInput(
+                    tankId = tankId,
+                    type = type,
+                    completedAtMillis = completedAtMillis,
+                    waterChangePercent = waterChangePercent,
+                    note = note
+                )
             )
-        )
+        }.await()
     }
 
     suspend fun deleteManualTask(taskId: Long) {
