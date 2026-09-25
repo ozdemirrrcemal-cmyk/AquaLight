@@ -47,15 +47,24 @@ class DefaultAquariumTankOperations(
 
     override suspend fun addTank(draft: AquariumTankDraft): Long = withContext(NonCancellable) {
         withContext(dispatcher) {
-            val pendingPhoto = draft.photoUri
+            val pendingMedia = buildList {
+                draft.photoUri?.takeIf(String::isNotBlank)?.let(::add)
+                draft.plants
+                    .mapNotNull { plant -> plant.photoUri?.takeIf(String::isNotBlank) }
+                    .forEach(::add)
+            }
             val tankId = try {
                 tankStore.addTankFromDraft(draft.toDataDraft())
             } catch (error: Throwable) {
-                runCatching { AppMediaStorage.rollbackPendingMedia(appContext, pendingPhoto) }
+                pendingMedia.forEach { uri ->
+                    runCatching { AppMediaStorage.rollbackPendingMedia(appContext, uri) }
+                }
                 throw error
             }
 
-            runCatching { AppMediaStorage.commitPendingMedia(appContext, pendingPhoto) }
+            pendingMedia.forEach { uri ->
+                runCatching { AppMediaStorage.commitPendingMedia(appContext, uri) }
+            }
             tankId
         }
     }
@@ -75,14 +84,31 @@ class DefaultAquariumTankOperations(
             val invalidSharedOwnership = sourceIsOwned &&
                 !source.photoUri.isNullOrBlank() &&
                 (duplicate.photoUri.isNullOrBlank() || duplicate.photoUri == source.photoUri)
-            if (invalidSharedOwnership) {
+            val duplicatePlantsById = duplicate.plants.associateBy { plant -> plant.id }
+            val hasInvalidPlantOwnership = source.plants.any { sourcePlant ->
+                val duplicatedPlant = duplicatePlantsById[sourcePlant.id]
+                AppMediaStorage.isAppOwned(appContext, sourcePlant.photoUri) &&
+                    !sourcePlant.photoUri.isNullOrBlank() &&
+                    (
+                        duplicatedPlant?.photoUri.isNullOrBlank() ||
+                            duplicatedPlant?.photoUri == sourcePlant.photoUri
+                        )
+            }
+            if (invalidSharedOwnership || hasInvalidPlantOwnership) {
                 runCatching { tankStore.deleteTanks(listOf(duplicateId)) }
                 throw IllegalStateException(
-                    "Tank photo could not be copied with independent ownership."
+                    "Tank media could not be copied with independent ownership."
                 )
             }
 
-            runCatching { AppMediaStorage.commitPendingMedia(appContext, duplicate.photoUri) }
+            buildList {
+                duplicate.photoUri?.takeIf(String::isNotBlank)?.let(::add)
+                duplicate.plants
+                    .mapNotNull { plant -> plant.photoUri?.takeIf(String::isNotBlank) }
+                    .forEach(::add)
+            }.forEach { uri ->
+                runCatching { AppMediaStorage.commitPendingMedia(appContext, uri) }
+            }
             duplicateId
         }
     }
@@ -117,6 +143,32 @@ class DefaultAquariumTankOperations(
                 Unit
             }
         }
+
+    override suspend fun updatePlantPhoto(
+        tankId: Long,
+        plantId: Long,
+        photoUri: String?
+    ): Unit = withContext(NonCancellable) {
+        withContext(dispatcher) {
+            val ownerUid = UserDataScope.requireCurrentUid()
+            val previousPhoto = try {
+                tankStore.updatePlantPhoto(tankId, plantId, photoUri)
+            } catch (error: Throwable) {
+                runCatching { AppMediaStorage.rollbackPendingMedia(appContext, photoUri) }
+                throw error
+            }
+
+            runCatching { AppMediaStorage.commitPendingMedia(appContext, photoUri) }
+            runCatching {
+                AppMediaStorage.deleteAfterCommit(
+                    context = appContext,
+                    ownerUid = ownerUid,
+                    uriString = previousPhoto
+                )
+            }
+            Unit
+        }
+    }
 
     override suspend fun updateTankName(tankId: Long, name: String) =
         tankStore.updateTankName(tankId, name)
@@ -155,8 +207,27 @@ class DefaultAquariumTankOperations(
         materials = materials.map(AquariumMaterialSelection::toDataSelection)
     )
 
-    override suspend fun updateTankPlants(tankId: Long, plants: List<AquariumPlantTag>) =
-        tankStore.updateTankPlants(tankId, plants.map(AquariumPlantTag::toDataTag))
+    override suspend fun updateTankPlants(
+        tankId: Long,
+        plants: List<AquariumPlantTag>
+    ): Unit = withContext(NonCancellable) {
+        withContext(dispatcher) {
+            val ownerUid = UserDataScope.requireCurrentUid()
+            val supersededPhotos = tankStore.updateTankPlants(
+                tankId,
+                plants.map(AquariumPlantTag::toDataTag)
+            )
+            supersededPhotos.forEach { uri ->
+                runCatching {
+                    AppMediaStorage.deleteAfterCommit(
+                        context = appContext,
+                        ownerUid = ownerUid,
+                        uriString = uri
+                    )
+                }
+            }
+        }
+    }
 
     override suspend fun addLivestock(
         tankId: Long,
@@ -233,7 +304,8 @@ internal fun SavedAquariumTank.toApplicationSnapshot(): AquariumTankSnapshot =
                 plantName = plant.plantName,
                 category = plant.category,
                 markerX = plant.markerX,
-                markerY = plant.markerY
+                markerY = plant.markerY,
+                photoUri = plant.photoUri
             )
         },
         materials = materials.map { material ->
@@ -283,7 +355,8 @@ private fun AquariumPlantTag.toDataTag(): TankPlantTag = TankPlantTag(
     plantName = plantName,
     category = category,
     markerX = markerX,
-    markerY = markerY
+    markerY = markerY,
+    photoUri = photoUri
 )
 
 private fun AquariumMaterialSelection.toDataSelection(): TankMaterialSelection =
