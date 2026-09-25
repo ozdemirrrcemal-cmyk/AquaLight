@@ -60,6 +60,18 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
         binding.btnEmptyAddLife.setOnClickListener {
             openLivestockPicker()
         }
+        binding.cardLivestockHealth.setOnClickListener {
+            val navController = findNavController()
+            navController.currentBackStackEntry?.savedStateHandle?.set(
+                TankDetailFragment.KEY_SELECTED_TAB,
+                TankDetailTabArgs.TANK_LIFE
+            )
+            navController.navigateSafelyFrom(
+                sourceDestinationId = R.id.tankDetailFragment,
+                directions = TankDetailFragmentDirections
+                    .actionTankDetailFragmentToLivestockHealthFragment(tankId)
+            )
+        }
     }
 
     private fun openLivestockPicker() {

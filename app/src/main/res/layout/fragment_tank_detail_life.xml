@@ -51,6 +51,63 @@
         </LinearLayout>
 
         <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.Aqua.Card.TankListItem"
+            android:id="@+id/cardLivestockHealth"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/aqua_size_16"
+            android:clickable="true"
+            android:focusable="true"
+            android:contentDescription="@string/livestock_health_home_title">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="@dimen/aqua_size_18">
+
+                <ImageView
+                    android:layout_width="@dimen/aqua_size_48"
+                    android:layout_height="@dimen/aqua_size_48"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_life_fish_24"
+                    app:tint="@color/aqua_accent_primary" />
+
+                <LinearLayout
+                    android:layout_width="@dimen/aqua_size_0"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/aqua_size_16"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/livestock_health_home_title"
+                        android:textColor="@color/aqua_card_text_primary"
+                        android:textSize="@dimen/aqua_text_size_body_large"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/aqua_size_4"
+                        android:text="@string/livestock_health_home_entry_subtitle"
+                        android:textColor="@color/aqua_card_text_secondary"
+                        android:textSize="@dimen/aqua_text_size_body_small" />
+                </LinearLayout>
+
+                <ImageView
+                    android:layout_width="@dimen/aqua_size_24"
+                    android:layout_height="@dimen/aqua_size_24"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_arrow_right"
+                    app:tint="@color/aqua_content_secondary" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
             style="@style/Widget.Aqua.Card"
             android:id="@+id/cardTankLifeEmpty"
             android:layout_width="match_parent"

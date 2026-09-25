@@ -7,6 +7,7 @@ import com.aqua.aqualight.application.aquarium.AquariumPlantTag
 import com.aqua.aqualight.application.aquarium.AquariumTankCleanupIssue
 import com.aqua.aqualight.application.aquarium.AquariumTankCleanupStage
 import com.aqua.aqualight.application.aquarium.AquariumTankDraft
+import com.aqua.aqualight.application.aquarium.AquariumHealthOperations
 import com.aqua.aqualight.application.aquarium.AquariumTankOperations
 import com.aqua.aqualight.application.aquarium.AquariumTankSize
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
@@ -36,7 +37,8 @@ class DefaultAquariumTankOperations(
     private val tankDataCleaner: OwnerTankDataCleaner,
     private val notificationPreferences: NotificationPreferenceUseCase,
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
-) : AquariumTankOperations {
+) : AquariumTankOperations,
+    AquariumHealthOperations by DefaultAquariumHealthOperations(context, tankStore, dispatcher) {
 
     private val appContext = context.applicationContext
     private val livestockSelectionValidator = LivestockSelectionValidator(appContext)
@@ -257,7 +259,8 @@ internal fun SavedAquariumTank.toApplicationSnapshot(): AquariumTankSnapshot =
                 addedDateEpochDay = item.addedDateEpochDay,
                 note = item.note
             )
-        }
+        },
+        healthObservations = healthObservations
     )
 
 internal fun AquariumTankDraft.toDataDraft(): TankDraft = TankDraft(

@@ -129,21 +129,17 @@ class AquariumTankDataStoreManager(
                     "Tank photo changed while duplication was being prepared."
                 }
 
-                val existingNames = currentStore.tanksList
-                    .filter { storedTank -> storedTank.belongsToOwner(ownerUid) }
-                    .mapTo(mutableSetOf()) { storedTank -> storedTank.name }
+                val existingNames = currentStore.tanksList.filter { it.belongsToOwner(ownerUid) }
+                    .mapTo(mutableSetOf()) { it.name }
+                val duplicateName = createDuplicateTankName(sourceTank.name,
+                    existingNames, duplicateNameContext)
                 val duplicatedTank = sourceTank.toBuilder()
                     .setId(newTankId)
                     .setOwnerUid(ownerUid)
-                    .setName(
-                        createDuplicateTankName(
-                            originalName = sourceTank.name,
-                            existingNames = existingNames,
-                            localizedContext = duplicateNameContext
-                        )
-                    )
+                    .setName(duplicateName)
                     .setPhotoUri(duplicatedPhotoUri.orEmpty().trim())
                     .setCreatedAtMillis(System.currentTimeMillis())
+                    .clearHealthObservations()
                     .build()
                 TankStoreRules.validateTank(duplicatedTank)
                 currentStore.appendValidated(duplicatedTank)
@@ -182,6 +178,7 @@ class AquariumTankDataStoreManager(
                     if (storedTank.photoUri.isNotBlank()) {
                         photoUrisToDelete += storedTank.photoUri
                     }
+                    photoUrisToDelete += storedTank.healthPhotoUris()
                 }
                 shouldDelete
             }
@@ -219,6 +216,7 @@ class AquariumTankDataStoreManager(
                     if (storedTank.photoUri.isNotBlank()) {
                         deletedPhotoUris += storedTank.photoUri
                     }
+                    deletedPhotoUris += storedTank.healthPhotoUris()
                 }
                 shouldDelete
             }
@@ -502,7 +500,7 @@ class AquariumTankDataStoreManager(
         }
     }
 
-    private suspend fun updateCurrentOwnerTank(
+    internal suspend fun updateCurrentOwnerTank(
         tankId: Long,
         transform: (StoredTank) -> StoredTank
     ) {
@@ -662,7 +660,8 @@ class AquariumTankDataStoreManager(
                     addedDateEpochDay = livestock.addedDateEpochDay.takeIf { value -> value > 0L },
                     note = livestock.note
                 )
-            }
+            },
+            healthObservations = healthObservationsList.map { it.toApplication() }
         )
     }
 
@@ -757,6 +756,15 @@ class AquariumTankDataStoreManager(
                 return candidate
             }
             copyNumber += 1
+        }
+    }
+}
+
+private fun StoredTank.healthPhotoUris(): Set<String> = buildSet {
+    healthObservationsList.forEach { observation ->
+        observation.photoUri.takeIf(String::isNotBlank)?.let(::add)
+        observation.checksList.forEach { check ->
+            check.photoUri.takeIf(String::isNotBlank)?.let(::add)
         }
     }
 }

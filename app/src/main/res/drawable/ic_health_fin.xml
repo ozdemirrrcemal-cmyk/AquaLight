@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="@dimen/aqua_size_36" android:height="@dimen/aqua_size_36"
+    android:viewportWidth="36" android:viewportHeight="36">
+    <path android:pathData="M5,27 C7,8 20,7 30,6 C28,14 20,23 7,28 M10,23 C14,14 23,12 30,6 M16,17 L7,9 M20,14 L17,5" android:fillColor="@color/aqua_color_transparent"
+        android:strokeColor="@color/aqua_card_text_secondary" android:strokeWidth="1.8"
+        android:strokeLineCap="round" android:strokeLineJoin="round" />
+</vector>

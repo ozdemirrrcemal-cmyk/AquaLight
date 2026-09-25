@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.aquarium.model
 
 import com.aqua.aqualight.application.aquarium.AquariumIdGenerator
+import com.aqua.aqualight.application.aquarium.LivestockHealthObservation
 
 data class SavedAquariumTank(
     val id: Long,
@@ -21,7 +22,8 @@ data class SavedAquariumTank(
     val careRemindersEnabled: Boolean = true,
     val plants: List<SavedAquariumPlant>,
     val materials: List<SavedAquariumMaterial>,
-    val livestock: List<SavedAquariumLivestock> = emptyList()
+    val livestock: List<SavedAquariumLivestock> = emptyList(),
+    val healthObservations: List<LivestockHealthObservation> = emptyList()
 )
 
 data class SavedAquariumPlant(

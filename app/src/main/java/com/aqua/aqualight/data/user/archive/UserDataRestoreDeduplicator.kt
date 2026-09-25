@@ -56,11 +56,36 @@ internal class UserDataRestoreDeduplicator(
     }
 
     private fun SavedAquariumTank.matchesArchivedContent(archived: ArchiveAquarium): Boolean {
-        val normalizedCurrent = toArchiveAquarium(archived.photo).copy(
+        val references = buildMap {
+            archived.healthObservations.orEmpty().forEach { observation ->
+                val current = healthObservations.firstOrNull { it.id == observation.id }
+                observation.photo?.let { reference ->
+                    current?.photoUri?.let { uri ->
+                        if (matchesFingerprint(uri, reference)) put(reference.entryName, reference)
+                    }
+                }
+                observation.checks.orEmpty().forEach { check ->
+                    val uri = current?.checks?.firstOrNull { it.id == check.id }?.photoUri
+                    if (uri != null && check.photo != null && matchesFingerprint(uri, check.photo)) {
+                        put(check.photo.entryName, check.photo)
+                    }
+                }
+            }
+        }
+        val currentArchive = toArchiveAquarium(archived.photo, references)
+        val normalizedCurrent = currentArchive.copy(
             id = archived.id,
-            createdAtMillis = archived.createdAtMillis
+            createdAtMillis = archived.createdAtMillis,
+            healthObservations = if (archived.healthObservations == null && healthObservations.isEmpty())
+                null else currentArchive.healthObservations
         )
         return normalizedCurrent == archived && matchesArchivedPhoto(archived.photo)
+    }
+
+    private fun matchesFingerprint(uri: String?, reference: ArchiveMediaReference): Boolean {
+        val fingerprint = snapshotTankPhoto(uri) ?: return false
+        return fingerprint.byteSize == reference.byteSize &&
+            fingerprint.sha256.equals(reference.sha256, ignoreCase = true)
     }
 
     private fun SavedAquariumTank.matchesArchivedPhoto(
@@ -69,10 +94,7 @@ internal class UserDataRestoreDeduplicator(
         return if (reference == null) {
             photoUri.isNullOrBlank()
         } else {
-            val fingerprint = snapshotTankPhoto(photoUri)
-            fingerprint != null &&
-                fingerprint.byteSize == reference.byteSize &&
-                fingerprint.sha256.equals(reference.sha256, ignoreCase = true)
+            matchesFingerprint(photoUri, reference)
         }
     }
 

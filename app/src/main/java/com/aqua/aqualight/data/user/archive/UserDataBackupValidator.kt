@@ -21,9 +21,15 @@ internal object UserDataBackupLimits {
     const val MAX_DEVICE_ASSIGNMENTS = 500
     const val MAX_ITEMS_PER_AQUARIUM = 2_000
     const val MAX_LIVESTOCK_CATALOG_ID_CHARS = 160
+    const val MAX_HEALTH_OBSERVATIONS = 500
+    const val MAX_HEALTH_CHECKS = 300
+    const val MAX_HEALTH_SYMPTOMS = 5
+    const val MAX_AFFECTED_LIVESTOCK = 100_000
     const val BUFFER_SIZE = 8 * 1024
 
-    val mediaEntryPattern = Regex("media/tanks/[1-9][0-9]*\\.jpg")
+    val mediaEntryPattern = Regex(
+        "media/tanks/[1-9][0-9]*(?:_observation_[1-9][0-9]*(?:_check_[1-9][0-9]*)?)?\\.jpg"
+    )
     val sha256Pattern = Regex("[0-9a-fA-F]{64}")
 }
 
@@ -106,6 +112,7 @@ internal class UserDataBackupValidator {
                 )
             }
         }
+        validateArchivedHealthObservations(aquarium.healthObservations.orEmpty())
     }
 
     private fun validateCareTasks(
@@ -164,17 +171,55 @@ internal class UserDataBackupValidator {
         aquariums: List<ArchiveAquarium>,
         mediaByEntryName: Map<String, File>
     ) {
-        val referenced = aquariums.mapNotNull { aquarium ->
-            aquarium.photo?.also { reference ->
-                validateMediaReference(reference, aquarium.id, mediaByEntryName)
-            }?.entryName
-        }.toSet()
-        require(referenced.size == aquariums.count { aquarium -> aquarium.photo != null }) {
-            "Backup reuses a media entry for multiple aquariums."
+        val references = aquariums.flatMap { aquarium ->
+            buildList {
+                aquarium.photo?.let { reference ->
+                    add(reference to "${UserDataBackupLimits.MEDIA_PREFIX}${aquarium.id}.jpg")
+                }
+                aquarium.healthObservations.orEmpty().forEach { observation ->
+                    observation.photo?.let { reference ->
+                        val entry = "${UserDataBackupLimits.MEDIA_PREFIX}${aquarium.id}" +
+                            "_observation_${observation.id}.jpg"
+                        add(reference to entry)
+                    }
+                    observation.checks.orEmpty().forEach { check ->
+                        check.photo?.let { reference ->
+                            val entry = "${UserDataBackupLimits.MEDIA_PREFIX}${aquarium.id}" +
+                                "_observation_${observation.id}_check_${check.id}.jpg"
+                            add(reference to entry)
+                        }
+                    }
+                }
+            }
+        }
+        references.forEach { (reference, entryName) ->
+            validateMediaReference(reference, entryName, mediaByEntryName)
+        }
+        val referenced = references.map { it.first.entryName }.toSet()
+        require(referenced.size == references.size) {
+            "Backup reuses a media entry for multiple photos."
         }
         require(mediaByEntryName.keys == referenced) {
             "Backup contains unreferenced or missing media entries."
         }
+    }
+}
+
+private fun validateArchivedHealthObservations(observations: List<ArchiveHealthObservation>) {
+    require(observations.size <= UserDataBackupLimits.MAX_HEALTH_OBSERVATIONS) {
+        "Too many archived health observations."
+    }
+    validateArchiveItemIds(observations.map(ArchiveHealthObservation::id))
+    observations.forEach { observation ->
+        require(observation.livestockId > 0L && observation.livestockName.isNotBlank())
+        require(observation.livestockCategory in AquariumLivestockTaxonomy.categoryCodes)
+        require(observation.catalogEntryId.isNotBlank())
+        require(observation.affectedCount in 1..UserDataBackupLimits.MAX_AFFECTED_LIVESTOCK)
+        require(observation.startedAtMillis in 1..observation.observedAtMillis)
+        require(observation.symptomCodes.size in 1..UserDataBackupLimits.MAX_HEALTH_SYMPTOMS &&
+            observation.symptomCodes.distinct().size == observation.symptomCodes.size)
+        require(observation.checks.orEmpty().size <= UserDataBackupLimits.MAX_HEALTH_CHECKS)
+        observation.toApplication()
     }
 }
 
@@ -218,12 +263,12 @@ private fun requireValidArchiveMediaEntryName(entryName: String) {
 
 private fun validateMediaReference(
     reference: ArchiveMediaReference,
-    tankId: Long,
+    expectedEntryName: String,
     mediaByEntryName: Map<String, File>
 ) {
     requireValidArchiveMediaEntryName(reference.entryName)
-    require(reference.entryName == "${UserDataBackupLimits.MEDIA_PREFIX}$tankId.jpg") {
-        "Backup aquarium photo entry does not match its aquarium."
+    require(reference.entryName == expectedEntryName) {
+        "Backup photo entry does not match its record."
     }
     require(reference.byteSize in 1..UserDataBackupLimits.MAX_MEDIA_ENTRY_BYTES) {
         "Backup aquarium photo size is invalid."

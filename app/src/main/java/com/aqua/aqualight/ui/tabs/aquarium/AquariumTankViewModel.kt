@@ -7,6 +7,7 @@ import com.aqua.aqualight.application.aquarium.AquariumLivestock
 import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
 import com.aqua.aqualight.application.aquarium.AquariumPlantTag
 import com.aqua.aqualight.application.aquarium.AquariumTankDraft
+import com.aqua.aqualight.application.aquarium.AquariumHealthOperations
 import com.aqua.aqualight.application.aquarium.AquariumTankOperations
 import com.aqua.aqualight.application.aquarium.AquariumTankSize
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
@@ -14,7 +15,7 @@ import com.aqua.aqualight.application.aquarium.DeleteAquariumTanksResult
 
 class AquariumTankViewModel(
     private val operations: AquariumTankOperations
-) : ViewModel() {
+) : ViewModel(), AquariumHealthOperations by operations {
 
     val tanks: LiveData<List<AquariumTankSnapshot>> = operations.tanks.asLiveData()
 

@@ -35,6 +35,36 @@ message StoredTank {
   repeated StoredPlantTag plants = 20;
   repeated StoredMaterial materials = 30;
   repeated StoredLivestock livestock = 40;
+  repeated StoredLivestockHealthObservation health_observations = 50;
+}
+
+message StoredLivestockHealthObservation {
+  int64 id = 1;
+  int64 livestock_id = 2;
+  string livestock_name = 3;
+  string livestock_category = 4;
+  string catalog_entry_id = 5;
+  int32 affected_count = 6;
+  int64 observed_at_millis = 7;
+  int64 started_at_millis = 8;
+  repeated string symptom_codes = 9;
+  string trend_code = 10;
+  string note = 11;
+  // "yes" or "unsure". Required when the recorded behavior is species-dependent.
+  string baseline_change_code = 12;
+  int64 closed_at_millis = 13;
+  string outcome_code = 14;
+  repeated StoredLivestockHealthCheck checks = 15;
+  string photo_uri = 16;
+}
+
+message StoredLivestockHealthCheck {
+  int64 id = 1;
+  int64 observed_at_millis = 2;
+  int32 affected_count = 3;
+  string trend_code = 4;
+  string note = 5;
+  string photo_uri = 6;
 }
 
 message StoredPlantTag {

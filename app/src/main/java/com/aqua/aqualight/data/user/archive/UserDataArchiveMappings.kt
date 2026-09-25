@@ -1,6 +1,11 @@
 package com.aqua.aqualight.data.user.archive
 
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignment
+import com.aqua.aqualight.application.aquarium.BaselineChange
+import com.aqua.aqualight.application.aquarium.LivestockHealthCheck
+import com.aqua.aqualight.application.aquarium.LivestockHealthObservation
+import com.aqua.aqualight.application.aquarium.LivestockHealthSymptom
+import com.aqua.aqualight.application.aquarium.LivestockHealthTrend
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumLivestock
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.data.aquarium.model.TankDraft
@@ -12,7 +17,8 @@ import com.aqua.aqualight.data.care.model.CareTaskStatus
 import com.aqua.aqualight.data.care.model.CareTaskType
 
 internal fun SavedAquariumTank.toArchiveAquarium(
-    photoReference: ArchiveMediaReference?
+    photoReference: ArchiveMediaReference?,
+    healthPhotoReferences: Map<String, ArchiveMediaReference> = emptyMap()
 ): ArchiveAquarium {
     return ArchiveAquarium(
         id = id,
@@ -61,9 +67,60 @@ internal fun SavedAquariumTank.toArchiveAquarium(
                 note = item.note,
                 catalogEntryId = item.catalogEntryId
             )
-        }
+        },
+        healthObservations = archiveHealthObservations(healthPhotoReferences)
     )
 }
+
+private fun SavedAquariumTank.archiveHealthObservations(
+    healthPhotoReferences: Map<String, ArchiveMediaReference>
+): List<ArchiveHealthObservation> = healthObservations.map { observation ->
+            ArchiveHealthObservation(
+                id = observation.id,
+                livestockId = observation.livestockId,
+                livestockName = observation.livestockName,
+                livestockCategory = observation.livestockCategory,
+                catalogEntryId = observation.catalogEntryId,
+                affectedCount = observation.affectedCount,
+                observedAtMillis = observation.observedAtMillis,
+                startedAtMillis = observation.startedAtMillis,
+                symptomCodes = observation.symptoms.map { it.code },
+                trendCode = observation.trend.code,
+                note = observation.note,
+                photo = healthPhotoReferences["${UserDataBackupLimits.MEDIA_PREFIX}${id}_observation_${observation.id}.jpg"],
+                baselineChangeCode = observation.baselineChange?.code,
+                closedAtMillis = observation.closedAtMillis,
+                outcomeCode = observation.outcome?.code ?: if (observation.closedAtMillis != null) "ended" else null,
+                checks = observation.checks.map { check ->
+                    ArchiveHealthCheck(check.id, check.observedAtMillis,
+                        check.affectedCount, check.trend.code, check.note,
+                        healthPhotoReferences[
+                            "${UserDataBackupLimits.MEDIA_PREFIX}${id}_observation_${observation.id}_check_${check.id}.jpg"
+                        ])
+                }
+            )
+        }
+
+internal fun ArchiveHealthObservation.toApplication(
+    photoUris: Map<String, String> = emptyMap()
+): LivestockHealthObservation =
+    LivestockHealthObservation(
+        id = id, livestockId = livestockId, livestockName = livestockName,
+        livestockCategory = livestockCategory, catalogEntryId = catalogEntryId,
+        affectedCount = affectedCount, observedAtMillis = observedAtMillis,
+        startedAtMillis = startedAtMillis,
+        symptoms = symptomCodes.map(LivestockHealthSymptom::fromCode),
+        trend = LivestockHealthTrend.fromCode(trendCode), note = note,
+        photoUri = photo?.let { reference -> photoUris[reference.entryName] },
+        baselineChange = baselineChangeCode?.let(BaselineChange::fromCode),
+        closedAtMillis = closedAtMillis,
+        outcome = outcomeCode?.takeUnless { it == "ended" }?.let(LivestockHealthTrend::fromCode),
+        checks = checks.orEmpty().map { check ->
+            LivestockHealthCheck(check.id, check.observedAtMillis, check.affectedCount,
+                LivestockHealthTrend.fromCode(check.trendCode), check.note,
+                check.photo?.let { reference -> photoUris[reference.entryName] })
+        }
+    )
 
 internal fun ArchiveAquarium.toTankDraft(photoUri: String?): TankDraft {
     return TankDraft(

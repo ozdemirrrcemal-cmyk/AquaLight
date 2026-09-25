@@ -82,6 +82,7 @@ object TankStoreRules {
         validatePlants(tank)
         validateMaterials(tank)
         validateLivestock(tank)
+        StoredLivestockHealthRules.validate(tank)
 
         return tank
     }
@@ -208,7 +209,7 @@ object TankStoreRules {
         return canonical
     }
 
-    private fun requirePositiveId(field: String, value: Long) {
+    internal fun requirePositiveId(field: String, value: Long) {
         if (value <= 0L) {
             violation("$field must be positive.")
         }
@@ -220,7 +221,7 @@ object TankStoreRules {
         }
     }
 
-    private fun requireCanonicalRequiredText(
+    internal fun requireCanonicalRequiredText(
         field: String,
         value: String,
         maxChars: Int
@@ -232,7 +233,7 @@ object TankStoreRules {
         requireTextLength(field, canonical, maxChars)
     }
 
-    private fun requireCanonicalOptionalText(
+    internal fun requireCanonicalOptionalText(
         field: String,
         value: String,
         maxChars: Int
@@ -261,13 +262,13 @@ object TankStoreRules {
         }
     }
 
-    private fun requireTimestamp(field: String, value: Long) {
+    internal fun requireTimestamp(field: String, value: Long) {
         if (value !in MIN_TIMESTAMP_MILLIS..MAX_TIMESTAMP_MILLIS) {
             violation("$field is outside the supported commercial timestamp range.")
         }
     }
 
-    private fun violation(message: String): Nothing {
+    internal fun violation(message: String): Nothing {
         throw StoreInvariantViolation(message)
     }
 }
