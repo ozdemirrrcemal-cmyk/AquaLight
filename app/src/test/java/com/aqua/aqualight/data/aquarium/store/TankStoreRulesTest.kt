@@ -116,6 +116,48 @@ class TankStoreRulesTest {
     }
 
     @Test
+    fun healthTimelineRequiresBaselineAndChronologicalChecks() {
+        val firstAt = 1_767_225_601_000L
+        val health = StoredLivestockHealthObservation.newBuilder()
+            .setId(201L)
+            .setLivestockId(101L)
+            .setLivestockName("Custom Fish")
+            .setLivestockCategory("Fish")
+            .setCatalogEntryId("custom:101")
+            .setAffectedCount(1)
+            .setObservedAtMillis(firstAt)
+            .setStartedAtMillis(firstAt)
+            .addSymptomCodes("surface_frequency_change")
+            .setTrendCode("same")
+            .setBaselineChangeCode("yes")
+            .build()
+        val tank = validTank(id = 60L, ownerUid = "owner-a").toBuilder()
+            .addLivestock(validLivestock(id = 101L))
+            .addHealthObservations(health)
+            .build()
+
+        assertEquals(tank, TankStoreRules.validateTank(tank))
+
+        val withoutBaseline = tank.toBuilder().setHealthObservations(0,
+            health.toBuilder().clearBaselineChangeCode()).build()
+        assertThrows(StoreInvariantViolation::class.java) {
+            TankStoreRules.validateTank(withoutBaseline)
+        }
+
+        val earlyCheck = StoredLivestockHealthCheck.newBuilder()
+            .setId(301L)
+            .setObservedAtMillis(firstAt - 1L)
+            .setAffectedCount(1)
+            .setTrendCode("same")
+            .build()
+        val nonChronological = tank.toBuilder().setHealthObservations(0,
+            health.toBuilder().addChecks(earlyCheck)).build()
+        assertThrows(StoreInvariantViolation::class.java) {
+            TankStoreRules.validateTank(nonChronological)
+        }
+    }
+
+    @Test
     fun schemaConstantMatchesCurrentCommercialVersion() {
         assertEquals(
             CommercialStoreSchema.AQUARIUM_TANKS_VERSION,

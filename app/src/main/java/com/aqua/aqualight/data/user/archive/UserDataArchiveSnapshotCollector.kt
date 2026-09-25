@@ -135,25 +135,25 @@ private fun collectHealthPhotoReferences(
 ): Pair<Map<String, ArchiveMediaReference>, Int> {
     val references = mutableMapOf<String, ArchiveMediaReference>()
     var photoCount = 0
-    tank.healthObservations.forEach { observation ->
+    val photos = tank.healthObservations.flatMap { observation ->
         val prefix = "${UserDataBackupLimits.MEDIA_PREFIX}${tank.id}_observation_${observation.id}"
-        val photos = listOfNotNull(observation.photoUri?.let { uri -> uri to "$prefix.jpg" }) +
+        listOfNotNull(observation.photoUri?.let { uri -> uri to "$prefix.jpg" }) +
             observation.checks.mapNotNull { check ->
                 check.photoUri?.let { uri -> uri to "${prefix}_check_${check.id}.jpg" }
             }
-        photos.forEach { (uri, entryName) ->
-            if (mediaDirectory == null) {
-                if (mediaGateway.canSnapshotTankPhoto(uri)) photoCount++
-            } else {
-                val destination = File(mediaDirectory, entryName.substringAfterLast('/') + ".media")
-                val staged = requireNotNull(mediaGateway.snapshotTankPhoto(uri, destination)) {
-                    "Observation photo could not be included in the backup."
-                }
-                photoCount++
-                media[entryName] = staged
-                references[entryName] = ArchiveMediaReference(
-                    entryName, staged.length().toInt(), sha256(staged))
+    }
+    photos.forEach { (uri, entryName) ->
+        if (mediaDirectory == null) {
+            if (mediaGateway.canSnapshotTankPhoto(uri)) photoCount++
+        } else {
+            val destination = File(mediaDirectory, entryName.substringAfterLast('/') + ".media")
+            val staged = requireNotNull(mediaGateway.snapshotTankPhoto(uri, destination)) {
+                "Observation photo could not be included in the backup."
             }
+            photoCount++
+            media[entryName] = staged
+            references[entryName] = ArchiveMediaReference(
+                entryName, staged.length().toInt(), sha256(staged))
         }
     }
     return references to photoCount

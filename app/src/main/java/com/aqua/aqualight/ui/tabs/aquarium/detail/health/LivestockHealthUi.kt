@@ -19,6 +19,9 @@ import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.LivestockCategories
 import com.google.android.material.card.MaterialCardView
 
 internal class LivestockHealthUi(context: Context) : LivestockHealthComponents(context) {
+    private companion object {
+        const val MAX_SYMPTOM_LINES = 3
+    }
 
     fun speciesImage(
         livestock: AquariumLivestock, width: Int, height: Int, photoUri: String? = null
@@ -119,7 +122,7 @@ internal class LivestockHealthUi(context: Context) : LivestockHealthComponents(c
             addView(spacer(R.dimen.aqua_size_4))
             addView(text(symptomName(symptom), R.dimen.aqua_text_size_body_small).apply {
                 gravity = Gravity.CENTER
-                maxLines = 3
+                maxLines = MAX_SYMPTOM_LINES
             })
         }
         return card(if (selected) R.color.aqua_accent_primary else R.color.aqua_card_outline,
@@ -242,20 +245,6 @@ internal class LivestockHealthUi(context: Context) : LivestockHealthComponents(c
             isClickable = true
             isFocusable = true
             setOnClickListener { onOpen() }
-        }
-    }
-
-    fun statusBadge(label: String, active: Boolean): android.widget.TextView = text(
-        label, R.dimen.aqua_text_size_body_small,
-        if (active) R.color.aqua_content_warning else R.color.aqua_card_text_secondary
-    ).apply {
-        setPadding(size(R.dimen.aqua_size_10), size(R.dimen.aqua_size_6),
-            size(R.dimen.aqua_size_10), size(R.dimen.aqua_size_6))
-        background = GradientDrawable().apply {
-            cornerRadius = size(R.dimen.aqua_size_20).toFloat()
-            setColor(ContextCompat.getColor(context, if (active)
-                R.color.aqua_bg_maintenance_profile_percent_warning_fill
-            else R.color.aqua_bg_maintenance_tab_unselected_fill))
         }
     }
 

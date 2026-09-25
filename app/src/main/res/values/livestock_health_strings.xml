@@ -84,6 +84,7 @@
     <string name="livestock_health_detail_status_title">Latest status</string>
     <string name="livestock_health_detail_history">Observation history</string>
     <string name="livestock_health_history_event">%1$s · %2$s</string>
+    <string name="livestock_health_history_note">%1$s · %2$s</string>
     <string name="livestock_health_timeline_marker" translatable="false">●</string>
     <string name="livestock_health_detail_initial">First observation</string>
     <string name="livestock_health_detail_affected">%1$d animals affected</string>

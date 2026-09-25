@@ -99,17 +99,7 @@ class AquariumTankDataStoreManager(
                 .mapTo(mutableSetOf()) { tank -> tank.id }
         )
         val sourcePhotoAtPreparation = sourceSnapshot.photoUri
-        val duplicatedPhotoUri = AppMediaStorage.copyInternalMedia(
-            context = context,
-            sourceUriString = sourcePhotoAtPreparation,
-            targetScope = AppMediaScope.TANK,
-            ownerToken = newTankId.toString(),
-            ownerUid = ownerUid
-        )
-        val sourceWasOwned = AppMediaStorage.isAppOwned(context, sourcePhotoAtPreparation)
-        if (sourceWasOwned && duplicatedPhotoUri.isNullOrBlank()) {
-            throw IllegalStateException("Tank photo could not be copied with independent ownership.")
-        }
+        val duplicatedPhotoUri = copyTankPhoto(sourcePhotoAtPreparation, newTankId, ownerUid)
 
         // Freeze the active per-app language before entering the retryable DataStore transform.
         // This keeps every retry deterministic and supports non-Activity contexts on API 17+.
@@ -150,6 +140,20 @@ class AquariumTankDataStoreManager(
         }
 
         return newTankId
+    }
+
+    private fun copyTankPhoto(sourceUri: String, newTankId: Long, ownerUid: String): String? {
+        val copied = AppMediaStorage.copyInternalMedia(
+            context = context,
+            sourceUriString = sourceUri,
+            targetScope = AppMediaScope.TANK,
+            ownerToken = newTankId.toString(),
+            ownerUid = ownerUid
+        )
+        if (AppMediaStorage.isAppOwned(context, sourceUri) && copied.isNullOrBlank()) {
+            throw IllegalStateException("Tank photo could not be copied with independent ownership.")
+        }
+        return copied
     }
 
     suspend fun deleteTanks(

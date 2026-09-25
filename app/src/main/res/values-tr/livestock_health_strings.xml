@@ -84,6 +84,7 @@
     <string name="livestock_health_detail_status_title">Son durum</string>
     <string name="livestock_health_detail_history">Gözlem geçmişi</string>
     <string name="livestock_health_history_event">%1$s · %2$s</string>
+    <string name="livestock_health_history_note">%1$s · %2$s</string>
     <string name="livestock_health_detail_initial">İlk gözlem</string>
     <string name="livestock_health_detail_affected">%1$d canlı etkileniyor</string>
     <string name="livestock_health_detail_add_check">Yeni kontrol kaydet</string>
