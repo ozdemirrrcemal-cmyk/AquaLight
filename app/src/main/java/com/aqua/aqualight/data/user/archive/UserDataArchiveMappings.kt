@@ -1,6 +1,11 @@
 package com.aqua.aqualight.data.user.archive
 
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignment
+import com.aqua.aqualight.application.aquarium.BaselineChange
+import com.aqua.aqualight.application.aquarium.LivestockHealthCheck
+import com.aqua.aqualight.application.aquarium.LivestockHealthObservation
+import com.aqua.aqualight.application.aquarium.LivestockHealthSymptom
+import com.aqua.aqualight.application.aquarium.LivestockHealthTrend
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumLivestock
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
 import com.aqua.aqualight.data.aquarium.model.TankDraft
@@ -61,9 +66,48 @@ internal fun SavedAquariumTank.toArchiveAquarium(
                 note = item.note,
                 catalogEntryId = item.catalogEntryId
             )
+        },
+        healthObservations = healthObservations.map { observation ->
+            ArchiveHealthObservation(
+                id = observation.id,
+                livestockId = observation.livestockId,
+                livestockName = observation.livestockName,
+                livestockCategory = observation.livestockCategory,
+                catalogEntryId = observation.catalogEntryId,
+                affectedCount = observation.affectedCount,
+                observedAtMillis = observation.observedAtMillis,
+                startedAtMillis = observation.startedAtMillis,
+                symptomCodes = observation.symptoms.map { it.code },
+                trendCode = observation.trend.code,
+                note = observation.note,
+                baselineChangeCode = observation.baselineChange?.code,
+                closedAtMillis = observation.closedAtMillis,
+                outcomeCode = observation.outcome?.code ?: if (observation.closedAtMillis != null) "ended" else null,
+                checks = observation.checks.map { check ->
+                    ArchiveHealthCheck(check.id, check.observedAtMillis,
+                        check.affectedCount, check.trend.code, check.note)
+                }
+            )
         }
     )
 }
+
+internal fun ArchiveHealthObservation.toApplication(): LivestockHealthObservation =
+    LivestockHealthObservation(
+        id = id, livestockId = livestockId, livestockName = livestockName,
+        livestockCategory = livestockCategory, catalogEntryId = catalogEntryId,
+        affectedCount = affectedCount, observedAtMillis = observedAtMillis,
+        startedAtMillis = startedAtMillis,
+        symptoms = symptomCodes.map(LivestockHealthSymptom::fromCode),
+        trend = LivestockHealthTrend.fromCode(trendCode), note = note,
+        baselineChange = baselineChangeCode?.let(BaselineChange::fromCode),
+        closedAtMillis = closedAtMillis,
+        outcome = outcomeCode?.takeUnless { it == "ended" }?.let(LivestockHealthTrend::fromCode),
+        checks = checks.orEmpty().map { check ->
+            LivestockHealthCheck(check.id, check.observedAtMillis, check.affectedCount,
+                LivestockHealthTrend.fromCode(check.trendCode), check.note)
+        }
+    )
 
 internal fun ArchiveAquarium.toTankDraft(photoUri: String?): TankDraft {
     return TankDraft(

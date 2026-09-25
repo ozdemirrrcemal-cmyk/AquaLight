@@ -84,6 +84,15 @@
                 app:argType="long" />
         </action>
         <action
+            android:id="@+id/action_tankDetailFragment_to_livestockHealthFragment"
+            app:destination="@id/livestockHealthFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right">
+            <argument android:name="tankId" app:argType="long" />
+        </action>
+        <action
             android:id="@+id/action_tankDetailFragment_to_tankDetailLivestockFormFragment"
             app:destination="@id/tankDetailLivestockFormFragment"
             app:enterAnim="@anim/nav_slide_in_right"
@@ -167,6 +176,23 @@
         <action
             android:id="@+id/action_tankDetailFragment_to_unsupportedDeviceFragment"
             app:destination="@id/unsupportedDeviceFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/livestockHealthFragment"
+        android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.health.LivestockHealthFragment"
+        android:label="@string/livestock_health_home_title"
+        tools:layout="@layout/fragment_livestock_health">
+        <argument android:name="tankId" app:argType="long" />
+        <argument android:name="page" app:argType="string" android:defaultValue="home" />
+        <argument android:name="observationId" app:argType="long" android:defaultValue="0L" />
+        <action
+            android:id="@+id/action_livestockHealthFragment_self"
+            app:destination="@id/livestockHealthFragment"
             app:enterAnim="@anim/nav_slide_in_right"
             app:exitAnim="@anim/nav_slide_out_left"
             app:popEnterAnim="@anim/nav_slide_in_left"

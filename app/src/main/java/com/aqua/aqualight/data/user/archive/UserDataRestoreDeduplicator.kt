@@ -56,9 +56,12 @@ internal class UserDataRestoreDeduplicator(
     }
 
     private fun SavedAquariumTank.matchesArchivedContent(archived: ArchiveAquarium): Boolean {
-        val normalizedCurrent = toArchiveAquarium(archived.photo).copy(
+        val currentArchive = toArchiveAquarium(archived.photo)
+        val normalizedCurrent = currentArchive.copy(
             id = archived.id,
-            createdAtMillis = archived.createdAtMillis
+            createdAtMillis = archived.createdAtMillis,
+            healthObservations = if (archived.healthObservations == null && healthObservations.isEmpty())
+                null else currentArchive.healthObservations
         )
         return normalizedCurrent == archived && matchesArchivedPhoto(archived.photo)
     }

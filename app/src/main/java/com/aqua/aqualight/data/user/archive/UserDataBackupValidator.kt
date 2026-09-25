@@ -106,6 +106,20 @@ internal class UserDataBackupValidator {
                 )
             }
         }
+        val observations = aquarium.healthObservations.orEmpty()
+        require(observations.size <= 500) { "Too many archived health observations." }
+        validateArchiveItemIds(observations.map(ArchiveHealthObservation::id))
+        observations.forEach { observation ->
+            require(observation.livestockId > 0L && observation.livestockName.isNotBlank())
+            require(observation.livestockCategory in AquariumLivestockTaxonomy.categoryCodes)
+            require(observation.catalogEntryId.isNotBlank())
+            require(observation.affectedCount in 1..100_000)
+            require(observation.startedAtMillis in 1..observation.observedAtMillis)
+            require(observation.symptomCodes.size in 1..5 &&
+                observation.symptomCodes.distinct().size == observation.symptomCodes.size)
+            require(observation.checks.orEmpty().size <= 300)
+            observation.toApplication()
+        }
     }
 
     private fun validateCareTasks(

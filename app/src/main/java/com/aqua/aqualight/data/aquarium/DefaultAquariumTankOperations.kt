@@ -11,6 +11,8 @@ import com.aqua.aqualight.application.aquarium.AquariumTankOperations
 import com.aqua.aqualight.application.aquarium.AquariumTankSize
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.application.aquarium.DeleteAquariumTanksResult
+import com.aqua.aqualight.application.aquarium.LivestockHealthCheck
+import com.aqua.aqualight.application.aquarium.LivestockHealthObservation
 import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
 import com.aqua.aqualight.data.aquarium.catalog.livestock.LivestockSelectionValidator
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
@@ -177,6 +179,15 @@ class DefaultAquariumTankOperations(
     override suspend fun removeLivestock(tankId: Long, livestockId: Long) =
         tankStore.removeLivestockFromTank(tankId, livestockId)
 
+    override suspend fun addHealthObservation(tankId: Long, observation: LivestockHealthObservation) =
+        tankStore.addHealthObservation(tankId, observation)
+
+    override suspend fun addHealthCheck(tankId: Long, observationId: Long, check: LivestockHealthCheck) =
+        tankStore.addHealthCheck(tankId, observationId, check)
+
+    override suspend fun closeHealthObservation(tankId: Long, observationId: Long, atMillis: Long) =
+        tankStore.closeHealthObservation(tankId, observationId, atMillis)
+
     override suspend fun updateSmartCareEnabled(tankId: Long, enabled: Boolean) =
         tankStore.updateSmartCareEnabled(tankId, enabled)
 
@@ -257,7 +268,8 @@ internal fun SavedAquariumTank.toApplicationSnapshot(): AquariumTankSnapshot =
                 addedDateEpochDay = item.addedDateEpochDay,
                 note = item.note
             )
-        }
+        },
+        healthObservations = healthObservations
     )
 
 internal fun AquariumTankDraft.toDataDraft(): TankDraft = TankDraft(

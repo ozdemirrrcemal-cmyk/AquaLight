@@ -37,7 +37,35 @@ internal data class ArchiveAquarium(
     val careRemindersEnabled: Boolean,
     val plants: List<ArchivePlant>,
     val materials: List<ArchiveMaterial>,
-    val livestock: List<ArchiveLivestock>
+    val livestock: List<ArchiveLivestock>,
+    // Nullable for backups created before observations were introduced.
+    val healthObservations: List<ArchiveHealthObservation>? = null
+)
+
+internal data class ArchiveHealthObservation(
+    val id: Long,
+    val livestockId: Long,
+    val livestockName: String,
+    val livestockCategory: String,
+    val catalogEntryId: String,
+    val affectedCount: Int,
+    val observedAtMillis: Long,
+    val startedAtMillis: Long,
+    val symptomCodes: List<String>,
+    val trendCode: String,
+    val note: String,
+    val baselineChangeCode: String?,
+    val closedAtMillis: Long?,
+    val outcomeCode: String?,
+    val checks: List<ArchiveHealthCheck>?
+)
+
+internal data class ArchiveHealthCheck(
+    val id: Long,
+    val observedAtMillis: Long,
+    val affectedCount: Int,
+    val trendCode: String,
+    val note: String
 )
 
 internal data class ArchiveMediaReference(

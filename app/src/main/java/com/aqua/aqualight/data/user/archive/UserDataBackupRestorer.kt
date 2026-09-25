@@ -164,6 +164,9 @@ internal class UserDataBackupRestorer(
         archived.livestock.forEach { item ->
             dataSources.tanks.addLivestockToTank(newTankId, item.toSavedLivestock())
         }
+        archived.healthObservations.orEmpty().forEach { observation ->
+            dataSources.tanks.restoreHealthObservation(newTankId, observation.toApplication())
+        }
     }
 
     private suspend fun restoreCareTasks(
