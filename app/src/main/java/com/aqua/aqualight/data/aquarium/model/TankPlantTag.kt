@@ -8,5 +8,6 @@ data class TankPlantTag(
     val plantName: String,
     val category: String,
     val markerX: Float = 0.5f,
-    val markerY: Float = 0.5f
+    val markerY: Float = 0.5f,
+    val photoUri: String? = null
 )
