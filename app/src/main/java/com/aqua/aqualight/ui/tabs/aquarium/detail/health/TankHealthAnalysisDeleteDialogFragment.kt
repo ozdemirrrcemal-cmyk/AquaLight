@@ -6,7 +6,6 @@ import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
-import androidx.core.view.isNotEmpty
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
 import com.aqua.aqualight.R
@@ -21,9 +20,6 @@ internal class TankHealthAnalysisDeleteDialogFragment : DialogFragment() {
         val binding = BottomSheetDeviceConfirmBinding.inflate(layoutInflater)
 
         binding.deviceConfirmSheetRoot.apply {
-            if (isNotEmpty()) {
-                removeViewAt(0)
-            }
             background = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
                 setColor(
