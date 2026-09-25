@@ -111,7 +111,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/aqua_size_3">
 
-<TextView
+                        <TextView
                             android:id="@+id/tvPhValue"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -121,20 +121,10 @@
                             android:textSize="@dimen/aqua_text_size_body"
                             android:textStyle="bold" />
 
-<TextView
-                            android:id="@+id/tvPhValue"
-                            android:layout_width="@dimen/aqua_size_0"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="end|center_vertical"
-                            android:layout_weight="1"
-                            android:includeFontPadding="false"
-                            android:textColor="@color/aqua_card_text_primary"
-                            android:textSize="@dimen/aqua_text_size_body"
-                            android:textStyle="bold" />
-
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_gravity="end|center_vertical"
                             android:includeFontPadding="false"
                             android:text="@string/tank_health_status_normal"
                             android:textColor="@color/aqua_status_success"
@@ -173,7 +163,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/aqua_size_3">
 
-<TextView
+                        <TextView
                             android:id="@+id/tvNo3Value"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -183,21 +173,11 @@
                             android:textSize="@dimen/aqua_text_size_body"
                             android:textStyle="bold" />
 
-<TextView
-                            android:id="@+id/tvNo3Value"
-                            android:layout_width="@dimen/aqua_size_0"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="end|center_vertical"
-                            android:layout_weight="1"
-                            android:includeFontPadding="false"
-                            android:textColor="@color/aqua_card_text_primary"
-                            android:textSize="@dimen/aqua_text_size_body"
-                            android:textStyle="bold" />
-
                         <TextView
                             android:id="@+id/tvNo3Status"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_gravity="end|center_vertical"
                             android:includeFontPadding="false"
                             android:textSize="@dimen/aqua_text_size_status_micro" />
 
@@ -234,7 +214,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/aqua_size_3">
 
-<TextView
+                        <TextView
                             android:id="@+id/tvTemperatureValue"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -244,20 +224,10 @@
                             android:textSize="@dimen/aqua_text_size_body"
                             android:textStyle="bold" />
 
-<TextView
-                            android:id="@+id/tvTemperatureValue"
-                            android:layout_width="@dimen/aqua_size_0"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="end|center_vertical"
-                            android:layout_weight="1"
-                            android:includeFontPadding="false"
-                            android:textColor="@color/aqua_card_text_primary"
-                            android:textSize="@dimen/aqua_text_size_body"
-                            android:textStyle="bold" />
-
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_gravity="end|center_vertical"
                             android:includeFontPadding="false"
                             android:text="@string/tank_health_status_normal"
                             android:textColor="@color/aqua_status_success"
