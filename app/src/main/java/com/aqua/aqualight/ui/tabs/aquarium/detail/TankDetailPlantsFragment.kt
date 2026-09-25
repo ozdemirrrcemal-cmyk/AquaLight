@@ -33,7 +33,7 @@ import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.TankDetailTabArgs
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
 import com.yalantis.ucrop.UCrop
-import java.util.concurrent.CancellationException
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) {
@@ -46,7 +46,7 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
         MediaFlowCoordinatorViewModel.factory(
             context = requireContext().applicationContext,
             scope = AppMediaScope.PLANT,
-            ownerToken = plantPhotoOwnerToken(tankId),
+            ownerToken = tankId.toString(),
             ownerUid = container.authenticatedOwnerIdentity.requireOwnerUid(),
             cropSpec = MediaCropSpec.PLANT,
             mediaProcessor = container.imageMediaProcessor
@@ -424,8 +424,6 @@ class TankDetailPlantsFragment : Fragment(R.layout.fragment_tank_detail_plants) 
     companion object {
         private const val ARG_TANK_ID = "tankId"
         private const val ACTION_CAPTURE_PLANT_PHOTO = "capture_plant_photo"
-
-        private fun plantPhotoOwnerToken(tankId: Long): String = "tank_$tankId"
 
         fun newInstance(tankId: Long): TankDetailPlantsFragment {
             return TankDetailPlantsFragment().apply {
