@@ -2,10 +2,12 @@ package com.aqua.aqualight.platform.media
 
 import android.content.Context
 import android.graphics.BitmapFactory
+import android.net.Uri
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
 import java.security.MessageDigest
+import kotlinx.coroutines.Dispatchers
 
 internal data class UserDataArchiveMediaFingerprint(
     val byteSize: Int,
@@ -76,7 +78,7 @@ internal class UserDataArchiveMediaGateway(
         )
     }
 
-    fun prepareRestoredPhoto(
+    suspend fun prepareRestoredPhoto(
         ownerUid: String,
         ownerToken: String,
         source: File,
@@ -92,6 +94,36 @@ internal class UserDataArchiveMediaGateway(
             "Restored photo is not a supported image."
         }
 
+        val processor = AndroidImageMediaProcessor(
+            context = appContext,
+            dispatcher = Dispatchers.IO,
+            clockMillis = System::currentTimeMillis,
+            sourceAccess = ArchivePhotoSourceAccess(source),
+            maxOutputEdgePx = if (scope == AppMediaScope.TANK) {
+                ImageMediaPolicy.MAX_OUTPUT_EDGE_PX
+            } else {
+                ImageMediaPolicy.MAX_RECORD_OUTPUT_EDGE_PX
+            }
+        )
+        val normalized = when (val result = processor.process(Uri.fromFile(source))) {
+            is ImageMediaProcessingResult.Success -> result.media.file
+            is ImageMediaProcessingResult.Failure -> {
+                throw IllegalArgumentException("Restored photo failed media normalization.", result.cause)
+            }
+        }
+        try {
+            return promoteNormalizedPhoto(ownerUid, ownerToken, normalized, scope)
+        } finally {
+            normalized.delete()
+        }
+    }
+
+    private fun promoteNormalizedPhoto(
+        ownerUid: String,
+        ownerToken: String,
+        normalized: File,
+        scope: AppMediaScope
+    ): String {
         val temporaryUri = requireNotNull(
             AppMediaStorage.createCropOutputUri(
                 context = appContext,
@@ -107,12 +139,12 @@ internal class UserDataArchiveMediaGateway(
 
         var promoted = false
         return try {
-            source.inputStream().buffered().use { input ->
+            normalized.inputStream().buffered().use { input ->
                 temporaryFile.outputStream().buffered().use { output ->
-                    copyLimited(input, output, MAX_ARCHIVED_PHOTO_BYTES)
+                    copyLimited(input, output, ImageMediaPolicy.MAX_OUTPUT_BYTES.toInt())
                 }
             }
-            require(temporaryFile.length() == source.length()) {
+            require(temporaryFile.length() == normalized.length()) {
                 "Restored photo copy was incomplete."
             }
             requireNotNull(
@@ -206,4 +238,11 @@ internal class UserDataArchiveMediaGateway(
             "image/webp"
         )
     }
+}
+
+private class ArchivePhotoSourceAccess(private val source: File) : ImageMediaSourceAccess {
+    override fun mimeType(uri: Uri): String? = null
+    override fun declaredLength(uri: Uri): Long = source.length()
+    override fun open(uri: Uri): InputStream = source.inputStream()
+    override fun displayName(uri: Uri): String = "restored-photo.jpg"
 }

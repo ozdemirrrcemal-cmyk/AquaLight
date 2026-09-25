@@ -5,7 +5,7 @@ import java.io.File
 
 internal data class LivestockRestoreMedia(
     val snapshot: (String?) -> UserDataArchiveMediaFingerprint? = { null },
-    val prepare: (String, String, File) -> String = { _, _, _ ->
+    val prepare: suspend (String, String, File) -> String = { _, _, _ ->
         error("No livestock photo restore operation is configured.")
     }
 )

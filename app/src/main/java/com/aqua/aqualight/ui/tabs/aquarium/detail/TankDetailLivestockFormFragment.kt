@@ -580,6 +580,8 @@ class TankDetailLivestockFormFragment :
                     tankId, editingLivestockId, requireNotNull(photoDraft.ownerUid)
                 )
                 finishAfterMutation()
+            } catch (cancellation: CancellationException) {
+                throw cancellation
             } catch (exception: Exception) {
                 exception.printStackTrace()
                 isDeletingLivestock = false
@@ -645,19 +647,22 @@ class TankDetailLivestockFormFragment :
         if (cannotClose) return
 
         isNavigatingBack = true
-
-        val navController = findNavController()
-
-        if (!openedFromPicker) {
-            navController.previousBackStackEntry
-                ?.savedStateHandle
-                ?.set(
-                    TankDetailFragment.KEY_RETURN_TAB,
-                    TankDetailTabArgs.TANK_LIFE
-                )
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                // The pending file belongs to this draft, not to the persisted livestock record.
+                kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
+                    mediaFlow.rollbackSelection()
+                }
+            } finally {
+                val navController = findNavController()
+                if (!openedFromPicker) {
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.set(TankDetailFragment.KEY_RETURN_TAB, TankDetailTabArgs.TANK_LIFE)
+                }
+                navController.navigateUp()
+            }
         }
-
-        navController.navigateUp()
     }
 
     private fun showSnackBar(

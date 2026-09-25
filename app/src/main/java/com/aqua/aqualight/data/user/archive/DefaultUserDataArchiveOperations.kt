@@ -85,10 +85,7 @@ internal class DefaultUserDataArchiveOperations(
                     aquariumCount = manifest.aquariums.size,
                     careTaskCount = manifest.careTasks.size,
                     deviceAssignmentCount = manifest.deviceAssignments.size,
-                    photoCount = manifest.aquariums.sumOf { aquarium ->
-                        (if (aquarium.photo != null) 1 else 0) +
-                            aquarium.plants.count { plant -> plant.photo != null }
-                    }
+                    photoCount = manifest.archivedPhotoCount()
                 )
             }
             UserDataBackupCandidate(
@@ -130,7 +127,8 @@ internal class DefaultUserDataArchiveOperations(
                             aquariums = aquarium.aquariums.map { item ->
                                 item.copy(
                                     photo = null,
-                                    plants = item.plants.map { plant -> plant.copy(photo = null) }
+                                    plants = item.plants.map { plant -> plant.copy(photo = null) },
+                                    livestock = item.livestock.map { record -> record.copy(photo = null) }
                                 )
                             },
                             careTasks = aquarium.careTasks,
@@ -190,6 +188,12 @@ internal class DefaultUserDataArchiveOperations(
             }.rethrowCancellation()
         }
     }
+}
+
+internal fun UserDataBackupManifest.archivedPhotoCount(): Int = aquariums.sumOf { aquarium ->
+    (if (aquarium.photo != null) 1 else 0) +
+        aquarium.plants.count { plant -> plant.photo != null } +
+        aquarium.livestock.count { item -> item.photo != null }
 }
 
 private fun <T> Result<T>.rethrowCancellation(): Result<T> {

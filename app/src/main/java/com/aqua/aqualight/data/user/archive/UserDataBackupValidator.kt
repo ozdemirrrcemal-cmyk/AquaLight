@@ -15,7 +15,8 @@ internal object UserDataBackupLimits {
     const val MAX_UNCOMPRESSED_ARCHIVE_BYTES = 64 * 1024 * 1024
     const val MAX_MEDIA_ENTRY_BYTES = 8 * 1024 * 1024
     const val MAX_MANIFEST_BYTES = 4 * 1024 * 1024
-    const val MAX_ZIP_ENTRIES = 256
+    // One manifest plus all supported inventory photo entries; byte ceilings still bound the archive.
+    const val MAX_ZIP_ENTRIES = 4_001
     const val MAX_AQUARIUMS = 100
     const val MAX_CARE_TASKS = 10_000
     const val MAX_DEVICE_ASSIGNMENTS = 500

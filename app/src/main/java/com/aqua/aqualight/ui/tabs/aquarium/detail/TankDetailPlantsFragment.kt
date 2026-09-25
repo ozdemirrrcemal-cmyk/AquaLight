@@ -1,9 +1,9 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail
 
-import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageView
+import androidx.core.net.toUri
 import androidx.navigation.fragment.findNavController
 import coil3.load
 import coil3.request.crossfade
@@ -12,6 +12,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumPlantTag
 import com.aqua.aqualight.databinding.FragmentTankDetailPlantsBinding
 import com.aqua.aqualight.databinding.ItemTankPlantPhotoBinding
+import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.TankDetailTabArgs
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
 
@@ -106,7 +107,7 @@ class TankDetailPlantsFragment : TankPlantPhotoFragment() {
             binding.plantListContainer,
             false
         )
-        item.tvPlantOrderBadge.text = (index + 1).toString()
+        item.tvPlantOrderBadge.text = LocaleFormatter.formatInteger(requireContext(), index + 1)
         item.tvPlantCategory.text = plant.category
         item.tvPlantName.text = plant.plantName
         item.plantCard.contentDescription = getString(
@@ -128,7 +129,7 @@ class TankDetailPlantsFragment : TankPlantPhotoFragment() {
         }
 
         imageView.scaleType = ImageView.ScaleType.CENTER_CROP
-        imageView.load(Uri.parse(photoUri)) {
+        imageView.load(photoUri.toUri()) {
             error(R.drawable.ic_camera_24)
             crossfade(true)
         }

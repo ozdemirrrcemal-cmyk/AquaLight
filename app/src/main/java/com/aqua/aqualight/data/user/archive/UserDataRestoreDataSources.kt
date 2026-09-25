@@ -231,11 +231,11 @@ private suspend fun UserDataRestoreDataSources.AssignmentDataSource.compensateCr
 /** Restore-only media boundary; presentation never receives paths, streams or Android URIs. */
 internal data class UserDataRestoreMediaOperations(
     val snapshotTankPhoto: (String?) -> UserDataArchiveMediaFingerprint?,
-    val prepareRestoredTankPhoto: (String, String, File) -> String,
+    val prepareRestoredTankPhoto: suspend (String, String, File) -> String,
     val commit: (String?) -> Unit,
     val rollback: (String?) -> Unit,
     val snapshotPlantPhoto: (String?) -> UserDataArchiveMediaFingerprint? = { null },
-    val prepareRestoredPlantPhoto: (String, String, File) -> String = { _, _, _ ->
+    val prepareRestoredPlantPhoto: suspend (String, String, File) -> String = { _, _, _ ->
         error("No plant photo restore operation is configured.")
     },
     val livestock: LivestockRestoreMedia = LivestockRestoreMedia()

@@ -124,20 +124,23 @@ class AndroidImageMediaProcessor internal constructor(
     context: Context,
     private val dispatcher: CoroutineDispatcher,
     private val clockMillis: () -> Long,
-    private val sourceAccess: ImageMediaSourceAccess
+    private val sourceAccess: ImageMediaSourceAccess,
+    private val maxOutputEdgePx: Int = ImageMediaPolicy.MAX_OUTPUT_EDGE_PX
 ) : ImageMediaProcessor {
 
     constructor(
         context: Context,
         dispatcher: CoroutineDispatcher = Dispatchers.IO,
-        clockMillis: () -> Long = System::currentTimeMillis
+        clockMillis: () -> Long = System::currentTimeMillis,
+        maxOutputEdgePx: Int = ImageMediaPolicy.MAX_OUTPUT_EDGE_PX
     ) : this(
         context = context,
         dispatcher = dispatcher,
         clockMillis = clockMillis,
         sourceAccess = ContentResolverImageMediaSourceAccess(
             context.applicationContext.contentResolver
-        )
+        ),
+        maxOutputEdgePx = maxOutputEdgePx
     )
 
     private val appContext = context.applicationContext
@@ -235,7 +238,8 @@ class AndroidImageMediaProcessor internal constructor(
             oriented = applyExifOrientation(stagedSource, decoded)
             val target = ImageMediaPolicy.targetSize(
                 width = oriented.width,
-                height = oriented.height
+                height = oriented.height,
+                maxEdgePx = maxOutputEdgePx
             )
             scaled = if (target.first == oriented.width && target.second == oriented.height) {
                 oriented

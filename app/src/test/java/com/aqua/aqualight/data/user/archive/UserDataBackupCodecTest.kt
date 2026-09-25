@@ -18,6 +18,19 @@ class UserDataBackupCodecTest {
     private val codec = UserDataBackupCodec()
 
     @Test
+    fun `backup preview counts tank plant and livestock photos by record`() {
+        val photo = ArchiveMediaReference("media/tanks/7.jpg", 12, "a".repeat(64))
+        val aquarium = manifest(photo = photo, plantPhoto = photo).aquariums.single()
+        val livestock = ArchiveLivestock(
+            id = 19L, name = "Neon tetra", category = "fish", quantity = 2,
+            addedDateEpochDay = null, note = "", catalogEntryId = "", photo = photo
+        )
+        val withPhotos = aquarium.copy(livestock = listOf(livestock, livestock.copy(id = 20L, photo = null)))
+
+        assertEquals(3, manifest().copy(aquariums = listOf(withPhotos)).archivedPhotoCount())
+    }
+
+    @Test
     fun `backup codec round trips a validated manifest and media`() {
         val root = tempDirectory()
         val photo = "image-bytes".toByteArray()
@@ -232,17 +245,22 @@ class UserDataBackupCodecTest {
         val bytes = "small-plant-photo".toByteArray()
         val file = File(root, "source.jpg").apply { writeBytes(bytes) }
         val media = linkedMapOf<String, File>()
-        val plants = (1..count).map { id ->
-            val entryName = "media/tanks/7_plant_$id.jpg"
-            media[entryName] = file
-            ArchivePlant(
-                id = id.toLong(), catalogId = "plant:anubias_barteri",
-                plantName = "Anubias", category = "Epiphyte", markerX = 0.5f, markerY = 0.5f,
-                photo = ArchiveMediaReference(entryName, bytes.size, sha256(bytes))
-            )
-        }
         val base = manifest()
-        return base.copy(aquariums = listOf(base.aquariums.single().copy(plants = plants))) to media
+        val aquariums = (1..count).chunked(UserDataBackupLimits.MAX_ITEMS_PER_AQUARIUM)
+            .mapIndexed { tankIndex, plantIds ->
+                val tankId = 7L + tankIndex
+                val plants = plantIds.map { id ->
+                    val entryName = "media/tanks/${tankId}_plant_$id.jpg"
+                    media[entryName] = file
+                    ArchivePlant(
+                        id = id.toLong(), catalogId = "plant:anubias_barteri",
+                        plantName = "Anubias", category = "Epiphyte", markerX = 0.5f, markerY = 0.5f,
+                        photo = ArchiveMediaReference(entryName, bytes.size, sha256(bytes))
+                    )
+                }
+                base.aquariums.single().copy(id = tankId, plants = plants)
+            }
+        return base.copy(aquariums = aquariums) to media
     }
 
     private fun manifest(
