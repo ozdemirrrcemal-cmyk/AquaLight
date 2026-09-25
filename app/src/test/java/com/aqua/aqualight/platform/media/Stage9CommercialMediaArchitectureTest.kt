@@ -85,6 +85,34 @@ class Stage9CommercialMediaArchitectureTest {
         )
     }
 
+
+    @Test
+    fun plantPhotosUseCanonicalAppOwnedMediaLifecycle() {
+        val storage = source(
+            "app/src/main/java/com/aqua/aqualight/platform/media/AppMediaStorage.kt"
+        )
+        val manager = source(
+            "app/src/main/java/com/aqua/aqualight/data/aquarium/store/" +
+                "AquariumTankDataStoreManager.kt"
+        )
+        val operations = source(
+            "app/src/main/java/com/aqua/aqualight/data/aquarium/" +
+                "DefaultAquariumTankOperations.kt"
+        )
+        val recovery = source(
+            "app/src/main/java/com/aqua/aqualight/data/media/AppMediaRecoveryManager.kt"
+        )
+        val providerPaths = source("app/src/main/res/xml/file_paths.xml")
+
+        assertTrue(storage.contains("PLANT(\"plant_photos\", \"plant\")"))
+        assertTrue(providerPaths.contains("plant_photos"))
+        assertTrue(manager.contains("AppMediaScope.PLANT"))
+        assertTrue(manager.contains("sourcePlantPhotosAtPreparation"))
+        assertTrue(recovery.contains("tank.plants"))
+        assertTrue(operations.contains("override suspend fun updatePlantPhoto"))
+        assertTrue(operations.contains("deleteAfterCommit"))
+    }
+
     @Test
     fun feedbackSubmissionUsesSparkPlanTransactionBoundary() {
         val application = source(
