@@ -168,4 +168,11 @@
     <string name="aquarium_text_18_may_2026">18 Mayıs 2026</string>
     <string name="aquarium_text_1_l">1 L</string>
     <string name="aquarium_text_79_gal">79 gal</string>
+    <string name="aquarium_plant_photo_title">Bitki fotoğrafı</string>
+    <string name="aquarium_plant_photo_crop_title">Bitki fotoğrafını düzenle</string>
+    <string name="aquarium_plant_photo_updated">Bitki fotoğrafı güncellendi.</string>
+    <string name="aquarium_plant_photo_removed">Bitki fotoğrafı kaldırıldı.</string>
+    <string name="aquarium_plant_photo_save_failed">Bitki fotoğrafı kaydedilemedi. Lütfen yeniden deneyin.</string>
+    <string name="aquarium_plant_photo_remove_failed">Bitki fotoğrafı kaldırılamadı. Lütfen yeniden deneyin.</string>
+    <string name="aquarium_plant_photo_action_description">%1$s için fotoğraf ekle veya değiştir</string>
 </resources>
