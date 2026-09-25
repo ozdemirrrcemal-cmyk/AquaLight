@@ -11,7 +11,12 @@
         name="tank_photos"
         path="tank_photos/" />
 
-    <!-- Bounded, app-owned source prepared before profile/tank cropping. -->
+    <!-- /data/data/<package>/files/plant_photos/ -->
+    <files-path
+        name="plant_photos"
+        path="plant_photos/" />
+
+    <!-- Bounded, app-owned source prepared before profile/tank/plant cropping. -->
     <cache-path
         name="image_processing"
         path="image_processing/" />
