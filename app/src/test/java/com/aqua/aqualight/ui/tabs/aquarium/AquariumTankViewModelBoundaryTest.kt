@@ -107,6 +107,7 @@ private class FakeAquariumTankOperations(
         return deleteResult
     }
     override suspend fun updateTankPhoto(tankId: Long, photoUri: String?) = Unit
+    override suspend fun updatePlantPhoto(tankId: Long, plantId: Long, photoUri: String?) = Unit
     override suspend fun updateTankName(tankId: Long, name: String) {
         latestUpdate = Triple(tankId, name, latestUpdate?.third ?: true)
     }
