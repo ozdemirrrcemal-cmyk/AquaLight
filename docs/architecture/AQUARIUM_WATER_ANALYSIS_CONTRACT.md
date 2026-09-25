@@ -404,7 +404,7 @@ Therefore the persistence model must not use an ambiguous field such as only `am
 
 Before implementation, the supported metric must be explicitly named in the domain enum / model. For example, if the product chooses combined total ammonia, the domain representation must say so explicitly.
 
-Under K03.0, the main product field is named "Toplam amonyak" (total ammonia), with ammonia + ammonium explained in help text. Its exact concentration basis, accepted test methods, and any separately supported free-ammonia result remain K03 decisions. A free-NH3 or NH4-only result must not be silently stored as total ammonia. Preserve the approved field styling while making the label understandable.
+Under K03.0, the main product field is named "Toplam amonyak" (total ammonia). The proposed explanatory text is "Amonyak ve amonyum toplamı"; its placement follows the pending help interaction decision in section 25.3. Its exact concentration basis, accepted test methods, and any separately supported free-ammonia result remain K03 decisions. A free-NH3 or NH4-only result must not be silently stored as total ammonia. Preserve the approved field styling while making the label understandable.
 
 ### 6.4 Accepted reuse of existing measurement models (K02)
 
@@ -419,6 +419,17 @@ Decision accepted with the user on 26 September 2026:
 The approved UI already contains NO2 and NH3/NH4 input controls. The missing support refers to the underlying measurement contracts and the future persistence/assessment integration, not missing UI fields. K02 alone did not authorize additional controls; the later K03.0 decision in section 25 defines the tank-specific field additions while preserving the existing UI design.
 
 K03 remains open. Existing `nitratePpm` and `phosphatePpm` names do not, by themselves, establish the source data's chemical reporting basis or authorize treating those values as mg/L. Field naming, explicit normalization, ammonia semantics, and rule thresholds must follow their own evidence-backed decisions before implementation. Adding parameters must not invent livestock requirements where the catalog has none.
+
+### 6.5 Retained test-selection and derived-ammonia proposals
+
+Recorded explicitly on 26 September 2026 during the documentation-completeness review. These proposals are retained for item-by-item decisions; asking whether they are documented does not approve their implementation or close the remaining K03 decisions.
+
+- **Test brand/model selection:** let the user select a supported test product so that a verified product/method profile supplies the measured analyte, chemical reporting basis, and source unit. Brand alone is insufficient: different products, methods, or result modes can differ. Preserve the entered result and source profile/revision alongside any normalized result. The supported product list, maintenance ownership, selection interaction, and unknown-product flow remain to be decided. Unknown semantics must never be guessed from the number or label.
+- **Direct free-ammonia results:** if supported, store a kit's free-NH3 result as a distinct measured metric, not as total ammonia or a calculated result. A separate result mode on a multi-mode kit must also remain identifiable. Exact support and units remain open.
+- **Calculated free ammonia:** if this feature is accepted, derive it only from a compatible total-ammonia result and pH/temperature belonging to the same measurement event; marine calculations also need compatible salinity. Never substitute today's sensor temperature for an older sample. Allowed time differences, equation, applicability range, concentration basis, and precision must be researched and decided before enabling the calculation.
+- Preserve the source measurement references and calculation version. Present the output as **"Hesaplanan değer"**, distinct from a direct test result. Missing or incompatible prerequisites produce an unavailable calculation with a reason, not zero, a safe status, or an invented input. A calculated NH3 value must not overwrite the original total-ammonia measurement.
+
+Scientific background is in research references R7–R8. Those sources support the distinctions and dependencies; this section does not approve a particular equation or toxicity threshold.
 
 ---
 
@@ -1009,6 +1020,7 @@ For `Other`/unknown profiles, the supported fields listed above and the profile-
 - Preserve the existing screen structure, sensor/temperature area, water-parameter grid and input components, card styling, and save/history navigation. Applicable fields reuse those components; row count may change with the tank type. Do not introduce new tabs, sections, or a different visual layout from the logical grouping alone.
 - Use readable localized names; chemical formulas are secondary identifiers. The accepted freshwater names are Sıcaklık, pH, Toplam amonyak, Nitrit (NO2), Nitrat (NO3), Genel sertlik (GH), Tampon kapasitesi (KH), and Fosfat (PO4). Labels must remain readable at supported font scales.
 - Decide the precise way users reveal/select additional measurements together before UI implementation. The accepted availability table is not approval to add a new accordion, picker, or help layout now.
+- Retain the proposal for short **"Nedir / Nasıl ölçülür?"** help for every measurement field, including additional fields. Explain the parameter, the accepted test result, and its unit without requiring the user to know chemical notation. Product-specific instructions must match a verified test profile. The placement/opening interaction remains a K13/UI decision and must preserve the existing design; documenting this proposal does not authorize a new help icon or layout now.
 - A visible field is not a promise of a complete assessment. Unmeasured, measured zero, inapplicable, unknown test basis, and missing assessment rules must remain distinct. A critical known result must not be hidden by a partial-data state.
 - Preserve entered drafts and persisted measurements when tank type changes; no field hidden by the new profile may silently discard its value or be persisted invisibly. Resolve affected draft values explicitly before saving. Detailed interaction belongs to the later state/UI decision.
 - Store the assessment's tank-type/profile context with its provenance. History/detail render the saved measurement set and assessment context; today's tank type must not erase or reinterpret yesterday's fields. The latest result must expose a context mismatch if the tank type has since changed.
@@ -1080,6 +1092,13 @@ Flow:
 7. return/navigate according to the existing approved flow.
 
 The Fragment must not build domain ranges or read catalogs itself.
+
+Form behavior to preserve from the agreed data-quality direction:
+
+- A new form starts with empty manual measurement fields. Do not preload example numbers or silently copy previous analysis values. Restoring an existing user draft is a different state and must preserve the user's input.
+- Auto-populate temperature only from a valid, fresh, assigned sensor sample appropriate for the measurement event. If unavailable, retain explicit unavailable/manual-source behavior; do not invent a reading.
+- Let users record the measurements they actually took rather than requiring every displayed test. Exact minimum-input and fully empty-record behavior remain K11 decisions. A missing prerequisite for one calculation does not turn an otherwise valid partial measurement into a fabricated complete analysis.
+- An empty field means **"Ölçülmedi"**; a measured `0` remains a real result. Explain limited coverage as **"Kısmi değerlendirme"** alongside any known critical finding. Missing results must not increase a health score or be described as normal. Final aggregation and score policy remain separate decisions.
 
 ### 28.2 Tank Health main screen
 

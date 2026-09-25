@@ -30,6 +30,24 @@ Bu kayıt kabul edilen kararları belgeler; paketlerin/kodun uygulanmış olduğ
 
 K03.1 için doğrulanan kaynaklar ve henüz onaylanmamış öneri: [Konsantrasyon birimleri araştırma notu](research/WATER_ANALYSIS_CONCENTRATION_UNITS_K03.md).
 
+### Önerilerin sözleşme ve checklist karşılıkları — 26.09.2026
+
+Bu tablo kullanıcının tekrar paylaştığı önerilerin unutulmaması için izlenebilirlik kaydıdır. **Belgede kayıtlı olmak, kararı alınmış veya kodu tamamlanmış olmak değildir.** K03.0'da kabul edilen kapsam korunur; aşağıdaki açık seçimler sırayla birlikte kararlaştırılır.
+
+| Öneri | Sözleşme / checklist karşılığı | Durum |
+| --- | --- | --- |
+| Toplam amonyak; “Amonyak ve amonyum toplamı” açıklaması | §6.3; W0.3, W8.1, W8.20 | Ana alan kabul edildi; açıklamanın yerleşimi açık |
+| Desteklenen testin marka/modeli ile ölçüm türü ve birimini belirleme | §6.5; W0.3, W8.21 | Öneri kayıtlı; desteklenecek ürünler ve seçim akışı karar bekliyor |
+| Doğrudan serbest NH3 sonucunu toplamdan ayrı kaydetme | §6.3–6.5; W0.3, W1.2 | Birbirinin yerine kullanmama kuralı var; ayrı sonuç desteği ve birimi karar bekliyor |
+| Toplamdan NH3 hesabında aynı ölçüm olayının pH/sıcaklığı, denizde tuzluluk; “Hesaplanan değer” etiketi | §6.5; W4.10 | Koşullu öneri açıkça kayıtlı; özellik/formül/zaman toleransı karar bekliyor |
+| Deniz/resif için tuzluluk, alkalinite, Ca/Mg, NO3/PO4; GH'nin bunların yerine geçmemesi | §25.1; W0.5–W0.6, W1.1, W8.1 | Tür bazlı kapsam kabul edildi; kesin semantik/birimler açık |
+| Çözünmüş oksijen, serbest/toplam klor desteği ve ölçülmeyen değeri türetmeme | §25.2; W0.2, W0.6, W4.6 | Destek kapsamı kayıtlı; yöntem/birimler açık |
+| İletkenlik/TDS, CO2, demir ve potasyum ek ölçümleri | §25.2–25.3; W0.2, W0.6, W8.1 | Destek kapsamı kayıtlı; semantik ve ek alan açma etkileşimi açık |
+| Tüm kutuları zorunlu tutmama; boş = Ölçülmedi, ölçülmüş 0 ayrı | §24, §28.1; W0.2, W1.3, W8.2 | İlke kayıtlı; tamamen boş kayıt/minimum girdi K11'de açık |
+| Kısmi değerlendirme; eksik ölçümün puanı iyileştirmemesi | §14, §28.1; W0.7, W0.13, W8.17 | İlke kayıtlı; şiddet/tamlık ve skor politikası açık |
+| Yalnız geçerli/güncel sensör sıcaklığını doldurma; yeni formda diğer alanların boş başlaması | §7, §27, §28.1; W3.1–W3.9, W8.1, W8.4 | İlke kayıtlı; sensör tazelik politikası ayrıca kesinleşecek |
+| Her alanda Nedir / Nasıl ölçülür? yardımı | §25.3; W8.20 | Öneri kayıtlı; tasarımı koruyan yerleşim/etkileşim karar bekliyor |
+
 ## 1. Sonuç
 
 **Sözleşmenin mimari yönü doğru; mevcut hali uygulamaya başlamak için bütün kararları dondurmuş değil.** Bölüm 45’teki temel sıra korunmalı; önüne kararların kesinleştirildiği bir hazırlık aşaması eklenmeli. Testler yalnız son aşamada yazılmamalı, her aşamanın kabul şartı olmalı.
@@ -128,7 +146,7 @@ WaterAnalysisRecord içindeki kalıcı owner kimliğinin UI’a açılması gere
 
 - [ ] W0.1 K01–K18 kararlarını ilgili sözleşme bölümlerine işle; “recommended”, “may choose”, “exact names later” kalan üretim davranışlarını kesinleştir.
 - [ ] W0.2 §25'teki varsayılan ve ek parametrelerin tamamı için canonical unit, kimyasal temel, nullable/required, hassasiyet ve fiziksel giriş sınırı tablosunu tamamla. Görünür alan ile zorunlu kayıt alanını ayır; tehlikeli ama fiziksel olarak geçerli ölçümleri kabul et.
-- [ ] W0.3 NH3/NH4 alanının desteklediği test sonucunu açık adlandır; kullanıcı hangi test sonucunu gireceğini anlayabilsin. Desteklenmeyen semantik için sessiz dönüşüm kullanma.
+- [ ] W0.3 §6.3–6.5'e göre toplam amonyak raporlama temelini ve ayrı serbest NH3 desteğini kararlaştır. Marka/model/yöntem/sonuç modu bazlı doğrulanmış test profili önerisinin kapsamını, kaynak birimini, revision sahipliğini ve bilinmeyen kit davranışını belirle; kullanıcıdan kimyasal anlam tahmini isteme, sessiz dönüşüm kullanma.
 - [ ] W0.4 Kanıtlı chemistry rule kataloğuna kural kimliği, kaynak, kapsam, sayı/birim, sınır dahil/harici bilgisi, önkoşul ve revision ekle. Bu rapor herhangi bir sayısal güvenlik eşiğini bilimsel olarak onaylamaz.
 - [ ] W0.5 Kabul edilen §25.1 matrisini AquariumTankTaxonomy'nin 9 sabitine ve snapshot.tankType'a bağla; application görünürlük politikasını tanımla. Other/boş/bilinmeyen kodda profil uydurma; tank sınıfı ve kayıtlı canlıların waterGroup bilgisi çelişirse açık incompatibility üret.
 - [ ] W0.6 §25.1–25.2'deki deniz/resif ve ek ölçüm kapsamının birimlerini/yorum önkoşullarını kesinleştir; eksik tuzluluk gibi bağlamda tam değerlendirme üretme. Mevcut UI tasarımı korunacak; ek ölçüm açma etkileşimi ayrıca kararlaştırılacak.
@@ -198,7 +216,7 @@ WaterAnalysisRecord içindeki kalıcı owner kimliğinin UI’a açılması gere
 - [ ] W4.7 Chemistry tehlikesini bitki ihtiyacı, filtre varlığı veya genel ortalama iyileştirmesin. Bir kritik parametre çok sayıda normal parametreyle bastırılmasın.
 - [ ] W4.8 Birden fazla profil/rule uygulanırsa öncelik ve birleşim deterministik olsun; JSON/list sırası sonucu değiştirmesin.
 - [ ] W4.9 Recommendation code → reason → rule/evidence bağı kur; yinelenen önerileri sabit sırayla birleştir. Belirsizlikte yeniden ölçüm gibi tanımlı konservatif öneriler kullan.
-- [ ] W4.10 Sıcaklık/pH veya başka önkoşula ihtiyaç duyan türetilmiş hesaplamayı eksik girdilerle yapma; türetilmiş değer ölçülmüş değer diye saklanmasın.
+- [ ] W4.10 §6.5'teki serbest NH3 hesabı kabul edilirse toplam amonyak + aynı ölçüm olayının pH/sıcaklığı + denizde tuzluluk önkoşullarını, onaylı formül/birim/zaman toleransını uygula. Eksikte hesap üretme; geçmiş örneğe bugünkü sensörü bağlama. Kaynakları ve hesap sürümünü koru; “Hesaplanan değer” olarak göster, doğrudan ölçüm/toplam amonyak üzerine yazma. Diğer türetilmiş hesaplarda da önkoşulları doğrula.
 - [ ] W4.11 Smart Care task yaratma, donanım kontrolü veya dozlama engine yan etkisi olmasın.
 
 **Geçiş ölçütü:** Aynı girdiler aynı structured sonucu veriyor; list sırası/adet varyasyonları gereksinim aralığını değiştirmiyor; tehlike/çatışma/eksik veri kaybolmuyor.
@@ -274,6 +292,8 @@ WaterAnalysisRecord içindeki kalıcı owner kimliğinin UI’a açılması gere
 - [ ] W8.17 NoAnalysis, Loading, Partial, Error, NotFound ve SensorUnavailable görünümü mevcut tasarım diliyle tamamlanmış olsun. Tasarım dondurulmuş olması sahte başarı göstermeyi gerektirmez.
 - [ ] W8.18 Tüm locale resource’larında kullanımdan düşen fixture değer/tarih/model string’leri temizlensin; geçerli statik etiketler ve açık empty-state metinleri korunmalı.
 - [ ] W8.19 Yosun sekmesi henüz geliştirilmemişken çalışan analiz sonucu gibi görünmesin; kapsamı açık placeholder/non-active davranışı olsun.
+- [ ] W8.20 §25.3'teki her alan için “Nedir / Nasıl ölçülür?” yardım önerisinin yerleşimini kullanıcıyla kararlaştır; mevcut tasarım korunarak uygulanırsa temel ve ek alanların açıklamaları, birimleri ve varsa doğrulanmış test talimatları eşleşsin. “Amonyak ve amonyum toplamı” açıklaması da kapsansın.
+- [ ] W8.21 §6.5'teki test marka/modeli seçimi kabul edilirse onaylı akışı application test profiline bağla; seçili ürün/yöntem/sonuç modu kaynak türünü ve birimini belirlesin. Kit değişimi mevcut sayıyı sessizce yeniden anlamlandırmasın; bilinmeyen profilde tahmin yapma. Ürün kataloğu ve yeni seçim kontrolü karar alınmadan uygulanmasın.
 
 **Geçiş ölçütü:** Sağlık giriş kartı dahil kullanıcıya gösterilen her dinamik değer için gerçek kaynak veya açık veri-yok/hata durumu var. Onaylı ekran düzeni korunuyor.
 
