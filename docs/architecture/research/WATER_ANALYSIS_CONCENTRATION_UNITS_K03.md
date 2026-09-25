@@ -2,9 +2,9 @@
 
 Araştırma tarihi: 26.09.2026 (Europe/Istanbul).
 
-Durum: **K03.0 ölçüm kapsamı, K03.1 NO3/NO2/PO4 kanonik kayıt anlamı/birimleri, K03.2 test/cihaz seçimi + kaynak semantiği çözümleme + normalizasyon akışı, K03.3 amonyak kanonik temelleri, K03.4 concurrent multi-result kayıt/UI politikası, K03.5 deniz salinity/SG dönüşüm güvenliği, K03.6 alkalinite/KH semantik-birim politikası ve K03.7 çözünmüş oksijen konsantrasyon/doygunluk politikası kabul edildi. K03.8 ve sonraki kararlar açık.** Kabul edilen normatif kapsam ana sözleşme §6.1–6.6, §7, §25.1–25.3 ve §28.1'de kayıtlıdır. Bu araştırma dosyası uygulama kodu veya bilimsel güvenlik eşiği değildir.
+Durum: **K03.0 ölçüm kapsamı, K03.1 NO3/NO2/PO4 kanonik kayıt anlamı/birimleri, K03.2 test/cihaz seçimi + kaynak semantiği çözümleme + normalizasyon akışı, K03.3 amonyak kanonik temelleri, K03.4 concurrent multi-result kayıt/UI politikası, K03.5 deniz salinity/SG dönüşüm güvenliği, K03.6 alkalinite/KH semantik-birim politikası, K03.7 çözünmüş oksijen konsantrasyon/doygunluk politikası ve K03.8 klor/kloramin sample-context politikası kabul edildi. K03.9 ve sonraki kararlar açık.** Kabul edilen normatif kapsam ana sözleşme §6.1–6.6, §7, §25.1–25.3 ve §28.1'de kayıtlıdır. Bu araştırma dosyası uygulama kodu veya bilimsel güvenlik eşiği değildir.
 
-Kapsam: K03.0 için ölçüm seçiminin kaynaklarını, K03.1'de kabul edilen NO3/NO2/PO4 ortak raporlama temelini, K03.2'de kabul edilen source-aware giriş/normalizasyon yaklaşımını, K03.3'te kabul edilen amonyak kanonik temellerini, K03.4'te kabul edilen concurrent multi-result cardinality/UI davranışını, K03.5'te kabul edilen marine salinity/SG/conductivity ayrımını, K03.6'da kabul edilen total-alkalinity/KH politikasını ve K03.7'de kabul edilen dissolved-oxygen concentration/saturation politikasını izlenebilir tutmak. Klor/kloramin ve diğer ek parametrelerin semantiği, kanıtlı profil/dönüşüm tablolarının ayrıntıları ve türetilmiş hesaplar sonraki ayrı kararlar olacak.
+Kapsam: K03.0 için ölçüm seçiminin kaynaklarını, K03.1'de kabul edilen NO3/NO2/PO4 ortak raporlama temelini, K03.2'de kabul edilen source-aware giriş/normalizasyon yaklaşımını, K03.3'te kabul edilen amonyak kanonik temellerini, K03.4'te kabul edilen concurrent multi-result cardinality/UI davranışını, K03.5'te kabul edilen marine salinity/SG/conductivity ayrımını, K03.6'da kabul edilen total-alkalinity/KH politikasını, K03.7'de kabul edilen dissolved-oxygen concentration/saturation politikasını ve K03.8'de kabul edilen chlorine/chloramine sample-context politikasını izlenebilir tutmak. Ca/Mg ve diğer ek parametrelerin semantiği, kanıtlı profil/dönüşüm tablolarının ayrıntıları ve türetilmiş hesaplar sonraki ayrı kararlar olacak.
 
 ## Doğrulanan ayrımlar
 
@@ -135,9 +135,26 @@ Bu kararın amacı aquarium-industry shorthand'ını kullanıcıya korurken doma
 
 Bu kararın güvenlik ilkesi: **same-event context eksikse kesin-looking DO conversion üretme; doğrudan ölçülmüş/source-native değeri koru ve değerlendirme kapsamını açıkça kısıtla.**
 
-## K03.8 — sıradaki açık karar
+## K03.8 — kabul edilen klor / kloramin ve sample-context politikası
 
-Serbest klor / toplam klor / kloramin semantiği, canonical unit/basis, source-water ile tank-water bağlamı ve aynı testte çoklu sonuçların ayrı measured metric olarak saklanma davranışı kararlaştırılacak.
+26.09.2026 tarihinde profesyonel güvenlik standardı olarak kabul edildi:
+
+- `FREE_CHLORINE_AS_CL2` ve `TOTAL_CHLORINE_AS_CL2` ayrı measured metric'tir; canonical unit **mg/L as Cl2**.
+- Aynı sample/event ve method-compatible free + total pair için `COMBINED_CHLORINE_AS_CL2 = total - free` **derived** olarak hesaplanabilir; bu sonuç monokloramin değildir ve `MONOCHLORAMINE` etiketi taşıyamaz.
+- `MONOCHLORAMINE_AS_CL2` yalnız monokloramini spesifik ölçen verified yöntem/profile ile direct measured metric olarak kabul edilir. Dichloramine/organic chloramine gibi species free/total farkından türetilmez.
+- Total chlorine free + combined available chlorine kapsamıdır; yalnız `free=0`, `total>0` görmek bütün combined residual'in monokloramin olduğunu kanıtlamaz.
+- `RAW_SOURCE_WATER`, `CONDITIONED_SOURCE_WATER`, `TANK_WATER` typed sample context'leri ayrıdır. Before/after conditioner ve tank ölçümleri birbirinin üstüne yazılmaz ve cross-context subtraction yapılmaz.
+- Combined derivation yalnız aynı sample context, compatible sample time/window ve method pair için yapılır. `total < free` ise değeri zero'ya clamp etme veya negatif combined üretme; pair inconsistent olarak işaretlenir ve re-test/verification gerekir.
+- Verified source profile sample matrix applicability/interference bilgisini taşır. Source-water yöntemi marine/tank matrix için doğrulanmamışsa hard assessment üretmez.
+- Chlorine residual transient olabilir; sample timestamp ve yöntemin prompt/on-site read gerekliliği provenance/quality state'te korunur.
+- UI aynı sample'da free+total destekliyorsa `Serbest klor` ve `Toplam klor` alanlarını ayrı gösterir; direct mono yöntemi seçildiyse `Monokloramin` ayrıca gösterilir. Derived combined value ölçülmüş monokloramin gibi sunulmaz.
+- Unknown analyte/basis, unsupported matrix, mismatched sample context veya invalid derivation prerequisites fail-closed olur: `INSUFFICIENT_DATA` / method-semantic unavailable.
+
+Bu karar numerical safety threshold seçmez; yalnız ölçümün ne olduğunu, nereden alındığını ve hangi derivation'ın bilimsel olarak hangi anlama geldiğini dondurur.
+
+## K03.9 — sıradaki açık karar
+
+Marine/reef kalsiyum ve magnezyum için kanonik elemental reporting basis/birim, test profile semantic'leri, aynı sonuçların salt/compound basis ile karıştırılmaması ve assessment rule matching kararlaştırılacak.
 
 ## Birincil kaynaklar
 
@@ -179,6 +196,10 @@ Aşağıdaki kaynaklar önceki karar araştırmasında 26.09.2026 tarihinde aç�
 | R19 | [US EPA — Dissolved Oxygen](https://www.epa.gov/caddis/dissolved-oxygen) | DO konsantrasyonu mg/L veya percent saturation olarak raporlanabilir; bunlar ilişkili ama eşdeğer değildir. Saturation sıcaklık, basınç ve salinity'ye bağlıdır. |
 | R20 | [USGS — DOTABLES](https://www.usgs.gov/tools/dotables) | DO solubility ve percent saturation hesabı water temperature, barometric pressure ve salinity/specific conductance girdilerini kullanır; algoritmanın geçerlilik aralıkları açıkça tanımlıdır. |
 | R21 | [Hach — Dissolved Oxygen](https://www.hach.com/parameters/dissolved-oxygen) | Aynı %100 saturation farklı temperature/pressure/salinity koşullarında farklı mg/L DO değerlerine karşılık gelebilir; supersaturation mümkündür. |
+| R22 | [Hach — Chlorine, Free and Total](https://cdn.hach.com/7FYZVWYB/at/hcxnhv6vk3bnzsj6crvbnxp/ex_chlorinefreetotal.pdf) | Free chlorine ve total chlorine ayrı DPD ölçümleridir; total chlorine free + combined available forms kapsamındadır ve sonuçlar mg/L Cl2 olarak raporlanır. |
+| R23 | [Hach — Chlorination, Chloramination and Chlorine Measurement](https://cdn.hach.com/7FYZVWYB/at/2pt86h8m6tgxf5hspvssxr8/DOC1805320183.pdf) | Total residual minus free residual **monochloramine ile zorunlu olarak eşit değildir**; monochloramine konsantrasyonu ancak onu spesifik ölçen yöntemle bilinir. |
+| R24 | [Hach Method 10171 — Monochloramine](https://cdn.hach.com/7FYZVWYB/at/46kjs8xchb5t2vbh66hjhn26/DR_2400_Procedures_Manual.pdf) | Monochloramine doğrudan, ayrı yöntemle ölçülebilir ve mg/L Cl2 olarak raporlanır. |
+| R25 | [MSD Veterinary Manual — Environmental Diseases, chlorine/chloramine](https://www.msdvetmanual.com/exotic-and-laboratory-animals/aquatic-systems/environmental-diseases-of-aquatic-animals-in-aquatic-systems) | Free ve total chlorine birlikte test edilmelidir; chloramine kullanılan suda free chlorine negatifken total chlorine pozitif olabilir. Dechlorination öncesi/sonrası test bağlamı ve source-water/tank-water ayrımı önemlidir. |
 | R9 | [MSD Veterinary Manual — Equipment Needed for Aquatic Systems and Water Analysis](https://www.msdvetmanual.com/exotic-and-laboratory-animals/aquatic-systems/equipment-needed-for-aquatic-systems-and-water-analysis) | Oksijen, sıcaklık, pH, amonyak, nitrit, alkalinite, sertlik, deniz suyunda tuzluluk ve bağlama göre ek testler. Veteriner değerlendirme kapsamı UI'daki zorunlu alan listesi değildir. |
 | R10 | [Red Sea — Foundation manual, “Optimal levels of the Foundation Elements”](https://redseafish.com/wp-content/uploads/2020/11/24653-NEW-Manual-Foundation-Complete-GB-_2018c.pdf) | Deniz/resif profillerinde tuzluluk, alkalinite, kalsiyum ve magnezyum ayrımı. Üretici hedefleri tüm akvaryumlar için evrensel güvenlik sınırı sayılmaz. |
 | R11 | [MSD Veterinary Manual — Environmental Diseases, chlorine/chloramine section](https://www.msdvetmanual.com/exotic-and-laboratory-animals/aquatic-systems/environmental-diseases-of-aquatic-animals-in-aquatic-systems) | Serbest klor ve toplam klor ayrı ölçümlerdir; kloramin için yalnız serbest klor sonucunun yeterli olmaması. |
