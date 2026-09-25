@@ -13,6 +13,7 @@ MINIMUM = {
     "LOW": "LOW", "LOW_MEDIUM": "LOW", "LOW_HIGH": "LOW",
     "MEDIUM": "MEDIUM", "MEDIUM_HIGH": "MEDIUM", "HIGH": "HIGH",
 }
+RECORDS_PER_PART = 100
 
 
 def render():
@@ -34,23 +35,18 @@ def render():
         "    val lightRequirement: String,",
         "    val catalogRevision: Int = AquariumPlantLightCatalog.CATALOG_REVISION", ")", "",
         "/** Exact catalog identities. A range uses its lowest supported light as the minimum demand. */",
-        '@Suppress("LargeClass") // Static catalog entries intentionally share one record table.',
         "object AquariumPlantLightCatalog {", "    const val CATALOG_REVISION: Int = 2",
         "    const val EXPECTED_RECORD_COUNT: Int = 271", "",
-        "    val records: List<AquariumPlantLightCatalogRecord> = listOf("
+        "    val records: List<AquariumPlantLightCatalogRecord> = buildList(EXPECTED_RECORD_COUNT) {",
     ]
-    for i, (row, identity) in enumerate(zip(records, ids)):
-        demand = MINIMUM[row["lightRequirement"]]
-        comma = "," if i < len(records) - 1 else ""
-        lines.extend([
-            "        AquariumPlantLightCatalogRecord(",
-            f'            catalogId = "{identity}",',
-            f"            lightDemand = AquariumPlantLightDemand.{demand},",
-            f'            lightRequirement = "{row["lightRequirement"]}"',
-            f"        ){comma}",
-        ])
+    parts = [
+        list(zip(records[start:start + RECORDS_PER_PART], ids[start:start + RECORDS_PER_PART]))
+        for start in range(0, len(records), RECORDS_PER_PART)
+    ]
+    for part_number in range(1, len(parts) + 1):
+        lines.append(f"        addAll(catalogRecordsPart{part_number})")
     lines.extend([
-        "    )", "", "    private val byCatalogId = records.associateBy(AquariumPlantLightCatalogRecord::catalogId)",
+        "    }", "", "    private val byCatalogId = records.associateBy(AquariumPlantLightCatalogRecord::catalogId)",
         "    val catalogIds: Set<String> get() = byCatalogId.keys", "", "    init {",
         "        check(records.size == EXPECTED_RECORD_COUNT)",
         "        check(byCatalogId.size == records.size)", "    }", "",
@@ -58,8 +54,22 @@ def render():
         "    fun requireRecord(catalogId: String): AquariumPlantLightCatalogRecord =",
         '        requireNotNull(record(catalogId)) { "Missing plant-light record for $catalogId" }',
         "    fun resolve(catalogId: String): AquariumPlantLightDemand = requireRecord(catalogId).lightDemand",
-        "}", ""
+        "}",
     ])
+    for part_number, part in enumerate(parts, start=1):
+        lines.extend(["", f"private val catalogRecordsPart{part_number}: List<AquariumPlantLightCatalogRecord> = listOf("])
+        for i, (row, identity) in enumerate(part):
+            demand = MINIMUM[row["lightRequirement"]]
+            comma = "," if i < len(part) - 1 else ""
+            lines.extend([
+                "    AquariumPlantLightCatalogRecord(",
+                f'        catalogId = "{identity}",',
+                f"        lightDemand = AquariumPlantLightDemand.{demand},",
+                f'        lightRequirement = "{row["lightRequirement"]}"',
+                f"    ){comma}",
+            ])
+        lines.append(")")
+    lines.append("")
     return "\n".join(lines)
 
 
