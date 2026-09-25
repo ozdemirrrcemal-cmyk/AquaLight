@@ -35,6 +35,7 @@ import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.LivestockCategories
 import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.localizedName
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.TankDetailTabArgs
 import java.util.Calendar
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 class TankDetailLivestockFormFragment :
@@ -247,13 +248,10 @@ class TankDetailLivestockFormFragment :
             return
         }
 
-        selectedCatalogEntry?.let { entry ->
-            selectedCategory = entry.category
-        } ?: run {
-            selectedCategory = (restoredFormState?.getString("form.category") ?: livestock.category).takeIf { category ->
-                category in LivestockCategories.all
-            } ?: LivestockCategories.FISH
-        }
+        selectedCategory = selectedCatalogEntry?.category
+            ?: (restoredFormState?.getString("form.category") ?: livestock.category)
+                .takeIf { it in LivestockCategories.all }
+            ?: LivestockCategories.FISH
 
         mediaFlow.initializeSelection(livestock.photoUri)
         selectedQuantity = restoredFormState?.getInt("form.quantity") ?: livestock.quantity.coerceAtLeast(1)
@@ -534,11 +532,16 @@ class TankDetailLivestockFormFragment :
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                saveLivestockPhoto(aquariumTankViewModel, livestock, isNew = editingLivestockId <= 0L)
+                saveLivestockPhoto(
+                    aquariumTankViewModel,
+                    livestock,
+                    isNew = editingLivestockId <= 0L
+                )
                 isSavingLivestock = false
                 finishAfterMutation()
+            } catch (exception: CancellationException) {
+                throw exception
             } catch (exception: Exception) {
-                if (exception is kotlinx.coroutines.CancellationException) throw exception
                 exception.printStackTrace()
                 isSavingLivestock = false
                 _binding?.btnSaveLife?.isEnabled = true

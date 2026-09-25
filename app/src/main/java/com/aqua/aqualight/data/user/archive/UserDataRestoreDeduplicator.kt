@@ -12,8 +12,7 @@ internal class UserDataRestoreDeduplicator(
     private val snapshotTankPhoto: (String?) -> UserDataArchiveMediaFingerprint?,
     private val provenance: UserDataRestoreProvenanceSnapshot =
         UserDataRestoreProvenanceSnapshot.Empty,
-    private val snapshotPlantPhoto: (String?) -> UserDataArchiveMediaFingerprint? = { null },
-    private val livestockMedia: LivestockRestoreMedia = LivestockRestoreMedia()
+    private val recordMedia: RestoreRecordMedia = RestoreRecordMedia()
 ) {
     private val unmatchedAquariums = existingAquariums.toMutableList()
     private val unmatchedCareTasks = existingCareTasks.toMutableList()
@@ -95,7 +94,7 @@ internal class UserDataRestoreDeduplicator(
             if (reference == null) {
                 currentPlant.photoUri.isNullOrBlank()
             } else {
-                snapshotPlantPhoto(currentPlant.photoUri).matches(reference)
+                recordMedia.snapshotPlant(currentPlant.photoUri).matches(reference)
             }
         }
     }
@@ -106,7 +105,7 @@ internal class UserDataRestoreDeduplicator(
             val current = items[item.id] ?: return@all false
             val reference = item.photo
             if (reference == null) current.photoUri.isNullOrBlank()
-            else livestockMedia.snapshot(current.photoUri).matches(reference)
+            else recordMedia.livestock.snapshot(current.photoUri).matches(reference)
         }
     }
 
@@ -135,3 +134,8 @@ internal class UserDataRestoreDeduplicator(
             generatedRuleKey == restored.generatedRuleKey
     }
 }
+
+internal data class RestoreRecordMedia(
+    val snapshotPlant: (String?) -> UserDataArchiveMediaFingerprint? = { null },
+    val livestock: LivestockRestoreMedia = LivestockRestoreMedia()
+)

@@ -100,7 +100,10 @@ class DefaultAquariumTankOperations(
                             duplicatedPlant?.photoUri == sourcePlant.photoUri
                         )
             }
-            if (invalidSharedOwnership || hasInvalidPlantOwnership || !source.hasIndependentLivestockPhotos(duplicate)) {
+            if (
+                invalidSharedOwnership || hasInvalidPlantOwnership ||
+                !source.hasIndependentLivestockPhotos(duplicate)
+            ) {
                 runCatching { tankStore.deleteTanks(listOf(duplicateId)) }
                 throw IllegalStateException(
                     "Tank media could not be copied with independent ownership."

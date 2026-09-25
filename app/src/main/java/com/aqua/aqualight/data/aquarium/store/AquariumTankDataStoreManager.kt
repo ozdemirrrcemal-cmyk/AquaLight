@@ -39,7 +39,10 @@ class AquariumTankDataStoreManager(
     private val context: Context
 ) {
 
-    internal val livestockPhotos = TankLivestockMutations(context, ::updateCurrentOwnerTank) { it.toStoredLivestockStrict() }
+    internal val livestockPhotos = TankLivestockMutations(
+        context,
+        ::updateCurrentOwnerTank
+    ) { it.toStoredLivestockStrict() }
     internal val plantPhotos = TankPlantPhotoMutations(context, ::updateCurrentOwnerTank)
 
     val tanksFlow: Flow<List<SavedAquariumTank>> =

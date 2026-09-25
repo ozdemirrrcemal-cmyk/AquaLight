@@ -42,14 +42,19 @@ class LivestockPhotoIsolationInstrumentedTest {
                 operation.saveLivestockWithPhoto(tank, item(12), owner, true, false)
                 operation.saveLivestockWithPhoto(otherTank, item(11), owner, true, false)
                 val photo = pending(owner)
-                operation.saveLivestockWithPhoto(tank, item(11).copy(quantity = 4, photoUri = photo), owner, false, true)
+                operation.saveLivestockWithPhoto(
+                    tank, item(11).copy(quantity = 4, photoUri = photo), owner, false, true
+                )
                 val selected = store.tanksSnapshotForOwner(owner).first { it.id == tank }.livestock
                 assertEquals(photo, selected.first { it.id == 11L }.photoUri)
                 assertEquals(4, selected.first { it.id == 11L }.quantity)
                 assertNull(selected.first { it.id == 12L }.photoUri)
                 assertNull(store.tanksSnapshotForOwner(owner).first { it.id == otherTank }.livestock.single().photoUri)
                 operation.saveLivestockWithPhoto(tank, item(11).copy(note = "stale editor"), owner, false, false)
-                assertEquals(photo, store.tanksSnapshotForOwner(owner).first { it.id == tank }.livestock.first().photoUri)
+                assertEquals(
+                    photo,
+                    store.tanksSnapshotForOwner(owner).first { it.id == tank }.livestock.first().photoUri
+                )
             } finally {
                 store.deleteTanks(listOf(otherTank))
             }
@@ -148,7 +153,9 @@ class LivestockPhotoIsolationInstrumentedTest {
         catalogEntryId = "e194e2ec0b16b759"
     )
 
-    private fun draft() = TankDraft(name = "Photo test", widthCm = 60, lengthCm = 40, heightCm = 40, tankType = "Planted")
+    private fun draft() = TankDraft(
+        name = "Photo test", widthCm = 60, lengthCm = 40, heightCm = 40, tankType = "Planted"
+    )
 
     private fun operations() = DefaultAquariumTankOperations(
         context = context,

@@ -55,8 +55,10 @@ internal class UserDataBackupRestorer(
             ownerUid = ownerUid,
             snapshotTankPhoto = mediaOperations.snapshotTankPhoto,
             provenance = provenance.snapshot(ownerUid),
-            snapshotPlantPhoto = mediaOperations.snapshotPlantPhoto,
-            livestockMedia = mediaOperations.livestock
+            recordMedia = RestoreRecordMedia(
+                snapshotPlant = mediaOperations.snapshotPlantPhoto,
+                livestock = mediaOperations.livestock
+            )
         )
         transactions.begin(
             ownerUid = ownerUid,
