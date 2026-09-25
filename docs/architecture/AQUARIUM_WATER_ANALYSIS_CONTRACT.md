@@ -6,7 +6,7 @@ This document freezes the architectural, data, analysis, persistence, and UI-int
 
 The existing Tank Health / Water Quality UI is considered visually complete for this stage. Implementation work governed by this contract must connect that UI to authoritative data and analysis without redesigning the approved screens unless a later explicit UI change is requested.
 
-Accepted clarification on 26 September 2026 (K03.0): the selected tank type determines which measurement fields are shown. Preserve the existing screen structure, cards, field styling, grid, and navigation while populating them with the applicable measurements in section 25.1. Basic, tank-specific, and additional measurements are logical groups, not approval for a new visual layout. K03.1 subsequently freezes nitrate, nitrite, and phosphate recording semantics in section 6.1. K03.2 freezes the test/device selection, source-semantic resolution, and normalization workflow in sections 6.2, 6.5, 7, and 28.1. K03.3 freezes the canonical ammonia reporting bases in section 6.3; the remaining K03 decisions stay open.
+Accepted clarification on 26 September 2026 (K03.0): the selected tank type determines which measurement fields are shown. Preserve the existing screen structure, cards, field styling, grid, and navigation while populating them with the applicable measurements in section 25.1. Basic, tank-specific, and additional measurements are logical groups, not approval for a new visual layout. K03.1 subsequently freezes nitrate, nitrite, and phosphate recording semantics in section 6.1. K03.2 freezes the test/device selection, source-semantic resolution, and normalization workflow in sections 6.2, 6.5, 7, and 28.1. K03.3 freezes the canonical ammonia reporting bases in section 6.3. K03.4 freezes concurrent multi-result measurement/cardinality behavior in section 6.6; the remaining K03 decisions stay open.
 
 This contract is intentionally broader than a screen implementation. It defines the foundation that later powers:
 
@@ -422,7 +422,7 @@ Accepted with the user on 26 September 2026 (K03.3):
 
 UI contract for K03.3: keep the approved field/card design. The primary user-facing label remains **"Toplam amonyak"**, with the selected test/device's source unit/reporting context visible at entry. Users should not be forced to understand or manually convert to `mg/L as N`. When the selected profile reports direct free ammonia, present it explicitly as **"Serbest amonyak (NH3)"**. Technical canonical/provenance detail may be shown in record detail where useful, but the entry screen must not replace the familiar label with internal enum terminology.
 
-The explanatory text **"Amonyak ve amonyum toplamı"** remains appropriate for the total-ammonia field; its exact help-control placement follows the pending section 25.3 interaction decision. Whether one analysis event can store both a total-ammonia result and a direct free-NH3 result from the same multi-result kit is a separate K03 interaction/model decision; K03.3 does not silently choose one-or-the-other or overwrite either result.
+The explanatory text **"Amonyak ve amonyum toplamı"** remains appropriate for the total-ammonia field; its exact help-control placement follows the pending section 25.3 interaction decision. K03.4 defines how a single measurement event stores and renders multiple independently measured ammonia results.
 
 ### 6.4 Accepted reuse of existing measurement models (K02)
 
@@ -436,7 +436,7 @@ Decision accepted with the user on 26 September 2026:
 
 The approved UI already contains NO2 and NH3/NH4 input controls. The missing support refers to the underlying measurement contracts and the future persistence/assessment integration, not missing UI fields. K02 alone did not authorize additional controls; the later K03.0 decision in section 25 defines the tank-specific field additions while preserving the existing UI design.
 
-K03 is partially decided: K03.0 defines measurement scope, K03.1 defines nitrate/nitrite/phosphate canonical meanings, K03.2 defines test/device selection plus source-aware normalization behavior, and K03.3 defines TAN as mg/L as N plus direct free NH3 as mg/L as NH3. Existing `nitratePpm` and `phosphatePpm` names do not, by themselves, establish the source data's chemical reporting basis or authorize treating those values as mg/L. Evidence-backed profile/conversion entries, remaining parameter semantics, multi-result event behavior, and rule thresholds still require their own decisions before implementation. Adding parameters must not invent livestock requirements where the catalog has none.
+K03 is partially decided: K03.0 defines measurement scope, K03.1 defines nitrate/nitrite/phosphate canonical meanings, K03.2 defines test/device selection plus source-aware normalization behavior, K03.3 defines TAN as mg/L as N plus direct free NH3 as mg/L as NH3, and K03.4 defines concurrent multi-result storage/UI behavior. Existing `nitratePpm` and `phosphatePpm` names do not, by themselves, establish the source data's chemical reporting basis or authorize treating those values as mg/L. Evidence-backed profile/conversion entries, remaining parameter semantics, and rule thresholds still require their own decisions before implementation. Adding parameters must not invent livestock requirements where the catalog has none.
 
 ### 6.5 Accepted test/device selection and source-normalization policy (K03.2)
 
@@ -445,16 +445,29 @@ Decision accepted with the user on 26 September 2026: measurement meaning must b
 - **Parameter-scoped source selection:** test/device preference is stored per measurement parameter and isolated by owner. A single global product selection must not be applied to every parameter. Tank-bound hardware must also respect the tank/device assignment boundary. The same user may therefore use one source for nitrate and another for ammonia.
 - **Verified product/method profile:** when the selected product is known, its verified profile supplies the measured analyte, chemical reporting basis, source unit, supported result modes, and any conversion metadata. Brand alone is insufficient; model, method, or result mode may change semantics.
 - **Remembered low-friction entry:** after the source is selected, later measurements should normally require only the numeric result. The input control shows the source unit/reporting context and the application performs any supported normalization; the user is not asked to perform a conversion manually.
-- **Explicit multi-result mode:** when one product can produce more than one semantically different result, show only the necessary mode choice, for example **"Toplam amonyak" / "Serbest amonyak"**. The application must never infer the measured mode from the number, previous value, or field name.
+- **Multi-result capability:** a verified profile declares whether outputs are concurrent independent results or mutually exclusive device/test modes. If multiple results can be produced from the same measurement event, each result gets its own typed input/metric under K03.4; do not force the user to choose one and discard the other. Use an explicit mode selector only where the source itself is genuinely mutually exclusive. The application must never infer a mode from the number, previous value, or field name.
 - **Guided unknown-product fallback:** if the product is not in the catalog, the flow must still allow the user to select the measurement type, chemical reporting basis, and source unit from a controlled typed list. This keeps the system extensible beyond the built-in brand catalog without making arbitrary free text a chemical-semantic source of truth.
 - **Raw + normalized provenance:** preserve the entered raw result, resolved source semantics, product/profile id and revision when applicable, selected result mode, and the normalized canonical result separately. Conversion rules/revisions and required preconditions are traceable; rounding is presentation-only and occurs after assessment.
 - **No silent reinterpretation:** changing the selected product, method, unit, or result mode after a value has been entered must not silently reinterpret the existing number. The flow must require explicit reconfirmation/re-entry or otherwise keep the old raw value bound to its original source semantics.
 - **Unresolved input stays out of committed analysis:** if measurement meaning/unit still cannot be resolved, that field is not committed as a normal `WaterAnalysisRecord` measurement and does not enter engine comparisons or derived calculations. The unresolved value may remain in draft/form state while other resolved measurements are validated, assessed, and saved. This does not define a durable draft-store implementation by itself. Unknown is not zero, measured, normal, or safe.
-- **Direct free-ammonia measurement:** when a verified test/profile exposes direct free-NH3, store it as a distinct measured metric/result mode, never as total ammonia and never as a calculated value.
+- **Direct free-ammonia measurement:** when a verified test/profile exposes direct free-NH3, store it as a distinct measured metric, never as total ammonia and never as a calculated value. If the same source also produces TAN in the same event, K03.4 allows both measured metrics to coexist.
 - **Calculated free ammonia remains a separate open decision:** if later accepted, derive it only from a compatible total-ammonia result and pH/temperature belonging to the same measurement event; marine calculations also need compatible salinity. Never substitute today's sensor temperature for an older sample. Allowed time differences, equation, applicability range, concentration basis, and precision must be researched and decided before enabling the calculation. Present any future derived output as **"Hesaplanan değer"** and preserve calculation provenance.
 
 Scientific background is in research references R7–R8. K03.2 accepts the source-selection and resolution workflow; K03.3 freezes TAN as mg/L as N and direct free NH3 as mg/L as NH3. Neither decision freezes a complete commercial product catalog, a derived-ammonia calculation equation, or toxicity thresholds.
 
+### 6.6 Accepted concurrent multi-result measurement policy (K03.4)
+
+Decision accepted with the user on 26 September 2026: if a real test/device can produce multiple semantically distinct measurements from the same sampling event, AquaLight must preserve those measurements independently instead of collapsing them into a single field with a mode switch.
+
+- **Same event, separate metrics:** one `WaterAnalysisRecord` may contain both `TOTAL_AMMONIA_NITROGEN` and `FREE_AMMONIA_NH3` when both were directly measured for the same `observedAt` event. They share the analysis event identity but remain separate measurement entries.
+- **Separate UI inputs for concurrent outputs:** when the selected verified source profile supports both results from the same event, the Add Analysis screen renders separate inputs **"Toplam amonyak"** and **"Serbest amonyak (NH3)"**. Each input displays its own source unit/reporting context. The user may enter either available result or both according to what was actually measured; missing one does not fabricate or infer it from the other.
+- **Mode selector only for true exclusivity:** a selector/toggle is reserved for products or device configurations where the source can output only one mutually exclusive semantic mode at a time. Concurrent outputs must not be represented as mutually exclusive choices.
+- **Independent provenance:** each measured metric retains its own raw value, source unit/reporting basis, result/channel identity when applicable, normalized value, and normalization provenance. Shared product/profile identity may be referenced by both entries without merging their measurements.
+- **No overwrite or derivation by implication:** entering direct free NH3 must not overwrite TAN; entering TAN must not clear or synthesize direct free NH3. A future calculated free-NH3 result, if accepted separately, uses a distinct derived provenance/type and never replaces a directly measured free-NH3 value.
+- **Presentation:** record detail shows both measured metrics separately when present. The Water Quality input/metric presentation may expose direct free NH3 as an additional conditional metric while retaining **Toplam amonyak** as the common core metric; history summary may stay compact but must not mislabel one result as the other.
+- **Validation/cardinality:** within one analysis event, TAN and direct free NH3 are different canonical parameter keys and therefore are not duplicates of each other. Validation must operate per canonical metric and preserve partial-analysis behavior.
+
+K03.4 generalizes beyond Seachem: the rule is based on source capability metadata, not a brand-specific exception.
 ---
 
 ## 7. Measurement provenance
@@ -1048,7 +1061,7 @@ For `Other`/unknown profiles, the supported fields listed above and the profile-
 - A visible field is not a promise of a complete assessment. Unmeasured, measured zero, inapplicable, unknown test basis, and missing assessment rules must remain distinct. A critical known result must not be hidden by a partial-data state.
 - Preserve entered drafts and persisted measurements when tank type changes; no field hidden by the new profile may silently discard its value or be persisted invisibly. Resolve affected draft values explicitly before saving. Detailed interaction belongs to the later state/UI decision.
 - Store the assessment's tank-type/profile context with its provenance. History/detail render the saved measurement set and assessment context; today's tank type must not erase or reinterpret yesterday's fields. The latest result must expose a context mismatch if the tank type has since changed.
-- K03.1 fixes nitrate/nitrite/phosphate canonical meanings and units in section 6.1, K03.2 fixes the test/device-driven source-resolution and normalization workflow, and K03.3 fixes TAN as mg/L as N plus direct free NH3 as mg/L as NH3. Remaining K03 decisions include same-event multi-result ammonia behavior, remaining fields' chemical reporting bases/units, evidence-backed profile/conversion entries and precision, and derived-measurement prerequisites. K03.0–K03.3 do not accept numerical safety thresholds, complete implementation, or all of K03/K11/K13.
+- K03.1 fixes nitrate/nitrite/phosphate canonical meanings and units in section 6.1, K03.2 fixes the test/device-driven source-resolution and normalization workflow, K03.3 fixes TAN as mg/L as N plus direct free NH3 as mg/L as NH3, and K03.4 fixes concurrent multi-result storage/UI behavior. Remaining K03 decisions include remaining fields' chemical reporting bases/units, evidence-backed profile/conversion entries and precision, and derived-measurement prerequisites. K03.0–K03.4 do not accept numerical safety thresholds, complete implementation, or all of K03/K11/K13.
 
 Evidence and repository references for this scope are recorded in [the K03 research note](research/WATER_ANALYSIS_CONCENTRATION_UNITS_K03.md). The per-type visibility matrix is a product decision informed by those sources, not a scientific claim that all listed tests must be performed at every save.
 
@@ -1125,7 +1138,7 @@ Form behavior to preserve from the agreed data-quality direction:
 - Auto-populate temperature only from a valid, fresh, assigned sensor sample appropriate for the measurement event. If unavailable, retain explicit unavailable/manual-source behavior; do not invent a reading.
 - Let users record the measurements they actually took rather than requiring every displayed test. Exact minimum-input and fully empty-record behavior remain K11 decisions. A missing prerequisite for one calculation does not turn an otherwise valid partial measurement into a fabricated complete analysis.
 - Source/test selection is parameter-specific and remembered. A known profile auto-selects the valid analyte/unit/result-mode options; an unknown product opens the guided typed fallback. The unit/reporting context remains visible beside the result input while conversion happens below the UI boundary.
-- If a selected product exposes multiple result modes, request the explicit mode only when needed. Never guess total versus free ammonia or any other reporting basis.
+- If a selected product exposes multiple **concurrent** results, render separate typed fields for each supported result and allow them to coexist in the same analysis event. Request a mode selector only for genuinely mutually exclusive source modes. Never guess total versus free ammonia or any other reporting basis.
 - If a field's source semantics cannot be resolved, keep that field out of the committed analysis and retain it only as draft/form state; other resolved measurements may still be saved. Changing source semantics after entering a number must not silently reinterpret the number.
 - An empty field means **"Ölçülmedi"**; a measured `0` remains a real result. Explain limited coverage as **"Kısmi değerlendirme"** alongside any known critical finding. Missing results must not increase a health score or be described as normal. Final aggregation and score policy remain separate decisions.
 
@@ -1508,7 +1521,9 @@ Cover:
 - parameter-scoped remembered test/device selection;
 - verified profile analyte/reporting-basis/unit resolution;
 - guided unknown-product measurement/basis/unit selection;
-- explicit multi-result-mode selection with no inference;
+- concurrent multi-result source renders separate inputs and commits both independent metrics;
+- mutually exclusive source modes use explicit selection with no inference;
+- TAN + direct free NH3 same-event round-trip without overwrite or accidental derivation;
 - source change after value entry without silent reinterpretation;
 - unresolved source semantics staying draft-only while other resolved fields can commit;
 - raw/source-profile/revision/normalized provenance round-trip;
@@ -1610,63 +1625,64 @@ The implementation order is frozen as follows.
 2. canonical units;
 3. K03.2 source/test profile selection, guided source resolution, and normalization policy (accepted; exact evidence-backed profile/conversion entries remain implementation data);
 4. K03.3 ammonia canonical semantics: TAN as mg/L as N; direct free NH3 as mg/L as NH3 (accepted);
-5. severity/status model;
-6. species-range intersection/conflict policy;
-7. intrinsic chemistry rule catalog and evidence revision.
+5. K03.4 concurrent multi-result measurement policy: separate canonical metrics/inputs for simultaneous outputs; selector only for mutually exclusive modes (accepted);
+6. severity/status model;
+7. species-range intersection/conflict policy;
+8. intrinsic chemistry rule catalog and evidence revision.
 
 ### Phase 2 - Application/domain foundation
 
-8. WaterAnalysis input/record models;
-9. structured assessment models;
-10. recommendation/reason codes;
-11. PlantCareCatalogOperations boundary;
-12. AquariumHealthContext model/provider;
-13. reuse/integrate LivestockWaterAdvisorOperations;
-14. WaterQualityAssessmentEngine;
-15. TankWaterTemperatureOperations boundary.
+9. WaterAnalysis input/record models;
+10. structured assessment models;
+11. recommendation/reason codes;
+12. PlantCareCatalogOperations boundary;
+13. AquariumHealthContext model/provider;
+14. reuse/integrate LivestockWaterAdvisorOperations;
+15. WaterQualityAssessmentEngine;
+16. TankWaterTemperatureOperations boundary.
 
 ### Phase 3 - Persistence
 
-16. dedicated water-analysis proto/store;
-17. schema version;
-18. strict store rules;
-19. owner/tank-scoped queries;
-20. create/delete/latest operations;
-21. persisted assessment/provenance snapshot.
+17. dedicated water-analysis proto/store;
+18. schema version;
+19. strict store rules;
+20. owner/tank-scoped queries;
+21. create/delete/latest operations;
+22. persisted assessment/provenance snapshot.
 
 ### Phase 4 - Integrity
 
-22. integrate Water Analysis into tank deletion transaction;
-23. process-death recovery;
-24. account deletion cleanup;
-25. backup/restore policy and implementation if included;
-26. data inventory / export updates where applicable.
+23. integrate Water Analysis into tank deletion transaction;
+24. process-death recovery;
+25. account deletion cleanup;
+26. backup/restore policy and implementation if included;
+27. data inventory / export updates where applicable.
 
 ### Phase 5 - UI integration
 
-27. WaterAnalysisViewModel;
-28. save real analysis;
-29. replace mock history;
-30. pass analysisId through Safe Args;
-31. bind real record detail;
-32. implement real delete;
-33. bind latest analysis to Tank Health Water Quality metrics;
-34. connect fresh cooling sensor temperature.
+28. WaterAnalysisViewModel;
+29. save real analysis;
+30. replace mock history;
+31. pass analysisId through Safe Args;
+32. bind real record detail;
+33. implement real delete;
+34. bind latest analysis to Tank Health Water Quality metrics;
+35. connect fresh cooling sensor temperature.
 
 ### Phase 6 - Validation
 
-35. engine tests;
-36. persistence tests;
-37. owner/process-death tests;
-38. ViewModel/UI contract tests;
-39. architecture/lint/detekt/CodeQL;
-40. all CI green.
+36. engine tests;
+37. persistence tests;
+38. owner/process-death tests;
+39. ViewModel/UI contract tests;
+40. architecture/lint/detekt/CodeQL;
+41. all CI green.
 
 Only after this sequence:
 
-41. Algae Control;
-42. Plant Health;
-43. Livestock Health.
+42. Algae Control;
+43. Plant Health;
+44. Livestock Health.
 
 ---
 
@@ -1679,6 +1695,7 @@ Water Quality is complete only when all of the following are true:
 - additional measurements preserve the existing design and have explicit supported semantics before being enabled;
 - each parameter can retain its own remembered test/device selection; known profiles drive analyte/unit/result-mode semantics, unknown products use guided typed fallback, and multi-mode results are never inferred;
 - total ammonia normalizes to TAN in mg/L as N, while directly measured free ammonia normalizes separately to mg/L as NH3; neither is silently substituted for the other;
+- when a source can measure TAN and direct free NH3 in the same event, both can be entered and persisted as separate measured metrics with separate provenance; concurrent outputs are not collapsed into a selector;
 - unresolved source semantics are excluded from committed analysis and may remain in draft while other resolved measurements are saved; changing a source never silently reinterprets an entered number;
 - tank-type changes do not silently lose draft values or remove historical measurements;
 - a user can enter a physically valid analysis and save it;
