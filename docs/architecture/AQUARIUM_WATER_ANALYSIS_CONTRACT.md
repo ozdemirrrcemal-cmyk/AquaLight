@@ -6,7 +6,7 @@ This document freezes the architectural, data, analysis, persistence, and UI-int
 
 The existing Tank Health / Water Quality UI is considered visually complete for this stage. Implementation work governed by this contract must connect that UI to authoritative data and analysis without redesigning the approved screens unless a later explicit UI change is requested.
 
-Accepted clarification on 26 September 2026 (K03.0): the selected tank type determines which measurement fields are shown. Preserve the existing screen structure, cards, field styling, grid, and navigation while populating them with the applicable measurements in section 25.1. Basic, tank-specific, and additional measurements are logical groups, not approval for a new visual layout. K03.1 subsequently freezes nitrate, nitrite, and phosphate recording semantics in section 6.1. K03.2 freezes the test/device selection, source-semantic resolution, and normalization workflow in sections 6.2, 6.5, 7, and 28.1. K03.3 freezes the canonical ammonia reporting bases in section 6.3. K03.4 freezes concurrent multi-result measurement/cardinality behavior in section 6.6; the remaining K03 decisions stay open.
+Accepted clarification on 26 September 2026 (K03.0): the selected tank type determines which measurement fields are shown. Preserve the existing screen structure, cards, field styling, grid, and navigation while populating them with the applicable measurements in section 25.1. Basic, tank-specific, and additional measurements are logical groups, not approval for a new visual layout. K03.1 subsequently freezes nitrate, nitrite, and phosphate recording semantics in section 6.1. K03.2 freezes the test/device selection, source-semantic resolution, and normalization workflow in sections 6.2, 6.5, 7, and 28.1. K03.3 freezes the canonical ammonia reporting bases in section 6.3. K03.4 freezes concurrent multi-result measurement/cardinality behavior in section 6.6. K03.5 freezes marine salinity/specific-gravity semantics and conversion safety in section 6.7; the remaining K03 decisions stay open.
 
 This contract is intentionally broader than a screen implementation. It defines the foundation that later powers:
 
@@ -468,6 +468,22 @@ Decision accepted with the user on 26 September 2026: if a real test/device can 
 - **Validation/cardinality:** within one analysis event, TAN and direct free NH3 are different canonical parameter keys and therefore are not duplicates of each other. Validation must operate per canonical metric and preserve partial-analysis behavior.
 
 K03.4 generalizes beyond Seachem: the rule is based on source capability metadata, not a brand-specific exception.
+### 6.7 Accepted marine salinity / specific-gravity safety policy (K03.5)
+
+Decision accepted on 26 September 2026 for commercial-safety behavior: AquaLight must not collapse salinity, specific gravity, conductivity, or vendor-labeled `ppt` into one generic numeric field. The exact physical/reporting basis is part of the measurement identity.
+
+- **Practical Salinity:** use a distinct canonical metric such as `PRACTICAL_SALINITY_PSS78`. PSS-78 Practical Salinity is dimensionless in the domain model. A device may display `PSU`, but `PSU` is presentation/source metadata rather than a dimensional SI unit.
+- **Specific Gravity:** use a separate canonical metric such as `SPECIFIC_GRAVITY`. SG is a dimensionless density ratio and is not numerically interchangeable with Practical Salinity. Persist the source's calibration/reference-temperature semantics and the sample/measurement temperature when the method requires them.
+- **Absolute/mass salinity:** `ABSOLUTE_SALINITY_G_PER_KG` or another mass-fraction basis is a separate metric and may be used only when the source/method explicitly establishes that basis. Do not infer TEOS-10 Absolute Salinity from a generic aquarium label such as `ppt`.
+- **Conductivity:** conductivity remains its own measured metric. A conductivity value becomes PSS-78 Practical Salinity only through a versioned, standard algorithm with the required inputs (including temperature and pressure/reference conditions) and declared applicability bounds. Do not use a hobby approximation formula.
+- **Ambiguous `ppt`:** `ppt` alone is not a canonical semantic. The verified source profile must state what the manufacturer means by that display (for example a defined seawater/refractometer scale or another mass/concentration basis). Unknown `ppt` remains source-native/unresolved for normalization.
+- **No blind SG ↔ salinity conversion:** do not convert `1.026` SG to `35` salinity, or the reverse, from the number alone. Conversion is permitted only when source type, scale/calibration, required temperature/reference metadata, and an evidence-backed algorithm are all available. The conversion algorithm/revision and inputs are persisted in provenance.
+- **No location-based ocean correction for closed aquaria:** do not derive TEOS-10 Absolute Salinity from Practical Salinity by applying open-ocean longitude/latitude anomaly corrections to an aquarium. Synthetic/closed aquarium composition is not established by geographic location.
+- **Typed rule matching:** chemistry/risk rules must carry the same metric/basis metadata as measurements. The engine compares directly only on matching semantics, or after an approved conversion. Missing conversion prerequisites produce `INSUFFICIENT_DATA`/conversion-unavailable behavior, never a guessed normal/critical result.
+- **Do not double-count representations:** if one electronic instrument reports salinity and SG derived from the same underlying conductivity/temperature observation, preserve both source representations if useful but link them to the same source observation/provenance and do not count them as independent evidence.
+- **UI:** preserve the approved card/grid layout but render the selected source's real representation. A PSS-78 source can show `Tuzluluk` with its device display convention; an SG source shows `Specific Gravity (SG)` rather than relabelling the number as salinity. Required reference-temperature/calibration context belongs in the source/profile/help/detail presentation, not as an invisible assumption.
+
+K03.5 prioritizes a correct partial assessment over a precise-looking but unsupported conversion. A source-native SG or salinity result may still be stored historically when valid; if no matching rule or verified normalization path exists, that measurement is retained but not used to fabricate an assessment.
 ---
 
 ## 7. Measurement provenance
@@ -1032,7 +1048,7 @@ Product interpretation and limits:
 - Nitrite remains available in marine profiles for cycle/setup monitoring; this does not imply identical freshwater/marine toxicity rules or testing frequency.
 - The same default fields for the four coral profiles do not imply identical target values, consumption, or dosing. These depend on the evidence-backed rules and inhabitants.
 - Marine alkalinity is not GH. KH wording, carbonate hardness, total alkalinity, and their supported test methods must be reconciled under K03; do not expose duplicated KH and alkalinity fields for the same recorded measurement.
-- Salinity and specific gravity are not interchangeable numeric values. Supported inputs, temperature conventions, and normalization must be decided under K03 before binding the field.
+- Under accepted K03.5, salinity and specific gravity are distinct typed metrics. PSS-78, SG, conductivity, mass/absolute salinity, and vendor `ppt` displays are not silently interchangeable. The selected source profile determines the representation; only evidence-backed conversions with required temperature/reference metadata may normalize across representations.
 - `Other`, blank, and unsupported legacy codes do not inherit freshwater or marine thresholds. Additional measurements with known semantics can be recorded without fabricating a profile-dependent assessment. How a user explicitly supplies missing profile context is a later interaction decision.
 - Field selection must be an application-layer policy under the accepted `application/aquarium/health/water/` ownership, using the existing parameter vocabulary. Presentation renders this policy; Fragments/XML must not own a second classification table or chemistry rules.
 
@@ -1061,7 +1077,7 @@ For `Other`/unknown profiles, the supported fields listed above and the profile-
 - A visible field is not a promise of a complete assessment. Unmeasured, measured zero, inapplicable, unknown test basis, and missing assessment rules must remain distinct. A critical known result must not be hidden by a partial-data state.
 - Preserve entered drafts and persisted measurements when tank type changes; no field hidden by the new profile may silently discard its value or be persisted invisibly. Resolve affected draft values explicitly before saving. Detailed interaction belongs to the later state/UI decision.
 - Store the assessment's tank-type/profile context with its provenance. History/detail render the saved measurement set and assessment context; today's tank type must not erase or reinterpret yesterday's fields. The latest result must expose a context mismatch if the tank type has since changed.
-- K03.1 fixes nitrate/nitrite/phosphate canonical meanings and units in section 6.1, K03.2 fixes the test/device-driven source-resolution and normalization workflow, K03.3 fixes TAN as mg/L as N plus direct free NH3 as mg/L as NH3, and K03.4 fixes concurrent multi-result storage/UI behavior. Remaining K03 decisions include remaining fields' chemical reporting bases/units, evidence-backed profile/conversion entries and precision, and derived-measurement prerequisites. K03.0–K03.4 do not accept numerical safety thresholds, complete implementation, or all of K03/K11/K13.
+- K03.1 fixes nitrate/nitrite/phosphate canonical meanings and units in section 6.1, K03.2 fixes source-resolution/normalization, K03.3 fixes TAN/direct-NH3 canonical bases, K03.4 fixes concurrent multi-result behavior, and K03.5 fixes marine salinity/SG/conductivity representation and conversion safety. Remaining K03 decisions include alkalinity/KH and other fields' chemical reporting bases/units, evidence-backed profile/conversion entries and precision, and derived-measurement prerequisites. K03.0–K03.5 do not accept numerical safety thresholds, complete implementation, or all of K03/K11/K13.
 
 Evidence and repository references for this scope are recorded in [the K03 research note](research/WATER_ANALYSIS_CONCENTRATION_UNITS_K03.md). The per-type visibility matrix is a product decision informed by those sources, not a scientific claim that all listed tests must be performed at every save.
 
@@ -1138,7 +1154,7 @@ Form behavior to preserve from the agreed data-quality direction:
 - Auto-populate temperature only from a valid, fresh, assigned sensor sample appropriate for the measurement event. If unavailable, retain explicit unavailable/manual-source behavior; do not invent a reading.
 - Let users record the measurements they actually took rather than requiring every displayed test. Exact minimum-input and fully empty-record behavior remain K11 decisions. A missing prerequisite for one calculation does not turn an otherwise valid partial measurement into a fabricated complete analysis.
 - Source/test selection is parameter-specific and remembered. A known profile auto-selects the valid analyte/unit/result-mode options; an unknown product opens the guided typed fallback. The unit/reporting context remains visible beside the result input while conversion happens below the UI boundary.
-- If a selected product exposes multiple **concurrent** results, render separate typed fields for each supported result and allow them to coexist in the same analysis event. Request a mode selector only for genuinely mutually exclusive source modes. Never guess total versus free ammonia or any other reporting basis.
+- If a selected product exposes multiple **concurrent** independent results, render separate typed fields for each supported result and allow them to coexist in the same analysis event. Request a mode selector only for genuinely mutually exclusive source modes. For marine salinity sources, render the verified source representation (`PSS-78`/device salinity scale, `SG`, conductivity, or explicitly defined mass salinity) rather than silently relabelling or converting it.
 - If a field's source semantics cannot be resolved, keep that field out of the committed analysis and retain it only as draft/form state; other resolved measurements may still be saved. Changing source semantics after entering a number must not silently reinterpret the number.
 - An empty field means **"Ölçülmedi"**; a measured `0` remains a real result. Explain limited coverage as **"Kısmi değerlendirme"** alongside any known critical finding. Missing results must not increase a health score or be described as normal. Final aggregation and score policy remain separate decisions.
 
@@ -1530,6 +1546,11 @@ Cover:
 - TAN `mg/L as N` canonical mapping;
 - direct free-NH3 `mg/L as NH3` canonical mapping;
 - no substitution between TAN, direct free NH3, NH4-only, and calculated free NH3;
+- PSS-78 practical salinity remains distinct from SG, conductivity, absolute/mass salinity, and ambiguous vendor `ppt`;
+- SG conversion requires declared reference/calibration temperature and all algorithm prerequisites;
+- conductivity→PSS-78 uses a versioned standards-based algorithm with golden-vector tests and applicability checks;
+- unknown/ambiguous `ppt` never normalizes by label alone;
+- two representations derived by one device observation are not double-counted as independent evidence;
 - no implicit zero for empty input.
 
 ### 43.5 Temperature tests
@@ -1626,63 +1647,64 @@ The implementation order is frozen as follows.
 3. K03.2 source/test profile selection, guided source resolution, and normalization policy (accepted; exact evidence-backed profile/conversion entries remain implementation data);
 4. K03.3 ammonia canonical semantics: TAN as mg/L as N; direct free NH3 as mg/L as NH3 (accepted);
 5. K03.4 concurrent multi-result measurement policy: separate canonical metrics/inputs for simultaneous outputs; selector only for mutually exclusive modes (accepted);
-6. severity/status model;
-7. species-range intersection/conflict policy;
-8. intrinsic chemistry rule catalog and evidence revision.
+6. K03.5 marine salinity/SG/conductivity typed semantics and conversion-safety policy (accepted);
+7. severity/status model;
+8. species-range intersection/conflict policy;
+9. intrinsic chemistry rule catalog and evidence revision.
 
 ### Phase 2 - Application/domain foundation
 
-9. WaterAnalysis input/record models;
-10. structured assessment models;
-11. recommendation/reason codes;
-12. PlantCareCatalogOperations boundary;
-13. AquariumHealthContext model/provider;
-14. reuse/integrate LivestockWaterAdvisorOperations;
-15. WaterQualityAssessmentEngine;
-16. TankWaterTemperatureOperations boundary.
+10. WaterAnalysis input/record models;
+11. structured assessment models;
+12. recommendation/reason codes;
+13. PlantCareCatalogOperations boundary;
+14. AquariumHealthContext model/provider;
+15. reuse/integrate LivestockWaterAdvisorOperations;
+16. WaterQualityAssessmentEngine;
+17. TankWaterTemperatureOperations boundary.
 
 ### Phase 3 - Persistence
 
-17. dedicated water-analysis proto/store;
-18. schema version;
-19. strict store rules;
-20. owner/tank-scoped queries;
-21. create/delete/latest operations;
-22. persisted assessment/provenance snapshot.
+18. dedicated water-analysis proto/store;
+19. schema version;
+20. strict store rules;
+21. owner/tank-scoped queries;
+22. create/delete/latest operations;
+23. persisted assessment/provenance snapshot.
 
 ### Phase 4 - Integrity
 
-23. integrate Water Analysis into tank deletion transaction;
-24. process-death recovery;
-25. account deletion cleanup;
-26. backup/restore policy and implementation if included;
-27. data inventory / export updates where applicable.
+24. integrate Water Analysis into tank deletion transaction;
+25. process-death recovery;
+26. account deletion cleanup;
+27. backup/restore policy and implementation if included;
+28. data inventory / export updates where applicable.
 
 ### Phase 5 - UI integration
 
-28. WaterAnalysisViewModel;
-29. save real analysis;
-30. replace mock history;
-31. pass analysisId through Safe Args;
-32. bind real record detail;
-33. implement real delete;
-34. bind latest analysis to Tank Health Water Quality metrics;
-35. connect fresh cooling sensor temperature.
+29. WaterAnalysisViewModel;
+30. save real analysis;
+31. replace mock history;
+32. pass analysisId through Safe Args;
+33. bind real record detail;
+34. implement real delete;
+35. bind latest analysis to Tank Health Water Quality metrics;
+36. connect fresh cooling sensor temperature.
 
 ### Phase 6 - Validation
 
-36. engine tests;
-37. persistence tests;
-38. owner/process-death tests;
-39. ViewModel/UI contract tests;
-40. architecture/lint/detekt/CodeQL;
-41. all CI green.
+37. engine tests;
+38. persistence tests;
+39. owner/process-death tests;
+40. ViewModel/UI contract tests;
+41. architecture/lint/detekt/CodeQL;
+42. all CI green.
 
 Only after this sequence:
 
-42. Algae Control;
-43. Plant Health;
-44. Livestock Health.
+43. Algae Control;
+44. Plant Health;
+45. Livestock Health.
 
 ---
 
@@ -1696,6 +1718,7 @@ Water Quality is complete only when all of the following are true:
 - each parameter can retain its own remembered test/device selection; known profiles drive analyte/unit/result-mode semantics, unknown products use guided typed fallback, and multi-mode results are never inferred;
 - total ammonia normalizes to TAN in mg/L as N, while directly measured free ammonia normalizes separately to mg/L as NH3; neither is silently substituted for the other;
 - when a source can measure TAN and direct free NH3 in the same event, both can be entered and persisted as separate measured metrics with separate provenance; concurrent outputs are not collapsed into a selector;
+- marine salinity assessment never assumes SG, PSS-78, conductivity, absolute/mass salinity, or generic `ppt` are equivalent; cross-representation comparison requires an explicit verified conversion with all required reference conditions, otherwise the result remains source-native/insufficient for that rule;
 - unresolved source semantics are excluded from committed analysis and may remain in draft while other resolved measurements are saved; changing a source never silently reinterprets an entered number;
 - tank-type changes do not silently lose draft values or remove historical measurements;
 - a user can enter a physically valid analysis and save it;
