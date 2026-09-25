@@ -1559,7 +1559,7 @@ Water Quality owns water measurements and their historical assessments.
 
 Algae Control owns tank-level algae observation, cause analysis, intervention planning, and history.
 
-Plant Health owns plant physiology, leaf/browth symptoms, nutrient-deficiency observations, and plant observation history. Algae observed on a plant is a finding that routes to Algae Control for remediation.
+Plant Health owns plant physiology, leaf/growth symptoms, nutrient-deficiency observations, and plant observation history. Algae observed on a plant is a finding that routes to Algae Control for remediation.
 
 Livestock Health owns animal behavior, stress, disease/symptom observations, and livestock health history.
 
