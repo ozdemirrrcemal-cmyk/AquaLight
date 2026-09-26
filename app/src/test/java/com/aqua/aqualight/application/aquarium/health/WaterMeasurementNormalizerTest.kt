@@ -38,7 +38,7 @@ class WaterMeasurementNormalizerTest {
             10.0,
             WaterMeasurementNormalizer.canonicalValue(
                 parameter = WaterParameter.KH,
-                value = 178.48,
+                value = 178.6,
                 basis = WaterMeasurementBasis.KH,
                 unit = WaterMeasurementUnit.PPM_CACO3
             ) ?: error("Expected conversion"),
@@ -51,6 +51,21 @@ class WaterMeasurementNormalizerTest {
                 value = 2.0,
                 basis = WaterMeasurementBasis.KH,
                 unit = WaterMeasurementUnit.MEQ_L
+            ) ?: error("Expected conversion"),
+            0.0001
+        )
+    }
+
+    @Test
+    fun generalHardnessDegreesConvertToCaco3WithoutChangingRawUnit() {
+        assertEquals(WaterMeasurementUnit.PPM_CACO3, WaterParameterDefinitions.canonicalUnit(WaterParameter.GH))
+        assertEquals(
+            178.6,
+            WaterMeasurementNormalizer.canonicalValue(
+                parameter = WaterParameter.GH,
+                value = 10.0,
+                basis = WaterMeasurementBasis.GH,
+                unit = WaterMeasurementUnit.DGH
             ) ?: error("Expected conversion"),
             0.0001
         )

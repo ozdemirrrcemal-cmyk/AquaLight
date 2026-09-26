@@ -33,7 +33,7 @@ object WaterParameterDefinitions {
         ),
         WaterParameter.GH to WaterParameterDefinition(
             canonicalBasis = WaterMeasurementBasis.GH,
-            canonicalUnit = WaterMeasurementUnit.DGH,
+            canonicalUnit = WaterMeasurementUnit.PPM_CACO3,
             unitOptions = listOf(
                 WaterMeasurementUnit.DGH,
                 WaterMeasurementUnit.PPM_CACO3

@@ -4,6 +4,7 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumTankTaxonomy
+import com.aqua.aqualight.application.aquarium.health.WaterTankMeasurementPolicy
 
 internal enum class WaterTestParameterId {
     PH,
@@ -55,149 +56,17 @@ internal sealed interface TemperatureSensorUiState {
 
 internal object WaterTestProfileUiCatalog {
 
-    private val freshwaterFishRecommended = listOf(
-        WaterTestParameterId.PH,
-        WaterTestParameterId.AMMONIA_AMMONIUM,
-        WaterTestParameterId.NITRITE,
-        WaterTestParameterId.NITRATE,
-        WaterTestParameterId.GH,
-        WaterTestParameterId.KH
-    )
+    fun recommendedIds(tankProfile: String): List<WaterTestParameterId> =
+        WaterTankMeasurementPolicy.scopeFor(tankProfile)
+            ?.recommended
+            ?.map { parameter -> parameter.toUiParameterId() }
+            .orEmpty()
 
-    private val freshwaterFishAdditional = listOf(
-        WaterTestParameterId.PHOSPHATE,
-        WaterTestParameterId.TDS,
-        WaterTestParameterId.EC,
-        WaterTestParameterId.DISSOLVED_OXYGEN
-    )
-
-    private val plantedRecommended = listOf(
-        WaterTestParameterId.PH,
-        WaterTestParameterId.NITRATE,
-        WaterTestParameterId.PHOSPHATE,
-        WaterTestParameterId.GH,
-        WaterTestParameterId.KH
-    )
-
-    private val plantedAdditional = listOf(
-        WaterTestParameterId.AMMONIA_AMMONIUM,
-        WaterTestParameterId.NITRITE,
-        WaterTestParameterId.CO2,
-        WaterTestParameterId.IRON,
-        WaterTestParameterId.POTASSIUM,
-        WaterTestParameterId.TDS,
-        WaterTestParameterId.EC,
-        WaterTestParameterId.DISSOLVED_OXYGEN
-    )
-
-    private val shrimpRecommended = listOf(
-        WaterTestParameterId.PH,
-        WaterTestParameterId.AMMONIA_AMMONIUM,
-        WaterTestParameterId.NITRITE,
-        WaterTestParameterId.NITRATE,
-        WaterTestParameterId.GH,
-        WaterTestParameterId.KH,
-        WaterTestParameterId.TDS
-    )
-
-    private val shrimpAdditional = listOf(
-        WaterTestParameterId.EC,
-        WaterTestParameterId.PHOSPHATE,
-        WaterTestParameterId.COPPER,
-        WaterTestParameterId.DISSOLVED_OXYGEN
-    )
-
-    private val brackishRecommended = listOf(
-        WaterTestParameterId.PH,
-        WaterTestParameterId.AMMONIA_AMMONIUM,
-        WaterTestParameterId.NITRITE,
-        WaterTestParameterId.NITRATE,
-        WaterTestParameterId.SALINITY,
-        WaterTestParameterId.KH
-    )
-
-    private val brackishAdditional = listOf(
-        WaterTestParameterId.GH,
-        WaterTestParameterId.PHOSPHATE,
-        WaterTestParameterId.SPECIFIC_GRAVITY,
-        WaterTestParameterId.DISSOLVED_OXYGEN
-    )
-
-    private val marineFishRecommended = listOf(
-        WaterTestParameterId.PH,
-        WaterTestParameterId.AMMONIA_AMMONIUM,
-        WaterTestParameterId.NITRITE,
-        WaterTestParameterId.NITRATE,
-        WaterTestParameterId.SALINITY,
-        WaterTestParameterId.KH,
-        WaterTestParameterId.PHOSPHATE
-    )
-
-    private val reefRecommended = listOf(
-        WaterTestParameterId.PH,
-        WaterTestParameterId.NITRATE,
-        WaterTestParameterId.PHOSPHATE,
-        WaterTestParameterId.SALINITY,
-        WaterTestParameterId.KH,
-        WaterTestParameterId.CALCIUM,
-        WaterTestParameterId.MAGNESIUM
-    )
-
-    private val marineAdditional = listOf(
-        WaterTestParameterId.AMMONIA_AMMONIUM,
-        WaterTestParameterId.NITRITE,
-        WaterTestParameterId.SPECIFIC_GRAVITY,
-        WaterTestParameterId.DISSOLVED_OXYGEN
-    )
-
-    private val marineFishAdditional = listOf(
-        WaterTestParameterId.SPECIFIC_GRAVITY,
-        WaterTestParameterId.CALCIUM,
-        WaterTestParameterId.MAGNESIUM,
-        WaterTestParameterId.DISSOLVED_OXYGEN
-    )
-
-    fun recommendedIds(tankProfile: String): List<WaterTestParameterId> = when (tankProfile) {
-        AquariumTankTaxonomy.TYPE_FRESHWATER_FISH,
-        AquariumTankTaxonomy.TYPE_OTHER_FRESHWATER -> freshwaterFishRecommended
-
-        AquariumTankTaxonomy.TYPE_PLANTED -> plantedRecommended
-        AquariumTankTaxonomy.TYPE_SHRIMP -> shrimpRecommended
-
-        AquariumTankTaxonomy.TYPE_BRACKISH_GENERAL,
-        AquariumTankTaxonomy.TYPE_OTHER_BRACKISH -> brackishRecommended
-
-        AquariumTankTaxonomy.TYPE_MARINE_FISH,
-        AquariumTankTaxonomy.TYPE_OTHER_MARINE -> marineFishRecommended
-
-        AquariumTankTaxonomy.TYPE_SOFT_CORAL_REEF,
-        AquariumTankTaxonomy.TYPE_LPS_REEF,
-        AquariumTankTaxonomy.TYPE_SPS_REEF,
-        AquariumTankTaxonomy.TYPE_MIXED_REEF -> reefRecommended
-
-        else -> emptyList()
-    }
-
-    fun additionalIds(tankProfile: String): List<WaterTestParameterId> = when (tankProfile) {
-        AquariumTankTaxonomy.TYPE_FRESHWATER_FISH,
-        AquariumTankTaxonomy.TYPE_OTHER_FRESHWATER -> freshwaterFishAdditional
-
-        AquariumTankTaxonomy.TYPE_PLANTED -> plantedAdditional
-        AquariumTankTaxonomy.TYPE_SHRIMP -> shrimpAdditional
-
-        AquariumTankTaxonomy.TYPE_BRACKISH_GENERAL,
-        AquariumTankTaxonomy.TYPE_OTHER_BRACKISH -> brackishAdditional
-
-        AquariumTankTaxonomy.TYPE_MARINE_FISH,
-        AquariumTankTaxonomy.TYPE_OTHER_MARINE -> marineFishAdditional
-
-        AquariumTankTaxonomy.TYPE_SOFT_CORAL_REEF,
-        AquariumTankTaxonomy.TYPE_LPS_REEF,
-        AquariumTankTaxonomy.TYPE_SPS_REEF,
-        AquariumTankTaxonomy.TYPE_MIXED_REEF -> marineAdditional
-
-        else -> emptyList()
-    }
+    fun additionalIds(tankProfile: String): List<WaterTestParameterId> =
+        WaterTankMeasurementPolicy.scopeFor(tankProfile)
+            ?.additional
+            ?.map { parameter -> parameter.toUiParameterId() }
+            .orEmpty()
 
     @DrawableRes
     fun profileIconRes(tankProfile: String): Int = when (tankProfile) {

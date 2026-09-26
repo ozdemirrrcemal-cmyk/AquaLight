@@ -45,6 +45,10 @@ class WaterAnalysisUiContractTest {
             "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
                 "WaterAnalysisParameterTileBinder.kt"
         )
+        val grid = file(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
+                "WaterAnalysisParameterGrid.kt"
+        )
 
         assertTrue(renderer.contains("WaterTestProfileUiCatalog.recommendedIds("))
         assertTrue(renderer.contains("WaterTestPickerBottomSheet.show("))
@@ -65,7 +69,9 @@ class WaterAnalysisUiContractTest {
         assertFalse(parameterLayout.contains("TextInputLayout"))
         assertTrue(waterLayout.contains("android:layout_gravity=\"top\""))
         assertTrue(waterLayout.contains("aqua_text_size_micro_caption"))
-        assertTrue(renderer.contains("tileLayoutParams"))
+        assertTrue(renderer.contains("grid.cellLayoutParams(column, spacing)"))
+        assertTrue(renderer.contains("grid.addSpacer(row, spacing)"))
+        assertTrue(grid.contains("LinearLayout.LayoutParams(0, 1, 1f)"))
         assertFalse(renderer.contains("fullWidth: Boolean"))
         assertFalse(renderer.contains("inputLayout.suffixText"))
         assertTrue(parameterLayout.contains("unitSelector"))
@@ -98,7 +104,9 @@ class WaterAnalysisUiContractTest {
         )
 
         assertTrue(sheet.contains("DialogSettingsBottomSheetBinding"))
-        assertTrue(sheet.contains("SingleChoiceBottomSheet.show("))
+        assertTrue(sheet.contains("WaterMeasurementMethodSheetBinder("))
+        assertTrue(binder.contains("SingleChoiceBottomSheet.show("))
+        assertTrue(binder.contains("fragment.childFragmentManager.setFragmentResultListener("))
         assertTrue(content.contains("cardMethodManual"))
         assertTrue(content.contains("cardMethodTestKit"))
         assertTrue(content.contains("cardMethodDigital"))

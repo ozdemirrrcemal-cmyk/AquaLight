@@ -25,11 +25,11 @@ verification separately. Do not mark a decision complete as an implementation.
 
 | Area | Present on `ui-flow` | Missing or incompatible with production contract |
 | --- | --- | --- |
-| Tank-aware form | `WaterTestProfileUiCatalog` selects recommended/additional fields for all **12** `AquariumTankTaxonomy` codes; bottom sheets select method/kit/basis/unit; values and selections survive configuration state. | The profile matrix lives in UI, selected extra fields and hidden values are pruned on tank type change; no immutable application policy or durable draft/request ID. The old section 25 count of nine is historical. |
+| Tank-aware form | The approved form and bottom sheets select method/kit/basis/unit across all **12** taxonomy codes. The profile matrix was moved to application `WaterTankMeasurementPolicy`; hidden typed values now remain in draft and are filtered from the active event. | No durable route-scoped draft/request ID or explicit source-change confirmation; the old nine-type matrix is historical. |
 | Product catalog | `WaterMeasurementCatalog` defines **Salifert Nitrate** and generic `other`; basis/unit options and a small converter exist. | No broad verified JBL/Sera/API/Red Sea/Hanna catalog, versioned product/method profiles, sample matrix, detection/result modes, provenance revision or remembered product choice. A generic `other` or `MANUAL` selection must not be mistaken for a verified method. |
 | Domain/application | `WaterAnalysisOperations`, `WaterAnalysisPolicy`, `WaterParameterDefinitions`, `WaterMeasurementNormalizer` and UI mapping are wired through `OwnerViewModelFactory`. | Current `AMMONIA_AMMONIUM` and `NH3_NH4` are ambiguous versus accepted TAN and free NH3; marine KH is only relabelled alkalinity; GH is canonically dGH instead of mg/L as CaCO3; generic salinity ppt, iron scope, P→PO4 and raw-vs-derived semantics need the method-specific restrictions below. No assessment/context engine. |
 | Persistence | Owner-scoped `water_analyses.pb` Proto DataStore stores raw measurement, source selection and timestamps; save/history/detail/delete are connected; tank and account cleanup call the manager. | Normalized value is calculated on **read**, not committed with raw value; no assessment/context/rule snapshot, idempotency key or indexed paging. Store reads and writes validate/rebuild the full list. Existing valid user records require an explicit lossless migration before any Room cutover. |
-| UI output | Add, history and detail show stored values; Tank Health renders variable parameter cards. | Dashboard combines most recent value for **each** parameter across different analysis events without showing their separate sample times; status is merely “recorded”. Static water/maintenance/system and tank entry content still require source/empty/error audit. Sensor state is currently `Unavailable`; an entered SENSOR value cannot prove an authoritative Cooling sample. Date/time picker result currently replaces the entire calendar instant. |
+| UI output | Add, history and detail show stored values; Tank Health renders variable parameter cards from the latest single event. Date and time pickers now preserve the other component. | Status is merely “recorded”. Static water/maintenance/system and tank entry content still require source/empty/error audit. Sensor state is currently `Unavailable`; an entered SENSOR value cannot prove an authoritative Cooling sample. DST/time-zone cases remain unverified. |
 | Tests | Policy, store rules, input parser and UI contract tests exist. | These do not establish assessed Water Quality, physical sensor provenance, bounded history, archive restore, delete concurrency or release acceptance. |
 
 The exact source paths for these statements are the classes named in the table;
@@ -235,9 +235,9 @@ The following are not part of the first implementation:
 
 ---
 
-## 3. Current branch inventory
+## 3. Foundation-era inventory (historical)
 
-At the time this contract is introduced, the branch already contains important authoritative inputs.
+This section records the earlier foundation review. Current `ui-flow` behavior and gaps are in §0.1; catalog counts below must be revalidated against a later source commit before being used as release evidence.
 
 ### 3.1 Tank snapshot
 
@@ -374,7 +374,7 @@ The approved UI currently supports:
 - record detail;
 - record deletion.
 
-Today those screens still contain mock / fixture data and deferred persistence hooks. This contract defines how those fixtures are replaced.
+On the current `ui-flow` baseline, Add/History/Detail save and read owner-scoped raw records, while Tank Health renders profile-aware metric cards. They still lack a persisted assessment, dated context and rule provenance, and some health-screen sections remain static. The current source of truth for implementation status is §0.1 and the production checklist.
 
 ---
 
@@ -1422,31 +1422,20 @@ Unknown/custom tank classifications produce explicit reduced-confidence / missin
 
 Decision accepted with the user on 26 September 2026: use **basic measurements + tank-specific fields + additional measurements**, driven by the tank type already selected when creating the aquarium. Keep the existing UI design. The user requested that the per-type mapping be written into this contract.
 
-Source of truth: `AquariumTankSnapshot.tankType`, using `AquariumTankTaxonomy` constants. The creation UI already offers all nine types through `AquariumTankTaxonomyText`. Do not ask the user to choose a second tank type in the analysis form. This is a field-visibility policy, not a universal safe-range table.
+Source of truth: `AquariumTankSnapshot.tankType` and the 12 exact `AquariumTankTaxonomy` codes. `WaterTankMeasurementPolicy` in the application layer defines recommended and additional fields; the UI renders that policy. No second tank-type picker exists in the analysis form. This is a visibility policy, not a safety-range table. Temperature is handled in the separate sensor/manual section and is not a member of the test grid. An unmeasured recommended field is not a required numeric input. The earlier proposed nine-type/common-core matrix is superseded by the current approved UI-flow matrix below; ammonia and nitrite are **additional** rather than default in planted and reef profiles.
 
-**Common core in every row:** temperature (Sıcaklık), pH, total ammonia (Toplam amonyak), nitrite (Nitrit / NO2), and nitrate (Nitrat / NO3).
+| Canonical tank code(s) | Recommended test-grid fields | User-addable test-grid fields |
+| --- | --- | --- |
+| `Freshwater Fish`, `Other Freshwater` | pH, total ammonia UI slot, NO2, NO3, GH, KH | PO4, TDS, EC, dissolved oxygen |
+| `Planted` | pH, NO3, PO4, GH, KH | total ammonia UI slot, NO2, CO2, iron, potassium, TDS, EC, dissolved oxygen |
+| `Shrimp` | pH, total ammonia UI slot, NO2, NO3, GH, KH, TDS | EC, PO4, copper, dissolved oxygen |
+| `Brackish General`, `Other Brackish` | pH, total ammonia UI slot, NO2, NO3, salinity, KH | GH, PO4, specific gravity, dissolved oxygen |
+| `Marine Fish`, `Other Marine` | pH, total ammonia UI slot, NO2, NO3, salinity, alkalinity UI slot, PO4 | specific gravity, calcium, magnesium, dissolved oxygen |
+| `Soft Coral Reef`, `LPS Reef`, `SPS Reef`, `Mixed Reef` | pH, NO3, PO4, salinity, alkalinity UI slot, calcium, magnesium | total ammonia UI slot, NO2, specific gravity, dissolved oxygen |
 
-| Canonical tank code | Existing Turkish picker label | Analysis profile | Default fields in addition to the common core |
-| --- | --- | --- | --- |
-| `Fish` | Balık | Freshwater | General hardness (Genel sertlik / GH; K03.13), buffering capacity (Tampon kapasitesi / KH) |
-| `Shrimp` | Karides | Freshwater shrimp | General hardness (GH; K03.13), buffering capacity (KH) |
-| `Planted` | Bitkili | Planted freshwater | General hardness (GH; K03.13), buffering capacity (KH), phosphate (Fosfat / PO4) |
-| `Marine` | Deniz | Marine | Salinity (Tuzluluk), alkalinity (Alkalinite / KH), phosphate (PO4) |
-| `Softies` | Yumuşak Mercan | Marine / soft coral | Salinity, alkalinity, phosphate, calcium (Kalsiyum / Ca), magnesium (Magnezyum / Mg) |
-| `Mixed Reef` | Karma Resif | Marine / mixed reef | Salinity, alkalinity, phosphate, calcium, magnesium |
-| `SPS` | SPS | Marine / SPS | Salinity, alkalinity, phosphate, calcium, magnesium |
-| `Coral` | Mercan | Marine / coral | Salinity, alkalinity, phosphate, calcium, magnesium |
-| `Other` | Diğer | Unresolved water profile | No automatic freshwater/marine additions; common-core measurements remain recordable with explicit missing profile context |
+The table records **UI slots**, not approval of the current ambiguous domain semantics: `AMMONIA_AMMONIUM`/`NH3_NH4` must become typed TAN and separate direct NH3 (§6.3/§6.6); marine `KH` must become total alkalinity (§6.8). Until that migration, do not present their raw value as a verified TAN/alkalinity health assessment. Freshwater GH and KH remain distinct. A product may expose a direct free NH3 or chlorine-family result only when its verified profile and corresponding new input/cardinality support are implemented; do not shoehorn those results into an existing slot.
 
-Product interpretation and limits:
-
-- `Fish`, `Shrimp`, and `Planted` follow the existing canonical freshwater grouping; the five marine/coral codes follow the existing marine grouping. This does not claim all fish or shrimp species live in freshwater. Conflicting registered livestock `waterGroup` must be reported, not used to silently relabel the tank.
-- Nitrite remains available in marine profiles for cycle/setup monitoring; this does not imply identical freshwater/marine toxicity rules or testing frequency.
-- The same default fields for the four coral profiles do not imply identical target values, consumption, or dosing. These depend on the evidence-backed rules and inhabitants.
-- Under accepted K03.6, marine/coral profiles use `TOTAL_ALKALINITY` as the single alkalinity metric; do not expose duplicate `KH` and `Alkalinite` fields for the same test result. The canonical unit is meq/L, while verified source/display representations may be dKH or mg/L as CaCO3. `GENERAL_HARDNESS` and true `CARBONATE_HARDNESS` remain separate semantics.
-- Under accepted K03.5, salinity and specific gravity are distinct typed metrics. PSS-78, SG, conductivity, mass/absolute salinity, and vendor `ppt` displays are not silently interchangeable. The selected source profile determines the representation; only evidence-backed conversions with required temperature/reference metadata may normalize across representations.
-- `Other`, blank, and unsupported legacy codes do not inherit freshwater or marine thresholds. Additional measurements with known semantics can be recorded without fabricating a profile-dependent assessment. How a user explicitly supplies missing profile context is a later interaction decision.
-- Field selection must be an application-layer policy under the accepted `application/aquarium/health/water/` ownership, using the existing parameter vocabulary. Presentation renders this policy; Fragments/XML must not own a second classification table or chemistry rules.
+Changing the tank type preserves the complete draft. The current profile controls visible recommended/additional fields and only those fields may enter a new event after review. Historical values keep their original profile and raw/provenance context. Unknown/blank tank codes have no invented default field policy; known typed measurements may remain draft but cannot receive a profile-derived normality claim. Registered livestock water-group disagreement is an explicit conflict, never silent profile substitution. The four reef codes sharing a field matrix does not imply identical target ranges or dosing.
 
 ### 25.2 Additional measurement availability
 
@@ -1454,21 +1443,21 @@ These measurements are supported scope beyond the default fields above. "Additio
 
 | Measurement / Turkish name | Availability / context | Important boundary |
 | --- | --- | --- |
-| Phosphate / Fosfat (PO4) | Additional for `Fish` and `Shrimp`; already default for `Planted` and marine/coral types; recordable for `Other` | Supports nutrient, plant, and algae investigation; no diagnosis from this value alone |
-| Dissolved oxygen / Çözünmüş oksijen | Additional for all nine types | K03.7: canonical concentration is `DISSOLVED_OXYGEN_CONCENTRATION` in mg/L O2; `% saturation` is a separate context-dependent metric/representation. Temperature, aeration, or saturation alone must not fabricate a concentration without the required same-event conversion context |
-| Free chlorine + total chlorine / Serbest klor + Toplam klor | Additional for all types, particularly when municipal source water is used | K03.8: free and total chlorine are separate mg/L as Cl2 metrics; combined chlorine may be derived only from compatible same-sample free+total results and is not synonymous with monochloramine. Sample context distinguishes raw source water, conditioned source water, and tank water |
-| Conductivity / İletkenlik and TDS | Additional for freshwater types; `Other` may record explicitly identified results | K03.10: conductivity canonical µS/cm with temperature-basis provenance; TDS UI is source-reported ppm entered as shown by the meter. Unknown TDS factor does not block storing the ppm value, but EC↔TDS conversion and hard cross-scale assessment require a verified source/profile relationship |
-| Carbon dioxide / CO2 | Additional for freshwater types, especially planted tanks with CO2 use | K03.11: direct verified CO2 is mg/L as CO2; when direct CO2 is not measured, AquaLight may calculate and label `Hesaplanan CO2` from compatible same-event pH + KH inputs using a versioned method. Drop-checker color is not converted to ppm |
-| Iron / Demir (Fe) and potassium / Potasyum (K) | Additional for freshwater nutrient/plant investigation | K03.12: potassium canonical `mg/L as K`; iron canonical `mg/L as Fe` plus verified analytical scope (total/dissolved/ferrous/method-defined). UI remains simple `Demir (Fe)` / `Potasyum (K)`. A bare Fe/K result never authorizes automatic fertilizer dosing |
-| Calcium / Kalsiyum (Ca) and magnesium / Magnezyum (Mg) | Additional for `Marine`; already default for coral profiles; recordable for `Other` with explicit semantics | K03.9: canonical reef metrics are elemental `CALCIUM_CONCENTRATION` in mg/L as Ca2+ and `MAGNESIUM_CONCENTRATION` in mg/L as Mg2+. Hardness-as-CaCO3/GH results are separate semantics and require an explicit verified conversion path |
+| Phosphate / Fosfat (PO4) | Additional for freshwater fish, shrimp and brackish; recommended for planted, marine and reef | Supports nutrient, plant and algae investigation; no diagnosis from this value alone |
+| Dissolved oxygen / Çözünmüş oksijen | Additional for all 12 current profiles | K03.7: canonical concentration is `DISSOLVED_OXYGEN_CONCENTRATION` in mg/L O2; `% saturation` is a separate context-dependent metric/representation. Temperature, aeration or saturation alone must not fabricate a concentration without same-event conversion context |
+| Free chlorine + total chlorine / Serbest klor + Toplam klor | Planned typed extension; not present in the current 12-profile picker | K03.8 requires distinct mg/L as Cl2 metrics and raw/conditioned/tank sample context before these fields can be enabled. Combined chlorine is derived only from compatible same-sample results and is not monochloramine |
+| Conductivity / İletkenlik and TDS | EC additional for freshwater fish, planted and shrimp; TDS additional for freshwater fish/planted and recommended for shrimp | K03.10: EC canonical µS/cm with temperature-basis provenance; TDS is source-reported ppm. Unknown factor permits raw storage, not EC↔TDS conversion or hard cross-scale assessment |
+| Carbon dioxide / CO2 | Additional for planted in the current UI matrix | K03.11: direct verified CO2 is mg/L as CO2; a separately labelled calculation requires compatible same-event pH + KH and a versioned method. Drop-checker color is not converted to ppm |
+| Iron / Demir (Fe) and potassium / Potasyum (K) | Additional for planted in the current UI matrix | K03.12: potassium is `mg/L as K`; iron is `mg/L as Fe` with verified analytical scope. No bare value authorizes fertilizer dosing |
+| Calcium / Kalsiyum (Ca) and magnesium / Magnezyum (Mg) | Additional for marine fish/other marine; recommended for the four reef types | K03.9: elemental `mg/L as Ca2+` and `mg/L as Mg2+`; hardness-as-CaCO3/GH results cannot silently substitute |
 
-For `Other`/unknown profiles, the supported fields listed above and the profile-specific fields from section 25.1 may be explicitly selected as additional measurements, once their semantics are defined. No such selection acts as an implicit freshwater/marine profile declaration. Support and interpretation must stay separate. Missing context restricts assessment rather than changing the entered result.
+The three typed `Other Freshwater`/`Other Brackish`/`Other Marine` codes use their environment-specific rows above. A truly unknown or blank legacy code has no implicit profile; a future explicit typed fallback must preserve the source semantic and cannot declare freshwater/marine normality by itself. Support and interpretation remain separate.
 
 ### 25.3 Presentation and record continuity
 
 - Preserve the existing screen structure, sensor/temperature area, water-parameter grid and input components, card styling, and save/history navigation. Applicable fields reuse those components; row count may change with the tank type. Do not introduce new tabs, sections, or a different visual layout from the logical grouping alone.
 - Use readable localized names; chemical formulas are secondary identifiers. The accepted freshwater names are Sıcaklık, pH, Toplam amonyak, Nitrit (NO2), Nitrat (NO3), Genel sertlik (GH), Tampon kapasitesi (KH), and Fosfat (PO4). Labels must remain readable at supported font scales.
-- Additional applicable measurements appear on demand under a single **"Diğer ölçümler"** disclosure at the end of the existing water-parameter card; no separate route, new tab or second form. The existing two-column field/grid styling continues below the disclosure. Preserve its expanded state and all typed drafts across rotation/tank-type changes; hidden input cannot be silently committed or discarded. The default-visible fields follow section 25.1.
+- Additional applicable measurements use the approved **Add Test tile and central bottom-sheet picker** within the existing two-column card/grid. Do not substitute an old proposed disclosure, separate route, new tab or a second form. Preserve selected extra tests, product/method selections and all typed drafts across rotation/tank-type changes; hidden input cannot be silently committed or discarded. The default-visible fields follow section 25.1.
 - Provide short **"Nedir / Nasıl ölçülür?"** help for every measurement field, including additional fields, through a labelled, keyboard/TalkBack-accessible info action adjacent to its field label inside the existing card; open the project's standard informational dialog/sheet without navigating away or changing the entered draft. Explain the metric, accepted test result and displayed unit in plain language. Product-specific instructions appear only for a verified selected test profile; unknown-product guidance describes measurement/basis choice without claiming a product method. Keep the approved field and card styling and verify large-font layout before release.
 - A visible field is not a promise of a complete assessment. Unmeasured, measured zero, inapplicable, unknown test basis, and missing assessment rules must remain distinct. A critical known result must not be hidden by a partial-data state.
 - Preserve entered drafts and persisted measurements when tank type changes; no field hidden by the new profile may silently discard its value or be persisted invisibly. Resolve affected draft values explicitly before saving. Detailed interaction belongs to the later state/UI decision.
@@ -2194,7 +2183,7 @@ Only after this sequence:
 Water Quality is complete only when all of the following are true:
 
 - approved UI remains visually intact unless explicitly changed;
-- all nine canonical tank types follow the accepted measurement matrix without locale-dependent matching; unknown types never silently become freshwater;
+- all 12 canonical tank types follow the application measurement matrix without locale-dependent matching; unknown types never silently become freshwater;
 - additional measurements preserve the existing design and have explicit supported semantics before being enabled;
 - each parameter can retain its own remembered test/device selection; known profiles drive analyte/unit/result-mode semantics, unknown products use guided typed fallback, and multi-mode results are never inferred;
 - total ammonia normalizes to TAN in mg/L as N, while directly measured free ammonia normalizes separately to mg/L as NH3; neither is silently substituted for the other;
