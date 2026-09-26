@@ -2,9 +2,9 @@
 
 Araştırma tarihi: 26.09.2026 (Europe/Istanbul).
 
-Durum: **K03.0 ölçüm kapsamı, K03.1 NO3/NO2/PO4 kanonik kayıt anlamı/birimleri, K03.2 test/cihaz seçimi + kaynak semantiği çözümleme + normalizasyon akışı, K03.3 amonyak kanonik temelleri, K03.4 concurrent multi-result kayıt/UI politikası, K03.5 deniz salinity/SG dönüşüm güvenliği, K03.6 alkalinite/KH semantik-birim politikası, K03.7 çözünmüş oksijen konsantrasyon/doygunluk politikası, K03.8 klor/kloramin sample-context politikası, K03.9 marine elemental Ca/Mg politikası, K03.10 conductivity/TDS ürün politikası ve K03.11 direct-vs-calculated CO2 politikası kabul edildi. K03.12 ve sonraki kararlar açık.** Kabul edilen normatif kapsam ana sözleşme §6.1–6.6, §7, §25.1–25.3 ve §28.1'de kayıtlıdır. Bu araştırma dosyası uygulama kodu veya bilimsel güvenlik eşiği değildir.
+Durum: **K03.0 ölçüm kapsamı, K03.1 NO3/NO2/PO4 kanonik kayıt anlamı/birimleri, K03.2 test/cihaz seçimi + kaynak semantiği çözümleme + normalizasyon akışı, K03.3 amonyak kanonik temelleri, K03.4 concurrent multi-result kayıt/UI politikası, K03.5 deniz salinity/SG dönüşüm güvenliği, K03.6 alkalinite/KH semantik-birim politikası, K03.7 çözünmüş oksijen konsantrasyon/doygunluk politikası, K03.8 klor/kloramin sample-context politikası, K03.9 marine elemental Ca/Mg politikası, K03.10 conductivity/TDS ürün politikası, K03.11 direct-vs-calculated CO2 politikası ve K03.12 Fe/K politikası kabul edildi. K03.13 ve sonraki kararlar açık.** Kabul edilen normatif kapsam ana sözleşme §6.1–6.6, §7, §25.1–25.3 ve §28.1'de kayıtlıdır. Bu araştırma dosyası uygulama kodu veya bilimsel güvenlik eşiği değildir.
 
-Kapsam: K03.0 için ölçüm seçiminin kaynaklarını, K03.1'de kabul edilen NO3/NO2/PO4 ortak raporlama temelini, K03.2'de kabul edilen source-aware giriş/normalizasyon yaklaşımını, K03.3'te kabul edilen amonyak kanonik temellerini, K03.4'te kabul edilen concurrent multi-result cardinality/UI davranışını, K03.5'te kabul edilen marine salinity/SG/conductivity ayrımını, K03.6'da kabul edilen total-alkalinity/KH politikasını, K03.7'de kabul edilen dissolved-oxygen concentration/saturation politikasını, K03.8'de kabul edilen chlorine/chloramine sample-context politikasını, K03.9'da kabul edilen elemental Ca/Mg semantiğini, K03.10'da kabul edilen conductivity/TDS ürün davranışını ve K03.11'de kabul edilen direct-vs-calculated CO2 politikasını izlenebilir tutmak. Fe/K ve diğer ek parametrelerin semantiği sonraki ayrı kararlar olacak.
+Kapsam: K03.0 için ölçüm seçiminin kaynaklarını, K03.1'de kabul edilen NO3/NO2/PO4 ortak raporlama temelini, K03.2'de kabul edilen source-aware giriş/normalizasyon yaklaşımını, K03.3'te kabul edilen amonyak kanonik temellerini, K03.4'te kabul edilen concurrent multi-result cardinality/UI davranışını, K03.5'te kabul edilen marine salinity/SG/conductivity ayrımını, K03.6'da kabul edilen total-alkalinity/KH politikasını, K03.7'de kabul edilen dissolved-oxygen concentration/saturation politikasını, K03.8'de kabul edilen chlorine/chloramine sample-context politikasını, K03.9'da kabul edilen elemental Ca/Mg semantiğini, K03.10'da kabul edilen conductivity/TDS ürün davranışını, K03.11'de kabul edilen direct-vs-calculated CO2 politikasını ve K03.12'de kabul edilen iron/potassium semantiğini izlenebilir tutmak. GH ve kalan profile/precision kararları sonraki ayrı maddelerdir.
 
 ## Doğrulanan ayrımlar
 
@@ -200,9 +200,25 @@ Bu karar reef target range veya dosing recommendation seçmez; yalnız ölçüm�
 
 Bu karar otomatik CO2/gübre doz önerisini kabul etmez; yalnız direct measurement ile pH+KH-derived CO2 arasındaki kayıt/UI/provenance davranışını dondurur.
 
-## K03.12 — sıradaki açık karar
+## K03.12 — kabul edilen demir / potasyum politikası
 
-Demir ve potasyum için canonical elemental/compound basis, unit ve test-method semantiği kararlaştırılacak.
+26.09.2026 tarihinde profesyonel ürün standardı olarak kabul edildi:
+
+- `POTASSIUM_CONCENTRATION` canonical **mg/L as K**. Verified aquarium test `ppm K` raporluyorsa source profile kullanıcı değerini elemental-K canonical semantiğine bağlar; kullanıcı manuel conversion yapmaz.
+- `IRON_CONCENTRATION` canonical **mg/L as Fe** ancak analytical scope zorunlu metadata'dır. Minimum scope kümesi: `TOTAL_IRON`, `DISSOLVED_IRON`, `FERROUS_IRON_FE2`, `METHOD_DEFINED_IRON`.
+- Hach method catalog ferrous, total ve total-dissolved iron'ı ayrı test/method olarak tanımlar; bu nedenle yalnız `Fe` etiketi scope eşitliği kanıtı değildir.
+- `METHOD_DEFINED_IRON`, üreticisi/yöntemi doğrulanmış fakat total/dissolved/ferrous kategorilerinden birine güvenle indirgenemeyen aquarium Fe testini kaydetmek içindir. Böyle bir sonuç yalnız matching/explicit-compatible rule ile değerlendirilir.
+- UI sade kalır: `Demir (Fe)` ve `Potasyum (K)`. Known product profile analytical scope'u arka planda çözer; kullanıcıya normal akışta total/dissolved/ferrous seçimi yaptırılmaz.
+- Verified test birden fazla independent iron fraction üretiyorsa K03.4 uyarınca separate typed result olarak saklanır; tek Fe slotunda overwrite edilmez.
+- `K2O` veya başka compound-basis potassium elemental K değildir; ancak verified reporting basis + supported stoichiometric conversion varsa normalize edilebilir.
+- Test method range/matrix/dilution/interference metadata'sı source profile'da tutulur. Out-of-range sonucu exact zero/scale-edge olarak uydurmak yasaktır; shared limit-input policy uygulanır.
+- Fe veya K değeri tek başına otomatik gübre doz miktarı üretmez. Future dosing ayrı contract gerektirir: tank volume, fertilizer composition/concentration, target change, max dose, recent dosing/water-change history ve nutrient interactions.
+
+Ürün ilkesi: **kullanıcı yalnız testte gördüğü Fe/K değerini girer; kimyasal scope güvenliği profile/backend'de çözülür.**
+
+## K03.13 — sıradaki açık karar
+
+Genel Sertlik (GH) için canonical metric/unit, `dGH` ile `mg/L as CaCO3` gösterimi ve total-hardness semantiği kesinleştirilecek.
 
 ## Birincil kaynaklar
 
@@ -258,8 +274,12 @@ Aşağıdaki kaynaklar önceki karar araştırmasında 26.09.2026 tarihinde aç�
 | R33 | [Hach — Carbon Dioxide test methods](https://www.hach.com/p-carbon-dioxide-test-kit-model-ca-23/143601) | CO2 doğrudan test/titrasyon yöntemiyle mg/L as CO2 olarak ölçülebilir; bu direct measurement, pH ölçümünden farklıdır. |
 | R34 | [Sera — Quick Test / CO2 table guidance](https://www.sera.de/us/product/pond/sera-quick-test-1/) | Akvaryum pratiğinde pH ve KH sonuçları birlikte kullanılarak CO2 tablosundan hesaplanan/tahmini CO2 değeri elde edilebilir. |
 | R35 | [USGS — Alkalinity calculation criteria](https://or.water.usgs.gov/alk/criteria.html) | pH/alkalinity tabanlı carbonate calculations kullanılan alkalinity species/assumptions'a bağlıdır; bu nedenle hesaplanan değer direct measurement olarak etiketlenmemelidir. |
-| R9 | [MSD Veterinary Manual — Equipment Needed for Aquatic Systems and Water Analysis](https://www.msdvetmanual.com/exotic-and-laboratory-animals/aquatic-systems/equipment-needed-for-aquatic-systems-and-water-analysis) | Oksijen, sıcaklık, pH, amonyak, nitrit, alkalinite, sertlik, deniz suyunda tuzluluk ve bağlama göre ek testler. Veteriner değerlendirme kapsamı UI'daki zorunlu alan listesi değildir. |
+| R36 | [Hach Methods Quick Reference Guide](https://cdn.hach.com/7FYZVWYB/at/tw6ck8vvkqgpj8psc5v4np5/DOC0525325020QRG.pdf) | Iron için `Ferrous`, `Total` ve `Total Dissolved` ayrı test/method kayıtlarıdır; aynı `mg/L Fe` reporting basis farklı analytical scope'ları birleştirmez. |
+| R37 | [Hach Potassium Reagent Set / Method 8049](https://ie.hach.com/potassium-reagent-set-0-1-7-0mg-l-k/product-downloads?id=71638523450) | Potassium Method 8049 sonucu **mg/L K** olarak raporlanır; elemental potassium canonical basis'ini destekler. |
+| R38 | [JBL PROAQUATEST Fe / K operating manual](https://www.jbl.de/en-ir/productsv2/download_instruction_manual_pdf/25000191) | Aquarium Fe ve K testleri kullanıcıya mg/L sonuç verir; K testinde dilution multiplier gibi method-specific uygulama bulunabilir ve profile metadata olarak ele alınmalıdır. |
+| R39 | [sera Iron Test](https://www.sera.de/tr/ueruen/tuzlu-su-akvaryum/sera-iron-test/) | Aquarium Fe testleri method-dependent olabilir; sera testi şelatlı demiri de algıladığını belirtir. Bu, tüm `Fe` etiketli kitleri tek analytical scope kabul etmeme gereğini destekler. |
+| R9 | [MSD Veterinary Manual — Equipment Needed for Aquatic Systems and Water Analysis]| R9 | [MSD Veterinary Manual — Equipment Needed for Aquatic Systems and Water Analysis](https://www.msdvetmanual.com/exotic-and-laboratory-animals/aquatic-systems/equipment-needed-for-aquatic-systems-and-water-analysis) | Oksijen, sıcaklık, pH, amonyak, nitrit, alkalinite, sertlik, deniz suyunda tuzluluk ve bağlama göre ek testler. Veteriner değerlendirme kapsamı UI'daki zorunlu alan listesi değildir. |
 | R10 | [Red Sea — Foundation manual, “Optimal levels of the Foundation Elements”](https://redseafish.com/wp-content/uploads/2020/11/24653-NEW-Manual-Foundation-Complete-GB-_2018c.pdf) | Deniz/resif profillerinde tuzluluk, alkalinite, kalsiyum ve magnezyum ayrımı. Üretici hedefleri tüm akvaryumlar için evrensel güvenlik sınırı sayılmaz. |
 | R11 | [MSD Veterinary Manual — Environmental Diseases, chlorine/chloramine section](https://www.msdvetmanual.com/exotic-and-laboratory-animals/aquatic-systems/environmental-diseases-of-aquatic-animals-in-aquatic-systems) | Serbest klor ve toplam klor ayrı ölçümlerdir; kloramin için yalnız serbest klor sonucunun yeterli olmaması. |
 
-Ek ölçümlerde conductivity/TDS K03.10, direct-vs-calculated CO2 K03.11 ile kabul edildi. Demir ve potasyum için kesin ölçüm semantiği henüz açık. CO2 calculation desteklenmesi, hesaplanan değerin direct measurement gibi kaydı veya otomatik doz önerisi anlamına gelmez.
+Ek ölçümlerde conductivity/TDS K03.10, direct-vs-calculated CO2 K03.11 ve Fe/K K03.12 ile kabul edildi. Fe/K ölçüm desteği otomatik fertilizer-dose özelliği anlamına gelmez. GH canonical semantics ve kalan source-profile/precision ayrıntıları açık karar olarak devam eder.
