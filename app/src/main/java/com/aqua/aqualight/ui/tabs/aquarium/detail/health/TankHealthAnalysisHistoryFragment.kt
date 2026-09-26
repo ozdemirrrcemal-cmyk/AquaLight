@@ -2,12 +2,17 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 
 import android.os.Bundle
 import android.view.View
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.aquarium.health.WaterAnalysisSnapshot
+import com.aqua.aqualight.application.aquarium.health.WaterParameter
 import com.aqua.aqualight.databinding.FragmentTankHealthAnalysisHistoryBinding
+import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
@@ -16,112 +21,12 @@ class TankHealthAnalysisHistoryFragment :
     Fragment(R.layout.fragment_tank_health_analysis_history) {
 
     private val args: TankHealthAnalysisHistoryFragmentArgs by navArgs()
+    private val waterAnalysisViewModel: WaterAnalysisViewModel by activityViewModels()
 
     private var _binding: FragmentTankHealthAnalysisHistoryBinding? = null
     private val binding get() = _binding!!
 
     private lateinit var historyAdapter: TankHealthAnalysisHistoryAdapter
-
-    private val allRecords: List<TankHealthAnalysisHistoryRecord> by lazy {
-        listOf(
-            TankHealthAnalysisHistoryRecord(
-                dateRes = R.string.tank_health_analysis_record_date_1,
-                timeRes = R.string.tank_health_analysis_record_time_1,
-                phValueRes = R.string.tank_health_value_ph,
-                no3ValueRes = R.string.tank_health_value_no3,
-                temperatureValueRes = R.string.tank_health_value_temperature,
-                no3StatusRes = R.string.tank_health_status_moderate
-            ),
-            TankHealthAnalysisHistoryRecord(
-                dateRes = R.string.tank_health_analysis_record_date_2,
-                timeRes = R.string.tank_health_analysis_record_time_2,
-                phValueRes = R.string.tank_health_analysis_value_ph_70,
-                no3ValueRes = R.string.tank_health_analysis_value_no3_10,
-                temperatureValueRes = R.string.tank_health_analysis_value_temp_24,
-                no3StatusRes = R.string.tank_health_status_normal
-            ),
-            TankHealthAnalysisHistoryRecord(
-                dateRes = R.string.tank_health_analysis_record_date_3,
-                timeRes = R.string.tank_health_analysis_record_time_3,
-                phValueRes = R.string.tank_health_analysis_value_ph_66,
-                no3ValueRes = R.string.tank_health_analysis_value_no3_22,
-                temperatureValueRes = R.string.tank_health_analysis_value_temp_26,
-                no3StatusRes = R.string.tank_health_status_moderate
-            ),
-            TankHealthAnalysisHistoryRecord(
-                dateRes = R.string.tank_health_analysis_record_date_4,
-                timeRes = R.string.tank_health_analysis_record_time_4,
-                phValueRes = R.string.tank_health_analysis_value_ph_72,
-                no3ValueRes = R.string.tank_health_analysis_value_no3_8,
-                temperatureValueRes = R.string.tank_health_analysis_value_temp_24,
-                no3StatusRes = R.string.tank_health_status_normal
-            ),
-            TankHealthAnalysisHistoryRecord(
-                dateRes = R.string.tank_health_analysis_record_date_5,
-                timeRes = R.string.tank_health_analysis_record_time_5,
-                phValueRes = R.string.tank_health_analysis_value_ph_69,
-                no3ValueRes = R.string.tank_health_analysis_value_no3_16,
-                temperatureValueRes = R.string.tank_health_value_temperature,
-                no3StatusRes = R.string.tank_health_status_normal
-            ),
-            TankHealthAnalysisHistoryRecord(
-                dateRes = R.string.tank_health_analysis_record_date_6,
-                timeRes = R.string.tank_health_analysis_record_time_6,
-                phValueRes = R.string.tank_health_value_ph,
-                no3ValueRes = R.string.tank_health_analysis_value_no3_10,
-                temperatureValueRes = R.string.tank_health_value_temperature,
-                no3StatusRes = R.string.tank_health_status_normal
-            ),
-            TankHealthAnalysisHistoryRecord(
-                dateRes = R.string.tank_health_analysis_record_date_7,
-                timeRes = R.string.tank_health_analysis_record_time_7,
-                phValueRes = R.string.tank_health_analysis_value_ph_70,
-                no3ValueRes = R.string.tank_health_analysis_value_no3_22,
-                temperatureValueRes = R.string.tank_health_analysis_value_temp_26,
-                no3StatusRes = R.string.tank_health_status_moderate
-            ),
-            TankHealthAnalysisHistoryRecord(
-                dateRes = R.string.tank_health_analysis_record_date_8,
-                timeRes = R.string.tank_health_analysis_record_time_8,
-                phValueRes = R.string.tank_health_analysis_value_ph_66,
-                no3ValueRes = R.string.tank_health_analysis_value_no3_8,
-                temperatureValueRes = R.string.tank_health_analysis_value_temp_24,
-                no3StatusRes = R.string.tank_health_status_normal
-            ),
-            TankHealthAnalysisHistoryRecord(
-                dateRes = R.string.tank_health_analysis_record_date_9,
-                timeRes = R.string.tank_health_analysis_record_time_9,
-                phValueRes = R.string.tank_health_analysis_value_ph_72,
-                no3ValueRes = R.string.tank_health_analysis_value_no3_16,
-                temperatureValueRes = R.string.tank_health_value_temperature,
-                no3StatusRes = R.string.tank_health_status_normal
-            ),
-            TankHealthAnalysisHistoryRecord(
-                dateRes = R.string.tank_health_analysis_record_date_10,
-                timeRes = R.string.tank_health_analysis_record_time_10,
-                phValueRes = R.string.tank_health_analysis_value_ph_69,
-                no3ValueRes = R.string.tank_health_analysis_value_no3_10,
-                temperatureValueRes = R.string.tank_health_analysis_value_temp_24,
-                no3StatusRes = R.string.tank_health_status_normal
-            ),
-            TankHealthAnalysisHistoryRecord(
-                dateRes = R.string.tank_health_analysis_record_date_11,
-                timeRes = R.string.tank_health_analysis_record_time_11,
-                phValueRes = R.string.tank_health_value_ph,
-                no3ValueRes = R.string.tank_health_analysis_value_no3_8,
-                temperatureValueRes = R.string.tank_health_value_temperature,
-                no3StatusRes = R.string.tank_health_status_normal
-            ),
-            TankHealthAnalysisHistoryRecord(
-                dateRes = R.string.tank_health_analysis_record_date_12,
-                timeRes = R.string.tank_health_analysis_record_time_12,
-                phValueRes = R.string.tank_health_analysis_value_ph_70,
-                no3ValueRes = R.string.tank_health_analysis_value_no3_16,
-                temperatureValueRes = R.string.tank_health_analysis_value_temp_26,
-                no3StatusRes = R.string.tank_health_status_normal
-            )
-        )
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -137,6 +42,7 @@ class TankHealthAnalysisHistoryFragment :
         setupHeader()
         setupHistoryList()
         setupNewAnalysisAction()
+        observeHistory()
     }
 
     private fun setupHeader() {
@@ -144,19 +50,14 @@ class TankHealthAnalysisHistoryFragment :
             fragment = this,
             config = AquaHeaderConfig(
                 titleOverride = getString(R.string.screen_title_tank_health_analysis_history),
-                onBackClick = {
-                    findNavController().navigateUp()
-                }
+                onBackClick = { findNavController().navigateUp() }
             )
         )
     }
 
     private fun setupHistoryList() {
         historyAdapter = TankHealthAnalysisHistoryAdapter(
-            items = allRecords,
-            onRecordClick = {
-                openRecordDetail()
-            }
+            onRecordClick = { record -> openRecordDetail(record.analysisId) }
         )
         binding.historyList.layoutManager = LinearLayoutManager(requireContext())
         binding.historyList.adapter = historyAdapter
@@ -175,12 +76,50 @@ class TankHealthAnalysisHistoryFragment :
         }
     }
 
-    private fun openRecordDetail() {
+    private fun observeHistory() {
+        waterAnalysisViewModel.analysesForTank(args.tankId)
+            .observe(viewLifecycleOwner) { analyses ->
+                historyAdapter.submitItems(analyses.map(::toHistoryRecord))
+                binding.tvHistorySummary.text = resources.getQuantityString(
+                    R.plurals.tank_health_analysis_history_count,
+                    analyses.size,
+                    analyses.size
+                )
+                binding.tvEmptyHistory.isVisible = analyses.isEmpty()
+                binding.historyList.isVisible = analyses.isNotEmpty()
+            }
+    }
+
+    private fun toHistoryRecord(snapshot: WaterAnalysisSnapshot): TankHealthAnalysisHistoryRecord {
+        val context = requireContext()
+        val ph = snapshot.measurements.firstOrNull { it.parameter == WaterParameter.PH }
+        val nitrate = snapshot.measurements.firstOrNull { it.parameter == WaterParameter.NITRATE }
+        return TankHealthAnalysisHistoryRecord(
+            analysisId = snapshot.id,
+            dateText = LocaleFormatter.formatDate(context, snapshot.measuredAtMillis),
+            timeText = LocaleFormatter.formatTime(context, snapshot.measuredAtMillis),
+            phValueText = ph?.let { WaterAnalysisPresentation.measurementValueText(context, it) }
+                ?: getString(R.string.tank_health_value_not_measured),
+            nitrateValueText = nitrate
+                ?.let { WaterAnalysisPresentation.measurementValueText(context, it) }
+                ?: getString(R.string.tank_health_value_not_measured),
+            temperatureValueText = WaterAnalysisPresentation.temperatureValueText(
+                context,
+                snapshot.temperatureCelsius
+            ),
+            phMeasured = ph != null,
+            nitrateMeasured = nitrate != null,
+            temperatureMeasured = snapshot.temperatureCelsius != null
+        )
+    }
+
+    private fun openRecordDetail(analysisId: Long) {
         findNavController().navigateSafelyFrom(
             sourceDestinationId = R.id.tankHealthAnalysisHistoryFragment,
             directions = TankHealthAnalysisHistoryFragmentDirections
                 .actionTankHealthAnalysisHistoryFragmentToTankHealthAnalysisDetailFragment(
-                    args.tankId
+                    args.tankId,
+                    analysisId
                 )
         )
     }
@@ -190,5 +129,4 @@ class TankHealthAnalysisHistoryFragment :
         _binding = null
         super.onDestroyView()
     }
-
 }

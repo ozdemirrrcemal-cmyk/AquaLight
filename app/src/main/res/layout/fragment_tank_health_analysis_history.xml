@@ -55,10 +55,10 @@
                 app:layout_constraintTop_toTopOf="parent">
 
                 <TextView
+                    android:id="@+id/tvHistorySummary"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:includeFontPadding="false"
-                    android:text="@string/tank_health_analysis_history_summary"
                     android:textColor="@color/aqua_card_text_primary"
                     android:textSize="@dimen/aqua_text_size_body_xlarge"
                     android:textStyle="bold" />
@@ -71,12 +71,24 @@
                     android:text="@string/tank_health_analysis_history_summary_subtitle"
                     android:textColor="@color/aqua_card_text_secondary"
                     android:textSize="@dimen/aqua_text_size_caption" />
-
             </LinearLayout>
-
         </androidx.constraintlayout.widget.ConstraintLayout>
-
     </com.google.android.material.card.MaterialCardView>
+
+    <TextView
+        android:id="@+id/tvEmptyHistory"
+        android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/aqua_size_24"
+        android:gravity="center"
+        android:text="@string/tank_health_analysis_history_empty"
+        android:textColor="@color/aqua_card_text_secondary"
+        android:textSize="@dimen/aqua_text_size_body"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@id/btnNewAnalysis"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/historySummaryCard" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/historyList"
@@ -109,5 +121,4 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
-
 </androidx.constraintlayout.widget.ConstraintLayout>

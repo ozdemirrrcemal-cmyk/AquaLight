@@ -89,8 +89,13 @@
     <string name="tank_health_analysis_history_action">Geçmiş Kayıtlar</string>
     <string name="tank_health_analysis_new">Yeni Analiz</string>
 
-    <string name="tank_health_analysis_history_summary">Toplam 12 kayıt</string>
+    <plurals name="tank_health_analysis_history_count">
+        <item quantity="one">%1$d kayıt</item>
+        <item quantity="other">%1$d kayıt</item>
+    </plurals>
     <string name="tank_health_analysis_history_summary_subtitle">Tankınızdaki tüm analiz geçmişi</string>
+    <string name="tank_health_analysis_history_empty">Bu tank için henüz analiz kaydı bulunmuyor.</string>
+    <string name="tank_health_analysis_recorded">Kaydedildi</string>
 
     <string name="tank_health_analysis_record_date_1">26 Eyl 2026</string>
     <string name="tank_health_analysis_record_date_2">24 Eyl 2026</string>

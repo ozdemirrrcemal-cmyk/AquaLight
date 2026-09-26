@@ -114,8 +114,13 @@
     <string name="tank_health_analysis_history_action">Analysis History</string>
     <string name="tank_health_analysis_new">New Analysis</string>
 
-    <string name="tank_health_analysis_history_summary">Total 12 records</string>
+    <plurals name="tank_health_analysis_history_count">
+        <item quantity="one">%1$d record</item>
+        <item quantity="other">%1$d records</item>
+    </plurals>
     <string name="tank_health_analysis_history_summary_subtitle">All analysis history for this tank</string>
+    <string name="tank_health_analysis_history_empty">No analysis records have been saved for this tank yet.</string>
+    <string name="tank_health_analysis_recorded">Recorded</string>
 
     <string name="tank_health_analysis_record_date_1">26 Sep 2026</string>
     <string name="tank_health_analysis_record_time_1" translatable="false">14:10</string>

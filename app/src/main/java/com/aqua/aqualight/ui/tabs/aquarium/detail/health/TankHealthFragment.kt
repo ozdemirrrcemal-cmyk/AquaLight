@@ -9,6 +9,9 @@ import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.GridLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumTankTaxonomy
+import com.aqua.aqualight.application.aquarium.health.WaterAnalysisSnapshot
+import com.aqua.aqualight.application.aquarium.health.WaterMeasurementSnapshot
+import com.aqua.aqualight.application.aquarium.health.WaterParameter
 import com.aqua.aqualight.databinding.FragmentTankHealthBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
@@ -19,10 +22,14 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
 
     private val args: TankHealthFragmentArgs by navArgs()
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
+    private val waterAnalysisViewModel: WaterAnalysisViewModel by activityViewModels()
 
     private var _binding: FragmentTankHealthBinding? = null
     private val binding get() = _binding!!
     private var contentAdapter: TankHealthContentAdapter? = null
+
+    private var currentTankProfile: String? = null
+    private var currentAnalyses: List<WaterAnalysisSnapshot> = emptyList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,7 +44,7 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
 
         setupHeader()
         setupContent()
-        observeTankProfile()
+        observeTankHealth()
     }
 
     private fun setupHeader() {
@@ -51,9 +58,7 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
     }
 
     private fun setupContent() {
-        val adapter = TankHealthContentAdapter(
-            onAddAnalysisClick = ::openAddAnalysis
-        )
+        val adapter = TankHealthContentAdapter(onAddAnalysisClick = ::openAddAnalysis)
         contentAdapter = adapter
 
         binding.healthContent.layoutManager = GridLayoutManager(
@@ -69,24 +74,60 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
         binding.healthContent.itemAnimator = null
     }
 
-    private fun observeTankProfile() {
+    private fun observeTankHealth() {
         aquariumTankViewModel.tanks.observe(viewLifecycleOwner) { tanks ->
-            val tankProfile = tanks
+            currentTankProfile = tanks
                 .firstOrNull { tank -> tank.id == args.tankId }
                 ?.tankType
                 ?.takeIf(AquariumTankTaxonomy::isSupportedTankType)
-
-            val metrics = tankProfile
-                ?.let { profile ->
-                    TankHealthWaterMetricUiCatalog.models(
-                        tankProfile = profile,
-                        measuredParameterIds = emptyList()
-                    )
-                }
-                .orEmpty()
-
-            contentAdapter?.submitWaterMetrics(metrics)
+            renderWaterMetrics()
         }
+
+        waterAnalysisViewModel.analysesForTank(args.tankId)
+            .observe(viewLifecycleOwner) { analyses ->
+                currentAnalyses = analyses
+                renderWaterMetrics()
+            }
+    }
+
+    private fun renderWaterMetrics() {
+        val profile = currentTankProfile ?: run {
+            contentAdapter?.submitWaterMetrics(emptyList())
+            return
+        }
+
+        val latestMeasurements = latestMeasurementsByParameter(currentAnalyses)
+        val models = TankHealthWaterMetricUiCatalog.models(
+            tankProfile = profile,
+            measuredParameterIds = latestMeasurements.keys.map(WaterParameter::toUiParameterId)
+        ).map { model ->
+            val measurement = latestMeasurements[model.id.toDomainParameter()]
+            if (measurement == null) {
+                model
+            } else {
+                model.copy(
+                    symbolRes = WaterAnalysisPresentation.measurementSymbolRes(measurement),
+                    valueText = WaterAnalysisPresentation.measurementValueText(
+                        requireContext(),
+                        measurement
+                    ),
+                    statusText = getString(R.string.tank_health_analysis_recorded)
+                )
+            }
+        }
+        contentAdapter?.submitWaterMetrics(models)
+    }
+
+    private fun latestMeasurementsByParameter(
+        analyses: List<WaterAnalysisSnapshot>
+    ): Map<WaterParameter, WaterMeasurementSnapshot> {
+        val latest = linkedMapOf<WaterParameter, WaterMeasurementSnapshot>()
+        analyses.forEach { analysis ->
+            analysis.measurements.forEach { measurement ->
+                latest.putIfAbsent(measurement.parameter, measurement)
+            }
+        }
+        return latest
     }
 
     private fun openAddAnalysis() {
