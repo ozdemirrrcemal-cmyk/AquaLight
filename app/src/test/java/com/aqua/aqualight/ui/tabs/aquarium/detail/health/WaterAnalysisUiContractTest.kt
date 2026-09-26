@@ -40,7 +40,17 @@ class WaterAnalysisUiContractTest {
         assertTrue(fragment.contains("WaterTestPickerBottomSheet.show("))
         assertTrue(waterLayout.contains("recommendedParametersContainer"))
         assertTrue(waterLayout.contains("additionalParametersContainer"))
-        assertTrue(waterLayout.contains("btnAddTest"))
+        val addTestLayout = file(
+            "app/src/main/res/layout/item_tank_health_analysis_add_test.xml"
+        )
+        val parameterLayout = file(
+            "app/src/main/res/layout/item_tank_health_analysis_parameter_input.xml"
+        )
+
+        assertTrue(addTestLayout.contains("btnAddTest"))
+        assertTrue(fragment.contains("ItemTankHealthAnalysisAddTestBinding.inflate("))
+        assertTrue(parameterLayout.contains("ivParameterIcon"))
+        assertTrue(parameterLayout.contains("bg_water_test_symbol_chip"))
         assertFalse(values.contains("tank_health_analysis_input_"))
         assertFalse(waterLayout.contains("inputPh"))
         assertFalse(waterLayout.contains("inputNo3"))

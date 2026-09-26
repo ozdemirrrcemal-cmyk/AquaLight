@@ -36,6 +36,8 @@
     <string name="tank_health_analysis_additional_tests">Additional tests</string>
     <string name="tank_health_analysis_add_test">+ Add Test</string>
     <string name="tank_health_analysis_add_test_subtitle">Add optional measurements that are relevant to this tank profile.</string>
+    <string name="tank_health_analysis_add_test_example_format">E.g. %1$s…</string>
+    <string name="tank_health_analysis_input_hint">Enter value</string>
     <string name="tank_health_analysis_all_additional_tests_added">All available tests added</string>
     <string name="tank_health_analysis_remove_test">Remove test</string>
     <string name="tank_health_analysis_test_picker_label_format">%1$s  •  %2$s</string>

@@ -25,8 +25,8 @@
         android:paddingStart="@dimen/aqua_size_14"
         android:paddingTop="@dimen/aqua_size_8"
         android:paddingEnd="@dimen/aqua_size_14"
-        android:paddingBottom="@dimen/aqua_size_24"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:paddingBottom="@dimen/aqua_size_16"
+        app:layout_constraintBottom_toTopOf="@id/bottomActions"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/appHeader">
@@ -54,35 +54,61 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/aqua_size_52"
-                android:layout_marginTop="@dimen/aqua_size_14"
-                android:baselineAligned="false"
-                android:orientation="horizontal">
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnSaveAnalysis"
-                    style="@style/Widget.Aqua.Button.Primary"
-                    android:layout_width="@dimen/aqua_size_0"
-                    android:layout_height="match_parent"
-                    android:layout_marginEnd="@dimen/aqua_size_4"
-                    android:layout_weight="1"
-                    android:text="@string/tank_health_analysis_save" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnHistory"
-                    style="@style/Widget.Aqua.Button.OutlineAccent"
-                    android:layout_width="@dimen/aqua_size_0"
-                    android:layout_height="match_parent"
-                    android:layout_marginStart="@dimen/aqua_size_4"
-                    android:layout_weight="1"
-                    android:text="@string/tank_health_analysis_history_action" />
-
-            </LinearLayout>
-
         </LinearLayout>
 
     </androidx.core.widget.NestedScrollView>
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/bottomActions"
+        style="@style/Widget.Aqua.Card.Inline"
+        android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="@dimen/aqua_size_76"
+        app:cardBackgroundColor="@color/aqua_surface_deep"
+        app:cardCornerRadius="@dimen/aqua_size_24"
+        app:cardElevation="@dimen/aqua_size_0"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:strokeColor="@color/aqua_card_outline"
+        app:strokeWidth="@dimen/aqua_size_1">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:baselineAligned="false"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="@dimen/aqua_size_14"
+            android:paddingEnd="@dimen/aqua_size_14"
+            android:paddingTop="@dimen/aqua_size_10"
+            android:paddingBottom="@dimen/aqua_size_10">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnHistory"
+                style="@style/Widget.Aqua.Button.OutlineAccent"
+                android:layout_width="@dimen/aqua_size_0"
+                android:layout_height="@dimen/aqua_size_54"
+                android:layout_marginEnd="@dimen/aqua_size_5"
+                android:layout_weight="1"
+                android:text="@string/tank_health_analysis_history_action"
+                app:icon="@drawable/ic_tank_health_history_24"
+                app:iconGravity="textStart"
+                app:iconSize="@dimen/aqua_size_22" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSaveAnalysis"
+                style="@style/Widget.Aqua.Button.Primary"
+                android:layout_width="@dimen/aqua_size_0"
+                android:layout_height="@dimen/aqua_size_54"
+                android:layout_marginStart="@dimen/aqua_size_5"
+                android:layout_weight="1"
+                android:text="@string/tank_health_analysis_save"
+                app:icon="@drawable/ic_water_test_save_24"
+                app:iconGravity="textStart"
+                app:iconSize="@dimen/aqua_size_22" />
+
+        </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

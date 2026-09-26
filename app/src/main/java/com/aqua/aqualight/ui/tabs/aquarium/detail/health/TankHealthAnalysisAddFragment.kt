@@ -15,6 +15,7 @@ import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumTankTaxonomy
 import com.aqua.aqualight.databinding.FragmentTankHealthAnalysisAddBinding
+import com.aqua.aqualight.databinding.ItemTankHealthAnalysisAddTestBinding
 import com.aqua.aqualight.databinding.ItemTankHealthAnalysisParameterInputBinding
 import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.ui.common.dialog.AppDatePickerDialogFragment
@@ -62,7 +63,6 @@ class TankHealthAnalysisAddFragment :
         setupMeasurementTime()
         setupTemperatureSource()
         setupTemperatureInput()
-        setupWaterParameterActions()
         setupNavigation()
         observeTankProfile()
 
@@ -265,19 +265,6 @@ class TankHealthAnalysisAddFragment :
         )
     }
 
-    private fun setupWaterParameterActions() {
-        binding.waterParametersSection.btnAddTest.setOnClickListener {
-            val profile = tankProfile ?: return@setOnClickListener
-            val available = WaterTestProfileUiCatalog.additionalIds(profile)
-                .filterNot(additionalParameters::contains)
-            WaterTestPickerBottomSheet.show(
-                fragmentManager = childFragmentManager,
-                tankProfile = profile,
-                parameterIds = available
-            )
-        }
-    }
-
     private fun setupNavigation() {
         binding.btnHistory.setOnClickListener {
             findNavController().navigateSafelyFrom(
@@ -424,21 +411,22 @@ class TankHealthAnalysisAddFragment :
         val profile = tankProfile
 
         if (profile == null) {
-            section.tvProfileContext.setText(R.string.tank_health_analysis_profile_missing)
-            section.tvRecommendedTitle.isVisible = false
+            section.profileContextCard.isVisible = false
             section.recommendedParametersContainer.removeAllViews()
-            section.tvAdditionalTitle.isVisible = false
+            section.additionalSectionHeader.isVisible = false
             section.additionalParametersContainer.isVisible = false
             section.additionalParametersContainer.removeAllViews()
-            section.btnAddTest.isEnabled = false
             return
         }
 
+        section.profileContextCard.isVisible = true
+        section.ivProfileIcon.setImageResource(
+            WaterTestProfileUiCatalog.profileIconRes(profile)
+        )
         section.tvProfileContext.text = getString(
             R.string.tank_health_analysis_profile_context,
             AquariumTankTaxonomyText.tankTypeLabel(requireContext(), profile)
         )
-        section.tvRecommendedTitle.isVisible = true
 
         val recommendedModels = WaterTestProfileUiCatalog.recommendedIds(profile).map { id ->
             WaterTestProfileUiCatalog.model(
@@ -464,23 +452,18 @@ class TankHealthAnalysisAddFragment :
                     value = parameterValues[id].orEmpty()
                 )
             }
-
-        val hasAdditional = additionalModels.isNotEmpty()
-        section.tvAdditionalTitle.isVisible = hasAdditional
-        section.additionalParametersContainer.isVisible = hasAdditional
-        renderParameterContainer(
-            container = section.additionalParametersContainer,
-            models = additionalModels
-        )
-
         val availableAdditional = additionalOrder.filterNot(additionalParameters::contains)
-        section.btnAddTest.isEnabled = availableAdditional.isNotEmpty()
-        section.btnAddTest.setText(
-            if (availableAdditional.isEmpty()) {
-                R.string.tank_health_analysis_all_additional_tests_added
-            } else {
-                R.string.tank_health_analysis_add_test
-            }
+
+        section.additionalSectionHeader.isVisible =
+            additionalModels.isNotEmpty() || availableAdditional.isNotEmpty()
+        section.additionalParametersContainer.isVisible =
+            additionalModels.isNotEmpty() || availableAdditional.isNotEmpty()
+
+        renderAdditionalParameterContainer(
+            container = section.additionalParametersContainer,
+            tankProfile = profile,
+            models = additionalModels,
+            availableAdditional = availableAdditional
         )
     }
 
@@ -489,56 +472,155 @@ class TankHealthAnalysisAddFragment :
         models: List<WaterTestParameterUiModel>
     ) {
         container.removeAllViews()
-        val spacing = resources.getDimensionPixelSize(R.dimen.aqua_size_4)
-        val rowSpacing = resources.getDimensionPixelSize(R.dimen.aqua_size_8)
+        val spacing = resources.getDimensionPixelSize(R.dimen.aqua_size_5)
+        val rowSpacing = resources.getDimensionPixelSize(R.dimen.aqua_size_10)
 
         models.chunked(PARAMETERS_PER_ROW).forEachIndexed { rowIndex, rowModels ->
-            val row = LinearLayout(requireContext()).apply {
-                orientation = LinearLayout.HORIZONTAL
-                isBaselineAligned = false
-            }
-            val rowParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                if (rowIndex > 0) topMargin = rowSpacing
-            }
-
+            val row = createParameterRow()
             rowModels.forEachIndexed { column, model ->
-                val itemBinding = ItemTankHealthAnalysisParameterInputBinding.inflate(
-                    layoutInflater,
-                    row,
-                    false
-                )
-                bindParameterInput(itemBinding, model)
-                row.addView(
-                    itemBinding.root,
-                    LinearLayout.LayoutParams(
-                        0,
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        1f
-                    ).apply {
-                        marginEnd = if (column == 0) spacing else 0
-                        marginStart = if (column == 0) 0 else spacing
-                    }
-                )
+                addParameterCard(row, model, column, spacing)
             }
-
             if (rowModels.size < PARAMETERS_PER_ROW) {
-                row.addView(
-                    Space(requireContext()),
-                    LinearLayout.LayoutParams(
-                        0,
-                        1,
-                        1f
-                    ).apply {
-                        marginStart = spacing
-                    }
-                )
+                addGridSpacer(row, spacing)
             }
-
-            container.addView(row, rowParams)
+            container.addView(row, parameterRowLayoutParams(rowIndex, rowSpacing))
         }
+    }
+
+    private fun renderAdditionalParameterContainer(
+        container: LinearLayout,
+        tankProfile: String,
+        models: List<WaterTestParameterUiModel>,
+        availableAdditional: List<WaterTestParameterId>
+    ) {
+        container.removeAllViews()
+        val spacing = resources.getDimensionPixelSize(R.dimen.aqua_size_5)
+        val rowSpacing = resources.getDimensionPixelSize(R.dimen.aqua_size_10)
+        val hasAddTile = availableAdditional.isNotEmpty()
+        val itemCount = models.size + if (hasAddTile) 1 else 0
+
+        (0 until itemCount)
+            .toList()
+            .chunked(PARAMETERS_PER_ROW)
+            .forEachIndexed { rowIndex, indexes ->
+                val row = createParameterRow()
+                indexes.forEachIndexed { column, itemIndex ->
+                    if (itemIndex < models.size) {
+                        addParameterCard(row, models[itemIndex], column, spacing)
+                    } else {
+                        addTestTile(
+                            row = row,
+                            tankProfile = tankProfile,
+                            availableAdditional = availableAdditional,
+                            column = column,
+                            spacing = spacing
+                        )
+                    }
+                }
+                if (indexes.size < PARAMETERS_PER_ROW) {
+                    addGridSpacer(row, spacing)
+                }
+                container.addView(row, parameterRowLayoutParams(rowIndex, rowSpacing))
+            }
+    }
+
+    private fun createParameterRow(): LinearLayout =
+        LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.HORIZONTAL
+            isBaselineAligned = false
+        }
+
+    private fun parameterRowLayoutParams(
+        rowIndex: Int,
+        rowSpacing: Int
+    ): LinearLayout.LayoutParams =
+        LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        ).apply {
+            if (rowIndex > 0) topMargin = rowSpacing
+        }
+
+    private fun gridCellLayoutParams(
+        column: Int,
+        spacing: Int
+    ): LinearLayout.LayoutParams =
+        LinearLayout.LayoutParams(
+            0,
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            1f
+        ).apply {
+            marginEnd = if (column == 0) spacing else 0
+            marginStart = if (column == 0) 0 else spacing
+        }
+
+    private fun addParameterCard(
+        row: LinearLayout,
+        model: WaterTestParameterUiModel,
+        column: Int,
+        spacing: Int
+    ) {
+        val itemBinding = ItemTankHealthAnalysisParameterInputBinding.inflate(
+            layoutInflater,
+            row,
+            false
+        )
+        bindParameterInput(itemBinding, model)
+        row.addView(itemBinding.root, gridCellLayoutParams(column, spacing))
+    }
+
+    private fun addTestTile(
+        row: LinearLayout,
+        tankProfile: String,
+        availableAdditional: List<WaterTestParameterId>,
+        column: Int,
+        spacing: Int
+    ) {
+        val addBinding = ItemTankHealthAnalysisAddTestBinding.inflate(
+            layoutInflater,
+            row,
+            false
+        )
+        val examples = availableAdditional
+            .take(ADD_TEST_EXAMPLE_LIMIT)
+            .map { id ->
+                val model = WaterTestProfileUiCatalog.model(
+                    tankProfile = tankProfile,
+                    id = id,
+                    importance = WaterTestImportance.ADDITIONAL,
+                    value = ""
+                )
+                getString(model.nameRes)
+            }
+            .joinToString(", ")
+        addBinding.tvAddTestExample.text = getString(
+            R.string.tank_health_analysis_add_test_example_format,
+            examples
+        )
+        addBinding.root.setOnClickListener {
+            WaterTestPickerBottomSheet.show(
+                fragmentManager = childFragmentManager,
+                tankProfile = tankProfile,
+                parameterIds = availableAdditional
+            )
+        }
+        row.addView(addBinding.root, gridCellLayoutParams(column, spacing))
+    }
+
+    private fun addGridSpacer(
+        row: LinearLayout,
+        spacing: Int
+    ) {
+        row.addView(
+            Space(requireContext()),
+            LinearLayout.LayoutParams(
+                0,
+                1,
+                1f
+            ).apply {
+                marginStart = spacing
+            }
+        )
     }
 
     private fun bindParameterInput(
@@ -550,6 +632,7 @@ class TankHealthAnalysisAddFragment :
         itemBinding.inputValue.id = View.generateViewId()
         itemBinding.inputValue.isSaveEnabled = false
 
+        itemBinding.ivParameterIcon.setImageResource(model.iconRes)
         itemBinding.tvParameterName.setText(model.nameRes)
         itemBinding.tvParameterSymbol.isVisible = model.symbolRes != null
         model.symbolRes?.let { symbolRes -> itemBinding.tvParameterSymbol.setText(symbolRes) }
@@ -625,6 +708,7 @@ class TankHealthAnalysisAddFragment :
 
         const val NO_SAVED_TIME = -1L
         const val PARAMETERS_PER_ROW = 2
+        const val ADD_TEST_EXAMPLE_LIMIT = 3
         const val ENABLED_ALPHA = 1f
         const val DISABLED_ALPHA = 0.5f
     }

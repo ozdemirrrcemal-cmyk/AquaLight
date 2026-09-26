@@ -34,7 +34,9 @@
     <string name="tank_health_analysis_recommended_tests">Önerilen Testler</string>
     <string name="tank_health_analysis_additional_tests">Ek Testler</string>
     <string name="tank_health_analysis_add_test">+ Test Ekle</string>
-    <string name="tank_health_analysis_add_test_subtitle">Bu tank profili için kullanmak istediğiniz ek ölçümleri seçin.</string>
+    <string name="tank_health_analysis_add_test_subtitle">İhtiyacınıza göre ek testler ekleyebilirsiniz.</string>
+    <string name="tank_health_analysis_add_test_example_format">Örn. %1$s…</string>
+    <string name="tank_health_analysis_input_hint">Değer girin</string>
     <string name="tank_health_analysis_all_additional_tests_added">Tüm uygun testler eklendi</string>
     <string name="tank_health_analysis_remove_test">Testi kaldır</string>
     <string name="tank_health_analysis_test_picker_label_format">%1$s  •  %2$s</string>

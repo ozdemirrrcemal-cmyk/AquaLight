@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/btnAddTest"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="@dimen/aqua_size_140"
+    android:background="@drawable/bg_water_test_add_tile"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="@dimen/aqua_size_12">
+
+    <ImageView
+        android:layout_width="@dimen/aqua_size_40"
+        android:layout_height="@dimen/aqua_size_40"
+        android:background="@drawable/bg_water_test_add_icon"
+        android:contentDescription="@null"
+        android:importantForAccessibility="no"
+        android:padding="@dimen/aqua_size_8"
+        android:src="@drawable/ic_add_24"
+        app:tint="@color/aqua_accent_primary" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/aqua_size_8"
+        android:includeFontPadding="false"
+        android:text="@string/tank_health_analysis_add_test"
+        android:textColor="@color/aqua_accent_primary"
+        android:textSize="@dimen/aqua_text_size_body_small"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvAddTestExample"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/aqua_size_4"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:maxLines="2"
+        android:textColor="@color/aqua_content_muted"
+        android:textSize="@dimen/aqua_text_size_micro_caption" />
+
+</LinearLayout>
