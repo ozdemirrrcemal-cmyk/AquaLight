@@ -6,7 +6,7 @@ This document freezes the architectural, data, analysis, persistence, and UI-int
 
 The existing Tank Health / Water Quality UI is considered visually complete for this stage. Implementation work governed by this contract must connect that UI to authoritative data and analysis without redesigning the approved screens unless a later explicit UI change is requested.
 
-Accepted clarification on 26 September 2026 (K03.0): the selected tank type determines which measurement fields are shown. Preserve the existing screen structure, cards, field styling, grid, and navigation while populating them with the applicable measurements in section 25.1. Basic, tank-specific, and additional measurements are logical groups, not approval for a new visual layout. K03.1 subsequently freezes nitrate, nitrite, and phosphate recording semantics in section 6.1. K03.2 freezes the test/device selection, source-semantic resolution, and normalization workflow in sections 6.2, 6.5, 7, and 28.1. K03.3 freezes the canonical ammonia reporting bases in section 6.3. K03.4 freezes concurrent multi-result measurement/cardinality behavior in section 6.6. K03.5 freezes marine salinity/specific-gravity semantics and conversion safety in section 6.7. K03.6 freezes alkalinity/KH semantics, canonical units, and duplicate-field prevention in section 6.8. K03.7 freezes dissolved-oxygen concentration/saturation semantics and conversion prerequisites in section 6.9. K03.8 freezes chlorine/chloramine semantics, sample-context requirements, and multi-result handling in section 6.10. K03.9 freezes marine calcium/magnesium elemental semantics and hardness separation in section 6.11. K03.10 freezes conductivity/TDS semantics, temperature-basis provenance, and safe EC↔TDS behavior in section 6.12. K03.11 freezes direct-vs-calculated CO2 semantics in section 6.13. K03.12 freezes iron/potassium canonical semantics, iron analytical-scope handling, and the no-auto-dosing boundary in section 6.14. K03.13 freezes general-hardness semantics, canonical basis, and dGH conversion behavior in section 6.15. K03.14 freezes the first-release freshwater calculated-free-ammonia policy and marine exclusion in section 6.16. Evidence-backed source profiles, numerical thresholds, and remaining K04–K18 decisions are still open.
+Accepted clarification on 26 September 2026 (K03.0): the selected tank type determines which measurement fields are shown. Preserve the existing screen structure, cards, field styling, grid, and navigation while populating them with the applicable measurements in section 25.1. Basic, tank-specific, and additional measurements are logical groups, not approval for a new visual layout. K03.1 subsequently freezes nitrate, nitrite, and phosphate recording semantics in section 6.1. K03.2 freezes the test/device selection, source-semantic resolution, and normalization workflow in sections 6.2, 6.5, 7, and 28.1. K03.3 freezes the canonical ammonia reporting bases in section 6.3. K03.4 freezes concurrent multi-result measurement/cardinality behavior in section 6.6. K03.5 freezes marine salinity/specific-gravity semantics and conversion safety in section 6.7. K03.6 freezes alkalinity/KH semantics, canonical units, and duplicate-field prevention in section 6.8. K03.7 freezes dissolved-oxygen concentration/saturation semantics and conversion prerequisites in section 6.9. K03.8 freezes chlorine/chloramine semantics, sample-context requirements, and multi-result handling in section 6.10. K03.9 freezes marine calcium/magnesium elemental semantics and hardness separation in section 6.11. K03.10 freezes conductivity/TDS semantics, temperature-basis provenance, and safe EC↔TDS behavior in section 6.12. K03.11 freezes direct-vs-calculated CO2 semantics in section 6.13. K03.12 freezes iron/potassium canonical semantics, iron analytical-scope handling, and the no-auto-dosing boundary in section 6.14. K03.13 freezes general-hardness semantics, canonical basis, and dGH conversion behavior in section 6.15. K03.14 freezes the first-release freshwater calculated-free-ammonia policy and marine exclusion in section 6.16. K04 freezes the structured severity, direction, coverage and conflict model in section 14. Evidence-backed source profiles, numerical thresholds, and remaining K05–K18 decisions are still open.
 
 This contract is intentionally broader than a screen implementation. It defines the foundation that later powers:
 
@@ -633,7 +633,7 @@ Decision accepted at the user's request on 26 September 2026: support a clearly 
 - **Input quality:** resolve TAN's reporting basis under K03.2, respect test detection/range/uncertainty metadata and preserve `0`, below-detection, and missing as different states under K11. pH and temperature must be finite, valid measured values; do not use defaults, inferred pH, or a rounded presentation value in the equation. Calculate from unrounded normalized inputs; apply rounding only to display. If a prerequisite is invalid, unresolved, out of bounds, or absent, do not create a numeric NH3 result or a false safe verdict.
 - **Marine/reef first-release boundary:** do **not** run this freshwater equation on marine/brackish water or silently treat a salinity reading as a freshwater correction. In v1, marine/reef free NH3 requires a verified direct free-NH3 measurement; TAN may still be retained and evaluated only by independently approved, matching TAN rules. A later marine calculation requires a versioned seawater equilibrium method, verified salinity and pH-scale semantics, same-sample inputs, published reference vectors, and explicit applicability/precision tests before it can be enabled. EPA's saltwater model and pH-scale discussion are references for that separate gate, not permission to use the freshwater equation.
 - **Direct measurement priority and display:** if a verified direct free-NH3 result exists for the event, use it as the primary free-ammonia result and do not produce a second calculated value in v1. Otherwise, an eligible freshwater estimate appears as **"Hesaplanan serbest amonyak (NH3)"**, with `mg/L as NH3`, an estimated/derived marker, and a short explanation that it uses the same-sample TAN, pH, and temperature. The record retains input identities and raw/normalized values, formula and constants revision, computed fraction, computed result before display rounding, and calculation status/reason. Reopening history uses the persisted snapshot; later measurements or formula revisions do not rewrite it.
-- **Assessment boundary:** a derived value is one interpretation of TAN, not independent evidence. Do not double-count TAN and calculated NH3, automatically declare the tank safe from a low estimate, or use this calculation to approve dosing. Any numeric hazard threshold and treatment advice require their own versioned, species/context-appropriate evidence under W0.4/K04. Missing calculation is reported as unavailable/partial, not `0` or `Normal`.
+- **Assessment boundary:** a derived value is one interpretation of TAN, not independent evidence. Do not double-count TAN and calculated NH3, automatically declare the tank safe from a low estimate, or use this calculation to approve dosing. Any numeric hazard threshold and treatment advice require their own versioned, species/context-appropriate evidence under W0.4; K04 defines how supported findings are combined. Missing calculation is reported as unavailable/partial, not `0` or `Normal`.
 - **Verification gate:** unit and golden-vector tests cover the fraction, `as N` to `as NH3` conversion, zero vs detection-limit input, envelope edges, monotonicity with pH/temperature, direct-result priority, cross-sample/time/tank rejection, marine exclusion, rounding, and historical snapshot stability. For example, with `TAN = 1 mg/L as N`, `pH = 8.0`, `T = 25 °C`, the reference equation yields `f_NH3 ≈ 0.053842` and `NH3 ≈ 0.06547 mg/L as NH3`; this is a calculation test vector, **not** a safety threshold.
 
 Sources: EPA 2013 freshwater ammonia criteria (Emerson equation and TAN/NH3 mass-basis distinction), UF/IFAS *Ammonia in Aquatic Systems* (published fraction table), and EPA 1989 saltwater ammonia criteria (seawater equilibrium and pH-scale dependence); see research note R44–R46.
@@ -875,28 +875,30 @@ This rule catalog is responsible for parameters that need a general safety inter
 
 ## 14. Severity and status model
 
-Domain status is structured and locale-independent.
+Accepted with the user on 26 September 2026 (K04): the engine returns **independent, locale-independent dimensions**, not one mutually exclusive `OPTIMAL / LOW / HIGH / WARNING / CRITICAL / CONFLICT / INSUFFICIENT_DATA` enum. The existing `LivestockWaterAssessmentStatus` is an input/adapter concern; its values must not be cast directly to the overall Water Quality result.
 
-A suitable initial vocabulary is:
+| Dimension | Contract | Meaning |
+| --- | --- | --- |
+| `hazardSeverity` | Nullable `NONE`, `ADVISORY`, `WARNING`, `CRITICAL` | Highest **supported** adverse finding from the evaluated rules; `NONE` means no adverse finding **among evaluated evidence**, not that the aquarium is safe. `null` means no eligible rule was evaluated. |
+| `direction` | Per evaluated rule/parameter: `BELOW`, `WITHIN`, `ABOVE`; absent with a typed non-evaluation reason when no comparison was possible | Direction relative to that rule's typed interval. It is not an overall hazard level; different applicable rules may produce different directions for one measurement. |
+| `coverage` | `NONE`, `PARTIAL`, `COMPLETE`, plus evaluated/required/missing/unusable rule and measurement identities | How much of a **declared assessment scope** was actually evaluated. `COMPLETE` requires at least one evaluated rule and all evidence required for that scope; `PARTIAL` has at least one evaluated rule but a missing/unusable requirement; `NONE` has no eligible evaluation. Optional visible fields are not automatically required. Required evidence is defined by the applicable rule/profile policy; K11 resolves minimum save input, not scientific rule requirements. |
+| `conflicts` | Structured list with affected entities/parameters, incompatible requirements, evidence and confidence; separate `NONE/PARTIAL/COMPLETE` conflict-coverage state | An incompatibility can be present before any value is measured and can coexist with low/high results, a hazard, or missing data. An empty list means "no known conflict in assessed requirements," never "all requirements were checked." |
 
-- `OPTIMAL`;
-- `LOW`;
-- `HIGH`;
-- `WARNING`;
-- `CRITICAL`;
-- `CONFLICT`;
-- `INSUFFICIENT_DATA`.
+Each rule evaluation records its rule/revision, source measurement/provenance, typed metric and unit, applicable tank/species context, direction, severity and reason. A rule with unresolved unit, unsupported method, absent threshold, missing input or unverified applicability yields a typed `NOT_EVALUATED` reason and affects coverage; it cannot emit `NONE`, `WITHIN`, or a hard hazard by assumption. Non-comparability carries the precise cause in this reason, not a fabricated direction. The rule catalog and K05/K18 decisions determine which evidence is authoritative; K04 does **not** promote SOFT catalog ranges to `CRITICAL` or approve any numeric threshold.
 
-The implementation may refine names before code is frozen, but must preserve these semantics:
+**Deterministic aggregation:** among eligible, actually evaluated findings, take the maximum `CRITICAL > WARNING > ADVISORY > NONE` for `hazardSeverity`. `NONE` is the aggregate only if at least one eligible rule was evaluated without an adverse finding; when none was evaluated, `hazardSeverity = null`, `coverage = NONE`, and no green/healthy claim is allowed. Missing evidence never downgrades an observed hazard. Preserve *all* findings, directions, conflicting entities and missing/unusable reasons even if one headline is chosen. Stable rule ID, parameter ID and entity ID order breaks ties for explanation/recommendation ordering; list/input order does not change results.
 
-- direction where meaningful (low/high);
-- severity;
-- conflict distinct from simple out-of-range;
-- missing evidence distinct from "normal".
+**Presentation priority:** the primary headline presents the highest supported hazard first. With no supported hazard, a known incompatibility is shown before a partial/no-data headline. `coverage = PARTIAL` or `NONE` is always disclosed alongside any hazard or conflict. Only a `COMPLETE` assessment for its explicitly named scope, with no supported adverse finding or known conflict, may show that scope as normal; it cannot claim universal tank safety. Unknown conflict coverage prevents a blanket compatibility claim. Thus `CRITICAL + PARTIAL + conflict` keeps the critical headline **and** visible missing-data/conflict indicators. A conflict alone does not become a chemistry `CRITICAL` without a separately evidenced rule. UI resource strings/colors are mapped from these dimensions and reason codes, not persisted as domain status.
 
-The overall status must be derived deterministically from parameter results according to an explicit severity ordering. A missing measurement must not make the overall result better.
+| Evaluated outcome | Primary presentation | Always retained alongside it |
+| --- | --- | --- |
+| `CRITICAL + PARTIAL + known conflict` | Critical finding | Partial coverage and conflict with affected entities |
+| `WARNING + COMPLETE + known conflict` | Warning | Conflict and its evidence |
+| `NONE + PARTIAL + no known conflict` | Partial assessment | Evaluated normal findings and specific gaps; no green overall claim |
+| `null + NONE + known conflict` | Incompatible requirements | No assessable water-chemistry result |
+| `NONE + COMPLETE + no known conflict` | Normal **for the explicitly evaluated scope** | Scope and evidence coverage; a compatibility claim additionally requires complete conflict coverage |
 
-Localized UI text is mapped from enums / reason codes at the presentation layer.
+`Loading`, `NoAnalysis`, `Error`, `NotFound` and `SensorUnavailable` are screen/data-source states under K13. An engine or store failure is a typed failure, never an assessment with `hazardSeverity = NONE`. An unavailable sensor may contribute a missing-temperature reason to a valid assessment if the user saved other measurements; it is not silently replaced by a normal value.
 
 ---
 
@@ -909,12 +911,12 @@ Conceptual output:
 ```text
 WaterQualityAssessment
 |
-+-- overallSeverity
++-- hazardSeverity + coverage(scope, evaluated/required/missing/unusable)
 |
 +-- parameterAssessments[]
 |   +-- parameter
 |   +-- measuredValue
-|   +-- status
+|   +-- ruleFindings[] (direction, severity, rule/revision, evidence)
 |   +-- reasons[]
 |   +-- affectedEntities[]
 |   +-- expected / compatible ranges
@@ -923,9 +925,9 @@ WaterQualityAssessment
 |
 +-- plantAssessments[]
 |
-+-- conflicts[]
++-- conflicts[] + conflictCoverage
 |
-+-- missingData[]
++-- missingData[] + unusableEvidence[]
 |
 +-- recommendations[]
 ```
@@ -1310,7 +1312,7 @@ Form behavior to preserve from the agreed data-quality direction:
 - Source/test selection is parameter-specific and remembered. A known profile auto-selects the valid analyte/unit/result-mode options; an unknown product opens the guided typed fallback. The unit/reporting context remains visible beside the result input while conversion happens below the UI boundary.
 - If a selected product exposes multiple **concurrent** independent results, render separate typed fields for each supported result and allow them to coexist in the same analysis event. Request a mode selector only for genuinely mutually exclusive source modes. For marine salinity sources, render the verified source representation (`PSS-78`/device salinity scale, `SG`, conductivity, or explicitly defined mass salinity) rather than silently relabelling or converting it.
 - If a field's source semantics cannot be resolved, keep that field out of the committed analysis and retain it only as draft/form state; other resolved measurements may still be saved. Changing source semantics after entering a number must not silently reinterpret the number.
-- An empty field means **"Ölçülmedi"**; a measured `0` remains a real result. Explain limited coverage as **"Kısmi değerlendirme"** alongside any known critical finding. Missing results must not increase a health score or be described as normal. Final aggregation and score policy remain separate decisions.
+- An empty field means **"Ölçülmedi"**; a measured `0` remains a real result. Explain limited coverage as **"Kısmi değerlendirme"** alongside any known critical finding under K04. Missing results must not increase a health score or be described as normal. The separate numerical score policy remains an open W0.13/K12 decision.
 
 ### 28.2 Tank Health main screen
 
@@ -1481,7 +1483,7 @@ If there is no shared compatible interval for inhabitants, that conflict exists 
 
 A conflict may coexist with a measurement that happens to fit one side.
 
-The overall severity policy must explicitly account for conflicts.
+K04/section 14 keeps conflict identity and conflict-coverage independently of hazard severity. A known conflict is highlighted when there is no higher supported hazard, and remains visible alongside a higher hazard. It cannot be silently averaged away or promoted to a chemistry `CRITICAL` without an evidenced rule. K18 still decides the detailed eligibility and intersection policy for plant/livestock combinations.
 
 ---
 
@@ -1499,7 +1501,7 @@ Examples:
 - no current temperature sensor;
 - user omitted an optional measurement.
 
-Represent these explicitly through `missingData` / `INSUFFICIENT_DATA` structures.
+Represent these explicitly through `missingData`, unusable-evidence reasons, and the scoped K04 `coverage` dimension. `INSUFFICIENT_DATA` is a presentation/reason concept, not a replacement for the independently observed hazard and conflict dimensions. Absence of a purely optional visible test does not by itself make a scoped assessment incomplete; its applicability and required evidence come from the rule/profile policy.
 
 Do not convert unknown ranges to broad infinite ranges and then label the result compatible.
 
@@ -1658,6 +1660,16 @@ Test every parameter for:
 - plant issue;
 - conflict;
 - insufficient data.
+
+Combination and ordering tests cover:
+
+- `CRITICAL + PARTIAL + conflict` retains all three dimensions and a critical headline;
+- `WARNING + missing required evidence` retains warning with partial coverage;
+- all measurements/rules absent yields `hazardSeverity = null`, `coverage = NONE`, never normal;
+- all evidence required for the declared scope evaluated with no adverse finding may present scope-limited normal; if that claim includes livestock/plant compatibility, `conflictCoverage = COMPLETE` with no conflict is also required;
+- conflicting requirements with no measurement remain visible, with hazard unassessed and the conflict-coverage state retained;
+- unsupported unit, missing rule and SOFT-only evidence never create a hard hazard or `WITHIN` result;
+- permutation of rule/entity input order leaves aggregation and ordered reasons stable.
 
 ### 43.2 Species intersection tests
 
@@ -1922,6 +1934,7 @@ Water Quality is complete only when all of the following are true:
 - CO2 may be either directly measured in mg/L as CO2 or explicitly calculated from compatible same-event pH+KH; calculated CO2 is labelled/provenanced separately, pH alone and drop-checker color never fabricate ppm, and a direct result is never overwritten by the calculation;
 - potassium uses elemental mg/L as K, while iron uses mg/L as Fe with its verified analytical scope preserved; the entry UI remains simple and no bare Fe/K measurement produces an automatic fertilizer dose;
 - freshwater GH uses `GENERAL_HARDNESS` canonical mg/L as CaCO3 with familiar verified dGH source/display support; GH is never substituted for KH/alkalinity or elemental Ca/Mg;
+- K04 hazard, per-rule direction, declared-scope coverage and conflicts persist as independent fields; `CRITICAL + PARTIAL + conflict` is rendered without loss, no evaluated rule never appears green, and any normal label names its verified scope rather than implying universal tank safety;
 - unresolved source semantics are excluded from committed analysis and may remain in draft while other resolved measurements are saved; changing a source never silently reinterprets an entered number;
 - tank-type changes do not silently lose draft values or remove historical measurements;
 - a user can enter a physically valid analysis and save it;
