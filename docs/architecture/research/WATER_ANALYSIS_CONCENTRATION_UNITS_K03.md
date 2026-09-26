@@ -2,9 +2,9 @@
 
 Araştırma tarihi: 26.09.2026 (Europe/Istanbul).
 
-Durum: **K03.0 ölçüm kapsamı, K03.1 NO3/NO2/PO4 kanonik kayıt anlamı/birimleri, K03.2 test/cihaz seçimi + kaynak semantiği çözümleme + normalizasyon akışı, K03.3 amonyak kanonik temelleri, K03.4 concurrent multi-result kayıt/UI politikası, K03.5 deniz salinity/SG dönüşüm güvenliği, K03.6 alkalinite/KH semantik-birim politikası, K03.7 çözünmüş oksijen konsantrasyon/doygunluk politikası, K03.8 klor/kloramin sample-context politikası, K03.9 marine elemental Ca/Mg politikası ve K03.10 conductivity/TDS ürün politikası kabul edildi. K03.11 ve sonraki kararlar açık.** Kabul edilen normatif kapsam ana sözleşme §6.1–6.6, §7, §25.1–25.3 ve §28.1'de kayıtlıdır. Bu araştırma dosyası uygulama kodu veya bilimsel güvenlik eşiği değildir.
+Durum: **K03.0 ölçüm kapsamı, K03.1 NO3/NO2/PO4 kanonik kayıt anlamı/birimleri, K03.2 test/cihaz seçimi + kaynak semantiği çözümleme + normalizasyon akışı, K03.3 amonyak kanonik temelleri, K03.4 concurrent multi-result kayıt/UI politikası, K03.5 deniz salinity/SG dönüşüm güvenliği, K03.6 alkalinite/KH semantik-birim politikası, K03.7 çözünmüş oksijen konsantrasyon/doygunluk politikası, K03.8 klor/kloramin sample-context politikası, K03.9 marine elemental Ca/Mg politikası, K03.10 conductivity/TDS ürün politikası ve K03.11 direct-vs-calculated CO2 politikası kabul edildi. K03.12 ve sonraki kararlar açık.** Kabul edilen normatif kapsam ana sözleşme §6.1–6.6, §7, §25.1–25.3 ve §28.1'de kayıtlıdır. Bu araştırma dosyası uygulama kodu veya bilimsel güvenlik eşiği değildir.
 
-Kapsam: K03.0 için ölçüm seçiminin kaynaklarını, K03.1'de kabul edilen NO3/NO2/PO4 ortak raporlama temelini, K03.2'de kabul edilen source-aware giriş/normalizasyon yaklaşımını, K03.3'te kabul edilen amonyak kanonik temellerini, K03.4'te kabul edilen concurrent multi-result cardinality/UI davranışını, K03.5'te kabul edilen marine salinity/SG/conductivity ayrımını, K03.6'da kabul edilen total-alkalinity/KH politikasını, K03.7'de kabul edilen dissolved-oxygen concentration/saturation politikasını, K03.8'de kabul edilen chlorine/chloramine sample-context politikasını, K03.9'da kabul edilen elemental Ca/Mg semantiğini ve K03.10'da kabul edilen conductivity/TDS ürün davranışını izlenebilir tutmak. CO2 ve diğer ek parametrelerin semantiği, kanıtlı profil/dönüşüm tablolarının ayrıntıları ve türetilmiş hesaplar sonraki ayrı kararlar olacak.
+Kapsam: K03.0 için ölçüm seçiminin kaynaklarını, K03.1'de kabul edilen NO3/NO2/PO4 ortak raporlama temelini, K03.2'de kabul edilen source-aware giriş/normalizasyon yaklaşımını, K03.3'te kabul edilen amonyak kanonik temellerini, K03.4'te kabul edilen concurrent multi-result cardinality/UI davranışını, K03.5'te kabul edilen marine salinity/SG/conductivity ayrımını, K03.6'da kabul edilen total-alkalinity/KH politikasını, K03.7'de kabul edilen dissolved-oxygen concentration/saturation politikasını, K03.8'de kabul edilen chlorine/chloramine sample-context politikasını, K03.9'da kabul edilen elemental Ca/Mg semantiğini, K03.10'da kabul edilen conductivity/TDS ürün davranışını ve K03.11'de kabul edilen direct-vs-calculated CO2 politikasını izlenebilir tutmak. Fe/K ve diğer ek parametrelerin semantiği sonraki ayrı kararlar olacak.
 
 ## Doğrulanan ayrımlar
 
@@ -184,9 +184,25 @@ Bu karar reef target range veya dosing recommendation seçmez; yalnız ölçüm�
 
 Ürün ilkesi: **kullanıcı cihazdaki TDS ppm değerini aynen girer; factor ancak AquaLight cross-representation conversion yapacaksa backend için önemlidir.**
 
-## K03.11 — sıradaki açık karar
+## K03.11 — kabul edilen direct / calculated CO2 politikası
 
-CO2 için doğrudan ölçülen konsantrasyon ile pH/KH tablosu/hesabından türetilen tahmini değerin semantic ayrımı, gerekli prerequisites ve hard assessment'ta kullanılıp kullanılmayacağı kararlaştırılacak.
+26.09.2026 tarihinde kabul edildi:
+
+- Direct `DISSOLVED_CO2_CONCENTRATION` canonical **mg/L as CO2**; seçilen verified test/cihaz ne değer gösteriyorsa kullanıcı onu girer.
+- Direct CO2 ölçülmemişse AquaLight compatible same-event **pH + KH** girdilerinden `CALCULATED_DISSOLVED_CO2_CONCENTRATION` hesaplayabilir ve sonucu açıkça **`Hesaplanan CO2`** olarak gösterir.
+- pH metre tek başına CO2 ölçmez; pH-only input CO2 üretmez.
+- KH semantic'i resolved olmalı ve accepted/versioned calculation method'un desteklediği basis/unit ile uyumlu olmalıdır; unresolved `KH`, GH veya başka hardness değeri formüle sokulmaz.
+- Calculation formula/revision + pH/KH input references provenance'ta tutulur; historical CO2 bugünkü pH/KH ile yeniden hesaplanmaz.
+- Direct ve calculated CO2 aynı event'te varsa ikisi birlikte korunur; direct result primary measurement olarak kalır ve calculated result direct değerin üstüne yazmaz.
+- Drop-checker color v1'de sabit ppm'e çevrilmez; yalnız ileride qualitative indicator/observation olarak desteklenebilir.
+- Installed CO2 equipment concentration değildir.
+- Prerequisite eksik/uyumsuzsa hesap yapılmaz; valid measurements korunur ve CO2 için calculation unavailable / `INSUFFICIENT_DATA` davranışı kullanılır.
+
+Bu karar otomatik CO2/gübre doz önerisini kabul etmez; yalnız direct measurement ile pH+KH-derived CO2 arasındaki kayıt/UI/provenance davranışını dondurur.
+
+## K03.12 — sıradaki açık karar
+
+Demir ve potasyum için canonical elemental/compound basis, unit ve test-method semantiği kararlaştırılacak.
 
 ## Birincil kaynaklar
 
@@ -239,8 +255,11 @@ Aşağıdaki kaynaklar önceki karar araştırmasında 26.09.2026 tarihinde aç�
 | R30 | [Hanna HI98194/HI98195 manual — TDS Factor](https://www.documentation.hannainst.com/manuals/download/174) | TDS, conductivity'den `TDS = factor × EC25` olarak hesaplanan değerdir; factor 0.00–1.00 ayarlanabilir, tipik güçlü iyonik çözelti 0.50 ve zayıf iyonik çözelti 0.70 örnekleri verilir. |
 | R31 | [Hanna EC/TDS probe guide](https://pages.hannainst.com/hubfs/006-finished-content/EC-Guides/getting-to-know-your-probe-electrical-conductivity-ec-rev1.pdf) | TDS mg/L/ppm olarak gösterilir; bazı cihazlarda factor ayarlanabilir, bazılarında sabittir. Örnek: 100 µS/cm, factor 0.5 ile 50 ppm TDS. |
 | R32 | [HM Digital COM-100](https://hmdigital.com/com-100/) | Aynı cihaz 0.5 (NaCl) ve 0.7 (442) TDS ppm scale'lerini destekler; bu, ekranda her ikisi de ppm olsa bile EC→TDS ölçeğinin cihaz/profile bağlı olduğunu doğrular. |
+| R33 | [Hach — Carbon Dioxide test methods](https://www.hach.com/p-carbon-dioxide-test-kit-model-ca-23/143601) | CO2 doğrudan test/titrasyon yöntemiyle mg/L as CO2 olarak ölçülebilir; bu direct measurement, pH ölçümünden farklıdır. |
+| R34 | [Sera — Quick Test / CO2 table guidance](https://www.sera.de/us/product/pond/sera-quick-test-1/) | Akvaryum pratiğinde pH ve KH sonuçları birlikte kullanılarak CO2 tablosundan hesaplanan/tahmini CO2 değeri elde edilebilir. |
+| R35 | [USGS — Alkalinity calculation criteria](https://or.water.usgs.gov/alk/criteria.html) | pH/alkalinity tabanlı carbonate calculations kullanılan alkalinity species/assumptions'a bağlıdır; bu nedenle hesaplanan değer direct measurement olarak etiketlenmemelidir. |
 | R9 | [MSD Veterinary Manual — Equipment Needed for Aquatic Systems and Water Analysis](https://www.msdvetmanual.com/exotic-and-laboratory-animals/aquatic-systems/equipment-needed-for-aquatic-systems-and-water-analysis) | Oksijen, sıcaklık, pH, amonyak, nitrit, alkalinite, sertlik, deniz suyunda tuzluluk ve bağlama göre ek testler. Veteriner değerlendirme kapsamı UI'daki zorunlu alan listesi değildir. |
 | R10 | [Red Sea — Foundation manual, “Optimal levels of the Foundation Elements”](https://redseafish.com/wp-content/uploads/2020/11/24653-NEW-Manual-Foundation-Complete-GB-_2018c.pdf) | Deniz/resif profillerinde tuzluluk, alkalinite, kalsiyum ve magnezyum ayrımı. Üretici hedefleri tüm akvaryumlar için evrensel güvenlik sınırı sayılmaz. |
 | R11 | [MSD Veterinary Manual — Environmental Diseases, chlorine/chloramine section](https://www.msdvetmanual.com/exotic-and-laboratory-animals/aquatic-systems/environmental-diseases-of-aquatic-animals-in-aquatic-systems) | Serbest klor ve toplam klor ayrı ölçümlerdir; kloramin için yalnız serbest klor sonucunun yeterli olmaması. |
 
-Ek ölçümlerde conductivity/TDS semantiği K03.10 ile kabul edildi. CO2, demir ve potasyum için kesin ölçüm yöntemi ve yorum kuralları henüz araştırılıp kabul edilmiş değildir. Destek kapsamına alınmaları otomatik eşik/doz önerisi veya hesaplanan değerin ölçülmüş gibi kaydı için izin vermez.
+Ek ölçümlerde conductivity/TDS K03.10, direct-vs-calculated CO2 K03.11 ile kabul edildi. Demir ve potasyum için kesin ölçüm semantiği henüz açık. CO2 calculation desteklenmesi, hesaplanan değerin direct measurement gibi kaydı veya otomatik doz önerisi anlamına gelmez.
