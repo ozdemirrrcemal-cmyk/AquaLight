@@ -8,25 +8,74 @@
     <string name="tank_health_analysis_measurement_time_subtitle">Choose the analysis date and time.</string>
     <string name="tank_health_analysis_date_label">Date</string>
     <string name="tank_health_analysis_time_label">Time</string>
-    <string name="tank_health_analysis_date_value">26 Sep 2026</string>
-    <string name="tank_health_analysis_time_value" translatable="false">14:10</string>
 
     <string name="tank_health_analysis_sensor_title">Sensor Data</string>
     <string name="tank_health_analysis_sensor_subtitle">Temperature can be read from the assigned cooling device sensor.</string>
     <string name="tank_health_analysis_assigned_device">Assigned device</string>
-    <string name="tank_health_analysis_device_name" translatable="false">Cooling Mini v2</string>
     <string name="tank_health_analysis_connected">Connected</string>
     <string name="tank_health_analysis_temperature_source">Temperature source</string>
     <string name="tank_health_analysis_source_sensor">Sensor</string>
     <string name="tank_health_analysis_source_manual">Manual</string>
     <string name="tank_health_analysis_temperature">Temperature</string>
-    <string name="tank_health_analysis_temperature_value" translatable="false">25</string>
     <string name="tank_health_analysis_temperature_unit" translatable="false">°C</string>
     <string name="tank_health_analysis_from_sensor">Read from sensor</string>
-    <string name="tank_health_analysis_sensor_helper">If no cooling device is assigned, you can enter temperature manually.</string>
+    <string name="tank_health_analysis_sensor_helper">Manual entry stays available whenever a fresh compatible sensor reading is unavailable.</string>
+    <string name="tank_health_analysis_sensor_status_label">Sensor status</string>
+    <string name="tank_health_analysis_sensor_unavailable">No compatible sensor reading available</string>
+    <string name="tank_health_analysis_sensor_loading">Checking sensor…</string>
+    <string name="tank_health_analysis_sensor_available">Sensor available: %1$s</string>
+    <string name="tank_health_analysis_sensor_reading">Live reading: %1$s</string>
+    <string name="tank_health_analysis_sensor_stale">Sensor reading is not current</string>
+    <string name="tank_health_analysis_sensor_error">Sensor reading could not be loaded</string>
 
     <string name="tank_health_analysis_water_parameters_title">Water Parameters</string>
     <string name="tank_health_analysis_water_parameters_subtitle">Measure and enter your water values.</string>
+    <string name="tank_health_analysis_profile_context">%1$s profile • recommended tests</string>
+    <string name="tank_health_analysis_profile_missing">Tank profile is unavailable. Choose a profile before adding measurements.</string>
+    <string name="tank_health_analysis_recommended_tests">Recommended tests</string>
+    <string name="tank_health_analysis_additional_tests">Additional tests</string>
+    <string name="tank_health_analysis_add_test">+ Add Test</string>
+    <string name="tank_health_analysis_add_test_subtitle">Add optional measurements that are relevant to this tank profile.</string>
+    <string name="tank_health_analysis_all_additional_tests_added">All available tests added</string>
+    <string name="tank_health_analysis_remove_test">Remove test</string>
+    <string name="tank_health_analysis_test_picker_label_format">%1$s  •  %2$s</string>
+
+    <string name="tank_health_test_ph">pH</string>
+    <string name="tank_health_test_nitrate">Nitrate</string>
+    <string name="tank_health_test_nitrite">Nitrite</string>
+    <string name="tank_health_test_ammonia_ammonium">Ammonia / Ammonium</string>
+    <string name="tank_health_test_general_hardness">General Hardness</string>
+    <string name="tank_health_test_carbonate_hardness">Carbonate Hardness</string>
+    <string name="tank_health_test_alkalinity">Alkalinity</string>
+    <string name="tank_health_test_phosphate">Phosphate</string>
+    <string name="tank_health_test_tds">Total Dissolved Solids</string>
+    <string name="tank_health_test_conductivity">Conductivity</string>
+    <string name="tank_health_test_carbon_dioxide">Carbon Dioxide</string>
+    <string name="tank_health_test_iron">Iron</string>
+    <string name="tank_health_test_potassium">Potassium</string>
+    <string name="tank_health_test_salinity">Salinity</string>
+    <string name="tank_health_test_specific_gravity">Specific Gravity</string>
+    <string name="tank_health_test_calcium">Calcium</string>
+    <string name="tank_health_test_magnesium">Magnesium</string>
+    <string name="tank_health_test_copper">Copper</string>
+    <string name="tank_health_test_dissolved_oxygen">Dissolved Oxygen</string>
+
+    <string name="tank_health_test_symbol_nitrate" translatable="false">NO₃⁻</string>
+    <string name="tank_health_test_symbol_nitrite" translatable="false">NO₂⁻</string>
+    <string name="tank_health_test_symbol_ammonia_ammonium" translatable="false">NH₃ / NH₄⁺</string>
+    <string name="tank_health_test_symbol_gh" translatable="false">GH</string>
+    <string name="tank_health_test_symbol_kh" translatable="false">KH</string>
+    <string name="tank_health_test_symbol_phosphate" translatable="false">PO₄³⁻</string>
+    <string name="tank_health_test_symbol_tds" translatable="false">TDS</string>
+    <string name="tank_health_test_symbol_ec" translatable="false">EC</string>
+    <string name="tank_health_test_symbol_co2" translatable="false">CO₂</string>
+    <string name="tank_health_test_symbol_iron" translatable="false">Fe</string>
+    <string name="tank_health_test_symbol_potassium" translatable="false">K</string>
+    <string name="tank_health_test_symbol_specific_gravity" translatable="false">SG</string>
+    <string name="tank_health_test_symbol_calcium" translatable="false">Ca</string>
+    <string name="tank_health_test_symbol_magnesium" translatable="false">Mg</string>
+    <string name="tank_health_test_symbol_copper" translatable="false">Cu</string>
+    <string name="tank_health_test_symbol_oxygen" translatable="false">O₂</string>
     <string name="tank_health_analysis_test_kit_note">Use reliable test kits for more accurate results.</string>
     <string name="tank_health_analysis_save">Save Analysis</string>
     <string name="tank_health_analysis_history_action">Analysis History</string>
