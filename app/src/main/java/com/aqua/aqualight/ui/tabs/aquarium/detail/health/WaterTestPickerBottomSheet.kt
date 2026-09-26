@@ -51,7 +51,7 @@ internal class WaterTestPickerBottomSheet : BottomSheetDialogFragment() {
                 contentBinding.optionsContainer,
                 false
             ).root
-            val symbol = model.symbolRes?.let(::getString)
+            val symbol = model.symbolRes?.let { symbolRes -> getString(symbolRes) }
             option.text = if (symbol.isNullOrBlank()) {
                 getString(model.nameRes)
             } else {
@@ -97,7 +97,7 @@ internal class WaterTestPickerBottomSheet : BottomSheetDialogFragment() {
             WaterTestPickerBottomSheet().apply {
                 arguments = bundleOf(
                     ARG_TANK_PROFILE to tankProfile,
-                    ARG_PARAMETER_IDS to ArrayList(parameterIds.map(WaterTestParameterId::name))
+                    ARG_PARAMETER_IDS to ArrayList(parameterIds.map { it.name })
                 )
             }.show(fragmentManager, TAG)
         }
