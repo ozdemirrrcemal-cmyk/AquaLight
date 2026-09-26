@@ -105,6 +105,35 @@ class WaterAnalysisUiContractTest {
     }
 
     @Test
+    fun waterAnalysisImplementationDoesNotSuppressStaticAnalysisRules() {
+        val guardedFiles = listOf(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/common/" +
+                "AquariumTankTaxonomyText.kt",
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
+                "TankHealthAnalysisAddFragment.kt",
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
+                "WaterAnalysisDraftUiState.kt",
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
+                "WaterAnalysisMeasurementTimeController.kt",
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
+                "WaterAnalysisParameterController.kt",
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
+                "WaterAnalysisParameterRenderer.kt",
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
+                "WaterAnalysisSensorController.kt",
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
+                "WaterAnalysisTemperatureUiController.kt"
+        )
+
+        guardedFiles.forEach { relativePath ->
+            assertFalse(
+                "$relativePath must resolve static-analysis findings instead of suppressing them.",
+                file(relativePath).contains("@Suppress")
+            )
+        }
+    }
+
+    @Test
     fun processRecreationHooksPreserveUserInputSelections() {
         val fragment = file(
             "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
