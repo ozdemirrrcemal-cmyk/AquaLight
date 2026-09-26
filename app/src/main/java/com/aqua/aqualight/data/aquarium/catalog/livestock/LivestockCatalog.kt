@@ -108,7 +108,7 @@ object LivestockCatalog {
             flow = json.optionalString("flow"),
             note = json.optionalString("note"),
             confidence = json.optionalString("confidence"),
-            warningMode = json.optionalString("warningMode") ?: "SOFT"
+            warningMode = json.requiredString("warningMode", lineNumber)
         )
     }
 

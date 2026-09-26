@@ -12,7 +12,7 @@ class LivestockWaterCompatibilityEvaluatorTest {
         val requirements = LivestockWaterRequirements(
             temperatureC = LivestockParameterRange(22.0, 26.0),
             ph = LivestockParameterRange(6.0, 7.5),
-            nitratePpm = LivestockParameterRange(maximum = 20.0),
+            nitrateMgLAsNo3 = LivestockParameterRange(maximum = 20.0),
             warningMode = LivestockWarningMode.SOFT
         )
         val water = AquariumWaterSnapshot(
@@ -31,27 +31,27 @@ class LivestockWaterCompatibilityEvaluatorTest {
         assertEquals(AquariumWaterParameter.PH, result.issues.single().parameter)
         assertEquals(8.0, result.issues.single().measuredValue, 0.0)
         assertEquals(LivestockWarningMode.SOFT, result.warningMode)
-        assertEquals(listOf(AquariumWaterParameter.NITRATE_PPM), result.missingMeasurements)
+        assertEquals(listOf(AquariumWaterParameter.NITRATE_NO3), result.missingMeasurements)
     }
 
     @Test
     fun openEndedMaximumRangeIsAcceptedBelowLimitAndRejectedAboveIt() {
         val requirements = LivestockWaterRequirements(
-            nitratePpm = LivestockParameterRange(maximum = 20.0)
+            nitrateMgLAsNo3 = LivestockParameterRange(maximum = 20.0)
         )
 
         val safe = LivestockWaterCompatibilityEvaluator.evaluate(
             requirements,
-            AquariumWaterSnapshot(nitratePpm = 15.0)
+            AquariumWaterSnapshot(nitrateMgLAsNo3 = 15.0)
         )
         val unsafe = LivestockWaterCompatibilityEvaluator.evaluate(
             requirements,
-            AquariumWaterSnapshot(nitratePpm = 25.0)
+            AquariumWaterSnapshot(nitrateMgLAsNo3 = 25.0)
         )
 
         assertTrue(safe.isCompatible)
         assertFalse(unsafe.isCompatible)
-        assertEquals(AquariumWaterParameter.NITRATE_PPM, unsafe.issues.single().parameter)
+        assertEquals(AquariumWaterParameter.NITRATE_NO3, unsafe.issues.single().parameter)
     }
 
     @Test
@@ -95,22 +95,22 @@ class LivestockWaterCompatibilityEvaluatorTest {
     fun exclusiveEndpointsAndApproximateValuesDoNotCreateFalseCompatibility() {
         val strict = LivestockWaterCompatibilityEvaluator.evaluate(
             LivestockWaterRequirements(
-                nitratePpm = LivestockParameterRange(
+                nitrateMgLAsNo3 = LivestockParameterRange(
                     maximum = 20.0,
                     maximumInclusive = false,
                     sourceText = "<20"
                 ),
-                phosphatePpm = LivestockParameterRange(
+                orthophosphateMgLAsPo4 = LivestockParameterRange(
                     approximate = true,
                     nominalValue = 0.05,
                     sourceText = "~0.05"
                 )
             ),
-            AquariumWaterSnapshot(nitratePpm = 20.0, phosphatePpm = 0.05)
+            AquariumWaterSnapshot(nitrateMgLAsNo3 = 20.0, orthophosphateMgLAsPo4 = 0.05)
         )
 
         assertEquals(1, strict.checkedParameterCount)
-        assertEquals(AquariumWaterParameter.NITRATE_PPM, strict.issues.single().parameter)
+        assertEquals(AquariumWaterParameter.NITRATE_NO3, strict.issues.single().parameter)
         assertEquals(
             LivestockRequirementUnavailableReason.APPROXIMATE_ONLY,
             strict.unavailableRequirements.single().reason
@@ -133,5 +133,23 @@ class LivestockWaterCompatibilityEvaluatorTest {
             assertTrue(result.issues.isEmpty())
             assertFalse(result.isCompatible)
         }
+    }
+
+    @Test
+    fun independentAmmoniaResultsKeepDistinctCanonicalIdentities() {
+        val water = AquariumWaterSnapshot(
+            totalAmmoniaNitrogenMgLAsN = 0.2,
+            freeAmmoniaMgLAsNh3 = 0.01,
+            nitriteMgLAsNo2 = 0.05
+        )
+
+        assertEquals(
+            listOf(
+                AquariumWaterParameter.NITRITE_NO2,
+                AquariumWaterParameter.TOTAL_AMMONIA_NITROGEN,
+                AquariumWaterParameter.FREE_AMMONIA_NH3
+            ),
+            water.values().filter { (_, value) -> value != null }.map { (parameter, _) -> parameter }
+        )
     }
 }

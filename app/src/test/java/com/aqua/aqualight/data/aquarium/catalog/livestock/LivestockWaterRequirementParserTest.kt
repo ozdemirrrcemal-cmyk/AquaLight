@@ -1,8 +1,10 @@
 package com.aqua.aqualight.data.aquarium.catalog.livestock
 
 import com.aqua.aqualight.application.aquarium.AquariumWaterParameter
+import com.aqua.aqualight.application.aquarium.AquariumWaterSnapshot
 import com.aqua.aqualight.application.aquarium.LivestockRequirementUnavailableReason
 import com.aqua.aqualight.application.aquarium.LivestockWarningMode
+import com.aqua.aqualight.application.aquarium.LivestockWaterCompatibilityEvaluator
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -109,6 +111,36 @@ class LivestockWaterRequirementParserTest {
         assertTrue(parsed.unavailableRequirements.any { failure ->
             failure.reason == LivestockRequirementUnavailableReason.UNKNOWN_WARNING_MODE
         })
+    }
+
+    @Test
+    fun unverifiedCatalogBasisCannotEnterCanonicalComparison() {
+        val requirements = LivestockWaterRequirementParser.parse(
+            entry(ph = "6.5–7.5", warningMode = "SOFT").copy(
+                nitratePpm = "<20",
+                phosphatePpm = "~0.05",
+                ghDgh = "4–8"
+            )
+        )
+
+        assertNull(requirements.nitrateMgLAsNo3)
+        assertNull(requirements.orthophosphateMgLAsPo4)
+        assertNull(requirements.generalHardnessMgLAsCaCo3)
+        assertEquals(3, requirements.unavailableRequirements.size)
+        assertTrue(requirements.unavailableRequirements.all { failure ->
+            failure.reason == LivestockRequirementUnavailableReason.UNVERIFIED_SOURCE_SEMANTICS
+        })
+        assertEquals(
+            listOf("4–8", "<20", "~0.05"),
+            requirements.unavailableRequirements.map { failure -> failure.sourceText }
+        )
+        val assessment = LivestockWaterCompatibilityEvaluator.evaluate(
+            requirements,
+            AquariumWaterSnapshot(ph = 7.0, nitrateMgLAsNo3 = 100.0)
+        )
+        assertEquals(1, assessment.checkedParameterCount)
+        assertTrue(assessment.issues.isEmpty())
+        assertFalse(assessment.isCompatible)
     }
 
     private fun entry(ph: String, warningMode: String) = LivestockCatalogEntry(
