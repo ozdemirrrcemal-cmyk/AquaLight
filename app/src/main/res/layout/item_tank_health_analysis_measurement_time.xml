@@ -2,192 +2,231 @@
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-                style="@style/Widget.Aqua.Card.Metric"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+    style="@style/Widget.Aqua.Card.Grouped"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:cardCornerRadius="@dimen/aqua_size_16"
+    app:strokeColor="@color/aqua_card_outline_subtle">
 
-                <LinearLayout
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/aqua_size_10">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Aqua.Card.Inline"
+                android:layout_width="@dimen/aqua_size_40"
+                android:layout_height="@dimen/aqua_size_40"
+                app:cardBackgroundColor="@color/aqua_card_icon_accent_surface"
+                app:cardCornerRadius="@dimen/aqua_size_20"
+                app:cardElevation="@dimen/aqua_size_0"
+                app:strokeWidth="@dimen/aqua_size_0">
+
+                <ImageView
+                    android:layout_width="@dimen/aqua_size_20"
+                    android:layout_height="@dimen/aqua_size_20"
+                    android:layout_gravity="center"
+                    android:contentDescription="@null"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_tank_health_calendar_24"
+                    app:tint="@color/aqua_accent_primary" />
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <LinearLayout
+                android:layout_width="@dimen/aqua_size_0"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/aqua_size_10"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="@dimen/aqua_size_12">
+                    android:includeFontPadding="false"
+                    android:text="@string/tank_health_analysis_measurement_time_title"
+                    android:textColor="@color/aqua_card_text_primary"
+                    android:textSize="@dimen/aqua_text_size_body_xlarge"
+                    android:textStyle="bold" />
 
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:includeFontPadding="false"
-                        android:text="@string/tank_health_analysis_measurement_time_title"
-                        android:textColor="@color/aqua_card_text_primary"
-                        android:textSize="@dimen/aqua_text_size_body_xlarge"
-                        android:textStyle="bold" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/aqua_size_2"
+                    android:includeFontPadding="false"
+                    android:text="@string/tank_health_analysis_measurement_time_subtitle"
+                    android:textColor="@color/aqua_card_text_secondary"
+                    android:textSize="@dimen/aqua_text_size_caption" />
 
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/aqua_size_4"
-                        android:includeFontPadding="false"
-                        android:text="@string/tank_health_analysis_measurement_time_subtitle"
-                        android:textColor="@color/aqua_card_text_secondary"
-                        android:textSize="@dimen/aqua_text_size_caption" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/aqua_size_56"
+            android:layout_marginTop="@dimen/aqua_size_8"
+            android:baselineAligned="false"
+            android:orientation="horizontal">
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardDate"
+                style="@style/Widget.Aqua.Card.Metric"
+                android:layout_width="@dimen/aqua_size_0"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="@dimen/aqua_size_4"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                app:strokeColor="@color/aqua_card_outline_subtle">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:paddingHorizontal="@dimen/aqua_size_10">
+
+                    <ImageView
+                        android:id="@+id/ivDate"
+                        android:layout_width="@dimen/aqua_size_20"
+                        android:layout_height="@dimen/aqua_size_20"
+                        android:contentDescription="@null"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_tank_health_calendar_24"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:tint="@color/aqua_accent_primary" />
 
                     <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="@dimen/aqua_size_64"
-                        android:layout_marginTop="@dimen/aqua_size_10"
-                        android:baselineAligned="false"
-                        android:orientation="horizontal">
+                        android:id="@+id/dateTextContainer"
+                        android:layout_width="@dimen/aqua_size_0"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/aqua_size_8"
+                        android:orientation="vertical"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@id/ivDateChevron"
+                        app:layout_constraintStart_toEndOf="@id/ivDate"
+                        app:layout_constraintTop_toTopOf="parent">
 
-                        <com.google.android.material.card.MaterialCardView
-                            android:id="@+id/cardDate"
-                            style="@style/Widget.Aqua.Card.Metric"
-                            android:layout_width="@dimen/aqua_size_0"
-                            android:layout_height="match_parent"
-                            android:layout_marginEnd="@dimen/aqua_size_4"
-                            android:layout_weight="1"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:foreground="?attr/selectableItemBackground">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:includeFontPadding="false"
+                            android:text="@string/tank_health_analysis_date_label"
+                            android:textColor="@color/aqua_card_text_secondary"
+                            android:textSize="@dimen/aqua_text_size_caption" />
 
-                            <androidx.constraintlayout.widget.ConstraintLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:paddingHorizontal="@dimen/aqua_size_12">
-
-                                <ImageView
-                                    android:id="@+id/ivDate"
-                                    android:layout_width="@dimen/aqua_size_24"
-                                    android:layout_height="@dimen/aqua_size_24"
-                                    android:contentDescription="@null"
-                                    android:importantForAccessibility="no"
-                                    android:src="@drawable/ic_tank_health_calendar_24"
-                                    app:layout_constraintBottom_toBottomOf="parent"
-                                    app:layout_constraintStart_toStartOf="parent"
-                                    app:layout_constraintTop_toTopOf="parent"
-                                    app:tint="@color/aqua_card_text_secondary" />
-
-                                <LinearLayout
-                                    android:id="@+id/dateTextContainer"
-                                    android:layout_width="@dimen/aqua_size_0"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginStart="@dimen/aqua_size_10"
-                                    android:orientation="vertical"
-                                    app:layout_constraintBottom_toBottomOf="parent"
-                                    app:layout_constraintEnd_toStartOf="@id/ivDateChevron"
-                                    app:layout_constraintStart_toEndOf="@id/ivDate"
-                                    app:layout_constraintTop_toTopOf="parent">
-
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:includeFontPadding="false"
-                                        android:text="@string/tank_health_analysis_date_label"
-                                        android:textColor="@color/aqua_card_text_secondary"
-                                        android:textSize="@dimen/aqua_text_size_caption" />
-
-                                    <TextView
-                                        android:id="@+id/tvDateValue"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginTop="@dimen/aqua_size_2"
-                                        android:includeFontPadding="false"
-                                        android:text="@string/tank_health_analysis_date_value"
-                                        android:textColor="@color/aqua_card_text_primary"
-                                        android:textSize="@dimen/aqua_text_size_body" />
-
-                                </LinearLayout>
-
-                                <ImageView
-                                    android:id="@+id/ivDateChevron"
-                                    android:layout_width="@dimen/aqua_size_20"
-                                    android:layout_height="@dimen/aqua_size_20"
-                                    android:contentDescription="@null"
-                                    android:importantForAccessibility="no"
-                                    android:src="@drawable/ic_tank_health_chevron_right_24"
-                                    app:layout_constraintBottom_toBottomOf="parent"
-                                    app:layout_constraintEnd_toEndOf="parent"
-                                    app:layout_constraintTop_toTopOf="parent"
-                                    app:tint="@color/aqua_card_text_secondary" />
-
-                            </androidx.constraintlayout.widget.ConstraintLayout>
-
-                        </com.google.android.material.card.MaterialCardView>
-
-                        <com.google.android.material.card.MaterialCardView
-                            android:id="@+id/cardTime"
-                            style="@style/Widget.Aqua.Card.Metric"
-                            android:layout_width="@dimen/aqua_size_0"
-                            android:layout_height="match_parent"
-                            android:layout_marginStart="@dimen/aqua_size_4"
-                            android:layout_weight="1"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:foreground="?attr/selectableItemBackground">
-
-                            <androidx.constraintlayout.widget.ConstraintLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:paddingHorizontal="@dimen/aqua_size_12">
-
-                                <ImageView
-                                    android:id="@+id/ivTime"
-                                    android:layout_width="@dimen/aqua_size_24"
-                                    android:layout_height="@dimen/aqua_size_24"
-                                    android:contentDescription="@null"
-                                    android:importantForAccessibility="no"
-                                    android:src="@drawable/ic_tank_health_clock_24"
-                                    app:layout_constraintBottom_toBottomOf="parent"
-                                    app:layout_constraintStart_toStartOf="parent"
-                                    app:layout_constraintTop_toTopOf="parent"
-                                    app:tint="@color/aqua_card_text_secondary" />
-
-                                <LinearLayout
-                                    android:layout_width="@dimen/aqua_size_0"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginStart="@dimen/aqua_size_10"
-                                    android:orientation="vertical"
-                                    app:layout_constraintBottom_toBottomOf="parent"
-                                    app:layout_constraintEnd_toStartOf="@id/ivTimeChevron"
-                                    app:layout_constraintStart_toEndOf="@id/ivTime"
-                                    app:layout_constraintTop_toTopOf="parent">
-
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:includeFontPadding="false"
-                                        android:text="@string/tank_health_analysis_time_label"
-                                        android:textColor="@color/aqua_card_text_secondary"
-                                        android:textSize="@dimen/aqua_text_size_caption" />
-
-                                    <TextView
-                                        android:id="@+id/tvTimeValue"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginTop="@dimen/aqua_size_2"
-                                        android:includeFontPadding="false"
-                                        android:text="@string/tank_health_analysis_time_value"
-                                        android:textColor="@color/aqua_card_text_primary"
-                                        android:textSize="@dimen/aqua_text_size_body" />
-
-                                </LinearLayout>
-
-                                <ImageView
-                                    android:id="@+id/ivTimeChevron"
-                                    android:layout_width="@dimen/aqua_size_20"
-                                    android:layout_height="@dimen/aqua_size_20"
-                                    android:contentDescription="@null"
-                                    android:importantForAccessibility="no"
-                                    android:src="@drawable/ic_tank_health_chevron_right_24"
-                                    app:layout_constraintBottom_toBottomOf="parent"
-                                    app:layout_constraintEnd_toEndOf="parent"
-                                    app:layout_constraintTop_toTopOf="parent"
-                                    app:tint="@color/aqua_card_text_secondary" />
-
-                            </androidx.constraintlayout.widget.ConstraintLayout>
-
-                        </com.google.android.material.card.MaterialCardView>
+                        <TextView
+                            android:id="@+id/tvDateValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/aqua_size_1"
+                            android:includeFontPadding="false"
+                            android:textColor="@color/aqua_card_text_primary"
+                            android:textSize="@dimen/aqua_text_size_body_small" />
 
                     </LinearLayout>
 
-                </LinearLayout>
+                    <ImageView
+                        android:id="@+id/ivDateChevron"
+                        android:layout_width="@dimen/aqua_size_18"
+                        android:layout_height="@dimen/aqua_size_18"
+                        android:contentDescription="@null"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_tank_health_chevron_right_24"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:tint="@color/aqua_card_text_secondary" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
 
             </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardTime"
+                style="@style/Widget.Aqua.Card.Metric"
+                android:layout_width="@dimen/aqua_size_0"
+                android:layout_height="match_parent"
+                android:layout_marginStart="@dimen/aqua_size_4"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                app:strokeColor="@color/aqua_card_outline_subtle">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:paddingHorizontal="@dimen/aqua_size_10">
+
+                    <ImageView
+                        android:id="@+id/ivTime"
+                        android:layout_width="@dimen/aqua_size_20"
+                        android:layout_height="@dimen/aqua_size_20"
+                        android:contentDescription="@null"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_tank_health_clock_24"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:tint="@color/aqua_accent_primary" />
+
+                    <LinearLayout
+                        android:layout_width="@dimen/aqua_size_0"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/aqua_size_8"
+                        android:orientation="vertical"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@id/ivTimeChevron"
+                        app:layout_constraintStart_toEndOf="@id/ivTime"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:includeFontPadding="false"
+                            android:text="@string/tank_health_analysis_time_label"
+                            android:textColor="@color/aqua_card_text_secondary"
+                            android:textSize="@dimen/aqua_text_size_caption" />
+
+                        <TextView
+                            android:id="@+id/tvTimeValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/aqua_size_1"
+                            android:includeFontPadding="false"
+                            android:textColor="@color/aqua_card_text_primary"
+                            android:textSize="@dimen/aqua_text_size_body_small" />
+
+                    </LinearLayout>
+
+                    <ImageView
+                        android:id="@+id/ivTimeChevron"
+                        android:layout_width="@dimen/aqua_size_18"
+                        android:layout_height="@dimen/aqua_size_18"
+                        android:contentDescription="@null"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_tank_health_chevron_right_24"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:tint="@color/aqua_card_text_secondary" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

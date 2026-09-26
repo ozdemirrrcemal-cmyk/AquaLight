@@ -33,7 +33,7 @@ class PlantPhotoIsolationInstrumentedTest {
     private val store = AquariumTankDataStoreManager(context)
 
     @Test
-    fun sameSpeciesAndSamePlantIdsInOtherTankNeverChangeTheSelectedRecord() = runBlocking {
+    fun sameSpeciesAndSamePlantIdsInOtherTankNeverChangeTheSelectedRecord() = runBlocking<Unit> {
         val owner = "plant-target-${UUID.randomUUID()}"
         UserDataScope.withOwnerUid(owner) {
             val draft = draft()
@@ -63,7 +63,7 @@ class PlantPhotoIsolationInstrumentedTest {
     }
 
     @Test
-    fun foreignOwnerWrongScopeMissingPlantAndSharedFileAreRejected() = runBlocking {
+    fun foreignOwnerWrongScopeMissingPlantAndSharedFileAreRejected() = runBlocking<Unit> {
         val owner = "plant-owner-${UUID.randomUUID()}"
         val other = "${owner}_other"
         val foreign = pending(other)
@@ -98,7 +98,7 @@ class PlantPhotoIsolationInstrumentedTest {
     }
 
     @Test
-    fun applicationBoundaryRejectsChangedOwnerAndPreservesForeignOrReferencedFiles() = runBlocking {
+    fun applicationBoundaryRejectsChangedOwnerAndPreservesForeignOrReferencedFiles() = runBlocking<Unit> {
         val owner = "plant-application-${UUID.randomUUID()}"
         val foreignOwner = "${owner}_other"
         val foreign = pending(foreignOwner)

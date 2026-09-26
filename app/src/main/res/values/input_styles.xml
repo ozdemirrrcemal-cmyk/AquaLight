@@ -43,6 +43,17 @@
         <item name="android:includeFontPadding">false</item>
     </style>
 
+    <style name="Widget.Aqua.Input.Layout.WaterAnalysisCompact" parent="Widget.Aqua.Input.Layout">
+        <item name="hintEnabled">false</item>
+        <item name="suffixTextColor">@color/aqua_input_hint_unfocused</item>
+    </style>
+
+    <style name="Widget.Aqua.Input.EditText.WaterAnalysisCompact" parent="Widget.Aqua.Input.EditText">
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:textSize">@dimen/aqua_text_size_body</item>
+    </style>
+
     <style name="Widget.Aqua.Input.EditText.Multiline" parent="Widget.Aqua.Input.EditText">
         <item name="android:gravity">top|start</item>
         <item name="android:minLines">4</item>

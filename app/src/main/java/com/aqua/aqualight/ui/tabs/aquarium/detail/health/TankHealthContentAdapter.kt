@@ -166,33 +166,34 @@ internal class TankHealthContentAdapter(
         private fun buildItems(): List<TankHealthContentItem> {
             return listOf(
                 TankHealthContentItem.WaterQualityHeader,
-                metric(R.string.tank_health_metric_ph, R.string.tank_health_value_ph),
-                metric(R.string.tank_health_metric_no3,
-                    R.string.tank_health_value_no3,
-                    R.string.tank_health_status_moderate,
-                    R.color.aqua_content_warning
-                ),
-                metric(R.string.tank_health_metric_no2, R.string.tank_health_value_no2),
-                metric(R.string.tank_health_metric_nh3_nh4,
-                    R.string.tank_health_value_nh3_nh4
-                ),
-                metric(R.string.tank_health_metric_temperature,
-                    R.string.tank_health_value_temperature
-                ),
-                metric(R.string.tank_health_metric_gh, R.string.tank_health_value_gh),
-                metric(R.string.tank_health_metric_kh, R.string.tank_health_value_kh),
-                metric(R.string.tank_health_metric_po4, R.string.tank_health_value_po4),
+                unmeasuredMetric(R.string.tank_health_metric_ph),
+                unmeasuredMetric(R.string.tank_health_metric_no3),
+                unmeasuredMetric(R.string.tank_health_metric_no2),
+                unmeasuredMetric(R.string.tank_health_metric_nh3_nh4),
+                unmeasuredMetric(R.string.tank_health_metric_temperature),
+                unmeasuredMetric(R.string.tank_health_metric_gh),
+                unmeasuredMetric(R.string.tank_health_metric_kh),
+                unmeasuredMetric(R.string.tank_health_metric_po4),
                 TankHealthContentItem.AddAnalysis,
                 TankHealthContentItem.MaintenanceSection,
                 TankHealthContentItem.SystemSection
             )
         }
 
+        private fun unmeasuredMetric(@StringRes labelRes: Int): TankHealthContentItem.Metric {
+            return metric(
+                labelRes = labelRes,
+                valueRes = R.string.tank_health_value_not_measured,
+                statusRes = R.string.tank_health_status_not_measured,
+                statusColorRes = R.color.aqua_content_muted
+            )
+        }
+
         private fun metric(
             @StringRes labelRes: Int,
             @StringRes valueRes: Int,
-            @StringRes statusRes: Int = R.string.tank_health_status_normal,
-            @ColorRes statusColorRes: Int = R.color.aqua_status_success
+            @StringRes statusRes: Int,
+            @ColorRes statusColorRes: Int
         ): TankHealthContentItem.Metric {
             return TankHealthContentItem.Metric(
                 labelRes = labelRes,

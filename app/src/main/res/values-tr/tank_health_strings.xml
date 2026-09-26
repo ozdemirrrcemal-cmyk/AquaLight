@@ -2,17 +2,18 @@
 <resources>
     <string name="screen_title_tank_health">Tank Sağlığı</string>
     <string name="tank_health_entry_title">Tank Sağlığı</string>
-    <string name="tank_health_entry_summary">Tank durumu iyi görünüyor</string>
-    <string name="tank_health_entry_last_analysis">Son analiz: 2 gün önce</string>
+    <string name="tank_health_entry_summary">Su kalitesi henüz analiz edilmedi</string>
+    <string name="tank_health_entry_last_analysis">Henüz analiz yok</string>
 
     <string name="tank_health_tab_water_quality">Su Kalitesi</string>
     <string name="tank_health_tab_algae_control">Yosun Kontrolü</string>
 
     <string name="tank_health_water_quality_title">Su Kalitesi</string>
-    <string name="tank_health_last_analysis">Son analiz: 2 gün önce</string>
+    <string name="tank_health_last_analysis">Henüz analiz yok</string>
     <string name="tank_health_status_normal">Normal</string>
     <string name="tank_health_status_moderate">Orta</string>
     <string name="tank_health_status_approaching">Yaklaşıyor</string>
+    <string name="tank_health_status_not_measured">Ölçülmedi</string>
 
     <string name="tank_health_metric_temperature">Sıcaklık</string>
     <string name="tank_health_add_analysis">Analiz Ekle</string>
