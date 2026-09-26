@@ -2,8 +2,12 @@
 
 ## 0. Applicable baseline and precedence (27 September 2026)
 
-This document is the implementation contract for the branch created from
-`feat/water-analysis-ui-flow` at `0de1707ff15e1b722464caa305f06d0c0c809ea1`.
+This document is the implementation contract for `feat/water-analysis-ui-flow`
+through `3b8920d1349e8c4b657fb9e352c3953a9f566294`. The production branch
+initially forked at `0de1707` and then incorporated the four newer UI-flow
+commits (`34a2c46` through `3b8920d`) before further work. Those commits change
+owner cleanup snapshotting/provisioning order and definition formatting; they
+do not implement the missing assessment engine or catalog expansion.
 The rest of this document preserves the accepted K01–K18 decisions from the
 earlier foundation contract. The foundation **branch** is no longer the code
 baseline. Where a historical "current branch" inventory, proposed class name,
@@ -29,7 +33,7 @@ verification separately. Do not mark a decision complete as an implementation.
 | Tests | Policy, store rules, input parser and UI contract tests exist. | These do not establish assessed Water Quality, physical sensor provenance, bounded history, archive restore, delete concurrency or release acceptance. |
 
 The exact source paths for these statements are the classes named in the table;
-the audit is anchored to the baseline commit above. Any subsequent change must
+the audit is anchored to the source commit above. Any subsequent change must
 update this table or record a dated implementation note, with test evidence.
 
 ### 0.2 Product scope and delivery gates

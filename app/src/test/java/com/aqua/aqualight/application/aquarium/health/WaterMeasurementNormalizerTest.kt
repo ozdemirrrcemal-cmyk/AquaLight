@@ -21,16 +21,14 @@ class WaterMeasurementNormalizerTest {
     }
 
     @Test
-    fun elementalPhosphorusConvertsToPhosphate() {
-        assertEquals(
-            3.06618,
+    fun unspecifiedPhosphorusDoesNotBecomeReactivePhosphate() {
+        assertNull(
             WaterMeasurementNormalizer.canonicalValue(
                 parameter = WaterParameter.PHOSPHATE,
                 value = 1.0,
                 basis = WaterMeasurementBasis.P,
                 unit = WaterMeasurementUnit.MG_L
-            ) ?: error("Expected conversion"),
-            0.00001
+            )
         )
     }
 

@@ -2,8 +2,9 @@
 
 ## 0. Rebaseline — 27 September 2026
 
-Code baseline: `feat/water-analysis-ui-flow` at
-`0de1707ff15e1b722464caa305f06d0c0c809ea1`. The source of decisions is
+Code baseline: `feat/water-analysis-ui-flow` through
+`3b8920d1349e8c4b657fb9e352c3953a9f566294`, including four commits after
+the initial `0de1707` fork. The source of decisions is
 the earlier foundation contract, carried into
 `AQUARIUM_WATER_ANALYSIS_PRODUCTION_CONTRACT.md`. The earlier foundation **branch**
 is not an implementation baseline. Historical review and older references below
