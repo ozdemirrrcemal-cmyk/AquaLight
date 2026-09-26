@@ -447,16 +447,6 @@ class TankSettingsEditorBottomSheet : BottomSheetDialogFragment() {
         attachContent(binding.root)
     }
 
-    private fun bindChoiceOptions(options: List<Pair<TextView, String>>) {
-        options.forEach { (view, value) ->
-            view.setOnClickListener {
-                selectedChoice = value
-                renderChoiceOptions(options)
-            }
-        }
-        renderChoiceOptions(options)
-    }
-
     private fun renderChoiceOptions(options: List<Pair<TextView, String>>) {
         renderChoiceOptions(options, selectedChoice)
     }
