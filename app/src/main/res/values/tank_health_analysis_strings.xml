@@ -24,7 +24,7 @@
     <string name="tank_health_analysis_sensor_unavailable">No compatible sensor reading available</string>
     <string name="tank_health_analysis_sensor_loading">Checking sensor…</string>
     <string name="tank_health_analysis_sensor_available">Sensor available: %1$s</string>
-    <string name="tank_health_analysis_sensor_reading">Live reading: %1$s</string>
+    <string name="tank_health_analysis_sensor_reading">Live reading from %1$s • %2$s °C</string>
     <string name="tank_health_analysis_sensor_stale">Sensor reading is not current</string>
     <string name="tank_health_analysis_sensor_error">Sensor reading could not be loaded</string>
 
