@@ -49,6 +49,22 @@ internal class WaterAnalysisTemperatureUiController(
             }
         )
 
+        binding.inputTemperature.setOnFocusChangeListener { _, hasFocus ->
+            val context = fragment.requireContext()
+            binding.inputTemperatureContainer.strokeColor = ContextCompat.getColor(
+                context,
+                if (hasFocus) {
+                    R.color.aqua_input_stroke_focused
+                } else {
+                    R.color.aqua_input_stroke_unfocused
+                }
+            )
+            binding.inputTemperatureContainer.strokeWidth =
+                fragment.resources.getDimensionPixelSize(
+                    if (hasFocus) R.dimen.aqua_size_2 else R.dimen.aqua_size_1
+                )
+        }
+
         binding.cardSensorSource.setOnClickListener {
             val sensorReading = sensorUiState as? TemperatureSensorUiState.Reading
                 ?: return@setOnClickListener

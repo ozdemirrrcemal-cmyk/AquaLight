@@ -130,6 +130,13 @@ class WaterAnalysisUiContractTest {
         assertTrue(controller.contains("TemperatureSource.MANUAL"))
         assertFalse(sensorLayout.contains("tank_health_analysis_temperature_value"))
         assertFalse(sensorLayout.contains("tank_health_analysis_device_name"))
+        assertTrue(sensorLayout.contains("inputTemperatureContainer"))
+        assertTrue(sensorLayout.contains("tvTemperatureUnit"))
+        assertFalse(sensorLayout.contains("inputTemperatureLayout"))
+        assertFalse(sensorLayout.contains("TextInputLayout"))
+        assertTrue(
+            controller.contains("binding.inputTemperatureContainer.strokeColor")
+        )
         assertFalse(strings.contains("Cooling Mini v2"))
         assertFalse(strings.contains("recommended tests"))
         assertFalse(turkishStrings.contains("önerilen testler"))
