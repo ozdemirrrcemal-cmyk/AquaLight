@@ -90,7 +90,6 @@
                                         android:layout_height="wrap_content"
                                         android:layout_marginTop="@dimen/aqua_size_2"
                                         android:includeFontPadding="false"
-                                        android:text="@string/tank_health_analysis_date_value"
                                         android:textColor="@color/aqua_card_text_primary"
                                         android:textSize="@dimen/aqua_text_size_body" />
 
@@ -164,7 +163,6 @@
                                         android:layout_height="wrap_content"
                                         android:layout_marginTop="@dimen/aqua_size_2"
                                         android:includeFontPadding="false"
-                                        android:text="@string/tank_health_analysis_time_value"
                                         android:textColor="@color/aqua_card_text_primary"
                                         android:textSize="@dimen/aqua_text_size_body" />
 
