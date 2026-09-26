@@ -287,7 +287,10 @@ class TankHealthAnalysisAddFragment :
                 ?.tankType
                 ?.takeIf(AquariumTankTaxonomy::isSupportedTankType)
 
-            if (nextProfile == tankProfile) return@observe
+            if (nextProfile == tankProfile) {
+                renderWaterParameters()
+                return@observe
+            }
 
             tankProfile = nextProfile
             val allowedAdditional = nextProfile

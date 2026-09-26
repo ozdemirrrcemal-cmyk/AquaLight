@@ -84,6 +84,27 @@ class WaterAnalysisUiContractTest {
     }
 
     @Test
+    fun returningFromHistoryRendersDynamicWaterCardsAgain() {
+        val fragment = file(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
+                "TankHealthAnalysisAddFragment.kt"
+        )
+        val screen = file(
+            "app/src/main/res/layout/fragment_tank_health_analysis_add.xml"
+        )
+
+        assertTrue(
+            fragment.contains(
+                "if (nextProfile == tankProfile) {\n                renderWaterParameters()"
+            )
+        )
+        assertFalse(fragment.contains("if (nextProfile == tankProfile) return@observe"))
+        assertTrue(screen.contains("android:id=\"@+id/sensorSection\""))
+        assertTrue(screen.contains("android:id=\"@+id/waterParametersSection\""))
+        assertTrue(screen.contains("android:layout_marginTop=\"@dimen/aqua_size_12\""))
+    }
+
+    @Test
     fun processRecreationHooksPreserveUserInputSelections() {
         val fragment = file(
             "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +

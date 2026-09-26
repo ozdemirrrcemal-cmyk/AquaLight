@@ -46,13 +46,15 @@
                 android:id="@+id/sensorSection"
                 layout="@layout/item_tank_health_analysis_sensor_section"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_12" />
 
             <include
                 android:id="@+id/waterParametersSection"
                 layout="@layout/item_tank_health_analysis_water_parameters"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_12" />
 
         </LinearLayout>
 
