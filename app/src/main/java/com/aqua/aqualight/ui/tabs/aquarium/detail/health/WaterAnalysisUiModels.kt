@@ -220,104 +220,111 @@ internal object WaterTestProfileUiCatalog {
         else -> R.drawable.ic_care_water_test_24
     }
 
+    private val iconResByParameter = mapOf(
+        WaterTestParameterId.PH to R.drawable.ic_care_water_test_24,
+        WaterTestParameterId.NITRATE to R.drawable.ic_water_test_molecule_24,
+        WaterTestParameterId.NITRITE to R.drawable.ic_water_test_molecule_24,
+        WaterTestParameterId.AMMONIA_AMMONIUM to R.drawable.ic_water_test_molecule_24,
+        WaterTestParameterId.GH to R.drawable.ic_water_test_shield_24,
+        WaterTestParameterId.KH to R.drawable.ic_water_test_wave_24,
+        WaterTestParameterId.PHOSPHATE to R.drawable.ic_water_test_molecule_24,
+        WaterTestParameterId.TDS to R.drawable.ic_care_water_change_24,
+        WaterTestParameterId.EC to R.drawable.ic_water_test_wave_24,
+        WaterTestParameterId.CO2 to R.drawable.ic_health_plant_24,
+        WaterTestParameterId.IRON to R.drawable.ic_water_test_mineral_24,
+        WaterTestParameterId.POTASSIUM to R.drawable.ic_water_test_crystal_24,
+        WaterTestParameterId.SALINITY to R.drawable.ic_water_test_wave_24,
+        WaterTestParameterId.SPECIFIC_GRAVITY to R.drawable.ic_care_water_change_24,
+        WaterTestParameterId.CALCIUM to R.drawable.ic_water_test_crystal_24,
+        WaterTestParameterId.MAGNESIUM to R.drawable.ic_water_test_mineral_24,
+        WaterTestParameterId.COPPER to R.drawable.ic_water_test_molecule_24,
+        WaterTestParameterId.DISSOLVED_OXYGEN to R.drawable.ic_water_test_wave_24
+    )
+
+    private val nameResByParameter = mapOf(
+        WaterTestParameterId.PH to R.string.tank_health_test_ph,
+        WaterTestParameterId.NITRATE to R.string.tank_health_test_nitrate,
+        WaterTestParameterId.NITRITE to R.string.tank_health_test_nitrite,
+        WaterTestParameterId.AMMONIA_AMMONIUM to R.string.tank_health_test_ammonia_ammonium,
+        WaterTestParameterId.GH to R.string.tank_health_test_general_hardness,
+        WaterTestParameterId.KH to R.string.tank_health_test_carbonate_hardness,
+        WaterTestParameterId.PHOSPHATE to R.string.tank_health_test_phosphate,
+        WaterTestParameterId.TDS to R.string.tank_health_test_tds,
+        WaterTestParameterId.EC to R.string.tank_health_test_conductivity,
+        WaterTestParameterId.CO2 to R.string.tank_health_test_carbon_dioxide,
+        WaterTestParameterId.IRON to R.string.tank_health_test_iron,
+        WaterTestParameterId.POTASSIUM to R.string.tank_health_test_potassium,
+        WaterTestParameterId.SALINITY to R.string.tank_health_test_salinity,
+        WaterTestParameterId.SPECIFIC_GRAVITY to R.string.tank_health_test_specific_gravity,
+        WaterTestParameterId.CALCIUM to R.string.tank_health_test_calcium,
+        WaterTestParameterId.MAGNESIUM to R.string.tank_health_test_magnesium,
+        WaterTestParameterId.COPPER to R.string.tank_health_test_copper,
+        WaterTestParameterId.DISSOLVED_OXYGEN to R.string.tank_health_test_dissolved_oxygen
+    )
+
+    private val symbolResByParameter = mapOf(
+        WaterTestParameterId.PH to R.string.tank_health_test_ph,
+        WaterTestParameterId.NITRATE to R.string.tank_health_test_symbol_nitrate,
+        WaterTestParameterId.NITRITE to R.string.tank_health_test_symbol_nitrite,
+        WaterTestParameterId.AMMONIA_AMMONIUM to R.string.tank_health_test_symbol_ammonia_ammonium,
+        WaterTestParameterId.GH to R.string.tank_health_test_symbol_gh,
+        WaterTestParameterId.KH to R.string.tank_health_test_symbol_kh,
+        WaterTestParameterId.PHOSPHATE to R.string.tank_health_test_symbol_phosphate,
+        WaterTestParameterId.TDS to R.string.tank_health_test_symbol_tds,
+        WaterTestParameterId.EC to R.string.tank_health_test_symbol_ec,
+        WaterTestParameterId.CO2 to R.string.tank_health_test_symbol_co2,
+        WaterTestParameterId.IRON to R.string.tank_health_test_symbol_iron,
+        WaterTestParameterId.POTASSIUM to R.string.tank_health_test_symbol_potassium,
+        WaterTestParameterId.SPECIFIC_GRAVITY to R.string.tank_health_test_symbol_specific_gravity,
+        WaterTestParameterId.CALCIUM to R.string.tank_health_test_symbol_calcium,
+        WaterTestParameterId.MAGNESIUM to R.string.tank_health_test_symbol_magnesium,
+        WaterTestParameterId.COPPER to R.string.tank_health_test_symbol_copper,
+        WaterTestParameterId.DISSOLVED_OXYGEN to R.string.tank_health_test_symbol_oxygen
+    )
+
+    private val unitResByParameter = mapOf(
+        WaterTestParameterId.NITRATE to R.string.tank_health_analysis_unit_mg_l,
+        WaterTestParameterId.NITRITE to R.string.tank_health_analysis_unit_mg_l,
+        WaterTestParameterId.AMMONIA_AMMONIUM to R.string.tank_health_analysis_unit_mg_l,
+        WaterTestParameterId.GH to R.string.tank_health_analysis_unit_dgh,
+        WaterTestParameterId.KH to R.string.tank_health_analysis_unit_dkh,
+        WaterTestParameterId.PHOSPHATE to R.string.tank_health_analysis_unit_mg_l,
+        WaterTestParameterId.TDS to R.string.tank_health_analysis_unit_ppm,
+        WaterTestParameterId.EC to R.string.tank_health_analysis_unit_us_cm,
+        WaterTestParameterId.CO2 to R.string.tank_health_analysis_unit_mg_l,
+        WaterTestParameterId.IRON to R.string.tank_health_analysis_unit_mg_l,
+        WaterTestParameterId.POTASSIUM to R.string.tank_health_analysis_unit_mg_l,
+        WaterTestParameterId.SALINITY to R.string.tank_health_analysis_unit_ppt,
+        WaterTestParameterId.CALCIUM to R.string.tank_health_analysis_unit_mg_l,
+        WaterTestParameterId.MAGNESIUM to R.string.tank_health_analysis_unit_mg_l,
+        WaterTestParameterId.COPPER to R.string.tank_health_analysis_unit_mg_l,
+        WaterTestParameterId.DISSOLVED_OXYGEN to R.string.tank_health_analysis_unit_mg_l
+    )
+
     fun model(
         tankProfile: String,
         id: WaterTestParameterId,
         importance: WaterTestImportance,
         value: String
     ): WaterTestParameterUiModel {
-        val environment = AquariumTankTaxonomy.environmentForTankType(tankProfile)
-        val iconRes = when (id) {
-            WaterTestParameterId.PH -> R.drawable.ic_care_water_test_24
-            WaterTestParameterId.NITRATE,
-            WaterTestParameterId.NITRITE,
-            WaterTestParameterId.AMMONIA_AMMONIUM,
-            WaterTestParameterId.PHOSPHATE,
-            WaterTestParameterId.COPPER -> R.drawable.ic_water_test_molecule_24
-
-            WaterTestParameterId.GH -> R.drawable.ic_water_test_shield_24
-            WaterTestParameterId.KH,
-            WaterTestParameterId.SALINITY,
-            WaterTestParameterId.EC,
-            WaterTestParameterId.DISSOLVED_OXYGEN -> R.drawable.ic_water_test_wave_24
-
-            WaterTestParameterId.TDS,
-            WaterTestParameterId.SPECIFIC_GRAVITY -> R.drawable.ic_care_water_change_24
-
-            WaterTestParameterId.CO2 -> R.drawable.ic_health_plant_24
-            WaterTestParameterId.CALCIUM,
-            WaterTestParameterId.POTASSIUM -> R.drawable.ic_water_test_crystal_24
-
-            WaterTestParameterId.MAGNESIUM,
-            WaterTestParameterId.IRON -> R.drawable.ic_water_test_mineral_24
+        val isMarineKh = id == WaterTestParameterId.KH &&
+            AquariumTankTaxonomy.environmentForTankType(tankProfile) ==
+            AquariumTankTaxonomy.WATER_ENVIRONMENT_MARINE
+        val nameRes = if (isMarineKh) {
+            R.string.tank_health_test_alkalinity
+        } else {
+            requireNotNull(nameResByParameter[id])
         }
-        val nameRes = when (id) {
-            WaterTestParameterId.PH -> R.string.tank_health_test_ph
-            WaterTestParameterId.NITRATE -> R.string.tank_health_test_nitrate
-            WaterTestParameterId.NITRITE -> R.string.tank_health_test_nitrite
-            WaterTestParameterId.AMMONIA_AMMONIUM -> R.string.tank_health_test_ammonia_ammonium
-            WaterTestParameterId.GH -> R.string.tank_health_test_general_hardness
-            WaterTestParameterId.KH -> if (
-                environment == AquariumTankTaxonomy.WATER_ENVIRONMENT_MARINE
-            ) {
-                R.string.tank_health_test_alkalinity
-            } else {
-                R.string.tank_health_test_carbonate_hardness
-            }
 
-            WaterTestParameterId.PHOSPHATE -> R.string.tank_health_test_phosphate
-            WaterTestParameterId.TDS -> R.string.tank_health_test_tds
-            WaterTestParameterId.EC -> R.string.tank_health_test_conductivity
-            WaterTestParameterId.CO2 -> R.string.tank_health_test_carbon_dioxide
-            WaterTestParameterId.IRON -> R.string.tank_health_test_iron
-            WaterTestParameterId.POTASSIUM -> R.string.tank_health_test_potassium
-            WaterTestParameterId.SALINITY -> R.string.tank_health_test_salinity
-            WaterTestParameterId.SPECIFIC_GRAVITY -> R.string.tank_health_test_specific_gravity
-            WaterTestParameterId.CALCIUM -> R.string.tank_health_test_calcium
-            WaterTestParameterId.MAGNESIUM -> R.string.tank_health_test_magnesium
-            WaterTestParameterId.COPPER -> R.string.tank_health_test_copper
-            WaterTestParameterId.DISSOLVED_OXYGEN -> R.string.tank_health_test_dissolved_oxygen
-        }
-        val symbolRes = when (id) {
-            WaterTestParameterId.PH -> R.string.tank_health_test_ph
-            WaterTestParameterId.NITRATE -> R.string.tank_health_test_symbol_nitrate
-            WaterTestParameterId.NITRITE -> R.string.tank_health_test_symbol_nitrite
-            WaterTestParameterId.AMMONIA_AMMONIUM -> R.string.tank_health_test_symbol_ammonia_ammonium
-            WaterTestParameterId.GH -> R.string.tank_health_test_symbol_gh
-            WaterTestParameterId.KH -> R.string.tank_health_test_symbol_kh
-            WaterTestParameterId.PHOSPHATE -> R.string.tank_health_test_symbol_phosphate
-            WaterTestParameterId.TDS -> R.string.tank_health_test_symbol_tds
-            WaterTestParameterId.EC -> R.string.tank_health_test_symbol_ec
-            WaterTestParameterId.CO2 -> R.string.tank_health_test_symbol_co2
-            WaterTestParameterId.IRON -> R.string.tank_health_test_symbol_iron
-            WaterTestParameterId.POTASSIUM -> R.string.tank_health_test_symbol_potassium
-            WaterTestParameterId.SALINITY -> null
-            WaterTestParameterId.SPECIFIC_GRAVITY -> R.string.tank_health_test_symbol_specific_gravity
-            WaterTestParameterId.CALCIUM -> R.string.tank_health_test_symbol_calcium
-            WaterTestParameterId.MAGNESIUM -> R.string.tank_health_test_symbol_magnesium
-            WaterTestParameterId.COPPER -> R.string.tank_health_test_symbol_copper
-            WaterTestParameterId.DISSOLVED_OXYGEN -> R.string.tank_health_test_symbol_oxygen
-        }
-        val unitRes = when (id) {
-            WaterTestParameterId.PH,
-            WaterTestParameterId.SPECIFIC_GRAVITY -> null
-
-            WaterTestParameterId.GH -> R.string.tank_health_analysis_unit_dgh
-            WaterTestParameterId.KH -> R.string.tank_health_analysis_unit_dkh
-            WaterTestParameterId.TDS -> R.string.tank_health_analysis_unit_ppm
-            WaterTestParameterId.EC -> R.string.tank_health_analysis_unit_us_cm
-            WaterTestParameterId.SALINITY -> R.string.tank_health_analysis_unit_ppt
-
-            else -> R.string.tank_health_analysis_unit_mg_l
-        }
         return WaterTestParameterUiModel(
             id = id,
-            iconRes = iconRes,
+            iconRes = requireNotNull(iconResByParameter[id]),
             nameRes = nameRes,
-            symbolRes = symbolRes,
-            unitRes = unitRes,
+            symbolRes = symbolResByParameter[id],
+            unitRes = unitResByParameter[id],
             importance = importance,
             value = value
         )
     }
+
 }

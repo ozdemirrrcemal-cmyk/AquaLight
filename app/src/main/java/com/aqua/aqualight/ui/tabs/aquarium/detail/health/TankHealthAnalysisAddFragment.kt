@@ -27,6 +27,7 @@ import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumTankTaxonomyText
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
 import java.util.Calendar
 
+@Suppress("TooManyFunctions")
 class TankHealthAnalysisAddFragment :
     Fragment(R.layout.fragment_tank_health_analysis_add) {
 
