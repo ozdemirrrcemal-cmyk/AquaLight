@@ -41,6 +41,10 @@ class WaterAnalysisUiContractTest {
         val parameterLayout = file(
             "app/src/main/res/layout/item_tank_health_analysis_parameter_input.xml"
         )
+        val tileBinder = file(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
+                "WaterAnalysisParameterTileBinder.kt"
+        )
 
         assertTrue(renderer.contains("WaterTestProfileUiCatalog.recommendedIds("))
         assertTrue(renderer.contains("WaterTestPickerBottomSheet.show("))
@@ -67,8 +71,8 @@ class WaterAnalysisUiContractTest {
         assertTrue(parameterLayout.contains("unitSelector"))
         assertTrue(parameterLayout.contains("ivUnitChevron"))
         assertTrue(parameterLayout.contains("parameterHeader"))
-        assertTrue(renderer.contains("WaterMeasurementMethodBottomSheet.show("))
-        assertTrue(renderer.contains("parameterHeader.setOnClickListener"))
+        assertTrue(tileBinder.contains("WaterMeasurementMethodBottomSheet.show("))
+        assertTrue(tileBinder.contains("parameterHeader.setOnClickListener"))
         assertTrue(renderer.contains("activeMeasurementParameterId"))
         val inputStyles = file("app/src/main/res/values/input_styles.xml")
         assertFalse(inputStyles.contains("WaterAnalysisCompact"))
@@ -88,6 +92,10 @@ class WaterAnalysisUiContractTest {
         val content = file(
             "app/src/main/res/layout/content_sheet_water_measurement_method.xml"
         )
+        val binder = file(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
+                "WaterMeasurementMethodSheetBinder.kt"
+        )
 
         assertTrue(sheet.contains("DialogSettingsBottomSheetBinding"))
         assertTrue(sheet.contains("SingleChoiceBottomSheet.show("))
@@ -101,8 +109,8 @@ class WaterAnalysisUiContractTest {
         assertTrue(content.contains("dividerBeforeUnit"))
         assertTrue(content.contains("btnApply"))
         assertTrue(sheet.contains("override fun onSaveInstanceState"))
-        assertTrue(sheet.contains("card.isCheckable = true"))
-        assertTrue(sheet.contains("text.setTypeface"))
+        assertTrue(binder.contains("card.isCheckable = true"))
+        assertTrue(binder.contains("text.setTypeface"))
         assertFalse(content.contains("android:textStyle=\"bold\""))
         assertFalse(content.contains("close"))
         assertFalse(content.contains("btnClose"))

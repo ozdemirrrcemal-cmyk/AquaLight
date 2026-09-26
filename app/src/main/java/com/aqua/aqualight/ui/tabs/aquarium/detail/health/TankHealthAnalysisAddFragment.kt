@@ -9,8 +9,6 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumTankTaxonomy
-import com.aqua.aqualight.application.aquarium.health.WaterAnalysisInput
-import com.aqua.aqualight.application.aquarium.health.WaterMeasurementInput
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentTankHealthAnalysisAddBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
@@ -30,11 +28,7 @@ class TankHealthAnalysisAddFragment :
     private val binding get() = _binding!!
 
     private var tankProfile: String? = null
-    private var activeMeasurementParameterId: WaterTestParameterId? = null
-    private val parameterValues = linkedMapOf<WaterTestParameterId, String>()
-    private val additionalParameters = linkedSetOf<WaterTestParameterId>()
-    private val measurementSelections =
-        linkedMapOf<WaterTestParameterId, WaterMeasurementSelectionUi>()
+    private val parameterState = WaterAnalysisParameterState()
 
     private var measurementTimeController: WaterAnalysisMeasurementTimeController? = null
     private var temperatureUiController: WaterAnalysisTemperatureUiController? = null
@@ -67,17 +61,11 @@ class TankHealthAnalysisAddFragment :
         parameterRenderer = WaterAnalysisParameterRenderer(
             fragment = this,
             binding = binding.waterParametersSection,
-            parameterValues = parameterValues,
-            additionalParameters = additionalParameters,
-            measurementSelections = measurementSelections,
-            activeMeasurementParameterId = activeMeasurementParameterId,
-            onActiveMeasurementParameterChanged = { parameterId ->
-                activeMeasurementParameterId = parameterId
-            }
+            state = parameterState
         )
 
         setupHeader()
-        setupWaterTestPickerResultListener()
+        setupSelectionResultListeners()
         setupNavigation()
         observeTankProfile()
     }
@@ -87,20 +75,22 @@ class TankHealthAnalysisAddFragment :
         temperatureUiController?.saveState(outState)
         outState.putStringArrayList(
             STATE_ADDITIONAL_PARAMETER_IDS,
-            ArrayList(additionalParameters.map { parameterId -> parameterId.name })
+            ArrayList(
+                parameterState.additionalParameters.map { parameterId -> parameterId.name }
+            )
         )
         outState.putStringArrayList(
             STATE_PARAMETER_VALUE_IDS,
-            ArrayList(parameterValues.keys.map { parameterId -> parameterId.name })
+            ArrayList(parameterState.parameterValues.keys.map { parameterId -> parameterId.name })
         )
         outState.putStringArrayList(
             STATE_PARAMETER_VALUES,
-            ArrayList(parameterValues.values)
+            ArrayList(parameterState.parameterValues.values)
         )
-        WaterMeasurementUiStateCodec.save(outState, measurementSelections)
+        WaterMeasurementUiStateCodec.save(outState, parameterState.measurementSelections)
         outState.putString(
             STATE_ACTIVE_MEASUREMENT_PARAMETER_ID,
-            activeMeasurementParameterId?.name
+            parameterState.activeMeasurementParameterId?.name
         )
         super.onSaveInstanceState(outState)
     }
@@ -111,7 +101,7 @@ class TankHealthAnalysisAddFragment :
             .mapNotNull { rawId ->
                 runCatching { WaterTestParameterId.valueOf(rawId) }.getOrNull()
             }
-            .forEach(additionalParameters::add)
+            .forEach(parameterState.additionalParameters::add)
 
         val valueIds = savedInstanceState
             ?.getStringArrayList(STATE_PARAMETER_VALUE_IDS)
@@ -122,11 +112,16 @@ class TankHealthAnalysisAddFragment :
         valueIds.zip(values).forEach { (rawId, value) ->
             runCatching { WaterTestParameterId.valueOf(rawId) }
                 .getOrNull()
-                ?.let { parameterId -> parameterValues[parameterId] = value }
+                ?.let { parameterId ->
+                    parameterState.parameterValues[parameterId] = value
+                }
         }
 
-        WaterMeasurementUiStateCodec.restore(savedInstanceState, measurementSelections)
-        activeMeasurementParameterId = savedInstanceState
+        WaterMeasurementUiStateCodec.restore(
+            savedInstanceState,
+            parameterState.measurementSelections
+        )
+        parameterState.activeMeasurementParameterId = savedInstanceState
             ?.getString(STATE_ACTIVE_MEASUREMENT_PARAMETER_ID)
             ?.let { rawId ->
                 runCatching { WaterTestParameterId.valueOf(rawId) }.getOrNull()
@@ -143,79 +138,13 @@ class TankHealthAnalysisAddFragment :
         )
     }
 
-    private fun setupWaterTestPickerResultListener() {
-        childFragmentManager.setFragmentResultListener(
-            WaterTestPickerBottomSheet.REQUEST_KEY,
-            viewLifecycleOwner
-        ) { _, result ->
-            val parameterId = result.getString(WaterTestPickerBottomSheet.RESULT_PARAMETER_ID)
-                ?.let { rawId ->
-                    runCatching { WaterTestParameterId.valueOf(rawId) }.getOrNull()
-                }
-                ?: return@setFragmentResultListener
-            val profile = tankProfile ?: return@setFragmentResultListener
-            if (parameterId !in WaterTestProfileUiCatalog.additionalIds(profile)) {
-                return@setFragmentResultListener
-            }
-
-            additionalParameters.add(parameterId)
-            parameterRenderer?.render(profile)
-        }
-
-        childFragmentManager.setFragmentResultListener(
-            WaterMeasurementMethodBottomSheet.REQUEST_KEY,
-            viewLifecycleOwner
-        ) { _, result ->
-            val parameterId = result
-                .getString(WaterMeasurementMethodBottomSheet.RESULT_PARAMETER_ID)
-                ?.let { rawId ->
-                    runCatching { WaterTestParameterId.valueOf(rawId) }.getOrNull()
-                }
-                ?: return@setFragmentResultListener
-            val method = result
-                .getString(WaterMeasurementMethodBottomSheet.RESULT_METHOD)
-                ?.let { rawMethod ->
-                    runCatching { WaterMeasurementMethodUi.valueOf(rawMethod) }.getOrNull()
-                }
-                ?: return@setFragmentResultListener
-
-            measurementSelections[parameterId] = WaterMeasurementUiCatalog.normalizeSelection(
-                parameterId = parameterId,
-                selection = WaterMeasurementSelectionUi(
-                    method = method,
-                    testKitId = result
-                        .getString(WaterMeasurementMethodBottomSheet.RESULT_TEST_KIT_ID)
-                        .orEmpty(),
-                    basisId = result
-                        .getString(WaterMeasurementMethodBottomSheet.RESULT_BASIS_ID)
-                        .orEmpty(),
-                    unitId = result
-                        .getString(WaterMeasurementMethodBottomSheet.RESULT_UNIT_ID)
-                        .orEmpty()
-                )
-            )
-            val rerenderedByClear =
-                parameterRenderer?.clearActiveMeasurementParameter(parameterId) == true
-            if (!rerenderedByClear) {
-                parameterRenderer?.render(tankProfile)
-            }
-        }
-
-        childFragmentManager.setFragmentResultListener(
-            WaterMeasurementMethodBottomSheet.CANCEL_REQUEST_KEY,
-            viewLifecycleOwner
-        ) { _, result ->
-            val parameterId = result
-                .getString(WaterMeasurementMethodBottomSheet.RESULT_PARAMETER_ID)
-                ?.let { rawId ->
-                    runCatching { WaterTestParameterId.valueOf(rawId) }.getOrNull()
-                }
-                ?: return@setFragmentResultListener
-            if (parameterRenderer?.clearActiveMeasurementParameter(parameterId) != true) {
-                activeMeasurementParameterId = null
-                parameterRenderer?.render(tankProfile)
-            }
-        }
+    private fun setupSelectionResultListeners() {
+        WaterAnalysisSelectionResultBinder(
+            fragment = this,
+            state = parameterState,
+            tankProfile = { tankProfile },
+            renderer = { parameterRenderer }
+        ).bind()
     }
 
     private fun setupNavigation() {
@@ -228,111 +157,66 @@ class TankHealthAnalysisAddFragment :
                     )
             )
         }
-
-        binding.btnSaveAnalysis.setOnClickListener {
-            saveAnalysis()
-        }
+        binding.btnSaveAnalysis.setOnClickListener { saveAnalysis() }
     }
 
     private fun saveAnalysis() {
-        val input = buildAnalysisInput() ?: return
-        binding.btnSaveAnalysis.isEnabled = false
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            runCatching {
-                waterAnalysisViewModel.saveAnalysis(input)
-            }.onSuccess {
-                if (_binding != null) {
-                    findNavController().navigateUp()
-                }
-            }.onFailure {
-                _binding?.let { currentBinding ->
-                    currentBinding.btnSaveAnalysis.isEnabled = true
-                    (activity as? BaseActivity)?.showSnackBar(
-                        message = getString(R.string.tank_health_analysis_save_failed),
-                        type = BaseActivity.SnackType.ERROR
-                    )
-                }
-            }
-        }
-    }
-
-    private fun buildAnalysisInput(): WaterAnalysisInput? {
-        val measurementInputs = mutableListOf<WaterMeasurementInput>()
-        parameterValues.forEach { (parameterId, rawValue) ->
-            val trimmed = rawValue.trim()
-            if (trimmed.isEmpty()) return@forEach
-
-            val value = WaterAnalysisValueParser.parse(trimmed)
-            if (value == null) {
-                showInputError(
-                    getString(
-                        R.string.tank_health_analysis_invalid_parameter_value,
-                        parameterName(parameterId)
-                    )
-                )
-                return null
-            }
-
-            val selection = measurementSelections[parameterId]
-                ?: WaterMeasurementUiCatalog.defaultSelection(parameterId)
-            val domainSelection =
-                WaterMeasurementUiCatalog.domainSelectionOrNull(parameterId, selection)
-            if (domainSelection == null) {
-                showInputError(
-                    getString(R.string.tank_health_analysis_invalid_measurement_selection)
-                )
-                return null
-            }
-
-            measurementInputs += WaterMeasurementInput(
-                parameter = parameterId.toDomainParameter(),
-                value = value,
-                selection = domainSelection
+        val timeController = requireNotNull(measurementTimeController)
+        val temperatureController = requireNotNull(temperatureUiController)
+        val buildResult = WaterAnalysisInputBuilder.build(
+            WaterAnalysisInputBuildRequest(
+                tankId = args.tankId,
+                measuredAtMillis = timeController.measurementTimeMillis(),
+                temperatureText = temperatureController.currentValueText(),
+                temperatureSource = temperatureController.currentDomainSource(),
+                parameterState = parameterState
             )
-        }
+        )
 
-        if (measurementInputs.isEmpty()) {
-            showInputError(getString(R.string.tank_health_analysis_measurement_required))
-            return null
-        }
-
-        val temperatureController = temperatureUiController
-        val temperatureText = temperatureController?.currentValueText().orEmpty()
-        val temperatureValue = if (temperatureText.isBlank()) {
-            null
-        } else {
-            WaterAnalysisValueParser.parse(temperatureText)
-                ?: run {
-                    showInputError(getString(R.string.tank_health_analysis_invalid_temperature))
-                    return null
+        when (buildResult) {
+            is WaterAnalysisInputBuildResult.Failure -> showInputError(buildResult)
+            is WaterAnalysisInputBuildResult.Success -> {
+                binding.btnSaveAnalysis.isEnabled = false
+                viewLifecycleOwner.lifecycleScope.launch {
+                    runCatching {
+                        waterAnalysisViewModel.saveAnalysis(buildResult.input)
+                    }.onSuccess {
+                        if (_binding != null) {
+                            findNavController().navigateUp()
+                        }
+                    }.onFailure {
+                        _binding?.btnSaveAnalysis?.isEnabled = true
+                        (activity as? BaseActivity)?.showSnackBar(
+                            message = getString(R.string.tank_health_analysis_save_failed),
+                            type = BaseActivity.SnackType.ERROR
+                        )
+                    }
                 }
+            }
+        }
+    }
+
+    private fun showInputError(failure: WaterAnalysisInputBuildResult.Failure) {
+        val message = when (failure) {
+            WaterAnalysisInputBuildResult.Failure.MeasurementRequired ->
+                getString(R.string.tank_health_analysis_measurement_required)
+            WaterAnalysisInputBuildResult.Failure.InvalidMeasurementSelection ->
+                getString(R.string.tank_health_analysis_invalid_measurement_selection)
+            WaterAnalysisInputBuildResult.Failure.InvalidTemperature ->
+                getString(R.string.tank_health_analysis_invalid_temperature)
+            is WaterAnalysisInputBuildResult.Failure.InvalidParameterValue -> {
+                val name = tankProfile?.let { profile ->
+                    WaterTestProfileUiCatalog.model(
+                        tankProfile = profile,
+                        id = failure.parameterId,
+                        importance = WaterTestImportance.RECOMMENDED,
+                        value = ""
+                    ).nameRes
+                }?.let(::getString) ?: failure.parameterId.name
+                getString(R.string.tank_health_analysis_invalid_parameter_value, name)
+            }
         }
 
-        return WaterAnalysisInput(
-            tankId = args.tankId,
-            measuredAtMillis = requireNotNull(measurementTimeController).measurementTimeMillis(),
-            temperatureCelsius = temperatureValue,
-            temperatureSource = temperatureValue?.let {
-                requireNotNull(temperatureController).currentDomainSource()
-            },
-            measurements = measurementInputs
-        )
-    }
-
-    private fun parameterName(parameterId: WaterTestParameterId): String {
-        val profile = tankProfile ?: return parameterId.name
-        return getString(
-            WaterTestProfileUiCatalog.model(
-                tankProfile = profile,
-                id = parameterId,
-                importance = WaterTestImportance.RECOMMENDED,
-                value = ""
-            ).nameRes
-        )
-    }
-
-    private fun showInputError(message: String) {
         (activity as? BaseActivity)?.showSnackBar(
             message = message,
             type = BaseActivity.SnackType.WARNING
@@ -356,7 +240,7 @@ class TankHealthAnalysisAddFragment :
                 ?.let(WaterTestProfileUiCatalog::additionalIds)
                 .orEmpty()
                 .toSet()
-            additionalParameters.retainAll(allowedAdditional)
+            parameterState.additionalParameters.retainAll(allowedAdditional)
 
             val visibleParameterIds = linkedSetOf<WaterTestParameterId>()
             if (nextProfile != null) {
@@ -364,15 +248,15 @@ class TankHealthAnalysisAddFragment :
                     WaterTestProfileUiCatalog.recommendedIds(nextProfile)
                 )
             }
-            visibleParameterIds.addAll(additionalParameters)
-            parameterValues.keys.retainAll(visibleParameterIds)
-            measurementSelections.keys.retainAll(visibleParameterIds)
+            visibleParameterIds.addAll(parameterState.additionalParameters)
+            parameterState.parameterValues.keys.retainAll(visibleParameterIds)
+            parameterState.measurementSelections.keys.retainAll(visibleParameterIds)
 
-            activeMeasurementParameterId
+            parameterState.activeMeasurementParameterId
                 ?.takeIf { activeId -> activeId !in visibleParameterIds }
                 ?.let { activeId ->
                     if (parameterRenderer?.clearActiveMeasurementParameter(activeId) != true) {
-                        activeMeasurementParameterId = null
+                        parameterState.activeMeasurementParameterId = null
                     }
                 }
 

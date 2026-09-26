@@ -4,7 +4,7 @@ import com.aqua.aqualight.application.aquarium.health.WaterAnalysisInput
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisOperations
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisPolicy
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisSnapshot
-import com.aqua.aqualight.application.aquarium.health.WaterMeasurementCatalog
+import com.aqua.aqualight.application.aquarium.health.WaterParameterDefinitions
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementNormalizer
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementSnapshot
 import com.aqua.aqualight.data.user.withCurrentOwnerScope
@@ -63,9 +63,9 @@ internal class DefaultWaterAnalysisOperations(
             temperatureSource = temperatureSource,
             measurements = measurements.map { measurement ->
                 val canonicalBasis =
-                    WaterMeasurementCatalog.canonicalBasis(measurement.parameter)
+                    WaterParameterDefinitions.canonicalBasis(measurement.parameter)
                 val canonicalUnit =
-                    WaterMeasurementCatalog.canonicalUnit(measurement.parameter)
+                    WaterParameterDefinitions.canonicalUnit(measurement.parameter)
                 WaterMeasurementSnapshot(
                     parameter = measurement.parameter,
                     value = measurement.value,

@@ -71,6 +71,6 @@ class WaterMeasurementCatalogTest {
         val selection = WaterMeasurementCatalog.defaultSelection(WaterParameter.PH)
 
         assertEquals(WaterMeasurementUnit.NONE, selection.unit)
-        assertTrue(WaterMeasurementCatalog.unitOptions(WaterParameter.PH).isEmpty())
+        assertTrue(WaterParameterDefinitions.unitOptions(WaterParameter.PH).isEmpty())
     }
 }
