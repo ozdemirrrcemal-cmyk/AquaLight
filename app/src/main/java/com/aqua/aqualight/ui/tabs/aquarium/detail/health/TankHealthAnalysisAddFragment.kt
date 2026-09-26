@@ -82,11 +82,11 @@ class TankHealthAnalysisAddFragment :
         outState.putString(STATE_MANUAL_TEMPERATURE, manualTemperatureValue)
         outState.putStringArrayList(
             STATE_ADDITIONAL_PARAMETER_IDS,
-            ArrayList(additionalParameters.map(WaterTestParameterId::name))
+            ArrayList(additionalParameters.map { it.name })
         )
         outState.putStringArrayList(
             STATE_PARAMETER_VALUE_IDS,
-            ArrayList(parameterValues.keys.map(WaterTestParameterId::name))
+            ArrayList(parameterValues.keys.map { it.name })
         )
         outState.putStringArrayList(
             STATE_PARAMETER_VALUES,
@@ -553,7 +553,7 @@ class TankHealthAnalysisAddFragment :
         itemBinding.tvParameterName.setText(model.nameRes)
         itemBinding.tvParameterSymbol.isVisible = model.symbolRes != null
         model.symbolRes?.let { symbolRes -> itemBinding.tvParameterSymbol.setText(symbolRes) }
-        itemBinding.inputLayout.suffixText = model.unitRes?.let(::getString)
+        itemBinding.inputLayout.suffixText = model.unitRes?.let { unitRes -> getString(unitRes) }
         itemBinding.inputValue.setText(model.value)
 
         val accessibleLabel = buildString {
