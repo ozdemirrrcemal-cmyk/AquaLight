@@ -8,7 +8,6 @@
     <string name="tank_health_analysis_measurement_time_subtitle">Analizin tarih ve saatini seçin.</string>
     <string name="tank_health_analysis_date_label">Tarih</string>
     <string name="tank_health_analysis_time_label">Saat</string>
-    <string name="tank_health_analysis_date_value">26 Eyl 2026</string>
 
     <string name="tank_health_analysis_sensor_title">Sensör Verisi</string>
     <string name="tank_health_analysis_sensor_subtitle">Sıcaklık, bağlı soğutucu cihazın sensöründen alınabilir.</string>
@@ -19,10 +18,46 @@
     <string name="tank_health_analysis_source_manual">Manuel</string>
     <string name="tank_health_analysis_temperature">Sıcaklık</string>
     <string name="tank_health_analysis_from_sensor">Sensörden alındı</string>
-    <string name="tank_health_analysis_sensor_helper">Soğutucu cihaz bağlı değilse sıcaklığı manuel olarak girebilirsiniz.</string>
+    <string name="tank_health_analysis_sensor_helper">Güncel ve uyumlu bir sensör okuması yoksa manuel giriş her zaman kullanılabilir.</string>
+    <string name="tank_health_analysis_sensor_status_label">Sensör durumu</string>
+    <string name="tank_health_analysis_sensor_unavailable">Uyumlu sensör okuması yok</string>
+    <string name="tank_health_analysis_sensor_loading">Sensör kontrol ediliyor…</string>
+    <string name="tank_health_analysis_sensor_available">Sensör kullanılabilir: %1$s</string>
+    <string name="tank_health_analysis_sensor_reading">Güncel okuma: %1$s</string>
+    <string name="tank_health_analysis_sensor_stale">Sensör verisi güncel değil</string>
+    <string name="tank_health_analysis_sensor_error">Sensör verisi alınamadı</string>
 
     <string name="tank_health_analysis_water_parameters_title">Su Parametreleri</string>
     <string name="tank_health_analysis_water_parameters_subtitle">Su değerlerinizi ölçüp girin.</string>
+    <string name="tank_health_analysis_profile_context">%1$s profili • önerilen testler</string>
+    <string name="tank_health_analysis_profile_missing">Tank profili kullanılamıyor. Ölçüm eklemeden önce tank profilini seçin.</string>
+    <string name="tank_health_analysis_recommended_tests">Önerilen Testler</string>
+    <string name="tank_health_analysis_additional_tests">Ek Testler</string>
+    <string name="tank_health_analysis_add_test">+ Test Ekle</string>
+    <string name="tank_health_analysis_add_test_subtitle">Bu tank profili için kullanmak istediğiniz ek ölçümleri seçin.</string>
+    <string name="tank_health_analysis_all_additional_tests_added">Tüm uygun testler eklendi</string>
+    <string name="tank_health_analysis_remove_test">Testi kaldır</string>
+    <string name="tank_health_analysis_test_picker_label_format">%1$s  •  %2$s</string>
+
+    <string name="tank_health_test_ph">pH</string>
+    <string name="tank_health_test_nitrate">Nitrat</string>
+    <string name="tank_health_test_nitrite">Nitrit</string>
+    <string name="tank_health_test_ammonia_ammonium">Amonyak / Amonyum</string>
+    <string name="tank_health_test_general_hardness">Genel Sertlik</string>
+    <string name="tank_health_test_carbonate_hardness">Karbonat Sertliği</string>
+    <string name="tank_health_test_alkalinity">Alkalinite</string>
+    <string name="tank_health_test_phosphate">Fosfat</string>
+    <string name="tank_health_test_tds">Toplam Çözünmüş Madde</string>
+    <string name="tank_health_test_conductivity">İletkenlik</string>
+    <string name="tank_health_test_carbon_dioxide">Karbondioksit</string>
+    <string name="tank_health_test_iron">Demir</string>
+    <string name="tank_health_test_potassium">Potasyum</string>
+    <string name="tank_health_test_salinity">Tuzluluk</string>
+    <string name="tank_health_test_specific_gravity">Özgül Ağırlık</string>
+    <string name="tank_health_test_calcium">Kalsiyum</string>
+    <string name="tank_health_test_magnesium">Magnezyum</string>
+    <string name="tank_health_test_copper">Bakır</string>
+    <string name="tank_health_test_dissolved_oxygen">Çözünmüş Oksijen</string>
     <string name="tank_health_analysis_test_kit_note">Daha doğru sonuçlar için güvenilir test kitleri kullanın.</string>
     <string name="tank_health_analysis_save">Analizi Kaydet</string>
     <string name="tank_health_analysis_history_action">Geçmiş Kayıtlar</string>
