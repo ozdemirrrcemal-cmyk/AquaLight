@@ -1,6 +1,9 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 
 import androidx.fragment.app.Fragment
+import com.aqua.aqualight.R
+import com.aqua.aqualight.ui.common.dialog.ConfirmDialogFragment
+import com.aqua.aqualight.utils.DialogType
 
 internal class WaterAnalysisSelectionResultBinder(
     private val fragment: Fragment,
@@ -13,6 +16,7 @@ internal class WaterAnalysisSelectionResultBinder(
         bindAdditionalTestResult()
         bindMeasurementResult()
         bindMeasurementCancelResult()
+        bindSourceChangeConfirmation()
     }
 
     private fun bindAdditionalTestResult() {
@@ -46,27 +50,75 @@ internal class WaterAnalysisSelectionResultBinder(
                 .toMeasurementMethodOrNull()
                 ?: return@setFragmentResultListener
 
-            state.measurementSelections[parameterId] =
-                WaterMeasurementUiCatalog.normalizeSelection(
-                    parameterId = parameterId,
-                    selection = WaterMeasurementSelectionUi(
-                        method = method,
-                        testKitId = result
-                            .getString(WaterMeasurementMethodBottomSheet.RESULT_TEST_KIT_ID)
-                            .orEmpty(),
-                        basisId = result
-                            .getString(WaterMeasurementMethodBottomSheet.RESULT_BASIS_ID)
-                            .orEmpty(),
-                        unitId = result
-                            .getString(WaterMeasurementMethodBottomSheet.RESULT_UNIT_ID)
-                            .orEmpty()
+            val candidate = WaterMeasurementUiCatalog.normalizeSelection(
+                parameterId = parameterId,
+                selection = WaterMeasurementSelectionUi(
+                    method = method,
+                    testKitId = result
+                        .getString(WaterMeasurementMethodBottomSheet.RESULT_TEST_KIT_ID)
+                        .orEmpty(),
+                    basisId = result
+                        .getString(WaterMeasurementMethodBottomSheet.RESULT_BASIS_ID)
+                        .orEmpty(),
+                    unitId = result
+                        .getString(WaterMeasurementMethodBottomSheet.RESULT_UNIT_ID)
+                        .orEmpty()
+                )
+            )
+            val previous = state.measurementSelections[parameterId]
+                ?: WaterMeasurementUiCatalog.defaultSelection(parameterId)
+            if (state.parameterValues[parameterId]?.isNotBlank() == true && previous != candidate) {
+                ConfirmDialogFragment.show(
+                    fragmentManager = fragment.childFragmentManager,
+                    request = ConfirmDialogFragment.Request(
+                        title = fragment.getString(R.string.water_measurement_change_source_title),
+                        message = fragment.getString(R.string.water_measurement_change_source_message),
+                        confirmText = fragment.getString(R.string.confirm),
+                        cancelText = fragment.getString(R.string.cancel),
+                        presentation = ConfirmDialogFragment.Presentation(DialogType.WARNING),
+                        resultTarget = ConfirmDialogFragment.ResultTarget(
+                            requestKey = SOURCE_CHANGE_REQUEST_KEY,
+                            actionId = WaterSourceChangeCandidateCodec.encode(
+                                parameterId,
+                                candidate
+                            )
+                        )
                     )
                 )
+                return@setFragmentResultListener
+            }
+            applySelection(parameterId, candidate)
+        }
+    }
 
-            if (renderer()?.clearActiveMeasurementParameter(parameterId) != true) {
+    private fun bindSourceChangeConfirmation() {
+        fragment.childFragmentManager.setFragmentResultListener(
+            SOURCE_CHANGE_REQUEST_KEY,
+            fragment.viewLifecycleOwner
+        ) { _, result ->
+            val decoded = result.getString(ConfirmDialogFragment.RESULT_ACTION_ID)
+                ?.let(WaterSourceChangeCandidateCodec::decode)
+            if (
+                result.getString(ConfirmDialogFragment.RESULT_KEY) ==
+                ConfirmDialogFragment.RESULT_CONFIRM && decoded != null
+            ) {
+                applySelection(decoded.first, decoded.second)
+            } else {
                 state.activeMeasurementParameterId = null
                 renderer()?.render(tankProfile())
             }
+        }
+    }
+
+    private fun applySelection(
+        parameterId: WaterTestParameterId,
+        selection: WaterMeasurementSelectionUi
+    ) {
+        state.measurementSelections[parameterId] = selection
+
+        if (renderer()?.clearActiveMeasurementParameter(parameterId) != true) {
+            state.activeMeasurementParameterId = null
+            renderer()?.render(tankProfile())
         }
     }
 
@@ -95,4 +147,8 @@ internal class WaterAnalysisSelectionResultBinder(
         this?.let { rawMethod ->
             runCatching { WaterMeasurementMethodUi.valueOf(rawMethod) }.getOrNull()
         }
+
+    private companion object {
+        const val SOURCE_CHANGE_REQUEST_KEY = "water_measurement_source_change"
+    }
 }

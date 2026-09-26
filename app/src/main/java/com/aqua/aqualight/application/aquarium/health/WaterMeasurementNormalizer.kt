@@ -27,7 +27,7 @@ object WaterMeasurementNormalizer {
     ): Double? {
         // These legacy slots omit the chemical species, sample matrix or device
         // calibration needed to assign an authoritative canonical meaning.
-        if (parameter in UNRESOLVED_LEGACY_PARAMETERS) return null
+        if (!hasCanonicalSemantics(parameter)) return null
         return value.takeIf { candidate -> candidate.isFinite() && candidate >= 0.0 }?.let { validValue ->
             val isCanonical =
                 basis == WaterParameterDefinitions.canonicalBasis(parameter) &&
@@ -39,6 +39,9 @@ object WaterMeasurementNormalizer {
             }
         }
     }
+
+    fun hasCanonicalSemantics(parameter: WaterParameter): Boolean =
+        parameter !in UNRESOLVED_LEGACY_PARAMETERS
 
     private val UNRESOLVED_LEGACY_PARAMETERS = setOf(
         WaterParameter.AMMONIA_AMMONIUM,

@@ -8,6 +8,23 @@ import org.junit.Test
 class WaterMeasurementUiModelsTest {
 
     @Test
+    fun legacyAmbiguousMethodSheetDoesNotAdvertiseCanonicalResult() {
+        assertFalse(
+            WaterMeasurementUiCatalog.hasCanonicalSemantics(
+                WaterTestParameterId.AMMONIA_AMMONIUM
+            )
+        )
+        assertTrue(WaterMeasurementUiCatalog.hasCanonicalSemantics(WaterTestParameterId.NITRATE))
+    }
+
+    @Test
+    fun sensorMethodNeedsAnAssignedVerifiedSampleBeforeSaving() {
+        val selection = WaterMeasurementUiCatalog.defaultSelection(WaterTestParameterId.PH)
+            .copy(method = WaterMeasurementMethodUi.SENSOR)
+        assertFalse(WaterMeasurementUiCatalog.isSelectionValid(WaterTestParameterId.PH, selection))
+    }
+
+    @Test
     fun nitrateDefaultDoesNotAssumeAUserTestKit() {
         val selection = WaterMeasurementUiCatalog.defaultSelection(
             WaterTestParameterId.NITRATE

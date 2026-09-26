@@ -88,6 +88,8 @@ object WaterMeasurementCatalog {
         parameter: WaterParameter,
         selection: WaterMeasurementSelection
     ): Boolean {
+        // The current input has no assigned device, sample identity or freshness proof.
+        if (selection.method == WaterMeasurementMethod.SENSOR) return false
         val normalized = normalizeSelection(parameter, selection)
         val hasRequiredKit =
             selection.method != WaterMeasurementMethod.TEST_KIT ||

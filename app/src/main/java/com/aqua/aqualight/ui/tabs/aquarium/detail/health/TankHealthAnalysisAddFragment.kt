@@ -11,10 +11,12 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumTankTaxonomy
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentTankHealthAnalysisAddBinding
+import com.aqua.aqualight.ui.common.dialog.ConfirmDialogFragment
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
+import com.aqua.aqualight.utils.DialogType
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
@@ -72,6 +74,7 @@ class TankHealthAnalysisAddFragment :
             tankProfile = { tankProfile },
             renderer = { parameterRenderer }
         ).bind()
+        bindHiddenDraftConfirmation()
         setupNavigation()
         observeTankProfile()
     }
@@ -157,7 +160,7 @@ class TankHealthAnalysisAddFragment :
         binding.btnSaveAnalysis.setOnClickListener { saveAnalysis() }
     }
 
-    private fun saveAnalysis() {
+    private fun saveAnalysis(hiddenDraftReviewed: Boolean = false) {
         val profile = tankProfile ?: return
         val timeController = requireNotNull(measurementTimeController)
         val temperatureController = requireNotNull(temperatureUiController)
@@ -165,7 +168,27 @@ class TankHealthAnalysisAddFragment :
             WaterTestProfileUiCatalog.recommendedIds(profile) +
                 WaterTestProfileUiCatalog.additionalIds(profile)
                     .filter(parameterState.additionalParameters::contains)
-            ).toSet()
+        ).toSet()
+        val hiddenValues = parameterState.parameterValues.filter { (id, value) ->
+            id !in visibleParameterIds && value.isNotBlank()
+        }
+        if (hiddenValues.isNotEmpty() && !hiddenDraftReviewed) {
+            ConfirmDialogFragment.show(
+                fragmentManager = childFragmentManager,
+                request = ConfirmDialogFragment.Request(
+                    title = getString(R.string.water_analysis_hidden_draft_title),
+                    message = getString(R.string.water_analysis_hidden_draft_message),
+                    confirmText = getString(R.string.confirm),
+                    cancelText = getString(R.string.cancel),
+                    presentation = ConfirmDialogFragment.Presentation(DialogType.WARNING),
+                    resultTarget = ConfirmDialogFragment.ResultTarget(
+                        requestKey = HIDDEN_DRAFT_REQUEST_KEY,
+                        actionId = args.tankId.toString()
+                    )
+                )
+            )
+            return
+        }
         val buildResult = WaterAnalysisInputBuilder.build(
             WaterAnalysisInputBuildRequest(
                 tankId = args.tankId,
@@ -199,6 +222,21 @@ class TankHealthAnalysisAddFragment :
                         }
                     }
                 }
+            }
+        }
+    }
+
+    private fun bindHiddenDraftConfirmation() {
+        childFragmentManager.setFragmentResultListener(
+            HIDDEN_DRAFT_REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            if (
+                result.getString(ConfirmDialogFragment.RESULT_KEY) ==
+                ConfirmDialogFragment.RESULT_CONFIRM &&
+                result.getString(ConfirmDialogFragment.RESULT_ACTION_ID) == args.tankId.toString()
+            ) {
+                saveAnalysis(hiddenDraftReviewed = true)
             }
         }
     }
@@ -279,6 +317,7 @@ class TankHealthAnalysisAddFragment :
     }
 
     private companion object {
+        const val HIDDEN_DRAFT_REQUEST_KEY = "water_analysis_hidden_draft_confirmation"
         const val STATE_ADDITIONAL_PARAMETER_IDS = "additional_parameter_ids"
         const val STATE_PARAMETER_VALUE_IDS = "parameter_value_ids"
         const val STATE_PARAMETER_VALUES = "parameter_values"

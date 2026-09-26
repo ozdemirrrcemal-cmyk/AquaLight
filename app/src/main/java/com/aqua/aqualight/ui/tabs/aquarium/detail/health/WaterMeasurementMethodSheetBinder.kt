@@ -78,9 +78,9 @@ internal class WaterMeasurementMethodSheetBinder(
         binding.cardMethodDigital.setOnClickListener {
             updateMethod(WaterMeasurementMethodUi.DIGITAL)
         }
-        binding.cardMethodSensor.setOnClickListener {
-            updateMethod(WaterMeasurementMethodUi.SENSOR)
-        }
+        binding.cardMethodSensor.isEnabled = false
+        binding.cardMethodSensor.isClickable = false
+        binding.cardMethodSensor.alpha = DISABLED_ALPHA
     }
 
     private fun setupOptionActions() {
@@ -192,6 +192,9 @@ internal class WaterMeasurementMethodSheetBinder(
     }
 
     private fun renderCanonicalInfo() {
+        binding.tvCanonicalInfo.isVisible =
+            WaterMeasurementUiCatalog.hasCanonicalSemantics(state.parameterId)
+        if (!binding.tvCanonicalInfo.isVisible) return
         val canonicalBasis = WaterMeasurementUiCatalog.canonicalBasis(state.parameterId)
         val canonicalUnit = WaterMeasurementUiCatalog.canonicalUnit(state.parameterId)
         binding.tvCanonicalInfo.text = if (canonicalUnit == null) {

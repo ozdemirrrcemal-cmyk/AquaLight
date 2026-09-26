@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.annotation.StringRes
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementCatalog
+import com.aqua.aqualight.application.aquarium.health.WaterMeasurementNormalizer
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementSelection
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementUnit
 import com.aqua.aqualight.application.aquarium.health.WaterParameterDefinitions
@@ -28,6 +29,9 @@ internal data class WaterMeasurementOptionUi(
 )
 
 internal object WaterMeasurementUiCatalog {
+
+    fun hasCanonicalSemantics(parameterId: WaterTestParameterId): Boolean =
+        WaterMeasurementNormalizer.hasCanonicalSemantics(parameterId.toDomainParameter())
 
     fun defaultSelection(parameterId: WaterTestParameterId): WaterMeasurementSelectionUi =
         WaterMeasurementUiMapper.toUiSelection(

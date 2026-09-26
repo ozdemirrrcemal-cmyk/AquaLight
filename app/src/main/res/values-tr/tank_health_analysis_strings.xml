@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="water_measurement_change_source_title">Ölçüm kaynağını gözden geçirin</string>
+    <string name="water_measurement_change_source_message">Girdiğiniz değer alanda kalacak. Kaydetmeden önce sayının yeni seçilen yöntem, kit, raporlama temeli ve birimin sonucu olduğunu kontrol edin.</string>
+    <string name="water_analysis_hidden_draft_title">Gizli ölçümleri gözden geçirin</string>
+    <string name="water_analysis_hidden_draft_message">Bu tank türünde girdiğiniz bazı ölçümler mevcut formda gösterilmiyor. Bu analize eklenmeyecekler. Taslağı düzenlemeye devam etmek için iptal edin veya görünür ölçümlerle devam edin.</string>
     <string name="screen_title_tank_health_analysis_add">Analiz Ekle</string>
     <string name="screen_title_tank_health_analysis_history">Geçmiş Kayıtlar</string>
     <string name="screen_title_tank_health_analysis_detail">Kayıt Detayı</string>

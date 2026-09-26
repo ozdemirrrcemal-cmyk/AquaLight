@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="water_measurement_change_source_title">Review measurement source</string>
+    <string name="water_measurement_change_source_message">The value you entered stays in the field. Check that this number is the result reported by the newly selected method, kit, basis and unit before saving.</string>
+    <string name="water_analysis_hidden_draft_title">Review hidden measurements</string>
+    <string name="water_analysis_hidden_draft_message">This tank type has measurements you entered that are not shown in the current form. They will not be included in this analysis. You can cancel and keep editing the draft, or continue with the visible measurements.</string>
     <string name="screen_title_tank_health_analysis_add">Add Analysis</string>
     <string name="screen_title_tank_health_analysis_history">Analysis History</string>
     <string name="screen_title_tank_health_analysis_detail">Record Detail</string>

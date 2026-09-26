@@ -177,6 +177,9 @@ internal object WaterAnalysisPolicy {
             requireNotNull(input.temperatureSource) {
                 "Temperature value requires a source."
             }
+            require(input.temperatureSource != WaterTemperatureSource.SENSOR) {
+                "Sensor temperature requires verified sample provenance."
+            }
         }
 
         input.measurements.forEach { measurement ->

@@ -32,6 +32,17 @@ The old ammonia/KH/salinity/SG/iron/EC/TDS/CO2 slots retain raw readings but
 do not emit an authoritative canonical value until their missing species,
 matrix or calibration context is represented and validated. This is an interim
 fail-closed behavior, not completion of S.1–S.3.
+New SENSOR selections are disabled until assigned sample identity/freshness
+provenance is implemented; existing raw sensor-labelled records are retained
+for migration review. This does not close the physical sensor acceptance gate.
+Changing method, kit, basis or unit after typing a result now asks for explicit
+review through the shared process-safe confirmation dialog; cancellation keeps
+the previous selection and number. A confirmed selection keeps the number for
+user review. Product-specific precision and provenance remain open.
+If tank-type changes hide previously entered values, save now requires an
+explicit confirmation that only visible measurements enter the event; cancelling
+keeps all draft values. Persisting this draft beyond the fragment's saved-state
+window and route-scoped retry semantics remain open.
 
 ### U — Baseline and architecture inventory
 
