@@ -12,9 +12,9 @@ import android.widget.EditText
 import android.widget.TextView
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
-import com.aqua.aqualight.application.aquarium.AquariumTankTaxonomy
 import androidx.fragment.app.FragmentManager
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.aquarium.AquariumTankTaxonomy
 import com.aqua.aqualight.databinding.ContentSheetIdeaBinding
 import com.aqua.aqualight.databinding.ContentSheetSetupDateBinding
 import com.aqua.aqualight.databinding.ContentSheetTankNameBinding
