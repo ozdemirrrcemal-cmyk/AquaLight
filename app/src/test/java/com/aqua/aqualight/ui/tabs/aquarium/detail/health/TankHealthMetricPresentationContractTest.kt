@@ -24,6 +24,19 @@ class TankHealthMetricPresentationContractTest {
         assertTrue(turkish.contains("Genel Sertlik (GH)"))
         assertTrue(turkish.contains("Karbonat Sertliği (KH)"))
         assertTrue(turkish.contains("Fosfat (PO₄³⁻)"))
+
+        val fragment = file(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
+                "TankHealthFragment.kt"
+        )
+        val adapter = file(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
+                "TankHealthContentAdapter.kt"
+        )
+        assertTrue(fragment.contains("TankHealthWaterMetricUiCatalog.models("))
+        assertTrue(fragment.contains("AquariumTankViewModel"))
+        assertTrue(adapter.contains("submitWaterMetrics("))
+        assertTrue(adapter.contains("buildItems(metrics)"))
     }
 
     private fun file(relativePath: String): String =

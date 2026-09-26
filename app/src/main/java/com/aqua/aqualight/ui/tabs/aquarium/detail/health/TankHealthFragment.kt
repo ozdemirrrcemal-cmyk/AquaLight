@@ -3,21 +3,26 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.GridLayoutManager
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.aquarium.AquariumTankTaxonomy
 import com.aqua.aqualight.databinding.FragmentTankHealthBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
 
 class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
 
     private val args: TankHealthFragmentArgs by navArgs()
+    private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
 
     private var _binding: FragmentTankHealthBinding? = null
     private val binding get() = _binding!!
+    private var contentAdapter: TankHealthContentAdapter? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,6 +37,7 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
 
         setupHeader()
         setupContent()
+        observeTankProfile()
     }
 
     private fun setupHeader() {
@@ -39,31 +45,48 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
             fragment = this,
             config = AquaHeaderConfig(
                 titleOverride = getString(R.string.screen_title_tank_health),
-                onBackClick = {
-                    findNavController().navigateUp()
-                }
+                onBackClick = { findNavController().navigateUp() }
             )
         )
     }
 
     private fun setupContent() {
-        val contentAdapter = TankHealthContentAdapter(
+        val adapter = TankHealthContentAdapter(
             onAddAnalysisClick = ::openAddAnalysis
         )
-        val contentLayoutManager = GridLayoutManager(
+        contentAdapter = adapter
+
+        binding.healthContent.layoutManager = GridLayoutManager(
             requireContext(),
             TankHealthContentAdapter.GRID_SPAN_COUNT
         ).apply {
             spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
-                override fun getSpanSize(position: Int): Int {
-                    return contentAdapter.spanSizeForPosition(position)
-                }
+                override fun getSpanSize(position: Int): Int =
+                    adapter.spanSizeForPosition(position)
             }
         }
-
-        binding.healthContent.layoutManager = contentLayoutManager
-        binding.healthContent.adapter = contentAdapter
+        binding.healthContent.adapter = adapter
         binding.healthContent.itemAnimator = null
+    }
+
+    private fun observeTankProfile() {
+        aquariumTankViewModel.tanks.observe(viewLifecycleOwner) { tanks ->
+            val tankProfile = tanks
+                .firstOrNull { tank -> tank.id == args.tankId }
+                ?.tankType
+                ?.takeIf(AquariumTankTaxonomy::isSupportedTankType)
+
+            val metrics = tankProfile
+                ?.let { profile ->
+                    TankHealthWaterMetricUiCatalog.models(
+                        tankProfile = profile,
+                        measuredParameterIds = emptyList()
+                    )
+                }
+                .orEmpty()
+
+            contentAdapter?.submitWaterMetrics(metrics)
+        }
     }
 
     private fun openAddAnalysis() {
@@ -76,8 +99,8 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
 
     override fun onDestroyView() {
         binding.healthContent.adapter = null
+        contentAdapter = null
         _binding = null
         super.onDestroyView()
     }
-
 }
