@@ -623,7 +623,7 @@ Decision accepted on 26 September 2026 for aquarium usability and consistent rul
 K03.13 freezes representation and conversion semantics only. Species/tank GH target ranges remain evidence-backed rule-catalog data and are not approved by this unit decision.
 ---
 
-## 7. Measurement provenance---
+## 7. Measurement provenance
 
 ## 7. Measurement provenance
 
