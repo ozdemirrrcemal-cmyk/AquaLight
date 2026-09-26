@@ -6,7 +6,7 @@ This document freezes the architectural, data, analysis, persistence, and UI-int
 
 The existing Tank Health / Water Quality UI is considered visually complete for this stage. Implementation work governed by this contract must connect that UI to authoritative data and analysis without redesigning the approved screens unless a later explicit UI change is requested.
 
-Accepted clarification on 26 September 2026 (K03.0): the selected tank type determines which measurement fields are shown. Preserve the existing screen structure, cards, field styling, grid, and navigation while populating them with the applicable measurements in section 25.1. Basic, tank-specific, and additional measurements are logical groups, not approval for a new visual layout. K03.1 subsequently freezes nitrate, nitrite, and phosphate recording semantics in section 6.1. K03.2 freezes the test/device selection, source-semantic resolution, and normalization workflow in sections 6.2, 6.5, 7, and 28.1. K03.3 freezes the canonical ammonia reporting bases in section 6.3. K03.4 freezes concurrent multi-result measurement/cardinality behavior in section 6.6. K03.5 freezes marine salinity/specific-gravity semantics and conversion safety in section 6.7. K03.6 freezes alkalinity/KH semantics, canonical units, and duplicate-field prevention in section 6.8. K03.7 freezes dissolved-oxygen concentration/saturation semantics and conversion prerequisites in section 6.9. K03.8 freezes chlorine/chloramine semantics, sample-context requirements, and multi-result handling in section 6.10. K03.9 freezes marine calcium/magnesium elemental semantics and hardness separation in section 6.11. K03.10 freezes conductivity/TDS semantics, temperature-basis provenance, and safe EC↔TDS behavior in section 6.12. K03.11 freezes direct-vs-calculated CO2 semantics in section 6.13. K03.12 freezes iron/potassium canonical semantics, iron analytical-scope handling, and the no-auto-dosing boundary in section 6.14; the remaining K03 decisions stay open.
+Accepted clarification on 26 September 2026 (K03.0): the selected tank type determines which measurement fields are shown. Preserve the existing screen structure, cards, field styling, grid, and navigation while populating them with the applicable measurements in section 25.1. Basic, tank-specific, and additional measurements are logical groups, not approval for a new visual layout. K03.1 subsequently freezes nitrate, nitrite, and phosphate recording semantics in section 6.1. K03.2 freezes the test/device selection, source-semantic resolution, and normalization workflow in sections 6.2, 6.5, 7, and 28.1. K03.3 freezes the canonical ammonia reporting bases in section 6.3. K03.4 freezes concurrent multi-result measurement/cardinality behavior in section 6.6. K03.5 freezes marine salinity/specific-gravity semantics and conversion safety in section 6.7. K03.6 freezes alkalinity/KH semantics, canonical units, and duplicate-field prevention in section 6.8. K03.7 freezes dissolved-oxygen concentration/saturation semantics and conversion prerequisites in section 6.9. K03.8 freezes chlorine/chloramine semantics, sample-context requirements, and multi-result handling in section 6.10. K03.9 freezes marine calcium/magnesium elemental semantics and hardness separation in section 6.11. K03.10 freezes conductivity/TDS semantics, temperature-basis provenance, and safe EC↔TDS behavior in section 6.12. K03.11 freezes direct-vs-calculated CO2 semantics in section 6.13. K03.12 freezes iron/potassium canonical semantics, iron analytical-scope handling, and the no-auto-dosing boundary in section 6.14. K03.13 freezes general-hardness semantics, canonical basis, and dGH conversion behavior in section 6.15; the remaining K03 decisions stay open.
 
 This contract is intentionally broader than a screen implementation. It defines the foundation that later powers:
 
@@ -376,13 +376,13 @@ These meanings must stay consistent between input interpretation, normalized rec
 
 For a compatible source already reporting the same basis and unit, normalization is an identity operation: a test result of 18 mg/L as NO3 remains 18 mg/L nitrate. This example is not a safe-range threshold. K03.1 does not authorize guessing the basis of an unidentified test result or relabelling existing `nitratePpm` / `phosphatePpm` catalog values. Under accepted K03.2, source semantics must be resolved from a verified test/device profile or an explicit guided typed selection before canonicalization; unidentified semantics are never guessed.
 
-The other original unit proposals remain subject to their own decisions:
+Remaining original scalar conventions are:
 
 - temperature: degrees Celsius;
 - pH: unitless;
-- GH: degrees dGH;
-- KH: degrees dKH;
-- ammonia: canonical ammonia semantic defined in section 6.3.
+- GH: accepted K03.13 canonical `mg/L as CaCO3`, with verified `dGH` source/display conversion;
+- KH/alkalinity: governed by K03.6 rather than a generic dKH field semantic;
+- ammonia: canonical ammonia semantics defined in section 6.3.
 
 UI formatting and parsing must use `LocaleFormatter` or the central locale policy. The UI must not use ad-hoc `toDoubleOrNull`, comma replacement, or locale-blind number parsing.
 
@@ -605,7 +605,25 @@ Decision accepted with the user on 26 September 2026: AquaLight supports iron an
 - **Fail closed:** unresolved iron scope, unsupported sample matrix/method, unknown compound basis, or incompatible rule semantics produce source-native/draft or `INSUFFICIENT_DATA` behavior according to K03.2 rather than a fabricated nutrient assessment.
 
 K03.12 does not freeze plant nutrient target ranges, fertilizer brands, or dosing quantities. Those require evidence-backed rule/recommendation decisions.
+### 6.15 Accepted general-hardness / GH policy (K03.13)
+
+Decision accepted on 26 September 2026 for aquarium usability and consistent rule matching: AquaLight treats aquarium GH as a total/general-hardness measurement, keeps the familiar `dGH` user experience, and normalizes the same hardness quantity to a CaCO3-equivalent canonical basis below the UI boundary.
+
+- **Canonical metric:** use `GENERAL_HARDNESS` for aquarium general/total hardness with canonical unit **mg/L as CaCO3**.
+- **Aquarium display/input:** the normal user-facing label remains **"Genel sertlik (GH)"**. A verified aquarium drop test that reports degrees German hardness may show/input **dGH** directly; the user enters the number produced by the test and performs no manual conversion.
+- **Verified unit conversion:** for the same general-hardness semantic, use the accepted hardness conversion `1 mg/L as CaCO3 = 0.056 °dH`, equivalently about `1 dGH = 17.9 mg/L as CaCO3`. Preserve the raw source value/unit and normalize separately. Conversion constants/revision are covered by unit tests.
+- **GH is not KH/alkalinity:** `GENERAL_HARDNESS` must never alias `CARBONATE_HARDNESS` or `TOTAL_ALKALINITY`, even when the UI uses familiar GH/KH degree labels. K03.6 remains authoritative for alkalinity/KH behavior.
+- **GH is not elemental Ca or Mg:** general hardness in aquarium practice is driven primarily by calcium and magnesium hardness equivalents, but one GH value does not reveal the individual elemental Ca2+ and Mg2+ concentrations. AquaLight must not split GH into calcium and magnesium by assumption or feed GH directly into marine elemental Ca/Mg rules.
+- **No naive Ca+Mg sum:** elemental calcium and magnesium values in mg/L must not simply be added and called GH. A calculation to CaCO3-equivalent hardness requires the approved equivalent-mass method and complete required inputs; if supported later, it is a derived result with calculation provenance.
+- **Source profile semantics:** known GH test/device profiles declare whether they report dGH, mg/L as CaCO3, or another supported hardness representation. An unidentified `ppm` or generic `hardness` result is not silently assumed to be general hardness as CaCO3.
+- **Concurrent hardness outputs:** if a verified device independently reports general/total hardness and calcium hardness or another hardness fraction, preserve them as separate typed metrics under K03.4; do not overwrite one with another.
+- **UI simplicity:** no extra laboratory controls are added for ordinary GH entry. Source profile selection resolves the representation automatically; guided fallback is used only for an unknown product as required by K03.2.
+- **Fail closed:** unresolved hardness type/basis or an unsupported source representation remains source-native/draft or `INSUFFICIENT_DATA` according to K03.2 rather than being guessed into GH.
+
+K03.13 freezes representation and conversion semantics only. Species/tank GH target ranges remain evidence-backed rule-catalog data and are not approved by this unit decision.
 ---
+
+## 7. Measurement provenance---
 
 ## 7. Measurement provenance
 
@@ -1153,9 +1171,9 @@ Source of truth: `AquariumTankSnapshot.tankType`, using `AquariumTankTaxonomy` c
 
 | Canonical tank code | Existing Turkish picker label | Analysis profile | Default fields in addition to the common core |
 | --- | --- | --- | --- |
-| `Fish` | Balık | Freshwater | General hardness (Genel sertlik / GH), buffering capacity (Tampon kapasitesi / KH) |
-| `Shrimp` | Karides | Freshwater shrimp | General hardness (GH), buffering capacity (KH) |
-| `Planted` | Bitkili | Planted freshwater | General hardness (GH), buffering capacity (KH), phosphate (Fosfat / PO4) |
+| `Fish` | Balık | Freshwater | General hardness (Genel sertlik / GH; K03.13), buffering capacity (Tampon kapasitesi / KH) |
+| `Shrimp` | Karides | Freshwater shrimp | General hardness (GH; K03.13), buffering capacity (KH) |
+| `Planted` | Bitkili | Planted freshwater | General hardness (GH; K03.13), buffering capacity (KH), phosphate (Fosfat / PO4) |
 | `Marine` | Deniz | Marine | Salinity (Tuzluluk), alkalinity (Alkalinite / KH), phosphate (PO4) |
 | `Softies` | Yumuşak Mercan | Marine / soft coral | Salinity, alkalinity, phosphate, calcium (Kalsiyum / Ca), magnesium (Magnezyum / Mg) |
 | `Mixed Reef` | Karma Resif | Marine / mixed reef | Salinity, alkalinity, phosphate, calcium, magnesium |
@@ -1198,7 +1216,7 @@ For `Other`/unknown profiles, the supported fields listed above and the profile-
 - A visible field is not a promise of a complete assessment. Unmeasured, measured zero, inapplicable, unknown test basis, and missing assessment rules must remain distinct. A critical known result must not be hidden by a partial-data state.
 - Preserve entered drafts and persisted measurements when tank type changes; no field hidden by the new profile may silently discard its value or be persisted invisibly. Resolve affected draft values explicitly before saving. Detailed interaction belongs to the later state/UI decision.
 - Store the assessment's tank-type/profile context with its provenance. History/detail render the saved measurement set and assessment context; today's tank type must not erase or reinterpret yesterday's fields. The latest result must expose a context mismatch if the tank type has since changed.
-- K03.1 fixes nitrate/nitrite/phosphate meanings, K03.2 source-resolution/normalization, K03.3 TAN/direct-NH3 bases, K03.4 concurrent multi-result behavior, K03.5 marine salinity/SG safety, K03.6 alkalinity/KH semantics, K03.7 dissolved oxygen, K03.8 chlorine/chloramine/sample-context, K03.9 marine elemental Ca/Mg, K03.10 conductivity/TDS, K03.11 direct-vs-calculated CO2, and K03.12 iron/potassium semantics plus the no-auto-dosing boundary. Remaining K03 work is evidence-backed profile/conversion/precision data and any still-unresolved supported measurement semantics. K03.0–K03.12 do not accept numerical safety thresholds, complete implementation, or all of K03/K11/K13.
+- K03.1 fixes nitrate/nitrite/phosphate meanings, K03.2 source-resolution/normalization, K03.3 TAN/direct-NH3 bases, K03.4 concurrent multi-result behavior, K03.5 marine salinity/SG safety, K03.6 alkalinity/KH semantics, K03.7 dissolved oxygen, K03.8 chlorine/chloramine/sample-context, K03.9 marine elemental Ca/Mg, K03.10 conductivity/TDS, K03.11 direct-vs-calculated CO2, K03.12 iron/potassium, and K03.13 general-hardness semantics. Remaining K03 work is evidence-backed profile/conversion/precision data and any still-unresolved supported measurement semantics. K03.0–K03.13 do not accept numerical safety thresholds, complete implementation, or all of K03/K11/K13.
 
 Evidence and repository references for this scope are recorded in [the K03 research note](research/WATER_ANALYSIS_CONCENTRATION_UNITS_K03.md). The per-type visibility matrix is a product decision informed by those sources, not a scientific claim that all listed tests must be performed at every save.
 
@@ -1696,6 +1714,9 @@ Cover:
 - known Fe test profiles resolve scope without extra user-facing laboratory choices; unknown scope fails closed;
 - K2O/compound-basis potassium does not silently enter elemental-K rules;
 - bare Fe/K measurements never generate fertilizer dosing quantities;
+- `GENERAL_HARDNESS` canonicalizes to mg/L as CaCO3; verified dGH conversion round-trips preserve the raw source value;
+- GH never aliases KH/alkalinity or elemental Ca/Mg, and elemental Ca+Mg are not naively summed into GH;
+- unknown hardness/ppm semantics fail closed instead of being guessed into GH;
 - SG conversion requires declared reference/calibration temperature and all algorithm prerequisites;
 - conductivity→PSS-78 uses a versioned standards-based algorithm with golden-vector tests and applicability checks;
 - unknown/ambiguous `ppt` never normalizes by label alone;
@@ -1804,63 +1825,64 @@ The implementation order is frozen as follows.
 11. K03.10 conductivity canonical µS/cm + source-reported TDS ppm and safe conversion policy (accepted);
 12. K03.11 direct measured CO2 vs same-event pH+KH calculated CO2 policy (accepted);
 13. K03.12 iron mg/L-as-Fe analytical-scope + potassium mg/L-as-K and no-auto-dosing policy (accepted);
-14. severity/status model;
-15. species-range intersection/conflict policy;
-16. intrinsic chemistry rule catalog and evidence revision.
+14. K03.13 general-hardness canonical mg/L-as-CaCO3 + dGH display/conversion policy (accepted);
+15. severity/status model;
+16. species-range intersection/conflict policy;
+17. intrinsic chemistry rule catalog and evidence revision.
 
 ### Phase 2 - Application/domain foundation
 
-17. WaterAnalysis input/record models;
-18. structured assessment models;
-19. recommendation/reason codes;
-20. PlantCareCatalogOperations boundary;
-21. AquariumHealthContext model/provider;
-22. reuse/integrate LivestockWaterAdvisorOperations;
-23. WaterQualityAssessmentEngine;
-24. TankWaterTemperatureOperations boundary.
+18. WaterAnalysis input/record models;
+19. structured assessment models;
+20. recommendation/reason codes;
+21. PlantCareCatalogOperations boundary;
+22. AquariumHealthContext model/provider;
+23. reuse/integrate LivestockWaterAdvisorOperations;
+24. WaterQualityAssessmentEngine;
+25. TankWaterTemperatureOperations boundary.
 
 ### Phase 3 - Persistence
 
-25. dedicated water-analysis proto/store;
-26. schema version;
-27. strict store rules;
-28. owner/tank-scoped queries;
-29. create/delete/latest operations;
-30. persisted assessment/provenance snapshot.
+26. dedicated water-analysis proto/store;
+27. schema version;
+28. strict store rules;
+29. owner/tank-scoped queries;
+30. create/delete/latest operations;
+31. persisted assessment/provenance snapshot.
 
 ### Phase 4 - Integrity
 
-31. integrate Water Analysis into tank deletion transaction;
-32. process-death recovery;
-33. account deletion cleanup;
-34. backup/restore policy and implementation if included;
-35. data inventory / export updates where applicable.
+32. integrate Water Analysis into tank deletion transaction;
+33. process-death recovery;
+34. account deletion cleanup;
+35. backup/restore policy and implementation if included;
+36. data inventory / export updates where applicable.
 
 ### Phase 5 - UI integration
 
-36. WaterAnalysisViewModel;
-37. save real analysis;
-38. replace mock history;
-39. pass analysisId through Safe Args;
-40. bind real record detail;
-41. implement real delete;
-42. bind latest analysis to Tank Health Water Quality metrics;
-43. connect fresh cooling sensor temperature.
+37. WaterAnalysisViewModel;
+38. save real analysis;
+39. replace mock history;
+40. pass analysisId through Safe Args;
+41. bind real record detail;
+42. implement real delete;
+43. bind latest analysis to Tank Health Water Quality metrics;
+44. connect fresh cooling sensor temperature.
 
 ### Phase 6 - Validation
 
-44. engine tests;
-45. persistence tests;
-46. owner/process-death tests;
-47. ViewModel/UI contract tests;
-48. architecture/lint/detekt/CodeQL;
-49. all CI green.
+45. engine tests;
+46. persistence tests;
+47. owner/process-death tests;
+48. ViewModel/UI contract tests;
+49. architecture/lint/detekt/CodeQL;
+50. all CI green.
 
 Only after this sequence:
 
-50. Algae Control;
-51. Plant Health;
-52. Livestock Health.
+51. Algae Control;
+52. Plant Health;
+53. Livestock Health.
 
 ---
 
@@ -1882,6 +1904,7 @@ Water Quality is complete only when all of the following are true:
 - TDS accepts the meter's ppm value as reported without asking the user for a conversion factor; conductivity remains separate, and any EC↔TDS translation requires a verified source profile/temperature basis and is never double-counted;
 - CO2 may be either directly measured in mg/L as CO2 or explicitly calculated from compatible same-event pH+KH; calculated CO2 is labelled/provenanced separately, pH alone and drop-checker color never fabricate ppm, and a direct result is never overwritten by the calculation;
 - potassium uses elemental mg/L as K, while iron uses mg/L as Fe with its verified analytical scope preserved; the entry UI remains simple and no bare Fe/K measurement produces an automatic fertilizer dose;
+- freshwater GH uses `GENERAL_HARDNESS` canonical mg/L as CaCO3 with familiar verified dGH source/display support; GH is never substituted for KH/alkalinity or elemental Ca/Mg;
 - unresolved source semantics are excluded from committed analysis and may remain in draft while other resolved measurements are saved; changing a source never silently reinterprets an entered number;
 - tank-type changes do not silently lose draft values or remove historical measurements;
 - a user can enter a physically valid analysis and save it;
