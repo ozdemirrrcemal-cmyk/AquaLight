@@ -589,7 +589,7 @@ Decision accepted on 26 September 2026 for commercial-safety behavior: AquaLight
 K03.11 deliberately avoids turning aquarium shorthand into false precision. Direct CO2 measurements may participate in hard rules when evidence-backed; indirect estimates remain explicitly derived unless a later rule decision proves their applicability.
 ---
 
-## 7. Measurement provenance---
+## 7. Measurement provenance
 
 ## 7. Measurement provenance
 
