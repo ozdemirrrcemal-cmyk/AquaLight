@@ -27,9 +27,9 @@ class WaterAnalysisUiContractTest {
 
     @Test
     fun addAnalysisUsesProfileModelsAndHasNoFixedWaterValueFixtures() {
-        val controller = file(
+        val renderer = file(
             "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
-                "WaterAnalysisParameterController.kt"
+                "WaterAnalysisParameterRenderer.kt"
         )
         val waterLayout = file(
             "app/src/main/res/layout/item_tank_health_analysis_water_parameters.xml"
@@ -42,15 +42,15 @@ class WaterAnalysisUiContractTest {
             "app/src/main/res/layout/item_tank_health_analysis_parameter_input.xml"
         )
 
-        assertTrue(controller.contains("WaterTestProfileUiCatalog.recommendedIds("))
-        assertTrue(controller.contains("WaterTestPickerBottomSheet.show("))
+        assertTrue(renderer.contains("WaterTestProfileUiCatalog.recommendedIds("))
+        assertTrue(renderer.contains("WaterTestPickerBottomSheet.show("))
+        assertTrue(renderer.contains("ItemTankHealthAnalysisAddTestBinding.inflate("))
         assertTrue(waterLayout.contains("recommendedParametersContainer"))
         assertTrue(waterLayout.contains("additionalParametersContainer"))
-        assertTrue(addTestLayout.contains("btnAddTest"))
-        assertTrue(addTestLayout.contains("aqua_size_110"))
-        assertTrue(controller.contains("ItemTankHealthAnalysisAddTestBinding.inflate("))
         assertTrue(waterLayout.contains("waterParametersCard"))
         assertTrue(waterLayout.contains("additionalTestsCard"))
+        assertTrue(addTestLayout.contains("btnAddTest"))
+        assertTrue(addTestLayout.contains("aqua_size_110"))
         assertTrue(parameterLayout.contains("ivParameterIcon"))
         assertTrue(parameterLayout.contains("bg_water_test_symbol_chip"))
         assertTrue(parameterLayout.contains("aqua_size_110"))
@@ -62,9 +62,9 @@ class WaterAnalysisUiContractTest {
 
     @Test
     fun sensorUiCannotClaimAReadingBeforeAuthoritativeIntegration() {
-        val state = file(
+        val controller = file(
             "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
-                "WaterAnalysisDraftUiState.kt"
+                "WaterAnalysisTemperatureUiController.kt"
         )
         val sensorLayout = file(
             "app/src/main/res/layout/item_tank_health_analysis_sensor_section.xml"
@@ -72,16 +72,12 @@ class WaterAnalysisUiContractTest {
         val strings = file("app/src/main/res/values/tank_health_analysis_strings.xml")
 
         assertTrue(
-            state.contains(
+            controller.contains(
                 "sensorUiState: TemperatureSensorUiState = " +
                     "TemperatureSensorUiState.Unavailable"
             )
         )
-        assertTrue(
-            state.contains(
-                "temperatureSource: TemperatureSource = TemperatureSource.MANUAL"
-            )
-        )
+        assertTrue(controller.contains("TemperatureSource.MANUAL"))
         assertFalse(sensorLayout.contains("tank_health_analysis_temperature_value"))
         assertFalse(sensorLayout.contains("tank_health_analysis_device_name"))
         assertFalse(strings.contains("Cooling Mini v2"))
@@ -97,40 +93,17 @@ class WaterAnalysisUiContractTest {
             "app/src/main/res/layout/fragment_tank_health_analysis_add.xml"
         )
 
-        assertTrue(fragment.contains("parameterController?.render(nextProfile)"))
-        assertFalse(fragment.contains("if (nextProfile == tankProfile) return@observe"))
+        val sameProfileRender = """
+            if (nextProfile == tankProfile) {
+                parameterRenderer?.render(nextProfile)
+                return@observe
+            }
+        """.trimIndent()
+
+        assertTrue(fragment.contains(sameProfileRender))
         assertTrue(screen.contains("android:id=\"@+id/sensorSection\""))
         assertTrue(screen.contains("android:id=\"@+id/waterParametersSection\""))
         assertTrue(screen.contains("android:layout_marginTop=\"@dimen/aqua_size_12\""))
-    }
-
-    @Test
-    fun waterAnalysisImplementationDoesNotSuppressStaticAnalysisRules() {
-        val guardedFiles = listOf(
-            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/common/" +
-                "AquariumTankTaxonomyText.kt",
-            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
-                "TankHealthAnalysisAddFragment.kt",
-            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
-                "WaterAnalysisDraftUiState.kt",
-            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
-                "WaterAnalysisMeasurementTimeController.kt",
-            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
-                "WaterAnalysisParameterController.kt",
-            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
-                "WaterAnalysisParameterRenderer.kt",
-            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
-                "WaterAnalysisSensorController.kt",
-            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
-                "WaterAnalysisTemperatureUiController.kt"
-        )
-
-        guardedFiles.forEach { relativePath ->
-            assertFalse(
-                "$relativePath must resolve static-analysis findings instead of suppressing them.",
-                file(relativePath).contains("@Suppress")
-            )
-        }
     }
 
     @Test
@@ -139,40 +112,29 @@ class WaterAnalysisUiContractTest {
             "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
                 "TankHealthAnalysisAddFragment.kt"
         )
-        val state = file(
+        val measurementController = file(
             "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
-                "WaterAnalysisDraftUiState.kt"
+                "WaterAnalysisMeasurementTimeController.kt"
+        )
+        val temperatureController = file(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
+                "WaterAnalysisTemperatureUiController.kt"
         )
 
         assertTrue(fragment.contains("override fun onSaveInstanceState(outState: Bundle)"))
-        assertTrue(fragment.contains("uiState.save(outState)"))
-        assertTrue(state.contains("STATE_MEASUREMENT_TIME_MILLIS"))
-        assertTrue(state.contains("STATE_TEMPERATURE_SOURCE"))
-        assertTrue(state.contains("STATE_MANUAL_TEMPERATURE"))
-        assertTrue(state.contains("STATE_ADDITIONAL_PARAMETER_IDS"))
-        assertTrue(state.contains("STATE_PARAMETER_VALUE_IDS"))
-        assertTrue(state.contains("STATE_PARAMETER_VALUES"))
+        assertTrue(fragment.contains("measurementTimeController?.saveState(outState)"))
+        assertTrue(fragment.contains("temperatureUiController?.saveState(outState)"))
+        assertTrue(fragment.contains("STATE_ADDITIONAL_PARAMETER_IDS"))
+        assertTrue(fragment.contains("STATE_PARAMETER_VALUE_IDS"))
+        assertTrue(fragment.contains("STATE_PARAMETER_VALUES"))
+        assertTrue(measurementController.contains("STATE_MEASUREMENT_TIME_MILLIS"))
+        assertTrue(temperatureController.contains("STATE_TEMPERATURE_SOURCE"))
+        assertTrue(temperatureController.contains("STATE_MANUAL_TEMPERATURE"))
     }
 
     @Test
-    fun waterAnalysisCodeDoesNotSuppressStaticAnalysisFindings() {
-        val fragment = file(
-            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
-                "TankHealthAnalysisAddFragment.kt"
-        )
-        val taxonomyText = file(
-            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/common/" +
-                "AquariumTankTaxonomyText.kt"
-        )
-
-        assertFalse(fragment.contains("@Suppress("))
-        assertFalse(taxonomyText.contains("@Suppress("))
-    }
-
-
-    @Test
-    fun waterAnalysisUiDoesNotSuppressStaticAnalysis() {
-        val paths = listOf(
+    fun waterAnalysisImplementationIsSuppressionFreeAndHasSingleControllerPath() {
+        val activeFiles = listOf(
             "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/common/" +
                 "AquariumTankTaxonomyText.kt",
             "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
@@ -180,13 +142,30 @@ class WaterAnalysisUiContractTest {
             "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
                 "WaterAnalysisMeasurementTimeController.kt",
             "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
-                "WaterAnalysisTemperatureUiController.kt",
+                "WaterAnalysisParameterRenderer.kt",
             "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
-                "WaterAnalysisParameterRenderer.kt"
+                "WaterAnalysisTemperatureUiController.kt"
+        )
+        val retiredFiles = listOf(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
+                "WaterAnalysisDraftUiState.kt",
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
+                "WaterAnalysisParameterController.kt",
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
+                "WaterAnalysisSensorController.kt"
         )
 
-        paths.forEach { path ->
-            assertFalse("$path must not suppress static analysis", file(path).contains("@Suppress("))
+        activeFiles.forEach { relativePath ->
+            assertFalse(
+                "$relativePath must resolve static-analysis findings without suppression.",
+                file(relativePath).contains("@Suppress")
+            )
+        }
+        retiredFiles.forEach { relativePath ->
+            assertFalse(
+                "$relativePath is an obsolete parallel implementation.",
+                File(repositoryRoot, relativePath).exists()
+            )
         }
     }
 
