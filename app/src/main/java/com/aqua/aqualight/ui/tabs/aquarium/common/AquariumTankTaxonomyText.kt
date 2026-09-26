@@ -8,16 +8,49 @@ import com.aqua.aqualight.application.aquarium.AquariumTankTaxonomy
 object AquariumTankTaxonomyText {
     private data class Choice(val code: String, @StringRes val labelRes: Int)
 
+    private val waterEnvironments = listOf(
+        Choice(
+            AquariumTankTaxonomy.WATER_ENVIRONMENT_FRESHWATER,
+            R.string.aquarium_water_environment_freshwater
+        ),
+        Choice(
+            AquariumTankTaxonomy.WATER_ENVIRONMENT_BRACKISH,
+            R.string.aquarium_water_environment_brackish
+        ),
+        Choice(
+            AquariumTankTaxonomy.WATER_ENVIRONMENT_MARINE,
+            R.string.aquarium_water_environment_marine
+        )
+    )
+
     private val tankTypes = listOf(
-        Choice(AquariumTankTaxonomy.TYPE_FISH, R.string.aquarium_tank_type_fish),
-        Choice(AquariumTankTaxonomy.TYPE_SHRIMP, R.string.aquarium_tank_type_shrimp),
-        Choice(AquariumTankTaxonomy.TYPE_PLANTED, R.string.aquarium_tank_type_planted),
-        Choice(AquariumTankTaxonomy.TYPE_MARINE, R.string.aquarium_tank_type_marine),
-        Choice(AquariumTankTaxonomy.TYPE_SOFTIES, R.string.aquarium_tank_type_softies),
-        Choice(AquariumTankTaxonomy.TYPE_MIXED_REEF, R.string.aquarium_tank_type_mixed_reef),
-        Choice(AquariumTankTaxonomy.TYPE_SPS, R.string.aquarium_tank_type_sps),
-        Choice(AquariumTankTaxonomy.TYPE_CORAL, R.string.aquarium_tank_type_coral),
-        Choice(AquariumTankTaxonomy.TYPE_OTHER, R.string.aquarium_tank_type_other)
+        Choice(
+            AquariumTankTaxonomy.TYPE_FRESHWATER_FISH,
+            R.string.aquarium_tank_profile_freshwater_fish
+        ),
+        Choice(AquariumTankTaxonomy.TYPE_PLANTED, R.string.aquarium_tank_profile_planted),
+        Choice(AquariumTankTaxonomy.TYPE_SHRIMP, R.string.aquarium_tank_profile_shrimp),
+        Choice(
+            AquariumTankTaxonomy.TYPE_BRACKISH_GENERAL,
+            R.string.aquarium_tank_profile_brackish_general
+        ),
+        Choice(AquariumTankTaxonomy.TYPE_MARINE_FISH, R.string.aquarium_tank_profile_marine_fish),
+        Choice(
+            AquariumTankTaxonomy.TYPE_SOFT_CORAL_REEF,
+            R.string.aquarium_tank_profile_soft_coral_reef
+        ),
+        Choice(AquariumTankTaxonomy.TYPE_LPS_REEF, R.string.aquarium_tank_profile_lps_reef),
+        Choice(AquariumTankTaxonomy.TYPE_SPS_REEF, R.string.aquarium_tank_profile_sps_reef),
+        Choice(AquariumTankTaxonomy.TYPE_MIXED_REEF, R.string.aquarium_tank_profile_mixed_reef),
+        Choice(
+            AquariumTankTaxonomy.TYPE_OTHER_FRESHWATER,
+            R.string.aquarium_tank_profile_other
+        ),
+        Choice(
+            AquariumTankTaxonomy.TYPE_OTHER_BRACKISH,
+            R.string.aquarium_tank_profile_other
+        ),
+        Choice(AquariumTankTaxonomy.TYPE_OTHER_MARINE, R.string.aquarium_tank_profile_other)
     )
 
     private val presetStyles = listOf(
@@ -32,6 +65,12 @@ object AquariumTankTaxonomyText {
         Choice(AquariumTankTaxonomy.STYLE_ISLAND, R.string.aquarium_style_island)
     )
 
+    fun canonicalWaterEnvironment(context: Context, value: String): String? =
+        canonical(value, waterEnvironments) { context.getString(it) }
+
+    fun waterEnvironmentLabel(context: Context, value: String): String =
+        label(value, waterEnvironments) { context.getString(it) }
+
     fun canonicalTankType(context: Context, value: String): String? =
         canonical(value, tankTypes) { context.getString(it) }
 
@@ -45,6 +84,12 @@ object AquariumTankTaxonomyText {
 
     fun tankStyleLabel(context: Context, value: String): String =
         label(value, presetStyles) { context.getString(it) }
+
+    internal fun canonicalWaterEnvironment(value: String, labelFor: (Int) -> String): String? =
+        canonical(value, waterEnvironments, labelFor)
+
+    internal fun waterEnvironmentLabel(value: String, labelFor: (Int) -> String): String =
+        label(value, waterEnvironments, labelFor)
 
     internal fun canonicalTankType(value: String, labelFor: (Int) -> String): String? =
         canonical(value, tankTypes, labelFor)
@@ -67,10 +112,15 @@ object AquariumTankTaxonomyText {
     ): String? {
         val trimmed = value.trim()
         if (trimmed.isEmpty()) return null
-        return choices.firstOrNull { choice ->
-            choice.code.equals(trimmed, ignoreCase = true) ||
-                labelFor(choice.labelRes).trim().equals(trimmed, ignoreCase = true)
-        }?.code
+
+        choices.firstOrNull { choice ->
+            choice.code.equals(trimmed, ignoreCase = true)
+        }?.let { return it.code }
+
+        val labelMatches = choices.filter { choice ->
+            labelFor(choice.labelRes).trim().equals(trimmed, ignoreCase = true)
+        }
+        return labelMatches.singleOrNull()?.code
     }
 
     private fun label(
@@ -81,8 +131,7 @@ object AquariumTankTaxonomyText {
         val trimmed = value.trim()
         if (trimmed.isEmpty()) return ""
         val choice = choices.firstOrNull { choice ->
-            choice.code.equals(trimmed, ignoreCase = true) ||
-                labelFor(choice.labelRes).trim().equals(trimmed, ignoreCase = true)
+            choice.code.equals(trimmed, ignoreCase = true)
         }
         return choice?.let { labelFor(it.labelRes) } ?: trimmed
     }
