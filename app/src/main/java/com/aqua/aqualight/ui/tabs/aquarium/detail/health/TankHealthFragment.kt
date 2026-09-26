@@ -10,7 +10,6 @@ import androidx.recyclerview.widget.GridLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumTankTaxonomy
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisSnapshot
-import com.aqua.aqualight.application.aquarium.health.WaterMeasurementSnapshot
 import com.aqua.aqualight.application.aquarium.health.WaterParameter
 import com.aqua.aqualight.databinding.FragmentTankHealthBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
@@ -96,7 +95,7 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
             return
         }
 
-        val latestMeasurements = latestMeasurementsByParameter(currentAnalyses)
+        val latestMeasurements = WaterAnalysisLatestMeasurements.from(currentAnalyses)
         val models = TankHealthWaterMetricUiCatalog.models(
             tankProfile = profile,
             measuredParameterIds = latestMeasurements.keys.map(WaterParameter::toUiParameterId)
@@ -116,18 +115,6 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
             }
         }
         contentAdapter?.submitWaterMetrics(models)
-    }
-
-    private fun latestMeasurementsByParameter(
-        analyses: List<WaterAnalysisSnapshot>
-    ): Map<WaterParameter, WaterMeasurementSnapshot> {
-        val latest = linkedMapOf<WaterParameter, WaterMeasurementSnapshot>()
-        analyses.forEach { analysis ->
-            analysis.measurements.forEach { measurement ->
-                latest.putIfAbsent(measurement.parameter, measurement)
-            }
-        }
-        return latest
     }
 
     private fun openAddAnalysis() {

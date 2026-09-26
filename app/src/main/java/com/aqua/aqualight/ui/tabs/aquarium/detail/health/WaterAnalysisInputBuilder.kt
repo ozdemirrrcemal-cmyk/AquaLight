@@ -9,6 +9,7 @@ internal data class WaterAnalysisInputBuildRequest(
     val measuredAtMillis: Long,
     val temperatureText: String,
     val temperatureSource: WaterTemperatureSource,
+    val visibleParameterIds: Set<WaterTestParameterId>,
     val parameterState: WaterAnalysisParameterState
 )
 
@@ -26,7 +27,10 @@ internal sealed interface WaterAnalysisInputBuildResult {
 internal object WaterAnalysisInputBuilder {
 
     fun build(request: WaterAnalysisInputBuildRequest): WaterAnalysisInputBuildResult {
-        val measurements = buildMeasurements(request.parameterState)
+        val measurements = buildMeasurements(
+            request.parameterState,
+            request.visibleParameterIds
+        )
         val temperature = parseTemperature(request.temperatureText)
 
         return when {
@@ -48,12 +52,14 @@ internal object WaterAnalysisInputBuilder {
     }
 
     private fun buildMeasurements(
-        state: WaterAnalysisParameterState
+        state: WaterAnalysisParameterState,
+        visibleParameterIds: Set<WaterTestParameterId>
     ): MeasurementBuildResult {
         val values = mutableListOf<WaterMeasurementInput>()
         var failure: WaterAnalysisInputBuildResult.Failure? = null
 
         state.parameterValues.forEach { (parameterId, rawValue) ->
+            if (parameterId !in visibleParameterIds) return@forEach
             val trimmed = rawValue.trim()
             if (trimmed.isNotEmpty() && failure == null) {
                 val value = WaterAnalysisValueParser.parse(trimmed)

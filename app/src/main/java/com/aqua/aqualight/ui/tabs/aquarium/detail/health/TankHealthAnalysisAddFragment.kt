@@ -15,6 +15,7 @@ import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 class TankHealthAnalysisAddFragment :
@@ -157,14 +158,21 @@ class TankHealthAnalysisAddFragment :
     }
 
     private fun saveAnalysis() {
+        val profile = tankProfile ?: return
         val timeController = requireNotNull(measurementTimeController)
         val temperatureController = requireNotNull(temperatureUiController)
+        val visibleParameterIds = (
+            WaterTestProfileUiCatalog.recommendedIds(profile) +
+                WaterTestProfileUiCatalog.additionalIds(profile)
+                    .filter(parameterState.additionalParameters::contains)
+            ).toSet()
         val buildResult = WaterAnalysisInputBuilder.build(
             WaterAnalysisInputBuildRequest(
                 tankId = args.tankId,
                 measuredAtMillis = timeController.measurementTimeMillis(),
                 temperatureText = temperatureController.currentValueText(),
                 temperatureSource = temperatureController.currentDomainSource(),
+                visibleParameterIds = visibleParameterIds,
                 parameterState = parameterState
             )
         )
@@ -174,18 +182,21 @@ class TankHealthAnalysisAddFragment :
             is WaterAnalysisInputBuildResult.Success -> {
                 binding.btnSaveAnalysis.isEnabled = false
                 viewLifecycleOwner.lifecycleScope.launch {
-                    runCatching {
+                    try {
                         waterAnalysisViewModel.saveAnalysis(buildResult.input)
-                    }.onSuccess {
                         if (_binding != null) {
                             findNavController().navigateUp()
                         }
-                    }.onFailure {
+                    } catch (cancelled: CancellationException) {
+                        throw cancelled
+                    } catch (_: Exception) {
                         _binding?.btnSaveAnalysis?.isEnabled = true
-                        (activity as? BaseActivity)?.showSnackBar(
-                            message = getString(R.string.tank_health_analysis_save_failed),
-                            type = BaseActivity.SnackType.ERROR
-                        )
+                        if (_binding != null) {
+                            (activity as? BaseActivity)?.showSnackBar(
+                                message = getString(R.string.tank_health_analysis_save_failed),
+                                type = BaseActivity.SnackType.ERROR
+                            )
+                        }
                     }
                 }
             }
@@ -232,21 +243,20 @@ class TankHealthAnalysisAddFragment :
             }
 
             tankProfile = nextProfile
-            val allowedAdditional = nextProfile
-                ?.let(WaterTestProfileUiCatalog::additionalIds)
-                .orEmpty()
-                .toSet()
-            parameterState.additionalParameters.retainAll(allowedAdditional)
-
             val visibleParameterIds = linkedSetOf<WaterTestParameterId>()
             if (nextProfile != null) {
                 visibleParameterIds.addAll(
                     WaterTestProfileUiCatalog.recommendedIds(nextProfile)
                 )
             }
-            visibleParameterIds.addAll(parameterState.additionalParameters)
-            parameterState.parameterValues.keys.retainAll(visibleParameterIds)
-            parameterState.measurementSelections.keys.retainAll(visibleParameterIds)
+            visibleParameterIds.addAll(
+                nextProfile
+                    ?.let(WaterTestProfileUiCatalog::additionalIds)
+                    .orEmpty()
+                    .filter(parameterState.additionalParameters::contains)
+            )
+            // Keep hidden draft input when the tank type changes; only visible
+            // fields enter the event assembled above.
 
             parameterState.activeMeasurementParameterId
                 ?.takeIf { activeId -> activeId !in visibleParameterIds }

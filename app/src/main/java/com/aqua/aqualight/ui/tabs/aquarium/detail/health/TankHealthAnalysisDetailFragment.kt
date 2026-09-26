@@ -17,6 +17,7 @@ import com.aqua.aqualight.ui.common.dialog.ConfirmDialogFragment
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.utils.DialogType
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 class TankHealthAnalysisDetailFragment :
@@ -125,18 +126,21 @@ class TankHealthAnalysisDetailFragment :
         if (currentRecord == null) return
         binding.btnDeleteRecord.isEnabled = false
         viewLifecycleOwner.lifecycleScope.launch {
-            runCatching {
+            try {
                 waterAnalysisViewModel.deleteAnalysis(args.analysisId)
-            }.onSuccess {
                 if (_binding != null) {
                     findNavController().navigateUp()
                 }
-            }.onFailure {
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
                 _binding?.btnDeleteRecord?.isEnabled = true
-                (activity as? BaseActivity)?.showSnackBar(
-                    message = getString(R.string.tank_health_analysis_delete_failed),
-                    type = BaseActivity.SnackType.ERROR
-                )
+                if (_binding != null) {
+                    (activity as? BaseActivity)?.showSnackBar(
+                        message = getString(R.string.tank_health_analysis_delete_failed),
+                        type = BaseActivity.SnackType.ERROR
+                    )
+                }
             }
         }
     }

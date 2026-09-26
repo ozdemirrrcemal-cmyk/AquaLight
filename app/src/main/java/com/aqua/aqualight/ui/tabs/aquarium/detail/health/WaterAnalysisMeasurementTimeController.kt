@@ -32,9 +32,9 @@ internal class WaterAnalysisMeasurementTimeController(
                 result.getString(AppDatePickerDialogFragment.RESULT_KEY) ==
                 AppDatePickerDialogFragment.RESULT_SELECTED
             ) {
-                selectedCalendar.timeInMillis = result.getLong(
+                WaterAnalysisObservationTime.withDate(selectedCalendar, result.getLong(
                     AppDatePickerDialogFragment.RESULT_MILLIS
-                )
+                ))
                 render()
             }
         }
@@ -47,11 +47,9 @@ internal class WaterAnalysisMeasurementTimeController(
                 result.getString(AppTimePickerDialogFragment.RESULT_KEY) ==
                 AppTimePickerDialogFragment.RESULT_SELECTED
             ) {
-                selectedCalendar.timeInMillis = result.getLong(
+                WaterAnalysisObservationTime.withTime(selectedCalendar, result.getLong(
                     AppTimePickerDialogFragment.RESULT_MILLIS
-                )
-                selectedCalendar.set(Calendar.SECOND, 0)
-                selectedCalendar.set(Calendar.MILLISECOND, 0)
+                ))
                 render()
             }
         }

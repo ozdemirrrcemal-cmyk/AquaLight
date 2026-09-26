@@ -1,5 +1,10 @@
 # AquaLight Aquarium Water Analysis Contract
 
+> Historical foundation contract. For work based on `feat/water-analysis-ui-flow`, use
+> [AQUARIUM_WATER_ANALYSIS_PRODUCTION_CONTRACT.md](AQUARIUM_WATER_ANALYSIS_PRODUCTION_CONTRACT.md)
+> and its [production checklist](AQUARIUM_WATER_ANALYSIS_PRODUCTION_CHECKLIST.md).
+> This draft's earlier inventory does not describe the current UI/data code.
+
 ## Status
 
 This document freezes the architectural, data, analysis, persistence, and UI-integration contract for the first production-grade Aquarium Health analysis flow.
