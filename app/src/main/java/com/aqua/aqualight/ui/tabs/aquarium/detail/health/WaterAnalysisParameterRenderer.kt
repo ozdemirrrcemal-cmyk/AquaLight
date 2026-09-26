@@ -113,7 +113,14 @@ internal class WaterAnalysisParameterRenderer(
                     if (itemIndex < models.size) {
                         addParameterCard(row, models[itemIndex], column, spacing)
                     } else {
-                        addTestTile(row, tankProfile, availableAdditional, column, spacing)
+                        addTestTile(
+                            row = row,
+                            tankProfile = tankProfile,
+                            availableAdditional = availableAdditional,
+                            column = column,
+                            spacing = spacing,
+                            fullWidth = indexes.size == 1
+                        )
                     }
                 }
                 if (indexes.size < PARAMETERS_PER_ROW) {
@@ -173,7 +180,8 @@ internal class WaterAnalysisParameterRenderer(
         tankProfile: String,
         availableAdditional: List<WaterTestParameterId>,
         column: Int,
-        spacing: Int
+        spacing: Int,
+        fullWidth: Boolean
     ) {
         val addBinding = ItemTankHealthAnalysisAddTestBinding.inflate(
             fragment.layoutInflater,
@@ -203,7 +211,17 @@ internal class WaterAnalysisParameterRenderer(
                 parameterIds = availableAdditional
             )
         }
-        row.addView(addBinding.root, gridCellLayoutParams(column, spacing))
+        row.addView(
+            addBinding.root,
+            if (fullWidth) {
+                LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+            } else {
+                gridCellLayoutParams(column, spacing)
+            }
+        )
     }
 
     private fun addGridSpacer(row: LinearLayout, spacing: Int) {

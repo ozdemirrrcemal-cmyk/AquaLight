@@ -2,50 +2,90 @@
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    style="@style/Widget.Aqua.Card.Metric"
+    style="@style/Widget.Aqua.Card.Grouped"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    app:cardCornerRadius="@dimen/aqua_size_16"
+    app:strokeColor="@color/aqua_card_outline_subtle">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="@dimen/aqua_size_12">
+        android:padding="@dimen/aqua_size_10">
 
-        <TextView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:includeFontPadding="false"
-            android:text="@string/tank_health_analysis_sensor_title"
-            android:textColor="@color/aqua_card_text_primary"
-            android:textSize="@dimen/aqua_text_size_body_xlarge"
-            android:textStyle="bold" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/aqua_size_4"
-            android:includeFontPadding="false"
-            android:text="@string/tank_health_analysis_sensor_subtitle"
-            android:textColor="@color/aqua_card_text_secondary"
-            android:textSize="@dimen/aqua_text_size_caption" />
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Aqua.Card.Inline"
+                android:layout_width="@dimen/aqua_size_40"
+                android:layout_height="@dimen/aqua_size_40"
+                app:cardBackgroundColor="@color/aqua_card_icon_accent_surface"
+                app:cardCornerRadius="@dimen/aqua_size_20"
+                app:cardElevation="@dimen/aqua_size_0"
+                app:strokeWidth="@dimen/aqua_size_0">
+
+                <ImageView
+                    android:layout_width="@dimen/aqua_size_20"
+                    android:layout_height="@dimen/aqua_size_20"
+                    android:layout_gravity="center"
+                    android:contentDescription="@null"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_tank_health_thermometer_24"
+                    app:tint="@color/aqua_accent_primary" />
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <LinearLayout
+                android:layout_width="@dimen/aqua_size_0"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/aqua_size_10"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:includeFontPadding="false"
+                    android:text="@string/tank_health_analysis_sensor_title"
+                    android:textColor="@color/aqua_card_text_primary"
+                    android:textSize="@dimen/aqua_text_size_body_xlarge"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/aqua_size_2"
+                    android:includeFontPadding="false"
+                    android:text="@string/tank_health_analysis_sensor_subtitle"
+                    android:textColor="@color/aqua_card_text_secondary"
+                    android:textSize="@dimen/aqua_text_size_caption" />
+
+            </LinearLayout>
+
+        </LinearLayout>
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardSensorStatus"
             style="@style/Widget.Aqua.Card.Metric"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/aqua_size_64"
-            android:layout_marginTop="@dimen/aqua_size_10">
+            android:layout_height="@dimen/aqua_size_56"
+            android:layout_marginTop="@dimen/aqua_size_8"
+            app:strokeColor="@color/aqua_card_outline_subtle">
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:paddingHorizontal="@dimen/aqua_size_12">
+                android:paddingHorizontal="@dimen/aqua_size_10">
 
                 <ImageView
                     android:id="@+id/ivSensorStatus"
-                    android:layout_width="@dimen/aqua_size_24"
-                    android:layout_height="@dimen/aqua_size_24"
+                    android:layout_width="@dimen/aqua_size_20"
+                    android:layout_height="@dimen/aqua_size_20"
                     android:contentDescription="@null"
                     android:importantForAccessibility="no"
                     android:src="@drawable/ic_tank_health_sensor_24"
@@ -57,7 +97,7 @@
                 <LinearLayout
                     android:layout_width="@dimen/aqua_size_0"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/aqua_size_10"
+                    android:layout_marginStart="@dimen/aqua_size_8"
                     android:orientation="vertical"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
@@ -76,13 +116,13 @@
                         android:id="@+id/tvSensorStatusValue"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/aqua_size_2"
+                        android:layout_marginTop="@dimen/aqua_size_1"
                         android:ellipsize="end"
                         android:includeFontPadding="false"
                         android:maxLines="1"
                         android:text="@string/tank_health_analysis_sensor_unavailable"
                         android:textColor="@color/aqua_card_text_primary"
-                        android:textSize="@dimen/aqua_text_size_body" />
+                        android:textSize="@dimen/aqua_text_size_body_small" />
 
                 </LinearLayout>
 
@@ -93,17 +133,17 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="@dimen/aqua_size_1"
-            android:layout_marginTop="@dimen/aqua_size_10"
+            android:layout_marginTop="@dimen/aqua_size_8"
             android:background="@color/aqua_card_divider" />
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="@dimen/aqua_size_52">
+            android:layout_height="@dimen/aqua_size_44">
 
             <ImageView
                 android:id="@+id/temperatureSourceIcon"
-                android:layout_width="@dimen/aqua_size_22"
-                android:layout_height="@dimen/aqua_size_22"
+                android:layout_width="@dimen/aqua_size_20"
+                android:layout_height="@dimen/aqua_size_20"
                 android:contentDescription="@null"
                 android:importantForAccessibility="no"
                 android:src="@drawable/ic_tank_health_thermometer_24"
@@ -116,8 +156,8 @@
                 android:id="@+id/temperatureSourceLabel"
                 android:layout_width="@dimen/aqua_size_0"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/aqua_size_10"
-                android:layout_marginEnd="@dimen/aqua_size_8"
+                android:layout_marginStart="@dimen/aqua_size_8"
+                android:layout_marginEnd="@dimen/aqua_size_6"
                 android:includeFontPadding="false"
                 android:text="@string/tank_health_analysis_temperature_source"
                 android:textColor="@color/aqua_card_text_primary"
@@ -129,8 +169,8 @@
 
             <LinearLayout
                 android:id="@+id/temperatureSourceSelector"
-                android:layout_width="@dimen/aqua_size_170"
-                android:layout_height="@dimen/aqua_size_38"
+                android:layout_width="@dimen/aqua_size_160"
+                android:layout_height="@dimen/aqua_size_34"
                 android:orientation="horizontal"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -160,7 +200,7 @@
                         android:includeFontPadding="false"
                         android:text="@string/tank_health_analysis_source_sensor"
                         android:textColor="@color/aqua_card_text_secondary"
-                        android:textSize="@dimen/aqua_text_size_body_small" />
+                        android:textSize="@dimen/aqua_text_size_caption" />
 
                 </com.google.android.material.card.MaterialCardView>
 
@@ -188,7 +228,7 @@
                         android:includeFontPadding="false"
                         android:text="@string/tank_health_analysis_source_manual"
                         android:textColor="@color/aqua_content_on_dark"
-                        android:textSize="@dimen/aqua_text_size_body_small"
+                        android:textSize="@dimen/aqua_text_size_caption"
                         android:textStyle="bold" />
 
                 </com.google.android.material.card.MaterialCardView>
@@ -204,12 +244,12 @@
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="@dimen/aqua_size_64">
+            android:layout_height="@dimen/aqua_size_56">
 
             <ImageView
                 android:id="@+id/temperatureValueIcon"
-                android:layout_width="@dimen/aqua_size_22"
-                android:layout_height="@dimen/aqua_size_22"
+                android:layout_width="@dimen/aqua_size_20"
+                android:layout_height="@dimen/aqua_size_20"
                 android:contentDescription="@null"
                 android:importantForAccessibility="no"
                 android:src="@drawable/ic_tank_health_thermometer_24"
@@ -222,8 +262,8 @@
                 android:id="@+id/temperatureValueLabel"
                 android:layout_width="@dimen/aqua_size_0"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/aqua_size_10"
-                android:layout_marginEnd="@dimen/aqua_size_8"
+                android:layout_marginStart="@dimen/aqua_size_8"
+                android:layout_marginEnd="@dimen/aqua_size_6"
                 android:includeFontPadding="false"
                 android:text="@string/tank_health_analysis_temperature"
                 android:textColor="@color/aqua_card_text_primary"
@@ -236,9 +276,9 @@
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/inputTemperatureLayout"
                 style="@style/Widget.Aqua.Input.Layout"
-                android:layout_width="@dimen/aqua_size_112"
+                android:layout_width="@dimen/aqua_size_128"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="@dimen/aqua_size_8"
+                android:layout_marginEnd="@dimen/aqua_size_6"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@id/cardSensorReadingBadge"
                 app:layout_constraintTop_toTopOf="parent"
@@ -248,10 +288,11 @@
                     android:id="@+id/inputTemperature"
                     style="@style/Widget.Aqua.Input.EditText"
                     android:layout_width="match_parent"
-                    android:layout_height="@dimen/aqua_size_50"
+                    android:layout_height="@dimen/aqua_size_44"
                     android:gravity="center_vertical"
                     android:inputType="numberDecimal"
-                    android:selectAllOnFocus="true" />
+                    android:selectAllOnFocus="true"
+                    android:textSize="@dimen/aqua_text_size_body" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -259,10 +300,10 @@
                 android:id="@+id/cardSensorReadingBadge"
                 style="@style/Widget.Aqua.Card.Inline"
                 android:layout_width="wrap_content"
-                android:layout_height="@dimen/aqua_size_30"
+                android:layout_height="@dimen/aqua_size_28"
                 android:visibility="gone"
                 app:cardBackgroundColor="@color/aqua_surface_positive"
-                app:cardCornerRadius="@dimen/aqua_size_15"
+                app:cardCornerRadius="@dimen/aqua_size_14"
                 app:cardElevation="@dimen/aqua_size_0"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -276,7 +317,7 @@
                     android:drawablePadding="@dimen/aqua_size_4"
                     android:gravity="center"
                     android:includeFontPadding="false"
-                    android:paddingHorizontal="@dimen/aqua_size_10"
+                    android:paddingHorizontal="@dimen/aqua_size_8"
                     android:text="@string/tank_health_analysis_from_sensor"
                     android:textColor="@color/aqua_accent_positive"
                     android:textSize="@dimen/aqua_text_size_status_micro"
@@ -290,7 +331,8 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/aqua_size_32"
+            android:layout_marginStart="@dimen/aqua_size_28"
+            android:layout_marginTop="@dimen/aqua_size_2"
             android:includeFontPadding="false"
             android:text="@string/tank_health_analysis_sensor_helper"
             android:textColor="@color/aqua_content_muted"

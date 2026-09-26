@@ -50,10 +50,14 @@ class WaterAnalysisUiContractTest {
         assertTrue(waterLayout.contains("waterParametersCard"))
         assertTrue(waterLayout.contains("additionalTestsCard"))
         assertTrue(addTestLayout.contains("btnAddTest"))
-        assertTrue(addTestLayout.contains("aqua_size_110"))
+        assertTrue(addTestLayout.contains("aqua_size_92"))
         assertTrue(parameterLayout.contains("ivParameterIcon"))
         assertTrue(parameterLayout.contains("bg_water_test_symbol_chip"))
-        assertTrue(parameterLayout.contains("aqua_size_110"))
+        assertTrue(parameterLayout.contains("aqua_size_92"))
+        assertTrue(parameterLayout.contains("aqua_size_44"))
+        assertTrue(waterLayout.contains("android:layout_gravity=\"end\""))
+        assertTrue(renderer.contains("fullWidth = indexes.size == 1"))
+        assertFalse(parameterLayout.contains("aqua_size_110"))
         assertFalse(parameterLayout.contains("aqua_size_140"))
         assertFalse(values.contains("tank_health_analysis_input_"))
         assertFalse(waterLayout.contains("inputPh"))
@@ -69,6 +73,9 @@ class WaterAnalysisUiContractTest {
         val sensorLayout = file(
             "app/src/main/res/layout/item_tank_health_analysis_sensor_section.xml"
         )
+        val measurementLayout = file(
+            "app/src/main/res/layout/item_tank_health_analysis_measurement_time.xml"
+        )
         val strings = file("app/src/main/res/values/tank_health_analysis_strings.xml")
 
         assertTrue(
@@ -81,6 +88,9 @@ class WaterAnalysisUiContractTest {
         assertFalse(sensorLayout.contains("tank_health_analysis_temperature_value"))
         assertFalse(sensorLayout.contains("tank_health_analysis_device_name"))
         assertFalse(strings.contains("Cooling Mini v2"))
+        assertTrue(sensorLayout.contains("aqua_size_56"))
+        assertTrue(sensorLayout.contains("aqua_size_44"))
+        assertTrue(measurementLayout.contains("aqua_size_56"))
     }
 
     @Test
