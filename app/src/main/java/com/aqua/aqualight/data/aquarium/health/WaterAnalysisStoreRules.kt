@@ -97,10 +97,6 @@ internal object WaterAnalysisStoreRules {
         return stored
     }
 
-    fun requirePositiveId(field: String, value: Long) {
-        requirePositive(field, value)
-    }
-
     fun nextUniqueId(
         current: List<StoredWaterAnalysis>,
         nowMillis: Long = System.currentTimeMillis()
@@ -138,7 +134,7 @@ internal object WaterAnalysisStoreRules {
         }
     }
 
-    private fun requirePositive(field: String, value: Long) {
+    fun requirePositive(field: String, value: Long) {
         if (value <= 0L) violation("$field must be positive.")
     }
 

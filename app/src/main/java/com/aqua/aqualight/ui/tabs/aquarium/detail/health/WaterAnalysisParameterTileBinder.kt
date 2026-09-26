@@ -96,7 +96,7 @@ internal class WaterAnalysisParameterTileBinder(
             }
         }
 
-        bindUnitSelector(binding, model, selection, unitOptions, hasUnit, openConfiguration)
+        bindUnitSelector(binding, model, selection, unitOptions, openConfiguration)
         bindUnitlessHeader(binding, model, hasUnit, openConfiguration)
     }
 
@@ -120,9 +120,9 @@ internal class WaterAnalysisParameterTileBinder(
         model: WaterTestParameterUiModel,
         selection: WaterMeasurementSelectionUi,
         unitOptions: List<WaterMeasurementOptionUi>,
-        hasUnit: Boolean,
         openConfiguration: View.OnClickListener
     ) {
+        val hasUnit = unitOptions.isNotEmpty()
         binding.unitDivider.isVisible = hasUnit
         binding.unitSelector.isVisible = hasUnit
         binding.unitSelector.isClickable = hasUnit

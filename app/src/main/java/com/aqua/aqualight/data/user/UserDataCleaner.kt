@@ -112,30 +112,12 @@ class UserDataCleaner private constructor(
             }
         }
 
-        runStep(Step.CARE_TASKS) {
-            NotificationPlatform.get(appContext)
-                .preferenceUseCase
-                .cancelOwner(targetOwnerUid)
-            CareTaskDataStoreManager.create(appContext)
-                .clearAllTasks(ownerUid = targetOwnerUid)
+        clearOwnerStores(
+            ownerUid = targetOwnerUid,
+            tankStore = tankDataStoreManager
+        ) { step, block ->
+            runStep(step, block)
         }
-
-        runStep(Step.WATER_ANALYSES) {
-            clearWaterAnalyses(targetOwnerUid)
-        }
-
-        runStep(Step.AQUARIUM_TANKS) { tankDataStoreManager.clearAllTanks(targetOwnerUid) }
-
-        runStep(Step.DEVICE_ASSIGNMENTS) {
-            TankDeviceAssignmentStore.get(appContext)
-                .clearOwnerAssignments(ownerUid = targetOwnerUid)
-        }
-
-        runStep(Step.PROVISIONING_SESSIONS) {
-            clearProvisioningData(targetOwnerUid)
-        }
-
-        clearDeviceStores(targetOwnerUid) { step, block -> runStep(step, block) }
 
         runStep(Step.APP_OWNED_FILES) {
             clearAppOwnedUserFiles(
@@ -154,15 +136,32 @@ class UserDataCleaner private constructor(
         return CleanupResult(issues = issues.toList())
     }
 
-    private suspend fun clearWaterAnalyses(ownerUid: String) {
-        WaterAnalysisDataStoreManager(appContext)
-            .clearAllAnalyses(ownerUid = ownerUid)
-    }
-
-    private suspend fun clearDeviceStores(
+    private suspend fun clearOwnerStores(
         ownerUid: String,
+        tankStore: AquariumTankDataStoreManager,
         runStep: suspend (Step, suspend () -> Unit) -> Unit
     ) {
+        runStep(Step.CARE_TASKS) {
+            NotificationPlatform.get(appContext)
+                .preferenceUseCase
+                .cancelOwner(ownerUid)
+            CareTaskDataStoreManager.create(appContext)
+                .clearAllTasks(ownerUid = ownerUid)
+        }
+        runStep(Step.WATER_ANALYSES) {
+            WaterAnalysisDataStoreManager(appContext)
+                .clearAllAnalyses(ownerUid = ownerUid)
+        }
+        runStep(Step.AQUARIUM_TANKS) {
+            tankStore.clearAllTanks(ownerUid)
+        }
+        runStep(Step.DEVICE_ASSIGNMENTS) {
+            TankDeviceAssignmentStore.get(appContext)
+                .clearOwnerAssignments(ownerUid = ownerUid)
+        }
+        runStep(Step.PROVISIONING_SESSIONS) {
+            clearProvisioningData(ownerUid)
+        }
         runStep(Step.KNOWN_DEVICES) {
             DeviceKnownStore(
                 context = appContext,

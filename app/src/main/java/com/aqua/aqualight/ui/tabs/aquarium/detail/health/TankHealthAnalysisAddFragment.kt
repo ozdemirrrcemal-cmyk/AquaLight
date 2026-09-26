@@ -65,7 +65,12 @@ class TankHealthAnalysisAddFragment :
         )
 
         setupHeader()
-        setupSelectionResultListeners()
+        WaterAnalysisSelectionResultBinder(
+            fragment = this,
+            state = parameterState,
+            tankProfile = { tankProfile },
+            renderer = { parameterRenderer }
+        ).bind()
         setupNavigation()
         observeTankProfile()
     }
@@ -136,15 +141,6 @@ class TankHealthAnalysisAddFragment :
                 onBackClick = { findNavController().navigateUp() }
             )
         )
-    }
-
-    private fun setupSelectionResultListeners() {
-        WaterAnalysisSelectionResultBinder(
-            fragment = this,
-            state = parameterState,
-            tankProfile = { tankProfile },
-            renderer = { parameterRenderer }
-        ).bind()
     }
 
     private fun setupNavigation() {

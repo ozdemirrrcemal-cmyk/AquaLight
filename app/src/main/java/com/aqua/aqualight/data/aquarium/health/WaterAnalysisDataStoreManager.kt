@@ -39,14 +39,14 @@ internal class WaterAnalysisDataStoreManager(
         }
 
     fun analysesForTankFlow(tankId: Long): Flow<List<WaterAnalysisRecord>> {
-        WaterAnalysisStoreRules.requirePositiveId("tankId", tankId)
+        WaterAnalysisStoreRules.requirePositive("tankId", tankId)
         return analysesFlow.map { analyses ->
             analyses.filter { record -> record.tankId == tankId }
         }
     }
 
     fun analysisFlow(analysisId: Long): Flow<WaterAnalysisRecord?> {
-        WaterAnalysisStoreRules.requirePositiveId("analysisId", analysisId)
+        WaterAnalysisStoreRules.requirePositive("analysisId", analysisId)
         return analysesFlow.map { analyses ->
             analyses.firstOrNull { record -> record.id == analysisId }
         }
@@ -88,7 +88,7 @@ internal class WaterAnalysisDataStoreManager(
     }
 
     suspend fun deleteAnalysis(analysisId: Long) {
-        WaterAnalysisStoreRules.requirePositiveId("analysisId", analysisId)
+        WaterAnalysisStoreRules.requirePositive("analysisId", analysisId)
         val ownerUid = UserDataScope.requireCurrentUid()
         appContext.waterAnalysesDataStore.updateData { currentStore ->
             requireOwnerScope(ownerUid)
@@ -101,7 +101,7 @@ internal class WaterAnalysisDataStoreManager(
     }
 
     suspend fun deleteAnalysesForTank(tankId: Long) {
-        WaterAnalysisStoreRules.requirePositiveId("tankId", tankId)
+        WaterAnalysisStoreRules.requirePositive("tankId", tankId)
         val ownerUid = UserDataScope.requireCurrentUid()
         appContext.waterAnalysesDataStore.updateData { currentStore ->
             requireOwnerScope(ownerUid)
@@ -149,7 +149,7 @@ internal class WaterAnalysisDataStoreManager(
     }
 
     private suspend fun requireTankExistsForOwner(ownerUid: String, tankId: Long) {
-        WaterAnalysisStoreRules.requirePositiveId("tankId", tankId)
+        WaterAnalysisStoreRules.requirePositive("tankId", tankId)
         if (tankStore.tanksSnapshotForOwner(ownerUid).none { tank -> tank.id == tankId }) {
             throw StoreInvariantViolation(
                 "Water analysis references a tank that does not exist for the active owner."

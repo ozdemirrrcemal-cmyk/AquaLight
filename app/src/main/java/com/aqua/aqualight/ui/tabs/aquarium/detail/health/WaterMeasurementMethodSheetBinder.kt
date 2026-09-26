@@ -26,7 +26,16 @@ internal class WaterMeasurementMethodSheetBinder(
         setupChoiceResult()
         setupMethodActions()
         setupOptionActions()
-        setupApplyAction()
+        binding.btnApply.setOnClickListener {
+            val normalized = WaterMeasurementUiCatalog.normalizeSelection(
+                state.parameterId,
+                state.selection
+            )
+            state.selection = normalized
+            if (WaterMeasurementUiCatalog.isSelectionValid(state.parameterId, normalized)) {
+                onApply(normalized)
+            }
+        }
         render()
     }
 
@@ -106,19 +115,6 @@ internal class WaterMeasurementMethodSheetBinder(
                 selectedId = state.selection.unitId,
                 payloadId = PAYLOAD_UNIT
             )
-        }
-    }
-
-    private fun setupApplyAction() {
-        binding.btnApply.setOnClickListener {
-            val normalized = WaterMeasurementUiCatalog.normalizeSelection(
-                state.parameterId,
-                state.selection
-            )
-            state.selection = normalized
-            if (WaterMeasurementUiCatalog.isSelectionValid(state.parameterId, normalized)) {
-                onApply(normalized)
-            }
         }
     }
 
