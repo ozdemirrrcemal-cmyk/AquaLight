@@ -73,6 +73,8 @@ internal class WaterAnalysisMeasurementTimeController(
         render()
     }
 
+    fun measurementTimeMillis(): Long = selectedCalendar.timeInMillis
+
     fun saveState(outState: Bundle) {
         outState.putLong(STATE_MEASUREMENT_TIME_MILLIS, selectedCalendar.timeInMillis)
     }

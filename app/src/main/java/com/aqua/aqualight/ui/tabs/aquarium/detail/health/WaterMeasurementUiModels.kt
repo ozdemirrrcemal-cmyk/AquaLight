@@ -3,6 +3,12 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 import android.os.Bundle
 import androidx.annotation.StringRes
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.aquarium.health.WaterMeasurementBasis
+import com.aqua.aqualight.application.aquarium.health.WaterMeasurementCatalog
+import com.aqua.aqualight.application.aquarium.health.WaterMeasurementMethod
+import com.aqua.aqualight.application.aquarium.health.WaterMeasurementSelection
+import com.aqua.aqualight.application.aquarium.health.WaterMeasurementUnit
+import com.aqua.aqualight.application.aquarium.health.WaterParameter
 
 internal enum class WaterMeasurementMethodUi {
     MANUAL,
@@ -26,199 +32,102 @@ internal data class WaterMeasurementOptionUi(
 internal object WaterMeasurementUiCatalog {
 
     fun defaultSelection(parameterId: WaterTestParameterId): WaterMeasurementSelectionUi =
-        WaterMeasurementSelectionUi(
-            method = WaterMeasurementMethodUi.MANUAL,
-            testKitId = OPTION_NONE,
-            basisId = canonicalBasis(parameterId).id,
-            unitId = canonicalUnit(parameterId)?.id ?: UNIT_NONE
-        )
+        WaterMeasurementCatalog
+            .defaultSelection(parameterId.toDomainParameter())
+            .toUiSelection()
 
     fun normalizeSelection(
         parameterId: WaterTestParameterId,
         selection: WaterMeasurementSelectionUi
     ): WaterMeasurementSelectionUi {
-        val normalizedKitId = if (selection.method == WaterMeasurementMethodUi.TEST_KIT) {
-            selection.testKitId.takeIf { candidate ->
-                testKitOptions(parameterId).any { option -> option.id == candidate }
-            } ?: OPTION_NONE
-        } else {
-            OPTION_NONE
-        }
-
-        val constrainedSelection = selection.copy(testKitId = normalizedKitId)
-        val basisOptions = selectableBasisOptions(parameterId, constrainedSelection)
-        val unitOptions = selectableUnitOptions(parameterId, constrainedSelection)
-
-        return constrainedSelection.copy(
-            basisId = selection.basisId.takeIf { candidate ->
-                basisOptions.any { option -> option.id == candidate }
-            } ?: basisOptions.first().id,
-            unitId = if (unitOptions.isEmpty()) {
-                UNIT_NONE
-            } else {
-                selection.unitId.takeIf { candidate ->
-                    unitOptions.any { option -> option.id == candidate }
-                } ?: unitOptions.first().id
-            }
-        )
+        val parameter = parameterId.toDomainParameter()
+        val candidate = selection.toDomainSelectionOrNull(parameter)
+            ?: WaterMeasurementCatalog.defaultSelection(parameter)
+        return WaterMeasurementCatalog
+            .normalizeSelection(parameter, candidate)
+            .toUiSelection()
     }
 
     fun isSelectionValid(
         parameterId: WaterTestParameterId,
         selection: WaterMeasurementSelectionUi
     ): Boolean {
-        val normalized = normalizeSelection(parameterId, selection)
-        val hasRequiredTestKit =
-            selection.method != WaterMeasurementMethodUi.TEST_KIT ||
-                selection.testKitId != OPTION_NONE
-        return normalized == selection && hasRequiredTestKit
+        val parameter = parameterId.toDomainParameter()
+        val candidate = selection.toDomainSelectionOrNull(parameter) ?: return false
+        return WaterMeasurementCatalog.isSelectionValid(parameter, candidate)
     }
 
-    fun testKitOptions(parameterId: WaterTestParameterId): List<WaterMeasurementOptionUi> =
-        buildList {
+    fun domainSelectionOrNull(
+        parameterId: WaterTestParameterId,
+        selection: WaterMeasurementSelectionUi
+    ): WaterMeasurementSelection? {
+        val parameter = parameterId.toDomainParameter()
+        val candidate = selection.toDomainSelectionOrNull(parameter) ?: return null
+        return candidate.takeIf {
+            WaterMeasurementCatalog.isSelectionValid(parameter, candidate)
+        }
+    }
+
+    fun testKitOptions(parameterId: WaterTestParameterId): List<WaterMeasurementOptionUi> {
+        val parameter = parameterId.toDomainParameter()
+        return buildList {
             add(WaterMeasurementOptionUi(OPTION_NONE, R.string.water_measurement_not_selected))
-            if (parameterId == WaterTestParameterId.NITRATE) {
+            WaterMeasurementCatalog.builtInTestKitsFor(parameter).forEach { definition ->
                 add(
                     WaterMeasurementOptionUi(
-                        KIT_SALIFERT_NITRATE,
-                        R.string.water_measurement_kit_salifert_nitrate
+                        id = definition.id,
+                        labelRes = testKitLabelRes(definition.id)
                     )
                 )
             }
             add(WaterMeasurementOptionUi(KIT_OTHER, R.string.water_measurement_kit_other))
         }
+    }
 
     fun basisOptions(parameterId: WaterTestParameterId): List<WaterMeasurementOptionUi> =
-        when (parameterId) {
-            WaterTestParameterId.NITRATE -> listOf(
-                WaterMeasurementOptionUi(BASIS_NO3, R.string.water_measurement_basis_no3),
-                WaterMeasurementOptionUi(BASIS_NO3_N, R.string.water_measurement_basis_no3_n)
-            )
-            WaterTestParameterId.PHOSPHATE -> listOf(
-                WaterMeasurementOptionUi(BASIS_PO4, R.string.water_measurement_basis_po4),
-                WaterMeasurementOptionUi(BASIS_P, R.string.water_measurement_basis_p)
-            )
-            WaterTestParameterId.AMMONIA_AMMONIUM -> listOf(
-                WaterMeasurementOptionUi(
-                    BASIS_NH3_NH4,
-                    R.string.water_measurement_basis_nh3_nh4
-                ),
-                WaterMeasurementOptionUi(BASIS_TAN, R.string.water_measurement_basis_tan)
-            )
-            else -> listOf(canonicalBasis(parameterId))
-        }
+        WaterMeasurementCatalog
+            .basisOptions(parameterId.toDomainParameter())
+            .map(::basisOption)
 
     fun unitOptions(parameterId: WaterTestParameterId): List<WaterMeasurementOptionUi> =
-        when (parameterId) {
-            WaterTestParameterId.GH -> listOf(
-                WaterMeasurementOptionUi(UNIT_DGH, R.string.tank_health_analysis_unit_dgh),
-                WaterMeasurementOptionUi(
-                    UNIT_PPM_CACO3,
-                    R.string.tank_health_analysis_unit_ppm_caco3
-                )
-            )
-            WaterTestParameterId.KH -> listOf(
-                WaterMeasurementOptionUi(UNIT_DKH, R.string.tank_health_analysis_unit_dkh),
-                WaterMeasurementOptionUi(UNIT_MEQ_L, R.string.tank_health_analysis_unit_meq_l),
-                WaterMeasurementOptionUi(
-                    UNIT_PPM_CACO3,
-                    R.string.tank_health_analysis_unit_ppm_caco3
-                )
-            )
-            else -> canonicalUnit(parameterId)?.let(::listOf).orEmpty()
-        }
+        WaterMeasurementCatalog
+            .unitOptions(parameterId.toDomainParameter())
+            .map(::unitOption)
 
     fun selectableBasisOptions(
         parameterId: WaterTestParameterId,
         selection: WaterMeasurementSelectionUi
-    ): List<WaterMeasurementOptionUi> =
-        if (
-            selection.method == WaterMeasurementMethodUi.TEST_KIT &&
-            selection.testKitId == KIT_SALIFERT_NITRATE &&
-            parameterId == WaterTestParameterId.NITRATE
-        ) {
-            listOf(canonicalBasis(parameterId))
-        } else {
-            basisOptions(parameterId)
-        }
+    ): List<WaterMeasurementOptionUi> {
+        val parameter = parameterId.toDomainParameter()
+        val candidate = selection.toDomainSelectionOrNull(parameter)
+            ?: WaterMeasurementCatalog.defaultSelection(parameter)
+        return WaterMeasurementCatalog
+            .selectableBasisOptions(parameter, candidate)
+            .map(::basisOption)
+    }
 
     fun selectableUnitOptions(
         parameterId: WaterTestParameterId,
         selection: WaterMeasurementSelectionUi
-    ): List<WaterMeasurementOptionUi> =
-        if (
-            selection.method == WaterMeasurementMethodUi.TEST_KIT &&
-            selection.testKitId == KIT_SALIFERT_NITRATE &&
-            parameterId == WaterTestParameterId.NITRATE
-        ) {
-            canonicalUnit(parameterId)?.let(::listOf).orEmpty()
-        } else {
-            unitOptions(parameterId)
-        }
+    ): List<WaterMeasurementOptionUi> {
+        val parameter = parameterId.toDomainParameter()
+        val candidate = selection.toDomainSelectionOrNull(parameter)
+            ?: WaterMeasurementCatalog.defaultSelection(parameter)
+        return WaterMeasurementCatalog
+            .selectableUnitOptions(parameter, candidate)
+            .map(::unitOption)
+    }
 
     fun canonicalBasis(parameterId: WaterTestParameterId): WaterMeasurementOptionUi =
-        when (parameterId) {
-            WaterTestParameterId.PH ->
-                WaterMeasurementOptionUi(BASIS_PH, R.string.tank_health_test_ph)
-            WaterTestParameterId.NITRATE ->
-                WaterMeasurementOptionUi(BASIS_NO3, R.string.water_measurement_basis_no3)
-            WaterTestParameterId.NITRITE ->
-                WaterMeasurementOptionUi(BASIS_NO2, R.string.tank_health_test_symbol_nitrite)
-            WaterTestParameterId.AMMONIA_AMMONIUM ->
-                WaterMeasurementOptionUi(
-                    BASIS_NH3_NH4,
-                    R.string.water_measurement_basis_nh3_nh4
-                )
-            WaterTestParameterId.GH ->
-                WaterMeasurementOptionUi(BASIS_GH, R.string.tank_health_test_symbol_gh)
-            WaterTestParameterId.KH ->
-                WaterMeasurementOptionUi(BASIS_KH, R.string.tank_health_test_symbol_kh)
-            WaterTestParameterId.PHOSPHATE ->
-                WaterMeasurementOptionUi(BASIS_PO4, R.string.water_measurement_basis_po4)
-            WaterTestParameterId.TDS ->
-                WaterMeasurementOptionUi(BASIS_TDS, R.string.tank_health_test_symbol_tds)
-            WaterTestParameterId.EC ->
-                WaterMeasurementOptionUi(BASIS_EC, R.string.tank_health_test_symbol_ec)
-            WaterTestParameterId.CO2 ->
-                WaterMeasurementOptionUi(BASIS_CO2, R.string.tank_health_test_symbol_co2)
-            WaterTestParameterId.IRON ->
-                WaterMeasurementOptionUi(BASIS_FE, R.string.tank_health_test_symbol_iron)
-            WaterTestParameterId.POTASSIUM ->
-                WaterMeasurementOptionUi(BASIS_K, R.string.tank_health_test_symbol_potassium)
-            WaterTestParameterId.SALINITY ->
-                WaterMeasurementOptionUi(BASIS_SALINITY, R.string.tank_health_test_salinity)
-            WaterTestParameterId.SPECIFIC_GRAVITY ->
-                WaterMeasurementOptionUi(
-                    BASIS_SG,
-                    R.string.tank_health_test_symbol_specific_gravity
-                )
-            WaterTestParameterId.CALCIUM ->
-                WaterMeasurementOptionUi(BASIS_CA, R.string.tank_health_test_symbol_calcium)
-            WaterTestParameterId.MAGNESIUM ->
-                WaterMeasurementOptionUi(BASIS_MG, R.string.tank_health_test_symbol_magnesium)
-            WaterTestParameterId.COPPER ->
-                WaterMeasurementOptionUi(BASIS_CU, R.string.tank_health_test_symbol_copper)
-            WaterTestParameterId.DISSOLVED_OXYGEN ->
-                WaterMeasurementOptionUi(BASIS_O2, R.string.tank_health_test_symbol_oxygen)
-        }
+        basisOption(
+            WaterMeasurementCatalog.canonicalBasis(parameterId.toDomainParameter())
+        )
 
     fun canonicalUnit(parameterId: WaterTestParameterId): WaterMeasurementOptionUi? =
-        when (parameterId) {
-            WaterTestParameterId.PH,
-            WaterTestParameterId.SPECIFIC_GRAVITY -> null
-            WaterTestParameterId.GH ->
-                WaterMeasurementOptionUi(UNIT_DGH, R.string.tank_health_analysis_unit_dgh)
-            WaterTestParameterId.KH ->
-                WaterMeasurementOptionUi(UNIT_DKH, R.string.tank_health_analysis_unit_dkh)
-            WaterTestParameterId.TDS ->
-                WaterMeasurementOptionUi(UNIT_PPM, R.string.tank_health_analysis_unit_ppm)
-            WaterTestParameterId.EC ->
-                WaterMeasurementOptionUi(UNIT_US_CM, R.string.tank_health_analysis_unit_us_cm)
-            WaterTestParameterId.SALINITY ->
-                WaterMeasurementOptionUi(UNIT_PPT, R.string.tank_health_analysis_unit_ppt)
-            else ->
-                WaterMeasurementOptionUi(UNIT_MG_L, R.string.tank_health_analysis_unit_mg_l)
-        }
+        WaterMeasurementCatalog
+            .canonicalUnit(parameterId.toDomainParameter())
+            .takeUnless { unit -> unit == WaterMeasurementUnit.NONE }
+            ?.let(::unitOption)
 
     fun optionLabelRes(
         options: List<WaterMeasurementOptionUi>,
@@ -228,9 +137,91 @@ internal object WaterMeasurementUiCatalog {
         ?: options.firstOrNull()?.labelRes
         ?: R.string.water_measurement_not_selected
 
+    private fun WaterMeasurementSelectionUi.toDomainSelectionOrNull(
+        parameter: WaterParameter
+    ): WaterMeasurementSelection? {
+        val basis = WaterMeasurementBasis.fromId(basisId) ?: return null
+        val unit = WaterMeasurementUnit.fromId(unitId) ?: return null
+        val method = runCatching { WaterMeasurementMethod.valueOf(method.name) }.getOrNull()
+            ?: return null
+        val kitId = testKitId
+            .takeUnless { id -> id == OPTION_NONE || id.isBlank() }
+        return WaterMeasurementSelection(
+            method = method,
+            testKitId = kitId,
+            basis = basis,
+            unit = unit
+        ).takeIf { candidate ->
+            basis in WaterMeasurementCatalog.basisOptions(parameter) &&
+                (
+                    unit == WaterMeasurementCatalog.canonicalUnit(parameter) ||
+                        unit in WaterMeasurementCatalog.unitOptions(parameter)
+                    )
+        }
+    }
+
+    private fun WaterMeasurementSelection.toUiSelection(): WaterMeasurementSelectionUi =
+        WaterMeasurementSelectionUi(
+            method = WaterMeasurementMethodUi.valueOf(method.name),
+            testKitId = testKitId ?: OPTION_NONE,
+            basisId = basis.id,
+            unitId = unit.id
+        )
+
+    private fun basisOption(basis: WaterMeasurementBasis): WaterMeasurementOptionUi =
+        WaterMeasurementOptionUi(
+            id = basis.id,
+            labelRes = when (basis) {
+                WaterMeasurementBasis.PH -> R.string.tank_health_test_ph
+                WaterMeasurementBasis.NO3 -> R.string.water_measurement_basis_no3
+                WaterMeasurementBasis.NO3_N -> R.string.water_measurement_basis_no3_n
+                WaterMeasurementBasis.NO2 -> R.string.tank_health_test_symbol_nitrite
+                WaterMeasurementBasis.NH3_NH4 -> R.string.water_measurement_basis_nh3_nh4
+                WaterMeasurementBasis.TAN -> R.string.water_measurement_basis_tan
+                WaterMeasurementBasis.GH -> R.string.tank_health_test_symbol_gh
+                WaterMeasurementBasis.KH -> R.string.tank_health_test_symbol_kh
+                WaterMeasurementBasis.PO4 -> R.string.water_measurement_basis_po4
+                WaterMeasurementBasis.P -> R.string.water_measurement_basis_p
+                WaterMeasurementBasis.TDS -> R.string.tank_health_test_symbol_tds
+                WaterMeasurementBasis.EC -> R.string.tank_health_test_symbol_ec
+                WaterMeasurementBasis.CO2 -> R.string.tank_health_test_symbol_co2
+                WaterMeasurementBasis.FE -> R.string.tank_health_test_symbol_iron
+                WaterMeasurementBasis.K -> R.string.tank_health_test_symbol_potassium
+                WaterMeasurementBasis.SALINITY -> R.string.tank_health_test_salinity
+                WaterMeasurementBasis.SG -> R.string.tank_health_test_symbol_specific_gravity
+                WaterMeasurementBasis.CA -> R.string.tank_health_test_symbol_calcium
+                WaterMeasurementBasis.MG -> R.string.tank_health_test_symbol_magnesium
+                WaterMeasurementBasis.CU -> R.string.tank_health_test_symbol_copper
+                WaterMeasurementBasis.O2 -> R.string.tank_health_test_symbol_oxygen
+            }
+        )
+
+    private fun unitOption(unit: WaterMeasurementUnit): WaterMeasurementOptionUi =
+        WaterMeasurementOptionUi(
+            id = unit.id,
+            labelRes = when (unit) {
+                WaterMeasurementUnit.NONE -> R.string.water_measurement_not_selected
+                WaterMeasurementUnit.MG_L -> R.string.tank_health_analysis_unit_mg_l
+                WaterMeasurementUnit.DGH -> R.string.tank_health_analysis_unit_dgh
+                WaterMeasurementUnit.DKH -> R.string.tank_health_analysis_unit_dkh
+                WaterMeasurementUnit.PPM -> R.string.tank_health_analysis_unit_ppm
+                WaterMeasurementUnit.US_CM -> R.string.tank_health_analysis_unit_us_cm
+                WaterMeasurementUnit.PPT -> R.string.tank_health_analysis_unit_ppt
+                WaterMeasurementUnit.MEQ_L -> R.string.tank_health_analysis_unit_meq_l
+                WaterMeasurementUnit.PPM_CACO3 -> R.string.tank_health_analysis_unit_ppm_caco3
+            }
+        )
+
+    @StringRes
+    private fun testKitLabelRes(id: String): Int =
+        when (id) {
+            KIT_SALIFERT_NITRATE -> R.string.water_measurement_kit_salifert_nitrate
+            else -> R.string.water_measurement_kit_other
+        }
+
     const val OPTION_NONE = "none"
-    const val KIT_SALIFERT_NITRATE = "salifert_nitrate"
-    const val KIT_OTHER = "other"
+    const val KIT_SALIFERT_NITRATE = WaterMeasurementCatalog.SALIFERT_NITRATE_TEST_KIT_ID
+    const val KIT_OTHER = WaterMeasurementCatalog.OTHER_TEST_KIT_ID
 
     const val BASIS_PH = "ph"
     const val BASIS_NO3 = "no3"
@@ -264,6 +255,12 @@ internal object WaterMeasurementUiCatalog {
     const val UNIT_MEQ_L = "meq_l"
     const val UNIT_PPM_CACO3 = "ppm_caco3"
 }
+
+internal fun WaterTestParameterId.toDomainParameter(): WaterParameter =
+    WaterParameter.valueOf(name)
+
+internal fun WaterParameter.toUiParameterId(): WaterTestParameterId =
+    WaterTestParameterId.valueOf(name)
 
 internal object WaterMeasurementUiStateCodec {
     private const val STATE_KEY = "water_measurement_ui_selections"

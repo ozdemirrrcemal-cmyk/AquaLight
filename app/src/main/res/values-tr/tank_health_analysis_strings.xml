@@ -81,6 +81,11 @@
     <string name="tank_health_test_dissolved_oxygen">Çözünmüş Oksijen</string>
     <string name="tank_health_analysis_test_kit_note">Daha doğru sonuçlar için güvenilir test kitleri kullanın.</string>
     <string name="tank_health_analysis_save">Analizi Kaydet</string>
+    <string name="tank_health_analysis_measurement_required">En az bir su ölçümü girin.</string>
+    <string name="tank_health_analysis_invalid_parameter_value">%1$s için geçerli bir sayısal değer girin.</string>
+    <string name="tank_health_analysis_invalid_temperature">Geçerli bir sıcaklık değeri girin.</string>
+    <string name="tank_health_analysis_invalid_measurement_selection">Geçerli bir ölçüm yöntemi, test kiti ve birim seçin.</string>
+    <string name="tank_health_analysis_save_failed">Analiz kaydedilemedi. Lütfen tekrar deneyin.</string>
     <string name="tank_health_analysis_history_action">Geçmiş Kayıtlar</string>
     <string name="tank_health_analysis_new">Yeni Analiz</string>
 

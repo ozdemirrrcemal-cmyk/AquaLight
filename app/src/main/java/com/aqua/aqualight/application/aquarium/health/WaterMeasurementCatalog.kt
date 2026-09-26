@@ -101,6 +101,30 @@ object WaterMeasurementCatalog {
                 .filterNot { unit -> unit == WaterMeasurementUnit.NONE }
         }
 
+    fun selectableBasisOptions(
+        parameter: WaterParameter,
+        selection: WaterMeasurementSelection
+    ): List<WaterMeasurementBasis> {
+        val definition = selection
+            .testKitId
+            ?.takeIf { selection.method == WaterMeasurementMethod.TEST_KIT }
+            ?.let(::testKitDefinition)
+            ?.takeIf { it.parameter == parameter }
+        return definition?.let { listOf(it.basis) } ?: basisOptions(parameter)
+    }
+
+    fun selectableUnitOptions(
+        parameter: WaterParameter,
+        selection: WaterMeasurementSelection
+    ): List<WaterMeasurementUnit> {
+        val definition = selection
+            .testKitId
+            ?.takeIf { selection.method == WaterMeasurementMethod.TEST_KIT }
+            ?.let(::testKitDefinition)
+            ?.takeIf { it.parameter == parameter }
+        return definition?.let { listOf(it.unit) } ?: unitOptions(parameter)
+    }
+
     fun defaultSelection(parameter: WaterParameter): WaterMeasurementSelection =
         WaterMeasurementSelection(
             method = WaterMeasurementMethod.MANUAL,

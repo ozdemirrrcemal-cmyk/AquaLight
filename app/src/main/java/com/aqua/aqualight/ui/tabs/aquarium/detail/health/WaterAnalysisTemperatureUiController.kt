@@ -8,6 +8,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.aquarium.health.WaterTemperatureSource
 import com.aqua.aqualight.databinding.ItemTankHealthAnalysisSensorSectionBinding
 
 internal class WaterAnalysisTemperatureUiController(
@@ -84,6 +85,16 @@ internal class WaterAnalysisTemperatureUiController(
 
         renderSensorUiState()
     }
+
+    fun currentValueText(): String =
+        binding.inputTemperature.text?.toString().orEmpty().trim()
+
+    fun currentDomainSource(): WaterTemperatureSource =
+        if (temperatureSource == TemperatureSource.SENSOR) {
+            WaterTemperatureSource.SENSOR
+        } else {
+            WaterTemperatureSource.MANUAL
+        }
 
     fun saveState(outState: Bundle) {
         if (temperatureSource == TemperatureSource.MANUAL) {

@@ -4,21 +4,27 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumTankTaxonomy
+import com.aqua.aqualight.application.aquarium.health.WaterAnalysisInput
+import com.aqua.aqualight.application.aquarium.health.WaterMeasurementInput
 import com.aqua.aqualight.databinding.FragmentTankHealthAnalysisAddBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
+import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.launch
 
 class TankHealthAnalysisAddFragment :
     Fragment(R.layout.fragment_tank_health_analysis_add) {
 
     private val args: TankHealthAnalysisAddFragmentArgs by navArgs()
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
+    private val waterAnalysisViewModel: WaterAnalysisViewModel by activityViewModels()
 
     private var _binding: FragmentTankHealthAnalysisAddBinding? = null
     private val binding get() = _binding!!
@@ -223,8 +229,112 @@ class TankHealthAnalysisAddFragment :
             )
         }
 
-        // Persistence is intentionally deferred to the data-integration stage.
-        binding.btnSaveAnalysis.setOnClickListener { }
+        binding.btnSaveAnalysis.setOnClickListener {
+            saveAnalysis()
+        }
+    }
+
+    private fun saveAnalysis() {
+        val input = buildAnalysisInput() ?: return
+        binding.btnSaveAnalysis.isEnabled = false
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            runCatching {
+                waterAnalysisViewModel.saveAnalysis(input)
+            }.onSuccess {
+                if (_binding != null) {
+                    findNavController().navigateUp()
+                }
+            }.onFailure {
+                _binding?.let { currentBinding ->
+                    currentBinding.btnSaveAnalysis.isEnabled = true
+                    Snackbar.make(
+                        currentBinding.root,
+                        R.string.tank_health_analysis_save_failed,
+                        Snackbar.LENGTH_LONG
+                    ).show()
+                }
+            }
+        }
+    }
+
+    private fun buildAnalysisInput(): WaterAnalysisInput? {
+        val measurementInputs = mutableListOf<WaterMeasurementInput>()
+        parameterValues.forEach { (parameterId, rawValue) ->
+            val trimmed = rawValue.trim()
+            if (trimmed.isEmpty()) return@forEach
+
+            val value = WaterAnalysisValueParser.parse(trimmed)
+            if (value == null) {
+                showInputError(
+                    getString(
+                        R.string.tank_health_analysis_invalid_parameter_value,
+                        parameterName(parameterId)
+                    )
+                )
+                return null
+            }
+
+            val selection = measurementSelections[parameterId]
+                ?: WaterMeasurementUiCatalog.defaultSelection(parameterId)
+            val domainSelection =
+                WaterMeasurementUiCatalog.domainSelectionOrNull(parameterId, selection)
+            if (domainSelection == null) {
+                showInputError(
+                    getString(R.string.tank_health_analysis_invalid_measurement_selection)
+                )
+                return null
+            }
+
+            measurementInputs += WaterMeasurementInput(
+                parameter = parameterId.toDomainParameter(),
+                value = value,
+                selection = domainSelection
+            )
+        }
+
+        if (measurementInputs.isEmpty()) {
+            showInputError(getString(R.string.tank_health_analysis_measurement_required))
+            return null
+        }
+
+        val temperatureController = temperatureUiController
+        val temperatureText = temperatureController?.currentValueText().orEmpty()
+        val temperatureValue = if (temperatureText.isBlank()) {
+            null
+        } else {
+            WaterAnalysisValueParser.parse(temperatureText)
+                ?: run {
+                    showInputError(getString(R.string.tank_health_analysis_invalid_temperature))
+                    return null
+                }
+        }
+
+        return WaterAnalysisInput(
+            tankId = args.tankId,
+            measuredAtMillis = requireNotNull(measurementTimeController).measurementTimeMillis(),
+            temperatureCelsius = temperatureValue,
+            temperatureSource = temperatureValue?.let {
+                requireNotNull(temperatureController).currentDomainSource()
+            },
+            measurements = measurementInputs
+        )
+    }
+
+    private fun parameterName(parameterId: WaterTestParameterId): String {
+        val profile = tankProfile ?: return parameterId.name
+        return getString(
+            WaterTestProfileUiCatalog.model(
+                tankProfile = profile,
+                id = parameterId,
+                importance = WaterTestImportance.RECOMMENDED,
+                value = ""
+            ).nameRes
+        )
+    }
+
+    private fun showInputError(message: String) {
+        Snackbar.make(binding.root, message, Snackbar.LENGTH_LONG).show()
     }
 
     private fun observeTankProfile() {
@@ -253,6 +363,7 @@ class TankHealthAnalysisAddFragment :
                 )
             }
             visibleParameterIds.addAll(additionalParameters)
+            parameterValues.keys.retainAll(visibleParameterIds)
             measurementSelections.keys.retainAll(visibleParameterIds)
 
             activeMeasurementParameterId
