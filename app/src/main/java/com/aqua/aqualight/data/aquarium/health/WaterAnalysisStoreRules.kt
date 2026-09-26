@@ -97,12 +97,8 @@ internal object WaterAnalysisStoreRules {
         return stored
     }
 
-    fun requireValidTankId(tankId: Long) {
-        requirePositive("tankId", tankId)
-    }
-
-    fun requireValidAnalysisId(analysisId: Long) {
-        requirePositive("analysisId", analysisId)
+    fun requirePositiveId(field: String, value: Long) {
+        requirePositive(field, value)
     }
 
     fun nextUniqueId(
@@ -123,8 +119,14 @@ internal object WaterAnalysisStoreRules {
 
     private fun canonicalOwnerUid(value: String): String {
         val canonical = value.trim()
-        if (canonical.isBlank() || canonical != value || canonical.length > 128) {
-            violation("ownerUid must be non-blank, canonical and at most 128 characters.")
+        if (
+            canonical.isBlank() ||
+            canonical != value ||
+            canonical.length > MAX_OWNER_UID_CHARS
+        ) {
+            violation(
+                "ownerUid must be non-blank, canonical and at most $MAX_OWNER_UID_CHARS characters."
+            )
         }
         return canonical
     }
@@ -143,4 +145,6 @@ internal object WaterAnalysisStoreRules {
     private fun violation(message: String): Nothing {
         throw StoreInvariantViolation(message)
     }
+
+    private const val MAX_OWNER_UID_CHARS = 128
 }

@@ -28,6 +28,7 @@ import com.aqua.aqualight.application.user.UserSettingsOperations
 import com.aqua.aqualight.composition.AppContainer
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupCoordinator
 import com.aqua.aqualight.composition.OwnerLightOperations
+import com.aqua.aqualight.data.aquarium.AquariumTankOperationDependencies
 import com.aqua.aqualight.data.aquarium.DefaultAquariumTankOperations
 import com.aqua.aqualight.data.aquarium.catalog.livestock.DefaultLivestockCatalogOperations
 import com.aqua.aqualight.data.aquarium.catalog.livestock.DefaultLivestockWaterAdvisor
@@ -338,13 +339,15 @@ private class ReleaseSmokeViewModelFactory(
                             snapshots = snapshots
                         )
                     },
-                    deleteWaterAnalysesForTank = waterAnalysisStore::deleteAnalysesForTank,
                     removeDeviceAssignmentsForTank = assignmentRepository::removeAssignmentsForTank,
                     cancelCareTaskReminder = notificationPreferences::cancelCareTask,
                     reconcileCareReminders = notificationPreferences::reconcileOwner,
                     ownerUidProvider = { SMOKE_OWNER_UID }
                 ),
-                notificationPreferences = notificationPreferences
+                operationDependencies = AquariumTankOperationDependencies(
+                    notificationPreferences = notificationPreferences,
+                    deleteWaterAnalysesForTank = waterAnalysisStore::deleteAnalysesForTank
+                )
             )
         )
 

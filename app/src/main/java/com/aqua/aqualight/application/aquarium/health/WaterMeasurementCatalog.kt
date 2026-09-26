@@ -13,16 +13,16 @@ object WaterMeasurementCatalog {
     const val OTHER_TEST_KIT_ID = "other"
     const val SALIFERT_NITRATE_TEST_KIT_ID = "salifert_nitrate"
 
-    private val salifertNitrate = WaterTestKitDefinition(
-        id = SALIFERT_NITRATE_TEST_KIT_ID,
-        brand = "Salifert",
-        name = "Nitrate",
-        parameter = WaterParameter.NITRATE,
-        basis = WaterMeasurementBasis.NO3,
-        unit = WaterMeasurementUnit.MG_L
+    private val builtInTestKits = listOf(
+        WaterTestKitDefinition(
+            id = SALIFERT_NITRATE_TEST_KIT_ID,
+            brand = "Salifert",
+            name = "Nitrate",
+            parameter = WaterParameter.NITRATE,
+            basis = WaterMeasurementBasis.NO3,
+            unit = WaterMeasurementUnit.MG_L
+        )
     )
-
-    private val builtInTestKits = listOf(salifertNitrate)
 
     fun builtInTestKitsFor(parameter: WaterParameter): List<WaterTestKitDefinition> =
         builtInTestKits.filter { definition -> definition.parameter == parameter }
@@ -34,103 +34,26 @@ object WaterMeasurementCatalog {
         builtInTestKitsFor(parameter).map { definition -> definition.id } +
             OTHER_TEST_KIT_ID
 
-    fun canonicalBasis(parameter: WaterParameter): WaterMeasurementBasis =
-        when (parameter) {
-            WaterParameter.PH -> WaterMeasurementBasis.PH
-            WaterParameter.NITRATE -> WaterMeasurementBasis.NO3
-            WaterParameter.NITRITE -> WaterMeasurementBasis.NO2
-            WaterParameter.AMMONIA_AMMONIUM -> WaterMeasurementBasis.NH3_NH4
-            WaterParameter.GH -> WaterMeasurementBasis.GH
-            WaterParameter.KH -> WaterMeasurementBasis.KH
-            WaterParameter.PHOSPHATE -> WaterMeasurementBasis.PO4
-            WaterParameter.TDS -> WaterMeasurementBasis.TDS
-            WaterParameter.EC -> WaterMeasurementBasis.EC
-            WaterParameter.CO2 -> WaterMeasurementBasis.CO2
-            WaterParameter.IRON -> WaterMeasurementBasis.FE
-            WaterParameter.POTASSIUM -> WaterMeasurementBasis.K
-            WaterParameter.SALINITY -> WaterMeasurementBasis.SALINITY
-            WaterParameter.SPECIFIC_GRAVITY -> WaterMeasurementBasis.SG
-            WaterParameter.CALCIUM -> WaterMeasurementBasis.CA
-            WaterParameter.MAGNESIUM -> WaterMeasurementBasis.MG
-            WaterParameter.COPPER -> WaterMeasurementBasis.CU
-            WaterParameter.DISSOLVED_OXYGEN -> WaterMeasurementBasis.O2
-        }
-
-    fun canonicalUnit(parameter: WaterParameter): WaterMeasurementUnit =
-        when (parameter) {
-            WaterParameter.PH,
-            WaterParameter.SPECIFIC_GRAVITY -> WaterMeasurementUnit.NONE
-
-            WaterParameter.GH -> WaterMeasurementUnit.DGH
-            WaterParameter.KH -> WaterMeasurementUnit.DKH
-            WaterParameter.TDS -> WaterMeasurementUnit.PPM
-            WaterParameter.EC -> WaterMeasurementUnit.US_CM
-            WaterParameter.SALINITY -> WaterMeasurementUnit.PPT
-            else -> WaterMeasurementUnit.MG_L
-        }
-
-    fun basisOptions(parameter: WaterParameter): List<WaterMeasurementBasis> =
-        when (parameter) {
-            WaterParameter.NITRATE -> listOf(
-                WaterMeasurementBasis.NO3,
-                WaterMeasurementBasis.NO3_N
-            )
-            WaterParameter.PHOSPHATE -> listOf(
-                WaterMeasurementBasis.PO4,
-                WaterMeasurementBasis.P
-            )
-            WaterParameter.AMMONIA_AMMONIUM -> listOf(
-                WaterMeasurementBasis.NH3_NH4,
-                WaterMeasurementBasis.TAN
-            )
-            else -> listOf(canonicalBasis(parameter))
-        }
-
-    fun unitOptions(parameter: WaterParameter): List<WaterMeasurementUnit> =
-        when (parameter) {
-            WaterParameter.GH -> listOf(
-                WaterMeasurementUnit.DGH,
-                WaterMeasurementUnit.PPM_CACO3
-            )
-            WaterParameter.KH -> listOf(
-                WaterMeasurementUnit.DKH,
-                WaterMeasurementUnit.MEQ_L,
-                WaterMeasurementUnit.PPM_CACO3
-            )
-            else -> listOf(canonicalUnit(parameter))
-                .filterNot { unit -> unit == WaterMeasurementUnit.NONE }
-        }
-
     fun selectableBasisOptions(
         parameter: WaterParameter,
         selection: WaterMeasurementSelection
-    ): List<WaterMeasurementBasis> {
-        val definition = selection
-            .testKitId
-            ?.takeIf { selection.method == WaterMeasurementMethod.TEST_KIT }
-            ?.let(::testKitDefinition)
-            ?.takeIf { it.parameter == parameter }
-        return definition?.let { listOf(it.basis) } ?: basisOptions(parameter)
-    }
+    ): List<WaterMeasurementBasis> =
+        selectedBuiltInKit(parameter, selection)?.let { listOf(it.basis) }
+            ?: WaterParameterDefinitions.basisOptions(parameter)
 
     fun selectableUnitOptions(
         parameter: WaterParameter,
         selection: WaterMeasurementSelection
-    ): List<WaterMeasurementUnit> {
-        val definition = selection
-            .testKitId
-            ?.takeIf { selection.method == WaterMeasurementMethod.TEST_KIT }
-            ?.let(::testKitDefinition)
-            ?.takeIf { it.parameter == parameter }
-        return definition?.let { listOf(it.unit) } ?: unitOptions(parameter)
-    }
+    ): List<WaterMeasurementUnit> =
+        selectedBuiltInKit(parameter, selection)?.let { listOf(it.unit) }
+            ?: WaterParameterDefinitions.unitOptions(parameter)
 
     fun defaultSelection(parameter: WaterParameter): WaterMeasurementSelection =
         WaterMeasurementSelection(
             method = WaterMeasurementMethod.MANUAL,
             testKitId = null,
-            basis = canonicalBasis(parameter),
-            unit = canonicalUnit(parameter)
+            basis = WaterParameterDefinitions.canonicalBasis(parameter),
+            unit = WaterParameterDefinitions.canonicalUnit(parameter)
         )
 
     fun normalizeSelection(
@@ -143,29 +66,22 @@ object WaterMeasurementCatalog {
         } else {
             null
         }
+        val kitAdjusted = selection.copy(testKitId = testKitId)
+        val builtInKit = selectedBuiltInKit(parameter, kitAdjusted)
 
-        val builtInKit = testKitId?.let(::testKitDefinition)
-        if (builtInKit != null && builtInKit.parameter == parameter) {
-            return selection.copy(
-                testKitId = builtInKit.id,
-                basis = builtInKit.basis,
-                unit = builtInKit.unit
+        return if (builtInKit != null) {
+            kitAdjusted.copy(basis = builtInKit.basis, unit = builtInKit.unit)
+        } else {
+            kitAdjusted.copy(
+                basis = selection.basis.takeIf { candidate ->
+                    candidate in WaterParameterDefinitions.basisOptions(parameter)
+                } ?: WaterParameterDefinitions.canonicalBasis(parameter),
+                unit = selection.unit.takeIf { candidate ->
+                    candidate in WaterParameterDefinitions.unitOptions(parameter) ||
+                        candidate == WaterParameterDefinitions.canonicalUnit(parameter)
+                } ?: WaterParameterDefinitions.canonicalUnit(parameter)
             )
         }
-
-        val basis = selection.basis.takeIf { candidate ->
-            candidate in basisOptions(parameter)
-        } ?: canonicalBasis(parameter)
-        val unit = selection.unit.takeIf { candidate ->
-            candidate in unitOptions(parameter) ||
-                candidate == canonicalUnit(parameter)
-        } ?: canonicalUnit(parameter)
-
-        return selection.copy(
-            testKitId = testKitId,
-            basis = basis,
-            unit = unit
-        )
     }
 
     fun isSelectionValid(
@@ -178,4 +94,13 @@ object WaterMeasurementCatalog {
                 !selection.testKitId.isNullOrBlank()
         return selection == normalized && hasRequiredKit
     }
+
+    private fun selectedBuiltInKit(
+        parameter: WaterParameter,
+        selection: WaterMeasurementSelection
+    ): WaterTestKitDefinition? =
+        selection.testKitId
+            ?.takeIf { selection.method == WaterMeasurementMethod.TEST_KIT }
+            ?.let(::testKitDefinition)
+            ?.takeIf { definition -> definition.parameter == parameter }
 }

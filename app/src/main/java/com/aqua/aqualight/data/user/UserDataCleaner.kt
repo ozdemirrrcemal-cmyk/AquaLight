@@ -121,8 +121,7 @@ class UserDataCleaner private constructor(
         }
 
         runStep(Step.WATER_ANALYSES) {
-            WaterAnalysisDataStoreManager(appContext)
-                .clearAllAnalyses(ownerUid = targetOwnerUid)
+            clearWaterAnalyses(targetOwnerUid)
         }
 
         runStep(Step.AQUARIUM_TANKS) { tankDataStoreManager.clearAllTanks(targetOwnerUid) }
@@ -153,6 +152,11 @@ class UserDataCleaner private constructor(
         }
 
         return CleanupResult(issues = issues.toList())
+    }
+
+    private suspend fun clearWaterAnalyses(ownerUid: String) {
+        WaterAnalysisDataStoreManager(appContext)
+            .clearAllAnalyses(ownerUid = ownerUid)
     }
 
     private suspend fun clearDeviceStores(
