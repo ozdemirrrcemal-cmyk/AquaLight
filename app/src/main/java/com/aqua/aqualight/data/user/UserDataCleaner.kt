@@ -119,6 +119,10 @@ class UserDataCleaner private constructor(
             runStep(step, block)
         }
 
+        runStep(Step.PROVISIONING_SESSIONS) {
+            clearProvisioningData(targetOwnerUid)
+        }
+
         runStep(Step.APP_OWNED_FILES) {
             clearAppOwnedUserFiles(
                 ownerUid = targetOwnerUid,
@@ -158,9 +162,6 @@ class UserDataCleaner private constructor(
         runStep(Step.DEVICE_ASSIGNMENTS) {
             TankDeviceAssignmentStore.get(appContext)
                 .clearOwnerAssignments(ownerUid = ownerUid)
-        }
-        runStep(Step.PROVISIONING_SESSIONS) {
-            clearProvisioningData(ownerUid)
         }
         runStep(Step.KNOWN_DEVICES) {
             DeviceKnownStore(
