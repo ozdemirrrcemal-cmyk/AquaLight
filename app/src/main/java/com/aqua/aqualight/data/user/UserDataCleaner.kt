@@ -310,9 +310,3 @@ class UserDataCleaner private constructor(
     }
 }
 
-private fun com.aqua.aqualight.data.aquarium.model.SavedAquariumTank.photoUris(): List<String> =
-    buildList {
-        photoUri?.takeIf(String::isNotBlank)?.let(::add)
-        plants.mapNotNull { plant -> plant.photoUri?.takeIf(String::isNotBlank) }.forEach(::add)
-        livestock.mapNotNull { item -> item.photoUri?.takeIf(String::isNotBlank) }.forEach(::add)
-    }
