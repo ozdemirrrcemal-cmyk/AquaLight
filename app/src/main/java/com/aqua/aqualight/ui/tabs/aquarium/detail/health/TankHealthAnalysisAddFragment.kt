@@ -413,7 +413,7 @@ class TankHealthAnalysisAddFragment :
         if (profile == null) {
             section.profileContextCard.isVisible = false
             section.recommendedParametersContainer.removeAllViews()
-            section.additionalSectionHeader.isVisible = false
+            section.additionalTestsCard.isVisible = false
             section.additionalParametersContainer.isVisible = false
             section.additionalParametersContainer.removeAllViews()
             return
@@ -454,10 +454,10 @@ class TankHealthAnalysisAddFragment :
             }
         val availableAdditional = additionalOrder.filterNot(additionalParameters::contains)
 
-        section.additionalSectionHeader.isVisible =
+        val hasAdditionalContent =
             additionalModels.isNotEmpty() || availableAdditional.isNotEmpty()
-        section.additionalParametersContainer.isVisible =
-            additionalModels.isNotEmpty() || availableAdditional.isNotEmpty()
+        section.additionalTestsCard.isVisible = hasAdditionalContent
+        section.additionalParametersContainer.isVisible = hasAdditionalContent
 
         renderAdditionalParameterContainer(
             container = section.additionalParametersContainer,
@@ -472,8 +472,8 @@ class TankHealthAnalysisAddFragment :
         models: List<WaterTestParameterUiModel>
     ) {
         container.removeAllViews()
-        val spacing = resources.getDimensionPixelSize(R.dimen.aqua_size_5)
-        val rowSpacing = resources.getDimensionPixelSize(R.dimen.aqua_size_10)
+        val spacing = resources.getDimensionPixelSize(R.dimen.aqua_size_4)
+        val rowSpacing = resources.getDimensionPixelSize(R.dimen.aqua_size_8)
 
         models.chunked(PARAMETERS_PER_ROW).forEachIndexed { rowIndex, rowModels ->
             val row = createParameterRow()
@@ -494,8 +494,8 @@ class TankHealthAnalysisAddFragment :
         availableAdditional: List<WaterTestParameterId>
     ) {
         container.removeAllViews()
-        val spacing = resources.getDimensionPixelSize(R.dimen.aqua_size_5)
-        val rowSpacing = resources.getDimensionPixelSize(R.dimen.aqua_size_10)
+        val spacing = resources.getDimensionPixelSize(R.dimen.aqua_size_4)
+        val rowSpacing = resources.getDimensionPixelSize(R.dimen.aqua_size_8)
         val hasAddTile = availableAdditional.isNotEmpty()
         val itemCount = models.size + if (hasAddTile) 1 else 0
 
