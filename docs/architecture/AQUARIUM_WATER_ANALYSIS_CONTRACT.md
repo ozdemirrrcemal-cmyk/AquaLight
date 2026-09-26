@@ -6,7 +6,7 @@ This document freezes the architectural, data, analysis, persistence, and UI-int
 
 The existing Tank Health / Water Quality UI is considered visually complete for this stage. Implementation work governed by this contract must connect that UI to authoritative data and analysis without redesigning the approved screens unless a later explicit UI change is requested.
 
-Accepted clarification on 26 September 2026 (K03.0): the selected tank type determines which measurement fields are shown. Preserve the existing screen structure, cards, field styling, grid, and navigation while populating them with the applicable measurements in section 25.1. Basic, tank-specific, and additional measurements are logical groups, not approval for a new visual layout. K03.1 subsequently freezes nitrate, nitrite, and phosphate recording semantics in section 6.1. K03.2 freezes the test/device selection, source-semantic resolution, and normalization workflow in sections 6.2, 6.5, 7, and 28.1. K03.3 freezes the canonical ammonia reporting bases in section 6.3. K03.4 freezes concurrent multi-result measurement/cardinality behavior in section 6.6. K03.5 freezes marine salinity/specific-gravity semantics and conversion safety in section 6.7. K03.6 freezes alkalinity/KH semantics, canonical units, and duplicate-field prevention in section 6.8. K03.7 freezes dissolved-oxygen concentration/saturation semantics and conversion prerequisites in section 6.9. K03.8 freezes chlorine/chloramine semantics, sample-context requirements, and multi-result handling in section 6.10. K03.9 freezes marine calcium/magnesium elemental semantics and hardness separation in section 6.11. K03.10 freezes conductivity/TDS semantics, temperature-basis provenance, and safe EC↔TDS behavior in section 6.12. K03.11 freezes direct-vs-calculated CO2 semantics in section 6.13. K03.12 freezes iron/potassium canonical semantics, iron analytical-scope handling, and the no-auto-dosing boundary in section 6.14. K03.13 freezes general-hardness semantics, canonical basis, and dGH conversion behavior in section 6.15. K03.14 freezes the first-release freshwater calculated-free-ammonia policy and marine exclusion in section 6.16. K04 freezes the structured severity, direction, coverage and conflict model in section 14. Evidence-backed source profiles, numerical thresholds, and remaining K05–K18 decisions are still open.
+Accepted clarification on 26 September 2026 (K03.0): the selected tank type determines which measurement fields are shown. Preserve the existing screen structure, cards, field styling, grid, and navigation while populating them with the applicable measurements in section 25.1. Basic, tank-specific, and additional measurements are logical groups, not approval for a new visual layout. K03.1 subsequently freezes nitrate, nitrite, and phosphate recording semantics in section 6.1. K03.2 freezes the test/device selection, source-semantic resolution, and normalization workflow in sections 6.2, 6.5, 7, and 28.1. K03.3 freezes the canonical ammonia reporting bases in section 6.3. K03.4 freezes concurrent multi-result measurement/cardinality behavior in section 6.6. K03.5 freezes marine salinity/specific-gravity semantics and conversion safety in section 6.7. K03.6 freezes alkalinity/KH semantics, canonical units, and duplicate-field prevention in section 6.8. K03.7 freezes dissolved-oxygen concentration/saturation semantics and conversion prerequisites in section 6.9. K03.8 freezes chlorine/chloramine semantics, sample-context requirements, and multi-result handling in section 6.10. K03.9 freezes marine calcium/magnesium elemental semantics and hardness separation in section 6.11. K03.10 freezes conductivity/TDS semantics, temperature-basis provenance, and safe EC↔TDS behavior in section 6.12. K03.11 freezes direct-vs-calculated CO2 semantics in section 6.13. K03.12 freezes iron/potassium canonical semantics, iron analytical-scope handling, and the no-auto-dosing boundary in section 6.14. K03.13 freezes general-hardness semantics, canonical basis, and dGH conversion behavior in section 6.15. K03.14 freezes the first-release freshwater calculated-free-ammonia policy and marine exclusion in section 6.16. K04 freezes the structured severity, direction, coverage and conflict model in section 14. K05 freezes livestock range-bound and approximate/SOFT interpretation in section 10.5. Evidence-backed source profiles, numerical thresholds, and remaining K06–K18 decisions are still open.
 
 This contract is intentionally broader than a screen implementation. It defines the foundation that later powers:
 
@@ -761,6 +761,27 @@ It is not silently ignored.
 
 Livestock quantity may affect future bioload/context reasoning, but quantity must not duplicate a species requirement range. Ten animals do not change the species pH range merely because there are ten of them.
 
+### 10.5 Accepted range-bound and approximate/SOFT policy (K05)
+
+Accepted with the user on 26 September 2026. Preserve the existing `LivestockWaterRequirementParser` and `LivestockWaterCompatibilityEvaluator` as the single parse/comparison path under K02/section 10.1; extend their typed range and result semantics instead of creating another evaluator. Current `LivestockParameterRange.contains()` includes both endpoints, while the parser maps `<` and `≤` to the same maximum and `>` and `≥` to the same minimum. The catalog currently has 687 `SOFT` records, including 582 strict `<` nitrate strings and two `~0.05` phosphate strings; those labels are guidance, not verified toxicity thresholds.
+
+| Source text | Typed meaning | Comparison at the stated boundary |
+| --- | --- | --- |
+| `<20` | Upper bound 20, **exclusive** | 20 is outside; 19.9 is inside this catalog interval. |
+| `≤20` | Upper bound 20, **inclusive** | 20 is inside. |
+| `>20` / `≥20` | Lower bound 20, exclusive / inclusive respectively | 20 is outside / inside respectively. |
+| `20–26` | Explicit two-sided interval; endpoints inclusive unless the source marks them otherwise | 20 and 26 are inside; no invented tolerance beyond either endpoint. |
+| `~20`, `≈20`, `about 20`, or an unqualified single value | Nominal/approximate target with **no verified tolerance** | It is not converted into `[20,20]`, `19–21`, or any other pass/fail interval. Display as informational context only until a supported tolerance/source is verified. |
+| `~20–26` or another explicitly approximate interval | Approximate guidance whose endpoints are not validated exact limits | Keep the stated values and approximate marker for display; do not issue an exact-bound violation or hard conflict without separately verified endpoint semantics. |
+
+- **Typed bounds and provenance:** each successfully parsed interval retains lower/upper value, inclusive/exclusive flag, raw source string, catalog record/revision and approximate marker. A missing bound is genuinely open-ended, not an invented zero/infinity. The existing two-sided constructor/defaults can remain inclusive for callers already creating explicit `20–26` intervals; source `<`/`>` parsing must set exclusivity explicitly. Comparison uses unrounded, unit-compatible canonical values; display rounding cannot change an endpoint decision.
+- **Strict supported grammar:** consume the entire recognized value/range expression, not the first one or two numbers found anywhere in a string. Reject ambiguous, malformed, reversed or unsupported expressions as `UNPARSEABLE_REQUIREMENT` with the original text and record identity retained. Do not swap reversed endpoints, infer a `±` tolerance, mistake a unit/version number for a bound, or silently map an unknown `warningMode` string to an authoritative one. K03 source-unit/basis verification remains a prerequisite to comparison; a numeric match of incompatible units is not compatibility.
+- **Evidence strength:** an out-of-interval value from a comparable `SOFT` profile may generate an `ADVISORY` with its affected animal, direction and source; it is not by itself a `WARNING`, `CRITICAL`, hard toxicity rule, or a treatment/dosing instruction. A value inside a SOFT interval means only "within this catalog guidance," not proof of tank safety. An `INFORMATIONAL` profile and nominal/approximate-only value remain context without directional pass/fail. Even a catalog label `HARD` requires separately verified rule authority, applicable species/context and evidence under W0.4 before it can produce a hard hazard; the string alone is not authority. K18 will decide which requirements may create hard habitat conflicts.
+- **Coverage and zero comparisons:** missing/unparseable/approximate-only requirements and absent measurements are reported distinctly under K04 coverage. `issues.isEmpty()` with `checkedParameterCount = 0` is **not** `COMPATIBLE`; the adapter must emit no-comparable-evidence/insufficient coverage. An exclusive-bound violation remains visible as an issue even when severity is advisory. A catalog requirement conflict can be recorded independently of measurements, but SOFT ranges must not silently become a hard incompatibility; K18 owns cross-entity intersection eligibility.
+- **Regression gate:** tests cover every `<`, `≤`, `>`, `≥` exact endpoint and nearby value; inclusive two-sided endpoints; nominal/approximate-only input; malformed/reversed/multiple-number strings; compatible units, missing values and zero comparisons; `SOFT` outside guidance staying advisory; unknown warning-mode fail-closed behavior. Existing inclusive two-sided behavior remains intact. These are behavioral tests for the shared parser/evaluator and its Water Analysis mapping, not a second implementation.
+
+This decision does not approve the catalog's numerical ranges as universal safe values. Catalog source quality, chemical reporting bases and applicability still require the K03/W0.4 checks before a rule can use them.
+
 ---
 
 ## 11. Aggregating multiple livestock requirements
@@ -768,6 +789,8 @@ Livestock quantity may affect future bioload/context reasoning, but quantity mus
 Do not average species ranges.
 
 For each comparable parameter, the engine should compute the intersection of all authoritative requirements that apply.
+
+K05's endpoint inclusion/exclusion must be preserved during any later intersection: touching an exclusive endpoint is not an overlap. SOFT or approximate-only ranges are not automatically authoritative hard requirements; K18 freezes the cross-entity evidence/eligibility and conflict policy before implementation.
 
 Example:
 
@@ -1682,6 +1705,11 @@ Cover:
 - three or more species;
 - custom livestock;
 - missing catalog entry.
+- `<20` rejects exactly 20 while `≤20` accepts it; corresponding strict/inclusive lower-bound cases and nearby values;
+- inclusive two-sided endpoints remain valid; exclusive touching endpoints do not create a shared interval;
+- `~20` and an unqualified single value remain nominal context without fabricated tolerance/pass-fail;
+- malformed or reversed strings and unknown warning-mode values retain typed unavailable evidence;
+- zero checked comparable parameters never yield compatibility; a SOFT out-of-interval finding is advisory only.
 
 ### 43.3 Plant eligibility tests
 
@@ -1947,6 +1975,7 @@ Water Quality is complete only when all of the following are true:
 - every supported parameter has a structured assessment;
 - species requirements influence the result where data exists;
 - incompatible inhabitants produce conflict rather than an average;
+- livestock range parsing preserves strict versus inclusive endpoints; approximate-only values do not become point intervals, and SOFT catalog guidance cannot by itself produce a critical toxicity verdict;
 - verified plant requirements influence the result according to policy;
 - partial plant data cannot create unsupported hard warnings;
 - NO2 and the chosen NH3/NH4 semantic have evidence-backed intrinsic rules;
