@@ -7,15 +7,38 @@ import com.aqua.aqualight.application.aquarium.AquariumTankTaxonomy
 
 @Composable
 internal fun quickSetupTankTypeText(value: String): String = when (value.trim()) {
-    AquariumTankTaxonomy.TYPE_FISH -> stringResource(R.string.aquarium_tank_type_fish)
-    AquariumTankTaxonomy.TYPE_SHRIMP -> stringResource(R.string.aquarium_tank_type_shrimp)
-    AquariumTankTaxonomy.TYPE_PLANTED -> stringResource(R.string.aquarium_tank_type_planted)
-    AquariumTankTaxonomy.TYPE_MARINE -> stringResource(R.string.aquarium_tank_type_marine)
-    AquariumTankTaxonomy.TYPE_SOFTIES -> stringResource(R.string.aquarium_tank_type_softies)
-    AquariumTankTaxonomy.TYPE_MIXED_REEF -> stringResource(R.string.aquarium_tank_type_mixed_reef)
-    AquariumTankTaxonomy.TYPE_SPS -> stringResource(R.string.aquarium_tank_type_sps)
-    AquariumTankTaxonomy.TYPE_CORAL -> stringResource(R.string.aquarium_tank_type_coral)
-    AquariumTankTaxonomy.TYPE_OTHER -> stringResource(R.string.aquarium_tank_type_other)
+    AquariumTankTaxonomy.TYPE_FRESHWATER_FISH ->
+        stringResource(R.string.aquarium_tank_profile_freshwater_fish)
+
+    AquariumTankTaxonomy.TYPE_SHRIMP ->
+        stringResource(R.string.aquarium_tank_profile_shrimp)
+
+    AquariumTankTaxonomy.TYPE_PLANTED ->
+        stringResource(R.string.aquarium_tank_profile_planted)
+
+    AquariumTankTaxonomy.TYPE_BRACKISH_GENERAL ->
+        stringResource(R.string.aquarium_tank_profile_brackish_general)
+
+    AquariumTankTaxonomy.TYPE_MARINE_FISH ->
+        stringResource(R.string.aquarium_tank_profile_marine_fish)
+
+    AquariumTankTaxonomy.TYPE_SOFT_CORAL_REEF ->
+        stringResource(R.string.aquarium_tank_profile_soft_coral_reef)
+
+    AquariumTankTaxonomy.TYPE_LPS_REEF ->
+        stringResource(R.string.aquarium_tank_profile_lps_reef)
+
+    AquariumTankTaxonomy.TYPE_SPS_REEF ->
+        stringResource(R.string.aquarium_tank_profile_sps_reef)
+
+    AquariumTankTaxonomy.TYPE_MIXED_REEF ->
+        stringResource(R.string.aquarium_tank_profile_mixed_reef)
+
+    AquariumTankTaxonomy.TYPE_OTHER_FRESHWATER,
+    AquariumTankTaxonomy.TYPE_OTHER_BRACKISH,
+    AquariumTankTaxonomy.TYPE_OTHER_MARINE ->
+        stringResource(R.string.aquarium_tank_profile_other)
+
     else -> stringResource(R.string.device_light_unknown_value)
 }
 

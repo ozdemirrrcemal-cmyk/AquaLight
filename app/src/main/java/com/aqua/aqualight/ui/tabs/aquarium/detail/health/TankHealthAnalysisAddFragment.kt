@@ -495,7 +495,7 @@ class TankHealthAnalysisAddFragment :
         models.chunked(PARAMETERS_PER_ROW).forEachIndexed { rowIndex, rowModels ->
             val row = LinearLayout(requireContext()).apply {
                 orientation = LinearLayout.HORIZONTAL
-                baselineAligned = false
+                isBaselineAligned = false
             }
             val rowParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
