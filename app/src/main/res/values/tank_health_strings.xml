@@ -18,13 +18,13 @@
     <string name="tank_health_value_not_measured" translatable="false">—</string>
 
     <string name="tank_health_metric_ph" translatable="false">pH</string>
-    <string name="tank_health_metric_no3" translatable="false">NO3</string>
-    <string name="tank_health_metric_po4" translatable="false">PO4</string>
-    <string name="tank_health_metric_no2" translatable="false">NO2</string>
-    <string name="tank_health_metric_nh3_nh4" translatable="false">NH3/NH4</string>
+    <string name="tank_health_metric_no3">Nitrate (NO₃⁻)</string>
+    <string name="tank_health_metric_po4">Phosphate (PO₄³⁻)</string>
+    <string name="tank_health_metric_no2">Nitrite (NO₂⁻)</string>
+    <string name="tank_health_metric_nh3_nh4">Ammonia / Ammonium (NH₃/NH₄⁺)</string>
     <string name="tank_health_metric_temperature">Temperature</string>
-    <string name="tank_health_metric_gh" translatable="false">GH</string>
-    <string name="tank_health_metric_kh" translatable="false">KH</string>
+    <string name="tank_health_metric_gh">General Hardness (GH)</string>
+    <string name="tank_health_metric_kh">Carbonate Hardness (KH)</string>
 
     <string name="tank_health_value_ph" translatable="false">6.8</string>
     <string name="tank_health_value_no3" translatable="false">18 mg/L</string>

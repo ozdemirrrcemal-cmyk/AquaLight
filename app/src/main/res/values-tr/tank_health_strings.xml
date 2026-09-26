@@ -15,7 +15,13 @@
     <string name="tank_health_status_approaching">Yaklaşıyor</string>
     <string name="tank_health_status_not_measured">Ölçülmedi</string>
 
+    <string name="tank_health_metric_no3">Nitrat (NO₃⁻)</string>
+    <string name="tank_health_metric_po4">Fosfat (PO₄³⁻)</string>
+    <string name="tank_health_metric_no2">Nitrit (NO₂⁻)</string>
+    <string name="tank_health_metric_nh3_nh4">Amonyak / Amonyum (NH₃/NH₄⁺)</string>
     <string name="tank_health_metric_temperature">Sıcaklık</string>
+    <string name="tank_health_metric_gh">Genel Sertlik (GH)</string>
+    <string name="tank_health_metric_kh">Karbonat Sertliği (KH)</string>
     <string name="tank_health_add_analysis">Analiz Ekle</string>
 
     <string name="tank_health_maintenance_title">Bakım Durumu</string>
