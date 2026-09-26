@@ -2,9 +2,9 @@
 
 Araştırma tarihi: 26.09.2026 (Europe/Istanbul).
 
-Durum: **K03.0–K03.13 ile desteklenen ölçümlerin ana canonical semantic/unit/source-resolution kararları kabul edildi. K03.13 GH/total-hardness semantiğini de kapattı.** Bundan sonraki K03 işi yeni kullanıcı-facing kimya alanı kararı değil; verified source-profile catalog, conversion revision/precision, method range/detection metadata ve golden-vector uygulama verileridir. Kabul edilen normatif kapsam ana sözleşme §6.1–6.6, §7, §25.1–25.3 ve §28.1'de kayıtlıdır. Bu araştırma dosyası uygulama kodu veya bilimsel güvenlik eşiği değildir.
+Durum: **K03.0–K03.14 ile desteklenen ölçümlerin ana canonical semantic/unit/source-resolution ve ilk sürüm serbest NH3 hesap politikası kabul edildi.** Bundan sonraki K03 işi verified source-profile catalog, conversion revision/precision, method range/detection metadata ve golden-vector uygulama verileridir. Kabul edilen normatif kapsam ana sözleşme §6.1–6.16, §7, §25.1–25.3 ve §28.1'de kayıtlıdır. Bu araştırma dosyası uygulama kodu veya bilimsel güvenlik eşiği değildir.
 
-Kapsam: K03.0–K03.13 boyunca kabul edilen measurement scope, source-aware normalization, ammonia, marine salinity/SG, alkalinity/KH, dissolved oxygen, chlorine/chloramine, Ca/Mg, conductivity/TDS, direct/calculated CO2, Fe/K ve GH semantic kararlarını izlenebilir tutmak. Kalan K03 çalışması profile/precision/range/detection implementation data'sıdır; yeni canonical measurement kararı değildir.
+Kapsam: K03.0–K03.14 boyunca kabul edilen measurement scope, source-aware normalization, ammonia, marine salinity/SG, alkalinity/KH, dissolved oxygen, chlorine/chloramine, Ca/Mg, conductivity/TDS, direct/calculated CO2, Fe/K, GH ve freshwater calculated free-NH3 kararlarını izlenebilir tutmak. Kalan K03 çalışması profile/precision/range/detection implementation data'sıdır; yeni canonical measurement kararı değildir.
 
 ## Doğrulanan ayrımlar
 
@@ -228,7 +228,17 @@ Bu karar otomatik CO2/gübre doz önerisini kabul etmez; yalnız direct measurem
 - Elemental Ca ve Mg mg/L değerleri basitçe toplanıp GH yapılmaz; CaCO3-equivalent hardness hesabı ancak approved equivalence method ile yapılabilir ve derived provenance taşır.
 - Known source profile dGH/mg-L-as-CaCO3 representation'ını çözer. Generic `hardness` veya unidentified `ppm` otomatik GH sayılmaz.
 
-Bu kararla desteklenen measurement setinin ana semantic/unit kararları K03.0–K03.13 düzeyinde tamamlandı. Bundan sonraki K03 işi verified source-profile data, conversion precision/revision, method range/detection limits ve golden-vector implementation verileridir.
+K03.13, desteklenen ölçümlerin ana semantic/unit kararlarını GH dahil tamamladı. Hesaplanan serbest NH3 için ayrı K03.14 politikası aşağıdadır.
+
+## K03.14 — hesaplanan serbest amonyak, ilk sürüm
+
+26.09.2026 tarihinde kullanıcının profesyonel ürün davranışı talebiyle kararlaştırıldı. Normatif kural ana sözleşme §6.16'dadır.
+
+- EPA 2013 tatlı su raporu Emerson ilişkisinde `pKa = 0.09018 + 2729.92/(273.2+T)` verir; serbest NH3 mol/pay oranı `1/(1+10^(pKa-pH))` olarak alınır. TAN `mg/L as N` olduğundan önce serbest `NH3-N`, sonra NH3/N molekül kütlesi oranıyla `mg/L as NH3` bulunur. EPA farklı kütle temelleri için ayrı dönüşüm örneği verir (R44).
+- UF/IFAS tatlı su tablosu pH 7.0–10.2 ve 6–32 °C aralığında pH/sıcaklığa göre serbest oranları yayımlar. Bu tablo ilk sürümün ihtiyatlı ürün geçerlilik zarfına temel olur; dışarıya kestirim yapılmaz. Bu sınır doğa yasasının bitişi veya güvenlik eşiği değildir (R45).
+- Ölçümler yalnız açıkça aynı su örneği/olayına aitse birleştirilir; yakın tarih/saat tek başına yetmez. Doğrudan ölçülen serbest NH3 varsa v1'de hesaplanan ikinci sonuç üretilmez. Hesaplanan değer ayrı kaynak/sürüm/kimlikle saklanır ve bir sağlık kuralında TAN'la iki kez kanıt sayılmaz. Bu maddeler bilimsel kaynağın iddiası değil, ürün güvenliği kararıdır.
+- EPA 1989 deniz suyu raporu tuzluluk ve sıcaklıkla değişen ayrı denge modeli kullanır; pH ölçüm ölçeğinin etkisini ayrıca tartışır (R46). Bu nedenle v1 marine/reef için tatlı su formülü çalışmaz; doğrulanmış doğrudan serbest NH3 ölçümü desteklenir. Marine türetme daha sonra saltwater model, pH ölçeği, salinity ve referans vektörleriyle ayrı doğrulama kapısından geçer.
+- Örnek doğrulama vektörü: TAN `1 mg/L as N`, pH `8.0`, sıcaklık `25 °C` → `pKa ≈ 9.2448413`, `f_NH3 ≈ 0.0538421`, `NH3 ≈ 0.06547 mg/L as NH3` (NH3/N kütle oranı `17.03052/14.0067`). Bu sayı **güvenli/tehlikeli eşik değildir**. UF tablosunun 24/26 °C, pH 8.0 değerleri arasındadır; implementation golden test'i yayınlanmış tablo ve EPA denklemiyle ayrıca doğrulanmalıdır.
 
 ## Birincil kaynaklar
 
@@ -260,6 +270,9 @@ Aşağıdaki kaynaklar önceki karar araştırmasında 26.09.2026 tarihinde aç�
 | R6 | [OATA — How to test water quality in your freshwater tank](https://ornamentalfish.org/what-we-do/advice-information/care-sheets/caresheets-tropical-freshwater-fish/how-to-test-water-quality-in-your-freshwater-tank-aquarium/) | Tatlı suda amonyak, nitrit, nitrat, pH, sertlik ve fosfat takibi; oksijen ve şebeke suyu bağlamı. Her kayıtta tüm alanların zorunlu olduğu anlamına gelmez. |
 | R7 | [UF/IFAS — Ammonia in Aquatic Systems](https://ask.ifas.ufl.edu/publication/FA031) | NH3/NH4 ayrımı; serbest amonyak payının pH, sıcaklık ve tuzlulukla ilişkisi. Sayfadaki genel TAN/ppm anlatımı tüm kitlerin raporlama temelinin aynı olduğunu kanıtlamaz. |
 | R8 | [Seachem — MultiTest Ammonia](https://www.seachem.com/multitest-ammonia.php) | Aynı üretici toplam ve serbest amonyak ölçümlerini ayırır; yalnız etiket benzerliğine göre kayıt anlamı seçilemez. |
+| R44 | [US EPA — Aquatic Life Ambient Water Quality Criteria for Ammonia, Freshwater (2013), p.7 ve Appendix D](https://nepis.epa.gov/Exe/ZyPURL.cgi?Dockey=P100VT5L.TXT) | Emerson tatlı su pKa bağıntısı; TAN, UIA-N ve NH3 kütle temelleri arasındaki ayrım ve 14/17 dönüşüm örneği. |
+| R45 | [UF/IFAS — Ammonia in Aquatic Systems (FA16, 2022 revision), Table 1](https://edis.ifas.ufl.edu/publication/FA031/pdf) | Aynı örnek TAN+pH+sıcaklıkla serbest amonyak payı; yayımlanmış pH 7.0–10.2 / 6–32 °C tablo aralığı. |
+| R46 | [US EPA — Ambient Water Quality Criteria for Ammonia, Saltwater (1989), pp. 1–3](https://www.epa.gov/sites/default/files/2015-08/documents/ambient_water_quality_criteria_for_ammonia_saltwater_-_1989_0.pdf) | Seawater hesabı tuzluluk/sıcaklık ve pH ölçeğine bağlıdır; freshwater pKa'yı denizde kullanmama gerekçesi. |
 | R12 | [TEOS-10 — official overview](https://www.teos-10.org/) | Practical Salinity ile Absolute Salinity ayrı niceliklerdir; Practical Salinity conductivity tabanlıdır ve arşivlenen measured salinity olarak kalır, Absolute Salinity g/kg'dır. |
 | R13 | [TEOS-10 GSW — Practical Salinity from conductivity](https://www.teos-10.org/pubs/gsw/html/gsw_SP_from_C.html) | PSS-78 Practical Salinity conductivity, in-situ temperature ve pressure girdilerinden hesaplanır; algoritma/applicability explicit olmalıdır. |
 | R14 | [NOAA — salinity measurement methods](https://repository.library.noaa.gov/view/noaa/13165/noaa_13165_DS1.pdf) | Practical salinity conductivity ratioyla; SG hydrometerla ölçülebilir ve SG için temperature correction gerekir; refractive-index yönteminde de temperature correction gerekir. |
@@ -292,8 +305,8 @@ Aşağıdaki kaynaklar önceki karar araştırmasında 26.09.2026 tarihinde aç�
 | R41 | [USGS — Hardness of Water](https://www.usgs.gov/water-science-school/science/hardness-water) | Water hardness esas olarak dissolved calcium ve magnesium ile ilişkilidir ve genel olarak mg/L as CaCO3 olarak ifade edilir. |
 | R42 | [JBL PROAQUATEST GH](https://www.jbl.de/en/products/detail/8649/jbl-proaquatest-gh-general-hardness) | Aquarium GH drop test sonucu `number of drops = general hardness in °dH`; bu UI'da dGH source entry modelini destekler. |
 | R43 | [sera — GH/KH FAQ](https://www.sera.de/tr/hizmet/sss/faq-detail/karbonat-sertligi-toplam-sertlikten-daha-yueksek-olabilir-mi/) | Aquarium GH iki değerli metal iyonları/çoğunlukla Ca-Mg ile ilgilidir; hobby KH ise acid-binding-capacity davranışı gösterebilir. Bu nedenle GH ve KH aynı semantic değildir. |
-| R9 | [MSD Veterinary Manual — Equipment Needed for Aquatic Systems and Water Analysis]| R9 | [MSD Veterinary Manual — Equipment Needed for Aquatic Systems and Water Analysis]| R9 | [MSD Veterinary Manual — Equipment Needed for Aquatic Systems and Water Analysis](https://www.msdvetmanual.com/exotic-and-laboratory-animals/aquatic-systems/equipment-needed-for-aquatic-systems-and-water-analysis) | Oksijen, sıcaklık, pH, amonyak, nitrit, alkalinite, sertlik, deniz suyunda tuzluluk ve bağlama göre ek testler. Veteriner değerlendirme kapsamı UI'daki zorunlu alan listesi değildir. |
+| R9 | [MSD Veterinary Manual — Equipment Needed for Aquatic Systems and Water Analysis](https://www.msdvetmanual.com/exotic-and-laboratory-animals/aquatic-systems/equipment-needed-for-aquatic-systems-and-water-analysis) | Oksijen, sıcaklık, pH, amonyak, nitrit, alkalinite, sertlik, deniz suyunda tuzluluk ve bağlama göre ek testler. Veteriner değerlendirme kapsamı UI'daki zorunlu alan listesi değildir. |
 | R10 | [Red Sea — Foundation manual, “Optimal levels of the Foundation Elements”](https://redseafish.com/wp-content/uploads/2020/11/24653-NEW-Manual-Foundation-Complete-GB-_2018c.pdf) | Deniz/resif profillerinde tuzluluk, alkalinite, kalsiyum ve magnezyum ayrımı. Üretici hedefleri tüm akvaryumlar için evrensel güvenlik sınırı sayılmaz. |
 | R11 | [MSD Veterinary Manual — Environmental Diseases, chlorine/chloramine section](https://www.msdvetmanual.com/exotic-and-laboratory-animals/aquatic-systems/environmental-diseases-of-aquatic-animals-in-aquatic-systems) | Serbest klor ve toplam klor ayrı ölçümlerdir; kloramin için yalnız serbest klor sonucunun yeterli olmaması. |
 
-K03.13 ile GH canonical semantics de kabul edildi. Böylece desteklenen measurement setinin ana semantic/unit kararları tamamlandı. Kalan K03 çalışması source-profile catalog, conversion precision/revision, method range/detection metadata ve test vectors uygulamasıdır.
+K03.13 ile GH canonical semantics, K03.14 ile ilk sürüm freshwater serbest NH3 hesap politikası kabul edildi. Kalan K03 çalışması source-profile catalog, conversion precision/revision, method range/detection metadata ve test vectors uygulamasıdır.
