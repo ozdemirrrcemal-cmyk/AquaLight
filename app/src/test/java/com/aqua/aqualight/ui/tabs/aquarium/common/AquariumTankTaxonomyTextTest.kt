@@ -39,29 +39,42 @@ class AquariumTankTaxonomyTextTest {
     fun translatedEnvironmentAndTankProfileUseStableCodes() {
         assertEquals(
             AquariumTankTaxonomy.WATER_ENVIRONMENT_BRACKISH,
-            AquariumTankTaxonomyText.canonicalWaterEnvironment("Acı Su", ::labelFor)
+            AquariumTankTaxonomyTextResolver.canonicalWaterEnvironment(
+                "Acı Su",
+                ::labelFor
+            )
         )
         assertEquals(
             AquariumTankTaxonomy.TYPE_SHRIMP,
-            AquariumTankTaxonomyText.canonicalTankType("Karides", ::labelFor)
+            AquariumTankTaxonomyTextResolver.canonicalTankType("Karides", ::labelFor)
         )
         assertEquals(
             AquariumTankTaxonomy.TYPE_SHRIMP,
-            AquariumTankTaxonomyText.canonicalTankType("Shrimp", ::labelFor)
+            AquariumTankTaxonomyTextResolver.canonicalTankType("Shrimp", ::labelFor)
         )
         assertEquals(
             "Karides",
-            AquariumTankTaxonomyText.tankTypeLabel("Shrimp", ::labelFor)
+            AquariumTankTaxonomyTextResolver.tankTypeLabel("Shrimp", ::labelFor)
         )
-        assertNull(AquariumTankTaxonomyText.canonicalTankType("Bilinmeyen", ::labelFor))
+        assertNull(
+            AquariumTankTaxonomyTextResolver.canonicalTankType(
+                "Bilinmeyen",
+                ::labelFor
+            )
+        )
     }
 
     @Test
     fun ambiguousOtherLabelCannotBecomeAnArbitraryStableProfile() {
-        assertNull(AquariumTankTaxonomyText.canonicalTankType("Diğer", ::labelFor))
+        assertNull(
+            AquariumTankTaxonomyTextResolver.canonicalTankType(
+                "Diğer",
+                ::labelFor
+            )
+        )
         assertEquals(
             "Diğer",
-            AquariumTankTaxonomyText.tankTypeLabel(
+            AquariumTankTaxonomyTextResolver.tankTypeLabel(
                 AquariumTankTaxonomy.TYPE_OTHER_MARINE,
                 ::labelFor
             )
@@ -72,15 +85,21 @@ class AquariumTankTaxonomyTextTest {
     fun presetStyleUsesStableCodeWhileCustomStyleRemainsUserText() {
         assertEquals(
             AquariumTankTaxonomy.STYLE_DUTCH,
-            AquariumTankTaxonomyText.canonicalTankStyle("Hollanda", ::labelFor)
+            AquariumTankTaxonomyTextResolver.canonicalTankStyle(
+                "Hollanda",
+                ::labelFor
+            )
         )
         assertEquals(
             "Hollanda",
-            AquariumTankTaxonomyText.tankStyleLabel("Dutch", ::labelFor)
+            AquariumTankTaxonomyTextResolver.tankStyleLabel("Dutch", ::labelFor)
         )
         assertEquals(
             "Benim Stilim",
-            AquariumTankTaxonomyText.canonicalTankStyle(" Benim Stilim ", ::labelFor)
+            AquariumTankTaxonomyTextResolver.canonicalTankStyle(
+                " Benim Stilim ",
+                ::labelFor
+            )
         )
     }
 }
