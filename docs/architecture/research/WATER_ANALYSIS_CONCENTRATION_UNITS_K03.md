@@ -2,9 +2,9 @@
 
 Araştırma tarihi: 26.09.2026 (Europe/Istanbul).
 
-Durum: **K03.0 ölçüm kapsamı, K03.1 NO3/NO2/PO4 kanonik kayıt anlamı/birimleri, K03.2 test/cihaz seçimi + kaynak semantiği çözümleme + normalizasyon akışı, K03.3 amonyak kanonik temelleri, K03.4 concurrent multi-result kayıt/UI politikası, K03.5 deniz salinity/SG dönüşüm güvenliği, K03.6 alkalinite/KH semantik-birim politikası, K03.7 çözünmüş oksijen konsantrasyon/doygunluk politikası, K03.8 klor/kloramin sample-context politikası ve K03.9 marine elemental Ca/Mg politikası kabul edildi. K03.10 ve sonraki kararlar açık.** Kabul edilen normatif kapsam ana sözleşme §6.1–6.6, §7, §25.1–25.3 ve §28.1'de kayıtlıdır. Bu araştırma dosyası uygulama kodu veya bilimsel güvenlik eşiği değildir.
+Durum: **K03.0 ölçüm kapsamı, K03.1 NO3/NO2/PO4 kanonik kayıt anlamı/birimleri, K03.2 test/cihaz seçimi + kaynak semantiği çözümleme + normalizasyon akışı, K03.3 amonyak kanonik temelleri, K03.4 concurrent multi-result kayıt/UI politikası, K03.5 deniz salinity/SG dönüşüm güvenliği, K03.6 alkalinite/KH semantik-birim politikası, K03.7 çözünmüş oksijen konsantrasyon/doygunluk politikası, K03.8 klor/kloramin sample-context politikası, K03.9 marine elemental Ca/Mg politikası ve K03.10 conductivity/TDS ürün politikası kabul edildi. K03.11 ve sonraki kararlar açık.** Kabul edilen normatif kapsam ana sözleşme §6.1–6.6, §7, §25.1–25.3 ve §28.1'de kayıtlıdır. Bu araştırma dosyası uygulama kodu veya bilimsel güvenlik eşiği değildir.
 
-Kapsam: K03.0 için ölçüm seçiminin kaynaklarını, K03.1'de kabul edilen NO3/NO2/PO4 ortak raporlama temelini, K03.2'de kabul edilen source-aware giriş/normalizasyon yaklaşımını, K03.3'te kabul edilen amonyak kanonik temellerini, K03.4'te kabul edilen concurrent multi-result cardinality/UI davranışını, K03.5'te kabul edilen marine salinity/SG/conductivity ayrımını, K03.6'da kabul edilen total-alkalinity/KH politikasını, K03.7'de kabul edilen dissolved-oxygen concentration/saturation politikasını, K03.8'de kabul edilen chlorine/chloramine sample-context politikasını ve K03.9'da kabul edilen elemental Ca/Mg semantiğini izlenebilir tutmak. Conductivity/TDS ve diğer ek parametrelerin semantiği, kanıtlı profil/dönüşüm tablolarının ayrıntıları ve türetilmiş hesaplar sonraki ayrı kararlar olacak.
+Kapsam: K03.0 için ölçüm seçiminin kaynaklarını, K03.1'de kabul edilen NO3/NO2/PO4 ortak raporlama temelini, K03.2'de kabul edilen source-aware giriş/normalizasyon yaklaşımını, K03.3'te kabul edilen amonyak kanonik temellerini, K03.4'te kabul edilen concurrent multi-result cardinality/UI davranışını, K03.5'te kabul edilen marine salinity/SG/conductivity ayrımını, K03.6'da kabul edilen total-alkalinity/KH politikasını, K03.7'de kabul edilen dissolved-oxygen concentration/saturation politikasını, K03.8'de kabul edilen chlorine/chloramine sample-context politikasını, K03.9'da kabul edilen elemental Ca/Mg semantiğini ve K03.10'da kabul edilen conductivity/TDS ürün davranışını izlenebilir tutmak. CO2 ve diğer ek parametrelerin semantiği, kanıtlı profil/dönüşüm tablolarının ayrıntıları ve türetilmiş hesaplar sonraki ayrı kararlar olacak.
 
 ## Doğrulanan ayrımlar
 
@@ -167,9 +167,26 @@ Bu karar numerical safety threshold seçmez; yalnız ölçümün ne olduğunu, n
 
 Bu karar reef target range veya dosing recommendation seçmez; yalnız ölçümün elemental semantic'ini dondurur.
 
-## K03.10 — sıradaki açık karar
+## K03.10 — kabul edilen conductivity / TDS ürün politikası
 
-Conductivity ile TDS için canonical metric/unit, temperature compensation/reference, cell/meter source semantics ve TDS conversion-factor (`0.5`, `0.64`, `0.7` gibi) güvenliği kararlaştırılacak. TDS conductivity ile aynı measurement değildir ve cihaz factor'ü bilinmeden birbirine çevrilmeyecektir.
+26.09.2026 tarihinde kullanıcı deneyimini sade tutan ve backend varsayımlarını sınırlayan model kabul edildi:
+
+- `ELECTRICAL_CONDUCTIVITY` canonical unit **µS/cm**. mS/cm yalnız aynı physical quantity'nin scale conversion'ıdır ve güvenle µS/cm'e normalize edilebilir.
+- Conductivity result'ında source temperature basis korunur: in-situ/raw, reference-temperature compensated (ör. 25 °C), veya verified device-ATC behavior. AquaLight mevcut ATC/reference düzeltmesini ikinci kez uygulamaz.
+- `TDS_REPORTED_PPM` kullanıcının cihazında gördüğü TDS değeridir. UI sade biçimde `TDS [ppm]` gösterir; kullanıcı ppm'i aynen girer.
+- TDS factor/scale (`0.5`, `0.7`, manufacturer-specific vb.) **TDS kaydı için kullanıcıdan istenmez**. Factor bilinmiyorsa bile valid cihaz okuması örneğin `180 ppm` olarak source-native saklanır.
+- Verified cihaz/profile TDS'yi EC25'ten türetiyorsa kullanılan factor/scale ve reference-temperature behavior provenance'ta tutulabilir.
+- AquaLight EC↔TDS conversion'ı yalnız factor/scale + temperature basis explicitly biliniyorsa yapar. Evrensel `0.5`, `0.64`, `0.7` varsayımı yapılmaz.
+- Aynı meter probe reading'inden üretilen EC ve TDS iki bağımsız evidence sayılmaz; aynı source observation'a bağlanır.
+- Existing catalog TDS range'lerinin scale/basis metadata'sı bilinmiyorsa arbitrary TDS meter ppm değeriyle hard safe/unsafe assessment yapılmaz; önce source/rule compatibility doğrulanır.
+- TDS freshwater/shrimp/RO/remineralization/trend takibinde faydalı additional metric'tir; GH, KH/alkalinity, salinity, nitrate veya ion-specific measurement yerine geçmez.
+- Marine/reef'te primary ionic-strength semantics K03.5 salinity/SG/conductivity modelidir; generic TDS ppm salinity yerine kullanılmaz.
+
+Ürün ilkesi: **kullanıcı cihazdaki TDS ppm değerini aynen girer; factor ancak AquaLight cross-representation conversion yapacaksa backend için önemlidir.**
+
+## K03.11 — sıradaki açık karar
+
+CO2 için doğrudan ölçülen konsantrasyon ile pH/KH tablosu/hesabından türetilen tahmini değerin semantic ayrımı, gerekli prerequisites ve hard assessment'ta kullanılıp kullanılmayacağı kararlaştırılacak.
 
 ## Birincil kaynaklar
 
@@ -219,8 +236,11 @@ Aşağıdaki kaynaklar önceki karar araştırmasında 26.09.2026 tarihinde aç�
 | R27 | [Hanna Marine Magnesium — HI783 / factory method](https://www.documentation.hannainst.com/manuals/download/6907) | Marine magnesium aralığı ve sonucu **mg/L as Mg2+** olarak tanımlanır; temperature ve method koşulları ölçüm doğruluğunu etkiler. |
 | R28 | [Red Sea Foundation Pro Test Kits](https://g1.redseafish.com/wp-content/uploads/2020/11/24784-NEW-Manual-Foundation-Test-Kits_GB-DE-FR-NL-SP-_2018a-52p.pdf) | Reef programı calcium ve magnesium'u ayrı elemental testler olarak sunar; calcium resolution 5 ppm, magnesium resolution 20 ppm. |
 | R29 | [Hach — Hardness (Total, Ca & Mg)](https://www.hach.com/parameters/hardness) | Hardness çoğunlukla Ca/Mg katkısını CaCO3-equivalent olarak raporlar; elemental Ca/Mg concentration ile hardness semantic'i aynı değildir. |
-| R9 | [MSD Veterinary Manual — Equipment Needed for Aquatic Systems and Water Analysis](https://www.msdvetmanual.com/exotic-and-laboratory-animals/aquatic-systems/equipment-needed-for-aquatic-systems-and-water-analysis) | Oksijen, sıcaklık, pH, amonyak, nitrit, alkalinite, sertlik, deniz suyunda tuzluluk ve bağlama göre ek testler. Veteriner değerlendirme kapsamı UI'daki zorunlu alan listesi değildir. |
+| R30 | [Hanna HI98194/HI98195 manual — TDS Factor](https://www.documentation.hannainst.com/manuals/download/174) | TDS, conductivity'den `TDS = factor × EC25` olarak hesaplanan değerdir; factor 0.00–1.00 ayarlanabilir, tipik güçlü iyonik çözelti 0.50 ve zayıf iyonik çözelti 0.70 örnekleri verilir. |
+| R31 | [Hanna EC/TDS probe guide](https://pages.hannainst.com/hubfs/006-finished-content/EC-Guides/getting-to-know-your-probe-electrical-conductivity-ec-rev1.pdf) | TDS mg/L/ppm olarak gösterilir; bazı cihazlarda factor ayarlanabilir, bazılarında sabittir. Örnek: 100 µS/cm, factor 0.5 ile 50 ppm TDS. |
+| R32 | [HM Digital COM-100](https://hmdigital.com/com-100/) | Aynı cihaz 0.5 (NaCl) ve 0.7 (442) TDS ppm scale'lerini destekler; bu, ekranda her ikisi de ppm olsa bile EC→TDS ölçeğinin cihaz/profile bağlı olduğunu doğrular. |
+| R9 || R9 | [MSD Veterinary Manual — Equipment Needed for Aquatic Systems and Water Analysis](https://www.msdvetmanual.com/exotic-and-laboratory-animals/aquatic-systems/equipment-needed-for-aquatic-systems-and-water-analysis) | Oksijen, sıcaklık, pH, amonyak, nitrit, alkalinite, sertlik, deniz suyunda tuzluluk ve bağlama göre ek testler. Veteriner değerlendirme kapsamı UI'daki zorunlu alan listesi değildir. |
 | R10 | [Red Sea — Foundation manual, “Optimal levels of the Foundation Elements”](https://redseafish.com/wp-content/uploads/2020/11/24653-NEW-Manual-Foundation-Complete-GB-_2018c.pdf) | Deniz/resif profillerinde tuzluluk, alkalinite, kalsiyum ve magnezyum ayrımı. Üretici hedefleri tüm akvaryumlar için evrensel güvenlik sınırı sayılmaz. |
 | R11 | [MSD Veterinary Manual — Environmental Diseases, chlorine/chloramine section](https://www.msdvetmanual.com/exotic-and-laboratory-animals/aquatic-systems/environmental-diseases-of-aquatic-animals-in-aquatic-systems) | Serbest klor ve toplam klor ayrı ölçümlerdir; kloramin için yalnız serbest klor sonucunun yeterli olmaması. |
 
-Ek ölçümlerde CO2, iletkenlik/TDS, demir ve potasyum için kesin ölçüm yöntemi ve yorum kuralları henüz araştırılıp kabul edilmiş değildir. Destek kapsamına alınmaları otomatik eşik/doz önerisi veya hesaplanan değerin ölçülmüş gibi kaydı için izin vermez.
+Ek ölçümlerde conductivity/TDS semantiği K03.10 ile kabul edildi. CO2, demir ve potasyum için kesin ölçüm yöntemi ve yorum kuralları henüz araştırılıp kabul edilmiş değildir. Destek kapsamına alınmaları otomatik eşik/doz önerisi veya hesaplanan değerin ölçülmüş gibi kaydı için izin vermez.
