@@ -41,7 +41,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/tank_health_analysis_remove_test"
             android:padding="@dimen/aqua_size_10"
-            android:src="@drawable/ic_aqua_close_24"
+            android:src="@drawable/ic_remove_24"
             app:tint="@color/aqua_card_text_secondary" />
 
     </LinearLayout>
