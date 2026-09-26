@@ -2,9 +2,9 @@
 
 Araştırma tarihi: 26.09.2026 (Europe/Istanbul).
 
-Durum: **K03.0 ölçüm kapsamı, K03.1 NO3/NO2/PO4 kanonik kayıt anlamı/birimleri, K03.2 test/cihaz seçimi + kaynak semantiği çözümleme + normalizasyon akışı, K03.3 amonyak kanonik temelleri, K03.4 concurrent multi-result kayıt/UI politikası, K03.5 deniz salinity/SG dönüşüm güvenliği, K03.6 alkalinite/KH semantik-birim politikası, K03.7 çözünmüş oksijen konsantrasyon/doygunluk politikası ve K03.8 klor/kloramin sample-context politikası kabul edildi. K03.9 ve sonraki kararlar açık.** Kabul edilen normatif kapsam ana sözleşme §6.1–6.6, §7, §25.1–25.3 ve §28.1'de kayıtlıdır. Bu araştırma dosyası uygulama kodu veya bilimsel güvenlik eşiği değildir.
+Durum: **K03.0 ölçüm kapsamı, K03.1 NO3/NO2/PO4 kanonik kayıt anlamı/birimleri, K03.2 test/cihaz seçimi + kaynak semantiği çözümleme + normalizasyon akışı, K03.3 amonyak kanonik temelleri, K03.4 concurrent multi-result kayıt/UI politikası, K03.5 deniz salinity/SG dönüşüm güvenliği, K03.6 alkalinite/KH semantik-birim politikası, K03.7 çözünmüş oksijen konsantrasyon/doygunluk politikası, K03.8 klor/kloramin sample-context politikası ve K03.9 marine elemental Ca/Mg politikası kabul edildi. K03.10 ve sonraki kararlar açık.** Kabul edilen normatif kapsam ana sözleşme §6.1–6.6, §7, §25.1–25.3 ve §28.1'de kayıtlıdır. Bu araştırma dosyası uygulama kodu veya bilimsel güvenlik eşiği değildir.
 
-Kapsam: K03.0 için ölçüm seçiminin kaynaklarını, K03.1'de kabul edilen NO3/NO2/PO4 ortak raporlama temelini, K03.2'de kabul edilen source-aware giriş/normalizasyon yaklaşımını, K03.3'te kabul edilen amonyak kanonik temellerini, K03.4'te kabul edilen concurrent multi-result cardinality/UI davranışını, K03.5'te kabul edilen marine salinity/SG/conductivity ayrımını, K03.6'da kabul edilen total-alkalinity/KH politikasını, K03.7'de kabul edilen dissolved-oxygen concentration/saturation politikasını ve K03.8'de kabul edilen chlorine/chloramine sample-context politikasını izlenebilir tutmak. Ca/Mg ve diğer ek parametrelerin semantiği, kanıtlı profil/dönüşüm tablolarının ayrıntıları ve türetilmiş hesaplar sonraki ayrı kararlar olacak.
+Kapsam: K03.0 için ölçüm seçiminin kaynaklarını, K03.1'de kabul edilen NO3/NO2/PO4 ortak raporlama temelini, K03.2'de kabul edilen source-aware giriş/normalizasyon yaklaşımını, K03.3'te kabul edilen amonyak kanonik temellerini, K03.4'te kabul edilen concurrent multi-result cardinality/UI davranışını, K03.5'te kabul edilen marine salinity/SG/conductivity ayrımını, K03.6'da kabul edilen total-alkalinity/KH politikasını, K03.7'de kabul edilen dissolved-oxygen concentration/saturation politikasını, K03.8'de kabul edilen chlorine/chloramine sample-context politikasını ve K03.9'da kabul edilen elemental Ca/Mg semantiğini izlenebilir tutmak. Conductivity/TDS ve diğer ek parametrelerin semantiği, kanıtlı profil/dönüşüm tablolarının ayrıntıları ve türetilmiş hesaplar sonraki ayrı kararlar olacak.
 
 ## Doğrulanan ayrımlar
 
@@ -152,9 +152,24 @@ Bu kararın güvenlik ilkesi: **same-event context eksikse kesin-looking DO conv
 
 Bu karar numerical safety threshold seçmez; yalnız ölçümün ne olduğunu, nereden alındığını ve hangi derivation'ın bilimsel olarak hangi anlama geldiğini dondurur.
 
-## K03.9 — sıradaki açık karar
+## K03.9 — kabul edilen marine kalsiyum / magnezyum elemental-basis politikası
 
-Marine/reef kalsiyum ve magnezyum için kanonik elemental reporting basis/birim, test profile semantic'leri, aynı sonuçların salt/compound basis ile karıştırılmaması ve assessment rule matching kararlaştırılacak.
+26.09.2026 tarihinde profesyonel güvenlik standardı olarak kabul edildi:
+
+- `CALCIUM_CONCENTRATION` canonical **mg/L as Ca2+**.
+- `MAGNESIUM_CONCENTRATION` canonical **mg/L as Mg2+**.
+- Generic `ppm` source label tek başına elemental basis değildir; verified product/method profile üreticinin sonucu elemental Ca veya Mg olarak tanımladığını kanıtlamalıdır.
+- `CALCIUM_HARDNESS_AS_CACO3`, `MAGNESIUM_HARDNESS_AS_CACO3`, `GENERAL_HARDNESS` ve diğer CaCO3-equivalent hardness değerleri reef elemental Ca/Mg ile aynı semantic değildir.
+- Hardness→elemental conversion yalnız method/basis/stoichiometry/sample-matrix/interference/precision politikası explicit ve versioned ise yapılır; generic GH elemental Ca/Mg'ye bölünmez.
+- Total-hardness minus calcium-hardness ile elde edilen magnesium-hardness gibi difference methods derived provenance taşır; direct elemental Mg ölçümü gibi sunulmaz.
+- Marine profiles method range, seawater applicability, temperature/dilution prerequisites ve known interferences taşır; freshwater hardness yöntemi reef Ca/Mg rule'una otomatik bağlanmaz.
+- UI `Kalsiyum` ve `Magnezyum` değerlerini ayrı input/metric olarak gösterir; biri diğerinden, GH'den, alkalinity veya salinity'den tahmin edilmez.
+
+Bu karar reef target range veya dosing recommendation seçmez; yalnız ölçümün elemental semantic'ini dondurur.
+
+## K03.10 — sıradaki açık karar
+
+Conductivity ile TDS için canonical metric/unit, temperature compensation/reference, cell/meter source semantics ve TDS conversion-factor (`0.5`, `0.64`, `0.7` gibi) güvenliği kararlaştırılacak. TDS conductivity ile aynı measurement değildir ve cihaz factor'ü bilinmeden birbirine çevrilmeyecektir.
 
 ## Birincil kaynaklar
 
@@ -200,7 +215,11 @@ Aşağıdaki kaynaklar önceki karar araştırmasında 26.09.2026 tarihinde aç�
 | R23 | [Hach — Chlorination, Chloramination and Chlorine Measurement](https://cdn.hach.com/7FYZVWYB/at/2pt86h8m6tgxf5hspvssxr8/DOC1805320183.pdf) | Total residual minus free residual **monochloramine ile zorunlu olarak eşit değildir**; monochloramine konsantrasyonu ancak onu spesifik ölçen yöntemle bilinir. |
 | R24 | [Hach Method 10171 — Monochloramine](https://cdn.hach.com/7FYZVWYB/at/46kjs8xchb5t2vbh66hjhn26/DR_2400_Procedures_Manual.pdf) | Monochloramine doğrudan, ayrı yöntemle ölçülebilir ve mg/L Cl2 olarak raporlanır. |
 | R25 | [MSD Veterinary Manual — Environmental Diseases, chlorine/chloramine](https://www.msdvetmanual.com/exotic-and-laboratory-animals/aquatic-systems/environmental-diseases-of-aquatic-animals-in-aquatic-systems) | Free ve total chlorine birlikte test edilmelidir; chloramine kullanılan suda free chlorine negatifken total chlorine pozitif olabilir. Dechlorination öncesi/sonrası test bağlamı ve source-water/tank-water ayrımı önemlidir. |
-| R9 | [MSD Veterinary Manual — Equipment Needed for Aquatic Systems and Water Analysis](https://www.msdvetmanual.com/exotic-and-laboratory-animals/aquatic-systems/equipment-needed-for-aquatic-systems-and-water-analysis) | Oksijen, sıcaklık, pH, amonyak, nitrit, alkalinite, sertlik, deniz suyunda tuzluluk ve bağlama göre ek testler. Veteriner değerlendirme kapsamı UI'daki zorunlu alan listesi değildir. |
+| R26 | [Hanna Marine Calcium — HI758 / factory method](https://www.documentation.hannainst.com/manuals/download/6905) | Marine calcium sonucu doğrudan **mg/L of calcium (Ca2+)** olarak raporlanır; reef calcium semantic'i elemental Ca'dır. |
+| R27 | [Hanna Marine Magnesium — HI783 / factory method](https://www.documentation.hannainst.com/manuals/download/6907) | Marine magnesium aralığı ve sonucu **mg/L as Mg2+** olarak tanımlanır; temperature ve method koşulları ölçüm doğruluğunu etkiler. |
+| R28 | [Red Sea Foundation Pro Test Kits](https://g1.redseafish.com/wp-content/uploads/2020/11/24784-NEW-Manual-Foundation-Test-Kits_GB-DE-FR-NL-SP-_2018a-52p.pdf) | Reef programı calcium ve magnesium'u ayrı elemental testler olarak sunar; calcium resolution 5 ppm, magnesium resolution 20 ppm. |
+| R29 | [Hach — Hardness (Total, Ca & Mg)](https://www.hach.com/parameters/hardness) | Hardness çoğunlukla Ca/Mg katkısını CaCO3-equivalent olarak raporlar; elemental Ca/Mg concentration ile hardness semantic'i aynı değildir. |
+| R9 || R9 | [MSD Veterinary Manual — Equipment Needed for Aquatic Systems and Water Analysis](https://www.msdvetmanual.com/exotic-and-laboratory-animals/aquatic-systems/equipment-needed-for-aquatic-systems-and-water-analysis) | Oksijen, sıcaklık, pH, amonyak, nitrit, alkalinite, sertlik, deniz suyunda tuzluluk ve bağlama göre ek testler. Veteriner değerlendirme kapsamı UI'daki zorunlu alan listesi değildir. |
 | R10 | [Red Sea — Foundation manual, “Optimal levels of the Foundation Elements”](https://redseafish.com/wp-content/uploads/2020/11/24653-NEW-Manual-Foundation-Complete-GB-_2018c.pdf) | Deniz/resif profillerinde tuzluluk, alkalinite, kalsiyum ve magnezyum ayrımı. Üretici hedefleri tüm akvaryumlar için evrensel güvenlik sınırı sayılmaz. |
 | R11 | [MSD Veterinary Manual — Environmental Diseases, chlorine/chloramine section](https://www.msdvetmanual.com/exotic-and-laboratory-animals/aquatic-systems/environmental-diseases-of-aquatic-animals-in-aquatic-systems) | Serbest klor ve toplam klor ayrı ölçümlerdir; kloramin için yalnız serbest klor sonucunun yeterli olmaması. |
 
