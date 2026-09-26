@@ -5,7 +5,7 @@
     android:id="@+id/btnAddTest"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:minHeight="@dimen/aqua_size_92"
+    android:minHeight="@dimen/aqua_size_96"
     android:background="@drawable/bg_water_test_add_tile"
     android:clickable="true"
     android:focusable="true"

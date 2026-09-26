@@ -5,7 +5,7 @@
     style="@style/Widget.Aqua.Card.Metric"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:minHeight="@dimen/aqua_size_92"
+    android:minHeight="@dimen/aqua_size_96"
     app:cardCornerRadius="@dimen/aqua_size_14"
     app:strokeColor="@color/aqua_card_outline_subtle"
     app:strokeWidth="@dimen/aqua_size_1">
@@ -73,20 +73,20 @@
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/inputLayout"
-            style="@style/Widget.Aqua.Input.Layout"
+            style="@style/Widget.Aqua.Input.Layout.WaterAnalysisCompact"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/aqua_size_4">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/inputValue"
-                style="@style/Widget.Aqua.Input.EditText"
+                style="@style/Widget.Aqua.Input.EditText.WaterAnalysisCompact"
                 android:layout_width="match_parent"
-                android:layout_height="@dimen/aqua_size_44"
+                android:layout_height="@dimen/aqua_size_48"
                 android:hint="@string/tank_health_analysis_input_hint"
                 android:inputType="numberDecimal"
                 android:selectAllOnFocus="true"
-                android:textSize="@dimen/aqua_text_size_body" />
+                android:gravity="center_vertical" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
