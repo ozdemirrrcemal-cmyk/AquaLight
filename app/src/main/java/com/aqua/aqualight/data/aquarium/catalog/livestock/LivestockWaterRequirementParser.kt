@@ -1,88 +1,190 @@
 package com.aqua.aqualight.data.aquarium.catalog.livestock
 
+import com.aqua.aqualight.application.aquarium.AquariumWaterParameter
 import com.aqua.aqualight.application.aquarium.LivestockParameterRange
+import com.aqua.aqualight.application.aquarium.LivestockRequirementUnavailable
+import com.aqua.aqualight.application.aquarium.LivestockRequirementUnavailableReason
 import com.aqua.aqualight.application.aquarium.LivestockWarningMode
 import com.aqua.aqualight.application.aquarium.LivestockWaterRequirements
 
 internal object LivestockWaterRequirementParser {
 
-    private val numberPattern = Regex("""[-+]?\d+(?:[.,]\d+)?""")
+    private const val NUMBER = """[+-]?\d+(?:[.,]\d+)?"""
+    private val upperBound = Regex("""(<=|<|≤)\s*($NUMBER)""")
+    private val lowerBound = Regex("""(>=|>|≥)\s*($NUMBER)""")
+    private val interval = Regex("""($NUMBER)\s*[-–—]\s*($NUMBER)""")
+    private val single = Regex(NUMBER)
+    private val approximation = Regex("""(?:~|≈|about\s+)""", RegexOption.IGNORE_CASE)
 
-    fun parse(
-        entry: LivestockCatalogEntry
-    ): LivestockWaterRequirements {
+    internal sealed interface RangeParseResult {
+        data object Missing : RangeParseResult
+        data class Parsed(val range: LivestockParameterRange) : RangeParseResult
+        data class Unparseable(val sourceText: String) : RangeParseResult
+    }
+
+    fun parse(entry: LivestockCatalogEntry): LivestockWaterRequirements {
+        val unavailable = mutableListOf<LivestockRequirementUnavailable>()
+
+        fun resolved(parameter: AquariumWaterParameter, raw: String?): LivestockParameterRange? =
+            when (val result = parseRangeResult(raw)) {
+                RangeParseResult.Missing -> null
+                is RangeParseResult.Parsed -> result.range
+                is RangeParseResult.Unparseable -> {
+                    unavailable += LivestockRequirementUnavailable(
+                        parameter = parameter,
+                        sourceText = result.sourceText,
+                        reason = LivestockRequirementUnavailableReason.UNPARSEABLE_REQUIREMENT
+                    )
+                    null
+                }
+            }
+
+        val mode = LivestockWarningMode.fromCatalogValue(entry.warningMode)
+        if (mode == LivestockWarningMode.UNKNOWN) {
+            unavailable += LivestockRequirementUnavailable(
+                parameter = null,
+                sourceText = entry.warningMode,
+                reason = LivestockRequirementUnavailableReason.UNKNOWN_WARNING_MODE
+            )
+        }
+
+
+        unavailable += unverifiedSources(entry)
+
         return LivestockWaterRequirements(
-            temperatureC = parseRange(entry.temperatureC),
-            ph = parseRange(entry.ph),
-            ghDgh = parseRange(entry.ghDgh),
-            khDkh = parseRange(entry.khDkh),
-            tdsPpm = parseRange(entry.tdsPpm),
-            specificGravity = parseRange(entry.specificGravity),
-            alkalinityDkh = parseRange(entry.alkalinityDkh),
-            calciumPpm = parseRange(entry.calciumPpm),
-            magnesiumPpm = parseRange(entry.magnesiumPpm),
-            nitratePpm = parseRange(entry.nitratePpm),
-            phosphatePpm = parseRange(entry.phosphatePpm),
-            par = parseRange(entry.par),
+            temperatureC = resolved(AquariumWaterParameter.TEMPERATURE_C, entry.temperatureC),
+            ph = resolved(AquariumWaterParameter.PH, entry.ph),
             flow = entry.flow?.trim()?.takeIf(String::isNotBlank),
-            warningMode = LivestockWarningMode.fromCatalogValue(entry.warningMode)
+            warningMode = mode,
+            catalogEntryId = entry.id,
+            unavailableRequirements = unavailable.toList()
         )
     }
 
-    internal fun parseRange(
-        raw: String?
-    ): LivestockParameterRange? {
-        val normalized = raw
-            ?.trim()
-            ?.takeIf(String::isNotBlank)
-            ?: return null
-
-        val values = numberPattern.findAll(normalized)
-            .mapNotNull { match ->
-                match.value.replace(',', '.').toDoubleOrNull()
+    private fun unverifiedSources(entry: LivestockCatalogEntry): List<LivestockRequirementUnavailable> {
+        // JSON field names and numeric syntax do not establish reporting basis or unit.
+        // Keep source text until an evidence-backed profile normalizes it for this model.
+        val rawFields = listOf(
+            AquariumWaterParameter.GENERAL_HARDNESS to entry.ghDgh,
+            AquariumWaterParameter.CARBONATE_HARDNESS to entry.khDkh,
+            AquariumWaterParameter.REPORTED_TDS to entry.tdsPpm,
+            AquariumWaterParameter.SPECIFIC_GRAVITY to entry.specificGravity,
+            AquariumWaterParameter.TOTAL_ALKALINITY to entry.alkalinityDkh,
+            AquariumWaterParameter.CALCIUM_CONCENTRATION to entry.calciumPpm,
+            AquariumWaterParameter.MAGNESIUM_CONCENTRATION to entry.magnesiumPpm,
+            AquariumWaterParameter.NITRATE_NO3 to entry.nitratePpm,
+            AquariumWaterParameter.ORTHOPHOSPHATE_PO4 to entry.phosphatePpm,
+            AquariumWaterParameter.PAR to entry.par
+        )
+        return rawFields.mapNotNull { (parameter, raw) ->
+            val result = parseRangeResult(raw)
+            val reason = when (result) {
+                RangeParseResult.Missing -> return@mapNotNull null
+                is RangeParseResult.Parsed ->
+                    LivestockRequirementUnavailableReason.UNVERIFIED_SOURCE_SEMANTICS
+                is RangeParseResult.Unparseable ->
+                    LivestockRequirementUnavailableReason.UNPARSEABLE_REQUIREMENT
             }
-            .toList()
+            LivestockRequirementUnavailable(parameter, raw.orEmpty(), reason)
+        }
+    }
 
-        return values.takeIf(List<Double>::isNotEmpty)?.let { parsedValues ->
-            buildRange(
-                normalized = normalized,
-                values = parsedValues
+    internal fun parseRange(raw: String?): LivestockParameterRange? =
+        (parseRangeResult(raw) as? RangeParseResult.Parsed)?.range
+
+    internal fun parseRangeResult(raw: String?): RangeParseResult {
+        val sourceText = raw?.takeIf(String::isNotBlank) ?: return RangeParseResult.Missing
+        val normalized = sourceText.trim()
+        val prefix = approximation.find(normalized)?.takeIf { it.range.first == 0 }
+        val approximate = prefix != null
+        val expression = if (prefix == null) normalized else {
+            normalized.substring(prefix.range.last + 1).trim()
+        }
+
+        return parseUpperBound(expression, sourceText, approximate)
+            ?: parseLowerBound(expression, sourceText, approximate)
+            ?: parseInterval(expression, sourceText, approximate)
+            ?: parseNominal(expression, sourceText)
+            ?: RangeParseResult.Unparseable(sourceText)
+    }
+
+    private fun parseUpperBound(
+        expression: String,
+        sourceText: String,
+        approximate: Boolean
+    ): RangeParseResult? = upperBound.matchEntire(expression)?.let { match ->
+        val value = number(match.groupValues[2])
+        if (value == null || approximate) {
+            RangeParseResult.Unparseable(sourceText)
+        } else {
+            RangeParseResult.Parsed(
+                LivestockParameterRange(
+                    maximum = value,
+                    maximumInclusive = match.groupValues[1] in setOf("<=", "≤"),
+                    sourceText = sourceText
+                )
             )
         }
     }
 
-    private fun buildRange(
-        normalized: String,
-        values: List<Double>
-    ): LivestockParameterRange {
-        val approximate = normalized.contains('~') ||
-            normalized.contains('≈') ||
-            normalized.contains("about", ignoreCase = true)
-
-        return when {
-            normalized.startsWith("<") || normalized.startsWith("≤") ->
+    private fun parseLowerBound(
+        expression: String,
+        sourceText: String,
+        approximate: Boolean
+    ): RangeParseResult? = lowerBound.matchEntire(expression)?.let { match ->
+        val value = number(match.groupValues[2])
+        if (value == null || approximate) {
+            RangeParseResult.Unparseable(sourceText)
+        } else {
+            RangeParseResult.Parsed(
                 LivestockParameterRange(
-                    maximum = values.first(),
-                    approximate = approximate
+                    minimum = value,
+                    minimumInclusive = match.groupValues[1] in setOf(">=", "≥"),
+                    sourceText = sourceText
                 )
-
-            normalized.startsWith(">") || normalized.startsWith("≥") ->
-                LivestockParameterRange(
-                    minimum = values.first(),
-                    approximate = approximate
-                )
-
-            values.size >= 2 -> LivestockParameterRange(
-                minimum = minOf(values[0], values[1]),
-                maximum = maxOf(values[0], values[1]),
-                approximate = approximate
-            )
-
-            else -> LivestockParameterRange(
-                minimum = values.first(),
-                maximum = values.first(),
-                approximate = true
             )
         }
     }
+
+    private fun parseInterval(
+        expression: String,
+        sourceText: String,
+        approximate: Boolean
+    ): RangeParseResult? = interval.matchEntire(expression)?.let { match ->
+        val minimum = number(match.groupValues[1])
+        val maximum = number(match.groupValues[2])
+        if (minimum == null || maximum == null || minimum > maximum) {
+            RangeParseResult.Unparseable(sourceText)
+        } else {
+            RangeParseResult.Parsed(
+                LivestockParameterRange(
+                    minimum = minimum,
+                    maximum = maximum,
+                    approximate = approximate,
+                    sourceText = sourceText
+                )
+            )
+        }
+    }
+
+    private fun parseNominal(
+        expression: String,
+        sourceText: String
+    ): RangeParseResult? = single.matchEntire(expression)?.let { match ->
+        val value = number(match.value)
+        if (value == null) {
+            RangeParseResult.Unparseable(sourceText)
+        } else {
+            RangeParseResult.Parsed(
+                LivestockParameterRange(
+                    approximate = true,
+                    nominalValue = value,
+                    sourceText = sourceText
+                )
+            )
+        }
+    }
+
+    private fun number(value: String): Double? = value.replace(',', '.').toDoubleOrNull()
+        ?.takeIf(Double::isFinite)
 }

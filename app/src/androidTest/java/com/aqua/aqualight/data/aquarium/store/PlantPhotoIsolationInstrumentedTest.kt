@@ -33,7 +33,7 @@ class PlantPhotoIsolationInstrumentedTest {
     private val store = AquariumTankDataStoreManager(context)
 
     @Test
-    fun sameSpeciesAndSamePlantIdsInOtherTankNeverChangeTheSelectedRecord() = runBlocking {
+    fun sameSpeciesAndSamePlantIdsInOtherTankNeverChangeTheSelectedRecord() = runBlocking<Unit> {
         val owner = "plant-target-${UUID.randomUUID()}"
         UserDataScope.withOwnerUid(owner) {
             val draft = draft()

@@ -3,6 +3,7 @@ package com.aqua.aqualight.application.aquarium
 enum class LivestockWaterAssessmentStatus {
     COMPATIBLE,
     OUT_OF_RANGE,
+    PARTIAL_EVIDENCE,
     NO_COMPARABLE_MEASUREMENTS,
     CUSTOM_UNVERIFIED,
     CATALOG_ENTRY_MISSING
