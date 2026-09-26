@@ -74,25 +74,23 @@ class WaterAnalysisUiContractTest {
     }
 
     @Test
-    fun tankHealthSummaryUsesLocalizedNamesWithChemicalSymbolsWithoutResizingCards() {
+    fun tankHealthSummaryUsesProfileAwareMetricModelsWithoutResizingCards() {
         val adapter = file(
             "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
                 "TankHealthContentAdapter.kt"
         )
+        val catalog = file(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
+                "TankHealthWaterMetricUiModels.kt"
+        )
         val metricLayout = file("app/src/main/res/layout/item_tank_health_metric.xml")
 
-        assertTrue(adapter.contains("tank_health_test_nitrate"))
-        assertTrue(adapter.contains("tank_health_test_symbol_nitrate"))
-        assertTrue(adapter.contains("tank_health_test_nitrite"))
-        assertTrue(adapter.contains("tank_health_test_symbol_nitrite"))
-        assertTrue(adapter.contains("tank_health_test_ammonia_ammonium"))
-        assertTrue(adapter.contains("tank_health_test_symbol_ammonia_ammonium"))
-        assertTrue(adapter.contains("tank_health_test_general_hardness"))
-        assertTrue(adapter.contains("tank_health_test_symbol_gh"))
-        assertTrue(adapter.contains("tank_health_test_carbonate_hardness"))
-        assertTrue(adapter.contains("tank_health_test_symbol_kh"))
-        assertTrue(adapter.contains("tank_health_test_phosphate"))
-        assertTrue(adapter.contains("tank_health_test_symbol_phosphate"))
+        assertTrue(adapter.contains("context.getString(item.labelRes)"))
+        assertTrue(adapter.contains("context.getString(symbolRes)"))
+        assertTrue(catalog.contains("WaterTestProfileUiCatalog.recommendedIds(tankProfile)"))
+        assertTrue(catalog.contains("WaterTestProfileUiCatalog.model("))
+        assertTrue(catalog.contains("MAX_DASHBOARD_METRICS = 8"))
+        assertTrue(catalog.contains("measuredParameterIds"))
         assertTrue(metricLayout.contains("android:layout_height=\"@dimen/aqua_size_72\""))
         assertTrue(
             metricLayout.contains(
