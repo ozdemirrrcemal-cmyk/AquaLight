@@ -64,6 +64,9 @@ class WaterAnalysisUiContractTest {
         assertTrue(renderer.contains("tileLayoutParams"))
         assertFalse(renderer.contains("fullWidth: Boolean"))
         assertFalse(renderer.contains("inputLayout.suffixText"))
+        assertTrue(parameterLayout.contains("unitSelector"))
+        assertTrue(parameterLayout.contains("ivUnitChevron"))
+        assertTrue(renderer.contains("WaterMeasurementMethodBottomSheet.show("))
         val inputStyles = file("app/src/main/res/values/input_styles.xml")
         assertFalse(inputStyles.contains("WaterAnalysisCompact"))
         assertFalse(parameterLayout.contains("aqua_size_110"))
@@ -71,6 +74,30 @@ class WaterAnalysisUiContractTest {
         assertFalse(values.contains("tank_health_analysis_input_"))
         assertFalse(waterLayout.contains("inputPh"))
         assertFalse(waterLayout.contains("inputNo3"))
+    }
+
+    @Test
+    fun measurementMethodSheetUsesCentralHostWithoutCloseButton() {
+        val sheet = file(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
+                "WaterMeasurementMethodBottomSheet.kt"
+        )
+        val content = file(
+            "app/src/main/res/layout/content_sheet_water_measurement_method.xml"
+        )
+
+        assertTrue(sheet.contains("DialogSettingsBottomSheetBinding"))
+        assertTrue(sheet.contains("SingleChoiceBottomSheet.show("))
+        assertTrue(content.contains("cardMethodManual"))
+        assertTrue(content.contains("cardMethodTestKit"))
+        assertTrue(content.contains("cardMethodDigital"))
+        assertTrue(content.contains("cardMethodSensor"))
+        assertTrue(content.contains("rowTestKit"))
+        assertTrue(content.contains("rowBasis"))
+        assertTrue(content.contains("rowUnit"))
+        assertTrue(content.contains("btnApply"))
+        assertFalse(content.contains("close"))
+        assertFalse(content.contains("btnClose"))
     }
 
     @Test

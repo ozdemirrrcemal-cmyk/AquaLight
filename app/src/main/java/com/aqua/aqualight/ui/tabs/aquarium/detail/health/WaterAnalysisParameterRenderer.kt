@@ -17,7 +17,9 @@ internal class WaterAnalysisParameterRenderer(
     private val fragment: Fragment,
     private val binding: ItemTankHealthAnalysisWaterParametersBinding,
     private val parameterValues: MutableMap<WaterTestParameterId, String>,
-    private val additionalParameters: MutableSet<WaterTestParameterId>
+    private val additionalParameters: MutableSet<WaterTestParameterId>,
+    private val measurementSelections:
+        MutableMap<WaterTestParameterId, WaterMeasurementSelectionUi>
 ) {
     private var currentTankProfile: String? = null
 
@@ -240,8 +242,31 @@ internal class WaterAnalysisParameterRenderer(
         itemBinding.tvParameterName.setText(model.nameRes)
         itemBinding.tvParameterSymbol.isVisible = model.symbolRes != null
         model.symbolRes?.let { symbolRes -> itemBinding.tvParameterSymbol.setText(symbolRes) }
-        itemBinding.tvParameterUnit.isVisible = model.unitRes != null
-        model.unitRes?.let { unitRes -> itemBinding.tvParameterUnit.setText(unitRes) }
+
+        val defaultMeasurementSelection = WaterMeasurementUiCatalog.defaultSelection(model.id)
+        val measurementSelection = measurementSelections[model.id] ?: defaultMeasurementSelection
+        val unitOptions = WaterMeasurementUiCatalog.unitOptions(model.id)
+        val hasUnit = unitOptions.isNotEmpty()
+        itemBinding.unitDivider.isVisible = hasUnit
+        itemBinding.unitSelector.isVisible = hasUnit
+        if (hasUnit) {
+            itemBinding.tvParameterUnit.setText(
+                WaterMeasurementUiCatalog.optionLabelRes(
+                    unitOptions,
+                    measurementSelection.unitId
+                )
+            )
+            itemBinding.unitSelector.setOnClickListener {
+                WaterMeasurementMethodBottomSheet.show(
+                    fragmentManager = fragment.childFragmentManager,
+                    parameterId = model.id,
+                    selection = measurementSelection
+                )
+            }
+        } else {
+            itemBinding.unitSelector.setOnClickListener(null)
+        }
+
         itemBinding.inputValue.setText(model.value)
         itemBinding.inputValue.setOnFocusChangeListener { _, hasFocus ->
             val context = fragment.requireContext()
@@ -273,6 +298,7 @@ internal class WaterAnalysisParameterRenderer(
                 View.OnClickListener {
                     additionalParameters.remove(model.id)
                     parameterValues.remove(model.id)
+                    measurementSelections.remove(model.id)
                     render(currentTankProfile)
                 }
             } else {

@@ -26,6 +26,8 @@ class TankHealthAnalysisAddFragment :
     private var tankProfile: String? = null
     private val parameterValues = linkedMapOf<WaterTestParameterId, String>()
     private val additionalParameters = linkedSetOf<WaterTestParameterId>()
+    private val measurementSelections =
+        linkedMapOf<WaterTestParameterId, WaterMeasurementSelectionUi>()
 
     private var measurementTimeController: WaterAnalysisMeasurementTimeController? = null
     private var temperatureUiController: WaterAnalysisTemperatureUiController? = null
@@ -59,7 +61,8 @@ class TankHealthAnalysisAddFragment :
             fragment = this,
             binding = binding.waterParametersSection,
             parameterValues = parameterValues,
-            additionalParameters = additionalParameters
+            additionalParameters = additionalParameters,
+            measurementSelections = measurementSelections
         )
 
         setupHeader()
@@ -83,6 +86,7 @@ class TankHealthAnalysisAddFragment :
             STATE_PARAMETER_VALUES,
             ArrayList(parameterValues.values)
         )
+        WaterMeasurementUiStateCodec.save(outState, measurementSelections)
         super.onSaveInstanceState(outState)
     }
 
@@ -105,6 +109,8 @@ class TankHealthAnalysisAddFragment :
                 .getOrNull()
                 ?.let { parameterId -> parameterValues[parameterId] = value }
         }
+
+        WaterMeasurementUiStateCodec.restore(savedInstanceState, measurementSelections)
     }
 
     private fun setupHeader() {
@@ -134,6 +140,38 @@ class TankHealthAnalysisAddFragment :
 
             additionalParameters.add(parameterId)
             parameterRenderer?.render(profile)
+        }
+
+        childFragmentManager.setFragmentResultListener(
+            WaterMeasurementMethodBottomSheet.REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            val parameterId = result
+                .getString(WaterMeasurementMethodBottomSheet.RESULT_PARAMETER_ID)
+                ?.let { rawId ->
+                    runCatching { WaterTestParameterId.valueOf(rawId) }.getOrNull()
+                }
+                ?: return@setFragmentResultListener
+            val method = result
+                .getString(WaterMeasurementMethodBottomSheet.RESULT_METHOD)
+                ?.let { rawMethod ->
+                    runCatching { WaterMeasurementMethodUi.valueOf(rawMethod) }.getOrNull()
+                }
+                ?: return@setFragmentResultListener
+
+            measurementSelections[parameterId] = WaterMeasurementSelectionUi(
+                method = method,
+                testKitId = result
+                    .getString(WaterMeasurementMethodBottomSheet.RESULT_TEST_KIT_ID)
+                    .orEmpty(),
+                basisId = result
+                    .getString(WaterMeasurementMethodBottomSheet.RESULT_BASIS_ID)
+                    .orEmpty(),
+                unitId = result
+                    .getString(WaterMeasurementMethodBottomSheet.RESULT_UNIT_ID)
+                    .orEmpty()
+            )
+            parameterRenderer?.render(tankProfile)
         }
     }
 

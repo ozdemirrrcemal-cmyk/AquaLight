@@ -42,6 +42,32 @@
     <string name="tank_health_analysis_remove_test">Remove test</string>
     <string name="tank_health_analysis_test_picker_label_format">%1$s  •  %2$s</string>
 
+    <string name="water_measurement_sheet_title">Measurement Method and Test Kit</string>
+    <string name="water_measurement_sheet_subtitle">Choose the measurement method and test kit for this analysis.</string>
+    <string name="water_measurement_method_manual">Manual</string>
+    <string name="water_measurement_method_test_kit">Test Kit</string>
+    <string name="water_measurement_method_digital">Digital</string>
+    <string name="water_measurement_method_sensor">Sensor</string>
+    <string name="water_measurement_test_kit">Test kit</string>
+    <string name="water_measurement_test_kit_helper">Choose the test kit you used.</string>
+    <string name="water_measurement_basis">Measurement basis</string>
+    <string name="water_measurement_basis_helper">The analyte basis reported by the test.</string>
+    <string name="water_measurement_unit">Unit</string>
+    <string name="water_measurement_unit_helper">The unit reported by the test.</string>
+    <string name="water_measurement_not_selected">Not selected</string>
+    <string name="water_measurement_kit_salifert_nitrate" translatable="false">Salifert Nitrate</string>
+    <string name="water_measurement_kit_other">Other test kit</string>
+    <string name="water_measurement_basis_no3" translatable="false">NO₃⁻</string>
+    <string name="water_measurement_basis_no3_n" translatable="false">NO₃-N</string>
+    <string name="water_measurement_basis_po4" translatable="false">PO₄³⁻</string>
+    <string name="water_measurement_basis_p" translatable="false">P</string>
+    <string name="water_measurement_basis_nh3_nh4" translatable="false">NH₃ / NH₄⁺</string>
+    <string name="water_measurement_basis_tan" translatable="false">TAN</string>
+    <string name="water_measurement_canonical_format">Values are converted inside AquaLight to the standard %1$s %2$s format.</string>
+    <string name="water_measurement_canonical_format_without_unit">Values are normalized inside AquaLight to the standard %1$s format.</string>
+    <string name="water_measurement_apply">Apply</string>
+    <string name="water_measurement_open_configuration">Configure measurement method and unit</string>
+
     <string name="tank_health_test_ph">pH</string>
     <string name="tank_health_test_nitrate">Nitrate</string>
     <string name="tank_health_test_nitrite">Nitrite</string>

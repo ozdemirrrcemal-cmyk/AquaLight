@@ -103,16 +103,43 @@
                     android:selectAllOnFocus="true"
                     android:textSize="@dimen/aqua_text_size_body" />
 
-                <TextView
-                    android:id="@+id/tvParameterUnit"
+                <View
+                    android:id="@+id/unitDivider"
+                    android:layout_width="@dimen/aqua_size_1"
+                    android:layout_height="@dimen/aqua_size_28"
+                    android:background="@color/aqua_card_divider" />
+
+                <LinearLayout
+                    android:id="@+id/unitSelector"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackgroundBorderless"
                     android:gravity="center"
-                    android:includeFontPadding="false"
-                    android:paddingStart="@dimen/aqua_size_4"
-                    android:paddingEnd="@dimen/aqua_size_12"
-                    android:textColor="@color/aqua_input_hint_unfocused"
-                    android:textSize="@dimen/aqua_text_size_caption" />
+                    android:orientation="horizontal"
+                    android:paddingStart="@dimen/aqua_size_8"
+                    android:paddingEnd="@dimen/aqua_size_8">
+
+                    <TextView
+                        android:id="@+id/tvParameterUnit"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:includeFontPadding="false"
+                        android:textColor="@color/aqua_card_text_primary"
+                        android:textSize="@dimen/aqua_text_size_body_small" />
+
+                    <ImageView
+                        android:id="@+id/ivUnitChevron"
+                        android:layout_width="@dimen/aqua_size_16"
+                        android:layout_height="@dimen/aqua_size_16"
+                        android:layout_marginStart="@dimen/aqua_size_3"
+                        android:contentDescription="@string/water_measurement_open_configuration"
+                        android:rotation="@integer/aqua_rotation_90"
+                        android:src="@drawable/ic_tank_health_chevron_right_24"
+                        app:tint="@color/aqua_card_text_secondary" />
+
+                </LinearLayout>
 
             </LinearLayout>
 

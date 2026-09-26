@@ -6,4 +6,6 @@
     <string name="tank_health_analysis_unit_ppm" translatable="false">ppm</string>
     <string name="tank_health_analysis_unit_us_cm" translatable="false">µS/cm</string>
     <string name="tank_health_analysis_unit_ppt" translatable="false">ppt</string>
+    <string name="tank_health_analysis_unit_meq_l" translatable="false">meq/L</string>
+    <string name="tank_health_analysis_unit_ppm_caco3" translatable="false">ppm as CaCO₃</string>
 </resources>
