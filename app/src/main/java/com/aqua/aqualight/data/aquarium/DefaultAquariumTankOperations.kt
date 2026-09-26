@@ -259,6 +259,8 @@ internal fun OwnerTankDataCleaner.Result.toApplicationResult(): DeleteAquariumTa
                     stage = when (issue.stage) {
                         OwnerTankDataCleaner.CleanupStage.CARE_TASKS ->
                             AquariumTankCleanupStage.CARE_TASKS
+                        OwnerTankDataCleaner.CleanupStage.WATER_ANALYSES ->
+                            AquariumTankCleanupStage.WATER_ANALYSES
                         OwnerTankDataCleaner.CleanupStage.DEVICE_ASSIGNMENTS ->
                             AquariumTankCleanupStage.DEVICE_ASSIGNMENTS
                     }

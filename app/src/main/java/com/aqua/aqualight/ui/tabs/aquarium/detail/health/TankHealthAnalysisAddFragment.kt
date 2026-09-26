@@ -11,12 +11,12 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumTankTaxonomy
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisInput
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementInput
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentTankHealthAnalysisAddBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
-import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
 
 class TankHealthAnalysisAddFragment :
@@ -248,11 +248,10 @@ class TankHealthAnalysisAddFragment :
             }.onFailure {
                 _binding?.let { currentBinding ->
                     currentBinding.btnSaveAnalysis.isEnabled = true
-                    Snackbar.make(
-                        currentBinding.root,
-                        R.string.tank_health_analysis_save_failed,
-                        Snackbar.LENGTH_LONG
-                    ).show()
+                    (activity as? BaseActivity)?.showSnackBar(
+                        message = getString(R.string.tank_health_analysis_save_failed),
+                        type = BaseActivity.SnackType.ERROR
+                    )
                 }
             }
         }
@@ -334,7 +333,10 @@ class TankHealthAnalysisAddFragment :
     }
 
     private fun showInputError(message: String) {
-        Snackbar.make(binding.root, message, Snackbar.LENGTH_LONG).show()
+        (activity as? BaseActivity)?.showSnackBar(
+            message = message,
+            type = BaseActivity.SnackType.WARNING
+        )
     }
 
     private fun observeTankProfile() {

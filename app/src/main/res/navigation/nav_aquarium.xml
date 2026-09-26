@@ -297,6 +297,9 @@
             <argument
                 android:name="tankId"
                 app:argType="long" />
+            <argument
+                android:name="analysisId"
+                app:argType="long" />
         </action>
     </fragment>
 
@@ -307,6 +310,9 @@
         tools:layout="@layout/fragment_tank_health_analysis_detail">
         <argument
             android:name="tankId"
+            app:argType="long" />
+        <argument
+            android:name="analysisId"
             app:argType="long" />
     </fragment>
 

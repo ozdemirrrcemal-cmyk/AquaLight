@@ -113,7 +113,8 @@
     <string name="tank_health_analysis_record_info_title">Kayıt Bilgisi</string>
     <string name="tank_health_analysis_record_info_subtitle">Bu kayda ait tarih ve saat bilgileri.</string>
     <string name="tank_health_analysis_date_time_label">Tarih ve Saat</string>
-    <string name="tank_health_analysis_record_date_time">26 Eyl 2026 • 14:10</string>
+    <string name="tank_health_analysis_record_date_time">Kayıt tarihi ve saati</string>
+    <string name="tank_health_analysis_date_time_format">%1$s • %2$s</string>
     <string name="tank_health_analysis_values_title">Su Değerleri</string>
     <string name="tank_health_analysis_values_subtitle">Bu kayıttaki ölçüm sonuçları.</string>
     <string name="tank_health_analysis_extra_title">Ek Bilgiler</string>
@@ -124,7 +125,8 @@
     <string name="tank_health_analysis_back">Geri</string>
 
     <string name="tank_health_analysis_delete_title">Kaydı Sil?</string>
-    <string name="tank_health_analysis_delete_message">26 Eyl 2026 14:10 tarihli analiz kaydını silmek istediğinize emin misiniz? Bu işlem geri alınamaz.</string>
+    <string name="tank_health_analysis_delete_message">Bu analiz kaydını silmek istediğinize emin misiniz? Bu işlem geri alınamaz.</string>
+    <string name="tank_health_analysis_delete_failed">Analiz kaydı silinemedi. Lütfen tekrar deneyin.</string>
     <string name="tank_health_analysis_delete_confirm">Sil</string>
     <string name="tank_health_analysis_delete_cancel">İptal</string>
 </resources>

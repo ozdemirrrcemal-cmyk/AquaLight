@@ -160,7 +160,8 @@
     <string name="tank_health_analysis_record_info_title">Record Information</string>
     <string name="tank_health_analysis_record_info_subtitle">Date and time information for this record.</string>
     <string name="tank_health_analysis_date_time_label">Date and Time</string>
-    <string name="tank_health_analysis_record_date_time">26 Sep 2026 • 14:10</string>
+    <string name="tank_health_analysis_record_date_time">Record date and time</string>
+    <string name="tank_health_analysis_date_time_format">%1$s • %2$s</string>
     <string name="tank_health_analysis_values_title">Water Values</string>
     <string name="tank_health_analysis_values_subtitle">Measurement results in this record.</string>
     <string name="tank_health_analysis_extra_title">Additional Information</string>
@@ -171,7 +172,8 @@
     <string name="tank_health_analysis_back">Back</string>
 
     <string name="tank_health_analysis_delete_title">Delete Record?</string>
-    <string name="tank_health_analysis_delete_message">Are you sure you want to delete the analysis record dated 26 Sep 2026 14:10? This action cannot be undone.</string>
+    <string name="tank_health_analysis_delete_message">Are you sure you want to delete this analysis record? This action cannot be undone.</string>
+    <string name="tank_health_analysis_delete_failed">The analysis record could not be deleted. Please try again.</string>
     <string name="tank_health_analysis_delete_confirm">Delete</string>
     <string name="tank_health_analysis_delete_cancel">Cancel</string>
 </resources>
