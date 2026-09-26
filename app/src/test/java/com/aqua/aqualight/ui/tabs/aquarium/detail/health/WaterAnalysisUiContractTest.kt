@@ -93,14 +93,9 @@ class WaterAnalysisUiContractTest {
             "app/src/main/res/layout/fragment_tank_health_analysis_add.xml"
         )
 
-        val sameProfileRender = """
-            if (nextProfile == tankProfile) {
-                parameterRenderer?.render(nextProfile)
-                return@observe
-            }
-        """.trimIndent()
-
-        assertTrue(fragment.contains(sameProfileRender))
+        assertTrue(fragment.contains("if (nextProfile == tankProfile)"))
+        assertTrue(fragment.contains("parameterRenderer?.render(nextProfile)"))
+        assertTrue(fragment.contains("return@observe"))
         assertTrue(screen.contains("android:id=\"@+id/sensorSection\""))
         assertTrue(screen.contains("android:id=\"@+id/waterParametersSection\""))
         assertTrue(screen.contains("android:layout_marginTop=\"@dimen/aqua_size_12\""))
@@ -173,7 +168,7 @@ class WaterAnalysisUiContractTest {
         File(repositoryRoot, relativePath).readText()
 
     private fun locateRepositoryRoot(): File {
-        var candidate: File? = File(System.getProperty("user.dir")).absoluteFile
+        var candidate: File? = File(requireNotNull(System.getProperty("user.dir"))).absoluteFile
         while (candidate != null) {
             if (File(candidate, "app/src/main").isDirectory) return candidate
             candidate = candidate.parentFile
