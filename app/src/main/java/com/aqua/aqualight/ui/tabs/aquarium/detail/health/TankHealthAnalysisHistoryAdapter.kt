@@ -3,15 +3,18 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.ItemTankHealthAnalysisHistoryRecordBinding
 
 internal class TankHealthAnalysisHistoryAdapter(
     private val onRecordClick: (TankHealthAnalysisHistoryRecord) -> Unit
-) : RecyclerView.Adapter<TankHealthAnalysisHistoryAdapter.RecordViewHolder>() {
-
-    private var items: List<TankHealthAnalysisHistoryRecord> = emptyList()
+) : ListAdapter<
+    TankHealthAnalysisHistoryRecord,
+    TankHealthAnalysisHistoryAdapter.RecordViewHolder
+>(DIFF_CALLBACK) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecordViewHolder =
         RecordViewHolder(
@@ -24,14 +27,11 @@ internal class TankHealthAnalysisHistoryAdapter(
         )
 
     override fun onBindViewHolder(holder: RecordViewHolder, position: Int) {
-        holder.bind(items[position])
+        holder.bind(getItem(position))
     }
 
-    override fun getItemCount(): Int = items.size
-
     fun submitItems(nextItems: List<TankHealthAnalysisHistoryRecord>) {
-        items = nextItems
-        notifyDataSetChanged()
+        submitList(nextItems)
     }
 
     internal class RecordViewHolder(
@@ -60,6 +60,20 @@ internal class TankHealthAnalysisHistoryAdapter(
             binding.tvTemperatureStatus.setTextColor(statusColor)
 
             binding.root.setOnClickListener { onRecordClick(item) }
+        }
+    }
+
+    private companion object {
+        val DIFF_CALLBACK = object : DiffUtil.ItemCallback<TankHealthAnalysisHistoryRecord>() {
+            override fun areItemsTheSame(
+                oldItem: TankHealthAnalysisHistoryRecord,
+                newItem: TankHealthAnalysisHistoryRecord
+            ): Boolean = oldItem.analysisId == newItem.analysisId
+
+            override fun areContentsTheSame(
+                oldItem: TankHealthAnalysisHistoryRecord,
+                newItem: TankHealthAnalysisHistoryRecord
+            ): Boolean = oldItem == newItem
         }
     }
 }
