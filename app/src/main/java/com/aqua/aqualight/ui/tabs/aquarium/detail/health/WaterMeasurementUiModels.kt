@@ -27,19 +27,52 @@ internal object WaterMeasurementUiCatalog {
 
     fun defaultSelection(parameterId: WaterTestParameterId): WaterMeasurementSelectionUi =
         WaterMeasurementSelectionUi(
-            method = if (parameterId == WaterTestParameterId.NITRATE) {
-                WaterMeasurementMethodUi.TEST_KIT
-            } else {
-                WaterMeasurementMethodUi.MANUAL
-            },
-            testKitId = if (parameterId == WaterTestParameterId.NITRATE) {
-                KIT_SALIFERT_NITRATE
-            } else {
-                OPTION_NONE
-            },
+            method = WaterMeasurementMethodUi.MANUAL,
+            testKitId = OPTION_NONE,
             basisId = canonicalBasis(parameterId).id,
             unitId = canonicalUnit(parameterId)?.id ?: UNIT_NONE
         )
+
+    fun normalizeSelection(
+        parameterId: WaterTestParameterId,
+        selection: WaterMeasurementSelectionUi
+    ): WaterMeasurementSelectionUi {
+        val normalizedKitId = if (selection.method == WaterMeasurementMethodUi.TEST_KIT) {
+            selection.testKitId.takeIf { candidate ->
+                testKitOptions(parameterId).any { option -> option.id == candidate }
+            } ?: OPTION_NONE
+        } else {
+            OPTION_NONE
+        }
+
+        val constrainedSelection = selection.copy(testKitId = normalizedKitId)
+        val basisOptions = selectableBasisOptions(parameterId, constrainedSelection)
+        val unitOptions = selectableUnitOptions(parameterId, constrainedSelection)
+
+        return constrainedSelection.copy(
+            basisId = selection.basisId.takeIf { candidate ->
+                basisOptions.any { option -> option.id == candidate }
+            } ?: basisOptions.first().id,
+            unitId = if (unitOptions.isEmpty()) {
+                UNIT_NONE
+            } else {
+                selection.unitId.takeIf { candidate ->
+                    unitOptions.any { option -> option.id == candidate }
+                } ?: unitOptions.first().id
+            }
+        )
+    }
+
+    fun isSelectionValid(
+        parameterId: WaterTestParameterId,
+        selection: WaterMeasurementSelectionUi
+    ): Boolean {
+        val normalized = normalizeSelection(parameterId, selection)
+        val hasRequiredTestKit =
+            selection.method != WaterMeasurementMethodUi.TEST_KIT ||
+                selection.testKitId != OPTION_NONE
+        return normalized == selection && hasRequiredTestKit
+    }
 
     fun testKitOptions(parameterId: WaterTestParameterId): List<WaterMeasurementOptionUi> =
         buildList {
@@ -93,6 +126,34 @@ internal object WaterMeasurementUiCatalog {
                 )
             )
             else -> canonicalUnit(parameterId)?.let(::listOf).orEmpty()
+        }
+
+    fun selectableBasisOptions(
+        parameterId: WaterTestParameterId,
+        selection: WaterMeasurementSelectionUi
+    ): List<WaterMeasurementOptionUi> =
+        if (
+            selection.method == WaterMeasurementMethodUi.TEST_KIT &&
+            selection.testKitId == KIT_SALIFERT_NITRATE &&
+            parameterId == WaterTestParameterId.NITRATE
+        ) {
+            listOf(canonicalBasis(parameterId))
+        } else {
+            basisOptions(parameterId)
+        }
+
+    fun selectableUnitOptions(
+        parameterId: WaterTestParameterId,
+        selection: WaterMeasurementSelectionUi
+    ): List<WaterMeasurementOptionUi> =
+        if (
+            selection.method == WaterMeasurementMethodUi.TEST_KIT &&
+            selection.testKitId == KIT_SALIFERT_NITRATE &&
+            parameterId == WaterTestParameterId.NITRATE
+        ) {
+            canonicalUnit(parameterId)?.let(::listOf).orEmpty()
+        } else {
+            unitOptions(parameterId)
         }
 
     fun canonicalBasis(parameterId: WaterTestParameterId): WaterMeasurementOptionUi =
@@ -164,7 +225,8 @@ internal object WaterMeasurementUiCatalog {
         selectedId: String
     ): Int = options.firstOrNull { option -> option.id == selectedId }
         ?.labelRes
-        ?: options.first().labelRes
+        ?: options.firstOrNull()?.labelRes
+        ?: R.string.water_measurement_not_selected
 
     const val OPTION_NONE = "none"
     const val KIT_SALIFERT_NITRATE = "salifert_nitrate"
@@ -245,11 +307,14 @@ internal object WaterMeasurementUiStateCodec {
                         WaterMeasurementMethodUi.valueOf(parts[1])
                     }.getOrNull()
                     if (parameterId != null && method != null) {
-                        destination[parameterId] = WaterMeasurementSelectionUi(
-                            method = method,
-                            testKitId = parts[2],
-                            basisId = parts[3],
-                            unitId = parts[4]
+                        destination[parameterId] = WaterMeasurementUiCatalog.normalizeSelection(
+                            parameterId = parameterId,
+                            selection = WaterMeasurementSelectionUi(
+                                method = method,
+                                testKitId = parts[2],
+                                basisId = parts[3],
+                                unitId = parts[4]
+                            )
                         )
                     }
                 }

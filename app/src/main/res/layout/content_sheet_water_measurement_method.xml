@@ -111,8 +111,7 @@
                         android:includeFontPadding="false"
                         android:text="@string/water_measurement_method_test_kit"
                         android:textColor="@color/aqua_content_on_dark"
-                        android:textSize="@dimen/aqua_text_size_caption"
-                        android:textStyle="bold" />
+                        android:textSize="@dimen/aqua_text_size_caption" />
 
                 </LinearLayout>
 
@@ -387,6 +386,7 @@
             </androidx.constraintlayout.widget.ConstraintLayout>
 
             <View
+                android:id="@+id/dividerBeforeUnit"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/aqua_size_1"
                 android:layout_marginStart="@dimen/aqua_size_44"

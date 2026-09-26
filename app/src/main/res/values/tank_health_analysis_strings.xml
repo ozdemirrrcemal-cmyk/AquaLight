@@ -63,8 +63,8 @@
     <string name="water_measurement_basis_p" translatable="false">P</string>
     <string name="water_measurement_basis_nh3_nh4" translatable="false">NH₃ / NH₄⁺</string>
     <string name="water_measurement_basis_tan" translatable="false">TAN</string>
-    <string name="water_measurement_canonical_format">Values are converted inside AquaLight to the standard %1$s %2$s format.</string>
-    <string name="water_measurement_canonical_format_without_unit">Values are normalized inside AquaLight to the standard %1$s format.</string>
+    <string name="water_measurement_canonical_format">AquaLight standard display: %1$s %2$s.</string>
+    <string name="water_measurement_canonical_format_without_unit">AquaLight standard display: %1$s.</string>
     <string name="water_measurement_apply">Apply</string>
     <string name="water_measurement_open_configuration">Configure measurement method and unit</string>
 

@@ -1,5 +1,7 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 
+import android.content.DialogInterface
+import android.graphics.Typeface
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -8,6 +10,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
+import androidx.core.view.isVisible
 import androidx.fragment.app.FragmentManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.ContentSheetWaterMeasurementMethodBinding
@@ -42,13 +45,37 @@ internal class WaterMeasurementMethodBottomSheet : BottomSheetDialogFragment() {
         parameterId = WaterTestParameterId.valueOf(
             requireNotNull(args.getString(ARG_PARAMETER_ID))
         )
-        selection = WaterMeasurementSelectionUi(
+        val argumentSelection = WaterMeasurementSelectionUi(
             method = WaterMeasurementMethodUi.valueOf(
                 requireNotNull(args.getString(ARG_METHOD))
             ),
             testKitId = args.getString(ARG_TEST_KIT_ID).orEmpty(),
             basisId = args.getString(ARG_BASIS_ID).orEmpty(),
             unitId = args.getString(ARG_UNIT_ID).orEmpty()
+        )
+        val restoredSelection = savedInstanceState
+            ?.getString(STATE_METHOD)
+            ?.let { rawMethod ->
+                runCatching { WaterMeasurementMethodUi.valueOf(rawMethod) }
+                    .getOrNull()
+                    ?.let { method ->
+                        WaterMeasurementSelectionUi(
+                            method = method,
+                            testKitId = savedInstanceState
+                                .getString(STATE_TEST_KIT_ID)
+                                .orEmpty(),
+                            basisId = savedInstanceState
+                                .getString(STATE_BASIS_ID)
+                                .orEmpty(),
+                            unitId = savedInstanceState
+                                .getString(STATE_UNIT_ID)
+                                .orEmpty()
+                        )
+                    }
+            }
+        selection = WaterMeasurementUiCatalog.normalizeSelection(
+            parameterId = parameterId,
+            selection = restoredSelection ?: argumentSelection
         )
 
         sheetBinding.tvSheetTitle.setText(R.string.water_measurement_sheet_title)
@@ -69,7 +96,7 @@ internal class WaterMeasurementMethodBottomSheet : BottomSheetDialogFragment() {
             val selectedId = result
                 .getString(SingleChoiceBottomSheet.RESULT_SELECTED_ID)
                 .orEmpty()
-            selection = when (
+            val updatedSelection = when (
                 result.getString(SingleChoiceBottomSheet.RESULT_PAYLOAD_ID).orEmpty()
             ) {
                 PAYLOAD_TEST_KIT -> selection.copy(testKitId = selectedId)
@@ -77,23 +104,39 @@ internal class WaterMeasurementMethodBottomSheet : BottomSheetDialogFragment() {
                 PAYLOAD_UNIT -> selection.copy(unitId = selectedId)
                 else -> selection
             }
+            selection = WaterMeasurementUiCatalog.normalizeSelection(
+                parameterId = parameterId,
+                selection = updatedSelection
+            )
             render()
         }
 
         contentBinding.cardMethodManual.setOnClickListener {
-            selection = selection.copy(method = WaterMeasurementMethodUi.MANUAL)
+            selection = WaterMeasurementUiCatalog.normalizeSelection(
+                parameterId = parameterId,
+                selection = selection.copy(method = WaterMeasurementMethodUi.MANUAL)
+            )
             render()
         }
         contentBinding.cardMethodTestKit.setOnClickListener {
-            selection = selection.copy(method = WaterMeasurementMethodUi.TEST_KIT)
+            selection = WaterMeasurementUiCatalog.normalizeSelection(
+                parameterId = parameterId,
+                selection = selection.copy(method = WaterMeasurementMethodUi.TEST_KIT)
+            )
             render()
         }
         contentBinding.cardMethodDigital.setOnClickListener {
-            selection = selection.copy(method = WaterMeasurementMethodUi.DIGITAL)
+            selection = WaterMeasurementUiCatalog.normalizeSelection(
+                parameterId = parameterId,
+                selection = selection.copy(method = WaterMeasurementMethodUi.DIGITAL)
+            )
             render()
         }
         contentBinding.cardMethodSensor.setOnClickListener {
-            selection = selection.copy(method = WaterMeasurementMethodUi.SENSOR)
+            selection = WaterMeasurementUiCatalog.normalizeSelection(
+                parameterId = parameterId,
+                selection = selection.copy(method = WaterMeasurementMethodUi.SENSOR)
+            )
             render()
         }
 
@@ -110,7 +153,10 @@ internal class WaterMeasurementMethodBottomSheet : BottomSheetDialogFragment() {
         contentBinding.rowBasis.setOnClickListener {
             showChoice(
                 titleRes = R.string.water_measurement_basis,
-                options = WaterMeasurementUiCatalog.basisOptions(parameterId),
+                options = WaterMeasurementUiCatalog.selectableBasisOptions(
+                    parameterId,
+                    selection
+                ),
                 selectedId = selection.basisId,
                 payloadId = PAYLOAD_BASIS
             )
@@ -118,13 +164,20 @@ internal class WaterMeasurementMethodBottomSheet : BottomSheetDialogFragment() {
         contentBinding.rowUnit.setOnClickListener {
             showChoice(
                 titleRes = R.string.water_measurement_unit,
-                options = WaterMeasurementUiCatalog.unitOptions(parameterId),
+                options = WaterMeasurementUiCatalog.selectableUnitOptions(
+                    parameterId,
+                    selection
+                ),
                 selectedId = selection.unitId,
                 payloadId = PAYLOAD_UNIT
             )
         }
 
         contentBinding.btnApply.setOnClickListener {
+            selection = WaterMeasurementUiCatalog.normalizeSelection(parameterId, selection)
+            if (!WaterMeasurementUiCatalog.isSelectionValid(parameterId, selection)) {
+                return@setOnClickListener
+            }
             parentFragmentManager.setFragmentResult(
                 REQUEST_KEY,
                 bundleOf(
@@ -168,8 +221,14 @@ internal class WaterMeasurementMethodBottomSheet : BottomSheetDialogFragment() {
         )
 
         val kitOptions = WaterMeasurementUiCatalog.testKitOptions(parameterId)
-        val basisOptions = WaterMeasurementUiCatalog.basisOptions(parameterId)
-        val unitOptions = WaterMeasurementUiCatalog.unitOptions(parameterId)
+        val basisOptions = WaterMeasurementUiCatalog.selectableBasisOptions(
+            parameterId,
+            selection
+        )
+        val unitOptions = WaterMeasurementUiCatalog.selectableUnitOptions(
+            parameterId,
+            selection
+        )
 
         contentBinding.tvTestKitValue.setText(
             WaterMeasurementUiCatalog.optionLabelRes(kitOptions, selection.testKitId)
@@ -177,7 +236,10 @@ internal class WaterMeasurementMethodBottomSheet : BottomSheetDialogFragment() {
         contentBinding.tvBasisValue.setText(
             WaterMeasurementUiCatalog.optionLabelRes(basisOptions, selection.basisId)
         )
-        if (unitOptions.isNotEmpty()) {
+        val hasUnit = unitOptions.isNotEmpty()
+        contentBinding.dividerBeforeUnit.isVisible = hasUnit
+        contentBinding.rowUnit.isVisible = hasUnit
+        if (hasUnit) {
             contentBinding.tvUnitValue.setText(
                 WaterMeasurementUiCatalog.optionLabelRes(unitOptions, selection.unitId)
             )
@@ -186,6 +248,8 @@ internal class WaterMeasurementMethodBottomSheet : BottomSheetDialogFragment() {
         val testKitEnabled = selection.method == WaterMeasurementMethodUi.TEST_KIT
         contentBinding.rowTestKit.isEnabled = testKitEnabled
         contentBinding.rowTestKit.alpha = if (testKitEnabled) ENABLED_ALPHA else DISABLED_ALPHA
+        contentBinding.btnApply.isEnabled =
+            WaterMeasurementUiCatalog.isSelectionValid(parameterId, selection)
 
         val canonicalBasis = WaterMeasurementUiCatalog.canonicalBasis(parameterId)
         val canonicalUnit = WaterMeasurementUiCatalog.canonicalUnit(parameterId)
@@ -216,9 +280,12 @@ internal class WaterMeasurementMethodBottomSheet : BottomSheetDialogFragment() {
         val selectedText = ContextCompat.getColor(context, R.color.aqua_content_on_dark)
         val unselectedText = ContextCompat.getColor(context, R.color.aqua_card_text_secondary)
 
+        card.isCheckable = true
+        card.isChecked = selected
         card.setCardBackgroundColor(if (selected) primary else transparent)
         card.strokeColor = if (selected) primary else outline
         text.setTextColor(if (selected) selectedText else unselectedText)
+        text.setTypeface(null, if (selected) Typeface.BOLD else Typeface.NORMAL)
         icon.imageTintList = android.content.res.ColorStateList.valueOf(
             if (selected) selectedText else unselectedText
         )
@@ -242,6 +309,24 @@ internal class WaterMeasurementMethodBottomSheet : BottomSheetDialogFragment() {
         )
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putString(STATE_METHOD, selection.method.name)
+        outState.putString(STATE_TEST_KIT_ID, selection.testKitId)
+        outState.putString(STATE_BASIS_ID, selection.basisId)
+        outState.putString(STATE_UNIT_ID, selection.unitId)
+        super.onSaveInstanceState(outState)
+    }
+
+    override fun onCancel(dialog: DialogInterface) {
+        if (::parameterId.isInitialized) {
+            parentFragmentManager.setFragmentResult(
+                CANCEL_REQUEST_KEY,
+                bundleOf(RESULT_PARAMETER_ID to parameterId.name)
+            )
+        }
+        super.onCancel(dialog)
+    }
+
     override fun onDestroyView() {
         _contentBinding = null
         _sheetBinding = null
@@ -250,6 +335,7 @@ internal class WaterMeasurementMethodBottomSheet : BottomSheetDialogFragment() {
 
     companion object {
         const val REQUEST_KEY = "water_measurement_method_request"
+        const val CANCEL_REQUEST_KEY = "water_measurement_method_cancel_request"
         const val RESULT_PARAMETER_ID = "water_measurement_parameter_id"
         const val RESULT_METHOD = "water_measurement_method"
         const val RESULT_TEST_KIT_ID = "water_measurement_test_kit_id"
@@ -261,6 +347,10 @@ internal class WaterMeasurementMethodBottomSheet : BottomSheetDialogFragment() {
         private const val ARG_TEST_KIT_ID = "test_kit_id"
         private const val ARG_BASIS_ID = "basis_id"
         private const val ARG_UNIT_ID = "unit_id"
+        private const val STATE_METHOD = "state_method"
+        private const val STATE_TEST_KIT_ID = "state_test_kit_id"
+        private const val STATE_BASIS_ID = "state_basis_id"
+        private const val STATE_UNIT_ID = "state_unit_id"
         private const val CHOICE_REQUEST_KEY = "water_measurement_choice_request"
         private const val PAYLOAD_TEST_KIT = "test_kit"
         private const val PAYLOAD_BASIS = "basis"
@@ -273,9 +363,9 @@ internal class WaterMeasurementMethodBottomSheet : BottomSheetDialogFragment() {
             fragmentManager: FragmentManager,
             parameterId: WaterTestParameterId,
             selection: WaterMeasurementSelectionUi
-        ) {
+        ): Boolean {
             if (fragmentManager.findFragmentByTag(TAG) != null || fragmentManager.isStateSaved) {
-                return
+                return false
             }
             WaterMeasurementMethodBottomSheet().apply {
                 arguments = bundleOf(
@@ -286,6 +376,7 @@ internal class WaterMeasurementMethodBottomSheet : BottomSheetDialogFragment() {
                     ARG_UNIT_ID to selection.unitId
                 )
             }.show(fragmentManager, TAG)
+            return true
         }
     }
 }

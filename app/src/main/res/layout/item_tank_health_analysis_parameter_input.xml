@@ -17,6 +17,7 @@
         android:padding="@dimen/aqua_size_6">
 
         <LinearLayout
+            android:id="@+id/parameterHeader"
             android:layout_width="match_parent"
             android:layout_height="@dimen/aqua_size_30"
             android:gravity="center_vertical"

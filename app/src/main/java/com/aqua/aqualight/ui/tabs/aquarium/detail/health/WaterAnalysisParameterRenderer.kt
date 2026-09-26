@@ -5,6 +5,7 @@ import android.text.TextWatcher
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.Space
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import com.aqua.aqualight.R
@@ -19,9 +20,12 @@ internal class WaterAnalysisParameterRenderer(
     private val parameterValues: MutableMap<WaterTestParameterId, String>,
     private val additionalParameters: MutableSet<WaterTestParameterId>,
     private val measurementSelections:
-        MutableMap<WaterTestParameterId, WaterMeasurementSelectionUi>
+        MutableMap<WaterTestParameterId, WaterMeasurementSelectionUi>,
+    activeMeasurementParameterId: WaterTestParameterId?,
+    private val onActiveMeasurementParameterChanged: (WaterTestParameterId?) -> Unit
 ) {
     private var currentTankProfile: String? = null
+    private var activeMeasurementParameterId = activeMeasurementParameterId
 
     fun render(tankProfile: String?) {
         currentTankProfile = tankProfile
@@ -75,6 +79,19 @@ internal class WaterAnalysisParameterRenderer(
             models = additionalModels,
             availableAdditional = availableAdditional
         )
+    }
+
+    fun clearActiveMeasurementParameter(parameterId: WaterTestParameterId): Boolean {
+        if (activeMeasurementParameterId != parameterId) return false
+        setActiveMeasurementParameter(null)
+        return true
+    }
+
+    private fun setActiveMeasurementParameter(parameterId: WaterTestParameterId?) {
+        if (activeMeasurementParameterId == parameterId) return
+        activeMeasurementParameterId = parameterId
+        onActiveMeasurementParameterChanged(parameterId)
+        render(currentTankProfile)
     }
 
     private fun renderParameterContainer(
@@ -240,15 +257,75 @@ internal class WaterAnalysisParameterRenderer(
 
         itemBinding.ivParameterIcon.setImageResource(model.iconRes)
         itemBinding.tvParameterName.setText(model.nameRes)
-        itemBinding.tvParameterSymbol.isVisible = model.symbolRes != null
-        model.symbolRes?.let { symbolRes -> itemBinding.tvParameterSymbol.setText(symbolRes) }
 
         val defaultMeasurementSelection = WaterMeasurementUiCatalog.defaultSelection(model.id)
-        val measurementSelection = measurementSelections[model.id] ?: defaultMeasurementSelection
+        val storedMeasurementSelection = measurementSelections[model.id]
+        val measurementSelection = WaterMeasurementUiCatalog.normalizeSelection(
+            parameterId = model.id,
+            selection = storedMeasurementSelection ?: defaultMeasurementSelection
+        )
+        if (
+            storedMeasurementSelection != null &&
+            storedMeasurementSelection != measurementSelection
+        ) {
+            measurementSelections[model.id] = measurementSelection
+        }
+
+        val basisOptions = WaterMeasurementUiCatalog.basisOptions(model.id)
+        val displayedSymbolRes = if (basisOptions.size > 1) {
+            WaterMeasurementUiCatalog.optionLabelRes(
+                basisOptions,
+                measurementSelection.basisId
+            )
+        } else {
+            model.symbolRes
+        }
+        itemBinding.tvParameterSymbol.isVisible = displayedSymbolRes != null
+        displayedSymbolRes?.let(itemBinding.tvParameterSymbol::setText)
+
         val unitOptions = WaterMeasurementUiCatalog.unitOptions(model.id)
         val hasUnit = unitOptions.isNotEmpty()
+        val measurementActive = activeMeasurementParameterId == model.id
+        val context = fragment.requireContext()
+        val activeColor = ContextCompat.getColor(context, R.color.aqua_accent_primary)
+        val defaultCardOutline = ContextCompat.getColor(
+            context,
+            R.color.aqua_card_outline_subtle
+        )
+
+        itemBinding.root.strokeColor = if (measurementActive) {
+            activeColor
+        } else {
+            defaultCardOutline
+        }
+        itemBinding.root.strokeWidth = fragment.resources.getDimensionPixelSize(
+            if (measurementActive) R.dimen.aqua_size_2 else R.dimen.aqua_size_1
+        )
+
+        val openMeasurementConfiguration = View.OnClickListener {
+            val shown = WaterMeasurementMethodBottomSheet.show(
+                fragmentManager = fragment.childFragmentManager,
+                parameterId = model.id,
+                selection = measurementSelection
+            )
+            if (shown) {
+                setActiveMeasurementParameter(model.id)
+            }
+        }
+
         itemBinding.unitDivider.isVisible = hasUnit
         itemBinding.unitSelector.isVisible = hasUnit
+        itemBinding.unitSelector.isClickable = hasUnit
+        itemBinding.unitSelector.isFocusable = hasUnit
+        itemBinding.unitSelector.contentDescription = if (hasUnit) {
+            buildString {
+                append(fragment.getString(model.nameRes))
+                append(". ")
+                append(fragment.getString(R.string.water_measurement_open_configuration))
+            }
+        } else {
+            null
+        }
         if (hasUnit) {
             itemBinding.tvParameterUnit.setText(
                 WaterMeasurementUiCatalog.optionLabelRes(
@@ -256,36 +333,46 @@ internal class WaterAnalysisParameterRenderer(
                     measurementSelection.unitId
                 )
             )
-            itemBinding.unitSelector.setOnClickListener {
-                WaterMeasurementMethodBottomSheet.show(
-                    fragmentManager = fragment.childFragmentManager,
-                    parameterId = model.id,
-                    selection = measurementSelection
-                )
-            }
+            itemBinding.unitSelector.setOnClickListener(openMeasurementConfiguration)
         } else {
             itemBinding.unitSelector.setOnClickListener(null)
         }
 
+        itemBinding.parameterHeader.isClickable = !hasUnit
+        itemBinding.parameterHeader.isFocusable = !hasUnit
+        itemBinding.parameterHeader.contentDescription = if (!hasUnit) {
+            buildString {
+                append(fragment.getString(model.nameRes))
+                append(". ")
+                append(fragment.getString(R.string.water_measurement_open_configuration))
+            }
+        } else {
+            null
+        }
+        itemBinding.parameterHeader.setOnClickListener(
+            if (hasUnit) null else openMeasurementConfiguration
+        )
+
         itemBinding.inputValue.setText(model.value)
-        itemBinding.inputValue.setOnFocusChangeListener { _, hasFocus ->
-            val context = fragment.requireContext()
-            itemBinding.inputContainer.strokeColor = androidx.core.content.ContextCompat.getColor(
-                context,
-                if (hasFocus) {
-                    R.color.aqua_input_stroke_focused
-                } else {
-                    R.color.aqua_input_stroke_unfocused
-                }
-            )
+        val renderInputStroke: (Boolean) -> Unit = { hasFocus ->
+            val emphasized = measurementActive || hasFocus
+            itemBinding.inputContainer.strokeColor = if (emphasized) {
+                activeColor
+            } else {
+                ContextCompat.getColor(context, R.color.aqua_input_stroke_unfocused)
+            }
             itemBinding.inputContainer.strokeWidth = fragment.resources.getDimensionPixelSize(
-                if (hasFocus) R.dimen.aqua_size_2 else R.dimen.aqua_size_1
+                if (emphasized) R.dimen.aqua_size_2 else R.dimen.aqua_size_1
             )
+        }
+        renderInputStroke(itemBinding.inputValue.hasFocus())
+        itemBinding.inputValue.setOnFocusChangeListener { _, hasFocus ->
+            renderInputStroke(hasFocus)
         }
 
         itemBinding.inputValue.contentDescription = buildString {
             append(fragment.getString(model.nameRes))
-            model.symbolRes?.let { symbolRes ->
+            displayedSymbolRes?.let { symbolRes ->
                 append(", ")
                 append(fragment.getString(symbolRes))
             }

@@ -55,8 +55,8 @@
     <string name="water_measurement_unit_helper">Test kitinin ölçüm birimi.</string>
     <string name="water_measurement_not_selected">Seçilmedi</string>
     <string name="water_measurement_kit_other">Diğer test kiti</string>
-    <string name="water_measurement_canonical_format">Değerler AquaLight içinde standart %1$s %2$s biçimine çevrilir.</string>
-    <string name="water_measurement_canonical_format_without_unit">Değerler AquaLight içinde standart %1$s biçimine dönüştürülür.</string>
+    <string name="water_measurement_canonical_format">AquaLight standart gösterimi: %1$s %2$s.</string>
+    <string name="water_measurement_canonical_format_without_unit">AquaLight standart gösterimi: %1$s.</string>
     <string name="water_measurement_apply">Uygula</string>
     <string name="water_measurement_open_configuration">Ölçüm yöntemi ve birimi ayarla</string>
 
