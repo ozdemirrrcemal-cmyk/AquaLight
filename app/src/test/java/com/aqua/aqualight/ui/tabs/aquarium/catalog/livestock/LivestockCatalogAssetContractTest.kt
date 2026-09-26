@@ -50,6 +50,16 @@ class LivestockCatalogAssetContractTest {
         assertTrue(raw.contains("Ambystoma mexicanum"))
     }
 
+    @Test
+    fun acroporaParGuidanceDoesNotClaimAHardUpperLimit() {
+        val acropora = assetFile.readLines().single { line ->
+            line.contains("\"id\":\"440cfc3ef12c07ff\"")
+        }
+
+        assertTrue(acropora.contains("\"par\":\"~200–300\""))
+        assertFalse(acropora.contains("200–400+"))
+    }
+
     private fun locateRepositoryRoot(): File {
         var candidate: File? = File(System.getProperty("user.dir")).absoluteFile
 
