@@ -2,9 +2,9 @@
 
 Araştırma tarihi: 26.09.2026 (Europe/Istanbul).
 
-Durum: **K03.0 ölçüm kapsamı, K03.1 NO3/NO2/PO4 kanonik kayıt anlamı/birimleri, K03.2 test/cihaz seçimi + kaynak semantiği çözümleme + normalizasyon akışı, K03.3 amonyak kanonik temelleri, K03.4 concurrent multi-result kayıt/UI politikası, K03.5 deniz salinity/SG dönüşüm güvenliği, K03.6 alkalinite/KH semantik-birim politikası, K03.7 çözünmüş oksijen konsantrasyon/doygunluk politikası, K03.8 klor/kloramin sample-context politikası, K03.9 marine elemental Ca/Mg politikası, K03.10 conductivity/TDS ürün politikası, K03.11 direct-vs-calculated CO2 politikası ve K03.12 Fe/K politikası kabul edildi. K03.13 ve sonraki kararlar açık.** Kabul edilen normatif kapsam ana sözleşme §6.1–6.6, §7, §25.1–25.3 ve §28.1'de kayıtlıdır. Bu araştırma dosyası uygulama kodu veya bilimsel güvenlik eşiği değildir.
+Durum: **K03.0–K03.13 ile desteklenen ölçümlerin ana canonical semantic/unit/source-resolution kararları kabul edildi. K03.13 GH/total-hardness semantiğini de kapattı.** Bundan sonraki K03 işi yeni kullanıcı-facing kimya alanı kararı değil; verified source-profile catalog, conversion revision/precision, method range/detection metadata ve golden-vector uygulama verileridir. Kabul edilen normatif kapsam ana sözleşme §6.1–6.6, §7, §25.1–25.3 ve §28.1'de kayıtlıdır. Bu araştırma dosyası uygulama kodu veya bilimsel güvenlik eşiği değildir.
 
-Kapsam: K03.0 için ölçüm seçiminin kaynaklarını, K03.1'de kabul edilen NO3/NO2/PO4 ortak raporlama temelini, K03.2'de kabul edilen source-aware giriş/normalizasyon yaklaşımını, K03.3'te kabul edilen amonyak kanonik temellerini, K03.4'te kabul edilen concurrent multi-result cardinality/UI davranışını, K03.5'te kabul edilen marine salinity/SG/conductivity ayrımını, K03.6'da kabul edilen total-alkalinity/KH politikasını, K03.7'de kabul edilen dissolved-oxygen concentration/saturation politikasını, K03.8'de kabul edilen chlorine/chloramine sample-context politikasını, K03.9'da kabul edilen elemental Ca/Mg semantiğini, K03.10'da kabul edilen conductivity/TDS ürün davranışını, K03.11'de kabul edilen direct-vs-calculated CO2 politikasını ve K03.12'de kabul edilen iron/potassium semantiğini izlenebilir tutmak. GH ve kalan profile/precision kararları sonraki ayrı maddelerdir.
+Kapsam: K03.0–K03.13 boyunca kabul edilen measurement scope, source-aware normalization, ammonia, marine salinity/SG, alkalinity/KH, dissolved oxygen, chlorine/chloramine, Ca/Mg, conductivity/TDS, direct/calculated CO2, Fe/K ve GH semantic kararlarını izlenebilir tutmak. Kalan K03 çalışması profile/precision/range/detection implementation data'sıdır; yeni canonical measurement kararı değildir.
 
 ## Doğrulanan ayrımlar
 
@@ -216,9 +216,19 @@ Bu karar otomatik CO2/gübre doz önerisini kabul etmez; yalnız direct measurem
 
 Ürün ilkesi: **kullanıcı yalnız testte gördüğü Fe/K değerini girer; kimyasal scope güvenliği profile/backend'de çözülür.**
 
-## K03.13 — sıradaki açık karar
+## K03.13 — kabul edilen Genel Sertlik (GH) politikası
 
-Genel Sertlik (GH) için canonical metric/unit, `dGH` ile `mg/L as CaCO3` gösterimi ve total-hardness semantiği kesinleştirilecek.
+26.09.2026 tarihinde kabul edildi:
+
+- `GENERAL_HARDNESS` aquarium general/total-hardness canonical metric'idir; canonical unit **mg/L as CaCO3**.
+- UI sade ve akvaryum-dostu kalır: `Genel sertlik (GH)`. Verified aquarium test `dGH` veriyorsa kullanıcı test sonucunu aynen girer.
+- Same-semantic conversion: **1 mg/L as CaCO3 = 0.056 °dH**, yaklaşık **1 dGH = 17.9 mg/L as CaCO3**. Raw source value/unit korunur, canonical normalization application katmanında yapılır.
+- GH ile KH/alkalinity aynı semantic değildir. K03.6 alkalinity/KH davranışı ayrı kalır.
+- Aquarium GH pratikte ağırlıklı Ca/Mg hardness contribution'ını temsil eder, ancak tek GH sonucu ayrı elemental Ca2+ ve Mg2+ konsantrasyonlarını vermez. GH'den Ca/Mg bölüşümü tahmin edilmez.
+- Elemental Ca ve Mg mg/L değerleri basitçe toplanıp GH yapılmaz; CaCO3-equivalent hardness hesabı ancak approved equivalence method ile yapılabilir ve derived provenance taşır.
+- Known source profile dGH/mg-L-as-CaCO3 representation'ını çözer. Generic `hardness` veya unidentified `ppm` otomatik GH sayılmaz.
+
+Bu kararla desteklenen measurement setinin ana semantic/unit kararları K03.0–K03.13 düzeyinde tamamlandı. Bundan sonraki K03 işi verified source-profile data, conversion precision/revision, method range/detection limits ve golden-vector implementation verileridir.
 
 ## Birincil kaynaklar
 
@@ -278,8 +288,12 @@ Aşağıdaki kaynaklar önceki karar araştırmasında 26.09.2026 tarihinde aç�
 | R37 | [Hach Potassium Reagent Set / Method 8049](https://ie.hach.com/potassium-reagent-set-0-1-7-0mg-l-k/product-downloads?id=71638523450) | Potassium Method 8049 sonucu **mg/L K** olarak raporlanır; elemental potassium canonical basis'ini destekler. |
 | R38 | [JBL PROAQUATEST Fe / K operating manual](https://www.jbl.de/en-ir/productsv2/download_instruction_manual_pdf/25000191) | Aquarium Fe ve K testleri kullanıcıya mg/L sonuç verir; K testinde dilution multiplier gibi method-specific uygulama bulunabilir ve profile metadata olarak ele alınmalıdır. |
 | R39 | [sera Iron Test](https://www.sera.de/tr/ueruen/tuzlu-su-akvaryum/sera-iron-test/) | Aquarium Fe testleri method-dependent olabilir; sera testi şelatlı demiri de algıladığını belirtir. Bu, tüm `Fe` etiketli kitleri tek analytical scope kabul etmeme gereğini destekler. |
-| R9 | [MSD Veterinary Manual — Equipment Needed for Aquatic Systems and Water Analysis]| R9 | [MSD Veterinary Manual — Equipment Needed for Aquatic Systems and Water Analysis](https://www.msdvetmanual.com/exotic-and-laboratory-animals/aquatic-systems/equipment-needed-for-aquatic-systems-and-water-analysis) | Oksijen, sıcaklık, pH, amonyak, nitrit, alkalinite, sertlik, deniz suyunda tuzluluk ve bağlama göre ek testler. Veteriner değerlendirme kapsamı UI'daki zorunlu alan listesi değildir. |
+| R40 | [Hach — Hardness](https://de.hach.com/parameters/hardness) | Total hardness ağırlıklı Ca/Mg sertliğidir; mg/L as CaCO3 ve German degrees kullanılabilir. Hach conversion: `1 mg/L CaCO3 = 0.056 °dH`. |
+| R41 | [USGS — Hardness of Water](https://www.usgs.gov/water-science-school/science/hardness-water) | Water hardness esas olarak dissolved calcium ve magnesium ile ilişkilidir ve genel olarak mg/L as CaCO3 olarak ifade edilir. |
+| R42 | [JBL PROAQUATEST GH](https://www.jbl.de/en/products/detail/8649/jbl-proaquatest-gh-general-hardness) | Aquarium GH drop test sonucu `number of drops = general hardness in °dH`; bu UI'da dGH source entry modelini destekler. |
+| R43 | [sera — GH/KH FAQ](https://www.sera.de/tr/hizmet/sss/faq-detail/karbonat-sertligi-toplam-sertlikten-daha-yueksek-olabilir-mi/) | Aquarium GH iki değerli metal iyonları/çoğunlukla Ca-Mg ile ilgilidir; hobby KH ise acid-binding-capacity davranışı gösterebilir. Bu nedenle GH ve KH aynı semantic değildir. |
+| R9 | [MSD Veterinary Manual — Equipment Needed for Aquatic Systems and Water Analysis]| R9 | [MSD Veterinary Manual — Equipment Needed for Aquatic Systems and Water Analysis]| R9 | [MSD Veterinary Manual — Equipment Needed for Aquatic Systems and Water Analysis](https://www.msdvetmanual.com/exotic-and-laboratory-animals/aquatic-systems/equipment-needed-for-aquatic-systems-and-water-analysis) | Oksijen, sıcaklık, pH, amonyak, nitrit, alkalinite, sertlik, deniz suyunda tuzluluk ve bağlama göre ek testler. Veteriner değerlendirme kapsamı UI'daki zorunlu alan listesi değildir. |
 | R10 | [Red Sea — Foundation manual, “Optimal levels of the Foundation Elements”](https://redseafish.com/wp-content/uploads/2020/11/24653-NEW-Manual-Foundation-Complete-GB-_2018c.pdf) | Deniz/resif profillerinde tuzluluk, alkalinite, kalsiyum ve magnezyum ayrımı. Üretici hedefleri tüm akvaryumlar için evrensel güvenlik sınırı sayılmaz. |
 | R11 | [MSD Veterinary Manual — Environmental Diseases, chlorine/chloramine section](https://www.msdvetmanual.com/exotic-and-laboratory-animals/aquatic-systems/environmental-diseases-of-aquatic-animals-in-aquatic-systems) | Serbest klor ve toplam klor ayrı ölçümlerdir; kloramin için yalnız serbest klor sonucunun yeterli olmaması. |
 
-Ek ölçümlerde conductivity/TDS K03.10, direct-vs-calculated CO2 K03.11 ve Fe/K K03.12 ile kabul edildi. Fe/K ölçüm desteği otomatik fertilizer-dose özelliği anlamına gelmez. GH canonical semantics ve kalan source-profile/precision ayrıntıları açık karar olarak devam eder.
+K03.13 ile GH canonical semantics de kabul edildi. Böylece desteklenen measurement setinin ana semantic/unit kararları tamamlandı. Kalan K03 çalışması source-profile catalog, conversion precision/revision, method range/detection metadata ve test vectors uygulamasıdır.
