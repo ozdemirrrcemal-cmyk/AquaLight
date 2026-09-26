@@ -2,27 +2,29 @@
 <resources>
     <string name="screen_title_tank_health">Tank Health</string>
     <string name="tank_health_entry_title">Tank Health</string>
-    <string name="tank_health_entry_summary">Tank condition looks good</string>
-    <string name="tank_health_entry_last_analysis">Last analysis: 2 days ago</string>
-    <string name="tank_health_entry_score" translatable="false">82</string>
+    <string name="tank_health_entry_summary">Water quality has not been analyzed yet</string>
+    <string name="tank_health_entry_last_analysis">No analysis yet</string>
+    <string name="tank_health_entry_score" translatable="false">—</string>
 
     <string name="tank_health_tab_water_quality">Water Quality</string>
     <string name="tank_health_tab_algae_control">Algae Control</string>
 
     <string name="tank_health_water_quality_title">Water Quality</string>
-    <string name="tank_health_last_analysis">Last analysis: 2 days ago</string>
+    <string name="tank_health_last_analysis">No analysis yet</string>
     <string name="tank_health_status_normal">Normal</string>
     <string name="tank_health_status_moderate">Moderate</string>
     <string name="tank_health_status_approaching">Approaching</string>
+    <string name="tank_health_status_not_measured">Not measured</string>
+    <string name="tank_health_value_not_measured" translatable="false">—</string>
 
     <string name="tank_health_metric_ph" translatable="false">pH</string>
-    <string name="tank_health_metric_no3" translatable="false">NO3</string>
-    <string name="tank_health_metric_po4" translatable="false">PO4</string>
-    <string name="tank_health_metric_no2" translatable="false">NO2</string>
-    <string name="tank_health_metric_nh3_nh4" translatable="false">NH3/NH4</string>
+    <string name="tank_health_metric_no3">Nitrate (NO₃⁻)</string>
+    <string name="tank_health_metric_po4">Phosphate (PO₄³⁻)</string>
+    <string name="tank_health_metric_no2">Nitrite (NO₂⁻)</string>
+    <string name="tank_health_metric_nh3_nh4">Ammonia / Ammonium (NH₃/NH₄⁺)</string>
     <string name="tank_health_metric_temperature">Temperature</string>
-    <string name="tank_health_metric_gh" translatable="false">GH</string>
-    <string name="tank_health_metric_kh" translatable="false">KH</string>
+    <string name="tank_health_metric_gh">General Hardness (GH)</string>
+    <string name="tank_health_metric_kh">Carbonate Hardness (KH)</string>
 
     <string name="tank_health_value_ph" translatable="false">6.8</string>
     <string name="tank_health_value_no3" translatable="false">18 mg/L</string>

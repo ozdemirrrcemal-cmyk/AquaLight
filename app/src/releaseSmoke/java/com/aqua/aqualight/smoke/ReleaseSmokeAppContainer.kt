@@ -28,10 +28,13 @@ import com.aqua.aqualight.application.user.UserSettingsOperations
 import com.aqua.aqualight.composition.AppContainer
 import com.aqua.aqualight.application.devices.light.quicksetup.DeviceLightQuickSetupCoordinator
 import com.aqua.aqualight.composition.OwnerLightOperations
+import com.aqua.aqualight.data.aquarium.AquariumTankOperationDependencies
 import com.aqua.aqualight.data.aquarium.DefaultAquariumTankOperations
 import com.aqua.aqualight.data.aquarium.catalog.livestock.DefaultLivestockCatalogOperations
 import com.aqua.aqualight.data.aquarium.catalog.livestock.DefaultLivestockWaterAdvisor
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
+import com.aqua.aqualight.data.aquarium.health.DefaultWaterAnalysisOperations
+import com.aqua.aqualight.data.aquarium.health.WaterAnalysisDataStoreManager
 import com.aqua.aqualight.data.aquarium.devices.DefaultTankDeviceAssignmentOperations
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentStore
@@ -77,6 +80,7 @@ import com.aqua.aqualight.platform.vision.MlKitProvisioningQrFrameDecoderFactory
 import com.aqua.aqualight.platform.vision.ProvisioningQrFrameDecoderFactory
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesViewModel
+import com.aqua.aqualight.ui.tabs.aquarium.detail.health.WaterAnalysisViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectViewModel
 import com.aqua.aqualight.ui.tabs.devices.DevicesViewModel
 import com.aqua.aqualight.ui.tabs.devices.add.DeviceAddViewModel
@@ -205,6 +209,7 @@ private class ReleaseSmokeViewModelFactory(
     }
     private val timerControlOperations = DefaultDeviceTimerControlOperations(devicesRepository)
     private val tankStore = AquariumTankDataStoreManager(appContext)
+    private val waterAnalysisStore = WaterAnalysisDataStoreManager(appContext)
     private val careTaskStore = CareTaskDataStoreManager.create(appContext)
     private val assignmentRepository = TankDeviceAssignmentRepository(
         ownerUid = SMOKE_OWNER_UID,
@@ -291,6 +296,10 @@ private class ReleaseSmokeViewModelFactory(
                 textResolver = appTextResolver
             )
         modelClass.isAssignableFrom(AquariumTankViewModel::class.java) -> createAquariumTankViewModel()
+        modelClass.isAssignableFrom(WaterAnalysisViewModel::class.java) ->
+            WaterAnalysisViewModel(
+                operations = DefaultWaterAnalysisOperations(waterAnalysisStore)
+            )
         modelClass.isAssignableFrom(MaintenanceViewModel::class.java) ->
             MaintenanceViewModel(
                 operations = maintenanceOperations,
@@ -335,7 +344,10 @@ private class ReleaseSmokeViewModelFactory(
                     reconcileCareReminders = notificationPreferences::reconcileOwner,
                     ownerUidProvider = { SMOKE_OWNER_UID }
                 ),
-                notificationPreferences = notificationPreferences
+                operationDependencies = AquariumTankOperationDependencies(
+                    notificationPreferences = notificationPreferences,
+                    deleteWaterAnalysesForTank = waterAnalysisStore::deleteAnalysesForTank
+                )
             )
         )
 

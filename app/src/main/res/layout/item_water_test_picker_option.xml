@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/Widget.Aqua.SelectionRow.BottomSheet"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/aqua_size_52"
+    android:layout_marginBottom="@dimen/aqua_size_8"
+    android:gravity="center_vertical"
+    android:includeFontPadding="false"
+    android:maxLines="2"
+    android:textColor="@color/aqua_card_text_primary"
+    android:textSize="@dimen/aqua_text_size_body" />

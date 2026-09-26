@@ -2,8 +2,6 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.annotation.ColorRes
-import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.aqua.aqualight.R
@@ -17,17 +15,16 @@ internal class TankHealthContentAdapter(
     private val onAddAnalysisClick: () -> Unit = {}
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
-    private val items: List<TankHealthContentItem> = buildItems()
+    private var items: List<TankHealthContentItem> = buildItems(emptyList())
 
-    override fun getItemViewType(position: Int): Int {
-        return when (items[position]) {
+    override fun getItemViewType(position: Int): Int =
+        when (items[position]) {
             TankHealthContentItem.WaterQualityHeader -> VIEW_TYPE_WATER_QUALITY_HEADER
             is TankHealthContentItem.Metric -> VIEW_TYPE_METRIC
             TankHealthContentItem.AddAnalysis -> VIEW_TYPE_ADD_ANALYSIS
             TankHealthContentItem.MaintenanceSection -> VIEW_TYPE_MAINTENANCE_SECTION
             TankHealthContentItem.SystemSection -> VIEW_TYPE_SYSTEM_SECTION
         }
-    }
 
     override fun onCreateViewHolder(
         parent: ViewGroup,
@@ -44,11 +41,7 @@ internal class TankHealthContentAdapter(
             )
 
             VIEW_TYPE_METRIC -> MetricViewHolder(
-                ItemTankHealthMetricBinding.inflate(
-                    inflater,
-                    parent,
-                    false
-                )
+                ItemTankHealthMetricBinding.inflate(inflater, parent, false)
             )
 
             VIEW_TYPE_ADD_ANALYSIS -> {
@@ -57,9 +50,7 @@ internal class TankHealthContentAdapter(
                     parent,
                     false
                 )
-                binding.root.setOnClickListener {
-                    onAddAnalysisClick()
-                }
+                binding.root.setOnClickListener { onAddAnalysisClick() }
                 StaticViewHolder(binding.root)
             }
 
@@ -87,21 +78,28 @@ internal class TankHealthContentAdapter(
         val item = items[position]
         if (holder is MetricViewHolder && item is TankHealthContentItem.Metric) {
             holder.bind(
-                item = item,
-                metricIndex = position - FIRST_METRIC_ADAPTER_POSITION
+                item = item.metric,
+                metricIndex = metricIndexAt(position)
             )
         }
     }
 
     override fun getItemCount(): Int = items.size
 
-    fun spanSizeForPosition(position: Int): Int {
-        return if (items[position] is TankHealthContentItem.Metric) {
+    fun submitWaterMetrics(metrics: List<TankHealthWaterMetricUiModel>) {
+        items = buildItems(metrics)
+        notifyDataSetChanged()
+    }
+
+    fun spanSizeForPosition(position: Int): Int =
+        if (items[position] is TankHealthContentItem.Metric) {
             METRIC_SPAN_SIZE
         } else {
             GRID_SPAN_COUNT
         }
-    }
+
+    private fun metricIndexAt(position: Int): Int =
+        items.take(position).count { item -> item is TankHealthContentItem.Metric }
 
     private class StaticViewHolder(
         root: android.view.View
@@ -112,15 +110,24 @@ internal class TankHealthContentAdapter(
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(
-            item: TankHealthContentItem.Metric,
+            item: TankHealthWaterMetricUiModel,
             metricIndex: Int
         ) {
             val context = binding.root.context
-            binding.metricLabel.setText(item.labelRes)
-            binding.metricValue.setText(item.valueRes)
-            binding.metricStatus.setText(item.statusRes)
+            binding.metricLabel.text = buildString {
+                append(context.getString(item.labelRes))
+                item.symbolRes?.let { symbolRes ->
+                    append(" (")
+                    append(context.getString(symbolRes))
+                    append(")")
+                }
+            }
+            binding.metricValue.text =
+                item.valueText ?: context.getString(R.string.tank_health_value_not_measured)
+            binding.metricStatus.text =
+                item.statusText ?: context.getString(R.string.tank_health_status_not_measured)
             binding.metricStatus.setTextColor(
-                ContextCompat.getColor(context, item.statusColorRes)
+                ContextCompat.getColor(context, R.color.aqua_content_muted)
             )
 
             val layoutParams = binding.root.layoutParams as ViewGroup.MarginLayoutParams
@@ -139,14 +146,9 @@ internal class TankHealthContentAdapter(
 
     private sealed interface TankHealthContentItem {
         object WaterQualityHeader : TankHealthContentItem
-
         data class Metric(
-            @StringRes val labelRes: Int,
-            @StringRes val valueRes: Int,
-            @StringRes val statusRes: Int,
-            @ColorRes val statusColorRes: Int
+            val metric: TankHealthWaterMetricUiModel
         ) : TankHealthContentItem
-
         object AddAnalysis : TankHealthContentItem
         object MaintenanceSection : TankHealthContentItem
         object SystemSection : TankHealthContentItem
@@ -161,46 +163,16 @@ internal class TankHealthContentAdapter(
         private const val VIEW_TYPE_MAINTENANCE_SECTION = 3
         private const val VIEW_TYPE_SYSTEM_SECTION = 4
         private const val METRIC_SPAN_SIZE = 1
-        private const val FIRST_METRIC_ADAPTER_POSITION = 1
 
-        private fun buildItems(): List<TankHealthContentItem> {
-            return listOf(
-                TankHealthContentItem.WaterQualityHeader,
-                metric(R.string.tank_health_metric_ph, R.string.tank_health_value_ph),
-                metric(R.string.tank_health_metric_no3,
-                    R.string.tank_health_value_no3,
-                    R.string.tank_health_status_moderate,
-                    R.color.aqua_content_warning
-                ),
-                metric(R.string.tank_health_metric_no2, R.string.tank_health_value_no2),
-                metric(R.string.tank_health_metric_nh3_nh4,
-                    R.string.tank_health_value_nh3_nh4
-                ),
-                metric(R.string.tank_health_metric_temperature,
-                    R.string.tank_health_value_temperature
-                ),
-                metric(R.string.tank_health_metric_gh, R.string.tank_health_value_gh),
-                metric(R.string.tank_health_metric_kh, R.string.tank_health_value_kh),
-                metric(R.string.tank_health_metric_po4, R.string.tank_health_value_po4),
-                TankHealthContentItem.AddAnalysis,
-                TankHealthContentItem.MaintenanceSection,
-                TankHealthContentItem.SystemSection
-            )
-        }
-
-        private fun metric(
-            @StringRes labelRes: Int,
-            @StringRes valueRes: Int,
-            @StringRes statusRes: Int = R.string.tank_health_status_normal,
-            @ColorRes statusColorRes: Int = R.color.aqua_status_success
-        ): TankHealthContentItem.Metric {
-            return TankHealthContentItem.Metric(
-                labelRes = labelRes,
-                valueRes = valueRes,
-                statusRes = statusRes,
-                statusColorRes = statusColorRes
-            )
-        }
+        private fun buildItems(
+            metrics: List<TankHealthWaterMetricUiModel>
+        ): List<TankHealthContentItem> =
+            buildList {
+                add(TankHealthContentItem.WaterQualityHeader)
+                addAll(metrics.map(TankHealthContentItem::Metric))
+                add(TankHealthContentItem.AddAnalysis)
+                add(TankHealthContentItem.MaintenanceSection)
+                add(TankHealthContentItem.SystemSection)
+            }
     }
-
 }

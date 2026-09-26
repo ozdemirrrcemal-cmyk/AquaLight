@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:includeFontPadding="false"
+        android:text="@string/tank_health_analysis_add_test_subtitle"
+        android:textColor="@color/aqua_card_text_secondary"
+        android:textSize="@dimen/aqua_text_size_caption" />
+
+    <LinearLayout
+        android:id="@+id/optionsContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/aqua_size_10"
+        android:orientation="vertical" />
+
+    <TextView
+        android:id="@+id/btnCancel"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/aqua_size_44"
+        android:layout_marginTop="@dimen/aqua_size_10"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:text="@string/common_cancel"
+        android:textColor="@color/aqua_card_text_secondary"
+        android:textSize="@dimen/aqua_text_size_body" />
+
+</LinearLayout>

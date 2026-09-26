@@ -236,7 +236,7 @@
                     android:layout_width="@dimen/aqua_size_0"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/aqua_size_6"
-                    android:text="@string/aquarium_tank_type_fish"
+                    android:text="@string/aquarium_tank_profile_freshwater_fish"
                     android:textColor="@color/aqua_card_text_primary"
                     android:textSize="@dimen/aqua_text_size_body_large"
                     android:textStyle="bold"

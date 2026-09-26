@@ -114,7 +114,7 @@ class SmartCareProfileAndLightingTest {
   @Test
   fun `marine tank never inherits planted freshwater lighting policy`() {
     val profile = profile(
-      tankType = AquariumTankTaxonomy.TYPE_MARINE,
+      tankType = AquariumTankTaxonomy.TYPE_MARINE_FISH,
       tankStyle = "Other",
       setupDay = 10
     )

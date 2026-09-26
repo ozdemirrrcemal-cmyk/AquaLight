@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    style="@style/Widget.Aqua.Card.Metric"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="@dimen/aqua_size_96"
+    app:cardCornerRadius="@dimen/aqua_size_14"
+    app:strokeColor="@color/aqua_card_outline_subtle"
+    app:strokeWidth="@dimen/aqua_size_1">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/aqua_size_6">
+
+        <LinearLayout
+            android:id="@+id/parameterHeader"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/aqua_size_30"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/ivParameterIcon"
+                android:layout_width="@dimen/aqua_size_20"
+                android:layout_height="@dimen/aqua_size_20"
+                android:contentDescription="@null"
+                android:importantForAccessibility="no"
+                app:tint="@color/aqua_accent_primary" />
+
+            <TextView
+                android:id="@+id/tvParameterName"
+                android:layout_width="@dimen/aqua_size_0"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/aqua_size_7"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:includeFontPadding="false"
+                android:maxLines="2"
+                android:textColor="@color/aqua_card_text_primary"
+                android:textSize="@dimen/aqua_text_size_body_small"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvParameterSymbol"
+                android:layout_width="wrap_content"
+                android:layout_height="@dimen/aqua_size_26"
+                android:layout_marginStart="@dimen/aqua_size_4"
+                android:background="@drawable/bg_water_test_symbol_chip"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:minWidth="@dimen/aqua_size_34"
+                android:paddingStart="@dimen/aqua_size_6"
+                android:paddingEnd="@dimen/aqua_size_6"
+                android:textColor="@color/aqua_accent_primary"
+                android:textSize="@dimen/aqua_text_size_caption"
+                android:textStyle="bold" />
+
+            <ImageButton
+                android:id="@+id/btnRemoveParameter"
+                android:layout_width="@dimen/aqua_size_28"
+                android:layout_height="@dimen/aqua_size_28"
+                android:layout_marginStart="@dimen/aqua_size_2"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/tank_health_analysis_remove_test"
+                android:padding="@dimen/aqua_size_5"
+                android:src="@drawable/ic_remove_24"
+                app:tint="@color/aqua_card_text_secondary" />
+
+        </LinearLayout>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/inputContainer"
+            style="@style/Widget.Aqua.Card.Inline"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/aqua_size_48"
+            android:layout_marginTop="@dimen/aqua_size_6"
+            app:cardBackgroundColor="@color/aqua_input_background"
+            app:cardCornerRadius="@dimen/aqua_size_14"
+            app:cardElevation="@dimen/aqua_size_0"
+            app:strokeColor="@color/aqua_input_stroke_unfocused"
+            app:strokeWidth="@dimen/aqua_size_1">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <EditText
+                    android:id="@+id/inputValue"
+                    style="@style/Widget.Aqua.Input.PlainEditText.Embedded"
+                    android:layout_width="@dimen/aqua_size_0"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical"
+                    android:hint="@string/tank_health_analysis_input_hint"
+                    android:inputType="numberDecimal"
+                    android:paddingStart="@dimen/aqua_size_12"
+                    android:paddingEnd="@dimen/aqua_size_4"
+                    android:selectAllOnFocus="true"
+                    android:textSize="@dimen/aqua_text_size_body" />
+
+                <View
+                    android:id="@+id/unitDivider"
+                    android:layout_width="@dimen/aqua_size_1"
+                    android:layout_height="@dimen/aqua_size_28"
+                    android:background="@color/aqua_card_divider" />
+
+                <LinearLayout
+                    android:id="@+id/unitSelector"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackgroundBorderless"
+                    android:gravity="center"
+                    android:orientation="horizontal"
+                    android:paddingStart="@dimen/aqua_size_8"
+                    android:paddingEnd="@dimen/aqua_size_8">
+
+                    <TextView
+                        android:id="@+id/tvParameterUnit"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:includeFontPadding="false"
+                        android:textColor="@color/aqua_card_text_primary"
+                        android:textSize="@dimen/aqua_text_size_body_small" />
+
+                    <ImageView
+                        android:id="@+id/ivUnitChevron"
+                        android:layout_width="@dimen/aqua_size_16"
+                        android:layout_height="@dimen/aqua_size_16"
+                        android:layout_marginStart="@dimen/aqua_size_3"
+                        android:contentDescription="@string/water_measurement_open_configuration"
+                        android:rotation="@integer/aqua_rotation_90"
+                        android:src="@drawable/ic_tank_health_chevron_right_24"
+                        app:tint="@color/aqua_card_text_secondary" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

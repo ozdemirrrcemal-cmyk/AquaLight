@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="@dimen/aqua_size_24"
+    android:height="@dimen/aqua_size_24"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="@color/aqua_color_transparent"
+        android:strokeColor="@color/aqua_content_on_dark"
+        android:strokeWidth="2"
+        android:strokeLineJoin="round"
+        android:pathData="M12,3L19,6v5c0,4.7 -2.9,8 -7,10c-4.1,-2 -7,-5.3 -7,-10V6z" />
+</vector>
