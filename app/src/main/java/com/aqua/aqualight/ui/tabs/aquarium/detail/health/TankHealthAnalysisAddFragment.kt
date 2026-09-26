@@ -552,7 +552,7 @@ class TankHealthAnalysisAddFragment :
 
         itemBinding.tvParameterName.setText(model.nameRes)
         itemBinding.tvParameterSymbol.isVisible = model.symbolRes != null
-        model.symbolRes?.let(itemBinding.tvParameterSymbol::setText)
+        model.symbolRes?.let { symbolRes -> itemBinding.tvParameterSymbol.setText(symbolRes) }
         itemBinding.inputLayout.suffixText = model.unitRes?.let(::getString)
         itemBinding.inputValue.setText(model.value)
 
