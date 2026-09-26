@@ -573,7 +573,7 @@ Decision accepted on 26 September 2026 for aquarium-product usability and data s
 K03.10 deliberately keeps the user experience simple while keeping conversion assumptions out of the analysis engine. The device reading is accepted as reported; conversion metadata matters only when AquaLight tries to translate or compare across representations.
 ---
 
-## 7. Measurement provenance---
+## 7. Measurement provenance
 
 ## 7. Measurement provenance
 
