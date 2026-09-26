@@ -2,10 +2,8 @@ package com.aqua.aqualight.data.aquarium.health
 
 import android.content.Context
 import androidx.datastore.core.DataStore
-import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.dataStore
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
-import com.aqua.aqualight.data.recovery.LocalDataRecoveryTracker
 import com.aqua.aqualight.data.store.StoreInvariantViolation
 import com.aqua.aqualight.data.user.UserDataScope
 import kotlinx.coroutines.flow.Flow
@@ -13,11 +11,7 @@ import kotlinx.coroutines.flow.map
 
 private val Context.waterAnalysesDataStore: DataStore<WaterAnalysesStore> by dataStore(
     fileName = "water_analyses.pb",
-    serializer = WaterAnalysesSerializer,
-    corruptionHandler = ReplaceFileCorruptionHandler {
-        LocalDataRecoveryTracker.markRecovered(LocalDataRecoveryTracker.Area.WATER_ANALYSES)
-        WaterAnalysisStoreRules.defaultStore()
-    }
+    serializer = WaterAnalysesSerializer
 )
 
 internal class WaterAnalysisDataStoreManager(

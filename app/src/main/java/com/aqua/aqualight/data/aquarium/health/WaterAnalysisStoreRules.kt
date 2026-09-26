@@ -77,7 +77,7 @@ internal object WaterAnalysisStoreRules {
                 basis = measurement.basis,
                 unit = measurement.unit
             )
-            if (!WaterMeasurementCatalog.isSelectionValid(measurement.parameter, selection)) {
+            if (!WaterMeasurementCatalog.isStoredSelectionValid(measurement.parameter, selection)) {
                 violation("Measurement selection is not valid for ${measurement.parameter}.")
             }
         }

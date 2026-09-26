@@ -35,6 +35,10 @@ fail-closed behavior, not completion of S.1–S.3.
 New SENSOR selections are disabled until assigned sample identity/freshness
 provenance is implemented; existing raw sensor-labelled records are retained
 for migration review. This does not close the physical sensor acceptance gate.
+Store reads use legacy structural validation while new writes require current
+provenance. The analysis Proto store no longer replaces unsupported/corrupt
+content with an empty store; it surfaces a typed read failure and leaves the
+file intact for recovery. This is not the Room migration or archive recovery.
 Changing method, kit, basis or unit after typing a result now asks for explicit
 review through the shared process-safe confirmation dialog; cancellation keeps
 the previous selection and number. A confirmed selection keeps the number for

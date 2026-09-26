@@ -31,6 +31,28 @@ class WaterAnalysisStoreRulesTest {
     }
 
     @Test
+    fun legacySensorMeasurementSurvivesReadAlthoughNewSensorWritesAreUnavailable() {
+        val record = validRecord(
+            WaterMeasurementRecord(
+                parameter = WaterParameter.PH,
+                value = 7.0,
+                method = WaterMeasurementMethod.SENSOR,
+                testKitId = null,
+                basis = WaterMeasurementBasis.PH,
+                unit = WaterMeasurementUnit.NONE
+            )
+        )
+        val stored = WaterAnalysisStoreRules.defaultStore().toBuilder()
+            .addAnalyses(record.toStoredStrict())
+            .build()
+
+        assertEquals(
+            record,
+            WaterAnalysisStoreRules.validateStore(stored).analysesList.single().toRecordStrict()
+        )
+    }
+
+    @Test
     fun duplicateParametersFailClosed() {
         val measurement = WaterMeasurementRecord(
             parameter = WaterParameter.PH,
