@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+option java_package = "com.aqua.aqualight.data.aquarium.health";
+option java_multiple_files = true;
+
+message WaterAnalysesStore {
+  repeated StoredWaterAnalysis analyses = 1;
+  uint32 schema_version = 100;
+}
+
+message StoredWaterAnalysis {
+  int64 id = 1;
+  int64 tank_id = 2;
+  int64 measured_at_millis = 3;
+  bool has_temperature = 4;
+  double temperature_celsius = 5;
+  string temperature_source = 6;
+  int64 created_at_millis = 7;
+  repeated StoredWaterMeasurement measurements = 20;
+  string owner_uid = 100;
+}
+
+message StoredWaterMeasurement {
+  string parameter = 1;
+  double value = 2;
+  string method = 3;
+  string test_kit_id = 4;
+  string basis = 5;
+  string unit = 6;
+}

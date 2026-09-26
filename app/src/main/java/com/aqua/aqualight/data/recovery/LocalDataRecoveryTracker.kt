@@ -15,6 +15,7 @@ object LocalDataRecoveryTracker {
     enum class Area {
         AQUARIUM_TANKS,
         CARE_TASKS,
+        WATER_ANALYSES,
         USER_PREFERENCES,
         LIGHT_LIBRARY,
         NOTIFICATION_PREFERENCES,
