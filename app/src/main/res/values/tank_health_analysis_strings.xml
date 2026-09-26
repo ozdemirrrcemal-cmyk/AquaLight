@@ -30,7 +30,7 @@
 
     <string name="tank_health_analysis_water_parameters_title">Water Parameters</string>
     <string name="tank_health_analysis_water_parameters_subtitle">Measure and enter your water values.</string>
-    <string name="tank_health_analysis_profile_context">%1$s profile • recommended tests</string>
+    <string name="tank_health_analysis_profile_context">%1$s profile</string>
     <string name="tank_health_analysis_profile_missing">Tank profile is unavailable. Choose a profile before adding measurements.</string>
     <string name="tank_health_analysis_recommended_tests">Recommended tests</string>
     <string name="tank_health_analysis_additional_tests">Additional tests</string>

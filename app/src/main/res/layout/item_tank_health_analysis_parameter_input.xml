@@ -71,24 +71,52 @@
 
         </LinearLayout>
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/inputLayout"
-            style="@style/Widget.Aqua.Input.Layout.WaterAnalysisCompact"
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/inputContainer"
+            style="@style/Widget.Aqua.Card.Inline"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/aqua_size_4">
+            android:layout_height="@dimen/aqua_size_48"
+            android:layout_marginTop="@dimen/aqua_size_6"
+            app:cardBackgroundColor="@color/aqua_input_background"
+            app:cardCornerRadius="@dimen/aqua_size_14"
+            app:cardElevation="@dimen/aqua_size_0"
+            app:strokeColor="@color/aqua_input_stroke_unfocused"
+            app:strokeWidth="@dimen/aqua_size_1">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/inputValue"
-                style="@style/Widget.Aqua.Input.EditText.WaterAnalysisCompact"
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="@dimen/aqua_size_48"
-                android:hint="@string/tank_health_analysis_input_hint"
-                android:inputType="numberDecimal"
-                android:selectAllOnFocus="true"
-                android:gravity="center_vertical" />
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
-        </com.google.android.material.textfield.TextInputLayout>
+                <EditText
+                    android:id="@+id/inputValue"
+                    style="@style/Widget.Aqua.Input.PlainEditText.Embedded"
+                    android:layout_width="@dimen/aqua_size_0"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical"
+                    android:hint="@string/tank_health_analysis_input_hint"
+                    android:inputType="numberDecimal"
+                    android:paddingStart="@dimen/aqua_size_12"
+                    android:paddingEnd="@dimen/aqua_size_4"
+                    android:selectAllOnFocus="true"
+                    android:textSize="@dimen/aqua_text_size_body" />
+
+                <TextView
+                    android:id="@+id/tvParameterUnit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:includeFontPadding="false"
+                    android:paddingStart="@dimen/aqua_size_4"
+                    android:paddingEnd="@dimen/aqua_size_12"
+                    android:textColor="@color/aqua_input_hint_unfocused"
+                    android:textSize="@dimen/aqua_text_size_caption" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
 
     </LinearLayout>
 

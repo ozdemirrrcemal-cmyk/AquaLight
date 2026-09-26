@@ -55,14 +55,17 @@ class WaterAnalysisUiContractTest {
         assertTrue(parameterLayout.contains("bg_water_test_symbol_chip"))
         assertTrue(parameterLayout.contains("aqua_size_96"))
         assertTrue(parameterLayout.contains("aqua_size_48"))
-        assertTrue(parameterLayout.contains("Widget.Aqua.Input.Layout.WaterAnalysisCompact"))
-        assertTrue(parameterLayout.contains("Widget.Aqua.Input.EditText.WaterAnalysisCompact"))
-        assertTrue(waterLayout.contains("android:layout_gravity=\"start\""))
-        assertTrue(waterLayout.contains("android:layout_marginStart=\"@dimen/aqua_size_50\""))
-        assertTrue(renderer.contains("fullWidth = indexes.size == 1"))
+        assertTrue(parameterLayout.contains("inputContainer"))
+        assertTrue(parameterLayout.contains("tvParameterUnit"))
+        assertTrue(parameterLayout.contains("Widget.Aqua.Input.PlainEditText.Embedded"))
+        assertFalse(parameterLayout.contains("TextInputLayout"))
+        assertTrue(waterLayout.contains("android:layout_gravity=\"top\""))
+        assertTrue(waterLayout.contains("aqua_text_size_micro_caption"))
+        assertTrue(renderer.contains("tileLayoutParams"))
+        assertFalse(renderer.contains("fullWidth: Boolean"))
+        assertFalse(renderer.contains("inputLayout.suffixText"))
         val inputStyles = file("app/src/main/res/values/input_styles.xml")
-        assertTrue(inputStyles.contains("Widget.Aqua.Input.Layout.WaterAnalysisCompact"))
-        assertTrue(inputStyles.contains("<item name=\"hintEnabled\">false</item>"))
+        assertFalse(inputStyles.contains("WaterAnalysisCompact"))
         assertFalse(parameterLayout.contains("aqua_size_110"))
         assertFalse(parameterLayout.contains("aqua_size_140"))
         assertFalse(values.contains("tank_health_analysis_input_"))
@@ -83,6 +86,9 @@ class WaterAnalysisUiContractTest {
             "app/src/main/res/layout/item_tank_health_analysis_measurement_time.xml"
         )
         val strings = file("app/src/main/res/values/tank_health_analysis_strings.xml")
+        val turkishStrings = file(
+            "app/src/main/res/values-tr/tank_health_analysis_strings.xml"
+        )
 
         assertTrue(
             controller.contains(
@@ -94,6 +100,8 @@ class WaterAnalysisUiContractTest {
         assertFalse(sensorLayout.contains("tank_health_analysis_temperature_value"))
         assertFalse(sensorLayout.contains("tank_health_analysis_device_name"))
         assertFalse(strings.contains("Cooling Mini v2"))
+        assertFalse(strings.contains("recommended tests"))
+        assertFalse(turkishStrings.contains("önerilen testler"))
         assertTrue(sensorLayout.contains("aqua_size_56"))
         assertTrue(sensorLayout.contains("aqua_size_44"))
         assertTrue(measurementLayout.contains("aqua_size_56"))

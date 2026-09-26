@@ -113,13 +113,19 @@ internal class WaterAnalysisParameterRenderer(
                     if (itemIndex < models.size) {
                         addParameterCard(row, models[itemIndex], column, spacing)
                     } else {
+                        val tileLayoutParams = if (indexes.size == 1) {
+                            LinearLayout.LayoutParams(
+                                LinearLayout.LayoutParams.MATCH_PARENT,
+                                LinearLayout.LayoutParams.WRAP_CONTENT
+                            )
+                        } else {
+                            gridCellLayoutParams(column, spacing)
+                        }
                         addTestTile(
                             row = row,
                             tankProfile = tankProfile,
                             availableAdditional = availableAdditional,
-                            column = column,
-                            spacing = spacing,
-                            fullWidth = indexes.size == 1
+                            layoutParams = tileLayoutParams
                         )
                     }
                 }
@@ -179,9 +185,7 @@ internal class WaterAnalysisParameterRenderer(
         row: LinearLayout,
         tankProfile: String,
         availableAdditional: List<WaterTestParameterId>,
-        column: Int,
-        spacing: Int,
-        fullWidth: Boolean
+        layoutParams: LinearLayout.LayoutParams
     ) {
         val addBinding = ItemTankHealthAnalysisAddTestBinding.inflate(
             fragment.layoutInflater,
@@ -211,17 +215,7 @@ internal class WaterAnalysisParameterRenderer(
                 parameterIds = availableAdditional
             )
         }
-        row.addView(
-            addBinding.root,
-            if (fullWidth) {
-                LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                )
-            } else {
-                gridCellLayoutParams(column, spacing)
-            }
-        )
+        row.addView(addBinding.root, layoutParams)
     }
 
     private fun addGridSpacer(row: LinearLayout, spacing: Int) {
@@ -238,7 +232,7 @@ internal class WaterAnalysisParameterRenderer(
         model: WaterTestParameterUiModel
     ) {
         itemBinding.root.id = View.generateViewId()
-        itemBinding.inputLayout.id = View.generateViewId()
+        itemBinding.inputContainer.id = View.generateViewId()
         itemBinding.inputValue.id = View.generateViewId()
         itemBinding.inputValue.isSaveEnabled = false
 
@@ -246,9 +240,23 @@ internal class WaterAnalysisParameterRenderer(
         itemBinding.tvParameterName.setText(model.nameRes)
         itemBinding.tvParameterSymbol.isVisible = model.symbolRes != null
         model.symbolRes?.let { symbolRes -> itemBinding.tvParameterSymbol.setText(symbolRes) }
-        itemBinding.inputLayout.suffixText =
-            model.unitRes?.let { unitRes -> fragment.getString(unitRes) }
+        itemBinding.tvParameterUnit.isVisible = model.unitRes != null
+        model.unitRes?.let { unitRes -> itemBinding.tvParameterUnit.setText(unitRes) }
         itemBinding.inputValue.setText(model.value)
+        itemBinding.inputValue.setOnFocusChangeListener { _, hasFocus ->
+            val context = fragment.requireContext()
+            itemBinding.inputContainer.strokeColor = androidx.core.content.ContextCompat.getColor(
+                context,
+                if (hasFocus) {
+                    R.color.aqua_input_stroke_focused
+                } else {
+                    R.color.aqua_input_stroke_unfocused
+                }
+            )
+            itemBinding.inputContainer.strokeWidth = fragment.resources.getDimensionPixelSize(
+                if (hasFocus) R.dimen.aqua_size_2 else R.dimen.aqua_size_1
+            )
+        }
 
         itemBinding.inputValue.contentDescription = buildString {
             append(fragment.getString(model.nameRes))
