@@ -22,6 +22,7 @@ class OwnerTankDataCleaner internal constructor(
     private val snapshotCareTasksForTank: suspend (Long) -> List<CareTask>,
     private val deleteCareTasksForTank: suspend (Long) -> Unit,
     private val restoreCareTasksForTank: suspend (Long, List<CareTask>) -> Unit,
+    private val deleteWaterAnalysesForTank: suspend (Long) -> Unit = {},
     private val removeDeviceAssignmentsForTank:
         suspend (Long) -> TankAssignmentCleanupResult,
     private val cancelCareTaskReminder: suspend (String, Long) -> Unit,
@@ -32,6 +33,7 @@ class OwnerTankDataCleaner internal constructor(
 ) {
     enum class CleanupStage {
         CARE_TASKS,
+        WATER_ANALYSES,
         DEVICE_ASSIGNMENTS
     }
 
@@ -135,6 +137,17 @@ class OwnerTankDataCleaner internal constructor(
                 cleanupIssues += CleanupIssue(
                     tankId = tankId,
                     stage = CleanupStage.CARE_TASKS,
+                    error = error
+                )
+            }
+
+            try {
+                deleteWaterAnalysesForTank(tankId)
+            } catch (error: Throwable) {
+                error.throwIfCancellation()
+                cleanupIssues += CleanupIssue(
+                    tankId = tankId,
+                    stage = CleanupStage.WATER_ANALYSES,
                     error = error
                 )
             }

@@ -3,6 +3,7 @@ package com.aqua.aqualight.data.user
 import android.content.Context
 import android.net.Uri
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentStore
+import com.aqua.aqualight.data.aquarium.health.WaterAnalysisDataStoreManager
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.auth.SessionBoundServiceManager
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
@@ -29,6 +30,7 @@ class UserDataCleaner private constructor(
     enum class Step {
         SESSION_BOUND_SERVICES,
         CARE_TASKS,
+        WATER_ANALYSES,
         AQUARIUM_TANKS,
         DEVICE_ASSIGNMENTS,
         PROVISIONING_SESSIONS,
@@ -116,6 +118,11 @@ class UserDataCleaner private constructor(
                 .cancelOwner(targetOwnerUid)
             CareTaskDataStoreManager.create(appContext)
                 .clearAllTasks(ownerUid = targetOwnerUid)
+        }
+
+        runStep(Step.WATER_ANALYSES) {
+            WaterAnalysisDataStoreManager(appContext)
+                .clearAllAnalyses(ownerUid = targetOwnerUid)
         }
 
         runStep(Step.AQUARIUM_TANKS) { tankDataStoreManager.clearAllTanks(targetOwnerUid) }

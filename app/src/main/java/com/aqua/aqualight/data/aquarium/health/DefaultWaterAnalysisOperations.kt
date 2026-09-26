@@ -1,6 +1,5 @@
 package com.aqua.aqualight.data.aquarium.health
 
-import android.content.Context
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisInput
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisOperations
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisPolicy
@@ -12,16 +11,13 @@ import com.aqua.aqualight.data.user.withCurrentOwnerScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-class DefaultWaterAnalysisOperations(
-    context: Context,
+internal class DefaultWaterAnalysisOperations(
     private val store: WaterAnalysisDataStoreManager
 ) : WaterAnalysisOperations {
 
-    private val appContext = context.applicationContext
-
     override fun analysesForTank(tankId: Long): Flow<List<WaterAnalysisSnapshot>> =
         store.analysesForTankFlow(tankId).map { analyses ->
-            analyses.map(WaterAnalysisRecord::toApplicationSnapshot)
+            analyses.map { record -> record.toApplicationSnapshot() }
         }
 
     override fun analysis(analysisId: Long): Flow<WaterAnalysisSnapshot?> =
