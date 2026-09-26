@@ -9,15 +9,19 @@ import org.junit.Test
 /** Visible labels may change with language; persisted taxonomy codes must never change. */
 class AquariumTankTaxonomyTextTest {
     private val turkishLabels = mapOf(
-        R.string.aquarium_tank_type_fish to "Balık",
-        R.string.aquarium_tank_type_shrimp to "Karides",
-        R.string.aquarium_tank_type_planted to "Bitkili",
-        R.string.aquarium_tank_type_marine to "Deniz",
-        R.string.aquarium_tank_type_softies to "Yumuşak Mercan",
-        R.string.aquarium_tank_type_mixed_reef to "Karma Resif",
-        R.string.aquarium_tank_type_sps to "SPS",
-        R.string.aquarium_tank_type_coral to "Mercan",
-        R.string.aquarium_tank_type_other to "Diğer",
+        R.string.aquarium_water_environment_freshwater to "Tatlı Su",
+        R.string.aquarium_water_environment_brackish to "Acı Su",
+        R.string.aquarium_water_environment_marine to "Deniz",
+        R.string.aquarium_tank_profile_freshwater_fish to "Balık / Genel",
+        R.string.aquarium_tank_profile_planted to "Bitkili",
+        R.string.aquarium_tank_profile_shrimp to "Karides",
+        R.string.aquarium_tank_profile_brackish_general to "Acı Su",
+        R.string.aquarium_tank_profile_marine_fish to "Balık / FOWLR",
+        R.string.aquarium_tank_profile_soft_coral_reef to "Yumuşak Mercan",
+        R.string.aquarium_tank_profile_lps_reef to "LPS Resif",
+        R.string.aquarium_tank_profile_sps_reef to "SPS Resif",
+        R.string.aquarium_tank_profile_mixed_reef to "Karma Resif",
+        R.string.aquarium_tank_profile_other to "Diğer",
         R.string.aquarium_text_nature_aquarium to "Doğa Akvaryumu",
         R.string.aquarium_style_iwagumi to "Iwagumi",
         R.string.aquarium_style_dutch to "Hollanda",
@@ -32,7 +36,11 @@ class AquariumTankTaxonomyTextTest {
     private fun labelFor(resId: Int): String = requireNotNull(turkishLabels[resId])
 
     @Test
-    fun translatedTankTypeIsConvertedToStableCode() {
+    fun translatedEnvironmentAndTankProfileUseStableCodes() {
+        assertEquals(
+            AquariumTankTaxonomy.WATER_ENVIRONMENT_BRACKISH,
+            AquariumTankTaxonomyText.canonicalWaterEnvironment("Acı Su", ::labelFor)
+        )
         assertEquals(
             AquariumTankTaxonomy.TYPE_SHRIMP,
             AquariumTankTaxonomyText.canonicalTankType("Karides", ::labelFor)
@@ -46,6 +54,18 @@ class AquariumTankTaxonomyTextTest {
             AquariumTankTaxonomyText.tankTypeLabel("Shrimp", ::labelFor)
         )
         assertNull(AquariumTankTaxonomyText.canonicalTankType("Bilinmeyen", ::labelFor))
+    }
+
+    @Test
+    fun ambiguousOtherLabelCannotBecomeAnArbitraryStableProfile() {
+        assertNull(AquariumTankTaxonomyText.canonicalTankType("Diğer", ::labelFor))
+        assertEquals(
+            "Diğer",
+            AquariumTankTaxonomyText.tankTypeLabel(
+                AquariumTankTaxonomy.TYPE_OTHER_MARINE,
+                ::labelFor
+            )
+        )
     }
 
     @Test
