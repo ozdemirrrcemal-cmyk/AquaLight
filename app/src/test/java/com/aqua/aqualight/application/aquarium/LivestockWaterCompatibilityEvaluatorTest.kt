@@ -67,6 +67,20 @@ class LivestockWaterCompatibilityEvaluatorTest {
 
         assertEquals(0, result.checkedParameterCount)
         assertTrue(result.issues.isEmpty())
-        assertTrue(result.isCompatible)
+        assertFalse(result.isCompatible)
+    }
+
+    @Test
+    fun approximateSingleTargetDoesNotCreateAnExactValueWarning() {
+        val requirements = LivestockWaterRequirements(
+            phosphatePpm = LivestockParameterRange(nominalTarget = 0.05, approximate = true)
+        )
+        val result = LivestockWaterCompatibilityEvaluator.evaluate(
+            requirements,
+            AquariumWaterSnapshot(phosphatePpm = 0.04)
+        )
+        assertEquals(0, result.checkedParameterCount)
+        assertTrue(result.issues.isEmpty())
+        assertFalse(result.isCompatible)
     }
 }

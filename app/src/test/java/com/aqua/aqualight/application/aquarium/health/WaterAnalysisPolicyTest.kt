@@ -6,6 +6,30 @@ import org.junit.Test
 class WaterAnalysisPolicyTest {
 
     @Test
+    fun futureSamplesAllowOnlyOneMinuteOfClockTolerance() {
+        val input = WaterAnalysisInput(
+            tankId = 1L,
+            measuredAtMillis = VALID_TIME + 60_000L,
+            temperatureCelsius = null,
+            temperatureSource = null,
+            measurements = listOf(
+                WaterMeasurementInput(
+                    parameter = WaterParameter.PH,
+                    value = 7.0,
+                    selection = WaterMeasurementCatalog.defaultSelection(WaterParameter.PH)
+                )
+            )
+        )
+        WaterAnalysisPolicy.validate(input, nowMillis = VALID_TIME)
+        assertThrows(IllegalArgumentException::class.java) {
+            WaterAnalysisPolicy.validate(
+                input.copy(measuredAtMillis = VALID_TIME + 60_001L),
+                nowMillis = VALID_TIME
+            )
+        }
+    }
+
+    @Test
     fun duplicateParametersAreRejected() {
         val measurement = WaterMeasurementInput(
             parameter = WaterParameter.PH,

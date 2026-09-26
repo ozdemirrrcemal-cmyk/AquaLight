@@ -10,6 +10,7 @@
 
     <string name="tank_health_water_quality_title">Su Kalitesi</string>
     <string name="tank_health_last_analysis">Henüz analiz yok</string>
+    <string name="tank_health_last_analysis_at">Ölçüm: %1$s</string>
     <string name="tank_health_status_normal">Normal</string>
     <string name="tank_health_status_moderate">Orta</string>
     <string name="tank_health_status_approaching">Yaklaşıyor</string>

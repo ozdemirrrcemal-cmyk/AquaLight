@@ -91,7 +91,10 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
 
     private fun renderWaterMetrics() {
         val profile = currentTankProfile ?: run {
-            contentAdapter?.submitWaterMetrics(emptyList())
+            contentAdapter?.submitWaterMetrics(
+                metrics = emptyList(),
+                measuredAtMillis = currentAnalyses.firstOrNull()?.measuredAtMillis
+            )
             return
         }
 
@@ -114,7 +117,10 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
                 )
             }
         }
-        contentAdapter?.submitWaterMetrics(models)
+        contentAdapter?.submitWaterMetrics(
+            metrics = models,
+            measuredAtMillis = currentAnalyses.firstOrNull()?.measuredAtMillis
+        )
     }
 
     private fun openAddAnalysis() {

@@ -36,7 +36,8 @@ class TankHealthMetricPresentationContractTest {
         assertTrue(fragment.contains("TankHealthWaterMetricUiCatalog.models("))
         assertTrue(fragment.contains("AquariumTankViewModel"))
         assertTrue(adapter.contains("submitWaterMetrics("))
-        assertTrue(adapter.contains("buildItems(metrics)"))
+        assertTrue(adapter.contains("buildItems(metrics, measuredAtMillis)"))
+        assertTrue(adapter.contains("R.string.tank_health_last_analysis_at"))
     }
 
     private fun file(relativePath: String): String =

@@ -3,12 +3,16 @@ package com.aqua.aqualight.application.aquarium
 data class LivestockParameterRange(
     val minimum: Double? = null,
     val maximum: Double? = null,
-    val approximate: Boolean = false
+    val approximate: Boolean = false,
+    val minimumInclusive: Boolean = true,
+    val maximumInclusive: Boolean = true,
+    val nominalTarget: Double? = null
 ) {
     init {
         require(minimum?.isFinite() != false)
         require(maximum?.isFinite() != false)
         require(minimum == null || maximum == null || minimum <= maximum)
+        require(nominalTarget?.isFinite() != false)
     }
 
     fun contains(
@@ -18,9 +22,12 @@ data class LivestockParameterRange(
             return false
         }
 
-        return (minimum == null || value >= minimum) &&
-            (maximum == null || value <= maximum)
+        return (minimum == null || if (minimumInclusive) value >= minimum else value > minimum) &&
+            (maximum == null || if (maximumInclusive) value <= maximum else value < maximum)
     }
+
+    val hasComparableBounds: Boolean
+        get() = minimum != null || maximum != null
 }
 
 enum class LivestockWarningMode {
@@ -137,7 +144,7 @@ data class LivestockWaterCompatibility(
     val warningMode: LivestockWarningMode
 ) {
     val isCompatible: Boolean
-        get() = issues.isEmpty()
+        get() = checkedParameterCount > 0 && issues.isEmpty()
 }
 
 object LivestockWaterCompatibilityEvaluator {
@@ -164,7 +171,7 @@ object LivestockWaterCompatibilityEvaluator {
         var checked = 0
         val issues = water.values().mapNotNull { (parameter, measuredValue) ->
             val range = expected[parameter]
-            if (range == null || measuredValue == null) {
+            if (range == null || measuredValue == null || !range.hasComparableBounds) {
                 return@mapNotNull null
             }
 

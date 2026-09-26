@@ -135,13 +135,20 @@ internal object WaterAnalysisPolicy {
     const val MAX_MEASUREMENTS = 32
     const val MIN_DATE_MILLIS = 946_684_800_000L
     const val MAX_DATE_MILLIS = 4_102_444_800_000L
+    const val FUTURE_TOLERANCE_MILLIS = 60_000L
     const val MIN_TEMPERATURE_C = -50.0
     const val MAX_TEMPERATURE_C = 100.0
 
-    fun validate(input: WaterAnalysisInput): WaterAnalysisInput {
+    fun validate(
+        input: WaterAnalysisInput,
+        nowMillis: Long = System.currentTimeMillis()
+    ): WaterAnalysisInput {
         require(input.tankId > 0L) { "tankId must be positive." }
         require(input.measuredAtMillis in MIN_DATE_MILLIS..MAX_DATE_MILLIS) {
             "measuredAtMillis is outside the supported range."
+        }
+        require(input.measuredAtMillis <= nowMillis + FUTURE_TOLERANCE_MILLIS) {
+            "measuredAtMillis cannot be more than one minute in the future."
         }
         require(input.measurements.isNotEmpty()) {
             "A water analysis must contain at least one measurement."

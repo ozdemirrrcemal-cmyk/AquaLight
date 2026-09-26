@@ -6,10 +6,10 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.ItemTankHealthAddAnalysisBinding
-import com.aqua.aqualight.databinding.ItemTankHealthMaintenanceSectionBinding
 import com.aqua.aqualight.databinding.ItemTankHealthMetricBinding
-import com.aqua.aqualight.databinding.ItemTankHealthSystemSectionBinding
 import com.aqua.aqualight.databinding.ItemTankHealthWaterQualityHeaderBinding
+import java.text.DateFormat
+import java.util.Date
 
 internal class TankHealthContentAdapter(
     private val onAddAnalysisClick: () -> Unit = {}
@@ -19,11 +19,9 @@ internal class TankHealthContentAdapter(
 
     override fun getItemViewType(position: Int): Int =
         when (items[position]) {
-            TankHealthContentItem.WaterQualityHeader -> VIEW_TYPE_WATER_QUALITY_HEADER
+            is TankHealthContentItem.WaterQualityHeader -> VIEW_TYPE_WATER_QUALITY_HEADER
             is TankHealthContentItem.Metric -> VIEW_TYPE_METRIC
             TankHealthContentItem.AddAnalysis -> VIEW_TYPE_ADD_ANALYSIS
-            TankHealthContentItem.MaintenanceSection -> VIEW_TYPE_MAINTENANCE_SECTION
-            TankHealthContentItem.SystemSection -> VIEW_TYPE_SYSTEM_SECTION
         }
 
     override fun onCreateViewHolder(
@@ -32,12 +30,12 @@ internal class TankHealthContentAdapter(
     ): RecyclerView.ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
         return when (viewType) {
-            VIEW_TYPE_WATER_QUALITY_HEADER -> StaticViewHolder(
+            VIEW_TYPE_WATER_QUALITY_HEADER -> WaterQualityHeaderViewHolder(
                 ItemTankHealthWaterQualityHeaderBinding.inflate(
                     inflater,
                     parent,
                     false
-                ).root
+                )
             )
 
             VIEW_TYPE_METRIC -> MetricViewHolder(
@@ -54,22 +52,6 @@ internal class TankHealthContentAdapter(
                 StaticViewHolder(binding.root)
             }
 
-            VIEW_TYPE_MAINTENANCE_SECTION -> StaticViewHolder(
-                ItemTankHealthMaintenanceSectionBinding.inflate(
-                    inflater,
-                    parent,
-                    false
-                ).root
-            )
-
-            VIEW_TYPE_SYSTEM_SECTION -> StaticViewHolder(
-                ItemTankHealthSystemSectionBinding.inflate(
-                    inflater,
-                    parent,
-                    false
-                ).root
-            )
-
             else -> error("Unsupported Tank Health view type: $viewType")
         }
     }
@@ -82,12 +64,21 @@ internal class TankHealthContentAdapter(
                 metricIndex = metricIndexAt(position)
             )
         }
+        if (
+            holder is WaterQualityHeaderViewHolder &&
+            item is TankHealthContentItem.WaterQualityHeader
+        ) {
+            holder.bind(item.measuredAtMillis)
+        }
     }
 
     override fun getItemCount(): Int = items.size
 
-    fun submitWaterMetrics(metrics: List<TankHealthWaterMetricUiModel>) {
-        items = buildItems(metrics)
+    fun submitWaterMetrics(
+        metrics: List<TankHealthWaterMetricUiModel>,
+        measuredAtMillis: Long? = null
+    ) {
+        items = buildItems(metrics, measuredAtMillis)
         notifyDataSetChanged()
     }
 
@@ -104,6 +95,25 @@ internal class TankHealthContentAdapter(
     private class StaticViewHolder(
         root: android.view.View
     ) : RecyclerView.ViewHolder(root)
+
+    private class WaterQualityHeaderViewHolder(
+        private val binding: ItemTankHealthWaterQualityHeaderBinding
+    ) : RecyclerView.ViewHolder(binding.root) {
+        fun bind(measuredAtMillis: Long?) {
+            binding.tvLastAnalysis.text = measuredAtMillis?.let { timestamp ->
+                val context = binding.root.context
+                context.getString(
+                    R.string.tank_health_last_analysis_at,
+                    DateFormat.getDateTimeInstance(
+                        DateFormat.MEDIUM,
+                        DateFormat.SHORT,
+                        context.resources.configuration.locales[0]
+                    )
+                        .format(Date(timestamp))
+                )
+            } ?: binding.root.context.getString(R.string.tank_health_last_analysis)
+        }
+    }
 
     private class MetricViewHolder(
         private val binding: ItemTankHealthMetricBinding
@@ -145,13 +155,11 @@ internal class TankHealthContentAdapter(
     }
 
     private sealed interface TankHealthContentItem {
-        object WaterQualityHeader : TankHealthContentItem
+        data class WaterQualityHeader(val measuredAtMillis: Long?) : TankHealthContentItem
         data class Metric(
             val metric: TankHealthWaterMetricUiModel
         ) : TankHealthContentItem
         object AddAnalysis : TankHealthContentItem
-        object MaintenanceSection : TankHealthContentItem
-        object SystemSection : TankHealthContentItem
     }
 
     internal companion object {
@@ -160,19 +168,16 @@ internal class TankHealthContentAdapter(
         private const val VIEW_TYPE_WATER_QUALITY_HEADER = 0
         private const val VIEW_TYPE_METRIC = 1
         private const val VIEW_TYPE_ADD_ANALYSIS = 2
-        private const val VIEW_TYPE_MAINTENANCE_SECTION = 3
-        private const val VIEW_TYPE_SYSTEM_SECTION = 4
         private const val METRIC_SPAN_SIZE = 1
 
         private fun buildItems(
-            metrics: List<TankHealthWaterMetricUiModel>
+            metrics: List<TankHealthWaterMetricUiModel>,
+            measuredAtMillis: Long? = null
         ): List<TankHealthContentItem> =
             buildList {
-                add(TankHealthContentItem.WaterQualityHeader)
+                add(TankHealthContentItem.WaterQualityHeader(measuredAtMillis))
                 addAll(metrics.map(TankHealthContentItem::Metric))
                 add(TankHealthContentItem.AddAnalysis)
-                add(TankHealthContentItem.MaintenanceSection)
-                add(TankHealthContentItem.SystemSection)
             }
     }
 }

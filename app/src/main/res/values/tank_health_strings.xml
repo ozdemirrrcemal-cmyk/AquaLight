@@ -11,6 +11,7 @@
 
     <string name="tank_health_water_quality_title">Water Quality</string>
     <string name="tank_health_last_analysis">No analysis yet</string>
+    <string name="tank_health_last_analysis_at">Sampled: %1$s</string>
     <string name="tank_health_status_normal">Normal</string>
     <string name="tank_health_status_moderate">Moderate</string>
     <string name="tank_health_status_approaching">Approaching</string>

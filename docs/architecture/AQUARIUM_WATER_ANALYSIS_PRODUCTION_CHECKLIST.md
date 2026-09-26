@@ -20,6 +20,19 @@ implementations**. No old W item is marked complete until its full acceptance
 criterion and regressions pass. Keep the approved UI and central bottom-sheet
 design while connecting real states.
 
+Implementation evidence added on the production branch: the 12-code field
+matrix now has an application-layer owner and coverage test; GH dGH values
+normalize to mg/L as CaCO3 while their raw units survive; `<`/`≤` and `>`/`≥`
+remain distinct in livestock ranges, and approximate single targets do not
+produce exact-match warnings. Dashboard measurements come from one latest
+event with its observed time. Unsupported maintenance/system fixture cards are
+not rendered until they have real data owners. These repairs do not satisfy the
+catalog, assessment, migration, sensor or end-to-end gates below.
+The old ammonia/KH/salinity/SG/iron/EC/TDS/CO2 slots retain raw readings but
+do not emit an authoritative canonical value until their missing species,
+matrix or calibration context is represented and validated. This is an interim
+fail-closed behavior, not completion of S.1–S.3.
+
 ### U — Baseline and architecture inventory
 
 - [x] U.1 Freeze and inspect the `ui-flow` commit; enumerate application/data/UI/composition paths and the 12 tank type codes.

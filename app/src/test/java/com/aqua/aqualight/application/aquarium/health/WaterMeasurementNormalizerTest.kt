@@ -33,26 +33,22 @@ class WaterMeasurementNormalizerTest {
     }
 
     @Test
-    fun carbonateHardnessUnitsConvertToDkh() {
-        assertEquals(
-            10.0,
+    fun legacyKhCannotBecomeFreshwaterCarbonateOrMarineAlkalinityWithoutTankContext() {
+        assertNull(
             WaterMeasurementNormalizer.canonicalValue(
                 parameter = WaterParameter.KH,
                 value = 178.6,
                 basis = WaterMeasurementBasis.KH,
                 unit = WaterMeasurementUnit.PPM_CACO3
-            ) ?: error("Expected conversion"),
-            0.0001
+            )
         )
-        assertEquals(
-            5.6,
+        assertNull(
             WaterMeasurementNormalizer.canonicalValue(
                 parameter = WaterParameter.KH,
                 value = 2.0,
                 basis = WaterMeasurementBasis.KH,
                 unit = WaterMeasurementUnit.MEQ_L
-            ) ?: error("Expected conversion"),
-            0.0001
+            )
         )
     }
 
@@ -81,5 +77,26 @@ class WaterMeasurementNormalizerTest {
                 unit = WaterMeasurementUnit.MG_L
             )
         )
+        assertNull(
+            WaterMeasurementNormalizer.canonicalValue(
+                parameter = WaterParameter.AMMONIA_AMMONIUM,
+                value = 1.0,
+                basis = WaterMeasurementBasis.NH3_NH4,
+                unit = WaterMeasurementUnit.MG_L
+            )
+        )
+    }
+
+    @Test
+    fun bareSalinityIronAndDeviceScalesStaySourceNative() {
+        listOf(
+            Triple(WaterParameter.SALINITY, WaterMeasurementBasis.SALINITY, WaterMeasurementUnit.PPT),
+            Triple(WaterParameter.IRON, WaterMeasurementBasis.FE, WaterMeasurementUnit.MG_L),
+            Triple(WaterParameter.SPECIFIC_GRAVITY, WaterMeasurementBasis.SG, WaterMeasurementUnit.NONE),
+            Triple(WaterParameter.TDS, WaterMeasurementBasis.TDS, WaterMeasurementUnit.PPM),
+            Triple(WaterParameter.EC, WaterMeasurementBasis.EC, WaterMeasurementUnit.US_CM)
+        ).forEach { (parameter, basis, unit) ->
+            assertNull(WaterMeasurementNormalizer.canonicalValue(parameter, 1.0, basis, unit))
+        }
     }
 }

@@ -29,9 +29,24 @@ class LivestockWaterRequirementParserTest {
 
         assertNull(nitrate?.minimum)
         assertEquals(20.0, nitrate?.maximum)
-        assertEquals(0.05, phosphate?.minimum)
-        assertEquals(0.05, phosphate?.maximum)
+        assertNull(phosphate?.minimum)
+        assertNull(phosphate?.maximum)
+        assertEquals(0.05, phosphate?.nominalTarget)
         assertTrue(phosphate?.approximate == true)
+        assertFalse(requireNotNull(nitrate).contains(20.0))
+        assertTrue(nitrate.contains(19.9))
+    }
+
+    @Test
+    fun strictAndInclusiveEndpointsRemainDistinct() {
+        val greater = requireNotNull(LivestockWaterRequirementParser.parseRange(">7"))
+        val atLeast = requireNotNull(LivestockWaterRequirementParser.parseRange("≥7"))
+        val less = requireNotNull(LivestockWaterRequirementParser.parseRange("<7"))
+        val atMost = requireNotNull(LivestockWaterRequirementParser.parseRange("≤7"))
+        assertFalse(greater.contains(7.0))
+        assertTrue(atLeast.contains(7.0))
+        assertFalse(less.contains(7.0))
+        assertTrue(atMost.contains(7.0))
     }
 
     @Test

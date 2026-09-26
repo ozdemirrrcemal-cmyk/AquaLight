@@ -63,13 +63,15 @@ internal object LivestockWaterRequirementParser {
             normalized.startsWith("<") || normalized.startsWith("≤") ->
                 LivestockParameterRange(
                     maximum = values.first(),
-                    approximate = approximate
+                    approximate = approximate,
+                    maximumInclusive = normalized.startsWith("≤")
                 )
 
             normalized.startsWith(">") || normalized.startsWith("≥") ->
                 LivestockParameterRange(
                     minimum = values.first(),
-                    approximate = approximate
+                    approximate = approximate,
+                    minimumInclusive = normalized.startsWith("≥")
                 )
 
             values.size >= 2 -> LivestockParameterRange(
@@ -79,8 +81,7 @@ internal object LivestockWaterRequirementParser {
             )
 
             else -> LivestockParameterRange(
-                minimum = values.first(),
-                maximum = values.first(),
+                nominalTarget = values.first(),
                 approximate = true
             )
         }
