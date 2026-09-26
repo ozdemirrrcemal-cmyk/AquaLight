@@ -3,30 +3,43 @@ package com.aqua.aqualight.application.aquarium
 data class LivestockParameterRange(
     val minimum: Double? = null,
     val maximum: Double? = null,
-    val approximate: Boolean = false
+    val approximate: Boolean = false,
+    val minimumInclusive: Boolean = true,
+    val maximumInclusive: Boolean = true,
+    val nominalValue: Double? = null,
+    val sourceText: String? = null
 ) {
     init {
         require(minimum?.isFinite() != false)
         require(maximum?.isFinite() != false)
+        require(nominalValue?.isFinite() != false)
         require(minimum == null || maximum == null || minimum <= maximum)
+        require(minimum == null || maximum == null || minimum != maximum ||
+            (minimumInclusive && maximumInclusive))
+        require(nominalValue == null || (approximate && minimum == null && maximum == null))
     }
+
+    val isComparable: Boolean
+        get() = !approximate && nominalValue == null &&
+            (minimum != null || maximum != null)
 
     fun contains(
         value: Double
     ): Boolean {
-        if (!value.isFinite()) {
+        if (!isComparable || !value.isFinite()) {
             return false
         }
 
-        return (minimum == null || value >= minimum) &&
-            (maximum == null || value <= maximum)
+        return (minimum == null || if (minimumInclusive) value >= minimum else value > minimum) &&
+            (maximum == null || if (maximumInclusive) value <= maximum else value < maximum)
     }
 }
 
 enum class LivestockWarningMode {
     SOFT,
     HARD,
-    INFORMATIONAL;
+    INFORMATIONAL,
+    UNKNOWN;
 
     companion object {
         fun fromCatalogValue(
@@ -34,10 +47,23 @@ enum class LivestockWarningMode {
         ): LivestockWarningMode {
             return entries.firstOrNull { mode ->
                 mode.name.equals(value.trim(), ignoreCase = true)
-            } ?: SOFT
+            } ?: UNKNOWN
         }
     }
 }
+
+enum class LivestockRequirementUnavailableReason {
+    UNPARSEABLE_REQUIREMENT,
+    APPROXIMATE_ONLY,
+    INFORMATIONAL_ONLY,
+    UNKNOWN_WARNING_MODE
+}
+
+data class LivestockRequirementUnavailable(
+    val parameter: AquariumWaterParameter?,
+    val sourceText: String,
+    val reason: LivestockRequirementUnavailableReason
+)
 
 data class LivestockWaterRequirements(
     val temperatureC: LivestockParameterRange? = null,
@@ -53,7 +79,9 @@ data class LivestockWaterRequirements(
     val phosphatePpm: LivestockParameterRange? = null,
     val par: LivestockParameterRange? = null,
     val flow: String? = null,
-    val warningMode: LivestockWarningMode = LivestockWarningMode.SOFT
+    val warningMode: LivestockWarningMode = LivestockWarningMode.SOFT,
+    val catalogEntryId: String? = null,
+    val unavailableRequirements: List<LivestockRequirementUnavailable> = emptyList()
 ) {
     val hasAnyMeasuredRequirement: Boolean
         get() = listOf(
@@ -134,10 +162,14 @@ data class LivestockWaterParameterIssue(
 data class LivestockWaterCompatibility(
     val checkedParameterCount: Int,
     val issues: List<LivestockWaterParameterIssue>,
-    val warningMode: LivestockWarningMode
+    val warningMode: LivestockWarningMode,
+    val unavailableRequirements: List<LivestockRequirementUnavailable> = emptyList(),
+    val missingMeasurements: List<AquariumWaterParameter> = emptyList()
 ) {
     val isCompatible: Boolean
-        get() = issues.isEmpty()
+        get() = checkedParameterCount > 0 && issues.isEmpty() &&
+            warningMode in setOf(LivestockWarningMode.SOFT, LivestockWarningMode.HARD) &&
+            unavailableRequirements.isEmpty() && missingMeasurements.isEmpty()
 }
 
 object LivestockWaterCompatibilityEvaluator {
@@ -161,10 +193,37 @@ object LivestockWaterCompatibilityEvaluator {
             AquariumWaterParameter.PAR to requirements.par
         ).toMap()
 
+        val unavailable = requirements.unavailableRequirements.toMutableList()
+        expected.forEach { (parameter, range) ->
+            if (range != null && !range.isComparable) {
+                unavailable += LivestockRequirementUnavailable(
+                    parameter = parameter,
+                    sourceText = range.sourceText.orEmpty(),
+                    reason = LivestockRequirementUnavailableReason.APPROXIMATE_ONLY
+                )
+            }
+        }
+        if (requirements.warningMode == LivestockWarningMode.INFORMATIONAL) {
+            unavailable += LivestockRequirementUnavailable(
+                parameter = null,
+                sourceText = LivestockWarningMode.INFORMATIONAL.name,
+                reason = LivestockRequirementUnavailableReason.INFORMATIONAL_ONLY
+            )
+        }
+
+        val measured = water.values().toMap()
+        val missingMeasurements = expected.mapNotNull { (parameter, range) ->
+            parameter.takeIf { range?.isComparable == true && measured[parameter] == null }
+        }
         var checked = 0
         val issues = water.values().mapNotNull { (parameter, measuredValue) ->
             val range = expected[parameter]
             if (range == null || measuredValue == null) {
+                return@mapNotNull null
+            }
+
+            if (!range.isComparable || requirements.warningMode == LivestockWarningMode.UNKNOWN ||
+                requirements.warningMode == LivestockWarningMode.INFORMATIONAL) {
                 return@mapNotNull null
             }
 
@@ -184,7 +243,9 @@ object LivestockWaterCompatibilityEvaluator {
         return LivestockWaterCompatibility(
             checkedParameterCount = checked,
             issues = issues,
-            warningMode = requirements.warningMode
+            warningMode = requirements.warningMode,
+            unavailableRequirements = unavailable,
+            missingMeasurements = missingMeasurements
         )
     }
 }

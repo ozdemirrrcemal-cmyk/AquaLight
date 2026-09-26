@@ -90,10 +90,13 @@ private fun com.aqua.aqualight.application.aquarium.LivestockWaterCompatibility.
         checkedParameterCount == 0 ->
             LivestockWaterAssessmentStatus.NO_COMPARABLE_MEASUREMENTS
 
+        issues.isNotEmpty() ->
+            LivestockWaterAssessmentStatus.OUT_OF_RANGE
+
         isCompatible ->
             LivestockWaterAssessmentStatus.COMPATIBLE
 
         else ->
-            LivestockWaterAssessmentStatus.OUT_OF_RANGE
+            LivestockWaterAssessmentStatus.PARTIAL_EVIDENCE
     }
 }
