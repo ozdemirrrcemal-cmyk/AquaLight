@@ -40,15 +40,15 @@ internal data class WaterTestParameterUiModel(
 )
 
 internal sealed interface TemperatureSensorUiState {
-    data object Unavailable : TemperatureSensorUiState
-    data object Loading : TemperatureSensorUiState
+    object Unavailable : TemperatureSensorUiState
+    object Loading : TemperatureSensorUiState
     data class Available(val deviceName: String) : TemperatureSensorUiState
     data class Reading(
         val deviceName: String,
         val temperatureText: String
     ) : TemperatureSensorUiState
     data class Stale(val deviceName: String?) : TemperatureSensorUiState
-    data object Error : TemperatureSensorUiState
+    object Error : TemperatureSensorUiState
 }
 
 internal object WaterTestProfileUiCatalog {
