@@ -23,7 +23,7 @@
     <string name="tank_health_analysis_sensor_unavailable">Uyumlu sensör okuması yok</string>
     <string name="tank_health_analysis_sensor_loading">Sensör kontrol ediliyor…</string>
     <string name="tank_health_analysis_sensor_available">Sensör kullanılabilir: %1$s</string>
-    <string name="tank_health_analysis_sensor_reading">Güncel okuma: %1$s</string>
+    <string name="tank_health_analysis_sensor_reading">%1$s • güncel okuma %2$s °C</string>
     <string name="tank_health_analysis_sensor_stale">Sensör verisi güncel değil</string>
     <string name="tank_health_analysis_sensor_error">Sensör verisi alınamadı</string>
 
