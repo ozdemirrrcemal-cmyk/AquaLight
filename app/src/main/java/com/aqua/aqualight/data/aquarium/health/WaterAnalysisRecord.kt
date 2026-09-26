@@ -12,7 +12,8 @@ internal data class WaterAnalysisDraftRecord(
     val measuredAtMillis: Long,
     val temperatureCelsius: Double?,
     val temperatureSource: WaterTemperatureSource?,
-    val measurements: List<WaterMeasurementRecord>
+    val measurements: List<WaterMeasurementRecord>,
+    val requestId: String
 )
 
 internal data class WaterAnalysisRecord(
@@ -23,7 +24,8 @@ internal data class WaterAnalysisRecord(
     val temperatureCelsius: Double?,
     val temperatureSource: WaterTemperatureSource?,
     val measurements: List<WaterMeasurementRecord>,
-    val createdAtMillis: Long
+    val createdAtMillis: Long,
+    val requestId: String = ""
 )
 
 internal data class WaterMeasurementRecord(
@@ -51,7 +53,8 @@ internal fun StoredWaterAnalysis.toRecordStrict(): WaterAnalysisRecord =
             null
         },
         measurements = measurementsList.map(StoredWaterMeasurement::toRecordStrict),
-        createdAtMillis = createdAtMillis
+        createdAtMillis = createdAtMillis,
+        requestId = requestId
     )
 
 internal fun StoredWaterMeasurement.toRecordStrict(): WaterMeasurementRecord =
@@ -74,6 +77,7 @@ internal fun WaterAnalysisRecord.toStoredStrict(): StoredWaterAnalysis =
         .setTemperatureCelsius(temperatureCelsius ?: 0.0)
         .setTemperatureSource(temperatureSource?.name.orEmpty())
         .setCreatedAtMillis(createdAtMillis)
+        .setRequestId(requestId)
         .addAllMeasurements(measurements.map(WaterMeasurementRecord::toStoredStrict))
         .build()
 

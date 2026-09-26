@@ -6,6 +6,27 @@ import org.junit.Test
 class WaterAnalysisPolicyTest {
 
     @Test
+    fun requestIdentityMustBeCanonicalAndStable() {
+        val input = WaterAnalysisInput(
+            tankId = 1L,
+            measuredAtMillis = VALID_TIME,
+            temperatureCelsius = null,
+            temperatureSource = null,
+            measurements = listOf(
+                WaterMeasurementInput(
+                    parameter = WaterParameter.PH,
+                    value = 7.0,
+                    selection = WaterMeasurementCatalog.defaultSelection(WaterParameter.PH)
+                )
+            ),
+            requestId = "not-a-uuid"
+        )
+        assertThrows(IllegalArgumentException::class.java) {
+            WaterAnalysisPolicy.validate(input, nowMillis = VALID_TIME)
+        }
+    }
+
+    @Test
     fun futureSamplesAllowOnlyOneMinuteOfClockTolerance() {
         val input = WaterAnalysisInput(
             tankId = 1L,

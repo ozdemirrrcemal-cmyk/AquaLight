@@ -1,5 +1,6 @@
 package com.aqua.aqualight.application.aquarium.health
 
+import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 
 interface WaterAnalysisOperations {
@@ -14,7 +15,8 @@ data class WaterAnalysisInput(
     val measuredAtMillis: Long,
     val temperatureCelsius: Double?,
     val temperatureSource: WaterTemperatureSource?,
-    val measurements: List<WaterMeasurementInput>
+    val measurements: List<WaterMeasurementInput>,
+    val requestId: String = UUID.randomUUID().toString()
 )
 
 data class WaterMeasurementInput(
@@ -144,6 +146,7 @@ internal object WaterAnalysisPolicy {
         nowMillis: Long = System.currentTimeMillis()
     ): WaterAnalysisInput {
         require(input.tankId > 0L) { "tankId must be positive." }
+        require(isValidRequestId(input.requestId)) { "requestId must be a canonical UUID." }
         require(input.measuredAtMillis in MIN_DATE_MILLIS..MAX_DATE_MILLIS) {
             "measuredAtMillis is outside the supported range."
         }
@@ -198,4 +201,7 @@ internal object WaterAnalysisPolicy {
 
         return input
     }
+
+    fun isValidRequestId(requestId: String): Boolean =
+        runCatching { UUID.fromString(requestId).toString() == requestId }.getOrDefault(false)
 }

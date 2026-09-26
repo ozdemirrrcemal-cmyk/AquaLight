@@ -42,6 +42,7 @@ internal class DefaultWaterAnalysisOperations(
             measuredAtMillis = measuredAtMillis,
             temperatureCelsius = temperatureCelsius,
             temperatureSource = temperatureSource,
+            requestId = requestId,
             measurements = measurements.map { measurement ->
                 WaterMeasurementRecord(
                     parameter = measurement.parameter,

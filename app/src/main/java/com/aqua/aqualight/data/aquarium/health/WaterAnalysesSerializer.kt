@@ -19,7 +19,12 @@ internal object WaterAnalysesSerializer : Serializer<WaterAnalysesStore> {
         }
 
         return try {
-            WaterAnalysisStoreRules.validateStore(parsed)
+            val migrated = if (parsed.schemaVersion == 1) {
+                WaterAnalysisStoreRules.upgradeLegacyStore(parsed)
+            } else {
+                parsed
+            }
+            WaterAnalysisStoreRules.validateStore(migrated)
         } catch (error: StoreInvariantViolation) {
             throw CorruptionException(
                 "Water analyses proto violates the commercial store contract.",

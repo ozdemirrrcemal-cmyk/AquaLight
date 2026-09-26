@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisInput
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementInput
 import com.aqua.aqualight.application.aquarium.health.WaterTemperatureSource
+import java.util.UUID
 
 internal data class WaterAnalysisInputBuildRequest(
     val tankId: Long,
@@ -10,7 +11,8 @@ internal data class WaterAnalysisInputBuildRequest(
     val temperatureText: String,
     val temperatureSource: WaterTemperatureSource,
     val visibleParameterIds: Set<WaterTestParameterId>,
-    val parameterState: WaterAnalysisParameterState
+    val parameterState: WaterAnalysisParameterState,
+    val requestId: String = UUID.randomUUID().toString()
 )
 
 internal sealed interface WaterAnalysisInputBuildResult {
@@ -45,7 +47,8 @@ internal object WaterAnalysisInputBuilder {
                     measuredAtMillis = request.measuredAtMillis,
                     temperatureCelsius = temperature.value,
                     temperatureSource = temperature.value?.let { request.temperatureSource },
-                    measurements = measurements.values
+                    measurements = measurements.values,
+                    requestId = request.requestId
                 )
             )
         }

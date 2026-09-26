@@ -16,6 +16,7 @@ message StoredWaterAnalysis {
   double temperature_celsius = 5;
   string temperature_source = 6;
   int64 created_at_millis = 7;
+  string request_id = 8;
   repeated StoredWaterMeasurement measurements = 20;
   string owner_uid = 100;
 }

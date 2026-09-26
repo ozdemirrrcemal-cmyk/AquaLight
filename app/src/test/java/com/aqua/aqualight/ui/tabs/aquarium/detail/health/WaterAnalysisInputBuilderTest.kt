@@ -20,7 +20,8 @@ class WaterAnalysisInputBuilderTest {
                 temperatureText = "",
                 temperatureSource = WaterTemperatureSource.MANUAL,
                 visibleParameterIds = setOf(WaterTestParameterId.PH),
-                parameterState = state
+                parameterState = state,
+                requestId = REQUEST_ID
             )
         )
 
@@ -29,5 +30,10 @@ class WaterAnalysisInputBuilderTest {
         assertEquals(1, input.measurements.size)
         assertEquals(7.4, input.measurements.single().value, 0.0)
         assertEquals("12", state.parameterValues[WaterTestParameterId.NITRATE])
+        assertEquals(REQUEST_ID, input.requestId)
+    }
+
+    private companion object {
+        const val REQUEST_ID = "123e4567-e89b-12d3-a456-426614174000"
     }
 }

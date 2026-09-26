@@ -53,6 +53,89 @@ class WaterAnalysisStoreRulesTest {
     }
 
     @Test
+    fun latestEventOrdersBySampleThenCommitThenIdentity() {
+        val measurement = WaterMeasurementRecord(
+            parameter = WaterParameter.PH,
+            value = 7.0,
+            method = WaterMeasurementMethod.MANUAL,
+            testKitId = null,
+            basis = WaterMeasurementBasis.PH,
+            unit = WaterMeasurementUnit.NONE
+        )
+        val base = validRecord(measurement)
+        val olderCommitWithHigherId = base.copy(id = 99L, createdAtMillis = VALID_TIME)
+        val laterCommit = base.copy(id = 12L, createdAtMillis = VALID_TIME + 1L)
+        val olderSample = base.copy(id = 100L, measuredAtMillis = VALID_TIME - 1L)
+
+        assertEquals(
+            listOf(laterCommit, olderCommitWithHigherId, olderSample),
+            WaterAnalysisStoreRules.newestFirst(
+                listOf(olderSample, olderCommitWithHigherId, laterCommit)
+            )
+        )
+    }
+
+    @Test
+    fun versionOneRecordsUpgradeWithoutChangingMeasurementsOrIdentity() {
+        val record = validRecord(validPhMeasurement())
+        val legacy = WaterAnalysisStoreRules.defaultStore().toBuilder()
+            .setSchemaVersion(1)
+            .addAnalyses(record.toStoredStrict())
+            .build()
+
+        val upgraded = WaterAnalysisStoreRules.upgradeLegacyStore(legacy)
+        assertEquals(2, upgraded.schemaVersion)
+        assertEquals(record, upgraded.analysesList.single().toRecordStrict())
+    }
+
+    @Test
+    fun repeatedRequestReturnsSameIdentityAndRejectsChangedPayload() {
+        val record = validRecord(validPhMeasurement()).copy(requestId = REQUEST_ID)
+        val store = WaterAnalysisStoreRules.defaultStore().toBuilder()
+            .addAnalyses(record.toStoredStrict())
+            .build()
+        val draft = WaterAnalysisDraftRecord(
+            tankId = record.tankId,
+            measuredAtMillis = record.measuredAtMillis,
+            temperatureCelsius = record.temperatureCelsius,
+            temperatureSource = record.temperatureSource,
+            measurements = record.measurements,
+            requestId = REQUEST_ID
+        )
+
+        assertEquals(record.id, WaterAnalysisStoreRules.replayId(store, OWNER_UID, draft))
+        assertThrows(StoreInvariantViolation::class.java) {
+            WaterAnalysisStoreRules.replayId(
+                store,
+                OWNER_UID,
+                draft.copy(measuredAtMillis = VALID_TIME + 1L)
+            )
+        }
+    }
+
+    @Test
+    fun duplicateOwnerRequestIdFailsStoreValidation() {
+        val record = validRecord(validPhMeasurement()).copy(requestId = REQUEST_ID)
+        val store = WaterAnalysisStoreRules.defaultStore().toBuilder()
+            .addAnalyses(record.toStoredStrict())
+            .addAnalyses(record.copy(id = 12L).toStoredStrict())
+            .build()
+
+        assertThrows(StoreInvariantViolation::class.java) {
+            WaterAnalysisStoreRules.validateStore(store)
+        }
+    }
+
+    private fun validPhMeasurement(): WaterMeasurementRecord = WaterMeasurementRecord(
+        parameter = WaterParameter.PH,
+        value = 7.0,
+        method = WaterMeasurementMethod.MANUAL,
+        testKitId = null,
+        basis = WaterMeasurementBasis.PH,
+        unit = WaterMeasurementUnit.NONE
+    )
+
+    @Test
     fun duplicateParametersFailClosed() {
         val measurement = WaterMeasurementRecord(
             parameter = WaterParameter.PH,
@@ -106,5 +189,6 @@ class WaterAnalysisStoreRulesTest {
     private companion object {
         const val OWNER_UID = "owner-1"
         const val VALID_TIME = 1_790_000_000_000L
+        const val REQUEST_ID = "123e4567-e89b-12d3-a456-426614174000"
     }
 }

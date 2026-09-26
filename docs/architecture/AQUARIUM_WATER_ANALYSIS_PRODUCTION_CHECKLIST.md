@@ -32,6 +32,8 @@ The old ammonia/KH/salinity/SG/iron/EC/TDS/CO2 slots retain raw readings but
 do not emit an authoritative canonical value until their missing species,
 matrix or calibration context is represented and validated. This is an interim
 fail-closed behavior, not completion of S.1–S.3.
+Generic NO3-N, like generic phosphorus, remains source-native until a verified
+method profile authorizes the chemical conversion.
 New SENSOR selections are disabled until assigned sample identity/freshness
 provenance is implemented; existing raw sensor-labelled records are retained
 for migration review. This does not close the physical sensor acceptance gate.
@@ -47,6 +49,14 @@ If tank-type changes hide previously entered values, save now requires an
 explicit confirmation that only visible measurements enter the event; cancelling
 keeps all draft values. Persisting this draft beyond the fragment's saved-state
 window and route-scoped retry semantics remain open.
+The current Proto history now orders one latest event by observed time, commit
+time and ID. Indexed keyset paging remains open under M.5.
+An additive Proto v1→v2 reader now preserves old record fields/identity and
+accepts blank legacy request IDs; new event requests carry a saved UUID and
+retry with the same payload returns the existing record. Reusing that UUID for
+a changed payload is rejected. This is an interim idempotency step in the
+current full-list store, not the indexed Room cutover or atomic context and
+assessment transaction required by M.2–M.5.
 
 ### U — Baseline and architecture inventory
 

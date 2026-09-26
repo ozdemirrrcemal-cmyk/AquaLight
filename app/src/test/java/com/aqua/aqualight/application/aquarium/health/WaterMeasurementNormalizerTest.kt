@@ -7,16 +7,14 @@ import org.junit.Test
 class WaterMeasurementNormalizerTest {
 
     @Test
-    fun nitrateNitrogenConvertsToNitrate() {
-        assertEquals(
-            44.2664,
+    fun genericNitrateNitrogenCannotBePromotedWithoutVerifiedMethodScope() {
+        assertNull(
             WaterMeasurementNormalizer.canonicalValue(
                 parameter = WaterParameter.NITRATE,
                 value = 10.0,
                 basis = WaterMeasurementBasis.NO3_N,
                 unit = WaterMeasurementUnit.MG_L
-            ) ?: error("Expected conversion"),
-            0.0001
+            )
         )
     }
 

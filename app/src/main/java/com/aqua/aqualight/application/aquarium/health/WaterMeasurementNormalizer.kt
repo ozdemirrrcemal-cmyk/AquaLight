@@ -1,7 +1,6 @@
 package com.aqua.aqualight.application.aquarium.health
 
 object WaterMeasurementNormalizer {
-    private const val NITRATE_N_TO_NO3 = 4.42664
     private const val PPM_CACO3_PER_DEGREE = 17.86
 
     private data class ConversionKey(
@@ -11,10 +10,7 @@ object WaterMeasurementNormalizer {
     )
 
     private val conversions: Map<ConversionKey, (Double) -> Double> = mapOf(
-        ConversionKey(WaterParameter.NITRATE, WaterMeasurementBasis.NO3_N, WaterMeasurementUnit.MG_L) to
-            { value -> value * NITRATE_N_TO_NO3 },
-        // A bare phosphorus result does not establish reactive orthophosphate.
-        // Method-scoped phosphorus conversion belongs in the verified profile layer.
+        // Nitrogen/phosphorus forms need verified method scope before conversion.
         ConversionKey(WaterParameter.GH, WaterMeasurementBasis.GH, WaterMeasurementUnit.DGH) to
             { value -> value * PPM_CACO3_PER_DEGREE }
     )

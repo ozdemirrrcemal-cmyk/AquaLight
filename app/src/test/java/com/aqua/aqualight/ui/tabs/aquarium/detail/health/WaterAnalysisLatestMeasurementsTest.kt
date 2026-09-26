@@ -22,6 +22,23 @@ class WaterAnalysisLatestMeasurementsTest {
         assertFalse(displayed.containsKey(WaterParameter.NITRATE))
     }
 
+    @Test
+    fun latestEventIsIndependentOfListOrderAndUsesCommitTimeBeforeId() {
+        val olderCommit = event(99L, WaterParameter.NITRATE)
+            .copy(measuredAtMillis = 10_000L, createdAtMillis = 10_000L)
+        val laterCommit = event(2L, WaterParameter.PH)
+            .copy(measuredAtMillis = 10_000L, createdAtMillis = 11_000L)
+
+        assertEquals(
+            laterCommit,
+            WaterAnalysisLatestMeasurements.latestEvent(listOf(olderCommit, laterCommit))
+        )
+        assertEquals(
+            setOf(WaterParameter.PH),
+            WaterAnalysisLatestMeasurements.from(listOf(olderCommit, laterCommit)).keys
+        )
+    }
+
     private fun event(id: Long, parameter: WaterParameter): WaterAnalysisSnapshot =
         WaterAnalysisSnapshot(
             id = id,

@@ -17,6 +17,7 @@ import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
 import com.aqua.aqualight.utils.DialogType
+import java.util.UUID
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
@@ -32,6 +33,7 @@ class TankHealthAnalysisAddFragment :
 
     private var tankProfile: String? = null
     private val parameterState = WaterAnalysisParameterState()
+    private var requestId: String = UUID.randomUUID().toString()
 
     private var measurementTimeController: WaterAnalysisMeasurementTimeController? = null
     private var temperatureUiController: WaterAnalysisTemperatureUiController? = null
@@ -43,6 +45,7 @@ class TankHealthAnalysisAddFragment :
             "TankHealthAnalysisAddFragment requires a positive tankId."
         }
         restoreWaterTestState(savedInstanceState)
+        requestId = savedInstanceState?.getString(STATE_REQUEST_ID) ?: requestId
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -97,6 +100,7 @@ class TankHealthAnalysisAddFragment :
             ArrayList(parameterState.parameterValues.values)
         )
         WaterMeasurementUiStateCodec.save(outState, parameterState.measurementSelections)
+        outState.putString(STATE_REQUEST_ID, requestId)
         outState.putString(
             STATE_ACTIVE_MEASUREMENT_PARAMETER_ID,
             parameterState.activeMeasurementParameterId?.name
@@ -196,7 +200,8 @@ class TankHealthAnalysisAddFragment :
                 temperatureText = temperatureController.currentValueText(),
                 temperatureSource = temperatureController.currentDomainSource(),
                 visibleParameterIds = visibleParameterIds,
-                parameterState = parameterState
+                parameterState = parameterState,
+                requestId = requestId
             )
         )
 
@@ -317,6 +322,7 @@ class TankHealthAnalysisAddFragment :
     }
 
     private companion object {
+        const val STATE_REQUEST_ID = "water_analysis_request_id"
         const val HIDDEN_DRAFT_REQUEST_KEY = "water_analysis_hidden_draft_confirmation"
         const val STATE_ADDITIONAL_PARAMETER_IDS = "additional_parameter_ids"
         const val STATE_PARAMETER_VALUE_IDS = "parameter_value_ids"

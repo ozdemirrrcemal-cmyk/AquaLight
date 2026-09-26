@@ -26,10 +26,7 @@ internal class WaterAnalysisDataStoreManager(
                 .analysesList
                 .filter(StoredWaterAnalysis::belongsToCurrentUser)
                 .map(StoredWaterAnalysis::toRecordStrict)
-                .sortedWith(
-                    compareByDescending<WaterAnalysisRecord> { record -> record.measuredAtMillis }
-                        .thenByDescending { record -> record.id }
-                )
+                .let(WaterAnalysisStoreRules::newestFirst)
         }
 
     fun analysesForTankFlow(tankId: Long): Flow<List<WaterAnalysisRecord>> {
@@ -53,6 +50,11 @@ internal class WaterAnalysisDataStoreManager(
 
         appContext.waterAnalysesDataStore.updateData { currentStore ->
             requireOwnerScope(ownerUid)
+            val replayId = WaterAnalysisStoreRules.replayId(currentStore, ownerUid, draft)
+            if (replayId != null) {
+                createdId = replayId
+                return@updateData currentStore
+            }
             val now = System.currentTimeMillis()
             val record = WaterAnalysisRecord(
                 id = WaterAnalysisStoreRules.nextUniqueId(
@@ -65,7 +67,8 @@ internal class WaterAnalysisDataStoreManager(
                 temperatureCelsius = draft.temperatureCelsius,
                 temperatureSource = draft.temperatureSource,
                 measurements = draft.measurements,
-                createdAtMillis = now
+                createdAtMillis = now,
+                requestId = draft.requestId
             )
             WaterAnalysisStoreRules.validateRecord(record, ownerUid)
             createdId = record.id

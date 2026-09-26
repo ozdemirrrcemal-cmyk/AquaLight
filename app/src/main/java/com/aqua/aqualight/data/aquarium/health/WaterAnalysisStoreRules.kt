@@ -8,23 +8,67 @@ import com.aqua.aqualight.data.store.StoreInvariantViolation
 
 internal object WaterAnalysisStoreRules {
 
+    fun newestFirst(records: List<WaterAnalysisRecord>): List<WaterAnalysisRecord> =
+        records.sortedWith(
+            compareByDescending<WaterAnalysisRecord>(WaterAnalysisRecord::measuredAtMillis)
+                .thenByDescending(WaterAnalysisRecord::createdAtMillis)
+                .thenByDescending(WaterAnalysisRecord::id)
+        )
+
+    fun replayId(
+        store: WaterAnalysesStore,
+        ownerUid: String,
+        draft: WaterAnalysisDraftRecord
+    ): Long? {
+        val previous = store.analysesList.firstOrNull { stored ->
+            stored.ownerUid == ownerUid && stored.requestId == draft.requestId
+        }?.toRecordStrict() ?: return null
+        if (
+            previous.tankId != draft.tankId ||
+            previous.measuredAtMillis != draft.measuredAtMillis ||
+            previous.temperatureCelsius != draft.temperatureCelsius ||
+            previous.temperatureSource != draft.temperatureSource ||
+            previous.measurements != draft.measurements
+        ) {
+            violation("A water-analysis request ID cannot be reused with different input.")
+        }
+        return previous.id
+    }
+
     fun defaultStore(): WaterAnalysesStore = WaterAnalysesStore.newBuilder()
         .setSchemaVersion(CommercialStoreSchema.WATER_ANALYSES_VERSION)
         .build()
 
-    fun validateStore(store: WaterAnalysesStore): WaterAnalysesStore {
+    fun validateStore(store: WaterAnalysesStore): WaterAnalysesStore =
+        validateStoreVersion(store, CommercialStoreSchema.WATER_ANALYSES_VERSION)
+
+    fun upgradeLegacyStore(store: WaterAnalysesStore): WaterAnalysesStore {
+        validateStoreVersion(store, LEGACY_VERSION)
+        return store.toBuilder()
+            .setSchemaVersion(CommercialStoreSchema.WATER_ANALYSES_VERSION)
+            .build()
+            .let(::validateStore)
+    }
+
+    private fun validateStoreVersion(store: WaterAnalysesStore, expectedVersion: Int): WaterAnalysesStore {
         CommercialStoreSchema.requireCurrent(
             storeName = "WaterAnalysesStore",
             actualVersion = store.schemaVersion,
-            expectedVersion = CommercialStoreSchema.WATER_ANALYSES_VERSION
+            expectedVersion = expectedVersion
         )
 
         val ownerScopedIds = mutableSetOf<Pair<String, Long>>()
+        val ownerScopedRequests = mutableSetOf<Pair<String, String>>()
         store.analysesList.forEach { stored ->
             validateStoredAnalysis(stored)
             val ownerUid = canonicalOwnerUid(stored.ownerUid)
             if (!ownerScopedIds.add(ownerUid to stored.id)) {
                 violation("Duplicate water-analysis id ${stored.id} for owner $ownerUid.")
+            }
+            if (stored.requestId.isNotBlank() &&
+                !ownerScopedRequests.add(ownerUid to stored.requestId)
+            ) {
+                violation("Duplicate water-analysis request ID for owner $ownerUid.")
             }
         }
         return store
@@ -40,6 +84,9 @@ internal object WaterAnalysisStoreRules {
         requirePositive("analysis.tankId", record.tankId)
         requireDate("analysis.measuredAtMillis", record.measuredAtMillis)
         requireDate("analysis.createdAtMillis", record.createdAtMillis)
+        if (record.requestId.isNotBlank() && !WaterAnalysisPolicy.isValidRequestId(record.requestId)) {
+            violation("analysis.requestId must be a canonical UUID when present.")
+        }
 
         if (record.temperatureCelsius == null) {
             if (record.temperatureSource != null) {
@@ -143,4 +190,5 @@ internal object WaterAnalysisStoreRules {
     }
 
     private const val MAX_OWNER_UID_CHARS = 128
+    private const val LEGACY_VERSION = 1
 }
