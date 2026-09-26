@@ -5,6 +5,7 @@ import androidx.annotation.StringRes
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumTankTaxonomy
 
+@Suppress("TooManyFunctions")
 object AquariumTankTaxonomyText {
     private data class Choice(val code: String, @StringRes val labelRes: Int)
 
@@ -113,14 +114,18 @@ object AquariumTankTaxonomyText {
         val trimmed = value.trim()
         if (trimmed.isEmpty()) return null
 
-        choices.firstOrNull { choice ->
+        val codeMatch = choices.firstOrNull { choice ->
             choice.code.equals(trimmed, ignoreCase = true)
-        }?.let { return it.code }
+        }?.code
 
-        val labelMatches = choices.filter { choice ->
-            labelFor(choice.labelRes).trim().equals(trimmed, ignoreCase = true)
-        }
-        return labelMatches.singleOrNull()?.code
+        val labelMatch = choices
+            .filter { choice ->
+                labelFor(choice.labelRes).trim().equals(trimmed, ignoreCase = true)
+            }
+            .singleOrNull()
+            ?.code
+
+        return codeMatch ?: labelMatch
     }
 
     private fun label(
