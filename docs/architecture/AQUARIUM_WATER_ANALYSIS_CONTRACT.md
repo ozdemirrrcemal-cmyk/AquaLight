@@ -4,7 +4,7 @@
 
 This document freezes the architectural, data, analysis, persistence, and UI-integration contract for the first production-grade Aquarium Health analysis flow.
 
-The existing Tank Health / Water Quality UI is considered visually complete for this stage. Implementation work governed by this contract must connect that UI to authoritative data and analysis without redesigning the approved screens unless a later explicit UI change is requested.
+The Tank Health / Water Quality visual shell is retained, but the input flow is not frozen until the profile-aware taxonomy and test-entry revision in section 28.0 is complete. After that revision, data-integration work must connect the approved profile-aware UI to authoritative data and analysis without introducing unrelated visual redesign.
 
 This contract is intentionally broader than a screen implementation. It defines the foundation that later powers:
 
@@ -40,7 +40,7 @@ The Water Analysis system must:
 
 The following are not part of the first implementation:
 
-- redesigning the approved Water Quality UI;
+- redesigning unrelated Tank Health surfaces after the profile-aware Water Quality input revision is accepted;
 - implementing Algae Control UI or analysis;
 - implementing Plant Health UI or analysis;
 - implementing Livestock Health UI or disease diagnosis;
@@ -960,7 +960,22 @@ If the reading is stale:
 
 ## 28. UI integration contract
 
-The existing approved UI is frozen for data-integration work.
+The visual language, shared components, navigation conventions, and central AquaLight architecture remain authoritative. The Water Quality input surface is frozen for data-integration work only after the following profile-aware UI revision is complete.
+
+### 28.0 Profile-aware UI revision contract
+
+This is the mandatory UI gate before Water Analysis persistence/assessment implementation.
+
+1. **Taxonomy boundary** — represent tank classification as water environment + canonical tank profile while keeping Tank Style independent. The persisted `tankType` field stores one canonical profile code; water environment is derived deterministically from that profile to prevent contradictory duplicated state.
+2. **No legacy compatibility layer** — this application is still under development. Ambiguous temporary values such as `Fish`, `Marine`, and `Coral` are not migrated, aliased, or silently reinterpreted. Development data may be reset.
+3. **Bottom-sheet selection flow** — Tank Type remains in the existing AquaLight bottom-sheet visual system. The user first chooses water environment, then sees only the profiles valid for that environment. Freshwater, brackish, and marine are distinct environments; Turkish UI uses `Tatlı Su`, `Acı Su`, and `Deniz`.
+4. **Presentation model** — Add Analysis renders parameters from a `WaterTestParameterUiModel` presentation model. Fragment/XML code must not own a hard-coded fixed seven-field scientific form.
+5. **Profile-aware recommended/additional tests** — each canonical tank profile provides a deterministic recommended test set plus contextual additional tests. The screen exposes recommended tests first and a `+ Add Test` flow for extra measurements. This mapping is presentation guidance only; it does not define scientific target ranges.
+6. **Fixture-free input** — no fake initial water values, fake measurement date/time, fake sensor temperature, fake device identity, or implicit zero. Empty text remains missing/empty input.
+7. **Professional parameter naming** — entry UI displays a readable parameter name together with its chemical abbreviation/formula and unit where applicable. Compact summary surfaces may use the short chemical notation.
+8. **Sensor-ready UI state** — sensor presentation is modeled with explicit unavailable/loading/available/reading/stale/error states. Until the authoritative temperature boundary is connected, the UI must not claim a device is connected or that a sensor value was read; manual entry remains available.
+9. **UI regression coverage** — tests must freeze environment/profile mapping, representative freshwater/planted/shrimp/marine/SPS/mixed-reef recommended sets, absence of fixture input values, empty-is-not-zero behavior, and state-restoration hooks for measurement time/source/user-added parameters.
+10. **Scope boundary** — this UI revision does not implement target ranges, assessment status, Water Analysis persistence, scientific rule evaluation, or the production health engine. Those remain the next implementation stage through the application/domain boundaries defined below.
 
 ### 28.1 Add Analysis
 
@@ -1442,6 +1457,16 @@ New code should be structured to satisfy the existing zero-new-debt policy natur
 
 The implementation order is frozen as follows.
 
+### Phase 0 - Profile-aware UI/taxonomy gate
+
+1. apply the section 28.0 water-environment / tank-profile taxonomy;
+2. update the Tank Type bottom sheet without replacing central AquaLight components;
+3. replace the fixed Add Analysis form with presentation-model-driven recommended/additional tests;
+4. remove fake Add Analysis measurement/sensor fixtures and preserve recreation state;
+5. freeze the UI mapping/architecture tests.
+
+No Water Analysis persistence or assessment engine is introduced in Phase 0.
+
 ### Phase 1 - Freeze scientific/domain semantics
 
 1. canonical WaterParameter enum;
@@ -1512,7 +1537,7 @@ Only after this sequence:
 
 Water Quality is complete only when all of the following are true:
 
-- approved UI remains visually intact unless explicitly changed;
+- the section 28.0 profile-aware UI revision is complete and its visual result remains intact during data integration;
 - a user can enter a physically valid analysis and save it;
 - temperature may be manual or a validated fresh tank sensor reading;
 - saved analysis survives process death;
