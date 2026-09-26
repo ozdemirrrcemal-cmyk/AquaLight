@@ -135,25 +135,13 @@ object SmartCareTankClassifier {
       )
   }
 
-  private fun isMarineTankType(tankType: String): Boolean = tankType in setOf(
-    AquariumTankTaxonomy.TYPE_MARINE,
-    AquariumTankTaxonomy.TYPE_SOFTIES,
-    AquariumTankTaxonomy.TYPE_MIXED_REEF,
-    AquariumTankTaxonomy.TYPE_SPS,
-    AquariumTankTaxonomy.TYPE_CORAL
-  )
+  private fun isMarineTankType(tankType: String): Boolean =
+    AquariumTankTaxonomy.environmentForTankType(tankType) ==
+      AquariumTankTaxonomy.WATER_ENVIRONMENT_MARINE
 
-  private fun isFreshwaterTankType(tankType: String): Boolean {
-    val knownFreshwater = tankType in setOf(
-      AquariumTankTaxonomy.TYPE_FISH,
-      AquariumTankTaxonomy.TYPE_SHRIMP,
-      AquariumTankTaxonomy.TYPE_PLANTED
-    )
-    return knownFreshwater || SmartCareTextMatcher.normalize(tankType) in setOf(
-      "freshwater",
-      "tatli su"
-    )
-  }
+  private fun isFreshwaterTankType(tankType: String): Boolean =
+    AquariumTankTaxonomy.environmentForTankType(tankType) ==
+      AquariumTankTaxonomy.WATER_ENVIRONMENT_FRESHWATER
 
   private const val MATERIAL_CATEGORY_CO2 = "co2"
   private const val MATERIAL_CATEGORY_FERTILIZER = "fertilizer"
