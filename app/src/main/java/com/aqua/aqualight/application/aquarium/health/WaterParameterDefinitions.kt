@@ -59,7 +59,10 @@ object WaterParameterDefinitions {
         WaterParameter.IRON to WaterParameterDefinition(WaterMeasurementBasis.FE, WaterMeasurementUnit.MG_L),
         WaterParameter.POTASSIUM to WaterParameterDefinition(WaterMeasurementBasis.K, WaterMeasurementUnit.MG_L),
         WaterParameter.SALINITY to WaterParameterDefinition(WaterMeasurementBasis.SALINITY, WaterMeasurementUnit.PPT),
-        WaterParameter.SPECIFIC_GRAVITY to WaterParameterDefinition(WaterMeasurementBasis.SG, WaterMeasurementUnit.NONE),
+        WaterParameter.SPECIFIC_GRAVITY to WaterParameterDefinition(
+            WaterMeasurementBasis.SG,
+            WaterMeasurementUnit.NONE
+        ),
         WaterParameter.CALCIUM to WaterParameterDefinition(WaterMeasurementBasis.CA, WaterMeasurementUnit.MG_L),
         WaterParameter.MAGNESIUM to WaterParameterDefinition(WaterMeasurementBasis.MG, WaterMeasurementUnit.MG_L),
         WaterParameter.COPPER to WaterParameterDefinition(WaterMeasurementBasis.CU, WaterMeasurementUnit.MG_L),
