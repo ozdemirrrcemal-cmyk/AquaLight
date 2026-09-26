@@ -24,8 +24,8 @@
             android:includeFontPadding="false"
             android:maxLines="2"
             android:textColor="@color/aqua_card_text_secondary"
-            android:textSize="@dimen/aqua_text_size_status_nano"
-            app:autoSizeMaxTextSize="@dimen/aqua_text_size_status_nano"
+            android:textSize="@dimen/aqua_text_size_health_metric_label_max"
+            app:autoSizeMaxTextSize="@dimen/aqua_text_size_health_metric_label_max"
             app:autoSizeMinTextSize="@dimen/aqua_text_size_health_metric_label_min"
             app:autoSizeStepGranularity="@dimen/aqua_text_size_autosize_step"
             app:autoSizeTextType="uniform" />
