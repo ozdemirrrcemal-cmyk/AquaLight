@@ -6,7 +6,7 @@ This document freezes the architectural, data, analysis, persistence, and UI-int
 
 The existing Tank Health / Water Quality UI is considered visually complete for this stage. Implementation work governed by this contract must connect that UI to authoritative data and analysis without redesigning the approved screens unless a later explicit UI change is requested.
 
-Accepted clarification on 26 September 2026 (K03.0): the selected tank type determines which measurement fields are shown. Preserve the existing screen structure, cards, field styling, grid, and navigation while populating them with the applicable measurements in section 25.1. Basic, tank-specific, and additional measurements are logical groups, not approval for a new visual layout. K03.1 subsequently freezes nitrate, nitrite, and phosphate recording semantics in section 6.1. K03.2 freezes the test/device selection, source-semantic resolution, and normalization workflow in sections 6.2, 6.5, 7, and 28.1. K03.3 freezes the canonical ammonia reporting bases in section 6.3. K03.4 freezes concurrent multi-result measurement/cardinality behavior in section 6.6. K03.5 freezes marine salinity/specific-gravity semantics and conversion safety in section 6.7. K03.6 freezes alkalinity/KH semantics, canonical units, and duplicate-field prevention in section 6.8. K03.7 freezes dissolved-oxygen concentration/saturation semantics and conversion prerequisites in section 6.9. K03.8 freezes chlorine/chloramine semantics, sample-context requirements, and multi-result handling in section 6.10. K03.9 freezes marine calcium/magnesium elemental semantics and hardness separation in section 6.11. K03.10 freezes conductivity/TDS semantics, temperature-basis provenance, and safe EC↔TDS behavior in section 6.12. K03.11 freezes direct-vs-calculated CO2 semantics in section 6.13. K03.12 freezes iron/potassium canonical semantics, iron analytical-scope handling, and the no-auto-dosing boundary in section 6.14. K03.13 freezes general-hardness semantics, canonical basis, and dGH conversion behavior in section 6.15. K03.14 freezes the first-release freshwater calculated-free-ammonia policy and marine exclusion in section 6.16. K04 freezes the structured severity, direction, coverage and conflict model in section 14. K05 freezes livestock range-bound and approximate/SOFT interpretation in section 10.5. K06 freezes the single plant-catalog data/application boundary in section 12.4. Evidence-backed source profiles, numerical thresholds, and remaining K07–K18 decisions are still open.
+Accepted clarification on 26 September 2026 (K03.0): the selected tank type determines which measurement fields are shown. Preserve the existing screen structure, cards, field styling, grid, and navigation while populating them with the applicable measurements in section 25.1. Basic, tank-specific, and additional measurements are logical groups, not approval for a new visual layout. K03.1 subsequently freezes nitrate, nitrite, and phosphate recording semantics in section 6.1. K03.2 freezes the test/device selection, source-semantic resolution, and normalization workflow in sections 6.2, 6.5, 7, and 28.1. K03.3 freezes the canonical ammonia reporting bases in section 6.3. K03.4 freezes concurrent multi-result measurement/cardinality behavior in section 6.6. K03.5 freezes marine salinity/specific-gravity semantics and conversion safety in section 6.7. K03.6 freezes alkalinity/KH semantics, canonical units, and duplicate-field prevention in section 6.8. K03.7 freezes dissolved-oxygen concentration/saturation semantics and conversion prerequisites in section 6.9. K03.8 freezes chlorine/chloramine semantics, sample-context requirements, and multi-result handling in section 6.10. K03.9 freezes marine calcium/magnesium elemental semantics and hardness separation in section 6.11. K03.10 freezes conductivity/TDS semantics, temperature-basis provenance, and safe EC↔TDS behavior in section 6.12. K03.11 freezes direct-vs-calculated CO2 semantics in section 6.13. K03.12 freezes iron/potassium canonical semantics, iron analytical-scope handling, and the no-auto-dosing boundary in section 6.14. K03.13 freezes general-hardness semantics, canonical basis, and dGH conversion behavior in section 6.15. K03.14 freezes the first-release freshwater calculated-free-ammonia policy and marine exclusion in section 6.16. K04 freezes the structured severity, direction, coverage and conflict model in section 14. K05 freezes livestock range-bound and approximate/SOFT interpretation in section 10.5. K06 freezes the single plant-catalog data/application boundary in section 12.4. K07–K18 freeze requirement resolution, sensor/time authority, integrity, input, UI, storage, history, backup and cross-entity conflict policies in sections 5.3, 10.6, 12.5, 17.1, 19.1, 21.1, 23, 24.1, 27.1, 28 and 29.1. Evidence-backed source profiles, per-metric input rules and numerical hazard thresholds remain implementation/data work.
 
 This contract is intentionally broader than a screen implementation. It defines the foundation that later powers:
 
@@ -340,6 +340,10 @@ A user may enter an older measurement today. In that case:
 is valid.
 
 History ordering should normally use `observedAtMillis` descending, with a deterministic secondary ordering by creation/id if two records share the same observation time.
+
+### 5.3 Accepted historical measurement and context policy (K09)
+
+At save, `observedAt` is the actual sample instant; `createdAt` is commit time. Backdated manual results retain the selected sample instant. Current tank contents, equipment and catalog resolution are captured separately as `contextCapturedAt` with `contextTemporalBasis = CURRENT_AT_ENTRY`, unless a verified historical context snapshot exists for that instant. An assessment using today's context for an older sample must disclose this mismatch and cannot claim it describes the old tank's inhabitants or equipment. No current sensor sample is attached to a past observation; a historical sensor result requires a persisted same-event sample, source identity and valid time mapping. History/latest sorts by observation instant, then creation instant, then stable ID; clock correction or a later import cannot silently rewrite old snapshots. K11 defines input time validation and K16 the retained explanation fields.
 
 ---
 
@@ -776,11 +780,15 @@ Accepted with the user on 26 September 2026. Preserve the existing `LivestockWat
 
 - **Typed bounds and provenance:** each successfully parsed interval retains lower/upper value, inclusive/exclusive flag, raw source string, catalog record/revision and approximate marker. A missing bound is genuinely open-ended, not an invented zero/infinity. The existing two-sided constructor/defaults can remain inclusive for callers already creating explicit `20–26` intervals; source `<`/`>` parsing must set exclusivity explicitly. Comparison uses unrounded, unit-compatible canonical values; display rounding cannot change an endpoint decision.
 - **Strict supported grammar:** consume the entire recognized value/range expression, not the first one or two numbers found anywhere in a string. Reject ambiguous, malformed, reversed or unsupported expressions as `UNPARSEABLE_REQUIREMENT` with the original text and record identity retained. Do not swap reversed endpoints, infer a `±` tolerance, mistake a unit/version number for a bound, or silently map an unknown `warningMode` string to an authoritative one. K03 source-unit/basis verification remains a prerequisite to comparison; a numeric match of incompatible units is not compatibility.
-- **Evidence strength:** an out-of-interval value from a comparable `SOFT` profile may generate an `ADVISORY` with its affected animal, direction and source; it is not by itself a `WARNING`, `CRITICAL`, hard toxicity rule, or a treatment/dosing instruction. A value inside a SOFT interval means only "within this catalog guidance," not proof of tank safety. An `INFORMATIONAL` profile and nominal/approximate-only value remain context without directional pass/fail. Even a catalog label `HARD` requires separately verified rule authority, applicable species/context and evidence under W0.4 before it can produce a hard hazard; the string alone is not authority. K18 will decide which requirements may create hard habitat conflicts.
-- **Coverage and zero comparisons:** missing/unparseable/approximate-only requirements and absent measurements are reported distinctly under K04 coverage. `issues.isEmpty()` with `checkedParameterCount = 0` is **not** `COMPATIBLE`; the adapter must emit no-comparable-evidence/insufficient coverage. An exclusive-bound violation remains visible as an issue even when severity is advisory. A catalog requirement conflict can be recorded independently of measurements, but SOFT ranges must not silently become a hard incompatibility; K18 owns cross-entity intersection eligibility.
+- **Evidence strength:** an out-of-interval value from a comparable `SOFT` profile may generate an `ADVISORY` with its affected animal, direction and source; it is not by itself a `WARNING`, `CRITICAL`, hard toxicity rule, or a treatment/dosing instruction. A value inside a SOFT interval means only "within this catalog guidance," not proof of tank safety. An `INFORMATIONAL` profile and nominal/approximate-only value remain context without directional pass/fail. Even a catalog label `HARD` requires separately verified rule authority, applicable species/context and evidence under W0.4 before it can produce a hard hazard; the string alone is not authority. K18/section 12.5 now defines which requirements may create hard habitat conflicts.
+- **Coverage and zero comparisons:** missing/unparseable/approximate-only requirements and absent measurements are reported distinctly under K04 coverage. `issues.isEmpty()` with `checkedParameterCount = 0` is **not** `COMPATIBLE`; the adapter must emit no-comparable-evidence/insufficient coverage. An exclusive-bound violation remains visible as an issue even when severity is advisory. A catalog requirement conflict can be recorded independently of measurements, but SOFT ranges must not silently become a hard incompatibility; K18/section 12.5 defines cross-entity intersection eligibility.
 - **Regression gate:** tests cover every `<`, `≤`, `>`, `≥` exact endpoint and nearby value; inclusive two-sided endpoints; nominal/approximate-only input; malformed/reversed/multiple-number strings; compatible units, missing values and zero comparisons; `SOFT` outside guidance staying advisory; unknown warning-mode fail-closed behavior. Existing inclusive two-sided behavior remains intact. These are behavioral tests for the shared parser/evaluator and its Water Analysis mapping, not a second implementation.
 
 This decision does not approve the catalog's numerical ranges as universal safe values. Catalog source quality, chemical reporting bases and applicability still require the K03/W0.4 checks before a rule can use them.
+
+### 10.6 Accepted livestock requirement resolution (K07)
+
+Resolve registered animals from one revisioned `LivestockCatalogOperations` snapshot before evaluating measurements. Each result retains local livestock ID and quantity, stable catalog ID, catalog revision, typed per-parameter parsed requirements (K05), raw source/confidence/warning mode and separate missing/invalid reasons. The existing `LivestockCatalogItem.waterRequirements` can supply the application-owned facts; extend the current catalog boundary with snapshot/revision and typed failure information instead of making the advisor's measurement-dependent `assess()` result the sole source of ranges. A custom animal has `CUSTOM_UNVERIFIED`; a deleted/unknown catalog ID has `CATALOG_ENTRY_MISSING`; catalog load failure is distinct. None is an unrestricted compatible range. One species quantity does not multiply its interval. The context provider resolves requirements once; the pure intersection engine receives ready facts and can find a supported K18 conflict with **no water measurement**. Actual water-to-one-profile comparison still delegates to the existing `LivestockWaterCompatibilityEvaluator`; catalog I/O stays outside it and the pure engine. A single assessment must never mix revisions of the same catalog.
 
 ---
 
@@ -790,7 +798,7 @@ Do not average species ranges.
 
 For each comparable parameter, the engine should compute the intersection of all authoritative requirements that apply.
 
-K05's endpoint inclusion/exclusion must be preserved during any later intersection: touching an exclusive endpoint is not an overlap. SOFT or approximate-only ranges are not automatically authoritative hard requirements; K18 freezes the cross-entity evidence/eligibility and conflict policy before implementation.
+K05's endpoint inclusion/exclusion must be preserved during any later intersection: touching an exclusive endpoint is not an overlap. SOFT or approximate-only ranges are not automatically authoritative hard requirements; accepted K18/section 12.5 defines cross-entity evidence/eligibility and conflict policy.
 
 Example:
 
@@ -845,7 +853,7 @@ A `PARTIAL` plant may contribute informational context only where the specific f
 
 It must not create a hard warning from unverified or unknown data.
 
-At minimum, the first production implementation may choose the stricter policy:
+The first production implementation uses the stricter policy:
 
 - VERIFIED records participate in hard analysis;
 - PARTIAL records produce `INSUFFICIENT_DATA` / informational context only.
@@ -866,6 +874,12 @@ Accepted with the user on 26 September 2026. The existing `aqualight_plant_catal
 - **Snapshot and revision:** load/parse the packaged asset once per process into an immutable, safely published snapshot with stable-id lookup and a content revision distinct from the JSON `schema` (`aqualight.plant.catalog.v1`) and `recordCount`. An explicit catalog content revision must change when care/identity facts change; retain its revision in assessment provenance under section 20. Keep the lighting catalog's own revision separate. Resolve a group of tank plants against one snapshot to avoid mixing revisions during an assessment. Never infer a catalog revision from the 271 count or schema label.
 - **Failure and missing identity:** validate the existing count, distinct normalized IDs, required fields and readiness consistency at load, plus W1.7's finite/min-max/verified-field constraints before promoting records to an assessment. A malformed/unavailable asset yields a typed catalog-unavailable result; an unresolvable saved `catalogId` yields a typed missing-entry result. The picker shows a recoverable load failure, and the assessment records incomplete plant coverage rather than an empty-successful catalog or invented care values. No application/data import from UI and no `Context` retained by a static cache; perform asset I/O and initial parse off the main thread. Concurrent callers share the same initialized snapshot; failure does not poison the cache as a valid empty list.
 - **Migration and regression gate:** rewire the existing picker through the application boundary, remove its direct UI JSON/cache owner, and bind the data implementation once in the composition root. Compare before/after IDs, 271 count, all picker categories/order and display/search behavior, VERIFIED/PARTIAL eligibility, light-catalog parity and missing/corrupt-asset behavior. Test repeated/concurrent reads and stable revision. This is a targeted boundary move, not a rewrite of the plant JSON or unrelated picker layout.
+
+### 12.5 Accepted cross-entity requirement intersection (K18)
+
+For each canonical metric, unit/reporting basis and applicable tank context, intersect *only* comparable, verified and authoritative hard ranges from registered livestock and VERIFIED+ready plants with a verified field/range. Consider animal–animal, plant–plant and animal–plant pairs/groups symmetrically; quantity does not duplicate a range. Preserve one-sided and inclusive/exclusive endpoints: a shared single boundary is nonempty only if every participating range includes it. Detect an empty intersection without any measurement and preserve all contributing local IDs, catalog IDs, individual ranges, evidence/revision and the minimal conflicting set. An explicit tank-type/water-group mismatch is a separate typed habitat conflict if taxonomy is verified; it is not translated to an invented pH/salinity interval.
+
+SOFT animal ranges, approximate/nominal values, PARTIAL or unverified plant fields may produce a **guidance tension** only when their units/context and source are comparable; they never prove a hard habitat conflict. Missing custom/catalog records, inapplicable metrics, unknown units, unresolved source basis and incompatible tank context contribute typed conflict-coverage gaps, not open-ended ranges or a compatible conclusion. Hard conflict is reported only when the authoritative participating requirements have empty intersection; a mere absence of measurements does not remove it. A measured chemistry hazard remains independently visible under K04 and cannot be mitigated by a plant interval, system equipment or an averaged target. Where a more specific verified tank/species rule applies, evaluate its own applicability and revision rather than silently overwriting or averaging a general profile. Deterministic sorting and canonical unit conversion precede intersection; list order, duplicate species quantities and unrelated metrics cannot alter the result. No catalog value is promoted to hard authority without K05/W0.4 evidence checks.
 
 ---
 
@@ -1009,9 +1023,7 @@ A future LLM layer may explain structured recommendations in natural language, b
 
 Do not place growing analysis history inside `aquarium_tanks.pb`.
 
-Create a dedicated versioned store, conceptually:
-
-`water_analyses.pb`
+Create a dedicated versioned, owner-scoped **Room/SQLite** history store (K15). The earlier `water_analyses.pb` Proto DataStore suggestion is superseded for this growing, per-record queried history. Android's [DataStore guidance](https://developer.android.com/topic/libraries/architecture/datastore) recommends Room for large/complex datasets, partial updates and referential integrity. No analysis rows belong in `aquarium_tanks.pb` or a monolithic analysis Proto blob.
 
 Reasons:
 
@@ -1031,7 +1043,11 @@ The store must follow commercial store rules:
 - deterministic corruption handling;
 - no UI access to the store.
 
-Add a dedicated schema constant to the commercial store schema when implementation begins.
+Add an explicit database schema/version and tested migrations; the existing Proto stores and their commercial schema remain untouched. Access is through one data-layer store per application process with owner-scoped queries, indexed `(ownerUid, tankId, observedAtMillis DESC, createdAtMillis DESC, analysisId DESC)` and unique `(ownerUid, analysisId)` plus `(ownerUid, requestId)` for idempotent create. The analysis record, measured values, context/explanation snapshot, assessment and request mapping commit in one Room transaction. A repeated requestId with the same canonical payload returns its original ID; a changed payload under that requestId fails as an idempotency conflict. Foreign ownership validation against the separate tank Proto store requires the K10 cross-store gate/journal; Room's transaction alone cannot make two stores atomic.
+
+### 17.1 Accepted growth/query policy (K15)
+
+History retains records until **explicit user deletion, owner cleanup or an explicit future retention policy**; no silent oldest-record eviction, hidden row cap or unbounded in-memory list. Page history by stable keyset cursor (50 records per page) using the indexed time/ID order; detail and latest fetch only required rows. No growing Water Analysis payload may be embedded directly in the existing SharedPreferences care-integrity journal. Stage dependent snapshots in a bounded durable file/table keyed by journal transaction, with checksum, atomic completion and recovery; clean staging only after durable resolution. Disk-full/size/I/O failures return typed errors before reporting success, and a deletion that cannot stage its rollback snapshot does not start destructive steps. Benchmark/memory-test create, latest, page, delete and recovery at 10,000 generated records across owners/tanks on a representative low-memory device; no promise of unlimited device storage or automatic loss of older user data. Schema migration, paging stability and storage-full behavior are release gates.
 
 ---
 
@@ -1088,6 +1104,10 @@ Therefore persist:
 
 A future explicit "Re-analyze with current rules" operation may create a new assessment/version, but silent mutation of history is forbidden.
 
+### 19.1 Accepted minimum historical explanation snapshot (K16)
+
+Persist the actual measured raw/canonical values, units/bases, sample/source/method provenance and source/measurement identity; `observedAt`, `createdAt`, `contextCapturedAt`, `contextTemporalBasis`, tank identity/type and relevant equipment state. For every participating or unresolved animal/plant retain local entity ID, stable catalog ID (if any), historical display/scientific name when available, quantity/status, applicable typed range with endpoint semantics and units, confidence/verified-field/source markers, catalog/rule revisions and the resulting direction/severity/conflict/reason codes. Preserve missing/unparseable identity and coverage reasons; don't invent a range merely to fill the snapshot. Store only context needed to reproduce the explanation and the complete structured assessment, not the entire live catalog, media or owner profile. History/detail render persisted names and findings even after entity deletion or catalog update; optional explicit reanalysis produces a **new** versioned record and never overwrites this snapshot. Retained data is owner-scoped and follows K17 backup/delete rules.
+
 ---
 
 ## 20. Engine and catalog versioning
@@ -1135,6 +1155,10 @@ Required behavior:
 
 The exact transaction extension may generalize the existing tank-care journal rather than create disconnected cleanup logic.
 
+### 21.1 Accepted concurrent create/delete barrier (K10)
+
+The owner+tank deletion gate is acquired **before** dependent snapshots; analysis create/delete and restore must enter the same per-owner/tank gate for their entire write transaction. A write already admitted finishes before the deletion snapshot, or fails before commit after deletion begins. Recheck immutable owner/session generation, tank ownership, pending deletion/tombstone and request identity inside the actual analysis commit, not only at the start of the use case. Lock order is fixed (owner/tank gate, then analysis transaction) to avoid deadlock. A successful tank deletion leaves a durable/recoverable tombstone until the authoritative tank state is reconciled; rollback restores both care tasks and analyses and releases the gate only when recovery is complete. Cancellation/process death cannot release protection while a journal entry is pending. If a large analysis snapshot cannot be durably staged within the selected journal limits, deletion fails **before** any dependent data is removed. Tests interleave both possible write/delete orders and recovery points.
+
 ---
 
 ## 22. Account deletion and owner cleanup
@@ -1146,25 +1170,17 @@ Requirements:
 - no records from owner A become visible to owner B;
 - account deletion clears the owner's Water Analysis records according to the existing deletion contract;
 - process-death recovery for account deletion must include the new store;
-- backup/restore and data-inventory documentation must be updated if Water Analysis records are included in user backup/export.
+- K17 backup/restore and data-inventory documentation include Water Analysis records and their owner-scoped cleanup.
 
 ---
 
 ## 23. Backup, restore, and export policy
 
-Before implementation is considered complete, explicitly decide and test:
+The following backup and export behavior is fixed for the first implementation:
 
-### Backup / restore
+### Accepted backup / restore (K17)
 
-If aquarium health history is part of AquaLight user data backup:
-
-- archive models must contain the Water Analysis records;
-- restored tank ids must remap correctly;
-- analysis ids must not collide;
-- owner UID must be rebound only through the canonical restore owner contract;
-- assessment provenance is preserved.
-
-If excluded from backup, that exclusion must be explicit in the product/data contract rather than accidental.
+Water Analysis history **is included** in AquaLight's explicit user backup and portable data export, with raw measurements, retained context/assessment, revisions and source explanations. Bump archive/export schema with backward-compatible reading of old archives (zero analysis records when the old schema has none); validate counts, sizes, owner references and record integrity before mutating live stores. Restore tank mappings first, then remap owner/tank/analysis IDs and any local entity references consistently, preserving original observed/created times and historical names; allocate new analysis/request IDs on collision, persist an import mapping for retry, and deduplicate repeated restore by archive identity plus original record identity. Stage and commit/recover via the existing restore journal with K10's write gate; corrupt/partial archives do not leave partial history or cross-owner rows. Account deletion removes history and staging data. Tank duplicate in v1 copies tank configuration as today but **starts with no Water Analysis history**. The app currently has `android:allowBackup="false"`; do not enable Android automatic backup implicitly for an owner-scoped database. Inspect existing backup/data-extraction rules with release tests; explicit AquaLight archive behavior is independent of Android device transfer.
 
 ### PDF / user-facing export
 
@@ -1182,13 +1198,19 @@ Rules:
 - concentrations/hardness values that cannot physically be negative are rejected if negative;
 - pH must obey the canonical pH input policy;
 - required measurements follow the product contract;
-- default-visible or scientifically important does not mean mandatory in every saved record; partial measurements must remain distinguishable from a complete assessment, and the fully empty-record policy remains an explicit K11 decision;
+- default-visible or scientifically important does not mean mandatory in every saved record; one resolved measured metric is the minimum under K11 and partial assessment remains explicit;
 - locale-aware parsing occurs at the UI/presentation boundary;
 - canonical numeric values cross into the application layer;
 - empty text is not converted into zero;
 - invalid input cannot be persisted.
 
 Scientific target ranges are not input-validation ranges. A user may legitimately enter a dangerous measurement; the app should accept a physically valid measurement and assess it as dangerous rather than reject it merely for being out of target.
+
+### 24.1 Accepted minimum input, time and precision policy (K11)
+
+- At least one **resolved measured metric** is required to save; note-only and entirely empty analyses are rejected. Partial analyses with one valid metric are allowed and report scoped coverage. Empty text is absent, a typed measured zero is zero, and one invalid/unresolved field stays in the draft while other resolved fields may save. The v1 approved Add Analysis flow does not collect a note; no default or fabricated note is persisted.
+- Parse locale-aware decimal text to a finite decimal, retain the entered representation and source precision, and normalize using verified source semantics. No silent rounding, clamping, negative-zero special case or guessing `ppm` basis; reject NaN, infinity, overflow, negative concentrations/hardness, pH outside the **v1 aquarium input envelope 0–14**, and any value outside the **source method's supported reporting domain**. The pH input envelope is a product scope, not a claim that pH outside it is physically impossible. Dangerous but method-valid readings remain savable. Limit text length/precision for resource safety in the UI policy without truncating a submitted measurement; method-specific resolution and detection limits control whether a reported value is exact, bounded or unavailable. W0.2 must fill the per-metric units, input constraints and tested precision before implementation.
+- The selected local date/time is resolved once to an instant with the device zone and selected offset retained. An ambiguous daylight-saving overlap needs an explicit offset; a nonexistent local time is rejected. Values more than **60 seconds in the future** at save are rejected; 0–60 seconds of clock skew is recorded, not silently rewritten to `now`. No arbitrary age cutoff for manual past samples, but their context temporal basis is disclosed under K09. UI/restored draft time cannot bypass serverless commit validation; history follows `observedAt`, `createdAt`, ID, and a saved record's snapshot never changes because the device zone later changes.
 
 ---
 
@@ -1256,16 +1278,16 @@ These measurements are supported scope beyond the default fields above. "Additio
 
 For `Other`/unknown profiles, the supported fields listed above and the profile-specific fields from section 25.1 may be explicitly selected as additional measurements, once their semantics are defined. No such selection acts as an implicit freshwater/marine profile declaration. Support and interpretation must stay separate. Missing context restricts assessment rather than changing the entered result.
 
-### 25.3 Presentation, record continuity, and remaining decisions
+### 25.3 Presentation and record continuity
 
 - Preserve the existing screen structure, sensor/temperature area, water-parameter grid and input components, card styling, and save/history navigation. Applicable fields reuse those components; row count may change with the tank type. Do not introduce new tabs, sections, or a different visual layout from the logical grouping alone.
 - Use readable localized names; chemical formulas are secondary identifiers. The accepted freshwater names are Sıcaklık, pH, Toplam amonyak, Nitrit (NO2), Nitrat (NO3), Genel sertlik (GH), Tampon kapasitesi (KH), and Fosfat (PO4). Labels must remain readable at supported font scales.
-- Decide the precise way users reveal/select additional measurements together before UI implementation. The accepted availability table is not approval to add a new accordion, picker, or help layout now.
-- Retain the proposal for short **"Nedir / Nasıl ölçülür?"** help for every measurement field, including additional fields. Explain the parameter, the accepted test result, and its unit without requiring the user to know chemical notation. Product-specific instructions must match a verified test profile. The placement/opening interaction remains a K13/UI decision and must preserve the existing design; documenting this proposal does not authorize a new help icon or layout now.
+- Additional applicable measurements appear on demand under a single **"Diğer ölçümler"** disclosure at the end of the existing water-parameter card; no separate route, new tab or second form. The existing two-column field/grid styling continues below the disclosure. Preserve its expanded state and all typed drafts across rotation/tank-type changes; hidden input cannot be silently committed or discarded. The default-visible fields follow section 25.1.
+- Provide short **"Nedir / Nasıl ölçülür?"** help for every measurement field, including additional fields, through a labelled, keyboard/TalkBack-accessible info action adjacent to its field label inside the existing card; open the project's standard informational dialog/sheet without navigating away or changing the entered draft. Explain the metric, accepted test result and displayed unit in plain language. Product-specific instructions appear only for a verified selected test profile; unknown-product guidance describes measurement/basis choice without claiming a product method. Keep the approved field and card styling and verify large-font layout before release.
 - A visible field is not a promise of a complete assessment. Unmeasured, measured zero, inapplicable, unknown test basis, and missing assessment rules must remain distinct. A critical known result must not be hidden by a partial-data state.
 - Preserve entered drafts and persisted measurements when tank type changes; no field hidden by the new profile may silently discard its value or be persisted invisibly. Resolve affected draft values explicitly before saving. Detailed interaction belongs to the later state/UI decision.
 - Store the assessment's tank-type/profile context with its provenance. History/detail render the saved measurement set and assessment context; today's tank type must not erase or reinterpret yesterday's fields. The latest result must expose a context mismatch if the tank type has since changed.
-- K03.1 fixes nitrate/nitrite/phosphate meanings, K03.2 source-resolution/normalization, K03.3 TAN/direct-NH3 bases, K03.4 concurrent multi-result behavior, K03.5 marine salinity/SG safety, K03.6 alkalinity/KH semantics, K03.7 dissolved oxygen, K03.8 chlorine/chloramine/sample-context, K03.9 marine elemental Ca/Mg, K03.10 conductivity/TDS, K03.11 direct-vs-calculated CO2, K03.12 iron/potassium, K03.13 general-hardness semantics, and K03.14 freshwater calculated free NH3 with marine first-release exclusion. Remaining K03 work is evidence-backed profile/conversion/precision data. K03.0–K03.14 do not accept numerical safety thresholds, complete implementation, or all of K03/K11/K13.
+- K03.1 fixes nitrate/nitrite/phosphate meanings, K03.2 source-resolution/normalization, K03.3 TAN/direct-NH3 bases, K03.4 concurrent multi-result behavior, K03.5 marine salinity/SG safety, K03.6 alkalinity/KH semantics, K03.7 dissolved oxygen, K03.8 chlorine/chloramine/sample-context, K03.9 marine elemental Ca/Mg, K03.10 conductivity/TDS, K03.11 direct-vs-calculated CO2, K03.12 iron/potassium, K03.13 general-hardness semantics, and K03.14 freshwater calculated free NH3 with marine first-release exclusion. Remaining K03 work is evidence-backed profile/conversion/precision data. K03.0–K03.14 do not accept numerical safety thresholds or complete implementation; K11/K13 and this minimal additional-field/help interaction are now fixed separately.
 
 Evidence and repository references for this scope are recorded in [the K03 research note](research/WATER_ANALYSIS_CONCENTRATION_UNITS_K03.md). The per-type visibility matrix is a product decision informed by those sources, not a scientific claim that all listed tests must be performed at every save.
 
@@ -1312,6 +1334,10 @@ If the reading is stale:
 - do not persist it as fresh sensor input;
 - allow manual fallback according to UI behavior.
 
+### 27.1 Accepted Cooling sample authority (K08)
+
+Use only the assigned device's WATER sensor sample, never the summary card's bare `waterTemperatureC` or ambient temperature. Verify owner/session, tank assignment, device family/capability, sensor key, reading validity/health, finite value, sample sequence and `timeGeneration`. In one firmware runtime, require `0 <= evaluatedAtUptimeMillis - sampledAtUptimeMillis <= 10_000`; an uptime from another boot/generation is incomparable. Also require a trusted same-session monotonic receive anchor and at most **10 seconds** from arrival to commit. A delayed buffered/offline sample, out-of-order sequence, reboot, clock uncertainty or missing anchor is unavailable, regardless of plausible temperature. The firmware uptime is not Unix time or Android elapsed time. Persist source device/sensor/runtime identity, generation, sequence, source uptime, reception evidence, freshness decision and a real sample epoch only if a verified same-runtime mapping exists; do not label the receive instant as `sampledAt`. With no verified sample instant for the user-selected measurement event, choose explicit manual input rather than sensor auto-fill. If multiple qualified sensors exist, require an explicit persisted primary/selection for this tank; ambiguity is a typed state, no first-item or average fallback. Revalidate all authority and freshness at commit. These durations are versioned **product freshness limits**, not scientific temperature thresholds; they need boundary, reboot, delay and race tests.
+
 ---
 
 ## 28. UI integration contract
@@ -1340,11 +1366,11 @@ Form behavior to preserve from the agreed data-quality direction:
 
 - A new form starts with empty manual measurement fields. Do not preload example numbers or silently copy previous analysis values. Restoring an existing user draft is a different state and must preserve the user's input.
 - Auto-populate temperature only from a valid, fresh, assigned sensor sample appropriate for the measurement event. If unavailable, retain explicit unavailable/manual-source behavior; do not invent a reading.
-- Let users record the measurements they actually took rather than requiring every displayed test. Exact minimum-input and fully empty-record behavior remain K11 decisions. A missing prerequisite for one calculation does not turn an otherwise valid partial measurement into a fabricated complete analysis.
+- Let users record the measurements they actually took rather than requiring every displayed test. K11 requires at least one resolved measured metric; a missing prerequisite for one calculation does not turn an otherwise valid partial measurement into a fabricated complete analysis.
 - Source/test selection is parameter-specific and remembered. A known profile auto-selects the valid analyte/unit/result-mode options; an unknown product opens the guided typed fallback. The unit/reporting context remains visible beside the result input while conversion happens below the UI boundary.
 - If a selected product exposes multiple **concurrent** independent results, render separate typed fields for each supported result and allow them to coexist in the same analysis event. Request a mode selector only for genuinely mutually exclusive source modes. For marine salinity sources, render the verified source representation (`PSS-78`/device salinity scale, `SG`, conductivity, or explicitly defined mass salinity) rather than silently relabelling or converting it.
 - If a field's source semantics cannot be resolved, keep that field out of the committed analysis and retain it only as draft/form state; other resolved measurements may still be saved. Changing source semantics after entering a number must not silently reinterpret the number.
-- An empty field means **"Ölçülmedi"**; a measured `0` remains a real result. Explain limited coverage as **"Kısmi değerlendirme"** alongside any known critical finding under K04. Missing results must not increase a health score or be described as normal. The separate numerical score policy remains an open W0.13/K12 decision.
+- An empty field means **"Ölçülmedi"**; a measured `0` remains a real result. Explain limited coverage as **"Kısmi değerlendirme"** alongside any known critical finding under K04. Missing results must not increase a health score or be described as normal. K12 keeps the numerical score hidden/no-data in v1.
 
 ### 28.2 Tank Health main screen
 
@@ -1358,6 +1384,14 @@ If there is no analysis:
 
 - render the approved empty/no-analysis state according to the existing design contract;
 - do not invent "normal" values.
+
+#### Accepted full-screen fixture replacement (K12)
+
+Audit **every** visible fixture in the Tank Health entry and main screen, not only the water metric grid: tank age/setup, maintenance state, equipment identity/connection, system summary, animal/plant counts, history count, summary status/color and the entry card's `82` score. Each component receives a named source and timestamp/scope from tank snapshot, independent maintenance/device operations or latest persisted analysis. If the source is absent/unavailable, render the existing component's no-data/loading/error treatment without retaining its placeholder number, device name, fake status or reassuring color. Data from equipment *presence* is not live operating status. The numeric score stays **hidden/no-data in v1** until a separately versioned, evidence-backed score formula and coverage requirements are accepted; do not convert K04 severity to an arbitrary 0–100 score. The latest panel is one latest record, not an unlabelled mixture of earlier tests. Preserve the approved card layout and navigation; map every placeholder to a testable presentation field before release.
+
+#### Accepted presentation states (K13)
+
+Use route-local immutable UI states: `Loading`, `NoAnalysis`, `Content` (with K04 `coverage`, including `PARTIAL`), `Error`, `NotFound` for a deleted detail, and `SensorUnavailable` inside the Add Analysis temperature selector. A stored-record query error is `Error`, never `NoAnalysis`; no record under a successful scoped query is `NoAnalysis`, never `Normal`. Render these through existing cards/headers/feedback patterns with retry where safe, without redesign. Preserve real measurements while one source is unavailable, keep a known `CRITICAL` visible with `PARTIAL` coverage, and distinguish a missing detail after deletion from a transient load failure. Bind owner+tank+route identity to every result so a late old-session emission cannot paint the new tank.
 
 ### 28.3 History
 
@@ -1418,10 +1452,14 @@ It must own:
 It must not own:
 
 - Firebase owner lookup;
-- DataStore instances;
+- Room/database and DataStore instances;
 - JSON catalog parsing;
 - device repository access;
 - scientific rule constants.
+
+### 29.1 Accepted route state and write retry (K14)
+
+Use focused route-scoped state holders/ViewModels for dashboard, Add Analysis draft, history and detail/delete, sharing the same owner-scoped application operations; do not create one mutable ViewModel whose selected record/draft bleeds across tank routes. The route tank ID and detail analysis ID come from Safe Args and `SavedStateHandle`, are validated against active owner/session generation, and are rehydrated after process death from committed storage. Keep entered draft text, selected test/source, sample time and a stable `requestId` in saved state until a definitive create result; never persist a credential, owner UID or a fake committed analysis there. One in-flight save/delete per route is guarded against repeated taps. Create is idempotent by `(ownerUid, requestId)`: after commit response loss, retry with the **same ID and payload** returns the original analysis ID; an edited payload requires a new requestId only after the prior request has been definitively reconciled. Cancellation before commit leaves a draft; after commit, observe by request ID to reconcile rather than claiming failure or inserting a duplicate. A delete targets the exact `(owner,tank,analysis)` and may return `NotFound` on repeat without deleting another row. Only navigate on confirmed result; one-shot feedback is tied to route/session, survives view recreation without replaying an old action, and old owner emissions are ignored.
 
 ---
 
@@ -1429,7 +1467,7 @@ It must not own:
 
 Dependencies must be constructed in the existing composition root / owner dependency system.
 
-Do not instantiate production repositories or DataStore managers in Fragments/ViewModels.
+Do not instantiate production repositories, Room databases or DataStore managers in Fragments/ViewModels.
 
 New dependencies may include:
 
@@ -1515,7 +1553,7 @@ If there is no shared compatible interval for inhabitants, that conflict exists 
 
 A conflict may coexist with a measurement that happens to fit one side.
 
-K04/section 14 keeps conflict identity and conflict-coverage independently of hazard severity. A known conflict is highlighted when there is no higher supported hazard, and remains visible alongside a higher hazard. It cannot be silently averaged away or promoted to a chemistry `CRITICAL` without an evidenced rule. K18 still decides the detailed eligibility and intersection policy for plant/livestock combinations.
+K04/section 14 keeps conflict identity and conflict-coverage independently of hazard severity. A known conflict is highlighted when there is no higher supported hazard, and remains visible alongside a higher hazard. It cannot be silently averaged away or promoted to a chemistry `CRITICAL` without an evidenced rule. K18/section 12.5 defines the eligibility and intersection policy for plant/livestock combinations.
 
 ---
 
@@ -1713,12 +1751,14 @@ Cover:
 - no overlap;
 - three or more species;
 - custom livestock;
-- missing catalog entry.
+- missing catalog entry;
 - `<20` rejects exactly 20 while `≤20` accepts it; corresponding strict/inclusive lower-bound cases and nearby values;
 - inclusive two-sided endpoints remain valid; exclusive touching endpoints do not create a shared interval;
 - `~20` and an unqualified single value remain nominal context without fabricated tolerance/pass-fail;
 - malformed or reversed strings and unknown warning-mode values retain typed unavailable evidence;
-- zero checked comparable parameters never yield compatibility; a SOFT out-of-interval finding is advisory only.
+- zero checked comparable parameters never yield compatibility; a SOFT out-of-interval finding is advisory only;
+- K07 resolves revisioned requirements without a measurement, preserving local ID/quantity and custom/missing/load-error states;
+- K18 animal–animal, plant–plant and cross-entity intersection, open endpoints, incomplete evidence and list-order invariance distinguish hard conflict from guidance tension.
 
 ### 43.3 Plant eligibility tests
 
@@ -1728,7 +1768,8 @@ Cover:
 - PARTIAL;
 - unknown field;
 - verified field;
-- missing plant catalog id.
+- missing plant catalog id;
+- K18 PARTIAL/unverified fields never become hard constraints; verified field/range/context eligibility is checked before intersection.
 
 ### 43.4 Unit/semantic tests
 
@@ -1799,7 +1840,9 @@ Cover:
 - no assignment;
 - wrong device family/capability;
 - device reassignment;
-- process recreation.
+- process recreation;
+- K08 firmware 10-second and local 10-second boundaries, delayed packet, new timeGeneration/runtime, duplicate/out-of-order sequence, multiple sensors and reassignment at commit;
+- K09 old observedAt does not attach today's sensor or falsely date today's context.
 
 ### 43.6 Persistence tests
 
@@ -1814,7 +1857,9 @@ Cover:
 - tank isolation;
 - duplicate id prevention;
 - schema mismatch;
-- corruption recovery.
+- corruption recovery;
+- K15 indexed 50-row keyset pagination, 10,000-record low-memory benchmark, migration, disk-full behavior and no silent retention;
+- K14 repeated requestId after commit-response loss returns one row; K16 historical explanation survives entity/catalog changes.
 
 ### 43.7 Tank deletion tests
 
@@ -1825,7 +1870,9 @@ Cover:
 - cancellation;
 - process death / durable recovery;
 - device assignment cleanup still works;
-- care-task cleanup still works.
+- care-task cleanup still works;
+- K10 write admitted before versus after deletion gate, rollback staging failure before deletion, and every journal/recovery crash point;
+- K17 old/new archive restore remaps identities exactly once; tank duplicate does not copy analysis history.
 
 ### 43.8 UI/ViewModel tests
 
@@ -1839,7 +1886,9 @@ Cover:
 - latest metrics on Tank Health main screen;
 - no-analysis state;
 - loading state;
-- double-click/navigation guard behavior.
+- double-click/navigation guard behavior;
+- K11 empty versus zero/partial, future skew, DST overlap/gap, high-precision input and invalid method domain;
+- K12 every main/entry fixture including score `82` receives a real source or no-data state; K13 query error differs from no records; K14 process-death draft/requestId and owner/tank route isolation.
 
 ### 43.9 Catalog regression tests
 
@@ -1895,7 +1944,7 @@ The implementation order is frozen as follows.
 13. K03.12 iron mg/L-as-Fe analytical-scope + potassium mg/L-as-K and no-auto-dosing policy (accepted);
 14. K03.13 general-hardness canonical mg/L-as-CaCO3 + dGH display/conversion policy, and K03.14 freshwater calculated free-NH3 equation/same-sample gate with marine first-release exclusion (accepted);
 15. severity/status model;
-16. species-range intersection/conflict policy;
+16. K18 cross-entity range intersection/conflict policy (accepted; source authority still needs W0.4 evidence);
 17. intrinsic chemistry rule catalog and evidence revision.
 
 ### Phase 2 - Application/domain foundation
@@ -1905,13 +1954,13 @@ The implementation order is frozen as follows.
 20. recommendation/reason codes;
 21. PlantCareCatalogOperations boundary;
 22. AquariumHealthContext model/provider;
-23. reuse/integrate LivestockWaterAdvisorOperations;
+23. K07 catalog requirement resolution plus reuse/integration of LivestockWaterAdvisorOperations;
 24. WaterQualityAssessmentEngine;
 25. TankWaterTemperatureOperations boundary.
 
 ### Phase 3 - Persistence
 
-26. dedicated water-analysis proto/store;
+26. dedicated versioned Room water-analysis history store (K15);
 27. schema version;
 28. strict store rules;
 29. owner/tank-scoped queries;
@@ -1923,12 +1972,12 @@ The implementation order is frozen as follows.
 32. integrate Water Analysis into tank deletion transaction;
 33. process-death recovery;
 34. account deletion cleanup;
-35. backup/restore policy and implementation if included;
-36. data inventory / export updates where applicable.
+35. K17 explicit user backup/restore and portable export implementation;
+36. data inventory / export updates.
 
 ### Phase 5 - UI integration
 
-37. WaterAnalysisViewModel;
+37. K14 route-scoped dashboard/add/history/detail ViewModels;
 38. save real analysis;
 39. replace mock history;
 40. pass analysisId through Safe Args;
@@ -1979,7 +2028,10 @@ Water Quality is complete only when all of the following are true:
 - tank-type changes do not silently lose draft values or remove historical measurements;
 - a user can enter a physically valid analysis and save it;
 - temperature may be manual or a validated fresh tank sensor reading;
+- K08 sensor identity/generation/uptime/receive-age and assignment pass at commit, while backdated K09 samples never inherit today's sensor or silently claim historical tank context;
+- K11 rejects empty analyses and future instants beyond the declared tolerance, accepts one resolved metric and preserves zero/source precision/offset without guessing units;
 - saved analysis survives process death;
+- K14 repeated or response-lost save with the same requestId returns the original record rather than duplicating it;
 - history contains real records only;
 - history record opens the correct detail by stable id;
 - delete removes the exact record only;
@@ -1987,6 +2039,7 @@ Water Quality is complete only when all of the following are true:
 - every supported parameter has a structured assessment;
 - species requirements influence the result where data exists;
 - incompatible inhabitants produce conflict rather than an average;
+- K18 intersects verified hard animal/plant requirements even without measurements; SOFT/partial/missing evidence remains guidance or incomplete conflict coverage, not an invented hard incompatibility;
 - livestock range parsing preserves strict versus inclusive endpoints; approximate-only values do not become point intervals, and SOFT catalog guidance cannot by itself produce a critical toxicity verdict;
 - verified plant requirements influence the result according to policy;
 - partial plant data cannot create unsupported hard warnings;
@@ -1994,6 +2047,9 @@ Water Quality is complete only when all of the following are true:
 - missing information is represented explicitly;
 - recommendations are deterministic codes;
 - historical assessments remain stable after later catalog/rule changes;
+- K15 history pages and exact-row operations use versioned Room storage with no silent retention; K10 blocks concurrent create/delete or restores both dependent snapshots after failure;
+- K16 history retains the source/context/entity/range/revision needed to explain findings after catalog or tank membership changes;
+- K17 explicit user backup/portable export contains Water Analysis history with tested remap/retry/old-archive behavior; tank duplicate has no copied history;
 - picker and Water Analysis resolve plant care through the same versioned application catalog boundary; catalog-load/missing-identity failures cannot masquerade as a valid empty plant set;
 - owner isolation is proven by tests;
 - tank deletion cannot leave orphan analyses;
