@@ -140,6 +140,27 @@ class WaterAnalysisUiContractTest {
         assertFalse(taxonomyText.contains("@Suppress("))
     }
 
+
+    @Test
+    fun waterAnalysisUiDoesNotSuppressStaticAnalysis() {
+        val paths = listOf(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/common/" +
+                "AquariumTankTaxonomyText.kt",
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
+                "TankHealthAnalysisAddFragment.kt",
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
+                "WaterAnalysisMeasurementTimeController.kt",
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
+                "WaterAnalysisTemperatureUiController.kt",
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
+                "WaterAnalysisParameterRenderer.kt"
+        )
+
+        paths.forEach { path ->
+            assertFalse("$path must not suppress static analysis", file(path).contains("@Suppress("))
+        }
+    }
+
     private fun file(relativePath: String): String =
         File(repositoryRoot, relativePath).readText()
 

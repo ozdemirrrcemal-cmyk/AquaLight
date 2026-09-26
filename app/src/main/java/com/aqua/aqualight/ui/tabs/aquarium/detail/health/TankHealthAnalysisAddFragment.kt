@@ -23,52 +23,88 @@ class TankHealthAnalysisAddFragment :
     private var _binding: FragmentTankHealthAnalysisAddBinding? = null
     private val binding get() = _binding!!
 
-    private val uiState = WaterAnalysisDraftUiState()
     private var tankProfile: String? = null
+    private val parameterValues = linkedMapOf<WaterTestParameterId, String>()
+    private val additionalParameters = linkedSetOf<WaterTestParameterId>()
 
-    private var measurementController: WaterAnalysisMeasurementTimeController? = null
-    private var sensorController: WaterAnalysisSensorController? = null
-    private var parameterController: WaterAnalysisParameterController? = null
+    private var measurementTimeController: WaterAnalysisMeasurementTimeController? = null
+    private var temperatureUiController: WaterAnalysisTemperatureUiController? = null
+    private var parameterRenderer: WaterAnalysisParameterRenderer? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         require(args.tankId > 0L) {
             "TankHealthAnalysisAddFragment requires a positive tankId."
         }
-        uiState.restore(savedInstanceState)
+        restoreWaterTestState(savedInstanceState)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentTankHealthAnalysisAddBinding.bind(view)
 
-        measurementController = WaterAnalysisMeasurementTimeController(
+        measurementTimeController = WaterAnalysisMeasurementTimeController(
             fragment = this,
             binding = binding.measurementTimeSection,
-            state = uiState
-        )
-        sensorController = WaterAnalysisSensorController(
+            savedInstanceState = savedInstanceState
+        ).also { controller -> controller.bind() }
+
+        temperatureUiController = WaterAnalysisTemperatureUiController(
             fragment = this,
             binding = binding.sensorSection,
-            state = uiState
-        )
-        parameterController = WaterAnalysisParameterController(
+            savedInstanceState = savedInstanceState
+        ).also { controller -> controller.bind() }
+
+        parameterRenderer = WaterAnalysisParameterRenderer(
             fragment = this,
             binding = binding.waterParametersSection,
-            state = uiState
+            parameterValues = parameterValues,
+            additionalParameters = additionalParameters
         )
 
         setupHeader()
-        measurementController?.bind()
-        sensorController?.bind()
-        parameterController?.bindPickerResultListener()
+        setupWaterTestPickerResultListener()
         setupNavigation()
         observeTankProfile()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
-        uiState.save(outState)
+        measurementTimeController?.saveState(outState)
+        temperatureUiController?.saveState(outState)
+        outState.putStringArrayList(
+            STATE_ADDITIONAL_PARAMETER_IDS,
+            ArrayList(additionalParameters.map { parameterId -> parameterId.name })
+        )
+        outState.putStringArrayList(
+            STATE_PARAMETER_VALUE_IDS,
+            ArrayList(parameterValues.keys.map { parameterId -> parameterId.name })
+        )
+        outState.putStringArrayList(
+            STATE_PARAMETER_VALUES,
+            ArrayList(parameterValues.values)
+        )
         super.onSaveInstanceState(outState)
+    }
+
+    private fun restoreWaterTestState(savedInstanceState: Bundle?) {
+        savedInstanceState?.getStringArrayList(STATE_ADDITIONAL_PARAMETER_IDS)
+            .orEmpty()
+            .mapNotNull { rawId ->
+                runCatching { WaterTestParameterId.valueOf(rawId) }.getOrNull()
+            }
+            .forEach(additionalParameters::add)
+
+        val valueIds = savedInstanceState
+            ?.getStringArrayList(STATE_PARAMETER_VALUE_IDS)
+            .orEmpty()
+        val values = savedInstanceState
+            ?.getStringArrayList(STATE_PARAMETER_VALUES)
+            .orEmpty()
+        valueIds.zip(values).forEach { (rawId, value) ->
+            runCatching { WaterTestParameterId.valueOf(rawId) }
+                .getOrNull()
+                ?.let { parameterId -> parameterValues[parameterId] = value }
+        }
     }
 
     private fun setupHeader() {
@@ -76,11 +112,29 @@ class TankHealthAnalysisAddFragment :
             fragment = this,
             config = AquaHeaderConfig(
                 titleOverride = getString(R.string.screen_title_tank_health_analysis_add),
-                onBackClick = {
-                    findNavController().navigateUp()
-                }
+                onBackClick = { findNavController().navigateUp() }
             )
         )
+    }
+
+    private fun setupWaterTestPickerResultListener() {
+        childFragmentManager.setFragmentResultListener(
+            WaterTestPickerBottomSheet.REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, result ->
+            val parameterId = result.getString(WaterTestPickerBottomSheet.RESULT_PARAMETER_ID)
+                ?.let { rawId ->
+                    runCatching { WaterTestParameterId.valueOf(rawId) }.getOrNull()
+                }
+                ?: return@setFragmentResultListener
+            val profile = tankProfile ?: return@setFragmentResultListener
+            if (parameterId !in WaterTestProfileUiCatalog.additionalIds(profile)) {
+                return@setFragmentResultListener
+            }
+
+            additionalParameters.add(parameterId)
+            parameterRenderer?.render(profile)
+        }
     }
 
     private fun setupNavigation() {
@@ -105,24 +159,32 @@ class TankHealthAnalysisAddFragment :
                 ?.tankType
                 ?.takeIf(AquariumTankTaxonomy::isSupportedTankType)
 
-            if (nextProfile != tankProfile) {
-                tankProfile = nextProfile
-                val allowedAdditional = nextProfile
-                    ?.let(WaterTestProfileUiCatalog::additionalIds)
-                    .orEmpty()
-                    .toSet()
-                uiState.additionalParameters.retainAll(allowedAdditional)
+            if (nextProfile == tankProfile) {
+                parameterRenderer?.render(nextProfile)
+                return@observe
             }
 
-            parameterController?.render(nextProfile)
+            tankProfile = nextProfile
+            val allowedAdditional = nextProfile
+                ?.let(WaterTestProfileUiCatalog::additionalIds)
+                .orEmpty()
+                .toSet()
+            additionalParameters.retainAll(allowedAdditional)
+            parameterRenderer?.render(nextProfile)
         }
     }
 
     override fun onDestroyView() {
-        measurementController = null
-        sensorController = null
-        parameterController = null
+        measurementTimeController = null
+        temperatureUiController = null
+        parameterRenderer = null
         _binding = null
         super.onDestroyView()
+    }
+
+    private companion object {
+        const val STATE_ADDITIONAL_PARAMETER_IDS = "additional_parameter_ids"
+        const val STATE_PARAMETER_VALUE_IDS = "parameter_value_ids"
+        const val STATE_PARAMETER_VALUES = "parameter_values"
     }
 }
