@@ -556,8 +556,6 @@ Decision accepted on 26 September 2026 for production-grade reef chemistry seman
 K03.9 does not freeze target reef ranges or dosing advice. Those remain evidence-backed rule/recommendation decisions.
 ---
 
-## 7. Measurement provenance---
-
 ## 7. Measurement provenance
 
 Under accepted K03.2, every committed non-temperature measurement whose semantics or normalization depends on a selected test/device must retain source-resolution provenance sufficient to explain what the user entered and how it became a canonical value. At minimum this includes source kind, profile id/revision when catalog-backed, result mode when applicable, analyte/reporting basis, source unit, raw value, and normalization rule/revision when conversion occurred. A guided non-catalog selection stores the resolved typed semantics rather than inventing a product profile id. Temperature additionally requires the sensor provenance below.
