@@ -60,16 +60,18 @@ object WaterMeasurementNormalizer {
         // These legacy slots omit the chemical species, sample matrix or device
         // calibration needed to assign an authoritative canonical meaning.
         if (!hasCanonicalSemantics(parameter)) return null
-        return value.takeIf { candidate -> candidate.isFinite() && candidate >= 0.0 }?.let { validValue ->
-            val isCanonical =
-                basis == WaterParameterDefinitions.canonicalBasis(parameter) &&
-                    unit == WaterParameterDefinitions.canonicalUnit(parameter)
-            if (isCanonical) {
-                validValue
-            } else {
-                conversions[ConversionKey(parameter, basis, unit)]?.invoke(validValue)
+        val converted = value.takeIf { candidate -> candidate.isFinite() && candidate >= 0.0 }
+            ?.let { validValue ->
+                val isCanonical =
+                    basis == WaterParameterDefinitions.canonicalBasis(parameter) &&
+                        unit == WaterParameterDefinitions.canonicalUnit(parameter)
+                if (isCanonical) {
+                    validValue
+                } else {
+                    conversions[ConversionKey(parameter, basis, unit)]?.invoke(validValue)
+                }
             }
-        }
+        return converted?.takeIf(Double::isFinite)
     }
 
     fun hasCanonicalSemantics(parameter: WaterParameter): Boolean =

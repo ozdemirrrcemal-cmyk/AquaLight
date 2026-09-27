@@ -135,6 +135,12 @@ class WaterMeasurementNormalizerTest {
                 WaterMeasurementUnit.DKH
             )
         ))
+        assertNull(WaterMeasurementNormalizer.canonicalValue(
+            WaterParameter.TOTAL_ALKALINITY,
+            Double.MAX_VALUE,
+            basis,
+            WaterMeasurementUnit.DKH
+        ))
     }
 
     @Test
