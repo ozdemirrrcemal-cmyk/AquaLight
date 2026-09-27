@@ -166,6 +166,7 @@ class WaterMeasurementNormalizerTest {
     @Test
     fun oldAmmoniaResultHasUnassessedSemanticsWithoutMutatingItsRawValue() {
         val measurement = WaterMeasurementSnapshot(
+            resultId = WaterMeasurementResultId(11L, WaterParameter.AMMONIA_AMMONIUM),
             parameter = WaterParameter.AMMONIA_AMMONIUM,
             value = 0.25,
             method = WaterMeasurementMethod.TEST_KIT,

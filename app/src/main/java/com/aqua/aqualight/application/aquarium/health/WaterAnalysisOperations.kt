@@ -33,9 +33,26 @@ data class WaterAnalysisSnapshot(
     val temperatureSource: WaterTemperatureSource?,
     val measurements: List<WaterMeasurementSnapshot>,
     val createdAtMillis: Long
-)
+) {
+    init {
+        require(measurements.all { measurement -> measurement.resultId.analysisId == id }) {
+            "Water analysis results must belong to their observation."
+        }
+    }
+}
+
+/** Stable identity within an immutable analysis event; distinct analytes never overwrite each other. */
+data class WaterMeasurementResultId(
+    val analysisId: Long,
+    val parameter: WaterParameter
+) {
+    init {
+        require(analysisId > 0L) { "Water result analysisId must be positive." }
+    }
+}
 
 data class WaterMeasurementSnapshot(
+    val resultId: WaterMeasurementResultId,
     val parameter: WaterParameter,
     val value: Double,
     val method: WaterMeasurementMethod,
@@ -46,6 +63,11 @@ data class WaterMeasurementSnapshot(
     val canonicalBasis: WaterMeasurementBasis,
     val canonicalUnit: WaterMeasurementUnit
 ) {
+    init {
+        require(resultId.parameter == parameter) {
+            "Water result identity must match its measured parameter."
+        }
+    }
     val semanticStatus: WaterMeasurementSemanticStatus
         get() = when {
             parameter == WaterParameter.AMMONIA_AMMONIUM ->

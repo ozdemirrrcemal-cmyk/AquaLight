@@ -4,6 +4,7 @@ import com.aqua.aqualight.application.aquarium.health.WaterAnalysisSnapshot
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementBasis
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementMethod
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementSnapshot
+import com.aqua.aqualight.application.aquarium.health.WaterMeasurementResultId
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementUnit
 import com.aqua.aqualight.application.aquarium.health.WaterParameter
 import com.aqua.aqualight.application.aquarium.health.WaterTemperatureSource
@@ -73,6 +74,7 @@ class WaterAnalysisHistoryPreviewTest {
             else -> error("Unexpected test parameter: $parameter")
         }
         return WaterMeasurementSnapshot(
+            resultId = WaterMeasurementResultId(SAMPLE_ANALYSIS_ID, parameter),
             parameter = parameter,
             value = SAMPLE_MEASUREMENT_VALUE,
             method = WaterMeasurementMethod.MANUAL,

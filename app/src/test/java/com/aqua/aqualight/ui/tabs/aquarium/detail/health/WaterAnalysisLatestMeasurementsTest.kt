@@ -4,6 +4,7 @@ import com.aqua.aqualight.application.aquarium.health.WaterAnalysisSnapshot
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementBasis
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementMethod
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementSnapshot
+import com.aqua.aqualight.application.aquarium.health.WaterMeasurementResultId
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementUnit
 import com.aqua.aqualight.application.aquarium.health.WaterParameter
 import org.junit.Assert.assertEquals
@@ -48,6 +49,7 @@ class WaterAnalysisLatestMeasurementsTest {
             temperatureSource = null,
             measurements = listOf(
                 WaterMeasurementSnapshot(
+                    resultId = WaterMeasurementResultId(id, parameter),
                     parameter = parameter,
                     value = 7.0,
                     method = WaterMeasurementMethod.MANUAL,

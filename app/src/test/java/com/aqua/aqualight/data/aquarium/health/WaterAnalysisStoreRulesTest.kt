@@ -3,6 +3,7 @@ package com.aqua.aqualight.data.aquarium.health
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementBasis
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementMethod
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementUnit
+import com.aqua.aqualight.application.aquarium.health.WaterMeasurementResultId
 import com.aqua.aqualight.application.aquarium.health.WaterParameter
 import com.aqua.aqualight.data.store.StoreInvariantViolation
 import org.junit.Assert.assertEquals
@@ -133,6 +134,18 @@ class WaterAnalysisStoreRulesTest {
             .analysesList.single().toRecordStrict()
         assertEquals(record, restored)
         assertEquals(listOf(tan, free), restored.measurements)
+        val snapshot = restored.toApplicationSnapshot()
+        assertEquals(
+            listOf(
+                WaterMeasurementResultId(record.id, WaterParameter.TOTAL_AMMONIA_NITROGEN),
+                WaterMeasurementResultId(record.id, WaterParameter.FREE_AMMONIA_NH3)
+            ),
+            snapshot.measurements.map { measurement -> measurement.resultId }
+        )
+        assertEquals(
+            snapshot.measurements.map { measurement -> measurement.resultId },
+            restored.toApplicationSnapshot().measurements.map { measurement -> measurement.resultId }
+        )
     }
 
     @Test

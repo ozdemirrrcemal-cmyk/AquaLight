@@ -8,6 +8,7 @@ import com.aqua.aqualight.application.aquarium.health.WaterParameterDefinitions
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementNormalizer
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementSelection
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementSnapshot
+import com.aqua.aqualight.application.aquarium.health.WaterMeasurementResultId
 import com.aqua.aqualight.data.user.withCurrentOwnerScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -55,40 +56,39 @@ internal class DefaultWaterAnalysisOperations(
                 )
             }
         )
+}
 
-    private fun WaterAnalysisRecord.toApplicationSnapshot(): WaterAnalysisSnapshot =
-        WaterAnalysisSnapshot(
-            id = id,
-            tankId = tankId,
-            measuredAtMillis = measuredAtMillis,
-            temperatureCelsius = temperatureCelsius,
-            temperatureSource = temperatureSource,
-            measurements = measurements.map { measurement ->
-                val canonicalBasis =
-                    WaterParameterDefinitions.canonicalBasis(measurement.parameter)
-                val canonicalUnit =
-                    WaterParameterDefinitions.canonicalUnit(measurement.parameter)
-                WaterMeasurementSnapshot(
+internal fun WaterAnalysisRecord.toApplicationSnapshot(): WaterAnalysisSnapshot =
+    WaterAnalysisSnapshot(
+        id = id,
+        tankId = tankId,
+        measuredAtMillis = measuredAtMillis,
+        temperatureCelsius = temperatureCelsius,
+        temperatureSource = temperatureSource,
+        measurements = measurements.map { measurement ->
+            val canonicalBasis = WaterParameterDefinitions.canonicalBasis(measurement.parameter)
+            val canonicalUnit = WaterParameterDefinitions.canonicalUnit(measurement.parameter)
+            WaterMeasurementSnapshot(
+                resultId = WaterMeasurementResultId(id, measurement.parameter),
+                parameter = measurement.parameter,
+                value = measurement.value,
+                method = measurement.method,
+                testKitId = measurement.testKitId,
+                basis = measurement.basis,
+                unit = measurement.unit,
+                canonicalValue = WaterMeasurementNormalizer.canonicalValueForStoredSource(
                     parameter = measurement.parameter,
                     value = measurement.value,
-                    method = measurement.method,
-                    testKitId = measurement.testKitId,
-                    basis = measurement.basis,
-                    unit = measurement.unit,
-                    canonicalValue = WaterMeasurementNormalizer.canonicalValueForStoredSource(
-                        parameter = measurement.parameter,
-                        value = measurement.value,
-                        selection = WaterMeasurementSelection(
-                            method = measurement.method,
-                            testKitId = measurement.testKitId,
-                            basis = measurement.basis,
-                            unit = measurement.unit
-                        )
-                    ),
-                    canonicalBasis = canonicalBasis,
-                    canonicalUnit = canonicalUnit
-                )
-            },
-            createdAtMillis = createdAtMillis
-        )
-}
+                    selection = WaterMeasurementSelection(
+                        method = measurement.method,
+                        testKitId = measurement.testKitId,
+                        basis = measurement.basis,
+                        unit = measurement.unit
+                    )
+                ),
+                canonicalBasis = canonicalBasis,
+                canonicalUnit = canonicalUnit
+            )
+        },
+        createdAtMillis = createdAtMillis
+    )

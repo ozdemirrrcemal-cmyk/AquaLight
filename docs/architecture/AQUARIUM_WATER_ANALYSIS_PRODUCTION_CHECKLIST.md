@@ -37,6 +37,10 @@ The next semantic migration introduces version 3 store reads, distinct TAN-as-N
 and direct NH3-as-NH3 result keys, and a legacy-unassessed projection for old
 ambiguous ammonia readings. S.1 remains open until source revision/provenance,
 historical migration and UI acceptance pass in CI and on device.
+The application read projection gives each result a stable `(analysisId, parameter)`
+identity within its observation; concurrent TAN and direct NH3 results round-trip
+independently. S.8 remains open for persisted result identity, source product
+cardinality and chlorine-family sample context.
 Generic NO3-N, like generic phosphorus, remains source-native until a verified
 method profile authorizes the chemical conversion.
 New SENSOR selections are disabled until assigned sample identity/freshness
@@ -82,7 +86,7 @@ assessment transaction required by M.2–M.5.
 - [ ] S.1 Replace ambiguous `AMMONIA_AMMONIUM`/`NH3_NH4` storage authority with versioned TAN mg/L as N and distinct direct free NH3 mg/L as NH3; migrate legacy ambiguity to `LEGACY_UNASSESSED` without relabelling.
 - [ ] S.2 Align GH canonical mg/L as CaCO3 and freshwater KH versus marine total alkalinity meq/L. Preserve source dGH/dKH and exact verified conversion; add golden and rejected-conversion tests.
 - [ ] S.3 Review every current `WaterParameterDefinitions` option and `WaterMeasurementNormalizer` conversion against §0.5 and §§6.1–6.16. In particular forbid generic P→PO4, ppm/ppt and total phosphorus reinterpretation without method scope, and refuse unknown Fe, salinity/SG and EC/TDS semantics.
-- [ ] S.4 Move recommended/additional 12-type matrix to application policy; retain the same XML cards/grid and centralized sheets. Unknown/missing tank type has explicit state, never an invented freshwater profile.
+- [x] S.4 Move recommended/additional 12-type matrix to application policy; retain the same XML cards/grid and centralized sheets. Unknown/missing tank type has explicit state, never an invented freshwater profile. `WaterTankMeasurementPolicyTest`, `WaterTestProfileUiCatalogTest` and Android CI run 36306975969 cover the implemented boundary.
 - [ ] S.5 Define product profile schema with exact product/variant, matrix, analyte, reporting basis, unit, modes, range, limit notation, revision and primary evidence. Validate unique stable IDs and immutable published revisions.
 - [ ] S.6 Keep Salifert Nitrate as the only currently named product until its exact method/matrix/basis evidence is recorded. Generic Other is a typed guided fallback; unknown selection cannot get a canonical or assessed value by default.
 - [ ] S.7 Persist owner/tank/metric product preference with revision. Handle profile removal, catalog update, process death and product change with existing typed value; preserve old record provenance.
