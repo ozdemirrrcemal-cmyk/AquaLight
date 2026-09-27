@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+import "water_analyses.proto";
+option java_package = "com.aqua.aqualight.data.aquarium.health.observation";
+option java_multiple_files = true;
+
+// Each event belongs to exactly one feature. It is never embedded in StoredWaterAnalysis.
+message StoredHealthObservation {
+  uint32 schema_version = 1;
+  int64 id = 2;
+  string owner_uid = 3;
+  int64 created_at_millis = 4;
+  StoredHealthObservationInput input = 5;
+  StoredHealthObservationSubject subject = 6;
+  StoredHealthObservationEvidence evidence = 7;
+  StoredHealthObservationAssessment assessment = 8;
+  StoredHealthObservationOrigin origin = 9;
+}
+message StoredHealthObservationInput {
+  int64 tank_id = 1;
+  int64 observed_at_millis = 2;
+  string request_id = 3;
+  string kind = 4;
+  int64 subject_id = 5;
+  repeated string findings = 6;
+  repeated string algae_locations = 7;
+  string algae_extent = 8;
+  optional int32 affected_quantity = 9;
+  StoredHealthOperatingEvidence operating = 10;
+  string note = 11;
+  string photo_uri = 12;
+  string phase = 13;
+  optional int64 previous_observation_id = 14;
+}
+message StoredHealthOperatingEvidence {
+  optional int32 photoperiod_minutes = 1;
+  string light_measurement = 2;
+  string co2_pattern = 3;
+  string dosing_history = 4;
+}
+message StoredHealthObservationSubject {
+  int64 original_local_id = 1;
+  string catalog_id = 2;
+  string display_name = 3;
+  optional int32 quantity = 4;
+  string resolution = 5;
+}
+message StoredHealthObservationEvidence {
+  int64 context_captured_at_millis = 1;
+  string context_revision = 2;
+  int64 original_tank_id = 3;
+  string context_json = 4;
+  string context_sha256 = 5;
+  StoredHealthWaterSnapshot water = 6;
+  string water_relation = 7;
+  optional int64 water_age_at_observation_millis = 8;
+  string water_policy_revision = 9;
+  int64 water_maximum_age_millis = 10;
+}
+message StoredHealthWaterSnapshot {
+  int64 analysis_id = 1;
+  int64 original_tank_id = 2;
+  int64 measured_at_millis = 3;
+  int64 created_at_millis = 4;
+  optional double temperature_celsius = 5;
+  string temperature_source = 6;
+  repeated StoredWaterMeasurement raw_measurements = 7;
+  repeated StoredWaterCanonicalMeasurement canonical_measurements = 8;
+  string assessment_context_revision = 9;
+}
+message StoredHealthObservationAssessment {
+  string engine_revision = 1;
+  string state = 2;
+  repeated string gaps = 3;
+  repeated string actions = 4;
+  repeated StoredWaterRuleFinding water_findings = 5;
+}
+message StoredHealthObservationOrigin {
+  string source_owner_uid = 1;
+  int64 source_observation_id = 2;
+  int64 source_tank_id = 3;
+  int64 source_subject_id = 4;
+  string source_record_sha256 = 5;
+  string restore_transaction_id = 6;
+  optional int64 source_previous_observation_id = 7;
+}

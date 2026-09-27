@@ -27,7 +27,7 @@ class ObservationWaterFindingsTest {
         listOf(plant, otherPlant, animal), emptyList(), emptyList())
     private val sample = WaterAnalysisSnapshot(7, 2, 900, null, null, emptyList(), 950, assessment)
     private val evidence = ObservationWaterEvidence(sample, 100,
-        ObservationWaterRelation.AVAILABLE_BEFORE_OBSERVATION, "test-window")
+        ObservationWaterRelation.AVAILABLE_BEFORE_OBSERVATION, "test-window", 100)
 
     @Test
     fun findingsAreReusedOnlyForTheExactEntityKindAndLocalIdentity() {

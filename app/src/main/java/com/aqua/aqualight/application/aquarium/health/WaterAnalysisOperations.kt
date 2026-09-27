@@ -7,6 +7,7 @@ import com.aqua.aqualight.application.aquarium.health.water.WaterQualityAssessme
 interface WaterAnalysisOperations {
     fun historyPage(tankId: Long, cursor: WaterHistoryCursor? = null, newer: Boolean = false): Flow<WaterHistoryPage>
     fun latestAnalysis(tankId: Long): Flow<WaterAnalysisSnapshot?>
+    fun analysisAtOrBefore(tankId: Long, observedAtMillis: Long): Flow<WaterAnalysisSnapshot?>
     fun analysis(tankId: Long, analysisId: Long): Flow<WaterAnalysisSnapshot?>
     suspend fun saveAnalysis(input: WaterAnalysisInput): Long
     suspend fun deleteAnalysis(tankId: Long, analysisId: Long)

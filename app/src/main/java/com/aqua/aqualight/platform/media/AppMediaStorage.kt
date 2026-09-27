@@ -664,7 +664,8 @@ enum class AppMediaScope(
     PROFILE("profile_photos", "profile"),
     TANK("tank_photos", "tank"),
     PLANT("plant_photos", "plant"),
-    LIVESTOCK("livestock_photos", "livestock")
+    LIVESTOCK("livestock_photos", "livestock"),
+    HEALTH("health_photos", "health")
 }
 
 private enum class MediaFileRole(val token: String) {

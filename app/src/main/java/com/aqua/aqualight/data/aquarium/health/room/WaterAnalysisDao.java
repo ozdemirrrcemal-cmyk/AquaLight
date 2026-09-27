@@ -39,6 +39,12 @@ public interface WaterAnalysisDao {
             + "ORDER BY observedAtMillis DESC, createdAtMillis DESC, analysisId DESC LIMIT 1")
     WaterAnalysisEntity latest(String ownerUid, long tankId);
 
+    @Nullable
+    @Query("SELECT * FROM water_analysis WHERE ownerUid = :ownerUid AND tankId = :tankId "
+            + "AND observedAtMillis <= :observedAtMillis "
+            + "ORDER BY observedAtMillis DESC, createdAtMillis DESC, analysisId DESC LIMIT 1")
+    WaterAnalysisEntity atOrBefore(String ownerUid, long tankId, long observedAtMillis);
+
     @Query("SELECT * FROM water_analysis WHERE ownerUid = :ownerUid AND tankId = :tankId "
             + "ORDER BY observedAtMillis DESC, createdAtMillis DESC, analysisId DESC LIMIT 50")
     List<WaterAnalysisEntity> firstPage(String ownerUid, long tankId);

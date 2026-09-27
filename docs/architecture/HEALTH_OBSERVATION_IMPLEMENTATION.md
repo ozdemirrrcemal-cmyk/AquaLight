@@ -1,8 +1,9 @@
 # Algae, plant and livestock observation implementation
 
 27 September 2026 continuation. These concrete application models and engines
-are implemented and locally tested. Storage, media, operations, composition and
-UI integration are the next continuation. This document does not close all A/P/L
+are implemented and locally tested. Separate Room storage, owner-bound operations,
+deletion recovery and media ownership are implemented; composition, archive and
+UI integration remain in progress. This document does not close all A/P/L
 acceptance gates or authorize replacing the approved Water Quality UI.
 
 ## Observation and engine boundaries
@@ -42,6 +43,21 @@ sample or a changed habitat remains historical and produces a coverage gap.
 The livestock engine adds no second water range comparator.
 
 ## Verification and remaining integration
+
+The version-1 `health_observation.db` stores an immutable, checksummed snapshot
+and a durable idempotency request together. Queries use exact owner/tank/subject
+identity and 50-row keyset pages. The same tank deletion journal stages health
+rows and water rows; prepare-abort preserves data, committed removal keeps rows
+until rollback is no longer possible, and account cleanup includes this store.
+Local JVM codec tests and Android-test compilation pass. Device execution for
+the new observation tests still requires a subsequent checkpoint CI run.
+
+Health images use the existing pending-media ownership journal in a bounded
+`health_photos` FileProvider root. A new record accepts only a current owner's
+pending health image; commit adopts it and exact deletion releases it. Startup
+media recovery includes health deletion staging, so rollback images survive.
+The dated Water query selects the last sample at or before the observation;
+the 24-hour linking convention is recorded with its revision and maximum age.
 
 `HealthObservationPolicyTest`, `ObservationWaterEvidencePolicyTest`,
 `ObservationWaterFindingsTest` and `HealthObservationEnginesTest` cover immutable

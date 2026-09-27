@@ -95,6 +95,7 @@ private class MutationOperations : WaterAnalysisOperations {
     override fun historyPage(tankId: Long, cursor: WaterHistoryCursor?, newer: Boolean) =
         flowOf(WaterHistoryPage(emptyList(), 0, null))
     override fun latestAnalysis(tankId: Long) = flowOf<WaterAnalysisSnapshot?>(null)
+    override fun analysisAtOrBefore(tankId: Long, observedAtMillis: Long) = flowOf<WaterAnalysisSnapshot?>(null)
     override fun analysis(tankId: Long, analysisId: Long) = flowOf<WaterAnalysisSnapshot?>(null)
     override suspend fun saveAnalysis(input: WaterAnalysisInput): Long {
         saves++

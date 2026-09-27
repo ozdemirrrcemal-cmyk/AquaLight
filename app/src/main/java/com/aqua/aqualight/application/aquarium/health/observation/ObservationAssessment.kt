@@ -26,7 +26,8 @@ data class ObservationWaterEvidence(
     val analysis: WaterAnalysisSnapshot?,
     val ageAtObservationMillis: Long?,
     val relation: ObservationWaterRelation,
-    val policyRevision: String
+    val policyRevision: String,
+    val maximumAgeMillis: Long
 )
 
 data class ObservationAssessment(
@@ -49,7 +50,7 @@ object ObservationWaterEvidencePolicy {
             age !in 0L..window.maximumAgeMillis -> ObservationWaterRelation.OUTSIDE_WINDOW
             else -> ObservationWaterRelation.AVAILABLE_BEFORE_OBSERVATION
         }
-        return ObservationWaterEvidence(analysis, age, relation, window.revision)
+        return ObservationWaterEvidence(analysis, age, relation, window.revision, window.maximumAgeMillis)
     }
 }
 

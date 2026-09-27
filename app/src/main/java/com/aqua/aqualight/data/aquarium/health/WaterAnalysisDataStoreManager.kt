@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
+import com.aqua.aqualight.data.aquarium.health.observation.HealthObservationDeletionIntegrity
 import com.aqua.aqualight.data.auth.OwnerSessionWriteLease
 import com.aqua.aqualight.data.care.integrity.TankCareIntegrityJournal
 import com.aqua.aqualight.data.store.StoreInvariantViolation
@@ -25,11 +26,12 @@ internal class WaterAnalysisDataStoreManager(
 ) {
     private val appContext = context.applicationContext
     private val tankStore = AquariumTankDataStoreManager(appContext)
+    private val observations by lazy { HealthObservationDeletionIntegrity(appContext) }
     val room by lazy { WaterAnalysisRoomRuntime(appContext, appContext.waterAnalysesDataStore, tankStore) }
     val deletionIntegrity by lazy {
-        WaterAnalysisRecoveryAuthority(
+        CombinedHealthDeletionIntegrity(WaterAnalysisRecoveryAuthority(
             ProtoWaterAnalysisDeletionIntegrity(appContext.waterAnalysesDataStore, room.database),
-            room.deletion, room.cutover::requireSettledAuthority)
+            room.deletion, room.cutover::requireSettledAuthority), observations)
     }
     val archiveStore by lazy {
         WaterAnalysisArchiveAuthority(WaterAnalysisArchiveStore(appContext.waterAnalysesDataStore) { owner ->
@@ -71,6 +73,7 @@ internal class WaterAnalysisDataStoreManager(
     suspend fun deleteAnalysesForTank(tankId: Long) {
         WaterAnalysisIdentityRules.requirePositive("tankId", tankId)
         val ownerUid = UserDataScope.requireCurrentUid()
+        observations.remove(tankId)
         if (room.cutover.requireSettledAuthority(ownerUid)) {
             room.deletion.remove(tankId)
             return
@@ -89,6 +92,7 @@ internal class WaterAnalysisDataStoreManager(
         val targetOwnerUid = requireOwnerUid(ownerUid)
         val validTankIds = tankStore.tanksSnapshotForOwner(targetOwnerUid)
             .mapTo(mutableSetOf()) { tank -> tank.id }
+        observations.repairOrphans(targetOwnerUid, validTankIds)
         if (room.cutover.requireSettledAuthority(targetOwnerUid)) {
             return withContext(NonCancellable + Dispatchers.IO) {
                 WaterAnalysisRoomOrphanRepair(room.database).repair(targetOwnerUid, validTankIds)
@@ -124,6 +128,7 @@ internal class WaterAnalysisDataStoreManager(
                 )
             }
             withContext(Dispatchers.IO) {
+                observations.clearOwner(targetOwnerUid)
                 room.cutover.sources.clear(targetOwnerUid)
                 WaterAnalysisOwnerCleanup(room.database).clear(targetOwnerUid)
             }

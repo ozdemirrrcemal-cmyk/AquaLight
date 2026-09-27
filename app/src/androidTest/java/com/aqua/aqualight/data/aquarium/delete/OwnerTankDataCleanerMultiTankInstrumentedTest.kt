@@ -11,6 +11,8 @@ import com.aqua.aqualight.data.aquarium.model.TankDraft
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.aquarium.health.waterHistoryTestRows
 import com.aqua.aqualight.data.aquarium.health.WaterAnalysisDataStoreManager
+import com.aqua.aqualight.data.aquarium.health.observation.healthHistoryTestRows
+import com.aqua.aqualight.data.aquarium.health.observation.seedHealthHistory
 import com.aqua.aqualight.data.aquarium.health.WaterAnalysisDraftRecord
 import com.aqua.aqualight.data.aquarium.health.WaterMeasurementRecord
 import com.aqua.aqualight.data.auth.OwnerSessionTestFixture
@@ -131,12 +133,15 @@ class OwnerTankDataCleanerMultiTankInstrumentedTest {
             addTask(fixture.care, fixture.tankId, "Rollback filter")
             fixture.analyses.addAnalysis(validAnalysis(fixture.tankId), fixture.session)
             val original = waterHistoryTestRows(context, fixture.owner)
+            seedHealthHistory(context, fixture.owner, fixture.tankId)
+            val observations = healthHistoryTestRows(context, fixture.owner)
             val care = fixture.care.tasksForTankFlow(fixture.tankId).first()
             val cleaner = OwnerTankDataCleaner(
                 stores = OwnerTankDeletionStores(
                     requireArchiveSettled = UserDataRestoreJournal(context)::requireNoActiveRestore,
                     deleteTankRecords = {
                         assertTrue(waterHistoryTestRows(context, fixture.owner).isEmpty())
+                        assertTrue(healthHistoryTestRows(context, fixture.owner).isEmpty())
                         error("Injected tank commit failure")
                     },
                     snapshotCareTasksForTank = fixture.care::snapshotTasksForIntegrity,
@@ -151,6 +156,7 @@ class OwnerTankDataCleanerMultiTankInstrumentedTest {
             )
             assertTrue(cleaner.deleteTanks(listOf(fixture.tankId)) is OwnerTankDataCleaner.Result.DeleteFailed)
             assertEquals(original, waterHistoryTestRows(context, fixture.owner))
+            assertEquals(observations, healthHistoryTestRows(context, fixture.owner))
             assertEquals(care, fixture.care.tasksForTankFlow(fixture.tankId).first())
             assertTrue(TankCareIntegrityJournal.pendingForOwner(fixture.owner).isEmpty())
         }
@@ -161,14 +167,19 @@ class OwnerTankDataCleanerMultiTankInstrumentedTest {
         withIsolatedTank { fixture ->
             fixture.analyses.addAnalysis(validAnalysis(fixture.tankId), fixture.session)
             val original = waterHistoryTestRows(context, fixture.owner)
+            seedHealthHistory(context, fixture.owner, fixture.tankId)
+            val observations = healthHistoryTestRows(context, fixture.owner)
             prepareInterruptedDeletion(fixture)
             assertTrue(waterHistoryTestRows(context, fixture.owner).isEmpty())
+                        assertTrue(healthHistoryTestRows(context, fixture.owner).isEmpty())
             TankCareIntegrityRecovery.create(context).recover(fixture.owner)
             assertEquals(original, waterHistoryTestRows(context, fixture.owner))
+            assertEquals(observations, healthHistoryTestRows(context, fixture.owner))
             prepareInterruptedDeletion(fixture)
             fixture.tanks.deleteTanks(listOf(fixture.tankId))
             TankCareIntegrityRecovery.create(context).recover(fixture.owner)
             assertTrue(waterHistoryTestRows(context, fixture.owner).isEmpty())
+                        assertTrue(healthHistoryTestRows(context, fixture.owner).isEmpty())
             assertTrue(TankCareIntegrityJournal.pendingForOwner(fixture.owner).isEmpty())
         }
     }

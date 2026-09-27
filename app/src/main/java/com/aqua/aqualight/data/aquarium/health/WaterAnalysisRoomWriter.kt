@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.aquarium.health
 
 import com.aqua.aqualight.data.aquarium.OwnerTankMutationGate
+import com.aqua.aqualight.data.aquarium.OwnerArchiveMutationGate
 import com.aqua.aqualight.data.aquarium.health.room.WaterAnalysisDatabase
 import com.aqua.aqualight.data.auth.OwnerSessionWriteLease
 import com.aqua.aqualight.data.care.integrity.TankCareIntegrityJournal
@@ -12,7 +13,7 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 
-/** Session -> tank -> Room, retaining both gates until an admitted disk transaction has settled. */
+/** Session -> owner archive -> tank -> Room; every admitted gate remains held until commit settles. */
 internal class WaterAnalysisRoomWriter(
     private val database: WaterAnalysisDatabase,
     private val session: OwnerSessionWriteLease,
@@ -61,6 +62,8 @@ internal class WaterAnalysisRoomWriter(
     }
 
     private suspend fun <T> withOwnerWrite(block: suspend () -> T): T = session.withWrite {
-        UserDataScope.withOwnerUid(session.ownerUid, block)
+        UserDataScope.withOwnerUid(session.ownerUid) {
+            OwnerArchiveMutationGate.shared.withOwner(session.ownerUid, block)
+        }
     }
 }

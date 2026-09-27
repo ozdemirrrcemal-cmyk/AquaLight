@@ -70,6 +70,8 @@ class WaterAnalysisSessionInstrumentedTest {
             val backdated = operations.saveAnalysis(sample.copy(
                 measuredAtMillis = sample.measuredAtMillis - 60_000L, requestId = UUID.randomUUID().toString()))
             assertEquals(first, operations.latestAnalysis(tankId).first()?.id)
+            assertEquals(backdated, operations.analysisAtOrBefore(tankId, sample.measuredAtMillis - 1L).first()?.id)
+            assertNull(operations.analysisAtOrBefore(tankId, sample.measuredAtMillis - 60_001L).first())
             operations.saveAnalysis(input(otherTankId))
             assertEquals(first, operations.latestAnalysis(tankId).first()?.id)
             val tied = operations.saveAnalysis(sample.copy(requestId = UUID.randomUUID().toString()))

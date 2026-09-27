@@ -33,6 +33,11 @@ internal class WaterAnalysisRoomQueries(
         dao.record(owner, tankId, analysisId)?.toMigrationRecord()?.validatedSnapshot()
     }
 
+    fun atOrBefore(owner: String, tankId: Long, observedAtMillis: Long): Flow<WaterAnalysisSnapshot?> = observe(owner) {
+        require(tankId > 0L && observedAtMillis > 0L)
+        dao.atOrBefore(owner, tankId, observedAtMillis)?.toMigrationRecord()?.validatedSnapshot()
+    }
+
     fun page(owner: String, tankId: Long, after: WaterHistoryCursor?, newer: Boolean = false): Flow<WaterHistoryPage> =
         observe(owner) {
         require(tankId > 0L && (after == null || after.tankId == tankId))

@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.media
 
 import android.content.Context
+import com.aqua.aqualight.data.aquarium.health.observation.healthObservationPhotoReferences
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.data.user.UserPreferencesManager
@@ -29,6 +30,7 @@ class AppMediaRecoveryManager(
             require(normalized.isNotBlank()) { "ownerUid must not be blank" }
         }
         val referencedUris = buildSet {
+            addAll(healthObservationPhotoReferences(appContext, normalizedOwnerUid))
             preferences.profilePhotoUrlForOwner(normalizedOwnerUid)
                 .takeIf(String::isNotBlank)
                 ?.let(::add)

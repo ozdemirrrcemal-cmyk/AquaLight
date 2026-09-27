@@ -23,7 +23,7 @@ class HealthObservationEnginesTest {
         listOf(HealthPlantContext(3, "same-catalog", "plant", HealthEntityResolution.PARTIAL, null)),
         listOf(HealthLivestockContext(4, "custom", "animal", 2, HealthEntityResolution.CUSTOM_UNVERIFIED, null, null)),
         listOf(HealthMaterialContext(1, "light-product", "lighting")))
-    private val water = ObservationWaterEvidence(null, null, ObservationWaterRelation.MISSING, "test-window-v1")
+    private val water = ObservationWaterEvidence(null, null, ObservationWaterRelation.MISSING, "test-window-v1", 100)
 
     @Test
     fun installedLightDoesNotSupplyMeasuredOperatingEvidence() {

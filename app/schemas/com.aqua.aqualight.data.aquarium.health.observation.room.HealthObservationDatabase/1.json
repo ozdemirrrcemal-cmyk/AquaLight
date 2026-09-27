@@ -1,0 +1,249 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "ce33eba75bcc02deb27b130254d50a14",
+    "entities": [
+      {
+        "tableName": "health_observation",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`ownerUid` TEXT NOT NULL, `observationId` INTEGER NOT NULL, `tankId` INTEGER NOT NULL, `kind` TEXT NOT NULL, `subjectId` INTEGER NOT NULL, `observedAtMillis` INTEGER NOT NULL, `createdAtMillis` INTEGER NOT NULL, `requestId` TEXT NOT NULL, `payload` BLOB NOT NULL, `payloadSha256` TEXT NOT NULL, `photoUri` TEXT, `sourceOwnerUid` TEXT NOT NULL, `sourceObservationId` INTEGER NOT NULL, `sourceSha256` TEXT NOT NULL, `restoreTransactionId` TEXT NOT NULL, `deleteTransactionId` TEXT NOT NULL, `deleteState` INTEGER NOT NULL, PRIMARY KEY(`ownerUid`, `observationId`))",
+        "fields": [
+          {
+            "fieldPath": "ownerUid",
+            "columnName": "ownerUid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "observationId",
+            "columnName": "observationId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tankId",
+            "columnName": "tankId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "kind",
+            "columnName": "kind",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "subjectId",
+            "columnName": "subjectId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "observedAtMillis",
+            "columnName": "observedAtMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAtMillis",
+            "columnName": "createdAtMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "requestId",
+            "columnName": "requestId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "payload",
+            "columnName": "payload",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "payloadSha256",
+            "columnName": "payloadSha256",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "photoUri",
+            "columnName": "photoUri",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "sourceOwnerUid",
+            "columnName": "sourceOwnerUid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceObservationId",
+            "columnName": "sourceObservationId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceSha256",
+            "columnName": "sourceSha256",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "restoreTransactionId",
+            "columnName": "restoreTransactionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deleteTransactionId",
+            "columnName": "deleteTransactionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deleteState",
+            "columnName": "deleteState",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "ownerUid",
+            "observationId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_health_observation_ownerUid_tankId_kind_observedAtMillis_createdAtMillis_observationId",
+            "unique": false,
+            "columnNames": [
+              "ownerUid",
+              "tankId",
+              "kind",
+              "observedAtMillis",
+              "createdAtMillis",
+              "observationId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_health_observation_ownerUid_tankId_kind_observedAtMillis_createdAtMillis_observationId` ON `${TABLE_NAME}` (`ownerUid`, `tankId`, `kind`, `observedAtMillis`, `createdAtMillis`, `observationId`)"
+          },
+          {
+            "name": "index_health_observation_ownerUid_tankId_observationId",
+            "unique": false,
+            "columnNames": [
+              "ownerUid",
+              "tankId",
+              "observationId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_health_observation_ownerUid_tankId_observationId` ON `${TABLE_NAME}` (`ownerUid`, `tankId`, `observationId`)"
+          },
+          {
+            "name": "index_health_observation_ownerUid_tankId_kind_subjectId_observedAtMillis_createdAtMillis_observationId",
+            "unique": false,
+            "columnNames": [
+              "ownerUid",
+              "tankId",
+              "kind",
+              "subjectId",
+              "observedAtMillis",
+              "createdAtMillis",
+              "observationId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_health_observation_ownerUid_tankId_kind_subjectId_observedAtMillis_createdAtMillis_observationId` ON `${TABLE_NAME}` (`ownerUid`, `tankId`, `kind`, `subjectId`, `observedAtMillis`, `createdAtMillis`, `observationId`)"
+          },
+          {
+            "name": "index_health_observation_ownerUid_sourceOwnerUid_sourceObservationId",
+            "unique": true,
+            "columnNames": [
+              "ownerUid",
+              "sourceOwnerUid",
+              "sourceObservationId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_health_observation_ownerUid_sourceOwnerUid_sourceObservationId` ON `${TABLE_NAME}` (`ownerUid`, `sourceOwnerUid`, `sourceObservationId`)"
+          },
+          {
+            "name": "index_health_observation_ownerUid_restoreTransactionId",
+            "unique": false,
+            "columnNames": [
+              "ownerUid",
+              "restoreTransactionId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_health_observation_ownerUid_restoreTransactionId` ON `${TABLE_NAME}` (`ownerUid`, `restoreTransactionId`)"
+          },
+          {
+            "name": "index_health_observation_ownerUid_deleteTransactionId",
+            "unique": false,
+            "columnNames": [
+              "ownerUid",
+              "deleteTransactionId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_health_observation_ownerUid_deleteTransactionId` ON `${TABLE_NAME}` (`ownerUid`, `deleteTransactionId`)"
+          }
+        ]
+      },
+      {
+        "tableName": "health_observation_request",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`ownerUid` TEXT NOT NULL, `requestId` TEXT NOT NULL, `observationId` INTEGER NOT NULL, `payloadSha256` TEXT NOT NULL, PRIMARY KEY(`ownerUid`, `requestId`))",
+        "fields": [
+          {
+            "fieldPath": "ownerUid",
+            "columnName": "ownerUid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "requestId",
+            "columnName": "requestId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "observationId",
+            "columnName": "observationId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "payloadSha256",
+            "columnName": "payloadSha256",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "ownerUid",
+            "requestId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_health_observation_request_ownerUid_observationId",
+            "unique": true,
+            "columnNames": [
+              "ownerUid",
+              "observationId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_health_observation_request_ownerUid_observationId` ON `${TABLE_NAME}` (`ownerUid`, `observationId`)"
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ce33eba75bcc02deb27b130254d50a14')"
+    ]
+  }
+}

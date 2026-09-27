@@ -37,6 +37,9 @@ internal class DefaultWaterAnalysisOperations(
     override fun latestAnalysis(tankId: Long): Flow<WaterAnalysisSnapshot?> =
         roomRead { it.latest(session.ownerUid, tankId) }
 
+    override fun analysisAtOrBefore(tankId: Long, observedAtMillis: Long): Flow<WaterAnalysisSnapshot?> =
+        roomRead { it.atOrBefore(session.ownerUid, tankId, observedAtMillis) }
+
     override fun analysis(tankId: Long, analysisId: Long): Flow<WaterAnalysisSnapshot?> =
         roomRead { it.record(session.ownerUid, tankId, analysisId) }
 
