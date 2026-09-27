@@ -1,6 +1,7 @@
 package com.aqua.aqualight.application.aquarium.health
 
 import java.time.LocalDate
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
@@ -76,6 +77,8 @@ class WaterMethodProfileTest {
     @Test
     fun reportingRangesLimitsAndPrecisionMustBeInternallyConsistent() {
         val scale = WaterMethodProfileFixture.output().scale
+        val quantifiedRange = scale.copy(range = scale.range.copy(minimum = "2".toBigDecimal()))
+        assertEquals("1".toBigDecimal(), quantifiedRange.limits.detection)
         assertThrows(IllegalArgumentException::class.java) {
             scale.range.copy(maximum = scale.range.minimum)
         }

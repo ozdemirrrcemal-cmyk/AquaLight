@@ -59,8 +59,8 @@ data class WaterMethodResultScale(
 ) {
     init {
         require(qualifiers.isNotEmpty()) { "Supported result notation must be explicit." }
-        require(listOfNotNull(limits.detection, limits.quantification).all { it in range }) {
-            "Detection limits must fall within the source range."
+        require(listOfNotNull(limits.detection, limits.quantification).all { it <= range.maximum }) {
+            "Detection limits cannot exceed the source range maximum."
         }
         if (precision is WaterMethodPrecision.ComparatorScale) {
             require(precision.values.all { it in range }) { "Comparator values exceed the source range." }

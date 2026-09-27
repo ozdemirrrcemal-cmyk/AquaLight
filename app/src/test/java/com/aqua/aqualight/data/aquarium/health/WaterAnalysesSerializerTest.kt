@@ -1,6 +1,5 @@
 package com.aqua.aqualight.data.aquarium.health
 
-import androidx.datastore.core.CorruptionException
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import kotlinx.coroutines.runBlocking
@@ -43,7 +42,7 @@ class WaterAnalysesSerializerTest {
             .build()
             .toByteArray()
 
-        assertThrows(CorruptionException::class.java) {
+        assertThrows(WaterAnalysisReadFailure.UnsupportedSchema::class.java) {
             runBlocking { WaterAnalysesSerializer.readFrom(ByteArrayInputStream(bytes)) }
         }
     }
