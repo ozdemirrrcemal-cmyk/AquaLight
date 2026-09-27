@@ -1,6 +1,6 @@
 # AquaLight — Production Water Analysis Implementation Checklist
 
-## Current acceptance status — 28 September 2026, 00:15 Europe/Istanbul
+## Current acceptance status — 28 September 2026, 01:02 Europe/Istanbul
 
 The accepted K01–K18 contract decisions are recorded. Implementation and release
 acceptance are incomplete. Current U/S/C/M/E rows total **12 closed, 22 open**;
@@ -36,9 +36,19 @@ including 172 instrumentation tests on each API and minified navigation smoke.
 M.3/M.4 are accepted individually below. Observation engines and owner-scoped
 Room/media/deletion storage were subsequently checkpointed as `570b865a` and
 `d0dea22b`. Three observation UI flows and version-4 archive integration are now implemented
-in the continuation. All 1,973 local JVM tests, 335 Python tests and Android-test
-compilation passed. Latest lint/APK and API 27/API 36 execution remain pending.
-A/P/L acceptance has not been claimed from intermediate commits.
+in `8f207e03`. All 1,973 local JVM tests and Android-test compilation passed.
+On `78a8311a`, Android CI `36351790925`, Installable Debug APK `36351790983`,
+dependency integrity and Firebase checks passed. Both baseline-free Lint variants
+and all 10 critical-package coverage thresholds passed. The existing Detekt
+baseline reports zero new debt. API 27 and API 36 run `36351790882` executed all 184 device
+tests on each API with zero failures, including health Room/archive/media scenarios; the later
+minified visual smoke crashed because the smoke container lacked the image
+processor required by the new forms. API 27 also stopped at visual smoke.
+The follow-up binds the production image processor in the smoke container,
+requires all 13 screens in six visual profiles (78 screenshots), and reports
+process crashes immediately. Its 337 Python tests and unchanged-baseline Detekt
+pass locally; device/minified confirmation remains pending. A/P/L acceptance
+has not been claimed from intermediate commits.
 
 ## 0. Rebaseline — 27 September 2026
 
@@ -191,12 +201,15 @@ owner changes, tank deletion races and restore without duplication or loss.
 assessment without false normality or lost history. E is the release gate;
 writing this checklist does not close it.
 
-### Deferred health views
+### Health view implementation and acceptance
 
-Algae Control → Plant Health → Livestock Health follows the historical A/P/L
-sequence below **after E**. Design observation and UI for each separately;
-share dated Water Quality/context through application boundaries. No placeholder
-view should imply a working diagnosis.
+Algae Control, Plant Health and Livestock Health now have separate observation
+forms, bounded history, exact-record details, owned photos and follow-up routes.
+They share dated Water Quality/context through application boundaries, preserve
+saved evidence and participate in owner-scoped archive/restore. Their code is
+checkpointed as `8f207e03`; device persistence tests pass on `78a8311a`, while
+minified visual acceptance is being repaired. Formal acceptance follows E → A →
+P → L below. No diagnosis or acceptance is inferred from screen/code presence.
 
 ---
 

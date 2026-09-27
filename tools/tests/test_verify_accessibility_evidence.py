@@ -80,7 +80,7 @@ class AccessibilityEvidenceTest(unittest.TestCase):
 
         self.assertTrue(summary["passed"])
         self.assertEqual(6, summary["profileCount"])
-        self.assertEqual(24, summary["screenshotCount"])
+        self.assertEqual(78, summary["screenshotCount"])
 
     def test_api_36_profiles_pass(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -96,6 +96,14 @@ class AccessibilityEvidenceTest(unittest.TestCase):
 
             with self.assertRaisesRegex(AccessibilityEvidenceFailure, "mismatch"):
                 validate(prefix, screens, 27, COMMIT)
+
+    def test_each_health_form_is_required_in_the_visual_evidence(self) -> None:
+        for kind in ("algae", "plant", "livestock"):
+            with self.subTest(kind=kind), tempfile.TemporaryDirectory() as temporary:
+                prefix, screens = self.evidence(Path(temporary))
+                (screens / f"large-font-dark-{kind}-observation-form.png").unlink()
+                with self.assertRaisesRegex(AccessibilityEvidenceFailure, "mismatch"):
+                    validate(prefix, screens, 36, COMMIT)
 
     def test_byte_identical_profile_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

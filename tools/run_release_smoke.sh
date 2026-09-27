@@ -13,6 +13,9 @@ UPGRADE_INSTALL_SMOKE_ACTIVITY="com.aqua.aqualight.smoke.UpgradeInstallSmokeActi
 UPGRADE_INSTALL_SMOKE_COMPONENT="${PACKAGE_NAME}/${UPGRADE_INSTALL_SMOKE_ACTIVITY}"
 SMOKE_PREFIX="release-smoke-api-${API_LEVEL}"
 SMOKE_SCREEN_DIR="release-smoke-screens/api-${API_LEVEL}"
+EXPECTED_PROFILE_SCREENSHOTS="$(
+  python3 -c 'from tools.verify_accessibility_evidence import SCREENS; print(len(SCREENS))'
+)"
 PASS_MARKER="RELEASE_SMOKE_PASS"
 CLEAN_INSTALL_PASS_MARKER="CLEAN_INSTALL_PASS"
 CLEAN_INSTALL_FAIL_MARKER="CLEAN_INSTALL_FAIL"
@@ -77,6 +80,8 @@ capture_smoke_diagnostics() {
   adb shell uiautomator dump "$REMOTE_WINDOW_DUMP" >/dev/null 2>&1
   adb pull "$REMOTE_WINDOW_DUMP" "$WINDOW_DUMP" >/dev/null 2>&1
   adb logcat -d > "${SMOKE_PREFIX}-logcat.txt" 2>&1
+  adb pull "/sdcard/Android/data/${PACKAGE_NAME}/files/smoke-screens/." \
+    "$SMOKE_SCREEN_DIR/" >/dev/null 2>&1
   adb shell dumpsys activity activities > "${SMOKE_PREFIX}-activities.txt" 2>&1
   adb shell dumpsys package "$PACKAGE_NAME" > "${SMOKE_PREFIX}-package.txt" 2>&1
   adb shell pm path "$PACKAGE_NAME" > "${SMOKE_PREFIX}-package-path.txt" 2>&1
@@ -395,6 +400,12 @@ run_visual_profile() {
 
   rm -f "$profile_dump"
   for attempt in $(seq 1 50); do
+    if ! adb shell pidof "$PACKAGE_NAME" >/dev/null 2>&1; then
+      adb logcat -d > "$profile_logcat" 2>&1
+      echo "Minified release smoke process exited for ${profile} on API ${API_LEVEL}."
+      grep 'E AndroidRuntime:' "$profile_logcat" | tail -n 60 || true
+      return 1
+    fi
     adb shell uiautomator dump "$remote_profile_dump" >/dev/null 2>&1 || true
     adb pull "$remote_profile_dump" "$profile_dump" >/dev/null 2>&1 || true
 
@@ -406,9 +417,9 @@ run_visual_profile() {
           | wc -l \
           | tr -d ' '
       )"
-      if [ "$screenshot_count" -ne 4 ]; then
+      if [ "$screenshot_count" -ne "$EXPECTED_PROFILE_SCREENSHOTS" ]; then
         adb logcat -d > "$profile_logcat" 2>&1
-        echo "Expected 4 ${profile} screenshots, found ${screenshot_count}."
+        echo "Expected ${EXPECTED_PROFILE_SCREENSHOTS} ${profile} screenshots, found ${screenshot_count}."
         return 1
       fi
       adb logcat -d > "$profile_logcat" 2>&1

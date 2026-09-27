@@ -80,6 +80,7 @@ import com.aqua.aqualight.data.recovery.DefaultLocalDataRecoveryOperations
 import com.aqua.aqualight.data.user.StartupAppearanceCache
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.platform.auth.GoogleIdentityClient
+import com.aqua.aqualight.platform.media.AndroidImageMediaProcessor
 import com.aqua.aqualight.platform.media.ImageMediaProcessor
 import com.aqua.aqualight.platform.text.AndroidAppTextResolver
 import com.aqua.aqualight.platform.text.AndroidMaintenanceTextResolver
@@ -158,8 +159,9 @@ internal class ReleaseSmokeAppContainer(context: Context) : AppContainer {
         AuthenticatedOwnerIdentity { SMOKE_OWNER_UID }
     override val feedbackSubmissionOperations: FeedbackSubmissionUseCase
         get() = unused("feedbackSubmissionOperations")
-    override val imageMediaProcessor: ImageMediaProcessor
-        get() = unused("imageMediaProcessor")
+    override val imageMediaProcessor: ImageMediaProcessor by lazy(LazyThreadSafetyMode.NONE) {
+        AndroidImageMediaProcessor(context.applicationContext)
+    }
     override val provisioningDraftOperations: ProvisioningDraftOperations
         get() = unused("provisioningDraftOperations")
     override val provisioningQrFrameDecoderFactory: ProvisioningQrFrameDecoderFactory =
