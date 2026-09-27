@@ -16,5 +16,20 @@
     <string name="tank_health_metric_temperature">Sıcaklık</string>
     <string name="tank_health_add_analysis">Analiz Ekle</string>
 
+    <string name="tank_health_maintenance_title">Bakım Durumu</string>
+    <string name="tank_health_water_change">Su değişimi</string>
+    <string name="tank_health_pruning">Budama</string>
+    <string name="tank_health_filter_maintenance">Filtre bakımı</string>
+    <string name="tank_health_no_care_record">Bakım kaydı yok</string>
+    <string name="tank_health_data_unavailable">Veri yok</string>
+    <string name="tank_health_system_selected">Seçili</string>
+    <plurals name="tank_health_livestock_count">
+        <item quantity="one">%d canlı</item>
+        <item quantity="other">%d canlı</item>
+    </plurals>
+    <string name="tank_health_system_summary_title">Sistem Özeti</string>
+    <string name="tank_health_system_lighting">Aydınlatma</string>
+    <string name="tank_health_system_filter">Filtre</string>
+    <string name="tank_health_system_livestock_load">Canlı yükü</string>
 
 </resources>

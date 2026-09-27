@@ -20,5 +20,21 @@
     <string name="tank_health_add_analysis">Add Analysis</string>
     <string name="tank_health_add_analysis_symbol" translatable="false">＋</string>
 
+    <string name="tank_health_maintenance_title">Maintenance Status</string>
+    <string name="tank_health_water_change">Water change</string>
+    <string name="tank_health_pruning">Pruning</string>
+    <string name="tank_health_filter_maintenance">Filter maintenance</string>
+    <string name="tank_health_no_care_record">No maintenance record</string>
+    <string name="tank_health_data_unavailable">No data</string>
+    <string name="tank_health_system_selected">Selected</string>
+    <plurals name="tank_health_livestock_count">
+        <item quantity="one">%d animal</item>
+        <item quantity="other">%d animals</item>
+    </plurals>
+    <string name="tank_health_system_summary_title">System Summary</string>
+    <string name="tank_health_system_co2" translatable="false">CO₂</string>
+    <string name="tank_health_system_lighting">Lighting</string>
+    <string name="tank_health_system_filter">Filter</string>
+    <string name="tank_health_system_livestock_load">Livestock load</string>
 
 </resources>

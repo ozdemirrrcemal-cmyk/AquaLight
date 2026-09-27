@@ -12,8 +12,8 @@ it is not a sign-off for accessibility, chemistry, assessment or release.
 | Method sheet / `content_sheet_water_measurement_method.xml` | Manual, test kit, digital, unavailable sensor; typed basis and unit | `WaterMeasurementUiCatalog` delegates to the domain catalog. Only Salifert Nitrate and Other exist. SENSOR cannot be selected for a new unverified reading. Typed value source changes require explicit confirmation. |
 | History / `fragment_tank_health_analysis_history.xml`, `item_tank_health_analysis_history_record.xml` | All owner/tank events; up to three actual measured results in each preview, including temperature when space permits; tap for detail | `WaterAnalysisViewModel.analysesForTank`. The preview no longer implies unmeasured pH/NO3; other results remain accessible in detail. Current full-list Proto flow has no indexed paging or 10,000-record evidence. |
 | Detail / `fragment_tank_health_analysis_detail.xml`, `item_tank_health_analysis_detail_measurement.xml` | Observed date/time, optional temperature, every stored raw measurement and method metadata, delete confirmation | Same owner-scoped snapshot. Canonical conversion is displayed where valid; when it changes the result, the original number/unit is additionally labelled. No historical assessment snapshot is stored yet. |
-| Maintenance | Static water-change/pruning/filter ages and status labels | Obsolete unused layout and fixture strings removed after Lint exposed them. Build a new projection from real owner-scoped care data when that feature is ready. |
-| System summary | Static CO2, lighting, filter and load labels/values | Obsolete unused layout and fixture strings removed after Lint exposed them. A future context/device adapter must distinguish installed hardware from live measurements. |
+| Maintenance / `item_tank_health_maintenance_section.xml` | Water-change, pruning and filter rows in their original position beneath Add Analysis | `MaintenanceViewModel.tankActivityStateFlow` reads owner-scoped completed care activity; the latest recorded times appear only if a matching completed task exists. Otherwise each row says that no record exists, with no invented health verdict. |
+| System summary / `item_tank_health_system_section.xml` | CO2, lighting, filter and livestock rows in their original position beneath Maintenance | The selected tank snapshot supplies selected CO2 presence, lighting/filter names and actual livestock quantity. Selection does not claim that hardware is running; missing selections show No data. Live device status needs its own verified source. |
 | Plant/Livestock Health / `fragment_aquarium_health_placeholder.xml` | Placeholder | Explicitly deferred until Water Analysis acceptance; no implied health verdict. Algae Control remains deferred. |
 
 TR and EN strings exist for the current dynamic water controls. The parameter
@@ -24,5 +24,6 @@ grouping. The visible state and exact string/semantics still require API 27/36,
 TR/EN, dark/light, large-font and TalkBack inspection on device. In particular,
 the 28 dp remove button, 30 dp card header, dense four-column dashboard and
 fixed-height history preview cards need touch-target and font-scaling review before
-the UI/accessibility gate can close. Removed fixture layouts and their static
-"normal" values cannot be reused as evidence for a health assessment.
+the UI/accessibility gate can close. The restored maintenance and system layouts
+retain their original structure; their old fixture values and static "normal"
+labels cannot be reused as evidence for a health assessment.

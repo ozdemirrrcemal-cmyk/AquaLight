@@ -4,24 +4,35 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.GridLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumTankTaxonomy
+import com.aqua.aqualight.application.aquarium.AquariumMaterialCategoryKeys
+import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
+import com.aqua.aqualight.application.care.CareTaskType
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisSnapshot
 import com.aqua.aqualight.application.aquarium.health.WaterParameter
 import com.aqua.aqualight.databinding.FragmentTankHealthBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.common.text.resolve
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
+import com.aqua.aqualight.ui.tabs.maintenance.MaintenanceViewModel
+import com.aqua.aqualight.ui.tabs.maintenance.TankActivityUiState
+import kotlinx.coroutines.launch
 
 class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
 
     private val args: TankHealthFragmentArgs by navArgs()
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
     private val waterAnalysisViewModel: WaterAnalysisViewModel by activityViewModels()
+    private val maintenanceViewModel: MaintenanceViewModel by activityViewModels()
 
     private var _binding: FragmentTankHealthBinding? = null
     private val binding get() = _binding!!
@@ -44,6 +55,7 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
         setupHeader()
         setupContent()
         observeTankHealth()
+        observeMaintenance()
     }
 
     private fun setupHeader() {
@@ -75,10 +87,12 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
 
     private fun observeTankHealth() {
         aquariumTankViewModel.tanks.observe(viewLifecycleOwner) { tanks ->
-            currentTankProfile = tanks
-                .firstOrNull { tank -> tank.id == args.tankId }
+            maintenanceViewModel.setTanks(tanks)
+            val tank = tanks.firstOrNull { candidate -> candidate.id == args.tankId }
+            currentTankProfile = tank
                 ?.tankType
                 ?.takeIf(AquariumTankTaxonomy::isSupportedTankType)
+            contentAdapter?.submitSystem(tank?.toHealthSystemUi() ?: TankHealthSystemUi())
             renderWaterMetrics()
         }
 
@@ -87,6 +101,48 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
                 currentAnalyses = analyses
                 renderWaterMetrics()
             }
+    }
+
+    private fun observeMaintenance() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                maintenanceViewModel.tankActivityStateFlow(args.tankId).collect { state ->
+                    contentAdapter?.submitMaintenance(state.toHealthMaintenanceUi())
+                }
+            }
+        }
+    }
+
+    private fun AquariumTankSnapshot.toHealthSystemUi(): TankHealthSystemUi {
+        fun selectedName(categoryKey: String): String? = materials
+            .firstOrNull { selection -> selection.categoryKey == categoryKey }
+            ?.name
+            ?.takeIf(String::isNotBlank)
+
+        return TankHealthSystemUi(
+            hasSelectedCo2 = materials.any { selection ->
+                selection.categoryKey == AquariumMaterialCategoryKeys.CO2
+            },
+            lightingName = selectedName(AquariumMaterialCategoryKeys.LIGHT),
+            filterName = selectedName(AquariumMaterialCategoryKeys.FILTER),
+            livestockCount = livestock.sumOf { animal -> animal.quantity }
+        )
+    }
+
+    private fun TankActivityUiState.toHealthMaintenanceUi(): TankHealthMaintenanceUi {
+        val completedTypes = completedTasks.map { task -> task.type }.toSet()
+        val context = requireContext()
+        return TankHealthMaintenanceUi(
+            waterChangeText = lastWaterChangeText.takeIf {
+                CareTaskType.WATER_CHANGE in completedTypes
+            }?.let(context::resolve)?.toString(),
+            pruningText = lastTrimText.takeIf {
+                CareTaskType.PLANT_TRIM in completedTypes
+            }?.let(context::resolve)?.toString(),
+            filterText = lastFilterMaintenanceText.takeIf {
+                completedTypes.any { type -> type in FILTER_CARE_TYPES }
+            }?.let(context::resolve)?.toString()
+        )
     }
 
     private fun renderWaterMetrics() {
@@ -138,5 +194,16 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
         contentAdapter = null
         _binding = null
         super.onDestroyView()
+    }
+
+    private companion object {
+        val FILTER_CARE_TYPES = setOf(
+            CareTaskType.FILTER_MAINTENANCE,
+            CareTaskType.FILTER_CHANGE,
+            CareTaskType.PRE_FILTER_CLEANING,
+            CareTaskType.PIPE_CLEANING,
+            CareTaskType.DIFFUSER_CLEANING,
+            CareTaskType.HOSE_CLEANING
+        )
     }
 }
