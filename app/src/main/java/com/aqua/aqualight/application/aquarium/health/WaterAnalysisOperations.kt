@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.Flow
 import com.aqua.aqualight.application.aquarium.health.water.WaterQualityAssessment
 
 interface WaterAnalysisOperations {
-    fun analysesForTank(tankId: Long): Flow<List<WaterAnalysisSnapshot>>
+    fun historyPage(tankId: Long, cursor: WaterHistoryCursor? = null, newer: Boolean = false): Flow<WaterHistoryPage>
     fun latestAnalysis(tankId: Long): Flow<WaterAnalysisSnapshot?>
     fun analysis(tankId: Long, analysisId: Long): Flow<WaterAnalysisSnapshot?>
     suspend fun saveAnalysis(input: WaterAnalysisInput): Long

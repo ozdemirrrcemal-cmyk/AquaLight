@@ -4,6 +4,8 @@ import com.aqua.aqualight.application.aquarium.health.WaterAnalysisInput
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisOperations
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisPolicy
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisSnapshot
+import com.aqua.aqualight.application.aquarium.health.WaterHistoryCursor
+import com.aqua.aqualight.application.aquarium.health.WaterHistoryPage
 import com.aqua.aqualight.application.aquarium.health.WaterParameterDefinitions
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementNormalizer
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementSelection
@@ -28,10 +30,10 @@ internal class DefaultWaterAnalysisOperations(
     private val evaluationPreparation: WaterAnalysisEvaluationPreparation?
 ) : WaterAnalysisOperations {
 
-    override fun analysesForTank(tankId: Long): Flow<List<WaterAnalysisSnapshot>> =
+    override fun historyPage(tankId: Long, cursor: WaterHistoryCursor?, newer: Boolean): Flow<WaterHistoryPage> =
         store.analysesForTankFlow(session.ownerUid, tankId).onStart { session.requireCurrent() }.map { analyses ->
             session.requireCurrent()
-            analyses.map { record -> record.toApplicationSnapshot() }
+            WaterAnalysisProtoPages.page(analyses, tankId, cursor, newer)
         }.withWaterReadFailures()
 
     override fun latestAnalysis(tankId: Long): Flow<WaterAnalysisSnapshot?> =

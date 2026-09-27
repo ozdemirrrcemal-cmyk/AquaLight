@@ -33,18 +33,24 @@ internal class WaterAnalysisRoomQueries(
         dao.record(owner, tankId, analysisId)?.toMigrationRecord()?.validatedSnapshot()
     }
 
-    fun page(owner: String, tankId: Long, after: WaterHistoryCursor?): Flow<WaterHistoryPage> = observe(owner) {
+    fun page(owner: String, tankId: Long, after: WaterHistoryCursor?, newer: Boolean = false): Flow<WaterHistoryPage> =
+        observe(owner) {
         require(tankId > 0L && (after == null || after.tankId == tankId))
-        val rows = if (after == null) dao.firstPage(owner, tankId) else
-            dao.pageAfter(owner, tankId, after.observedAtMillis, after.createdAtMillis, after.analysisId)
-        val last = rows.lastOrNull()
-        val hasNext = last != null && dao.hasOlder(owner, tankId, last.observedAtMillis,
-            last.createdAtMillis, last.analysisId)
-        WaterHistoryPage(rows.map { it.toMigrationRecord().validatedSnapshot() }, dao.countForTank(owner, tankId),
-            last?.takeIf { hasNext }?.let {
-                WaterHistoryCursor(tankId, it.observedAtMillis, it.createdAtMillis, it.analysisId)
-            })
+        require(after != null || !newer)
+        val rows = when {
+            after == null -> dao.firstPage(owner, tankId)
+            newer -> dao.pageBefore(owner, tankId, after.observedAtMillis, after.createdAtMillis,
+                after.analysisId).asReversed()
+            else -> dao.pageAfter(owner, tankId, after.observedAtMillis, after.createdAtMillis, after.analysisId)
+        }.ifEmpty { dao.firstPage(owner, tankId) }.map { it.toMigrationRecord().validatedSnapshot() }
+        val first = rows.firstOrNull()?.cursor()
+        val last = rows.lastOrNull()?.cursor()
+        WaterHistoryPage(rows, dao.countForTank(owner, tankId),
+            last?.takeIf { dao.hasOlder(owner, tankId, it.observedAtMillis, it.createdAtMillis, it.analysisId) },
+            first?.takeIf { dao.hasNewer(owner, tankId, it.observedAtMillis, it.createdAtMillis, it.analysisId) })
     }
+
+    private fun WaterAnalysisSnapshot.cursor() = WaterHistoryCursor(tankId, measuredAtMillis, createdAtMillis, id)
 
     private fun <T> observe(owner: String, query: () -> T): Flow<T> = invalidations().map {
         withContext(dispatcher) {

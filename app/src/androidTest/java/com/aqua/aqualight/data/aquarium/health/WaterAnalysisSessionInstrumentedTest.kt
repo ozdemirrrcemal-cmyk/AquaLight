@@ -100,7 +100,7 @@ class WaterAnalysisSessionInstrumentedTest {
             val currentOperations = DefaultWaterAnalysisOperations(fixture.store, current, evaluationPreparation = null)
             assertEquals(id, currentOperations.analysis(tankId, id).first()?.id)
             currentOperations.deleteAnalysis(tankId, id)
-            assertTrue(currentOperations.analysesForTank(tankId).first().isEmpty())
+            assertTrue(currentOperations.historyPage(tankId).first().records.isEmpty())
         }
     }
 
@@ -142,8 +142,8 @@ class WaterAnalysisSessionInstrumentedTest {
                 val received = mutableListOf<Long>()
                 val collector = launch {
                     cancelled.complete(runCatching {
-                        oldOperations.analysesForTank(firstTank).collect { records ->
-                            received += records.map { it.id }
+                        oldOperations.historyPage(firstTank).collect { records ->
+                            received += records.records.map { it.id }
                             firstEmission.complete(Unit)
                         }
                     }.exceptionOrNull())
@@ -159,7 +159,7 @@ class WaterAnalysisSessionInstrumentedTest {
                 UserDataScope.withOwnerUid(fixture.otherOwner) {
                     val firstOwnerRecords = fixture.store.analysesForOwnerFlow(fixture.owner).first()
                     assertEquals(listOf(firstId), firstOwnerRecords.map { it.id })
-                    assertEquals(listOf(secondId), newOperations.analysesForTank(secondTank).first().map { it.id })
+                    assertEquals(listOf(secondId), newOperations.historyPage(secondTank).first().records.map { it.id })
                 }
             }
         }
@@ -211,10 +211,10 @@ class WaterAnalysisSessionInstrumentedTest {
             fixture.archive.begin(fixture.owner, setOf(tankId))
             assertTrue(runCatching { operations.saveAnalysis(input(tankId)) }.isFailure)
             assertTrue(runCatching { operations.deleteAnalysis(tankId, id) }.isFailure)
-            assertEquals(1, operations.analysesForTank(tankId).first().size)
+            assertEquals(1, operations.historyPage(tankId).first().records.size)
             fixture.archive.markCommitted(fixture.owner)
             operations.deleteAnalysis(tankId, id)
-            assertTrue(operations.analysesForTank(tankId).first().isEmpty())
+            assertTrue(operations.historyPage(tankId).first().records.isEmpty())
         }
     }
 

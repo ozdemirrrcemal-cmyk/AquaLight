@@ -1,9 +1,9 @@
 # AquaLight — Production Water Analysis Implementation Checklist
 
-## Current acceptance status — 27 September 2026, 21:24 Europe/Istanbul
+## Current acceptance status — 27 September 2026, 22:03 Europe/Istanbul
 
 The accepted K01–K18 contract decisions are recorded. Implementation and release
-acceptance are incomplete. Current U/S/C/M/E rows total **9 closed, 25 open**;
+acceptance are incomplete. Current U/S/C/M/E rows total **10 closed, 24 open**;
 these are acceptance counts, not a percentage of code implemented.
 
 | Current gate | Closed | Open |
@@ -11,7 +11,7 @@ these are acceptance counts, not a percentage of code implemented.
 | U — Baseline and architecture | 4 | 2 |
 | S — Semantics and catalog foundation | 4 | 5 |
 | C — Verified named products | 0 | 5 |
-| M — Migration and scalable history | 1 | 6 |
+| M — Migration and scalable history | 2 | 5 |
 | E — End-to-end acceptance | 0 | 7 |
 | A — Algae Control | 0 | 7 |
 | P — Plant Health | 0 | 6 |
@@ -22,14 +22,14 @@ must not be added to the current counts or treated as independent completed
 features. The dated continuation notes below document intermediate states;
 the individually evidenced checkbox rows are authoritative for closure.
 
-Room v3 archive/identity indexing and startup recovery ordering have passed
-local verification but production still uses Proto. On uploaded `1a0f00b2`,
-Android CI `36338668121` and APK `36338668183` passed. API 27/API 36 run
-`36338668127` failed in a historical-schema test fixture, and CodeQL workflow
-`36338668208` stopped at release-smoke lint before analysis. The fixes passed local
-Android-test compilation, release-smoke lint and unchanged-baseline Detekt;
-five-screen runtime navigation and the E gate remain unaccepted pending new CI.
-See `WATER_ANALYSIS_NAVIGATION_REGRESSION.md` for exact failures and boundaries.
+Room v3 archive/identity indexing, startup recovery and the five-screen central
+navigation smoke passed API 27/API 36 run `36340971240` on `9f80eb2d`: 163
+instrumentation tests passed on each API and the minified release smoke passed.
+Android CI `36340971220`, APK `36340971208`, dependency and Firebase guards passed.
+CodeQL workflow `36340971213` is still running. M.2 and the specific composition
+rows W7.1/W7.2 are now accepted with this evidence. E and the A/P/L gates remain
+open. The earlier failed run and its fixes remain recorded in
+`WATER_ANALYSIS_NAVIGATION_REGRESSION.md`.
 
 ## 0. Rebaseline — 27 September 2026
 
@@ -157,10 +157,10 @@ staging are implemented. Local evidence and unclosed integration gates are in
 `WATER_ANALYSIS_ROOM_TRANSACTIONS.md`; production composition still uses Proto.
 
 - [x] M.1 Accepted on `6203e1cb`: Android CI run 36319320876 and Installable Debug APK run 36319320867 passed. Local reader/serializer tests and existing-baseline Detekt passed. `WATER_ANALYSIS_LEGACY_FORMAT_INVENTORY.md` inventories Proto v1/v2/v3 and backup/export v1/v2 from source history. `WaterAnalysisLegacyReader` preserves raw entries and unknown wire fields, distinguishes unsupported schema/value from corrupt data and I/O, and is the serializer's production read path. Populated migration and complete vocabulary tests are in `WaterAnalysisLegacyReaderTest`; archive-history restoration remains M.7.
-- [ ] M.2 Room schema and durable batch journal implemented; device acceptance pending. Android CI `36321146886`, Debug APK `36321146873` and dependency integrity `36321146842` passed on `e046a82b`. Room 2.7.0 generated schema v1 and compiled the Java declarations; Kotlin migration and Android test sources compiled locally. Five tests execute the generated schema and actual DAO SQL against SQLite. `WaterAnalysisDatabase` has composite owner/event identity, owner/request uniqueness and the owner/tank/time/ID index. Preserve `(ownerUid, tankId, analysisId)`, observed/created times, raw selection/value and source metadata exactly; no historic rule result is invented.
+- [x] M.2 Room v3 schema and owner/event/request identity are accepted on `9f80eb2d`: Android CI `36340971220` and API 27/API 36 run `36340971240` passed. `WaterRoomSchemaUpgradeInstrumentedTest`, `WaterAnalysisRoomMigrationInstrumentedTest`, `WaterAnalysisRoomPagingInstrumentedTest` and `WaterRoomArchiveInstrumentedTest` execute actual Room migrations and verify retained raw payloads, timestamps, source metadata and composite owner/tank/event indexes. Live cutover is separately open under M.3–M.7.
 - [ ] M.3 Migration staging implemented: `WaterAnalysisMigrationSource` fingerprints the original stream and verifies exact owner-scoped record bytes; `WaterAnalysisRoomMigration` atomically commits 50-row batches with checkpoints, then verifies count/checksum before marking staging verified. Local source tests cover 10,000 records and mutation rejection. Room restart/transaction-failure tests are added; device acceptance and live-store cutover remain open. Do not erase Proto before verified cutover and rollback/recovery policy. Surface unsupported schema/I/O failure distinctly.
 - [ ] M.4 Atomic new event commit includes raw/canonical measurements, source/profile revision, context, assessment and rule/catalog versions, with `(ownerUid, requestId)` unique retry semantics.
-- [ ] M.5 Room DAO provides owner/tank-targeted detail/latest/delete and 50-item indexed keyset paging. Added Android tests cover 10,000 equal-time rows, backdating, identity constraints and query plans; execution, live Room/history-page binding and device budget acceptance remain open. The application/UI now requests one latest event and exact tank/event detail/delete; those legacy Proto projections run on IO, but the Proto file and history list remain unbounded. Test 10,000 records and bounded collectors/memory; no silent retention or overwrite.
+- [ ] M.5 Room DAO owner/tank-targeted detail/latest/delete and indexed 50-item keyset queries passed API 27/API 36 on `9f80eb2d`. The subsequent UI uses a saved single cursor and bounded newer/older pages, with reverse SQL and deleted-page recovery tests. Live Room binding, this continuation's device execution and measured memory/latency budget remain open; no history is truncated or silently retained away.
 - [ ] M.6 Extend tank deletion gate/journal, orphan repair, owner logout/account deletion and explicit backup/export/restore (including preferences and migration staging). Cover crash/cancellation at every durable boundary. Shared owner/tank ordering covers live Proto create/exact delete, cleaner rollback and recovery. Live analysis writes now require an immutable session-generation lease and await durable DataStore acknowledgement before releasing the session/tank locks, including caller cancellation. Room commit, owner-wide and archive integration remain open. See `WATER_ANALYSIS_ROOM_MIGRATION.md`.
 - [ ] M.7 Live Proto archive v3 now includes checked history, v1/v2 zero-history compatibility, immutable source/ID remap, repeat-import deduplication and durable restore rollback. Whole restore/delete coordinators share an owner gate with pending-journal guards and local concurrency tests. See `WATER_ANALYSIS_ARCHIVE_ROUND_TRIP.md` for named tests and limits. The bounded Room archive backend and schema v3 import index are staged; live Room/migration/preference integration, tank-duplicate regression and device/minified concurrency acceptance remain open; incomplete history is rejected.
 
@@ -467,8 +467,8 @@ WaterAnalysisRecord içindeki kalıcı owner kimliğinin UI’a açılması gere
 
 ### W7 — Composition, ViewModel ve lifecycle
 
-- [ ] W7.1 Dependencies committed OwnerDependencyGraph/OwnerViewModelFactory üzerinden kurulsun; releaseSmoke karşılığı aynı application yolunu kullansın.
-- [ ] W7.2 UI/VM’de repository, DataStore, JSON reader, device provider veya Firebase construction/lookup olmasın.
+- [x] W7.1 Dependencies committed OwnerDependencyGraph/OwnerViewModelFactory üzerinden kurulu; releaseSmoke aynı application operations yolunu kullanır. `9f80eb2d`, composition guard ve API 27/API 36 run `36340971240` ile beş gerçek ekranın merkezi factory üzerinden oluşturulması doğrulandı.
+- [x] W7.2 UI/VM repository, DataStore, JSON reader, device provider veya Firebase oluşturmaz/aramaz. UI dependency, Water Analysis boundary ve composition guards Android CI `36340971220` üzerinde geçti; merkezi factory zorunluluğu mevcut guard içine eklendi.
 - [ ] W7.3 K14 §29.1: dashboard, add draft, history, detail/delete ayrı route-scoped ViewModel/state holder kullansın; application operations ortak, owner/tank/route kimliği immutable.
 - [ ] W7.4 Safe Args tankId/analysisId ve SavedStateHandle draft text, source/test, sample instant/offset ve requestId saklasın; tüm geçmiş Bundle'a girmez.
 - [ ] W7.5 Lifecycle-aware collection, tank değişiminde eski akışın iptali, view binding temizliği ve navigation event tüketimi sağlansın.

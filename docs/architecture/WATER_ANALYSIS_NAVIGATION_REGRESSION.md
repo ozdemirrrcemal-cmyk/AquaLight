@@ -57,3 +57,18 @@ navigation/composition/UI-dependency/Water Analysis/session guards passed. A new
 comparison through `c6951c4c` and these test-only fixes still finds no production
 navigation or tank pager changes. Android instrumentation and minified route
 execution still require the new CI result.
+
+### Accepted runtime result on `9f80eb2d`
+
+Run `36340971240` passed on API 27 (job `108680846871`) and API 36
+(job `108680846786`). Each executed 163 instrumentation tests without failures
+or skips, followed by the successful minified release-smoke script. The
+`WaterAnalysisNavigationSmoke` call precedes the required pass marker, so all
+five Fragment factory/route checks, real-graph forward actions, stale navigation
+rejection and back-stack identity checks ran successfully on both APIs.
+
+Android CI `36340971220`, APK `36340971208`, dependency integrity and Firebase
+guards also passed. CodeQL is still running at this evidence checkpoint. This
+accepts the reported navigation regression and the tested Room schema scenarios;
+it does not close physical Cooling, full health-feature UI/accessibility acceptance
+or the subsequently changed paging/cutover source.

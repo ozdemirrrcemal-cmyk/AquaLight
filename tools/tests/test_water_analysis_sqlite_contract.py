@@ -77,6 +77,20 @@ class WaterAnalysisSqliteContractTest(unittest.TestCase):
         self.assertTrue(any('USING INDEX index_water_analysis_ownerUid_tankId' in d for d in descriptions))
         self.assertFalse(any('TEMP B-TREE' in d for d in descriptions))
 
+    def test_reverse_page_is_nearest_fifty_and_uses_the_same_order_index(self):
+        self.database.executemany(
+            'INSERT INTO water_analysis VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [('owner', identity, 2, 100, 100, None, b'raw') for identity in range(1, 10_001)],
+        )
+        parameters = dict(ownerUid='owner', tankId=2, observedAtMillis=100,
+                          createdAtMillis=100, analysisId=100)
+        rows = self.query('pageBefore', **parameters).fetchall()
+        self.assertEqual(list(range(101, 151)), [r['analysisId'] for r in rows])
+        self.assertEqual(1, self.query('hasNewer', **parameters).fetchone()[0])
+        plan = self.database.execute('EXPLAIN QUERY PLAN ' + self.queries['pageBefore'], parameters).fetchall()
+        self.assertTrue(any('USING INDEX index_water_analysis_ownerUid_tankId' in r['detail'] for r in plan))
+        self.assertFalse(any('TEMP B-TREE' in r['detail'] for r in plan))
+
     def test_backdating_ties_exact_delete_and_latest_are_owner_tank_scoped(self):
         self.insert(1)
         self.insert(2, created=101)

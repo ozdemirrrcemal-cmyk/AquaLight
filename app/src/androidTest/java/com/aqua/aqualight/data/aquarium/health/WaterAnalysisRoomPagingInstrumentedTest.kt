@@ -13,6 +13,8 @@ import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 
 @RunWith(AndroidJUnit4::class)
 class WaterAnalysisRoomPagingInstrumentedTest {
@@ -74,6 +76,26 @@ class WaterAnalysisRoomPagingInstrumentedTest {
         val legacy = listOf(WaterRoomFixture.record(2), WaterRoomFixture.record(3))
         dao.insert(legacy.map(StoredWaterAnalysis::toMigrationEntity))
         assertEquals(3L, dao.countForOwner(WaterRoomFixture.OWNER))
+    }
+
+    @Test
+    fun observablePagesNavigateBothWaysAndRecoverAfterTheSelectedPageIsDeleted() = runBlocking {
+        val source = WaterRoomFixture.source((1L..125L).map(WaterRoomFixture::record))
+        WaterAnalysisRoomActivation(database).activate(source)
+        val queries = WaterAnalysisRoomQueries(database)
+        val owner = WaterRoomFixture.OWNER
+        val tank = WaterRoomFixture.TANK_ID
+        val first = queries.page(owner, tank, null).first()
+        val middle = queries.page(owner, tank, first.next).first()
+        val last = queries.page(owner, tank, middle.next).first()
+        assertEquals(listOf(50, 50, 25), listOf(first, middle, last).map { it.records.size })
+        assertEquals(middle.records, queries.page(owner, tank, last.previous, newer = true).first().records)
+        assertEquals(first.records, queries.page(owner, tank, middle.previous, newer = true).first().records)
+        last.records.forEach { dao.delete(owner, tank, it.id) }
+        val recovered = queries.page(owner, tank, middle.next).first()
+        assertEquals(first.records, recovered.records)
+        assertEquals(100L, recovered.totalCount)
+        assertNull(recovered.previous)
     }
 
     @Test

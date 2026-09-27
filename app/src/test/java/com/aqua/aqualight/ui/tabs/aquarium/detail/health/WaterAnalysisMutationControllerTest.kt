@@ -3,6 +3,8 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisInput
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisOperations
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisSnapshot
+import com.aqua.aqualight.application.aquarium.health.WaterHistoryCursor
+import com.aqua.aqualight.application.aquarium.health.WaterHistoryPage
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.flowOf
@@ -90,7 +92,8 @@ private class MutationOperations : WaterAnalysisOperations {
     var failure: Exception? = null
     val requests = mutableListOf<String>()
     val deletedKeys = mutableListOf<Pair<Long, Long>>()
-    override fun analysesForTank(tankId: Long) = flowOf(emptyList<WaterAnalysisSnapshot>())
+    override fun historyPage(tankId: Long, cursor: WaterHistoryCursor?, newer: Boolean) =
+        flowOf(WaterHistoryPage(emptyList(), 0, null))
     override fun latestAnalysis(tankId: Long) = flowOf<WaterAnalysisSnapshot?>(null)
     override fun analysis(tankId: Long, analysisId: Long) = flowOf<WaterAnalysisSnapshot?>(null)
     override suspend fun saveAnalysis(input: WaterAnalysisInput): Long {

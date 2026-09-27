@@ -49,6 +49,17 @@ public interface WaterAnalysisDao {
     List<WaterAnalysisEntity> pageAfter(String ownerUid, long tankId, long observedAtMillis,
             long createdAtMillis, long analysisId);
 
+    @Query("SELECT * FROM water_analysis WHERE ownerUid = :ownerUid AND tankId = :tankId AND "
+            + "(observedAtMillis, createdAtMillis, analysisId) > (:observedAtMillis, :createdAtMillis, :analysisId) "
+            + "ORDER BY observedAtMillis ASC, createdAtMillis ASC, analysisId ASC LIMIT 50")
+    List<WaterAnalysisEntity> pageBefore(String ownerUid, long tankId, long observedAtMillis,
+            long createdAtMillis, long analysisId);
+
+    @Query("SELECT EXISTS(SELECT 1 FROM water_analysis WHERE ownerUid = :ownerUid AND tankId = :tankId "
+            + "AND (observedAtMillis, createdAtMillis, analysisId) > "
+            + "(:observedAtMillis, :createdAtMillis, :analysisId) LIMIT 1)")
+    boolean hasNewer(String ownerUid, long tankId, long observedAtMillis, long createdAtMillis, long analysisId);
+
     @Query("SELECT EXISTS(SELECT 1 FROM water_analysis WHERE ownerUid = :ownerUid AND tankId = :tankId "
             + "AND (observedAtMillis, createdAtMillis, analysisId) < "
             + "(:observedAtMillis, :createdAtMillis, :analysisId) LIMIT 1)")

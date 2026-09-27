@@ -30,6 +30,28 @@ scenarios are compiled, not locally executed; M.5 and E acceptance remain open.
 
 ## Schema and authority
 
+### Bounded UI continuation
+
+History now requests 50-record pages through `WaterAnalysisOperations`, displaying
+the store total separately from the current page size. Newer/older controls reuse
+the existing button styles and record cards. A route saves only one ordering cursor
+and direction, so walking all history does not retain records or cursor stacks.
+An emptied page returns to the first existing page; deleted cursor rows remain
+valid ordering boundaries. The RecyclerView delays scroll-state restoration until
+records arrive. Navigation destinations and directions are unchanged.
+
+Room adds the reverse indexed query, returning the nearest 50 newer rows; both
+directions use one read transaction for page contents, total and availability.
+`WaterAnalysisProtoPagesTest` covers both directions, ordering, wrong tank and
+deleted pages. An added actual-Room instrumentation test covers round-trip page
+navigation and deletion recovery; the Python SQL contract verifies reverse query
+ordering and the index plan on 10,000 rows. Initial local verification passed
+1,946 JVM tests, 333 Python tests and Android/releaseSmoke compilation. Device
+execution of this continuation is separate from the successful `9f80eb2d` run.
+
+Production remains on Proto at this checkpoint: bounded UI output does not remove
+DataStore's whole-file decode. The live Room authority switch is the next gate.
+
 Room's processor generates schema v2. `MIGRATION_1_2` adds request tombstones and
 deletion staging without rewriting v1 event payloads. No destructive fallback is
 configured. The Android schema-upgrade test constructs the real exported v1

@@ -89,7 +89,7 @@ internal class WaterAnalysisNavigationSmoke(private val host: NavHostFragment) {
         // Every screen has already accessed its production delegate during onCreate/onViewCreated.
         // Provider retrieval here also verifies its instance survived a back-stack view recreation.
         return ViewModelProvider(fragment)[WaterAnalysisViewModel::class.java].also { model ->
-            model.analysesStateForTank(TANK_ID)
+            model.latestAnalysisState(TANK_ID)
             if (index == screens.lastIndex) model.analysisState(TANK_ID, ANALYSIS_ID)
         }
     }

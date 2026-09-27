@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="water_history_newer">Daha yeni kayıtlar</string>
+    <string name="water_history_older">Daha eski kayıtlar</string>
     <string name="water_analysis_loading">Analiz kayıtları yükleniyor…</string>
     <string name="water_analysis_read_failed">Analiz kayıtları yüklenemedi. Yeniden denemek için ekranı tekrar açın.</string>
     <string name="water_analysis_record_missing">Bu analiz kaydı bulunamadı.</string>

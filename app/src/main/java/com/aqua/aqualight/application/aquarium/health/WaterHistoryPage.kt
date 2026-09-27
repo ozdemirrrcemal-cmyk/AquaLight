@@ -2,7 +2,7 @@ package com.aqua.aqualight.application.aquarium.health
 
 import java.util.Collections
 
-/** Strictly older than this complete key; the cursor cannot be reused for a different tank. */
+/** Complete ordering key; a cursor cannot be reused for a different tank. */
 data class WaterHistoryCursor(
     val tankId: Long,
     val observedAtMillis: Long,
@@ -15,7 +15,8 @@ data class WaterHistoryCursor(
 class WaterHistoryPage(
     records: List<WaterAnalysisSnapshot>,
     val totalCount: Long,
-    val next: WaterHistoryCursor?
+    val next: WaterHistoryCursor?,
+    val previous: WaterHistoryCursor? = null
 ) {
     val records: List<WaterAnalysisSnapshot> = Collections.unmodifiableList(records.toList())
 

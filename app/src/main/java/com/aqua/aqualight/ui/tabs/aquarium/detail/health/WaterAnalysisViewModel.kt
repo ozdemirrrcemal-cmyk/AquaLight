@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisInput
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisOperations
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisSnapshot
+import com.aqua.aqualight.application.aquarium.health.WaterHistoryCursor
 import java.util.UUID
 
 /** Each fragment owns this instance and its immutable Safe Args route. */
@@ -18,6 +19,7 @@ class WaterAnalysisViewModel(
 ) : ViewModel() {
     private val tankId: Long = checkNotNull(savedStateHandle["tankId"])
     private val analysisId: Long? = savedStateHandle["analysisId"]
+    private val history by lazy { WaterAnalysisHistoryController(operations, savedStateHandle, tankId) }
     internal val mutations = WaterAnalysisMutationController(operations, viewModelScope)
     internal val requestId: String = savedStateHandle.get<String>("water_request_id")
         ?: UUID.randomUUID().toString().also { savedStateHandle["water_request_id"] = it }
@@ -27,10 +29,11 @@ class WaterAnalysisViewModel(
 
     init { require(tankId > 0 && (analysisId == null || analysisId > 0)) }
 
-    fun analysesStateForTank(tankId: Long): LiveData<WaterAnalysisLoadState<List<WaterAnalysisSnapshot>>> {
+    fun historyStateForTank(tankId: Long) = history.state.also {
         require(tankId == this.tankId)
-        return operations.analysesForTank(tankId).asWaterLoadState().asLiveData()
     }
+
+    fun showHistoryPage(cursor: WaterHistoryCursor, newer: Boolean) = history.show(cursor, newer)
 
     fun latestAnalysisState(tankId: Long): LiveData<WaterAnalysisLoadState<WaterAnalysisSnapshot?>> {
         require(tankId == this.tankId)

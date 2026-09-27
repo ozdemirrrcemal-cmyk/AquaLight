@@ -85,7 +85,7 @@
         android:textColor="@color/aqua_card_text_secondary"
         android:textSize="@dimen/aqua_text_size_body"
         android:visibility="gone"
-        app:layout_constraintBottom_toTopOf="@id/btnNewAnalysis"
+        app:layout_constraintBottom_toTopOf="@id/historyPageControls"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/historySummaryCard" />
@@ -101,10 +101,41 @@
         android:paddingEnd="@dimen/aqua_size_14"
         android:paddingBottom="@dimen/aqua_size_8"
         android:scrollbars="none"
-        app:layout_constraintBottom_toTopOf="@id/btnNewAnalysis"
+        app:layout_constraintBottom_toTopOf="@id/historyPageControls"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/historySummaryCard" />
+
+    <LinearLayout
+        android:id="@+id/historyPageControls"
+        android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/aqua_size_14"
+        android:orientation="horizontal"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@id/btnNewAnalysis"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnNewerAnalyses"
+            style="@style/Widget.Aqua.Button.Secondary"
+            android:layout_width="@dimen/aqua_size_0"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:minHeight="@dimen/aqua_size_48"
+            android:text="@string/water_history_newer" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnOlderAnalyses"
+            style="@style/Widget.Aqua.Button.Secondary"
+            android:layout_width="@dimen/aqua_size_0"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/aqua_size_8"
+            android:layout_weight="1"
+            android:minHeight="@dimen/aqua_size_48"
+            android:text="@string/water_history_older" />
+    </LinearLayout>
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnNewAnalysis"
