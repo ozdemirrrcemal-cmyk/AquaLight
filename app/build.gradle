@@ -282,6 +282,9 @@ android {
         test {
             resources.srcDir rootProject.file("protocol/fixtures")
         }
+        androidTest {
+            assets.srcDir file("schemas")
+        }
     }
 }
 

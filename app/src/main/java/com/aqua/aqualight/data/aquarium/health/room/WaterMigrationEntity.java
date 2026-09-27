@@ -9,6 +9,7 @@ import androidx.room.PrimaryKey;
 public final class WaterMigrationEntity {
     public static final int COPYING = 1;
     public static final int VERIFIED = 2;
+    public static final int ACTIVE = 3;
 
     @PrimaryKey @NonNull public final String ownerUid;
     @NonNull public final String sourceSha256;

@@ -1,0 +1,288 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 2,
+    "identityHash": "34da53be401d44317f8d3d492f9855ae",
+    "entities": [
+      {
+        "tableName": "water_analysis",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`ownerUid` TEXT NOT NULL, `analysisId` INTEGER NOT NULL, `tankId` INTEGER NOT NULL, `observedAtMillis` INTEGER NOT NULL, `createdAtMillis` INTEGER NOT NULL, `requestId` TEXT, `rawProto` BLOB NOT NULL, PRIMARY KEY(`ownerUid`, `analysisId`))",
+        "fields": [
+          {
+            "fieldPath": "ownerUid",
+            "columnName": "ownerUid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "analysisId",
+            "columnName": "analysisId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tankId",
+            "columnName": "tankId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "observedAtMillis",
+            "columnName": "observedAtMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAtMillis",
+            "columnName": "createdAtMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "requestId",
+            "columnName": "requestId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "rawProto",
+            "columnName": "rawProto",
+            "affinity": "BLOB",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "ownerUid",
+            "analysisId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_water_analysis_ownerUid_tankId_observedAtMillis_createdAtMillis_analysisId",
+            "unique": false,
+            "columnNames": [
+              "ownerUid",
+              "tankId",
+              "observedAtMillis",
+              "createdAtMillis",
+              "analysisId"
+            ],
+            "orders": [
+              "ASC",
+              "ASC",
+              "DESC",
+              "DESC",
+              "DESC"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_water_analysis_ownerUid_tankId_observedAtMillis_createdAtMillis_analysisId` ON `${TABLE_NAME}` (`ownerUid` ASC, `tankId` ASC, `observedAtMillis` DESC, `createdAtMillis` DESC, `analysisId` DESC)"
+          },
+          {
+            "name": "index_water_analysis_ownerUid_requestId",
+            "unique": true,
+            "columnNames": [
+              "ownerUid",
+              "requestId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_water_analysis_ownerUid_requestId` ON `${TABLE_NAME}` (`ownerUid`, `requestId`)"
+          }
+        ]
+      },
+      {
+        "tableName": "water_analysis_migration",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`ownerUid` TEXT NOT NULL, `sourceSha256` TEXT NOT NULL, `recordsSha256` TEXT NOT NULL, `expectedCount` INTEGER NOT NULL, `copiedCount` INTEGER NOT NULL, `lastAnalysisId` INTEGER NOT NULL, `state` INTEGER NOT NULL, PRIMARY KEY(`ownerUid`))",
+        "fields": [
+          {
+            "fieldPath": "ownerUid",
+            "columnName": "ownerUid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceSha256",
+            "columnName": "sourceSha256",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "recordsSha256",
+            "columnName": "recordsSha256",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "expectedCount",
+            "columnName": "expectedCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "copiedCount",
+            "columnName": "copiedCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastAnalysisId",
+            "columnName": "lastAnalysisId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "state",
+            "columnName": "state",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "ownerUid"
+          ]
+        }
+      },
+      {
+        "tableName": "water_analysis_request",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`ownerUid` TEXT NOT NULL, `requestId` TEXT NOT NULL, `analysisId` INTEGER NOT NULL, `payloadSha256` TEXT NOT NULL, PRIMARY KEY(`ownerUid`, `requestId`))",
+        "fields": [
+          {
+            "fieldPath": "ownerUid",
+            "columnName": "ownerUid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "requestId",
+            "columnName": "requestId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "analysisId",
+            "columnName": "analysisId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "payloadSha256",
+            "columnName": "payloadSha256",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "ownerUid",
+            "requestId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_water_analysis_request_ownerUid_analysisId",
+            "unique": true,
+            "columnNames": [
+              "ownerUid",
+              "analysisId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_water_analysis_request_ownerUid_analysisId` ON `${TABLE_NAME}` (`ownerUid`, `analysisId`)"
+          }
+        ]
+      },
+      {
+        "tableName": "water_analysis_delete_stage",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`ownerUid` TEXT NOT NULL, `tankId` INTEGER NOT NULL, `analysisId` INTEGER NOT NULL, `rawProto` BLOB NOT NULL, PRIMARY KEY(`ownerUid`, `tankId`, `analysisId`))",
+        "fields": [
+          {
+            "fieldPath": "ownerUid",
+            "columnName": "ownerUid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tankId",
+            "columnName": "tankId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "analysisId",
+            "columnName": "analysisId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rawProto",
+            "columnName": "rawProto",
+            "affinity": "BLOB",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "ownerUid",
+            "tankId",
+            "analysisId"
+          ]
+        }
+      },
+      {
+        "tableName": "water_analysis_delete_manifest",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`ownerUid` TEXT NOT NULL, `tankId` INTEGER NOT NULL, `transactionId` TEXT NOT NULL, `recordCount` INTEGER NOT NULL, `sha256` TEXT NOT NULL, `state` INTEGER NOT NULL, PRIMARY KEY(`ownerUid`, `tankId`))",
+        "fields": [
+          {
+            "fieldPath": "ownerUid",
+            "columnName": "ownerUid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tankId",
+            "columnName": "tankId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "transactionId",
+            "columnName": "transactionId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "recordCount",
+            "columnName": "recordCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sha256",
+            "columnName": "sha256",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "state",
+            "columnName": "state",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "ownerUid",
+            "tankId"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '34da53be401d44317f8d3d492f9855ae')"
+    ]
+  }
+}

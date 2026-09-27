@@ -107,3 +107,7 @@ advisories. No suppression, baseline expansion or disabled guard was added.
 Lint identified three quantity-wording issues and two obsolete resources; those
 were corrected without suppressions. The follow-up lint run is recorded separately
 when it completes. Device/instrumentation execution remains a distinct gate.
+
+Follow-up: debug lint completed successfully with no new errors. The later Room
+backend verification passed 1,911 debug tests and compiled the Android tests;
+see `WATER_ANALYSIS_ROOM_TRANSACTIONS.md` for exact scope and outstanding gates.

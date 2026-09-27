@@ -1,0 +1,74 @@
+package com.aqua.aqualight.data.aquarium.health
+
+import androidx.room.InvalidationTracker
+import com.aqua.aqualight.application.aquarium.health.WaterAnalysisSnapshot
+import com.aqua.aqualight.application.aquarium.health.WaterHistoryCursor
+import com.aqua.aqualight.application.aquarium.health.WaterHistoryPage
+import com.aqua.aqualight.data.aquarium.health.room.WaterAnalysisDatabase
+import java.util.concurrent.Callable
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
+
+/** All disk access is dispatched; observers are removed when their route collector is cancelled. */
+internal class WaterAnalysisRoomQueries(
+    private val database: WaterAnalysisDatabase,
+    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
+) {
+    private val dao = database.analyses()
+
+    fun latest(owner: String, tankId: Long): Flow<WaterAnalysisSnapshot?> = observe(owner) {
+        require(tankId > 0L)
+        dao.latest(owner, tankId)?.toMigrationRecord()?.validatedSnapshot()
+    }
+
+    fun record(owner: String, tankId: Long, analysisId: Long): Flow<WaterAnalysisSnapshot?> = observe(owner) {
+        require(tankId > 0L && analysisId > 0L)
+        dao.record(owner, tankId, analysisId)?.toMigrationRecord()?.validatedSnapshot()
+    }
+
+    fun page(owner: String, tankId: Long, after: WaterHistoryCursor?): Flow<WaterHistoryPage> = observe(owner) {
+        require(tankId > 0L && (after == null || after.tankId == tankId))
+        val rows = if (after == null) dao.firstPage(owner, tankId) else
+            dao.pageAfter(owner, tankId, after.observedAtMillis, after.createdAtMillis, after.analysisId)
+        val last = rows.lastOrNull()
+        val hasNext = last != null && dao.hasOlder(owner, tankId, last.observedAtMillis,
+            last.createdAtMillis, last.analysisId)
+        WaterHistoryPage(rows.map { it.toMigrationRecord().validatedSnapshot() }, dao.countForTank(owner, tankId),
+            last?.takeIf { hasNext }?.let {
+                WaterHistoryCursor(tankId, it.observedAtMillis, it.createdAtMillis, it.analysisId)
+            })
+    }
+
+    private fun <T> observe(owner: String, query: () -> T): Flow<T> = invalidations().map {
+        withContext(dispatcher) {
+            database.runInTransaction(Callable {
+                WaterAnalysisRoomCommit(database).requireActive(owner)
+                query()
+            })
+        }
+    }
+
+    private fun invalidations(): Flow<Unit> = callbackFlow {
+        val observer = object : InvalidationTracker.Observer("water_analysis", "water_analysis_migration") {
+            override fun onInvalidated(tables: Set<String>) { trySend(Unit) }
+        }
+        try {
+            withContext(dispatcher) { database.invalidationTracker.addObserver(observer) }
+            trySend(Unit)
+            awaitClose()
+        } finally {
+            // Also covers cancellation after registration but before dispatch returns to this builder.
+            database.invalidationTracker.removeObserver(observer)
+        }
+    }.buffer(Channel.CONFLATED)
+
+    private fun StoredWaterAnalysis.validatedSnapshot(): WaterAnalysisSnapshot =
+        WaterAnalysisStoreRules.validateStoredAnalysis(this).toRecordStrict().toApplicationSnapshot()
+}

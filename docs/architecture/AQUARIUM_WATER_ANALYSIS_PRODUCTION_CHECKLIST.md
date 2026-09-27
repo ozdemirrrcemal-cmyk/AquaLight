@@ -119,6 +119,11 @@ parallel with engine work, but a claim of a broad catalog requires C.1–C.5.
 
 ### M — Existing user-data migration and scalable history
 
+Room continuation: schema v2, atomic event/request commits, durable request tombstones,
+explicit ACTIVE cutover, dispatched bounded queries and checksum-verified deletion
+staging are implemented. Local evidence and unclosed integration gates are in
+`WATER_ANALYSIS_ROOM_TRANSACTIONS.md`; production composition still uses Proto.
+
 - [x] M.1 Accepted on `6203e1cb`: Android CI run 36319320876 and Installable Debug APK run 36319320867 passed. Local reader/serializer tests and existing-baseline Detekt passed. `WATER_ANALYSIS_LEGACY_FORMAT_INVENTORY.md` inventories Proto v1/v2/v3 and backup/export v1/v2 from source history. `WaterAnalysisLegacyReader` preserves raw entries and unknown wire fields, distinguishes unsupported schema/value from corrupt data and I/O, and is the serializer's production read path. Populated migration and complete vocabulary tests are in `WaterAnalysisLegacyReaderTest`; archive-history restoration remains M.7.
 - [ ] M.2 Room schema and durable batch journal implemented; device acceptance pending. Android CI `36321146886`, Debug APK `36321146873` and dependency integrity `36321146842` passed on `e046a82b`. Room 2.7.0 generated schema v1 and compiled the Java declarations; Kotlin migration and Android test sources compiled locally. Five tests execute the generated schema and actual DAO SQL against SQLite. `WaterAnalysisDatabase` has composite owner/event identity, owner/request uniqueness and the owner/tank/time/ID index. Preserve `(ownerUid, tankId, analysisId)`, observed/created times, raw selection/value and source metadata exactly; no historic rule result is invented.
 - [ ] M.3 Migration staging implemented: `WaterAnalysisMigrationSource` fingerprints the original stream and verifies exact owner-scoped record bytes; `WaterAnalysisRoomMigration` atomically commits 50-row batches with checkpoints, then verifies count/checksum before marking staging verified. Local source tests cover 10,000 records and mutation rejection. Room restart/transaction-failure tests are added; device acceptance and live-store cutover remain open. Do not erase Proto before verified cutover and rollback/recovery policy. Surface unsupported schema/I/O failure distinctly.

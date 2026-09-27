@@ -7,12 +7,12 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 ROOM = ROOT / 'app/src/main/java/com/aqua/aqualight/data/aquarium/health/room'
-SCHEMA = ROOT / 'app/schemas/com.aqua.aqualight.data.aquarium.health.room.WaterAnalysisDatabase/1.json'
+SCHEMA = ROOT / 'app/schemas/com.aqua.aqualight.data.aquarium.health.room.WaterAnalysisDatabase/2.json'
 
 
-def dao_queries():
+def dao_queries(filename="WaterAnalysisDao.java"):
     queries = {}
-    source = (ROOM / 'WaterAnalysisDao.java').read_text()
+    source = (ROOM / filename).read_text()
     for match in re.finditer(r'@Query\((.*?)\)\s+[\w<>]+\s+(\w+)\(', source, re.S):
         queries[match[2]] = ''.join(json.loads(token) for token in re.findall(r'"(?:[^"\\]|\\.)*"', match[1]))
     return queries
@@ -29,6 +29,7 @@ class WaterAnalysisSqliteContractTest(unittest.TestCase):
             for index in entity.get('indices', []):
                 self.database.execute(index['createSql'].replace('${TABLE_NAME}', table))
         self.queries = dao_queries()
+        self.deletions = dao_queries("WaterDeletionDao.java")
 
     def tearDown(self):
         self.database.close()
@@ -106,6 +107,103 @@ class WaterAnalysisSqliteContractTest(unittest.TestCase):
                                   ('owner', 'source', 'records', 1, 1, 1, 1))
         self.assertEqual(0, self.query('countForOwner', ownerUid='owner').fetchone()[0])
         self.assertIsNone(self.query('migration', ownerUid='owner').fetchone())
+
+    def test_request_tombstone_survives_delete_and_prevents_identity_reuse(self):
+        self.insert(91, request='stable-request')
+        self.database.execute('INSERT INTO water_analysis_request VALUES (?, ?, ?, ?)',
+                              ('owner', 'stable-request', 91, 'payload-hash'))
+        self.query('delete', ownerUid='owner', tankId=2, analysisId=91)
+        request = self.query('request', ownerUid='owner', requestId='stable-request').fetchone()
+        self.assertEqual(91, request['analysisId'])
+        self.assertEqual(91, self.query('lastAllocatedId', ownerUid='owner').fetchone()[0])
+        self.assertIsNone(self.query('request', ownerUid='foreign', requestId='stable-request').fetchone())
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.database.execute('INSERT INTO water_analysis_request VALUES (?, ?, ?, ?)',
+                                  ('owner', 'stable-request', 92, 'changed'))
+
+    def test_migration_identity_floor_survives_deletion_of_legacy_rows_without_requests(self):
+        self.database.execute('INSERT INTO water_analysis_migration VALUES (?, ?, ?, ?, ?, ?, ?)',
+                              ('owner', 'source', 'records', 1, 1, 400, 3))
+        self.assertEqual(400, self.query('lastAllocatedId', ownerUid='owner').fetchone()[0])
+        self.assertEqual(0, self.query('lastAllocatedId', ownerUid='foreign').fetchone()[0])
+
+    def test_count_and_has_older_are_owner_tank_scoped_with_strict_full_cursor(self):
+        self.insert(1)
+        self.insert(2)
+        self.insert(3, owner='foreign')
+        self.insert(4, tank=3)
+        self.assertEqual(2, self.query('countForTank', ownerUid='owner', tankId=2).fetchone()[0])
+        scope = dict(ownerUid='owner', tankId=2, observedAtMillis=100, createdAtMillis=100)
+        self.assertEqual(1, self.query('hasOlder', **scope, analysisId=2).fetchone()[0])
+        self.assertEqual(0, self.query('hasOlder', **scope, analysisId=1).fetchone()[0])
+
+    def test_request_insert_failure_cannot_commit_a_raw_only_event(self):
+        self.database.execute("CREATE TRIGGER fail_request BEFORE INSERT ON water_analysis_request "
+                              "BEGIN SELECT RAISE(ABORT, 'request failure'); END")
+        with self.assertRaises(sqlite3.IntegrityError), self.database:
+            self.insert(1, request='request')
+            self.database.execute('INSERT INTO water_analysis_request VALUES (?, ?, ?, ?)',
+                                  ('owner', 'request', 1, 'hash'))
+        self.assertEqual(0, self.query('countForOwner', ownerUid='owner').fetchone()[0])
+
+    def test_ten_thousand_deletion_snapshots_page_without_touching_other_tanks(self):
+        self.database.executemany('INSERT INTO water_analysis VALUES (?, ?, ?, ?, ?, ?, ?)',
+                                  [('owner', i, 2, 100, 100, None, b'exact') for i in range(1, 10_001)])
+        self.insert(10_001, tank=3)
+        self.insert(1, owner='foreign')
+        scope = dict(ownerUid='owner', tankId=2)
+        self.database.execute(self.deletions['capture'], scope)
+        self.assertEqual(10_000, self.database.execute(self.deletions['count'], scope).fetchone()[0])
+        cursor, count = 0, 0
+        while True:
+            page = self.database.execute(self.deletions['page'], dict(**scope, afterId=cursor)).fetchall()
+            if not page:
+                break
+            self.assertLessEqual(len(page), 50)
+            self.assertEqual(list(range(cursor + 1, cursor + len(page) + 1)), [r['analysisId'] for r in page])
+            count += len(page)
+            cursor = page[-1]['analysisId']
+        self.assertEqual(10_000, count)
+        self.database.execute(self.deletions['removeEvents'], scope)
+        self.assertEqual(1, self.query('countForOwner', ownerUid='owner').fetchone()[0])
+        self.assertEqual(1, self.query('countForOwner', ownerUid='foreign').fetchone()[0])
+
+    def test_stage_manifest_failure_preserves_live_history_and_rolls_back_snapshot_rows(self):
+        self.insert(1)
+        self.database.commit()
+        self.database.execute("CREATE TRIGGER fail_stage BEFORE INSERT ON water_analysis_delete_manifest "
+                              "BEGIN SELECT RAISE(ABORT, 'staging failure'); END")
+        scope = dict(ownerUid='owner', tankId=2)
+        with self.assertRaises(sqlite3.IntegrityError), self.database:
+            self.database.execute(self.deletions['capture'], scope)
+            self.database.execute('INSERT INTO water_analysis_delete_manifest VALUES (?, ?, ?, ?, ?, ?)',
+                                  ('owner', 2, 'transaction', 1, 'checksum', 1))
+        self.assertEqual(1, self.query('countForOwner', ownerUid='owner').fetchone()[0])
+        self.assertEqual(0, self.database.execute(self.deletions['count'], scope).fetchone()[0])
+
+    def test_version_one_upgrade_executes_actual_migration_sql_and_keeps_raw_bytes(self):
+        old = sqlite3.connect(':memory:')
+        try:
+            v1 = json.loads(SCHEMA.with_name('1.json').read_text())['database']
+            for entity in v1['entities']:
+                table = entity['tableName']
+                old.execute(entity['createSql'].replace('${TABLE_NAME}', table))
+                for index in entity.get('indices', []):
+                    old.execute(index['createSql'].replace('${TABLE_NAME}', table))
+            old.execute('INSERT INTO water_analysis VALUES (?, ?, ?, ?, ?, ?, ?)',
+                        ('owner', 1, 2, 100, 100, None, b'unchanged raw event'))
+            source = (ROOM / 'WaterAnalysisDatabase.java').read_text()
+            for statement in re.findall(r'database\.execSQL\((.*?)\);', source, re.S):
+                sql = ''.join(json.loads(token) for token in re.findall(r'"(?:[^"\\]|\\.)*"', statement))
+                old.execute(sql)
+            self.assertEqual(b'unchanged raw event', old.execute('SELECT rawProto FROM water_analysis').fetchone()[0])
+            v2 = json.loads(SCHEMA.read_text())['database']
+            for entity in v2['entities']:
+                columns = old.execute('PRAGMA table_info(' + entity['tableName'] + ')').fetchall()
+                self.assertEqual([(f['columnName'], f['affinity'], int(f.get('notNull', False))) for f in entity['fields']],
+                                 [(r[1], r[2], r[3]) for r in columns])
+        finally:
+            old.close()
 
 
 if __name__ == '__main__':
