@@ -194,7 +194,7 @@ internal class WaterMeasurementMethodSheetBinder(
 
     private fun renderCanonicalInfo() {
         binding.canonicalInfoCard.isVisible =
-            WaterMeasurementCanonicalUi.hasCanonicalSemantics(state.parameterId)
+            WaterMeasurementCanonicalUi.hasCanonicalPreview(state.parameterId, state.selection)
         if (!binding.canonicalInfoCard.isVisible) return
         val canonicalBasis = WaterMeasurementCanonicalUi.canonicalBasis(state.parameterId)
         val canonicalUnit = WaterMeasurementCanonicalUi.canonicalUnit(state.parameterId)

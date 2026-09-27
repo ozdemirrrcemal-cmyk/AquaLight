@@ -25,6 +25,18 @@ object WaterMeasurementNormalizer {
         return canonicalValue(parameter, value, selection.basis, selection.unit)
     }
 
+    fun supportsCanonicalSource(
+        parameter: WaterParameter,
+        selection: WaterMeasurementSelection
+    ): Boolean {
+        if (selection.method != WaterMeasurementMethod.MANUAL || !hasCanonicalSemantics(parameter)) {
+            return false
+        }
+        val isCanonical = selection.basis == WaterParameterDefinitions.canonicalBasis(parameter) &&
+            selection.unit == WaterParameterDefinitions.canonicalUnit(parameter)
+        return isCanonical || ConversionKey(parameter, selection.basis, selection.unit) in conversions
+    }
+
     fun canonicalValue(
         parameter: WaterParameter,
         value: Double,

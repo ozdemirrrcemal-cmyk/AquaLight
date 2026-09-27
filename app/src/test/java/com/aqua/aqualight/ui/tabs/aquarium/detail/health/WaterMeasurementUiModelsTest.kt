@@ -18,6 +18,25 @@ class WaterMeasurementUiModelsTest {
     }
 
     @Test
+    fun unverifiedKitAndDigitalMethodsDoNotAdvertiseCanonicalResults() {
+        val manual = WaterMeasurementUiCatalog.defaultSelection(WaterTestParameterId.NITRATE)
+        assertTrue(WaterMeasurementCanonicalUi.hasCanonicalPreview(WaterTestParameterId.NITRATE, manual))
+        val otherKit = manual.copy(
+            method = WaterMeasurementMethodUi.TEST_KIT,
+            testKitId = WaterMeasurementUiCatalog.KIT_OTHER
+        )
+        assertFalse(WaterMeasurementCanonicalUi.hasCanonicalPreview(WaterTestParameterId.NITRATE, otherKit))
+        assertFalse(WaterMeasurementCanonicalUi.hasCanonicalPreview(
+            WaterTestParameterId.NITRATE,
+            manual.copy(method = WaterMeasurementMethodUi.DIGITAL)
+        ))
+        assertFalse(WaterMeasurementCanonicalUi.hasCanonicalPreview(
+            WaterTestParameterId.NITRATE,
+            manual.copy(basisId = WaterMeasurementUiCatalog.BASIS_NO3_N)
+        ))
+    }
+
+    @Test
     fun sensorMethodNeedsAnAssignedVerifiedSampleBeforeSaving() {
         val selection = WaterMeasurementUiCatalog.defaultSelection(WaterTestParameterId.PH)
             .copy(method = WaterMeasurementMethodUi.SENSOR)

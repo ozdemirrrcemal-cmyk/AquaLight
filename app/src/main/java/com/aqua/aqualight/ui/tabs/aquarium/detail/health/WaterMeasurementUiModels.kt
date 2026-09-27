@@ -149,6 +149,13 @@ internal object WaterMeasurementCanonicalUi {
     fun hasCanonicalSemantics(parameterId: WaterTestParameterId): Boolean =
         WaterMeasurementNormalizer.hasCanonicalSemantics(parameterId.toDomainParameter())
 
+    fun hasCanonicalPreview(
+        parameterId: WaterTestParameterId,
+        selection: WaterMeasurementSelectionUi
+    ): Boolean = selection.toValidDomainSelectionOrNull(parameterId)?.let { source ->
+        WaterMeasurementNormalizer.supportsCanonicalSource(parameterId.toDomainParameter(), source)
+    } ?: false
+
     fun canonicalBasis(parameterId: WaterTestParameterId): WaterMeasurementOptionUi =
         WaterMeasurementUiMapper.basisOption(
             WaterParameterDefinitions.canonicalBasis(parameterId.toDomainParameter())
