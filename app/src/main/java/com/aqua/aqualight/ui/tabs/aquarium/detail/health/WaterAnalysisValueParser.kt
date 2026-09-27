@@ -6,14 +6,15 @@ internal object WaterAnalysisValueParser {
     fun parse(raw: CharSequence): Double? {
         val trimmed = raw.toString().trim()
         if (!decimalPattern.matches(trimmed)) return null
-        val decimal = trimmed
+        return trimmed
             .replace(',', '.')
             .toBigDecimalOrNull()
-            ?: return null
-        val value = decimal.toDouble()
-        return value.takeIf { candidate ->
-            candidate.isFinite() && candidate >= 0.0 &&
-                (candidate != 0.0 || decimal.signum() == 0)
-        }
+            ?.let { decimal ->
+                val value = decimal.toDouble()
+                value.takeIf { candidate ->
+                    candidate.isFinite() && candidate >= 0.0 &&
+                        (candidate != 0.0 || decimal.signum() == 0)
+                }
+            }
     }
 }
