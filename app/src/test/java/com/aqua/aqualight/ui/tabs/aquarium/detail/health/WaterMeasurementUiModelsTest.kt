@@ -10,11 +10,11 @@ class WaterMeasurementUiModelsTest {
     @Test
     fun legacyAmbiguousMethodSheetDoesNotAdvertiseCanonicalResult() {
         assertFalse(
-            WaterMeasurementUiCatalog.hasCanonicalSemantics(
+            WaterMeasurementCanonicalUi.hasCanonicalSemantics(
                 WaterTestParameterId.AMMONIA_AMMONIUM
             )
         )
-        assertTrue(WaterMeasurementUiCatalog.hasCanonicalSemantics(WaterTestParameterId.NITRATE))
+        assertTrue(WaterMeasurementCanonicalUi.hasCanonicalSemantics(WaterTestParameterId.NITRATE))
     }
 
     @Test

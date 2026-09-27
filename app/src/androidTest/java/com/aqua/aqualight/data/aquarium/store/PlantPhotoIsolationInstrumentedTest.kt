@@ -10,6 +10,7 @@ import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCas
 import com.aqua.aqualight.application.notifications.NotificationRenderer
 import com.aqua.aqualight.application.notifications.NotificationScheduler
 import com.aqua.aqualight.data.aquarium.DefaultAquariumTankOperations
+import com.aqua.aqualight.data.aquarium.AquariumTankOperationDependencies
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
 import com.aqua.aqualight.data.aquarium.model.TankDraft
 import com.aqua.aqualight.data.aquarium.model.TankPlantTag
@@ -152,12 +153,15 @@ class PlantPhotoIsolationInstrumentedTest {
             cancelCareTaskReminder = { _, _ -> error("Unexpected notification access") },
             reconcileCareReminders = { error("Unexpected notification access") }
         ),
-        notificationPreferences = NotificationPreferenceUseCase(
-            repository = unused(NotificationPreferenceRepository::class.java),
-            permissionPolicy = unused(NotificationPermissionPolicy::class.java),
-            scheduler = unused(NotificationScheduler::class.java),
-            deviceUpdateWorkCoordinator = unused(DeviceUpdateNotificationWorkCoordinator::class.java),
-            renderer = unused(NotificationRenderer::class.java)
+        operationDependencies = AquariumTankOperationDependencies(
+            notificationPreferences = NotificationPreferenceUseCase(
+                repository = unused(NotificationPreferenceRepository::class.java),
+                permissionPolicy = unused(NotificationPermissionPolicy::class.java),
+                scheduler = unused(NotificationScheduler::class.java),
+                deviceUpdateWorkCoordinator = unused(DeviceUpdateNotificationWorkCoordinator::class.java),
+                renderer = unused(NotificationRenderer::class.java)
+            ),
+            deleteWaterAnalysesForTank = { error("Unexpected water analysis deletion") }
         )
     )
 

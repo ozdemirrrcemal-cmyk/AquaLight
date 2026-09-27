@@ -193,10 +193,10 @@ internal class WaterMeasurementMethodSheetBinder(
 
     private fun renderCanonicalInfo() {
         binding.tvCanonicalInfo.isVisible =
-            WaterMeasurementUiCatalog.hasCanonicalSemantics(state.parameterId)
+            WaterMeasurementCanonicalUi.hasCanonicalSemantics(state.parameterId)
         if (!binding.tvCanonicalInfo.isVisible) return
-        val canonicalBasis = WaterMeasurementUiCatalog.canonicalBasis(state.parameterId)
-        val canonicalUnit = WaterMeasurementUiCatalog.canonicalUnit(state.parameterId)
+        val canonicalBasis = WaterMeasurementCanonicalUi.canonicalBasis(state.parameterId)
+        val canonicalUnit = WaterMeasurementCanonicalUi.canonicalUnit(state.parameterId)
         binding.tvCanonicalInfo.text = if (canonicalUnit == null) {
             fragment.getString(
                 R.string.water_measurement_canonical_format_without_unit,

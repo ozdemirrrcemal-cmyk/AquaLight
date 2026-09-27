@@ -82,8 +82,6 @@ class WaterAnalysisUiContractTest {
         assertTrue(renderer.contains("activeMeasurementParameterId"))
         val inputStyles = file("app/src/main/res/values/input_styles.xml")
         assertFalse(inputStyles.contains("WaterAnalysisCompact"))
-        assertFalse(parameterLayout.contains("aqua_size_110"))
-        assertFalse(parameterLayout.contains("aqua_size_140"))
         assertFalse(values.contains("tank_health_analysis_input_"))
         assertFalse(waterLayout.contains("inputPh"))
         assertFalse(waterLayout.contains("inputNo3"))

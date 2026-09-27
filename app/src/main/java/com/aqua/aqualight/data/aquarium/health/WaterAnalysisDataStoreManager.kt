@@ -26,18 +26,18 @@ internal class WaterAnalysisDataStoreManager(
                 .analysesList
                 .filter(StoredWaterAnalysis::belongsToCurrentUser)
                 .map(StoredWaterAnalysis::toRecordStrict)
-                .let(WaterAnalysisStoreRules::newestFirst)
+                .let(WaterAnalysisIdentityRules::newestFirst)
         }
 
     fun analysesForTankFlow(tankId: Long): Flow<List<WaterAnalysisRecord>> {
-        WaterAnalysisStoreRules.requirePositive("tankId", tankId)
+        WaterAnalysisIdentityRules.requirePositive("tankId", tankId)
         return analysesFlow.map { analyses ->
             analyses.filter { record -> record.tankId == tankId }
         }
     }
 
     fun analysisFlow(analysisId: Long): Flow<WaterAnalysisRecord?> {
-        WaterAnalysisStoreRules.requirePositive("analysisId", analysisId)
+        WaterAnalysisIdentityRules.requirePositive("analysisId", analysisId)
         return analysesFlow.map { analyses ->
             analyses.firstOrNull { record -> record.id == analysisId }
         }
@@ -50,14 +50,14 @@ internal class WaterAnalysisDataStoreManager(
 
         appContext.waterAnalysesDataStore.updateData { currentStore ->
             requireOwnerScope(ownerUid)
-            val replayId = WaterAnalysisStoreRules.replayId(currentStore, ownerUid, draft)
+            val replayId = WaterAnalysisIdentityRules.replayId(currentStore, ownerUid, draft)
             if (replayId != null) {
                 createdId = replayId
                 return@updateData currentStore
             }
             val now = System.currentTimeMillis()
             val record = WaterAnalysisRecord(
-                id = WaterAnalysisStoreRules.nextUniqueId(
+                id = WaterAnalysisIdentityRules.nextUniqueId(
                     current = currentStore.analysesList,
                     nowMillis = now
                 ),
@@ -85,7 +85,7 @@ internal class WaterAnalysisDataStoreManager(
     }
 
     suspend fun deleteAnalysis(analysisId: Long) {
-        WaterAnalysisStoreRules.requirePositive("analysisId", analysisId)
+        WaterAnalysisIdentityRules.requirePositive("analysisId", analysisId)
         val ownerUid = UserDataScope.requireCurrentUid()
         appContext.waterAnalysesDataStore.updateData { currentStore ->
             requireOwnerScope(ownerUid)
@@ -98,7 +98,7 @@ internal class WaterAnalysisDataStoreManager(
     }
 
     suspend fun deleteAnalysesForTank(tankId: Long) {
-        WaterAnalysisStoreRules.requirePositive("tankId", tankId)
+        WaterAnalysisIdentityRules.requirePositive("tankId", tankId)
         val ownerUid = UserDataScope.requireCurrentUid()
         appContext.waterAnalysesDataStore.updateData { currentStore ->
             requireOwnerScope(ownerUid)
@@ -146,7 +146,7 @@ internal class WaterAnalysisDataStoreManager(
     }
 
     private suspend fun requireTankExistsForOwner(ownerUid: String, tankId: Long) {
-        WaterAnalysisStoreRules.requirePositive("tankId", tankId)
+        WaterAnalysisIdentityRules.requirePositive("tankId", tankId)
         if (tankStore.tanksSnapshotForOwner(ownerUid).none { tank -> tank.id == tankId }) {
             throw StoreInvariantViolation(
                 "Water analysis references a tank that does not exist for the active owner."

@@ -25,4 +25,13 @@ class WaterTankMeasurementPolicyTest {
         assertNull(WaterTankMeasurementPolicy.scopeFor(""))
         assertNull(WaterTankMeasurementPolicy.scopeFor("Freshwater"))
     }
+
+    @Test
+    fun everyLegacyParameterIsExplicitlyVisibleInAtLeastOneTankScope() {
+        val visible = AquariumTankTaxonomy.tankTypeCodes.flatMap { type ->
+            val scope = requireNotNull(WaterTankMeasurementPolicy.scopeFor(type))
+            scope.recommended + scope.additional
+        }.toSet()
+        assertEquals(WaterParameter.entries.toSet(), visible)
+    }
 }

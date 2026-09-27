@@ -30,9 +30,6 @@ internal data class WaterMeasurementOptionUi(
 
 internal object WaterMeasurementUiCatalog {
 
-    fun hasCanonicalSemantics(parameterId: WaterTestParameterId): Boolean =
-        WaterMeasurementNormalizer.hasCanonicalSemantics(parameterId.toDomainParameter())
-
     fun defaultSelection(parameterId: WaterTestParameterId): WaterMeasurementSelectionUi =
         WaterMeasurementUiMapper.toUiSelection(
             WaterMeasurementCatalog.defaultSelection(parameterId.toDomainParameter())
@@ -109,17 +106,6 @@ internal object WaterMeasurementUiCatalog {
             .map(WaterMeasurementUiMapper::unitOption)
     }
 
-    fun canonicalBasis(parameterId: WaterTestParameterId): WaterMeasurementOptionUi =
-        WaterMeasurementUiMapper.basisOption(
-            WaterParameterDefinitions.canonicalBasis(parameterId.toDomainParameter())
-        )
-
-    fun canonicalUnit(parameterId: WaterTestParameterId): WaterMeasurementOptionUi? =
-        WaterParameterDefinitions
-            .canonicalUnit(parameterId.toDomainParameter())
-            .takeUnless { unit -> unit == WaterMeasurementUnit.NONE }
-            ?.let(WaterMeasurementUiMapper::unitOption)
-
     const val OPTION_NONE = "none"
     const val KIT_SALIFERT_NITRATE = WaterMeasurementCatalog.SALIFERT_NITRATE_TEST_KIT_ID
     const val KIT_OTHER = WaterMeasurementCatalog.OTHER_TEST_KIT_ID
@@ -155,6 +141,22 @@ internal object WaterMeasurementUiCatalog {
     const val UNIT_PPT = "ppt"
     const val UNIT_MEQ_L = "meq_l"
     const val UNIT_PPM_CACO3 = "ppm_caco3"
+}
+
+internal object WaterMeasurementCanonicalUi {
+    fun hasCanonicalSemantics(parameterId: WaterTestParameterId): Boolean =
+        WaterMeasurementNormalizer.hasCanonicalSemantics(parameterId.toDomainParameter())
+
+    fun canonicalBasis(parameterId: WaterTestParameterId): WaterMeasurementOptionUi =
+        WaterMeasurementUiMapper.basisOption(
+            WaterParameterDefinitions.canonicalBasis(parameterId.toDomainParameter())
+        )
+
+    fun canonicalUnit(parameterId: WaterTestParameterId): WaterMeasurementOptionUi? =
+        WaterParameterDefinitions
+            .canonicalUnit(parameterId.toDomainParameter())
+            .takeUnless { unit -> unit == WaterMeasurementUnit.NONE }
+            ?.let(WaterMeasurementUiMapper::unitOption)
 }
 
 internal fun WaterMeasurementSelectionUi.toValidDomainSelectionOrNull(

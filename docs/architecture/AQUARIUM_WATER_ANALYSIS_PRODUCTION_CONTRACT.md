@@ -23,18 +23,20 @@ verification separately. Do not mark a decision complete as an implementation.
 
 ### 0.1 Verified starting point
 
-| Area | Present on `ui-flow` | Missing or incompatible with production contract |
+| Area | Production branch implementation | Missing or incompatible with production contract |
 | --- | --- | --- |
-| Tank-aware form | The approved form and bottom sheets select method/kit/basis/unit across all **12** taxonomy codes. The profile matrix was moved to application `WaterTankMeasurementPolicy`; hidden typed values now remain in draft and are filtered from the active event. | No durable route-scoped draft/request ID or explicit source-change confirmation; the old nine-type matrix is historical. |
+| Tank-aware form | The approved form and bottom sheets select method/kit/basis/unit across all **12** taxonomy codes. The profile matrix lives in application `WaterTankMeasurementPolicy`; hidden values survive saved state and require confirmation before exclusion. Source changes with a typed value require explicit review. | No durable route-scoped draft holder or per-tank product preference; the old nine-type matrix is historical. |
 | Product catalog | `WaterMeasurementCatalog` defines **Salifert Nitrate** and generic `other`; basis/unit options and a small converter exist. | No broad verified JBL/Sera/API/Red Sea/Hanna catalog, versioned product/method profiles, sample matrix, detection/result modes, provenance revision or remembered product choice. A generic `other` or `MANUAL` selection must not be mistaken for a verified method. |
-| Domain/application | `WaterAnalysisOperations`, `WaterAnalysisPolicy`, `WaterParameterDefinitions`, `WaterMeasurementNormalizer` and UI mapping are wired through `OwnerViewModelFactory`. | Current `AMMONIA_AMMONIUM` and `NH3_NH4` are ambiguous versus accepted TAN and free NH3; marine KH is only relabelled alkalinity; GH is canonically dGH instead of mg/L as CaCO3; generic salinity ppt, iron scope, P→PO4 and raw-vs-derived semantics need the method-specific restrictions below. No assessment/context engine. |
-| Persistence | Owner-scoped `water_analyses.pb` Proto DataStore stores raw measurement, source selection and timestamps; save/history/detail/delete are connected; tank and account cleanup call the manager. | Normalized value is calculated on **read**, not committed with raw value; no assessment/context/rule snapshot, idempotency key or indexed paging. Store reads and writes validate/rebuild the full list. Existing valid user records require an explicit lossless migration before any Room cutover. |
-| UI output | Add, history and detail show stored values; Tank Health renders variable parameter cards from the latest single event. Date and time pickers now preserve the other component. | Status is merely “recorded”. Static water/maintenance/system and tank entry content still require source/empty/error audit. Sensor state is currently `Unavailable`; an entered SENSOR value cannot prove an authoritative Cooling sample. DST/time-zone cases remain unverified. |
+| Domain/application | Operations, policy, definitions, normalizer and UI mapping are wired. GH canonical mg/L as CaCO3 has a verified dGH conversion; bare NO3-N/P and ambiguous legacy ammonia/KH/salinity/SG/Fe/EC/TDS/CO2 remain source-native. | Distinct TAN/direct NH3, freshwater KH/marine alkalinity, method revisions and immutable context/assessment engine are absent. |
+| Persistence | Owner-scoped Proto stores raw selection/timestamps; save/history/detail/delete work. An additive v1→v2 reader preserves legacy fields, and a stable request UUID deduplicates identical live-record retries. Corrupt/unsupported files are left intact. | Canonical/context/assessment/rule snapshots are not committed; full-list reads/writes remain O(n). Room migration, durable delete journal, archive and request tombstones remain open. |
+| UI output | Add/history/detail show stored values; Tank Health renders one latest event and observed time. Unsupported static maintenance/system fixture cards are hidden; date/time component edits and source-change confirmation are wired. | “Recorded” is not an assessment. Entry card and other static content need audit; physical Cooling sensor is unavailable and new SENSOR inputs are blocked. DST/time-zone and accessibility acceptance remain open. |
 | Tests | Policy, store rules, input parser and UI contract tests exist. | These do not establish assessed Water Quality, physical sensor provenance, bounded history, archive restore, delete concurrency or release acceptance. |
 
-The exact source paths for these statements are the classes named in the table;
-the audit is anchored to the source commit above. Any subsequent change must
-update this table or record a dated implementation note, with test evidence.
+The exact source paths for these statements are the classes named in the table.
+The per-tank and per-parameter inventory is
+`WATER_ANALYSIS_PARAMETER_GAP_MATRIX.md`. The baseline audit is anchored to the
+source commit above; subsequent branch repairs are recorded in the production
+checklist and require separate CI evidence before acceptance.
 
 ### 0.2 Product scope and delivery gates
 

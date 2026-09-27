@@ -69,7 +69,7 @@ class WaterAnalysisStoreRulesTest {
 
         assertEquals(
             listOf(laterCommit, olderCommitWithHigherId, olderSample),
-            WaterAnalysisStoreRules.newestFirst(
+            WaterAnalysisIdentityRules.newestFirst(
                 listOf(olderSample, olderCommitWithHigherId, laterCommit)
             )
         )
@@ -103,9 +103,9 @@ class WaterAnalysisStoreRulesTest {
             requestId = REQUEST_ID
         )
 
-        assertEquals(record.id, WaterAnalysisStoreRules.replayId(store, OWNER_UID, draft))
+        assertEquals(record.id, requireNotNull(WaterAnalysisIdentityRules.replayId(store, OWNER_UID, draft)))
         assertThrows(StoreInvariantViolation::class.java) {
-            WaterAnalysisStoreRules.replayId(
+            WaterAnalysisIdentityRules.replayId(
                 store,
                 OWNER_UID,
                 draft.copy(measuredAtMillis = VALID_TIME + 1L)

@@ -5,6 +5,13 @@ import java.util.Base64
 /** Keeps a pending source change in the shared confirmation dialog's saved arguments. */
 internal object WaterSourceChangeCandidateCodec {
     private const val VERSION = "v1"
+    private const val PART_COUNT = 6
+    private const val VERSION_INDEX = 0
+    private const val PARAMETER_INDEX = 1
+    private const val METHOD_INDEX = 2
+    private const val KIT_INDEX = 3
+    private const val BASIS_INDEX = 4
+    private const val UNIT_INDEX = 5
 
     fun encode(
         parameterId: WaterTestParameterId,
@@ -21,21 +28,24 @@ internal object WaterSourceChangeCandidateCodec {
             .encodeToString(value.toByteArray(Charsets.UTF_8))
     }
 
-    fun decode(raw: String): Pair<WaterTestParameterId, WaterMeasurementSelectionUi>? {
+    fun decode(raw: String): Pair<WaterTestParameterId, WaterMeasurementSelectionUi>? = runCatching {
         val parts = raw.split('.')
-        if (parts.size != 6) return null
-        val values = runCatching {
+        if (parts.size == PART_COUNT) {
             parts.map { part ->
                 Base64.getUrlDecoder().decode(part).toString(Charsets.UTF_8)
-            }
-        }.getOrNull() ?: return null
-        if (values[0] != VERSION) return null
-        val parameterId = runCatching { WaterTestParameterId.valueOf(values[1]) }.getOrNull()
-            ?: return null
-        val method = runCatching { WaterMeasurementMethodUi.valueOf(values[2]) }.getOrNull()
-            ?: return null
-        val selection = WaterMeasurementSelectionUi(method, values[3], values[4], values[5])
-        if (!WaterMeasurementUiCatalog.isSelectionValid(parameterId, selection)) return null
-        return parameterId to selection
-    }
+            }.takeIf { values -> values[VERSION_INDEX] == VERSION }
+                ?.let { values ->
+                    val parameterId = WaterTestParameterId.valueOf(values[PARAMETER_INDEX])
+                    val method = WaterMeasurementMethodUi.valueOf(values[METHOD_INDEX])
+                    val selection = WaterMeasurementSelectionUi(
+                        method, values[KIT_INDEX], values[BASIS_INDEX], values[UNIT_INDEX]
+                    )
+                    (parameterId to selection).takeIf { (id, candidate) ->
+                        WaterMeasurementUiCatalog.isSelectionValid(id, candidate)
+                    }
+                }
+        } else {
+            null
+        }
+    }.getOrNull()
 }

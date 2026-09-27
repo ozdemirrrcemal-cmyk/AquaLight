@@ -70,7 +70,13 @@ class TankHealthAnalysisAddFragment :
             state = parameterState
         )
 
-        setupHeader()
+        binding.appHeader.setupAquaHeader(
+            fragment = this,
+            config = AquaHeaderConfig(
+                titleOverride = getString(R.string.screen_title_tank_health_analysis_add),
+                onBackClick = { findNavController().navigateUp() }
+            )
+        )
         WaterAnalysisSelectionResultBinder(
             fragment = this,
             state = parameterState,
@@ -141,16 +147,6 @@ class TankHealthAnalysisAddFragment :
             }
     }
 
-    private fun setupHeader() {
-        binding.appHeader.setupAquaHeader(
-            fragment = this,
-            config = AquaHeaderConfig(
-                titleOverride = getString(R.string.screen_title_tank_health_analysis_add),
-                onBackClick = { findNavController().navigateUp() }
-            )
-        )
-    }
-
     private fun setupNavigation() {
         binding.btnHistory.setOnClickListener {
             findNavController().navigateSafelyFrom(
@@ -207,25 +203,25 @@ class TankHealthAnalysisAddFragment :
 
         when (buildResult) {
             is WaterAnalysisInputBuildResult.Failure -> showInputError(buildResult)
-            is WaterAnalysisInputBuildResult.Success -> {
-                binding.btnSaveAnalysis.isEnabled = false
-                viewLifecycleOwner.lifecycleScope.launch {
-                    try {
-                        waterAnalysisViewModel.saveAnalysis(buildResult.input)
-                        if (_binding != null) {
-                            findNavController().navigateUp()
-                        }
-                    } catch (cancelled: CancellationException) {
-                        throw cancelled
-                    } catch (_: Exception) {
-                        _binding?.btnSaveAnalysis?.isEnabled = true
-                        if (_binding != null) {
-                            (activity as? BaseActivity)?.showSnackBar(
-                                message = getString(R.string.tank_health_analysis_save_failed),
-                                type = BaseActivity.SnackType.ERROR
-                            )
-                        }
-                    }
+            is WaterAnalysisInputBuildResult.Success -> persistAnalysis(buildResult)
+        }
+    }
+
+    private fun persistAnalysis(result: WaterAnalysisInputBuildResult.Success) {
+        binding.btnSaveAnalysis.isEnabled = false
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                waterAnalysisViewModel.saveAnalysis(result.input)
+                if (_binding != null) findNavController().navigateUp()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                _binding?.btnSaveAnalysis?.isEnabled = true
+                if (_binding != null) {
+                    (activity as? BaseActivity)?.showSnackBar(
+                        message = getString(R.string.tank_health_analysis_save_failed),
+                        type = BaseActivity.SnackType.ERROR
+                    )
                 }
             }
         }
