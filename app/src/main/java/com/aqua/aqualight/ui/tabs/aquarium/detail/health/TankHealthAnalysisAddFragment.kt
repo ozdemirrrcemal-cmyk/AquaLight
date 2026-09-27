@@ -157,7 +157,13 @@ class TankHealthAnalysisAddFragment :
     }
 
     private fun saveAnalysis(hiddenDraftReviewed: Boolean = false) {
-        val profile = tankProfile ?: return
+        val profile = tankProfile ?: run {
+            (activity as? BaseActivity)?.showSnackBar(
+                message = getString(R.string.tank_health_analysis_profile_missing),
+                type = BaseActivity.SnackType.WARNING
+            )
+            return
+        }
         val timeController = requireNotNull(measurementTimeController)
         val temperatureController = requireNotNull(temperatureUiController)
         val visibleParameterIds = (

@@ -30,6 +30,7 @@ internal class WaterAnalysisParameterRenderer(
         }
 
         binding.profileContextCard.isVisible = true
+        binding.profileMissingMessage.isVisible = false
         binding.ivProfileIcon.setImageResource(
             WaterTestProfileUiCatalog.profileIconRes(tankProfile)
         )
@@ -59,6 +60,7 @@ internal class WaterAnalysisParameterRenderer(
 
     private fun renderMissingProfile() {
         binding.profileContextCard.isVisible = false
+        binding.profileMissingMessage.isVisible = true
         binding.recommendedParametersContainer.removeAllViews()
         binding.additionalTestsCard.isVisible = false
         binding.additionalParametersContainer.isVisible = false

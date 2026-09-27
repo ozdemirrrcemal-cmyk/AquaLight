@@ -44,6 +44,9 @@
     <string name="tank_health_analysis_input_hint">Enter value</string>
     <string name="tank_health_analysis_all_additional_tests_added">All available tests added</string>
     <string name="tank_health_analysis_remove_test">Remove test</string>
+    <string name="tank_health_analysis_remove_named_test">Remove %1$s test</string>
+    <string name="tank_health_analysis_source_value">Original reading: %1$s</string>
+    <string name="tank_health_analysis_profile_missing">Select a supported tank type in tank settings to enter water tests.</string>
     <string name="tank_health_analysis_test_picker_label_format">%1$s  •  %2$s</string>
 
     <string name="water_measurement_sheet_title">Measurement Method and Test Kit</string>

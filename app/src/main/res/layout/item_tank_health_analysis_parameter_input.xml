@@ -135,7 +135,8 @@
                         android:layout_width="@dimen/aqua_size_16"
                         android:layout_height="@dimen/aqua_size_16"
                         android:layout_marginStart="@dimen/aqua_size_3"
-                        android:contentDescription="@string/water_measurement_open_configuration"
+                        android:contentDescription="@null"
+                        android:importantForAccessibility="no"
                         android:rotation="@integer/aqua_rotation_90"
                         android:src="@drawable/ic_tank_health_chevron_right_24"
                         app:tint="@color/aqua_card_text_secondary" />

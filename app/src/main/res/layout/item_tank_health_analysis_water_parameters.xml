@@ -118,6 +118,16 @@
 
             </LinearLayout>
 
+            <TextView
+                android:id="@+id/profileMissingMessage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_8"
+                android:text="@string/tank_health_analysis_profile_missing"
+                android:textColor="@color/aqua_card_text_secondary"
+                android:textSize="@dimen/aqua_text_size_body_small"
+                android:visibility="gone" />
+
             <LinearLayout
                 android:id="@+id/recommendedParametersContainer"
                 android:layout_width="match_parent"

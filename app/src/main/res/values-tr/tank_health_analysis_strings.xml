@@ -43,6 +43,9 @@
     <string name="tank_health_analysis_input_hint">Değer girin</string>
     <string name="tank_health_analysis_all_additional_tests_added">Tüm uygun testler eklendi</string>
     <string name="tank_health_analysis_remove_test">Testi kaldır</string>
+    <string name="tank_health_analysis_remove_named_test">%1$s testini kaldır</string>
+    <string name="tank_health_analysis_source_value">Orijinal ölçüm: %1$s</string>
+    <string name="tank_health_analysis_profile_missing">Su testlerini girmek için akvaryum ayarlarından desteklenen bir tür seçin.</string>
     <string name="tank_health_analysis_test_picker_label_format">%1$s  •  %2$s</string>
 
     <string name="water_measurement_sheet_title">Ölçüm Yöntemi ve Test Kiti</string>

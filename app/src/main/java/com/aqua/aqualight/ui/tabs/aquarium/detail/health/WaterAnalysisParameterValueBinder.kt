@@ -41,6 +41,14 @@ internal class WaterAnalysisParameterValueBinder(
     ) {
         val removable = model.importance == WaterTestImportance.ADDITIONAL
         binding.btnRemoveParameter.isVisible = removable
+        binding.btnRemoveParameter.contentDescription = if (removable) {
+            fragment.getString(
+                R.string.tank_health_analysis_remove_named_test,
+                fragment.getString(model.nameRes)
+            )
+        } else {
+            null
+        }
         binding.btnRemoveParameter.setOnClickListener(
             if (removable) {
                 View.OnClickListener {

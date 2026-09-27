@@ -10,6 +10,10 @@ import com.aqua.aqualight.application.aquarium.health.WaterMeasurementSnapshot
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementUnit
 import com.aqua.aqualight.application.aquarium.health.WaterParameter
 import com.aqua.aqualight.i18n.LocaleFormatter
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
+import java.util.Locale
+import kotlin.math.abs
 
 internal object WaterAnalysisPresentation {
 
@@ -84,11 +88,7 @@ internal object WaterAnalysisPresentation {
         val canonical = measurement.canonicalValue
         val value = canonical ?: measurement.value
         val unit = if (canonical != null) measurement.canonicalUnit else measurement.unit
-        val valueText = LocaleFormatter.formatDecimal(
-            context = context,
-            value = value,
-            maximumFractionDigits = MAX_DISPLAY_FRACTION_DIGITS
-        )
+        val valueText = formatMeasuredNumber(value, LocaleFormatter.appLocale(context))
         return if (unit == WaterMeasurementUnit.NONE) {
             valueText
         } else {
@@ -98,11 +98,7 @@ internal object WaterAnalysisPresentation {
 
     fun temperatureValueText(context: Context, temperatureCelsius: Double?): String =
         temperatureCelsius?.let { value ->
-            val valueText = LocaleFormatter.formatDecimal(
-                context = context,
-                value = value,
-                maximumFractionDigits = MAX_DISPLAY_FRACTION_DIGITS
-            )
+            val valueText = formatMeasuredNumber(value, LocaleFormatter.appLocale(context))
             "$valueText ${context.getString(R.string.tank_health_analysis_temperature_unit)}"
         } ?: context.getString(R.string.tank_health_value_not_measured)
 
@@ -122,8 +118,11 @@ internal object WaterAnalysisPresentation {
     fun measurementMetaText(
         context: Context,
         measurement: WaterMeasurementSnapshot
-    ): String =
-        buildList {
+    ): String {
+        val sourceChanged = measurement.canonicalValue != measurement.value ||
+            measurement.canonicalBasis != measurement.basis ||
+            measurement.canonicalUnit != measurement.unit
+        return buildList {
             add(context.getString(methodLabelRes(measurement.method)))
             measurement.testKitId?.let { id ->
                 add(context.getString(testKitLabelRes(id)))
@@ -132,7 +131,20 @@ internal object WaterAnalysisPresentation {
             if (measurement.unit != WaterMeasurementUnit.NONE) {
                 add(context.getString(unitLabelRes(measurement.unit)))
             }
+            if (measurement.canonicalValue != null && sourceChanged) {
+                val rawNumber = formatMeasuredNumber(
+                    measurement.value,
+                    LocaleFormatter.appLocale(context)
+                )
+                val rawValue = if (measurement.unit == WaterMeasurementUnit.NONE) {
+                    rawNumber
+                } else {
+                    "$rawNumber ${context.getString(unitLabelRes(measurement.unit))}"
+                }
+                add(context.getString(R.string.tank_health_analysis_source_value, rawValue))
+            }
         }.joinToString(META_SEPARATOR)
+    }
 
     @StringRes
     fun parameterNameRes(parameter: WaterParameter): Int =
@@ -158,6 +170,17 @@ internal object WaterAnalysisPresentation {
             R.string.water_measurement_kit_other
         }
 
+    /** Small nonzero readings must never appear as a measured zero. */
+    internal fun formatMeasuredNumber(value: Double, locale: Locale): String =
+        if (value != 0.0 && abs(value) < SCIENTIFIC_NOTATION_BELOW) {
+            DecimalFormat("0.####E0", DecimalFormatSymbols.getInstance(locale)).apply {
+                isGroupingUsed = false
+            }.format(value)
+        } else {
+            LocaleFormatter.formatDecimal(value, locale, MAX_DISPLAY_FRACTION_DIGITS)
+        }
+
     private const val MAX_DISPLAY_FRACTION_DIGITS = 4
+    private const val SCIENTIFIC_NOTATION_BELOW = 0.001
     private const val META_SEPARATOR = " • "
 }
