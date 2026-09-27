@@ -6,9 +6,10 @@ import com.aqua.aqualight.application.aquarium.health.water.WaterQualityAssessme
 
 interface WaterAnalysisOperations {
     fun analysesForTank(tankId: Long): Flow<List<WaterAnalysisSnapshot>>
-    fun analysis(analysisId: Long): Flow<WaterAnalysisSnapshot?>
+    fun latestAnalysis(tankId: Long): Flow<WaterAnalysisSnapshot?>
+    fun analysis(tankId: Long, analysisId: Long): Flow<WaterAnalysisSnapshot?>
     suspend fun saveAnalysis(input: WaterAnalysisInput): Long
-    suspend fun deleteAnalysis(analysisId: Long)
+    suspend fun deleteAnalysis(tankId: Long, analysisId: Long)
 }
 
 data class WaterAnalysisInput(

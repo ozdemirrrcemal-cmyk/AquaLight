@@ -15,8 +15,10 @@ import com.aqua.aqualight.application.aquarium.health.WaterAnalysisFailure
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisUnavailableException
 import com.aqua.aqualight.data.store.StoreInvariantViolation
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 
@@ -32,8 +34,14 @@ internal class DefaultWaterAnalysisOperations(
             analyses.map { record -> record.toApplicationSnapshot() }
         }.withWaterReadFailures()
 
-    override fun analysis(analysisId: Long): Flow<WaterAnalysisSnapshot?> =
-        store.analysisFlow(session.ownerUid, analysisId).onStart { session.requireCurrent() }.map { record ->
+    override fun latestAnalysis(tankId: Long): Flow<WaterAnalysisSnapshot?> =
+        store.latestAnalysisFlow(session.ownerUid, tankId).onStart { session.requireCurrent() }.map { record ->
+            session.requireCurrent()
+            record?.toApplicationSnapshot()
+        }.withWaterReadFailures()
+
+    override fun analysis(tankId: Long, analysisId: Long): Flow<WaterAnalysisSnapshot?> =
+        store.analysisFlow(session.ownerUid, tankId, analysisId).onStart { session.requireCurrent() }.map { record ->
             session.requireCurrent()
             record?.toApplicationSnapshot()
         }.withWaterReadFailures()
@@ -47,8 +55,8 @@ internal class DefaultWaterAnalysisOperations(
         }
     }
 
-    override suspend fun deleteAnalysis(analysisId: Long) =
-        store.deleteAnalysis(analysisId, session)
+    override suspend fun deleteAnalysis(tankId: Long, analysisId: Long) =
+        store.deleteAnalysis(tankId, analysisId, session)
 
     private fun WaterAnalysisInput.toDraftRecord(): WaterAnalysisDraftRecord =
         WaterAnalysisDraftRecord(
@@ -70,7 +78,7 @@ internal class DefaultWaterAnalysisOperations(
         )
 }
 
-private fun <T> Flow<T>.withWaterReadFailures(): Flow<T> = catch { error ->
+private fun <T> Flow<T>.withWaterReadFailures(): Flow<T> = flowOn(Dispatchers.IO).catch { error ->
     if (error is CancellationException) throw error
     val failure = when (error) {
         is WaterAnalysisReadFailure.UnsupportedSchema -> WaterAnalysisFailure.UNSUPPORTED_SCHEMA

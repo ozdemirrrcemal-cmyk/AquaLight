@@ -66,10 +66,26 @@ internal class WaterAnalysisDataStoreManager(
         }
     }
 
-    fun analysisFlow(ownerUid: String, analysisId: Long): Flow<WaterAnalysisRecord?> {
+    fun latestAnalysisFlow(ownerUid: String, tankId: Long): Flow<WaterAnalysisRecord?> {
+        val owner = requireOwnerUid(ownerUid)
+        WaterAnalysisIdentityRules.requirePositive("tankId", tankId)
+        return appContext.waterAnalysesDataStore.data.map { store ->
+            WaterAnalysisStoreRules.validateStore(store).analysesList.asSequence()
+                .filter { it.belongsToOwner(owner) && it.tankId == tankId }
+                .maxWithOrNull(compareBy<StoredWaterAnalysis> { it.measuredAtMillis }
+                    .thenBy { it.createdAtMillis }.thenBy { it.id })
+                ?.toRecordStrict()
+        }
+    }
+
+    fun analysisFlow(ownerUid: String, tankId: Long, analysisId: Long): Flow<WaterAnalysisRecord?> {
+        val owner = requireOwnerUid(ownerUid)
+        WaterAnalysisIdentityRules.requirePositive("tankId", tankId)
         WaterAnalysisIdentityRules.requirePositive("analysisId", analysisId)
-        return analysesForOwnerFlow(ownerUid).map { analyses ->
-            analyses.firstOrNull { record -> record.id == analysisId }
+        return appContext.waterAnalysesDataStore.data.map { store ->
+            WaterAnalysisStoreRules.validateStore(store).analysesList.firstOrNull { record ->
+                record.id == analysisId && record.tankId == tankId && record.belongsToOwner(owner)
+            }?.toRecordStrict()
         }
     }
 
@@ -94,7 +110,7 @@ internal class WaterAnalysisDataStoreManager(
     ): Long {
         val ownerUid = session.ownerUid
         UserDataRestoreJournal(appContext).requireNoActiveRestore(ownerUid)
-        requireTankExistsForOwner(ownerUid, draft.tankId)
+        tankStore.requireTankExistsForOwner(ownerUid, draft.tankId)
         // An acknowledged retry returns its frozen event even after catalogs or tank context change.
         WaterAnalysisIdentityRules.replayId(appContext.waterAnalysesDataStore.data.first(), ownerUid, draft)
             ?.let { return it }
@@ -144,10 +160,10 @@ internal class WaterAnalysisDataStoreManager(
         return createdId
     }
 
-    suspend fun deleteAnalysis(analysisId: Long, session: OwnerSessionWriteLease) = session.withWrite {
+    suspend fun deleteAnalysis(tankId: Long, analysisId: Long, session: OwnerSessionWriteLease) = session.withWrite {
         UserDataScope.withOwnerUid(session.ownerUid) {
             UserDataRestoreJournal(appContext).requireNoActiveRestore(session.ownerUid)
-            appContext.waterAnalysesDataStore.deleteAnalysisForSession(analysisId, session)
+            appContext.waterAnalysesDataStore.deleteAnalysisForSession(tankId, analysisId, session)
         }
     }
 
@@ -205,31 +221,32 @@ internal class WaterAnalysisDataStoreManager(
         currentCoroutineContext().ensureActive()
     }
 
-    private suspend fun requireTankExistsForOwner(ownerUid: String, tankId: Long) {
-        WaterAnalysisIdentityRules.requirePositive("tankId", tankId)
-        if (tankStore.tanksSnapshotForOwner(ownerUid).none { tank -> tank.id == tankId }) {
-            throw StoreInvariantViolation(
-                "Water analysis references a tank that does not exist for the active owner."
-            )
-        }
+}
+
+private suspend fun AquariumTankDataStoreManager.requireTankExistsForOwner(ownerUid: String, tankId: Long) {
+    WaterAnalysisIdentityRules.requirePositive("tankId", tankId)
+    if (tanksSnapshotForOwner(ownerUid).none { tank -> tank.id == tankId }) {
+        throw StoreInvariantViolation(
+            "Water analysis references a tank that does not exist for the active owner."
+        )
     }
 }
 
 private suspend fun DataStore<WaterAnalysesStore>.deleteAnalysisForSession(
+    tankId: Long,
     analysisId: Long,
     session: OwnerSessionWriteLease
 ) {
+    WaterAnalysisIdentityRules.requirePositive("tankId", tankId)
     WaterAnalysisIdentityRules.requirePositive("analysisId", analysisId)
     val ownerUid = session.ownerUid
-    val record = data.first().analysesList
-        .firstOrNull { it.id == analysisId && it.belongsToOwner(ownerUid) } ?: return
-    OwnerTankMutationGate.shared.withTanks(ownerUid, listOf(record.tankId)) {
+    OwnerTankMutationGate.shared.withTanks(ownerUid, listOf(tankId)) {
         updateDataAwaitingCommit { currentStore ->
             session.requireCurrent()
             requireOwnerScope(ownerUid)
             currentStore.replaceAllValidated(
                 currentStore.analysesList.filterNot { stored ->
-                    stored.id == analysisId && stored.tankId == record.tankId && stored.belongsToOwner(ownerUid)
+                    stored.id == analysisId && stored.tankId == tankId && stored.belongsToOwner(ownerUid)
                 }
             )
         }

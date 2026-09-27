@@ -29,8 +29,8 @@ internal class WaterAnalysisMutationController(
         start(deleting = false) { WaterAnalysisMutationState.Saved(operations.saveAnalysis(frozen)) }
     }
 
-    fun delete(analysisId: Long) = start(deleting = true) {
-        operations.deleteAnalysis(analysisId)
+    fun delete(tankId: Long, analysisId: Long) = start(deleting = true) {
+        operations.deleteAnalysis(tankId, analysisId)
         WaterAnalysisMutationState.Deleted
     }
 

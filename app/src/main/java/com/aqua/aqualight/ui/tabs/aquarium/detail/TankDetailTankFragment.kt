@@ -26,7 +26,6 @@ import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumDatePolicy
 import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumDimensionFormatter
 import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumTankTaxonomyText
 import com.aqua.aqualight.ui.tabs.aquarium.materials.MaterialSummaryFormatter
-import com.aqua.aqualight.ui.tabs.aquarium.detail.health.WaterAnalysisLatestMeasurements
 import com.aqua.aqualight.ui.tabs.aquarium.detail.health.WaterAnalysisViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.AquariumTabArgs
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
@@ -127,7 +126,7 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
     private fun observeHealthEntry() {
         binding.tvTankHealthSummary.setText(R.string.tank_health_entry_loading)
         binding.tvTankHealthLastAnalysis.setText(R.string.tank_health_entry_loading)
-        waterAnalysisViewModel.analysesStateForTank(tankId).observe(viewLifecycleOwner) { state ->
+        waterAnalysisViewModel.latestAnalysisState(tankId).observe(viewLifecycleOwner) { state ->
             if (state !is WaterAnalysisLoadState.Content) {
                 val message = if (state is WaterAnalysisLoadState.Error) R.string.water_analysis_read_failed
                     else R.string.water_analysis_loading
@@ -136,8 +135,7 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
                 binding.tvTankHealthScore.setText(R.string.tank_health_entry_score)
                 return@observe
             }
-            val analyses = state.value
-            val latest = WaterAnalysisLatestMeasurements.latestEvent(analyses)
+            val latest = state.value
             if (latest == null) {
                 binding.tvTankHealthSummary.setText(R.string.tank_health_entry_summary)
                 binding.tvTankHealthLastAnalysis.setText(R.string.tank_health_entry_last_analysis)

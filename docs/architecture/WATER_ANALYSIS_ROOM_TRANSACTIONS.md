@@ -5,6 +5,29 @@ facade. These Room components are implemented and locally verified; composition
 cutover, cross-store coordinator binding and archive integration remain open.
 They are not a claim of Water Quality release acceptance.
 
+## Application read/delete boundary continuation
+
+The application boundary now offers a tank-targeted `latestAnalysis` result;
+both the tank entry card and the health dashboard collect one event instead of
+an entire projected history. Detail and exact delete require both `tankId` and
+`analysisId` through ViewModel, mutation controller, operations and store. A
+valid event ID from another tank cannot read or remove that event. Read validation
+and historical projection execute on the IO dispatcher. Central navigation and
+the existing layouts are unchanged.
+
+The legacy Proto file is still decoded as a whole by DataStore, and the history
+screen still collects its full list. This step does not claim indexed storage,
+bounded history paging or Room cutover completion. The new operations match the
+already staged Room latest/detail/delete primitives for the later cutover.
+
+Local verification: 1,942 JVM tests passed with no failures/errors/skips;
+Android-test and releaseSmoke Kotlin compilation passed; 332 Python tests and
+navigation/composition/UI dependency/Water Analysis guards passed. The mutation
+test checks that both route identities survive until durable acknowledgement.
+Two added Android scenarios cover wrong-tank read/delete and latest ordering
+after backdating, equal observation times, other-tank writes and deletion. Those
+scenarios are compiled, not locally executed; M.5 and E acceptance remain open.
+
 ## Schema and authority
 
 Room's processor generates schema v2. `MIGRATION_1_2` adds request tombstones and

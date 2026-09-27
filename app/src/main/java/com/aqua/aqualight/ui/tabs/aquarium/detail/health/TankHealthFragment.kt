@@ -42,7 +42,7 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
     private var contentAdapter: TankHealthContentAdapter? = null
 
     private var currentTankProfile: String? = null
-    private var currentAnalyses: List<WaterAnalysisSnapshot> = emptyList()
+    private var currentAnalysis: WaterAnalysisSnapshot? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -99,9 +99,9 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
             renderWaterMetrics()
         }
 
-        waterAnalysisViewModel.analysesStateForTank(args.tankId)
+        waterAnalysisViewModel.latestAnalysisState(args.tankId)
             .observe(viewLifecycleOwner) { state ->
-                currentAnalyses = (state as? WaterAnalysisLoadState.Content)?.value.orEmpty()
+                currentAnalysis = (state as? WaterAnalysisLoadState.Content)?.value
                 renderWaterMetrics()
                 contentAdapter?.waterReadStatus = when (state) {
                     WaterAnalysisLoadState.Loading -> R.string.water_analysis_loading
@@ -143,7 +143,7 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
     private fun renderWaterMetrics() {
         val profile = currentTankProfile.orEmpty()
 
-        val latestMeasurements = WaterAnalysisLatestMeasurements.from(currentAnalyses)
+        val latestMeasurements = WaterAnalysisLatestMeasurements.from(listOfNotNull(currentAnalysis))
         val models = TankHealthWaterMetricUiCatalog.models(
             tankProfile = profile,
             measuredParameterIds = latestMeasurements.keys.map(WaterParameter::toUiParameterId)
@@ -172,10 +172,8 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
         }
         contentAdapter?.submitWaterMetrics(
             metrics = models,
-            measuredAtMillis = WaterAnalysisLatestMeasurements.latestEvent(currentAnalyses)
-                ?.measuredAtMillis,
-            assessmentSummary = WaterAnalysisLatestMeasurements.latestEvent(currentAnalyses)
-                ?.let { WaterAssessmentPresentation.summary(requireContext(), it) }
+            measuredAtMillis = currentAnalysis?.measuredAtMillis,
+            assessmentSummary = currentAnalysis?.let { WaterAssessmentPresentation.summary(requireContext(), it) }
         )
     }
 

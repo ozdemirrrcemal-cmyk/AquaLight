@@ -22,7 +22,7 @@ class WaterAnalysisMutationControllerTest {
         val input = input()
         controller.save(input)
         controller.save(input)
-        controller.delete(2)
+        controller.delete(7, 2)
         runCurrent()
         assertEquals(1, fake.saves)
         assertEquals(0, fake.deletes)
@@ -60,7 +60,7 @@ class WaterAnalysisMutationControllerTest {
     fun `cancelled session is not converted into a mutation failure or success`() = runTest {
         val fake = MutationOperations().apply { failure = CancellationException("owner changed") }
         val controller = WaterAnalysisMutationController(fake, backgroundScope)
-        controller.delete(12)
+        controller.delete(7, 12)
         fake.commit.complete(Unit)
         runCurrent()
         assertEquals(WaterAnalysisMutationState.Idle, controller.state.value)
@@ -68,6 +68,19 @@ class WaterAnalysisMutationControllerTest {
     }
 
     private fun input() = WaterAnalysisInput(7, 1_800_000_000_000, null, null, emptyList())
+
+    @Test
+    fun `delete retains both route identities until commit acknowledgement`() = runTest {
+        val fake = MutationOperations()
+        val controller = WaterAnalysisMutationController(fake, backgroundScope)
+        controller.delete(7, 12)
+        runCurrent()
+        assertEquals(listOf(7L to 12L), fake.deletedKeys)
+        assertEquals(WaterAnalysisMutationState.Running, controller.state.value)
+        fake.commit.complete(Unit)
+        runCurrent()
+        assertEquals(WaterAnalysisMutationState.Deleted, controller.state.value)
+    }
 }
 
 private class MutationOperations : WaterAnalysisOperations {
@@ -76,8 +89,10 @@ private class MutationOperations : WaterAnalysisOperations {
     var deletes = 0
     var failure: Exception? = null
     val requests = mutableListOf<String>()
+    val deletedKeys = mutableListOf<Pair<Long, Long>>()
     override fun analysesForTank(tankId: Long) = flowOf(emptyList<WaterAnalysisSnapshot>())
-    override fun analysis(analysisId: Long) = flowOf<WaterAnalysisSnapshot?>(null)
+    override fun latestAnalysis(tankId: Long) = flowOf<WaterAnalysisSnapshot?>(null)
+    override fun analysis(tankId: Long, analysisId: Long) = flowOf<WaterAnalysisSnapshot?>(null)
     override suspend fun saveAnalysis(input: WaterAnalysisInput): Long {
         saves++
         requests += input.requestId
@@ -85,8 +100,9 @@ private class MutationOperations : WaterAnalysisOperations {
         failure?.let { throw it }
         return 12
     }
-    override suspend fun deleteAnalysis(analysisId: Long) {
+    override suspend fun deleteAnalysis(tankId: Long, analysisId: Long) {
         deletes++
+        deletedKeys += tankId to analysisId
         commit.await()
         failure?.let { throw it }
     }

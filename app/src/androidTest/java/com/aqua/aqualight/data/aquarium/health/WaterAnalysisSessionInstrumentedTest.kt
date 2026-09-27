@@ -34,12 +34,53 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class WaterAnalysisSessionInstrumentedTest {
+    @Test
+    fun mismatchedTankCannotReadOrDeleteAnExistingAnalysis() = runBlocking {
+        withFixture { fixture ->
+            val tankId = fixture.addTank(fixture.owner)
+            val otherTankId = fixture.addTank(fixture.owner)
+            val operations = DefaultWaterAnalysisOperations(fixture.store, fixture.session.lease, null)
+            val id = operations.saveAnalysis(input(tankId))
+            assertNull(operations.analysis(otherTankId, id).first())
+            assertNull(operations.latestAnalysis(otherTankId).first())
+            operations.deleteAnalysis(otherTankId, id)
+            assertEquals(id, operations.analysis(tankId, id).first()?.id)
+            assertEquals(id, operations.latestAnalysis(tankId).first()?.id)
+            operations.deleteAnalysis(tankId, id)
+            assertNull(operations.analysis(tankId, id).first())
+            assertNull(operations.latestAnalysis(tankId).first())
+        }
+    }
+
+    @Test
+    fun latestUsesObservationBeforeCommitOrderAndKeepsOtherTanksSeparate() = runBlocking {
+        withFixture { fixture ->
+            val tankId = fixture.addTank(fixture.owner)
+            val otherTankId = fixture.addTank(fixture.owner)
+            val operations = DefaultWaterAnalysisOperations(fixture.store, fixture.session.lease, null)
+            val sample = input(tankId)
+            val first = operations.saveAnalysis(sample)
+            val backdated = operations.saveAnalysis(sample.copy(
+                measuredAtMillis = sample.measuredAtMillis - 60_000L, requestId = UUID.randomUUID().toString()))
+            assertEquals(first, operations.latestAnalysis(tankId).first()?.id)
+            operations.saveAnalysis(input(otherTankId))
+            assertEquals(first, operations.latestAnalysis(tankId).first()?.id)
+            val tied = operations.saveAnalysis(sample.copy(requestId = UUID.randomUUID().toString()))
+            assertEquals(tied, operations.latestAnalysis(tankId).first()?.id)
+            operations.deleteAnalysis(tankId, tied)
+            assertEquals(first, operations.latestAnalysis(tankId).first()?.id)
+            operations.deleteAnalysis(tankId, first)
+            assertEquals(backdated, operations.latestAnalysis(tankId).first()?.id)
+        }
+    }
+
     @Test
     fun sameOwnerReentryRejectsOldCreateDeleteAndReadsWithoutLosingHistory() = runBlocking {
         withFixture { fixture ->
@@ -52,13 +93,13 @@ class WaterAnalysisSessionInstrumentedTest {
 
             assertTrue(runCatching { operations.saveAnalysis(input(tankId)) }
                 .exceptionOrNull() is OwnerSessionExpiredException)
-            assertTrue(runCatching { operations.deleteAnalysis(id) }
+            assertTrue(runCatching { operations.deleteAnalysis(tankId, id) }
                 .exceptionOrNull() is OwnerSessionExpiredException)
-            assertTrue(runCatching { operations.analysis(id).first() }
+            assertTrue(runCatching { operations.analysis(tankId, id).first() }
                 .exceptionOrNull() is OwnerSessionExpiredException)
             val currentOperations = DefaultWaterAnalysisOperations(fixture.store, current, evaluationPreparation = null)
-            assertEquals(id, currentOperations.analysis(id).first()?.id)
-            currentOperations.deleteAnalysis(id)
+            assertEquals(id, currentOperations.analysis(tankId, id).first()?.id)
+            currentOperations.deleteAnalysis(tankId, id)
             assertTrue(currentOperations.analysesForTank(tankId).first().isEmpty())
         }
     }
@@ -143,7 +184,7 @@ class WaterAnalysisSessionInstrumentedTest {
             assertEquals(1, captures)
             val stored = fixture.store.analysesForTankFlow(fixture.owner, tankId).first().single()
             assertTrue(stored.evaluation != null)
-            val reopened = operations.analysis(id).first()!!
+            val reopened = operations.analysis(tankId, id).first()!!
             assertEquals("context-v1", reopened.assessment?.contextRevision)
             assertEquals(input.measurements.single().value, reopened.measurements.single().canonicalValue!!, 0.0)
         }
@@ -169,10 +210,10 @@ class WaterAnalysisSessionInstrumentedTest {
             val id = operations.saveAnalysis(input(tankId))
             fixture.archive.begin(fixture.owner, setOf(tankId))
             assertTrue(runCatching { operations.saveAnalysis(input(tankId)) }.isFailure)
-            assertTrue(runCatching { operations.deleteAnalysis(id) }.isFailure)
+            assertTrue(runCatching { operations.deleteAnalysis(tankId, id) }.isFailure)
             assertEquals(1, operations.analysesForTank(tankId).first().size)
             fixture.archive.markCommitted(fixture.owner)
-            operations.deleteAnalysis(id)
+            operations.deleteAnalysis(tankId, id)
             assertTrue(operations.analysesForTank(tankId).first().isEmpty())
         }
     }

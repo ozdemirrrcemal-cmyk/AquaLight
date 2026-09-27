@@ -10,7 +10,6 @@ import com.aqua.aqualight.application.aquarium.health.WaterAnalysisInput
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisOperations
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisSnapshot
 import java.util.UUID
-import kotlinx.coroutines.flow.map
 
 /** Each fragment owns this instance and its immutable Safe Args route. */
 class WaterAnalysisViewModel(
@@ -33,10 +32,14 @@ class WaterAnalysisViewModel(
         return operations.analysesForTank(tankId).asWaterLoadState().asLiveData()
     }
 
+    fun latestAnalysisState(tankId: Long): LiveData<WaterAnalysisLoadState<WaterAnalysisSnapshot?>> {
+        require(tankId == this.tankId)
+        return operations.latestAnalysis(tankId).asWaterLoadState().asLiveData()
+    }
+
     fun analysisState(tankId: Long, analysisId: Long): LiveData<WaterAnalysisLoadState<WaterAnalysisSnapshot?>> {
         require(tankId == this.tankId && analysisId == this.analysisId)
-        return operations.analysis(analysisId).map { record -> record?.takeIf { it.tankId == tankId } }
-            .asWaterLoadState().asLiveData()
+        return operations.analysis(tankId, analysisId).asWaterLoadState().asLiveData()
     }
 
     internal fun saveAnalysis(input: WaterAnalysisInput) {
@@ -46,6 +49,6 @@ class WaterAnalysisViewModel(
 
     internal fun deleteAnalysis(analysisId: Long) {
         require(analysisId == this.analysisId)
-        mutations.delete(analysisId)
+        mutations.delete(tankId, analysisId)
     }
 }
