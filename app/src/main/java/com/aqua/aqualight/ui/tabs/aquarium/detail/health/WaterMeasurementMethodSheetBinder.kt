@@ -1,8 +1,8 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 
 import android.graphics.Typeface
-import android.widget.ImageView
 import android.widget.TextView
+import androidx.annotation.DrawableRes
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import com.aqua.aqualight.R
@@ -131,25 +131,25 @@ internal class WaterMeasurementMethodSheetBinder(
         renderMethod(
             binding.cardMethodManual,
             binding.tvMethodManual,
-            binding.ivMethodManual,
+            R.drawable.ic_edit_24,
             selection.method == WaterMeasurementMethodUi.MANUAL
         )
         renderMethod(
             binding.cardMethodTestKit,
             binding.tvMethodTestKit,
-            binding.ivMethodTestKit,
+            R.drawable.ic_care_water_test_24,
             selection.method == WaterMeasurementMethodUi.TEST_KIT
         )
         renderMethod(
             binding.cardMethodDigital,
             binding.tvMethodDigital,
-            binding.ivMethodDigital,
+            R.drawable.ic_tank_health_device_24,
             selection.method == WaterMeasurementMethodUi.DIGITAL
         )
         renderMethod(
             binding.cardMethodSensor,
             binding.tvMethodSensor,
-            binding.ivMethodSensor,
+            R.drawable.ic_tank_health_sensor_24,
             selection.method == WaterMeasurementMethodUi.SENSOR
         )
         renderRows()
@@ -192,9 +192,9 @@ internal class WaterMeasurementMethodSheetBinder(
     }
 
     private fun renderCanonicalInfo() {
-        binding.tvCanonicalInfo.isVisible =
+        binding.canonicalInfoCard.isVisible =
             WaterMeasurementCanonicalUi.hasCanonicalSemantics(state.parameterId)
-        if (!binding.tvCanonicalInfo.isVisible) return
+        if (!binding.canonicalInfoCard.isVisible) return
         val canonicalBasis = WaterMeasurementCanonicalUi.canonicalBasis(state.parameterId)
         val canonicalUnit = WaterMeasurementCanonicalUi.canonicalUnit(state.parameterId)
         binding.tvCanonicalInfo.text = if (canonicalUnit == null) {
@@ -214,7 +214,7 @@ internal class WaterMeasurementMethodSheetBinder(
     private fun renderMethod(
         card: MaterialCardView,
         text: TextView,
-        icon: ImageView,
+        @DrawableRes iconRes: Int,
         selected: Boolean
     ) {
         val context = fragment.requireContext()
@@ -230,7 +230,12 @@ internal class WaterMeasurementMethodSheetBinder(
         card.strokeColor = if (selected) primary else outline
         text.setTextColor(if (selected) selectedText else unselectedText)
         text.setTypeface(null, if (selected) Typeface.BOLD else Typeface.NORMAL)
-        icon.imageTintList = android.content.res.ColorStateList.valueOf(
+        val iconSize = fragment.resources.getDimensionPixelSize(R.dimen.aqua_size_18)
+        val icon = requireNotNull(ContextCompat.getDrawable(context, iconRes)).mutate().apply {
+            setBounds(0, 0, iconSize, iconSize)
+        }
+        text.setCompoundDrawablesRelative(icon, null, null, null)
+        text.compoundDrawableTintList = android.content.res.ColorStateList.valueOf(
             if (selected) selectedText else unselectedText
         )
     }

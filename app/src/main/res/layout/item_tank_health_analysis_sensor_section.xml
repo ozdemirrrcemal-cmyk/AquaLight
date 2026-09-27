@@ -41,7 +41,7 @@
             </com.google.android.material.card.MaterialCardView>
 
             <LinearLayout
-                android:layout_width="@dimen/aqua_size_0"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/aqua_size_10"
                 android:layout_weight="1"
@@ -179,7 +179,7 @@
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/cardSensorSource"
                     style="@style/Widget.Aqua.Card.Inline"
-                    android:layout_width="@dimen/aqua_size_0"
+                    android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_marginEnd="@dimen/aqua_size_2"
                     android:layout_weight="1"
@@ -207,7 +207,7 @@
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/cardManualSource"
                     style="@style/Widget.Aqua.Card.Inline"
-                    android:layout_width="@dimen/aqua_size_0"
+                    android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_marginStart="@dimen/aqua_size_2"
                     android:layout_weight="1"
@@ -265,6 +265,7 @@
                 android:layout_marginStart="@dimen/aqua_size_8"
                 android:layout_marginEnd="@dimen/aqua_size_6"
                 android:includeFontPadding="false"
+                android:labelFor="@id/inputTemperature"
                 android:text="@string/tank_health_analysis_temperature"
                 android:textColor="@color/aqua_card_text_primary"
                 android:textSize="@dimen/aqua_text_size_body_small"
@@ -297,10 +298,11 @@
                     <EditText
                         android:id="@+id/inputTemperature"
                         style="@style/Widget.Aqua.Input.PlainEditText.Embedded"
-                        android:layout_width="@dimen/aqua_size_0"
+                        android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:gravity="center_vertical"
+                        android:importantForAutofill="no"
                         android:inputType="numberDecimal"
                         android:paddingStart="@dimen/aqua_size_12"
                         android:paddingEnd="@dimen/aqua_size_4"

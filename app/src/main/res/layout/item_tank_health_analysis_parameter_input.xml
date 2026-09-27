@@ -33,7 +33,7 @@
 
             <TextView
                 android:id="@+id/tvParameterName"
-                android:layout_width="@dimen/aqua_size_0"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/aqua_size_7"
                 android:layout_weight="1"
@@ -93,11 +93,12 @@
                 <EditText
                     android:id="@+id/inputValue"
                     style="@style/Widget.Aqua.Input.PlainEditText.Embedded"
-                    android:layout_width="@dimen/aqua_size_0"
+                    android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:gravity="center_vertical"
                     android:hint="@string/tank_health_analysis_input_hint"
+                    android:importantForAutofill="no"
                     android:inputType="numberDecimal"
                     android:paddingStart="@dimen/aqua_size_12"
                     android:paddingEnd="@dimen/aqua_size_4"
@@ -110,38 +111,21 @@
                     android:layout_height="@dimen/aqua_size_28"
                     android:background="@color/aqua_card_divider" />
 
-                <LinearLayout
+                <TextView
                     android:id="@+id/unitSelector"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:clickable="true"
-                    android:focusable="true"
+                    android:drawableEnd="@drawable/ic_water_measurement_chevron_down_16"
+                    android:drawablePadding="@dimen/aqua_size_3"
                     android:foreground="?attr/selectableItemBackgroundBorderless"
+                    android:focusable="true"
                     android:gravity="center"
-                    android:orientation="horizontal"
+                    android:includeFontPadding="false"
                     android:paddingStart="@dimen/aqua_size_8"
-                    android:paddingEnd="@dimen/aqua_size_8">
-
-                    <TextView
-                        android:id="@+id/tvParameterUnit"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:includeFontPadding="false"
-                        android:textColor="@color/aqua_card_text_primary"
-                        android:textSize="@dimen/aqua_text_size_body_small" />
-
-                    <ImageView
-                        android:id="@+id/ivUnitChevron"
-                        android:layout_width="@dimen/aqua_size_16"
-                        android:layout_height="@dimen/aqua_size_16"
-                        android:layout_marginStart="@dimen/aqua_size_3"
-                        android:contentDescription="@null"
-                        android:importantForAccessibility="no"
-                        android:rotation="@integer/aqua_rotation_90"
-                        android:src="@drawable/ic_tank_health_chevron_right_24"
-                        app:tint="@color/aqua_card_text_secondary" />
-
-                </LinearLayout>
+                    android:paddingEnd="@dimen/aqua_size_8"
+                    android:textColor="@color/aqua_card_text_primary"
+                    android:textSize="@dimen/aqua_text_size_body_small" />
 
             </LinearLayout>
 

@@ -90,6 +90,23 @@ def is_color_definition_layer(path: Path) -> bool:
     return path.parent.name.startswith("values") and "color" in path.name
 
 
+def is_weighted_zero_width(text: str, match: re.Match[str]) -> bool:
+    """Android Lint requires literal 0dp on weighted LinearLayout children."""
+    if match.group(0) != "0dp":
+        return False
+    start = text.rfind("<", 0, match.start())
+    end = text.find(">", match.end())
+    if start < 0 or end < 0:
+        return False
+    tag = text[start:end]
+    return (
+        'android:layout_width="0dp"' in tag
+        and 'android:layout_weight=' in tag
+        and text[match.start() - len('android:layout_width="'):match.start()]
+        == 'android:layout_width="'
+    )
+
+
 def validate_component_style(errors: list[str], path: Path, element: ET.Element) -> None:
     tag = element.tag.rsplit("}", 1)[-1]
     expected_prefixes: tuple[str, ...] | None = None
@@ -117,7 +134,13 @@ def validate_xml(errors: list[str]) -> set[str]:
         if path.name != "palette_colors.xml":
             add_matches(errors, path, text, HEX_LITERAL, "raw color outside the primitive palette")
         if not is_dimension_definition(path):
-            add_matches(errors, path, text, RAW_DIMENSION, "raw dp/sp outside a dimension resource")
+            for match in RAW_DIMENSION.finditer(text):
+                if is_weighted_zero_width(text, match):
+                    continue
+                errors.append(
+                    f"{relative(path)}:{line_number(text, match.start())}: "
+                    f"raw dp/sp outside a dimension resource: {match.group(0)}"
+                )
         add_matches(errors, path, text, ANDROID_COLOR_REFERENCE, "platform color bypasses semantic tokens")
         if not is_color_definition_layer(path) and path.name != "palette_colors.xml":
             add_matches(errors, path, text, PRIMITIVE_XML_COLOR, "primitive palette bypasses semantic tokens")

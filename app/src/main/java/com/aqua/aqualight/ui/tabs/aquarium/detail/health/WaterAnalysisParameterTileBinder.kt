@@ -131,7 +131,7 @@ internal class WaterAnalysisParameterTileBinder(
             configurationDescription(model).takeIf { hasUnit }
 
         if (hasUnit) {
-            binding.tvParameterUnit.setText(
+            binding.unitSelector.setText(
                 selectedOptionLabelRes(unitOptions, selection.unitId)
             )
             binding.unitSelector.setOnClickListener(openConfiguration)

@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.ItemTankHealthAddAnalysisBinding
@@ -78,8 +79,27 @@ internal class TankHealthContentAdapter(
         metrics: List<TankHealthWaterMetricUiModel>,
         measuredAtMillis: Long? = null
     ) {
-        items = buildItems(metrics, measuredAtMillis)
-        notifyDataSetChanged()
+        val previous = items
+        val next = buildItems(metrics, measuredAtMillis)
+        val diff = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
+            override fun getOldListSize(): Int = previous.size
+            override fun getNewListSize(): Int = next.size
+
+            override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                val old = previous[oldItemPosition]
+                val new = next[newItemPosition]
+                return when {
+                    old is TankHealthContentItem.Metric && new is TankHealthContentItem.Metric ->
+                        old.metric.id == new.metric.id
+                    else -> old.javaClass == new.javaClass
+                }
+            }
+
+            override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean =
+                previous[oldItemPosition] == next[newItemPosition]
+        })
+        items = next
+        diff.dispatchUpdatesTo(this)
     }
 
     fun spanSizeForPosition(position: Int): Int =

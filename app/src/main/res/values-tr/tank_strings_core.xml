@@ -111,15 +111,8 @@
     <string name="aquarium_tank_profile_sps_reef">SPS Resif</string>
     <string name="aquarium_tank_profile_mixed_reef">Karma Resif</string>
     <string name="aquarium_tank_profile_other">Diğer</string>
-    <string name="aquarium_tank_type_coral">Mercan</string>
     <string name="aquarium_tank_type_fish">Balık</string>
-    <string name="aquarium_tank_type_marine">Deniz</string>
-    <string name="aquarium_tank_type_mixed_reef">Karma Resif</string>
-    <string name="aquarium_tank_type_other">Diğer</string>
-    <string name="aquarium_tank_type_planted">Bitkili</string>
     <string name="aquarium_tank_type_shrimp">Karides</string>
-    <string name="aquarium_tank_type_softies">Yumuşak Mercan</string>
-    <string name="aquarium_tank_type_sps">SPS</string>
     <string name="aquarium_tank_type_title">Tank Türü</string>
     <string name="aquarium_type_title">Tür</string>
     <string name="aquarium_unit_centimeters">santimetre</string>

@@ -11,32 +11,11 @@
     <string name="tank_health_water_quality_title">Su Kalitesi</string>
     <string name="tank_health_last_analysis">Henüz analiz yok</string>
     <string name="tank_health_last_analysis_at">Ölçüm: %1$s</string>
-    <string name="tank_health_status_normal">Normal</string>
-    <string name="tank_health_status_moderate">Orta</string>
-    <string name="tank_health_status_approaching">Yaklaşıyor</string>
     <string name="tank_health_status_not_measured">Ölçülmedi</string>
 
     <string name="tank_health_metric_no3">Nitrat (NO₃⁻)</string>
-    <string name="tank_health_metric_po4">Fosfat (PO₄³⁻)</string>
-    <string name="tank_health_metric_no2">Nitrit (NO₂⁻)</string>
-    <string name="tank_health_metric_nh3_nh4">Amonyak / Amonyum (NH₃/NH₄⁺)</string>
     <string name="tank_health_metric_temperature">Sıcaklık</string>
-    <string name="tank_health_metric_gh">Genel Sertlik (GH)</string>
-    <string name="tank_health_metric_kh">Karbonat Sertliği (KH)</string>
     <string name="tank_health_add_analysis">Analiz Ekle</string>
 
-    <string name="tank_health_maintenance_title">Bakım Durumu</string>
-    <string name="tank_health_water_change">Su değişimi</string>
-    <string name="tank_health_water_change_age">5 gün önce</string>
-    <string name="tank_health_pruning">Budama</string>
-    <string name="tank_health_pruning_age">9 gün önce</string>
-    <string name="tank_health_filter_maintenance">Filtre bakımı</string>
-    <string name="tank_health_filter_maintenance_age">18 gün önce</string>
 
-    <string name="tank_health_system_summary_title">Sistem Özeti</string>
-    <string name="tank_health_system_co2_value">Mevcut</string>
-    <string name="tank_health_system_lighting">Aydınlatma</string>
-    <string name="tank_health_system_filter">Filtre</string>
-    <string name="tank_health_system_livestock_load">Canlı yükü</string>
-    <string name="tank_health_system_livestock_load_value">28 canlı</string>
 </resources>

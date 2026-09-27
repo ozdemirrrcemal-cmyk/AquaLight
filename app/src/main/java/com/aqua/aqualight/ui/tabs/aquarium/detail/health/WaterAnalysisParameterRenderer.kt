@@ -1,6 +1,8 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 
 import android.widget.LinearLayout
+import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import com.aqua.aqualight.R
@@ -31,9 +33,15 @@ internal class WaterAnalysisParameterRenderer(
 
         binding.profileContextCard.isVisible = true
         binding.profileMissingMessage.isVisible = false
-        binding.ivProfileIcon.setImageResource(
-            WaterTestProfileUiCatalog.profileIconRes(tankProfile)
-        )
+        val context = fragment.requireContext()
+        val iconSize = fragment.resources.getDimensionPixelSize(R.dimen.aqua_size_14)
+        val icon = requireNotNull(
+            ContextCompat.getDrawable(context, WaterTestProfileUiCatalog.profileIconRes(tankProfile))
+        ).mutate().apply {
+            setBounds(0, 0, iconSize, iconSize)
+        }
+        DrawableCompat.setTint(icon, ContextCompat.getColor(context, R.color.aqua_accent_primary))
+        binding.tvProfileContext.setCompoundDrawablesRelative(icon, null, null, null)
         binding.tvProfileContext.text = fragment.getString(
             R.string.tank_health_analysis_profile_context,
             AquariumTankTaxonomyText.tankTypeLabel(fragment.requireContext(), tankProfile)
