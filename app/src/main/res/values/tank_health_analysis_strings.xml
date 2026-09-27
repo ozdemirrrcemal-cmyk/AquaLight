@@ -35,7 +35,7 @@
     <string name="tank_health_analysis_water_parameters_title">Water Parameters</string>
     <string name="tank_health_analysis_water_parameters_subtitle">Measure and enter your water values.</string>
     <string name="tank_health_analysis_profile_context">%1$s profile</string>
-    <string name="tank_health_analysis_profile_missing">Tank profile is unavailable. Choose a profile before adding measurements.</string>
+    <string name="tank_health_analysis_profile_missing">Select a supported tank type in tank settings to enter water tests.</string>
     <string name="tank_health_analysis_recommended_tests">Recommended tests</string>
     <string name="tank_health_analysis_additional_tests">Additional tests</string>
     <string name="tank_health_analysis_add_test">+ Add Test</string>
@@ -46,7 +46,6 @@
     <string name="tank_health_analysis_remove_test">Remove test</string>
     <string name="tank_health_analysis_remove_named_test">Remove %1$s test</string>
     <string name="tank_health_analysis_source_value">Original reading: %1$s</string>
-    <string name="tank_health_analysis_profile_missing">Select a supported tank type in tank settings to enter water tests.</string>
     <string name="tank_health_analysis_test_picker_label_format">%1$s  •  %2$s</string>
 
     <string name="water_measurement_sheet_title">Measurement Method and Test Kit</string>
