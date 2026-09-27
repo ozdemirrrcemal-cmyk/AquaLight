@@ -120,12 +120,39 @@ class UserDataBackupCodecTest {
     }
 
     @Test
-    fun `decoder rejects the previous backup schema without compatibility`() {
-        val invalid = manifest().copy(schemaVersion = 1)
-        val encoded = rawZip(Gson().toJson(invalid))
+    fun `decoder upgrades the known previous schema without inventing records`() {
+        val original = manifest()
+        val encoded = rawZip(Gson().toJson(original.copy(schemaVersion = 1)))
+        val decoded = codec.decode(encoded, File(encoded.parentFile, "decoded-previous-schema"))
+        assertEquals(original, decoded.manifest)
+    }
 
+    @Test
+    fun `legacy missing catalog identities become explicit custom identities without guessing species`() {
+        val original = manifest()
+        val livestock = listOf(41L, 42L, 43L).map { id ->
+            ArchiveLivestock(id, "Original name $id", "Fish", 2, null, "Original note", "custom:$id")
+        }
+        val legacy = original.copy(schemaVersion = 1,
+            aquariums = listOf(original.aquariums.single().copy(livestock = livestock)))
+        val document = Gson().toJsonTree(legacy).asJsonObject
+        val items = document.getAsJsonArray("aquariums")[0].asJsonObject.getAsJsonArray("livestock")
+        items[0].asJsonObject.remove("catalogEntryId")
+        items[1].asJsonObject.add("catalogEntryId", com.google.gson.JsonNull.INSTANCE)
+        items[2].asJsonObject.addProperty("catalogEntryId", "")
+        val encoded = rawZip(document.toString())
+        val decoded = codec.decode(encoded, File(encoded.parentFile, "decoded-legacy-identities"))
+        assertEquals(livestock, decoded.manifest.aquariums.single().livestock)
+    }
+
+    @Test
+    fun `legacy malformed declared identity is rejected rather than replaced`() {
+        val original = manifest()
+        val invalid = original.copy(schemaVersion = 1, aquariums = listOf(original.aquariums.single().copy(
+            livestock = listOf(ArchiveLivestock(42, "Fish", "Fish", 1, null, "", "custom:99")))))
+        val encoded = rawZip(Gson().toJson(invalid))
         assertThrows(IllegalArgumentException::class.java) {
-            codec.decode(encoded, File(encoded.parentFile, "decoded-previous-schema"))
+            codec.decode(encoded, File(encoded.parentFile, "decoded-invalid-legacy-identity"))
         }
     }
 

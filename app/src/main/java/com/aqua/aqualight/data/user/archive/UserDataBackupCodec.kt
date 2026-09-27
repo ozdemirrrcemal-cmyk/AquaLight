@@ -192,7 +192,7 @@ internal class UserDataBackupCodec(
 
     private fun decodeManifest(json: String): UserDataBackupManifest {
         return runCatching {
-            gson.fromJson(json, UserDataBackupManifest::class.java)
+            UserDataBackupManifestReader(gson).read(json)
         }.getOrElse { error ->
             throw IllegalArgumentException("Backup manifest is invalid.", error)
         }

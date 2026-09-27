@@ -12,7 +12,7 @@ devices is not established by this inventory.
 | `water_analyses.pb` v2 | `18ed54a2c2916a555a20c57b8940cb923a041aa7` | Adds request ID at tag 8. Identical retry uses the stored request identity; legacy rows may remain blank. No raw measurement field changes. |
 | `water_analyses.pb` v3 | `33c75adfa3940cbb96b98034cc7a31c77fb80e83`, plus `3dccd32` | Introduces distinct TAN-as-N/direct-NH3 vocabulary; later adds typed total alkalinity. Proto wire fields remain additive. Old ammonia and KH retain their original keys/bases/units. |
 | User backup ZIP v1 / portable JSON v1 | `9c27591b4996499c23f262a204fa60b95aaea553^:UserDataArchiveModels.kt` | Contains aquarium, care-task and device-assignment data; no analysis list, method preference, assessment or migration staging. It cannot supply historic analyses. |
-| User backup ZIP v2 / portable JSON v2 | `9c27591b4996499c23f262a204fa60b95aaea553` through current models | Moves livestock to strict catalog identity; later media additions do not add analysis history. The current decoder rejects v1. Old-archive compatibility and new history round-trip remain M.7. |
+| User backup ZIP v2 / portable JSON v2 | `9c27591b4996499c23f262a204fa60b95aaea553` through current models | Moves livestock to strict catalog identity; later media additions do not add analysis history. The decoder accepts the known v1 envelope and converts only absent/null/empty livestock catalog identities to explicit custom:<localId> identities. Existing identities, names, quantities and notes are retained; malformed identities and unsupported taxonomy still fail validation. Neither v1 nor v2 contains analyses. New history round-trip remains M.7. |
 | Android system backup/data extraction | Current manifest and backup/extraction XML | Backup is disabled and datastore data excluded. This is not a water-analysis export/restore mechanism. |
 
 The archive paths above are under
@@ -90,3 +90,7 @@ The separate application suite passed 40 tests. The architecture guards and
 308 Python tool tests passed. Detekt 1.23.8 passed both configured rule sets and
 the existing advisory baseline policy: zero blockers and zero new debt.
 These are local checks; the full Android Gradle and device gates remain separate.
+
+## Legacy backup reader evidence (2026-09-27)
+
+`UserDataBackupCodecTest` (35 local JVM tests) verifies the known v1 manifest, missing/null/empty catalog identities, and rejection of a mismatched declared custom identity. Serializable archive/export DTO fields now carry explicit `SerializedName` names so obfuscation cannot rename the cross-version wire contract; minified runtime acceptance remains a separate release gate. This does not close M.7 or claim history import.
