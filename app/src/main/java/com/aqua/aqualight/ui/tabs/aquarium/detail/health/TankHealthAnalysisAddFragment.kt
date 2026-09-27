@@ -84,7 +84,16 @@ class TankHealthAnalysisAddFragment :
             renderer = { parameterRenderer }
         ).bind()
         bindHiddenDraftConfirmation()
-        setupNavigation()
+        binding.btnHistory.setOnClickListener {
+            findNavController().navigateSafelyFrom(
+                sourceDestinationId = R.id.tankHealthAnalysisAddFragment,
+                directions = TankHealthAnalysisAddFragmentDirections
+                    .actionTankHealthAnalysisAddFragmentToTankHealthAnalysisHistoryFragment(
+                        args.tankId
+                    )
+            )
+        }
+        binding.btnSaveAnalysis.setOnClickListener { saveAnalysis() }
         observeTankProfile()
     }
 
@@ -145,19 +154,6 @@ class TankHealthAnalysisAddFragment :
             ?.let { rawId ->
                 runCatching { WaterTestParameterId.valueOf(rawId) }.getOrNull()
             }
-    }
-
-    private fun setupNavigation() {
-        binding.btnHistory.setOnClickListener {
-            findNavController().navigateSafelyFrom(
-                sourceDestinationId = R.id.tankHealthAnalysisAddFragment,
-                directions = TankHealthAnalysisAddFragmentDirections
-                    .actionTankHealthAnalysisAddFragmentToTankHealthAnalysisHistoryFragment(
-                        args.tankId
-                    )
-            )
-        }
-        binding.btnSaveAnalysis.setOnClickListener { saveAnalysis() }
     }
 
     private fun saveAnalysis(hiddenDraftReviewed: Boolean = false) {
