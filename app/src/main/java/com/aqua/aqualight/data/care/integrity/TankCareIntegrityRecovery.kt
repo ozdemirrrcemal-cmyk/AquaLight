@@ -2,13 +2,15 @@ package com.aqua.aqualight.data.care.integrity
 
 import android.content.Context
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
+import com.aqua.aqualight.data.aquarium.health.WaterAnalysisDataStoreManager
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.store.StoreInvariantViolation
 import com.aqua.aqualight.data.user.UserDataScope
 
 internal class TankCareIntegrityRecovery private constructor(
     private val tankStore: AquariumTankDataStoreManager,
-    private val careTaskStore: CareTaskDataStoreManager
+    private val careTaskStore: CareTaskDataStoreManager,
+    private val waterAnalysisStore: WaterAnalysisDataStoreManager
 ) {
 
     data class Result(
@@ -69,6 +71,7 @@ internal class TankCareIntegrityRecovery private constructor(
                 val existingTasks = careTaskStore
                     .snapshotTasksForIntegrity(pending.tankId)
                 careTaskStore.deleteTasksForTank(pending.tankId)
+                waterAnalysisStore.deleteAnalysesForTank(pending.tankId)
                 TankCareIntegrityJournal.complete(owner, pending.tankId)
                 removedTaskCount += existingTasks.size
             }
@@ -89,7 +92,8 @@ internal class TankCareIntegrityRecovery private constructor(
             TankCareIntegrityJournal.initialize(appContext)
             return TankCareIntegrityRecovery(
                 tankStore = AquariumTankDataStoreManager(appContext),
-                careTaskStore = CareTaskDataStoreManager.create(appContext)
+                careTaskStore = CareTaskDataStoreManager.create(appContext),
+                waterAnalysisStore = WaterAnalysisDataStoreManager(appContext)
             )
         }
     }

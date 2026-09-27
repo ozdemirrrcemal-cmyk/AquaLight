@@ -277,19 +277,15 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
             }
         )
         cardBinding.tvTitle.text = title
-        cardBinding.tvSummary.text = getComponentSummary(materials)
+        cardBinding.tvSummary.text = MaterialSummaryFormatter.summaryForSavedMaterials(
+            context = requireContext(),
+            materials = materials
+        )
         cardBinding.cardRoot.setOnClickListener {
             openTankSettingsDetails()
         }
 
         return cardBinding.root
-    }
-
-    private fun getComponentSummary(materials: List<AquariumMaterialSelection>): String {
-        return MaterialSummaryFormatter.summaryForSavedMaterials(
-            context = requireContext(),
-            materials = materials
-        )
     }
 
     private fun getTankDaysText(setupDateEpochDay: Long?): String {

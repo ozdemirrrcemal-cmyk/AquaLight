@@ -148,6 +148,7 @@ class PlantPhotoIsolationInstrumentedTest {
             deleteTankRecords = { error("Unexpected tank deletion") },
             snapshotCareTasksForTank = { error("Unexpected care access") },
             deleteCareTasksForTank = { error("Unexpected care deletion") },
+            deleteWaterAnalysesForTank = { error("Unexpected water analysis deletion") },
             restoreCareTasksForTank = { _, _ -> error("Unexpected care restore") },
             removeDeviceAssignmentsForTank = { error("Unexpected device access") },
             cancelCareTaskReminder = { _, _ -> error("Unexpected notification access") },
@@ -160,8 +161,7 @@ class PlantPhotoIsolationInstrumentedTest {
                 scheduler = unused(NotificationScheduler::class.java),
                 deviceUpdateWorkCoordinator = unused(DeviceUpdateNotificationWorkCoordinator::class.java),
                 renderer = unused(NotificationRenderer::class.java)
-            ),
-            deleteWaterAnalysesForTank = { error("Unexpected water analysis deletion") }
+            )
         )
     )
 

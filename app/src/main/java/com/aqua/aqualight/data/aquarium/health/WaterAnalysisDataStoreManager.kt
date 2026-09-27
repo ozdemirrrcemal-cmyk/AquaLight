@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
+import com.aqua.aqualight.data.care.integrity.TankCareIntegrityJournal
 import com.aqua.aqualight.data.store.StoreInvariantViolation
 import com.aqua.aqualight.data.user.UserDataScope
 import kotlinx.coroutines.flow.Flow
@@ -19,6 +20,10 @@ internal class WaterAnalysisDataStoreManager(
 ) {
     private val appContext = context.applicationContext
     private val tankStore = AquariumTankDataStoreManager(appContext)
+
+    init {
+        TankCareIntegrityJournal.initialize(appContext)
+    }
 
     val analysesFlow: Flow<List<WaterAnalysisRecord>> =
         appContext.waterAnalysesDataStore.data.map { store ->
@@ -50,6 +55,11 @@ internal class WaterAnalysisDataStoreManager(
 
         appContext.waterAnalysesDataStore.updateData { currentStore ->
             requireOwnerScope(ownerUid)
+            if (TankCareIntegrityJournal.isWriteBlocked(ownerUid, draft.tankId)) {
+                throw StoreInvariantViolation(
+                    "Water analysis targets a tank with an active deletion transaction."
+                )
+            }
             val replayId = WaterAnalysisIdentityRules.replayId(currentStore, ownerUid, draft)
             if (replayId != null) {
                 createdId = replayId

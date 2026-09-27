@@ -22,6 +22,7 @@ class OwnerTankDataCleaner internal constructor(
     private val snapshotCareTasksForTank: suspend (Long) -> List<CareTask>,
     private val deleteCareTasksForTank: suspend (Long) -> Unit,
     private val restoreCareTasksForTank: suspend (Long, List<CareTask>) -> Unit,
+    private val deleteWaterAnalysesForTank: suspend (Long) -> Unit,
     private val removeDeviceAssignmentsForTank:
         suspend (Long) -> TankAssignmentCleanupResult,
     private val cancelCareTaskReminder: suspend (String, Long) -> Unit,
@@ -32,6 +33,7 @@ class OwnerTankDataCleaner internal constructor(
 ) {
     enum class CleanupStage {
         CARE_TASKS,
+        WATER_ANALYSES,
         DEVICE_ASSIGNMENTS
     }
 
@@ -129,14 +131,31 @@ class OwnerTankDataCleaner internal constructor(
             }
 
             try {
-                integrityTransactions.complete(ownerUid, tankId)
+                // Keep the durable deletion pending until the analysis store is clean.
+                // Owner-session recovery repeats this idempotent step after a crash.
+                deleteWaterAnalysesForTank(tankId)
             } catch (error: Throwable) {
                 error.throwIfCancellation()
                 cleanupIssues += CleanupIssue(
                     tankId = tankId,
-                    stage = CleanupStage.CARE_TASKS,
+                    stage = CleanupStage.WATER_ANALYSES,
                     error = error
                 )
+            }
+
+            if (cleanupIssues.none { issue ->
+                    issue.tankId == tankId && issue.stage == CleanupStage.WATER_ANALYSES
+                }) {
+                try {
+                    integrityTransactions.complete(ownerUid, tankId)
+                } catch (error: Throwable) {
+                    error.throwIfCancellation()
+                    cleanupIssues += CleanupIssue(
+                        tankId = tankId,
+                        stage = CleanupStage.CARE_TASKS,
+                        error = error
+                    )
+                }
             }
 
             try {

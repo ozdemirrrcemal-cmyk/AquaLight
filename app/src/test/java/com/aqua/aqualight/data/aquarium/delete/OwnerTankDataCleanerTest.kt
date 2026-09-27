@@ -168,6 +168,30 @@ class OwnerTankDataCleanerTest {
     }
 
     @Test
+    fun `analysis cleanup completes before journal and failure leaves it pending`() = runBlocking {
+        val events = mutableListOf<String>()
+        val integrity = RecordingIntegrityTransactions(events)
+        val successfulCleaner = cleaner(
+            integrity = integrity,
+            deleteWaterAnalysesForTank = { tankId -> events += "analysis:$tankId" }
+        )
+
+        val result = successfulCleaner.deleteTanks(listOf(7L))
+        assertTrue(result is OwnerTankDataCleaner.Result.Deleted)
+        assertTrue(events.indexOf("analysis:7") < events.indexOf("complete:7"))
+
+        val failureIntegrity = RecordingIntegrityTransactions()
+        val failed = cleaner(
+            integrity = failureIntegrity,
+            deleteWaterAnalysesForTank = { error("analysis store unavailable") }
+        ).deleteTanks(listOf(8L)) as OwnerTankDataCleaner.Result.Deleted
+
+        assertEquals(OwnerTankDataCleaner.CleanupStage.WATER_ANALYSES, failed.cleanupIssues.single().stage)
+        assertTrue(failureIntegrity.completedTankIds.isEmpty())
+        assertTrue(failureIntegrity.abortedTankIds.isEmpty())
+    }
+
+    @Test
     fun `assignment cleanup failure is reported after authoritative deletion`() = runBlocking {
         val cleanupError = IllegalStateException("assignment cleanup failed")
         val cleaner = cleaner(
@@ -218,6 +242,7 @@ class OwnerTankDataCleanerTest {
         snapshotCareTasksForTank: suspend (Long) -> List<CareTask> = { emptyList() },
         deleteCareTasksForTank: suspend (Long) -> Unit = {},
         restoreCareTasksForTank: suspend (Long, List<CareTask>) -> Unit = { _, _ -> },
+        deleteWaterAnalysesForTank: suspend (Long) -> Unit = {},
         removeAssignmentsForTank: suspend (Long) -> TankAssignmentCleanupResult = {
             TankAssignmentCleanupResult.Completed(0)
         },
@@ -229,6 +254,7 @@ class OwnerTankDataCleanerTest {
             snapshotCareTasksForTank = snapshotCareTasksForTank,
             deleteCareTasksForTank = deleteCareTasksForTank,
             restoreCareTasksForTank = restoreCareTasksForTank,
+            deleteWaterAnalysesForTank = deleteWaterAnalysesForTank,
             removeDeviceAssignmentsForTank = removeAssignmentsForTank,
             cancelCareTaskReminder = cancelCareTaskReminder,
             reconcileCareReminders = reconcileCareReminders,
