@@ -481,9 +481,11 @@ class MaintenanceViewModel(
         types: Set<CareTaskType>
     ): AquaUiText {
         val lastTask = tasks
-            .filter { task -> task.type in types }
-            .maxByOrNull { task -> task.completedAtMillis ?: task.dueAtMillis }
-        val completedAt = lastTask?.completedAtMillis ?: lastTask?.dueAtMillis
+            .filter { task ->
+                task.type in types && task.completedAtMillis?.let { it > 0L } == true
+            }
+            .maxByOrNull { task -> requireNotNull(task.completedAtMillis) }
+        val completedAt = lastTask?.completedAtMillis
         return if (completedAt == null || completedAt <= 0L) {
             AquaUiText.Resource(R.string.common_not_available_double_symbol)
         } else {

@@ -113,7 +113,10 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
     }
 
     private fun TankActivityUiState.toHealthMaintenanceUi(): TankHealthMaintenanceUi {
-        val completedTypes = completedTasks.map { task -> task.type }.toSet()
+        val completedTypes = completedTasks
+            .filter { task -> task.completedAtMillis?.let { it > 0L } == true }
+            .map { task -> task.type }
+            .toSet()
         val context = requireContext()
         return TankHealthMaintenanceUi(
             waterChangeText = lastWaterChangeText.takeIf {

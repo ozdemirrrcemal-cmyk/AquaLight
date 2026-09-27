@@ -447,7 +447,7 @@ WaterAnalysisRecord içindeki kalıcı owner kimliğinin UI’a açılması gere
 - [ ] W8.10 Delete dialog tarihi seçili kayıttan locale-aware formatlansın; hard-coded 26 Sep 2026 kalksın; navigation yalnız gerçek delete başarısından sonra olsun.
 - [ ] W8.11 K12/K13: TankHealthContentAdapter fixture yerine real presentation model ve Loading/NoAnalysis/Content(PARTIAL)/Error durumlarını render etsin; default Normal/yeşil/82 fallback'i kalksın.
 - [ ] W8.12 “Son analiz” tarihi, data age/stale işareti ve §25'e uygun ölçüm kartları latest record'dan beslensin; sabit sekiz kart varsayımı kalksın. Tank türü değişikliği eski kaydın ölçümlerini gizlemesin; eski ölçüm güncel canlı su durumu gibi sunulmasın.
-- [ ] W8.13 Bakım bölümünü MaintenanceOperations tamamlanmış kayıtlarından bağla; completedAt ile dueAt birbirine karışmasın. Son bakım kaydı yoksa “5 gün önce/Normal” uydurulmasın; overdue/approaching için tanımlı takvim politikası kullanılsın.
+- [ ] W8.13 Bakım bölümünü MaintenanceOperations tamamlanmış kayıtlarından bağla; completedAt ile dueAt birbirine karışmasın. Son bakım kaydı yoksa “5 gün önce/Normal” uydurulmasın; overdue/approaching için tanımlı takvim politikası kullanılsın. Bağlantı ve `completedAt`-olmayan geçmiş kaydın planlı tarihini son bakım saymama testi eklendi; tanımlı overdue/approaching politikası açık.
 - [ ] W8.14 Sistem özeti canonical material selections/assigned cihaz/context verisinden gelsin; birden fazla ürün, kayıt yokluğu ve offline durumları ayrı olsun.
 - [ ] W8.15 “28 canlı” gerçek quantity toplamından gelsin; sayıyı doğrulanmamış biyolojik yük/risk skoruna dönüştürme.
 - [ ] W8.16 TankDetailTankFragment giriş kartındaki sabit 82, “iyi görünüyor” ve “2 gün önce” metinleri de gerçek summary/NoAnalysis durumuna bağlansın.

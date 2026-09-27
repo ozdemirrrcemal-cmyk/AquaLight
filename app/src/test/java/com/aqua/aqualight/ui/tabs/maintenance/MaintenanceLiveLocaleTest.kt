@@ -1,5 +1,6 @@
 package com.aqua.aqualight.ui.tabs.maintenance
 
+import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.application.care.CareTaskSnapshot
 import com.aqua.aqualight.application.care.CareTaskSource
@@ -8,6 +9,7 @@ import com.aqua.aqualight.application.care.CareTaskType
 import com.aqua.aqualight.application.care.CompletedCareActivityInput
 import com.aqua.aqualight.application.care.MaintenanceOperations
 import com.aqua.aqualight.application.care.ManualCareTaskInput
+import com.aqua.aqualight.ui.common.text.AquaUiText
 import com.aqua.aqualight.ui.tabs.maintenance.text.CareTaskTextPresentation
 import com.aqua.aqualight.ui.tabs.maintenance.text.CareTaskTypePresentation
 import com.aqua.aqualight.ui.tabs.maintenance.text.MaintenanceTextResolver
@@ -112,6 +114,43 @@ class MaintenanceLiveLocaleTest {
         }
         assertEquals("tr-auto-description", turkish.single().description)
     }
+
+    @Test
+    fun `last maintenance time never substitutes a scheduled due date for missing completion time`() =
+        runTest {
+            val operations = FakeOperations()
+            val viewModel = MaintenanceViewModel(operations, FakeResolver())
+            viewModel.setTanks(listOf(tank()))
+            val knownCompletion = System.currentTimeMillis() - 2L * 24L * 60L * 60L * 1000L
+            val known = task(
+                id = 10L,
+                type = CareTaskType.WATER_CHANGE,
+                title = "Water change",
+                description = "Completed"
+            ).copy(status = CareTaskStatus.COMPLETED, completedAtMillis = knownCompletion)
+            val missingCompletion = known.copy(
+                id = 11L,
+                dueAtMillis = System.currentTimeMillis() + 20L * 24L * 60L * 60L * 1000L,
+                completedAtMillis = null
+            )
+
+            operations.tasks.value = listOf(missingCompletion)
+            val missing = viewModel.tankActivityStateFlow(11L)
+                .first { state -> state.completedTasks.size == 1 }
+            assertEquals(
+                AquaUiText.Resource(R.string.common_not_available_double_symbol),
+                missing.lastWaterChangeText
+            )
+
+            operations.tasks.value = listOf(known)
+            val expected = viewModel.tankActivityStateFlow(11L)
+                .first { state -> state.completedTasks.size == 1 }
+                .lastWaterChangeText
+            operations.tasks.value = listOf(known, missingCompletion)
+            val mixed = viewModel.tankActivityStateFlow(11L)
+                .first { state -> state.completedTasks.size == 2 }
+            assertEquals(expected, mixed.lastWaterChangeText)
+        }
 
     private class FakeOperations : MaintenanceOperations {
         override val tasks = MutableStateFlow<List<CareTaskSnapshot>>(emptyList())
