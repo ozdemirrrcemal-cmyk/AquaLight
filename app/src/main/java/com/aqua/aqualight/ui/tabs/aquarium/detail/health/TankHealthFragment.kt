@@ -12,6 +12,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.GridLayoutManager
 import com.aqua.aqualight.R
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.application.aquarium.AquariumTankTaxonomy
 import com.aqua.aqualight.application.care.CareTaskType
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisSnapshot
@@ -31,7 +32,9 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
 
     private val args: TankHealthFragmentArgs by navArgs()
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
-    private val waterAnalysisViewModel: WaterAnalysisViewModel by viewModels()
+    private val waterAnalysisViewModel: WaterAnalysisViewModel by viewModels {
+        requireContext().requireAppContainer().defaultViewModelFactory
+    }
     private val maintenanceViewModel: MaintenanceViewModel by activityViewModels()
 
     private var _binding: FragmentTankHealthBinding? = null

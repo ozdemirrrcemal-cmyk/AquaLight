@@ -7,6 +7,7 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisSnapshot
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentTankHealthAnalysisDetailBinding
@@ -21,7 +22,9 @@ class TankHealthAnalysisDetailFragment :
     Fragment(R.layout.fragment_tank_health_analysis_detail) {
 
     private val args: TankHealthAnalysisDetailFragmentArgs by navArgs()
-    private val waterAnalysisViewModel: WaterAnalysisViewModel by viewModels()
+    private val waterAnalysisViewModel: WaterAnalysisViewModel by viewModels {
+        requireContext().requireAppContainer().defaultViewModelFactory
+    }
 
     private var _binding: FragmentTankHealthAnalysisDetailBinding? = null
     private val binding get() = _binding!!

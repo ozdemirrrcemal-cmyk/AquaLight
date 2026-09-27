@@ -9,6 +9,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisSnapshot
 import com.aqua.aqualight.databinding.FragmentTankHealthAnalysisHistoryBinding
 import com.aqua.aqualight.i18n.LocaleFormatter
@@ -20,7 +21,9 @@ class TankHealthAnalysisHistoryFragment :
     Fragment(R.layout.fragment_tank_health_analysis_history) {
 
     private val args: TankHealthAnalysisHistoryFragmentArgs by navArgs()
-    private val waterAnalysisViewModel: WaterAnalysisViewModel by viewModels()
+    private val waterAnalysisViewModel: WaterAnalysisViewModel by viewModels {
+        requireContext().requireAppContainer().defaultViewModelFactory
+    }
 
     private var _binding: FragmentTankHealthAnalysisHistoryBinding? = null
     private val binding get() = _binding!!

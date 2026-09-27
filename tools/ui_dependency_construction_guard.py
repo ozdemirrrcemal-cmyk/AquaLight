@@ -69,6 +69,7 @@ INJECTED_FRAGMENT_VIEWMODELS = (
     "DeviceProvisioningProgressViewModel",
     "TankDetailDevicesViewModel",
     "TankDeviceSelectViewModel",
+    "WaterAnalysisViewModel",
     "DeviceLightRootViewModel",
     "DeviceCoolingRootViewModel",
     "DeviceTimerRootViewModel",

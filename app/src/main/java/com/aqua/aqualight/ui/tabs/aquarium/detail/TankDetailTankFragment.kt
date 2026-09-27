@@ -12,6 +12,7 @@ import com.aqua.aqualight.ui.tabs.aquarium.detail.health.WaterAssessmentPresenta
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.ui.tabs.aquarium.catalog.material.MaterialCategoryCatalog
 import com.aqua.aqualight.application.aquarium.AquariumMaterialSelection
@@ -42,7 +43,9 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
     private val binding get() = _binding!!
 
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
-    private val waterAnalysisViewModel: WaterAnalysisViewModel by viewModels()
+    private val waterAnalysisViewModel: WaterAnalysisViewModel by viewModels {
+        requireContext().requireAppContainer().defaultViewModelFactory
+    }
 
     private var tankId: Long = 0L
     private var currentTank: AquariumTankSnapshot? = null

@@ -127,6 +127,7 @@ class ReleaseSmokeActivity : BaseActivity() {
                     verifyLargeFontText(fragmentRoot)
                     captureScreen(screen)
                 }
+                WaterAnalysisNavigationSmoke(navHostFragment).verify()
             }.onSuccess {
                 renderResult("$PASS_MARKER:$smokeProfile")
             }.onFailure { error ->
