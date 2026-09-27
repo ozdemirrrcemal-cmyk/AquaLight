@@ -13,7 +13,6 @@
     <string name="tank_health_last_analysis_at">Ölçüm: %1$s</string>
     <string name="tank_health_status_not_measured">Ölçülmedi</string>
 
-    <string name="tank_health_metric_no3">Nitrat (NO₃⁻)</string>
     <string name="tank_health_metric_temperature">Sıcaklık</string>
     <string name="tank_health_add_analysis">Analiz Ekle</string>
 

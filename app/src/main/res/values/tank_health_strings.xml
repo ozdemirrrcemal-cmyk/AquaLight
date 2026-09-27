@@ -15,8 +15,6 @@
     <string name="tank_health_status_not_measured">Not measured</string>
     <string name="tank_health_value_not_measured" translatable="false">—</string>
 
-    <string name="tank_health_metric_ph" translatable="false">pH</string>
-    <string name="tank_health_metric_no3">Nitrate (NO₃⁻)</string>
     <string name="tank_health_metric_temperature">Temperature</string>
 
     <string name="tank_health_add_analysis">Add Analysis</string>

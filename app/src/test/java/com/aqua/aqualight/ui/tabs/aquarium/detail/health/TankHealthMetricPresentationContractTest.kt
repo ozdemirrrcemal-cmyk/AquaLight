@@ -19,16 +19,16 @@ class TankHealthMetricPresentationContractTest {
         assertTrue(layout.contains("app:autoSizeTextType=\"uniform\""))
         assertTrue(layout.contains("aqua_text_size_health_metric_label_min"))
 
-        assertTrue(turkish.contains("<string name=\"tank_health_test_nitrate\">Nitrat</string>"))
-        assertTrue(turkish.contains("<string name=\"tank_health_test_nitrite\">Nitrit</string>"))
-        assertTrue(turkish.contains("<string name=\"tank_health_test_ammonia_ammonium\">Amonyak / Amonyum</string>"))
-        assertTrue(turkish.contains("<string name=\"tank_health_test_general_hardness\">Genel Sertlik</string>"))
-        assertTrue(turkish.contains("<string name=\"tank_health_test_carbonate_hardness\">Karbonat Sertliği</string>"))
-        assertTrue(turkish.contains("<string name=\"tank_health_test_phosphate\">Fosfat</string>"))
-        assertTrue(symbols.contains("<string name=\"tank_health_test_symbol_nitrate\" translatable=\"false\">NO₃⁻</string>"))
-        assertTrue(symbols.contains("<string name=\"tank_health_test_symbol_nitrite\" translatable=\"false\">NO₂⁻</string>"))
-        assertTrue(symbols.contains("<string name=\"tank_health_test_symbol_ammonia_ammonium\" translatable=\"false\">NH₃ / NH₄⁺</string>"))
-        assertTrue(symbols.contains("<string name=\"tank_health_test_symbol_phosphate\" translatable=\"false\">PO₄³⁻</string>"))
+        assertLocalizedString(turkish, "tank_health_test_nitrate", "Nitrat")
+        assertLocalizedString(turkish, "tank_health_test_nitrite", "Nitrit")
+        assertLocalizedString(turkish, "tank_health_test_ammonia_ammonium", "Amonyak / Amonyum")
+        assertLocalizedString(turkish, "tank_health_test_general_hardness", "Genel Sertlik")
+        assertLocalizedString(turkish, "tank_health_test_carbonate_hardness", "Karbonat Sertliği")
+        assertLocalizedString(turkish, "tank_health_test_phosphate", "Fosfat")
+        assertSymbol(symbols, "tank_health_test_symbol_nitrate", "NO₃⁻")
+        assertSymbol(symbols, "tank_health_test_symbol_nitrite", "NO₂⁻")
+        assertSymbol(symbols, "tank_health_test_symbol_ammonia_ammonium", "NH₃ / NH₄⁺")
+        assertSymbol(symbols, "tank_health_test_symbol_phosphate", "PO₄³⁻")
 
         val fragment = file(
             "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
@@ -49,6 +49,14 @@ class TankHealthMetricPresentationContractTest {
 
     private fun file(relativePath: String): String =
         File(repositoryRoot, relativePath).readText()
+
+    private fun assertLocalizedString(xml: String, name: String, value: String) {
+        assertTrue(xml.contains("<string name=\"$name\">$value</string>"))
+    }
+
+    private fun assertSymbol(xml: String, name: String, value: String) {
+        assertTrue(xml.contains("<string name=\"$name\" translatable=\"false\">$value</string>"))
+    }
 
     private fun locateRepositoryRoot(): File {
         var candidate: File? = File(requireNotNull(System.getProperty("user.dir"))).absoluteFile

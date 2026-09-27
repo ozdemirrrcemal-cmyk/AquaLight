@@ -10,7 +10,6 @@ import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisSnapshot
-import com.aqua.aqualight.application.aquarium.health.WaterParameter
 import com.aqua.aqualight.databinding.FragmentTankHealthAnalysisHistoryBinding
 import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
@@ -92,24 +91,38 @@ class TankHealthAnalysisHistoryFragment :
 
     private fun toHistoryRecord(snapshot: WaterAnalysisSnapshot): TankHealthAnalysisHistoryRecord {
         val context = requireContext()
-        val ph = snapshot.measurements.firstOrNull { it.parameter == WaterParameter.PH }
-        val nitrate = snapshot.measurements.firstOrNull { it.parameter == WaterParameter.NITRATE }
+        val metrics = WaterAnalysisHistoryPreview.from(snapshot).map { preview ->
+            when (preview) {
+                is WaterAnalysisHistoryPreviewValue.Measurement -> {
+                    val measurement = preview.source
+                    val name = getString(
+                        WaterAnalysisPresentation.parameterNameRes(measurement.parameter)
+                    )
+                    val symbol = WaterAnalysisPresentation.measurementSymbolRes(measurement)
+                        ?.let { symbolRes -> getString(symbolRes) }
+                    TankHealthHistoryMetric(
+                        labelText = symbol?.let { "$name ($it)" } ?: name,
+                        valueText = WaterAnalysisPresentation.measurementValueText(
+                            context,
+                            measurement
+                        )
+                    )
+                }
+
+                is WaterAnalysisHistoryPreviewValue.Temperature -> TankHealthHistoryMetric(
+                    labelText = getString(R.string.tank_health_metric_temperature),
+                    valueText = WaterAnalysisPresentation.temperatureValueText(
+                        context,
+                        preview.celsius
+                    )
+                )
+            }
+        }
         return TankHealthAnalysisHistoryRecord(
             analysisId = snapshot.id,
             dateText = LocaleFormatter.formatDate(context, snapshot.measuredAtMillis),
             timeText = LocaleFormatter.formatTime(context, snapshot.measuredAtMillis),
-            phValueText = ph?.let { WaterAnalysisPresentation.measurementValueText(context, it) }
-                ?: getString(R.string.tank_health_value_not_measured),
-            nitrateValueText = nitrate
-                ?.let { WaterAnalysisPresentation.measurementValueText(context, it) }
-                ?: getString(R.string.tank_health_value_not_measured),
-            temperatureValueText = WaterAnalysisPresentation.temperatureValueText(
-                context,
-                snapshot.temperatureCelsius
-            ),
-            phMeasured = ph != null,
-            nitrateMeasured = nitrate != null,
-            temperatureMeasured = snapshot.temperatureCelsius != null
+            metrics = metrics
         )
     }
 

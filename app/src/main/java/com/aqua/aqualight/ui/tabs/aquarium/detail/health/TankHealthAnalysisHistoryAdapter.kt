@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -43,21 +44,50 @@ internal class TankHealthAnalysisHistoryAdapter(
             val context = binding.root.context
             binding.tvDate.text = item.dateText
             binding.tvTime.text = item.timeText
-            binding.tvPhValue.text = item.phValueText
-            binding.tvNo3Value.text = item.nitrateValueText
-            binding.tvTemperatureValue.text = item.temperatureValueText
-
-            val recorded = context.getString(R.string.tank_health_analysis_recorded)
-            val notMeasured = context.getString(R.string.tank_health_status_not_measured)
-            binding.tvPhStatus.text = if (item.phMeasured) recorded else notMeasured
-            binding.tvNo3Status.text = if (item.nitrateMeasured) recorded else notMeasured
-            binding.tvTemperatureStatus.text =
-                if (item.temperatureMeasured) recorded else notMeasured
-
+            binding.metricsRow.isVisible = item.metrics.isNotEmpty()
             val statusColor = ContextCompat.getColor(context, R.color.aqua_content_muted)
-            binding.tvPhStatus.setTextColor(statusColor)
-            binding.tvNo3Status.setTextColor(statusColor)
-            binding.tvTemperatureStatus.setTextColor(statusColor)
+            val cards = listOf(
+                binding.metricCardFirst,
+                binding.metricCardSecond,
+                binding.metricCardThird
+            )
+            val labels = listOf(
+                binding.tvMetricFirstLabel,
+                binding.tvMetricSecondLabel,
+                binding.tvMetricThirdLabel
+            )
+            val values = listOf(
+                binding.tvMetricFirstValue,
+                binding.tvMetricSecondValue,
+                binding.tvMetricThirdValue
+            )
+            val statuses = listOf(
+                binding.tvMetricFirstStatus,
+                binding.tvMetricSecondStatus,
+                binding.tvMetricThirdStatus
+            )
+            cards.forEachIndexed { index, card ->
+                val metric = item.metrics.getOrNull(index)
+                card.isVisible = metric != null
+                if (metric != null) {
+                    labels[index].text = metric.labelText
+                    values[index].text = metric.valueText
+                    statuses[index].text = context.getString(R.string.tank_health_analysis_recorded)
+                    statuses[index].setTextColor(statusColor)
+                }
+            }
+
+            binding.root.contentDescription = buildString {
+                append(item.dateText)
+                append(' ')
+                append(item.timeText)
+                item.metrics.forEach { metric ->
+                    append(", ")
+                    append(metric.labelText)
+                    append(' ')
+                    append(metric.valueText)
+                }
+            }
 
             binding.root.setOnClickListener { onRecordClick(item) }
         }
@@ -82,10 +112,10 @@ internal data class TankHealthAnalysisHistoryRecord(
     val analysisId: Long,
     val dateText: String,
     val timeText: String,
-    val phValueText: String,
-    val nitrateValueText: String,
-    val temperatureValueText: String,
-    val phMeasured: Boolean,
-    val nitrateMeasured: Boolean,
-    val temperatureMeasured: Boolean
+    val metrics: List<TankHealthHistoryMetric>
+)
+
+internal data class TankHealthHistoryMetric(
+    val labelText: String,
+    val valueText: String
 )

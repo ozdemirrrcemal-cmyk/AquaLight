@@ -75,6 +75,7 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <LinearLayout
+            android:id="@+id/metricsRow"
             android:layout_width="match_parent"
             android:layout_height="@dimen/aqua_size_72"
             android:layout_marginTop="@dimen/aqua_size_6"
@@ -82,6 +83,7 @@
             android:orientation="horizontal">
 
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/metricCardFirst"
                 style="@style/Widget.Aqua.Card.Metric"
                 android:layout_width="@dimen/aqua_size_0"
                 android:layout_height="match_parent"
@@ -97,15 +99,17 @@
                     android:paddingHorizontal="@dimen/aqua_size_8">
 
                     <TextView
+                        android:id="@+id/tvMetricFirstLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:includeFontPadding="false"
-                        android:text="@string/tank_health_metric_ph"
+                        android:ellipsize="end"
+                        android:maxLines="1"
                         android:textColor="@color/aqua_card_text_secondary"
                         android:textSize="@dimen/aqua_text_size_micro_caption" />
 
                     <TextView
-                        android:id="@+id/tvPhValue"
+                        android:id="@+id/tvMetricFirstValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/aqua_size_2"
@@ -116,7 +120,7 @@
                         android:textStyle="bold" />
 
                     <TextView
-                        android:id="@+id/tvPhStatus"
+                        android:id="@+id/tvMetricFirstStatus"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/aqua_size_1"
@@ -127,6 +131,7 @@
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/metricCardSecond"
                 style="@style/Widget.Aqua.Card.Metric"
                 android:layout_width="@dimen/aqua_size_0"
                 android:layout_height="match_parent"
@@ -142,15 +147,17 @@
                     android:paddingHorizontal="@dimen/aqua_size_8">
 
                     <TextView
+                        android:id="@+id/tvMetricSecondLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:includeFontPadding="false"
-                        android:text="@string/tank_health_metric_no3"
+                        android:ellipsize="end"
+                        android:maxLines="1"
                         android:textColor="@color/aqua_card_text_secondary"
                         android:textSize="@dimen/aqua_text_size_micro_caption" />
 
                     <TextView
-                        android:id="@+id/tvNo3Value"
+                        android:id="@+id/tvMetricSecondValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/aqua_size_2"
@@ -161,7 +168,7 @@
                         android:textStyle="bold" />
 
                     <TextView
-                        android:id="@+id/tvNo3Status"
+                        android:id="@+id/tvMetricSecondStatus"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/aqua_size_1"
@@ -172,6 +179,7 @@
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/metricCardThird"
                 style="@style/Widget.Aqua.Card.Metric"
                 android:layout_width="@dimen/aqua_size_0"
                 android:layout_height="match_parent"
@@ -187,15 +195,17 @@
                     android:paddingHorizontal="@dimen/aqua_size_8">
 
                     <TextView
+                        android:id="@+id/tvMetricThirdLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:includeFontPadding="false"
-                        android:text="@string/tank_health_metric_temperature"
+                        android:ellipsize="end"
+                        android:maxLines="1"
                         android:textColor="@color/aqua_card_text_secondary"
                         android:textSize="@dimen/aqua_text_size_micro_caption" />
 
                     <TextView
-                        android:id="@+id/tvTemperatureValue"
+                        android:id="@+id/tvMetricThirdValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/aqua_size_2"
@@ -206,7 +216,7 @@
                         android:textStyle="bold" />
 
                     <TextView
-                        android:id="@+id/tvTemperatureStatus"
+                        android:id="@+id/tvMetricThirdStatus"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/aqua_size_1"
