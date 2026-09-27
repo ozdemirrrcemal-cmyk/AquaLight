@@ -3,11 +3,13 @@ package com.aqua.aqualight.data.aquarium.health
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
+import com.aqua.aqualight.data.aquarium.OwnerTankMutationGate
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.care.integrity.TankCareIntegrityJournal
 import com.aqua.aqualight.data.store.StoreInvariantViolation
 import com.aqua.aqualight.data.user.UserDataScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 private val Context.waterAnalysesDataStore: DataStore<WaterAnalysesStore> by dataStore(
@@ -50,6 +52,13 @@ internal class WaterAnalysisDataStoreManager(
 
     suspend fun addAnalysis(draft: WaterAnalysisDraftRecord): Long {
         val ownerUid = UserDataScope.requireCurrentUid()
+        WaterAnalysisIdentityRules.requirePositive("tankId", draft.tankId)
+        return OwnerTankMutationGate.shared.withTanks(ownerUid, listOf(draft.tankId)) {
+            addAnalysisUnderGate(ownerUid, draft)
+        }
+    }
+
+    private suspend fun addAnalysisUnderGate(ownerUid: String, draft: WaterAnalysisDraftRecord): Long {
         requireTankExistsForOwner(ownerUid, draft.tankId)
         var createdId = 0L
 
@@ -97,16 +106,21 @@ internal class WaterAnalysisDataStoreManager(
     suspend fun deleteAnalysis(analysisId: Long) {
         WaterAnalysisIdentityRules.requirePositive("analysisId", analysisId)
         val ownerUid = UserDataScope.requireCurrentUid()
-        appContext.waterAnalysesDataStore.updateData { currentStore ->
-            requireOwnerScope(ownerUid)
-            currentStore.replaceAllValidated(
-                currentStore.analysesList.filterNot { stored ->
-                    stored.id == analysisId && stored.belongsToOwner(ownerUid)
-                }
-            )
+        val record = appContext.waterAnalysesDataStore.data.first().analysesList
+            .firstOrNull { it.id == analysisId && it.belongsToOwner(ownerUid) } ?: return
+        OwnerTankMutationGate.shared.withTanks(ownerUid, listOf(record.tankId)) {
+            appContext.waterAnalysesDataStore.updateData { currentStore ->
+                requireOwnerScope(ownerUid)
+                currentStore.replaceAllValidated(
+                    currentStore.analysesList.filterNot { stored ->
+                        stored.id == analysisId && stored.tankId == record.tankId && stored.belongsToOwner(ownerUid)
+                    }
+                )
+            }
         }
     }
 
+    /** Cleanup-only: the deletion coordinator or recovery must hold the shared tank gate. */
     suspend fun deleteAnalysesForTank(tankId: Long) {
         WaterAnalysisIdentityRules.requirePositive("tankId", tankId)
         val ownerUid = UserDataScope.requireCurrentUid()
@@ -164,20 +178,20 @@ internal class WaterAnalysisDataStoreManager(
         }
     }
 
-    private fun requireOwnerScope(expectedOwnerUid: String) {
-        if (UserDataScope.requireCurrentUid() != expectedOwnerUid) {
-            throw StoreInvariantViolation(
-                "The active owner changed while a water-analysis write was in progress."
-            )
-        }
-    }
-
     private fun requireOwnerUid(value: String): String {
         val normalized = UserDataScope.normalizeOwnerUid(value)
         if (normalized.isBlank()) {
             throw StoreInvariantViolation("Water-analysis owner uid must not be blank.")
         }
         return normalized
+    }
+}
+
+private fun requireOwnerScope(expectedOwnerUid: String) {
+    if (UserDataScope.requireCurrentUid() != expectedOwnerUid) {
+        throw StoreInvariantViolation(
+            "The active owner changed while a water-analysis write was in progress."
+        )
     }
 }
 

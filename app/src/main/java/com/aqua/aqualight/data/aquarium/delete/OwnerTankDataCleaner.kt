@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.aquarium.delete
 
+import com.aqua.aqualight.data.aquarium.OwnerTankMutationGate
 import com.aqua.aqualight.data.aquarium.devices.TankAssignmentCleanupResult
 import com.aqua.aqualight.data.care.integrity.TankCareIntegrityJournal
 import com.aqua.aqualight.data.care.integrity.TankCareIntegrityTransactions
@@ -76,12 +77,33 @@ class OwnerTankDataCleaner internal constructor(
             }
         }
 
-        try {
-            integrityTransactions.begin(ownerUid, normalizedTankIds)
+        return OwnerTankMutationGate.shared.withTanks(ownerUid, normalizedTankIds) {
+            deleteTanksUnderGate(ownerUid, normalizedTankIds)
+        }
+    }
+
+    private suspend fun deleteTanksUnderGate(
+        ownerUid: String,
+        normalizedTankIds: List<Long>
+    ): Result {
+        val snapshotsByTank = try {
+            commitTankDeletion(ownerUid, normalizedTankIds)
         } catch (error: Throwable) {
             error.throwIfCancellation()
             return Result.DeleteFailed(error)
         }
+        val issues = mutableListOf<CleanupIssue>()
+        normalizedTankIds.forEach { tankId ->
+            issues += cleanupCommittedTank(ownerUid, tankId, snapshotsByTank[tankId].orEmpty())
+        }
+        return Result.Deleted(normalizedTankIds, issues)
+    }
+
+    private suspend fun commitTankDeletion(
+        ownerUid: String,
+        normalizedTankIds: List<Long>
+    ): Map<Long, List<CareTask>> {
+        integrityTransactions.begin(ownerUid, normalizedTankIds)
 
         val snapshotsByTank = try {
             captureCareSnapshots(ownerUid, normalizedTankIds)
@@ -90,8 +112,7 @@ class OwnerTankDataCleaner internal constructor(
                 abortTransactions(ownerUid, normalizedTankIds)
             }
             abortError?.let(error::addSuppressed)
-            error.throwIfCancellation()
-            return Result.DeleteFailed(error)
+            throw error
         }
 
         try {
@@ -107,15 +128,10 @@ class OwnerTankDataCleaner internal constructor(
                 )
             }
             rollbackError?.let(error::addSuppressed)
-            error.throwIfCancellation()
-            return Result.DeleteFailed(error)
+            throw error
         }
 
-        val issues = mutableListOf<CleanupIssue>()
-        normalizedTankIds.forEach { tankId ->
-            issues += cleanupCommittedTank(ownerUid, tankId, snapshotsByTank[tankId].orEmpty())
-        }
-        return Result.Deleted(normalizedTankIds, issues)
+        return snapshotsByTank
     }
 
     private suspend fun captureCareSnapshots(

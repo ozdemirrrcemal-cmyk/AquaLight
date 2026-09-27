@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.care.integrity
 
 import android.content.Context
+import com.aqua.aqualight.data.aquarium.OwnerTankMutationGate
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.aquarium.health.WaterAnalysisDataStoreManager
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
@@ -30,59 +31,79 @@ internal class TankCareIntegrityRecovery private constructor(
             )
         }
 
-        val existingTankIds = tankStore
-            .tanksSnapshotForOwner(owner)
-            .mapTo(mutableSetOf()) { tank -> tank.id }
-
         var restoredTaskCount = 0
         var removedTaskCount = 0
         var recoveredTransactionCount = 0
 
-        TankCareIntegrityJournal.pendingForOwner(owner).forEach { pending ->
-            if (pending.tankId in existingTankIds) {
-                when (pending.state) {
-                    TankCareIntegrityJournal.State.BLOCKED -> {
-                        // The process stopped before any care-task mutation.
-                        TankCareIntegrityJournal.abort(owner, pending.tankId)
-                    }
-
-                    TankCareIntegrityJournal.State.SNAPSHOTS_CAPTURED -> {
-                        val beforeIds = careTaskStore
-                            .snapshotTasksForIntegrity(pending.tankId)
-                            .mapTo(mutableSetOf()) { task -> task.id }
-
-                        TankCareIntegrityJournal.withRollbackWritesAllowed(
-                            ownerUid = owner,
-                            tankId = pending.tankId
-                        ) {
-                            careTaskStore.restoreTaskSnapshotsForIntegrity(
-                                tankId = pending.tankId,
-                                snapshots = pending.taskSnapshots
-                            )
-                        }
-                        TankCareIntegrityJournal.abort(owner, pending.tankId)
-
-                        restoredTaskCount += pending.taskSnapshots.count { task ->
-                            task.id !in beforeIds
-                        }
-                    }
-                }
-            } else {
-                val existingTasks = careTaskStore
-                    .snapshotTasksForIntegrity(pending.tankId)
-                careTaskStore.deleteTasksForTank(pending.tankId)
-                waterAnalysisStore.deleteAnalysesForTank(pending.tankId)
-                TankCareIntegrityJournal.complete(owner, pending.tankId)
-                removedTaskCount += existingTasks.size
+        TankCareIntegrityJournal.pendingForOwner(owner).forEach { candidate ->
+            OwnerTankMutationGate.shared.withTanks(owner, listOf(candidate.tankId)) {
+                // Both journal and tank state may have changed while awaiting a live deletion.
+                val pending = TankCareIntegrityJournal.pendingForOwner(owner)
+                    .firstOrNull { it.tankId == candidate.tankId } ?: return@withTanks
+                val tankExists = tankStore.tanksSnapshotForOwner(owner)
+                    .any { it.id == pending.tankId }
+                val result = recoverTank(owner, pending, tankExists)
+                restoredTaskCount += result.restoredTaskCount
+                removedTaskCount += result.removedTaskCount
+                recoveredTransactionCount += result.recoveredTransactionCount
             }
-
-            recoveredTransactionCount += 1
         }
 
         return Result(
             restoredTaskCount = restoredTaskCount,
             removedTaskCount = removedTaskCount,
             recoveredTransactionCount = recoveredTransactionCount
+        )
+    }
+
+    private suspend fun recoverTank(
+        owner: String,
+        pending: TankCareIntegrityJournal.PendingDeletion,
+        tankExists: Boolean
+    ): Result {
+        var restoredTaskCount = 0
+        var removedTaskCount = 0
+        if (tankExists) {
+            when (pending.state) {
+                TankCareIntegrityJournal.State.BLOCKED -> {
+                    // The process stopped before any care-task mutation.
+                    TankCareIntegrityJournal.abort(owner, pending.tankId)
+                }
+
+                TankCareIntegrityJournal.State.SNAPSHOTS_CAPTURED -> {
+                    val beforeIds = careTaskStore
+                        .snapshotTasksForIntegrity(pending.tankId)
+                        .mapTo(mutableSetOf()) { task -> task.id }
+
+                    TankCareIntegrityJournal.withRollbackWritesAllowed(
+                        ownerUid = owner,
+                        tankId = pending.tankId
+                    ) {
+                        careTaskStore.restoreTaskSnapshotsForIntegrity(
+                            tankId = pending.tankId,
+                            snapshots = pending.taskSnapshots
+                        )
+                    }
+                    TankCareIntegrityJournal.abort(owner, pending.tankId)
+
+                    restoredTaskCount += pending.taskSnapshots.count { task ->
+                        task.id !in beforeIds
+                    }
+                }
+            }
+        } else {
+            val existingTasks = careTaskStore
+                .snapshotTasksForIntegrity(pending.tankId)
+            careTaskStore.deleteTasksForTank(pending.tankId)
+            waterAnalysisStore.deleteAnalysesForTank(pending.tankId)
+            TankCareIntegrityJournal.complete(owner, pending.tankId)
+            removedTaskCount += existingTasks.size
+        }
+
+        return Result(
+            restoredTaskCount = restoredTaskCount,
+            removedTaskCount = removedTaskCount,
+            recoveredTransactionCount = 1
         )
     }
 

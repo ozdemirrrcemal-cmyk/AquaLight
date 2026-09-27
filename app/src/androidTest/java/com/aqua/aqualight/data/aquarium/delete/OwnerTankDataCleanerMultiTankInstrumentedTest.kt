@@ -3,6 +3,7 @@ package com.aqua.aqualight.data.aquarium.delete
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.aqua.aqualight.data.aquarium.OwnerTankMutationGate
 import com.aqua.aqualight.data.aquarium.devices.TankAssignmentCleanupResult
 import com.aqua.aqualight.data.aquarium.model.TankDraft
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
@@ -25,6 +26,12 @@ import com.aqua.aqualight.data.store.StoreInvariantViolation
 import java.util.UUID
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withContext
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -35,6 +42,82 @@ import org.junit.runner.RunWith
 class OwnerTankDataCleanerMultiTankInstrumentedTest {
 
     private val context = ApplicationProvider.getApplicationContext<Context>()
+
+    @Test
+    fun queuedAnalysisRechecksTankAfterDeletionReleasesGate() = runBlocking {
+        withTimeout(GATE_TIMEOUT_MILLIS) {
+            withIsolatedTank { fixture ->
+                coroutineScope {
+                    val queued = OwnerTankMutationGate.shared.withTanks(fixture.owner, listOf(fixture.tankId)) {
+                        val write = async(start = CoroutineStart.UNDISPATCHED) {
+                            runCatching { fixture.analyses.addAnalysis(validAnalysis(fixture.tankId)) }
+                        }
+                        assertFalse(write.isCompleted)
+                        fixture.tanks.deleteTanks(listOf(fixture.tankId))
+                        write
+                    }
+                    assertTrue(queued.await().exceptionOrNull() is StoreInvariantViolation)
+                    assertTrue(fixture.analyses.analysesFlow.first().isEmpty())
+                }
+            }
+        }
+    }
+
+    @Test
+    fun recoveryRechecksTankAfterWaitingForLiveDeletionGate() = runBlocking {
+        withTimeout(GATE_TIMEOUT_MILLIS) {
+            withIsolatedTank { fixture ->
+                addTask(fixture.care, fixture.tankId, "Pending cleanup")
+                fixture.analyses.addAnalysis(validAnalysis(fixture.tankId))
+                val snapshots = fixture.care.snapshotTasksForIntegrity(fixture.tankId)
+                TankCareIntegrityJournal.begin(fixture.owner, listOf(fixture.tankId))
+                TankCareIntegrityJournal.captureSnapshots(fixture.owner, mapOf(fixture.tankId to snapshots))
+                coroutineScope {
+                    val queued = OwnerTankMutationGate.shared.withTanks(fixture.owner, listOf(fixture.tankId)) {
+                        val recovery = async(start = CoroutineStart.UNDISPATCHED) {
+                            TankCareIntegrityRecovery.create(context).recover(fixture.owner)
+                        }
+                        assertFalse(recovery.isCompleted)
+                        fixture.care.deleteTasksForTank(fixture.tankId)
+                        fixture.tanks.deleteTanks(listOf(fixture.tankId))
+                        recovery
+                    }
+                    assertEquals(0, queued.await().restoredTaskCount)
+                    assertTrue(fixture.care.tasksForTankFlow(fixture.tankId).first().isEmpty())
+                    assertTrue(fixture.analyses.analysesFlow.first().isEmpty())
+                    assertTrue(TankCareIntegrityJournal.pendingForOwner(fixture.owner).isEmpty())
+                }
+            }
+        }
+    }
+
+    private suspend fun withIsolatedTank(block: suspend (GateFixture) -> Unit) {
+        val owner = "tank-gate-${UUID.randomUUID()}"
+        val tanks = AquariumTankDataStoreManager(context)
+        val analyses = WaterAnalysisDataStoreManager(context)
+        val care = CareTaskDataStoreManager.create(context)
+        UserDataScope.withOwnerUid(owner) {
+            try {
+                val tankId = tanks.addTankFromDraft(validTankDraft("Gate Tank"))
+                block(GateFixture(owner, tankId, tanks, analyses, care))
+            } finally {
+                withContext(NonCancellable) {
+                    care.clearAllTasks(owner)
+                    analyses.clearAllAnalyses(owner)
+                    tanks.clearAllTanks(owner)
+                    TankCareIntegrityJournal.clearOwner(owner)
+                }
+            }
+        }
+    }
+
+    private data class GateFixture(
+        val owner: String,
+        val tankId: Long,
+        val tanks: AquariumTankDataStoreManager,
+        val analyses: WaterAnalysisDataStoreManager,
+        val care: CareTaskDataStoreManager
+    )
 
     @Test
     fun twoTanksWithCareTasksAreDeletedThroughOneCrashSafeOperation() = runBlocking {
@@ -211,6 +294,7 @@ class OwnerTankDataCleanerMultiTankInstrumentedTest {
     )
 
     private companion object {
+        const val GATE_TIMEOUT_MILLIS = 10_000L
         const val SETUP_EPOCH_DAY = 20_454L
         const val DUE_MILLIS = 1_767_312_000_000L
     }

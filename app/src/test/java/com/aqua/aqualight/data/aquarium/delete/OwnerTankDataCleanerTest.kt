@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.aquarium.delete
 
 import com.aqua.aqualight.data.aquarium.devices.TankAssignmentCleanupResult
+import com.aqua.aqualight.data.aquarium.OwnerTankMutationGate
 import com.aqua.aqualight.data.care.integrity.TankCareIntegrityTransactions
 import com.aqua.aqualight.data.care.model.CareTask
 import com.aqua.aqualight.data.care.model.CareTaskSource
@@ -8,6 +9,11 @@ import com.aqua.aqualight.data.care.model.CareTaskStatus
 import com.aqua.aqualight.data.care.model.CareTaskType
 import java.util.concurrent.CancellationException
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
@@ -15,6 +21,77 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class OwnerTankDataCleanerTest {
+
+    @Test
+    fun `deletion waits before opening journal when a writer holds the tank`() = runBlocking {
+        withTimeout(5_000L) {
+            val integrity = RecordingIntegrityTransactions()
+            val cleaner = cleaner(integrity = integrity)
+            val deletion = OwnerTankMutationGate.shared.withTanks(OWNER_UID, listOf(7L)) {
+                async(start = CoroutineStart.UNDISPATCHED) { cleaner.deleteTanks(listOf(7L)) }
+                    .also {
+                        assertFalse(it.isCompleted)
+                        assertTrue(integrity.begunTankIds.isEmpty())
+                    }
+            }
+            assertTrue(deletion.await() is OwnerTankDataCleaner.Result.Deleted)
+            assertEquals(listOf(7L), integrity.completedTankIds)
+        }
+    }
+
+    @Test
+    fun `deletion retains the gate until analysis cleanup and journal completion`() = runBlocking {
+        withTimeout(5_000L) {
+            val integrity = RecordingIntegrityTransactions()
+            val cleanupEntered = CompletableDeferred<Unit>()
+            val releaseCleanup = CompletableDeferred<Unit>()
+            val cleaner = waterCleaner(integrity) {
+                cleanupEntered.complete(Unit)
+                releaseCleanup.await()
+            }
+            val deletion = async { cleaner.deleteTanks(listOf(7L)) }
+            cleanupEntered.await()
+            val writer = async(start = CoroutineStart.UNDISPATCHED) {
+                OwnerTankMutationGate.shared.withTanks(OWNER_UID, listOf(7L)) {
+                    assertEquals(listOf(7L), integrity.completedTankIds)
+                }
+            }
+            assertFalse(writer.isCompleted)
+            releaseCleanup.complete(Unit)
+            assertTrue(deletion.await() is OwnerTankDataCleaner.Result.Deleted)
+            writer.await()
+        }
+    }
+
+    @Test
+    fun `cancelled deletion holds the gate until non cancellable rollback finishes`() = runBlocking {
+        withTimeout(5_000L) {
+            val integrity = RecordingIntegrityTransactions()
+            val rollbackEntered = CompletableDeferred<Unit>()
+            val releaseRollback = CompletableDeferred<Unit>()
+            val cleaner = cleaner(
+                integrity = integrity,
+                snapshotCareTasksForTank = { listOf(validTask(it)) },
+                deleteTankRecords = { throw CancellationException("cancelled") },
+                restoreCareTasksForTank = { _, _ ->
+                    rollbackEntered.complete(Unit)
+                    releaseRollback.await()
+                }
+            )
+            val deletion = launch { cleaner.deleteTanks(listOf(7L)) }
+            rollbackEntered.await()
+            val writer = async(start = CoroutineStart.UNDISPATCHED) {
+                OwnerTankMutationGate.shared.withTanks(OWNER_UID, listOf(7L)) {
+                    assertEquals(listOf(7L), integrity.abortedTankIds)
+                }
+            }
+            assertFalse(writer.isCompleted)
+            releaseRollback.complete(Unit)
+            deletion.join()
+            assertTrue(deletion.isCancelled)
+            writer.await()
+        }
+    }
 
     @Test
     fun `invalid and duplicate ids are normalized before the transaction begins`() = runBlocking {

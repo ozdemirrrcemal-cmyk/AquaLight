@@ -9,6 +9,47 @@ occurred. No code here deletes, replaces or truncates the source Proto file.
 Composition must switch only after the owner/session/tank gate, cancellation,
 archive, rollback and recovery requirements are implemented and accepted.
 
+## Shared mutation gate before live cutover
+
+`OwnerTankMutationGate.shared` now orders the live Proto analysis create and exact
+delete paths with `OwnerTankDataCleaner` and `TankCareIntegrityRecovery`. The gate
+is acquired before store transactions and held across tank validation, analysis
+commit, deletion snapshots, tank commit, dependent cleanup and compensating
+rollback. Multi-tank deletions acquire ascending tank IDs; different owners and
+tanks have independent locks. Reservations include waiters, are released on
+cancellation/failure, and are removed when no operation uses the key. Child
+coroutines cannot inherit permission to bypass an occupied gate.
+
+Recovery rereads both pending journal state and authoritative tank existence
+after acquiring the gate. A recovery request queued behind live deletion cannot
+restore care tasks using a tank snapshot taken before deletion. The low-level
+`deleteAnalysesForTank` callback is cleanup-only and deliberately uses the caller's
+gate; acquiring the non-reentrant gate again would deadlock.
+
+`OwnerTankMutationGateTest` covers ordering, independent keys, opposite multi-tank
+input order, partial-acquisition cancellation, holder cancellation and failure
+cleanup. `OwnerTankDataCleanerTest` verifies the journal waits for a writer and
+the gate remains held through water cleanup and non-cancellable care rollback.
+The multi-tank Android suite also covers queued analysis creation after tank
+deletion and recovery waiting behind an in-flight tank deletion.
+
+This closes the live analysis/cleaner ordering gap, but does not activate Room.
+Actual Room commits still need session-generation validation; owner-wide cleanup,
+archive restore and bounded durable analysis snapshots remain separate acceptance
+requirements. The new Android concurrency tests require device/CI execution.
+
+Local gate validation on 27 September 2026 passed with Gradle 8.11.1:
+`:app:testDebugUnitTest` filtered to `OwnerTankMutationGateTest` (7 tests) and
+`OwnerTankDataCleanerTest` (12 tests), plus `:app:compileDebugAndroidTestKotlin`.
+All 19 selected tests passed with zero failures/errors/skips; Android test sources
+compiled successfully. Architecture guards and the 313-test tool suite passed.
+Detekt 1.23.8 passed against the unchanged baseline with zero blockers and zero
+new debt (776 existing advisories). No suppression or baseline entry was added.
+
+For the preceding Room staging commit `e046a82b`, Android CI `36321146886`,
+Debug APK `36321146873` and dependency integrity `36321146842` succeeded. API 27
+and API 36 emulator acceptance remained pending when this gate change was made.
+
 ## Schema and queries
 
 `WaterAnalysisDatabase` is one process singleton, uses the application context,
