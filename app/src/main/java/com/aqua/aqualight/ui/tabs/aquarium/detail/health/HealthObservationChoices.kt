@@ -1,6 +1,7 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 
 import android.widget.LinearLayout
+import androidx.core.content.ContextCompat
 import com.aqua.aqualight.R
 import com.google.android.material.checkbox.MaterialCheckBox
 
@@ -12,6 +13,8 @@ internal fun <T : Enum<T>> LinearLayout.healthChoices(values: List<T>, selected:
     val choices = values.map { value ->
         MaterialCheckBox(context).apply {
             setText(HealthObservationLabels.label(value))
+            setTextColor(ContextCompat.getColor(context, R.color.aqua_card_text_primary))
+            buttonTintList = ContextCompat.getColorStateList(context, R.color.aqua_choice_tint)
             minHeight = resources.getDimensionPixelSize(R.dimen.aqua_size_48)
             isChecked = value.name in selected
             tag = value.name

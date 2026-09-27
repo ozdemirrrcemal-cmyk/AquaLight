@@ -1,5 +1,11 @@
 # Water Analysis indexed migration staging
 
+Current checkpoint, 28 September 2026: Room schema v3 is the live authority after
+verified owner activation. M.2/M.3/M.4 have accepted CI/device evidence; see the
+production checklist and `WATER_ANALYSIS_ACCEPTANCE_EVIDENCE.md`. The sections
+below retain the earlier staging checkpoint and its then-open gates. Their
+Proto-authority statements do not describe the current runtime.
+
 ## Status and authority
 
 This implementation adds Room schema v1 and a verified migration staging path.

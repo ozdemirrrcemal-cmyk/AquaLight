@@ -9,6 +9,9 @@ import com.aqua.aqualight.application.aquarium.health.observation.HealthObservat
 import com.aqua.aqualight.ui.tabs.aquarium.detail.health.HealthObservationViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.health.HealthObservationFormFragment
 import com.aqua.aqualight.ui.tabs.aquarium.detail.health.HealthObservationDetailFragment
+import com.aqua.aqualight.ui.tabs.aquarium.detail.health.HealthLoadState
+import android.view.View
+import android.widget.TextView
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
 import com.aqua.aqualight.ui.tabs.aquarium.detail.health.AlgaeControlFragment
 import com.aqua.aqualight.ui.tabs.aquarium.detail.health.AlgaeControlFragmentArgs
@@ -20,10 +23,12 @@ import com.aqua.aqualight.ui.tabs.aquarium.detail.health.LivestockHealthFragment
 import com.aqua.aqualight.ui.tabs.aquarium.detail.health.LivestockHealthFragmentArgs
 import com.aqua.aqualight.ui.tabs.aquarium.detail.health.LivestockHealthFragmentDirections
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withTimeout
 
 /** Actual central graph, production delegates and SavedState extras in the minified application. */
 internal class HealthObservationNavigationSmoke(
-    private val host: NavHostFragment, private val capture: (String) -> Unit
+    private val host: NavHostFragment, private val data: HealthObservationSmokeData,
+    private val capture: (String) -> Unit
 ) {
     suspend fun verify() {
         HealthObservationKind.entries.forEach { kind -> verifyKind(kind) }
@@ -36,48 +41,78 @@ internal class HealthObservationNavigationSmoke(
             HealthObservationKind.LIVESTOCK -> R.id.livestockHealthFragment
         }
         val arguments = when (kind) {
-            HealthObservationKind.ALGAE -> AlgaeControlFragmentArgs(TANK).toBundle()
-            HealthObservationKind.PLANT -> PlantHealthFragmentArgs(TANK).toBundle()
-            HealthObservationKind.LIVESTOCK -> LivestockHealthFragmentArgs(TANK).toBundle()
+            HealthObservationKind.ALGAE -> AlgaeControlFragmentArgs(data.tankId).toBundle()
+            HealthObservationKind.PLANT -> PlantHealthFragmentArgs(data.tankId).toBundle()
+            HealthObservationKind.LIVESTOCK -> LivestockHealthFragmentArgs(data.tankId).toBundle()
         }
         val graph = host.navController.navInflater.inflate(R.navigation.nav_aquarium)
         graph.setStartDestination(route)
         host.navController.setGraph(graph, arguments)
         val list = current(kind)
+        awaitContent {
+            (list.history.value as? HealthLoadState.Content)?.value?.records?.any {
+                it.id == data.records.getValue(kind)
+            } == true
+        }
         capture("${kind.name.lowercase()}-observations")
         val formDirection = form(kind)
         check(host.navController.navigateSafelyFrom(route, formDirection))
         check(!host.navController.navigateSafelyFrom(route, formDirection))
         val form = current(kind)
+        awaitContent {
+            form.preparation.value is HealthLoadState.Content && root().findViewById<View>(R.id.save).isEnabled
+        }
         capture("${kind.name.lowercase()}-observation-form")
         check(form !== list && host.childFragmentManager.primaryNavigationFragment is HealthObservationFormFragment)
         check(host.navController.popBackStack())
         check(current(kind) === list)
         check(host.navController.navigateSafelyFrom(route, detail(kind)))
         val detail = current(kind)
+        awaitContent { (detail.record.value as? HealthLoadState.Content)?.value?.id == data.records.getValue(kind) }
+        check(root().findViewById<TextView>(R.id.notes).text.isNotBlank())
+        check(root().findViewById<View>(R.id.follow).isEnabled && root().findViewById<View>(R.id.delete).isEnabled)
         capture("${kind.name.lowercase()}-observation-detail")
-        check(detail !== form && detail !== list && detail.observationId == RECORD)
+        check(detail !== form && detail !== list && detail.observationId == data.records.getValue(kind))
         check(host.childFragmentManager.primaryNavigationFragment is HealthObservationDetailFragment)
+        verifyFollowUp(kind, detail)
         check(host.navController.popBackStack())
         check(current(kind) === list)
     }
 
+    private suspend fun verifyFollowUp(kind: HealthObservationKind, detail: HealthObservationViewModel) {
+        check(root().findViewById<View>(R.id.follow).performClick())
+        val followUp = current(kind)
+        check(followUp !== detail && followUp.previousId == detail.observationId)
+        awaitContent {
+            followUp.previous.value is HealthLoadState.Content && root().findViewById<View>(R.id.save).isEnabled
+        }
+        val parent = checkNotNull((followUp.previous.value as? HealthLoadState.Content)?.value)
+        check(followUp.draft.getLong("subject") == (parent.input.observation.subjectId ?: 0L))
+        check(!root().findViewById<View>(R.id.subject).isEnabled)
+        check(root().findViewById<TextView>(R.id.parent).text.isNotBlank())
+        check(host.navController.popBackStack())
+        check(current(kind) === detail)
+    }
+
     private fun form(kind: HealthObservationKind): NavDirections = when (kind) {
         HealthObservationKind.ALGAE -> AlgaeControlFragmentDirections
-            .actionAlgaeControlFragmentToHealthObservationFormFragment(TANK, kind.name)
+            .actionAlgaeControlFragmentToHealthObservationFormFragment(data.tankId, kind.name)
         HealthObservationKind.PLANT -> PlantHealthFragmentDirections
-            .actionPlantHealthFragmentToHealthObservationFormFragment(TANK, kind.name)
+            .actionPlantHealthFragmentToHealthObservationFormFragment(data.tankId, kind.name)
         HealthObservationKind.LIVESTOCK -> LivestockHealthFragmentDirections
-            .actionLivestockHealthFragmentToHealthObservationFormFragment(TANK, kind.name)
+            .actionLivestockHealthFragmentToHealthObservationFormFragment(data.tankId, kind.name)
     }
 
     private fun detail(kind: HealthObservationKind): NavDirections = when (kind) {
         HealthObservationKind.ALGAE -> AlgaeControlFragmentDirections
-            .actionAlgaeControlFragmentToHealthObservationDetailFragment(TANK, kind.name, RECORD)
+            .actionAlgaeControlFragmentToHealthObservationDetailFragment(
+                data.tankId, kind.name, data.records.getValue(kind))
         HealthObservationKind.PLANT -> PlantHealthFragmentDirections
-            .actionPlantHealthFragmentToHealthObservationDetailFragment(TANK, kind.name, RECORD)
+            .actionPlantHealthFragmentToHealthObservationDetailFragment(
+                data.tankId, kind.name, data.records.getValue(kind))
         HealthObservationKind.LIVESTOCK -> LivestockHealthFragmentDirections
-            .actionLivestockHealthFragmentToHealthObservationDetailFragment(TANK, kind.name, RECORD)
+            .actionLivestockHealthFragmentToHealthObservationDetailFragment(
+                data.tankId, kind.name, data.records.getValue(kind))
     }
 
     private suspend fun current(kind: HealthObservationKind): HealthObservationViewModel {
@@ -87,13 +122,24 @@ internal class HealthObservationNavigationSmoke(
             ?: error("Health observation route did not create a primary navigation fragment")
         check(fragment.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED) && fragment.view != null)
         return ViewModelProvider(fragment)[HealthObservationViewModel::class.java].also {
-            check(it.tankId == TANK && it.kind == kind)
+            check(it.tankId == data.tankId && it.kind == kind)
         }
     }
 
+    private fun root(): View {
+        val fragment = host.childFragmentManager.primaryNavigationFragment
+            ?: error("Health observation route has no active fragment")
+        return fragment.requireView()
+    }
+
+    private suspend fun awaitContent(ready: () -> Boolean) = withTimeout(CONTENT_TIMEOUT_MILLIS) {
+        while (!ready()) delay(CONTENT_POLL_MILLIS)
+        delay(SETTLE_MILLIS)
+    }
+
     private companion object {
-        const val TANK = 901L
-        const val RECORD = 902L
         const val SETTLE_MILLIS = 300L
+        const val CONTENT_TIMEOUT_MILLIS = 10_000L
+        const val CONTENT_POLL_MILLIS = 50L
     }
 }

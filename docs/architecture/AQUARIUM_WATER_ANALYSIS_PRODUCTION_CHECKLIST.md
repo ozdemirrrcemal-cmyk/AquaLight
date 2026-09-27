@@ -1,6 +1,6 @@
 # AquaLight — Production Water Analysis Implementation Checklist
 
-## Current acceptance status — 28 September 2026, 01:02 Europe/Istanbul
+## Current acceptance status — 28 September 2026, 01:42 Europe/Istanbul
 
 The accepted K01–K18 contract decisions are recorded. Implementation and release
 acceptance are incomplete. Current U/S/C/M/E rows total **12 closed, 22 open**;
@@ -21,6 +21,11 @@ The historical W rows overlap these gates and include accepted decisions; they
 must not be added to the current counts or treated as independent completed
 features. The dated continuation notes below document intermediate states;
 the individually evidenced checkbox rows are authoritative for closure.
+
+Twelve previously open historical rows (W5.1/W5.2/W5.5–W5.10, W6.3/W6.4,
+W7.3/W7.6) now have individual executed evidence in
+`WATER_ANALYSIS_ACCEPTANCE_EVIDENCE.md`. They overlap the formal gates above and
+do not increase the 12/34 formal acceptance count.
 
 Room v3 archive/identity indexing, startup recovery and the five-screen central
 navigation smoke passed API 27/API 36 run `36340971240` on `9f80eb2d`: 163
@@ -44,11 +49,19 @@ baseline reports zero new debt. API 27 and API 36 run `36351790882` executed all
 tests on each API with zero failures, including health Room/archive/media scenarios; the later
 minified visual smoke crashed because the smoke container lacked the image
 processor required by the new forms. API 27 also stopped at visual smoke.
-The follow-up binds the production image processor in the smoke container,
-requires all 13 screens in six visual profiles (78 screenshots), and reports
-process crashes immediately. Its 337 Python tests and unchanged-baseline Detekt
-pass locally; device/minified confirmation remains pending. A/P/L acceptance
-has not been claimed from intermediate commits.
+The follow-up `9b731d26` binds the production image processor in the smoke
+container, requires all 13 screens in six visual profiles (78 screenshots), and
+reports process crashes immediately. Android CI `36354005818` and emulator run
+`36354005814` now pass: 184 instrumentation tests and 78 verified screenshots
+on each of API 27/API 36, including the minified health routes. APK, dependency
+integrity and Firebase checks also pass. CodeQL `36354005819` passed as well.
+The local continuation expands those routes from empty/missing states to saved
+observations and follow-up forms, and adds a tank-duplicate/history regression;
+its device execution is separate and pending. Screenshot review also found
+low-contrast default checkbox text in the light profile; the continuation uses
+Aqua text/tint colors, a styled dropdown and a rendered contrast check.
+A/P/L acceptance has not been
+claimed from route smoke alone.
 
 ## 0. Rebaseline — 27 September 2026
 
@@ -180,9 +193,9 @@ evidence and pending device acceptance are in `WATER_ANALYSIS_ROOM_TRANSACTIONS.
 - [x] M.2 Room v3 schema and owner/event/request identity are accepted on `9f80eb2d`: Android CI `36340971220` and API 27/API 36 run `36340971240` passed. `WaterRoomSchemaUpgradeInstrumentedTest`, `WaterAnalysisRoomMigrationInstrumentedTest`, `WaterAnalysisRoomPagingInstrumentedTest` and `WaterRoomArchiveInstrumentedTest` execute actual Room migrations and verify retained raw payloads, timestamps, source metadata and composite owner/tank/event indexes. Live cutover is separately open under M.3–M.7.
 - [x] M.3 Accepted on `c6224e4f`: Android CI `36344376557`, API 27/API 36 `36344376560` (172 tests each plus minified smoke), APK `36344376561` and CodeQL `36344376593` passed. `WaterAnalysisRoomMigrationInstrumentedTest` verifies 50-row checkpoint atomicity, restart and changed-source/raw/index rejection. `WaterAnalysisCutoverInstrumentedTest` verifies owner-frozen source retention, resumed activation, pending-restore/deletion rejection and no legacy resurrection after ACTIVE/owner cleanup. Unsupported source/I/O stays an explicit failure; original Proto is retained through verified activation.
 - [x] M.4 Accepted on `c6224e4f` with the same CI/device runs as M.3. `WaterAnalysisRoomCommitInstrumentedTest.eventAndRequestInsertAreOneTransactionAndRetryIsExact` and `WaterAnalysisSessionInstrumentedTest.savedEvaluationIsAtomicAndRetryDoesNotReadChangedContext` verify atomic event/request/evidence storage and exact retries. `evaluationFailureDoesNotLeaveARawOnlyRecord` rejects partial events. Current scientific source coverage and catalog expansion remain separate S/C/E gates.
-- [ ] M.5 Room DAO owner/tank-targeted detail/latest/delete and indexed 50-item keyset queries passed API 27/API 36 on `9f80eb2d`. The subsequent UI uses a saved single cursor and bounded newer/older pages, with reverse SQL and deleted-page recovery tests. Live Room binding is implemented; this continuation's device execution and measured memory/latency budget remain open; no history is truncated or silently retained away.
-- [ ] M.6 Extend tank deletion gate/journal, orphan repair, owner logout/account deletion and explicit backup/export/restore (including preferences and migration staging). Cover crash/cancellation at every durable boundary. Shared owner/tank ordering covers live Proto create/exact delete, cleaner rollback and recovery. Live analysis writes now require an immutable session-generation lease and await durable DataStore acknowledgement before releasing the session/tank locks, including caller cancellation. Room commit, owner-wide and archive integration remain open. See `WATER_ANALYSIS_ROOM_MIGRATION.md`.
-- [ ] M.7 Live Proto archive v3 now includes checked history, v1/v2 zero-history compatibility, immutable source/ID remap, repeat-import deduplication and durable restore rollback. Whole restore/delete coordinators share an owner gate with pending-journal guards and local concurrency tests. See `WATER_ANALYSIS_ARCHIVE_ROUND_TRIP.md` for named tests and limits. The bounded Room archive backend and schema v3 import index are staged; live Room/migration/preference integration, tank-duplicate regression and device/minified concurrency acceptance remain open; incomplete history is rejected.
+- [ ] M.5 Live Room owner/tank-targeted detail/latest/delete and indexed 50-item keyset queries passed API 27/API 36, most recently as part of the 184 instrumentation tests per API on `78a8311a`. The UI retains one cursor and bounded newer/older pages; reverse queries and deleted-page recovery passed. Measured memory/latency on a representative low-memory device remains open. The 10,000-row test proves ordering/index behavior, not that performance budget; no history is silently evicted.
+- [ ] M.6 Live Room create/delete now holds the immutable session-generation lease, owner archive and tank gates until durable acknowledgement, including cancellation. Bounded deletion staging, orphan repair, pending-journal admission, owner cleanup and reopen tests passed on API 27/API 36. Individual staging/journal requirements are accepted under W6.3/W6.4. Complete boundary coverage, future persisted method preferences and final release/minified integration remain open. See `WATER_ANALYSIS_ACCEPTANCE_EVIDENCE.md` and the dated checkpoints in `WATER_ANALYSIS_ROOM_TRANSACTIONS.md`.
+- [ ] M.7 Live Room archive authority and v3 water import indexes are implemented; archive v4 also carries health observations/photos and follow-up identity. API 27/API 36 on `78a8311a` passed actual Room archive round-trip, deduplication, conflict rollback, reopen and health provenance tests; the workflow later failed at minified health navigation. Legacy v1/v2/v3 readers remain. Persisted method-preference integration, tank-duplicate regression and complete final minified/concurrency acceptance remain open; incomplete history is rejected.
 
 **Gate M:** Legacy and new records survive process death, migration retries,
 owner changes, tank deletion races and restore without duplication or loss.
@@ -207,8 +220,9 @@ Algae Control, Plant Health and Livestock Health now have separate observation
 forms, bounded history, exact-record details, owned photos and follow-up routes.
 They share dated Water Quality/context through application boundaries, preserve
 saved evidence and participate in owner-scoped archive/restore. Their code is
-checkpointed as `8f207e03`; device persistence tests pass on `78a8311a`, while
-minified visual acceptance is being repaired. Formal acceptance follows E → A →
+checkpointed as `8f207e03`; device persistence and minified route/profile smoke
+pass on `9b731d26`. Populated detail/follow-up smoke is the next added check.
+Formal acceptance follows E → A →
 P → L below. No diagnosis or acceptance is inferred from screen/code presence.
 
 ---
@@ -453,16 +467,16 @@ WaterAnalysisRecord içindeki kalıcı owner kimliğinin UI’a açılması gere
 
 ### W5 — Kalıcılık ve application operations
 
-- [ ] W5.1 K15 §17: aquarium_tanks.pb dışında sürümlü owner-scoped Room/SQLite history kur; monolitik DataStore/Proto history oluşturma.
-- [ ] W5.2 Tek Room database instance, migration/DAO/entity mapping, owner+tank/time/ID indeksleri ve K10 cross-store gate bağlantısını kur; mevcut Proto schema sürümleri değişmesin.
+- [x] W5.1 K15 §17: aquarium_tanks.pb dışında sürümlü owner-scoped Room/SQLite history kur; monolitik DataStore/Proto history oluşturma. Accepted individually: `WATER_ANALYSIS_ACCEPTANCE_EVIDENCE.md` maps this row to named tests and executed commits/runs.
+- [x] W5.2 Tek Room database instance, migration/DAO/entity mapping, owner+tank/time/ID indeksleri ve K10 cross-store gate bağlantısını kur; mevcut Proto schema sürümleri değişmesin. Accepted individually: `WATER_ANALYSIS_ACCEPTANCE_EVIDENCE.md` maps this row to named tests and executed commits/runs.
 - [ ] W5.3 Room nullable/presence, typed enum unknown/migration ve raw/canonical/provenance round-trip'i doğrula; eksik değer default 0/normal olmaz.
 - [ ] W5.4 ownerUid/tankId/analysisId geçerliliği; owner içinde benzersiz ID; tank ownership; finite sayılar; timestamp ve provenance alanları commit öncesinde doğrulansın.
-- [ ] W5.5 Raw measurement + relevant context snapshot + assessment + sürümler tek atomik commit olsun. Bir parça yazıldıktan sonra assessment üretme.
-- [ ] W5.6 observeForTank, observeRecord, latestForTank, createAnalysis ve deleteAnalysis uygulansın; sorgu/mutasyon kimliği owner+tank+analysis ile sınırlandırılsın.
-- [ ] W5.7 Tarih sırası observedAt DESC, createdAt DESC ve sabit ID tie-break ile dondurulsun. Yeni girilen eski tarihli kayıt son ölçümü yanlış değiştirmesin.
-- [ ] W5.8 V1 dashboard tek latest record kullansın; son kayıtta eksik GH varsa önceki kaydın GH’ını kaynak/zaman belirtmeden doldurmasın.
-- [ ] W5.9 K14: `(ownerUid, requestId)` unique create; çift tıklama veya commit cevabı kaybolunca aynı requestId aynı analysisId döndürür; yeni draft yeni ID alır.
-- [ ] W5.10 Delete exact record için idempotent/NotFound semantiğine sahip olsun; son kaydın silinmesi latest’i yeniden seçsin; tek kayıt silinince NoAnalysis olsun.
+- [x] W5.5 Raw measurement + relevant context snapshot + assessment + sürümler tek atomik commit olsun. Bir parça yazıldıktan sonra assessment üretme. Accepted individually: `WATER_ANALYSIS_ACCEPTANCE_EVIDENCE.md` maps this row to named tests and executed commits/runs.
+- [x] W5.6 observeForTank, observeRecord, latestForTank, createAnalysis ve deleteAnalysis uygulansın; sorgu/mutasyon kimliği owner+tank+analysis ile sınırlandırılsın. Accepted individually: `WATER_ANALYSIS_ACCEPTANCE_EVIDENCE.md` maps this row to named tests and executed commits/runs.
+- [x] W5.7 Tarih sırası observedAt DESC, createdAt DESC ve sabit ID tie-break ile dondurulsun. Yeni girilen eski tarihli kayıt son ölçümü yanlış değiştirmesin. Accepted individually: `WATER_ANALYSIS_ACCEPTANCE_EVIDENCE.md` maps this row to named tests and executed commits/runs.
+- [x] W5.8 V1 dashboard tek latest record kullansın; son kayıtta eksik GH varsa önceki kaydın GH’ını kaynak/zaman belirtmeden doldurmasın. Accepted individually: `WATER_ANALYSIS_ACCEPTANCE_EVIDENCE.md` maps this row to named tests and executed commits/runs.
+- [x] W5.9 K14: `(ownerUid, requestId)` unique create; çift tıklama veya commit cevabı kaybolunca aynı requestId aynı analysisId döndürür; yeni draft yeni ID alır. Accepted individually: `WATER_ANALYSIS_ACCEPTANCE_EVIDENCE.md` maps this row to named tests and executed commits/runs.
+- [x] W5.10 Delete exact record için idempotent/NotFound semantiğine sahip olsun; son kaydın silinmesi latest’i yeniden seçsin; tek kayıt silinince NoAnalysis olsun. Accepted individually: `WATER_ANALYSIS_ACCEPTANCE_EVIDENCE.md` maps this row to named tests and executed commits/runs.
 - [x] W5.11 Geçmiş açılışında yeniden değerlendirme yapma. Katalog değişimi veya bitki/canlı silinmesi tarihsel sonuç ve açıklamayı değiştirmesin. Local evidence: `WaterEvaluationCodecTest` changes the current catalog while decoded history retains its saved output and names. Room/archive acceptance remains separate.
 - [ ] W5.12 Corruption, unsupported schema, disk full ve I/O error’ı NoAnalysis/başarılı kayıt gibi göstermeyen typed sonuçlar kullan; mevcut commercial recovery/cutover politikasını koru.
 - [ ] W5.13 K15: 50 satırlık indexed keyset page, row-targeted latest/detail, explicit delete dışında retention yok; 10.000 kayıt benchmark, disk dolu/I/O typed hata ve sınırsız UI listesi yok.
@@ -473,8 +487,8 @@ WaterAnalysisRecord içindeki kalıcı owner kimliğinin UI’a açılması gere
 
 - [ ] W6.1 OwnerTankDataCleaner transaction’ına Water Analysis snapshot/delete/restore adımlarını ekle; yeni store yazmalarını tank silme başlangıcında engelle.
 - [ ] W6.2 K10 §21.1: owner+tank gate create/delete/restore'un bütün transaction süresini kapsasın; actual Room commit içinde owner/session/tank/tombstone tekrar doğrulansın. Canlı Proto create/exact delete + cleaner rollback + recovery ortak gate'e bağlandı. Proto create/exact delete ayrıca session-generation lease ve iptalde durable acknowledgement bekleme kullanıyor; Room commit ve archive restore kapsamı açık.
-- [ ] W6.3 Mevcut durable journal snapshot formatını sürümlendir; eski pending journal durumu için açık recovery/cutover davranışı tanımla.
-- [ ] W6.4 K15: analysis rollback snapshot'ı bounded durable staging file/table + checksum/atomic recovery ile tut; SharedPreferences journal'a büyüyen payload gömme.
+- [x] W6.3 Mevcut durable journal snapshot formatını sürümlendir; eski pending journal durumu için açık recovery/cutover davranışı tanımla. Accepted individually: `WATER_ANALYSIS_ACCEPTANCE_EVIDENCE.md` maps this row to named tests and executed commits/runs.
+- [x] W6.4 K15: analysis rollback snapshot'ı bounded durable staging file/table + checksum/atomic recovery ile tut; SharedPreferences journal'a büyüyen payload gömme. Accepted individually: `WATER_ANALYSIS_ACCEPTANCE_EVIDENCE.md` maps this row to named tests and executed commits/runs.
 - [ ] W6.5 Snapshot alma, dependent silme, tank commit, rollback ve journal complete aralarındaki her crash/cancellation noktası için yeniden başlama sonucu test edilsin.
 - [ ] W6.6 Rollback hem care hem analysis snapshot’larını geri getirsin; rollback başarısızsa journal silinmesin ve recovery devam edebilsin.
 - [ ] W6.7 Eşzamanlı save/delete, iki analiz yazması, aynı ID retry, restore/create ve owner logout/account switch senaryoları bariyerlerden geçsin.
@@ -492,10 +506,10 @@ WaterAnalysisRecord içindeki kalıcı owner kimliğinin UI’a açılması gere
 
 - [x] W7.1 Dependencies committed OwnerDependencyGraph/OwnerViewModelFactory üzerinden kurulu; releaseSmoke aynı application operations yolunu kullanır. `9f80eb2d`, composition guard ve API 27/API 36 run `36340971240` ile beş gerçek ekranın merkezi factory üzerinden oluşturulması doğrulandı.
 - [x] W7.2 UI/VM repository, DataStore, JSON reader, device provider veya Firebase oluşturmaz/aramaz. UI dependency, Water Analysis boundary ve composition guards Android CI `36340971220` üzerinde geçti; merkezi factory zorunluluğu mevcut guard içine eklendi.
-- [ ] W7.3 K14 §29.1: dashboard, add draft, history, detail/delete ayrı route-scoped ViewModel/state holder kullansın; application operations ortak, owner/tank/route kimliği immutable.
+- [x] W7.3 K14 §29.1: dashboard, add draft, history, detail/delete ayrı route-scoped ViewModel/state holder kullansın; application operations ortak, owner/tank/route kimliği immutable. Accepted individually: `WATER_ANALYSIS_ACCEPTANCE_EVIDENCE.md` maps this row to named tests and executed commits/runs.
 - [ ] W7.4 Safe Args tankId/analysisId ve SavedStateHandle draft text, source/test, sample instant/offset ve requestId saklasın; tüm geçmiş Bundle'a girmez.
 - [ ] W7.5 Lifecycle-aware collection, tank değişiminde eski akışın iptali, view binding temizliği ve navigation event tüketimi sağlansın.
-- [ ] W7.6 Saving/Deleting durumları tekrar komutu engellesin; işlemin başarı sinyali yalnız commit sonrası gelsin; cancellation yutulmasın.
+- [x] W7.6 Saving/Deleting durumları tekrar komutu engellesin; işlemin başarı sinyali yalnız commit sonrası gelsin; cancellation yutulmasın. Accepted individually: `WATER_ANALYSIS_ACCEPTANCE_EVIDENCE.md` maps this row to named tests and executed commits/runs.
 - [ ] W7.7 ValidationError, TankMissing, SensorStale, ContextUnavailable, StoreFailure ve RecordMissing sonuçları merkezi process-safe feedback’e bağlansın.
 - [ ] W7.8 Katalog I/O ve yoğun değerlendirme uygun dispatcher’da yürüsün; dispatcher/clock/ID generation test edilebilir şekilde sağlansın.
 

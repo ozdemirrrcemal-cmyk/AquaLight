@@ -129,10 +129,14 @@ internal class ReleaseSmokeAppContainer(context: Context) : AppContainer {
         DefaultLocalDataRecoveryOperations
     private val profileOperations = SmokeUserProfileOperations()
 
-    override val defaultViewModelFactory: ViewModelProvider.Factory by lazy(LazyThreadSafetyMode.NONE) {
+    private val smokeFactory by lazy(LazyThreadSafetyMode.NONE) {
         ReleaseSmokeViewModelFactory(context.applicationContext, profileOperations,
             WaterContextCatalogs(plantCareCatalogOperations, livestockCatalogOperations))
     }
+
+    override val defaultViewModelFactory: ViewModelProvider.Factory get() = smokeFactory
+
+    suspend fun prepareHealthSmoke(): HealthObservationSmokeData = smokeFactory.healthSmoke.create()
 
     override val authViewModelFactory: ViewModelProvider.Factory
         get() = defaultViewModelFactory
@@ -231,6 +235,15 @@ private class ReleaseSmokeViewModelFactory(
         check(state.commit(transition))
         OwnerSessionMutationBarrier(state).bind(SMOKE_OWNER_UID, transition.generation)
     }
+    private val healthOperations by lazy(LazyThreadSafetyMode.NONE) {
+        createHealthObservationOperations(appContext, waterAnalysisStore, tankStore,
+            waterAnalysisSession, waterContextCatalogs)
+    }
+
+    val healthSmoke by lazy(LazyThreadSafetyMode.NONE) {
+        HealthObservationSmokeFixture(SMOKE_OWNER_UID, tankStore, healthOperations)
+    }
+
     private val careTaskStore = CareTaskDataStoreManager.create(appContext)
     private val assignmentRepository = TankDeviceAssignmentRepository(
         ownerUid = SMOKE_OWNER_UID,
@@ -323,9 +336,7 @@ private class ReleaseSmokeViewModelFactory(
             )
         modelClass.isAssignableFrom(AquariumTankViewModel::class.java) -> createAquariumTankViewModel()
         modelClass.isAssignableFrom(HealthObservationViewModel::class.java) ->
-            HealthObservationViewModel(
-                createHealthObservationOperations(appContext, waterAnalysisStore, tankStore,
-                    waterAnalysisSession, waterContextCatalogs), checkNotNull(savedStateHandle))
+            HealthObservationViewModel(healthOperations, checkNotNull(savedStateHandle))
         modelClass.isAssignableFrom(WaterAnalysisViewModel::class.java) ->
             WaterAnalysisViewModel(
                 operations = createWaterAnalysisOperations(

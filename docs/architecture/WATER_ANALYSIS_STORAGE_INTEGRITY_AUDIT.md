@@ -1,5 +1,12 @@
 # Water Analysis storage and deletion integrity audit
 
+Current checkpoint, 28 September 2026: live history now uses Room after verified
+owner cutover. Atomic event/request commits, indexed queries, bounded deletion
+staging and Room archive/recovery tests have executed on API 27/API 36. Archive
+v4 includes health observations and photos. See `WATER_ANALYSIS_ACCEPTANCE_EVIDENCE.md`
+for named evidence and remaining limits. The table below is the original baseline
+gap inventory; its Proto/no-export descriptions are historical, not current runtime.
+
 Reviewed on 27 September 2026 against `feat/water-analysis-ui-flow` at
 `3b8920d` and the production branch. This is a gap inventory, not an archive
 or recovery guarantee.

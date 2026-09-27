@@ -1,5 +1,13 @@
 # Water Analysis archive and restore evidence
 
+Current checkpoint, 28 September 2026: live water archive reads/restores use Room
+after owner activation. Archive v4 adds health history/photos and follow-up
+remapping while retaining v1/v2/v3 readers. API 27/API 36 on `78a8311a` passed
+the Room/health archive instrumentation tests; that workflow subsequently failed
+at minified health navigation. Final archive/preference/release gates remain open.
+The dated Proto-bridge sections below are historical; named current evidence is
+in `WATER_ANALYSIS_ACCEPTANCE_EVIDENCE.md` and the production checklist.
+
 Implementation date: 2026-09-27. This is the live Proto bridge; it does not claim the Room event-store cutover or device acceptance.
 
 ## Explicit format and completeness

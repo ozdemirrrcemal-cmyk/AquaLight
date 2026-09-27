@@ -20,6 +20,7 @@
  style="@style/Widget.Aqua.Input.Layout" app:endIconMode="dropdown_menu"
  android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/health_select_subject">
  <com.google.android.material.textfield.MaterialAutoCompleteTextView android:id="@+id/subject"
+ style="@style/Widget.Aqua.Input.Dropdown"
  android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="none"
  android:minHeight="@dimen/aqua_size_48" />
 </com.google.android.material.textfield.TextInputLayout>

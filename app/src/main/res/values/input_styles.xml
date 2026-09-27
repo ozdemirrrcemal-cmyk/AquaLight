@@ -49,6 +49,18 @@
         <item name="android:maxLines">8</item>
     </style>
 
+    <style name="Widget.Aqua.Input.Dropdown" parent="Widget.Material3.AutoCompleteTextView.OutlinedBox">
+        <item name="android:textColor">@color/aqua_input_text_primary</item>
+        <item name="android:textColorHint">@color/aqua_input_hint_unfocused</item>
+        <item name="android:textSize">@dimen/aqua_text_size_body_xlarge</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:minHeight">@dimen/aqua_size_48</item>
+        <item name="android:paddingStart">@dimen/aqua_size_16</item>
+        <item name="android:paddingEnd">@dimen/aqua_size_16</item>
+        <item name="android:paddingTop">@dimen/aqua_size_12</item>
+        <item name="android:paddingBottom">@dimen/aqua_size_12</item>
+    </style>
+
     <style name="Widget.Aqua.Input.PlainEditText" parent="@android:style/Widget.EditText">
         <item name="android:background">@drawable/bg_aqua_input</item>
         <item name="android:textColor">@color/aqua_input_text_primary</item>

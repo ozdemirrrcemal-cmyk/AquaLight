@@ -38,6 +38,7 @@ class ReleaseSmokeActivity : BaseActivity() {
 
     private lateinit var navHostFragment: NavHostFragment
     private lateinit var navController: NavController
+    private lateinit var smokeContainer: ReleaseSmokeAppContainer
     private var smokeStarted = false
     private val smokeTheme: String by lazy {
         intent.getStringExtra(EXTRA_SMOKE_THEME).orEmpty().lowercase().ifBlank { THEME_LIGHT }
@@ -54,9 +55,8 @@ class ReleaseSmokeActivity : BaseActivity() {
                 AppCompatDelegate.MODE_NIGHT_NO
             }
         )
-        (application as AquaApp).replaceAppContainerForProcess(
-            ReleaseSmokeAppContainer(applicationContext)
-        )
+        smokeContainer = ReleaseSmokeAppContainer(applicationContext)
+        (application as AquaApp).replaceAppContainerForProcess(smokeContainer)
         super.onCreate(savedInstanceState)
 
         val requestedDirection = requestedLayoutDirection()
@@ -85,7 +85,8 @@ class ReleaseSmokeActivity : BaseActivity() {
 
         lifecycleScope.launch {
             runCatching {
-                smokeScreens().forEach { screen ->
+                val healthData = smokeContainer.prepareHealthSmoke()
+                smokeScreens.forEach { screen ->
                     if (navController.currentDestination?.id != screen.destinationId) {
                         navController.navigate(screen.destinationId)
                     }
@@ -123,15 +124,7 @@ class ReleaseSmokeActivity : BaseActivity() {
                     captureSmokeScreen(screen.name, smokeProfile)
                 }
                 WaterAnalysisNavigationSmoke(navHostFragment).verify()
-                HealthObservationNavigationSmoke(navHostFragment) { name ->
-                    val fragment = navHostFragment.childFragmentManager.primaryNavigationFragment
-                        ?: error("Health observation route did not create a primary navigation fragment")
-                    val root = fragment.requireView()
-                    applyRequestedLayoutDirection(root)
-                    verifyIconAccessibility(root)
-                    verifyLargeFontText(root)
-                    captureSmokeScreen(name, smokeProfile)
-                }.verify()
+                HealthObservationNavigationSmoke(navHostFragment, healthData, ::captureHealthScreen).verify()
             }.onSuccess {
                 renderResult("$PASS_MARKER:$smokeProfile")
             }.onFailure { error ->
@@ -142,6 +135,17 @@ class ReleaseSmokeActivity : BaseActivity() {
         }
     }
 
+    private fun captureHealthScreen(name: String) {
+        val fragment = navHostFragment.childFragmentManager.primaryNavigationFragment
+            ?: error("Health observation route did not create a primary navigation fragment")
+        val root = fragment.requireView()
+        applyRequestedLayoutDirection(root)
+        HealthObservationContrastSmoke.verify(root)
+        verifyIconAccessibility(root)
+        verifyLargeFontText(root)
+        captureSmokeScreen(name, smokeProfile)
+    }
+
     private fun createSmokeGraph(): NavGraph {
         val navigatorProvider = navController.navigatorProvider
         val graphNavigator = navigatorProvider.getNavigator(
@@ -150,7 +154,7 @@ class ReleaseSmokeActivity : BaseActivity() {
         val fragmentNavigator = navigatorProvider.getNavigator(
             FragmentNavigator::class.java
         )
-        val screens = smokeScreens()
+        val screens = smokeScreens
 
         return NavGraph(graphNavigator).apply {
             id = SMOKE_GRAPH_ID
@@ -166,7 +170,7 @@ class ReleaseSmokeActivity : BaseActivity() {
         }
     }
 
-    private fun smokeScreens(): List<SmokeScreen> = listOf(
+    private val smokeScreens: List<SmokeScreen> = listOf(
         SmokeScreen(
             name = "AquariumFragment",
             destinationId = DESTINATION_AQUARIUM,
