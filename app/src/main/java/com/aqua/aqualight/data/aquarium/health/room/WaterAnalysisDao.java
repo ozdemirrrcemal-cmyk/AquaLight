@@ -30,7 +30,8 @@ public interface WaterAnalysisDao {
             + "WHERE ownerUid = :ownerUid UNION ALL SELECT COALESCE(MAX(analysisId), 0) AS value "
             + "FROM water_analysis_request WHERE ownerUid = :ownerUid UNION ALL "
             + "SELECT COALESCE(MAX(lastAnalysisId), 0) AS value FROM water_analysis_migration "
-            + "WHERE ownerUid = :ownerUid)")
+            + "WHERE ownerUid = :ownerUid UNION ALL SELECT COALESCE(MAX(sourceAnalysisId), 0) AS value "
+            + "FROM water_analysis_import WHERE ownerUid = :ownerUid AND sourceOwnerUid = :ownerUid)")
     long lastAllocatedId(String ownerUid);
 
     @Nullable

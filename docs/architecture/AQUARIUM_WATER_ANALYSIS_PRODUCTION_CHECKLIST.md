@@ -119,7 +119,8 @@ parallel with engine work, but a claim of a broad catalog requires C.1–C.5.
 
 ### M — Existing user-data migration and scalable history
 
-Room continuation: schema v2, atomic event/request commits, durable request tombstones,
+Room continuation: schema v3 adds an indexed archive identity/rollback backend to atomic event/request commits,
+durable request tombstones,
 explicit ACTIVE cutover, dispatched bounded queries and checksum-verified deletion
 staging are implemented. Local evidence and unclosed integration gates are in
 `WATER_ANALYSIS_ROOM_TRANSACTIONS.md`; production composition still uses Proto.
@@ -130,7 +131,7 @@ staging are implemented. Local evidence and unclosed integration gates are in
 - [ ] M.4 Atomic new event commit includes raw/canonical measurements, source/profile revision, context, assessment and rule/catalog versions, with `(ownerUid, requestId)` unique retry semantics.
 - [ ] M.5 Room DAO provides owner/tank-targeted detail/latest/delete and 50-item indexed keyset paging. Added Android tests cover 10,000 equal-time rows, backdating, identity constraints and query plans; execution, operation/UI binding and device budget acceptance remain open. Test 10,000 records and bounded collectors/memory; no silent retention or overwrite.
 - [ ] M.6 Extend tank deletion gate/journal, orphan repair, owner logout/account deletion and explicit backup/export/restore (including preferences and migration staging). Cover crash/cancellation at every durable boundary. Shared owner/tank ordering covers live Proto create/exact delete, cleaner rollback and recovery. Live analysis writes now require an immutable session-generation lease and await durable DataStore acknowledgement before releasing the session/tank locks, including caller cancellation. Room commit, owner-wide and archive integration remain open. See `WATER_ANALYSIS_ROOM_MIGRATION.md`.
-- [ ] M.7 Live Proto archive v3 now includes checked history, v1/v2 zero-history compatibility, immutable source/ID remap, repeat-import deduplication and durable restore rollback. See `WATER_ANALYSIS_ARCHIVE_ROUND_TRIP.md` for named tests and limits. Tank-duplicate regression, full restore/delete concurrency, Room/migration/preference integration and device acceptance remain open; incomplete history is rejected.
+- [ ] M.7 Live Proto archive v3 now includes checked history, v1/v2 zero-history compatibility, immutable source/ID remap, repeat-import deduplication and durable restore rollback. Whole restore/delete coordinators share an owner gate with pending-journal guards and local concurrency tests. See `WATER_ANALYSIS_ARCHIVE_ROUND_TRIP.md` for named tests and limits. The bounded Room archive backend and schema v3 import index are staged; live Room/migration/preference integration, tank-duplicate regression and device/minified concurrency acceptance remain open; incomplete history is rejected.
 
 **Gate M:** Legacy and new records survive process death, migration retries,
 owner changes, tank deletion races and restore without duplication or loss.

@@ -20,12 +20,18 @@ internal data class WaterHistoryRestoreRequest(
     val file: File
 )
 
+internal interface WaterAnalysisHistoryArchiveStore {
+    suspend fun snapshot(ownerUid: String, tankIds: Set<Long>, file: File): WaterHistoryArchiveReference
+    suspend fun restore(request: WaterHistoryRestoreRequest): Int
+    suspend fun rollback(ownerUid: String, transactionId: String)
+}
+
 /** Live Proto bridge. The event carries its rollback identity in the same durable write. */
 internal class WaterAnalysisArchiveStore(
     private val store: DataStore<WaterAnalysesStore>,
     private val existingTankIds: suspend (String) -> Set<Long>
-) {
-    suspend fun snapshot(ownerUid: String, tankIds: Set<Long>, file: File): WaterHistoryArchiveReference =
+) : WaterAnalysisHistoryArchiveStore {
+    override suspend fun snapshot(ownerUid: String, tankIds: Set<Long>, file: File): WaterHistoryArchiveReference =
         withContext(Dispatchers.IO) {
             requireOwner(ownerUid)
             val current = WaterAnalysisStoreRules.validateStore(store.data.first())
@@ -34,7 +40,7 @@ internal class WaterAnalysisArchiveStore(
             WaterHistoryArchive.write(records, records.count(), file).also { requireOwner(ownerUid) }
         }
 
-    suspend fun restore(request: WaterHistoryRestoreRequest): Int = withContext(Dispatchers.IO) {
+    override suspend fun restore(request: WaterHistoryRestoreRequest): Int = withContext(Dispatchers.IO) {
         requireOwner(request.ownerUid)
         WaterHistoryArchive.validate(request.reference, request.file, request.tankIdMap.keys)
         if (request.reference.recordCount == 0) return@withContext 0
@@ -56,7 +62,7 @@ internal class WaterAnalysisArchiveStore(
     }
 
     /** Called before rollback removes tanks, including after process death. */
-    suspend fun rollback(ownerUid: String, transactionId: String) {
+    override suspend fun rollback(ownerUid: String, transactionId: String) {
         requireOwner(ownerUid)
         val tankIds = store.data.first().analysesList.filter { it.matchesImport(ownerUid, transactionId) }
             .map { it.tankId }.toSet()

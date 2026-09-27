@@ -7,7 +7,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 ROOM = ROOT / 'app/src/main/java/com/aqua/aqualight/data/aquarium/health/room'
-SCHEMA = ROOT / 'app/schemas/com.aqua.aqualight.data.aquarium.health.room.WaterAnalysisDatabase/2.json'
+SCHEMA = ROOT / 'app/schemas/com.aqua.aqualight.data.aquarium.health.room.WaterAnalysisDatabase/3.json'
 
 
 def dao_queries(filename="WaterAnalysisDao.java"):
@@ -21,6 +21,7 @@ def dao_queries(filename="WaterAnalysisDao.java"):
 class WaterAnalysisSqliteContractTest(unittest.TestCase):
     def setUp(self):
         self.database = sqlite3.connect(':memory:')
+        self.database.execute('PRAGMA foreign_keys = ON')
         self.database.row_factory = sqlite3.Row
         schema = json.loads(SCHEMA.read_text())['database']
         for entity in schema['entities']:
@@ -30,6 +31,7 @@ class WaterAnalysisSqliteContractTest(unittest.TestCase):
                 self.database.execute(index['createSql'].replace('${TABLE_NAME}', table))
         self.queries = dao_queries()
         self.deletions = dao_queries("WaterDeletionDao.java")
+        self.imports = dao_queries("WaterImportDao.java")
 
     def tearDown(self):
         self.database.close()
@@ -42,6 +44,10 @@ class WaterAnalysisSqliteContractTest(unittest.TestCase):
 
     def query(self, method, **parameters):
         return self.database.execute(self.queries[method], parameters)
+
+    def insert_import(self, identity, owner='owner', transaction='restore'):
+        self.database.execute('INSERT INTO water_analysis_import VALUES (?, ?, ?, ?, ?, ?)',
+                              (owner, 'source-owner', identity, identity, transaction, 'evidence-hash'))
 
     def test_ten_thousand_tied_rows_use_bounded_keysets_without_gaps(self):
         self.database.executemany(
@@ -127,6 +133,13 @@ class WaterAnalysisSqliteContractTest(unittest.TestCase):
         self.assertEqual(400, self.query('lastAllocatedId', ownerUid='owner').fetchone()[0])
         self.assertEqual(0, self.query('lastAllocatedId', ownerUid='foreign').fetchone()[0])
 
+    def test_remapped_same_owner_source_identity_cannot_collide_with_future_native_events(self):
+        self.insert(1)
+        self.database.execute('INSERT INTO water_analysis_import VALUES (?, ?, ?, ?, ?, ?)',
+                              ('owner', 'owner', 10_000, 1, 'restore', 'hash'))
+        self.assertEqual(10_000, self.query('lastAllocatedId', ownerUid='owner').fetchone()[0])
+        self.assertEqual(0, self.query('lastAllocatedId', ownerUid='foreign').fetchone()[0])
+
     def test_count_and_has_older_are_owner_tank_scoped_with_strict_full_cursor(self):
         self.insert(1)
         self.insert(2)
@@ -197,8 +210,8 @@ class WaterAnalysisSqliteContractTest(unittest.TestCase):
                 sql = ''.join(json.loads(token) for token in re.findall(r'"(?:[^"\\]|\\.)*"', statement))
                 old.execute(sql)
             self.assertEqual(b'unchanged raw event', old.execute('SELECT rawProto FROM water_analysis').fetchone()[0])
-            v2 = json.loads(SCHEMA.read_text())['database']
-            for entity in v2['entities']:
+            latest = json.loads(SCHEMA.read_text())['database']
+            for entity in latest['entities']:
                 columns = old.execute('PRAGMA table_info(' + entity['tableName'] + ')').fetchall()
                 self.assertEqual([(f['columnName'], f['affinity'], int(f.get('notNull', False))) for f in entity['fields']],
                                  [(r[1], r[2], r[3]) for r in columns])
@@ -209,6 +222,7 @@ class WaterAnalysisSqliteContractTest(unittest.TestCase):
         cleanup = dao_queries('WaterOwnerCleanupDao.java')
         for owner in ('owner', 'foreign'):
             self.insert(1, owner=owner, request='request')
+            self.insert_import(1, owner=owner)
             self.database.execute('INSERT INTO water_analysis_request VALUES (?, ?, ?, ?)',
                                   (owner, 'request', 1, 'hash'))
             self.database.execute('INSERT INTO water_analysis_migration VALUES (?, ?, ?, ?, ?, ?, ?)',
@@ -221,11 +235,12 @@ class WaterAnalysisSqliteContractTest(unittest.TestCase):
             for sql in cleanup.values():
                 self.database.execute(sql, dict(ownerUid='owner'))
         for table in ('water_analysis', 'water_analysis_request', 'water_analysis_migration',
-                      'water_analysis_delete_stage', 'water_analysis_delete_manifest'):
+                      'water_analysis_delete_stage', 'water_analysis_delete_manifest', 'water_analysis_import'):
             self.assertEqual(['foreign'], [r[0] for r in self.database.execute('SELECT ownerUid FROM ' + table)])
 
     def test_owner_cleanup_failure_rolls_back_earlier_table_deletes(self):
         self.insert(1)
+        self.insert_import(1)
         self.database.execute('INSERT INTO water_analysis_request VALUES (?, ?, ?, ?)', ('owner', 'r', 1, 'hash'))
         self.database.commit()
         self.database.execute("CREATE TRIGGER fail_owner_cleanup BEFORE DELETE ON water_analysis_request "
@@ -236,6 +251,50 @@ class WaterAnalysisSqliteContractTest(unittest.TestCase):
                 self.database.execute(sql, dict(ownerUid='owner'))
         self.assertEqual(1, self.query('countForOwner', ownerUid='owner').fetchone()[0])
         self.assertEqual(1, self.query('request', ownerUid='owner', requestId='r').fetchone()['analysisId'])
+        self.assertEqual(1, self.database.execute('SELECT COUNT(*) FROM water_analysis_import').fetchone()[0])
+
+    def test_ten_thousand_import_rows_use_indexed_bounded_transaction_pages(self):
+        self.database.executemany('INSERT INTO water_analysis VALUES (?, ?, ?, ?, ?, ?, ?)',
+                                  [('owner', i, 2, 100, 100, None, b'exact') for i in range(1, 10_001)])
+        self.database.executemany('INSERT INTO water_analysis_import VALUES (?, ?, ?, ?, ?, ?)',
+                                  [('owner', 'source-owner', i, i, 'restore', 'hash') for i in range(1, 10_001)])
+        sql = self.imports['transactionPage']
+        params = dict(ownerUid='owner', transactionId='restore', afterId=0)
+        plan = [row['detail'] for row in self.database.execute('EXPLAIN QUERY PLAN ' + sql, params)]
+        self.assertTrue(any('index_water_analysis_import_ownerUid_restoreTransactionId_analysisId' in r for r in plan))
+        self.assertFalse(any('TEMP B-TREE' in r for r in plan))
+        count = 0
+        while page := self.database.execute(sql, params).fetchall():
+            self.assertLessEqual(len(page), 50)
+            self.assertEqual(list(range(count + 1, count + len(page) + 1)), [r['analysisId'] for r in page])
+            count += len(page)
+            params['afterId'] = page[-1]['analysisId']
+        self.assertEqual(10_000, count)
+
+    def test_import_rollback_cascades_exact_owner_transaction_but_preserves_request_tombstones(self):
+        for owner, identity, transaction in [('owner', 1, 'a'), ('owner', 2, 'b'), ('foreign', 1, 'a')]:
+            self.insert(identity, owner=owner, request=str(identity))
+            self.insert_import(identity, owner=owner, transaction=transaction)
+            self.database.execute('INSERT INTO water_analysis_request VALUES (?, ?, ?, ?)',
+                                  (owner, str(identity), identity, 'hash'))
+        self.database.execute(self.imports['rollback'], dict(ownerUid='owner', transactionId='a'))
+        self.assertEqual(1, self.query('countForOwner', ownerUid='owner').fetchone()[0])
+        self.assertEqual(1, self.query('countForOwner', ownerUid='foreign').fetchone()[0])
+        self.assertIsNotNone(self.query('request', ownerUid='owner', requestId='1').fetchone())
+        self.assertEqual([('foreign', 1), ('owner', 2)], [tuple(r) for r in self.database.execute(
+            'SELECT ownerUid, analysisId FROM water_analysis_import ORDER BY ownerUid')])
+
+    def test_import_mapping_requires_its_exact_owner_event_and_unique_source(self):
+        self.insert(1)
+        self.insert_import(1)
+        self.insert(2)
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.database.execute('INSERT INTO water_analysis_import VALUES (?, ?, ?, ?, ?, ?)',
+                                  ('owner', 'source-owner', 1, 2, 'restore', 'hash'))
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.insert_import(1, owner='foreign')
+        self.query('delete', ownerUid='owner', tankId=2, analysisId=1)
+        self.assertEqual(0, self.database.execute('SELECT COUNT(*) FROM water_analysis_import').fetchone()[0])
 
 
 if __name__ == '__main__':

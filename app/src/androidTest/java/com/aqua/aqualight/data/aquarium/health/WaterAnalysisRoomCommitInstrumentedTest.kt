@@ -77,16 +77,20 @@ class WaterAnalysisRoomCommitInstrumentedTest {
 
     @Test
     fun activationRequestFailureLeavesVerifiedCheckpointAndRetriesAtomically() {
-        val row = WaterRoomFixture.record(1).toBuilder().setRequestId(UUID.randomUUID().toString()).build()
+        val original = WaterRoomFixture.record(1).toBuilder().setOwnerUid("archived-owner").build()
+        val row = WaterAnalysisImportIdentity.remap(original,
+            WaterAnalysisImportTarget(OWNER, original.tankId, 1L, UUID.randomUUID().toString()))
         val source = WaterRoomFixture.source(listOf(row))
         database.openHelper.writableDatabase.execSQL("CREATE TRIGGER fail_activation BEFORE INSERT ON " +
             "water_analysis_migration WHEN NEW.state = 3 BEGIN SELECT RAISE(ABORT, 'activation failed'); END")
         assertThrows(RuntimeException::class.java) { WaterAnalysisRoomActivation(database).activate(source) }
         assertEquals(WaterMigrationEntity.VERIFIED, database.analyses().migration(OWNER)?.state)
         assertNull(database.analyses().request(OWNER, row.requestId))
+        assertNull(database.imports().original(OWNER, original.ownerUid, original.id))
         database.openHelper.writableDatabase.execSQL("DROP TRIGGER fail_activation")
         WaterAnalysisRoomActivation(database).activate(source)
         assertEquals(row.id, database.analyses().request(OWNER, row.requestId)?.analysisId)
+        assertEquals(row.id, database.imports().original(OWNER, original.ownerUid, original.id)?.analysisId)
     }
 
     @Test

@@ -118,6 +118,7 @@ internal class WaterAnalysisRoomDeletionStage(private val database: WaterAnalysi
             }
         }
         analyses.insert(missing)
+        missing.forEach { WaterAnalysisRoomImportIndex(database).insert(it.toMigrationRecord()) }
     }
 
     private fun forEachPage(owner: String, tankId: Long, action: (List<WaterDeletionStageEntity>) -> Unit) {

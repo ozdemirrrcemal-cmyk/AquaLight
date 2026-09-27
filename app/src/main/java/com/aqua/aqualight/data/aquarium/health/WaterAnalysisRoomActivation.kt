@@ -24,17 +24,18 @@ internal class WaterAnalysisRoomActivation(private val database: WaterAnalysisDa
         database.runInTransaction {
             val verified = checkNotNull(dao.migration(source.manifest.ownerUid))
             check(verified.state == WaterMigrationEntity.VERIFIED)
-            seedRequests(source)
+            seedIdentities(source)
             dao.saveMigration(WaterMigrationEntity(verified.ownerUid, verified.sourceSha256,
                 verified.recordsSha256, verified.expectedCount, verified.copiedCount,
                 verified.lastAnalysisId, WaterMigrationEntity.ACTIVE))
         }
     }
 
-    private fun seedRequests(source: WaterAnalysisMigrationSource) {
+    private fun seedIdentities(source: WaterAnalysisMigrationSource) {
         var lastId = 0L
         var batch = source.batchAfter(lastId)
         while (batch.isNotEmpty()) {
+            batch.forEach(WaterAnalysisRoomImportIndex(database)::insert)
             database.analyses().insertRequests(batch.filter { it.requestId.isNotEmpty() }.map { row ->
                 WaterRequestEntity(row.ownerUid, row.requestId, row.id, WaterAnalysisRequestFingerprint.of(row))
             })

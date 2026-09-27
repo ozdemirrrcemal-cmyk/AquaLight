@@ -9,7 +9,7 @@ import com.aqua.aqualight.platform.media.AppMediaScope
 import com.aqua.aqualight.platform.media.UserDataArchiveMediaGateway
 import java.io.File
 import com.aqua.aqualight.data.aquarium.OwnerArchiveMutationGate
-import com.aqua.aqualight.data.aquarium.health.WaterAnalysisArchiveStore
+import com.aqua.aqualight.data.aquarium.health.WaterAnalysisHistoryArchiveStore
 import com.aqua.aqualight.data.auth.OwnerSessionWriteLease
 import kotlinx.coroutines.flow.first
 
@@ -17,7 +17,7 @@ internal data class UserDataArchiveDataSources(
     val aquariumStore: AquariumTankDataStoreManager,
     val careTaskStore: CareTaskDataStoreManager,
     val assignmentRepository: TankDeviceAssignmentRepository,
-    val waterHistory: WaterAnalysisArchiveStore,
+    val waterHistory: WaterAnalysisHistoryArchiveStore,
     val session: OwnerSessionWriteLease?,
     val restoreTransactions: UserDataRestoreTransactions
 )

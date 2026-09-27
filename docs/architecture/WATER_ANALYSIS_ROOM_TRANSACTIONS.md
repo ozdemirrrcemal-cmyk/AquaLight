@@ -60,7 +60,57 @@ the same transaction and follows durable resolution of the external tank journal
 Coordinator/recovery binding is the next implementation step; these primitives
 alone do not close M.6/W6.
 
-## Verification
+## Archive backend and schema v3 follow-up
+
+Schema v3 adds `water_analysis_import`: owner + original source owner/event identity,
+unique local event mapping, original evidence hash and restore transaction UUID.
+Its event foreign key cascades on deletion. The owner/restore-UUID/event-ID index
+supports 50-row rollback queries without a temporary sort. New allocation also
+reserves remapped same-owner source IDs, preventing a later native event from
+claiming an already imported original identity.
+
+`MIGRATION_2_3` adds the table/indexes and visits retained raw events one at a time
+to backfill existing import provenance, without rewriting payloads. Invalid raw
+identity or provenance fails the schema transaction. Activation seeds import and
+request identities together with ACTIVE; it also accepts identical mappings
+already backfilled by schema migration. Deletion-stage compensation recreates
+the mapping with the exact restored event; owner cleanup cascades only that
+owner's mappings and preserves the other owners.
+
+`WaterAnalysisRoomArchiveStore` implements the shared history-archive boundary.
+Export streams 50-row pages in one consistent Room transaction into the existing
+checked length-framed archive. Restore uses indexed source-identity lookup and
+atomically commits events, request fingerprints and import mappings. An error
+late in the archive rolls back the whole attempt. Deduplication requires the
+same mapped tank and byte-identical original evidence. Journal rollback checks
+the stored index against each event and removes only the exact owner/transaction,
+retaining request tombstones. Admitted writes keep tank gates until durable
+completion even on caller cancellation; the outer archive coordinator owns the
+session and owner gate.
+
+This is a staged backend, not live Room cutover. Production still composes the
+Proto backend through the same interface. The owner migration barrier, activation
+binding, Room deletion facade and indexed UI integration remain open.
+
+Named follow-up checks: `WaterRoomArchiveInstrumentedTest` covers multi-page
+round-trip, exact evidence, repeat restore, injected index-insert failure, late
+conflict atomicity, reopened owner/transaction rollback, request tombstones,
+tank-delete compensation and owner cleanup. `WaterRoomSchemaUpgradeInstrumentedTest`
+adds real v2→v3 provenance backfill to v1 upgrade coverage. The activation failure
+test checks both request and import-index rollback. Python executes the generated
+v3 schema and actual DAO SQL, including 10,000 indexed transaction rows, foreign
+keys, uniqueness and cleanup rollback. Android execution remains a separate gate.
+
+Local v3 follow-up verification: 1,941 JVM tests passed with zero failures/errors/skips;
+debug Android-test and releaseSmoke Kotlin compilation passed. Room's javac
+processor generated the committed v3 schema and DAO implementations. All 329
+Python tests passed, including 18 actual SQLite contract tests. Navigation,
+composition, architecture, UI dependency and Water Analysis guards passed.
+Detekt 1.23.8 against the unchanged baseline: zero blockers/new debt and 775
+existing advisories. The five new Android scenarios are compiled, not executed
+locally; live cutover and device acceptance remain open.
+
+## Verification of the preceding v2 transaction implementation
 
 - Full debug JUnit: 1,911 tests, zero failures/errors/skips. Includes three request
   fingerprint tests and two deletion digest tests.
