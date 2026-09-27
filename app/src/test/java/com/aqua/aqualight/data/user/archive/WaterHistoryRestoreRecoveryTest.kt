@@ -10,6 +10,12 @@ import com.aqua.aqualight.data.aquarium.health.WaterHistoryRestoreRequest
 import com.aqua.aqualight.data.user.UserDataScope
 import java.io.File
 import java.nio.file.Files
+import com.aqua.aqualight.data.aquarium.OwnerArchiveMutationGate
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -17,6 +23,7 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -114,6 +121,44 @@ class WaterHistoryRestoreRecoveryTest {
                 assertNull(harness.transactions.pending(RestoreFixture.OWNER_UID))
             }
         } finally { job.cancelAndJoin() }
+    }
+
+    @Test
+    fun `owner gate remains held until the failed restore has completed rollback`() = runBlocking {
+        withTimeout(5_000) {
+            val root = Files.createTempDirectory("archive-coordinator-gate").toFile()
+            val entered = CompletableDeferred<Unit>()
+            val release = CompletableDeferred<Unit>()
+            val harness = RestoreHarness(waterOverride = UserDataRestoreDataSources.WaterHistoryDataSource(
+                restore = { entered.complete(Unit); release.await(); error("injected history failure") },
+                rollback = { _, _ -> }))
+            UserDataScope.withOwnerUid(RestoreFixture.OWNER_UID) {
+                coroutineScope {
+                    val restore = async { runCatching { harness.restorer().restore(backup(root)) } }
+                    entered.await()
+                    val competitor = async(start = CoroutineStart.UNDISPATCHED) {
+                        OwnerArchiveMutationGate.shared.withOwner(RestoreFixture.OWNER_UID) {
+                            assertTrue(harness.tanks.isEmpty())
+                            assertNull(harness.transactions.pending(RestoreFixture.OWNER_UID))
+                        }
+                    }
+                    assertFalse(competitor.isCompleted)
+                    release.complete(Unit)
+                    assertTrue(restore.await().isFailure)
+                    competitor.await()
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `pending tank deletion rejects restore before creating a journal or aquarium`() = runBlocking {
+        val harness = RestoreHarness(deletionGuard = { error("Pending deletion") })
+        UserDataScope.withOwnerUid(RestoreFixture.OWNER_UID) {
+            assertTrue(runCatching { harness.restorer().restore(RestoreFixture.backup()) }.isFailure)
+            assertTrue(harness.tanks.isEmpty())
+            assertNull(harness.transactions.pending(RestoreFixture.OWNER_UID))
+        }
     }
 
     private fun backup(root: File, record: StoredWaterAnalysis = event(),

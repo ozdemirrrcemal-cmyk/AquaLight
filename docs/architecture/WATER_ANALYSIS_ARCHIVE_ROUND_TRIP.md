@@ -22,6 +22,12 @@ If a later assignment/commit step fails, recovery removes only this owner and th
 
 Portable JSON streams `waterAnalyses` with explicit stable field names for raw/source values, optional temperature, canonical measurements, context, findings/conflicts/recommendations and import lineage. An unassessed old event remains unassessed. Preview and completion show actual analysis counts in TR/EN. Failure feedback no longer claims rollback succeeded when recovery itself failed.
 
+## Whole-coordinator ordering
+
+Backup/export, restore and restore recovery, tank deletion and deletion recovery now share an owner archive gate. Lock order is session lease → owner archive gate → ordered tank gates → durable stores. The owner gate stays held through restore completion or rollback, preventing a concurrent tank deletion from snapshotting uncommitted imported history and later resurrecting it. Separate owners can progress independently; a cancelled waiter releases its reservation. Internal rollback calls the already-held-gate recovery entry and never reacquires the non-reentrant owner gate.
+
+An unresolved ACTIVE restore journal blocks new tank deletion, deletion recovery, backup/export and manual analysis writes/deletes. A COMMITTED journal does not block them. Backup/export and a new restore also reject unresolved tank-deletion journals; startup recovers the archive before the dependent deletion recovery. Journal checks involving disk run on IO. The gate is process-local, while the persisted journals enforce the pending-work restriction after reopening.
+
 ## Named verification
 
 - `WaterHistoryArchiveTest`: 10,000 exact events, zero history, checksums/counts/trailing/truncated data, duplicate IDs, missing tanks, mixed owners, partial-output cleanup.
@@ -29,9 +35,15 @@ Portable JSON streams `waterAnalyses` with explicit stable field names for raw/s
 - `WaterHistoryRestoreRecoveryTest`: actual ZIP decode and real DataStore persistence; repeated restore; failure after history commit; disk close/reopen and owner/transaction-specific rollback; failed rollback retains the journal until retry succeeds.
 - `WaterHistoryPortableWriterTest`: readable raw zero, absent temperature/assessment, original observation/creation time and source basis/method.
 - `UserDataBackupCodecTest`: old v1/v2 zero-history behavior and rejection of missing or smuggled history, plus existing media/size/path validation.
+- `OwnerArchiveMutationGateTest`: child coroutine waits for the same owner, another owner progresses, cancelled waiter reservations are pruned.
+- `OwnerTankDataCleanerTest`: deletion waits for the full archive coordinator; ACTIVE restore journal rejects deletion and COMMITTED permits it.
+- `WaterHistoryRestoreRecoveryTest` also verifies the gate remains held through failed-restore rollback and a pending deletion rejects restore before journal/tank creation.
+- `WaterAnalysisSessionInstrumentedTest`: pending real restore journal rejects new save/exact delete and preserves prior history; COMMITTED allows deletion (compiled locally, execution requires Android).
 
 ## Remaining acceptance
 
-Room live authority, indexed history UI, method preference persistence/export, migration-stage export policy, tank-duplicate device regression, restore/delete concurrency across the entire coordinator, minified runtime restore, and final API 27/API 36 physical/locale/accessibility evidence remain separate gates. No M/W checklist row is closed solely by this document.
+Room live authority, indexed history UI, method preference persistence/export, migration-stage export policy, tank-duplicate device regression, minified runtime restore/concurrency, and final API 27/API 36 physical/locale/accessibility evidence remain separate gates. No M/W checklist row is closed solely by this document.
 
 Local verification: the final source passed 1,935 debug JVM tests (zero failures/errors/skips), debug Android-test compilation and releaseSmoke Kotlin compilation. The three new journal Android tests are compiled, not executed locally. The 325 Python tests and seven relevant architecture/composition/session/feedback guards passed. Detekt 1.23.8 against the unchanged advisory baseline: zero blockers, zero new debt, 775 existing advisories. R8 releaseSmoke minification and existing-baseline debug lint passed on the preceding archive candidate; final session-scope and strict integer-declaration amendments received fresh unit/compile/Detekt verification. Exact-head baseline-free CI and device/minified-runtime results remain separate evidence.
+
+Coordinator follow-up: 1,941 JVM tests passed with zero failures/errors/skips; debug Android-test and releaseSmoke Kotlin compilation passed. The existing Detekt baseline remains unchanged: zero blockers and zero new debt. This run includes the separately reported Water Analysis Fragment factory correction. The earlier archive commit `d4ef0f0a` also received successful Android CI, dependency-integrity, Firebase and debug-APK workflow results; that success is not substituted for follow-up runtime evidence.

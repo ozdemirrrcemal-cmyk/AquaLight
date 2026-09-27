@@ -10,6 +10,7 @@ import com.aqua.aqualight.data.devices.update.DeviceFirmwareAvailabilityEventTri
 import com.aqua.aqualight.data.notifications.NotificationPlatform
 import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.data.user.archive.UserDataRestoreRecovery
+import com.aqua.aqualight.data.user.archive.recover
 import java.util.concurrent.CancellationException
 
 /** Starts and stops services that are valid only for one authenticated owner. */

@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.user.archive
 
 import android.content.Context
+import com.aqua.aqualight.data.aquarium.OwnerArchiveMutationGate
 import com.aqua.aqualight.data.aquarium.health.WaterAnalysisDataStoreManager
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryProvider
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceRemovalResult
@@ -24,7 +25,8 @@ internal class UserDataRestoreRecovery(
         val clearedCommittedTransaction: Boolean
     )
 
-    suspend fun recover(ownerUid: String): Result {
+    /** Caller already holds the owner archive gate through its complete restore/rollback transaction. */
+    internal suspend fun recoverUnderArchiveGate(ownerUid: String): Result {
         val owner = canonicalRestoreOwnerUid(ownerUid)
         check(UserDataScope.requireCurrentUid() == owner) {
             "Restore recovery owner does not match the active owner."
@@ -275,10 +277,11 @@ internal class UserDataRestoreRecovery(
                 careTaskStore = CareTaskDataStoreManager.create(appContext),
                 assignmentRepository = assignmentRepository,
                 waterHistory = WaterAnalysisDataStoreManager(appContext).archiveStore,
-                session = null
+                session = null,
+                restoreTransactions = UserDataRestoreJournal(appContext)
             )
             val restoreSources = UserDataRestoreDataSources.from(archiveSources)
-            val transactions = UserDataRestoreJournal(appContext)
+            val transactions = archiveSources.restoreTransactions
             val provenance = UserDataRestoreProvenanceStore(appContext)
             return UserDataRestoreRecovery(
                 dataSources = restoreSources,
@@ -288,3 +291,6 @@ internal class UserDataRestoreRecovery(
         }
     }
 }
+
+internal suspend fun UserDataRestoreRecovery.recover(ownerUid: String): UserDataRestoreRecovery.Result =
+    OwnerArchiveMutationGate.shared.withOwner(ownerUid) { recoverUnderArchiveGate(ownerUid) }

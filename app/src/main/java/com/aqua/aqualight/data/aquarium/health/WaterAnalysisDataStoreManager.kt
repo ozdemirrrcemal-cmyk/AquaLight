@@ -1,6 +1,8 @@
 package com.aqua.aqualight.data.aquarium.health
 
 import android.content.Context
+import com.aqua.aqualight.data.user.archive.UserDataRestoreJournal
+import com.aqua.aqualight.data.user.archive.requireNoActiveRestore
 import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
 import com.aqua.aqualight.data.aquarium.OwnerTankMutationGate
@@ -91,6 +93,7 @@ internal class WaterAnalysisDataStoreManager(
         prepareEvaluation: suspend () -> StoredWaterEvaluation?
     ): Long {
         val ownerUid = session.ownerUid
+        UserDataRestoreJournal(appContext).requireNoActiveRestore(ownerUid)
         requireTankExistsForOwner(ownerUid, draft.tankId)
         // An acknowledged retry returns its frozen event even after catalogs or tank context change.
         WaterAnalysisIdentityRules.replayId(appContext.waterAnalysesDataStore.data.first(), ownerUid, draft)
@@ -143,6 +146,7 @@ internal class WaterAnalysisDataStoreManager(
 
     suspend fun deleteAnalysis(analysisId: Long, session: OwnerSessionWriteLease) = session.withWrite {
         UserDataScope.withOwnerUid(session.ownerUid) {
+            UserDataRestoreJournal(appContext).requireNoActiveRestore(session.ownerUid)
             appContext.waterAnalysesDataStore.deleteAnalysisForSession(analysisId, session)
         }
     }

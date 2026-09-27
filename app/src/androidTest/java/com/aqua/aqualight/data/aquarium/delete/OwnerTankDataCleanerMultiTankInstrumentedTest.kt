@@ -1,6 +1,8 @@
 package com.aqua.aqualight.data.aquarium.delete
 
 import android.content.Context
+import com.aqua.aqualight.data.user.archive.UserDataRestoreJournal
+import com.aqua.aqualight.data.user.archive.requireNoActiveRestore
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.aqua.aqualight.data.aquarium.OwnerTankMutationGate
@@ -131,6 +133,7 @@ class OwnerTankDataCleanerMultiTankInstrumentedTest {
             val care = fixture.care.tasksForTankFlow(fixture.tankId).first()
             val cleaner = OwnerTankDataCleaner(
                 stores = OwnerTankDeletionStores(
+                    requireArchiveSettled = UserDataRestoreJournal(context)::requireNoActiveRestore,
                     deleteTankRecords = {
                         assertTrue(fixture.analyses.analysesForOwnerFlow(fixture.owner).first().isEmpty())
                         error("Injected tank commit failure")
@@ -201,19 +204,13 @@ class OwnerTankDataCleanerMultiTankInstrumentedTest {
 
                 val cleaner = OwnerTankDataCleaner(
                     stores = OwnerTankDeletionStores(
+                        requireArchiveSettled = UserDataRestoreJournal(context)::requireNoActiveRestore,
                         deleteTankRecords = tankStore::deleteTanks,
-                        snapshotCareTasksForTank = { tankId ->
-                            careStore.snapshotTasksForIntegrity(tankId)
-                        },
+                        snapshotCareTasksForTank = careStore::snapshotTasksForIntegrity,
                         deleteCareTasksForTank = careStore::deleteTasksForTank,
                         deleteWaterAnalysesForTank = analysisStore::deleteAnalysesForTank,
                         waterIntegrity = analysisStore.deletionIntegrity,
-                        restoreCareTasksForTank = { tankId, snapshots ->
-                            careStore.restoreTaskSnapshotsForIntegrity(
-                                tankId = tankId,
-                                snapshots = snapshots
-                            )
-                        }
+                        restoreCareTasksForTank = careStore::restoreTaskSnapshotsForIntegrity
                     ),
                     removeDeviceAssignmentsForTank = {
                         TankAssignmentCleanupResult.Completed(0)
@@ -260,12 +257,11 @@ class OwnerTankDataCleanerMultiTankInstrumentedTest {
                 analysisStore.addAnalysis(validAnalysis(tankId), session)
                 val cleaner = OwnerTankDataCleaner(
                     stores = OwnerTankDeletionStores(
+                        requireArchiveSettled = UserDataRestoreJournal(context)::requireNoActiveRestore,
                         deleteTankRecords = tankStore::deleteTanks,
-                        snapshotCareTasksForTank = { id -> careStore.snapshotTasksForIntegrity(id) },
+                        snapshotCareTasksForTank = careStore::snapshotTasksForIntegrity,
                         deleteCareTasksForTank = careStore::deleteTasksForTank,
-                        restoreCareTasksForTank = { id, snapshots ->
-                            careStore.restoreTaskSnapshotsForIntegrity(id, snapshots)
-                        },
+                        restoreCareTasksForTank = careStore::restoreTaskSnapshotsForIntegrity,
                         deleteWaterAnalysesForTank = { error("Injected analysis cleanup failure") },
                         waterIntegrity = analysisStore.deletionIntegrity
                     ),

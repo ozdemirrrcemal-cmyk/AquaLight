@@ -365,3 +365,11 @@ private object UserDataRestoreJournalCodec {
         return item.getLong(name).also { value -> require(value > 0L) }
     }
 }
+
+/** An unresolved rollback must settle before deletion can snapshot imported rows. */
+internal suspend fun UserDataRestoreTransactions.requireNoActiveRestore(ownerUid: String) =
+    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+    check(pending(ownerUid)?.state != UserDataRestoreTransactionState.ACTIVE) {
+        "Pending archive restore must recover before aquarium deletion."
+    }
+}

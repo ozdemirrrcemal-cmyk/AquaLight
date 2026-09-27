@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.user.archive
 
 import android.content.Context
+import com.aqua.aqualight.data.aquarium.OwnerArchiveMutationGate
 import com.aqua.aqualight.application.user.UserDataRestoreResult
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentResult
 import com.aqua.aqualight.data.aquarium.model.SavedAquariumTank
@@ -45,14 +46,17 @@ internal class UserDataBackupRestorer(
     suspend fun restore(backup: DecodedUserDataBackup): UserDataRestoreResult {
         requireRestoreOwner(ownerUid)
         val action: suspend () -> UserDataRestoreResult = {
-            UserDataScope.withOwnerUid(ownerUid) { restoreUnderSession(backup) }
+            OwnerArchiveMutationGate.shared.withOwner(ownerUid) {
+                UserDataScope.withOwnerUid(ownerUid) { restoreUnderSession(backup) }
+            }
         }
         return runtime.session?.withWrite(action) ?: action()
     }
 
     private suspend fun restoreUnderSession(backup: DecodedUserDataBackup): UserDataRestoreResult {
         requireRestoreOwner(ownerUid)
-        runtime.recovery.recover(ownerUid)
+        runtime.recovery.recoverUnderArchiveGate(ownerUid)
+        dataSources.requireDeletionSettled(ownerUid)
 
         val existingAquariums = dataSources.tanks.snapshotForOwner(ownerUid)
         val existingCareTasks = dataSources.careTasks.snapshot()
@@ -384,7 +388,7 @@ private suspend fun UserDataRestoreRecovery.rollbackAfterFailure(
     ownerUid: String, originalError: Throwable
 ): Throwable {
     val rollbackFailure = withContext(NonCancellable) {
-        runCatching { recover(ownerUid) }.exceptionOrNull()
+        runCatching { recoverUnderArchiveGate(ownerUid) }.exceptionOrNull()
     }
     rollbackFailure?.let(originalError::addSuppressed)
     return originalError

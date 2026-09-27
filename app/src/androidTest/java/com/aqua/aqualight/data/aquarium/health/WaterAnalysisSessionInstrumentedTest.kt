@@ -21,6 +21,7 @@ import com.aqua.aqualight.data.auth.OwnerSessionExpiredException
 import com.aqua.aqualight.data.auth.OwnerSessionTestFixture
 import com.aqua.aqualight.data.care.integrity.TankCareIntegrityJournal
 import com.aqua.aqualight.data.user.UserDataScope
+import com.aqua.aqualight.data.user.archive.UserDataRestoreJournal
 import java.util.UUID
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
@@ -160,6 +161,22 @@ class WaterAnalysisSessionInstrumentedTest {
         }
     }
 
+    @Test
+    fun pendingRestoreRejectsNewAnalysisMutationsUntilRecoveryCommits() = runBlocking {
+        withFixture { fixture ->
+            val tankId = fixture.addTank(fixture.owner)
+            val operations = DefaultWaterAnalysisOperations(fixture.store, fixture.session.lease, null)
+            val id = operations.saveAnalysis(input(tankId))
+            fixture.archive.begin(fixture.owner, setOf(tankId))
+            assertTrue(runCatching { operations.saveAnalysis(input(tankId)) }.isFailure)
+            assertTrue(runCatching { operations.deleteAnalysis(id) }.isFailure)
+            assertEquals(1, operations.analysesForTank(tankId).first().size)
+            fixture.archive.markCommitted(fixture.owner)
+            operations.deleteAnalysis(id)
+            assertTrue(operations.analysesForTank(tankId).first().isEmpty())
+        }
+    }
+
     private suspend fun withFixture(block: suspend (Fixture) -> Unit) = withTimeout(30_000L) {
         val fixture = Fixture(ApplicationProvider.getApplicationContext())
         try {
@@ -172,6 +189,7 @@ class WaterAnalysisSessionInstrumentedTest {
                         fixture.store.clearAllAnalyses(owner)
                         fixture.tanks.clearAllTanks(owner)
                         TankCareIntegrityJournal.clearOwner(owner)
+                        fixture.archive.clearOwner(owner)
                     }
                 }
             }
@@ -196,6 +214,7 @@ class WaterAnalysisSessionInstrumentedTest {
         val owner = "water-session-${UUID.randomUUID()}"
         val otherOwner = "water-other-${UUID.randomUUID()}"
         val session = OwnerSessionTestFixture(owner)
+        val archive = UserDataRestoreJournal(context)
         val store = WaterAnalysisDataStoreManager(context)
         val tanks = AquariumTankDataStoreManager(context)
 

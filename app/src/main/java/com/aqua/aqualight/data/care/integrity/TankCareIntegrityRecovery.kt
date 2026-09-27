@@ -1,6 +1,9 @@
 package com.aqua.aqualight.data.care.integrity
 
 import android.content.Context
+import com.aqua.aqualight.data.aquarium.OwnerArchiveMutationGate
+import com.aqua.aqualight.data.user.archive.UserDataRestoreJournal
+import com.aqua.aqualight.data.user.archive.requireNoActiveRestore
 import com.aqua.aqualight.data.aquarium.OwnerTankMutationGate
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.aquarium.health.WaterAnalysisDataStoreManager
@@ -11,7 +14,8 @@ import com.aqua.aqualight.data.user.UserDataScope
 internal class TankCareIntegrityRecovery private constructor(
     private val tankStore: AquariumTankDataStoreManager,
     private val careTaskStore: CareTaskDataStoreManager,
-    private val waterAnalysisStore: WaterAnalysisDataStoreManager
+    private val waterAnalysisStore: WaterAnalysisDataStoreManager,
+    private val archiveJournal: UserDataRestoreJournal
 ) {
 
     data class Result(
@@ -20,7 +24,12 @@ internal class TankCareIntegrityRecovery private constructor(
         val recoveredTransactionCount: Int
     )
 
-    suspend fun recover(ownerUid: String): Result {
+    suspend fun recover(ownerUid: String): Result = OwnerArchiveMutationGate.shared.withOwner(ownerUid) {
+        archiveJournal.requireNoActiveRestore(ownerUid)
+        recoverUnderArchiveGate(ownerUid)
+    }
+
+    private suspend fun recoverUnderArchiveGate(ownerUid: String): Result {
         val owner = ownerUid.trim()
         require(owner.isNotBlank() && owner == ownerUid) {
             "ownerUid must be canonical and non-blank"
@@ -121,7 +130,8 @@ internal class TankCareIntegrityRecovery private constructor(
             return TankCareIntegrityRecovery(
                 tankStore = AquariumTankDataStoreManager(appContext),
                 careTaskStore = CareTaskDataStoreManager.create(appContext),
-                waterAnalysisStore = WaterAnalysisDataStoreManager(appContext)
+                waterAnalysisStore = WaterAnalysisDataStoreManager(appContext),
+                archiveJournal = UserDataRestoreJournal(appContext)
             )
         }
     }

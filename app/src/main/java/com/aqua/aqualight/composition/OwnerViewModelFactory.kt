@@ -1,5 +1,7 @@
 package com.aqua.aqualight.composition
 
+import com.aqua.aqualight.data.user.archive.UserDataRestoreJournal
+import com.aqua.aqualight.data.user.archive.requireNoActiveRestore
 import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -195,6 +197,7 @@ internal class OwnerViewModelFactory(
                     tankStore = graph.aquariumTankStore,
                     tankDataCleaner = OwnerTankDataCleaner(
                         stores = OwnerTankDeletionStores(
+                            requireArchiveSettled = UserDataRestoreJournal(appContext)::requireNoActiveRestore,
                             deleteTankRecords = graph.aquariumTankStore::deleteTanks,
                             snapshotCareTasksForTank = { tankId ->
                                 graph.careTaskStore.snapshotTasksForIntegrity(tankId)

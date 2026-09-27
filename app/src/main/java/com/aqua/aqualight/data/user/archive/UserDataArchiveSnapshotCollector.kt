@@ -8,6 +8,7 @@ import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.platform.media.AppMediaScope
 import com.aqua.aqualight.platform.media.UserDataArchiveMediaGateway
 import java.io.File
+import com.aqua.aqualight.data.aquarium.OwnerArchiveMutationGate
 import com.aqua.aqualight.data.aquarium.health.WaterAnalysisArchiveStore
 import com.aqua.aqualight.data.auth.OwnerSessionWriteLease
 import kotlinx.coroutines.flow.first
@@ -17,7 +18,8 @@ internal data class UserDataArchiveDataSources(
     val careTaskStore: CareTaskDataStoreManager,
     val assignmentRepository: TankDeviceAssignmentRepository,
     val waterHistory: WaterAnalysisArchiveStore,
-    val session: OwnerSessionWriteLease?
+    val session: OwnerSessionWriteLease?,
+    val restoreTransactions: UserDataRestoreTransactions
 )
 
 internal class UserDataArchiveSnapshotCollector(
@@ -85,7 +87,13 @@ internal class UserDataArchiveSnapshotCollector(
 
     suspend fun <T> withSession(block: suspend () -> T): T = requireNotNull(dataSources.session).withWrite {
         requireOwner()
-        UserDataScope.withOwnerUid(ownerUid, block)
+        OwnerArchiveMutationGate.shared.withOwner(ownerUid) {
+            dataSources.restoreTransactions.requireNoActiveRestore(ownerUid)
+            check(com.aqua.aqualight.data.care.integrity.TankCareIntegrityJournal.pendingForOwner(ownerUid).isEmpty()) {
+                "Pending aquarium deletion must recover before backup/export."
+            }
+            UserDataScope.withOwnerUid(ownerUid, block)
+        }
     }
 
     suspend fun collectWaterHistory(tankIds: Set<Long>, destination: File): WaterHistoryArchiveReference {

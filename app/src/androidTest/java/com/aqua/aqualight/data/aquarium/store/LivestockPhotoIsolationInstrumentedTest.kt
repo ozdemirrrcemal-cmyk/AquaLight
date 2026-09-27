@@ -165,6 +165,7 @@ class LivestockPhotoIsolationInstrumentedTest {
         tankStore = store,
         tankDataCleaner = OwnerTankDataCleaner(
             stores = OwnerTankDeletionStores(
+                    requireArchiveSettled = {},
                 deleteTankRecords = { error("Unexpected tank deletion") },
                 snapshotCareTasksForTank = { error("Unexpected care access") },
                 deleteCareTasksForTank = { error("Unexpected care deletion") },

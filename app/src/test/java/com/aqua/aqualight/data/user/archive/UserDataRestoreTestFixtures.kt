@@ -13,7 +13,8 @@ import com.aqua.aqualight.data.devices.model.DeviceUid
 
 internal class RestoreHarness(
     mediaOverride: UserDataRestoreMediaOperations? = null,
-    waterOverride: UserDataRestoreDataSources.WaterHistoryDataSource? = null
+    waterOverride: UserDataRestoreDataSources.WaterHistoryDataSource? = null,
+    deletionGuard: (String) -> Unit = {}
 ) {
     val tanks = mutableListOf<SavedAquariumTank>()
     val tasks = mutableListOf<CareTask>()
@@ -26,6 +27,7 @@ internal class RestoreHarness(
     private var nextTankCreatedAt = RestoreFixture.FIRST_LOCAL_TANK_CREATED_AT_MILLIS
 
     private val sources = UserDataRestoreDataSources(
+        requireDeletionSettled = deletionGuard,
         waterHistory = waterOverride ?: UserDataRestoreDataSources.WaterHistoryDataSource(
             restore = { error("This fixture does not provide analysis storage.") }, rollback = { _, _ -> }),
         tanks = UserDataRestoreDataSources.TankDataSource(

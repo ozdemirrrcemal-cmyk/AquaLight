@@ -2,6 +2,9 @@ package com.aqua.aqualight.data.aquarium.delete
 
 import com.aqua.aqualight.data.aquarium.devices.TankAssignmentCleanupResult
 import com.aqua.aqualight.data.aquarium.OwnerTankMutationGate
+import com.aqua.aqualight.data.aquarium.OwnerArchiveMutationGate
+import com.aqua.aqualight.data.user.archive.InMemoryRestoreTransactions
+import com.aqua.aqualight.data.user.archive.requireNoActiveRestore
 import com.aqua.aqualight.data.aquarium.health.WaterAnalysisDeletionIntegrity
 import com.aqua.aqualight.data.care.integrity.TankCareIntegrityTransactions
 import com.aqua.aqualight.data.care.model.CareTask
@@ -366,6 +369,33 @@ class OwnerTankDataCleanerTest {
         assertFalse(cleaned)
     }
 
+    @Test
+    fun `deletion waits for the complete owner archive transaction before capturing`() = runBlocking {
+        withTimeout(5_000) {
+            var captured = false
+            val cleaner = cleaner(snapshotCareTasksForTank = { captured = true; emptyList() })
+            val waiting = OwnerArchiveMutationGate.shared.withOwner(OWNER_UID) {
+                async(start = CoroutineStart.UNDISPATCHED) { cleaner.deleteTanks(listOf(1L)) }
+                    .also { assertFalse(captured) }
+            }
+            assertTrue(waiting.await() is OwnerTankDataCleaner.Result.Deleted)
+            assertTrue(captured)
+        }
+    }
+
+    @Test
+    fun `unresolved restore rejects deletion before journal or snapshot mutation`() = runBlocking {
+        val archive = InMemoryRestoreTransactions()
+        archive.begin(OWNER_UID, emptySet())
+        var touched = false
+        val cleaner = waterFailureCleaner(RecordingIntegrityTransactions(), RecordingWaterIntegrity(),
+            deleteCareTasksForTank = { touched = true }, archiveGuard = archive::requireNoActiveRestore)
+        assertTrue(cleaner.deleteTanks(listOf(1L)) is OwnerTankDataCleaner.Result.DeleteFailed)
+        assertFalse(touched)
+        archive.markCommitted(OWNER_UID)
+        assertTrue(cleaner.deleteTanks(listOf(1L)) is OwnerTankDataCleaner.Result.Deleted)
+    }
+
     private fun cleaner(
         integrity: RecordingIntegrityTransactions = RecordingIntegrityTransactions(),
         deleteTankRecords: suspend (List<Long>) -> Unit = {},
@@ -380,6 +410,7 @@ class OwnerTankDataCleanerTest {
     ): OwnerTankDataCleaner {
         return OwnerTankDataCleaner(
             stores = OwnerTankDeletionStores(
+                    requireArchiveSettled = {},
                 deleteTankRecords = deleteTankRecords,
                 snapshotCareTasksForTank = snapshotCareTasksForTank,
                 deleteCareTasksForTank = deleteCareTasksForTank,
@@ -399,10 +430,11 @@ class OwnerTankDataCleanerTest {
         integrity: RecordingIntegrityTransactions,
         waterIntegrity: WaterAnalysisDeletionIntegrity,
         deleteCareTasksForTank: suspend (Long) -> Unit = {},
-        deleteTankRecords: suspend (List<Long>) -> Unit = {}
+        deleteTankRecords: suspend (List<Long>) -> Unit = {},
+        archiveGuard: suspend (String) -> Unit = {}
     ) = OwnerTankDataCleaner(
         stores = OwnerTankDeletionStores(deleteTankRecords, { emptyList() }, deleteCareTasksForTank,
-            { _, _ -> }, {}, waterIntegrity),
+            { _, _ -> }, {}, waterIntegrity, archiveGuard),
         removeDeviceAssignmentsForTank = { TankAssignmentCleanupResult.Completed(0) },
         cancelCareTaskReminder = { _, _ -> },
         reconcileCareReminders = {},
@@ -415,6 +447,7 @@ class OwnerTankDataCleanerTest {
         deleteWaterAnalysesForTank: suspend (Long) -> Unit
     ) = OwnerTankDataCleaner(
         stores = OwnerTankDeletionStores(
+                    requireArchiveSettled = {},
             deleteTankRecords = {},
             snapshotCareTasksForTank = { emptyList() },
             deleteCareTasksForTank = {},

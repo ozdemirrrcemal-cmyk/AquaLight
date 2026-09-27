@@ -1,5 +1,7 @@
 package com.aqua.aqualight.smoke
 
+import com.aqua.aqualight.data.user.archive.UserDataRestoreJournal
+import com.aqua.aqualight.data.user.archive.requireNoActiveRestore
 import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -352,6 +354,7 @@ private class ReleaseSmokeViewModelFactory(
                 tankStore = tankStore,
                 tankDataCleaner = OwnerTankDataCleaner(
                     stores = OwnerTankDeletionStores(
+                            requireArchiveSettled = UserDataRestoreJournal(appContext)::requireNoActiveRestore,
                         deleteTankRecords = tankStore::deleteTanks,
                         snapshotCareTasksForTank = { tankId ->
                             careTaskStore.snapshotTasksForIntegrity(tankId)

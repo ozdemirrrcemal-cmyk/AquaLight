@@ -22,7 +22,8 @@ internal data class UserDataRestoreDataSources(
     val tanks: TankDataSource,
     val careTasks: CareTaskDataSource,
     val assignments: AssignmentDataSource,
-    val waterHistory: WaterHistoryDataSource
+    val waterHistory: WaterHistoryDataSource,
+    val requireDeletionSettled: (String) -> Unit
 ) {
     internal data class WaterHistoryDataSource(
         val restore: suspend (com.aqua.aqualight.data.aquarium.health.WaterHistoryRestoreRequest) -> Int,
@@ -56,6 +57,12 @@ internal data class UserDataRestoreDataSources(
             val careTaskStore = dataSources.careTaskStore
             val assignmentRepository = dataSources.assignmentRepository
             return UserDataRestoreDataSources(
+                requireDeletionSettled = { owner ->
+                    check(com.aqua.aqualight.data.care.integrity.TankCareIntegrityJournal
+                        .pendingForOwner(owner).isEmpty()) {
+                        "Pending aquarium deletion must recover before archive restore."
+                    }
+                },
                 waterHistory = WaterHistoryDataSource(
                     dataSources.waterHistory::restore, dataSources.waterHistory::rollback),
                 tanks = TankDataSource(
@@ -289,7 +296,7 @@ internal data class UserDataRestoreRuntime(
         ): UserDataRestoreRuntime {
             val appContext = context.applicationContext
             val restoreDataSources = UserDataRestoreDataSources.from(archiveDataSources)
-            val transactions = UserDataRestoreJournal(appContext)
+            val transactions = archiveDataSources.restoreTransactions
             val provenance = UserDataRestoreProvenanceStore(appContext)
             return UserDataRestoreRuntime(
                 session = requireNotNull(archiveDataSources.session),

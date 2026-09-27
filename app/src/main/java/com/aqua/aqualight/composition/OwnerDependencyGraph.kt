@@ -299,7 +299,8 @@ internal class ActiveOwnerDependencyGraphResolver(
             careTaskStore = careTaskStore,
             assignmentRepository = dependencies.assignmentRepository,
             waterHistory = WaterAnalysisDataStoreManager(appContext).archiveStore,
-            session = sessionCoordinator.bindWriteLease(dependencies.ownerUid, dependencies.sessionGeneration)
+            session = sessionCoordinator.bindWriteLease(dependencies.ownerUid, dependencies.sessionGeneration),
+            restoreTransactions = com.aqua.aqualight.data.user.archive.UserDataRestoreJournal(appContext)
         )
         val mediaGateway = UserDataArchiveMediaGateway(appContext)
         return DefaultUserDataArchiveOperations(

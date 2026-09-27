@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.aquarium.delete
 
 import com.aqua.aqualight.data.aquarium.OwnerTankMutationGate
+import com.aqua.aqualight.data.aquarium.OwnerArchiveMutationGate
 import com.aqua.aqualight.data.aquarium.health.WaterAnalysisDeletionIntegrity
 import com.aqua.aqualight.data.aquarium.devices.TankAssignmentCleanupResult
 import com.aqua.aqualight.data.care.integrity.TankCareIntegrityJournal
@@ -25,7 +26,8 @@ internal data class OwnerTankDeletionStores(
     val deleteCareTasksForTank: suspend (Long) -> Unit,
     val restoreCareTasksForTank: suspend (Long, List<CareTask>) -> Unit,
     val deleteWaterAnalysesForTank: suspend (Long) -> Unit,
-    val waterIntegrity: WaterAnalysisDeletionIntegrity
+    val waterIntegrity: WaterAnalysisDeletionIntegrity,
+    val requireArchiveSettled: suspend (String) -> Unit
 )
 
 class OwnerTankDataCleaner internal constructor(
@@ -79,8 +81,10 @@ class OwnerTankDataCleaner internal constructor(
             }
         }
 
-        return OwnerTankMutationGate.shared.withTanks(ownerUid, normalizedTankIds) {
-            deleteTanksUnderGate(ownerUid, normalizedTankIds)
+        return OwnerArchiveMutationGate.shared.withOwner(ownerUid) {
+            OwnerTankMutationGate.shared.withTanks(ownerUid, normalizedTankIds) {
+                deleteTanksUnderGate(ownerUid, normalizedTankIds)
+            }
         }
     }
 
@@ -89,6 +93,7 @@ class OwnerTankDataCleaner internal constructor(
         normalizedTankIds: List<Long>
     ): Result {
         val snapshotsByTank = try {
+            stores.requireArchiveSettled(ownerUid)
             commitTankDeletion(ownerUid, normalizedTankIds)
         } catch (error: Throwable) {
             error.throwIfCancellation()
