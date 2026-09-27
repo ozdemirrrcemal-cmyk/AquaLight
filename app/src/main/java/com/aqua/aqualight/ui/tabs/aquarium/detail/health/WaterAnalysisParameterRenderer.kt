@@ -78,7 +78,6 @@ internal class WaterAnalysisParameterRenderer(
     private fun recommendedModels(tankProfile: String): List<WaterTestParameterUiModel> =
         WaterTestProfileUiCatalog.recommendedIds(tankProfile).map { id ->
             WaterTestProfileUiCatalog.model(
-                tankProfile = tankProfile,
                 id = id,
                 importance = WaterTestImportance.RECOMMENDED,
                 value = state.parameterValues[id].orEmpty()
@@ -90,7 +89,6 @@ internal class WaterAnalysisParameterRenderer(
             .filter(state.additionalParameters::contains)
             .map { id ->
                 WaterTestProfileUiCatalog.model(
-                    tankProfile = tankProfile,
                     id = id,
                     importance = WaterTestImportance.ADDITIONAL,
                     value = state.parameterValues[id].orEmpty()
@@ -192,7 +190,6 @@ internal class WaterAnalysisParameterRenderer(
             .take(ADD_TEST_EXAMPLE_LIMIT)
             .map { id ->
                 WaterTestProfileUiCatalog.model(
-                    tankProfile = tankProfile,
                     id = id,
                     importance = WaterTestImportance.ADDITIONAL,
                     value = ""

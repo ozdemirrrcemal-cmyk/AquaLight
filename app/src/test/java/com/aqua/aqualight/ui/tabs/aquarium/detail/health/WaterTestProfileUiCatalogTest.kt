@@ -83,7 +83,6 @@ class WaterTestProfileUiCatalogTest {
     @Test
     fun emptyPresentationValueRemainsEmptyAndNeverBecomesZero() {
         val model = WaterTestProfileUiCatalog.model(
-            tankProfile = AquariumTankTaxonomy.TYPE_PLANTED,
             id = WaterTestParameterId.NITRATE,
             importance = WaterTestImportance.RECOMMENDED,
             value = ""

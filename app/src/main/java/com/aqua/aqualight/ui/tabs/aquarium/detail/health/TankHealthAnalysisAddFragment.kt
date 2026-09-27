@@ -253,9 +253,8 @@ class TankHealthAnalysisAddFragment :
             WaterAnalysisInputBuildResult.Failure.InvalidTemperature ->
                 getString(R.string.tank_health_analysis_invalid_temperature)
             is WaterAnalysisInputBuildResult.Failure.InvalidParameterValue -> {
-                val name = tankProfile?.let { profile ->
+                val name = tankProfile?.let {
                     WaterTestProfileUiCatalog.model(
-                        tankProfile = profile,
                         id = failure.parameterId,
                         importance = WaterTestImportance.RECOMMENDED,
                         value = ""

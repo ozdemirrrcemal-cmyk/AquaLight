@@ -40,7 +40,6 @@ internal object TankHealthWaterMetricUiCatalog {
         val recommended = WaterTestProfileUiCatalog.recommendedIds(tankProfile).toSet()
         return visibleParameterIds(tankProfile, measuredParameterIds).map { id ->
             val base = WaterTestProfileUiCatalog.model(
-                tankProfile = tankProfile,
                 id = id,
                 importance = if (id in recommended) {
                     WaterTestImportance.RECOMMENDED

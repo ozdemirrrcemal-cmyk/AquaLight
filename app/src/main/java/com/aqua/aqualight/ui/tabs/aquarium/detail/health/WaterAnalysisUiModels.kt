@@ -186,7 +186,6 @@ internal object WaterTestProfileUiCatalog {
     )
 
     fun model(
-        tankProfile: String,
         id: WaterTestParameterId,
         importance: WaterTestImportance,
         value: String

@@ -39,9 +39,9 @@ internal class WaterTestPickerBottomSheet : BottomSheetDialogFragment() {
                 runCatching { WaterTestParameterId.valueOf(rawId) }.getOrNull()
             }
 
-        parameterIds.forEach { parameterId ->
+        val allowedParameterIds = WaterTestProfileUiCatalog.additionalIds(tankProfile).toSet()
+        parameterIds.filter(allowedParameterIds::contains).forEach { parameterId ->
             val model = WaterTestProfileUiCatalog.model(
-                tankProfile = tankProfile,
                 id = parameterId,
                 importance = WaterTestImportance.ADDITIONAL,
                 value = ""
