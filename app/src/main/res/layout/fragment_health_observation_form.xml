@@ -17,7 +17,7 @@
  android:padding="@dimen/aqua_size_8" android:textColor="@color/aqua_card_text_primary"
  android:textSize="@dimen/aqua_text_size_body" android:accessibilityLiveRegion="polite"  />
 <com.google.android.material.textfield.TextInputLayout android:id="@+id/subjectInput"
- style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+ style="@style/Widget.Aqua.Input.Layout" app:endIconMode="dropdown_menu"
  android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/health_select_subject">
  <com.google.android.material.textfield.MaterialAutoCompleteTextView android:id="@+id/subject"
  android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="none"
@@ -61,8 +61,10 @@
 <LinearLayout android:id="@+id/extent" android:orientation="vertical"
  android:layout_width="match_parent" android:layout_height="wrap_content" />
 <com.google.android.material.textfield.TextInputLayout android:id="@+id/affectedInput"
+ style="@style/Widget.Aqua.Input.Layout"
  android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/health_affected">
  <com.google.android.material.textfield.TextInputEditText android:id="@+id/affected"
+ style="@style/Widget.Aqua.Input.EditText"
  android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="@dimen/aqua_size_48"
  android:inputType="number" android:maxLength="4000" />
  </com.google.android.material.textfield.TextInputLayout>
@@ -70,14 +72,18 @@
  android:padding="@dimen/aqua_size_8" android:textColor="@color/aqua_card_text_primary"
  android:textSize="@dimen/aqua_text_size_body" android:accessibilityLiveRegion="polite" android:text="@string/health_operating_note" />
 <com.google.android.material.textfield.TextInputLayout android:id="@+id/photoperiodInput"
+ style="@style/Widget.Aqua.Input.Layout"
  android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/health_photoperiod">
  <com.google.android.material.textfield.TextInputEditText android:id="@+id/photoperiod"
+ style="@style/Widget.Aqua.Input.EditText"
  android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="@dimen/aqua_size_48"
  android:inputType="number" android:maxLength="4000" />
  </com.google.android.material.textfield.TextInputLayout>
 <com.google.android.material.textfield.TextInputLayout android:id="@+id/lightInput"
+ style="@style/Widget.Aqua.Input.Layout"
  android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/health_light">
  <com.google.android.material.textfield.TextInputEditText android:id="@+id/light"
+ style="@style/Widget.Aqua.Input.EditText"
  android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="@dimen/aqua_size_48"
  android:inputType="textMultiLine" android:maxLength="4000" />
  </com.google.android.material.textfield.TextInputLayout>
@@ -87,14 +93,18 @@
 <LinearLayout android:id="@+id/co2" android:orientation="vertical"
  android:layout_width="match_parent" android:layout_height="wrap_content" />
 <com.google.android.material.textfield.TextInputLayout android:id="@+id/dosingInput"
+ style="@style/Widget.Aqua.Input.Layout"
  android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/health_dosing">
  <com.google.android.material.textfield.TextInputEditText android:id="@+id/dosing"
+ style="@style/Widget.Aqua.Input.EditText"
  android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="@dimen/aqua_size_48"
  android:inputType="textMultiLine" android:maxLength="4000" />
  </com.google.android.material.textfield.TextInputLayout>
 <com.google.android.material.textfield.TextInputLayout android:id="@+id/notesInput"
+ style="@style/Widget.Aqua.Input.Layout"
  android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/health_notes">
  <com.google.android.material.textfield.TextInputEditText android:id="@+id/notes"
+ style="@style/Widget.Aqua.Input.EditText"
  android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="@dimen/aqua_size_48"
  android:inputType="textMultiLine" android:maxLength="4000" />
  </com.google.android.material.textfield.TextInputLayout>

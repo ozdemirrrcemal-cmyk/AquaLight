@@ -90,7 +90,7 @@ def is_color_definition_layer(path: Path) -> bool:
     return path.parent.name.startswith("values") and "color" in path.name
 
 
-def is_weighted_zero_width(text: str, match: re.Match[str]) -> bool:
+def is_weighted_zero_dimension(text: str, match: re.Match[str]) -> bool:
     """Android Lint requires literal 0dp on weighted LinearLayout children."""
     if match.group(0) != "0dp":
         return False
@@ -99,11 +99,9 @@ def is_weighted_zero_width(text: str, match: re.Match[str]) -> bool:
     if start < 0 or end < 0:
         return False
     tag = text[start:end]
-    return (
-        'android:layout_width="0dp"' in tag
-        and 'android:layout_weight=' in tag
-        and text[match.start() - len('android:layout_width="'):match.start()]
-        == 'android:layout_width="'
+    return 'android:layout_weight=' in tag and any(
+        text[match.start() - len(attribute):match.start()] == attribute
+        for attribute in ('android:layout_width="', 'android:layout_height="')
     )
 
 
@@ -135,7 +133,7 @@ def validate_xml(errors: list[str]) -> set[str]:
             add_matches(errors, path, text, HEX_LITERAL, "raw color outside the primitive palette")
         if not is_dimension_definition(path):
             for match in RAW_DIMENSION.finditer(text):
-                if is_weighted_zero_width(text, match):
+                if is_weighted_zero_dimension(text, match):
                     continue
                 errors.append(
                     f"{relative(path)}:{line_number(text, match.start())}: "
