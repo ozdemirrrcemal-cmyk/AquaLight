@@ -526,6 +526,12 @@ WaterAnalysisRecord içindeki kalıcı owner kimliğinin UI’a açılması gere
 
 ## 6. Sonraki ekranların sırası ve sınırları
 
+27 September continuation: dated typed algae/plant/livestock observations and
+three separate pure engines are implemented with local identity, uncertainty,
+count and historical water-evidence tests. See `HEALTH_OBSERVATION_IMPLEMENTATION.md`.
+Persistence, UI/media/restore and end-to-end acceptance are not inferred from
+these models; the remaining A/P/L checkboxes stay open until their complete evidence.
+
 ### A — Yosun Kontrolü
 
 - [ ] A.1 Water Quality kabul kapısı kapandıktan sonra observation/input/output sözleşmesini ve ekran akışını tasarla.

@@ -31,6 +31,14 @@ class WaterArchitectureGuardTest(unittest.TestCase):
     def test_production_boundaries_pass(self):
         self.assertEqual([], guard.violations(MODULE_PATH.parent.parent))
 
+    def test_all_observation_engines_reject_ambient_io_and_time(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for engine in ('algae', 'plant', 'livestock', 'observation'):
+                self.write(root, f'application/aquarium/health/{engine}/Engine.kt',
+                           'fun assess() = System.currentTimeMillis()\nval io = Dispatchers.IO')
+            self.assertEqual(8, len(guard.violations(root)))
+
     @staticmethod
     def write(root, relative, content):
         path = root / guard.BASE / relative

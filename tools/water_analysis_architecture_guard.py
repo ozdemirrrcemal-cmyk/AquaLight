@@ -25,8 +25,10 @@ def violations(root: Path) -> list[str]:
             for imported in re.findall(r'^import\s+([\w.]+)', text, re.MULTILINE):
                 if imported.startswith(forbidden):
                     errors.append(f'{path.relative_to(root)} imports {imported}')
-    engine = root / BASE / 'application/aquarium/health/water'
-    for path in sorted(engine.rglob('*.kt')):
+    health = root / BASE / 'application/aquarium/health'
+    engines = ('water', 'observation', 'algae', 'plant', 'livestock')
+    paths = (path for engine in engines for path in (health / engine).rglob('*.kt'))
+    for path in sorted(paths):
         text = path.read_text(encoding='utf-8')
         for token in ('System.currentTimeMillis(', 'Clock.system', 'Firebase', 'Dispatchers.',
                       'DataStore', 'JSONObject(', 'JsonParser.', 'java.io.', 'java.net.'):
