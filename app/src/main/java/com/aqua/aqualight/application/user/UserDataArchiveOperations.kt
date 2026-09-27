@@ -36,7 +36,8 @@ data class UserDataBackupInspection(
     val aquariumCount: Int,
     val careTaskCount: Int,
     val deviceAssignmentCount: Int,
-    val photoCount: Int
+    val photoCount: Int,
+    val waterAnalysisCount: Int = 0
 )
 
 data class UserDataRestoreResult(
@@ -44,5 +45,6 @@ data class UserDataRestoreResult(
     val restoredCareTaskCount: Int,
     val restoredDeviceAssignmentCount: Int,
     val skippedDeviceAssignmentCount: Int,
-    val reminderReconciliationWarning: Boolean
+    val reminderReconciliationWarning: Boolean,
+    val restoredWaterAnalysisCount: Int = 0
 )

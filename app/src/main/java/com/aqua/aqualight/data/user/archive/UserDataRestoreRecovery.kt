@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.user.archive
 
 import android.content.Context
+import com.aqua.aqualight.data.aquarium.health.WaterAnalysisDataStoreManager
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepositoryProvider
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceRemovalResult
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
@@ -36,6 +37,8 @@ internal class UserDataRestoreRecovery(
                 Result(0, 0, 0, true)
             }
             else -> withContext(NonCancellable) {
+                pending.waterTransactionId?.let { dataSources.waterHistory.rollback(owner, it) }
+
                 if (pending.exactMutationTracking) {
                     rollbackExact(owner, pending)
                 } else {
@@ -270,7 +273,9 @@ internal class UserDataRestoreRecovery(
             val archiveSources = UserDataArchiveDataSources(
                 aquariumStore = AquariumTankDataStoreManager(appContext),
                 careTaskStore = CareTaskDataStoreManager.create(appContext),
-                assignmentRepository = assignmentRepository
+                assignmentRepository = assignmentRepository,
+                waterHistory = WaterAnalysisDataStoreManager(appContext).archiveStore,
+                session = null
             )
             val restoreSources = UserDataRestoreDataSources.from(archiveSources)
             val transactions = UserDataRestoreJournal(appContext)

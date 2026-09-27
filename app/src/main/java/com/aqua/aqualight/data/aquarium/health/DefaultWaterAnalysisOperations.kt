@@ -120,6 +120,6 @@ internal fun WaterAnalysisRecord.toApplicationSnapshot(): WaterAnalysisSnapshot 
             )
         },
         createdAtMillis = createdAtMillis,
-        assessment = evaluation?.let { WaterEvaluationCodec.decode(it, tankId) },
+        assessment = evaluation?.let { WaterEvaluationCodec.decode(it, importOrigin?.sourceTankId ?: tankId) },
         contextCapturedAtMillis = evaluation?.capturedAtMillis
     )

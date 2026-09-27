@@ -21,8 +21,14 @@ import kotlinx.coroutines.withContext
 internal data class UserDataRestoreDataSources(
     val tanks: TankDataSource,
     val careTasks: CareTaskDataSource,
-    val assignments: AssignmentDataSource
+    val assignments: AssignmentDataSource,
+    val waterHistory: WaterHistoryDataSource
 ) {
+    internal data class WaterHistoryDataSource(
+        val restore: suspend (com.aqua.aqualight.data.aquarium.health.WaterHistoryRestoreRequest) -> Int,
+        val rollback: suspend (String, String) -> Unit
+    )
+
     internal data class TankDataSource(
         val snapshotForOwner: suspend (String) -> List<SavedAquariumTank>,
         val addFromDraft: suspend (String, TankDraft) -> SavedAquariumTank,
@@ -50,6 +56,8 @@ internal data class UserDataRestoreDataSources(
             val careTaskStore = dataSources.careTaskStore
             val assignmentRepository = dataSources.assignmentRepository
             return UserDataRestoreDataSources(
+                waterHistory = WaterHistoryDataSource(
+                    dataSources.waterHistory::restore, dataSources.waterHistory::rollback),
                 tanks = TankDataSource(
                     snapshotForOwner = aquariumStore::tanksSnapshotForOwner,
                     addFromDraft = { ownerUid, draft ->
@@ -270,7 +278,8 @@ internal data class UserDataRestoreRuntime(
     val mediaOperations: UserDataRestoreMediaOperations,
     val transactions: UserDataRestoreTransactions,
     val provenance: UserDataRestoreProvenance,
-    val recovery: UserDataRestoreRecovery
+    val recovery: UserDataRestoreRecovery,
+    val session: com.aqua.aqualight.data.auth.OwnerSessionWriteLease? = null
 ) {
     companion object {
         fun create(
@@ -283,6 +292,7 @@ internal data class UserDataRestoreRuntime(
             val transactions = UserDataRestoreJournal(appContext)
             val provenance = UserDataRestoreProvenanceStore(appContext)
             return UserDataRestoreRuntime(
+                session = requireNotNull(archiveDataSources.session),
                 dataSources = restoreDataSources.trackCreatedMutations(transactions),
                 mediaOperations = UserDataRestoreMediaOperations.from(mediaGateway),
                 transactions = transactions,

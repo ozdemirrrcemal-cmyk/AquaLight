@@ -35,9 +35,13 @@ internal object WaterAnalysisStoreRules {
 
         val ownerScopedIds = mutableSetOf<Pair<String, Long>>()
         val ownerScopedRequests = mutableSetOf<Pair<String, String>>()
+        val originIds = mutableSetOf<Pair<String, Pair<String, Long>>>()
         store.analysesList.forEach { stored ->
             validateStoredAnalysis(stored)
             val ownerUid = canonicalOwnerUid(stored.ownerUid)
+            if (!originIds.add(ownerUid to WaterAnalysisImportIdentity.key(stored))) {
+                violation("Duplicate water-analysis import identity.")
+            }
             if (!ownerScopedIds.add(ownerUid to stored.id)) {
                 violation("Duplicate water-analysis id ${stored.id} for owner $ownerUid.")
             }
@@ -75,7 +79,7 @@ internal object WaterAnalysisStoreRules {
         WaterAnalysisValueRules.validateMeasurements(record.measurements)
         record.evaluation?.let { evaluation ->
             try {
-                WaterEvaluationCodec.decode(evaluation, record.tankId)
+                WaterEvaluationCodec.decode(evaluation, record.importOrigin?.sourceTankId ?: record.tankId)
                 WaterCanonicalSnapshotCodec.validate(
                     evaluation.canonicalMeasurementsList, record.measurements.map { it.parameter }.toSet()
                 )
@@ -94,6 +98,11 @@ internal object WaterAnalysisStoreRules {
             }
         } else if (stored.temperatureSource.isBlank()) {
             violation("Stored temperature requires a source.")
+        }
+        try {
+            WaterAnalysisImportIdentity.validate(stored)
+        } catch (_: IllegalArgumentException) {
+            violation("Water-analysis import origin contains invalid evidence.")
         }
         validateRecord(stored.toRecordStrict())
         return stored

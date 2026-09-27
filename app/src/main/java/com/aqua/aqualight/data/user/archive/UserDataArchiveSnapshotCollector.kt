@@ -8,12 +8,16 @@ import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.platform.media.AppMediaScope
 import com.aqua.aqualight.platform.media.UserDataArchiveMediaGateway
 import java.io.File
+import com.aqua.aqualight.data.aquarium.health.WaterAnalysisArchiveStore
+import com.aqua.aqualight.data.auth.OwnerSessionWriteLease
 import kotlinx.coroutines.flow.first
 
 internal data class UserDataArchiveDataSources(
     val aquariumStore: AquariumTankDataStoreManager,
     val careTaskStore: CareTaskDataStoreManager,
-    val assignmentRepository: TankDeviceAssignmentRepository
+    val assignmentRepository: TankDeviceAssignmentRepository,
+    val waterHistory: WaterAnalysisArchiveStore,
+    val session: OwnerSessionWriteLease?
 )
 
 internal class UserDataArchiveSnapshotCollector(
@@ -77,6 +81,16 @@ internal class UserDataArchiveSnapshotCollector(
             mediaByEntryName = media.toMap(),
             archivedPhotoCount = archivedPhotoCount
         )
+    }
+
+    suspend fun <T> withSession(block: suspend () -> T): T = requireNotNull(dataSources.session).withWrite {
+        requireOwner()
+        UserDataScope.withOwnerUid(ownerUid, block)
+    }
+
+    suspend fun collectWaterHistory(tankIds: Set<Long>, destination: File): WaterHistoryArchiveReference {
+        requireNotNull(dataSources.session).requireCurrent()
+        return dataSources.waterHistory.snapshot(ownerUid, tankIds, destination)
     }
 
     private fun collectPlantPhotos(

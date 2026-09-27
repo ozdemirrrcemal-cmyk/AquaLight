@@ -42,7 +42,15 @@
     <string name="data_management_backup_error_title">Yedekleme başarısız</string>
     <string name="data_management_backup_error_message">AquaLight yedeği oluşturamadı veya kaydedemedi. Mevcut verileriniz değiştirilmedi.</string>
     <string name="data_management_restore_error_title">Geri yükleme başarısız</string>
-    <string name="data_management_restore_error_message">Seçilen yedek doğrulanamadı veya geri yüklenemedi. AquaLight bu geri yükleme denemesinde oluşturulan kayıtları geri aldı.</string>
+    <string name="data_management_restore_error_message">Seçilen yedek doğrulanamadı veya geri yüklenemedi. Kurtarma henüz tamamlanmadıysa AquaLight yeniden açıldığında devam eder.</string>
     <string name="data_management_export_error_title">Dışa aktarma başarısız</string>
     <string name="data_management_export_error_message">AquaLight veri dışa aktarımınızı oluşturamadı veya kaydedemedi. Mevcut verileriniz değiştirilmedi.</string>
+    <plurals name="data_management_archive_water_analyses">
+        <item quantity="one">%d su analizi kaydı</item>
+        <item quantity="other">%d su analizi kaydı</item>
+    </plurals>
+    <plurals name="data_management_restored_water_analyses">
+        <item quantity="one">%d yeni su analizi kaydı geri yüklendi.</item>
+        <item quantity="other">%d yeni su analizi kaydı geri yüklendi.</item>
+    </plurals>
 </resources>

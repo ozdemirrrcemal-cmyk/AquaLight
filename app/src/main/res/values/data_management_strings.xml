@@ -42,7 +42,15 @@
     <string name="data_management_backup_error_title">Backup failed</string>
     <string name="data_management_backup_error_message">AquaLight could not create or save the backup. Your existing data was not changed.</string>
     <string name="data_management_restore_error_title">Restore failed</string>
-    <string name="data_management_restore_error_message">The selected backup could not be validated or restored. AquaLight rolled back records created by this restore attempt.</string>
+    <string name="data_management_restore_error_message">The selected backup could not be validated or restored. If recovery is still pending, it continues when you reopen AquaLight.</string>
     <string name="data_management_export_error_title">Export failed</string>
     <string name="data_management_export_error_message">AquaLight could not create or save your data export. Your existing data was not changed.</string>
+    <plurals name="data_management_archive_water_analyses">
+        <item quantity="one">%d water analysis record</item>
+        <item quantity="other">%d water analysis records</item>
+    </plurals>
+    <plurals name="data_management_restored_water_analyses">
+        <item quantity="one">Restored %d new water analysis record.</item>
+        <item quantity="other">Restored %d new water analysis records.</item>
+    </plurals>
 </resources>

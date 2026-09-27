@@ -41,7 +41,8 @@ internal data class PendingUserDataRestore(
     val createdTanks: List<RestoreCreatedTank> = emptyList(),
     val createdTasks: List<RestoreCreatedTask> = emptyList(),
     val createdAssignments: List<RestoreCreatedAssignment> = emptyList(),
-    val exactMutationTracking: Boolean = false
+    val exactMutationTracking: Boolean = false,
+    val waterTransactionId: String? = null
 )
 
 internal interface UserDataRestoreTransactions {
@@ -93,7 +94,8 @@ internal class UserDataRestoreJournal(
                     existingTankIds = emptySet(),
                     plannedTaskIds = emptyList(),
                     plannedAssignments = emptyList(),
-                    exactMutationTracking = true
+                    exactMutationTracking = true,
+                    waterTransactionId = java.util.UUID.randomUUID().toString()
                 )
             )
         }
@@ -231,7 +233,7 @@ private class UserDataRestoreJournalStorage(context: Context) {
 }
 
 private object UserDataRestoreJournalCodec {
-    private const val FORMAT_VERSION = 2
+    private const val FORMAT_VERSION = 3
     private const val LEGACY_FORMAT_VERSION = 1
 
     fun encode(transaction: PendingUserDataRestore): String {
@@ -262,9 +264,10 @@ private object UserDataRestoreJournalCodec {
             )
         }
         return JSONObject()
-            .put("version", FORMAT_VERSION)
+            .put("version", if (transaction.waterTransactionId == null) 2 else FORMAT_VERSION)
             .put("ownerUid", transaction.ownerUid)
             .put("state", transaction.state.name)
+            .put("waterTransactionId", transaction.waterTransactionId ?: JSONObject.NULL)
             .put("createdTanks", tanks)
             .put("createdTasks", tasks)
             .put("createdAssignments", assignments)
@@ -278,7 +281,7 @@ private object UserDataRestoreJournalCodec {
         require(owner == expectedOwner)
         val state = UserDataRestoreTransactionState.valueOf(root.getString("state"))
         return when (version) {
-            FORMAT_VERSION -> decodeCurrent(root, owner, state)
+            FORMAT_VERSION, 2 -> decodeCurrent(root, owner, state)
             LEGACY_FORMAT_VERSION -> PendingUserDataRestore(
                 ownerUid = owner,
                 state = state,
@@ -349,7 +352,12 @@ private object UserDataRestoreJournalCodec {
             createdTanks = createdTanks.toList(),
             createdTasks = createdTasks.toList(),
             createdAssignments = createdAssignments.toList(),
-            exactMutationTracking = true
+            exactMutationTracking = true,
+            waterTransactionId = if (root.getInt("version") == FORMAT_VERSION) {
+                root.getString("waterTransactionId").also {
+                    require(java.util.UUID.fromString(it).toString() == it)
+                }
+            } else null
         )
     }
 

@@ -139,7 +139,9 @@ class DataManagementFragment : Fragment(R.layout.fragment_data_management) {
                 inspection.careTaskCount,
                 inspection.deviceAssignmentCount,
                 inspection.photoCount
-            ),
+            ) + "\n" + resources.getQuantityString(
+                R.plurals.data_management_archive_water_analyses,
+                inspection.waterAnalysisCount, inspection.waterAnalysisCount),
             primaryText = getString(R.string.data_management_restore_confirm),
             cancelText = getString(R.string.cancel),
             tone = FeedbackBottomSheet.FeedbackTone.WARNING,
@@ -243,5 +245,6 @@ private fun Resources.restoreSuccessMessage(result: UserDataRestoreResult): Stri
             result.skippedDeviceAssignmentCount,
             result.skippedDeviceAssignmentCount
         )
-    )
+    ) + "\n" + getQuantityString(R.plurals.data_management_restored_water_analyses,
+        result.restoredWaterAnalysisCount, result.restoredWaterAnalysisCount)
 }

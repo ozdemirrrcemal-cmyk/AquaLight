@@ -44,6 +44,14 @@ internal class UserDataBackupRestorer(
 
     suspend fun restore(backup: DecodedUserDataBackup): UserDataRestoreResult {
         requireRestoreOwner(ownerUid)
+        val action: suspend () -> UserDataRestoreResult = {
+            UserDataScope.withOwnerUid(ownerUid) { restoreUnderSession(backup) }
+        }
+        return runtime.session?.withWrite(action) ?: action()
+    }
+
+    private suspend fun restoreUnderSession(backup: DecodedUserDataBackup): UserDataRestoreResult {
+        requireRestoreOwner(ownerUid)
         runtime.recovery.recover(ownerUid)
 
         val existingAquariums = dataSources.tanks.snapshotForOwner(ownerUid)
@@ -75,7 +83,7 @@ internal class UserDataBackupRestorer(
             )
         }
         val failure = attempt.exceptionOrNull()
-        if (failure != null) throw rollbackAfterFailure(failure)
+        if (failure != null) throw runtime.recovery.rollbackAfterFailure(ownerUid, failure)
         return attempt.getOrThrow()
     }
 
@@ -93,6 +101,7 @@ internal class UserDataBackupRestorer(
             deduplicator = deduplicator,
             provenanceBatch = provenanceBatch
         )
+        val restoredAnalyses = dataSources.restoreWaterHistory(ownerUid, transactions, backup, aquariums.tankIdMap)
         val assignments = restoreAssignments(backup, aquariums.tankIdMap)
 
         provenance.record(ownerUid, provenanceBatch)
@@ -106,7 +115,8 @@ internal class UserDataBackupRestorer(
             restoredCareTaskCount = restoredCareTasks,
             restoredDeviceAssignmentCount = assignments.restored,
             skippedDeviceAssignmentCount = assignments.skipped,
-            reminderReconciliationWarning = reminderWarning
+            reminderReconciliationWarning = reminderWarning,
+            restoredWaterAnalysisCount = restoredAnalyses
         )
     }
 
@@ -300,13 +310,7 @@ internal class UserDataBackupRestorer(
         return failure != null
     }
 
-    private suspend fun rollbackAfterFailure(originalError: Throwable): Throwable {
-        val rollbackFailure = withContext(NonCancellable) {
-            runCatching { runtime.recovery.recover(ownerUid) }.exceptionOrNull()
-        }
-        rollbackFailure?.let(originalError::addSuppressed)
-        return originalError
-    }
+
 }
 
 private fun requireRestoreOwner(ownerUid: String) {
@@ -360,3 +364,28 @@ private data class AssignmentRestoreCount(
     val restored: Int,
     val skipped: Int
 )
+
+private suspend fun UserDataRestoreDataSources.restoreWaterHistory(
+    ownerUid: String,
+    transactions: UserDataRestoreTransactions,
+    backup: DecodedUserDataBackup,
+    tankIdMap: Map<Long, Long>
+): Int {
+    val reference = backup.manifest.waterHistory
+    if (reference == null || reference.recordCount == 0) return 0
+    val transactionId = requireNotNull(transactions.pending(ownerUid)?.waterTransactionId) {
+        "Analysis restore requires a durable transaction identity."
+    }
+    return waterHistory.restore(com.aqua.aqualight.data.aquarium.health.WaterHistoryRestoreRequest(
+        ownerUid, transactionId, tankIdMap, reference, requireNotNull(backup.waterHistoryFile)))
+}
+
+private suspend fun UserDataRestoreRecovery.rollbackAfterFailure(
+    ownerUid: String, originalError: Throwable
+): Throwable {
+    val rollbackFailure = withContext(NonCancellable) {
+        runCatching { recover(ownerUid) }.exceptionOrNull()
+    }
+    rollbackFailure?.let(originalError::addSuppressed)
+    return originalError
+}

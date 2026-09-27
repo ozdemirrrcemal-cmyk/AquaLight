@@ -33,31 +33,33 @@ internal class DefaultUserDataArchiveOperations(
     private val mutationMutex = Mutex()
 
     override suspend fun createBackup(): Result<UserDataArchiveArtifact> =
-        operationResult {
-            mutationMutex.withLock {
-                createStagedArtifact(
-                    prefix = "AquaLight-backup",
-                    extension = "aqlbackup",
-                    mimeType = USER_DATA_BACKUP_MIME_TYPE
-                ) { handle, destination ->
-                    val mediaDirectory = runtime.staging.createScratchDirectory(handle)
-                    try {
-                        val createdAt = runtime.nowMillis()
-                        val snapshot = snapshotCollector.collectAquariumData(mediaDirectory)
-                        val manifest = UserDataBackupManifest(
-                            format = USER_DATA_BACKUP_FORMAT,
-                            schemaVersion = USER_DATA_BACKUP_SCHEMA_VERSION,
-                            createdAtMillis = createdAt,
-                            sourceAppVersion = sourceAppVersion,
-                            aquariums = snapshot.aquariums,
-                            careTasks = snapshot.careTasks,
-                            deviceAssignments = snapshot.deviceAssignments
-                        )
-                        runtime.codec.encode(manifest, snapshot.mediaByEntryName, destination)
-                        createdAt
-                    } finally {
-                        runtime.staging.discardScratch(mediaDirectory)
-                    }
+        snapshotResult {
+            createStagedArtifact(
+                prefix = "AquaLight-backup",
+                extension = "aqlbackup",
+                mimeType = USER_DATA_BACKUP_MIME_TYPE
+            ) { handle, destination ->
+                val mediaDirectory = runtime.staging.createScratchDirectory(handle)
+                try {
+                    val createdAt = runtime.nowMillis()
+                    val snapshot = snapshotCollector.collectAquariumData(mediaDirectory)
+                    val historyFile = File(mediaDirectory, "water-history.bin")
+                    val history = snapshotCollector.collectWaterHistory(
+                        snapshot.aquariums.map { it.id }.toSet(), historyFile)
+                    val manifest = UserDataBackupManifest(
+                        format = USER_DATA_BACKUP_FORMAT,
+                        schemaVersion = USER_DATA_BACKUP_SCHEMA_VERSION,
+                        createdAtMillis = createdAt,
+                        sourceAppVersion = sourceAppVersion,
+                        aquariums = snapshot.aquariums,
+                        careTasks = snapshot.careTasks,
+                        deviceAssignments = snapshot.deviceAssignments,
+                        waterHistory = history
+                    )
+                    runtime.codec.encode(manifest, snapshot.mediaByEntryName, destination, historyFile)
+                    createdAt
+                } finally {
+                    runtime.staging.discardScratch(mediaDirectory)
                 }
             }
         }
@@ -85,7 +87,8 @@ internal class DefaultUserDataArchiveOperations(
                     aquariumCount = manifest.aquariums.size,
                     careTaskCount = manifest.careTasks.size,
                     deviceAssignmentCount = manifest.deviceAssignments.size,
-                    photoCount = manifest.archivedPhotoCount()
+                    photoCount = manifest.archivedPhotoCount(),
+                    waterAnalysisCount = manifest.waterHistory?.recordCount ?: 0
                 )
             }
             UserDataBackupCandidate(
@@ -105,13 +108,14 @@ internal class DefaultUserDataArchiveOperations(
         }
 
     override suspend fun createPortableExport(): Result<UserDataArchiveArtifact> =
-        operationResult {
-            mutationMutex.withLock {
-                createStagedArtifact(
-                    prefix = "AquaLight-data-export",
-                    extension = "json",
-                    mimeType = USER_DATA_EXPORT_MIME_TYPE
-                ) { _, destination ->
+        snapshotResult {
+            createStagedArtifact(
+                prefix = "AquaLight-data-export",
+                extension = "json",
+                mimeType = USER_DATA_EXPORT_MIME_TYPE
+            ) { handle, destination ->
+                val scratch = runtime.staging.createScratchDirectory(handle)
+                try {
                     val exportedAt = runtime.nowMillis()
                     val aquarium = snapshotCollector.collectAquariumData()
                     val profile = snapshotCollector.collectPortableProfile()
@@ -136,8 +140,13 @@ internal class DefaultUserDataArchiveOperations(
                             archivedPhotoCount = aquarium.archivedPhotoCount
                         )
                     )
-                    runtime.codec.encodePortableExport(export, destination)
+                    val historyFile = File(scratch, "water-history.bin")
+                    val history = snapshotCollector.collectWaterHistory(
+                        aquarium.aquariums.map { it.id }.toSet(), historyFile)
+                    runtime.codec.encodePortableExport(export, destination, history to historyFile)
                     exportedAt
+                } finally {
+                    runtime.staging.discardScratch(scratch)
                 }
             }
         }
@@ -178,6 +187,10 @@ internal class DefaultUserDataArchiveOperations(
         } finally {
             runtime.staging.discardScratch(scratch)
         }
+    }
+
+    private suspend fun <T> snapshotResult(block: suspend () -> T): Result<T> = operationResult {
+        mutationMutex.withLock { snapshotCollector.withSession(block) }
     }
 
     private suspend fun <T> operationResult(block: suspend () -> T): Result<T> {

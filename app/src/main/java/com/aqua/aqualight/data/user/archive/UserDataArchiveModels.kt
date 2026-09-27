@@ -4,9 +4,9 @@ import java.io.File
 import com.google.gson.annotations.SerializedName
 
 internal const val USER_DATA_BACKUP_FORMAT = "aqualight-user-backup"
-internal const val USER_DATA_BACKUP_SCHEMA_VERSION = 2
+internal const val USER_DATA_BACKUP_SCHEMA_VERSION = 3
 internal const val USER_DATA_EXPORT_FORMAT = "aqualight-portable-data-export"
-internal const val USER_DATA_EXPORT_SCHEMA_VERSION = 2
+internal const val USER_DATA_EXPORT_SCHEMA_VERSION = 3
 internal const val USER_DATA_BACKUP_MIME_TYPE = "application/zip"
 internal const val USER_DATA_EXPORT_MIME_TYPE = "application/json"
 
@@ -24,7 +24,9 @@ internal data class UserDataBackupManifest(
     @field:SerializedName("careTasks")
     val careTasks: List<ArchiveCareTask>,
     @field:SerializedName("deviceAssignments")
-    val deviceAssignments: List<ArchiveDeviceAssignment>
+    val deviceAssignments: List<ArchiveDeviceAssignment>,
+    @field:SerializedName("waterHistory")
+    val waterHistory: WaterHistoryArchiveReference? = WaterHistoryArchive.emptyReference
 )
 
 internal data class ArchiveAquarium(
@@ -180,7 +182,8 @@ internal data class ArchiveDeviceAssignment(
 
 internal data class DecodedUserDataBackup(
     val manifest: UserDataBackupManifest,
-    val mediaByEntryName: Map<String, File>
+    val mediaByEntryName: Map<String, File>,
+    val waterHistoryFile: File? = null
 )
 
 internal data class PortableUserDataExport(

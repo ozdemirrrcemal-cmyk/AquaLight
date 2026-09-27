@@ -14,14 +14,39 @@ internal class UserDataBackupManifestReader(private val gson: Gson) {
         val document = root.asJsonObject
         val version = document.get("schemaVersion")
         require(version?.isJsonPrimitive == true && version.asJsonPrimitive.isNumber)
-        require(version.asString in setOf("1", USER_DATA_BACKUP_SCHEMA_VERSION.toString())) {
+        require(version.asString in setOf("1", "2", USER_DATA_BACKUP_SCHEMA_VERSION.toString())) {
             "Unsupported backup schema version."
         }
         if (version.asInt == LEGACY_VERSION) {
             upgradeLegacyIdentities(document)
+        }
+        if (version.asInt < USER_DATA_BACKUP_SCHEMA_VERSION) {
+            require(!document.has("waterHistory")) { "Legacy archives cannot declare analysis history." }
+            document.add("waterHistory", com.google.gson.JsonNull.INSTANCE)
             document.addProperty("schemaVersion", USER_DATA_BACKUP_SCHEMA_VERSION)
         }
+        else {
+            validateHistoryDeclaration(document.get("waterHistory"))
+        }
         return requireNotNull(gson.fromJson(document, UserDataBackupManifest::class.java))
+    }
+
+    private fun validateHistoryDeclaration(element: JsonElement?) {
+        require(element?.isJsonObject == true) { "Current backup is missing its analysis history declaration." }
+        val history = element.asJsonObject
+        require(history.get("entryName")?.asString == WaterHistoryArchive.ENTRY)
+        require(exactLong(history, "formatVersion") == WaterHistoryArchive.FORMAT_VERSION.toLong())
+        require(exactLong(history, "recordCount") in 0L..WaterHistoryArchive.MAX_RECORDS.toLong())
+        require(exactLong(history, "byteSize") in 1L..UserDataBackupLimits.MAX_UNCOMPRESSED_ARCHIVE_BYTES.toLong())
+        val hash = history.get("sha256")
+        require(hash?.isJsonPrimitive == true && hash.asJsonPrimitive.isString)
+        require(Regex("[0-9a-f]{64}").matches(hash.asString))
+    }
+
+    private fun exactLong(document: JsonObject, key: String): Long {
+        val value = document.get(key)
+        require(value?.isJsonPrimitive == true && value.asJsonPrimitive.isNumber)
+        return requireNotNull(value.asString.toLongOrNull()) { "Archive history integer is invalid." }
     }
 
     private fun upgradeLegacyIdentities(document: JsonObject) {

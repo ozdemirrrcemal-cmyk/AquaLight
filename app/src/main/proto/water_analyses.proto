@@ -19,6 +19,7 @@ message StoredWaterAnalysis {
   string request_id = 8;
   repeated StoredWaterMeasurement measurements = 20;
   StoredWaterEvaluation evaluation = 30;
+  StoredWaterImportOrigin import_origin = 31;
   string owner_uid = 100;
 }
 
@@ -102,4 +103,15 @@ message StoredWaterMeasurement {
   string test_kit_id = 4;
   string basis = 5;
   string unit = 6;
+}
+
+// Import linkage is separate from the byte-stable historical context and rule result.
+message StoredWaterImportOrigin {
+  uint32 schema_version = 1;
+  string source_owner_uid = 2;
+  int64 source_analysis_id = 3;
+  int64 source_tank_id = 4;
+  string source_request_id = 5;
+  string source_record_sha256 = 6;
+  string restore_transaction_id = 7;
 }

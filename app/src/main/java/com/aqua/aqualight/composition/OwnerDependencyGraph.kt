@@ -297,7 +297,9 @@ internal class ActiveOwnerDependencyGraphResolver(
         val archiveDataSources = UserDataArchiveDataSources(
             aquariumStore = aquariumTankStore,
             careTaskStore = careTaskStore,
-            assignmentRepository = dependencies.assignmentRepository
+            assignmentRepository = dependencies.assignmentRepository,
+            waterHistory = WaterAnalysisDataStoreManager(appContext).archiveStore,
+            session = sessionCoordinator.bindWriteLease(dependencies.ownerUid, dependencies.sessionGeneration)
         )
         val mediaGateway = UserDataArchiveMediaGateway(appContext)
         return DefaultUserDataArchiveOperations(

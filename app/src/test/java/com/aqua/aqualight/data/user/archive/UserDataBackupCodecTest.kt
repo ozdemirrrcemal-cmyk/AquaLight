@@ -122,9 +122,9 @@ class UserDataBackupCodecTest {
     @Test
     fun `decoder upgrades the known previous schema without inventing records`() {
         val original = manifest()
-        val encoded = rawZip(Gson().toJson(original.copy(schemaVersion = 1)))
+        val encoded = rawZip(Gson().toJson(original.copy(schemaVersion = 1, waterHistory = null)))
         val decoded = codec.decode(encoded, File(encoded.parentFile, "decoded-previous-schema"))
-        assertEquals(original, decoded.manifest)
+        assertEquals(original.copy(waterHistory = null), decoded.manifest)
     }
 
     @Test
@@ -133,7 +133,7 @@ class UserDataBackupCodecTest {
         val livestock = listOf(41L, 42L, 43L).map { id ->
             ArchiveLivestock(id, "Original name $id", "Fish", 2, null, "Original note", "custom:$id")
         }
-        val legacy = original.copy(schemaVersion = 1,
+        val legacy = original.copy(schemaVersion = 1, waterHistory = null,
             aquariums = listOf(original.aquariums.single().copy(livestock = livestock)))
         val document = Gson().toJsonTree(legacy).asJsonObject
         val items = document.getAsJsonArray("aquariums")[0].asJsonObject.getAsJsonArray("livestock")
@@ -148,7 +148,8 @@ class UserDataBackupCodecTest {
     @Test
     fun `legacy malformed declared identity is rejected rather than replaced`() {
         val original = manifest()
-        val invalid = original.copy(schemaVersion = 1, aquariums = listOf(original.aquariums.single().copy(
+        val invalid = original.copy(schemaVersion = 1, waterHistory = null,
+            aquariums = listOf(original.aquariums.single().copy(
             livestock = listOf(ArchiveLivestock(42, "Fish", "Fish", 1, null, "", "custom:99")))))
         val encoded = rawZip(Gson().toJson(invalid))
         assertThrows(IllegalArgumentException::class.java) {
@@ -228,7 +229,7 @@ class UserDataBackupCodecTest {
     @Test
     fun `maximum photo count round trips including manifest entry`() {
         val root = tempDirectory()
-        val (manifest, media) = plantPhotoArchive(root, UserDataBackupLimits.MAX_ZIP_ENTRIES - 1)
+        val (manifest, media) = plantPhotoArchive(root, UserDataBackupLimits.MAX_ZIP_ENTRIES - 2)
         val encoded = File(root, "maximum.aqlbackup")
         codec.encode(manifest, media, encoded)
         val decoded = codec.decode(encoded, File(root, "decoded-maximum"))
@@ -288,6 +289,44 @@ class UserDataBackupCodecTest {
                 base.aquariums.single().copy(id = tankId, plants = plants)
             }
         return base.copy(aquariums = aquariums) to media
+    }
+
+    @Test
+    fun `v2 archive has zero analyses and cannot smuggle future history`() {
+        val legacy = manifest().copy(schemaVersion = 2, waterHistory = null)
+        val file = rawZip(Gson().toJson(legacy))
+        val decoded = codec.decode(file, File(file.parentFile, "v2"))
+        assertEquals(null, decoded.manifest.waterHistory)
+        assertEquals(null, decoded.waterHistoryFile)
+        val smuggled = rawZip(Gson().toJson(legacy),
+            mapOf(WaterHistoryArchive.ENTRY to WaterHistoryArchive.emptyBytes))
+        assertThrows(IllegalArgumentException::class.java) {
+            codec.decode(smuggled, File(smuggled.parentFile, "v2-smuggled"))
+        }
+    }
+
+    @Test
+    fun `current archive must declare and contain its history even when empty`() {
+        val noDeclaration = rawZip(Gson().toJson(manifest().copy(waterHistory = null)))
+        assertThrows(IllegalArgumentException::class.java) {
+            codec.decode(noDeclaration, File(noDeclaration.parentFile, "no-history-declaration"))
+        }
+        val missingEntry = rawZip(Gson().toJson(manifest()))
+        assertThrows(IllegalArgumentException::class.java) {
+            codec.decode(missingEntry, File(missingEntry.parentFile, "no-history-entry"))
+        }
+    }
+
+    @Test
+    fun `history count and sizes must be declared exact integers`() {
+        listOf("recordCount", "byteSize", "formatVersion").forEach { field ->
+            val document = Gson().toJsonTree(manifest()).asJsonObject
+            document.getAsJsonObject("waterHistory").addProperty(field, 0.5)
+            val file = rawZip(document.toString(), mapOf(WaterHistoryArchive.ENTRY to WaterHistoryArchive.emptyBytes))
+            assertThrows(IllegalArgumentException::class.java) {
+                codec.decode(file, File(file.parentFile, "fractional-$field"))
+            }
+        }
     }
 
     private fun manifest(

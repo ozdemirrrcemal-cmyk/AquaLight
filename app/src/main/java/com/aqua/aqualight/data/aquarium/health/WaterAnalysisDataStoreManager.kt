@@ -34,6 +34,11 @@ internal class WaterAnalysisDataStoreManager(
         ProtoWaterAnalysisDeletionIntegrity(appContext.waterAnalysesDataStore,
             WaterAnalysisDatabase.getInstance(appContext))
     }
+    val archiveStore by lazy {
+        WaterAnalysisArchiveStore(appContext.waterAnalysesDataStore) { owner ->
+            tankStore.tanksSnapshotForOwner(owner).map { it.id }.toSet()
+        }
+    }
     val deletionIntegrity: ProtoWaterAnalysisDeletionIntegrity get() = deletionSupport
 
 

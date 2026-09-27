@@ -26,7 +26,8 @@ internal data class WaterAnalysisRecord(
     val measurements: List<WaterMeasurementRecord>,
     val createdAtMillis: Long,
     val requestId: String = "",
-    val evaluation: StoredWaterEvaluation? = null
+    val evaluation: StoredWaterEvaluation? = null,
+    val importOrigin: StoredWaterImportOrigin? = null
 )
 
 internal data class WaterMeasurementRecord(
@@ -56,7 +57,8 @@ internal fun StoredWaterAnalysis.toRecordStrict(): WaterAnalysisRecord =
         measurements = measurementsList.map(StoredWaterMeasurement::toRecordStrict),
         createdAtMillis = createdAtMillis,
         requestId = requestId,
-        evaluation = if (hasEvaluation()) evaluation else null
+        evaluation = if (hasEvaluation()) evaluation else null,
+        importOrigin = if (hasImportOrigin()) importOrigin else null
     )
 
 internal fun StoredWaterMeasurement.toRecordStrict(): WaterMeasurementRecord =
@@ -82,6 +84,7 @@ internal fun WaterAnalysisRecord.toStoredStrict(): StoredWaterAnalysis =
         .setRequestId(requestId)
         .addAllMeasurements(measurements.map(WaterMeasurementRecord::toStoredStrict))
         .apply { this@toStoredStrict.evaluation?.let(::setEvaluation) }
+        .apply { this@toStoredStrict.importOrigin?.let(::setImportOrigin) }
         .build()
 
 private fun WaterMeasurementRecord.toStoredStrict(): StoredWaterMeasurement =
