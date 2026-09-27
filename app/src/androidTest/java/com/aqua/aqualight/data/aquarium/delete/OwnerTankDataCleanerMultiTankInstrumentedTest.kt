@@ -10,6 +10,7 @@ import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.aquarium.health.WaterAnalysisDataStoreManager
 import com.aqua.aqualight.data.aquarium.health.WaterAnalysisDraftRecord
 import com.aqua.aqualight.data.aquarium.health.WaterMeasurementRecord
+import com.aqua.aqualight.data.auth.OwnerSessionTestFixture
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementBasis
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementMethod
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementUnit
@@ -50,14 +51,14 @@ class OwnerTankDataCleanerMultiTankInstrumentedTest {
                 coroutineScope {
                     val queued = OwnerTankMutationGate.shared.withTanks(fixture.owner, listOf(fixture.tankId)) {
                         val write = async(start = CoroutineStart.UNDISPATCHED) {
-                            runCatching { fixture.analyses.addAnalysis(validAnalysis(fixture.tankId)) }
+                            runCatching { fixture.analyses.addAnalysis(validAnalysis(fixture.tankId), fixture.session) }
                         }
                         assertFalse(write.isCompleted)
                         fixture.tanks.deleteTanks(listOf(fixture.tankId))
                         write
                     }
                     assertTrue(queued.await().exceptionOrNull() is StoreInvariantViolation)
-                    assertTrue(fixture.analyses.analysesFlow.first().isEmpty())
+                    assertTrue(fixture.analyses.analysesForOwnerFlow(fixture.owner).first().isEmpty())
                 }
             }
         }
@@ -68,7 +69,7 @@ class OwnerTankDataCleanerMultiTankInstrumentedTest {
         withTimeout(GATE_TIMEOUT_MILLIS) {
             withIsolatedTank { fixture ->
                 addTask(fixture.care, fixture.tankId, "Pending cleanup")
-                fixture.analyses.addAnalysis(validAnalysis(fixture.tankId))
+                fixture.analyses.addAnalysis(validAnalysis(fixture.tankId), fixture.session)
                 val snapshots = fixture.care.snapshotTasksForIntegrity(fixture.tankId)
                 TankCareIntegrityJournal.begin(fixture.owner, listOf(fixture.tankId))
                 TankCareIntegrityJournal.captureSnapshots(fixture.owner, mapOf(fixture.tankId to snapshots))
@@ -84,7 +85,7 @@ class OwnerTankDataCleanerMultiTankInstrumentedTest {
                     }
                     assertEquals(0, queued.await().restoredTaskCount)
                     assertTrue(fixture.care.tasksForTankFlow(fixture.tankId).first().isEmpty())
-                    assertTrue(fixture.analyses.analysesFlow.first().isEmpty())
+                    assertTrue(fixture.analyses.analysesForOwnerFlow(fixture.owner).first().isEmpty())
                     assertTrue(TankCareIntegrityJournal.pendingForOwner(fixture.owner).isEmpty())
                 }
             }
@@ -117,11 +118,14 @@ class OwnerTankDataCleanerMultiTankInstrumentedTest {
         val tanks: AquariumTankDataStoreManager,
         val analyses: WaterAnalysisDataStoreManager,
         val care: CareTaskDataStoreManager
-    )
+    ) {
+        val session = OwnerSessionTestFixture(owner).lease
+    }
 
     @Test
     fun twoTanksWithCareTasksAreDeletedThroughOneCrashSafeOperation() = runBlocking {
         val ownerUid = "bulk-delete-${UUID.randomUUID()}"
+        val session = OwnerSessionTestFixture(ownerUid).lease
         val tankStore = AquariumTankDataStoreManager(context)
         val careStore = CareTaskDataStoreManager.create(context)
         val analysisStore = WaterAnalysisDataStoreManager(context)
@@ -135,7 +139,7 @@ class OwnerTankDataCleanerMultiTankInstrumentedTest {
                 addTask(careStore, firstTankId, "Inspect first filter")
                 addTask(careStore, secondTankId, "Inspect second filter")
                 listOf(firstTankId, secondTankId).forEach { tankId ->
-                    analysisStore.addAnalysis(validAnalysis(tankId))
+                    analysisStore.addAnalysis(validAnalysis(tankId), session)
                 }
 
                 val cleaner = OwnerTankDataCleaner(
@@ -168,8 +172,8 @@ class OwnerTankDataCleanerMultiTankInstrumentedTest {
                 assertTrue(tankStore.tanksSnapshotForOwner(ownerUid).isEmpty())
                 assertTrue(careStore.tasksForTankFlow(firstTankId).first().isEmpty())
                 assertTrue(careStore.tasksForTankFlow(secondTankId).first().isEmpty())
-                assertTrue(analysisStore.analysesForTankFlow(firstTankId).first().isEmpty())
-                assertTrue(analysisStore.analysesForTankFlow(secondTankId).first().isEmpty())
+                assertTrue(analysisStore.analysesForTankFlow(ownerUid, firstTankId).first().isEmpty())
+                assertTrue(analysisStore.analysesForTankFlow(ownerUid, secondTankId).first().isEmpty())
                 assertTrue(TankCareIntegrityJournal.pendingForOwner(ownerUid).isEmpty())
             }
         } finally {
@@ -185,6 +189,7 @@ class OwnerTankDataCleanerMultiTankInstrumentedTest {
     @Test
     fun failedAnalysisCleanupIsReplayedFromDurableTankDeletion() = runBlocking {
         val ownerUid = "analysis-recovery-${UUID.randomUUID()}"
+        val session = OwnerSessionTestFixture(ownerUid).lease
         val tankStore = AquariumTankDataStoreManager(context)
         val careStore = CareTaskDataStoreManager.create(context)
         val analysisStore = WaterAnalysisDataStoreManager(context)
@@ -194,7 +199,7 @@ class OwnerTankDataCleanerMultiTankInstrumentedTest {
             UserDataScope.withOwnerUid(ownerUid) {
                 TankCareIntegrityJournal.clearOwner(ownerUid)
                 val tankId = tankStore.addTankFromDraft(validTankDraft("Recovery Tank"))
-                analysisStore.addAnalysis(validAnalysis(tankId))
+                analysisStore.addAnalysis(validAnalysis(tankId), session)
                 val cleaner = OwnerTankDataCleaner(
                     stores = OwnerTankDeletionStores(
                         deleteTankRecords = tankStore::deleteTanks,
@@ -215,16 +220,16 @@ class OwnerTankDataCleanerMultiTankInstrumentedTest {
                 val result = cleaner.deleteTanks(listOf(tankId))
                     as OwnerTankDataCleaner.Result.Deleted
                 assertEquals(OwnerTankDataCleaner.CleanupStage.WATER_ANALYSES, result.cleanupIssues.single().stage)
-                assertEquals(1, analysisStore.analysesForTankFlow(tankId).first().size)
+                assertEquals(1, analysisStore.analysesForTankFlow(ownerUid, tankId).first().size)
                 assertEquals(1, TankCareIntegrityJournal.pendingForOwner(ownerUid).size)
                 val blockedWrite = runCatching {
-                    analysisStore.addAnalysis(validAnalysis(tankId))
+                    analysisStore.addAnalysis(validAnalysis(tankId), session)
                 }
                 assertTrue(blockedWrite.exceptionOrNull() is StoreInvariantViolation)
 
                 TankCareIntegrityRecovery.create(context).recover(ownerUid)
 
-                assertTrue(analysisStore.analysesForTankFlow(tankId).first().isEmpty())
+                assertTrue(analysisStore.analysesForTankFlow(ownerUid, tankId).first().isEmpty())
                 assertTrue(TankCareIntegrityJournal.pendingForOwner(ownerUid).isEmpty())
             }
         } finally {

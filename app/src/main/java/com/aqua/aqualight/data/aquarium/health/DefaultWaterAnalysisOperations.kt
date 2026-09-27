@@ -9,34 +9,36 @@ import com.aqua.aqualight.application.aquarium.health.WaterMeasurementNormalizer
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementSelection
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementSnapshot
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementResultId
-import com.aqua.aqualight.data.user.withCurrentOwnerScope
+import com.aqua.aqualight.data.auth.OwnerSessionWriteLease
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 
 internal class DefaultWaterAnalysisOperations(
-    private val store: WaterAnalysisDataStoreManager
+    private val store: WaterAnalysisDataStoreManager,
+    private val session: OwnerSessionWriteLease
 ) : WaterAnalysisOperations {
 
     override fun analysesForTank(tankId: Long): Flow<List<WaterAnalysisSnapshot>> =
-        store.analysesForTankFlow(tankId).map { analyses ->
+        store.analysesForTankFlow(session.ownerUid, tankId).onStart { session.requireCurrent() }.map { analyses ->
+            session.requireCurrent()
             analyses.map { record -> record.toApplicationSnapshot() }
         }
 
     override fun analysis(analysisId: Long): Flow<WaterAnalysisSnapshot?> =
-        store.analysisFlow(analysisId).map { record ->
+        store.analysisFlow(session.ownerUid, analysisId).onStart { session.requireCurrent() }.map { record ->
+            session.requireCurrent()
             record?.toApplicationSnapshot()
         }
 
-    override suspend fun saveAnalysis(input: WaterAnalysisInput): Long =
-        withCurrentOwnerScope {
-            WaterAnalysisPolicy.validate(input)
-            store.addAnalysis(input.toDraftRecord())
-        }
+    override suspend fun saveAnalysis(input: WaterAnalysisInput): Long {
+        session.requireCurrent()
+        WaterAnalysisPolicy.validate(input)
+        return store.addAnalysis(input.toDraftRecord(), session)
+    }
 
     override suspend fun deleteAnalysis(analysisId: Long) =
-        withCurrentOwnerScope {
-            store.deleteAnalysis(analysisId)
-        }
+        store.deleteAnalysis(analysisId, session)
 
     private fun WaterAnalysisInput.toDraftRecord(): WaterAnalysisDraftRecord =
         WaterAnalysisDraftRecord(

@@ -36,6 +36,8 @@ import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDeletionStores
 import com.aqua.aqualight.data.aquarium.health.DefaultWaterAnalysisOperations
 import com.aqua.aqualight.data.aquarium.health.WaterAnalysisDataStoreManager
+import com.aqua.aqualight.data.auth.OwnerSessionMutationBarrier
+import com.aqua.aqualight.data.auth.OwnerSessionStateMachine
 import com.aqua.aqualight.data.aquarium.devices.DefaultTankDeviceAssignmentOperations
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentStore
@@ -211,6 +213,11 @@ private class ReleaseSmokeViewModelFactory(
     private val timerControlOperations = DefaultDeviceTimerControlOperations(devicesRepository)
     private val tankStore = AquariumTankDataStoreManager(appContext)
     private val waterAnalysisStore = WaterAnalysisDataStoreManager(appContext)
+    private val waterAnalysisSession = OwnerSessionStateMachine().let { state ->
+        val transition = state.begin(SMOKE_OWNER_UID)
+        check(state.commit(transition))
+        OwnerSessionMutationBarrier(state).bind(SMOKE_OWNER_UID, transition.generation)
+    }
     private val careTaskStore = CareTaskDataStoreManager.create(appContext)
     private val assignmentRepository = TankDeviceAssignmentRepository(
         ownerUid = SMOKE_OWNER_UID,
@@ -299,7 +306,7 @@ private class ReleaseSmokeViewModelFactory(
         modelClass.isAssignableFrom(AquariumTankViewModel::class.java) -> createAquariumTankViewModel()
         modelClass.isAssignableFrom(WaterAnalysisViewModel::class.java) ->
             WaterAnalysisViewModel(
-                operations = DefaultWaterAnalysisOperations(waterAnalysisStore)
+                operations = DefaultWaterAnalysisOperations(waterAnalysisStore, waterAnalysisSession)
             )
         modelClass.isAssignableFrom(MaintenanceViewModel::class.java) ->
             MaintenanceViewModel(

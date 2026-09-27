@@ -34,7 +34,7 @@ The multi-tank Android suite also covers queued analysis creation after tank
 deletion and recovery waiting behind an in-flight tank deletion.
 
 This closes the live analysis/cleaner ordering gap, but does not activate Room.
-Actual Room commits still need session-generation validation; owner-wide cleanup,
+Actual Room commits still need session-generation integration; owner-wide cleanup,
 archive restore and bounded durable analysis snapshots remain separate acceptance
 requirements. The new Android concurrency tests require device/CI execution.
 
@@ -49,6 +49,61 @@ new debt (776 existing advisories). No suppression or baseline entry was added.
 For the preceding Room staging commit `e046a82b`, Android CI `36321146886`,
 Debug APK `36321146873` and dependency integrity `36321146842` succeeded. API 27
 and API 36 emulator acceptance remained pending when this gate change was made.
+
+## Session-bound live writes and cancellation
+
+`UserDataScope` pins a UID across suspensions; that UID alone cannot distinguish
+logout or a new session for the same owner. Production composition now binds an
+immutable `OwnerSessionWriteLease` to the committed graph's exact owner and
+generation. The release-smoke fixture uses the same barrier/lease implementation
+with its isolated committed smoke session.
+
+`OwnerSessionCoordinator.open` and `close` share `OwnerSessionMutationBarrier`
+with live analysis create/exact-delete operations. The order is session barrier,
+owner/tank gate, then DataStore. An admitted write keeps its session until its
+durable result; a queued writer validates after acquiring the barrier. Owner
+switch, logout, pending activation and same-owner reentry invalidate an old
+lease. The DataStore transform revalidates that lease as well. This conservative
+barrier serializes live Proto analysis mutations; concurrent Room writer
+throughput remains part of the live-cutover performance work.
+
+The DataStore actor can continue disk I/O after cancellation of the caller waiting
+for its acknowledgement. `updateDataAwaitingCommit` checks cancellation before
+admission, awaits the actual `updateData` result in `NonCancellable`, then
+propagates caller cancellation. Session/tank locks therefore cannot be released
+while an admitted disk write is still running. A cancelled request may already
+be committed and must be reconciled using its original request ID; this is not a
+claim that the remaining SavedStateHandle/UI retry work is complete.
+
+Application reads now carry the lease's explicit owner into the store and check
+the generation at subscription and each emission. They cannot switch to another
+owner through ambient Firebase/coroutine identity. Expiry is a typed cancellation,
+so obsolete LiveData collectors stop without converting old-session access into
+empty history or an uncaught ordinary exception. This does not replace root-graph
+replacement or the remaining route/draft/event lifecycle acceptance tests.
+
+Startup orphan repair, deletion recovery and explicit owner cleanup remain
+maintenance paths. They do not recursively acquire a live-write lease while
+startup already holds the transition barrier. Owner-wide cleanup, archive restore
+and the Room cutover still need their broader acceptance work.
+
+Evidence: `OwnerSessionMutationBarrierTest` covers exact binding, pending/closed
+sessions, both write/transition orders, same-owner reentry, failure, cancellation
+and child-coroutine exclusion. `DataStoreCommitTest` uses the real file DataStore
+and a paused serializer to reproduce acknowledgement cancellation, verify durable
+completion before session close, inject write failure and reject pre-admission
+cancellation. `WaterAnalysisSessionInstrumentedTest` adds three Android scenarios
+for stale create/delete/read, a queued stale writer, and collector/owner isolation.
+The last suite requires device execution; compilation alone is not acceptance.
+
+Local Gradle verification on 27 September 2026 passed all 40 selected tests:
+8 session-barrier, 6 existing session-state, 4 real DataStore commit, 3 existing
+commercial-store concurrency, 7 tank-gate and 12 tank-cleaner tests. Both
+`:app:compileDebugAndroidTestKotlin` and `:app:compileReleaseSmokeKotlin` succeeded.
+The 313-test tool suite and architecture, composition, application-boundary and
+session-startup guards passed. For the preceding `bb0e403a` commit, Android CI
+`36322495211`, Debug APK `36322495151` and dependency integrity `36322495126`
+succeeded; current session changes require their own CI/device results.
 
 ## Schema and queries
 

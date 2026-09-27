@@ -213,7 +213,7 @@ internal class OwnerViewModelFactory(
                 )
             )
             WaterAnalysisViewModel::class.java -> WaterAnalysisViewModel(
-                operations = DefaultWaterAnalysisOperations(graph.waterAnalysisStore)
+                operations = DefaultWaterAnalysisOperations(graph.waterAnalysisStore, graph.waterAnalysisSession)
             )
             MaintenanceViewModel::class.java -> MaintenanceViewModel(
                 operations = DefaultMaintenanceOperations(

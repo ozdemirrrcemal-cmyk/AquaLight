@@ -15,8 +15,6 @@ import com.aqua.aqualight.data.user.UserDataScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 
 class OwnerSessionCoordinator private constructor(
@@ -65,7 +63,7 @@ class OwnerSessionCoordinator private constructor(
         val normalizedOwnerUid = ownerUid.trim().also { normalized ->
             require(normalized.isNotBlank()) { "ownerUid must not be blank" }
         }
-        return transitionMutex.withLock {
+        return mutationBarrier.withTransition {
             OwnerSessionOpenFlow(appContext, stateMachine).open(normalizedOwnerUid)
         }
     }
@@ -78,9 +76,9 @@ class OwnerSessionCoordinator private constructor(
             ?.trim()
             ?.takeIf(String::isNotBlank)
 
-        return transitionMutex.withLock {
+        return mutationBarrier.withTransition {
             val transition = stateMachine.close(normalizedExpected)
-                ?: return@withLock CloseResult.StaleRequestIgnored(
+                ?: return@withTransition CloseResult.StaleRequestIgnored(
                     expectedOwnerUid = normalizedExpected.orEmpty()
                 )
 
@@ -100,9 +98,12 @@ class OwnerSessionCoordinator private constructor(
 
     fun snapshot(): OwnerSessionStateMachine.Snapshot = stateMachine.snapshot()
 
+    internal fun bindWriteLease(ownerUid: String, generation: Long): OwnerSessionWriteLease =
+        mutationBarrier.bind(ownerUid, generation)
+
     companion object {
         private val stateMachine = OwnerSessionStateMachine()
-        private val transitionMutex = Mutex()
+        private val mutationBarrier = OwnerSessionMutationBarrier(stateMachine)
 
         fun create(context: Context): OwnerSessionCoordinator {
             return OwnerSessionCoordinator(

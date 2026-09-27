@@ -34,6 +34,7 @@ import com.aqua.aqualight.data.aquarium.health.WaterAnalysisDataStoreManager
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.auth.OwnerSessionCoordinator
 import com.aqua.aqualight.data.auth.OwnerSessionStateMachine
+import com.aqua.aqualight.data.auth.OwnerSessionWriteLease
 import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.devices.DefaultDeviceFirmwareUpdateOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
@@ -80,6 +81,7 @@ import com.aqua.aqualight.platform.text.AndroidDeviceDosingLowLevelAlertTextReso
 internal data class OwnerDependencyGraph(
     val ownerUid: String,
     val sessionGeneration: Long,
+    val waterAnalysisSession: OwnerSessionWriteLease,
     val devicesRepository: DevicesRepository,
     val firmwareUpdateOperations: DeviceFirmwareUpdateOperations,
     val deviceFirmwareNotifications: DeviceFirmwareUpdateNotificationOperations,
@@ -248,6 +250,10 @@ internal class ActiveOwnerDependencyGraphResolver(
         return OwnerDependencyGraph(
             ownerUid = dependencies.ownerUid,
             sessionGeneration = dependencies.sessionGeneration,
+            waterAnalysisSession = sessionCoordinator.bindWriteLease(
+                dependencies.ownerUid,
+                dependencies.sessionGeneration
+            ),
             devicesRepository = dependencies.devicesRepository,
             firmwareUpdateOperations = createFirmwareUpdateOperations(dependencies),
             deviceFirmwareNotifications = deviceFirmwareNotifications,
