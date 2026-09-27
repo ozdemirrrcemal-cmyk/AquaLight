@@ -72,7 +72,7 @@ data class WaterMeasurementSnapshot(
         get() = when {
             parameter == WaterParameter.AMMONIA_AMMONIUM ->
                 WaterMeasurementSemanticStatus.LEGACY_UNASSESSED
-            WaterMeasurementNormalizer.hasCanonicalSemantics(parameter) ->
+            canonicalValue != null && WaterMeasurementNormalizer.hasCanonicalSemantics(parameter) ->
                 WaterMeasurementSemanticStatus.SOURCE_TYPED
             else -> WaterMeasurementSemanticStatus.SOURCE_NATIVE_UNASSESSED
         }

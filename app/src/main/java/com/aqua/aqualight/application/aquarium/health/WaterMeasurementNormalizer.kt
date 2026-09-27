@@ -71,7 +71,9 @@ object WaterMeasurementNormalizer {
                     conversions[ConversionKey(parameter, basis, unit)]?.invoke(validValue)
                 }
             }
-        return converted?.takeIf(Double::isFinite)
+        return converted?.takeIf { result ->
+            result.isFinite() && (value == 0.0 || result > 0.0)
+        }
     }
 
     fun hasCanonicalSemantics(parameter: WaterParameter): Boolean =
