@@ -81,7 +81,8 @@ internal class WaterAnalysisNavigationSmoke(private val host: NavHostFragment) {
     private suspend fun requireScreen(index: Int): WaterAnalysisViewModel {
         host.childFragmentManager.executePendingTransactions()
         delay(SCREEN_SETTLE_MILLIS)
-        val fragment = checkNotNull(host.childFragmentManager.primaryNavigationFragment)
+        val fragment = host.childFragmentManager.primaryNavigationFragment
+            ?: error("Water navigation has no active fragment")
         check(screens[index].second.isInstance(fragment))
         check(fragment.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED))
         check(fragment.view != null)

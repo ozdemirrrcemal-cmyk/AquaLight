@@ -1,5 +1,36 @@
 # AquaLight — Production Water Analysis Implementation Checklist
 
+## Current acceptance status — 27 September 2026, 21:24 Europe/Istanbul
+
+The accepted K01–K18 contract decisions are recorded. Implementation and release
+acceptance are incomplete. Current U/S/C/M/E rows total **9 closed, 25 open**;
+these are acceptance counts, not a percentage of code implemented.
+
+| Current gate | Closed | Open |
+| --- | ---: | ---: |
+| U — Baseline and architecture | 4 | 2 |
+| S — Semantics and catalog foundation | 4 | 5 |
+| C — Verified named products | 0 | 5 |
+| M — Migration and scalable history | 1 | 6 |
+| E — End-to-end acceptance | 0 | 7 |
+| A — Algae Control | 0 | 7 |
+| P — Plant Health | 0 | 6 |
+| L — Livestock Health | 0 | 5 |
+
+The historical W rows overlap these gates and include accepted decisions; they
+must not be added to the current counts or treated as independent completed
+features. The dated continuation notes below document intermediate states;
+the individually evidenced checkbox rows are authoritative for closure.
+
+Room v3 archive/identity indexing and startup recovery ordering have passed
+local verification but production still uses Proto. On uploaded `1a0f00b2`,
+Android CI `36338668121` and APK `36338668183` passed. API 27/API 36 run
+`36338668127` failed in a historical-schema test fixture, and CodeQL workflow
+`36338668208` stopped at release-smoke lint before analysis. The fixes passed local
+Android-test compilation, release-smoke lint and unchanged-baseline Detekt;
+five-screen runtime navigation and the E gate remain unaccepted pending new CI.
+See `WATER_ANALYSIS_NAVIGATION_REGRESSION.md` for exact failures and boundaries.
+
 ## 0. Rebaseline — 27 September 2026
 
 Code baseline: `feat/water-analysis-ui-flow` through

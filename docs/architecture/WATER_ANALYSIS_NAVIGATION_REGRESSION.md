@@ -32,3 +32,28 @@ The corrected working tree, including the separately pending archive-coordinator
 `WaterAnalysisNavigationSmoke` is called before the existing release-smoke pass marker. It opens all five real fragments, checks distinct route ViewModels and stable instances on back-stack view recreation. The follow-up expands it to inflate the production `nav_aquarium.xml`, use generated Directions and `navigateSafelyFrom` for health/add/history/detail, and reject repeated stale-source navigation. Only the pager child is mounted as an extra test-host destination; production XML and entry routes are unchanged.
 
 This environment has no connected Android device/emulator. The smoke code is compiled locally; API 27/API 36 execution and full parent-pager/physical-device acceptance require observed CI/device results. Static checks and JVM success do not establish those runtime results, and no checklist acceptance row is closed by this report.
+
+### Observed CI outcome on `1a0f00b2`
+
+Android CI `36338668121` and installable APK `36338668183` passed. Emulator run
+`36338668127` completed 158 instrumentation tests on each of API 27 and API 36:
+157 passed and one failed on each API. `WaterRoomSchemaUpgradeInstrumentedTest`
+failed while constructing its historical database fixture because the generated
+Room schema omits `indices` for entities with no indices. The fixture reader now
+handles that omission; its migration and exact-payload assertions remain intact.
+The instrumentation failure prevented the subsequent minified navigation smoke
+from running, so it provides no five-screen navigation acceptance evidence.
+
+CodeQL run `36338668208` stopped before analysis because release-smoke lint
+reported `UseRequireInsteadOfGet` on the nested navigation-host expression. The
+smoke now obtains the primary navigation fragment with an explicit missing-fragment
+error. No lint suppression or baseline change was introduced. Both corrections
+require a new successful CI run; the previous failures are not counted as passes.
+
+The corrected source passed local `:app:compileDebugAndroidTestKotlin` and
+`:app:lintReleaseSmoke` (including its Detekt policy task): zero new lint issues,
+775 existing Detekt advisories and zero new debt. All 332 Python tests and the
+navigation/composition/UI-dependency/Water Analysis/session guards passed. A new
+comparison through `c6951c4c` and these test-only fixes still finds no production
+navigation or tank pager changes. Android instrumentation and minified route
+execution still require the new CI result.
