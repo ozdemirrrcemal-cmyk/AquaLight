@@ -42,7 +42,12 @@ jobs:
 
     env:
       CI: "true"
-      GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx4g -XX:+UseParallelGC -Dfile.encoding=UTF-8" -Dorg.gradle.daemon=false
+      # Compile inside the bounded Gradle heap; a separate Kotlin daemon exhausted CI memory.
+      GRADLE_OPTS: >-
+        -Dorg.gradle.jvmargs="-Xmx4g -XX:+UseParallelGC -Dfile.encoding=UTF-8"
+        -Dorg.gradle.daemon=false
+        -Dorg.gradle.project.kotlin.compiler.execution.strategy=in-process
+        -Dorg.gradle.workers.max=1
       AQL_FIREBASE_DEBUG_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_DEBUG_CONFIG_BASE64 }}
       AQL_FIREBASE_STAGING_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_STAGING_CONFIG_BASE64 }}
       AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64: ${{ secrets.AQL_FIREBASE_RELEASE_SMOKE_CONFIG_BASE64 }}
