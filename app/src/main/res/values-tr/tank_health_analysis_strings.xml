@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="water_measurement_legacy_unassessed">Eski kayıt · değerlendirilmedi</string>
     <string name="water_measurement_change_source_title">Ölçüm kaynağını gözden geçirin</string>
     <string name="water_measurement_change_source_message">Girdiğiniz değer alanda kalacak. Kaydetmeden önce sayının yeni seçilen yöntem, kit, raporlama temeli ve birimin sonucu olduğunu kontrol edin.</string>
     <string name="water_analysis_hidden_draft_title">Gizli ölçümleri gözden geçirin</string>
@@ -66,6 +67,10 @@
     <string name="tank_health_test_nitrate">Nitrat</string>
     <string name="tank_health_test_nitrite">Nitrit</string>
     <string name="tank_health_test_ammonia_ammonium">Amonyak / Amonyum</string>
+    <string name="tank_health_test_total_ammonia">Toplam amonyak</string>
+    <string name="tank_health_test_free_ammonia">Serbest amonyak</string>
+    <string name="water_measurement_basis_tan_n">TAN (N olarak)</string>
+    <string name="water_measurement_basis_free_nh3">Serbest NH₃ (NH₃ olarak)</string>
     <string name="tank_health_test_general_hardness">Genel Sertlik</string>
     <string name="tank_health_test_carbonate_hardness">Karbonat Sertliği</string>
     <string name="tank_health_test_alkalinity">Alkalinite</string>

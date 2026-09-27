@@ -116,6 +116,8 @@ internal object WaterMeasurementUiCatalog {
     const val BASIS_NO2 = "no2"
     const val BASIS_NH3_NH4 = "nh3_nh4"
     const val BASIS_TAN = "tan"
+    const val BASIS_TAN_N = "tan_n"
+    const val BASIS_FREE_NH3 = "free_nh3"
     const val BASIS_GH = "gh"
     const val BASIS_KH = "kh"
     const val BASIS_PO4 = "po4"

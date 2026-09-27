@@ -31,6 +31,14 @@ object WaterParameterDefinitions {
                 WaterMeasurementBasis.TAN
             )
         ),
+        WaterParameter.TOTAL_AMMONIA_NITROGEN to WaterParameterDefinition(
+            WaterMeasurementBasis.TAN_N,
+            WaterMeasurementUnit.MG_L
+        ),
+        WaterParameter.FREE_AMMONIA_NH3 to WaterParameterDefinition(
+            WaterMeasurementBasis.FREE_NH3,
+            WaterMeasurementUnit.MG_L
+        ),
         WaterParameter.GH to WaterParameterDefinition(
             canonicalBasis = WaterMeasurementBasis.GH,
             canonicalUnit = WaterMeasurementUnit.PPM_CACO3,

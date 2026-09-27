@@ -18,6 +18,8 @@ internal object WaterMeasurementUiMapper {
         WaterMeasurementBasis.NO2 to R.string.tank_health_test_symbol_nitrite,
         WaterMeasurementBasis.NH3_NH4 to R.string.water_measurement_basis_nh3_nh4,
         WaterMeasurementBasis.TAN to R.string.water_measurement_basis_tan,
+        WaterMeasurementBasis.TAN_N to R.string.water_measurement_basis_tan_n,
+        WaterMeasurementBasis.FREE_NH3 to R.string.water_measurement_basis_free_nh3,
         WaterMeasurementBasis.GH to R.string.tank_health_test_symbol_gh,
         WaterMeasurementBasis.KH to R.string.tank_health_test_symbol_kh,
         WaterMeasurementBasis.PO4 to R.string.water_measurement_basis_po4,

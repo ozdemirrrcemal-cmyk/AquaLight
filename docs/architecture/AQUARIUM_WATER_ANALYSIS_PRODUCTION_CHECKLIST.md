@@ -25,13 +25,18 @@ matrix now has an application-layer owner and coverage test; GH dGH values
 normalize to mg/L as CaCO3 while their raw units survive; `<`/`≤` and `>`/`≥`
 remain distinct in livestock ranges, and approximate single targets do not
 produce exact-match warnings. Dashboard measurements come from one latest
-event with its observed time. Unsupported maintenance/system fixture cards are
-not rendered until they have real data owners. These repairs do not satisfy the
+event with its observed time. The original maintenance and system sections are
+restored with owner-scoped care history and selected tank data; unknown values
+are labelled as unavailable, without fixture health verdicts. These repairs do not satisfy the
 catalog, assessment, migration, sensor or end-to-end gates below.
 The old ammonia/KH/salinity/SG/iron/EC/TDS/CO2 slots retain raw readings but
 do not emit an authoritative canonical value until their missing species,
 matrix or calibration context is represented and validated. This is an interim
 fail-closed behavior, not completion of S.1–S.3.
+The next semantic migration introduces version 3 store reads, distinct TAN-as-N
+and direct NH3-as-NH3 result keys, and a legacy-unassessed projection for old
+ambiguous ammonia readings. S.1 remains open until source revision/provenance,
+historical migration and UI acceptance pass in CI and on device.
 Generic NO3-N, like generic phosphorus, remains source-native until a verified
 method profile authorizes the chemical conversion.
 New SENSOR selections are disabled until assigned sample identity/freshness

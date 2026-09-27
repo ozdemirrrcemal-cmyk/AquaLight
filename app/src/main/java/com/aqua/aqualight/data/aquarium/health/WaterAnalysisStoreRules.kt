@@ -16,7 +16,10 @@ internal object WaterAnalysisStoreRules {
         validateStoreVersion(store, CommercialStoreSchema.WATER_ANALYSES_VERSION)
 
     fun upgradeLegacyStore(store: WaterAnalysesStore): WaterAnalysesStore {
-        validateStoreVersion(store, LEGACY_VERSION)
+        require(store.schemaVersion in 1..2) {
+            "Only water-analysis stores v1 and v2 can be upgraded."
+        }
+        validateStoreVersion(store, store.schemaVersion)
         return store.toBuilder()
             .setSchemaVersion(CommercialStoreSchema.WATER_ANALYSES_VERSION)
             .build()
@@ -118,7 +121,6 @@ internal object WaterAnalysisStoreRules {
     }
 
     private const val MAX_OWNER_UID_CHARS = 128
-    private const val LEGACY_VERSION = 1
 }
 
 internal object WaterAnalysisIdentityRules {

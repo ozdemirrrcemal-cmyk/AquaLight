@@ -1,5 +1,6 @@
 package com.aqua.aqualight.application.aquarium.health
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test
 
@@ -87,6 +88,50 @@ class WaterAnalysisPolicyTest {
 
         assertThrows(IllegalArgumentException::class.java) {
             WaterAnalysisPolicy.validate(input)
+        }
+    }
+
+    @Test
+    fun tanAndDirectFreeAmmoniaRemainIndependentResultsInOneEvent() {
+        val total = WaterMeasurementInput(
+            parameter = WaterParameter.TOTAL_AMMONIA_NITROGEN,
+            value = 1.0,
+            selection = WaterMeasurementCatalog.defaultSelection(
+                WaterParameter.TOTAL_AMMONIA_NITROGEN
+            )
+        )
+        val free = WaterMeasurementInput(
+            parameter = WaterParameter.FREE_AMMONIA_NH3,
+            value = 0.08,
+            selection = WaterMeasurementCatalog.defaultSelection(WaterParameter.FREE_AMMONIA_NH3)
+        )
+        val input = WaterAnalysisInput(
+            tankId = 1L,
+            measuredAtMillis = VALID_TIME,
+            temperatureCelsius = null,
+            temperatureSource = null,
+            measurements = listOf(total, free)
+        )
+
+        assertEquals(input, WaterAnalysisPolicy.validate(input, nowMillis = VALID_TIME))
+        assertEquals(WaterMeasurementBasis.TAN_N, total.selection.basis)
+        assertEquals(WaterMeasurementBasis.FREE_NH3, free.selection.basis)
+        assertThrows(IllegalArgumentException::class.java) {
+            WaterAnalysisPolicy.validate(input.copy(measurements = listOf(total, total)))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            WaterAnalysisPolicy.validate(
+                input.copy(measurements = listOf(
+                    WaterMeasurementInput(
+                        parameter = WaterParameter.AMMONIA_AMMONIUM,
+                        value = 1.0,
+                        selection = WaterMeasurementCatalog.defaultSelection(
+                            WaterParameter.AMMONIA_AMMONIUM
+                        )
+                    )
+                )),
+                nowMillis = VALID_TIME
+            )
         }
     }
 

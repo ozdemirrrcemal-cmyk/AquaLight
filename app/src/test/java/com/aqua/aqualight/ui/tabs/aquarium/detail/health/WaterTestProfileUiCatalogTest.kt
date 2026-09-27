@@ -12,7 +12,7 @@ class WaterTestProfileUiCatalogTest {
         assertEquals(
             listOf(
                 WaterTestParameterId.PH,
-                WaterTestParameterId.AMMONIA_AMMONIUM,
+                WaterTestParameterId.TOTAL_AMMONIA_NITROGEN,
                 WaterTestParameterId.NITRITE,
                 WaterTestParameterId.NITRATE,
                 WaterTestParameterId.GH,
@@ -37,7 +37,7 @@ class WaterTestProfileUiCatalogTest {
         assertEquals(
             listOf(
                 WaterTestParameterId.PH,
-                WaterTestParameterId.AMMONIA_AMMONIUM,
+                WaterTestParameterId.TOTAL_AMMONIA_NITROGEN,
                 WaterTestParameterId.NITRITE,
                 WaterTestParameterId.NITRATE,
                 WaterTestParameterId.GH,
@@ -51,7 +51,7 @@ class WaterTestProfileUiCatalogTest {
         assertEquals(
             listOf(
                 WaterTestParameterId.PH,
-                WaterTestParameterId.AMMONIA_AMMONIUM,
+                WaterTestParameterId.TOTAL_AMMONIA_NITROGEN,
                 WaterTestParameterId.NITRITE,
                 WaterTestParameterId.NITRATE,
                 WaterTestParameterId.SALINITY,

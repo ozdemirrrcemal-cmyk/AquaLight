@@ -17,6 +17,7 @@ import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.application.care.CareTaskType
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisSnapshot
 import com.aqua.aqualight.application.aquarium.health.WaterParameter
+import com.aqua.aqualight.application.aquarium.health.WaterMeasurementSemanticStatus
 import com.aqua.aqualight.databinding.FragmentTankHealthBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
@@ -170,7 +171,15 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
                         requireContext(),
                         measurement
                     ),
-                    statusText = getString(R.string.tank_health_analysis_recorded)
+                    statusText = getString(
+                        if (measurement.semanticStatus ==
+                            WaterMeasurementSemanticStatus.LEGACY_UNASSESSED
+                        ) {
+                            R.string.water_measurement_legacy_unassessed
+                        } else {
+                            R.string.tank_health_analysis_recorded
+                        }
+                    )
                 )
             }
         }

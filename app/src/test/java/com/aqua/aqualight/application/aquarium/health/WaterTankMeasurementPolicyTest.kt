@@ -27,11 +27,17 @@ class WaterTankMeasurementPolicyTest {
     }
 
     @Test
-    fun everyLegacyParameterIsExplicitlyVisibleInAtLeastOneTankScope() {
+    fun everySelectableParameterIsVisibleAndLegacyAmbiguousAmmoniaIsHidden() {
         val visible = AquariumTankTaxonomy.tankTypeCodes.flatMap { type ->
             val scope = requireNotNull(WaterTankMeasurementPolicy.scopeFor(type))
             scope.recommended + scope.additional
         }.toSet()
-        assertEquals(WaterParameter.entries.toSet(), visible)
+        assertEquals(WaterParameter.entries.toSet() - WaterParameter.AMMONIA_AMMONIUM, visible)
+        AquariumTankTaxonomy.tankTypeCodes.forEach { type ->
+            val scope = requireNotNull(WaterTankMeasurementPolicy.scopeFor(type))
+            assertTrue(WaterParameter.TOTAL_AMMONIA_NITROGEN in scope.recommended ||
+                WaterParameter.TOTAL_AMMONIA_NITROGEN in scope.additional)
+            assertTrue(WaterParameter.FREE_AMMONIA_NH3 in scope.additional)
+        }
     }
 }

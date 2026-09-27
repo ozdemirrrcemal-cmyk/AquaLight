@@ -7,6 +7,7 @@ import com.aqua.aqualight.application.aquarium.health.WaterMeasurementBasis
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementCatalog
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementMethod
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementSnapshot
+import com.aqua.aqualight.application.aquarium.health.WaterMeasurementSemanticStatus
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementUnit
 import com.aqua.aqualight.application.aquarium.health.WaterParameter
 import com.aqua.aqualight.i18n.LocaleFormatter
@@ -22,6 +23,8 @@ internal object WaterAnalysisPresentation {
         WaterParameter.NITRATE to R.string.tank_health_test_nitrate,
         WaterParameter.NITRITE to R.string.tank_health_test_nitrite,
         WaterParameter.AMMONIA_AMMONIUM to R.string.tank_health_test_ammonia_ammonium,
+        WaterParameter.TOTAL_AMMONIA_NITROGEN to R.string.tank_health_test_total_ammonia,
+        WaterParameter.FREE_AMMONIA_NH3 to R.string.tank_health_test_free_ammonia,
         WaterParameter.GH to R.string.tank_health_test_general_hardness,
         WaterParameter.KH to R.string.tank_health_test_carbonate_hardness,
         WaterParameter.PHOSPHATE to R.string.tank_health_test_phosphate,
@@ -45,6 +48,8 @@ internal object WaterAnalysisPresentation {
         WaterMeasurementBasis.NO2 to R.string.tank_health_test_symbol_nitrite,
         WaterMeasurementBasis.NH3_NH4 to R.string.water_measurement_basis_nh3_nh4,
         WaterMeasurementBasis.TAN to R.string.water_measurement_basis_tan,
+        WaterMeasurementBasis.TAN_N to R.string.water_measurement_basis_tan_n,
+        WaterMeasurementBasis.FREE_NH3 to R.string.water_measurement_basis_free_nh3,
         WaterMeasurementBasis.GH to R.string.tank_health_test_symbol_gh,
         WaterMeasurementBasis.KH to R.string.tank_health_test_symbol_kh,
         WaterMeasurementBasis.PO4 to R.string.water_measurement_basis_po4,
@@ -123,6 +128,9 @@ internal object WaterAnalysisPresentation {
             measurement.canonicalBasis != measurement.basis ||
             measurement.canonicalUnit != measurement.unit
         return buildList {
+            if (measurement.semanticStatus == WaterMeasurementSemanticStatus.LEGACY_UNASSESSED) {
+                add(context.getString(R.string.water_measurement_legacy_unassessed))
+            }
             add(context.getString(methodLabelRes(measurement.method)))
             measurement.testKitId?.let { id ->
                 add(context.getString(testKitLabelRes(id)))

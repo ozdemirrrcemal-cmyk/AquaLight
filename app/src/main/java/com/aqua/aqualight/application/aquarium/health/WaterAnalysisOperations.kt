@@ -45,7 +45,22 @@ data class WaterMeasurementSnapshot(
     val canonicalValue: Double?,
     val canonicalBasis: WaterMeasurementBasis,
     val canonicalUnit: WaterMeasurementUnit
-)
+) {
+    val semanticStatus: WaterMeasurementSemanticStatus
+        get() = when {
+            parameter == WaterParameter.AMMONIA_AMMONIUM ->
+                WaterMeasurementSemanticStatus.LEGACY_UNASSESSED
+            WaterMeasurementNormalizer.hasCanonicalSemantics(parameter) ->
+                WaterMeasurementSemanticStatus.SOURCE_TYPED
+            else -> WaterMeasurementSemanticStatus.SOURCE_NATIVE_UNASSESSED
+        }
+}
+
+enum class WaterMeasurementSemanticStatus {
+    SOURCE_TYPED,
+    SOURCE_NATIVE_UNASSESSED,
+    LEGACY_UNASSESSED
+}
 
 data class WaterMeasurementSelection(
     val method: WaterMeasurementMethod,
@@ -59,6 +74,8 @@ enum class WaterParameter {
     NITRATE,
     NITRITE,
     AMMONIA_AMMONIUM,
+    TOTAL_AMMONIA_NITROGEN,
+    FREE_AMMONIA_NH3,
     GH,
     KH,
     PHOSPHATE,
@@ -89,6 +106,8 @@ enum class WaterMeasurementBasis(val id: String) {
     NO2("no2"),
     NH3_NH4("nh3_nh4"),
     TAN("tan"),
+    TAN_N("tan_n"),
+    FREE_NH3("free_nh3"),
     GH("gh"),
     KH("kh"),
     PO4("po4"),
@@ -186,6 +205,9 @@ internal object WaterAnalysisPolicy {
         }
 
         input.measurements.forEach { measurement ->
+            require(measurement.parameter != WaterParameter.AMMONIA_AMMONIUM) {
+                "Legacy NH3/NH4 has no resolved analyte and cannot be a new measurement."
+            }
             require(measurement.value.isFinite() && measurement.value >= 0.0) {
                 "Measurement values must be finite and non-negative."
             }

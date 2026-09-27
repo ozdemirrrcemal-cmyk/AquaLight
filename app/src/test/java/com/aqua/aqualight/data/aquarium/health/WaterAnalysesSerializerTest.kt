@@ -20,8 +20,20 @@ class WaterAnalysesSerializerTest {
 
         val migrated = WaterAnalysesSerializer.readFrom(ByteArrayInputStream(bytes))
 
-        assertEquals(2, migrated.schemaVersion)
+        assertEquals(3, migrated.schemaVersion)
         assertEquals(legacy.analysesList, migrated.analysesList)
+    }
+
+    @Test
+    fun versionTwoStoreIsUpgradedOnRead() = runBlocking {
+        val bytes = WaterAnalysesStore.newBuilder()
+            .setSchemaVersion(2)
+            .build()
+            .toByteArray()
+
+        val migrated = WaterAnalysesSerializer.readFrom(ByteArrayInputStream(bytes))
+
+        assertEquals(3, migrated.schemaVersion)
     }
 
     @Test

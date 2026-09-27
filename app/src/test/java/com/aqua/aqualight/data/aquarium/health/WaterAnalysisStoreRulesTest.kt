@@ -84,8 +84,55 @@ class WaterAnalysisStoreRulesTest {
             .build()
 
         val upgraded = WaterAnalysisStoreRules.upgradeLegacyStore(legacy)
-        assertEquals(2, upgraded.schemaVersion)
+        assertEquals(3, upgraded.schemaVersion)
         assertEquals(record, upgraded.analysesList.single().toRecordStrict())
+    }
+
+    @Test
+    fun versionTwoAmbiguousAmmoniaUpgradesWithoutRelabellingItsRawResult() {
+        val legacy = WaterMeasurementRecord(
+            parameter = WaterParameter.AMMONIA_AMMONIUM,
+            value = 0.25,
+            method = WaterMeasurementMethod.TEST_KIT,
+            testKitId = "other",
+            basis = WaterMeasurementBasis.NH3_NH4,
+            unit = WaterMeasurementUnit.MG_L
+        )
+        val record = validRecord(legacy)
+        val versionTwo = WaterAnalysisStoreRules.defaultStore().toBuilder()
+            .setSchemaVersion(2)
+            .addAnalyses(record.toStoredStrict())
+            .build()
+
+        val upgraded = WaterAnalysisStoreRules.upgradeLegacyStore(versionTwo)
+        assertEquals(3, upgraded.schemaVersion)
+        assertEquals(record, upgraded.analysesList.single().toRecordStrict())
+    }
+
+    @Test
+    fun oneSampleRoundTripsTanAndDirectFreeAmmoniaAsSeparateRawResults() {
+        val tan = WaterMeasurementRecord(
+            parameter = WaterParameter.TOTAL_AMMONIA_NITROGEN,
+            value = 0.5,
+            method = WaterMeasurementMethod.MANUAL,
+            testKitId = null,
+            basis = WaterMeasurementBasis.TAN_N,
+            unit = WaterMeasurementUnit.MG_L
+        )
+        val free = tan.copy(
+            parameter = WaterParameter.FREE_AMMONIA_NH3,
+            value = 0.03,
+            basis = WaterMeasurementBasis.FREE_NH3
+        )
+        val record = validRecord(tan).copy(measurements = listOf(tan, free))
+        val stored = WaterAnalysisStoreRules.defaultStore().toBuilder()
+            .addAnalyses(record.toStoredStrict())
+            .build()
+
+        val restored = WaterAnalysisStoreRules.validateStore(stored)
+            .analysesList.single().toRecordStrict()
+        assertEquals(record, restored)
+        assertEquals(listOf(tan, free), restored.measurements)
     }
 
     @Test

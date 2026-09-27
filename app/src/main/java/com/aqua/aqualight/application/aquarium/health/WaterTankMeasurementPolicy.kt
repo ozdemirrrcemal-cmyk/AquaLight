@@ -17,11 +17,12 @@ data class WaterTankMeasurementScope(
 object WaterTankMeasurementPolicy {
     private val freshwaterFish = WaterTankMeasurementScope(
         recommended = listOf(
-            WaterParameter.PH, WaterParameter.AMMONIA_AMMONIUM,
+            WaterParameter.PH, WaterParameter.TOTAL_AMMONIA_NITROGEN,
             WaterParameter.NITRITE, WaterParameter.NITRATE,
             WaterParameter.GH, WaterParameter.KH
         ),
         additional = listOf(
+            WaterParameter.FREE_AMMONIA_NH3,
             WaterParameter.PHOSPHATE, WaterParameter.TDS,
             WaterParameter.EC, WaterParameter.DISSOLVED_OXYGEN
         )
@@ -32,40 +33,44 @@ object WaterTankMeasurementPolicy {
             WaterParameter.PHOSPHATE, WaterParameter.GH, WaterParameter.KH
         ),
         additional = listOf(
-            WaterParameter.AMMONIA_AMMONIUM, WaterParameter.NITRITE,
+            WaterParameter.TOTAL_AMMONIA_NITROGEN, WaterParameter.FREE_AMMONIA_NH3,
+            WaterParameter.NITRITE,
             WaterParameter.CO2, WaterParameter.IRON, WaterParameter.POTASSIUM,
             WaterParameter.TDS, WaterParameter.EC, WaterParameter.DISSOLVED_OXYGEN
         )
     )
     private val shrimp = WaterTankMeasurementScope(
         recommended = listOf(
-            WaterParameter.PH, WaterParameter.AMMONIA_AMMONIUM,
+            WaterParameter.PH, WaterParameter.TOTAL_AMMONIA_NITROGEN,
             WaterParameter.NITRITE, WaterParameter.NITRATE,
             WaterParameter.GH, WaterParameter.KH, WaterParameter.TDS
         ),
         additional = listOf(
+            WaterParameter.FREE_AMMONIA_NH3,
             WaterParameter.EC, WaterParameter.PHOSPHATE,
             WaterParameter.COPPER, WaterParameter.DISSOLVED_OXYGEN
         )
     )
     private val brackish = WaterTankMeasurementScope(
         recommended = listOf(
-            WaterParameter.PH, WaterParameter.AMMONIA_AMMONIUM,
+            WaterParameter.PH, WaterParameter.TOTAL_AMMONIA_NITROGEN,
             WaterParameter.NITRITE, WaterParameter.NITRATE,
             WaterParameter.SALINITY, WaterParameter.KH
         ),
         additional = listOf(
+            WaterParameter.FREE_AMMONIA_NH3,
             WaterParameter.GH, WaterParameter.PHOSPHATE,
             WaterParameter.SPECIFIC_GRAVITY, WaterParameter.DISSOLVED_OXYGEN
         )
     )
     private val marineFish = WaterTankMeasurementScope(
         recommended = listOf(
-            WaterParameter.PH, WaterParameter.AMMONIA_AMMONIUM,
+            WaterParameter.PH, WaterParameter.TOTAL_AMMONIA_NITROGEN,
             WaterParameter.NITRITE, WaterParameter.NITRATE,
             WaterParameter.SALINITY, WaterParameter.KH, WaterParameter.PHOSPHATE
         ),
         additional = listOf(
+            WaterParameter.FREE_AMMONIA_NH3,
             WaterParameter.SPECIFIC_GRAVITY, WaterParameter.CALCIUM,
             WaterParameter.MAGNESIUM, WaterParameter.DISSOLVED_OXYGEN
         )
@@ -77,7 +82,8 @@ object WaterTankMeasurementPolicy {
             WaterParameter.KH, WaterParameter.CALCIUM, WaterParameter.MAGNESIUM
         ),
         additional = listOf(
-            WaterParameter.AMMONIA_AMMONIUM, WaterParameter.NITRITE,
+            WaterParameter.TOTAL_AMMONIA_NITROGEN, WaterParameter.FREE_AMMONIA_NH3,
+            WaterParameter.NITRITE,
             WaterParameter.SPECIFIC_GRAVITY, WaterParameter.DISSOLVED_OXYGEN
         )
     )

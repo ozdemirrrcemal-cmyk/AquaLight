@@ -134,6 +134,60 @@ class WaterMeasurementNormalizerTest {
     }
 
     @Test
+    fun typedTanAndDirectFreeAmmoniaKeepTheirOwnMassBasis() {
+        assertEquals(
+            WaterMeasurementBasis.TAN_N,
+            WaterParameterDefinitions.canonicalBasis(WaterParameter.TOTAL_AMMONIA_NITROGEN)
+        )
+        assertEquals(
+            WaterMeasurementBasis.FREE_NH3,
+            WaterParameterDefinitions.canonicalBasis(WaterParameter.FREE_AMMONIA_NH3)
+        )
+        assertEquals(
+            1.0,
+            WaterMeasurementNormalizer.canonicalValue(
+                WaterParameter.TOTAL_AMMONIA_NITROGEN,
+                1.0,
+                WaterMeasurementBasis.TAN_N,
+                WaterMeasurementUnit.MG_L
+            ) ?: error("Expected typed TAN"),
+            0.0
+        )
+        assertNull(
+            WaterMeasurementNormalizer.canonicalValue(
+                WaterParameter.FREE_AMMONIA_NH3,
+                1.0,
+                WaterMeasurementBasis.TAN_N,
+                WaterMeasurementUnit.MG_L
+            )
+        )
+    }
+
+    @Test
+    fun oldAmmoniaResultHasUnassessedSemanticsWithoutMutatingItsRawValue() {
+        val measurement = WaterMeasurementSnapshot(
+            parameter = WaterParameter.AMMONIA_AMMONIUM,
+            value = 0.25,
+            method = WaterMeasurementMethod.TEST_KIT,
+            testKitId = WaterMeasurementCatalog.OTHER_TEST_KIT_ID,
+            basis = WaterMeasurementBasis.NH3_NH4,
+            unit = WaterMeasurementUnit.MG_L,
+            canonicalValue = WaterMeasurementNormalizer.canonicalValue(
+                WaterParameter.AMMONIA_AMMONIUM,
+                0.25,
+                WaterMeasurementBasis.NH3_NH4,
+                WaterMeasurementUnit.MG_L
+            ),
+            canonicalBasis = WaterMeasurementBasis.NH3_NH4,
+            canonicalUnit = WaterMeasurementUnit.MG_L
+        )
+
+        assertEquals(WaterMeasurementSemanticStatus.LEGACY_UNASSESSED, measurement.semanticStatus)
+        assertEquals(0.25, measurement.value, 0.0)
+        assertNull(measurement.canonicalValue)
+    }
+
+    @Test
     fun bareSalinityIronAndDeviceScalesStaySourceNative() {
         listOf(
             Triple(WaterParameter.SALINITY, WaterMeasurementBasis.SALINITY, WaterMeasurementUnit.PPT),

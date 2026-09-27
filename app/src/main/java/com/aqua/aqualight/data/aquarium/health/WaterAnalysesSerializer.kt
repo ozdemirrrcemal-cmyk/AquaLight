@@ -19,7 +19,7 @@ internal object WaterAnalysesSerializer : Serializer<WaterAnalysesStore> {
         }
 
         return try {
-            val migrated = if (parsed.schemaVersion == 1) {
+            val migrated = if (parsed.schemaVersion in 1..2) {
                 WaterAnalysisStoreRules.upgradeLegacyStore(parsed)
             } else {
                 parsed
