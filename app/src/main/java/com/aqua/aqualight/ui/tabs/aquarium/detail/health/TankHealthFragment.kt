@@ -12,8 +12,6 @@ import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.GridLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumTankTaxonomy
-import com.aqua.aqualight.application.aquarium.AquariumMaterialCategoryKeys
-import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.application.care.CareTaskType
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisSnapshot
 import com.aqua.aqualight.application.aquarium.health.WaterParameter
@@ -93,7 +91,7 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
             currentTankProfile = tank
                 ?.tankType
                 ?.takeIf(AquariumTankTaxonomy::isSupportedTankType)
-            contentAdapter?.submitSystem(tank?.toHealthSystemUi() ?: TankHealthSystemUi())
+            contentAdapter?.submitSystem(TankHealthOverviewProjection.system(tank))
             renderWaterMetrics()
         }
 
@@ -112,22 +110,6 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
                 }
             }
         }
-    }
-
-    private fun AquariumTankSnapshot.toHealthSystemUi(): TankHealthSystemUi {
-        fun selectedName(categoryKey: String): String? = materials
-            .firstOrNull { selection -> selection.categoryKey == categoryKey }
-            ?.name
-            ?.takeIf(String::isNotBlank)
-
-        return TankHealthSystemUi(
-            hasSelectedCo2 = materials.any { selection ->
-                selection.categoryKey == AquariumMaterialCategoryKeys.CO2
-            },
-            lightingName = selectedName(AquariumMaterialCategoryKeys.LIGHT),
-            filterName = selectedName(AquariumMaterialCategoryKeys.FILTER),
-            livestockCount = livestock.sumOf { animal -> animal.quantity }
-        )
     }
 
     private fun TankActivityUiState.toHealthMaintenanceUi(): TankHealthMaintenanceUi {
