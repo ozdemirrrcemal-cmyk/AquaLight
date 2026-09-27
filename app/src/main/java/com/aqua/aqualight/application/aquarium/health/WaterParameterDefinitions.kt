@@ -56,6 +56,15 @@ object WaterParameterDefinitions {
                 WaterMeasurementUnit.PPM_CACO3
             )
         ),
+        WaterParameter.TOTAL_ALKALINITY to WaterParameterDefinition(
+            canonicalBasis = WaterMeasurementBasis.TOTAL_ALKALINITY,
+            canonicalUnit = WaterMeasurementUnit.MEQ_L,
+            unitOptions = listOf(
+                WaterMeasurementUnit.DKH,
+                WaterMeasurementUnit.MEQ_L,
+                WaterMeasurementUnit.PPM_CACO3
+            )
+        ),
         WaterParameter.PHOSPHATE to WaterParameterDefinition(
             canonicalBasis = WaterMeasurementBasis.PO4,
             canonicalUnit = WaterMeasurementUnit.MG_L,

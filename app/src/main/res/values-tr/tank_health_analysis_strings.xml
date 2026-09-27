@@ -71,6 +71,7 @@
     <string name="tank_health_test_free_ammonia">Serbest amonyak</string>
     <string name="water_measurement_basis_tan_n">TAN (N olarak)</string>
     <string name="water_measurement_basis_free_nh3">Serbest NH₃ (NH₃ olarak)</string>
+    <string name="water_measurement_basis_total_alkalinity">Toplam alkalinite</string>
     <string name="tank_health_test_general_hardness">Genel Sertlik</string>
     <string name="tank_health_test_carbonate_hardness">Karbonat Sertliği</string>
     <string name="tank_health_test_alkalinity">Alkalinite</string>

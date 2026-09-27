@@ -21,6 +21,12 @@ internal object TankHealthWaterMetricUiCatalog {
         val measuredExtras = measuredParameterIds
             .distinct()
             .filterNot(recommended::contains)
+            // Old marine KH readings remain in history/detail as raw, unresolved
+            // results. They must not become a second alkalinity card or evidence.
+            .filterNot { id ->
+                id == WaterTestParameterId.KH &&
+                    WaterTestParameterId.TOTAL_ALKALINITY in recommended
+            }
 
         return (recommended + measuredExtras)
             .distinct()

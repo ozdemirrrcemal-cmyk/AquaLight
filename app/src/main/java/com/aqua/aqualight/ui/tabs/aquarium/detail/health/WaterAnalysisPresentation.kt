@@ -27,6 +27,7 @@ internal object WaterAnalysisPresentation {
         WaterParameter.FREE_AMMONIA_NH3 to R.string.tank_health_test_free_ammonia,
         WaterParameter.GH to R.string.tank_health_test_general_hardness,
         WaterParameter.KH to R.string.tank_health_test_carbonate_hardness,
+        WaterParameter.TOTAL_ALKALINITY to R.string.tank_health_test_alkalinity,
         WaterParameter.PHOSPHATE to R.string.tank_health_test_phosphate,
         WaterParameter.TDS to R.string.tank_health_test_tds,
         WaterParameter.EC to R.string.tank_health_test_conductivity,
@@ -52,6 +53,7 @@ internal object WaterAnalysisPresentation {
         WaterMeasurementBasis.FREE_NH3 to R.string.water_measurement_basis_free_nh3,
         WaterMeasurementBasis.GH to R.string.tank_health_test_symbol_gh,
         WaterMeasurementBasis.KH to R.string.tank_health_test_symbol_kh,
+        WaterMeasurementBasis.TOTAL_ALKALINITY to R.string.water_measurement_basis_total_alkalinity,
         WaterMeasurementBasis.PO4 to R.string.water_measurement_basis_po4,
         WaterMeasurementBasis.P to R.string.water_measurement_basis_p,
         WaterMeasurementBasis.TDS to R.string.tank_health_test_symbol_tds,
@@ -109,6 +111,9 @@ internal object WaterAnalysisPresentation {
 
     @StringRes
     fun measurementSymbolRes(measurement: WaterMeasurementSnapshot): Int? {
+        if (measurement.parameter == WaterParameter.TOTAL_ALKALINITY) {
+            return R.string.tank_health_test_symbol_kh
+        }
         val basis = if (measurement.canonicalValue != null) {
             measurement.canonicalBasis
         } else {

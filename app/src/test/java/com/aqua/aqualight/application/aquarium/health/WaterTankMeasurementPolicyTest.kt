@@ -27,6 +27,23 @@ class WaterTankMeasurementPolicyTest {
     }
 
     @Test
+    fun marineAndReefHaveExactlyOneTypedAlkalinitySlot() {
+        val marineTypes = listOf(
+            AquariumTankTaxonomy.TYPE_MARINE_FISH,
+            AquariumTankTaxonomy.TYPE_OTHER_MARINE,
+            AquariumTankTaxonomy.TYPE_SOFT_CORAL_REEF,
+            AquariumTankTaxonomy.TYPE_LPS_REEF,
+            AquariumTankTaxonomy.TYPE_SPS_REEF,
+            AquariumTankTaxonomy.TYPE_MIXED_REEF
+        )
+        marineTypes.forEach { type ->
+            val scope = requireNotNull(WaterTankMeasurementPolicy.scopeFor(type))
+            assertTrue(WaterParameter.TOTAL_ALKALINITY in scope.recommended)
+            assertTrue(WaterParameter.KH !in scope.recommended + scope.additional)
+        }
+    }
+
+    @Test
     fun everySelectableParameterIsVisibleAndLegacyAmbiguousAmmoniaIsHidden() {
         val visible = AquariumTankTaxonomy.tankTypeCodes.flatMap { type ->
             val scope = requireNotNull(WaterTankMeasurementPolicy.scopeFor(type))

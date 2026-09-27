@@ -55,7 +55,7 @@ class WaterTestProfileUiCatalogTest {
                 WaterTestParameterId.NITRITE,
                 WaterTestParameterId.NITRATE,
                 WaterTestParameterId.SALINITY,
-                WaterTestParameterId.KH,
+                WaterTestParameterId.TOTAL_ALKALINITY,
                 WaterTestParameterId.PHOSPHATE
             ),
             WaterTestProfileUiCatalog.recommendedIds(

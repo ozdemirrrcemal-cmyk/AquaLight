@@ -9,6 +9,16 @@ import org.junit.Test
 class TankHealthWaterMetricUiCatalogTest {
 
     @Test
+    fun oldMarineKhDoesNotCreateASecondAlkalinityCard() {
+        val ids = TankHealthWaterMetricUiCatalog.visibleParameterIds(
+            AquariumTankTaxonomy.TYPE_MARINE_FISH,
+            listOf(WaterTestParameterId.KH)
+        )
+        assertTrue(WaterTestParameterId.TOTAL_ALKALINITY in ids)
+        assertTrue(WaterTestParameterId.KH !in ids)
+    }
+
+    @Test
     fun plantedProfileStartsWithExactlyFiveRecommendedMetrics() {
         val ids = TankHealthWaterMetricUiCatalog.visibleParameterIds(
             tankProfile = AquariumTankTaxonomy.TYPE_PLANTED,

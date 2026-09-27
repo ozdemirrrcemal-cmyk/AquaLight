@@ -15,6 +15,7 @@ internal enum class WaterTestParameterId {
     FREE_AMMONIA_NH3,
     GH,
     KH,
+    TOTAL_ALKALINITY,
     PHOSPHATE,
     TDS,
     EC,
@@ -100,6 +101,7 @@ internal object WaterTestProfileUiCatalog {
         WaterTestParameterId.FREE_AMMONIA_NH3 to R.drawable.ic_water_test_molecule_24,
         WaterTestParameterId.GH to R.drawable.ic_water_test_shield_24,
         WaterTestParameterId.KH to R.drawable.ic_water_test_wave_24,
+        WaterTestParameterId.TOTAL_ALKALINITY to R.drawable.ic_water_test_wave_24,
         WaterTestParameterId.PHOSPHATE to R.drawable.ic_water_test_molecule_24,
         WaterTestParameterId.TDS to R.drawable.ic_care_water_change_24,
         WaterTestParameterId.EC to R.drawable.ic_water_test_wave_24,
@@ -123,6 +125,7 @@ internal object WaterTestProfileUiCatalog {
         WaterTestParameterId.FREE_AMMONIA_NH3 to R.string.tank_health_test_free_ammonia,
         WaterTestParameterId.GH to R.string.tank_health_test_general_hardness,
         WaterTestParameterId.KH to R.string.tank_health_test_carbonate_hardness,
+        WaterTestParameterId.TOTAL_ALKALINITY to R.string.tank_health_test_alkalinity,
         WaterTestParameterId.PHOSPHATE to R.string.tank_health_test_phosphate,
         WaterTestParameterId.TDS to R.string.tank_health_test_tds,
         WaterTestParameterId.EC to R.string.tank_health_test_conductivity,
@@ -146,6 +149,7 @@ internal object WaterTestProfileUiCatalog {
         WaterTestParameterId.FREE_AMMONIA_NH3 to R.string.tank_health_test_symbol_free_nh3,
         WaterTestParameterId.GH to R.string.tank_health_test_symbol_gh,
         WaterTestParameterId.KH to R.string.tank_health_test_symbol_kh,
+        WaterTestParameterId.TOTAL_ALKALINITY to R.string.tank_health_test_symbol_kh,
         WaterTestParameterId.PHOSPHATE to R.string.tank_health_test_symbol_phosphate,
         WaterTestParameterId.TDS to R.string.tank_health_test_symbol_tds,
         WaterTestParameterId.EC to R.string.tank_health_test_symbol_ec,
@@ -167,6 +171,7 @@ internal object WaterTestProfileUiCatalog {
         WaterTestParameterId.FREE_AMMONIA_NH3 to R.string.tank_health_analysis_unit_mg_l,
         WaterTestParameterId.GH to R.string.tank_health_analysis_unit_dgh,
         WaterTestParameterId.KH to R.string.tank_health_analysis_unit_dkh,
+        WaterTestParameterId.TOTAL_ALKALINITY to R.string.tank_health_analysis_unit_dkh,
         WaterTestParameterId.PHOSPHATE to R.string.tank_health_analysis_unit_mg_l,
         WaterTestParameterId.TDS to R.string.tank_health_analysis_unit_ppm,
         WaterTestParameterId.EC to R.string.tank_health_analysis_unit_us_cm,
@@ -186,19 +191,10 @@ internal object WaterTestProfileUiCatalog {
         importance: WaterTestImportance,
         value: String
     ): WaterTestParameterUiModel {
-        val isMarineKh = id == WaterTestParameterId.KH &&
-            AquariumTankTaxonomy.environmentForTankType(tankProfile) ==
-            AquariumTankTaxonomy.WATER_ENVIRONMENT_MARINE
-        val nameRes = if (isMarineKh) {
-            R.string.tank_health_test_alkalinity
-        } else {
-            requireNotNull(nameResByParameter[id])
-        }
-
         return WaterTestParameterUiModel(
             id = id,
             iconRes = requireNotNull(iconResByParameter[id]),
-            nameRes = nameRes,
+            nameRes = requireNotNull(nameResByParameter[id]),
             symbolRes = symbolResByParameter[id],
             unitRes = unitResByParameter[id],
             importance = importance,

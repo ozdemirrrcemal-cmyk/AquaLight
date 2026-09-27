@@ -67,7 +67,8 @@ object WaterTankMeasurementPolicy {
         recommended = listOf(
             WaterParameter.PH, WaterParameter.TOTAL_AMMONIA_NITROGEN,
             WaterParameter.NITRITE, WaterParameter.NITRATE,
-            WaterParameter.SALINITY, WaterParameter.KH, WaterParameter.PHOSPHATE
+            WaterParameter.SALINITY, WaterParameter.TOTAL_ALKALINITY,
+            WaterParameter.PHOSPHATE
         ),
         additional = listOf(
             WaterParameter.FREE_AMMONIA_NH3,
@@ -79,7 +80,8 @@ object WaterTankMeasurementPolicy {
         recommended = listOf(
             WaterParameter.PH, WaterParameter.NITRATE,
             WaterParameter.PHOSPHATE, WaterParameter.SALINITY,
-            WaterParameter.KH, WaterParameter.CALCIUM, WaterParameter.MAGNESIUM
+            WaterParameter.TOTAL_ALKALINITY,
+            WaterParameter.CALCIUM, WaterParameter.MAGNESIUM
         ),
         additional = listOf(
             WaterParameter.TOTAL_AMMONIA_NITROGEN, WaterParameter.FREE_AMMONIA_NH3,

@@ -53,7 +53,11 @@ object WaterMeasurementCatalog {
             method = WaterMeasurementMethod.MANUAL,
             testKitId = null,
             basis = WaterParameterDefinitions.canonicalBasis(parameter),
-            unit = WaterParameterDefinitions.canonicalUnit(parameter)
+            unit = if (parameter == WaterParameter.TOTAL_ALKALINITY) {
+                WaterMeasurementUnit.DKH
+            } else {
+                WaterParameterDefinitions.canonicalUnit(parameter)
+            }
         )
 
     fun normalizeSelection(

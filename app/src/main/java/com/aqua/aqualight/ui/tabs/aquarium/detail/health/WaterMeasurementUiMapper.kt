@@ -22,6 +22,7 @@ internal object WaterMeasurementUiMapper {
         WaterMeasurementBasis.FREE_NH3 to R.string.water_measurement_basis_free_nh3,
         WaterMeasurementBasis.GH to R.string.tank_health_test_symbol_gh,
         WaterMeasurementBasis.KH to R.string.tank_health_test_symbol_kh,
+        WaterMeasurementBasis.TOTAL_ALKALINITY to R.string.water_measurement_basis_total_alkalinity,
         WaterMeasurementBasis.PO4 to R.string.water_measurement_basis_po4,
         WaterMeasurementBasis.P to R.string.water_measurement_basis_p,
         WaterMeasurementBasis.TDS to R.string.tank_health_test_symbol_tds,

@@ -2,6 +2,8 @@ package com.aqua.aqualight.application.aquarium.health
 
 object WaterMeasurementNormalizer {
     private const val PPM_CACO3_PER_DEGREE = 17.86
+    private const val MEQ_L_PER_DKH_ALKALINITY = 0.358
+    private const val MG_L_CACO3_PER_MEQ_L = 50.0
 
     private data class ConversionKey(
         val parameter: WaterParameter,
@@ -12,7 +14,19 @@ object WaterMeasurementNormalizer {
     private val conversions: Map<ConversionKey, (Double) -> Double> = mapOf(
         // Nitrogen/phosphorus forms need verified method scope before conversion.
         ConversionKey(WaterParameter.GH, WaterMeasurementBasis.GH, WaterMeasurementUnit.DGH) to
-            { value -> value * PPM_CACO3_PER_DEGREE }
+            { value -> value * PPM_CACO3_PER_DEGREE },
+        // Only the explicitly typed total-alkalinity result may use these
+        // reporting-unit conversions. Historical KH does not acquire this meaning.
+        ConversionKey(
+            WaterParameter.TOTAL_ALKALINITY,
+            WaterMeasurementBasis.TOTAL_ALKALINITY,
+            WaterMeasurementUnit.DKH
+        ) to { value -> value * MEQ_L_PER_DKH_ALKALINITY },
+        ConversionKey(
+            WaterParameter.TOTAL_ALKALINITY,
+            WaterMeasurementBasis.TOTAL_ALKALINITY,
+            WaterMeasurementUnit.PPM_CACO3
+        ) to { value -> value / MG_L_CACO3_PER_MEQ_L }
     )
 
     /** Only an explicitly entered manual basis has a resolved numeric conversion today. */

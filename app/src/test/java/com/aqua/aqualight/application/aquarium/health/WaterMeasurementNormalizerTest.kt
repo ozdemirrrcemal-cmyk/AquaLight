@@ -99,6 +99,45 @@ class WaterMeasurementNormalizerTest {
     }
 
     @Test
+    fun explicitlyTypedTotalAlkalinityUnitsConvertWithoutReinterpretingKhOrBarePpm() {
+        assertEquals(
+            WaterMeasurementUnit.MEQ_L,
+            WaterParameterDefinitions.canonicalUnit(WaterParameter.TOTAL_ALKALINITY)
+        )
+        assertEquals(
+            WaterMeasurementUnit.DKH,
+            WaterMeasurementCatalog.defaultSelection(WaterParameter.TOTAL_ALKALINITY).unit
+        )
+        val basis = WaterMeasurementBasis.TOTAL_ALKALINITY
+        assertEquals(3.58, requireNotNull(WaterMeasurementNormalizer.canonicalValue(
+            WaterParameter.TOTAL_ALKALINITY, 10.0, basis, WaterMeasurementUnit.DKH
+        )), 0.0001)
+        assertEquals(2.0, requireNotNull(WaterMeasurementNormalizer.canonicalValue(
+            WaterParameter.TOTAL_ALKALINITY, 100.0, basis, WaterMeasurementUnit.PPM_CACO3
+        )), 0.0001)
+        assertEquals(2.0, requireNotNull(WaterMeasurementNormalizer.canonicalValue(
+            WaterParameter.TOTAL_ALKALINITY, 2.0, basis, WaterMeasurementUnit.MEQ_L
+        )), 0.0)
+        assertNull(WaterMeasurementNormalizer.canonicalValue(
+            WaterParameter.TOTAL_ALKALINITY, 100.0, basis, WaterMeasurementUnit.PPM
+        ))
+        assertNull(WaterMeasurementNormalizer.canonicalValue(
+            WaterParameter.TOTAL_ALKALINITY, 10.0,
+            WaterMeasurementBasis.KH, WaterMeasurementUnit.DKH
+        ))
+        assertNull(WaterMeasurementNormalizer.canonicalValueForStoredSource(
+            WaterParameter.TOTAL_ALKALINITY,
+            10.0,
+            WaterMeasurementSelection(
+                WaterMeasurementMethod.TEST_KIT,
+                WaterMeasurementCatalog.OTHER_TEST_KIT_ID,
+                basis,
+                WaterMeasurementUnit.DKH
+            )
+        ))
+    }
+
+    @Test
     fun generalHardnessDegreesConvertToCaco3WithoutChangingRawUnit() {
         assertEquals(WaterMeasurementUnit.PPM_CACO3, WaterParameterDefinitions.canonicalUnit(WaterParameter.GH))
         assertEquals(

@@ -7,6 +7,7 @@ import com.aqua.aqualight.application.aquarium.health.WaterMeasurementResultId
 import com.aqua.aqualight.application.aquarium.health.WaterParameter
 import com.aqua.aqualight.data.store.StoreInvariantViolation
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Test
 
@@ -146,6 +147,39 @@ class WaterAnalysisStoreRulesTest {
             snapshot.measurements.map { measurement -> measurement.resultId },
             restored.toApplicationSnapshot().measurements.map { measurement -> measurement.resultId }
         )
+    }
+
+    @Test
+    fun typedMarineAlkalinityKeepsRawDkhAndOldKhRemainsUnassessed() {
+        val typed = WaterMeasurementRecord(
+            parameter = WaterParameter.TOTAL_ALKALINITY,
+            value = 10.0,
+            method = WaterMeasurementMethod.MANUAL,
+            testKitId = null,
+            basis = WaterMeasurementBasis.TOTAL_ALKALINITY,
+            unit = WaterMeasurementUnit.DKH
+        )
+        val oldKh = typed.copy(
+            parameter = WaterParameter.KH,
+            basis = WaterMeasurementBasis.KH
+        )
+        listOf(typed, oldKh).forEach { source ->
+            val record = validRecord(source)
+            val restored = WaterAnalysisStoreRules.validateStore(
+                WaterAnalysisStoreRules.defaultStore().toBuilder()
+                    .addAnalyses(record.toStoredStrict())
+                    .build()
+            ).analysesList.single().toRecordStrict()
+            assertEquals(record, restored)
+            val result = restored.toApplicationSnapshot().measurements.single()
+            assertEquals(10.0, result.value, 0.0)
+            assertEquals(WaterMeasurementUnit.DKH, result.unit)
+            if (source.parameter == WaterParameter.TOTAL_ALKALINITY) {
+                assertEquals(3.58, requireNotNull(result.canonicalValue), 0.0001)
+            } else {
+                assertNull(result.canonicalValue)
+            }
+        }
     }
 
     @Test
