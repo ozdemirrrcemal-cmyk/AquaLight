@@ -72,7 +72,7 @@ assessment transaction required by M.2–M.5.
 
 - [x] U.1 Freeze and inspect the `ui-flow` commit; enumerate application/data/UI/composition paths and the 12 tank type codes.
 - [x] U.2 Trace form → `WaterAnalysisInputBuilder` → operations → Proto → history/detail/dashboard, including current Salifert Nitrate/Other semantics.
-- [ ] U.3 Build a testable gap matrix for every current parameter and tank type: `WATER_ANALYSIS_PARAMETER_GAP_MATRIX.md` and the expanded `WaterTankMeasurementPolicyTest` are written; close after CI evidence. All assessment rules remain open; visibility is not scientific assessability.
+- [x] U.3 Build a testable gap matrix for every current parameter and tank type: `WATER_ANALYSIS_PARAMETER_GAP_MATRIX.md` and `WaterTankMeasurementPolicyTest` cover all 12 types and selectable parameters. Android CI run 36306975969 passed on commit `25b61f4`. All assessment rules remain open; visibility is not scientific assessability.
 - [x] U.4 Audit XML and entry card, maintenance/system placeholders, accessibility and locale resources; record fixture-by-fixture disposition in `WATER_ANALYSIS_UI_SOURCE_AUDIT.md`. Device accessibility and localization acceptance remains open under E.7.
 - [ ] U.5 `WATER_ANALYSIS_STORAGE_INTEGRITY_AUDIT.md` records current owner/tank/delete/backup gaps. Add failure injection points and verified recovery before closure; cleanup is not archive/restore.
 - [ ] U.6 Mark existing behavior with named tests and commit evidence, then update historical W rows individually. No bulk "done" status from code presence.
