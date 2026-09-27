@@ -1,9 +1,9 @@
 # AquaLight — Production Water Analysis Implementation Checklist
 
-## Current acceptance status — 27 September 2026, 22:03 Europe/Istanbul
+## Current acceptance status — 28 September 2026, 00:15 Europe/Istanbul
 
 The accepted K01–K18 contract decisions are recorded. Implementation and release
-acceptance are incomplete. Current U/S/C/M/E rows total **10 closed, 24 open**;
+acceptance are incomplete. Current U/S/C/M/E rows total **12 closed, 22 open**;
 these are acceptance counts, not a percentage of code implemented.
 
 | Current gate | Closed | Open |
@@ -11,7 +11,7 @@ these are acceptance counts, not a percentage of code implemented.
 | U — Baseline and architecture | 4 | 2 |
 | S — Semantics and catalog foundation | 4 | 5 |
 | C — Verified named products | 0 | 5 |
-| M — Migration and scalable history | 2 | 5 |
+| M — Migration and scalable history | 4 | 3 |
 | E — End-to-end acceptance | 0 | 7 |
 | A — Algae Control | 0 | 7 |
 | P — Plant Health | 0 | 6 |
@@ -30,6 +30,15 @@ CodeQL workflow `36340971213` also passed. M.2 and the specific composition
 rows W7.1/W7.2 are now accepted with this evidence. E and the A/P/L gates remain
 open. The earlier failed run and its fixes remain recorded in
 `WATER_ANALYSIS_NAVIGATION_REGRESSION.md`.
+
+The live Room checkpoint `c6224e4f` has now passed all applicable workflows,
+including 172 instrumentation tests on each API and minified navigation smoke.
+M.3/M.4 are accepted individually below. Observation engines and owner-scoped
+Room/media/deletion storage were subsequently checkpointed as `570b865a` and
+`d0dea22b`. Three observation UI flows and version-4 archive integration are now implemented
+in the continuation. All 1,973 local JVM tests, 335 Python tests and Android-test
+compilation passed. Latest lint/APK and API 27/API 36 execution remain pending.
+A/P/L acceptance has not been claimed from intermediate commits.
 
 ## 0. Rebaseline — 27 September 2026
 
@@ -159,8 +168,8 @@ evidence and pending device acceptance are in `WATER_ANALYSIS_ROOM_TRANSACTIONS.
 
 - [x] M.1 Accepted on `6203e1cb`: Android CI run 36319320876 and Installable Debug APK run 36319320867 passed. Local reader/serializer tests and existing-baseline Detekt passed. `WATER_ANALYSIS_LEGACY_FORMAT_INVENTORY.md` inventories Proto v1/v2/v3 and backup/export v1/v2 from source history. `WaterAnalysisLegacyReader` preserves raw entries and unknown wire fields, distinguishes unsupported schema/value from corrupt data and I/O, and is the serializer's production read path. Populated migration and complete vocabulary tests are in `WaterAnalysisLegacyReaderTest`; archive-history restoration remains M.7.
 - [x] M.2 Room v3 schema and owner/event/request identity are accepted on `9f80eb2d`: Android CI `36340971220` and API 27/API 36 run `36340971240` passed. `WaterRoomSchemaUpgradeInstrumentedTest`, `WaterAnalysisRoomMigrationInstrumentedTest`, `WaterAnalysisRoomPagingInstrumentedTest` and `WaterRoomArchiveInstrumentedTest` execute actual Room migrations and verify retained raw payloads, timestamps, source metadata and composite owner/tank/event indexes. Live cutover is separately open under M.3–M.7.
-- [ ] M.3 Migration staging implemented: `WaterAnalysisMigrationSource` fingerprints the original stream and verifies exact owner-scoped record bytes; `WaterAnalysisRoomMigration` atomically commits 50-row batches with checkpoints, then verifies count/checksum before marking staging verified. Local source tests cover 10,000 records and mutation rejection. Room restart/transaction-failure tests are added; device acceptance and live-store cutover remain open. Do not erase Proto before verified cutover and rollback/recovery policy. Surface unsupported schema/I/O failure distinctly.
-- [ ] M.4 Atomic new event commit includes raw/canonical measurements, source/profile revision, context, assessment and rule/catalog versions, with `(ownerUid, requestId)` unique retry semantics.
+- [x] M.3 Accepted on `c6224e4f`: Android CI `36344376557`, API 27/API 36 `36344376560` (172 tests each plus minified smoke), APK `36344376561` and CodeQL `36344376593` passed. `WaterAnalysisRoomMigrationInstrumentedTest` verifies 50-row checkpoint atomicity, restart and changed-source/raw/index rejection. `WaterAnalysisCutoverInstrumentedTest` verifies owner-frozen source retention, resumed activation, pending-restore/deletion rejection and no legacy resurrection after ACTIVE/owner cleanup. Unsupported source/I/O stays an explicit failure; original Proto is retained through verified activation.
+- [x] M.4 Accepted on `c6224e4f` with the same CI/device runs as M.3. `WaterAnalysisRoomCommitInstrumentedTest.eventAndRequestInsertAreOneTransactionAndRetryIsExact` and `WaterAnalysisSessionInstrumentedTest.savedEvaluationIsAtomicAndRetryDoesNotReadChangedContext` verify atomic event/request/evidence storage and exact retries. `evaluationFailureDoesNotLeaveARawOnlyRecord` rejects partial events. Current scientific source coverage and catalog expansion remain separate S/C/E gates.
 - [ ] M.5 Room DAO owner/tank-targeted detail/latest/delete and indexed 50-item keyset queries passed API 27/API 36 on `9f80eb2d`. The subsequent UI uses a saved single cursor and bounded newer/older pages, with reverse SQL and deleted-page recovery tests. Live Room binding is implemented; this continuation's device execution and measured memory/latency budget remain open; no history is truncated or silently retained away.
 - [ ] M.6 Extend tank deletion gate/journal, orphan repair, owner logout/account deletion and explicit backup/export/restore (including preferences and migration staging). Cover crash/cancellation at every durable boundary. Shared owner/tank ordering covers live Proto create/exact delete, cleaner rollback and recovery. Live analysis writes now require an immutable session-generation lease and await durable DataStore acknowledgement before releasing the session/tank locks, including caller cancellation. Room commit, owner-wide and archive integration remain open. See `WATER_ANALYSIS_ROOM_MIGRATION.md`.
 - [ ] M.7 Live Proto archive v3 now includes checked history, v1/v2 zero-history compatibility, immutable source/ID remap, repeat-import deduplication and durable restore rollback. Whole restore/delete coordinators share an owner gate with pending-journal guards and local concurrency tests. See `WATER_ANALYSIS_ARCHIVE_ROUND_TRIP.md` for named tests and limits. The bounded Room archive backend and schema v3 import index are staged; live Room/migration/preference integration, tank-duplicate regression and device/minified concurrency acceptance remain open; incomplete history is rejected.
@@ -529,8 +538,9 @@ WaterAnalysisRecord içindeki kalıcı owner kimliğinin UI’a açılması gere
 27 September continuation: dated typed algae/plant/livestock observations and
 three separate pure engines are implemented with local identity, uncertainty,
 count and historical water-evidence tests. See `HEALTH_OBSERVATION_IMPLEMENTATION.md`.
-Persistence, UI/media/restore and end-to-end acceptance are not inferred from
-these models; the remaining A/P/L checkboxes stay open until their complete evidence.
+Owner-scoped persistence, UI/media/restore and the central navigation routes are
+implemented. Additional archive and lifecycle tests are in the continuation; the
+remaining A/P/L checkboxes stay open until their complete acceptance evidence.
 
 ### A — Yosun Kontrolü
 

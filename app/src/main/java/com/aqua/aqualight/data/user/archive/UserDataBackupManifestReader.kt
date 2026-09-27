@@ -14,20 +14,26 @@ internal class UserDataBackupManifestReader(private val gson: Gson) {
         val document = root.asJsonObject
         val version = document.get("schemaVersion")
         require(version?.isJsonPrimitive == true && version.asJsonPrimitive.isNumber)
-        require(version.asString in setOf("1", "2", USER_DATA_BACKUP_SCHEMA_VERSION.toString())) {
+        require(version.asString in setOf("1", "2", "3", USER_DATA_BACKUP_SCHEMA_VERSION.toString())) {
             "Unsupported backup schema version."
         }
         if (version.asInt == LEGACY_VERSION) {
             upgradeLegacyIdentities(document)
         }
-        if (version.asInt < USER_DATA_BACKUP_SCHEMA_VERSION) {
+        if (version.asInt < WATER_HISTORY_VERSION) {
             require(!document.has("waterHistory")) { "Legacy archives cannot declare analysis history." }
             document.add("waterHistory", com.google.gson.JsonNull.INSTANCE)
-            document.addProperty("schemaVersion", USER_DATA_BACKUP_SCHEMA_VERSION)
         }
         else {
             validateHistoryDeclaration(document.get("waterHistory"))
         }
+        if (version.asInt < USER_DATA_BACKUP_SCHEMA_VERSION) {
+            require(!document.has("healthHistory")) { "Legacy archives cannot declare observation history." }
+            document.add("healthHistory", com.google.gson.JsonNull.INSTANCE)
+        } else {
+            HealthHistoryBackupIntegration.validateDeclaration(document.get("healthHistory"))
+        }
+        document.addProperty("schemaVersion", USER_DATA_BACKUP_SCHEMA_VERSION)
         return requireNotNull(gson.fromJson(document, UserDataBackupManifest::class.java))
     }
 
@@ -73,5 +79,5 @@ internal class UserDataBackupManifestReader(private val gson: Gson) {
         else -> false
     }
 
-    private companion object { const val LEGACY_VERSION = 1 }
+    private companion object { const val LEGACY_VERSION = 1; const val WATER_HISTORY_VERSION = 3 }
 }

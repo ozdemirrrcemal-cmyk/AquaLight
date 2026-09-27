@@ -18,6 +18,7 @@ internal data class UserDataArchiveDataSources(
     val careTaskStore: CareTaskDataStoreManager,
     val assignmentRepository: TankDeviceAssignmentRepository,
     val waterHistory: WaterAnalysisHistoryArchiveStore,
+    val healthHistory: com.aqua.aqualight.data.aquarium.health.observation.HealthObservationArchiveStore,
     val session: OwnerSessionWriteLease?,
     val restoreTransactions: UserDataRestoreTransactions
 )
@@ -100,6 +101,9 @@ internal class UserDataArchiveSnapshotCollector(
         requireNotNull(dataSources.session).requireCurrent()
         return dataSources.waterHistory.snapshot(ownerUid, tankIds, destination)
     }
+
+    suspend fun collectHealthHistory(tanks: Set<Long>, destination: File, mediaDirectory: File?) =
+        dataSources.healthHistory.snapshot(ownerUid, tanks, destination, mediaDirectory)
 
     private fun collectPlantPhotos(
         tank: com.aqua.aqualight.data.aquarium.model.SavedAquariumTank,

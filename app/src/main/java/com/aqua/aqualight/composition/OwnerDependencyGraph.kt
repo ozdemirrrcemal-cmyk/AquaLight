@@ -294,13 +294,17 @@ internal class ActiveOwnerDependencyGraphResolver(
         aquariumTankStore: AquariumTankDataStoreManager,
         careTaskStore: CareTaskDataStoreManager
     ): UserDataArchiveOperations {
+        val archiveTransactions = com.aqua.aqualight.data.user.archive.UserDataRestoreJournal(appContext)
         val archiveDataSources = UserDataArchiveDataSources(
             aquariumStore = aquariumTankStore,
             careTaskStore = careTaskStore,
             assignmentRepository = dependencies.assignmentRepository,
             waterHistory = WaterAnalysisDataStoreManager(appContext).archiveStore,
+            healthHistory = com.aqua.aqualight.data.aquarium.health.observation.HealthObservationArchiveStore(
+                appContext, { uid -> aquariumTankStore.tanksSnapshotForOwner(uid).map { it.id }.toSet() },
+                archiveTransactions),
             session = sessionCoordinator.bindWriteLease(dependencies.ownerUid, dependencies.sessionGeneration),
-            restoreTransactions = com.aqua.aqualight.data.user.archive.UserDataRestoreJournal(appContext)
+            restoreTransactions = archiveTransactions
         )
         val mediaGateway = UserDataArchiveMediaGateway(appContext)
         return DefaultUserDataArchiveOperations(

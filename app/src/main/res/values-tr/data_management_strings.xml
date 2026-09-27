@@ -53,4 +53,12 @@
         <item quantity="one">%d yeni su analizi kaydı geri yüklendi.</item>
         <item quantity="other">%d yeni su analizi kaydı geri yüklendi.</item>
     </plurals>
+    <plurals name="data_management_archive_health_observations">
+        <item quantity="one">%d sağlık gözlemi</item>
+        <item quantity="other">%d sağlık gözlemi</item>
+    </plurals>
+    <plurals name="data_management_restored_health_observations">
+        <item quantity="one">%d yeni sağlık gözlemi geri yüklendi.</item>
+        <item quantity="other">%d yeni sağlık gözlemi geri yüklendi.</item>
+    </plurals>
 </resources>

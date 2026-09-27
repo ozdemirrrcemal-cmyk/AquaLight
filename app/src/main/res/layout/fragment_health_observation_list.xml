@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+ android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical"
+ android:background="@color/background_color">
+ <include android:id="@+id/appHeader" layout="@layout/layout_aqua_header"
+  android:layout_width="match_parent" android:layout_height="wrap_content" />
+<TextView android:id="@+id/status" android:layout_width="match_parent" android:layout_height="wrap_content"
+ android:padding="@dimen/aqua_size_8" android:textColor="@color/aqua_card_text_primary"
+ android:textSize="@dimen/aqua_text_size_body" android:accessibilityLiveRegion="polite"  />
+<com.google.android.material.button.MaterialButton android:id="@+id/retry"
+ style="@style/Widget.Aqua.Button.Secondary" android:maxLines="3" android:ellipsize="none" android:layout_width="match_parent" android:layout_height="wrap_content"
+ android:minHeight="@dimen/aqua_size_48" android:text="@string/health_retry" />
+
+<androidx.recyclerview.widget.RecyclerView android:id="@+id/historyList" android:layout_width="match_parent"
+ android:layout_height="0dp" android:layout_weight="1" android:padding="@dimen/aqua_size_14"
+ android:clipToPadding="false" />
+<com.google.android.material.button.MaterialButton android:id="@+id/latest"
+ style="@style/Widget.Aqua.Button.Secondary" android:maxLines="3" android:ellipsize="none" android:layout_width="match_parent" android:layout_height="wrap_content"
+ android:minHeight="@dimen/aqua_size_48" android:text="@string/health_first_page" />
+<com.google.android.material.button.MaterialButton android:id="@+id/older"
+ style="@style/Widget.Aqua.Button.Secondary" android:maxLines="3" android:ellipsize="none" android:layout_width="match_parent" android:layout_height="wrap_content"
+ android:minHeight="@dimen/aqua_size_48" android:text="@string/health_older" />
+<com.google.android.material.button.MaterialButton android:id="@+id/add"
+ style="@style/Widget.Aqua.Button.Primary" android:maxLines="3" android:ellipsize="none" android:layout_width="match_parent" android:layout_height="wrap_content"
+ android:minHeight="@dimen/aqua_size_48" android:text="@string/health_new" />
+</LinearLayout>

@@ -46,6 +46,9 @@ internal class DefaultUserDataArchiveOperations(
                     val historyFile = File(mediaDirectory, "water-history.bin")
                     val history = snapshotCollector.collectWaterHistory(
                         snapshot.aquariums.map { it.id }.toSet(), historyFile)
+                    val healthFile = File(mediaDirectory, "health-history.bin")
+                    val health = snapshotCollector.collectHealthHistory(
+                        snapshot.aquariums.map { it.id }.toSet(), healthFile, mediaDirectory)
                     val manifest = UserDataBackupManifest(
                         format = USER_DATA_BACKUP_FORMAT,
                         schemaVersion = USER_DATA_BACKUP_SCHEMA_VERSION,
@@ -54,9 +57,11 @@ internal class DefaultUserDataArchiveOperations(
                         aquariums = snapshot.aquariums,
                         careTasks = snapshot.careTasks,
                         deviceAssignments = snapshot.deviceAssignments,
-                        waterHistory = history
+                        waterHistory = history,
+                        healthHistory = health.reference
                     )
-                    runtime.codec.encode(manifest, snapshot.mediaByEntryName, destination, historyFile)
+                    runtime.codec.encode(manifest, snapshot.mediaByEntryName + health.mediaByEntryName,
+                        destination, historyFile, healthFile)
                     createdAt
                 } finally {
                     runtime.staging.discardScratch(mediaDirectory)
@@ -88,7 +93,8 @@ internal class DefaultUserDataArchiveOperations(
                     careTaskCount = manifest.careTasks.size,
                     deviceAssignmentCount = manifest.deviceAssignments.size,
                     photoCount = manifest.archivedPhotoCount(),
-                    waterAnalysisCount = manifest.waterHistory?.recordCount ?: 0
+                    waterAnalysisCount = manifest.waterHistory?.recordCount ?: 0,
+                    healthObservationCount = manifest.healthHistory?.recordCount ?: 0
                 )
             }
             UserDataBackupCandidate(
@@ -143,7 +149,11 @@ internal class DefaultUserDataArchiveOperations(
                     val historyFile = File(scratch, "water-history.bin")
                     val history = snapshotCollector.collectWaterHistory(
                         aquarium.aquariums.map { it.id }.toSet(), historyFile)
-                    runtime.codec.encodePortableExport(export, destination, history to historyFile)
+                    val healthFile = File(scratch, "health-history.bin")
+                    val health = snapshotCollector.collectHealthHistory(
+                        aquarium.aquariums.map { it.id }.toSet(), healthFile, null)
+                    runtime.codec.encodePortableExport(export, destination, history to historyFile,
+                        health.reference to healthFile)
                     exportedAt
                 } finally {
                     runtime.staging.discardScratch(scratch)
@@ -207,7 +217,7 @@ internal fun UserDataBackupManifest.archivedPhotoCount(): Int = aquariums.sumOf 
     (if (aquarium.photo != null) 1 else 0) +
         aquarium.plants.count { plant -> plant.photo != null } +
         aquarium.livestock.count { item -> item.photo != null }
-}
+} + (healthHistory?.photos?.size ?: 0)
 
 private fun <T> Result<T>.rethrowCancellation(): Result<T> {
     val failure = exceptionOrNull()

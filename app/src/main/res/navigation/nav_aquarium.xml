@@ -210,20 +210,46 @@
         android:id="@+id/plantHealthFragment"
         android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.health.PlantHealthFragment"
         android:label="@string/screen_title_plant_health"
-        tools:layout="@layout/fragment_aquarium_health_placeholder">
+        tools:layout="@layout/fragment_health_observation_list">
         <argument
             android:name="tankId"
             app:argType="long" />
+        <argument android:name="healthKind" app:argType="string" android:defaultValue="PLANT" />
+        <action android:id="@+id/action_plantHealthFragment_to_healthObservationFormFragment"
+            app:destination="@id/healthObservationFormFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+        <action android:id="@+id/action_plantHealthFragment_to_healthObservationDetailFragment"
+            app:destination="@id/healthObservationDetailFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
     </fragment>
 
     <fragment
         android:id="@+id/livestockHealthFragment"
         android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.health.LivestockHealthFragment"
         android:label="@string/screen_title_livestock_health"
-        tools:layout="@layout/fragment_aquarium_health_placeholder">
+        tools:layout="@layout/fragment_health_observation_list">
         <argument
             android:name="tankId"
             app:argType="long" />
+        <argument android:name="healthKind" app:argType="string" android:defaultValue="LIVESTOCK" />
+        <action android:id="@+id/action_livestockHealthFragment_to_healthObservationFormFragment"
+            app:destination="@id/healthObservationFormFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+        <action android:id="@+id/action_livestockHealthFragment_to_healthObservationDetailFragment"
+            app:destination="@id/healthObservationDetailFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
     </fragment>
 
     <fragment
@@ -245,6 +271,12 @@
                 android:name="tankId"
                 app:argType="long" />
         </action>
+        <action android:id="@+id/action_tankHealthFragment_to_algaeControlFragment"
+            app:destination="@id/algaeControlFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
     </fragment>
 
     <fragment
@@ -861,5 +893,49 @@
             android:name="deviceUid"
             app:argType="string"
             android:defaultValue="" />
+    </fragment>
+    <fragment android:id="@+id/algaeControlFragment"
+        android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.health.AlgaeControlFragment"
+        android:label="@string/tank_health_tab_algae_control" tools:layout="@layout/fragment_health_observation_list">
+        <argument android:name="tankId" app:argType="long" />
+        <argument android:name="healthKind" app:argType="string" android:defaultValue="ALGAE" />
+        <action android:id="@+id/action_algaeControlFragment_to_healthObservationFormFragment"
+            app:destination="@id/healthObservationFormFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+        <action android:id="@+id/action_algaeControlFragment_to_healthObservationDetailFragment"
+            app:destination="@id/healthObservationDetailFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+    </fragment>
+    <fragment android:id="@+id/healthObservationFormFragment"
+        android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.health.HealthObservationFormFragment"
+        android:label="@string/health_new" tools:layout="@layout/fragment_health_observation_form">
+        <argument android:name="tankId" app:argType="long" />
+        <argument android:name="healthKind" app:argType="string" />
+        <argument android:name="previousObservationId" app:argType="long" android:defaultValue="0L" />
+    </fragment>
+    <fragment android:id="@+id/healthObservationDetailFragment"
+        android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.health.HealthObservationDetailFragment"
+        android:label="@string/health_detail" tools:layout="@layout/fragment_health_observation_detail">
+        <argument android:name="tankId" app:argType="long" />
+        <argument android:name="healthKind" app:argType="string" />
+        <argument android:name="observationId" app:argType="long" />
+        <action android:id="@+id/action_healthObservationDetailFragment_to_healthObservationFormFragment"
+            app:destination="@id/healthObservationFormFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+        <action android:id="@+id/action_healthObservationDetailFragment_to_algaeControlFragment"
+            app:destination="@id/algaeControlFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
     </fragment>
 </navigation>

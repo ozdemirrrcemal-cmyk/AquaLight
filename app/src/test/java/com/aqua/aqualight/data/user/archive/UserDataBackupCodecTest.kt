@@ -122,9 +122,9 @@ class UserDataBackupCodecTest {
     @Test
     fun `decoder upgrades the known previous schema without inventing records`() {
         val original = manifest()
-        val encoded = rawZip(Gson().toJson(original.copy(schemaVersion = 1, waterHistory = null)))
+        val encoded = rawZip(Gson().toJson(original.copy(schemaVersion = 1, waterHistory = null, healthHistory = null)))
         val decoded = codec.decode(encoded, File(encoded.parentFile, "decoded-previous-schema"))
-        assertEquals(original.copy(waterHistory = null), decoded.manifest)
+        assertEquals(original.copy(waterHistory = null, healthHistory = null), decoded.manifest)
     }
 
     @Test
@@ -133,7 +133,7 @@ class UserDataBackupCodecTest {
         val livestock = listOf(41L, 42L, 43L).map { id ->
             ArchiveLivestock(id, "Original name $id", "Fish", 2, null, "Original note", "custom:$id")
         }
-        val legacy = original.copy(schemaVersion = 1, waterHistory = null,
+        val legacy = original.copy(schemaVersion = 1, waterHistory = null, healthHistory = null,
             aquariums = listOf(original.aquariums.single().copy(livestock = livestock)))
         val document = Gson().toJsonTree(legacy).asJsonObject
         val items = document.getAsJsonArray("aquariums")[0].asJsonObject.getAsJsonArray("livestock")
@@ -148,7 +148,7 @@ class UserDataBackupCodecTest {
     @Test
     fun `legacy malformed declared identity is rejected rather than replaced`() {
         val original = manifest()
-        val invalid = original.copy(schemaVersion = 1, waterHistory = null,
+        val invalid = original.copy(schemaVersion = 1, waterHistory = null, healthHistory = null,
             aquariums = listOf(original.aquariums.single().copy(
             livestock = listOf(ArchiveLivestock(42, "Fish", "Fish", 1, null, "", "custom:99")))))
         val encoded = rawZip(Gson().toJson(invalid))
@@ -227,9 +227,9 @@ class UserDataBackupCodecTest {
     }
 
     @Test
-    fun `maximum photo count round trips including manifest entry`() {
+    fun `four thousand photos round trip with the manifest and both history streams`() {
         val root = tempDirectory()
-        val (manifest, media) = plantPhotoArchive(root, UserDataBackupLimits.MAX_ZIP_ENTRIES - 2)
+        val (manifest, media) = plantPhotoArchive(root, 4_000)
         val encoded = File(root, "maximum.aqlbackup")
         codec.encode(manifest, media, encoded)
         val decoded = codec.decode(encoded, File(root, "decoded-maximum"))
@@ -293,7 +293,7 @@ class UserDataBackupCodecTest {
 
     @Test
     fun `v2 archive has zero analyses and cannot smuggle future history`() {
-        val legacy = manifest().copy(schemaVersion = 2, waterHistory = null)
+        val legacy = manifest().copy(schemaVersion = 2, waterHistory = null, healthHistory = null)
         val file = rawZip(Gson().toJson(legacy))
         val decoded = codec.decode(file, File(file.parentFile, "v2"))
         assertEquals(null, decoded.manifest.waterHistory)

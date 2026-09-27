@@ -1,7 +1,5 @@
 package com.aqua.aqualight.smoke
 
-import android.graphics.Bitmap
-import android.graphics.Canvas
 import android.os.Bundle
 import android.text.Layout
 import android.view.Gravity
@@ -12,7 +10,6 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.core.graphics.createBitmap
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commitNow
 import androidx.lifecycle.Lifecycle
@@ -29,8 +26,6 @@ import com.aqua.aqualight.ui.tabs.aquarium.AquariumFragment
 import com.aqua.aqualight.ui.tabs.devices.DevicesFragment
 import com.aqua.aqualight.ui.tabs.maintenance.AquariumMaintenanceFragment
 import com.aqua.aqualight.ui.tabs.settings.SettingsFragment
-import java.io.File
-import java.io.FileOutputStream
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -125,9 +120,18 @@ class ReleaseSmokeActivity : BaseActivity() {
                     verifyRequestedLayoutDirection(fragmentRoot)
                     verifyIconAccessibility(fragmentRoot)
                     verifyLargeFontText(fragmentRoot)
-                    captureScreen(screen)
+                    captureSmokeScreen(screen.name, smokeProfile)
                 }
                 WaterAnalysisNavigationSmoke(navHostFragment).verify()
+                HealthObservationNavigationSmoke(navHostFragment) { name ->
+                    val fragment = navHostFragment.childFragmentManager.primaryNavigationFragment
+                        ?: error("Health observation route did not create a primary navigation fragment")
+                    val root = fragment.requireView()
+                    applyRequestedLayoutDirection(root)
+                    verifyIconAccessibility(root)
+                    verifyLargeFontText(root)
+                    captureSmokeScreen(name, smokeProfile)
+                }.verify()
             }.onSuccess {
                 renderResult("$PASS_MARKER:$smokeProfile")
             }.onFailure { error ->
@@ -268,38 +272,6 @@ class ReleaseSmokeActivity : BaseActivity() {
         visit(root)
     }
 
-    private fun View.debugName(): String {
-        return runCatching {
-            resources.getResourceEntryName(id)
-        }.getOrElse {
-            this::class.java.simpleName
-        }
-    }
-
-    private fun captureScreen(screen: SmokeScreen) {
-        val root = window.decorView.rootView
-        check(root.width > 0 && root.height > 0) {
-            "${screen.name} has invalid render bounds ${root.width}x${root.height}"
-        }
-        val bitmap = createBitmap(root.width, root.height, Bitmap.Config.ARGB_8888)
-        root.draw(Canvas(bitmap))
-        val screenshotRoot = getExternalFilesDir(null) ?: filesDir
-        val directory = File(screenshotRoot, SCREENSHOT_DIRECTORY).apply { mkdirs() }
-        val output = File(
-            directory,
-            "$smokeProfile-${screen.name.removeSuffix("Fragment").lowercase()}.png"
-        )
-        FileOutputStream(output).use { stream ->
-            check(bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)) {
-                "${screen.name} screenshot could not be encoded"
-            }
-        }
-        check(output.isFile && output.length() > MIN_SCREENSHOT_BYTES) {
-            "${screen.name} screenshot is empty"
-        }
-        bitmap.recycle()
-    }
-
     private fun renderResult(message: String) {
         supportFragmentManager.fragments.forEach { fragment ->
             supportFragmentManager.commitNow {
@@ -341,8 +313,6 @@ class ReleaseSmokeActivity : BaseActivity() {
         const val THEME_DARK = "dark"
         const val LARGE_FONT_PROFILE_PREFIX = "large-font-"
         const val RTL_PROFILE_PREFIX = "rtl-"
-        const val SCREENSHOT_DIRECTORY = "smoke-screens"
-        const val MIN_SCREENSHOT_BYTES = 1024L
         const val TEXT_WIDTH_TOLERANCE_PX = 1f
 
         val STRICT_SINGLE_LINE_TEXT_IDS = setOf(
@@ -353,4 +323,10 @@ class ReleaseSmokeActivity : BaseActivity() {
             R.id.btnEmptyAddCareTask
         )
     }
+}
+
+private fun View.debugName(): String = runCatching {
+    resources.getResourceEntryName(id)
+}.getOrElse {
+    this::class.java.simpleName
 }

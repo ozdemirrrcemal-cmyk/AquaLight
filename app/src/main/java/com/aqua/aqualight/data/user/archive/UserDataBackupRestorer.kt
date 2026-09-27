@@ -106,6 +106,7 @@ internal class UserDataBackupRestorer(
             provenanceBatch = provenanceBatch
         )
         val restoredAnalyses = dataSources.restoreWaterHistory(ownerUid, transactions, backup, aquariums.tankIdMap)
+        val restoredHealth = dataSources.restoreHealthHistory(ownerUid, transactions, backup, aquariums.tankIdMap)
         val assignments = restoreAssignments(backup, aquariums.tankIdMap)
 
         provenance.record(ownerUid, provenanceBatch)
@@ -120,7 +121,8 @@ internal class UserDataBackupRestorer(
             restoredDeviceAssignmentCount = assignments.restored,
             skippedDeviceAssignmentCount = assignments.skipped,
             reminderReconciliationWarning = reminderWarning,
-            restoredWaterAnalysisCount = restoredAnalyses
+            restoredWaterAnalysisCount = restoredAnalyses,
+            restoredHealthObservationCount = restoredHealth
         )
     }
 
@@ -392,4 +394,16 @@ private suspend fun UserDataRestoreRecovery.rollbackAfterFailure(
     }
     rollbackFailure?.let(originalError::addSuppressed)
     return originalError
+}
+
+private suspend fun UserDataRestoreDataSources.restoreHealthHistory(
+    ownerUid: String, transactions: UserDataRestoreTransactions,
+    backup: DecodedUserDataBackup, tankIdMap: Map<Long, Long>
+): Int {
+    val reference = backup.manifest.healthHistory
+    if (reference == null || reference.recordCount == 0) return 0
+    val transactionId = requireNotNull(transactions.pending(ownerUid)?.waterTransactionId)
+    return healthHistory.restore(com.aqua.aqualight.data.aquarium.health.observation.HealthHistoryRestoreRequest(
+        ownerUid, transactionId, tankIdMap, reference,
+        requireNotNull(backup.healthHistoryFile), backup.mediaByEntryName))
 }

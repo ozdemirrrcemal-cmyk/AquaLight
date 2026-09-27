@@ -23,10 +23,16 @@ internal data class UserDataRestoreDataSources(
     val careTasks: CareTaskDataSource,
     val assignments: AssignmentDataSource,
     val waterHistory: WaterHistoryDataSource,
+    val healthHistory: HealthHistoryDataSource,
     val requireDeletionSettled: (String) -> Unit
 ) {
     internal data class WaterHistoryDataSource(
         val restore: suspend (com.aqua.aqualight.data.aquarium.health.WaterHistoryRestoreRequest) -> Int,
+        val rollback: suspend (String, String) -> Unit
+    )
+
+    internal data class HealthHistoryDataSource(
+        val restore: suspend (com.aqua.aqualight.data.aquarium.health.observation.HealthHistoryRestoreRequest) -> Int,
         val rollback: suspend (String, String) -> Unit
     )
 
@@ -65,6 +71,8 @@ internal data class UserDataRestoreDataSources(
                 },
                 waterHistory = WaterHistoryDataSource(
                     dataSources.waterHistory::restore, dataSources.waterHistory::rollback),
+                healthHistory = HealthHistoryDataSource(
+                    dataSources.healthHistory::restore, dataSources.healthHistory::rollback),
                 tanks = TankDataSource(
                     snapshotForOwner = aquariumStore::tanksSnapshotForOwner,
                     addFromDraft = { ownerUid, draft ->

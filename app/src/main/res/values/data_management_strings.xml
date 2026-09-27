@@ -53,4 +53,12 @@
         <item quantity="one">Restored %d new water analysis record.</item>
         <item quantity="other">Restored %d new water analysis records.</item>
     </plurals>
+    <plurals name="data_management_archive_health_observations">
+        <item quantity="one">%d health observation</item>
+        <item quantity="other">%d health observations</item>
+    </plurals>
+    <plurals name="data_management_restored_health_observations">
+        <item quantity="one">Restored %d new health observation.</item>
+        <item quantity="other">Restored %d new health observations.</item>
+    </plurals>
 </resources>

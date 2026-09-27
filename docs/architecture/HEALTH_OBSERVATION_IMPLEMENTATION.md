@@ -2,8 +2,8 @@
 
 27 September 2026 continuation. These concrete application models and engines
 are implemented and locally tested. Separate Room storage, owner-bound operations,
-deletion recovery and media ownership are implemented; composition, archive and
-UI integration remain in progress. This document does not close all A/P/L
+deletion recovery, media ownership, composition, archive and UI integration are
+implemented. Device acceptance for the latest continuation remains in progress. This document does not close all A/P/L
 acceptance gates or authorize replacing the approved Water Quality UI.
 
 ## Observation and engine boundaries
@@ -24,7 +24,8 @@ acceptance gates or authorize replacing the approved Water Quality UI.
   coverage, gaps, actions and reused water findings, without disease labels,
   chemical doses, fabricated safety scores or a generic healthy verdict.
 - Plant algae presence produces an `OPEN_ALGAE_CONTROL` action. The plant engine
-  does not implement algae remediation. Central UI routing remains to be bound.
+  does not implement algae remediation. The detail action uses the central Safe Args
+  route to the tank’s Algae Control history.
 - Removed/unverified subjects and partial plant care are explicit gaps. Livestock
   affected quantity cannot exceed the registered group's captured quantity.
 
@@ -69,3 +70,46 @@ I/O/time. Local debug unit and releaseSmoke Kotlin compilation passed, and the
 unchanged Detekt baseline reports zero new debt. Full A/P/L acceptance also needs
 live save/history/delete, media ownership, owner/tank/entity removal, restore,
 process recreation, central navigation and UI/device evidence.
+
+## UI and archive continuation
+
+The three feature entry points now have owner-bound observation history, dated
+forms, exact-record details, explicit unknown choices, photos and intervention /
+follow-up entry. Plant and livestock subjects use local registered IDs. Loading,
+empty, missing and failure states remain distinct. The approved Water Quality
+layout is retained. All new routes live in `nav_aquarium.xml` and use
+`navigateSafelyFrom`; their ViewModels are fragment-scoped with SavedState extras.
+
+The version-4 backup declares a separate bounded/checksummed observation stream
+and its exact photo references. Versions 1/2 retain their existing migration;
+version 3 retains water history without inventing observations. New backups,
+inspection counts, restore results and portable exports include health history.
+Restore joins the existing owner transaction and deletion/session gates. Original
+context, assessment, subject name and original event identity remain immutable;
+local event/tank/photo references are remapped. Repeated imports are idempotent,
+conflicting evidence is rejected, and rollback targets only the current owner and
+restore transaction. Follow-up links survive a second export/import. Record and
+photo extraction still share the existing archive byte ceilings.
+
+Named additional regression coverage:
+- `HealthObservationMutationsTest`: duplicate-save exclusion, immutable inputs,
+  retry identity, cancellation, exact owner-bound route operation.
+- `HealthObservationDraftInstrumentedTest`: parcelable date/subject/photo/request
+  restoration; this is saved-state coverage, not a claim of a physical-device run.
+- `HealthHistoryArchiveTest`, `HealthHistoryBackupCodecTest`,
+  `HealthHistoryRestoreRecoveryTest`: stream integrity, exact photo declarations,
+  legacy v3 migration, original provenance, JSON export and shared compensation.
+- `HealthObservationArchiveInstrumentedTest`: actual Room atomicity, rollback,
+  reopen/idempotency, cross-owner isolation and repeated-export follow-up links.
+- `HealthObservationNavigationSmoke`: all three list/form/detail routes use the
+  minified production graph and retain route ViewModels across back navigation.
+
+The earlier CI failures are isolated in `9201035b`: Kotlin compiler GC exhaustion
+is addressed by in-process compilation within the bounded Gradle heap; the media
+recovery test now ages its fixture beyond the existing orphan grace period and
+still verifies that a rollback-staged old photo is retained. No Detekt baseline,
+suppression, test exclusion or acceptance gate was relaxed.
+
+Latest continuation test/CI results are recorded in the production checklist.
+Physical sensor, full accessibility and the outstanding scientific/catalog gates
+remain separate acceptance work; these observation changes do not close them.

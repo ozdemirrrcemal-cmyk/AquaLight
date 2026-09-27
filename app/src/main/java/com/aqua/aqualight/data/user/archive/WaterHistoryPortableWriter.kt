@@ -15,9 +15,13 @@ internal object WaterHistoryPortableWriter {
     private val gson = GsonBuilder().serializeNulls().disableHtmlEscaping().create()
 
     fun write(export: PortableUserDataExport, writer: Writer,
-        history: Pair<WaterHistoryArchiveReference, File>?) {
+        history: Pair<WaterHistoryArchiveReference, File>?,
+        healthHistory: Pair<HealthHistoryArchiveReference, File>? = null) {
         history?.let { (reference, file) ->
             WaterHistoryArchive.validate(reference, file, export.aquariumData.aquariums.map { it.id }.toSet())
+        }
+        healthHistory?.let { (reference, file) ->
+            HealthHistoryArchive.validate(reference, file, export.aquariumData.aquariums.map { it.id }.toSet())
         }
         val document = gson.toJsonTree(export).asJsonObject
         val json = JsonWriter(writer).apply { setIndent("  ") }
@@ -30,7 +34,9 @@ internal object WaterHistoryPortableWriter {
         history?.let { (reference, file) ->
             WaterHistoryArchive.visit(file, reference.recordCount) { gson.toJson(event(it), json) }
         }
-        json.endArray().endObject()
+        json.endArray()
+        HealthHistoryPortableWriter.write(json, healthHistory)
+        json.endObject()
         json.flush()
     }
 
@@ -70,7 +76,7 @@ internal object WaterHistoryPortableWriter {
             "sourceWaterGroup" to it.sourceWaterGroup) }
     )
 
-    private fun finding(value: StoredWaterRuleFinding): Map<String, Any?> = linkedMapOf(
+    internal fun finding(value: StoredWaterRuleFinding): Map<String, Any?> = linkedMapOf(
         "entityKind" to value.entityKind, "entityId" to value.entityId, "catalogId" to value.catalogId,
         "entityDisplayName" to value.entityDisplayName, "parameter" to value.parameter,
         "ruleId" to value.ruleId, "ruleRevision" to value.ruleRevision, "catalogRevision" to value.catalogRevision,

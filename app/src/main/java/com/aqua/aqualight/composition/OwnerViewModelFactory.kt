@@ -43,6 +43,7 @@ import com.aqua.aqualight.platform.text.AndroidMaintenanceTextResolver
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.health.WaterAnalysisViewModel
+import com.aqua.aqualight.ui.tabs.aquarium.detail.health.HealthObservationViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectViewModel
 import com.aqua.aqualight.ui.tabs.devices.DevicesViewModel
 import com.aqua.aqualight.ui.tabs.devices.add.DeviceAddViewModel
@@ -101,7 +102,7 @@ internal class OwnerViewModelFactory(
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         check(modelClass != DeviceLightQuickSetupViewModel::class.java &&
-            modelClass != WaterAnalysisViewModel::class.java) {
+            modelClass != WaterAnalysisViewModel::class.java && modelClass != HealthObservationViewModel::class.java) {
             "This route requires CreationExtras for SavedStateHandle."
         }
         return createInternal(
@@ -117,7 +118,7 @@ internal class OwnerViewModelFactory(
         modelClass = modelClass,
         quickSetupSavedStateHandle = if (
             modelClass == DeviceLightQuickSetupViewModel::class.java ||
-            modelClass == WaterAnalysisViewModel::class.java
+            modelClass == WaterAnalysisViewModel::class.java || modelClass == HealthObservationViewModel::class.java
         ) {
             extras.createSavedStateHandle()
         } else {
@@ -217,6 +218,10 @@ internal class OwnerViewModelFactory(
                         notificationPreferences = notificationPreferenceUseCase
                     )
                 )
+            )
+            HealthObservationViewModel::class.java -> HealthObservationViewModel(
+                operations = createHealthObservationOperations(appContext, graph, waterContextCatalogs),
+                savedState = checkNotNull(quickSetupSavedStateHandle)
             )
             WaterAnalysisViewModel::class.java -> WaterAnalysisViewModel(
                 operations = createWaterAnalysisOperations(
@@ -396,6 +401,7 @@ internal class OwnerViewModelFactory(
             DeviceProvisioningProgressViewModel::class.java,
             AquariumTankViewModel::class.java,
             WaterAnalysisViewModel::class.java,
+            HealthObservationViewModel::class.java,
             MaintenanceViewModel::class.java,
             DeviceLightRootViewModel::class.java,
             DeviceLightAdaptationViewModel::class.java,

@@ -83,4 +83,6 @@ message StoredHealthObservationOrigin {
   string source_record_sha256 = 5;
   string restore_transaction_id = 6;
   optional int64 source_previous_observation_id = 7;
+  string source_request_id = 8;
+  string source_photo_uri = 9;
 }

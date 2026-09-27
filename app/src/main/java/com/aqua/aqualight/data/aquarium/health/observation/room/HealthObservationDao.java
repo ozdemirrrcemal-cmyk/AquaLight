@@ -49,6 +49,13 @@ public interface HealthObservationDao {
             + "ORDER BY observationId ASC LIMIT 50")
     List<HealthObservationEntity> ownerPage(String owner, long after);
 
+    @Query("SELECT COUNT(*) FROM health_observation WHERE ownerUid = :owner")
+    long countForOwner(String owner);
+
+    @Query("SELECT * FROM health_observation WHERE ownerUid = :owner AND restoreTransactionId = :transaction "
+            + "AND observationId > :after ORDER BY observationId ASC LIMIT 50")
+    List<HealthObservationEntity> restorePage(String owner, String transaction, long after);
+
     @Query("SELECT * FROM health_observation WHERE ownerUid = :owner AND tankId = :tank "
             + "AND observationId > :after ORDER BY observationId ASC LIMIT 50")
     List<HealthObservationEntity> tankPage(String owner, long tank, long after);

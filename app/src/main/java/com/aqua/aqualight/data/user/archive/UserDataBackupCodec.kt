@@ -30,10 +30,12 @@ internal class UserDataBackupCodec(
         manifest: UserDataBackupManifest,
         mediaByEntryName: Map<String, File>,
         destination: File,
-        waterHistoryFile: File? = null
+        waterHistoryFile: File? = null,
+        healthHistoryFile: File? = null
     ) {
-        validateEntryCount(mediaByEntryName.size + 2)
+        validateEntryCount(mediaByEntryName.size + BACKUP_METADATA_ENTRY_COUNT)
         validateWaterHistory(manifest, waterHistoryFile, writing = true)
+        HealthHistoryBackupIntegration.validateHistory(manifest, healthHistoryFile, writing = true)
         validator.validate(manifest, mediaByEntryName)
         requireStagingDirectory(destination, "Backup staging directory could not be created.")
         val manifestBytes = gson.toJson(manifest).toByteArray(StandardCharsets.UTF_8)
@@ -41,13 +43,13 @@ internal class UserDataBackupCodec(
             "Backup manifest exceeds the supported size."
         }
         require(manifestBytes.size.toLong() + mediaByEntryName.values.sumOf(File::length) +
-            requireNotNull(manifest.waterHistory).byteSize <=
+            requireNotNull(manifest.waterHistory).byteSize + requireNotNull(manifest.healthHistory).byteSize <=
             maxUncompressedArchiveBytes.toLong()) {
             "Backup exceeds the supported uncompressed archive size."
         }
         var completed = false
         try {
-            writeBackupArchive(destination, manifestBytes, mediaByEntryName, waterHistoryFile)
+            writeBackupArchive(destination, manifestBytes, mediaByEntryName, waterHistoryFile, healthHistoryFile)
             require(destination.length() in 1L..UserDataBackupLimits.MAX_ARCHIVE_BYTES.toLong()) {
                 "Backup archive size is invalid."
             }
@@ -74,17 +76,20 @@ internal class UserDataBackupCodec(
         val manifest = decodeManifest(entries.manifestJson)
         validator.validate(manifest, entries.media)
         validateWaterHistory(manifest, entries.history, writing = false)
+        HealthHistoryBackupIntegration.validateHistory(manifest, entries.healthHistory, writing = false)
         return DecodedUserDataBackup(
             manifest = manifest,
             mediaByEntryName = entries.media,
-            waterHistoryFile = entries.history
+            waterHistoryFile = entries.history,
+            healthHistoryFile = entries.healthHistory
         )
     }
 
     fun encodePortableExport(
         export: PortableUserDataExport,
         destination: File,
-        history: Pair<WaterHistoryArchiveReference, File>? = null
+        history: Pair<WaterHistoryArchiveReference, File>? = null,
+        healthHistory: Pair<HealthHistoryArchiveReference, File>? = null
     ) {
         require(export.format == USER_DATA_EXPORT_FORMAT)
         require(export.schemaVersion == USER_DATA_EXPORT_SCHEMA_VERSION)
@@ -92,7 +97,7 @@ internal class UserDataBackupCodec(
         requireStagingDirectory(destination, "Export staging directory could not be created.")
         var completed = false
         try {
-            writePortableExport(export, destination, history)
+            writePortableExport(export, destination, history, healthHistory)
             require(destination.length() in 1L..UserDataBackupLimits.MAX_ARCHIVE_BYTES.toLong()) {
                 "Portable export size is invalid."
             }
@@ -142,6 +147,7 @@ internal class UserDataBackupCodec(
         return ArchiveEntries(
             manifestJson = requireNotNull(manifestJson) { "Backup manifest is missing." },
             history = media.remove(WaterHistoryArchive.ENTRY),
+            healthHistory = media.remove(HealthHistoryArchive.ENTRY),
             media = media.toMap()
         )
     }
@@ -168,9 +174,9 @@ internal class UserDataBackupCodec(
                 )
             }
 
-            request.entryName == WaterHistoryArchive.ENTRY ||
+            request.entryName in HISTORY_ENTRIES ||
                 request.entryName.startsWith(UserDataBackupLimits.MEDIA_PREFIX) -> {
-                val isHistory = request.entryName == WaterHistoryArchive.ENTRY
+                val isHistory = request.entryName in HISTORY_ENTRIES
                 if (!isHistory) validator.requireValidMediaEntryName(request.entryName)
                 require(request.media[request.entryName] == null) {
                     "Backup contains a duplicate media entry."
@@ -244,7 +250,8 @@ internal class UserDataBackupCodec(
     private data class ArchiveEntries(
         val manifestJson: String,
         val media: Map<String, File>,
-        val history: File?
+        val history: File?,
+        val healthHistory: File?
     )
 
     private data class ArchiveEntryRequest(
@@ -271,11 +278,13 @@ private fun writeBackupArchive(
     destination: File,
     manifestBytes: ByteArray,
     mediaByEntryName: Map<String, File>,
-    waterHistoryFile: File?
+    waterHistoryFile: File?,
+    healthHistoryFile: File?
 ) {
     val rawOutput = destination.outputStream().buffered()
     LimitedOutputStream(rawOutput, UserDataBackupLimits.MAX_ARCHIVE_BYTES.toLong()).use {
-        limitedOutput -> writeBackupZip(limitedOutput, manifestBytes, mediaByEntryName, waterHistoryFile)
+        limitedOutput ->
+            writeBackupZip(limitedOutput, manifestBytes, mediaByEntryName, waterHistoryFile, healthHistoryFile)
     }
 }
 
@@ -283,7 +292,8 @@ private fun writeBackupZip(
     output: OutputStream,
     manifestBytes: ByteArray,
     mediaByEntryName: Map<String, File>,
-    waterHistoryFile: File?
+    waterHistoryFile: File?,
+    healthHistoryFile: File?
 ) {
     ZipOutputStream(output).use { zip ->
         writeBytesEntry(zip, UserDataBackupLimits.MANIFEST_ENTRY, manifestBytes)
@@ -291,6 +301,11 @@ private fun writeBackupZip(
             writeBytesEntry(zip, WaterHistoryArchive.ENTRY, WaterHistoryArchive.emptyBytes)
         } else {
             writeFileEntry(zip, WaterHistoryArchive.ENTRY, waterHistoryFile)
+        }
+        if (healthHistoryFile == null) {
+            writeBytesEntry(zip, HealthHistoryArchive.ENTRY, HealthHistoryArchive.emptyBytes)
+        } else {
+            writeFileEntry(zip, HealthHistoryArchive.ENTRY, healthHistoryFile)
         }
         mediaByEntryName.toSortedMap().forEach { (entryName, file) ->
             UserDataBackupValidator().requireValidMediaEntryName(entryName)
@@ -300,12 +315,13 @@ private fun writeBackupZip(
 }
 
 private fun writePortableExport(export: PortableUserDataExport, destination: File,
-    history: Pair<WaterHistoryArchiveReference, File>?) {
+    history: Pair<WaterHistoryArchiveReference, File>?,
+    healthHistory: Pair<HealthHistoryArchiveReference, File>?) {
     val rawOutput = destination.outputStream().buffered()
     LimitedOutputStream(rawOutput, UserDataBackupLimits.MAX_ARCHIVE_BYTES.toLong()).use {
         limitedOutput ->
         OutputStreamWriter(limitedOutput, StandardCharsets.UTF_8).use { writer ->
-            WaterHistoryPortableWriter.write(export, writer, history)
+            WaterHistoryPortableWriter.write(export, writer, history, healthHistory)
             writer.flush()
         }
     }
@@ -326,7 +342,7 @@ private fun writeFileEntry(
     entryName: String,
     source: File
 ) {
-    val limit = if (entryName == WaterHistoryArchive.ENTRY) UserDataBackupLimits.MAX_UNCOMPRESSED_ARCHIVE_BYTES
+    val limit = if (entryName in HISTORY_ENTRIES) UserDataBackupLimits.MAX_UNCOMPRESSED_ARCHIVE_BYTES
     else UserDataBackupLimits.MAX_MEDIA_ENTRY_BYTES
     require(source.isFile && source.length() in 1L..limit.toLong()) {
         "Backup media source size is invalid."
@@ -394,3 +410,7 @@ private fun validateWaterHistory(manifest: UserDataBackupManifest, history: File
         WaterHistoryArchive.validate(reference, history, manifest.aquariums.map { it.id }.toSet())
     }
 }
+
+private val HISTORY_ENTRIES = setOf(WaterHistoryArchive.ENTRY, HealthHistoryArchive.ENTRY)
+
+private const val BACKUP_METADATA_ENTRY_COUNT = 3

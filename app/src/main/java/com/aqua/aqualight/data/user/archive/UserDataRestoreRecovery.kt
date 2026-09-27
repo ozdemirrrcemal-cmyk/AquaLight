@@ -39,7 +39,10 @@ internal class UserDataRestoreRecovery(
                 Result(0, 0, 0, true)
             }
             else -> withContext(NonCancellable) {
-                pending.waterTransactionId?.let { dataSources.waterHistory.rollback(owner, it) }
+                pending.waterTransactionId?.let {
+                    dataSources.healthHistory.rollback(owner, it)
+                    dataSources.waterHistory.rollback(owner, it)
+                }
 
                 if (pending.exactMutationTracking) {
                     rollbackExact(owner, pending)
@@ -272,13 +275,19 @@ internal class UserDataRestoreRecovery(
             ) {
                 "Restore recovery requires the active owner assignment repository."
             }
+            val archiveTransactions = com.aqua.aqualight.data.user.archive.UserDataRestoreJournal(appContext)
             val archiveSources = UserDataArchiveDataSources(
                 aquariumStore = AquariumTankDataStoreManager(appContext),
                 careTaskStore = CareTaskDataStoreManager.create(appContext),
                 assignmentRepository = assignmentRepository,
                 waterHistory = WaterAnalysisDataStoreManager(appContext).archiveStore,
+                healthHistory = com.aqua.aqualight.data.aquarium.health.observation.HealthObservationArchiveStore(
+                    appContext, { uid ->
+                        AquariumTankDataStoreManager(appContext).tanksSnapshotForOwner(uid).map { it.id }.toSet()
+                    },
+                    archiveTransactions),
                 session = null,
-                restoreTransactions = UserDataRestoreJournal(appContext)
+                restoreTransactions = archiveTransactions
             )
             val restoreSources = UserDataRestoreDataSources.from(archiveSources)
             val transactions = archiveSources.restoreTransactions

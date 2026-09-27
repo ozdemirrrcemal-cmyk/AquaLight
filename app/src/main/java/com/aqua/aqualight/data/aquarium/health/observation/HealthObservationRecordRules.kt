@@ -29,6 +29,7 @@ internal object HealthObservationRecordRules {
         validateSubject(stored)
         validateWater(stored)
         HealthObservationAssessmentCodec.decode(stored.assessment)
+        HealthObservationImportIdentity.validate(stored)
     }
 
     private fun validateFollowUp(stored: StoredHealthObservation) {

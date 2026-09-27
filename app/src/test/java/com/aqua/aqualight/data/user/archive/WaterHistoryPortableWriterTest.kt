@@ -32,7 +32,7 @@ class WaterHistoryPortableWriterTest {
         assertEquals(0.0, measurement.get("value").asDouble, 0.0)
         assertEquals("NO3_N", measurement.get("basis").asString)
         assertEquals("TEST_KIT", measurement.get("method").asString)
-        assertEquals(3, document.get("schemaVersion").asInt)
+        assertEquals(4, document.get("schemaVersion").asInt)
     }
 
     private fun export(): PortableUserDataExport {

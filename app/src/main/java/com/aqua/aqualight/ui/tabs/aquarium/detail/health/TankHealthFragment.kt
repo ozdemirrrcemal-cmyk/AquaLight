@@ -72,6 +72,10 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
     }
 
     private fun setupContent() {
+        binding.tabAlgaeControl.setOnClickListener {
+            findNavController().navigateSafelyFrom(R.id.tankHealthFragment,
+                TankHealthFragmentDirections.actionTankHealthFragmentToAlgaeControlFragment(args.tankId))
+        }
         val adapter = TankHealthContentAdapter(onAddAnalysisClick = ::openAddAnalysis)
         contentAdapter = adapter
 

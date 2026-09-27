@@ -15,8 +15,8 @@ internal object UserDataBackupLimits {
     const val MAX_UNCOMPRESSED_ARCHIVE_BYTES = 64 * 1024 * 1024
     const val MAX_MEDIA_ENTRY_BYTES = 8 * 1024 * 1024
     const val MAX_MANIFEST_BYTES = 4 * 1024 * 1024
-    // One manifest and one history stream plus up to 4,000 photos; byte ceilings also bound archive extraction.
-    const val MAX_ZIP_ENTRIES = 4_002
+    // One manifest and two history streams plus up to 4,000 photos; byte ceilings also bound archive extraction.
+    const val MAX_ZIP_ENTRIES = 4_003
     const val MAX_AQUARIUMS = 100
     const val MAX_CARE_TASKS = 10_000
     const val MAX_DEVICE_ASSIGNMENTS = 500
@@ -25,7 +25,7 @@ internal object UserDataBackupLimits {
     const val BUFFER_SIZE = 8 * 1024
 
     val mediaEntryPattern =
-        Regex("media/tanks/[1-9][0-9]*(?:_(?:plant|livestock)_[1-9][0-9]*)?\\.jpg")
+        Regex("media/tanks/[1-9][0-9]*(?:_(?:plant|livestock|health)_[1-9][0-9]*)?\\.jpg")
     val sha256Pattern = Regex("[0-9a-fA-F]{64}")
 }
 
@@ -39,7 +39,8 @@ internal class UserDataBackupValidator {
         val tankIds = validateAquariums(manifest.aquariums)
         validateCareTasks(manifest.careTasks, tankIds)
         validateAssignments(manifest.deviceAssignments, tankIds)
-        validateMedia(manifest.aquariums, mediaByEntryName)
+        val healthPhotos = HealthHistoryBackupIntegration.validateMedia(manifest, mediaByEntryName)
+        validateMedia(manifest.aquariums, mediaByEntryName.filterKeys { it !in healthPhotos })
     }
 
     fun requireSafeEntryName(entryName: String) {
@@ -248,7 +249,7 @@ private fun requireValidArchiveMediaEntryName(entryName: String) {
     }
 }
 
-private fun validateMediaReference(
+internal fun validateMediaReference(
     reference: ArchiveMediaReference,
     expectedEntryName: String,
     mediaByEntryName: Map<String, File>

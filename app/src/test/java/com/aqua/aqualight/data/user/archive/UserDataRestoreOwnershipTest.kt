@@ -164,6 +164,8 @@ private class ExactRecoveryHarness(
     val transactions = ExactRecoveryTransactions(pending)
 
     private val sources = UserDataRestoreDataSources(
+        healthHistory = UserDataRestoreDataSources.HealthHistoryDataSource(
+            restore = { error("No health history in this fixture") }, rollback = { _, _ -> }),
         requireDeletionSettled = {},
         waterHistory = UserDataRestoreDataSources.WaterHistoryDataSource(
             restore = { error("This fixture does not provide analysis storage.") }, rollback = { _, _ -> }),

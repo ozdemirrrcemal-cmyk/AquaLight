@@ -37,6 +37,7 @@ import com.aqua.aqualight.data.aquarium.catalog.livestock.DefaultLivestockWaterA
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDeletionStores
 import com.aqua.aqualight.composition.createWaterAnalysisOperations
+import com.aqua.aqualight.composition.createHealthObservationOperations
 import com.aqua.aqualight.composition.WaterContextCatalogs
 import com.aqua.aqualight.data.aquarium.health.WaterAnalysisDataStoreManager
 import com.aqua.aqualight.data.auth.OwnerSessionMutationBarrier
@@ -87,6 +88,7 @@ import com.aqua.aqualight.platform.vision.ProvisioningQrFrameDecoderFactory
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.health.WaterAnalysisViewModel
+import com.aqua.aqualight.ui.tabs.aquarium.detail.health.HealthObservationViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectViewModel
 import com.aqua.aqualight.ui.tabs.devices.DevicesViewModel
 import com.aqua.aqualight.ui.tabs.devices.add.DeviceAddViewModel
@@ -248,7 +250,7 @@ private class ReleaseSmokeViewModelFactory(
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         check(modelClass != DeviceLightQuickSetupViewModel::class.java &&
-            modelClass != WaterAnalysisViewModel::class.java) {
+            modelClass != WaterAnalysisViewModel::class.java && modelClass != HealthObservationViewModel::class.java) {
             "This route requires CreationExtras for SavedStateHandle."
         }
         return createInternal(
@@ -264,7 +266,7 @@ private class ReleaseSmokeViewModelFactory(
         modelClass = modelClass,
         quickSetupSavedStateHandle = if (
             modelClass == DeviceLightQuickSetupViewModel::class.java ||
-            modelClass == WaterAnalysisViewModel::class.java
+            modelClass == WaterAnalysisViewModel::class.java || modelClass == HealthObservationViewModel::class.java
         ) {
             extras.createSavedStateHandle()
         } else {
@@ -318,6 +320,10 @@ private class ReleaseSmokeViewModelFactory(
                 textResolver = appTextResolver
             )
         modelClass.isAssignableFrom(AquariumTankViewModel::class.java) -> createAquariumTankViewModel()
+        modelClass.isAssignableFrom(HealthObservationViewModel::class.java) ->
+            HealthObservationViewModel(
+                createHealthObservationOperations(appContext, waterAnalysisStore, tankStore,
+                    waterAnalysisSession, waterContextCatalogs), checkNotNull(savedStateHandle))
         modelClass.isAssignableFrom(WaterAnalysisViewModel::class.java) ->
             WaterAnalysisViewModel(
                 operations = createWaterAnalysisOperations(

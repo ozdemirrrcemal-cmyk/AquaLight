@@ -9,6 +9,7 @@ import com.aqua.aqualight.application.aquarium.health.water.WaterAssessmentEntit
 import com.aqua.aqualight.application.aquarium.health.water.WaterAssessmentEntityKind
 import com.aqua.aqualight.application.aquarium.health.water.WaterAssessmentGap
 import com.aqua.aqualight.application.aquarium.health.water.WaterQualityAssessment
+import com.aqua.aqualight.application.aquarium.health.water.WaterRuleFinding
 import com.aqua.aqualight.i18n.LocaleFormatter
 
 /** Uses only the frozen event. Names and ranges never come from the current tank or catalog. */
@@ -38,7 +39,28 @@ internal object WaterAssessmentFindingPresentation {
     )
 
     fun lines(context: Context, result: WaterQualityAssessment): List<String> = buildList {
-        result.findings.filter { it.direction != null }.forEach { finding ->
+        addAll(measuredLines(context, result.findings))
+        result.conflicts.forEach { conflict ->
+            add(context.getString(R.string.water_finding_conflict, label(context, conflict.first.entity),
+                label(context, conflict.second.entity), context.getString(parameters.getValue(conflict.parameter))))
+        }
+        result.habitatConflicts.forEach { conflict ->
+            add(context.getString(R.string.water_finding_habitat, label(context, conflict.entity)))
+        }
+        addAll(gapLines(context, result.findings))
+        if (result.recommendations.any { it.code == "VERIFY_TEST_RESULT" }) {
+            add(context.getString(R.string.water_recommendation_verify))
+        }
+        if (result.conflicts.isNotEmpty() || result.habitatConflicts.isNotEmpty()) {
+            add(context.getString(R.string.water_recommendation_habitat))
+        }
+    }
+
+    fun findingLines(context: Context, findings: List<WaterRuleFinding>): List<String> =
+        measuredLines(context, findings) + gapLines(context, findings)
+
+    private fun measuredLines(context: Context, findings: List<WaterRuleFinding>): List<String> = buildList {
+        findings.filter { it.direction != null }.forEach { finding ->
             val status = when (finding.direction) {
                 WaterAssessmentDirection.BELOW -> R.string.water_finding_below
                 WaterAssessmentDirection.ABOVE -> R.string.water_finding_above
@@ -48,21 +70,11 @@ internal object WaterAssessmentFindingPresentation {
                 context.getString(parameters.getValue(finding.parameter)), context.getString(status),
                 range(context, requireNotNull(finding.expectedRange)), unit(finding.parameter)))
         }
-        result.conflicts.forEach { conflict ->
-            add(context.getString(R.string.water_finding_conflict, label(context, conflict.first.entity),
-                label(context, conflict.second.entity), context.getString(parameters.getValue(conflict.parameter))))
-        }
-        result.habitatConflicts.forEach { conflict ->
-            add(context.getString(R.string.water_finding_habitat, label(context, conflict.entity)))
-        }
-        result.findings.mapNotNull { it.gap }.groupingBy { it }.eachCount().toSortedMap().forEach { (gap, count) ->
+    }
+
+    private fun gapLines(context: Context, findings: List<WaterRuleFinding>): List<String> = buildList {
+        findings.mapNotNull { it.gap }.groupingBy { it }.eachCount().toSortedMap().forEach { (gap, count) ->
             add(context.getString(R.string.water_gap_line, count, context.getString(gaps.getValue(gap))))
-        }
-        if (result.recommendations.any { it.code == "VERIFY_TEST_RESULT" }) {
-            add(context.getString(R.string.water_recommendation_verify))
-        }
-        if (result.conflicts.isNotEmpty() || result.habitatConflicts.isNotEmpty()) {
-            add(context.getString(R.string.water_recommendation_habitat))
         }
     }
 

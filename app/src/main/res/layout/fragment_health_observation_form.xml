@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+ android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical"
+ android:background="@color/background_color">
+ <include android:id="@+id/appHeader" layout="@layout/layout_aqua_header"
+  android:layout_width="match_parent" android:layout_height="wrap_content" />
+<androidx.core.widget.NestedScrollView android:layout_width="match_parent" android:layout_height="0dp"
+ android:layout_weight="1" android:fillViewport="true" android:clipToPadding="false" android:padding="@dimen/aqua_size_14">
+ <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+<TextView android:id="@+id/status" android:layout_width="match_parent" android:layout_height="wrap_content"
+ android:padding="@dimen/aqua_size_8" android:textColor="@color/aqua_card_text_primary"
+ android:textSize="@dimen/aqua_text_size_body" android:accessibilityLiveRegion="polite"  />
+<com.google.android.material.button.MaterialButton android:id="@+id/retry"
+ style="@style/Widget.Aqua.Button.Secondary" android:maxLines="3" android:ellipsize="none" android:layout_width="match_parent" android:layout_height="wrap_content"
+ android:minHeight="@dimen/aqua_size_48" android:text="@string/health_retry" />
+<TextView android:id="@+id/parent" android:layout_width="match_parent" android:layout_height="wrap_content"
+ android:padding="@dimen/aqua_size_8" android:textColor="@color/aqua_card_text_primary"
+ android:textSize="@dimen/aqua_text_size_body" android:accessibilityLiveRegion="polite"  />
+<com.google.android.material.textfield.TextInputLayout android:id="@+id/subjectInput"
+ style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+ android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/health_select_subject">
+ <com.google.android.material.textfield.MaterialAutoCompleteTextView android:id="@+id/subject"
+ android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="none"
+ android:minHeight="@dimen/aqua_size_48" />
+</com.google.android.material.textfield.TextInputLayout>
+<TextView android:id="@+id/dateLabel" android:layout_width="match_parent" android:layout_height="wrap_content"
+ android:padding="@dimen/aqua_size_8" android:textColor="@color/aqua_card_text_primary"
+ android:textSize="@dimen/aqua_text_size_body" android:accessibilityLiveRegion="polite" android:text="@string/health_date" />
+<com.google.android.material.button.MaterialButton android:id="@+id/date"
+ style="@style/Widget.Aqua.Button.Secondary" android:maxLines="3" android:ellipsize="none" android:layout_width="match_parent" android:layout_height="wrap_content"
+ android:minHeight="@dimen/aqua_size_48" android:text="@string/health_date" />
+<TextView android:id="@+id/timeLabel" android:layout_width="match_parent" android:layout_height="wrap_content"
+ android:padding="@dimen/aqua_size_8" android:textColor="@color/aqua_card_text_primary"
+ android:textSize="@dimen/aqua_text_size_body" android:accessibilityLiveRegion="polite" android:text="@string/health_time" />
+<com.google.android.material.button.MaterialButton android:id="@+id/time"
+ style="@style/Widget.Aqua.Button.Secondary" android:maxLines="3" android:ellipsize="none" android:layout_width="match_parent" android:layout_height="wrap_content"
+ android:minHeight="@dimen/aqua_size_48" android:text="@string/health_time" />
+<TextView android:id="@+id/phasesLabel" android:layout_width="match_parent" android:layout_height="wrap_content"
+ android:padding="@dimen/aqua_size_8" android:textColor="@color/aqua_card_text_primary"
+ android:textSize="@dimen/aqua_text_size_body" android:accessibilityLiveRegion="polite" android:text="@string/health_phase" />
+<LinearLayout android:id="@+id/phases" android:orientation="vertical"
+ android:layout_width="match_parent" android:layout_height="wrap_content" />
+<TextView android:id="@+id/findingsLabel" android:layout_width="match_parent" android:layout_height="wrap_content"
+ android:padding="@dimen/aqua_size_8" android:textColor="@color/aqua_card_text_primary"
+ android:textSize="@dimen/aqua_text_size_body" android:accessibilityLiveRegion="polite" android:text="@string/health_findings" />
+<LinearLayout android:id="@+id/findings" android:orientation="vertical"
+ android:layout_width="match_parent" android:layout_height="wrap_content" />
+<TextView android:id="@+id/locationsLabel" android:layout_width="match_parent" android:layout_height="wrap_content"
+ android:padding="@dimen/aqua_size_8" android:textColor="@color/aqua_card_text_primary"
+ android:textSize="@dimen/aqua_text_size_body" android:accessibilityLiveRegion="polite" android:text="@string/health_locations" />
+<LinearLayout android:id="@+id/locations" android:orientation="vertical"
+ android:layout_width="match_parent" android:layout_height="wrap_content" />
+<TextView android:id="@+id/appearancesLabel" android:layout_width="match_parent" android:layout_height="wrap_content"
+ android:padding="@dimen/aqua_size_8" android:textColor="@color/aqua_card_text_primary"
+ android:textSize="@dimen/aqua_text_size_body" android:accessibilityLiveRegion="polite" android:text="@string/health_appearances" />
+<LinearLayout android:id="@+id/appearances" android:orientation="vertical"
+ android:layout_width="match_parent" android:layout_height="wrap_content" />
+<TextView android:id="@+id/extentLabel" android:layout_width="match_parent" android:layout_height="wrap_content"
+ android:padding="@dimen/aqua_size_8" android:textColor="@color/aqua_card_text_primary"
+ android:textSize="@dimen/aqua_text_size_body" android:accessibilityLiveRegion="polite" android:text="@string/health_extent" />
+<LinearLayout android:id="@+id/extent" android:orientation="vertical"
+ android:layout_width="match_parent" android:layout_height="wrap_content" />
+<com.google.android.material.textfield.TextInputLayout android:id="@+id/affectedInput"
+ android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/health_affected">
+ <com.google.android.material.textfield.TextInputEditText android:id="@+id/affected"
+ android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="@dimen/aqua_size_48"
+ android:inputType="number" android:maxLength="4000" />
+ </com.google.android.material.textfield.TextInputLayout>
+<TextView android:id="@+id/operatingNote" android:layout_width="match_parent" android:layout_height="wrap_content"
+ android:padding="@dimen/aqua_size_8" android:textColor="@color/aqua_card_text_primary"
+ android:textSize="@dimen/aqua_text_size_body" android:accessibilityLiveRegion="polite" android:text="@string/health_operating_note" />
+<com.google.android.material.textfield.TextInputLayout android:id="@+id/photoperiodInput"
+ android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/health_photoperiod">
+ <com.google.android.material.textfield.TextInputEditText android:id="@+id/photoperiod"
+ android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="@dimen/aqua_size_48"
+ android:inputType="number" android:maxLength="4000" />
+ </com.google.android.material.textfield.TextInputLayout>
+<com.google.android.material.textfield.TextInputLayout android:id="@+id/lightInput"
+ android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/health_light">
+ <com.google.android.material.textfield.TextInputEditText android:id="@+id/light"
+ android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="@dimen/aqua_size_48"
+ android:inputType="textMultiLine" android:maxLength="4000" />
+ </com.google.android.material.textfield.TextInputLayout>
+<TextView android:id="@+id/co2Label" android:layout_width="match_parent" android:layout_height="wrap_content"
+ android:padding="@dimen/aqua_size_8" android:textColor="@color/aqua_card_text_primary"
+ android:textSize="@dimen/aqua_text_size_body" android:accessibilityLiveRegion="polite" android:text="@string/health_co2" />
+<LinearLayout android:id="@+id/co2" android:orientation="vertical"
+ android:layout_width="match_parent" android:layout_height="wrap_content" />
+<com.google.android.material.textfield.TextInputLayout android:id="@+id/dosingInput"
+ android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/health_dosing">
+ <com.google.android.material.textfield.TextInputEditText android:id="@+id/dosing"
+ android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="@dimen/aqua_size_48"
+ android:inputType="textMultiLine" android:maxLength="4000" />
+ </com.google.android.material.textfield.TextInputLayout>
+<com.google.android.material.textfield.TextInputLayout android:id="@+id/notesInput"
+ android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/health_notes">
+ <com.google.android.material.textfield.TextInputEditText android:id="@+id/notes"
+ android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="@dimen/aqua_size_48"
+ android:inputType="textMultiLine" android:maxLength="4000" />
+ </com.google.android.material.textfield.TextInputLayout>
+<ImageView android:id="@+id/photo" android:layout_width="match_parent" android:layout_height="@dimen/aqua_size_160"
+ android:contentDescription="@string/health_photo" android:scaleType="centerInside" />
+<com.google.android.material.button.MaterialButton android:id="@+id/photoAction"
+ style="@style/Widget.Aqua.Button.Secondary" android:maxLines="3" android:ellipsize="none" android:layout_width="match_parent" android:layout_height="wrap_content"
+ android:minHeight="@dimen/aqua_size_48" android:text="@string/health_photo" />
+<TextView android:id="@+id/policy" android:layout_width="match_parent" android:layout_height="wrap_content"
+ android:padding="@dimen/aqua_size_8" android:textColor="@color/aqua_card_text_primary"
+ android:textSize="@dimen/aqua_text_size_body" android:accessibilityLiveRegion="polite" android:text="@string/health_water_link_policy" />
+<TextView android:id="@+id/safety" android:layout_width="match_parent" android:layout_height="wrap_content"
+ android:padding="@dimen/aqua_size_8" android:textColor="@color/aqua_card_text_primary"
+ android:textSize="@dimen/aqua_text_size_body" android:accessibilityLiveRegion="polite" android:text="@string/health_no_diagnosis" />
+<com.google.android.material.button.MaterialButton android:id="@+id/save"
+ style="@style/Widget.Aqua.Button.Primary" android:maxLines="3" android:ellipsize="none" android:layout_width="match_parent" android:layout_height="wrap_content"
+ android:minHeight="@dimen/aqua_size_48" android:text="@string/health_save" />
+</LinearLayout></androidx.core.widget.NestedScrollView>
+</LinearLayout>
