@@ -269,6 +269,7 @@ private class OwnerSessionOpenFlow(
         normalizedOwnerUid: String
     ): OwnerRepairCounts {
         val assignmentRepository = TankDeviceAssignmentRepositoryProvider.get(appContext)
+        WaterAnalysisDataStoreManager(appContext).resumePendingCutover(normalizedOwnerUid)
         UserDataRestoreRecovery.create(appContext, normalizedOwnerUid).recover(normalizedOwnerUid)
         val assignmentCount = when (
             val repairResult = assignmentRepository.repairOwnerAssignments()

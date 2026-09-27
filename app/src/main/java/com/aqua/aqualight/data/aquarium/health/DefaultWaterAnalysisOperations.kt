@@ -21,8 +21,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.onEach
 
 internal class DefaultWaterAnalysisOperations(
     private val store: WaterAnalysisDataStoreManager,
@@ -31,22 +32,18 @@ internal class DefaultWaterAnalysisOperations(
 ) : WaterAnalysisOperations {
 
     override fun historyPage(tankId: Long, cursor: WaterHistoryCursor?, newer: Boolean): Flow<WaterHistoryPage> =
-        store.analysesForTankFlow(session.ownerUid, tankId).onStart { session.requireCurrent() }.map { analyses ->
-            session.requireCurrent()
-            WaterAnalysisProtoPages.page(analyses, tankId, cursor, newer)
-        }.withWaterReadFailures()
+        roomRead { it.page(session.ownerUid, tankId, cursor, newer) }
 
     override fun latestAnalysis(tankId: Long): Flow<WaterAnalysisSnapshot?> =
-        store.latestAnalysisFlow(session.ownerUid, tankId).onStart { session.requireCurrent() }.map { record ->
-            session.requireCurrent()
-            record?.toApplicationSnapshot()
-        }.withWaterReadFailures()
+        roomRead { it.latest(session.ownerUid, tankId) }
 
     override fun analysis(tankId: Long, analysisId: Long): Flow<WaterAnalysisSnapshot?> =
-        store.analysisFlow(session.ownerUid, tankId, analysisId).onStart { session.requireCurrent() }.map { record ->
-            session.requireCurrent()
-            record?.toApplicationSnapshot()
-        }.withWaterReadFailures()
+        roomRead { it.record(session.ownerUid, tankId, analysisId) }
+
+    private fun <T> roomRead(query: (WaterAnalysisRoomQueries) -> Flow<T>): Flow<T> = flow {
+        store.activate(session)
+        emitAll(query(store.room.queries))
+    }.onEach { session.requireCurrent() }.withWaterReadFailures()
 
     override suspend fun saveAnalysis(input: WaterAnalysisInput): Long {
         session.requireCurrent()

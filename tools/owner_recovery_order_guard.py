@@ -12,6 +12,7 @@ def violations(root: Path) -> list[str]:
     body = re.sub(r'\s+', '', body.split('private suspend fun abortTransition', 1)[0])
     ordered = (
         'TankDeviceAssignmentRepositoryProvider.get(appContext)',
+        'WaterAnalysisDataStoreManager(appContext).resumePendingCutover(normalizedOwnerUid)',
         'UserDataRestoreRecovery.create(appContext,normalizedOwnerUid).recover(normalizedOwnerUid)',
         'assignmentRepository.repairOwnerAssignments()',
         'TankCareIntegrityRecovery',
@@ -20,7 +21,7 @@ def violations(root: Path) -> list[str]:
     positions = [body.find(token) for token in ordered]
     errors = []
     if any(position < 0 for position in positions) or positions != sorted(positions):
-        errors.append(f'{COORDINATOR}: bind assignment repository, recover archive, then repair dependent data')
+        errors.append(f'{COORDINATOR}: bind repository, resume water cutover, recover archive, then repair dependent data')
     if 'UserDataRestoreRecovery' in (root / SERVICES).read_text():
         errors.append(f'{SERVICES}: archive recovery cannot wait until services start after data repair')
     return errors

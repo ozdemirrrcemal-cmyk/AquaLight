@@ -4,6 +4,7 @@ import com.aqua.aqualight.data.aquarium.OwnerTankMutationGate
 import com.aqua.aqualight.data.aquarium.health.room.WaterAnalysisDatabase
 import com.aqua.aqualight.data.auth.OwnerSessionWriteLease
 import com.aqua.aqualight.data.care.integrity.TankCareIntegrityJournal
+import com.aqua.aqualight.data.user.UserDataScope
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
@@ -21,8 +22,8 @@ internal class WaterAnalysisRoomWriter(
 ) {
     private val commits = WaterAnalysisRoomCommit(database)
 
-    suspend fun create(draft: WaterAnalysisDraftRecord, prepare: suspend () -> StoredWaterEvaluation): Long =
-        session.withWrite {
+    suspend fun create(draft: WaterAnalysisDraftRecord, prepare: suspend () -> StoredWaterEvaluation?): Long =
+        withOwnerWrite {
             val frozen = draft.copy(measurements = draft.measurements.toList())
             OwnerTankMutationGate.shared.withTanks(session.ownerUid, listOf(frozen.tankId)) {
                 requireTank(session.ownerUid, frozen.tankId)
@@ -31,15 +32,16 @@ internal class WaterAnalysisRoomWriter(
             }
         }
 
-    suspend fun delete(tankId: Long, analysisId: Long) = session.withWrite {
+    suspend fun delete(tankId: Long, analysisId: Long) = withOwnerWrite {
         require(tankId > 0L && analysisId > 0L)
         OwnerTankMutationGate.shared.withTanks(session.ownerUid, listOf(tankId)) {
+            requireTank(session.ownerUid, tankId)
             awaitCommit { commits.delete(session.ownerUid, tankId, analysisId, session::requireCurrent) }
         }
     }
 
     private suspend fun createUnderGate(draft: WaterAnalysisDraftRecord,
-        prepare: suspend () -> StoredWaterEvaluation): Long {
+        prepare: suspend () -> StoredWaterEvaluation?): Long {
         val evaluation = prepare()
         return awaitCommit {
             commits.create(session.ownerUid, draft, evaluation, nowMillis()) {
@@ -56,5 +58,9 @@ internal class WaterAnalysisRoomWriter(
         val result = withContext(NonCancellable + dispatcher) { block() }
         currentCoroutineContext().ensureActive()
         return result
+    }
+
+    private suspend fun <T> withOwnerWrite(block: suspend () -> T): T = session.withWrite {
+        UserDataScope.withOwnerUid(session.ownerUid, block)
     }
 }

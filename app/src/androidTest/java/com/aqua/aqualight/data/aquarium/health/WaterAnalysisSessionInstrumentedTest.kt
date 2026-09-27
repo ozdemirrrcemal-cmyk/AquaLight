@@ -123,7 +123,7 @@ class WaterAnalysisSessionInstrumentedTest {
                 }
                 queued.first.await()
                 assertTrue(queued.second.await().exceptionOrNull() is OwnerSessionExpiredException)
-                assertTrue(fixture.store.analysesForOwnerFlow(fixture.owner).first().isEmpty())
+                assertTrue(waterHistoryTestRows(fixture.context, fixture.owner).isEmpty())
             }
         }
     }
@@ -157,7 +157,7 @@ class WaterAnalysisSessionInstrumentedTest {
                 collector.join()
                 assertEquals(listOf(firstId), received)
                 UserDataScope.withOwnerUid(fixture.otherOwner) {
-                    val firstOwnerRecords = fixture.store.analysesForOwnerFlow(fixture.owner).first()
+                    val firstOwnerRecords = waterHistoryTestRows(fixture.context, fixture.owner)
                     assertEquals(listOf(firstId), firstOwnerRecords.map { it.id })
                     assertEquals(listOf(secondId), newOperations.historyPage(secondTank).first().records.map { it.id })
                 }
@@ -182,7 +182,7 @@ class WaterAnalysisSessionInstrumentedTest {
             val id = operations.saveAnalysis(input)
             assertEquals(id, operations.saveAnalysis(input))
             assertEquals(1, captures)
-            val stored = fixture.store.analysesForTankFlow(fixture.owner, tankId).first().single()
+            val stored = waterHistoryTestRows(fixture.context, fixture.owner, tankId).single()
             assertTrue(stored.evaluation != null)
             val reopened = operations.analysis(tankId, id).first()!!
             assertEquals("context-v1", reopened.assessment?.contextRevision)
@@ -198,7 +198,7 @@ class WaterAnalysisSessionInstrumentedTest {
                 throw IllegalStateException("context read failed")
             }
             assertTrue(runCatching { operations.saveAnalysis(input(tankId)) }.isFailure)
-            assertTrue(fixture.store.analysesForTankFlow(fixture.owner, tankId).first().isEmpty())
+            assertTrue(waterHistoryTestRows(fixture.context, fixture.owner, tankId).isEmpty())
         }
     }
 
@@ -251,7 +251,7 @@ class WaterAnalysisSessionInstrumentedTest {
         ))
     )
 
-    private class Fixture(context: Context) {
+    private class Fixture(val context: Context) {
         val owner = "water-session-${UUID.randomUUID()}"
         val otherOwner = "water-other-${UUID.randomUUID()}"
         val session = OwnerSessionTestFixture(owner)

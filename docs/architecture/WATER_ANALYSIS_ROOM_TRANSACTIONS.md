@@ -1,9 +1,46 @@
 # Water Analysis Room transactions and bounded deletion staging
 
-Implementation date: 27 September 2026. Production still uses the existing Proto
-facade. These Room components are implemented and locally verified; composition
-cutover, cross-store coordinator binding and archive integration remain open.
-They are not a claim of Water Quality release acceptance.
+Implementation continuation: 27 September 2026. Production now binds event reads,
+new writes, exact deletion and archive/recovery authority to Room after verified
+owner cutover. The historical checkpoint notes below describe their original
+Proto state; the current binding is described here. This is not a claim of all
+Water Quality or health-screen release gates being accepted.
+
+## Live authority and restart continuation
+
+`WaterAnalysisRoomRuntime` composes Room queries/writes, migration, deletion and
+archive behind the existing manager/application interfaces. UI constructs no
+store or factory, and all existing central destinations/directions are retained.
+Latest/detail and bidirectional history issue indexed owner/tank queries; the
+old full-history projection exists only as a reference algorithm in unit tests.
+
+First feature admission holds the immutable session barrier followed by the
+existing owner archive gate. It refuses unfinished restore/deletion work, writes
+an atomic owner-only copy of the original Proto bytes, resumes 50-row migration
+checkpoints, verifies counts/checksums and commits ACTIVE with retry identities.
+The original multi-owner Proto file is retained. Another owner's later legacy
+writes cannot change this owner's frozen source. Changed owner input is rejected
+without overwriting either source or partially copied rows.
+
+Once ACTIVE, no feature/archive/deletion read falls back to Proto and new events
+are written only to Room. Recovery dispatches by durable authority before opening
+feature UI. A partial copy blocks further legacy archive/deletion mutations;
+owner startup resumes it under the transition barrier before archive recovery,
+then runs assignment/deletion/orphan repair in the existing order. A source file
+created before the first checkpoint also triggers this resume. Owner cleanup
+removes legacy rows, then retained source, then the Room authority/data in that
+order, so interruption cannot authorize resurrection. Request tombstones survive
+individual/tank/orphan deletion; other owners remain separate.
+
+`WaterAnalysisCutoverInstrumentedTest` adds six device scenarios: frozen source
+resume after another owner's change; ACTIVE restart with legacy reads prohibited;
+changed source rejection; pending restore/deletion admission; bounded orphan
+repair with retained retry identities; and owner cleanup/reopen isolation.
+`WaterAnalysisSessionInstrumentedTest` and the existing multi-tank coordinator
+suite now exercise the live Room manager. Their original identity, payload,
+rollback and cancellation assertions remain. The new device scenarios must pass
+on this continuation's CI before M.3–M.7 can be accepted. The earlier `9f80eb2d`
+163-test/minified API 27/API 36 result covers the preceding staged components.
 
 ## Application read/delete boundary continuation
 

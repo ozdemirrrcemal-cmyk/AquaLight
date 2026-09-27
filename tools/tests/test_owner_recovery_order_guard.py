@@ -10,6 +10,19 @@ SPEC.loader.exec_module(guard)
 
 
 class OwnerRecoveryOrderGuardTest(unittest.TestCase):
+    def test_incomplete_water_cutover_must_resume_before_archive_recovery(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for relative in (guard.COORDINATOR, guard.SERVICES):
+                target = root / relative
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_text((MODULE_PATH.parent.parent / relative).read_text())
+            coordinator = root / guard.COORDINATOR
+            resume = 'WaterAnalysisDataStoreManager(appContext).resumePendingCutover(normalizedOwnerUid)'
+            source = coordinator.read_text().replace(resume, '')
+            coordinator.write_text(source.replace('return OwnerRepairCounts(', resume + '\nreturn OwnerRepairCounts('))
+            self.assertEqual(1, len(guard.violations(root)))
+
     def test_production_recovers_archive_before_guarded_deletion_recovery(self):
         self.assertEqual([], guard.violations(MODULE_PATH.parent.parent))
 
