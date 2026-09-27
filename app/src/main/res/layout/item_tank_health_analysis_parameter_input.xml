@@ -116,7 +116,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:clickable="true"
-                    android:drawableEnd="@drawable/ic_water_measurement_chevron_down_16"
+                    app:drawableEndCompat="@drawable/ic_water_measurement_chevron_down_16"
                     android:drawablePadding="@dimen/aqua_size_3"
                     android:foreground="?attr/selectableItemBackgroundBorderless"
                     android:focusable="true"

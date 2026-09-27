@@ -5,6 +5,7 @@ import android.widget.TextView
 import androidx.annotation.DrawableRes
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
+import androidx.core.widget.TextViewCompat
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.ContentSheetWaterMeasurementMethodBinding
 import com.aqua.aqualight.ui.common.bottomsheet.SingleChoiceBottomSheet
@@ -235,8 +236,11 @@ internal class WaterMeasurementMethodSheetBinder(
             setBounds(0, 0, iconSize, iconSize)
         }
         text.setCompoundDrawablesRelative(icon, null, null, null)
-        text.compoundDrawableTintList = android.content.res.ColorStateList.valueOf(
-            if (selected) selectedText else unselectedText
+        TextViewCompat.setCompoundDrawableTintList(
+            text,
+            android.content.res.ColorStateList.valueOf(
+                if (selected) selectedText else unselectedText
+            )
         )
     }
 
