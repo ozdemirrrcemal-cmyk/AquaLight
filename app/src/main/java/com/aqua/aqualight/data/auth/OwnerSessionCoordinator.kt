@@ -12,6 +12,8 @@ import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import com.aqua.aqualight.data.devices.store.DeviceCredentialStore
 import com.aqua.aqualight.data.media.AppMediaRecoveryManager
 import com.aqua.aqualight.data.user.UserDataScope
+import com.aqua.aqualight.data.user.archive.UserDataRestoreRecovery
+import com.aqua.aqualight.data.user.archive.recover
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.first
@@ -266,10 +268,10 @@ private class OwnerSessionOpenFlow(
     private suspend fun repairOwnerData(
         normalizedOwnerUid: String
     ): OwnerRepairCounts {
+        val assignmentRepository = TankDeviceAssignmentRepositoryProvider.get(appContext)
+        UserDataRestoreRecovery.create(appContext, normalizedOwnerUid).recover(normalizedOwnerUid)
         val assignmentCount = when (
-            val repairResult = TankDeviceAssignmentRepositoryProvider
-                .get(appContext)
-                .repairOwnerAssignments()
+            val repairResult = assignmentRepository.repairOwnerAssignments()
         ) {
             is TankAssignmentRepairResult.Completed -> repairResult.removedAssignments.size
             is TankAssignmentRepairResult.Failure -> throw repairResult.error

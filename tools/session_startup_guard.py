@@ -3,9 +3,11 @@
 
 from pathlib import Path
 import sys
+from owner_recovery_order_guard import violations as recovery_order_violations
 
 ROOT = Path(__file__).resolve().parents[1]
 errors: list[str] = []
+errors.extend(recovery_order_violations(ROOT))
 
 
 def read(relative_path: str) -> str:

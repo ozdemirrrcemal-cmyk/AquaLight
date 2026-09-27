@@ -9,8 +9,6 @@ import com.aqua.aqualight.data.devices.repository.DevicesRepositoryProvider
 import com.aqua.aqualight.data.devices.update.DeviceFirmwareAvailabilityEventTrigger
 import com.aqua.aqualight.data.notifications.NotificationPlatform
 import com.aqua.aqualight.data.user.UserDataScope
-import com.aqua.aqualight.data.user.archive.UserDataRestoreRecovery
-import com.aqua.aqualight.data.user.archive.recover
 import java.util.concurrent.CancellationException
 
 /** Starts and stops services that are valid only for one authenticated owner. */
@@ -56,8 +54,6 @@ object SessionBoundServiceManager {
         if (normalizedOwnerUid.isBlank()) return
 
         val appContext = context.applicationContext
-        UserDataRestoreRecovery.create(appContext, normalizedOwnerUid)
-            .recover(normalizedOwnerUid)
         val notificationPlatform = NotificationPlatform.get(appContext)
         installDeviceUpdateTrigger(appContext, normalizedOwnerUid)
         SmartCareDailyWorker.schedule(appContext, normalizedOwnerUid)

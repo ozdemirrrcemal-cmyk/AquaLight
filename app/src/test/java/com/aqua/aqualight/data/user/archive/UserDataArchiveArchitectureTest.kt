@@ -102,6 +102,9 @@ class UserDataArchiveArchitectureTest {
         val sessionServices = source(
             "app/src/main/java/com/aqua/aqualight/data/auth/SessionBoundServiceManager.kt"
         )
+        val ownerSession = source(
+            "app/src/main/java/com/aqua/aqualight/data/auth/OwnerSessionCoordinator.kt"
+        )
         val cleaner = source(
             "app/src/main/java/com/aqua/aqualight/data/user/UserDataCleaner.kt"
         )
@@ -111,8 +114,18 @@ class UserDataArchiveArchitectureTest {
         assertTrue(graph.contains("context = appContext"))
         assertTrue(factory.contains("DataManagementViewModel::class.java"))
         assertTrue(factory.contains("archiveOperations = graph.userDataArchiveOperations"))
-        assertTrue(sessionServices.contains("UserDataRestoreRecovery.create"))
-        assertTrue(sessionServices.contains(".recover(normalizedOwnerUid)"))
+        val repair = ownerSession.substringAfter("private suspend fun repairOwnerData(")
+            .substringBefore("private suspend fun abortTransition")
+        val binding = repair.indexOf("TankDeviceAssignmentRepositoryProvider.get(appContext)")
+        val recovery = repair.indexOf("UserDataRestoreRecovery.create(appContext, normalizedOwnerUid)")
+        val recovered = repair.indexOf(".recover(normalizedOwnerUid)")
+        val assignments = repair.indexOf("assignmentRepository.repairOwnerAssignments()")
+        val deletion = repair.indexOf("TankCareIntegrityRecovery")
+        assertTrue("Archive recovery needs its bound assignment repository", binding >= 0 && recovery > binding)
+        assertTrue("Dependent repair must wait for archive rollback", recovered > recovery && assignments > recovered)
+        assertTrue("Tank deletion recovery must follow archive recovery", deletion > assignments)
+        assertFalse("Service startup is too late for archive recovery",
+            sessionServices.contains("UserDataRestoreRecovery"))
         assertTrue(cleaner.contains("UserDataRestoreJournal(appContext).clearOwner(ownerUid)"))
         assertTrue(cleaner.contains("UserDataRestoreProvenanceStore(appContext).clearOwner(ownerUid)"))
     }
