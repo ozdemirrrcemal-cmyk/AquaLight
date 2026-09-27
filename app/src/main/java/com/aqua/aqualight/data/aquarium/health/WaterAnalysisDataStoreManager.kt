@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
 import com.aqua.aqualight.data.aquarium.OwnerTankMutationGate
+import com.aqua.aqualight.data.aquarium.health.room.WaterAnalysisDatabase
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.auth.OwnerSessionWriteLease
 import com.aqua.aqualight.data.care.integrity.TankCareIntegrityJournal
@@ -13,6 +14,11 @@ import com.aqua.aqualight.data.user.UserDataScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.withContext
 
 private val Context.waterAnalysesDataStore: DataStore<WaterAnalysesStore> by dataStore(
     fileName = "water_analyses.pb",
@@ -24,6 +30,12 @@ internal class WaterAnalysisDataStoreManager(
 ) {
     private val appContext = context.applicationContext
     private val tankStore = AquariumTankDataStoreManager(appContext)
+    private val deletionSupport by lazy {
+        ProtoWaterAnalysisDeletionIntegrity(appContext.waterAnalysesDataStore,
+            WaterAnalysisDatabase.getInstance(appContext))
+    }
+    val deletionIntegrity: ProtoWaterAnalysisDeletionIntegrity get() = deletionSupport
+
 
     init {
         TankCareIntegrityJournal.initialize(appContext)
@@ -134,7 +146,7 @@ internal class WaterAnalysisDataStoreManager(
     suspend fun deleteAnalysesForTank(tankId: Long) {
         WaterAnalysisIdentityRules.requirePositive("tankId", tankId)
         val ownerUid = UserDataScope.requireCurrentUid()
-        appContext.waterAnalysesDataStore.updateData { currentStore ->
+        appContext.waterAnalysesDataStore.updateDataAwaitingCommit { currentStore ->
             requireOwnerScope(ownerUid)
             currentStore.replaceAllValidated(
                 currentStore.analysesList.filterNot { stored ->
@@ -170,13 +182,18 @@ internal class WaterAnalysisDataStoreManager(
     suspend fun clearAllAnalyses(ownerUid: String? = null) {
         val targetOwnerUid = ownerUid?.let(::requireOwnerUid)
             ?: UserDataScope.requireCurrentUid()
-        appContext.waterAnalysesDataStore.updateData { currentStore ->
-            currentStore.replaceAllValidated(
-                currentStore.analysesList.filterNot { stored ->
-                    stored.belongsToOwner(targetOwnerUid)
-                }
-            )
+        currentCoroutineContext().ensureActive()
+        withContext(NonCancellable) {
+            appContext.waterAnalysesDataStore.updateData { currentStore ->
+                currentStore.replaceAllValidated(
+                    currentStore.analysesList.filterNot { stored -> stored.belongsToOwner(targetOwnerUid) }
+                )
+            }
+            withContext(Dispatchers.IO) {
+                WaterAnalysisOwnerCleanup(WaterAnalysisDatabase.getInstance(appContext)).clear(targetOwnerUid)
+            }
         }
+        currentCoroutineContext().ensureActive()
     }
 
     private suspend fun requireTankExistsForOwner(ownerUid: String, tankId: Long) {

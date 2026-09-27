@@ -123,6 +123,63 @@ class OwnerTankDataCleanerMultiTankInstrumentedTest {
     }
 
     @Test
+    fun failedTankWriteRestoresExactAnalysisAndCareSnapshots() = runBlocking {
+        withIsolatedTank { fixture ->
+            addTask(fixture.care, fixture.tankId, "Rollback filter")
+            fixture.analyses.addAnalysis(validAnalysis(fixture.tankId), fixture.session)
+            val original = fixture.analyses.analysesForOwnerFlow(fixture.owner).first()
+            val care = fixture.care.tasksForTankFlow(fixture.tankId).first()
+            val cleaner = OwnerTankDataCleaner(
+                stores = OwnerTankDeletionStores(
+                    deleteTankRecords = {
+                        assertTrue(fixture.analyses.analysesForOwnerFlow(fixture.owner).first().isEmpty())
+                        error("Injected tank commit failure")
+                    },
+                    snapshotCareTasksForTank = fixture.care::snapshotTasksForIntegrity,
+                    deleteCareTasksForTank = fixture.care::deleteTasksForTank,
+                    restoreCareTasksForTank = fixture.care::restoreTaskSnapshotsForIntegrity,
+                    deleteWaterAnalysesForTank = fixture.analyses::deleteAnalysesForTank,
+                    waterIntegrity = fixture.analyses.deletionIntegrity
+                ),
+                removeDeviceAssignmentsForTank = { error("No assignment cleanup before tank commit") },
+                cancelCareTaskReminder = { _, _ -> },
+                reconcileCareReminders = {}
+            )
+            assertTrue(cleaner.deleteTanks(listOf(fixture.tankId)) is OwnerTankDataCleaner.Result.DeleteFailed)
+            assertEquals(original, fixture.analyses.analysesForOwnerFlow(fixture.owner).first())
+            assertEquals(care, fixture.care.tasksForTankFlow(fixture.tankId).first())
+            assertTrue(TankCareIntegrityJournal.pendingForOwner(fixture.owner).isEmpty())
+        }
+    }
+
+    @Test
+    fun interruptedDeletionRestoresHistoryWhenTankSurvivesAndDoesNotResurrectWhenTankIsGone() = runBlocking {
+        withIsolatedTank { fixture ->
+            fixture.analyses.addAnalysis(validAnalysis(fixture.tankId), fixture.session)
+            val original = fixture.analyses.analysesForOwnerFlow(fixture.owner).first()
+            prepareInterruptedDeletion(fixture)
+            assertTrue(fixture.analyses.analysesForOwnerFlow(fixture.owner).first().isEmpty())
+            TankCareIntegrityRecovery.create(context).recover(fixture.owner)
+            assertEquals(original, fixture.analyses.analysesForOwnerFlow(fixture.owner).first())
+            prepareInterruptedDeletion(fixture)
+            fixture.tanks.deleteTanks(listOf(fixture.tankId))
+            TankCareIntegrityRecovery.create(context).recover(fixture.owner)
+            assertTrue(fixture.analyses.analysesForOwnerFlow(fixture.owner).first().isEmpty())
+            assertTrue(TankCareIntegrityJournal.pendingForOwner(fixture.owner).isEmpty())
+        }
+    }
+
+    private suspend fun prepareInterruptedDeletion(fixture: GateFixture) {
+        OwnerTankMutationGate.shared.withTanks(fixture.owner, listOf(fixture.tankId)) {
+            TankCareIntegrityJournal.begin(fixture.owner, listOf(fixture.tankId))
+            val transaction = fixture.analyses.deletionIntegrity.prepare(fixture.tankId)
+            TankCareIntegrityJournal.captureSnapshots(fixture.owner, mapOf(fixture.tankId to emptyList()),
+                mapOf(fixture.tankId to transaction))
+            fixture.analyses.deleteAnalysesForTank(fixture.tankId)
+        }
+    }
+
+    @Test
     fun twoTanksWithCareTasksAreDeletedThroughOneCrashSafeOperation() = runBlocking {
         val ownerUid = "bulk-delete-${UUID.randomUUID()}"
         val session = OwnerSessionTestFixture(ownerUid).lease
@@ -150,6 +207,7 @@ class OwnerTankDataCleanerMultiTankInstrumentedTest {
                         },
                         deleteCareTasksForTank = careStore::deleteTasksForTank,
                         deleteWaterAnalysesForTank = analysisStore::deleteAnalysesForTank,
+                        waterIntegrity = analysisStore.deletionIntegrity,
                         restoreCareTasksForTank = { tankId, snapshots ->
                             careStore.restoreTaskSnapshotsForIntegrity(
                                 tankId = tankId,
@@ -187,7 +245,7 @@ class OwnerTankDataCleanerMultiTankInstrumentedTest {
     }
 
     @Test
-    fun failedAnalysisCleanupIsReplayedFromDurableTankDeletion() = runBlocking {
+    fun failedAnalysisDeletionPreservesTankAndHistory() = runBlocking {
         val ownerUid = "analysis-recovery-${UUID.randomUUID()}"
         val session = OwnerSessionTestFixture(ownerUid).lease
         val tankStore = AquariumTankDataStoreManager(context)
@@ -208,7 +266,8 @@ class OwnerTankDataCleanerMultiTankInstrumentedTest {
                         restoreCareTasksForTank = { id, snapshots ->
                             careStore.restoreTaskSnapshotsForIntegrity(id, snapshots)
                         },
-                        deleteWaterAnalysesForTank = { error("Injected analysis cleanup failure") }
+                        deleteWaterAnalysesForTank = { error("Injected analysis cleanup failure") },
+                        waterIntegrity = analysisStore.deletionIntegrity
                     ),
                     removeDeviceAssignmentsForTank = {
                         TankAssignmentCleanupResult.Completed(0)
@@ -218,18 +277,14 @@ class OwnerTankDataCleanerMultiTankInstrumentedTest {
                 )
 
                 val result = cleaner.deleteTanks(listOf(tankId))
-                    as OwnerTankDataCleaner.Result.Deleted
-                assertEquals(OwnerTankDataCleaner.CleanupStage.WATER_ANALYSES, result.cleanupIssues.single().stage)
+                assertTrue(result is OwnerTankDataCleaner.Result.DeleteFailed)
                 assertEquals(1, analysisStore.analysesForTankFlow(ownerUid, tankId).first().size)
-                assertEquals(1, TankCareIntegrityJournal.pendingForOwner(ownerUid).size)
-                val blockedWrite = runCatching {
-                    analysisStore.addAnalysis(validAnalysis(tankId), session)
-                }
-                assertTrue(blockedWrite.exceptionOrNull() is StoreInvariantViolation)
+                assertTrue(tankStore.tanksSnapshotForOwner(ownerUid).any { it.id == tankId })
+                assertTrue(TankCareIntegrityJournal.pendingForOwner(ownerUid).isEmpty())
 
                 TankCareIntegrityRecovery.create(context).recover(ownerUid)
 
-                assertTrue(analysisStore.analysesForTankFlow(ownerUid, tankId).first().isEmpty())
+                assertEquals(1, analysisStore.analysesForTankFlow(ownerUid, tankId).first().size)
                 assertTrue(TankCareIntegrityJournal.pendingForOwner(ownerUid).isEmpty())
             }
         } finally {

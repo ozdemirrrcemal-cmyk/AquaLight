@@ -82,3 +82,7 @@ latency budgets, and complete E/W9 acceptance. A/P/L gates remain open.
 
 Commit-time local Detekt 1.23.8 passed against the unchanged baseline: zero
 blockers, zero new advisory debt, 776 existing advisories. `git diff --check` passed.
+
+The subsequent live-Proto deletion/owner-cleanup binding is described in
+`WATER_ANALYSIS_DELETION_RECOVERY.md`. Event-history cutover and archive integration
+are still distinct unfinished gates.

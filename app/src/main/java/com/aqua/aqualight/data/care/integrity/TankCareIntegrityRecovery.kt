@@ -49,6 +49,7 @@ internal class TankCareIntegrityRecovery private constructor(
             }
         }
 
+        waterAnalysisStore.deletionIntegrity.reconcileResolvedStages(owner)
         return Result(
             restoredTaskCount = restoredTaskCount,
             removedTaskCount = removedTaskCount,
@@ -68,6 +69,7 @@ internal class TankCareIntegrityRecovery private constructor(
                 TankCareIntegrityJournal.State.BLOCKED -> {
                     // The process stopped before any care-task mutation.
                     TankCareIntegrityJournal.abort(owner, pending.tankId)
+                    waterAnalysisStore.deletionIntegrity.finish(pending.tankId)
                 }
 
                 TankCareIntegrityJournal.State.SNAPSHOTS_CAPTURED -> {
@@ -83,8 +85,12 @@ internal class TankCareIntegrityRecovery private constructor(
                             tankId = pending.tankId,
                             snapshots = pending.taskSnapshots
                         )
+                        pending.waterTransactionId?.let { transaction ->
+                            waterAnalysisStore.deletionIntegrity.restore(pending.tankId, transaction)
+                        }
                     }
                     TankCareIntegrityJournal.abort(owner, pending.tankId)
+                    waterAnalysisStore.deletionIntegrity.finish(pending.tankId, pending.waterTransactionId)
 
                     restoredTaskCount += pending.taskSnapshots.count { task ->
                         task.id !in beforeIds
@@ -97,6 +103,7 @@ internal class TankCareIntegrityRecovery private constructor(
             careTaskStore.deleteTasksForTank(pending.tankId)
             waterAnalysisStore.deleteAnalysesForTank(pending.tankId)
             TankCareIntegrityJournal.complete(owner, pending.tankId)
+            waterAnalysisStore.deletionIntegrity.finish(pending.tankId, pending.waterTransactionId)
             removedTaskCount += existingTasks.size
         }
 

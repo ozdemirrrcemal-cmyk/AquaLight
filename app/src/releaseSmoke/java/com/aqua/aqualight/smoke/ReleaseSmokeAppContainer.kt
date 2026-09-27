@@ -358,6 +358,7 @@ private class ReleaseSmokeViewModelFactory(
                         },
                         deleteCareTasksForTank = careTaskStore::deleteTasksForTank,
                         deleteWaterAnalysesForTank = waterAnalysisStore::deleteAnalysesForTank,
+                        waterIntegrity = waterAnalysisStore.deletionIntegrity,
                         restoreCareTasksForTank = { tankId, snapshots ->
                             careTaskStore.restoreTaskSnapshotsForIntegrity(
                                 tankId = tankId,

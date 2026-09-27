@@ -19,7 +19,8 @@ internal interface TankCareIntegrityTransactions {
 
     fun captureSnapshots(
         ownerUid: String,
-        snapshotsByTank: Map<Long, List<CareTask>>
+        snapshotsByTank: Map<Long, List<CareTask>>,
+        waterTransactionsByTank: Map<Long, String> = emptyMap()
     )
 
     suspend fun <T> withRollbackWritesAllowed(
@@ -58,7 +59,8 @@ internal object TankCareIntegrityJournal : TankCareIntegrityTransactions {
         val ownerUid: String,
         val tankId: Long,
         val state: State,
-        val taskSnapshots: List<CareTask>
+        val taskSnapshots: List<CareTask>,
+        val waterTransactionId: String? = null
     )
 
     private data class Key(
@@ -148,8 +150,11 @@ internal object TankCareIntegrityJournal : TankCareIntegrityTransactions {
 
     override fun captureSnapshots(
         ownerUid: String,
-        snapshotsByTank: Map<Long, List<CareTask>>
+        snapshotsByTank: Map<Long, List<CareTask>>,
+        waterTransactionsByTank: Map<Long, String>
     ) {
+        require(waterTransactionsByTank.isEmpty() || waterTransactionsByTank.keys == snapshotsByTank.keys)
+        waterTransactionsByTank.values.forEach(TankCareIntegrityFormat::requireWaterReference)
         val owner = canonicalOwnerUid(ownerUid)
         require(snapshotsByTank.isNotEmpty()) {
             "Snapshot capture requires at least one tank."
@@ -176,7 +181,8 @@ internal object TankCareIntegrityJournal : TankCareIntegrityTransactions {
                 )
                 next[key] = current.copy(
                     state = State.SNAPSHOTS_CAPTURED,
-                    taskSnapshots = snapshots.toList()
+                    taskSnapshots = snapshots.toList(),
+                    waterTransactionId = waterTransactionsByTank[tankId]
                 )
             }
 
@@ -329,19 +335,19 @@ internal object TankCareIntegrityJournal : TankCareIntegrityTransactions {
             encodeBytes(task.toStoredTask().toByteArray())
         }
         return listOf(
-            FORMAT_VERSION,
+            TankCareIntegrityFormat.VERSION,
             stateToken,
             ownerToken,
             entry.tankId.toString(),
-            taskToken
+            taskToken,
+            entry.waterTransactionId.orEmpty()
         ).joinToString("|")
     }
 
     private fun decodeEntry(encoded: String): PendingDeletion {
-        val parts = encoded.split('|', limit = 5)
-        if (parts.size != 5 || parts[0] != FORMAT_VERSION) {
-            violation("Tank-care integrity journal contains an unsupported entry.")
-        }
+        val parsed = TankCareIntegrityFormat.parse(encoded)
+        val parts = parsed.fields
+        val waterTransaction = parsed.waterTransaction
 
         val state = when (parts[1]) {
             "B" -> State.BLOCKED
@@ -378,7 +384,7 @@ internal object TankCareIntegrityJournal : TankCareIntegrityTransactions {
             }
         }
 
-        if (state == State.BLOCKED && snapshots.isNotEmpty()) {
+        if (state == State.BLOCKED && (snapshots.isNotEmpty() || waterTransaction != null)) {
             violation("A blocked tank-care transaction must not contain snapshots.")
         }
         validateSnapshots(
@@ -391,7 +397,8 @@ internal object TankCareIntegrityJournal : TankCareIntegrityTransactions {
             ownerUid = ownerUid,
             tankId = tankId,
             state = state,
-            taskSnapshots = snapshots
+            taskSnapshots = snapshots,
+            waterTransactionId = waterTransaction
         )
     }
 
@@ -498,7 +505,6 @@ internal object TankCareIntegrityJournal : TankCareIntegrityTransactions {
 
     private const val PREFERENCES_NAME = "tank_care_integrity_journal"
     private const val KEY_PENDING_DELETIONS = "pending_deletions"
-    private const val FORMAT_VERSION = "v1"
 
     private val base64Encoder = Base64.getUrlEncoder().withoutPadding()
     private val base64Decoder = Base64.getUrlDecoder()

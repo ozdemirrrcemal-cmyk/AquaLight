@@ -9,6 +9,9 @@ import java.util.List;
 
 @Dao
 public interface WaterDeletionDao {
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    void insertRows(List<WaterDeletionStageEntity> rows);
+
     @Query("INSERT INTO water_analysis_delete_stage(ownerUid, tankId, analysisId, rawProto) "
             + "SELECT ownerUid, tankId, analysisId, rawProto FROM water_analysis "
             + "WHERE ownerUid = :ownerUid AND tankId = :tankId")
@@ -24,6 +27,10 @@ public interface WaterDeletionDao {
     @Nullable
     @Query("SELECT * FROM water_analysis_delete_manifest WHERE ownerUid = :ownerUid AND tankId = :tankId")
     WaterDeletionManifestEntity manifest(String ownerUid, long tankId);
+
+    @Query("SELECT * FROM water_analysis_delete_manifest WHERE ownerUid = :ownerUid "
+            + "AND tankId > :afterTankId ORDER BY tankId ASC LIMIT 50")
+    List<WaterDeletionManifestEntity> manifestPage(String ownerUid, long afterTankId);
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     void insertManifest(WaterDeletionManifestEntity manifest);

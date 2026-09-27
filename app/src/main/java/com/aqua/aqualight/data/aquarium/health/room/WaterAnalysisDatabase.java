@@ -17,6 +17,7 @@ public abstract class WaterAnalysisDatabase extends RoomDatabase {
 
     public abstract WaterAnalysisDao analyses();
     public abstract WaterDeletionDao deletions();
+    public abstract WaterOwnerCleanupDao ownerCleanup();
 
     public static final Migration MIGRATION_1_2 = new Migration(1, 2) {
         @Override public void migrate(@NonNull SupportSQLiteDatabase database) {

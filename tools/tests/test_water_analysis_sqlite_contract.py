@@ -205,6 +205,38 @@ class WaterAnalysisSqliteContractTest(unittest.TestCase):
         finally:
             old.close()
 
+    def test_owner_cleanup_removes_all_owner_state_and_retains_foreign_rows(self):
+        cleanup = dao_queries('WaterOwnerCleanupDao.java')
+        for owner in ('owner', 'foreign'):
+            self.insert(1, owner=owner, request='request')
+            self.database.execute('INSERT INTO water_analysis_request VALUES (?, ?, ?, ?)',
+                                  (owner, 'request', 1, 'hash'))
+            self.database.execute('INSERT INTO water_analysis_migration VALUES (?, ?, ?, ?, ?, ?, ?)',
+                                  (owner, 'source', 'records', 1, 1, 1, 3))
+            self.database.execute(self.deletions['capture'], dict(ownerUid=owner, tankId=2))
+            self.database.execute('INSERT INTO water_analysis_delete_manifest VALUES (?, ?, ?, ?, ?, ?)',
+                                  (owner, 2, 'transaction', 1, 'checksum', 1))
+        self.database.commit()
+        with self.database:
+            for sql in cleanup.values():
+                self.database.execute(sql, dict(ownerUid='owner'))
+        for table in ('water_analysis', 'water_analysis_request', 'water_analysis_migration',
+                      'water_analysis_delete_stage', 'water_analysis_delete_manifest'):
+            self.assertEqual(['foreign'], [r[0] for r in self.database.execute('SELECT ownerUid FROM ' + table)])
+
+    def test_owner_cleanup_failure_rolls_back_earlier_table_deletes(self):
+        self.insert(1)
+        self.database.execute('INSERT INTO water_analysis_request VALUES (?, ?, ?, ?)', ('owner', 'r', 1, 'hash'))
+        self.database.commit()
+        self.database.execute("CREATE TRIGGER fail_owner_cleanup BEFORE DELETE ON water_analysis_request "
+                              "BEGIN SELECT RAISE(ABORT, 'cleanup failure'); END")
+        cleanup = dao_queries('WaterOwnerCleanupDao.java')
+        with self.assertRaises(sqlite3.IntegrityError), self.database:
+            for sql in cleanup.values():
+                self.database.execute(sql, dict(ownerUid='owner'))
+        self.assertEqual(1, self.query('countForOwner', ownerUid='owner').fetchone()[0])
+        self.assertEqual(1, self.query('request', ownerUid='owner', requestId='r').fetchone()['analysisId'])
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -14,6 +14,7 @@ import com.aqua.aqualight.data.aquarium.DefaultAquariumTankOperations
 import com.aqua.aqualight.data.aquarium.AquariumTankOperationDependencies
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDeletionStores
+import com.aqua.aqualight.data.aquarium.health.WaterAnalysisDeletionIntegrity
 import com.aqua.aqualight.data.aquarium.model.TankDraft
 import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.platform.media.AppMediaScope
@@ -168,6 +169,7 @@ class LivestockPhotoIsolationInstrumentedTest {
                 snapshotCareTasksForTank = { error("Unexpected care access") },
                 deleteCareTasksForTank = { error("Unexpected care deletion") },
                 deleteWaterAnalysesForTank = { error("Unexpected water analysis deletion") },
+                waterIntegrity = unused(WaterAnalysisDeletionIntegrity::class.java),
                 restoreCareTasksForTank = { _, _ -> error("Unexpected care restore") }
             ),
             removeDeviceAssignmentsForTank = { error("Unexpected device access") },

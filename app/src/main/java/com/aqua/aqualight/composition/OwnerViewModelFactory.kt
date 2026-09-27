@@ -203,7 +203,8 @@ internal class OwnerViewModelFactory(
                             restoreCareTasksForTank = { tankId, snapshots ->
                                 graph.careTaskStore.restoreTaskSnapshotsForIntegrity(tankId, snapshots)
                             },
-                            deleteWaterAnalysesForTank = graph.waterAnalysisStore::deleteAnalysesForTank
+                            deleteWaterAnalysesForTank = graph.waterAnalysisStore::deleteAnalysesForTank,
+                            waterIntegrity = graph.waterAnalysisStore.deletionIntegrity
                         ),
                         removeDeviceAssignmentsForTank = assignments::removeAssignmentsForTank,
                         cancelCareTaskReminder = notificationPreferenceUseCase::cancelCareTask,

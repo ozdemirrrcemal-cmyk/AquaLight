@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.aquarium.delete
 
 import com.aqua.aqualight.data.aquarium.devices.TankAssignmentCleanupResult
 import com.aqua.aqualight.data.aquarium.OwnerTankMutationGate
+import com.aqua.aqualight.data.aquarium.health.WaterAnalysisDeletionIntegrity
 import com.aqua.aqualight.data.care.integrity.TankCareIntegrityTransactions
 import com.aqua.aqualight.data.care.model.CareTask
 import com.aqua.aqualight.data.care.model.CareTaskSource
@@ -245,7 +246,7 @@ class OwnerTankDataCleanerTest {
     }
 
     @Test
-    fun `analysis cleanup completes before journal and failure leaves it pending`() = runBlocking {
+    fun `analysis deletion completes before journal and failure rolls back the tank transaction`() = runBlocking {
         val events = mutableListOf<String>()
         val integrity = RecordingIntegrityTransactions(events)
         val successfulCleaner = waterCleaner(
@@ -261,11 +262,11 @@ class OwnerTankDataCleanerTest {
         val failed = waterCleaner(
             integrity = failureIntegrity,
             deleteWaterAnalysesForTank = { error("analysis store unavailable") }
-        ).deleteTanks(listOf(8L)) as OwnerTankDataCleaner.Result.Deleted
+        ).deleteTanks(listOf(8L)) as OwnerTankDataCleaner.Result.DeleteFailed
 
-        assertEquals(OwnerTankDataCleaner.CleanupStage.WATER_ANALYSES, failed.cleanupIssues.single().stage)
+        assertEquals("analysis store unavailable", failed.error.message)
         assertTrue(failureIntegrity.completedTankIds.isEmpty())
-        assertTrue(failureIntegrity.abortedTankIds.isEmpty())
+        assertEquals(listOf(8L), failureIntegrity.abortedTankIds)
     }
 
     @Test
@@ -313,6 +314,58 @@ class OwnerTankDataCleanerTest {
         assertEquals(listOf(7L), integrity.abortedTankIds)
     }
 
+    @Test
+    fun `water snapshot failure starts no destructive store operation`() = runBlocking {
+        val integrity = RecordingIntegrityTransactions()
+        var destructiveCalls = 0
+        val result = waterFailureCleaner(
+            integrity = integrity,
+            deleteCareTasksForTank = { destructiveCalls++ },
+            deleteTankRecords = { destructiveCalls++ },
+            waterIntegrity = RecordingWaterIntegrity(onPrepare = { error("staging full") })
+        ).deleteTanks(listOf(7L))
+        assertEquals("staging full", (result as OwnerTankDataCleaner.Result.DeleteFailed).error.message)
+        assertEquals(0, destructiveCalls)
+        assertEquals(listOf(7L), integrity.abortedTankIds)
+    }
+
+    @Test
+    fun `water restoration completes before journal abort and staging cleanup`() = runBlocking {
+        val integrity = RecordingIntegrityTransactions()
+        var restored = false
+        var cleaned = false
+        val result = waterFailureCleaner(
+            integrity = integrity,
+            deleteTankRecords = { error("tank commit failed") },
+            waterIntegrity = RecordingWaterIntegrity(onRestore = {
+                assertTrue(integrity.abortedTankIds.isEmpty())
+                restored = true
+            }, onFinish = {
+                assertTrue(restored)
+                assertEquals(listOf(7L), integrity.abortedTankIds)
+                cleaned = true
+            })
+        ).deleteTanks(listOf(7L))
+        assertTrue(result is OwnerTankDataCleaner.Result.DeleteFailed)
+        assertTrue(restored && cleaned)
+    }
+
+    @Test
+    fun `failed water restoration retains the journal and snapshot for recovery`() = runBlocking {
+        val integrity = RecordingIntegrityTransactions()
+        var cleaned = false
+        val result = waterFailureCleaner(
+            integrity = integrity,
+            deleteTankRecords = { error("tank commit failed") },
+            waterIntegrity = RecordingWaterIntegrity(onRestore = { error("rollback I/O") },
+                onFinish = { cleaned = true })
+        ).deleteTanks(listOf(7L)) as OwnerTankDataCleaner.Result.DeleteFailed
+        assertEquals("tank commit failed", result.error.message)
+        assertEquals("rollback I/O", result.error.suppressed.single().message)
+        assertTrue(integrity.abortedTankIds.isEmpty())
+        assertFalse(cleaned)
+    }
+
     private fun cleaner(
         integrity: RecordingIntegrityTransactions = RecordingIntegrityTransactions(),
         deleteTankRecords: suspend (List<Long>) -> Unit = {},
@@ -331,7 +384,8 @@ class OwnerTankDataCleanerTest {
                 snapshotCareTasksForTank = snapshotCareTasksForTank,
                 deleteCareTasksForTank = deleteCareTasksForTank,
                 restoreCareTasksForTank = restoreCareTasksForTank,
-                deleteWaterAnalysesForTank = {}
+                deleteWaterAnalysesForTank = {},
+                waterIntegrity = RecordingWaterIntegrity()
             ),
             removeDeviceAssignmentsForTank = removeAssignmentsForTank,
             cancelCareTaskReminder = cancelCareTaskReminder,
@@ -340,6 +394,21 @@ class OwnerTankDataCleanerTest {
             ownerUidProvider = { OWNER_UID }
         )
     }
+
+    private fun waterFailureCleaner(
+        integrity: RecordingIntegrityTransactions,
+        waterIntegrity: WaterAnalysisDeletionIntegrity,
+        deleteCareTasksForTank: suspend (Long) -> Unit = {},
+        deleteTankRecords: suspend (List<Long>) -> Unit = {}
+    ) = OwnerTankDataCleaner(
+        stores = OwnerTankDeletionStores(deleteTankRecords, { emptyList() }, deleteCareTasksForTank,
+            { _, _ -> }, {}, waterIntegrity),
+        removeDeviceAssignmentsForTank = { TankAssignmentCleanupResult.Completed(0) },
+        cancelCareTaskReminder = { _, _ -> },
+        reconcileCareReminders = {},
+        integrityTransactions = integrity,
+        ownerUidProvider = { OWNER_UID }
+    )
 
     private fun waterCleaner(
         integrity: RecordingIntegrityTransactions,
@@ -350,7 +419,8 @@ class OwnerTankDataCleanerTest {
             snapshotCareTasksForTank = { emptyList() },
             deleteCareTasksForTank = {},
             restoreCareTasksForTank = { _, _ -> },
-            deleteWaterAnalysesForTank = deleteWaterAnalysesForTank
+            deleteWaterAnalysesForTank = deleteWaterAnalysesForTank,
+            waterIntegrity = RecordingWaterIntegrity()
         ),
         removeDeviceAssignmentsForTank = { TankAssignmentCleanupResult.Completed(0) },
         cancelCareTaskReminder = { _, _ -> },
@@ -397,7 +467,8 @@ class OwnerTankDataCleanerTest {
 
         override fun captureSnapshots(
             ownerUid: String,
-            snapshotsByTank: Map<Long, List<CareTask>>
+            snapshotsByTank: Map<Long, List<CareTask>>,
+            waterTransactionsByTank: Map<Long, String>
         ) {
             events += "capture:${snapshotsByTank.keys.joinToString()}"
         }
@@ -426,4 +497,17 @@ class OwnerTankDataCleanerTest {
     private companion object {
         const val OWNER_UID = "owner-test"
     }
+}
+
+private class RecordingWaterIntegrity(
+    private val onPrepare: () -> Unit = {},
+    private val onRestore: () -> Unit = {},
+    private val onFinish: () -> Unit = {}
+) : WaterAnalysisDeletionIntegrity {
+    override suspend fun prepare(tankId: Long): String {
+        onPrepare()
+        return java.util.UUID.randomUUID().toString()
+    }
+    override suspend fun restore(tankId: Long, transactionId: String) = onRestore()
+    override suspend fun finish(tankId: Long, transactionId: String?) = onFinish()
 }
