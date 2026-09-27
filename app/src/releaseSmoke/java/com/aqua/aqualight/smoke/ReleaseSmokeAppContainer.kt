@@ -34,7 +34,8 @@ import com.aqua.aqualight.data.aquarium.catalog.livestock.DefaultLivestockCatalo
 import com.aqua.aqualight.data.aquarium.catalog.livestock.DefaultLivestockWaterAdvisor
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDeletionStores
-import com.aqua.aqualight.data.aquarium.health.DefaultWaterAnalysisOperations
+import com.aqua.aqualight.composition.createWaterAnalysisOperations
+import com.aqua.aqualight.composition.WaterContextCatalogs
 import com.aqua.aqualight.data.aquarium.health.WaterAnalysisDataStoreManager
 import com.aqua.aqualight.data.auth.OwnerSessionMutationBarrier
 import com.aqua.aqualight.data.auth.OwnerSessionStateMachine
@@ -123,8 +124,10 @@ internal class ReleaseSmokeAppContainer(context: Context) : AppContainer {
         DefaultLocalDataRecoveryOperations
     private val profileOperations = SmokeUserProfileOperations()
 
-    override val defaultViewModelFactory: ViewModelProvider.Factory =
-        ReleaseSmokeViewModelFactory(context.applicationContext, profileOperations)
+    override val defaultViewModelFactory: ViewModelProvider.Factory by lazy(LazyThreadSafetyMode.NONE) {
+        ReleaseSmokeViewModelFactory(context.applicationContext, profileOperations,
+            WaterContextCatalogs(plantCareCatalogOperations, livestockCatalogOperations))
+    }
 
     override val authViewModelFactory: ViewModelProvider.Factory
         get() = defaultViewModelFactory
@@ -132,6 +135,9 @@ internal class ReleaseSmokeAppContainer(context: Context) : AppContainer {
         get() = profileOperations
     override val livestockCatalogOperations: LivestockCatalogOperations =
         DefaultLivestockCatalogOperations(context.applicationContext)
+    override val plantCareCatalogOperations:
+        com.aqua.aqualight.application.aquarium.catalog.plant.PlantCareCatalogOperations =
+        com.aqua.aqualight.data.aquarium.catalog.plant.DefaultPlantCareCatalogOperations.create(context)
     override val livestockWaterAdvisorOperations: LivestockWaterAdvisorOperations =
         DefaultLivestockWaterAdvisor(context.applicationContext)
     override val startupAppearanceCache: StartupAppearanceCache
@@ -171,7 +177,8 @@ internal class ReleaseSmokeAppContainer(context: Context) : AppContainer {
 
 private class ReleaseSmokeViewModelFactory(
     context: Context,
-    private val profileOperations: UserProfileOperations
+    private val profileOperations: UserProfileOperations,
+    private val waterContextCatalogs: WaterContextCatalogs
 ) : ViewModelProvider.Factory {
     private val appContext = context.applicationContext
     private val notificationPreferences = NotificationPlatform.get(appContext).preferenceUseCase
@@ -238,8 +245,9 @@ private class ReleaseSmokeViewModelFactory(
     )
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        check(modelClass != DeviceLightQuickSetupViewModel::class.java) {
-            "DeviceLightQuickSetupViewModel requires CreationExtras for SavedStateHandle."
+        check(modelClass != DeviceLightQuickSetupViewModel::class.java &&
+            modelClass != WaterAnalysisViewModel::class.java) {
+            "This route requires CreationExtras for SavedStateHandle."
         }
         return createInternal(
             modelClass = modelClass,
@@ -253,7 +261,8 @@ private class ReleaseSmokeViewModelFactory(
     ): T = createInternal(
         modelClass = modelClass,
         quickSetupSavedStateHandle = if (
-            modelClass == DeviceLightQuickSetupViewModel::class.java
+            modelClass == DeviceLightQuickSetupViewModel::class.java ||
+            modelClass == WaterAnalysisViewModel::class.java
         ) {
             extras.createSavedStateHandle()
         } else {
@@ -265,7 +274,7 @@ private class ReleaseSmokeViewModelFactory(
         modelClass: Class<T>,
         quickSetupSavedStateHandle: SavedStateHandle?
     ): T {
-        val viewModel = createPrimaryViewModel(modelClass)
+        val viewModel = createPrimaryViewModel(modelClass, quickSetupSavedStateHandle)
             ?: createDeviceRootViewModel(modelClass, quickSetupSavedStateHandle)
             ?: createTankDeviceViewModel(modelClass)
             ?: error("Release smoke factory has no binding for ${modelClass.name}")
@@ -274,7 +283,10 @@ private class ReleaseSmokeViewModelFactory(
         return viewModel as T
     }
 
-    private fun createPrimaryViewModel(modelClass: Class<out ViewModel>): ViewModel? = when {
+    private fun createPrimaryViewModel(
+        modelClass: Class<out ViewModel>,
+        savedStateHandle: SavedStateHandle?
+    ): ViewModel? = when {
         modelClass.isAssignableFrom(SettingsViewModel::class.java) ->
             SettingsViewModel(
                 userProfileOperations = profileOperations,
@@ -306,7 +318,10 @@ private class ReleaseSmokeViewModelFactory(
         modelClass.isAssignableFrom(AquariumTankViewModel::class.java) -> createAquariumTankViewModel()
         modelClass.isAssignableFrom(WaterAnalysisViewModel::class.java) ->
             WaterAnalysisViewModel(
-                operations = DefaultWaterAnalysisOperations(waterAnalysisStore, waterAnalysisSession)
+                operations = createWaterAnalysisOperations(
+                    waterAnalysisStore, tankStore, waterAnalysisSession, waterContextCatalogs
+                ),
+                savedStateHandle = checkNotNull(savedStateHandle)
             )
         modelClass.isAssignableFrom(MaintenanceViewModel::class.java) ->
             MaintenanceViewModel(

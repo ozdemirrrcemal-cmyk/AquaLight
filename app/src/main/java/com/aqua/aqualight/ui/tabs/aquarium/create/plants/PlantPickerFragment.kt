@@ -11,14 +11,18 @@ import android.widget.TextView
 import androidx.core.os.bundleOf
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.aquarium.catalog.plant.PlantCareCatalogResult
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentPlantPickerBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderSearchField
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.google.android.material.card.MaterialCardView
+import kotlinx.coroutines.launch
 
 class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
 
@@ -27,9 +31,12 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
 
     private val args: PlantPickerFragmentArgs by navArgs()
 
-    private val plants: List<AquariumPlant> by lazy(LazyThreadSafetyMode.NONE) {
-        PlantCatalog.resolve(requireContext())
+    private val catalog by lazy(LazyThreadSafetyMode.NONE) {
+        requireContext().requireAppContainer().plantCareCatalogOperations
     }
+    private var plants: List<AquariumPlant> = emptyList()
+    private var catalogReady = false
+    private var searchQuery = ""
 
     override fun onViewCreated(
         view: View,
@@ -43,7 +50,23 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
         _binding = FragmentPlantPickerBinding.bind(view)
 
         setupHeader()
-        renderPlantList(plants)
+        loadCatalog()
+    }
+
+    private fun loadCatalog() {
+        catalogReady = false
+        PlantPickerLoadStateBinder.loading(binding.listContainer)
+        viewLifecycleOwner.lifecycleScope.launch {
+            when (val result = catalog.snapshot()) {
+                is PlantCareCatalogResult.Available -> {
+                    plants = PlantCatalog.resolve(requireContext(), result.snapshot)
+                    catalogReady = true
+                    filterPlants(searchQuery)
+                }
+                is PlantCareCatalogResult.Unavailable ->
+                    PlantPickerLoadStateBinder.failed(binding.listContainer, ::loadCatalog)
+            }
+        }
     }
 
     private fun setupHeader() {
@@ -51,7 +74,7 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
             fragment = this,
             config = AquaHeaderConfig(
                 onBackClick = {
-                    closePicker()
+                    findNavController().navigateUp()
                 },
                 searchField = AquaHeaderSearchField(
                     hint = getString(R.string.catalog_search_hint),
@@ -59,7 +82,7 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
                         filterPlants(query)
                     },
                     onClearClick = {
-                        renderPlantList(plants)
+                        filterPlants("")
                     }
                 )
             )
@@ -69,6 +92,8 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
     private fun filterPlants(
         query: String
     ) {
+        searchQuery = query
+        if (!catalogReady) return
         val normalizedQuery = query.trim()
 
         val filteredPlants = if (normalizedQuery.isBlank()) {
@@ -273,9 +298,6 @@ class PlantPickerFragment : Fragment(R.layout.fragment_plant_picker) {
         navController.navigateUp()
     }
 
-    private fun closePicker() {
-        findNavController().navigateUp()
-    }
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null

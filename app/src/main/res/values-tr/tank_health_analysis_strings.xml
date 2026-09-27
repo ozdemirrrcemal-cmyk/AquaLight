@@ -114,7 +114,6 @@
     <string name="tank_health_analysis_back">Geri</string>
 
     <string name="tank_health_analysis_delete_title">Kaydı Sil?</string>
-    <string name="tank_health_analysis_delete_message">Bu analiz kaydını silmek istediğinize emin misiniz? Bu işlem geri alınamaz.</string>
     <string name="tank_health_analysis_delete_failed">Analiz kaydı silinemedi. Lütfen tekrar deneyin.</string>
     <string name="tank_health_analysis_delete_confirm">Sil</string>
     <string name="tank_health_analysis_delete_cancel">İptal</string>

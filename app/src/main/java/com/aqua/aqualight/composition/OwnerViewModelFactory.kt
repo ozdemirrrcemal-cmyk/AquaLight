@@ -13,7 +13,6 @@ import com.aqua.aqualight.data.aquarium.AquariumTankOperationDependencies
 import com.aqua.aqualight.data.aquarium.DefaultAquariumTankOperations
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDeletionStores
-import com.aqua.aqualight.data.aquarium.health.DefaultWaterAnalysisOperations
 import com.aqua.aqualight.data.aquarium.devices.DefaultTankDeviceAssignmentOperations
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
 import com.aqua.aqualight.data.care.DefaultMaintenanceOperations
@@ -85,7 +84,8 @@ internal class OwnerViewModelFactory(
     context: Context,
     private val userProfileOperations: UserProfileOperations,
     private val notificationPreferenceUseCase: NotificationPreferenceUseCase,
-    private val ownerGraphResolver: OwnerDependencyGraphResolver
+    private val ownerGraphResolver: OwnerDependencyGraphResolver,
+    private val waterContextCatalogs: WaterContextCatalogs
 ) : ScopedViewModelFactory {
     private val appContext = context.applicationContext
     private val appTextResolver by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
@@ -98,8 +98,9 @@ internal class OwnerViewModelFactory(
     override fun supports(modelClass: Class<out ViewModel>): Boolean = modelClass in OWNER_BINDINGS
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        check(modelClass != DeviceLightQuickSetupViewModel::class.java) {
-            "DeviceLightQuickSetupViewModel requires CreationExtras for SavedStateHandle."
+        check(modelClass != DeviceLightQuickSetupViewModel::class.java &&
+            modelClass != WaterAnalysisViewModel::class.java) {
+            "This route requires CreationExtras for SavedStateHandle."
         }
         return createInternal(
             modelClass = modelClass,
@@ -113,7 +114,8 @@ internal class OwnerViewModelFactory(
     ): T = createInternal(
         modelClass = modelClass,
         quickSetupSavedStateHandle = if (
-            modelClass == DeviceLightQuickSetupViewModel::class.java
+            modelClass == DeviceLightQuickSetupViewModel::class.java ||
+            modelClass == WaterAnalysisViewModel::class.java
         ) {
             extras.createSavedStateHandle()
         } else {
@@ -213,7 +215,10 @@ internal class OwnerViewModelFactory(
                 )
             )
             WaterAnalysisViewModel::class.java -> WaterAnalysisViewModel(
-                operations = DefaultWaterAnalysisOperations(graph.waterAnalysisStore, graph.waterAnalysisSession)
+                operations = createWaterAnalysisOperations(
+                    graph.waterAnalysisStore, graph.aquariumTankStore, graph.waterAnalysisSession, waterContextCatalogs
+                ),
+                savedStateHandle = checkNotNull(quickSetupSavedStateHandle)
             )
             MaintenanceViewModel::class.java -> MaintenanceViewModel(
                 operations = DefaultMaintenanceOperations(

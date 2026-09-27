@@ -10,31 +10,41 @@ import com.aqua.aqualight.application.aquarium.health.WaterMeasurementSelection
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementSnapshot
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementResultId
 import com.aqua.aqualight.data.auth.OwnerSessionWriteLease
+import androidx.datastore.core.CorruptionException
+import com.aqua.aqualight.application.aquarium.health.WaterAnalysisFailure
+import com.aqua.aqualight.application.aquarium.health.WaterAnalysisUnavailableException
+import com.aqua.aqualight.data.store.StoreInvariantViolation
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 
 internal class DefaultWaterAnalysisOperations(
     private val store: WaterAnalysisDataStoreManager,
-    private val session: OwnerSessionWriteLease
+    private val session: OwnerSessionWriteLease,
+    private val evaluationPreparation: WaterAnalysisEvaluationPreparation?
 ) : WaterAnalysisOperations {
 
     override fun analysesForTank(tankId: Long): Flow<List<WaterAnalysisSnapshot>> =
         store.analysesForTankFlow(session.ownerUid, tankId).onStart { session.requireCurrent() }.map { analyses ->
             session.requireCurrent()
             analyses.map { record -> record.toApplicationSnapshot() }
-        }
+        }.withWaterReadFailures()
 
     override fun analysis(analysisId: Long): Flow<WaterAnalysisSnapshot?> =
         store.analysisFlow(session.ownerUid, analysisId).onStart { session.requireCurrent() }.map { record ->
             session.requireCurrent()
             record?.toApplicationSnapshot()
-        }
+        }.withWaterReadFailures()
 
     override suspend fun saveAnalysis(input: WaterAnalysisInput): Long {
         session.requireCurrent()
-        WaterAnalysisPolicy.validate(input)
-        return store.addAnalysis(input.toDraftRecord(), session)
+        val frozenInput = input.copy(measurements = input.measurements.toList())
+        WaterAnalysisPolicy.validate(frozenInput)
+        return store.addAnalysis(frozenInput.toDraftRecord(), session) {
+            evaluationPreparation?.prepare(frozenInput)
+        }
     }
 
     override suspend fun deleteAnalysis(analysisId: Long) =
@@ -60,6 +70,17 @@ internal class DefaultWaterAnalysisOperations(
         )
 }
 
+private fun <T> Flow<T>.withWaterReadFailures(): Flow<T> = catch { error ->
+    if (error is CancellationException) throw error
+    val failure = when (error) {
+        is WaterAnalysisReadFailure.UnsupportedSchema -> WaterAnalysisFailure.UNSUPPORTED_SCHEMA
+        is WaterAnalysisReadFailure.UnsupportedValue -> WaterAnalysisFailure.UNSUPPORTED_VALUE
+        is CorruptionException, is StoreInvariantViolation -> WaterAnalysisFailure.CORRUPT_DATA
+        else -> WaterAnalysisFailure.STORE_UNAVAILABLE
+    }
+    throw WaterAnalysisUnavailableException(failure, error)
+}
+
 internal fun WaterAnalysisRecord.toApplicationSnapshot(): WaterAnalysisSnapshot =
     WaterAnalysisSnapshot(
         id = id,
@@ -68,8 +89,13 @@ internal fun WaterAnalysisRecord.toApplicationSnapshot(): WaterAnalysisSnapshot 
         temperatureCelsius = temperatureCelsius,
         temperatureSource = temperatureSource,
         measurements = measurements.map { measurement ->
-            val canonicalBasis = WaterParameterDefinitions.canonicalBasis(measurement.parameter)
-            val canonicalUnit = WaterParameterDefinitions.canonicalUnit(measurement.parameter)
+            val frozen = evaluation?.canonicalMeasurementsList?.single { it.parameter == measurement.parameter.name }
+            val canonicalBasis = frozen?.basis?.let {
+                enumValueOf<com.aqua.aqualight.application.aquarium.health.WaterMeasurementBasis>(it)
+            } ?: WaterParameterDefinitions.canonicalBasis(measurement.parameter)
+            val canonicalUnit = frozen?.unit?.let {
+                enumValueOf<com.aqua.aqualight.application.aquarium.health.WaterMeasurementUnit>(it)
+            } ?: WaterParameterDefinitions.canonicalUnit(measurement.parameter)
             WaterMeasurementSnapshot(
                 resultId = WaterMeasurementResultId(id, measurement.parameter),
                 parameter = measurement.parameter,
@@ -78,7 +104,8 @@ internal fun WaterAnalysisRecord.toApplicationSnapshot(): WaterAnalysisSnapshot 
                 testKitId = measurement.testKitId,
                 basis = measurement.basis,
                 unit = measurement.unit,
-                canonicalValue = WaterMeasurementNormalizer.canonicalValueForStoredSource(
+                canonicalValue = if (frozen != null) frozen.value.takeIf { frozen.hasValue() }
+                else WaterMeasurementNormalizer.canonicalValueForStoredSource(
                     parameter = measurement.parameter,
                     value = measurement.value,
                     selection = WaterMeasurementSelection(
@@ -92,5 +119,7 @@ internal fun WaterAnalysisRecord.toApplicationSnapshot(): WaterAnalysisSnapshot 
                 canonicalUnit = canonicalUnit
             )
         },
-        createdAtMillis = createdAtMillis
+        createdAtMillis = createdAtMillis,
+        assessment = evaluation?.let { WaterEvaluationCodec.decode(it, tankId) },
+        contextCapturedAtMillis = evaluation?.capturedAtMillis
     )

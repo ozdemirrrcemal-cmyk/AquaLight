@@ -9,6 +9,11 @@ import com.aqua.aqualight.application.aquarium.health.WaterMeasurementInput
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementMethod
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementSelection
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementUnit
+import com.aqua.aqualight.application.aquarium.health.context.AquariumHealthContext
+import com.aqua.aqualight.application.aquarium.health.context.HealthContextCapture
+import com.aqua.aqualight.application.aquarium.health.context.HealthTankFacts
+import com.aqua.aqualight.application.aquarium.health.context.HealthCatalogRevisions
+import com.aqua.aqualight.application.aquarium.health.water.WaterQualityAssessmentEngine
 import com.aqua.aqualight.application.aquarium.health.WaterParameter
 import com.aqua.aqualight.data.aquarium.model.TankDraft
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
@@ -38,7 +43,9 @@ class WaterAnalysisSessionInstrumentedTest {
     fun sameOwnerReentryRejectsOldCreateDeleteAndReadsWithoutLosingHistory() = runBlocking {
         withFixture { fixture ->
             val tankId = fixture.addTank(fixture.owner)
-            val operations = DefaultWaterAnalysisOperations(fixture.store, fixture.session.lease)
+            val operations = DefaultWaterAnalysisOperations(
+                    fixture.store, fixture.session.lease, evaluationPreparation = null
+                )
             val id = operations.saveAnalysis(input(tankId))
             val current = fixture.session.reopen(fixture.owner)
 
@@ -48,7 +55,7 @@ class WaterAnalysisSessionInstrumentedTest {
                 .exceptionOrNull() is OwnerSessionExpiredException)
             assertTrue(runCatching { operations.analysis(id).first() }
                 .exceptionOrNull() is OwnerSessionExpiredException)
-            val currentOperations = DefaultWaterAnalysisOperations(fixture.store, current)
+            val currentOperations = DefaultWaterAnalysisOperations(fixture.store, current, evaluationPreparation = null)
             assertEquals(id, currentOperations.analysis(id).first()?.id)
             currentOperations.deleteAnalysis(id)
             assertTrue(currentOperations.analysesForTank(tankId).first().isEmpty())
@@ -60,7 +67,9 @@ class WaterAnalysisSessionInstrumentedTest {
         withFixture { fixture ->
             coroutineScope {
                 val tankId = fixture.addTank(fixture.owner)
-                val operations = DefaultWaterAnalysisOperations(fixture.store, fixture.session.lease)
+                val operations = DefaultWaterAnalysisOperations(
+                    fixture.store, fixture.session.lease, evaluationPreparation = null
+                )
                 val queued = fixture.session.lease.withWrite {
                     val transition = async(start = CoroutineStart.UNDISPATCHED) {
                         fixture.session.reopen(fixture.owner)
@@ -82,7 +91,9 @@ class WaterAnalysisSessionInstrumentedTest {
         withFixture { fixture ->
             coroutineScope {
                 val firstTank = fixture.addTank(fixture.owner)
-                val oldOperations = DefaultWaterAnalysisOperations(fixture.store, fixture.session.lease)
+                val oldOperations = DefaultWaterAnalysisOperations(
+                    fixture.store, fixture.session.lease, evaluationPreparation = null
+                )
                 val firstId = oldOperations.saveAnalysis(input(firstTank))
                 val firstEmission = CompletableDeferred<Unit>()
                 val cancelled = CompletableDeferred<Throwable?>()
@@ -98,7 +109,7 @@ class WaterAnalysisSessionInstrumentedTest {
                 firstEmission.await()
                 val next = fixture.session.reopen(fixture.otherOwner)
                 val secondTank = fixture.addTank(fixture.otherOwner)
-                val newOperations = DefaultWaterAnalysisOperations(fixture.store, next)
+                val newOperations = DefaultWaterAnalysisOperations(fixture.store, next, evaluationPreparation = null)
                 val secondId = newOperations.saveAnalysis(input(secondTank))
                 assertTrue(cancelled.await() is OwnerSessionExpiredException)
                 collector.join()
@@ -109,6 +120,43 @@ class WaterAnalysisSessionInstrumentedTest {
                     assertEquals(listOf(secondId), newOperations.analysesForTank(secondTank).first().map { it.id })
                 }
             }
+        }
+    }
+
+    @Test
+    fun savedEvaluationIsAtomicAndRetryDoesNotReadChangedContext() = runBlocking {
+        withFixture { fixture ->
+            val tankId = fixture.addTank(fixture.owner)
+            val input = input(tankId)
+            var captures = 0
+            val operations = DefaultWaterAnalysisOperations(fixture.store, fixture.session.lease) { sample ->
+                captures++
+                check(captures == 1) { "Committed retries must not recapture context." }
+                val context = AquariumHealthContext(HealthContextCapture(System.currentTimeMillis(), "context-v1"),
+                    HealthTankFacts(tankId, "Freshwater Fish", "Freshwater", null, null),
+                    HealthCatalogRevisions("plants-v1", "animals-v1"), emptyList(), emptyList(), emptyList())
+                WaterEvaluationCodec.encode(sample, context, WaterQualityAssessmentEngine.assess(sample, context))
+            }
+            val id = operations.saveAnalysis(input)
+            assertEquals(id, operations.saveAnalysis(input))
+            assertEquals(1, captures)
+            val stored = fixture.store.analysesForTankFlow(fixture.owner, tankId).first().single()
+            assertTrue(stored.evaluation != null)
+            val reopened = operations.analysis(id).first()!!
+            assertEquals("context-v1", reopened.assessment?.contextRevision)
+            assertEquals(input.measurements.single().value, reopened.measurements.single().canonicalValue!!, 0.0)
+        }
+    }
+
+    @Test
+    fun evaluationFailureDoesNotLeaveARawOnlyRecord() = runBlocking {
+        withFixture { fixture ->
+            val tankId = fixture.addTank(fixture.owner)
+            val operations = DefaultWaterAnalysisOperations(fixture.store, fixture.session.lease) {
+                throw IllegalStateException("context read failed")
+            }
+            assertTrue(runCatching { operations.saveAnalysis(input(tankId)) }.isFailure)
+            assertTrue(fixture.store.analysesForTankFlow(fixture.owner, tankId).first().isEmpty())
         }
     }
 

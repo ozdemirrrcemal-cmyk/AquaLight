@@ -41,7 +41,10 @@ class DataStoreCommitTest {
                 writer.cancelAndJoin()
                 assertFalse(fixture.file.exists())
                 fixture.serializer.release.complete(Unit)
-                assertEquals(1, fixture.store.data.first { it == 1 })
+                // Queue an acknowledgement behind the admitted write. Reading the flow while
+                // the file/version update is in flight adds an unrelated DataStore read race.
+                assertEquals(1, fixture.store.updateData { it })
+                assertEquals(1, DataInputStream(fixture.file.inputStream()).use { it.readInt() })
             }
         }
     }

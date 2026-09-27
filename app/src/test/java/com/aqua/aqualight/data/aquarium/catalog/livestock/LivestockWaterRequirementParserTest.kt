@@ -1,5 +1,6 @@
 package com.aqua.aqualight.data.aquarium.catalog.livestock
 
+import com.aqua.aqualight.application.aquarium.LivestockRequirementParseResult
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -7,6 +8,29 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class LivestockWaterRequirementParserTest {
+
+    @Test
+    fun fullExpressionMustBeValidAndReversedBoundsAreNeverRepaired() {
+        listOf("28–24", "20 mg/L", "200–400+", "<20 garbage", "20–30–40", "NaN", "Infinity", "1e309")
+            .forEach { raw ->
+                assertTrue(raw,
+                    LivestockWaterRequirementParser.parseResult(raw) is LivestockRequirementParseResult.Unparseable)
+                assertNull(LivestockWaterRequirementParser.parseRange(raw))
+            }
+        assertEquals(LivestockRequirementParseResult.Missing, LivestockWaterRequirementParser.parseResult(" "))
+    }
+
+    @Test
+    fun hyphenIsASeparatorAndSignedBoundsArePreserved() {
+        val range = requireNotNull(LivestockWaterRequirementParser.parseRange("24-28"))
+        assertEquals(24.0, range.minimum)
+        assertEquals(28.0, range.maximum)
+        val signed = requireNotNull(LivestockWaterRequirementParser.parseRange("-5 - -1"))
+        assertEquals(-5.0, signed.minimum)
+        assertEquals(-1.0, signed.maximum)
+        assertTrue(requireNotNull(LivestockWaterRequirementParser.parseRange("<=7,5")).contains(7.5))
+        assertTrue(requireNotNull(LivestockWaterRequirementParser.parseRange(">=7,5")).contains(7.5))
+    }
 
     @Test
     fun parsesClosedRangesUsedByTemperaturePhAndSpecificGravity() {

@@ -57,16 +57,22 @@ class TankHealthWaterMetricUiCatalogTest {
     }
 
     @Test
-    fun dashboardCapsVisibleMetricsAtEight() {
+    fun dashboardRetainsAllMeasuredMetricsWhenMoreThanEightWereRecorded() {
         val ids = TankHealthWaterMetricUiCatalog.visibleParameterIds(
             tankProfile = AquariumTankTaxonomy.TYPE_PLANTED,
             measuredParameterIds = WaterTestParameterId.entries
         )
 
-        assertEquals(TankHealthWaterMetricUiCatalog.MAX_DASHBOARD_METRICS, ids.size)
+        assertEquals(WaterTestParameterId.entries.size, ids.size)
         assertTrue(ids.containsAll(WaterTestProfileUiCatalog.recommendedIds(
             AquariumTankTaxonomy.TYPE_PLANTED
         )))
         assertFalse(ids.drop(5).isEmpty())
+    }
+
+    @Test
+    fun unknownTankTypeStillDisplaysDatedMeasurementsWithoutInventingRecommendedFields() {
+        val measured = listOf(WaterTestParameterId.PH, WaterTestParameterId.NITRATE)
+        assertEquals(measured, TankHealthWaterMetricUiCatalog.visibleParameterIds("Unknown", measured))
     }
 }

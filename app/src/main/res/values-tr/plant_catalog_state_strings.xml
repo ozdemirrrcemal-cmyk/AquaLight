@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="plant_picker_load_failed">Bitki kataloğu yüklenemedi. Yeniden deneyin.</string>
+    <string name="plant_picker_retry">Yeniden dene</string>
+</resources>

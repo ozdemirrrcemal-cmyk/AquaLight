@@ -6,6 +6,9 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
+import com.aqua.aqualight.ui.tabs.aquarium.detail.health.WaterAnalysisLoadState
+import com.aqua.aqualight.ui.tabs.aquarium.detail.health.WaterAssessmentPresentation
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
@@ -39,7 +42,7 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
     private val binding get() = _binding!!
 
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
-    private val waterAnalysisViewModel: WaterAnalysisViewModel by activityViewModels()
+    private val waterAnalysisViewModel: WaterAnalysisViewModel by viewModels()
 
     private var tankId: Long = 0L
     private var currentTank: AquariumTankSnapshot? = null
@@ -121,17 +124,22 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
     private fun observeHealthEntry() {
         binding.tvTankHealthSummary.setText(R.string.tank_health_entry_loading)
         binding.tvTankHealthLastAnalysis.setText(R.string.tank_health_entry_loading)
-        waterAnalysisViewModel.analysesForTank(tankId).observe(viewLifecycleOwner) { analyses ->
+        waterAnalysisViewModel.analysesStateForTank(tankId).observe(viewLifecycleOwner) { state ->
+            if (state !is WaterAnalysisLoadState.Content) {
+                val message = if (state is WaterAnalysisLoadState.Error) R.string.water_analysis_read_failed
+                    else R.string.water_analysis_loading
+                binding.tvTankHealthSummary.setText(message)
+                binding.tvTankHealthLastAnalysis.setText(message)
+                binding.tvTankHealthScore.setText(R.string.tank_health_entry_score)
+                return@observe
+            }
+            val analyses = state.value
             val latest = WaterAnalysisLatestMeasurements.latestEvent(analyses)
             if (latest == null) {
                 binding.tvTankHealthSummary.setText(R.string.tank_health_entry_summary)
                 binding.tvTankHealthLastAnalysis.setText(R.string.tank_health_entry_last_analysis)
             } else {
-                binding.tvTankHealthSummary.text = resources.getQuantityString(
-                    R.plurals.tank_health_entry_measurement_count,
-                    latest.measurements.size,
-                    latest.measurements.size
-                )
+                binding.tvTankHealthSummary.text = WaterAssessmentPresentation.entry(requireContext(), latest)
                 val formatted = DateFormat.getDateTimeInstance(
                     DateFormat.MEDIUM,
                     DateFormat.SHORT,

@@ -2,6 +2,7 @@ package com.aqua.aqualight.application.aquarium.health
 
 import java.util.UUID
 import kotlinx.coroutines.flow.Flow
+import com.aqua.aqualight.application.aquarium.health.water.WaterQualityAssessment
 
 interface WaterAnalysisOperations {
     fun analysesForTank(tankId: Long): Flow<List<WaterAnalysisSnapshot>>
@@ -32,7 +33,9 @@ data class WaterAnalysisSnapshot(
     val temperatureCelsius: Double?,
     val temperatureSource: WaterTemperatureSource?,
     val measurements: List<WaterMeasurementSnapshot>,
-    val createdAtMillis: Long
+    val createdAtMillis: Long,
+    val assessment: WaterQualityAssessment? = null,
+    val contextCapturedAtMillis: Long? = null
 ) {
     init {
         require(measurements.all { measurement -> measurement.resultId.analysisId == id }) {
@@ -232,8 +235,8 @@ internal object WaterAnalysisPolicy {
             require(measurement.parameter != WaterParameter.AMMONIA_AMMONIUM) {
                 "Legacy NH3/NH4 has no resolved analyte and cannot be a new measurement."
             }
-            require(measurement.value.isFinite() && measurement.value >= 0.0) {
-                "Measurement values must be finite and non-negative."
+            require(WaterMeasurementInputPolicy.accepts(measurement.parameter, measurement.value)) {
+                "Measurement value is outside the supported input envelope."
             }
             require(
                 WaterMeasurementCatalog.isSelectionValid(

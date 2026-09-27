@@ -1,25 +1,51 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 
+import android.os.Bundle
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
+import androidx.lifecycle.viewModelScope
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisInput
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisOperations
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisSnapshot
+import java.util.UUID
+import kotlinx.coroutines.flow.map
 
+/** Each fragment owns this instance and its immutable Safe Args route. */
 class WaterAnalysisViewModel(
-    private val operations: WaterAnalysisOperations
+    private val operations: WaterAnalysisOperations,
+    private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
+    private val tankId: Long = checkNotNull(savedStateHandle["tankId"])
+    private val analysisId: Long? = savedStateHandle["analysisId"]
+    internal val mutations = WaterAnalysisMutationController(operations, viewModelScope)
+    internal val requestId: String = savedStateHandle.get<String>("water_request_id")
+        ?: UUID.randomUUID().toString().also { savedStateHandle["water_request_id"] = it }
+    internal var draft: Bundle?
+        get() = savedStateHandle["water_draft"]
+        set(value) { savedStateHandle["water_draft"] = value }
 
-    fun analysesForTank(tankId: Long): LiveData<List<WaterAnalysisSnapshot>> =
-        operations.analysesForTank(tankId).asLiveData()
+    init { require(tankId > 0 && (analysisId == null || analysisId > 0)) }
 
-    fun analysis(analysisId: Long): LiveData<WaterAnalysisSnapshot?> =
-        operations.analysis(analysisId).asLiveData()
+    fun analysesStateForTank(tankId: Long): LiveData<WaterAnalysisLoadState<List<WaterAnalysisSnapshot>>> {
+        require(tankId == this.tankId)
+        return operations.analysesForTank(tankId).asWaterLoadState().asLiveData()
+    }
 
-    suspend fun saveAnalysis(input: WaterAnalysisInput): Long =
-        operations.saveAnalysis(input)
+    fun analysisState(tankId: Long, analysisId: Long): LiveData<WaterAnalysisLoadState<WaterAnalysisSnapshot?>> {
+        require(tankId == this.tankId && analysisId == this.analysisId)
+        return operations.analysis(analysisId).map { record -> record?.takeIf { it.tankId == tankId } }
+            .asWaterLoadState().asLiveData()
+    }
 
-    suspend fun deleteAnalysis(analysisId: Long) =
-        operations.deleteAnalysis(analysisId)
+    internal fun saveAnalysis(input: WaterAnalysisInput) {
+        require(input.tankId == tankId && analysisId == null)
+        mutations.save(input)
+    }
+
+    internal fun deleteAnalysis(analysisId: Long) {
+        require(analysisId == this.analysisId)
+        mutations.delete(analysisId)
+    }
 }

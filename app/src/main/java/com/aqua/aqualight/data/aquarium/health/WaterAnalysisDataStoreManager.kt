@@ -54,19 +54,31 @@ internal class WaterAnalysisDataStoreManager(
         }
     }
 
-    suspend fun addAnalysis(draft: WaterAnalysisDraftRecord, session: OwnerSessionWriteLease): Long =
+    suspend fun addAnalysis(
+        draft: WaterAnalysisDraftRecord,
+        session: OwnerSessionWriteLease,
+        prepareEvaluation: suspend () -> StoredWaterEvaluation? = { null }
+    ): Long =
         session.withWrite {
             UserDataScope.withOwnerUid(session.ownerUid) {
                 WaterAnalysisIdentityRules.requirePositive("tankId", draft.tankId)
                 OwnerTankMutationGate.shared.withTanks(session.ownerUid, listOf(draft.tankId)) {
-                    addAnalysisUnderGate(draft, session)
+                    addAnalysisUnderGate(draft, session, prepareEvaluation)
                 }
             }
         }
 
-    private suspend fun addAnalysisUnderGate(draft: WaterAnalysisDraftRecord, session: OwnerSessionWriteLease): Long {
+    private suspend fun addAnalysisUnderGate(
+        draft: WaterAnalysisDraftRecord,
+        session: OwnerSessionWriteLease,
+        prepareEvaluation: suspend () -> StoredWaterEvaluation?
+    ): Long {
         val ownerUid = session.ownerUid
         requireTankExistsForOwner(ownerUid, draft.tankId)
+        // An acknowledged retry returns its frozen event even after catalogs or tank context change.
+        WaterAnalysisIdentityRules.replayId(appContext.waterAnalysesDataStore.data.first(), ownerUid, draft)
+            ?.let { return it }
+        val evaluation = prepareEvaluation()
         var createdId = 0L
 
         appContext.waterAnalysesDataStore.updateDataAwaitingCommit { currentStore ->
@@ -95,7 +107,8 @@ internal class WaterAnalysisDataStoreManager(
                 temperatureSource = draft.temperatureSource,
                 measurements = draft.measurements,
                 createdAtMillis = now,
-                requestId = draft.requestId
+                requestId = draft.requestId,
+                evaluation = evaluation
             )
             WaterAnalysisStoreRules.validateRecord(record, ownerUid)
             createdId = record.id

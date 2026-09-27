@@ -73,6 +73,16 @@ internal object WaterAnalysisStoreRules {
             violation("Water analysis contains too many measurements.")
         }
         WaterAnalysisValueRules.validateMeasurements(record.measurements)
+        record.evaluation?.let { evaluation ->
+            try {
+                WaterEvaluationCodec.decode(evaluation, record.tankId)
+                WaterCanonicalSnapshotCodec.validate(
+                    evaluation.canonicalMeasurementsList, record.measurements.map { it.parameter }.toSet()
+                )
+            } catch (_: IllegalArgumentException) {
+                violation("Water-analysis evaluation contains invalid evidence.")
+            }
+        }
 
         return record
     }

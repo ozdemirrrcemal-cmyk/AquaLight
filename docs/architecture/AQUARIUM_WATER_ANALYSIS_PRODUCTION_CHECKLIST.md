@@ -72,6 +72,14 @@ a changed payload is rejected. This is an interim idempotency step in the
 current full-list store, not the indexed Room cutover or atomic context and
 assessment transaction required by M.2–M.5.
 
+Implementation continuation on 27 September: immutable catalog/context boundaries,
+a pure partial catalog assessment, frozen event serialization, typed read states,
+route mutation/draft handling and bound UI reasons are implemented. Exact scope,
+named tests and remaining limits are in
+`WATER_ANALYSIS_CONTEXT_ASSESSMENT_EVIDENCE.md`. The new assessment does not close
+E, Room/archive/sensor acceptance or the A/P/L gates. No numerical chemistry
+threshold or product provenance has been invented.
+
 ### U — Baseline and architecture inventory
 
 - [x] U.1 Freeze and inspect the `ui-flow` commit; enumerate application/data/UI/composition paths and the 12 tank type codes.
@@ -330,23 +338,23 @@ WaterAnalysisRecord içindeki kalıcı owner kimliğinin UI’a açılması gere
 - [ ] W1.4 Parse/normalization öncesi anlamı koru; typed source-profile politikasını kullan. Conductivity/TDS metadata'sına ek olarak Fe için analytical scope + method/range/matrix; K için elemental/compound reporting basis korunur. Known profiles bunları kullanıcıya teknik seçim yaptırmadan çözer. Yuvarlama yalnız sunumda.
 - [ ] W1.5 engineVersion, ruleRevision, plantCatalogRevision ve livestockCatalogRevision alanlarını zorunlu yap. K06'daki explicit plant content revision değişen bakım/kimlik verisiyle güncellensin; mevcut JSON schema/count veya ayrı light-catalog revision bunun yerine geçmesin.
 - [ ] W1.6 K06 §12.4: tek bitki asset'inin okuyucu/parser/cache'ini data katmanına taşı, immutable id lookup + revision snapshot'ını application `PlantCareCatalogOperations` sınırından picker ve context'e sun. UI `PlantCatalog` bölüm/etiket projection'ı kalsın. İlk yükleme ana iş parçacığı dışında, concurrent istekler aynı snapshot'ı görsün; ikinci asset/parser/cache oluşturma.
-- [ ] W1.7 Bitki min/max tutarlılığı, finite değerler, sabit kimlik, verified field anahtarları ve ready/status tutarlılığını katalog yüklemede doğrula.
+- [x] W1.7 Bitki min/max tutarlılığı, finite değerler, sabit kimlik, verified field anahtarları ve ready/status tutarlılığını katalog yüklemede doğrula. Local evidence: `PlantCareCatalogTest` validates the real asset and rejects invalid ranges, fields and readiness.
 - [ ] W1.8 Canlı requirements için mevcut LivestockCatalogOperations’ı kullan; gereken confidence/evidence/revision bilgisini mevcut sınırda tamamla.
 - [ ] W1.9 K05 §10.5 uyarınca mevcut parser/evaluator'a strict/inclusive bound, açık iki taraflı inclusive aralık, nominal/approximate değer, typed `UNPARSEABLE_REQUIREMENT`, raw kaynak/revision ve source-unit uyumluluğu ekle; tüm ifadeyi doğrula, ters sınırı düzeltme, desteklenmeyen formatı sessizce geçme. Tam sınır ve yakın değer regresyonlarını geçir.
-- [ ] W1.10 Salt isCompatible kontrolü kullanma: mevcut değer `issues.isEmpty()` olduğu için sıfır karşılaştırmada da true olabilir; NO_COMPARABLE_MEASUREMENTS ve parametre bazlı coverage korunmalı.
+- [x] W1.10 Salt isCompatible kontrolü kullanma: mevcut değer `issues.isEmpty()` olduğu için sıfır karşılaştırmada da true olabilir; NO_COMPARABLE_MEASUREMENTS ve parametre bazlı coverage korunmalı. Local evidence: `LivestockCatalogItemTest` and `WaterQualityAssessmentEngineTest` preserve zero-comparison and per-parameter coverage.
 
 **Geçiş ölçütü:** Mevcut canlı evaluator’ı ve katalog kimlikleri korunuyor; picker davranışı bozulmuyor; eksik ve sınırlı güvene sahip veri tiplerde taşınıyor.
 
 ### W2 — Ortak AquariumHealthContext’i oluştur
 
-- [ ] W2.1 Tek owner/tank snapshot’ından tank türü, kurulum tarihi, boyut/hacim, malzemeler, canlılar ve bitkileri çözümle.
-- [ ] W2.2 Context’e capturedAt, bağlam revision/hash politikası ve veri tamlık bilgisini ekle; create sırasında hangi snapshot’ın kullanıldığı açıklanabilsin.
-- [ ] W2.3 Yerel livestockId/plantId ile catalogId ayrımını koru. Bir türün adedi range’i çoğaltmasın; kayıtların ayrı kimliği kaybolmasın.
-- [ ] W2.4 Custom canlı, silinmiş katalog kimliği, PARTIAL bitki ve çözümleme hatasını ayrı sonuçlara dönüştür.
+- [x] W2.1 Tek owner/tank snapshot’ından tank türü, kurulum tarihi, boyut/hacim, malzemeler, canlılar ve bitkileri çözümle. Local evidence: `AquariumHealthContextProviderTest`; one explicit-owner tank snapshot, with facts frozen before commit.
+- [x] W2.2 Context’e capturedAt, bağlam revision/hash politikası ve veri tamlık bilgisini ekle; create sırasında hangi snapshot’ın kullanıldığı açıklanabilsin. Local evidence: `AquariumHealthContextProviderTest` and `WaterEvaluationCodecTest`; capture time, content revision and resolution states persist.
+- [x] W2.3 Yerel livestockId/plantId ile catalogId ayrımını koru. Bir türün adedi range’i çoğaltmasın; kayıtların ayrı kimliği kaybolmasın. Local evidence: `HealthContextEntityResolverTest` and engine order/quantity invariance tests.
+- [x] W2.4 Custom canlı, silinmiş katalog kimliği, PARTIAL bitki ve çözümleme hatasını ayrı sonuçlara dönüştür. Local evidence: `HealthContextEntityResolverTest`, `AquariumHealthContextProviderTest` and plant readiness engine tests.
 - [ ] W2.5 CO2/light/filter/fertilizer/substrate/cooler/heater bağlamını canonical category/product metadata’dan çıkar. Kayıtlı ekipman varlığı ile cihazın çalıştığı bilgisi ayrı olsun.
-- [ ] W2.6 Tank yaşı bilinmiyorsa mature varsayma; hacmi boyutlardan türetiyorsan brüt/geometrik hacim olduğunu koru; net su miktarı diye kimyasal doz önerme.
+- [x] W2.6 Tank yaşı bilinmiyorsa mature varsayma; hacmi boyutlardan türetiyorsan brüt/geometrik hacim olduğunu koru; net su miktarı diye kimyasal doz önerme. Local evidence: `AquariumHealthContextProviderTest`; missing setup/geometry stays absent, geometric volume uses the existing calculator.
 - [ ] W2.7 Katalog yükleme hatası ile boş tankı ayır. Bilinmeyen taxonomy ve malzeme anahtarını generic freshwater olarak kullanma.
-- [ ] W2.8 Geriye dönük analizde kullanıcının eski tank bağlamı bulunmuyorsa `contextAsOfCreation` benzeri açık semantik sakla; kayıt tarihi itibarıyla bağlam biliniyormuş izlenimi verme.
+- [x] W2.8 Geriye dönük analizde kullanıcının eski tank bağlamı bulunmuyorsa `contextAsOfCreation` benzeri açık semantik sakla; kayıt tarihi itibarıyla bağlam biliniyormuş izlenimi verme. Local evidence: `WaterEvaluationCodecTest`; CURRENT_AT_ENTRY is persisted and disclosed in detail.
 - [ ] W2.9 Bağlamı UI’ın her render’ında yeniden kurma; katalogları revision ile cache’le; tank/owner değişiminde eski sonuç taşınmasını engelle.
 
 **Geçiş ölçütü:** Dört motorun kullanabileceği tek, immutable, açıklanabilir snapshot var; application/data katmanı UI sınıflarına bağımlı değil.
@@ -369,17 +377,17 @@ WaterAnalysisRecord içindeki kalıcı owner kimliğinin UI’a açılması gere
 
 ### W4 — Saf analiz motoru
 
-- [ ] W4.1 Engine yalnız hazır measurements/context/rules/explicit time girdileriyle çalışsın; Android kaynakları, ağ, JSON, store ve Clock çağrısı yapmasın.
+- [x] W4.1 Engine yalnız hazır measurements/context/rules/explicit time girdileriyle çalışsın; Android kaynakları, ağ, JSON, store ve Clock çağrısı yapmasın. Local evidence: engine unit tests and `water_analysis_architecture_guard.py` (including negative guard tests).
 - [ ] W4.2 Önce girdi geçerliliği, sonra chemistry kuralları, canlı/bitki değerlendirmeleri, conflict ve recommendation birleşimi çalışsın.
 - [ ] W4.3 Mevcut LivestockWaterCompatibilityEvaluator tek range comparison kaynağı kalsın; K05 inclusive/exclusive ve nominal/SOFT anlamı adapter'da kaybolmasın, sıfır karşılaştırma compatibility üretmesin. Advisor'ın catalog I/O'su engine'in içine taşınmasın; gerekirse hazır profile kabul eden sınır uyarlaması yap.
-- [ ] W4.4 Gereksinim kesişimini ölçümden bağımsız hesapla; ölçüm yokken de uyumsuz habitat gereksinimleri görünür olsun.
-- [ ] W4.5 Partial/missing gereksinimi sonsuz aralık kabul edip compatible sayma; değerlendirilmiş ve değerlendirilememiş parametreleri ayrı say.
+- [x] W4.4 Gereksinim kesişimini ölçümden bağımsız hesapla; ölçüm yokken de uyumsuz habitat gereksinimleri görünür olsun. Local evidence: strict/inclusive intersection tests in `WaterQualityAssessmentEngineTest` run with no measurements.
+- [x] W4.5 Partial/missing gereksinimi sonsuz aralık kabul edip compatible sayma; değerlendirilmiş ve değerlendirilememiş parametreleri ayrı say. Local evidence: engine unknown/custom/partial/readiness tests retain explicit gaps and non-comparable requirements.
 - [ ] W4.6 §25 kapsamındaki her desteklenen parametre için measured/missing/applicability, değerlendirme yönü/şiddeti, nedenler, kullanılan aralıklar ve etkilenen varlıkları üret; sabit sekiz parametre varsayımı kullanma.
 - [ ] W4.7 Chemistry tehlikesini bitki ihtiyacı, filtre varlığı veya genel ortalama iyileştirmesin. K04 maksimum kanıtlı severity birleşimini uygula: kritik parametre çok sayıda normal veya eksik parametreyle bastırılmasın; conflict ve coverage aynı sonuçta ayrı kalsın.
-- [ ] W4.8 Birden fazla profil/rule uygulanırsa öncelik ve birleşim deterministik olsun; JSON/list sırası sonucu değiştirmesin.
-- [ ] W4.9 Recommendation code → reason → rule/evidence bağı kur; yinelenen önerileri sabit sırayla birleştir. Belirsizlikte yeniden ölçüm gibi tanımlı konservatif öneriler kullan.
+- [x] W4.8 Birden fazla profil/rule uygulanırsa öncelik ve birleşim deterministik olsun; JSON/list sırası sonucu değiştirmesin. Local evidence: engine order/quantity invariance; sorted rule IDs, pair witnesses and recommendations.
+- [x] W4.9 Recommendation code → reason → rule/evidence bağı kur; yinelenen önerileri sabit sırayla birleştir. Belirsizlikte yeniden ölçüm gibi tanımlı konservatif öneriler kullan. Local evidence: frozen recommendation rule-ID references validated by `WaterEvaluationCodecTest`; deterministic conservative codes.
 - [ ] W4.10 Kabul edilen K03.14'ü uygula: v1 yalnız freshwater, same-sample verified TAN-as-N + pH + °C; §6.16 EPA/Emerson fraction ve NH3-N → NH3 kütle dönüşümü; pH 7.0–10.2 ve 6–32 °C dışı/eksik/uyumsuz örnekte `CALCULATION_UNAVAILABLE`. Yakın timestamp'i tek başına eşleştirme, geçmişe bugünkü sensörü bağlama; deniz/resifte freshwater formülünü çalıştırma. Direct NH3 varken hesaplanan ikinci v1 sonuç üretme. Kaynakları, formül sürümünü ve sonucu ayrı sakla, `Hesaplanan serbest amonyak` göster; TAN'ı silme/iki kez kanıt sayma. Referans vektörler ve sınır testleri geçsin. Diğer türetilmiş hesaplarda da önkoşulları doğrula.
-- [ ] W4.11 Smart Care task yaratma, donanım kontrolü veya dozlama engine yan etkisi olmasın.
+- [x] W4.11 Smart Care task yaratma, donanım kontrolü veya dozlama engine yan etkisi olmasın. Local evidence: pure engine and new architecture guard; no care/device/dose operation is reachable.
 
 **Geçiş ölçütü:** Aynı girdiler aynı structured sonucu veriyor; list sırası/adet varyasyonları gereksinim aralığını değiştirmiyor; tehlike/çatışma/eksik veri kaybolmuyor.
 
@@ -395,7 +403,7 @@ WaterAnalysisRecord içindeki kalıcı owner kimliğinin UI’a açılması gere
 - [ ] W5.8 V1 dashboard tek latest record kullansın; son kayıtta eksik GH varsa önceki kaydın GH’ını kaynak/zaman belirtmeden doldurmasın.
 - [ ] W5.9 K14: `(ownerUid, requestId)` unique create; çift tıklama veya commit cevabı kaybolunca aynı requestId aynı analysisId döndürür; yeni draft yeni ID alır.
 - [ ] W5.10 Delete exact record için idempotent/NotFound semantiğine sahip olsun; son kaydın silinmesi latest’i yeniden seçsin; tek kayıt silinince NoAnalysis olsun.
-- [ ] W5.11 Geçmiş açılışında yeniden değerlendirme yapma. Katalog değişimi veya bitki/canlı silinmesi tarihsel sonuç ve açıklamayı değiştirmesin.
+- [x] W5.11 Geçmiş açılışında yeniden değerlendirme yapma. Katalog değişimi veya bitki/canlı silinmesi tarihsel sonuç ve açıklamayı değiştirmesin. Local evidence: `WaterEvaluationCodecTest` changes the current catalog while decoded history retains its saved output and names. Room/archive acceptance remains separate.
 - [ ] W5.12 Corruption, unsupported schema, disk full ve I/O error’ı NoAnalysis/başarılı kayıt gibi göstermeyen typed sonuçlar kullan; mevcut commercial recovery/cutover politikasını koru.
 - [ ] W5.13 K15: 50 satırlık indexed keyset page, row-targeted latest/detail, explicit delete dışında retention yok; 10.000 kayıt benchmark, disk dolu/I/O typed hata ve sınırsız UI listesi yok.
 

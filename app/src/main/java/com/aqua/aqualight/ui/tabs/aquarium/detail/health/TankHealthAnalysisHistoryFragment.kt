@@ -4,7 +4,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -20,7 +20,7 @@ class TankHealthAnalysisHistoryFragment :
     Fragment(R.layout.fragment_tank_health_analysis_history) {
 
     private val args: TankHealthAnalysisHistoryFragmentArgs by navArgs()
-    private val waterAnalysisViewModel: WaterAnalysisViewModel by activityViewModels()
+    private val waterAnalysisViewModel: WaterAnalysisViewModel by viewModels()
 
     private var _binding: FragmentTankHealthAnalysisHistoryBinding? = null
     private val binding get() = _binding!!
@@ -76,8 +76,13 @@ class TankHealthAnalysisHistoryFragment :
     }
 
     private fun observeHistory() {
-        waterAnalysisViewModel.analysesForTank(args.tankId)
-            .observe(viewLifecycleOwner) { analyses ->
+        waterAnalysisViewModel.analysesStateForTank(args.tankId)
+            .observe(viewLifecycleOwner) { state ->
+                if (state !is WaterAnalysisLoadState.Content) {
+                    renderLoadState(state)
+                    return@observe
+                }
+                val analyses = state.value
                 historyAdapter.submitItems(analyses.map(::toHistoryRecord))
                 binding.tvHistorySummary.text = resources.getQuantityString(
                     R.plurals.tank_health_analysis_history_count,
@@ -85,8 +90,20 @@ class TankHealthAnalysisHistoryFragment :
                     analyses.size
                 )
                 binding.tvEmptyHistory.isVisible = analyses.isEmpty()
+                binding.tvEmptyHistory.setText(R.string.tank_health_analysis_history_empty)
                 binding.historyList.isVisible = analyses.isNotEmpty()
             }
+    }
+
+    private fun renderLoadState(state: WaterAnalysisLoadState<*>) {
+        historyAdapter.submitItems(emptyList())
+        binding.historyList.isVisible = false
+        binding.tvEmptyHistory.isVisible = true
+        val message = if (state is WaterAnalysisLoadState.Error) {
+            R.string.water_analysis_read_failed
+        } else R.string.water_analysis_loading
+        binding.tvEmptyHistory.setText(message)
+        binding.tvHistorySummary.setText(message)
     }
 
     private fun toHistoryRecord(snapshot: WaterAnalysisSnapshot): TankHealthAnalysisHistoryRecord {

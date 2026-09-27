@@ -5,5 +5,6 @@ internal class WaterAnalysisParameterState {
     val additionalParameters = linkedSetOf<WaterTestParameterId>()
     val measurementSelections =
         linkedMapOf<WaterTestParameterId, WaterMeasurementSelectionUi>()
+    var invalidParameterId: WaterTestParameterId? = null
     var activeMeasurementParameterId: WaterTestParameterId? = null
 }

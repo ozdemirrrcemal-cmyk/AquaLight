@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -30,7 +31,7 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
 
     private val args: TankHealthFragmentArgs by navArgs()
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
-    private val waterAnalysisViewModel: WaterAnalysisViewModel by activityViewModels()
+    private val waterAnalysisViewModel: WaterAnalysisViewModel by viewModels()
     private val maintenanceViewModel: MaintenanceViewModel by activityViewModels()
 
     private var _binding: FragmentTankHealthBinding? = null
@@ -95,10 +96,15 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
             renderWaterMetrics()
         }
 
-        waterAnalysisViewModel.analysesForTank(args.tankId)
-            .observe(viewLifecycleOwner) { analyses ->
-                currentAnalyses = analyses
+        waterAnalysisViewModel.analysesStateForTank(args.tankId)
+            .observe(viewLifecycleOwner) { state ->
+                currentAnalyses = (state as? WaterAnalysisLoadState.Content)?.value.orEmpty()
                 renderWaterMetrics()
+                contentAdapter?.waterReadStatus = when (state) {
+                    WaterAnalysisLoadState.Loading -> R.string.water_analysis_loading
+                    is WaterAnalysisLoadState.Error -> R.string.water_analysis_read_failed
+                    is WaterAnalysisLoadState.Content -> null
+                }
             }
     }
 
@@ -132,14 +138,7 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
     }
 
     private fun renderWaterMetrics() {
-        val profile = currentTankProfile ?: run {
-            contentAdapter?.submitWaterMetrics(
-                metrics = emptyList(),
-                measuredAtMillis = WaterAnalysisLatestMeasurements.latestEvent(currentAnalyses)
-                    ?.measuredAtMillis
-            )
-            return
-        }
+        val profile = currentTankProfile.orEmpty()
 
         val latestMeasurements = WaterAnalysisLatestMeasurements.from(currentAnalyses)
         val models = TankHealthWaterMetricUiCatalog.models(
@@ -171,7 +170,9 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
         contentAdapter?.submitWaterMetrics(
             metrics = models,
             measuredAtMillis = WaterAnalysisLatestMeasurements.latestEvent(currentAnalyses)
-                ?.measuredAtMillis
+                ?.measuredAtMillis,
+            assessmentSummary = WaterAnalysisLatestMeasurements.latestEvent(currentAnalyses)
+                ?.let { WaterAssessmentPresentation.summary(requireContext(), it) }
         )
     }
 

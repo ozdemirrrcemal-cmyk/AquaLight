@@ -18,7 +18,81 @@ message StoredWaterAnalysis {
   int64 created_at_millis = 7;
   string request_id = 8;
   repeated StoredWaterMeasurement measurements = 20;
+  StoredWaterEvaluation evaluation = 30;
   string owner_uid = 100;
+}
+
+message StoredWaterEvaluation {
+  uint32 schema_version = 1;
+  int64 tank_id = 2;
+  int64 captured_at_millis = 3;
+  string context_revision = 4;
+  string context_json = 5;
+  string context_sha256 = 6;
+  string engine_version = 7;
+  string rule_revision = 8;
+  string hazard_severity = 9;
+  string coverage = 10;
+  string conflict_coverage = 11;
+  string chemistry_gap = 12;
+  repeated StoredWaterRuleFinding findings = 20;
+  repeated StoredWaterRequirementConflict conflicts = 21;
+  repeated StoredWaterRecommendation recommendations = 22;
+  repeated StoredWaterHabitatConflict habitat_conflicts = 23;
+  repeated StoredWaterCanonicalMeasurement canonical_measurements = 24;
+}
+
+message StoredWaterCanonicalMeasurement {
+  string parameter = 1;
+  string basis = 2;
+  string unit = 3;
+  optional double value = 4;
+  string conversion_revision = 5;
+}
+
+message StoredWaterRuleFinding {
+  string entity_kind = 1;
+  int64 entity_id = 2;
+  string catalog_id = 3;
+  string parameter = 4;
+  string rule_id = 5;
+  string rule_revision = 6;
+  string catalog_revision = 7;
+  optional double measured_value = 8;
+  StoredWaterRequirementRange expected_range = 9;
+  string direction = 10;
+  string severity = 11;
+  string gap = 12;
+  string entity_display_name = 13;
+}
+
+message StoredWaterRequirementRange {
+  optional double minimum = 1;
+  optional double maximum = 2;
+  bool approximate = 3;
+  bool minimum_inclusive = 4;
+  bool maximum_inclusive = 5;
+  optional double nominal_target = 6;
+}
+
+message StoredWaterRequirementConflict {
+  string first_rule_id = 1;
+  string second_rule_id = 2;
+  bool authoritative = 3;
+}
+
+message StoredWaterRecommendation {
+  string code = 1;
+  repeated string finding_rule_ids = 2;
+}
+
+message StoredWaterHabitatConflict {
+  string entity_kind = 1;
+  int64 entity_id = 2;
+  string catalog_id = 3;
+  string tank_environment = 4;
+  string source_water_group = 5;
+  string entity_display_name = 6;
 }
 
 message StoredWaterMeasurement {

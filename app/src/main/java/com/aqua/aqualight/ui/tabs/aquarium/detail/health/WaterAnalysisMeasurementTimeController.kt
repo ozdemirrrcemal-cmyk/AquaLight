@@ -7,13 +7,16 @@ import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.ui.common.dialog.AppDatePickerDialogFragment
 import com.aqua.aqualight.ui.common.dialog.AppTimePickerDialogFragment
 import java.util.Calendar
+import java.util.TimeZone
 
 internal class WaterAnalysisMeasurementTimeController(
     private val fragment: Fragment,
     private val binding: ItemTankHealthAnalysisMeasurementTimeBinding,
     savedInstanceState: Bundle?
 ) {
-    private val selectedCalendar = Calendar.getInstance().apply {
+    private val selectedCalendar = Calendar.getInstance(
+        savedInstanceState?.getString(STATE_TIME_ZONE)?.let(TimeZone::getTimeZone) ?: TimeZone.getDefault()
+    ).apply {
         val savedTime = savedInstanceState?.getLong(
             STATE_MEASUREMENT_TIME_MILLIS,
             NO_SAVED_TIME
@@ -75,6 +78,7 @@ internal class WaterAnalysisMeasurementTimeController(
 
     fun saveState(outState: Bundle) {
         outState.putLong(STATE_MEASUREMENT_TIME_MILLIS, selectedCalendar.timeInMillis)
+        outState.putString(STATE_TIME_ZONE, selectedCalendar.timeZone.id)
     }
 
     private fun render() {
@@ -92,6 +96,7 @@ internal class WaterAnalysisMeasurementTimeController(
         const val DATE_PICKER_REQUEST_KEY = "tank_health_analysis_date_picker"
         const val TIME_PICKER_REQUEST_KEY = "tank_health_analysis_time_picker"
         const val STATE_MEASUREMENT_TIME_MILLIS = "measurement_time_millis"
+        const val STATE_TIME_ZONE = "measurement_time_zone"
         const val NO_SAVED_TIME = -1L
     }
 }

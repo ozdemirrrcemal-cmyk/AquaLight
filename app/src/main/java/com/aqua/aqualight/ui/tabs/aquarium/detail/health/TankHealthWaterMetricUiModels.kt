@@ -11,8 +11,6 @@ internal data class TankHealthWaterMetricUiModel(
 )
 
 internal object TankHealthWaterMetricUiCatalog {
-    const val MAX_DASHBOARD_METRICS = 8
-
     fun visibleParameterIds(
         tankProfile: String,
         measuredParameterIds: List<WaterTestParameterId>
@@ -30,7 +28,6 @@ internal object TankHealthWaterMetricUiCatalog {
 
         return (recommended + measuredExtras)
             .distinct()
-            .take(MAX_DASHBOARD_METRICS)
     }
 
     fun models(

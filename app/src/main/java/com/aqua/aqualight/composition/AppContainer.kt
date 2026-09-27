@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModelProvider
 import com.aqua.aqualight.app.AquaApp
 import com.aqua.aqualight.application.aquarium.LivestockCatalogOperations
+import com.aqua.aqualight.application.aquarium.catalog.plant.PlantCareCatalogOperations
 import com.aqua.aqualight.application.aquarium.LivestockWaterAdvisorOperations
 import com.aqua.aqualight.application.auth.AccountSecurityOperations
 import com.aqua.aqualight.application.auth.AppSessionOperations
@@ -20,6 +21,7 @@ import com.aqua.aqualight.application.user.LocalDataRecoveryOperations
 import com.aqua.aqualight.application.user.UserProfileOperations
 import com.aqua.aqualight.application.user.UserSettingsOperations
 import com.aqua.aqualight.data.aquarium.catalog.livestock.DefaultLivestockCatalogOperations
+import com.aqua.aqualight.data.aquarium.catalog.plant.DefaultPlantCareCatalogOperations
 import com.aqua.aqualight.data.aquarium.catalog.livestock.DefaultLivestockWaterAdvisor
 import com.aqua.aqualight.data.auth.AppSessionCoordinator
 import com.aqua.aqualight.data.auth.AuthRepository
@@ -65,6 +67,7 @@ interface AppContainer {
     val authenticatedOwnerIdentity: AuthenticatedOwnerIdentity
     val userProfileOperations: UserProfileOperations
     val livestockCatalogOperations: LivestockCatalogOperations
+    val plantCareCatalogOperations: PlantCareCatalogOperations
     val livestockWaterAdvisorOperations: LivestockWaterAdvisorOperations
     val feedbackSubmissionOperations: FeedbackSubmissionUseCase
     val imageMediaProcessor: ImageMediaProcessor
@@ -157,6 +160,12 @@ internal class DefaultAppContainer(
         DefaultLivestockWaterAdvisor(appContext)
     }
 
+    override val plantCareCatalogOperations: PlantCareCatalogOperations by lazy(
+        LazyThreadSafetyMode.SYNCHRONIZED
+    ) {
+        DefaultPlantCareCatalogOperations.create(appContext)
+    }
+
     override val feedbackSubmissionOperations: FeedbackSubmissionUseCase by lazy(
         LazyThreadSafetyMode.SYNCHRONIZED
     ) {
@@ -238,7 +247,8 @@ internal class DefaultAppContainer(
                 context = appContext,
                 userProfileOperations = userProfileOperations,
                 notificationPreferenceUseCase = notificationPreferenceUseCase,
-                ownerGraphResolver = ownerGraphResolver
+                ownerGraphResolver = ownerGraphResolver,
+                waterContextCatalogs = WaterContextCatalogs(plantCareCatalogOperations, livestockCatalogOperations)
             )
         )
     }

@@ -5,6 +5,7 @@ import androidx.annotation.StringRes
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumPlantCatalogRecord
 import com.aqua.aqualight.application.aquarium.AquariumPlantLightCatalog
+import com.aqua.aqualight.application.aquarium.catalog.plant.PlantCareCatalogSnapshot
 
 /** Every category refers to the same stable identity, including overlapping types and positions. */
 object PlantCatalog {
@@ -21,8 +22,8 @@ object PlantCatalog {
         Section(R.string.catalog_plant_category_rare_title) { "RARE_AQUARIUM_TRADE" in it.catalogFlags }
     )
 
-    fun resolve(context: Context): List<AquariumPlant> {
-        val records = AquariumPlantCatalog.records(context)
+    fun resolve(context: Context, snapshot: PlantCareCatalogSnapshot): List<AquariumPlant> {
+        val records = snapshot.records
         require(records.all { record -> sections.any { it.includes(record) } })
         return sections.flatMap { section ->
             records.asSequence()

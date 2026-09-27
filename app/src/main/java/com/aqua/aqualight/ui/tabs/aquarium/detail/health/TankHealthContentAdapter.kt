@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.aqua.aqualight.R
@@ -20,6 +21,12 @@ internal class TankHealthContentAdapter(
 
     private var currentMetrics: List<TankHealthWaterMetricUiModel> = emptyList()
     private var currentMeasuredAtMillis: Long? = null
+    private var currentAssessmentSummary: String? = null
+    var waterReadStatus: Int? = R.string.water_analysis_loading
+        set(value) {
+            field = value
+            updateItems()
+        }
     private var maintenance = TankHealthMaintenanceUi()
     private var system = TankHealthSystemUi()
     private var items: List<TankHealthContentItem> = buildItems(emptyList())
@@ -85,7 +92,7 @@ internal class TankHealthContentAdapter(
             holder is WaterQualityHeaderViewHolder &&
             item is TankHealthContentItem.WaterQualityHeader
         ) {
-            holder.bind(item.measuredAtMillis)
+            holder.bind(item)
         }
         if (holder is MaintenanceViewHolder && item is TankHealthContentItem.MaintenanceSection) {
             holder.bind(item.summary)
@@ -99,10 +106,12 @@ internal class TankHealthContentAdapter(
 
     fun submitWaterMetrics(
         metrics: List<TankHealthWaterMetricUiModel>,
-        measuredAtMillis: Long? = null
+        measuredAtMillis: Long? = null,
+        assessmentSummary: String? = null
     ) {
         currentMetrics = metrics
         currentMeasuredAtMillis = measuredAtMillis
+        currentAssessmentSummary = assessmentSummary
         updateItems()
     }
 
@@ -118,7 +127,10 @@ internal class TankHealthContentAdapter(
 
     private fun updateItems() {
         val previous = items
-        val next = buildItems(currentMetrics, currentMeasuredAtMillis, maintenance, system)
+        val header = TankHealthContentItem.WaterQualityHeader(
+            currentMeasuredAtMillis, waterReadStatus, currentAssessmentSummary
+        )
+        val next = buildItems(currentMetrics, header, maintenance, system)
         val diff = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
             override fun getOldListSize(): Int = previous.size
             override fun getNewListSize(): Int = next.size
@@ -200,8 +212,11 @@ internal class TankHealthContentAdapter(
     private class WaterQualityHeaderViewHolder(
         private val binding: ItemTankHealthWaterQualityHeaderBinding
     ) : RecyclerView.ViewHolder(binding.root) {
-        fun bind(measuredAtMillis: Long?) {
-            binding.tvLastAnalysis.text = measuredAtMillis?.let { timestamp ->
+        fun bind(item: TankHealthContentItem.WaterQualityHeader) {
+            binding.tvAssessmentSummary.text = item.assessmentSummary
+            binding.tvAssessmentSummary.isVisible = item.assessmentSummary != null
+            binding.tvLastAnalysis.text = item.readStatus?.let(binding.root.context::getString)
+                ?: item.measuredAtMillis?.let { timestamp ->
                 val context = binding.root.context
                 context.getString(
                     R.string.tank_health_last_analysis_at,
@@ -256,7 +271,11 @@ internal class TankHealthContentAdapter(
     }
 
     private sealed interface TankHealthContentItem {
-        data class WaterQualityHeader(val measuredAtMillis: Long?) : TankHealthContentItem
+        data class WaterQualityHeader(
+            val measuredAtMillis: Long? = null,
+            val readStatus: Int? = null,
+            val assessmentSummary: String? = null
+        ) : TankHealthContentItem
         data class Metric(
             val metric: TankHealthWaterMetricUiModel
         ) : TankHealthContentItem
@@ -277,12 +296,12 @@ internal class TankHealthContentAdapter(
 
         private fun buildItems(
             metrics: List<TankHealthWaterMetricUiModel>,
-            measuredAtMillis: Long? = null,
+            header: TankHealthContentItem.WaterQualityHeader = TankHealthContentItem.WaterQualityHeader(),
             maintenance: TankHealthMaintenanceUi = TankHealthMaintenanceUi(),
             system: TankHealthSystemUi = TankHealthSystemUi()
         ): List<TankHealthContentItem> =
             buildList {
-                add(TankHealthContentItem.WaterQualityHeader(measuredAtMillis))
+                add(header)
                 addAll(metrics.map(TankHealthContentItem::Metric))
                 add(TankHealthContentItem.AddAnalysis)
                 add(TankHealthContentItem.MaintenanceSection(maintenance))

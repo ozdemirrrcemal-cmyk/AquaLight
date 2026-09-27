@@ -21,10 +21,11 @@ object LivestockCatalog {
         }
 
         return synchronized(this) {
-            cachedEntries ?: loadEntries(context.applicationContext).also { entries ->
-                validate(entries)
-                cachedEntries = entries
-            }
+            cachedEntries ?: java.util.Collections.unmodifiableList(loadEntries(context.applicationContext))
+                .also { entries ->
+                    validate(entries)
+                    cachedEntries = entries
+                }
         }
     }
 
@@ -55,8 +56,9 @@ object LivestockCatalog {
     private fun loadEntries(
         context: Context
     ): List<LivestockCatalogEntry> {
-        return context.assets.open(ASSET_FILE)
-            .bufferedReader(Charsets.UTF_8)
+        val content = context.assets.open(ASSET_FILE).use { it.readBytes() }
+        LivestockCatalogRevision.verify(content)
+        return content.inputStream().bufferedReader(Charsets.UTF_8)
             .useLines { lines ->
                 lines.mapIndexedNotNull { index, line ->
                     val trimmed = line.trim()

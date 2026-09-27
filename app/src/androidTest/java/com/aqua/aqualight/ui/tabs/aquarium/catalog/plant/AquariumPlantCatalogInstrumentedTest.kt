@@ -3,6 +3,9 @@ package com.aqua.aqualight.ui.tabs.aquarium.catalog.plant
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.aqua.aqualight.application.aquarium.catalog.plant.PlantCareCatalogResult
+import com.aqua.aqualight.composition.requireAppContainer
+import kotlinx.coroutines.runBlocking
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumPlantLightCatalog
 import org.junit.Assert.assertEquals
@@ -15,12 +18,17 @@ class AquariumPlantCatalogInstrumentedTest {
 
     private val context: Context = ApplicationProvider.getApplicationContext()
 
+    private fun snapshot() = runBlocking {
+        (context.requireAppContainer().plantCareCatalogOperations.snapshot() as
+            PlantCareCatalogResult.Available).snapshot
+    }
+
     @Test
     fun everySelectablePlantResolvesToAnExactReviewedLightRecord() {
-        val resolvedPlants = PlantCatalog.resolve(context)
+        val resolvedPlants = PlantCatalog.resolve(context, snapshot())
         val uniquePlants = resolvedPlants.distinctBy(AquariumPlant::catalogId)
 
-        assertEquals(AquariumPlantCatalog.EXPECTED_RECORD_COUNT, uniquePlants.size)
+        assertEquals(271, uniquePlants.size)
         assertEquals(
             AquariumPlantLightCatalog.catalogIds,
             uniquePlants.map(AquariumPlant::catalogId).toSet()
@@ -28,16 +36,16 @@ class AquariumPlantCatalogInstrumentedTest {
         assertTrue(uniquePlants.all { plant ->
             plant.lightDemand == AquariumPlantLightCatalog.resolve(plant.catalogId)
         })
-        assertEquals(182, AquariumPlantCatalog.records(context).count { it.care.healthAnalysisReady })
-        assertTrue(AquariumPlantCatalog.records(context).all { it.placement.isNotEmpty() })
-        assertTrue(AquariumPlantCatalog.records(context).all { record ->
+        assertEquals(182, snapshot().records.count { it.care.healthAnalysisReady })
+        assertTrue(snapshot().records.all { it.placement.isNotEmpty() })
+        assertTrue(snapshot().records.all { record ->
             AquariumPlantLightCatalog.requireRecord(record.id).lightRequirement == record.care.lightRequirement
         })
     }
 
     @Test
     fun pickerUsesEightOrderedCategoriesAndRetainsSharedPlantIds() {
-        val plants = PlantCatalog.resolve(context)
+        val plants = PlantCatalog.resolve(context, snapshot())
         val sectionNames = listOf(
             R.string.catalog_plant_category_foreground_title,
             R.string.catalog_plant_category_middle_ground_title,
@@ -76,6 +84,6 @@ class AquariumPlantCatalogInstrumentedTest {
         assertTrue(!packagedJson.contains("sourceUrl"))
         assertTrue(!packagedJson.contains("sourceOrganization"))
         assertTrue(!packagedJson.contains("selectedRecordEvidence"))
-        assertEquals(271, AquariumPlantCatalog.parse(packagedJson).size)
+        assertEquals(271, snapshot().records.size)
     }
 }

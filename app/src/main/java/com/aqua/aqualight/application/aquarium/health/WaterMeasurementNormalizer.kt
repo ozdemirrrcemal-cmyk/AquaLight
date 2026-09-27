@@ -1,6 +1,7 @@
 package com.aqua.aqualight.application.aquarium.health
 
 object WaterMeasurementNormalizer {
+    const val CONVERSION_REVISION = "water-normalization-2026-09-27.1"
     private const val PPM_CACO3_PER_DEGREE = 17.86
     private const val MEQ_L_PER_DKH_ALKALINITY = 0.358
     private const val MG_L_CACO3_PER_MEQ_L = 50.0

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="water_analysis_loading">Analiz kayıtları yükleniyor…</string>
+    <string name="water_analysis_read_failed">Analiz kayıtları yüklenemedi. Yeniden denemek için ekranı tekrar açın.</string>
+    <string name="water_analysis_record_missing">Bu analiz kaydı bulunamadı.</string>
+    <string name="water_assessment_not_available">Kayıtlı ölçümler. Kaydedilmiş değerlendirme yok.</string>
+    <string name="water_assessment_catalog_summary">Katalog karşılaştırması: %1$d/%2$d koşul incelendi. Aralık dışı: %3$d. Gereksinim uyuşmazlığı: %4$d. Kimyasal güvenlik değerlendirilmedi.</string>
+    <string name="water_assessment_context_at_entry">Tank bağlamı kayıt sırasında alındı: %1$s %2$s. Geçmiş ölçüm tarihindeki tank koşullarını doğrulamaz.</string>
+    <string name="water_assessment_entry_summary">Kısmi katalog değerlendirmesi: %1$d aralık dışı, %2$d gereksinim uyuşmazlığı.</string>
+    <string name="water_analysis_delete_dated">%1$s %2$s tarihli analiz silinsin mi? Bu işlem geri alınamaz.</string>
+    <string name="water_finding_line">%1$s · %2$s: %3$s. Katalog sınırları: %4$s %5$s.</string>
+    <string name="water_finding_below">katalog aralığının altında</string>
+    <string name="water_finding_above">katalog aralığının üzerinde</string>
+    <string name="water_finding_within">bu katalog aralığında</string>
+    <string name="water_finding_conflict">%1$s ve %2$s için %3$s katalog gereksinimleri kesişmiyor.</string>
+    <string name="water_finding_habitat">%1$s için katalogdaki su ortamı bu tankla uyuşmuyor.</string>
+    <string name="water_gap_line">%1$d karşılaştırma yapılamadı: %2$s.</string>
+    <string name="water_entity_plant">Bitki %1$s (#%2$d)</string>
+    <string name="water_entity_livestock">Canlı %1$s (#%2$d)</string>
+    <string name="water_gap_measurement">ölçüm eksik</string>
+    <string name="water_gap_requirement">katalog gereksinimi eksik</string>
+    <string name="water_gap_parse">katalog gereksinimi çözümlenemedi</string>
+    <string name="water_gap_informational">kaynak yalnız bilgilendirme amaçlı</string>
+    <string name="water_gap_source">ölçüm kaynağı veya raporlama temeli çözümlenmedi</string>
+    <string name="water_gap_catalog">katalog kullanılamıyor</string>
+    <string name="water_gap_identity">katalog kaydı eksik</string>
+    <string name="water_gap_custom">özel canlının doğrulanmış gereksinimleri yok</string>
+    <string name="water_gap_plant">bitki bakım profili eksik</string>
+    <string name="water_gap_tank">tankın su türü bilinmiyor</string>
+    <string name="water_gap_semantic">gereksinim birimi veya ölçüm anlamı çözümlenmedi</string>
+    <string name="water_gap_rule">doğrulanmış değerlendirme kuralı yok</string>
+    <string name="water_gap_habitat">katalog su ortamı tankla uyuşmuyor</string>
+    <string name="water_gap_unknown_habitat">katalog su ortamı bilinmiyor</string>
+    <string name="water_recommendation_verify">Kayıtlı değer, birim ve test yöntemini kontrol edin; katalog uyuşmazlığına göre işlem yapmadan önce ölçümü tekrarlayın.</string>
+    <string name="water_recommendation_habitat">Listelenen bitki veya canlıların uyuşmayan ortam gereksinimlerini inceleyin. Bu sonuç hastalık teşhisi veya doz talimatı değildir.</string>
+    <string name="water_assessment_no_comparison">Karşılaştırılabilir katalog sonucu yok. Analizdeki eksik verileri inceleyin.</string>
+</resources>

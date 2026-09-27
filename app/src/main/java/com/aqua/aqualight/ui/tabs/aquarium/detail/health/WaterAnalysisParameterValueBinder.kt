@@ -21,6 +21,9 @@ internal class WaterAnalysisParameterValueBinder(
         symbolRes: Int?
     ) {
         binding.inputValue.setText(model.value)
+        binding.inputValue.error = if (state.invalidParameterId == model.id) {
+            fragment.getString(R.string.tank_health_analysis_invalid_parameter_value, fragment.getString(model.nameRes))
+        } else null
         renderInputStroke(binding, binding.inputValue.hasFocus(), model.id)
         binding.inputValue.setOnFocusChangeListener { _, hasFocus ->
             renderInputStroke(binding, hasFocus, model.id)
@@ -32,7 +35,7 @@ internal class WaterAnalysisParameterValueBinder(
                 append(fragment.getString(resource))
             }
         }
-        binding.inputValue.addTextChangedListener(parameterValueWatcher(model.id))
+        binding.inputValue.addTextChangedListener(parameterValueWatcher(model.id, binding))
     }
 
     fun bindRemoveAction(
@@ -79,7 +82,10 @@ internal class WaterAnalysisParameterValueBinder(
         )
     }
 
-    private fun parameterValueWatcher(parameterId: WaterTestParameterId): TextWatcher =
+    private fun parameterValueWatcher(
+        parameterId: WaterTestParameterId,
+        binding: ItemTankHealthAnalysisParameterInputBinding
+    ): TextWatcher =
         object : TextWatcher {
             override fun beforeTextChanged(
                 s: CharSequence?,
@@ -95,6 +101,10 @@ internal class WaterAnalysisParameterValueBinder(
                 count: Int
             ) {
                 state.parameterValues[parameterId] = s?.toString().orEmpty()
+                if (state.invalidParameterId == parameterId) {
+                    state.invalidParameterId = null
+                    binding.inputValue.error = null
+                }
             }
 
             override fun afterTextChanged(s: Editable?) = Unit

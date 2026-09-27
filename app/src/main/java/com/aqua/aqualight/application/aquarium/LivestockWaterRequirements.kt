@@ -41,7 +41,7 @@ enum class LivestockWarningMode {
         ): LivestockWarningMode {
             return entries.firstOrNull { mode ->
                 mode.name.equals(value.trim(), ignoreCase = true)
-            } ?: SOFT
+            } ?: INFORMATIONAL
         }
     }
 }
@@ -60,7 +60,8 @@ data class LivestockWaterRequirements(
     val phosphatePpm: LivestockParameterRange? = null,
     val par: LivestockParameterRange? = null,
     val flow: String? = null,
-    val warningMode: LivestockWarningMode = LivestockWarningMode.SOFT
+    val warningMode: LivestockWarningMode = LivestockWarningMode.SOFT,
+    val evidence: LivestockRequirementEvidence? = null
 ) {
     val hasAnyMeasuredRequirement: Boolean
         get() = listOf(
@@ -141,7 +142,8 @@ data class LivestockWaterParameterIssue(
 data class LivestockWaterCompatibility(
     val checkedParameterCount: Int,
     val issues: List<LivestockWaterParameterIssue>,
-    val warningMode: LivestockWarningMode
+    val warningMode: LivestockWarningMode,
+    val coverage: Map<AquariumWaterParameter, LivestockParameterCoverage> = emptyMap()
 ) {
     val isCompatible: Boolean
         get() = checkedParameterCount > 0 && issues.isEmpty()
@@ -169,9 +171,12 @@ object LivestockWaterCompatibilityEvaluator {
         ).toMap()
 
         var checked = 0
+        val coverage = linkedMapOf<AquariumWaterParameter, LivestockParameterCoverage>()
         val issues = water.values().mapNotNull { (parameter, measuredValue) ->
             val range = expected[parameter]
-            if (range == null || measuredValue == null || !range.hasComparableBounds) {
+            val state = comparisonCoverage(parameter, range, measuredValue, requirements)
+            coverage[parameter] = state
+            if (state != LivestockParameterCoverage.COMPARED || range == null || measuredValue == null) {
                 return@mapNotNull null
             }
 
@@ -191,7 +196,23 @@ object LivestockWaterCompatibilityEvaluator {
         return LivestockWaterCompatibility(
             checkedParameterCount = checked,
             issues = issues,
-            warningMode = requirements.warningMode
+            warningMode = requirements.warningMode,
+            coverage = java.util.Collections.unmodifiableMap(coverage)
         )
+    }
+
+    private fun comparisonCoverage(
+        parameter: AquariumWaterParameter,
+        range: LivestockParameterRange?,
+        measuredValue: Double?,
+        requirements: LivestockWaterRequirements
+    ): LivestockParameterCoverage = when {
+        requirements.evidence?.parameters?.get(parameter) is LivestockRequirementParseResult.Unparseable ->
+            LivestockParameterCoverage.UNPARSEABLE_REQUIREMENT
+        range == null -> LivestockParameterCoverage.REQUIREMENT_MISSING
+        range.approximate || !range.hasComparableBounds ||
+            requirements.warningMode == LivestockWarningMode.INFORMATIONAL -> LivestockParameterCoverage.INFORMATIONAL
+        measuredValue == null -> LivestockParameterCoverage.MEASUREMENT_MISSING
+        else -> LivestockParameterCoverage.COMPARED
     }
 }

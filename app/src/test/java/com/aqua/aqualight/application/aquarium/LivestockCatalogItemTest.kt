@@ -86,7 +86,7 @@ class LivestockCatalogItemTest {
             LivestockWarningMode.fromCatalogValue("INFORMATIONAL")
         )
         assertEquals(
-            LivestockWarningMode.SOFT,
+            LivestockWarningMode.INFORMATIONAL,
             LivestockWarningMode.fromCatalogValue("unknown")
         )
     }

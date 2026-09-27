@@ -4,7 +4,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.lifecycleScope
+import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
@@ -17,23 +17,20 @@ import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
 import com.aqua.aqualight.utils.DialogType
-import java.util.UUID
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.launch
 
 class TankHealthAnalysisAddFragment :
     Fragment(R.layout.fragment_tank_health_analysis_add) {
 
     private val args: TankHealthAnalysisAddFragmentArgs by navArgs()
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
-    private val waterAnalysisViewModel: WaterAnalysisViewModel by activityViewModels()
+    private val waterAnalysisViewModel: WaterAnalysisViewModel by viewModels()
 
     private var _binding: FragmentTankHealthAnalysisAddBinding? = null
     private val binding get() = _binding!!
 
     private var tankProfile: String? = null
     private val parameterState = WaterAnalysisParameterState()
-    private var requestId: String = UUID.randomUUID().toString()
+    private var requestId: String = ""
 
     private var measurementTimeController: WaterAnalysisMeasurementTimeController? = null
     private var temperatureUiController: WaterAnalysisTemperatureUiController? = null
@@ -44,8 +41,9 @@ class TankHealthAnalysisAddFragment :
         require(args.tankId > 0L) {
             "TankHealthAnalysisAddFragment requires a positive tankId."
         }
-        restoreWaterTestState(savedInstanceState)
-        requestId = savedInstanceState?.getString(STATE_REQUEST_ID) ?: requestId
+        val restored = waterAnalysisViewModel.draft ?: savedInstanceState
+        restoreWaterTestState(restored)
+        requestId = restored?.getString(STATE_REQUEST_ID) ?: waterAnalysisViewModel.requestId
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -55,13 +53,13 @@ class TankHealthAnalysisAddFragment :
         measurementTimeController = WaterAnalysisMeasurementTimeController(
             fragment = this,
             binding = binding.measurementTimeSection,
-            savedInstanceState = savedInstanceState
+            savedInstanceState = waterAnalysisViewModel.draft ?: savedInstanceState
         ).also { controller -> controller.bind() }
 
         temperatureUiController = WaterAnalysisTemperatureUiController(
             fragment = this,
             binding = binding.sensorSection,
-            savedInstanceState = savedInstanceState
+            savedInstanceState = waterAnalysisViewModel.draft ?: savedInstanceState
         ).also { controller -> controller.bind() }
 
         parameterRenderer = WaterAnalysisParameterRenderer(
@@ -95,9 +93,18 @@ class TankHealthAnalysisAddFragment :
         }
         binding.btnSaveAnalysis.setOnClickListener { saveAnalysis() }
         observeTankProfile()
+        bindWaterAnalysisMutation(waterAnalysisViewModel.mutations, R.id.tankHealthAnalysisAddFragment) { state ->
+            binding.btnSaveAnalysis.isEnabled = state == WaterAnalysisMutationState.Idle
+        }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
+        captureDraft(outState)
+        waterAnalysisViewModel.draft = Bundle(outState)
+        super.onSaveInstanceState(outState)
+    }
+
+    private fun captureDraft(outState: Bundle) {
         measurementTimeController?.saveState(outState)
         temperatureUiController?.saveState(outState)
         outState.putStringArrayList(
@@ -120,7 +127,6 @@ class TankHealthAnalysisAddFragment :
             STATE_ACTIVE_MEASUREMENT_PARAMETER_ID,
             parameterState.activeMeasurementParameterId?.name
         )
-        super.onSaveInstanceState(outState)
     }
 
     private fun restoreWaterTestState(savedInstanceState: Bundle?) {
@@ -205,26 +211,9 @@ class TankHealthAnalysisAddFragment :
 
         when (buildResult) {
             is WaterAnalysisInputBuildResult.Failure -> showInputError(buildResult)
-            is WaterAnalysisInputBuildResult.Success -> persistAnalysis(buildResult)
-        }
-    }
-
-    private fun persistAnalysis(result: WaterAnalysisInputBuildResult.Success) {
-        binding.btnSaveAnalysis.isEnabled = false
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                waterAnalysisViewModel.saveAnalysis(result.input)
-                if (_binding != null) findNavController().navigateUp()
-            } catch (cancelled: CancellationException) {
-                throw cancelled
-            } catch (_: Exception) {
-                _binding?.btnSaveAnalysis?.isEnabled = true
-                if (_binding != null) {
-                    (activity as? BaseActivity)?.showSnackBar(
-                        message = getString(R.string.tank_health_analysis_save_failed),
-                        type = BaseActivity.SnackType.ERROR
-                    )
-                }
+            is WaterAnalysisInputBuildResult.Success -> {
+                waterAnalysisViewModel.draft = Bundle().also(::captureDraft)
+                waterAnalysisViewModel.saveAnalysis(buildResult.input)
             }
         }
     }
@@ -245,6 +234,13 @@ class TankHealthAnalysisAddFragment :
     }
 
     private fun showInputError(failure: WaterAnalysisInputBuildResult.Failure) {
+        parameterState.invalidParameterId =
+            (failure as? WaterAnalysisInputBuildResult.Failure.InvalidParameterValue)?.parameterId
+        parameterRenderer?.render(tankProfile)
+        binding.sensorSection.inputTemperature.error =
+            if (failure == WaterAnalysisInputBuildResult.Failure.InvalidTemperature) {
+                getString(R.string.tank_health_analysis_invalid_temperature)
+            } else null
         val message = when (failure) {
             WaterAnalysisInputBuildResult.Failure.MeasurementRequired ->
                 getString(R.string.tank_health_analysis_measurement_required)
@@ -311,6 +307,7 @@ class TankHealthAnalysisAddFragment :
     }
 
     override fun onDestroyView() {
+        if (_binding != null) waterAnalysisViewModel.draft = Bundle().also(::captureDraft)
         measurementTimeController = null
         temperatureUiController = null
         parameterRenderer = null

@@ -3,8 +3,7 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.lifecycleScope
+import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
@@ -17,14 +16,12 @@ import com.aqua.aqualight.ui.common.dialog.ConfirmDialogFragment
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.utils.DialogType
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.launch
 
 class TankHealthAnalysisDetailFragment :
     Fragment(R.layout.fragment_tank_health_analysis_detail) {
 
     private val args: TankHealthAnalysisDetailFragmentArgs by navArgs()
-    private val waterAnalysisViewModel: WaterAnalysisViewModel by activityViewModels()
+    private val waterAnalysisViewModel: WaterAnalysisViewModel by viewModels()
 
     private var _binding: FragmentTankHealthAnalysisDetailBinding? = null
     private val binding get() = _binding!!
@@ -48,6 +45,9 @@ class TankHealthAnalysisDetailFragment :
         setupDeleteResult()
         setupActions()
         observeRecord()
+        bindWaterAnalysisMutation(waterAnalysisViewModel.mutations, R.id.tankHealthAnalysisDetailFragment) { state ->
+            binding.btnDeleteRecord.isEnabled = currentRecord != null && state == WaterAnalysisMutationState.Idle
+        }
     }
 
     private fun setupHeader() {
@@ -61,15 +61,17 @@ class TankHealthAnalysisDetailFragment :
     }
 
     private fun observeRecord() {
-        waterAnalysisViewModel.analysis(args.analysisId)
-            .observe(viewLifecycleOwner) { record ->
+        waterAnalysisViewModel.analysisState(args.tankId, args.analysisId)
+            .observe(viewLifecycleOwner) { state ->
+                if (state !is WaterAnalysisLoadState.Content) {
+                    renderUnavailable(if (state is WaterAnalysisLoadState.Error) {
+                        R.string.water_analysis_read_failed
+                    } else R.string.water_analysis_loading)
+                    return@observe
+                }
+                val record = state.value
                 if (record == null || record.tankId != args.tankId) {
-                    currentRecord = null
-                    if (findNavController().currentDestination?.id ==
-                        R.id.tankHealthAnalysisDetailFragment
-                    ) {
-                        findNavController().navigateUp()
-                    }
+                    renderUnavailable(R.string.water_analysis_record_missing)
                     return@observe
                 }
                 currentRecord = record
@@ -77,8 +79,20 @@ class TankHealthAnalysisDetailFragment :
             }
     }
 
+    private fun renderUnavailable(@androidx.annotation.StringRes message: Int) {
+        currentRecord = null
+        binding.btnDeleteRecord.isEnabled = false
+        binding.tvRecordDateTime.setText(message)
+        binding.tvRecordTemperature.text = null
+        binding.tvAssessmentSummary.text = null
+        binding.measurementContainer.removeAllViews()
+    }
+
     private fun renderRecord(record: WaterAnalysisSnapshot) {
+        binding.btnDeleteRecord.isEnabled =
+            waterAnalysisViewModel.mutations.state.value == WaterAnalysisMutationState.Idle
         val context = requireContext()
+        binding.tvAssessmentSummary.text = WaterAssessmentPresentation.detail(context, record)
         binding.tvRecordDateTime.text = getString(
             R.string.tank_health_analysis_date_time_format,
             LocaleFormatter.formatDate(context, record.measuredAtMillis),
@@ -115,7 +129,8 @@ class TankHealthAnalysisDetailFragment :
         ) { _, result ->
             if (
                 result.getString(ConfirmDialogFragment.RESULT_KEY) ==
-                ConfirmDialogFragment.RESULT_CONFIRM
+                ConfirmDialogFragment.RESULT_CONFIRM &&
+                result.getString(ConfirmDialogFragment.RESULT_ACTION_ID) == DELETE_ACTION_ID
             ) {
                 deleteCurrentRecord()
             }
@@ -124,25 +139,7 @@ class TankHealthAnalysisDetailFragment :
 
     private fun deleteCurrentRecord() {
         if (currentRecord == null) return
-        binding.btnDeleteRecord.isEnabled = false
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                waterAnalysisViewModel.deleteAnalysis(args.analysisId)
-                if (_binding != null) {
-                    findNavController().navigateUp()
-                }
-            } catch (cancelled: CancellationException) {
-                throw cancelled
-            } catch (_: Exception) {
-                _binding?.btnDeleteRecord?.isEnabled = true
-                if (_binding != null) {
-                    (activity as? BaseActivity)?.showSnackBar(
-                        message = getString(R.string.tank_health_analysis_delete_failed),
-                        type = BaseActivity.SnackType.ERROR
-                    )
-                }
-            }
-        }
+        waterAnalysisViewModel.deleteAnalysis(args.analysisId)
     }
 
     private fun setupActions() {
@@ -151,12 +148,14 @@ class TankHealthAnalysisDetailFragment :
         }
 
         binding.btnDeleteRecord.setOnClickListener {
-            if (currentRecord == null) return@setOnClickListener
+            val record = currentRecord ?: return@setOnClickListener
             ConfirmDialogFragment.show(
                 fragmentManager = childFragmentManager,
                 request = ConfirmDialogFragment.Request(
                     title = getString(R.string.tank_health_analysis_delete_title),
-                    message = getString(R.string.tank_health_analysis_delete_message),
+                    message = getString(R.string.water_analysis_delete_dated,
+                        LocaleFormatter.formatDate(requireContext(), record.measuredAtMillis),
+                        LocaleFormatter.formatTime(requireContext(), record.measuredAtMillis)),
                     confirmText = getString(R.string.tank_health_analysis_delete_confirm),
                     cancelText = getString(R.string.tank_health_analysis_delete_cancel),
                     presentation = ConfirmDialogFragment.Presentation(

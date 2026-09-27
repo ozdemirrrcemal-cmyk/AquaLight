@@ -2,6 +2,7 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisInput
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementInput
+import com.aqua.aqualight.application.aquarium.health.WaterMeasurementInputPolicy
 import com.aqua.aqualight.application.aquarium.health.WaterTemperatureSource
 import java.util.UUID
 
@@ -71,7 +72,7 @@ internal object WaterAnalysisInputBuilder {
                 val domainSelection = selection.toValidDomainSelectionOrNull(parameterId)
 
                 when {
-                    value == null -> {
+                    value == null || !WaterMeasurementInputPolicy.accepts(parameterId.toDomainParameter(), value) -> {
                         failure =
                             WaterAnalysisInputBuildResult.Failure.InvalidParameterValue(parameterId)
                     }
@@ -94,7 +95,8 @@ internal object WaterAnalysisInputBuilder {
     private fun parseTemperature(rawValue: String): TemperatureBuildResult {
         val trimmed = rawValue.trim()
         val value = trimmed.takeIf(String::isNotEmpty)
-            ?.let(WaterAnalysisValueParser::parse)
+            ?.let(WaterAnalysisValueParser::parseTemperature)
+            ?.takeIf(WaterMeasurementInputPolicy::acceptsTemperature)
         return TemperatureBuildResult(
             value = value,
             invalid = trimmed.isNotEmpty() && value == null

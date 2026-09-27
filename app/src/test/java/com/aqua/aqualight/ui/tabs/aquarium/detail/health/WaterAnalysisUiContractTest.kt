@@ -138,7 +138,7 @@ class WaterAnalysisUiContractTest {
         assertTrue(adapter.contains("context.getString(symbolRes)"))
         assertTrue(catalog.contains("WaterTestProfileUiCatalog.recommendedIds(tankProfile)"))
         assertTrue(catalog.contains("WaterTestProfileUiCatalog.model("))
-        assertTrue(catalog.contains("MAX_DASHBOARD_METRICS = 8"))
+        assertFalse(catalog.contains("MAX_DASHBOARD_METRICS"))
         assertTrue(catalog.contains("measuredParameterIds"))
         assertTrue(metricLayout.contains("android:layout_height=\"@dimen/aqua_size_72\""))
         assertTrue(

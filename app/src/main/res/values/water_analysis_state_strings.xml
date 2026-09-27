@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="water_analysis_loading">Loading analysis records…</string>
+    <string name="water_analysis_read_failed">Analysis records could not be loaded. Reopen this screen to retry.</string>
+    <string name="water_analysis_record_missing">This analysis record is unavailable.</string>
+    <string name="water_assessment_not_available">Recorded measurements. No saved assessment.</string>
+    <string name="water_assessment_catalog_summary">Catalog comparison. Checked conditions: %1$d/%2$d. Outside guidance: %3$d. Requirement conflicts: %4$d. Chemical safety has not been assessed.</string>
+    <string name="water_assessment_context_at_entry">Tank context captured at entry: %1$s %2$s. It does not establish the tank’s condition at an earlier sample time.</string>
+    <string name="water_assessment_entry_summary">Partial catalog assessment. Outside range: %1$d. Requirement conflicts: %2$d.</string>
+    <string name="water_analysis_delete_dated">Delete the analysis from %1$s at %2$s? This action cannot be undone.</string>
+    <string name="water_finding_line">%1$s · %2$s: %3$s. Catalog bounds: %4$s %5$s.</string>
+    <string name="water_finding_below">below catalog range</string>
+    <string name="water_finding_above">above catalog range</string>
+    <string name="water_finding_within">within this catalog range</string>
+    <string name="water_finding_conflict">%1$s and %2$s have non-overlapping %3$s catalog requirements.</string>
+    <string name="water_finding_habitat">%1$s has a catalog water environment that differs from this tank.</string>
+    <string name="water_gap_line">Unavailable comparisons: %1$d. Reason: %2$s.</string>
+    <string name="water_entity_plant">Plant %1$s (#%2$d)</string>
+    <string name="water_entity_livestock">Livestock %1$s (#%2$d)</string>
+    <string name="water_gap_measurement">measurement missing</string>
+    <string name="water_gap_requirement">catalog requirement missing</string>
+    <string name="water_gap_parse">catalog requirement could not be interpreted</string>
+    <string name="water_gap_informational">source provides guidance only</string>
+    <string name="water_gap_source">measurement source or reporting basis is unresolved</string>
+    <string name="water_gap_catalog">catalog unavailable</string>
+    <string name="water_gap_identity">catalog entry missing</string>
+    <string name="water_gap_custom">custom livestock has no verified requirements</string>
+    <string name="water_gap_plant">plant care profile is incomplete</string>
+    <string name="water_gap_tank">tank water type is unknown</string>
+    <string name="water_gap_semantic">requirement units or measurement meaning are unresolved</string>
+    <string name="water_gap_rule">verified assessment rule unavailable</string>
+    <string name="water_gap_habitat">catalog water environment differs from the tank</string>
+    <string name="water_gap_unknown_habitat">catalog water environment is unknown</string>
+    <string name="water_recommendation_verify">Check the recorded value, unit and test method; repeat the measurement before acting on a catalog mismatch.</string>
+    <string name="water_recommendation_habitat">Review the conflicting habitat requirements for the listed plants or livestock. This result is not a disease diagnosis or a dosing instruction.</string>
+    <string name="water_assessment_no_comparison">No comparable catalog result. Review missing data in the analysis.</string>
+</resources>
