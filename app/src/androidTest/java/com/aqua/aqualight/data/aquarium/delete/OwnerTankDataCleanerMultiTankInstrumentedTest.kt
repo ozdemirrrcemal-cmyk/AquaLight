@@ -56,18 +56,20 @@ class OwnerTankDataCleanerMultiTankInstrumentedTest {
                 }
 
                 val cleaner = OwnerTankDataCleaner(
-                    deleteTankRecords = tankStore::deleteTanks,
-                    snapshotCareTasksForTank = { tankId ->
-                        careStore.snapshotTasksForIntegrity(tankId)
-                    },
-                    deleteCareTasksForTank = careStore::deleteTasksForTank,
-                    deleteWaterAnalysesForTank = analysisStore::deleteAnalysesForTank,
-                    restoreCareTasksForTank = { tankId, snapshots ->
-                        careStore.restoreTaskSnapshotsForIntegrity(
-                            tankId = tankId,
-                            snapshots = snapshots
-                        )
-                    },
+                    stores = OwnerTankDeletionStores(
+                        deleteTankRecords = tankStore::deleteTanks,
+                        snapshotCareTasksForTank = { tankId ->
+                            careStore.snapshotTasksForIntegrity(tankId)
+                        },
+                        deleteCareTasksForTank = careStore::deleteTasksForTank,
+                        deleteWaterAnalysesForTank = analysisStore::deleteAnalysesForTank,
+                        restoreCareTasksForTank = { tankId, snapshots ->
+                            careStore.restoreTaskSnapshotsForIntegrity(
+                                tankId = tankId,
+                                snapshots = snapshots
+                            )
+                        }
+                    ),
                     removeDeviceAssignmentsForTank = {
                         TankAssignmentCleanupResult.Completed(0)
                     },
@@ -111,13 +113,15 @@ class OwnerTankDataCleanerMultiTankInstrumentedTest {
                 val tankId = tankStore.addTankFromDraft(validTankDraft("Recovery Tank"))
                 analysisStore.addAnalysis(validAnalysis(tankId))
                 val cleaner = OwnerTankDataCleaner(
-                    deleteTankRecords = tankStore::deleteTanks,
-                    snapshotCareTasksForTank = { id -> careStore.snapshotTasksForIntegrity(id) },
-                    deleteCareTasksForTank = careStore::deleteTasksForTank,
-                    restoreCareTasksForTank = { id, snapshots ->
-                        careStore.restoreTaskSnapshotsForIntegrity(id, snapshots)
-                    },
-                    deleteWaterAnalysesForTank = { error("Injected analysis cleanup failure") },
+                    stores = OwnerTankDeletionStores(
+                        deleteTankRecords = tankStore::deleteTanks,
+                        snapshotCareTasksForTank = { id -> careStore.snapshotTasksForIntegrity(id) },
+                        deleteCareTasksForTank = careStore::deleteTasksForTank,
+                        restoreCareTasksForTank = { id, snapshots ->
+                            careStore.restoreTaskSnapshotsForIntegrity(id, snapshots)
+                        },
+                        deleteWaterAnalysesForTank = { error("Injected analysis cleanup failure") }
+                    ),
                     removeDeviceAssignmentsForTank = {
                         TankAssignmentCleanupResult.Completed(0)
                     },

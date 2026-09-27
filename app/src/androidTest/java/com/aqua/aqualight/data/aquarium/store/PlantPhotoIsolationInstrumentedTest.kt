@@ -12,6 +12,7 @@ import com.aqua.aqualight.application.notifications.NotificationScheduler
 import com.aqua.aqualight.data.aquarium.DefaultAquariumTankOperations
 import com.aqua.aqualight.data.aquarium.AquariumTankOperationDependencies
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
+import com.aqua.aqualight.data.aquarium.delete.OwnerTankDeletionStores
 import com.aqua.aqualight.data.aquarium.model.TankDraft
 import com.aqua.aqualight.data.aquarium.model.TankPlantTag
 import com.aqua.aqualight.data.user.UserDataScope
@@ -145,11 +146,13 @@ class PlantPhotoIsolationInstrumentedTest {
         context = context,
         tankStore = store,
         tankDataCleaner = OwnerTankDataCleaner(
-            deleteTankRecords = { error("Unexpected tank deletion") },
-            snapshotCareTasksForTank = { error("Unexpected care access") },
-            deleteCareTasksForTank = { error("Unexpected care deletion") },
-            deleteWaterAnalysesForTank = { error("Unexpected water analysis deletion") },
-            restoreCareTasksForTank = { _, _ -> error("Unexpected care restore") },
+            stores = OwnerTankDeletionStores(
+                deleteTankRecords = { error("Unexpected tank deletion") },
+                snapshotCareTasksForTank = { error("Unexpected care access") },
+                deleteCareTasksForTank = { error("Unexpected care deletion") },
+                deleteWaterAnalysesForTank = { error("Unexpected water analysis deletion") },
+                restoreCareTasksForTank = { _, _ -> error("Unexpected care restore") }
+            ),
             removeDeviceAssignmentsForTank = { error("Unexpected device access") },
             cancelCareTaskReminder = { _, _ -> error("Unexpected notification access") },
             reconcileCareReminders = { error("Unexpected notification access") }

@@ -12,6 +12,7 @@ import com.aqua.aqualight.application.user.UserProfileOperations
 import com.aqua.aqualight.data.aquarium.AquariumTankOperationDependencies
 import com.aqua.aqualight.data.aquarium.DefaultAquariumTankOperations
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
+import com.aqua.aqualight.data.aquarium.delete.OwnerTankDeletionStores
 import com.aqua.aqualight.data.aquarium.health.DefaultWaterAnalysisOperations
 import com.aqua.aqualight.data.aquarium.devices.DefaultTankDeviceAssignmentOperations
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
@@ -191,15 +192,17 @@ internal class OwnerViewModelFactory(
                     context = appContext,
                     tankStore = graph.aquariumTankStore,
                     tankDataCleaner = OwnerTankDataCleaner(
-                        deleteTankRecords = graph.aquariumTankStore::deleteTanks,
-                        snapshotCareTasksForTank = { tankId ->
-                            graph.careTaskStore.snapshotTasksForIntegrity(tankId)
-                        },
-                        deleteCareTasksForTank = graph.careTaskStore::deleteTasksForTank,
-                        restoreCareTasksForTank = { tankId, snapshots ->
-                            graph.careTaskStore.restoreTaskSnapshotsForIntegrity(tankId, snapshots)
-                        },
-                        deleteWaterAnalysesForTank = graph.waterAnalysisStore::deleteAnalysesForTank,
+                        stores = OwnerTankDeletionStores(
+                            deleteTankRecords = graph.aquariumTankStore::deleteTanks,
+                            snapshotCareTasksForTank = { tankId ->
+                                graph.careTaskStore.snapshotTasksForIntegrity(tankId)
+                            },
+                            deleteCareTasksForTank = graph.careTaskStore::deleteTasksForTank,
+                            restoreCareTasksForTank = { tankId, snapshots ->
+                                graph.careTaskStore.restoreTaskSnapshotsForIntegrity(tankId, snapshots)
+                            },
+                            deleteWaterAnalysesForTank = graph.waterAnalysisStore::deleteAnalysesForTank
+                        ),
                         removeDeviceAssignmentsForTank = assignments::removeAssignmentsForTank,
                         cancelCareTaskReminder = notificationPreferenceUseCase::cancelCareTask,
                         reconcileCareReminders = notificationPreferenceUseCase::reconcileOwner

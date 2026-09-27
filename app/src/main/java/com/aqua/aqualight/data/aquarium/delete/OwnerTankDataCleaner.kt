@@ -17,12 +17,16 @@ import kotlinx.coroutines.withContext
  * fails or the operation is cancelled, task snapshots are restored before the failure
  * is returned. A durable journal allows owner-session recovery after process death.
  */
+internal data class OwnerTankDeletionStores(
+    val deleteTankRecords: suspend (List<Long>) -> Unit,
+    val snapshotCareTasksForTank: suspend (Long) -> List<CareTask>,
+    val deleteCareTasksForTank: suspend (Long) -> Unit,
+    val restoreCareTasksForTank: suspend (Long, List<CareTask>) -> Unit,
+    val deleteWaterAnalysesForTank: suspend (Long) -> Unit
+)
+
 class OwnerTankDataCleaner internal constructor(
-    private val deleteTankRecords: suspend (List<Long>) -> Unit,
-    private val snapshotCareTasksForTank: suspend (Long) -> List<CareTask>,
-    private val deleteCareTasksForTank: suspend (Long) -> Unit,
-    private val restoreCareTasksForTank: suspend (Long, List<CareTask>) -> Unit,
-    private val deleteWaterAnalysesForTank: suspend (Long) -> Unit,
+    private val stores: OwnerTankDeletionStores,
     private val removeDeviceAssignmentsForTank:
         suspend (Long) -> TankAssignmentCleanupResult,
     private val cancelCareTaskReminder: suspend (String, Long) -> Unit,
@@ -79,15 +83,8 @@ class OwnerTankDataCleaner internal constructor(
             return Result.DeleteFailed(error)
         }
 
-        val snapshotsByTank = linkedMapOf<Long, List<CareTask>>()
-        try {
-            normalizedTankIds.forEach { tankId ->
-                snapshotsByTank[tankId] = snapshotCareTasksForTank(tankId)
-            }
-            integrityTransactions.captureSnapshots(
-                ownerUid = ownerUid,
-                snapshotsByTank = snapshotsByTank
-            )
+        val snapshotsByTank = try {
+            captureCareSnapshots(ownerUid, normalizedTankIds)
         } catch (error: Throwable) {
             val abortError = withContext(NonCancellable) {
                 abortTransactions(ownerUid, normalizedTankIds)
@@ -99,9 +96,9 @@ class OwnerTankDataCleaner internal constructor(
 
         try {
             normalizedTankIds.forEach { tankId ->
-                deleteCareTasksForTank(tankId)
+                stores.deleteCareTasksForTank(tankId)
             }
-            deleteTankRecords(normalizedTankIds)
+            stores.deleteTankRecords(normalizedTankIds)
         } catch (error: Throwable) {
             val rollbackError = withContext(NonCancellable) {
                 rollbackCareTasks(
@@ -114,84 +111,82 @@ class OwnerTankDataCleaner internal constructor(
             return Result.DeleteFailed(error)
         }
 
-        val cleanupIssues = mutableListOf<CleanupIssue>()
-
+        val issues = mutableListOf<CleanupIssue>()
         normalizedTankIds.forEach { tankId ->
-            snapshotsByTank[tankId].orEmpty().forEach { task ->
-                try {
-                    cancelCareTaskReminder(ownerUid, task.id)
-                } catch (error: Throwable) {
-                    error.throwIfCancellation()
-                    cleanupIssues += CleanupIssue(
-                        tankId = tankId,
-                        stage = CleanupStage.CARE_TASKS,
-                        error = error
-                    )
-                }
-            }
+            issues += cleanupCommittedTank(ownerUid, tankId, snapshotsByTank[tankId].orEmpty())
+        }
+        return Result.Deleted(normalizedTankIds, issues)
+    }
 
+    private suspend fun captureCareSnapshots(
+        ownerUid: String,
+        tankIds: List<Long>
+    ): Map<Long, List<CareTask>> {
+        val snapshots = linkedMapOf<Long, List<CareTask>>()
+        tankIds.forEach { tankId ->
+            snapshots[tankId] = stores.snapshotCareTasksForTank(tankId)
+        }
+        integrityTransactions.captureSnapshots(ownerUid, snapshots)
+        return snapshots
+    }
+
+    private suspend fun cleanupCommittedTank(
+        ownerUid: String,
+        tankId: Long,
+        tasks: List<CareTask>
+    ): List<CleanupIssue> {
+        val issues = mutableListOf<CleanupIssue>()
+        tasks.forEach { task ->
             try {
-                // Keep the durable deletion pending until the analysis store is clean.
-                // Owner-session recovery repeats this idempotent step after a crash.
-                deleteWaterAnalysesForTank(tankId)
+                cancelCareTaskReminder(ownerUid, task.id)
             } catch (error: Throwable) {
                 error.throwIfCancellation()
-                cleanupIssues += CleanupIssue(
-                    tankId = tankId,
-                    stage = CleanupStage.WATER_ANALYSES,
-                    error = error
-                )
-            }
-
-            if (cleanupIssues.none { issue ->
-                    issue.tankId == tankId && issue.stage == CleanupStage.WATER_ANALYSES
-                }) {
-                try {
-                    integrityTransactions.complete(ownerUid, tankId)
-                } catch (error: Throwable) {
-                    error.throwIfCancellation()
-                    cleanupIssues += CleanupIssue(
-                        tankId = tankId,
-                        stage = CleanupStage.CARE_TASKS,
-                        error = error
-                    )
-                }
-            }
-
-            try {
-                when (val result = removeDeviceAssignmentsForTank(tankId)) {
-                    is TankAssignmentCleanupResult.Completed -> Unit
-                    TankAssignmentCleanupResult.InvalidRequest -> {
-                        cleanupIssues += CleanupIssue(
-                            tankId = tankId,
-                            stage = CleanupStage.DEVICE_ASSIGNMENTS,
-                            error = IllegalArgumentException(
-                                "Tank assignment cleanup received an invalid tank id."
-                            )
-                        )
-                    }
-                    is TankAssignmentCleanupResult.Failure -> {
-                        cleanupIssues += CleanupIssue(
-                            tankId = tankId,
-                            stage = CleanupStage.DEVICE_ASSIGNMENTS,
-                            error = result.error
-                        )
-                    }
-                }
-            } catch (error: Throwable) {
-                error.throwIfCancellation()
-                cleanupIssues += CleanupIssue(
-                    tankId = tankId,
-                    stage = CleanupStage.DEVICE_ASSIGNMENTS,
-                    error = error
-                )
+                issues += CleanupIssue(tankId, CleanupStage.CARE_TASKS, error)
             }
         }
+        completeAnalysisAndJournal(ownerUid, tankId)?.let(issues::add)
+        cleanupDeviceAssignments(tankId)?.let(issues::add)
+        return issues
+    }
 
-        return Result.Deleted(
-            tankIds = normalizedTankIds,
-            cleanupIssues = cleanupIssues.toList()
-        )
+    private suspend fun completeAnalysisAndJournal(
+        ownerUid: String,
+        tankId: Long
+    ): CleanupIssue? {
+        // Keep the durable deletion pending until the analysis store is clean.
+        // Owner-session recovery repeats this idempotent step after a crash.
+        val failure = runCatching { stores.deleteWaterAnalysesForTank(tankId) }
+            .exceptionOrNull()
+        if (failure != null) {
+            failure.throwIfCancellation()
+            return CleanupIssue(tankId, CleanupStage.WATER_ANALYSES, failure)
+        }
+        return try {
+            integrityTransactions.complete(ownerUid, tankId)
+            null
+        } catch (error: Throwable) {
+            error.throwIfCancellation()
+            CleanupIssue(tankId, CleanupStage.CARE_TASKS, error)
+        }
+    }
+
+    private suspend fun cleanupDeviceAssignments(tankId: Long): CleanupIssue? = try {
+        when (val result = removeDeviceAssignmentsForTank(tankId)) {
+            is TankAssignmentCleanupResult.Completed -> null
+            TankAssignmentCleanupResult.InvalidRequest -> CleanupIssue(
+                tankId,
+                CleanupStage.DEVICE_ASSIGNMENTS,
+                IllegalArgumentException("Tank assignment cleanup received an invalid tank id.")
+            )
+            is TankAssignmentCleanupResult.Failure -> CleanupIssue(
+                tankId,
+                CleanupStage.DEVICE_ASSIGNMENTS,
+                result.error
+            )
+        }
+    } catch (error: Throwable) {
+        error.throwIfCancellation()
+        CleanupIssue(tankId, CleanupStage.DEVICE_ASSIGNMENTS, error)
     }
 
     private suspend fun rollbackCareTasks(
@@ -206,7 +201,7 @@ class OwnerTankDataCleaner internal constructor(
                     ownerUid = ownerUid,
                     tankId = tankId
                 ) {
-                    restoreCareTasksForTank(tankId, snapshots)
+                    stores.restoreCareTasksForTank(tankId, snapshots)
                 }
                 integrityTransactions.abort(ownerUid, tankId)
             } catch (error: Throwable) {

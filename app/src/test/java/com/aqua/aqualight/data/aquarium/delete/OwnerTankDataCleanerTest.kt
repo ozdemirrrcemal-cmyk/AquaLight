@@ -171,7 +171,7 @@ class OwnerTankDataCleanerTest {
     fun `analysis cleanup completes before journal and failure leaves it pending`() = runBlocking {
         val events = mutableListOf<String>()
         val integrity = RecordingIntegrityTransactions(events)
-        val successfulCleaner = cleaner(
+        val successfulCleaner = waterCleaner(
             integrity = integrity,
             deleteWaterAnalysesForTank = { tankId -> events += "analysis:$tankId" }
         )
@@ -181,7 +181,7 @@ class OwnerTankDataCleanerTest {
         assertTrue(events.indexOf("analysis:7") < events.indexOf("complete:7"))
 
         val failureIntegrity = RecordingIntegrityTransactions()
-        val failed = cleaner(
+        val failed = waterCleaner(
             integrity = failureIntegrity,
             deleteWaterAnalysesForTank = { error("analysis store unavailable") }
         ).deleteTanks(listOf(8L)) as OwnerTankDataCleaner.Result.Deleted
@@ -242,7 +242,6 @@ class OwnerTankDataCleanerTest {
         snapshotCareTasksForTank: suspend (Long) -> List<CareTask> = { emptyList() },
         deleteCareTasksForTank: suspend (Long) -> Unit = {},
         restoreCareTasksForTank: suspend (Long, List<CareTask>) -> Unit = { _, _ -> },
-        deleteWaterAnalysesForTank: suspend (Long) -> Unit = {},
         removeAssignmentsForTank: suspend (Long) -> TankAssignmentCleanupResult = {
             TankAssignmentCleanupResult.Completed(0)
         },
@@ -250,11 +249,13 @@ class OwnerTankDataCleanerTest {
         reconcileCareReminders: suspend (String) -> Unit = {}
     ): OwnerTankDataCleaner {
         return OwnerTankDataCleaner(
-            deleteTankRecords = deleteTankRecords,
-            snapshotCareTasksForTank = snapshotCareTasksForTank,
-            deleteCareTasksForTank = deleteCareTasksForTank,
-            restoreCareTasksForTank = restoreCareTasksForTank,
-            deleteWaterAnalysesForTank = deleteWaterAnalysesForTank,
+            stores = OwnerTankDeletionStores(
+                deleteTankRecords = deleteTankRecords,
+                snapshotCareTasksForTank = snapshotCareTasksForTank,
+                deleteCareTasksForTank = deleteCareTasksForTank,
+                restoreCareTasksForTank = restoreCareTasksForTank,
+                deleteWaterAnalysesForTank = {}
+            ),
             removeDeviceAssignmentsForTank = removeAssignmentsForTank,
             cancelCareTaskReminder = cancelCareTaskReminder,
             reconcileCareReminders = reconcileCareReminders,
@@ -262,6 +263,24 @@ class OwnerTankDataCleanerTest {
             ownerUidProvider = { OWNER_UID }
         )
     }
+
+    private fun waterCleaner(
+        integrity: RecordingIntegrityTransactions,
+        deleteWaterAnalysesForTank: suspend (Long) -> Unit
+    ) = OwnerTankDataCleaner(
+        stores = OwnerTankDeletionStores(
+            deleteTankRecords = {},
+            snapshotCareTasksForTank = { emptyList() },
+            deleteCareTasksForTank = {},
+            restoreCareTasksForTank = { _, _ -> },
+            deleteWaterAnalysesForTank = deleteWaterAnalysesForTank
+        ),
+        removeDeviceAssignmentsForTank = { TankAssignmentCleanupResult.Completed(0) },
+        cancelCareTaskReminder = { _, _ -> },
+        reconcileCareReminders = {},
+        integrityTransactions = integrity,
+        ownerUidProvider = { OWNER_UID }
+    )
 
     private fun validTask(tankId: Long): CareTask = CareTask(
         id = 100L + tankId,

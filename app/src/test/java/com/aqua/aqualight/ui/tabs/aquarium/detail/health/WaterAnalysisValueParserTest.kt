@@ -20,4 +20,14 @@ class WaterAnalysisValueParserTest {
         assertNull(WaterAnalysisValueParser.parse("12."))
         assertNull(WaterAnalysisValueParser.parse(""))
     }
+
+    @Test
+    fun tinyPositiveInputCannotBecomeMeasuredZero() {
+        assertNull(WaterAnalysisValueParser.parse("0.${"0".repeat(UNDERFLOW_ZERO_COUNT)}1"))
+        assertEquals(0.0, WaterAnalysisValueParser.parse("0,000") ?: error("parse"), 0.0)
+    }
+
+    private companion object {
+        const val UNDERFLOW_ZERO_COUNT = 400
+    }
 }
