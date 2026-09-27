@@ -15,11 +15,11 @@ class WaterAnalysisHistoryPreviewTest {
     @Test
     fun previewShowsActualNonDefaultMetricAndTemperature() {
         val preview = WaterAnalysisHistoryPreview.from(
-            snapshot(listOf(measurement(WaterParameter.NITRITE)), temperature = 24.0)
+            snapshot(listOf(measurement(WaterParameter.NITRITE)), temperature = SAMPLE_TEMP_C)
         )
 
         assertEquals(
-            listOf(WaterParameter.NITRITE, 24.0),
+            listOf(WaterParameter.NITRITE, SAMPLE_TEMP_C),
             preview.map { item ->
                 when (item) {
                     is WaterAnalysisHistoryPreviewValue.Measurement -> item.source.parameter
@@ -39,7 +39,7 @@ class WaterAnalysisHistoryPreviewTest {
                     measurement(WaterParameter.MAGNESIUM),
                     measurement(WaterParameter.COPPER)
                 ),
-                temperature = 24.0
+                temperature = SAMPLE_TEMP_C
             )
         )
 
@@ -55,13 +55,13 @@ class WaterAnalysisHistoryPreviewTest {
         measurements: List<WaterMeasurementSnapshot>,
         temperature: Double?
     ) = WaterAnalysisSnapshot(
-        id = 1L,
-        tankId = 2L,
-        measuredAtMillis = 1_800_000_000_000L,
+        id = SAMPLE_ANALYSIS_ID,
+        tankId = SAMPLE_TANK_ID,
+        measuredAtMillis = SAMPLE_TIME_MILLIS,
         temperatureCelsius = temperature,
         temperatureSource = temperature?.let { WaterTemperatureSource.MANUAL },
         measurements = measurements,
-        createdAtMillis = 1_800_000_000_000L
+        createdAtMillis = SAMPLE_TIME_MILLIS
     )
 
     private fun measurement(parameter: WaterParameter): WaterMeasurementSnapshot {
@@ -74,7 +74,7 @@ class WaterAnalysisHistoryPreviewTest {
         }
         return WaterMeasurementSnapshot(
             parameter = parameter,
-            value = 1.0,
+            value = SAMPLE_MEASUREMENT_VALUE,
             method = WaterMeasurementMethod.MANUAL,
             testKitId = null,
             basis = basis,
@@ -83,5 +83,13 @@ class WaterAnalysisHistoryPreviewTest {
             canonicalBasis = basis,
             canonicalUnit = WaterMeasurementUnit.MG_L
         )
+    }
+
+    private companion object {
+        const val SAMPLE_ANALYSIS_ID = 1L
+        const val SAMPLE_TANK_ID = 2L
+        const val SAMPLE_TIME_MILLIS = 1_800_000_000_000L
+        const val SAMPLE_TEMP_C = 24.0
+        const val SAMPLE_MEASUREMENT_VALUE = 1.0
     }
 }

@@ -37,6 +37,11 @@ method profile authorizes the chemical conversion.
 New SENSOR selections are disabled until assigned sample identity/freshness
 provenance is implemented; existing raw sensor-labelled records are retained
 for migration review. This does not close the physical sensor acceptance gate.
+Read projections retain TEST_KIT (including Salifert Nitrate and Other), DIGITAL
+and legacy SENSOR values in their raw source units without assigning canonical
+authority until a verified method profile or device calibration exists. Manual
+entries with an explicit basis can still show the narrow numeric conversion;
+this alone never authorizes an assessment. S.5–S.6 and W1 evidence remain open.
 Store reads use legacy structural validation while new writes require current
 provenance. The analysis Proto store no longer replaces unsupported/corrupt
 content with an empty store; it surfaces a typed read failure and leaves the

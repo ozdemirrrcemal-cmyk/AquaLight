@@ -19,6 +19,54 @@ class WaterMeasurementNormalizerTest {
     }
 
     @Test
+    fun unverifiedKitResultStaysSourceNativeEvenWhenItsReportedUnitMatchesCanonical() {
+        listOf(
+            WaterMeasurementCatalog.OTHER_TEST_KIT_ID,
+            WaterMeasurementCatalog.SALIFERT_NITRATE_TEST_KIT_ID
+        ).forEach { kitId ->
+            assertNull(
+                WaterMeasurementNormalizer.canonicalValueForStoredSource(
+                    parameter = WaterParameter.NITRATE,
+                    value = SAMPLE_NITRATE_MG_L,
+                    selection = WaterMeasurementSelection(
+                        method = WaterMeasurementMethod.TEST_KIT,
+                        testKitId = kitId,
+                        basis = WaterMeasurementBasis.NO3,
+                        unit = WaterMeasurementUnit.MG_L
+                    )
+                )
+            )
+        }
+        assertEquals(
+            SAMPLE_NITRATE_MG_L,
+            WaterMeasurementNormalizer.canonicalValueForStoredSource(
+                parameter = WaterParameter.NITRATE,
+                value = SAMPLE_NITRATE_MG_L,
+                selection = WaterMeasurementCatalog.defaultSelection(WaterParameter.NITRATE)
+            ) ?: error("Expected a manually specified NO3 measurement"),
+            EXACT_CONVERSION_TOLERANCE
+        )
+    }
+
+    @Test
+    fun uncalibratedDigitalAndLegacySensorResultsRemainSourceNative() {
+        listOf(WaterMeasurementMethod.DIGITAL, WaterMeasurementMethod.SENSOR).forEach { method ->
+            assertNull(
+                WaterMeasurementNormalizer.canonicalValueForStoredSource(
+                    parameter = WaterParameter.PH,
+                    value = SAMPLE_PH,
+                    selection = WaterMeasurementSelection(
+                        method = method,
+                        testKitId = null,
+                        basis = WaterMeasurementBasis.PH,
+                        unit = WaterMeasurementUnit.NONE
+                    )
+                )
+            )
+        }
+    }
+
+    @Test
     fun unspecifiedPhosphorusDoesNotBecomeReactivePhosphate() {
         assertNull(
             WaterMeasurementNormalizer.canonicalValue(
@@ -96,5 +144,11 @@ class WaterMeasurementNormalizerTest {
         ).forEach { (parameter, basis, unit) ->
             assertNull(WaterMeasurementNormalizer.canonicalValue(parameter, 1.0, basis, unit))
         }
+    }
+
+    private companion object {
+        const val SAMPLE_NITRATE_MG_L = 10.0
+        const val SAMPLE_PH = 7.0
+        const val EXACT_CONVERSION_TOLERANCE = 0.0
     }
 }

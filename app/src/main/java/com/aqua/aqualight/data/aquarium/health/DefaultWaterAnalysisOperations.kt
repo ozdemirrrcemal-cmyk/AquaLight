@@ -6,6 +6,7 @@ import com.aqua.aqualight.application.aquarium.health.WaterAnalysisPolicy
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisSnapshot
 import com.aqua.aqualight.application.aquarium.health.WaterParameterDefinitions
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementNormalizer
+import com.aqua.aqualight.application.aquarium.health.WaterMeasurementSelection
 import com.aqua.aqualight.application.aquarium.health.WaterMeasurementSnapshot
 import com.aqua.aqualight.data.user.withCurrentOwnerScope
 import kotlinx.coroutines.flow.Flow
@@ -74,11 +75,15 @@ internal class DefaultWaterAnalysisOperations(
                     testKitId = measurement.testKitId,
                     basis = measurement.basis,
                     unit = measurement.unit,
-                    canonicalValue = WaterMeasurementNormalizer.canonicalValue(
+                    canonicalValue = WaterMeasurementNormalizer.canonicalValueForStoredSource(
                         parameter = measurement.parameter,
                         value = measurement.value,
-                        basis = measurement.basis,
-                        unit = measurement.unit
+                        selection = WaterMeasurementSelection(
+                            method = measurement.method,
+                            testKitId = measurement.testKitId,
+                            basis = measurement.basis,
+                            unit = measurement.unit
+                        )
                     ),
                     canonicalBasis = canonicalBasis,
                     canonicalUnit = canonicalUnit

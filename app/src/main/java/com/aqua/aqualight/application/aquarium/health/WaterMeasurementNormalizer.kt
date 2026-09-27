@@ -15,6 +15,16 @@ object WaterMeasurementNormalizer {
             { value -> value * PPM_CACO3_PER_DEGREE }
     )
 
+    /** Only an explicitly entered manual basis has a resolved numeric conversion today. */
+    fun canonicalValueForStoredSource(
+        parameter: WaterParameter,
+        value: Double,
+        selection: WaterMeasurementSelection
+    ): Double? {
+        if (selection.method != WaterMeasurementMethod.MANUAL) return null
+        return canonicalValue(parameter, value, selection.basis, selection.unit)
+    }
+
     fun canonicalValue(
         parameter: WaterParameter,
         value: Double,
