@@ -4,6 +4,12 @@
     <string name="tank_health_entry_title">Tank Sağlığı</string>
     <string name="tank_health_entry_summary">Su kalitesi henüz analiz edilmedi</string>
     <string name="tank_health_entry_last_analysis">Henüz analiz yok</string>
+    <string name="tank_health_entry_loading">Analiz yükleniyor…</string>
+    <string name="tank_health_entry_last_analysis_at">Son analiz: %1$s</string>
+    <plurals name="tank_health_entry_measurement_count">
+        <item quantity="one">%1$d ölçüm kaydedildi</item>
+        <item quantity="other">%1$d ölçüm kaydedildi</item>
+    </plurals>
 
     <string name="tank_health_tab_water_quality">Su Kalitesi</string>
     <string name="tank_health_tab_algae_control">Yosun Kontrolü</string>

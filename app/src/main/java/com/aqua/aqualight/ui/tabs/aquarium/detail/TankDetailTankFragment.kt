@@ -16,16 +16,21 @@ import com.aqua.aqualight.application.aquarium.AquariumTankSnapshot
 import com.aqua.aqualight.databinding.FragmentTankDetailTankBinding
 import com.aqua.aqualight.databinding.ItemTankComponentCardBinding
 import com.aqua.aqualight.i18n.DateOnly
+import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumDatePolicy
 import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumDimensionFormatter
 import com.aqua.aqualight.ui.tabs.aquarium.common.AquariumTankTaxonomyText
 import com.aqua.aqualight.ui.tabs.aquarium.materials.MaterialSummaryFormatter
+import com.aqua.aqualight.ui.tabs.aquarium.detail.health.WaterAnalysisLatestMeasurements
+import com.aqua.aqualight.ui.tabs.aquarium.detail.health.WaterAnalysisViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.AquariumTabArgs
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
 import kotlinx.coroutines.launch
+import java.text.DateFormat
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
+import java.util.Date
 import java.util.Locale
 
 class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
@@ -34,6 +39,7 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
     private val binding get() = _binding!!
 
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
+    private val waterAnalysisViewModel: WaterAnalysisViewModel by activityViewModels()
 
     private var tankId: Long = 0L
     private var currentTank: AquariumTankSnapshot? = null
@@ -52,6 +58,7 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
 
         setupClickListeners()
         observeTank()
+        observeHealthEntry()
     }
 
     override fun onResume() {
@@ -108,6 +115,35 @@ class TankDetailTankFragment : Fragment(R.layout.fragment_tank_detail_tank) {
 
             currentTank = tank
             renderTankSection(tank)
+        }
+    }
+
+    private fun observeHealthEntry() {
+        binding.tvTankHealthSummary.setText(R.string.tank_health_entry_loading)
+        binding.tvTankHealthLastAnalysis.setText(R.string.tank_health_entry_loading)
+        waterAnalysisViewModel.analysesForTank(tankId).observe(viewLifecycleOwner) { analyses ->
+            val latest = WaterAnalysisLatestMeasurements.latestEvent(analyses)
+            if (latest == null) {
+                binding.tvTankHealthSummary.setText(R.string.tank_health_entry_summary)
+                binding.tvTankHealthLastAnalysis.setText(R.string.tank_health_entry_last_analysis)
+            } else {
+                binding.tvTankHealthSummary.text = resources.getQuantityString(
+                    R.plurals.tank_health_entry_measurement_count,
+                    latest.measurements.size,
+                    latest.measurements.size
+                )
+                val formatted = DateFormat.getDateTimeInstance(
+                    DateFormat.MEDIUM,
+                    DateFormat.SHORT,
+                    LocaleFormatter.appLocale(requireContext())
+                ).format(Date(latest.measuredAtMillis))
+                binding.tvTankHealthLastAnalysis.text = getString(
+                    R.string.tank_health_entry_last_analysis_at,
+                    formatted
+                )
+            }
+            // No versioned Water Quality assessment exists to justify a numeric score.
+            binding.tvTankHealthScore.setText(R.string.tank_health_entry_score)
         }
     }
 

@@ -4,6 +4,12 @@
     <string name="tank_health_entry_title">Tank Health</string>
     <string name="tank_health_entry_summary">Water quality has not been analyzed yet</string>
     <string name="tank_health_entry_last_analysis">No analysis yet</string>
+    <string name="tank_health_entry_loading">Loading analysis…</string>
+    <string name="tank_health_entry_last_analysis_at">Last analysis: %1$s</string>
+    <plurals name="tank_health_entry_measurement_count">
+        <item quantity="one">%1$d measurement recorded</item>
+        <item quantity="other">%1$d measurements recorded</item>
+    </plurals>
     <string name="tank_health_entry_score" translatable="false">—</string>
 
     <string name="tank_health_tab_water_quality">Water Quality</string>

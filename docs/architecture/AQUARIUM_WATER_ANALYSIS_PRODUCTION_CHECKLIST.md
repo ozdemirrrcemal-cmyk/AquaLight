@@ -450,7 +450,7 @@ WaterAnalysisRecord içindeki kalıcı owner kimliğinin UI’a açılması gere
 - [ ] W8.13 Bakım bölümünü MaintenanceOperations tamamlanmış kayıtlarından bağla; completedAt ile dueAt birbirine karışmasın. Son bakım kaydı yoksa “5 gün önce/Normal” uydurulmasın; overdue/approaching için tanımlı takvim politikası kullanılsın. Bağlantı ve `completedAt`-olmayan geçmiş kaydın planlı tarihini son bakım saymama testi eklendi; tanımlı overdue/approaching politikası açık.
 - [ ] W8.14 Sistem özeti canonical material selections/assigned cihaz/context verisinden gelsin; birden fazla ürün, kayıt yokluğu ve offline durumları ayrı olsun.
 - [ ] W8.15 “28 canlı” gerçek quantity toplamından gelsin; sayıyı doğrulanmamış biyolojik yük/risk skoruna dönüştürme.
-- [ ] W8.16 TankDetailTankFragment giriş kartındaki sabit 82, “iyi görünüyor” ve “2 gün önce” metinleri de gerçek summary/NoAnalysis durumuna bağlansın.
+- [ ] W8.16 TankDetailTankFragment giriş kartındaki sabit 82, “iyi görünüyor” ve “2 gün önce” metinleri de gerçek summary/NoAnalysis durumuna bağlansın. Son olayın gerçek tarih/ölçüm adedi ve boş/yükleniyor durumu aynı kartta bağlı; kanıtlı değerlendirme/skor üretilene kadar puan gösterilmez. Typed Error ve assessment summary açık.
 - [ ] W8.17 K13: Loading, NoAnalysis, Content(PARTIAL dahil), Error, detail NotFound ve Add SensorUnavailable görünümü mevcut tasarım diliyle tamamlanmış olsun; hata NoAnalysis/Normal'a çevrilmesin.
 - [ ] W8.18 Tüm locale resource’larında kullanımdan düşen fixture değer/tarih/model string’leri temizlensin; geçerli statik etiketler ve açık empty-state metinleri korunmalı.
 - [ ] W8.19 Yosun sekmesi henüz geliştirilmemişken çalışan analiz sonucu gibi görünmesin; kapsamı açık placeholder/non-active davranışı olsun.

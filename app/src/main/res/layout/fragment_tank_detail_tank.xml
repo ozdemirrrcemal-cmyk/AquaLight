@@ -126,6 +126,7 @@
                     app:strokeWidth="@dimen/aqua_size_2">
 
                     <TextView
+                        android:id="@+id/tvTankHealthScore"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:gravity="center"
