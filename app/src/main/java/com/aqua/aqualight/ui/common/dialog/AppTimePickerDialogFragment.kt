@@ -9,6 +9,7 @@ import androidx.core.os.bundleOf
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
 import java.util.Calendar
+import java.util.TimeZone
 
 /** Framework-recreatable time picker that returns its value through Fragment Result. */
 class AppTimePickerDialogFragment : DialogFragment() {
@@ -17,7 +18,9 @@ class AppTimePickerDialogFragment : DialogFragment() {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val args = requireArguments()
-        val calendar = Calendar.getInstance().apply {
+        val calendar = Calendar.getInstance(
+            args.getString(ARG_TIME_ZONE)?.let(TimeZone::getTimeZone) ?: TimeZone.getDefault()
+        ).apply {
             timeInMillis = args.getLong(ARG_INITIAL_MILLIS)
         }
         val hostActivity = requireActivity()
@@ -63,6 +66,7 @@ class AppTimePickerDialogFragment : DialogFragment() {
         const val RESULT_CANCELLED = "cancelled"
 
         private const val ARG_INITIAL_MILLIS = "arg_initial_millis"
+        private const val ARG_TIME_ZONE = "arg_time_zone"
         private const val ARG_REQUEST_KEY = "arg_request_key"
         private const val ARG_PAYLOAD_ID = "arg_payload_id"
         private const val TAG_PREFIX = "AppTimePickerDialogFragment:"
@@ -71,13 +75,15 @@ class AppTimePickerDialogFragment : DialogFragment() {
             fragmentManager: FragmentManager,
             requestKey: String,
             initialMillis: Long,
-            payloadId: String = ""
+            payloadId: String = "",
+            zone: TimeZone = TimeZone.getDefault()
         ) {
             val tag = TAG_PREFIX + requestKey
             if (fragmentManager.findFragmentByTag(tag) != null || fragmentManager.isStateSaved) return
             AppTimePickerDialogFragment().apply {
                 arguments = bundleOf(
                     ARG_INITIAL_MILLIS to initialMillis,
+                    ARG_TIME_ZONE to zone.id,
                     ARG_REQUEST_KEY to requestKey,
                     ARG_PAYLOAD_ID to payloadId
                 )

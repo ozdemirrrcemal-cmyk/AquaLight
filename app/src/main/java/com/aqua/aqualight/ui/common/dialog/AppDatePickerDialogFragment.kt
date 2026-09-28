@@ -8,6 +8,7 @@ import androidx.core.os.bundleOf
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
 import java.util.Calendar
+import java.util.TimeZone
 
 /** Framework-recreatable date picker that returns its value through Fragment Result. */
 class AppDatePickerDialogFragment : DialogFragment() {
@@ -16,7 +17,9 @@ class AppDatePickerDialogFragment : DialogFragment() {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val args = requireArguments()
-        val calendar = Calendar.getInstance().apply {
+        val calendar = Calendar.getInstance(
+            args.getString(ARG_TIME_ZONE)?.let(TimeZone::getTimeZone) ?: TimeZone.getDefault()
+        ).apply {
             timeInMillis = args.getLong(ARG_INITIAL_MILLIS)
         }
         val hostActivity = requireActivity()
@@ -70,6 +73,7 @@ class AppDatePickerDialogFragment : DialogFragment() {
         const val RESULT_CANCELLED = "cancelled"
 
         private const val ARG_INITIAL_MILLIS = "arg_initial_millis"
+        private const val ARG_TIME_ZONE = "arg_time_zone"
         private const val ARG_MIN_MILLIS = "arg_min_millis"
         private const val ARG_MAX_MILLIS = "arg_max_millis"
         private const val ARG_REQUEST_KEY = "arg_request_key"
@@ -85,16 +89,34 @@ class AppDatePickerDialogFragment : DialogFragment() {
             minMillis: Long? = null,
             maxMillis: Long? = null
         ) {
+            showWithArguments(fragmentManager, requestKey, bundleOf(
+                ARG_INITIAL_MILLIS to initialMillis,
+                ARG_MIN_MILLIS to (minMillis ?: NO_BOUND),
+                ARG_MAX_MILLIS to (maxMillis ?: NO_BOUND),
+                ARG_REQUEST_KEY to requestKey,
+                ARG_PAYLOAD_ID to payloadId,
+                ARG_TIME_ZONE to TimeZone.getDefault().id
+            ))
+        }
+
+        fun show(
+            fragmentManager: FragmentManager,
+            requestKey: String,
+            initialMillis: Long,
+            zone: TimeZone
+        ) {
+            showWithArguments(fragmentManager, requestKey, bundleOf(
+                ARG_INITIAL_MILLIS to initialMillis,
+                ARG_REQUEST_KEY to requestKey,
+                ARG_TIME_ZONE to zone.id
+            ))
+        }
+
+        private fun showWithArguments(fragmentManager: FragmentManager, requestKey: String, args: Bundle) {
             val tag = TAG_PREFIX + requestKey
             if (fragmentManager.findFragmentByTag(tag) != null || fragmentManager.isStateSaved) return
             AppDatePickerDialogFragment().apply {
-                arguments = bundleOf(
-                    ARG_INITIAL_MILLIS to initialMillis,
-                    ARG_MIN_MILLIS to (minMillis ?: NO_BOUND),
-                    ARG_MAX_MILLIS to (maxMillis ?: NO_BOUND),
-                    ARG_REQUEST_KEY to requestKey,
-                    ARG_PAYLOAD_ID to payloadId
-                )
+                arguments = args
             }.show(fragmentManager, tag)
         }
     }

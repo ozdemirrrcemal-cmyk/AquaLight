@@ -61,14 +61,16 @@ internal class WaterAnalysisMeasurementTimeController(
             AppDatePickerDialogFragment.show(
                 fragmentManager = fragment.childFragmentManager,
                 requestKey = DATE_PICKER_REQUEST_KEY,
-                initialMillis = selectedCalendar.timeInMillis
+                initialMillis = selectedCalendar.timeInMillis,
+                zone = selectedCalendar.timeZone
             )
         }
         binding.cardTime.setOnClickListener {
             AppTimePickerDialogFragment.show(
                 fragmentManager = fragment.childFragmentManager,
                 requestKey = TIME_PICKER_REQUEST_KEY,
-                initialMillis = selectedCalendar.timeInMillis
+                initialMillis = selectedCalendar.timeInMillis,
+                zone = selectedCalendar.timeZone
             )
         }
         render()
@@ -84,11 +86,13 @@ internal class WaterAnalysisMeasurementTimeController(
     private fun render() {
         binding.tvDateValue.text = LocaleFormatter.formatDate(
             fragment.requireContext(),
-            selectedCalendar.timeInMillis
+            selectedCalendar.timeInMillis,
+            selectedCalendar.timeZone
         )
         binding.tvTimeValue.text = LocaleFormatter.formatTime(
             fragment.requireContext(),
-            selectedCalendar.timeInMillis
+            selectedCalendar.timeInMillis,
+            selectedCalendar.timeZone
         )
     }
 

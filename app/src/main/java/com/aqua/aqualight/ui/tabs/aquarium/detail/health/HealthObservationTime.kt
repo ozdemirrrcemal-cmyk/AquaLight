@@ -35,10 +35,12 @@ internal class HealthObservationTime(
             }
         }
         ui.date.setOnClickListener {
-            AppDatePickerDialogFragment.show(fragment.childFragmentManager, DATE, selected.timeInMillis)
+            AppDatePickerDialogFragment.show(fragment.childFragmentManager, DATE,
+                selected.timeInMillis, zone = selected.timeZone)
         }
         ui.time.setOnClickListener {
-            AppTimePickerDialogFragment.show(fragment.childFragmentManager, TIME, selected.timeInMillis)
+            AppTimePickerDialogFragment.show(fragment.childFragmentManager, TIME,
+                selected.timeInMillis, zone = selected.timeZone)
         }
         render()
     }
@@ -48,8 +50,8 @@ internal class HealthObservationTime(
             putLong("observed", selected.timeInMillis)
             putString("time_zone", selected.timeZone.id)
         }
-        ui.date.text = LocaleFormatter.formatDate(fragment.requireContext(), selected.timeInMillis)
-        ui.time.text = LocaleFormatter.formatTime(fragment.requireContext(), selected.timeInMillis)
+        ui.date.text = LocaleFormatter.formatDate(fragment.requireContext(), selected.timeInMillis, selected.timeZone)
+        ui.time.text = LocaleFormatter.formatTime(fragment.requireContext(), selected.timeInMillis, selected.timeZone)
     }
 
     private companion object {

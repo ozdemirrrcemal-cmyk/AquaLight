@@ -1,16 +1,16 @@
 # AquaLight — Production Water Analysis Implementation Checklist
 
-## Current acceptance status — 28 September 2026, 01:42 Europe/Istanbul
+## Current acceptance status — 28 September 2026, 12:05 Europe/Istanbul
 
 The accepted K01–K18 contract decisions are recorded. Implementation and release
-acceptance are incomplete. Current U/S/C/M/E rows total **12 closed, 22 open**;
+acceptance are incomplete. Current U/S/C/M/E rows total **13 closed, 21 open**;
 these are acceptance counts, not a percentage of code implemented.
 
 | Current gate | Closed | Open |
 | --- | ---: | ---: |
 | U — Baseline and architecture | 4 | 2 |
 | S — Semantics and catalog foundation | 4 | 5 |
-| C — Verified named products | 0 | 5 |
+| C — Verified named products | 1 | 4 |
 | M — Migration and scalable history | 4 | 3 |
 | E — End-to-end acceptance | 0 | 7 |
 | A — Algae Control | 0 | 7 |
@@ -22,10 +22,12 @@ must not be added to the current counts or treated as independent completed
 features. The dated continuation notes below document intermediate states;
 the individually evidenced checkbox rows are authoritative for closure.
 
-Twelve previously open historical rows (W5.1/W5.2/W5.5–W5.10, W6.3/W6.4,
+Thirteen previously open historical rows (W5.1/W5.2/W5.5–W5.10, W6.3/W6.4/W6.13,
 W7.3/W7.6) now have individual executed evidence in
 `WATER_ANALYSIS_ACCEPTANCE_EVIDENCE.md`. They overlap the formal gates above and
-do not increase the 12/34 formal acceptance count.
+do not increase the formal acceptance count. C.1 is separately accepted as a
+product-prioritization decision in `WATER_TEST_KIT_PRIORITIES.md`; no new
+product is enabled and C.2–C.5 remain open.
 
 Room v3 archive/identity indexing, startup recovery and the five-screen central
 navigation smoke passed API 27/API 36 run `36340971240` on `9f80eb2d`: 163
@@ -55,13 +57,20 @@ reports process crashes immediately. Android CI `36354005818` and emulator run
 `36354005814` now pass: 184 instrumentation tests and 78 verified screenshots
 on each of API 27/API 36, including the minified health routes. APK, dependency
 integrity and Firebase checks also pass. CodeQL `36354005819` passed as well.
-The local continuation expands those routes from empty/missing states to saved
-observations and follow-up forms, and adds a tank-duplicate/history regression;
-its device execution is separate and pending. Screenshot review also found
-low-contrast default checkbox text in the light profile; the continuation uses
-Aqua text/tint colors, a styled dropdown and a rendered contrast check.
-A/P/L acceptance has not been
-claimed from route smoke alone.
+The follow-up `7169891e` passed all applicable CI workflows: Android CI
+`36356386170`, CodeQL `36356386173`, emulator `36356386129`, APK, dependency
+and Firebase guards. Both APIs passed **185 instrumentation tests and 78
+screenshots**. The minified smoke now writes actual observations through
+production operations, verifies exact retries, waits for populated list/detail
+and ready forms, and checks follow-up parent/subject identity. Rendered choice
+contrast assertions pass in all six profiles; manual API 36 screenshot review
+also confirms the light-profile text and dropdown inset correction. The real
+production tank-duplicate regression passed and closes W6.13 individually.
+These checks do not establish complete TalkBack or A/P/L acceptance.
+
+The next local change makes Water/Health draft formatting and shared pickers use
+one saved timezone, including picker recreation. New timezone regressions are
+pending device CI; no broad E.2/E.3/W8.3 closure is claimed.
 
 ## 0. Rebaseline — 27 September 2026
 
@@ -170,7 +179,7 @@ silently promoted to a health decision.
 
 ### C — Named test-kit catalog expansion (separate acceptance gate)
 
-- [ ] C.1 Prioritize exact models for JBL, Sera, API, Red Sea and Hanna by actual supported tank/parameter coverage; do not create placeholder SKUs from brand names.
+- [x] C.1 `WATER_TEST_KIT_PRIORITIES.md` prioritizes exact API, Red Sea, JBL, Hanna and sera products against the actual tank/parameter policy, using manufacturer sources retrieved 27 September 2026 UTC. Variant/revision/basis gaps and unverified brackish coverage remain explicit. This closes prioritization only; no profile, conversion or assessment is enabled.
 - [ ] C.2 For each profile retain primary manufacturer/manual evidence, publication/retrieval date, supported water matrix, species/basis, units, range/precision and result modes. Independently review chemical conversions and method interference.
 - [ ] C.3 Add data-driven tests per profile: known label/result vectors, unsupported matrix, unknown revision, mode cardinality and normalization/no-conversion cases.
 - [ ] C.4 Localize brand/model presentation without using localized text as stable identity. Verify scrolling/search, duplicate names, long strings and accessible sheet selection.
@@ -195,7 +204,7 @@ evidence and pending device acceptance are in `WATER_ANALYSIS_ROOM_TRANSACTIONS.
 - [x] M.4 Accepted on `c6224e4f` with the same CI/device runs as M.3. `WaterAnalysisRoomCommitInstrumentedTest.eventAndRequestInsertAreOneTransactionAndRetryIsExact` and `WaterAnalysisSessionInstrumentedTest.savedEvaluationIsAtomicAndRetryDoesNotReadChangedContext` verify atomic event/request/evidence storage and exact retries. `evaluationFailureDoesNotLeaveARawOnlyRecord` rejects partial events. Current scientific source coverage and catalog expansion remain separate S/C/E gates.
 - [ ] M.5 Live Room owner/tank-targeted detail/latest/delete and indexed 50-item keyset queries passed API 27/API 36, most recently as part of the 184 instrumentation tests per API on `78a8311a`. The UI retains one cursor and bounded newer/older pages; reverse queries and deleted-page recovery passed. Measured memory/latency on a representative low-memory device remains open. The 10,000-row test proves ordering/index behavior, not that performance budget; no history is silently evicted.
 - [ ] M.6 Live Room create/delete now holds the immutable session-generation lease, owner archive and tank gates until durable acknowledgement, including cancellation. Bounded deletion staging, orphan repair, pending-journal admission, owner cleanup and reopen tests passed on API 27/API 36. Individual staging/journal requirements are accepted under W6.3/W6.4. Complete boundary coverage, future persisted method preferences and final release/minified integration remain open. See `WATER_ANALYSIS_ACCEPTANCE_EVIDENCE.md` and the dated checkpoints in `WATER_ANALYSIS_ROOM_TRANSACTIONS.md`.
-- [ ] M.7 Live Room archive authority and v3 water import indexes are implemented; archive v4 also carries health observations/photos and follow-up identity. API 27/API 36 on `78a8311a` passed actual Room archive round-trip, deduplication, conflict rollback, reopen and health provenance tests; the workflow later failed at minified health navigation. Legacy v1/v2/v3 readers remain. Persisted method-preference integration, tank-duplicate regression and complete final minified/concurrency acceptance remain open; incomplete history is rejected.
+- [ ] M.7 Live Room archive authority and v3 water import indexes are implemented; archive v4 also carries health observations/photos and follow-up identity. API 27/API 36 on `78a8311a` passed actual Room archive round-trip, deduplication, conflict rollback, reopen and health provenance tests; the workflow later failed at minified health navigation. Legacy v1/v2/v3 readers remain. The production tank-duplicate regression and populated minified health smoke subsequently passed on `7169891e`. Persisted method-preference integration and complete final concurrency acceptance remain open; incomplete history is rejected.
 
 **Gate M:** Legacy and new records survive process death, migration retries,
 owner changes, tank deletion races and restore without duplication or loss.
@@ -221,7 +230,7 @@ forms, bounded history, exact-record details, owned photos and follow-up routes.
 They share dated Water Quality/context through application boundaries, preserve
 saved evidence and participate in owner-scoped archive/restore. Their code is
 checkpointed as `8f207e03`; device persistence and minified route/profile smoke
-pass on `9b731d26`. Populated detail/follow-up smoke is the next added check.
+pass on `9b731d26`. Populated detail/follow-up smoke and the duplicate/history regression pass on `7169891e`.
 Formal acceptance follows E → A →
 P → L below. No diagnosis or acceptance is inferred from screen/code presence.
 
@@ -497,7 +506,7 @@ WaterAnalysisRecord içindeki kalıcı owner kimliğinin UI’a açılması gere
 - [ ] W6.10 Owner graph generation değişince eski collector/event/draft UI’a taşınmasın; eski oturumun işlemi yeni hesaba yazamasın. Aynı owner ile yeni oturum generation’ı da kapsansın. Analysis operations artık graph owner/generation lease'ine bağlı; okumalar sabit owner kullanıyor ve eski generation typed cancellation ile duruyor. Event/draft/lifecycle ve cihaz kabul kapsamı açık.
 - [ ] W6.11 K17: analysis history explicit user backup ve portable export'a dahil; archive schema/validator/snapshot/codec/restore/remap/dedup/journal ve eski arşivlerin sıfır analiz semantiği test edilsin.
 - [ ] W6.12 Android allowBackup=false korunup backup/data-extraction kuralları ayrı doğrulansın; explicit AquaLight arşivinde geçmiş eksikse işlem başarılı/tam diye bildirilmesin. Tank duplicate v1 geçmiş taşımasın.
-- [ ] W6.13 Tank duplicate’de geçmiş kopyalanmasın önerisini sözleşme ve regresyon testinde sabitle; açıkça istenen başka davranış varsa bağımsız provenance tasarla.
+- [x] W6.13 Tank duplicate geçmişi kopyalamaz. `WaterTankDuplicateHistoryInstrumentedTest.duplicateKeepsBothHistoriesOnlyOnOriginalTankEvenWhenPlantIdentityIsCopied`, `7169891e` / API 27 ve API 36 `36356386129` üzerinde geçti: yerel bitki ID’si kopyalansa da su ve bitki gözlem geçmişi yalnız özgün akvaryumda kalır; kayıtlı kanıt değişmez. Ayrıntı: `WATER_ANALYSIS_ACCEPTANCE_EVIDENCE.md`.
 - [ ] W6.14 Data inventory/retention/export belgelerini güncelle; log/analytics’e ham ölçüm, owner kimliği veya notların kontrolsüz düşmesini önle.
 
 **Geçiş ölçütü:** Tank silindikten sonra orphan analiz oluşmuyor; silme başarısız olduğunda geçmiş korunuyor; owner ve restore izolasyonu testli.

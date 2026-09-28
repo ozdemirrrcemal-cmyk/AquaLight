@@ -1,6 +1,8 @@
 package com.aqua.aqualight.i18n
 
 import java.util.Locale
+import java.util.TimeZone
+import java.time.Instant
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
@@ -11,6 +13,20 @@ class LocaleFormatterTest {
 
     private val turkish = Locale.forLanguageTag("tr-TR")
     private val english = Locale.ENGLISH
+
+    @Test
+    fun explicitSampleZoneWinsOverChangedDeviceZoneWhenFormattingDate() {
+        val original = TimeZone.getDefault()
+        try {
+            TimeZone.setDefault(TimeZone.getTimeZone("America/Los_Angeles"))
+            val instant = Instant.parse("2026-01-01T15:30:00Z").toEpochMilli()
+            assertEquals("Jan 2, 2026", LocaleFormatter.formatDate(
+                instant, Locale.US, TimeZone.getTimeZone("Asia/Tokyo")))
+            assertEquals("Jan 1, 2026", LocaleFormatter.formatDate(instant, Locale.US))
+        } finally {
+            TimeZone.setDefault(original)
+        }
+    }
 
     @Test
     fun integersFollowAppLocaleWithoutGrouping() {

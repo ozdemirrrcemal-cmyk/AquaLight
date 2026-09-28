@@ -15,6 +15,7 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 
 /** Locale-aware, per-call formatters. NumberFormat and DateFormat are not shared across threads. */
 object LocaleFormatter {
@@ -98,8 +99,8 @@ object LocaleFormatter {
         return formatPercent(fraction, appLocale(context), maximumFractionDigits)
     }
 
-    fun formatDate(context: Context, timeMillis: Long): String {
-        return formatDate(timeMillis, appLocale(context))
+    fun formatDate(context: Context, timeMillis: Long, zone: TimeZone = TimeZone.getDefault()): String {
+        return formatDate(timeMillis, appLocale(context), zone)
     }
 
     /** Formats a compact weekday label such as Mon / Pzt for charts and calendars. */
@@ -117,12 +118,13 @@ object LocaleFormatter {
         return formatDateEpochDay(epochDay, appLocale(context))
     }
 
-    fun formatTime(context: Context, timeMillis: Long): String {
+    fun formatTime(context: Context, timeMillis: Long, zone: TimeZone = TimeZone.getDefault()): String {
         val localizedContext = localizedContext(context)
         return formatTime(
             timeMillis = timeMillis,
             locale = appLocale(localizedContext),
-            is24Hour = AndroidDateFormat.is24HourFormat(localizedContext)
+            is24Hour = AndroidDateFormat.is24HourFormat(localizedContext),
+            zone = zone
         )
     }
 
@@ -209,11 +211,11 @@ object LocaleFormatter {
         }.format(fraction)
     }
 
-    internal fun formatDate(timeMillis: Long, locale: Locale): String {
+    internal fun formatDate(timeMillis: Long, locale: Locale, zone: TimeZone = TimeZone.getDefault()): String {
         return JavaDateFormat.getDateInstance(
             JavaDateFormat.MEDIUM,
             locale
-        ).format(Date(timeMillis))
+        ).apply { timeZone = zone }.format(Date(timeMillis))
     }
 
     internal fun formatWeekdayShort(timeMillis: Long, locale: Locale): String {
@@ -241,11 +243,12 @@ object LocaleFormatter {
     internal fun formatTime(
         timeMillis: Long,
         locale: Locale,
-        is24Hour: Boolean
+        is24Hour: Boolean,
+        zone: TimeZone = TimeZone.getDefault()
     ): String {
         val skeleton = if (is24Hour) "Hm" else "hm"
         val pattern = AndroidDateFormat.getBestDateTimePattern(locale, skeleton)
-        return SimpleDateFormat(pattern, locale).format(Date(timeMillis))
+        return SimpleDateFormat(pattern, locale).apply { timeZone = zone }.format(Date(timeMillis))
     }
 
     /** Locale-default overload retained for deterministic JVM formatter coverage. */

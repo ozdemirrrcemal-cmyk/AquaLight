@@ -1,6 +1,6 @@
 # Water Analysis: verified implementation rows
 
-Reviewed 28 September 2026 against `9b731d26`. This maps individual historical
+Reviewed 28 September 2026 against `7169891e`. This maps individual historical
 W requirements to executed evidence. It does not close the broader U/S/C/M/E
 release gates or the dependent Algae, Plant and Livestock acceptance gates.
 
@@ -17,8 +17,14 @@ release gates or the dependent Algae, Plant and Livestock acceptance gates.
   screens across six profiles. Android CI `36354005818` and emulator run
   `36354005814` passed: 184 instrumentation tests and 78 validated screenshots
   on each API, including minified health navigation. CodeQL `36354005819`, APK,
-  dependency and Firebase workflows also passed. The routes currently
-  exercise empty/missing-record states; populated records are the next check.
+  dependency and Firebase workflows also passed. At that checkpoint the routes
+  exercised empty/missing-record states; the later checkpoint below adds saved records.
+
+- `7169891e`: all applicable CI workflows passed: Android `36356386170`,
+  CodeQL `36356386173`, emulator `36356386129`, APK, dependency and Firebase.
+  API 27 and API 36 each passed **185 tests and 78 screenshots**. Populated
+  health list/detail, ready forms, exact retries and follow-up parent/subject
+  identity passed in the minified build, with rendered choice contrast checks.
 
 ## Individually accepted historical requirements
 
@@ -34,6 +40,7 @@ release gates or the dependent Algae, Plant and Livestock acceptance gates.
 | W5.10 | `WaterAnalysisRoomPagingInstrumentedTest.backdatingAndCreatedTimeTiesUseStableOrderAndExactDeletion`; `WaterAnalysisSessionInstrumentedTest.mismatchedTankCannotReadOrDeleteAnExistingAnalysis`, `latestUsesObservationBeforeCommitOrderAndKeepsOtherTanksSeparate`. | Repeated exact deletion is harmless; latest selects the next record, and deleting the sole record returns null/empty content. Wrong-tank deletion cannot remove it. |
 | W6.3 | `TankCareIntegrityFormatTest` legacy/current/malformed entry cases; `WaterAnalysisCutoverInstrumentedTest` pending-journal admission cases; `WaterArchiveJournalInstrumentedTest`. | The care journal keeps bounded v2 transaction references, reads v1 without inventing a snapshot, rejects unknown/malformed entries and blocks cutover while recovery is pending. The archive journal preserves its separate transaction identity. |
 | W6.4 | `WaterDeletionStageInstrumentedTest.restartAfterRemovalRestoresExactBytesOnceAndRetainsOtherTanks`, `fullDiskAtManifestWriteLeavesNoStageAndDoesNotBeginDestruction`, `checksumCorruptionCannotDeleteLiveRowsOrRestorePartialHistory`, `removalAndMarkerFailureRollBackTogetherAndChangedTransactionCannotCleanStage`, `rollbackRefusesConflictingLiveIdentityWithoutOverwritingEitherSide`. | Bounded durable Room staging, checksums, atomic marker/removal and reopen/retry recovery. The disk-full case is injected at the write boundary; it is not a physical-device capacity benchmark. |
+| W6.13 | `WaterTankDuplicateHistoryInstrumentedTest.duplicateKeepsBothHistoriesOnlyOnOriginalTankEvenWhenPlantIdentityIsCopied`, API 27/API 36 run `36356386129`. | Real production tank duplication retains local plant ID but copies neither Water nor Plant Health history; original saved evidence remains identical. |
 | W7.3 | `WaterAnalysisNavigationSmoke.verify` on the successful `c6224e4f` minified runs; application session-isolation tests above. | Five real routes obtain distinct central-factory ViewModels; back navigation retains the correct instance and stale duplicate navigation is rejected. |
 | W7.6 | `WaterAnalysisMutationControllerTest` pending-save/delete, exact retry, cancellation and retained-delete-identity cases; atomic Room commit tests above. | A pending mutation blocks duplicate commands; success follows durable acknowledgement; cancellation is propagated. |
 
@@ -47,27 +54,40 @@ are functional evidence only. M.6/M.7 still include persisted method preferences
 all recovery boundaries and complete archive/minified acceptance. UI navigation
 evidence alone does not prove process-death draft restoration or TalkBack usability.
 
-These twelve closures must not be added to the formal gate total: the historical
+These thirteen closures must not be added to the formal gate total: the historical
 W rows overlap the already accepted M rows and other release requirements.
 
-## Additional verification awaiting device execution
+## Populated health and duplication verification
 
-`HealthObservationSmokeFixture` writes all three kinds through the production
-owner-bound operations and verifies exact retries and reads. The minified
-navigation smoke waits for populated history, ready forms and saved detail,
-then follows each record into a new form and verifies the frozen parent/subject
-identity and back-stack ViewModel. This expands the previous missing-record route
-check; it has not yet passed device CI.
+`HealthObservationSmokeFixture` writes all three kinds through production
+owner-bound operations and verifies exact retries and reads. On `7169891e`,
+both API jobs passed populated history, ready forms, saved detail, follow-up
+parent/subject identity and back-stack ViewModel checks. This supersedes the
+previous empty/missing-record route-only evidence.
 
-Manual review of `9b731d26` API 36 screenshots found dark default checkbox text
-on the navy surface in the light profile and missing dropdown insets. The
-continuation binds checkbox text/tint to Aqua semantic colors, adds a shared
-outlined dropdown style, and checks rendered choice text/control contrast in
-each health visual profile. The preceding automated pass did not detect that
-visual issue and must not be described as complete accessibility acceptance.
+Manual review of `9b731d26` screenshots found low-contrast default checkbox text
+in the light profile and missing dropdown insets. `7169891e` uses Aqua semantic
+text/tint colors and a shared outlined dropdown style. Rendered text/control
+contrast checks passed in all six profiles on both APIs. API 36 light Plant form,
+saved Plant detail and large-font-light Livestock form were visually inspected
+on 28 September. Full TalkBack/scroll/interaction acceptance remains separate.
 
-`WaterTankDuplicateHistoryInstrumentedTest` adds a real-store regression for
-W6.13/M.7: duplicating a tank must leave both Water and Plant Health history on
-the original, even though the copied tank retains the local plant ID. The test
-also verifies that the original saved evidence is unchanged. W6.13 stays open
-until this added scenario executes on API 27/API 36.
+`WaterTankDuplicateHistoryInstrumentedTest` passed on both APIs. API 36 JUnit XML
+records 185 tests, zero failures/errors/skips, including the named duplicate
+case. W6.13 is accepted; the broader M.7 preference/concurrency gate stays open.
+
+## Timezone continuation (device execution pending)
+
+The existing component-replacement tests only covered a stable device timezone.
+Water/Health controllers saved a draft timezone, but shared picker construction
+and rendered date/time used the current device zone. The continuation explicitly
+passes the draft zone to both, and persists the picker zone in fragment arguments
+for recreation. Existing callers keep the device-zone default and existing
+payload/bounds arguments. No navigation or approved layout is changed.
+
+`ObservationTimeZoneInstrumentedTest` adds date/time picker recreation after a
+device-zone change and TR/EN 12/24-hour formatting checks. The JVM formatter
+regression checks an instant that falls on different calendar days in Tokyo and
+Los Angeles. These new tests must pass before this fix receives CI acceptance.
+The water input still lacks the original sample-offset field, and broad
+process-death/DST acceptance remains open under E.2/E.3/W8.3.
