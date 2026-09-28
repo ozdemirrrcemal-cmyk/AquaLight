@@ -250,6 +250,11 @@ internal class ActiveOwnerDependencyGraphResolver(
             assignmentRepository = dependencies.assignmentRepository,
             aquariumTankStore = aquariumTankStore
         )
+        val coolingCardOperations = createCoolingCardOperations(dependencies)
+        val tankWaterTemperatureOperations = DefaultTankWaterTemperatureOperations(
+            assignments = dependencies.assignmentRepository,
+            cooling = coolingCardOperations
+        )
         return OwnerDependencyGraph(
             ownerUid = dependencies.ownerUid,
             sessionGeneration = dependencies.sessionGeneration,
@@ -287,11 +292,8 @@ internal class ActiveOwnerDependencyGraphResolver(
             ),
             lightOperations = lightOperations,
             timerControlOperations = timerControlOperations,
-            coolingCardOperations = createCoolingCardOperations(dependencies),
-            tankWaterTemperatureOperations = DefaultTankWaterTemperatureOperations(
-                assignments = dependencies.assignmentRepository,
-                cooling = createCoolingCardOperations(dependencies)
-            ),
+            coolingCardOperations = coolingCardOperations,
+            tankWaterTemperatureOperations = tankWaterTemperatureOperations,
             dosingOperations = dosingOperations
         )
     }

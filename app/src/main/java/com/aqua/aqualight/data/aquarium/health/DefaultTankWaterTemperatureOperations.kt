@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 internal class DefaultTankWaterTemperatureOperations(
     private val assignments: TankDeviceAssignmentRepository,
     private val cooling: DeviceCoolingCardOperations
