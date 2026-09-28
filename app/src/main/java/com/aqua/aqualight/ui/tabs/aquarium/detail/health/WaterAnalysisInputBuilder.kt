@@ -48,6 +48,7 @@ internal object WaterAnalysisInputBuilder {
                     measuredAtMillis = request.measuredAtMillis,
                     temperatureCelsius = temperature.value,
                     temperatureSource = temperature.value?.let { request.temperatureSource },
+                    sensorProvenanceVerified = request.temperatureSource == WaterTemperatureSource.SENSOR,
                     measurements = measurements.values,
                     requestId = request.requestId
                 )
@@ -113,3 +114,4 @@ internal object WaterAnalysisInputBuilder {
         val invalid: Boolean
     )
 }
+

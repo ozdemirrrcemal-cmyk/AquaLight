@@ -19,7 +19,9 @@ data class WaterAnalysisInput(
     val temperatureCelsius: Double?,
     val temperatureSource: WaterTemperatureSource?,
     val measurements: List<WaterMeasurementInput>,
-    val requestId: String = UUID.randomUUID().toString()
+    val requestId: String = UUID.randomUUID().toString(),
+    /** Set only by the assigned-Cooling sensor adapter; prevents UI-forged SENSOR claims. */
+    val sensorProvenanceVerified: Boolean = false
 )
 
 data class WaterMeasurementInput(
@@ -228,8 +230,10 @@ internal object WaterAnalysisPolicy {
             requireNotNull(input.temperatureSource) {
                 "Temperature value requires a source."
             }
-            require(input.temperatureSource != WaterTemperatureSource.SENSOR) {
-                "Sensor temperature requires verified sample provenance."
+            if (input.temperatureSource == WaterTemperatureSource.SENSOR) {
+                require(input.sensorProvenanceVerified) {
+                    "Sensor temperature requires verified sample provenance."
+                }
             }
         }
 
@@ -256,3 +260,4 @@ internal object WaterAnalysisPolicy {
     fun isValidRequestId(requestId: String): Boolean =
         runCatching { UUID.fromString(requestId).toString() == requestId }.getOrDefault(false)
 }
+

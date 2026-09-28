@@ -10,11 +10,19 @@ import com.aqua.aqualight.application.aquarium.health.WaterAnalysisInput
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisOperations
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisSnapshot
 import com.aqua.aqualight.application.aquarium.health.WaterHistoryCursor
+import com.aqua.aqualight.application.aquarium.health.TankWaterTemperatureOperations
 import java.util.UUID
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 
 /** Each fragment owns this instance and its immutable Safe Args route. */
 class WaterAnalysisViewModel(
     private val operations: WaterAnalysisOperations,
+    internal val tankTemperatureOperations: TankWaterTemperatureOperations =
+        object : TankWaterTemperatureOperations {
+            override fun observe(tankId: Long): Flow<com.aqua.aqualight.application.aquarium.health.TankWaterTemperatureState> =
+                flowOf(com.aqua.aqualight.application.aquarium.health.TankWaterTemperatureState.Unavailable)
+        },
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
     private val tankId: Long = checkNotNull(savedStateHandle["tankId"])
@@ -55,3 +63,4 @@ class WaterAnalysisViewModel(
         mutations.delete(tankId, analysisId)
     }
 }
+

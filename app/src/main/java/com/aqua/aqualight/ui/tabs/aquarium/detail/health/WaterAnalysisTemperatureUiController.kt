@@ -9,12 +9,20 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.health.WaterTemperatureSource
+import com.aqua.aqualight.application.aquarium.health.TankWaterTemperatureOperations
+import com.aqua.aqualight.application.aquarium.health.TankWaterTemperatureState
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import com.aqua.aqualight.databinding.ItemTankHealthAnalysisSensorSectionBinding
 
 internal class WaterAnalysisTemperatureUiController(
     private val fragment: Fragment,
     private val binding: ItemTankHealthAnalysisSensorSectionBinding,
-    savedInstanceState: Bundle?
+    savedInstanceState: Bundle?,
+    private val tankId: Long,
+    private val temperatureOperations: TankWaterTemperatureOperations,
+    private val lifecycleOwner: LifecycleOwner
 ) {
     private var temperatureSource = savedInstanceState
         ?.getString(STATE_TEMPERATURE_SOURCE)
@@ -84,6 +92,21 @@ internal class WaterAnalysisTemperatureUiController(
         }
 
         renderSensorUiState()
+        lifecycleOwner.lifecycleScope.launch {
+            temperatureOperations.observe(tankId).collect { state ->
+                sensorUiState = when (state) {
+                    TankWaterTemperatureState.Loading -> TemperatureSensorUiState.Loading
+                    TankWaterTemperatureState.NoAssignedCooling,
+                    TankWaterTemperatureState.Unavailable,
+                    TankWaterTemperatureState.Invalid -> TemperatureSensorUiState.Unavailable
+                    is TankWaterTemperatureState.Reading -> TemperatureSensorUiState.Reading(
+                        deviceName = state.deviceUid,
+                        temperatureText = state.temperatureCelsius.toString()
+                    )
+                }
+                renderSensorUiState()
+            }
+        }
     }
 
     fun currentValueText(): String =
@@ -203,3 +226,4 @@ internal class WaterAnalysisTemperatureUiController(
         const val DISABLED_ALPHA = 0.5f
     }
 }
+

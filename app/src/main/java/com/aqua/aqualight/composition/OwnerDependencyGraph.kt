@@ -6,6 +6,7 @@ import com.aqua.aqualight.application.auth.AuthenticatedOwnerIdentity
 import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationOperations
 import com.aqua.aqualight.application.devices.DeviceFirmwareUpdateOperations
 import com.aqua.aqualight.application.devices.cooling.DeviceCoolingCardOperations
+import com.aqua.aqualight.application.aquarium.health.TankWaterTemperatureOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationDraftOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCalibrationOperations
 import com.aqua.aqualight.application.devices.dosing.DeviceDosingCardOperations
@@ -39,6 +40,7 @@ import com.aqua.aqualight.data.care.CareTaskDataStoreManager
 import com.aqua.aqualight.data.devices.DefaultDeviceFirmwareUpdateOperations
 import com.aqua.aqualight.data.devices.DefaultDeviceRootOperations
 import com.aqua.aqualight.data.devices.cooling.DefaultDeviceCoolingCardOperations
+import com.aqua.aqualight.data.aquarium.health.DefaultTankWaterTemperatureOperations
 import com.aqua.aqualight.data.devices.cooling.control.DefaultDeviceCoolingControlOperations
 import com.aqua.aqualight.data.devices.dosing.DefaultDeviceDosingChannelNavigationOperations
 import com.aqua.aqualight.data.devices.dosing.SharedPreferencesDeviceDosingCalibrationDraftStore
@@ -95,6 +97,7 @@ internal data class OwnerDependencyGraph(
     val lightOperations: OwnerLightOperations,
     val timerControlOperations: DeviceTimerControlOperations,
     val coolingCardOperations: DeviceCoolingCardOperations,
+    val tankWaterTemperatureOperations: TankWaterTemperatureOperations,
     val dosingOperations: OwnerDosingOperations
 )
 
@@ -285,6 +288,10 @@ internal class ActiveOwnerDependencyGraphResolver(
             lightOperations = lightOperations,
             timerControlOperations = timerControlOperations,
             coolingCardOperations = createCoolingCardOperations(dependencies),
+            tankWaterTemperatureOperations = DefaultTankWaterTemperatureOperations(
+                assignments = dependencies.assignmentRepository,
+                cooling = createCoolingCardOperations(dependencies)
+            ),
             dosingOperations = dosingOperations
         )
     }
@@ -479,3 +486,4 @@ internal class ResolvingProvisioningDraftOperations(
         }
     }
 }
+

@@ -227,6 +227,7 @@ internal class OwnerViewModelFactory(
                 operations = createWaterAnalysisOperations(
                     graph.waterAnalysisStore, graph.aquariumTankStore, graph.waterAnalysisSession, waterContextCatalogs
                 ),
+                tankTemperatureOperations = graph.tankWaterTemperatureOperations,
                 savedStateHandle = checkNotNull(quickSetupSavedStateHandle)
             )
             MaintenanceViewModel::class.java -> MaintenanceViewModel(
@@ -434,3 +435,4 @@ internal class OwnerViewModelFactory(
         )
     }
 }
+

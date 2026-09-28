@@ -62,7 +62,10 @@ class TankHealthAnalysisAddFragment :
         temperatureUiController = WaterAnalysisTemperatureUiController(
             fragment = this,
             binding = binding.sensorSection,
-            savedInstanceState = waterAnalysisViewModel.draft ?: savedInstanceState
+            savedInstanceState = waterAnalysisViewModel.draft ?: savedInstanceState,
+            tankId = args.tankId,
+            temperatureOperations = waterAnalysisViewModel.tankTemperatureOperations,
+            lifecycleOwner = viewLifecycleOwner
         ).also { controller -> controller.bind() }
 
         parameterRenderer = WaterAnalysisParameterRenderer(
@@ -328,3 +331,4 @@ class TankHealthAnalysisAddFragment :
             "active_measurement_parameter_id"
     }
 }
+
