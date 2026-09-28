@@ -48,7 +48,7 @@ class ObservationTimeZoneInstrumentedTest {
                 val dialog = fragment.requireDialog() as DatePickerDialog
                 assertEquals(2, dialog.datePicker.dayOfMonth)
                 dialog.datePicker.updateDate(2026, Calendar.JANUARY, 3)
-                dialog.getButton(DialogInterface.BUTTON_POSITIVE).performClick()
+                dialog.onClick(dialog, DialogInterface.BUTTON_POSITIVE)
                 val selected = Calendar.getInstance(sampleZone).apply { timeInMillis = checkNotNull(result) }
                 assertEquals(2026, selected.get(Calendar.YEAR))
                 assertEquals(Calendar.JANUARY, selected.get(Calendar.MONTH))
@@ -82,7 +82,7 @@ class ObservationTimeZoneInstrumentedTest {
                 assertEquals(30, picker.minute)
                 picker.hour = 16
                 picker.minute = 45
-                dialog.getButton(DialogInterface.BUTTON_POSITIVE).performClick()
+                dialog.onClick(dialog, DialogInterface.BUTTON_POSITIVE)
                 val selected = Calendar.getInstance(sampleZone).apply { timeInMillis = checkNotNull(result) }
                 assertEquals(2, selected.get(Calendar.DAY_OF_MONTH))
                 assertEquals(16, selected.get(Calendar.HOUR_OF_DAY))
