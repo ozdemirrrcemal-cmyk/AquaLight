@@ -82,8 +82,9 @@ internal object HealthObservationPresentation {
         if (input is HealthObservation.Livestock) {
             val count = input.affectedQuantity?.let { LocaleFormatter.formatInteger(context, it) }
                 ?: context.getString(R.string.health_algaeextent_unknown)
-            add(context.getString(R.string.health_affected_count, count,
-                LocaleFormatter.formatInteger(context, requireNotNull(row.subject?.quantity))))
+            val registered = row.subject?.quantity?.let { LocaleFormatter.formatInteger(context, it) }
+                ?: context.getString(R.string.health_algaeextent_unknown)
+            add(context.getString(R.string.health_affected_count, count, registered))
         }
     }
 }
