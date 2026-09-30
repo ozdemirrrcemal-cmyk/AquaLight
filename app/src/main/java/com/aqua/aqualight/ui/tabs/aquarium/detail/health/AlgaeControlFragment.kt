@@ -28,13 +28,7 @@ class AlgaeControlFragment : Fragment(R.layout.fragment_algae_control) {
         super.onViewCreated(view, savedInstanceState)
         val ui = FragmentAlgaeControlBinding.bind(view).also { binding = it }
 
-        ui.appHeader.setupAquaHeader(
-            fragment = this,
-            config = AquaHeaderConfig(
-                titleOverride = getString(R.string.tank_health_tab_algae_control),
-                onBackClick = { findNavController().navigateUp() }
-            )
-        )
+        setupHeader(ui)
 
         val adapter = HealthObservationListAdapter { id ->
             findNavController().navigateSafelyFrom(
@@ -90,6 +84,16 @@ class AlgaeControlFragment : Fragment(R.layout.fragment_algae_control) {
                 )
             }
         }
+    }
+
+    private fun setupHeader(ui: FragmentAlgaeControlBinding) {
+        ui.appHeader.setupAquaHeader(
+            fragment = this,
+            config = AquaHeaderConfig(
+                titleOverride = getString(R.string.tank_health_tab_algae_control),
+                onBackClick = { findNavController().navigateUp() }
+            )
+        )
     }
 
     override fun onDestroyView() {
