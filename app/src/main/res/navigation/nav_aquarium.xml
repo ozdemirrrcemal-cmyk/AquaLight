@@ -210,7 +210,7 @@
         android:id="@+id/plantHealthFragment"
         android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.health.PlantHealthFragment"
         android:label="@string/screen_title_plant_health"
-        tools:layout="@layout/fragment_health_observation_list">
+        tools:layout="@layout/fragment_plant_health">
         <argument
             android:name="tankId"
             app:argType="long" />
@@ -233,7 +233,7 @@
         android:id="@+id/livestockHealthFragment"
         android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.health.LivestockHealthFragment"
         android:label="@string/screen_title_livestock_health"
-        tools:layout="@layout/fragment_health_observation_list">
+        tools:layout="@layout/fragment_livestock_health">
         <argument
             android:name="tankId"
             app:argType="long" />
