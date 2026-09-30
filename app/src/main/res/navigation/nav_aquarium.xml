@@ -896,7 +896,7 @@
     </fragment>
     <fragment android:id="@+id/algaeControlFragment"
         android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.health.AlgaeControlFragment"
-        android:label="@string/tank_health_tab_algae_control" tools:layout="@layout/fragment_health_observation_list">
+        android:label="@string/tank_health_tab_algae_control" tools:layout="@layout/fragment_algae_control">
         <argument android:name="tankId" app:argType="long" />
         <argument android:name="healthKind" app:argType="string" android:defaultValue="ALGAE" />
         <action android:id="@+id/action_algaeControlFragment_to_healthObservationFormFragment"
