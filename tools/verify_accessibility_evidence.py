@@ -24,10 +24,16 @@ PROFILES = (
     "rtl-light",
     "rtl-dark",
 )
-SCREENS = ("aquarium", "aquariummaintenance", "devices", "settings") + tuple(
-    f"{kind}-{screen}"
-    for kind in ("algae", "plant", "livestock")
-    for screen in ("observations", "observation-form", "observation-detail")
+SCREENS = (
+    "aquarium",
+    "aquariummaintenance",
+    "devices",
+    "settings",
+    "algae-observations",
+    "algae-observation-form",
+    "algae-observation-detail",
+    "plant-blank-health",
+    "livestock-blank-health",
 )
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 MIN_PNG_BYTES = 1024
