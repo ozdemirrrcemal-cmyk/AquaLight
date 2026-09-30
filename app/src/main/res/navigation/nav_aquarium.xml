@@ -214,19 +214,6 @@
         <argument
             android:name="tankId"
             app:argType="long" />
-        <argument android:name="healthKind" app:argType="string" android:defaultValue="PLANT" />
-        <action android:id="@+id/action_plantHealthFragment_to_healthObservationFormFragment"
-            app:destination="@id/healthObservationFormFragment"
-            app:enterAnim="@anim/nav_slide_in_right"
-            app:exitAnim="@anim/nav_slide_out_left"
-            app:popEnterAnim="@anim/nav_slide_in_left"
-            app:popExitAnim="@anim/nav_slide_out_right" />
-        <action android:id="@+id/action_plantHealthFragment_to_healthObservationDetailFragment"
-            app:destination="@id/healthObservationDetailFragment"
-            app:enterAnim="@anim/nav_slide_in_right"
-            app:exitAnim="@anim/nav_slide_out_left"
-            app:popEnterAnim="@anim/nav_slide_in_left"
-            app:popExitAnim="@anim/nav_slide_out_right" />
     </fragment>
 
     <fragment
@@ -237,19 +224,6 @@
         <argument
             android:name="tankId"
             app:argType="long" />
-        <argument android:name="healthKind" app:argType="string" android:defaultValue="LIVESTOCK" />
-        <action android:id="@+id/action_livestockHealthFragment_to_healthObservationFormFragment"
-            app:destination="@id/healthObservationFormFragment"
-            app:enterAnim="@anim/nav_slide_in_right"
-            app:exitAnim="@anim/nav_slide_out_left"
-            app:popEnterAnim="@anim/nav_slide_in_left"
-            app:popExitAnim="@anim/nav_slide_out_right" />
-        <action android:id="@+id/action_livestockHealthFragment_to_healthObservationDetailFragment"
-            app:destination="@id/healthObservationDetailFragment"
-            app:enterAnim="@anim/nav_slide_in_right"
-            app:exitAnim="@anim/nav_slide_out_left"
-            app:popEnterAnim="@anim/nav_slide_in_left"
-            app:popExitAnim="@anim/nav_slide_out_right" />
     </fragment>
 
     <fragment
