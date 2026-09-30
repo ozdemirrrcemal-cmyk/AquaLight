@@ -20,8 +20,13 @@ class WaterAnalysisViewModel(
     private val operations: WaterAnalysisOperations,
     internal val tankTemperatureOperations: TankWaterTemperatureOperations =
         object : TankWaterTemperatureOperations {
-            override fun observe(tankId: Long): Flow<com.aqua.aqualight.application.aquarium.health.TankWaterTemperatureState> =
-                flowOf(com.aqua.aqualight.application.aquarium.health.TankWaterTemperatureState.Unavailable)
+            override fun observe(
+                tankId: Long
+            ): Flow<com.aqua.aqualight.application.aquarium.health.TankWaterTemperatureState> =
+                flowOf(
+                    com.aqua.aqualight.application.aquarium.health
+                        .TankWaterTemperatureState.Unavailable
+                )
         },
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
