@@ -30,17 +30,7 @@ class AlgaeControlFragment : Fragment(R.layout.fragment_algae_control) {
 
         setupHeader(ui)
 
-        val adapter = HealthObservationListAdapter { id ->
-            findNavController().navigateSafelyFrom(
-                R.id.algaeControlFragment,
-                AlgaeControlFragmentDirections
-                    .actionAlgaeControlFragmentToHealthObservationDetailFragment(
-                        tankId = args.tankId,
-                        healthKind = args.healthKind,
-                        observationId = id
-                    )
-            )
-        }
+        val adapter = createAdapter()
 
         ui.historyList.layoutManager = LinearLayoutManager(requireContext())
         ui.historyList.adapter = adapter
@@ -84,6 +74,18 @@ class AlgaeControlFragment : Fragment(R.layout.fragment_algae_control) {
                 )
             }
         }
+    }
+
+    private fun createAdapter() = HealthObservationListAdapter { id ->
+        findNavController().navigateSafelyFrom(
+            R.id.algaeControlFragment,
+            AlgaeControlFragmentDirections
+                .actionAlgaeControlFragmentToHealthObservationDetailFragment(
+                    tankId = args.tankId,
+                    healthKind = args.healthKind,
+                    observationId = id
+                )
+        )
     }
 
     private fun setupHeader(ui: FragmentAlgaeControlBinding) {
