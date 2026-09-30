@@ -1,17 +1,25 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 
-import androidx.navigation.fragment.navArgs
+import android.os.Bundle
+import android.view.View
+import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.R
+import com.aqua.aqualight.databinding.FragmentLivestockHealthBinding
+import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
+import com.aqua.aqualight.ui.common.header.setupAquaHeader
 
-class LivestockHealthFragment : HealthObservationListFragment(
-    R.id.livestockHealthFragment, R.string.screen_title_livestock_health) {
-    private val args: LivestockHealthFragmentArgs by navArgs()
+class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
 
-    override fun newDirections() = LivestockHealthFragmentDirections
-        .actionLivestockHealthFragmentToHealthObservationFormFragment(
-            tankId = args.tankId, healthKind = args.healthKind)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
-    override fun detailDirections(id: Long) = LivestockHealthFragmentDirections
-        .actionLivestockHealthFragmentToHealthObservationDetailFragment(
-            tankId = args.tankId, healthKind = args.healthKind, observationId = id)
+        FragmentLivestockHealthBinding.bind(view).appHeader.setupAquaHeader(
+            fragment = this,
+            config = AquaHeaderConfig(
+                titleOverride = getString(R.string.screen_title_livestock_health),
+                onBackClick = { findNavController().navigateUp() }
+            )
+        )
+    }
 }
