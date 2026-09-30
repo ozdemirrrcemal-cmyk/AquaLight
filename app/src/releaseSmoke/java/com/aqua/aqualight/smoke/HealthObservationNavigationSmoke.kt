@@ -18,10 +18,8 @@ import com.aqua.aqualight.ui.tabs.aquarium.detail.health.AlgaeControlFragmentArg
 import com.aqua.aqualight.ui.tabs.aquarium.detail.health.AlgaeControlFragmentDirections
 import com.aqua.aqualight.ui.tabs.aquarium.detail.health.PlantHealthFragment
 import com.aqua.aqualight.ui.tabs.aquarium.detail.health.PlantHealthFragmentArgs
-import com.aqua.aqualight.ui.tabs.aquarium.detail.health.PlantHealthFragmentDirections
 import com.aqua.aqualight.ui.tabs.aquarium.detail.health.LivestockHealthFragment
 import com.aqua.aqualight.ui.tabs.aquarium.detail.health.LivestockHealthFragmentArgs
-import com.aqua.aqualight.ui.tabs.aquarium.detail.health.LivestockHealthFragmentDirections
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeout
 
@@ -31,7 +29,48 @@ internal class HealthObservationNavigationSmoke(
     private val capture: (String) -> Unit
 ) {
     suspend fun verify() {
-        HealthObservationKind.entries.forEach { kind -> verifyKind(kind) }
+        verifyBlankHealthRoot(HealthObservationKind.PLANT)
+        verifyBlankHealthRoot(HealthObservationKind.LIVESTOCK)
+        verifyKind(HealthObservationKind.ALGAE)
+    }
+
+    private suspend fun verifyBlankHealthRoot(kind: HealthObservationKind) {
+        val route = when (kind) {
+            HealthObservationKind.PLANT -> R.id.plantHealthFragment
+            HealthObservationKind.LIVESTOCK -> R.id.livestockHealthFragment
+            HealthObservationKind.ALGAE -> error("Algae keeps the observation flow.")
+        }
+        val arguments = when (kind) {
+            HealthObservationKind.PLANT -> PlantHealthFragmentArgs(data.tankId).toBundle()
+            HealthObservationKind.LIVESTOCK -> LivestockHealthFragmentArgs(data.tankId).toBundle()
+            HealthObservationKind.ALGAE -> error("Algae keeps the observation flow.")
+        }
+
+        val graph = host.navController.navInflater.inflate(R.navigation.nav_aquarium)
+        graph.setStartDestination(route)
+        host.navController.setGraph(graph, arguments)
+        host.childFragmentManager.executePendingTransactions()
+        delay(SETTLE_MILLIS)
+
+        val fragment = host.childFragmentManager.primaryNavigationFragment
+            ?: error("Blank health route did not create a primary navigation fragment")
+        check(fragment.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED))
+        check(fragment.view != null)
+
+        when (kind) {
+            HealthObservationKind.PLANT -> check(fragment is PlantHealthFragment)
+            HealthObservationKind.LIVESTOCK -> check(fragment is LivestockHealthFragment)
+            HealthObservationKind.ALGAE -> error("Algae keeps the observation flow.")
+        }
+
+        val root = fragment.requireView()
+        check(root.findViewById<View>(R.id.appHeader) != null)
+        check(root.findViewById<View>(R.id.add) == null)
+        check(root.findViewById<View>(R.id.historyList) == null)
+        check(root.findViewById<View>(R.id.retry) == null)
+        check(root.findViewById<View>(R.id.latest) == null)
+        check(root.findViewById<View>(R.id.older) == null)
+        capture("${kind.name.lowercase()}-blank-health")
     }
 
     private suspend fun verifyKind(kind: HealthObservationKind) {
@@ -97,22 +136,16 @@ internal class HealthObservationNavigationSmoke(
     private fun form(kind: HealthObservationKind): NavDirections = when (kind) {
         HealthObservationKind.ALGAE -> AlgaeControlFragmentDirections
             .actionAlgaeControlFragmentToHealthObservationFormFragment(data.tankId, kind.name)
-        HealthObservationKind.PLANT -> PlantHealthFragmentDirections
-            .actionPlantHealthFragmentToHealthObservationFormFragment(data.tankId, kind.name)
-        HealthObservationKind.LIVESTOCK -> LivestockHealthFragmentDirections
-            .actionLivestockHealthFragmentToHealthObservationFormFragment(data.tankId, kind.name)
+        HealthObservationKind.PLANT,
+        HealthObservationKind.LIVESTOCK -> error("Blank health roots do not expose observation forms.")
     }
 
     private fun detail(kind: HealthObservationKind): NavDirections = when (kind) {
         HealthObservationKind.ALGAE -> AlgaeControlFragmentDirections
             .actionAlgaeControlFragmentToHealthObservationDetailFragment(
                 data.tankId, kind.name, data.records.getValue(kind))
-        HealthObservationKind.PLANT -> PlantHealthFragmentDirections
-            .actionPlantHealthFragmentToHealthObservationDetailFragment(
-                data.tankId, kind.name, data.records.getValue(kind))
-        HealthObservationKind.LIVESTOCK -> LivestockHealthFragmentDirections
-            .actionLivestockHealthFragmentToHealthObservationDetailFragment(
-                data.tankId, kind.name, data.records.getValue(kind))
+        HealthObservationKind.PLANT,
+        HealthObservationKind.LIVESTOCK -> error("Blank health roots do not expose observation details.")
     }
 
     private suspend fun current(kind: HealthObservationKind): HealthObservationViewModel {
