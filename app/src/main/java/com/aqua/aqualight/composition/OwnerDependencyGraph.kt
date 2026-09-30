@@ -274,15 +274,9 @@ internal class ActiveOwnerDependencyGraphResolver(
                 aquariumTankStore = aquariumTankStore,
                 careTaskStore = careTaskStore
             ),
-            provisioningDraftOperations = DefaultProvisioningDraftOperations(
-                draftStore = AqlProvisioningDraftStore(
-                    context = appContext,
-                    ownerUidProvider = ownerUidProvider
-                ),
-                qrSecretStore = AqlProvisioningQrSecretStore(
-                    context = appContext,
-                    ownerUidProvider = ownerUidProvider
-                )
+            provisioningDraftOperations = createProvisioningDraftOperations(
+                context = appContext,
+                ownerUidProvider = ownerUidProvider
             ),
             controlSurfacePreparationOperations = createControlSurfacePreparationOperations(
                 dependencies = dependencies,
@@ -408,6 +402,20 @@ internal class ActiveOwnerDependencyGraphResolver(
         ).also(dependencies.devicesRepository::registerOwnerScopedResource)
     }
 }
+
+private fun createProvisioningDraftOperations(
+    context: Context,
+    ownerUidProvider: () -> String
+): ProvisioningDraftOperations = DefaultProvisioningDraftOperations(
+    draftStore = AqlProvisioningDraftStore(
+        context = context,
+        ownerUidProvider = ownerUidProvider
+    ),
+    qrSecretStore = AqlProvisioningQrSecretStore(
+        context = context,
+        ownerUidProvider = ownerUidProvider
+    )
+)
 
 private fun createOwnerLightOperations(
     context: Context,
