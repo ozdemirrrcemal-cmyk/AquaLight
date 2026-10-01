@@ -16,6 +16,12 @@
     <string name="tank_health_status_not_measured">Ölçülmedi</string>
 
     <string name="tank_health_metric_temperature">Sıcaklık</string>
+    <string name="tank_health_metric_assessment_within">Katalog aralığında</string>
+    <string name="tank_health_metric_assessment_above">Katalog aralığının üzerinde</string>
+    <string name="tank_health_metric_assessment_below">Katalog aralığının altında</string>
+    <string name="tank_health_metric_assessment_mixed">Bazı katalog aralıklarının dışında</string>
+    <string name="tank_health_metric_assessment_not_comparable">Katalog karşılaştırması yok</string>
+    <string name="tank_health_metric_assessment_unavailable">Kayıtlı değerlendirme yok</string>
     <string name="tank_health_add_analysis">Analiz Ekle</string>
 
     <string name="tank_health_maintenance_title">Bakım Durumu</string>
