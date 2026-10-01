@@ -35,6 +35,15 @@
             android:textStyle="bold" />
 
         <TextView
+            android:id="@+id/tvCompatibilityStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/aqua_size_4"
+            android:includeFontPadding="false"
+            android:textSize="@dimen/aqua_text_size_body_small"
+            android:textStyle="bold" />
+
+        <TextView
             android:id="@+id/tvMeasurementMeta"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
