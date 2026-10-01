@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <include
+        android:id="@+id/appHeader"
+        layout="@layout/layout_aqua_header"
+        android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="@dimen/aqua_size_0"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:paddingStart="@dimen/aqua_size_14"
+        android:paddingEnd="@dimen/aqua_size_14"
+        android:paddingBottom="@dimen/aqua_size_20"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/appHeader">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Aqua.Card.Metric"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_8">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/aqua_size_14">
+
+                    <TextView
+                        android:id="@+id/tvMetricName"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/aqua_card_text_secondary"
+                        android:textSize="@dimen/aqua_text_size_caption" />
+
+                    <TextView
+                        android:id="@+id/tvMetricValue"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/aqua_size_4"
+                        android:textColor="@color/aqua_card_text_primary"
+                        android:textSize="@dimen/aqua_text_size_display"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvMetricStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/aqua_size_6"
+                        android:textSize="@dimen/aqua_text_size_body"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvComparisonCount"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/aqua_size_10"
+                        android:textColor="@color/aqua_card_text_primary"
+                        android:textSize="@dimen/aqua_text_size_body_small" />
+
+                    <TextView
+                        android:id="@+id/tvCountBreakdown"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/aqua_size_4"
+                        android:textColor="@color/aqua_content_muted"
+                        android:textSize="@dimen/aqua_text_size_caption" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:id="@+id/tvNoComparison"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_12"
+                android:text="@string/tank_health_metric_detail_no_comparison"
+                android:textColor="@color/aqua_content_muted"
+                android:textSize="@dimen/aqua_text_size_body_small"
+                android:visibility="gone" />
+
+            <LinearLayout
+                android:id="@+id/groupWithin"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_16"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/tank_health_metric_detail_within_title"
+                    android:textColor="@color/aqua_card_text_primary"
+                    android:textSize="@dimen/aqua_text_size_body"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:id="@+id/withinContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/aqua_size_8"
+                    android:orientation="vertical" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/groupOutside"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_16"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/tank_health_metric_detail_outside_title"
+                    android:textColor="@color/aqua_card_text_primary"
+                    android:textSize="@dimen/aqua_text_size_body"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:id="@+id/outsideContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/aqua_size_8"
+                    android:orientation="vertical" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/groupUnassessed"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_16"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/tank_health_metric_detail_unassessed_title"
+                    android:textColor="@color/aqua_card_text_primary"
+                    android:textSize="@dimen/aqua_text_size_body"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:id="@+id/unassessedContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/aqua_size_8"
+                    android:orientation="vertical" />
+            </LinearLayout>
+
+            <com.google.android.material.card.MaterialCardView
+                style="@style/Widget.Aqua.Card.Inline"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_16">
+
+                <TextView
+                    android:id="@+id/tvFrozenContext"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="@dimen/aqua_size_12"
+                    android:text="@string/tank_health_metric_detail_frozen_context"
+                    android:textColor="@color/aqua_content_muted"
+                    android:textSize="@dimen/aqua_text_size_caption" />
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+</androidx.constraintlayout.widget.ConstraintLayout>
