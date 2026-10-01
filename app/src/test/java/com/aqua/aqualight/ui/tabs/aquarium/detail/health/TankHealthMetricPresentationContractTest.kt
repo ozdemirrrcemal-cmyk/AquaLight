@@ -1,6 +1,7 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 
 import java.io.File
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -39,6 +40,10 @@ class TankHealthMetricPresentationContractTest {
                 "TankHealthContentAdapter.kt"
         )
         assertTrue(fragment.contains("TankHealthWaterMetricUiCatalog.models("))
+        assertTrue(fragment.contains("TankHealthWaterMetricId.Temperature"))
+        assertTrue(fragment.contains("WaterAnalysisPresentation.temperatureValueText("))
+        assertTrue(fragment.contains("TankHealthWaterMetricAssessment.statusRes("))
+        assertFalse(fragment.contains("R.string.tank_health_analysis_recorded"))
         assertTrue(fragment.contains("AquariumTankViewModel"))
         assertTrue(adapter.contains("submitWaterMetrics("))
         assertTrue(adapter.contains("buildItems(currentMetrics, header, maintenance, system)"))
