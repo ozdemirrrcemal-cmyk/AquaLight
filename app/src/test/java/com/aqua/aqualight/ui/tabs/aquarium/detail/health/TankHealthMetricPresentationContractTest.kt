@@ -42,7 +42,9 @@ class TankHealthMetricPresentationContractTest {
         assertTrue(fragment.contains("TankHealthWaterMetricUiCatalog.models("))
         assertTrue(fragment.contains("TankHealthWaterMetricId.Temperature"))
         assertTrue(fragment.contains("WaterAnalysisPresentation.temperatureValueText("))
-        assertTrue(fragment.contains("TankHealthWaterMetricAssessment.statusRes("))
+        assertTrue(fragment.contains("TankHealthWaterMetricAssessment.summarize("))
+        assertTrue(fragment.contains("actionTankHealthFragmentToTankHealthMetricDetailFragment"))
+        assertTrue(adapter.contains("TankHealthWaterMetricAssessment.statusColorRes("))
         assertFalse(fragment.contains("R.string.tank_health_analysis_recorded"))
         assertTrue(fragment.contains("AquariumTankViewModel"))
         assertTrue(adapter.contains("submitWaterMetrics("))
@@ -53,6 +55,35 @@ class TankHealthMetricPresentationContractTest {
         assertTrue(adapter.contains("R.string.tank_health_last_analysis_at"))
         assertTrue(adapter.contains("context.getString(item.labelRes)"))
         assertTrue(adapter.contains("context.getString(symbolRes)"))
+    }
+
+    @Test
+    fun historyAndMetricDetailUseStructuredFrozenAssessmentInsteadOfRawParagraphDump() {
+        val historyDetail = file(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
+                "TankHealthAnalysisDetailFragment.kt"
+        )
+        val metricDetail = file(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
+                "TankHealthMetricDetailFragment.kt"
+        )
+        val metricPresentation = file(
+            "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
+                "TankHealthWaterMetricDetailPresentation.kt"
+        )
+
+        assertFalse(historyDetail.contains("WaterAssessmentPresentation.detail("))
+        assertTrue(historyDetail.contains("WaterAssessmentPresentation.summary("))
+        assertTrue(historyDetail.contains("tvCompatibilityStatus"))
+        assertTrue(
+            historyDetail.contains(
+                "actionTankHealthAnalysisDetailFragmentToTankHealthMetricDetailFragment"
+            )
+        )
+        assertTrue(metricDetail.contains("TankHealthWaterMetricDetailPresentation.findings("))
+        assertTrue(metricDetail.contains("tank_health_metric_detail_frozen_context"))
+        assertTrue(metricPresentation.contains("record.assessment"))
+        assertFalse(metricPresentation.contains("WaterQualityAssessmentEngine.assess("))
     }
 
     private fun file(relativePath: String): String =
