@@ -16,7 +16,8 @@ import java.text.DateFormat
 import java.util.Date
 
 internal class TankHealthContentAdapter(
-    private val onAddAnalysisClick: () -> Unit = {}
+    private val onAddAnalysisClick: () -> Unit = {},
+    private val onMetricClick: (TankHealthWaterMetricId) -> Unit = {}
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private var currentMetrics: List<TankHealthWaterMetricUiModel> = emptyList()
@@ -250,10 +251,28 @@ internal class TankHealthContentAdapter(
             }
             binding.metricValue.text =
                 item.valueText ?: context.getString(R.string.tank_health_value_not_measured)
-            binding.metricStatus.text =
-                item.statusText ?: context.getString(R.string.tank_health_status_not_measured)
+            val status = item.status
+            binding.metricStatus.text = status?.let {
+                context.getString(TankHealthWaterMetricAssessment.statusRes(it))
+            } ?: context.getString(R.string.tank_health_status_not_measured)
             binding.metricStatus.setTextColor(
-                ContextCompat.getColor(context, R.color.aqua_content_muted)
+                ContextCompat.getColor(
+                    context,
+                    status?.let(TankHealthWaterMetricAssessment::statusColorRes)
+                        ?: R.color.aqua_content_muted
+                )
+            )
+            val opensDetail = item.valueText != null &&
+                status != null &&
+                status != TankHealthWaterCompatibilityStatus.SUITABLE
+            binding.root.isClickable = opensDetail
+            binding.root.isFocusable = opensDetail
+            binding.root.setOnClickListener(
+                if (opensDetail) {
+                    android.view.View.OnClickListener { onMetricClick(item.id) }
+                } else {
+                    null
+                }
             )
 
             val layoutParams = binding.root.layoutParams as ViewGroup.MarginLayoutParams
