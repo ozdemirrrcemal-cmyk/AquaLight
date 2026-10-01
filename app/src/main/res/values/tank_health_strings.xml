@@ -18,6 +18,12 @@
     <string name="tank_health_value_not_measured" translatable="false">—</string>
 
     <string name="tank_health_metric_temperature">Temperature</string>
+    <string name="tank_health_metric_assessment_within">Within catalog range</string>
+    <string name="tank_health_metric_assessment_above">Above catalog range</string>
+    <string name="tank_health_metric_assessment_below">Below catalog range</string>
+    <string name="tank_health_metric_assessment_mixed">Outside some catalog ranges</string>
+    <string name="tank_health_metric_assessment_not_comparable">No catalog comparison</string>
+    <string name="tank_health_metric_assessment_unavailable">No saved assessment</string>
 
     <string name="tank_health_add_analysis">Add Analysis</string>
     <string name="tank_health_add_analysis_symbol" translatable="false">＋</string>
