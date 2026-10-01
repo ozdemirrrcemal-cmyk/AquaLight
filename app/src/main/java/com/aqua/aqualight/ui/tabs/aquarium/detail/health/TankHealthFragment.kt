@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.application.aquarium.AquariumTankTaxonomy
+import com.aqua.aqualight.application.aquarium.AquariumWaterParameter
 import com.aqua.aqualight.application.care.CareTaskType
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisSnapshot
 import com.aqua.aqualight.application.aquarium.health.WaterParameter
@@ -146,13 +147,14 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
 
     private fun renderWaterMetrics() {
         val profile = currentTankProfile.orEmpty()
-
-        val latestMeasurements = WaterAnalysisLatestMeasurements.from(listOfNotNull(currentAnalysis))
-        val models = TankHealthWaterMetricUiCatalog.models(
+        val analysis = currentAnalysis
+        val latestMeasurements = WaterAnalysisLatestMeasurements.from(listOfNotNull(analysis))
+        val parameterModels = TankHealthWaterMetricUiCatalog.models(
             tankProfile = profile,
             measuredParameterIds = latestMeasurements.keys.map(WaterParameter::toUiParameterId)
         ).map { model ->
-            val measurement = latestMeasurements[model.id.toDomainParameter()]
+            val parameterId = (model.id as TankHealthWaterMetricId.Parameter).value
+            val measurement = latestMeasurements[parameterId.toDomainParameter()]
             if (measurement == null) {
                 model
             } else {
@@ -162,24 +164,49 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
                         requireContext(),
                         measurement
                     ),
-                    statusText = getString(
-                        if (measurement.semanticStatus ==
-                            WaterMeasurementSemanticStatus.LEGACY_UNASSESSED
-                        ) {
-                            R.string.water_measurement_legacy_unassessed
-                        } else {
-                            R.string.tank_health_analysis_recorded
-                        }
-                    )
+                    statusText = measurementStatusText(analysis, measurement)
                 )
             }
         }
+        val temperatureModel = TankHealthWaterMetricUiModel(
+            id = TankHealthWaterMetricId.Temperature,
+            labelRes = R.string.tank_health_metric_temperature,
+            symbolRes = null,
+            valueText = analysis?.temperatureCelsius?.let { temperature ->
+                WaterAnalysisPresentation.temperatureValueText(requireContext(), temperature)
+            },
+            statusText = analysis?.temperatureCelsius?.let {
+                getString(
+                    TankHealthWaterMetricAssessment.statusRes(
+                        assessment = analysis.assessment,
+                        parameter = AquariumWaterParameter.TEMPERATURE_C
+                    )
+                )
+            }
+        )
         contentAdapter?.submitWaterMetrics(
-            metrics = models,
-            measuredAtMillis = currentAnalysis?.measuredAtMillis,
-            assessmentSummary = currentAnalysis?.let { WaterAssessmentPresentation.summary(requireContext(), it) }
+            metrics = listOf(temperatureModel) + parameterModels,
+            measuredAtMillis = analysis?.measuredAtMillis,
+            assessmentSummary = analysis?.let { WaterAssessmentPresentation.summary(requireContext(), it) }
         )
     }
+
+    private fun measurementStatusText(
+        analysis: WaterAnalysisSnapshot?,
+        measurement: com.aqua.aqualight.application.aquarium.health.WaterMeasurementSnapshot
+    ): String =
+        if (measurement.semanticStatus == WaterMeasurementSemanticStatus.LEGACY_UNASSESSED) {
+            getString(R.string.water_measurement_legacy_unassessed)
+        } else {
+            getString(
+                TankHealthWaterMetricAssessment.statusRes(
+                    assessment = analysis?.assessment,
+                    parameter = TankHealthWaterMetricAssessment.assessmentParameter(
+                        measurement.parameter
+                    )
+                )
+            )
+        }
 
     private fun openAddAnalysis() {
         findNavController().navigateSafelyFrom(
