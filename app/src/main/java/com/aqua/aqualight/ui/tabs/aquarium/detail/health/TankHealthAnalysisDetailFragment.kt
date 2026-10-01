@@ -2,20 +2,24 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 
 import android.os.Bundle
 import android.view.View
+import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
-import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisSnapshot
+import com.aqua.aqualight.application.aquarium.health.WaterTemperatureSource
 import com.aqua.aqualight.base.BaseActivity
+import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentTankHealthAnalysisDetailBinding
 import com.aqua.aqualight.databinding.ItemTankHealthAnalysisDetailMeasurementBinding
 import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.ui.common.dialog.ConfirmDialogFragment
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
 import com.aqua.aqualight.utils.DialogType
 
 class TankHealthAnalysisDetailFragment :
@@ -48,8 +52,12 @@ class TankHealthAnalysisDetailFragment :
         setupDeleteResult()
         setupActions()
         observeRecord()
-        bindWaterAnalysisMutation(waterAnalysisViewModel.mutations, R.id.tankHealthAnalysisDetailFragment) { state ->
-            binding.btnDeleteRecord.isEnabled = currentRecord != null && state == WaterAnalysisMutationState.Idle
+        bindWaterAnalysisMutation(
+            waterAnalysisViewModel.mutations,
+            R.id.tankHealthAnalysisDetailFragment
+        ) { state ->
+            binding.btnDeleteRecord.isEnabled =
+                currentRecord != null && state == WaterAnalysisMutationState.Idle
         }
     }
 
@@ -67,9 +75,13 @@ class TankHealthAnalysisDetailFragment :
         waterAnalysisViewModel.analysisState(args.tankId, args.analysisId)
             .observe(viewLifecycleOwner) { state ->
                 if (state !is WaterAnalysisLoadState.Content) {
-                    renderUnavailable(if (state is WaterAnalysisLoadState.Error) {
-                        R.string.water_analysis_read_failed
-                    } else R.string.water_analysis_loading)
+                    renderUnavailable(
+                        if (state is WaterAnalysisLoadState.Error) {
+                            R.string.water_analysis_read_failed
+                        } else {
+                            R.string.water_analysis_loading
+                        }
+                    )
                     return@observe
                 }
                 val record = state.value
@@ -86,7 +98,6 @@ class TankHealthAnalysisDetailFragment :
         currentRecord = null
         binding.btnDeleteRecord.isEnabled = false
         binding.tvRecordDateTime.setText(message)
-        binding.tvRecordTemperature.text = null
         binding.tvAssessmentSummary.text = null
         binding.measurementContainer.removeAllViews()
     }
@@ -95,34 +106,105 @@ class TankHealthAnalysisDetailFragment :
         binding.btnDeleteRecord.isEnabled =
             waterAnalysisViewModel.mutations.state.value == WaterAnalysisMutationState.Idle
         val context = requireContext()
-        binding.tvAssessmentSummary.text = WaterAssessmentPresentation.detail(context, record)
+        binding.tvAssessmentSummary.text = WaterAssessmentPresentation.summary(context, record)
         binding.tvRecordDateTime.text = getString(
             R.string.tank_health_analysis_date_time_format,
             LocaleFormatter.formatDate(context, record.measuredAtMillis),
             LocaleFormatter.formatTime(context, record.measuredAtMillis)
         )
-        binding.tvRecordTemperature.text =
-            WaterAnalysisPresentation.temperatureValueText(
-                context,
-                record.temperatureCelsius
-            )
 
         binding.measurementContainer.removeAllViews()
+        addTemperatureRow(record)
         record.measurements.forEach { measurement ->
-            val item = ItemTankHealthAnalysisDetailMeasurementBinding.inflate(
-                layoutInflater,
-                binding.measurementContainer,
-                false
+            addMetricRow(
+                record = record,
+                metricId = TankHealthWaterMetricId.Parameter(
+                    measurement.parameter.toUiParameterId()
+                ),
+                valueText = WaterAnalysisPresentation.measurementValueText(
+                    context,
+                    measurement
+                ),
+                metaText = WaterAnalysisPresentation.measurementMetaText(
+                    context,
+                    measurement
+                )
             )
-            item.tvParameterName.setText(
-                WaterAnalysisPresentation.parameterNameRes(measurement.parameter)
-            )
-            item.tvMeasurementValue.text =
-                WaterAnalysisPresentation.measurementValueText(context, measurement)
-            item.tvMeasurementMeta.text =
-                WaterAnalysisPresentation.measurementMetaText(context, measurement)
-            binding.measurementContainer.addView(item.root)
         }
+    }
+
+    private fun addTemperatureRow(record: WaterAnalysisSnapshot) {
+        val temperature = record.temperatureCelsius ?: return
+        val meta = when (record.temperatureSource) {
+            WaterTemperatureSource.SENSOR ->
+                getString(R.string.water_measurement_method_sensor)
+            WaterTemperatureSource.MANUAL ->
+                getString(R.string.water_measurement_method_manual)
+            null -> ""
+        }
+        addMetricRow(
+            record = record,
+            metricId = TankHealthWaterMetricId.Temperature,
+            valueText = WaterAnalysisPresentation.temperatureValueText(
+                requireContext(),
+                temperature
+            ),
+            metaText = meta
+        )
+    }
+
+    private fun addMetricRow(
+        record: WaterAnalysisSnapshot,
+        metricId: TankHealthWaterMetricId,
+        valueText: String,
+        metaText: String
+    ) {
+        val item = ItemTankHealthAnalysisDetailMeasurementBinding.inflate(
+            layoutInflater,
+            binding.measurementContainer,
+            false
+        )
+        val summary = TankHealthWaterMetricDetailPresentation.summary(record, metricId)
+        item.tvParameterName.setText(
+            TankHealthWaterMetricDetailPresentation.metricNameRes(metricId)
+        )
+        item.tvMeasurementValue.text = valueText
+        item.tvCompatibilityStatus.setText(
+            TankHealthWaterMetricAssessment.statusRes(summary.status)
+        )
+        item.tvCompatibilityStatus.setTextColor(
+            ContextCompat.getColor(
+                requireContext(),
+                TankHealthWaterMetricAssessment.statusColorRes(summary.status)
+            )
+        )
+        item.tvMeasurementMeta.text = metaText
+        item.tvMeasurementMeta.isVisible = metaText.isNotBlank()
+
+        val opensDetail = summary.status != TankHealthWaterCompatibilityStatus.SUITABLE
+        item.root.isClickable = opensDetail
+        item.root.isFocusable = opensDetail
+        item.root.setOnClickListener(
+            if (opensDetail) {
+                View.OnClickListener { openMetricDetail(metricId) }
+            } else {
+                null
+            }
+        )
+        binding.measurementContainer.addView(item.root)
+    }
+
+    private fun openMetricDetail(metricId: TankHealthWaterMetricId) {
+        val record = currentRecord ?: return
+        findNavController().navigateSafelyFrom(
+            sourceDestinationId = R.id.tankHealthAnalysisDetailFragment,
+            directions = TankHealthAnalysisDetailFragmentDirections
+                .actionTankHealthAnalysisDetailFragmentToTankHealthMetricDetailFragment(
+                    tankId = args.tankId,
+                    analysisId = record.id,
+                    metricKey = TankHealthWaterMetricRoute.encode(metricId)
+                )
+        )
     }
 
     private fun setupDeleteResult() {
@@ -156,9 +238,17 @@ class TankHealthAnalysisDetailFragment :
                 fragmentManager = childFragmentManager,
                 request = ConfirmDialogFragment.Request(
                     title = getString(R.string.tank_health_analysis_delete_title),
-                    message = getString(R.string.water_analysis_delete_dated,
-                        LocaleFormatter.formatDate(requireContext(), record.measuredAtMillis),
-                        LocaleFormatter.formatTime(requireContext(), record.measuredAtMillis)),
+                    message = getString(
+                        R.string.water_analysis_delete_dated,
+                        LocaleFormatter.formatDate(
+                            requireContext(),
+                            record.measuredAtMillis
+                        ),
+                        LocaleFormatter.formatTime(
+                            requireContext(),
+                            record.measuredAtMillis
+                        )
+                    ),
                     confirmText = getString(R.string.tank_health_analysis_delete_confirm),
                     cancelText = getString(R.string.tank_health_analysis_delete_cancel),
                     presentation = ConfirmDialogFragment.Presentation(
