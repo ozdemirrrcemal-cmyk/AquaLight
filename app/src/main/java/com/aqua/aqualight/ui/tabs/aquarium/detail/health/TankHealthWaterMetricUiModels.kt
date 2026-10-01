@@ -12,8 +12,29 @@ internal data class TankHealthWaterMetricUiModel(
     @StringRes val labelRes: Int,
     @StringRes val symbolRes: Int?,
     val valueText: String? = null,
-    val statusText: String? = null
+    val status: TankHealthWaterCompatibilityStatus? = null
 )
+
+internal object TankHealthWaterMetricRoute {
+    private const val TEMPERATURE = "temperature"
+    private const val PARAMETER_PREFIX = "parameter:"
+
+    fun encode(id: TankHealthWaterMetricId): String =
+        when (id) {
+            TankHealthWaterMetricId.Temperature -> TEMPERATURE
+            is TankHealthWaterMetricId.Parameter -> PARAMETER_PREFIX + id.value.name
+        }
+
+    fun decode(value: String): TankHealthWaterMetricId? =
+        when {
+            value == TEMPERATURE -> TankHealthWaterMetricId.Temperature
+            value.startsWith(PARAMETER_PREFIX) -> value
+                .removePrefix(PARAMETER_PREFIX)
+                .let { raw -> runCatching { WaterTestParameterId.valueOf(raw) }.getOrNull() }
+                ?.let(TankHealthWaterMetricId::Parameter)
+            else -> null
+        }
+}
 
 internal object TankHealthWaterMetricUiCatalog {
     fun visibleParameterIds(
