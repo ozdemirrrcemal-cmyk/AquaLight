@@ -251,6 +251,17 @@
             app:exitAnim="@anim/nav_slide_out_left"
             app:popEnterAnim="@anim/nav_slide_in_left"
             app:popExitAnim="@anim/nav_slide_out_right" />
+        <action
+            android:id="@+id/action_tankHealthFragment_to_tankHealthMetricDetailFragment"
+            app:destination="@id/tankHealthMetricDetailFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right">
+            <argument android:name="tankId" app:argType="long" />
+            <argument android:name="analysisId" app:argType="long" />
+            <argument android:name="metricKey" app:argType="string" />
+        </action>
     </fragment>
 
     <fragment
@@ -320,6 +331,27 @@
         <argument
             android:name="analysisId"
             app:argType="long" />
+        <action
+            android:id="@+id/action_tankHealthAnalysisDetailFragment_to_tankHealthMetricDetailFragment"
+            app:destination="@id/tankHealthMetricDetailFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right">
+            <argument android:name="tankId" app:argType="long" />
+            <argument android:name="analysisId" app:argType="long" />
+            <argument android:name="metricKey" app:argType="string" />
+        </action>
+    </fragment>
+
+    <fragment
+        android:id="@+id/tankHealthMetricDetailFragment"
+        android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.health.TankHealthMetricDetailFragment"
+        android:label="@string/screen_title_tank_health_metric_detail"
+        tools:layout="@layout/fragment_tank_health_metric_detail">
+        <argument android:name="tankId" app:argType="long" />
+        <argument android:name="analysisId" app:argType="long" />
+        <argument android:name="metricKey" app:argType="string" />
     </fragment>
 
     <fragment
