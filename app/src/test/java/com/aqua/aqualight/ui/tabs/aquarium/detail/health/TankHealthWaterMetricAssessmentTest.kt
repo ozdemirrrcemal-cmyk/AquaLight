@@ -8,6 +8,7 @@ import com.aqua.aqualight.application.aquarium.health.water.WaterAssessmentCover
 import com.aqua.aqualight.application.aquarium.health.water.WaterAssessmentDirection
 import com.aqua.aqualight.application.aquarium.health.water.WaterAssessmentEntity
 import com.aqua.aqualight.application.aquarium.health.water.WaterAssessmentEntityKind
+import com.aqua.aqualight.application.aquarium.health.water.WaterAssessmentGap
 import com.aqua.aqualight.application.aquarium.health.water.WaterHazardSeverity
 import com.aqua.aqualight.application.aquarium.health.water.WaterQualityAssessment
 import com.aqua.aqualight.application.aquarium.health.water.WaterRuleFinding
@@ -18,60 +19,107 @@ import org.junit.Test
 class TankHealthWaterMetricAssessmentTest {
 
     @Test
-    fun allWithinFindingsRenderWithinCatalogStatus() {
-        assertEquals(
-            R.string.tank_health_metric_assessment_within,
-            TankHealthWaterMetricAssessment.statusRes(
-                assessment(WaterAssessmentDirection.WITHIN),
-                AquariumWaterParameter.PH
-            )
+    fun allComparableFindingsWithinRangeAreSuitable() {
+        val summary = TankHealthWaterMetricAssessment.summarize(
+            assessment(
+                finding(0, WaterAssessmentDirection.WITHIN),
+                finding(1, WaterAssessmentDirection.WITHIN)
+            ),
+            AquariumWaterParameter.PH
         )
+
+        assertEquals(TankHealthWaterCompatibilityStatus.SUITABLE, summary.status)
+        assertEquals(2, summary.comparedCount)
+        assertEquals(2, summary.withinCount)
     }
 
     @Test
-    fun singleDirectionOutsideFindingsKeepTheirDirection() {
-        assertEquals(
-            R.string.tank_health_metric_assessment_above,
-            TankHealthWaterMetricAssessment.statusRes(
-                assessment(WaterAssessmentDirection.ABOVE),
-                AquariumWaterParameter.PH
-            )
+    fun mixedWithinAndOutsideFindingsArePartial() {
+        val summary = TankHealthWaterMetricAssessment.summarize(
+            assessment(
+                finding(0, WaterAssessmentDirection.WITHIN),
+                finding(1, WaterAssessmentDirection.ABOVE)
+            ),
+            AquariumWaterParameter.PH
         )
-        assertEquals(
-            R.string.tank_health_metric_assessment_below,
-            TankHealthWaterMetricAssessment.statusRes(
-                assessment(WaterAssessmentDirection.BELOW),
-                AquariumWaterParameter.PH
-            )
-        )
+
+        assertEquals(TankHealthWaterCompatibilityStatus.PARTIAL, summary.status)
+        assertEquals(1, summary.withinCount)
+        assertEquals(1, summary.aboveCount)
     }
 
     @Test
-    fun mixedEntityResultsDoNotPretendThereIsOneCompatibleRange() {
-        assertEquals(
-            R.string.tank_health_metric_assessment_mixed,
-            TankHealthWaterMetricAssessment.statusRes(
-                assessment(
-                    WaterAssessmentDirection.WITHIN,
-                    WaterAssessmentDirection.ABOVE
-                ),
-                AquariumWaterParameter.PH
-            )
+    fun incompleteCatalogCoveragePreventsFalseGreenStatus() {
+        val summary = TankHealthWaterMetricAssessment.summarize(
+            assessment(
+                finding(0, WaterAssessmentDirection.WITHIN),
+                finding(1, null)
+            ),
+            AquariumWaterParameter.PH
         )
+
+        assertEquals(TankHealthWaterCompatibilityStatus.PARTIAL, summary.status)
+        assertEquals(1, summary.unassessedCount)
     }
 
     @Test
-    fun missingOrUnsupportedAssessmentIsExplicit() {
+    fun allComparableFindingsOutsideRangeAreIncompatible() {
+        val summary = TankHealthWaterMetricAssessment.summarize(
+            assessment(
+                finding(0, WaterAssessmentDirection.ABOVE),
+                finding(1, WaterAssessmentDirection.BELOW)
+            ),
+            AquariumWaterParameter.PH
+        )
+
+        assertEquals(TankHealthWaterCompatibilityStatus.INCOMPATIBLE, summary.status)
+        assertEquals(2, summary.comparedCount)
+    }
+
+    @Test
+    fun missingOrNonComparableAssessmentIsUnevaluated() {
         assertEquals(
-            R.string.tank_health_metric_assessment_unavailable,
-            TankHealthWaterMetricAssessment.statusRes(null, AquariumWaterParameter.PH)
+            TankHealthWaterCompatibilityStatus.UNEVALUATED,
+            TankHealthWaterMetricAssessment
+                .summarize(null, AquariumWaterParameter.PH)
+                .status
         )
         assertEquals(
-            R.string.tank_health_metric_assessment_not_comparable,
-            TankHealthWaterMetricAssessment.statusRes(assessment(), AquariumWaterParameter.PH)
+            TankHealthWaterCompatibilityStatus.UNEVALUATED,
+            TankHealthWaterMetricAssessment
+                .summarize(assessment(finding(0, null)), AquariumWaterParameter.PH)
+                .status
         )
         assertNull(
             TankHealthWaterMetricAssessment.assessmentParameter(WaterParameter.NITRITE)
+        )
+    }
+
+    @Test
+    fun compatibilityStatusUsesCompactUserFacingLabels() {
+        assertEquals(
+            R.string.tank_health_metric_status_suitable,
+            TankHealthWaterMetricAssessment.statusRes(
+                TankHealthWaterCompatibilityStatus.SUITABLE
+            )
+        )
+        assertEquals(
+            R.string.tank_health_metric_status_partial,
+            TankHealthWaterMetricAssessment.statusRes(
+                TankHealthWaterCompatibilityStatus.PARTIAL
+            )
+        )
+        assertEquals(
+            R.string.tank_health_metric_status_incompatible,
+            TankHealthWaterMetricAssessment.statusRes(
+                TankHealthWaterCompatibilityStatus.INCOMPATIBLE
+            )
+        )
+        assertEquals(
+            R.string.tank_health_metric_status_unevaluated,
+            TankHealthWaterMetricAssessment.statusRes(
+                TankHealthWaterCompatibilityStatus.UNEVALUATED
+            )
         )
     }
 
@@ -95,55 +143,74 @@ class TankHealthWaterMetricAssessmentTest {
         )
     }
 
-    private fun assessment(
-        vararg directions: WaterAssessmentDirection
-    ): WaterQualityAssessment {
-        val entity = WaterAssessmentEntity(
-            kind = WaterAssessmentEntityKind.LIVESTOCK,
-            localId = 1L,
-            catalogId = "test-fish",
-            displayName = "Test fish"
+    @Test
+    fun metricRouteRoundTripsWithoutInventingDomainParameters() {
+        val parameter = TankHealthWaterMetricId.Parameter(WaterTestParameterId.PH)
+        assertEquals(
+            parameter,
+            TankHealthWaterMetricRoute.decode(TankHealthWaterMetricRoute.encode(parameter))
         )
-        val range = LivestockParameterRange(minimum = 6.5, maximum = 7.5)
-        return WaterQualityAssessment(
+        assertEquals(
+            TankHealthWaterMetricId.Temperature,
+            TankHealthWaterMetricRoute.decode(
+                TankHealthWaterMetricRoute.encode(TankHealthWaterMetricId.Temperature)
+            )
+        )
+        assertNull(TankHealthWaterMetricRoute.decode("parameter:not-real"))
+    }
+
+    private fun assessment(
+        vararg findings: WaterRuleFinding
+    ): WaterQualityAssessment =
+        WaterQualityAssessment(
             engineVersion = "test",
             ruleRevision = "test",
             contextRevision = "test",
-            hazardSeverity = directions
-                .map { direction ->
-                    if (direction == WaterAssessmentDirection.WITHIN) {
-                        WaterHazardSeverity.NONE
-                    } else {
-                        WaterHazardSeverity.ADVISORY
-                    }
-                }
-                .maxOrNull(),
-            coverage = if (directions.isEmpty()) {
-                WaterAssessmentCoverage.NONE
-            } else {
+            hazardSeverity = findings.mapNotNull { it.severity }.maxOrNull(),
+            coverage = if (findings.any { it.direction != null }) {
                 WaterAssessmentCoverage.PARTIAL
+            } else {
+                WaterAssessmentCoverage.NONE
             },
             conflictCoverage = WaterAssessmentCoverage.NONE,
-            findings = directions.mapIndexed { index, direction ->
-                WaterRuleFinding(
-                    entity = entity,
-                    parameter = AquariumWaterParameter.PH,
-                    ruleId = "rule-$index",
-                    ruleRevision = "test",
-                    catalogRevision = "test",
-                    measuredValue = 7.0,
-                    expectedRange = range,
-                    direction = direction,
-                    severity = if (direction == WaterAssessmentDirection.WITHIN) {
-                        WaterHazardSeverity.NONE
-                    } else {
-                        WaterHazardSeverity.ADVISORY
-                    },
-                    gap = null
-                )
-            },
+            findings = findings.toList(),
             conflicts = emptyList(),
             recommendations = emptyList()
+        )
+
+    private fun finding(
+        index: Int,
+        direction: WaterAssessmentDirection?
+    ): WaterRuleFinding {
+        val entity = WaterAssessmentEntity(
+            kind = WaterAssessmentEntityKind.LIVESTOCK,
+            localId = index + 1L,
+            catalogId = "test-fish-$index",
+            displayName = "Test fish $index"
+        )
+        return WaterRuleFinding(
+            entity = entity,
+            parameter = AquariumWaterParameter.PH,
+            ruleId = "rule-$index",
+            ruleRevision = "test",
+            catalogRevision = "test",
+            measuredValue = direction?.let { 7.0 },
+            expectedRange = direction?.let {
+                LivestockParameterRange(minimum = 6.5, maximum = 7.5)
+            },
+            direction = direction,
+            severity = direction?.let {
+                if (it == WaterAssessmentDirection.WITHIN) {
+                    WaterHazardSeverity.NONE
+                } else {
+                    WaterHazardSeverity.ADVISORY
+                }
+            },
+            gap = if (direction == null) {
+                WaterAssessmentGap.REQUIREMENT_MISSING
+            } else {
+                null
+            }
         )
     }
 }
