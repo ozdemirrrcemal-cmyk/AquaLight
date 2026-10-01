@@ -16,6 +16,32 @@
     <string name="tank_health_status_not_measured">Ölçülmedi</string>
 
     <string name="tank_health_metric_temperature">Sıcaklık</string>
+    <string name="tank_health_metric_status_suitable">Uygun</string>
+    <string name="tank_health_metric_status_partial">Kısmi Uyum</string>
+    <string name="tank_health_metric_status_incompatible">Uyumsuz</string>
+    <string name="tank_health_metric_status_unevaluated">Değerlendirilemedi</string>
+    <string name="screen_title_tank_health_metric_detail">Uyum Detayı</string>
+    <string name="tank_health_metric_detail_summary_title">Katalog uyum özeti</string>
+    <plurals name="tank_health_metric_detail_compared_count">
+        <item quantity="one">%d katalog gereksinimi karşılaştırıldı</item>
+        <item quantity="other">%d katalog gereksinimi karşılaştırıldı</item>
+    </plurals>
+    <string name="tank_health_metric_detail_within_count">%1$d uygun</string>
+    <string name="tank_health_metric_detail_above_count">%1$d yüksek</string>
+    <string name="tank_health_metric_detail_below_count">%1$d düşük</string>
+    <string name="tank_health_metric_detail_unassessed_count">%1$d karşılaştırılamadı</string>
+    <string name="tank_health_metric_detail_within_title">Uygun gereksinimler</string>
+    <string name="tank_health_metric_detail_outside_title">Aralık dışında</string>
+    <string name="tank_health_metric_detail_unassessed_title">Karşılaştırılamayan</string>
+    <string name="tank_health_metric_detail_catalog_range">Katalog aralığı: %1$s</string>
+    <string name="tank_health_metric_detail_frozen_context">Bu sonuç, analiz kaydedildiği anda tankta bulunan canlı ve bitkilerin dondurulmuş katalog değerlendirmesini kullanır. Güncel katalogla yeniden hesaplanmaz.</string>
+    <string name="tank_health_metric_detail_no_comparison">Bu parametre için kayıt anındaki katalog verilerinden karşılaştırılabilir bir sonuç üretilemedi.</string>
+    <string name="tank_health_metric_detail_entity_livestock">Canlı</string>
+    <string name="tank_health_metric_detail_entity_plant">Bitki</string>
+    <string name="tank_health_metric_detail_result_suitable">Uygun</string>
+    <string name="tank_health_metric_detail_result_high">Yüksek</string>
+    <string name="tank_health_metric_detail_result_low">Düşük</string>
+    <string name="tank_health_metric_detail_result_unassessed">Karşılaştırılamadı</string>
     <string name="tank_health_metric_assessment_within">Katalog aralığında</string>
     <string name="tank_health_metric_assessment_above">Katalog aralığının üzerinde</string>
     <string name="tank_health_metric_assessment_below">Katalog aralığının altında</string>
