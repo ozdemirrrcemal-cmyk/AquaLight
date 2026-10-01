@@ -2,19 +2,15 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 
 import android.os.Bundle
 import android.view.View
-import androidx.core.content.ContextCompat
-import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.health.WaterAnalysisSnapshot
-import com.aqua.aqualight.application.aquarium.health.WaterTemperatureSource
 import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentTankHealthAnalysisDetailBinding
-import com.aqua.aqualight.databinding.ItemTankHealthAnalysisDetailMeasurementBinding
 import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.ui.common.dialog.ConfirmDialogFragment
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
@@ -33,6 +29,7 @@ class TankHealthAnalysisDetailFragment :
     private var _binding: FragmentTankHealthAnalysisDetailBinding? = null
     private val binding get() = _binding!!
     private var currentRecord: WaterAnalysisSnapshot? = null
+    private var metricRenderer: TankHealthAnalysisDetailMetricRenderer? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,6 +44,11 @@ class TankHealthAnalysisDetailFragment :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentTankHealthAnalysisDetailBinding.bind(view)
+        metricRenderer = TankHealthAnalysisDetailMetricRenderer(
+            inflater = layoutInflater,
+            container = binding.measurementContainer,
+            onMetricClick = ::openMetricDetail
+        )
 
         setupHeader()
         setupDeleteResult()
@@ -112,86 +114,7 @@ class TankHealthAnalysisDetailFragment :
             LocaleFormatter.formatDate(context, record.measuredAtMillis),
             LocaleFormatter.formatTime(context, record.measuredAtMillis)
         )
-
-        binding.measurementContainer.removeAllViews()
-        addTemperatureRow(record)
-        record.measurements.forEach { measurement ->
-            addMetricRow(
-                record = record,
-                metricId = TankHealthWaterMetricId.Parameter(
-                    measurement.parameter.toUiParameterId()
-                ),
-                valueText = WaterAnalysisPresentation.measurementValueText(
-                    context,
-                    measurement
-                ),
-                metaText = WaterAnalysisPresentation.measurementMetaText(
-                    context,
-                    measurement
-                )
-            )
-        }
-    }
-
-    private fun addTemperatureRow(record: WaterAnalysisSnapshot) {
-        val temperature = record.temperatureCelsius ?: return
-        val meta = when (record.temperatureSource) {
-            WaterTemperatureSource.SENSOR ->
-                getString(R.string.water_measurement_method_sensor)
-            WaterTemperatureSource.MANUAL ->
-                getString(R.string.water_measurement_method_manual)
-            null -> ""
-        }
-        addMetricRow(
-            record = record,
-            metricId = TankHealthWaterMetricId.Temperature,
-            valueText = WaterAnalysisPresentation.temperatureValueText(
-                requireContext(),
-                temperature
-            ),
-            metaText = meta
-        )
-    }
-
-    private fun addMetricRow(
-        record: WaterAnalysisSnapshot,
-        metricId: TankHealthWaterMetricId,
-        valueText: String,
-        metaText: String
-    ) {
-        val item = ItemTankHealthAnalysisDetailMeasurementBinding.inflate(
-            layoutInflater,
-            binding.measurementContainer,
-            false
-        )
-        val summary = TankHealthWaterMetricDetailPresentation.summary(record, metricId)
-        item.tvParameterName.setText(
-            TankHealthWaterMetricDetailPresentation.metricNameRes(metricId)
-        )
-        item.tvMeasurementValue.text = valueText
-        item.tvCompatibilityStatus.setText(
-            TankHealthWaterMetricAssessment.statusRes(summary.status)
-        )
-        item.tvCompatibilityStatus.setTextColor(
-            ContextCompat.getColor(
-                requireContext(),
-                TankHealthWaterMetricAssessment.statusColorRes(summary.status)
-            )
-        )
-        item.tvMeasurementMeta.text = metaText
-        item.tvMeasurementMeta.isVisible = metaText.isNotBlank()
-
-        val opensDetail = summary.status != TankHealthWaterCompatibilityStatus.SUITABLE
-        item.root.isClickable = opensDetail
-        item.root.isFocusable = opensDetail
-        item.root.setOnClickListener(
-            if (opensDetail) {
-                View.OnClickListener { openMetricDetail(metricId) }
-            } else {
-                null
-            }
-        )
-        binding.measurementContainer.addView(item.root)
+        metricRenderer?.render(record)
     }
 
     private fun openMetricDetail(metricId: TankHealthWaterMetricId) {
@@ -266,6 +189,7 @@ class TankHealthAnalysisDetailFragment :
 
     override fun onDestroyView() {
         currentRecord = null
+        metricRenderer = null
         _binding = null
         super.onDestroyView()
     }
