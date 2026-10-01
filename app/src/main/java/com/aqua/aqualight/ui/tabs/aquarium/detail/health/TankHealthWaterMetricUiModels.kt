@@ -31,7 +31,7 @@ internal object TankHealthWaterMetricRoute {
             value.startsWith(PARAMETER_PREFIX) -> value
                 .removePrefix(PARAMETER_PREFIX)
                 .let { raw -> runCatching { WaterTestParameterId.valueOf(raw) }.getOrNull() }
-                ?.let(TankHealthWaterMetricId::Parameter)
+                ?.let { id -> TankHealthWaterMetricId.Parameter(id) }
             else -> null
         }
 }
