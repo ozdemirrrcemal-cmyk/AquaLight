@@ -2,8 +2,13 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 
 import androidx.annotation.StringRes
 
+internal sealed interface TankHealthWaterMetricId {
+    data object Temperature : TankHealthWaterMetricId
+    data class Parameter(val value: WaterTestParameterId) : TankHealthWaterMetricId
+}
+
 internal data class TankHealthWaterMetricUiModel(
-    val id: WaterTestParameterId,
+    val id: TankHealthWaterMetricId,
     @StringRes val labelRes: Int,
     @StringRes val symbolRes: Int?,
     val valueText: String? = null,
@@ -46,7 +51,7 @@ internal object TankHealthWaterMetricUiCatalog {
                 value = ""
             )
             TankHealthWaterMetricUiModel(
-                id = id,
+                id = TankHealthWaterMetricId.Parameter(id),
                 labelRes = base.nameRes,
                 symbolRes = base.symbolRes
             )
