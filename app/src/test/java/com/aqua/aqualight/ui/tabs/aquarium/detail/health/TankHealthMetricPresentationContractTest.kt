@@ -75,6 +75,9 @@ class TankHealthMetricPresentationContractTest {
             "app/src/main/java/com/aqua/aqualight/ui/tabs/aquarium/detail/health/" +
                 "TankHealthWaterMetricDetailPresentation.kt"
         )
+        val metricDetailLayout = file(
+            "app/src/main/res/layout/fragment_tank_health_metric_detail.xml"
+        )
 
         assertFalse(historyDetail.contains("WaterAssessmentPresentation.detail("))
         assertTrue(historyDetail.contains("WaterAssessmentPresentation.summary("))
@@ -85,7 +88,7 @@ class TankHealthMetricPresentationContractTest {
             )
         )
         assertTrue(metricDetail.contains("TankHealthWaterMetricDetailPresentation.findings("))
-        assertTrue(metricDetail.contains("tank_health_metric_detail_frozen_context"))
+        assertTrue(metricDetailLayout.contains("tank_health_metric_detail_frozen_context"))
         assertTrue(metricPresentation.contains("record.assessment"))
         assertFalse(metricPresentation.contains("WaterQualityAssessmentEngine.assess("))
     }
