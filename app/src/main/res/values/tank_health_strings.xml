@@ -18,6 +18,32 @@
     <string name="tank_health_value_not_measured" translatable="false">—</string>
 
     <string name="tank_health_metric_temperature">Temperature</string>
+    <string name="tank_health_metric_status_suitable">Suitable</string>
+    <string name="tank_health_metric_status_partial">Partial fit</string>
+    <string name="tank_health_metric_status_incompatible">Incompatible</string>
+    <string name="tank_health_metric_status_unevaluated">Not evaluated</string>
+    <string name="screen_title_tank_health_metric_detail">Compatibility Detail</string>
+    <string name="tank_health_metric_detail_summary_title">Catalog compatibility summary</string>
+    <plurals name="tank_health_metric_detail_compared_count">
+        <item quantity="one">%d catalog requirement compared</item>
+        <item quantity="other">%d catalog requirements compared</item>
+    </plurals>
+    <string name="tank_health_metric_detail_within_count">%1$d suitable</string>
+    <string name="tank_health_metric_detail_above_count">%1$d high</string>
+    <string name="tank_health_metric_detail_below_count">%1$d low</string>
+    <string name="tank_health_metric_detail_unassessed_count">%1$d not comparable</string>
+    <string name="tank_health_metric_detail_within_title">Suitable requirements</string>
+    <string name="tank_health_metric_detail_outside_title">Outside catalog range</string>
+    <string name="tank_health_metric_detail_unassessed_title">Not comparable</string>
+    <string name="tank_health_metric_detail_catalog_range">Catalog range: %1$s</string>
+    <string name="tank_health_metric_detail_frozen_context">This result uses the frozen catalog assessment for the plants and livestock present when the analysis was saved. It is not recalculated from today’s catalog.</string>
+    <string name="tank_health_metric_detail_no_comparison">The frozen catalog data for this parameter did not produce a comparable result.</string>
+    <string name="tank_health_metric_detail_entity_livestock">Livestock</string>
+    <string name="tank_health_metric_detail_entity_plant">Plant</string>
+    <string name="tank_health_metric_detail_result_suitable">Suitable</string>
+    <string name="tank_health_metric_detail_result_high">High</string>
+    <string name="tank_health_metric_detail_result_low">Low</string>
+    <string name="tank_health_metric_detail_result_unassessed">Not comparable</string>
     <string name="tank_health_metric_assessment_within">Within catalog range</string>
     <string name="tank_health_metric_assessment_above">Above catalog range</string>
     <string name="tank_health_metric_assessment_below">Below catalog range</string>
