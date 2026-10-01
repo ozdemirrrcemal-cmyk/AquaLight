@@ -84,9 +84,6 @@ internal object TankHealthWaterMetricDetailPresentation {
             R.string.tank_health_metric_detail_entity_livestock
         }
 
-    fun entityName(finding: WaterRuleFinding): String =
-        finding.entity.displayName.ifBlank { finding.entity.catalogId }
-
     @StringRes
     fun findingResultRes(finding: WaterRuleFinding): Int =
         when (finding.direction) {
