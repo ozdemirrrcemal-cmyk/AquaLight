@@ -56,7 +56,8 @@ internal class TankHealthContentAdapter(
             )
 
             VIEW_TYPE_METRIC -> MetricViewHolder(
-                ItemTankHealthMetricBinding.inflate(inflater, parent, false)
+                binding = ItemTankHealthMetricBinding.inflate(inflater, parent, false),
+                onMetricClick = onMetricClick
             )
 
             VIEW_TYPE_ADD_ANALYSIS -> {
@@ -233,7 +234,8 @@ internal class TankHealthContentAdapter(
     }
 
     private class MetricViewHolder(
-        private val binding: ItemTankHealthMetricBinding
+        private val binding: ItemTankHealthMetricBinding,
+        private val onMetricClick: (TankHealthWaterMetricId) -> Unit
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(
