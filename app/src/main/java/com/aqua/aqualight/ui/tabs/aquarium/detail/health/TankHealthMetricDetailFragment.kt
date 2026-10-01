@@ -179,7 +179,7 @@ class TankHealthMetricDetailFragment :
             TankHealthWaterMetricDetailPresentation.entityKindRes(finding)
         )
         item.tvEntityName.text =
-            TankHealthWaterMetricDetailPresentation.entityName(finding)
+            finding.entity.displayName.ifBlank { finding.entity.catalogId }
         item.tvFindingStatus.setText(
             TankHealthWaterMetricDetailPresentation.findingResultRes(finding)
         )
