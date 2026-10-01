@@ -77,7 +77,10 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
             findNavController().navigateSafelyFrom(R.id.tankHealthFragment,
                 TankHealthFragmentDirections.actionTankHealthFragmentToAlgaeControlFragment(args.tankId))
         }
-        val adapter = TankHealthContentAdapter(onAddAnalysisClick = ::openAddAnalysis)
+        val adapter = TankHealthContentAdapter(
+            onAddAnalysisClick = ::openAddAnalysis,
+            onMetricClick = ::openMetricDetail
+        )
         contentAdapter = adapter
 
         binding.healthContent.layoutManager = GridLayoutManager(
@@ -164,7 +167,7 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
                         requireContext(),
                         measurement
                     ),
-                    statusText = measurementStatusText(analysis, measurement)
+                    status = measurementStatus(analysis, measurement)
                 )
             }
         }
@@ -175,13 +178,11 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
             valueText = analysis?.temperatureCelsius?.let { temperature ->
                 WaterAnalysisPresentation.temperatureValueText(requireContext(), temperature)
             },
-            statusText = analysis?.temperatureCelsius?.let {
-                getString(
-                    TankHealthWaterMetricAssessment.statusRes(
-                        assessment = analysis.assessment,
-                        parameter = AquariumWaterParameter.TEMPERATURE_C
-                    )
-                )
+            status = analysis?.temperatureCelsius?.let {
+                TankHealthWaterMetricAssessment.summarize(
+                    assessment = analysis.assessment,
+                    parameter = AquariumWaterParameter.TEMPERATURE_C
+                ).status
             }
         )
         contentAdapter?.submitWaterMetrics(
@@ -191,22 +192,33 @@ class TankHealthFragment : Fragment(R.layout.fragment_tank_health) {
         )
     }
 
-    private fun measurementStatusText(
+    private fun measurementStatus(
         analysis: WaterAnalysisSnapshot?,
         measurement: com.aqua.aqualight.application.aquarium.health.WaterMeasurementSnapshot
-    ): String =
+    ): TankHealthWaterCompatibilityStatus =
         if (measurement.semanticStatus == WaterMeasurementSemanticStatus.LEGACY_UNASSESSED) {
-            getString(R.string.water_measurement_legacy_unassessed)
+            TankHealthWaterCompatibilityStatus.UNEVALUATED
         } else {
-            getString(
-                TankHealthWaterMetricAssessment.statusRes(
-                    assessment = analysis?.assessment,
-                    parameter = TankHealthWaterMetricAssessment.assessmentParameter(
-                        measurement.parameter
-                    )
+            TankHealthWaterMetricAssessment.summarize(
+                assessment = analysis?.assessment,
+                parameter = TankHealthWaterMetricAssessment.assessmentParameter(
+                    measurement.parameter
                 )
-            )
+            ).status
         }
+
+    private fun openMetricDetail(metricId: TankHealthWaterMetricId) {
+        val analysis = currentAnalysis ?: return
+        findNavController().navigateSafelyFrom(
+            sourceDestinationId = R.id.tankHealthFragment,
+            directions = TankHealthFragmentDirections
+                .actionTankHealthFragmentToTankHealthMetricDetailFragment(
+                    tankId = args.tankId,
+                    analysisId = analysis.id,
+                    metricKey = TankHealthWaterMetricRoute.encode(metricId)
+                )
+        )
+    }
 
     private fun openAddAnalysis() {
         findNavController().navigateSafelyFrom(
