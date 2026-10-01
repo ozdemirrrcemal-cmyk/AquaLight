@@ -41,27 +41,18 @@ internal object TankHealthWaterMetricAssessment {
     }
 
     fun assessmentParameter(parameter: WaterParameter): AquariumWaterParameter? =
-        when (parameter) {
-            WaterParameter.PH -> AquariumWaterParameter.PH
-            WaterParameter.GH -> AquariumWaterParameter.GH_DGH
-            WaterParameter.KH -> AquariumWaterParameter.KH_DKH
-            WaterParameter.TDS -> AquariumWaterParameter.TDS_PPM
-            WaterParameter.SPECIFIC_GRAVITY -> AquariumWaterParameter.SPECIFIC_GRAVITY
-            WaterParameter.TOTAL_ALKALINITY -> AquariumWaterParameter.ALKALINITY_DKH
-            WaterParameter.CALCIUM -> AquariumWaterParameter.CALCIUM_PPM
-            WaterParameter.MAGNESIUM -> AquariumWaterParameter.MAGNESIUM_PPM
-            WaterParameter.NITRATE -> AquariumWaterParameter.NITRATE_PPM
-            WaterParameter.PHOSPHATE -> AquariumWaterParameter.PHOSPHATE_PPM
-            WaterParameter.NITRITE,
-            WaterParameter.AMMONIA_AMMONIUM,
-            WaterParameter.TOTAL_AMMONIA_NITROGEN,
-            WaterParameter.FREE_AMMONIA_NH3,
-            WaterParameter.EC,
-            WaterParameter.CO2,
-            WaterParameter.IRON,
-            WaterParameter.POTASSIUM,
-            WaterParameter.SALINITY,
-            WaterParameter.COPPER,
-            WaterParameter.DISSOLVED_OXYGEN -> null
-        }
+        assessmentParameters[parameter]
+
+    private val assessmentParameters = mapOf(
+        WaterParameter.PH to AquariumWaterParameter.PH,
+        WaterParameter.GH to AquariumWaterParameter.GH_DGH,
+        WaterParameter.KH to AquariumWaterParameter.KH_DKH,
+        WaterParameter.TDS to AquariumWaterParameter.TDS_PPM,
+        WaterParameter.SPECIFIC_GRAVITY to AquariumWaterParameter.SPECIFIC_GRAVITY,
+        WaterParameter.TOTAL_ALKALINITY to AquariumWaterParameter.ALKALINITY_DKH,
+        WaterParameter.CALCIUM to AquariumWaterParameter.CALCIUM_PPM,
+        WaterParameter.MAGNESIUM to AquariumWaterParameter.MAGNESIUM_PPM,
+        WaterParameter.NITRATE to AquariumWaterParameter.NITRATE_PPM,
+        WaterParameter.PHOSPHATE to AquariumWaterParameter.PHOSPHATE_PPM
+    )
 }
