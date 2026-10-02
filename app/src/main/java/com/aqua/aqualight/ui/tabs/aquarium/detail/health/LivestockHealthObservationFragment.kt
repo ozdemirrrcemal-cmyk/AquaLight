@@ -3,7 +3,6 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
-import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -18,7 +17,6 @@ import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.media.bindRecordPhoto
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
-import com.google.android.material.card.MaterialCardView
 
 class LivestockHealthObservationFragment :
     Fragment(R.layout.fragment_livestock_health_observation) {
@@ -113,34 +111,14 @@ class LivestockHealthObservationFragment :
             itemBinding.root.setOnClickListener {
                 selectedLivestockId = livestock.id
                 affectedCount = affectedCount.coerceAtMost(livestock.quantity.coerceAtLeast(1))
-                updateSelectorStyles()
+                applyLivestockSelectorSelection(selectorBindings, selectedLivestockId)
                 updateAffectedCount()
             }
             selectorBindings[livestock.id] = itemBinding
             binding.livestockSelectorContainer.addView(itemBinding.root)
         }
 
-        updateSelectorStyles()
-    }
-
-    private fun updateSelectorStyles() {
-        val selectedStroke = ContextCompat.getColor(requireContext(), R.color.aqua_button_blue)
-        val normalStroke = ContextCompat.getColor(requireContext(), R.color.aqua_card_outline)
-        val selectedSurface = ContextCompat.getColor(requireContext(), R.color.aqua_surface_action)
-        val normalSurface = ContextCompat.getColor(requireContext(), R.color.aqua_card_surface)
-
-        selectorBindings.forEach {
-            (livestockId, itemBinding) ->
-            val isSelected = livestockId == selectedLivestockId
-            itemBinding.root.strokeWidth = resources.getDimensionPixelSize(
-                if (isSelected) R.dimen.aqua_size_2 else R.dimen.aqua_size_1
-            )
-            itemBinding.root.setStrokeColor(if (isSelected) selectedStroke else normalStroke)
-            itemBinding.root.setCardBackgroundColor(
-                if (isSelected) selectedSurface else normalSurface
-            )
-            itemBinding.ivSelected.isVisible = isSelected
-        }
+        applyLivestockSelectorSelection(selectorBindings, selectedLivestockId)
     }
 
     private fun bindSymptomSelection() {
@@ -157,27 +135,10 @@ class LivestockHealthObservationFragment :
             (key, card) ->
             card.setOnClickListener {
                 selectedSymptom = key
-                updateSymptomStyles(cards)
+                applyLivestockSymptomSelection(cards, selectedSymptom)
             }
         }
-        updateSymptomStyles(cards)
-    }
-
-    private fun updateSymptomStyles(cards: Map<String, MaterialCardView>) {
-        val selectedStroke = ContextCompat.getColor(requireContext(), R.color.aqua_button_blue)
-        val normalStroke = ContextCompat.getColor(requireContext(), R.color.aqua_card_outline)
-        val selectedSurface = ContextCompat.getColor(requireContext(), R.color.aqua_surface_action)
-        val normalSurface = ContextCompat.getColor(requireContext(), R.color.aqua_card_surface)
-
-        cards.forEach {
-            (key, card) ->
-            val selected = key == selectedSymptom
-            card.strokeWidth = resources.getDimensionPixelSize(
-                if (selected) R.dimen.aqua_size_2 else R.dimen.aqua_size_1
-            )
-            card.setStrokeColor(if (selected) selectedStroke else normalStroke)
-            card.setCardBackgroundColor(if (selected) selectedSurface else normalSurface)
-        }
+        applyLivestockSymptomSelection(cards, selectedSymptom)
     }
 
     private fun bindAffectedCounter() {
