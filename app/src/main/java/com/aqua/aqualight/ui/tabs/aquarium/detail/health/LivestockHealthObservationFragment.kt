@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import androidx.core.view.isVisible
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
@@ -12,20 +11,30 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
 import com.aqua.aqualight.databinding.FragmentLivestockHealthObservationBinding
 import com.aqua.aqualight.databinding.ItemLivestockHealthSelectorBinding
+import com.aqua.aqualight.composition.requireAppContainer
+import com.aqua.aqualight.platform.media.AppMediaScope
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.common.media.TankRecordPhotoFragment
 import com.aqua.aqualight.ui.common.media.bindRecordPhoto
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
 
-class LivestockHealthObservationFragment :
-    Fragment(R.layout.fragment_livestock_health_observation) {
+class LivestockHealthObservationFragment : TankRecordPhotoFragment(
+    R.layout.fragment_livestock_health_observation,
+    AppMediaScope.LIVESTOCK,
+    R.string.aquarium_livestock_photo_title,
+    R.string.aquarium_livestock_photo_crop_title
+) {
 
     private val args: LivestockHealthObservationFragmentArgs by navArgs()
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
 
     private var _binding: FragmentLivestockHealthObservationBinding? = null
     private val binding get() = _binding!!
+
+    override val photoTankId: Long get() = args.tankId
+    override val hasPhotoView: Boolean get() = _binding != null
 
     private val selectorBindings = linkedMapOf<Long, ItemLivestockHealthSelectorBinding>()
     private var currentLivestock: List<AquariumLivestock> = emptyList()
@@ -45,6 +54,13 @@ class LivestockHealthObservationFragment :
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentLivestockHealthObservationBinding.bind(view)
 
+        mediaFlow.initializeSelection(null)
+        setupPhotoSourceResultListener()
+        val currentPhoto = mediaFlow.selection.value.selectedUri
+        binding.ivObservationPhotoPreview.isVisible = !currentPhoto.isNullOrBlank()
+        binding.tvObservationPhotoSlotPlus.isVisible = currentPhoto.isNullOrBlank()
+        currentPhoto?.let(binding.ivObservationPhotoPreview::bindRecordPhoto)
+
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
@@ -56,6 +72,15 @@ class LivestockHealthObservationFragment :
         bindSymptomSelection()
         bindAffectedCounter()
 
+        binding.photoAddArea.setOnClickListener {
+            val recordId = selectedLivestockId.takeIf { id -> id > 0L }
+                ?: return@setOnClickListener
+            val ownerUid = requireContext()
+                .requireAppContainer()
+                .authenticatedOwnerIdentity
+                .requireOwnerUid()
+            showRecordPhotoSource(recordId = recordId, ownerUid = ownerUid)
+        }
         binding.btnEvaluate.setOnClickListener { continueToEvaluation() }
         observeTank()
     }
@@ -154,14 +179,14 @@ class LivestockHealthObservationFragment :
             updateAffectedCount()
         }
         binding.btnAffectedPlus.setOnClickListener {
-            val maximum = selectedLivestock()?.quantity?.coerceAtLeast(1) ?: 1
+            val maximum = currentLivestock.selectedLivestock(selectedLivestockId)?.quantity?.coerceAtLeast(1) ?: 1
             affectedCount = (affectedCount + 1).coerceAtMost(maximum)
             updateAffectedCount()
         }
     }
 
     private fun updateAffectedCount() {
-        val maximum = selectedLivestock()?.quantity?.coerceAtLeast(1) ?: 1
+        val maximum = currentLivestock.selectedLivestock(selectedLivestockId)?.quantity?.coerceAtLeast(1) ?: 1
         affectedCount = affectedCount.coerceIn(1, maximum)
         binding.tvAffectedRegisteredCount.text = getString(
             R.string.livestock_health_registered_count_format,
@@ -176,15 +201,12 @@ class LivestockHealthObservationFragment :
         binding.btnAffectedPlus.isEnabled = affectedCount < maximum
     }
 
-    private fun selectedLivestock(): AquariumLivestock? =
-        currentLivestock.firstOrNull { item -> item.id == selectedLivestockId }
-
     private fun continueToEvaluation() {
         if (isNavigating) {
             return
         }
 
-        val livestock = selectedLivestock() ?: return
+        val livestock = currentLivestock.selectedLivestock(selectedLivestockId) ?: return
         val navController = findNavController()
 
         runCatching {
@@ -208,6 +230,13 @@ class LivestockHealthObservationFragment :
                 )
         )
         isNavigating = didNavigate
+    }
+
+    override suspend fun onPhotoSelected(photoUri: String?) {
+        if (!hasPhotoView) return
+        binding.ivObservationPhotoPreview.isVisible = !photoUri.isNullOrBlank()
+        binding.tvObservationPhotoSlotPlus.isVisible = photoUri.isNullOrBlank()
+        photoUri?.let(binding.ivObservationPhotoPreview::bindRecordPhoto)
     }
 
     override fun onDestroyView() {

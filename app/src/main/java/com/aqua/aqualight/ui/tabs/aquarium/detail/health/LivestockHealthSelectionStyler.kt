@@ -3,6 +3,7 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.aquarium.AquariumLivestock
 import com.aqua.aqualight.databinding.ItemLivestockHealthSelectorBinding
 import com.google.android.material.card.MaterialCardView
 
@@ -52,3 +53,7 @@ internal fun Fragment.applyLivestockSymptomSelection(
         card.setCardBackgroundColor(if (selected) selectedSurface else normalSurface)
     }
 }
+
+internal fun List<AquariumLivestock>.selectedLivestock(
+    selectedLivestockId: Long
+): AquariumLivestock? = firstOrNull { item -> item.id == selectedLivestockId }
