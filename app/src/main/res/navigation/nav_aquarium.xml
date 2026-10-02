@@ -230,14 +230,25 @@
             app:enterAnim="@anim/nav_slide_in_right"
             app:exitAnim="@anim/nav_slide_out_left"
             app:popEnterAnim="@anim/nav_slide_in_left"
-            app:popExitAnim="@anim/nav_slide_out_right" />
+            app:popExitAnim="@anim/nav_slide_out_right">
+            <argument
+                android:name="tankId"
+                app:argType="long" />
+        </action>
         <action
             android:id="@+id/action_livestockHealthFragment_to_livestockHealthFollowUpFragment"
             app:destination="@id/livestockHealthFollowUpFragment"
             app:enterAnim="@anim/nav_slide_in_right"
             app:exitAnim="@anim/nav_slide_out_left"
             app:popEnterAnim="@anim/nav_slide_in_left"
-            app:popExitAnim="@anim/nav_slide_out_right" />
+            app:popExitAnim="@anim/nav_slide_out_right">
+            <argument
+                android:name="tankId"
+                app:argType="long" />
+            <argument
+                android:name="livestockId"
+                app:argType="long" />
+        </action>
     </fragment>
 
     <fragment
@@ -254,7 +265,20 @@
             app:enterAnim="@anim/nav_slide_in_right"
             app:exitAnim="@anim/nav_slide_out_left"
             app:popEnterAnim="@anim/nav_slide_in_left"
-            app:popExitAnim="@anim/nav_slide_out_right" />
+            app:popExitAnim="@anim/nav_slide_out_right">
+            <argument
+                android:name="tankId"
+                app:argType="long" />
+            <argument
+                android:name="livestockId"
+                app:argType="long" />
+            <argument
+                android:name="symptomKey"
+                app:argType="string" />
+            <argument
+                android:name="affectedCount"
+                app:argType="integer" />
+        </action>
     </fragment>
 
     <fragment
@@ -280,14 +304,25 @@
             app:enterAnim="@anim/nav_slide_in_right"
             app:exitAnim="@anim/nav_slide_out_left"
             app:popEnterAnim="@anim/nav_slide_in_left"
-            app:popExitAnim="@anim/nav_slide_out_right" />
+            app:popExitAnim="@anim/nav_slide_out_right">
+            <argument
+                android:name="tankId"
+                app:argType="long" />
+            <argument
+                android:name="livestockId"
+                app:argType="long" />
+        </action>
         <action
             android:id="@+id/action_livestockHealthEvaluationFragment_to_tankHealthFragment"
             app:destination="@id/tankHealthFragment"
             app:enterAnim="@anim/nav_slide_in_right"
             app:exitAnim="@anim/nav_slide_out_left"
             app:popEnterAnim="@anim/nav_slide_in_left"
-            app:popExitAnim="@anim/nav_slide_out_right" />
+            app:popExitAnim="@anim/nav_slide_out_right">
+            <argument
+                android:name="tankId"
+                app:argType="long" />
+        </action>
     </fragment>
 
     <fragment
