@@ -17,7 +17,6 @@ import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.media.bindRecordPhoto
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
-import com.google.android.material.snackbar.Snackbar
 
 class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
 
@@ -52,13 +51,7 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
                     AquaHeaderAction(
                         iconRes = R.drawable.ic_info,
                         contentDescription = getString(R.string.livestock_health_info_description),
-                        onClick = {
-                            Snackbar.make(
-                                binding.root,
-                                R.string.livestock_health_info_message,
-                                Snackbar.LENGTH_SHORT
-                            ).show()
-                        }
+                        onClick = {}
                     )
                 )
             )
