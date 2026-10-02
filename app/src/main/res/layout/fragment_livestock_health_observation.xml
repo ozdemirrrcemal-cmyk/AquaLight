@@ -758,12 +758,16 @@
                 </LinearLayout>
 
                 <FrameLayout
+                    android:id="@+id/photoSlotOne"
                     android:layout_width="@dimen/aqua_size_40"
                     android:layout_height="@dimen/aqua_size_44"
-                    android:background="@drawable/bg_livestock_health_photo_slot">
+                    android:background="@drawable/bg_livestock_health_photo_slot"
+                    android:clickable="true"
+                    android:contentDescription="@string/livestock_health_photo_add"
+                    android:focusable="true">
 
                     <ImageView
-                        android:id="@+id/ivObservationPhotoPreview"
+                        android:id="@+id/ivObservationPhotoPreviewOne"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:contentDescription="@null"
@@ -773,7 +777,7 @@
                         tools:visibility="visible" />
 
                     <TextView
-                        android:id="@+id/tvObservationPhotoSlotPlus"
+                        android:id="@+id/tvObservationPhotoSlotPlusOne"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:gravity="center"
@@ -783,25 +787,67 @@
 
                 </FrameLayout>
 
-                <TextView
+                <FrameLayout
+                    android:id="@+id/photoSlotTwo"
                     android:layout_width="@dimen/aqua_size_40"
                     android:layout_height="@dimen/aqua_size_44"
                     android:layout_marginStart="@dimen/aqua_size_5"
                     android:background="@drawable/bg_livestock_health_photo_slot"
-                    android:gravity="center"
-                    android:text="@string/common_plus"
-                    android:textColor="@color/aqua_content_secondary"
-                    android:textSize="@dimen/aqua_text_size_body_large" />
+                    android:clickable="true"
+                    android:contentDescription="@string/livestock_health_photo_add"
+                    android:focusable="true">
 
-                <TextView
+                    <ImageView
+                        android:id="@+id/ivObservationPhotoPreviewTwo"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:contentDescription="@null"
+                        android:importantForAccessibility="no"
+                        android:scaleType="centerCrop"
+                        android:visibility="gone"
+                        tools:visibility="visible" />
+
+                    <TextView
+                        android:id="@+id/tvObservationPhotoSlotPlusTwo"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:text="@string/common_plus"
+                        android:textColor="@color/aqua_content_secondary"
+                        android:textSize="@dimen/aqua_text_size_body_large" />
+
+                </FrameLayout>
+
+                <FrameLayout
+                    android:id="@+id/photoSlotThree"
                     android:layout_width="@dimen/aqua_size_40"
                     android:layout_height="@dimen/aqua_size_44"
                     android:layout_marginStart="@dimen/aqua_size_5"
                     android:background="@drawable/bg_livestock_health_photo_slot"
-                    android:gravity="center"
-                    android:text="@string/common_plus"
-                    android:textColor="@color/aqua_content_secondary"
-                    android:textSize="@dimen/aqua_text_size_body_large" />
+                    android:clickable="true"
+                    android:contentDescription="@string/livestock_health_photo_add"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:id="@+id/ivObservationPhotoPreviewThree"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:contentDescription="@null"
+                        android:importantForAccessibility="no"
+                        android:scaleType="centerCrop"
+                        android:visibility="gone"
+                        tools:visibility="visible" />
+
+                    <TextView
+                        android:id="@+id/tvObservationPhotoSlotPlusThree"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:text="@string/common_plus"
+                        android:textColor="@color/aqua_content_secondary"
+                        android:textSize="@dimen/aqua_text_size_body_large" />
+
+                </FrameLayout>
 
             </LinearLayout>
 

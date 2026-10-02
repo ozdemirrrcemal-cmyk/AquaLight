@@ -19,6 +19,7 @@ import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.media.TankRecordPhotoFragment
 import com.aqua.aqualight.ui.common.media.bindRecordPhoto
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
+import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.LivestockCategories
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
 
 class LivestockHealthObservationFragment : TankRecordPhotoFragment(
@@ -44,6 +45,8 @@ class LivestockHealthObservationFragment : TankRecordPhotoFragment(
     private var selectedOnset: String = LivestockHealthObservationCatalog.ONSET_TODAY
     private var selectedTrend: String = LivestockHealthObservationCatalog.TREND_NEW
     private var affectedCount: Int = 1
+    private val observationPhotoUris = MutableList<String?>(MAX_OBSERVATION_PHOTOS) { null }
+    private var activePhotoSlotIndex: Int = 0
     private var isNavigating: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,18 +54,26 @@ class LivestockHealthObservationFragment : TankRecordPhotoFragment(
         require(args.tankId > 0L) {
             "LivestockHealthObservationFragment requires a positive tankId."
         }
+
+        savedInstanceState
+            ?.getStringArrayList(STATE_OBSERVATION_PHOTOS)
+            ?.take(MAX_OBSERVATION_PHOTOS)
+            ?.forEachIndexed { index, uri ->
+                observationPhotoUris[index] = uri.takeIf(String::isNotBlank)
+            }
+        activePhotoSlotIndex = savedInstanceState
+            ?.getInt(STATE_ACTIVE_PHOTO_SLOT, 0)
+            ?.coerceIn(0, MAX_OBSERVATION_PHOTOS - 1)
+            ?: 0
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentLivestockHealthObservationBinding.bind(view)
 
-        mediaFlow.initializeSelection(null)
+        mediaFlow.initializeSelection(observationPhotoUris[activePhotoSlotIndex])
         setupPhotoSourceResultListener()
-        val currentPhoto = mediaFlow.selection.value.selectedUri
-        binding.ivObservationPhotoPreview.isVisible = !currentPhoto.isNullOrBlank()
-        binding.tvObservationPhotoSlotPlus.isVisible = currentPhoto.isNullOrBlank()
-        currentPhoto?.let(binding.ivObservationPhotoPreview::bindRecordPhoto)
+        renderObservationPhotoSlots()
 
         binding.appHeader.setupAquaHeader(
             fragment = this,
@@ -93,14 +104,15 @@ class LivestockHealthObservationFragment : TankRecordPhotoFragment(
         }
 
         binding.photoAddArea.setOnClickListener {
-            val recordId = selectedLivestockId.takeIf { id -> id > 0L }
-                ?: return@setOnClickListener
-            val ownerUid = requireContext()
-                .requireAppContainer()
-                .authenticatedOwnerIdentity
-                .requireOwnerUid()
-            showRecordPhotoSource(recordId = recordId, ownerUid = ownerUid)
+            openObservationPhotoSlot(
+                observationPhotoUris.indexOfFirst { uri -> uri.isNullOrBlank() }
+                    .takeIf { index -> index >= 0 }
+                    ?: 0
+            )
         }
+        binding.photoSlotOne.setOnClickListener { openObservationPhotoSlot(0) }
+        binding.photoSlotTwo.setOnClickListener { openObservationPhotoSlot(1) }
+        binding.photoSlotThree.setOnClickListener { openObservationPhotoSlot(2) }
         binding.btnEvaluate.setOnClickListener { continueToEvaluation() }
         observeTank()
     }
@@ -150,7 +162,10 @@ class LivestockHealthObservationFragment : TankRecordPhotoFragment(
                 binding.livestockSelectorContainer,
                 false
             )
-            itemBinding.ivLivestockPhoto.bindRecordPhoto(livestock.photoUri)
+            itemBinding.ivLivestockPhoto.bindRecordPhoto(
+                livestock.photoUri,
+                LivestockCategories.iconRes(livestock.category)
+            )
             val displayName = livestock.name.ifBlank {
                 getString(R.string.aquarium_unnamed_livestock)
             }
@@ -273,16 +288,83 @@ class LivestockHealthObservationFragment : TankRecordPhotoFragment(
         isNavigating = didNavigate
     }
 
+    private fun openObservationPhotoSlot(slotIndex: Int) {
+        val recordId = selectedLivestockId.takeIf { id -> id > 0L } ?: return
+        activePhotoSlotIndex = slotIndex.coerceIn(0, MAX_OBSERVATION_PHOTOS - 1)
+        val ownerUid = requireContext()
+            .requireAppContainer()
+            .authenticatedOwnerIdentity
+            .requireOwnerUid()
+        showRecordPhotoSource(
+            recordId = recordId,
+            ownerUid = ownerUid,
+            persistedUri = observationPhotoUris[activePhotoSlotIndex],
+            resetSelection = true
+        )
+    }
+
+    private fun renderObservationPhotoSlots() {
+        if (_binding == null) return
+        renderObservationPhotoSlot(
+            observationPhotoUris[0],
+            binding.ivObservationPhotoPreviewOne,
+            binding.tvObservationPhotoSlotPlusOne
+        )
+        renderObservationPhotoSlot(
+            observationPhotoUris[1],
+            binding.ivObservationPhotoPreviewTwo,
+            binding.tvObservationPhotoSlotPlusTwo
+        )
+        renderObservationPhotoSlot(
+            observationPhotoUris[2],
+            binding.ivObservationPhotoPreviewThree,
+            binding.tvObservationPhotoSlotPlusThree
+        )
+    }
+
+    private fun renderObservationPhotoSlot(
+        photoUri: String?,
+        preview: android.widget.ImageView,
+        plus: android.widget.TextView
+    ) {
+        val hasPhoto = !photoUri.isNullOrBlank()
+        preview.isVisible = hasPhoto
+        plus.isVisible = !hasPhoto
+        if (hasPhoto) {
+            preview.bindRecordPhoto(photoUri)
+        } else {
+            preview.setImageDrawable(null)
+        }
+    }
+
     override suspend fun onPhotoSelected(photoUri: String?) {
         if (!hasPhotoView) return
-        binding.ivObservationPhotoPreview.isVisible = !photoUri.isNullOrBlank()
-        binding.tvObservationPhotoSlotPlus.isVisible = photoUri.isNullOrBlank()
-        photoUri?.let(binding.ivObservationPhotoPreview::bindRecordPhoto)
+        val previous = observationPhotoUris[activePhotoSlotIndex]
+        if (previous != photoUri && !previous.isNullOrBlank()) {
+            mediaFlow.deleteInternalMedia(previous)
+        }
+        observationPhotoUris[activePhotoSlotIndex] = photoUri
+        renderObservationPhotoSlots()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putStringArrayList(
+            STATE_OBSERVATION_PHOTOS,
+            ArrayList(observationPhotoUris.map { uri -> uri.orEmpty() })
+        )
+        outState.putInt(STATE_ACTIVE_PHOTO_SLOT, activePhotoSlotIndex)
+        super.onSaveInstanceState(outState)
     }
 
     override fun onDestroyView() {
         selectorBindings.clear()
         _binding = null
         super.onDestroyView()
+    }
+
+    private companion object {
+        const val MAX_OBSERVATION_PHOTOS = 3
+        const val STATE_OBSERVATION_PHOTOS = "livestock_health_observation_photos"
+        const val STATE_ACTIVE_PHOTO_SLOT = "livestock_health_active_photo_slot"
     }
 }
