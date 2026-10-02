@@ -58,6 +58,7 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
         )
 
         binding.btnNewObservation.setOnClickListener { openNewObservation() }
+        binding.cardTankData.setOnClickListener { openTankHealth() }
         binding.cardActiveFollowup.setOnClickListener { openCurrentFollowup() }
         binding.cardRecentObservation.setOnClickListener { openCurrentFollowup() }
 
@@ -116,6 +117,7 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
         )
 
         binding.cardEmptyFollowups.isVisible = !canShowFilledState
+        binding.cardNoObservationInfo.isVisible = !canShowFilledState
         binding.filledHealthContent.isVisible = canShowFilledState
 
         if (livestock.isEmpty()) {
@@ -165,6 +167,19 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
             sourceDestinationId = R.id.livestockHealthFragment,
             directions = LivestockHealthFragmentDirections
                 .actionLivestockHealthFragmentToLivestockHealthObservationFragment(args.tankId)
+        )
+        isNavigating = didNavigate
+    }
+
+    private fun openTankHealth() {
+        if (isNavigating) {
+            return
+        }
+
+        val didNavigate = findNavController().navigateSafelyFrom(
+            sourceDestinationId = R.id.livestockHealthFragment,
+            directions = LivestockHealthFragmentDirections
+                .actionLivestockHealthFragmentToTankHealthFragment(args.tankId)
         )
         isNavigating = didNavigate
     }

@@ -15,13 +15,13 @@
     <string name="livestock_health_info_message">Observations help you track changes over time; they are not a diagnosis.</string>
     <string name="livestock_health_hero_image_description">Aquarium with a betta fish</string>
     <string name="livestock_health_hero_empty_title">Save your first observation</string>
-    <string name="livestock_health_hero_empty_subtitle">Record symptoms and changes so you can follow the process over time.</string>
+    <string name="livestock_health_hero_empty_subtitle">Track symptoms and recovery progress in one place.</string>
     <string name="livestock_health_hero_active_title">Track your livestock</string>
     <string name="livestock_health_hero_active_subtitle">Keep observations together and compare how each tracked issue changes.</string>
     <string name="livestock_health_new_observation">New observation</string>
     <string name="livestock_health_followups_section">Follow-ups</string>
     <string name="livestock_health_empty_followups_title">No observations yet</string>
-    <string name="livestock_health_empty_followups_body">You can create a record to start tracking a livestock change.</string>
+    <string name="livestock_health_empty_followups_body">Add a record to track your livestock condition.</string>
     <string name="livestock_health_no_livestock_title">No livestock in this tank</string>
     <string name="livestock_health_no_livestock_body">Add livestock from the Livestock tab before creating a health observation.</string>
     <string name="livestock_health_active_followups_section">Active follow-ups</string>
@@ -32,10 +32,10 @@
     <string name="livestock_health_affected_format">%1$d / %2$d livestock affected</string>
     <string name="livestock_health_history_today_surface_same">Today · 18:20 · Surface breathing · Same</string>
     <string name="livestock_health_history_previous_surface">Today · 14:30 · First observation · Increased</string>
-    <string name="livestock_health_tank_context_title">Context from the tank</string>
-    <string name="livestock_health_tank_context_measurement">Water measurement · 2 days ago</string>
-    <string name="livestock_health_tank_context_change">Water change · 5 days ago</string>
-    <string name="livestock_health_main_helper">An observation records what you see; tank data stays connected as context.</string>
+    <string name="livestock_health_tank_data_title">Tank data</string>
+    <string name="livestock_health_tank_data_last_measurement_empty">No measurements yet</string>
+    <string name="livestock_health_tank_data_description">Open tank health</string>
+    <string name="livestock_health_no_observation_notice">No observation does not mean the livestock is healthy.</string>
 
     <string name="livestock_health_new_observation_title">New observation</string>
     <string name="livestock_health_step_livestock">1. Which livestock?</string>

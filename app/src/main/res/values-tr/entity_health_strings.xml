@@ -15,13 +15,13 @@
     <string name="livestock_health_info_message">Gözlemler değişimi zaman içinde takip etmeye yardımcı olur; tanı değildir.</string>
     <string name="livestock_health_hero_image_description">Beta balıklı akvaryum</string>
     <string name="livestock_health_hero_empty_title">İlk gözlemini kaydet</string>
-    <string name="livestock_health_hero_empty_subtitle">Belirtileri ve değişimleri kaydet, süreci zaman içinde takip et.</string>
+    <string name="livestock_health_hero_empty_subtitle">Belirtileri ve iyileşme sürecini tek yerde takip et.</string>
     <string name="livestock_health_hero_active_title">Canlılarını takip et</string>
     <string name="livestock_health_hero_active_subtitle">Gözlemleri tek yerde tut ve takip edilen değişimin seyrini karşılaştır.</string>
     <string name="livestock_health_new_observation">Yeni gözlem</string>
     <string name="livestock_health_followups_section">Takipler</string>
     <string name="livestock_health_empty_followups_title">Henüz gözlem yok</string>
-    <string name="livestock_health_empty_followups_body">Bir canlıdaki değişimi takip etmeye başlamak için gözlem kaydı oluşturabilirsin.</string>
+    <string name="livestock_health_empty_followups_body">Canlılarının durumu için kayıt ekleyebilirsin.</string>
     <string name="livestock_health_no_livestock_title">Bu tankta canlı yok</string>
     <string name="livestock_health_no_livestock_body">Sağlık gözlemi oluşturmadan önce Canlılar sekmesinden canlı ekle.</string>
     <string name="livestock_health_active_followups_section">Aktif takipler</string>
@@ -32,10 +32,10 @@
     <string name="livestock_health_affected_format">%1$d / %2$d canlı etkileniyor</string>
     <string name="livestock_health_history_today_surface_same">Bugün · 18:20 · Yüzeye çıkma · Aynı</string>
     <string name="livestock_health_history_previous_surface">Bugün · 14:30 · İlk gözlem · Artıyordu</string>
-    <string name="livestock_health_tank_context_title">Tanktan gelen bağlam</string>
-    <string name="livestock_health_tank_context_measurement">Su ölçümü · 2 gün önce</string>
-    <string name="livestock_health_tank_context_change">Su değişimi · 5 gün önce</string>
-    <string name="livestock_health_main_helper">Gözlem gördüğünü kaydeder; tank verileri bağlam olarak yanında kalır.</string>
+    <string name="livestock_health_tank_data_title">Tank verileri</string>
+    <string name="livestock_health_tank_data_last_measurement_empty">Son ölçüm yok</string>
+    <string name="livestock_health_tank_data_description">Tank sağlığı ekranını aç</string>
+    <string name="livestock_health_no_observation_notice">Gözlem olmaması sağlık durumu anlamına gelmez.</string>
 
     <string name="livestock_health_new_observation_title">Yeni gözlem</string>
     <string name="livestock_health_step_livestock">1. Hangi canlı?</string>
