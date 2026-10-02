@@ -30,7 +30,7 @@ class LivestockHealthObservationFragment :
     private val selectorBindings = linkedMapOf<Long, ItemLivestockHealthSelectorBinding>()
     private var currentLivestock: List<AquariumLivestock> = emptyList()
     private var selectedLivestockId: Long = 0L
-    private var selectedSymptom: String = LivestockHealthUiText.SYMPTOM_SURFACE
+    private val selectedSymptoms = linkedSetOf(LivestockHealthUiText.SYMPTOM_SURFACE)
     private var affectedCount: Int = 1
     private var isNavigating: Boolean = false
 
@@ -101,9 +101,13 @@ class LivestockHealthObservationFragment :
                 false
             )
             itemBinding.ivLivestockPhoto.bindRecordPhoto(livestock.photoUri)
-            itemBinding.tvLivestockName.text = livestock.name.ifBlank {
+            val displayName = livestock.name.ifBlank {
                 getString(R.string.aquarium_unnamed_livestock)
             }
+            val nameParts = displayName.split(" / ", limit = 2)
+            itemBinding.tvLivestockName.text = nameParts.first()
+            itemBinding.tvLivestockSubtitle.isVisible = nameParts.size > 1
+            itemBinding.tvLivestockSubtitle.text = nameParts.getOrNull(1).orEmpty()
             itemBinding.tvLivestockQuantity.text = getString(
                 R.string.livestock_health_selector_quantity_format,
                 livestock.quantity.coerceAtLeast(1)
@@ -123,22 +127,25 @@ class LivestockHealthObservationFragment :
 
     private fun bindSymptomSelection() {
         val cards = linkedMapOf(
-            LivestockHealthUiText.SYMPTOM_NORMAL to binding.cardSymptomNormal,
             LivestockHealthUiText.SYMPTOM_SURFACE to binding.cardSymptomSurface,
             LivestockHealthUiText.SYMPTOM_APPETITE to binding.cardSymptomAppetite,
-            LivestockHealthUiText.SYMPTOM_HIDING to binding.cardSymptomHiding,
+            LivestockHealthUiText.SYMPTOM_SWIMMING to binding.cardSymptomSwimming,
+            LivestockHealthUiText.SYMPTOM_SPOT to binding.cardSymptomSpot,
             LivestockHealthUiText.SYMPTOM_FINS to binding.cardSymptomFins,
             LivestockHealthUiText.SYMPTOM_OTHER to binding.cardSymptomOther
         )
 
-        cards.forEach {
-            (key, card) ->
+        cards.forEach { (key, card) ->
             card.setOnClickListener {
-                selectedSymptom = key
-                applyLivestockSymptomSelection(cards, selectedSymptom)
+                if (!selectedSymptoms.add(key)) {
+                    selectedSymptoms.remove(key)
+                }
+                applyLivestockSymptomSelection(cards, selectedSymptoms)
+                binding.btnEvaluate.isEnabled =
+                    currentLivestock.isNotEmpty() && selectedSymptoms.isNotEmpty()
             }
         }
-        applyLivestockSymptomSelection(cards, selectedSymptom)
+        applyLivestockSymptomSelection(cards, selectedSymptoms)
     }
 
     private fun bindAffectedCounter() {
@@ -156,9 +163,13 @@ class LivestockHealthObservationFragment :
     private fun updateAffectedCount() {
         val maximum = selectedLivestock()?.quantity?.coerceAtLeast(1) ?: 1
         affectedCount = affectedCount.coerceIn(1, maximum)
-        binding.tvAffectedCount.text = affectedCount.toString()
-        binding.tvAffectedTotal.text = getString(
-            R.string.livestock_health_affected_total_format,
+        binding.tvAffectedRegisteredCount.text = getString(
+            R.string.livestock_health_registered_count_format,
+            maximum
+        )
+        binding.tvAffectedCount.text = getString(
+            R.string.livestock_health_affected_counter_format,
+            affectedCount,
             maximum
         )
         binding.btnAffectedMinus.isEnabled = affectedCount > 1
@@ -191,7 +202,8 @@ class LivestockHealthObservationFragment :
                 .actionLivestockHealthObservationFragmentToLivestockHealthEvaluationFragment(
                     tankId = args.tankId,
                     livestockId = livestock.id,
-                    symptomKey = selectedSymptom,
+                    symptomKey = selectedSymptoms.firstOrNull()
+                        ?: LivestockHealthUiText.SYMPTOM_SURFACE,
                     affectedCount = affectedCount
                 )
         )
