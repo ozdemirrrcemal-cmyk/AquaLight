@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    style="@style/Widget.Aqua.Card"
+    android:layout_width="@dimen/aqua_size_112"
+    android:layout_height="@dimen/aqua_size_120"
+    android:layout_marginEnd="@dimen/aqua_size_10"
+    android:clickable="true"
+    android:focusable="true"
+    app:cardCornerRadius="@dimen/aqua_size_14">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="@dimen/aqua_size_10">
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/photoFrame"
+            style="@style/Widget.Aqua.Card.Device.Media"
+            android:layout_width="@dimen/aqua_size_52"
+            android:layout_height="@dimen/aqua_size_52"
+            app:cardCornerRadius="@dimen/aqua_size_10"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:id="@+id/ivLivestockPhoto"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="@null"
+                android:scaleType="center" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <ImageView
+            android:id="@+id/ivSelected"
+            android:layout_width="@dimen/aqua_size_20"
+            android:layout_height="@dimen/aqua_size_20"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_check_24"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="@color/aqua_button_blue"
+            tools:visibility="visible" />
+
+        <TextView
+            android:id="@+id/tvLivestockName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/aqua_size_8"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:textColor="@color/aqua_card_text_primary"
+            android:textSize="@dimen/aqua_text_size_caption"
+            android:textStyle="bold"
+            app:layout_constraintTop_toBottomOf="@id/photoFrame"
+            tools:text="Beta" />
+
+        <TextView
+            android:id="@+id/tvLivestockQuantity"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/aqua_size_3"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:textColor="@color/aqua_content_muted"
+            android:textSize="@dimen/aqua_text_size_micro"
+            app:layout_constraintTop_toBottomOf="@id/tvLivestockName"
+            tools:text="4 canlı" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

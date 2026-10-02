@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/aqua_size_60"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.Aqua.Card.Device.Media"
+            android:layout_width="@dimen/aqua_size_52"
+            android:layout_height="@dimen/aqua_size_52"
+            app:cardCornerRadius="@dimen/aqua_size_10">
+
+            <ImageView
+                android:id="@+id/ivCheckLivestock"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="@null"
+                android:scaleType="center" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <LinearLayout
+            android:layout_width="@dimen/aqua_size_0"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/aqua_size_12"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvCheckLivestockName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/aqua_card_text_primary"
+                android:textSize="@dimen/aqua_text_size_body"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_3"
+                android:text="@string/livestock_health_issue_surface"
+                android:textColor="@color/aqua_card_text_secondary"
+                android:textSize="@dimen/aqua_text_size_caption" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/aqua_size_14"
+        android:text="@string/livestock_health_check_status_question"
+        android:textColor="@color/aqua_card_text_primary"
+        android:textSize="@dimen/aqua_text_size_body_small"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/aqua_size_48"
+        android:layout_marginTop="@dimen/aqua_size_8"
+        android:orientation="horizontal">
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardCheckIncreased"
+            style="@style/Widget.Aqua.Card"
+            android:layout_width="@dimen/aqua_size_0"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:clickable="true"
+            android:focusable="true">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="@string/livestock_health_status_increased"
+                android:textColor="@color/aqua_status_danger"
+                android:textSize="@dimen/aqua_text_size_status_micro" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <Space
+            android:layout_width="@dimen/aqua_size_5"
+            android:layout_height="@dimen/aqua_size_1" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardCheckSame"
+            style="@style/Widget.Aqua.Card"
+            android:layout_width="@dimen/aqua_size_0"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:clickable="true"
+            android:focusable="true">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="@string/livestock_health_status_same"
+                android:textColor="@color/dialog_icon_warning"
+                android:textSize="@dimen/aqua_text_size_status_micro" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <Space
+            android:layout_width="@dimen/aqua_size_5"
+            android:layout_height="@dimen/aqua_size_1" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardCheckDecreased"
+            style="@style/Widget.Aqua.Card"
+            android:layout_width="@dimen/aqua_size_0"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:clickable="true"
+            android:focusable="true">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="@string/livestock_health_status_decreased"
+                android:textColor="@color/aqua_status_success"
+                android:textSize="@dimen/aqua_text_size_status_micro" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <Space
+            android:layout_width="@dimen/aqua_size_5"
+            android:layout_height="@dimen/aqua_size_1" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardCheckRecovered"
+            style="@style/Widget.Aqua.Card"
+            android:layout_width="@dimen/aqua_size_0"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:clickable="true"
+            android:focusable="true">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="@string/livestock_health_status_recovered"
+                android:textColor="@color/aqua_card_text_secondary"
+                android:textSize="@dimen/aqua_text_size_status_micro" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/aqua_size_16"
+        android:text="@string/livestock_health_check_affected_question"
+        android:textColor="@color/aqua_card_text_primary"
+        android:textSize="@dimen/aqua_text_size_body_small"
+        android:textStyle="bold" />
+
+    <com.google.android.material.card.MaterialCardView
+        style="@style/Widget.Aqua.Card"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/aqua_size_56"
+        android:layout_marginTop="@dimen/aqua_size_8">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="@dimen/aqua_size_12"
+            android:paddingEnd="@dimen/aqua_size_12">
+
+            <TextView
+                android:id="@+id/btnCheckMinus"
+                android:layout_width="@dimen/aqua_size_40"
+                android:layout_height="@dimen/aqua_size_40"
+                android:background="@drawable/bg_aqua_toolbar_pill_action_primary"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:text="−"
+                android:textColor="@color/aqua_card_text_primary"
+                android:textSize="@dimen/aqua_text_size_title_small" />
+
+            <TextView
+                android:id="@+id/tvCheckAffectedCount"
+                android:layout_width="@dimen/aqua_size_56"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="1"
+                android:textColor="@color/aqua_card_text_primary"
+                android:textSize="@dimen/aqua_text_size_title_medium"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvCheckAffectedTotal"
+                android:layout_width="@dimen/aqua_size_0"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="@color/aqua_card_text_secondary"
+                android:textSize="@dimen/aqua_text_size_body_small" />
+
+            <TextView
+                android:id="@+id/btnCheckPlus"
+                android:layout_width="@dimen/aqua_size_40"
+                android:layout_height="@dimen/aqua_size_40"
+                android:background="@drawable/bg_aqua_toolbar_pill_action_primary"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:text="+"
+                android:textColor="@color/aqua_card_text_primary"
+                android:textSize="@dimen/aqua_text_size_title_small" />
+
+        </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/aqua_size_16"
+        android:text="@string/livestock_health_check_time_title"
+        android:textColor="@color/aqua_card_text_primary"
+        android:textSize="@dimen/aqua_text_size_body_small"
+        android:textStyle="bold" />
+
+    <com.google.android.material.card.MaterialCardView
+        style="@style/Widget.Aqua.Card"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/aqua_size_52"
+        android:layout_marginTop="@dimen/aqua_size_8">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:paddingStart="@dimen/aqua_size_14"
+            android:text="@string/livestock_health_check_time_value"
+            android:textColor="@color/aqua_card_text_secondary"
+            android:textSize="@dimen/aqua_text_size_body_small" />
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/aqua_size_16"
+        android:text="@string/livestock_health_check_photo_note_title"
+        android:textColor="@color/aqua_card_text_primary"
+        android:textSize="@dimen/aqua_text_size_body_small"
+        android:textStyle="bold" />
+
+    <com.google.android.material.card.MaterialCardView
+        style="@style/Widget.Aqua.Card"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/aqua_size_56"
+        android:layout_marginTop="@dimen/aqua_size_8">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:paddingStart="@dimen/aqua_size_14"
+            android:text="@string/livestock_health_check_photo_note_value"
+            android:textColor="@color/aqua_card_text_secondary"
+            android:textSize="@dimen/aqua_text_size_body_small" />
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/aqua_size_10"
+        android:text="@string/livestock_health_check_context_value"
+        android:textColor="@color/aqua_content_muted"
+        android:textSize="@dimen/aqua_text_size_micro" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnSaveCheck"
+        style="@style/Widget.Aqua.Button.Primary"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/aqua_size_48"
+        android:layout_marginTop="@dimen/aqua_size_16"
+        android:text="@string/livestock_health_check_save"
+        app:icon="@drawable/ic_check_24" />
+
+</LinearLayout>

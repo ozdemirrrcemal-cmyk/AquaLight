@@ -220,9 +220,86 @@
         android:id="@+id/livestockHealthFragment"
         android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.health.LivestockHealthFragment"
         android:label="@string/screen_title_livestock_health"
-        tools:layout="@layout/fragment_aquarium_health_placeholder">
+        tools:layout="@layout/fragment_livestock_health">
         <argument
             android:name="tankId"
+            app:argType="long" />
+        <action
+            android:id="@+id/action_livestockHealthFragment_to_livestockHealthObservationFragment"
+            app:destination="@id/livestockHealthObservationFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+        <action
+            android:id="@+id/action_livestockHealthFragment_to_livestockHealthFollowUpFragment"
+            app:destination="@id/livestockHealthFollowUpFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/livestockHealthObservationFragment"
+        android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.health.LivestockHealthObservationFragment"
+        android:label="@string/livestock_health_new_observation_title"
+        tools:layout="@layout/fragment_livestock_health_observation">
+        <argument
+            android:name="tankId"
+            app:argType="long" />
+        <action
+            android:id="@+id/action_livestockHealthObservationFragment_to_livestockHealthEvaluationFragment"
+            app:destination="@id/livestockHealthEvaluationFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/livestockHealthEvaluationFragment"
+        android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.health.LivestockHealthEvaluationFragment"
+        android:label="@string/livestock_health_evaluation_title"
+        tools:layout="@layout/fragment_livestock_health_evaluation">
+        <argument
+            android:name="tankId"
+            app:argType="long" />
+        <argument
+            android:name="livestockId"
+            app:argType="long" />
+        <argument
+            android:name="symptomKey"
+            app:argType="string" />
+        <argument
+            android:name="affectedCount"
+            app:argType="integer" />
+        <action
+            android:id="@+id/action_livestockHealthEvaluationFragment_to_livestockHealthFollowUpFragment"
+            app:destination="@id/livestockHealthFollowUpFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+        <action
+            android:id="@+id/action_livestockHealthEvaluationFragment_to_tankHealthFragment"
+            app:destination="@id/tankHealthFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/livestockHealthFollowUpFragment"
+        android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.health.LivestockHealthFollowUpFragment"
+        android:label="@string/livestock_health_followup_title"
+        tools:layout="@layout/fragment_livestock_health_follow_up">
+        <argument
+            android:name="tankId"
+            app:argType="long" />
+        <argument
+            android:name="livestockId"
             app:argType="long" />
     </fragment>
 
