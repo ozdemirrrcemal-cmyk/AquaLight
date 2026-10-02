@@ -106,4 +106,9 @@
     <string name="livestock_health_check_context_value">Su ölçümü: 2 gün önce · Tankta aç</string>
     <string name="livestock_health_check_save">Kontrolü kaydet</string>
 
+    <string name="livestock_health_default_count">1</string>
+    <string name="livestock_health_step_number_1">1</string>
+    <string name="livestock_health_step_number_2">2</string>
+    <string name="livestock_health_step_number_3">3</string>
+    <string name="livestock_health_step_number_4">4</string>
 </resources>

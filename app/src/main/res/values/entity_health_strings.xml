@@ -106,4 +106,9 @@
     <string name="livestock_health_check_context_value">Water measurement: 2 days ago · Open tank</string>
     <string name="livestock_health_check_save">Save check</string>
 
+    <string name="livestock_health_default_count">1</string>
+    <string name="livestock_health_step_number_1">1</string>
+    <string name="livestock_health_step_number_2">2</string>
+    <string name="livestock_health_step_number_3">3</string>
+    <string name="livestock_health_step_number_4">4</string>
 </resources>

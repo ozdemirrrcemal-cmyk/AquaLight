@@ -300,13 +300,13 @@
 
                     <TextView
                         android:id="@+id/btnAffectedMinus"
-                        android:layout_width="@dimen/aqua_size_40"
-                        android:layout_height="@dimen/aqua_size_40"
+                        android:layout_width="@dimen/aqua_size_48"
+                        android:layout_height="@dimen/aqua_size_48"
                         android:background="@drawable/bg_aqua_toolbar_pill_action_primary"
                         android:clickable="true"
                         android:focusable="true"
                         android:gravity="center"
-                        android:text="−"
+                        android:text="@string/common_minus"
                         android:textColor="@color/aqua_card_text_primary"
                         android:textSize="@dimen/aqua_text_size_title_small" />
 
@@ -315,7 +315,7 @@
                         android:layout_width="@dimen/aqua_size_56"
                         android:layout_height="wrap_content"
                         android:gravity="center"
-                        android:text="1"
+                        android:text="@string/livestock_health_default_count"
                         android:textColor="@color/aqua_card_text_primary"
                         android:textSize="@dimen/aqua_text_size_title_medium"
                         android:textStyle="bold" />
@@ -331,13 +331,13 @@
 
                     <TextView
                         android:id="@+id/btnAffectedPlus"
-                        android:layout_width="@dimen/aqua_size_40"
-                        android:layout_height="@dimen/aqua_size_40"
+                        android:layout_width="@dimen/aqua_size_48"
+                        android:layout_height="@dimen/aqua_size_48"
                         android:background="@drawable/bg_aqua_toolbar_pill_action_primary"
                         android:clickable="true"
                         android:focusable="true"
                         android:gravity="center"
-                        android:text="+"
+                        android:text="@string/common_plus"
                         android:textColor="@color/aqua_card_text_primary"
                         android:textSize="@dimen/aqua_text_size_title_small" />
 
