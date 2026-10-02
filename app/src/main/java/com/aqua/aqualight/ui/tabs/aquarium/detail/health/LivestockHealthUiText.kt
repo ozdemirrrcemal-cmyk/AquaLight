@@ -1,7 +1,6 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 
 import androidx.annotation.StringRes
-import com.aqua.aqualight.R
 
 internal object LivestockHealthUiText {
     const val SYMPTOM_NORMAL = "normal"

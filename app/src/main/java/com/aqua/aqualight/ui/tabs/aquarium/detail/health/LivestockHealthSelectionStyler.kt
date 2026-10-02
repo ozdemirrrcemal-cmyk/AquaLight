@@ -81,3 +81,7 @@ internal fun com.aqua.aqualight.databinding.FragmentLivestockHealthObservationBi
         slot.card.setOnClickListener { onToggle(option.key) }
     }
 }
+
+internal fun List<AquariumLivestock>.selectedLivestock(
+    selectedLivestockId: Long
+): AquariumLivestock? = firstOrNull { item -> item.id == selectedLivestockId }
