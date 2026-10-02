@@ -154,6 +154,7 @@
                         android:padding="@dimen/aqua_size_5">
 
                         <ImageView
+                            android:id="@+id/ivSymptomSurface"
                             android:layout_width="@dimen/aqua_size_26"
                             android:layout_height="@dimen/aqua_size_26"
                             android:contentDescription="@null"
@@ -161,6 +162,7 @@
                             android:src="@drawable/ic_livestock_symptom_surface_24" />
 
                         <TextView
+                            android:id="@+id/tvSymptomSurface"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="@dimen/aqua_size_4"
@@ -196,6 +198,7 @@
                         android:padding="@dimen/aqua_size_5">
 
                         <ImageView
+                            android:id="@+id/ivSymptomAppetite"
                             android:layout_width="@dimen/aqua_size_26"
                             android:layout_height="@dimen/aqua_size_26"
                             android:contentDescription="@null"
@@ -203,6 +206,7 @@
                             android:src="@drawable/ic_livestock_symptom_appetite_24" />
 
                         <TextView
+                            android:id="@+id/tvSymptomAppetite"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="@dimen/aqua_size_4"
@@ -238,6 +242,7 @@
                         android:padding="@dimen/aqua_size_5">
 
                         <ImageView
+                            android:id="@+id/ivSymptomSwimming"
                             android:layout_width="@dimen/aqua_size_26"
                             android:layout_height="@dimen/aqua_size_26"
                             android:contentDescription="@null"
@@ -245,6 +250,7 @@
                             android:src="@drawable/ic_livestock_symptom_swimming_24" />
 
                         <TextView
+                            android:id="@+id/tvSymptomSwimming"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="@dimen/aqua_size_4"
@@ -284,6 +290,7 @@
                         android:padding="@dimen/aqua_size_5">
 
                         <ImageView
+                            android:id="@+id/ivSymptomSpot"
                             android:layout_width="@dimen/aqua_size_26"
                             android:layout_height="@dimen/aqua_size_26"
                             android:contentDescription="@null"
@@ -291,6 +298,7 @@
                             android:src="@drawable/ic_livestock_symptom_spot_24" />
 
                         <TextView
+                            android:id="@+id/tvSymptomSpot"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="@dimen/aqua_size_4"
@@ -326,6 +334,7 @@
                         android:padding="@dimen/aqua_size_5">
 
                         <ImageView
+                            android:id="@+id/ivSymptomFins"
                             android:layout_width="@dimen/aqua_size_26"
                             android:layout_height="@dimen/aqua_size_26"
                             android:contentDescription="@null"
@@ -333,6 +342,7 @@
                             android:src="@drawable/ic_livestock_symptom_fin_24" />
 
                         <TextView
+                            android:id="@+id/tvSymptomFins"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="@dimen/aqua_size_4"
@@ -368,6 +378,7 @@
                         android:padding="@dimen/aqua_size_5">
 
                         <ImageView
+                            android:id="@+id/ivSymptomOther"
                             android:layout_width="@dimen/aqua_size_26"
                             android:layout_height="@dimen/aqua_size_26"
                             android:contentDescription="@null"
@@ -375,6 +386,7 @@
                             android:src="@drawable/ic_livestock_symptom_more_24" />
 
                         <TextView
+                            android:id="@+id/tvSymptomOther"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="@dimen/aqua_size_4"
@@ -390,6 +402,46 @@
                 </com.google.android.material.card.MaterialCardView>
 
             </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/otherObservationContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_8"
+                android:orientation="vertical"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:includeFontPadding="false"
+                    android:text="@string/livestock_health_other_observation_title"
+                    android:textColor="@color/aqua_card_text_primary"
+                    android:textSize="@dimen/aqua_text_size_caption"
+                    android:textStyle="bold" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.Aqua.Input.Layout.Multiline"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/aqua_size_6">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etOtherObservation"
+                        style="@style/Widget.Aqua.Input.EditText.Multiline"
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/aqua_size_70"
+                        android:hint="@string/livestock_health_other_observation_hint"
+                        android:inputType="textCapSentences|textMultiLine"
+                        android:maxLines="3"
+                        android:minLines="2" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+            </LinearLayout>
+
+
 
             <TextView
                 android:layout_width="match_parent"
@@ -497,10 +549,13 @@
                 android:orientation="horizontal">
 
                 <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardObservationStart"
                     style="@style/Widget.Aqua.Card"
                     android:layout_width="@dimen/aqua_size_0"
                     android:layout_height="@dimen/aqua_size_60"
-                    android:layout_weight="1">
+                    android:layout_weight="1"
+                    android:clickable="true"
+                    android:focusable="true">
 
                     <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="match_parent"
@@ -569,10 +624,13 @@
                     android:layout_height="@dimen/aqua_size_1" />
 
                 <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardObservationTrend"
                     style="@style/Widget.Aqua.Card"
                     android:layout_width="@dimen/aqua_size_0"
                     android:layout_height="@dimen/aqua_size_60"
-                    android:layout_weight="1">
+                    android:layout_weight="1"
+                    android:clickable="true"
+                    android:focusable="true">
 
                     <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="match_parent"
@@ -612,7 +670,7 @@
                             android:layout_width="@dimen/aqua_size_0"
                             android:layout_height="wrap_content"
                             android:includeFontPadding="false"
-                            android:text="@string/livestock_health_status_increased"
+                            android:text="@string/livestock_health_trend_new"
                             android:textColor="@color/aqua_card_text_primary"
                             android:textSize="@dimen/aqua_text_size_caption"
                             app:layout_constraintBottom_toBottomOf="parent"

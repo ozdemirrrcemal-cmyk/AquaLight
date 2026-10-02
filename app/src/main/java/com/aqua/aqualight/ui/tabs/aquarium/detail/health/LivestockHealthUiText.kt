@@ -14,14 +14,7 @@ internal object LivestockHealthUiText {
     const val SYMPTOM_OTHER = "other"
 
     @StringRes
-    fun symptomLabelRes(symptomKey: String): Int = when (symptomKey) {
-        SYMPTOM_NORMAL -> R.string.livestock_health_symptom_normal
-        SYMPTOM_APPETITE -> R.string.livestock_health_symptom_appetite
-        SYMPTOM_SWIMMING -> R.string.livestock_health_symptom_swimming
-        SYMPTOM_SPOT -> R.string.livestock_health_symptom_spot
-        SYMPTOM_HIDING -> R.string.livestock_health_symptom_hiding
-        SYMPTOM_FINS -> R.string.livestock_health_symptom_fins
-        SYMPTOM_OTHER -> R.string.livestock_health_symptom_other
-        else -> R.string.livestock_health_symptom_surface
-    }
+    fun symptomLabelRes(symptomKey: String): Int =
+        LivestockHealthObservationCatalog.symptomLabelRes(symptomKey)
+
 }
