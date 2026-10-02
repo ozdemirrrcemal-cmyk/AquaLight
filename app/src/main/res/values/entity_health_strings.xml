@@ -32,6 +32,9 @@
     <string name="livestock_health_affected_format">%1$d / %2$d livestock affected</string>
     <string name="livestock_health_history_today_surface_same">Today · 18:20 · Surface breathing · Same</string>
     <string name="livestock_health_history_previous_surface">Today · 14:30 · First observation · Increased</string>
+    <string name="livestock_health_tank_context_title">Context from the tank</string>
+    <string name="livestock_health_tank_context_measurement">Water measurement · 2 days ago</string>
+    <string name="livestock_health_tank_context_change">Water change · 5 days ago</string>
     <string name="livestock_health_tank_data_title">Tank data</string>
     <string name="livestock_health_tank_data_last_measurement_empty">No measurements yet</string>
     <string name="livestock_health_tank_data_description">Open tank health</string>

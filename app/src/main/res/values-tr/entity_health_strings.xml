@@ -32,6 +32,9 @@
     <string name="livestock_health_affected_format">%1$d / %2$d canlı etkileniyor</string>
     <string name="livestock_health_history_today_surface_same">Bugün · 18:20 · Yüzeye çıkma · Aynı</string>
     <string name="livestock_health_history_previous_surface">Bugün · 14:30 · İlk gözlem · Artıyordu</string>
+    <string name="livestock_health_tank_context_title">Tanktan gelen bağlam</string>
+    <string name="livestock_health_tank_context_measurement">Su ölçümü · 2 gün önce</string>
+    <string name="livestock_health_tank_context_change">Su değişimi · 5 gün önce</string>
     <string name="livestock_health_tank_data_title">Tank verileri</string>
     <string name="livestock_health_tank_data_last_measurement_empty">Son ölçüm yok</string>
     <string name="livestock_health_tank_data_description">Tank sağlığı ekranını aç</string>
