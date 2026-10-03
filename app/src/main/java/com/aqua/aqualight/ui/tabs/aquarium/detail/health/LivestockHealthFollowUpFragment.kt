@@ -62,7 +62,7 @@ class LivestockHealthFollowUpFragment :
                 titleOverride = getString(R.string.livestock_health_followup_title),
                 onBackClick = { findNavController().navigateUp() },
                 pillTextAction = if (args.readOnly) {
-                    renderer?.closedStatusAction()
+                    null
                 } else {
                     AquaHeaderPillTextAction(
                         text = getString(R.string.livestock_health_end_followup),

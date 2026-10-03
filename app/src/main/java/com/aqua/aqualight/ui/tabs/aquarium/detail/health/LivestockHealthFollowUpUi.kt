@@ -10,7 +10,6 @@ import com.aqua.aqualight.application.aquarium.AquariumLivestock
 import com.aqua.aqualight.databinding.FragmentLivestockHealthFollowUpBinding
 import com.aqua.aqualight.databinding.ItemLivestockHealthHistoryBinding
 import com.aqua.aqualight.i18n.LocaleFormatter
-import com.aqua.aqualight.ui.common.header.AquaHeaderPillTextAction
 import com.aqua.aqualight.ui.common.media.bindRecordPhoto
 import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.LivestockCategories
 import com.google.android.material.card.MaterialCardView
@@ -231,10 +230,37 @@ internal class LivestockHealthFollowUpRenderer(
         )
 
         if (readOnly) {
+            val recovered =
+                closeReason == LivestockHealthUiSessionState.CLOSE_REASON_RECOVERED
+            binding.tvFollowupBadge.setText(
+                if (recovered) {
+                    R.string.livestock_health_status_recovered
+                } else {
+                    R.string.livestock_health_followup_closed_manual
+                }
+            )
+            binding.tvFollowupBadge.setTextColor(
+                ContextCompat.getColor(
+                    fragment.requireContext(),
+                    if (recovered) {
+                        R.color.aqua_status_success
+                    } else {
+                        R.color.aqua_card_text_secondary
+                    }
+                )
+            )
             binding.cardStatusIncreased.isClickable = false
             binding.cardStatusSame.isClickable = false
             binding.cardStatusDecreased.isClickable = false
             binding.cardStatusRecovered.isClickable = false
+        } else {
+            binding.tvFollowupBadge.setText(R.string.livestock_health_tracking_badge)
+            binding.tvFollowupBadge.setTextColor(
+                ContextCompat.getColor(
+                    fragment.requireContext(),
+                    R.color.aqua_status_success
+                )
+            )
         }
     }
 
@@ -305,26 +331,6 @@ internal class LivestockHealthFollowUpRenderer(
         }
     }
 
-    fun closedStatusAction(): AquaHeaderPillTextAction {
-        val recovered = closeReason == LivestockHealthUiSessionState.CLOSE_REASON_RECOVERED
-        val textRes = if (recovered) {
-            R.string.livestock_health_status_recovered
-        } else {
-            R.string.livestock_health_followup_closed_manual
-        }
-        val colorRes = if (recovered) {
-            R.color.aqua_status_success
-        } else {
-            R.color.aqua_card_text_secondary
-        }
-        return AquaHeaderPillTextAction(
-            text = fragment.getString(textRes),
-            backgroundRes = R.drawable.bg_aqua_toolbar_pill_action_primary,
-            textColor = ContextCompat.getColor(fragment.requireContext(), colorRes),
-            contentDescription = fragment.getString(textRes),
-            onClick = {}
-        )
-    }
 
     private fun styleStatusCard(
         card: MaterialCardView,
