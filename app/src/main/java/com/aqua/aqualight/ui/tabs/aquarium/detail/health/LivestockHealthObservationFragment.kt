@@ -43,7 +43,6 @@ class LivestockHealthObservationFragment : TankRecordPhotoFragment(
     private var selectedLivestockId: Long = 0L
     private val selectedSymptoms = linkedSetOf<String>()
     private var selectedOnset: String = LivestockHealthObservationCatalog.ONSET_TODAY
-    private var selectedTrend: String = LivestockHealthObservationCatalog.TREND_NEW
     private var affectedCount: Int = 1
     private val observationPhotoUris = MutableList<String?>(MAX_OBSERVATION_PHOTOS) { null }
     private var activePhotoSlotIndex: Int = 0
@@ -89,9 +88,7 @@ class LivestockHealthObservationFragment : TankRecordPhotoFragment(
             fragment = this,
             binding = binding,
             selectedOnset = { selectedOnset },
-            selectedTrend = { selectedTrend },
-            onOnsetSelected = { selectedOnset = it },
-            onTrendSelected = { selectedTrend = it }
+            onOnsetSelected = { selectedOnset = it }
         )
         binding.etOtherObservation.doAfterTextChanged { text ->
             binding.btnEvaluate.isEnabled =

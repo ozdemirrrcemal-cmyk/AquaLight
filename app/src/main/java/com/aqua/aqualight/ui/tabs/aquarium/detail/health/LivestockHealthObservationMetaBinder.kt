@@ -9,16 +9,11 @@ internal fun bindLivestockObservationMeta(
     fragment: Fragment,
     binding: FragmentLivestockHealthObservationBinding,
     selectedOnset: () -> String,
-    selectedTrend: () -> String,
-    onOnsetSelected: (String) -> Unit,
-    onTrendSelected: (String) -> Unit
+    onOnsetSelected: (String) -> Unit
 ) {
     fun render() {
         binding.tvObservationStartValue.setText(
             LivestockHealthObservationCatalog.onsetLabelRes(selectedOnset())
-        )
-        binding.tvObservationTrendValue.setText(
-            LivestockHealthObservationCatalog.trendLabelRes(selectedTrend())
         )
     }
 
@@ -32,13 +27,15 @@ internal fun bindLivestockObservationMeta(
         ) {
             return@setFragmentResultListener
         }
-        val selectedId = result
-            .getString(SingleChoiceBottomSheet.RESULT_SELECTED_ID)
-            .orEmpty()
-        when (result.getString(SingleChoiceBottomSheet.RESULT_PAYLOAD_ID)) {
-            PAYLOAD_ONSET -> onOnsetSelected(selectedId)
-            PAYLOAD_TREND -> onTrendSelected(selectedId)
+        if (
+            result.getString(SingleChoiceBottomSheet.RESULT_PAYLOAD_ID) !=
+            PAYLOAD_ONSET
+        ) {
+            return@setFragmentResultListener
         }
+        onOnsetSelected(
+            result.getString(SingleChoiceBottomSheet.RESULT_SELECTED_ID).orEmpty()
+        )
         render()
     }
 
@@ -56,23 +53,8 @@ internal fun bindLivestockObservationMeta(
         )
     }
 
-    binding.cardObservationTrend.setOnClickListener {
-        SingleChoiceBottomSheet.show(
-            fragmentManager = fragment.childFragmentManager,
-            title = fragment.getString(R.string.livestock_health_when_change_label),
-            options = LivestockHealthObservationCatalog.trendOptions().map { option ->
-                option.id to fragment.getString(option.labelRes)
-            },
-            selectedId = selectedTrend(),
-            columns = 1,
-            requestKey = REQUEST_KEY,
-            payloadId = PAYLOAD_TREND
-        )
-    }
-
     render()
 }
 
 private const val REQUEST_KEY = "livestock_health_observation_meta_request"
 private const val PAYLOAD_ONSET = "onset"
-private const val PAYLOAD_TREND = "trend"

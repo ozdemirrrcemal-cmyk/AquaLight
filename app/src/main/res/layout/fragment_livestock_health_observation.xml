@@ -551,9 +551,8 @@
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/cardObservationStart"
                     style="@style/Widget.Aqua.Card"
-                    android:layout_width="@dimen/aqua_size_0"
+                    android:layout_width="match_parent"
                     android:layout_height="@dimen/aqua_size_60"
-                    android:layout_weight="1"
                     android:clickable="true"
                     android:focusable="true">
 
@@ -605,81 +604,6 @@
 
                         <ImageView
                             android:id="@+id/ivObservationStartChevron"
-                            android:layout_width="@dimen/aqua_size_18"
-                            android:layout_height="@dimen/aqua_size_18"
-                            android:contentDescription="@null"
-                            android:importantForAccessibility="no"
-                            android:src="@drawable/ic_livestock_chevron_down_24"
-                            app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintTop_toTopOf="parent"
-                            app:tint="@color/aqua_content_secondary" />
-
-                    </androidx.constraintlayout.widget.ConstraintLayout>
-
-                </com.google.android.material.card.MaterialCardView>
-
-                <Space
-                    android:layout_width="@dimen/aqua_size_8"
-                    android:layout_height="@dimen/aqua_size_1" />
-
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/cardObservationTrend"
-                    style="@style/Widget.Aqua.Card"
-                    android:layout_width="@dimen/aqua_size_0"
-                    android:layout_height="@dimen/aqua_size_60"
-                    android:layout_weight="1"
-                    android:clickable="true"
-                    android:focusable="true">
-
-                    <androidx.constraintlayout.widget.ConstraintLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:paddingStart="@dimen/aqua_size_10"
-                        android:paddingEnd="@dimen/aqua_size_8">
-
-                        <ImageView
-                            android:id="@+id/ivObservationTrend"
-                            android:layout_width="@dimen/aqua_size_22"
-                            android:layout_height="@dimen/aqua_size_22"
-                            android:contentDescription="@null"
-                            android:importantForAccessibility="no"
-                            android:src="@drawable/ic_livestock_trend_up_24"
-                            app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toTopOf="parent"
-                            app:tint="@color/aqua_status_danger" />
-
-                        <TextView
-                            android:id="@+id/tvObservationTrendLabel"
-                            android:layout_width="@dimen/aqua_size_0"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="@dimen/aqua_size_8"
-                            android:includeFontPadding="false"
-                            android:text="@string/livestock_health_when_change_label"
-                            android:textColor="@color/aqua_content_muted"
-                            android:textSize="@dimen/aqua_text_size_status_nano"
-                            app:layout_constraintBottom_toTopOf="@id/tvObservationTrendValue"
-                            app:layout_constraintEnd_toStartOf="@id/ivObservationTrendChevron"
-                            app:layout_constraintStart_toEndOf="@id/ivObservationTrend"
-                            app:layout_constraintTop_toTopOf="parent"
-                            app:layout_constraintVertical_chainStyle="packed" />
-
-                        <TextView
-                            android:id="@+id/tvObservationTrendValue"
-                            android:layout_width="@dimen/aqua_size_0"
-                            android:layout_height="wrap_content"
-                            android:includeFontPadding="false"
-                            android:text="@string/livestock_health_trend_new"
-                            android:textColor="@color/aqua_card_text_primary"
-                            android:textSize="@dimen/aqua_text_size_caption"
-                            app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintEnd_toStartOf="@id/ivObservationTrendChevron"
-                            app:layout_constraintStart_toStartOf="@id/tvObservationTrendLabel"
-                            app:layout_constraintTop_toBottomOf="@id/tvObservationTrendLabel" />
-
-                        <ImageView
-                            android:id="@+id/ivObservationTrendChevron"
                             android:layout_width="@dimen/aqua_size_18"
                             android:layout_height="@dimen/aqua_size_18"
                             android:contentDescription="@null"
