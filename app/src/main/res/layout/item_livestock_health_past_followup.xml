@@ -13,7 +13,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="@dimen/aqua_size_88"
+        android:minHeight="@dimen/aqua_size_90"
         android:padding="@dimen/aqua_size_12">
 
         <com.google.android.material.card.MaterialCardView
