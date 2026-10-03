@@ -6,7 +6,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.os.bundleOf
-import androidx.core.view.isVisible
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -14,7 +13,6 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.ContentSheetLivestockHealthCheckBinding
 import com.aqua.aqualight.databinding.DialogSettingsBottomSheetBinding
-import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.platform.media.AppMediaScope
 import com.aqua.aqualight.ui.common.dialog.AppTimePickerDialogFragment
 import com.aqua.aqualight.ui.common.media.MediaCropSpec

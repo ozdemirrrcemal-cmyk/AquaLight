@@ -42,38 +42,30 @@ internal fun ContentSheetLivestockHealthCheckBinding.bindCheckStatusCards(
         LivestockHealthCheckBottomSheet.STATUS_DECREASED to cardCheckDecreased,
         LivestockHealthCheckBottomSheet.STATUS_RECOVERED to cardCheckRecovered
     )
-    val selectedStroke = ContextCompat.getColor(
-        fragment.requireContext(),
-        R.color.aqua_button_blue
-    )
-    val normalStroke = ContextCompat.getColor(
-        fragment.requireContext(),
-        R.color.aqua_card_outline
-    )
-    val selectedSurface = ContextCompat.getColor(
-        fragment.requireContext(),
-        R.color.aqua_surface_action
-    )
-    val normalSurface = ContextCompat.getColor(
-        fragment.requireContext(),
-        R.color.aqua_card_surface
+    val style = CheckStatusStyle(
+        selectedStroke = ContextCompat.getColor(
+            fragment.requireContext(),
+            R.color.aqua_button_blue
+        ),
+        normalStroke = ContextCompat.getColor(
+            fragment.requireContext(),
+            R.color.aqua_card_outline
+        ),
+        selectedSurface = ContextCompat.getColor(
+            fragment.requireContext(),
+            R.color.aqua_surface_action
+        ),
+        normalSurface = ContextCompat.getColor(
+            fragment.requireContext(),
+            R.color.aqua_card_surface
+        ),
+        selectedWidth = fragment.resources.getDimensionPixelSize(R.dimen.aqua_size_2),
+        normalWidth = fragment.resources.getDimensionPixelSize(R.dimen.aqua_size_1)
     )
 
     fun render(status: String) {
         cards.forEach { (key, card) ->
-            card.renderCheckStatus(
-                selected = key == status,
-                selectedStroke = selectedStroke,
-                normalStroke = normalStroke,
-                selectedSurface = selectedSurface,
-                normalSurface = normalSurface,
-                selectedWidth = fragment.resources.getDimensionPixelSize(
-                    R.dimen.aqua_size_2
-                ),
-                normalWidth = fragment.resources.getDimensionPixelSize(
-                    R.dimen.aqua_size_1
-                )
-            )
+            card.renderCheckStatus(selected = key == status, style = style)
         }
     }
 
@@ -132,18 +124,24 @@ internal fun ContentSheetLivestockHealthCheckBinding.renderCheckPhoto(photoUri: 
     }
 }
 
+private data class CheckStatusStyle(
+    val selectedStroke: Int,
+    val normalStroke: Int,
+    val selectedSurface: Int,
+    val normalSurface: Int,
+    val selectedWidth: Int,
+    val normalWidth: Int
+)
+
 private fun MaterialCardView.renderCheckStatus(
     selected: Boolean,
-    selectedStroke: Int,
-    normalStroke: Int,
-    selectedSurface: Int,
-    normalSurface: Int,
-    selectedWidth: Int,
-    normalWidth: Int
+    style: CheckStatusStyle
 ) {
-    strokeWidth = if (selected) selectedWidth else normalWidth
-    setStrokeColor(if (selected) selectedStroke else normalStroke)
-    setCardBackgroundColor(if (selected) selectedSurface else normalSurface)
+    strokeWidth = if (selected) style.selectedWidth else style.normalWidth
+    setStrokeColor(if (selected) style.selectedStroke else style.normalStroke)
+    setCardBackgroundColor(
+        if (selected) style.selectedSurface else style.normalSurface
+    )
 }
 
 internal fun Bundle.toLivestockHealthCheckRequest(): LivestockHealthCheckSheetRequest =
