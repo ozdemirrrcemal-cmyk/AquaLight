@@ -17,15 +17,15 @@ internal fun FragmentLivestockHealthObservationBinding.renderObservationLivestoc
     selectedLivestockId: Long,
     onSelected: (AquariumLivestock) -> Unit
 ) {
-    binding.livestockSelectorContainer.removeAllViews()
+    livestockSelectorContainer.removeAllViews()
     selectorBindings.clear()
-    binding.tvNoLivestock.isVisible = livestock.isEmpty()
-    binding.livestockSelectorScroll.isVisible = livestock.isNotEmpty()
+    tvNoLivestock.isVisible = livestock.isEmpty()
+    livestockSelectorScroll.isVisible = livestock.isNotEmpty()
 
     livestock.forEach { item ->
         val itemBinding = ItemLivestockHealthSelectorBinding.inflate(
             LayoutInflater.from(fragment.requireContext()),
-            binding.livestockSelectorContainer,
+            livestockSelectorContainer,
             false
         )
         itemBinding.ivLivestockPhoto.bindRecordPhoto(
@@ -48,7 +48,7 @@ internal fun FragmentLivestockHealthObservationBinding.renderObservationLivestoc
             fragment.applyLivestockSelectorSelection(selectorBindings, item.id)
         }
         selectorBindings[item.id] = itemBinding
-        binding.livestockSelectorContainer.addView(itemBinding.root)
+        livestockSelectorContainer.addView(itemBinding.root)
     }
 
     fragment.applyLivestockSelectorSelection(selectorBindings, selectedLivestockId)
