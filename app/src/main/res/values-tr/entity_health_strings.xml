@@ -32,9 +32,18 @@
     <string name="livestock_health_active_last_check_format">Son kontrol: %1$s</string>
     <string name="livestock_health_today_time_format">Bugün · %1$s</string>
     <string name="livestock_health_no_check_yet">Henüz kontrol yok</string>
-    <string name="livestock_health_past_period_format">%1$s – %2$s · %3$d gün</string>
-    <string name="livestock_health_past_recovered_format">Son durum: Düzeldi · %1$d kontrol</string>
-    <string name="livestock_health_past_manual_format">Kullanıcı tarafından kapatıldı · %1$d kontrol</string>
+    <plurals name="livestock_health_past_period_format">
+        <item quantity="one">%1$s – %2$s · %3$d gün</item>
+        <item quantity="other">%1$s – %2$s · %3$d gün</item>
+    </plurals>
+    <plurals name="livestock_health_past_recovered_format">
+        <item quantity="one">Son durum: Düzeldi · %1$d kontrol</item>
+        <item quantity="other">Son durum: Düzeldi · %1$d kontrol</item>
+    </plurals>
+    <plurals name="livestock_health_past_manual_format">
+        <item quantity="one">Kullanıcı tarafından kapatıldı · %1$d kontrol</item>
+        <item quantity="other">Kullanıcı tarafından kapatıldı · %1$d kontrol</item>
+    </plurals>
     <string name="livestock_health_history_screen_subtitle">Kapanan takipler en yeniden eskiye sıralanır. Bir takibe dokunarak geçmişini salt okunur görüntüleyebilirsin.</string>
 
     <string name="livestock_health_tracking_badge">Takipte</string>

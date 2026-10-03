@@ -44,20 +44,24 @@ internal fun Fragment.bindPastFollowupCard(
     )
     item.tvName.text = livestock.healthDisplayName(this)
     item.tvIssue.setText(LivestockHealthUiText.symptomLabelRes(entry.symptomKey))
-    item.tvPeriod.text = getString(
-        R.string.livestock_health_past_period_format,
+    val durationDays = healthFollowupDurationDays(entry)
+    item.tvPeriod.text = resources.getQuantityString(
+        R.plurals.livestock_health_past_period_format,
+        durationDays,
         LocaleFormatter.formatDate(requireContext(), entry.startedAtMillis),
         LocaleFormatter.formatDate(requireContext(), entry.closedAtMillis),
-        healthFollowupDurationDays(entry)
+        durationDays
     )
     val recovered =
         entry.closeReason == LivestockHealthUiSessionState.CLOSE_REASON_RECOVERED
-    item.tvCloseReason.text = getString(
-        if (recovered) {
-            R.string.livestock_health_past_recovered_format
-        } else {
-            R.string.livestock_health_past_manual_format
-        },
+    val closeReasonPlurals = if (recovered) {
+        R.plurals.livestock_health_past_recovered_format
+    } else {
+        R.plurals.livestock_health_past_manual_format
+    }
+    item.tvCloseReason.text = resources.getQuantityString(
+        closeReasonPlurals,
+        entry.checkCount,
         entry.checkCount
     )
     item.tvCloseReason.setTextColor(
@@ -86,7 +90,10 @@ private fun Fragment.healthLastCheckLabel(millis: Long): String =
         getString(R.string.livestock_health_no_check_yet)
     }
 
-private fun healthFollowupDurationDays(entry: ClosedLivestockFollowupUi): Long =
+private fun healthFollowupDurationDays(entry: ClosedLivestockFollowupUi): Int =
     TimeUnit.MILLISECONDS.toDays(
         (entry.closedAtMillis - entry.startedAtMillis).coerceAtLeast(0L)
-    ).coerceAtLeast(1L)
+    )
+        .coerceAtLeast(1L)
+        .coerceAtMost(Int.MAX_VALUE.toLong())
+        .toInt()

@@ -32,9 +32,18 @@
     <string name="livestock_health_active_last_check_format">Last check: %1$s</string>
     <string name="livestock_health_today_time_format">Today · %1$s</string>
     <string name="livestock_health_no_check_yet">No check yet</string>
-    <string name="livestock_health_past_period_format">%1$s – %2$s · %3$d days</string>
-    <string name="livestock_health_past_recovered_format">Final status: Recovered · %1$d checks</string>
-    <string name="livestock_health_past_manual_format">Closed by user · %1$d checks</string>
+    <plurals name="livestock_health_past_period_format">
+        <item quantity="one">%1$s – %2$s · %3$d day</item>
+        <item quantity="other">%1$s – %2$s · %3$d days</item>
+    </plurals>
+    <plurals name="livestock_health_past_recovered_format">
+        <item quantity="one">Final status: Recovered · %1$d check</item>
+        <item quantity="other">Final status: Recovered · %1$d checks</item>
+    </plurals>
+    <plurals name="livestock_health_past_manual_format">
+        <item quantity="one">Closed by user · %1$d check</item>
+        <item quantity="other">Closed by user · %1$d checks</item>
+    </plurals>
     <string name="livestock_health_history_screen_subtitle">Closed follow-ups are ordered newest first. Tap one to view its history in read-only mode.</string>
 
     <string name="livestock_health_tracking_badge">Tracking</string>
