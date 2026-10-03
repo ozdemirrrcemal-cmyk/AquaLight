@@ -219,9 +219,16 @@
     <string name="livestock_health_check_affected_question">Kaç canlı etkileniyor?</string>
     <string name="livestock_health_check_time_title">Kontrol zamanı</string>
     <string name="livestock_health_check_time_value">Bugün · 18:20</string>
+    <string name="livestock_health_check_time_today_format">Bugün · %1$s</string>
     <string name="livestock_health_check_photo_note_title">Fotoğraf veya not (isteğe bağlı)</string>
     <string name="livestock_health_check_photo_note_value">Yeni bir not veya gözlem fotoğrafı ekle</string>
-    <string name="livestock_health_check_context_value">Su ölçümü: 2 gün önce · Tankta aç</string>
+    <string name="livestock_health_check_photo_source_title">Kontrol görseli</string>
+    <string name="livestock_health_check_photo_add_title">Görsel ekle</string>
+    <string name="livestock_health_check_photo_add_subtitle">Kamera veya albümden seç</string>
+    <string name="livestock_health_check_photo_selected">Kontrol görseli eklendi</string>
+    <string name="livestock_health_check_photo_replace">Değiştirmek için dokun</string>
+    <string name="livestock_health_check_note_hint">Kontrolde gözlemlediğin değişimi yaz…</string>
+    <string name="livestock_health_check_context_value">Su ölçümü · 2 gün önce</string>
     <string name="livestock_health_check_save">Kontrolü kaydet</string>
 
     <string name="livestock_health_default_count">1</string>

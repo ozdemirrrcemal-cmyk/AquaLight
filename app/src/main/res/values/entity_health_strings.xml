@@ -219,9 +219,16 @@
     <string name="livestock_health_check_affected_question">How many are affected?</string>
     <string name="livestock_health_check_time_title">Check time</string>
     <string name="livestock_health_check_time_value">Today · 18:20</string>
+    <string name="livestock_health_check_time_today_format">Today · %1$s</string>
     <string name="livestock_health_check_photo_note_title">Photo or note (optional)</string>
     <string name="livestock_health_check_photo_note_value">Add a note or a new observation photo</string>
-    <string name="livestock_health_check_context_value">Water measurement: 2 days ago · Open tank</string>
+    <string name="livestock_health_check_photo_source_title">Check photo</string>
+    <string name="livestock_health_check_photo_add_title">Add photo</string>
+    <string name="livestock_health_check_photo_add_subtitle">Choose camera or gallery</string>
+    <string name="livestock_health_check_photo_selected">Check photo added</string>
+    <string name="livestock_health_check_photo_replace">Tap to replace</string>
+    <string name="livestock_health_check_note_hint">Describe what changed during this check…</string>
+    <string name="livestock_health_check_context_value">Water measurement · 2 days ago</string>
     <string name="livestock_health_check_save">Save check</string>
 
     <string name="livestock_health_default_count">1</string>
