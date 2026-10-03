@@ -83,8 +83,9 @@ class LivestockHealthEvaluationFragment :
         binding.ivEvaluationLivestockIcon.setImageResource(
             LivestockCategories.iconRes(livestock?.category.orEmpty())
         )
-        binding.tvEvaluationSummary.text = getString(
-            R.string.livestock_health_evaluation_summary_format,
+        binding.tvEvaluationSummary.text = resources.getQuantityString(
+            R.plurals.livestock_health_evaluation_summary_format,
+            totalCount,
             name,
             affectedCount,
             totalCount,

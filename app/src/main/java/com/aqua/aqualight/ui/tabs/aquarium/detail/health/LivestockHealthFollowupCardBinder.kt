@@ -22,10 +22,13 @@ internal fun Fragment.bindActiveFollowupCard(
     )
     item.tvName.text = livestock.healthDisplayName(this)
     item.tvIssue.setText(LivestockHealthUiText.symptomLabelRes(entry.symptomKey))
-    item.tvAffected.text = getString(
-        R.string.livestock_health_affected_format,
-        entry.affectedCount.coerceIn(1, livestock.quantity.coerceAtLeast(1)),
-        livestock.quantity.coerceAtLeast(1)
+    val totalCount = livestock.quantity.coerceAtLeast(1)
+    val affectedCount = entry.affectedCount.coerceIn(1, totalCount)
+    item.tvAffected.text = resources.getQuantityString(
+        R.plurals.livestock_health_affected_format,
+        totalCount,
+        affectedCount,
+        totalCount
     )
     item.tvLastCheck.text = getString(
         R.string.livestock_health_active_last_check_format,

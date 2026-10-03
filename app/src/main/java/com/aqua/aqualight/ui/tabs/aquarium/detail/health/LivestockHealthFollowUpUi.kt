@@ -223,8 +223,9 @@ internal class LivestockHealthFollowUpRenderer(
             fragment.getString(R.string.aquarium_unnamed_livestock)
         }
         binding.tvFollowupIssue.setText(LivestockHealthUiText.symptomLabelRes(symptomKey))
-        binding.tvFollowupAffected.text = fragment.getString(
-            R.string.livestock_health_affected_format,
+        binding.tvFollowupAffected.text = fragment.resources.getQuantityString(
+            R.plurals.livestock_health_affected_format,
+            quantity,
             affectedCount.coerceIn(1, quantity),
             quantity
         )
@@ -270,8 +271,9 @@ internal class LivestockHealthFollowUpRenderer(
                     statusColorRes(entry.status)
                 )
             )
-            item.tvHistoryAffected.text = fragment.getString(
-                R.string.livestock_health_affected_format,
+            item.tvHistoryAffected.text = fragment.resources.getQuantityString(
+                R.plurals.livestock_health_affected_format,
+                entry.totalCount,
                 entry.affectedCount,
                 entry.totalCount
             )

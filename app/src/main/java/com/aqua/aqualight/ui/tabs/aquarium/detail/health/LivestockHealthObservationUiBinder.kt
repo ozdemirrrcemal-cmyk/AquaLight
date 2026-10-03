@@ -39,9 +39,11 @@ internal fun FragmentLivestockHealthObservationBinding.renderObservationLivestoc
         itemBinding.tvLivestockName.text = nameParts.first()
         itemBinding.tvLivestockSubtitle.isVisible = nameParts.size > 1
         itemBinding.tvLivestockSubtitle.text = nameParts.getOrNull(1).orEmpty()
-        itemBinding.tvLivestockQuantity.text = fragment.getString(
-            R.string.livestock_health_selector_quantity_format,
-            item.quantity.coerceAtLeast(1)
+        val quantity = item.quantity.coerceAtLeast(1)
+        itemBinding.tvLivestockQuantity.text = fragment.resources.getQuantityString(
+            R.plurals.livestock_health_selector_quantity_format,
+            quantity,
+            quantity
         )
         itemBinding.root.setOnClickListener {
             onSelected(item)

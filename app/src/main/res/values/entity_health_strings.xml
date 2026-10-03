@@ -49,7 +49,10 @@
     <string name="livestock_health_tracking_badge">Tracking</string>
     <string name="livestock_health_issue_surface">Breathing near the surface</string>
     <string name="livestock_health_issue_first_seen">First observed today · 14:30</string>
-    <string name="livestock_health_affected_format">%1$d / %2$d livestock affected</string>
+    <plurals name="livestock_health_affected_format">
+        <item quantity="one">%1$d / %2$d livestock affected</item>
+        <item quantity="other">%1$d / %2$d livestock affected</item>
+    </plurals>
     <string name="livestock_health_history_today_surface_same">Today · 18:20 · Surface breathing · Same</string>
     <string name="livestock_health_history_time_today_format">Today · %1$s</string>
     <string name="livestock_health_history_time_current_preview">Today · 18:20</string>
@@ -73,7 +76,10 @@
     <string name="livestock_health_new_observation_title">New observation</string>
     <string name="livestock_health_observation_progress">Observation record</string>
     <string name="livestock_health_step_livestock">1. Which livestock?</string>
-    <string name="livestock_health_selector_quantity_format">%1$d livestock</string>
+    <plurals name="livestock_health_selector_quantity_format">
+        <item quantity="one">%1$d livestock</item>
+        <item quantity="other">%1$d livestock</item>
+    </plurals>
     <string name="livestock_health_step_observation">2. What did you observe?</string>
     <string name="livestock_health_select_single">Select one status or change.</string>
     <string name="livestock_health_select_livestock_hint">Select from livestock registered in this tank.</string>
@@ -143,7 +149,10 @@
 
     <string name="livestock_health_evaluation_title">Evaluation</string>
     <string name="livestock_health_change_control_title">Change to check</string>
-    <string name="livestock_health_evaluation_summary_format">%1$s · %2$d / %3$d livestock · %4$s</string>
+    <plurals name="livestock_health_evaluation_summary_format">
+        <item quantity="one">%1$s · %2$d / %3$d livestock · %4$s</item>
+        <item quantity="other">%1$s · %2$d / %3$d livestock · %4$s</item>
+    </plurals>
     <string name="livestock_health_used_data_title">Used in this evaluation</string>
     <string name="livestock_health_last_water_measurement">Last water measurement</string>
     <string name="livestock_health_last_water_measurement_value">5 days ago · needs a fresh check</string>

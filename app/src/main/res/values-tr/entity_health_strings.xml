@@ -49,7 +49,10 @@
     <string name="livestock_health_tracking_badge">Takipte</string>
     <string name="livestock_health_issue_surface">Normalden sık yüzeye çıkma</string>
     <string name="livestock_health_issue_first_seen">İlk gözlem bugün · 14:30</string>
-    <string name="livestock_health_affected_format">%1$d / %2$d canlı etkileniyor</string>
+    <plurals name="livestock_health_affected_format">
+        <item quantity="one">%1$d / %2$d canlı etkileniyor</item>
+        <item quantity="other">%1$d / %2$d canlı etkileniyor</item>
+    </plurals>
     <string name="livestock_health_history_today_surface_same">Bugün · 18:20 · Yüzeye çıkma · Aynı</string>
     <string name="livestock_health_history_time_today_format">Bugün · %1$s</string>
     <string name="livestock_health_history_time_current_preview">Bugün · 18:20</string>
@@ -73,7 +76,10 @@
     <string name="livestock_health_new_observation_title">Yeni gözlem</string>
     <string name="livestock_health_observation_progress">Gözlem kaydı</string>
     <string name="livestock_health_step_livestock">1. Hangi canlı?</string>
-    <string name="livestock_health_selector_quantity_format">%1$d canlı</string>
+    <plurals name="livestock_health_selector_quantity_format">
+        <item quantity="one">%1$d canlı</item>
+        <item quantity="other">%1$d canlı</item>
+    </plurals>
     <string name="livestock_health_step_observation">2. Ne gözlemledin?</string>
     <string name="livestock_health_select_single">Yalnızca tek bir durum veya değişim seç.</string>
     <string name="livestock_health_select_livestock_hint">Tankındaki kayıtlı canlılardan seç.</string>
@@ -143,7 +149,10 @@
 
     <string name="livestock_health_evaluation_title">Değerlendirme</string>
     <string name="livestock_health_change_control_title">Değişimi kontrol et</string>
-    <string name="livestock_health_evaluation_summary_format">%1$s · %2$d / %3$d canlı · %4$s</string>
+    <plurals name="livestock_health_evaluation_summary_format">
+        <item quantity="one">%1$s · %2$d / %3$d canlı · %4$s</item>
+        <item quantity="other">%1$s · %2$d / %3$d canlı · %4$s</item>
+    </plurals>
     <string name="livestock_health_used_data_title">Bu değerlendirmede kullanılanlar</string>
     <string name="livestock_health_last_water_measurement">Son su ölçümü</string>
     <string name="livestock_health_last_water_measurement_value">5 gün önce · güncel ölçüm gerekli</string>
