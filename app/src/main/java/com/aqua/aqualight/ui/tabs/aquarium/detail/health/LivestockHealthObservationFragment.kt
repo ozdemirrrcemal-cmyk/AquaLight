@@ -153,7 +153,8 @@ class LivestockHealthObservationFragment : TankRecordPhotoFragment(
 
         binding.tvNoLivestock.isVisible = currentLivestock.isEmpty()
         binding.livestockSelectorScroll.isVisible = currentLivestock.isNotEmpty()
-        binding.btnEvaluate.isEnabled = currentLivestock.isNotEmpty()
+        binding.btnEvaluate.isEnabled =
+            currentLivestock.isNotEmpty() && selectedSymptoms.isNotEmpty()
 
         currentLivestock.forEach {
             livestock ->
@@ -261,11 +262,7 @@ class LivestockHealthObservationFragment : TankRecordPhotoFragment(
         }
         val navController = findNavController()
 
-        val symptomKey = selectedSymptoms.firstOrNull()
-            ?: LivestockHealthObservationCatalog
-                .symptomsFor(livestock.category)
-                .first()
-                .key
+        val symptomKey = selectedSymptoms.first()
         val now = System.currentTimeMillis()
         runCatching {
             navController.getBackStackEntry(R.id.livestockHealthFragment)
