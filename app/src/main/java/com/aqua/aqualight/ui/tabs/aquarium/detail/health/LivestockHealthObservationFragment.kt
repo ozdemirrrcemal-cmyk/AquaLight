@@ -201,10 +201,6 @@ class LivestockHealthObservationFragment : TankRecordPhotoFragment(
         val options = LivestockHealthObservationCatalog.symptomsFor(category)
         val validKeys = options.mapTo(linkedSetOf()) { option -> option.key }
         selectedSymptoms.retainAll(validKeys)
-        if (selectedSymptoms.isEmpty()) {
-            options.firstOrNull()?.let { option -> selectedSymptoms += option.key }
-        }
-
         binding.bindLivestockSymptomOptions(
             options = options,
             selectedSymptoms = selectedSymptoms
@@ -260,6 +256,9 @@ class LivestockHealthObservationFragment : TankRecordPhotoFragment(
         }
 
         val livestock = currentLivestock.selectedLivestock(selectedLivestockId) ?: return
+        if (selectedSymptoms.isEmpty()) {
+            return
+        }
         val navController = findNavController()
 
         val symptomKey = selectedSymptoms.firstOrNull()

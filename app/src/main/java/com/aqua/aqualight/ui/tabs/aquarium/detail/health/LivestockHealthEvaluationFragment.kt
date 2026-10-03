@@ -9,7 +9,6 @@ import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
 import com.aqua.aqualight.databinding.FragmentLivestockHealthEvaluationBinding
-import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
@@ -42,14 +41,7 @@ class LivestockHealthEvaluationFragment :
             fragment = this,
             config = AquaHeaderConfig(
                 titleOverride = getString(R.string.livestock_health_evaluation_title),
-                onBackClick = { findNavController().navigateUp() },
-                actions = listOf(
-                    AquaHeaderAction(
-                        iconRes = R.drawable.ic_info,
-                        contentDescription = getString(R.string.livestock_health_info_description),
-                        onClick = {}
-                    )
-                )
+                onBackClick = { findNavController().navigateUp() }
             )
         )
 
