@@ -37,6 +37,20 @@ internal class WaterAnalysisParameterGrid(
             marginStart = if (column == 0) 0 else spacing
         }
 
+    fun tileLayoutParams(
+        itemCountInRow: Int,
+        column: Int,
+        spacing: Int
+    ): LinearLayout.LayoutParams =
+        if (itemCountInRow == 1) {
+            LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+        } else {
+            cellLayoutParams(column, spacing)
+        }
+
     fun addSpacer(row: LinearLayout, spacing: Int) {
         row.addView(
             Space(fragment.requireContext()),

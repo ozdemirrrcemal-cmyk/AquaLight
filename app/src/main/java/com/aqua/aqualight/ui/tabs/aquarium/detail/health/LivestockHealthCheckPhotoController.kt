@@ -16,7 +16,6 @@ import com.aqua.aqualight.ui.common.media.MediaCropPreparationResult
 import com.aqua.aqualight.ui.common.media.MediaFlowCoordinatorViewModel
 import com.aqua.aqualight.ui.common.permission.CapabilityPermissionCoordinator
 import com.yalantis.ucrop.UCrop
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 internal class LivestockHealthCheckPhotoController(
@@ -151,8 +150,6 @@ internal class LivestockHealthCheckPhotoController(
                     showError()
                 }
             }
-        } catch (cancellation: CancellationException) {
-            throw cancellation
         } finally {
             fragment.setFragmentGlobalLoading(false)
         }

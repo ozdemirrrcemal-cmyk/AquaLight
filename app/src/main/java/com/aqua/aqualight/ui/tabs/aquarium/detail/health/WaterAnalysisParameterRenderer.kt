@@ -134,7 +134,7 @@ internal class WaterAnalysisParameterRenderer(
                     if (itemIndex < models.size) {
                         addParameterCard(row, models[itemIndex], column, spacing)
                     } else {
-                        val layoutParams = tileLayoutParams(
+                        val layoutParams = grid.tileLayoutParams(
                             itemCountInRow = indexes.size,
                             column = column,
                             spacing = spacing
@@ -164,19 +164,6 @@ internal class WaterAnalysisParameterRenderer(
         row.addView(itemBinding.root, grid.cellLayoutParams(column, spacing))
     }
 
-    private fun tileLayoutParams(
-        itemCountInRow: Int,
-        column: Int,
-        spacing: Int
-    ): LinearLayout.LayoutParams =
-        if (itemCountInRow == 1) {
-            LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-        } else {
-            grid.cellLayoutParams(column, spacing)
-        }
 
     private fun addTestTile(
         row: LinearLayout,

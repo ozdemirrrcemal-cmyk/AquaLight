@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.FragmentManager
@@ -20,10 +19,7 @@ import com.aqua.aqualight.platform.media.AppMediaScope
 import com.aqua.aqualight.ui.common.dialog.AppTimePickerDialogFragment
 import com.aqua.aqualight.ui.common.media.MediaCropSpec
 import com.aqua.aqualight.ui.common.media.MediaFlowCoordinatorViewModel
-import com.aqua.aqualight.ui.common.media.bindRecordPhoto
-import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.LivestockCategories
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.launch
 
 internal class LivestockHealthCheckBottomSheet : BottomSheetDialogFragment() {
@@ -39,7 +35,7 @@ internal class LivestockHealthCheckBottomSheet : BottomSheetDialogFragment() {
         MediaFlowCoordinatorViewModel.factory(
             context = requireContext().applicationContext,
             scope = AppMediaScope.LIVESTOCK,
-            ownerToken = "health_check_${requireArguments().getLong(ARG_LIVESTOCK_ID)}",
+            ownerToken = "health_check_${requireArguments().getLong(ARG_CHECK_LIVESTOCK_ID)}",
             ownerUid = container.authenticatedOwnerIdentity.requireOwnerUid(),
             cropSpec = MediaCropSpec.RECORD,
             mediaProcessor = container.imageMediaProcessor
@@ -51,7 +47,9 @@ internal class LivestockHealthCheckBottomSheet : BottomSheetDialogFragment() {
             fragment = this,
             mediaFlow = mediaFlow,
             hasView = { _contentBinding != null },
-            onPhotoChanged = ::renderSelectedPhoto
+            onPhotoChanged = { photoUri ->
+                _contentBinding?.renderCheckPhoto(photoUri)
+            }
         )
     }
 
@@ -88,87 +86,26 @@ internal class LivestockHealthCheckBottomSheet : BottomSheetDialogFragment() {
         sheetBinding.sheetContentContainer.removeAllViews()
         sheetBinding.sheetContentContainer.addView(contentBinding.root)
 
-        totalCount = requireArguments().getInt(ARG_TOTAL_COUNT, 1).coerceAtLeast(1)
+        val request = requireArguments().toLivestockHealthCheckRequest()
+        totalCount = request.totalCount
         affectedCount = affectedCount.coerceIn(1, totalCount)
 
-        bindLivestock()
-        bindStatusCards()
-        bindCounter()
+        contentBinding.bindCheckLivestock(request)
+        contentBinding.bindCheckStatusCards(
+            fragment = this,
+            selectedStatus = selectedStatus,
+            onSelected = { selectedStatus = it }
+        )
+        contentBinding.bindAffectedCounter(
+            fragment = this,
+            currentCount = { affectedCount },
+            totalCount = { totalCount },
+            onCountChanged = { affectedCount = it }
+        )
         bindTimePicker()
         bindPhotoAndNote()
         bindSave()
-        renderTime()
-        updateCounter()
-    }
-
-    private fun bindLivestock() {
-        contentBinding.tvCheckLivestockName.text = requireArguments()
-            .getString(ARG_LIVESTOCK_NAME)
-            .orEmpty()
-        contentBinding.tvCheckLivestockIssue.text = requireArguments()
-            .getString(ARG_ISSUE_LABEL)
-            .orEmpty()
-        contentBinding.ivCheckLivestock.bindRecordPhoto(
-            requireArguments().getString(ARG_PHOTO_URI),
-            LivestockCategories.iconRes(
-                requireArguments().getString(ARG_CATEGORY).orEmpty()
-            )
-        )
-    }
-
-    private fun bindStatusCards() {
-        val cards = linkedMapOf(
-            STATUS_INCREASED to contentBinding.cardCheckIncreased,
-            STATUS_SAME to contentBinding.cardCheckSame,
-            STATUS_DECREASED to contentBinding.cardCheckDecreased,
-            STATUS_RECOVERED to contentBinding.cardCheckRecovered
-        )
-
-        cards.forEach { (status, card) ->
-            card.setOnClickListener {
-                selectedStatus = status
-                updateStatusCards(cards)
-            }
-        }
-        updateStatusCards(cards)
-    }
-
-    private fun updateStatusCards(cards: Map<String, MaterialCardView>) {
-        val selectedStroke = ContextCompat.getColor(requireContext(), R.color.aqua_button_blue)
-        val normalStroke = ContextCompat.getColor(requireContext(), R.color.aqua_card_outline)
-        val selectedSurface = ContextCompat.getColor(requireContext(), R.color.aqua_surface_action)
-        val normalSurface = ContextCompat.getColor(requireContext(), R.color.aqua_card_surface)
-
-        cards.forEach { (status, card) ->
-            val selected = status == selectedStatus
-            card.strokeWidth = resources.getDimensionPixelSize(
-                if (selected) R.dimen.aqua_size_2 else R.dimen.aqua_size_1
-            )
-            card.setStrokeColor(if (selected) selectedStroke else normalStroke)
-            card.setCardBackgroundColor(if (selected) selectedSurface else normalSurface)
-        }
-    }
-
-    private fun bindCounter() {
-        contentBinding.btnCheckMinus.setOnClickListener {
-            affectedCount = (affectedCount - 1).coerceAtLeast(1)
-            updateCounter()
-        }
-        contentBinding.btnCheckPlus.setOnClickListener {
-            affectedCount = (affectedCount + 1).coerceAtMost(totalCount)
-            updateCounter()
-        }
-    }
-
-    private fun updateCounter() {
-        affectedCount = affectedCount.coerceIn(1, totalCount)
-        contentBinding.tvCheckAffectedCount.text = getString(
-            R.string.livestock_health_affected_counter_format,
-            affectedCount,
-            totalCount
-        )
-        contentBinding.btnCheckMinus.isEnabled = affectedCount > 1
-        contentBinding.btnCheckPlus.isEnabled = affectedCount < totalCount
+        contentBinding.renderCheckTime(this, selectedTimeMillis)
     }
 
     private fun bindTimePicker() {
@@ -183,7 +120,7 @@ internal class LivestockHealthCheckBottomSheet : BottomSheetDialogFragment() {
                 return@setFragmentResultListener
             }
             selectedTimeMillis = result.getLong(AppTimePickerDialogFragment.RESULT_MILLIS)
-            renderTime()
+            contentBinding.renderCheckTime(this, selectedTimeMillis)
         }
 
         contentBinding.cardCheckTime.setOnClickListener {
@@ -195,17 +132,11 @@ internal class LivestockHealthCheckBottomSheet : BottomSheetDialogFragment() {
         }
     }
 
-    private fun renderTime() {
-        contentBinding.tvCheckTimeValue.text = getString(
-            R.string.livestock_health_check_time_today_format,
-            LocaleFormatter.formatTime(requireContext(), selectedTimeMillis)
-        )
-    }
 
     private fun bindPhotoAndNote() {
         mediaFlow.initializeSelection(null)
         photoController.bind(viewLifecycleOwner)
-        renderSelectedPhoto(photoController.selectedUri())
+        contentBinding.renderCheckPhoto(photoController.selectedUri())
 
         contentBinding.checkPhotoMediaArea.setOnClickListener {
             photoController.showSource(
@@ -217,18 +148,6 @@ internal class LivestockHealthCheckBottomSheet : BottomSheetDialogFragment() {
         }
     }
 
-    private fun renderSelectedPhoto(photoUri: String?) {
-        if (_contentBinding == null) return
-        val hasPhoto = !photoUri.isNullOrBlank()
-        contentBinding.ivCheckPhotoPreview.isVisible = hasPhoto
-        contentBinding.ivCheckPhotoPlaceholder.isVisible = !hasPhoto
-        contentBinding.btnRemoveCheckPhoto.isVisible = hasPhoto
-        if (hasPhoto) {
-            contentBinding.ivCheckPhotoPreview.bindRecordPhoto(photoUri)
-        } else {
-            contentBinding.ivCheckPhotoPreview.setImageDrawable(null)
-        }
-    }
 
     private fun bindSave() {
         contentBinding.btnSaveCheck.setOnClickListener {
@@ -283,12 +202,6 @@ internal class LivestockHealthCheckBottomSheet : BottomSheetDialogFragment() {
         const val STATUS_DECREASED = "decreased"
         const val STATUS_RECOVERED = "recovered"
 
-        private const val ARG_LIVESTOCK_NAME = "livestock_name"
-        private const val ARG_ISSUE_LABEL = "issue_label"
-        private const val ARG_CATEGORY = "livestock_category"
-        private const val ARG_LIVESTOCK_ID = "livestock_id"
-        private const val ARG_TOTAL_COUNT = "total_count"
-        private const val ARG_PHOTO_URI = "photo_uri"
 
         private const val STATE_STATUS = "status"
         private const val STATE_AFFECTED_COUNT = "affected_count"
@@ -299,12 +212,7 @@ internal class LivestockHealthCheckBottomSheet : BottomSheetDialogFragment() {
 
         fun show(
             fragmentManager: FragmentManager,
-            livestockId: Long,
-            livestockName: String,
-            category: String,
-            issueLabel: String,
-            totalCount: Int,
-            photoUri: String?
+            request: LivestockHealthCheckSheetRequest
         ) {
             if (fragmentManager.findFragmentByTag(TAG) != null || fragmentManager.isStateSaved) {
                 return
@@ -312,14 +220,15 @@ internal class LivestockHealthCheckBottomSheet : BottomSheetDialogFragment() {
 
             LivestockHealthCheckBottomSheet().apply {
                 arguments = bundleOf(
-                    ARG_LIVESTOCK_ID to livestockId,
-                    ARG_LIVESTOCK_NAME to livestockName,
-                    ARG_CATEGORY to category,
-                    ARG_ISSUE_LABEL to issueLabel,
-                    ARG_TOTAL_COUNT to totalCount,
-                    ARG_PHOTO_URI to photoUri
+                    ARG_CHECK_LIVESTOCK_ID to request.livestockId,
+                    ARG_CHECK_LIVESTOCK_NAME to request.livestockName,
+                    ARG_CHECK_CATEGORY to request.category,
+                    ARG_CHECK_ISSUE_LABEL to request.issueLabel,
+                    ARG_CHECK_TOTAL_COUNT to request.totalCount,
+                    ARG_CHECK_PHOTO_URI to request.photoUri
                 )
             }.show(fragmentManager, TAG)
         }
+
     }
 }

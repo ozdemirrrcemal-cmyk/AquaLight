@@ -129,43 +129,45 @@ class LivestockHealthEvaluationFragment :
     }
 
     private fun saveEvaluationAndReturn() {
-        if (isNavigating) {
-            return
-        }
-        val livestock = currentLivestock ?: return
-        val navController = findNavController()
-        val now = System.currentTimeMillis()
+        if (!isNavigating) {
+            currentLivestock?.let { livestock ->
+                val navController = findNavController()
+                val now = System.currentTimeMillis()
+                val saved = runCatching {
+                    navController.getBackStackEntry(R.id.livestockHealthFragment)
+                        .savedStateHandle
+                        .apply {
+                            set(LivestockHealthFragment.KEY_HAS_OBSERVATION, true)
+                            set(LivestockHealthFragment.KEY_LIVESTOCK_ID, livestock.id)
+                            set(LivestockHealthFragment.KEY_SYMPTOM_KEY, args.symptomKey)
+                            set(LivestockHealthFragment.KEY_AFFECTED_COUNT, args.affectedCount)
+                            set(LivestockHealthFragment.KEY_STARTED_AT, now)
+                            set(LivestockHealthFragment.KEY_LAST_CHECK_AT, now)
+                            LivestockHealthUiSessionState.upsertActiveFollowup(
+                                handle = this,
+                                entry = ActiveLivestockFollowupUi(
+                                    livestockId = livestock.id,
+                                    symptomKey = args.symptomKey,
+                                    affectedCount = args.affectedCount.coerceIn(
+                                        1,
+                                        livestock.quantity.coerceAtLeast(1)
+                                    ),
+                                    totalCount = livestock.quantity.coerceAtLeast(1),
+                                    startedAtMillis = now,
+                                    lastCheckAtMillis = now
+                                )
+                            )
+                        }
+                }.isSuccess
 
-        runCatching {
-            navController.getBackStackEntry(R.id.livestockHealthFragment)
-                .savedStateHandle
-                .apply {
-                    set(LivestockHealthFragment.KEY_HAS_OBSERVATION, true)
-                    set(LivestockHealthFragment.KEY_LIVESTOCK_ID, livestock.id)
-                    set(LivestockHealthFragment.KEY_SYMPTOM_KEY, args.symptomKey)
-                    set(LivestockHealthFragment.KEY_AFFECTED_COUNT, args.affectedCount)
-                    set(LivestockHealthFragment.KEY_STARTED_AT, now)
-                    set(LivestockHealthFragment.KEY_LAST_CHECK_AT, now)
-                    LivestockHealthUiSessionState.upsertActiveFollowup(
-                        handle = this,
-                        entry = ActiveLivestockFollowupUi(
-                            livestockId = livestock.id,
-                            symptomKey = args.symptomKey,
-                            affectedCount = args.affectedCount.coerceIn(
-                                1,
-                                livestock.quantity.coerceAtLeast(1)
-                            ),
-                            totalCount = livestock.quantity.coerceAtLeast(1),
-                            startedAtMillis = now,
-                            lastCheckAtMillis = now
-                        )
+                if (saved) {
+                    isNavigating = navController.popBackStack(
+                        R.id.livestockHealthFragment,
+                        false
                     )
                 }
-        }.getOrElse {
-            return
+            }
         }
-
-        isNavigating = navController.popBackStack(R.id.livestockHealthFragment, false)
     }
 
     override fun onDestroyView() {
