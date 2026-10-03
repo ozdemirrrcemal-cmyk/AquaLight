@@ -10,9 +10,8 @@ import com.aqua.aqualight.databinding.ItemLivestockHealthSelectorBinding
 import com.aqua.aqualight.ui.common.media.bindRecordPhoto
 import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.LivestockCategories
 
-internal fun renderObservationLivestockSelectors(
+internal fun FragmentLivestockHealthObservationBinding.renderObservationLivestockSelectors(
     fragment: Fragment,
-    binding: FragmentLivestockHealthObservationBinding,
     livestock: List<AquariumLivestock>,
     selectorBindings: MutableMap<Long, ItemLivestockHealthSelectorBinding>,
     selectedLivestockId: Long,

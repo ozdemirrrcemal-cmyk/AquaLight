@@ -147,9 +147,8 @@ class LivestockHealthObservationFragment : TankRecordPhotoFragment(
                 selectedSymptoms.clear()
             }
 
-            renderObservationLivestockSelectors(
+            binding.renderObservationLivestockSelectors(
                 fragment = this,
-                binding = binding,
                 livestock = currentLivestock,
                 selectorBindings = selectorBindings,
                 selectedLivestockId = selectedLivestockId
