@@ -7,11 +7,13 @@ import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.aquarium.AquariumLivestock
 import com.aqua.aqualight.databinding.FragmentLivestockHealthEvaluationBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
+import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.LivestockCategories
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
 
 class LivestockHealthEvaluationFragment :
@@ -51,7 +53,8 @@ class LivestockHealthEvaluationFragment :
             )
         )
 
-        binding.btnMeasureWater.setOnClickListener { openTankHealth() }
+        binding.rowLastWaterMeasurement.setOnClickListener { openTankHealth() }
+        binding.rowLastWaterChange.setOnClickListener { openTankHealth() }
         binding.btnViewFollowup.setOnClickListener { openFollowup() }
 
         observeLivestock()
@@ -63,23 +66,60 @@ class LivestockHealthEvaluationFragment :
     }
 
     private fun observeLivestock() {
-        aquariumTankViewModel.tanks.observe(viewLifecycleOwner) {
-            tanks ->
+        aquariumTankViewModel.tanks.observe(viewLifecycleOwner) { tanks ->
             val livestock = tanks
                 .firstOrNull { tank -> tank.id == args.tankId }
                 ?.livestock
                 ?.firstOrNull { item -> item.id == args.livestockId }
 
-            val name = livestock?.name?.ifBlank {
-                getString(R.string.aquarium_unnamed_livestock)
-            } ?: getString(R.string.aquarium_unnamed_livestock)
+            renderEvaluation(livestock)
+        }
+    }
 
-            binding.tvEvaluationSummary.text = getString(
-                R.string.livestock_health_evaluation_summary_format,
-                name,
-                getString(LivestockHealthUiText.symptomLabelRes(args.symptomKey)),
-                args.affectedCount.coerceAtLeast(1)
-            )
+    private fun renderEvaluation(livestock: AquariumLivestock?) {
+        val name = livestock?.name?.ifBlank {
+            getString(R.string.aquarium_unnamed_livestock)
+        } ?: getString(R.string.aquarium_unnamed_livestock)
+        val totalCount = livestock?.quantity?.coerceAtLeast(1)
+            ?: args.affectedCount.coerceAtLeast(1)
+        val affectedCount = args.affectedCount.coerceIn(1, totalCount)
+        val symptomLabel = getString(
+            LivestockHealthUiText.symptomLabelRes(args.symptomKey)
+        )
+
+        binding.ivEvaluationLivestockIcon.setImageResource(
+            LivestockCategories.iconRes(livestock?.category.orEmpty())
+        )
+        binding.tvEvaluationSummary.text = getString(
+            R.string.livestock_health_evaluation_summary_format,
+            name,
+            affectedCount,
+            totalCount,
+            symptomLabel
+        )
+
+        val checks = LivestockHealthEvaluationCatalog.checksFor(
+            category = livestock?.category,
+            symptomKey = args.symptomKey
+        )
+        binding.bindEvaluationChecks(checks)
+    }
+
+    private fun FragmentLivestockHealthEvaluationBinding.bindEvaluationChecks(
+        checks: List<LivestockHealthEvaluationCheck>
+    ) {
+        require(checks.size == CHECK_COUNT) {
+            "Livestock health evaluation requires exactly $CHECK_COUNT checks."
+        }
+
+        val icons = listOf(ivCheckOne, ivCheckTwo, ivCheckThree, ivCheckFour)
+        val titles = listOf(tvCheckOneTitle, tvCheckTwoTitle, tvCheckThreeTitle, tvCheckFourTitle)
+        val bodies = listOf(tvCheckOneBody, tvCheckTwoBody, tvCheckThreeBody, tvCheckFourBody)
+
+        checks.forEachIndexed { index, check ->
+            icons[index].setImageResource(check.iconRes)
+            titles[index].setText(check.titleRes)
+            bodies[index].setText(check.bodyRes)
         }
     }
 
@@ -113,5 +153,9 @@ class LivestockHealthEvaluationFragment :
     override fun onDestroyView() {
         _binding = null
         super.onDestroyView()
+    }
+
+    private companion object {
+        const val CHECK_COUNT = 4
     }
 }

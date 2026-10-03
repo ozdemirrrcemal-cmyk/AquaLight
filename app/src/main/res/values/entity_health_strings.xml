@@ -113,15 +113,17 @@
 
     <string name="livestock_health_evaluation_title">Evaluation</string>
     <string name="livestock_health_change_control_title">Change to check</string>
-    <string name="livestock_health_evaluation_summary_format">%1$s · %2$s · %3$d affected</string>
+    <string name="livestock_health_evaluation_summary_format">%1$s · %2$d / %3$d livestock · %4$s</string>
     <string name="livestock_health_used_data_title">Used in this evaluation</string>
     <string name="livestock_health_last_water_measurement">Last water measurement</string>
     <string name="livestock_health_last_water_measurement_value">5 days ago · needs a fresh check</string>
     <string name="livestock_health_old_data_badge">Old data</string>
     <string name="livestock_health_last_water_change">Last water change</string>
     <string name="livestock_health_last_water_change_value">5 days ago</string>
+    <string name="livestock_health_fresh_measurement_warning_title">No recent water measurement</string>
     <string name="livestock_health_fresh_measurement_warning">A recent measurement is missing. Check ammonia, nitrite and oxygen before drawing a conclusion.</string>
     <string name="livestock_health_check_first_title">Check first</string>
+    <string name="livestock_health_check_first_subtitle">Quick checks based on the selected livestock and observation.</string>
     <string name="livestock_health_check_surface_title">Surface movement and aeration</string>
     <string name="livestock_health_check_surface_body">Check whether surface agitation is sufficient and whether breathing is rapid.</string>
     <string name="livestock_health_check_body_title">Eyes, gills and body</string>
@@ -130,7 +132,63 @@
     <string name="livestock_health_check_others_body">Compare the affected animal with the rest of the tank before treating it as an isolated case.</string>
     <string name="livestock_health_check_feed_title">Response to food</string>
     <string name="livestock_health_check_feed_body">Observe appetite and whether the animal can reach and take food normally.</string>
+    <string name="livestock_health_evaluation_basis_title">What is this based on?</string>
+    <string name="livestock_health_evaluation_basis_body">The selected observation and context recorded for the tank. Water-quality analysis data can enrich this evaluation when connected.</string>
     <string name="livestock_health_evaluation_helper">This screen organizes observations and tank context; it does not provide a medical diagnosis.</string>
+    <string name="livestock_health_check_fish_surface_title">Check surface movement and breathing</string>
+    <string name="livestock_health_check_fish_surface_body">Observe surface movement, aeration and any clear change in breathing rate.</string>
+    <string name="livestock_health_check_fish_body_title">Check eyes, gills, fins and body</string>
+    <string name="livestock_health_check_fish_body_body">Look for spots, wounds, swelling, discoloration or clamped fins.</string>
+    <string name="livestock_health_check_fish_others_title">Compare with other fish</string>
+    <string name="livestock_health_check_fish_others_body">Check whether the same observation is present in other fish.</string>
+    <string name="livestock_health_check_fish_feed_title">Observe feeding behavior</string>
+    <string name="livestock_health_check_fish_feed_body">Compare approach to food, access to food and actual feeding.</string>
+
+    <string name="livestock_health_check_shrimp_molt_title">Check molting status</string>
+    <string name="livestock_health_check_shrimp_molt_body">Look for incomplete molts, retained shell or an abnormal body posture.</string>
+    <string name="livestock_health_check_shrimp_activity_title">Observe movement and balance</string>
+    <string name="livestock_health_check_shrimp_activity_body">Compare walking, swimming, grip and balance with normal behavior.</string>
+    <string name="livestock_health_check_shrimp_body_title">Check color and body appearance</string>
+    <string name="livestock_health_check_shrimp_body_body">Look for color loss, opacity, spots or body deformation.</string>
+    <string name="livestock_health_check_shrimp_feed_title">Check feeding behavior</string>
+    <string name="livestock_health_check_shrimp_feed_body">Observe whether it approaches, holds and consumes food normally.</string>
+
+    <string name="livestock_health_check_snail_grip_title">Check grip and movement</string>
+    <string name="livestock_health_check_snail_grip_body">Look for changes in gripping glass, decor or substrate and in normal movement.</string>
+    <string name="livestock_health_check_snail_shell_title">Inspect the shell carefully</string>
+    <string name="livestock_health_check_snail_shell_body">Check for cracks, erosion, whitening or other visible shell damage.</string>
+    <string name="livestock_health_check_snail_body_title">Observe retraction behavior</string>
+    <string name="livestock_health_check_snail_body_body">Look for prolonged retraction, limp posture or unusual withdrawal.</string>
+    <string name="livestock_health_check_snail_feed_title">Check signs of feeding</string>
+    <string name="livestock_health_check_snail_feed_body">Compare feeding on food and surfaces with its normal pattern.</string>
+
+    <string name="livestock_health_check_crustacean_molt_title">Check molting status</string>
+    <string name="livestock_health_check_crustacean_molt_body">Look for incomplete molts, a soft shell or unusually prolonged hiding.</string>
+    <string name="livestock_health_check_crustacean_limb_title">Inspect shell and limbs</string>
+    <string name="livestock_health_check_crustacean_limb_body">Check claws, legs, joints and shell for damage or deformation.</string>
+    <string name="livestock_health_check_crustacean_activity_title">Observe walking, balance and hiding</string>
+    <string name="livestock_health_check_crustacean_activity_body">Compare movement, balance and hiding duration with normal behavior.</string>
+    <string name="livestock_health_check_crustacean_feed_title">Check feeding access and competition</string>
+    <string name="livestock_health_check_crustacean_feed_body">Observe whether it reaches food and whether tankmates prevent access.</string>
+
+    <string name="livestock_health_check_coral_polyp_title">Compare polyp extension</string>
+    <string name="livestock_health_check_coral_polyp_body">Observe how far polyps open compared with their normal pattern at this time of day.</string>
+    <string name="livestock_health_check_coral_tissue_title">Check tissue integrity</string>
+    <string name="livestock_health_check_coral_tissue_body">Look for tissue recession, tears, exposed skeleton or localized damage.</string>
+    <string name="livestock_health_check_coral_color_title">Compare color and fading</string>
+    <string name="livestock_health_check_coral_color_body">Check for general fading, bleaching or localized color loss.</string>
+    <string name="livestock_health_check_coral_environment_title">Check flow and lighting</string>
+    <string name="livestock_health_check_coral_environment_body">Check whether water flow or lighting at the coral location changed recently.</string>
+
+    <string name="livestock_health_check_generic_activity_title">Observe movement and behavior</string>
+    <string name="livestock_health_check_generic_activity_body">Compare current movement and response with the normal pattern.</string>
+    <string name="livestock_health_check_generic_body_title">Check body and external appearance</string>
+    <string name="livestock_health_check_generic_body_body">Look for new changes in color, tissue, shell or body.</string>
+    <string name="livestock_health_check_generic_others_title">Compare with similar livestock</string>
+    <string name="livestock_health_check_generic_others_body">Check whether similar livestock in the same tank show the same observation.</string>
+    <string name="livestock_health_check_generic_feed_title">Observe feeding behavior</string>
+    <string name="livestock_health_check_generic_feed_body">Compare approach to food and feeding with the normal pattern.</string>
+
     <string name="livestock_health_measure_water">Measure tank water</string>
     <string name="livestock_health_view_followup">View follow-up</string>
 
