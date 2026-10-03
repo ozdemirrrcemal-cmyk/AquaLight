@@ -32,27 +32,27 @@ internal object LivestockHealthObservationCatalog {
 
     private const val SHRIMP_INACTIVE = "shrimp_inactive"
     private const val SHRIMP_NO_FOOD = "shrimp_no_food"
+    private const val SHRIMP_MOLT = "shrimp_molt"
     private const val SHRIMP_COLOR = "shrimp_color"
-    private const val SHRIMP_SHELL = "shrimp_shell"
-    private const val SHRIMP_MOVEMENT = "shrimp_movement"
+    private const val SHRIMP_BALANCE = "shrimp_balance"
 
     private const val SNAIL_INACTIVE = "snail_inactive"
+    private const val SNAIL_RETRACTED = "snail_retracted"
     private const val SNAIL_NO_FOOD = "snail_no_food"
     private const val SNAIL_SHELL = "snail_shell"
-    private const val SNAIL_SURFACE = "snail_surface"
-    private const val SNAIL_COLOR = "snail_color"
+    private const val SNAIL_GRIP = "snail_grip"
 
     private const val CRUSTACEAN_INACTIVE = "crustacean_inactive"
     private const val CRUSTACEAN_NO_FOOD = "crustacean_no_food"
-    private const val CRUSTACEAN_COLOR = "crustacean_color"
-    private const val CRUSTACEAN_SHELL = "crustacean_shell"
-    private const val CRUSTACEAN_MOVEMENT = "crustacean_movement"
+    private const val CRUSTACEAN_MOLT = "crustacean_molt"
+    private const val CRUSTACEAN_LIMB = "crustacean_limb"
+    private const val CRUSTACEAN_BALANCE = "crustacean_balance"
 
     private const val CORAL_CLOSED = "coral_closed"
     private const val CORAL_TISSUE = "coral_tissue"
     private const val CORAL_COLOR = "coral_color"
-    private const val CORAL_DAMAGE = "coral_damage"
     private const val CORAL_MUCUS = "coral_mucus"
+    private const val CORAL_DAMAGE = "coral_damage"
 
     private const val GENERIC_INACTIVE = "generic_inactive"
     private const val GENERIC_NO_FOOD = "generic_no_food"
@@ -61,175 +61,175 @@ internal object LivestockHealthObservationCatalog {
     private const val GENERIC_MOVEMENT = "generic_movement"
 
     private val fish = listOf(
-        LivestockHealthSymptomOption(
+        symptom(
             LivestockHealthUiText.SYMPTOM_SURFACE,
             R.string.livestock_health_symptom_surface,
-            R.drawable.ic_livestock_symptom_surface_24
+            R.drawable.ic_health_observation_breathing_24
         ),
-        LivestockHealthSymptomOption(
+        symptom(
             LivestockHealthUiText.SYMPTOM_APPETITE,
             R.string.livestock_health_symptom_appetite,
-            R.drawable.ic_livestock_symptom_appetite_24
+            R.drawable.ic_health_observation_appetite_24
         ),
-        LivestockHealthSymptomOption(
+        symptom(
             LivestockHealthUiText.SYMPTOM_SWIMMING,
             R.string.livestock_health_symptom_swimming,
-            R.drawable.ic_livestock_symptom_swimming_24
+            R.drawable.ic_health_observation_balance_24
         ),
-        LivestockHealthSymptomOption(
+        symptom(
             LivestockHealthUiText.SYMPTOM_SPOT,
             R.string.livestock_health_symptom_spot,
-            R.drawable.ic_livestock_symptom_spot_24
+            R.drawable.ic_health_observation_lesion_24
         ),
-        LivestockHealthSymptomOption(
+        symptom(
             LivestockHealthUiText.SYMPTOM_FINS,
             R.string.livestock_health_symptom_fins,
-            R.drawable.ic_livestock_symptom_fin_24
+            R.drawable.ic_health_observation_fin_gill_24
         ),
         other()
     )
 
     private val shrimp = listOf(
-        LivestockHealthSymptomOption(
+        symptom(
             SHRIMP_INACTIVE,
             R.string.livestock_health_symptom_shrimp_inactive,
-            R.drawable.ic_life_shrimp_24
+            R.drawable.ic_health_observation_inactive_24
         ),
-        LivestockHealthSymptomOption(
+        symptom(
             SHRIMP_NO_FOOD,
             R.string.livestock_health_symptom_shrimp_no_food,
-            R.drawable.ic_livestock_symptom_appetite_24
+            R.drawable.ic_health_observation_appetite_24
         ),
-        LivestockHealthSymptomOption(
+        symptom(
+            SHRIMP_MOLT,
+            R.string.livestock_health_symptom_shrimp_molt,
+            R.drawable.ic_health_observation_molt_24
+        ),
+        symptom(
             SHRIMP_COLOR,
             R.string.livestock_health_symptom_shrimp_color,
-            R.drawable.ic_livestock_symptom_spot_24
+            R.drawable.ic_health_observation_color_24
         ),
-        LivestockHealthSymptomOption(
-            SHRIMP_SHELL,
-            R.string.livestock_health_symptom_shrimp_shell,
-            R.drawable.ic_livestock_symptom_fin_24
-        ),
-        LivestockHealthSymptomOption(
-            SHRIMP_MOVEMENT,
-            R.string.livestock_health_symptom_shrimp_movement,
-            R.drawable.ic_livestock_symptom_swimming_24
+        symptom(
+            SHRIMP_BALANCE,
+            R.string.livestock_health_symptom_shrimp_balance,
+            R.drawable.ic_health_observation_balance_24
         ),
         other()
     )
 
     private val snail = listOf(
-        LivestockHealthSymptomOption(
+        symptom(
             SNAIL_INACTIVE,
             R.string.livestock_health_symptom_snail_inactive,
-            R.drawable.ic_life_snail_24
+            R.drawable.ic_health_observation_inactive_24
         ),
-        LivestockHealthSymptomOption(
+        symptom(
+            SNAIL_RETRACTED,
+            R.string.livestock_health_symptom_snail_retracted,
+            R.drawable.ic_health_observation_retracted_24
+        ),
+        symptom(
             SNAIL_NO_FOOD,
             R.string.livestock_health_symptom_snail_no_food,
-            R.drawable.ic_livestock_symptom_appetite_24
+            R.drawable.ic_health_observation_appetite_24
         ),
-        LivestockHealthSymptomOption(
+        symptom(
             SNAIL_SHELL,
             R.string.livestock_health_symptom_snail_shell,
-            R.drawable.ic_life_snail_24
+            R.drawable.ic_health_observation_shell_damage_24
         ),
-        LivestockHealthSymptomOption(
-            SNAIL_SURFACE,
-            R.string.livestock_health_symptom_snail_surface,
-            R.drawable.ic_livestock_symptom_surface_24
-        ),
-        LivestockHealthSymptomOption(
-            SNAIL_COLOR,
-            R.string.livestock_health_symptom_snail_color,
-            R.drawable.ic_livestock_symptom_spot_24
+        symptom(
+            SNAIL_GRIP,
+            R.string.livestock_health_symptom_snail_grip,
+            R.drawable.ic_health_observation_grip_24
         ),
         other()
     )
 
     private val crustacean = listOf(
-        LivestockHealthSymptomOption(
+        symptom(
             CRUSTACEAN_INACTIVE,
             R.string.livestock_health_symptom_crustacean_inactive,
-            R.drawable.ic_life_crab_24
+            R.drawable.ic_health_observation_inactive_24
         ),
-        LivestockHealthSymptomOption(
+        symptom(
             CRUSTACEAN_NO_FOOD,
             R.string.livestock_health_symptom_crustacean_no_food,
-            R.drawable.ic_livestock_symptom_appetite_24
+            R.drawable.ic_health_observation_appetite_24
         ),
-        LivestockHealthSymptomOption(
-            CRUSTACEAN_COLOR,
-            R.string.livestock_health_symptom_crustacean_color,
-            R.drawable.ic_livestock_symptom_spot_24
+        symptom(
+            CRUSTACEAN_MOLT,
+            R.string.livestock_health_symptom_crustacean_molt,
+            R.drawable.ic_health_observation_molt_24
         ),
-        LivestockHealthSymptomOption(
-            CRUSTACEAN_SHELL,
-            R.string.livestock_health_symptom_crustacean_shell,
-            R.drawable.ic_livestock_symptom_fin_24
+        symptom(
+            CRUSTACEAN_LIMB,
+            R.string.livestock_health_symptom_crustacean_limb,
+            R.drawable.ic_health_observation_limb_damage_24
         ),
-        LivestockHealthSymptomOption(
-            CRUSTACEAN_MOVEMENT,
-            R.string.livestock_health_symptom_crustacean_movement,
-            R.drawable.ic_livestock_symptom_swimming_24
+        symptom(
+            CRUSTACEAN_BALANCE,
+            R.string.livestock_health_symptom_crustacean_balance,
+            R.drawable.ic_health_observation_balance_24
         ),
         other()
     )
 
     private val coral = listOf(
-        LivestockHealthSymptomOption(
+        symptom(
             CORAL_CLOSED,
             R.string.livestock_health_symptom_coral_closed,
-            R.drawable.ic_life_coral_24
+            R.drawable.ic_health_observation_polyp_24
         ),
-        LivestockHealthSymptomOption(
+        symptom(
             CORAL_TISSUE,
             R.string.livestock_health_symptom_coral_tissue,
-            R.drawable.ic_livestock_symptom_fin_24
+            R.drawable.ic_health_observation_tissue_24
         ),
-        LivestockHealthSymptomOption(
+        symptom(
             CORAL_COLOR,
             R.string.livestock_health_symptom_coral_color,
-            R.drawable.ic_livestock_symptom_spot_24
+            R.drawable.ic_health_observation_color_24
         ),
-        LivestockHealthSymptomOption(
-            CORAL_DAMAGE,
-            R.string.livestock_health_symptom_coral_damage,
-            R.drawable.ic_livestock_symptom_spot_24
-        ),
-        LivestockHealthSymptomOption(
+        symptom(
             CORAL_MUCUS,
             R.string.livestock_health_symptom_coral_mucus,
-            R.drawable.ic_livestock_symptom_surface_24
+            R.drawable.ic_health_observation_mucus_24
+        ),
+        symptom(
+            CORAL_DAMAGE,
+            R.string.livestock_health_symptom_coral_damage,
+            R.drawable.ic_health_observation_coral_damage_24
         ),
         other()
     )
 
     private val generic = listOf(
-        LivestockHealthSymptomOption(
+        symptom(
             GENERIC_INACTIVE,
             R.string.livestock_health_symptom_generic_inactive,
-            R.drawable.ic_health_livestock_24
+            R.drawable.ic_health_observation_inactive_24
         ),
-        LivestockHealthSymptomOption(
+        symptom(
             GENERIC_NO_FOOD,
             R.string.livestock_health_symptom_generic_no_food,
-            R.drawable.ic_livestock_symptom_appetite_24
+            R.drawable.ic_health_observation_appetite_24
         ),
-        LivestockHealthSymptomOption(
+        symptom(
             GENERIC_COLOR,
             R.string.livestock_health_symptom_generic_color,
-            R.drawable.ic_livestock_symptom_spot_24
+            R.drawable.ic_health_observation_color_24
         ),
-        LivestockHealthSymptomOption(
+        symptom(
             GENERIC_BODY,
             R.string.livestock_health_symptom_generic_body,
-            R.drawable.ic_livestock_symptom_fin_24
+            R.drawable.ic_health_observation_shell_damage_24
         ),
-        LivestockHealthSymptomOption(
+        symptom(
             GENERIC_MOVEMENT,
             R.string.livestock_health_symptom_generic_movement,
-            R.drawable.ic_livestock_symptom_swimming_24
+            R.drawable.ic_health_observation_balance_24
         ),
         other()
     )
@@ -287,7 +287,13 @@ internal object LivestockHealthObservationCatalog {
         trendOptions().firstOrNull { option -> option.id == id }?.labelRes
             ?: R.string.livestock_health_trend_new
 
-    private fun other() = LivestockHealthSymptomOption(
+    private fun symptom(
+        key: String,
+        @StringRes labelRes: Int,
+        @DrawableRes iconRes: Int
+    ) = LivestockHealthSymptomOption(key, labelRes, iconRes)
+
+    private fun other() = symptom(
         LivestockHealthUiText.SYMPTOM_OTHER,
         R.string.livestock_health_symptom_other,
         R.drawable.ic_livestock_symptom_more_24

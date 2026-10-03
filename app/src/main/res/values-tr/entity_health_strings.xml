@@ -49,33 +49,38 @@
     <string name="livestock_health_select_livestock_hint">Tankındaki kayıtlı canlılardan seç.</string>
     <string name="livestock_health_select_multiple">Birden fazla belirti seçebilirsin.</string>
     <string name="livestock_health_symptom_normal">Normal görünüyor</string>
-    <string name="livestock_health_symptom_surface">Normalden sık yüzeye çıkma</string>
-    <string name="livestock_health_symptom_appetite">İştah azaldı</string>
+    <string name="livestock_health_symptom_surface">Hızlı soluma / yüzeye çıkma</string>
+    <string name="livestock_health_symptom_appetite">İştah azalması</string>
     <string name="livestock_health_symptom_hiding">Saklanıyor</string>
-    <string name="livestock_health_symptom_swimming">Yüzme değişimi</string>
-    <string name="livestock_health_symptom_spot">Leke / yara</string>
-    <string name="livestock_health_symptom_fins">Yüzgeç</string>
+    <string name="livestock_health_symptom_swimming">Yüzme / denge değişimi</string>
+    <string name="livestock_health_symptom_spot">Benek / yara / şişlik</string>
+    <string name="livestock_health_symptom_fins">Yüzgeç / solungaç</string>
     <string name="livestock_health_symptom_other">Diğer</string>
+
     <string name="livestock_health_symptom_shrimp_inactive">Hareketsizlik</string>
     <string name="livestock_health_symptom_shrimp_no_food">Yem almama</string>
-    <string name="livestock_health_symptom_shrimp_color">Renk değişimi</string>
-    <string name="livestock_health_symptom_shrimp_shell">Kabuk / deformasyon</string>
-    <string name="livestock_health_symptom_shrimp_movement">Anormal hareket</string>
+    <string name="livestock_health_symptom_shrimp_molt">Kabuk değiştirme sorunu</string>
+    <string name="livestock_health_symptom_shrimp_color">Renk / şeffaflık değişimi</string>
+    <string name="livestock_health_symptom_shrimp_balance">Anormal yüzme / denge</string>
+
     <string name="livestock_health_symptom_snail_inactive">Hareketsizlik</string>
+    <string name="livestock_health_symptom_snail_retracted">Uzun süre kabukta kalma</string>
     <string name="livestock_health_symptom_snail_no_food">Yem almama</string>
-    <string name="livestock_health_symptom_snail_shell">Kabuk hasarı</string>
-    <string name="livestock_health_symptom_snail_surface">Yüzeye çıkma</string>
-    <string name="livestock_health_symptom_snail_color">Renk / doku değişimi</string>
-    <string name="livestock_health_symptom_crustacean_inactive">Hareketsizlik</string>
+    <string name="livestock_health_symptom_snail_shell">Kabuk hasarı / aşınma</string>
+    <string name="livestock_health_symptom_snail_grip">Tutunma / hareket sorunu</string>
+
+    <string name="livestock_health_symptom_crustacean_inactive">Hareketsizlik / aşırı saklanma</string>
     <string name="livestock_health_symptom_crustacean_no_food">Yem almama</string>
-    <string name="livestock_health_symptom_crustacean_color">Renk değişimi</string>
-    <string name="livestock_health_symptom_crustacean_shell">Kabuk / eklem hasarı</string>
-    <string name="livestock_health_symptom_crustacean_movement">Anormal hareket</string>
-    <string name="livestock_health_symptom_coral_closed">Açılmama</string>
+    <string name="livestock_health_symptom_crustacean_molt">Kabuk değiştirme sorunu</string>
+    <string name="livestock_health_symptom_crustacean_limb">Kabuk / uzuv hasarı</string>
+    <string name="livestock_health_symptom_crustacean_balance">Yürüme / denge değişimi</string>
+
+    <string name="livestock_health_symptom_coral_closed">Poliplerin açılmaması</string>
     <string name="livestock_health_symptom_coral_tissue">Doku çekilmesi</string>
-    <string name="livestock_health_symptom_coral_color">Renk kaybı</string>
-    <string name="livestock_health_symptom_coral_damage">Leke / hasar</string>
-    <string name="livestock_health_symptom_coral_mucus">Mukus / anormal görünüm</string>
+    <string name="livestock_health_symptom_coral_color">Renk kaybı / solma</string>
+    <string name="livestock_health_symptom_coral_mucus">Mukus / anormal tabaka</string>
+    <string name="livestock_health_symptom_coral_damage">Fiziksel hasar / doku yırtığı</string>
+
     <string name="livestock_health_symptom_generic_inactive">Hareketsizlik</string>
     <string name="livestock_health_symptom_generic_no_food">Yem almama</string>
     <string name="livestock_health_symptom_generic_color">Renk / doku değişimi</string>

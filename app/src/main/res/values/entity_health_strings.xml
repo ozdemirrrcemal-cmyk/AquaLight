@@ -49,35 +49,40 @@
     <string name="livestock_health_select_livestock_hint">Select from livestock registered in this tank.</string>
     <string name="livestock_health_select_multiple">You can select more than one symptom.</string>
     <string name="livestock_health_symptom_normal">Looks normal</string>
-    <string name="livestock_health_symptom_surface">More surface visits than usual</string>
-    <string name="livestock_health_symptom_appetite">No appetite</string>
+    <string name="livestock_health_symptom_surface">Rapid breathing / surface visits</string>
+    <string name="livestock_health_symptom_appetite">Reduced appetite</string>
     <string name="livestock_health_symptom_hiding">Hiding</string>
-    <string name="livestock_health_symptom_swimming">Swimming change</string>
-    <string name="livestock_health_symptom_spot">Spot / wound</string>
-    <string name="livestock_health_symptom_fins">Fins</string>
+    <string name="livestock_health_symptom_swimming">Swimming / balance change</string>
+    <string name="livestock_health_symptom_spot">Spot / wound / swelling</string>
+    <string name="livestock_health_symptom_fins">Fins / gills</string>
     <string name="livestock_health_symptom_other">Other</string>
+
     <string name="livestock_health_symptom_shrimp_inactive">Inactivity</string>
-    <string name="livestock_health_symptom_shrimp_no_food">Not eating</string>
-    <string name="livestock_health_symptom_shrimp_color">Color change</string>
-    <string name="livestock_health_symptom_shrimp_shell">Shell / deformation</string>
-    <string name="livestock_health_symptom_shrimp_movement">Abnormal movement</string>
+    <string name="livestock_health_symptom_shrimp_no_food">Not feeding</string>
+    <string name="livestock_health_symptom_shrimp_molt">Molting problem</string>
+    <string name="livestock_health_symptom_shrimp_color">Color / transparency change</string>
+    <string name="livestock_health_symptom_shrimp_balance">Abnormal swimming / balance</string>
+
     <string name="livestock_health_symptom_snail_inactive">Inactivity</string>
-    <string name="livestock_health_symptom_snail_no_food">Not eating</string>
-    <string name="livestock_health_symptom_snail_shell">Shell damage</string>
-    <string name="livestock_health_symptom_snail_surface">Moving to the surface</string>
-    <string name="livestock_health_symptom_snail_color">Color / tissue change</string>
-    <string name="livestock_health_symptom_crustacean_inactive">Inactivity</string>
-    <string name="livestock_health_symptom_crustacean_no_food">Not eating</string>
-    <string name="livestock_health_symptom_crustacean_color">Color change</string>
-    <string name="livestock_health_symptom_crustacean_shell">Shell / joint damage</string>
-    <string name="livestock_health_symptom_crustacean_movement">Abnormal movement</string>
-    <string name="livestock_health_symptom_coral_closed">Not opening</string>
+    <string name="livestock_health_symptom_snail_retracted">Stays retracted for a long time</string>
+    <string name="livestock_health_symptom_snail_no_food">Not feeding</string>
+    <string name="livestock_health_symptom_snail_shell">Shell damage / erosion</string>
+    <string name="livestock_health_symptom_snail_grip">Grip / movement problem</string>
+
+    <string name="livestock_health_symptom_crustacean_inactive">Inactivity / excessive hiding</string>
+    <string name="livestock_health_symptom_crustacean_no_food">Not feeding</string>
+    <string name="livestock_health_symptom_crustacean_molt">Molting problem</string>
+    <string name="livestock_health_symptom_crustacean_limb">Shell / limb damage</string>
+    <string name="livestock_health_symptom_crustacean_balance">Walking / balance change</string>
+
+    <string name="livestock_health_symptom_coral_closed">Polyps not opening</string>
     <string name="livestock_health_symptom_coral_tissue">Tissue recession</string>
-    <string name="livestock_health_symptom_coral_color">Color loss</string>
-    <string name="livestock_health_symptom_coral_damage">Spot / damage</string>
-    <string name="livestock_health_symptom_coral_mucus">Mucus / abnormal appearance</string>
+    <string name="livestock_health_symptom_coral_color">Color loss / fading</string>
+    <string name="livestock_health_symptom_coral_mucus">Mucus / abnormal coating</string>
+    <string name="livestock_health_symptom_coral_damage">Physical damage / tissue tear</string>
+
     <string name="livestock_health_symptom_generic_inactive">Inactivity</string>
-    <string name="livestock_health_symptom_generic_no_food">Not eating</string>
+    <string name="livestock_health_symptom_generic_no_food">Not feeding</string>
     <string name="livestock_health_symptom_generic_color">Color / tissue change</string>
     <string name="livestock_health_symptom_generic_body">Body / shell change</string>
     <string name="livestock_health_symptom_generic_movement">Abnormal movement</string>
