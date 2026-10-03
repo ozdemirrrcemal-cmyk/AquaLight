@@ -263,30 +263,6 @@ class LivestockHealthObservationFragment : TankRecordPhotoFragment(
         val navController = findNavController()
 
         val symptomKey = selectedSymptoms.first()
-        val now = System.currentTimeMillis()
-        runCatching {
-            navController.getBackStackEntry(R.id.livestockHealthFragment)
-                .savedStateHandle
-                .apply {
-                    set(LivestockHealthFragment.KEY_HAS_OBSERVATION, true)
-                    set(LivestockHealthFragment.KEY_LIVESTOCK_ID, livestock.id)
-                    set(LivestockHealthFragment.KEY_SYMPTOM_KEY, symptomKey)
-                    set(LivestockHealthFragment.KEY_AFFECTED_COUNT, affectedCount)
-                    set(LivestockHealthFragment.KEY_STARTED_AT, now)
-                    set(LivestockHealthFragment.KEY_LAST_CHECK_AT, now)
-                    LivestockHealthUiSessionState.upsertActiveFollowup(
-                        handle = this,
-                        entry = ActiveLivestockFollowupUi(
-                            livestockId = livestock.id,
-                            symptomKey = symptomKey,
-                            affectedCount = affectedCount,
-                            totalCount = livestock.quantity.coerceAtLeast(1),
-                            startedAtMillis = now,
-                            lastCheckAtMillis = now
-                        )
-                    )
-                }
-        }
 
         val didNavigate = navController.navigateSafelyFrom(
             sourceDestinationId = R.id.livestockHealthObservationFragment,

@@ -24,6 +24,7 @@ class LivestockHealthEvaluationFragment :
     private var _binding: FragmentLivestockHealthEvaluationBinding? = null
     private val binding get() = _binding!!
 
+    private var currentLivestock: AquariumLivestock? = null
     private var isNavigating: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,7 +48,7 @@ class LivestockHealthEvaluationFragment :
 
         binding.rowLastWaterMeasurement.setOnClickListener { openTankHealth() }
         binding.rowLastWaterChange.setOnClickListener { openTankHealth() }
-        binding.btnViewFollowup.setOnClickListener { openFollowup() }
+        binding.btnViewFollowup.setOnClickListener { saveEvaluationAndReturn() }
 
         observeLivestock()
     }
@@ -59,12 +60,12 @@ class LivestockHealthEvaluationFragment :
 
     private fun observeLivestock() {
         aquariumTankViewModel.tanks.observe(viewLifecycleOwner) { tanks ->
-            val livestock = tanks
+            currentLivestock = tanks
                 .firstOrNull { tank -> tank.id == args.tankId }
                 ?.livestock
                 ?.firstOrNull { item -> item.id == args.livestockId }
 
-            renderEvaluation(livestock)
+            renderEvaluation(currentLivestock)
         }
     }
 
@@ -127,22 +128,44 @@ class LivestockHealthEvaluationFragment :
         isNavigating = didNavigate
     }
 
-    private fun openFollowup() {
+    private fun saveEvaluationAndReturn() {
         if (isNavigating) {
             return
         }
-        val didNavigate = findNavController().navigateSafelyFrom(
-            sourceDestinationId = R.id.livestockHealthEvaluationFragment,
-            directions = LivestockHealthEvaluationFragmentDirections
-                .actionLivestockHealthEvaluationFragmentToLivestockHealthFollowUpFragment(
-                    tankId = args.tankId,
-                    livestockId = args.livestockId,
-                    symptomKey = args.symptomKey,
-                    affectedCount = args.affectedCount,
-                    readOnly = false
-                )
-        )
-        isNavigating = didNavigate
+        val livestock = currentLivestock ?: return
+        val navController = findNavController()
+        val now = System.currentTimeMillis()
+
+        runCatching {
+            navController.getBackStackEntry(R.id.livestockHealthFragment)
+                .savedStateHandle
+                .apply {
+                    set(LivestockHealthFragment.KEY_HAS_OBSERVATION, true)
+                    set(LivestockHealthFragment.KEY_LIVESTOCK_ID, livestock.id)
+                    set(LivestockHealthFragment.KEY_SYMPTOM_KEY, args.symptomKey)
+                    set(LivestockHealthFragment.KEY_AFFECTED_COUNT, args.affectedCount)
+                    set(LivestockHealthFragment.KEY_STARTED_AT, now)
+                    set(LivestockHealthFragment.KEY_LAST_CHECK_AT, now)
+                    LivestockHealthUiSessionState.upsertActiveFollowup(
+                        handle = this,
+                        entry = ActiveLivestockFollowupUi(
+                            livestockId = livestock.id,
+                            symptomKey = args.symptomKey,
+                            affectedCount = args.affectedCount.coerceIn(
+                                1,
+                                livestock.quantity.coerceAtLeast(1)
+                            ),
+                            totalCount = livestock.quantity.coerceAtLeast(1),
+                            startedAtMillis = now,
+                            lastCheckAtMillis = now
+                        )
+                    )
+                }
+        }.getOrElse {
+            return
+        }
+
+        isNavigating = navController.popBackStack(R.id.livestockHealthFragment, false)
     }
 
     override fun onDestroyView() {

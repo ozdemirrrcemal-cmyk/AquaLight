@@ -130,7 +130,7 @@
     <string name="livestock_health_other_observation_hint">Gözlemlediğin durumu kısaca yaz…</string>
     <string name="livestock_health_note_label">Not ekle (isteğe bağlı)</string>
     <string name="livestock_health_note_hint">Gözleminle ilgili bir not ekleyebilirsin…</string>
-    <string name="livestock_health_save_evaluate">Gözlemi kaydet ve değerlendir</string>
+    <string name="livestock_health_save_evaluate">Gözlemi Değerlendir</string>
 
     <string name="livestock_health_evaluation_title">Değerlendirme</string>
     <string name="livestock_health_change_control_title">Değişimi kontrol et</string>
@@ -211,7 +211,7 @@
     <string name="livestock_health_check_generic_feed_body">Yeme yaklaşma ve beslenme davranışında değişim var mı karşılaştır.</string>
 
     <string name="livestock_health_measure_water">Tankta su kalitesini ölç</string>
-    <string name="livestock_health_view_followup">Takibi gör</string>
+    <string name="livestock_health_view_followup">Kaydet</string>
 
     <string name="livestock_health_followup_title">Canlı takibi</string>
     <string name="livestock_health_end_followup">Takibi bitir</string>

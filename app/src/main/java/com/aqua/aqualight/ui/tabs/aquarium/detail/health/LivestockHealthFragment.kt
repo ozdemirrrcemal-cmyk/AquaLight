@@ -17,7 +17,6 @@ import com.aqua.aqualight.databinding.FragmentLivestockHealthBinding
 import com.aqua.aqualight.databinding.ItemLivestockHealthActiveFollowupBinding
 import com.aqua.aqualight.databinding.ItemLivestockHealthPastFollowupBinding
 import com.aqua.aqualight.i18n.LocaleFormatter
-import com.aqua.aqualight.ui.common.header.AquaHeaderAction
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.media.bindRecordPhoto
@@ -54,14 +53,7 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
             fragment = this,
             config = AquaHeaderConfig(
                 titleOverride = getString(R.string.screen_title_livestock_health),
-                onBackClick = { findNavController().navigateUp() },
-                actions = listOf(
-                    AquaHeaderAction(
-                        iconRes = R.drawable.ic_info,
-                        contentDescription = getString(R.string.livestock_health_info_description),
-                        onClick = {}
-                    )
-                )
+                onBackClick = { findNavController().navigateUp() }
             )
         )
 
