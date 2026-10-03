@@ -43,7 +43,7 @@
         android:layout_marginEnd="@dimen/aqua_size_8"
         android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/ivHistoryPhoto"
+        app:layout_constraintEnd_toStartOf="@id/historyPhotoFrame"
         app:layout_constraintStart_toEndOf="@id/timelineNode"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_chainStyle="packed">

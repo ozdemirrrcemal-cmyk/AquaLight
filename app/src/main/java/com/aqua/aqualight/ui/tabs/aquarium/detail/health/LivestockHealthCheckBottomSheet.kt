@@ -207,7 +207,7 @@ internal class LivestockHealthCheckBottomSheet : BottomSheetDialogFragment() {
         photoController.bind(viewLifecycleOwner)
         renderSelectedPhoto(photoController.selectedUri())
 
-        contentBinding.cardCheckPhoto.setOnClickListener {
+        contentBinding.checkPhotoMediaArea.setOnClickListener {
             photoController.showSource(
                 getString(R.string.livestock_health_check_photo_source_title)
             )
@@ -223,20 +223,6 @@ internal class LivestockHealthCheckBottomSheet : BottomSheetDialogFragment() {
         contentBinding.ivCheckPhotoPreview.isVisible = hasPhoto
         contentBinding.ivCheckPhotoPlaceholder.isVisible = !hasPhoto
         contentBinding.btnRemoveCheckPhoto.isVisible = hasPhoto
-        contentBinding.tvCheckPhotoTitle.setText(
-            if (hasPhoto) {
-                R.string.livestock_health_check_photo_selected
-            } else {
-                R.string.livestock_health_check_photo_add_title
-            }
-        )
-        contentBinding.tvCheckPhotoSubtitle.setText(
-            if (hasPhoto) {
-                R.string.livestock_health_check_photo_replace
-            } else {
-                R.string.livestock_health_check_photo_add_subtitle
-            }
-        )
         if (hasPhoto) {
             contentBinding.ivCheckPhotoPreview.bindRecordPhoto(photoUri)
         } else {

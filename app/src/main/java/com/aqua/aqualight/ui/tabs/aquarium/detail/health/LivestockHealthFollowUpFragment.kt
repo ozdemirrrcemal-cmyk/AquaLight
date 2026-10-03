@@ -78,11 +78,15 @@ class LivestockHealthFollowUpFragment :
             val checkPhotoUri = bundle.getString(
                 LivestockHealthCheckBottomSheet.RESULT_PHOTO_URI
             )
+            val checkNote = bundle.getString(
+                LivestockHealthCheckBottomSheet.RESULT_NOTE
+            ).orEmpty()
             appendHistoryEntry(
                 status = currentStatus,
                 affectedCount = affectedCount,
                 checkTimeMillis = checkTimeMillis,
-                photoUri = checkPhotoUri
+                photoUri = checkPhotoUri,
+                note = checkNote
             )
             if (currentStatus == LivestockHealthCheckBottomSheet.STATUS_RECOVERED) {
                 endSessionFollowup()
@@ -156,7 +160,8 @@ class LivestockHealthFollowUpFragment :
             statusLabel = getString(R.string.livestock_health_status_same),
             affectedCount = 1,
             totalCount = totalCount,
-            photoUri = null
+            photoUri = null,
+            note = ""
         )
         historyEntries += FollowUpHistoryEntry(
             timeLabel = getString(R.string.livestock_health_history_time_initial_preview),
@@ -165,7 +170,8 @@ class LivestockHealthFollowUpFragment :
             statusLabel = getString(R.string.livestock_health_status_was_increasing),
             affectedCount = 1,
             totalCount = totalCount,
-            photoUri = null
+            photoUri = null,
+            note = ""
         )
     }
 
@@ -173,7 +179,8 @@ class LivestockHealthFollowUpFragment :
         status: String,
         affectedCount: Int,
         checkTimeMillis: Long,
-        photoUri: String?
+        photoUri: String?,
+        note: String
     ) {
         val livestock = currentLivestock ?: return
         val time = com.aqua.aqualight.i18n.LocaleFormatter.formatTime(
@@ -189,7 +196,8 @@ class LivestockHealthFollowUpFragment :
                 statusLabel = getString(statusLabelRes(status)),
                 affectedCount = affectedCount.coerceIn(1, livestock.quantity.coerceAtLeast(1)),
                 totalCount = livestock.quantity.coerceAtLeast(1),
-                photoUri = photoUri
+                photoUri = photoUri,
+                note = note
             )
         )
     }
@@ -295,6 +303,9 @@ class LivestockHealthFollowUpFragment :
         val photoUris = savedInstanceState
             ?.getStringArrayList(STATE_HISTORY_PHOTOS)
             .orEmpty()
+        val notes = savedInstanceState
+            ?.getStringArrayList(STATE_HISTORY_NOTES)
+            .orEmpty()
 
         val size = listOf(
             times.size,
@@ -303,7 +314,8 @@ class LivestockHealthFollowUpFragment :
             statusLabels.size,
             affected.size,
             totals.size,
-            photoUris.size
+            photoUris.size,
+            notes.size
         ).minOrNull() ?: 0
 
         repeat(size) { index ->
@@ -314,7 +326,8 @@ class LivestockHealthFollowUpFragment :
                 statusLabel = statusLabels[index],
                 affectedCount = affected[index],
                 totalCount = totals[index],
-                photoUri = photoUris[index].takeIf(String::isNotBlank)
+                photoUri = photoUris[index].takeIf(String::isNotBlank),
+                note = notes[index]
             )
         }
     }
@@ -348,6 +361,10 @@ class LivestockHealthFollowUpFragment :
             STATE_HISTORY_PHOTOS,
             ArrayList(historyEntries.map { entry -> entry.photoUri.orEmpty() })
         )
+        outState.putStringArrayList(
+            STATE_HISTORY_NOTES,
+            ArrayList(historyEntries.map(FollowUpHistoryEntry::note))
+        )
         super.onSaveInstanceState(outState)
     }
 
@@ -373,7 +390,8 @@ class LivestockHealthFollowUpFragment :
         val statusLabel: String,
         val affectedCount: Int,
         val totalCount: Int,
-        val photoUri: String?
+        val photoUri: String?,
+        val note: String
     )
 
     private companion object {
@@ -384,5 +402,6 @@ class LivestockHealthFollowUpFragment :
         const val STATE_HISTORY_AFFECTED = "livestock_followup_history_affected"
         const val STATE_HISTORY_TOTALS = "livestock_followup_history_totals"
         const val STATE_HISTORY_PHOTOS = "livestock_followup_history_photos"
+        const val STATE_HISTORY_NOTES = "livestock_followup_history_notes"
     }
 }
