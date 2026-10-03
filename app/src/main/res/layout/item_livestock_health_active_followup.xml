@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    style="@style/Widget.Aqua.Card.TankListItem"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="@dimen/aqua_size_8"
+    android:clickable="true"
+    android:focusable="true">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/aqua_size_14">
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/photoFrame"
+            style="@style/Widget.Aqua.Card.Device.Media"
+            android:layout_width="@dimen/aqua_size_56"
+            android:layout_height="@dimen/aqua_size_56"
+            app:cardCornerRadius="@dimen/aqua_size_12"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:id="@+id/ivLivestock"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="@null"
+                android:scaleType="center" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <TextView
+            android:id="@+id/tvName"
+            android:layout_width="@dimen/aqua_size_0"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/aqua_size_12"
+            android:ellipsize="end"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:textColor="@color/aqua_card_text_primary"
+            android:textSize="@dimen/aqua_text_size_body"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toStartOf="@id/tvBadge"
+            app:layout_constraintStart_toEndOf="@id/photoFrame"
+            app:layout_constraintTop_toTopOf="@id/photoFrame"
+            tools:text="Beta / Siyam Dövüşçü Balığı" />
+
+        <TextView
+            android:id="@+id/tvBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/aqua_size_26"
+            android:background="@drawable/bg_aqua_toolbar_pill_action_primary"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:paddingStart="@dimen/aqua_size_9"
+            android:paddingEnd="@dimen/aqua_size_9"
+            android:text="@string/livestock_health_tracking_badge"
+            android:textColor="@color/aqua_status_success"
+            android:textSize="@dimen/aqua_text_size_status_micro"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tvIssue"
+            android:layout_width="@dimen/aqua_size_0"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/aqua_size_12"
+            android:layout_marginTop="@dimen/aqua_size_4"
+            android:ellipsize="end"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:textColor="@color/aqua_card_text_secondary"
+            android:textSize="@dimen/aqua_text_size_caption"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/photoFrame"
+            app:layout_constraintTop_toBottomOf="@id/tvName"
+            tools:text="Hızlı soluma / yüzeye çıkma" />
+
+        <TextView
+            android:id="@+id/tvAffected"
+            android:layout_width="@dimen/aqua_size_0"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/aqua_size_12"
+            android:layout_marginTop="@dimen/aqua_size_3"
+            android:includeFontPadding="false"
+            android:textColor="@color/aqua_content_muted"
+            android:textSize="@dimen/aqua_text_size_micro"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/photoFrame"
+            app:layout_constraintTop_toBottomOf="@id/tvIssue"
+            tools:text="1 / 4 canlı etkileniyor" />
+
+        <TextView
+            android:id="@+id/tvLastCheck"
+            android:layout_width="@dimen/aqua_size_0"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/aqua_size_12"
+            android:layout_marginTop="@dimen/aqua_size_3"
+            android:includeFontPadding="false"
+            android:textColor="@color/aqua_content_muted"
+            android:textSize="@dimen/aqua_text_size_status_micro"
+            app:layout_constraintBottom_toBottomOf="@id/photoFrame"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/photoFrame"
+            app:layout_constraintTop_toBottomOf="@id/tvAffected"
+            tools:text="Son kontrol: Bugün · 18:20" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

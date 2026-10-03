@@ -10,6 +10,7 @@ import androidx.fragment.app.FragmentManager
 import com.aqua.aqualight.R
 import com.aqua.aqualight.databinding.ContentSheetWaterMeasurementMethodBinding
 import com.aqua.aqualight.databinding.DialogSettingsBottomSheetBinding
+import com.aqua.aqualight.ui.common.bottomsheet.SingleChoiceBottomSheet
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 
 internal class WaterMeasurementMethodBottomSheet : BottomSheetDialogFragment() {
@@ -81,6 +82,27 @@ internal class WaterMeasurementMethodBottomSheet : BottomSheetDialogFragment() {
                 basisId = source.getString(basisKey).orEmpty(),
                 unitId = source.getString(unitKey).orEmpty()
             )
+        )
+    }
+
+    internal fun showChoice(
+        titleRes: Int,
+        options: List<WaterMeasurementOptionUi>,
+        selectedId: String,
+        requestKey: String,
+        payloadId: String
+    ) {
+        if (options.isEmpty()) return
+        SingleChoiceBottomSheet.show(
+            fragmentManager = childFragmentManager,
+            title = getString(titleRes),
+            options = options.map { option ->
+                option.id to getString(option.labelRes)
+            },
+            selectedId = selectedId,
+            columns = 1,
+            requestKey = requestKey,
+            payloadId = payloadId
         )
     }
 

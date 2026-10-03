@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="@dimen/aqua_size_24" android:height="@dimen/aqua_size_24"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <path android:fillColor="@color/aqua_color_transparent" android:strokeColor="@color/aqua_content_on_dark"
+        android:strokeWidth="1.65" android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:pathData="M12,21V10M12,14l-4,-4M12,13l4,-4M8,10V6M16,9V5M6,6l2,-2M18,5l2,-2M10.5,12.5l2,-2l-1,-2l2.5,-2"/>
+</vector>

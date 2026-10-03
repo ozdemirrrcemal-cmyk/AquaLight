@@ -238,19 +238,13 @@ internal class WaterMeasurementMethodSheetBinder(
         selectedId: String,
         payloadId: String
     ) {
-        if (options.isNotEmpty()) {
-            SingleChoiceBottomSheet.show(
-                fragmentManager = fragment.childFragmentManager,
-                title = fragment.getString(titleRes),
-                options = options.map { option ->
-                    option.id to fragment.getString(option.labelRes)
-                },
-                selectedId = selectedId,
-                columns = 1,
-                requestKey = CHOICE_REQUEST_KEY,
-                payloadId = payloadId
-            )
-        }
+        fragment.showChoice(
+            titleRes = titleRes,
+            options = options,
+            selectedId = selectedId,
+            requestKey = CHOICE_REQUEST_KEY,
+            payloadId = payloadId
+        )
     }
 
     private companion object {

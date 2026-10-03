@@ -10,4 +10,260 @@
     <string name="livestock_health_entry_title">Livestock Health</string>
     <string name="livestock_health_entry_summary">Livestock are active and doing well</string>
     <string name="livestock_health_entry_last_check">Last check: today</string>
+
+    <string name="livestock_health_info_description">Livestock health information</string>
+    <string name="livestock_health_info_message">Observations help you track changes over time; they are not a diagnosis.</string>
+    <string name="livestock_health_hero_image_description">Aquarium with a betta fish</string>
+    <string name="livestock_health_hero_empty_title">Save your first observation</string>
+    <string name="livestock_health_hero_empty_subtitle">Track symptoms and recovery progress in one place.</string>
+    <string name="livestock_health_hero_active_title">Track your livestock</string>
+    <string name="livestock_health_hero_active_subtitle">Keep observations together and compare how each tracked issue changes.</string>
+    <string name="livestock_health_new_observation">New observation</string>
+    <string name="livestock_health_followups_section">Follow-ups</string>
+    <string name="livestock_health_empty_followups_title">No observations yet</string>
+    <string name="livestock_health_empty_followups_body">Add a record to track your livestock condition.</string>
+    <string name="livestock_health_no_livestock_title">No livestock in this tank</string>
+    <string name="livestock_health_no_livestock_body">Add livestock from the Livestock tab before creating a health observation.</string>
+    <string name="livestock_health_active_followups_section">Active follow-ups</string>
+    <string name="livestock_health_recent_observations_section">Recent observations</string>
+    <string name="livestock_health_past_followups_section">Past follow-ups</string>
+    <string name="livestock_health_view_all">View all</string>
+    <string name="livestock_health_past_followups_empty">No closed follow-ups yet.</string>
+    <string name="livestock_health_active_last_check_format">Last check: %1$s</string>
+    <string name="livestock_health_today_time_format">Today · %1$s</string>
+    <string name="livestock_health_no_check_yet">No check yet</string>
+    <plurals name="livestock_health_past_period_format">
+        <item quantity="one">%1$s – %2$s · %3$d day</item>
+        <item quantity="other">%1$s – %2$s · %3$d days</item>
+    </plurals>
+    <plurals name="livestock_health_past_recovered_format">
+        <item quantity="one">Final status: Recovered · %1$d check</item>
+        <item quantity="other">Final status: Recovered · %1$d checks</item>
+    </plurals>
+    <plurals name="livestock_health_past_manual_format">
+        <item quantity="one">Closed by user · %1$d check</item>
+        <item quantity="other">Closed by user · %1$d checks</item>
+    </plurals>
+    <string name="livestock_health_history_screen_subtitle">Closed follow-ups are ordered newest first. Tap one to view its history in read-only mode.</string>
+
+    <string name="livestock_health_tracking_badge">Tracking</string>
+    <string name="livestock_health_issue_surface">Breathing near the surface</string>
+    <string name="livestock_health_issue_first_seen">First observed today · 14:30</string>
+    <plurals name="livestock_health_affected_format">
+        <item quantity="one">%1$d / %2$d livestock affected</item>
+        <item quantity="other">%1$d / %2$d livestock affected</item>
+    </plurals>
+    <string name="livestock_health_history_today_surface_same">Today · 18:20 · Surface breathing · Same</string>
+    <string name="livestock_health_history_time_today_format">Today · %1$s</string>
+    <string name="livestock_health_history_time_current_preview">Today · 18:20</string>
+    <string name="livestock_health_history_time_initial_preview">Today · 14:30</string>
+    <string name="livestock_health_history_issue_surface">More surface visits than usual</string>
+    <string name="livestock_health_history_issue_initial">Surface visits</string>
+    <string name="livestock_health_status_was_increasing">Was increasing</string>
+    <string name="livestock_health_history_previous_surface">Today · 14:30 · First observation · Increased</string>
+    <string name="livestock_health_tank_context_title">Context from the tank</string>
+    <string name="livestock_health_tank_context_measurement">Water measurement · 2 days ago</string>
+    <string name="livestock_health_tank_context_measurement_title">Water measurement</string>
+    <string name="livestock_health_tank_context_measurement_age">2 days ago</string>
+    <string name="livestock_health_tank_context_change_title">Water change</string>
+    <string name="livestock_health_tank_context_change_age">5 days ago</string>
+    <string name="livestock_health_tank_context_change">Water change · 5 days ago</string>
+    <string name="livestock_health_tank_data_title">Tank data</string>
+    <string name="livestock_health_tank_data_last_measurement_empty">No measurements yet</string>
+    <string name="livestock_health_tank_data_description">Open tank health</string>
+    <string name="livestock_health_no_observation_notice">No observation does not mean the livestock is healthy.</string>
+
+    <string name="livestock_health_new_observation_title">New observation</string>
+    <string name="livestock_health_observation_progress">Observation record</string>
+    <string name="livestock_health_step_livestock">1. Which livestock?</string>
+    <plurals name="livestock_health_selector_quantity_format">
+        <item quantity="one">%1$d livestock</item>
+        <item quantity="other">%1$d livestock</item>
+    </plurals>
+    <string name="livestock_health_step_observation">2. What did you observe?</string>
+    <string name="livestock_health_select_single">Select one status or change.</string>
+    <string name="livestock_health_select_livestock_hint">Select from livestock registered in this tank.</string>
+    <string name="livestock_health_select_multiple">You can select more than one symptom.</string>
+    <string name="livestock_health_symptom_normal">Looks normal</string>
+    <string name="livestock_health_symptom_surface">Rapid breathing / surface visits</string>
+    <string name="livestock_health_symptom_appetite">Reduced appetite</string>
+    <string name="livestock_health_symptom_hiding">Hiding</string>
+    <string name="livestock_health_symptom_swimming">Swimming / balance change</string>
+    <string name="livestock_health_symptom_spot">Spot / wound / swelling</string>
+    <string name="livestock_health_symptom_fins">Fins / gills</string>
+    <string name="livestock_health_symptom_other">Other</string>
+
+    <string name="livestock_health_symptom_shrimp_inactive">Inactivity</string>
+    <string name="livestock_health_symptom_shrimp_no_food">Not feeding</string>
+    <string name="livestock_health_symptom_shrimp_molt">Molting problem</string>
+    <string name="livestock_health_symptom_shrimp_color">Color / transparency change</string>
+    <string name="livestock_health_symptom_shrimp_balance">Abnormal swimming / balance</string>
+
+    <string name="livestock_health_symptom_snail_inactive">Inactivity</string>
+    <string name="livestock_health_symptom_snail_retracted">Stays retracted for a long time</string>
+    <string name="livestock_health_symptom_snail_no_food">Not feeding</string>
+    <string name="livestock_health_symptom_snail_shell">Shell damage / erosion</string>
+    <string name="livestock_health_symptom_snail_grip">Grip / movement problem</string>
+
+    <string name="livestock_health_symptom_crustacean_inactive">Inactivity / excessive hiding</string>
+    <string name="livestock_health_symptom_crustacean_no_food">Not feeding</string>
+    <string name="livestock_health_symptom_crustacean_molt">Molting problem</string>
+    <string name="livestock_health_symptom_crustacean_limb">Shell / limb damage</string>
+    <string name="livestock_health_symptom_crustacean_balance">Walking / balance change</string>
+
+    <string name="livestock_health_symptom_coral_closed">Polyps not opening</string>
+    <string name="livestock_health_symptom_coral_tissue">Tissue recession</string>
+    <string name="livestock_health_symptom_coral_color">Color loss / fading</string>
+    <string name="livestock_health_symptom_coral_mucus">Mucus / abnormal coating</string>
+    <string name="livestock_health_symptom_coral_damage">Physical damage / tissue tear</string>
+
+    <string name="livestock_health_symptom_generic_inactive">Inactivity</string>
+    <string name="livestock_health_symptom_generic_no_food">Not feeding</string>
+    <string name="livestock_health_symptom_generic_color">Color / tissue change</string>
+    <string name="livestock_health_symptom_generic_body">Body / shell change</string>
+    <string name="livestock_health_symptom_generic_movement">Abnormal movement</string>
+    <string name="livestock_health_step_affected">3. How many are affected?</string>
+    <string name="livestock_health_affected_total_format">/ %1$d total</string>
+    <string name="livestock_health_affected_total_preview">/ 1 total</string>
+    <string name="livestock_health_registered_count_format">Registered count of the same type: %1$d</string>
+    <string name="livestock_health_affected_counter_format">%1$d / %2$d</string>
+    <string name="livestock_health_affected_counter_preview">1 / 4</string>
+    <string name="livestock_health_step_when">4. When?</string>
+    <string name="livestock_health_when_today">Today</string>
+    <string name="livestock_health_onset_1_3_days">1–3 days</string>
+    <string name="livestock_health_onset_4_7_days">4–7 days</string>
+    <string name="livestock_health_onset_over_week">More than 1 week</string>
+    <string name="livestock_health_choice_unsure">Not sure</string>
+    <string name="livestock_health_trend_new">Just noticed</string>
+    <string name="livestock_health_when_now">Just now</string>
+    <string name="livestock_health_when_start_label">Start</string>
+    <string name="livestock_health_when_change_label">Trend</string>
+    <string name="livestock_health_photo_optional">Add photo (optional)</string>
+    <string name="livestock_health_photo_add">Add observation photo</string>
+    <string name="livestock_health_photo_hint">Maximum 3 photos · JPG, PNG</string>
+    <string name="livestock_health_other_observation_title">Other observation</string>
+    <string name="livestock_health_other_observation_hint">Briefly describe what you observed…</string>
+    <string name="livestock_health_note_label">Add note (optional)</string>
+    <string name="livestock_health_note_hint">You can add a note about your observation…</string>
+    <string name="livestock_health_save_evaluate">Evaluate observation</string>
+
+    <string name="livestock_health_evaluation_title">Evaluation</string>
+    <string name="livestock_health_change_control_title">Change to check</string>
+    <plurals name="livestock_health_evaluation_summary_format">
+        <item quantity="one">%1$s · %2$d / %3$d livestock · %4$s</item>
+        <item quantity="other">%1$s · %2$d / %3$d livestock · %4$s</item>
+    </plurals>
+    <string name="livestock_health_used_data_title">Used in this evaluation</string>
+    <string name="livestock_health_last_water_measurement">Last water measurement</string>
+    <string name="livestock_health_last_water_measurement_value">5 days ago · needs a fresh check</string>
+    <string name="livestock_health_old_data_badge">Old data</string>
+    <string name="livestock_health_last_water_change">Last water change</string>
+    <string name="livestock_health_last_water_change_value">5 days ago</string>
+    <string name="livestock_health_fresh_measurement_warning_title">No recent water measurement</string>
+    <string name="livestock_health_fresh_measurement_warning">A recent measurement is missing. Check ammonia, nitrite and oxygen before drawing a conclusion.</string>
+    <string name="livestock_health_check_first_title">Check first</string>
+    <string name="livestock_health_check_first_subtitle">Quick checks based on the selected livestock and observation.</string>
+    <string name="livestock_health_check_surface_title">Surface movement and aeration</string>
+    <string name="livestock_health_check_surface_body">Check whether surface agitation is sufficient and whether breathing is rapid.</string>
+    <string name="livestock_health_check_body_title">Eyes, gills and body</string>
+    <string name="livestock_health_check_body_body">Look for spots, wounds, discoloration, swelling or clamped fins.</string>
+    <string name="livestock_health_check_others_title">Are other livestock behaving the same way?</string>
+    <string name="livestock_health_check_others_body">Compare the affected animal with the rest of the tank before treating it as an isolated case.</string>
+    <string name="livestock_health_check_feed_title">Response to food</string>
+    <string name="livestock_health_check_feed_body">Observe appetite and whether the animal can reach and take food normally.</string>
+    <string name="livestock_health_evaluation_basis_title">What is this based on?</string>
+    <string name="livestock_health_evaluation_basis_body">The selected observation and context recorded for the tank. Water-quality analysis data can enrich this evaluation when connected.</string>
+    <string name="livestock_health_evaluation_helper">This screen organizes observations and tank context; it does not provide a medical diagnosis.</string>
+    <string name="livestock_health_check_fish_surface_title">Check surface movement and breathing</string>
+    <string name="livestock_health_check_fish_surface_body">Observe surface movement, aeration and any clear change in breathing rate.</string>
+    <string name="livestock_health_check_fish_body_title">Check eyes, gills, fins and body</string>
+    <string name="livestock_health_check_fish_body_body">Look for spots, wounds, swelling, discoloration or clamped fins.</string>
+    <string name="livestock_health_check_fish_others_title">Compare with other fish</string>
+    <string name="livestock_health_check_fish_others_body">Check whether the same observation is present in other fish.</string>
+    <string name="livestock_health_check_fish_feed_title">Observe feeding behavior</string>
+    <string name="livestock_health_check_fish_feed_body">Compare approach to food, access to food and actual feeding.</string>
+
+    <string name="livestock_health_check_shrimp_molt_title">Check molting status</string>
+    <string name="livestock_health_check_shrimp_molt_body">Look for incomplete molts, retained shell or an abnormal body posture.</string>
+    <string name="livestock_health_check_shrimp_activity_title">Observe movement and balance</string>
+    <string name="livestock_health_check_shrimp_activity_body">Compare walking, swimming, grip and balance with normal behavior.</string>
+    <string name="livestock_health_check_shrimp_body_title">Check color and body appearance</string>
+    <string name="livestock_health_check_shrimp_body_body">Look for color loss, opacity, spots or body deformation.</string>
+    <string name="livestock_health_check_shrimp_feed_title">Check feeding behavior</string>
+    <string name="livestock_health_check_shrimp_feed_body">Observe whether it approaches, holds and consumes food normally.</string>
+
+    <string name="livestock_health_check_snail_grip_title">Check grip and movement</string>
+    <string name="livestock_health_check_snail_grip_body">Look for changes in gripping glass, decor or substrate and in normal movement.</string>
+    <string name="livestock_health_check_snail_shell_title">Inspect the shell carefully</string>
+    <string name="livestock_health_check_snail_shell_body">Check for cracks, erosion, whitening or other visible shell damage.</string>
+    <string name="livestock_health_check_snail_body_title">Observe retraction behavior</string>
+    <string name="livestock_health_check_snail_body_body">Look for prolonged retraction, limp posture or unusual withdrawal.</string>
+    <string name="livestock_health_check_snail_feed_title">Check signs of feeding</string>
+    <string name="livestock_health_check_snail_feed_body">Compare feeding on food and surfaces with its normal pattern.</string>
+
+    <string name="livestock_health_check_crustacean_molt_title">Check molting status</string>
+    <string name="livestock_health_check_crustacean_molt_body">Look for incomplete molts, a soft shell or unusually prolonged hiding.</string>
+    <string name="livestock_health_check_crustacean_limb_title">Inspect shell and limbs</string>
+    <string name="livestock_health_check_crustacean_limb_body">Check claws, legs, joints and shell for damage or deformation.</string>
+    <string name="livestock_health_check_crustacean_activity_title">Observe walking, balance and hiding</string>
+    <string name="livestock_health_check_crustacean_activity_body">Compare movement, balance and hiding duration with normal behavior.</string>
+    <string name="livestock_health_check_crustacean_feed_title">Check feeding access and competition</string>
+    <string name="livestock_health_check_crustacean_feed_body">Observe whether it reaches food and whether tankmates prevent access.</string>
+
+    <string name="livestock_health_check_coral_polyp_title">Compare polyp extension</string>
+    <string name="livestock_health_check_coral_polyp_body">Observe how far polyps open compared with their normal pattern at this time of day.</string>
+    <string name="livestock_health_check_coral_tissue_title">Check tissue integrity</string>
+    <string name="livestock_health_check_coral_tissue_body">Look for tissue recession, tears, exposed skeleton or localized damage.</string>
+    <string name="livestock_health_check_coral_color_title">Compare color and fading</string>
+    <string name="livestock_health_check_coral_color_body">Check for general fading, bleaching or localized color loss.</string>
+    <string name="livestock_health_check_coral_environment_title">Check flow and lighting</string>
+    <string name="livestock_health_check_coral_environment_body">Check whether water flow or lighting at the coral location changed recently.</string>
+
+    <string name="livestock_health_check_generic_activity_title">Observe movement and behavior</string>
+    <string name="livestock_health_check_generic_activity_body">Compare current movement and response with the normal pattern.</string>
+    <string name="livestock_health_check_generic_body_title">Check body and external appearance</string>
+    <string name="livestock_health_check_generic_body_body">Look for new changes in color, tissue, shell or body.</string>
+    <string name="livestock_health_check_generic_others_title">Compare with similar livestock</string>
+    <string name="livestock_health_check_generic_others_body">Check whether similar livestock in the same tank show the same observation.</string>
+    <string name="livestock_health_check_generic_feed_title">Observe feeding behavior</string>
+    <string name="livestock_health_check_generic_feed_body">Compare approach to food and feeding with the normal pattern.</string>
+
+    <string name="livestock_health_measure_water">Measure tank water</string>
+    <string name="livestock_health_view_followup">Save</string>
+
+    <string name="livestock_health_followup_title">Livestock follow-up</string>
+    <string name="livestock_health_end_followup">End follow-up</string>
+    <string name="livestock_health_followup_closed_manual">Follow-up ended</string>
+    <string name="livestock_health_last_status_title">Latest status</string>
+    <string name="livestock_health_last_check_time">Last check today · 18:20</string>
+    <string name="livestock_health_status_increased">Increased</string>
+    <string name="livestock_health_status_same">Same</string>
+    <string name="livestock_health_status_decreased">Decreased</string>
+    <string name="livestock_health_status_recovered">Recovered</string>
+    <string name="livestock_health_history_title">Observation history</string>
+    <string name="livestock_health_new_check">New check</string>
+    <string name="livestock_health_recovered_helper">Selecting Recovered ends the follow-up while the observation history remains available.</string>
+
+    <string name="livestock_health_new_check_title">New check</string>
+    <string name="livestock_health_check_status_question">How is the symptom now?</string>
+    <string name="livestock_health_check_affected_question">How many are affected?</string>
+    <string name="livestock_health_check_time_title">Check time</string>
+    <string name="livestock_health_check_time_value">Today · 18:20</string>
+    <string name="livestock_health_check_time_today_format">Today · %1$s</string>
+    <string name="livestock_health_check_photo_note_title">Photo or note (optional)</string>
+    <string name="livestock_health_check_photo_note_value">Add a note or a new observation photo</string>
+    <string name="livestock_health_check_photo_source_title">Check photo</string>
+    <string name="livestock_health_check_photo_add_title">Add photo</string>
+    <string name="livestock_health_check_photo_add_subtitle">Choose camera or gallery</string>
+    <string name="livestock_health_check_photo_selected">Check photo added</string>
+    <string name="livestock_health_check_photo_replace">Tap to replace</string>
+    <string name="livestock_health_check_note_hint">Describe what changed during this check…</string>
+    <string name="livestock_health_check_context_value">Water measurement · 2 days ago</string>
+    <string name="livestock_health_check_save">Save check</string>
+
+    <string name="livestock_health_default_count">1</string>
+    <string name="livestock_health_step_number_1">1</string>
+    <string name="livestock_health_step_number_2">2</string>
+    <string name="livestock_health_step_number_3">3</string>
+    <string name="livestock_health_step_number_4">4</string>
 </resources>

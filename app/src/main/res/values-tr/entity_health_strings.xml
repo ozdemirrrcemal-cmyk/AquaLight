@@ -10,4 +10,260 @@
     <string name="livestock_health_entry_title">Canlı Sağlığı</string>
     <string name="livestock_health_entry_summary">Canlılar aktif ve iyi durumda</string>
     <string name="livestock_health_entry_last_check">Son kontrol: bugün</string>
+
+    <string name="livestock_health_info_description">Canlı sağlığı bilgisi</string>
+    <string name="livestock_health_info_message">Gözlemler değişimi zaman içinde takip etmeye yardımcı olur; tanı değildir.</string>
+    <string name="livestock_health_hero_image_description">Beta balıklı akvaryum</string>
+    <string name="livestock_health_hero_empty_title">İlk gözlemini kaydet</string>
+    <string name="livestock_health_hero_empty_subtitle">Belirtileri ve iyileşme sürecini tek yerde takip et.</string>
+    <string name="livestock_health_hero_active_title">Canlılarını takip et</string>
+    <string name="livestock_health_hero_active_subtitle">Gözlemleri tek yerde tut ve takip edilen değişimin seyrini karşılaştır.</string>
+    <string name="livestock_health_new_observation">Yeni gözlem</string>
+    <string name="livestock_health_followups_section">Takipler</string>
+    <string name="livestock_health_empty_followups_title">Henüz gözlem yok</string>
+    <string name="livestock_health_empty_followups_body">Canlılarının durumu için kayıt ekleyebilirsin.</string>
+    <string name="livestock_health_no_livestock_title">Bu tankta canlı yok</string>
+    <string name="livestock_health_no_livestock_body">Sağlık gözlemi oluşturmadan önce Canlılar sekmesinden canlı ekle.</string>
+    <string name="livestock_health_active_followups_section">Aktif takipler</string>
+    <string name="livestock_health_recent_observations_section">Son gözlemler</string>
+    <string name="livestock_health_past_followups_section">Geçmiş takipler</string>
+    <string name="livestock_health_view_all">Tümünü gör</string>
+    <string name="livestock_health_past_followups_empty">Henüz kapanmış takip yok.</string>
+    <string name="livestock_health_active_last_check_format">Son kontrol: %1$s</string>
+    <string name="livestock_health_today_time_format">Bugün · %1$s</string>
+    <string name="livestock_health_no_check_yet">Henüz kontrol yok</string>
+    <plurals name="livestock_health_past_period_format">
+        <item quantity="one">%1$s – %2$s · %3$d gün</item>
+        <item quantity="other">%1$s – %2$s · %3$d gün</item>
+    </plurals>
+    <plurals name="livestock_health_past_recovered_format">
+        <item quantity="one">Son durum: Düzeldi · %1$d kontrol</item>
+        <item quantity="other">Son durum: Düzeldi · %1$d kontrol</item>
+    </plurals>
+    <plurals name="livestock_health_past_manual_format">
+        <item quantity="one">Kullanıcı tarafından kapatıldı · %1$d kontrol</item>
+        <item quantity="other">Kullanıcı tarafından kapatıldı · %1$d kontrol</item>
+    </plurals>
+    <string name="livestock_health_history_screen_subtitle">Kapanan takipler en yeniden eskiye sıralanır. Bir takibe dokunarak geçmişini salt okunur görüntüleyebilirsin.</string>
+
+    <string name="livestock_health_tracking_badge">Takipte</string>
+    <string name="livestock_health_issue_surface">Normalden sık yüzeye çıkma</string>
+    <string name="livestock_health_issue_first_seen">İlk gözlem bugün · 14:30</string>
+    <plurals name="livestock_health_affected_format">
+        <item quantity="one">%1$d / %2$d canlı etkileniyor</item>
+        <item quantity="other">%1$d / %2$d canlı etkileniyor</item>
+    </plurals>
+    <string name="livestock_health_history_today_surface_same">Bugün · 18:20 · Yüzeye çıkma · Aynı</string>
+    <string name="livestock_health_history_time_today_format">Bugün · %1$s</string>
+    <string name="livestock_health_history_time_current_preview">Bugün · 18:20</string>
+    <string name="livestock_health_history_time_initial_preview">Bugün · 14:30</string>
+    <string name="livestock_health_history_issue_surface">Normalden sık yüzeye çıkma</string>
+    <string name="livestock_health_history_issue_initial">Sık yüzeye çıkma</string>
+    <string name="livestock_health_status_was_increasing">Artıyordu</string>
+    <string name="livestock_health_history_previous_surface">Bugün · 14:30 · İlk gözlem · Artıyordu</string>
+    <string name="livestock_health_tank_context_title">Tanktan gelen bağlam</string>
+    <string name="livestock_health_tank_context_measurement">Su ölçümü · 2 gün önce</string>
+    <string name="livestock_health_tank_context_measurement_title">Su ölçümü</string>
+    <string name="livestock_health_tank_context_measurement_age">2 gün önce</string>
+    <string name="livestock_health_tank_context_change_title">Su değişimi</string>
+    <string name="livestock_health_tank_context_change_age">5 gün önce</string>
+    <string name="livestock_health_tank_context_change">Su değişimi · 5 gün önce</string>
+    <string name="livestock_health_tank_data_title">Tank verileri</string>
+    <string name="livestock_health_tank_data_last_measurement_empty">Son ölçüm yok</string>
+    <string name="livestock_health_tank_data_description">Tank sağlığı ekranını aç</string>
+    <string name="livestock_health_no_observation_notice">Gözlem olmaması sağlık durumu anlamına gelmez.</string>
+
+    <string name="livestock_health_new_observation_title">Yeni gözlem</string>
+    <string name="livestock_health_observation_progress">Gözlem kaydı</string>
+    <string name="livestock_health_step_livestock">1. Hangi canlı?</string>
+    <plurals name="livestock_health_selector_quantity_format">
+        <item quantity="one">%1$d canlı</item>
+        <item quantity="other">%1$d canlı</item>
+    </plurals>
+    <string name="livestock_health_step_observation">2. Ne gözlemledin?</string>
+    <string name="livestock_health_select_single">Yalnızca tek bir durum veya değişim seç.</string>
+    <string name="livestock_health_select_livestock_hint">Tankındaki kayıtlı canlılardan seç.</string>
+    <string name="livestock_health_select_multiple">Birden fazla belirti seçebilirsin.</string>
+    <string name="livestock_health_symptom_normal">Normal görünüyor</string>
+    <string name="livestock_health_symptom_surface">Hızlı soluma / yüzeye çıkma</string>
+    <string name="livestock_health_symptom_appetite">İştah azalması</string>
+    <string name="livestock_health_symptom_hiding">Saklanıyor</string>
+    <string name="livestock_health_symptom_swimming">Yüzme / denge değişimi</string>
+    <string name="livestock_health_symptom_spot">Benek / yara / şişlik</string>
+    <string name="livestock_health_symptom_fins">Yüzgeç / solungaç</string>
+    <string name="livestock_health_symptom_other">Diğer</string>
+
+    <string name="livestock_health_symptom_shrimp_inactive">Hareketsizlik</string>
+    <string name="livestock_health_symptom_shrimp_no_food">Yem almama</string>
+    <string name="livestock_health_symptom_shrimp_molt">Kabuk değiştirme sorunu</string>
+    <string name="livestock_health_symptom_shrimp_color">Renk / şeffaflık değişimi</string>
+    <string name="livestock_health_symptom_shrimp_balance">Anormal yüzme / denge</string>
+
+    <string name="livestock_health_symptom_snail_inactive">Hareketsizlik</string>
+    <string name="livestock_health_symptom_snail_retracted">Uzun süre kabukta kalma</string>
+    <string name="livestock_health_symptom_snail_no_food">Yem almama</string>
+    <string name="livestock_health_symptom_snail_shell">Kabuk hasarı / aşınma</string>
+    <string name="livestock_health_symptom_snail_grip">Tutunma / hareket sorunu</string>
+
+    <string name="livestock_health_symptom_crustacean_inactive">Hareketsizlik / aşırı saklanma</string>
+    <string name="livestock_health_symptom_crustacean_no_food">Yem almama</string>
+    <string name="livestock_health_symptom_crustacean_molt">Kabuk değiştirme sorunu</string>
+    <string name="livestock_health_symptom_crustacean_limb">Kabuk / uzuv hasarı</string>
+    <string name="livestock_health_symptom_crustacean_balance">Yürüme / denge değişimi</string>
+
+    <string name="livestock_health_symptom_coral_closed">Poliplerin açılmaması</string>
+    <string name="livestock_health_symptom_coral_tissue">Doku çekilmesi</string>
+    <string name="livestock_health_symptom_coral_color">Renk kaybı / solma</string>
+    <string name="livestock_health_symptom_coral_mucus">Mukus / anormal tabaka</string>
+    <string name="livestock_health_symptom_coral_damage">Fiziksel hasar / doku yırtığı</string>
+
+    <string name="livestock_health_symptom_generic_inactive">Hareketsizlik</string>
+    <string name="livestock_health_symptom_generic_no_food">Yem almama</string>
+    <string name="livestock_health_symptom_generic_color">Renk / doku değişimi</string>
+    <string name="livestock_health_symptom_generic_body">Gövde / kabuk değişimi</string>
+    <string name="livestock_health_symptom_generic_movement">Anormal hareket</string>
+    <string name="livestock_health_step_affected">3. Kaç canlı etkilendi?</string>
+    <string name="livestock_health_affected_total_format">/ %1$d toplam</string>
+    <string name="livestock_health_affected_total_preview">/ 1 toplam</string>
+    <string name="livestock_health_registered_count_format">Aynı türün kayıtlı sayısı: %1$d</string>
+    <string name="livestock_health_affected_counter_format">%1$d / %2$d</string>
+    <string name="livestock_health_affected_counter_preview">1 / 4</string>
+    <string name="livestock_health_step_when">4. Ne zamandır?</string>
+    <string name="livestock_health_when_today">Bugün</string>
+    <string name="livestock_health_onset_1_3_days">1–3 gündür</string>
+    <string name="livestock_health_onset_4_7_days">4–7 gündür</string>
+    <string name="livestock_health_onset_over_week">1 haftadan uzun</string>
+    <string name="livestock_health_choice_unsure">Emin değilim</string>
+    <string name="livestock_health_trend_new">Yeni fark ettim</string>
+    <string name="livestock_health_when_now">Az önce</string>
+    <string name="livestock_health_when_start_label">Başlangıç</string>
+    <string name="livestock_health_when_change_label">Seyir</string>
+    <string name="livestock_health_photo_optional">Fotoğraf ekle (isteğe bağlı)</string>
+    <string name="livestock_health_photo_add">Gözlem fotoğrafı ekle</string>
+    <string name="livestock_health_photo_hint">Maksimum 3 fotoğraf · JPG, PNG</string>
+    <string name="livestock_health_other_observation_title">Diğer gözlem</string>
+    <string name="livestock_health_other_observation_hint">Gözlemlediğin durumu kısaca yaz…</string>
+    <string name="livestock_health_note_label">Not ekle (isteğe bağlı)</string>
+    <string name="livestock_health_note_hint">Gözleminle ilgili bir not ekleyebilirsin…</string>
+    <string name="livestock_health_save_evaluate">Gözlemi Değerlendir</string>
+
+    <string name="livestock_health_evaluation_title">Değerlendirme</string>
+    <string name="livestock_health_change_control_title">Değişimi kontrol et</string>
+    <plurals name="livestock_health_evaluation_summary_format">
+        <item quantity="one">%1$s · %2$d / %3$d canlı · %4$s</item>
+        <item quantity="other">%1$s · %2$d / %3$d canlı · %4$s</item>
+    </plurals>
+    <string name="livestock_health_used_data_title">Bu değerlendirmede kullanılanlar</string>
+    <string name="livestock_health_last_water_measurement">Son su ölçümü</string>
+    <string name="livestock_health_last_water_measurement_value">5 gün önce · güncel ölçüm gerekli</string>
+    <string name="livestock_health_old_data_badge">Eski veri</string>
+    <string name="livestock_health_last_water_change">Son su değişimi</string>
+    <string name="livestock_health_last_water_change_value">5 gün önce</string>
+    <string name="livestock_health_fresh_measurement_warning_title">Güncel su ölçümü görünmüyor</string>
+    <string name="livestock_health_fresh_measurement_warning">Güncel ölçüm görünmüyor. Sonuç çıkarmadan önce amonyak, nitrit ve oksijen durumunu kontrol et.</string>
+    <string name="livestock_health_check_first_title">Önce kontrol et</string>
+    <string name="livestock_health_check_first_subtitle">Seçilen canlı ve gözleme göre hızlı kontroller.</string>
+    <string name="livestock_health_check_surface_title">Yüzey hareketi ve havalandırma güçlü mü?</string>
+    <string name="livestock_health_check_surface_body">Yüzeyde yeterli hareket olup olmadığını ve solunumun hızlanıp hızlanmadığını kontrol et.</string>
+    <string name="livestock_health_check_body_title">Göz, solungaç ve gövdeyi kontrol et</string>
+    <string name="livestock_health_check_body_body">Benek, yara, renk değişimi, şişlik veya kısılmış yüzgeç var mı bak.</string>
+    <string name="livestock_health_check_others_title">Diğer canlılarda da aynı belirti var mı?</string>
+    <string name="livestock_health_check_others_body">Durumu tek bir canlıya bağlamadan önce tanktaki diğer canlılarla karşılaştır.</string>
+    <string name="livestock_health_check_feed_title">Yeme davranışı</string>
+    <string name="livestock_health_check_feed_body">İştahı ve yeme normal şekilde ulaşıp ulaşamadığını gözlemle.</string>
+    <string name="livestock_health_evaluation_basis_title">Neye dayanıyor?</string>
+    <string name="livestock_health_evaluation_basis_body">Seçilen gözlem ve tankta kayıtlı bağlam verileri. Su kalitesi analiz verileri bağlandığında değerlendirme burada zenginleşecek.</string>
+    <string name="livestock_health_evaluation_helper">Bu ekran gözlem ve tank bağlamını düzenler; tıbbi tanı vermez.</string>
+    <string name="livestock_health_check_fish_surface_title">Yüzey hareketi ve solunumu kontrol et</string>
+    <string name="livestock_health_check_fish_surface_body">Yüzey hareketi, havalandırma ve solunum hızında belirgin değişim var mı gözle.</string>
+    <string name="livestock_health_check_fish_body_title">Göz, solungaç, yüzgeç ve gövdeyi kontrol et</string>
+    <string name="livestock_health_check_fish_body_body">Benek, yara, şişlik, renk değişimi veya kısılmış yüzgeç var mı bak.</string>
+    <string name="livestock_health_check_fish_others_title">Diğer balıklarla karşılaştır</string>
+    <string name="livestock_health_check_fish_others_body">Aynı belirti başka balıklarda da görülüyor mu kontrol et.</string>
+    <string name="livestock_health_check_fish_feed_title">Yeme davranışını gözle</string>
+    <string name="livestock_health_check_fish_feed_body">Yeme yaklaşma, yeme ulaşma ve tüketme davranışında değişim var mı karşılaştır.</string>
+
+    <string name="livestock_health_check_shrimp_molt_title">Kabuk değiştirme durumunu kontrol et</string>
+    <string name="livestock_health_check_shrimp_molt_body">Yarım kalmış kabuk değişimi, eski kabuk veya anormal vücut duruşu var mı bak.</string>
+    <string name="livestock_health_check_shrimp_activity_title">Hareket ve dengeyi gözle</string>
+    <string name="livestock_health_check_shrimp_activity_body">Yürüme, yüzme, tutunma ve denge davranışı normalden farklı mı karşılaştır.</string>
+    <string name="livestock_health_check_shrimp_body_title">Renk ve gövde görünümünü kontrol et</string>
+    <string name="livestock_health_check_shrimp_body_body">Renk kaybı, opaklaşma, leke veya gövde deformasyonu var mı gözle.</string>
+    <string name="livestock_health_check_shrimp_feed_title">Yem alma davranışını kontrol et</string>
+    <string name="livestock_health_check_shrimp_feed_body">Yeme yaklaşıyor mu, yemi tutuyor mu ve normal şekilde besleniyor mu gözle.</string>
+
+    <string name="livestock_health_check_snail_grip_title">Tutunma ve hareketi kontrol et</string>
+    <string name="livestock_health_check_snail_grip_body">Cam, dekor veya zemine tutunma ve ilerleme davranışında değişim var mı bak.</string>
+    <string name="livestock_health_check_snail_shell_title">Kabuğu dikkatle incele</string>
+    <string name="livestock_health_check_snail_shell_body">Çatlak, aşınma, beyazlaşma veya belirgin kabuk hasarı var mı kontrol et.</string>
+    <string name="livestock_health_check_snail_body_title">Kabuktan çıkma davranışını gözle</string>
+    <string name="livestock_health_check_snail_body_body">Uzun süre kabukta kalma, gevşek duruş veya alışılmadık geri çekilme var mı bak.</string>
+    <string name="livestock_health_check_snail_feed_title">Beslenme izlerini kontrol et</string>
+    <string name="livestock_health_check_snail_feed_body">Yem ve yüzeylerde beslenme davranışı normalden azalmış mı karşılaştır.</string>
+
+    <string name="livestock_health_check_crustacean_molt_title">Kabuk değiştirme durumunu kontrol et</string>
+    <string name="livestock_health_check_crustacean_molt_body">Yarım kalmış kabuk değişimi, sertleşmemiş kabuk veya olağandışı saklanma var mı bak.</string>
+    <string name="livestock_health_check_crustacean_limb_title">Kabuk ve uzuvları incele</string>
+    <string name="livestock_health_check_crustacean_limb_body">Kıskaç, bacak, eklem veya kabukta hasar ve deformasyon var mı kontrol et.</string>
+    <string name="livestock_health_check_crustacean_activity_title">Yürüme, denge ve saklanmayı gözle</string>
+    <string name="livestock_health_check_crustacean_activity_body">Hareket, denge ve saklanma süresi normal davranışından farklı mı karşılaştır.</string>
+    <string name="livestock_health_check_crustacean_feed_title">Yem alma ve rekabeti kontrol et</string>
+    <string name="livestock_health_check_crustacean_feed_body">Yeme ulaşabiliyor mu ve diğer canlılar tarafından yemden uzaklaştırılıyor mu gözle.</string>
+
+    <string name="livestock_health_check_coral_polyp_title">Polip açılımını karşılaştır</string>
+    <string name="livestock_health_check_coral_polyp_body">Poliplerin günün normal dönemine göre ne kadar açıldığını ve tepki verdiğini gözle.</string>
+    <string name="livestock_health_check_coral_tissue_title">Doku bütünlüğünü kontrol et</string>
+    <string name="livestock_health_check_coral_tissue_body">Doku çekilmesi, yırtılma, iskelet görünmesi veya lokal hasar var mı bak.</string>
+    <string name="livestock_health_check_coral_color_title">Renk ve solmayı karşılaştır</string>
+    <string name="livestock_health_check_coral_color_body">Genel solma, beyazlama veya bölgesel renk kaybı var mı kontrol et.</string>
+    <string name="livestock_health_check_coral_environment_title">Akış ve ışık koşullarını kontrol et</string>
+    <string name="livestock_health_check_coral_environment_body">Mercanın bulunduğu noktadaki su akışı ve ışıkta yakın zamanda belirgin değişiklik oldu mu kontrol et.</string>
+
+    <string name="livestock_health_check_generic_activity_title">Hareket ve davranışı gözle</string>
+    <string name="livestock_health_check_generic_activity_body">Normal hareket ve tepki davranışından belirgin bir sapma var mı karşılaştır.</string>
+    <string name="livestock_health_check_generic_body_title">Gövde ve dış görünümü kontrol et</string>
+    <string name="livestock_health_check_generic_body_body">Renk, doku, kabuk veya gövdede yeni bir değişiklik var mı gözle.</string>
+    <string name="livestock_health_check_generic_others_title">Benzer canlılarla karşılaştır</string>
+    <string name="livestock_health_check_generic_others_body">Aynı tanktaki benzer canlılarda aynı belirti görülüyor mu kontrol et.</string>
+    <string name="livestock_health_check_generic_feed_title">Beslenme davranışını gözle</string>
+    <string name="livestock_health_check_generic_feed_body">Yeme yaklaşma ve beslenme davranışında değişim var mı karşılaştır.</string>
+
+    <string name="livestock_health_measure_water">Tankta su kalitesini ölç</string>
+    <string name="livestock_health_view_followup">Kaydet</string>
+
+    <string name="livestock_health_followup_title">Canlı takibi</string>
+    <string name="livestock_health_end_followup">Takibi bitir</string>
+    <string name="livestock_health_followup_closed_manual">Takip bitirildi</string>
+    <string name="livestock_health_last_status_title">Son durum</string>
+    <string name="livestock_health_last_check_time">Son kontrol bugün · 18:20</string>
+    <string name="livestock_health_status_increased">Artıyor</string>
+    <string name="livestock_health_status_same">Aynı</string>
+    <string name="livestock_health_status_decreased">Azalıyor</string>
+    <string name="livestock_health_status_recovered">Düzeldi</string>
+    <string name="livestock_health_history_title">Gözlem geçmişi</string>
+    <string name="livestock_health_new_check">Yeni kontrol kaydet</string>
+    <string name="livestock_health_recovered_helper">Düzeldi seçildiğinde takip kapanır; gözlem geçmişi korunur.</string>
+
+    <string name="livestock_health_new_check_title">Yeni kontrol</string>
+    <string name="livestock_health_check_status_question">Belirti şimdi nasıl?</string>
+    <string name="livestock_health_check_affected_question">Kaç canlı etkileniyor?</string>
+    <string name="livestock_health_check_time_title">Kontrol zamanı</string>
+    <string name="livestock_health_check_time_value">Bugün · 18:20</string>
+    <string name="livestock_health_check_time_today_format">Bugün · %1$s</string>
+    <string name="livestock_health_check_photo_note_title">Fotoğraf veya not (isteğe bağlı)</string>
+    <string name="livestock_health_check_photo_note_value">Yeni bir not veya gözlem fotoğrafı ekle</string>
+    <string name="livestock_health_check_photo_source_title">Kontrol görseli</string>
+    <string name="livestock_health_check_photo_add_title">Görsel ekle</string>
+    <string name="livestock_health_check_photo_add_subtitle">Kamera veya albümden seç</string>
+    <string name="livestock_health_check_photo_selected">Kontrol görseli eklendi</string>
+    <string name="livestock_health_check_photo_replace">Değiştirmek için dokun</string>
+    <string name="livestock_health_check_note_hint">Kontrolde gözlemlediğin değişimi yaz…</string>
+    <string name="livestock_health_check_context_value">Su ölçümü · 2 gün önce</string>
+    <string name="livestock_health_check_save">Kontrolü kaydet</string>
+
+    <string name="livestock_health_default_count">1</string>
+    <string name="livestock_health_step_number_1">1</string>
+    <string name="livestock_health_step_number_2">2</string>
+    <string name="livestock_health_step_number_3">3</string>
+    <string name="livestock_health_step_number_4">4</string>
 </resources>
