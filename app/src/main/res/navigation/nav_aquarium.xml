@@ -279,6 +279,10 @@
             <argument
                 android:name="readOnly"
                 app:argType="boolean" />
+            <argument
+                android:name="closeReason"
+                android:defaultValue=""
+                app:argType="string" />
         </action>
     </fragment>
 
@@ -351,6 +355,10 @@
             <argument
                 android:name="readOnly"
                 app:argType="boolean" />
+            <argument
+                android:name="closeReason"
+                android:defaultValue=""
+                app:argType="string" />
         </action>
         <action
             android:id="@+id/action_livestockHealthEvaluationFragment_to_tankHealthFragment"
@@ -388,6 +396,10 @@
             android:name="readOnly"
             android:defaultValue="false"
             app:argType="boolean" />
+        <argument
+            android:name="closeReason"
+            android:defaultValue=""
+            app:argType="string" />
     </fragment>
 
     <fragment
@@ -420,6 +432,10 @@
             <argument
                 android:name="readOnly"
                 app:argType="boolean" />
+            <argument
+                android:name="closeReason"
+                android:defaultValue=""
+                app:argType="string" />
         </action>
     </fragment>
 

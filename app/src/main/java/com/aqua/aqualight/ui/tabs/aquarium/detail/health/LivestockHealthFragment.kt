@@ -288,7 +288,8 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
                     livestockId = entry.livestockId,
                     symptomKey = entry.symptomKey,
                     affectedCount = entry.affectedCount,
-                    readOnly = true
+                    readOnly = true,
+                    closeReason = entry.closeReason
                 )
         )
         isNavigating = didNavigate

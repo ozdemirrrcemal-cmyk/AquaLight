@@ -215,6 +215,7 @@
 
     <string name="livestock_health_followup_title">Livestock follow-up</string>
     <string name="livestock_health_end_followup">End follow-up</string>
+    <string name="livestock_health_followup_closed_manual">Follow-up ended</string>
     <string name="livestock_health_last_status_title">Latest status</string>
     <string name="livestock_health_last_check_time">Last check today · 18:20</string>
     <string name="livestock_health_status_increased">Increased</string>

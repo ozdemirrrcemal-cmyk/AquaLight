@@ -215,6 +215,7 @@
 
     <string name="livestock_health_followup_title">Canlı takibi</string>
     <string name="livestock_health_end_followup">Takibi bitir</string>
+    <string name="livestock_health_followup_closed_manual">Takip bitirildi</string>
     <string name="livestock_health_last_status_title">Son durum</string>
     <string name="livestock_health_last_check_time">Son kontrol bugün · 18:20</string>
     <string name="livestock_health_status_increased">Artıyor</string>

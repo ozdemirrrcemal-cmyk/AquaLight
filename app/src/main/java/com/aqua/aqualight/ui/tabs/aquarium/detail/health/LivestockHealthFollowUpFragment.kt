@@ -52,7 +52,7 @@ class LivestockHealthFollowUpFragment :
                 titleOverride = getString(R.string.livestock_health_followup_title),
                 onBackClick = { findNavController().navigateUp() },
                 pillTextAction = if (args.readOnly) {
-                    null
+                    closedFollowupStatusAction()
                 } else {
                     AquaHeaderPillTextAction(
                         text = getString(R.string.livestock_health_end_followup),
@@ -297,6 +297,29 @@ class LivestockHealthFollowUpFragment :
             if (selected) R.dimen.aqua_size_2 else R.dimen.aqua_size_1
         )
         card.setStrokeColor(if (selected) selectedStroke else normalStroke)
+    }
+
+    private fun closedFollowupStatusAction(): AquaHeaderPillTextAction {
+        val isRecovered =
+            args.closeReason == LivestockHealthUiSessionState.CLOSE_REASON_RECOVERED
+        val textRes = if (isRecovered) {
+            R.string.livestock_health_status_recovered
+        } else {
+            R.string.livestock_health_followup_closed_manual
+        }
+        val textColorRes = if (isRecovered) {
+            R.color.aqua_status_success
+        } else {
+            R.color.aqua_card_text_secondary
+        }
+
+        return AquaHeaderPillTextAction(
+            text = getString(textRes),
+            backgroundRes = R.drawable.bg_aqua_toolbar_pill_action_primary,
+            textColor = ContextCompat.getColor(requireContext(), textColorRes),
+            contentDescription = getString(textRes),
+            onClick = {}
+        )
     }
 
     private fun statusLabelRes(status: String): Int = when (status) {

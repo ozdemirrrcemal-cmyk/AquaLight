@@ -129,7 +129,8 @@ class LivestockHealthHistoryFragment :
                     livestockId = entry.livestockId,
                     symptomKey = entry.symptomKey,
                     affectedCount = entry.affectedCount,
-                    readOnly = true
+                    readOnly = true,
+                    closeReason = entry.closeReason
                 )
         )
         isNavigating = didNavigate
