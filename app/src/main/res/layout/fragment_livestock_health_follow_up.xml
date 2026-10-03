@@ -293,95 +293,14 @@
                 android:layout_marginTop="@dimen/aqua_size_10">
 
                 <LinearLayout
+                    android:id="@+id/historyContainer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="@dimen/aqua_size_12">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="@dimen/aqua_size_64"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <ImageView
-                            android:id="@+id/ivHistoryCurrent"
-                            android:layout_width="@dimen/aqua_size_48"
-                            android:layout_height="@dimen/aqua_size_48"
-                            android:contentDescription="@null"
-                            android:scaleType="center" />
-
-                        <LinearLayout
-                            android:layout_width="@dimen/aqua_size_0"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="@dimen/aqua_size_10"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="@string/livestock_health_history_today_surface_same"
-                                android:textColor="@color/aqua_card_text_primary"
-                                android:textSize="@dimen/aqua_text_size_body_small" />
-
-                            <TextView
-                                android:id="@+id/tvHistoryCurrentAffected"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="@dimen/aqua_size_3"
-                                android:textColor="@color/aqua_content_muted"
-                                android:textSize="@dimen/aqua_text_size_micro" />
-
-                        </LinearLayout>
-
-                    </LinearLayout>
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="@dimen/aqua_size_1"
-                        android:background="@color/aqua_card_divider" />
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="@dimen/aqua_size_64"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <ImageView
-                            android:id="@+id/ivHistoryPrevious"
-                            android:layout_width="@dimen/aqua_size_48"
-                            android:layout_height="@dimen/aqua_size_48"
-                            android:contentDescription="@null"
-                            android:scaleType="center" />
-
-                        <LinearLayout
-                            android:layout_width="@dimen/aqua_size_0"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="@dimen/aqua_size_10"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="@string/livestock_health_history_previous_surface"
-                                android:textColor="@color/aqua_card_text_primary"
-                                android:textSize="@dimen/aqua_text_size_body_small" />
-
-                            <TextView
-                                android:id="@+id/tvHistoryPreviousAffected"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="@dimen/aqua_size_3"
-                                android:textColor="@color/aqua_content_muted"
-                                android:textSize="@dimen/aqua_text_size_micro" />
-
-                        </LinearLayout>
-
-                    </LinearLayout>
-
-                </LinearLayout>
+                    android:paddingStart="@dimen/aqua_size_8"
+                    android:paddingTop="@dimen/aqua_size_8"
+                    android:paddingEnd="@dimen/aqua_size_8"
+                    android:paddingBottom="@dimen/aqua_size_8" />
 
             </com.google.android.material.card.MaterialCardView>
 
@@ -404,22 +323,119 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="@dimen/aqua_size_14">
+                    android:paddingStart="@dimen/aqua_size_12"
+                    android:paddingTop="@dimen/aqua_size_6"
+                    android:paddingEnd="@dimen/aqua_size_12"
+                    android:paddingBottom="@dimen/aqua_size_6">
 
-                    <TextView
+                    <LinearLayout
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/livestock_health_tank_context_measurement"
-                        android:textColor="@color/aqua_card_text_secondary"
-                        android:textSize="@dimen/aqua_text_size_body_small" />
+                        android:layout_height="@dimen/aqua_size_58"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
 
-                    <TextView
+                        <com.google.android.material.card.MaterialCardView
+                            style="@style/Widget.Aqua.Card.IconAccent"
+                            android:layout_width="@dimen/aqua_size_36"
+                            android:layout_height="@dimen/aqua_size_36"
+                            app:cardCornerRadius="@dimen/aqua_size_10">
+
+                            <ImageView
+                                android:layout_width="@dimen/aqua_size_22"
+                                android:layout_height="@dimen/aqua_size_22"
+                                android:layout_gravity="center"
+                                android:contentDescription="@null"
+                                android:importantForAccessibility="no"
+                                android:src="@drawable/ic_water_test_wave_24"
+                                app:tint="@color/aqua_button_blue" />
+
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <LinearLayout
+                            android:layout_width="@dimen/aqua_size_0"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/aqua_size_10"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:includeFontPadding="false"
+                                android:text="@string/livestock_health_tank_context_measurement_title"
+                                android:textColor="@color/aqua_card_text_primary"
+                                android:textSize="@dimen/aqua_text_size_body_small"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/aqua_size_2"
+                                android:includeFontPadding="false"
+                                android:text="@string/livestock_health_tank_context_measurement_age"
+                                android:textColor="@color/aqua_content_muted"
+                                android:textSize="@dimen/aqua_text_size_micro" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <View
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/aqua_size_8"
-                        android:text="@string/livestock_health_tank_context_change"
-                        android:textColor="@color/aqua_card_text_secondary"
-                        android:textSize="@dimen/aqua_text_size_body_small" />
+                        android:layout_height="@dimen/aqua_size_1"
+                        android:background="@color/aqua_card_divider" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/aqua_size_58"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.card.MaterialCardView
+                            style="@style/Widget.Aqua.Card.IconAccent"
+                            android:layout_width="@dimen/aqua_size_36"
+                            android:layout_height="@dimen/aqua_size_36"
+                            app:cardCornerRadius="@dimen/aqua_size_10">
+
+                            <ImageView
+                                android:layout_width="@dimen/aqua_size_22"
+                                android:layout_height="@dimen/aqua_size_22"
+                                android:layout_gravity="center"
+                                android:contentDescription="@null"
+                                android:importantForAccessibility="no"
+                                android:src="@drawable/ic_care_water_change_24"
+                                app:tint="@color/aqua_content_secondary" />
+
+                        </com.google.android.material.card.MaterialCardView>
+
+                        <LinearLayout
+                            android:layout_width="@dimen/aqua_size_0"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/aqua_size_10"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:includeFontPadding="false"
+                                android:text="@string/livestock_health_tank_context_change_title"
+                                android:textColor="@color/aqua_card_text_primary"
+                                android:textSize="@dimen/aqua_text_size_body_small"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="@dimen/aqua_size_2"
+                                android:includeFontPadding="false"
+                                android:text="@string/livestock_health_tank_context_change_age"
+                                android:textColor="@color/aqua_content_muted"
+                                android:textSize="@dimen/aqua_text_size_micro" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
 
                 </LinearLayout>
 

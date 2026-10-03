@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/aqua_size_86">
+
+    <View
+        android:id="@+id/timelineTop"
+        android:layout_width="@dimen/aqua_size_1"
+        android:layout_height="@dimen/aqua_size_0"
+        android:background="@color/aqua_card_outline"
+        app:layout_constraintBottom_toTopOf="@id/timelineNode"
+        app:layout_constraintStart_toStartOf="@id/timelineNode"
+        app:layout_constraintEnd_toEndOf="@id/timelineNode"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <View
+        android:id="@+id/timelineNode"
+        android:layout_width="@dimen/aqua_size_14"
+        android:layout_height="@dimen/aqua_size_14"
+        android:background="@drawable/bg_livestock_health_timeline_previous"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <View
+        android:id="@+id/timelineBottom"
+        android:layout_width="@dimen/aqua_size_1"
+        android:layout_height="@dimen/aqua_size_0"
+        android:background="@color/aqua_card_outline"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="@id/timelineNode"
+        app:layout_constraintEnd_toEndOf="@id/timelineNode"
+        app:layout_constraintTop_toBottomOf="@id/timelineNode" />
+
+    <LinearLayout
+        android:id="@+id/historyText"
+        android:layout_width="@dimen/aqua_size_0"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/aqua_size_12"
+        android:layout_marginEnd="@dimen/aqua_size_8"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/ivHistoryPhoto"
+        app:layout_constraintStart_toEndOf="@id/timelineNode"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_chainStyle="packed">
+
+        <TextView
+            android:id="@+id/tvHistoryTime"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:includeFontPadding="false"
+            android:textColor="@color/aqua_button_blue"
+            android:textSize="@dimen/aqua_text_size_micro"
+            tools:text="Bugün · 18:20" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/aqua_size_3"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tvHistoryObservation"
+                android:layout_width="@dimen/aqua_size_0"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:includeFontPadding="false"
+                android:maxLines="1"
+                android:textColor="@color/aqua_card_text_primary"
+                android:textSize="@dimen/aqua_text_size_caption"
+                android:textStyle="bold"
+                tools:text="Normalden sık yüzeye çıkma" />
+
+            <TextView
+                android:id="@+id/tvHistoryStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/aqua_size_4"
+                android:includeFontPadding="false"
+                android:textColor="@color/dialog_icon_warning"
+                android:textSize="@dimen/aqua_text_size_caption"
+                android:textStyle="bold"
+                tools:text="Aynı" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvHistoryAffected"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/aqua_size_3"
+            android:includeFontPadding="false"
+            android:textColor="@color/aqua_content_muted"
+            android:textSize="@dimen/aqua_text_size_micro"
+            tools:text="1 / 4 canlı etkileniyor" />
+
+    </LinearLayout>
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/historyPhotoFrame"
+        style="@style/Widget.Aqua.Card.Device.Media"
+        android:layout_width="@dimen/aqua_size_58"
+        android:layout_height="@dimen/aqua_size_58"
+        app:cardCornerRadius="@dimen/aqua_size_10"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/ivHistoryPhoto"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="@null"
+            android:importantForAccessibility="no"
+            android:scaleType="center" />
+
+    </com.google.android.material.card.MaterialCardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

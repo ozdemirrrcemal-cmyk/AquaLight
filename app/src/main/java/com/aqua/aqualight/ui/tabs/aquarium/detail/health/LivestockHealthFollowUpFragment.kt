@@ -1,8 +1,10 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
@@ -10,12 +12,16 @@ import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
 import com.aqua.aqualight.databinding.FragmentLivestockHealthFollowUpBinding
+import com.aqua.aqualight.databinding.ItemLivestockHealthHistoryBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderPillTextAction
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.media.bindRecordPhoto
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
+import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.LivestockCategories
 import com.google.android.material.card.MaterialCardView
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
 class LivestockHealthFollowUpFragment :
     Fragment(R.layout.fragment_livestock_health_follow_up) {
@@ -28,12 +34,14 @@ class LivestockHealthFollowUpFragment :
 
     private var currentLivestock: AquariumLivestock? = null
     private var currentStatus: String = LivestockHealthCheckBottomSheet.STATUS_SAME
+    private val historyEntries = mutableListOf<FollowUpHistoryEntry>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         require(args.tankId > 0L) {
             "LivestockHealthFollowUpFragment requires a positive tankId."
         }
+        restoreHistory(savedInstanceState)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -56,13 +64,18 @@ class LivestockHealthFollowUpFragment :
         parentFragmentManager.setFragmentResultListener(
             LivestockHealthCheckBottomSheet.REQUEST_KEY,
             viewLifecycleOwner
-        ) {
-            _, bundle ->
+        ) { _, bundle ->
             currentStatus = bundle.getString(
                 LivestockHealthCheckBottomSheet.RESULT_STATUS,
                 LivestockHealthCheckBottomSheet.STATUS_SAME
             )
+            val affectedCount = bundle.getInt(
+                LivestockHealthCheckBottomSheet.RESULT_AFFECTED_COUNT,
+                1
+            )
+            appendHistoryEntry(currentStatus, affectedCount)
             renderStatus()
+            renderHistory()
         }
 
         binding.btnNewCheck.setOnClickListener {
@@ -82,8 +95,7 @@ class LivestockHealthFollowUpFragment :
     }
 
     private fun observeLivestock() {
-        aquariumTankViewModel.tanks.observe(viewLifecycleOwner) {
-            tanks ->
+        aquariumTankViewModel.tanks.observe(viewLifecycleOwner) { tanks ->
             currentLivestock = tanks
                 .firstOrNull { tank -> tank.id == args.tankId }
                 ?.livestock
@@ -103,7 +115,10 @@ class LivestockHealthFollowUpFragment :
         }
         val quantity = livestock.quantity.coerceAtLeast(1)
 
-        binding.ivFollowupLivestock.bindRecordPhoto(livestock.photoUri)
+        binding.ivFollowupLivestock.bindRecordPhoto(
+            livestock.photoUri,
+            LivestockCategories.iconRes(livestock.category)
+        )
         binding.tvFollowupLivestockName.text = name
         binding.tvFollowupAffected.text = getString(
             R.string.livestock_health_affected_format,
@@ -111,18 +126,87 @@ class LivestockHealthFollowUpFragment :
             quantity
         )
 
-        binding.ivHistoryCurrent.bindRecordPhoto(livestock.photoUri)
-        binding.ivHistoryPrevious.bindRecordPhoto(livestock.photoUri)
-        binding.tvHistoryCurrentAffected.text = getString(
-            R.string.livestock_health_affected_format,
-            1,
-            quantity
+        ensureInitialHistory(quantity)
+        renderHistory()
+    }
+
+    private fun ensureInitialHistory(totalCount: Int) {
+        if (historyEntries.isNotEmpty()) return
+        historyEntries += FollowUpHistoryEntry(
+            timeLabel = getString(R.string.livestock_health_history_time_current_preview),
+            observationLabel = getString(R.string.livestock_health_history_issue_surface),
+            status = LivestockHealthCheckBottomSheet.STATUS_SAME,
+            statusLabel = getString(R.string.livestock_health_status_same),
+            affectedCount = 1,
+            totalCount = totalCount
         )
-        binding.tvHistoryPreviousAffected.text = getString(
-            R.string.livestock_health_affected_format,
-            1,
-            quantity
+        historyEntries += FollowUpHistoryEntry(
+            timeLabel = getString(R.string.livestock_health_history_time_initial_preview),
+            observationLabel = getString(R.string.livestock_health_history_issue_initial),
+            status = LivestockHealthCheckBottomSheet.STATUS_INCREASED,
+            statusLabel = getString(R.string.livestock_health_status_was_increasing),
+            affectedCount = 1,
+            totalCount = totalCount
         )
+    }
+
+    private fun appendHistoryEntry(status: String, affectedCount: Int) {
+        val livestock = currentLivestock ?: return
+        val time = LocalTime.now().format(HISTORY_TIME_FORMATTER)
+        historyEntries.add(
+            0,
+            FollowUpHistoryEntry(
+                timeLabel = getString(R.string.livestock_health_history_time_today_format, time),
+                observationLabel = getString(R.string.livestock_health_history_issue_surface),
+                status = status,
+                statusLabel = getString(statusLabelRes(status)),
+                affectedCount = affectedCount.coerceIn(1, livestock.quantity.coerceAtLeast(1)),
+                totalCount = livestock.quantity.coerceAtLeast(1)
+            )
+        )
+    }
+
+    private fun renderHistory() {
+        if (_binding == null) return
+        val livestock = currentLivestock ?: return
+        val inflater = LayoutInflater.from(requireContext())
+
+        binding.historyContainer.removeAllViews()
+        historyEntries.forEachIndexed { index, entry ->
+            val item = ItemLivestockHealthHistoryBinding.inflate(
+                inflater,
+                binding.historyContainer,
+                false
+            )
+            val isNewest = index == 0
+            val isLast = index == historyEntries.lastIndex
+
+            item.timelineTop.isVisible = !isNewest
+            item.timelineBottom.isVisible = !isLast
+            item.timelineNode.setBackgroundResource(
+                if (isNewest) {
+                    R.drawable.bg_livestock_health_timeline_current
+                } else {
+                    R.drawable.bg_livestock_health_timeline_previous
+                }
+            )
+            item.tvHistoryTime.text = entry.timeLabel
+            item.tvHistoryObservation.text = entry.observationLabel
+            item.tvHistoryStatus.text = entry.statusLabel
+            item.tvHistoryStatus.setTextColor(
+                ContextCompat.getColor(requireContext(), statusColorRes(entry.status))
+            )
+            item.tvHistoryAffected.text = getString(
+                R.string.livestock_health_affected_format,
+                entry.affectedCount,
+                entry.totalCount
+            )
+            item.ivHistoryPhoto.bindRecordPhoto(
+                livestock.photoUri,
+                LivestockCategories.iconRes(livestock.category)
+            )
+            binding.historyContainer.addView(item.root)
+        }
     }
 
     private fun renderStatus() {
@@ -135,8 +219,7 @@ class LivestockHealthFollowUpFragment :
         val selectedStroke = ContextCompat.getColor(requireContext(), R.color.aqua_button_blue)
         val normalStroke = ContextCompat.getColor(requireContext(), R.color.aqua_card_outline)
 
-        cards.forEach {
-            (status, card) ->
+        cards.forEach { (status, card) ->
             styleStatusCard(card, status == currentStatus, selectedStroke, normalStroke)
         }
     }
@@ -153,6 +236,84 @@ class LivestockHealthFollowUpFragment :
         card.setStrokeColor(if (selected) selectedStroke else normalStroke)
     }
 
+    private fun statusLabelRes(status: String): Int = when (status) {
+        LivestockHealthCheckBottomSheet.STATUS_INCREASED ->
+            R.string.livestock_health_status_increased
+        LivestockHealthCheckBottomSheet.STATUS_DECREASED ->
+            R.string.livestock_health_status_decreased
+        LivestockHealthCheckBottomSheet.STATUS_RECOVERED ->
+            R.string.livestock_health_status_recovered
+        else -> R.string.livestock_health_status_same
+    }
+
+    private fun statusColorRes(status: String): Int = when (status) {
+        LivestockHealthCheckBottomSheet.STATUS_INCREASED -> R.color.aqua_status_danger
+        LivestockHealthCheckBottomSheet.STATUS_DECREASED -> R.color.aqua_status_success
+        LivestockHealthCheckBottomSheet.STATUS_RECOVERED -> R.color.aqua_content_secondary
+        else -> R.color.dialog_icon_warning
+    }
+
+    private fun restoreHistory(savedInstanceState: Bundle?) {
+        val times = savedInstanceState?.getStringArrayList(STATE_HISTORY_TIMES).orEmpty()
+        val observations = savedInstanceState
+            ?.getStringArrayList(STATE_HISTORY_OBSERVATIONS)
+            .orEmpty()
+        val statuses = savedInstanceState?.getStringArrayList(STATE_HISTORY_STATUSES).orEmpty()
+        val statusLabels = savedInstanceState
+            ?.getStringArrayList(STATE_HISTORY_STATUS_LABELS)
+            .orEmpty()
+        val affected = savedInstanceState?.getIntegerArrayList(STATE_HISTORY_AFFECTED).orEmpty()
+        val totals = savedInstanceState?.getIntegerArrayList(STATE_HISTORY_TOTALS).orEmpty()
+
+        val size = listOf(
+            times.size,
+            observations.size,
+            statuses.size,
+            statusLabels.size,
+            affected.size,
+            totals.size
+        ).minOrNull() ?: 0
+
+        repeat(size) { index ->
+            historyEntries += FollowUpHistoryEntry(
+                timeLabel = times[index],
+                observationLabel = observations[index],
+                status = statuses[index],
+                statusLabel = statusLabels[index],
+                affectedCount = affected[index],
+                totalCount = totals[index]
+            )
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putStringArrayList(
+            STATE_HISTORY_TIMES,
+            ArrayList(historyEntries.map(FollowUpHistoryEntry::timeLabel))
+        )
+        outState.putStringArrayList(
+            STATE_HISTORY_OBSERVATIONS,
+            ArrayList(historyEntries.map(FollowUpHistoryEntry::observationLabel))
+        )
+        outState.putStringArrayList(
+            STATE_HISTORY_STATUSES,
+            ArrayList(historyEntries.map(FollowUpHistoryEntry::status))
+        )
+        outState.putStringArrayList(
+            STATE_HISTORY_STATUS_LABELS,
+            ArrayList(historyEntries.map(FollowUpHistoryEntry::statusLabel))
+        )
+        outState.putIntegerArrayList(
+            STATE_HISTORY_AFFECTED,
+            ArrayList(historyEntries.map(FollowUpHistoryEntry::affectedCount))
+        )
+        outState.putIntegerArrayList(
+            STATE_HISTORY_TOTALS,
+            ArrayList(historyEntries.map(FollowUpHistoryEntry::totalCount))
+        )
+        super.onSaveInstanceState(outState)
+    }
+
     private fun endSessionFollowup() {
         val navController = findNavController()
         runCatching {
@@ -166,5 +327,24 @@ class LivestockHealthFollowUpFragment :
     override fun onDestroyView() {
         _binding = null
         super.onDestroyView()
+    }
+
+    private data class FollowUpHistoryEntry(
+        val timeLabel: String,
+        val observationLabel: String,
+        val status: String,
+        val statusLabel: String,
+        val affectedCount: Int,
+        val totalCount: Int
+    )
+
+    private companion object {
+        val HISTORY_TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+        const val STATE_HISTORY_TIMES = "livestock_followup_history_times"
+        const val STATE_HISTORY_OBSERVATIONS = "livestock_followup_history_observations"
+        const val STATE_HISTORY_STATUSES = "livestock_followup_history_statuses"
+        const val STATE_HISTORY_STATUS_LABELS = "livestock_followup_history_status_labels"
+        const val STATE_HISTORY_AFFECTED = "livestock_followup_history_affected"
+        const val STATE_HISTORY_TOTALS = "livestock_followup_history_totals"
     }
 }
