@@ -27,6 +27,7 @@
     <string name="livestock_health_active_followups_section">Aktif takipler</string>
     <string name="livestock_health_recent_observations_section">Son gözlemler</string>
     <string name="livestock_health_past_followups_section">Geçmiş takipler</string>
+    <string name="livestock_health_view_all">Tümünü gör</string>
     <string name="livestock_health_past_followups_empty">Henüz kapanmış takip yok.</string>
     <string name="livestock_health_active_last_check_format">Son kontrol: %1$s</string>
     <string name="livestock_health_today_time_format">Bugün · %1$s</string>

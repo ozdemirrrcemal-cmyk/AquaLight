@@ -27,6 +27,7 @@
     <string name="livestock_health_active_followups_section">Active follow-ups</string>
     <string name="livestock_health_recent_observations_section">Recent observations</string>
     <string name="livestock_health_past_followups_section">Past follow-ups</string>
+    <string name="livestock_health_view_all">View all</string>
     <string name="livestock_health_past_followups_empty">No closed follow-ups yet.</string>
     <string name="livestock_health_active_last_check_format">Last check: %1$s</string>
     <string name="livestock_health_today_time_format">Today · %1$s</string>

@@ -211,7 +211,7 @@
                         android:includeFontPadding="false"
                         android:paddingStart="@dimen/aqua_size_8"
                         android:paddingEnd="@dimen/aqua_size_4"
-                        android:text="@string/common_view_all"
+                        android:text="@string/livestock_health_view_all"
                         android:textColor="@color/aqua_button_blue"
                         android:textSize="@dimen/aqua_text_size_caption"
                         android:textStyle="bold" />
