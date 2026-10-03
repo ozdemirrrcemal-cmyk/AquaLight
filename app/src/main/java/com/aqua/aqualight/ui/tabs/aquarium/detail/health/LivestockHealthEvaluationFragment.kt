@@ -144,7 +144,10 @@ class LivestockHealthEvaluationFragment :
             directions = LivestockHealthEvaluationFragmentDirections
                 .actionLivestockHealthEvaluationFragmentToLivestockHealthFollowUpFragment(
                     tankId = args.tankId,
-                    livestockId = args.livestockId
+                    livestockId = args.livestockId,
+                    symptomKey = args.symptomKey,
+                    affectedCount = args.affectedCount,
+                    readOnly = false
                 )
         )
         isNavigating = didNavigate

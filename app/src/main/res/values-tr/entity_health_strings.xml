@@ -26,6 +26,16 @@
     <string name="livestock_health_no_livestock_body">Sağlık gözlemi oluşturmadan önce Canlılar sekmesinden canlı ekle.</string>
     <string name="livestock_health_active_followups_section">Aktif takipler</string>
     <string name="livestock_health_recent_observations_section">Son gözlemler</string>
+    <string name="livestock_health_past_followups_section">Geçmiş takipler</string>
+    <string name="livestock_health_past_followups_empty">Henüz kapanmış takip yok.</string>
+    <string name="livestock_health_active_last_check_format">Son kontrol: %1$s</string>
+    <string name="livestock_health_today_time_format">Bugün · %1$s</string>
+    <string name="livestock_health_no_check_yet">Henüz kontrol yok</string>
+    <string name="livestock_health_past_period_format">%1$s – %2$s · %3$d gün</string>
+    <string name="livestock_health_past_recovered_format">Son durum: Düzeldi · %1$d kontrol</string>
+    <string name="livestock_health_past_manual_format">Kullanıcı tarafından kapatıldı · %1$d kontrol</string>
+    <string name="livestock_health_history_screen_subtitle">Kapanan takipler en yeniden eskiye sıralanır. Bir takibe dokunarak geçmişini salt okunur görüntüleyebilirsin.</string>
+
     <string name="livestock_health_tracking_badge">Takipte</string>
     <string name="livestock_health_issue_surface">Normalden sık yüzeye çıkma</string>
     <string name="livestock_health_issue_first_seen">İlk gözlem bugün · 14:30</string>

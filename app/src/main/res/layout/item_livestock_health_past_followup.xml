@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    style="@style/Widget.Aqua.Card"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="@dimen/aqua_size_8"
+    android:clickable="true"
+    android:focusable="true">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="@dimen/aqua_size_88"
+        android:padding="@dimen/aqua_size_12">
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/photoFrame"
+            style="@style/Widget.Aqua.Card.Device.Media"
+            android:layout_width="@dimen/aqua_size_52"
+            android:layout_height="@dimen/aqua_size_52"
+            app:cardCornerRadius="@dimen/aqua_size_10"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:id="@+id/ivLivestock"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="@null"
+                android:scaleType="center" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <TextView
+            android:id="@+id/tvName"
+            android:layout_width="@dimen/aqua_size_0"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/aqua_size_10"
+            android:ellipsize="end"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:textColor="@color/aqua_card_text_primary"
+            android:textSize="@dimen/aqua_text_size_body_small"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/photoFrame"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="Beta / Siyam Dövüşçü Balığı" />
+
+        <TextView
+            android:id="@+id/tvIssue"
+            android:layout_width="@dimen/aqua_size_0"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/aqua_size_10"
+            android:layout_marginTop="@dimen/aqua_size_3"
+            android:ellipsize="end"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:textColor="@color/aqua_card_text_secondary"
+            android:textSize="@dimen/aqua_text_size_caption"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/photoFrame"
+            app:layout_constraintTop_toBottomOf="@id/tvName"
+            tools:text="Hızlı soluma / yüzeye çıkma" />
+
+        <TextView
+            android:id="@+id/tvPeriod"
+            android:layout_width="@dimen/aqua_size_0"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/aqua_size_10"
+            android:layout_marginTop="@dimen/aqua_size_3"
+            android:includeFontPadding="false"
+            android:textColor="@color/aqua_content_muted"
+            android:textSize="@dimen/aqua_text_size_micro"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/photoFrame"
+            app:layout_constraintTop_toBottomOf="@id/tvIssue"
+            tools:text="25 Eyl – 29 Eyl · 4 gün" />
+
+        <TextView
+            android:id="@+id/tvCloseReason"
+            android:layout_width="@dimen/aqua_size_0"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/aqua_size_10"
+            android:layout_marginTop="@dimen/aqua_size_3"
+            android:includeFontPadding="false"
+            android:textColor="@color/aqua_status_success"
+            android:textSize="@dimen/aqua_text_size_status_micro"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/photoFrame"
+            app:layout_constraintTop_toBottomOf="@id/tvPeriod"
+            tools:text="Son durum: Düzeldi · 4 kontrol" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

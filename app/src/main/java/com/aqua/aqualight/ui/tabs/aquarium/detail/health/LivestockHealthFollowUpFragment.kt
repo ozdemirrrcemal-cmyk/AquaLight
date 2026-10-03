@@ -51,11 +51,19 @@ class LivestockHealthFollowUpFragment :
             config = AquaHeaderConfig(
                 titleOverride = getString(R.string.livestock_health_followup_title),
                 onBackClick = { findNavController().navigateUp() },
-                pillTextAction = AquaHeaderPillTextAction(
-                    text = getString(R.string.livestock_health_end_followup),
-                    backgroundRes = R.drawable.bg_aqua_toolbar_pill_action_primary,
-                    onClick = { endSessionFollowup() }
-                )
+                pillTextAction = if (args.readOnly) {
+                    null
+                } else {
+                    AquaHeaderPillTextAction(
+                        text = getString(R.string.livestock_health_end_followup),
+                        backgroundRes = R.drawable.bg_aqua_toolbar_pill_action_primary,
+                        onClick = {
+                            endSessionFollowup(
+                                LivestockHealthUiSessionState.CLOSE_REASON_MANUAL
+                            )
+                        }
+                    )
+                }
             )
         )
 
@@ -88,15 +96,20 @@ class LivestockHealthFollowUpFragment :
                 photoUri = checkPhotoUri,
                 note = checkNote
             )
+            updateMainLastCheck(checkTimeMillis, affectedCount)
             if (currentStatus == LivestockHealthCheckBottomSheet.STATUS_RECOVERED) {
-                endSessionFollowup()
+                endSessionFollowup(
+                    LivestockHealthUiSessionState.CLOSE_REASON_RECOVERED
+                )
                 return@setFragmentResultListener
             }
             renderStatus()
             renderHistory()
         }
 
+        binding.btnNewCheck.isVisible = !args.readOnly
         binding.btnNewCheck.setOnClickListener {
+            if (args.readOnly) return@setOnClickListener
             val livestock = currentLivestock ?: return@setOnClickListener
             LivestockHealthCheckBottomSheet.show(
                 fragmentManager = parentFragmentManager,
@@ -141,11 +154,21 @@ class LivestockHealthFollowUpFragment :
             LivestockCategories.iconRes(livestock.category)
         )
         binding.tvFollowupLivestockName.text = name
+        binding.tvFollowupIssue.setText(
+            LivestockHealthUiText.symptomLabelRes(args.symptomKey)
+        )
         binding.tvFollowupAffected.text = getString(
             R.string.livestock_health_affected_format,
-            1,
+            args.affectedCount.coerceIn(1, quantity),
             quantity
         )
+
+        if (args.readOnly) {
+            binding.cardStatusIncreased.isClickable = false
+            binding.cardStatusSame.isClickable = false
+            binding.cardStatusDecreased.isClickable = false
+            binding.cardStatusRecovered.isClickable = false
+        }
 
         ensureInitialHistory(quantity)
         renderHistory()
@@ -155,7 +178,9 @@ class LivestockHealthFollowUpFragment :
         if (historyEntries.isNotEmpty()) return
         historyEntries += FollowUpHistoryEntry(
             timeLabel = getString(R.string.livestock_health_history_time_current_preview),
-            observationLabel = getString(R.string.livestock_health_history_issue_surface),
+            observationLabel = getString(
+                LivestockHealthUiText.symptomLabelRes(args.symptomKey)
+            ),
             status = LivestockHealthCheckBottomSheet.STATUS_SAME,
             statusLabel = getString(R.string.livestock_health_status_same),
             affectedCount = 1,
@@ -191,7 +216,9 @@ class LivestockHealthFollowUpFragment :
             0,
             FollowUpHistoryEntry(
                 timeLabel = getString(R.string.livestock_health_history_time_today_format, time),
-                observationLabel = getString(R.string.livestock_health_history_issue_surface),
+                observationLabel = getString(
+                LivestockHealthUiText.symptomLabelRes(args.symptomKey)
+            ),
                 status = status,
                 statusLabel = getString(statusLabelRes(status)),
                 affectedCount = affectedCount.coerceIn(1, livestock.quantity.coerceAtLeast(1)),
@@ -368,12 +395,50 @@ class LivestockHealthFollowUpFragment :
         super.onSaveInstanceState(outState)
     }
 
-    private fun endSessionFollowup() {
-        val navController = findNavController()
+    private fun updateMainLastCheck(
+        checkTimeMillis: Long,
+        affectedCount: Int
+    ) {
         runCatching {
-            navController.getBackStackEntry(R.id.livestockHealthFragment)
+            findNavController().getBackStackEntry(R.id.livestockHealthFragment)
                 .savedStateHandle
-                .set(LivestockHealthFragment.KEY_HAS_OBSERVATION, false)
+                .apply {
+                    set(LivestockHealthFragment.KEY_LAST_CHECK_AT, checkTimeMillis)
+                    set(LivestockHealthFragment.KEY_AFFECTED_COUNT, affectedCount)
+                }
+        }
+    }
+
+    private fun endSessionFollowup(closeReason: String) {
+        val navController = findNavController()
+        val livestock = currentLivestock
+        runCatching {
+            val handle = navController
+                .getBackStackEntry(R.id.livestockHealthFragment)
+                .savedStateHandle
+            val now = System.currentTimeMillis()
+            val startedAt = handle.get<Long>(
+                LivestockHealthFragment.KEY_STARTED_AT
+            ) ?: now
+            if (livestock != null) {
+                LivestockHealthUiSessionState.addClosedFollowup(
+                    handle = handle,
+                    entry = ClosedLivestockFollowupUi(
+                        livestockId = livestock.id,
+                        symptomKey = args.symptomKey,
+                        affectedCount = args.affectedCount.coerceIn(
+                            1,
+                            livestock.quantity.coerceAtLeast(1)
+                        ),
+                        totalCount = livestock.quantity.coerceAtLeast(1),
+                        startedAtMillis = startedAt,
+                        closedAtMillis = now,
+                        closeReason = closeReason,
+                        checkCount = historyEntries.size.coerceAtLeast(1)
+                    )
+                )
+            }
+            handle[LivestockHealthFragment.KEY_HAS_OBSERVATION] = false
         }
         navController.popBackStack(R.id.livestockHealthFragment, false)
     }

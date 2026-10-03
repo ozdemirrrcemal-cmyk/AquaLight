@@ -262,12 +262,22 @@ class LivestockHealthObservationFragment : TankRecordPhotoFragment(
         val livestock = currentLivestock.selectedLivestock(selectedLivestockId) ?: return
         val navController = findNavController()
 
+        val symptomKey = selectedSymptoms.firstOrNull()
+            ?: LivestockHealthObservationCatalog
+                .symptomsFor(livestock.category)
+                .first()
+                .key
+        val now = System.currentTimeMillis()
         runCatching {
             navController.getBackStackEntry(R.id.livestockHealthFragment)
                 .savedStateHandle
                 .apply {
                     set(LivestockHealthFragment.KEY_HAS_OBSERVATION, true)
                     set(LivestockHealthFragment.KEY_LIVESTOCK_ID, livestock.id)
+                    set(LivestockHealthFragment.KEY_SYMPTOM_KEY, symptomKey)
+                    set(LivestockHealthFragment.KEY_AFFECTED_COUNT, affectedCount)
+                    set(LivestockHealthFragment.KEY_STARTED_AT, now)
+                    set(LivestockHealthFragment.KEY_LAST_CHECK_AT, now)
                 }
         }
 
@@ -277,11 +287,7 @@ class LivestockHealthObservationFragment : TankRecordPhotoFragment(
                 .actionLivestockHealthObservationFragmentToLivestockHealthEvaluationFragment(
                     tankId = args.tankId,
                     livestockId = livestock.id,
-                    symptomKey = selectedSymptoms.firstOrNull()
-                        ?: LivestockHealthObservationCatalog
-                            .symptomsFor(livestock.category)
-                            .first()
-                            .key,
+                    symptomKey = symptomKey,
                     affectedCount = affectedCount
                 )
         )

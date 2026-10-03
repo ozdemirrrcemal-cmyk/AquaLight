@@ -247,6 +247,17 @@
                 app:argType="long" />
         </action>
         <action
+            android:id="@+id/action_livestockHealthFragment_to_livestockHealthHistoryFragment"
+            app:destination="@id/livestockHealthHistoryFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right">
+            <argument
+                android:name="tankId"
+                app:argType="long" />
+        </action>
+        <action
             android:id="@+id/action_livestockHealthFragment_to_livestockHealthFollowUpFragment"
             app:destination="@id/livestockHealthFollowUpFragment"
             app:enterAnim="@anim/nav_slide_in_right"
@@ -259,6 +270,15 @@
             <argument
                 android:name="livestockId"
                 app:argType="long" />
+            <argument
+                android:name="symptomKey"
+                app:argType="string" />
+            <argument
+                android:name="affectedCount"
+                app:argType="integer" />
+            <argument
+                android:name="readOnly"
+                app:argType="boolean" />
         </action>
     </fragment>
 
@@ -322,6 +342,15 @@
             <argument
                 android:name="livestockId"
                 app:argType="long" />
+            <argument
+                android:name="symptomKey"
+                app:argType="string" />
+            <argument
+                android:name="affectedCount"
+                app:argType="integer" />
+            <argument
+                android:name="readOnly"
+                app:argType="boolean" />
         </action>
         <action
             android:id="@+id/action_livestockHealthEvaluationFragment_to_tankHealthFragment"
@@ -347,6 +376,51 @@
         <argument
             android:name="livestockId"
             app:argType="long" />
+        <argument
+            android:name="symptomKey"
+            android:defaultValue="surface"
+            app:argType="string" />
+        <argument
+            android:name="affectedCount"
+            android:defaultValue="1"
+            app:argType="integer" />
+        <argument
+            android:name="readOnly"
+            android:defaultValue="false"
+            app:argType="boolean" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/livestockHealthHistoryFragment"
+        android:name="com.aqua.aqualight.ui.tabs.aquarium.detail.health.LivestockHealthHistoryFragment"
+        android:label="@string/livestock_health_past_followups_section"
+        tools:layout="@layout/fragment_livestock_health_history">
+        <argument
+            android:name="tankId"
+            app:argType="long" />
+        <action
+            android:id="@+id/action_livestockHealthHistoryFragment_to_livestockHealthFollowUpFragment"
+            app:destination="@id/livestockHealthFollowUpFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right">
+            <argument
+                android:name="tankId"
+                app:argType="long" />
+            <argument
+                android:name="livestockId"
+                app:argType="long" />
+            <argument
+                android:name="symptomKey"
+                app:argType="string" />
+            <argument
+                android:name="affectedCount"
+                app:argType="integer" />
+            <argument
+                android:name="readOnly"
+                app:argType="boolean" />
+        </action>
     </fragment>
 
     <fragment

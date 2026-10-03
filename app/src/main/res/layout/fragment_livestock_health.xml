@@ -42,8 +42,7 @@
                 style="@style/Widget.Aqua.Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="@dimen/aqua_size_16"
->
+                app:cardCornerRadius="@dimen/aqua_size_16">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -167,6 +166,7 @@
                 tools:visibility="visible">
 
                 <TextView
+                    android:id="@+id/tvActiveFollowupsTitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/aqua_size_14"
@@ -176,271 +176,68 @@
                     android:textSize="@dimen/aqua_text_size_caption"
                     android:textStyle="bold" />
 
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/cardActiveFollowup"
-                    style="@style/Widget.Aqua.Card.TankListItem"
+                <LinearLayout
+                    android:id="@+id/activeFollowupsContainer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/aqua_size_8"
-                    android:clickable="true"
-                    android:focusable="true">
+                    android:orientation="vertical" />
 
-                    <androidx.constraintlayout.widget.ConstraintLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:padding="@dimen/aqua_size_14">
-
-                        <com.google.android.material.card.MaterialCardView
-                            android:id="@+id/activePhotoFrame"
-                            style="@style/Widget.Aqua.Card.Device.Media"
-                            android:layout_width="@dimen/aqua_size_56"
-                            android:layout_height="@dimen/aqua_size_56"
-                            app:cardCornerRadius="@dimen/aqua_size_12"
-                            app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toTopOf="parent">
-
-                            <ImageView
-                                android:id="@+id/ivActiveLivestock"
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:contentDescription="@null"
-                                android:scaleType="center" />
-
-                        </com.google.android.material.card.MaterialCardView>
-
-                        <TextView
-                            android:id="@+id/tvActiveLivestockName"
-                            android:layout_width="@dimen/aqua_size_0"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="@dimen/aqua_size_12"
-                            android:ellipsize="end"
-                            android:includeFontPadding="false"
-                            android:maxLines="1"
-                            android:textColor="@color/aqua_card_text_primary"
-                            android:textSize="@dimen/aqua_text_size_body"
-                            android:textStyle="bold"
-                            app:layout_constraintEnd_toStartOf="@id/tvActiveBadge"
-                            app:layout_constraintStart_toEndOf="@id/activePhotoFrame"
-                            app:layout_constraintTop_toTopOf="@id/activePhotoFrame"
-                            tools:text="Beta" />
-
-                        <TextView
-                            android:id="@+id/tvActiveBadge"
-                            android:layout_width="wrap_content"
-                            android:layout_height="@dimen/aqua_size_26"
-                            android:background="@drawable/bg_aqua_toolbar_pill_action_primary"
-                            android:gravity="center"
-                            android:includeFontPadding="false"
-                            android:paddingStart="@dimen/aqua_size_9"
-                            android:paddingEnd="@dimen/aqua_size_9"
-                            android:text="@string/livestock_health_tracking_badge"
-                            android:textColor="@color/aqua_status_success"
-                            android:textSize="@dimen/aqua_text_size_status_micro"
-                            android:textStyle="bold"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintTop_toTopOf="parent" />
-
-                        <TextView
-                            android:id="@+id/tvActiveIssue"
-                            android:layout_width="@dimen/aqua_size_0"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="@dimen/aqua_size_12"
-                            android:layout_marginTop="@dimen/aqua_size_5"
-                            android:ellipsize="end"
-                            android:maxLines="1"
-                            android:text="@string/livestock_health_issue_surface"
-                            android:textColor="@color/aqua_card_text_secondary"
-                            android:textSize="@dimen/aqua_text_size_body_small"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintStart_toEndOf="@id/activePhotoFrame"
-                            app:layout_constraintTop_toBottomOf="@id/tvActiveLivestockName" />
-
-                        <TextView
-                            android:id="@+id/tvActiveLivestockAffected"
-                            android:layout_width="@dimen/aqua_size_0"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="@dimen/aqua_size_12"
-                            android:layout_marginTop="@dimen/aqua_size_4"
-                            android:textColor="@color/aqua_content_muted"
-                            android:textSize="@dimen/aqua_text_size_caption"
-                            app:layout_constraintBottom_toBottomOf="@id/activePhotoFrame"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintStart_toEndOf="@id/activePhotoFrame"
-                            app:layout_constraintTop_toBottomOf="@id/tvActiveIssue"
-                            tools:text="1 / 4 canlı etkileniyor" />
-
-                    </androidx.constraintlayout.widget.ConstraintLayout>
-
-                </com.google.android.material.card.MaterialCardView>
-
-                <TextView
+                <LinearLayout
+                    android:id="@+id/pastFollowupsHeader"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/aqua_size_18"
-                    android:includeFontPadding="false"
-                    android:text="@string/livestock_health_recent_observations_section"
-                    android:textColor="@color/aqua_card_text_secondary"
-                    android:textSize="@dimen/aqua_text_size_caption"
-                    android:textStyle="bold" />
-
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/cardRecentObservation"
-                    style="@style/Widget.Aqua.Card"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/aqua_size_8"
-                    android:clickable="true"
-                    android:focusable="true">
-
-                    <androidx.constraintlayout.widget.ConstraintLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:padding="@dimen/aqua_size_14">
-
-                        <ImageView
-                            android:id="@+id/ivRecentLivestock"
-                            android:layout_width="@dimen/aqua_size_48"
-                            android:layout_height="@dimen/aqua_size_48"
-                            android:contentDescription="@null"
-                            android:scaleType="center"
-                            app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toTopOf="parent" />
-
-                        <TextView
-                            android:id="@+id/tvRecentLivestockName"
-                            android:layout_width="@dimen/aqua_size_0"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="@dimen/aqua_size_12"
-                            android:includeFontPadding="false"
-                            android:textColor="@color/aqua_card_text_primary"
-                            android:textSize="@dimen/aqua_text_size_body_small"
-                            android:textStyle="bold"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintStart_toEndOf="@id/ivRecentLivestock"
-                            app:layout_constraintTop_toTopOf="parent"
-                            tools:text="Beta" />
-
-                        <TextView
-                            android:id="@+id/tvRecentObservation"
-                            android:layout_width="@dimen/aqua_size_0"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="@dimen/aqua_size_12"
-                            android:layout_marginTop="@dimen/aqua_size_4"
-                            android:text="@string/livestock_health_history_today_surface_same"
-                            android:textColor="@color/aqua_card_text_secondary"
-                            android:textSize="@dimen/aqua_text_size_caption"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintStart_toEndOf="@id/ivRecentLivestock"
-                            app:layout_constraintTop_toBottomOf="@id/tvRecentLivestockName" />
-
-                        <TextView
-                            android:id="@+id/tvRecentLivestockAffected"
-                            android:layout_width="@dimen/aqua_size_0"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="@dimen/aqua_size_12"
-                            android:layout_marginTop="@dimen/aqua_size_3"
-                            android:textColor="@color/aqua_content_muted"
-                            android:textSize="@dimen/aqua_text_size_micro"
-                            app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintStart_toEndOf="@id/ivRecentLivestock"
-                            app:layout_constraintTop_toBottomOf="@id/tvRecentObservation"
-                            tools:text="1 / 4 canlı etkileniyor" />
-
-                    </androidx.constraintlayout.widget.ConstraintLayout>
-
-                </com.google.android.material.card.MaterialCardView>
-
-            </LinearLayout>
-
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/cardTankData"
-                style="@style/Widget.Aqua.Card"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/aqua_size_72"
-                android:layout_marginTop="@dimen/aqua_size_14"
-                android:clickable="true"
-                android:contentDescription="@string/livestock_health_tank_data_description"
-                android:focusable="true"
-                android:foreground="?attr/selectableItemBackground">
-
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:paddingStart="@dimen/aqua_size_12"
-                    android:paddingEnd="@dimen/aqua_size_12">
-
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/tankDataIconSurface"
-                        style="@style/Widget.Aqua.Card.Inline"
-                        android:layout_width="@dimen/aqua_size_40"
-                        android:layout_height="@dimen/aqua_size_40"
-                        app:cardBackgroundColor="@color/aqua_surface_action"
-                        app:cardCornerRadius="@dimen/aqua_size_10"
-                        app:cardElevation="@dimen/aqua_size_0"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent">
-
-                        <ImageView
-                            android:layout_width="@dimen/aqua_size_24"
-                            android:layout_height="@dimen/aqua_size_24"
-                            android:layout_gravity="center"
-                            android:contentDescription="@null"
-                            android:importantForAccessibility="no"
-                            android:src="@drawable/ic_livestock_health_tank_data_24"
-                            app:tint="@color/aqua_content_tertiary" />
-
-                    </com.google.android.material.card.MaterialCardView>
+                    android:layout_height="@dimen/aqua_size_40"
+                    android:layout_marginTop="@dimen/aqua_size_14"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
                     <TextView
-                        android:id="@+id/tvTankDataTitle"
                         android:layout_width="@dimen/aqua_size_0"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="@dimen/aqua_size_12"
+                        android:layout_weight="1"
                         android:includeFontPadding="false"
-                        android:text="@string/livestock_health_tank_data_title"
-                        android:textColor="@color/aqua_card_text_primary"
-                        android:textSize="@dimen/aqua_text_size_body"
-                        android:textStyle="bold"
-                        app:layout_constraintBottom_toTopOf="@id/tvTankDataSummary"
-                        app:layout_constraintEnd_toStartOf="@id/ivTankDataArrow"
-                        app:layout_constraintStart_toEndOf="@id/tankDataIconSurface"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintVertical_chainStyle="packed" />
-
-                    <TextView
-                        android:id="@+id/tvTankDataSummary"
-                        android:layout_width="@dimen/aqua_size_0"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="@dimen/aqua_size_12"
-                        android:layout_marginTop="@dimen/aqua_size_4"
-                        android:includeFontPadding="false"
-                        android:text="@string/livestock_health_tank_data_last_measurement_empty"
+                        android:text="@string/livestock_health_past_followups_section"
                         android:textColor="@color/aqua_card_text_secondary"
                         android:textSize="@dimen/aqua_text_size_caption"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toStartOf="@id/ivTankDataArrow"
-                        app:layout_constraintStart_toEndOf="@id/tankDataIconSurface"
-                        app:layout_constraintTop_toBottomOf="@id/tvTankDataTitle" />
+                        android:textStyle="bold" />
 
-                    <ImageView
-                        android:id="@+id/ivTankDataArrow"
-                        android:layout_width="@dimen/aqua_size_20"
-                        android:layout_height="@dimen/aqua_size_20"
-                        android:contentDescription="@null"
-                        android:importantForAccessibility="no"
-                        android:src="@drawable/ic_tank_health_chevron_right_24"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:tint="@color/aqua_content_secondary" />
+                    <TextView
+                        android:id="@+id/btnViewAllPast"
+                        android:layout_width="wrap_content"
+                        android:layout_height="@dimen/aqua_size_40"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:includeFontPadding="false"
+                        android:paddingStart="@dimen/aqua_size_8"
+                        android:paddingEnd="@dimen/aqua_size_4"
+                        android:text="@string/common_view_all"
+                        android:textColor="@color/aqua_button_blue"
+                        android:textSize="@dimen/aqua_text_size_caption"
+                        android:textStyle="bold" />
 
-                </androidx.constraintlayout.widget.ConstraintLayout>
+                </LinearLayout>
 
-            </com.google.android.material.card.MaterialCardView>
+                <LinearLayout
+                    android:id="@+id/pastFollowupsContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+
+                <TextView
+                    android:id="@+id/tvPastFollowupsEmpty"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:paddingTop="@dimen/aqua_size_16"
+                    android:paddingBottom="@dimen/aqua_size_16"
+                    android:text="@string/livestock_health_past_followups_empty"
+                    android:textColor="@color/aqua_content_muted"
+                    android:textSize="@dimen/aqua_text_size_caption"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
+
+            </LinearLayout>
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardNoObservationInfo"
