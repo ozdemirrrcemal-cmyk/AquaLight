@@ -35,11 +35,7 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
     private val binding get() = _binding!!
 
     private var currentTank: AquariumTankSnapshot? = null
-    private var hasSessionObservation: Boolean = false
-    private var sessionLivestockId: Long = 0L
-    private var sessionSymptomKey: String = LivestockHealthUiText.SYMPTOM_SURFACE
-    private var sessionAffectedCount: Int = 1
-    private var sessionLastCheckAt: Long = 0L
+    private var activeFollowups: List<ActiveLivestockFollowupUi> = emptyList()
     private var closedFollowups: List<ClosedLivestockFollowupUi> = emptyList()
     private var isNavigating: Boolean = false
 
@@ -86,11 +82,9 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
     private fun observeSessionUiState() {
         val handle = mainStateHandle() ?: return
         listOf(
-            LivestockHealthUiSessionState.KEY_HAS_OBSERVATION,
-            LivestockHealthUiSessionState.KEY_LIVESTOCK_ID,
-            LivestockHealthUiSessionState.KEY_SYMPTOM_KEY,
-            LivestockHealthUiSessionState.KEY_AFFECTED_COUNT,
-            LivestockHealthUiSessionState.KEY_LAST_CHECK_AT
+            LivestockHealthUiSessionState.KEY_ACTIVE_REVISION,
+            LivestockHealthUiSessionState.KEY_CLOSED_REVISION,
+            LivestockHealthUiSessionState.KEY_HAS_OBSERVATION
         ).forEach { key ->
             handle.getLiveData<Any?>(key).observe(viewLifecycleOwner) {
                 readSessionState()
@@ -101,21 +95,7 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
 
     private fun readSessionState() {
         val handle = mainStateHandle() ?: return
-        hasSessionObservation = handle[
-            LivestockHealthUiSessionState.KEY_HAS_OBSERVATION
-        ] ?: false
-        sessionLivestockId = handle[
-            LivestockHealthUiSessionState.KEY_LIVESTOCK_ID
-        ] ?: 0L
-        sessionSymptomKey = handle[
-            LivestockHealthUiSessionState.KEY_SYMPTOM_KEY
-        ] ?: LivestockHealthUiText.SYMPTOM_SURFACE
-        sessionAffectedCount = handle[
-            LivestockHealthUiSessionState.KEY_AFFECTED_COUNT
-        ] ?: 1
-        sessionLastCheckAt = handle[
-            LivestockHealthUiSessionState.KEY_LAST_CHECK_AT
-        ] ?: 0L
+        activeFollowups = LivestockHealthUiSessionState.activeFollowups(handle)
         closedFollowups = LivestockHealthUiSessionState.closedFollowups(handle)
     }
 
@@ -128,8 +108,9 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
 
     private fun render() {
         val livestock = currentTank?.livestock.orEmpty()
-        val hasActive = hasSessionObservation &&
-            livestock.any { item -> item.id == sessionLivestockId }
+        val hasActive = activeFollowups.any { entry ->
+            livestock.any { item -> item.id == entry.livestockId }
+        }
         val hasHistory = closedFollowups.isNotEmpty()
         val hasAnyTracking = hasActive || hasHistory
 
@@ -171,33 +152,34 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
         binding.activeFollowupsContainer.isVisible = hasActive
         if (!hasActive) return
 
-        val livestock = currentTank
-            ?.livestock
-            ?.firstOrNull { item -> item.id == sessionLivestockId }
-            ?: return
-
-        val item = ItemLivestockHealthActiveFollowupBinding.inflate(
-            LayoutInflater.from(requireContext()),
-            binding.activeFollowupsContainer,
-            false
-        )
-        item.ivLivestock.bindRecordPhoto(
-            livestock.photoUri,
-            LivestockCategories.iconRes(livestock.category)
-        )
-        item.tvName.text = livestock.displayName()
-        item.tvIssue.setText(LivestockHealthUiText.symptomLabelRes(sessionSymptomKey))
-        item.tvAffected.text = getString(
-            R.string.livestock_health_affected_format,
-            sessionAffectedCount.coerceIn(1, livestock.quantity.coerceAtLeast(1)),
-            livestock.quantity.coerceAtLeast(1)
-        )
-        item.tvLastCheck.text = getString(
-            R.string.livestock_health_active_last_check_format,
-            formatLastCheck(sessionLastCheckAt)
-        )
-        item.root.setOnClickListener { openCurrentFollowup() }
-        binding.activeFollowupsContainer.addView(item.root)
+        activeFollowups.forEach { entry ->
+            val livestock = currentTank
+                ?.livestock
+                ?.firstOrNull { item -> item.id == entry.livestockId }
+                ?: return@forEach
+            val item = ItemLivestockHealthActiveFollowupBinding.inflate(
+                LayoutInflater.from(requireContext()),
+                binding.activeFollowupsContainer,
+                false
+            )
+            item.ivLivestock.bindRecordPhoto(
+                livestock.photoUri,
+                LivestockCategories.iconRes(livestock.category)
+            )
+            item.tvName.text = livestock.displayName()
+            item.tvIssue.setText(LivestockHealthUiText.symptomLabelRes(entry.symptomKey))
+            item.tvAffected.text = getString(
+                R.string.livestock_health_affected_format,
+                entry.affectedCount.coerceIn(1, livestock.quantity.coerceAtLeast(1)),
+                livestock.quantity.coerceAtLeast(1)
+            )
+            item.tvLastCheck.text = getString(
+                R.string.livestock_health_active_last_check_format,
+                formatLastCheck(entry.lastCheckAtMillis)
+            )
+            item.root.setOnClickListener { openActiveFollowup(entry) }
+            binding.activeFollowupsContainer.addView(item.root)
+        }
     }
 
     private fun renderPastFollowups() {
@@ -288,16 +270,16 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
         isNavigating = didNavigate
     }
 
-    private fun openCurrentFollowup() {
-        if (isNavigating || !hasSessionObservation) return
+    private fun openActiveFollowup(entry: ActiveLivestockFollowupUi) {
+        if (isNavigating) return
         val didNavigate = findNavController().navigateSafelyFrom(
             sourceDestinationId = R.id.livestockHealthFragment,
             directions = LivestockHealthFragmentDirections
                 .actionLivestockHealthFragmentToLivestockHealthFollowUpFragment(
                     tankId = args.tankId,
-                    livestockId = sessionLivestockId,
-                    symptomKey = sessionSymptomKey,
-                    affectedCount = sessionAffectedCount,
+                    livestockId = entry.livestockId,
+                    symptomKey = entry.symptomKey,
+                    affectedCount = entry.affectedCount,
                     readOnly = false
                 )
         )

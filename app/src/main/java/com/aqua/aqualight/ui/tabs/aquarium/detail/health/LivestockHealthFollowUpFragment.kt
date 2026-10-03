@@ -405,6 +405,13 @@ class LivestockHealthFollowUpFragment :
                 .apply {
                     set(LivestockHealthFragment.KEY_LAST_CHECK_AT, checkTimeMillis)
                     set(LivestockHealthFragment.KEY_AFFECTED_COUNT, affectedCount)
+                    LivestockHealthUiSessionState.updateActiveFollowup(
+                        handle = this,
+                        livestockId = args.livestockId,
+                        symptomKey = args.symptomKey,
+                        affectedCount = affectedCount,
+                        lastCheckAtMillis = checkTimeMillis
+                    )
                 }
         }
     }
@@ -417,19 +424,25 @@ class LivestockHealthFollowUpFragment :
                 .getBackStackEntry(R.id.livestockHealthFragment)
                 .savedStateHandle
             val now = System.currentTimeMillis()
-            val startedAt = handle.get<Long>(
-                LivestockHealthFragment.KEY_STARTED_AT
-            ) ?: now
+            val active = LivestockHealthUiSessionState.removeActiveFollowup(
+                handle = handle,
+                livestockId = args.livestockId,
+                symptomKey = args.symptomKey
+            )
+            val startedAt = active?.startedAtMillis
+                ?: handle.get<Long>(LivestockHealthFragment.KEY_STARTED_AT)
+                ?: now
             if (livestock != null) {
                 LivestockHealthUiSessionState.addClosedFollowup(
                     handle = handle,
                     entry = ClosedLivestockFollowupUi(
                         livestockId = livestock.id,
                         symptomKey = args.symptomKey,
-                        affectedCount = args.affectedCount.coerceIn(
-                            1,
-                            livestock.quantity.coerceAtLeast(1)
-                        ),
+                        affectedCount = active?.affectedCount
+                            ?: args.affectedCount.coerceIn(
+                                1,
+                                livestock.quantity.coerceAtLeast(1)
+                            ),
                         totalCount = livestock.quantity.coerceAtLeast(1),
                         startedAtMillis = startedAt,
                         closedAtMillis = now,
@@ -438,7 +451,6 @@ class LivestockHealthFollowUpFragment :
                     )
                 )
             }
-            handle[LivestockHealthFragment.KEY_HAS_OBSERVATION] = false
         }
         navController.popBackStack(R.id.livestockHealthFragment, false)
     }

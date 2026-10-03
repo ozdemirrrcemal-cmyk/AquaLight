@@ -278,6 +278,17 @@ class LivestockHealthObservationFragment : TankRecordPhotoFragment(
                     set(LivestockHealthFragment.KEY_AFFECTED_COUNT, affectedCount)
                     set(LivestockHealthFragment.KEY_STARTED_AT, now)
                     set(LivestockHealthFragment.KEY_LAST_CHECK_AT, now)
+                    LivestockHealthUiSessionState.upsertActiveFollowup(
+                        handle = this,
+                        entry = ActiveLivestockFollowupUi(
+                            livestockId = livestock.id,
+                            symptomKey = symptomKey,
+                            affectedCount = affectedCount,
+                            totalCount = livestock.quantity.coerceAtLeast(1),
+                            startedAtMillis = now,
+                            lastCheckAtMillis = now
+                        )
+                    )
                 }
         }
 
