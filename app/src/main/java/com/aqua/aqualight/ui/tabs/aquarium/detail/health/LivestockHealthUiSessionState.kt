@@ -34,14 +34,14 @@ internal object LivestockHealthUiSessionState {
     private const val KEY_CLOSED_CHECK_COUNTS = "livestock_health_closed_check_counts"
 
     fun closedFollowups(handle: SavedStateHandle): List<ClosedLivestockFollowupUi> {
-        val ids = handle.get<LongArray>(KEY_CLOSED_LIVESTOCK_IDS).orEmpty()
+        val ids = handle.get<LongArray>(KEY_CLOSED_LIVESTOCK_IDS) ?: longArrayOf()
         val symptoms = handle.get<ArrayList<String>>(KEY_CLOSED_SYMPTOMS).orEmpty()
-        val affected = handle.get<IntArray>(KEY_CLOSED_AFFECTED).orEmpty()
-        val totals = handle.get<IntArray>(KEY_CLOSED_TOTALS).orEmpty()
-        val started = handle.get<LongArray>(KEY_CLOSED_STARTED).orEmpty()
-        val closed = handle.get<LongArray>(KEY_CLOSED_AT).orEmpty()
+        val affected = handle.get<IntArray>(KEY_CLOSED_AFFECTED) ?: intArrayOf()
+        val totals = handle.get<IntArray>(KEY_CLOSED_TOTALS) ?: intArrayOf()
+        val started = handle.get<LongArray>(KEY_CLOSED_STARTED) ?: longArrayOf()
+        val closed = handle.get<LongArray>(KEY_CLOSED_AT) ?: longArrayOf()
         val reasons = handle.get<ArrayList<String>>(KEY_CLOSED_REASONS).orEmpty()
-        val checks = handle.get<IntArray>(KEY_CLOSED_CHECK_COUNTS).orEmpty()
+        val checks = handle.get<IntArray>(KEY_CLOSED_CHECK_COUNTS) ?: intArrayOf()
 
         val size = listOf(
             ids.size,

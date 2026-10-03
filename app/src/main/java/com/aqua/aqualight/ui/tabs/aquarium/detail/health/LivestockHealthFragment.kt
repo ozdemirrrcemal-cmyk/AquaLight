@@ -204,7 +204,7 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
         binding.pastFollowupsContainer.removeAllViews()
         val latest = closedFollowups.take(MAX_HOME_HISTORY)
         binding.tvPastFollowupsEmpty.isVisible = latest.isEmpty()
-        binding.btnViewAllPast.isVisible = closedFollowups.size > MAX_HOME_HISTORY
+        binding.btnViewAllPast.isVisible = closedFollowups.isNotEmpty()
 
         latest.forEach { entry ->
             val livestock = currentTank
