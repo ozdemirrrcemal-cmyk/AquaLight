@@ -75,6 +75,27 @@ class AppMediaStorageInstrumentedTest {
     }
 
     @Test
+    fun preparedDeletionWaitsForReferenceRemovalAndSurvivesInterruptedOperation() {
+        val owner = "owner-prepared"
+        val photo = pendingSavedMedia(owner, "interrupted", AppMediaScope.LIVESTOCK)
+        try {
+            AppMediaStorage.commitPendingMedia(context, photo)
+            assertTrue(AppMediaStorage.deleteAfterCommit(
+                context, owner, photo, CommittedMediaDeletionMode.PREPARE
+            ))
+            assertTrue(AppMediaStorage.isAppOwned(context, photo))
+
+            AppMediaStorage.reconcilePendingDeletions(context, owner, listOf(photo))
+            assertTrue(AppMediaStorage.isAppOwned(context, photo))
+
+            AppMediaStorage.reconcilePendingDeletions(context, owner, emptyList())
+            assertFalse(AppMediaStorage.isAppOwned(context, photo))
+        } finally {
+            AppMediaStorage.deleteInternalMedia(context, photo)
+        }
+    }
+
+    @Test
     fun ownerScopedCommittedSweepCleansOrphanWhenDeletionJournalCouldNotBeWritten() {
         val committed = pendingSavedMedia("owner-sweep", "orphan")
         AppMediaStorage.commitPendingMedia(context, committed)
