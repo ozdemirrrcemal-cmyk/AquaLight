@@ -10,6 +10,8 @@ import java.util.Locale
 import java.util.UUID
 import org.json.JSONObject
 
+enum class CommittedMediaDeletionMode { PREPARE, DELETE }
+
 /** Canonical app-owned media storage for profile and aquarium photo flows. */
 object AppMediaStorage {
 
@@ -197,30 +199,28 @@ object AppMediaStorage {
      * Journals a superseded committed file before deletion. A journal failure never risks deleting
      * a still-referenced file; the owner-scoped committed-file sweep is the durable fallback.
      */
-    fun prepareCommittedMediaDeletion(
-        context: Context,
-        ownerUid: String,
-        uriString: String
-    ) {
-        require(ownerUid.isNotBlank()) { "ownerUid must not be blank" }
-        requireNotNull(resolveInternalMediaFile(context, uriString)) {
-            "Committed media URI must be app-owned."
-        }
-        registerDeletion(context, uriString, ownerUid)
-    }
-
     fun deleteAfterCommit(
         context: Context,
         ownerUid: String,
-        uriString: String?
-    ): Boolean = deleteAfterCommit(context, ownerUid, uriString) { file ->
-        !file.exists() || file.delete()
+        uriString: String?,
+        mode: CommittedMediaDeletionMode = CommittedMediaDeletionMode.DELETE
+    ): Boolean {
+        if (mode == CommittedMediaDeletionMode.PREPARE) {
+            require(ownerUid.isNotBlank()) { "ownerUid must not be blank" }
+            requireNotNull(resolveInternalMediaFile(context, uriString)) {
+                "Committed media URI must be app-owned."
+            }
+        }
+        return deleteAfterCommit(context, ownerUid, uriString, mode) { file ->
+            !file.exists() || file.delete()
+        }
     }
 
     internal fun deleteAfterCommit(
         context: Context,
         ownerUid: String,
         uriString: String?,
+        mode: CommittedMediaDeletionMode = CommittedMediaDeletionMode.DELETE,
         deleteFile: (File) -> Boolean
     ): Boolean {
         require(ownerUid.isNotBlank()) { "ownerUid must not be blank" }
@@ -228,7 +228,10 @@ object AppMediaStorage {
         val file = resolveInternalMediaFile(context, uriString) ?: return true
         if (!file.exists()) return true
         val entry = registerDeletion(context, uriString, ownerUid)
-        return reconcileDeletionEntry(context, entry, deleteFile)
+        return when (mode) {
+            CommittedMediaDeletionMode.PREPARE -> true
+            CommittedMediaDeletionMode.DELETE -> reconcileDeletionEntry(context, entry, deleteFile)
+        }
     }
 
     /**

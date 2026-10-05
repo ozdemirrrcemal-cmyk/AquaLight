@@ -16,6 +16,7 @@ import com.aqua.aqualight.data.store.StoreInvariantViolation
 import com.aqua.aqualight.data.store.CommercialStoreSchema
 import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.platform.media.AppMediaStorage
+import com.aqua.aqualight.platform.media.CommittedMediaDeletionMode
 import com.aqua.aqualight.platform.media.AppMediaScope
 import com.google.protobuf.InvalidProtocolBufferException
 import java.io.InputStream
@@ -60,8 +61,16 @@ internal class LivestockHealthDataStoreManager(context: Context) {
     private val appContext = context.applicationContext
     private val tanks = AquariumTankDataStoreManager(appContext)
 
-    suspend fun mediaUrisForOwner(ownerUid: String): Set<String> {
+    suspend fun reconcileAndGetMediaUrisForOwner(ownerUid: String): Set<String> {
         require(ownerUid.isNotBlank())
+        removeObservations(ownerUid, false) { records ->
+            val livestockByTank = tanks.tanksSnapshotForOwner(ownerUid).associate { tank ->
+                tank.id to tank.livestock.map { it.id }.toSet()
+            }
+            records.filter { record ->
+                livestockByTank[record.tankId]?.contains(record.livestockId) != true
+            }
+        }
         return appContext.livestockHealthDataStore.data.map { store ->
             validateLivestockHealthStore(store).observationsList
                 .filter { it.ownerUid == ownerUid }
@@ -140,15 +149,7 @@ internal class LivestockHealthDataStoreManager(context: Context) {
                 ).build())
             }
             input.photoUris.forEach { AppMediaStorage.commitPendingMedia(appContext, it) }
-            val stillPresent = tanks.tanksSnapshotForOwner(ownerUid).any { tank ->
-                tank.id == input.tankId && tank.livestock.any { it.id == input.livestockId }
-            }
-            if (!stillPresent) {
-                removeObservations(ownerUid, true) { records ->
-                    records.filter { it.id == id && it.tankId == input.tankId }
-                }
-                throw StoreInvariantViolation("Selected livestock no longer exists in this tank.")
-            }
+            ensureCreatedLivestockPresent(ownerUid, input, id)
             id
         }
 
@@ -212,6 +213,22 @@ internal class LivestockHealthDataStoreManager(context: Context) {
         }
     }
 
+    private suspend fun ensureCreatedLivestockPresent(
+        ownerUid: String,
+        input: LivestockObservationInput,
+        id: Long
+    ) {
+        val stillPresent = tanks.tanksSnapshotForOwner(ownerUid).any { tank ->
+            tank.id == input.tankId && tank.livestock.any { it.id == input.livestockId }
+        }
+        if (!stillPresent) {
+            removeObservations(ownerUid, true) { records ->
+                records.filter { it.id == id && it.tankId == input.tankId }
+            }
+            throw StoreInvariantViolation("Selected livestock no longer exists in this tank.")
+        }
+    }
+
     suspend fun deleteForTank(tankId: Long) {
         require(tankId > 0)
         val ownerUid = UserDataScope.requireCurrentUid()
@@ -233,18 +250,6 @@ internal class LivestockHealthDataStoreManager(context: Context) {
         removeObservations(ownerUid, false) { records -> records }
     }
 
-    suspend fun reconcileOrphansForOwner(ownerUid: String) {
-        require(ownerUid.isNotBlank())
-        removeObservations(ownerUid, false) { records ->
-            val livestockByTank = tanks.tanksSnapshotForOwner(ownerUid).associate { tank ->
-                tank.id to tank.livestock.map { it.id }.toSet()
-            }
-            records.filter { record ->
-                livestockByTank[record.tankId]?.contains(record.livestockId) != true
-            }
-        }
-    }
-
     private suspend fun removeObservations(
         ownerUid: String,
         requireActiveOwner: Boolean,
@@ -262,7 +267,9 @@ internal class LivestockHealthDataStoreManager(context: Context) {
             val deletedMedia = selected.flatMap(StoredLivestockObservation::mediaUris)
                 .filterNot { it in retainedMedia }.toSet()
             deletedMedia.forEach { uri ->
-                AppMediaStorage.prepareCommittedMediaDeletion(appContext, ownerUid, uri)
+                AppMediaStorage.deleteAfterCommit(
+                    appContext, ownerUid, uri, CommittedMediaDeletionMode.PREPARE
+                )
             }
             media.addAll(deletedMedia)
             validateLivestockHealthStore(current.toBuilder().clearObservations()
@@ -292,10 +299,11 @@ internal class LivestockHealthDataStoreManager(context: Context) {
         }
     }
 
-    private fun checkOwner(expected: String) {
-        if (UserDataScope.requireCurrentUid() != expected) {
-            throw StoreInvariantViolation("Active owner changed during livestock health operation.")
-        }
+}
+
+private fun checkOwner(expected: String) {
+    if (UserDataScope.requireCurrentUid() != expected) {
+        throw StoreInvariantViolation("Active owner changed during livestock health operation.")
     }
 }
 

@@ -30,7 +30,6 @@ class AppMediaRecoveryManager(
         val normalizedOwnerUid = ownerUid.trim().also { normalized ->
             require(normalized.isNotBlank()) { "ownerUid must not be blank" }
         }
-        livestockHealth.reconcileOrphansForOwner(normalizedOwnerUid)
         val referencedUris = buildSet {
             preferences.profilePhotoUrlForOwner(normalizedOwnerUid)
                 .takeIf(String::isNotBlank)
@@ -43,7 +42,7 @@ class AppMediaRecoveryManager(
                         .forEach(::add)
                     tank.livestock.mapNotNull { it.photoUri?.takeIf(String::isNotBlank) }.forEach(::add)
                 }
-            addAll(livestockHealth.mediaUrisForOwner(normalizedOwnerUid))
+            addAll(livestockHealth.reconcileAndGetMediaUrisForOwner(normalizedOwnerUid))
         }
 
         AppMediaStorage.reconcilePendingMedia(
