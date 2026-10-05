@@ -98,6 +98,43 @@ class LivestockHealthStoreTest {
         }
     }
 
+    @Test
+    fun previousLivestockHealthSchemaVersionIsRejected() {
+        val previous = store(record()).toBuilder()
+            .setSchemaVersion(CommercialStoreSchema.LIVESTOCK_HEALTH_VERSION - 1)
+            .build()
+
+        assertThrows(StoreInvariantViolation::class.java) {
+            validateLivestockHealthStore(previous)
+        }
+    }
+
+    @Test
+    fun mediaReferencesIncludeObservationAndAllCheckPhotos() {
+        val check = StoredLivestockCheck.newBuilder()
+            .setRequestId("check-media")
+            .setStatus("same")
+            .setAffectedCount(1)
+            .setCheckedAtMillis(1_800_000_001_000)
+            .addAllPhotoUris(listOf("check-a", "check-b", "check-c"))
+            .build()
+        val record = record().toBuilder()
+            .addAllPhotoUris(listOf("observation-a", "observation-b"))
+            .addChecks(check)
+            .build()
+
+        assertEquals(
+            listOf(
+                "observation-a",
+                "observation-b",
+                "check-a",
+                "check-b",
+                "check-c"
+            ),
+            record.mediaUris()
+        )
+    }
+
     private fun store(vararg records: StoredLivestockObservation): LivestockHealthStore =
         LivestockHealthStore.newBuilder()
             .setSchemaVersion(CommercialStoreSchema.LIVESTOCK_HEALTH_VERSION)

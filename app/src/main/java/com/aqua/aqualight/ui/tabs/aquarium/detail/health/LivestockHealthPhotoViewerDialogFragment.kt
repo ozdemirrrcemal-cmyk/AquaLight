@@ -68,7 +68,9 @@ internal class LivestockHealthPhotoViewerDialogFragment :
     }
 
     override fun onDestroyView() {
-        pageCallback?.let(binding.photoViewerPager::unregisterOnPageChangeCallback)
+        pageCallback?.let { callback ->
+            binding.photoViewerPager.unregisterOnPageChangeCallback(callback)
+        }
         pageCallback = null
         binding.photoViewerPager.adapter = null
         _binding = null

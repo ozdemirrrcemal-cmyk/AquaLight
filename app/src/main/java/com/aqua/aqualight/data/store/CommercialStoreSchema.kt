@@ -10,7 +10,7 @@ object CommercialStoreSchema {
     const val AQUARIUM_TANKS_VERSION = 2
     const val CARE_TASKS_VERSION = 1
     const val WATER_ANALYSES_VERSION = 1
-    const val LIVESTOCK_HEALTH_VERSION = 1
+    const val LIVESTOCK_HEALTH_VERSION = 2
     const val USER_PREFERENCES_VERSION = 1
     const val LIGHT_LIBRARY_VERSION = 1
 

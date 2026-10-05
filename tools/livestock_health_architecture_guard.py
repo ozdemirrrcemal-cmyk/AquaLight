@@ -9,6 +9,7 @@ APP = ROOT / "app/src/main/java/com/aqua/aqualight"
 TESTS = ROOT / "app/src/test/java/com/aqua/aqualight"
 
 APPLICATION = APP / "application/aquarium/health/LivestockHealthOperations.kt"
+SCHEMA = APP / "data/store/CommercialStoreSchema.kt"
 PROTO = ROOT / "app/src/main/proto/livestock_health.proto"
 ADAPTER = APP / "data/aquarium/health/DefaultLivestockHealthOperations.kt"
 DATA_STORE = APP / "data/aquarium/health/LivestockHealthDataStore.kt"
@@ -20,6 +21,14 @@ PHOTO_VIEWER = (
     APP
     / "ui/tabs/aquarium/detail/health/LivestockHealthPhotoViewerDialogFragment.kt"
 )
+CHECK_SHEET = APP / "ui/tabs/aquarium/detail/health/LivestockHealthCheckBottomSheet.kt"
+CHECK_PHOTO_CONTROLLER = (
+    APP
+    / "ui/tabs/aquarium/detail/health/LivestockHealthCheckPhotoController.kt"
+)
+FOLLOW_UP_UI = APP / "ui/tabs/aquarium/detail/health/LivestockHealthFollowUpUi.kt"
+CHECK_LAYOUT = ROOT / "app/src/main/res/layout/content_sheet_livestock_health_check.xml"
+HISTORY_LAYOUT = ROOT / "app/src/main/res/layout/item_livestock_health_history.xml"
 UI_ROOT = APP / "ui/tabs/aquarium/detail/health"
 OWNER_GRAPH = APP / "composition/OwnerDependencyGraph.kt"
 OWNER_FACTORY = APP / "composition/OwnerViewModelFactory.kt"
@@ -28,6 +37,7 @@ BOUNDARY_TEST = TESTS / "ui/tabs/aquarium/detail/health/LivestockHealthViewModel
 
 required = (
     APPLICATION,
+    SCHEMA,
     PROTO,
     ADAPTER,
     DATA_STORE,
@@ -35,6 +45,11 @@ required = (
     RULES,
     VIEW_MODEL,
     PHOTO_VIEWER,
+    CHECK_SHEET,
+    CHECK_PHOTO_CONTROLLER,
+    FOLLOW_UP_UI,
+    CHECK_LAYOUT,
+    HISTORY_LAYOUT,
     OWNER_GRAPH,
     OWNER_FACTORY,
     SMOKE,
@@ -70,6 +85,12 @@ for token in (
 if "val photoUri: String?" in application:
     errors.append(
         f"{APPLICATION.relative_to(ROOT)}: singular health-check photo contract is forbidden"
+    )
+
+schema = read(SCHEMA)
+if "const val LIVESTOCK_HEALTH_VERSION = 2" not in schema:
+    errors.append(
+        f"{SCHEMA.relative_to(ROOT)}: livestock health schema must use hard-cutover version 2"
     )
 
 proto = read(PROTO)
@@ -144,6 +165,58 @@ for token in (
         errors.append(
             f"{PHOTO_VIEWER.relative_to(ROOT)}: photo viewer contract missing: {token}"
         )
+
+check_sheet = read(CHECK_SHEET)
+for token in (
+    "MutableList<String?>(LIVESTOCK_HEALTH_MAX_PHOTOS)",
+    "photoUris = checkPhotoUris.filterNotNull()",
+    "STATE_PHOTO_URIS",
+):
+    if token not in check_sheet:
+        errors.append(
+            f"{CHECK_SHEET.relative_to(ROOT)}: three-photo check contract missing: {token}"
+        )
+if "photoUri = photoController.selectedUri()" in check_sheet:
+    errors.append(f"{CHECK_SHEET.relative_to(ROOT)}: singular check photo save is forbidden")
+
+check_photo_controller = read(CHECK_PHOTO_CONTROLLER)
+for token in (
+    "activeSlotIndex: () -> Int",
+    "currentPhotoUri: (Int) -> String?",
+    "rollbackPendingMedia(previousUri)",
+):
+    if token not in check_photo_controller:
+        errors.append(
+            f"{CHECK_PHOTO_CONTROLLER.relative_to(ROOT)}: slot media lifecycle missing: {token}"
+        )
+
+check_layout = read(CHECK_LAYOUT)
+for token in (
+    "@+id/checkPhotoSlotOne",
+    "@+id/checkPhotoSlotTwo",
+    "@+id/checkPhotoSlotThree",
+):
+    if token not in check_layout:
+        errors.append(f"{CHECK_LAYOUT.relative_to(ROOT)}: check photo slot missing: {token}")
+
+follow_up_ui = read(FOLLOW_UP_UI)
+for token in (
+    "val photoUris: List<String>",
+    "livestock_health_photo_more_count",
+    "LivestockHealthPhotoViewerDialogFragment.show",
+):
+    if token not in follow_up_ui:
+        errors.append(f"{FOLLOW_UP_UI.relative_to(ROOT)}: history gallery contract missing: {token}")
+for forbidden in (
+    "entry.photoUri ?: livestock.photoUri",
+    "photoUri = check.photoUri",
+):
+    if forbidden in follow_up_ui:
+        errors.append(f"{FOLLOW_UP_UI.relative_to(ROOT)}: misleading photo fallback remains: {forbidden}")
+
+history_layout = read(HISTORY_LAYOUT)
+if "@+id/tvHistoryPhotoCount" not in history_layout:
+    errors.append(f"{HISTORY_LAYOUT.relative_to(ROOT)}: history +N photo badge is missing")
 
 view_model = read(VIEW_MODEL)
 if "LivestockHealthOperations" not in view_model:
