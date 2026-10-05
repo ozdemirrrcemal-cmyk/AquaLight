@@ -340,7 +340,7 @@
             app:argType="integer" />
         <argument
             android:name="observationId"
-            android:defaultValue="0"
+            android:defaultValue="0L"
             app:argType="long" />
         <action
             android:id="@+id/action_livestockHealthEvaluationFragment_to_livestockHealthFollowUpFragment"
