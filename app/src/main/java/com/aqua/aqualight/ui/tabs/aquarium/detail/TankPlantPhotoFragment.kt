@@ -4,14 +4,13 @@ import androidx.fragment.app.activityViewModels
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumPlantTag
 import com.aqua.aqualight.base.BaseActivity
-import com.aqua.aqualight.composition.requireAppContainer
-import com.aqua.aqualight.platform.media.AppMediaScope
+import com.aqua.aqualight.application.media.MediaScope
 import com.aqua.aqualight.ui.common.media.TankRecordPhotoFragment
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import kotlinx.coroutines.CancellationException
 
 abstract class TankPlantPhotoFragment : TankRecordPhotoFragment(
-    R.layout.fragment_tank_detail_plants, AppMediaScope.PLANT,
+    R.layout.fragment_tank_detail_plants, MediaScope.PLANT,
     R.string.aquarium_plant_photo_title, R.string.aquarium_plant_photo_crop_title
 ) {
     protected val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
@@ -23,8 +22,9 @@ abstract class TankPlantPhotoFragment : TankRecordPhotoFragment(
     protected fun showPlantPhotoSource(plant: AquariumPlantTag) {
         if (photoTarget.isInProgress || photoActionsBlocked) return
         showRecordPhotoSource(
-            plant.id, requireContext().requireAppContainer().authenticatedOwnerIdentity.requireOwnerUid(),
-            persistedUri = plant.photoUri, resetSelection = true
+            recordId = plant.id,
+            persistedUri = plant.photoUri,
+            resetSelection = true
         )
     }
 

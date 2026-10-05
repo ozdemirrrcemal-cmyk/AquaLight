@@ -11,8 +11,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.aqua.aqualight.R
 import com.aqua.aqualight.base.BaseActivity
-import com.aqua.aqualight.composition.requireAppContainer
-import com.aqua.aqualight.platform.media.AppMediaScope
+import com.aqua.aqualight.application.media.MediaScope
 import com.aqua.aqualight.platform.permissions.AppCapability
 import com.aqua.aqualight.ui.common.bottomsheet.PhotoSourceBottomSheet
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
@@ -26,19 +25,15 @@ import kotlinx.coroutines.withContext
 /** Central camera/gallery/crop lifecycle for owner-scoped plant and livestock record photos. */
 abstract class TankRecordPhotoFragment(
     @LayoutRes layoutRes: Int,
-    private val photoScope: AppMediaScope,
+    private val photoScope: MediaScope,
     @StringRes private val photoTitleRes: Int,
     @StringRes private val cropTitleRes: Int
 ) : Fragment(layoutRes) {
     protected val mediaFlow: MediaFlowCoordinatorViewModel by viewModels {
-        val container = requireContext().requireAppContainer()
-        MediaFlowCoordinatorViewModel.factory(
-            context = requireContext().applicationContext,
+        mediaFlowFactory(
             scope = photoScope,
-            ownerToken = photoTankId.toString(),
-            ownerUid = container.authenticatedOwnerIdentity.requireOwnerUid(),
-            cropSpec = MediaCropSpec.RECORD,
-            mediaProcessor = container.imageMediaProcessor
+            ownerToken = { photoTankId.toString() },
+            cropSpec = MediaCropSpec.RECORD
         )
     }
 
@@ -148,11 +143,13 @@ abstract class TankRecordPhotoFragment(
     }
 
     protected fun showRecordPhotoSource(
-        recordId: Long, ownerUid: String, persistedUri: String? = null, resetSelection: Boolean = false
+        recordId: Long,
+        persistedUri: String? = null,
+        resetSelection: Boolean = false
     ) {
         val sourceIsOpen = childFragmentManager.findFragmentByTag(PhotoSourceBottomSheet.TAG) != null
         if (photoActionsBlocked || photoTarget.isInProgress || sourceIsOpen) return
-        if (!photoTarget.select(ownerUid, recordId)) return
+        if (!photoTarget.select(mediaFlow.ownerUid, recordId)) return
         permissionCoordinator.cancelPending()
         if (resetSelection) mediaFlow.markExternallyOwnedSelection(persistedUri)
         PhotoSourceBottomSheet.newInstance(

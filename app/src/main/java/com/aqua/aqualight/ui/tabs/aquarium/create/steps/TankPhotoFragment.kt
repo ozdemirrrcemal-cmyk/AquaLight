@@ -16,15 +16,15 @@ import coil3.request.crossfade
 import coil3.request.error
 import coil3.request.placeholder
 import com.aqua.aqualight.R
-import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentTankPhotoBinding
-import com.aqua.aqualight.platform.media.AppMediaScope
+import com.aqua.aqualight.application.media.MediaScope
 import com.aqua.aqualight.platform.permissions.AppCapability
 import com.aqua.aqualight.ui.common.bottomsheet.PhotoSourceBottomSheet
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.ui.common.media.MediaCropPreparationResult
 import com.aqua.aqualight.ui.common.media.MediaCropSpec
 import com.aqua.aqualight.ui.common.media.MediaFlowCoordinatorViewModel
+import com.aqua.aqualight.ui.common.media.mediaFlowFactory
 import com.aqua.aqualight.ui.common.permission.CapabilityPermissionCoordinator
 import com.aqua.aqualight.ui.tabs.aquarium.create.CreateTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.create.plants.PlantTagFragment
@@ -42,14 +42,10 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
 
     private val viewModel: CreateTankViewModel by navGraphViewModels(R.id.nav_create_tank)
     private val mediaFlow: MediaFlowCoordinatorViewModel by viewModels {
-        val container = requireContext().requireAppContainer()
-        MediaFlowCoordinatorViewModel.factory(
-            context = requireContext().applicationContext,
-            scope = AppMediaScope.TANK,
-            ownerToken = "draft",
-            ownerUid = container.authenticatedOwnerIdentity.requireOwnerUid(),
-            cropSpec = MediaCropSpec.TANK,
-            mediaProcessor = container.imageMediaProcessor
+        mediaFlowFactory(
+            scope = MediaScope.TANK,
+            ownerToken = { "draft" },
+            cropSpec = MediaCropSpec.TANK
         )
     }
 
@@ -272,7 +268,7 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
         val previous = viewModel.tankDraft.photoUri
         val newValue = contentUri.toString()
         viewModel.updateTankPhoto(newValue)
-        if (previous != newValue) mediaFlow.deleteInternalMedia(previous)
+        if (previous != newValue) mediaFlow.rollbackPendingMedia(previous)
         mediaFlow.markExternallyOwnedSelection(newValue)
         renderPhoto(newValue)
     }
@@ -280,7 +276,7 @@ class TankPhotoFragment : Fragment(R.layout.fragment_tank_photo), TankStepFragme
     private suspend fun removeSelectedPhoto() {
         val previous = viewModel.tankDraft.photoUri
         viewModel.updateTankPhoto(null)
-        mediaFlow.deleteInternalMedia(previous)
+        mediaFlow.rollbackPendingMedia(previous)
         mediaFlow.markExternallyOwnedSelection(null)
         renderPhoto(null)
     }

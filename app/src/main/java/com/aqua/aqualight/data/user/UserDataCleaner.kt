@@ -75,6 +75,10 @@ class UserDataCleaner private constructor(
         val targetOwnerUid = ownerUid.orCurrentOwnerUidOrReturn()
         val issues = mutableListOf<CleanupIssue>()
         val tankDataStoreManager = AquariumTankDataStoreManager(appContext)
+        val livestockHealthStore = LivestockHealthDataStoreManager(
+            appContext,
+            tankDataStoreManager
+        )
         val userPreferencesManager = UserPreferencesManager.create(appContext)
 
         fun recordIssue(step: Step, error: Throwable) {
@@ -108,7 +112,8 @@ class UserDataCleaner private constructor(
 
         clearOwnerStores(
             ownerUid = targetOwnerUid,
-            tankStore = tankDataStoreManager
+            tankStore = tankDataStoreManager,
+            livestockHealthStore = livestockHealthStore
         ) { step, block ->
             runStep(step, block)
         }
@@ -137,6 +142,7 @@ class UserDataCleaner private constructor(
     private suspend fun clearOwnerStores(
         ownerUid: String,
         tankStore: AquariumTankDataStoreManager,
+        livestockHealthStore: LivestockHealthDataStoreManager,
         runStep: suspend (Step, suspend () -> Unit) -> Unit
     ) {
         runStep(Step.CARE_TASKS) {
@@ -151,7 +157,7 @@ class UserDataCleaner private constructor(
                 .clearAllAnalyses(ownerUid = ownerUid)
         }
         runStep(Step.LIVESTOCK_HEALTH) {
-            LivestockHealthDataStoreManager(appContext).clearAllForOwner(ownerUid)
+            livestockHealthStore.clearAllForOwner(ownerUid)
         }
         runStep(Step.AQUARIUM_TANKS) {
             tankStore.clearAllTanks(ownerUid)

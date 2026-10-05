@@ -175,8 +175,18 @@ class Stage9CommercialMediaArchitectureTest {
 
     @Test
     fun productionMediaApiIsDomainNeutralWithoutCompatibilityShims() {
+        val applicationBoundary = source(
+            "app/src/main/java/com/aqua/aqualight/application/media/MediaFlowOperations.kt"
+        )
+        val adapter = source(
+            "app/src/main/java/com/aqua/aqualight/platform/media/AndroidMediaFlowOperations.kt"
+        )
         val processor = source(
             "app/src/main/java/com/aqua/aqualight/platform/media/ImageMediaProcessor.kt"
+        )
+        val coordinator = source(
+            "app/src/main/java/com/aqua/aqualight/ui/common/media/" +
+                "MediaFlowCoordinatorViewModel.kt"
         )
         val container = source(
             "app/src/main/java/com/aqua/aqualight/composition/AppContainer.kt"
@@ -184,14 +194,23 @@ class Stage9CommercialMediaArchitectureTest {
         val providerPaths = source("app/src/main/res/xml/file_paths.xml")
 
         listOf(
-            "interface ImageMediaProcessor",
-            "class AndroidImageMediaProcessor",
-            "data class ProcessedImageMedia",
-            "sealed interface ImageMediaProcessingResult"
+            "interface MediaFlowOperations",
+            "enum class MediaScope",
+            "sealed interface MediaSourcePreparationResult"
         ).forEach { token ->
-            assertTrue("Generic media contract missing: $token", processor.contains(token))
+            assertTrue("Application media boundary missing: $token", applicationBoundary.contains(token))
         }
-        assertTrue(container.contains("val imageMediaProcessor: ImageMediaProcessor"))
+        assertFalse(applicationBoundary.contains("import android."))
+        assertFalse(applicationBoundary.contains("com.aqua.aqualight.platform."))
+
+        assertTrue(adapter.contains("class AndroidMediaFlowOperations"))
+        assertTrue(adapter.contains("AppMediaStorage"))
+        assertTrue(adapter.contains("ImageMediaProcessor"))
+        assertTrue(processor.contains("class AndroidImageMediaProcessor"))
+        assertTrue(container.contains("val mediaFlowOperations: MediaFlowOperations"))
+        assertFalse(container.contains("val imageMediaProcessor: ImageMediaProcessor"))
+        assertFalse(coordinator.contains("com.aqua.aqualight.platform.media"))
+        assertFalse(coordinator.contains("AppMediaStorage"))
         assertTrue(providerPaths.contains("image_processing"))
 
         listOf(

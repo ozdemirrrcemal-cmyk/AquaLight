@@ -235,7 +235,7 @@ internal class ActiveOwnerDependencyGraphResolver(
         val ownerUidProvider = { dependencies.ownerUid }
         val aquariumTankStore = AquariumTankDataStoreManager(appContext)
         val waterAnalysisStore = WaterAnalysisDataStoreManager(appContext)
-        val livestockHealthStore = LivestockHealthDataStoreManager(appContext)
+        val livestockHealthStore = LivestockHealthDataStoreManager(appContext, aquariumTankStore)
         val careTaskStore = CareTaskDataStoreManager.create(appContext)
         val dosingOperations = createDosingOperations(dependencies)
         val timerControlOperations = DefaultDeviceTimerControlOperations(

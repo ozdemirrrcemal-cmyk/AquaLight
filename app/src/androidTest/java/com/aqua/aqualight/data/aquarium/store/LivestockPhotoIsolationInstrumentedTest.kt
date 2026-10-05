@@ -139,7 +139,7 @@ class LivestockPhotoIsolationInstrumentedTest {
             val operation = operations()
             operation.saveLivestockWithPhoto(tank, item(11), owner, true, false)
             operation.saveLivestockWithPhoto(tank, item(12), owner, true, false)
-            val health = LivestockHealthDataStoreManager(context)
+            val health = LivestockHealthDataStoreManager(context, store)
             val removedPhoto = pending(owner)
             val removedCheckPhoto = pending(owner)
             val retainedPhoto = pending(owner)
@@ -178,7 +178,7 @@ class LivestockPhotoIsolationInstrumentedTest {
     fun recoveryRemovesOrphanHealthAfterInterruptedLivestockDeletion() = runBlocking {
         withTank { owner, tank ->
             operations().saveLivestockWithPhoto(tank, item(11), owner, true, false)
-            val health = LivestockHealthDataStoreManager(context)
+            val health = LivestockHealthDataStoreManager(context, store)
             val photo = pending(owner)
             health.create(observation(tank, 11, photo))
 
@@ -197,7 +197,7 @@ class LivestockPhotoIsolationInstrumentedTest {
         UserDataScope.withOwnerUid(owner) {
             val removedTank = store.addTankFromDraft(draft())
             val retainedTank = store.addTankFromDraft(draft())
-            val health = LivestockHealthDataStoreManager(context)
+            val health = LivestockHealthDataStoreManager(context, store)
             try {
                 val operation = operations()
                 operation.saveLivestockWithPhoto(removedTank, item(11), owner, true, false)
@@ -238,7 +238,7 @@ class LivestockPhotoIsolationInstrumentedTest {
         UserDataScope.withOwnerUid(owner) {
             val tank = store.addTankFromDraft(draft())
             try { block(owner, tank) } finally {
-                LivestockHealthDataStoreManager(context).deleteForTank(tank)
+                LivestockHealthDataStoreManager(context, store).deleteForTank(tank)
                 store.deleteTanks(listOf(tank))
                 AppMediaStorage.discardPendingMediaForOwner(context, owner)
             }
@@ -283,7 +283,7 @@ class LivestockPhotoIsolationInstrumentedTest {
                 error("Photo mutation unexpectedly deleted livestock health records")
             },
             deleteLivestockHealthForLivestock =
-                LivestockHealthDataStoreManager(context)::deleteForLivestock
+                LivestockHealthDataStoreManager(context, store)::deleteForLivestock
         )
     )
 

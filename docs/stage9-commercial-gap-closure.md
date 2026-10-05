@@ -6,7 +6,7 @@ architecture without backward-compatibility shims.
 
 ## Enforced guarantees
 
-- Profile, tank creation and tank settings sources pass through `ImageMediaProcessor` before crop.
+- Profile, tank creation and tank settings sources pass through the `MediaFlowOperations` application boundary; its Android adapter runs bounded `ImageMediaProcessor` processing before crop.
 - Source bytes, decoded pixels, output dimensions and output bytes are bounded before persistence.
 - The only staging cache and FileProvider root is `image_processing`.
 - App-owned crop results are synchronously journaled with immutable owner UID before a domain store

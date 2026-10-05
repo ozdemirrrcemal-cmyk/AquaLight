@@ -51,6 +51,7 @@ FORBIDDEN = {
     "Firebase.firestore": "Firestore must stay behind an adapter",
     "Firebase.storage": "Firebase Storage must stay behind an adapter",
     "FieldValue.serverTimestamp()": "Firestore values must stay behind an adapter",
+    "AppMediaStorage.": "media storage must stay behind the application media boundary",
 }
 
 VIEWMODEL_WORKFLOW_CONSTRUCTION = {
@@ -77,6 +78,10 @@ INJECTED_FRAGMENT_VIEWMODELS = (
 )
 
 FIREBASE_IMPORT = re.compile(r"^import\s+com\.google\.firebase\.", re.MULTILINE)
+PLATFORM_MEDIA_IMPORT = re.compile(
+    r"^import\s+com\.aqua\.aqualight\.platform\.media\.",
+    re.MULTILINE,
+)
 ANDROID_VIEWMODEL = re.compile(r"\bclass\s+\w+ViewModel\b[\s\S]{0,250}:\s*AndroidViewModel\b")
 APPLICATION_CTOR = re.compile(r"\bclass\s+\w+ViewModel\s*\([^)]*\bApplication\b")
 
@@ -102,6 +107,11 @@ for path in sorted(UI_ROOT.rglob("*.kt")):
 
     if FIREBASE_IMPORT.search(text):
         errors.append(f"{relative}: Firebase SDK imports are forbidden in UI")
+    if PLATFORM_MEDIA_IMPORT.search(text):
+        errors.append(
+            f"{relative}: platform media imports are forbidden in UI; "
+            "use application.media MediaFlowOperations"
+        )
 
     for view_model in INJECTED_FRAGMENT_VIEWMODELS:
         plain_delegate = f": {view_model} by viewModels()"

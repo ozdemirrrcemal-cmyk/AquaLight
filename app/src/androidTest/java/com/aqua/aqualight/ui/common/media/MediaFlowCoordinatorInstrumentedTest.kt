@@ -5,7 +5,9 @@ import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.aqua.aqualight.application.media.MediaScope
 import com.aqua.aqualight.platform.media.AppMediaScope
+import com.aqua.aqualight.platform.media.AndroidMediaFlowOperations
 import com.aqua.aqualight.platform.media.AppMediaStorage
 import com.aqua.aqualight.platform.media.ImageMediaProcessingResult
 import com.aqua.aqualight.platform.media.ImageMediaProcessor
@@ -150,7 +152,7 @@ class MediaFlowCoordinatorInstrumentedTest {
     private fun createCropOutput() = requireNotNull(
         AppMediaStorage.createCropOutputUri(
             context = context,
-            scope = AppMediaScope.TANK,
+            scope = MediaScope.TANK,
             ownerToken = OWNER_TOKEN
         )
     ).also { output ->
@@ -184,11 +186,13 @@ class MediaFlowCoordinatorInstrumentedTest {
     ) = MediaFlowCoordinatorViewModel(
         savedStateHandle = savedStateHandle,
         context = context,
-        scope = AppMediaScope.TANK,
-        ownerToken = OWNER_TOKEN,
-        ownerUid = OWNER_UID,
-        cropSpec = MediaCropSpec.TANK,
-        mediaProcessor = processor,
+        configuration = MediaFlowConfiguration(
+            scope = MediaScope.TANK,
+            ownerToken = OWNER_TOKEN,
+            ownerUid = OWNER_UID,
+            cropSpec = MediaCropSpec.TANK
+        ),
+        mediaOperations = AndroidMediaFlowOperations(context, processor),
         dispatcher = Dispatchers.Unconfined
     )
 

@@ -19,7 +19,7 @@ class AppMediaRecoveryManager(
     private val appContext = context.applicationContext
     private val preferences = UserPreferencesManager.create(appContext)
     private val tanks = AquariumTankDataStoreManager(appContext)
-    private val livestockHealth = LivestockHealthDataStoreManager(appContext)
+    private val livestockHealth = LivestockHealthDataStoreManager(appContext, tanks)
 
     suspend fun reconcileActiveOwner() {
         val ownerUid = UserDataScope.currentUid().takeIf(String::isNotBlank) ?: return

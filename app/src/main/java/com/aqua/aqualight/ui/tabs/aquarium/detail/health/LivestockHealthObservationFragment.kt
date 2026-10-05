@@ -5,7 +5,6 @@ import android.view.View
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -14,9 +13,7 @@ import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
 import com.aqua.aqualight.databinding.FragmentLivestockHealthObservationBinding
 import com.aqua.aqualight.databinding.ItemLivestockHealthSelectorBinding
-import com.aqua.aqualight.composition.requireAppContainer
-import com.aqua.aqualight.platform.media.AppMediaScope
-import com.aqua.aqualight.platform.media.AppMediaStorage
+import com.aqua.aqualight.application.media.MediaScope
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.media.TankRecordPhotoFragment
@@ -31,7 +28,7 @@ import kotlinx.coroutines.launch
 
 class LivestockHealthObservationFragment : TankRecordPhotoFragment(
     R.layout.fragment_livestock_health_observation,
-    AppMediaScope.LIVESTOCK,
+    MediaScope.LIVESTOCK,
     R.string.aquarium_livestock_photo_title,
     R.string.aquarium_livestock_photo_crop_title
 ) {
@@ -265,13 +262,8 @@ class LivestockHealthObservationFragment : TankRecordPhotoFragment(
     private fun openObservationPhotoSlot(slotIndex: Int) {
         val recordId = selectedLivestockId.takeIf { id -> id > 0L } ?: return
         activePhotoSlotIndex = slotIndex.coerceIn(0, MAX_OBSERVATION_PHOTOS - 1)
-        val ownerUid = requireContext()
-            .requireAppContainer()
-            .authenticatedOwnerIdentity
-            .requireOwnerUid()
         showRecordPhotoSource(
             recordId = recordId,
-            ownerUid = ownerUid,
             persistedUri = observationPhotoUris[activePhotoSlotIndex],
             resetSelection = true
         )
@@ -281,7 +273,7 @@ class LivestockHealthObservationFragment : TankRecordPhotoFragment(
         if (!hasPhotoView) return
         val previous = observationPhotoUris[activePhotoSlotIndex]
         if (previous != photoUri && !previous.isNullOrBlank()) {
-            mediaFlow.deleteInternalMedia(previous)
+            mediaFlow.rollbackPendingMedia(previous)
         }
         observationPhotoUris[activePhotoSlotIndex] = photoUri
         binding.renderObservationPhotoSlots(observationPhotoUris)
@@ -315,14 +307,25 @@ class LivestockHealthObservationFragment : TankRecordPhotoFragment(
             activity?.isChangingConfigurations != true
         ) {
             val pending = observationPhotoUris.filterNotNull()
-            val context = context?.applicationContext
-            if (context != null && pending.isNotEmpty()) {
+            if (pending.isNotEmpty()) {
                 CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
-                    pending.forEach { AppMediaStorage.rollbackPendingMedia(context, it) }
+                    pending.forEach { mediaFlow.rollbackPendingMedia(it) }
                 }
             }
         }
         super.onDestroy()
+    }
+
+    private fun discardObservationPhotos(
+        uris: MutableList<String?>,
+        binding: FragmentLivestockHealthObservationBinding?
+    ) {
+        val pending = uris.filterNotNull()
+        uris.indices.forEach { uris[it] = null }
+        binding?.renderObservationPhotoSlots(uris)
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+            pending.forEach { mediaFlow.rollbackPendingMedia(it) }
+        }
     }
 
     companion object {
@@ -347,18 +350,5 @@ class LivestockHealthObservationFragment : TankRecordPhotoFragment(
         private const val STATE_AFFECTED_COUNT = "livestock_health_affected_count"
         private const val STATE_OTHER = "livestock_health_other"
         private const val STATE_NOTE = "livestock_health_note"
-    }
-}
-
-private fun Fragment.discardObservationPhotos(
-    uris: MutableList<String?>,
-    binding: FragmentLivestockHealthObservationBinding?
-) {
-    val pending = uris.filterNotNull()
-    uris.indices.forEach { uris[it] = null }
-    binding?.renderObservationPhotoSlots(uris)
-    val appContext = requireContext().applicationContext
-    viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
-        pending.forEach { AppMediaStorage.rollbackPendingMedia(appContext, it) }
     }
 }

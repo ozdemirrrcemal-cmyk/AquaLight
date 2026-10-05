@@ -19,7 +19,7 @@ import coil3.request.placeholder
 import com.aqua.aqualight.R
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentEditProfileBinding
-import com.aqua.aqualight.platform.media.AppMediaScope
+import com.aqua.aqualight.application.media.MediaScope
 import com.aqua.aqualight.platform.permissions.AppCapability
 import com.aqua.aqualight.ui.common.bottomsheet.PhotoSourceBottomSheet
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
@@ -27,6 +27,7 @@ import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.ui.common.media.MediaCropPreparationResult
 import com.aqua.aqualight.ui.common.media.MediaCropSpec
 import com.aqua.aqualight.ui.common.media.MediaFlowCoordinatorViewModel
+import com.aqua.aqualight.ui.common.media.mediaFlowFactory
 import com.aqua.aqualight.ui.common.permission.CapabilityPermissionCoordinator
 import com.aqua.aqualight.utils.DialogManager
 import com.aqua.aqualight.utils.DialogType
@@ -44,14 +45,10 @@ class EditProfileFragment : Fragment(R.layout.fragment_edit_profile) {
     }
 
     private val mediaFlow: MediaFlowCoordinatorViewModel by viewModels {
-        val container = requireContext().requireAppContainer()
-        MediaFlowCoordinatorViewModel.factory(
-            context = requireContext().applicationContext,
-            scope = AppMediaScope.PROFILE,
-            ownerToken = "profile",
-            ownerUid = container.authenticatedOwnerIdentity.requireOwnerUid(),
-            cropSpec = MediaCropSpec.PROFILE,
-            mediaProcessor = container.imageMediaProcessor
+        mediaFlowFactory(
+            scope = MediaScope.PROFILE,
+            ownerToken = { "profile" },
+            cropSpec = MediaCropSpec.PROFILE
         )
     }
 

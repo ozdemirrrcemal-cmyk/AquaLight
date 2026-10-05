@@ -1,0 +1,182 @@
+#!/usr/bin/env python3
+"""Protect Livestock Health application/data/UI boundaries."""
+from pathlib import Path
+import re
+import sys
+
+ROOT = Path(__file__).resolve().parents[1]
+APP = ROOT / "app/src/main/java/com/aqua/aqualight"
+TESTS = ROOT / "app/src/test/java/com/aqua/aqualight"
+
+APPLICATION = APP / "application/aquarium/health/LivestockHealthOperations.kt"
+ADAPTER = APP / "data/aquarium/health/DefaultLivestockHealthOperations.kt"
+DATA_STORE = APP / "data/aquarium/health/LivestockHealthDataStore.kt"
+MANAGER = APP / "data/aquarium/health/LivestockHealthDataStoreManager.kt"
+RULES = APP / "data/aquarium/health/LivestockHealthStoreRules.kt"
+LEGACY_STORE = APP / "data/aquarium/health/LivestockHealthStore.kt"
+VIEW_MODEL = APP / "ui/tabs/aquarium/detail/health/LivestockHealthViewModel.kt"
+UI_ROOT = APP / "ui/tabs/aquarium/detail/health"
+OWNER_GRAPH = APP / "composition/OwnerDependencyGraph.kt"
+OWNER_FACTORY = APP / "composition/OwnerViewModelFactory.kt"
+SMOKE = ROOT / "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/ReleaseSmokeAppContainer.kt"
+BOUNDARY_TEST = TESTS / "ui/tabs/aquarium/detail/health/LivestockHealthViewModelBoundaryTest.kt"
+
+required = (
+    APPLICATION,
+    ADAPTER,
+    DATA_STORE,
+    MANAGER,
+    RULES,
+    VIEW_MODEL,
+    OWNER_GRAPH,
+    OWNER_FACTORY,
+    SMOKE,
+    BOUNDARY_TEST,
+)
+errors: list[str] = []
+
+
+def read(path: Path) -> str:
+    if not path.is_file():
+        errors.append(f"{path.relative_to(ROOT)}: required architecture file is missing")
+        return ""
+    return path.read_text(encoding="utf-8", errors="ignore")
+
+
+for path in required:
+    read(path)
+
+if LEGACY_STORE.exists():
+    errors.append(
+        f"{LEGACY_STORE.relative_to(ROOT)}: serializer, manager and validation must remain split"
+    )
+
+application = read(APPLICATION)
+for forbidden in (
+    "import android.",
+    "import androidx.",
+    "com.aqua.aqualight.data.",
+    "com.aqua.aqualight.platform.",
+    "com.aqua.aqualight.ui.",
+    "com.aqua.aqualight.composition.",
+):
+    if forbidden in application:
+        errors.append(f"{APPLICATION.relative_to(ROOT)}: application boundary leak: {forbidden}")
+
+adapter = read(ADAPTER)
+if "LivestockHealthOperations" not in adapter or "withCurrentOwnerScope" not in adapter:
+    errors.append(f"{ADAPTER.relative_to(ROOT)}: application adapter boundary is incomplete")
+if "com.aqua.aqualight.ui." in adapter:
+    errors.append(f"{ADAPTER.relative_to(ROOT)}: data adapter must not depend on UI")
+
+manager = read(MANAGER)
+for token in (
+    "private val tanks: AquariumTankDataStoreManager",
+    "LivestockHealthDataStoreManager(",
+    "removeObservations(",
+):
+    if token not in manager:
+        errors.append(f"{MANAGER.relative_to(ROOT)}: required injected-store contract missing: {token}")
+for forbidden in (
+    "private val tanks = AquariumTankDataStoreManager",
+    "AquariumTankDataStoreManager(appContext)",
+    "com.aqua.aqualight.ui.",
+):
+    if forbidden in manager:
+        errors.append(f"{MANAGER.relative_to(ROOT)}: hidden dependency construction/leak: {forbidden}")
+
+data_store = read(DATA_STORE)
+if "Serializer<LivestockHealthStore>" not in data_store:
+    errors.append(f"{DATA_STORE.relative_to(ROOT)}: serializer responsibility is missing")
+if "class LivestockHealthDataStoreManager" in data_store:
+    errors.append(f"{DATA_STORE.relative_to(ROOT)}: manager responsibility leaked into serializer file")
+
+rules = read(RULES)
+for token in (
+    "validateLivestockHealthStore",
+    "validateStoredObservation",
+    "validateStoredCheck",
+    "toSnapshot",
+):
+    if token not in rules:
+        errors.append(f"{RULES.relative_to(ROOT)}: validation/mapping rule missing: {token}")
+if "android." in rules or "androidx." in rules:
+    errors.append(f"{RULES.relative_to(ROOT)}: store rules must remain Android-free")
+
+view_model = read(VIEW_MODEL)
+if "LivestockHealthOperations" not in view_model:
+    errors.append(f"{VIEW_MODEL.relative_to(ROOT)}: ViewModel must depend on application operations")
+for forbidden in (
+    "com.aqua.aqualight.data.",
+    "com.aqua.aqualight.platform.",
+    "LivestockHealthDataStoreManager",
+    "DefaultLivestockHealthOperations",
+):
+    if forbidden in view_model:
+        errors.append(f"{VIEW_MODEL.relative_to(ROOT)}: ViewModel boundary leak: {forbidden}")
+
+livestock_ui = [
+    path for path in UI_ROOT.glob("LivestockHealth*.kt")
+    if path.is_file()
+]
+for path in livestock_ui:
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    for forbidden in (
+        "import com.aqua.aqualight.data.",
+        "import com.aqua.aqualight.platform.media.",
+        "AppMediaStorage",
+        "requireAppContainer",
+        "StoredLivestock",
+    ):
+        if forbidden in text:
+            errors.append(f"{path.relative_to(ROOT)}: livestock UI boundary leak: {forbidden}")
+
+owner_graph = read(OWNER_GRAPH)
+if "LivestockHealthDataStoreManager(appContext, aquariumTankStore)" not in owner_graph:
+    errors.append(
+        f"{OWNER_GRAPH.relative_to(ROOT)}: livestock store must reuse the composed tank store"
+    )
+
+owner_factory = read(OWNER_FACTORY)
+for token in (
+    "LivestockHealthViewModel::class.java",
+    "DefaultLivestockHealthOperations(graph.livestockHealthStore)",
+):
+    if token not in owner_factory:
+        errors.append(f"{OWNER_FACTORY.relative_to(ROOT)}: livestock ViewModel binding missing: {token}")
+
+smoke = read(SMOKE)
+if "LivestockHealthDataStoreManager(appContext, tankStore)" not in smoke:
+    errors.append(f"{SMOKE.relative_to(ROOT)}: release-smoke store wiring must match production")
+
+single_arg_construction = re.compile(
+    r"LivestockHealthDataStoreManager\(\s*(?:appContext|context)\s*\)"
+)
+for source_root in (ROOT / "app/src/main", ROOT / "app/src/releaseSmoke"):
+    for source in source_root.rglob("*.kt"):
+        text = source.read_text(encoding="utf-8", errors="ignore")
+        if single_arg_construction.search(text):
+            errors.append(
+                f"{source.relative_to(ROOT)}: livestock health store must receive the "
+                "authoritative tank store from its owner"
+            )
+
+boundary_test = read(BOUNDARY_TEST)
+for token in (
+    "observationReadDelegatesToApplicationBoundary",
+    "createCheckAndCloseDelegateTypedApplicationInputs",
+    "FakeLivestockHealthOperations",
+):
+    if token not in boundary_test:
+        errors.append(f"{BOUNDARY_TEST.relative_to(ROOT)}: boundary regression coverage missing: {token}")
+
+if errors:
+    print("Livestock Health architecture guard failed:", file=sys.stderr)
+    for error in errors:
+        print(f" - {error}", file=sys.stderr)
+    raise SystemExit(1)
+
+print(
+    "Livestock Health architecture guard passed: UI/application/data boundaries are isolated, "
+    "store dependencies are composed once, and persistence responsibilities are split."
+)

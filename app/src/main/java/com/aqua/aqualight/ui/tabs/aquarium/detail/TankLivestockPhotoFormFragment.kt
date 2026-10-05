@@ -6,9 +6,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
-import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.FragmentTankLivestockFormBinding
-import com.aqua.aqualight.platform.media.AppMediaScope
+import com.aqua.aqualight.application.media.MediaScope
 import com.aqua.aqualight.ui.common.media.TankRecordPhotoFragment
 import com.aqua.aqualight.ui.common.media.bindRecordPhoto
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
@@ -17,19 +16,18 @@ import kotlinx.coroutines.launch
 
 /** A photo is only a draft until the form's save action commits fields and media together. */
 abstract class TankLivestockPhotoFormFragment : TankRecordPhotoFragment(
-    R.layout.fragment_tank_livestock_form, AppMediaScope.LIVESTOCK,
+    R.layout.fragment_tank_livestock_form, MediaScope.LIVESTOCK,
     R.string.aquarium_livestock_photo_title, R.string.aquarium_livestock_photo_crop_title
 ) {
     protected val photoDraft: LivestockPhotoFormViewModel by viewModels()
 
     protected fun setupLivestockPhoto(binding: FragmentTankLivestockFormBinding, editingId: Long) {
-        photoDraft.initialize(requireContext().requireAppContainer()
-            .authenticatedOwnerIdentity.requireOwnerUid(), editingId)
+        photoDraft.initialize(mediaFlow.ownerUid, editingId)
         if (editingId <= 0L) mediaFlow.initializeSelection(null)
         setupPhotoSourceResultListener()
         binding.livestockPhotoButton.setOnClickListener {
             if (mediaFlow.selection.value.initialized) {
-                showRecordPhotoSource(requireNotNull(photoDraft.recordId), requireNotNull(photoDraft.ownerUid))
+                showRecordPhotoSource(requireNotNull(photoDraft.recordId))
             }
         }
         viewLifecycleOwner.lifecycleScope.launch {

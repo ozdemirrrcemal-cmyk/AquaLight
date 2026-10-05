@@ -18,6 +18,7 @@ import com.aqua.aqualight.application.devices.DeviceControlSurfacePreparationRes
 import com.aqua.aqualight.application.devices.DeviceMenuOpenUseCase
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftOperations
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionUseCase
+import com.aqua.aqualight.application.media.MediaFlowOperations
 import com.aqua.aqualight.application.notifications.NotificationDispatchUseCase
 import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
 import com.aqua.aqualight.application.user.LocalDataRecoveryOperations
@@ -75,7 +76,6 @@ import com.aqua.aqualight.data.recovery.DefaultLocalDataRecoveryOperations
 import com.aqua.aqualight.data.user.StartupAppearanceCache
 import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.platform.auth.GoogleIdentityClient
-import com.aqua.aqualight.platform.media.ImageMediaProcessor
 import com.aqua.aqualight.platform.text.AndroidAppTextResolver
 import com.aqua.aqualight.platform.text.AndroidMaintenanceTextResolver
 import com.aqua.aqualight.platform.vision.MlKitProvisioningQrFrameDecoderFactory
@@ -148,8 +148,8 @@ internal class ReleaseSmokeAppContainer(context: Context) : AppContainer {
         AuthenticatedOwnerIdentity { SMOKE_OWNER_UID }
     override val feedbackSubmissionOperations: FeedbackSubmissionUseCase
         get() = unused("feedbackSubmissionOperations")
-    override val imageMediaProcessor: ImageMediaProcessor
-        get() = unused("imageMediaProcessor")
+    override val mediaFlowOperations: MediaFlowOperations
+        get() = unused("mediaFlowOperations")
     override val provisioningDraftOperations: ProvisioningDraftOperations
         get() = unused("provisioningDraftOperations")
     override val provisioningQrFrameDecoderFactory: ProvisioningQrFrameDecoderFactory =
@@ -213,7 +213,7 @@ private class ReleaseSmokeViewModelFactory(
     private val timerControlOperations = DefaultDeviceTimerControlOperations(devicesRepository)
     private val tankStore = AquariumTankDataStoreManager(appContext)
     private val waterAnalysisStore = WaterAnalysisDataStoreManager(appContext)
-    private val livestockHealthStore = LivestockHealthDataStoreManager(appContext)
+    private val livestockHealthStore = LivestockHealthDataStoreManager(appContext, tankStore)
     private val careTaskStore = CareTaskDataStoreManager.create(appContext)
     private val assignmentRepository = TankDeviceAssignmentRepository(
         ownerUid = SMOKE_OWNER_UID,

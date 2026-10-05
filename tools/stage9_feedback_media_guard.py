@@ -19,6 +19,8 @@ APP_CONTAINER = APP / "composition/AppContainer.kt"
 RELEASE_SMOKE_CONTAINER = (
     ROOT / "app/src/releaseSmoke/java/com/aqua/aqualight/smoke/ReleaseSmokeAppContainer.kt"
 )
+MEDIA_APPLICATION = APP / "application/media/MediaFlowOperations.kt"
+MEDIA_ADAPTER = APP / "platform/media/AndroidMediaFlowOperations.kt"
 PROCESSOR = APP / "platform/media/ImageMediaProcessor.kt"
 IMAGE_POLICY = APP / "platform/media/ImageMediaPolicy.kt"
 APP_MEDIA_STORAGE = APP / "platform/media/AppMediaStorage.kt"
@@ -63,6 +65,8 @@ REQUIRED = (
     FIREBASE_RULES_TEST,
     APP_CONTAINER,
     RELEASE_SMOKE_CONTAINER,
+    MEDIA_APPLICATION,
+    MEDIA_ADAPTER,
     PROCESSOR,
     IMAGE_POLICY,
     APP_MEDIA_STORAGE,
@@ -324,15 +328,46 @@ require_tokens(
     "image policy",
 )
 
+require_tokens(
+    MEDIA_APPLICATION,
+    (
+        "interface MediaFlowOperations",
+        "enum class MediaScope",
+        "sealed interface MediaSourcePreparationResult",
+        "data class PreparedImageMedia",
+    ),
+    "Android-free application media boundary",
+)
+forbid_tokens(
+    MEDIA_APPLICATION,
+    ("import android.", "com.aqua.aqualight.platform."),
+    "application media boundary platform dependency",
+)
+require_tokens(
+    MEDIA_ADAPTER,
+    (
+        "class AndroidMediaFlowOperations",
+        "AppMediaStorage",
+        "ImageMediaProcessor",
+        "MediaFlowOperations",
+    ),
+    "platform media adapter",
+)
+
 for path in (APP_CONTAINER, RELEASE_SMOKE_CONTAINER):
-    require_tokens(path, ("imageMediaProcessor: ImageMediaProcessor",), "generic media composition")
+    require_tokens(path, ("mediaFlowOperations: MediaFlowOperations",), "generic media composition")
+    forbid_tokens(
+        path,
+        ("imageMediaProcessor: ImageMediaProcessor",),
+        "platform media contract exposure",
+    )
 
 require_tokens(
     COORDINATOR,
     (
-        "ImageMediaProcessor",
-        "ImageMediaProcessingResult",
-        "ImageMediaFailureKind",
+        "MediaFlowOperations",
+        "MediaSourcePreparationResult",
+        "MediaPreparationFailureKind",
         "prepareCropIntent",
         "preparationMutex.withLock",
         "commitSelection",
@@ -340,6 +375,15 @@ require_tokens(
         "setMaxBitmapSize",
     ),
     "lifecycle-safe image flow",
+)
+forbid_tokens(
+    COORDINATOR,
+    (
+        "com.aqua.aqualight.platform.media",
+        "AppMediaStorage",
+        "ImageMediaProcessor",
+    ),
+    "UI-owned platform media dependency",
 )
 require_tokens(FILE_PROVIDER_PATHS, ('name="image_processing"',), "image provider path")
 
@@ -353,9 +397,8 @@ for path in photo_consumers:
         path,
         (
             "MediaFlowCoordinatorViewModel",
-            "container.imageMediaProcessor",
+            "mediaFlowFactory(",
             "prepareCropIntent",
-            "authenticatedOwnerIdentity.requireOwnerUid()",
             "CancellationException",
             "throw cancellation",
         ),
@@ -363,8 +406,15 @@ for path in photo_consumers:
     )
     forbid_tokens(
         path,
-        ("FileProvider", "File.createTempFile", "UCrop.Options()", "feedbackMediaProcessor"),
-        "duplicated or legacy media ownership",
+        (
+            "com.aqua.aqualight.platform.media",
+            "container.imageMediaProcessor",
+            "FileProvider",
+            "File.createTempFile",
+            "UCrop.Options()",
+            "feedbackMediaProcessor",
+        ),
+        "duplicated, platform-owned or legacy media ownership",
     )
 
 require_tokens(

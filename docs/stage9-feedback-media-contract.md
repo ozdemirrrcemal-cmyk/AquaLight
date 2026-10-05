@@ -43,9 +43,10 @@ Android UI ownership of business or platform operations.
 ## Shared profile and aquarium photos
 
 1. Profile photo, tank creation photo and tank settings photo use one saved-state-capable media
-   coordinator and one domain-neutral `ImageMediaProcessor` API.
-2. The concrete implementation is `AndroidImageMediaProcessor`; no `FeedbackMedia*` alias, wrapper
-   or composition property exists.
+   coordinator through the Android-free `MediaFlowOperations` application boundary.
+2. `AndroidMediaFlowOperations` is the single platform adapter. It composes canonical
+   `AppMediaStorage` ownership with the bounded `AndroidImageMediaProcessor`; UI code never
+   imports those platform types and no `FeedbackMedia*` alias or compatibility wrapper exists.
 3. Selected sources are copied into the `image_processing` app cache before decode. There is no
    legacy `feedback_media` FileProvider path or legacy filename support.
 4. Declared and unknown source lengths use the same byte limit.

@@ -12,13 +12,13 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.health.LivestockCheckInput
-import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.ContentSheetLivestockHealthCheckBinding
 import com.aqua.aqualight.databinding.DialogSettingsBottomSheetBinding
-import com.aqua.aqualight.platform.media.AppMediaScope
+import com.aqua.aqualight.application.media.MediaScope
 import com.aqua.aqualight.ui.common.dialog.AppTimePickerDialogFragment
 import com.aqua.aqualight.ui.common.media.MediaCropSpec
 import com.aqua.aqualight.ui.common.media.MediaFlowCoordinatorViewModel
+import com.aqua.aqualight.ui.common.media.mediaFlowFactory
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.CancellationException
@@ -37,14 +37,12 @@ internal class LivestockHealthCheckBottomSheet : BottomSheetDialogFragment() {
     private val contentBinding get() = _contentBinding!!
 
     private val mediaFlow: MediaFlowCoordinatorViewModel by viewModels {
-        val container = requireContext().requireAppContainer()
-        MediaFlowCoordinatorViewModel.factory(
-            context = requireContext().applicationContext,
-            scope = AppMediaScope.LIVESTOCK,
-            ownerToken = "health_check_${requireArguments().getLong(ARG_CHECK_LIVESTOCK_ID)}",
-            ownerUid = container.authenticatedOwnerIdentity.requireOwnerUid(),
-            cropSpec = MediaCropSpec.RECORD,
-            mediaProcessor = container.imageMediaProcessor
+        mediaFlowFactory(
+            scope = MediaScope.LIVESTOCK,
+            ownerToken = {
+                "health_check_${requireArguments().getLong(ARG_CHECK_LIVESTOCK_ID)}"
+            },
+            cropSpec = MediaCropSpec.RECORD
         )
     }
 

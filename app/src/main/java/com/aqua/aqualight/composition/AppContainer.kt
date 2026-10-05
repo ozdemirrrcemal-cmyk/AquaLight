@@ -14,6 +14,7 @@ import com.aqua.aqualight.application.devices.DeviceFirmwareNotificationRouteDec
 import com.aqua.aqualight.application.devices.DeviceFirmwareNotificationRouteOperations
 import com.aqua.aqualight.application.devices.provisioning.ProvisioningDraftOperations
 import com.aqua.aqualight.application.feedback.FeedbackSubmissionUseCase
+import com.aqua.aqualight.application.media.MediaFlowOperations
 import com.aqua.aqualight.application.notifications.NotificationDispatchUseCase
 import com.aqua.aqualight.application.notifications.NotificationPreferenceUseCase
 import com.aqua.aqualight.application.user.LocalDataRecoveryOperations
@@ -37,7 +38,7 @@ import com.aqua.aqualight.data.user.UserPreferencesManager
 import com.aqua.aqualight.platform.auth.DefaultGoogleIdentityClient
 import com.aqua.aqualight.platform.auth.GoogleIdentityClient
 import com.aqua.aqualight.platform.media.AndroidImageMediaProcessor
-import com.aqua.aqualight.platform.media.ImageMediaProcessor
+import com.aqua.aqualight.platform.media.AndroidMediaFlowOperations
 import com.aqua.aqualight.platform.vision.MlKitProvisioningQrFrameDecoderFactory
 import com.aqua.aqualight.platform.vision.ProvisioningQrFrameDecoderFactory
 import com.aqua.aqualight.ui.auth.viewmodel.AuthViewModelFactory
@@ -67,7 +68,7 @@ interface AppContainer {
     val livestockCatalogOperations: LivestockCatalogOperations
     val livestockWaterAdvisorOperations: LivestockWaterAdvisorOperations
     val feedbackSubmissionOperations: FeedbackSubmissionUseCase
-    val imageMediaProcessor: ImageMediaProcessor
+    val mediaFlowOperations: MediaFlowOperations
     val provisioningDraftOperations: ProvisioningDraftOperations
     val provisioningQrFrameDecoderFactory: ProvisioningQrFrameDecoderFactory
     val authViewModelFactory: ViewModelProvider.Factory
@@ -165,10 +166,13 @@ internal class DefaultAppContainer(
         )
     }
 
-    override val imageMediaProcessor: ImageMediaProcessor by lazy(
+    override val mediaFlowOperations: MediaFlowOperations by lazy(
         LazyThreadSafetyMode.SYNCHRONIZED
     ) {
-        AndroidImageMediaProcessor(appContext)
+        AndroidMediaFlowOperations(
+            context = appContext,
+            imageMediaProcessor = AndroidImageMediaProcessor(appContext)
+        )
     }
 
     private val ownerGraphResolver: OwnerDependencyGraphResolver by lazy(
