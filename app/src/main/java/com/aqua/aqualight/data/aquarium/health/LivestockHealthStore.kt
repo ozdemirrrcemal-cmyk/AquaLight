@@ -63,7 +63,7 @@ internal class LivestockHealthDataStoreManager(context: Context) {
 
     suspend fun reconcileAndGetMediaUrisForOwner(ownerUid: String): Set<String> {
         require(ownerUid.isNotBlank())
-        removeObservations(ownerUid, false) { records ->
+        removeObservations(appContext, ownerUid, false) { records ->
             val livestockByTank = tanks.tanksSnapshotForOwner(ownerUid).associate { tank ->
                 tank.id to tank.livestock.map { it.id }.toSet()
             }
@@ -222,7 +222,7 @@ internal class LivestockHealthDataStoreManager(context: Context) {
             tank.id == input.tankId && tank.livestock.any { it.id == input.livestockId }
         }
         if (!stillPresent) {
-            removeObservations(ownerUid, true) { records ->
+            removeObservations(appContext, ownerUid, true) { records ->
                 records.filter { it.id == id && it.tankId == input.tankId }
             }
             throw StoreInvariantViolation("Selected livestock no longer exists in this tank.")
@@ -232,7 +232,7 @@ internal class LivestockHealthDataStoreManager(context: Context) {
     suspend fun deleteForTank(tankId: Long) {
         require(tankId > 0)
         val ownerUid = UserDataScope.requireCurrentUid()
-        removeObservations(ownerUid, true) { records ->
+        removeObservations(appContext, ownerUid, true) { records ->
             records.filter { it.tankId == tankId }
         }
     }
@@ -240,46 +240,14 @@ internal class LivestockHealthDataStoreManager(context: Context) {
     suspend fun deleteForLivestock(tankId: Long, livestockId: Long) {
         require(tankId > 0 && livestockId > 0)
         val ownerUid = UserDataScope.requireCurrentUid()
-        removeObservations(ownerUid, true) { records ->
+        removeObservations(appContext, ownerUid, true) { records ->
             records.filter { it.tankId == tankId && it.livestockId == livestockId }
         }
     }
 
     suspend fun clearAllForOwner(ownerUid: String) {
         require(ownerUid.isNotBlank())
-        removeObservations(ownerUid, false) { records -> records }
-    }
-
-    private suspend fun removeObservations(
-        ownerUid: String,
-        requireActiveOwner: Boolean,
-        select: suspend (List<StoredLivestockObservation>) -> List<StoredLivestockObservation>
-    ) = withContext(NonCancellable + Dispatchers.IO) {
-        val media = linkedSetOf<String>()
-        appContext.livestockHealthDataStore.updateData { current ->
-            if (requireActiveOwner) checkOwner(ownerUid)
-            val selected = select(current.observationsList.filter { it.ownerUid == ownerUid })
-            if (selected.isEmpty()) return@updateData current
-
-            val removed = selected.toSet()
-            val retained = current.observationsList.filterNot { it in removed }
-            val retainedMedia = retained.flatMap(StoredLivestockObservation::mediaUris).toSet()
-            val deletedMedia = selected.flatMap(StoredLivestockObservation::mediaUris)
-                .filterNot { it in retainedMedia }.toSet()
-            deletedMedia.forEach { uri ->
-                AppMediaStorage.deleteAfterCommit(
-                    appContext, ownerUid, uri, CommittedMediaDeletionMode.PREPARE
-                )
-            }
-            media.addAll(deletedMedia)
-            validateLivestockHealthStore(current.toBuilder().clearObservations()
-                .addAllObservations(retained).build())
-        }
-        val referenced = appContext.livestockHealthDataStore.data.first()
-            .observationsList.flatMap(StoredLivestockObservation::mediaUris).toSet()
-        media.filterNot { it in referenced }.forEach { uri ->
-            AppMediaStorage.deleteAfterCommit(appContext, ownerUid, uri)
-        }
+        removeObservations(appContext, ownerUid, false) { records -> records }
     }
 
     private suspend fun mutate(
@@ -300,6 +268,40 @@ internal class LivestockHealthDataStoreManager(context: Context) {
     }
 
 }
+
+private suspend fun removeObservations(
+    appContext: Context,
+    ownerUid: String,
+    requireActiveOwner: Boolean,
+    select: suspend (List<StoredLivestockObservation>) -> List<StoredLivestockObservation>
+) = withContext(NonCancellable + Dispatchers.IO) {
+    val media = linkedSetOf<String>()
+    appContext.livestockHealthDataStore.updateData { current ->
+        if (requireActiveOwner) checkOwner(ownerUid)
+        val selected = select(current.observationsList.filter { it.ownerUid == ownerUid })
+        if (selected.isEmpty()) return@updateData current
+
+        val removed = selected.toSet()
+        val retained = current.observationsList.filterNot { it in removed }
+        val retainedMedia = retained.flatMap(StoredLivestockObservation::mediaUris).toSet()
+        val deletedMedia = selected.flatMap(StoredLivestockObservation::mediaUris)
+            .filterNot { it in retainedMedia }.toSet()
+        deletedMedia.forEach { uri ->
+            AppMediaStorage.deleteAfterCommit(
+                appContext, ownerUid, uri, CommittedMediaDeletionMode.PREPARE
+            )
+        }
+        media.addAll(deletedMedia)
+        validateLivestockHealthStore(current.toBuilder().clearObservations()
+            .addAllObservations(retained).build())
+    }
+    val referenced = appContext.livestockHealthDataStore.data.first()
+        .observationsList.flatMap(StoredLivestockObservation::mediaUris).toSet()
+    media.filterNot { it in referenced }.forEach { uri ->
+        AppMediaStorage.deleteAfterCommit(appContext, ownerUid, uri)
+    }
+}
+
 
 private fun checkOwner(expected: String) {
     if (UserDataScope.requireCurrentUid() != expected) {
