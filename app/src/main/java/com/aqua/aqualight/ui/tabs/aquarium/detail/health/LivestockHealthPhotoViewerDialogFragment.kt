@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
-import androidx.core.os.bundleOf
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
 import androidx.recyclerview.widget.RecyclerView
@@ -101,10 +100,10 @@ internal class LivestockHealthPhotoViewerDialogFragment :
                 return
             }
             LivestockHealthPhotoViewerDialogFragment().apply {
-                arguments = bundleOf(
-                    ARG_PHOTO_URIS to ArrayList(photoUris),
-                    ARG_INITIAL_INDEX to initialIndex.coerceIn(0, photoUris.lastIndex)
-                )
+                arguments = Bundle().apply {
+                    putStringArrayList(ARG_PHOTO_URIS, ArrayList(photoUris))
+                    putInt(ARG_INITIAL_INDEX, initialIndex.coerceIn(0, photoUris.lastIndex))
+                }
             }.show(fragmentManager, TAG)
         }
     }
