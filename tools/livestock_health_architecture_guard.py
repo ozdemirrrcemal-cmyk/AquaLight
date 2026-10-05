@@ -30,6 +30,13 @@ CHECK_PHOTO_CONTROLLER = (
     / "ui/tabs/aquarium/detail/health/LivestockHealthCheckPhotoController.kt"
 )
 FOLLOW_UP_UI = APP / "ui/tabs/aquarium/detail/health/LivestockHealthFollowUpUi.kt"
+FOLLOW_UP_CARD_BINDER = (
+    APP / "ui/tabs/aquarium/detail/health/LivestockHealthFollowupCardBinder.kt"
+)
+UI_TEXT = APP / "ui/tabs/aquarium/detail/health/LivestockHealthUiText.kt"
+UI_SESSION = APP / "ui/tabs/aquarium/detail/health/LivestockHealthUiSessionState.kt"
+RECORD_UI = APP / "ui/tabs/aquarium/detail/health/LivestockHealthRecordUi.kt"
+EVALUATION = APP / "ui/tabs/aquarium/detail/health/LivestockHealthEvaluationFragment.kt"
 CHECK_LAYOUT = ROOT / "app/src/main/res/layout/content_sheet_livestock_health_check.xml"
 HISTORY_LAYOUT = ROOT / "app/src/main/res/layout/item_livestock_health_history.xml"
 UI_ROOT = APP / "ui/tabs/aquarium/detail/health"
@@ -54,6 +61,11 @@ required = (
     CHECK_SHEET,
     CHECK_PHOTO_CONTROLLER,
     FOLLOW_UP_UI,
+    FOLLOW_UP_CARD_BINDER,
+    UI_TEXT,
+    UI_SESSION,
+    RECORD_UI,
+    EVALUATION,
     CHECK_LAYOUT,
     HISTORY_LAYOUT,
     OWNER_GRAPH,
@@ -256,9 +268,12 @@ for token in (
     "val photoUris: List<String>",
     "livestock_health_photo_more_count",
     "LivestockHealthPhotoViewerDialogFragment.show",
+    "LivestockHealthUiText.observationLabel",
+    "tvHistoryNote",
+    "livestock_health_history_note_format",
 ):
     if token not in follow_up_ui:
-        errors.append(f"{FOLLOW_UP_UI.relative_to(ROOT)}: history gallery contract missing: {token}")
+        errors.append(f"{FOLLOW_UP_UI.relative_to(ROOT)}: history contract missing: {token}")
 for forbidden in (
     "entry.photoUri ?: livestock.photoUri",
     "photoUri = check.photoUri",
@@ -267,8 +282,44 @@ for forbidden in (
         errors.append(f"{FOLLOW_UP_UI.relative_to(ROOT)}: misleading photo fallback remains: {forbidden}")
 
 history_layout = read(HISTORY_LAYOUT)
-if "@+id/tvHistoryPhotoCount" not in history_layout:
-    errors.append(f"{HISTORY_LAYOUT.relative_to(ROOT)}: history +N photo badge is missing")
+for token in (
+    "@+id/tvHistoryPhotoCount",
+    "@+id/tvHistoryNote",
+):
+    if token not in history_layout:
+        errors.append(f"{HISTORY_LAYOUT.relative_to(ROOT)}: history UI contract missing: {token}")
+
+ui_text = read(UI_TEXT)
+for token in (
+    "fun observationLabel(",
+    "fun resolveObservationLabel(",
+    "symptomKey == SYMPTOM_OTHER",
+    "otherObservation.trim()",
+):
+    if token not in ui_text:
+        errors.append(f"{UI_TEXT.relative_to(ROOT)}: custom observation resolver missing: {token}")
+
+ui_session = read(UI_SESSION)
+if "val otherObservation: String" not in ui_session:
+    errors.append(f"{UI_SESSION.relative_to(ROOT)}: custom observation state is missing")
+
+record_ui = read(RECORD_UI)
+if "otherObservation = otherObservation" not in record_ui:
+    errors.append(f"{RECORD_UI.relative_to(ROOT)}: custom observation mapping is missing")
+
+follow_up_card_binder = read(FOLLOW_UP_CARD_BINDER)
+for token in (
+    "LivestockHealthUiText.observationLabel",
+    "otherObservation = entry.otherObservation",
+):
+    if token not in follow_up_card_binder:
+        errors.append(
+            f"{FOLLOW_UP_CARD_BINDER.relative_to(ROOT)}: custom observation card binding missing: {token}"
+        )
+
+evaluation = read(EVALUATION)
+if "LivestockHealthUiText.observationLabel" not in evaluation:
+    errors.append(f"{EVALUATION.relative_to(ROOT)}: evaluation must use custom observation resolver")
 
 view_model = read(VIEW_MODEL)
 if "LivestockHealthOperations" not in view_model:

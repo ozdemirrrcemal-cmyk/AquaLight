@@ -38,12 +38,15 @@ internal fun LivestockObservationSnapshot.toHistoryEntries(fragment: Fragment): 
         LocaleFormatter.formatDate(fragment.requireContext(), millis) + " · " +
             LocaleFormatter.formatTime(fragment.requireContext(), millis)
 
+    val observationLabel = LivestockHealthUiText.observationLabel(
+        fragment = fragment,
+        symptomKey = symptomKeys.first(),
+        otherObservation = otherObservation
+    )
     val checkEntries = checks.sortedByDescending { it.checkedAtMillis }.map { check ->
         FollowUpHistoryEntry(
             timeLabel = timeLabel(check.checkedAtMillis),
-            observationLabel = fragment.getString(
-                LivestockHealthUiText.symptomLabelRes(symptomKeys.first())
-            ),
+            observationLabel = observationLabel,
             status = check.status,
             statusLabel = fragment.getString(statusLabelRes(check.status)),
             affectedCount = check.affectedCount,
@@ -54,9 +57,7 @@ internal fun LivestockObservationSnapshot.toHistoryEntries(fragment: Fragment): 
     }
     return checkEntries + FollowUpHistoryEntry(
         timeLabel = timeLabel(createdAtMillis),
-        observationLabel = fragment.getString(
-            LivestockHealthUiText.symptomLabelRes(symptomKeys.first())
-        ),
+        observationLabel = observationLabel,
         status = LivestockHealthCheckBottomSheet.STATUS_SAME,
         statusLabel = fragment.getString(R.string.livestock_health_first_observation),
         affectedCount = affectedCount,
@@ -77,11 +78,14 @@ private fun statusLabelRes(status: String): Int = when (status) {
 internal class LivestockHealthFollowUpRenderer(
     private val fragment: Fragment,
     private val binding: FragmentLivestockHealthFollowUpBinding,
-    private val symptomKey: String,
     private val readOnly: Boolean,
     private val closeReason: String
 ) {
-    fun renderLivestock(livestock: AquariumLivestock, affectedCount: Int) {
+    fun renderLivestock(
+        livestock: AquariumLivestock,
+        affectedCount: Int,
+        observationLabel: String
+    ) {
         val quantity = livestock.quantity.coerceAtLeast(1)
         binding.ivFollowupLivestock.bindRecordPhoto(
             livestock.photoUri,
@@ -90,7 +94,7 @@ internal class LivestockHealthFollowUpRenderer(
         binding.tvFollowupLivestockName.text = livestock.name.ifBlank {
             fragment.getString(R.string.aquarium_unnamed_livestock)
         }
-        binding.tvFollowupIssue.setText(LivestockHealthUiText.symptomLabelRes(symptomKey))
+        binding.tvFollowupIssue.text = observationLabel
         binding.tvFollowupAffected.text = fragment.resources.getQuantityString(
             R.plurals.livestock_health_affected_format,
             quantity,
@@ -154,23 +158,37 @@ internal class LivestockHealthFollowUpRenderer(
                     R.drawable.bg_livestock_health_timeline_previous
                 }
             )
-            item.tvHistoryTime.text = entry.timeLabel
-            item.tvHistoryObservation.text = entry.observationLabel
-            item.tvHistoryStatus.text = entry.statusLabel
-            item.tvHistoryStatus.setTextColor(
-                ContextCompat.getColor(
-                    fragment.requireContext(),
-                    statusColorRes(entry.status)
-                )
-            )
-            item.tvHistoryAffected.text = fragment.resources.getQuantityString(
-                R.plurals.livestock_health_affected_format,
-                entry.totalCount,
-                entry.affectedCount,
-                entry.totalCount
-            )
+            bindHistoryText(item, entry)
             bindHistoryPhotos(item, entry)
             binding.historyContainer.addView(item.root)
+        }
+    }
+
+    private fun bindHistoryText(
+        item: ItemLivestockHealthHistoryBinding,
+        entry: FollowUpHistoryEntry
+    ) {
+        item.tvHistoryTime.text = entry.timeLabel
+        item.tvHistoryObservation.text = entry.observationLabel
+        item.tvHistoryStatus.text = entry.statusLabel
+        item.tvHistoryStatus.setTextColor(
+            ContextCompat.getColor(
+                fragment.requireContext(),
+                statusColorRes(entry.status)
+            )
+        )
+        item.tvHistoryAffected.text = fragment.resources.getQuantityString(
+            R.plurals.livestock_health_affected_format,
+            entry.totalCount,
+            entry.affectedCount,
+            entry.totalCount
+        )
+        val normalizedNote = entry.note.trim()
+        item.tvHistoryNote.isVisible = normalizedNote.isNotEmpty()
+        item.tvHistoryNote.text = if (normalizedNote.isNotEmpty()) {
+            fragment.getString(R.string.livestock_health_history_note_format, normalizedNote)
+        } else {
+            null
         }
     }
 

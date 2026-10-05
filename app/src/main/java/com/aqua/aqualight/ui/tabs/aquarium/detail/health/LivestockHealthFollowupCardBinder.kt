@@ -21,7 +21,11 @@ internal fun Fragment.bindActiveFollowupCard(
         LivestockCategories.iconRes(livestock.category)
     )
     item.tvName.text = livestock.healthDisplayName(this)
-    item.tvIssue.setText(LivestockHealthUiText.symptomLabelRes(entry.symptomKey))
+    item.tvIssue.text = LivestockHealthUiText.observationLabel(
+        fragment = this,
+        symptomKey = entry.symptomKey,
+        otherObservation = entry.otherObservation
+    )
     val totalCount = livestock.quantity.coerceAtLeast(1)
     val affectedCount = entry.affectedCount.coerceIn(1, totalCount)
     item.tvAffected.text = resources.getQuantityString(
@@ -46,7 +50,11 @@ internal fun Fragment.bindPastFollowupCard(
         LivestockCategories.iconRes(livestock.category)
     )
     item.tvName.text = livestock.healthDisplayName(this)
-    item.tvIssue.setText(LivestockHealthUiText.symptomLabelRes(entry.symptomKey))
+    item.tvIssue.text = LivestockHealthUiText.observationLabel(
+        fragment = this,
+        symptomKey = entry.symptomKey,
+        otherObservation = entry.otherObservation
+    )
     val durationDays = healthFollowupDurationDays(entry)
     item.tvPeriod.text = resources.getQuantityString(
         R.plurals.livestock_health_past_period_format,

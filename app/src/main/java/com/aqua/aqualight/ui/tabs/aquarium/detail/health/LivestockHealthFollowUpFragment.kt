@@ -42,7 +42,8 @@ class LivestockHealthFollowUpFragment : Fragment(R.layout.fragment_livestock_hea
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentLivestockHealthFollowUpBinding.bind(view)
         renderer = LivestockHealthFollowUpRenderer(
-            fragment = this, binding = binding, symptomKey = args.symptomKey,
+            fragment = this,
+            binding = binding,
             readOnly = args.readOnly,
             closeReason = args.closeReason
         )
@@ -102,7 +103,15 @@ class LivestockHealthFollowUpFragment : Fragment(R.layout.fragment_livestock_hea
     private fun render() {
         val record = currentRecord ?: return
         val livestock = currentLivestock ?: return
-        renderer?.renderLivestock(livestock, record.currentAffectedCount)
+        renderer?.renderLivestock(
+            livestock = livestock,
+            affectedCount = record.currentAffectedCount,
+            observationLabel = LivestockHealthUiText.observationLabel(
+                fragment = this,
+                symptomKey = record.symptomKeys.first(),
+                otherObservation = record.otherObservation
+            )
+        )
         renderer?.renderStatus(record.checks.maxByOrNull { it.checkedAtMillis }?.status
             ?: LivestockHealthCheckBottomSheet.STATUS_SAME)
         renderer?.renderHistory(record.toHistoryEntries(this))

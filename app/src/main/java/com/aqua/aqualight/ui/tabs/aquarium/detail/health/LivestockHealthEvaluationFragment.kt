@@ -85,8 +85,15 @@ class LivestockHealthEvaluationFragment :
         val totalCount = livestock?.quantity?.coerceAtLeast(1)
             ?: args.affectedCount.coerceAtLeast(1)
         val affectedCount = args.affectedCount.coerceIn(1, totalCount)
-        val symptomLabel = getString(
-            LivestockHealthUiText.symptomLabelRes(args.symptomKey)
+        val otherObservation = findNavController()
+            .previousBackStackEntry
+            ?.savedStateHandle
+            ?.get<String>(LivestockHealthObservationFragment.DRAFT_OTHER)
+            .orEmpty()
+        val symptomLabel = LivestockHealthUiText.observationLabel(
+            fragment = this,
+            symptomKey = args.symptomKey,
+            otherObservation = otherObservation
         )
 
         binding.ivEvaluationLivestockIcon.setImageResource(

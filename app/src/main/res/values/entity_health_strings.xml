@@ -241,6 +241,7 @@
     <string name="livestock_health_status_decreased">Decreased</string>
     <string name="livestock_health_status_recovered">Recovered</string>
     <string name="livestock_health_history_title">Observation history</string>
+    <string name="livestock_health_history_note_format">Note: %1$s</string>
     <string name="livestock_health_new_check">New check</string>
     <string name="livestock_health_recovered_helper">Selecting Recovered ends the follow-up while the observation history remains available.</string>
 

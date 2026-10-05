@@ -241,6 +241,7 @@
     <string name="livestock_health_status_decreased">Azalıyor</string>
     <string name="livestock_health_status_recovered">Düzeldi</string>
     <string name="livestock_health_history_title">Gözlem geçmişi</string>
+    <string name="livestock_health_history_note_format">Not: %1$s</string>
     <string name="livestock_health_new_check">Yeni kontrol kaydet</string>
     <string name="livestock_health_recovered_helper">Düzeldi seçildiğinde takip kapanır; gözlem geçmişi korunur.</string>
 
