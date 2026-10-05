@@ -152,7 +152,7 @@ class MediaFlowCoordinatorInstrumentedTest {
     private fun createCropOutput() = requireNotNull(
         AppMediaStorage.createCropOutputUri(
             context = context,
-            scope = MediaScope.TANK,
+            scope = AppMediaScope.TANK,
             ownerToken = OWNER_TOKEN
         )
     ).also { output ->
