@@ -97,7 +97,7 @@ private fun StoredLivestockEvaluation.toWaterAnalysisSnapshot(
         measuredAtMillis = waterAnalysisMeasuredAtMillis,
         temperatureCelsius = temperatureCelsius.takeIf { hasTemperature },
         temperatureSource = if (hasTemperature) {
-            enumOrEvaluationViolation(
+            enumOrEvaluationViolation<WaterTemperatureSource>(
                 temperatureSource,
                 "evaluation.temperatureSource"
             )
