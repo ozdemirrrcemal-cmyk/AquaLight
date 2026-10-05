@@ -1,12 +1,12 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 
-import android.os.Bundle
 import android.view.LayoutInflater
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
+import com.aqua.aqualight.application.aquarium.health.LivestockObservationSnapshot
 import com.aqua.aqualight.databinding.FragmentLivestockHealthFollowUpBinding
 import com.aqua.aqualight.databinding.ItemLivestockHealthHistoryBinding
 import com.aqua.aqualight.i18n.LocaleFormatter
@@ -33,186 +33,50 @@ internal data class FollowUpHistoryEntry(
     val note: String
 )
 
-internal class LivestockHealthFollowUpHistoryState {
-    val entries = mutableListOf<FollowUpHistoryEntry>()
+internal fun LivestockObservationSnapshot.toHistoryEntries(fragment: Fragment): List<FollowUpHistoryEntry> {
+    fun timeLabel(millis: Long): String =
+        LocaleFormatter.formatDate(fragment.requireContext(), millis) + " · " +
+            LocaleFormatter.formatTime(fragment.requireContext(), millis)
 
-    fun restore(savedInstanceState: Bundle?) {
-        val times = savedInstanceState?.getStringArrayList(STATE_HISTORY_TIMES).orEmpty()
-        val observations = savedInstanceState
-            ?.getStringArrayList(STATE_HISTORY_OBSERVATIONS)
-            .orEmpty()
-        val statuses = savedInstanceState?.getStringArrayList(STATE_HISTORY_STATUSES).orEmpty()
-        val statusLabels = savedInstanceState
-            ?.getStringArrayList(STATE_HISTORY_STATUS_LABELS)
-            .orEmpty()
-        val affected = savedInstanceState?.getIntegerArrayList(STATE_HISTORY_AFFECTED).orEmpty()
-        val totals = savedInstanceState?.getIntegerArrayList(STATE_HISTORY_TOTALS).orEmpty()
-        val photoUris = savedInstanceState?.getStringArrayList(STATE_HISTORY_PHOTOS).orEmpty()
-        val notes = savedInstanceState?.getStringArrayList(STATE_HISTORY_NOTES).orEmpty()
-
-        val size = listOf(
-            times.size,
-            observations.size,
-            statuses.size,
-            statusLabels.size,
-            affected.size,
-            totals.size,
-            photoUris.size,
-            notes.size
-        ).minOrNull() ?: 0
-
-        repeat(size) { index ->
-            entries += FollowUpHistoryEntry(
-                timeLabel = times[index],
-                observationLabel = observations[index],
-                status = statuses[index],
-                statusLabel = statusLabels[index],
-                affectedCount = affected[index],
-                totalCount = totals[index],
-                photoUri = photoUris[index].takeIf(String::isNotBlank),
-                note = notes[index]
-            )
-        }
-    }
-
-    fun ensureInitial(
-        fragment: Fragment,
-        symptomKey: String,
-        totalCount: Int
-    ) {
-        if (entries.isEmpty()) {
-            entries += FollowUpHistoryEntry(
-                timeLabel = fragment.getString(
-                    R.string.livestock_health_history_time_current_preview
-                ),
-                observationLabel = fragment.getString(
-                    LivestockHealthUiText.symptomLabelRes(symptomKey)
-                ),
-                status = LivestockHealthCheckBottomSheet.STATUS_SAME,
-                statusLabel = fragment.getString(R.string.livestock_health_status_same),
-                affectedCount = 1,
-                totalCount = totalCount,
-                photoUri = null,
-                note = ""
-            )
-            entries += FollowUpHistoryEntry(
-                timeLabel = fragment.getString(
-                    R.string.livestock_health_history_time_initial_preview
-                ),
-                observationLabel = fragment.getString(
-                    R.string.livestock_health_history_issue_initial
-                ),
-                status = LivestockHealthCheckBottomSheet.STATUS_INCREASED,
-                statusLabel = fragment.getString(
-                    R.string.livestock_health_status_was_increasing
-                ),
-                affectedCount = 1,
-                totalCount = totalCount,
-                photoUri = null,
-                note = ""
-            )
-        }
-    }
-
-    fun append(
-        fragment: Fragment,
-        symptomKey: String,
-        livestock: AquariumLivestock,
-        result: LivestockHealthCheckResultUi
-    ) {
-        val time = LocaleFormatter.formatTime(
-            fragment.requireContext(),
-            result.checkTimeMillis
-        )
-        entries.add(
-            0,
-            FollowUpHistoryEntry(
-                timeLabel = fragment.getString(
-                    R.string.livestock_health_history_time_today_format,
-                    time
-                ),
-                observationLabel = fragment.getString(
-                    LivestockHealthUiText.symptomLabelRes(symptomKey)
-                ),
-                status = result.status,
-                statusLabel = fragment.getString(statusLabelRes(result.status)),
-                affectedCount = result.affectedCount.coerceIn(
-                    1,
-                    livestock.quantity.coerceAtLeast(1)
-                ),
-                totalCount = livestock.quantity.coerceAtLeast(1),
-                photoUri = result.photoUri,
-                note = result.note
-            )
+    val checkEntries = checks.sortedByDescending { it.checkedAtMillis }.map { check ->
+        FollowUpHistoryEntry(
+            timeLabel = timeLabel(check.checkedAtMillis),
+            observationLabel = fragment.getString(LivestockHealthUiText.symptomLabelRes(symptomKeys.first())),
+            status = check.status,
+            statusLabel = fragment.getString(statusLabelRes(check.status)),
+            affectedCount = check.affectedCount,
+            totalCount = totalCount,
+            photoUri = check.photoUri,
+            note = check.note
         )
     }
+    return checkEntries + FollowUpHistoryEntry(
+        timeLabel = timeLabel(createdAtMillis),
+        observationLabel = fragment.getString(LivestockHealthUiText.symptomLabelRes(symptomKeys.first())),
+        status = LivestockHealthCheckBottomSheet.STATUS_SAME,
+        statusLabel = fragment.getString(R.string.livestock_health_first_observation),
+        affectedCount = affectedCount,
+        totalCount = totalCount,
+        photoUri = photoUris.firstOrNull(),
+        note = note
+    )
+}
 
-    fun save(outState: Bundle) {
-        outState.putStringArrayList(
-            STATE_HISTORY_TIMES,
-            ArrayList(entries.map(FollowUpHistoryEntry::timeLabel))
-        )
-        outState.putStringArrayList(
-            STATE_HISTORY_OBSERVATIONS,
-            ArrayList(entries.map(FollowUpHistoryEntry::observationLabel))
-        )
-        outState.putStringArrayList(
-            STATE_HISTORY_STATUSES,
-            ArrayList(entries.map(FollowUpHistoryEntry::status))
-        )
-        outState.putStringArrayList(
-            STATE_HISTORY_STATUS_LABELS,
-            ArrayList(entries.map(FollowUpHistoryEntry::statusLabel))
-        )
-        outState.putIntegerArrayList(
-            STATE_HISTORY_AFFECTED,
-            ArrayList(entries.map(FollowUpHistoryEntry::affectedCount))
-        )
-        outState.putIntegerArrayList(
-            STATE_HISTORY_TOTALS,
-            ArrayList(entries.map(FollowUpHistoryEntry::totalCount))
-        )
-        outState.putStringArrayList(
-            STATE_HISTORY_PHOTOS,
-            ArrayList(entries.map { it.photoUri.orEmpty() })
-        )
-        outState.putStringArrayList(
-            STATE_HISTORY_NOTES,
-            ArrayList(entries.map(FollowUpHistoryEntry::note))
-        )
-    }
-
-    private fun statusLabelRes(status: String): Int = when (status) {
-        LivestockHealthCheckBottomSheet.STATUS_INCREASED ->
-            R.string.livestock_health_status_increased
-        LivestockHealthCheckBottomSheet.STATUS_DECREASED ->
-            R.string.livestock_health_status_decreased
-        LivestockHealthCheckBottomSheet.STATUS_RECOVERED ->
-            R.string.livestock_health_status_recovered
-        else -> R.string.livestock_health_status_same
-    }
-
-    private companion object {
-        const val STATE_HISTORY_TIMES = "livestock_followup_history_times"
-        const val STATE_HISTORY_OBSERVATIONS = "livestock_followup_history_observations"
-        const val STATE_HISTORY_STATUSES = "livestock_followup_history_statuses"
-        const val STATE_HISTORY_STATUS_LABELS = "livestock_followup_history_status_labels"
-        const val STATE_HISTORY_AFFECTED = "livestock_followup_history_affected"
-        const val STATE_HISTORY_TOTALS = "livestock_followup_history_totals"
-        const val STATE_HISTORY_PHOTOS = "livestock_followup_history_photos"
-        const val STATE_HISTORY_NOTES = "livestock_followup_history_notes"
-    }
+private fun statusLabelRes(status: String): Int = when (status) {
+    LivestockHealthCheckBottomSheet.STATUS_INCREASED -> R.string.livestock_health_status_increased
+    LivestockHealthCheckBottomSheet.STATUS_DECREASED -> R.string.livestock_health_status_decreased
+    LivestockHealthCheckBottomSheet.STATUS_RECOVERED -> R.string.livestock_health_status_recovered
+    else -> R.string.livestock_health_status_same
 }
 
 internal class LivestockHealthFollowUpRenderer(
     private val fragment: Fragment,
     private val binding: FragmentLivestockHealthFollowUpBinding,
     private val symptomKey: String,
-    private val affectedCount: Int,
     private val readOnly: Boolean,
     private val closeReason: String
 ) {
-    fun renderLivestock(livestock: AquariumLivestock) {
+    fun renderLivestock(livestock: AquariumLivestock, affectedCount: Int) {
         val quantity = livestock.quantity.coerceAtLeast(1)
         binding.ivFollowupLivestock.bindRecordPhoto(
             livestock.photoUri,

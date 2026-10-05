@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+option java_package = "com.aqua.aqualight.data.aquarium.health";
+option java_multiple_files = true;
+
+message LivestockHealthStore {
+  repeated StoredLivestockObservation observations = 1;
+  uint32 schema_version = 100;
+}
+
+message StoredLivestockObservation {
+  int64 id = 1;
+  int64 tank_id = 2;
+  int64 livestock_id = 3;
+  repeated string symptom_keys = 4;
+  string onset_key = 5;
+  string other_observation = 6;
+  string note = 7;
+  repeated string photo_uris = 8;
+  int32 affected_count = 9;
+  int32 total_count = 10;
+  int64 created_at_millis = 11;
+  int64 closed_at_millis = 12;
+  string close_reason = 13;
+  repeated StoredLivestockCheck checks = 14;
+  string request_id = 15;
+  string owner_uid = 100;
+}
+
+message StoredLivestockCheck {
+  string status = 1;
+  int32 affected_count = 2;
+  int64 checked_at_millis = 3;
+  string note = 4;
+  string photo_uri = 5;
+  string request_id = 6;
+}

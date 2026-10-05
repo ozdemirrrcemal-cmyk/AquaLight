@@ -85,10 +85,8 @@ private fun AquariumLivestock.healthDisplayName(fragment: Fragment): String = na
 
 private fun Fragment.healthLastCheckLabel(millis: Long): String =
     if (millis > 0L) {
-        getString(
-            R.string.livestock_health_today_time_format,
+        LocaleFormatter.formatDate(requireContext(), millis) + " · " +
             LocaleFormatter.formatTime(requireContext(), millis)
-        )
     } else {
         getString(R.string.livestock_health_no_check_yet)
     }

@@ -22,10 +22,13 @@ class LivestockHealthHistoryFragment :
 
     private val args: LivestockHealthHistoryFragmentArgs by navArgs()
     private val tankViewModel: AquariumTankViewModel by activityViewModels()
+    private val healthViewModel: LivestockHealthViewModel by activityViewModels()
 
     private var _binding: FragmentLivestockHealthHistoryBinding? = null
     private val binding get() = _binding!!
     private var isNavigating = false
+    private var livestock: List<AquariumLivestock> = emptyList()
+    private var entries: List<ClosedLivestockFollowupUi> = emptyList()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -51,15 +54,14 @@ class LivestockHealthHistoryFragment :
 
     private fun observeHistory() {
         tankViewModel.tanks.observe(viewLifecycleOwner) { tanks ->
-            val livestock = tanks
+            livestock = tanks
                 .firstOrNull { it.id == args.tankId }
                 ?.livestock
                 .orEmpty()
-            val entries = findNavController()
-                .previousBackStackEntry
-                ?.savedStateHandle
-                ?.let(LivestockHealthUiSessionState::closedFollowups)
-                .orEmpty()
+            renderHistory(livestock, entries)
+        }
+        healthViewModel.observationsForTank(args.tankId).observe(viewLifecycleOwner) { records ->
+            entries = records.filter { it.closedAtMillis != null }.map { it.toClosedUi() }
             renderHistory(livestock, entries)
         }
     }
@@ -91,6 +93,7 @@ class LivestockHealthHistoryFragment :
                 sourceDestinationId = R.id.livestockHealthHistoryFragment,
                 directions = LivestockHealthHistoryFragmentDirections
                     .actionLivestockHealthHistoryFragmentToLivestockHealthFollowUpFragment(
+                        observationId = entry.observationId,
                         tankId = args.tankId,
                         livestockId = entry.livestockId,
                         symptomKey = entry.symptomKey,

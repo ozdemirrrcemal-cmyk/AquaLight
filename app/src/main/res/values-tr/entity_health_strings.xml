@@ -8,13 +8,16 @@
     <string name="plant_health_entry_last_check">Son kontrol: 1 gün önce</string>
 
     <string name="livestock_health_entry_title">Canlı Sağlığı</string>
-    <string name="livestock_health_entry_summary">Canlılar aktif ve iyi durumda</string>
-    <string name="livestock_health_entry_last_check">Son kontrol: bugün</string>
+    <plurals name="livestock_health_entry_record_count">
+        <item quantity="other">%d gözlem kaydı</item>
+    </plurals>
 
     <string name="livestock_health_info_description">Canlı sağlığı bilgisi</string>
     <string name="livestock_health_info_message">Gözlemler değişimi zaman içinde takip etmeye yardımcı olur; tanı değildir.</string>
     <string name="livestock_health_hero_image_description">Beta balıklı akvaryum</string>
     <string name="livestock_health_hero_empty_title">İlk gözlemini kaydet</string>
+    <string name="livestock_health_save_failed">Kayıt kaydedilemedi. Lütfen tekrar deneyin.</string>
+    <string name="livestock_health_first_observation">İlk gözlem</string>
     <string name="livestock_health_hero_empty_subtitle">Belirtileri ve iyileşme sürecini tek yerde takip et.</string>
     <string name="livestock_health_hero_active_title">Canlılarını takip et</string>
     <string name="livestock_health_hero_active_subtitle">Gözlemleri tek yerde tut ve takip edilen değişimin seyrini karşılaştır.</string>
@@ -55,12 +58,8 @@
     </plurals>
     <string name="livestock_health_history_today_surface_same">Bugün · 18:20 · Yüzeye çıkma · Aynı</string>
     <string name="livestock_health_history_time_today_format">Bugün · %1$s</string>
-    <string name="livestock_health_history_time_current_preview">Bugün · 18:20</string>
-    <string name="livestock_health_history_time_initial_preview">Bugün · 14:30</string>
     <string name="livestock_health_history_issue_surface">Normalden sık yüzeye çıkma</string>
-    <string name="livestock_health_history_issue_initial">Sık yüzeye çıkma</string>
     <string name="livestock_health_status_was_increasing">Artıyordu</string>
-    <string name="livestock_health_history_previous_surface">Bugün · 14:30 · İlk gözlem · Artıyordu</string>
     <string name="livestock_health_tank_context_title">Tanktan gelen bağlam</string>
     <string name="livestock_health_tank_context_measurement">Su ölçümü · 2 gün önce</string>
     <string name="livestock_health_tank_context_measurement_title">Su ölçümü</string>
@@ -155,12 +154,12 @@
     </plurals>
     <string name="livestock_health_used_data_title">Bu değerlendirmede kullanılanlar</string>
     <string name="livestock_health_last_water_measurement">Son su ölçümü</string>
-    <string name="livestock_health_last_water_measurement_value">5 gün önce · güncel ölçüm gerekli</string>
-    <string name="livestock_health_old_data_badge">Eski veri</string>
+    <string name="livestock_health_last_water_measurement_value">Henüz bağlı ölçüm yok</string>
+    <string name="livestock_health_old_data_badge">Beklemede</string>
     <string name="livestock_health_last_water_change">Son su değişimi</string>
-    <string name="livestock_health_last_water_change_value">5 gün önce</string>
-    <string name="livestock_health_fresh_measurement_warning_title">Güncel su ölçümü görünmüyor</string>
-    <string name="livestock_health_fresh_measurement_warning">Güncel ölçüm görünmüyor. Sonuç çıkarmadan önce amonyak, nitrit ve oksijen durumunu kontrol et.</string>
+    <string name="livestock_health_last_water_change_value">Henüz bağlı kayıt yok</string>
+    <string name="livestock_health_fresh_measurement_warning_title">Su analizi henüz bağlı değil</string>
+    <string name="livestock_health_fresh_measurement_warning">Su ölçümleri daha sonra bağlanacak. Sonuç çıkarmadan önce akvaryum koşullarını kontrol et.</string>
     <string name="livestock_health_check_first_title">Önce kontrol et</string>
     <string name="livestock_health_check_first_subtitle">Seçilen canlı ve gözleme göre hızlı kontroller.</string>
     <string name="livestock_health_check_surface_title">Yüzey hareketi ve havalandırma güçlü mü?</string>

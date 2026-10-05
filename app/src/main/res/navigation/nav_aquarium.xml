@@ -283,6 +283,9 @@
                 android:name="closeReason"
                 android:defaultValue=""
                 app:argType="string" />
+            <argument
+                android:name="observationId"
+                app:argType="long" />
         </action>
     </fragment>
 
@@ -359,6 +362,9 @@
                 android:name="closeReason"
                 android:defaultValue=""
                 app:argType="string" />
+            <argument
+                android:name="observationId"
+                app:argType="long" />
         </action>
         <action
             android:id="@+id/action_livestockHealthEvaluationFragment_to_tankHealthFragment"
@@ -380,6 +386,9 @@
         tools:layout="@layout/fragment_livestock_health_follow_up">
         <argument
             android:name="tankId"
+            app:argType="long" />
+        <argument
+            android:name="observationId"
             app:argType="long" />
         <argument
             android:name="livestockId"
@@ -436,6 +445,9 @@
                 android:name="closeReason"
                 android:defaultValue=""
                 app:argType="string" />
+            <argument
+                android:name="observationId"
+                app:argType="long" />
         </action>
     </fragment>
 

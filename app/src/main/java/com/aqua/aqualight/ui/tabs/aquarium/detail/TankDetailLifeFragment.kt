@@ -6,9 +6,12 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.aquarium.health.LivestockObservationSnapshot
 import com.aqua.aqualight.databinding.FragmentTankDetailLifeBinding
+import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.livestock.TankLivestockCardFactory
+import com.aqua.aqualight.ui.tabs.aquarium.detail.health.LivestockHealthViewModel
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
 import androidx.navigation.fragment.findNavController
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
@@ -20,6 +23,7 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
     private val binding get() = _binding!!
 
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
+    private val livestockHealthViewModel: LivestockHealthViewModel by activityViewModels()
 
     private lateinit var cardFactory: TankLivestockCardFactory
 
@@ -44,13 +48,6 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
         binding.livestockHealthEntry.tvHealthEntryTitle.setText(
             R.string.livestock_health_entry_title
         )
-        binding.livestockHealthEntry.tvHealthEntrySummary.setText(
-            R.string.livestock_health_entry_summary
-        )
-        binding.livestockHealthEntry.tvHealthEntryLastCheck.setText(
-            R.string.livestock_health_entry_last_check
-        )
-
         cardFactory = TankLivestockCardFactory(
             context = requireContext(),
             onClick = { livestockId ->
@@ -60,6 +57,8 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
 
         setupClickListeners()
         observeTank()
+        livestockHealthViewModel.observationsForTank(tankId)
+            .observe(viewLifecycleOwner, ::renderHealthEntry)
     }
 
     override fun onResume() {
@@ -187,6 +186,31 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
                 )
             )
         }
+    }
+
+    private fun renderHealthEntry(records: List<LivestockObservationSnapshot>) {
+        binding.livestockHealthEntry.tvHealthEntrySummary.text =
+            if (records.isEmpty()) {
+                getString(R.string.livestock_health_empty_followups_title)
+            } else {
+                resources.getQuantityString(
+                    R.plurals.livestock_health_entry_record_count,
+                    records.size,
+                    records.size
+                )
+            }
+        val lastCheck = records.flatMap { it.checks }
+            .maxOfOrNull { it.checkedAtMillis }
+        binding.livestockHealthEntry.tvHealthEntryLastCheck.text =
+            if (lastCheck == null) {
+                getString(R.string.livestock_health_no_check_yet)
+            } else {
+                getString(
+                    R.string.livestock_health_active_last_check_format,
+                    LocaleFormatter.formatDate(requireContext(), lastCheck) + " · " +
+                        LocaleFormatter.formatTime(requireContext(), lastCheck)
+                )
+            }
     }
 
     override fun onDestroyView() {

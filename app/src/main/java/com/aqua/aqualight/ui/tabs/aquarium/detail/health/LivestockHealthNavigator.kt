@@ -31,6 +31,7 @@ internal class LivestockHealthNavigator(
                 sourceDestinationId = R.id.livestockHealthFragment,
                 directions = LivestockHealthFragmentDirections
                     .actionLivestockHealthFragmentToLivestockHealthFollowUpFragment(
+                        observationId = entry.observationId,
                         tankId = tankId,
                         livestockId = entry.livestockId,
                         symptomKey = entry.symptomKey,
@@ -47,6 +48,7 @@ internal class LivestockHealthNavigator(
                 sourceDestinationId = R.id.livestockHealthFragment,
                 directions = LivestockHealthFragmentDirections
                     .actionLivestockHealthFragmentToLivestockHealthFollowUpFragment(
+                        observationId = entry.observationId,
                         tankId = tankId,
                         livestockId = entry.livestockId,
                         symptomKey = entry.symptomKey,

@@ -12,6 +12,8 @@ import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.LivestockCategories
 import com.google.android.material.card.MaterialCardView
 
 internal data class LivestockHealthCheckSheetRequest(
+    val tankId: Long,
+    val observationId: Long,
     val livestockId: Long,
     val livestockName: String,
     val category: String,
@@ -146,6 +148,8 @@ private fun MaterialCardView.renderCheckStatus(
 
 internal fun Bundle.toLivestockHealthCheckRequest(): LivestockHealthCheckSheetRequest =
     LivestockHealthCheckSheetRequest(
+        tankId = getLong(ARG_CHECK_TANK_ID),
+        observationId = getLong(ARG_CHECK_OBSERVATION_ID),
         livestockId = getLong(ARG_CHECK_LIVESTOCK_ID),
         livestockName = getString(ARG_CHECK_LIVESTOCK_NAME).orEmpty(),
         category = getString(ARG_CHECK_CATEGORY).orEmpty(),
@@ -158,5 +162,7 @@ internal const val ARG_CHECK_LIVESTOCK_NAME = "livestock_name"
 internal const val ARG_CHECK_ISSUE_LABEL = "issue_label"
 internal const val ARG_CHECK_CATEGORY = "livestock_category"
 internal const val ARG_CHECK_LIVESTOCK_ID = "livestock_id"
+internal const val ARG_CHECK_TANK_ID = "tank_id"
+internal const val ARG_CHECK_OBSERVATION_ID = "observation_id"
 internal const val ARG_CHECK_TOTAL_COUNT = "total_count"
 internal const val ARG_CHECK_PHOTO_URI = "photo_uri"

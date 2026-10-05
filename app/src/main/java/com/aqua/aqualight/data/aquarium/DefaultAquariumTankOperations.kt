@@ -36,7 +36,9 @@ import kotlinx.coroutines.withContext
 
 data class AquariumTankOperationDependencies(
     val notificationPreferences: NotificationPreferenceUseCase,
-    val deleteWaterAnalysesForTank: suspend (Long) -> Unit
+    val deleteWaterAnalysesForTank: suspend (Long) -> Unit,
+    val deleteLivestockHealthForTank: suspend (Long) -> Unit,
+    val deleteLivestockHealthForLivestock: suspend (Long, Long) -> Unit
 )
 
 class DefaultAquariumTankOperations(
@@ -53,6 +55,10 @@ class DefaultAquariumTankOperations(
     private val notificationPreferences = operationDependencies.notificationPreferences
     private val deleteWaterAnalysesForTank =
         operationDependencies.deleteWaterAnalysesForTank
+    private val deleteLivestockHealthForTank =
+        operationDependencies.deleteLivestockHealthForTank
+    private val deleteLivestockHealthForLivestock =
+        operationDependencies.deleteLivestockHealthForLivestock
     private val livestockSelectionValidator = LivestockSelectionValidator(appContext)
 
     override val tanks: Flow<List<AquariumTankSnapshot>> = tankStore.tanksFlow.map { tanks ->
@@ -149,8 +155,18 @@ class DefaultAquariumTankOperations(
                         )
                     }
                 }
+                val healthIssues = baseResult.tankIds.mapNotNull { tankId ->
+                    runCatching { deleteLivestockHealthForTank(tankId) }
+                        .exceptionOrNull()?.let { error ->
+                            if (error is CancellationException) throw error
+                            AquariumTankCleanupIssue(
+                                tankId = tankId,
+                                stage = AquariumTankCleanupStage.LIVESTOCK_HEALTH
+                            )
+                        }
+                }
                 baseResult.copy(
-                    cleanupIssues = baseResult.cleanupIssues + analysisIssues
+                    cleanupIssues = baseResult.cleanupIssues + analysisIssues + healthIssues
                 )
             }
         }
@@ -259,8 +275,10 @@ class DefaultAquariumTankOperations(
         tankStore.updateLivestockInTank(tankId, livestock.toDataLivestock())
     }
 
-    override suspend fun removeLivestock(tankId: Long, livestockId: Long) =
+    override suspend fun removeLivestock(tankId: Long, livestockId: Long) {
         tankStore.removeLivestockFromTank(tankId, livestockId)
+        deleteLivestockHealthForLivestock(tankId, livestockId)
+    }
 
     override suspend fun updateSmartCareEnabled(tankId: Long, enabled: Boolean) =
         tankStore.updateSmartCareEnabled(tankId, enabled)

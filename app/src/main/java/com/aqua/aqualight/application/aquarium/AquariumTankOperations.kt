@@ -127,6 +127,7 @@ data class AquariumTankCleanupIssue(
 enum class AquariumTankCleanupStage {
     CARE_TASKS,
     WATER_ANALYSES,
+    LIVESTOCK_HEALTH,
     DEVICE_ASSIGNMENTS
 }
 

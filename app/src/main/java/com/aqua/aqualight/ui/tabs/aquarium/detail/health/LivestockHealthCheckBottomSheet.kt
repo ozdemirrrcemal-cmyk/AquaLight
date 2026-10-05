@@ -7,9 +7,12 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.os.bundleOf
 import androidx.fragment.app.FragmentManager
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.aquarium.health.LivestockCheckInput
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.ContentSheetLivestockHealthCheckBinding
 import com.aqua.aqualight.databinding.DialogSettingsBottomSheetBinding
@@ -19,8 +22,13 @@ import com.aqua.aqualight.ui.common.media.MediaCropSpec
 import com.aqua.aqualight.ui.common.media.MediaFlowCoordinatorViewModel
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
+import java.util.UUID
 
 internal class LivestockHealthCheckBottomSheet : BottomSheetDialogFragment() {
+    private val healthViewModel: LivestockHealthViewModel by activityViewModels()
 
     private var _sheetBinding: DialogSettingsBottomSheetBinding? = null
     private val sheetBinding get() = _sheetBinding!!
@@ -56,10 +64,14 @@ internal class LivestockHealthCheckBottomSheet : BottomSheetDialogFragment() {
     private var totalCount: Int = 1
     private var selectedTimeMillis: Long = 0L
     private var resultPublished: Boolean = false
+    private var isSaving = false
+    private var saveMayHaveCommitted = false
+    private var requestId: String = UUID.randomUUID().toString()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         selectedStatus = savedInstanceState?.getString(STATE_STATUS) ?: STATUS_SAME
+        requestId = savedInstanceState?.getString(STATE_REQUEST_ID) ?: requestId
         affectedCount = savedInstanceState?.getInt(STATE_AFFECTED_COUNT, 1) ?: 1
         selectedTimeMillis = savedInstanceState?.getLong(
             STATE_TIME_MILLIS,
@@ -89,6 +101,7 @@ internal class LivestockHealthCheckBottomSheet : BottomSheetDialogFragment() {
         affectedCount = affectedCount.coerceIn(1, totalCount)
 
         contentBinding.bindCheckLivestock(request)
+        contentBinding.etCheckNote.setText(savedInstanceState?.getString(STATE_NOTE))
         contentBinding.bindCheckStatusCards(
             fragment = this,
             selectedStatus = selectedStatus,
@@ -101,7 +114,7 @@ internal class LivestockHealthCheckBottomSheet : BottomSheetDialogFragment() {
             onCountChanged = { affectedCount = it }
         )
         bindTimePicker()
-        bindPhotoAndNote()
+        bindPhotoAndNote(savedInstanceState)
         bindSave()
         contentBinding.renderCheckTime(this, selectedTimeMillis)
     }
@@ -131,8 +144,8 @@ internal class LivestockHealthCheckBottomSheet : BottomSheetDialogFragment() {
     }
 
 
-    private fun bindPhotoAndNote() {
-        mediaFlow.initializeSelection(null)
+    private fun bindPhotoAndNote(savedInstanceState: Bundle?) {
+        mediaFlow.initializeSelection(savedInstanceState?.getString(STATE_PHOTO_URI))
         photoController.bind(viewLifecycleOwner)
         contentBinding.renderCheckPhoto(photoController.selectedUri())
 
@@ -149,34 +162,64 @@ internal class LivestockHealthCheckBottomSheet : BottomSheetDialogFragment() {
 
     private fun bindSave() {
         contentBinding.btnSaveCheck.setOnClickListener {
-            resultPublished = true
-            parentFragmentManager.setFragmentResult(
-                REQUEST_KEY,
-                Bundle().apply {
-                    putString(RESULT_STATUS, selectedStatus)
-                    putInt(RESULT_AFFECTED_COUNT, affectedCount)
-                    putLong(RESULT_TIME_MILLIS, selectedTimeMillis)
-                    putString(
-                        RESULT_NOTE,
-                        contentBinding.etCheckNote.text?.toString()?.trim().orEmpty()
+            if (isSaving) return@setOnClickListener
+            val request = requireArguments().toLivestockHealthCheckRequest()
+            isSaving = true
+            saveMayHaveCommitted = true
+            isCancelable = false
+            contentBinding.btnSaveCheck.isEnabled = false
+            viewLifecycleOwner.lifecycleScope.launch {
+                try {
+                    healthViewModel.addCheck(
+                        request.tankId, request.observationId,
+                        LivestockCheckInput(
+                            requestId = requestId,
+                            status = selectedStatus,
+                            affectedCount = affectedCount,
+                            checkedAtMillis = selectedTimeMillis,
+                            note = contentBinding.etCheckNote.text?.toString()?.trim().orEmpty(),
+                            photoUri = photoController.selectedUri()
+                        )
                     )
-                    putString(RESULT_PHOTO_URI, photoController.selectedUri())
+                    resultPublished = true
+                    parentFragmentManager.setFragmentResult(
+                        REQUEST_KEY,
+                        Bundle().apply { putString(RESULT_STATUS, selectedStatus) }
+                    )
+                    dismiss()
+                } catch (error: Exception) {
+                    if (error is CancellationException) throw error
+                    saveMayHaveCommitted = false
+                    (activity as? BaseActivity)?.showSnackBar(
+                        getString(R.string.livestock_health_save_failed),
+                        BaseActivity.SnackType.ERROR
+                    )
+                } finally {
+                    isSaving = false
+                    isCancelable = true
+                    _contentBinding?.btnSaveCheck?.isEnabled = true
                 }
-            )
-            dismiss()
+            }
         }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putString(STATE_STATUS, selectedStatus)
+        outState.putString(STATE_REQUEST_ID, requestId)
         outState.putInt(STATE_AFFECTED_COUNT, affectedCount)
         outState.putLong(STATE_TIME_MILLIS, selectedTimeMillis)
+        outState.putString(STATE_NOTE, _contentBinding?.etCheckNote?.text?.toString())
+        outState.putString(STATE_PHOTO_URI, photoController.selectedUri())
         super.onSaveInstanceState(outState)
     }
 
     override fun onDismiss(dialog: DialogInterface) {
-        if (!resultPublished) {
-            lifecycleScope.launch { mediaFlow.rollbackSelection() }
+        if (!resultPublished && !saveMayHaveCommitted &&
+            activity?.isChangingConfigurations != true
+        ) {
+            lifecycleScope.launch {
+                withContext(NonCancellable) { mediaFlow.rollbackSelection() }
+            }
         }
         super.onDismiss(dialog)
     }
@@ -202,8 +245,11 @@ internal class LivestockHealthCheckBottomSheet : BottomSheetDialogFragment() {
 
 
         private const val STATE_STATUS = "status"
+        private const val STATE_REQUEST_ID = "request_id"
         private const val STATE_AFFECTED_COUNT = "affected_count"
         private const val STATE_TIME_MILLIS = "time_millis"
+        private const val STATE_NOTE = "note"
+        private const val STATE_PHOTO_URI = "photo_uri"
 
         private const val TIME_REQUEST_KEY = "livestock_health_check_time_request"
         private const val TAG = "LivestockHealthCheckBottomSheet"
@@ -218,6 +264,8 @@ internal class LivestockHealthCheckBottomSheet : BottomSheetDialogFragment() {
 
             LivestockHealthCheckBottomSheet().apply {
                 arguments = bundleOf(
+                    ARG_CHECK_TANK_ID to request.tankId,
+                    ARG_CHECK_OBSERVATION_ID to request.observationId,
                     ARG_CHECK_LIVESTOCK_ID to request.livestockId,
                     ARG_CHECK_LIVESTOCK_NAME to request.livestockName,
                     ARG_CHECK_CATEGORY to request.category,

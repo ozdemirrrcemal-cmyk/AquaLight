@@ -4,28 +4,36 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
+import com.aqua.aqualight.application.aquarium.health.LivestockObservationInput
+import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentLivestockHealthEvaluationBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
+import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.LivestockCategories
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
 
 class LivestockHealthEvaluationFragment :
     Fragment(R.layout.fragment_livestock_health_evaluation) {
 
     private val args: LivestockHealthEvaluationFragmentArgs by navArgs()
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
+    private val healthViewModel: LivestockHealthViewModel by activityViewModels()
 
     private var _binding: FragmentLivestockHealthEvaluationBinding? = null
     private val binding get() = _binding!!
 
     private var currentLivestock: AquariumLivestock? = null
     private var isNavigating: Boolean = false
+    private var isSaving: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -130,43 +138,54 @@ class LivestockHealthEvaluationFragment :
     }
 
     private fun saveEvaluationAndReturn() {
-        if (!isNavigating) {
-            currentLivestock?.let { livestock ->
-                val navController = findNavController()
-                val now = System.currentTimeMillis()
-                val saved = runCatching {
-                    navController.getBackStackEntry(R.id.livestockHealthFragment)
-                        .savedStateHandle
-                        .apply {
-                            set(LivestockHealthFragment.KEY_HAS_OBSERVATION, true)
-                            set(LivestockHealthFragment.KEY_LIVESTOCK_ID, livestock.id)
-                            set(LivestockHealthFragment.KEY_SYMPTOM_KEY, args.symptomKey)
-                            set(LivestockHealthFragment.KEY_AFFECTED_COUNT, args.affectedCount)
-                            set(LivestockHealthFragment.KEY_STARTED_AT, now)
-                            set(LivestockHealthFragment.KEY_LAST_CHECK_AT, now)
-                            LivestockHealthUiSessionState.upsertActiveFollowup(
-                                handle = this,
-                                entry = ActiveLivestockFollowupUi(
-                                    livestockId = livestock.id,
-                                    symptomKey = args.symptomKey,
-                                    affectedCount = args.affectedCount.coerceIn(
-                                        1,
-                                        livestock.quantity.coerceAtLeast(1)
-                                    ),
-                                    totalCount = livestock.quantity.coerceAtLeast(1),
-                                    startedAtMillis = now,
-                                    lastCheckAtMillis = now
-                                )
-                            )
-                        }
-                }.isSuccess
-
-                if (saved) {
-                    isNavigating = navController.popBackStack(
-                        R.id.livestockHealthFragment,
-                        false
-                    )
-                }
+        if (isSaving || isNavigating || currentLivestock == null) return
+        val draft = findNavController().previousBackStackEntry?.savedStateHandle ?: return
+        if (draft.get<Long>(LivestockHealthObservationFragment.DRAFT_TANK_ID) != args.tankId ||
+            draft.get<Long>(LivestockHealthObservationFragment.DRAFT_LIVESTOCK_ID) != args.livestockId
+        ) return
+        val symptoms = draft.get<ArrayList<String>>(
+            LivestockHealthObservationFragment.DRAFT_SYMPTOMS
+        ).orEmpty()
+        if (symptoms.isEmpty() || symptoms.first() != args.symptomKey) return
+        val input = LivestockObservationInput(
+            requestId = draft.get<String>(
+                LivestockHealthObservationFragment.DRAFT_REQUEST_ID
+            ).orEmpty(),
+            tankId = args.tankId,
+            livestockId = args.livestockId,
+            symptomKeys = symptoms,
+            onsetKey = draft.get<String>(LivestockHealthObservationFragment.DRAFT_ONSET).orEmpty(),
+            otherObservation = draft.get<String>(LivestockHealthObservationFragment.DRAFT_OTHER).orEmpty(),
+            note = draft.get<String>(LivestockHealthObservationFragment.DRAFT_NOTE).orEmpty(),
+            photoUris = draft.get<ArrayList<String>>(
+                LivestockHealthObservationFragment.DRAFT_PHOTOS
+            ).orEmpty(),
+            affectedCount = draft.get<Int>(LivestockHealthObservationFragment.DRAFT_AFFECTED)
+                ?: args.affectedCount
+        )
+        isSaving = true
+        draft[LivestockHealthObservationFragment.DRAFT_SAVING] = true
+        binding.btnViewFollowup.isEnabled = false
+        viewLifecycleOwner.lifecycleScope.launch {
+            setFragmentGlobalLoading(true)
+            try {
+                healthViewModel.create(input)
+                draft[LivestockHealthObservationFragment.DRAFT_COMMITTED] = true
+                draft[LivestockHealthObservationFragment.DRAFT_SAVING] = false
+                isNavigating = findNavController().popBackStack(
+                    R.id.livestockHealthFragment, false
+                )
+            } catch (error: Exception) {
+                if (error is CancellationException) throw error
+                draft[LivestockHealthObservationFragment.DRAFT_SAVING] = false
+                (activity as? BaseActivity)?.showSnackBar(
+                    getString(R.string.livestock_health_save_failed),
+                    BaseActivity.SnackType.ERROR
+                )
+            } finally {
+                setFragmentGlobalLoading(false)
+                isSaving = false
+                _binding?.btnViewFollowup?.isEnabled = true
             }
         }
     }

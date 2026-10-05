@@ -8,13 +8,17 @@
     <string name="plant_health_entry_last_check">Last check: 1 day ago</string>
 
     <string name="livestock_health_entry_title">Livestock Health</string>
-    <string name="livestock_health_entry_summary">Livestock are active and doing well</string>
-    <string name="livestock_health_entry_last_check">Last check: today</string>
+    <plurals name="livestock_health_entry_record_count">
+        <item quantity="one">%d observation recorded</item>
+        <item quantity="other">%d observations recorded</item>
+    </plurals>
 
     <string name="livestock_health_info_description">Livestock health information</string>
     <string name="livestock_health_info_message">Observations help you track changes over time; they are not a diagnosis.</string>
     <string name="livestock_health_hero_image_description">Aquarium with a betta fish</string>
     <string name="livestock_health_hero_empty_title">Save your first observation</string>
+    <string name="livestock_health_save_failed">Could not save the record. Please try again.</string>
+    <string name="livestock_health_first_observation">First observation</string>
     <string name="livestock_health_hero_empty_subtitle">Track symptoms and recovery progress in one place.</string>
     <string name="livestock_health_hero_active_title">Track your livestock</string>
     <string name="livestock_health_hero_active_subtitle">Keep observations together and compare how each tracked issue changes.</string>
@@ -55,12 +59,8 @@
     </plurals>
     <string name="livestock_health_history_today_surface_same">Today · 18:20 · Surface breathing · Same</string>
     <string name="livestock_health_history_time_today_format">Today · %1$s</string>
-    <string name="livestock_health_history_time_current_preview">Today · 18:20</string>
-    <string name="livestock_health_history_time_initial_preview">Today · 14:30</string>
     <string name="livestock_health_history_issue_surface">More surface visits than usual</string>
-    <string name="livestock_health_history_issue_initial">Surface visits</string>
     <string name="livestock_health_status_was_increasing">Was increasing</string>
-    <string name="livestock_health_history_previous_surface">Today · 14:30 · First observation · Increased</string>
     <string name="livestock_health_tank_context_title">Context from the tank</string>
     <string name="livestock_health_tank_context_measurement">Water measurement · 2 days ago</string>
     <string name="livestock_health_tank_context_measurement_title">Water measurement</string>
@@ -155,12 +155,12 @@
     </plurals>
     <string name="livestock_health_used_data_title">Used in this evaluation</string>
     <string name="livestock_health_last_water_measurement">Last water measurement</string>
-    <string name="livestock_health_last_water_measurement_value">5 days ago · needs a fresh check</string>
-    <string name="livestock_health_old_data_badge">Old data</string>
+    <string name="livestock_health_last_water_measurement_value">No measurement connected yet</string>
+    <string name="livestock_health_old_data_badge">Pending</string>
     <string name="livestock_health_last_water_change">Last water change</string>
-    <string name="livestock_health_last_water_change_value">5 days ago</string>
-    <string name="livestock_health_fresh_measurement_warning_title">No recent water measurement</string>
-    <string name="livestock_health_fresh_measurement_warning">A recent measurement is missing. Check ammonia, nitrite and oxygen before drawing a conclusion.</string>
+    <string name="livestock_health_last_water_change_value">No record connected yet</string>
+    <string name="livestock_health_fresh_measurement_warning_title">Water analysis not connected</string>
+    <string name="livestock_health_fresh_measurement_warning">Water measurements will be connected later. Check the tank conditions before drawing a conclusion.</string>
     <string name="livestock_health_check_first_title">Check first</string>
     <string name="livestock_health_check_first_subtitle">Quick checks based on the selected livestock and observation.</string>
     <string name="livestock_health_check_surface_title">Surface movement and aeration</string>

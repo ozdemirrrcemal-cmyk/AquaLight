@@ -1,6 +1,7 @@
 package com.aqua.aqualight.data.media
 
 import android.content.Context
+import com.aqua.aqualight.data.aquarium.health.LivestockHealthDataStoreManager
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.user.UserDataScope
 import com.aqua.aqualight.data.user.UserPreferencesManager
@@ -18,6 +19,7 @@ class AppMediaRecoveryManager(
     private val appContext = context.applicationContext
     private val preferences = UserPreferencesManager.create(appContext)
     private val tanks = AquariumTankDataStoreManager(appContext)
+    private val livestockHealth = LivestockHealthDataStoreManager(appContext)
 
     suspend fun reconcileActiveOwner() {
         val ownerUid = UserDataScope.currentUid().takeIf(String::isNotBlank) ?: return
@@ -40,6 +42,7 @@ class AppMediaRecoveryManager(
                         .forEach(::add)
                     tank.livestock.mapNotNull { it.photoUri?.takeIf(String::isNotBlank) }.forEach(::add)
                 }
+            addAll(livestockHealth.mediaUrisForOwner(normalizedOwnerUid))
         }
 
         AppMediaStorage.reconcilePendingMedia(

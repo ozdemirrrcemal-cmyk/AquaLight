@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.SavedStateHandle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
@@ -18,6 +17,7 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
 
     private val args: LivestockHealthFragmentArgs by navArgs()
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
+    private val healthViewModel: LivestockHealthViewModel by activityViewModels()
 
     private var _binding: FragmentLivestockHealthBinding? = null
     private val binding get() = _binding!!
@@ -63,35 +63,21 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
             navigator?.openAllPastFollowups(closedFollowups.isNotEmpty())
         }
 
-        observeSessionUiState()
+        observeHealthRecords()
         observeTank()
     }
 
     override fun onResume() {
         super.onResume()
         navigator?.reset()
-        readSessionState()
         render()
     }
 
-    private fun observeSessionUiState() {
-        val handle = mainStateHandle() ?: return
-        listOf(
-            LivestockHealthUiSessionState.KEY_ACTIVE_REVISION,
-            LivestockHealthUiSessionState.KEY_CLOSED_REVISION,
-            LivestockHealthUiSessionState.KEY_HAS_OBSERVATION
-        ).forEach { key ->
-            handle.getLiveData<Any?>(key).observe(viewLifecycleOwner) {
-                readSessionState()
-                render()
-            }
-        }
-    }
-
-    private fun readSessionState() {
-        mainStateHandle()?.let { handle ->
-            activeFollowups = LivestockHealthUiSessionState.activeFollowups(handle)
-            closedFollowups = LivestockHealthUiSessionState.closedFollowups(handle)
+    private fun observeHealthRecords() {
+        healthViewModel.observationsForTank(args.tankId).observe(viewLifecycleOwner) { records ->
+            activeFollowups = records.filter { it.closedAtMillis == null }.map { it.toActiveUi() }
+            closedFollowups = records.filter { it.closedAtMillis != null }.map { it.toClosedUi() }
+            render()
         }
     }
 
@@ -110,9 +96,6 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
         )
     }
 
-    private fun mainStateHandle(): SavedStateHandle? =
-        findNavController().currentBackStackEntry?.savedStateHandle
-
     override fun onDestroyView() {
         renderer = null
         navigator = null
@@ -120,12 +103,4 @@ class LivestockHealthFragment : Fragment(R.layout.fragment_livestock_health) {
         super.onDestroyView()
     }
 
-    companion object {
-        const val KEY_HAS_OBSERVATION = LivestockHealthUiSessionState.KEY_HAS_OBSERVATION
-        const val KEY_LIVESTOCK_ID = LivestockHealthUiSessionState.KEY_LIVESTOCK_ID
-        const val KEY_SYMPTOM_KEY = LivestockHealthUiSessionState.KEY_SYMPTOM_KEY
-        const val KEY_AFFECTED_COUNT = LivestockHealthUiSessionState.KEY_AFFECTED_COUNT
-        const val KEY_STARTED_AT = LivestockHealthUiSessionState.KEY_STARTED_AT
-        const val KEY_LAST_CHECK_AT = LivestockHealthUiSessionState.KEY_LAST_CHECK_AT
-    }
 }

@@ -16,6 +16,7 @@ object LocalDataRecoveryTracker {
         AQUARIUM_TANKS,
         CARE_TASKS,
         WATER_ANALYSES,
+        LIVESTOCK_HEALTH,
         USER_PREFERENCES,
         LIGHT_LIBRARY,
         NOTIFICATION_PREFERENCES,
