@@ -36,7 +36,7 @@
             android:paddingEnd="@dimen/aqua_size_16"
             android:paddingBottom="@dimen/aqua_size_24">
 
-            <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.CardSecondaryCaption"
+            <TextView android:textAppearance="@style/TextAppearance.Aqua.Card.SecondaryCaption"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/livestock_health_history_screen_subtitle" />
@@ -48,7 +48,7 @@
                 android:layout_marginTop="@dimen/aqua_size_12"
                 android:orientation="vertical" />
 
-            <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.ContentMutedCaption"
+            <TextView android:textAppearance="@style/TextAppearance.Aqua.Content.MutedCaption"
                 android:id="@+id/tvEmpty"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

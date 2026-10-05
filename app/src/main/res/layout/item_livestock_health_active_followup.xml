@@ -34,7 +34,7 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.CardPrimaryBodyBold"
+        <TextView android:textAppearance="@style/TextAppearance.Aqua.Card.PrimaryBodyBold"
             android:id="@+id/tvName"
             android:layout_width="@dimen/aqua_size_0"
             android:layout_height="wrap_content"
@@ -46,7 +46,7 @@
             app:layout_constraintStart_toEndOf="@id/photoFrame"
             app:layout_constraintTop_toTopOf="@id/photoFrame" />
 
-        <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.SuccessStatusMicroBold"
+        <TextView android:textAppearance="@style/TextAppearance.Aqua.Status.SuccessMicroBold"
             android:id="@+id/tvBadge"
             android:layout_width="wrap_content"
             android:layout_height="@dimen/aqua_size_26"
@@ -59,7 +59,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.CardSecondaryCaption"
+        <TextView android:textAppearance="@style/TextAppearance.Aqua.Card.SecondaryCaption"
             android:id="@+id/tvIssue"
             android:layout_width="@dimen/aqua_size_0"
             android:layout_height="wrap_content"
@@ -72,7 +72,7 @@
             app:layout_constraintStart_toEndOf="@id/photoFrame"
             app:layout_constraintTop_toBottomOf="@id/tvName" />
 
-        <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.ContentMutedMicro"
+        <TextView android:textAppearance="@style/TextAppearance.Aqua.Content.MutedMicro"
             android:id="@+id/tvAffected"
             android:layout_width="@dimen/aqua_size_0"
             android:layout_height="wrap_content"
@@ -83,7 +83,7 @@
             app:layout_constraintStart_toEndOf="@id/photoFrame"
             app:layout_constraintTop_toBottomOf="@id/tvIssue" />
 
-        <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.ContentMutedStatusMicro"
+        <TextView android:textAppearance="@style/TextAppearance.Aqua.Content.MutedStatusMicro"
             android:id="@+id/tvLastCheck"
             android:layout_width="@dimen/aqua_size_0"
             android:layout_height="wrap_content"

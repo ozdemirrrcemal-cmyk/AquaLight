@@ -48,7 +48,7 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_chainStyle="packed">
 
-        <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.AccentBlueMicro"
+        <TextView android:textAppearance="@style/TextAppearance.Aqua.Accent.Micro"
             android:id="@+id/tvHistoryTime"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -60,7 +60,7 @@
             android:layout_marginTop="@dimen/aqua_size_3"
             android:orientation="horizontal">
 
-            <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.CardPrimaryCaptionBold"
+            <TextView android:textAppearance="@style/TextAppearance.Aqua.Card.PrimaryCaptionBold"
                 android:id="@+id/tvHistoryObservation"
                 android:layout_width="@dimen/aqua_size_0"
                 android:layout_height="wrap_content"
@@ -69,7 +69,7 @@
                 android:includeFontPadding="false"
                 android:maxLines="1" />
 
-            <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.WarningCaptionBold"
+            <TextView android:textAppearance="@style/TextAppearance.Aqua.Status.WarningCaptionBold"
                 android:id="@+id/tvHistoryStatus"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -78,7 +78,7 @@
 
         </LinearLayout>
 
-        <TextView android:textAppearance="@style/TextAppearance.Aqua.LivestockHealth.ContentMutedMicro"
+        <TextView android:textAppearance="@style/TextAppearance.Aqua.Content.MutedMicro"
             android:id="@+id/tvHistoryAffected"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
