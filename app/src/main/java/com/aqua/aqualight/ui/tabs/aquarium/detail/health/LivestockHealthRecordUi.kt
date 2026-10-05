@@ -16,7 +16,7 @@ internal fun LivestockObservationSnapshot.toActiveUi(): ActiveLivestockFollowupU
         observationId = id,
         livestockId = livestockId,
         symptomKey = symptomKeys.first(),
-        affectedCount = checks.maxByOrNull { it.checkedAtMillis }?.affectedCount ?: affectedCount,
+        affectedCount = currentAffectedCount,
         totalCount = totalCount,
         startedAtMillis = createdAtMillis,
         lastCheckAtMillis = checks.maxOfOrNull { it.checkedAtMillis } ?: 0L
@@ -27,7 +27,7 @@ internal fun LivestockObservationSnapshot.toClosedUi(): ClosedLivestockFollowupU
         observationId = id,
         livestockId = livestockId,
         symptomKey = symptomKeys.first(),
-        affectedCount = checks.maxByOrNull { it.checkedAtMillis }?.affectedCount ?: affectedCount,
+        affectedCount = currentAffectedCount,
         totalCount = totalCount,
         startedAtMillis = createdAtMillis,
         closedAtMillis = requireNotNull(closedAtMillis),

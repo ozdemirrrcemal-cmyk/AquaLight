@@ -81,6 +81,7 @@ class LivestockHealthFollowUpFragment : Fragment(R.layout.fragment_livestock_hea
                     },
                     category = livestock.category,
                     issueLabel = binding.tvFollowupIssue.text.toString(),
+                    affectedCount = record.currentAffectedCount,
                     totalCount = record.totalCount,
                     photoUri = livestock.photoUri
                 )
@@ -101,11 +102,7 @@ class LivestockHealthFollowUpFragment : Fragment(R.layout.fragment_livestock_hea
     private fun render() {
         val record = currentRecord ?: return
         val livestock = currentLivestock ?: return
-        renderer?.renderLivestock(
-            livestock,
-            record.checks.maxByOrNull { it.checkedAtMillis }?.affectedCount
-                ?: record.affectedCount
-        )
+        renderer?.renderLivestock(livestock, record.currentAffectedCount)
         renderer?.renderStatus(record.checks.maxByOrNull { it.checkedAtMillis }?.status
             ?: LivestockHealthCheckBottomSheet.STATUS_SAME)
         renderer?.renderHistory(livestock, record.toHistoryEntries(this))

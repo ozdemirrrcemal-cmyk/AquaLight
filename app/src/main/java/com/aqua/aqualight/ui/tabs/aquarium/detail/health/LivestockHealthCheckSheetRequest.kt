@@ -18,6 +18,7 @@ internal data class LivestockHealthCheckSheetRequest(
     val livestockName: String,
     val category: String,
     val issueLabel: String,
+    val affectedCount: Int,
     val totalCount: Int,
     val photoUri: String?
 )
@@ -146,17 +147,25 @@ private fun MaterialCardView.renderCheckStatus(
     )
 }
 
-internal fun Bundle.toLivestockHealthCheckRequest(): LivestockHealthCheckSheetRequest =
-    LivestockHealthCheckSheetRequest(
+internal fun Bundle.toLivestockHealthCheckRequest(): LivestockHealthCheckSheetRequest {
+    val totalCount = getInt(ARG_CHECK_TOTAL_COUNT)
+    val affectedCount = getInt(ARG_CHECK_AFFECTED_COUNT)
+    require(totalCount > 0) { "Livestock check total count must be positive." }
+    require(affectedCount in 1..totalCount) {
+        "Livestock check affected count must be within the tracked population."
+    }
+    return LivestockHealthCheckSheetRequest(
         tankId = getLong(ARG_CHECK_TANK_ID),
         observationId = getLong(ARG_CHECK_OBSERVATION_ID),
         livestockId = getLong(ARG_CHECK_LIVESTOCK_ID),
         livestockName = getString(ARG_CHECK_LIVESTOCK_NAME).orEmpty(),
         category = getString(ARG_CHECK_CATEGORY).orEmpty(),
         issueLabel = getString(ARG_CHECK_ISSUE_LABEL).orEmpty(),
-        totalCount = getInt(ARG_CHECK_TOTAL_COUNT, 1).coerceAtLeast(1),
+        affectedCount = affectedCount,
+        totalCount = totalCount,
         photoUri = getString(ARG_CHECK_PHOTO_URI)
     )
+}
 
 internal const val ARG_CHECK_LIVESTOCK_NAME = "livestock_name"
 internal const val ARG_CHECK_ISSUE_LABEL = "issue_label"
@@ -164,5 +173,6 @@ internal const val ARG_CHECK_CATEGORY = "livestock_category"
 internal const val ARG_CHECK_LIVESTOCK_ID = "livestock_id"
 internal const val ARG_CHECK_TANK_ID = "tank_id"
 internal const val ARG_CHECK_OBSERVATION_ID = "observation_id"
+internal const val ARG_CHECK_AFFECTED_COUNT = "affected_count"
 internal const val ARG_CHECK_TOTAL_COUNT = "total_count"
 internal const val ARG_CHECK_PHOTO_URI = "photo_uri"

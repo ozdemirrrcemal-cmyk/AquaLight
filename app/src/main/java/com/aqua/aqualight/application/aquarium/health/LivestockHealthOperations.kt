@@ -46,7 +46,10 @@ data class LivestockObservationSnapshot(
     val closedAtMillis: Long?,
     val closeReason: String?,
     val checks: List<LivestockCheckSnapshot>
-)
+) {
+    val currentAffectedCount: Int
+        get() = checks.maxByOrNull { it.checkedAtMillis }?.affectedCount ?: affectedCount
+}
 
 interface LivestockHealthOperations {
     fun observationsForTank(tankId: Long): Flow<List<LivestockObservationSnapshot>>

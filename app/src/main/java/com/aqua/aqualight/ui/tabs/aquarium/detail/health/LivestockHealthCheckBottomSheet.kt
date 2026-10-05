@@ -68,9 +68,13 @@ internal class LivestockHealthCheckBottomSheet : BottomSheetDialogFragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val request = requireArguments().toLivestockHealthCheckRequest()
         selectedStatus = savedInstanceState?.getString(STATE_STATUS) ?: STATUS_SAME
         requestId = savedInstanceState?.getString(STATE_REQUEST_ID) ?: requestId
-        affectedCount = savedInstanceState?.getInt(STATE_AFFECTED_COUNT, 1) ?: 1
+        affectedCount = savedInstanceState
+            ?.getInt(STATE_AFFECTED_COUNT)
+            ?.takeIf { it > 0 }
+            ?: request.affectedCount
         selectedTimeMillis = savedInstanceState?.getLong(
             STATE_TIME_MILLIS,
             System.currentTimeMillis()
@@ -272,6 +276,7 @@ internal class LivestockHealthCheckBottomSheet : BottomSheetDialogFragment() {
                     ARG_CHECK_LIVESTOCK_NAME to request.livestockName,
                     ARG_CHECK_CATEGORY to request.category,
                     ARG_CHECK_ISSUE_LABEL to request.issueLabel,
+                    ARG_CHECK_AFFECTED_COUNT to request.affectedCount,
                     ARG_CHECK_TOTAL_COUNT to request.totalCount,
                     ARG_CHECK_PHOTO_URI to request.photoUri
                 )
