@@ -2,6 +2,8 @@ package com.aqua.aqualight.application.aquarium.health
 
 import kotlinx.coroutines.flow.Flow
 
+const val LIVESTOCK_HEALTH_MAX_PHOTOS = 3
+
 data class LivestockObservationInput(
     val requestId: String,
     val tankId: Long,
@@ -20,7 +22,7 @@ data class LivestockCheckInput(
     val affectedCount: Int,
     val checkedAtMillis: Long,
     val note: String,
-    val photoUri: String?
+    val photoUris: List<String>
 )
 
 data class LivestockCheckSnapshot(
@@ -28,7 +30,7 @@ data class LivestockCheckSnapshot(
     val affectedCount: Int,
     val checkedAtMillis: Long,
     val note: String,
-    val photoUri: String?
+    val photoUris: List<String>
 )
 
 data class LivestockObservationSnapshot(

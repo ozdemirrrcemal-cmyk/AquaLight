@@ -9,12 +9,17 @@ APP = ROOT / "app/src/main/java/com/aqua/aqualight"
 TESTS = ROOT / "app/src/test/java/com/aqua/aqualight"
 
 APPLICATION = APP / "application/aquarium/health/LivestockHealthOperations.kt"
+PROTO = ROOT / "app/src/main/proto/livestock_health.proto"
 ADAPTER = APP / "data/aquarium/health/DefaultLivestockHealthOperations.kt"
 DATA_STORE = APP / "data/aquarium/health/LivestockHealthDataStore.kt"
 MANAGER = APP / "data/aquarium/health/LivestockHealthDataStoreManager.kt"
 RULES = APP / "data/aquarium/health/LivestockHealthStoreRules.kt"
 LEGACY_STORE = APP / "data/aquarium/health/LivestockHealthStore.kt"
 VIEW_MODEL = APP / "ui/tabs/aquarium/detail/health/LivestockHealthViewModel.kt"
+PHOTO_VIEWER = (
+    APP
+    / "ui/tabs/aquarium/detail/health/LivestockHealthPhotoViewerDialogFragment.kt"
+)
 UI_ROOT = APP / "ui/tabs/aquarium/detail/health"
 OWNER_GRAPH = APP / "composition/OwnerDependencyGraph.kt"
 OWNER_FACTORY = APP / "composition/OwnerViewModelFactory.kt"
@@ -23,11 +28,13 @@ BOUNDARY_TEST = TESTS / "ui/tabs/aquarium/detail/health/LivestockHealthViewModel
 
 required = (
     APPLICATION,
+    PROTO,
     ADAPTER,
     DATA_STORE,
     MANAGER,
     RULES,
     VIEW_MODEL,
+    PHOTO_VIEWER,
     OWNER_GRAPH,
     OWNER_FACTORY,
     SMOKE,
@@ -52,6 +59,25 @@ if LEGACY_STORE.exists():
     )
 
 application = read(APPLICATION)
+for token in (
+    "const val LIVESTOCK_HEALTH_MAX_PHOTOS = 3",
+    "val photoUris: List<String>",
+):
+    if token not in application:
+        errors.append(
+            f"{APPLICATION.relative_to(ROOT)}: multi-photo application contract missing: {token}"
+        )
+if "val photoUri: String?" in application:
+    errors.append(
+        f"{APPLICATION.relative_to(ROOT)}: singular health-check photo contract is forbidden"
+    )
+
+proto = read(PROTO)
+if "repeated string photo_uris = 5;" not in proto:
+    errors.append(f"{PROTO.relative_to(ROOT)}: health checks must persist repeated photo_uris")
+if "string photo_uri = 5;" in proto:
+    errors.append(f"{PROTO.relative_to(ROOT)}: singular health-check photo field is forbidden")
+
 for forbidden in (
     "import android.",
     "import androidx.",
@@ -74,6 +100,9 @@ for token in (
     "private val tanks: AquariumTankDataStoreManager",
     "LivestockHealthDataStoreManager(",
     "removeObservations(",
+    "existing.photoUrisList == input.photoUris",
+    ".addAllPhotoUris(input.photoUris)",
+    "input.photoUris.forEach",
 ):
     if token not in manager:
         errors.append(f"{MANAGER.relative_to(ROOT)}: required injected-store contract missing: {token}")
@@ -97,11 +126,24 @@ for token in (
     "validateStoredObservation",
     "validateStoredCheck",
     "toSnapshot",
+    "check.photoUrisList",
+    "LIVESTOCK_HEALTH_MAX_PHOTOS",
 ):
     if token not in rules:
         errors.append(f"{RULES.relative_to(ROOT)}: validation/mapping rule missing: {token}")
 if "android." in rules or "androidx." in rules:
     errors.append(f"{RULES.relative_to(ROOT)}: store rules must remain Android-free")
+
+photo_viewer = read(PHOTO_VIEWER)
+for token in (
+    "ViewPager2.OnPageChangeCallback",
+    "ARG_PHOTO_URIS",
+    "LIVESTOCK_HEALTH_MAX_PHOTOS",
+):
+    if token not in photo_viewer:
+        errors.append(
+            f"{PHOTO_VIEWER.relative_to(ROOT)}: photo viewer contract missing: {token}"
+        )
 
 view_model = read(VIEW_MODEL)
 if "LivestockHealthOperations" not in view_model:

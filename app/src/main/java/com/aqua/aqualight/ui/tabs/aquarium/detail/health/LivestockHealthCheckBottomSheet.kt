@@ -11,6 +11,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.aqua.aqualight.R
+import com.aqua.aqualight.application.aquarium.health.LIVESTOCK_HEALTH_MAX_PHOTOS
 import com.aqua.aqualight.application.aquarium.health.LivestockCheckInput
 import com.aqua.aqualight.databinding.ContentSheetLivestockHealthCheckBinding
 import com.aqua.aqualight.databinding.DialogSettingsBottomSheetBinding
@@ -51,8 +52,11 @@ internal class LivestockHealthCheckBottomSheet : BottomSheetDialogFragment() {
             fragment = this,
             mediaFlow = mediaFlow,
             hasView = { _contentBinding != null },
-            onPhotoChanged = { photoUri ->
-                _contentBinding?.renderCheckPhoto(photoUri)
+            activeSlotIndex = { activePhotoSlotIndex },
+            currentPhotoUri = { slotIndex -> checkPhotoUris[slotIndex] },
+            onPhotoChanged = { slotIndex, photoUri ->
+                checkPhotoUris[slotIndex] = photoUri
+                _contentBinding?.renderCheckPhotoSlots(checkPhotoUris)
             }
         )
     }
@@ -61,6 +65,8 @@ internal class LivestockHealthCheckBottomSheet : BottomSheetDialogFragment() {
     private var affectedCount: Int = 1
     private var totalCount: Int = 1
     private var selectedTimeMillis: Long = 0L
+    private val checkPhotoUris = MutableList<String?>(LIVESTOCK_HEALTH_MAX_PHOTOS) { null }
+    private var activePhotoSlotIndex: Int = 0
     private var resultPublished: Boolean = false
     private var isSaving = false
     private var saveMayHaveCommitted = false
@@ -79,6 +85,16 @@ internal class LivestockHealthCheckBottomSheet : BottomSheetDialogFragment() {
             STATE_TIME_MILLIS,
             System.currentTimeMillis()
         ) ?: System.currentTimeMillis()
+        savedInstanceState
+            ?.getStringArrayList(STATE_PHOTO_URIS)
+            ?.take(LIVESTOCK_HEALTH_MAX_PHOTOS)
+            ?.forEachIndexed { index, uri ->
+                checkPhotoUris[index] = uri.takeIf(String::isNotBlank)
+            }
+        activePhotoSlotIndex = savedInstanceState
+            ?.getInt(STATE_ACTIVE_PHOTO_SLOT, 0)
+            ?.coerceIn(0, LIVESTOCK_HEALTH_MAX_PHOTOS - 1)
+            ?: 0
     }
 
     override fun onCreateView(
@@ -103,7 +119,6 @@ internal class LivestockHealthCheckBottomSheet : BottomSheetDialogFragment() {
         affectedCount = affectedCount.coerceIn(1, totalCount)
 
         contentBinding.bindCheckLivestock(request)
-        contentBinding.etCheckNote.setText(savedInstanceState?.getString(STATE_NOTE))
         contentBinding.bindCheckStatusCards(
             fragment = this,
             selectedStatus = selectedStatus,
@@ -147,18 +162,16 @@ internal class LivestockHealthCheckBottomSheet : BottomSheetDialogFragment() {
 
 
     private fun bindPhotoAndNote(savedInstanceState: Bundle?) {
-        mediaFlow.initializeSelection(savedInstanceState?.getString(STATE_PHOTO_URI))
         photoController.bind(viewLifecycleOwner)
-        contentBinding.renderCheckPhoto(photoController.selectedUri())
-
-        contentBinding.checkPhotoMediaArea.setOnClickListener {
+        contentBinding.renderCheckPhotoSlots(checkPhotoUris)
+        contentBinding.bindCheckPhotoSlots { slotIndex ->
+            activePhotoSlotIndex = slotIndex
             photoController.showSource(
-                getString(R.string.livestock_health_check_photo_source_title)
+                title = getString(R.string.livestock_health_check_photo_source_title),
+                currentUri = checkPhotoUris[slotIndex]
             )
         }
-        contentBinding.btnRemoveCheckPhoto.setOnClickListener {
-            photoController.removePhoto()
-        }
+        contentBinding.etCheckNote.setText(savedInstanceState?.getString(STATE_NOTE))
     }
 
 
@@ -180,7 +193,7 @@ internal class LivestockHealthCheckBottomSheet : BottomSheetDialogFragment() {
                             affectedCount = affectedCount,
                             checkedAtMillis = selectedTimeMillis,
                             note = contentBinding.etCheckNote.text?.toString()?.trim().orEmpty(),
-                            photoUri = photoController.selectedUri()
+                            photoUris = checkPhotoUris.filterNotNull()
                         )
                     )
                     resultPublished = true
@@ -215,7 +228,11 @@ internal class LivestockHealthCheckBottomSheet : BottomSheetDialogFragment() {
         outState.putInt(STATE_AFFECTED_COUNT, affectedCount)
         outState.putLong(STATE_TIME_MILLIS, selectedTimeMillis)
         outState.putString(STATE_NOTE, _contentBinding?.etCheckNote?.text?.toString())
-        outState.putString(STATE_PHOTO_URI, photoController.selectedUri())
+        outState.putStringArrayList(
+            STATE_PHOTO_URIS,
+            ArrayList(checkPhotoUris.map { uri -> uri.orEmpty() })
+        )
+        outState.putInt(STATE_ACTIVE_PHOTO_SLOT, activePhotoSlotIndex)
         super.onSaveInstanceState(outState)
     }
 
@@ -223,8 +240,11 @@ internal class LivestockHealthCheckBottomSheet : BottomSheetDialogFragment() {
         if (!resultPublished && !saveMayHaveCommitted &&
             activity?.isChangingConfigurations != true
         ) {
+            val pendingPhotos = checkPhotoUris.filterNotNull().distinct()
             lifecycleScope.launch {
-                withContext(NonCancellable) { mediaFlow.rollbackSelection() }
+                withContext(NonCancellable) {
+                    pendingPhotos.forEach { uri -> mediaFlow.rollbackPendingMedia(uri) }
+                }
             }
         }
         super.onDismiss(dialog)
@@ -239,10 +259,6 @@ internal class LivestockHealthCheckBottomSheet : BottomSheetDialogFragment() {
     companion object {
         const val REQUEST_KEY = "livestock_health_check_request"
         const val RESULT_STATUS = "livestock_health_check_status"
-        const val RESULT_AFFECTED_COUNT = "livestock_health_check_affected_count"
-        const val RESULT_TIME_MILLIS = "livestock_health_check_time_millis"
-        const val RESULT_NOTE = "livestock_health_check_note"
-        const val RESULT_PHOTO_URI = "livestock_health_check_photo_uri"
 
         const val STATUS_INCREASED = "increased"
         const val STATUS_SAME = "same"
@@ -255,7 +271,8 @@ internal class LivestockHealthCheckBottomSheet : BottomSheetDialogFragment() {
         private const val STATE_AFFECTED_COUNT = "affected_count"
         private const val STATE_TIME_MILLIS = "time_millis"
         private const val STATE_NOTE = "note"
-        private const val STATE_PHOTO_URI = "photo_uri"
+        private const val STATE_PHOTO_URIS = "photo_uris"
+        private const val STATE_ACTIVE_PHOTO_SLOT = "active_photo_slot"
 
         private const val TIME_REQUEST_KEY = "livestock_health_check_time_request"
         private const val TAG = "LivestockHealthCheckBottomSheet"
@@ -278,7 +295,7 @@ internal class LivestockHealthCheckBottomSheet : BottomSheetDialogFragment() {
                     ARG_CHECK_ISSUE_LABEL to request.issueLabel,
                     ARG_CHECK_AFFECTED_COUNT to request.affectedCount,
                     ARG_CHECK_TOTAL_COUNT to request.totalCount,
-                    ARG_CHECK_PHOTO_URI to request.photoUri
+                    ARG_CHECK_LIVESTOCK_PHOTO_URI to request.livestockPhotoUri
                 )
             }.show(fragmentManager, TAG)
         }

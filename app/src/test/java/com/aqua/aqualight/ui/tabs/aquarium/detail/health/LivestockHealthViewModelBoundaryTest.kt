@@ -69,7 +69,7 @@ class LivestockHealthViewModelBoundaryTest {
             affectedCount = 1,
             checkedAtMillis = 1_700_000_000_000L,
             note = "follow-up",
-            photoUri = null
+            photoUris = emptyList()
         )
 
         assertEquals(91L, viewModel.create(observation))

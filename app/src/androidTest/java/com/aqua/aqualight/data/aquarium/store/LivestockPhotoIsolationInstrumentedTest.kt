@@ -141,22 +141,27 @@ class LivestockPhotoIsolationInstrumentedTest {
             operation.saveLivestockWithPhoto(tank, item(12), owner, true, false)
             val health = LivestockHealthDataStoreManager(context, store)
             val removedPhoto = pending(owner)
-            val removedCheckPhoto = pending(owner)
+            val removedCheckPhotoOne = pending(owner)
+            val removedCheckPhotoTwo = pending(owner)
             val retainedPhoto = pending(owner)
             val removedId = health.create(observation(tank, 11, removedPhoto))
             health.addCheck(tank, removedId, LivestockCheckInput(
                 requestId = UUID.randomUUID().toString(),
                 status = "same", affectedCount = 1,
                 checkedAtMillis = System.currentTimeMillis(),
-                note = "", photoUri = removedCheckPhoto
+                note = "",
+                photoUris = listOf(removedCheckPhotoOne, removedCheckPhotoTwo)
             ))
             health.create(observation(tank, 12, retainedPhoto))
+            assertTrue(AppMediaStorage.isAppOwned(context, removedCheckPhotoOne))
+            assertTrue(AppMediaStorage.isAppOwned(context, removedCheckPhotoTwo))
 
             operation.removeLivestockWithPhoto(tank, 11, owner)
 
             assertEquals(listOf(12L), health.observationsForTank(tank).first().map { it.livestockId })
             assertFalse(AppMediaStorage.isAppOwned(context, removedPhoto))
-            assertFalse(AppMediaStorage.isAppOwned(context, removedCheckPhoto))
+            assertFalse(AppMediaStorage.isAppOwned(context, removedCheckPhotoOne))
+            assertFalse(AppMediaStorage.isAppOwned(context, removedCheckPhotoTwo))
             assertTrue(AppMediaStorage.isAppOwned(context, retainedPhoto))
         }
     }

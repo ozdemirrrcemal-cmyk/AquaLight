@@ -127,16 +127,18 @@ internal class LivestockHealthDataStoreManager(
                         existing.affectedCount == input.affectedCount &&
                         existing.checkedAtMillis == input.checkedAtMillis &&
                         existing.note == input.note.trim() &&
-                        existing.photoUri == input.photoUri.orEmpty()
+                        existing.photoUrisList == input.photoUris
                     ) { "Check request was already used for different data." }
                     return@mutate record
                 }
                 require(record.closedAtMillis == 0L) { "Follow-up already closed." }
-                require(input.photoUri == null ||
+                require(input.photoUris.all { uri ->
                     AppMediaStorage.pendingMediaOwner(
-                        appContext, input.photoUri, AppMediaScope.LIVESTOCK
+                        appContext,
+                        uri,
+                        AppMediaScope.LIVESTOCK
                     ) == ownerUid
-                ) { "Check photo must belong to the active owner." }
+                }) { "Check photos must belong to the active owner." }
                 require(input.checkedAtMillis >= record.createdAtMillis) {
                     "Check cannot predate the observation."
                 }
@@ -148,7 +150,7 @@ internal class LivestockHealthDataStoreManager(
                         .setAffectedCount(input.affectedCount)
                         .setCheckedAtMillis(input.checkedAtMillis)
                         .setNote(input.note.trim())
-                        .setPhotoUri(input.photoUri.orEmpty())
+                        .addAllPhotoUris(input.photoUris)
                         .build()
                 )
                 if (input.status == "recovered") {
@@ -157,7 +159,9 @@ internal class LivestockHealthDataStoreManager(
                 }
                 updated.build()
             }
-            AppMediaStorage.commitPendingMedia(appContext, input.photoUri)
+            input.photoUris.forEach { uri ->
+                AppMediaStorage.commitPendingMedia(appContext, uri)
+            }
         }
 
     suspend fun close(tankId: Long, observationId: Long, reason: String) {

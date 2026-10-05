@@ -253,6 +253,12 @@
     <string name="livestock_health_check_photo_note_title">Fotoğraf veya not (isteğe bağlı)</string>
     <string name="livestock_health_check_photo_note_value">Yeni bir not veya gözlem fotoğrafı ekle</string>
     <string name="livestock_health_check_photo_source_title">Kontrol görseli</string>
+    <string name="livestock_health_check_photo_hint">En fazla 3 fotoğraf</string>
+    <string name="livestock_health_photo_more_count">+%1$d</string>
+    <string name="livestock_health_photo_open_viewer">Sağlık fotoğraflarını aç</string>
+    <string name="livestock_health_photo_viewer_counter">%1$d / %2$d</string>
+    <string name="livestock_health_photo_viewer_close">Fotoğraf görüntüleyiciyi kapat</string>
+    <string name="livestock_health_photo_viewer_image_description">Sağlık fotoğrafı %1$d / %2$d</string>
     <string name="livestock_health_check_photo_add_title">Görsel ekle</string>
     <string name="livestock_health_check_photo_add_subtitle">Kamera veya albümden seç</string>
     <string name="livestock_health_check_photo_selected">Kontrol görseli eklendi</string>

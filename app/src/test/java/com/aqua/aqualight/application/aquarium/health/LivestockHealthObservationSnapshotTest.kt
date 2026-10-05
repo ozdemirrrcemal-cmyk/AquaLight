@@ -57,6 +57,6 @@ class LivestockHealthObservationSnapshotTest {
         affectedCount = affectedCount,
         checkedAtMillis = checkedAtMillis,
         note = "",
-        photoUri = null
+        photoUris = emptyList()
     )
 }

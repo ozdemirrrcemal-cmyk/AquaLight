@@ -18,7 +18,7 @@ internal data class LivestockHealthCheckResultUi(
     val status: String,
     val affectedCount: Int,
     val checkTimeMillis: Long,
-    val photoUri: String?,
+    val photoUris: List<String>,
     val note: String
 )
 
@@ -29,7 +29,7 @@ internal data class FollowUpHistoryEntry(
     val statusLabel: String,
     val affectedCount: Int,
     val totalCount: Int,
-    val photoUri: String?,
+    val photoUris: List<String>,
     val note: String
 )
 
@@ -41,23 +41,27 @@ internal fun LivestockObservationSnapshot.toHistoryEntries(fragment: Fragment): 
     val checkEntries = checks.sortedByDescending { it.checkedAtMillis }.map { check ->
         FollowUpHistoryEntry(
             timeLabel = timeLabel(check.checkedAtMillis),
-            observationLabel = fragment.getString(LivestockHealthUiText.symptomLabelRes(symptomKeys.first())),
+            observationLabel = fragment.getString(
+                LivestockHealthUiText.symptomLabelRes(symptomKeys.first())
+            ),
             status = check.status,
             statusLabel = fragment.getString(statusLabelRes(check.status)),
             affectedCount = check.affectedCount,
             totalCount = totalCount,
-            photoUri = check.photoUri,
+            photoUris = check.photoUris,
             note = check.note
         )
     }
     return checkEntries + FollowUpHistoryEntry(
         timeLabel = timeLabel(createdAtMillis),
-        observationLabel = fragment.getString(LivestockHealthUiText.symptomLabelRes(symptomKeys.first())),
+        observationLabel = fragment.getString(
+            LivestockHealthUiText.symptomLabelRes(symptomKeys.first())
+        ),
         status = LivestockHealthCheckBottomSheet.STATUS_SAME,
         statusLabel = fragment.getString(R.string.livestock_health_first_observation),
         affectedCount = affectedCount,
         totalCount = totalCount,
-        photoUri = photoUris.firstOrNull(),
+        photoUris = photoUris,
         note = note
     )
 }
@@ -129,10 +133,7 @@ internal class LivestockHealthFollowUpRenderer(
         }
     }
 
-    fun renderHistory(
-        livestock: AquariumLivestock,
-        entries: List<FollowUpHistoryEntry>
-    ) {
+    fun renderHistory(entries: List<FollowUpHistoryEntry>) {
         val inflater = LayoutInflater.from(fragment.requireContext())
         binding.historyContainer.removeAllViews()
 
@@ -168,11 +169,38 @@ internal class LivestockHealthFollowUpRenderer(
                 entry.affectedCount,
                 entry.totalCount
             )
-            item.ivHistoryPhoto.bindRecordPhoto(
-                entry.photoUri ?: livestock.photoUri,
-                LivestockCategories.iconRes(livestock.category)
-            )
+            bindHistoryPhotos(item, entry)
             binding.historyContainer.addView(item.root)
+        }
+    }
+
+    private fun bindHistoryPhotos(
+        item: ItemLivestockHealthHistoryBinding,
+        entry: FollowUpHistoryEntry
+    ) {
+        val hasPhotos = entry.photoUris.isNotEmpty()
+        item.historyPhotoFrame.isVisible = hasPhotos
+        item.tvHistoryPhotoCount.isVisible = entry.photoUris.size > 1
+        item.tvHistoryPhotoCount.text = fragment.getString(
+            R.string.livestock_health_photo_more_count,
+            (entry.photoUris.size - 1).coerceAtLeast(0)
+        )
+        if (!hasPhotos) {
+            item.ivHistoryPhoto.setImageDrawable(null)
+            item.historyPhotoFrame.setOnClickListener(null)
+            item.historyPhotoFrame.contentDescription = null
+            return
+        }
+
+        item.ivHistoryPhoto.bindRecordPhoto(entry.photoUris.first())
+        item.historyPhotoFrame.contentDescription = fragment.getString(
+            R.string.livestock_health_photo_open_viewer
+        )
+        item.historyPhotoFrame.setOnClickListener {
+            LivestockHealthPhotoViewerDialogFragment.show(
+                fragmentManager = fragment.parentFragmentManager,
+                photoUris = entry.photoUris
+            )
         }
     }
 

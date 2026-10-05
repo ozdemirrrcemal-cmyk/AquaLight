@@ -50,6 +50,7 @@ class LivestockHealthStoreTest {
             .setAffectedCount(1)
             .setCheckedAtMillis(1_800_000_001_000)
             .setNote("Recovered after care")
+            .addAllPhotoUris(listOf("photo-a", "photo-b", "photo-c"))
             .build()
         val closed = record().toBuilder().addChecks(check)
             .setClosedAtMillis(1_800_000_002_000)
@@ -58,6 +59,43 @@ class LivestockHealthStoreTest {
         val restored = LivestockHealthStore.parseFrom(store(closed).toByteArray())
         validateLivestockHealthStore(restored)
         assertEquals(check, restored.getObservations(0).getChecks(0))
+        assertEquals(
+            listOf("photo-a", "photo-b", "photo-c"),
+            restored.getObservations(0).getChecks(0).photoUrisList
+        )
+    }
+
+    @Test
+    fun checkInputWithMoreThanThreePhotosIsRejected() {
+        assertThrows(IllegalArgumentException::class.java) {
+            validateCheck(
+                com.aqua.aqualight.application.aquarium.health.LivestockCheckInput(
+                    requestId = "check-input-too-many",
+                    status = "same",
+                    affectedCount = 1,
+                    checkedAtMillis = System.currentTimeMillis(),
+                    note = "",
+                    photoUris = listOf("a", "b", "c", "d")
+                )
+            )
+        }
+    }
+
+    @Test
+    fun checkWithMoreThanThreePhotosIsRejected() {
+        val check = StoredLivestockCheck.newBuilder()
+            .setRequestId("check-too-many-photos")
+            .setStatus("same")
+            .setAffectedCount(1)
+            .setCheckedAtMillis(1_800_000_001_000)
+            .addAllPhotoUris(listOf("a", "b", "c", "d"))
+            .build()
+
+        assertThrows(StoreInvariantViolation::class.java) {
+            validateLivestockHealthStore(
+                store(record().toBuilder().addChecks(check).build())
+            )
+        }
     }
 
     private fun store(vararg records: StoredLivestockObservation): LivestockHealthStore =

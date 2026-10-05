@@ -22,7 +22,9 @@ internal class LivestockHealthCheckPhotoController(
     private val fragment: Fragment,
     private val mediaFlow: MediaFlowCoordinatorViewModel,
     private val hasView: () -> Boolean,
-    private val onPhotoChanged: (String?) -> Unit
+    private val activeSlotIndex: () -> Int,
+    private val currentPhotoUri: (Int) -> String?,
+    private val onPhotoChanged: (Int, String?) -> Unit
 ) {
     private val permissionCoordinator = CapabilityPermissionCoordinator(fragment) { action ->
         if (action == ACTION_CAPTURE_PHOTO) openCamera()
@@ -58,22 +60,11 @@ internal class LivestockHealthCheckPhotoController(
                 return@launch
             }
             when {
-                result.resultCode == Activity.RESULT_OK -> {
-                    val output = result.data?.let(UCrop::getOutput)
-                    val accepted = output?.let { uri -> mediaFlow.acceptCrop(uri) }
-                    if (accepted != null) {
-                        onPhotoChanged(accepted.toString())
-                    } else {
-                        mediaFlow.cancelCrop()
-                        showError()
-                    }
-                }
-
+                result.resultCode == Activity.RESULT_OK -> acceptCropResult(result.data?.let(UCrop::getOutput))
                 result.resultCode == UCrop.RESULT_ERROR -> {
                     mediaFlow.cancelCrop()
                     showError()
                 }
-
                 else -> mediaFlow.cancelCrop()
             }
         }
@@ -95,23 +86,45 @@ internal class LivestockHealthCheckPhotoController(
         }
     }
 
-    fun showSource(title: String) {
+    fun showSource(title: String, currentUri: String?) {
         val manager = fragment.childFragmentManager
         if (manager.isStateSaved || manager.findFragmentByTag(PhotoSourceBottomSheet.TAG) != null) {
             return
         }
+        mediaFlow.markExternallyOwnedSelection(currentUri)
         PhotoSourceBottomSheet.newInstance(
             title = title,
-            showRemove = !selectedUri().isNullOrBlank()
+            showRemove = !currentUri.isNullOrBlank()
         ).show(manager, PhotoSourceBottomSheet.TAG)
     }
 
-    fun selectedUri(): String? = mediaFlow.selection.value.selectedUri
+    private suspend fun acceptCropResult(outputUri: Uri?) {
+        val accepted = outputUri?.let { uri -> mediaFlow.acceptCrop(uri) }
+        if (accepted == null) {
+            mediaFlow.cancelCrop()
+            showError()
+            return
+        }
 
-    fun removePhoto() {
+        val slotIndex = activeSlotIndex()
+        val acceptedUri = accepted.toString()
+        val previousUri = currentPhotoUri(slotIndex)
+        if (!previousUri.isNullOrBlank() && previousUri != acceptedUri) {
+            mediaFlow.rollbackPendingMedia(previousUri)
+        }
+        mediaFlow.markExternallyOwnedSelection(acceptedUri)
+        onPhotoChanged(slotIndex, acceptedUri)
+    }
+
+    private fun removePhoto() {
         fragment.lifecycleScope.launch {
-            mediaFlow.selectRemoval()
-            if (hasView()) onPhotoChanged(null)
+            val slotIndex = activeSlotIndex()
+            val previousUri = currentPhotoUri(slotIndex)
+            if (!previousUri.isNullOrBlank()) {
+                mediaFlow.rollbackPendingMedia(previousUri)
+            }
+            mediaFlow.markExternallyOwnedSelection(null)
+            if (hasView()) onPhotoChanged(slotIndex, null)
         }
     }
 

@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.aquarium.health
 
 import com.aqua.aqualight.application.aquarium.health.LivestockCheckInput
 import com.aqua.aqualight.application.aquarium.health.LivestockCheckSnapshot
+import com.aqua.aqualight.application.aquarium.health.LIVESTOCK_HEALTH_MAX_PHOTOS
 import com.aqua.aqualight.application.aquarium.health.LivestockObservationInput
 import com.aqua.aqualight.application.aquarium.health.LivestockObservationSnapshot
 import com.aqua.aqualight.data.store.CommercialStoreSchema
@@ -20,13 +21,13 @@ internal fun StoredLivestockObservation.toSnapshot(): LivestockObservationSnapsh
             LivestockCheckSnapshot(
                 status = it.status, affectedCount = it.affectedCount,
                 checkedAtMillis = it.checkedAtMillis, note = it.note,
-                photoUri = it.photoUri.takeIf(String::isNotBlank)
+                photoUris = it.photoUrisList
             )
         }
     )
 
 internal fun StoredLivestockObservation.mediaUris(): List<String> =
-    photoUrisList + checksList.mapNotNull { it.photoUri.takeIf(String::isNotBlank) }
+    photoUrisList + checksList.flatMap { check -> check.photoUrisList }
 
 private const val MAX_REQUEST_ID_LENGTH = 64
 private const val MAX_OWNER_UID_LENGTH = 128
@@ -34,7 +35,6 @@ private const val MAX_SYMPTOMS = 16
 private const val MAX_KEY_LENGTH = 64
 private const val MAX_OTHER_LENGTH = 2000
 private const val MAX_NOTE_LENGTH = 4000
-private const val MAX_PHOTOS = 3
 private const val MAX_URI_LENGTH = 2048
 private const val MIN_RECORD_TIME_MILLIS = 946_684_800_000L
 private const val MAX_RECORD_TIME_MILLIS = 4_102_444_800_000L
@@ -48,7 +48,8 @@ internal fun validateInput(input: LivestockObservationInput) {
     require(input.symptomKeys.all { it.isNotBlank() && it.length <= MAX_KEY_LENGTH })
     require(input.onsetKey.isNotBlank() && input.onsetKey.length <= MAX_KEY_LENGTH)
     require(input.otherObservation.length <= MAX_OTHER_LENGTH && input.note.length <= MAX_NOTE_LENGTH)
-    require(input.photoUris.size <= MAX_PHOTOS)
+    require(input.photoUris.size <= LIVESTOCK_HEALTH_MAX_PHOTOS)
+    require(input.photoUris.distinct().size == input.photoUris.size)
     require(input.photoUris.all { it.isNotBlank() && it.length <= MAX_URI_LENGTH })
     require("other" !in input.symptomKeys || input.otherObservation.isNotBlank())
 }
@@ -60,7 +61,9 @@ internal fun validateCheck(input: LivestockCheckInput) {
     require(input.checkedAtMillis in MIN_RECORD_TIME_MILLIS..
         (System.currentTimeMillis() + CHECK_CLOCK_SKEW_MILLIS))
     require(input.note.length <= MAX_NOTE_LENGTH)
-    require(input.photoUri == null || input.photoUri.length <= MAX_URI_LENGTH)
+    require(input.photoUris.size <= LIVESTOCK_HEALTH_MAX_PHOTOS)
+    require(input.photoUris.distinct().size == input.photoUris.size)
+    require(input.photoUris.all { it.isNotBlank() && it.length <= MAX_URI_LENGTH })
 }
 
 internal fun validateLivestockHealthStore(store: LivestockHealthStore): LivestockHealthStore {
@@ -117,7 +120,11 @@ private fun validateStoredCheck(check: StoredLivestockCheck, record: StoredLives
     if (check.requestId.length !in 1..MAX_REQUEST_ID_LENGTH) invalidStoredHealthRecord(INVALID_CHECK_MESSAGE)
     if (check.affectedCount !in 1..record.totalCount) invalidStoredHealthRecord(INVALID_CHECK_MESSAGE)
     if (check.checkedAtMillis < record.createdAtMillis) invalidStoredHealthRecord(INVALID_CHECK_MESSAGE)
-    if (check.note.length > MAX_NOTE_LENGTH || check.photoUri.length > MAX_URI_LENGTH) {
+    if (check.note.length > MAX_NOTE_LENGTH ||
+        check.photoUrisCount > LIVESTOCK_HEALTH_MAX_PHOTOS ||
+        check.photoUrisList.distinct().size != check.photoUrisCount ||
+        check.photoUrisList.any { it.isBlank() || it.length > MAX_URI_LENGTH }
+    ) {
         invalidStoredHealthRecord(INVALID_CHECK_MESSAGE)
     }
 }

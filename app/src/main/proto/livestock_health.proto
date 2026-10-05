@@ -32,6 +32,6 @@ message StoredLivestockCheck {
   int32 affected_count = 2;
   int64 checked_at_millis = 3;
   string note = 4;
-  string photo_uri = 5;
+  repeated string photo_uris = 5;
   string request_id = 6;
 }

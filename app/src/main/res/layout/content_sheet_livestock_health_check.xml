@@ -245,6 +245,14 @@
         android:includeFontPadding="false"
         android:text="@string/livestock_health_check_photo_note_title" />
 
+    <TextView
+        android:textAppearance="@style/TextAppearance.Aqua.Content.MutedStatusNano"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/aqua_size_2"
+        android:includeFontPadding="false"
+        android:text="@string/livestock_health_check_photo_hint" />
+
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/cardCheckPhoto"
         style="@style/Widget.Aqua.Card"
@@ -261,32 +269,91 @@
             android:paddingEnd="@dimen/aqua_size_8">
 
             <FrameLayout
-                android:id="@+id/checkPhotoMediaArea"
-                android:layout_width="@dimen/aqua_size_44"
+                android:id="@+id/checkPhotoSlotOne"
+                android:layout_width="@dimen/aqua_size_40"
                 android:layout_height="@dimen/aqua_size_44"
+                android:background="@drawable/bg_livestock_health_photo_slot"
                 android:clickable="true"
                 android:contentDescription="@string/livestock_health_check_photo_add_title"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackground">
 
                 <ImageView
-                    android:id="@+id/ivCheckPhotoPlaceholder"
-                    android:layout_width="@dimen/aqua_size_24"
-                    android:layout_height="@dimen/aqua_size_24"
-                    android:layout_gravity="center"
-                    android:contentDescription="@null"
-                    android:importantForAccessibility="no"
-                    android:src="@drawable/ic_gallery"
-                    app:tint="@color/aqua_content_secondary" />
-
-                <ImageView
-                    android:id="@+id/ivCheckPhotoPreview"
+                    android:id="@+id/ivCheckPhotoPreviewOne"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:contentDescription="@null"
                     android:importantForAccessibility="no"
                     android:scaleType="centerCrop"
                     android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/tvCheckPhotoSlotPlusOne"
+                    android:textAppearance="@style/TextAppearance.Aqua.Content.SecondaryBodyLarge"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:text="@string/common_plus" />
+
+            </FrameLayout>
+
+            <FrameLayout
+                android:id="@+id/checkPhotoSlotTwo"
+                android:layout_width="@dimen/aqua_size_40"
+                android:layout_height="@dimen/aqua_size_44"
+                android:layout_marginStart="@dimen/aqua_size_4"
+                android:background="@drawable/bg_livestock_health_photo_slot"
+                android:clickable="true"
+                android:contentDescription="@string/livestock_health_check_photo_add_title"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
+
+                <ImageView
+                    android:id="@+id/ivCheckPhotoPreviewTwo"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:contentDescription="@null"
+                    android:importantForAccessibility="no"
+                    android:scaleType="centerCrop"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/tvCheckPhotoSlotPlusTwo"
+                    android:textAppearance="@style/TextAppearance.Aqua.Content.SecondaryBodyLarge"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:text="@string/common_plus" />
+
+            </FrameLayout>
+
+            <FrameLayout
+                android:id="@+id/checkPhotoSlotThree"
+                android:layout_width="@dimen/aqua_size_40"
+                android:layout_height="@dimen/aqua_size_44"
+                android:layout_marginStart="@dimen/aqua_size_4"
+                android:background="@drawable/bg_livestock_health_photo_slot"
+                android:clickable="true"
+                android:contentDescription="@string/livestock_health_check_photo_add_title"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
+
+                <ImageView
+                    android:id="@+id/ivCheckPhotoPreviewThree"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:contentDescription="@null"
+                    android:importantForAccessibility="no"
+                    android:scaleType="centerCrop"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/tvCheckPhotoSlotPlusThree"
+                    android:textAppearance="@style/TextAppearance.Aqua.Content.SecondaryBodyLarge"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:text="@string/common_plus" />
 
             </FrameLayout>
 
@@ -303,18 +370,6 @@
                 android:inputType="textCapSentences|textMultiLine"
                 android:maxLines="2"
                 android:textSize="@dimen/aqua_text_size_caption" />
-
-            <ImageView
-                android:id="@+id/btnRemoveCheckPhoto"
-                android:layout_width="@dimen/aqua_size_32"
-                android:layout_height="@dimen/aqua_size_32"
-                android:clickable="true"
-                android:contentDescription="@string/photo_bottom_sheet_remove"
-                android:focusable="true"
-                android:padding="@dimen/aqua_size_6"
-                android:src="@drawable/ic_remove_24"
-                android:visibility="gone"
-                app:tint="@color/aqua_content_secondary" />
 
         </LinearLayout>
 

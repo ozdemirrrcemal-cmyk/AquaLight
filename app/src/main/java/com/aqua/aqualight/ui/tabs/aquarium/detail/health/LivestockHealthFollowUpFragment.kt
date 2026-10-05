@@ -83,7 +83,7 @@ class LivestockHealthFollowUpFragment : Fragment(R.layout.fragment_livestock_hea
                     issueLabel = binding.tvFollowupIssue.text.toString(),
                     affectedCount = record.currentAffectedCount,
                     totalCount = record.totalCount,
-                    photoUri = livestock.photoUri
+                    livestockPhotoUri = livestock.photoUri
                 )
             )
         }
@@ -105,7 +105,7 @@ class LivestockHealthFollowUpFragment : Fragment(R.layout.fragment_livestock_hea
         renderer?.renderLivestock(livestock, record.currentAffectedCount)
         renderer?.renderStatus(record.checks.maxByOrNull { it.checkedAtMillis }?.status
             ?: LivestockHealthCheckBottomSheet.STATUS_SAME)
-        renderer?.renderHistory(livestock, record.toHistoryEntries(this))
+        renderer?.renderHistory(record.toHistoryEntries(this))
         _binding?.btnNewCheck?.isEnabled = !args.readOnly && record.closedAtMillis == null
     }
 

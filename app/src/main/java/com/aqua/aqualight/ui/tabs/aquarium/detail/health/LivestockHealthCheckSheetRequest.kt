@@ -20,7 +20,7 @@ internal data class LivestockHealthCheckSheetRequest(
     val issueLabel: String,
     val affectedCount: Int,
     val totalCount: Int,
-    val photoUri: String?
+    val livestockPhotoUri: String?
 )
 
 internal fun ContentSheetLivestockHealthCheckBinding.bindCheckLivestock(
@@ -29,7 +29,7 @@ internal fun ContentSheetLivestockHealthCheckBinding.bindCheckLivestock(
     tvCheckLivestockName.text = request.livestockName
     tvCheckLivestockIssue.text = request.issueLabel
     ivCheckLivestock.bindRecordPhoto(
-        request.photoUri,
+        request.livestockPhotoUri,
         LivestockCategories.iconRes(request.category)
     )
 }
@@ -115,15 +115,46 @@ internal fun ContentSheetLivestockHealthCheckBinding.renderCheckTime(
     )
 }
 
-internal fun ContentSheetLivestockHealthCheckBinding.renderCheckPhoto(photoUri: String?) {
+internal fun ContentSheetLivestockHealthCheckBinding.bindCheckPhotoSlots(
+    onSlotSelected: (Int) -> Unit
+) {
+    checkPhotoSlotOne.setOnClickListener { onSlotSelected(0) }
+    checkPhotoSlotTwo.setOnClickListener { onSlotSelected(1) }
+    checkPhotoSlotThree.setOnClickListener { onSlotSelected(2) }
+}
+
+internal fun ContentSheetLivestockHealthCheckBinding.renderCheckPhotoSlots(
+    photoUris: List<String?>
+) {
+    renderCheckPhotoSlot(
+        photoUris.getOrNull(0),
+        ivCheckPhotoPreviewOne,
+        tvCheckPhotoSlotPlusOne
+    )
+    renderCheckPhotoSlot(
+        photoUris.getOrNull(1),
+        ivCheckPhotoPreviewTwo,
+        tvCheckPhotoSlotPlusTwo
+    )
+    renderCheckPhotoSlot(
+        photoUris.getOrNull(2),
+        ivCheckPhotoPreviewThree,
+        tvCheckPhotoSlotPlusThree
+    )
+}
+
+private fun renderCheckPhotoSlot(
+    photoUri: String?,
+    preview: android.widget.ImageView,
+    plus: android.widget.TextView
+) {
     val hasPhoto = !photoUri.isNullOrBlank()
-    ivCheckPhotoPreview.isVisible = hasPhoto
-    ivCheckPhotoPlaceholder.isVisible = !hasPhoto
-    btnRemoveCheckPhoto.isVisible = hasPhoto
+    preview.isVisible = hasPhoto
+    plus.isVisible = !hasPhoto
     if (hasPhoto) {
-        ivCheckPhotoPreview.bindRecordPhoto(photoUri)
+        preview.bindRecordPhoto(photoUri)
     } else {
-        ivCheckPhotoPreview.setImageDrawable(null)
+        preview.setImageDrawable(null)
     }
 }
 
@@ -163,7 +194,7 @@ internal fun Bundle.toLivestockHealthCheckRequest(): LivestockHealthCheckSheetRe
         issueLabel = getString(ARG_CHECK_ISSUE_LABEL).orEmpty(),
         affectedCount = affectedCount,
         totalCount = totalCount,
-        photoUri = getString(ARG_CHECK_PHOTO_URI)
+        livestockPhotoUri = getString(ARG_CHECK_LIVESTOCK_PHOTO_URI)
     )
 }
 
@@ -175,4 +206,4 @@ internal const val ARG_CHECK_TANK_ID = "tank_id"
 internal const val ARG_CHECK_OBSERVATION_ID = "observation_id"
 internal const val ARG_CHECK_AFFECTED_COUNT = "affected_count"
 internal const val ARG_CHECK_TOTAL_COUNT = "total_count"
-internal const val ARG_CHECK_PHOTO_URI = "photo_uri"
+internal const val ARG_CHECK_LIVESTOCK_PHOTO_URI = "livestock_photo_uri"

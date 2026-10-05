@@ -11,6 +11,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
+import com.aqua.aqualight.application.aquarium.health.LIVESTOCK_HEALTH_MAX_PHOTOS
 import com.aqua.aqualight.databinding.FragmentLivestockHealthObservationBinding
 import com.aqua.aqualight.databinding.ItemLivestockHealthSelectorBinding
 import com.aqua.aqualight.application.media.MediaScope
@@ -48,7 +49,7 @@ class LivestockHealthObservationFragment : TankRecordPhotoFragment(
     private val selectedSymptoms = linkedSetOf<String>()
     private var selectedOnset: String = LivestockHealthObservationCatalog.ONSET_TODAY
     private var affectedCount: Int = 1
-    private val observationPhotoUris = MutableList<String?>(MAX_OBSERVATION_PHOTOS) { null }
+    private val observationPhotoUris = MutableList<String?>(LIVESTOCK_HEALTH_MAX_PHOTOS) { null }
     private var activePhotoSlotIndex: Int = 0
     private var isNavigating: Boolean = false
     private var draftStateHandle: SavedStateHandle? = null
@@ -62,13 +63,13 @@ class LivestockHealthObservationFragment : TankRecordPhotoFragment(
 
         savedInstanceState
             ?.getStringArrayList(STATE_OBSERVATION_PHOTOS)
-            ?.take(MAX_OBSERVATION_PHOTOS)
+            ?.take(LIVESTOCK_HEALTH_MAX_PHOTOS)
             ?.forEachIndexed { index, uri ->
                 observationPhotoUris[index] = uri.takeIf(String::isNotBlank)
             }
         activePhotoSlotIndex = savedInstanceState
             ?.getInt(STATE_ACTIVE_PHOTO_SLOT, 0)
-            ?.coerceIn(0, MAX_OBSERVATION_PHOTOS - 1)
+            ?.coerceIn(0, LIVESTOCK_HEALTH_MAX_PHOTOS - 1)
             ?: 0
         selectedLivestockId = savedInstanceState?.getLong(STATE_LIVESTOCK_ID) ?: 0L
         requestId = savedInstanceState?.getString(STATE_REQUEST_ID) ?: requestId
@@ -266,7 +267,7 @@ class LivestockHealthObservationFragment : TankRecordPhotoFragment(
 
     private fun openObservationPhotoSlot(slotIndex: Int) {
         val recordId = selectedLivestockId.takeIf { id -> id > 0L } ?: return
-        activePhotoSlotIndex = slotIndex.coerceIn(0, MAX_OBSERVATION_PHOTOS - 1)
+        activePhotoSlotIndex = slotIndex.coerceIn(0, LIVESTOCK_HEALTH_MAX_PHOTOS - 1)
         showRecordPhotoSource(
             recordId = recordId,
             persistedUri = observationPhotoUris[activePhotoSlotIndex],
@@ -333,7 +334,6 @@ class LivestockHealthObservationFragment : TankRecordPhotoFragment(
         const val DRAFT_AFFECTED = "health_draft_affected"
         const val DRAFT_COMMITTED = "health_draft_committed"
         const val DRAFT_SAVING = "health_draft_saving"
-        const val MAX_OBSERVATION_PHOTOS = 3
         const val STATE_OBSERVATION_PHOTOS = "livestock_health_observation_photos"
         const val STATE_REQUEST_ID = "livestock_health_request_id"
         const val STATE_ACTIVE_PHOTO_SLOT = "livestock_health_active_photo_slot"

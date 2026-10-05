@@ -93,6 +93,10 @@
         android:layout_width="@dimen/aqua_size_58"
         android:layout_height="@dimen/aqua_size_58"
         app:cardCornerRadius="@dimen/aqua_size_10"
+        android:clickable="true"
+        android:contentDescription="@string/livestock_health_photo_open_viewer"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackground"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -103,7 +107,23 @@
             android:layout_height="match_parent"
             android:contentDescription="@null"
             android:importantForAccessibility="no"
-            android:scaleType="center" />
+            android:scaleType="centerCrop" />
+
+        <TextView
+            android:id="@+id/tvHistoryPhotoCount"
+            android:textAppearance="@style/TextAppearance.Aqua.Card.PrimaryStatusMicro"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/aqua_size_22"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="@dimen/aqua_size_4"
+            android:background="@drawable/bg_livestock_photo_badge"
+            android:gravity="center"
+            android:minWidth="@dimen/aqua_size_22"
+            android:paddingStart="@dimen/aqua_size_5"
+            android:paddingEnd="@dimen/aqua_size_5"
+            android:visibility="gone"
+            tools:text="+2"
+            tools:visibility="visible" />
 
     </com.google.android.material.card.MaterialCardView>
 
