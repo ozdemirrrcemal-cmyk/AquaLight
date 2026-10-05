@@ -12,7 +12,6 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.health.LivestockCheckInput
-import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.composition.requireAppContainer
 import com.aqua.aqualight.databinding.ContentSheetLivestockHealthCheckBinding
 import com.aqua.aqualight.databinding.DialogSettingsBottomSheetBinding
@@ -26,6 +25,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import java.util.UUID
+import java.io.IOException
 
 internal class LivestockHealthCheckBottomSheet : BottomSheetDialogFragment() {
     private val healthViewModel: LivestockHealthViewModel by activityViewModels()
@@ -187,13 +187,17 @@ internal class LivestockHealthCheckBottomSheet : BottomSheetDialogFragment() {
                         Bundle().apply { putString(RESULT_STATUS, selectedStatus) }
                     )
                     dismiss()
-                } catch (error: Exception) {
-                    if (error is CancellationException) throw error
+                } catch (error: CancellationException) {
+                    throw error
+                } catch (_: IOException) {
                     saveMayHaveCommitted = false
-                    (activity as? BaseActivity)?.showSnackBar(
-                        getString(R.string.livestock_health_save_failed),
-                        BaseActivity.SnackType.ERROR
-                    )
+                    showLivestockHealthSaveFailure()
+                } catch (_: IllegalArgumentException) {
+                    saveMayHaveCommitted = false
+                    showLivestockHealthSaveFailure()
+                } catch (_: IllegalStateException) {
+                    saveMayHaveCommitted = false
+                    showLivestockHealthSaveFailure()
                 } finally {
                     isSaving = false
                     isCancelable = true

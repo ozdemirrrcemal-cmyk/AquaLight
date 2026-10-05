@@ -5,6 +5,7 @@ import android.view.View
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -82,6 +83,7 @@ class LivestockHealthObservationFragment : TankRecordPhotoFragment(
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        isNavigating = false
         _binding = FragmentLivestockHealthObservationBinding.bind(view)
         draftStateHandle = findNavController().currentBackStackEntry?.savedStateHandle
         binding.etOtherObservation.setText(savedInstanceState?.getString(STATE_OTHER))
@@ -142,11 +144,6 @@ class LivestockHealthObservationFragment : TankRecordPhotoFragment(
         observeTank()
     }
 
-    override fun onResume() {
-        super.onResume()
-        isNavigating = false
-    }
-
     private fun observeTank() {
         aquariumTankViewModel.tanks.observe(viewLifecycleOwner) {
             tanks ->
@@ -164,7 +161,9 @@ class LivestockHealthObservationFragment : TankRecordPhotoFragment(
             }
             if (selectedLivestockId != previousLivestockId) {
                 selectedSymptoms.clear()
-                if (previousLivestockId > 0L) discardObservationPhotos()
+                if (previousLivestockId > 0L) {
+                    discardObservationPhotos(observationPhotoUris, _binding)
+                }
             }
 
             binding.renderObservationLivestockSelectors(
@@ -175,7 +174,7 @@ class LivestockHealthObservationFragment : TankRecordPhotoFragment(
             ) { selected ->
                 if (selectedLivestockId != selected.id) {
                     selectedSymptoms.clear()
-                    discardObservationPhotos()
+                    discardObservationPhotos(observationPhotoUris, _binding)
                 }
                 selectedLivestockId = selected.id
                 affectedCount = affectedCount.coerceAtMost(
@@ -231,9 +230,8 @@ class LivestockHealthObservationFragment : TankRecordPhotoFragment(
 
 
     private fun continueToEvaluation() {
-        if (!isNavigating && !photoTarget.isInProgress &&
-            binding.btnEvaluate.isEnabled && selectedSymptoms.isNotEmpty()
-        ) {
+        if (isNavigating || photoTarget.isInProgress) return
+        if (binding.btnEvaluate.isEnabled && selectedSymptoms.isNotEmpty()) {
             currentLivestock
                 .selectedLivestock(selectedLivestockId)
                 ?.let { livestock ->
@@ -278,17 +276,6 @@ class LivestockHealthObservationFragment : TankRecordPhotoFragment(
             resetSelection = true
         )
     }
-
-    private fun discardObservationPhotos() {
-        val pending = observationPhotoUris.filterNotNull()
-        observationPhotoUris.indices.forEach { observationPhotoUris[it] = null }
-        _binding?.renderObservationPhotoSlots(observationPhotoUris)
-        val context = requireContext().applicationContext
-        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
-            pending.forEach { AppMediaStorage.rollbackPendingMedia(context, it) }
-        }
-    }
-
 
     override suspend fun onPhotoSelected(photoUri: String?) {
         if (!hasPhotoView) return
@@ -354,5 +341,24 @@ class LivestockHealthObservationFragment : TankRecordPhotoFragment(
         const val STATE_OBSERVATION_PHOTOS = "livestock_health_observation_photos"
         const val STATE_REQUEST_ID = "livestock_health_request_id"
         const val STATE_ACTIVE_PHOTO_SLOT = "livestock_health_active_photo_slot"
+        private const val STATE_LIVESTOCK_ID = "livestock_health_livestock_id"
+        private const val STATE_SYMPTOMS = "livestock_health_symptoms"
+        private const val STATE_ONSET = "livestock_health_onset"
+        private const val STATE_AFFECTED_COUNT = "livestock_health_affected_count"
+        private const val STATE_OTHER = "livestock_health_other"
+        private const val STATE_NOTE = "livestock_health_note"
+    }
+}
+
+private fun Fragment.discardObservationPhotos(
+    uris: MutableList<String?>,
+    binding: FragmentLivestockHealthObservationBinding?
+) {
+    val pending = uris.filterNotNull()
+    uris.indices.forEach { uris[it] = null }
+    binding?.renderObservationPhotoSlots(uris)
+    val appContext = requireContext().applicationContext
+    viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+        pending.forEach { AppMediaStorage.rollbackPendingMedia(appContext, it) }
     }
 }

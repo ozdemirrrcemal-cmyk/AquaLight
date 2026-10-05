@@ -58,7 +58,7 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
         setupClickListeners()
         observeTank()
         livestockHealthViewModel.observationsForTank(tankId)
-            .observe(viewLifecycleOwner, ::renderHealthEntry)
+            .observe(viewLifecycleOwner) { records -> binding.renderHealthEntry(this, records) }
     }
 
     override fun onResume() {
@@ -188,31 +188,6 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
         }
     }
 
-    private fun renderHealthEntry(records: List<LivestockObservationSnapshot>) {
-        binding.livestockHealthEntry.tvHealthEntrySummary.text =
-            if (records.isEmpty()) {
-                getString(R.string.livestock_health_empty_followups_title)
-            } else {
-                resources.getQuantityString(
-                    R.plurals.livestock_health_entry_record_count,
-                    records.size,
-                    records.size
-                )
-            }
-        val lastCheck = records.flatMap { it.checks }
-            .maxOfOrNull { it.checkedAtMillis }
-        binding.livestockHealthEntry.tvHealthEntryLastCheck.text =
-            if (lastCheck == null) {
-                getString(R.string.livestock_health_no_check_yet)
-            } else {
-                getString(
-                    R.string.livestock_health_active_last_check_format,
-                    LocaleFormatter.formatDate(requireContext(), lastCheck) + " · " +
-                        LocaleFormatter.formatTime(requireContext(), lastCheck)
-                )
-            }
-    }
-
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
@@ -231,4 +206,31 @@ class TankDetailLifeFragment : Fragment(R.layout.fragment_tank_detail_life) {
             }
         }
     }
+}
+
+private fun FragmentTankDetailLifeBinding.renderHealthEntry(
+    fragment: Fragment,
+    records: List<LivestockObservationSnapshot>
+) {
+    livestockHealthEntry.tvHealthEntrySummary.text =
+        if (records.isEmpty()) {
+            fragment.getString(R.string.livestock_health_empty_followups_title)
+        } else {
+            fragment.resources.getQuantityString(
+                R.plurals.livestock_health_entry_record_count,
+                records.size,
+                records.size
+            )
+        }
+    val lastCheck = records.flatMap { it.checks }.maxOfOrNull { it.checkedAtMillis }
+    livestockHealthEntry.tvHealthEntryLastCheck.text =
+        if (lastCheck == null) {
+            fragment.getString(R.string.livestock_health_no_check_yet)
+        } else {
+            fragment.getString(
+                R.string.livestock_health_active_last_check_format,
+                LocaleFormatter.formatDate(fragment.requireContext(), lastCheck) + " · " +
+                    LocaleFormatter.formatTime(fragment.requireContext(), lastCheck)
+            )
+        }
 }

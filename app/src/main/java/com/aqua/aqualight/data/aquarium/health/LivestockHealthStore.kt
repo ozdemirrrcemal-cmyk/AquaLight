@@ -288,25 +288,39 @@ private fun StoredLivestockObservation.toSnapshot(): LivestockObservationSnapsho
 private fun StoredLivestockObservation.mediaUris(): List<String> =
     photoUrisList + checksList.mapNotNull { it.photoUri.takeIf(String::isNotBlank) }
 
+private const val MAX_REQUEST_ID_LENGTH = 64
+private const val MAX_OWNER_UID_LENGTH = 128
+private const val MAX_SYMPTOMS = 16
+private const val MAX_KEY_LENGTH = 64
+private const val MAX_OTHER_LENGTH = 2000
+private const val MAX_NOTE_LENGTH = 4000
+private const val MAX_PHOTOS = 3
+private const val MAX_URI_LENGTH = 2048
+private const val MIN_RECORD_TIME_MILLIS = 946_684_800_000L
+private const val MAX_RECORD_TIME_MILLIS = 4_102_444_800_000L
+private const val CHECK_CLOCK_SKEW_MILLIS = 60_000L
+
 private fun validateInput(input: LivestockObservationInput) {
-    require(input.requestId.length in 1..64)
+    require(input.requestId.length in 1..MAX_REQUEST_ID_LENGTH)
     require(input.tankId > 0 && input.livestockId > 0 && input.affectedCount > 0)
-    require(input.symptomKeys.isNotEmpty() && input.symptomKeys.size <= 16)
+    require(input.symptomKeys.isNotEmpty() && input.symptomKeys.size <= MAX_SYMPTOMS)
     require(input.symptomKeys.distinct().size == input.symptomKeys.size)
-    require(input.symptomKeys.all { it.isNotBlank() && it.length <= 64 })
-    require(input.onsetKey.isNotBlank() && input.onsetKey.length <= 64)
-    require(input.otherObservation.length <= 2000 && input.note.length <= 4000)
-    require(input.photoUris.size <= 3 && input.photoUris.all { it.isNotBlank() && it.length <= 2048 })
+    require(input.symptomKeys.all { it.isNotBlank() && it.length <= MAX_KEY_LENGTH })
+    require(input.onsetKey.isNotBlank() && input.onsetKey.length <= MAX_KEY_LENGTH)
+    require(input.otherObservation.length <= MAX_OTHER_LENGTH && input.note.length <= MAX_NOTE_LENGTH)
+    require(input.photoUris.size <= MAX_PHOTOS)
+    require(input.photoUris.all { it.isNotBlank() && it.length <= MAX_URI_LENGTH })
     require("other" !in input.symptomKeys || input.otherObservation.isNotBlank())
 }
 
 private fun validateCheck(input: LivestockCheckInput) {
-    require(input.requestId.length in 1..64)
+    require(input.requestId.length in 1..MAX_REQUEST_ID_LENGTH)
     require(input.status in setOf("increased", "same", "decreased", "recovered"))
     require(input.affectedCount > 0)
-    require(input.checkedAtMillis in 946_684_800_000L..(System.currentTimeMillis() + 60_000L))
-    require(input.note.length <= 4000)
-    require(input.photoUri == null || input.photoUri.length <= 2048)
+    require(input.checkedAtMillis in MIN_RECORD_TIME_MILLIS..
+        (System.currentTimeMillis() + CHECK_CLOCK_SKEW_MILLIS))
+    require(input.note.length <= MAX_NOTE_LENGTH)
+    require(input.photoUri == null || input.photoUri.length <= MAX_URI_LENGTH)
 }
 
 internal fun validateLivestockHealthStore(store: LivestockHealthStore): LivestockHealthStore {
@@ -317,33 +331,50 @@ internal fun validateLivestockHealthStore(store: LivestockHealthStore): Livestoc
     val ids = mutableSetOf<Pair<String, Long>>()
     val requestIds = mutableSetOf<Pair<String, String>>()
     store.observationsList.forEach { record ->
-        if (record.id <= 0 || record.tankId <= 0 || record.livestockId <= 0 ||
-            record.ownerUid.isBlank() || record.ownerUid.length > 128 ||
-            record.ownerUid != record.ownerUid.trim() ||
-            !ids.add(record.ownerUid to record.id) ||
-            !requestIds.add(record.ownerUid to record.requestId) ||
-            record.createdAtMillis !in 946_684_800_000L..4_102_444_800_000L ||
-            record.totalCount <= 0 ||
-            record.affectedCount !in 1..record.totalCount ||
-            (record.closedAtMillis == 0L) != record.closeReason.isBlank() ||
-            (record.closedAtMillis != 0L && (record.closedAtMillis < record.createdAtMillis ||
-                record.closeReason !in setOf("manual", "recovered")))
-        ) throw StoreInvariantViolation("Invalid livestock observation.")
-        validateInput(LivestockObservationInput(
-            record.requestId, record.tankId, record.livestockId, record.symptomKeysList,
-            record.onsetKey, record.otherObservation, record.note,
-            record.photoUrisList, record.affectedCount
-        ))
+        validateStoredObservation(record)
+        if (!ids.add(record.ownerUid to record.id)) invalidObservation()
+        if (!requestIds.add(record.ownerUid to record.requestId)) invalidObservation()
         val checkRequestIds = mutableSetOf<String>()
         record.checksList.forEach { check ->
-            if (check.status !in setOf("increased", "same", "decreased", "recovered") ||
-                check.requestId.length !in 1..64 ||
-                !checkRequestIds.add(check.requestId) ||
-                check.affectedCount !in 1..record.totalCount ||
-                check.checkedAtMillis < record.createdAtMillis ||
-                check.note.length > 4000 || check.photoUri.length > 2048
-            ) throw StoreInvariantViolation("Invalid livestock check.")
+            validateStoredCheck(check, record)
+            if (!checkRequestIds.add(check.requestId)) invalidCheck()
         }
     }
     return store
 }
+
+private fun validateStoredObservation(record: StoredLivestockObservation) {
+    if (record.id <= 0 || record.tankId <= 0 || record.livestockId <= 0) invalidObservation()
+    if (record.ownerUid.isBlank() || record.ownerUid.length > MAX_OWNER_UID_LENGTH ||
+        record.ownerUid != record.ownerUid.trim()
+    ) invalidObservation()
+    if (record.createdAtMillis !in MIN_RECORD_TIME_MILLIS..MAX_RECORD_TIME_MILLIS) {
+        invalidObservation()
+    }
+    if (record.totalCount <= 0 || record.affectedCount !in 1..record.totalCount) {
+        invalidObservation()
+    }
+    if ((record.closedAtMillis == 0L) != record.closeReason.isBlank()) invalidObservation()
+    if (record.closedAtMillis != 0L) {
+        if (record.closedAtMillis < record.createdAtMillis) invalidObservation()
+        if (record.closeReason !in setOf("manual", "recovered")) invalidObservation()
+    }
+    validateInput(LivestockObservationInput(
+        record.requestId, record.tankId, record.livestockId, record.symptomKeysList,
+        record.onsetKey, record.otherObservation, record.note,
+        record.photoUrisList, record.affectedCount
+    ))
+}
+
+private fun validateStoredCheck(check: StoredLivestockCheck, record: StoredLivestockObservation) {
+    if (check.status !in setOf("increased", "same", "decreased", "recovered")) invalidCheck()
+    if (check.requestId.length !in 1..MAX_REQUEST_ID_LENGTH) invalidCheck()
+    if (check.affectedCount !in 1..record.totalCount) invalidCheck()
+    if (check.checkedAtMillis < record.createdAtMillis) invalidCheck()
+    if (check.note.length > MAX_NOTE_LENGTH || check.photoUri.length > MAX_URI_LENGTH) invalidCheck()
+}
+
+private fun invalidObservation(): Nothing =
+    throw StoreInvariantViolation("Invalid livestock observation.")
+
+private fun invalidCheck(): Nothing = throw StoreInvariantViolation("Invalid livestock check.")

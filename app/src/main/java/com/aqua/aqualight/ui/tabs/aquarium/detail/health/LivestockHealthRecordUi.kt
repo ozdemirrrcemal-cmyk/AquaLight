@@ -1,6 +1,15 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 
+import androidx.fragment.app.Fragment
+import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.health.LivestockObservationSnapshot
+import com.aqua.aqualight.base.BaseActivity
+
+internal fun Fragment.showLivestockHealthSaveFailure() {
+    (activity as? BaseActivity)?.showSnackBar(
+        getString(R.string.livestock_health_save_failed), BaseActivity.SnackType.ERROR
+    )
+}
 
 internal fun LivestockObservationSnapshot.toActiveUi(): ActiveLivestockFollowupUi =
     ActiveLivestockFollowupUi(

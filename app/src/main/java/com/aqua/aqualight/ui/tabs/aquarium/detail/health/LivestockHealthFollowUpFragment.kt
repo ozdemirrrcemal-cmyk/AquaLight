@@ -11,7 +11,6 @@ import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
 import com.aqua.aqualight.application.aquarium.health.LivestockObservationSnapshot
-import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentLivestockHealthFollowUpBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderPillTextAction
@@ -20,6 +19,7 @@ import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
+import java.io.IOException
 
 class LivestockHealthFollowUpFragment : Fragment(R.layout.fragment_livestock_health_follow_up) {
     private val args: LivestockHealthFollowUpFragmentArgs by navArgs()
@@ -123,11 +123,14 @@ class LivestockHealthFollowUpFragment : Fragment(R.layout.fragment_livestock_hea
                     LivestockHealthUiSessionState.CLOSE_REASON_MANUAL
                 )
                 findNavController().popBackStack(R.id.livestockHealthFragment, false)
-            } catch (error: Exception) {
-                if (error is CancellationException) throw error
-                (activity as? BaseActivity)?.showSnackBar(
-                    getString(R.string.livestock_health_save_failed), BaseActivity.SnackType.ERROR
-                )
+            } catch (error: CancellationException) {
+                throw error
+            } catch (_: IOException) {
+                showLivestockHealthSaveFailure()
+            } catch (_: IllegalArgumentException) {
+                showLivestockHealthSaveFailure()
+            } catch (_: IllegalStateException) {
+                showLivestockHealthSaveFailure()
             } finally {
                 isEnding = false
                 setFragmentGlobalLoading(false)

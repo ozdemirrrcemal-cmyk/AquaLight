@@ -4,13 +4,13 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
 import com.aqua.aqualight.application.aquarium.health.LivestockObservationInput
-import com.aqua.aqualight.base.BaseActivity
 import com.aqua.aqualight.databinding.FragmentLivestockHealthEvaluationBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
@@ -20,6 +20,7 @@ import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.LivestockCategories
 import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
+import java.io.IOException
 
 class LivestockHealthEvaluationFragment :
     Fragment(R.layout.fragment_livestock_health_evaluation) {
@@ -140,29 +141,12 @@ class LivestockHealthEvaluationFragment :
     private fun saveEvaluationAndReturn() {
         if (isSaving || isNavigating || currentLivestock == null) return
         val draft = findNavController().previousBackStackEntry?.savedStateHandle ?: return
-        if (draft.get<Long>(LivestockHealthObservationFragment.DRAFT_TANK_ID) != args.tankId ||
-            draft.get<Long>(LivestockHealthObservationFragment.DRAFT_LIVESTOCK_ID) != args.livestockId
-        ) return
-        val symptoms = draft.get<ArrayList<String>>(
-            LivestockHealthObservationFragment.DRAFT_SYMPTOMS
-        ).orEmpty()
-        if (symptoms.isEmpty() || symptoms.first() != args.symptomKey) return
-        val input = LivestockObservationInput(
-            requestId = draft.get<String>(
-                LivestockHealthObservationFragment.DRAFT_REQUEST_ID
-            ).orEmpty(),
-            tankId = args.tankId,
-            livestockId = args.livestockId,
-            symptomKeys = symptoms,
-            onsetKey = draft.get<String>(LivestockHealthObservationFragment.DRAFT_ONSET).orEmpty(),
-            otherObservation = draft.get<String>(LivestockHealthObservationFragment.DRAFT_OTHER).orEmpty(),
-            note = draft.get<String>(LivestockHealthObservationFragment.DRAFT_NOTE).orEmpty(),
-            photoUris = draft.get<ArrayList<String>>(
-                LivestockHealthObservationFragment.DRAFT_PHOTOS
-            ).orEmpty(),
-            affectedCount = draft.get<Int>(LivestockHealthObservationFragment.DRAFT_AFFECTED)
-                ?: args.affectedCount
-        )
+        draft.toObservationInput(
+            args.tankId, args.livestockId, args.symptomKey, args.affectedCount
+        )?.let { input -> persistDraft(draft, input) }
+    }
+
+    private fun persistDraft(draft: SavedStateHandle, input: LivestockObservationInput) {
         isSaving = true
         draft[LivestockHealthObservationFragment.DRAFT_SAVING] = true
         binding.btnViewFollowup.isEnabled = false
@@ -175,13 +159,17 @@ class LivestockHealthEvaluationFragment :
                 isNavigating = findNavController().popBackStack(
                     R.id.livestockHealthFragment, false
                 )
-            } catch (error: Exception) {
-                if (error is CancellationException) throw error
+            } catch (error: CancellationException) {
+                throw error
+            } catch (_: IOException) {
                 draft[LivestockHealthObservationFragment.DRAFT_SAVING] = false
-                (activity as? BaseActivity)?.showSnackBar(
-                    getString(R.string.livestock_health_save_failed),
-                    BaseActivity.SnackType.ERROR
-                )
+                showLivestockHealthSaveFailure()
+            } catch (_: IllegalArgumentException) {
+                draft[LivestockHealthObservationFragment.DRAFT_SAVING] = false
+                showLivestockHealthSaveFailure()
+            } catch (_: IllegalStateException) {
+                draft[LivestockHealthObservationFragment.DRAFT_SAVING] = false
+                showLivestockHealthSaveFailure()
             } finally {
                 setFragmentGlobalLoading(false)
                 isSaving = false
@@ -198,4 +186,31 @@ class LivestockHealthEvaluationFragment :
     private companion object {
         const val CHECK_COUNT = 4
     }
+}
+
+private fun SavedStateHandle.toObservationInput(
+    tankId: Long,
+    livestockId: Long,
+    symptomKey: String,
+    affectedCount: Int
+): LivestockObservationInput? {
+    val symptoms = get<ArrayList<String>>(LivestockHealthObservationFragment.DRAFT_SYMPTOMS)
+        .orEmpty()
+    val matchesSelection =
+        get<Long>(LivestockHealthObservationFragment.DRAFT_TANK_ID) == tankId &&
+            get<Long>(LivestockHealthObservationFragment.DRAFT_LIVESTOCK_ID) == livestockId &&
+            symptoms.firstOrNull() == symptomKey
+    return if (matchesSelection) LivestockObservationInput(
+        requestId = get<String>(LivestockHealthObservationFragment.DRAFT_REQUEST_ID).orEmpty(),
+        tankId = tankId,
+        livestockId = livestockId,
+        symptomKeys = symptoms,
+        onsetKey = get<String>(LivestockHealthObservationFragment.DRAFT_ONSET).orEmpty(),
+        otherObservation = get<String>(LivestockHealthObservationFragment.DRAFT_OTHER).orEmpty(),
+        note = get<String>(LivestockHealthObservationFragment.DRAFT_NOTE).orEmpty(),
+        photoUris = get<ArrayList<String>>(LivestockHealthObservationFragment.DRAFT_PHOTOS)
+            .orEmpty(),
+        affectedCount = get<Int>(LivestockHealthObservationFragment.DRAFT_AFFECTED)
+            ?: affectedCount
+    ) else null
 }
