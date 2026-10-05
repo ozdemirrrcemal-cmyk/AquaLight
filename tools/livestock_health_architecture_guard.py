@@ -15,6 +15,10 @@ ADAPTER = APP / "data/aquarium/health/DefaultLivestockHealthOperations.kt"
 DATA_STORE = APP / "data/aquarium/health/LivestockHealthDataStore.kt"
 MANAGER = APP / "data/aquarium/health/LivestockHealthDataStoreManager.kt"
 RULES = APP / "data/aquarium/health/LivestockHealthStoreRules.kt"
+EVALUATION_MAPPER = APP / "data/aquarium/health/LivestockHealthEvaluationMapper.kt"
+EVALUATION_RULES = APP / "data/aquarium/health/LivestockHealthEvaluationRules.kt"
+EVALUATION_MUTATION = APP / "data/aquarium/health/LivestockHealthEvaluationMutation.kt"
+OBSERVATION_CREATION = APP / "data/aquarium/health/LivestockHealthObservationCreation.kt"
 LEGACY_STORE = APP / "data/aquarium/health/LivestockHealthStore.kt"
 VIEW_MODEL = APP / "ui/tabs/aquarium/detail/health/LivestockHealthViewModel.kt"
 PHOTO_VIEWER = (
@@ -37,6 +41,19 @@ UI_TEXT = APP / "ui/tabs/aquarium/detail/health/LivestockHealthUiText.kt"
 UI_SESSION = APP / "ui/tabs/aquarium/detail/health/LivestockHealthUiSessionState.kt"
 RECORD_UI = APP / "ui/tabs/aquarium/detail/health/LivestockHealthRecordUi.kt"
 EVALUATION = APP / "ui/tabs/aquarium/detail/health/LivestockHealthEvaluationFragment.kt"
+EVALUATION_SUMMARY = (
+    APP / "ui/tabs/aquarium/detail/health/LivestockHealthEvaluationSummaryBinder.kt"
+)
+EVALUATION_SCREEN_BINDER = (
+    APP / "ui/tabs/aquarium/detail/health/LivestockHealthEvaluationScreenBinder.kt"
+)
+EVALUATION_REQUEST_FACTORY = (
+    APP / "ui/tabs/aquarium/detail/health/LivestockHealthEvaluationRequestFactory.kt"
+)
+EVALUATION_PERSISTENCE = (
+    APP / "ui/tabs/aquarium/detail/health/LivestockHealthEvaluationPersistence.kt"
+)
+NAVIGATION = ROOT / "app/src/main/res/navigation/nav_aquarium.xml"
 CHECK_LAYOUT = ROOT / "app/src/main/res/layout/content_sheet_livestock_health_check.xml"
 HISTORY_LAYOUT = ROOT / "app/src/main/res/layout/item_livestock_health_history.xml"
 FOLLOW_UP_LAYOUT = ROOT / "app/src/main/res/layout/fragment_livestock_health_follow_up.xml"
@@ -54,6 +71,10 @@ required = (
     DATA_STORE,
     MANAGER,
     RULES,
+    EVALUATION_MAPPER,
+    EVALUATION_RULES,
+    EVALUATION_MUTATION,
+    OBSERVATION_CREATION,
     VIEW_MODEL,
     PHOTO_VIEWER,
     AQUA_HEADER_CONFIG,
@@ -67,6 +88,11 @@ required = (
     UI_SESSION,
     RECORD_UI,
     EVALUATION,
+    EVALUATION_SUMMARY,
+    EVALUATION_SCREEN_BINDER,
+    EVALUATION_REQUEST_FACTORY,
+    EVALUATION_PERSISTENCE,
+    NAVIGATION,
     CHECK_LAYOUT,
     HISTORY_LAYOUT,
     FOLLOW_UP_LAYOUT,
@@ -106,11 +132,23 @@ if "val photoUri: String?" in application:
     errors.append(
         f"{APPLICATION.relative_to(ROOT)}: singular health-check photo contract is forbidden"
     )
+for token in (
+    "data class LivestockEvaluationInput",
+    "data class LivestockEvaluationSnapshot",
+    "val latestEvaluation: LivestockEvaluationSnapshot?",
+    "fun isEvaluationStale(",
+    "evaluation: LivestockEvaluationInput",
+    "suspend fun addEvaluation(",
+):
+    if token not in application:
+        errors.append(
+            f"{APPLICATION.relative_to(ROOT)}: evaluation application contract missing: {token}"
+        )
 
 schema = read(SCHEMA)
-if "const val LIVESTOCK_HEALTH_VERSION = 2" not in schema:
+if "const val LIVESTOCK_HEALTH_VERSION = 3" not in schema:
     errors.append(
-        f"{SCHEMA.relative_to(ROOT)}: livestock health schema must use hard-cutover version 2"
+        f"{SCHEMA.relative_to(ROOT)}: livestock health schema must use hard-cutover version 3"
     )
 
 proto = read(PROTO)
@@ -118,6 +156,13 @@ if "repeated string photo_uris = 5;" not in proto:
     errors.append(f"{PROTO.relative_to(ROOT)}: health checks must persist repeated photo_uris")
 if "string photo_uri = 5;" in proto:
     errors.append(f"{PROTO.relative_to(ROOT)}: singular health-check photo field is forbidden")
+for token in (
+    "repeated StoredLivestockEvaluation evaluations = 16;",
+    "message StoredLivestockEvaluation {",
+    "message StoredLivestockEvaluationWaterMeasurement {",
+):
+    if token not in proto:
+        errors.append(f"{PROTO.relative_to(ROOT)}: evaluation revision schema missing: {token}")
 
 for forbidden in (
     "import android.",
@@ -141,12 +186,23 @@ for token in (
     "private val tanks: AquariumTankDataStoreManager",
     "LivestockHealthDataStoreManager(",
     "removeObservations(",
-    "existing.photoUrisList == input.photoUris",
-    ".addAllPhotoUris(input.photoUris)",
+    "createOrReuseLivestockObservation(",
     "input.photoUris.forEach",
 ):
     if token not in manager:
         errors.append(f"{MANAGER.relative_to(ROOT)}: required injected-store contract missing: {token}")
+
+observation_creation = read(OBSERVATION_CREATION)
+for token in (
+    "LivestockEvaluationTrigger.INITIAL_OBSERVATION",
+    "requireObservationRetryMatches(",
+    ".addEvaluations(storedEvaluation)",
+    "existing.photoUrisList == input.photoUris",
+):
+    if token not in observation_creation:
+        errors.append(
+            f"{OBSERVATION_CREATION.relative_to(ROOT)}: atomic initial evaluation missing: {token}"
+        )
 for forbidden in (
     "private val tanks = AquariumTankDataStoreManager",
     "AquariumTankDataStoreManager(appContext)",
@@ -174,6 +230,40 @@ for token in (
         errors.append(f"{RULES.relative_to(ROOT)}: validation/mapping rule missing: {token}")
 if "android." in rules or "androidx." in rules:
     errors.append(f"{RULES.relative_to(ROOT)}: store rules must remain Android-free")
+if "evaluations = evaluationsList.map" not in rules:
+    errors.append(f"{RULES.relative_to(ROOT)}: evaluation snapshots are not mapped")
+
+evaluation_mapper = read(EVALUATION_MAPPER)
+for token in (
+    "buildStoredEvaluation(",
+    "StoredLivestockEvaluation.toSnapshot",
+    "matchesInput(",
+):
+    if token not in evaluation_mapper:
+        errors.append(
+            f"{EVALUATION_MAPPER.relative_to(ROOT)}: evaluation mapping missing: {token}"
+        )
+
+evaluation_rules = read(EVALUATION_RULES)
+for token in (
+    "validateStoredEvaluation(",
+    "validateEvaluationInput(",
+):
+    if token not in evaluation_rules:
+        errors.append(
+            f"{EVALUATION_RULES.relative_to(ROOT)}: evaluation validation missing: {token}"
+        )
+
+evaluation_mutation = read(EVALUATION_MUTATION)
+for token in (
+    "LivestockHealthDataStoreManager.addEvaluation",
+    "LivestockEvaluationTrigger.USER_REFRESH",
+    "appendNewEvaluation(",
+):
+    if token not in evaluation_mutation:
+        errors.append(
+            f"{EVALUATION_MUTATION.relative_to(ROOT)}: append-only evaluation mutation missing: {token}"
+        )
 
 photo_viewer = read(PHOTO_VIEWER)
 for token in (
@@ -292,6 +382,10 @@ for token in (
         errors.append(f"{HISTORY_LAYOUT.relative_to(ROOT)}: history UI contract missing: {token}")
 
 follow_up_layout = read(FOLLOW_UP_LAYOUT)
+if "@+id/cardEvaluation" not in follow_up_layout:
+    errors.append(
+        f"{FOLLOW_UP_LAYOUT.relative_to(ROOT)}: evaluation summary card is missing"
+    )
 for forbidden in (
     "@string/livestock_health_issue_surface",
     "@string/livestock_health_issue_first_seen",
@@ -330,8 +424,64 @@ for token in (
         )
 
 evaluation = read(EVALUATION)
-if "LivestockHealthUiText.observationLabel" not in evaluation:
-    errors.append(f"{EVALUATION.relative_to(ROOT)}: evaluation must use custom observation resolver")
+for token in (
+    "WaterAnalysisViewModel",
+    "renderEvaluationScreen(",
+    "saveLivestockEvaluation(",
+):
+    if token not in evaluation:
+        errors.append(f"{EVALUATION.relative_to(ROOT)}: evaluation flow missing: {token}")
+
+evaluation_persistence = read(EVALUATION_PERSISTENCE)
+for token in (
+    "healthViewModel.addEvaluation(",
+    "healthViewModel.create(",
+    "LivestockEvaluationSaveResult.FollowUpStarted",
+):
+    if token not in evaluation_persistence:
+        errors.append(
+            f"{EVALUATION_PERSISTENCE.relative_to(ROOT)}: evaluation persistence missing: {token}"
+        )
+
+evaluation_summary = read(EVALUATION_SUMMARY)
+for token in (
+    "record.isEvaluationStale(latestWaterAnalysis)",
+    "cardEvaluation.setOnClickListener",
+):
+    if token not in evaluation_summary:
+        errors.append(
+            f"{EVALUATION_SUMMARY.relative_to(ROOT)}: follow-up evaluation summary missing: {token}"
+        )
+
+evaluation_screen_binder = read(EVALUATION_SCREEN_BINDER)
+for token in (
+    "usedWaterAnalysis",
+    "latestWaterAnalysis",
+    "renderEvaluationAction",
+):
+    if token not in evaluation_screen_binder:
+        errors.append(
+            f"{EVALUATION_SCREEN_BINDER.relative_to(ROOT)}: evaluation screen state missing: {token}"
+        )
+
+evaluation_request_factory = read(EVALUATION_REQUEST_FACTORY)
+for token in (
+    "INITIAL_OBSERVATION",
+    "USER_REFRESH",
+):
+    if token not in evaluation_request_factory:
+        errors.append(
+            f"{EVALUATION_REQUEST_FACTORY.relative_to(ROOT)}: idempotent evaluation request missing: {token}"
+        )
+
+navigation = read(NAVIGATION)
+for token in (
+    "action_livestockHealthFollowUpFragment_to_livestockHealthEvaluationFragment",
+    'android:name="observationId"',
+    'app:popUpTo="@id/livestockHealthObservationFragment"',
+):
+    if token not in navigation:
+        errors.append(f"{NAVIGATION.relative_to(ROOT)}: evaluation navigation missing: {token}")
 
 view_model = read(VIEW_MODEL)
 if "LivestockHealthOperations" not in view_model:

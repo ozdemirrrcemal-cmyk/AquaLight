@@ -11,6 +11,8 @@ import com.aqua.aqualight.application.notifications.NotificationRenderer
 import com.aqua.aqualight.application.notifications.NotificationScheduler
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
 import com.aqua.aqualight.application.aquarium.health.LivestockCheckInput
+import com.aqua.aqualight.application.aquarium.health.LivestockEvaluationInput
+import com.aqua.aqualight.application.aquarium.health.LivestockEvaluationTrigger
 import com.aqua.aqualight.application.aquarium.health.LivestockObservationInput
 import com.aqua.aqualight.data.aquarium.health.LivestockHealthDataStoreManager
 import com.aqua.aqualight.data.media.AppMediaRecoveryManager
@@ -144,7 +146,7 @@ class LivestockPhotoIsolationInstrumentedTest {
             val removedCheckPhotoOne = pending(owner)
             val removedCheckPhotoTwo = pending(owner)
             val retainedPhoto = pending(owner)
-            val removedId = health.create(observation(tank, 11, removedPhoto))
+            val removedId = health.create(observation(tank, 11, removedPhoto), evaluation())
             health.addCheck(tank, removedId, LivestockCheckInput(
                 requestId = UUID.randomUUID().toString(),
                 status = "same", affectedCount = 1,
@@ -152,7 +154,7 @@ class LivestockPhotoIsolationInstrumentedTest {
                 note = "",
                 photoUris = listOf(removedCheckPhotoOne, removedCheckPhotoTwo)
             ))
-            health.create(observation(tank, 12, retainedPhoto))
+            health.create(observation(tank, 12, retainedPhoto), evaluation())
             assertTrue(AppMediaStorage.isAppOwned(context, removedCheckPhotoOne))
             assertTrue(AppMediaStorage.isAppOwned(context, removedCheckPhotoTwo))
 
@@ -179,13 +181,19 @@ class LivestockPhotoIsolationInstrumentedTest {
             affectedCount = 1
         )
 
+    private fun evaluation() = LivestockEvaluationInput(
+        requestId = UUID.randomUUID().toString(),
+        trigger = LivestockEvaluationTrigger.INITIAL_OBSERVATION,
+        waterAnalysis = null
+    )
+
     @Test
     fun recoveryRemovesOrphanHealthAfterInterruptedLivestockDeletion() = runBlocking {
         withTank { owner, tank ->
             operations().saveLivestockWithPhoto(tank, item(11), owner, true, false)
             val health = LivestockHealthDataStoreManager(context, store)
             val photo = pending(owner)
-            health.create(observation(tank, 11, photo))
+            health.create(observation(tank, 11, photo), evaluation())
 
             store.removeLivestockFromTank(tank, 11)
             assertEquals(1, health.observationsForTank(tank).first().size)
@@ -209,8 +217,8 @@ class LivestockPhotoIsolationInstrumentedTest {
                 operation.saveLivestockWithPhoto(retainedTank, item(12), owner, true, false)
                 val removedPhoto = pending(owner)
                 val retainedPhoto = pending(owner)
-                health.create(observation(removedTank, 11, removedPhoto))
-                health.create(observation(retainedTank, 12, retainedPhoto))
+                health.create(observation(removedTank, 11, removedPhoto), evaluation())
+                health.create(observation(retainedTank, 12, retainedPhoto), evaluation())
 
                 store.deleteTanks(listOf(removedTank))
                 assertEquals(1, health.observationsForTank(removedTank).first().size)

@@ -116,6 +116,98 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/aqua_size_18"
+                android:text="@string/livestock_health_evaluation_section_title" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardEvaluation"
+                style="@style/Widget.Aqua.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_10"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="@dimen/aqua_size_76"
+                    android:padding="@dimen/aqua_size_12">
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/evaluationIconFrame"
+                        style="@style/Widget.Aqua.Card.IconAccent"
+                        android:layout_width="@dimen/aqua_size_40"
+                        android:layout_height="@dimen/aqua_size_40"
+                        app:cardCornerRadius="@dimen/aqua_size_12"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <ImageView
+                            android:layout_width="@dimen/aqua_size_24"
+                            android:layout_height="@dimen/aqua_size_24"
+                            android:layout_gravity="center"
+                            android:contentDescription="@null"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/ic_livestock_sparkle_24"
+                            app:tint="@color/aqua_button_blue" />
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <TextView
+                        android:id="@+id/tvEvaluationMeta"
+                        android:textAppearance="@style/TextAppearance.Aqua.Card.PrimaryCaptionBold"
+                        android:layout_width="@dimen/aqua_size_0"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/aqua_size_10"
+                        android:includeFontPadding="false"
+                        app:layout_constraintEnd_toStartOf="@id/tvEvaluationState"
+                        app:layout_constraintStart_toEndOf="@id/evaluationIconFrame"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <TextView
+                        android:id="@+id/tvEvaluationState"
+                        android:textAppearance="@style/TextAppearance.Aqua.Status.SuccessMicroBold"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:includeFontPadding="false"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <TextView
+                        android:id="@+id/tvEvaluationBody"
+                        android:textAppearance="@style/TextAppearance.Aqua.Content.MutedMicro"
+                        android:layout_width="@dimen/aqua_size_0"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/aqua_size_10"
+                        android:layout_marginTop="@dimen/aqua_size_4"
+                        android:includeFontPadding="false"
+                        android:maxLines="2"
+                        app:layout_constraintEnd_toStartOf="@id/ivEvaluationChevron"
+                        app:layout_constraintStart_toEndOf="@id/evaluationIconFrame"
+                        app:layout_constraintTop_toBottomOf="@id/tvEvaluationMeta" />
+
+                    <ImageView
+                        android:id="@+id/ivEvaluationChevron"
+                        android:layout_width="@dimen/aqua_size_20"
+                        android:layout_height="@dimen/aqua_size_20"
+                        android:contentDescription="@null"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_tank_health_chevron_right_24"
+                        app:layout_constraintBottom_toBottomOf="@id/tvEvaluationBody"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="@id/tvEvaluationBody"
+                        app:tint="@color/aqua_content_secondary" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView android:textAppearance="@style/TextAppearance.Aqua.Card.PrimaryBodyBold"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/aqua_size_18"
                 android:text="@string/livestock_health_last_status_title" />
 
             <TextView android:textAppearance="@style/TextAppearance.Aqua.Content.MutedMicro"

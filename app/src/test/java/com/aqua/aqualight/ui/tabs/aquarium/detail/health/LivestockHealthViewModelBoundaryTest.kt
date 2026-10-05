@@ -3,6 +3,8 @@ package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.Observer
 import com.aqua.aqualight.application.aquarium.health.LivestockCheckInput
+import com.aqua.aqualight.application.aquarium.health.LivestockEvaluationInput
+import com.aqua.aqualight.application.aquarium.health.LivestockEvaluationTrigger
 import com.aqua.aqualight.application.aquarium.health.LivestockHealthOperations
 import com.aqua.aqualight.application.aquarium.health.LivestockObservationInput
 import com.aqua.aqualight.application.aquarium.health.LivestockObservationSnapshot
@@ -63,6 +65,15 @@ class LivestockHealthViewModelBoundaryTest {
             photoUris = listOf("content://photo"),
             affectedCount = 1
         )
+        val evaluation = LivestockEvaluationInput(
+            requestId = "evaluation-request",
+            trigger = LivestockEvaluationTrigger.INITIAL_OBSERVATION,
+            waterAnalysis = null
+        )
+        val refresh = evaluation.copy(
+            requestId = "evaluation-refresh",
+            trigger = LivestockEvaluationTrigger.USER_REFRESH
+        )
         val check = LivestockCheckInput(
             requestId = "check-request",
             status = "same",
@@ -72,18 +83,21 @@ class LivestockHealthViewModelBoundaryTest {
             photoUris = emptyList()
         )
 
-        assertEquals(91L, viewModel.create(observation))
+        assertEquals(91L, viewModel.create(observation, evaluation))
+        viewModel.addEvaluation(42L, 91L, refresh)
         viewModel.addCheck(42L, 91L, check)
         viewModel.close(42L, 91L, "manual")
 
-        assertEquals(observation, operations.created)
+        assertEquals(observation to evaluation, operations.created)
+        assertEquals(Triple(42L, 91L, refresh), operations.evaluated)
         assertEquals(Triple(42L, 91L, check), operations.checked)
         assertEquals(Triple(42L, 91L, "manual"), operations.closed)
     }
 
     private class FakeLivestockHealthOperations : LivestockHealthOperations {
         var observedTankId: Long? = null
-        var created: LivestockObservationInput? = null
+        var created: Pair<LivestockObservationInput, LivestockEvaluationInput>? = null
+        var evaluated: Triple<Long, Long, LivestockEvaluationInput>? = null
         var checked: Triple<Long, Long, LivestockCheckInput>? = null
         var closed: Triple<Long, Long, String>? = null
 
@@ -94,9 +108,20 @@ class LivestockHealthViewModelBoundaryTest {
             return flowOf(emptyList())
         }
 
-        override suspend fun createObservation(input: LivestockObservationInput): Long {
-            created = input
+        override suspend fun createObservation(
+            input: LivestockObservationInput,
+            evaluation: LivestockEvaluationInput
+        ): Long {
+            created = input to evaluation
             return 91L
+        }
+
+        override suspend fun addEvaluation(
+            tankId: Long,
+            observationId: Long,
+            input: LivestockEvaluationInput
+        ) {
+            evaluated = Triple(tankId, observationId, input)
         }
 
         override suspend fun addCheck(

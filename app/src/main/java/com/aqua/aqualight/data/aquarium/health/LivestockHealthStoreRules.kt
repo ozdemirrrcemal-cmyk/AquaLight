@@ -23,6 +23,9 @@ internal fun StoredLivestockObservation.toSnapshot(): LivestockObservationSnapsh
                 checkedAtMillis = it.checkedAtMillis, note = it.note,
                 photoUris = it.photoUrisList
             )
+        },
+        evaluations = evaluationsList.map { evaluation ->
+            evaluation.toSnapshot(tankId)
         }
     )
 
@@ -80,7 +83,20 @@ internal fun validateLivestockHealthStore(store: LivestockHealthStore): Livestoc
         val checkRequestIds = mutableSetOf<String>()
         record.checksList.forEach { check ->
             validateStoredCheck(check, record)
-            if (!checkRequestIds.add(check.requestId)) invalidStoredHealthRecord(INVALID_CHECK_MESSAGE)
+            if (!checkRequestIds.add(check.requestId)) {
+                invalidStoredHealthRecord(INVALID_CHECK_MESSAGE)
+            }
+        }
+        val evaluationIds = mutableSetOf<Long>()
+        val evaluationRequestIds = mutableSetOf<String>()
+        record.evaluationsList.forEach { evaluation ->
+            validateStoredEvaluation(record, evaluation)
+            if (!evaluationIds.add(evaluation.id)) {
+                invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
+            }
+            if (!evaluationRequestIds.add(evaluation.requestId)) {
+                invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
+            }
         }
     }
     return store
@@ -97,6 +113,18 @@ private fun validateStoredObservation(record: StoredLivestockObservation) {
         invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
     }
     if (record.totalCount <= 0 || record.affectedCount !in 1..record.totalCount) {
+        invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
+    }
+    if (record.evaluationsCount == 0) {
+        invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
+    }
+    val initialEvaluation = record.evaluationsList.minByOrNull {
+        evaluation -> evaluation.evaluatedAtMillis
+    } ?: invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
+    if (
+        initialEvaluation.trigger != "INITIAL_OBSERVATION" ||
+        initialEvaluation.basedOnCheckCount != 0
+    ) {
         invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
     }
     if ((record.closedAtMillis == 0L) != record.closeReason.isBlank()) {

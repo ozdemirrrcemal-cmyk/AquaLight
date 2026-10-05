@@ -146,6 +146,21 @@
     <string name="livestock_health_save_evaluate">Evaluate observation</string>
 
     <string name="livestock_health_evaluation_title">Evaluation</string>
+    <string name="livestock_health_evaluation_section_title">Evaluation</string>
+    <string name="livestock_health_evaluation_last_format">Last evaluation · %1$s</string>
+    <string name="livestock_health_evaluation_state_current">Current</string>
+    <string name="livestock_health_evaluation_state_recorded">Recorded</string>
+    <string name="livestock_health_evaluation_state_stale">New data available</string>
+    <string name="livestock_health_evaluation_body_current">The observation and tank data used by this evaluation are still current.</string>
+    <string name="livestock_health_evaluation_body_recorded">This evaluation is preserved with the data that was used before the follow-up was closed.</string>
+    <string name="livestock_health_evaluation_body_stale">A new check or water analysis was recorded after the last evaluation.</string>
+    <string name="livestock_health_evaluation_open_description">Open evaluation</string>
+    <string name="livestock_health_evaluation_start_followup">Start follow-up</string>
+    <string name="livestock_health_evaluation_refresh">Re-evaluate</string>
+    <string name="livestock_health_evaluation_return_to_followup">Return to follow-up</string>
+    <string name="livestock_health_evaluation_water_used_format">Water analysis used · %1$s</string>
+    <string name="livestock_health_evaluation_water_current_format">Current water analysis · %1$s</string>
+    <string name="livestock_health_evaluation_no_water_analysis">No water analysis is linked to this evaluation</string>
     <string name="livestock_health_change_control_title">Change to check</string>
     <plurals name="livestock_health_evaluation_summary_format">
         <item quantity="one">%1$s · %2$d / %3$d livestock · %4$s</item>

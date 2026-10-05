@@ -140,6 +140,50 @@ class LivestockHealthStoreTest {
             .setSchemaVersion(CommercialStoreSchema.LIVESTOCK_HEALTH_VERSION)
             .addAllObservations(records.asList()).build()
 
+    @Test
+    fun evaluationRoundTripPreservesWaterAnalysisSnapshot() {
+        val evaluation = initialEvaluation().toBuilder()
+            .setEvaluatedAtMillis(1_800_000_000_300)
+            .setHasWaterAnalysis(true)
+            .setWaterAnalysisId(44L)
+            .setWaterAnalysisMeasuredAtMillis(1_800_000_000_100)
+            .setWaterAnalysisCreatedAtMillis(1_800_000_000_200)
+            .setHasTemperature(true)
+            .setTemperatureCelsius(26.5)
+            .setTemperatureSource("MANUAL")
+            .addWaterMeasurements(
+                StoredLivestockEvaluationWaterMeasurement.newBuilder()
+                    .setParameter("PH")
+                    .setValue(7.2)
+                    .setMethod("MANUAL")
+                    .setBasis("PH")
+                    .setUnit("NONE")
+                    .setHasCanonicalValue(true)
+                    .setCanonicalValue(7.2)
+                    .setCanonicalBasis("PH")
+                    .setCanonicalUnit("NONE")
+                    .build()
+            )
+            .build()
+        val restored = LivestockHealthStore.parseFrom(
+            store(record().toBuilder().setEvaluations(0, evaluation).build()).toByteArray()
+        )
+        val snapshot = validateLivestockHealthStore(restored)
+            .getObservations(0)
+            .toSnapshot()
+            .evaluations
+            .single()
+
+        assertEquals(44L, snapshot.waterAnalysis?.id)
+        assertEquals(26.5, snapshot.waterAnalysis?.temperatureCelsius)
+        assertEquals(7.2, snapshot.waterAnalysis?.measurements?.single()?.canonicalValue)
+    }
+
+    private fun store(vararg records: StoredLivestockObservation): LivestockHealthStore =
+        LivestockHealthStore.newBuilder()
+            .setSchemaVersion(CommercialStoreSchema.LIVESTOCK_HEALTH_VERSION)
+            .addAllObservations(records.asList()).build()
+
     private fun record(): StoredLivestockObservation =
         StoredLivestockObservation.newBuilder()
             .setId(9).setOwnerUid("owner-a").setTankId(10).setLivestockId(11)
@@ -147,5 +191,17 @@ class LivestockHealthStoreTest {
             .addSymptomKeys("surface").addSymptomKeys("appetite")
             .setOnsetKey("onset_today").setAffectedCount(1).setTotalCount(4)
             .setCreatedAtMillis(1_800_000_000_000)
+            .addEvaluations(initialEvaluation())
+            .build()
+
+    private fun initialEvaluation(): StoredLivestockEvaluation =
+        StoredLivestockEvaluation.newBuilder()
+            .setId(90L)
+            .setRequestId("evaluation-a")
+            .setTrigger("INITIAL_OBSERVATION")
+            .setEvaluatedAtMillis(1_800_000_000_000)
+            .setAffectedCount(1)
+            .setBasedOnCheckCount(0)
+            .setBasedOnLatestCheckAtMillis(0L)
             .build()
 }

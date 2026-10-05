@@ -11,12 +11,14 @@ import androidx.navigation.fragment.navArgs
 import com.aqua.aqualight.R
 import com.aqua.aqualight.application.aquarium.AquariumLivestock
 import com.aqua.aqualight.application.aquarium.health.LivestockObservationSnapshot
+import com.aqua.aqualight.application.aquarium.health.WaterAnalysisSnapshot
 import com.aqua.aqualight.databinding.FragmentLivestockHealthFollowUpBinding
 import com.aqua.aqualight.ui.common.header.AquaHeaderConfig
 import com.aqua.aqualight.ui.common.header.AquaHeaderPillTextAction
 import com.aqua.aqualight.ui.common.header.setupAquaHeader
 import com.aqua.aqualight.ui.common.loading.setFragmentGlobalLoading
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
+import com.aqua.aqualight.ui.tabs.aquarium.navigation.navigateSafelyFrom
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import java.io.IOException
@@ -25,11 +27,13 @@ class LivestockHealthFollowUpFragment : Fragment(R.layout.fragment_livestock_hea
     private val args: LivestockHealthFollowUpFragmentArgs by navArgs()
     private val aquariumTankViewModel: AquariumTankViewModel by activityViewModels()
     private val healthViewModel: LivestockHealthViewModel by activityViewModels()
+    private val waterAnalysisViewModel: WaterAnalysisViewModel by activityViewModels()
 
     private var _binding: FragmentLivestockHealthFollowUpBinding? = null
     private val binding get() = _binding!!
     private var currentLivestock: AquariumLivestock? = null
     private var currentRecord: LivestockObservationSnapshot? = null
+    private var latestWaterAnalysis: WaterAnalysisSnapshot? = null
     private var renderer: LivestockHealthFollowUpRenderer? = null
     private var isEnding = false
 
@@ -98,6 +102,10 @@ class LivestockHealthFollowUpFragment : Fragment(R.layout.fragment_livestock_hea
                 it.livestockId == args.livestockId }
             render()
         }
+        waterAnalysisViewModel.analysesForTank(args.tankId).observe(viewLifecycleOwner) { analyses ->
+            latestWaterAnalysis = analyses.firstOrNull()
+            render()
+        }
     }
 
     private fun render() {
@@ -115,6 +123,23 @@ class LivestockHealthFollowUpFragment : Fragment(R.layout.fragment_livestock_hea
         renderer?.renderStatus(record.checks.maxByOrNull { it.checkedAtMillis }?.status
             ?: LivestockHealthCheckBottomSheet.STATUS_SAME)
         renderer?.renderHistory(record.toHistoryEntries(this))
+        binding.renderEvaluationSummary(
+            fragment = this,
+            record = record,
+            latestWaterAnalysis = latestWaterAnalysis
+        ) {
+            findNavController().navigateSafelyFrom(
+                sourceDestinationId = R.id.livestockHealthFollowUpFragment,
+                directions = LivestockHealthFollowUpFragmentDirections
+                    .actionLivestockHealthFollowUpFragmentToLivestockHealthEvaluationFragment(
+                        tankId = args.tankId,
+                        livestockId = record.livestockId,
+                        symptomKey = record.symptomKeys.first(),
+                        affectedCount = record.currentAffectedCount,
+                        observationId = record.id
+                    )
+            )
+        }
         _binding?.btnNewCheck?.isEnabled = !args.readOnly && record.closedAtMillis == null
     }
 

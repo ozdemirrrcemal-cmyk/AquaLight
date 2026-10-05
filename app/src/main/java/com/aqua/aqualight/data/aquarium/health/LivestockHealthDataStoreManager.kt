@@ -2,6 +2,7 @@ package com.aqua.aqualight.data.aquarium.health
 
 import android.content.Context
 import com.aqua.aqualight.application.aquarium.health.LivestockCheckInput
+import com.aqua.aqualight.application.aquarium.health.LivestockEvaluationInput
 import com.aqua.aqualight.application.aquarium.health.LivestockObservationInput
 import com.aqua.aqualight.application.aquarium.health.LivestockObservationSnapshot
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
@@ -54,73 +55,38 @@ internal class LivestockHealthDataStoreManager(
         }
     }
 
-    suspend fun create(input: LivestockObservationInput): Long =
-        withContext(NonCancellable + Dispatchers.IO) {
-            validateInput(input)
-            val ownerUid = UserDataScope.requireCurrentUid()
-            val livestock = tanks.tanksSnapshotForOwner(ownerUid)
-                .firstOrNull { it.id == input.tankId }
-                ?.livestock?.firstOrNull { it.id == input.livestockId }
-            var id = 0L
-            appContext.livestockHealthDataStore.updateData { current ->
-                checkOwner(ownerUid)
-                val existing = current.observationsList.firstOrNull {
-                    it.ownerUid == ownerUid && it.requestId == input.requestId
-                }
-                if (existing != null) {
-                    require(existing.tankId == input.tankId &&
-                        existing.livestockId == input.livestockId &&
-                        existing.symptomKeysList == input.symptomKeys &&
-                        existing.onsetKey == input.onsetKey &&
-                        existing.affectedCount == input.affectedCount &&
-                        existing.otherObservation == input.otherObservation.trim() &&
-                        existing.note == input.note.trim() &&
-                        existing.photoUrisList == input.photoUris
-                    ) { "Observation request was already used for different data." }
-                    id = existing.id
-                    return@updateData current
-                }
-                val selected = livestock
-                    ?: throw StoreInvariantViolation("Selected livestock no longer exists in this tank.")
-                require(input.affectedCount <= selected.quantity)
-                require(input.photoUris.all {
-                    AppMediaStorage.pendingMediaOwner(
-                        appContext, it, AppMediaScope.LIVESTOCK
-                    ) == ownerUid
-                }) { "Observation photos must belong to the active owner." }
-                val now = System.currentTimeMillis()
-                val maxId = current.observationsList.maxOfOrNull { it.id } ?: 0L
-                check(maxId < Long.MAX_VALUE)
-                id = maxOf(now, maxId + 1)
-                validateLivestockHealthStore(current.toBuilder().addObservations(
-                    StoredLivestockObservation.newBuilder()
-                        .setId(id)
-                        .setRequestId(input.requestId)
-                        .setOwnerUid(ownerUid)
-                        .setTankId(input.tankId)
-                        .setLivestockId(input.livestockId)
-                        .addAllSymptomKeys(input.symptomKeys)
-                        .setOnsetKey(input.onsetKey)
-                        .setOtherObservation(input.otherObservation.trim())
-                        .setNote(input.note.trim())
-                        .addAllPhotoUris(input.photoUris)
-                        .setAffectedCount(input.affectedCount)
-                        .setTotalCount(selected.quantity)
-                        .setCreatedAtMillis(now)
-                        .build()
-                ).build())
-            }
-            input.photoUris.forEach { AppMediaStorage.commitPendingMedia(appContext, it) }
-            ensureCreatedLivestockPresent(ownerUid, input, id)
-            id
+    suspend fun create(
+        input: LivestockObservationInput,
+        evaluation: LivestockEvaluationInput
+    ): Long = withContext(NonCancellable + Dispatchers.IO) {
+        validateInput(input)
+        val ownerUid = UserDataScope.requireCurrentUid()
+        val selectedQuantity = tanks.tanksSnapshotForOwner(ownerUid)
+            .firstOrNull { tank -> tank.id == input.tankId }
+            ?.livestock
+            ?.firstOrNull { livestock -> livestock.id == input.livestockId }
+            ?.quantity
+        val id = createOrReuseLivestockObservation(
+            appContext = appContext,
+            ownerUid = ownerUid,
+            selectedQuantity = selectedQuantity,
+            input = input,
+            evaluation = evaluation,
+            requireOwner = { checkOwner(ownerUid) }
+        )
+        input.photoUris.forEach { uri ->
+            AppMediaStorage.commitPendingMedia(appContext, uri)
         }
+        ensureCreatedLivestockPresent(ownerUid, input, id)
+        id
+    }
 
     suspend fun addCheck(tankId: Long, observationId: Long, input: LivestockCheckInput) =
         withContext(NonCancellable + Dispatchers.IO) {
             require(tankId > 0 && observationId > 0)
             validateCheck(input)
             val ownerUid = UserDataScope.requireCurrentUid()
-            mutate(tankId, observationId) { record ->
+            mutateRecord(tankId, observationId) { record ->
                 val existing = record.checksList.firstOrNull { it.requestId == input.requestId }
                 if (existing != null) {
                     require(existing.status == input.status &&
@@ -129,7 +95,7 @@ internal class LivestockHealthDataStoreManager(
                         existing.note == input.note.trim() &&
                         existing.photoUrisList == input.photoUris
                     ) { "Check request was already used for different data." }
-                    return@mutate record
+                    return@mutateRecord record
                 }
                 require(record.closedAtMillis == 0L) { "Follow-up already closed." }
                 require(input.photoUris.all { uri ->
@@ -166,8 +132,8 @@ internal class LivestockHealthDataStoreManager(
 
     suspend fun close(tankId: Long, observationId: Long, reason: String) {
         require(reason == "manual" || reason == "recovered")
-        mutate(tankId, observationId) { record ->
-            if (record.closedAtMillis != 0L) return@mutate record
+        mutateRecord(tankId, observationId) { record ->
+            if (record.closedAtMillis != 0L) return@mutateRecord record
             record.toBuilder()
                 .setClosedAtMillis(maxOf(
                     System.currentTimeMillis(),
@@ -216,7 +182,7 @@ internal class LivestockHealthDataStoreManager(
         removeObservations(appContext, ownerUid, false) { records -> records }
     }
 
-    private suspend fun mutate(
+    internal suspend fun mutateRecord(
         tankId: Long,
         observationId: Long,
         update: (StoredLivestockObservation) -> StoredLivestockObservation

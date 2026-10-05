@@ -32,7 +32,9 @@
             app:enterAnim="@anim/nav_slide_in_right"
             app:exitAnim="@anim/nav_slide_out_left"
             app:popEnterAnim="@anim/nav_slide_in_left"
-            app:popExitAnim="@anim/nav_slide_out_right">
+            app:popExitAnim="@anim/nav_slide_out_right"
+            app:popUpTo="@id/livestockHealthObservationFragment"
+            app:popUpToInclusive="true">
             <argument
                 android:name="tankId"
                 app:argType="long" />
@@ -336,13 +338,19 @@
         <argument
             android:name="affectedCount"
             app:argType="integer" />
+        <argument
+            android:name="observationId"
+            android:defaultValue="0"
+            app:argType="long" />
         <action
             android:id="@+id/action_livestockHealthEvaluationFragment_to_livestockHealthFollowUpFragment"
             app:destination="@id/livestockHealthFollowUpFragment"
             app:enterAnim="@anim/nav_slide_in_right"
             app:exitAnim="@anim/nav_slide_out_left"
             app:popEnterAnim="@anim/nav_slide_in_left"
-            app:popExitAnim="@anim/nav_slide_out_right">
+            app:popExitAnim="@anim/nav_slide_out_right"
+            app:popUpTo="@id/livestockHealthObservationFragment"
+            app:popUpToInclusive="true">
             <argument
                 android:name="tankId"
                 app:argType="long" />
@@ -409,6 +417,29 @@
             android:name="closeReason"
             android:defaultValue=""
             app:argType="string" />
+        <action
+            android:id="@+id/action_livestockHealthFollowUpFragment_to_livestockHealthEvaluationFragment"
+            app:destination="@id/livestockHealthEvaluationFragment"
+            app:enterAnim="@anim/nav_slide_in_right"
+            app:exitAnim="@anim/nav_slide_out_left"
+            app:popEnterAnim="@anim/nav_slide_in_left"
+            app:popExitAnim="@anim/nav_slide_out_right">
+            <argument
+                android:name="tankId"
+                app:argType="long" />
+            <argument
+                android:name="livestockId"
+                app:argType="long" />
+            <argument
+                android:name="symptomKey"
+                app:argType="string" />
+            <argument
+                android:name="affectedCount"
+                app:argType="integer" />
+            <argument
+                android:name="observationId"
+                app:argType="long" />
+        </action>
     </fragment>
 
     <fragment

@@ -24,6 +24,7 @@ message StoredLivestockObservation {
   string close_reason = 13;
   repeated StoredLivestockCheck checks = 14;
   string request_id = 15;
+  repeated StoredLivestockEvaluation evaluations = 16;
   string owner_uid = 100;
 }
 
@@ -34,4 +35,35 @@ message StoredLivestockCheck {
   string note = 4;
   repeated string photo_uris = 5;
   string request_id = 6;
+}
+
+message StoredLivestockEvaluation {
+  int64 id = 1;
+  string request_id = 2;
+  string trigger = 3;
+  int64 evaluated_at_millis = 4;
+  int32 affected_count = 5;
+  int32 based_on_check_count = 6;
+  int64 based_on_latest_check_at_millis = 7;
+  bool has_water_analysis = 8;
+  int64 water_analysis_id = 9;
+  int64 water_analysis_measured_at_millis = 10;
+  int64 water_analysis_created_at_millis = 11;
+  bool has_temperature = 12;
+  double temperature_celsius = 13;
+  string temperature_source = 14;
+  repeated StoredLivestockEvaluationWaterMeasurement water_measurements = 15;
+}
+
+message StoredLivestockEvaluationWaterMeasurement {
+  string parameter = 1;
+  double value = 2;
+  string method = 3;
+  string test_kit_id = 4;
+  string basis = 5;
+  string unit = 6;
+  bool has_canonical_value = 7;
+  double canonical_value = 8;
+  string canonical_basis = 9;
+  string canonical_unit = 10;
 }

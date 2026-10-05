@@ -146,6 +146,21 @@
     <string name="livestock_health_save_evaluate">Gözlemi Değerlendir</string>
 
     <string name="livestock_health_evaluation_title">Değerlendirme</string>
+    <string name="livestock_health_evaluation_section_title">Değerlendirme</string>
+    <string name="livestock_health_evaluation_last_format">Son değerlendirme · %1$s</string>
+    <string name="livestock_health_evaluation_state_current">Güncel</string>
+    <string name="livestock_health_evaluation_state_recorded">Kayıtlı</string>
+    <string name="livestock_health_evaluation_state_stale">Yeni veri var</string>
+    <string name="livestock_health_evaluation_body_current">Gözlem ve kullanılan tank verileri bu değerlendirmeyle eşleşiyor.</string>
+    <string name="livestock_health_evaluation_body_recorded">Bu değerlendirme, takip kapanmadan önce kullanılan verilerle birlikte korunuyor.</string>
+    <string name="livestock_health_evaluation_body_stale">Son değerlendirmeden sonra yeni kontrol veya su analizi kaydedildi.</string>
+    <string name="livestock_health_evaluation_open_description">Değerlendirmeyi aç</string>
+    <string name="livestock_health_evaluation_start_followup">Takibi başlat</string>
+    <string name="livestock_health_evaluation_refresh">Yeniden değerlendir</string>
+    <string name="livestock_health_evaluation_return_to_followup">Takibe dön</string>
+    <string name="livestock_health_evaluation_water_used_format">Kullanılan su analizi · %1$s</string>
+    <string name="livestock_health_evaluation_water_current_format">Güncel su analizi · %1$s</string>
+    <string name="livestock_health_evaluation_no_water_analysis">Değerlendirmeye bağlı su analizi yok</string>
     <string name="livestock_health_change_control_title">Değişimi kontrol et</string>
     <plurals name="livestock_health_evaluation_summary_format">
         <item quantity="one">%1$s · %2$d / %3$d canlı · %4$s</item>
