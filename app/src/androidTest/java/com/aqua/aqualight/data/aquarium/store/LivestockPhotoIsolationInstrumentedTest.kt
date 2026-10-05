@@ -182,6 +182,12 @@ class LivestockPhotoIsolationInstrumentedTest {
             ),
             deleteWaterAnalysesForTank = {
                 error("Photo mutation unexpectedly deleted water analyses")
+            },
+            deleteLivestockHealthForTank = {
+                error("Photo mutation unexpectedly deleted livestock health records")
+            },
+            deleteLivestockHealthForLivestock = { _, _ ->
+                error("Photo mutation unexpectedly deleted livestock health records")
             }
         )
     )
