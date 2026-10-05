@@ -142,8 +142,15 @@ class LivestockHealthObservationFragment : TankRecordPhotoFragment(
     }
 
     private fun observeTank() {
-        aquariumTankViewModel.tanks.observe(viewLifecycleOwner) {
-            tanks ->
+        aquariumTankViewModel.tanks.observe(viewLifecycleOwner) { tanks ->
+            val discardPhotos = {
+                discardLivestockObservationPhotos(
+                    observationPhotoUris,
+                    _binding,
+                    viewLifecycleOwner.lifecycleScope,
+                    mediaFlow::rollbackPendingMedia
+                )
+            }
             currentLivestock = tanks
                 .firstOrNull { tank -> tank.id == args.tankId }
                 ?.livestock
@@ -158,14 +165,7 @@ class LivestockHealthObservationFragment : TankRecordPhotoFragment(
             }
             if (selectedLivestockId != previousLivestockId) {
                 selectedSymptoms.clear()
-                if (previousLivestockId > 0L) {
-                    discardLivestockObservationPhotos(
-                        uris = observationPhotoUris,
-                        binding = _binding,
-                        scope = viewLifecycleOwner.lifecycleScope,
-                        rollbackPendingMedia = mediaFlow::rollbackPendingMedia
-                    )
-                }
+                if (previousLivestockId > 0L) discardPhotos()
             }
 
             binding.renderObservationLivestockSelectors(
@@ -176,12 +176,7 @@ class LivestockHealthObservationFragment : TankRecordPhotoFragment(
             ) { selected ->
                 if (selectedLivestockId != selected.id) {
                     selectedSymptoms.clear()
-                    discardLivestockObservationPhotos(
-                        uris = observationPhotoUris,
-                        binding = _binding,
-                        scope = viewLifecycleOwner.lifecycleScope,
-                        rollbackPendingMedia = mediaFlow::rollbackPendingMedia
-                    )
+                    discardPhotos()
                 }
                 selectedLivestockId = selected.id
                 affectedCount = affectedCount.coerceAtMost(
