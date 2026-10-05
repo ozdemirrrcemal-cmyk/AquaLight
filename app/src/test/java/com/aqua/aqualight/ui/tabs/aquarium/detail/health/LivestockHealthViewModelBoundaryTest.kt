@@ -1,29 +1,55 @@
 package com.aqua.aqualight.ui.tabs.aquarium.detail.health
 
+import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import androidx.lifecycle.Observer
 import com.aqua.aqualight.application.aquarium.health.LivestockCheckInput
 import com.aqua.aqualight.application.aquarium.health.LivestockHealthOperations
 import com.aqua.aqualight.application.aquarium.health.LivestockObservationInput
 import com.aqua.aqualight.application.aquarium.health.LivestockObservationSnapshot
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.TestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 import org.junit.Assert.assertEquals
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TestWatcher
+import org.junit.runner.Description
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class LivestockHealthViewModelBoundaryTest {
 
+    @get:Rule
+    val instantTaskExecutorRule = InstantTaskExecutorRule()
+
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
     @Test
-    fun observationReadDelegatesToApplicationBoundary() {
+    fun observationReadDelegatesToApplicationBoundary() = runTest {
         val operations = FakeLivestockHealthOperations()
         val viewModel = LivestockHealthViewModel(operations)
+        val observer = Observer<List<LivestockObservationSnapshot>> { }
 
-        viewModel.observationsForTank(42L)
+        val liveData = viewModel.observationsForTank(42L)
+        try {
+            liveData.observeForever(observer)
+            advanceUntilIdle()
 
-        assertEquals(42L, operations.observedTankId)
+            assertEquals(42L, operations.observedTankId)
+        } finally {
+            liveData.removeObserver(observer)
+        }
     }
 
     @Test
-    fun createCheckAndCloseDelegateTypedApplicationInputs() = runBlocking {
+    fun createCheckAndCloseDelegateTypedApplicationInputs() = runTest {
         val operations = FakeLivestockHealthOperations()
         val viewModel = LivestockHealthViewModel(operations)
         val observation = LivestockObservationInput(
@@ -87,6 +113,18 @@ class LivestockHealthViewModelBoundaryTest {
             reason: String
         ) {
             closed = Triple(tankId, observationId, reason)
+        }
+    }
+
+    class MainDispatcherRule(
+        private val dispatcher: TestDispatcher = UnconfinedTestDispatcher()
+    ) : TestWatcher() {
+        override fun starting(description: Description) {
+            Dispatchers.setMain(dispatcher)
+        }
+
+        override fun finished(description: Description) {
+            Dispatchers.resetMain()
         }
     }
 }
