@@ -34,6 +34,8 @@ import com.aqua.aqualight.data.aquarium.catalog.livestock.DefaultLivestockCatalo
 import com.aqua.aqualight.data.aquarium.catalog.livestock.DefaultLivestockWaterAdvisor
 import com.aqua.aqualight.data.aquarium.delete.OwnerTankDataCleaner
 import com.aqua.aqualight.data.aquarium.health.DefaultWaterAnalysisOperations
+import com.aqua.aqualight.data.aquarium.health.DefaultLivestockHealthOperations
+import com.aqua.aqualight.data.aquarium.health.LivestockHealthDataStoreManager
 import com.aqua.aqualight.data.aquarium.health.WaterAnalysisDataStoreManager
 import com.aqua.aqualight.data.aquarium.devices.DefaultTankDeviceAssignmentOperations
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentRepository
@@ -81,6 +83,7 @@ import com.aqua.aqualight.platform.vision.ProvisioningQrFrameDecoderFactory
 import com.aqua.aqualight.ui.tabs.aquarium.AquariumTankViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.TankDetailDevicesViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.health.WaterAnalysisViewModel
+import com.aqua.aqualight.ui.tabs.aquarium.detail.health.LivestockHealthViewModel
 import com.aqua.aqualight.ui.tabs.aquarium.detail.devices.select.TankDeviceSelectViewModel
 import com.aqua.aqualight.ui.tabs.devices.DevicesViewModel
 import com.aqua.aqualight.ui.tabs.devices.add.DeviceAddViewModel
@@ -210,6 +213,7 @@ private class ReleaseSmokeViewModelFactory(
     private val timerControlOperations = DefaultDeviceTimerControlOperations(devicesRepository)
     private val tankStore = AquariumTankDataStoreManager(appContext)
     private val waterAnalysisStore = WaterAnalysisDataStoreManager(appContext)
+    private val livestockHealthStore = LivestockHealthDataStoreManager(appContext)
     private val careTaskStore = CareTaskDataStoreManager.create(appContext)
     private val assignmentRepository = TankDeviceAssignmentRepository(
         ownerUid = SMOKE_OWNER_UID,
@@ -300,6 +304,10 @@ private class ReleaseSmokeViewModelFactory(
             WaterAnalysisViewModel(
                 operations = DefaultWaterAnalysisOperations(waterAnalysisStore)
             )
+        modelClass.isAssignableFrom(LivestockHealthViewModel::class.java) ->
+            LivestockHealthViewModel(
+                operations = DefaultLivestockHealthOperations(livestockHealthStore)
+            )
         modelClass.isAssignableFrom(MaintenanceViewModel::class.java) ->
             MaintenanceViewModel(
                 operations = maintenanceOperations,
@@ -346,7 +354,9 @@ private class ReleaseSmokeViewModelFactory(
                 ),
                 operationDependencies = AquariumTankOperationDependencies(
                     notificationPreferences = notificationPreferences,
-                    deleteWaterAnalysesForTank = waterAnalysisStore::deleteAnalysesForTank
+                    deleteWaterAnalysesForTank = waterAnalysisStore::deleteAnalysesForTank,
+                    deleteLivestockHealthForTank = livestockHealthStore::deleteForTank,
+                    deleteLivestockHealthForLivestock = livestockHealthStore::deleteForLivestock
                 )
             )
         )
