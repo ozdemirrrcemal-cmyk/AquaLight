@@ -3,6 +3,7 @@ package com.aqua.aqualight.data.user
 import android.content.Context
 import android.net.Uri
 import com.aqua.aqualight.data.aquarium.devices.TankDeviceAssignmentStore
+import com.aqua.aqualight.data.aquarium.health.LivestockHealthDataStoreManager
 import com.aqua.aqualight.data.aquarium.health.WaterAnalysisDataStoreManager
 import com.aqua.aqualight.data.aquarium.store.AquariumTankDataStoreManager
 import com.aqua.aqualight.data.auth.SessionBoundServiceManager
@@ -31,6 +32,7 @@ class UserDataCleaner private constructor(
         SESSION_BOUND_SERVICES,
         CARE_TASKS,
         WATER_ANALYSES,
+        LIVESTOCK_HEALTH,
         AQUARIUM_TANKS,
         DEVICE_ASSIGNMENTS,
         PROVISIONING_SESSIONS,
@@ -147,6 +149,9 @@ class UserDataCleaner private constructor(
         runStep(Step.WATER_ANALYSES) {
             WaterAnalysisDataStoreManager(appContext)
                 .clearAllAnalyses(ownerUid = ownerUid)
+        }
+        runStep(Step.LIVESTOCK_HEALTH) {
+            LivestockHealthDataStoreManager(appContext).clearAllForOwner(ownerUid)
         }
         runStep(Step.AQUARIUM_TANKS) {
             tankStore.clearAllTanks(ownerUid)
@@ -309,4 +314,3 @@ class UserDataCleaner private constructor(
         }
     }
 }
-

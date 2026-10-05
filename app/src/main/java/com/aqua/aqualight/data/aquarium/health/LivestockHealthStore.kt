@@ -243,6 +243,20 @@ internal class LivestockHealthDataStoreManager(context: Context) {
         }
     }
 
+    suspend fun clearAllForOwner(ownerUid: String) =
+        withContext(NonCancellable + Dispatchers.IO) {
+            require(ownerUid.isNotBlank())
+            val media = mutableSetOf<String>()
+            appContext.livestockHealthDataStore.updateData { current ->
+                current.observationsList.filter { it.ownerUid == ownerUid }
+                    .forEach { media += it.mediaUris() }
+                validateLivestockHealthStore(current.toBuilder().clearObservations()
+                    .addAllObservations(current.observationsList.filterNot { it.ownerUid == ownerUid })
+                    .build())
+            }
+            AppMediaStorage.deleteInternalMedia(appContext, media)
+        }
+
     private suspend fun mutate(
         tankId: Long,
         observationId: Long,
