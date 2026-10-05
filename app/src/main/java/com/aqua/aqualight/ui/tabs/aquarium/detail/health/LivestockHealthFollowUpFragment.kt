@@ -51,47 +51,76 @@ class LivestockHealthFollowUpFragment : Fragment(R.layout.fragment_livestock_hea
             readOnly = args.readOnly,
             closeReason = args.closeReason
         )
+        bindHeader()
+        bindCheckActions()
+        observeFollowUpState()
+    }
+
+    private fun bindHeader() {
         binding.appHeader.setupAquaHeader(
             fragment = this,
             config = AquaHeaderConfig(
                 titleOverride = getString(R.string.livestock_health_followup_title),
                 onBackClick = { findNavController().navigateUp() },
-                pillTextAction = if (args.readOnly) null else AquaHeaderPillTextAction(
-                    text = getString(R.string.livestock_health_end_followup),
-                    backgroundRes = R.drawable.bg_aqua_toolbar_pill_action_primary,
-                    onClick = { endFollowup() }
-                )
+                pillTextAction = if (args.readOnly) {
+                    null
+                } else {
+                    AquaHeaderPillTextAction(
+                        text = getString(R.string.livestock_health_end_followup),
+                        backgroundRes = R.drawable.bg_aqua_toolbar_pill_action_primary,
+                        onClick = { endFollowup() }
+                    )
+                }
             )
         )
+    }
+
+    private fun bindCheckActions() {
         parentFragmentManager.setFragmentResultListener(
-            LivestockHealthCheckBottomSheet.REQUEST_KEY, viewLifecycleOwner
+            LivestockHealthCheckBottomSheet.REQUEST_KEY,
+            viewLifecycleOwner
         ) { _, bundle ->
-            if (bundle.getString(LivestockHealthCheckBottomSheet.RESULT_STATUS) ==
+            if (
+                bundle.getString(LivestockHealthCheckBottomSheet.RESULT_STATUS) ==
                 LivestockHealthCheckBottomSheet.STATUS_RECOVERED
-            ) findNavController().popBackStack(R.id.livestockHealthFragment, false)
+            ) {
+                findNavController().popBackStack(R.id.livestockHealthFragment, false)
+            }
         }
+
         binding.btnNewCheck.isVisible = !args.readOnly
         binding.btnNewCheck.setOnClickListener {
-            val livestock = currentLivestock ?: return@setOnClickListener
-            val record = currentRecord ?: return@setOnClickListener
-            if (record.closedAtMillis != null || args.readOnly) return@setOnClickListener
-            LivestockHealthCheckBottomSheet.show(
-                parentFragmentManager,
-                LivestockHealthCheckSheetRequest(
-                    tankId = args.tankId,
-                    observationId = record.id,
-                    livestockId = livestock.id,
-                    livestockName = livestock.name.ifBlank {
-                        getString(R.string.aquarium_unnamed_livestock)
-                    },
-                    category = livestock.category,
-                    issueLabel = binding.tvFollowupIssue.text.toString(),
-                    affectedCount = record.currentAffectedCount,
-                    totalCount = record.totalCount,
-                    livestockPhotoUri = livestock.photoUri
-                )
-            )
+            val livestock = currentLivestock
+            val record = currentRecord
+            if (livestock != null && record != null && record.closedAtMillis == null) {
+                showNewCheck(livestock, record)
+            }
         }
+    }
+
+    private fun showNewCheck(
+        livestock: AquariumLivestock,
+        record: LivestockObservationSnapshot
+    ) {
+        LivestockHealthCheckBottomSheet.show(
+            parentFragmentManager,
+            LivestockHealthCheckSheetRequest(
+                tankId = args.tankId,
+                observationId = record.id,
+                livestockId = livestock.id,
+                livestockName = livestock.name.ifBlank {
+                    getString(R.string.aquarium_unnamed_livestock)
+                },
+                category = livestock.category,
+                issueLabel = binding.tvFollowupIssue.text.toString(),
+                affectedCount = record.currentAffectedCount,
+                totalCount = record.totalCount,
+                livestockPhotoUri = livestock.photoUri
+            )
+        )
+    }
+
+    private fun observeFollowUpState() {
         aquariumTankViewModel.tanks.observe(viewLifecycleOwner) { tanks ->
             currentLivestock = tanks.firstOrNull { it.id == args.tankId }
                 ?.livestock?.firstOrNull { it.id == args.livestockId }

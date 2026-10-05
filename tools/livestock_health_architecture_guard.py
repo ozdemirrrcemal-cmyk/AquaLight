@@ -51,7 +51,7 @@ EVALUATION_REQUEST_FACTORY = (
     APP / "ui/tabs/aquarium/detail/health/LivestockHealthEvaluationRequestFactory.kt"
 )
 EVALUATION_PERSISTENCE = (
-    APP / "ui/tabs/aquarium/detail/health/LivestockHealthEvaluationPersistence.kt"
+    APP / "ui/tabs/aquarium/detail/health/LivestockEvaluationSaveResult.kt"
 )
 NAVIGATION = ROOT / "app/src/main/res/navigation/nav_aquarium.xml"
 CHECK_LAYOUT = ROOT / "app/src/main/res/layout/content_sheet_livestock_health_check.xml"

@@ -101,13 +101,17 @@ class LivestockHealthEvaluationFragment :
         }
         binding.renderEvaluationScreen(
             fragment = this,
-            livestock = currentLivestock,
-            record = record,
-            fallbackSymptomKey = args.symptomKey,
-            fallbackAffectedCount = args.affectedCount,
-            draftOtherObservation = draftOtherObservation,
-            latestWaterAnalysis = latestWaterAnalysis,
-            existingEvaluation = existingEvaluation
+            state = LivestockEvaluationScreenState(
+                livestock = currentLivestock,
+                record = record,
+                fallback = LivestockEvaluationFallbackState(
+                    symptomKey = args.symptomKey,
+                    affectedCount = args.affectedCount,
+                    otherObservation = draftOtherObservation
+                ),
+                latestWaterAnalysis = latestWaterAnalysis,
+                existingEvaluation = existingEvaluation
+            )
         )
     }
 
@@ -121,18 +125,20 @@ class LivestockHealthEvaluationFragment :
     }
 
     private fun handlePrimaryAction() {
-        if (isSaving || isNavigating) return
-        val record = currentRecord
-        if (args.observationId > 0L) {
-            if (record == null) return
-            val stale = record.closedAtMillis == null &&
-                record.isEvaluationStale(latestWaterAnalysis)
-            if (!stale) {
-                isNavigating = findNavController().navigateUp()
-                return
+        if (!isSaving && !isNavigating) {
+            val record = currentRecord
+            val stale = record?.let { snapshot ->
+                snapshot.closedAtMillis == null &&
+                    snapshot.isEvaluationStale(latestWaterAnalysis)
+            }
+            when {
+                args.observationId > 0L && record == null -> Unit
+                args.observationId > 0L && stale == false -> {
+                    isNavigating = findNavController().navigateUp()
+                }
+                else -> persistEvaluation()
             }
         }
-        persistEvaluation()
     }
 
     private fun persistEvaluation() {
@@ -152,13 +158,17 @@ class LivestockHealthEvaluationFragment :
                 when (
                     val result = saveLivestockEvaluation(
                         healthViewModel = healthViewModel,
-                        record = currentRecord,
-                        draft = draft,
-                        tankId = args.tankId,
-                        livestockId = args.livestockId,
-                        symptomKey = args.symptomKey,
-                        affectedCount = args.affectedCount,
-                        latestWaterAnalysis = latestWaterAnalysis
+                        context = LivestockEvaluationSaveContext(
+                            record = currentRecord,
+                            draft = draft,
+                            route = LivestockEvaluationSaveRoute(
+                                tankId = args.tankId,
+                                livestockId = args.livestockId,
+                                symptomKey = args.symptomKey,
+                                affectedCount = args.affectedCount
+                            ),
+                            latestWaterAnalysis = latestWaterAnalysis
+                        )
                     )
                 ) {
                     null -> Unit

@@ -11,43 +11,60 @@ import com.aqua.aqualight.databinding.FragmentLivestockHealthEvaluationBinding
 import com.aqua.aqualight.i18n.LocaleFormatter
 import com.aqua.aqualight.ui.tabs.aquarium.catalog.livestock.LivestockCategories
 
-internal fun FragmentLivestockHealthEvaluationBinding.renderEvaluationContext(
+internal data class LivestockEvaluationFallbackState(
+    val symptomKey: String,
+    val affectedCount: Int,
+    val otherObservation: String
+)
+
+internal data class LivestockEvaluationScreenState(
+    val livestock: AquariumLivestock?,
+    val record: LivestockObservationSnapshot?,
+    val fallback: LivestockEvaluationFallbackState,
+    val latestWaterAnalysis: WaterAnalysisSnapshot?,
+    val existingEvaluation: Boolean
+)
+
+private data class LivestockEvaluationContextState(
+    val usedWaterAnalysis: WaterAnalysisSnapshot?,
+    val latestWaterAnalysis: WaterAnalysisSnapshot?,
+    val existingEvaluation: Boolean,
+    val stale: Boolean,
+    val recorded: Boolean
+)
+
+private data class LivestockEvaluationSummaryState(
+    val symptomKey: String,
+    val affectedCount: Int,
+    val totalCount: Int?,
+    val otherObservation: String
+)
+
+private fun FragmentLivestockHealthEvaluationBinding.renderEvaluationContext(
     fragment: Fragment,
-    usedWaterAnalysis: WaterAnalysisSnapshot?,
-    latestWaterAnalysis: WaterAnalysisSnapshot?,
-    existingEvaluation: Boolean,
-    stale: Boolean,
-    recorded: Boolean
+    state: LivestockEvaluationContextState
 ) {
-    val displayedWater = if (existingEvaluation) {
-        usedWaterAnalysis
+    val displayedWater = if (state.existingEvaluation) {
+        state.usedWaterAnalysis
     } else {
-        latestWaterAnalysis
+        state.latestWaterAnalysis
     }
     renderWaterContext(
         fragment = fragment,
         displayedWater = displayedWater,
-        existingEvaluation = existingEvaluation,
-        stale = stale,
-        recorded = recorded
+        state = state
     )
-    renderEvaluationNotice(
-        existingEvaluation = existingEvaluation,
-        stale = stale,
-        hasLatestWaterAnalysis = latestWaterAnalysis != null
-    )
+    renderEvaluationNotice(state)
 }
 
 private fun FragmentLivestockHealthEvaluationBinding.renderWaterContext(
     fragment: Fragment,
     displayedWater: WaterAnalysisSnapshot?,
-    existingEvaluation: Boolean,
-    stale: Boolean,
-    recorded: Boolean
+    state: LivestockEvaluationContextState
 ) {
     tvEvaluationWaterValue.text = displayedWater?.let { water ->
         fragment.getString(
-            if (existingEvaluation) {
+            if (state.existingEvaluation) {
                 R.string.livestock_health_evaluation_water_used_format
             } else {
                 R.string.livestock_health_evaluation_water_current_format
@@ -59,7 +76,7 @@ private fun FragmentLivestockHealthEvaluationBinding.renderWaterContext(
     tvEvaluationWaterBadge.setText(
         when {
             displayedWater == null -> R.string.livestock_health_old_data_badge
-            recorded || (existingEvaluation && stale) ->
+            state.recorded || (state.existingEvaluation && state.stale) ->
                 R.string.livestock_health_evaluation_state_recorded
             else -> R.string.livestock_health_evaluation_state_current
         }
@@ -68,8 +85,8 @@ private fun FragmentLivestockHealthEvaluationBinding.renderWaterContext(
         ContextCompat.getColor(
             fragment.requireContext(),
             when {
-                displayedWater == null || stale -> R.color.dialog_icon_warning
-                recorded -> R.color.aqua_content_secondary
+                displayedWater == null || state.stale -> R.color.dialog_icon_warning
+                state.recorded -> R.color.aqua_content_secondary
                 else -> R.color.aqua_status_success
             }
         )
@@ -77,23 +94,25 @@ private fun FragmentLivestockHealthEvaluationBinding.renderWaterContext(
 }
 
 private fun FragmentLivestockHealthEvaluationBinding.renderEvaluationNotice(
-    existingEvaluation: Boolean,
-    stale: Boolean,
-    hasLatestWaterAnalysis: Boolean
+    state: LivestockEvaluationContextState
 ) {
-    val showNotice = if (existingEvaluation) stale else !hasLatestWaterAnalysis
+    val showNotice = if (state.existingEvaluation) {
+        state.stale
+    } else {
+        state.latestWaterAnalysis == null
+    }
     cardEvaluationDataNotice.isVisible = showNotice
     if (!showNotice) return
 
     tvEvaluationDataNoticeTitle.setText(
-        if (existingEvaluation) {
+        if (state.existingEvaluation) {
             R.string.livestock_health_evaluation_state_stale
         } else {
             R.string.livestock_health_fresh_measurement_warning_title
         }
     )
     tvEvaluationDataNoticeBody.setText(
-        if (existingEvaluation) {
+        if (state.existingEvaluation) {
             R.string.livestock_health_evaluation_body_stale
         } else {
             R.string.livestock_health_fresh_measurement_warning
@@ -140,65 +159,63 @@ internal fun FragmentLivestockHealthEvaluationBinding.bindEvaluationChecks(
 
 internal fun FragmentLivestockHealthEvaluationBinding.renderEvaluationScreen(
     fragment: Fragment,
-    livestock: AquariumLivestock?,
-    record: LivestockObservationSnapshot?,
-    fallbackSymptomKey: String,
-    fallbackAffectedCount: Int,
-    draftOtherObservation: String,
-    latestWaterAnalysis: WaterAnalysisSnapshot?,
-    existingEvaluation: Boolean
+    state: LivestockEvaluationScreenState
 ) {
-    val symptomKey = record?.symptomKeys?.firstOrNull() ?: fallbackSymptomKey
+    val symptomKey = state.record?.symptomKeys?.firstOrNull()
+        ?: state.fallback.symptomKey
     renderEvaluationSummary(
         fragment = fragment,
-        livestock = livestock,
-        symptomKey = symptomKey,
-        affectedCount = record?.currentAffectedCount ?: fallbackAffectedCount,
-        totalCount = record?.totalCount,
-        otherObservation = record?.otherObservation ?: draftOtherObservation
+        livestock = state.livestock,
+        state = LivestockEvaluationSummaryState(
+            symptomKey = symptomKey,
+            affectedCount = state.record?.currentAffectedCount
+                ?: state.fallback.affectedCount,
+            totalCount = state.record?.totalCount,
+            otherObservation = state.record?.otherObservation
+                ?: state.fallback.otherObservation
+        )
     )
     bindEvaluationChecks(
         LivestockHealthEvaluationCatalog.checksFor(
-            category = livestock?.category,
+            category = state.livestock?.category,
             symptomKey = symptomKey
         )
     )
 
-    val stale = record?.let { snapshot ->
+    val stale = state.record?.let { snapshot ->
         snapshot.closedAtMillis == null &&
-            snapshot.isEvaluationStale(latestWaterAnalysis)
+            snapshot.isEvaluationStale(state.latestWaterAnalysis)
     } ?: false
     renderEvaluationContext(
         fragment = fragment,
-        usedWaterAnalysis = record?.latestEvaluation?.waterAnalysis,
-        latestWaterAnalysis = latestWaterAnalysis,
-        existingEvaluation = existingEvaluation,
-        stale = stale,
-        recorded = record?.closedAtMillis != null
+        state = LivestockEvaluationContextState(
+            usedWaterAnalysis = state.record?.latestEvaluation?.waterAnalysis,
+            latestWaterAnalysis = state.latestWaterAnalysis,
+            existingEvaluation = state.existingEvaluation,
+            stale = stale,
+            recorded = state.record?.closedAtMillis != null
+        )
     )
     renderEvaluationAction(
-        existingEvaluation = existingEvaluation,
+        existingEvaluation = state.existingEvaluation,
         stale = stale,
-        closed = record?.closedAtMillis != null
+        closed = state.record?.closedAtMillis != null
     )
-    btnViewFollowup.isEnabled = livestock != null
+    btnViewFollowup.isEnabled = state.livestock != null
 }
 
 private fun FragmentLivestockHealthEvaluationBinding.renderEvaluationSummary(
     fragment: Fragment,
     livestock: AquariumLivestock?,
-    symptomKey: String,
-    affectedCount: Int,
-    totalCount: Int?,
-    otherObservation: String
+    state: LivestockEvaluationSummaryState
 ) {
-    val resolvedTotal = totalCount
+    val resolvedTotal = state.totalCount
         ?: livestock?.quantity?.coerceAtLeast(1)
-        ?: affectedCount.coerceAtLeast(1)
+        ?: state.affectedCount.coerceAtLeast(1)
     val symptomLabel = LivestockHealthUiText.observationLabel(
         fragment = fragment,
-        symptomKey = symptomKey,
-        otherObservation = otherObservation
+        symptomKey = state.symptomKey,
+        otherObservation = state.otherObservation
     )
     val name = livestock?.name?.ifBlank {
         fragment.getString(R.string.aquarium_unnamed_livestock)
@@ -211,7 +228,7 @@ private fun FragmentLivestockHealthEvaluationBinding.renderEvaluationSummary(
         R.plurals.livestock_health_evaluation_summary_format,
         resolvedTotal,
         name,
-        affectedCount.coerceIn(1, resolvedTotal),
+        state.affectedCount.coerceIn(1, resolvedTotal),
         resolvedTotal,
         symptomLabel
     )

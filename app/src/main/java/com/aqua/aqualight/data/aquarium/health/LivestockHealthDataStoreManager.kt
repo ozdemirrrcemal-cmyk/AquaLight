@@ -67,12 +67,14 @@ internal class LivestockHealthDataStoreManager(
             ?.firstOrNull { livestock -> livestock.id == input.livestockId }
             ?.quantity
         val id = createOrReuseLivestockObservation(
-            appContext = appContext,
-            ownerUid = ownerUid,
-            selectedQuantity = selectedQuantity,
+            context = LivestockObservationCreationContext(
+                appContext = appContext,
+                ownerUid = ownerUid,
+                selectedQuantity = selectedQuantity,
+                requireOwner = { checkOwner(ownerUid) }
+            ),
             input = input,
-            evaluation = evaluation,
-            requireOwner = { checkOwner(ownerUid) }
+            evaluation = evaluation
         )
         input.photoUris.forEach { uri ->
             AppMediaStorage.commitPendingMedia(appContext, uri)

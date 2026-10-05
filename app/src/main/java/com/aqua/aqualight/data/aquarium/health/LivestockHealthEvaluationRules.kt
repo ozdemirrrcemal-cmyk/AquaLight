@@ -13,37 +13,30 @@ internal const val MIN_LIVESTOCK_EVALUATION_TIME_MILLIS = 946_684_800_000L
 internal const val MAX_LIVESTOCK_EVALUATION_TIME_MILLIS = 4_102_444_800_000L
 private const val MAX_EVALUATION_REQUEST_ID_LENGTH = 64
 private const val MAX_EVALUATION_WATER_MEASUREMENTS = 32
+private const val MIN_EVALUATION_TEMPERATURE_C = -50.0
+private const val MAX_EVALUATION_TEMPERATURE_C = 100.0
 
 internal fun validateStoredEvaluation(
     record: StoredLivestockObservation,
     evaluation: StoredLivestockEvaluation
 ) {
-    if (
-        evaluation.id <= 0L ||
-        evaluation.requestId.length !in 1..MAX_EVALUATION_REQUEST_ID_LENGTH ||
-        evaluation.evaluatedAtMillis !in
-            MIN_LIVESTOCK_EVALUATION_TIME_MILLIS..MAX_LIVESTOCK_EVALUATION_TIME_MILLIS
-    ) {
-        invalidEvaluation()
-    }
+    validateEvaluationIdentity(evaluation)
     requireEvaluationEnum<LivestockEvaluationTrigger>(
         evaluation.trigger,
         "evaluation.trigger"
     )
-    if (evaluation.basedOnCheckCount !in 0..record.checksCount) invalidEvaluation()
+    if (evaluation.basedOnCheckCount !in 0..record.checksCount) {
+        invalidEvaluation()
+    }
 
     val basedOnChecks = record.checksList.take(evaluation.basedOnCheckCount)
     val latestCheck = basedOnChecks.maxByOrNull { check -> check.checkedAtMillis }
-    val expectedAffected = latestCheck?.affectedCount ?: record.affectedCount
-    val expectedLatestCheckAt = latestCheck?.checkedAtMillis ?: 0L
-    if (
-        evaluation.affectedCount != expectedAffected ||
-        evaluation.basedOnLatestCheckAtMillis != expectedLatestCheckAt ||
-        evaluation.evaluatedAtMillis < record.createdAtMillis ||
-        evaluation.evaluatedAtMillis < expectedLatestCheckAt
-    ) {
-        invalidEvaluation()
-    }
+    validateEvaluationBasis(
+        record = record,
+        evaluation = evaluation,
+        expectedAffected = latestCheck?.affectedCount ?: record.affectedCount,
+        expectedLatestCheckAt = latestCheck?.checkedAtMillis ?: 0L
+    )
     validateStoredWaterSnapshot(evaluation)
 }
 
@@ -54,56 +47,100 @@ internal fun validateEvaluationInput(
     require(input.requestId.length in 1..MAX_EVALUATION_REQUEST_ID_LENGTH)
     input.waterAnalysis?.let { water ->
         require(water.id > 0L && water.tankId == record.tankId)
-        require(water.measuredAtMillis in
-            MIN_LIVESTOCK_EVALUATION_TIME_MILLIS..MAX_LIVESTOCK_EVALUATION_TIME_MILLIS)
-        require(water.createdAtMillis in
-            MIN_LIVESTOCK_EVALUATION_TIME_MILLIS..MAX_LIVESTOCK_EVALUATION_TIME_MILLIS)
+        require(
+            water.measuredAtMillis in
+                MIN_LIVESTOCK_EVALUATION_TIME_MILLIS..MAX_LIVESTOCK_EVALUATION_TIME_MILLIS
+        )
+        require(
+            water.createdAtMillis in
+                MIN_LIVESTOCK_EVALUATION_TIME_MILLIS..MAX_LIVESTOCK_EVALUATION_TIME_MILLIS
+        )
         require(water.measurements.size <= MAX_EVALUATION_WATER_MEASUREMENTS)
     }
 }
 
-private fun validateStoredWaterSnapshot(evaluation: StoredLivestockEvaluation) {
-    if (!evaluation.hasWaterAnalysis) {
-        if (
-            evaluation.waterAnalysisId != 0L ||
-            evaluation.waterAnalysisMeasuredAtMillis != 0L ||
-            evaluation.waterAnalysisCreatedAtMillis != 0L ||
-            evaluation.hasTemperature ||
-            evaluation.waterMeasurementsCount != 0
-        ) {
-            invalidEvaluation()
-        }
-        return
+private fun validateEvaluationIdentity(evaluation: StoredLivestockEvaluation) {
+    if (evaluation.id <= 0L) invalidEvaluation()
+    if (evaluation.requestId.length !in 1..MAX_EVALUATION_REQUEST_ID_LENGTH) {
+        invalidEvaluation()
     }
-
     if (
-        evaluation.waterAnalysisId <= 0L ||
-        evaluation.waterAnalysisMeasuredAtMillis !in
-            MIN_LIVESTOCK_EVALUATION_TIME_MILLIS..MAX_LIVESTOCK_EVALUATION_TIME_MILLIS ||
-        evaluation.waterAnalysisCreatedAtMillis !in
-            MIN_LIVESTOCK_EVALUATION_TIME_MILLIS..MAX_LIVESTOCK_EVALUATION_TIME_MILLIS ||
-        evaluation.waterAnalysisMeasuredAtMillis > evaluation.evaluatedAtMillis ||
-        evaluation.waterAnalysisCreatedAtMillis > evaluation.evaluatedAtMillis ||
-        evaluation.waterMeasurementsCount > MAX_EVALUATION_WATER_MEASUREMENTS
+        evaluation.evaluatedAtMillis !in
+        MIN_LIVESTOCK_EVALUATION_TIME_MILLIS..MAX_LIVESTOCK_EVALUATION_TIME_MILLIS
     ) {
         invalidEvaluation()
     }
+}
+
+private fun validateEvaluationBasis(
+    record: StoredLivestockObservation,
+    evaluation: StoredLivestockEvaluation,
+    expectedAffected: Int,
+    expectedLatestCheckAt: Long
+) {
+    if (evaluation.affectedCount != expectedAffected) invalidEvaluation()
+    if (evaluation.basedOnLatestCheckAtMillis != expectedLatestCheckAt) {
+        invalidEvaluation()
+    }
+    if (evaluation.evaluatedAtMillis < record.createdAtMillis) invalidEvaluation()
+    if (evaluation.evaluatedAtMillis < expectedLatestCheckAt) invalidEvaluation()
+}
+
+private fun validateStoredWaterSnapshot(evaluation: StoredLivestockEvaluation) {
+    if (evaluation.hasWaterAnalysis) {
+        validatePresentWaterSnapshot(evaluation)
+    } else {
+        validateAbsentWaterSnapshot(evaluation)
+    }
+}
+
+private fun validateAbsentWaterSnapshot(evaluation: StoredLivestockEvaluation) {
+    if (evaluation.waterAnalysisId != 0L) invalidEvaluation()
+    if (evaluation.waterAnalysisMeasuredAtMillis != 0L) invalidEvaluation()
+    if (evaluation.waterAnalysisCreatedAtMillis != 0L) invalidEvaluation()
+    if (evaluation.hasTemperature) invalidEvaluation()
+    if (evaluation.waterMeasurementsCount != 0) invalidEvaluation()
+}
+
+private fun validatePresentWaterSnapshot(evaluation: StoredLivestockEvaluation) {
+    if (evaluation.waterAnalysisId <= 0L) invalidEvaluation()
+    if (
+        evaluation.waterAnalysisMeasuredAtMillis !in
+        MIN_LIVESTOCK_EVALUATION_TIME_MILLIS..MAX_LIVESTOCK_EVALUATION_TIME_MILLIS
+    ) {
+        invalidEvaluation()
+    }
+    if (
+        evaluation.waterAnalysisCreatedAtMillis !in
+        MIN_LIVESTOCK_EVALUATION_TIME_MILLIS..MAX_LIVESTOCK_EVALUATION_TIME_MILLIS
+    ) {
+        invalidEvaluation()
+    }
+    if (evaluation.waterAnalysisMeasuredAtMillis > evaluation.evaluatedAtMillis) {
+        invalidEvaluation()
+    }
+    if (evaluation.waterAnalysisCreatedAtMillis > evaluation.evaluatedAtMillis) {
+        invalidEvaluation()
+    }
+    if (evaluation.waterMeasurementsCount > MAX_EVALUATION_WATER_MEASUREMENTS) {
+        invalidEvaluation()
+    }
+
     if (evaluation.hasTemperature) {
         requireEvaluationEnum<WaterTemperatureSource>(
             evaluation.temperatureSource,
             "evaluation.temperatureSource"
         )
+        if (!evaluation.temperatureCelsius.isFinite()) invalidEvaluation()
         if (
-            !evaluation.temperatureCelsius.isFinite() ||
-            evaluation.temperatureCelsius !in -50.0..100.0
+            evaluation.temperatureCelsius !in
+            MIN_EVALUATION_TEMPERATURE_C..MAX_EVALUATION_TEMPERATURE_C
         ) {
             invalidEvaluation()
         }
-    } else if (
-        evaluation.temperatureCelsius != 0.0 ||
-        evaluation.temperatureSource.isNotBlank()
-    ) {
-        invalidEvaluation()
+    } else {
+        if (evaluation.temperatureCelsius != 0.0) invalidEvaluation()
+        if (evaluation.temperatureSource.isNotBlank()) invalidEvaluation()
     }
     evaluation.waterMeasurementsList.forEach(::validateStoredEvaluationMeasurement)
 }

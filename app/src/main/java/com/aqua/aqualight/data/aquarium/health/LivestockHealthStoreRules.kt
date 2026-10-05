@@ -50,7 +50,8 @@ internal fun validateInput(input: LivestockObservationInput) {
     require(input.symptomKeys.distinct().size == input.symptomKeys.size)
     require(input.symptomKeys.all { it.isNotBlank() && it.length <= MAX_KEY_LENGTH })
     require(input.onsetKey.isNotBlank() && input.onsetKey.length <= MAX_KEY_LENGTH)
-    require(input.otherObservation.length <= MAX_OTHER_LENGTH && input.note.length <= MAX_NOTE_LENGTH)
+    require(input.otherObservation.length <= MAX_OTHER_LENGTH)
+    require(input.note.length <= MAX_NOTE_LENGTH)
     require(input.photoUris.size <= LIVESTOCK_HEALTH_MAX_PHOTOS)
     require(input.photoUris.distinct().size == input.photoUris.size)
     require(input.photoUris.all { it.isNotBlank() && it.length <= MAX_URI_LENGTH })
@@ -61,8 +62,10 @@ internal fun validateCheck(input: LivestockCheckInput) {
     require(input.requestId.length in 1..MAX_REQUEST_ID_LENGTH)
     require(input.status in setOf("increased", "same", "decreased", "recovered"))
     require(input.affectedCount > 0)
-    require(input.checkedAtMillis in MIN_RECORD_TIME_MILLIS..
-        (System.currentTimeMillis() + CHECK_CLOCK_SKEW_MILLIS))
+    require(
+        input.checkedAtMillis in
+            MIN_RECORD_TIME_MILLIS..(System.currentTimeMillis() + CHECK_CLOCK_SKEW_MILLIS)
+    )
     require(input.note.length <= MAX_NOTE_LENGTH)
     require(input.photoUris.size <= LIVESTOCK_HEALTH_MAX_PHOTOS)
     require(input.photoUris.distinct().size == input.photoUris.size)
@@ -71,15 +74,21 @@ internal fun validateCheck(input: LivestockCheckInput) {
 
 internal fun validateLivestockHealthStore(store: LivestockHealthStore): LivestockHealthStore {
     CommercialStoreSchema.requireCurrent(
-        "LivestockHealthStore", store.schemaVersion,
+        "LivestockHealthStore",
+        store.schemaVersion,
         CommercialStoreSchema.LIVESTOCK_HEALTH_VERSION
     )
     val ids = mutableSetOf<Pair<String, Long>>()
     val requestIds = mutableSetOf<Pair<String, String>>()
     store.observationsList.forEach { record ->
         validateStoredObservation(record)
-        if (!ids.add(record.ownerUid to record.id)) invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
-        if (!requestIds.add(record.ownerUid to record.requestId)) invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
+        if (!ids.add(record.ownerUid to record.id)) {
+            invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
+        }
+        if (!requestIds.add(record.ownerUid to record.requestId)) {
+            invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
+        }
+
         val checkRequestIds = mutableSetOf<String>()
         record.checksList.forEach { check ->
             validateStoredCheck(check, record)
@@ -87,6 +96,7 @@ internal fun validateLivestockHealthStore(store: LivestockHealthStore): Livestoc
                 invalidStoredHealthRecord(INVALID_CHECK_MESSAGE)
             }
         }
+
         val evaluationIds = mutableSetOf<Long>()
         val evaluationRequestIds = mutableSetOf<String>()
         record.evaluationsList.forEach { evaluation ->
@@ -103,56 +113,101 @@ internal fun validateLivestockHealthStore(store: LivestockHealthStore): Livestoc
 }
 
 private fun validateStoredObservation(record: StoredLivestockObservation) {
+    validateStoredObservationIdentity(record)
+    validateStoredObservationLifecycle(record)
+
+    val initialEvaluation = record.evaluationsList.minByOrNull { evaluation ->
+        evaluation.evaluatedAtMillis
+    } ?: invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
+    if (initialEvaluation.trigger != "INITIAL_OBSERVATION") {
+        invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
+    }
+    if (initialEvaluation.basedOnCheckCount != 0) {
+        invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
+    }
+
+    validateInput(
+        LivestockObservationInput(
+            record.requestId,
+            record.tankId,
+            record.livestockId,
+            record.symptomKeysList,
+            record.onsetKey,
+            record.otherObservation,
+            record.note,
+            record.photoUrisList,
+            record.affectedCount
+        )
+    )
+}
+
+private fun validateStoredObservationIdentity(record: StoredLivestockObservation) {
     if (record.id <= 0 || record.tankId <= 0 || record.livestockId <= 0) {
         invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
     }
-    if (record.ownerUid.isBlank() || record.ownerUid.length > MAX_OWNER_UID_LENGTH ||
-        record.ownerUid != record.ownerUid.trim()
-    ) invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
+    if (record.ownerUid.isBlank()) {
+        invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
+    }
+    if (record.ownerUid.length > MAX_OWNER_UID_LENGTH) {
+        invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
+    }
+    if (record.ownerUid != record.ownerUid.trim()) {
+        invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
+    }
     if (record.createdAtMillis !in MIN_RECORD_TIME_MILLIS..MAX_RECORD_TIME_MILLIS) {
         invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
     }
-    if (record.totalCount <= 0 || record.affectedCount !in 1..record.totalCount) {
+    if (record.totalCount <= 0) {
+        invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
+    }
+    if (record.affectedCount !in 1..record.totalCount) {
         invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
     }
     if (record.evaluationsCount == 0) {
         invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
     }
-    val initialEvaluation = record.evaluationsList.minByOrNull {
-        evaluation -> evaluation.evaluatedAtMillis
-    } ?: invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
-    if (
-        initialEvaluation.trigger != "INITIAL_OBSERVATION" ||
-        initialEvaluation.basedOnCheckCount != 0
-    ) {
-        invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
-    }
+}
+
+private fun validateStoredObservationLifecycle(record: StoredLivestockObservation) {
     if ((record.closedAtMillis == 0L) != record.closeReason.isBlank()) {
         invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
     }
     if (record.closedAtMillis != 0L) {
-        if (record.closedAtMillis < record.createdAtMillis) invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
-        if (record.closeReason !in setOf("manual", "recovered")) invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
+        if (record.closedAtMillis < record.createdAtMillis) {
+            invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
+        }
+        if (record.closeReason !in setOf("manual", "recovered")) {
+            invalidStoredHealthRecord(INVALID_OBSERVATION_MESSAGE)
+        }
     }
-    validateInput(LivestockObservationInput(
-        record.requestId, record.tankId, record.livestockId, record.symptomKeysList,
-        record.onsetKey, record.otherObservation, record.note,
-        record.photoUrisList, record.affectedCount
-    ))
 }
 
-private fun validateStoredCheck(check: StoredLivestockCheck, record: StoredLivestockObservation) {
+private fun validateStoredCheck(
+    check: StoredLivestockCheck,
+    record: StoredLivestockObservation
+) {
     if (check.status !in setOf("increased", "same", "decreased", "recovered")) {
         invalidStoredHealthRecord(INVALID_CHECK_MESSAGE)
     }
-    if (check.requestId.length !in 1..MAX_REQUEST_ID_LENGTH) invalidStoredHealthRecord(INVALID_CHECK_MESSAGE)
-    if (check.affectedCount !in 1..record.totalCount) invalidStoredHealthRecord(INVALID_CHECK_MESSAGE)
-    if (check.checkedAtMillis < record.createdAtMillis) invalidStoredHealthRecord(INVALID_CHECK_MESSAGE)
-    if (check.note.length > MAX_NOTE_LENGTH ||
-        check.photoUrisCount > LIVESTOCK_HEALTH_MAX_PHOTOS ||
-        check.photoUrisList.distinct().size != check.photoUrisCount ||
-        check.photoUrisList.any { it.isBlank() || it.length > MAX_URI_LENGTH }
-    ) {
+    if (check.requestId.length !in 1..MAX_REQUEST_ID_LENGTH) {
+        invalidStoredHealthRecord(INVALID_CHECK_MESSAGE)
+    }
+    if (check.affectedCount !in 1..record.totalCount) {
+        invalidStoredHealthRecord(INVALID_CHECK_MESSAGE)
+    }
+    if (check.checkedAtMillis < record.createdAtMillis) {
+        invalidStoredHealthRecord(INVALID_CHECK_MESSAGE)
+    }
+    if (check.note.length > MAX_NOTE_LENGTH) {
+        invalidStoredHealthRecord(INVALID_CHECK_MESSAGE)
+    }
+    if (check.photoUrisCount > LIVESTOCK_HEALTH_MAX_PHOTOS) {
+        invalidStoredHealthRecord(INVALID_CHECK_MESSAGE)
+    }
+    if (check.photoUrisList.distinct().size != check.photoUrisCount) {
+        invalidStoredHealthRecord(INVALID_CHECK_MESSAGE)
+    }
+    if (check.photoUrisList.any { it.isBlank() || it.length > MAX_URI_LENGTH }) {
         invalidStoredHealthRecord(INVALID_CHECK_MESSAGE)
     }
 }

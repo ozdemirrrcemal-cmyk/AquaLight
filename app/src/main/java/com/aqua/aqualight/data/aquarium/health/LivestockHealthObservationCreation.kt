@@ -8,20 +8,24 @@ import com.aqua.aqualight.data.store.StoreInvariantViolation
 import com.aqua.aqualight.platform.media.AppMediaScope
 import com.aqua.aqualight.platform.media.AppMediaStorage
 
+internal data class LivestockObservationCreationContext(
+    val appContext: Context,
+    val ownerUid: String,
+    val selectedQuantity: Int?,
+    val requireOwner: () -> Unit
+)
+
 internal suspend fun createOrReuseLivestockObservation(
-    appContext: Context,
-    ownerUid: String,
-    selectedQuantity: Int?,
+    context: LivestockObservationCreationContext,
     input: LivestockObservationInput,
-    evaluation: LivestockEvaluationInput,
-    requireOwner: () -> Unit
+    evaluation: LivestockEvaluationInput
 ): Long {
     require(evaluation.trigger == LivestockEvaluationTrigger.INITIAL_OBSERVATION)
     var id = 0L
-    appContext.livestockHealthDataStore.updateData { current ->
-        requireOwner()
+    context.appContext.livestockHealthDataStore.updateData { current ->
+        context.requireOwner()
         val existing = current.observationsList.firstOrNull { record ->
-            record.ownerUid == ownerUid && record.requestId == input.requestId
+            record.ownerUid == context.ownerUid && record.requestId == input.requestId
         }
         if (existing != null) {
             requireObservationRetryMatches(existing, input, evaluation)
@@ -29,12 +33,12 @@ internal suspend fun createOrReuseLivestockObservation(
             return@updateData current
         }
 
-        val quantity = selectedQuantity
+        val quantity = context.selectedQuantity
             ?: throw StoreInvariantViolation(
                 "Selected livestock no longer exists in this tank."
             )
         require(input.affectedCount <= quantity)
-        requireObservationPhotoOwnership(appContext, ownerUid, input.photoUris)
+        requireObservationPhotoOwnership(context, input.photoUris)
 
         val now = System.currentTimeMillis()
         val maxId = current.observationsList.maxOfOrNull { record -> record.id } ?: 0L
@@ -42,7 +46,7 @@ internal suspend fun createOrReuseLivestockObservation(
         id = maxOf(now, maxId + 1L)
         val observation = buildStoredObservation(
             id = id,
-            ownerUid = ownerUid,
+            ownerUid = context.ownerUid,
             totalCount = quantity,
             input = input,
             createdAtMillis = now
@@ -95,16 +99,15 @@ private fun requireObservationRetryMatches(
 }
 
 private fun requireObservationPhotoOwnership(
-    appContext: Context,
-    ownerUid: String,
+    context: LivestockObservationCreationContext,
     photoUris: List<String>
 ) {
     require(photoUris.all { uri ->
         AppMediaStorage.pendingMediaOwner(
-            appContext,
+            context.appContext,
             uri,
             AppMediaScope.LIVESTOCK
-        ) == ownerUid
+        ) == context.ownerUid
     }) {
         "Observation photos must belong to the active owner."
     }
